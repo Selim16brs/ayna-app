@@ -43,33 +43,22 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>AYNA Today</Text>
+        <Text style={styles.sectionTitle}>{t('home.section.today')}</Text>
 
         <Card
-          title={locale === 'kk' ? 'Жақын жазылу' : 'Ближайшая запись'}
-          subtitle={locale === 'kk' ? 'Жұма 14:00 · Шаш сырлау' : 'Пятница 14:00 · Окрашивание'}
-          badge={locale === 'kk' ? 'Расталды' : 'Подтверждено'}
+          title={t('home.upcoming.title')}
+          subtitle={t('home.upcoming.subtitle')}
+          badge={t('home.upcoming.badge')}
         />
+        <Card title={t('home.care.title')} subtitle={t('home.care.subtitle')} />
         <Card
-          title={locale === 'kk' ? 'Күтім уақыты' : 'Время ухода'}
-          subtitle={locale === 'kk' ? 'Маникюр жаңарту жақындады' : 'Скоро обновление маникюра'}
-        />
-        <Card
-          title={locale === 'kk' ? 'Дос ұсынысы' : 'Совет подруги'}
-          subtitle={
-            locale === 'kk'
-              ? '3 досыңыз осы шеберге барды'
-              : '3 ваши подруги ходили к этому мастеру'
-          }
+          title={t('home.friend.title')}
+          subtitle={t('home.friend.subtitle')}
           badge="AYNA Circle"
         />
 
         <View style={styles.note}>
-          <Text style={styles.noteText}>
-            {locale === 'kk'
-              ? 'Бұл — алғашқы экран. Келесі: телефонмен кіру (OTP).'
-              : 'Это первый экран. Далее: вход по телефону (OTP).'}
-          </Text>
+          <Text style={styles.noteText}>{t('home.next_note')}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

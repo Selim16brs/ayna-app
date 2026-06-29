@@ -23,8 +23,11 @@ export default function WelcomeScreen() {
 
       <View style={styles.choice}>
         <Text style={styles.choiceLabel}>{t('language.choose')}</Text>
-        <Pressable style={styles.langButton} onPress={() => choose('kk')}>
-          <Text style={styles.langText}>Қазақша</Text>
+        <Pressable style={styles.langButton} onPress={() => choose('tr')}>
+          <Text style={styles.langText}>Türkçe</Text>
+        </Pressable>
+        <Pressable style={[styles.langButton, styles.langButtonAlt]} onPress={() => choose('kk')}>
+          <Text style={[styles.langText, styles.langTextAlt]}>Қазақша</Text>
         </Pressable>
         <Pressable style={[styles.langButton, styles.langButtonAlt]} onPress={() => choose('ru')}>
           <Text style={[styles.langText, styles.langTextAlt]}>Русский</Text>
