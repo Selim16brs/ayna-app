@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api } from '../../src/api';
+import { UPCOMING, formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { colors, gradients, radius, shadow, space } from '../../src/theme';
 import { ProCard, Screen, Text } from '../../src/ui';
@@ -43,6 +44,52 @@ export default function DiscoverScreen() {
             </LinearGradient>
           </View>
         </View>
+
+        {/* Yaklaşan randevular */}
+        {UPCOMING.length > 0 ? (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text variant="h2" tone="ink">
+                {t('home.upcoming_events')}
+              </Text>
+              <Pressable onPress={() => router.push('/bookings')}>
+                <Text variant="caption" tone="gold">
+                  {t('common.see_all')}
+                </Text>
+              </Pressable>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.upcoming}
+            >
+              {UPCOMING.map((a) => (
+                <View key={a.id} style={[styles.upcomingCard, shadow.soft]}>
+                  <View style={styles.upcomingTop}>
+                    <Ionicons name="calendar" size={15} color={colors.rose} />
+                    <Text variant="caption" tone="rose">
+                      {a.dateLabel}
+                    </Text>
+                  </View>
+                  <Text
+                    variant="bodyStrong"
+                    tone="ink"
+                    numberOfLines={1}
+                    style={styles.upcomingTitle}
+                  >
+                    {a.service}
+                  </Text>
+                  <Text variant="caption" tone="muted" numberOfLines={1}>
+                    {a.proName}
+                  </Text>
+                  <Text variant="bodyStrong" tone="ink" style={styles.upcomingPrice}>
+                    {formatPrice(a.price)}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+          </>
+        ) : null}
 
         {/* Ana aksiyonlar */}
         <Text variant="label" tone="gold" style={styles.howLabel}>
@@ -198,6 +245,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  upcoming: { paddingHorizontal: space(3), gap: space(1.5), paddingBottom: space(2.5) },
+  upcomingCard: {
+    width: 200,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: space(2),
+  },
+  upcomingTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: space(1) },
+  upcomingTitle: { marginBottom: 2 },
+  upcomingPrice: { marginTop: space(1) },
   howLabel: { paddingHorizontal: space(3), marginBottom: space(1.25) },
   actions: {
     flexDirection: 'row',

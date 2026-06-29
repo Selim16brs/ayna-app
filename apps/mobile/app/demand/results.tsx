@@ -53,7 +53,15 @@ export default function DemandResultsScreen() {
                 </View>
               </View>
             </View>
-            <Pressable style={styles.pick} onPress={() => router.push(`/professional/${q.proId}`)}>
+            <Pressable
+              style={styles.pick}
+              onPress={() =>
+                router.push({
+                  pathname: '/booking/schedule',
+                  params: { proId: q.proId, source: 'demand' },
+                })
+              }
+            >
               <Text variant="caption" tone="onColor">
                 {t('quotes.pick')}
               </Text>

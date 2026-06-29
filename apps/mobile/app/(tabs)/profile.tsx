@@ -1,5 +1,143 @@
-import { Placeholder } from '../../src/ui';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useLocale } from '../../src/locale';
+import type { MessageKey } from '@ayna/i18n';
+import { colors, gradients, radius, shadow, space } from '../../src/theme';
+import { Screen, Text } from '../../src/ui';
+
+type IoniconName = keyof typeof Ionicons.glyphMap;
+
+const MENU: { key: MessageKey; icon: IoniconName; danger?: boolean }[] = [
+  { key: 'profile.menu.passport', icon: 'card-outline' },
+  { key: 'profile.menu.rewards', icon: 'gift-outline' },
+  { key: 'profile.menu.budget', icon: 'wallet-outline' },
+  { key: 'profile.menu.safe', icon: 'shield-checkmark-outline' },
+  { key: 'profile.menu.privacy', icon: 'lock-closed-outline' },
+  { key: 'profile.menu.notifications', icon: 'notifications-outline' },
+  { key: 'profile.menu.language', icon: 'language-outline' },
+  { key: 'profile.menu.help', icon: 'help-circle-outline' },
+  { key: 'profile.menu.logout', icon: 'log-out-outline', danger: true },
+];
 
 export default function ProfileScreen() {
-  return <Placeholder icon="person-outline" titleKey="profile.title" />;
+  const { t } = useLocale();
+  const router = useRouter();
+
+  const onPress = (key: MessageKey) => {
+    if (key === 'profile.menu.language' || key === 'profile.menu.logout') router.replace('/');
+  };
+
+  return (
+    <Screen edges={['top']}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.profileRow}>
+          <LinearGradient colors={gradients.rose} style={styles.avatar}>
+            <Text variant="title" tone="onColor">
+              A
+            </Text>
+          </LinearGradient>
+          <View style={styles.profileText}>
+            <Text variant="h2" tone="ink">
+              Aigerim
+            </Text>
+            <Pressable>
+              <Text variant="caption" tone="gold">
+                {t('profile.edit')}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={[styles.stats, shadow.soft]}>
+          <Stat value="12" label={t('profile.stat.bookings')} />
+          <View style={styles.statDivider} />
+          <Stat value="340" label={t('profile.stat.points')} />
+          <View style={styles.statDivider} />
+          <Stat value="5" label={t('profile.stat.reviews')} />
+        </View>
+
+        <View style={styles.menu}>
+          {MENU.map((m) => (
+            <Pressable key={m.key} style={styles.menuRow} onPress={() => onPress(m.key)}>
+              <View style={[styles.menuIcon, m.danger && styles.menuIconDanger]}>
+                <Ionicons name={m.icon} size={19} color={m.danger ? colors.danger : colors.plum} />
+              </View>
+              <Text variant="bodyStrong" tone={m.danger ? 'rose' : 'ink'} style={styles.menuLabel}>
+                {t(m.key)}
+              </Text>
+              {!m.danger ? (
+                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+              ) : null}
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
+    </Screen>
+  );
 }
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <View style={styles.stat}>
+      <Text variant="title" tone="ink">
+        {value}
+      </Text>
+      <Text variant="caption" tone="muted">
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: { padding: space(3), paddingBottom: space(4) },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space(2),
+    marginBottom: space(2.5),
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileText: { gap: 4 },
+  stats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    paddingVertical: space(2),
+    marginBottom: space(3),
+  },
+  stat: { flex: 1, alignItems: 'center' },
+  statDivider: { width: 1, height: 30, backgroundColor: colors.line },
+  menu: { gap: space(1) },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space(1.5),
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: space(1.75),
+  },
+  menuIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuIconDanger: { backgroundColor: '#FBE9E5' },
+  menuLabel: { flex: 1 },
+});

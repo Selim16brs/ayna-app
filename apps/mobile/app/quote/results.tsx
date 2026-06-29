@@ -49,7 +49,16 @@ export default function QuoteResultsScreen() {
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
         {quotes.map((q) => (
-          <QuoteCard key={q.id} quote={q} onPick={() => router.push(`/professional/${q.proId}`)} />
+          <QuoteCard
+            key={q.id}
+            quote={q}
+            onPick={() =>
+              router.push({
+                pathname: '/booking/schedule',
+                params: { proId: q.proId, source: 'photo_quote' },
+              })
+            }
+          />
         ))}
       </ScrollView>
     </Screen>

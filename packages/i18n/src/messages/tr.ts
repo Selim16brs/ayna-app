@@ -115,11 +115,63 @@ export const tr = {
   'booking.status.pending': 'Onay bekliyor',
   'booking.status.completed': 'Tamamlandı',
 
-  // Yer tutucu ekranlar
-  'bookings.title': 'Randevular',
+  // Ana ekran — yaklaşan etkinlikler
+  'home.upcoming_events': 'Yaklaşan randevuların',
+  'home.upcoming_empty': 'Yaklaşan randevun yok',
+
+  // Circle
   'circle.title': 'AYNA Circle',
-  'care.title': 'Bakım takvimin',
+  'circle.subtitle': 'Kadından kadına gerçek tavsiyeler',
+  'circle.ask': 'Tavsiye iste',
+  'circle.type.recommend': 'Öneriyorum',
+  'circle.type.asking': 'Tavsiye arıyorum',
+  'circle.type.experience': 'Deneyimim',
+  'circle.verified': 'Doğrulanmış üye',
+  'circle.helpful': 'faydalı',
+  'circle.comments': 'yorum',
+
+  // Bakım (Care + Moments)
+  'care.title': 'Bakım',
+  'care.subtitle': 'Bakım rutinlerin ve özel günlerin',
+  'care.section.routines': 'Bakım takvimi',
+  'care.section.moments': 'Özel günler',
+  'care.due_in': 'gün kaldı',
+  'care.overdue': 'gecikti',
+  'care.today': 'bugün',
+  'care.add': 'Hatırlatma ekle',
+
+  // Profil
   'profile.title': 'Profil',
+  'profile.edit': 'Profili düzenle',
+  'profile.stat.bookings': 'Randevu',
+  'profile.stat.points': 'Puan',
+  'profile.stat.reviews': 'Değerlendirme',
+  'profile.menu.passport': 'AYNA Passport',
+  'profile.menu.rewards': 'Puanlarım',
+  'profile.menu.budget': 'Bütçe',
+  'profile.menu.safe': 'AYNA Safe',
+  'profile.menu.privacy': 'Gizlilik',
+  'profile.menu.notifications': 'Bildirimler',
+  'profile.menu.language': 'Dil',
+  'profile.menu.help': 'Yardım & destek',
+  'profile.menu.logout': 'Çıkış yap',
+
+  // Randevu tamamlama akışı
+  'booking.schedule.title': 'Saat seç',
+  'booking.schedule.day': 'Gün',
+  'booking.schedule.time': 'Saat',
+  'booking.schedule.confirm': 'Randevuyu onayla',
+  'booking.confirmed.title': 'Randevun oluşturuldu',
+  'booking.confirmed.subtitle': 'Satıcı onayladı — bilgiler aşağıda',
+  'booking.field.service': 'Hizmet',
+  'booking.field.pro': 'Uzman',
+  'booking.field.datetime': 'Tarih & saat',
+  'booking.field.price': 'Fiyat',
+  'booking.field.address': 'Adres',
+  'booking.field.phone': 'Telefon',
+  'booking.address_note': 'Adres ve telefon yalnızca onay sonrası görünür',
+  'booking.confirmed.done': 'Randevularıma git',
+
   'screen.placeholder': 'Bu bölüm yakında burada olacak',
 
   // Sistem / domain

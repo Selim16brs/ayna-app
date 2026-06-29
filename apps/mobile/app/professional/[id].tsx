@@ -183,7 +183,16 @@ export default function ProfessionalScreen() {
 
       {/* Sabit CTA */}
       <View style={[styles.cta, { paddingBottom: insets.bottom + space(1.5) }]}>
-        <Button label={t('pro.book')} variant="primary" />
+        <Button
+          label={t('pro.book')}
+          variant="primary"
+          onPress={() =>
+            router.push({
+              pathname: '/booking/schedule',
+              params: { proId: pro.id, source: 'direct' },
+            })
+          }
+        />
       </View>
     </View>
   );

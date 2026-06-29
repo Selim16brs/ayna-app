@@ -219,6 +219,87 @@ export const APPOINTMENTS: Appointment[] = [
   },
 ];
 
+export const UPCOMING = APPOINTMENTS.filter((a) => a.status !== 'completed');
+
+export type CirclePostType = 'recommend' | 'asking' | 'experience';
+export interface CirclePost {
+  id: string;
+  type: CirclePostType;
+  category: string;
+  author: string;
+  anonymous: boolean;
+  text: string;
+  helpful: number;
+  comments: number;
+}
+
+export const CIRCLE_POSTS: CirclePost[] = [
+  {
+    id: 'c1',
+    type: 'recommend',
+    category: 'Saç',
+    author: 'Dana',
+    anonymous: false,
+    text: 'Madina Studio’da balayage yaptırdım, sonuç referansın birebir aynısı oldu. Gönül rahatlığıyla öneririm.',
+    helpful: 24,
+    comments: 6,
+  },
+  {
+    id: 'c2',
+    type: 'asking',
+    category: 'Makyaj',
+    author: 'Doğrulanmış üye',
+    anonymous: true,
+    text: 'Almatı’da gelin makyajı için güvenilir bir uzman arıyorum. Evime gelebilen biri ideal olur.',
+    helpful: 8,
+    comments: 11,
+  },
+  {
+    id: 'c3',
+    type: 'experience',
+    category: 'Tırnak',
+    author: 'Aigerim',
+    anonymous: false,
+    text: 'Kalıcı ojede hijyene çok dikkat eden bir yer buldum. Sterilizasyonu gözümün önünde yaptılar.',
+    helpful: 17,
+    comments: 3,
+  },
+];
+
+export interface CareRoutine {
+  id: string;
+  name: string;
+  icon: string;
+  dueDays: number; // <0 gecikmiş, 0 bugün
+}
+
+export const CARE_ROUTINES: CareRoutine[] = [
+  { id: 'cr1', name: 'Kalıcı oje yenileme', icon: 'color-palette-outline', dueDays: 2 },
+  { id: 'cr2', name: 'Saç dip boyası', icon: 'cut-outline', dueDays: -3 },
+  { id: 'cr3', name: 'Cilt bakımı', icon: 'sparkles-outline', dueDays: 9 },
+  { id: 'cr4', name: 'Lazer epilasyon seansı', icon: 'flash-outline', dueDays: 0 },
+];
+
+export interface Moment {
+  id: string;
+  title: string;
+  icon: string;
+  dateLabel: string;
+  daysLeft: number;
+}
+
+export const MOMENTS: Moment[] = [
+  { id: 'm1', title: 'Dana’nın doğum günü', icon: 'gift-outline', dateLabel: '7 Tem', daysLeft: 8 },
+  {
+    id: 'm2',
+    title: 'Evlilik yıl dönümü',
+    icon: 'heart-outline',
+    dateLabel: '22 Tem',
+    daysLeft: 23,
+  },
+  { id: 'm3', title: 'Arkadaş düğünü', icon: 'flower-outline', dateLabel: '3 Ağu', daysLeft: 35 },
+];
+
 export interface Quote {
   id: string;
   proId: string;
