@@ -1,5 +1,6 @@
 import 'reflect-metadata';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import 'dotenv/config';
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { loadEnv } from '@ayna/config/env';
@@ -14,7 +15,8 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix(env.API_GLOBAL_PREFIX);
   app.use(requestIdMiddleware);
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+  // Not: Girdi doğrulama Zod ile yapılır (packages/validation). NestJS'in
+  // class-validator tabanlı ValidationPipe'ı kullanılmaz; Zod pipe EPIC 2'de eklenir.
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('AYNA API')
