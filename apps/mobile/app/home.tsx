@@ -1,118 +1,147 @@
-import { Stack } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Feather } from '@expo/vector-icons';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../src/locale';
-import { theme } from '../src/theme';
+import { Badge, Card, Screen, Text } from '../src/ui';
+import { colors, radius, space } from '../src/theme';
 
-interface CardProps {
-  title: string;
-  subtitle: string;
-  badge?: string;
+type IconName = keyof typeof Feather.glyphMap;
+
+interface Item {
+  icon: IconName;
+  tone: 'rose' | 'gold';
+  titleKey: MessageKey;
+  subtitleKey: MessageKey;
+  badge?: { key?: MessageKey; text?: string; tone: 'rose' | 'gold' | 'neutral' };
 }
 
-function Card({ title, subtitle, badge }: CardProps) {
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{title}</Text>
-        {badge ? (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{badge}</Text>
-          </View>
-        ) : null}
-      </View>
-      <Text style={styles.cardSubtitle}>{subtitle}</Text>
-    </View>
-  );
-}
+const ITEMS: Item[] = [
+  {
+    icon: 'calendar',
+    tone: 'rose',
+    titleKey: 'home.upcoming.title',
+    subtitleKey: 'home.upcoming.subtitle',
+    badge: { key: 'home.upcoming.badge', tone: 'rose' },
+  },
+  { icon: 'clock', tone: 'gold', titleKey: 'home.care.title', subtitleKey: 'home.care.subtitle' },
+  {
+    icon: 'users',
+    tone: 'rose',
+    titleKey: 'home.friend.title',
+    subtitleKey: 'home.friend.subtitle',
+    badge: { text: 'AYNA Circle', tone: 'gold' },
+  },
+];
 
 export default function HomeScreen() {
   const { t, locale } = useLocale();
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView contentContainerStyle={styles.content}>
+    <Screen edges={['top']}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>{t('home.greeting')}</Text>
-            <Text style={styles.subtitle}>{t('home.subtitle')}</Text>
+          <View style={styles.headerText}>
+            <Text variant="title" tone="ink">
+              {t('home.greeting')}
+            </Text>
+            <Text variant="caption" tone="inkSoft" style={styles.subtitle}>
+              {t('home.subtitle')}
+            </Text>
           </View>
           <View style={styles.localePill}>
-            <Text style={styles.localePillText}>{locale.toUpperCase()}</Text>
+            <Text variant="caption" tone="gold" style={styles.localePillText}>
+              {locale.toUpperCase()}
+            </Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>{t('home.section.today')}</Text>
+        <Text variant="label" tone="gold" style={styles.section}>
+          {t('home.section.today')}
+        </Text>
 
-        <Card
-          title={t('home.upcoming.title')}
-          subtitle={t('home.upcoming.subtitle')}
-          badge={t('home.upcoming.badge')}
-        />
-        <Card title={t('home.care.title')} subtitle={t('home.care.subtitle')} />
-        <Card
-          title={t('home.friend.title')}
-          subtitle={t('home.friend.subtitle')}
-          badge="AYNA Circle"
-        />
+        <View style={styles.list}>
+          {ITEMS.map((item) => (
+            <Card key={item.titleKey} style={styles.card}>
+              <View
+                style={[
+                  styles.iconChip,
+                  { backgroundColor: item.tone === 'rose' ? colors.roseSoft : colors.goldSoft },
+                ]}
+              >
+                <Feather
+                  name={item.icon}
+                  size={20}
+                  color={item.tone === 'rose' ? colors.rose : colors.gold}
+                />
+              </View>
+              <View style={styles.cardBody}>
+                <View style={styles.cardTop}>
+                  <Text variant="h2" tone="ink" style={styles.cardTitle}>
+                    {t(item.titleKey)}
+                  </Text>
+                  {item.badge ? (
+                    <Badge
+                      label={item.badge.key ? t(item.badge.key) : (item.badge.text ?? '')}
+                      tone={item.badge.tone}
+                    />
+                  ) : null}
+                </View>
+                <Text variant="caption" tone="inkSoft" style={styles.cardSubtitle}>
+                  {t(item.subtitleKey)}
+                </Text>
+              </View>
+            </Card>
+          ))}
+        </View>
 
         <View style={styles.note}>
-          <Text style={styles.noteText}>{t('home.next_note')}</Text>
+          <Feather name="info" size={14} color={colors.muted} />
+          <Text variant="caption" tone="muted" style={styles.noteText}>
+            {t('home.next_note')}
+          </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.bg },
-  content: { padding: theme.spacing(3), gap: theme.spacing(2) },
+  content: { padding: space(3), paddingBottom: space(6) },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing(1),
+    marginBottom: space(3),
   },
-  greeting: { color: theme.colors.text, fontSize: 26, fontWeight: '800' },
-  subtitle: { color: theme.colors.muted, fontSize: 14, marginTop: 4 },
+  headerText: { flex: 1 },
+  subtitle: { marginTop: space(0.5) },
   localePill: {
-    backgroundColor: theme.colors.surfaceAlt,
-    paddingHorizontal: theme.spacing(1.5),
-    paddingVertical: theme.spacing(0.5),
-    borderRadius: theme.radius.pill,
+    backgroundColor: colors.goldSoft,
+    paddingHorizontal: space(1.25),
+    paddingVertical: space(0.5),
+    borderRadius: radius.pill,
   },
-  localePillText: { color: theme.colors.accent, fontWeight: '700', fontSize: 13 },
-  sectionTitle: {
-    color: theme.colors.accent,
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginTop: theme.spacing(1),
+  localePillText: { letterSpacing: 1 },
+  section: { marginBottom: space(1.5) },
+  list: { gap: space(1.5) },
+  card: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
+  iconChip: {
+    width: 46,
+    height: 46,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.md,
-    padding: theme.spacing(2),
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { color: theme.colors.text, fontSize: 17, fontWeight: '700' },
-  cardSubtitle: { color: theme.colors.muted, fontSize: 14, marginTop: 6 },
-  badge: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing(1),
-    paddingVertical: 2,
-    borderRadius: theme.radius.pill,
-  },
-  badgeText: { color: theme.colors.bg, fontSize: 11, fontWeight: '700' },
+  cardBody: { flex: 1 },
+  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cardTitle: { flexShrink: 1, paddingRight: space(1) },
+  cardSubtitle: { marginTop: space(0.5) },
   note: {
-    marginTop: theme.spacing(2),
-    padding: theme.spacing(2),
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.surfaceAlt,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space(1),
+    marginTop: space(3),
+    paddingHorizontal: space(1),
   },
-  noteText: { color: theme.colors.muted, fontSize: 13, textAlign: 'center' },
+  noteText: { flex: 1 },
 });

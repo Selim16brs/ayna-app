@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 import type { Locale } from '@ayna/i18n';
 import { useLocale } from '../src/locale';
-import { theme } from '../src/theme';
+import { Button, Screen, Text } from '../src/ui';
+import { colors, space } from '../src/theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -15,77 +15,47 @@ export default function WelcomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.hero}>
-        <Text style={styles.wordmark}>AYNA</Text>
-        <Text style={styles.tagline}>{t('app.tagline')}</Text>
-      </View>
+    <Screen hero>
+      <View style={styles.container}>
+        <View style={styles.hero}>
+          <View style={styles.markRule} />
+          <Text variant="display" tone="ink" style={styles.wordmark}>
+            AYNA
+          </Text>
+          <Text variant="caption" tone="inkSoft" style={styles.tagline}>
+            {t('app.tagline')}
+          </Text>
+        </View>
 
-      <View style={styles.choice}>
-        <Text style={styles.choiceLabel}>{t('language.choose')}</Text>
-        <Pressable style={styles.langButton} onPress={() => choose('tr')}>
-          <Text style={styles.langText}>Türkçe</Text>
-        </Pressable>
-        <Pressable style={[styles.langButton, styles.langButtonAlt]} onPress={() => choose('kk')}>
-          <Text style={[styles.langText, styles.langTextAlt]}>Қазақша</Text>
-        </Pressable>
-        <Pressable style={[styles.langButton, styles.langButtonAlt]} onPress={() => choose('ru')}>
-          <Text style={[styles.langText, styles.langTextAlt]}>Русский</Text>
-        </Pressable>
+        <View style={styles.choice}>
+          <Text variant="label" tone="gold" style={styles.choiceLabel}>
+            {t('language.choose')}
+          </Text>
+          <Button label="Türkçe" variant="primary" onPress={() => choose('tr')} />
+          <Button label="Қазақша" variant="secondary" onPress={() => choose('kk')} />
+          <Button label="Русский" variant="secondary" onPress={() => choose('ru')} />
+        </View>
       </View>
-    </SafeAreaView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.bg,
-    paddingHorizontal: theme.spacing(3),
+    paddingHorizontal: space(3),
     justifyContent: 'space-between',
   },
-  hero: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  markRule: {
+    width: 40,
+    height: 2,
+    borderRadius: 2,
+    backgroundColor: colors.gold,
+    marginBottom: space(3),
   },
-  wordmark: {
-    color: theme.colors.primary,
-    fontSize: 56,
-    fontWeight: '800',
-    letterSpacing: 8,
-  },
-  tagline: {
-    color: theme.colors.muted,
-    fontSize: 16,
-    marginTop: theme.spacing(2),
-    textAlign: 'center',
-  },
-  choice: {
-    paddingBottom: theme.spacing(4),
-    gap: theme.spacing(1.5),
-  },
-  choiceLabel: {
-    color: theme.colors.text,
-    fontSize: 15,
-    textAlign: 'center',
-    marginBottom: theme.spacing(1),
-  },
-  langButton: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing(2),
-    borderRadius: theme.radius.pill,
-    alignItems: 'center',
-  },
-  langButtonAlt: {
-    backgroundColor: theme.colors.surfaceAlt,
-  },
-  langText: {
-    color: theme.colors.bg,
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  langTextAlt: {
-    color: theme.colors.text,
-  },
+  wordmark: { fontSize: 64, letterSpacing: 14 },
+  tagline: { marginTop: space(1.5), letterSpacing: 0.3 },
+  choice: { paddingBottom: space(4), gap: space(1.5) },
+  choiceLabel: { textAlign: 'center', marginBottom: space(1) },
 });

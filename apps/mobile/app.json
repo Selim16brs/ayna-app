@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "backgroundColor": "#1E1B2E"
+      "backgroundColor": "#FBF6F1"
     },
     "ios": {
       "supportsTablet": true,
@@ -20,6 +20,6 @@
     "web": {
       "bundler": "metro"
     },
-    "plugins": ["expo-router", "expo-localization"]
+    "plugins": ["expo-router", "expo-localization", "expo-font"]
   }
 }
