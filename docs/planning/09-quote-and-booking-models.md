@@ -26,7 +26,25 @@
 4. Düşen bildirimler kullanıcıya listelenir.
 5. Kullanıcı birini seçer → ortak randevu akışına geçer.
 
-## Ortak Randevu Akışı (her iki modelde)
+## Randevu Kaynak Ayrımı (3 yol — karışmamalı)
+
+Randevular **üç farklı yoldan** oluşur ve sistemde **ayrı tutulur** (karışmaz):
+
+| Kaynak (`source`) | Yol                                             |
+| ----------------- | ----------------------------------------------- |
+| `direct`          | Normal arama/gözat → uzman profili → Randevu Al |
+| `photo_quote`     | Model 1 (fotoğrafla teklif) → seçilen teklif    |
+| `demand`          | Model 2 (talep + bütçe) → seçilen kabul         |
+
+Kural:
+
+- `bookings.source` enum alanı zorunlu; üç yol birbirine karışmaz.
+- Her randevu kaydı bağlamı taşır: **ne için** (hizmet/amaç), **kaç paraya** (fiyat), **hangi saatte** (start_at), **hangi uzmandan** (professional).
+- Her iki tarafta (kullanıcı + satıcı) randevu görünümü bu dört bilgiyi gösterir.
+- **Randevularım** (kullanıcı ve satıcı): kaynağa göre **ayrı sekmeler/bölümler** (Arama · Foto teklif · Talep). Satıcıda ayrıca online/offline ayrımı.
+- **Ortak onay akışı:** kaynak farklı olsa da saat seç → satıcı onayı → teyit adımları **ortaktır**; yalnızca `source` + bağlam farklı kaydedilir.
+
+## Ortak Randevu Akışı (her üç yolda)
 
 1. Kullanıcı satıcının **uygun saatlerine** bakar ve uygun saat(ler)i seçer.
 2. Seçim **satıcıya bildirilir**.

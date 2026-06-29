@@ -162,6 +162,63 @@ export function getProfessionalDetail(id: string): ProfessionalDetail {
   return { ...base, ...SHARED_DETAIL };
 }
 
+export type BookingSource = 'direct' | 'photo_quote' | 'demand';
+export type BookingStatus = 'confirmed' | 'pending' | 'completed';
+
+export interface Appointment {
+  id: string;
+  source: BookingSource;
+  service: string; // ne için
+  proName: string;
+  proImage: string;
+  dateLabel: string; // hangi saatte
+  price: number; // kaç paraya
+  status: BookingStatus;
+}
+
+export const APPOINTMENTS: Appointment[] = [
+  {
+    id: 'a1',
+    source: 'direct',
+    service: 'Saç kesimi & fön',
+    proName: 'Madina Studio',
+    proImage: FEATURED[0]!.image,
+    dateLabel: 'Cuma · 14:00',
+    price: 9000,
+    status: 'confirmed',
+  },
+  {
+    id: 'a2',
+    source: 'direct',
+    service: 'Cilt bakımı',
+    proName: 'Lotus Spa',
+    proImage: FEATURED[3]!.image,
+    dateLabel: 'Geçen hafta · 16:00',
+    price: 18000,
+    status: 'completed',
+  },
+  {
+    id: 'a3',
+    source: 'photo_quote',
+    service: 'Balayage (fotoğraflı teklif)',
+    proName: 'Ailin Makeup',
+    proImage: FEATURED[2]!.image,
+    dateLabel: 'Pazartesi · 11:00',
+    price: 21000,
+    status: 'pending',
+  },
+  {
+    id: 'a4',
+    source: 'demand',
+    service: 'Gelin makyajı (talep)',
+    proName: 'Aruzhan Beauty',
+    proImage: FEATURED[1]!.image,
+    dateLabel: 'Cumartesi · 09:00',
+    price: 18000,
+    status: 'confirmed',
+  },
+];
+
 export interface Quote {
   id: string;
   proId: string;

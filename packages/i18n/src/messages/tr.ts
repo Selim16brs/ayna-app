@@ -106,6 +106,15 @@ export const tr = {
   'demand.results.budget': 'Bütçen',
   'demand.accepted': 'Kabul etti',
 
+  // Randevular (kaynağa göre ayrı sekmeler)
+  'bookings.tab.direct': 'Arama',
+  'bookings.tab.photo': 'Foto teklif',
+  'bookings.tab.demand': 'Talep',
+  'bookings.empty': 'Bu yoldan randevun yok',
+  'booking.status.confirmed': 'Onaylandı',
+  'booking.status.pending': 'Onay bekliyor',
+  'booking.status.completed': 'Tamamlandı',
+
   // Yer tutucu ekranlar
   'bookings.title': 'Randevular',
   'circle.title': 'AYNA Circle',
