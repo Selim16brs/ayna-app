@@ -7,7 +7,7 @@ import { colors, radius, shadow, space } from '../../src/theme';
 import { Screen, Text } from '../../src/ui';
 
 const TYPE: Record<CirclePostType, { key: MessageKey; bg: string; fg: string }> = {
-  recommend: { key: 'circle.type.recommend', bg: '#E4F2EA', fg: colors.success },
+  recommend: { key: 'circle.type.recommend', bg: colors.successSoft, fg: colors.success },
   asking: { key: 'circle.type.asking', bg: colors.goldSoft, fg: colors.gold },
   experience: { key: 'circle.type.experience', bg: colors.roseSoft, fg: colors.rose },
 };

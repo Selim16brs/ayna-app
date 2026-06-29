@@ -3,7 +3,7 @@ import { Image, StyleSheet, View } from 'react-native';
 import type { Locale } from '@ayna/i18n';
 import { useLocale } from '../src/locale';
 import { Button, Screen, Text } from '../src/ui';
-import { space } from '../src/theme';
+import { colors, space } from '../src/theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  logo: { width: 260, height: 230 },
+  logo: { width: 260, height: 230, tintColor: colors.gold },
   tagline: { marginTop: space(1), letterSpacing: 0.3 },
   choice: { paddingBottom: space(4), gap: space(1.5) },
   choiceLabel: { textAlign: 'center', marginBottom: space(1) },

@@ -7,11 +7,11 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon-dark.png",
     "splash": {
-      "image": "./assets/logo-mark.png",
+      "image": "./assets/logo-gold.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FBF6F1"
+      "backgroundColor": "#141019"
     },
     "ios": {
       "supportsTablet": true,
@@ -20,8 +20,8 @@
     "android": {
       "package": "kz.ayna.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo-mark.png",
-        "backgroundColor": "#FBF6F1"
+        "foregroundImage": "./assets/logo-gold.png",
+        "backgroundColor": "#141019"
       }
     },
     "web": {

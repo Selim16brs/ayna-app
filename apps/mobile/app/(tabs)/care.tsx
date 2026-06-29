@@ -125,5 +125,5 @@ const styles = StyleSheet.create({
     paddingVertical: space(0.75),
     borderRadius: radius.pill,
   },
-  dueDanger: { backgroundColor: '#FBE9E5' },
+  dueDanger: { backgroundColor: colors.dangerSoft },
 });

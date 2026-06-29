@@ -66,7 +66,7 @@ export default function ProfileScreen() {
               onPress={() => onPress(m.key)}
             >
               <View style={styles.menuIcon}>
-                <Ionicons name={m.icon} size={18} color={colors.plum} />
+                <Ionicons name={m.icon} size={18} color={colors.gold} />
               </View>
               <Text variant="bodyStrong" tone="ink" style={styles.menuLabel}>
                 {t(m.key)}
@@ -158,6 +158,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  menuIconDanger: { backgroundColor: '#FBE9E5' },
+  menuIconDanger: { backgroundColor: colors.dangerSoft },
   menuLabel: { flex: 1 },
 });

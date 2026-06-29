@@ -20,7 +20,7 @@ const TABS: { source: BookingSource; labelKey: MessageKey }[] = [
 ];
 
 const STATUS: Record<BookingStatus, { key: MessageKey; bg: string; fg: string }> = {
-  confirmed: { key: 'booking.status.confirmed', bg: '#E4F2EA', fg: colors.success },
+  confirmed: { key: 'booking.status.confirmed', bg: colors.successSoft, fg: colors.success },
   pending: { key: 'booking.status.pending', bg: colors.goldSoft, fg: colors.gold },
   completed: { key: 'booking.status.completed', bg: colors.surfaceMuted, fg: colors.inkSoft },
 };

@@ -43,12 +43,12 @@ export function Button({
       <Animated.View style={{ transform: [{ scale }] }}>
         {variant === 'primary' ? (
           <LinearGradient
-            colors={gradients.rose}
+            colors={gradients.gold}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[styles.base, shadow.soft]}
           >
-            <Text variant="bodyStrong" tone="onColor" style={styles.label}>
+            <Text variant="bodyStrong" style={[styles.label, styles.goldLabel]}>
               {label}
             </Text>
           </LinearGradient>
@@ -73,6 +73,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space(3),
   },
   label: { fontSize: 16 },
+  goldLabel: { color: colors.bg, fontWeight: '700' },
   secondary: {
     backgroundColor: colors.surface,
     borderWidth: 1,

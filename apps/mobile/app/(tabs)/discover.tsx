@@ -36,7 +36,7 @@ export default function DiscoverScreen() {
           </View>
           <View style={styles.headerActions}>
             <View style={styles.iconButton}>
-              <Ionicons name="notifications-outline" size={20} color={colors.plum} />
+              <Ionicons name="notifications-outline" size={20} color={colors.gold} />
             </View>
             <LinearGradient colors={gradients.rose} style={styles.avatar}>
               <Text variant="bodyStrong" tone="onColor">
@@ -332,12 +332,12 @@ const styles = StyleSheet.create({
   promoCta: {
     alignSelf: 'flex-start',
     marginTop: space(1.75),
-    backgroundColor: colors.onColor,
+    backgroundColor: colors.gold,
     paddingHorizontal: space(2),
     paddingVertical: space(1),
     borderRadius: radius.pill,
   },
-  promoCtaText: { color: colors.plum, fontSize: 13 },
+  promoCtaText: { color: colors.bg, fontSize: 13, fontWeight: '600' },
   promoIcon: { position: 'absolute', right: -8, bottom: -12 },
   sectionHeader: {
     flexDirection: 'row',

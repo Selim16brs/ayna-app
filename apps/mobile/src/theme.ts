@@ -1,40 +1,42 @@
 import { Platform } from 'react-native';
 
 /**
- * AYNA tasarım sistemi token'ları — premium, sıcak, kadınsı.
- * Açık (ivory) tema: lüks güzellik/spa hissi. Serif başlık + temiz sans gövde.
+ * AYNA tasarım sistemi token'ları — KOYU LÜKS (siyah-altın, logo kimliği).
+ * Token tabanlı: tema değerleri değişince tüm ekranlar adapte olur.
  */
 export const colors = {
-  // Zemin
-  bg: '#FBF6F1', // sıcak fildişi
-  bgSunken: '#F4EAE1',
-  surface: '#FFFFFF',
-  surfaceMuted: '#FBF4EF',
+  // Zemin (koyu patlıcan-siyah)
+  bg: '#141019',
+  bgSunken: '#1C1726',
+  surface: '#221B2D',
+  surfaceMuted: '#2A2237',
 
-  // Metin
-  ink: '#2A2230', // koyu patlıcan
-  inkSoft: '#6E6473',
-  muted: '#A99FA6',
-  onColor: '#FFFFFF',
+  // Metin (sıcak krem)
+  ink: '#F4EFE7',
+  inkSoft: '#B7AEC0',
+  muted: '#827A8E',
+  onColor: '#F8F4EC', // renkli/koyu gradyan üstüne açık metin (altın buton hariç)
 
-  // Marka
-  rose: '#C45C77', // ana CTA
-  roseDeep: '#A8456060',
-  roseSoft: '#F5DDE3',
+  // Marka — altın öncelikli
+  gold: '#C9A86A',
+  goldSoft: '#2E2718', // koyu altın tint (chip zemini)
+  rose: '#D98FA6', // ikincil sıcak vurgu
+  roseSoft: '#33212C', // koyu rose tint
   plum: '#5A2E4D',
-  gold: '#B68A4E', // ince vurgular
-  goldSoft: '#EFE0C6',
 
   // Çizgi / durum
-  line: '#EFE5DC',
-  success: '#3F8F6B',
-  danger: '#C0492F',
+  line: '#2E2739',
+  success: '#5CC79A',
+  successSoft: '#15291F',
+  danger: '#E27A6C',
+  dangerSoft: '#2E1A18',
 } as const;
 
 export const gradients = {
-  hero: ['#F7E2E7', '#F4E7DC'] as const, // yumuşak rose → şampanya
-  rose: ['#D2718A', '#A8456A'] as const, // CTA derinliği
-  plum: ['#6A3A5B', '#3C2138'] as const,
+  hero: ['#1C1626', '#141019'] as const, // koyu hero
+  gold: ['#E6CE92', '#C2A05A'] as const, // ana CTA (altın)
+  rose: ['#D98FA6', '#B5677F'] as const, // ikincil aksiyon
+  plum: ['#4A3A5C', '#271E33'] as const, // koyu mor kart (okunur)
 } as const;
 
 // SF (San Francisco) — iOS sistem fontu. fontFamily verilmez; ağırlık fontWeight ile.
@@ -51,25 +53,25 @@ export const radius = { sm: 12, md: 18, lg: 26, xl: 34, pill: 999 } as const;
 export const space = (n: number): number => n * 8;
 
 export const shadow = {
-  // Yumuşak, düşük opaklı premium derinlik
+  // Koyu temada derinlik: siyah gölge + ince
   card: Platform.select({
     ios: {
-      shadowColor: '#7A5C45',
-      shadowOpacity: 0.12,
-      shadowRadius: 24,
-      shadowOffset: { width: 0, height: 10 },
+      shadowColor: '#000000',
+      shadowOpacity: 0.35,
+      shadowRadius: 22,
+      shadowOffset: { width: 0, height: 12 },
     },
-    android: { elevation: 4 },
+    android: { elevation: 5 },
     default: {},
   }),
   soft: Platform.select({
     ios: {
-      shadowColor: '#7A5C45',
-      shadowOpacity: 0.08,
+      shadowColor: '#000000',
+      shadowOpacity: 0.25,
       shadowRadius: 12,
-      shadowOffset: { width: 0, height: 4 },
+      shadowOffset: { width: 0, height: 5 },
     },
-    android: { elevation: 2 },
+    android: { elevation: 3 },
     default: {},
   }),
 } as const;

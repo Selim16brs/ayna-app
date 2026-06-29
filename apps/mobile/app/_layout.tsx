@@ -11,7 +11,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <LocaleProvider>
-        <StatusBar style="dark" />
+        <StatusBar style="light" />
         <Stack
           screenOptions={{
             headerShown: false,
