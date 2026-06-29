@@ -3,3 +3,5 @@ export { Button } from './Button';
 export { Card } from './Card';
 export { Badge } from './Badge';
 export { Screen } from './Screen';
+export { ProCard } from './ProCard';
+export { Placeholder } from './Placeholder';

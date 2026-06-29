@@ -1,0 +1,127 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { useLocale } from '../locale';
+import { type Professional, formatPrice } from '../data';
+import { colors, radius, shadow, space } from '../theme';
+import { Text } from './Text';
+
+const BADGE = {
+  campaign: { key: 'card.campaign', icon: 'pricetag', bg: colors.roseSoft, fg: colors.rose },
+  verified: {
+    key: 'card.verified',
+    icon: 'checkmark-circle',
+    bg: colors.goldSoft,
+    fg: colors.gold,
+  },
+  today: { key: 'card.today', icon: 'time', bg: colors.roseSoft, fg: colors.rose },
+} as const;
+
+export function ProCard({ pro }: { pro: Professional }) {
+  const { t } = useLocale();
+  const badge = BADGE[pro.badge];
+
+  return (
+    <Pressable style={({ pressed }) => [styles.card, shadow.card, pressed && styles.pressed]}>
+      <View style={styles.imageWrap}>
+        <Image source={{ uri: pro.image }} style={styles.image} />
+        <View style={[styles.badge, { backgroundColor: badge.bg }]}>
+          <Ionicons name={badge.icon} size={12} color={badge.fg} />
+          <Text variant="caption" style={[styles.badgeText, { color: badge.fg }]}>
+            {t(badge.key)}
+          </Text>
+        </View>
+        <View style={styles.heart}>
+          <Ionicons name="heart-outline" size={16} color={colors.rose} />
+        </View>
+      </View>
+
+      <View style={styles.body}>
+        <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+          {pro.name}
+        </Text>
+        <Text variant="caption" tone="muted" numberOfLines={1} style={styles.specialty}>
+          {pro.specialty}
+        </Text>
+
+        <View style={styles.chips}>
+          <View style={[styles.chip, { backgroundColor: colors.goldSoft }]}>
+            <Ionicons name="star" size={11} color={colors.gold} />
+            <Text variant="caption" style={[styles.chipText, { color: colors.gold }]}>
+              {pro.rating.toFixed(1)}
+            </Text>
+          </View>
+          {pro.friends ? (
+            <View style={[styles.chip, { backgroundColor: colors.roseSoft }]}>
+              <Ionicons name="people" size={11} color={colors.rose} />
+              <Text variant="caption" style={[styles.chipText, { color: colors.rose }]}>
+                {pro.friends} {t('card.friends_visited')}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        <View style={styles.priceRow}>
+          <Text variant="bodyStrong" tone="ink">
+            {formatPrice(pro.priceFrom)}
+          </Text>
+          <Text variant="caption" tone="muted" style={styles.starting}>
+            {t('card.starting')}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+const CARD_W = 210;
+
+const styles = StyleSheet.create({
+  card: {
+    width: CARD_W,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    overflow: 'hidden',
+  },
+  pressed: { opacity: 0.92, transform: [{ scale: 0.99 }] },
+  imageWrap: { height: 130, backgroundColor: colors.bgSunken },
+  image: { width: '100%', height: '100%' },
+  badge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: space(1),
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
+  badgeText: { fontSize: 11 },
+  heart: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  body: { padding: space(1.5) },
+  specialty: { marginTop: 2 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: space(1) },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: space(1),
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
+  chipText: { fontSize: 11 },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: space(1.25) },
+  starting: {},
+});
