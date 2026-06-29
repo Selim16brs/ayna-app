@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   CormorantGaramond_500Medium,
   CormorantGaramond_600SemiBold,
@@ -34,17 +35,21 @@ export default function RootLayout() {
     if (fontsLoaded) void SplashScreen.hideAsync();
   }, [fontsLoaded]);
 
+  const [queryClient] = useState(() => new QueryClient());
+
   if (!fontsLoaded) return null;
 
   return (
-    <LocaleProvider>
-      <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.bg },
-        }}
-      />
-    </LocaleProvider>
+    <QueryClientProvider client={queryClient}>
+      <LocaleProvider>
+        <StatusBar style="dark" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.bg },
+          }}
+        />
+      </LocaleProvider>
+    </QueryClientProvider>
   );
 }

@@ -1,16 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { CATEGORIES } from '../../src/data';
+import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { colors, gradients, radius, shadow, space } from '../../src/theme';
 import { ProCard, Screen, Text } from '../../src/ui';
-import { FEATURED } from '../../src/data';
+
+type IoniconName = keyof typeof Ionicons.glyphMap;
 
 export default function DiscoverScreen() {
   const { t } = useLocale();
   const router = useRouter();
+  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: api.categories });
+  const { data: featured = [] } = useQuery({
+    queryKey: ['professionals'],
+    queryFn: api.professionals,
+  });
 
   return (
     <Screen edges={['top']}>
@@ -90,7 +97,7 @@ export default function DiscoverScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categories}
         >
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <Pressable key={cat.id} style={styles.category}>
               <View
                 style={[
@@ -99,13 +106,13 @@ export default function DiscoverScreen() {
                 ]}
               >
                 <Ionicons
-                  name={cat.icon}
+                  name={cat.icon as IoniconName}
                   size={24}
                   color={cat.tone === 'rose' ? colors.rose : colors.gold}
                 />
               </View>
               <Text variant="caption" tone="inkSoft" style={styles.categoryLabel}>
-                {t(cat.labelKey)}
+                {cat.label}
               </Text>
             </Pressable>
           ))}
@@ -154,7 +161,7 @@ export default function DiscoverScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.featured}
         >
-          {FEATURED.map((pro) => (
+          {featured.map((pro) => (
             <ProCard key={pro.id} pro={pro} />
           ))}
         </ScrollView>

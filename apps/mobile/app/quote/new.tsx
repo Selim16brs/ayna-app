@@ -3,17 +3,32 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { CATEGORIES } from '../../src/data';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { colors, radius, space } from '../../src/theme';
 import { Button, Screen, StackHeader, Text } from '../../src/ui';
 
+type IoniconName = keyof typeof Ionicons.glyphMap;
+
 export default function NewQuoteScreen() {
   const router = useRouter();
   const { t } = useLocale();
+  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: api.categories });
   const [photo, setPhoto] = useState<string | null>(null);
-  const [category, setCategory] = useState<string>(CATEGORIES[0]!.id);
+  const [category, setCategory] = useState<string>('hair');
   const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit() {
+    setSubmitting(true);
+    try {
+      await api.createQuoteRequest({ categoryId: category, note: note.trim() || undefined });
+    } catch {
+      // demo: hata olsa da sonuç ekranına geç
+    }
+    router.replace('/quote/results');
+  }
 
   async function pickPhoto() {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -59,7 +74,7 @@ export default function NewQuoteScreen() {
           {t('quote.new.category')}
         </Text>
         <View style={styles.categories}>
-          {CATEGORIES.map((cat) => {
+          {categories.map((cat) => {
             const active = cat.id === category;
             return (
               <Pressable
@@ -68,12 +83,12 @@ export default function NewQuoteScreen() {
                 style={[styles.categoryChip, active && styles.categoryActive]}
               >
                 <Ionicons
-                  name={cat.icon}
+                  name={cat.icon as IoniconName}
                   size={16}
                   color={active ? colors.onColor : colors.inkSoft}
                 />
                 <Text variant="caption" tone={active ? 'onColor' : 'inkSoft'}>
-                  {t(cat.labelKey)}
+                  {cat.label}
                 </Text>
               </Pressable>
             );
@@ -98,7 +113,8 @@ export default function NewQuoteScreen() {
         <Button
           label={t('quote.new.submit')}
           variant="primary"
-          onPress={() => router.replace('/quote/results')}
+          disabled={submitting}
+          onPress={submit}
         />
       </View>
     </Screen>

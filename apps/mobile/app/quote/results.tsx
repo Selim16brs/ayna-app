@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { INCOMING_QUOTES, type Quote, formatPrice } from '../../src/data';
+import { api, type ApiQuote } from '../../src/api';
+import { formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { colors, radius, shadow, space } from '../../src/theme';
 import { Screen, StackHeader, Text } from '../../src/ui';
@@ -13,20 +15,21 @@ export default function QuoteResultsScreen() {
   const { t } = useLocale();
   const router = useRouter();
   const [sort, setSort] = useState<Sort>('rating');
+  const { data: incoming = [] } = useQuery({ queryKey: ['quotes'], queryFn: api.quotes });
 
   const quotes = useMemo(() => {
-    const list = [...INCOMING_QUOTES];
+    const list = [...incoming];
     return sort === 'rating'
       ? list.sort((a, b) => b.rating - a.rating)
       : list.sort((a, b) => a.price - b.price);
-  }, [sort]);
+  }, [incoming, sort]);
 
   return (
     <Screen edges={['top']}>
       <StackHeader title={t('quotes.title')} />
       <View style={styles.subtitleRow}>
         <Text variant="caption" tone="muted">
-          {INCOMING_QUOTES.length} {t('quotes.count')}
+          {incoming.length} {t('quotes.count')}
         </Text>
         <View style={styles.sort}>
           <SortChip
@@ -74,7 +77,7 @@ function SortChip({
   );
 }
 
-function QuoteCard({ quote, onPick }: { quote: Quote; onPick: () => void }) {
+function QuoteCard({ quote, onPick }: { quote: ApiQuote; onPick: () => void }) {
   const { t } = useLocale();
   return (
     <View style={[styles.card, shadow.card]}>
