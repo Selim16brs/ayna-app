@@ -88,6 +88,37 @@ export function formatPrice(value: number): string {
   return `₸${value.toLocaleString('ru-RU')}`;
 }
 
+// Reklam banner'ları — premium üye işletmelerin kampanyaları (admin panelden ayarlanır; şimdilik mock)
+export interface AdBanner {
+  id: string;
+  image: string;
+  title: string;
+  subtitle: string;
+}
+
+const adImg = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=70`;
+
+export const ADS: AdBanner[] = [
+  {
+    id: 'ad1',
+    image: adImg('photo-1633681926022-84c23e8cb2d6'),
+    title: 'Madina Studio',
+    subtitle: 'Balayage’de %30 indirim · bu hafta',
+  },
+  {
+    id: 'ad2',
+    image: adImg('photo-1487412947147-5cebf100ffc2'),
+    title: 'Ailin Makeup',
+    subtitle: 'Gelin paketi + ücretsiz prova',
+  },
+  {
+    id: 'ad3',
+    image: adImg('photo-1540555700478-4be289fbecef'),
+    title: 'Lotus Spa',
+    subtitle: 'Cilt bakımında 2. seans hediye',
+  },
+];
+
 export interface ServiceItem {
   id: string;
   name: string;

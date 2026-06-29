@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Dimensions, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api } from '../../src/api';
-import { getUpcomingEvents, whenShort } from '../../src/data';
+import { ADS, getUpcomingEvents, whenShort } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { colors, gradients, radius, shadow, space } from '../../src/theme';
 import { ProCard, Screen, Text } from '../../src/ui';
@@ -14,10 +14,17 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 // Kategori ikon zeminleri: dolu canlı renkler (içindeki ikon beyaz)
 const CAT_COLORS = [colors.rose, colors.orange, colors.teal, colors.blue, colors.plum];
 
+const ACTION_PHOTO_1 =
+  'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=70';
+const ACTION_PHOTO_2 =
+  'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=600&q=70';
+
+const AD_WIDTH = Dimensions.get('window').width - space(6);
+
 export default function DiscoverScreen() {
   const { t } = useLocale();
   const router = useRouter();
-  const events = getUpcomingEvents();
+  const events = getUpcomingEvents().slice(0, 3);
   const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: api.categories });
   const { data: featured = [] } = useQuery({
     queryKey: ['professionals'],
@@ -49,7 +56,7 @@ export default function DiscoverScreen() {
           </View>
         </View>
 
-        {/* Yaklaşan etkinlikler (randevu + özel gün + bakım) */}
+        {/* Yaklaşan etkinlikler — kompakt, ilk 3 */}
         {events.length > 0 ? (
           <>
             <View style={styles.sectionHeader}>
@@ -69,70 +76,47 @@ export default function DiscoverScreen() {
             >
               {events.map((e) => (
                 <View key={e.id} style={[styles.eventCard, shadow.soft]}>
-                  <View style={styles.eventTop}>
-                    <View
-                      style={[
-                        styles.eventIcon,
-                        { backgroundColor: e.tone === 'rose' ? colors.rose : colors.gold },
-                      ]}
-                    >
-                      <Ionicons name={e.icon as IoniconName} size={18} color={colors.onColor} />
-                    </View>
-                    <View style={styles.whenChip}>
-                      <Text variant="caption" tone="inkSoft">
-                        {whenShort(e.inDays)}
-                      </Text>
-                    </View>
+                  <View
+                    style={[
+                      styles.eventIcon,
+                      { backgroundColor: e.tone === 'rose' ? colors.rose : colors.gold },
+                    ]}
+                  >
+                    <Ionicons name={e.icon as IoniconName} size={18} color={colors.onColor} />
                   </View>
-                  <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.eventTitle}>
-                    {e.title}
-                  </Text>
-                  <Text variant="caption" tone="muted" numberOfLines={1}>
-                    {e.subtitle}
-                  </Text>
+                  <View style={styles.eventBody}>
+                    <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                      {e.title}
+                    </Text>
+                    <Text variant="caption" tone="muted">
+                      {whenShort(e.inDays)}
+                    </Text>
+                  </View>
                 </View>
               ))}
             </ScrollView>
           </>
         ) : null}
 
-        {/* Ana aksiyonlar */}
+        {/* Ne yapmak istersin — fotoğraflı aksiyon kartları */}
         <Text variant="label" tone="rose" style={styles.howLabel}>
           {t('home.how')}
         </Text>
         <View style={styles.actions}>
-          <Pressable style={styles.actionWrap} onPress={() => router.push('/quote/new')}>
-            <LinearGradient
-              colors={gradients.rose}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.action}
-            >
-              <Ionicons name="camera" size={26} color={colors.onColor} />
-              <Text variant="bodyStrong" tone="onColor" style={styles.actionTitle}>
-                {t('action.photo_quote.title')}
-              </Text>
-              <Text variant="caption" tone="onColor" style={styles.actionSubtitle}>
-                {t('action.photo_quote.subtitle')}
-              </Text>
-            </LinearGradient>
-          </Pressable>
-          <Pressable style={styles.actionWrap} onPress={() => router.push('/demand/new')}>
-            <LinearGradient
-              colors={gradients.teal}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.action}
-            >
-              <Ionicons name="pricetag" size={26} color={colors.onColor} />
-              <Text variant="bodyStrong" tone="onColor" style={styles.actionTitle}>
-                {t('action.demand.title')}
-              </Text>
-              <Text variant="caption" tone="onColor" style={styles.actionSubtitle}>
-                {t('action.demand.subtitle')}
-              </Text>
-            </LinearGradient>
-          </Pressable>
+          <ActionCard
+            photo={ACTION_PHOTO_1}
+            icon="camera"
+            title={t('action.photo_quote.title')}
+            subtitle={t('action.photo_quote.subtitle')}
+            onPress={() => router.push('/quote/new')}
+          />
+          <ActionCard
+            photo={ACTION_PHOTO_2}
+            icon="pricetag"
+            title={t('action.demand.title')}
+            subtitle={t('action.demand.subtitle')}
+            onPress={() => router.push('/demand/new')}
+          />
         </View>
 
         {/* Arama */}
@@ -166,44 +150,53 @@ export default function DiscoverScreen() {
           ))}
         </ScrollView>
 
-        {/* Kampanya */}
-        <LinearGradient
-          colors={gradients.plum}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.promo}
+        {/* Reklam banner (premium işletmeler) */}
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.ads}
+          snapToInterval={AD_WIDTH + space(1.5)}
+          decelerationRate="fast"
         >
-          <View style={styles.promoText}>
-            <Text variant="h2" tone="onColor" style={styles.promoTitle}>
-              {t('promo.title')}
-            </Text>
-            <Text variant="caption" tone="onColor" style={styles.promoSubtitle}>
-              {t('promo.subtitle')}
-            </Text>
-            <View style={styles.promoCta}>
-              <Text variant="caption" style={styles.promoCtaText}>
-                {t('promo.cta')}
-              </Text>
-            </View>
-          </View>
-          <Ionicons
-            name="pricetags"
-            size={88}
-            color="rgba(255,255,255,0.12)"
-            style={styles.promoIcon}
-          />
-        </LinearGradient>
+          {ADS.map((ad) => (
+            <ImageBackground
+              key={ad.id}
+              source={{ uri: ad.image }}
+              style={[styles.adCard, { width: AD_WIDTH }]}
+              imageStyle={styles.adImage}
+            >
+              <LinearGradient
+                colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.82)']}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.adBadge}>
+                <Ionicons name="star" size={11} color={colors.onColor} />
+                <Text variant="caption" tone="onColor" style={styles.adBadgeText}>
+                  {t('home.ad_badge')}
+                </Text>
+              </View>
+              <View style={styles.adText}>
+                <Text variant="h2" tone="onColor">
+                  {ad.title}
+                </Text>
+                <Text variant="caption" tone="onColor" style={styles.adSubtitle}>
+                  {ad.subtitle}
+                </Text>
+              </View>
+            </ImageBackground>
+          ))}
+        </ScrollView>
 
-        {/* Öne çıkanlar */}
+        {/* Senin için öneriler */}
         <View style={styles.sectionHeader}>
           <Text variant="h2" tone="ink">
-            {t('home.featured')}
+            {t('home.recommended')}
           </Text>
           <Text variant="caption" tone="rose">
             {t('common.see_all')}
           </Text>
         </View>
-
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -215,6 +208,42 @@ export default function DiscoverScreen() {
         </ScrollView>
       </ScrollView>
     </Screen>
+  );
+}
+
+function ActionCard({
+  photo,
+  icon,
+  title,
+  subtitle,
+  onPress,
+}: {
+  photo: string;
+  icon: IoniconName;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable style={styles.actionWrap} onPress={onPress}>
+      <ImageBackground
+        source={{ uri: photo }}
+        style={[styles.action, shadow.soft]}
+        imageStyle={styles.actionImage}
+      >
+        <LinearGradient
+          colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.8)']}
+          style={StyleSheet.absoluteFill}
+        />
+        <Ionicons name={icon} size={24} color={colors.onColor} />
+        <Text variant="bodyStrong" tone="onColor" style={styles.actionTitle}>
+          {title}
+        </Text>
+        <Text variant="caption" tone="onColor" style={styles.actionSubtitle}>
+          {subtitle}
+        </Text>
+      </ImageBackground>
+    </Pressable>
   );
 }
 
@@ -246,52 +275,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  upcoming: { paddingHorizontal: space(3), gap: space(1.5), paddingBottom: space(2.5) },
-  eventCard: {
-    width: 210,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: space(2),
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    paddingHorizontal: space(3),
+    marginTop: space(1.5),
+    marginBottom: space(2),
   },
-  eventTop: {
+  upcoming: { paddingHorizontal: space(3), gap: space(1.25), paddingBottom: space(1) },
+  eventCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: space(1.5),
+    gap: space(1.25),
+    width: 200,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: space(1.5),
   },
   eventIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
+    width: 38,
+    height: 38,
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  whenChip: {
-    backgroundColor: colors.bgSunken,
-    paddingHorizontal: space(1.25),
-    paddingVertical: space(0.5),
-    borderRadius: radius.pill,
-  },
-  eventTitle: { marginBottom: 2 },
-  howLabel: { paddingHorizontal: space(3), marginBottom: space(1.25) },
-  actions: {
-    flexDirection: 'row',
-    gap: space(1.5),
-    paddingHorizontal: space(3),
-    marginBottom: space(2.5),
-  },
+  eventBody: { flex: 1 },
+  howLabel: { paddingHorizontal: space(3), marginTop: space(1), marginBottom: space(1.25) },
+  actions: { flexDirection: 'row', gap: space(1.5), paddingHorizontal: space(3) },
   actionWrap: { flex: 1 },
   action: {
+    height: 150,
     borderRadius: radius.lg,
-    padding: space(2),
-    minHeight: 124,
+    padding: space(1.75),
     justifyContent: 'flex-end',
-    ...shadow.soft,
+    overflow: 'hidden',
   },
-  actionTitle: { marginTop: space(1) },
-  actionSubtitle: { opacity: 0.85, marginTop: 2 },
+  actionImage: { borderRadius: radius.lg },
+  actionTitle: { marginTop: space(0.75) },
+  actionSubtitle: { opacity: 0.9, marginTop: 2 },
   search: {
     marginHorizontal: space(3),
     height: 50,
@@ -301,7 +325,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space(1.25),
     paddingHorizontal: space(2.25),
+    marginTop: space(2.5),
     marginBottom: space(2.5),
+    borderWidth: 1,
+    borderColor: colors.line,
   },
   categories: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(1) },
   category: { alignItems: 'center', width: 64 },
@@ -313,34 +340,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   categoryLabel: { marginTop: space(0.75), textAlign: 'center' },
-  promo: {
-    marginHorizontal: space(3),
-    marginTop: space(2),
-    marginBottom: space(3),
-    borderRadius: radius.xl,
-    padding: space(2.5),
-    overflow: 'hidden',
-  },
-  promoText: { zIndex: 2 },
-  promoTitle: { fontSize: 21 },
-  promoSubtitle: { opacity: 0.85, marginTop: space(0.75) },
-  promoCta: {
-    alignSelf: 'flex-start',
-    marginTop: space(1.75),
-    backgroundColor: colors.onColor,
-    paddingHorizontal: space(2),
-    paddingVertical: space(1),
+  ads: { paddingHorizontal: space(3), gap: space(1.5), marginTop: space(2.5) },
+  adCard: { height: 160, borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end' },
+  adImage: { borderRadius: radius.lg },
+  adBadge: {
+    position: 'absolute',
+    top: space(1.5),
+    left: space(1.5),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.rose,
+    paddingHorizontal: space(1),
+    paddingVertical: 4,
     borderRadius: radius.pill,
   },
-  promoCtaText: { color: colors.plum, fontSize: 13, fontWeight: '600' },
-  promoIcon: { position: 'absolute', right: -8, bottom: -12 },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    paddingHorizontal: space(3),
-    marginTop: space(1.5),
-    marginBottom: space(2),
-  },
+  adBadgeText: { fontWeight: '600' },
+  adText: { padding: space(2) },
+  adSubtitle: { opacity: 0.9, marginTop: 2 },
   featured: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(2) },
 });
