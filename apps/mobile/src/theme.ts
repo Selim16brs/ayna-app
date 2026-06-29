@@ -25,6 +25,7 @@ export const colors = {
   teal: '#13C4AC',
   gold: '#FFB22E', // canlı sarı
   plum: '#7A5CF0', // canlı mor
+  pistachio: '#A8CF4D', // fıstık yeşili (alt menü)
 
   // Yumuşak tintler (beyaz üstü açık)
   roseSoft: '#FFE4EE',

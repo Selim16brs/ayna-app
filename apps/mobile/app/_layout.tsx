@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LocaleProvider } from '../src/locale';
+import { NailCursor } from '../src/ui';
 import { colors } from '../src/theme';
 
 export default function RootLayout() {
@@ -12,12 +13,14 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <LocaleProvider>
         <StatusBar style="dark" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.bg },
-          }}
-        />
+        <NailCursor>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.bg },
+            }}
+          />
+        </NailCursor>
       </LocaleProvider>
     </QueryClientProvider>
   );

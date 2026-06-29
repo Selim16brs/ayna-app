@@ -81,7 +81,7 @@ export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number 
   );
 }
 
-const CARD_W = 210;
+const CARD_W = 230;
 
 const styles = StyleSheet.create({
   card: {
@@ -92,8 +92,8 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
     overflow: 'hidden',
   },
-  pressed: { opacity: 0.92, transform: [{ scale: 0.99 }] },
-  imageWrap: { height: 130, backgroundColor: colors.bgSunken },
+  pressed: { opacity: 0.94, transform: [{ scale: 0.98 }] },
+  imageWrap: { height: 168, backgroundColor: colors.bgSunken },
   image: { width: '100%', height: '100%' },
   badge: {
     position: 'absolute',

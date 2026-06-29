@@ -339,7 +339,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'baseline',
     paddingHorizontal: space(3),
-    marginBottom: space(1.75),
+    marginTop: space(1.5),
+    marginBottom: space(2),
   },
-  featured: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(1) },
+  featured: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(2) },
 });
