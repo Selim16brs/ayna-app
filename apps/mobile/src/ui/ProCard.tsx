@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLocale } from '../locale';
 import { type Professional, formatPrice } from '../data';
 import { colors, radius, shadow, space } from '../theme';
@@ -17,64 +18,66 @@ const BADGE = {
   today: { key: 'card.today', icon: 'time', bg: colors.roseSoft, fg: colors.rose },
 } as const;
 
-export function ProCard({ pro }: { pro: Professional }) {
+export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number }) {
   const { t } = useLocale();
   const router = useRouter();
   const badge = BADGE[pro.badge];
 
   return (
-    <Pressable
-      onPress={() => router.push(`/professional/${pro.id}`)}
-      style={({ pressed }) => [styles.card, shadow.card, pressed && styles.pressed]}
-    >
-      <View style={styles.imageWrap}>
-        <Image source={{ uri: pro.image }} style={styles.image} />
-        <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-          <Ionicons name={badge.icon} size={12} color={badge.fg} />
-          <Text variant="caption" style={[styles.badgeText, { color: badge.fg }]}>
-            {t(badge.key)}
-          </Text>
-        </View>
-        <View style={styles.heart}>
-          <Ionicons name="heart-outline" size={16} color={colors.rose} />
-        </View>
-      </View>
-
-      <View style={styles.body}>
-        <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-          {pro.name}
-        </Text>
-        <Text variant="caption" tone="muted" numberOfLines={1} style={styles.specialty}>
-          {pro.specialty}
-        </Text>
-
-        <View style={styles.chips}>
-          <View style={[styles.chip, { backgroundColor: colors.goldSoft }]}>
-            <Ionicons name="star" size={11} color={colors.gold} />
-            <Text variant="caption" style={[styles.chipText, { color: colors.gold }]}>
-              {pro.rating.toFixed(1)}
+    <Animated.View entering={FadeInDown.duration(380).delay(index * 80)}>
+      <Pressable
+        onPress={() => router.push(`/professional/${pro.id}`)}
+        style={({ pressed }) => [styles.card, shadow.card, pressed && styles.pressed]}
+      >
+        <View style={styles.imageWrap}>
+          <Image source={{ uri: pro.image }} style={styles.image} />
+          <View style={[styles.badge, { backgroundColor: badge.bg }]}>
+            <Ionicons name={badge.icon} size={12} color={badge.fg} />
+            <Text variant="caption" style={[styles.badgeText, { color: badge.fg }]}>
+              {t(badge.key)}
             </Text>
           </View>
-          {pro.friends ? (
-            <View style={[styles.chip, { backgroundColor: colors.roseSoft }]}>
-              <Ionicons name="people" size={11} color={colors.rose} />
-              <Text variant="caption" style={[styles.chipText, { color: colors.rose }]}>
-                {pro.friends} {t('card.friends_visited')}
-              </Text>
-            </View>
-          ) : null}
+          <View style={styles.heart}>
+            <Ionicons name="heart-outline" size={16} color={colors.rose} />
+          </View>
         </View>
 
-        <View style={styles.priceRow}>
-          <Text variant="bodyStrong" tone="ink">
-            {formatPrice(pro.priceFrom)}
+        <View style={styles.body}>
+          <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+            {pro.name}
           </Text>
-          <Text variant="caption" tone="muted" style={styles.starting}>
-            {t('card.starting')}
+          <Text variant="caption" tone="muted" numberOfLines={1} style={styles.specialty}>
+            {pro.specialty}
           </Text>
+
+          <View style={styles.chips}>
+            <View style={[styles.chip, { backgroundColor: colors.goldSoft }]}>
+              <Ionicons name="star" size={11} color={colors.gold} />
+              <Text variant="caption" style={[styles.chipText, { color: colors.gold }]}>
+                {pro.rating.toFixed(1)}
+              </Text>
+            </View>
+            {pro.friends ? (
+              <View style={[styles.chip, { backgroundColor: colors.roseSoft }]}>
+                <Ionicons name="people" size={11} color={colors.rose} />
+                <Text variant="caption" style={[styles.chipText, { color: colors.rose }]}>
+                  {pro.friends} {t('card.friends_visited')}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
+          <View style={styles.priceRow}>
+            <Text variant="bodyStrong" tone="ink">
+              {formatPrice(pro.priceFrom)}
+            </Text>
+            <Text variant="caption" tone="muted" style={styles.starting}>
+              {t('card.starting')}
+            </Text>
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+    </Animated.View>
   );
 }
 

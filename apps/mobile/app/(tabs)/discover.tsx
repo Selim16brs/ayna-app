@@ -217,8 +217,8 @@ export default function DiscoverScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.featured}
         >
-          {featured.map((pro) => (
-            <ProCard key={pro.id} pro={pro} />
+          {featured.map((pro, i) => (
+            <ProCard key={pro.id} pro={pro} index={i} />
           ))}
         </ScrollView>
       </ScrollView>

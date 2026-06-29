@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, gradients } from '../theme';
 
 interface ScreenProps {
@@ -23,7 +24,9 @@ export function Screen({ children, hero = false, edges = ['top', 'bottom'] }: Sc
         />
       ) : null}
       <SafeAreaView style={styles.safe} edges={edges}>
-        {children}
+        <Animated.View style={styles.safe} entering={FadeIn.duration(280)}>
+          {children}
+        </Animated.View>
       </SafeAreaView>
     </View>
   );
