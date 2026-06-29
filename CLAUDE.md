@@ -32,4 +32,6 @@ pnpm + Turborepo · RN+Expo (Zustand, TanStack Query) · Next.js · NestJS+Prism
 
 - Para: NUMERIC(12,2), KZT, asla float. Bakiye ledger'dan türetilir.
 - İletişim dili: Türkçe (kullanıcı tercihi).
+- **UI dili (geliştirme):** Türkçe öncelikli ve kaynak dil (`DEFAULT_LOCALE='tr'`, `packages/i18n`). Her şey Türkçe tamamlandıktan SONRA kk/ru çevrilecek. Yine de tüm metinler i18n anahtarı olmalı (hardcode yok); kk/ru parite testi 3 dili senkron tutar.
+- Yerel altyapı (Docker yok): Homebrew Postgres 16 + Redis. API .env: `apps/api/.env` (dotenv). Mobil: `pnpm --filter @ayna/mobile start` → iOS sim.
 - Commit sonu: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`. `main`'e doğrudan push yok.
