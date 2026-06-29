@@ -44,6 +44,21 @@ Kural:
 - **Randevularım** (kullanıcı ve satıcı): kaynağa göre **ayrı sekmeler/bölümler** (Arama · Foto teklif · Talep). Satıcıda ayrıca online/offline ayrımı.
 - **Ortak onay akışı:** kaynak farklı olsa da saat seç → satıcı onayı → teyit adımları **ortaktır**; yalnızca `source` + bağlam farklı kaydedilir.
 
+## Salon vs Bağımsız Uzman (çok uzmanlı salon)
+
+Bir sağlayıcı iki türden biridir:
+
+- **Salon** (`kind = salon`): içinde **birden fazla uzman** (kadro) barındırır.
+- **Bağımsız uzman** (`kind = independent`): tek kişi; kadro yoktur.
+
+Kurallar:
+
+- **Kayıt (satıcı):** satıcı kayıtta salon mu bağımsız uzman mı seçer. Salon ise kadrosuna **birden çok uzman ekler** (her uzman: ad, uzmanlık, foto, puan). Her uzmanın kendi takvimi/uygunluğu olabilir.
+- **Randevu (kullanıcı):** akış **Salon → uzman → hizmet → saat**. Salon profili kadroyu listeler; kullanıcı uzman seçer. Bağımsız uzmanda bu adım **atlanır**.
+- Uzman seçimi her giriş yolunda korunur: doğrudan (profilde), foto teklif ve talep yollarında **saat seçimi ekranında** uzman seçtirilir.
+- Randevu kaydı hem **salonu** hem **seçilen uzmanı** taşır; teyit ekranında ikisi de gösterilir.
+- Uygunluk seçilen uzmanın online+offline takvimine göre hesaplanır (EK A R3).
+
 ## Ortak Randevu Akışı (her üç yolda)
 
 1. Kullanıcı satıcının **uygun saatlerine** bakar ve uygun saat(ler)i seçer.

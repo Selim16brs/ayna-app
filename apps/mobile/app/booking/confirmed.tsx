@@ -10,8 +10,14 @@ import { Button, Screen, Text } from '../../src/ui';
 export default function ConfirmedScreen() {
   const router = useRouter();
   const { t } = useLocale();
-  const params = useLocalSearchParams<{ proId?: string; day?: string; time?: string }>();
+  const params = useLocalSearchParams<{
+    proId?: string;
+    day?: string;
+    time?: string;
+    uzmanName?: string;
+  }>();
   const pro = getProfessionalDetail(params.proId ?? '1');
+  const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   const price = pro.services[0]?.price ?? Number(pro.priceFrom);
 
   return (
@@ -29,7 +35,18 @@ export default function ConfirmedScreen() {
 
         <View style={[styles.card, shadow.card]}>
           <Field icon="cut-outline" labelKey="booking.field.service" value={pro.specialty} />
-          <Field icon="person-outline" labelKey="booking.field.pro" value={pro.name} />
+          {isSalon ? (
+            <>
+              <Field icon="business-outline" labelKey="booking.field.salon" value={pro.name} />
+              <Field
+                icon="person-outline"
+                labelKey="booking.field.pro"
+                value={params.uzmanName || pro.staff[0]?.name || pro.name}
+              />
+            </>
+          ) : (
+            <Field icon="person-outline" labelKey="booking.field.pro" value={pro.name} />
+          )}
           <Field
             icon="time-outline"
             labelKey="booking.field.datetime"

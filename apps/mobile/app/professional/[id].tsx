@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatPrice, getProfessionalDetail } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { colors, gradients, radius, shadow, space } from '../../src/theme';
-import { Button, Text } from '../../src/ui';
+import { Badge, Button, Text } from '../../src/ui';
 
 export default function ProfessionalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -16,6 +16,8 @@ export default function ProfessionalScreen() {
   const { t } = useLocale();
   const pro = getProfessionalDetail(id ?? '1');
   const [selected, setSelected] = useState<string>(pro.services[0]?.id ?? '');
+  const [uzmanId, setUzmanId] = useState<string>(pro.staff[0]?.id ?? '');
+  const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
 
   return (
     <View style={styles.root}>
@@ -51,6 +53,12 @@ export default function ProfessionalScreen() {
               <Text variant="caption" tone="muted" style={styles.meta}>
                 {pro.specialty} · {pro.district}
               </Text>
+              <View style={styles.kindRow}>
+                <Badge
+                  label={t(isSalon ? 'pro.kind.salon' : 'pro.kind.independent')}
+                  tone={isSalon ? 'gold' : 'rose'}
+                />
+              </View>
             </View>
             <View style={styles.ratingBox}>
               <Ionicons name="star" size={14} color={colors.gold} />
@@ -75,6 +83,48 @@ export default function ProfessionalScreen() {
           <Text variant="body" tone="inkSoft" style={styles.about}>
             {pro.about}
           </Text>
+
+          {/* Uzmanlar (yalnızca salonlarda) */}
+          {isSalon ? (
+            <>
+              <Section title={t('pro.staff')} />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.staffRow}
+              >
+                {pro.staff.map((u) => {
+                  const on = u.id === uzmanId;
+                  return (
+                    <Pressable
+                      key={u.id}
+                      onPress={() => setUzmanId(u.id)}
+                      style={[styles.staffCard, on && styles.staffActive]}
+                    >
+                      <Image source={{ uri: u.image }} style={styles.staffAvatar} />
+                      <Text variant="bodyStrong" tone="ink">
+                        {u.name}
+                      </Text>
+                      <Text variant="caption" tone="muted" numberOfLines={1}>
+                        {u.role}
+                      </Text>
+                      <View style={styles.staffRating}>
+                        <Ionicons name="star" size={10} color={colors.gold} />
+                        <Text variant="caption" tone="inkSoft">
+                          {u.rating.toFixed(1)}
+                        </Text>
+                      </View>
+                      {on ? (
+                        <View style={styles.staffCheck}>
+                          <Ionicons name="checkmark-circle" size={20} color={colors.rose} />
+                        </View>
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </>
+          ) : null}
 
           {/* Hizmet bazlı puan */}
           <Section title={t('pro.service_ratings')} />
@@ -189,7 +239,12 @@ export default function ProfessionalScreen() {
           onPress={() =>
             router.push({
               pathname: '/booking/schedule',
-              params: { proId: pro.id, source: 'direct' },
+              params: {
+                proId: pro.id,
+                source: 'direct',
+                uzmanId,
+                uzmanName: pro.staff.find((u) => u.id === uzmanId)?.name ?? '',
+              },
             })
           }
         />
@@ -253,6 +308,27 @@ const styles = StyleSheet.create({
   titleText: { flex: 1, paddingRight: space(1.5) },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
   meta: { marginTop: space(0.5) },
+  kindRow: { flexDirection: 'row', marginTop: space(1) },
+  staffRow: { gap: space(1.5), paddingRight: space(3) },
+  staffCard: {
+    width: 120,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: space(1.5),
+    alignItems: 'center',
+  },
+  staffActive: { borderColor: colors.rose, borderWidth: 2 },
+  staffAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.bgSunken,
+    marginBottom: space(1),
+  },
+  staffRating: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: space(0.5) },
+  staffCheck: { position: 'absolute', top: space(1), right: space(1) },
   ratingBox: {
     flexDirection: 'row',
     alignItems: 'center',

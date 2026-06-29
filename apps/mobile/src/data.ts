@@ -19,6 +19,7 @@ export const CATEGORIES: Category[] = [
 ];
 
 export type ProBadge = 'campaign' | 'verified' | 'today';
+export type ProviderKind = 'salon' | 'independent';
 
 export interface Professional {
   id: string;
@@ -29,6 +30,15 @@ export interface Professional {
   priceFrom: number;
   image: string;
   badge: ProBadge;
+}
+
+/** Salon içindeki bir uzman (kadro). Bağımsız uzmanlarda kadro yoktur. */
+export interface Uzman {
+  id: string;
+  name: string;
+  role: string;
+  image: string;
+  rating: number;
 }
 
 const img = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=600&q=70`;
@@ -100,6 +110,8 @@ export interface Review {
 }
 
 export interface ProfessionalDetail extends Professional {
+  kind: ProviderKind;
+  staff: Uzman[];
   about: string;
   experienceYears: number;
   district: string;
@@ -109,6 +121,36 @@ export interface ProfessionalDetail extends Professional {
   portfolio: string[];
   reviews: Review[];
 }
+
+const avatar = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=200&q=70`;
+
+// Salon kadrosu (çok uzmanlı salonlar için)
+const STAFF: Uzman[] = [
+  {
+    id: 'u1',
+    name: 'Madina',
+    role: 'Renk uzmanı',
+    image: avatar('photo-1487412720507-e7ab37603c6f'),
+    rating: 4.9,
+  },
+  {
+    id: 'u2',
+    name: 'Aigerim',
+    role: 'Kesim & fön',
+    image: avatar('photo-1494790108377-be9c29b29330'),
+    rating: 4.8,
+  },
+  {
+    id: 'u3',
+    name: 'Saule',
+    role: 'Bakım & keratin',
+    image: avatar('photo-1438761681033-6461ffad8d80'),
+    rating: 4.7,
+  },
+];
+
+// Hangi sağlayıcı salon (çok uzmanlı), hangisi bağımsız uzman
+const SALON_IDS = new Set(['1', '4']);
 
 const portfolioImg = (id: string) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=400&q=70`;
@@ -159,7 +201,8 @@ const SHARED_DETAIL = {
 
 export function getProfessionalDetail(id: string): ProfessionalDetail {
   const base = FEATURED.find((p) => p.id === id) ?? FEATURED[0]!;
-  return { ...base, ...SHARED_DETAIL };
+  const kind: ProviderKind = SALON_IDS.has(base.id) ? 'salon' : 'independent';
+  return { ...base, ...SHARED_DETAIL, kind, staff: kind === 'salon' ? STAFF : [] };
 }
 
 export type BookingSource = 'direct' | 'photo_quote' | 'demand';

@@ -62,6 +62,11 @@ export const tr = {
   'pro.select_service': 'Hizmet seçin',
   'pro.reviews_based': 'doğrulanmış değerlendirme',
   'pro.friends_here': 'arkadaşın buraya gitti',
+  'pro.staff': 'Uzmanlar',
+  'pro.kind.salon': 'Salon',
+  'pro.kind.independent': 'Bağımsız uzman',
+  'booking.schedule.uzman': 'Uzman seç',
+  'booking.field.salon': 'Salon',
 
   // Ana akış — giriş aksiyonları
   'home.how': 'Nasıl başlamak istersin?',

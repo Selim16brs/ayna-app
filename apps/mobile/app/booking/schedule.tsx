@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { getProfessionalDetail } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { colors, radius, shadow, space } from '../../src/theme';
@@ -12,10 +13,18 @@ const TIMES = ['10:00', '11:30', '13:00', '14:30', '16:00', '17:30'];
 export default function ScheduleScreen() {
   const router = useRouter();
   const { t } = useLocale();
-  const params = useLocalSearchParams<{ proId?: string; source?: string }>();
+  const params = useLocalSearchParams<{
+    proId?: string;
+    source?: string;
+    uzmanId?: string;
+  }>();
   const pro = getProfessionalDetail(params.proId ?? '1');
+  const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
+  const [uzmanId, setUzmanId] = useState<string>(params.uzmanId ?? pro.staff[0]?.id ?? '');
   const [day, setDay] = useState(0);
   const [time, setTime] = useState<string | null>(null);
+
+  const uzman = pro.staff.find((u) => u.id === uzmanId);
 
   function confirm() {
     router.replace({
@@ -25,6 +34,7 @@ export default function ScheduleScreen() {
         source: params.source ?? 'direct',
         day: DAYS[day],
         time: time ?? '',
+        uzmanName: uzman?.name ?? '',
       },
     });
   }
@@ -38,9 +48,42 @@ export default function ScheduleScreen() {
             {pro.name}
           </Text>
           <Text variant="caption" tone="muted">
-            {pro.specialty}
+            {isSalon && uzman ? `${pro.specialty} · ${uzman.name}` : pro.specialty}
           </Text>
         </View>
+
+        {/* Uzman seçimi (salonlarda) */}
+        {isSalon ? (
+          <>
+            <Text variant="h2" tone="ink" style={styles.label}>
+              {t('booking.schedule.uzman')}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.staffRow}
+            >
+              {pro.staff.map((u) => {
+                const on = u.id === uzmanId;
+                return (
+                  <Pressable
+                    key={u.id}
+                    onPress={() => setUzmanId(u.id)}
+                    style={[styles.staffCard, on && styles.staffActive]}
+                  >
+                    <Image source={{ uri: u.image }} style={styles.staffAvatar} />
+                    <Text variant="caption" tone="ink">
+                      {u.name}
+                    </Text>
+                    <Text variant="caption" tone="muted" numberOfLines={1}>
+                      {u.role}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </>
+        ) : null}
 
         <Text variant="h2" tone="ink" style={styles.label}>
           {t('booking.schedule.day')}
@@ -99,6 +142,24 @@ const styles = StyleSheet.create({
     padding: space(2),
   },
   label: { marginTop: space(3), marginBottom: space(1.5) },
+  staffRow: { gap: space(1.5), paddingRight: space(3) },
+  staffCard: {
+    width: 110,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.line,
+    padding: space(1.5),
+  },
+  staffActive: { borderColor: colors.rose, borderWidth: 2 },
+  staffAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.bgSunken,
+    marginBottom: space(0.75),
+  },
   row: { flexDirection: 'row', gap: space(1), flexWrap: 'wrap' },
   dayChip: {
     paddingHorizontal: space(2),
