@@ -11,14 +11,8 @@ import { ProCard, Screen, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-// Kategoriler için canlı renk döngüsü (çok renkli his)
-const CAT_COLORS = [
-  { fg: colors.rose, bg: colors.roseSoft },
-  { fg: colors.orange, bg: colors.orangeSoft },
-  { fg: colors.teal, bg: colors.tealSoft },
-  { fg: colors.gold, bg: colors.goldSoft },
-  { fg: colors.plum, bg: colors.surfaceMuted },
-];
+// Kategori ikon zeminleri: dolu canlı renkler (içindeki ikon beyaz)
+const CAT_COLORS = [colors.rose, colors.orange, colors.teal, colors.blue, colors.plum];
 
 export default function DiscoverScreen() {
   const { t } = useLocale();
@@ -39,13 +33,13 @@ export default function DiscoverScreen() {
             <Text variant="caption" tone="inkSoft">
               {t('home.greeting')}
             </Text>
-            <Text variant="title" tone="ink">
+            <Text variant="title" tone="rose">
               Aigerim
             </Text>
           </View>
           <View style={styles.headerActions}>
             <View style={styles.iconButton}>
-              <Ionicons name="notifications-outline" size={20} color={colors.gold} />
+              <Ionicons name="notifications-outline" size={20} color={colors.blue} />
             </View>
             <LinearGradient colors={gradients.rose} style={styles.avatar}>
               <Text variant="bodyStrong" tone="onColor">
@@ -63,7 +57,7 @@ export default function DiscoverScreen() {
                 {t('home.upcoming_events')}
               </Text>
               <Pressable onPress={() => router.push('/bookings')}>
-                <Text variant="caption" tone="gold">
+                <Text variant="caption" tone="rose">
                   {t('common.see_all')}
                 </Text>
               </Pressable>
@@ -79,14 +73,10 @@ export default function DiscoverScreen() {
                     <View
                       style={[
                         styles.eventIcon,
-                        { backgroundColor: e.tone === 'rose' ? colors.roseSoft : colors.goldSoft },
+                        { backgroundColor: e.tone === 'rose' ? colors.rose : colors.gold },
                       ]}
                     >
-                      <Ionicons
-                        name={e.icon as IoniconName}
-                        size={18}
-                        color={e.tone === 'rose' ? colors.rose : colors.gold}
-                      />
+                      <Ionicons name={e.icon as IoniconName} size={18} color={colors.onColor} />
                     </View>
                     <View style={styles.whenChip}>
                       <Text variant="caption" tone="inkSoft">
@@ -107,7 +97,7 @@ export default function DiscoverScreen() {
         ) : null}
 
         {/* Ana aksiyonlar */}
-        <Text variant="label" tone="gold" style={styles.howLabel}>
+        <Text variant="label" tone="rose" style={styles.howLabel}>
           {t('home.how')}
         </Text>
         <View style={styles.actions}>
@@ -159,19 +149,21 @@ export default function DiscoverScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categories}
         >
-          {categories.map((cat, i) => {
-            const c = CAT_COLORS[i % CAT_COLORS.length]!;
-            return (
-              <Pressable key={cat.id} style={styles.category}>
-                <View style={[styles.categoryIcon, { backgroundColor: c.bg }]}>
-                  <Ionicons name={cat.icon as IoniconName} size={24} color={c.fg} />
-                </View>
-                <Text variant="caption" tone="inkSoft" style={styles.categoryLabel}>
-                  {cat.label}
-                </Text>
-              </Pressable>
-            );
-          })}
+          {categories.map((cat, i) => (
+            <Pressable key={cat.id} style={styles.category}>
+              <View
+                style={[
+                  styles.categoryIcon,
+                  { backgroundColor: CAT_COLORS[i % CAT_COLORS.length] },
+                ]}
+              >
+                <Ionicons name={cat.icon as IoniconName} size={24} color={colors.onColor} />
+              </View>
+              <Text variant="caption" tone="inkSoft" style={styles.categoryLabel}>
+                {cat.label}
+              </Text>
+            </Pressable>
+          ))}
         </ScrollView>
 
         {/* Kampanya */}
@@ -207,7 +199,7 @@ export default function DiscoverScreen() {
           <Text variant="h2" tone="ink">
             {t('home.featured')}
           </Text>
-          <Text variant="caption" tone="gold">
+          <Text variant="caption" tone="rose">
             {t('common.see_all')}
           </Text>
         </View>
@@ -335,12 +327,12 @@ const styles = StyleSheet.create({
   promoCta: {
     alignSelf: 'flex-start',
     marginTop: space(1.75),
-    backgroundColor: colors.gold,
+    backgroundColor: colors.onColor,
     paddingHorizontal: space(2),
     paddingVertical: space(1),
     borderRadius: radius.pill,
   },
-  promoCtaText: { color: colors.bg, fontSize: 13, fontWeight: '600' },
+  promoCtaText: { color: colors.plum, fontSize: 13, fontWeight: '600' },
   promoIcon: { position: 'absolute', right: -8, bottom: -12 },
   sectionHeader: {
     flexDirection: 'row',

@@ -74,7 +74,7 @@ export default function ReportsScreen() {
         </View>
 
         {/* Teklif hunisi */}
-        <Text variant="label" tone="gold" style={styles.section}>
+        <Text variant="label" tone="rose" style={styles.section}>
           {t('reports.section.funnel')}
         </Text>
         <View style={styles.group}>
@@ -84,7 +84,7 @@ export default function ReportsScreen() {
         </View>
 
         {/* Uzman performansı */}
-        <Text variant="label" tone="gold" style={styles.section}>
+        <Text variant="label" tone="rose" style={styles.section}>
           {t('reports.section.staff')}
         </Text>
         <View style={styles.group}>

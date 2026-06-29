@@ -9,6 +9,17 @@ import { Screen, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
+const MENU_COLORS = [
+  colors.rose,
+  colors.orange,
+  colors.teal,
+  colors.blue,
+  colors.plum,
+  colors.rose,
+  colors.orange,
+  colors.teal,
+];
+
 const MENU: { key: MessageKey; icon: IoniconName; danger?: boolean }[] = [
   { key: 'profile.menu.passport', icon: 'card-outline' },
   { key: 'profile.menu.rewards', icon: 'gift-outline' },
@@ -39,11 +50,11 @@ export default function ProfileScreen() {
             </Text>
           </LinearGradient>
           <View style={styles.profileText}>
-            <Text variant="h2" tone="ink">
+            <Text variant="h2" tone="rose">
               Aigerim
             </Text>
             <Pressable>
-              <Text variant="caption" tone="gold">
+              <Text variant="caption" tone="rose">
                 {t('profile.edit')}
               </Text>
             </Pressable>
@@ -65,8 +76,10 @@ export default function ProfileScreen() {
               style={[styles.row, i < arr.length - 1 && styles.rowBorder]}
               onPress={() => onPress(m.key)}
             >
-              <View style={styles.menuIcon}>
-                <Ionicons name={m.icon} size={18} color={colors.gold} />
+              <View
+                style={[styles.menuIcon, { backgroundColor: MENU_COLORS[i % MENU_COLORS.length] }]}
+              >
+                <Ionicons name={m.icon} size={18} color={colors.onColor} />
               </View>
               <Text variant="bodyStrong" tone="ink" style={styles.menuLabel}>
                 {t(m.key)}
@@ -80,7 +93,7 @@ export default function ProfileScreen() {
           {MENU.filter((m) => m.danger).map((m) => (
             <Pressable key={m.key} style={styles.row} onPress={() => onPress(m.key)}>
               <View style={[styles.menuIcon, styles.menuIconDanger]}>
-                <Ionicons name={m.icon} size={18} color={colors.danger} />
+                <Ionicons name={m.icon} size={18} color={colors.onColor} />
               </View>
               <Text variant="bodyStrong" tone="rose" style={styles.menuLabel}>
                 {t(m.key)}
@@ -158,6 +171,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  menuIconDanger: { backgroundColor: colors.dangerSoft },
+  menuIconDanger: { backgroundColor: colors.danger },
   menuLabel: { flex: 1 },
 });

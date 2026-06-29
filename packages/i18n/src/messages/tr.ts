@@ -10,7 +10,7 @@ export const tr = {
   'common.soon': 'Çok yakında',
 
   // Marka / dil
-  'app.tagline': 'Gerçek bağlantı · Uzman erişimi · Güvenle güzellik',
+  'app.tagline': 'Her kadının bir aynası olmalı!',
   'language.choose': 'Dil seçin',
   'language.tr': 'Türkçe',
   'language.kk': 'Kazakça',

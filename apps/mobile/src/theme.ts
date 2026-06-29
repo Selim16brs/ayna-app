@@ -1,49 +1,51 @@
 import { Platform } from 'react-native';
 
 /**
- * AYNA tasarım sistemi token'ları — CANLI ÇOK RENKLİ (lacivert zemin + canlı aksanlar).
- * Referans: lacivert + turuncu/pembe/turkuaz/sarı. Token tabanlı: tema değişince tüm ekranlar adapte.
+ * AYNA tasarım sistemi — BEYAZ zemin + CANLI renkli aksanlar (profesyonel UI).
+ * Başlıklar siyah; ikon zeminleri canlı renk, içindeki ikon/yazı beyaz; alt menü mavi.
  */
 export const colors = {
-  // Zemin (derin lacivert)
-  bg: '#151B45',
-  bgSunken: '#1D2454',
-  surface: '#222A5E',
-  surfaceMuted: '#2B3470',
+  // Zemin (beyaz)
+  bg: '#FFFFFF',
+  bgSunken: '#F3F4F8',
+  surface: '#FFFFFF',
+  surfaceMuted: '#F3F4F8',
 
-  // Metin
-  ink: '#F3F5FF',
-  inkSoft: '#A9B2E6',
-  muted: '#7B85BE',
-  onColor: '#FFFFFF',
+  // Metin (siyah başlıklar)
+  ink: '#16171D',
+  inkSoft: '#5A5E6C',
+  muted: '#9AA0B2',
+  onColor: '#FFFFFF', // canlı renk üstüne beyaz ikon/yazı
 
-  // Canlı aksanlar
-  rose: '#FF3D7F', // pembe/magenta (ana aksan)
+  // Canlı aksanlar (referans paleti)
+  blue: '#2D4BE0', // alt menü + erkek kullanıcı
+  navy: '#1B2A6B',
+  rose: '#FF2E7E', // pembe (kadın kullanıcı + ana aksan)
   orange: '#FF7A2F',
-  teal: '#16C9B0',
-  gold: '#FFC24B', // canlı sarı
-  plum: '#6C5CE7', // canlı mor
+  teal: '#13C4AC',
+  gold: '#FFB22E', // canlı sarı
+  plum: '#7A5CF0', // canlı mor
 
-  // Aksan yumuşak zeminleri (lacivert üstü koyu tint)
-  roseSoft: '#3A1F44',
-  orangeSoft: '#3A2519',
-  tealSoft: '#103833',
-  goldSoft: '#3A3318',
+  // Yumuşak tintler (beyaz üstü açık)
+  roseSoft: '#FFE4EE',
+  orangeSoft: '#FFE9DA',
+  tealSoft: '#D7F6F0',
+  goldSoft: '#FFF1D6',
 
   // Çizgi / durum
-  line: '#303A7E',
-  success: '#16C9B0',
-  successSoft: '#103833',
-  danger: '#FF5A6A',
-  dangerSoft: '#3A1E26',
+  line: '#E8E9F1',
+  success: '#16B98A',
+  successSoft: '#DCF6EE',
+  danger: '#F0483F',
+  dangerSoft: '#FCE4E2',
 } as const;
 
 export const gradients = {
-  hero: ['#1F2660', '#151B45'] as const, // lacivert hero
-  gold: ['#FF5C8A', '#FF8A3D'] as const, // ana CTA: pembe → turuncu (canlı)
-  rose: ['#FF4D86', '#E83C6D'] as const, // pembe aksiyon
-  teal: ['#1ED2B8', '#0FA892'] as const, // turkuaz aksiyon
-  plum: ['#7A6CF0', '#4A3CC7'] as const, // mor (kampanya)
+  hero: ['#FFFFFF', '#F6F7FB'] as const,
+  gold: ['#FF4E8B', '#FF7A2F'] as const, // ana CTA: pembe → turuncu (beyaz yazı)
+  rose: ['#FF4E8B', '#FF2E7E'] as const,
+  teal: ['#19D0B6', '#11A893'] as const,
+  plum: ['#8A6CF5', '#5C3CE0'] as const,
 } as const;
 
 // SF (San Francisco) — iOS sistem fontu. fontFamily verilmez; ağırlık fontWeight ile.
@@ -62,22 +64,22 @@ export const space = (n: number): number => n * 8;
 export const shadow = {
   card: Platform.select({
     ios: {
-      shadowColor: '#000000',
-      shadowOpacity: 0.35,
-      shadowRadius: 22,
-      shadowOffset: { width: 0, height: 12 },
+      shadowColor: '#1B2A6B',
+      shadowOpacity: 0.1,
+      shadowRadius: 20,
+      shadowOffset: { width: 0, height: 8 },
     },
-    android: { elevation: 5 },
+    android: { elevation: 4 },
     default: {},
   }),
   soft: Platform.select({
     ios: {
-      shadowColor: '#000000',
-      shadowOpacity: 0.25,
+      shadowColor: '#1B2A6B',
+      shadowOpacity: 0.07,
       shadowRadius: 12,
-      shadowOffset: { width: 0, height: 5 },
+      shadowOffset: { width: 0, height: 4 },
     },
-    android: { elevation: 3 },
+    android: { elevation: 2 },
     default: {},
   }),
 } as const;

@@ -22,7 +22,7 @@ export default function CareScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text variant="label" tone="gold" style={styles.section}>
+        <Text variant="label" tone="rose" style={styles.section}>
           {t('care.section.routines')}
         </Text>
         <View style={styles.group}>
@@ -31,7 +31,7 @@ export default function CareScreen() {
           ))}
         </View>
 
-        <Text variant="label" tone="gold" style={styles.section}>
+        <Text variant="label" tone="rose" style={styles.section}>
           {t('care.section.moments')}
         </Text>
         <View style={styles.group}>
