@@ -63,6 +63,49 @@ export const tr = {
   'pro.reviews_based': 'doğrulanmış değerlendirme',
   'pro.friends_here': 'arkadaşın buraya gitti',
 
+  // Ana akış — giriş aksiyonları
+  'home.how': 'Nasıl başlamak istersin?',
+  'action.photo_quote.title': 'Fotoğrafla teklif al',
+  'action.photo_quote.subtitle': 'Modeli yükle, teklifler gelsin',
+  'action.demand.title': 'Talep oluştur',
+  'action.demand.subtitle': 'Fiyatını sen belirle',
+
+  // Model 1 — teklif oluştur
+  'quote.new.title': 'Fotoğrafla teklif al',
+  'quote.new.photo': 'Fotoğraf ekle',
+  'quote.new.photo_hint': 'İstediğin modelin fotoğrafını yükle',
+  'quote.new.change_photo': 'Fotoğrafı değiştir',
+  'quote.new.category': 'Kategori',
+  'quote.new.note': 'Not (isteğe bağlı)',
+  'quote.new.note_ph': 'Detay ekle: saç boyu, renk, bölge...',
+  'quote.new.submit': 'Teklif iste',
+
+  // Gönderildi
+  'quote.sent.title': 'İsteğin gönderildi',
+  'quote.sent.subtitle': 'Satıcılardan teklifler birazdan gelecek',
+  'quote.sent.view': 'Teklifleri gör',
+
+  // Model 1 — gelen teklifler
+  'quotes.title': 'Gelen teklifler',
+  'quotes.count': 'satıcı teklif gönderdi',
+  'quotes.sort': 'Sırala',
+  'quotes.filter.rating': 'Puan',
+  'quotes.filter.price': 'Fiyat',
+  'quotes.pick': 'Saat seç',
+  'quotes.eta': 'tahmini süre',
+
+  // Model 2 — talep oluştur
+  'demand.new.title': 'Talep oluştur',
+  'demand.new.desc': 'Ne yaptırmak istiyorsun?',
+  'demand.new.desc_ph': 'Örn. gelin saçı + makyaj, evime gelsin',
+  'demand.new.budget': 'Bütçen',
+  'demand.new.budget_ph': 'Fiyat (₸)',
+  'demand.new.submit': 'Talebi yayınla',
+  'demand.results.title': 'Gelen kabuller',
+  'demand.results.count': 'satıcı bütçeni kabul etti',
+  'demand.results.budget': 'Bütçen',
+  'demand.accepted': 'Kabul etti',
+
   // Yer tutucu ekranlar
   'bookings.title': 'Randevular',
   'circle.title': 'AYNA Circle',

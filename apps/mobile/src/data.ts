@@ -161,3 +161,60 @@ export function getProfessionalDetail(id: string): ProfessionalDetail {
   const base = FEATURED.find((p) => p.id === id) ?? FEATURED[0]!;
   return { ...base, ...SHARED_DETAIL };
 }
+
+export interface Quote {
+  id: string;
+  proId: string;
+  name: string;
+  image: string;
+  rating: number;
+  reviewCount: number;
+  friends?: number;
+  price: number;
+  etaMin: number;
+}
+
+export const INCOMING_QUOTES: Quote[] = [
+  {
+    id: 'q1',
+    proId: '1',
+    name: 'Madina Studio',
+    image: FEATURED[0]!.image,
+    rating: 4.9,
+    reviewCount: 47,
+    friends: 3,
+    price: 16000,
+    etaMin: 120,
+  },
+  {
+    id: 'q2',
+    proId: '3',
+    name: 'Ailin Makeup',
+    image: FEATURED[2]!.image,
+    rating: 5.0,
+    reviewCount: 62,
+    friends: 5,
+    price: 21000,
+    etaMin: 90,
+  },
+  {
+    id: 'q3',
+    proId: '2',
+    name: 'Aruzhan Beauty',
+    image: FEATURED[1]!.image,
+    rating: 4.8,
+    reviewCount: 33,
+    price: 12000,
+    etaMin: 75,
+  },
+  {
+    id: 'q4',
+    proId: '4',
+    name: 'Lotus Spa',
+    image: FEATURED[3]!.image,
+    rating: 4.7,
+    reviewCount: 28,
+    price: 9500,
+    etaMin: 60,
+  },
+];

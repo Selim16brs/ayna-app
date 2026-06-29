@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { CATEGORIES } from '../../src/data';
 import { useLocale } from '../../src/locale';
@@ -9,6 +10,7 @@ import { FEATURED } from '../../src/data';
 
 export default function DiscoverScreen() {
   const { t } = useLocale();
+  const router = useRouter();
 
   return (
     <Screen edges={['top']}>
@@ -33,6 +35,45 @@ export default function DiscoverScreen() {
               </Text>
             </LinearGradient>
           </View>
+        </View>
+
+        {/* Ana aksiyonlar */}
+        <Text variant="label" tone="gold" style={styles.howLabel}>
+          {t('home.how')}
+        </Text>
+        <View style={styles.actions}>
+          <Pressable style={styles.actionWrap} onPress={() => router.push('/quote/new')}>
+            <LinearGradient
+              colors={gradients.rose}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.action}
+            >
+              <Ionicons name="camera" size={26} color={colors.onColor} />
+              <Text variant="bodyStrong" tone="onColor" style={styles.actionTitle}>
+                {t('action.photo_quote.title')}
+              </Text>
+              <Text variant="caption" tone="onColor" style={styles.actionSubtitle}>
+                {t('action.photo_quote.subtitle')}
+              </Text>
+            </LinearGradient>
+          </Pressable>
+          <Pressable style={styles.actionWrap} onPress={() => router.push('/demand/new')}>
+            <LinearGradient
+              colors={gradients.plum}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.action}
+            >
+              <Ionicons name="pricetag" size={26} color={colors.onColor} />
+              <Text variant="bodyStrong" tone="onColor" style={styles.actionTitle}>
+                {t('action.demand.title')}
+              </Text>
+              <Text variant="caption" tone="onColor" style={styles.actionSubtitle}>
+                {t('action.demand.subtitle')}
+              </Text>
+            </LinearGradient>
+          </Pressable>
         </View>
 
         {/* Arama */}
@@ -150,6 +191,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  howLabel: { paddingHorizontal: space(3), marginBottom: space(1.25) },
+  actions: {
+    flexDirection: 'row',
+    gap: space(1.5),
+    paddingHorizontal: space(3),
+    marginBottom: space(2.5),
+  },
+  actionWrap: { flex: 1 },
+  action: {
+    borderRadius: radius.lg,
+    padding: space(2),
+    minHeight: 124,
+    justifyContent: 'flex-end',
+    ...shadow.soft,
+  },
+  actionTitle: { marginTop: space(1) },
+  actionSubtitle: { opacity: 0.85, marginTop: 2 },
   search: {
     marginHorizontal: space(3),
     height: 50,

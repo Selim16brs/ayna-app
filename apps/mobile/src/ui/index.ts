@@ -5,3 +5,4 @@ export { Badge } from './Badge';
 export { Screen } from './Screen';
 export { ProCard } from './ProCard';
 export { Placeholder } from './Placeholder';
+export { StackHeader } from './StackHeader';
