@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.line,
-    fontFamily: 'Manrope_500Medium',
+    fontWeight: '500',
     fontSize: 16,
     color: colors.ink,
   },

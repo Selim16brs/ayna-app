@@ -37,14 +37,13 @@ export const gradients = {
   plum: ['#6A3A5B', '#3C2138'] as const,
 } as const;
 
-export const font = {
-  display: 'CormorantGaramond_600SemiBold',
-  displayMedium: 'CormorantGaramond_500Medium',
-  displayBold: 'CormorantGaramond_700Bold',
-  body: 'Manrope_400Regular',
-  medium: 'Manrope_500Medium',
-  semibold: 'Manrope_600SemiBold',
-  bold: 'Manrope_700Bold',
+// SF (San Francisco) — iOS sistem fontu. fontFamily verilmez; ağırlık fontWeight ile.
+export const weight = {
+  regular: '400',
+  medium: '500',
+  semibold: '600',
+  bold: '700',
+  heavy: '800',
 } as const;
 
 export const radius = { sm: 12, md: 18, lg: 26, xl: 34, pill: 999 } as const;
@@ -75,5 +74,5 @@ export const shadow = {
   }),
 } as const;
 
-export const theme = { colors, gradients, font, radius, space, shadow } as const;
+export const theme = { colors, gradients, weight, radius, space, shadow } as const;
 export type Theme = typeof theme;

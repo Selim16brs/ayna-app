@@ -27,7 +27,7 @@ export default function AuthRoleScreen() {
             icon="person"
             title={t('auth.role.customer')}
             sub={t('auth.role.customer_sub')}
-            onPress={() => router.push('/auth/phone?role=customer')}
+            onPress={() => router.push('/auth/customer')}
           />
           <RoleCard
             grad={gradients.plum}

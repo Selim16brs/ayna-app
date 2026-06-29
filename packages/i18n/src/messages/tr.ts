@@ -201,6 +201,14 @@ export const tr = {
   'auth.profile.city': 'Şehir',
   'auth.profile.finish': 'Tamamla',
   'auth.business.title': 'İşletme kaydı',
+  'auth.customer.title': 'Müşteri hesabı',
+  'auth.tab.register': 'Kayıt ol',
+  'auth.tab.login': 'Giriş yap',
+  'auth.f.name': 'Ad Soyad',
+  'auth.f.email': 'E-posta',
+  'auth.f.phone': 'Telefon',
+  'auth.f.password': 'Şifre',
+  'auth.f.identifier': 'E-posta veya telefon',
 
   // İşletme (satıcı) kaydı
   'biz.entry.title': 'İşletme kaydı',

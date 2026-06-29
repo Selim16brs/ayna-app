@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     padding: space(2),
     minHeight: 96,
     textAlignVertical: 'top',
-    fontFamily: 'Manrope_400Regular',
+    fontWeight: '400',
     fontSize: 15,
     color: colors.ink,
   },

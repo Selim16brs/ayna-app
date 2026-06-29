@@ -54,5 +54,5 @@ const styles = StyleSheet.create({
     borderRadius: radius.md - 3,
   },
   segmentOn: { backgroundColor: colors.surface },
-  onText: { fontFamily: 'Manrope_600SemiBold' },
+  onText: { fontWeight: '600' },
 });

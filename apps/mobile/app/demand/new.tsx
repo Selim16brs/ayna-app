@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     padding: space(2),
     minHeight: 110,
     textAlignVertical: 'top',
-    fontFamily: 'Manrope_400Regular',
+    fontWeight: '400',
     fontSize: 15,
     color: colors.ink,
   },
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   budgetInput: {
     flex: 1,
     height: 60,
-    fontFamily: 'Manrope_600SemiBold',
+    fontWeight: '600',
     fontSize: 22,
     color: colors.ink,
   },

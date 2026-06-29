@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.line,
-    fontFamily: 'Manrope_700Bold',
+    fontWeight: '700',
     fontSize: 18,
     letterSpacing: 2,
     color: colors.ink,

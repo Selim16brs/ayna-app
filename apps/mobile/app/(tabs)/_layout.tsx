@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useLocale } from '../../src/locale';
-import { colors, font } from '../../src/theme';
+import { colors } from '../../src/theme';
 
 export default function TabsLayout() {
   const { t } = useLocale();
@@ -18,7 +18,7 @@ export default function TabsLayout() {
           height: 88,
           paddingTop: 8,
         },
-        tabBarLabelStyle: { fontFamily: font.medium, fontSize: 11 },
+        tabBarLabelStyle: { fontWeight: '500', fontSize: 11 },
       }}
     >
       <Tabs.Screen
