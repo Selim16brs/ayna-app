@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  logo: { width: 260, height: 230, tintColor: colors.gold },
+  logo: { width: 260, height: 230, tintColor: colors.onColor },
   tagline: { marginTop: space(1), letterSpacing: 0.3 },
   choice: { paddingBottom: space(4), gap: space(1.5) },
   choiceLabel: { textAlign: 'center', marginBottom: space(1) },

@@ -11,6 +11,15 @@ import { ProCard, Screen, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
+// Kategoriler için canlı renk döngüsü (çok renkli his)
+const CAT_COLORS = [
+  { fg: colors.rose, bg: colors.roseSoft },
+  { fg: colors.orange, bg: colors.orangeSoft },
+  { fg: colors.teal, bg: colors.tealSoft },
+  { fg: colors.gold, bg: colors.goldSoft },
+  { fg: colors.plum, bg: colors.surfaceMuted },
+];
+
 export default function DiscoverScreen() {
   const { t } = useLocale();
   const router = useRouter();
@@ -120,7 +129,7 @@ export default function DiscoverScreen() {
           </Pressable>
           <Pressable style={styles.actionWrap} onPress={() => router.push('/demand/new')}>
             <LinearGradient
-              colors={gradients.plum}
+              colors={gradients.teal}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.action}
@@ -150,25 +159,19 @@ export default function DiscoverScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categories}
         >
-          {categories.map((cat) => (
-            <Pressable key={cat.id} style={styles.category}>
-              <View
-                style={[
-                  styles.categoryIcon,
-                  { backgroundColor: cat.tone === 'rose' ? colors.roseSoft : colors.goldSoft },
-                ]}
-              >
-                <Ionicons
-                  name={cat.icon as IoniconName}
-                  size={24}
-                  color={cat.tone === 'rose' ? colors.rose : colors.gold}
-                />
-              </View>
-              <Text variant="caption" tone="inkSoft" style={styles.categoryLabel}>
-                {cat.label}
-              </Text>
-            </Pressable>
-          ))}
+          {categories.map((cat, i) => {
+            const c = CAT_COLORS[i % CAT_COLORS.length]!;
+            return (
+              <Pressable key={cat.id} style={styles.category}>
+                <View style={[styles.categoryIcon, { backgroundColor: c.bg }]}>
+                  <Ionicons name={cat.icon as IoniconName} size={24} color={c.fg} />
+                </View>
+                <Text variant="caption" tone="inkSoft" style={styles.categoryLabel}>
+                  {cat.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
 
         {/* Kampanya */}

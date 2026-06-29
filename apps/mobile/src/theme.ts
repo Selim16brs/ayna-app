@@ -1,42 +1,49 @@
 import { Platform } from 'react-native';
 
 /**
- * AYNA tasarım sistemi token'ları — KOYU LÜKS (siyah-altın, logo kimliği).
- * Token tabanlı: tema değerleri değişince tüm ekranlar adapte olur.
+ * AYNA tasarım sistemi token'ları — CANLI ÇOK RENKLİ (lacivert zemin + canlı aksanlar).
+ * Referans: lacivert + turuncu/pembe/turkuaz/sarı. Token tabanlı: tema değişince tüm ekranlar adapte.
  */
 export const colors = {
-  // Zemin (koyu patlıcan-siyah)
-  bg: '#141019',
-  bgSunken: '#1C1726',
-  surface: '#221B2D',
-  surfaceMuted: '#2A2237',
+  // Zemin (derin lacivert)
+  bg: '#151B45',
+  bgSunken: '#1D2454',
+  surface: '#222A5E',
+  surfaceMuted: '#2B3470',
 
-  // Metin (sıcak krem)
-  ink: '#F4EFE7',
-  inkSoft: '#B7AEC0',
-  muted: '#827A8E',
-  onColor: '#F8F4EC', // renkli/koyu gradyan üstüne açık metin (altın buton hariç)
+  // Metin
+  ink: '#F3F5FF',
+  inkSoft: '#A9B2E6',
+  muted: '#7B85BE',
+  onColor: '#FFFFFF',
 
-  // Marka — altın öncelikli
-  gold: '#C9A86A',
-  goldSoft: '#2E2718', // koyu altın tint (chip zemini)
-  rose: '#D98FA6', // ikincil sıcak vurgu
-  roseSoft: '#33212C', // koyu rose tint
-  plum: '#5A2E4D',
+  // Canlı aksanlar
+  rose: '#FF3D7F', // pembe/magenta (ana aksan)
+  orange: '#FF7A2F',
+  teal: '#16C9B0',
+  gold: '#FFC24B', // canlı sarı
+  plum: '#6C5CE7', // canlı mor
+
+  // Aksan yumuşak zeminleri (lacivert üstü koyu tint)
+  roseSoft: '#3A1F44',
+  orangeSoft: '#3A2519',
+  tealSoft: '#103833',
+  goldSoft: '#3A3318',
 
   // Çizgi / durum
-  line: '#2E2739',
-  success: '#5CC79A',
-  successSoft: '#15291F',
-  danger: '#E27A6C',
-  dangerSoft: '#2E1A18',
+  line: '#303A7E',
+  success: '#16C9B0',
+  successSoft: '#103833',
+  danger: '#FF5A6A',
+  dangerSoft: '#3A1E26',
 } as const;
 
 export const gradients = {
-  hero: ['#1C1626', '#141019'] as const, // koyu hero
-  gold: ['#E6CE92', '#C2A05A'] as const, // ana CTA (altın)
-  rose: ['#D98FA6', '#B5677F'] as const, // ikincil aksiyon
-  plum: ['#4A3A5C', '#271E33'] as const, // koyu mor kart (okunur)
+  hero: ['#1F2660', '#151B45'] as const, // lacivert hero
+  gold: ['#FF5C8A', '#FF8A3D'] as const, // ana CTA: pembe → turuncu (canlı)
+  rose: ['#FF4D86', '#E83C6D'] as const, // pembe aksiyon
+  teal: ['#1ED2B8', '#0FA892'] as const, // turkuaz aksiyon
+  plum: ['#7A6CF0', '#4A3CC7'] as const, // mor (kampanya)
 } as const;
 
 // SF (San Francisco) — iOS sistem fontu. fontFamily verilmez; ağırlık fontWeight ile.
@@ -53,7 +60,6 @@ export const radius = { sm: 12, md: 18, lg: 26, xl: 34, pill: 999 } as const;
 export const space = (n: number): number => n * 8;
 
 export const shadow = {
-  // Koyu temada derinlik: siyah gölge + ince
   card: Platform.select({
     ios: {
       shadowColor: '#000000',

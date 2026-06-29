@@ -7,11 +7,11 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "icon": "./assets/icon-dark.png",
+    "icon": "./assets/icon-navy.png",
     "splash": {
-      "image": "./assets/logo-gold.png",
+      "image": "./assets/logo-light.png",
       "resizeMode": "contain",
-      "backgroundColor": "#141019"
+      "backgroundColor": "#151B45"
     },
     "ios": {
       "supportsTablet": true,
@@ -20,8 +20,8 @@
     "android": {
       "package": "kz.ayna.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/logo-gold.png",
-        "backgroundColor": "#141019"
+        "foregroundImage": "./assets/logo-light.png",
+        "backgroundColor": "#151B45"
       }
     },
     "web": {
