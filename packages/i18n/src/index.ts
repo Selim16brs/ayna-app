@@ -1,5 +1,5 @@
-import kk from './messages/kk.json';
-import ru from './messages/ru.json';
+import { kk } from './messages/kk.js';
+import { ru } from './messages/ru.js';
 
 // @ayna/i18n — Kazakça (kk) ve Rusça (ru) metinler
 // Kural: kullanıcıya görünen her metin burada (docs/planning/06-coding-standards.md §8)

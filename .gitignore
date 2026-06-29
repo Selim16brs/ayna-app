@@ -20,3 +20,9 @@ build/
 
 # Test
 coverage/
+
+# Expo / React Native
+.expo/
+*.tsbuildinfo
+ios/
+android/

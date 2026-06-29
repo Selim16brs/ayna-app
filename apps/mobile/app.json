@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "AYNA",
+    "slug": "ayna",
+    "scheme": "ayna",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#1E1B2E"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "kz.ayna.app"
+    },
+    "android": {
+      "package": "kz.ayna.app"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": ["expo-router", "expo-localization"]
+  }
+}
