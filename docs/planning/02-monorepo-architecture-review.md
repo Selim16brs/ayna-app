@@ -50,6 +50,7 @@ HTTP (Controller)  →  Application (Service / UseCase)  →  Domain (packages/d
 ```
 
 Bağlayıcı kurallar:
+
 - Controller'da iş mantığı **yok** — sadece DTO doğrulama + servis çağrısı.
 - DTO doğrulama Zod (`packages/validation`) ile **zorunlu**.
 - Repository katmanı domain servisinden **ayrı**.
@@ -59,17 +60,17 @@ Bağlayıcı kurallar:
 
 ## 4. Teknoloji onayı (EK D.2)
 
-| Katman | Seçim | Karar |
-|--------|-------|-------|
-| Mobile | React Native + Expo + Expo Router | ✅ Onay |
-| Mobil state | Zustand + TanStack Query | ✅ (Redux elendi, EK5) |
-| Web | Next.js | ✅ Onay (App Router) |
-| Backend | NestJS + Prisma | ✅ Onay |
-| DB | PostgreSQL | ✅ Onay |
-| Cache/Queue | Redis + BullMQ | ✅ Onay |
-| Validation | Zod (paylaşımlı) | ✅ Onay |
-| Storage | S3-compatible (MinIO→Yandex) | ✅ abstraction ile, ⛔ EK4 |
-| API stili | REST + OpenAPI | ✅ (GraphQL gerekmiyor; MVP'de fazlalık) |
+| Katman      | Seçim                             | Karar                                    |
+| ----------- | --------------------------------- | ---------------------------------------- |
+| Mobile      | React Native + Expo + Expo Router | ✅ Onay                                  |
+| Mobil state | Zustand + TanStack Query          | ✅ (Redux elendi, EK5)                   |
+| Web         | Next.js                           | ✅ Onay (App Router)                     |
+| Backend     | NestJS + Prisma                   | ✅ Onay                                  |
+| DB          | PostgreSQL                        | ✅ Onay                                  |
+| Cache/Queue | Redis + BullMQ                    | ✅ Onay                                  |
+| Validation  | Zod (paylaşımlı)                  | ✅ Onay                                  |
+| Storage     | S3-compatible (MinIO→Yandex)      | ✅ abstraction ile, ⛔ EK4               |
+| API stili   | REST + OpenAPI                    | ✅ (GraphQL gerekmiyor; MVP'de fazlalık) |
 
 ## 5. Sınır koşulları & gözden geçirme notları
 

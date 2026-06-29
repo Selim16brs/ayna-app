@@ -69,9 +69,13 @@ Mimari kararlar `docs/architecture/adr/NNNN-baslik.md` altında:
 
 ```md
 # ADR-0001: <Karar başlığı>
+
 ## Durum: Önerildi | Kabul | Reddedildi | Yerine geçti
+
 ## Bağlam
+
 ## Karar
+
 ## Sonuçlar (artı/eksi, migration etkisi)
 ```
 

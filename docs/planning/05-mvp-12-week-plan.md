@@ -1,6 +1,6 @@
 # AYNA — 12 Haftalık MVP Teslim Planı
 
-> EK M madde 8. Hipotez (EK 17.1): *Kadınlar, arkadaş tavsiyesi ve doğrulanmış işlem verisi olan uzmanlara daha yüksek güvenle rezervasyon yapar mı?* Plan EK 25 (90 gün) ile uyumludur.
+> EK M madde 8. Hipotez (EK 17.1): _Kadınlar, arkadaş tavsiyesi ve doğrulanmış işlem verisi olan uzmanlara daha yüksek güvenle rezervasyon yapar mı?_ Plan EK 25 (90 gün) ile uyumludur.
 
 ## Prensipler
 
@@ -11,21 +11,21 @@
 
 ## Yol haritası
 
-| Hafta | Epic / Odak | Çıktı | DoD gate |
-|-------|-------------|-------|----------|
-| **0** | Planning (EPIC 0) | Bu dokümanlar; ADR'ler; threat model'ler onaylandı | Plan onayı |
-| **1** | Foundation (EPIC 1) | Monorepo, CI, Docker stack, Prisma, i18n, audit altyapısı | CI yeşil |
-| **2** | Auth & Profil (EPIC 2) | OTP, session, profil, consent, RBAC | OTP E2E + güvenlik testi |
-| **3** | İşletme & Uzman (EPIC 3) | Business/Branch/Professional CRUD, belge upload, doğrulama | Doğrulama workflow demo |
-| **4** | İşletme & Hizmet (EPIC 3 devam) | Service/kategori (5 kategori), fiyat, availability | Fiyat/slot testleri |
-| **5** | Keşif (EPIC 4) | Arama, filtre, uzman/salon profili | Filtre + min-örneklem |
-| **6** | Keşif + Arkadaş sinyali (EPIC 4) | friend_connections, "arkadaşın gitti", availability sorgu | Arkadaş sinyali gizlilik testi |
-| **7** | Randevu I (EPIC 5) | Booking create, state machine, slot lock | State machine birim testleri |
-| **8** | Randevu II (EPIC 5) | Check-in, completion, dispute, ödeme webhook (idempotent, mock) | Randevu E2E (EK J.1) |
-| **9** | AYNA Safe (EPIC 6) | Trusted contacts, settings, share link, location session, retention | Konum E2E + privacy testleri (EK J.2/J.5) |
-| **10** | Yorum & Puan (EPIC 7) | Eligibility, form, anonim yayın, gecikme, rating snapshot | Yorum E2E + deanonymization testleri (EK J.4) |
-| **11** | Kampanya/Rewards + Circle temel (EPIC 8, 9) | Promo code, loyalty ledger, temel circle/tavsiye | Ledger tutarlılık + promo abuse |
-| **12** | Admin + Care/Moments + sertleştirme (EPIC 12, 10) | Moderasyon paneli, doğrulama kuyruğu, care reminder, load/abuse testleri | Tam DoD + kapalı beta hazır |
+| Hafta  | Epic / Odak                                       | Çıktı                                                                    | DoD gate                                      |
+| ------ | ------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------- |
+| **0**  | Planning (EPIC 0)                                 | Bu dokümanlar; ADR'ler; threat model'ler onaylandı                       | Plan onayı                                    |
+| **1**  | Foundation (EPIC 1)                               | Monorepo, CI, Docker stack, Prisma, i18n, audit altyapısı                | CI yeşil                                      |
+| **2**  | Auth & Profil (EPIC 2)                            | OTP, session, profil, consent, RBAC                                      | OTP E2E + güvenlik testi                      |
+| **3**  | İşletme & Uzman (EPIC 3)                          | Business/Branch/Professional CRUD, belge upload, doğrulama               | Doğrulama workflow demo                       |
+| **4**  | İşletme & Hizmet (EPIC 3 devam)                   | Service/kategori (5 kategori), fiyat, availability                       | Fiyat/slot testleri                           |
+| **5**  | Keşif (EPIC 4)                                    | Arama, filtre, uzman/salon profili                                       | Filtre + min-örneklem                         |
+| **6**  | Keşif + Arkadaş sinyali (EPIC 4)                  | friend_connections, "arkadaşın gitti", availability sorgu                | Arkadaş sinyali gizlilik testi                |
+| **7**  | Randevu I (EPIC 5)                                | Booking create, state machine, slot lock                                 | State machine birim testleri                  |
+| **8**  | Randevu II (EPIC 5)                               | Check-in, completion, dispute, ödeme webhook (idempotent, mock)          | Randevu E2E (EK J.1)                          |
+| **9**  | AYNA Safe (EPIC 6)                                | Trusted contacts, settings, share link, location session, retention      | Konum E2E + privacy testleri (EK J.2/J.5)     |
+| **10** | Yorum & Puan (EPIC 7)                             | Eligibility, form, anonim yayın, gecikme, rating snapshot                | Yorum E2E + deanonymization testleri (EK J.4) |
+| **11** | Kampanya/Rewards + Circle temel (EPIC 8, 9)       | Promo code, loyalty ledger, temel circle/tavsiye                         | Ledger tutarlılık + promo abuse               |
+| **12** | Admin + Care/Moments + sertleştirme (EPIC 12, 10) | Moderasyon paneli, doğrulama kuyruğu, care reminder, load/abuse testleri | Tam DoD + kapalı beta hazır                   |
 
 ## Paralelleştirme
 

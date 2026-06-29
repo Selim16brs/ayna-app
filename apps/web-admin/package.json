@@ -1,0 +1,6 @@
+{
+  "name": "@ayna/web-admin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "AYNA Admin — yönetim ve moderasyon paneli (Next.js) — EPIC 12 ile doldurulacak."
+}

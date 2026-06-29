@@ -1,0 +1,6 @@
+{
+  "name": "@ayna/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "description": "AYNA kullanıcı uygulaması (React Native + Expo) — EPIC 2+ ile doldurulacak. Bkz. docs/planning/05-mvp-12-week-plan.md"
+}

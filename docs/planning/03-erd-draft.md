@@ -344,6 +344,7 @@ erDiagram
 ## 8. Topluluk, Kişisel Yaşam, İçerik, Sistem (özet)
 
 EK E.7–E.9 tabloları aynı prensiplerle modellenir:
+
 - **Circle:** `circles`, `circle_members`, `posts`, `post_categories`, `post_visibility`, `post_reports`, `recommendations`, `recommendation_evidence`, `comments`.
 - **Kişisel yaşam (Faz 3, 🔒):** `cycle_entries`, `mood_entries`, `vault_items` — varsayılan kapalı, ayrı şifreleme, reklam/analytics yasak, kullanıcı silebilir. `beauty_passports` + entries, `care_schedules`, `moments`, `ready_plans`, `budgets`.
 - **İçerik:** `content_articles`, `content_categories`, `content_translations`, `expert_profiles`, `content_sources`, `content_bookmarks`.

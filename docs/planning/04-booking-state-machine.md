@@ -81,19 +81,19 @@ stateDiagram-v2
 
 ## 3. Geçiş kuralları (bağlayıcı)
 
-| Geçiş | Önkoşul / Kural |
-|-------|-----------------|
-| `DRAFT → *` | Sadece sahibi görür; rezervasyon sayılmaz. |
-| `→ CONFIRMED` | Slot iki tarafta ayrılır (slot lock 🧩). |
-| `→ DEPOSIT/PAYMENT_PENDING` | İptal politikası **ödemeden önce** kullanıcıya gösterilir. |
-| `→ PAID` | Ödeme webhook **idempotent**; aynı event iki kez = tek ödeme (R4). |
-| `→ CHECK_IN_AVAILABLE` | Randevudan yapılandırılabilir süre önce (job). |
-| `→ CHECKED_IN` | QR / 6-haneli OTP / "Geldim" / personel / opsiyonel konum. Konum **asla zorunlu değil**. |
-| `→ IN_SERVICE` | Başlangıç kodu veya iki taraf onayı veya salon paneli. |
-| `→ COMPLETED` (auto) | `COMPLETION_PENDING_USER`'da 72s (konfigüre, EK7) + açık dispute yoksa. |
-| `COMPLETED` | Değerlendirme hakkı **burada** açılır (EK C.2). Daha önce kamuya yorum **yok** (EK A.6). |
-| Fiyat değişimi | **Her** fiyat artışı kullanıcı onayı gerektirir; onaysız tutar artırılamaz. |
-| Çakışma | Kullanıcı ve uzman aynı slotta iki onaylı randevu alamaz. 🧩 |
+| Geçiş                       | Önkoşul / Kural                                                                          |
+| --------------------------- | ---------------------------------------------------------------------------------------- |
+| `DRAFT → *`                 | Sadece sahibi görür; rezervasyon sayılmaz.                                               |
+| `→ CONFIRMED`               | Slot iki tarafta ayrılır (slot lock 🧩).                                                 |
+| `→ DEPOSIT/PAYMENT_PENDING` | İptal politikası **ödemeden önce** kullanıcıya gösterilir.                               |
+| `→ PAID`                    | Ödeme webhook **idempotent**; aynı event iki kez = tek ödeme (R4).                       |
+| `→ CHECK_IN_AVAILABLE`      | Randevudan yapılandırılabilir süre önce (job).                                           |
+| `→ CHECKED_IN`              | QR / 6-haneli OTP / "Geldim" / personel / opsiyonel konum. Konum **asla zorunlu değil**. |
+| `→ IN_SERVICE`              | Başlangıç kodu veya iki taraf onayı veya salon paneli.                                   |
+| `→ COMPLETED` (auto)        | `COMPLETION_PENDING_USER`'da 72s (konfigüre, EK7) + açık dispute yoksa.                  |
+| `COMPLETED`                 | Değerlendirme hakkı **burada** açılır (EK C.2). Daha önce kamuya yorum **yok** (EK A.6). |
+| Fiyat değişimi              | **Her** fiyat artışı kullanıcı onayı gerektirir; onaysız tutar artırılamaz.              |
+| Çakışma                     | Kullanıcı ve uzman aynı slotta iki onaylı randevu alamaz. 🧩                             |
 
 ## 4. Terminal durumlar
 
@@ -107,12 +107,24 @@ Domain katmanında (`packages/domain/booking`) açık bir **izin verilen geçiş
 const ALLOWED: Record<BookingStatus, BookingStatus[]> = {
   DRAFT: ['PENDING_PROVIDER_CONFIRMATION', 'CONFIRMED', 'CANCELLED_BY_USER'],
   PENDING_PROVIDER_CONFIRMATION: ['CONFIRMED', 'CANCELLED_BY_PROVIDER', 'CANCELLED_BY_USER'],
-  CONFIRMED: ['DEPOSIT_PENDING', 'PAYMENT_PENDING', 'SCHEDULED', 'CANCELLED_BY_USER', 'CANCELLED_BY_PROVIDER'],
+  CONFIRMED: [
+    'DEPOSIT_PENDING',
+    'PAYMENT_PENDING',
+    'SCHEDULED',
+    'CANCELLED_BY_USER',
+    'CANCELLED_BY_PROVIDER',
+  ],
   DEPOSIT_PENDING: ['PAID', 'CANCELLED_BY_USER', 'CANCELLED_BY_PROVIDER'],
   PAYMENT_PENDING: ['PAID', 'CANCELLED_BY_USER', 'CANCELLED_BY_PROVIDER'],
   PAID: ['SCHEDULED', 'REFUND_PENDING'],
   SCHEDULED: ['CHECK_IN_AVAILABLE', 'CANCELLED_BY_USER', 'CANCELLED_BY_PROVIDER'],
-  CHECK_IN_AVAILABLE: ['CHECKED_IN', 'NO_SHOW_USER', 'NO_SHOW_PROVIDER', 'CANCELLED_BY_USER', 'CANCELLED_BY_PROVIDER'],
+  CHECK_IN_AVAILABLE: [
+    'CHECKED_IN',
+    'NO_SHOW_USER',
+    'NO_SHOW_PROVIDER',
+    'CANCELLED_BY_USER',
+    'CANCELLED_BY_PROVIDER',
+  ],
   CHECKED_IN: ['IN_SERVICE', 'CANCELLED_BY_PROVIDER'],
   IN_SERVICE: ['COMPLETED_BY_PROVIDER'],
   COMPLETED_BY_PROVIDER: ['COMPLETION_PENDING_USER'],
@@ -131,6 +143,7 @@ const ALLOWED: Record<BookingStatus, BookingStatus[]> = {
 ```
 
 Geçiş fonksiyonu `transition(current, next, actor)`:
+
 1. `next ∈ ALLOWED[current]` değilse → `InvalidTransitionError` (HTTP 409).
 2. Aktör yetkisi kontrol (örn. `complete-provider` sadece uzman/salon).
 3. Yan etkiler event'e (job kuyruğu) → retry-safe.

@@ -1,0 +1,28 @@
+{
+  "name": "@ayna/validation",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@ayna/types": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "eslint": "^9.12.0",
+    "typescript": "^5.6.3"
+  }
+}

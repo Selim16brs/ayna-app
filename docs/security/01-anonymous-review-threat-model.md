@@ -4,13 +4,13 @@
 
 ## 1. Güven sınırları & aktörler
 
-| Aktör | Kullanıcı kimliğini görebilir mi? | Notlar |
-|-------|-----------------------------------|--------|
-| Diğer kullanıcılar (public) | ❌ Asla | "Doğrulanmış AYNA üyesi" görür |
-| İşletme / uzman | ❌ Asla | Yoruma cevap verebilir, kimlik göremez |
-| Moderatör | ⚠️ Sınırlı | Sadece moderasyon vakası bağlamında, audit'li |
-| AYNA sistemi (DB) | ✅ | `reviews.user_id` saklanır ama korunur |
-| Saldırgan (dış) | ❌ Hedef | Tüm vektörler kapatılmalı |
+| Aktör                       | Kullanıcı kimliğini görebilir mi? | Notlar                                        |
+| --------------------------- | --------------------------------- | --------------------------------------------- |
+| Diğer kullanıcılar (public) | ❌ Asla                           | "Doğrulanmış AYNA üyesi" görür                |
+| İşletme / uzman             | ❌ Asla                           | Yoruma cevap verebilir, kimlik göremez        |
+| Moderatör                   | ⚠️ Sınırlı                        | Sadece moderasyon vakası bağlamında, audit'li |
+| AYNA sistemi (DB)           | ✅                                | `reviews.user_id` saklanır ama korunur        |
+| Saldırgan (dış)             | ❌ Hedef                          | Tüm vektörler kapatılmalı                     |
 
 ## 2. Veri akışı
 
@@ -36,33 +36,34 @@ flowchart TD
 
 ## 3. STRIDE analizi
 
-| Tehdit | Senaryo | Önlem |
-|--------|---------|-------|
-| **S**poofing | Hizmet almayan biri yorum yazar | Eligibility: sadece `COMPLETED` + randevu sahibi + doğrulanmış hizmet kaydı (EK C.2) |
-| **T**ampering | Kullanıcı puanı/işletmeyi değiştirir | Yorum booking'e bağlı (unique), business/professional booking'den türetilir |
-| **R**epudiation | "Bu yorumu ben yazmadım" | Audit log (actor + request_id), ama public'te anonim |
-| **I**nfo disclosure | **Deanonymization** (en kritik) | Bölüm 4 |
-| **D**oS | Review bombing / organize saldırı | Bölüm 5 |
-| **E**levation | İşletme API'den user_id çeker | `user_id` hiçbir public/pro response DTO'sunda yok; response şeması whitelist |
+| Tehdit              | Senaryo                              | Önlem                                                                                |
+| ------------------- | ------------------------------------ | ------------------------------------------------------------------------------------ |
+| **S**poofing        | Hizmet almayan biri yorum yazar      | Eligibility: sadece `COMPLETED` + randevu sahibi + doğrulanmış hizmet kaydı (EK C.2) |
+| **T**ampering       | Kullanıcı puanı/işletmeyi değiştirir | Yorum booking'e bağlı (unique), business/professional booking'den türetilir          |
+| **R**epudiation     | "Bu yorumu ben yazmadım"             | Audit log (actor + request_id), ama public'te anonim                                 |
+| **I**nfo disclosure | **Deanonymization** (en kritik)      | Bölüm 4                                                                              |
+| **D**oS             | Review bombing / organize saldırı    | Bölüm 5                                                                              |
+| **E**levation       | İşletme API'den user_id çeker        | `user_id` hiçbir public/pro response DTO'sunda yok; response şeması whitelist        |
 
 ## 4. Deanonymization vektörleri (🔴 en kritik risk R1)
 
-| # | Vektör | Önlem |
-|---|--------|-------|
-| D1 | **Zaman korelasyonu**: işletme yorumu kendi takvimiyle eşler | Gecikmeli yayın (0–72s rastgele); tam tarih/saat gizli; "son 30 gün" aralığı |
-| D2 | **Küçük örneklem**: salonda tek müşteri = tek yorumcu | k-anonimlik k≥5: yorum sayısı eşiğe ulaşana dek **toplu** yayın (EK C.6) |
-| D3 | **Alt kategori spesifikliği**: nadir hizmet ifşa eder | Kimlik riski varsa alt→üst kategori genelleştirme |
-| D4 | **Metin parmak izi**: yazım tarzı/detay | Moderasyon; kullanıcıya "kişisel detay verme" uyarısı; kişisel bilgi filtresi |
-| D5 | **Medya EXIF/yüz**: foto metadata | EXIF temizleme, yüz/3. kişi moderasyonu (EK H.4) |
-| D6 | **İşletme cevabı sızıntısı**: işletme cevapta detay yazıp eşler | Cevapta kişisel bilgi yasak; moderasyon |
-| D7 | **API enumeration**: review ID'lerden user çıkarımı | Response'ta user_id yok; review id ↔ booking id ilişkisi public değil |
-| D8 | **Tek yorumlu işletme + özel bildirim** (Ç3) | Özel bildirim işletmeye sadece k≥5 toplulaştırılmış tema olarak |
+| #   | Vektör                                                          | Önlem                                                                         |
+| --- | --------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| D1  | **Zaman korelasyonu**: işletme yorumu kendi takvimiyle eşler    | Gecikmeli yayın (0–72s rastgele); tam tarih/saat gizli; "son 30 gün" aralığı  |
+| D2  | **Küçük örneklem**: salonda tek müşteri = tek yorumcu           | k-anonimlik k≥5: yorum sayısı eşiğe ulaşana dek **toplu** yayın (EK C.6)      |
+| D3  | **Alt kategori spesifikliği**: nadir hizmet ifşa eder           | Kimlik riski varsa alt→üst kategori genelleştirme                             |
+| D4  | **Metin parmak izi**: yazım tarzı/detay                         | Moderasyon; kullanıcıya "kişisel detay verme" uyarısı; kişisel bilgi filtresi |
+| D5  | **Medya EXIF/yüz**: foto metadata                               | EXIF temizleme, yüz/3. kişi moderasyonu (EK H.4)                              |
+| D6  | **İşletme cevabı sızıntısı**: işletme cevapta detay yazıp eşler | Cevapta kişisel bilgi yasak; moderasyon                                       |
+| D7  | **API enumeration**: review ID'lerden user çıkarımı             | Response'ta user_id yok; review id ↔ booking id ilişkisi public değil         |
+| D8  | **Tek yorumlu işletme + özel bildirim** (Ç3)                    | Özel bildirim işletmeye sadece k≥5 toplulaştırılmış tema olarak               |
 
 ## 5. Sahte yorum / abuse (EK C.14)
 
 Sinyaller: aynı cihazdan çok hesap, aynı ödeme aracı, aynı IP pattern, kopya metin, kısa sürede tek işletmeye saldırı, çalışanın kendi işletmesine yorum, rakip bağlantısı, tamamlanmamış randevu.
 
 Önlem:
+
 - Şüpheli yorum **puana hemen katılmaz** (karantina).
 - Cihaz/IP/ödeme korelasyon skoru.
 - Rate limit (kullanıcı başına aktif itiraz/yorum).

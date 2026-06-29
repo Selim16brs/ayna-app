@@ -4,14 +4,14 @@
 
 ## 1. Güven sınırları
 
-| Aktör | Erişim |
-|-------|--------|
-| Kullanıcı | Tam kontrol; tek dokunuşla durdurur |
-| Güvenilen kişi | Sadece paylaşılan randevu bilgisi/konum; başka özel veri **yok** |
-| Salon / uzman | Güvenilen kişileri **göremez**; paylaşımdan habersiz |
-| AYNA sistemi | Şifreli koordinat (kısa ömürlü); ham koordinat log/analytics'e **asla** |
-| Link sahibi (token) | Süreli, iptal edilebilir, minimum veri |
-| Saldırgan | Tüm vektörler hedef |
+| Aktör               | Erişim                                                                  |
+| ------------------- | ----------------------------------------------------------------------- |
+| Kullanıcı           | Tam kontrol; tek dokunuşla durdurur                                     |
+| Güvenilen kişi      | Sadece paylaşılan randevu bilgisi/konum; başka özel veri **yok**        |
+| Salon / uzman       | Güvenilen kişileri **göremez**; paylaşımdan habersiz                    |
+| AYNA sistemi        | Şifreli koordinat (kısa ömürlü); ham koordinat log/analytics'e **asla** |
+| Link sahibi (token) | Süreli, iptal edilebilir, minimum veri                                  |
+| Saldırgan           | Tüm vektörler hedef                                                     |
 
 ## 2. Konum verisi yaşam döngüsü
 
@@ -31,16 +31,16 @@ flowchart TD
 
 ## 3. STRIDE + gizlilik tehditleri
 
-| Tehdit | Senaryo | Önlem |
-|--------|---------|-------|
-| **Info disclosure** | Ham konum log/analytics/backup'a sızar (R2) | Koordinat şifreli + ayrı kısa ömürlü tablo; log filtre middleware; analytics'e asla; backup'tan hariç (R14) |
-| **Spoofing** | Sahte güvenilen kişi linki ele geçirir | Token ≥128 bit, hash saklama, kısa TTL, iptal, 410 Gone, no-index |
-| **Tampering** | Link parametre manipülasyonu | Token opak; sunucu tarafı yetki; IDOR koruması |
-| **Repudiation** | Paylaşım başlangıç/bitiş izi yok | Audit log (koordinatsız): start/stop |
-| **DoS** | Share link brute force (R8) | Rate limit, uzun token, kısa TTL |
-| **Elevation** | Salon güvenilen kişi listesine erişir | Endpoint RBAC; salon rolü trusted-contacts'a **erişemez** |
-| **Consent ihlali** | Rıza geri çekilince paylaşım sürer | Revoke → aktif oturum **anında** durur |
-| **Aşırı tahminlenebilirlik** | Adres link üzerinden gereksiz ifşa | Eve hizmette açık adres link'te gösterilmez (B.5.4) |
+| Tehdit                       | Senaryo                                     | Önlem                                                                                                       |
+| ---------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Info disclosure**          | Ham konum log/analytics/backup'a sızar (R2) | Koordinat şifreli + ayrı kısa ömürlü tablo; log filtre middleware; analytics'e asla; backup'tan hariç (R14) |
+| **Spoofing**                 | Sahte güvenilen kişi linki ele geçirir      | Token ≥128 bit, hash saklama, kısa TTL, iptal, 410 Gone, no-index                                           |
+| **Tampering**                | Link parametre manipülasyonu                | Token opak; sunucu tarafı yetki; IDOR koruması                                                              |
+| **Repudiation**              | Paylaşım başlangıç/bitiş izi yok            | Audit log (koordinatsız): start/stop                                                                        |
+| **DoS**                      | Share link brute force (R8)                 | Rate limit, uzun token, kısa TTL                                                                            |
+| **Elevation**                | Salon güvenilen kişi listesine erişir       | Endpoint RBAC; salon rolü trusted-contacts'a **erişemez**                                                   |
+| **Consent ihlali**           | Rıza geri çekilince paylaşım sürer          | Revoke → aktif oturum **anında** durur                                                                      |
+| **Aşırı tahminlenebilirlik** | Adres link üzerinden gereksiz ifşa          | Eve hizmette açık adres link'te gösterilmez (B.5.4)                                                         |
 
 ## 4. Zorunlu gizlilik kuralları (EK B.2)
 
@@ -62,11 +62,11 @@ flowchart TD
 
 ## 6. Veri saklama (EK B.10)
 
-| Veri | Varsayılan retention | Konfigüre |
-|------|---------------------|-----------|
-| Ham koordinat | Oturum bitişi + 24s sonra sil | 1s / 6s / 24s |
-| Koordinatsız güvenlik audit | 30 gün | — |
-| Geçmiş paylaşım kaydı | Kullanıcı silebilir | — |
+| Veri                        | Varsayılan retention          | Konfigüre     |
+| --------------------------- | ----------------------------- | ------------- |
+| Ham koordinat               | Oturum bitişi + 24s sonra sil | 1s / 6s / 24s |
+| Koordinatsız güvenlik audit | 30 gün                        | —             |
+| Geçmiş paylaşım kaydı       | Kullanıcı silebilir           | —             |
 
 Yasal zorunluluk yoksa ham konum **backup'ta uzun süre kalmamalı** → crypto-shredding değerlendir.
 

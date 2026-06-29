@@ -1,0 +1,9 @@
+{
+  "common.ok": "Жарайды",
+  "common.cancel": "Болдырмау",
+  "auth.otp.sent": "Растау коды жіберілді",
+  "auth.otp.invalid": "Код жарамсыз немесе мерзімі өтті",
+  "booking.invalid_transition": "Жазылу күйін өзгерту мүмкін емес",
+  "review.not_eligible": "Бұл жазылуды бағалау мүмкін емес",
+  "safety.share.default_off": "Орналасқан жерді бөлісу әдепкі бойынша өшірулі"
+}

@@ -1,0 +1,72 @@
+// AYNA — başlangıç Prisma şeması (EPIC 1 foundation)
+// Tam veri modeli: docs/planning/03-erd-draft.md
+// Tarihler UTC (timestamptz). Hassas alanlar uygulama katmanında şifrelenir (docs/security/03).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  user
+  professional
+  salon
+  moderator
+  admin
+}
+
+enum UserStatus {
+  active
+  suspended
+  deleted
+}
+
+model User {
+  id            String     @id @default(uuid()) @db.Uuid
+  // Telefon uygulama katmanında şifreli saklanır (S2). Aramayı destekleyen hash ayrı tutulur.
+  phoneHash     String     @unique @map("phone_hash")
+  phoneEnc      Bytes      @map("phone_enc")
+  role          UserRole   @default(user)
+  status        UserStatus @default(active)
+  defaultLocale String     @default("ru") @map("default_locale")
+  timezone      String     @default("Asia/Almaty")
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("users")
+}
+
+// Kritik eylemlerin denetim kaydı — docs/security (EK H.5). safe_diff hassas veri içermez.
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  actorId      String?  @map("actor_id") @db.Uuid
+  actorRole    String?  @map("actor_role")
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  requestId    String?  @map("request_id")
+  ipHash       String?  @map("ip_hash")
+  deviceHash   String?  @map("device_hash")
+  safeDiff     Json?    @map("safe_diff")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([resourceType, resourceId])
+  @@index([actorId])
+  @@map("audit_logs")
+}
+
+// Özellik bayrakları — hassas özellikler önce internal beta (EK D.4).
+model FeatureFlag {
+  key         String   @id
+  enabled     Boolean  @default(false)
+  description String?
+  // Yüzde / rol bazlı kademeli açılış için opsiyonel kural seti.
+  rules       Json?
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("feature_flags")
+}

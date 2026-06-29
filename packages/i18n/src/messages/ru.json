@@ -1,0 +1,9 @@
+{
+  "common.ok": "Хорошо",
+  "common.cancel": "Отмена",
+  "auth.otp.sent": "Код подтверждения отправлен",
+  "auth.otp.invalid": "Код недействителен или истёк",
+  "booking.invalid_transition": "Невозможно изменить статус записи",
+  "review.not_eligible": "Эту запись нельзя оценить",
+  "safety.share.default_off": "Передача геопозиции по умолчанию выключена"
+}

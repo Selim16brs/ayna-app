@@ -4,12 +4,12 @@
 
 ## 1. Sınıflar
 
-| Sınıf | Tanım | Örnekler | Log? | Analytics? | Şifreleme |
-|-------|-------|----------|------|-----------|-----------|
-| **S3 — Hassas** | Sağlık/konum/özel | Regl, ruh hâli, alerji, sağlık notu, özel foto, ham konum, ev adresi, güvenilen kişi, tıbbi geçmiş | ❌ Asla | ❌ Asla | ✅ Zorunlu (app-katmanı + KMS) |
-| **S2 — PII** | Kimlik bilgisi | Telefon, ad, tam tarih+saat, vergi no, IP (ham) | ❌ | ⚠️ Sadece hash/anonim ID | ✅ Telefon/vergi şifreli |
-| **S1 — Dahili** | İş verisi | Booking durumu, puan, kampanya | ✅ safe_diff | ✅ internal ID | — |
-| **S0 — Public** | Açık | Hizmet kategorisi, şehir, anonim yorum metni | ✅ | ✅ | — |
+| Sınıf           | Tanım             | Örnekler                                                                                           | Log?         | Analytics?               | Şifreleme                      |
+| --------------- | ----------------- | -------------------------------------------------------------------------------------------------- | ------------ | ------------------------ | ------------------------------ |
+| **S3 — Hassas** | Sağlık/konum/özel | Regl, ruh hâli, alerji, sağlık notu, özel foto, ham konum, ev adresi, güvenilen kişi, tıbbi geçmiş | ❌ Asla      | ❌ Asla                  | ✅ Zorunlu (app-katmanı + KMS) |
+| **S2 — PII**    | Kimlik bilgisi    | Telefon, ad, tam tarih+saat, vergi no, IP (ham)                                                    | ❌           | ⚠️ Sadece hash/anonim ID | ✅ Telefon/vergi şifreli       |
+| **S1 — Dahili** | İş verisi         | Booking durumu, puan, kampanya                                                                     | ✅ safe_diff | ✅ internal ID           | —                              |
+| **S0 — Public** | Açık              | Hizmet kategorisi, şehir, anonim yorum metni                                                       | ✅           | ✅                       | —                              |
 
 ## 2. Bağlayıcı kurallar (EK H.3)
 
