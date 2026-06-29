@@ -26,7 +26,7 @@ export default function BusinessDoneScreen() {
         <Button
           label={t('biz.done.cta')}
           variant="primary"
-          onPress={() => router.replace('/discover')}
+          onPress={() => router.replace('/seller/reports')}
         />
       </View>
     </Screen>

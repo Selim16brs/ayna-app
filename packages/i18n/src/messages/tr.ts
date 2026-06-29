@@ -234,6 +234,23 @@ export const tr = {
   'sector.spa': 'Spa & Wellness',
   'sector.cosmetology': 'Kozmetoloji',
 
+  // Satıcı raporları
+  'reports.title': 'Raporlar',
+  'reports.period.week': 'Bu hafta',
+  'reports.period.month': 'Bu ay',
+  'reports.period.all': 'Tümü',
+  'reports.bookings': 'Randevu',
+  'reports.visits': 'Profil ziyareti',
+  'reports.conversion': 'Dönüşüm',
+  'reports.revenue': 'Gelir',
+  'reports.repeat': 'Tekrar müşteri',
+  'reports.noshow': 'No-show',
+  'reports.section.funnel': 'Teklif hunisi',
+  'reports.quotes_in': 'Gelen teklif isteği',
+  'reports.accept_rate': 'Kabul oranı',
+  'reports.demands_in': 'Gelen talep',
+  'reports.section.staff': 'Uzman performansı',
+
   // Sistem / domain
   'auth.otp.sent': 'Doğrulama kodu gönderildi',
   'auth.otp.invalid': 'Kod geçersiz veya süresi dolmuş',
