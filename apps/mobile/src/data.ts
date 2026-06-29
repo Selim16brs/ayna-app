@@ -77,3 +77,87 @@ export const FEATURED: Professional[] = [
 export function formatPrice(value: number): string {
   return `₸${value.toLocaleString('ru-RU')}`;
 }
+
+export interface ServiceItem {
+  id: string;
+  name: string;
+  durationMin: number;
+  price: number;
+}
+
+export interface ServiceRating {
+  name: string;
+  score: number | null;
+}
+
+export interface Review {
+  id: string;
+  period: string;
+  rating: number;
+  service: string;
+  text: string;
+  firstVisit: boolean;
+}
+
+export interface ProfessionalDetail extends Professional {
+  about: string;
+  experienceYears: number;
+  district: string;
+  reviewCount: number;
+  serviceRatings: ServiceRating[];
+  services: ServiceItem[];
+  portfolio: string[];
+  reviews: Review[];
+}
+
+const portfolioImg = (id: string) =>
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=400&q=70`;
+
+const SHARED_DETAIL = {
+  about:
+    'AYNA tarafından doğrulanmış, deneyimli ekip. Hijyen ve fiyat şeffaflığı önceliğimiz. Sonucun beklentine uygunluğunu garanti ederiz.',
+  experienceYears: 8,
+  district: 'Almatı · Medeu',
+  reviewCount: 47,
+  serviceRatings: [
+    { name: 'Balayage', score: 4.9 },
+    { name: 'Saç kesimi', score: 4.6 },
+    { name: 'Saç bakımı', score: 4.8 },
+    { name: 'Gelin saçı', score: null },
+  ] as ServiceRating[],
+  services: [
+    { id: 's1', name: 'Saç boyama', durationMin: 90, price: 15000 },
+    { id: 's2', name: 'Balayage', durationMin: 150, price: 28000 },
+    { id: 's3', name: 'Saç kesimi & fön', durationMin: 60, price: 9000 },
+    { id: 's4', name: 'Keratin bakımı', durationMin: 120, price: 22000 },
+  ] as ServiceItem[],
+  portfolio: [
+    portfolioImg('photo-1562322140-8baeececf3df'),
+    portfolioImg('photo-1595476108010-b4d1f102b1b1'),
+    portfolioImg('photo-1633681926022-84c23e8cb2d6'),
+    portfolioImg('photo-1521590832167-7bcbfaa6381f'),
+  ],
+  reviews: [
+    {
+      id: 'r1',
+      period: 'Son 30 gün içinde',
+      rating: 5,
+      service: 'Balayage',
+      text: 'Sonuç tam istediğim gibiydi, fiyat baştan açıktı. Kesinlikle tekrar geleceğim.',
+      firstVisit: true,
+    },
+    {
+      id: 'r2',
+      period: '1–3 ay önce',
+      rating: 4,
+      service: 'Saç kesimi',
+      text: 'Usta çok dikkatliydi ve zamanında başladı. Memnun kaldım.',
+      firstVisit: false,
+    },
+  ] as Review[],
+};
+
+export function getProfessionalDetail(id: string): ProfessionalDetail {
+  const base = FEATURED.find((p) => p.id === id) ?? FEATURED[0]!;
+  return { ...base, ...SHARED_DETAIL };
+}

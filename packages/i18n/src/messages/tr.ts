@@ -48,6 +48,21 @@ export const tr = {
   'card.starting': 'başlangıç',
   'card.friends_visited': 'arkadaşın gitti',
 
+  // Uzman/salon profili
+  'pro.book': 'Randevu Al',
+  'pro.about': 'Hakkında',
+  'pro.service_ratings': 'Hizmet bazlı puan',
+  'pro.services': 'Hizmetler',
+  'pro.portfolio': 'Doğrulanmış işlemler',
+  'pro.reviews': 'Değerlendirmeler',
+  'pro.no_data': 'Yeterli veri yok',
+  'pro.min': 'dk',
+  'pro.experience': 'yıl deneyim',
+  'pro.verified_member': 'Doğrulanmış AYNA üyesi',
+  'pro.select_service': 'Hizmet seçin',
+  'pro.reviews_based': 'doğrulanmış değerlendirme',
+  'pro.friends_here': 'arkadaşın buraya gitti',
+
   // Yer tutucu ekranlar
   'bookings.title': 'Randevular',
   'circle.title': 'AYNA Circle',

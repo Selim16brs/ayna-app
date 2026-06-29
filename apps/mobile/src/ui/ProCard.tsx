@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { useLocale } from '../locale';
 import { type Professional, formatPrice } from '../data';
@@ -18,10 +19,14 @@ const BADGE = {
 
 export function ProCard({ pro }: { pro: Professional }) {
   const { t } = useLocale();
+  const router = useRouter();
   const badge = BADGE[pro.badge];
 
   return (
-    <Pressable style={({ pressed }) => [styles.card, shadow.card, pressed && styles.pressed]}>
+    <Pressable
+      onPress={() => router.push(`/professional/${pro.id}`)}
+      style={({ pressed }) => [styles.card, shadow.card, pressed && styles.pressed]}
+    >
       <View style={styles.imageWrap}>
         <Image source={{ uri: pro.image }} style={styles.image} />
         <View style={[styles.badge, { backgroundColor: badge.bg }]}>
