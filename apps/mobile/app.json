@@ -7,7 +7,10 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/logo-mark.png",
+      "resizeMode": "contain",
       "backgroundColor": "#FBF6F1"
     },
     "ios": {
@@ -15,7 +18,11 @@
       "bundleIdentifier": "kz.ayna.app"
     },
     "android": {
-      "package": "kz.ayna.app"
+      "package": "kz.ayna.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo-mark.png",
+        "backgroundColor": "#FBF6F1"
+      }
     },
     "web": {
       "bundler": "metro"
