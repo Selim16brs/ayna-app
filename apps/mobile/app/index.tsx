@@ -11,7 +11,7 @@ export default function WelcomeScreen() {
 
   function choose(locale: Locale) {
     setLocale(locale);
-    router.replace('/discover');
+    router.push('/auth');
   }
 
   return (

@@ -179,6 +179,29 @@ export const tr = {
 
   'screen.placeholder': 'Bu bölüm yakında burada olacak',
 
+  // Kayıt / giriş
+  'auth.role.title': 'Nasıl devam etmek istersin?',
+  'auth.role.subtitle': 'Hesap türünü seç',
+  'auth.role.customer': 'Müşteri',
+  'auth.role.customer_sub': 'Hizmet al, randevu oluştur',
+  'auth.role.business': 'İşletme / Uzman',
+  'auth.role.business_sub': 'Hizmet ver, randevu al',
+  'auth.phone.title': 'Telefon numaran',
+  'auth.phone.subtitle': 'Sana 6 haneli bir doğrulama kodu göndereceğiz',
+  'auth.phone.placeholder': '700 123 45 67',
+  'auth.phone.send': 'Kod gönder',
+  'auth.otp.title': 'Doğrulama kodu',
+  'auth.otp.subtitle': 'numarasına gönderilen kodu gir',
+  'auth.otp.resend': 'Kodu tekrar gönder',
+  'auth.otp.verify': 'Doğrula',
+  'auth.profile.title': 'Profilini tamamla',
+  'auth.profile.subtitle': 'Seni tanıyalım',
+  'auth.profile.name': 'Ad Soyad',
+  'auth.profile.name_ph': 'Adın',
+  'auth.profile.city': 'Şehir',
+  'auth.profile.finish': 'Tamamla',
+  'auth.business.title': 'İşletme kaydı',
+
   // Sistem / domain
   'auth.otp.sent': 'Doğrulama kodu gönderildi',
   'auth.otp.invalid': 'Kod geçersiz veya süresi dolmuş',
