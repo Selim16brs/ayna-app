@@ -63,7 +63,7 @@ export default function DiscoverScreen() {
               <Text variant="h2" tone="ink">
                 {t('home.upcoming_events')}
               </Text>
-              <Pressable onPress={() => router.push('/bookings')}>
+              <Pressable onPress={() => router.push('/events')}>
                 <Text variant="caption" tone="rose">
                   {t('common.see_all')}
                 </Text>

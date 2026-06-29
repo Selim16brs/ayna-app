@@ -181,6 +181,34 @@ export const tr = {
 
   'screen.placeholder': 'Bu bölüm yakında burada olacak',
 
+  // Puanlarım / Ödüller
+  'rewards.title': 'Puanlarım',
+  'rewards.points': 'AYNA Puanı',
+  'rewards.tier': 'Seviye',
+  'rewards.next_tier': 'Sonraki seviyeye',
+  'rewards.bookings_left': 'randevu kaldı',
+  'rewards.raffle.title': 'Çekiliş',
+  'rewards.raffle.entries': 'çekiliş hakkın',
+  'rewards.raffle.next': 'Sonraki çekiliş',
+  'rewards.raffle.prize': 'Bu ayın ödülü: ücretsiz gelin paketi',
+  'rewards.earn.title': 'Nasıl puan kazanırsın?',
+  'rewards.earn.booking': 'Uygulamadan randevu tamamla',
+  'rewards.earn.review': 'Doğrulanmış değerlendirme yap',
+  'rewards.earn.referral': 'Arkadaşını davet et',
+  'rewards.earn.photo': 'Öncesi-sonrası fotoğraf paylaş',
+  'rewards.redeem.title': 'Puanını kullan',
+  'rewards.redeem.discount': 'Randevuda indirim',
+  'rewards.redeem.addon': 'Ücretsiz ek bakım',
+  'rewards.redeem.plus': 'AYNA Plus üyeliği',
+  'rewards.note': 'Puanlar yalnızca uygulama içi randevulardan kazanılır.',
+
+  // Tüm etkinlikler (takvim)
+  'events.title': 'Tüm etkinlikler',
+  'events.group.today': 'Bugün',
+  'events.group.week': 'Bu hafta',
+  'events.group.later': 'Daha sonra',
+  'events.empty': 'Yaklaşan etkinlik yok',
+
   // Kayıt / giriş
   'auth.role.title': 'Nasıl devam etmek istersin?',
   'auth.role.subtitle': 'Hesap türünü seç',

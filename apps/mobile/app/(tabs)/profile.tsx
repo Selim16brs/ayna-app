@@ -37,7 +37,8 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   const onPress = (key: MessageKey) => {
-    if (key === 'profile.menu.language' || key === 'profile.menu.logout') router.replace('/');
+    if (key === 'profile.menu.rewards') router.push('/rewards');
+    else if (key === 'profile.menu.language' || key === 'profile.menu.logout') router.replace('/');
   };
 
   return (
