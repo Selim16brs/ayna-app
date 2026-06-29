@@ -18,8 +18,10 @@ export default function WelcomeScreen() {
     <Screen hero>
       <View style={styles.container}>
         <View style={styles.hero}>
+          {/* Logo işareti (iki profil + A) buraya gelecek — dosya eklenince:
+              <Image source={require('../assets/logo-mark.png')} style={styles.mark} /> */}
           <View style={styles.markRule} />
-          <Text variant="display" tone="ink" style={styles.wordmark}>
+          <Text variant="display" tone="gold" style={styles.wordmark}>
             AYNA
           </Text>
           <Text variant="caption" tone="inkSoft" style={styles.tagline}>
