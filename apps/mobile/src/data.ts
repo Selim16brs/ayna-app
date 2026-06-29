@@ -215,6 +215,7 @@ export interface Appointment {
   proName: string;
   proImage: string;
   dateLabel: string; // hangi saatte
+  inDays: number; // sıralama için
   price: number; // kaç paraya
   status: BookingStatus;
 }
@@ -227,6 +228,7 @@ export const APPOINTMENTS: Appointment[] = [
     proName: 'Madina Studio',
     proImage: FEATURED[0]!.image,
     dateLabel: 'Cuma · 14:00',
+    inDays: 3,
     price: 9000,
     status: 'confirmed',
   },
@@ -237,6 +239,7 @@ export const APPOINTMENTS: Appointment[] = [
     proName: 'Lotus Spa',
     proImage: FEATURED[3]!.image,
     dateLabel: 'Geçen hafta · 16:00',
+    inDays: -7,
     price: 18000,
     status: 'completed',
   },
@@ -247,6 +250,7 @@ export const APPOINTMENTS: Appointment[] = [
     proName: 'Ailin Makeup',
     proImage: FEATURED[2]!.image,
     dateLabel: 'Pazartesi · 11:00',
+    inDays: 6,
     price: 21000,
     status: 'pending',
   },
@@ -257,6 +261,7 @@ export const APPOINTMENTS: Appointment[] = [
     proName: 'Aruzhan Beauty',
     proImage: FEATURED[1]!.image,
     dateLabel: 'Cumartesi · 09:00',
+    inDays: 4,
     price: 18000,
     status: 'confirmed',
   },
@@ -342,6 +347,57 @@ export const MOMENTS: Moment[] = [
   },
   { id: 'm3', title: 'Arkadaş düğünü', icon: 'flower-outline', dateLabel: '3 Ağu', daysLeft: 35 },
 ];
+
+export type EventKind = 'appointment' | 'moment' | 'care';
+export interface UpcomingEvent {
+  id: string;
+  kind: EventKind;
+  title: string;
+  subtitle: string;
+  icon: string;
+  inDays: number;
+  tone: 'rose' | 'gold';
+}
+
+function whenShort(days: number): string {
+  if (days <= 0) return 'Bugün';
+  if (days === 1) return 'Yarın';
+  return `${days} gün`;
+}
+
+/** Randevu + özel gün + bakım hatırlatmalarını tek takvim akışında birleştirir. */
+export function getUpcomingEvents(): UpcomingEvent[] {
+  const appts: UpcomingEvent[] = UPCOMING.map((a) => ({
+    id: `ap-${a.id}`,
+    kind: 'appointment',
+    title: a.service,
+    subtitle: `${a.proName} · ${a.dateLabel}`,
+    icon: 'calendar',
+    inDays: a.inDays,
+    tone: 'rose',
+  }));
+  const moments: UpcomingEvent[] = MOMENTS.map((m) => ({
+    id: `mo-${m.id}`,
+    kind: 'moment',
+    title: m.title,
+    subtitle: `Özel gün · ${m.dateLabel}`,
+    icon: m.icon,
+    inDays: m.daysLeft,
+    tone: 'gold',
+  }));
+  const care: UpcomingEvent[] = CARE_ROUTINES.filter((c) => c.dueDays >= 0).map((c) => ({
+    id: `ca-${c.id}`,
+    kind: 'care',
+    title: c.name,
+    subtitle: `Bakım · ${whenShort(c.dueDays)}`,
+    icon: c.icon,
+    inDays: c.dueDays,
+    tone: 'rose',
+  }));
+  return [...appts, ...moments, ...care].sort((a, b) => a.inDays - b.inDays);
+}
+
+export { whenShort };
 
 export interface Quote {
   id: string;

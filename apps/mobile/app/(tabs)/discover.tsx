@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api } from '../../src/api';
-import { UPCOMING, formatPrice } from '../../src/data';
+import { getUpcomingEvents, whenShort } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { colors, gradients, radius, shadow, space } from '../../src/theme';
 import { ProCard, Screen, Text } from '../../src/ui';
@@ -14,6 +14,7 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 export default function DiscoverScreen() {
   const { t } = useLocale();
   const router = useRouter();
+  const events = getUpcomingEvents();
   const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: api.categories });
   const { data: featured = [] } = useQuery({
     queryKey: ['professionals'],
@@ -45,8 +46,8 @@ export default function DiscoverScreen() {
           </View>
         </View>
 
-        {/* Yaklaşan randevular */}
-        {UPCOMING.length > 0 ? (
+        {/* Yaklaşan etkinlikler (randevu + özel gün + bakım) */}
+        {events.length > 0 ? (
           <>
             <View style={styles.sectionHeader}>
               <Text variant="h2" tone="ink">
@@ -63,27 +64,32 @@ export default function DiscoverScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.upcoming}
             >
-              {UPCOMING.map((a) => (
-                <View key={a.id} style={[styles.upcomingCard, shadow.soft]}>
-                  <View style={styles.upcomingTop}>
-                    <Ionicons name="calendar" size={15} color={colors.rose} />
-                    <Text variant="caption" tone="rose">
-                      {a.dateLabel}
-                    </Text>
+              {events.map((e) => (
+                <View key={e.id} style={[styles.eventCard, shadow.soft]}>
+                  <View style={styles.eventTop}>
+                    <View
+                      style={[
+                        styles.eventIcon,
+                        { backgroundColor: e.tone === 'rose' ? colors.roseSoft : colors.goldSoft },
+                      ]}
+                    >
+                      <Ionicons
+                        name={e.icon as IoniconName}
+                        size={18}
+                        color={e.tone === 'rose' ? colors.rose : colors.gold}
+                      />
+                    </View>
+                    <View style={styles.whenChip}>
+                      <Text variant="caption" tone="inkSoft">
+                        {whenShort(e.inDays)}
+                      </Text>
+                    </View>
                   </View>
-                  <Text
-                    variant="bodyStrong"
-                    tone="ink"
-                    numberOfLines={1}
-                    style={styles.upcomingTitle}
-                  >
-                    {a.service}
+                  <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.eventTitle}>
+                    {e.title}
                   </Text>
                   <Text variant="caption" tone="muted" numberOfLines={1}>
-                    {a.proName}
-                  </Text>
-                  <Text variant="bodyStrong" tone="ink" style={styles.upcomingPrice}>
-                    {formatPrice(a.price)}
+                    {e.subtitle}
                   </Text>
                 </View>
               ))}
@@ -246,17 +252,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   upcoming: { paddingHorizontal: space(3), gap: space(1.5), paddingBottom: space(2.5) },
-  upcomingCard: {
-    width: 200,
+  eventCard: {
+    width: 210,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.line,
     padding: space(2),
   },
-  upcomingTop: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: space(1) },
-  upcomingTitle: { marginBottom: 2 },
-  upcomingPrice: { marginTop: space(1) },
+  eventTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: space(1.5),
+  },
+  eventIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  whenChip: {
+    backgroundColor: colors.bgSunken,
+    paddingHorizontal: space(1.25),
+    paddingVertical: space(0.5),
+    borderRadius: radius.pill,
+  },
+  eventTitle: { marginBottom: 2 },
   howLabel: { paddingHorizontal: space(3), marginBottom: space(1.25) },
   actions: {
     flexDirection: 'row',

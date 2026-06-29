@@ -6,3 +6,4 @@ export { Screen } from './Screen';
 export { ProCard } from './ProCard';
 export { Placeholder } from './Placeholder';
 export { StackHeader } from './StackHeader';
+export { Segmented } from './Segmented';

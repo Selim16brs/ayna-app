@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import {
   APPOINTMENTS,
   type Appointment,
@@ -11,16 +11,12 @@ import {
 import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
 import { colors, radius, shadow, space } from '../../src/theme';
-import { Screen, Text } from '../../src/ui';
+import { Screen, Segmented, Text } from '../../src/ui';
 
-const TABS: {
-  source: BookingSource;
-  labelKey: MessageKey;
-  icon: keyof typeof Ionicons.glyphMap;
-}[] = [
-  { source: 'direct', labelKey: 'bookings.tab.direct', icon: 'search-outline' },
-  { source: 'photo_quote', labelKey: 'bookings.tab.photo', icon: 'camera-outline' },
-  { source: 'demand', labelKey: 'bookings.tab.demand', icon: 'pricetag-outline' },
+const TABS: { source: BookingSource; labelKey: MessageKey }[] = [
+  { source: 'direct', labelKey: 'bookings.tab.direct' },
+  { source: 'photo_quote', labelKey: 'bookings.tab.photo' },
+  { source: 'demand', labelKey: 'bookings.tab.demand' },
 ];
 
 const STATUS: Record<BookingStatus, { key: MessageKey; bg: string; fg: string }> = {
@@ -40,22 +36,12 @@ export default function BookingsScreen() {
         {t('nav.bookings')}
       </Text>
 
-      <View style={styles.tabs}>
-        {TABS.map((tab) => {
-          const on = tab.source === active;
-          return (
-            <Pressable
-              key={tab.source}
-              onPress={() => setActive(tab.source)}
-              style={[styles.tab, on && styles.tabActive]}
-            >
-              <Ionicons name={tab.icon} size={15} color={on ? colors.onColor : colors.inkSoft} />
-              <Text variant="caption" tone={on ? 'onColor' : 'inkSoft'}>
-                {t(tab.labelKey)}
-              </Text>
-            </Pressable>
-          );
-        })}
+      <View style={styles.segmentWrap}>
+        <Segmented
+          options={TABS.map((tab) => ({ value: tab.source, label: t(tab.labelKey) }))}
+          value={active}
+          onChange={setActive}
+        />
       </View>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
@@ -115,25 +101,7 @@ function BookingCard({ appt }: { appt: Appointment }) {
 
 const styles = StyleSheet.create({
   title: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
-  tabs: {
-    flexDirection: 'row',
-    gap: space(1),
-    paddingHorizontal: space(3),
-    marginBottom: space(2),
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: space(1.25),
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  tabActive: { backgroundColor: colors.rose, borderColor: colors.rose },
+  segmentWrap: { paddingHorizontal: space(3), marginBottom: space(2) },
   list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
   empty: { alignItems: 'center', justifyContent: 'center', paddingTop: space(8), gap: space(1.5) },
   emptyText: {},

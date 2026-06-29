@@ -121,7 +121,7 @@ export const tr = {
   'booking.status.completed': 'Tamamlandı',
 
   // Ana ekran — yaklaşan etkinlikler
-  'home.upcoming_events': 'Yaklaşan randevuların',
+  'home.upcoming_events': 'Yaklaşan etkinlikler',
   'home.upcoming_empty': 'Yaklaşan randevun yok',
 
   // Circle

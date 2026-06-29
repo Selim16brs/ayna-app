@@ -58,18 +58,33 @@ export default function ProfileScreen() {
           <Stat value="5" label={t('profile.stat.reviews')} />
         </View>
 
-        <View style={styles.menu}>
-          {MENU.map((m) => (
-            <Pressable key={m.key} style={styles.menuRow} onPress={() => onPress(m.key)}>
-              <View style={[styles.menuIcon, m.danger && styles.menuIconDanger]}>
-                <Ionicons name={m.icon} size={19} color={m.danger ? colors.danger : colors.plum} />
+        <View style={styles.group}>
+          {MENU.filter((m) => !m.danger).map((m, i, arr) => (
+            <Pressable
+              key={m.key}
+              style={[styles.row, i < arr.length - 1 && styles.rowBorder]}
+              onPress={() => onPress(m.key)}
+            >
+              <View style={styles.menuIcon}>
+                <Ionicons name={m.icon} size={18} color={colors.plum} />
               </View>
-              <Text variant="bodyStrong" tone={m.danger ? 'rose' : 'ink'} style={styles.menuLabel}>
+              <Text variant="bodyStrong" tone="ink" style={styles.menuLabel}>
                 {t(m.key)}
               </Text>
-              {!m.danger ? (
-                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-              ) : null}
+              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={[styles.group, styles.groupGap]}>
+          {MENU.filter((m) => m.danger).map((m) => (
+            <Pressable key={m.key} style={styles.row} onPress={() => onPress(m.key)}>
+              <View style={[styles.menuIcon, styles.menuIconDanger]}>
+                <Ionicons name={m.icon} size={18} color={colors.danger} />
+              </View>
+              <Text variant="bodyStrong" tone="rose" style={styles.menuLabel}>
+                {t(m.key)}
+              </Text>
             </Pressable>
           ))}
         </View>
@@ -119,17 +134,22 @@ const styles = StyleSheet.create({
   },
   stat: { flex: 1, alignItems: 'center' },
   statDivider: { width: 1, height: 30, backgroundColor: colors.line },
-  menu: { gap: space(1) },
-  menuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1.5),
+  group: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.line,
-    padding: space(1.75),
+    overflow: 'hidden',
   },
+  groupGap: { marginTop: space(2) },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space(1.5),
+    paddingHorizontal: space(1.75),
+    paddingVertical: space(1.5),
+  },
+  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
   menuIcon: {
     width: 38,
     height: 38,
