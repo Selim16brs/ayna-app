@@ -43,6 +43,7 @@ export default function DiscoverScreen() {
     [bookings, moments, routines],
   );
   const unread = useStore(selectUnreadCount);
+  const userName = useStore((s) => s.currentUser?.name)?.split(' ')[0] ?? 'Aigerim';
   const categories = CATEGORIES;
   const featured = useProfessionals().slice(0, 8);
 
@@ -56,7 +57,7 @@ export default function DiscoverScreen() {
               {t('home.greeting')}
             </Text>
             <Text variant="title" tone="rose">
-              Aigerim
+              {userName}
             </Text>
           </View>
           <View style={styles.headerActions}>

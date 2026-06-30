@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { MessageKey } from '@ayna/i18n';
-import { api } from './api';
+import { api, type AuthSession, type AuthUser } from './api';
 import {
   type AppNotification,
   type Appointment,
@@ -88,6 +88,12 @@ interface State {
   ledger: LedgerEntry[];
   userReviews: Record<string, Review[]>;
   notifications: AppNotification[];
+  token: string | null;
+  currentUser: AuthUser | null;
+
+  // auth
+  setAuth: (session: AuthSession) => void;
+  logout: () => void;
 
   // bookings
   addBooking: (input: AddBookingInput) => string;
@@ -132,6 +138,11 @@ export const useStore = create<State>((set, get) => ({
   ledger: SEED_LEDGER,
   userReviews: {},
   notifications: SEED_NOTIFICATIONS,
+  token: null,
+  currentUser: null,
+
+  setAuth: (session) => set({ token: session.token, currentUser: session.user }),
+  logout: () => set({ token: null, currentUser: null }),
 
   addBooking: (input) => {
     const id = nextId('bk');

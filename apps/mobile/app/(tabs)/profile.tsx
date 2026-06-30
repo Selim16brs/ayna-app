@@ -47,6 +47,8 @@ export default function ProfileScreen() {
   const reviewCount = useStore((s) =>
     Object.values(s.userReviews).reduce((n, a) => n + a.length, 0),
   );
+  const userName = useStore((s) => s.currentUser?.name) ?? 'Aigerim';
+  const logout = useStore((s) => s.logout);
 
   const appearance: 'system' | ThemeMode = preference ?? 'system';
   const onAppearance = (value: 'system' | ThemeMode) =>
@@ -61,7 +63,10 @@ export default function ProfileScreen() {
     else if (key === 'profile.menu.notifications') router.push('/notifications');
     else if (key === 'profile.menu.help') router.push('/profile/help');
     else if (key === 'profile.menu.language') router.push('/language');
-    else if (key === 'profile.menu.logout') router.replace('/');
+    else if (key === 'profile.menu.logout') {
+      logout();
+      router.replace('/');
+    }
   };
 
   return (
@@ -75,7 +80,7 @@ export default function ProfileScreen() {
           </LinearGradient>
           <View style={styles.profileText}>
             <Text variant="h2" tone="rose">
-              Aigerim
+              {userName}
             </Text>
             <Pressable onPress={() => router.push('/profile/edit')}>
               <Text variant="caption" tone="rose">

@@ -41,6 +41,28 @@ export interface ApiProfessional {
   badge: 'campaign' | 'verified' | 'today';
 }
 
+export interface AuthUser {
+  id: string;
+  name: string;
+  email?: string;
+  city?: string;
+  role: string;
+  phone: string;
+}
+
+export interface AuthSession {
+  token: string;
+  user: AuthUser;
+}
+
+export interface RegisterInput {
+  name: string;
+  phone: string;
+  password: string;
+  email?: string;
+  city?: string;
+}
+
 export interface ApiQuote {
   id: string;
   proId: string;
@@ -66,4 +88,9 @@ export const api = {
   bookings: () => get<Appointment[]>('/bookings'),
   createBooking: (b: Appointment) => post<Appointment>('/bookings', b),
   cancelBooking: (id: string) => post<Appointment>(`/bookings/${id}/cancel`, {}),
+
+  // Auth (parola tabanlı; telefon sunucuda şifreli saklanır)
+  register: (input: RegisterInput) => post<AuthSession>('/auth/register', input),
+  login: (input: { identifier: string; password: string }) =>
+    post<AuthSession>('/auth/login', input),
 };

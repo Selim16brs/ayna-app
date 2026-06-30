@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
+import { api } from '../../src/api';
 import { CITIES } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, Segmented, StackHeader, Text } from '../../src/ui';
@@ -16,13 +18,46 @@ export default function CustomerAuthScreen() {
   const router = useRouter();
   const { t } = useLocale();
   const styles = useThemedStyles(makeStyles);
+  const setAuth = useStore((s) => s.setAuth);
   const [mode, setMode] = useState<Mode>('register');
   const [fields, setFields] = useState<Record<string, string>>({});
   const [gender, setGender] = useState<Gender>('female');
   const [city, setCity] = useState<string | null>(null);
   const [terms, setTerms] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const set = (k: string, v: string) => setFields((p) => ({ ...p, [k]: v }));
+
+  async function submit() {
+    setBusy(true);
+    try {
+      const session =
+        mode === 'register'
+          ? await api.register({
+              name: (fields.name ?? '').trim(),
+              phone: (fields.phone ?? '').trim(),
+              password: fields.password ?? '',
+              ...(fields.email?.trim() ? { email: fields.email.trim() } : {}),
+              ...(city ? { city } : {}),
+            })
+          : await api.login({
+              identifier: (fields.id ?? '').trim(),
+              password: fields.password ?? '',
+            });
+      setAuth(session);
+      router.replace('/discover');
+    } catch (e) {
+      const msg = String((e as Error).message ?? '');
+      if (msg.includes('409') || msg.includes('401') || msg.includes('400')) {
+        Alert.alert(t(mode === 'register' ? 'auth.error.taken' : 'auth.error.bad'));
+      } else {
+        // Ağ hatası → çevrimdışı demo akışı engellenmesin
+        router.replace('/discover');
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const valid =
     mode === 'register'
@@ -147,9 +182,9 @@ export default function CustomerAuthScreen() {
       <View style={styles.footer}>
         <Button
           label={mode === 'register' ? t('auth.tab.register') : t('auth.tab.login')}
-          variant={valid ? 'primary' : 'secondary'}
-          disabled={!valid}
-          onPress={() => router.replace('/discover')}
+          variant={valid && !busy ? 'primary' : 'secondary'}
+          disabled={!valid || busy}
+          onPress={submit}
         />
       </View>
     </Screen>

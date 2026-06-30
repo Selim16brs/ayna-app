@@ -273,6 +273,8 @@ export const tr = {
   'auth.section.location': 'Konum',
   'auth.terms.accept': 'Kullanım koşulları ve gizlilik politikasını okudum, onaylıyorum.',
   'auth.city.required': 'Lütfen şehrini seç',
+  'auth.error.taken': 'Bu telefon veya e-posta zaten kayıtlı',
+  'auth.error.bad': 'E-posta/telefon veya şifre hatalı',
 
   // İşletme (satıcı) kaydı
   'biz.entry.title': 'İşletme kaydı',

@@ -30,6 +30,11 @@ model User {
   // Telefon uygulama katmanında şifreli saklanır (S2). Aramayı destekleyen hash ayrı tutulur.
   phoneHash     String     @unique @map("phone_hash")
   phoneEnc      Bytes      @map("phone_enc")
+  // Hesap (parola tabanlı kayıt/giriş — müşteri tarafı OTP'siz)
+  name          String     @default("")
+  email         String?    @unique
+  city          String?
+  passwordHash  String     @default("") @map("password_hash")
   role          UserRole   @default(user)
   status        UserStatus @default(active)
   defaultLocale String     @default("ru") @map("default_locale")
