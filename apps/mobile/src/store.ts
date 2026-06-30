@@ -98,6 +98,7 @@ interface State {
   // bookings
   addBooking: (input: AddBookingInput) => string;
   cancelBooking: (id: string) => void;
+  acceptAlternative: (id: string) => void;
   reviewBooking: (id: string, rating: number, text: string) => void;
   hydrateBookings: () => Promise<void>;
 
@@ -161,15 +162,16 @@ export const useStore = create<State>((set, get) => ({
       dateLabel: input.dateLabel,
       inDays: input.inDays ?? 2,
       price: input.price,
-      status: input.status ?? 'confirmed',
+      // §1.6 — yeni randevu uzman onayı bekler
+      status: input.status ?? 'awaiting_provider',
     };
     set((s) => ({ bookings: [booking, ...s.bookings] }));
     // Backend'e yaz (best-effort; offline'da sessizce geçilir)
     void api.createBooking(booking).catch(() => undefined);
     get().pushNotification({
       type: 'booking',
-      title: 'Randevun oluşturuldu',
-      body: `${input.proName} · ${input.dateLabel} · ${input.service}`,
+      title: 'Randevu isteğin gönderildi',
+      body: `${input.proName} · ${input.dateLabel} · uzman onayı bekleniyor`,
       dateLabel: 'Az önce',
       icon: 'calendar-outline',
     });
@@ -181,6 +183,23 @@ export const useStore = create<State>((set, get) => ({
       bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b)),
     }));
     void api.cancelBooking(id).catch(() => undefined);
+  },
+
+  // §1.6 — kullanıcı uzmanın önerdiği alternatif saati kabul eder
+  acceptAlternative: (id) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) =>
+        b.id === id
+          ? {
+              ...b,
+              status: 'confirmed',
+              dateLabel: b.proposedDateLabel ?? b.dateLabel,
+              proposedDateLabel: undefined,
+            }
+          : b,
+      ),
+    }));
+    void api.acceptBooking(id).catch(() => undefined);
   },
 
   hydrateBookings: async () => {

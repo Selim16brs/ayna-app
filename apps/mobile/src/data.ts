@@ -608,7 +608,13 @@ export function getProfessionalDetail(id: string): ProfessionalDetail {
 
 // ── Randevular (store tohumu) ────────────────────────────────────────────
 export type BookingSource = 'direct' | 'photo_quote' | 'demand';
-export type BookingStatus = 'confirmed' | 'pending' | 'completed' | 'cancelled';
+export type BookingStatus =
+  | 'confirmed'
+  | 'pending'
+  | 'completed'
+  | 'cancelled'
+  | 'awaiting_provider'
+  | 'alternative_proposed';
 
 export interface Appointment {
   id: string;
@@ -619,6 +625,7 @@ export interface Appointment {
   proImage: string;
   uzmanName?: string; // hangi uzmandan
   dateLabel: string; // hangi saatte
+  proposedDateLabel?: string; // uzmanın önerdiği alternatif (§1.6)
   inDays: number; // sıralama için (negatif = geçmiş)
   price: number; // kaç paraya
   status: BookingStatus;

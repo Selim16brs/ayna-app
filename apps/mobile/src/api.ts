@@ -140,6 +140,11 @@ export const api = {
   bookings: () => get<Appointment[]>('/bookings'),
   createBooking: (b: Appointment) => post<Appointment>('/bookings', b),
   cancelBooking: (id: string) => post<Appointment>(`/bookings/${id}/cancel`, {}),
+  // Onay/alternatif pazarlık döngüsü (§1.6)
+  approveBooking: (id: string) => post<Appointment>(`/bookings/${id}/approve`, {}),
+  proposeBooking: (id: string, dateLabel: string) =>
+    post<Appointment>(`/bookings/${id}/propose`, { dateLabel }),
+  acceptBooking: (id: string) => post<Appointment>(`/bookings/${id}/accept`, {}),
 
   // Auth (parola tabanlı; telefon sunucuda şifreli saklanır)
   register: (input: RegisterInput) => post<AuthSession>('/auth/register', input),

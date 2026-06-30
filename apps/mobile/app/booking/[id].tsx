@@ -23,6 +23,7 @@ export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
   const cancelBooking = useStore((s) => s.cancelBooking);
+  const acceptAlternative = useStore((s) => s.acceptAlternative);
 
   if (!booking) {
     return (
@@ -54,7 +55,11 @@ export default function BookingDetailScreen() {
     ]);
   }
 
-  const showActions = booking.status === 'confirmed' || booking.status === 'pending';
+  const canCancel =
+    booking.status === 'confirmed' ||
+    booking.status === 'pending' ||
+    booking.status === 'awaiting_provider' ||
+    booking.status === 'alternative_proposed';
   const showContact = booking.status === 'confirmed';
 
   return (
@@ -124,6 +129,33 @@ export default function BookingDetailScreen() {
           </>
         ) : null}
 
+        {/* Onay bekleniyor (§1.6) */}
+        {booking.status === 'awaiting_provider' ? (
+          <View style={styles.note}>
+            <Ionicons name="hourglass-outline" size={14} color={colors.gold} />
+            <Text variant="caption" tone="muted" style={styles.noteText}>
+              {t('booking.detail.awaiting_note')}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* Uzmanın önerdiği alternatif (§1.6) */}
+        {booking.status === 'alternative_proposed' && booking.proposedDateLabel ? (
+          <View style={[styles.proposedCard, shadow.soft]}>
+            <Text variant="caption" tone="muted">
+              {t('booking.detail.proposed')}
+            </Text>
+            <Text variant="h2" tone="ink" style={styles.proposedTime}>
+              {booking.proposedDateLabel}
+            </Text>
+            <Button
+              label={t('booking.detail.accept')}
+              variant="primary"
+              onPress={() => id && acceptAlternative(id)}
+            />
+          </View>
+        ) : null}
+
         {/* Aksiyonlar */}
         <View style={styles.actions}>
           {booking.status === 'completed' && !booking.reviewed ? (
@@ -141,7 +173,7 @@ export default function BookingDetailScreen() {
             variant="ghost"
             onPress={() => router.push('/professional/' + booking.proId)}
           />
-          {showActions ? (
+          {canCancel ? (
             <Button label={t('booking.detail.cancel')} variant="secondary" onPress={onCancel} />
           ) : null}
         </View>
@@ -188,6 +220,8 @@ const makeStatus = (
   pending: { key: 'booking.status.pending', bg: colors.goldSoft, fg: colors.gold },
   completed: { key: 'booking.status.completed', bg: colors.surfaceMuted, fg: colors.inkSoft },
   cancelled: { key: 'booking.status.cancelled', bg: colors.dangerSoft, fg: colors.danger },
+  awaiting_provider: { key: 'booking.status.awaiting', bg: colors.goldSoft, fg: colors.gold },
+  alternative_proposed: { key: 'booking.status.alternative', bg: colors.blueSoft, fg: colors.blue },
 });
 
 const makeStyles = (colors: ColorTokens) =>
@@ -256,5 +290,13 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1),
     },
     noteText: { flex: 1 },
+    proposedCard: {
+      marginTop: space(2),
+      backgroundColor: colors.blueSoft,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1),
+    },
+    proposedTime: { marginBottom: space(0.5) },
     actions: { marginTop: space(3), gap: space(1.25) },
   });

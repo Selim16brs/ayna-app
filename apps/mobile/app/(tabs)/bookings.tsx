@@ -28,6 +28,8 @@ const makeStatus = (
   pending: { key: 'booking.status.pending', bg: colors.goldSoft, fg: colors.gold },
   completed: { key: 'booking.status.completed', bg: colors.surfaceMuted, fg: colors.inkSoft },
   cancelled: { key: 'booking.status.cancelled', bg: colors.dangerSoft, fg: colors.danger },
+  awaiting_provider: { key: 'booking.status.awaiting', bg: colors.goldSoft, fg: colors.gold },
+  alternative_proposed: { key: 'booking.status.alternative', bg: colors.blueSoft, fg: colors.blue },
 });
 
 export default function BookingsScreen() {

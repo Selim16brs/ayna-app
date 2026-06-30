@@ -35,14 +35,42 @@ export class BookingsService {
   }
 
   async cancel(id: string) {
+    return this.transition(id, { status: 'cancelled' });
+  }
+
+  // §1.6 — uzman randevuyu onaylar
+  async approve(id: string) {
+    return this.transition(id, { status: 'confirmed', proposedDateLabel: null });
+  }
+
+  // §1.6 — uzman alternatif saat önerir
+  async propose(id: string, dateLabel: string) {
+    return this.transition(id, { status: 'alternative_proposed', proposedDateLabel: dateLabel });
+  }
+
+  // §1.6 — kullanıcı önerilen alternatifi kabul eder (tarih güncellenir, onaylanır)
+  async accept(id: string) {
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (!b)
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    return this.transition(id, {
+      status: 'confirmed',
+      dateLabel: b.proposedDateLabel ?? b.dateLabel,
+      proposedDateLabel: null,
+    });
+  }
+
+  // §1.6 — kullanıcı karşı öneri yapar (yeni tarih, tekrar uzman onayına döner)
+  async counter(id: string, dateLabel: string) {
+    return this.transition(id, { status: 'awaiting_provider', dateLabel, proposedDateLabel: null });
+  }
+
+  private async transition(id: string, data: Record<string, unknown>) {
     const existing = await this.prisma.booking.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     }
-    const row = await this.prisma.booking.update({
-      where: { id },
-      data: { status: 'cancelled' },
-    });
+    const row = await this.prisma.booking.update({ where: { id }, data });
     return mapBooking(row);
   }
 }
@@ -57,6 +85,7 @@ function mapBooking(b: Booking) {
     proImage: b.proImage,
     uzmanName: b.uzmanName ?? undefined,
     dateLabel: b.dateLabel,
+    proposedDateLabel: b.proposedDateLabel ?? undefined,
     inDays: b.inDays,
     price: Number(b.price),
     status: b.status,

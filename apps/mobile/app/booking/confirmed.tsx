@@ -31,10 +31,10 @@ export default function ConfirmedScreen() {
           <Ionicons name="checkmark" size={40} color={colors.onColor} />
         </View>
         <Text variant="title" tone="ink" style={styles.title}>
-          {t('booking.confirmed.title')}
+          {t('quote.sent.title')}
         </Text>
         <Text variant="caption" tone="muted" style={styles.subtitle}>
-          {t('booking.confirmed.subtitle')}
+          {t('booking.confirmed.awaiting')}
         </Text>
 
         <View style={[styles.card, shadow.card]}>
@@ -60,13 +60,8 @@ export default function ConfirmedScreen() {
             icon="pricetag-outline"
             labelKey="booking.field.price"
             value={formatPrice(price)}
+            last
           />
-          <Field
-            icon="location-outline"
-            labelKey="booking.field.address"
-            value="Almatı, Dostyk 162"
-          />
-          <Field icon="call-outline" labelKey="booking.field.phone" value="+7 700 123 45 67" last />
         </View>
 
         <View style={styles.note}>

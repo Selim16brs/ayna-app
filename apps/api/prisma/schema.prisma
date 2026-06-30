@@ -160,24 +160,27 @@ enum BookingStatus {
   pending
   completed
   cancelled
+  awaiting_provider
+  alternative_proposed
 }
 
 // Randevu kaydı. id istemci tarafından üretilir (mobil store ile tutarlı).
-// Not: auth dilimi gelince userId eklenecek; şimdilik anonim.
+// Onay/alternatif pazarlık döngüsü (Build Brief §1.6).
 model Booking {
-  id        String        @id
-  source    BookingSource
-  service   String
-  proId     String?       @map("pro_id")
-  proName   String        @map("pro_name")
-  proImage  String        @map("pro_image")
-  uzmanName String?       @map("uzman_name")
-  dateLabel String        @map("date_label")
-  inDays    Int           @map("in_days")
-  price     Decimal       @db.Decimal(12, 2)
-  status    BookingStatus @default(confirmed)
-  reviewed  Boolean       @default(false)
-  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                 String        @id
+  source             BookingSource
+  service            String
+  proId              String?       @map("pro_id")
+  proName            String        @map("pro_name")
+  proImage           String        @map("pro_image")
+  uzmanName          String?       @map("uzman_name")
+  dateLabel          String        @map("date_label")
+  proposedDateLabel  String?       @map("proposed_date_label")
+  inDays             Int           @map("in_days")
+  price              Decimal       @db.Decimal(12, 2)
+  status             BookingStatus @default(confirmed)
+  reviewed           Boolean       @default(false)
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([status])
   @@map("bookings")

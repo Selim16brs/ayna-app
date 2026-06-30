@@ -389,6 +389,12 @@ export const tr = {
   'booking.detail.rebook': 'Tekrar randevu al',
   'booking.detail.source': 'Randevu yolu',
   'booking.status.cancelled': 'İptal edildi',
+  'booking.status.awaiting': 'Onay bekliyor',
+  'booking.status.alternative': 'Alternatif önerildi',
+  'booking.detail.awaiting_note': 'Uzmanın onayı bekleniyor.',
+  'booking.detail.proposed': 'Uzmanın önerdiği yeni saat',
+  'booking.detail.accept': 'Bu saati kabul et',
+  'booking.confirmed.awaiting': 'Uzman onayı bekleniyor — onaylanınca adres ve telefon paylaşılır',
 
   // Değerlendirme akışı
   'review.title': 'Değerlendir',
