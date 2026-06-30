@@ -80,6 +80,22 @@ export default function ReportsScreen() {
           <Ionicons name="chevron-forward" size={18} color={colors.muted} />
         </PressableScale>
 
+        {/* Galeri yönetimi girişi (§6.A) */}
+        <PressableScale style={styles.agendaLink} onPress={() => router.push('/seller/gallery')}>
+          <View style={[styles.agendaIcon, { backgroundColor: colors.plum }]}>
+            <Ionicons name="images" size={18} color={colors.onColor} />
+          </View>
+          <View style={styles.agendaText}>
+            <Text variant="bodyStrong" tone="ink">
+              {t('gallery.manage_title')}
+            </Text>
+            <Text variant="caption" tone="muted">
+              {t('gallery.manage_hint')}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+        </PressableScale>
+
         <Segmented
           options={[
             { value: 'week', label: t('reports.period.week') },

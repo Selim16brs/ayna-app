@@ -374,6 +374,11 @@ export const tr = {
   'reports.live.noshow': 'Gelmeyen',
   'reports.live.revenue': 'Tamamlanan gelir',
   'reports.agenda_sub': 'Tüm uzmanların randevuları tek ekranda',
+  // §6.A — galeri yönetimi
+  'gallery.manage_title': 'Galeri yönetimi',
+  'gallery.manage_hint': 'İç mekân, ekipman ve yapılan işleri ekle',
+  'gallery.add': 'Foto ekle',
+  'gallery.remove_confirm': 'Bu fotoğrafı kaldır?',
   // §5 — ortak takvim (agenda) + offline randevu
   'agenda.title': 'Ortak takvim',
   'agenda.add_offline': 'Offline randevu',
