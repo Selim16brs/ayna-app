@@ -166,7 +166,8 @@ export const api = {
   // Randevular (yazma yolu) — id mobilde üretilir, API upsert ile idempotent
   bookings: () => get<Appointment[]>('/bookings'),
   createBooking: (b: Appointment) => post<Appointment>('/bookings', b),
-  cancelBooking: (id: string) => post<Appointment>(`/bookings/${id}/cancel`, {}),
+  cancelBooking: (id: string, reason?: string) =>
+    post<Appointment>(`/bookings/${id}/cancel`, reason ? { reason } : {}),
   // Onay/alternatif pazarlık döngüsü (§1.6)
   approveBooking: (id: string) => post<Appointment>(`/bookings/${id}/approve`, {}),
   proposeBooking: (id: string, dateLabel: string) =>

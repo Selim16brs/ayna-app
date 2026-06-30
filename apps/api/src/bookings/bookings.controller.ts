@@ -2,6 +2,8 @@ import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
+  type CancelInput,
+  cancelSchema,
   type CreateBookingInput,
   createBookingSchema,
   type DateLabelInput,
@@ -24,9 +26,19 @@ export class BookingsController {
     return this.bookings.create(body);
   }
 
+  // §6.C — iptal (opsiyonel sebep gövdede)
   @Post(':id/cancel')
-  cancel(@Param('id') id: string) {
-    return this.bookings.cancel(id);
+  cancel(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(cancelSchema)) body: CancelInput,
+  ) {
+    return this.bookings.cancel(id, body.reason);
+  }
+
+  // §6.C — uzman/işletme "gelmedi" işaretler
+  @Post(':id/no-show')
+  noShow(@Param('id') id: string) {
+    return this.bookings.noShow(id);
   }
 
   // §1.6 — onay/alternatif pazarlık döngüsü

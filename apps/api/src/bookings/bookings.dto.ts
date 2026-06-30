@@ -19,11 +19,16 @@ export const createBookingSchema = z.object({
       'cancelled',
       'awaiting_provider',
       'alternative_proposed',
+      'no_show',
     ])
     .optional(),
 });
 
 export const dateLabelSchema = z.object({ dateLabel: z.string().min(1) });
 
+// §6.C — iptal sebebi (opsiyonel)
+export const cancelSchema = z.object({ reason: z.string().max(300).optional() });
+
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type DateLabelInput = z.infer<typeof dateLabelSchema>;
+export type CancelInput = z.infer<typeof cancelSchema>;

@@ -34,8 +34,14 @@ export class BookingsService {
     return mapBooking(row);
   }
 
-  async cancel(id: string) {
-    return this.transition(id, { status: 'cancelled' });
+  // §6.C — iptal (opsiyonel "neden gelemiyorum" sebebiyle)
+  async cancel(id: string, reason?: string) {
+    return this.transition(id, { status: 'cancelled', cancelReason: reason ?? null });
+  }
+
+  // §6.C — uzman/işletme randevuyu "gelmedi" işaretler (CRM tarafı)
+  async noShow(id: string) {
+    return this.transition(id, { status: 'no_show' });
   }
 
   // §1.6 — uzman randevuyu onaylar
@@ -89,6 +95,7 @@ function mapBooking(b: Booking) {
     inDays: b.inDays,
     price: Number(b.price),
     status: b.status,
+    cancelReason: b.cancelReason ?? undefined,
     reviewed: b.reviewed,
   };
 }

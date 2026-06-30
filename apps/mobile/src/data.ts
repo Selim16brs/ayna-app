@@ -660,7 +660,8 @@ export type BookingStatus =
   | 'completed'
   | 'cancelled'
   | 'awaiting_provider'
-  | 'alternative_proposed';
+  | 'alternative_proposed'
+  | 'no_show';
 
 export interface Appointment {
   id: string;
@@ -675,6 +676,7 @@ export interface Appointment {
   inDays: number; // sıralama için (negatif = geçmiş)
   price: number; // kaç paraya
   status: BookingStatus;
+  cancelReason?: string; // §6.C — "neden gelemiyorum"
   reviewed?: boolean;
 }
 

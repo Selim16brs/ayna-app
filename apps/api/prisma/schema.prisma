@@ -168,6 +168,7 @@ enum BookingStatus {
   cancelled
   awaiting_provider
   alternative_proposed
+  no_show
 }
 
 // Randevu kaydı. id istemci tarafından üretilir (mobil store ile tutarlı).
@@ -185,6 +186,8 @@ model Booking {
   inDays             Int           @map("in_days")
   price              Decimal       @db.Decimal(12, 2)
   status             BookingStatus @default(confirmed)
+  // §6.C — iptal sebebi (kullanıcı "neden gelemiyorum" iletebilir)
+  cancelReason       String?       @map("cancel_reason")
   reviewed           Boolean       @default(false)
   createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 

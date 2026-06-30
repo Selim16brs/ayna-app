@@ -41,17 +41,21 @@ export default function BookingDetailScreen() {
 
   const st = makeStatus(colors)[booking.status];
 
+  // §6.C — iptal: "neden gelemiyorum" sebebi seçilebilir (opsiyonel)
+  function doCancel(reason?: string) {
+    if (id) cancelBooking(id, reason);
+    router.back();
+  }
+
   function onCancel() {
-    Alert.alert(t('booking.detail.cancel'), t('booking.detail.cancel_confirm'), [
+    const late = booking?.inDays === 0; // aynı gün → geç iptal uyarısı (politika)
+    const msg = late ? t('booking.cancel.late_warn') : t('booking.cancel.prompt');
+    Alert.alert(t('booking.detail.cancel'), msg, [
+      { text: t('booking.cancel.reason.plan'), onPress: () => doCancel(t('booking.cancel.reason.plan')) },
+      { text: t('booking.cancel.reason.time'), onPress: () => doCancel(t('booking.cancel.reason.time')) },
+      { text: t('booking.cancel.reason.price'), onPress: () => doCancel(t('booking.cancel.reason.price')) },
+      { text: t('booking.cancel.no_reason'), style: 'destructive', onPress: () => doCancel(undefined) },
       { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('booking.detail.cancel'),
-        style: 'destructive',
-        onPress: () => {
-          if (id) cancelBooking(id);
-          router.back();
-        },
-      },
     ]);
   }
 
@@ -156,6 +160,31 @@ export default function BookingDetailScreen() {
           </View>
         ) : null}
 
+        {/* §6.C — iptal sebebi (kullanıcı ilettiyse) */}
+        {booking.status === 'cancelled' && booking.cancelReason ? (
+          <View style={[styles.reasonCard, shadow.soft]}>
+            <View style={styles.reasonHead}>
+              <Ionicons name="chatbox-ellipses-outline" size={14} color={colors.muted} />
+              <Text variant="caption" tone="muted">
+                {t('booking.cancel.reason_label')}
+              </Text>
+            </View>
+            <Text variant="body" tone="ink">
+              {booking.cancelReason}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* §6.C — gelmedi (no-show) bilgisi */}
+        {booking.status === 'no_show' ? (
+          <View style={styles.note}>
+            <Ionicons name="alert-circle-outline" size={14} color={colors.danger} />
+            <Text variant="caption" tone="muted" style={styles.noteText}>
+              {t('booking.noshow_note')}
+            </Text>
+          </View>
+        ) : null}
+
         {/* Aksiyonlar */}
         <View style={styles.actions}>
           {booking.status === 'completed' && !booking.reviewed ? (
@@ -222,6 +251,7 @@ const makeStatus = (
   cancelled: { key: 'booking.status.cancelled', bg: colors.dangerSoft, fg: colors.danger },
   awaiting_provider: { key: 'booking.status.awaiting', bg: colors.goldSoft, fg: colors.gold },
   alternative_proposed: { key: 'booking.status.alternative', bg: colors.blueSoft, fg: colors.blue },
+  no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
 });
 
 const makeStyles = (colors: ColorTokens) =>
@@ -298,5 +328,13 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1),
     },
     proposedTime: { marginBottom: space(0.5) },
+    reasonCard: {
+      marginTop: space(2),
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(0.75),
+    },
+    reasonHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
     actions: { marginTop: space(3), gap: space(1.25) },
   });

@@ -411,6 +411,17 @@ export const tr = {
   'booking.status.cancelled': 'İptal edildi',
   'booking.status.awaiting': 'Onay bekliyor',
   'booking.status.alternative': 'Alternatif önerildi',
+  'booking.status.no_show': 'Gelmedi',
+  // §6.C — iptal sebebi + politika
+  'booking.cancel.prompt': 'İptal nedenini seçebilirsin (opsiyonel).',
+  'booking.cancel.late_warn':
+    'Randevun bugün. Geç iptal sadakat puanını etkileyebilir.',
+  'booking.cancel.reason.plan': 'Planım değişti',
+  'booking.cancel.reason.time': 'Başka bir zaman istiyorum',
+  'booking.cancel.reason.price': 'Fiyat/hizmet uygun değil',
+  'booking.cancel.no_reason': 'Sebep belirtmeden iptal et',
+  'booking.cancel.reason_label': 'İptal nedenin',
+  'booking.noshow_note': 'Bu randevu “gelmedi” olarak işaretlendi.',
   'booking.detail.awaiting_note': 'Uzmanın onayı bekleniyor.',
   'booking.detail.proposed': 'Uzmanın önerdiği yeni saat',
   'booking.detail.accept': 'Bu saati kabul et',
