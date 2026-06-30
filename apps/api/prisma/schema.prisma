@@ -334,3 +334,28 @@ model MarketPrice {
   @@unique([category, city])
   @@map("market_prices")
 }
+
+// --- Çift-kör + eşikli puanlama (Build Brief §1.8) ---
+// Puanlar iki taraf da verene kadar gizli; agregat eşik aşılınca görünür.
+model Rating {
+  id        String   @id @default(uuid()) @db.Uuid
+  bookingId String   @map("booking_id")
+  raterRole String   @map("rater_role") // 'user' | 'specialist'
+  subjectId String   @map("subject_id") // değerlendirilen (uzman/işletme veya kullanıcı)
+  score     Int
+  comment   String   @default("")
+  visible   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([subjectId, visible])
+  @@index([bookingId])
+  @@map("ratings")
+}
+
+// Admin ayarlanabilir parametreler (örn. puan görünürlük eşiği).
+model Setting {
+  key      String @id
+  intValue Int    @map("int_value")
+
+  @@map("settings")
+}
