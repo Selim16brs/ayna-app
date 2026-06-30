@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { MessageKey } from '@ayna/i18n';
+import { api } from './api';
 import {
   type AppNotification,
   type Appointment,
@@ -92,6 +93,7 @@ interface State {
   addBooking: (input: AddBookingInput) => string;
   cancelBooking: (id: string) => void;
   reviewBooking: (id: string, rating: number, text: string) => void;
+  hydrateBookings: () => Promise<void>;
 
   // favorites
   toggleFavorite: (proId: string) => void;
@@ -147,6 +149,8 @@ export const useStore = create<State>((set, get) => ({
       status: input.status ?? 'confirmed',
     };
     set((s) => ({ bookings: [booking, ...s.bookings] }));
+    // Backend'e yaz (best-effort; offline'da sessizce geçilir)
+    void api.createBooking(booking).catch(() => undefined);
     get().pushNotification({
       type: 'booking',
       title: 'Randevun oluşturuldu',
@@ -157,10 +161,23 @@ export const useStore = create<State>((set, get) => ({
     return id;
   },
 
-  cancelBooking: (id) =>
+  cancelBooking: (id) => {
     set((s) => ({
       bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b)),
-    })),
+    }));
+    void api.cancelBooking(id).catch(() => undefined);
+  },
+
+  hydrateBookings: async () => {
+    try {
+      const remote = await api.bookings();
+      if (remote.length === 0) return;
+      const remoteIds = new Set(remote.map((b) => b.id));
+      set((s) => ({ bookings: [...remote, ...s.bookings.filter((b) => !remoteIds.has(b.id))] }));
+    } catch {
+      // API erişilemez → yerel tohum korunur (offline-first)
+    }
+  },
 
   reviewBooking: (id, rating, text) => {
     const b = get().bookings.find((x) => x.id === id);

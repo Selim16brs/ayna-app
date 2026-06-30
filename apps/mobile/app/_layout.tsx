@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LocaleProvider } from '../src/locale';
+import { useStore } from '../src/store';
 import { ThemeProvider, useTheme } from '../src/theme-context';
 import { NailCursor } from '../src/ui';
 
 function ThemedStack() {
   const { colors, isDark } = useTheme();
+  const hydrateBookings = useStore((s) => s.hydrateBookings);
+  useEffect(() => {
+    void hydrateBookings();
+  }, [hydrateBookings]);
   return (
     <>
       <StatusBar style={isDark ? 'light' : 'dark'} />

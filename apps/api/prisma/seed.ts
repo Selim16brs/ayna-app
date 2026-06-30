@@ -292,6 +292,7 @@ const PRO_SEEDS: ProSeed[] = [
 ];
 
 async function main(): Promise<void> {
+  await prisma.booking.deleteMany();
   await prisma.quote.deleteMany();
   await prisma.quoteRequest.deleteMany();
   await prisma.professional.deleteMany();
@@ -333,11 +334,92 @@ async function main(): Promise<void> {
     });
   }
 
+  // Örnek randevular (mobil tohumla aynı id'ler; merge idempotent)
+  const madina = createdPros[0]!;
+  const aruzhan = createdPros[1]!;
+  const ailin = createdPros[2]!;
+  const lotus = createdPros[3]!;
+  const bella = createdPros[5]!;
+  const BOOKINGS = [
+    {
+      id: 'a1',
+      source: 'direct' as const,
+      service: 'Saç kesimi & fön',
+      pro: madina,
+      uzmanName: 'Aigerim',
+      dateLabel: 'Cuma · 14:00',
+      inDays: 3,
+      price: 9000,
+      status: 'confirmed' as const,
+    },
+    {
+      id: 'a2',
+      source: 'direct' as const,
+      service: 'Cilt bakımı',
+      pro: lotus,
+      dateLabel: 'Geçen hafta · 16:00',
+      inDays: -7,
+      price: 18000,
+      status: 'completed' as const,
+    },
+    {
+      id: 'a3',
+      source: 'photo_quote' as const,
+      service: 'Balayage (fotoğraflı teklif)',
+      pro: ailin,
+      dateLabel: 'Pazartesi · 11:00',
+      inDays: 6,
+      price: 21000,
+      status: 'pending' as const,
+    },
+    {
+      id: 'a4',
+      source: 'demand' as const,
+      service: 'Gelin makyajı (talep)',
+      pro: aruzhan,
+      dateLabel: 'Cumartesi · 09:00',
+      inDays: 4,
+      price: 18000,
+      status: 'confirmed' as const,
+    },
+    {
+      id: 'a5',
+      source: 'direct' as const,
+      service: 'Manikür',
+      pro: bella,
+      uzmanName: 'Kamila',
+      dateLabel: 'Geçen ay · 13:00',
+      inDays: -24,
+      price: 6000,
+      status: 'completed' as const,
+      reviewed: true,
+    },
+  ];
+  for (const b of BOOKINGS) {
+    await prisma.booking.create({
+      data: {
+        id: b.id,
+        source: b.source,
+        service: b.service,
+        proId: b.pro.id,
+        proName: b.pro.name,
+        proImage: b.pro.imageUrl,
+        uzmanName: b.uzmanName ?? null,
+        dateLabel: b.dateLabel,
+        inDays: b.inDays,
+        price: b.price,
+        status: b.status,
+        reviewed: b.reviewed ?? false,
+      },
+    });
+  }
+
   const cats = await prisma.serviceCategory.count();
   const pros = await prisma.professional.count();
   const quotes = await prisma.quote.count();
+  const bookings = await prisma.booking.count();
   // eslint-disable-next-line no-console
-  console.log(`Seed tamam: ${cats} kategori, ${pros} uzman, ${quotes} teklif`);
+  console.log(`Seed tamam: ${cats} kategori, ${pros} uzman, ${quotes} teklif, ${bookings} randevu`);
 }
 
 main()

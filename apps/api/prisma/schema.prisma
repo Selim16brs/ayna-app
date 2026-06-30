@@ -125,6 +125,40 @@ enum QuoteRequestStatus {
   closed
 }
 
+enum BookingSource {
+  direct
+  photo_quote
+  demand
+}
+
+enum BookingStatus {
+  confirmed
+  pending
+  completed
+  cancelled
+}
+
+// Randevu kaydı. id istemci tarafından üretilir (mobil store ile tutarlı).
+// Not: auth dilimi gelince userId eklenecek; şimdilik anonim.
+model Booking {
+  id        String        @id
+  source    BookingSource
+  service   String
+  proId     String?       @map("pro_id")
+  proName   String        @map("pro_name")
+  proImage  String        @map("pro_image")
+  uzmanName String?       @map("uzman_name")
+  dateLabel String        @map("date_label")
+  inDays    Int           @map("in_days")
+  price     Decimal       @db.Decimal(12, 2)
+  status    BookingStatus @default(confirmed)
+  reviewed  Boolean       @default(false)
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@map("bookings")
+}
+
 model QuoteRequest {
   id         String             @id @default(uuid()) @db.Uuid
   userId     String?            @map("user_id") @db.Uuid

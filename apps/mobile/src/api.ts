@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import type { Professional, ProfessionalDetail } from './data';
+import type { Appointment, Professional, ProfessionalDetail } from './data';
 
 // API taban adresi: Expo dev host IP'sinden türetilir (simülatör + cihaz uyumlu).
 const hostUri = Constants.expoConfig?.hostUri ?? '';
@@ -9,6 +9,16 @@ export const API_BASE = `http://${host}:3000/api/v1`;
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`);
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
   return res.json() as Promise<T>;
 }
 
@@ -49,13 +59,11 @@ export const api = {
   professionals: () => get<Professional[]>('/professionals'),
   professional: (id: string) => get<ProfessionalDetail>(`/professionals/${id}`),
   quotes: () => get<ApiQuote[]>('/quotes'),
-  createQuoteRequest: async (input: { categoryId: string; note?: string; photoUrl?: string }) => {
-    const res = await fetch(`${API_BASE}/quote-requests`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(input),
-    });
-    if (!res.ok) throw new Error(`POST /quote-requests → ${res.status}`);
-    return res.json() as Promise<{ id: string; status: string }>;
-  },
+  createQuoteRequest: (input: { categoryId: string; note?: string; photoUrl?: string }) =>
+    post<{ id: string; status: string }>('/quote-requests', input),
+
+  // Randevular (yazma yolu) — id mobilde üretilir, API upsert ile idempotent
+  bookings: () => get<Appointment[]>('/bookings'),
+  createBooking: (b: Appointment) => post<Appointment>('/bookings', b),
+  cancelBooking: (id: string) => post<Appointment>(`/bookings/${id}/cancel`, {}),
 };
