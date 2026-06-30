@@ -130,6 +130,25 @@ enum QuoteRequestStatus {
   closed
 }
 
+enum LoyaltyKind {
+  earn
+  spend
+}
+
+// Sadakat defteri — append-only. Bakiye girişlerin toplamından türetilir (finans kuralı).
+model LoyaltyEntry {
+  id        String      @id @default(uuid()) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  kind      LoyaltyKind
+  reason    String // i18n anahtarı (örn. 'rewards.earn.review')
+  detail    String      @default("")
+  points    Int // earn pozitif, spend negatif
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("loyalty_entries")
+}
+
 enum BookingSource {
   direct
   photo_quote

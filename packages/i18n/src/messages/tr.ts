@@ -213,6 +213,7 @@ export const tr = {
   'rewards.raffle.next': 'Sonraki çekiliş',
   'rewards.raffle.prize': 'Bu ayın ödülü: ücretsiz gelin paketi',
   'rewards.earn.title': 'Nasıl puan kazanırsın?',
+  'rewards.earn.welcome': 'Hoş geldin bonusu',
   'rewards.earn.booking': 'Uygulamadan randevu tamamla',
   'rewards.earn.review': 'Doğrulanmış değerlendirme yap',
   'rewards.earn.referral': 'Arkadaşını davet et',

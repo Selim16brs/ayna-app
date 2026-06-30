@@ -45,6 +45,16 @@ export class AuthService {
         ...(input.city ? { city: input.city } : {}),
       },
     });
+    // Hoş geldin bonusu (sadakat defterine ilk kayıt)
+    await this.prisma.loyaltyEntry.create({
+      data: {
+        userId: user.id,
+        kind: 'earn',
+        reason: 'rewards.earn.welcome',
+        detail: '',
+        points: 200,
+      },
+    });
     return this.session(user);
   }
 

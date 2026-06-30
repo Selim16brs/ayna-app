@@ -118,7 +118,8 @@ interface State {
 
   // loyalty
   earn: (points: number, labelKey: MessageKey, detail: string) => void;
-  redeem: (reward: Reward) => boolean;
+  redeem: (reward: Reward) => Promise<boolean>;
+  hydrateLoyalty: () => Promise<void>;
 
   // notifications
   pushNotification: (n: Omit<AppNotification, 'id' | 'read'>) => void;
@@ -141,7 +142,10 @@ export const useStore = create<State>((set, get) => ({
   token: null,
   currentUser: null,
 
-  setAuth: (session) => set({ token: session.token, currentUser: session.user }),
+  setAuth: (session) => {
+    set({ token: session.token, currentUser: session.user });
+    void get().hydrateLoyalty();
+  },
   logout: () => set({ token: null, currentUser: null }),
 
   addBooking: (input) => {
@@ -322,16 +326,35 @@ export const useStore = create<State>((set, get) => ({
       ),
     })),
 
-  earn: (points, labelKey, detail) =>
+  earn: (points, labelKey, detail) => {
+    // Optimistik yerel güncelleme (anında UI); oturum varsa sunucuya da yaz
     set((s) => ({
       points: s.points + points,
       ledger: [
         { id: nextId('le'), kind: 'earn', labelKey, detail, points, dateLabel: 'Az önce' },
         ...s.ledger,
       ],
-    })),
+    }));
+    const token = get().token;
+    if (token) void api.earnPoints(token, points, labelKey, detail).catch(() => undefined);
+  },
 
-  redeem: (reward) => {
+  redeem: async (reward) => {
+    const token = get().token;
+    if (token) {
+      try {
+        const summary = await api.redeemReward(token, reward.id);
+        set({
+          points: summary.points,
+          raffleEntries: summary.raffleEntries,
+          ledger: summary.ledger,
+        });
+        return true;
+      } catch {
+        return false; // yetersiz puan / sunucu hatası
+      }
+    }
+    // Oturum yok → yerel (çevrimdışı demo)
     if (get().points < reward.cost) return false;
     set((s) => ({
       points: s.points - reward.cost,
@@ -349,6 +372,17 @@ export const useStore = create<State>((set, get) => ({
       ],
     }));
     return true;
+  },
+
+  hydrateLoyalty: async () => {
+    const token = get().token;
+    if (!token) return;
+    try {
+      const summary = await api.loyalty(token);
+      set({ points: summary.points, raffleEntries: summary.raffleEntries, ledger: summary.ledger });
+    } catch {
+      // sunucuya ulaşılamadı → yerel değerler korunur
+    }
   },
 
   pushNotification: (n) =>

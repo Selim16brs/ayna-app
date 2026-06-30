@@ -1,21 +1,31 @@
 import Constants from 'expo-constants';
-import type { Appointment, Professional, ProfessionalDetail } from './data';
+import type { Appointment, LedgerEntry, Professional, ProfessionalDetail } from './data';
+
+export interface LoyaltySummary {
+  points: number;
+  raffleEntries: number;
+  ledger: LedgerEntry[];
+}
 
 // API taban adresi: Expo dev host IP'sinden türetilir (simülatör + cihaz uyumlu).
 const hostUri = Constants.expoConfig?.hostUri ?? '';
 const host = hostUri.split(':')[0] || 'localhost';
 export const API_BASE = `http://${host}:3000/api/v1`;
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`);
+function authHeader(token?: string): Record<string, string> {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function get<T>(path: string, token?: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, { headers: authHeader(token) });
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
   return res.json() as Promise<T>;
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function post<T>(path: string, body: unknown, token?: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeader(token) },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
@@ -93,4 +103,11 @@ export const api = {
   register: (input: RegisterInput) => post<AuthSession>('/auth/register', input),
   login: (input: { identifier: string; password: string }) =>
     post<AuthSession>('/auth/login', input),
+
+  // Sadakat (kullanıcıya bağlı; bakiye sunucuda defterden türetilir)
+  loyalty: (token: string) => get<LoyaltySummary>('/loyalty', token),
+  earnPoints: (token: string, points: number, reason: string, detail?: string) =>
+    post<LoyaltySummary>('/loyalty/earn', { points, reason, detail }, token),
+  redeemReward: (token: string, rewardId: string) =>
+    post<LoyaltySummary>('/loyalty/redeem', { rewardId }, token),
 };

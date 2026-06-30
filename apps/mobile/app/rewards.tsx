@@ -30,8 +30,8 @@ export default function RewardsScreen() {
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.continue'),
-        onPress: () => {
-          if (redeem(r)) Alert.alert(t('rewards.redeem.success'));
+        onPress: async () => {
+          if (await redeem(r)) Alert.alert(t('rewards.redeem.success'));
           else Alert.alert(t('rewards.redeem.insufficient'));
         },
       },

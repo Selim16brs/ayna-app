@@ -6,6 +6,7 @@ import { CatalogModule } from './catalog/catalog.module';
 import { ConfigModule } from './config/config.module';
 import { FeatureFlagModule } from './feature-flags/feature-flag.module';
 import { HealthModule } from './health/health.module';
+import { LoyaltyModule } from './loyalty/loyalty.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -18,6 +19,7 @@ import { PrismaModule } from './prisma/prisma.module';
     CatalogModule,
     BookingsModule,
     AuthModule,
+    LoyaltyModule,
   ],
 })
 export class AppModule {}
