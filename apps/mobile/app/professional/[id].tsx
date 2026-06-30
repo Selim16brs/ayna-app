@@ -89,7 +89,7 @@ export default function ProfessionalScreen() {
             </View>
           </View>
 
-          <View style={styles.statsRow}>
+          <View style={[styles.statsRow, shadow.soft]}>
             <Stat value={`${pro.reviewCount}`} label={t('pro.reviews_based')} />
             <View style={styles.statDivider} />
             <Stat value={`${pro.experienceYears}`} label={t('pro.experience')} />
@@ -120,7 +120,7 @@ export default function ProfessionalScreen() {
                     <Pressable
                       key={u.id}
                       onPress={() => setUzmanId(u.id)}
-                      style={[styles.staffCard, on && styles.staffActive]}
+                      style={[styles.staffCard, shadow.soft, on && styles.staffActive]}
                     >
                       <Image source={{ uri: u.image }} style={styles.staffAvatar} />
                       <Text variant="bodyStrong" tone="ink">
@@ -394,7 +394,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       borderWidth: 1,
-      borderColor: colors.line,
+      borderColor: 'transparent',
       padding: space(1.5),
       alignItems: 'center',
     },
@@ -422,8 +422,6 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       paddingVertical: space(1.5),
       marginTop: space(2.5),
     },
@@ -500,8 +498,6 @@ const makeStyles = (colors: ColorTokens) =>
     review: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       padding: space(2),
     },
     reviewTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
