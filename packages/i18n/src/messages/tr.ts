@@ -363,6 +363,17 @@ export const tr = {
   'common.on': 'Açık',
   'common.off': 'Kapalı',
 
+  // Harita (§8)
+  'map.title': 'Harita',
+  'map.list': 'Liste',
+  'map.all': 'Tümü',
+  'map.open': 'Profili aç',
+  'map.book': 'Randevu al',
+  'map.distance': 'km uzakta',
+  'map.bridge': 'Aradığını bulamadın mı? Fotoğraf gönder, teklif al',
+  'map.see': 'Haritada gör',
+  'map.empty': 'Bu filtrede sonuç yok',
+
   // Arama
   'search.title': 'Ara',
   'search.placeholder': 'Uzman, salon veya hizmet ara',

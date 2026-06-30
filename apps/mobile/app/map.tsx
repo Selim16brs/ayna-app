@@ -1,0 +1,221 @@
+import { useMemo, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import MapView, { Marker, type Region } from 'react-native-maps';
+import {
+  ALMATY,
+  CATEGORIES,
+  distanceKm,
+  formatPrice,
+  type Professional,
+  proCoords,
+} from '../src/data';
+import { useProfessionals } from '../src/catalog';
+import { useLocale } from '../src/locale';
+import { type ColorTokens, radius, space } from '../src/theme';
+import { useTheme, useThemedStyles } from '../src/theme-context';
+import { PressableScale, Screen, StackHeader, Text } from '../src/ui';
+
+const REGION: Region = {
+  ...ALMATY,
+  latitudeDelta: 0.12,
+  longitudeDelta: 0.12,
+};
+
+export default function MapScreen() {
+  const router = useRouter();
+  const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const all = useProfessionals();
+  const [cat, setCat] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Professional | null>(null);
+
+  const pros = useMemo(() => (cat ? all.filter((p) => p.sector === cat) : all), [all, cat]);
+
+  return (
+    <Screen edges={['top']}>
+      <View style={styles.headerRow}>
+        <StackHeader title={t('map.title')} />
+        <PressableScale style={styles.listBtn} onPress={() => router.replace('/search')}>
+          <Ionicons name="list" size={16} color={colors.ink} />
+          <Text variant="caption" tone="ink">
+            {t('map.list')}
+          </Text>
+        </PressableScale>
+      </View>
+
+      {/* Kategori filtresi */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chips}
+        style={styles.chipsWrap}
+      >
+        <Chip label={t('map.all')} active={cat === null} onPress={() => setCat(null)} />
+        {CATEGORIES.map((c) => (
+          <Chip
+            key={c.id}
+            label={t(c.labelKey)}
+            active={cat === c.id}
+            onPress={() => setCat(cat === c.id ? null : c.id)}
+          />
+        ))}
+      </ScrollView>
+
+      <View style={styles.mapWrap}>
+        <MapView style={StyleSheet.absoluteFill} initialRegion={REGION}>
+          {pros.map((p) => (
+            <Marker
+              key={p.id}
+              coordinate={proCoords(p.id)}
+              pinColor={colors.rose}
+              onPress={() => setSelected(p)}
+            />
+          ))}
+        </MapView>
+
+        {/* Teklif motoru köprüsü (denge kuralı §7.4) */}
+        {!selected ? (
+          <PressableScale style={styles.bridge} onPress={() => router.push('/quote/new')}>
+            <Ionicons name="sparkles" size={15} color={colors.onColor} />
+            <Text variant="caption" tone="onColor" style={styles.bridgeText} numberOfLines={2}>
+              {t('map.bridge')}
+            </Text>
+          </PressableScale>
+        ) : null}
+
+        {/* Seçili sağlayıcı mini kartı */}
+        {selected ? (
+          <View style={[styles.card, styles.cardShadow]}>
+            <Pressable style={styles.cardClose} hitSlop={8} onPress={() => setSelected(null)}>
+              <Ionicons name="close" size={18} color={colors.muted} />
+            </Pressable>
+            <View style={styles.cardRow}>
+              <Image source={{ uri: selected.image }} style={styles.cardImage} />
+              <View style={styles.cardBody}>
+                <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                  {selected.name}
+                </Text>
+                <Text variant="caption" tone="muted" numberOfLines={1}>
+                  {selected.specialty}
+                </Text>
+                <View style={styles.cardMeta}>
+                  <Ionicons name="star" size={12} color={colors.gold} />
+                  <Text variant="caption" tone="inkSoft">
+                    {selected.rating.toFixed(1)}
+                  </Text>
+                  <Text variant="caption" tone="muted">
+                    · {distanceKm(ALMATY, proCoords(selected.id))} {t('map.distance')}
+                  </Text>
+                  <Text variant="caption" tone="muted">
+                    · {formatPrice(selected.priceFrom)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <PressableScale
+              style={styles.cardBtn}
+              onPress={() => router.push('/professional/' + selected.id)}
+            >
+              <Text variant="bodyStrong" tone="onColor">
+                {t('map.open')}
+              </Text>
+            </PressableScale>
+          </View>
+        ) : null}
+      </View>
+    </Screen>
+  );
+}
+
+function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
+      <Text variant="caption" tone={active ? 'onColor' : 'inkSoft'}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    listBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginRight: space(2),
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    chipsWrap: { maxHeight: 56 },
+    chips: { paddingHorizontal: space(2), gap: space(1), paddingVertical: space(1) },
+    chip: {
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(0.9),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    chipActive: { backgroundColor: colors.rose, borderColor: colors.rose },
+    mapWrap: { flex: 1, overflow: 'hidden' },
+    bridge: {
+      position: 'absolute',
+      top: space(1.5),
+      left: space(2),
+      right: space(2),
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.accent,
+      borderRadius: radius.pill,
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.25),
+    },
+    bridgeText: { flex: 1 },
+    card: {
+      position: 'absolute',
+      left: space(2),
+      right: space(2),
+      bottom: space(2.5),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(2),
+      gap: space(1.5),
+    },
+    cardShadow: {
+      shadowColor: '#000',
+      shadowOpacity: 0.18,
+      shadowRadius: 18,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 8,
+    },
+    cardClose: { position: 'absolute', top: space(1.25), right: space(1.25), zIndex: 2 },
+    cardRow: { flexDirection: 'row', gap: space(1.5), alignItems: 'center' },
+    cardImage: { width: 56, height: 56, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    cardBody: { flex: 1, gap: 2 },
+    cardMeta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginTop: 2,
+      flexWrap: 'wrap',
+    },
+    cardBtn: {
+      backgroundColor: colors.accent,
+      borderRadius: radius.pill,
+      paddingVertical: space(1.25),
+      alignItems: 'center',
+    },
+  });

@@ -385,6 +385,34 @@ export function formatPrice(value: number): string {
   return `₸${value.toLocaleString('ru-RU')}`;
 }
 
+// ── Harita (§8) — Almatı merkezli koordinatlar ───────────────────────────
+export interface LatLng {
+  latitude: number;
+  longitude: number;
+}
+
+export const ALMATY: LatLng = { latitude: 43.2389, longitude: 76.8897 };
+
+/** İşletme/uzman için deterministik koordinat (Almatı çevresi; demo — gerçek değil). */
+export function proCoords(id: string): LatLng {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  const dlat = ((h % 1000) / 1000 - 0.5) * 0.09;
+  const dlng = (((h >>> 10) % 1000) / 1000 - 0.5) * 0.13;
+  return { latitude: ALMATY.latitude + dlat, longitude: ALMATY.longitude + dlng };
+}
+
+/** İki nokta arası mesafe (km, haversine). */
+export function distanceKm(a: LatLng, b: LatLng): number {
+  const R = 6371;
+  const dLat = ((b.latitude - a.latitude) * Math.PI) / 180;
+  const dLng = ((b.longitude - a.longitude) * Math.PI) / 180;
+  const lat1 = (a.latitude * Math.PI) / 180;
+  const lat2 = (b.latitude * Math.PI) / 180;
+  const x = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return Math.round(R * 2 * Math.asin(Math.sqrt(x)) * 10) / 10;
+}
+
 // ── Reklam banner'ları (premium üye kampanyaları) ────────────────────────
 export interface AdBanner {
   id: string;

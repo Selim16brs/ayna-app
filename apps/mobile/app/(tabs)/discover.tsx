@@ -151,13 +151,18 @@ export default function DiscoverScreen() {
           />
         </View>
 
-        {/* Arama */}
-        <Pressable style={[styles.search, shadow.soft]} onPress={() => router.push('/search')}>
-          <Ionicons name="search" size={19} color={colors.muted} />
-          <Text variant="body" tone="muted">
-            {t('home.search')}
-          </Text>
-        </Pressable>
+        {/* Arama + Harita */}
+        <View style={styles.searchRow}>
+          <Pressable style={[styles.search, shadow.soft]} onPress={() => router.push('/search')}>
+            <Ionicons name="search" size={19} color={colors.muted} />
+            <Text variant="body" tone="muted">
+              {t('home.search')}
+            </Text>
+          </Pressable>
+          <Pressable style={[styles.mapBtn, shadow.soft]} onPress={() => router.push('/map')}>
+            <Ionicons name="map-outline" size={20} color={colors.rose} />
+          </Pressable>
+        </View>
 
         {/* Kategoriler */}
         <ScrollView
@@ -370,8 +375,16 @@ const makeStyles = (colors: ColorTokens) =>
     actionImage: { borderRadius: radius.lg },
     actionTitle: { marginTop: space(0.75) },
     actionSubtitle: { opacity: 0.9, marginTop: 2 },
+    searchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      paddingHorizontal: space(3),
+      marginTop: space(2.5),
+      marginBottom: space(2.5),
+    },
     search: {
-      marginHorizontal: space(3),
+      flex: 1,
       height: 50,
       backgroundColor: colors.surface,
       borderRadius: radius.pill,
@@ -379,10 +392,18 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       gap: space(1.25),
       paddingHorizontal: space(2.25),
-      marginTop: space(2.5),
-      marginBottom: space(2.5),
       borderWidth: 1,
       borderColor: colors.line,
+    },
+    mapBtn: {
+      width: 50,
+      height: 50,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     categories: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(1) },
     category: { alignItems: 'center', width: 64 },
