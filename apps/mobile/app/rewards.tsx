@@ -103,7 +103,7 @@ export default function RewardsScreen() {
         <Text variant="label" tone="rose" style={styles.section}>
           {t('rewards.redeem.title')}
         </Text>
-        <View style={styles.group}>
+        <View style={[styles.group, shadow.soft]}>
           {REWARDS.map((r, i) => {
             const affordable = points >= r.cost;
             return (
@@ -140,7 +140,7 @@ export default function RewardsScreen() {
         <Text variant="label" tone="rose" style={styles.section}>
           {t('rewards.ledger.title')}
         </Text>
-        <View style={styles.group}>
+        <View style={[styles.group, shadow.soft]}>
           {ledger.map((e, i) => (
             <View key={e.id} style={[styles.row, i < ledger.length - 1 && styles.rowBorder]}>
               <View
@@ -219,8 +219,6 @@ const makeStyles = (colors: ColorTokens) =>
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       overflow: 'hidden',
     },
     row: {

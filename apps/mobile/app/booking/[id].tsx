@@ -271,9 +271,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1.5),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
-      padding: space(1.5),
+      padding: space(1.75),
     },
     proImage: {
       width: 64,
@@ -292,8 +290,6 @@ const makeStyles = (colors: ColorTokens) =>
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       paddingHorizontal: space(2),
       marginTop: space(2),
     },
