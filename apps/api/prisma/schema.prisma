@@ -213,3 +213,76 @@ model Quote {
   @@index([requestId])
   @@map("quotes")
 }
+
+// --- İşletme & uzman kaydı (Build Brief §3) ---
+
+enum BusinessStatus {
+  pending
+  approved
+  rejected
+}
+
+model Business {
+  id           String         @id @default(uuid()) @db.Uuid
+  ownerUserId  String         @map("owner_user_id") @db.Uuid
+  name         String
+  ownerName    String         @default("") @map("owner_name")
+  sector       String         @default("")
+  about        String         @default("")
+  city         String         @default("")
+  district     String         @default("")
+  address      String         @default("")
+  phone        String         @default("")
+  email        String         @default("")
+  workingHours String         @default("") @map("working_hours")
+  taxId        String         @default("") @map("tax_id")
+  categories   String[]       @default([])
+  photos       String[]       @default([])
+  docUrl       String?        @map("doc_url")
+  status       BusinessStatus @default(pending)
+  rejectReason String?        @map("reject_reason")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@index([ownerUserId])
+  @@map("businesses")
+}
+
+enum SpecialistKind {
+  salon_bound
+  independent
+}
+
+model Specialist {
+  id           String         @id @default(uuid()) @db.Uuid
+  userId       String         @unique @map("user_id") @db.Uuid
+  businessId   String?        @map("business_id") @db.Uuid
+  kind         SpecialistKind @default(independent)
+  bio          String         @default("")
+  certificates String[]       @default([])
+  featured     Boolean        @default(false)
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([businessId])
+  @@map("specialists")
+}
+
+enum InviteCodeStatus {
+  active
+  used
+  revoked
+}
+
+// İşletme doğrulama kodu — uzmanın işletmeye bağlandığını ispatlar (§3.3)
+model BusinessInviteCode {
+  id           String           @id @default(uuid()) @db.Uuid
+  businessId   String           @map("business_id") @db.Uuid
+  code         String           @unique
+  status       InviteCodeStatus @default(active)
+  usedByUserId String?          @map("used_by_user_id") @db.Uuid
+  attempts     Int              @default(0)
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([businessId])
+  @@map("business_invite_codes")
+}

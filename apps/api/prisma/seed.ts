@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { PrismaClient, ProBadge, ProviderKind } from '@prisma/client';
+import { encryptField, hashPassword, normalizePhone, phoneHash } from '../src/common/crypto';
 
 const prisma = new PrismaClient();
 
@@ -300,6 +301,24 @@ async function main(): Promise<void> {
 
   for (const c of CATEGORIES) {
     await prisma.serviceCategory.create({ data: c });
+  }
+
+  // Platform admini (işletme onayları için) — telefon: +7 700 000 00 00 / şifre: admin12345
+  const key = process.env.FIELD_ENCRYPTION_KEY ?? '';
+  const adminPhone = '+7 700 000 00 00';
+  const adminHash = phoneHash(adminPhone, key);
+  if (!(await prisma.user.findUnique({ where: { phoneHash: adminHash } }))) {
+    await prisma.user.create({
+      data: {
+        phoneHash: adminHash,
+        phoneEnc: Uint8Array.from(encryptField(normalizePhone(adminPhone), key)),
+        passwordHash: hashPassword('admin12345'),
+        name: 'AYNA Admin',
+        email: 'admin@ayna.kz',
+        role: 'admin',
+        defaultLocale: 'tr',
+      },
+    });
   }
 
   const createdPros = [];

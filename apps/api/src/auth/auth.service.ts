@@ -68,6 +68,19 @@ export class AuthService {
     if (!user || !verifyPassword(input.password, user.passwordHash)) {
       throw new UnauthorizedException({ code: 'BAD_CREDENTIALS', message: 'Bilgiler hatalı' });
     }
+    // §3.2 — İşletme admin onayı olmadan giriş yapamaz
+    if (user.role === 'salon') {
+      const business = await this.prisma.business.findFirst({ where: { ownerUserId: user.id } });
+      if (business && business.status !== 'approved') {
+        throw new UnauthorizedException({
+          code: business.status === 'pending' ? 'BUSINESS_PENDING' : 'BUSINESS_REJECTED',
+          message:
+            business.status === 'pending'
+              ? 'İşletme hesabınız admin onayı bekliyor'
+              : `İşletme kaydı reddedildi: ${business.rejectReason ?? ''}`,
+        });
+      }
+    }
     return this.session(user);
   }
 

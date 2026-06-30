@@ -73,6 +73,48 @@ export interface RegisterInput {
   city?: string;
 }
 
+export interface RegisterBusinessInput {
+  name: string;
+  ownerName: string;
+  phone: string;
+  password: string;
+  email?: string;
+  sector: string;
+  categories: string[];
+  city: string;
+  district: string;
+  address: string;
+  workingHours?: string;
+  taxId?: string;
+}
+
+export interface BusinessSummary {
+  id: string;
+  name: string;
+  status: string;
+  city: string;
+}
+
+export interface SearchableBusiness {
+  id: string;
+  name: string;
+  city: string;
+  sector: string;
+}
+
+export interface RegisterSpecialistInput {
+  name: string;
+  phone: string;
+  password: string;
+  email?: string;
+  city?: string;
+  kind: 'salon_bound' | 'independent';
+  bio?: string;
+  businessId?: string;
+  code?: string;
+  certificates?: string[];
+}
+
 export interface ApiQuote {
   id: string;
   proId: string;
@@ -103,6 +145,16 @@ export const api = {
   register: (input: RegisterInput) => post<AuthSession>('/auth/register', input),
   login: (input: { identifier: string; password: string }) =>
     post<AuthSession>('/auth/login', input),
+
+  // İşletme & uzman kaydı (Build Brief §3)
+  registerBusiness: (input: RegisterBusinessInput) =>
+    post<{ business: BusinessSummary }>('/businesses', input),
+  searchableBusinesses: () => get<SearchableBusiness[]>('/businesses/searchable'),
+  registerSpecialist: (input: RegisterSpecialistInput) =>
+    post<{
+      token: string;
+      specialist: { id: string; kind: string; businessId?: string; bio: string; featured: boolean };
+    }>('/specialists', input),
 
   // Sadakat (kullanıcıya bağlı; bakiye sunucuda defterden türetilir)
   loyalty: (token: string) => get<LoyaltySummary>('/loyalty', token),

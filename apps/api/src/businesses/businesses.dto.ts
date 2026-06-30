@@ -1,0 +1,22 @@
+import { z } from 'zod';
+
+export const registerBusinessSchema = z.object({
+  name: z.string().min(2),
+  ownerName: z.string().min(2),
+  phone: z.string().min(7),
+  password: z.string().min(6),
+  email: z.string().email().optional(),
+  sector: z.string().min(1),
+  categories: z.array(z.string()).default([]),
+  city: z.string().min(1),
+  district: z.string().min(1),
+  address: z.string().min(3),
+  workingHours: z.string().optional(),
+  taxId: z.string().optional(),
+  docUrl: z.string().optional(),
+});
+
+export const rejectSchema = z.object({ reason: z.string().min(1) });
+
+export type RegisterBusinessInput = z.infer<typeof registerBusinessSchema>;
+export type RejectInput = z.infer<typeof rejectSchema>;

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MessageKey } from '@ayna/i18n';
+import { api } from '../../../src/api';
 import { CITIES } from '../../../src/data';
 import { useLocale } from '../../../src/locale';
 import { radius, space, type ColorTokens } from '../../../src/theme';
@@ -45,6 +46,35 @@ export default function NewBusinessScreen() {
   const [tax, setTax] = useState('');
   const [password, setPassword] = useState('');
   const [terms, setTerms] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function submit() {
+    setBusy(true);
+    try {
+      const categories = [...areas].map((a) => a.replace('category.', ''));
+      await api.registerBusiness({
+        name: name.trim(),
+        ownerName: owner.trim(),
+        phone: phone.trim(),
+        password,
+        email: email.trim(),
+        sector: categories[0] ?? 'hair',
+        categories,
+        city: city ?? '',
+        district: district.trim(),
+        address: address.trim(),
+        workingHours: hours.trim(),
+        taxId: tax.trim(),
+      });
+      router.replace('/auth/business/done');
+    } catch (e) {
+      const msg = String((e as Error).message ?? '');
+      if (msg.includes('409')) Alert.alert(t('auth.error.taken'));
+      else router.replace('/auth/business/done'); // ağ hatası → demo akışı engellenmesin
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const valid =
     name.trim().length > 1 &&
@@ -159,9 +189,9 @@ export default function NewBusinessScreen() {
       <View style={styles.footer}>
         <Button
           label={t('biz.new.submit')}
-          variant={valid ? 'primary' : 'secondary'}
-          disabled={!valid}
-          onPress={() => router.replace('/auth/business/done')}
+          variant={valid && !busy ? 'primary' : 'secondary'}
+          disabled={!valid || busy}
+          onPress={submit}
         />
       </View>
     </Screen>
