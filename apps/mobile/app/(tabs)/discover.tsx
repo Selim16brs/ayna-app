@@ -290,7 +290,7 @@ function ActionCard({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingBottom: space(4) },
+    content: { paddingBottom: space(13) },
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',

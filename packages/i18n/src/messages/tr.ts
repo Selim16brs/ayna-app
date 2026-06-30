@@ -487,6 +487,12 @@ export const tr = {
   'seller.metric.bookings': 'Randevu',
   'seller.metric.rating': 'Puan',
   'seller.metric.repeat': 'Tekrar müşteri',
+  'seller.staff.title': 'Uzman detayı',
+  'seller.staff.period': 'Bu ay',
+  'seller.staff.bookings': 'Randevu',
+  'seller.staff.rating': 'Ortalama puan',
+  'seller.staff.revenue': 'Gelir katkısı',
+  'seller.staff.services': 'Hizmet dağılımı',
 
   // Sistem / domain
   'auth.otp.sent': 'Doğrulama kodu gönderildi',

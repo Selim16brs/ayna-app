@@ -60,7 +60,8 @@ export default function ProfileScreen() {
     else if (key === 'profile.menu.privacy') router.push('/profile/privacy');
     else if (key === 'profile.menu.notifications') router.push('/notifications');
     else if (key === 'profile.menu.help') router.push('/profile/help');
-    else if (key === 'profile.menu.language' || key === 'profile.menu.logout') router.replace('/');
+    else if (key === 'profile.menu.language') router.push('/language');
+    else if (key === 'profile.menu.logout') router.replace('/');
   };
 
   return (
@@ -163,7 +164,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: space(4) },
+    content: { padding: space(3), paddingBottom: space(13) },
     profileRow: {
       flexDirection: 'row',
       alignItems: 'center',

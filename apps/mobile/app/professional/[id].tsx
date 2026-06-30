@@ -25,8 +25,9 @@ export default function ProfessionalScreen() {
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   const toggleFavorite = useStore((s) => s.toggleFavorite);
   const isFav = useStore((s) => s.favorites.includes(proId));
-  const userReviews = useStore((s) => s.userReviews[proId] ?? []);
-  const reviews = [...userReviews, ...pro.reviews];
+  // Seçici sabit referans (map) döndürür; boş dizi fallback render içinde — sonsuz render önlenir
+  const userReviewsMap = useStore((s) => s.userReviews);
+  const reviews = [...(userReviewsMap[proId] ?? []), ...pro.reviews];
 
   return (
     <View style={styles.root}>
@@ -199,8 +200,18 @@ export default function ProfessionalScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.portfolio}
           >
-            {pro.portfolio.map((uri) => (
-              <Image key={uri} source={{ uri }} style={styles.portfolioImg} />
+            {pro.portfolio.map((uri, i) => (
+              <Pressable
+                key={uri}
+                onPress={() =>
+                  router.push({
+                    pathname: '/gallery',
+                    params: { images: JSON.stringify(pro.portfolio), index: String(i) },
+                  })
+                }
+              >
+                <Image source={{ uri }} style={styles.portfolioImg} />
+              </Pressable>
             ))}
           </ScrollView>
 

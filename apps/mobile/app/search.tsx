@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   CATEGORIES,
   categoryLabelKey,
@@ -12,7 +13,7 @@ import {
 import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, Text } from '../src/ui';
+import { PressableScale, Screen, StackHeader, Text } from '../src/ui';
 
 // Türkçe-duyarlı küçük harfe çevirme (İ/ı dahil)
 const lower = (s: string) => s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
@@ -104,8 +105,13 @@ export default function SearchScreen() {
           </View>
         ) : (
           <View style={styles.list}>
-            {results.map((p) => (
-              <ProRow key={p.id} pro={p} onPress={() => router.push('/professional/' + p.id)} />
+            {results.map((p, i) => (
+              <ProRow
+                key={p.id}
+                pro={p}
+                index={i}
+                onPress={() => router.push('/professional/' + p.id)}
+              />
             ))}
           </View>
         )}
@@ -119,38 +125,42 @@ export function ProRow({
   pro,
   onPress,
   right,
+  index = 0,
 }: {
   pro: Professional;
   onPress: () => void;
   right?: React.ReactNode;
+  index?: number;
 }) {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <Pressable style={[styles.row, shadow.soft]} onPress={onPress}>
-      <Image source={{ uri: pro.image }} style={styles.thumb} />
-      <View style={styles.rowBody}>
-        <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-          {pro.name}
-        </Text>
-        <Text variant="caption" tone="muted" numberOfLines={1} style={styles.rowMeta}>
-          {pro.specialty}
-        </Text>
-        <View style={styles.rowFooter}>
-          <Ionicons name="star" size={12} color={colors.gold} />
-          <Text variant="caption" tone="inkSoft">
-            {pro.rating.toFixed(1)}
+    <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 50)}>
+      <PressableScale style={[styles.row, shadow.soft]} onPress={onPress}>
+        <Image source={{ uri: pro.image }} style={styles.thumb} />
+        <View style={styles.rowBody}>
+          <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+            {pro.name}
           </Text>
-          <Text variant="caption" tone="muted">
-            ·
+          <Text variant="caption" tone="muted" numberOfLines={1} style={styles.rowMeta}>
+            {pro.specialty}
           </Text>
-          <Text variant="caption" tone="inkSoft">
-            {formatPrice(pro.priceFrom)}
-          </Text>
+          <View style={styles.rowFooter}>
+            <Ionicons name="star" size={12} color={colors.gold} />
+            <Text variant="caption" tone="inkSoft">
+              {pro.rating.toFixed(1)}
+            </Text>
+            <Text variant="caption" tone="muted">
+              ·
+            </Text>
+            <Text variant="caption" tone="inkSoft">
+              {formatPrice(pro.priceFrom)}
+            </Text>
+          </View>
         </View>
-      </View>
-      {right ?? <Ionicons name="chevron-forward" size={18} color={colors.muted} />}
-    </Pressable>
+        {right ?? <Ionicons name="chevron-forward" size={18} color={colors.muted} />}
+      </PressableScale>
+    </Animated.View>
   );
 }
 

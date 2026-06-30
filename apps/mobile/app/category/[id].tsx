@@ -53,8 +53,13 @@ export default function CategoryScreen() {
           </View>
         ) : (
           <View style={styles.list}>
-            {results.map((p) => (
-              <ProRow key={p.id} pro={p} onPress={() => router.push('/professional/' + p.id)} />
+            {results.map((p, i) => (
+              <ProRow
+                key={p.id}
+                pro={p}
+                index={i}
+                onPress={() => router.push('/professional/' + p.id)}
+              />
             ))}
           </View>
         )}

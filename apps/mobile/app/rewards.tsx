@@ -6,7 +6,7 @@ import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, Text } from '../src/ui';
+import { Progress, Screen, StackHeader, Text } from '../src/ui';
 
 const TIER = 'Gümüş';
 const PROGRESS = 0.62;
@@ -58,8 +58,13 @@ export default function RewardsScreen() {
           <Text variant="display" tone="onColor">
             {points}
           </Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${PROGRESS * 100}%` }]} />
+          <View style={styles.progressWrap}>
+            <Progress
+              value={PROGRESS}
+              height={6}
+              color={colors.onColor}
+              track="rgba(255,255,255,0.3)"
+            />
           </View>
           <Text variant="caption" tone="onColor" style={styles.dim}>
             {t('rewards.next_tier')}: {BOOKINGS_LEFT} {t('rewards.bookings_left')}
@@ -188,15 +193,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     tierText: { fontWeight: '600' },
-    progressTrack: {
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: 'rgba(255,255,255,0.3)',
-      marginTop: space(1.5),
-      marginBottom: space(1),
-      overflow: 'hidden',
-    },
-    progressFill: { height: 6, borderRadius: 3, backgroundColor: colors.onColor },
+    progressWrap: { marginTop: space(1.5), marginBottom: space(1) },
     raffle: {
       flexDirection: 'row',
       alignItems: 'center',

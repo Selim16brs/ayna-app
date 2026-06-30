@@ -117,7 +117,7 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     title: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
     segmentWrap: { paddingHorizontal: space(3), marginBottom: space(2) },
-    list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
+    list: { paddingHorizontal: space(3), paddingBottom: space(13), gap: space(1.5) },
     empty: {
       alignItems: 'center',
       justifyContent: 'center',

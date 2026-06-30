@@ -266,7 +266,7 @@ function MomentRow({ moment, border }: { moment: Moment; border: boolean }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingBottom: space(4) },
+    content: { paddingBottom: space(13) },
     header: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
     subtitle: { marginTop: 2 },
     quickRow: {

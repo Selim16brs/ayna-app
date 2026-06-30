@@ -135,7 +135,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
-    list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
+    list: { paddingHorizontal: space(3), paddingBottom: space(13), gap: space(1.5) },
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,

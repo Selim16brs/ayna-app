@@ -6,7 +6,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Progress, Screen, StackHeader, Text } from '../../src/ui';
 
 const LIMIT = 80000;
 
@@ -44,8 +44,8 @@ export default function BudgetScreen() {
           <Text variant="display" tone="ink">
             {formatPrice(spent)}
           </Text>
-          <View style={styles.track}>
-            <View style={[styles.fill, { width: `${progress * 100}%` }]} />
+          <View style={styles.barWrap}>
+            <Progress value={progress} color={colors.accent} />
           </View>
           <View style={styles.cardFoot}>
             <Text variant="caption" tone="muted">
@@ -134,15 +134,7 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(2.5),
       gap: space(0.5),
     },
-    track: {
-      height: 8,
-      borderRadius: 4,
-      backgroundColor: colors.surfaceMuted,
-      marginTop: space(1.5),
-      marginBottom: space(1.25),
-      overflow: 'hidden',
-    },
-    fill: { height: 8, borderRadius: 4, backgroundColor: colors.rose },
+    barWrap: { marginTop: space(1.5), marginBottom: space(1.25) },
     cardFoot: { flexDirection: 'row', justifyContent: 'space-between' },
     section: { marginTop: space(3), marginBottom: space(1.5) },
     group: {

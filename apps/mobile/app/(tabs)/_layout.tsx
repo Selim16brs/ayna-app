@@ -1,11 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { BlurView } from 'expo-blur';
+import { StyleSheet } from 'react-native';
 import { useLocale } from '../../src/locale';
 import { useTheme } from '../../src/theme-context';
 
 export default function TabsLayout() {
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <Tabs
@@ -13,8 +15,20 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.muted,
+        // Buzlu cam alt menü (frosted glass) — içerik altından geçer
+        tabBarBackground: () => (
+          <BlurView
+            intensity={isDark ? 40 : 60}
+            tint={isDark ? 'dark' : 'light'}
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: colors.surface + (isDark ? 'B0' : 'C8') },
+            ]}
+          />
+        ),
         tabBarStyle: {
-          backgroundColor: colors.surface,
+          position: 'absolute',
+          backgroundColor: 'transparent',
           borderTopColor: colors.line,
           height: 88,
           paddingTop: 8,

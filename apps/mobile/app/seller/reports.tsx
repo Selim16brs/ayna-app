@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { SELLER_DATA, type SellerMetric } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, Segmented, StackHeader, Text } from '../../src/ui';
+import { PressableScale, Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
 type Period = 'week' | 'month' | 'all';
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -14,6 +15,7 @@ export default function ReportsScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
   const [period, setPeriod] = useState<Period>('week');
   const data = SELLER_DATA[period];
 
@@ -43,9 +45,20 @@ export default function ReportsScreen() {
         </Text>
         <View style={styles.group}>
           {data.staff.map((u, i) => (
-            <View
+            <PressableScale
               key={u.name}
               style={[styles.staffRow, i < data.staff.length - 1 && styles.border]}
+              onPress={() =>
+                router.push({
+                  pathname: '/seller/staff',
+                  params: {
+                    name: u.name,
+                    image: u.image,
+                    bookings: String(u.bookings),
+                    rating: String(u.rating),
+                  },
+                })
+              }
             >
               <Image source={{ uri: u.image }} style={styles.staffImage} />
               <Text variant="bodyStrong" tone="ink" style={styles.staffName} numberOfLines={1}>
@@ -59,8 +72,9 @@ export default function ReportsScreen() {
                 <Text variant="caption" tone="inkSoft">
                   {u.rating.toFixed(1)}
                 </Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.muted} />
               </View>
-            </View>
+            </PressableScale>
           ))}
         </View>
       </ScrollView>

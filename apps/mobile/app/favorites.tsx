@@ -39,10 +39,11 @@ export default function FavoritesScreen() {
           </View>
         ) : (
           <View style={styles.list}>
-            {favs.map((p) => (
+            {favs.map((p, i) => (
               <ProRow
                 key={p.id}
                 pro={p}
+                index={i}
                 onPress={() => router.push('/professional/' + p.id)}
                 right={
                   <Pressable onPress={() => toggleFavorite(p.id)} hitSlop={10}>

@@ -8,3 +8,5 @@ export { Placeholder } from './Placeholder';
 export { StackHeader } from './StackHeader';
 export { Segmented } from './Segmented';
 export { NailCursor } from './NailCursor';
+export { PressableScale } from './PressableScale';
+export { Progress } from './Progress';
