@@ -1,16 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  CARE_ROUTINES,
   type CareRoutine,
   LIFE_ARTICLES,
-  MOMENTS,
   type Moment,
-  PERSONAL_LOGS,
   type PersonalTone,
   QUICK_ADD,
 } from '../../src/data';
+import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -26,10 +25,23 @@ const makeTone = (colors: ColorTokens): Record<PersonalTone, { bg: string; fg: s
 });
 
 export default function BenimIcinScreen() {
+  const router = useRouter();
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const TONE = makeTone(colors);
+
+  const personalLogs = useStore((s) => s.personalLogs);
+  const careRoutines = useStore((s) => s.careRoutines);
+  const moments = useStore((s) => s.moments);
+  const deletePersonalLog = useStore((s) => s.deletePersonalLog);
+
+  const confirmDeleteLog = (id: string) => {
+    Alert.alert(t('care.add.delete_confirm'), undefined, [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => deletePersonalLog(id) },
+    ]);
+  };
 
   return (
     <Screen edges={['top']}>
@@ -48,7 +60,11 @@ export default function BenimIcinScreen() {
           {QUICK_ADD.map((q) => {
             const c = TONE[q.tone];
             return (
-              <Pressable key={q.id} style={styles.quick}>
+              <Pressable
+                key={q.id}
+                style={styles.quick}
+                onPress={() => router.push('/care/add?kind=' + q.id)}
+              >
                 <View style={[styles.quickIcon, { backgroundColor: c.bg }]}>
                   <Ionicons name={q.icon as IoniconName} size={22} color={c.fg} />
                 </View>
@@ -61,16 +77,19 @@ export default function BenimIcinScreen() {
         </View>
 
         {/* Kişisel kayıtlar */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('benim.section.records')}
-        </Text>
+        <SectionHeader
+          label={t('benim.section.records')}
+          onAdd={() => router.push('/care/add?kind=personal')}
+          addLabel={t('common.add')}
+        />
         <View style={styles.group}>
-          {PERSONAL_LOGS.map((p, i) => {
+          {personalLogs.map((p, i) => {
             const c = TONE[p.tone];
             return (
-              <View
+              <Pressable
                 key={p.id}
-                style={[styles.row, i < PERSONAL_LOGS.length - 1 && styles.rowBorder]}
+                onLongPress={() => confirmDeleteLog(p.id)}
+                style={[styles.row, i < personalLogs.length - 1 && styles.rowBorder]}
               >
                 <View style={[styles.iconChip, { backgroundColor: c.bg }]}>
                   <Ionicons name={p.icon as IoniconName} size={19} color={c.fg} />
@@ -83,28 +102,35 @@ export default function BenimIcinScreen() {
                     {p.dateLabel}
                   </Text>
                 </View>
-              </View>
+                <Pressable hitSlop={10} onPress={() => confirmDeleteLog(p.id)} style={styles.trash}>
+                  <Ionicons name="trash-outline" size={18} color={colors.muted} />
+                </Pressable>
+              </Pressable>
             );
           })}
         </View>
 
         {/* Bakım takvimi */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('benim.section.care')}
-        </Text>
+        <SectionHeader
+          label={t('benim.section.care')}
+          onAdd={() => router.push('/care/add?mode=routine')}
+          addLabel={t('common.add')}
+        />
         <View style={styles.group}>
-          {CARE_ROUTINES.map((r, i) => (
-            <RoutineRow key={r.id} routine={r} border={i < CARE_ROUTINES.length - 1} />
+          {careRoutines.map((r, i) => (
+            <RoutineRow key={r.id} routine={r} border={i < careRoutines.length - 1} />
           ))}
         </View>
 
         {/* Özel günler */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('benim.section.moments')}
-        </Text>
+        <SectionHeader
+          label={t('benim.section.moments')}
+          onAdd={() => router.push('/care/add?mode=moment')}
+          addLabel={t('common.add')}
+        />
         <View style={styles.group}>
-          {MOMENTS.map((m, i) => (
-            <MomentRow key={m.id} moment={m} border={i < MOMENTS.length - 1} />
+          {moments.map((m, i) => (
+            <MomentRow key={m.id} moment={m} border={i < moments.length - 1} />
           ))}
         </View>
 
@@ -118,34 +144,61 @@ export default function BenimIcinScreen() {
           contentContainerStyle={styles.life}
         >
           {LIFE_ARTICLES.map((a) => (
-            <ImageBackground
-              key={a.id}
-              source={{ uri: a.image }}
-              style={styles.lifeCard}
-              imageStyle={styles.lifeImage}
-            >
-              <LinearGradient
-                colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.82)']}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.lifeTag}>
-                <Text variant="caption" tone="onColor" style={styles.lifeTagText}>
-                  {a.tag}
-                </Text>
-              </View>
-              <View style={styles.lifeBody}>
-                <Text variant="bodyStrong" tone="onColor" numberOfLines={2}>
-                  {a.title}
-                </Text>
-                <Text variant="caption" tone="onColor" style={styles.lifeRead}>
-                  {a.readMin} {t('life.read')}
-                </Text>
-              </View>
-            </ImageBackground>
+            <Pressable key={a.id} onPress={() => router.push('/life/' + a.id)}>
+              <ImageBackground
+                source={{ uri: a.image }}
+                style={styles.lifeCard}
+                imageStyle={styles.lifeImage}
+              >
+                <LinearGradient
+                  colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.82)']}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={styles.lifeTag}>
+                  <Text variant="caption" tone="onColor" style={styles.lifeTagText}>
+                    {a.tag}
+                  </Text>
+                </View>
+                <View style={styles.lifeBody}>
+                  <Text variant="bodyStrong" tone="onColor" numberOfLines={2}>
+                    {a.title}
+                  </Text>
+                  <Text variant="caption" tone="onColor" style={styles.lifeRead}>
+                    {a.readMin} {t('life.read')}
+                  </Text>
+                </View>
+              </ImageBackground>
+            </Pressable>
           ))}
         </ScrollView>
       </ScrollView>
     </Screen>
+  );
+}
+
+function SectionHeader({
+  label,
+  onAdd,
+  addLabel,
+}: {
+  label: string;
+  onAdd: () => void;
+  addLabel: string;
+}) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.sectionHeader}>
+      <Text variant="label" tone="rose">
+        {label}
+      </Text>
+      <Pressable hitSlop={8} onPress={onAdd} style={styles.addBtn}>
+        <Ionicons name="add" size={16} color={colors.rose} />
+        <Text variant="caption" tone="rose">
+          {addLabel}
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -159,6 +212,7 @@ function RoutineRow({ routine, border }: { routine: CareRoutine; border: boolean
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const completeRoutine = useStore((s) => s.completeRoutine);
   const due = dueLabel(routine.dueDays, t);
   return (
     <View style={[styles.row, border && styles.rowBorder]}>
@@ -173,6 +227,13 @@ function RoutineRow({ routine, border }: { routine: CareRoutine; border: boolean
           {due.text}
         </Text>
       </View>
+      <Pressable
+        hitSlop={8}
+        onPress={() => completeRoutine(routine.id)}
+        style={[styles.checkBtn, { backgroundColor: colors.sageSoft }]}
+      >
+        <Ionicons name="checkmark" size={16} color={colors.sage} />
+      </Pressable>
     </View>
   );
 }
@@ -226,6 +287,23 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
       marginTop: space(3),
       marginBottom: space(1.5),
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space(3),
+      marginTop: space(3),
+      marginBottom: space(1.5),
+    },
+    addBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    trash: { padding: space(0.5) },
+    checkBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     group: {
       marginHorizontal: space(3),

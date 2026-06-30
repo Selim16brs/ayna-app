@@ -6,6 +6,7 @@ import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatPrice, getProfessionalDetail } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Badge, Button, Text } from '../../src/ui';
@@ -17,10 +18,15 @@ export default function ProfessionalScreen() {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const pro = getProfessionalDetail(id ?? '1');
+  const proId = id ?? '1';
+  const pro = getProfessionalDetail(proId);
   const [selected, setSelected] = useState<string>(pro.services[0]?.id ?? '');
   const [uzmanId, setUzmanId] = useState<string>(pro.staff[0]?.id ?? '');
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
+  const toggleFavorite = useStore((s) => s.toggleFavorite);
+  const isFav = useStore((s) => s.favorites.includes(proId));
+  const userReviews = useStore((s) => s.userReviews[proId] ?? []);
+  const reviews = [...userReviews, ...pro.reviews];
 
   return (
     <View style={styles.root}>
@@ -38,8 +44,11 @@ export default function ProfessionalScreen() {
           >
             <Ionicons name="chevron-back" size={22} color={colors.ink} />
           </Pressable>
-          <Pressable style={[styles.circleBtn, { top: insets.top + 8, right: space(2) }]}>
-            <Ionicons name="heart-outline" size={20} color={colors.rose} />
+          <Pressable
+            style={[styles.circleBtn, { top: insets.top + 8, right: space(2) }]}
+            onPress={() => toggleFavorite(proId)}
+          >
+            <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={colors.rose} />
           </Pressable>
         </View>
 
@@ -198,7 +207,7 @@ export default function ProfessionalScreen() {
           {/* Değerlendirmeler */}
           <Section title={t('pro.reviews')} />
           <View style={styles.reviews}>
-            {pro.reviews.map((r) => (
+            {reviews.map((r) => (
               <View key={r.id} style={[styles.review, shadow.soft]}>
                 <View style={styles.reviewTop}>
                   <View style={styles.reviewAuthor}>
@@ -206,8 +215,8 @@ export default function ProfessionalScreen() {
                       <Ionicons name="shield-checkmark" size={14} color={colors.rose} />
                     </View>
                     <View>
-                      <Text variant="caption" tone="ink">
-                        {t('pro.verified_member')}
+                      <Text variant="bodyStrong" tone="ink">
+                        {r.author}
                       </Text>
                       <Text variant="caption" tone="muted">
                         {r.service} · {r.period}

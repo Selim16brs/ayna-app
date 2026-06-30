@@ -3,6 +3,7 @@ import type { MessageKey } from '@ayna/i18n';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
+// ── Kategoriler / sektörler (kadın odaklı güzellik) ──────────────────────
 export interface Category {
   id: string;
   labelKey: MessageKey;
@@ -14,9 +15,15 @@ export const CATEGORIES: Category[] = [
   { id: 'hair', labelKey: 'category.hair', icon: 'cut-outline', tone: 'rose' },
   { id: 'nails', labelKey: 'category.nails', icon: 'color-palette-outline', tone: 'gold' },
   { id: 'brows', labelKey: 'category.brows', icon: 'eye-outline', tone: 'rose' },
-  { id: 'makeup', labelKey: 'category.makeup', icon: 'brush-outline', tone: 'gold' },
+  { id: 'lashes', labelKey: 'category.lashes', icon: 'sparkles-outline', tone: 'gold' },
+  { id: 'makeup', labelKey: 'category.makeup', icon: 'brush-outline', tone: 'rose' },
+  { id: 'skincare', labelKey: 'category.skincare', icon: 'water-outline', tone: 'gold' },
   { id: 'spa', labelKey: 'category.spa', icon: 'flower-outline', tone: 'rose' },
+  { id: 'epilation', labelKey: 'category.epilation', icon: 'flash-outline', tone: 'gold' },
 ];
+
+export const categoryLabelKey = (id: string): MessageKey =>
+  CATEGORIES.find((c) => c.id === id)?.labelKey ?? 'category.hair';
 
 export type ProBadge = 'campaign' | 'verified' | 'today';
 export type ProviderKind = 'salon' | 'independent';
@@ -25,11 +32,16 @@ export interface Professional {
   id: string;
   name: string;
   specialty: string;
+  sector: string; // category id
+  kind: ProviderKind;
   rating: number;
+  reviewCount: number;
   friends?: number;
   priceFrom: number;
   image: string;
   badge: ProBadge;
+  district: string;
+  experienceYears: number;
 }
 
 /** Salon içindeki bir uzman (kadro). Bağımsız uzmanlarda kadro yoktur. */
@@ -42,55 +54,322 @@ export interface Uzman {
 }
 
 const img = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=600&q=70`;
+const avatar = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=200&q=70`;
 
-export const FEATURED: Professional[] = [
+const SALON_IMAGES = [
+  'photo-1560066984-138dadb4c035',
+  'photo-1633681926022-84c23e8cb2d6',
+  'photo-1522337660859-02fbefca4702',
+  'photo-1540555700478-4be289fbecef',
+  'photo-1596462502278-27bfdc403348',
+  'photo-1604654894610-df63bc536371',
+  'photo-1516975080664-ed2fc6a32937',
+  'photo-1487412947147-5cebf100ffc2',
+  'photo-1559599101-f09722fb4948',
+  'photo-1571875257727-256c39da42af',
+  'photo-1503951914875-452162b0f3f1',
+  'photo-1457972729786-0411a3b2b626',
+];
+
+const FACES = [
+  'photo-1487412720507-e7ab37603c6f',
+  'photo-1494790108377-be9c29b29330',
+  'photo-1438761681033-6461ffad8d80',
+  'photo-1544005313-94ddf0286df2',
+  'photo-1534528741775-53994a69daeb',
+  'photo-1546961329-78bef0414d7c',
+  'photo-1573496359142-b8d87734a5a2',
+  'photo-1502823403499-6ccfcf4fb453',
+];
+
+const DISTRICTS = [
+  'Almatı · Medeu',
+  'Almatı · Bostandık',
+  'Almatı · Almalı',
+  'Astana · Esil',
+  'Astana · Almatı',
+  'Şımkent · Merkez',
+];
+
+const SECTOR_SPECIALTY: Record<string, string> = {
+  hair: 'Saç boyama · Balayage',
+  nails: 'Manikür · Nail art',
+  brows: 'Kaş tasarımı · Laminasyon',
+  lashes: 'İpek kirpik · Lifting',
+  makeup: 'Gelin & gece makyajı',
+  skincare: 'Cilt bakımı · Hydrafacial',
+  spa: 'Masaj · Vücut bakımı',
+  epilation: 'Lazer · Ağda',
+};
+
+// ── İşletmeler / uzmanlar (zengin liste) ─────────────────────────────────
+interface ProSeed {
+  name: string;
+  sector: string;
+  kind: ProviderKind;
+  rating: number;
+  reviewCount: number;
+  friends?: number;
+  priceFrom: number;
+  badge: ProBadge;
+}
+
+const PRO_SEEDS: ProSeed[] = [
   {
-    id: '1',
     name: 'Madina Studio',
-    specialty: 'Saç boyama · Balayage',
+    sector: 'hair',
+    kind: 'salon',
     rating: 4.9,
+    reviewCount: 312,
     friends: 3,
     priceFrom: 15000,
-    image: img('photo-1560066984-138dadb4c035'),
     badge: 'campaign',
   },
   {
-    id: '2',
     name: 'Aruzhan Beauty',
-    specialty: 'Manikür · Nail art',
+    sector: 'nails',
+    kind: 'independent',
     rating: 4.8,
+    reviewCount: 156,
     priceFrom: 8000,
-    image: img('photo-1604654894610-df63bc536371'),
     badge: 'today',
   },
   {
-    id: '3',
     name: 'Ailin Makeup',
-    specialty: 'Gelin & gece makyajı',
+    sector: 'makeup',
+    kind: 'independent',
     rating: 5.0,
+    reviewCount: 204,
     friends: 5,
     priceFrom: 25000,
-    image: img('photo-1596462502278-27bfdc403348'),
     badge: 'verified',
   },
   {
-    id: '4',
     name: 'Lotus Spa',
-    specialty: 'Masaj · Cilt bakımı',
+    sector: 'spa',
+    kind: 'salon',
     rating: 4.7,
+    reviewCount: 98,
     priceFrom: 18000,
-    image: img('photo-1540555700478-4be289fbecef'),
     badge: 'campaign',
   },
+  {
+    name: 'Glow Room',
+    sector: 'skincare',
+    kind: 'salon',
+    rating: 4.8,
+    reviewCount: 142,
+    friends: 2,
+    priceFrom: 12000,
+    badge: 'verified',
+  },
+  {
+    name: 'Bella Nails',
+    sector: 'nails',
+    kind: 'salon',
+    rating: 4.6,
+    reviewCount: 87,
+    priceFrom: 7000,
+    badge: 'today',
+  },
+  {
+    name: 'Aru Brows',
+    sector: 'brows',
+    kind: 'independent',
+    rating: 4.9,
+    reviewCount: 176,
+    friends: 4,
+    priceFrom: 5000,
+    badge: 'verified',
+  },
+  {
+    name: 'Lash Lab',
+    sector: 'lashes',
+    kind: 'salon',
+    rating: 4.8,
+    reviewCount: 121,
+    priceFrom: 14000,
+    badge: 'campaign',
+  },
+  {
+    name: 'Sezim Hair',
+    sector: 'hair',
+    kind: 'independent',
+    rating: 4.7,
+    reviewCount: 64,
+    priceFrom: 11000,
+    badge: 'today',
+  },
+  {
+    name: 'Nur Beauty Bar',
+    sector: 'makeup',
+    kind: 'salon',
+    rating: 4.6,
+    reviewCount: 73,
+    priceFrom: 13000,
+    badge: 'verified',
+  },
+  {
+    name: 'Almaty Glow',
+    sector: 'skincare',
+    kind: 'independent',
+    rating: 4.9,
+    reviewCount: 188,
+    friends: 6,
+    priceFrom: 15000,
+    badge: 'campaign',
+  },
+  {
+    name: 'Zhuldyz Laser',
+    sector: 'epilation',
+    kind: 'salon',
+    rating: 4.7,
+    reviewCount: 109,
+    priceFrom: 8000,
+    badge: 'verified',
+  },
+  {
+    name: 'Kamila Nails',
+    sector: 'nails',
+    kind: 'independent',
+    rating: 4.8,
+    reviewCount: 95,
+    friends: 1,
+    priceFrom: 9000,
+    badge: 'today',
+  },
+  {
+    name: 'Velvet Lashes',
+    sector: 'lashes',
+    kind: 'independent',
+    rating: 4.9,
+    reviewCount: 132,
+    priceFrom: 12000,
+    badge: 'verified',
+  },
+  {
+    name: 'Asel Hair Atelier',
+    sector: 'hair',
+    kind: 'salon',
+    rating: 5.0,
+    reviewCount: 241,
+    friends: 7,
+    priceFrom: 20000,
+    badge: 'campaign',
+  },
+  {
+    name: 'Pure Skin Clinic',
+    sector: 'skincare',
+    kind: 'salon',
+    rating: 4.7,
+    reviewCount: 156,
+    priceFrom: 18000,
+    badge: 'verified',
+  },
+  {
+    name: 'Dana Brows',
+    sector: 'brows',
+    kind: 'independent',
+    rating: 4.6,
+    reviewCount: 54,
+    priceFrom: 4500,
+    badge: 'today',
+  },
+  {
+    name: 'Serenity Spa',
+    sector: 'spa',
+    kind: 'salon',
+    rating: 4.9,
+    reviewCount: 167,
+    friends: 2,
+    priceFrom: 22000,
+    badge: 'campaign',
+  },
+  {
+    name: 'Zhanar Makeup',
+    sector: 'makeup',
+    kind: 'independent',
+    rating: 4.8,
+    reviewCount: 118,
+    priceFrom: 16000,
+    badge: 'verified',
+  },
+  {
+    name: 'Smooth Laser Bar',
+    sector: 'epilation',
+    kind: 'independent',
+    rating: 4.7,
+    reviewCount: 76,
+    priceFrom: 7000,
+    badge: 'today',
+  },
+  {
+    name: 'Diva Nails Lounge',
+    sector: 'nails',
+    kind: 'salon',
+    rating: 4.8,
+    reviewCount: 134,
+    friends: 3,
+    priceFrom: 8500,
+    badge: 'campaign',
+  },
+  {
+    name: 'Aigerim Lashes',
+    sector: 'lashes',
+    kind: 'independent',
+    rating: 5.0,
+    reviewCount: 199,
+    friends: 4,
+    priceFrom: 13000,
+    badge: 'verified',
+  },
+  {
+    name: 'Royal Hair House',
+    sector: 'hair',
+    kind: 'salon',
+    rating: 4.6,
+    reviewCount: 89,
+    priceFrom: 14000,
+    badge: 'today',
+  },
+  {
+    name: 'Botanika Skincare',
+    sector: 'skincare',
+    kind: 'independent',
+    rating: 4.9,
+    reviewCount: 145,
+    priceFrom: 13000,
+    badge: 'verified',
+  },
 ];
+
+export const PROFESSIONALS: Professional[] = PRO_SEEDS.map((s, i) => ({
+  id: String(i + 1),
+  name: s.name,
+  specialty: SECTOR_SPECIALTY[s.sector] ?? s.name,
+  sector: s.sector,
+  kind: s.kind,
+  rating: s.rating,
+  reviewCount: s.reviewCount,
+  ...(s.friends !== undefined ? { friends: s.friends } : {}),
+  priceFrom: s.priceFrom,
+  image: img(SALON_IMAGES[i % SALON_IMAGES.length]!),
+  badge: s.badge,
+  district: DISTRICTS[i % DISTRICTS.length]!,
+  experienceYears: 4 + (i % 12),
+}));
+
+// Ana ekranda öne çıkanlar (ilk birkaç)
+export const FEATURED: Professional[] = PROFESSIONALS.slice(0, 8);
 
 export function formatPrice(value: number): string {
   return `₸${value.toLocaleString('ru-RU')}`;
 }
 
-// Reklam banner'ları — premium üye işletmelerin kampanyaları (admin panelden ayarlanır; şimdilik mock)
+// ── Reklam banner'ları (premium üye kampanyaları) ────────────────────────
 export interface AdBanner {
   id: string;
+  proId: string;
   image: string;
   title: string;
   subtitle: string;
@@ -101,24 +380,35 @@ const adImg = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit
 export const ADS: AdBanner[] = [
   {
     id: 'ad1',
+    proId: '1',
     image: adImg('photo-1633681926022-84c23e8cb2d6'),
     title: 'Madina Studio',
     subtitle: 'Balayage’de %30 indirim · bu hafta',
   },
   {
     id: 'ad2',
+    proId: '3',
     image: adImg('photo-1487412947147-5cebf100ffc2'),
     title: 'Ailin Makeup',
     subtitle: 'Gelin paketi + ücretsiz prova',
   },
   {
     id: 'ad3',
+    proId: '4',
     image: adImg('photo-1540555700478-4be289fbecef'),
     title: 'Lotus Spa',
     subtitle: 'Cilt bakımında 2. seans hediye',
   },
+  {
+    id: 'ad4',
+    proId: '15',
+    image: adImg('photo-1522337660859-02fbefca4702'),
+    title: 'Asel Hair Atelier',
+    subtitle: 'İlk keratin bakımına %25',
+  },
 ];
 
+// ── İşletme detayı ───────────────────────────────────────────────────────
 export interface ServiceItem {
   id: string;
   name: string;
@@ -133,6 +423,7 @@ export interface ServiceRating {
 
 export interface Review {
   id: string;
+  author: string;
   period: string;
   rating: number;
   service: string;
@@ -141,123 +432,189 @@ export interface Review {
 }
 
 export interface ProfessionalDetail extends Professional {
-  kind: ProviderKind;
   staff: Uzman[];
   about: string;
-  experienceYears: number;
-  district: string;
-  reviewCount: number;
   serviceRatings: ServiceRating[];
   services: ServiceItem[];
   portfolio: string[];
   reviews: Review[];
 }
 
-const avatar = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=200&q=70`;
+const SECTOR_SERVICES: Record<string, ServiceItem[]> = {
+  hair: [
+    { id: 'hair-1', name: 'Saç kesimi & fön', durationMin: 60, price: 9000 },
+    { id: 'hair-2', name: 'Saç boyama', durationMin: 90, price: 15000 },
+    { id: 'hair-3', name: 'Balayage', durationMin: 150, price: 28000 },
+    { id: 'hair-4', name: 'Keratin bakımı', durationMin: 120, price: 22000 },
+    { id: 'hair-5', name: 'Topuz / saç tasarımı', durationMin: 60, price: 12000 },
+  ],
+  nails: [
+    { id: 'nails-1', name: 'Manikür', durationMin: 45, price: 6000 },
+    { id: 'nails-2', name: 'Kalıcı oje', durationMin: 60, price: 9000 },
+    { id: 'nails-3', name: 'Nail art', durationMin: 90, price: 13000 },
+    { id: 'nails-4', name: 'Pedikür', durationMin: 60, price: 8000 },
+    { id: 'nails-5', name: 'Protez tırnak', durationMin: 120, price: 18000 },
+  ],
+  brows: [
+    { id: 'brows-1', name: 'Kaş şekillendirme', durationMin: 30, price: 4000 },
+    { id: 'brows-2', name: 'Kaş laminasyon', durationMin: 60, price: 11000 },
+    { id: 'brows-3', name: 'Kaş boyama', durationMin: 30, price: 5000 },
+    { id: 'brows-4', name: 'Microblading', durationMin: 120, price: 30000 },
+  ],
+  lashes: [
+    { id: 'lashes-1', name: 'İpek kirpik', durationMin: 90, price: 14000 },
+    { id: 'lashes-2', name: 'Hacimli kirpik', durationMin: 120, price: 18000 },
+    { id: 'lashes-3', name: 'Kirpik lifting', durationMin: 60, price: 10000 },
+    { id: 'lashes-4', name: 'Kirpik bakımı', durationMin: 30, price: 5000 },
+  ],
+  makeup: [
+    { id: 'makeup-1', name: 'Gündüz makyajı', durationMin: 45, price: 9000 },
+    { id: 'makeup-2', name: 'Gece makyajı', durationMin: 60, price: 14000 },
+    { id: 'makeup-3', name: 'Gelin makyajı', durationMin: 120, price: 30000 },
+    { id: 'makeup-4', name: 'Makyaj dersi', durationMin: 90, price: 16000 },
+  ],
+  skincare: [
+    { id: 'skin-1', name: 'Cilt analizi', durationMin: 30, price: 5000 },
+    { id: 'skin-2', name: 'Klasik cilt bakımı', durationMin: 60, price: 12000 },
+    { id: 'skin-3', name: 'Hydrafacial', durationMin: 75, price: 20000 },
+    { id: 'skin-4', name: 'Anti-aging bakım', durationMin: 90, price: 25000 },
+  ],
+  spa: [
+    { id: 'spa-1', name: 'İsveç masajı', durationMin: 60, price: 15000 },
+    { id: 'spa-2', name: 'Aroma terapi', durationMin: 75, price: 18000 },
+    { id: 'spa-3', name: 'Sıcak taş masajı', durationMin: 90, price: 22000 },
+    { id: 'spa-4', name: 'Vücut bakımı', durationMin: 90, price: 20000 },
+  ],
+  epilation: [
+    { id: 'epi-1', name: 'Lazer (tek bölge)', durationMin: 30, price: 8000 },
+    { id: 'epi-2', name: 'Tüm vücut lazer', durationMin: 120, price: 35000 },
+    { id: 'epi-3', name: 'Ağda', durationMin: 45, price: 6000 },
+    { id: 'epi-4', name: 'İğneli epilasyon', durationMin: 60, price: 12000 },
+  ],
+};
 
-// Salon kadrosu (çok uzmanlı salonlar için)
-const STAFF: Uzman[] = [
-  {
-    id: 'u1',
-    name: 'Madina',
-    role: 'Renk uzmanı',
-    image: avatar('photo-1487412720507-e7ab37603c6f'),
-    rating: 4.9,
-  },
-  {
-    id: 'u2',
-    name: 'Aigerim',
-    role: 'Kesim & fön',
-    image: avatar('photo-1494790108377-be9c29b29330'),
-    rating: 4.8,
-  },
-  {
-    id: 'u3',
-    name: 'Saule',
-    role: 'Bakım & keratin',
-    image: avatar('photo-1438761681033-6461ffad8d80'),
-    rating: 4.7,
-  },
+const STAFF_NAMES: { name: string; role: string }[] = [
+  { name: 'Madina', role: 'Renk uzmanı' },
+  { name: 'Aigerim', role: 'Kesim & fön' },
+  { name: 'Saule', role: 'Bakım & keratin' },
+  { name: 'Kamila', role: 'Nail art' },
+  { name: 'Asel', role: 'Cilt bakımı' },
 ];
 
-// Hangi sağlayıcı salon (çok uzmanlı), hangisi bağımsız uzman
-const SALON_IDS = new Set(['1', '4']);
+const REVIEW_POOL: Omit<Review, 'id' | 'service'>[] = [
+  {
+    author: 'Dana',
+    period: 'Son 30 gün içinde',
+    rating: 5,
+    text: 'Sonuç tam istediğim gibiydi, fiyat baştan açıktı. Kesinlikle tekrar geleceğim.',
+    firstVisit: true,
+  },
+  {
+    author: 'Doğrulanmış üye',
+    period: '1–3 ay önce',
+    rating: 4,
+    text: 'Usta çok dikkatliydi ve zamanında başladı. Memnun kaldım.',
+    firstVisit: false,
+  },
+  {
+    author: 'Aizhan',
+    period: 'Son 30 gün içinde',
+    rating: 5,
+    text: 'Hijyen mükemmeldi, her şey gözümün önünde sterilize edildi.',
+    firstVisit: true,
+  },
+  {
+    author: 'Gulnara',
+    period: '1–3 ay önce',
+    rating: 5,
+    text: 'Çok ilgili bir ekip, sonuçtan ailem bile etkilendi.',
+    firstVisit: false,
+  },
+  {
+    author: 'Madina',
+    period: '3–6 ay önce',
+    rating: 4,
+    text: 'Genel olarak iyiydi, küçük bir gecikme dışında sorun yoktu.',
+    firstVisit: false,
+  },
+];
 
 const portfolioImg = (id: string) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=400&q=70`;
 
-const SHARED_DETAIL = {
-  about:
-    'AYNA tarafından doğrulanmış, deneyimli ekip. Hijyen ve fiyat şeffaflığı önceliğimiz. Sonucun beklentine uygunluğunu garanti ederiz.',
-  experienceYears: 8,
-  district: 'Almatı · Medeu',
-  reviewCount: 47,
-  serviceRatings: [
-    { name: 'Balayage', score: 4.9 },
-    { name: 'Saç kesimi', score: 4.6 },
-    { name: 'Saç bakımı', score: 4.8 },
-    { name: 'Gelin saçı', score: null },
-  ] as ServiceRating[],
-  services: [
-    { id: 's1', name: 'Saç boyama', durationMin: 90, price: 15000 },
-    { id: 's2', name: 'Balayage', durationMin: 150, price: 28000 },
-    { id: 's3', name: 'Saç kesimi & fön', durationMin: 60, price: 9000 },
-    { id: 's4', name: 'Keratin bakımı', durationMin: 120, price: 22000 },
-  ] as ServiceItem[],
-  portfolio: [
-    portfolioImg('photo-1562322140-8baeececf3df'),
-    portfolioImg('photo-1595476108010-b4d1f102b1b1'),
-    portfolioImg('photo-1633681926022-84c23e8cb2d6'),
-    portfolioImg('photo-1521590832167-7bcbfaa6381f'),
-  ],
-  reviews: [
-    {
-      id: 'r1',
-      period: 'Son 30 gün içinde',
-      rating: 5,
-      service: 'Balayage',
-      text: 'Sonuç tam istediğim gibiydi, fiyat baştan açıktı. Kesinlikle tekrar geleceğim.',
-      firstVisit: true,
-    },
-    {
-      id: 'r2',
-      period: '1–3 ay önce',
-      rating: 4,
-      service: 'Saç kesimi',
-      text: 'Usta çok dikkatliydi ve zamanında başladı. Memnun kaldım.',
-      firstVisit: false,
-    },
-  ] as Review[],
-};
+const PORTFOLIO_POOL = [
+  'photo-1562322140-8baeececf3df',
+  'photo-1595476108010-b4d1f102b1b1',
+  'photo-1633681926022-84c23e8cb2d6',
+  'photo-1521590832167-7bcbfaa6381f',
+  'photo-1516975080664-ed2fc6a32937',
+  'photo-1588776814546-1ffcf47267a5',
+];
 
 export function getProfessionalDetail(id: string): ProfessionalDetail {
-  const base = FEATURED.find((p) => p.id === id) ?? FEATURED[0]!;
-  const kind: ProviderKind = SALON_IDS.has(base.id) ? 'salon' : 'independent';
-  return { ...base, ...SHARED_DETAIL, kind, staff: kind === 'salon' ? STAFF : [] };
+  const base = PROFESSIONALS.find((p) => p.id === id) ?? PROFESSIONALS[0]!;
+  const idx = PROFESSIONALS.indexOf(base);
+  const services = SECTOR_SERVICES[base.sector] ?? SECTOR_SERVICES.hair!;
+  const staff: Uzman[] =
+    base.kind === 'salon'
+      ? STAFF_NAMES.slice(0, 3).map((s, i) => ({
+          id: `${base.id}-u${i + 1}`,
+          name: s.name,
+          role: s.role,
+          image: avatar(FACES[(idx + i) % FACES.length]!),
+          rating: Math.round((4.6 + ((idx + i) % 4) * 0.1) * 10) / 10,
+        }))
+      : [];
+  const serviceRatings: ServiceRating[] = services.slice(0, 4).map((s, i) => ({
+    name: s.name,
+    score: i === 3 ? null : Math.round((4.5 + (i % 5) * 0.1) * 10) / 10,
+  }));
+  const reviews: Review[] = REVIEW_POOL.slice(0, 4).map((r, i) => ({
+    ...r,
+    id: `${base.id}-r${i + 1}`,
+    service: services[i % services.length]!.name,
+  }));
+  const portfolio = PORTFOLIO_POOL.map((p) => portfolioImg(p));
+  return {
+    ...base,
+    staff,
+    about:
+      'AYNA tarafından doğrulanmış, deneyimli ekip. Hijyen ve fiyat şeffaflığı önceliğimiz. Sonucun beklentine uygunluğunu garanti ederiz.',
+    serviceRatings,
+    services,
+    portfolio,
+    reviews,
+  };
 }
 
+// ── Randevular (store tohumu) ────────────────────────────────────────────
 export type BookingSource = 'direct' | 'photo_quote' | 'demand';
-export type BookingStatus = 'confirmed' | 'pending' | 'completed';
+export type BookingStatus = 'confirmed' | 'pending' | 'completed' | 'cancelled';
 
 export interface Appointment {
   id: string;
   source: BookingSource;
   service: string; // ne için
+  proId: string;
   proName: string;
   proImage: string;
+  uzmanName?: string; // hangi uzmandan
   dateLabel: string; // hangi saatte
-  inDays: number; // sıralama için
+  inDays: number; // sıralama için (negatif = geçmiş)
   price: number; // kaç paraya
   status: BookingStatus;
+  reviewed?: boolean;
 }
 
-export const APPOINTMENTS: Appointment[] = [
+export const SEED_APPOINTMENTS: Appointment[] = [
   {
     id: 'a1',
     source: 'direct',
     service: 'Saç kesimi & fön',
+    proId: '1',
     proName: 'Madina Studio',
-    proImage: FEATURED[0]!.image,
+    proImage: PROFESSIONALS[0]!.image,
+    uzmanName: 'Aigerim',
     dateLabel: 'Cuma · 14:00',
     inDays: 3,
     price: 9000,
@@ -267,19 +624,22 @@ export const APPOINTMENTS: Appointment[] = [
     id: 'a2',
     source: 'direct',
     service: 'Cilt bakımı',
+    proId: '4',
     proName: 'Lotus Spa',
-    proImage: FEATURED[3]!.image,
+    proImage: PROFESSIONALS[3]!.image,
     dateLabel: 'Geçen hafta · 16:00',
     inDays: -7,
     price: 18000,
     status: 'completed',
+    reviewed: false,
   },
   {
     id: 'a3',
     source: 'photo_quote',
     service: 'Balayage (fotoğraflı teklif)',
+    proId: '3',
     proName: 'Ailin Makeup',
-    proImage: FEATURED[2]!.image,
+    proImage: PROFESSIONALS[2]!.image,
     dateLabel: 'Pazartesi · 11:00',
     inDays: 6,
     price: 21000,
@@ -289,18 +649,38 @@ export const APPOINTMENTS: Appointment[] = [
     id: 'a4',
     source: 'demand',
     service: 'Gelin makyajı (talep)',
+    proId: '2',
     proName: 'Aruzhan Beauty',
-    proImage: FEATURED[1]!.image,
+    proImage: PROFESSIONALS[1]!.image,
     dateLabel: 'Cumartesi · 09:00',
     inDays: 4,
     price: 18000,
     status: 'confirmed',
   },
+  {
+    id: 'a5',
+    source: 'direct',
+    service: 'Manikür',
+    proId: '6',
+    proName: 'Bella Nails',
+    proImage: PROFESSIONALS[5]!.image,
+    uzmanName: 'Kamila',
+    dateLabel: 'Geçen ay · 13:00',
+    inDays: -24,
+    price: 6000,
+    status: 'completed',
+    reviewed: true,
+  },
 ];
 
-export const UPCOMING = APPOINTMENTS.filter((a) => a.status !== 'completed');
-
+// ── Circle (topluluk) ────────────────────────────────────────────────────
 export type CirclePostType = 'recommend' | 'asking' | 'experience';
+export interface CircleComment {
+  id: string;
+  author: string;
+  anonymous: boolean;
+  text: string;
+}
 export interface CirclePost {
   id: string;
   type: CirclePostType;
@@ -309,10 +689,11 @@ export interface CirclePost {
   anonymous: boolean;
   text: string;
   helpful: number;
-  comments: number;
+  helpfulByMe?: boolean;
+  comments: CircleComment[];
 }
 
-export const CIRCLE_POSTS: CirclePost[] = [
+export const SEED_CIRCLE_POSTS: CirclePost[] = [
   {
     id: 'c1',
     type: 'recommend',
@@ -321,7 +702,15 @@ export const CIRCLE_POSTS: CirclePost[] = [
     anonymous: false,
     text: 'Madina Studio’da balayage yaptırdım, sonuç referansın birebir aynısı oldu. Gönül rahatlığıyla öneririm.',
     helpful: 24,
-    comments: 6,
+    comments: [
+      { id: 'c1-1', author: 'Aizhan', anonymous: false, text: 'Fiyat aralığı nasıldı?' },
+      {
+        id: 'c1-2',
+        author: 'Dana',
+        anonymous: false,
+        text: 'Balayage 28.000 ₸ civarıydı, çok memnunum.',
+      },
+    ],
   },
   {
     id: 'c2',
@@ -331,7 +720,14 @@ export const CIRCLE_POSTS: CirclePost[] = [
     anonymous: true,
     text: 'Almatı’da gelin makyajı için güvenilir bir uzman arıyorum. Evime gelebilen biri ideal olur.',
     helpful: 8,
-    comments: 11,
+    comments: [
+      {
+        id: 'c2-1',
+        author: 'Gulnara',
+        anonymous: false,
+        text: 'Ailin Makeup eve geliyor, çok başarılı.',
+      },
+    ],
   },
   {
     id: 'c3',
@@ -341,10 +737,11 @@ export const CIRCLE_POSTS: CirclePost[] = [
     anonymous: false,
     text: 'Kalıcı ojede hijyene çok dikkat eden bir yer buldum. Sterilizasyonu gözümün önünde yaptılar.',
     helpful: 17,
-    comments: 3,
+    comments: [],
   },
 ];
 
+// ── Bakım rutinleri (store tohumu) ───────────────────────────────────────
 export interface CareRoutine {
   id: string;
   name: string;
@@ -352,14 +749,14 @@ export interface CareRoutine {
   dueDays: number; // <0 gecikmiş, 0 bugün
 }
 
-export const CARE_ROUTINES: CareRoutine[] = [
+export const SEED_CARE_ROUTINES: CareRoutine[] = [
   { id: 'cr1', name: 'Kalıcı oje yenileme', icon: 'color-palette-outline', dueDays: 2 },
   { id: 'cr2', name: 'Saç dip boyası', icon: 'cut-outline', dueDays: -3 },
   { id: 'cr3', name: 'Cilt bakımı', icon: 'sparkles-outline', dueDays: 9 },
   { id: 'cr4', name: 'Lazer epilasyon seansı', icon: 'flash-outline', dueDays: 0 },
 ];
 
-// Kişisel kayıtlar — kullanıcının kendi girdiği randevular (doktor, spor, vb.) — pazaryeri değil
+// ── Kişisel kayıtlar (kullanıcının kendi girdiği — pazaryeri değil) ──────
 export type PersonalTone = 'rose' | 'sage' | 'lavender' | 'blue';
 export interface PersonalLog {
   id: string;
@@ -367,9 +764,10 @@ export interface PersonalLog {
   dateLabel: string;
   icon: string;
   tone: PersonalTone;
+  note?: string;
 }
 
-export const PERSONAL_LOGS: PersonalLog[] = [
+export const SEED_PERSONAL_LOGS: PersonalLog[] = [
   {
     id: 'pl1',
     title: 'Pilates dersi',
@@ -393,8 +791,10 @@ export const PERSONAL_LOGS: PersonalLog[] = [
   },
 ];
 
+// Hızlı ekle türleri (Benim İçin → ekleme akışı)
+export type QuickAddKind = 'doctor' | 'gym' | 'personal' | 'reminder';
 export interface QuickAdd {
-  id: string;
+  id: QuickAddKind;
   labelKey: MessageKey;
   icon: string;
   tone: PersonalTone;
@@ -407,16 +807,21 @@ export const QUICK_ADD: QuickAdd[] = [
   { id: 'reminder', labelKey: 'record.reminder', icon: 'notifications-outline', tone: 'blue' },
 ];
 
-// AYNA Life — pratik bilgiler (kısa, uygulanabilir içerik)
+export const quickAddMeta = (kind: QuickAddKind): QuickAdd =>
+  QUICK_ADD.find((q) => q.id === kind) ?? QUICK_ADD[0]!;
+
+// ── AYNA Life — pratik bilgiler (tam içerikli) ───────────────────────────
 export interface LifeArticle {
   id: string;
   tag: string;
   title: string;
   readMin: number;
   image: string;
+  excerpt: string;
+  body: string[];
 }
 
-const lifeImg = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=600&q=70`;
+const lifeImg = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=70`;
 
 export const LIFE_ARTICLES: LifeArticle[] = [
   {
@@ -425,6 +830,13 @@ export const LIFE_ARTICLES: LifeArticle[] = [
     title: 'Jinekolojik muayeneye nasıl hazırlanılır?',
     readMin: 3,
     image: lifeImg('photo-1505751172876-fa1923c5c528'),
+    excerpt: 'İlk muayene öncesi bilmen gereken pratik adımlar ve doğru zamanlama.',
+    body: [
+      'Düzenli jinekolojik kontrol, kadın sağlığının temel taşlarından biridir. İlk muayene gözünü korkutmasın — hazırlıklı gitmek süreci kolaylaştırır.',
+      'Randevunu adetinin bittiği ilk günlere denk getirmeye çalış. Muayeneden 24 saat önce cinsel ilişki, vajinal duş ve fitil kullanımından kaçın.',
+      'Şikayetlerini, son adet tarihini ve kullandığın ilaçları not al. Soru sormaktan çekinme; iyi bir uzman her adımı anlatır.',
+      'Unutma: erken fark edilen pek çok durum kolayca yönetilebilir. Yılda bir kez kontrol, en değerli yatırımlardan biridir.',
+    ],
   },
   {
     id: 'la2',
@@ -432,6 +844,14 @@ export const LIFE_ARTICLES: LifeArticle[] = [
     title: 'Saç boyatmadan önce bilmen gereken 5 şey',
     readMin: 2,
     image: lifeImg('photo-1522338242992-e1a54906a8da'),
+    excerpt: 'Hayal kırıklığı yaşamamak için boya öncesi kontrol listesi.',
+    body: [
+      '1) Referans fotoğraf götür. Kelimeler yanıltıcı olabilir; görsel netlik sağlar.',
+      '2) Saç geçmişini paylaş. Daha önce yapılan işlemler sonucu doğrudan etkiler.',
+      '3) Fiyatı baştan netleştir. AYNA’da fiyat şeffaflığı önceliğimizdir.',
+      '4) Boya öncesi saçını yıkama; doğal yağ saç derini korur.',
+      '5) Sonrasında renk koruyucu bakım ürünleri kullan.',
+    ],
   },
   {
     id: 'la3',
@@ -439,6 +859,13 @@ export const LIFE_ARTICLES: LifeArticle[] = [
     title: 'Kişisel bakım bütçesi nasıl kurulur?',
     readMin: 4,
     image: lifeImg('photo-1554224155-6726b3ff858f'),
+    excerpt: 'Kendine yatırım yaparken bütçeni kontrol altında tutmanın yolu.',
+    body: [
+      'Kişisel bakım bir lüks değil, öz bakımın parçasıdır. Ama plansız harcama bütçeyi zorlayabilir.',
+      'Aylık bir bakım bütçesi belirle ve kategorilere ayır: saç, tırnak, cilt, spa.',
+      'AYNA’daki bütçe takibi ile harcamalarını gör; tekrar eden işlemler için paketleri değerlendir.',
+      'Sadakat puanlarını biriktir; bazı seansları puanla karşılayarak tasarruf et.',
+    ],
   },
   {
     id: 'la4',
@@ -446,9 +873,34 @@ export const LIFE_ARTICLES: LifeArticle[] = [
     title: 'Maaş görüşmesi için 5 pratik ipucu',
     readMin: 3,
     image: lifeImg('photo-1521737604893-d14cc237f11d'),
+    excerpt: 'Hak ettiğini istemek için kendinden emin bir hazırlık.',
+    body: [
+      'Önce piyasa araştırması yap; rakamla konuşmak güven verir.',
+      'Başarılarını somut örneklerle listele.',
+      'İlk rakamı söylemekten çekinme, aralık ver.',
+      'Sadece maaşı değil; yan haklar, esneklik ve gelişim fırsatlarını da masaya koy.',
+      'Sakin ve net ol — hazırlık, özgüvenin en iyi kaynağıdır.',
+    ],
+  },
+  {
+    id: 'la5',
+    tag: 'Wellness',
+    title: 'Yoğun günde 10 dakikalık nefes molası',
+    readMin: 2,
+    image: lifeImg('photo-1506126613408-eca07ce68773'),
+    excerpt: 'Stresi azaltan, her yerde uygulanabilen basit bir teknik.',
+    body: [
+      'Stres anında bedenimiz alarma geçer. Bilinçli nefes bunu hızla dengeler.',
+      '4 saniye burnundan al, 4 saniye tut, 6 saniye ağzından ver. 10 kez tekrarla.',
+      'Günde iki kez uygula; uyku kaliteni ve odaklanmanı belirgin iyileştirir.',
+    ],
   },
 ];
 
+export const getArticle = (id: string): LifeArticle | undefined =>
+  LIFE_ARTICLES.find((a) => a.id === id);
+
+// ── Özel günler (store tohumu) ───────────────────────────────────────────
 export interface Moment {
   id: string;
   title: string;
@@ -457,7 +909,7 @@ export interface Moment {
   daysLeft: number;
 }
 
-export const MOMENTS: Moment[] = [
+export const SEED_MOMENTS: Moment[] = [
   { id: 'm1', title: 'Dana’nın doğum günü', icon: 'gift-outline', dateLabel: '7 Tem', daysLeft: 8 },
   {
     id: 'm2',
@@ -469,9 +921,11 @@ export const MOMENTS: Moment[] = [
   { id: 'm3', title: 'Arkadaş düğünü', icon: 'flower-outline', dateLabel: '3 Ağu', daysLeft: 35 },
 ];
 
+// ── Birleşik takvim (randevu + özel gün + bakım) ─────────────────────────
 export type EventKind = 'appointment' | 'moment' | 'care';
 export interface UpcomingEvent {
   id: string;
+  refId: string;
   kind: EventKind;
   title: string;
   subtitle: string;
@@ -485,41 +939,52 @@ function whenShort(days: number): string {
   if (days === 1) return 'Yarın';
   return `${days} gün`;
 }
-
-/** Randevu + özel gün + bakım hatırlatmalarını tek takvim akışında birleştirir. */
-export function getUpcomingEvents(): UpcomingEvent[] {
-  const appts: UpcomingEvent[] = UPCOMING.map((a) => ({
-    id: `ap-${a.id}`,
-    kind: 'appointment',
-    title: a.service,
-    subtitle: `${a.proName} · ${a.dateLabel}`,
-    icon: 'calendar',
-    inDays: a.inDays,
-    tone: 'rose',
-  }));
-  const moments: UpcomingEvent[] = MOMENTS.map((m) => ({
-    id: `mo-${m.id}`,
-    kind: 'moment',
-    title: m.title,
-    subtitle: `Özel gün · ${m.dateLabel}`,
-    icon: m.icon,
-    inDays: m.daysLeft,
-    tone: 'gold',
-  }));
-  const care: UpcomingEvent[] = CARE_ROUTINES.filter((c) => c.dueDays >= 0).map((c) => ({
-    id: `ca-${c.id}`,
-    kind: 'care',
-    title: c.name,
-    subtitle: `Bakım · ${whenShort(c.dueDays)}`,
-    icon: c.icon,
-    inDays: c.dueDays,
-    tone: 'rose',
-  }));
-  return [...appts, ...moments, ...care].sort((a, b) => a.inDays - b.inDays);
-}
-
 export { whenShort };
 
+/** Randevu + özel gün + bakım hatırlatmalarını tek takvim akışında birleştirir. */
+export function buildUpcomingEvents(
+  appts: Appointment[],
+  moments: Moment[],
+  routines: CareRoutine[],
+): UpcomingEvent[] {
+  const a: UpcomingEvent[] = appts
+    .filter((x) => x.status === 'confirmed' || x.status === 'pending')
+    .map((x) => ({
+      id: `ap-${x.id}`,
+      refId: x.id,
+      kind: 'appointment',
+      title: x.service,
+      subtitle: `${x.proName} · ${x.dateLabel}`,
+      icon: 'calendar',
+      inDays: x.inDays,
+      tone: 'rose',
+    }));
+  const m: UpcomingEvent[] = moments.map((x) => ({
+    id: `mo-${x.id}`,
+    refId: x.id,
+    kind: 'moment',
+    title: x.title,
+    subtitle: `Özel gün · ${x.dateLabel}`,
+    icon: x.icon,
+    inDays: x.daysLeft,
+    tone: 'gold',
+  }));
+  const c: UpcomingEvent[] = routines
+    .filter((x) => x.dueDays >= 0)
+    .map((x) => ({
+      id: `ca-${x.id}`,
+      refId: x.id,
+      kind: 'care',
+      title: x.name,
+      subtitle: `Bakım · ${whenShort(x.dueDays)}`,
+      icon: x.icon,
+      inDays: x.dueDays,
+      tone: 'rose',
+    }));
+  return [...a, ...m, ...c].sort((x, y) => x.inDays - y.inDays);
+}
+
+// ── Teklifler (foto-teklif / talep sonuçları) ────────────────────────────
 export interface Quote {
   id: string;
   proId: string;
@@ -537,9 +1002,9 @@ export const INCOMING_QUOTES: Quote[] = [
     id: 'q1',
     proId: '1',
     name: 'Madina Studio',
-    image: FEATURED[0]!.image,
+    image: PROFESSIONALS[0]!.image,
     rating: 4.9,
-    reviewCount: 47,
+    reviewCount: 312,
     friends: 3,
     price: 16000,
     etaMin: 120,
@@ -548,9 +1013,9 @@ export const INCOMING_QUOTES: Quote[] = [
     id: 'q2',
     proId: '3',
     name: 'Ailin Makeup',
-    image: FEATURED[2]!.image,
+    image: PROFESSIONALS[2]!.image,
     rating: 5.0,
-    reviewCount: 62,
+    reviewCount: 204,
     friends: 5,
     price: 21000,
     etaMin: 90,
@@ -559,9 +1024,9 @@ export const INCOMING_QUOTES: Quote[] = [
     id: 'q3',
     proId: '2',
     name: 'Aruzhan Beauty',
-    image: FEATURED[1]!.image,
+    image: PROFESSIONALS[1]!.image,
     rating: 4.8,
-    reviewCount: 33,
+    reviewCount: 156,
     price: 12000,
     etaMin: 75,
   },
@@ -569,10 +1034,294 @@ export const INCOMING_QUOTES: Quote[] = [
     id: 'q4',
     proId: '4',
     name: 'Lotus Spa',
-    image: FEATURED[3]!.image,
+    image: PROFESSIONALS[3]!.image,
     rating: 4.7,
-    reviewCount: 28,
+    reviewCount: 98,
     price: 9500,
     etaMin: 60,
   },
 ];
+
+// ── Sadakat: kazanım/harcama defteri + çekiliş + ödüller ─────────────────
+export type LedgerKind = 'earn' | 'spend';
+export interface LedgerEntry {
+  id: string;
+  kind: LedgerKind;
+  labelKey: MessageKey;
+  detail: string;
+  points: number; // earn pozitif, spend negatif
+  dateLabel: string;
+}
+
+export const SEED_LEDGER: LedgerEntry[] = [
+  {
+    id: 'le1',
+    kind: 'earn',
+    labelKey: 'rewards.earn.booking',
+    detail: 'Lotus Spa · Cilt bakımı',
+    points: 180,
+    dateLabel: 'Geçen hafta',
+  },
+  {
+    id: 'le2',
+    kind: 'earn',
+    labelKey: 'rewards.earn.review',
+    detail: 'Bella Nails',
+    points: 40,
+    dateLabel: 'Geçen ay',
+  },
+  {
+    id: 'le3',
+    kind: 'earn',
+    labelKey: 'rewards.earn.referral',
+    detail: 'Dana katıldı',
+    points: 120,
+    dateLabel: 'Geçen ay',
+  },
+];
+
+export interface Reward {
+  id: string;
+  titleKey: MessageKey;
+  cost: number;
+  icon: string;
+}
+
+export const REWARDS: Reward[] = [
+  { id: 'rw1', titleKey: 'rewards.redeem.discount', cost: 200, icon: 'pricetag-outline' },
+  { id: 'rw2', titleKey: 'rewards.redeem.addon', cost: 150, icon: 'add-circle-outline' },
+  { id: 'rw3', titleKey: 'rewards.redeem.raffle', cost: 100, icon: 'ticket-outline' },
+  { id: 'rw4', titleKey: 'rewards.redeem.premium', cost: 500, icon: 'star-outline' },
+];
+
+// ── Bildirimler (store tohumu) ───────────────────────────────────────────
+export type NotificationType = 'booking' | 'quote' | 'loyalty' | 'circle' | 'system';
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  dateLabel: string;
+  icon: string;
+  read: boolean;
+}
+
+export const SEED_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 'n1',
+    type: 'booking',
+    title: 'Randevun onaylandı',
+    body: 'Madina Studio · Cuma 14:00 · Saç kesimi & fön',
+    dateLabel: '2 saat önce',
+    icon: 'calendar-outline',
+    read: false,
+  },
+  {
+    id: 'n2',
+    type: 'quote',
+    title: 'Yeni teklif geldi',
+    body: 'Balayage talebine 4 işletme teklif verdi.',
+    dateLabel: 'Dün',
+    icon: 'pricetags-outline',
+    read: false,
+  },
+  {
+    id: 'n3',
+    type: 'loyalty',
+    title: '180 puan kazandın',
+    body: 'Lotus Spa randevun tamamlandı.',
+    dateLabel: '3 gün önce',
+    icon: 'gift-outline',
+    read: true,
+  },
+  {
+    id: 'n4',
+    type: 'circle',
+    title: 'Gönderine yorum',
+    body: 'Aizhan: "Fiyat aralığı nasıldı?"',
+    dateLabel: '4 gün önce',
+    icon: 'chatbubble-outline',
+    read: true,
+  },
+];
+
+// ── Yardım & SSS ─────────────────────────────────────────────────────────
+export interface Faq {
+  id: string;
+  q: string;
+  a: string;
+}
+
+export const FAQ: Faq[] = [
+  {
+    id: 'f1',
+    q: 'Randevumu nasıl iptal ederim?',
+    a: 'Randevular sekmesinden ilgili randevuya dokun, ardından “İptal et”i seç. İşletme onayından önce iptal ücretsizdir.',
+  },
+  {
+    id: 'f2',
+    q: 'Fotoğrafla teklif nasıl çalışır?',
+    a: 'Bir fotoğraf ve kategori paylaş; o kategorideki işletmeler sana fiyat ve süre teklifi gönderir. Puanı ve fiyatı kıyaslayıp seçersin.',
+  },
+  {
+    id: 'f3',
+    q: 'Puanları nasıl kazanır ve kullanırım?',
+    a: 'Uygulama üzerinden tamamlanan her randevu, değerlendirme ve davet puan kazandırır. Puanları indirim, ekstra hizmet veya çekiliş için kullanabilirsin.',
+  },
+  {
+    id: 'f4',
+    q: 'Adresim ve numaram ne zaman paylaşılır?',
+    a: 'İletişim ve konum bilgilerin yalnızca randevu onaylandıktan sonra ilgili işletmeyle paylaşılır.',
+  },
+  {
+    id: 'f5',
+    q: 'Yorumum anonim kalır mı?',
+    a: 'Anonim yorum bırakırsan, işletme ve uzman yorum sahibinin kimliğini göremez.',
+  },
+];
+
+// ── Seller (işletme paneli) ──────────────────────────────────────────────
+export interface SellerMetric {
+  id: string;
+  labelKey: MessageKey;
+  value: string;
+  delta: string;
+  positive: boolean;
+  icon: string;
+}
+export interface SellerStaffRow {
+  name: string;
+  image: string;
+  bookings: number;
+  rating: number;
+}
+export interface SellerPeriodData {
+  metrics: SellerMetric[];
+  staff: SellerStaffRow[];
+}
+
+export const SELLER_DATA: Record<'week' | 'month' | 'all', SellerPeriodData> = {
+  week: {
+    metrics: [
+      {
+        id: 'rev',
+        labelKey: 'seller.metric.revenue',
+        value: '₸184.000',
+        delta: '+12%',
+        positive: true,
+        icon: 'cash-outline',
+      },
+      {
+        id: 'bk',
+        labelKey: 'seller.metric.bookings',
+        value: '23',
+        delta: '+4',
+        positive: true,
+        icon: 'calendar-outline',
+      },
+      {
+        id: 'rt',
+        labelKey: 'seller.metric.rating',
+        value: '4.9',
+        delta: '+0.1',
+        positive: true,
+        icon: 'star-outline',
+      },
+      {
+        id: 'rp',
+        labelKey: 'seller.metric.repeat',
+        value: '%62',
+        delta: '+5%',
+        positive: true,
+        icon: 'repeat-outline',
+      },
+    ],
+    staff: [
+      { name: 'Madina', image: avatar(FACES[0]!), bookings: 9, rating: 4.9 },
+      { name: 'Aigerim', image: avatar(FACES[1]!), bookings: 8, rating: 4.8 },
+      { name: 'Saule', image: avatar(FACES[2]!), bookings: 6, rating: 4.7 },
+    ],
+  },
+  month: {
+    metrics: [
+      {
+        id: 'rev',
+        labelKey: 'seller.metric.revenue',
+        value: '₸742.000',
+        delta: '+18%',
+        positive: true,
+        icon: 'cash-outline',
+      },
+      {
+        id: 'bk',
+        labelKey: 'seller.metric.bookings',
+        value: '96',
+        delta: '+14',
+        positive: true,
+        icon: 'calendar-outline',
+      },
+      {
+        id: 'rt',
+        labelKey: 'seller.metric.rating',
+        value: '4.8',
+        delta: '+0.2',
+        positive: true,
+        icon: 'star-outline',
+      },
+      {
+        id: 'rp',
+        labelKey: 'seller.metric.repeat',
+        value: '%58',
+        delta: '+3%',
+        positive: true,
+        icon: 'repeat-outline',
+      },
+    ],
+    staff: [
+      { name: 'Madina', image: avatar(FACES[0]!), bookings: 38, rating: 4.9 },
+      { name: 'Aigerim', image: avatar(FACES[1]!), bookings: 34, rating: 4.8 },
+      { name: 'Saule', image: avatar(FACES[2]!), bookings: 24, rating: 4.7 },
+    ],
+  },
+  all: {
+    metrics: [
+      {
+        id: 'rev',
+        labelKey: 'seller.metric.revenue',
+        value: '₸6.4M',
+        delta: '+92%',
+        positive: true,
+        icon: 'cash-outline',
+      },
+      {
+        id: 'bk',
+        labelKey: 'seller.metric.bookings',
+        value: '812',
+        delta: '+210',
+        positive: true,
+        icon: 'calendar-outline',
+      },
+      {
+        id: 'rt',
+        labelKey: 'seller.metric.rating',
+        value: '4.8',
+        delta: '—',
+        positive: true,
+        icon: 'star-outline',
+      },
+      {
+        id: 'rp',
+        labelKey: 'seller.metric.repeat',
+        value: '%61',
+        delta: '+8%',
+        positive: true,
+        icon: 'repeat-outline',
+      },
+    ],
+    staff: [
+      { name: 'Madina', image: avatar(FACES[0]!), bookings: 320, rating: 4.9 },
+      { name: 'Aigerim', image: avatar(FACES[1]!), bookings: 286, rating: 4.8 },
+      { name: 'Saule', image: avatar(FACES[2]!), bookings: 206, rating: 4.7 },
+    ],
+  },
+};

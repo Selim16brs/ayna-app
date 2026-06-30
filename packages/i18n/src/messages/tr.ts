@@ -32,9 +32,12 @@ export const tr = {
   // Kategoriler
   'category.hair': 'Saç',
   'category.nails': 'Tırnak',
-  'category.brows': 'Kaş & Kirpik',
+  'category.brows': 'Kaş',
+  'category.lashes': 'Kirpik',
   'category.makeup': 'Makyaj',
+  'category.skincare': 'Cilt Bakımı',
   'category.spa': 'Spa & Masaj',
+  'category.epilation': 'Epilasyon',
 
   // Kampanya kartı
   'promo.title': 'İlk randevuna özel',
@@ -306,6 +309,184 @@ export const tr = {
   'reports.accept_rate': 'Kabul oranı',
   'reports.demands_in': 'Gelen talep',
   'reports.section.staff': 'Uzman performansı',
+
+  // Ortak (yeni)
+  'common.delete': 'Sil',
+  'common.save': 'Kaydet',
+  'common.add': 'Ekle',
+  'common.send': 'Gönder',
+  'common.back': 'Geri',
+  'common.on': 'Açık',
+  'common.off': 'Kapalı',
+
+  // Arama
+  'search.title': 'Ara',
+  'search.placeholder': 'Uzman, salon veya hizmet ara',
+  'search.empty': 'Sonuç bulunamadı',
+  'search.empty_sub': 'Farklı bir kelime dene',
+  'search.results': 'sonuç',
+  'search.all_categories': 'Tüm kategoriler',
+
+  // Kategori listeleme
+  'category.browse.count': 'uzman bulundu',
+  'category.sort.rating': 'Puana göre',
+  'category.sort.price': 'Fiyata göre',
+  'category.empty': 'Bu kategoride henüz uzman yok',
+
+  // Kaydedilenler (favoriler)
+  'favorites.title': 'Kaydedilenler',
+  'favorites.empty': 'Henüz kaydedilen yok',
+  'favorites.empty_sub': 'Beğendiğin uzmanları kalple kaydet',
+
+  // Bildirimler
+  'notifications.title': 'Bildirimler',
+  'notifications.empty': 'Bildirimin yok',
+  'notifications.mark_all': 'Tümünü okundu işaretle',
+
+  // Randevu detayı + iptal
+  'booking.detail.title': 'Randevu detayı',
+  'booking.detail.cancel': 'Randevuyu iptal et',
+  'booking.detail.cancel_confirm': 'Bu randevuyu iptal etmek istiyor musun?',
+  'booking.detail.review': 'Değerlendir',
+  'booking.detail.reviewed': 'Değerlendirildi',
+  'booking.detail.rebook': 'Tekrar randevu al',
+  'booking.detail.source': 'Randevu yolu',
+  'booking.status.cancelled': 'İptal edildi',
+
+  // Değerlendirme akışı
+  'review.title': 'Değerlendir',
+  'review.subtitle': 'Deneyimini paylaş, başkalarına yol göster',
+  'review.rating': 'Puanın',
+  'review.comment': 'Yorumun',
+  'review.comment_ph': 'Deneyimini birkaç cümleyle anlat...',
+  'review.anonymous': 'Anonim olarak paylaş',
+  'review.submit': 'Değerlendirmeyi gönder',
+  'review.thanks': 'Teşekkürler! +40 puan kazandın',
+
+  // Circle — gönderi oluştur
+  'circle.new.title': 'Gönderi oluştur',
+  'circle.new.type': 'Gönderi türü',
+  'circle.new.category': 'Kategori',
+  'circle.new.text': 'Ne paylaşmak istersin?',
+  'circle.new.text_ph': 'Deneyimini, sorunu veya tavsiyeni yaz...',
+  'circle.new.anonymous': 'Anonim paylaş',
+  'circle.new.submit': 'Paylaş',
+
+  // Circle — gönderi detayı + yorumlar
+  'circle.detail.title': 'Gönderi',
+  'circle.detail.comments': 'Yorumlar',
+  'circle.detail.no_comments': 'İlk yorumu sen yap',
+  'circle.detail.comment_ph': 'Yorum yaz...',
+  'circle.helpful_btn': 'Faydalı',
+
+  // Benim İçin — ekleme akışı
+  'benim.add.choose': 'Ne eklemek istersin?',
+  'benim.add.log': 'Kişisel kayıt',
+  'benim.add.log_sub': 'Doktor, spor, kişisel randevu',
+  'benim.add.routine': 'Bakım hatırlatması',
+  'benim.add.routine_sub': 'Oje, dip boya, cilt bakımı...',
+  'benim.add.moment': 'Özel gün',
+  'benim.add.moment_sub': 'Doğum günü, yıl dönümü...',
+  'care.add.log_title': 'Kişisel kayıt ekle',
+  'care.add.routine_title': 'Bakım hatırlatması ekle',
+  'care.add.moment_title': 'Özel gün ekle',
+  'care.add.what': 'Başlık',
+  'care.add.what_ph': 'Örn. Jinekolog kontrolü',
+  'care.add.routine_name_ph': 'Örn. Kalıcı oje yenileme',
+  'care.add.moment_name_ph': 'Örn. Dana’nın doğum günü',
+  'care.add.date': 'Tarih & saat',
+  'care.add.date_ph': 'Örn. 12 Tem · 10:00',
+  'care.add.in_days': 'Kaç gün sonra?',
+  'care.add.in_days_ph': 'Örn. 7',
+  'care.add.type': 'Tür',
+  'care.add.note': 'Not (isteğe bağlı)',
+  'care.add.note_ph': 'Detay ekle...',
+  'care.add.delete_confirm': 'Bu kaydı silmek istiyor musun?',
+
+  // AYNA Life — yazı detayı
+  'life.title': 'AYNA Life',
+
+  // Profil — düzenle
+  'profile.edit.title': 'Profili düzenle',
+  'profile.edit.name': 'Ad Soyad',
+  'profile.edit.email': 'E-posta',
+  'profile.edit.phone': 'Telefon',
+  'profile.edit.city': 'Şehir',
+  'profile.edit.saved': 'Profil güncellendi',
+
+  // Profil — AYNA Passport
+  'passport.title': 'AYNA Passport',
+  'passport.subtitle': 'Doğrulanmış kimliğin ve güven puanın',
+  'passport.member_since': 'Üyelik',
+  'passport.trust': 'Güven puanı',
+  'passport.verified': 'Doğrulanmış üye',
+  'passport.completed': 'Tamamlanan randevu',
+  'passport.reviews': 'Değerlendirme',
+  'passport.benefits': 'Avantajların',
+  'passport.benefit.priority': 'Öncelikli randevu fırsatları',
+  'passport.benefit.support': 'Öncelikli destek',
+  'passport.benefit.raffle': 'Aylık çekiliş hakkı',
+
+  // Profil — Bütçe
+  'budget.title': 'Bütçe',
+  'budget.subtitle': 'Bakım harcamalarını takip et',
+  'budget.spent': 'Bu ay harcanan',
+  'budget.limit': 'Aylık limit',
+  'budget.remaining': 'Kalan',
+  'budget.by_category': 'Kategoriye göre',
+  'budget.history': 'Harcama geçmişi',
+  'budget.no_spend': 'Henüz harcama yok',
+
+  // Profil — AYNA Safe
+  'safe.title': 'AYNA Safe',
+  'safe.subtitle': 'Güvenliğin önceliğimiz',
+  'safe.location': 'Konum paylaşımı',
+  'safe.location_sub': 'Randevu sırasında güvendiğin kişiyle paylaş',
+  'safe.contacts': 'Güvendiğim kişiler',
+  'safe.contacts_sub': 'Acil durumda bilgilendirilecek kişiler',
+  'safe.add_contact': 'Kişi ekle',
+  'safe.share_trip': 'Randevuyu paylaş',
+  'safe.share_trip_sub': 'Aktif randevu konumunu canlı paylaş',
+  'safe.sos': 'Acil yardım',
+  'safe.sos_sub': 'Tek dokunuşla konum + uyarı gönder',
+
+  // Profil — Gizlilik
+  'privacy.title': 'Gizlilik',
+  'privacy.subtitle': 'Verilerin üzerindeki kontrol sende',
+  'privacy.location': 'Konum paylaşımı',
+  'privacy.location_sub': 'Varsayılan olarak kapalı',
+  'privacy.anon_reviews': 'Anonim yorumlar',
+  'privacy.anon_reviews_sub': 'Yorumlarında kimliğin gizli kalır',
+  'privacy.personalized': 'Kişiselleştirilmiş öneriler',
+  'privacy.analytics': 'Anonim kullanım istatistikleri',
+  'privacy.marketing': 'Kampanya bildirimleri',
+  'privacy.section.data': 'Verilerim',
+  'privacy.download': 'Verilerimi indir',
+  'privacy.delete': 'Hesabımı sil',
+
+  // Profil — Yardım
+  'help.title': 'Yardım & destek',
+  'help.subtitle': 'Sıkça sorulan sorular',
+  'help.contact': 'Bize ulaş',
+  'help.chat': 'Canlı destek',
+  'help.email': 'E-posta gönder',
+
+  // Çekiliş / ödül kullanımı (ek)
+  'rewards.redeem.raffle': 'Çekilişe katıl',
+  'rewards.redeem.premium': 'AYNA Plus üyeliği',
+  'rewards.redeem.cost': 'puan',
+  'rewards.redeem.use': 'Kullan',
+  'rewards.redeem.confirm': 'Bu ödülü kullanmak istiyor musun?',
+  'rewards.redeem.success': 'Ödül kullanıldı',
+  'rewards.redeem.insufficient': 'Yeterli puanın yok',
+  'rewards.ledger.title': 'Puan geçmişi',
+  'rewards.join_raffle': 'Çekilişe katıl',
+
+  // Satıcı panel metrikleri
+  'seller.metric.revenue': 'Gelir',
+  'seller.metric.bookings': 'Randevu',
+  'seller.metric.rating': 'Puan',
+  'seller.metric.repeat': 'Tekrar müşteri',
 
   // Sistem / domain
   'auth.otp.sent': 'Doğrulama kodu gönderildi',

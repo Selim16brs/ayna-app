@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { CIRCLE_POSTS, type CirclePost, type CirclePostType } from '../../src/data';
+import { type CirclePost, type CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -19,6 +21,8 @@ export default function CircleScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
+  const posts = useStore((s) => s.circlePosts);
 
   return (
     <Screen edges={['top']}>
@@ -31,7 +35,7 @@ export default function CircleScreen() {
             {t('circle.subtitle')}
           </Text>
         </View>
-        <Pressable style={styles.ask}>
+        <Pressable style={styles.ask} onPress={() => router.push('/circle/new')}>
           <Ionicons name="add" size={16} color={colors.onColor} />
           <Text variant="caption" tone="onColor">
             {t('circle.ask')}
@@ -40,7 +44,7 @@ export default function CircleScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-        {CIRCLE_POSTS.map((p) => (
+        {posts.map((p) => (
           <PostCard key={p.id} post={p} />
         ))}
       </ScrollView>
@@ -52,9 +56,11 @@ function PostCard({ post }: { post: CirclePost }) {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
+  const toggleHelpful = useStore((s) => s.toggleHelpful);
   const ty = makeType(colors)[post.type];
   return (
-    <View style={[styles.card, shadow.card]}>
+    <Pressable style={[styles.card, shadow.card]} onPress={() => router.push('/circle/' + post.id)}>
       <View style={styles.cardTop}>
         <View style={styles.author}>
           <View style={styles.avatar}>
@@ -87,20 +93,24 @@ function PostCard({ post }: { post: CirclePost }) {
       </Text>
 
       <View style={styles.footer}>
-        <View style={styles.footerItem}>
-          <Ionicons name="heart-outline" size={15} color={colors.muted} />
-          <Text variant="caption" tone="muted">
+        <Pressable style={styles.footerItem} onPress={() => toggleHelpful(post.id)} hitSlop={8}>
+          <Ionicons
+            name={post.helpfulByMe ? 'heart' : 'heart-outline'}
+            size={15}
+            color={post.helpfulByMe ? colors.accent : colors.muted}
+          />
+          <Text variant="caption" tone={post.helpfulByMe ? 'rose' : 'muted'}>
             {post.helpful} {t('circle.helpful')}
           </Text>
-        </View>
+        </Pressable>
         <View style={styles.footerItem}>
           <Ionicons name="chatbubble-outline" size={14} color={colors.muted} />
           <Text variant="caption" tone="muted">
-            {post.comments} {t('circle.comments')}
+            {post.comments.length} {t('circle.comments')}
           </Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

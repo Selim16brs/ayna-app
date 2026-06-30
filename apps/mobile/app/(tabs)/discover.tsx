@@ -1,11 +1,11 @@
+import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Dimensions, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { api } from '../../src/api';
-import { ADS, getUpcomingEvents, whenShort } from '../../src/data';
+import { ADS, buildUpcomingEvents, CATEGORIES, FEATURED, whenShort } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { selectUnreadCount, useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { ProCard, Screen, Text } from '../../src/ui';
@@ -34,12 +34,16 @@ export default function DiscoverScreen() {
   const styles = useThemedStyles(makeStyles);
   const CAT_COLORS = makeCatColors(colors);
   const router = useRouter();
-  const events = getUpcomingEvents().slice(0, 3);
-  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: api.categories });
-  const { data: featured = [] } = useQuery({
-    queryKey: ['professionals'],
-    queryFn: api.professionals,
-  });
+  const bookings = useStore((s) => s.bookings);
+  const moments = useStore((s) => s.moments);
+  const routines = useStore((s) => s.careRoutines);
+  const events = useMemo(
+    () => buildUpcomingEvents(bookings, moments, routines).slice(0, 3),
+    [bookings, moments, routines],
+  );
+  const unread = useStore(selectUnreadCount);
+  const categories = CATEGORIES;
+  const featured = FEATURED;
 
   return (
     <Screen edges={['top']}>
@@ -55,9 +59,13 @@ export default function DiscoverScreen() {
             </Text>
           </View>
           <View style={styles.headerActions}>
-            <View style={[styles.iconButton, shadow.soft]}>
+            <Pressable
+              style={[styles.iconButton, shadow.soft]}
+              onPress={() => router.push('/notifications')}
+            >
               <Ionicons name="notifications-outline" size={20} color={colors.blue} />
-            </View>
+              {unread > 0 ? <View style={styles.badge} /> : null}
+            </Pressable>
             <LinearGradient colors={gradients.rose} style={styles.avatar}>
               <Text variant="bodyStrong" tone="onColor">
                 A
@@ -85,7 +93,15 @@ export default function DiscoverScreen() {
               contentContainerStyle={styles.upcoming}
             >
               {events.map((e) => (
-                <View key={e.id} style={[styles.eventCard, shadow.soft]}>
+                <Pressable
+                  key={e.id}
+                  style={[styles.eventCard, shadow.soft]}
+                  onPress={() =>
+                    e.kind === 'appointment'
+                      ? router.push('/booking/' + e.refId)
+                      : router.push('/events')
+                  }
+                >
                   <View
                     style={[
                       styles.eventIcon,
@@ -106,7 +122,7 @@ export default function DiscoverScreen() {
                       {whenShort(e.inDays)}
                     </Text>
                   </View>
-                </View>
+                </Pressable>
               ))}
             </ScrollView>
           </>
@@ -134,7 +150,7 @@ export default function DiscoverScreen() {
         </View>
 
         {/* Arama */}
-        <Pressable style={[styles.search, shadow.soft]}>
+        <Pressable style={[styles.search, shadow.soft]} onPress={() => router.push('/search')}>
           <Ionicons name="search" size={19} color={colors.muted} />
           <Text variant="body" tone="muted">
             {t('home.search')}
@@ -150,12 +166,16 @@ export default function DiscoverScreen() {
           {categories.map((cat, i) => {
             const c = CAT_COLORS[i % CAT_COLORS.length]!;
             return (
-              <Pressable key={cat.id} style={styles.category}>
+              <Pressable
+                key={cat.id}
+                style={styles.category}
+                onPress={() => router.push('/category/' + cat.id)}
+              >
                 <View style={[styles.categoryIcon, { backgroundColor: c.bg }]}>
                   <Ionicons name={cat.icon as IoniconName} size={24} color={c.fg} />
                 </View>
                 <Text variant="caption" tone="inkSoft" style={styles.categoryLabel}>
-                  {cat.label}
+                  {t(cat.labelKey)}
                 </Text>
               </Pressable>
             );
@@ -172,31 +192,36 @@ export default function DiscoverScreen() {
           decelerationRate="fast"
         >
           {ADS.map((ad) => (
-            <ImageBackground
+            <Pressable
               key={ad.id}
-              source={{ uri: ad.image }}
-              style={[styles.adCard, { width: AD_WIDTH }]}
-              imageStyle={styles.adImage}
+              style={{ width: AD_WIDTH }}
+              onPress={() => router.push('/professional/' + ad.proId)}
             >
-              <LinearGradient
-                colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.82)']}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.adBadge}>
-                <Ionicons name="star" size={11} color={colors.onColor} />
-                <Text variant="caption" tone="onColor" style={styles.adBadgeText}>
-                  {t('home.ad_badge')}
-                </Text>
-              </View>
-              <View style={styles.adText}>
-                <Text variant="h2" tone="onColor">
-                  {ad.title}
-                </Text>
-                <Text variant="caption" tone="onColor" style={styles.adSubtitle}>
-                  {ad.subtitle}
-                </Text>
-              </View>
-            </ImageBackground>
+              <ImageBackground
+                source={{ uri: ad.image }}
+                style={[styles.adCard, { width: AD_WIDTH }]}
+                imageStyle={styles.adImage}
+              >
+                <LinearGradient
+                  colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.82)']}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={styles.adBadge}>
+                  <Ionicons name="star" size={11} color={colors.onColor} />
+                  <Text variant="caption" tone="onColor" style={styles.adBadgeText}>
+                    {t('home.ad_badge')}
+                  </Text>
+                </View>
+                <View style={styles.adText}>
+                  <Text variant="h2" tone="onColor">
+                    {ad.title}
+                  </Text>
+                  <Text variant="caption" tone="onColor" style={styles.adSubtitle}>
+                    {ad.subtitle}
+                  </Text>
+                </View>
+              </ImageBackground>
+            </Pressable>
           ))}
         </ScrollView>
 
@@ -205,9 +230,11 @@ export default function DiscoverScreen() {
           <Text variant="h2" tone="ink">
             {t('home.recommended')}
           </Text>
-          <Text variant="caption" tone="rose">
-            {t('common.see_all')}
-          </Text>
+          <Pressable onPress={() => router.push('/search')}>
+            <Text variant="caption" tone="rose">
+              {t('common.see_all')}
+            </Text>
+          </Pressable>
         </View>
         <ScrollView
           horizontal
@@ -288,6 +315,17 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: 21,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    badge: {
+      position: 'absolute',
+      top: 9,
+      right: 10,
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      backgroundColor: colors.rose,
+      borderWidth: 1.5,
+      borderColor: colors.surface,
     },
     sectionHeader: {
       flexDirection: 'row',

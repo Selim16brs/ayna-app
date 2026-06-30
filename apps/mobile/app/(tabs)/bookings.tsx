@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
-  APPOINTMENTS,
   type Appointment,
   type BookingSource,
   type BookingStatus,
   formatPrice,
 } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -26,6 +27,7 @@ const makeStatus = (
   confirmed: { key: 'booking.status.confirmed', bg: colors.successSoft, fg: colors.success },
   pending: { key: 'booking.status.pending', bg: colors.goldSoft, fg: colors.gold },
   completed: { key: 'booking.status.completed', bg: colors.surfaceMuted, fg: colors.inkSoft },
+  cancelled: { key: 'booking.status.cancelled', bg: colors.dangerSoft, fg: colors.danger },
 });
 
 export default function BookingsScreen() {
@@ -33,7 +35,8 @@ export default function BookingsScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [active, setActive] = useState<BookingSource>('direct');
-  const list = APPOINTMENTS.filter((a) => a.source === active);
+  const bookings = useStore((s) => s.bookings);
+  const list = bookings.filter((a) => a.source === active);
 
   return (
     <Screen edges={['top']}>
@@ -69,9 +72,13 @@ function BookingCard({ appt }: { appt: Appointment }) {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
   const st = makeStatus(colors)[appt.status];
   return (
-    <View style={[styles.card, shadow.card]}>
+    <Pressable
+      style={[styles.card, shadow.card]}
+      onPress={() => router.push('/booking/' + appt.id)}
+    >
       <Image source={{ uri: appt.proImage }} style={styles.thumb} />
       <View style={styles.body}>
         <View style={styles.topRow}>
@@ -102,7 +109,7 @@ function BookingCard({ appt }: { appt: Appointment }) {
           </Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

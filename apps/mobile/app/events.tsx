@@ -1,7 +1,10 @@
+import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { type UpcomingEvent, getUpcomingEvents, whenShort } from '../src/data';
+import { useRouter } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { buildUpcomingEvents, type UpcomingEvent, whenShort } from '../src/data';
 import { useLocale } from '../src/locale';
+import { useStore } from '../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -19,7 +22,13 @@ export default function EventsScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const events = getUpcomingEvents();
+  const bookings = useStore((s) => s.bookings);
+  const moments = useStore((s) => s.moments);
+  const routines = useStore((s) => s.careRoutines);
+  const events = useMemo(
+    () => buildUpcomingEvents(bookings, moments, routines),
+    [bookings, moments, routines],
+  );
 
   return (
     <Screen edges={['top']}>
@@ -58,8 +67,11 @@ export default function EventsScreen() {
 function Row({ event, border }: { event: UpcomingEvent; border: boolean }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={[styles.row, border && styles.rowBorder]}>
+  const router = useRouter();
+  const isAppointment = event.kind === 'appointment';
+
+  const inner = (
+    <>
       <View
         style={[
           styles.icon,
@@ -76,11 +88,28 @@ function Row({ event, border }: { event: UpcomingEvent; border: boolean }) {
           {event.subtitle}
         </Text>
       </View>
-      <Text variant="caption" tone="inkSoft">
-        {whenShort(event.inDays)}
-      </Text>
-    </View>
+      {isAppointment ? (
+        <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+      ) : (
+        <Text variant="caption" tone="inkSoft">
+          {whenShort(event.inDays)}
+        </Text>
+      )}
+    </>
   );
+
+  if (isAppointment) {
+    return (
+      <Pressable
+        style={[styles.row, border && styles.rowBorder]}
+        onPress={() => router.push('/booking/' + event.refId)}
+      >
+        {inner}
+      </Pressable>
+    );
+  }
+
+  return <View style={[styles.row, border && styles.rowBorder]}>{inner}</View>;
 }
 
 const makeStyles = (colors: ColorTokens) =>

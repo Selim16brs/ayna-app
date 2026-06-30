@@ -1,41 +1,42 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import type { MessageKey } from '@ayna/i18n';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { REWARDS, type Reward } from '../src/data';
 import { useLocale } from '../src/locale';
+import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Screen, StackHeader, Text } from '../src/ui';
 
-const POINTS = 340;
 const TIER = 'Gümüş';
-const BOOKINGS_LEFT = 3;
 const PROGRESS = 0.62;
-const RAFFLE_ENTRIES = 5;
+const BOOKINGS_LEFT = 3;
 const NEXT_DRAW = '30 Haziran';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
-
-const makeEarn = (
-  colors: ColorTokens,
-): { icon: IoniconName; key: MessageKey; pts: string; tone: string }[] => [
-  { icon: 'calendar', key: 'rewards.earn.booking', pts: '+50', tone: colors.rose },
-  { icon: 'star', key: 'rewards.earn.review', pts: '+20', tone: colors.gold },
-  { icon: 'people', key: 'rewards.earn.referral', pts: '+100', tone: colors.teal },
-  { icon: 'images', key: 'rewards.earn.photo', pts: '+15', tone: colors.plum },
-];
-
-const REDEEM: { icon: IoniconName; key: MessageKey }[] = [
-  { icon: 'pricetag', key: 'rewards.redeem.discount' },
-  { icon: 'sparkles', key: 'rewards.redeem.addon' },
-  { icon: 'diamond', key: 'rewards.redeem.plus' },
-];
 
 export default function RewardsScreen() {
   const { t } = useLocale();
   const { colors, gradients, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const EARN = makeEarn(colors);
+
+  const points = useStore((s) => s.points);
+  const raffleEntries = useStore((s) => s.raffleEntries);
+  const ledger = useStore((s) => s.ledger);
+  const redeem = useStore((s) => s.redeem);
+
+  const onRedeem = (r: Reward) => {
+    Alert.alert(t('rewards.redeem.confirm'), undefined, [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.continue'),
+        onPress: () => {
+          if (redeem(r)) Alert.alert(t('rewards.redeem.success'));
+          else Alert.alert(t('rewards.redeem.insufficient'));
+        },
+      },
+    ]);
+  };
 
   return (
     <Screen edges={['top']}>
@@ -55,7 +56,7 @@ export default function RewardsScreen() {
             </View>
           </View>
           <Text variant="display" tone="onColor">
-            {POINTS}
+            {points}
           </Text>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${PROGRESS * 100}%` }]} />
@@ -70,7 +71,7 @@ export default function RewardsScreen() {
           <Ionicons name="gift" size={30} color={colors.onColor} />
           <View style={styles.raffleBody}>
             <Text variant="h2" tone="onColor">
-              {RAFFLE_ENTRIES} {t('rewards.raffle.entries')}
+              {raffleEntries} {t('rewards.raffle.entries')}
             </Text>
             <Text variant="caption" tone="onColor" style={styles.dim}>
               {t('rewards.raffle.next')}: {NEXT_DRAW}
@@ -81,40 +82,76 @@ export default function RewardsScreen() {
           </View>
         </LinearGradient>
 
-        {/* Nasıl kazanılır */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('rewards.earn.title')}
-        </Text>
-        <View style={styles.group}>
-          {EARN.map((e, i) => (
-            <View key={e.key} style={[styles.row, i < EARN.length - 1 && styles.rowBorder]}>
-              <View style={[styles.icon, { backgroundColor: e.tone }]}>
-                <Ionicons name={e.icon} size={17} color={colors.onColor} />
-              </View>
-              <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
-                {t(e.key)}
-              </Text>
-              <Text variant="bodyStrong" tone="rose">
-                {e.pts}
-              </Text>
-            </View>
-          ))}
-        </View>
-
         {/* Kullan */}
         <Text variant="label" tone="rose" style={styles.section}>
           {t('rewards.redeem.title')}
         </Text>
         <View style={styles.group}>
-          {REDEEM.map((r, i) => (
-            <View key={r.key} style={[styles.row, i < REDEEM.length - 1 && styles.rowBorder]}>
-              <View style={[styles.icon, { backgroundColor: colors.blue }]}>
-                <Ionicons name={r.icon} size={17} color={colors.onColor} />
+          {REWARDS.map((r, i) => {
+            const affordable = points >= r.cost;
+            return (
+              <View key={r.id} style={[styles.row, i < REWARDS.length - 1 && styles.rowBorder]}>
+                <View style={[styles.icon, { backgroundColor: colors.blue }]}>
+                  <Ionicons name={r.icon as IoniconName} size={17} color={colors.onColor} />
+                </View>
+                <View style={styles.rowLabel}>
+                  <Text variant="bodyStrong" tone="ink">
+                    {t(r.titleKey)}
+                  </Text>
+                  <Text variant="caption" tone="muted">
+                    {r.cost} {t('rewards.redeem.cost')}
+                  </Text>
+                </View>
+                <Pressable
+                  disabled={!affordable}
+                  onPress={() => onRedeem(r)}
+                  style={[styles.redeemBtn, !affordable && styles.redeemBtnOff]}
+                >
+                  <Text
+                    variant="caption"
+                    style={{ color: affordable ? colors.onColor : colors.muted, fontWeight: '600' }}
+                  >
+                    {t('rewards.redeem.use')}
+                  </Text>
+                </Pressable>
               </View>
-              <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
-                {t(r.key)}
+            );
+          })}
+        </View>
+
+        {/* Puan geçmişi */}
+        <Text variant="label" tone="rose" style={styles.section}>
+          {t('rewards.ledger.title')}
+        </Text>
+        <View style={styles.group}>
+          {ledger.map((e, i) => (
+            <View key={e.id} style={[styles.row, i < ledger.length - 1 && styles.rowBorder]}>
+              <View
+                style={[
+                  styles.icon,
+                  { backgroundColor: e.kind === 'earn' ? colors.successSoft : colors.surfaceMuted },
+                ]}
+              >
+                <Ionicons
+                  name={e.kind === 'earn' ? 'arrow-up' : 'arrow-down'}
+                  size={16}
+                  color={e.kind === 'earn' ? colors.success : colors.muted}
+                />
+              </View>
+              <View style={styles.rowLabel}>
+                <Text variant="bodyStrong" tone="ink">
+                  {t(e.labelKey)}
+                </Text>
+                <Text variant="caption" tone="muted" numberOfLines={1}>
+                  {e.detail} · {e.dateLabel}
+                </Text>
+              </View>
+              <Text
+                variant="bodyStrong"
+                style={{ color: e.kind === 'earn' ? colors.success : colors.muted }}
+              >
+                {e.points > 0 ? `+${e.points}` : e.points}
               </Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
             </View>
           ))}
         </View>
@@ -192,7 +229,14 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    rowLabel: { flex: 1 },
+    rowLabel: { flex: 1, gap: 2 },
+    redeemBtn: {
+      backgroundColor: colors.rose,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+    },
+    redeemBtnOff: { backgroundColor: colors.surfaceMuted },
     note: {
       flexDirection: 'row',
       alignItems: 'center',

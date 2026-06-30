@@ -3,8 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
 import { api } from '../../src/api';
+import { CATEGORIES } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -17,7 +17,7 @@ export default function NewQuoteScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: api.categories });
+  const categories = CATEGORIES;
   const [photo, setPhoto] = useState<string | null>(null);
   const [category, setCategory] = useState<string>('hair');
   const [note, setNote] = useState('');
@@ -91,7 +91,7 @@ export default function NewQuoteScreen() {
                   color={active ? colors.onColor : colors.inkSoft}
                 />
                 <Text variant="caption" tone={active ? 'onColor' : 'inkSoft'}>
-                  {cat.label}
+                  {t(cat.labelKey)}
                 </Text>
               </Pressable>
             );

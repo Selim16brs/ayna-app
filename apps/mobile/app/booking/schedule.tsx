@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { getProfessionalDetail } from '../../src/data';
+import { type BookingSource, getProfessionalDetail } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text } from '../../src/ui';
@@ -20,7 +21,9 @@ export default function ScheduleScreen() {
     proId?: string;
     source?: string;
     uzmanId?: string;
+    service?: string;
   }>();
+  const addBooking = useStore((s) => s.addBooking);
   const pro = getProfessionalDetail(params.proId ?? '1');
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   const [uzmanId, setUzmanId] = useState<string>(params.uzmanId ?? pro.staff[0]?.id ?? '');
@@ -30,11 +33,34 @@ export default function ScheduleScreen() {
   const uzman = pro.staff.find((u) => u.id === uzmanId);
 
   function confirm() {
+    const source = (params.source as BookingSource) ?? 'direct';
+    // Seçili hizmet: param ile gelen ad eşleşirse onu, yoksa ilk hizmeti / priceFrom'u kullan
+    const chosenService = pro.services.find((sv) => sv.name === params.service);
+    const serviceName =
+      chosenService?.name ?? params.service ?? pro.services[0]?.name ?? pro.specialty;
+    const price = chosenService?.price ?? pro.services[0]?.price ?? Number(pro.priceFrom);
+    const dateLabel = `${DAYS[day]} · ${time ?? ''}`;
+    // Gün dizininden küçük pozitif inDays türet (Bugün→1, Yarın→2, ...)
+    const inDays = day + 1;
+
+    const id = addBooking({
+      source,
+      service: serviceName,
+      proId: pro.id,
+      proName: pro.name,
+      proImage: pro.image,
+      ...(uzman?.name ? { uzmanName: uzman.name } : {}),
+      dateLabel,
+      price,
+      inDays,
+    });
+
     router.replace({
       pathname: '/booking/confirmed',
       params: {
+        id,
         proId: pro.id,
-        source: params.source ?? 'direct',
+        source,
         day: DAYS[day],
         time: time ?? '',
         uzmanName: uzman?.name ?? '',

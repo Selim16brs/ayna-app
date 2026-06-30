@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, type ApiQuote } from '../../src/api';
-import { formatPrice } from '../../src/data';
+import { formatPrice, INCOMING_QUOTES } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -17,7 +17,9 @@ export default function QuoteResultsScreen() {
   const router = useRouter();
   const styles = useThemedStyles(makeStyles);
   const [sort, setSort] = useState<Sort>('rating');
-  const { data: incoming = [] } = useQuery({ queryKey: ['quotes'], queryFn: api.quotes });
+  const { data: apiQuotes = [] } = useQuery({ queryKey: ['quotes'], queryFn: api.quotes });
+  const incoming: (ApiQuote | (typeof INCOMING_QUOTES)[number])[] =
+    apiQuotes.length > 0 ? apiQuotes : INCOMING_QUOTES;
 
   const quotes = useMemo(() => {
     const list = [...incoming];

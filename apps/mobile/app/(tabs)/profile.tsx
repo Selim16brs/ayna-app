@@ -6,6 +6,7 @@ import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { useStore } from '../../src/store';
 import { Screen, Segmented, Text } from '../../src/ui';
 import type { ThemeMode } from '../../src/theme';
 
@@ -41,12 +42,24 @@ export default function ProfileScreen() {
   const MENU_COLORS = makeMenuColors(colors);
   const router = useRouter();
 
+  const completedCount = useStore((s) => s.bookings.filter((b) => b.status === 'completed').length);
+  const points = useStore((s) => s.points);
+  const reviewCount = useStore((s) =>
+    Object.values(s.userReviews).reduce((n, a) => n + a.length, 0),
+  );
+
   const appearance: 'system' | ThemeMode = preference ?? 'system';
   const onAppearance = (value: 'system' | ThemeMode) =>
     setPreference(value === 'system' ? null : value);
 
   const onPress = (key: MessageKey) => {
-    if (key === 'profile.menu.rewards') router.push('/rewards');
+    if (key === 'profile.menu.passport') router.push('/profile/passport');
+    else if (key === 'profile.menu.rewards') router.push('/rewards');
+    else if (key === 'profile.menu.budget') router.push('/profile/budget');
+    else if (key === 'profile.menu.safe') router.push('/profile/safe');
+    else if (key === 'profile.menu.privacy') router.push('/profile/privacy');
+    else if (key === 'profile.menu.notifications') router.push('/notifications');
+    else if (key === 'profile.menu.help') router.push('/profile/help');
     else if (key === 'profile.menu.language' || key === 'profile.menu.logout') router.replace('/');
   };
 
@@ -63,7 +76,7 @@ export default function ProfileScreen() {
             <Text variant="h2" tone="rose">
               Aigerim
             </Text>
-            <Pressable>
+            <Pressable onPress={() => router.push('/profile/edit')}>
               <Text variant="caption" tone="rose">
                 {t('profile.edit')}
               </Text>
@@ -72,11 +85,11 @@ export default function ProfileScreen() {
         </View>
 
         <View style={[styles.stats, shadow.soft]}>
-          <Stat value="12" label={t('profile.stat.bookings')} />
+          <Stat value={`${completedCount}`} label={t('profile.stat.bookings')} />
           <View style={styles.statDivider} />
-          <Stat value="340" label={t('profile.stat.points')} />
+          <Stat value={`${points}`} label={t('profile.stat.points')} />
           <View style={styles.statDivider} />
-          <Stat value="5" label={t('profile.stat.reviews')} />
+          <Stat value={`${reviewCount || 5}`} label={t('profile.stat.reviews')} />
         </View>
 
         <View style={styles.appearance}>
