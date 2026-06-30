@@ -57,6 +57,7 @@ export default function SearchScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.chipBar}
         contentContainerStyle={styles.chips}
       >
         <Pressable
@@ -175,8 +176,16 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
     },
     input: { flex: 1, color: colors.ink, fontSize: 15 },
-    chips: { paddingHorizontal: space(2), gap: space(1), paddingVertical: space(1.5) },
+    // Yatay ScrollView dikey eksende büyümesin (dik kolon içinde doğrudan çocuk)
+    chipBar: { flexGrow: 0, flexShrink: 0 },
+    chips: {
+      paddingHorizontal: space(2),
+      gap: space(1),
+      paddingVertical: space(1.5),
+      alignItems: 'center',
+    },
     chip: {
+      alignSelf: 'center',
       paddingHorizontal: space(1.75),
       paddingVertical: space(0.9),
       borderRadius: radius.pill,
