@@ -555,6 +555,24 @@ export const tr = {
   'seller.staff.revenue': 'Gelir katkısı',
   'seller.staff.services': 'Hizmet dağılımı',
 
+  // Boni — AI güzellik danışmanı (§13.5)
+  'boni.title': 'Boni',
+  'boni.subtitle': 'AI güzellik danışmanın',
+  'boni.entry': 'Boni’ye sor',
+  'boni.intro': 'Cilt, saç ya da bakım hakkında merak ettiğini sor; sana özel öneri vereyim.',
+  'boni.placeholder': 'Örn. kuru cildim için ne önerirsin?',
+  'boni.send': 'Sor',
+  'boni.thinking': 'Boni düşünüyor…',
+  'boni.quota.remaining': 'Bu ay kalan',
+  'boni.quota.shared': 'Premium üyeler için ortak aylık hak',
+  'boni.quota.empty': 'Bu ayki AI hakkın doldu. Gelecek ay yenilenir.',
+  'boni.error': 'Boni şu an yanıt veremedi, tekrar dene.',
+  'boni.premium.locked': 'Boni premium üyelere özel',
+  'boni.premium.desc': 'AI güzellik danışmanı, akıllı arama ve foto analizi premium ile açılır.',
+  'boni.premium.cta': 'Premium’a geç',
+  'boni.premium.demo': 'Premium’u dene (demo)',
+  'boni.disclaimer': 'Boni tıbbi tavsiye vermez; gerekirse bir uzmana danış.',
+
   // Sistem / domain
   'auth.otp.sent': 'Doğrulama kodu gönderildi',
   'auth.otp.invalid': 'Kod geçersiz veya süresi dolmuş',

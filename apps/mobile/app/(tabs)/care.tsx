@@ -125,6 +125,31 @@ export default function BenimIcinScreen() {
           </View>
         </View>
 
+        {/* Boni — AI güzellik danışmanı (§13.5) */}
+        <Animated.View entering={FadeInDown.duration(360).delay(160)} style={styles.boniWrap}>
+          <PressableScale onPress={() => router.push('/boni')}>
+            <LinearGradient
+              colors={gradients.plum}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.boniCard}
+            >
+              <View style={styles.boniIcon}>
+                <Ionicons name="sparkles" size={22} color={colors.onColor} />
+              </View>
+              <View style={styles.rowText}>
+                <Text variant="bodyStrong" tone="onColor">
+                  {t('boni.entry')}
+                </Text>
+                <Text variant="caption" tone="onColor" style={styles.boniSub}>
+                  {t('boni.subtitle')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.onColor} />
+            </LinearGradient>
+          </PressableScale>
+        </Animated.View>
+
         {/* Hızlı ekle */}
         <View style={styles.quickRow}>
           {QUICK_ADD.map((q) => {
@@ -406,6 +431,24 @@ const makeStyles = (colors: ColorTokens) =>
       marginBottom: space(0.5),
     },
     statValue: {},
+    boniWrap: { paddingHorizontal: space(3), marginTop: space(1.5), marginBottom: space(0.5) },
+    boniCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      borderRadius: radius.lg,
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
+    },
+    boniIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: 'rgba(255,255,255,0.22)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    boniSub: { opacity: 0.9, marginTop: 1 },
     quickRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',

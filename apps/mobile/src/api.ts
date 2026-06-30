@@ -7,6 +7,13 @@ export interface LoyaltySummary {
   ledger: LedgerEntry[];
 }
 
+export interface AiQuota {
+  premium: boolean;
+  used: number;
+  limit: number;
+  remaining: number;
+}
+
 // API taban adresi: Expo dev host IP'sinden türetilir (simülatör + cihaz uyumlu).
 const hostUri = Constants.expoConfig?.hostUri ?? '';
 const host = hostUri.split(':')[0] || 'localhost';
@@ -166,6 +173,14 @@ export const api = {
     get<{ category: string; average: number; floor: number; currency: string; source: string }>(
       `/market/average?category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}`,
     ),
+
+  // AI (§13.5) — anahtar backend'de; premium + ortak aylık kota sunucuda doğrulanır
+  aiQuota: (token: string) => get<AiQuota>('/ai/quota', token),
+  aiBoni: (token: string, question: string) =>
+    post<{ answer: string; remaining: number }>('/ai/boni', { question }, token),
+  // Dev/demo: premium aç/kapat (üretimde ödeme akışı yönetir)
+  aiSetPremium: (token: string, value: boolean) =>
+    post<{ premium: boolean }>('/ai/dev/premium', { value }, token),
 
   // Sadakat (kullanıcıya bağlı; bakiye sunucuda defterden türetilir)
   loyalty: (token: string) => get<LoyaltySummary>('/loyalty', token),

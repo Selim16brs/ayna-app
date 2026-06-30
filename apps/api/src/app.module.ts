@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AiModule } from './ai/ai.module';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { BookingsModule } from './bookings/bookings.module';
@@ -28,6 +29,7 @@ import { RatingsModule } from './ratings/ratings.module';
     SpecialistsModule,
     MarketModule,
     RatingsModule,
+    AiModule,
   ],
 })
 export class AppModule {}

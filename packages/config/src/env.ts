@@ -25,6 +25,10 @@ export const envSchema = z.object({
   SMS_PROVIDER: z.enum(['mock']).default('mock'),
   MAP_PROVIDER: z.enum(['mock']).default('mock'),
   STORAGE_PROVIDER: z.enum(['mock']).default('mock'),
+
+  // AI (§13.5) — anahtar yalnızca backend'de; yoksa güvenli mock kullanılır
+  OPENAI_API_KEY: z.string().optional(),
+  AI_MONTHLY_QUOTA: z.coerce.number().int().positive().default(5),
 });
 
 export type Env = z.infer<typeof envSchema>;
