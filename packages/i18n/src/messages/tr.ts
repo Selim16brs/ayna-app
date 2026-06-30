@@ -420,6 +420,12 @@ export const tr = {
   'search.empty_sub': 'Farklı bir kelime dene',
   'search.results': 'sonuç',
   'search.all_categories': 'Tüm kategoriler',
+  // §7 — sıralama
+  'search.sort.recommended': 'Önerilen',
+  'search.sort.rating': 'Puan',
+  'search.sort.price': 'Fiyat',
+  'search.sort.distance': 'Yakınlık',
+  'search.sort.popular': 'Popülerlik',
 
   // Kategori listeleme
   'category.browse.count': 'uzman bulundu',

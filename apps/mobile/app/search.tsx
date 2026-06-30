@@ -3,7 +3,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { CATEGORIES, categoryLabelKey, formatPrice, type Professional } from '../src/data';
+import {
+  ALMATY,
+  CATEGORIES,
+  categoryLabelKey,
+  distanceKm,
+  formatPrice,
+  type Professional,
+  proCoords,
+} from '../src/data';
+import type { MessageKey } from '@ayna/i18n';
 import { useProfessionals } from '../src/catalog';
 import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space } from '../src/theme';
@@ -13,6 +22,16 @@ import { PressableScale, Screen, StackHeader, Text } from '../src/ui';
 // Türkçe-duyarlı küçük harfe çevirme (İ/ı dahil)
 const lower = (s: string) => s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
 
+// §7 — sıralama seçenekleri
+type SortKey = 'recommended' | 'rating' | 'price' | 'distance' | 'popular';
+const SORTS: { key: SortKey; label: MessageKey }[] = [
+  { key: 'recommended', label: 'search.sort.recommended' },
+  { key: 'rating', label: 'search.sort.rating' },
+  { key: 'price', label: 'search.sort.price' },
+  { key: 'distance', label: 'search.sort.distance' },
+  { key: 'popular', label: 'search.sort.popular' },
+];
+
 export default function SearchScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
@@ -20,38 +39,89 @@ export default function SearchScreen() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [activeCat, setActiveCat] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortKey>('recommended');
+  const [showSort, setShowSort] = useState(false);
   const professionals = useProfessionals();
 
   const results = useMemo(() => {
     const q = lower(query.trim());
-    return professionals.filter((p) => {
+    const filtered = professionals.filter((p) => {
       if (activeCat && p.sector !== activeCat) return false;
       if (!q) return true;
       const sectorLabel = lower(t(categoryLabelKey(p.sector)));
       return lower(p.name).includes(q) || lower(p.specialty).includes(q) || sectorLabel.includes(q);
     });
-  }, [professionals, query, activeCat, t]);
+    // §7 — sıralama
+    const sorted = [...filtered];
+    if (sort === 'rating') sorted.sort((a, b) => b.rating - a.rating);
+    else if (sort === 'price') sorted.sort((a, b) => a.priceFrom - b.priceFrom);
+    else if (sort === 'popular') sorted.sort((a, b) => b.reviewCount - a.reviewCount);
+    else if (sort === 'distance')
+      sorted.sort(
+        (a, b) =>
+          distanceKm(ALMATY, proCoords(a.id)) - distanceKm(ALMATY, proCoords(b.id)),
+      );
+    return sorted;
+  }, [professionals, query, activeCat, sort, t]);
 
   return (
     <Screen edges={['top']}>
       <StackHeader title={t('search.title')} />
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={19} color={colors.muted} />
-        <TextInput
-          style={styles.input}
-          placeholder={t('search.placeholder')}
-          placeholderTextColor={colors.muted}
-          value={query}
-          onChangeText={setQuery}
-          autoFocus
-          returnKeyType="search"
-        />
-        {query.length > 0 ? (
-          <Pressable onPress={() => setQuery('')} hitSlop={8}>
-            <Ionicons name="close-circle" size={18} color={colors.muted} />
-          </Pressable>
-        ) : null}
+      <View style={styles.searchRow}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={19} color={colors.muted} />
+          <TextInput
+            style={styles.input}
+            placeholder={t('search.placeholder')}
+            placeholderTextColor={colors.muted}
+            value={query}
+            onChangeText={setQuery}
+            autoFocus
+            returnKeyType="search"
+          />
+          {query.length > 0 ? (
+            <Pressable onPress={() => setQuery('')} hitSlop={8}>
+              <Ionicons name="close-circle" size={18} color={colors.muted} />
+            </Pressable>
+          ) : null}
+        </View>
+        {/* §7 — sıralama paneli aç/kapat */}
+        <Pressable
+          onPress={() => setShowSort((v) => !v)}
+          style={[styles.tune, (showSort || sort !== 'recommended') && styles.tuneOn]}
+        >
+          <Ionicons
+            name="options-outline"
+            size={20}
+            color={showSort || sort !== 'recommended' ? colors.onColor : colors.inkSoft}
+          />
+        </Pressable>
       </View>
+
+      {/* §7 — sıralama çipleri */}
+      {showSort ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipBar}
+          contentContainerStyle={styles.chips}
+        >
+          {SORTS.map((s) => {
+            const on = s.key === sort;
+            return (
+              <Pressable
+                key={s.key}
+                onPress={() => setSort(s.key)}
+                style={[styles.chip, on && styles.chipOn]}
+              >
+                <Text variant="caption" tone={on ? 'onColor' : 'inkSoft'}>
+                  {t(s.label)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
 
       {/* Kategori daraltma */}
       <ScrollView
@@ -163,8 +233,25 @@ export function ProRow({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    searchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      paddingHorizontal: space(2),
+    },
+    tune: {
+      width: 50,
+      height: 50,
+      borderRadius: radius.md,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tuneOn: { backgroundColor: colors.rose, borderColor: colors.rose },
     searchBar: {
-      marginHorizontal: space(2),
+      flex: 1,
       height: 50,
       backgroundColor: colors.surface,
       borderRadius: radius.pill,
