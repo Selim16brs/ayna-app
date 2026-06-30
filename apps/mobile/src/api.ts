@@ -156,6 +156,12 @@ export const api = {
       specialist: { id: string; kind: string; businessId?: string; bio: string; featured: boolean };
     }>('/specialists', input),
 
+  // Ortalama piyasa fiyatı + %40 alt sınır (Build Brief §1.3)
+  marketAverage: (category: string, city: string) =>
+    get<{ category: string; average: number; floor: number; currency: string; source: string }>(
+      `/market/average?category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}`,
+    ),
+
   // Sadakat (kullanıcıya bağlı; bakiye sunucuda defterden türetilir)
   loyalty: (token: string) => get<LoyaltySummary>('/loyalty', token),
   earnPoints: (token: string, points: number, reason: string, detail?: string) =>

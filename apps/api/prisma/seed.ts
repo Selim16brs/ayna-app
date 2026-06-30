@@ -292,7 +292,19 @@ const PRO_SEEDS: ProSeed[] = [
   },
 ];
 
+const MARKET_BASE: Record<string, number> = {
+  hair: 15000,
+  nails: 9000,
+  brows: 6000,
+  lashes: 13000,
+  makeup: 16000,
+  skincare: 14000,
+  spa: 18000,
+  epilation: 9000,
+};
+
 async function main(): Promise<void> {
+  await prisma.marketPrice.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.quote.deleteMany();
   await prisma.quoteRequest.deleteMany();
@@ -431,6 +443,11 @@ async function main(): Promise<void> {
         reviewed: b.reviewed ?? false,
       },
     });
+  }
+
+  // Ortalama piyasa fiyatı temel değerleri (ulusal; %40 kuralı için)
+  for (const [category, basePrice] of Object.entries(MARKET_BASE)) {
+    await prisma.marketPrice.create({ data: { category, city: '', basePrice } });
   }
 
   const cats = await prisma.serviceCategory.count();

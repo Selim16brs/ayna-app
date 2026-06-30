@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { CATEGORIES } from '../../src/data';
+import { api } from '../../src/api';
+import { CATEGORIES, formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text } from '../../src/ui';
@@ -13,11 +15,31 @@ export default function NewDemandScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const [desc, setDesc] = useState('');
   const [category, setCategory] = useState<string>(CATEGORIES[0]!.id);
   const [budget, setBudget] = useState('');
+  const [market, setMarket] = useState<{ average: number; floor: number } | null>(null);
 
-  const canSubmit = desc.trim().length > 0 && Number(budget) > 0;
+  // Seçili kategori + şehir için ortalama piyasa fiyatı (%40 kuralı)
+  useEffect(() => {
+    let alive = true;
+    api
+      .marketAverage(category, city)
+      .then((m) => {
+        if (alive) setMarket({ average: m.average, floor: m.floor });
+      })
+      .catch(() => {
+        if (alive) setMarket(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [category, city]);
+
+  const budgetNum = Number(budget);
+  const tooLow = market !== null && budgetNum > 0 && budgetNum < market.floor;
+  const canSubmit = desc.trim().length > 0 && budgetNum > 0;
 
   return (
     <Screen edges={['top']}>
@@ -76,6 +98,20 @@ export default function NewDemandScreen() {
             style={styles.budgetInput}
           />
         </View>
+
+        {market ? (
+          <Text variant="caption" tone="muted" style={styles.marketHint}>
+            {t('demand.market.avg')}: ~{formatPrice(market.average)}
+          </Text>
+        ) : null}
+        {tooLow ? (
+          <View style={styles.warnBox}>
+            <Ionicons name="alert-circle-outline" size={18} color={colors.danger} />
+            <Text variant="caption" style={styles.warnText}>
+              {t('demand.market.low')}
+            </Text>
+          </View>
+        ) : null}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -136,6 +172,17 @@ const makeStyles = (colors: ColorTokens) =>
       fontSize: 22,
       color: colors.ink,
     },
+    marketHint: { marginTop: space(1), marginLeft: space(0.5) },
+    warnBox: {
+      flexDirection: 'row',
+      gap: space(1),
+      alignItems: 'flex-start',
+      marginTop: space(1.5),
+      backgroundColor: colors.dangerSoft,
+      borderRadius: radius.md,
+      padding: space(1.5),
+    },
+    warnText: { flex: 1, color: colors.danger, lineHeight: 18 },
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),

@@ -111,6 +111,9 @@ export const tr = {
   'demand.new.budget': 'Bütçen',
   'demand.new.budget_ph': 'Fiyat (₸)',
   'demand.new.submit': 'Talebi yayınla',
+  'demand.market.avg': 'Ortalama piyasa fiyatı',
+  'demand.market.low':
+    'Verdiğiniz teklif genel fiyatların çok altında olduğundan uzmanlar tarafından teklif verilmeyebilir.',
   'demand.results.title': 'Gelen kabuller',
   'demand.results.count': 'satıcı bütçeni kabul etti',
   'demand.results.budget': 'Bütçen',

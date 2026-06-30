@@ -318,3 +318,16 @@ model SpecialistBlock {
   @@index([specialistId, startAt])
   @@map("specialist_blocks")
 }
+
+// Ortalama piyasa fiyatı (kategori × şehir) — %40 alt sınır kuralı (Build Brief §1.3).
+// Dinamik gerçek tekliflerden hesaplanır; yeterli örnek yoksa admin tohumlu temel fiyat.
+model MarketPrice {
+  id        String   @id @default(uuid()) @db.Uuid
+  category  String
+  city      String   @default("")
+  basePrice Decimal  @map("base_price") @db.Decimal(12, 2)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([category, city])
+  @@map("market_prices")
+}

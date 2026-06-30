@@ -9,6 +9,7 @@ import { ConfigModule } from './config/config.module';
 import { FeatureFlagModule } from './feature-flags/feature-flag.module';
 import { HealthModule } from './health/health.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
+import { MarketModule } from './market/market.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -24,6 +25,7 @@ import { PrismaModule } from './prisma/prisma.module';
     LoyaltyModule,
     BusinessesModule,
     SpecialistsModule,
+    MarketModule,
   ],
 })
 export class AppModule {}
