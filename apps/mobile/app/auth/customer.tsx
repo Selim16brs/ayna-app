@@ -37,6 +37,7 @@ export default function CustomerAuthScreen() {
               name: (fields.name ?? '').trim(),
               phone: (fields.phone ?? '').trim(),
               password: fields.password ?? '',
+              gender: gender === 'female' ? 'female' : 'unspecified',
               ...(fields.email?.trim() ? { email: fields.email.trim() } : {}),
               ...(city ? { city } : {}),
             })

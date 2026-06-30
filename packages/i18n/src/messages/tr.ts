@@ -637,6 +637,7 @@ export const tr = {
   'profile.verify.cta': 'Telefonunu doğrula',
   'profile.verify.desc': 'Hesabını güvene almak için numaranı onayla',
   'profile.verify.done': 'Telefon doğrulandı',
+  'profile.women_member': 'Kadın üye',
 
   // Sistem / domain
   'auth.otp.sent': 'Doğrulama kodu gönderildi',

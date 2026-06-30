@@ -50,6 +50,7 @@ export default function ProfileScreen() {
   const userName = useStore((s) => s.currentUser?.name) ?? 'Aigerim';
   const isLoggedIn = useStore((s) => s.currentUser != null);
   const phoneVerified = useStore((s) => s.currentUser?.phoneVerified ?? false);
+  const womenVerified = useStore((s) => s.currentUser?.womenVerified ?? false);
   const logout = useStore((s) => s.logout);
 
   const appearance: 'system' | ThemeMode = preference ?? 'system';
@@ -90,6 +91,14 @@ export default function ProfileScreen() {
                   <Ionicons name="checkmark-circle" size={13} color={colors.success} />
                   <Text variant="caption" style={styles.verifiedText}>
                     {t('profile.verify.done')}
+                  </Text>
+                </View>
+              ) : null}
+              {womenVerified ? (
+                <View style={styles.womenChip}>
+                  <Ionicons name="female" size={12} color={colors.rose} />
+                  <Text variant="caption" style={styles.womenText}>
+                    {t('profile.women_member')}
                   </Text>
                 </View>
               ) : null}
@@ -225,6 +234,16 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     verifiedText: { color: colors.success, fontWeight: '600' },
+    womenChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      backgroundColor: colors.roseSoft,
+      paddingHorizontal: space(1),
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+    },
+    womenText: { color: colors.rose, fontWeight: '600' },
     verifyBanner: {
       flexDirection: 'row',
       alignItems: 'center',

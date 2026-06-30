@@ -34,6 +34,8 @@ model User {
   name          String     @default("")
   email         String?    @unique
   city          String?
+  // §4.6 — women-only yaklaşımı: kayıtta cinsiyet (female | unspecified)
+  gender        String     @default("unspecified")
   passwordHash  String     @default("") @map("password_hash")
   role          UserRole   @default(user)
   status        UserStatus @default(active)

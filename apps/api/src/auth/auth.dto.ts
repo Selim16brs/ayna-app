@@ -6,6 +6,7 @@ export const registerSchema = z.object({
   password: z.string().min(6),
   email: z.string().email().optional(),
   city: z.string().optional(),
+  gender: z.enum(['female', 'unspecified']).optional(),
 });
 
 export const loginSchema = z.object({

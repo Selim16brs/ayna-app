@@ -113,11 +113,8 @@ export interface AuthUser {
   role: string;
   phone: string;
   phoneVerified?: boolean;
-}
-
-export interface AuthSession {
-  token: string;
-  user: AuthUser;
+  gender?: string;
+  womenVerified?: boolean;
 }
 
 export interface RegisterInput {
@@ -126,6 +123,12 @@ export interface RegisterInput {
   password: string;
   email?: string;
   city?: string;
+  gender?: 'female' | 'unspecified';
+}
+
+export interface AuthSession {
+  token: string;
+  user: AuthUser;
 }
 
 export interface RegisterBusinessInput {

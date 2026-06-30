@@ -58,6 +58,7 @@ export class AuthService {
         passwordHash: hashPassword(input.password),
         name: input.name,
         defaultLocale: 'tr',
+        gender: input.gender ?? 'unspecified',
         ...(input.email ? { email: input.email } : {}),
         ...(input.city ? { city: input.city } : {}),
       },
@@ -210,6 +211,9 @@ export class AuthService {
       city: user.city ?? undefined,
       role: user.role,
       phoneVerified: user.phoneVerified,
+      gender: user.gender,
+      // women-only: kadın olarak kayıtlı doğrulanmış üye
+      womenVerified: user.gender === 'female',
       phone: decryptField(Buffer.from(user.phoneEnc), this.env.FIELD_ENCRYPTION_KEY),
     };
   }
