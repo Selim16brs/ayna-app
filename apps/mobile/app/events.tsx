@@ -20,7 +20,7 @@ const GROUPS: { key: MessageKey; match: (d: number) => boolean }[] = [
 
 export default function EventsScreen() {
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const bookings = useStore((s) => s.bookings);
   const moments = useStore((s) => s.moments);
@@ -50,7 +50,7 @@ export default function EventsScreen() {
                 <Text variant="label" tone="rose" style={styles.section}>
                   {t(g.key)}
                 </Text>
-                <View style={styles.group}>
+                <View style={[styles.group, shadow.soft]}>
                   {items.map((e, i) => (
                     <Row key={e.id} event={e} border={i < items.length - 1} />
                   ))}
@@ -126,8 +126,6 @@ const makeStyles = (colors: ColorTokens) =>
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       overflow: 'hidden',
     },
     row: {
