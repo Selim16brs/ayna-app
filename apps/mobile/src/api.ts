@@ -14,6 +14,17 @@ export interface AiQuota {
   remaining: number;
 }
 
+export interface BookingStats {
+  total: number;
+  completed: number;
+  cancelled: number;
+  noShow: number;
+  noShowRate: number;
+  upcoming: number;
+  revenue: number;
+  currency: string;
+}
+
 export interface RatingReview {
   id: string;
   score: number;
@@ -165,6 +176,8 @@ export const api = {
 
   // Randevular (yazma yolu) — id mobilde üretilir, API upsert ile idempotent
   bookings: () => get<Appointment[]>('/bookings'),
+  // §5 — CRM özet istatistiği (doluluk/gelir/no-show)
+  bookingStats: () => get<BookingStats>('/bookings/stats'),
   createBooking: (b: Appointment) => post<Appointment>('/bookings', b),
   cancelBooking: (id: string, reason?: string) =>
     post<Appointment>(`/bookings/${id}/cancel`, reason ? { reason } : {}),

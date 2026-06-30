@@ -355,6 +355,12 @@ export const tr = {
   'reports.accept_rate': 'Kabul oranı',
   'reports.demands_in': 'Gelen talep',
   'reports.section.staff': 'Uzman performansı',
+  // §5 — canlı özet (gerçek randevulardan)
+  'reports.live.title': 'Canlı özet',
+  'reports.live.upcoming': 'Yaklaşan',
+  'reports.live.completed': 'Tamamlanan',
+  'reports.live.noshow': 'Gelmeyen',
+  'reports.live.revenue': 'Tamamlanan gelir',
 
   // Ortak (yeni)
   'common.delete': 'Sil',

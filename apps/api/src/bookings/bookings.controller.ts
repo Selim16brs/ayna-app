@@ -21,6 +21,12 @@ export class BookingsController {
     return this.bookings.list();
   }
 
+  // §5 — CRM özet istatistiği (doluluk/gelir/no-show)
+  @Get('stats')
+  stats() {
+    return this.bookings.stats();
+  }
+
   @Post()
   create(@Body(new ZodValidationPipe(createBookingSchema)) body: CreateBookingInput) {
     return this.bookings.create(body);
