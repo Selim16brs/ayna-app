@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { formatPrice, getProfessionalDetail } from '../../src/data';
+import { formatPrice } from '../../src/data';
+import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -19,7 +20,7 @@ export default function ConfirmedScreen() {
     time?: string;
     uzmanName?: string;
   }>();
-  const pro = getProfessionalDetail(params.proId ?? '1');
+  const pro = useProfessionalDetail(params.proId ?? '1');
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   const price = pro.services[0]?.price ?? Number(pro.priceFrom);
 

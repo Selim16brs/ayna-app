@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { categoryLabelKey, PROFESSIONALS } from '../../src/data';
+import { categoryLabelKey } from '../../src/data';
+import { useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -19,13 +20,14 @@ export default function CategoryScreen() {
   const router = useRouter();
   const [sort, setSort] = useState<SortKey>('rating');
   const sector = id ?? '';
+  const professionals = useProfessionals();
 
   const results = useMemo(() => {
-    const list = PROFESSIONALS.filter((p) => p.sector === sector);
+    const list = professionals.filter((p) => p.sector === sector);
     return [...list].sort((a, b) =>
       sort === 'rating' ? b.rating - a.rating : a.priceFrom - b.priceFrom,
     );
-  }, [sector, sort]);
+  }, [professionals, sector, sort]);
 
   return (
     <Screen edges={['top']}>

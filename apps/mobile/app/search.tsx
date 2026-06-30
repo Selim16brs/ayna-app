@@ -3,13 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import {
-  CATEGORIES,
-  categoryLabelKey,
-  formatPrice,
-  type Professional,
-  PROFESSIONALS,
-} from '../src/data';
+import { CATEGORIES, categoryLabelKey, formatPrice, type Professional } from '../src/data';
+import { useProfessionals } from '../src/catalog';
 import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -25,16 +20,17 @@ export default function SearchScreen() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [activeCat, setActiveCat] = useState<string | null>(null);
+  const professionals = useProfessionals();
 
   const results = useMemo(() => {
     const q = lower(query.trim());
-    return PROFESSIONALS.filter((p) => {
+    return professionals.filter((p) => {
       if (activeCat && p.sector !== activeCat) return false;
       if (!q) return true;
       const sectorLabel = lower(t(categoryLabelKey(p.sector)));
       return lower(p.name).includes(q) || lower(p.specialty).includes(q) || sectorLabel.includes(q);
     });
-  }, [query, activeCat, t]);
+  }, [professionals, query, activeCat, t]);
 
   return (
     <Screen edges={['top']}>

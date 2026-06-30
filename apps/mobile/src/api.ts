@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import type { Professional, ProfessionalDetail } from './data';
 
 // API taban adresi: Expo dev host IP'sinden türetilir (simülatör + cihaz uyumlu).
 const hostUri = Constants.expoConfig?.hostUri ?? '';
@@ -44,7 +45,9 @@ export interface ApiQuote {
 
 export const api = {
   categories: () => get<ApiCategory[]>('/categories'),
-  professionals: () => get<ApiProfessional[]>('/professionals'),
+  // Backend artık sector/kind/district/experienceYears döndürür → mobil Professional ile uyumlu
+  professionals: () => get<Professional[]>('/professionals'),
+  professional: (id: string) => get<ProfessionalDetail>(`/professionals/${id}`),
   quotes: () => get<ApiQuote[]>('/quotes'),
   createQuoteRequest: async (input: { categoryId: string; note?: string; photoUrl?: string }) => {
     const res = await fetch(`${API_BASE}/quote-requests`, {

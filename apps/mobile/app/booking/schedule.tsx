@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { type BookingSource, getProfessionalDetail } from '../../src/data';
+import type { BookingSource } from '../../src/data';
+import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -24,7 +25,7 @@ export default function ScheduleScreen() {
     service?: string;
   }>();
   const addBooking = useStore((s) => s.addBooking);
-  const pro = getProfessionalDetail(params.proId ?? '1');
+  const pro = useProfessionalDetail(params.proId ?? '1');
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   const [uzmanId, setUzmanId] = useState<string>(params.uzmanId ?? pro.staff[0]?.id ?? '');
   const [day, setDay] = useState(0);

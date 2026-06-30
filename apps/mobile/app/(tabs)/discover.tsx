@@ -3,7 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Dimensions, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ADS, buildUpcomingEvents, CATEGORIES, FEATURED, whenShort } from '../../src/data';
+import { ADS, buildUpcomingEvents, CATEGORIES, whenShort } from '../../src/data';
+import { useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -43,7 +44,7 @@ export default function DiscoverScreen() {
   );
   const unread = useStore(selectUnreadCount);
   const categories = CATEGORIES;
-  const featured = FEATURED;
+  const featured = useProfessionals().slice(0, 8);
 
   return (
     <Screen edges={['top']}>

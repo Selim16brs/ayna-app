@@ -4,7 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatPrice, getProfessionalDetail } from '../../src/data';
+import { formatPrice } from '../../src/data';
+import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -19,7 +20,7 @@ export default function ProfessionalScreen() {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const proId = id ?? '1';
-  const pro = getProfessionalDetail(proId);
+  const pro = useProfessionalDetail(proId);
   const [selected, setSelected] = useState<string>(pro.services[0]?.id ?? '');
   const [uzmanId, setUzmanId] = useState<string>(pro.staff[0]?.id ?? '');
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
