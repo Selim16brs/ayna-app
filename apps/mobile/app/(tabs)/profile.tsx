@@ -76,9 +76,9 @@ export default function ProfileScreen() {
     <Screen edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.profileRow}>
-          <LinearGradient colors={gradients.rose} style={styles.avatar}>
+          <LinearGradient colors={gradients.rose} style={[styles.avatar, shadow.soft]}>
             <Text variant="title" tone="onColor">
-              A
+              {userName.charAt(0).toUpperCase()}
             </Text>
           </LinearGradient>
           <View style={styles.profileText}>
@@ -113,7 +113,7 @@ export default function ProfileScreen() {
 
         {/* §4.6 — telefon doğrulama çağrısı (yalnızca girişli + doğrulanmamışsa) */}
         {isLoggedIn && !phoneVerified ? (
-          <Pressable style={styles.verifyBanner} onPress={() => router.push('/auth/verify')}>
+          <Pressable style={[styles.verifyBanner, shadow.soft]} onPress={() => router.push('/auth/verify')}>
             <View style={styles.verifyIcon}>
               <Ionicons name="shield-checkmark" size={18} color={colors.onColor} />
             </View>
@@ -137,7 +137,7 @@ export default function ProfileScreen() {
           <Stat value={`${reviewCount || 5}`} label={t('profile.stat.reviews')} />
         </View>
 
-        <View style={styles.appearance}>
+        <View style={[styles.appearance, shadow.soft]}>
           <View style={styles.appearanceHead}>
             <Ionicons name="contrast-outline" size={18} color={colors.inkSoft} />
             <Text variant="bodyStrong" tone="ink" style={styles.appearanceTitle}>
@@ -155,7 +155,7 @@ export default function ProfileScreen() {
           />
         </View>
 
-        <View style={styles.group}>
+        <View style={[styles.group, shadow.soft]}>
           {MENU.filter((m) => !m.danger).map((m, i, arr) => (
             <Pressable
               key={m.key}
@@ -175,7 +175,7 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        <View style={[styles.group, styles.groupGap]}>
+        <View style={[styles.group, styles.groupGap, shadow.soft]}>
           {MENU.filter((m) => m.danger).map((m) => (
             <Pressable key={m.key} style={styles.row} onPress={() => onPress(m.key)}>
               <View style={[styles.menuIcon, styles.menuIconDanger]}>
@@ -249,8 +249,6 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       gap: space(1.5),
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
       borderRadius: radius.lg,
       padding: space(1.75),
       marginBottom: space(2),
@@ -269,8 +267,6 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       paddingVertical: space(2),
       marginBottom: space(3),
     },
@@ -279,8 +275,6 @@ const makeStyles = (colors: ColorTokens) =>
     appearance: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       padding: space(2),
       marginBottom: space(2),
       gap: space(1.5),
@@ -290,8 +284,6 @@ const makeStyles = (colors: ColorTokens) =>
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       overflow: 'hidden',
     },
     groupGap: { marginTop: space(2) },
@@ -302,7 +294,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1.75),
       paddingVertical: space(1.5),
     },
-    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
     menuIcon: {
       width: 38,
       height: 38,
