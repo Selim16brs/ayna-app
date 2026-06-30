@@ -201,7 +201,7 @@ interface DecoratedSvc extends SvcItem {
 
 // §6.E — popülerlik & indirim OTOMATİK türetilir (deterministik, pro id tohumlu).
 // İlk 2 hizmet "öne çıkan/TOP"; bir hizmette süreli indirim. Sahte rasgelelik yok.
-function decorateServices(services: SvcItem[], proId: string): DecoratedSvc[] {
+export function decorateServices(services: SvcItem[], proId: string): DecoratedSvc[] {
   const seed = [...proId].reduce((a, c) => a + c.charCodeAt(0), 0);
   const discountIdx = seed % services.length;
   const discountPct = [10, 15, 20, 25][seed % 4]!;

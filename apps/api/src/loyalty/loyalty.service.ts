@@ -21,7 +21,7 @@ const TIERS = [
   { key: 'gold', min: 1500 },
 ] as const;
 
-function computeTier(lifetimeEarned: number) {
+export function computeTier(lifetimeEarned: number) {
   let idx = 0;
   for (let i = 0; i < TIERS.length; i++) {
     if (lifetimeEarned >= TIERS[i]!.min) idx = i;

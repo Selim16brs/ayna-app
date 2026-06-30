@@ -24,27 +24,7 @@ export class BookingsService {
   // §5 — CRM özet istatistiği: doluluk/gelir + no-show (gerçek randevulardan)
   async stats() {
     const rows = await this.prisma.booking.findMany();
-    const count = (s: string) => rows.filter((b) => b.status === s).length;
-    const completed = rows.filter((b) => b.status === 'completed');
-    const revenue = completed.reduce((sum, b) => sum + Number(b.price), 0);
-    const noShow = count('no_show');
-    const cancelled = count('cancelled');
-    const upcoming = rows.filter((b) =>
-      ['confirmed', 'pending', 'awaiting_provider', 'alternative_proposed'].includes(b.status),
-    ).length;
-    // gerçekleşmesi beklenen = tamamlanan + gelmeyen
-    const realized = completed.length + noShow;
-    const noShowRate = realized ? Math.round((noShow / realized) * 100) : 0;
-    return {
-      total: rows.length,
-      completed: completed.length,
-      cancelled,
-      noShow,
-      noShowRate,
-      upcoming,
-      revenue,
-      currency: 'KZT',
-    };
+    return computeBookingStats(rows.map((b) => ({ status: b.status, price: Number(b.price) })));
   }
 
   async create(input: CreateBookingInput, userId?: string) {
@@ -139,5 +119,29 @@ function mapBooking(b: Booking) {
     status: b.status,
     cancelReason: b.cancelReason ?? undefined,
     reviewed: b.reviewed,
+  };
+}
+
+// §5 — saf istatistik hesabı (DB'den bağımsız; test edilebilir)
+export function computeBookingStats(rows: { status: string; price: number }[]) {
+  const count = (s: string) => rows.filter((b) => b.status === s).length;
+  const completedRows = rows.filter((b) => b.status === 'completed');
+  const revenue = completedRows.reduce((sum, b) => sum + b.price, 0);
+  const noShow = count('no_show');
+  const cancelled = count('cancelled');
+  const upcoming = rows.filter((b) =>
+    ['confirmed', 'pending', 'awaiting_provider', 'alternative_proposed'].includes(b.status),
+  ).length;
+  const realized = completedRows.length + noShow; // tamamlanan + gelmeyen
+  const noShowRate = realized ? Math.round((noShow / realized) * 100) : 0;
+  return {
+    total: rows.length,
+    completed: completedRows.length,
+    cancelled,
+    noShow,
+    noShowRate,
+    upcoming,
+    revenue,
+    currency: 'KZT' as const,
   };
 }
