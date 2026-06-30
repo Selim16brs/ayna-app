@@ -11,13 +11,13 @@ import { Platform } from 'react-native';
  * dönük uyumluluk için dışa açıktır.
  */
 
-// ── Açık tema (Build Brief: sıcak off-white "Cloud Dancer") ──────────────
+// ── Açık tema (temiz nötr açık zemin — krem/bej yok, referans çizgisi) ────
 export const lightColors = {
-  // Zemin (sıcak off-white — saf beyaz değil)
-  bg: '#F4F1EC',
-  bgSunken: '#ECE7DE',
+  // Zemin (temiz, çok hafif sıcak-nötr beyaz — krem değil)
+  bg: '#F7F5F6',
+  bgSunken: '#EFECEE',
   surface: '#FFFFFF',
-  surfaceMuted: '#EFEBE3',
+  surfaceMuted: '#F2EFF1',
 
   // Metin (derin kahve-gri mürekkep — saf siyah değil)
   ink: '#332E29',
@@ -45,8 +45,8 @@ export const lightColors = {
   teal: '#4E9E8E',
   plum: '#9D93C9',
 
-  // Çizgi / durum (nazik)
-  line: '#E6DFD4',
+  // Çizgi / durum (nazik, nötr)
+  line: '#E9E4E7',
   success: '#5E9E7E',
   successSoft: '#E1EDE6',
   danger: '#C9685C',
@@ -99,7 +99,7 @@ export type ThemeMode = 'light' | 'dark';
 
 // ── Gradyanlar (tema bazlı) ──────────────────────────────────────────────
 export const lightGradients = {
-  hero: ['#F4F1EC', '#E8EEE9'] as const, // off-white → çok hafif adaçayı
+  hero: ['#F7F5F6', '#EEF2F0'] as const, // temiz nötr beyaz → çok hafif adaçayı (krem yok)
   gold: ['#E8836E', '#D85E47'] as const, // ana CTA: coral ombre (tek vurgu)
   rose: ['#DCA9B6', '#CC8BA0'] as const, // pudra
   teal: ['#A6C6B6', '#7FA992'] as const, // adaçayı
