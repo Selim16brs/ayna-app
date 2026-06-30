@@ -6,12 +6,15 @@ import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
+import type { MessageKey } from '@ayna/i18n';
 import { Progress, Screen, StackHeader, Text } from '../src/ui';
 
-const TIER = 'Gümüş';
-const PROGRESS = 0.62;
-const BOOKINGS_LEFT = 3;
 const NEXT_DRAW = '30 Haziran';
+const TIER_LABEL: Record<'bronze' | 'silver' | 'gold', MessageKey> = {
+  bronze: 'rewards.tier.bronze',
+  silver: 'rewards.tier.silver',
+  gold: 'rewards.tier.gold',
+};
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -22,8 +25,15 @@ export default function RewardsScreen() {
 
   const points = useStore((s) => s.points);
   const raffleEntries = useStore((s) => s.raffleEntries);
+  const tier = useStore((s) => s.tier);
   const ledger = useStore((s) => s.ledger);
   const redeem = useStore((s) => s.redeem);
+
+  // §11 — sunucudan türetilen seviye; yoksa makul varsayılan
+  const tierKey = tier?.key ?? 'bronze';
+  const progress = tier?.progress ?? 0;
+  const pointsToNext = tier?.pointsToNext ?? 0;
+  const isMaxTier = tier?.next == null;
 
   const onRedeem = (r: Reward) => {
     Alert.alert(t('rewards.redeem.confirm'), undefined, [
@@ -51,7 +61,7 @@ export default function RewardsScreen() {
             <View style={styles.tierBadge}>
               <Ionicons name="medal" size={12} color={colors.onColor} />
               <Text variant="caption" tone="onColor" style={styles.tierText}>
-                {TIER}
+                {t(TIER_LABEL[tierKey])}
               </Text>
             </View>
           </View>
@@ -60,14 +70,16 @@ export default function RewardsScreen() {
           </Text>
           <View style={styles.progressWrap}>
             <Progress
-              value={PROGRESS}
+              value={progress}
               height={6}
               color={colors.onColor}
               track="rgba(255,255,255,0.3)"
             />
           </View>
           <Text variant="caption" tone="onColor" style={styles.dim}>
-            {t('rewards.next_tier')}: {BOOKINGS_LEFT} {t('rewards.bookings_left')}
+            {isMaxTier
+              ? t('rewards.tier.max')
+              : `${t('rewards.next_tier')}: ${pointsToNext} ${t('rewards.points_to_next')}`}
           </Text>
         </LinearGradient>
 

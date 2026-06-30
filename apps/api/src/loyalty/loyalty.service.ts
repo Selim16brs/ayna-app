@@ -14,6 +14,32 @@ const REWARDS: Record<string, { cost: number; key: string }> = {
 
 const dateFmt = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short' });
 
+// §11 — sadakat seviyeleri (kümülatif KAZANILAN puana göre; harcama seviyeyi düşürmez)
+const TIERS = [
+  { key: 'bronze', min: 0 },
+  { key: 'silver', min: 500 },
+  { key: 'gold', min: 1500 },
+] as const;
+
+function computeTier(lifetimeEarned: number) {
+  let idx = 0;
+  for (let i = 0; i < TIERS.length; i++) {
+    if (lifetimeEarned >= TIERS[i]!.min) idx = i;
+  }
+  const current = TIERS[idx]!;
+  const next = TIERS[idx + 1] ?? null;
+  const pointsToNext = next ? Math.max(0, next.min - lifetimeEarned) : 0;
+  const span = next ? next.min - current.min : 1;
+  const progress = next ? Math.min(1, (lifetimeEarned - current.min) / span) : 1;
+  return {
+    key: current.key,
+    lifetimeEarned,
+    next: next?.key ?? null,
+    pointsToNext,
+    progress: Math.round(progress * 100) / 100,
+  };
+}
+
 @Injectable()
 export class LoyaltyService {
   constructor(
@@ -27,10 +53,18 @@ export class LoyaltyService {
       orderBy: { createdAt: 'desc' },
     });
     const points = entries.reduce((sum, e) => sum + e.points, 0);
+    const lifetimeEarned = entries
+      .filter((e) => e.kind === 'earn')
+      .reduce((sum, e) => sum + e.points, 0);
     const raffleEntries = entries.filter(
       (e) => e.kind === 'spend' && e.reason === 'rewards.redeem.raffle',
     ).length;
-    return { points, raffleEntries, ledger: entries.map(mapEntry) };
+    return {
+      points,
+      raffleEntries,
+      tier: computeTier(lifetimeEarned),
+      ledger: entries.map(mapEntry),
+    };
   }
 
   async earn(userId: string, input: EarnInput) {

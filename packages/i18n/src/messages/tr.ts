@@ -221,6 +221,12 @@ export const tr = {
   'rewards.tier': 'Seviye',
   'rewards.next_tier': 'Sonraki seviyeye',
   'rewards.bookings_left': 'randevu kaldı',
+  // §11 — sadakat seviyeleri
+  'rewards.points_to_next': 'puan kaldı',
+  'rewards.tier.bronze': 'Bronz',
+  'rewards.tier.silver': 'Gümüş',
+  'rewards.tier.gold': 'Altın',
+  'rewards.tier.max': 'En üst seviyedesin · Altın 🏆',
   'rewards.raffle.title': 'Çekiliş',
   'rewards.raffle.entries': 'çekiliş hakkın',
   'rewards.raffle.next': 'Sonraki çekiliş',

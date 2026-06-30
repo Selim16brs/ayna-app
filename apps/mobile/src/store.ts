@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { MessageKey } from '@ayna/i18n';
-import { api, type AuthSession, type AuthUser } from './api';
+import { api, type AuthSession, type AuthUser, type LoyaltyTier } from './api';
 import {
   type AppNotification,
   type Appointment,
@@ -85,6 +85,7 @@ interface State {
   favorites: string[];
   points: number;
   raffleEntries: number;
+  tier: LoyaltyTier | null;
   ledger: LedgerEntry[];
   userReviews: Record<string, Review[]>;
   notifications: AppNotification[];
@@ -142,6 +143,7 @@ export const useStore = create<State>((set, get) => ({
   favorites: ['3'],
   points: 340,
   raffleEntries: 5,
+  tier: null,
   ledger: SEED_LEDGER,
   userReviews: {},
   reviewAnonymous: true,
@@ -394,6 +396,7 @@ export const useStore = create<State>((set, get) => ({
         set({
           points: summary.points,
           raffleEntries: summary.raffleEntries,
+          tier: summary.tier,
           ledger: summary.ledger,
         });
         return true;
@@ -426,7 +429,12 @@ export const useStore = create<State>((set, get) => ({
     if (!token) return;
     try {
       const summary = await api.loyalty(token);
-      set({ points: summary.points, raffleEntries: summary.raffleEntries, ledger: summary.ledger });
+      set({
+        points: summary.points,
+        raffleEntries: summary.raffleEntries,
+        tier: summary.tier,
+        ledger: summary.ledger,
+      });
     } catch {
       // sunucuya ulaşılamadı → yerel değerler korunur
     }

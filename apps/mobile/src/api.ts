@@ -1,9 +1,20 @@
 import Constants from 'expo-constants';
 import type { Appointment, LedgerEntry, Professional, ProfessionalDetail } from './data';
 
+export type LoyaltyTierKey = 'bronze' | 'silver' | 'gold';
+
+export interface LoyaltyTier {
+  key: LoyaltyTierKey;
+  lifetimeEarned: number;
+  next: LoyaltyTierKey | null;
+  pointsToNext: number;
+  progress: number;
+}
+
 export interface LoyaltySummary {
   points: number;
   raffleEntries: number;
+  tier: LoyaltyTier;
   ledger: LedgerEntry[];
 }
 
