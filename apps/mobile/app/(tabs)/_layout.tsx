@@ -14,7 +14,8 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.muted,
+        // Pasif sekmeler soluk gri yerine net koyu (ikon + yazı okunaklı)
+        tabBarInactiveTintColor: colors.ink,
         // Buzlu cam alt menü (frosted glass) — içerik altından geçer
         tabBarBackground: () => (
           <BlurView
