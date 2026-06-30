@@ -25,6 +25,25 @@ export const CATEGORIES: Category[] = [
 export const categoryLabelKey = (id: string): MessageKey =>
   CATEGORIES.find((c) => c.id === id)?.labelKey ?? 'category.hair';
 
+// Kazakistan başlıca şehirleri (kayıt / şehir seçimi)
+export const CITIES: string[] = [
+  'Almatı',
+  'Astana',
+  'Şımkent',
+  'Karagandı',
+  'Aktöbe',
+  'Taraz',
+  'Pavlodar',
+  'Öskemen',
+  'Semey',
+  'Atırav',
+  'Kostanay',
+  'Kızılorda',
+  'Oral',
+  'Aktau',
+  'Türkistan',
+];
+
 export type ProBadge = 'campaign' | 'verified' | 'today';
 export type ProviderKind = 'salon' | 'independent';
 
