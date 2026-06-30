@@ -148,6 +148,11 @@ export const tr = {
   // Benim İçin (kişisel hub: kayıtlar + bakım + özel günler + AYNA Life)
   'benim.title': 'Benim İçin',
   'benim.subtitle': 'Günlük hayatını tek yerde yönet',
+  'benim.summary.next': 'Yaklaşan randevun',
+  'benim.summary.none': 'Yaklaşan randevun yok',
+  'benim.summary.points': 'AYNA Puanı',
+  'benim.summary.saved': 'Kaydedilenler',
+  'benim.summary.notifications': 'Bildirimler',
   'benim.add': 'Ekle',
   'benim.section.records': 'Kişisel kayıtların',
   'benim.section.care': 'Bakım takvimi',

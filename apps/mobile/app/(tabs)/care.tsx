@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   type CareRoutine,
   LIFE_ARTICLES,
@@ -13,7 +15,7 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, Text } from '../../src/ui';
+import { PressableScale, Screen, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -27,7 +29,7 @@ const makeTone = (colors: ColorTokens): Record<PersonalTone, { bg: string; fg: s
 export default function BenimIcinScreen() {
   const router = useRouter();
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, gradients } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const TONE = makeTone(colors);
 
@@ -35,6 +37,21 @@ export default function BenimIcinScreen() {
   const careRoutines = useStore((s) => s.careRoutines);
   const moments = useStore((s) => s.moments);
   const deletePersonalLog = useStore((s) => s.deletePersonalLog);
+
+  // Bento özet — dinamik kartlar (randevu / puan / favori / bildirim)
+  const bookings = useStore((s) => s.bookings);
+  const points = useStore((s) => s.points);
+  const favCount = useStore((s) => s.favorites.length);
+  const nextBooking = useMemo(() => {
+    const active = bookings.filter(
+      (b) =>
+        b.status === 'confirmed' ||
+        b.status === 'pending' ||
+        b.status === 'awaiting_provider' ||
+        b.status === 'alternative_proposed',
+    );
+    return [...active].sort((a, b) => a.inDays - b.inDays)[0];
+  }, [bookings]);
 
   const confirmDeleteLog = (id: string) => {
     Alert.alert(t('care.add.delete_confirm'), undefined, [
@@ -55,12 +72,65 @@ export default function BenimIcinScreen() {
           </Text>
         </View>
 
+        {/* Bento özet — dinamik kartlar */}
+        <View style={styles.bento}>
+          <Animated.View entering={FadeInDown.duration(360)} style={styles.bentoFeatureWrap}>
+            <PressableScale style={styles.bentoFeature} onPress={() => router.push('/bookings')}>
+              <LinearGradient
+                colors={gradients.rose}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <Ionicons name="calendar" size={20} color={colors.onColor} />
+              <Text variant="caption" tone="onColor" style={styles.bentoFeatureLabel}>
+                {t('benim.summary.next')}
+              </Text>
+              {nextBooking ? (
+                <>
+                  <Text variant="h2" tone="onColor" numberOfLines={1}>
+                    {nextBooking.proName}
+                  </Text>
+                  <Text variant="caption" tone="onColor" style={styles.bentoFeatureSub}>
+                    {nextBooking.dateLabel}
+                  </Text>
+                </>
+              ) : (
+                <Text variant="bodyStrong" tone="onColor">
+                  {t('benim.summary.none')}
+                </Text>
+              )}
+            </PressableScale>
+          </Animated.View>
+
+          <View style={styles.bentoCol}>
+            <Animated.View entering={FadeInDown.duration(360).delay(60)}>
+              <StatTile
+                icon="gift"
+                tone="gold"
+                value={String(points)}
+                label={t('benim.summary.points')}
+                onPress={() => router.push('/rewards')}
+              />
+            </Animated.View>
+            <Animated.View entering={FadeInDown.duration(360).delay(120)}>
+              <StatTile
+                icon="heart"
+                tone="rose"
+                value={String(favCount)}
+                label={t('benim.summary.saved')}
+                onPress={() => router.push('/favorites')}
+              />
+            </Animated.View>
+          </View>
+        </View>
+
         {/* Hızlı ekle */}
         <View style={styles.quickRow}>
           {QUICK_ADD.map((q) => {
             const c = TONE[q.tone];
             return (
-              <Pressable
+              <PressableScale
                 key={q.id}
                 style={styles.quick}
                 onPress={() => router.push('/care/add?kind=' + q.id)}
@@ -71,7 +141,7 @@ export default function BenimIcinScreen() {
                 <Text variant="caption" tone="inkSoft" style={styles.quickLabel}>
                   {t(q.labelKey)}
                 </Text>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>
@@ -144,7 +214,7 @@ export default function BenimIcinScreen() {
           contentContainerStyle={styles.life}
         >
           {LIFE_ARTICLES.map((a) => (
-            <Pressable key={a.id} onPress={() => router.push('/life/' + a.id)}>
+            <PressableScale key={a.id} onPress={() => router.push('/life/' + a.id)}>
               <ImageBackground
                 source={{ uri: a.image }}
                 style={styles.lifeCard}
@@ -168,11 +238,43 @@ export default function BenimIcinScreen() {
                   </Text>
                 </View>
               </ImageBackground>
-            </Pressable>
+            </PressableScale>
           ))}
         </ScrollView>
       </ScrollView>
     </Screen>
+  );
+}
+
+function StatTile({
+  icon,
+  tone,
+  value,
+  label,
+  onPress,
+}: {
+  icon: IoniconName;
+  tone: 'gold' | 'rose';
+  value: string;
+  label: string;
+  onPress: () => void;
+}) {
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const bg = tone === 'gold' ? colors.goldSoft : colors.roseSoft;
+  const fg = tone === 'gold' ? colors.gold : colors.rose;
+  return (
+    <PressableScale style={[styles.statTile, shadow.soft]} onPress={onPress}>
+      <View style={[styles.statIcon, { backgroundColor: bg }]}>
+        <Ionicons name={icon} size={18} color={fg} />
+      </View>
+      <Text variant="h2" tone="ink" style={styles.statValue}>
+        {value}
+      </Text>
+      <Text variant="caption" tone="muted" numberOfLines={1}>
+        {label}
+      </Text>
+    </PressableScale>
   );
 }
 
@@ -269,6 +371,41 @@ const makeStyles = (colors: ColorTokens) =>
     content: { paddingBottom: space(13) },
     header: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
     subtitle: { marginTop: 2 },
+    bento: {
+      flexDirection: 'row',
+      gap: space(1.5),
+      paddingHorizontal: space(3),
+      marginBottom: space(1),
+    },
+    bentoFeatureWrap: { flex: 1.3 },
+    bentoFeature: {
+      borderRadius: radius.lg,
+      padding: space(2),
+      minHeight: 132,
+      justifyContent: 'flex-end',
+      gap: 2,
+      overflow: 'hidden',
+    },
+    bentoFeatureLabel: { opacity: 0.9, marginTop: space(1) },
+    bentoFeatureSub: { opacity: 0.9 },
+    bentoCol: { flex: 1, gap: space(1.5) },
+    statTile: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(1.5),
+      gap: 2,
+    },
+    statIcon: {
+      width: 34,
+      height: 34,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space(0.5),
+    },
+    statValue: {},
     quickRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
