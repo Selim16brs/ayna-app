@@ -130,6 +130,7 @@ export const tr = {
   'bookings.tab.photo': 'Foto teklif',
   'bookings.tab.demand': 'Talep',
   'bookings.empty': 'Bu yoldan randevun yok',
+  'bookings.empty_cta': 'Keşfet’e göz at',
   'booking.status.confirmed': 'Onaylandı',
   'booking.status.pending': 'Onay bekliyor',
   'booking.status.completed': 'Tamamlandı',

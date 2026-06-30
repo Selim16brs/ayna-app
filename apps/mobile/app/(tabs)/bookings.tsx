@@ -38,6 +38,7 @@ export default function BookingsScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
   const [active, setActive] = useState<BookingSource>('direct');
   const bookings = useStore((s) => s.bookings);
   const list = bookings.filter((a) => a.source === active);
@@ -59,10 +60,17 @@ export default function BookingsScreen() {
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
         {list.length === 0 ? (
           <View style={styles.empty}>
-            <Ionicons name="calendar-outline" size={32} color={colors.muted} />
-            <Text variant="caption" tone="muted" style={styles.emptyText}>
+            <View style={styles.emptyIcon}>
+              <Ionicons name="calendar-outline" size={28} color={colors.rose} />
+            </View>
+            <Text variant="bodyStrong" tone="ink">
               {t('bookings.empty')}
             </Text>
+            <Pressable style={styles.emptyCta} onPress={() => router.push('/discover')}>
+              <Text variant="caption" tone="onColor" style={styles.emptyCtaText}>
+                {t('bookings.empty_cta')}
+              </Text>
+            </Pressable>
           </View>
         ) : (
           list.map((a) => <BookingCard key={a.id} appt={a} />)
@@ -80,7 +88,7 @@ function BookingCard({ appt }: { appt: Appointment }) {
   const st = makeStatus(colors)[appt.status];
   return (
     <Pressable
-      style={[styles.card, shadow.card]}
+      style={[styles.card, shadow.soft]}
       onPress={() => router.push('/booking/' + appt.id)}
     >
       <Image source={{ uri: appt.proImage }} style={styles.thumb} />
@@ -125,20 +133,35 @@ const makeStyles = (colors: ColorTokens) =>
     empty: {
       alignItems: 'center',
       justifyContent: 'center',
-      paddingTop: space(8),
+      paddingTop: space(9),
       gap: space(1.5),
     },
-    emptyText: {},
+    emptyIcon: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: colors.roseSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space(0.5),
+    },
+    emptyCta: {
+      backgroundColor: colors.rose,
+      paddingHorizontal: space(2.5),
+      paddingVertical: space(1.25),
+      borderRadius: radius.pill,
+      marginTop: space(0.5),
+    },
+    emptyCtaText: { fontWeight: '600' },
     card: {
       flexDirection: 'row',
+      alignItems: 'center',
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
-      padding: space(1.5),
-      gap: space(1.5),
+      padding: space(1.75),
+      gap: space(1.75),
     },
-    thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    thumb: { width: 72, height: 72, borderRadius: radius.md, backgroundColor: colors.bgSunken },
     body: { flex: 1 },
     topRow: {
       flexDirection: 'row',
