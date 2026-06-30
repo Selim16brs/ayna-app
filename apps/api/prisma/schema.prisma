@@ -175,6 +175,8 @@ enum BookingStatus {
 // Onay/alternatif pazarlık döngüsü (Build Brief §1.6).
 model Booking {
   id                 String        @id
+  // §5.6/çift-yönlü puanlama önkoşulu: randevuyu sahibine bağlar (offline'da null)
+  userId             String?       @map("user_id") @db.Uuid
   source             BookingSource
   service            String
   proId              String?       @map("pro_id")

@@ -12,6 +12,15 @@ export class BookingsService {
     return rows.map(mapBooking);
   }
 
+  // §5.6 önkoşulu — kullanıcıya bağlı randevular
+  async listForUser(userId: string) {
+    const rows = await this.prisma.booking.findMany({
+      where: { userId },
+      orderBy: { inDays: 'asc' },
+    });
+    return rows.map(mapBooking);
+  }
+
   // §5 — CRM özet istatistiği: doluluk/gelir + no-show (gerçek randevulardan)
   async stats() {
     const rows = await this.prisma.booking.findMany();
@@ -38,7 +47,7 @@ export class BookingsService {
     };
   }
 
-  async create(input: CreateBookingInput) {
+  async create(input: CreateBookingInput, userId?: string) {
     // id istemciden gelir → upsert ile idempotent (tekrar gönderim güvenli)
     const data = {
       source: input.source,
@@ -55,7 +64,8 @@ export class BookingsService {
     };
     const row = await this.prisma.booking.upsert({
       where: { id: input.id },
-      create: { id: input.id, ...data },
+      // userId yalnızca oluşturmada; sahibi sonradan değişmez (offline upsert'te bozulmaz)
+      create: { id: input.id, ...data, ...(userId ? { userId } : {}) },
       update: data,
     });
     return mapBooking(row);

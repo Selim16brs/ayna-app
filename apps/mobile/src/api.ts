@@ -195,9 +195,12 @@ export const api = {
 
   // Randevular (yazma yolu) — id mobilde üretilir, API upsert ile idempotent
   bookings: () => get<Appointment[]>('/bookings'),
+  // §5.6 önkoşulu — yalnızca giriş yapan kullanıcının randevuları
+  myBookings: (token: string) => get<Appointment[]>('/bookings/mine', token),
   // §5 — CRM özet istatistiği (doluluk/gelir/no-show)
   bookingStats: () => get<BookingStats>('/bookings/stats'),
-  createBooking: (b: Appointment) => post<Appointment>('/bookings', b),
+  // token verilirse randevu sahibine bağlanır (offline seller girişinde verilmez)
+  createBooking: (b: Appointment, token?: string) => post<Appointment>('/bookings', b, token),
   cancelBooking: (id: string, reason?: string) =>
     post<Appointment>(`/bookings/${id}/cancel`, reason ? { reason } : {}),
   // Onay/alternatif pazarlık döngüsü (§1.6)

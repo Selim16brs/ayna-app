@@ -154,6 +154,7 @@ export const useStore = create<State>((set, get) => ({
   setAuth: (session) => {
     set({ token: session.token, currentUser: session.user });
     void get().hydrateLoyalty();
+    void get().hydrateBookings();
   },
   markPhoneVerified: () =>
     set((s) => (s.currentUser ? { currentUser: { ...s.currentUser, phoneVerified: true } } : {})),
@@ -176,8 +177,8 @@ export const useStore = create<State>((set, get) => ({
       status: input.status ?? 'awaiting_provider',
     };
     set((s) => ({ bookings: [booking, ...s.bookings] }));
-    // Backend'e yaz (best-effort; offline'da sessizce geçilir)
-    void api.createBooking(booking).catch(() => undefined);
+    // Backend'e yaz (best-effort; offline'da sessizce geçilir). Token → sahibine bağlanır.
+    void api.createBooking(booking, get().token ?? undefined).catch(() => undefined);
     get().pushNotification({
       type: 'booking',
       title: 'Randevu isteğin gönderildi',
@@ -216,7 +217,9 @@ export const useStore = create<State>((set, get) => ({
 
   hydrateBookings: async () => {
     try {
-      const remote = await api.bookings();
+      // Giriş yapıldıysa yalnızca kullanıcının randevuları; yoksa yerel tohum korunur
+      const token = get().token;
+      const remote = token ? await api.myBookings(token) : [];
       if (remote.length === 0) return;
       const remoteIds = new Set(remote.map((b) => b.id));
       set((s) => ({ bookings: [...remote, ...s.bookings.filter((b) => !remoteIds.has(b.id))] }));

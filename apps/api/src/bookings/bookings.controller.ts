@@ -1,6 +1,11 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
+import type { Env } from '@ayna/config/env';
+import { ENV } from '../config/config.module';
+import { verifyJwt } from '../common/crypto';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { type AuthedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
   type CancelInput,
   cancelSchema,
@@ -14,7 +19,18 @@ import { BookingsService } from './bookings.service';
 @ApiTags('bookings')
 @Controller('bookings')
 export class BookingsController {
-  constructor(private readonly bookings: BookingsService) {}
+  constructor(
+    private readonly bookings: BookingsService,
+    @Inject(ENV) private readonly env: Env,
+  ) {}
+
+  // Authorization varsa kullanıcıyı çöz (opsiyonel — giriş zorunlu değil)
+  private optionalUserId(req: Request): string | undefined {
+    const header = req.headers.authorization ?? '';
+    const token = header.startsWith('Bearer ') ? header.slice(7) : '';
+    const payload = token ? verifyJwt(token, this.env.JWT_ACCESS_SECRET) : null;
+    return payload && typeof payload.sub === 'string' ? payload.sub : undefined;
+  }
 
   @Get()
   list() {
@@ -27,9 +43,19 @@ export class BookingsController {
     return this.bookings.stats();
   }
 
+  // §5.6 önkoşulu — yalnızca giriş yapan kullanıcının randevuları
+  @Get('mine')
+  @UseGuards(JwtAuthGuard)
+  mine(@Req() req: AuthedRequest) {
+    return this.bookings.listForUser(req.user!.id);
+  }
+
   @Post()
-  create(@Body(new ZodValidationPipe(createBookingSchema)) body: CreateBookingInput) {
-    return this.bookings.create(body);
+  create(
+    @Req() req: Request,
+    @Body(new ZodValidationPipe(createBookingSchema)) body: CreateBookingInput,
+  ) {
+    return this.bookings.create(body, this.optionalUserId(req));
   }
 
   // §6.C — iptal (opsiyonel sebep gövdede)
