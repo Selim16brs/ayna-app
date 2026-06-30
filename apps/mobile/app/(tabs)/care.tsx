@@ -1,10 +1,18 @@
 import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { type CareRoutine, type Moment, type PersonalTone, QUICK_ADD } from '../../src/data';
+import type { MessageKey } from '@ayna/i18n';
+import {
+  type Appointment,
+  type CareRoutine,
+  type Moment,
+  type PersonalLog,
+  type PersonalTone,
+  QUICK_ADD,
+} from '../../src/data';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -20,214 +28,228 @@ const makeTone = (colors: ColorTokens): Record<PersonalTone, { bg: string; fg: s
   blue: { bg: colors.blueSoft, fg: colors.blue },
 });
 
+function greetingKey(): MessageKey {
+  const h = new Date().getHours();
+  if (h < 12) return 'benim.hello.morning';
+  if (h < 18) return 'benim.hello.day';
+  return 'benim.hello.evening';
+}
+
 export default function BenimIcinScreen() {
   const router = useRouter();
   const { t } = useLocale();
-  const { colors, gradients } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const TONE = makeTone(colors);
 
   const personalLogs = useStore((s) => s.personalLogs);
   const careRoutines = useStore((s) => s.careRoutines);
   const moments = useStore((s) => s.moments);
   const deletePersonalLog = useStore((s) => s.deletePersonalLog);
-
-  // Bento özet — dinamik kartlar (randevu / puan / favori / bildirim)
   const bookings = useStore((s) => s.bookings);
   const points = useStore((s) => s.points);
   const favCount = useStore((s) => s.favorites.length);
+  const userName = useStore((s) => s.currentUser?.name);
+  const firstName = userName?.trim().split(/\s+/)[0] ?? 'AYNA';
+
+  const completedCount = useMemo(
+    () => bookings.filter((b) => b.status === 'completed').length,
+    [bookings],
+  );
   const nextBooking = useMemo(() => {
-    const active = bookings.filter(
-      (b) =>
-        b.status === 'confirmed' ||
-        b.status === 'pending' ||
-        b.status === 'awaiting_provider' ||
-        b.status === 'alternative_proposed',
+    const active = bookings.filter((b) =>
+      ['confirmed', 'pending', 'awaiting_provider', 'alternative_proposed'].includes(b.status),
     );
     return [...active].sort((a, b) => a.inDays - b.inDays)[0];
   }, [bookings]);
 
-  const confirmDeleteLog = (id: string) => {
+  const confirmDeleteLog = (id: string) =>
     Alert.alert(t('care.add.delete_confirm'), undefined, [
       { text: t('common.cancel'), style: 'cancel' },
       { text: t('common.delete'), style: 'destructive', onPress: () => deletePersonalLog(id) },
     ]);
-  };
 
   return (
     <Screen edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
+        {/* Selamlama */}
+        <Animated.View entering={FadeInDown.duration(340)} style={styles.header}>
+          <Text variant="caption" tone="muted">
+            {t(greetingKey())}
+          </Text>
           <Text variant="title" tone="ink">
-            {t('benim.title')}
+            {firstName}
           </Text>
-          <Text variant="caption" tone="muted" style={styles.subtitle}>
-            {t('benim.subtitle')}
-          </Text>
-        </View>
+        </Animated.View>
 
-        {/* Bento özet — dinamik kartlar */}
-        <View style={styles.bento}>
-          <Animated.View entering={FadeInDown.duration(360)} style={styles.bentoFeatureWrap}>
-            <PressableScale style={styles.bentoFeature} onPress={() => router.push('/bookings')}>
-              <LinearGradient
-                colors={gradients.rose}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-              />
-              <Ionicons name="calendar" size={20} color={colors.onColor} />
-              <Text variant="caption" tone="onColor" style={styles.bentoFeatureLabel}>
-                {t('benim.summary.next')}
-              </Text>
-              {nextBooking ? (
-                <>
-                  <Text variant="h2" tone="onColor" numberOfLines={1}>
-                    {nextBooking.proName}
-                  </Text>
-                  <Text variant="caption" tone="onColor" style={styles.bentoFeatureSub}>
-                    {nextBooking.dateLabel}
-                  </Text>
-                </>
-              ) : (
-                <Text variant="bodyStrong" tone="onColor">
-                  {t('benim.summary.none')}
+        {/* Öne çıkan: yaklaşan randevu */}
+        <Animated.View entering={FadeInDown.duration(360).delay(60)} style={styles.block}>
+          {nextBooking ? (
+            <FeatureCard booking={nextBooking} onPress={() => router.push('/booking/' + nextBooking.id)} />
+          ) : (
+            <Pressable style={styles.emptyFeature} onPress={() => router.push('/discover')}>
+              <View style={styles.emptyFeatureIcon}>
+                <Ionicons name="calendar-outline" size={22} color={colors.rose} />
+              </View>
+              <View style={styles.flex}>
+                <Text variant="bodyStrong" tone="ink">
+                  {t('benim.feature.empty')}
                 </Text>
-              )}
-            </PressableScale>
-          </Animated.View>
+                <Text variant="caption" tone="muted" style={styles.emptyFeatureSub}>
+                  {t('benim.feature.empty_sub')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            </Pressable>
+          )}
+        </Animated.View>
 
-          <View style={styles.bentoCol}>
-            <Animated.View entering={FadeInDown.duration(360).delay(60)}>
-              <StatTile
-                icon="gift"
-                tone="gold"
-                value={String(points)}
-                label={t('benim.summary.points')}
-                onPress={() => router.push('/rewards')}
-              />
-            </Animated.View>
-            <Animated.View entering={FadeInDown.duration(360).delay(120)}>
-              <StatTile
-                icon="heart"
-                tone="rose"
-                value={String(favCount)}
-                label={t('benim.summary.saved')}
-                onPress={() => router.push('/favorites')}
-              />
-            </Animated.View>
+        {/* İstatistik şeridi */}
+        <Animated.View entering={FadeInDown.duration(360).delay(120)} style={styles.block}>
+          <View style={[styles.statStrip, shadow.soft]}>
+            <StatSegment
+              icon="gift-outline"
+              tone="gold"
+              value={String(points)}
+              label={t('benim.summary.points')}
+              onPress={() => router.push('/rewards')}
+            />
+            <View style={styles.statDivider} />
+            <StatSegment
+              icon="heart-outline"
+              tone="rose"
+              value={String(favCount)}
+              label={t('benim.summary.saved')}
+              onPress={() => router.push('/favorites')}
+            />
+            <View style={styles.statDivider} />
+            <StatSegment
+              icon="checkmark-done-outline"
+              tone="sage"
+              value={String(completedCount)}
+              label={t('benim.summary.completed')}
+              onPress={() => router.push('/bookings')}
+            />
           </View>
-        </View>
+        </Animated.View>
 
-        {/* Boni — AI güzellik danışmanı (§13.5) */}
-        <Animated.View entering={FadeInDown.duration(360).delay(160)} style={styles.boniWrap}>
-          <PressableScale onPress={() => router.push('/boni')}>
-            <LinearGradient
-              colors={gradients.plum}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.boniCard}
-            >
-              <View style={styles.boniIcon}>
-                <Ionicons name="sparkles" size={22} color={colors.onColor} />
-              </View>
-              <View style={styles.rowText}>
-                <Text variant="bodyStrong" tone="onColor">
-                  {t('boni.entry')}
-                </Text>
-                <Text variant="caption" tone="onColor" style={styles.boniSub}>
-                  {t('boni.subtitle')}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.onColor} />
-            </LinearGradient>
-          </PressableScale>
+        {/* Boni — AI danışman */}
+        <Animated.View entering={FadeInDown.duration(360).delay(180)} style={styles.block}>
+          <BoniCard onPress={() => router.push('/boni')} />
         </Animated.View>
 
         {/* Hızlı ekle */}
-        <View style={styles.quickRow}>
-          {QUICK_ADD.map((q) => {
-            const c = TONE[q.tone];
-            return (
-              <PressableScale
-                key={q.id}
-                style={styles.quick}
-                onPress={() => router.push('/care/add?kind=' + q.id)}
-              >
-                <View style={[styles.quickIcon, { backgroundColor: c.bg }]}>
-                  <Ionicons name={q.icon as IoniconName} size={22} color={c.fg} />
-                </View>
-                <Text variant="caption" tone="inkSoft" style={styles.quickLabel}>
-                  {t(q.labelKey)}
-                </Text>
-              </PressableScale>
-            );
-          })}
-        </View>
+        <Animated.View entering={FadeInDown.duration(360).delay(220)}>
+          <Text variant="bodyStrong" tone="ink" style={styles.quickTitle}>
+            {t('benim.quick_title')}
+          </Text>
+          <View style={styles.quickRow}>
+            {QUICK_ADD.map((q) => {
+              const c = makeTone(colors)[q.tone];
+              return (
+                <PressableScale
+                  key={q.id}
+                  style={styles.quick}
+                  onPress={() => router.push('/care/add?kind=' + q.id)}
+                >
+                  <View style={[styles.quickIcon, { backgroundColor: c.bg }]}>
+                    <Ionicons name={q.icon as IoniconName} size={22} color={c.fg} />
+                  </View>
+                  <Text variant="caption" tone="inkSoft" style={styles.quickLabel} numberOfLines={1}>
+                    {t(q.labelKey)}
+                  </Text>
+                </PressableScale>
+              );
+            })}
+          </View>
+        </Animated.View>
 
         {/* Kişisel kayıtlar */}
-        <SectionHeader
-          label={t('benim.section.records')}
+        <Section
+          title={t('benim.section.records')}
+          count={personalLogs.length}
           onAdd={() => router.push('/care/add?kind=personal')}
-          addLabel={t('common.add')}
-        />
-        <View style={styles.group}>
-          {personalLogs.map((p, i) => {
-            const c = TONE[p.tone];
-            return (
-              <Pressable
-                key={p.id}
-                onLongPress={() => confirmDeleteLog(p.id)}
-                style={[styles.row, i < personalLogs.length - 1 && styles.rowBorder]}
-              >
-                <View style={[styles.iconChip, { backgroundColor: c.bg }]}>
-                  <Ionicons name={p.icon as IoniconName} size={19} color={c.fg} />
-                </View>
-                <View style={styles.rowText}>
-                  <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                    {p.title}
-                  </Text>
-                  <Text variant="caption" tone="muted">
-                    {p.dateLabel}
-                  </Text>
-                </View>
-                <Pressable hitSlop={10} onPress={() => confirmDeleteLog(p.id)} style={styles.trash}>
-                  <Ionicons name="trash-outline" size={18} color={colors.muted} />
-                </Pressable>
-              </Pressable>
-            );
-          })}
-        </View>
+          empty={personalLogs.length === 0 ? t('benim.empty.records') : undefined}
+        >
+          {personalLogs.map((p, i) => (
+            <LogRow
+              key={p.id}
+              log={p}
+              border={i < personalLogs.length - 1}
+              onDelete={() => confirmDeleteLog(p.id)}
+            />
+          ))}
+        </Section>
 
         {/* Bakım takvimi */}
-        <SectionHeader
-          label={t('benim.section.care')}
+        <Section
+          title={t('benim.section.care')}
+          count={careRoutines.length}
           onAdd={() => router.push('/care/add?mode=routine')}
-          addLabel={t('common.add')}
-        />
-        <View style={styles.group}>
+          empty={careRoutines.length === 0 ? t('benim.empty.care') : undefined}
+        >
           {careRoutines.map((r, i) => (
             <RoutineRow key={r.id} routine={r} border={i < careRoutines.length - 1} />
           ))}
-        </View>
+        </Section>
 
         {/* Özel günler */}
-        <SectionHeader
-          label={t('benim.section.moments')}
+        <Section
+          title={t('benim.section.moments')}
+          count={moments.length}
           onAdd={() => router.push('/care/add?mode=moment')}
-          addLabel={t('common.add')}
-        />
-        <View style={styles.group}>
+          empty={moments.length === 0 ? t('benim.empty.moments') : undefined}
+        >
           {moments.map((m, i) => (
             <MomentRow key={m.id} moment={m} border={i < moments.length - 1} />
           ))}
-        </View>
+        </Section>
       </ScrollView>
     </Screen>
   );
 }
 
-function StatTile({
+// ── Öne çıkan randevu kartı (görsel zeminli, premium) ──────────────────────
+function FeatureCard({ booking, onPress }: { booking: Appointment; onPress: () => void }) {
+  const { t } = useLocale();
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <PressableScale style={[styles.feature, shadow.card]} onPress={onPress}>
+      <ImageBackground
+        source={{ uri: booking.proImage }}
+        style={StyleSheet.absoluteFill}
+        imageStyle={styles.featureImg}
+      >
+        <LinearGradient
+          colors={['rgba(20,16,18,0.15)', 'rgba(20,16,18,0.78)']}
+          style={StyleSheet.absoluteFill}
+        />
+      </ImageBackground>
+      <View style={styles.featureBadge}>
+        <Ionicons name="calendar" size={12} color={colors.onColor} />
+        <Text variant="caption" tone="onColor" style={styles.featureBadgeText}>
+          {t('benim.feature.badge')}
+        </Text>
+      </View>
+      <View style={styles.featureBody}>
+        <Text variant="h2" tone="onColor" numberOfLines={1}>
+          {booking.proName}
+        </Text>
+        <Text variant="caption" tone="onColor" style={styles.featureMeta} numberOfLines={1}>
+          {booking.service} · {booking.dateLabel}
+        </Text>
+        <View style={styles.featureCta}>
+          <Text variant="caption" tone="ink" style={styles.featureCtaText}>
+            {t('benim.feature.cta')}
+          </Text>
+          <Ionicons name="arrow-forward" size={13} color={colors.ink} />
+        </View>
+      </View>
+    </PressableScale>
+  );
+}
+
+function StatSegment({
   icon,
   tone,
   value,
@@ -235,53 +257,150 @@ function StatTile({
   onPress,
 }: {
   icon: IoniconName;
-  tone: 'gold' | 'rose';
+  tone: 'gold' | 'rose' | 'sage';
   value: string;
   label: string;
   onPress: () => void;
 }) {
-  const { colors, shadow } = useTheme();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const bg = tone === 'gold' ? colors.goldSoft : colors.roseSoft;
-  const fg = tone === 'gold' ? colors.gold : colors.rose;
+  const fg = tone === 'gold' ? colors.gold : tone === 'rose' ? colors.rose : colors.sage;
   return (
-    <PressableScale style={[styles.statTile, shadow.soft]} onPress={onPress}>
-      <View style={[styles.statIcon, { backgroundColor: bg }]}>
-        <Ionicons name={icon} size={18} color={fg} />
-      </View>
+    <Pressable style={styles.statSegment} onPress={onPress}>
+      <Ionicons name={icon} size={17} color={fg} />
       <Text variant="h2" tone="ink" style={styles.statValue}>
         {value}
       </Text>
       <Text variant="caption" tone="muted" numberOfLines={1}>
         {label}
       </Text>
+    </Pressable>
+  );
+}
+
+// ── Boni kartı + maskot-hazır avatar ──────────────────────────────────────
+function BoniCard({ onPress }: { onPress: () => void }) {
+  const { t } = useLocale();
+  const { colors, gradients, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <PressableScale onPress={onPress}>
+      <LinearGradient
+        colors={gradients.plum}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.boniCard, shadow.soft]}
+      >
+        <BoniAvatar />
+        <View style={styles.flex}>
+          <Text variant="bodyStrong" tone="onColor">
+            {t('boni.entry')}
+          </Text>
+          <Text variant="caption" tone="onColor" style={styles.dim}>
+            {t('boni.subtitle')}
+          </Text>
+        </View>
+        <View style={styles.boniGo}>
+          <Ionicons name="arrow-forward" size={16} color={colors.onColor} />
+        </View>
+      </LinearGradient>
     </PressableScale>
   );
 }
 
-function SectionHeader({
-  label,
-  onAdd,
-  addLabel,
-}: {
-  label: string;
-  onAdd: () => void;
-  addLabel: string;
-}) {
+// Maskot hazır: assets/boni-mascot.png eklenince
+// <Image source={require('../../assets/boni-mascot.png')} style={...}/> ile değiştir.
+export function BoniAvatar() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <View style={styles.sectionHeader}>
-      <Text variant="label" tone="rose">
-        {label}
-      </Text>
-      <Pressable hitSlop={8} onPress={onAdd} style={styles.addBtn}>
-        <Ionicons name="add" size={16} color={colors.rose} />
-        <Text variant="caption" tone="rose">
-          {addLabel}
-        </Text>
-      </Pressable>
+    <View style={styles.boniAvatar}>
+      <Ionicons name="sparkles" size={22} color={colors.onColor} />
     </View>
+  );
+}
+
+// ── Bölüm sarmalayıcı (tutarlı başlık + yumuşak kart + boş durum) ──────────
+function Section({
+  title,
+  count,
+  onAdd,
+  empty,
+  children,
+}: {
+  title: string;
+  count: number;
+  onAdd: () => void;
+  empty?: string;
+  children: React.ReactNode;
+}) {
+  const { t } = useLocale();
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionTitleWrap}>
+          <Text variant="bodyStrong" tone="ink" style={styles.sectionTitle}>
+            {title}
+          </Text>
+          {count > 0 ? (
+            <View style={styles.countPill}>
+              <Text variant="caption" tone="muted">
+                {count}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+        <Pressable hitSlop={8} onPress={onAdd} style={styles.addBtn}>
+          <Ionicons name="add" size={15} color={colors.rose} />
+          <Text variant="caption" tone="rose">
+            {t('common.add')}
+          </Text>
+        </Pressable>
+      </View>
+      {empty ? (
+        <View style={styles.emptyRow}>
+          <Text variant="caption" tone="muted">
+            {empty}
+          </Text>
+        </View>
+      ) : (
+        <View style={[styles.group, shadow.soft]}>{children}</View>
+      )}
+    </View>
+  );
+}
+
+function LogRow({
+  log,
+  border,
+  onDelete,
+}: {
+  log: PersonalLog;
+  border: boolean;
+  onDelete: () => void;
+}) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const c = makeTone(colors)[log.tone];
+  return (
+    <Pressable onLongPress={onDelete} style={[styles.row, border && styles.rowBorder]}>
+      <View style={[styles.iconChip, { backgroundColor: c.bg }]}>
+        <Ionicons name={log.icon as IoniconName} size={18} color={c.fg} />
+      </View>
+      <View style={styles.rowText}>
+        <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+          {log.title}
+        </Text>
+        <Text variant="caption" tone="muted">
+          {log.dateLabel}
+        </Text>
+      </View>
+      <Pressable hitSlop={10} onPress={onDelete} style={styles.trash}>
+        <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} />
+      </Pressable>
+    </Pressable>
   );
 }
 
@@ -300,7 +419,7 @@ function RoutineRow({ routine, border }: { routine: CareRoutine; border: boolean
   return (
     <View style={[styles.row, border && styles.rowBorder]}>
       <View style={[styles.iconChip, { backgroundColor: colors.sageSoft }]}>
-        <Ionicons name={routine.icon as IoniconName} size={19} color={colors.sage} />
+        <Ionicons name={routine.icon as IoniconName} size={18} color={colors.sage} />
       </View>
       <Text variant="bodyStrong" tone="ink" style={styles.rowText} numberOfLines={1}>
         {routine.name}
@@ -313,9 +432,9 @@ function RoutineRow({ routine, border }: { routine: CareRoutine; border: boolean
       <Pressable
         hitSlop={8}
         onPress={() => completeRoutine(routine.id)}
-        style={[styles.checkBtn, { backgroundColor: colors.sageSoft }]}
+        style={[styles.checkBtn, { backgroundColor: colors.sage }]}
       >
-        <Ionicons name="checkmark" size={16} color={colors.sage} />
+        <Ionicons name="checkmark" size={16} color={colors.onColor} />
       </Pressable>
     </View>
   );
@@ -328,7 +447,7 @@ function MomentRow({ moment, border }: { moment: Moment; border: boolean }) {
   return (
     <View style={[styles.row, border && styles.rowBorder]}>
       <View style={[styles.iconChip, { backgroundColor: colors.lavenderSoft }]}>
-        <Ionicons name={moment.icon as IoniconName} size={19} color={colors.lavender} />
+        <Ionicons name={moment.icon as IoniconName} size={18} color={colors.lavender} />
       </View>
       <View style={styles.rowText}>
         <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
@@ -350,121 +469,178 @@ function MomentRow({ moment, border }: { moment: Moment; border: boolean }) {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: space(13) },
-    header: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
-    subtitle: { marginTop: 2 },
-    bento: {
-      flexDirection: 'row',
-      gap: space(1.5),
-      paddingHorizontal: space(3),
-      marginBottom: space(1),
-    },
-    bentoFeatureWrap: { flex: 1.3 },
-    bentoFeature: {
-      borderRadius: radius.lg,
-      padding: space(2),
-      minHeight: 132,
-      justifyContent: 'flex-end',
-      gap: 2,
+    flex: { flex: 1 },
+    dim: { opacity: 0.9 },
+    header: { paddingHorizontal: space(3), paddingTop: space(1.5), marginBottom: space(2.5) },
+    block: { paddingHorizontal: space(3), marginBottom: space(2) },
+
+    // Öne çıkan randevu
+    feature: {
+      height: 164,
+      borderRadius: radius.xl,
       overflow: 'hidden',
+      justifyContent: 'flex-end',
+      backgroundColor: colors.surfaceMuted,
     },
-    bentoFeatureLabel: { opacity: 0.9, marginTop: space(1) },
-    bentoFeatureSub: { opacity: 0.9 },
-    bentoCol: { flex: 1, gap: space(1.5) },
-    statTile: {
+    featureImg: { borderRadius: radius.xl },
+    featureBadge: {
+      position: 'absolute',
+      top: space(2),
+      left: space(2),
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      backgroundColor: 'rgba(255,255,255,0.22)',
+      paddingHorizontal: space(1.25),
+      paddingVertical: 5,
+      borderRadius: radius.pill,
+    },
+    featureBadgeText: { fontWeight: '600' },
+    featureBody: { padding: space(2.25), gap: 3 },
+    featureMeta: { opacity: 0.92 },
+    featureCta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      alignSelf: 'flex-start',
+      marginTop: space(1.25),
+      backgroundColor: '#FFFFFF',
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+    },
+    featureCtaText: { fontWeight: '700' },
+
+    // Boş randevu durumu
+    emptyFeature: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.line,
-      padding: space(1.5),
-      gap: 2,
+      padding: space(2),
     },
-    statIcon: {
-      width: 34,
-      height: 34,
+    emptyFeatureIcon: {
+      width: 44,
+      height: 44,
       borderRadius: radius.md,
+      backgroundColor: colors.roseSoft,
       alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: space(0.5),
     },
-    statValue: {},
-    boniWrap: { paddingHorizontal: space(3), marginTop: space(1.5), marginBottom: space(0.5) },
+    emptyFeatureSub: { marginTop: 2 },
+
+    // İstatistik şeridi
+    statStrip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      paddingVertical: space(2),
+    },
+    statSegment: { flex: 1, alignItems: 'center', gap: 3 },
+    statValue: { marginTop: 2 },
+    statDivider: { width: 1, height: 36, backgroundColor: colors.line },
+
+    // Boni
     boniCard: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
       borderRadius: radius.lg,
       paddingHorizontal: space(2),
-      paddingVertical: space(1.75),
+      paddingVertical: space(2),
     },
-    boniIcon: {
-      width: 44,
-      height: 44,
-      borderRadius: radius.md,
+    boniAvatar: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: 'rgba(255,255,255,0.24)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    boniGo: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
       backgroundColor: 'rgba(255,255,255,0.22)',
       alignItems: 'center',
       justifyContent: 'center',
     },
-    boniSub: { opacity: 0.9, marginTop: 1 },
+
+    // Hızlı ekle
+    quickTitle: { paddingHorizontal: space(3), marginBottom: space(1.5) },
     quickRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       paddingHorizontal: space(3),
+      marginBottom: space(1),
     },
-    quick: { alignItems: 'center', width: 72 },
+    quick: { alignItems: 'center', width: 72, gap: space(0.75) },
     quickIcon: {
-      width: 56,
-      height: 56,
+      width: 60,
+      height: 60,
       borderRadius: radius.lg,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    quickLabel: { marginTop: space(0.75), textAlign: 'center' },
-    section: {
-      paddingHorizontal: space(3),
-      marginTop: space(3),
-      marginBottom: space(1.5),
-    },
+    quickLabel: { textAlign: 'center' },
+
+    // Bölümler
+    section: { marginTop: space(2.5) },
     sectionHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: space(3),
-      marginTop: space(3),
-      marginBottom: space(1.5),
+      marginBottom: space(1.25),
+    },
+    sectionTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    sectionTitle: {},
+    countPill: {
+      minWidth: 22,
+      paddingHorizontal: space(0.75),
+      paddingVertical: 1,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
     },
     addBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-    trash: { padding: space(0.5) },
-    checkBtn: {
-      width: 32,
-      height: 32,
-      borderRadius: radius.pill,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    group: {
+    emptyRow: {
       marginHorizontal: space(3),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.line,
+      borderStyle: 'dashed',
+      paddingVertical: space(2.5),
+      alignItems: 'center',
+    },
+    group: {
+      marginHorizontal: space(3),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
       overflow: 'hidden',
     },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.5),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
     },
-    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
     iconChip: {
-      width: 44,
-      height: 44,
+      width: 42,
+      height: 42,
       borderRadius: radius.md,
       alignItems: 'center',
       justifyContent: 'center',
     },
     rowText: { flex: 1 },
+    trash: { padding: space(0.5) },
     duePill: {
       backgroundColor: colors.surfaceMuted,
       paddingHorizontal: space(1.25),
@@ -472,25 +648,11 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     dueDanger: { backgroundColor: colors.dangerSoft },
-    life: { paddingHorizontal: space(3), gap: space(1.5), paddingBottom: space(1) },
-    lifeCard: {
-      width: 220,
-      height: 150,
-      borderRadius: radius.lg,
-      overflow: 'hidden',
-      justifyContent: 'flex-end',
-    },
-    lifeImage: { borderRadius: radius.lg },
-    lifeTag: {
-      position: 'absolute',
-      top: space(1.5),
-      left: space(1.5),
-      backgroundColor: colors.accent,
-      paddingHorizontal: space(1),
-      paddingVertical: 3,
+    checkBtn: {
+      width: 32,
+      height: 32,
       borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    lifeTagText: { fontWeight: '600' },
-    lifeBody: { padding: space(1.75) },
-    lifeRead: { opacity: 0.9, marginTop: 2 },
   });
