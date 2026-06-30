@@ -1,44 +1,145 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { CARE_ROUTINES, type CareRoutine, MOMENTS, type Moment } from '../../src/data';
+import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  CARE_ROUTINES,
+  type CareRoutine,
+  LIFE_ARTICLES,
+  MOMENTS,
+  type Moment,
+  PERSONAL_LOGS,
+  type PersonalTone,
+  QUICK_ADD,
+} from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { colors, radius, shadow, space } from '../../src/theme';
 import { Screen, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-export default function CareScreen() {
+const TONE: Record<PersonalTone, { bg: string; fg: string }> = {
+  rose: { bg: colors.roseSoft, fg: colors.rose },
+  sage: { bg: colors.sageSoft, fg: colors.sage },
+  lavender: { bg: colors.lavenderSoft, fg: colors.lavender },
+  blue: { bg: colors.blueSoft, fg: colors.blue },
+};
+
+export default function BenimIcinScreen() {
   const { t } = useLocale();
 
   return (
     <Screen edges={['top']}>
-      <View style={styles.header}>
-        <Text variant="title" tone="ink">
-          {t('care.title')}
-        </Text>
-        <Text variant="caption" tone="muted" style={styles.subtitle}>
-          {t('care.subtitle')}
-        </Text>
-      </View>
-
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text variant="title" tone="ink">
+            {t('benim.title')}
+          </Text>
+          <Text variant="caption" tone="muted" style={styles.subtitle}>
+            {t('benim.subtitle')}
+          </Text>
+        </View>
+
+        {/* Hızlı ekle */}
+        <View style={styles.quickRow}>
+          {QUICK_ADD.map((q) => {
+            const c = TONE[q.tone];
+            return (
+              <Pressable key={q.id} style={styles.quick}>
+                <View style={[styles.quickIcon, { backgroundColor: c.bg }]}>
+                  <Ionicons name={q.icon as IoniconName} size={22} color={c.fg} />
+                </View>
+                <Text variant="caption" tone="inkSoft" style={styles.quickLabel}>
+                  {t(q.labelKey)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Kişisel kayıtlar */}
         <Text variant="label" tone="rose" style={styles.section}>
-          {t('care.section.routines')}
+          {t('benim.section.records')}
         </Text>
         <View style={styles.group}>
-          {CARE_ROUTINES.map((r) => (
-            <RoutineRow key={r.id} routine={r} />
+          {PERSONAL_LOGS.map((p, i) => {
+            const c = TONE[p.tone];
+            return (
+              <View
+                key={p.id}
+                style={[styles.row, i < PERSONAL_LOGS.length - 1 && styles.rowBorder]}
+              >
+                <View style={[styles.iconChip, { backgroundColor: c.bg }]}>
+                  <Ionicons name={p.icon as IoniconName} size={19} color={c.fg} />
+                </View>
+                <View style={styles.rowText}>
+                  <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                    {p.title}
+                  </Text>
+                  <Text variant="caption" tone="muted">
+                    {p.dateLabel}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Bakım takvimi */}
+        <Text variant="label" tone="rose" style={styles.section}>
+          {t('benim.section.care')}
+        </Text>
+        <View style={styles.group}>
+          {CARE_ROUTINES.map((r, i) => (
+            <RoutineRow key={r.id} routine={r} border={i < CARE_ROUTINES.length - 1} />
           ))}
         </View>
 
+        {/* Özel günler */}
         <Text variant="label" tone="rose" style={styles.section}>
-          {t('care.section.moments')}
+          {t('benim.section.moments')}
         </Text>
         <View style={styles.group}>
-          {MOMENTS.map((m) => (
-            <MomentRow key={m.id} moment={m} />
+          {MOMENTS.map((m, i) => (
+            <MomentRow key={m.id} moment={m} border={i < MOMENTS.length - 1} />
           ))}
         </View>
+
+        {/* AYNA Life */}
+        <Text variant="label" tone="rose" style={styles.section}>
+          {t('benim.section.life')}
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.life}
+        >
+          {LIFE_ARTICLES.map((a) => (
+            <ImageBackground
+              key={a.id}
+              source={{ uri: a.image }}
+              style={styles.lifeCard}
+              imageStyle={styles.lifeImage}
+            >
+              <LinearGradient
+                colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.82)']}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.lifeTag}>
+                <Text variant="caption" tone="onColor" style={styles.lifeTagText}>
+                  {a.tag}
+                </Text>
+              </View>
+              <View style={styles.lifeBody}>
+                <Text variant="bodyStrong" tone="onColor" numberOfLines={2}>
+                  {a.title}
+                </Text>
+                <Text variant="caption" tone="onColor" style={styles.lifeRead}>
+                  {a.readMin} {t('life.read')}
+                </Text>
+              </View>
+            </ImageBackground>
+          ))}
+        </ScrollView>
       </ScrollView>
     </Screen>
   );
@@ -50,15 +151,15 @@ function dueLabel(days: number, t: (k: 'care.due_in' | 'care.overdue' | 'care.to
   return { text: `${days} ${t('care.due_in')}`, danger: false };
 }
 
-function RoutineRow({ routine }: { routine: CareRoutine }) {
+function RoutineRow({ routine, border }: { routine: CareRoutine; border: boolean }) {
   const { t } = useLocale();
   const due = dueLabel(routine.dueDays, t);
   return (
-    <View style={[styles.row, shadow.soft]}>
-      <View style={styles.iconChip}>
-        <Ionicons name={routine.icon as IoniconName} size={20} color={colors.rose} />
+    <View style={[styles.row, border && styles.rowBorder]}>
+      <View style={[styles.iconChip, { backgroundColor: colors.sageSoft }]}>
+        <Ionicons name={routine.icon as IoniconName} size={19} color={colors.sage} />
       </View>
-      <Text variant="bodyStrong" tone="ink" style={styles.rowTitle} numberOfLines={1}>
+      <Text variant="bodyStrong" tone="ink" style={styles.rowText} numberOfLines={1}>
         {routine.name}
       </Text>
       <View style={[styles.duePill, due.danger && styles.dueDanger]}>
@@ -70,14 +171,14 @@ function RoutineRow({ routine }: { routine: CareRoutine }) {
   );
 }
 
-function MomentRow({ moment }: { moment: Moment }) {
+function MomentRow({ moment, border }: { moment: Moment; border: boolean }) {
   const { t } = useLocale();
   return (
-    <View style={[styles.row, shadow.soft]}>
-      <View style={[styles.iconChip, { backgroundColor: colors.goldSoft }]}>
-        <Ionicons name={moment.icon as IoniconName} size={20} color={colors.gold} />
+    <View style={[styles.row, border && styles.rowBorder]}>
+      <View style={[styles.iconChip, { backgroundColor: colors.lavenderSoft }]}>
+        <Ionicons name={moment.icon as IoniconName} size={19} color={colors.lavender} />
       </View>
-      <View style={styles.rowTitle}>
+      <View style={styles.rowText}>
         <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
           {moment.title}
         </Text>
@@ -95,30 +196,52 @@ function MomentRow({ moment }: { moment: Moment }) {
 }
 
 const styles = StyleSheet.create({
+  content: { paddingBottom: space(4) },
   header: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
   subtitle: { marginTop: 2 },
-  content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-  section: { marginTop: space(2), marginBottom: space(1.5) },
-  group: { gap: space(1.25) },
-  row: {
+  quickRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: space(3),
+  },
+  quick: { alignItems: 'center', width: 72 },
+  quickIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.lg,
     alignItems: 'center',
-    gap: space(1.5),
+    justifyContent: 'center',
+  },
+  quickLabel: { marginTop: space(0.75), textAlign: 'center' },
+  section: {
+    paddingHorizontal: space(3),
+    marginTop: space(3),
+    marginBottom: space(1.5),
+  },
+  group: {
+    marginHorizontal: space(3),
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.line,
-    padding: space(1.75),
+    overflow: 'hidden',
   },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space(1.5),
+    paddingHorizontal: space(1.75),
+    paddingVertical: space(1.5),
+  },
+  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
   iconChip: {
     width: 44,
     height: 44,
     borderRadius: radius.md,
-    backgroundColor: colors.roseSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowTitle: { flex: 1 },
+  rowText: { flex: 1 },
   duePill: {
     backgroundColor: colors.surfaceMuted,
     paddingHorizontal: space(1.25),
@@ -126,4 +249,25 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   dueDanger: { backgroundColor: colors.dangerSoft },
+  life: { paddingHorizontal: space(3), gap: space(1.5), paddingBottom: space(1) },
+  lifeCard: {
+    width: 220,
+    height: 150,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  lifeImage: { borderRadius: radius.lg },
+  lifeTag: {
+    position: 'absolute',
+    top: space(1.5),
+    left: space(1.5),
+    backgroundColor: colors.accent,
+    paddingHorizontal: space(1),
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+  },
+  lifeTagText: { fontWeight: '600' },
+  lifeBody: { padding: space(1.75) },
+  lifeRead: { opacity: 0.9, marginTop: 2 },
 });

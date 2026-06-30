@@ -359,6 +359,96 @@ export const CARE_ROUTINES: CareRoutine[] = [
   { id: 'cr4', name: 'Lazer epilasyon seansı', icon: 'flash-outline', dueDays: 0 },
 ];
 
+// Kişisel kayıtlar — kullanıcının kendi girdiği randevular (doktor, spor, vb.) — pazaryeri değil
+export type PersonalTone = 'rose' | 'sage' | 'lavender' | 'blue';
+export interface PersonalLog {
+  id: string;
+  title: string;
+  dateLabel: string;
+  icon: string;
+  tone: PersonalTone;
+}
+
+export const PERSONAL_LOGS: PersonalLog[] = [
+  {
+    id: 'pl1',
+    title: 'Pilates dersi',
+    dateLabel: 'Bugün · 18:30',
+    icon: 'barbell-outline',
+    tone: 'sage',
+  },
+  {
+    id: 'pl2',
+    title: 'Jinekolog kontrolü',
+    dateLabel: '12 Tem · 10:00',
+    icon: 'medkit-outline',
+    tone: 'rose',
+  },
+  {
+    id: 'pl3',
+    title: 'Diş hekimi',
+    dateLabel: '20 Tem · 14:00',
+    icon: 'happy-outline',
+    tone: 'lavender',
+  },
+];
+
+export interface QuickAdd {
+  id: string;
+  labelKey: MessageKey;
+  icon: string;
+  tone: PersonalTone;
+}
+
+export const QUICK_ADD: QuickAdd[] = [
+  { id: 'doctor', labelKey: 'record.doctor', icon: 'medkit-outline', tone: 'rose' },
+  { id: 'gym', labelKey: 'record.gym', icon: 'barbell-outline', tone: 'sage' },
+  { id: 'personal', labelKey: 'record.personal', icon: 'calendar-outline', tone: 'lavender' },
+  { id: 'reminder', labelKey: 'record.reminder', icon: 'notifications-outline', tone: 'blue' },
+];
+
+// AYNA Life — pratik bilgiler (kısa, uygulanabilir içerik)
+export interface LifeArticle {
+  id: string;
+  tag: string;
+  title: string;
+  readMin: number;
+  image: string;
+}
+
+const lifeImg = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=600&q=70`;
+
+export const LIFE_ARTICLES: LifeArticle[] = [
+  {
+    id: 'la1',
+    tag: 'Sağlık',
+    title: 'Jinekolojik muayeneye nasıl hazırlanılır?',
+    readMin: 3,
+    image: lifeImg('photo-1505751172876-fa1923c5c528'),
+  },
+  {
+    id: 'la2',
+    tag: 'Bakım',
+    title: 'Saç boyatmadan önce bilmen gereken 5 şey',
+    readMin: 2,
+    image: lifeImg('photo-1522338242992-e1a54906a8da'),
+  },
+  {
+    id: 'la3',
+    tag: 'Para',
+    title: 'Kişisel bakım bütçesi nasıl kurulur?',
+    readMin: 4,
+    image: lifeImg('photo-1554224155-6726b3ff858f'),
+  },
+  {
+    id: 'la4',
+    tag: 'Kariyer',
+    title: 'Maaş görüşmesi için 5 pratik ipucu',
+    readMin: 3,
+    image: lifeImg('photo-1521737604893-d14cc237f11d'),
+  },
+];
+
 export interface Moment {
   id: string;
   title: string;

@@ -53,7 +53,7 @@ export default function TabsLayout() {
         options={{
           title: t('nav.care'),
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="sparkles-outline" size={size} color={color} />
+            <Ionicons name="heart-outline" size={size} color={color} />
           ),
         }}
       />

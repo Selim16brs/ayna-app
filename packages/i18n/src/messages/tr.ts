@@ -20,7 +20,7 @@ export const tr = {
   'nav.discover': 'Keşfet',
   'nav.bookings': 'Randevular',
   'nav.circle': 'Circle',
-  'nav.care': 'Bakım',
+  'nav.care': 'Benim İçin',
   'nav.profile': 'Profil',
 
   // Keşfet (ana ekran)
@@ -136,6 +136,20 @@ export const tr = {
   'circle.verified': 'Doğrulanmış üye',
   'circle.helpful': 'faydalı',
   'circle.comments': 'yorum',
+
+  // Benim İçin (kişisel hub: kayıtlar + bakım + özel günler + AYNA Life)
+  'benim.title': 'Benim İçin',
+  'benim.subtitle': 'Günlük hayatını tek yerde yönet',
+  'benim.add': 'Ekle',
+  'benim.section.records': 'Kişisel kayıtların',
+  'benim.section.care': 'Bakım takvimi',
+  'benim.section.moments': 'Özel günler',
+  'benim.section.life': 'AYNA Life · pratik bilgiler',
+  'record.doctor': 'Doktor',
+  'record.gym': 'Spor salonu',
+  'record.personal': 'Kişisel',
+  'record.reminder': 'Hatırlatma',
+  'life.read': 'dk okuma',
 
   // Bakım (Care + Moments)
   'care.title': 'Bakım',
