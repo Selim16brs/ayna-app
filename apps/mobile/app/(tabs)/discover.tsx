@@ -11,8 +11,14 @@ import { ProCard, Screen, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-// Kategori ikon zeminleri: dolu canlı renkler (içindeki ikon beyaz)
-const CAT_COLORS = [colors.rose, colors.orange, colors.teal, colors.blue, colors.plum];
+// Kategori ikon zeminleri: nazik pastel tint + renkli ikon (wellness, gökkuşağı yok)
+const CAT_COLORS = [
+  { bg: colors.sageSoft, fg: colors.sage },
+  { bg: colors.roseSoft, fg: colors.rose },
+  { bg: colors.lavenderSoft, fg: colors.lavender },
+  { bg: colors.blueSoft, fg: colors.blue },
+  { bg: colors.goldSoft, fg: colors.gold },
+];
 
 const ACTION_PHOTO_1 =
   'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=70';
@@ -79,10 +85,14 @@ export default function DiscoverScreen() {
                   <View
                     style={[
                       styles.eventIcon,
-                      { backgroundColor: e.tone === 'rose' ? colors.rose : colors.gold },
+                      { backgroundColor: e.tone === 'rose' ? colors.roseSoft : colors.sageSoft },
                     ]}
                   >
-                    <Ionicons name={e.icon as IoniconName} size={18} color={colors.onColor} />
+                    <Ionicons
+                      name={e.icon as IoniconName}
+                      size={18}
+                      color={e.tone === 'rose' ? colors.rose : colors.sage}
+                    />
                   </View>
                   <View style={styles.eventBody}>
                     <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
@@ -133,21 +143,19 @@ export default function DiscoverScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categories}
         >
-          {categories.map((cat, i) => (
-            <Pressable key={cat.id} style={styles.category}>
-              <View
-                style={[
-                  styles.categoryIcon,
-                  { backgroundColor: CAT_COLORS[i % CAT_COLORS.length] },
-                ]}
-              >
-                <Ionicons name={cat.icon as IoniconName} size={24} color={colors.onColor} />
-              </View>
-              <Text variant="caption" tone="inkSoft" style={styles.categoryLabel}>
-                {cat.label}
-              </Text>
-            </Pressable>
-          ))}
+          {categories.map((cat, i) => {
+            const c = CAT_COLORS[i % CAT_COLORS.length]!;
+            return (
+              <Pressable key={cat.id} style={styles.category}>
+                <View style={[styles.categoryIcon, { backgroundColor: c.bg }]}>
+                  <Ionicons name={cat.icon as IoniconName} size={24} color={c.fg} />
+                </View>
+                <Text variant="caption" tone="inkSoft" style={styles.categoryLabel}>
+                  {cat.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
 
         {/* Reklam banner (premium işletmeler) */}

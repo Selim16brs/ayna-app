@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/logo-mark.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
+      "backgroundColor": "#F4F1EC"
     },
     "ios": {
       "supportsTablet": true,
@@ -21,7 +21,7 @@
       "package": "kz.ayna.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo-mark.png",
-        "backgroundColor": "#FFFFFF"
+        "backgroundColor": "#F4F1EC"
       }
     },
     "web": {
