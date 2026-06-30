@@ -1176,7 +1176,18 @@ export interface AppNotification {
   dateLabel: string;
   icon: string;
   read: boolean;
+  // Tıklanınca gidilecek ekran (yoksa türe göre varsayılan kullanılır)
+  route?: string;
 }
+
+// Bildirim türüne göre varsayılan hedef ekran
+export const NOTIFICATION_ROUTE: Record<NotificationType, string | null> = {
+  booking: '/bookings',
+  quote: '/demand/results',
+  loyalty: '/rewards',
+  circle: '/circle',
+  system: null,
+};
 
 export const SEED_NOTIFICATIONS: AppNotification[] = [
   {

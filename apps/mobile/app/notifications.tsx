@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import type { NotificationType } from '../src/data';
+import { type AppNotification, NOTIFICATION_ROUTE, type NotificationType } from '../src/data';
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
@@ -19,6 +20,7 @@ const TONE: Record<NotificationType, 'rose' | 'gold' | 'sage' | 'blue' | 'lavend
 
 export default function NotificationsScreen() {
   const { t } = useLocale();
+  const router = useRouter();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const items = useStore((s) => s.notifications);
@@ -28,6 +30,13 @@ export default function NotificationsScreen() {
   const tint = (type: NotificationType) => {
     const key = TONE[type];
     return { bg: colors[`${key}Soft` as const], fg: colors[key] };
+  };
+
+  // Bildirime tıkla → okundu işaretle + ilgili ekrana geç
+  const onOpen = (n: AppNotification) => {
+    markRead(n.id);
+    const target = n.route ?? NOTIFICATION_ROUTE[n.type];
+    if (target) router.push(target as never);
   };
 
   return (
@@ -58,7 +67,7 @@ export default function NotificationsScreen() {
                 return (
                   <Pressable
                     key={n.id}
-                    onPress={() => markRead(n.id)}
+                    onPress={() => onOpen(n)}
                     style={[styles.row, !n.read && styles.rowUnread]}
                   >
                     <View style={[styles.iconChip, { backgroundColor: c.bg }]}>
@@ -75,7 +84,12 @@ export default function NotificationsScreen() {
                         {n.dateLabel}
                       </Text>
                     </View>
-                    {!n.read ? <View style={styles.dot} /> : null}
+                    <View style={styles.trailing}>
+                      {!n.read ? <View style={styles.dot} /> : null}
+                      {(n.route ?? NOTIFICATION_ROUTE[n.type]) ? (
+                        <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+                      ) : null}
+                    </View>
                   </Pressable>
                 );
               })}
@@ -113,12 +127,12 @@ const makeStyles = (colors: ColorTokens) =>
     rowBody: { flex: 1 },
     body: { marginTop: 2 },
     date: { marginTop: space(0.75) },
+    trailing: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), marginTop: space(0.5) },
     dot: {
       width: 9,
       height: 9,
       borderRadius: 5,
       backgroundColor: colors.rose,
-      marginTop: space(0.5),
     },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     emptyIcon: {
