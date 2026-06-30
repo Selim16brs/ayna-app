@@ -8,6 +8,7 @@ export const createBookingSchema = z.object({
   proName: z.string().min(1),
   proImage: z.string(),
   uzmanName: z.string().optional(),
+  customerName: z.string().max(80).optional(),
   dateLabel: z.string().min(1),
   inDays: z.number().int(),
   price: z.number().nonnegative(),

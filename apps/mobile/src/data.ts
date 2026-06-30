@@ -671,6 +671,7 @@ export interface Appointment {
   proName: string;
   proImage: string;
   uzmanName?: string; // hangi uzmandan
+  customerName?: string; // §2.2 offline randevuda müşteri adı
   dateLabel: string; // hangi saatte
   proposedDateLabel?: string; // uzmanın önerdiği alternatif (§1.6)
   inDays: number; // sıralama için (negatif = geçmiş)

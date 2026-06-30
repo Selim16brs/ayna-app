@@ -64,6 +64,22 @@ export default function ReportsScreen() {
           </LinearGradient>
         ) : null}
 
+        {/* Ortak takvim girişi (§5) */}
+        <PressableScale style={styles.agendaLink} onPress={() => router.push('/seller/agenda')}>
+          <View style={styles.agendaIcon}>
+            <Ionicons name="calendar" size={18} color={colors.onColor} />
+          </View>
+          <View style={styles.agendaText}>
+            <Text variant="bodyStrong" tone="ink">
+              {t('agenda.title')}
+            </Text>
+            <Text variant="caption" tone="muted">
+              {t('reports.agenda_sub')}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+        </PressableScale>
+
         <Segmented
           options={[
             { value: 'week', label: t('reports.period.week') },
@@ -172,6 +188,26 @@ const makeStyles = (colors: ColorTokens) =>
     liveDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.25)' },
     liveRevenue: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     dim: { opacity: 0.9 },
+    agendaLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(1.75),
+      marginBottom: space(2),
+    },
+    agendaIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.md,
+      backgroundColor: colors.rose,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    agendaText: { flex: 1, gap: 2 },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5), marginTop: space(2.5) },
     metric: {
       width: '47%',

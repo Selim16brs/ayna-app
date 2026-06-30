@@ -181,6 +181,8 @@ model Booking {
   proName            String        @map("pro_name")
   proImage           String        @map("pro_image")
   uzmanName          String?       @map("uzman_name")
+  // §2.2/§5 — offline (salon kaydı) randevuda müşteri adı
+  customerName       String?       @map("customer_name")
   dateLabel          String        @map("date_label")
   proposedDateLabel  String?       @map("proposed_date_label")
   inDays             Int           @map("in_days")

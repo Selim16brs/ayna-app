@@ -8,6 +8,7 @@ export const tr = {
   'common.continue': 'Devam et',
   'common.see_all': 'Tümü',
   'common.soon': 'Çok yakında',
+  'common.error': 'Bir hata oluştu, tekrar dene',
 
   // Marka / dil
   'app.tagline': 'Her kadının bir aynası olmalı!',
@@ -361,6 +362,25 @@ export const tr = {
   'reports.live.completed': 'Tamamlanan',
   'reports.live.noshow': 'Gelmeyen',
   'reports.live.revenue': 'Tamamlanan gelir',
+  'reports.agenda_sub': 'Tüm uzmanların randevuları tek ekranda',
+  // §5 — ortak takvim (agenda) + offline randevu
+  'agenda.title': 'Ortak takvim',
+  'agenda.add_offline': 'Offline randevu',
+  'agenda.empty': 'Bu aralıkta randevu yok',
+  'agenda.group.past': 'Geçmiş',
+  'agenda.group.today': 'Bugün',
+  'agenda.group.tomorrow': 'Yarın',
+  'agenda.group.week': 'Bu hafta',
+  'agenda.group.later': 'Sonra',
+  'offline.title': 'Offline randevu ekle',
+  'offline.customer': 'Müşteri adı',
+  'offline.service': 'Hizmet',
+  'offline.uzman': 'Uzman (opsiyonel)',
+  'offline.date': 'Tarih / saat',
+  'offline.price': 'Fiyat (₸)',
+  'offline.save': 'Randevuyu ekle',
+  'offline.saved': 'Offline randevu eklendi',
+  'offline.note': 'Salonda/telefonda alınan randevular buraya eklenir; ortak takvimde görünür.',
 
   // Ortak (yeni)
   'common.delete': 'Sil',
