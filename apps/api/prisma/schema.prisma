@@ -385,6 +385,23 @@ model OtpCode {
   @@map("otp_codes")
 }
 
+// §12 — Kampanya / promosyon. İşletme veya platform geneli; keşif vitrininde görünür.
+model Campaign {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String
+  subtitle  String   @default("")
+  badge     String   @default("") // örn "%20", "2+1"
+  category  String? // hedef kategori kodu (varsa o kategoriye köprü)
+  image     String
+  tone      String   @default("rose")
+  sortOrder Int      @default(0) @map("sort_order")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([active, sortOrder])
+  @@map("campaigns")
+}
+
 // Admin ayarlanabilir parametreler (örn. puan görünürlük eşiği).
 model Setting {
   key      String @id

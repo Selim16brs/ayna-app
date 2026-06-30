@@ -303,7 +303,47 @@ const MARKET_BASE: Record<string, number> = {
   epilation: 9000,
 };
 
+// §12 — kampanyalar (keşif vitrini)
+const CAMPAIGNS: {
+  title: string;
+  subtitle: string;
+  badge: string;
+  category: string | null;
+  image: string;
+  tone: string;
+  sortOrder: number;
+}[] = [
+  {
+    title: 'Yaz saç bakımı',
+    subtitle: 'Seçili salonlarda keratin & bakım',
+    badge: '%25',
+    category: 'hair',
+    image: img('photo-1560066984-138dadb4c035'),
+    tone: 'rose',
+    sortOrder: 1,
+  },
+  {
+    title: 'İlk randevuna özel',
+    subtitle: 'AYNA’da ilk randevunda indirim',
+    badge: '%20',
+    category: null,
+    image: img('photo-1522337660859-02fbefca4702'),
+    tone: 'plum',
+    sortOrder: 2,
+  },
+  {
+    title: 'Tırnak günleri',
+    subtitle: 'Kalıcı oje + nail art fırsatı',
+    badge: '2+1',
+    category: 'nails',
+    image: img('photo-1604654894610-df63bc536371'),
+    tone: 'gold',
+    sortOrder: 3,
+  },
+];
+
 async function main(): Promise<void> {
+  await prisma.campaign.deleteMany();
   await prisma.marketPrice.deleteMany();
   await prisma.booking.deleteMany();
   await prisma.quote.deleteMany();
@@ -448,6 +488,11 @@ async function main(): Promise<void> {
   // Ortalama piyasa fiyatı temel değerleri (ulusal; %40 kuralı için)
   for (const [category, basePrice] of Object.entries(MARKET_BASE)) {
     await prisma.marketPrice.create({ data: { category, city: '', basePrice } });
+  }
+
+  // §12 — kampanyalar
+  for (const c of CAMPAIGNS) {
+    await prisma.campaign.create({ data: c });
   }
 
   const cats = await prisma.serviceCategory.count();

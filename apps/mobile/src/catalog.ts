@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
 import {
+  type Campaign,
+  CAMPAIGNS,
   getProfessionalDetail,
   type Professional,
   type ProfessionalDetail,
@@ -19,6 +21,17 @@ export function useProfessionals(): Professional[] {
     staleTime: 60_000,
   });
   return data && data.length > 0 ? data : PROFESSIONALS;
+}
+
+// §12 — aktif kampanyalar; API erişilemezse yerel yedeğe düşer
+export function useCampaigns(): Campaign[] {
+  const { data } = useQuery({
+    queryKey: ['campaigns'],
+    queryFn: api.campaigns,
+    retry: 1,
+    staleTime: 60_000,
+  });
+  return data && data.length > 0 ? data : CAMPAIGNS;
 }
 
 export function useProfessionalDetail(id: string): ProfessionalDetail {

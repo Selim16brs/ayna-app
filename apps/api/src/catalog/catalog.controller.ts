@@ -14,6 +14,11 @@ export class CatalogController {
     return this.catalog.categories();
   }
 
+  @Get('campaigns')
+  campaigns() {
+    return this.catalog.campaigns();
+  }
+
   @Get('professionals')
   professionals() {
     return this.catalog.professionals();

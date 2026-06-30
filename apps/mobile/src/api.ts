@@ -1,5 +1,11 @@
 import Constants from 'expo-constants';
-import type { Appointment, LedgerEntry, Professional, ProfessionalDetail } from './data';
+import type {
+  Appointment,
+  Campaign,
+  LedgerEntry,
+  Professional,
+  ProfessionalDetail,
+} from './data';
 
 export type LoyaltyTierKey = 'bronze' | 'silver' | 'gold';
 
@@ -178,6 +184,8 @@ export interface ApiQuote {
 
 export const api = {
   categories: () => get<ApiCategory[]>('/categories'),
+  // §12 — kampanyalar (keşif vitrini)
+  campaigns: () => get<Campaign[]>('/campaigns'),
   // Backend artık sector/kind/district/experienceYears döndürür → mobil Professional ile uyumlu
   professionals: () => get<Professional[]>('/professionals'),
   professional: (id: string) => get<ProfessionalDetail>(`/professionals/${id}`),

@@ -77,6 +77,7 @@ export const tr = {
   // Ana akış — giriş aksiyonları
   'home.how': 'Ne yapmak istersin?',
   'home.recommended': 'Senin için öneriler',
+  'home.campaigns': 'Fırsatlar',
   'home.ad_badge': 'Premium',
   'action.photo_quote.title': 'Fotoğrafla teklif al',
   'action.photo_quote.subtitle': 'Modeli yükle, teklifler gelsin',

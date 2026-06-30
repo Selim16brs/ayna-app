@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Dimensions, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ADS, buildUpcomingEvents, CATEGORIES, whenShort } from '../../src/data';
-import { useProfessionals } from '../../src/catalog';
+import { useCampaigns, useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -43,6 +43,7 @@ export default function DiscoverScreen() {
     [bookings, moments, routines],
   );
   const unread = useStore(selectUnreadCount);
+  const campaigns = useCampaigns();
   const userName = useStore((s) => s.currentUser?.name)?.split(' ')[0] ?? 'Aigerim';
   const categories = CATEGORIES;
   const featured = useProfessionals().slice(0, 8);
@@ -187,6 +188,51 @@ export default function DiscoverScreen() {
               </Pressable>
             );
           })}
+        </ScrollView>
+
+        {/* §12 — Kampanyalar / fırsatlar vitrini */}
+        <View style={styles.sectionHeader}>
+          <Text variant="h2" tone="ink">
+            {t('home.campaigns')}
+          </Text>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.campaigns}
+        >
+          {campaigns.map((c) => (
+            <Pressable
+              key={c.id}
+              onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
+            >
+              <ImageBackground
+                source={{ uri: c.image }}
+                style={styles.campaignCard}
+                imageStyle={styles.campaignImage}
+              >
+                <LinearGradient
+                  colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.8)']}
+                  style={StyleSheet.absoluteFill}
+                />
+                {c.badge ? (
+                  <View style={styles.campaignBadge}>
+                    <Text variant="caption" tone="onColor" style={styles.campaignBadgeText}>
+                      {c.badge}
+                    </Text>
+                  </View>
+                ) : null}
+                <View style={styles.campaignText}>
+                  <Text variant="bodyStrong" tone="onColor" numberOfLines={1}>
+                    {c.title}
+                  </Text>
+                  <Text variant="caption" tone="onColor" style={styles.campaignSub} numberOfLines={2}>
+                    {c.subtitle}
+                  </Text>
+                </View>
+              </ImageBackground>
+            </Pressable>
+          ))}
         </ScrollView>
 
         {/* Reklam banner (premium işletmeler) */}
@@ -439,4 +485,26 @@ const makeStyles = (colors: ColorTokens) =>
     adText: { padding: space(2) },
     adSubtitle: { opacity: 0.9, marginTop: 2 },
     featured: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(2) },
+    // §12 kampanya vitrini
+    campaigns: { paddingHorizontal: space(3), gap: space(1.5) },
+    campaignCard: {
+      width: 240,
+      height: 130,
+      borderRadius: radius.lg,
+      overflow: 'hidden',
+      justifyContent: 'flex-end',
+    },
+    campaignImage: { borderRadius: radius.lg },
+    campaignBadge: {
+      position: 'absolute',
+      top: space(1.25),
+      left: space(1.25),
+      backgroundColor: colors.rose,
+      paddingHorizontal: space(1),
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+    },
+    campaignBadgeText: { fontWeight: '700' },
+    campaignText: { padding: space(1.75) },
+    campaignSub: { opacity: 0.9, marginTop: 2 },
   });

@@ -17,6 +17,23 @@ export class CatalogService {
     }));
   }
 
+  // §12 — aktif kampanyalar (keşif vitrini)
+  async campaigns() {
+    const rows = await this.prisma.campaign.findMany({
+      where: { active: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    return rows.map((c) => ({
+      id: c.id,
+      title: c.title,
+      subtitle: c.subtitle,
+      badge: c.badge,
+      category: c.category ?? undefined,
+      image: c.image,
+      tone: c.tone,
+    }));
+  }
+
   async professionals() {
     const rows = await this.prisma.professional.findMany({ orderBy: { rating: 'desc' } });
     return rows.map(mapPro);

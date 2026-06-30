@@ -413,6 +413,49 @@ export function distanceKm(a: LatLng, b: LatLng): number {
   return Math.round(R * 2 * Math.asin(Math.sqrt(x)) * 10) / 10;
 }
 
+// ── §12 Kampanyalar (keşif vitrini) ──────────────────────────────────────
+export interface Campaign {
+  id: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  category?: string;
+  image: string;
+  tone: string;
+}
+
+const adImg = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=70`;
+
+// Çevrimdışı yedek (backend ulaşılamazsa)
+export const CAMPAIGNS: Campaign[] = [
+  {
+    id: 'c1',
+    title: 'Yaz saç bakımı',
+    subtitle: 'Seçili salonlarda keratin & bakım',
+    badge: '%25',
+    category: 'hair',
+    image: adImg('photo-1560066984-138dadb4c035'),
+    tone: 'rose',
+  },
+  {
+    id: 'c2',
+    title: 'İlk randevuna özel',
+    subtitle: 'AYNA’da ilk randevunda indirim',
+    badge: '%20',
+    image: adImg('photo-1522337660859-02fbefca4702'),
+    tone: 'plum',
+  },
+  {
+    id: 'c3',
+    title: 'Tırnak günleri',
+    subtitle: 'Kalıcı oje + nail art fırsatı',
+    badge: '2+1',
+    category: 'nails',
+    image: adImg('photo-1604654894610-df63bc536371'),
+    tone: 'gold',
+  },
+];
+
 // ── Reklam banner'ları (premium üye kampanyaları) ────────────────────────
 export interface AdBanner {
   id: string;
@@ -421,8 +464,6 @@ export interface AdBanner {
   title: string;
   subtitle: string;
 }
-
-const adImg = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=70`;
 
 export const ADS: AdBanner[] = [
   {
