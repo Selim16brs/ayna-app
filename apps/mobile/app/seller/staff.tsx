@@ -1,11 +1,12 @@
+import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Progress, Screen, StackHeader, Text } from '../../src/ui';
+import { Progress, Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
 // Uzman bazlı hizmet dağılımı (mock; gerçek panelde API'den gelir)
 const SERVICES = [
@@ -13,6 +14,18 @@ const SERVICES = [
   { name: 'Kesim & fön', share: 0.31 },
   { name: 'Bakım', share: 0.27 },
 ];
+
+// §5.1 — salon hizmet havuzu (uzmana atanabilir)
+const SALON_POOL = [
+  'Saç kesimi & fön',
+  'Saç boyama',
+  'Balayage',
+  'Keratin bakımı',
+  'Topuz / saç tasarımı',
+  'Gelin saçı',
+];
+
+type Schedule = 'standard' | 'flexible';
 
 export default function StaffDetailScreen() {
   const { t } = useLocale();
@@ -27,6 +40,17 @@ export default function StaffDetailScreen() {
   const bookings = Number(p.bookings ?? 0) || 0;
   const rating = Number(p.rating ?? 0) || 0;
   const revenue = bookings * 14000; // mock ortalama bilet
+
+  // §5.1 — uzmana atanan hizmetler + çalışma grafiği tipi
+  const [assigned, setAssigned] = useState<Set<string>>(new Set(SALON_POOL.slice(0, 3)));
+  const [schedule, setSchedule] = useState<Schedule>('standard');
+  const toggle = (s: string) =>
+    setAssigned((prev) => {
+      const next = new Set(prev);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
+      return next;
+    });
 
   return (
     <Screen edges={['top']}>
@@ -58,6 +82,46 @@ export default function StaffDetailScreen() {
             value={formatPrice(revenue)}
             label={t('seller.staff.revenue')}
           />
+        </View>
+
+        {/* §5.1 — çalışma grafiği tipi */}
+        <Text variant="label" tone="rose" style={styles.section}>
+          {t('seller.staff.schedule')}
+        </Text>
+        <Segmented
+          options={[
+            { value: 'standard', label: t('seller.staff.schedule.standard') },
+            { value: 'flexible', label: t('seller.staff.schedule.flexible') },
+          ]}
+          value={schedule}
+          onChange={setSchedule}
+        />
+        <View style={styles.scheduleNote}>
+          <Ionicons name="time-outline" size={14} color={colors.muted} />
+          <Text variant="caption" tone="muted" style={styles.flex}>
+            {t(schedule === 'standard' ? 'seller.staff.schedule.standard_desc' : 'seller.staff.schedule.flexible_desc')}
+          </Text>
+        </View>
+
+        {/* §5.1 — salon havuzundan uzmana hizmet atama */}
+        <Text variant="label" tone="rose" style={styles.section}>
+          {t('seller.staff.assign')}
+        </Text>
+        <Text variant="caption" tone="muted" style={styles.assignHint}>
+          {t('seller.staff.assign_hint')}
+        </Text>
+        <View style={styles.poolWrap}>
+          {SALON_POOL.map((s) => {
+            const on = assigned.has(s);
+            return (
+              <Pressable key={s} onPress={() => toggle(s)} style={[styles.poolChip, on && styles.poolChipOn]}>
+                {on ? <Ionicons name="checkmark" size={13} color={colors.onColor} /> : null}
+                <Text variant="caption" tone={on ? 'onColor' : 'inkSoft'}>
+                  {s}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         <Text variant="label" tone="rose" style={styles.section}>
@@ -134,4 +198,26 @@ const makeStyles = (colors: ColorTokens) =>
     svc: { padding: space(2), gap: space(1) },
     svcBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
     svcHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    flex: { flex: 1 },
+    scheduleNote: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      marginTop: space(1),
+      paddingHorizontal: space(1),
+    },
+    assignHint: { paddingHorizontal: space(1), marginBottom: space(1.25) },
+    poolWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    poolChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.9),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    poolChipOn: { backgroundColor: colors.rose, borderColor: colors.rose },
   });

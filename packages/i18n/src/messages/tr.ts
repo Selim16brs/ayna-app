@@ -610,6 +610,14 @@ export const tr = {
   'seller.staff.rating': 'Ortalama puan',
   'seller.staff.revenue': 'Gelir katkısı',
   'seller.staff.services': 'Hizmet dağılımı',
+  // §5.1 — uzman bazlı yönetim
+  'seller.staff.schedule': 'Çalışma grafiği',
+  'seller.staff.schedule.standard': 'Standart',
+  'seller.staff.schedule.flexible': 'Esnek',
+  'seller.staff.schedule.standard_desc': 'Her gün aynı saatler (10:00–19:00).',
+  'seller.staff.schedule.flexible_desc': 'Günlere göre vardiya / değişken saatler.',
+  'seller.staff.assign': 'Uzmanın hizmetleri',
+  'seller.staff.assign_hint': 'Salon havuzundan bu uzmana atanan hizmetleri seç.',
 
   // Boni — AI güzellik danışmanı (§13.5)
   'boni.title': 'Boni',
