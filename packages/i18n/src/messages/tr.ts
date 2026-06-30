@@ -108,6 +108,8 @@ export const tr = {
   'demand.new.title': 'Talep oluştur',
   'demand.new.desc': 'Ne yaptırmak istiyorsun?',
   'demand.new.desc_ph': 'Örn. gelin saçı + makyaj, evime gelsin',
+  'demand.new.photo': 'Fotoğraf ekle (isteğe bağlı)',
+  'demand.new.photo_hint': 'Referans görsel ekleyebilirsin',
   'demand.new.budget': 'Bütçen',
   'demand.new.budget_ph': 'Fiyat (₸)',
   'demand.new.submit': 'Talebi yayınla',

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { api } from '../../src/api';
 import { CATEGORIES, formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
@@ -17,9 +18,18 @@ export default function NewDemandScreen() {
   const styles = useThemedStyles(makeStyles);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const [desc, setDesc] = useState('');
+  const [photo, setPhoto] = useState<string | null>(null);
   const [category, setCategory] = useState<string>(CATEGORIES[0]!.id);
   const [budget, setBudget] = useState('');
   const [market, setMarket] = useState<{ average: number; floor: number } | null>(null);
+
+  async function pickPhoto() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) setPhoto(result.assets[0].uri);
+  }
 
   // Seçili kategori + şehir için ortalama piyasa fiyatı (%40 kuralı)
   useEffect(() => {
@@ -56,6 +66,33 @@ export default function NewDemandScreen() {
           multiline
           style={styles.textarea}
         />
+
+        {/* Fotoğraf (isteğe bağlı) */}
+        <Text variant="h2" tone="ink" style={styles.label}>
+          {t('demand.new.photo')}
+        </Text>
+        <Pressable onPress={pickPhoto} style={styles.photoBox}>
+          {photo ? (
+            <>
+              <Image source={{ uri: photo }} style={styles.photo} />
+              <View style={styles.changeOverlay}>
+                <Ionicons name="camera" size={16} color={colors.onColor} />
+                <Text variant="caption" tone="onColor">
+                  {t('quote.new.change_photo')}
+                </Text>
+              </View>
+            </>
+          ) : (
+            <View style={styles.photoEmpty}>
+              <View style={styles.photoIcon}>
+                <Ionicons name="camera-outline" size={26} color={colors.rose} />
+              </View>
+              <Text variant="caption" tone="muted" style={styles.photoHint}>
+                {t('demand.new.photo_hint')}
+              </Text>
+            </View>
+          )}
+        </Pressable>
 
         <Text variant="h2" tone="ink" style={styles.label}>
           {t('quote.new.category')}
@@ -142,6 +179,38 @@ const makeStyles = (colors: ColorTokens) =>
       fontSize: 15,
       color: colors.ink,
     },
+    photoBox: {
+      height: 180,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      borderStyle: 'dashed',
+      overflow: 'hidden',
+    },
+    photo: { width: '100%', height: '100%' },
+    changeOverlay: {
+      position: 'absolute',
+      bottom: space(1.5),
+      right: space(1.5),
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: 'rgba(42,34,48,0.7)',
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+    },
+    photoEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space(1) },
+    photoIcon: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.lg,
+      backgroundColor: colors.roseSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    photoHint: { textAlign: 'center' },
     categories: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     categoryChip: {
       flexDirection: 'row',
