@@ -179,16 +179,46 @@ export default function ProfessionalScreen() {
                     {active ? <View style={styles.radioDot} /> : null}
                   </View>
                   <View style={styles.serviceText}>
-                    <Text variant="bodyStrong" tone="ink">
-                      {s.name}
-                    </Text>
+                    <View style={styles.serviceNameRow}>
+                      <Text variant="bodyStrong" tone="ink">
+                        {s.name}
+                      </Text>
+                      {/* §6.E — öne çıkan (TOP) işareti */}
+                      {s.popular ? (
+                        <View style={styles.topTag}>
+                          <Ionicons name="flame" size={10} color={colors.gold} />
+                          <Text variant="caption" style={styles.topText}>
+                            {t('pro.service.top')}
+                          </Text>
+                        </View>
+                      ) : null}
+                      {/* §6.E — indirim etiketi */}
+                      {s.discountPct ? (
+                        <View style={styles.discTag}>
+                          <Text variant="caption" style={styles.discText}>
+                            −%{s.discountPct}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
                     <Text variant="caption" tone="muted">
                       {s.durationMin} {t('pro.min')}
                     </Text>
                   </View>
-                  <Text variant="bodyStrong" tone="ink">
-                    {formatPrice(s.price)}
-                  </Text>
+                  {s.discountPct ? (
+                    <View style={styles.priceCol}>
+                      <Text variant="caption" tone="muted" style={styles.strike}>
+                        {formatPrice(s.price)}
+                      </Text>
+                      <Text variant="bodyStrong" tone="rose">
+                        {formatPrice(Math.round((s.price * (100 - s.discountPct)) / 100))}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text variant="bodyStrong" tone="ink">
+                      {formatPrice(s.price)}
+                    </Text>
+                  )}
                 </Pressable>
               );
             })}
@@ -430,7 +460,27 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     radioDot: { width: 11, height: 11, borderRadius: 6, backgroundColor: colors.rose },
-    serviceText: { flex: 1 },
+    serviceText: { flex: 1, gap: 2 },
+    serviceNameRow: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), flexWrap: 'wrap' },
+    topTag: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+      backgroundColor: colors.goldSoft,
+      paddingHorizontal: space(0.75),
+      paddingVertical: 2,
+      borderRadius: radius.pill,
+    },
+    topText: { color: colors.gold, fontWeight: '700', fontSize: 10 },
+    discTag: {
+      backgroundColor: colors.rose,
+      paddingHorizontal: space(0.75),
+      paddingVertical: 2,
+      borderRadius: radius.pill,
+    },
+    discText: { color: colors.onColor, fontWeight: '700', fontSize: 10 },
+    priceCol: { alignItems: 'flex-end' },
+    strike: { textDecorationLine: 'line-through' },
     portfolio: { gap: space(1.5), paddingRight: space(3) },
     portfolioImg: {
       width: 130,

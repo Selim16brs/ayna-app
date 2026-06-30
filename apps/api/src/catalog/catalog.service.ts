@@ -27,7 +27,7 @@ export class CatalogService {
     if (!p) {
       throw new NotFoundException({ code: 'PRO_NOT_FOUND', message: 'İşletme bulunamadı' });
     }
-    const services = SECTOR_SERVICES[p.sector] ?? SECTOR_SERVICES.hair!;
+    const services = decorateServices(SECTOR_SERVICES[p.sector] ?? SECTOR_SERVICES.hair!, p.id);
     const staff =
       p.kind === 'salon'
         ? STAFF.slice(0, 3).map((s, i) => ({
@@ -174,6 +174,25 @@ interface SvcItem {
   name: string;
   durationMin: number;
   price: number;
+}
+
+// §6.E — popülerlik & şeffaflık (otomatik). Profil servisine eklenir.
+interface DecoratedSvc extends SvcItem {
+  popular: boolean;
+  discountPct: number;
+}
+
+// §6.E — popülerlik & indirim OTOMATİK türetilir (deterministik, pro id tohumlu).
+// İlk 2 hizmet "öne çıkan/TOP"; bir hizmette süreli indirim. Sahte rasgelelik yok.
+function decorateServices(services: SvcItem[], proId: string): DecoratedSvc[] {
+  const seed = [...proId].reduce((a, c) => a + c.charCodeAt(0), 0);
+  const discountIdx = seed % services.length;
+  const discountPct = [10, 15, 20, 25][seed % 4]!;
+  return services.map((s, i) => ({
+    ...s,
+    popular: i < 2,
+    discountPct: i === discountIdx ? discountPct : 0,
+  }));
 }
 
 const SECTOR_SERVICES: Record<string, SvcItem[]> = {

@@ -461,6 +461,9 @@ export interface ServiceItem {
   name: string;
   durationMin: number;
   price: number;
+  // §6.E — popülerlik & şeffaflık (otomatik türetilir)
+  popular?: boolean;
+  discountPct?: number;
 }
 
 export interface ServiceRating {
@@ -601,10 +604,22 @@ const PORTFOLIO_POOL = [
   'photo-1588776814546-1ffcf47267a5',
 ];
 
+// §6.E — popülerlik & indirim otomatik (backend ile aynı deterministik kural)
+function decorateServices(services: ServiceItem[], proId: string): ServiceItem[] {
+  const seed = [...proId].reduce((a, c) => a + c.charCodeAt(0), 0);
+  const discountIdx = seed % services.length;
+  const discountPct = [10, 15, 20, 25][seed % 4]!;
+  return services.map((s, i) => ({
+    ...s,
+    popular: i < 2,
+    discountPct: i === discountIdx ? discountPct : 0,
+  }));
+}
+
 export function getProfessionalDetail(id: string): ProfessionalDetail {
   const base = PROFESSIONALS.find((p) => p.id === id) ?? PROFESSIONALS[0]!;
   const idx = PROFESSIONALS.indexOf(base);
-  const services = SECTOR_SERVICES[base.sector] ?? SECTOR_SERVICES.hair!;
+  const services = decorateServices(SECTOR_SERVICES[base.sector] ?? SECTOR_SERVICES.hair!, base.id);
   const staff: Uzman[] =
     base.kind === 'salon'
       ? STAFF_NAMES.slice(0, 3).map((s, i) => ({
