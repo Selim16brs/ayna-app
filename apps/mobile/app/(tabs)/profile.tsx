@@ -4,12 +4,14 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
-import { colors, gradients, radius, shadow, space } from '../../src/theme';
-import { Screen, Text } from '../../src/ui';
+import { radius, space, type ColorTokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { Screen, Segmented, Text } from '../../src/ui';
+import type { ThemeMode } from '../../src/theme';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-const MENU_COLORS = [
+const makeMenuColors = (colors: ColorTokens) => [
   colors.rose,
   colors.orange,
   colors.teal,
@@ -34,7 +36,14 @@ const MENU: { key: MessageKey; icon: IoniconName; danger?: boolean }[] = [
 
 export default function ProfileScreen() {
   const { t } = useLocale();
+  const { colors, gradients, shadow, preference, setPreference } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const MENU_COLORS = makeMenuColors(colors);
   const router = useRouter();
+
+  const appearance: 'system' | ThemeMode = preference ?? 'system';
+  const onAppearance = (value: 'system' | ThemeMode) =>
+    setPreference(value === 'system' ? null : value);
 
   const onPress = (key: MessageKey) => {
     if (key === 'profile.menu.rewards') router.push('/rewards');
@@ -68,6 +77,24 @@ export default function ProfileScreen() {
           <Stat value="340" label={t('profile.stat.points')} />
           <View style={styles.statDivider} />
           <Stat value="5" label={t('profile.stat.reviews')} />
+        </View>
+
+        <View style={styles.appearance}>
+          <View style={styles.appearanceHead}>
+            <Ionicons name="contrast-outline" size={18} color={colors.inkSoft} />
+            <Text variant="bodyStrong" tone="ink" style={styles.appearanceTitle}>
+              {t('profile.appearance')}
+            </Text>
+          </View>
+          <Segmented
+            value={appearance}
+            onChange={onAppearance}
+            options={[
+              { value: 'system', label: t('profile.appearance.system') },
+              { value: 'light', label: t('profile.appearance.light') },
+              { value: 'dark', label: t('profile.appearance.dark') },
+            ]}
+          />
         </View>
 
         <View style={styles.group}>
@@ -108,6 +135,7 @@ export default function ProfileScreen() {
 }
 
 function Stat({ value, label }: { value: string; label: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.stat}>
       <Text variant="title" tone="ink">
@@ -120,58 +148,70 @@ function Stat({ value, label }: { value: string; label: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { padding: space(3), paddingBottom: space(4) },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(2),
-    marginBottom: space(2.5),
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileText: { gap: 4 },
-  stats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    paddingVertical: space(2),
-    marginBottom: space(3),
-  },
-  stat: { flex: 1, alignItems: 'center' },
-  statDivider: { width: 1, height: 30, backgroundColor: colors.line },
-  group: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    overflow: 'hidden',
-  },
-  groupGap: { marginTop: space(2) },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1.5),
-    paddingHorizontal: space(1.75),
-    paddingVertical: space(1.5),
-  },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  menuIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuIconDanger: { backgroundColor: colors.danger },
-  menuLabel: { flex: 1 },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { padding: space(3), paddingBottom: space(4) },
+    profileRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(2),
+      marginBottom: space(2.5),
+    },
+    avatar: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    profileText: { gap: 4 },
+    stats: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      paddingVertical: space(2),
+      marginBottom: space(3),
+    },
+    stat: { flex: 1, alignItems: 'center' },
+    statDivider: { width: 1, height: 30, backgroundColor: colors.line },
+    appearance: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(2),
+      marginBottom: space(2),
+      gap: space(1.5),
+    },
+    appearanceHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    appearanceTitle: { flex: 1 },
+    group: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      overflow: 'hidden',
+    },
+    groupGap: { marginTop: space(2) },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1.5),
+    },
+    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    menuIcon: {
+      width: 38,
+      height: 38,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    menuIconDanger: { backgroundColor: colors.danger },
+    menuLabel: { flex: 1 },
+  });

@@ -3,7 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { formatPrice, getProfessionalDetail } from '../../src/data';
 import { useLocale } from '../../src/locale';
-import { colors, radius, shadow, space } from '../../src/theme';
+import { type ColorTokens, radius, space } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
 type Period = 'week' | 'month' | 'all';
@@ -46,6 +47,8 @@ const DATA: Record<Period, Record<string, number | string>> = {
 
 export default function ReportsScreen() {
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [period, setPeriod] = useState<Period>('week');
   const d = DATA[period];
   const staff = getProfessionalDetail('1').staff;
@@ -119,6 +122,8 @@ function Metric({
   label: string;
   value: string;
 }) {
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.metric, shadow.soft]}>
       <View style={styles.metricIcon}>
@@ -135,6 +140,7 @@ function Metric({
 }
 
 function Row({ label, value, border }: { label: string; value: string; border?: boolean }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.row, border && styles.border]}>
       <Text variant="body" tone="inkSoft" style={styles.rowLabel}>
@@ -147,52 +153,53 @@ function Row({ label, value, border }: { label: string; value: string; border?: 
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5), marginTop: space(2.5) },
-  metric: {
-    width: '47%',
-    flexGrow: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: space(2),
-  },
-  metricIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: radius.sm,
-    backgroundColor: colors.roseSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space(1),
-  },
-  metricValue: { fontSize: 24, lineHeight: 30 },
-  section: { marginTop: space(3.5), marginBottom: space(1.5) },
-  group: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space(2),
-    paddingVertical: space(1.75),
-  },
-  rowLabel: { flex: 1 },
-  border: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  staffRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1.25),
-    paddingHorizontal: space(2),
-    paddingVertical: space(1.75),
-  },
-  staffName: { flex: 1 },
-  staffMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5), marginTop: space(2.5) },
+    metric: {
+      width: '47%',
+      flexGrow: 1,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(2),
+    },
+    metricIcon: {
+      width: 34,
+      height: 34,
+      borderRadius: radius.sm,
+      backgroundColor: colors.roseSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space(1),
+    },
+    metricValue: { fontSize: 24, lineHeight: 30 },
+    section: { marginTop: space(3.5), marginBottom: space(1.5) },
+    group: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      overflow: 'hidden',
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
+    },
+    rowLabel: { flex: 1 },
+    border: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    staffRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
+    },
+    staffName: { flex: 1 },
+    staffMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  });

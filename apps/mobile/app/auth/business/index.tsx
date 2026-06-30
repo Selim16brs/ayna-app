@@ -2,12 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../../src/locale';
-import { colors, radius, shadow, space } from '../../../src/theme';
+import { radius, space, type ColorTokens } from '../../../src/theme';
+import { useTheme, useThemedStyles } from '../../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../../src/ui';
 
 export default function BusinessEntryScreen() {
   const router = useRouter();
   const { t } = useLocale();
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -57,27 +60,28 @@ export default function BusinessEntryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { flex: 1, paddingHorizontal: space(3), paddingTop: space(1) },
-  sub: { marginBottom: space(3) },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(2),
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: space(2),
-    marginBottom: space(1.5),
-  },
-  icon: {
-    width: 50,
-    height: 50,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardText: { flex: 1 },
-  cardSub: { marginTop: 2 },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { flex: 1, paddingHorizontal: space(3), paddingTop: space(1) },
+    sub: { marginBottom: space(3) },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(2),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(2),
+      marginBottom: space(1.5),
+    },
+    icon: {
+      width: 50,
+      height: 50,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cardText: { flex: 1 },
+    cardSub: { marginTop: 2 },
+  });

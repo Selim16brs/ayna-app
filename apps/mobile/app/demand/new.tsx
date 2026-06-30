@@ -4,12 +4,15 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { CATEGORIES } from '../../src/data';
 import { useLocale } from '../../src/locale';
-import { colors, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text } from '../../src/ui';
 
 export default function NewDemandScreen() {
   const router = useRouter();
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [desc, setDesc] = useState('');
   const [category, setCategory] = useState<string>(CATEGORIES[0]!.id);
   const [budget, setBudget] = useState('');
@@ -87,55 +90,56 @@ export default function NewDemandScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-  label: { marginTop: space(2.5), marginBottom: space(1.5) },
-  textarea: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.lg,
-    padding: space(2),
-    minHeight: 110,
-    textAlignVertical: 'top',
-    fontWeight: '400',
-    fontSize: 15,
-    color: colors.ink,
-  },
-  categories: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
-  categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: space(1.75),
-    paddingVertical: space(1),
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  categoryActive: { backgroundColor: colors.rose, borderColor: colors.rose },
-  budgetBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1),
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.lg,
-    paddingHorizontal: space(2),
-  },
-  budgetInput: {
-    flex: 1,
-    height: 60,
-    fontWeight: '600',
-    fontSize: 22,
-    color: colors.ink,
-  },
-  footer: {
-    paddingHorizontal: space(3),
-    paddingTop: space(1.5),
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
+    label: { marginTop: space(2.5), marginBottom: space(1.5) },
+    textarea: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      borderRadius: radius.lg,
+      padding: space(2),
+      minHeight: 110,
+      textAlignVertical: 'top',
+      fontWeight: '400',
+      fontSize: 15,
+      color: colors.ink,
+    },
+    categories: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    categoryChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    categoryActive: { backgroundColor: colors.rose, borderColor: colors.rose },
+    budgetBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      borderRadius: radius.lg,
+      paddingHorizontal: space(2),
+    },
+    budgetInput: {
+      flex: 1,
+      height: 60,
+      fontWeight: '600',
+      fontSize: 22,
+      color: colors.ink,
+    },
+    footer: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+  });

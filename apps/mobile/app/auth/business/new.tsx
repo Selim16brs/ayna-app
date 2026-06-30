@@ -4,7 +4,8 @@ import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../../src/locale';
-import { colors, radius, space } from '../../../src/theme';
+import { radius, space, type ColorTokens } from '../../../src/theme';
+import { useTheme, useThemedStyles } from '../../../src/theme-context';
 import { Button, Screen, Segmented, StackHeader, Text } from '../../../src/ui';
 
 const SECTORS: MessageKey[] = [
@@ -24,6 +25,8 @@ const AREAS: MessageKey[] = [
 export default function NewBusinessScreen() {
   const router = useRouter();
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [kind, setKind] = useState<'salon' | 'independent'>('salon');
   const [name, setName] = useState('');
   const [sector, setSector] = useState<MessageKey>('sector.beauty');
@@ -134,6 +137,7 @@ export default function NewBusinessScreen() {
 }
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
       <Text variant="caption" tone={active ? 'onColor' : 'inkSoft'}>
@@ -143,46 +147,47 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-  label: { marginTop: space(2.5), marginBottom: space(1.25) },
-  input: {
-    height: 54,
-    paddingHorizontal: space(2),
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    fontWeight: '500',
-    fontSize: 16,
-    color: colors.ink,
-  },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
-  chip: {
-    paddingHorizontal: space(1.75),
-    paddingVertical: space(1),
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  chipActive: { backgroundColor: colors.rose, borderColor: colors.rose },
-  docRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1),
-    height: 54,
-    paddingHorizontal: space(2),
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderStyle: 'dashed',
-  },
-  footer: {
-    paddingHorizontal: space(3),
-    paddingTop: space(1.5),
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
+    label: { marginTop: space(2.5), marginBottom: space(1.25) },
+    input: {
+      height: 54,
+      paddingHorizontal: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      fontWeight: '500',
+      fontSize: 16,
+      color: colors.ink,
+    },
+    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    chip: {
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    chipActive: { backgroundColor: colors.rose, borderColor: colors.rose },
+    docRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      height: 54,
+      paddingHorizontal: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      borderStyle: 'dashed',
+    },
+    footer: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+  });

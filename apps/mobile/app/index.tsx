@@ -3,11 +3,13 @@ import { Image, StyleSheet, View } from 'react-native';
 import type { Locale } from '@ayna/i18n';
 import { useLocale } from '../src/locale';
 import { Button, Screen, Text } from '../src/ui';
-import { colors, space } from '../src/theme';
+import { type ColorTokens, space } from '../src/theme';
+import { useThemedStyles } from '../src/theme-context';
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const { setLocale, t } = useLocale();
+  const styles = useThemedStyles(makeStyles);
 
   function choose(locale: Locale) {
     setLocale(locale);
@@ -41,15 +43,16 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: space(3),
-    justifyContent: 'space-between',
-  },
-  hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  logo: { width: 260, height: 230, tintColor: colors.ink },
-  tagline: { marginTop: space(1), letterSpacing: 0.3 },
-  choice: { paddingBottom: space(4), gap: space(1.5) },
-  choiceLabel: { textAlign: 'center', marginBottom: space(1) },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: space(3),
+      justifyContent: 'space-between',
+    },
+    hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    logo: { width: 260, height: 230, tintColor: colors.ink },
+    tagline: { marginTop: space(1), letterSpacing: 0.3 },
+    choice: { paddingBottom: space(4), gap: space(1.5) },
+    choiceLabel: { textAlign: 'center', marginBottom: space(1) },
+  });

@@ -10,7 +10,8 @@ import {
 } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
-import { colors, radius, shadow, space } from '../../src/theme';
+import { radius, space, type ColorTokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, Segmented, Text } from '../../src/ui';
 
 const TABS: { source: BookingSource; labelKey: MessageKey }[] = [
@@ -19,14 +20,18 @@ const TABS: { source: BookingSource; labelKey: MessageKey }[] = [
   { source: 'demand', labelKey: 'bookings.tab.demand' },
 ];
 
-const STATUS: Record<BookingStatus, { key: MessageKey; bg: string; fg: string }> = {
+const makeStatus = (
+  colors: ColorTokens,
+): Record<BookingStatus, { key: MessageKey; bg: string; fg: string }> => ({
   confirmed: { key: 'booking.status.confirmed', bg: colors.successSoft, fg: colors.success },
   pending: { key: 'booking.status.pending', bg: colors.goldSoft, fg: colors.gold },
   completed: { key: 'booking.status.completed', bg: colors.surfaceMuted, fg: colors.inkSoft },
-};
+});
 
 export default function BookingsScreen() {
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [active, setActive] = useState<BookingSource>('direct');
   const list = APPOINTMENTS.filter((a) => a.source === active);
 
@@ -62,7 +67,9 @@ export default function BookingsScreen() {
 
 function BookingCard({ appt }: { appt: Appointment }) {
   const { t } = useLocale();
-  const st = STATUS[appt.status];
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const st = makeStatus(colors)[appt.status];
   return (
     <View style={[styles.card, shadow.card]}>
       <Image source={{ uri: appt.proImage }} style={styles.thumb} />
@@ -99,37 +106,43 @@ function BookingCard({ appt }: { appt: Appointment }) {
   );
 }
 
-const styles = StyleSheet.create({
-  title: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
-  segmentWrap: { paddingHorizontal: space(3), marginBottom: space(2) },
-  list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
-  empty: { alignItems: 'center', justifyContent: 'center', paddingTop: space(8), gap: space(1.5) },
-  emptyText: {},
-  card: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: space(1.5),
-    gap: space(1.5),
-  },
-  thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.bgSunken },
-  body: { flex: 1 },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space(1),
-  },
-  service: { flex: 1 },
-  status: { paddingHorizontal: space(1), paddingVertical: 3, borderRadius: radius.pill },
-  statusText: { fontSize: 11 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: space(0.75) },
-  bottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: space(0.75),
-  },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    title: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
+    segmentWrap: { paddingHorizontal: space(3), marginBottom: space(2) },
+    list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
+    empty: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: space(8),
+      gap: space(1.5),
+    },
+    emptyText: {},
+    card: {
+      flexDirection: 'row',
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(1.5),
+      gap: space(1.5),
+    },
+    thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    body: { flex: 1 },
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: space(1),
+    },
+    service: { flex: 1 },
+    status: { paddingHorizontal: space(1), paddingVertical: 3, borderRadius: radius.pill },
+    statusText: { fontSize: 11 },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: space(0.75) },
+    bottomRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: space(0.75),
+    },
+  });

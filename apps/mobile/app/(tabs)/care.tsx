@@ -12,20 +12,24 @@ import {
   QUICK_ADD,
 } from '../../src/data';
 import { useLocale } from '../../src/locale';
-import { colors, radius, shadow, space } from '../../src/theme';
+import { radius, space, type ColorTokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-const TONE: Record<PersonalTone, { bg: string; fg: string }> = {
+const makeTone = (colors: ColorTokens): Record<PersonalTone, { bg: string; fg: string }> => ({
   rose: { bg: colors.roseSoft, fg: colors.rose },
   sage: { bg: colors.sageSoft, fg: colors.sage },
   lavender: { bg: colors.lavenderSoft, fg: colors.lavender },
   blue: { bg: colors.blueSoft, fg: colors.blue },
-};
+});
 
 export default function BenimIcinScreen() {
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const TONE = makeTone(colors);
 
   return (
     <Screen edges={['top']}>
@@ -153,6 +157,8 @@ function dueLabel(days: number, t: (k: 'care.due_in' | 'care.overdue' | 'care.to
 
 function RoutineRow({ routine, border }: { routine: CareRoutine; border: boolean }) {
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const due = dueLabel(routine.dueDays, t);
   return (
     <View style={[styles.row, border && styles.rowBorder]}>
@@ -173,6 +179,8 @@ function RoutineRow({ routine, border }: { routine: CareRoutine; border: boolean
 
 function MomentRow({ moment, border }: { moment: Moment; border: boolean }) {
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.row, border && styles.rowBorder]}>
       <View style={[styles.iconChip, { backgroundColor: colors.lavenderSoft }]}>
@@ -195,79 +203,80 @@ function MomentRow({ moment, border }: { moment: Moment; border: boolean }) {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingBottom: space(4) },
-  header: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
-  subtitle: { marginTop: 2 },
-  quickRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: space(3),
-  },
-  quick: { alignItems: 'center', width: 72 },
-  quickIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickLabel: { marginTop: space(0.75), textAlign: 'center' },
-  section: {
-    paddingHorizontal: space(3),
-    marginTop: space(3),
-    marginBottom: space(1.5),
-  },
-  group: {
-    marginHorizontal: space(3),
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1.5),
-    paddingHorizontal: space(1.75),
-    paddingVertical: space(1.5),
-  },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  iconChip: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowText: { flex: 1 },
-  duePill: {
-    backgroundColor: colors.surfaceMuted,
-    paddingHorizontal: space(1.25),
-    paddingVertical: space(0.75),
-    borderRadius: radius.pill,
-  },
-  dueDanger: { backgroundColor: colors.dangerSoft },
-  life: { paddingHorizontal: space(3), gap: space(1.5), paddingBottom: space(1) },
-  lifeCard: {
-    width: 220,
-    height: 150,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-  },
-  lifeImage: { borderRadius: radius.lg },
-  lifeTag: {
-    position: 'absolute',
-    top: space(1.5),
-    left: space(1.5),
-    backgroundColor: colors.accent,
-    paddingHorizontal: space(1),
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-  },
-  lifeTagText: { fontWeight: '600' },
-  lifeBody: { padding: space(1.75) },
-  lifeRead: { opacity: 0.9, marginTop: 2 },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { paddingBottom: space(4) },
+    header: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
+    subtitle: { marginTop: 2 },
+    quickRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: space(3),
+    },
+    quick: { alignItems: 'center', width: 72 },
+    quickIcon: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    quickLabel: { marginTop: space(0.75), textAlign: 'center' },
+    section: {
+      paddingHorizontal: space(3),
+      marginTop: space(3),
+      marginBottom: space(1.5),
+    },
+    group: {
+      marginHorizontal: space(3),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      overflow: 'hidden',
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1.5),
+    },
+    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    iconChip: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rowText: { flex: 1 },
+    duePill: {
+      backgroundColor: colors.surfaceMuted,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+    },
+    dueDanger: { backgroundColor: colors.dangerSoft },
+    life: { paddingHorizontal: space(3), gap: space(1.5), paddingBottom: space(1) },
+    lifeCard: {
+      width: 220,
+      height: 150,
+      borderRadius: radius.lg,
+      overflow: 'hidden',
+      justifyContent: 'flex-end',
+    },
+    lifeImage: { borderRadius: radius.lg },
+    lifeTag: {
+      position: 'absolute',
+      top: space(1.5),
+      left: space(1.5),
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(1),
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+    },
+    lifeTagText: { fontWeight: '600' },
+    lifeBody: { padding: space(1.75) },
+    lifeRead: { opacity: 0.9, marginTop: 2 },
+  });

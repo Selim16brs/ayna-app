@@ -4,12 +4,15 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { formatPrice, getProfessionalDetail } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
-import { colors, radius, shadow, space } from '../../src/theme';
+import { type ColorTokens, radius, space } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, Text } from '../../src/ui';
 
 export default function ConfirmedScreen() {
   const router = useRouter();
   const { t } = useLocale();
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const params = useLocalSearchParams<{
     proId?: string;
     day?: string;
@@ -96,6 +99,8 @@ function Field({
   last?: boolean;
 }) {
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.field, !last && styles.fieldBorder]}>
       <View style={styles.fieldIcon}>
@@ -113,50 +118,51 @@ function Field({
   );
 }
 
-const styles = StyleSheet.create({
-  content: { padding: space(3), alignItems: 'stretch' },
-  successCircle: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: colors.success,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginTop: space(2),
-  },
-  title: { textAlign: 'center', marginTop: space(2) },
-  subtitle: { textAlign: 'center', marginTop: space(1), marginBottom: space(3) },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    paddingHorizontal: space(2),
-  },
-  field: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1.5),
-    paddingVertical: space(1.75),
-  },
-  fieldBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  fieldIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    backgroundColor: colors.roseSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fieldText: { flex: 1, gap: 2 },
-  note: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1),
-    marginTop: space(2),
-    paddingHorizontal: space(1),
-  },
-  noteText: { flex: 1 },
-  footer: { paddingHorizontal: space(3), paddingTop: space(1.5) },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { padding: space(3), alignItems: 'stretch' },
+    successCircle: {
+      width: 76,
+      height: 76,
+      borderRadius: 38,
+      backgroundColor: colors.success,
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'center',
+      marginTop: space(2),
+    },
+    title: { textAlign: 'center', marginTop: space(2) },
+    subtitle: { textAlign: 'center', marginTop: space(1), marginBottom: space(3) },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      paddingHorizontal: space(2),
+    },
+    field: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      paddingVertical: space(1.75),
+    },
+    fieldBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    fieldIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.md,
+      backgroundColor: colors.roseSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    fieldText: { flex: 1, gap: 2 },
+    note: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      marginTop: space(2),
+      paddingHorizontal: space(1),
+    },
+    noteText: { flex: 1 },
+    footer: { paddingHorizontal: space(3), paddingTop: space(1.5) },
+  });

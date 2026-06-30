@@ -1,10 +1,12 @@
 import { StyleSheet, View } from 'react-native';
-import { colors, radius, space } from '../theme';
+import { radius, space } from '../theme';
+import { useTheme } from '../theme-context';
 import { Text } from './Text';
 
 type Tone = 'rose' | 'gold' | 'neutral';
 
 export function Badge({ label, tone = 'rose' }: { label: string; tone?: Tone }) {
+  const { colors } = useTheme();
   const bg =
     tone === 'rose' ? colors.roseSoft : tone === 'gold' ? colors.goldSoft : colors.surfaceMuted;
   const fg = tone === 'rose' ? colors.rose : tone === 'gold' ? colors.gold : colors.inkSoft;

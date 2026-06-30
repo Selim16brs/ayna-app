@@ -1,7 +1,8 @@
 import { useRef } from 'react';
 import { Animated, Pressable, type PressableProps, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, gradients, radius, shadow, space } from '../theme';
+import { type ColorTokens, radius, space } from '../theme';
+import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
 type Variant = 'primary' | 'secondary' | 'ghost';
@@ -18,6 +19,8 @@ export function Button({
   onPressOut,
   ...rest
 }: ButtonProps) {
+  const { gradients, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const scale = useRef(new Animated.Value(1)).current;
 
   const animate = (to: number) =>
@@ -64,20 +67,21 @@ export function Button({
   );
 }
 
-const styles = StyleSheet.create({
-  base: {
-    height: 56,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: space(3),
-  },
-  label: { fontSize: 16 },
-  goldLabel: { color: colors.bg, fontWeight: '700' },
-  secondary: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  ghost: { backgroundColor: 'transparent' },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    base: {
+      height: 56,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: space(3),
+    },
+    label: { fontSize: 16 },
+    goldLabel: { color: colors.onColor, fontWeight: '700' },
+    secondary: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    ghost: { backgroundColor: 'transparent' },
+  });

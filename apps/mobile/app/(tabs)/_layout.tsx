@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { useLocale } from '../../src/locale';
-import { colors } from '../../src/theme';
+import { useTheme } from '../../src/theme-context';
 
 export default function TabsLayout() {
   const { t } = useLocale();
+  const { colors } = useTheme();
 
   return (
     <Tabs

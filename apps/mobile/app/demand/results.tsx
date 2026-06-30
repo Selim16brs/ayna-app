@@ -3,13 +3,16 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { INCOMING_QUOTES, formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
-import { colors, gradients, radius, shadow, space } from '../../src/theme';
+import { type ColorTokens, radius, space } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function DemandResultsScreen() {
   const { t } = useLocale();
   const router = useRouter();
+  const { colors, gradients, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { budget } = useLocalSearchParams<{ budget: string }>();
   const budgetNum = Number(budget) || 0;
 
@@ -73,51 +76,52 @@ export default function DemandResultsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  budgetBanner: {
-    marginHorizontal: space(3),
-    borderRadius: radius.lg,
-    padding: space(2),
-    marginBottom: space(2),
-  },
-  budgetLabel: { opacity: 0.85, marginBottom: 2 },
-  count: { paddingHorizontal: space(3), marginBottom: space(1.5) },
-  list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
-  card: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: space(1.5),
-    gap: space(1.5),
-    alignItems: 'center',
-  },
-  thumb: { width: 60, height: 60, borderRadius: radius.md, backgroundColor: colors.bgSunken },
-  info: { flex: 1 },
-  metaRow: { flexDirection: 'row', gap: space(0.75), marginTop: space(0.75) },
-  metaChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.goldSoft,
-    paddingHorizontal: space(1),
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-  },
-  acceptChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.successSoft,
-    paddingHorizontal: space(1),
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-  },
-  pick: {
-    backgroundColor: colors.rose,
-    paddingHorizontal: space(1.75),
-    paddingVertical: space(1),
-    borderRadius: radius.pill,
-  },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    budgetBanner: {
+      marginHorizontal: space(3),
+      borderRadius: radius.lg,
+      padding: space(2),
+      marginBottom: space(2),
+    },
+    budgetLabel: { opacity: 0.85, marginBottom: 2 },
+    count: { paddingHorizontal: space(3), marginBottom: space(1.5) },
+    list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
+    card: {
+      flexDirection: 'row',
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(1.5),
+      gap: space(1.5),
+      alignItems: 'center',
+    },
+    thumb: { width: 60, height: 60, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    info: { flex: 1 },
+    metaRow: { flexDirection: 'row', gap: space(0.75), marginTop: space(0.75) },
+    metaChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.goldSoft,
+      paddingHorizontal: space(1),
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+    },
+    acceptChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.successSoft,
+      paddingHorizontal: space(1),
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+    },
+    pick: {
+      backgroundColor: colors.rose,
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+    },
+  });

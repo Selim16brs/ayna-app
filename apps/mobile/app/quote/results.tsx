@@ -6,7 +6,8 @@ import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, type ApiQuote } from '../../src/api';
 import { formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
-import { colors, radius, shadow, space } from '../../src/theme';
+import { type ColorTokens, radius, space } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
 
 type Sort = 'rating' | 'price';
@@ -14,6 +15,7 @@ type Sort = 'rating' | 'price';
 export default function QuoteResultsScreen() {
   const { t } = useLocale();
   const router = useRouter();
+  const styles = useThemedStyles(makeStyles);
   const [sort, setSort] = useState<Sort>('rating');
   const { data: incoming = [] } = useQuery({ queryKey: ['quotes'], queryFn: api.quotes });
 
@@ -76,6 +78,8 @@ function SortChip({
   active: boolean;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable onPress={onPress} style={[styles.sortChip, active && styles.sortChipActive]}>
       <Ionicons name={icon} size={13} color={active ? colors.onColor : colors.inkSoft} />
@@ -88,6 +92,8 @@ function SortChip({
 
 function QuoteCard({ quote, onPick }: { quote: ApiQuote; onPick: () => void }) {
   const { t } = useLocale();
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.card, shadow.card]}>
       <Image source={{ uri: quote.image }} style={styles.thumb} />
@@ -129,54 +135,55 @@ function QuoteCard({ quote, onPick }: { quote: ApiQuote; onPick: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
-  subtitleRow: {
-    paddingHorizontal: space(3),
-    paddingBottom: space(1.5),
-    gap: space(1.25),
-  },
-  sort: { flexDirection: 'row', gap: space(1) },
-  sortChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: space(1.5),
-    paddingVertical: space(0.75),
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  sortChipActive: { backgroundColor: colors.rose, borderColor: colors.rose },
-  list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
-  card: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: space(1.5),
-    gap: space(1.5),
-    alignItems: 'center',
-  },
-  thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.bgSunken },
-  info: { flex: 1 },
-  metaRow: { flexDirection: 'row', gap: space(0.75), marginTop: space(0.75) },
-  metaChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.goldSoft,
-    paddingHorizontal: space(1),
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-  },
-  eta: { marginTop: space(0.75) },
-  right: { alignItems: 'flex-end', gap: space(1) },
-  pick: {
-    backgroundColor: colors.rose,
-    paddingHorizontal: space(1.75),
-    paddingVertical: space(1),
-    borderRadius: radius.pill,
-  },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    subtitleRow: {
+      paddingHorizontal: space(3),
+      paddingBottom: space(1.5),
+      gap: space(1.25),
+    },
+    sort: { flexDirection: 'row', gap: space(1) },
+    sortChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    sortChipActive: { backgroundColor: colors.rose, borderColor: colors.rose },
+    list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
+    card: {
+      flexDirection: 'row',
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(1.5),
+      gap: space(1.5),
+      alignItems: 'center',
+    },
+    thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    info: { flex: 1 },
+    metaRow: { flexDirection: 'row', gap: space(0.75), marginTop: space(0.75) },
+    metaChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.goldSoft,
+      paddingHorizontal: space(1),
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+    },
+    eta: { marginTop: space(0.75) },
+    right: { alignItems: 'flex-end', gap: space(1) },
+    pick: {
+      backgroundColor: colors.rose,
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+    },
+  });

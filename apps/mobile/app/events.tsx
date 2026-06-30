@@ -3,7 +3,8 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { type UpcomingEvent, getUpcomingEvents, whenShort } from '../src/data';
 import { useLocale } from '../src/locale';
 import type { MessageKey } from '@ayna/i18n';
-import { colors, radius, shadow, space } from '../src/theme';
+import { type ColorTokens, radius, space } from '../src/theme';
+import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Screen, StackHeader, Text } from '../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -16,6 +17,8 @@ const GROUPS: { key: MessageKey; match: (d: number) => boolean }[] = [
 
 export default function EventsScreen() {
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const events = getUpcomingEvents();
 
   return (
@@ -53,6 +56,8 @@ export default function EventsScreen() {
 }
 
 function Row({ event, border }: { event: UpcomingEvent; border: boolean }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.row, border && styles.rowBorder]}>
       <View
@@ -78,32 +83,38 @@ function Row({ event, border }: { event: UpcomingEvent; border: boolean }) {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-  empty: { alignItems: 'center', justifyContent: 'center', paddingTop: space(8), gap: space(1.5) },
-  emptyText: {},
-  section: { marginTop: space(2), marginBottom: space(1.25) },
-  group: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1.5),
-    paddingHorizontal: space(1.75),
-    paddingVertical: space(1.5),
-  },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  icon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: { flex: 1 },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
+    empty: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: space(8),
+      gap: space(1.5),
+    },
+    emptyText: {},
+    section: { marginTop: space(2), marginBottom: space(1.25) },
+    group: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      overflow: 'hidden',
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1.5),
+    },
+    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    icon: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    body: { flex: 1 },
+  });

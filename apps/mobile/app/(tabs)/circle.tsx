@@ -3,17 +3,22 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { CIRCLE_POSTS, type CirclePost, type CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
-import { colors, radius, shadow, space } from '../../src/theme';
+import { radius, space, type ColorTokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, Text } from '../../src/ui';
 
-const TYPE: Record<CirclePostType, { key: MessageKey; bg: string; fg: string }> = {
+const makeType = (
+  colors: ColorTokens,
+): Record<CirclePostType, { key: MessageKey; bg: string; fg: string }> => ({
   recommend: { key: 'circle.type.recommend', bg: colors.successSoft, fg: colors.success },
   asking: { key: 'circle.type.asking', bg: colors.goldSoft, fg: colors.gold },
   experience: { key: 'circle.type.experience', bg: colors.roseSoft, fg: colors.rose },
-};
+});
 
 export default function CircleScreen() {
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   return (
     <Screen edges={['top']}>
@@ -45,7 +50,9 @@ export default function CircleScreen() {
 
 function PostCard({ post }: { post: CirclePost }) {
   const { t } = useLocale();
-  const ty = TYPE[post.type];
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const ty = makeType(colors)[post.type];
   return (
     <View style={[styles.card, shadow.card]}>
       <View style={styles.cardTop}>
@@ -97,54 +104,55 @@ function PostCard({ post }: { post: CirclePost }) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: space(3),
-    paddingTop: space(1),
-    marginBottom: space(2),
-  },
-  headerText: { flex: 1 },
-  subtitle: { marginTop: 2 },
-  ask: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: colors.rose,
-    paddingHorizontal: space(1.5),
-    paddingVertical: space(1),
-    borderRadius: radius.pill,
-  },
-  list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: space(2),
-  },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  author: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.roseSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  typeBadge: { paddingHorizontal: space(1.25), paddingVertical: 4, borderRadius: radius.pill },
-  typeText: { fontSize: 11 },
-  text: { marginTop: space(1.5) },
-  footer: {
-    flexDirection: 'row',
-    gap: space(2.5),
-    marginTop: space(1.5),
-    paddingTop: space(1.5),
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-  footerItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: space(3),
+      paddingTop: space(1),
+      marginBottom: space(2),
+    },
+    headerText: { flex: 1 },
+    subtitle: { marginTop: 2 },
+    ask: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      backgroundColor: colors.rose,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+    },
+    list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(2),
+    },
+    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    author: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    avatar: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: colors.roseSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    typeBadge: { paddingHorizontal: space(1.25), paddingVertical: 4, borderRadius: radius.pill },
+    typeText: { fontSize: 11 },
+    text: { marginTop: space(1.5) },
+    footer: {
+      flexDirection: 'row',
+      gap: space(2.5),
+      marginTop: space(1.5),
+      paddingTop: space(1.5),
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+    footerItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  });

@@ -3,7 +3,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../src/locale';
-import { colors, gradients, radius, shadow, space } from '../src/theme';
+import { type ColorTokens, radius, space } from '../src/theme';
+import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Screen, StackHeader, Text } from '../src/ui';
 
 const POINTS = 340;
@@ -15,7 +16,9 @@ const NEXT_DRAW = '30 Haziran';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-const EARN: { icon: IoniconName; key: MessageKey; pts: string; tone: string }[] = [
+const makeEarn = (
+  colors: ColorTokens,
+): { icon: IoniconName; key: MessageKey; pts: string; tone: string }[] => [
   { icon: 'calendar', key: 'rewards.earn.booking', pts: '+50', tone: colors.rose },
   { icon: 'star', key: 'rewards.earn.review', pts: '+20', tone: colors.gold },
   { icon: 'people', key: 'rewards.earn.referral', pts: '+100', tone: colors.teal },
@@ -30,13 +33,16 @@ const REDEEM: { icon: IoniconName; key: MessageKey }[] = [
 
 export default function RewardsScreen() {
   const { t } = useLocale();
+  const { colors, gradients, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const EARN = makeEarn(colors);
 
   return (
     <Screen edges={['top']}>
       <StackHeader title={t('rewards.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Puan kartı */}
-        <LinearGradient colors={gradients.rose} style={styles.pointsCard}>
+        <LinearGradient colors={gradients.rose} style={[styles.pointsCard, shadow.card]}>
           <View style={styles.pointsTop}>
             <Text variant="caption" tone="onColor" style={styles.dim}>
               {t('rewards.points')}
@@ -60,7 +66,7 @@ export default function RewardsScreen() {
         </LinearGradient>
 
         {/* Çekiliş */}
-        <LinearGradient colors={gradients.plum} style={styles.raffle}>
+        <LinearGradient colors={gradients.plum} style={[styles.raffle, shadow.card]}>
           <Ionicons name="gift" size={30} color={colors.onColor} />
           <View style={styles.raffleBody}>
             <Text variant="h2" tone="onColor">
@@ -124,75 +130,75 @@ export default function RewardsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-  pointsCard: { borderRadius: radius.xl, padding: space(2.5), ...shadow.card },
-  pointsTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space(0.5),
-  },
-  dim: { opacity: 0.9 },
-  tierBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    paddingHorizontal: space(1.25),
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-  },
-  tierText: { fontWeight: '600' },
-  progressTrack: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    marginTop: space(1.5),
-    marginBottom: space(1),
-    overflow: 'hidden',
-  },
-  progressFill: { height: 6, borderRadius: 3, backgroundColor: colors.onColor },
-  raffle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(2),
-    borderRadius: radius.lg,
-    padding: space(2.5),
-    marginTop: space(2),
-    ...shadow.card,
-  },
-  raffleBody: { flex: 1, gap: 2 },
-  section: { marginTop: space(3), marginBottom: space(1.5) },
-  group: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1.5),
-    paddingHorizontal: space(1.75),
-    paddingVertical: space(1.5),
-  },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
-  icon: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rowLabel: { flex: 1 },
-  note: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1),
-    marginTop: space(2.5),
-    paddingHorizontal: space(1),
-  },
-  noteText: { flex: 1 },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
+    pointsCard: { borderRadius: radius.xl, padding: space(2.5) },
+    pointsTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: space(0.5),
+    },
+    dim: { opacity: 0.9 },
+    tierBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: 'rgba(255,255,255,0.22)',
+      paddingHorizontal: space(1.25),
+      paddingVertical: 4,
+      borderRadius: radius.pill,
+    },
+    tierText: { fontWeight: '600' },
+    progressTrack: {
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: 'rgba(255,255,255,0.3)',
+      marginTop: space(1.5),
+      marginBottom: space(1),
+      overflow: 'hidden',
+    },
+    progressFill: { height: 6, borderRadius: 3, backgroundColor: colors.onColor },
+    raffle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(2),
+      borderRadius: radius.lg,
+      padding: space(2.5),
+      marginTop: space(2),
+    },
+    raffleBody: { flex: 1, gap: 2 },
+    section: { marginTop: space(3), marginBottom: space(1.5) },
+    group: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      overflow: 'hidden',
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1.5),
+    },
+    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    icon: {
+      width: 38,
+      height: 38,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rowLabel: { flex: 1 },
+    note: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      marginTop: space(2.5),
+      paddingHorizontal: space(1),
+    },
+    noteText: { flex: 1 },
+  });

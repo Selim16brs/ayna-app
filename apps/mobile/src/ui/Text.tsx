@@ -1,5 +1,5 @@
 import { Text as RNText, type TextProps as RNTextProps, StyleSheet } from 'react-native';
-import { colors } from '../theme';
+import { useTheme } from '../theme-context';
 
 type Variant = 'display' | 'title' | 'h2' | 'body' | 'bodyStrong' | 'label' | 'caption';
 type Tone = 'ink' | 'inkSoft' | 'muted' | 'rose' | 'gold' | 'onColor';
@@ -11,6 +11,7 @@ interface TextProps extends RNTextProps {
 
 // Sistem fontu = SF (San Francisco) iOS'ta. fontFamily verilmez; ağırlık fontWeight ile.
 export function Text({ variant = 'body', tone = 'ink', style, ...rest }: TextProps) {
+  const { colors } = useTheme();
   return <RNText {...rest} style={[styles[variant], { color: colors[tone] }, style]} />;
 }
 

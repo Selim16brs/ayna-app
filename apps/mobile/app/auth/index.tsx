@@ -3,12 +3,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../src/locale';
-import { colors, gradients, radius, shadow, space } from '../../src/theme';
+import { radius, space, type ColorTokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
 
 export default function AuthRoleScreen() {
   const router = useRouter();
   const { t } = useLocale();
+  const { gradients } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -55,6 +58,8 @@ function RoleCard({
   sub: string;
   onPress: () => void;
 }) {
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable onPress={onPress}>
       <LinearGradient
@@ -80,25 +85,26 @@ function RoleCard({
   );
 }
 
-const styles = StyleSheet.create({
-  content: { flex: 1, paddingHorizontal: space(3), paddingTop: space(2) },
-  sub: { marginTop: space(0.5), marginBottom: space(4) },
-  cards: { gap: space(2) },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(2),
-    borderRadius: radius.xl,
-    padding: space(2.5),
-  },
-  cardIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardText: { flex: 1 },
-  cardSub: { opacity: 0.85, marginTop: 2 },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { flex: 1, paddingHorizontal: space(3), paddingTop: space(2) },
+    sub: { marginTop: space(0.5), marginBottom: space(4) },
+    cards: { gap: space(2) },
+    card: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(2),
+      borderRadius: radius.xl,
+      padding: space(2.5),
+    },
+    cardIcon: {
+      width: 52,
+      height: 52,
+      borderRadius: radius.lg,
+      backgroundColor: 'rgba(255,255,255,0.18)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cardText: { flex: 1 },
+    cardSub: { opacity: 0.85, marginTop: 2 },
+  });

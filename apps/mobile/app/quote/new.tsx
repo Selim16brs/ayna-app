@@ -6,7 +6,8 @@ import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
-import { colors, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -14,6 +15,8 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 export default function NewQuoteScreen() {
   const router = useRouter();
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: api.categories });
   const [photo, setPhoto] = useState<string | null>(null);
   const [category, setCategory] = useState<string>('hair');
@@ -121,72 +124,73 @@ export default function NewQuoteScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-  photoBox: {
-    height: 220,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.line,
-    borderStyle: 'dashed',
-    overflow: 'hidden',
-  },
-  photo: { width: '100%', height: '100%' },
-  changeOverlay: {
-    position: 'absolute',
-    bottom: space(1.5),
-    right: space(1.5),
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(42,34,48,0.7)',
-    paddingHorizontal: space(1.5),
-    paddingVertical: space(0.75),
-    borderRadius: radius.pill,
-  },
-  changeText: {},
-  photoEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space(1) },
-  photoIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.lg,
-    backgroundColor: colors.roseSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space(0.5),
-  },
-  photoHint: { textAlign: 'center', paddingHorizontal: space(4) },
-  label: { marginTop: space(3), marginBottom: space(1.5) },
-  categories: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
-  categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: space(1.75),
-    paddingVertical: space(1),
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  categoryActive: { backgroundColor: colors.rose, borderColor: colors.rose },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.lg,
-    padding: space(2),
-    minHeight: 96,
-    textAlignVertical: 'top',
-    fontWeight: '400',
-    fontSize: 15,
-    color: colors.ink,
-  },
-  footer: {
-    paddingHorizontal: space(3),
-    paddingTop: space(1.5),
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
+    photoBox: {
+      height: 220,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      borderStyle: 'dashed',
+      overflow: 'hidden',
+    },
+    photo: { width: '100%', height: '100%' },
+    changeOverlay: {
+      position: 'absolute',
+      bottom: space(1.5),
+      right: space(1.5),
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: 'rgba(42,34,48,0.7)',
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+    },
+    changeText: {},
+    photoEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space(1) },
+    photoIcon: {
+      width: 64,
+      height: 64,
+      borderRadius: radius.lg,
+      backgroundColor: colors.roseSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space(0.5),
+    },
+    photoHint: { textAlign: 'center', paddingHorizontal: space(4) },
+    label: { marginTop: space(3), marginBottom: space(1.5) },
+    categories: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    categoryChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    categoryActive: { backgroundColor: colors.rose, borderColor: colors.rose },
+    input: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      borderRadius: radius.lg,
+      padding: space(2),
+      minHeight: 96,
+      textAlignVertical: 'top',
+      fontWeight: '400',
+      fontSize: 15,
+      color: colors.ink,
+    },
+    footer: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+  });

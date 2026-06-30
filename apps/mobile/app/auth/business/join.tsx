@@ -4,12 +4,15 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { FEATURED } from '../../../src/data';
 import { useLocale } from '../../../src/locale';
-import { colors, radius, space } from '../../../src/theme';
+import { radius, space, type ColorTokens } from '../../../src/theme';
+import { useTheme, useThemedStyles } from '../../../src/theme-context';
 import { Button, Screen, StackHeader, Text } from '../../../src/ui';
 
 export default function JoinBusinessScreen() {
   const router = useRouter();
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [firmId, setFirmId] = useState<string>('');
   const [code, setCode] = useState('');
   const valid = firmId.length > 0 && code.trim().length >= 4;
@@ -77,49 +80,50 @@ export default function JoinBusinessScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-  label: { marginTop: space(2.5), marginBottom: space(1.25) },
-  firmList: { gap: space(1) },
-  firm: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1.5),
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: space(1.75),
-  },
-  firmActive: { borderColor: colors.rose },
-  radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: colors.rose,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.rose },
-  firmName: { flexShrink: 0 },
-  codeSub: { marginBottom: space(1.25) },
-  input: {
-    height: 56,
-    paddingHorizontal: space(2),
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    fontWeight: '700',
-    fontSize: 18,
-    letterSpacing: 2,
-    color: colors.ink,
-  },
-  footer: {
-    paddingHorizontal: space(3),
-    paddingTop: space(1.5),
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
+    label: { marginTop: space(2.5), marginBottom: space(1.25) },
+    firmList: { gap: space(1) },
+    firm: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(1.75),
+    },
+    firmActive: { borderColor: colors.rose },
+    radio: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      borderWidth: 2,
+      borderColor: colors.rose,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.rose },
+    firmName: { flexShrink: 0 },
+    codeSub: { marginBottom: space(1.25) },
+    input: {
+      height: 56,
+      paddingHorizontal: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      fontWeight: '700',
+      fontSize: 18,
+      letterSpacing: 2,
+      color: colors.ink,
+    },
+    footer: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+  });

@@ -6,7 +6,8 @@ import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatPrice, getProfessionalDetail } from '../../src/data';
 import { useLocale } from '../../src/locale';
-import { colors, gradients, radius, shadow, space } from '../../src/theme';
+import { type ColorTokens, radius, space } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Badge, Button, Text } from '../../src/ui';
 
 export default function ProfessionalScreen() {
@@ -14,6 +15,8 @@ export default function ProfessionalScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useLocale();
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const pro = getProfessionalDetail(id ?? '1');
   const [selected, setSelected] = useState<string>(pro.services[0]?.id ?? '');
   const [uzmanId, setUzmanId] = useState<string>(pro.staff[0]?.id ?? '');
@@ -262,6 +265,7 @@ function Stat({
   label: string;
   tone?: 'ink' | 'rose';
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.stat}>
       <Text variant="bodyStrong" tone={tone}>
@@ -275,6 +279,7 @@ function Stat({
 }
 
 function Section({ title }: { title: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Text variant="h2" tone="ink" style={styles.section}>
       {title}
@@ -282,150 +287,151 @@ function Section({ title }: { title: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
-  hero: { height: 300, backgroundColor: colors.bgSunken },
-  heroImage: { width: '100%', height: '100%' },
-  heroTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 120 },
-  circleBtn: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sheet: {
-    marginTop: -28,
-    backgroundColor: colors.bg,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: space(3),
-    paddingTop: space(3),
-  },
-  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  titleText: { flex: 1, paddingRight: space(1.5) },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
-  meta: { marginTop: space(0.5) },
-  kindRow: { flexDirection: 'row', marginTop: space(1) },
-  staffRow: { gap: space(1.5), paddingRight: space(3) },
-  staffCard: {
-    width: 120,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: space(1.5),
-    alignItems: 'center',
-  },
-  staffActive: { borderColor: colors.rose, borderWidth: 2 },
-  staffAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.bgSunken,
-    marginBottom: space(1),
-  },
-  staffRating: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: space(0.5) },
-  staffCheck: { position: 'absolute', top: space(1), right: space(1) },
-  ratingBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.goldSoft,
-    paddingHorizontal: space(1.25),
-    paddingVertical: space(0.75),
-    borderRadius: radius.pill,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    paddingVertical: space(1.5),
-    marginTop: space(2.5),
-  },
-  stat: { flex: 1, alignItems: 'center' },
-  statLabel: { marginTop: 2, textAlign: 'center', paddingHorizontal: space(0.5) },
-  statDivider: { width: 1, height: 28, backgroundColor: colors.line },
-  about: { marginTop: space(2.5) },
-  section: { marginTop: space(3.5), marginBottom: space(1.5) },
-  ratingChips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
-  ratingChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1),
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    paddingHorizontal: space(1.5),
-    paddingVertical: space(1),
-    borderRadius: radius.pill,
-  },
-  ratingChipScore: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  scoreText: {},
-  services: { gap: space(1.25) },
-  service: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1.5),
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: radius.lg,
-    padding: space(2),
-  },
-  serviceActive: { borderColor: colors.rose, backgroundColor: colors.surfaceMuted },
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: colors.rose,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioDot: { width: 11, height: 11, borderRadius: 6, backgroundColor: colors.rose },
-  serviceText: { flex: 1 },
-  portfolio: { gap: space(1.5), paddingRight: space(3) },
-  portfolioImg: {
-    width: 130,
-    height: 160,
-    borderRadius: radius.lg,
-    backgroundColor: colors.bgSunken,
-  },
-  reviews: { gap: space(1.5) },
-  review: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: space(2),
-  },
-  reviewTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  reviewAuthor: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
-  reviewAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.roseSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  reviewStars: { flexDirection: 'row', gap: 2 },
-  reviewText: { marginTop: space(1.25) },
-  cta: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.bg,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    paddingHorizontal: space(3),
-    paddingTop: space(1.5),
-  },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    root: { flex: 1, backgroundColor: colors.bg },
+    hero: { height: 300, backgroundColor: colors.bgSunken },
+    heroImage: { width: '100%', height: '100%' },
+    heroTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 120 },
+    circleBtn: {
+      position: 'absolute',
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(255,255,255,0.92)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    sheet: {
+      marginTop: -28,
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
+      paddingHorizontal: space(3),
+      paddingTop: space(3),
+    },
+    titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    titleText: { flex: 1, paddingRight: space(1.5) },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    meta: { marginTop: space(0.5) },
+    kindRow: { flexDirection: 'row', marginTop: space(1) },
+    staffRow: { gap: space(1.5), paddingRight: space(3) },
+    staffCard: {
+      width: 120,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(1.5),
+      alignItems: 'center',
+    },
+    staffActive: { borderColor: colors.rose, borderWidth: 2 },
+    staffAvatar: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.bgSunken,
+      marginBottom: space(1),
+    },
+    staffRating: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: space(0.5) },
+    staffCheck: { position: 'absolute', top: space(1), right: space(1) },
+    ratingBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.goldSoft,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+    },
+    statsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      paddingVertical: space(1.5),
+      marginTop: space(2.5),
+    },
+    stat: { flex: 1, alignItems: 'center' },
+    statLabel: { marginTop: 2, textAlign: 'center', paddingHorizontal: space(0.5) },
+    statDivider: { width: 1, height: 28, backgroundColor: colors.line },
+    about: { marginTop: space(2.5) },
+    section: { marginTop: space(3.5), marginBottom: space(1.5) },
+    ratingChips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    ratingChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+    },
+    ratingChipScore: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    scoreText: {},
+    services: { gap: space(1.25) },
+    service: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      borderRadius: radius.lg,
+      padding: space(2),
+    },
+    serviceActive: { borderColor: colors.rose, backgroundColor: colors.surfaceMuted },
+    radio: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 2,
+      borderColor: colors.rose,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioDot: { width: 11, height: 11, borderRadius: 6, backgroundColor: colors.rose },
+    serviceText: { flex: 1 },
+    portfolio: { gap: space(1.5), paddingRight: space(3) },
+    portfolioImg: {
+      width: 130,
+      height: 160,
+      borderRadius: radius.lg,
+      backgroundColor: colors.bgSunken,
+    },
+    reviews: { gap: space(1.5) },
+    review: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(2),
+    },
+    reviewTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    reviewAuthor: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    reviewAvatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.roseSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    reviewStars: { flexDirection: 'row', gap: 2 },
+    reviewText: { marginTop: space(1.25) },
+    cta: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: colors.bg,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+    },
+  });

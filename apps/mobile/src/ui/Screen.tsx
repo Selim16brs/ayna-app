@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { colors, gradients } from '../theme';
+import { useTheme } from '../theme-context';
 
 interface ScreenProps {
   children: ReactNode;
@@ -13,8 +13,9 @@ interface ScreenProps {
 }
 
 export function Screen({ children, hero = false, edges = ['top', 'bottom'] }: ScreenProps) {
+  const { colors, gradients } = useTheme();
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.bg }]}>
       {hero ? (
         <LinearGradient
           colors={gradients.hero}
@@ -33,6 +34,6 @@ export function Screen({ children, hero = false, edges = ['top', 'bottom'] }: Sc
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1 },
   safe: { flex: 1 },
 });

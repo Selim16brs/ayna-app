@@ -3,7 +3,8 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
-import { colors, radius, space } from '../../src/theme';
+import { radius, space, type ColorTokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
 type Mode = 'register' | 'login';
@@ -11,6 +12,7 @@ type Mode = 'register' | 'login';
 export default function CustomerAuthScreen() {
   const router = useRouter();
   const { t } = useLocale();
+  const styles = useThemedStyles(makeStyles);
   const [mode, setMode] = useState<Mode>('register');
   const [fields, setFields] = useState<Record<string, string>>({});
 
@@ -107,6 +109,8 @@ function Field({
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
 }) {
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View>
       <Text variant="bodyStrong" tone="ink" style={styles.label}>
@@ -125,24 +129,25 @@ function Field({
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-  form: { marginTop: space(2.5), gap: space(2) },
-  label: { marginBottom: space(1) },
-  input: {
-    height: 54,
-    paddingHorizontal: space(2),
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    fontSize: 16,
-    color: colors.ink,
-  },
-  footer: {
-    paddingHorizontal: space(3),
-    paddingTop: space(1.5),
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-  },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
+    form: { marginTop: space(2.5), gap: space(2) },
+    label: { marginBottom: space(1) },
+    input: {
+      height: 54,
+      paddingHorizontal: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      fontSize: 16,
+      color: colors.ink,
+    },
+    footer: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+  });

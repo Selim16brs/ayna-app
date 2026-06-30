@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { colors, radius, shadow, space } from '../theme';
+import { type ColorTokens, radius, space } from '../theme';
+import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
 interface Option<T extends string> {
@@ -15,6 +16,8 @@ interface SegmentedProps<T extends string> {
 
 /** iOS-tarzı segmented control: açık ray + seçili segment beyaz pill. */
 export function Segmented<T extends string>({ options, value, onChange }: SegmentedProps<T>) {
+  const { shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.track}>
       {options.map((o) => {
@@ -39,20 +42,21 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
   );
 }
 
-const styles = StyleSheet.create({
-  track: {
-    flexDirection: 'row',
-    backgroundColor: colors.bgSunken,
-    borderRadius: radius.md,
-    padding: 3,
-  },
-  segment: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: space(1.1),
-    borderRadius: radius.md - 3,
-  },
-  segmentOn: { backgroundColor: colors.surface },
-  onText: { fontWeight: '600' },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    track: {
+      flexDirection: 'row',
+      backgroundColor: colors.bgSunken,
+      borderRadius: radius.md,
+      padding: 3,
+    },
+    segment: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: space(1.1),
+      borderRadius: radius.md - 3,
+    },
+    segmentOn: { backgroundColor: colors.surface },
+    onText: { fontWeight: '600' },
+  });

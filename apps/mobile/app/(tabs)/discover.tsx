@@ -6,13 +6,14 @@ import { Dimensions, ImageBackground, Pressable, ScrollView, StyleSheet, View } 
 import { api } from '../../src/api';
 import { ADS, getUpcomingEvents, whenShort } from '../../src/data';
 import { useLocale } from '../../src/locale';
-import { colors, gradients, radius, shadow, space } from '../../src/theme';
+import { radius, space, type ColorTokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { ProCard, Screen, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 // Kategori ikon zeminleri: nazik pastel tint + renkli ikon (wellness, gökkuşağı yok)
-const CAT_COLORS = [
+const makeCatColors = (colors: ColorTokens) => [
   { bg: colors.sageSoft, fg: colors.sage },
   { bg: colors.roseSoft, fg: colors.rose },
   { bg: colors.lavenderSoft, fg: colors.lavender },
@@ -29,6 +30,9 @@ const AD_WIDTH = Dimensions.get('window').width - space(6);
 
 export default function DiscoverScreen() {
   const { t } = useLocale();
+  const { colors, gradients, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const CAT_COLORS = makeCatColors(colors);
   const router = useRouter();
   const events = getUpcomingEvents().slice(0, 3);
   const { data: categories = [] } = useQuery({ queryKey: ['categories'], queryFn: api.categories });
@@ -51,7 +55,7 @@ export default function DiscoverScreen() {
             </Text>
           </View>
           <View style={styles.headerActions}>
-            <View style={styles.iconButton}>
+            <View style={[styles.iconButton, shadow.soft]}>
               <Ionicons name="notifications-outline" size={20} color={colors.blue} />
             </View>
             <LinearGradient colors={gradients.rose} style={styles.avatar}>
@@ -232,6 +236,8 @@ function ActionCard({
   subtitle: string;
   onPress: () => void;
 }) {
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable style={styles.actionWrap} onPress={onPress}>
       <ImageBackground
@@ -255,116 +261,121 @@ function ActionCard({
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingBottom: space(4) },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: space(3),
-    paddingTop: space(1),
-    marginBottom: space(2.5),
-  },
-  headerText: { flex: 1 },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
-  iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadow.soft,
-  },
-  avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    paddingHorizontal: space(3),
-    marginTop: space(1.5),
-    marginBottom: space(2),
-  },
-  upcoming: { paddingHorizontal: space(3), gap: space(1.25), paddingBottom: space(1) },
-  eventCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1.25),
-    width: 200,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: space(1.5),
-  },
-  eventIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eventBody: { flex: 1 },
-  howLabel: { paddingHorizontal: space(3), marginTop: space(1), marginBottom: space(1.25) },
-  actions: { flexDirection: 'row', gap: space(1.5), paddingHorizontal: space(3) },
-  actionWrap: { flex: 1 },
-  action: {
-    height: 150,
-    borderRadius: radius.lg,
-    padding: space(1.75),
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-  },
-  actionImage: { borderRadius: radius.lg },
-  actionTitle: { marginTop: space(0.75) },
-  actionSubtitle: { opacity: 0.9, marginTop: 2 },
-  search: {
-    marginHorizontal: space(3),
-    height: 50,
-    backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space(1.25),
-    paddingHorizontal: space(2.25),
-    marginTop: space(2.5),
-    marginBottom: space(2.5),
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  categories: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(1) },
-  category: { alignItems: 'center', width: 64 },
-  categoryIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryLabel: { marginTop: space(0.75), textAlign: 'center' },
-  ads: { paddingHorizontal: space(3), gap: space(1.5), marginTop: space(2.5) },
-  adCard: { height: 160, borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end' },
-  adImage: { borderRadius: radius.lg },
-  adBadge: {
-    position: 'absolute',
-    top: space(1.5),
-    left: space(1.5),
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: colors.rose,
-    paddingHorizontal: space(1),
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-  },
-  adBadgeText: { fontWeight: '600' },
-  adText: { padding: space(2) },
-  adSubtitle: { opacity: 0.9, marginTop: 2 },
-  featured: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(2) },
-});
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    content: { paddingBottom: space(4) },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: space(3),
+      paddingTop: space(1),
+      marginBottom: space(2.5),
+    },
+    headerText: { flex: 1 },
+    headerActions: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
+    iconButton: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    avatar: {
+      width: 42,
+      height: 42,
+      borderRadius: 21,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+      paddingHorizontal: space(3),
+      marginTop: space(1.5),
+      marginBottom: space(2),
+    },
+    upcoming: { paddingHorizontal: space(3), gap: space(1.25), paddingBottom: space(1) },
+    eventCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      width: 200,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.line,
+      padding: space(1.5),
+    },
+    eventIcon: {
+      width: 38,
+      height: 38,
+      borderRadius: radius.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    eventBody: { flex: 1 },
+    howLabel: { paddingHorizontal: space(3), marginTop: space(1), marginBottom: space(1.25) },
+    actions: { flexDirection: 'row', gap: space(1.5), paddingHorizontal: space(3) },
+    actionWrap: { flex: 1 },
+    action: {
+      height: 150,
+      borderRadius: radius.lg,
+      padding: space(1.75),
+      justifyContent: 'flex-end',
+      overflow: 'hidden',
+    },
+    actionImage: { borderRadius: radius.lg },
+    actionTitle: { marginTop: space(0.75) },
+    actionSubtitle: { opacity: 0.9, marginTop: 2 },
+    search: {
+      marginHorizontal: space(3),
+      height: 50,
+      backgroundColor: colors.surface,
+      borderRadius: radius.pill,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      paddingHorizontal: space(2.25),
+      marginTop: space(2.5),
+      marginBottom: space(2.5),
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    categories: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(1) },
+    category: { alignItems: 'center', width: 64 },
+    categoryIcon: {
+      width: 60,
+      height: 60,
+      borderRadius: radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    categoryLabel: { marginTop: space(0.75), textAlign: 'center' },
+    ads: { paddingHorizontal: space(3), gap: space(1.5), marginTop: space(2.5) },
+    adCard: {
+      height: 160,
+      borderRadius: radius.lg,
+      overflow: 'hidden',
+      justifyContent: 'flex-end',
+    },
+    adImage: { borderRadius: radius.lg },
+    adBadge: {
+      position: 'absolute',
+      top: space(1.5),
+      left: space(1.5),
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.rose,
+      paddingHorizontal: space(1),
+      paddingVertical: 4,
+      borderRadius: radius.pill,
+    },
+    adBadgeText: { fontWeight: '600' },
+    adText: { padding: space(2) },
+    adSubtitle: { opacity: 0.9, marginTop: 2 },
+    featured: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(2) },
+  });
