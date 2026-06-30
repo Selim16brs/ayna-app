@@ -24,6 +24,7 @@ export class RatingsService {
         score: input.score,
         comment: input.comment ?? '',
         serviceTag: input.serviceTag ?? '',
+        authorLabel: input.authorLabel?.trim() || 'Doğrulanmış üye',
         visible: false,
       },
     });
@@ -69,6 +70,7 @@ export class RatingsService {
             score: r.score,
             comment: r.comment,
             serviceTag: r.serviceTag,
+            authorLabel: r.authorLabel, // kimlik değil, yalnızca etiket (provider-blind)
             createdAt: r.createdAt,
             reply: r.reply,
             repliedAt: r.repliedAt,

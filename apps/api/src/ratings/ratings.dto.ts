@@ -7,6 +7,8 @@ export const submitRatingSchema = z.object({
   score: z.number().int().min(1).max(5),
   comment: z.string().max(500).optional(),
   serviceTag: z.string().max(80).optional(),
+  // Gizlilik: kullanıcının seçtiği görünen ad (anonim ise "Doğrulanmış üye")
+  authorLabel: z.string().max(60).optional(),
 });
 
 export const thresholdSchema = z.object({ value: z.number().int().min(1).max(50) });

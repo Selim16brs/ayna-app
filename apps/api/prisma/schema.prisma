@@ -354,6 +354,9 @@ model Rating {
   score      Int
   comment    String    @default("")
   serviceTag String    @default("") @map("service_tag") // §6.D opsiyonel hizmet etiketi
+  // Gizlilik: salon/uzman yorum sahibinin KİMLİĞİNİ göremez — yalnızca bu etiket
+  // ("Doğrulanmış üye" ya da kullanıcının seçtiği ad). Rating'de userId tutulmaz.
+  authorLabel String   @default("Doğrulanmış üye") @map("author_label")
   visible    Boolean   @default(false)
   // §6.D — açılınca kalıcı (silme yolu YOK); uzman/işletme yanıt verebilir (silemez)
   reply      String    @default("")

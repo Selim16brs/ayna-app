@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
@@ -40,6 +41,10 @@ export default function PrivacyScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
+  // "anon" (yorum gizliliği) gerçek store değeridir; diğerleri yerel
+  const reviewAnonymous = useStore((s) => s.reviewAnonymous);
+  const setReviewAnonymous = useStore((s) => s.setReviewAnonymous);
+
   const [state, setState] = useState<Record<ToggleKey, boolean>>({
     location: false,
     anon: true,
@@ -48,7 +53,11 @@ export default function PrivacyScreen() {
     marketing: false,
   });
 
-  const set = (k: ToggleKey) => (v: boolean) => setState((s) => ({ ...s, [k]: v }));
+  const value = (k: ToggleKey) => (k === 'anon' ? reviewAnonymous : state[k]);
+  const set = (k: ToggleKey) => (v: boolean) => {
+    if (k === 'anon') setReviewAnonymous(v);
+    else setState((s) => ({ ...s, [k]: v }));
+  };
 
   const onDownload = () => Alert.alert(t('common.soon'));
   const onDelete = () =>
@@ -82,7 +91,7 @@ export default function PrivacyScreen() {
                 )}
               </View>
               <Switch
-                value={state[tg.key]}
+                value={value(tg.key)}
                 onValueChange={set(tg.key)}
                 trackColor={{ true: colors.lavender, false: colors.line }}
               />

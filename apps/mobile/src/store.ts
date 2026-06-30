@@ -103,6 +103,10 @@ interface State {
   reviewBooking: (id: string, rating: number, text: string) => void;
   hydrateBookings: () => Promise<void>;
 
+  // gizlilik: değerlendirmede kimliği gizle (salon/uzman yorum sahibini göremez)
+  reviewAnonymous: boolean;
+  setReviewAnonymous: (v: boolean) => void;
+
   // favorites
   toggleFavorite: (proId: string) => void;
 
@@ -140,6 +144,7 @@ export const useStore = create<State>((set, get) => ({
   raffleEntries: 5,
   ledger: SEED_LEDGER,
   userReviews: {},
+  reviewAnonymous: true,
   notifications: SEED_NOTIFICATIONS,
   token: null,
   currentUser: null,
@@ -218,21 +223,39 @@ export const useStore = create<State>((set, get) => ({
     }
   },
 
+  setReviewAnonymous: (v) => set({ reviewAnonymous: v }),
+
   reviewBooking: (id, rating, text) => {
     const b = get().bookings.find((x) => x.id === id);
+    const anon = get().reviewAnonymous;
+    // Gizlilik: anonimse "Doğrulanmış üye"; değilse kullanıcının ilk adı
+    const firstName = get().currentUser?.name?.trim().split(/\s+/)[0];
+    const authorLabel = anon || !firstName ? 'Doğrulanmış üye' : firstName;
     set((s) => ({
       bookings: s.bookings.map((x) => (x.id === id ? { ...x, reviewed: true } : x)),
     }));
     if (b) {
       const review: Review = {
         id: nextId('rv'),
-        author: 'Sen',
+        author: authorLabel,
         period: 'Az önce',
         rating,
         service: b.service,
         text,
         firstVisit: false,
       };
+      // En iyi çaba: backend'e de gönder (kimlik değil yalnızca etiket — provider-blind)
+      void api
+        .submitRating({
+          bookingId: b.id,
+          raterRole: 'user',
+          subjectId: b.proId,
+          score: rating,
+          comment: text,
+          serviceTag: b.service,
+          authorLabel,
+        })
+        .catch(() => undefined);
       set((s) => ({
         userReviews: { ...s.userReviews, [b.proId]: [review, ...(s.userReviews[b.proId] ?? [])] },
       }));
