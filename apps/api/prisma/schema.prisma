@@ -171,6 +171,7 @@ enum BookingStatus {
   awaiting_provider
   alternative_proposed
   no_show
+  waitlist
 }
 
 // Randevu kaydı. id istemci tarafından üretilir (mobil store ile tutarlı).
@@ -187,6 +188,9 @@ model Booking {
   uzmanName          String?       @map("uzman_name")
   // §2.2/§5 — offline (salon kaydı) randevuda müşteri adı
   customerName       String?       @map("customer_name")
+  // §6.C/Faz3 — randevu türü (normal | group | express) + grup kişi sayısı
+  bookingKind        String        @default("normal") @map("booking_kind")
+  groupSize          Int?          @map("group_size")
   dateLabel          String        @map("date_label")
   proposedDateLabel  String?       @map("proposed_date_label")
   inDays             Int           @map("in_days")

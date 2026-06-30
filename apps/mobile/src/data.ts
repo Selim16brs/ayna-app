@@ -702,7 +702,8 @@ export type BookingStatus =
   | 'cancelled'
   | 'awaiting_provider'
   | 'alternative_proposed'
-  | 'no_show';
+  | 'no_show'
+  | 'waitlist';
 
 export interface Appointment {
   id: string;
@@ -713,6 +714,8 @@ export interface Appointment {
   proImage: string;
   uzmanName?: string; // hangi uzmandan
   customerName?: string; // §2.2 offline randevuda müşteri adı
+  bookingKind?: string; // normal | group | express (Faz 3)
+  groupSize?: number; // grup randevuda kişi sayısı
   dateLabel: string; // hangi saatte
   proposedDateLabel?: string; // uzmanın önerdiği alternatif (§1.6)
   inDays: number; // sıralama için (negatif = geçmiş)

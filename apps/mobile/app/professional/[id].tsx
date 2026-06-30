@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatPrice } from '../../src/data';
 import { useProfessionalDetail } from '../../src/catalog';
@@ -26,6 +26,13 @@ export default function ProfessionalScreen() {
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   const toggleFavorite = useStore((s) => s.toggleFavorite);
   const isFav = useStore((s) => s.favorites.includes(proId));
+  const joinWaitlist = useStore((s) => s.joinWaitlist);
+
+  const onWaitlist = () => {
+    const svc = pro.services.find((s) => s.id === selected)?.name ?? pro.services[0]?.name ?? '';
+    joinWaitlist({ id: pro.id, name: pro.name, image: pro.image, service: svc });
+    Alert.alert(t('pro.waitlist_joined'));
+  };
   // Seçici sabit referans (map) döndürür; boş dizi fallback render içinde — sonsuz render önlenir
   const userReviewsMap = useStore((s) => s.userReviews);
   const reviews = [...(userReviewsMap[proId] ?? []), ...pro.reviews];
@@ -316,6 +323,7 @@ export default function ProfessionalScreen() {
             })
           }
         />
+        <Button label={t('pro.waitlist')} variant="ghost" onPress={onWaitlist} />
       </View>
     </View>
   );

@@ -37,6 +37,7 @@ const STATUS_LABEL: Record<BookingStatus, MessageKey> = {
   awaiting_provider: 'booking.status.awaiting',
   alternative_proposed: 'booking.status.alternative',
   no_show: 'booking.status.no_show',
+  waitlist: 'booking.status.waitlist',
 };
 
 export default function AgendaScreen() {
@@ -94,9 +95,25 @@ export default function AgendaScreen() {
                       </Text>
                     </View>
                     <View style={styles.rowBody}>
-                      <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                        {b.service}
-                      </Text>
+                      <View style={styles.serviceRow}>
+                        <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.flexShrink}>
+                          {b.service}
+                        </Text>
+                        {b.bookingKind === 'group' ? (
+                          <View style={styles.kindTag}>
+                            <Text variant="caption" style={styles.kindText}>
+                              {t('agenda.group')}
+                              {b.groupSize ? ` ${b.groupSize}` : ''}
+                            </Text>
+                          </View>
+                        ) : b.bookingKind === 'express' ? (
+                          <View style={styles.kindTag}>
+                            <Text variant="caption" style={styles.kindText}>
+                              {t('agenda.express')}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
                       <Text variant="caption" tone="muted" numberOfLines={1}>
                         {b.customerName ? `${b.customerName} · ` : ''}
                         {b.uzmanName ?? b.proName}
@@ -174,6 +191,15 @@ const makeStyles = (colors: ColorTokens) =>
     },
     timeCol: { width: 72 },
     rowBody: { flex: 1, gap: 2 },
+    serviceRow: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    flexShrink: { flexShrink: 1 },
+    kindTag: {
+      backgroundColor: colors.lavenderSoft,
+      paddingHorizontal: space(0.75),
+      paddingVertical: 2,
+      borderRadius: radius.pill,
+    },
+    kindText: { color: colors.lavender, fontWeight: '700', fontSize: 10 },
     rowRight: { alignItems: 'flex-end', gap: 4 },
     pill: {
       paddingHorizontal: space(1),

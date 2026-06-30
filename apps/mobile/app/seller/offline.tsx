@@ -6,8 +6,9 @@ import type { Appointment } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
+type Kind = 'normal' | 'group' | 'express';
 let seq = 0;
 
 export default function OfflineBookingScreen() {
@@ -21,6 +22,8 @@ export default function OfflineBookingScreen() {
   const [uzman, setUzman] = useState('');
   const [date, setDate] = useState('Bugün');
   const [price, setPrice] = useState('');
+  const [kind, setKind] = useState<Kind>('normal');
+  const [groupSize, setGroupSize] = useState('3');
   const [busy, setBusy] = useState(false);
 
   const canSave = customer.trim().length > 1 && service.trim().length > 1 && !busy;
@@ -41,6 +44,8 @@ export default function OfflineBookingScreen() {
       inDays: 0,
       price: Number(price.replace(/[^0-9]/g, '')) || 0,
       status: 'confirmed',
+      bookingKind: kind,
+      ...(kind === 'group' ? { groupSize: Number(groupSize) || 2 } : {}),
     };
     try {
       await api.createBooking(booking);
@@ -105,6 +110,34 @@ export default function OfflineBookingScreen() {
             />
           </Field>
         </View>
+
+        {/* Faz 3 — randevu türü */}
+        <View style={styles.field}>
+          <Text variant="label" tone="rose" style={styles.label}>
+            {t('offline.kind')}
+          </Text>
+          <Segmented
+            options={[
+              { value: 'normal', label: t('offline.kind.normal') },
+              { value: 'group', label: t('offline.kind.group') },
+              { value: 'express', label: t('offline.kind.express') },
+            ]}
+            value={kind}
+            onChange={setKind}
+          />
+        </View>
+        {kind === 'group' ? (
+          <Field label={t('offline.group_size')}>
+            <TextInput
+              style={styles.input}
+              value={groupSize}
+              onChangeText={(v) => setGroupSize(v.replace(/[^0-9]/g, ''))}
+              placeholder="3"
+              placeholderTextColor={colors.muted}
+              keyboardType="number-pad"
+            />
+          </Field>
+        ) : null}
 
         <View style={styles.note}>
           <Text variant="caption" tone="muted">

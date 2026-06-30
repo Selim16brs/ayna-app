@@ -397,6 +397,16 @@ export const tr = {
   'offline.save': 'Randevuyu ekle',
   'offline.saved': 'Offline randevu eklendi',
   'offline.note': 'Salonda/telefonda alınan randevular buraya eklenir; ortak takvimde görünür.',
+  // Faz 3 — randevu türü
+  'offline.kind': 'Randevu türü',
+  'offline.kind.normal': 'Normal',
+  'offline.kind.group': 'Grup',
+  'offline.kind.express': 'Express',
+  'offline.group_size': 'Kişi sayısı',
+  'agenda.group': 'Grup',
+  'agenda.express': 'Express',
+  'pro.waitlist': 'Bekleme listesine ekle',
+  'pro.waitlist_joined': 'Bekleme listesine eklendin 🤍',
 
   // Ortak (yeni)
   'common.delete': 'Sil',
@@ -460,6 +470,7 @@ export const tr = {
   'booking.status.awaiting': 'Onay bekliyor',
   'booking.status.alternative': 'Alternatif önerildi',
   'booking.status.no_show': 'Gelmedi',
+  'booking.status.waitlist': 'Bekleme listesi',
   // §6.C — iptal sebebi + politika
   'booking.cancel.prompt': 'İptal nedenini seçebilirsin (opsiyonel).',
   'booking.cancel.late_warn':

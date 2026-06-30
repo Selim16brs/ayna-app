@@ -252,6 +252,7 @@ const makeStatus = (
   awaiting_provider: { key: 'booking.status.awaiting', bg: colors.goldSoft, fg: colors.gold },
   alternative_proposed: { key: 'booking.status.alternative', bg: colors.blueSoft, fg: colors.blue },
   no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
+  waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
 });
 
 const makeStyles = (colors: ColorTokens) =>

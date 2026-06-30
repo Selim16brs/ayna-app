@@ -99,6 +99,8 @@ interface State {
 
   // bookings
   addBooking: (input: AddBookingInput) => string;
+  // Faz 3 — dolu uzmana bekleme listesine eklenme
+  joinWaitlist: (pro: { id: string; name: string; image: string; service: string }) => void;
   cancelBooking: (id: string, reason?: string) => void;
   acceptAlternative: (id: string) => void;
   reviewBooking: (id: string, rating: number, text: string) => void;
@@ -187,6 +189,32 @@ export const useStore = create<State>((set, get) => ({
       icon: 'calendar-outline',
     });
     return id;
+  },
+
+  // Faz 3 — bekleme listesi: dolu uzmana eklenir, yer açılınca bildirilir (auto-promote ileride)
+  joinWaitlist: (pro) => {
+    const id = nextId('bk');
+    const booking: Appointment = {
+      id,
+      source: 'direct',
+      service: pro.service,
+      proId: pro.id,
+      proName: pro.name,
+      proImage: pro.image,
+      dateLabel: 'Bekleme listesi',
+      inDays: 0,
+      price: 0,
+      status: 'waitlist',
+    };
+    set((s) => ({ bookings: [booking, ...s.bookings] }));
+    void api.createBooking(booking, get().token ?? undefined).catch(() => undefined);
+    get().pushNotification({
+      type: 'booking',
+      title: 'Bekleme listesine eklendin',
+      body: `${pro.name} · yer açılınca öncelikli bildirim alacaksın`,
+      dateLabel: 'Az önce',
+      icon: 'hourglass-outline',
+    });
   },
 
   cancelBooking: (id, reason) => {

@@ -9,6 +9,8 @@ export const createBookingSchema = z.object({
   proImage: z.string(),
   uzmanName: z.string().optional(),
   customerName: z.string().max(80).optional(),
+  bookingKind: z.enum(['normal', 'group', 'express']).optional(),
+  groupSize: z.number().int().min(2).max(20).optional(),
   dateLabel: z.string().min(1),
   inDays: z.number().int(),
   price: z.number().nonnegative(),
@@ -21,6 +23,7 @@ export const createBookingSchema = z.object({
       'awaiting_provider',
       'alternative_proposed',
       'no_show',
+      'waitlist',
     ])
     .optional(),
 });
