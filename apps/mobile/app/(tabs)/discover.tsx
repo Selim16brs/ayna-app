@@ -69,12 +69,27 @@ export default function DiscoverScreen() {
               <Ionicons name="notifications-outline" size={20} color={colors.blue} />
               {unread > 0 ? <View style={styles.badge} /> : null}
             </Pressable>
-            <LinearGradient colors={gradients.rose} style={styles.avatar}>
-              <Text variant="bodyStrong" tone="onColor">
-                A
-              </Text>
-            </LinearGradient>
+            <Pressable onPress={() => router.push('/profile')}>
+              <LinearGradient colors={gradients.rose} style={styles.avatar}>
+                <Text variant="bodyStrong" tone="onColor">
+                  {userName.charAt(0).toUpperCase()}
+                </Text>
+              </LinearGradient>
+            </Pressable>
           </View>
+        </View>
+
+        {/* Arama + Harita — üstte, belirgin (referans çizgisi) */}
+        <View style={styles.searchRow}>
+          <Pressable style={[styles.search, shadow.soft]} onPress={() => router.push('/search')}>
+            <Ionicons name="search" size={19} color={colors.muted} />
+            <Text variant="body" tone="muted">
+              {t('home.search')}
+            </Text>
+          </Pressable>
+          <Pressable style={[styles.mapBtn, shadow.soft]} onPress={() => router.push('/map')}>
+            <Ionicons name="map-outline" size={20} color={colors.rose} />
+          </Pressable>
         </View>
 
         {/* Yaklaşan etkinlikler — kompakt, ilk 3 */}
@@ -132,9 +147,11 @@ export default function DiscoverScreen() {
         ) : null}
 
         {/* Ne yapmak istersin — fotoğraflı aksiyon kartları */}
-        <Text variant="label" tone="rose" style={styles.howLabel}>
-          {t('home.how')}
-        </Text>
+        <View style={styles.sectionHeader}>
+          <Text variant="h2" tone="ink">
+            {t('home.how')}
+          </Text>
+        </View>
         <View style={styles.actions}>
           <ActionCard
             photo={ACTION_PHOTO_1}
@@ -150,19 +167,6 @@ export default function DiscoverScreen() {
             subtitle={t('action.demand.subtitle')}
             onPress={() => router.push('/demand/new')}
           />
-        </View>
-
-        {/* Arama + Harita */}
-        <View style={styles.searchRow}>
-          <Pressable style={[styles.search, shadow.soft]} onPress={() => router.push('/search')}>
-            <Ionicons name="search" size={19} color={colors.muted} />
-            <Text variant="body" tone="muted">
-              {t('home.search')}
-            </Text>
-          </Pressable>
-          <Pressable style={[styles.mapBtn, shadow.soft]} onPress={() => router.push('/map')}>
-            <Ionicons name="map-outline" size={20} color={colors.rose} />
-          </Pressable>
         </View>
 
         {/* Kategoriler */}
@@ -393,17 +397,15 @@ const makeStyles = (colors: ColorTokens) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.25),
-      width: 200,
+      width: 210,
       backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.line,
+      borderRadius: radius.lg,
       padding: space(1.5),
     },
     eventIcon: {
-      width: 38,
-      height: 38,
-      borderRadius: radius.sm,
+      width: 40,
+      height: 40,
+      borderRadius: radius.md,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -426,28 +428,23 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       gap: space(1.25),
       paddingHorizontal: space(3),
-      marginTop: space(2.5),
-      marginBottom: space(2.5),
+      marginBottom: space(1),
     },
     search: {
       flex: 1,
-      height: 50,
+      height: 52,
       backgroundColor: colors.surface,
       borderRadius: radius.pill,
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.25),
       paddingHorizontal: space(2.25),
-      borderWidth: 1,
-      borderColor: colors.line,
     },
     mapBtn: {
-      width: 50,
-      height: 50,
+      width: 52,
+      height: 52,
       borderRadius: radius.pill,
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
       alignItems: 'center',
       justifyContent: 'center',
     },
