@@ -148,6 +148,10 @@ export const tr = {
   'circle.verified': 'Doğrulanmış üye',
   'circle.helpful': 'faydalı',
   'circle.comments': 'yorum',
+  'circle.life_section': 'AYNA Life · Pratik Bilgiler',
+  'circle.recommendations': 'Tavsiyeler',
+  'circle.sort_by_rating': 'Değerlendirmeye göre',
+  'circle.all_categories': 'Tümü',
 
   // Benim İçin (kişisel hub: kayıtlar + bakım + özel günler + AYNA Life)
   'benim.title': 'Benim İçin',

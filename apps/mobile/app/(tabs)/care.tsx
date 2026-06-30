@@ -1,16 +1,10 @@
 import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import {
-  type CareRoutine,
-  LIFE_ARTICLES,
-  type Moment,
-  type PersonalTone,
-  QUICK_ADD,
-} from '../../src/data';
+import { type CareRoutine, type Moment, type PersonalTone, QUICK_ADD } from '../../src/data';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -228,44 +222,6 @@ export default function BenimIcinScreen() {
             <MomentRow key={m.id} moment={m} border={i < moments.length - 1} />
           ))}
         </View>
-
-        {/* AYNA Life */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('benim.section.life')}
-        </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.life}
-        >
-          {LIFE_ARTICLES.map((a) => (
-            <PressableScale key={a.id} onPress={() => router.push('/life/' + a.id)}>
-              <ImageBackground
-                source={{ uri: a.image }}
-                style={styles.lifeCard}
-                imageStyle={styles.lifeImage}
-              >
-                <LinearGradient
-                  colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.82)']}
-                  style={StyleSheet.absoluteFill}
-                />
-                <View style={styles.lifeTag}>
-                  <Text variant="caption" tone="onColor" style={styles.lifeTagText}>
-                    {a.tag}
-                  </Text>
-                </View>
-                <View style={styles.lifeBody}>
-                  <Text variant="bodyStrong" tone="onColor" numberOfLines={2}>
-                    {a.title}
-                  </Text>
-                  <Text variant="caption" tone="onColor" style={styles.lifeRead}>
-                    {a.readMin} {t('life.read')}
-                  </Text>
-                </View>
-              </ImageBackground>
-            </PressableScale>
-          ))}
-        </ScrollView>
       </ScrollView>
     </Screen>
   );
