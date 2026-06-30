@@ -93,6 +93,7 @@ interface State {
 
   // auth
   setAuth: (session: AuthSession) => void;
+  markPhoneVerified: () => void;
   logout: () => void;
 
   // bookings
@@ -147,6 +148,8 @@ export const useStore = create<State>((set, get) => ({
     set({ token: session.token, currentUser: session.user });
     void get().hydrateLoyalty();
   },
+  markPhoneVerified: () =>
+    set((s) => (s.currentUser ? { currentUser: { ...s.currentUser, phoneVerified: true } } : {})),
   logout: () => set({ token: null, currentUser: null }),
 
   addBooking: (input) => {

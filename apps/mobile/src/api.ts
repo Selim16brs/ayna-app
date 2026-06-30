@@ -84,6 +84,7 @@ export interface AuthUser {
   city?: string;
   role: string;
   phone: string;
+  phoneVerified?: boolean;
 }
 
 export interface AuthSession {
@@ -176,6 +177,12 @@ export const api = {
   register: (input: RegisterInput) => post<AuthSession>('/auth/register', input),
   login: (input: { identifier: string; password: string }) =>
     post<AuthSession>('/auth/login', input),
+
+  // §4.6 — OTP telefon doğrulama (mock SMS; devCode yalnızca mock'ta döner)
+  otpRequest: (phone: string) =>
+    post<{ sent: boolean; expiresInSec: number; devCode?: string }>('/auth/otp/request', { phone }),
+  otpVerify: (phone: string, code: string) =>
+    post<{ verified: boolean; phoneVerified: boolean }>('/auth/otp/verify', { phone, code }),
 
   // İşletme & uzman kaydı (Build Brief §3)
   registerBusiness: (input: RegisterBusinessInput) =>

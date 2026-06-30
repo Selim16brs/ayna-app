@@ -3,6 +3,7 @@ import {
   createDecipheriv,
   createHmac,
   randomBytes,
+  randomInt,
   scryptSync,
   timingSafeEqual,
 } from 'node:crypto';
@@ -48,6 +49,16 @@ export function decryptField(buf: Buffer, secret: string): string {
 // --- Telefon arama hash'i (HMAC-SHA256) ---
 export function phoneHash(phone: string, secret: string): string {
   return createHmac('sha256', secret).update(normalizePhone(phone)).digest('hex');
+}
+
+// --- OTP (§4.6): kod düz metin saklanmaz; HMAC ile karşılaştırılır ---
+export function hashOtp(code: string, secret: string): string {
+  return createHmac('sha256', secret).update(`otp:${code}`).digest('hex');
+}
+
+// 6 haneli kriptografik OTP (000000–999999, baştaki sıfırlar korunur)
+export function generateOtp(): string {
+  return String(randomInt(0, 1_000_000)).padStart(6, '0');
 }
 
 export function normalizePhone(phone: string): string {

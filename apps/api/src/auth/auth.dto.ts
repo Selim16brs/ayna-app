@@ -13,5 +13,14 @@ export const loginSchema = z.object({
   password: z.string().min(6),
 });
 
+// §4.6 — OTP
+export const otpRequestSchema = z.object({ phone: z.string().min(7) });
+export const otpVerifySchema = z.object({
+  phone: z.string().min(7),
+  code: z.string().regex(/^\d{6}$/, '6 haneli kod'),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type OtpRequestInput = z.infer<typeof otpRequestSchema>;
+export type OtpVerifyInput = z.infer<typeof otpVerifySchema>;

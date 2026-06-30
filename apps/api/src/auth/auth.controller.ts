@@ -2,7 +2,16 @@ import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { AuthService } from './auth.service';
-import { type LoginInput, loginSchema, type RegisterInput, registerSchema } from './auth.dto';
+import {
+  type LoginInput,
+  loginSchema,
+  type OtpRequestInput,
+  otpRequestSchema,
+  type OtpVerifyInput,
+  otpVerifySchema,
+  type RegisterInput,
+  registerSchema,
+} from './auth.dto';
 import { type AuthedRequest, JwtAuthGuard } from './jwt-auth.guard';
 
 @ApiTags('auth')
@@ -24,5 +33,16 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   me(@Req() req: AuthedRequest) {
     return this.auth.me(req.user!.id);
+  }
+
+  // §4.6 — OTP iste / doğrula (mock SMS)
+  @Post('otp/request')
+  otpRequest(@Body(new ZodValidationPipe(otpRequestSchema)) body: OtpRequestInput) {
+    return this.auth.requestOtp(body.phone);
+  }
+
+  @Post('otp/verify')
+  otpVerify(@Body(new ZodValidationPipe(otpVerifySchema)) body: OtpVerifyInput) {
+    return this.auth.verifyOtp(body.phone, body.code);
   }
 }

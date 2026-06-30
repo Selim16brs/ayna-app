@@ -41,6 +41,8 @@ model User {
   isPremium     Boolean    @default(false) @map("is_premium")
   aiUsed        Int        @default(0) @map("ai_used")
   aiPeriod      String     @default("") @map("ai_period")
+  // §4.6 — telefon OTP doğrulaması (mock SMS)
+  phoneVerified Boolean    @default(false) @map("phone_verified")
   defaultLocale String     @default("ru") @map("default_locale")
   timezone      String     @default("Asia/Almaty")
   createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -358,6 +360,21 @@ model Rating {
   @@index([subjectId, visible])
   @@index([bookingId])
   @@map("ratings")
+}
+
+// §4.6 — Telefon OTP doğrulama kodu. Kod düz metin saklanmaz (HMAC).
+// Mock SMS; tek seferlik, süreli, deneme limitli.
+model OtpCode {
+  id         String    @id @default(uuid()) @db.Uuid
+  phoneHash  String    @map("phone_hash")
+  codeHash   String    @map("code_hash")
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  attempts   Int       @default(0)
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([phoneHash])
+  @@map("otp_codes")
 }
 
 // Admin ayarlanabilir parametreler (örn. puan görünürlük eşiği).

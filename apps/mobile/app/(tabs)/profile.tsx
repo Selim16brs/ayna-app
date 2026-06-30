@@ -48,6 +48,8 @@ export default function ProfileScreen() {
     Object.values(s.userReviews).reduce((n, a) => n + a.length, 0),
   );
   const userName = useStore((s) => s.currentUser?.name) ?? 'Aigerim';
+  const isLoggedIn = useStore((s) => s.currentUser != null);
+  const phoneVerified = useStore((s) => s.currentUser?.phoneVerified ?? false);
   const logout = useStore((s) => s.logout);
 
   const appearance: 'system' | ThemeMode = preference ?? 'system';
@@ -79,9 +81,19 @@ export default function ProfileScreen() {
             </Text>
           </LinearGradient>
           <View style={styles.profileText}>
-            <Text variant="h2" tone="rose">
-              {userName}
-            </Text>
+            <View style={styles.nameRow}>
+              <Text variant="h2" tone="rose">
+                {userName}
+              </Text>
+              {phoneVerified ? (
+                <View style={styles.verifiedChip}>
+                  <Ionicons name="checkmark-circle" size={13} color={colors.success} />
+                  <Text variant="caption" style={styles.verifiedText}>
+                    {t('profile.verify.done')}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
             <Pressable onPress={() => router.push('/profile/edit')}>
               <Text variant="caption" tone="rose">
                 {t('profile.edit')}
@@ -89,6 +101,24 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
         </View>
+
+        {/* §4.6 — telefon doğrulama çağrısı (yalnızca girişli + doğrulanmamışsa) */}
+        {isLoggedIn && !phoneVerified ? (
+          <Pressable style={styles.verifyBanner} onPress={() => router.push('/auth/verify')}>
+            <View style={styles.verifyIcon}>
+              <Ionicons name="shield-checkmark" size={18} color={colors.onColor} />
+            </View>
+            <View style={styles.verifyText}>
+              <Text variant="bodyStrong" tone="ink">
+                {t('profile.verify.cta')}
+              </Text>
+              <Text variant="caption" tone="muted">
+                {t('profile.verify.desc')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+          </Pressable>
+        ) : null}
 
         <View style={[styles.stats, shadow.soft]}>
           <Stat value={`${completedCount}`} label={t('profile.stat.bookings')} />
@@ -183,7 +213,38 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    profileText: { gap: 4 },
+    profileText: { gap: 4, flex: 1 },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: space(1), flexWrap: 'wrap' },
+    verifiedChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      backgroundColor: colors.successSoft,
+      paddingHorizontal: space(1),
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+    },
+    verifiedText: { color: colors.success, fontWeight: '600' },
+    verifyBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      borderRadius: radius.lg,
+      padding: space(1.75),
+      marginBottom: space(2),
+    },
+    verifyIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.md,
+      backgroundColor: colors.teal,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    verifyText: { flex: 1, gap: 2 },
     stats: {
       flexDirection: 'row',
       alignItems: 'center',

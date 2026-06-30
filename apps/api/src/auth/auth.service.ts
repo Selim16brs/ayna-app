@@ -1,11 +1,22 @@
-import { ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import type { User } from '@prisma/client';
 import type { Env } from '@ayna/config/env';
 import { ENV } from '../config/config.module';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import {
   decryptField,
   encryptField,
+  generateOtp,
+  hashOtp,
   hashPassword,
   normalizePhone,
   phoneHash,
@@ -14,10 +25,16 @@ import {
 } from '../common/crypto';
 import type { LoginInput, RegisterInput } from './auth.dto';
 
+// §4.6 OTP politikası
+const OTP_TTL_SEC = 300; // 5 dk geçerli
+const OTP_MAX_ATTEMPTS = 5; // kod başına yanlış deneme
+const OTP_RESEND_COOLDOWN_SEC = 30; // yeni kod isteme aralığı
+
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -90,6 +107,92 @@ export class AuthService {
     return this.safe(user);
   }
 
+  // §4.6 — OTP iste. Kod düz metin saklanmaz (HMAC). Mock SMS ile "gönderilir".
+  async requestOtp(phone: string) {
+    const key = this.env.FIELD_ENCRYPTION_KEY;
+    const ph = phoneHash(phone, key);
+
+    // Yeniden gönderim soğuma süresi (spam önleme)
+    const last = await this.prisma.otpCode.findFirst({
+      where: { phoneHash: ph },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (last) {
+      const ageSec = (Date.now() - last.createdAt.getTime()) / 1000;
+      if (ageSec < OTP_RESEND_COOLDOWN_SEC) {
+        throw new HttpException(
+          { code: 'OTP_RATE_LIMIT', message: 'Çok sık kod istendi, biraz bekle' },
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+    }
+
+    // Önceki kullanılmamış kodları geçersiz kıl (tek aktif kod)
+    await this.prisma.otpCode.updateMany({
+      where: { phoneHash: ph, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+
+    const code = generateOtp();
+    await this.prisma.otpCode.create({
+      data: {
+        phoneHash: ph,
+        codeHash: hashOtp(code, key),
+        expiresAt: new Date(Date.now() + OTP_TTL_SEC * 1000),
+      },
+    });
+
+    // Mock SMS — gerçek sağlayıcı eklenene kadar konsola yazılır (PII log'lanmaz: telefon yok)
+    await this.audit.record({ action: 'otp.request', resourceType: 'otp' });
+    if (this.env.SMS_PROVIDER === 'mock') {
+      // eslint-disable-next-line no-console
+      console.log(`[mock-sms] OTP kodu: ${code}`);
+    }
+
+    // devCode YALNIZCA mock sağlayıcıda döner; üretimde asla istemciye inmez
+    return {
+      sent: true,
+      expiresInSec: OTP_TTL_SEC,
+      ...(this.env.SMS_PROVIDER === 'mock' ? { devCode: code } : {}),
+    };
+  }
+
+  // §4.6 — OTP doğrula. Süre + deneme limiti; başarıda kullanıcı phoneVerified olur.
+  async verifyOtp(phone: string, code: string) {
+    const key = this.env.FIELD_ENCRYPTION_KEY;
+    const ph = phoneHash(phone, key);
+
+    const otp = await this.prisma.otpCode.findFirst({
+      where: { phoneHash: ph, consumedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!otp) {
+      throw new BadRequestException({ code: 'OTP_INVALID', message: 'Kod geçersiz veya süresi doldu' });
+    }
+    if (otp.attempts >= OTP_MAX_ATTEMPTS) {
+      throw new BadRequestException({ code: 'OTP_INVALID', message: 'Çok fazla yanlış deneme' });
+    }
+    if (otp.codeHash !== hashOtp(code, key)) {
+      await this.prisma.otpCode.update({
+        where: { id: otp.id },
+        data: { attempts: { increment: 1 } },
+      });
+      throw new BadRequestException({ code: 'OTP_INVALID', message: 'Kod geçersiz veya süresi doldu' });
+    }
+
+    await this.prisma.otpCode.update({
+      where: { id: otp.id },
+      data: { consumedAt: new Date() },
+    });
+    // Kayıtlı kullanıcı varsa telefonunu doğrulanmış işaretle
+    const updated = await this.prisma.user.updateMany({
+      where: { phoneHash: ph },
+      data: { phoneVerified: true },
+    });
+    await this.audit.record({ action: 'otp.verify', resourceType: 'otp' });
+    return { verified: true, phoneVerified: updated.count > 0 };
+  }
+
   private session(user: User) {
     const token = signJwt(
       { sub: user.id, role: user.role },
@@ -106,6 +209,7 @@ export class AuthService {
       email: user.email ?? undefined,
       city: user.city ?? undefined,
       role: user.role,
+      phoneVerified: user.phoneVerified,
       phone: decryptField(Buffer.from(user.phoneEnc), this.env.FIELD_ENCRYPTION_KEY),
     };
   }

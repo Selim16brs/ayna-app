@@ -574,6 +574,21 @@ export const tr = {
   'boni.premium.demo': 'Premium’u dene (demo)',
   'boni.disclaimer': 'Boni tıbbi tavsiye vermez; gerekirse bir uzmana danış.',
 
+  // §4.6 — Telefon doğrulama (OTP)
+  'verify.title': 'Telefonu doğrula',
+  'verify.subtitle': 'Numaranı doğrulayarak hesabını güvene al.',
+  'verify.send': 'Kod gönder',
+  'verify.resend': 'Tekrar gönder',
+  'verify.code_label': 'Doğrulama kodu',
+  'verify.placeholder': '6 haneli kod',
+  'verify.confirm': 'Doğrula',
+  'verify.success': 'Telefonun doğrulandı 💚',
+  'verify.dev_hint': 'Demo kodu',
+  'verify.no_phone': 'Doğrulamak için önce giriş yap.',
+  'profile.verify.cta': 'Telefonunu doğrula',
+  'profile.verify.desc': 'Hesabını güvene almak için numaranı onayla',
+  'profile.verify.done': 'Telefon doğrulandı',
+
   // Sistem / domain
   'auth.otp.sent': 'Doğrulama kodu gönderildi',
   'auth.otp.invalid': 'Kod geçersiz veya süresi dolmuş',
