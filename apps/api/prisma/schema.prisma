@@ -342,14 +342,18 @@ model MarketPrice {
 // --- Çift-kör + eşikli puanlama (Build Brief §1.8) ---
 // Puanlar iki taraf da verene kadar gizli; agregat eşik aşılınca görünür.
 model Rating {
-  id        String   @id @default(uuid()) @db.Uuid
-  bookingId String   @map("booking_id")
-  raterRole String   @map("rater_role") // 'user' | 'specialist'
-  subjectId String   @map("subject_id") // değerlendirilen (uzman/işletme veya kullanıcı)
-  score     Int
-  comment   String   @default("")
-  visible   Boolean  @default(false)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id         String    @id @default(uuid()) @db.Uuid
+  bookingId  String    @map("booking_id")
+  raterRole  String    @map("rater_role") // 'user' | 'specialist'
+  subjectId  String    @map("subject_id") // değerlendirilen (uzman/işletme veya kullanıcı)
+  score      Int
+  comment    String    @default("")
+  serviceTag String    @default("") @map("service_tag") // §6.D opsiyonel hizmet etiketi
+  visible    Boolean   @default(false)
+  // §6.D — açılınca kalıcı (silme yolu YOK); uzman/işletme yanıt verebilir (silemez)
+  reply      String    @default("")
+  repliedAt  DateTime? @map("replied_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([subjectId, visible])
   @@index([bookingId])

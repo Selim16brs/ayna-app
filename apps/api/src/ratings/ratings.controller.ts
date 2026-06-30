@@ -1,8 +1,11 @@
-import { Body, Controller, Get, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { AdminGuard } from '../common/admin.guard';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
+  type ReplyInput,
+  replySchema,
   type SubmitRatingInput,
   submitRatingSchema,
   type ThresholdInput,
@@ -23,6 +26,13 @@ export class RatingsController {
   @Get('summary')
   summary(@Query('subjectId') subjectId: string) {
     return this.ratings.summary(subjectId);
+  }
+
+  // §6.D — uzman/işletme yorumu yanıtlar (giriş gerekli; yorum silinemez, yalnızca yanıt)
+  @Post(':id/reply')
+  @UseGuards(JwtAuthGuard)
+  reply(@Param('id') id: string, @Body(new ZodValidationPipe(replySchema)) body: ReplyInput) {
+    return this.ratings.reply(id, body.reply);
   }
 
   @Put('threshold')

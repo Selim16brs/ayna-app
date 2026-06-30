@@ -249,6 +249,20 @@ export default function ProfessionalScreen() {
                 <Text variant="body" tone="inkSoft" style={styles.reviewText}>
                   {r.text}
                 </Text>
+                {/* §6.D — uzman/işletme yanıtı (kalıcı yoruma) */}
+                {r.reply ? (
+                  <View style={styles.replyBox}>
+                    <View style={styles.replyHead}>
+                      <Ionicons name="storefront" size={12} color={colors.rose} />
+                      <Text variant="caption" tone="rose" style={styles.replyLabel}>
+                        {t('pro.review.reply')}
+                      </Text>
+                    </View>
+                    <Text variant="body" tone="inkSoft">
+                      {r.reply}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             ))}
           </View>
@@ -444,6 +458,15 @@ const makeStyles = (colors: ColorTokens) =>
     },
     reviewStars: { flexDirection: 'row', gap: 2 },
     reviewText: { marginTop: space(1.25) },
+    replyBox: {
+      marginTop: space(1.25),
+      padding: space(1.5),
+      backgroundColor: colors.roseSoft,
+      borderRadius: radius.md,
+      gap: space(0.75),
+    },
+    replyHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    replyLabel: { fontWeight: '600' },
     cta: {
       position: 'absolute',
       left: 0,

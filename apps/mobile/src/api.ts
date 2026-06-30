@@ -14,6 +14,25 @@ export interface AiQuota {
   remaining: number;
 }
 
+export interface RatingReview {
+  id: string;
+  score: number;
+  comment: string;
+  serviceTag: string;
+  createdAt: string;
+  reply: string;
+  repliedAt: string | null;
+}
+
+export interface RatingSummary {
+  subjectId: string;
+  count: number;
+  average: number | null;
+  revealed: boolean;
+  threshold: number;
+  reviews: RatingReview[];
+}
+
 // API taban adresi: Expo dev host IP'sinden türetilir (simülatör + cihaz uyumlu).
 const hostUri = Constants.expoConfig?.hostUri ?? '';
 const host = hostUri.split(':')[0] || 'localhost';
@@ -172,6 +191,17 @@ export const api = {
   marketAverage: (category: string, city: string) =>
     get<{ category: string; average: number; floor: number; currency: string; source: string }>(
       `/market/average?category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}`,
+    ),
+
+  // Puanlama (§1.8 çift-kör + §6.D yanıt/kalıcılık)
+  ratingSummary: (subjectId: string) =>
+    get<RatingSummary>(`/ratings/summary?subjectId=${encodeURIComponent(subjectId)}`),
+  // Uzman/işletme görünür yoruma yanıt verir (silemez) — giriş gerekli
+  replyToRating: (token: string, ratingId: string, reply: string) =>
+    post<{ id: string; reply: string; repliedAt: string | null }>(
+      `/ratings/${ratingId}/reply`,
+      { reply },
+      token,
     ),
 
   // AI (§13.5) — anahtar backend'de; premium + ortak aylık kota sunucuda doğrulanır

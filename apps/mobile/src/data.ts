@@ -476,6 +476,8 @@ export interface Review {
   service: string;
   text: string;
   firstVisit: boolean;
+  // §6.D — uzman/işletme yanıtı (açılınca kalıcı; yanıt silinemez)
+  reply?: string;
 }
 
 export interface ProfessionalDetail extends Professional {
@@ -562,6 +564,7 @@ const REVIEW_POOL: Omit<Review, 'id' | 'service'>[] = [
     rating: 4,
     text: 'Usta çok dikkatliydi ve zamanında başladı. Memnun kaldım.',
     firstVisit: false,
+    reply: 'Güzel yorumun için teşekkürler! Seni yeniden ağırlamaktan mutluluk duyarız 💕',
   },
   {
     author: 'Aizhan',

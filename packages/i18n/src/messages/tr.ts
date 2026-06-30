@@ -58,6 +58,7 @@ export const tr = {
   'pro.services': 'Hizmetler',
   'pro.portfolio': 'Doğrulanmış işlemler',
   'pro.reviews': 'Değerlendirmeler',
+  'pro.review.reply': 'Salon yanıtı',
   'pro.no_data': 'Yeterli veri yok',
   'pro.min': 'dk',
   'pro.experience': 'yıl deneyim',

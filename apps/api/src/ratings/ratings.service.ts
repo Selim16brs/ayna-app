@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { SubmitRatingInput } from './ratings.dto';
 
@@ -23,6 +23,7 @@ export class RatingsService {
         subjectId: input.subjectId,
         score: input.score,
         comment: input.comment ?? '',
+        serviceTag: input.serviceTag ?? '',
         visible: false,
       },
     });
@@ -63,9 +64,34 @@ export class RatingsService {
       revealed,
       threshold,
       reviews: revealed
-        ? visible.map((r) => ({ id: r.id, score: r.score, comment: r.comment }))
+        ? visible.map((r) => ({
+            id: r.id,
+            score: r.score,
+            comment: r.comment,
+            serviceTag: r.serviceTag,
+            createdAt: r.createdAt,
+            reply: r.reply,
+            repliedAt: r.repliedAt,
+          }))
         : [],
     };
+  }
+
+  // §6.D — uzman/işletme yorumu YANITLAR (silemez). Yalnızca görünür (kalıcı) yoruma yanıt.
+  async reply(ratingId: string, text: string) {
+    const r = await this.prisma.rating.findUnique({ where: { id: ratingId } });
+    if (!r) throw new NotFoundException({ code: 'RATING_NOT_FOUND', message: 'Yorum bulunamadı' });
+    if (!r.visible) {
+      throw new BadRequestException({
+        code: 'RATING_NOT_VISIBLE',
+        message: 'Henüz açılmamış yoruma yanıt verilemez',
+      });
+    }
+    const updated = await this.prisma.rating.update({
+      where: { id: ratingId },
+      data: { reply: text, repliedAt: new Date() },
+    });
+    return { id: updated.id, reply: updated.reply, repliedAt: updated.repliedAt };
   }
 
   async setThreshold(value: number) {
