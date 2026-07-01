@@ -4,13 +4,26 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   api,
   type Business,
+  type BookingsResp,
   clearToken,
   getToken,
   type InviteCode,
+  type ReviewsResp,
   setToken,
 } from './lib/api';
 
-type Tab = 'profile' | 'codes';
+type Tab = 'profile' | 'bookings' | 'reviews' | 'codes';
+const TL = (n: number) => '₸' + n.toLocaleString('tr-TR');
+const BOOKING_STATUS_TR: Record<string, string> = {
+  confirmed: 'Onaylı',
+  pending: 'Bekliyor',
+  completed: 'Tamamlandı',
+  cancelled: 'İptal',
+  no_show: 'Gelmedi',
+  awaiting_provider: 'Salon onayı bekliyor',
+  alternative_proposed: 'Alternatif önerildi',
+  waitlist: 'Bekleme listesi',
+};
 
 const SECTOR_TR: Record<string, string> = {
   hair: 'Saç',
@@ -65,6 +78,8 @@ export default function ProApp() {
   const roleLabel = role === 'salon' ? 'Salon Sahibi' : role === 'professional' ? 'Uzman' : 'İşletme';
   const NAV: { id: Tab; label: string; icon: string }[] = [
     { id: 'profile', label: 'İşletme Profili', icon: '🏪' },
+    { id: 'bookings', label: 'Randevular', icon: '📅' },
+    { id: 'reviews', label: 'Yorumlar', icon: '⭐' },
     { id: 'codes', label: 'Davet Kodları', icon: '🔑' },
   ];
 
@@ -91,6 +106,8 @@ export default function ProApp() {
       </aside>
       <main className="main">
         {tab === 'profile' && <ProfileView />}
+        {tab === 'bookings' && <BookingsView />}
+        {tab === 'reviews' && <ReviewsView />}
         {tab === 'codes' && <CodesView />}
       </main>
     </div>
@@ -302,5 +319,169 @@ function CodesView() {
         )}
       </div>
     </>
+  );
+}
+
+function useMyBusiness() {
+  const { data, loading } = useAsync<Business[]>(() => api.myBusinesses(), []);
+  return { biz: data?.[0], loading };
+}
+
+function NoBiz({ title }: { title: string }) {
+  return (
+    <>
+      <h1 className="page-title">{title}</h1>
+      <p className="page-sub">Hesabına bağlı bir işletme kaydı bulunamadı.</p>
+      <div className="card">
+        <div className="hint">Önce mobil uygulamadan işletme kaydını tamamla.</div>
+      </div>
+    </>
+  );
+}
+
+function BookingsView() {
+  const { biz, loading: bl } = useMyBusiness();
+  const { data, loading } = useAsync<BookingsResp | null>(
+    () => (biz ? api.myBookings(biz.id) : Promise.resolve(null)),
+    [biz?.id],
+  );
+  if (bl) return <div className="empty">Yükleniyor…</div>;
+  if (!biz) return <NoBiz title="Randevular" />;
+  return (
+    <>
+      <h1 className="page-title">Randevular</h1>
+      <p className="page-sub">{biz.name} — salonuna gelen randevular</p>
+      <div className="card">
+        {loading ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : !data?.linked ? (
+          <div className="hint">
+            Bu işletme henüz keşif listesine bağlı değil. Randevular listeye bağlandığında görünür.
+          </div>
+        ) : data.bookings.length === 0 ? (
+          <div className="empty">Randevu yok</div>
+        ) : (
+          data.bookings.map((b) => (
+            <div key={b.id} className="list-row">
+              <div className="grow">
+                <div className="name">
+                  {b.service}
+                  {b.bookingKind && b.bookingKind !== 'normal' ? ` · ${b.bookingKind}` : ''}
+                </div>
+                <div className="meta">
+                  {b.dateLabel}
+                  {b.customerName ? ` · ${b.customerName}` : ''}
+                  {b.source === 'offline' ? ' · offline kayıt' : ''}
+                </div>
+              </div>
+              <div className="kv-v" style={{ marginRight: 4 }}>
+                {b.price > 0 ? TL(b.price) : '—'}
+              </div>
+              <span className={`pill ${statusPillClass(b.status)}`}>
+                {BOOKING_STATUS_TR[b.status] ?? b.status}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+function statusPillClass(status: string) {
+  if (status === 'completed' || status === 'confirmed') return 'approved';
+  if (status === 'cancelled' || status === 'no_show') return 'rejected';
+  return 'pending';
+}
+
+function ReviewsView() {
+  const { biz, loading: bl } = useMyBusiness();
+  const { data, loading, reload } = useAsync<ReviewsResp | null>(
+    () => (biz ? api.myReviews(biz.id) : Promise.resolve(null)),
+    [biz?.id],
+  );
+  if (bl) return <div className="empty">Yükleniyor…</div>;
+  if (!biz) return <NoBiz title="Yorumlar" />;
+  return (
+    <>
+      <h1 className="page-title">Yorumlar</h1>
+      <p className="page-sub">
+        {biz.name}
+        {data?.linked && data.average != null
+          ? ` — ★ ${data.average} (${data.count} yorum)`
+          : ' — müşteri yorumları'}
+      </p>
+      <div className="card">
+        {loading ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : !data?.linked ? (
+          <div className="hint">Bu işletme henüz keşif listesine bağlı değil.</div>
+        ) : data.reviews.length === 0 ? (
+          <div className="empty">Henüz yorum yok</div>
+        ) : (
+          data.reviews.map((r) => (
+            <ReviewRow key={r.id} businessId={biz.id} review={r} onReplied={reload} />
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+function ReviewRow({
+  businessId,
+  review,
+  onReplied,
+}: {
+  businessId: string;
+  review: ReviewsResp['reviews'][number];
+  onReplied: () => void;
+}) {
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const submit = async () => {
+    if (!text.trim()) return;
+    setBusy(true);
+    try {
+      await api.replyReview(businessId, review.id, text.trim());
+      setText('');
+      setOpen(false);
+      onReplied();
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="review">
+      <div className="stars">
+        {'★'.repeat(review.score)}
+        {'☆'.repeat(5 - review.score)}
+        {review.serviceTag ? ` · ${review.serviceTag}` : ''}
+      </div>
+      <div className="body">{review.comment || '—'}</div>
+      <div className="author">{review.authorLabel}</div>
+      {review.reply ? (
+        <div className="reply">↳ Salon yanıtı: {review.reply}</div>
+      ) : open ? (
+        <div className="reply-box">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Yanıtını yaz…"
+            autoFocus
+          />
+          <button className="btn-sm btn-ok" onClick={submit} disabled={busy || !text.trim()}>
+            {busy ? '…' : 'Gönder'}
+          </button>
+        </div>
+      ) : (
+        <div style={{ marginTop: 10 }}>
+          <button className="btn-sm btn-ghost" onClick={() => setOpen(true)}>
+            Yanıtla
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

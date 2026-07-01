@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { z } from 'zod';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { AdminGuard } from '../common/admin.guard';
 import { type AuthedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -10,6 +11,8 @@ import {
   rejectSchema,
 } from './businesses.dto';
 import { BusinessesService } from './businesses.service';
+
+const replySchema = z.object({ reply: z.string().min(1).max(500) });
 
 @ApiTags('businesses')
 @Controller('businesses')
@@ -58,6 +61,32 @@ export class BusinessesController {
   @UseGuards(JwtAuthGuard)
   revokeCode(@Param('id') id: string, @Param('codeId') codeId: string, @Req() req: AuthedRequest) {
     return this.businesses.revokeInviteCode(id, codeId, req.user!.id);
+  }
+
+  // Salon paneli — kendi randevuları (yalnızca sahibi)
+  @Get(':id/bookings')
+  @UseGuards(JwtAuthGuard)
+  bookings(@Param('id') id: string, @Req() req: AuthedRequest) {
+    return this.businesses.bookingsForBusiness(id, req.user!.id);
+  }
+
+  // Salon paneli — kendi yorumları (provider-blind)
+  @Get(':id/reviews')
+  @UseGuards(JwtAuthGuard)
+  reviews(@Param('id') id: string, @Req() req: AuthedRequest) {
+    return this.businesses.reviewsForBusiness(id, req.user!.id);
+  }
+
+  // Salon paneli — yoruma yanıt (§6.D: yalnızca yanıt, silme yok)
+  @Post(':id/reviews/:ratingId/reply')
+  @UseGuards(JwtAuthGuard)
+  replyReview(
+    @Param('id') id: string,
+    @Param('ratingId') ratingId: string,
+    @Body(new ZodValidationPipe(replySchema)) body: { reply: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.businesses.replyToReview(id, ratingId, body.reply, req.user!.id);
   }
 
   @Post(':id/approve')

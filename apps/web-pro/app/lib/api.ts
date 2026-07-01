@@ -47,6 +47,14 @@ export const api = {
     req<{ ok: boolean }>(`/businesses/${businessId}/invite-codes/${codeId}/revoke`, {
       method: 'POST',
     }),
+  myBookings: (businessId: string) =>
+    req<BookingsResp>(`/businesses/${businessId}/bookings`),
+  myReviews: (businessId: string) => req<ReviewsResp>(`/businesses/${businessId}/reviews`),
+  replyReview: (businessId: string, ratingId: string, reply: string) =>
+    req<{ id: string; reply: string }>(
+      `/businesses/${businessId}/reviews/${ratingId}/reply`,
+      { method: 'POST', body: JSON.stringify({ reply }) },
+    ),
 };
 
 export interface Business {
@@ -69,4 +77,33 @@ export interface InviteCode {
   code: string;
   status: string;
   attempts?: number;
+}
+export interface ProBooking {
+  id: string;
+  service: string;
+  customerName: string;
+  dateLabel: string;
+  price: number;
+  status: string;
+  bookingKind: string;
+  source: string;
+}
+export interface BookingsResp {
+  linked: boolean;
+  bookings: ProBooking[];
+}
+export interface ProReview {
+  id: string;
+  score: number;
+  comment: string;
+  serviceTag: string;
+  authorLabel: string;
+  reply: string;
+  createdAt: string;
+}
+export interface ReviewsResp {
+  linked: boolean;
+  average: number | null;
+  count: number;
+  reviews: ProReview[];
 }

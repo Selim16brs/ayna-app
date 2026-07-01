@@ -261,6 +261,8 @@ model Business {
   categories   String[]       @default([])
   photos       String[]       @default([])
   docUrl       String?        @map("doc_url")
+  // Keşif listesine (professionals) köprü — salon panelinde randevu/yorum kapsamı için
+  professionalId String?      @map("professional_id")
   status       BusinessStatus @default(pending)
   rejectReason String?        @map("reject_reason")
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)

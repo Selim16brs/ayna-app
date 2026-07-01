@@ -138,6 +138,72 @@ export class BusinessesService {
     return b;
   }
 
+  // Salon paneli — YALNIZCA kendi işletmesine (keşif listesine) ait randevular
+  async bookingsForBusiness(businessId: string, ownerUserId: string) {
+    const b = await this.assertOwner(businessId, ownerUserId);
+    if (!b.professionalId) return { linked: false, bookings: [] };
+    const rows = await this.prisma.booking.findMany({
+      where: { proId: b.professionalId },
+      orderBy: { inDays: 'asc' },
+    });
+    return {
+      linked: true,
+      bookings: rows.map((r) => ({
+        id: r.id,
+        service: r.service,
+        // §5 — offline'da müşteri adı, online'da uzman adı; PII değil, salonun kendi kaydı
+        customerName: r.customerName ?? r.uzmanName ?? '',
+        dateLabel: r.dateLabel,
+        price: Number(r.price),
+        status: r.status,
+        bookingKind: r.bookingKind,
+        source: r.source,
+      })),
+    };
+  }
+
+  // Salon paneli — kendi yorumları (provider-blind: yazar kimliği DEĞİL, yalnızca etiket)
+  async reviewsForBusiness(businessId: string, ownerUserId: string) {
+    const b = await this.assertOwner(businessId, ownerUserId);
+    if (!b.professionalId) return { linked: false, average: null, count: 0, reviews: [] };
+    const rows = await this.prisma.rating.findMany({
+      where: { subjectId: b.professionalId, visible: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    const count = rows.length;
+    const average = count
+      ? Math.round((rows.reduce((s, r) => s + r.score, 0) / count) * 10) / 10
+      : null;
+    return {
+      linked: true,
+      average,
+      count,
+      reviews: rows.map((r) => ({
+        id: r.id,
+        score: r.score,
+        comment: r.comment,
+        serviceTag: r.serviceTag,
+        authorLabel: r.authorLabel, // kimlik değil (privacy-by-design)
+        reply: r.reply,
+        createdAt: r.createdAt,
+      })),
+    };
+  }
+
+  // Salon paneli — kendi yorumuna yanıt (§6.D: silinemez, yalnızca yanıtlanır; sahiplik doğrulanır)
+  async replyToReview(businessId: string, ratingId: string, text: string, ownerUserId: string) {
+    const b = await this.assertOwner(businessId, ownerUserId);
+    const r = await this.prisma.rating.findUnique({ where: { id: ratingId } });
+    if (!r || r.subjectId !== b.professionalId) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Yorum bulunamadı' });
+    }
+    const updated = await this.prisma.rating.update({
+      where: { id: ratingId },
+      data: { reply: text, repliedAt: new Date() },
+    });
+    return { id: updated.id, reply: updated.reply };
+  }
+
   async createInviteCode(businessId: string, ownerUserId: string) {
     await this.assertOwner(businessId, ownerUserId);
     let code = randomCode();
