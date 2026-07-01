@@ -17,7 +17,7 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, Screen, Text } from '../../src/ui';
+import { PressableScale, ProgressRing, Screen, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -55,6 +55,13 @@ export default function BenimIcinScreen() {
     () => bookings.filter((b) => b.status === 'completed').length,
     [bookings],
   );
+  // Bakım skoru — gerçek veri: zamanında rutinler / toplam (tutarlılık)
+  const score = useMemo(() => {
+    if (careRoutines.length === 0) return 0;
+    const onTrack = careRoutines.filter((r) => r.dueDays >= 0).length;
+    return Math.round((onTrack / careRoutines.length) * 100);
+  }, [careRoutines]);
+  const scoreState = score >= 80 ? 'great' : score >= 50 ? 'good' : 'low';
   const nextBooking = useMemo(() => {
     const active = bookings.filter((b) =>
       ['confirmed', 'pending', 'awaiting_provider', 'alternative_proposed'].includes(b.status),
@@ -79,6 +86,80 @@ export default function BenimIcinScreen() {
           <Text variant="display" tone="ink" style={styles.greetingName}>
             {firstName}
           </Text>
+        </Animated.View>
+
+        {/* Bakım skoru — halka göstergeli hero (referans dili) */}
+        <Animated.View entering={FadeInDown.duration(360).delay(40)} style={styles.block}>
+          {careRoutines.length > 0 ? (
+            <Pressable
+              style={[styles.scoreCard, shadow.card]}
+              onPress={() => router.push('/care/add?mode=routine')}
+            >
+              <View style={styles.scoreTop}>
+                <ProgressRing
+                  size={94}
+                  stroke={9}
+                  progress={score / 100}
+                  color={colors.accent}
+                  track={colors.accentSoft}
+                >
+                  <View style={styles.scoreCenter}>
+                    <Text variant="h2" tone="ink" style={styles.scoreNum}>
+                      {score}%
+                    </Text>
+                    <Text variant="label" tone="muted" style={styles.scoreRingLabel}>
+                      {t('benim.score.ring')}
+                    </Text>
+                  </View>
+                </ProgressRing>
+                <View style={styles.scoreText}>
+                  <Text variant="label" tone="muted">
+                    {t('benim.score.label')}
+                  </Text>
+                  <Text variant="h2" tone="ink" style={styles.scoreStatus}>
+                    {t(`benim.score.${scoreState}` as 'benim.score.great')}
+                  </Text>
+                  <Text variant="caption" tone="muted" style={styles.scoreSub}>
+                    {t(`benim.score.sub_${scoreState}` as 'benim.score.sub_great')}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.scoreCta}>
+                <Text variant="bodyStrong" tone="onColor">
+                  {t('benim.score.cta')}
+                </Text>
+                <Ionicons name="arrow-forward" size={16} color={colors.onColor} />
+              </View>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={[styles.scoreCard, shadow.card]}
+              onPress={() => router.push('/care/add?mode=routine')}
+            >
+              <View style={styles.scoreTop}>
+                <View style={[styles.scoreEmptyIcon, { backgroundColor: colors.accentSoft }]}>
+                  <Ionicons name="sparkles" size={26} color={colors.accent} />
+                </View>
+                <View style={styles.scoreText}>
+                  <Text variant="label" tone="muted">
+                    {t('benim.score.empty_label')}
+                  </Text>
+                  <Text variant="h2" tone="ink" style={styles.scoreStatus}>
+                    {t('benim.score.empty_title')}
+                  </Text>
+                  <Text variant="caption" tone="muted" style={styles.scoreSub}>
+                    {t('benim.score.empty_sub')}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.scoreCta}>
+                <Text variant="bodyStrong" tone="onColor">
+                  {t('benim.score.empty_cta')}
+                </Text>
+                <Ionicons name="add" size={18} color={colors.onColor} />
+              </View>
+            </Pressable>
+          )}
         </Animated.View>
 
         {/* Öne çıkan: yaklaşan randevu */}
@@ -474,6 +555,31 @@ const makeStyles = (colors: ColorTokens) =>
     header: { paddingHorizontal: space(3), paddingTop: space(1.5), marginBottom: space(2.5) },
     greetingLabel: { marginBottom: space(0.75) },
     greetingName: { letterSpacing: -0.6 },
+    scoreCard: { backgroundColor: colors.surface, borderRadius: radius.xl, padding: space(2.25) },
+    scoreTop: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
+    scoreCenter: { alignItems: 'center' },
+    scoreNum: { fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
+    scoreRingLabel: { fontSize: 9, marginTop: 1 },
+    scoreText: { flex: 1, gap: 3 },
+    scoreStatus: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4, lineHeight: 26 },
+    scoreSub: { lineHeight: 17 },
+    scoreCta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      backgroundColor: colors.accent,
+      borderRadius: radius.lg,
+      paddingVertical: space(1.5),
+      marginTop: space(2),
+    },
+    scoreEmptyIcon: {
+      width: 62,
+      height: 62,
+      borderRadius: 20,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     block: { paddingHorizontal: space(3), marginBottom: space(2) },
 
     // Öne çıkan randevu

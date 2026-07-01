@@ -10,3 +10,4 @@ export { Segmented } from './Segmented';
 export { NailCursor } from './NailCursor';
 export { PressableScale } from './PressableScale';
 export { Progress } from './Progress';
+export { ProgressRing } from './ProgressRing';
