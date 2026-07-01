@@ -72,11 +72,26 @@ export const api = {
     req(`/admin/ads/${id}/active`, { method: 'POST', body: JSON.stringify({ active }) }),
   deleteAd: (id: string) => req(`/admin/ads/${id}`, { method: 'DELETE' }),
   professionals: () => req<Pro[]>('/admin/professionals'),
+  createProfessional: (p: ProInput) =>
+    req<Pro>('/admin/professionals', { method: 'POST', body: JSON.stringify(p) }),
+  updateProfessional: (id: string, p: Partial<ProInput>) =>
+    req<Pro>(`/admin/professionals/${id}`, { method: 'PATCH', body: JSON.stringify(p) }),
+  deleteProfessional: (id: string) =>
+    req(`/admin/professionals/${id}`, { method: 'DELETE' }),
   setFeatured: (id: string, featured: boolean) =>
     req(`/admin/professionals/${id}/feature`, {
       method: 'POST',
       body: JSON.stringify({ featured }),
     }),
+  categories: () => req<Category[]>('/admin/categories'),
+  createCategory: (c: CategoryInput) =>
+    req<Category>('/admin/categories', { method: 'POST', body: JSON.stringify(c) }),
+  updateCategory: (id: string, c: Partial<Omit<CategoryInput, 'code'>>) =>
+    req<Category>(`/admin/categories/${id}`, { method: 'PATCH', body: JSON.stringify(c) }),
+  deleteCategory: (id: string) => req(`/admin/categories/${id}`, { method: 'DELETE' }),
+  marketPrices: () => req<MarketPrice[]>('/admin/market-prices'),
+  setMarketPrice: (m: { category: string; city?: string; basePrice: number }) =>
+    req<MarketPrice>('/admin/market-prices', { method: 'POST', body: JSON.stringify(m) }),
 };
 
 export interface Overview {
@@ -232,10 +247,49 @@ export type NewAd = {
 export interface Pro {
   id: string;
   name: string;
+  specialty: string;
   sector: string;
+  kind: string;
   district: string;
+  about: string;
   rating: number;
   reviewCount: number;
+  experienceYears: number;
+  priceFrom: number;
+  imageUrl: string;
   badge: string;
   featured: boolean;
+}
+export type ProInput = {
+  name: string;
+  sector: string;
+  specialty?: string;
+  kind?: string;
+  district?: string;
+  about?: string;
+  experienceYears?: number;
+  priceFrom?: number;
+  imageUrl?: string;
+  badge?: string;
+};
+export interface Category {
+  id: string;
+  code: string;
+  nameTr: string;
+  icon: string;
+  tone: string;
+  sortOrder: number;
+}
+export type CategoryInput = {
+  code: string;
+  nameTr: string;
+  icon: string;
+  tone: string;
+  sortOrder?: number;
+};
+export interface MarketPrice {
+  id: string;
+  category: string;
+  city: string;
+  basePrice: number;
 }

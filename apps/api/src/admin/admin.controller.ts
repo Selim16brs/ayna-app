@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
@@ -31,6 +31,32 @@ const adSchema = z.object({
   subtitle: z.string().max(120).optional(),
   image: z.string().url(),
   sortOrder: z.number().int().optional(),
+});
+const proSchema = z.object({
+  name: z.string().min(2).max(80),
+  specialty: z.string().max(80).optional(),
+  sector: z.string().min(1).max(40),
+  kind: z.enum(['salon', 'independent']).optional(),
+  district: z.string().max(60).optional(),
+  about: z.string().max(600).optional(),
+  experienceYears: z.number().int().min(0).max(70).optional(),
+  priceFrom: z.number().min(0).max(100_000_000).optional(),
+  imageUrl: z.string().url().optional(),
+  badge: z.enum(['campaign', 'verified', 'today']).optional(),
+});
+const proUpdateSchema = proSchema.partial();
+const categorySchema = z.object({
+  code: z.string().min(1).max(40),
+  nameTr: z.string().min(1).max(60),
+  icon: z.string().min(1).max(40),
+  tone: z.string().min(1).max(20),
+  sortOrder: z.number().int().optional(),
+});
+const categoryUpdateSchema = categorySchema.partial().omit({ code: true });
+const marketSchema = z.object({
+  category: z.string().min(1).max(40),
+  city: z.string().max(60).optional(),
+  basePrice: z.number().min(0).max(100_000_000),
 });
 
 // Tüm admin uçları AdminGuard arkasında (yalnızca admin rolü)
@@ -137,15 +163,68 @@ export class AdminController {
     return this.admin.deleteAd(id);
   }
 
-  // Öne çıkan firmalar
+  // Uzmanlar / keşif listesi — tam CRUD
   @Get('professionals')
   professionals() {
     return this.admin.professionals();
   }
 
+  @Post('professionals')
+  createProfessional(@Body(new ZodValidationPipe(proSchema)) body: z.infer<typeof proSchema>) {
+    return this.admin.createProfessional(body);
+  }
+
+  @Patch('professionals/:id')
+  updateProfessional(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(proUpdateSchema)) body: z.infer<typeof proUpdateSchema>,
+  ) {
+    return this.admin.updateProfessional(id, body);
+  }
+
+  @Delete('professionals/:id')
+  deleteProfessional(@Param('id') id: string) {
+    return this.admin.deleteProfessional(id);
+  }
+
   @Post('professionals/:id/feature')
   setFeatured(@Param('id') id: string, @Body(new ZodValidationPipe(featuredSchema)) body: { featured: boolean }) {
     return this.admin.setFeatured(id, body.featured);
+  }
+
+  // Hizmetler (servis kategorileri) — CRUD
+  @Get('categories')
+  categories() {
+    return this.admin.categories();
+  }
+
+  @Post('categories')
+  createCategory(@Body(new ZodValidationPipe(categorySchema)) body: z.infer<typeof categorySchema>) {
+    return this.admin.createCategory(body);
+  }
+
+  @Patch('categories/:id')
+  updateCategory(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(categoryUpdateSchema)) body: z.infer<typeof categoryUpdateSchema>,
+  ) {
+    return this.admin.updateCategory(id, body);
+  }
+
+  @Delete('categories/:id')
+  deleteCategory(@Param('id') id: string) {
+    return this.admin.deleteCategory(id);
+  }
+
+  // Piyasa fiyatları — liste + upsert
+  @Get('market-prices')
+  marketPrices() {
+    return this.admin.marketPrices();
+  }
+
+  @Post('market-prices')
+  setMarketPrice(@Body(new ZodValidationPipe(marketSchema)) body: z.infer<typeof marketSchema>) {
+    return this.admin.setMarketPrice(body);
   }
 
   // Moderasyon — görünür yorumlar + gizleme

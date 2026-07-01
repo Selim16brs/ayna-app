@@ -8,11 +8,14 @@ import {
   type Business,
   type BusinessDetail,
   type Campaign,
+  type Category,
   type Commissions,
   clearToken,
   getToken,
+  type MarketPrice,
   type Overview,
   type Pro,
+  type ProInput,
   type AdminUser,
   type Stats,
   setToken,
@@ -23,9 +26,11 @@ type Tab =
   | 'stats'
   | 'commissions'
   | 'businesses'
+  | 'professionals'
+  | 'services'
+  | 'prices'
   | 'campaigns'
   | 'ads'
-  | 'featured'
   | 'moderation'
   | 'users';
 const TL = (n: number) => '₸' + n.toLocaleString('tr-TR');
@@ -53,9 +58,11 @@ export default function AdminApp() {
     { id: 'stats', label: 'İstatistik', icon: '📈' },
     { id: 'commissions', label: 'Komisyon', icon: '💰' },
     { id: 'businesses', label: 'Üyelikler', icon: '🏪' },
+    { id: 'professionals', label: 'Uzmanlar', icon: '💇' },
+    { id: 'services', label: 'Hizmetler', icon: '🗂️' },
+    { id: 'prices', label: 'Fiyatlar', icon: '🏷️' },
     { id: 'campaigns', label: 'Kampanya & Banner', icon: '🎯' },
     { id: 'ads', label: 'Reklamlar', icon: '📢' },
-    { id: 'featured', label: 'Öne Çıkanlar', icon: '⭐' },
     { id: 'moderation', label: 'Moderasyon', icon: '🛡️' },
     { id: 'users', label: 'Kullanıcılar', icon: '👥' },
   ];
@@ -82,9 +89,11 @@ export default function AdminApp() {
         {tab === 'stats' && <StatsView />}
         {tab === 'commissions' && <CommissionsView />}
         {tab === 'businesses' && <BusinessesView />}
+        {tab === 'professionals' && <ProfessionalsView />}
+        {tab === 'services' && <ServicesView />}
+        {tab === 'prices' && <PricesView />}
         {tab === 'campaigns' && <CampaignsView />}
         {tab === 'ads' && <AdsView />}
-        {tab === 'featured' && <FeaturedView />}
         {tab === 'moderation' && <ModerationView />}
         {tab === 'users' && <UsersView />}
       </main>
@@ -887,22 +896,84 @@ function AdsView() {
   );
 }
 
-function FeaturedView() {
+const EMPTY_PRO: ProInput = {
+  name: '',
+  sector: 'hair',
+  specialty: '',
+  kind: 'salon',
+  district: '',
+  about: '',
+  experienceYears: 0,
+  priceFrom: 0,
+  imageUrl: '',
+};
+
+function ProfessionalsView() {
   const { data, reload } = useAsync<Pro[]>(() => api.professionals(), []);
+  const { data: cats } = useAsync<Category[]>(() => api.categories(), []);
+  const [edit, setEdit] = useState<{ id?: string; form: ProInput } | null>(null);
+  const [q, setQ] = useState('');
+
+  const list = (data ?? []).filter(
+    (p) => !q || p.name.toLowerCase().includes(q.toLowerCase()) || p.sector.includes(q.toLowerCase()),
+  );
+  const save = async () => {
+    if (!edit) return;
+    if (!edit.form.name || edit.form.name.length < 2 || !edit.form.sector) return;
+    // Boş opsiyonel alanları gönderme (imageUrl .url() doğrulaması boş string'i reddeder)
+    const payload: ProInput = { ...edit.form };
+    if (!payload.imageUrl) delete payload.imageUrl;
+    if (!payload.specialty) delete payload.specialty;
+    if (!payload.district) delete payload.district;
+    if (!payload.about) delete payload.about;
+    if (edit.id) await api.updateProfessional(edit.id, payload);
+    else await api.createProfessional(payload);
+    setEdit(null);
+    reload();
+  };
+  const del = async (id: string) => {
+    if (confirm('Uzman silinsin mi? (ilişkili teklifler de silinir)')) {
+      await api.deleteProfessional(id);
+      reload();
+    }
+  };
+
   return (
     <>
-      <h1 className="page-title">Öne Çıkan Firmalar</h1>
-      <p className="page-sub">Keşifte öne çıkacak işletmeleri seç</p>
+      <h1 className="page-title">Uzmanlar</h1>
+      <p className="page-sub">Keşif listesindeki uzman/salonlar — ekle, düzenle, fiyat, öne çıkar, sil</p>
+      <div className="toolbar">
+        <button className="btn-sm btn-ok" onClick={() => setEdit({ form: { ...EMPTY_PRO } })}>
+          + Yeni uzman
+        </button>
+        <input
+          className="input"
+          style={{ height: 34, maxWidth: 240 }}
+          placeholder="Ara (isim / sektör)"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <span className="page-sub" style={{ margin: 0 }}>
+          {list.length} kayıt
+        </span>
+      </div>
       <div className="card">
         {!data ? (
           <div className="empty">Yükleniyor…</div>
+        ) : list.length === 0 ? (
+          <div className="empty">Uzman yok</div>
         ) : (
-          data.map((p) => (
+          list.map((p) => (
             <div key={p.id} className="list-row">
+              {p.imageUrl ? <img className="thumb" src={p.imageUrl} alt="" /> : <div className="thumb" />}
               <div className="grow">
-                <div className="name">{p.name}</div>
+                <div className="name">
+                  {p.name}
+                  {p.featured ? ' · ⭐' : ''}
+                </div>
                 <div className="meta">
-                  {p.sector} · {p.district} · ★ {p.rating.toFixed(1)} ({p.reviewCount})
+                  {p.sector} · {p.district || '—'} · {p.priceFrom > 0 ? TL(p.priceFrom) + '+' : 'fiyat yok'}{' '}
+                  · ★ {p.rating.toFixed(1)} ({p.reviewCount})
                 </div>
               </div>
               <button
@@ -914,6 +985,287 @@ function FeaturedView() {
               >
                 {p.featured ? 'Öne çıkan' : 'Normal'}
               </button>
+              <button
+                className="btn-sm btn-ghost"
+                onClick={() =>
+                  setEdit({
+                    id: p.id,
+                    form: {
+                      name: p.name,
+                      sector: p.sector,
+                      specialty: p.specialty,
+                      kind: p.kind,
+                      district: p.district,
+                      about: p.about,
+                      experienceYears: p.experienceYears,
+                      priceFrom: p.priceFrom,
+                      imageUrl: p.imageUrl,
+                    },
+                  })
+                }
+              >
+                Düzenle
+              </button>
+              <button className="btn-sm btn-danger" onClick={() => del(p.id)}>
+                Sil
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {edit ? (
+        <div className="modal-backdrop" onClick={() => setEdit(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <div className="page-title" style={{ fontSize: 20 }}>
+                {edit.id ? 'Uzmanı düzenle' : 'Yeni uzman'}
+              </div>
+              <button className="btn-sm btn-ghost" onClick={() => setEdit(null)}>
+                Kapat
+              </button>
+            </div>
+            <div className="form-inline">
+              <F label="Ad *">
+                <input
+                  className="input"
+                  value={edit.form.name}
+                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, name: e.target.value } })}
+                />
+              </F>
+              <F label="Sektör *">
+                <select
+                  className="input"
+                  value={edit.form.sector}
+                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, sector: e.target.value } })}
+                >
+                  {(cats ?? []).map((c) => (
+                    <option key={c.id} value={c.code}>
+                      {c.nameTr} ({c.code})
+                    </option>
+                  ))}
+                </select>
+              </F>
+              <F label="Uzmanlık">
+                <input
+                  className="input"
+                  value={edit.form.specialty ?? ''}
+                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, specialty: e.target.value } })}
+                />
+              </F>
+              <F label="Tür">
+                <select
+                  className="input"
+                  value={edit.form.kind ?? 'salon'}
+                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, kind: e.target.value } })}
+                >
+                  <option value="salon">Salon</option>
+                  <option value="independent">Bağımsız uzman</option>
+                </select>
+              </F>
+              <F label="İlçe/Bölge">
+                <input
+                  className="input"
+                  value={edit.form.district ?? ''}
+                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, district: e.target.value } })}
+                />
+              </F>
+              <F label="Başlangıç fiyatı (KZT)">
+                <input
+                  className="input"
+                  type="number"
+                  value={edit.form.priceFrom ?? 0}
+                  onChange={(e) =>
+                    setEdit({ ...edit, form: { ...edit.form, priceFrom: Number(e.target.value) } })
+                  }
+                />
+              </F>
+              <F label="Deneyim (yıl)">
+                <input
+                  className="input"
+                  type="number"
+                  value={edit.form.experienceYears ?? 0}
+                  onChange={(e) =>
+                    setEdit({ ...edit, form: { ...edit.form, experienceYears: Number(e.target.value) } })
+                  }
+                />
+              </F>
+              <F label="Görsel URL">
+                <input
+                  className="input"
+                  value={edit.form.imageUrl ?? ''}
+                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, imageUrl: e.target.value } })}
+                />
+              </F>
+              <F label="Hakkında" full>
+                <input
+                  className="input"
+                  value={edit.form.about ?? ''}
+                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, about: e.target.value } })}
+                />
+              </F>
+              <button className="btn-sm btn-ok full" onClick={save}>
+                {edit.id ? 'Kaydet' : 'Uzman ekle'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function F({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
+  return (
+    <div className={full ? 'full' : ''}>
+      <div className="kv-k" style={{ marginBottom: 6 }}>
+        {label}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ServicesView() {
+  const { data, reload } = useAsync<Category[]>(() => api.categories(), []);
+  const [form, setForm] = useState({ code: '', nameTr: '', icon: '✨', tone: 'rose', sortOrder: '' });
+  const create = async () => {
+    if (!form.code || !form.nameTr) return;
+    await api.createCategory({
+      code: form.code,
+      nameTr: form.nameTr,
+      icon: form.icon,
+      tone: form.tone,
+      sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
+    });
+    setForm({ code: '', nameTr: '', icon: '✨', tone: 'rose', sortOrder: '' });
+    reload();
+  };
+  return (
+    <>
+      <h1 className="page-title">Hizmetler</h1>
+      <p className="page-sub">Keşif kategorileri (saç, tırnak, makyaj…) — ekle, düzenle, sırala, sil</p>
+
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="form-inline">
+          <input className="input" placeholder="Kod (örn. hair)" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
+          <input className="input" placeholder="Ad (TR)" value={form.nameTr} onChange={(e) => setForm({ ...form, nameTr: e.target.value })} />
+          <input className="input" placeholder="İkon (emoji)" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} />
+          <input className="input" placeholder="Sıra" type="number" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} />
+          <button className="btn-sm btn-ok full" onClick={create}>+ Hizmet ekle</button>
+        </div>
+      </div>
+
+      <div className="card">
+        {!data ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : data.length === 0 ? (
+          <div className="empty">Hizmet yok</div>
+        ) : (
+          data.map((c) => <CategoryRow key={c.id} cat={c} onChanged={reload} />)
+        )}
+      </div>
+    </>
+  );
+}
+
+function CategoryRow({ cat, onChanged }: { cat: Category; onChanged: () => void }) {
+  const [name, setName] = useState(cat.nameTr);
+  const [icon, setIcon] = useState(cat.icon);
+  const [order, setOrder] = useState(String(cat.sortOrder));
+  const dirty = name !== cat.nameTr || icon !== cat.icon || order !== String(cat.sortOrder);
+  return (
+    <div className="list-row">
+      <input
+        className="input"
+        style={{ height: 34, maxWidth: 150 }}
+        value={icon}
+        placeholder="ikon"
+        onChange={(e) => setIcon(e.target.value)}
+      />
+      <input className="input" style={{ height: 34, flex: 1 }} value={name} onChange={(e) => setName(e.target.value)} />
+      <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>{cat.code}</span>
+      <input className="input" style={{ height: 34, maxWidth: 70 }} type="number" value={order} onChange={(e) => setOrder(e.target.value)} />
+      {dirty ? (
+        <button
+          className="btn-sm btn-ok"
+          onClick={async () => {
+            await api.updateCategory(cat.id, { nameTr: name, icon, sortOrder: Number(order) });
+            onChanged();
+          }}
+        >
+          Kaydet
+        </button>
+      ) : null}
+      <button
+        className="btn-sm btn-danger"
+        onClick={async () => {
+          if (confirm(`"${cat.nameTr}" hizmeti silinsin mi?`)) {
+            await api.deleteCategory(cat.id);
+            onChanged();
+          }
+        }}
+      >
+        Sil
+      </button>
+    </div>
+  );
+}
+
+function PricesView() {
+  const { data, reload } = useAsync<MarketPrice[]>(() => api.marketPrices(), []);
+  const { data: cats } = useAsync<Category[]>(() => api.categories(), []);
+  const [form, setForm] = useState({ category: '', city: '', basePrice: '' });
+  const save = async () => {
+    if (!form.category || !form.basePrice) return;
+    await api.setMarketPrice({
+      category: form.category,
+      city: form.city || undefined,
+      basePrice: Number(form.basePrice),
+    });
+    setForm({ category: '', city: '', basePrice: '' });
+    reload();
+  };
+  const catName = (code: string) => cats?.find((c) => c.code === code)?.nameTr ?? code;
+  return (
+    <>
+      <h1 className="page-title">Fiyatlar</h1>
+      <p className="page-sub">
+        Piyasa taban fiyatları (kategori × şehir) — teklif tabanı ve %40-altı uyarısı için. Uzman
+        başlangıç fiyatları "Uzmanlar" bölümünden düzenlenir.
+      </p>
+
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="form-inline">
+          <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+            <option value="">Kategori seç…</option>
+            {(cats ?? []).map((c) => (
+              <option key={c.id} value={c.code}>
+                {c.nameTr}
+              </option>
+            ))}
+          </select>
+          <input className="input" placeholder="Şehir (boş = genel)" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+          <input className="input" placeholder="Taban fiyat (KZT)" type="number" value={form.basePrice} onChange={(e) => setForm({ ...form, basePrice: e.target.value })} />
+          <button className="btn-sm btn-ok full" onClick={save}>Kaydet / güncelle</button>
+        </div>
+      </div>
+
+      <div className="card">
+        {!data ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : data.length === 0 ? (
+          <div className="empty">Fiyat kaydı yok</div>
+        ) : (
+          data.map((m) => (
+            <div key={m.id} className="list-row">
+              <div className="grow">
+                <div className="name">{catName(m.category)}</div>
+                <div className="meta">
+                  {m.category} · {m.city || 'Genel'}
+                </div>
+              </div>
+              <div className="kv-v">{TL(m.basePrice)}</div>
             </div>
           ))
         )}

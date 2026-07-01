@@ -9,6 +9,52 @@ const DEFAULT_PRO_IMAGE =
 // Platform komisyon oranı (yüzde) — app sahibi her online randevudan bu oranı kazanır
 const DEFAULT_COMMISSION_RATE = 10;
 
+interface ProInput {
+  name: string;
+  specialty?: string | undefined;
+  sector: string;
+  kind?: string | undefined;
+  district?: string | undefined;
+  about?: string | undefined;
+  experienceYears?: number | undefined;
+  priceFrom?: number | undefined;
+  imageUrl?: string | undefined;
+  badge?: string | undefined;
+}
+
+function mapAdminPro(p: {
+  id: string;
+  name: string;
+  specialty: string;
+  sector: string;
+  kind: string;
+  district: string;
+  about: string;
+  rating: unknown;
+  reviewCount: number;
+  experienceYears: number;
+  priceFrom: unknown;
+  imageUrl: string;
+  badge: string;
+}) {
+  return {
+    id: p.id,
+    name: p.name,
+    specialty: p.specialty,
+    sector: p.sector,
+    kind: p.kind,
+    district: p.district,
+    about: p.about,
+    rating: Number(p.rating),
+    reviewCount: p.reviewCount,
+    experienceYears: p.experienceYears,
+    priceFrom: Number(p.priceFrom),
+    imageUrl: p.imageUrl,
+    badge: p.badge,
+    featured: p.badge === 'campaign',
+  };
+}
+
 @Injectable()
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
@@ -428,19 +474,58 @@ export class AdminService {
     return { deleted: true };
   }
 
-  // Öne çıkan firmalar — badge üzerinden (campaign = öne çıkan)
+  // Uzmanlar / işletmeler — keşif listesi (tam alanlar, düzenlenebilir)
   async professionals() {
     const rows = await this.prisma.professional.findMany({ orderBy: { rating: 'desc' } });
-    return rows.map((p) => ({
-      id: p.id,
-      name: p.name,
-      sector: p.sector,
-      district: p.district,
-      rating: Number(p.rating),
-      reviewCount: p.reviewCount,
-      badge: p.badge,
-      featured: p.badge === 'campaign',
-    }));
+    return rows.map(mapAdminPro);
+  }
+
+  async createProfessional(input: ProInput) {
+    const p = await this.prisma.professional.create({
+      data: {
+        name: input.name,
+        specialty: input.specialty ?? '',
+        sector: input.sector,
+        kind: (input.kind ?? 'salon') as never,
+        district: input.district ?? '',
+        about: input.about ?? '',
+        experienceYears: input.experienceYears ?? 0,
+        priceFrom: input.priceFrom ?? 0,
+        imageUrl: input.imageUrl ?? DEFAULT_PRO_IMAGE,
+        badge: (input.badge ?? 'verified') as never,
+      },
+    });
+    return mapAdminPro(p);
+  }
+
+  async updateProfessional(id: string, input: { [K in keyof ProInput]?: ProInput[K] | undefined }) {
+    const p = await this.prisma.professional.findUnique({ where: { id } });
+    if (!p) throw new NotFoundException({ code: 'PRO_NOT_FOUND', message: 'Uzman yok' });
+    const updated = await this.prisma.professional.update({
+      where: { id },
+      data: {
+        ...(input.name !== undefined ? { name: input.name } : {}),
+        ...(input.specialty !== undefined ? { specialty: input.specialty } : {}),
+        ...(input.sector !== undefined ? { sector: input.sector } : {}),
+        ...(input.kind !== undefined ? { kind: input.kind as never } : {}),
+        ...(input.district !== undefined ? { district: input.district } : {}),
+        ...(input.about !== undefined ? { about: input.about } : {}),
+        ...(input.experienceYears !== undefined ? { experienceYears: input.experienceYears } : {}),
+        ...(input.priceFrom !== undefined ? { priceFrom: input.priceFrom } : {}),
+        ...(input.imageUrl !== undefined ? { imageUrl: input.imageUrl } : {}),
+        ...(input.badge !== undefined ? { badge: input.badge as never } : {}),
+      },
+    });
+    return mapAdminPro(updated);
+  }
+
+  async deleteProfessional(id: string) {
+    // İlişkili teklifler varsa önce onları temizle (FK)
+    await this.prisma.quote.deleteMany({ where: { professionalId: id } });
+    await this.prisma.professional.delete({ where: { id } }).catch(() => {
+      throw new NotFoundException({ code: 'PRO_NOT_FOUND', message: 'Uzman yok' });
+    });
+    return { deleted: true };
   }
 
   async setFeatured(id: string, featured: boolean) {
@@ -451,6 +536,84 @@ export class AdminService {
       data: { badge: featured ? 'campaign' : 'verified' },
     });
     return { id: updated.id, featured: updated.badge === 'campaign' };
+  }
+
+  // Hizmetler (servis kategorileri) — keşif taksonomisi
+  async categories() {
+    const rows = await this.prisma.serviceCategory.findMany({ orderBy: { sortOrder: 'asc' } });
+    return rows.map((c) => ({
+      id: c.id,
+      code: c.code,
+      nameTr: c.nameTr,
+      icon: c.icon,
+      tone: c.tone,
+      sortOrder: c.sortOrder,
+    }));
+  }
+
+  async createCategory(input: {
+    code: string;
+    nameTr: string;
+    icon: string;
+    tone: string;
+    sortOrder?: number | undefined;
+  }) {
+    const exists = await this.prisma.serviceCategory.findUnique({ where: { code: input.code } });
+    if (exists) throw new BadRequestException({ code: 'CODE_TAKEN', message: 'Bu kod kullanımda' });
+    return this.prisma.serviceCategory.create({
+      data: {
+        code: input.code,
+        nameTr: input.nameTr,
+        icon: input.icon,
+        tone: input.tone,
+        sortOrder: input.sortOrder ?? 0,
+      },
+    });
+  }
+
+  async updateCategory(
+    id: string,
+    input: { nameTr?: string | undefined; icon?: string | undefined; tone?: string | undefined; sortOrder?: number | undefined },
+  ) {
+    const c = await this.prisma.serviceCategory.findUnique({ where: { id } });
+    if (!c) throw new NotFoundException({ code: 'CAT_NOT_FOUND', message: 'Kategori yok' });
+    return this.prisma.serviceCategory.update({
+      where: { id },
+      data: {
+        ...(input.nameTr !== undefined ? { nameTr: input.nameTr } : {}),
+        ...(input.icon !== undefined ? { icon: input.icon } : {}),
+        ...(input.tone !== undefined ? { tone: input.tone } : {}),
+        ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
+      },
+    });
+  }
+
+  async deleteCategory(id: string) {
+    await this.prisma.serviceCategory.delete({ where: { id } }).catch(() => {
+      throw new NotFoundException({ code: 'CAT_NOT_FOUND', message: 'Kategori yok' });
+    });
+    return { deleted: true };
+  }
+
+  // Piyasa fiyatları (kategori × şehir taban fiyatı — teklif tabanı)
+  async marketPrices() {
+    const rows = await this.prisma.marketPrice.findMany({ orderBy: [{ category: 'asc' }, { city: 'asc' }] });
+    return rows.map((m) => ({
+      id: m.id,
+      category: m.category,
+      city: m.city,
+      basePrice: Number(m.basePrice),
+    }));
+  }
+
+  async setMarketPrice(input: { category: string; city?: string | undefined; basePrice: number }) {
+    const city = input.city ?? '';
+    const row = await this.prisma.marketPrice.upsert({
+      where: { category_city: { category: input.category, city } },
+      create: { category: input.category, city, basePrice: input.basePrice },
+      update: { basePrice: input.basePrice },
+    });
+    return { id: row.id, category: row.category, city: row.city, basePrice: Number(row.basePrice) };
   }
 
   // Moderasyon — görünür yorumlar (kötüye kullanım denetimi)
