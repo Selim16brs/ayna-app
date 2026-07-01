@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import type {
+  AdBanner,
   Appointment,
   Campaign,
   LedgerEntry,
@@ -189,6 +190,8 @@ export const api = {
   categories: () => get<ApiCategory[]>('/categories'),
   // §12 — kampanyalar (keşif vitrini)
   campaigns: () => get<Campaign[]>('/campaigns'),
+  // Reklam banner'ları (keşif ekranı sponsorlu şerit)
+  ads: () => get<AdBanner[]>('/ads'),
   // Backend artık sector/kind/district/experienceYears döndürür → mobil Professional ile uyumlu
   professionals: () => get<Professional[]>('/professionals'),
   professional: (id: string) => get<ProfessionalDetail>(`/professionals/${id}`),

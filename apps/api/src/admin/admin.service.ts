@@ -220,6 +220,42 @@ export class AdminService {
     return { deleted: true };
   }
 
+  // Reklam banner yönetimi
+  async ads() {
+    return this.prisma.adBanner.findMany({ orderBy: { sortOrder: 'asc' } });
+  }
+
+  async createAd(input: {
+    proId: string;
+    title: string;
+    subtitle?: string | undefined;
+    image: string;
+    sortOrder?: number | undefined;
+  }) {
+    return this.prisma.adBanner.create({
+      data: {
+        proId: input.proId,
+        title: input.title,
+        subtitle: input.subtitle ?? '',
+        image: input.image,
+        sortOrder: input.sortOrder ?? 0,
+      },
+    });
+  }
+
+  async setAdActive(id: string, active: boolean) {
+    const a = await this.prisma.adBanner.findUnique({ where: { id } });
+    if (!a) throw new NotFoundException({ code: 'AD_NOT_FOUND', message: 'Reklam yok' });
+    return this.prisma.adBanner.update({ where: { id }, data: { active } });
+  }
+
+  async deleteAd(id: string) {
+    await this.prisma.adBanner.delete({ where: { id } }).catch(() => {
+      throw new NotFoundException({ code: 'AD_NOT_FOUND', message: 'Reklam yok' });
+    });
+    return { deleted: true };
+  }
+
   // Öne çıkan firmalar — badge üzerinden (campaign = öne çıkan)
   async professionals() {
     const rows = await this.prisma.professional.findMany({ orderBy: { rating: 'desc' } });

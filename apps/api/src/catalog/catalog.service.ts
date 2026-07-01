@@ -34,6 +34,21 @@ export class CatalogService {
     }));
   }
 
+  // Reklam banner'ları (keşif ekranı sponsorlu şerit)
+  async ads() {
+    const rows = await this.prisma.adBanner.findMany({
+      where: { active: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    return rows.map((a) => ({
+      id: a.id,
+      proId: a.proId,
+      title: a.title,
+      subtitle: a.subtitle,
+      image: a.image,
+    }));
+  }
+
   async professionals() {
     const rows = await this.prisma.professional.findMany({ orderBy: { rating: 'desc' } });
     return rows.map(mapPro);

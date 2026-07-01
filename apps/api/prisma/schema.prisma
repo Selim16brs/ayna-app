@@ -412,6 +412,21 @@ model Campaign {
   @@map("campaigns")
 }
 
+// Reklam banner'ı — keşif ekranındaki sponsorlu şerit (belirli bir uzmana/salona bağlı)
+model AdBanner {
+  id        String   @id @default(uuid()) @db.Uuid
+  proId     String   @map("pro_id") // hedef uzman/salon (keşif listesi id'si)
+  title     String
+  subtitle  String   @default("")
+  image     String
+  sortOrder Int      @default(0) @map("sort_order")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([active, sortOrder])
+  @@map("ad_banners")
+}
+
 // Admin ayarlanabilir parametreler (örn. puan görünürlük eşiği).
 model Setting {
   key      String @id

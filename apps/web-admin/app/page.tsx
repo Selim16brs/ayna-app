@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   api,
+  type AdBanner,
   type AdminReview,
   type Business,
   type BusinessDetail,
@@ -16,7 +17,15 @@ import {
   setToken,
 } from './lib/api';
 
-type Tab = 'overview' | 'stats' | 'businesses' | 'campaigns' | 'featured' | 'moderation' | 'users';
+type Tab =
+  | 'overview'
+  | 'stats'
+  | 'businesses'
+  | 'campaigns'
+  | 'ads'
+  | 'featured'
+  | 'moderation'
+  | 'users';
 const TL = (n: number) => '₸' + n.toLocaleString('tr-TR');
 
 export default function AdminApp() {
@@ -42,6 +51,7 @@ export default function AdminApp() {
     { id: 'stats', label: 'İstatistik', icon: '📈' },
     { id: 'businesses', label: 'Üyelikler', icon: '🏪' },
     { id: 'campaigns', label: 'Kampanya & Banner', icon: '🎯' },
+    { id: 'ads', label: 'Reklamlar', icon: '📢' },
     { id: 'featured', label: 'Öne Çıkanlar', icon: '⭐' },
     { id: 'moderation', label: 'Moderasyon', icon: '🛡️' },
     { id: 'users', label: 'Kullanıcılar', icon: '👥' },
@@ -69,6 +79,7 @@ export default function AdminApp() {
         {tab === 'stats' && <StatsView />}
         {tab === 'businesses' && <BusinessesView />}
         {tab === 'campaigns' && <CampaignsView />}
+        {tab === 'ads' && <AdsView />}
         {tab === 'featured' && <FeaturedView />}
         {tab === 'moderation' && <ModerationView />}
         {tab === 'users' && <UsersView />}
@@ -585,6 +596,113 @@ function CampaignsView() {
                 onClick={async () => {
                   if (confirm('Kampanya silinsin mi?')) {
                     await api.deleteCampaign(c.id);
+                    reload();
+                  }
+                }}
+              >
+                Sil
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+function AdsView() {
+  const { data: ads, reload } = useAsync<AdBanner[]>(() => api.ads(), []);
+  const { data: pros } = useAsync<Pro[]>(() => api.professionals(), []);
+  const [form, setForm] = useState({ proId: '', title: '', subtitle: '', image: '' });
+  const proName = (id: string) => pros?.find((p) => p.id === id)?.name ?? id;
+
+  const create = async () => {
+    if (!form.proId || form.title.length < 2 || !form.image) return;
+    await api.createAd({
+      proId: form.proId,
+      title: form.title,
+      subtitle: form.subtitle || undefined,
+      image: form.image,
+    });
+    setForm({ proId: '', title: '', subtitle: '', image: '' });
+    reload();
+  };
+
+  return (
+    <>
+      <h1 className="page-title">Reklamlar</h1>
+      <p className="page-sub">Keşif ekranındaki sponsorlu reklam şeridi</p>
+
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="form-inline">
+          <select
+            className="input"
+            value={form.proId}
+            onChange={(e) => {
+              const p = pros?.find((x) => x.id === e.target.value);
+              setForm({ ...form, proId: e.target.value, title: form.title || (p?.name ?? '') });
+            }}
+          >
+            <option value="">İşletme seç…</option>
+            {(pros ?? []).map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} · {p.sector}
+              </option>
+            ))}
+          </select>
+          <input
+            className="input"
+            placeholder="Başlık"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Alt başlık (örn. Balayage'de %30)"
+            value={form.subtitle}
+            onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Görsel URL (https://...)"
+            value={form.image}
+            onChange={(e) => setForm({ ...form, image: e.target.value })}
+          />
+          <button className="btn-sm btn-ok full" onClick={create}>
+            + Reklam ekle
+          </button>
+        </div>
+      </div>
+
+      <div className="card">
+        {!ads || ads.length === 0 ? (
+          <div className="empty">Reklam yok</div>
+        ) : (
+          ads.map((a) => (
+            <div key={a.id} className="list-row">
+              {a.image ? <img className="thumb" src={a.image} alt="" /> : <div className="thumb" />}
+              <div className="grow">
+                <div className="name">{a.title}</div>
+                <div className="meta">
+                  {a.subtitle}
+                  {' · '}
+                  {proName(a.proId)}
+                </div>
+              </div>
+              <button
+                className={`switch ${a.active ? 'on' : 'off'}`}
+                onClick={async () => {
+                  await api.setAdActive(a.id, !a.active);
+                  reload();
+                }}
+              >
+                {a.active ? 'Aktif' : 'Pasif'}
+              </button>
+              <button
+                className="btn-sm btn-danger"
+                onClick={async () => {
+                  if (confirm('Reklam silinsin mi?')) {
+                    await api.deleteAd(a.id);
                     reload();
                   }
                 }}

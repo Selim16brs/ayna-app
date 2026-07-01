@@ -18,6 +18,13 @@ const campaignSchema = z.object({
   tone: z.enum(['rose', 'plum', 'gold', 'sage', 'teal']).optional(),
   sortOrder: z.number().int().optional(),
 });
+const adSchema = z.object({
+  proId: z.string().min(1).max(64),
+  title: z.string().min(2).max(80),
+  subtitle: z.string().max(120).optional(),
+  image: z.string().url(),
+  sortOrder: z.number().int().optional(),
+});
 
 // Tüm admin uçları AdminGuard arkasında (yalnızca admin rolü)
 @ApiTags('admin')
@@ -83,6 +90,27 @@ export class AdminController {
   @Delete('campaigns/:id')
   deleteCampaign(@Param('id') id: string) {
     return this.admin.deleteCampaign(id);
+  }
+
+  // Reklam banner yönetimi
+  @Get('ads')
+  ads() {
+    return this.admin.ads();
+  }
+
+  @Post('ads')
+  createAd(@Body(new ZodValidationPipe(adSchema)) body: z.infer<typeof adSchema>) {
+    return this.admin.createAd(body);
+  }
+
+  @Post('ads/:id/active')
+  setAdActive(@Param('id') id: string, @Body(new ZodValidationPipe(activeSchema)) body: { active: boolean }) {
+    return this.admin.setAdActive(id, body.active);
+  }
+
+  @Delete('ads/:id')
+  deleteAd(@Param('id') id: string) {
+    return this.admin.deleteAd(id);
   }
 
   // Öne çıkan firmalar

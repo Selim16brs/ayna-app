@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
 import {
+  type AdBanner,
+  ADS,
   type Campaign,
   CAMPAIGNS,
   getProfessionalDetail,
@@ -32,6 +34,17 @@ export function useCampaigns(): Campaign[] {
     staleTime: 60_000,
   });
   return data && data.length > 0 ? data : CAMPAIGNS;
+}
+
+// Reklam banner'ları (admin yönetimli); API erişilemezse yerel yedeğe düşer
+export function useAds(): AdBanner[] {
+  const { data } = useQuery({
+    queryKey: ['ads'],
+    queryFn: api.ads,
+    retry: 1,
+    staleTime: 60_000,
+  });
+  return data && data.length > 0 ? data : ADS;
 }
 
 export function useProfessionalDetail(id: string): ProfessionalDetail {

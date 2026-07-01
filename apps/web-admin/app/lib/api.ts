@@ -55,6 +55,11 @@ export const api = {
   setCampaignActive: (id: string, active: boolean) =>
     req(`/admin/campaigns/${id}/active`, { method: 'POST', body: JSON.stringify({ active }) }),
   deleteCampaign: (id: string) => req(`/admin/campaigns/${id}`, { method: 'DELETE' }),
+  ads: () => req<AdBanner[]>('/admin/ads'),
+  createAd: (a: NewAd) => req<AdBanner>('/admin/ads', { method: 'POST', body: JSON.stringify(a) }),
+  setAdActive: (id: string, active: boolean) =>
+    req(`/admin/ads/${id}/active`, { method: 'POST', body: JSON.stringify({ active }) }),
+  deleteAd: (id: string) => req(`/admin/ads/${id}`, { method: 'DELETE' }),
   professionals: () => req<Pro[]>('/admin/professionals'),
   setFeatured: (id: string, featured: boolean) =>
     req(`/admin/professionals/${id}/feature`, {
@@ -155,6 +160,22 @@ export type NewCampaign = {
   category?: string;
   image: string;
   tone?: string;
+  sortOrder?: number;
+};
+export interface AdBanner {
+  id: string;
+  proId: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  sortOrder: number;
+  active: boolean;
+}
+export type NewAd = {
+  proId: string;
+  title: string;
+  subtitle?: string;
+  image: string;
   sortOrder?: number;
 };
 export interface Pro {

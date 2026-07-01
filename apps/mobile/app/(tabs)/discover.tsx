@@ -3,8 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Dimensions, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { ADS, buildUpcomingEvents, CATEGORIES, whenShort } from '../../src/data';
-import { useCampaigns, useProfessionals } from '../../src/catalog';
+import { buildUpcomingEvents, CATEGORIES, whenShort } from '../../src/data';
+import { useAds, useCampaigns, useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -44,6 +44,7 @@ export default function DiscoverScreen() {
   );
   const unread = useStore(selectUnreadCount);
   const campaigns = useCampaigns();
+  const ads = useAds();
   const userName = useStore((s) => s.currentUser?.name)?.split(' ')[0] ?? 'Aigerim';
   const categories = CATEGORIES;
   const featured = useProfessionals().slice(0, 8);
@@ -248,7 +249,7 @@ export default function DiscoverScreen() {
           snapToInterval={AD_WIDTH + space(1.5)}
           decelerationRate="fast"
         >
-          {ADS.map((ad) => (
+          {ads.map((ad) => (
             <Pressable
               key={ad.id}
               style={{ width: AD_WIDTH }}
