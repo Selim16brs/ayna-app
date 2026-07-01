@@ -2,5 +2,16 @@
   "name": "@ayna/web-admin",
   "version": "0.0.0",
   "private": true,
-  "description": "AYNA Admin — yönetim ve moderasyon paneli (Next.js) — EPIC 12 ile doldurulacak."
+  "description": "AYNA Admin — yönetim ve moderasyon paneli (Next.js).",
+  "scripts": {
+    "dev": "next dev -p 3100",
+    "build": "next build",
+    "start": "next start -p 3100",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "14",
+    "react": "18",
+    "react-dom": "18"
+  }
 }

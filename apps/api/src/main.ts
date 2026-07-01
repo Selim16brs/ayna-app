@@ -13,6 +13,8 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.setGlobalPrefix(env.API_GLOBAL_PREFIX);
+  // Admin web paneli + mobil için CORS (dev: tüm origin'ler)
+  app.enableCors({ origin: true, credentials: true });
   app.use(requestIdMiddleware);
   app.useGlobalFilters(new AllExceptionsFilter());
   // Not: Girdi doğrulama Zod ile yapılır (packages/validation). NestJS'in
