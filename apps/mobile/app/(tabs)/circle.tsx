@@ -43,7 +43,7 @@ export default function CircleScreen() {
     <Screen edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Text variant="title" tone="ink">
+          <Text variant="display" tone="ink" style={{ letterSpacing: -0.6 }}>
             {t('circle.title')}
           </Text>
           <Text variant="caption" tone="muted" style={styles.subtitle}>
@@ -60,7 +60,7 @@ export default function CircleScreen() {
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* AYNA Life · Pratik Bilgiler — en başta */}
-        <Text variant="h2" tone="ink" style={styles.sectionTitle}>
+        <Text variant="label" tone="muted" style={styles.sectionTitle}>
           {t('circle.life_section')}
         </Text>
         <ScrollView
@@ -99,7 +99,7 @@ export default function CircleScreen() {
 
         {/* Tavsiyeler başlığı + değerlendirme sıralaması */}
         <View style={styles.recHeader}>
-          <Text variant="h2" tone="ink">
+          <Text variant="label" tone="muted">
             {t('circle.recommendations')}
           </Text>
           <View style={styles.sortLabel}>

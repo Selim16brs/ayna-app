@@ -47,7 +47,7 @@ export default function BookingsScreen() {
 
   return (
     <Screen edges={['top']}>
-      <Text variant="title" tone="ink" style={styles.title}>
+      <Text variant="display" tone="ink" style={styles.title}>
         {t('nav.bookings')}
       </Text>
 
