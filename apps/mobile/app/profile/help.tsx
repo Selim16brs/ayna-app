@@ -9,7 +9,7 @@ import { Screen, StackHeader, Text } from '../../src/ui';
 
 export default function HelpScreen() {
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [open, setOpen] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ export default function HelpScreen() {
           {t('help.subtitle')}
         </Text>
 
-        <View style={styles.group}>
+        <View style={[styles.group, shadow.soft]}>
           {FAQ.map((f, i) => {
             const expanded = open === f.id;
             return (
@@ -52,7 +52,7 @@ export default function HelpScreen() {
         <Text variant="label" tone="rose" style={styles.section}>
           {t('help.contact')}
         </Text>
-        <View style={styles.group}>
+        <View style={[styles.group, shadow.soft]}>
           <Pressable onPress={onContact} style={[styles.row, styles.rowBorder]}>
             <View style={[styles.icon, { backgroundColor: colors.roseSoft }]}>
               <Ionicons name="chatbubbles-outline" size={18} color={colors.rose} />
@@ -85,8 +85,6 @@ const makeStyles = (colors: ColorTokens) =>
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       overflow: 'hidden',
     },
     rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },

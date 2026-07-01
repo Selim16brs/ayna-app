@@ -68,7 +68,7 @@ export default function BudgetScreen() {
             </Text>
           </View>
         ) : (
-          <View style={styles.group}>
+          <View style={[styles.group, shadow.soft]}>
             {categories.map(([name, amount], i) => (
               <View key={name} style={[styles.row, i < categories.length - 1 && styles.rowBorder]}>
                 <View style={[styles.icon, { backgroundColor: colors.roseSoft }]}>
@@ -96,7 +96,7 @@ export default function BudgetScreen() {
             </Text>
           </View>
         ) : (
-          <View style={styles.group}>
+          <View style={[styles.group, shadow.soft]}>
             {completed.map((b, i) => (
               <View
                 key={b.id}
@@ -129,8 +129,6 @@ const makeStyles = (colors: ColorTokens) =>
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.xl,
-      borderWidth: 1,
-      borderColor: colors.line,
       padding: space(2.5),
       gap: space(0.5),
     },
@@ -140,8 +138,6 @@ const makeStyles = (colors: ColorTokens) =>
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       overflow: 'hidden',
     },
     empty: { padding: space(2.5), alignItems: 'center' },

@@ -123,7 +123,7 @@ export default function PostDetailScreen() {
           </Text>
 
           {post.comments.length === 0 ? (
-            <View style={styles.noComments}>
+            <View style={[styles.noComments, shadow.soft]}>
               <Text variant="caption" tone="muted">
                 {t('circle.detail.no_comments')}
               </Text>
@@ -131,7 +131,7 @@ export default function PostDetailScreen() {
           ) : (
             <View style={styles.comments}>
               {post.comments.map((c) => (
-                <View key={c.id} style={styles.comment}>
+                <View key={c.id} style={[styles.comment, shadow.soft]}>
                   <View style={styles.commentAvatar}>
                     {c.anonymous ? (
                       <Ionicons name="shield-checkmark" size={13} color={colors.rose} />
@@ -186,8 +186,6 @@ const makeStyles = (colors: ColorTokens) =>
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       padding: space(2),
     },
     cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -215,8 +213,6 @@ const makeStyles = (colors: ColorTokens) =>
     noComments: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       padding: space(2.5),
       alignItems: 'center',
     },
@@ -226,8 +222,6 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       padding: space(1.75),
     },
     commentAvatar: {

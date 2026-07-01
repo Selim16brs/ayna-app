@@ -13,7 +13,7 @@ const CONTACTS = [
 
 export default function SafeScreen() {
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
   const [location, setLocation] = useState(false);
@@ -46,7 +46,7 @@ export default function SafeScreen() {
         </Pressable>
 
         {/* Ayarlar */}
-        <View style={styles.group}>
+        <View style={[styles.group, shadow.soft]}>
           <ToggleRow
             icon="location-outline"
             label={t('safe.location')}
@@ -71,7 +71,7 @@ export default function SafeScreen() {
         <Text variant="caption" tone="muted" style={styles.sectionSub}>
           {t('safe.contacts_sub')}
         </Text>
-        <View style={styles.group}>
+        <View style={[styles.group, shadow.soft]}>
           {CONTACTS.map((c, i) => (
             <View key={c.name} style={[styles.row, i < CONTACTS.length - 1 && styles.rowBorder]}>
               <View style={[styles.icon, { backgroundColor: colors.lavenderSoft }]}>
@@ -163,8 +163,6 @@ const makeStyles = (colors: ColorTokens) =>
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       overflow: 'hidden',
       marginTop: space(2),
     },

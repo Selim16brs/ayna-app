@@ -63,7 +63,7 @@ export default function PassportScreen() {
         </LinearGradient>
 
         {/* Seviye + üyelik */}
-        <View style={styles.group}>
+        <View style={[styles.group, shadow.soft]}>
           <View style={[styles.row, styles.rowBorder]}>
             <View style={[styles.icon, { backgroundColor: colors.goldSoft }]}>
               <Ionicons name="medal-outline" size={18} color={colors.gold} />
@@ -92,7 +92,7 @@ export default function PassportScreen() {
         <Text variant="label" tone="rose" style={styles.section}>
           {t('passport.benefits')}
         </Text>
-        <View style={styles.group}>
+        <View style={[styles.group, shadow.soft]}>
           {BENEFITS.map((b, i) => (
             <View key={b} style={[styles.row, i < BENEFITS.length - 1 && styles.rowBorder]}>
               <View style={[styles.icon, { backgroundColor: colors.successSoft }]}>
@@ -164,8 +164,6 @@ const makeStyles = (colors: ColorTokens) =>
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       overflow: 'hidden',
       marginTop: space(2),
     },
