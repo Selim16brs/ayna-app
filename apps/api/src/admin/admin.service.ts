@@ -6,6 +6,9 @@ import { computeBookingStats } from '../bookings/bookings.service';
 const DEFAULT_PRO_IMAGE =
   'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=70';
 
+// Platform komisyon oranı (yüzde) — app sahibi her online randevudan bu oranı kazanır
+const DEFAULT_COMMISSION_RATE = 10;
+
 @Injectable()
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
@@ -96,6 +99,96 @@ export class AdminService {
       .sort((a, b) => b.count - a.count);
 
     return { range: span, timezone: TZ, series, totals, categories };
+  }
+
+  // Komisyon oranı (yüzde, tam sayı) — ayar tablosundan; yoksa varsayılan %10
+  private async commissionRate(): Promise<number> {
+    const s = await this.prisma.setting.findUnique({ where: { key: 'commission.rate' } });
+    return s?.intValue ?? DEFAULT_COMMISSION_RATE;
+  }
+
+  async setCommissionRate(value: number) {
+    if (value < 0 || value > 100) {
+      throw new BadRequestException({ code: 'BAD_VALUE', message: 'Oran 0–100 olmalı' });
+    }
+    const s = await this.prisma.setting.upsert({
+      where: { key: 'commission.rate' },
+      create: { key: 'commission.rate', intValue: value },
+      update: { intValue: value },
+    });
+    return { rate: s.intValue };
+  }
+
+  // Platform komisyonu — YALNIZCA online app randevuları (userId dolu; offline salon kaydı hariç).
+  // Para birimi kuruş (minor unit) tam sayı ile hesaplanır (float yok, finans kuralı).
+  async commissions() {
+    const rate = await this.commissionRate();
+    const rows = await this.prisma.booking.findMany({
+      where: { userId: { not: null } }, // app üzerinden gelen randevular
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const EARNED = ['completed'];
+    const PENDING = ['confirmed', 'pending', 'awaiting_provider', 'alternative_proposed', 'waitlist'];
+    // kuruş cinsinden komisyon: round(priceMinor * rate / 100)
+    const commMinor = (price: number) => Math.round(Math.round(price * 100) * rate) / 100;
+
+    const bySalon = new Map<
+      string,
+      { proId: string; proName: string; count: number; gmv: number; earned: number; pending: number }
+    >();
+    const totals = { count: rows.length, gmv: 0, earned: 0, pending: 0, voided: 0 };
+    const items = rows.map((r) => {
+      const price = Number(r.price);
+      const commission = Math.round(commMinor(price)) / 100; // KZT (2 hane)
+      const isEarned = EARNED.includes(r.status);
+      const isPending = PENDING.includes(r.status);
+      const key = r.proId || r.proName;
+      const s =
+        bySalon.get(key) ??
+        { proId: r.proId ?? '', proName: r.proName, count: 0, gmv: 0, earned: 0, pending: 0 };
+      s.count += 1;
+      if (isEarned || isPending) {
+        s.gmv += price;
+        totals.gmv += price;
+      }
+      if (isEarned) {
+        s.earned += commission;
+        totals.earned += commission;
+      } else if (isPending) {
+        s.pending += commission;
+        totals.pending += commission;
+      } else {
+        totals.voided += commission;
+      }
+      bySalon.set(key, s);
+      return {
+        id: r.id,
+        proName: r.proName,
+        service: r.service,
+        dateLabel: r.dateLabel,
+        price,
+        commission,
+        status: r.status,
+        state: isEarned ? 'earned' : isPending ? 'pending' : 'void',
+      };
+    });
+
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    return {
+      rate,
+      currency: 'KZT',
+      totals: {
+        count: totals.count,
+        gmv: round2(totals.gmv),
+        earned: round2(totals.earned),
+        pending: round2(totals.pending),
+      },
+      salons: [...bySalon.values()]
+        .map((s) => ({ ...s, gmv: round2(s.gmv), earned: round2(s.earned), pending: round2(s.pending) }))
+        .sort((a, b) => b.earned + b.pending - (a.earned + a.pending)),
+      items,
+    };
   }
 
   // Üyelik işlemleri — işletmeler (duruma göre)

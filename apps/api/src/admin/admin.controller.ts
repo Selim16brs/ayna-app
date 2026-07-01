@@ -9,6 +9,7 @@ const rejectSchema = z.object({ reason: z.string().max(300).optional() });
 const featuredSchema = z.object({ featured: z.boolean() });
 const activeSchema = z.object({ active: z.boolean() });
 const thresholdSchema = z.object({ value: z.number().int().min(1).max(50) });
+const rateSchema = z.object({ value: z.number().int().min(0).max(100) });
 const campaignSchema = z.object({
   title: z.string().min(2).max(80),
   subtitle: z.string().max(120).optional(),
@@ -43,6 +44,17 @@ export class AdminController {
   stats(@Query('days') days?: string) {
     const n = Number(days);
     return this.admin.stats(Number.isFinite(n) && n > 0 ? n : 30);
+  }
+
+  // Platform komisyonu — online app randevularından %oran
+  @Get('commissions')
+  commissions() {
+    return this.admin.commissions();
+  }
+
+  @Post('settings/commission-rate')
+  setCommissionRate(@Body(new ZodValidationPipe(rateSchema)) body: { value: number }) {
+    return this.admin.setCommissionRate(body.value);
   }
 
   // Üyelik / işletme onayları

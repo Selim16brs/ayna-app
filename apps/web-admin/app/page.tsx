@@ -8,6 +8,7 @@ import {
   type Business,
   type BusinessDetail,
   type Campaign,
+  type Commissions,
   clearToken,
   getToken,
   type Overview,
@@ -20,6 +21,7 @@ import {
 type Tab =
   | 'overview'
   | 'stats'
+  | 'commissions'
   | 'businesses'
   | 'campaigns'
   | 'ads'
@@ -49,6 +51,7 @@ export default function AdminApp() {
   const NAV: { id: Tab; label: string; icon: string }[] = [
     { id: 'overview', label: 'Genel Bakış', icon: '📊' },
     { id: 'stats', label: 'İstatistik', icon: '📈' },
+    { id: 'commissions', label: 'Komisyon', icon: '💰' },
     { id: 'businesses', label: 'Üyelikler', icon: '🏪' },
     { id: 'campaigns', label: 'Kampanya & Banner', icon: '🎯' },
     { id: 'ads', label: 'Reklamlar', icon: '📢' },
@@ -77,6 +80,7 @@ export default function AdminApp() {
       <main className="main">
         {tab === 'overview' && <OverviewView />}
         {tab === 'stats' && <StatsView />}
+        {tab === 'commissions' && <CommissionsView />}
         {tab === 'businesses' && <BusinessesView />}
         {tab === 'campaigns' && <CampaignsView />}
         {tab === 'ads' && <AdsView />}
@@ -374,6 +378,122 @@ function CategoryBars({ items }: { items: { sector: string; count: number }[] })
         </div>
       ))}
     </div>
+  );
+}
+
+function CommissionsView() {
+  const { data, loading, reload } = useAsync<Commissions>(() => api.commissions(), []);
+  const [rateInput, setRateInput] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const saveRate = async () => {
+    const v = parseInt(rateInput, 10);
+    if (!Number.isFinite(v) || v < 0 || v > 100) return;
+    setBusy(true);
+    try {
+      await api.setCommissionRate(v);
+      setRateInput('');
+      reload();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const stateLabel = (s: string) =>
+    s === 'earned' ? 'Kazanıldı' : s === 'pending' ? 'Bekliyor' : 'İptal/Gelmedi';
+  const statePill = (s: string) =>
+    s === 'earned' ? 'approved' : s === 'pending' ? 'pending' : 'rejected';
+
+  return (
+    <>
+      <h1 className="page-title">Komisyon</h1>
+      <p className="page-sub">
+        App üzerinden alınan online randevulardan platform komisyonu (offline salon kayıtları hariç)
+      </p>
+
+      {loading || !data ? (
+        <div className="empty">Yükleniyor…</div>
+      ) : (
+        <>
+          <div className="stat-grid">
+            <Stat v={TL(data.totals.earned)} l="Kazanılan komisyon" />
+            <Stat v={TL(data.totals.pending)} l="Bekleyen komisyon" />
+            <Stat v={String(data.totals.count)} l="Online randevu" />
+            <Stat v={`%${data.rate}`} l="Komisyon oranı" />
+          </div>
+
+          <div className="section-title">Komisyon oranı</div>
+          <div className="card">
+            <div className="list-row">
+              <div className="grow">
+                <div className="name">Güncel oran: %{data.rate}</div>
+                <div className="meta">
+                  Her online randevu tutarının %{data.rate}'i platforma kalır (GMV:{' '}
+                  {TL(data.totals.gmv)})
+                </div>
+              </div>
+              <input
+                className="input"
+                style={{ width: 90, height: 34 }}
+                type="number"
+                min={0}
+                max={100}
+                placeholder={String(data.rate)}
+                value={rateInput}
+                onChange={(e) => setRateInput(e.target.value)}
+              />
+              <button className="btn-sm btn-ok" onClick={saveRate} disabled={busy || !rateInput}>
+                Kaydet
+              </button>
+            </div>
+          </div>
+
+          <div className="section-title">Salon bazında</div>
+          <div className="card">
+            {data.salons.length === 0 ? (
+              <div className="empty">Online randevu yok</div>
+            ) : (
+              data.salons.map((s) => (
+                <div key={s.proId || s.proName} className="list-row">
+                  <div className="grow">
+                    <div className="name">{s.proName}</div>
+                    <div className="meta">
+                      {s.count} randevu · GMV {TL(s.gmv)}
+                    </div>
+                  </div>
+                  <div className="kv-v" style={{ color: 'var(--success)' }}>
+                    {TL(s.earned)}
+                  </div>
+                  <span className="pill pending">+{TL(s.pending)} bekliyor</span>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="section-title">Randevu kayıtları ({data.items.length})</div>
+          <div className="card">
+            {data.items.length === 0 ? (
+              <div className="empty">Kayıt yok</div>
+            ) : (
+              data.items.map((it) => (
+                <div key={it.id} className="list-row">
+                  <div className="grow">
+                    <div className="name">
+                      {it.proName} · {it.service}
+                    </div>
+                    <div className="meta">
+                      {it.dateLabel} · Tutar {TL(it.price)}
+                    </div>
+                  </div>
+                  <div className="kv-v">{TL(it.commission)}</div>
+                  <span className={`pill ${statePill(it.state)}`}>{stateLabel(it.state)}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
+    </>
   );
 }
 

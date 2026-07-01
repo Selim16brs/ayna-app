@@ -40,6 +40,12 @@ export const api = {
     }),
   overview: () => req<Overview>('/admin/overview'),
   stats: (days: number) => req<Stats>(`/admin/stats?days=${days}`),
+  commissions: () => req<Commissions>('/admin/commissions'),
+  setCommissionRate: (value: number) =>
+    req<{ rate: number }>('/admin/settings/commission-rate', {
+      method: 'POST',
+      body: JSON.stringify({ value }),
+    }),
   businesses: (status?: string) =>
     req<Business[]>(`/admin/businesses${status ? `?status=${status}` : ''}`),
   businessDetail: (id: string) => req<BusinessDetail>(`/admin/businesses/${id}`),
@@ -83,6 +89,29 @@ export interface Overview {
     revenue: number;
     currency: string;
   };
+}
+export interface Commissions {
+  rate: number;
+  currency: string;
+  totals: { count: number; gmv: number; earned: number; pending: number };
+  salons: {
+    proId: string;
+    proName: string;
+    count: number;
+    gmv: number;
+    earned: number;
+    pending: number;
+  }[];
+  items: {
+    id: string;
+    proName: string;
+    service: string;
+    dateLabel: string;
+    price: number;
+    commission: number;
+    status: string;
+    state: 'earned' | 'pending' | 'void';
+  }[];
 }
 export interface StatPoint {
   date: string;
