@@ -378,17 +378,18 @@ export class AdminService {
     return { id: updated.id, status: updated.status, professionalId: updated.professionalId };
   }
 
-  // Kullanıcılar (temel liste; PII gösterilmez)
+  // Kullanıcılar (temel liste; PII/telefon gösterilmez)
   async users() {
     const rows = await this.prisma.user.findMany({
       orderBy: { createdAt: 'desc' },
-      take: 200,
+      take: 300,
       select: {
         id: true,
         name: true,
         email: true,
         city: true,
         role: true,
+        status: true,
         gender: true,
         phoneVerified: true,
         isPremium: true,
@@ -396,6 +397,67 @@ export class AdminService {
       },
     });
     return rows;
+  }
+
+  async setUserRole(id: string, role: 'user' | 'professional' | 'salon' | 'moderator' | 'admin') {
+    const u = await this.prisma.user.findUnique({ where: { id } });
+    if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
+    const updated = await this.prisma.user.update({ where: { id }, data: { role } });
+    return { id: updated.id, role: updated.role };
+  }
+
+  async setUserStatus(id: string, status: 'active' | 'suspended' | 'deleted') {
+    const u = await this.prisma.user.findUnique({ where: { id } });
+    if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
+    if (u.role === 'admin' && status !== 'active') {
+      throw new BadRequestException({ code: 'CANNOT_SUSPEND_ADMIN', message: 'Admin askıya alınamaz' });
+    }
+    const updated = await this.prisma.user.update({ where: { id }, data: { status } });
+    return { id: updated.id, status: updated.status };
+  }
+
+  async setUserPremium(id: string, isPremium: boolean) {
+    const u = await this.prisma.user.findUnique({ where: { id } });
+    if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
+    const updated = await this.prisma.user.update({ where: { id }, data: { isPremium } });
+    return { id: updated.id, isPremium: updated.isPremium };
+  }
+
+  // Randevular — platform geneli (admin görünürlüğü)
+  async bookings(filter?: string) {
+    const rows = await this.prisma.booking.findMany({ orderBy: { createdAt: 'desc' }, take: 300 });
+    const mapped = rows.map((b) => ({
+      id: b.id,
+      service: b.service,
+      proName: b.proName,
+      customerName: b.customerName ?? b.uzmanName ?? '',
+      dateLabel: b.dateLabel,
+      price: Number(b.price),
+      status: b.status,
+      source: b.source,
+      online: b.userId != null, // app üzerinden mi (komisyonlu)
+      createdAt: b.createdAt,
+    }));
+    return filter && filter !== 'all' ? mapped.filter((b) => b.status === filter) : mapped;
+  }
+
+  // Teklif talepleri (§ çekirdek akış: foto teklif / talep) + gelen teklifler
+  async quoteRequests() {
+    const rows = await this.prisma.quoteRequest.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      include: { category: true, quotes: true },
+    });
+    return rows.map((q) => ({
+      id: q.id,
+      category: q.category?.nameTr ?? '—',
+      note: q.note ?? '',
+      hasPhoto: !!q.photoUrl,
+      status: q.status,
+      quoteCount: q.quotes.length,
+      bestPrice: q.quotes.length ? Math.min(...q.quotes.map((x) => Number(x.price))) : null,
+      createdAt: q.createdAt,
+    }));
   }
 
   // Kampanya / banner yönetimi

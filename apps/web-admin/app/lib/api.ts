@@ -60,6 +60,15 @@ export const api = {
   rejectBusiness: (id: string, reason: string) =>
     req(`/admin/businesses/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
   users: () => req<AdminUser[]>('/admin/users'),
+  setUserRole: (id: string, role: string) =>
+    req(`/admin/users/${id}/role`, { method: 'POST', body: JSON.stringify({ role }) }),
+  setUserStatus: (id: string, status: string) =>
+    req(`/admin/users/${id}/status`, { method: 'POST', body: JSON.stringify({ status }) }),
+  setUserPremium: (id: string, isPremium: boolean) =>
+    req(`/admin/users/${id}/premium`, { method: 'POST', body: JSON.stringify({ isPremium }) }),
+  bookings: (status?: string) =>
+    req<AdminBooking[]>(`/admin/bookings${status && status !== 'all' ? `?status=${status}` : ''}`),
+  quoteRequests: () => req<QuoteReq[]>('/admin/quote-requests'),
   campaigns: () => req<Campaign[]>('/admin/campaigns'),
   createCampaign: (c: NewCampaign) =>
     req<Campaign>('/admin/campaigns', { method: 'POST', body: JSON.stringify(c) }),
@@ -203,9 +212,32 @@ export interface AdminUser {
   email?: string;
   city?: string;
   role: string;
+  status: string;
   gender: string;
   phoneVerified: boolean;
   isPremium: boolean;
+  createdAt: string;
+}
+export interface AdminBooking {
+  id: string;
+  service: string;
+  proName: string;
+  customerName: string;
+  dateLabel: string;
+  price: number;
+  status: string;
+  source: string;
+  online: boolean;
+  createdAt: string;
+}
+export interface QuoteReq {
+  id: string;
+  category: string;
+  note: string;
+  hasPhoto: boolean;
+  status: string;
+  quoteCount: number;
+  bestPrice: number | null;
   createdAt: string;
 }
 export interface Campaign {

@@ -58,6 +58,9 @@ const marketSchema = z.object({
   city: z.string().max(60).optional(),
   basePrice: z.number().min(0).max(100_000_000),
 });
+const userRoleSchema = z.object({ role: z.enum(['user', 'professional', 'salon', 'moderator', 'admin']) });
+const userStatusSchema = z.object({ status: z.enum(['active', 'suspended', 'deleted']) });
+const premiumSchema = z.object({ isPremium: z.boolean() });
 
 // Tüm admin uçları AdminGuard arkasında (yalnızca admin rolü)
 @ApiTags('admin')
@@ -116,9 +119,37 @@ export class AdminController {
     return this.admin.setBusinessStatus(id, 'rejected', body.reason);
   }
 
+  // Kullanıcı yönetimi
   @Get('users')
   users() {
     return this.admin.users();
+  }
+
+  @Post('users/:id/role')
+  setUserRole(@Param('id') id: string, @Body(new ZodValidationPipe(userRoleSchema)) body: z.infer<typeof userRoleSchema>) {
+    return this.admin.setUserRole(id, body.role);
+  }
+
+  @Post('users/:id/status')
+  setUserStatus(@Param('id') id: string, @Body(new ZodValidationPipe(userStatusSchema)) body: z.infer<typeof userStatusSchema>) {
+    return this.admin.setUserStatus(id, body.status);
+  }
+
+  @Post('users/:id/premium')
+  setUserPremium(@Param('id') id: string, @Body(new ZodValidationPipe(premiumSchema)) body: { isPremium: boolean }) {
+    return this.admin.setUserPremium(id, body.isPremium);
+  }
+
+  // Randevular (platform geneli)
+  @Get('bookings')
+  bookings(@Query('status') status?: string) {
+    return this.admin.bookings(status);
+  }
+
+  // Teklif talepleri
+  @Get('quote-requests')
+  quoteRequests() {
+    return this.admin.quoteRequests();
   }
 
   // Kampanya / banner yönetimi

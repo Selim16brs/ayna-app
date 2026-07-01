@@ -4,8 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   api,
   type AdBanner,
+  type AdminBooking,
   type AdminReview,
   type Business,
+  type QuoteReq,
   type BusinessDetail,
   type Campaign,
   type Category,
@@ -29,6 +31,8 @@ type Tab =
   | 'professionals'
   | 'services'
   | 'prices'
+  | 'bookings'
+  | 'quotes'
   | 'campaigns'
   | 'ads'
   | 'moderation'
@@ -61,6 +65,8 @@ export default function AdminApp() {
     { id: 'professionals', label: 'Uzmanlar', icon: '💇' },
     { id: 'services', label: 'Hizmetler', icon: '🗂️' },
     { id: 'prices', label: 'Fiyatlar', icon: '🏷️' },
+    { id: 'bookings', label: 'Randevular', icon: '📅' },
+    { id: 'quotes', label: 'Teklifler', icon: '📩' },
     { id: 'campaigns', label: 'Kampanya & Banner', icon: '🎯' },
     { id: 'ads', label: 'Reklamlar', icon: '📢' },
     { id: 'moderation', label: 'Moderasyon', icon: '🛡️' },
@@ -92,6 +98,8 @@ export default function AdminApp() {
         {tab === 'professionals' && <ProfessionalsView />}
         {tab === 'services' && <ServicesView />}
         {tab === 'prices' && <PricesView />}
+        {tab === 'bookings' && <BookingsAdminView />}
+        {tab === 'quotes' && <QuotesView />}
         {tab === 'campaigns' && <CampaignsView />}
         {tab === 'ads' && <AdsView />}
         {tab === 'moderation' && <ModerationView />}
@@ -1274,29 +1282,201 @@ function PricesView() {
   );
 }
 
+const ROLE_TR: Record<string, string> = {
+  user: 'Kullanıcı',
+  professional: 'Uzman',
+  salon: 'Salon',
+  moderator: 'Moderatör',
+  admin: 'Admin',
+};
+
 function UsersView() {
-  const { data } = useAsync<AdminUser[]>(() => api.users(), []);
+  const { data, reload } = useAsync<AdminUser[]>(() => api.users(), []);
+  const [q, setQ] = useState('');
+  const [role, setRole] = useState('all');
+  const list = (data ?? []).filter(
+    (u) =>
+      (role === 'all' || u.role === role) &&
+      (!q ||
+        u.name.toLowerCase().includes(q.toLowerCase()) ||
+        (u.email ?? '').toLowerCase().includes(q.toLowerCase())),
+  );
   return (
     <>
       <h1 className="page-title">Kullanıcılar</h1>
-      <p className="page-sub">Son kayıt olan kullanıcılar</p>
+      <p className="page-sub">Rol, durum ve premium yönetimi ({data?.length ?? 0} kayıt)</p>
+      <div className="toolbar">
+        {['all', 'user', 'salon', 'professional', 'moderator', 'admin'].map((r) => (
+          <button key={r} className={`chip ${role === r ? 'on' : ''}`} onClick={() => setRole(r)}>
+            {r === 'all' ? 'Hepsi' : ROLE_TR[r]}
+          </button>
+        ))}
+        <input
+          className="input"
+          style={{ height: 34, maxWidth: 220 }}
+          placeholder="Ara (isim / e-posta)"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </div>
       <div className="card">
-        {!data || data.length === 0 ? (
+        {list.length === 0 ? (
           <div className="empty">Kullanıcı yok</div>
         ) : (
-          data.map((u) => (
+          list.map((u) => (
             <div key={u.id} className="list-row">
               <div className="grow">
                 <div className="name">
-                  {u.name}
-                  {u.isPremium ? ' · ⭐ Premium' : ''}
+                  {u.name || '—'}
+                  {u.isPremium ? ' · ⭐' : ''}
+                  {u.status !== 'active' ? ' · ⛔' : ''}
                 </div>
                 <div className="meta">
-                  {u.email ?? '—'} · {u.city ?? '—'} · {u.role}
-                  {u.phoneVerified ? ' · ✓ doğrulandı' : ''}
+                  {u.email ?? '—'} · {u.city ?? '—'}
+                  {u.phoneVerified ? ' · ✓ telefon' : ''}
+                  {u.gender === 'female' ? ' · Kadın' : ''}
                 </div>
               </div>
-              <span className="pill approved">{u.gender === 'female' ? 'Kadın' : '—'}</span>
+              <select
+                className="input"
+                style={{ height: 32, maxWidth: 130 }}
+                value={u.role}
+                onChange={async (e) => {
+                  await api.setUserRole(u.id, e.target.value);
+                  reload();
+                }}
+              >
+                {['user', 'salon', 'professional', 'moderator', 'admin'].map((r) => (
+                  <option key={r} value={r}>
+                    {ROLE_TR[r]}
+                  </option>
+                ))}
+              </select>
+              <button
+                className={`switch ${u.isPremium ? 'on' : 'off'}`}
+                onClick={async () => {
+                  await api.setUserPremium(u.id, !u.isPremium);
+                  reload();
+                }}
+              >
+                {u.isPremium ? 'Premium' : 'Normal'}
+              </button>
+              {u.status === 'active' ? (
+                <button
+                  className="btn-sm btn-danger"
+                  onClick={async () => {
+                    if (u.role === 'admin') return alert('Admin askıya alınamaz.');
+                    if (confirm(`${u.name || 'Kullanıcı'} askıya alınsın mı?`)) {
+                      await api.setUserStatus(u.id, 'suspended');
+                      reload();
+                    }
+                  }}
+                >
+                  Askıya al
+                </button>
+              ) : (
+                <button
+                  className="btn-sm btn-ok"
+                  onClick={async () => {
+                    await api.setUserStatus(u.id, 'active');
+                    reload();
+                  }}
+                >
+                  Aktifleştir
+                </button>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+const BOOKING_STATUS_TR: Record<string, string> = {
+  confirmed: 'Onaylı',
+  pending: 'Bekliyor',
+  completed: 'Tamamlandı',
+  cancelled: 'İptal',
+  no_show: 'Gelmedi',
+  awaiting_provider: 'Salon onayı bekliyor',
+  alternative_proposed: 'Alternatif önerildi',
+  waitlist: 'Bekleme listesi',
+};
+
+function BookingsAdminView() {
+  const [status, setStatus] = useState('all');
+  const { data } = useAsync<AdminBooking[]>(() => api.bookings(status), [status]);
+  const STATES = ['all', 'confirmed', 'completed', 'cancelled', 'no_show', 'waitlist'];
+  const pill = (s: string) =>
+    s === 'completed' || s === 'confirmed' ? 'approved' : s === 'cancelled' || s === 'no_show' ? 'rejected' : 'pending';
+  return (
+    <>
+      <h1 className="page-title">Randevular</h1>
+      <p className="page-sub">Platform geneli tüm randevular ({data?.length ?? 0})</p>
+      <div className="toolbar">
+        {STATES.map((s) => (
+          <button key={s} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>
+            {s === 'all' ? 'Hepsi' : BOOKING_STATUS_TR[s]}
+          </button>
+        ))}
+      </div>
+      <div className="card">
+        {!data ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : data.length === 0 ? (
+          <div className="empty">Randevu yok</div>
+        ) : (
+          data.map((b) => (
+            <div key={b.id} className="list-row">
+              <div className="grow">
+                <div className="name">
+                  {b.proName} · {b.service}
+                </div>
+                <div className="meta">
+                  {b.dateLabel}
+                  {b.customerName ? ` · ${b.customerName}` : ''} ·{' '}
+                  {b.online ? 'Online (app)' : 'Offline (salon)'}
+                </div>
+              </div>
+              <div className="kv-v">{b.price > 0 ? TL(b.price) : '—'}</div>
+              <span className={`pill ${pill(b.status)}`}>{BOOKING_STATUS_TR[b.status] ?? b.status}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+function QuotesView() {
+  const { data } = useAsync<QuoteReq[]>(() => api.quoteRequests(), []);
+  return (
+    <>
+      <h1 className="page-title">Teklifler</h1>
+      <p className="page-sub">Foto teklif / talep istekleri ve gelen teklifler ({data?.length ?? 0})</p>
+      <div className="card">
+        {!data ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : data.length === 0 ? (
+          <div className="empty">Teklif talebi yok</div>
+        ) : (
+          data.map((q) => (
+            <div key={q.id} className="list-row">
+              <div className="grow">
+                <div className="name">
+                  {q.category}
+                  {q.hasPhoto ? ' · 📷' : ''}
+                </div>
+                <div className="meta">{q.note || 'Not yok'}</div>
+              </div>
+              <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>
+                {q.quoteCount} teklif
+              </span>
+              {q.bestPrice != null ? <div className="kv-v">min {TL(q.bestPrice)}</div> : null}
+              <span className={`pill ${q.status === 'open' ? 'pending' : 'approved'}`}>
+                {q.status === 'open' ? 'Açık' : 'Kapalı'}
+              </span>
             </div>
           ))
         )}
