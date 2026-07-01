@@ -37,6 +37,11 @@ export class AdminController {
     return this.admin.businesses(status);
   }
 
+  @Get('businesses/:id')
+  businessDetail(@Param('id') id: string) {
+    return this.admin.businessDetail(id);
+  }
+
   @Post('businesses/:id/approve')
   approve(@Param('id') id: string) {
     return this.admin.setBusinessStatus(id, 'approved');
@@ -82,6 +87,17 @@ export class AdminController {
   @Post('professionals/:id/feature')
   setFeatured(@Param('id') id: string, @Body(new ZodValidationPipe(featuredSchema)) body: { featured: boolean }) {
     return this.admin.setFeatured(id, body.featured);
+  }
+
+  // Moderasyon — görünür yorumlar + gizleme
+  @Get('reviews')
+  reviews() {
+    return this.admin.reviews();
+  }
+
+  @Post('reviews/:id/hide')
+  hideReview(@Param('id') id: string) {
+    return this.admin.hideReview(id);
   }
 
   // Moderasyon — puan görünürlük eşiği

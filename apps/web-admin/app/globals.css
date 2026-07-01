@@ -105,3 +105,21 @@ a { color: inherit; }
 .switch.off { background: var(--line); color: var(--muted); }
 .form-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 20px; }
 .form-inline .full { grid-column: 1 / -1; }
+
+/* Modal (işletme detay) */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(40, 34, 30, 0.42);
+  display: grid; place-items: center; padding: 24px; z-index: 50;
+  backdrop-filter: blur(2px);
+}
+.modal {
+  width: 100%; max-width: 640px; max-height: 88vh; overflow-y: auto;
+  background: var(--surface); border-radius: 20px; padding: 28px; box-shadow: var(--shadow);
+}
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.modal-head .pill { display: inline-block; margin-top: 8px; }
+.kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+.kv-k { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.kv-v { font-size: 15px; font-weight: 600; margin-top: 3px; word-break: break-word; }
+.about { margin-top: 20px; color: var(--ink); line-height: 1.5; font-size: 14px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 24px; }

@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   api,
+  type AdminReview,
   type Business,
+  type BusinessDetail,
   type Campaign,
   clearToken,
   getToken,
@@ -13,7 +15,7 @@ import {
   setToken,
 } from './lib/api';
 
-type Tab = 'overview' | 'businesses' | 'campaigns' | 'featured' | 'users';
+type Tab = 'overview' | 'businesses' | 'campaigns' | 'featured' | 'moderation' | 'users';
 const TL = (n: number) => '₸' + n.toLocaleString('tr-TR');
 
 export default function AdminApp() {
@@ -39,6 +41,7 @@ export default function AdminApp() {
     { id: 'businesses', label: 'Üyelikler', icon: '🏪' },
     { id: 'campaigns', label: 'Kampanya & Banner', icon: '🎯' },
     { id: 'featured', label: 'Öne Çıkanlar', icon: '⭐' },
+    { id: 'moderation', label: 'Moderasyon', icon: '🛡️' },
     { id: 'users', label: 'Kullanıcılar', icon: '👥' },
   ];
 
@@ -64,6 +67,7 @@ export default function AdminApp() {
         {tab === 'businesses' && <BusinessesView />}
         {tab === 'campaigns' && <CampaignsView />}
         {tab === 'featured' && <FeaturedView />}
+        {tab === 'moderation' && <ModerationView />}
         {tab === 'users' && <UsersView />}
       </main>
     </div>
@@ -191,12 +195,15 @@ function Stat({ v, l }: { v: string; l: string }) {
 
 function BusinessesView() {
   const [status, setStatus] = useState<string>('pending');
+  const [detail, setDetail] = useState<BusinessDetail | null>(null);
   const { data, reload } = useAsync<Business[]>(() => api.businesses(status), [status]);
   const act = async (id: string, kind: 'approve' | 'reject') => {
     if (kind === 'approve') await api.approveBusiness(id);
     else await api.rejectBusiness(id, prompt('Red sebebi:') ?? '');
+    setDetail(null);
     reload();
   };
+  const openDetail = async (id: string) => setDetail(await api.businessDetail(id));
   return (
     <>
       <h1 className="page-title">Üyelikler</h1>
@@ -214,16 +221,16 @@ function BusinessesView() {
         ) : (
           data.map((b) => (
             <div key={b.id} className="list-row">
-              <div className="grow">
+              <div className="grow" style={{ cursor: 'pointer' }} onClick={() => openDetail(b.id)}>
                 <div className="name">{b.name}</div>
                 <div className="meta">
                   {b.ownerName} · {b.sector} · {b.city}
                   {b.district ? ` / ${b.district}` : ''} · {b.phone}
                 </div>
               </div>
-              <span className={`pill ${b.status}`}>
-                {b.status === 'pending' ? 'Bekliyor' : b.status === 'approved' ? 'Onaylı' : 'Red'}
-              </span>
+              <button className="btn-sm btn-ghost" onClick={() => openDetail(b.id)}>
+                Detay
+              </button>
               {b.status !== 'approved' ? (
                 <button className="btn-sm btn-ok" onClick={() => act(b.id, 'approve')}>
                   Onayla
@@ -234,6 +241,107 @@ function BusinessesView() {
                   Reddet
                 </button>
               ) : null}
+            </div>
+          ))
+        )}
+      </div>
+
+      {detail ? (
+        <div className="modal-backdrop" onClick={() => setDetail(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <div>
+                <div className="page-title" style={{ fontSize: 20 }}>
+                  {detail.name}
+                </div>
+                <span className={`pill ${detail.status}`}>
+                  {detail.status === 'pending'
+                    ? 'Onay bekliyor'
+                    : detail.status === 'approved'
+                      ? 'Onaylı'
+                      : 'Reddedildi'}
+                </span>
+              </div>
+              <button className="btn-sm btn-ghost" onClick={() => setDetail(null)}>
+                Kapat
+              </button>
+            </div>
+            <div className="kv-grid">
+              <KV k="Sahip" v={detail.ownerName} />
+              <KV k="Sektör" v={detail.sector} />
+              <KV k="Telefon" v={detail.phone} />
+              <KV k="E-posta" v={detail.email || '—'} />
+              <KV k="Vergi/kayıt no" v={detail.taxId || '—'} />
+              <KV k="Çalışma saatleri" v={detail.workingHours || '—'} />
+              <KV k="Adres" v={`${detail.city} / ${detail.district} ${detail.address}`.trim()} />
+              <KV k="Kategoriler" v={detail.categories.join(', ') || '—'} />
+              <KV k="Ekip (uzman)" v={String(detail.specialistCount)} />
+              <KV k="Davet kodu" v={String(detail.inviteCodes.length)} />
+              <KV k="Belge" v={detail.docUrl ? 'Yüklendi' : 'Yok'} />
+            </div>
+            {detail.about ? <p className="about">{detail.about}</p> : null}
+            {detail.rejectReason ? (
+              <p className="err">Red sebebi: {detail.rejectReason}</p>
+            ) : null}
+            <div className="modal-actions">
+              {detail.status !== 'approved' ? (
+                <button className="btn-sm btn-ok" onClick={() => act(detail.id, 'approve')}>
+                  Onayla
+                </button>
+              ) : null}
+              {detail.status !== 'rejected' ? (
+                <button className="btn-sm btn-danger" onClick={() => act(detail.id, 'reject')}>
+                  Reddet
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+function KV({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="kv">
+      <div className="kv-k">{k}</div>
+      <div className="kv-v">{v}</div>
+    </div>
+  );
+}
+
+function ModerationView() {
+  const { data, reload } = useAsync<AdminReview[]>(() => api.reviews(), []);
+  const hide = async (id: string) => {
+    if (confirm('Bu yorumu gizle? (moderasyon)')) {
+      await api.hideReview(id);
+      reload();
+    }
+  };
+  return (
+    <>
+      <h1 className="page-title">Moderasyon</h1>
+      <p className="page-sub">Görünür yorumlar — uygunsuz içeriği gizle</p>
+      <div className="card">
+        {!data || data.length === 0 ? (
+          <div className="empty">Görünür yorum yok</div>
+        ) : (
+          data.map((r) => (
+            <div key={r.id} className="list-row">
+              <div className="grow">
+                <div className="name">
+                  {'★'.repeat(r.score)}
+                  {r.serviceTag ? ` · ${r.serviceTag}` : ''}
+                </div>
+                <div className="meta">
+                  {r.comment || '—'} — {r.authorLabel}
+                </div>
+                {r.reply ? <div className="meta">↳ Salon: {r.reply}</div> : null}
+              </div>
+              <button className="btn-sm btn-danger" onClick={() => hide(r.id)}>
+                Gizle
+              </button>
             </div>
           ))
         )}

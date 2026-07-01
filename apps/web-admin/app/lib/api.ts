@@ -41,6 +41,9 @@ export const api = {
   overview: () => req<Overview>('/admin/overview'),
   businesses: (status?: string) =>
     req<Business[]>(`/admin/businesses${status ? `?status=${status}` : ''}`),
+  businessDetail: (id: string) => req<BusinessDetail>(`/admin/businesses/${id}`),
+  reviews: () => req<AdminReview[]>('/admin/reviews'),
+  hideReview: (id: string) => req(`/admin/reviews/${id}/hide`, { method: 'POST' }),
   approveBusiness: (id: string) => req(`/admin/businesses/${id}/approve`, { method: 'POST' }),
   rejectBusiness: (id: string, reason: string) =>
     req(`/admin/businesses/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
@@ -87,6 +90,25 @@ export interface Business {
   taxId: string;
   status: string;
   rejectReason?: string;
+  createdAt: string;
+}
+export interface BusinessDetail extends Business {
+  about: string;
+  address: string;
+  workingHours: string;
+  categories: string[];
+  docUrl?: string;
+  specialistCount: number;
+  inviteCodes: { code: string; status: string; attempts: number }[];
+}
+export interface AdminReview {
+  id: string;
+  subjectId: string;
+  score: number;
+  comment: string;
+  serviceTag: string;
+  authorLabel: string;
+  reply: string;
   createdAt: string;
 }
 export interface AdminUser {

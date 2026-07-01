@@ -49,6 +49,40 @@ export class AdminService {
     }));
   }
 
+  // İşletme detay — ekip (uzman) + davet kodları + tam bilgi
+  async businessDetail(id: string) {
+    const b = await this.prisma.business.findUnique({ where: { id } });
+    if (!b) throw new NotFoundException({ code: 'BUSINESS_NOT_FOUND', message: 'İşletme yok' });
+    const [specialists, inviteCodes] = await Promise.all([
+      this.prisma.specialist.findMany({ where: { businessId: id } }),
+      this.prisma.businessInviteCode.findMany({
+        where: { businessId: id },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+    return {
+      id: b.id,
+      name: b.name,
+      ownerName: b.ownerName,
+      sector: b.sector,
+      about: b.about,
+      city: b.city,
+      district: b.district,
+      address: b.address,
+      phone: b.phone,
+      email: b.email,
+      taxId: b.taxId,
+      workingHours: b.workingHours,
+      categories: b.categories,
+      docUrl: b.docUrl ?? undefined,
+      status: b.status,
+      rejectReason: b.rejectReason ?? undefined,
+      createdAt: b.createdAt,
+      specialistCount: specialists.length,
+      inviteCodes: inviteCodes.map((c) => ({ code: c.code, status: c.status, attempts: c.attempts })),
+    };
+  }
+
   async setBusinessStatus(id: string, status: 'approved' | 'rejected', reason?: string) {
     const b = await this.prisma.business.findUnique({ where: { id } });
     if (!b) throw new NotFoundException({ code: 'BUSINESS_NOT_FOUND', message: 'İşletme yok' });
@@ -142,6 +176,33 @@ export class AdminService {
       data: { badge: featured ? 'campaign' : 'verified' },
     });
     return { id: updated.id, featured: updated.badge === 'campaign' };
+  }
+
+  // Moderasyon — görünür yorumlar (kötüye kullanım denetimi)
+  async reviews() {
+    const rows = await this.prisma.rating.findMany({
+      where: { visible: true, raterRole: 'user' },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      subjectId: r.subjectId,
+      score: r.score,
+      comment: r.comment,
+      serviceTag: r.serviceTag,
+      authorLabel: r.authorLabel,
+      reply: r.reply,
+      createdAt: r.createdAt,
+    }));
+  }
+
+  // Moderasyon: uygunsuz yorumu gizle (admin yetkisi; §6.D kalıcılık kullanıcı/işletme içindir)
+  async hideReview(id: string) {
+    const r = await this.prisma.rating.findUnique({ where: { id } });
+    if (!r) throw new NotFoundException({ code: 'RATING_NOT_FOUND', message: 'Yorum yok' });
+    await this.prisma.rating.update({ where: { id }, data: { visible: false } });
+    return { id, hidden: true };
   }
 
   // Puan görünürlük eşiği (moderasyon)
