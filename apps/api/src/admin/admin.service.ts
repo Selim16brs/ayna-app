@@ -2,6 +2,10 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { computeBookingStats } from '../bookings/bookings.service';
 
+// Onayda otomatik keşif listesi için varsayılan görsel (işletme foto yüklemediyse)
+const DEFAULT_PRO_IMAGE =
+  'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=70';
+
 @Injectable()
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
@@ -153,11 +157,36 @@ export class AdminService {
   async setBusinessStatus(id: string, status: 'approved' | 'rejected', reason?: string) {
     const b = await this.prisma.business.findUnique({ where: { id } });
     if (!b) throw new NotFoundException({ code: 'BUSINESS_NOT_FOUND', message: 'İşletme yok' });
+
+    // Onayda: keşif listesi (professional) yoksa otomatik oluştur + bağla.
+    // Böylece register→onay→keşifte görün→salon kendi randevu/yorumunu görür döngüsü kapanır.
+    let professionalId = b.professionalId;
+    if (status === 'approved' && !professionalId) {
+      const sector = b.sector || b.categories[0] || 'hair';
+      const pro = await this.prisma.professional.create({
+        data: {
+          name: b.name,
+          specialty: b.about?.slice(0, 60) || 'Güzellik & bakım',
+          sector,
+          kind: 'salon',
+          district: b.district,
+          about: b.about,
+          imageUrl: b.photos[0] ?? DEFAULT_PRO_IMAGE,
+          badge: 'verified',
+        },
+      });
+      professionalId = pro.id;
+    }
+
     const updated = await this.prisma.business.update({
       where: { id },
-      data: { status, rejectReason: status === 'rejected' ? (reason ?? '') : null },
+      data: {
+        status,
+        rejectReason: status === 'rejected' ? (reason ?? '') : null,
+        ...(professionalId && professionalId !== b.professionalId ? { professionalId } : {}),
+      },
     });
-    return { id: updated.id, status: updated.status };
+    return { id: updated.id, status: updated.status, professionalId: updated.professionalId };
   }
 
   // Kullanıcılar (temel liste; PII gösterilmez)
