@@ -62,6 +62,44 @@ export interface RatingSummary {
   reviews: RatingReview[];
 }
 
+// Salon sahibi mobil yönetim tipleri
+export interface SellerBusiness {
+  id: string;
+  name: string;
+  ownerName: string;
+  sector: string;
+  categories: string[];
+  city: string;
+  district: string;
+  address: string;
+  phone: string;
+  email: string;
+  workingHours: string;
+  status: string;
+  rejectReason?: string;
+}
+export interface SellerInviteCode {
+  id: string;
+  code: string;
+  status: string;
+  attempts?: number;
+}
+export interface SellerReview {
+  id: string;
+  score: number;
+  comment: string;
+  serviceTag: string;
+  authorLabel: string;
+  reply: string;
+  createdAt: string;
+}
+export interface SellerReviews {
+  linked: boolean;
+  average: number | null;
+  count: number;
+  reviews: SellerReview[];
+}
+
 // API taban adresi: Expo dev host IP'sinden türetilir (simülatör + cihaz uyumlu).
 const hostUri = Constants.expoConfig?.hostUri ?? '';
 const host = hostUri.split(':')[0] || 'localhost';
@@ -214,6 +252,23 @@ export const api = {
   proposeBooking: (id: string, dateLabel: string) =>
     post<Appointment>(`/bookings/${id}/propose`, { dateLabel }),
   acceptBooking: (id: string) => post<Appointment>(`/bookings/${id}/accept`, {}),
+
+  // Salon sahibi/uzman kendi işletmesi (mobil yönetim) — hepsi sahibe-kapılı
+  myBusinesses: (token: string) => get<SellerBusiness[]>('/businesses/mine', token),
+  inviteCodes: (token: string, businessId: string) =>
+    get<SellerInviteCode[]>(`/businesses/${businessId}/invite-codes`, token),
+  createInviteCode: (token: string, businessId: string) =>
+    post<SellerInviteCode>(`/businesses/${businessId}/invite-codes`, {}, token),
+  revokeInviteCode: (token: string, businessId: string, codeId: string) =>
+    post<{ ok: boolean }>(`/businesses/${businessId}/invite-codes/${codeId}/revoke`, {}, token),
+  businessReviews: (token: string, businessId: string) =>
+    get<SellerReviews>(`/businesses/${businessId}/reviews`, token),
+  replyBusinessReview: (token: string, businessId: string, ratingId: string, reply: string) =>
+    post<{ id: string; reply: string }>(
+      `/businesses/${businessId}/reviews/${ratingId}/reply`,
+      { reply },
+      token,
+    ),
 
   // Auth (parola tabanlı; telefon sunucuda şifreli saklanır)
   register: (input: RegisterInput) => post<AuthSession>('/auth/register', input),
