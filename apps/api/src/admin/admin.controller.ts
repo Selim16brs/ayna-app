@@ -10,6 +10,12 @@ const featuredSchema = z.object({ featured: z.boolean() });
 const activeSchema = z.object({ active: z.boolean() });
 const thresholdSchema = z.object({ value: z.number().int().min(1).max(50) });
 const rateSchema = z.object({ value: z.number().int().min(0).max(100) });
+const payoutSchema = z.object({
+  proId: z.string().min(1).max(64),
+  proName: z.string().min(1).max(120),
+  amount: z.number().positive().max(100_000_000),
+  note: z.string().max(200).optional(),
+});
 const campaignSchema = z.object({
   title: z.string().min(2).max(80),
   subtitle: z.string().max(120).optional(),
@@ -55,6 +61,12 @@ export class AdminController {
   @Post('settings/commission-rate')
   setCommissionRate(@Body(new ZodValidationPipe(rateSchema)) body: { value: number }) {
     return this.admin.setCommissionRate(body.value);
+  }
+
+  // Komisyon tahsilatı kaydet (append-only ledger)
+  @Post('commissions/payouts')
+  addPayout(@Body(new ZodValidationPipe(payoutSchema)) body: z.infer<typeof payoutSchema>) {
+    return this.admin.addPayout(body);
   }
 
   // Üyelik / işletme onayları

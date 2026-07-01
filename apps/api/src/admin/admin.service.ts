@@ -123,10 +123,22 @@ export class AdminService {
   // Para birimi kuruş (minor unit) tam sayı ile hesaplanır (float yok, finans kuralı).
   async commissions() {
     const rate = await this.commissionRate();
-    const rows = await this.prisma.booking.findMany({
-      where: { userId: { not: null } }, // app üzerinden gelen randevular
-      orderBy: { createdAt: 'desc' },
-    });
+    const [rows, payoutRows] = await Promise.all([
+      this.prisma.booking.findMany({
+        where: { userId: { not: null } }, // app üzerinden gelen randevular
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.commissionPayout.findMany({ orderBy: { createdAt: 'desc' } }),
+    ]);
+
+    // Tahsilat toplamı — salon anahtarına göre (kuruş cinsinden tam sayı)
+    const collectedMinorBy = new Map<string, number>();
+    let totalCollectedMinor = 0;
+    for (const p of payoutRows) {
+      const minor = Math.round(Number(p.amount) * 100);
+      collectedMinorBy.set(p.proId, (collectedMinorBy.get(p.proId) ?? 0) + minor);
+      totalCollectedMinor += minor;
+    }
 
     const EARNED = ['completed'];
     const PENDING = ['confirmed', 'pending', 'awaiting_provider', 'alternative_proposed', 'waitlist'];
@@ -175,6 +187,7 @@ export class AdminService {
     });
 
     const round2 = (n: number) => Math.round(n * 100) / 100;
+    const totalCollected = totalCollectedMinor / 100;
     return {
       rate,
       currency: 'KZT',
@@ -183,12 +196,49 @@ export class AdminService {
         gmv: round2(totals.gmv),
         earned: round2(totals.earned),
         pending: round2(totals.pending),
+        collected: round2(totalCollected),
+        // Alacak = kazanılan − tahsil edilen (negatife düşmez: fazla tahsilat 0 sayılır)
+        outstanding: round2(Math.max(0, totals.earned - totalCollected)),
       },
       salons: [...bySalon.values()]
-        .map((s) => ({ ...s, gmv: round2(s.gmv), earned: round2(s.earned), pending: round2(s.pending) }))
-        .sort((a, b) => b.earned + b.pending - (a.earned + a.pending)),
+        .map((s) => {
+          const collected = (collectedMinorBy.get(s.proId || s.proName) ?? 0) / 100;
+          return {
+            ...s,
+            gmv: round2(s.gmv),
+            earned: round2(s.earned),
+            pending: round2(s.pending),
+            collected: round2(collected),
+            outstanding: round2(Math.max(0, s.earned - collected)),
+          };
+        })
+        .sort((a, b) => b.outstanding - a.outstanding || b.earned - a.earned),
+      payouts: payoutRows.slice(0, 50).map((p) => ({
+        id: p.id,
+        proId: p.proId,
+        proName: p.proName,
+        amount: Number(p.amount),
+        note: p.note,
+        createdAt: p.createdAt,
+      })),
       items,
     };
+  }
+
+  // Komisyon tahsilatı kaydet (append-only ledger girişi)
+  async addPayout(input: { proId: string; proName: string; amount: number; note?: string | undefined }) {
+    if (!(input.amount > 0)) {
+      throw new BadRequestException({ code: 'BAD_VALUE', message: 'Tutar pozitif olmalı' });
+    }
+    const p = await this.prisma.commissionPayout.create({
+      data: {
+        proId: input.proId,
+        proName: input.proName,
+        amount: input.amount,
+        note: input.note ?? '',
+      },
+    });
+    return { id: p.id, proId: p.proId, amount: Number(p.amount) };
   }
 
   // Üyelik işlemleri — işletmeler (duruma göre)

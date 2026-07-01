@@ -46,6 +46,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ value }),
     }),
+  addPayout: (p: { proId: string; proName: string; amount: number; note?: string }) =>
+    req<{ id: string }>('/admin/commissions/payouts', {
+      method: 'POST',
+      body: JSON.stringify(p),
+    }),
   businesses: (status?: string) =>
     req<Business[]>(`/admin/businesses${status ? `?status=${status}` : ''}`),
   businessDetail: (id: string) => req<BusinessDetail>(`/admin/businesses/${id}`),
@@ -93,7 +98,14 @@ export interface Overview {
 export interface Commissions {
   rate: number;
   currency: string;
-  totals: { count: number; gmv: number; earned: number; pending: number };
+  totals: {
+    count: number;
+    gmv: number;
+    earned: number;
+    pending: number;
+    collected: number;
+    outstanding: number;
+  };
   salons: {
     proId: string;
     proName: string;
@@ -101,6 +113,16 @@ export interface Commissions {
     gmv: number;
     earned: number;
     pending: number;
+    collected: number;
+    outstanding: number;
+  }[];
+  payouts: {
+    id: string;
+    proId: string;
+    proName: string;
+    amount: number;
+    note: string;
+    createdAt: string;
   }[];
   items: {
     id: string;

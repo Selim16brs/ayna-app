@@ -412,6 +412,20 @@ model Campaign {
   @@map("campaigns")
 }
 
+// Komisyon tahsilat defteri (append-only ledger) — salondan tahsil edilen platform komisyonu.
+// Alacak = (tamamlanan online randevulardan kazanılan komisyon) − (bu defterdeki tahsilat toplamı).
+model CommissionPayout {
+  id        String   @id @default(uuid()) @db.Uuid
+  proId     String   @map("pro_id") // salon/uzman anahtarı (keşif listesi id'si)
+  proName   String   @map("pro_name") // görüntü için anlık kopya
+  amount    Decimal  @db.Decimal(12, 2) // tahsil edilen tutar (KZT, pozitif)
+  note      String   @default("")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([proId])
+  @@map("commission_payouts")
+}
+
 // Reklam banner'ı — keşif ekranındaki sponsorlu şerit (belirli bir uzmana/salona bağlı)
 model AdBanner {
   id        String   @id @default(uuid()) @db.Uuid

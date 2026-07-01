@@ -417,9 +417,9 @@ function CommissionsView() {
         <>
           <div className="stat-grid">
             <Stat v={TL(data.totals.earned)} l="Kazanılan komisyon" />
-            <Stat v={TL(data.totals.pending)} l="Bekleyen komisyon" />
-            <Stat v={String(data.totals.count)} l="Online randevu" />
-            <Stat v={`%${data.rate}`} l="Komisyon oranı" />
+            <Stat v={TL(data.totals.collected)} l="Tahsil edilen" />
+            <Stat v={TL(data.totals.outstanding)} l="Açık alacak" />
+            <Stat v={`%${data.rate}`} l={`Oran · ${data.totals.count} online randevu`} />
           </div>
 
           <div className="section-title">Komisyon oranı</div>
@@ -448,7 +448,7 @@ function CommissionsView() {
             </div>
           </div>
 
-          <div className="section-title">Salon bazında</div>
+          <div className="section-title">Salon bazında — alacak & tahsilat</div>
           <div className="card">
             {data.salons.length === 0 ? (
               <div className="empty">Online randevu yok</div>
@@ -458,17 +458,67 @@ function CommissionsView() {
                   <div className="grow">
                     <div className="name">{s.proName}</div>
                     <div className="meta">
-                      {s.count} randevu · GMV {TL(s.gmv)}
+                      Kazanılan {TL(s.earned)} · Tahsil {TL(s.collected)}
+                      {s.pending > 0 ? ` · +${TL(s.pending)} bekleyen randevu` : ''}
                     </div>
                   </div>
-                  <div className="kv-v" style={{ color: 'var(--success)' }}>
-                    {TL(s.earned)}
-                  </div>
-                  <span className="pill pending">+{TL(s.pending)} bekliyor</span>
+                  {s.outstanding > 0 ? (
+                    <span className="pill rejected">{TL(s.outstanding)} alacak</span>
+                  ) : s.earned > 0 ? (
+                    <span className="pill approved">Tahsil edildi</span>
+                  ) : (
+                    <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>
+                      Alacak yok
+                    </span>
+                  )}
+                  {s.outstanding > 0 ? (
+                    <button
+                      className="btn-sm btn-ok"
+                      onClick={async () => {
+                        const raw = prompt(
+                          `${s.proName} — tahsil edilecek tutar (KZT):`,
+                          String(s.outstanding),
+                        );
+                        if (raw == null) return;
+                        const amount = Number(raw);
+                        if (!Number.isFinite(amount) || amount <= 0) return;
+                        await api.addPayout({
+                          proId: s.proId || s.proName,
+                          proName: s.proName,
+                          amount,
+                        });
+                        reload();
+                      }}
+                    >
+                      Tahsil et
+                    </button>
+                  ) : null}
                 </div>
               ))
             )}
           </div>
+
+          {data.payouts.length > 0 ? (
+            <>
+              <div className="section-title">Tahsilat geçmişi</div>
+              <div className="card">
+                {data.payouts.map((p) => (
+                  <div key={p.id} className="list-row">
+                    <div className="grow">
+                      <div className="name">{p.proName}</div>
+                      <div className="meta">
+                        {new Date(p.createdAt).toLocaleDateString('tr-TR')}
+                        {p.note ? ` · ${p.note}` : ''}
+                      </div>
+                    </div>
+                    <div className="kv-v" style={{ color: 'var(--success)' }}>
+                      {TL(p.amount)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
 
           <div className="section-title">Randevu kayıtları ({data.items.length})</div>
           <div className="card">
