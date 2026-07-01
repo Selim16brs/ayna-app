@@ -341,7 +341,7 @@ function NoBiz({ title }: { title: string }) {
 
 function BookingsView() {
   const { biz, loading: bl } = useMyBusiness();
-  const { data, loading } = useAsync<BookingsResp | null>(
+  const { data, loading, reload } = useAsync<BookingsResp | null>(
     () => (biz ? api.myBookings(biz.id) : Promise.resolve(null)),
     [biz?.id],
   );
@@ -362,29 +362,81 @@ function BookingsView() {
           <div className="empty">Randevu yok</div>
         ) : (
           data.bookings.map((b) => (
-            <div key={b.id} className="list-row">
-              <div className="grow">
-                <div className="name">
-                  {b.service}
-                  {b.bookingKind && b.bookingKind !== 'normal' ? ` · ${b.bookingKind}` : ''}
-                </div>
-                <div className="meta">
-                  {b.dateLabel}
-                  {b.customerName ? ` · ${b.customerName}` : ''}
-                  {b.source === 'offline' ? ' · offline kayıt' : ''}
-                </div>
-              </div>
-              <div className="kv-v" style={{ marginRight: 4 }}>
-                {b.price > 0 ? TL(b.price) : '—'}
-              </div>
-              <span className={`pill ${statusPillClass(b.status)}`}>
-                {BOOKING_STATUS_TR[b.status] ?? b.status}
-              </span>
-            </div>
+            <BookingRow key={b.id} businessId={biz.id} booking={b} onChanged={reload} />
           ))
         )}
       </div>
     </>
+  );
+}
+
+function BookingRow({
+  businessId,
+  booking: b,
+  onChanged,
+}: {
+  businessId: string;
+  booking: BookingsResp['bookings'][number];
+  onChanged: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const run = async (action: 'approve' | 'no-show' | 'cancel' | 'propose') => {
+    let dateLabel: string | undefined;
+    if (action === 'propose') {
+      const v = prompt('Önerilecek yeni tarih (örn. Pazartesi 16:00):');
+      if (!v) return;
+      dateLabel = v;
+    }
+    if (action === 'cancel' && !confirm('Randevu iptal edilsin mi?')) return;
+    setBusy(true);
+    try {
+      await api.bookingAction(businessId, b.id, action, dateLabel);
+      onChanged();
+    } finally {
+      setBusy(false);
+    }
+  };
+  const pending = ['waitlist', 'pending', 'awaiting_provider'].includes(b.status);
+  return (
+    <div className="list-row">
+      <div className="grow">
+        <div className="name">
+          {b.service}
+          {b.bookingKind && b.bookingKind !== 'normal' ? ` · ${b.bookingKind}` : ''}
+        </div>
+        <div className="meta">
+          {b.dateLabel}
+          {b.customerName ? ` · ${b.customerName}` : ''}
+          {b.source === 'offline' ? ' · offline kayıt' : ''}
+        </div>
+      </div>
+      <div className="kv-v" style={{ marginRight: 4 }}>
+        {b.price > 0 ? TL(b.price) : '—'}
+      </div>
+      <span className={`pill ${statusPillClass(b.status)}`}>
+        {BOOKING_STATUS_TR[b.status] ?? b.status}
+      </span>
+      {pending ? (
+        <>
+          <button className="btn-sm btn-ok" disabled={busy} onClick={() => run('approve')}>
+            Onayla
+          </button>
+          <button className="btn-sm btn-ghost" disabled={busy} onClick={() => run('propose')}>
+            Alternatif
+          </button>
+        </>
+      ) : null}
+      {b.status === 'confirmed' ? (
+        <button className="btn-sm btn-ghost" disabled={busy} onClick={() => run('no-show')}>
+          Gelmedi
+        </button>
+      ) : null}
+      {b.status !== 'cancelled' && b.status !== 'completed' && b.status !== 'no_show' ? (
+        <button className="btn-sm btn-danger" disabled={busy} onClick={() => run('cancel')}>
+          İptal
+        </button>
+      ) : null}
+    </div>
   );
 }
 

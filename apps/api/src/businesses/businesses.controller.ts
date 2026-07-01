@@ -13,6 +13,10 @@ import {
 import { BusinessesService } from './businesses.service';
 
 const replySchema = z.object({ reply: z.string().min(1).max(500) });
+const bookingActionSchema = z.object({
+  action: z.enum(['approve', 'no-show', 'cancel', 'propose']),
+  dateLabel: z.string().min(1).max(80).optional(),
+});
 
 @ApiTags('businesses')
 @Controller('businesses')
@@ -68,6 +72,19 @@ export class BusinessesController {
   @UseGuards(JwtAuthGuard)
   bookings(@Param('id') id: string, @Req() req: AuthedRequest) {
     return this.businesses.bookingsForBusiness(id, req.user!.id);
+  }
+
+  // Salon paneli — randevu aksiyonu (onayla/gelmedi/iptal/alternatif öner)
+  @Post(':id/bookings/:bookingId/action')
+  @UseGuards(JwtAuthGuard)
+  bookingAction(
+    @Param('id') id: string,
+    @Param('bookingId') bookingId: string,
+    @Body(new ZodValidationPipe(bookingActionSchema))
+    body: { action: 'approve' | 'no-show' | 'cancel' | 'propose'; dateLabel?: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.businesses.bookingAction(id, bookingId, body.action, req.user!.id, body.dateLabel);
   }
 
   // Salon paneli — kendi yorumları (provider-blind)

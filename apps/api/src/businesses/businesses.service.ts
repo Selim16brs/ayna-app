@@ -9,6 +9,7 @@ import {
 import type { Business, BusinessInviteCode } from '@prisma/client';
 import type { Env } from '@ayna/config/env';
 import { AuditService } from '../audit/audit.service';
+import { BookingsService } from '../bookings/bookings.service';
 import { ENV } from '../config/config.module';
 import { encryptField, hashPassword, normalizePhone, phoneHash } from '../common/crypto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -28,6 +29,7 @@ export class BusinessesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly bookings: BookingsService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -160,6 +162,35 @@ export class BusinessesService {
         source: r.source,
       })),
     };
+  }
+
+  // Salon paneli — kendi randevusuna aksiyon (onayla/gelmedi/iptal/alternatif öner)
+  // Yalnızca sahibi + randevu bu işletmenin keşif listesine ait olmalı.
+  async bookingAction(
+    businessId: string,
+    bookingId: string,
+    action: 'approve' | 'no-show' | 'cancel' | 'propose',
+    ownerUserId: string,
+    dateLabel?: string,
+  ) {
+    const b = await this.assertOwner(businessId, ownerUserId);
+    const bk = await this.prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!bk || !b.professionalId || bk.proId !== b.professionalId) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Randevu bulunamadı' });
+    }
+    switch (action) {
+      case 'approve':
+        return this.bookings.approve(bookingId);
+      case 'no-show':
+        return this.bookings.noShow(bookingId);
+      case 'cancel':
+        return this.bookings.cancel(bookingId);
+      case 'propose':
+        if (!dateLabel) {
+          throw new NotFoundException({ code: 'BAD_INPUT', message: 'Tarih gerekli' });
+        }
+        return this.bookings.propose(bookingId, dateLabel);
+    }
   }
 
   // Salon paneli — kendi yorumları (provider-blind: yazar kimliği DEĞİL, yalnızca etiket)

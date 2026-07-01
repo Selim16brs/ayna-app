@@ -49,6 +49,16 @@ export const api = {
     }),
   myBookings: (businessId: string) =>
     req<BookingsResp>(`/businesses/${businessId}/bookings`),
+  bookingAction: (
+    businessId: string,
+    bookingId: string,
+    action: 'approve' | 'no-show' | 'cancel' | 'propose',
+    dateLabel?: string,
+  ) =>
+    req<{ id: string; status: string }>(
+      `/businesses/${businessId}/bookings/${bookingId}/action`,
+      { method: 'POST', body: JSON.stringify(dateLabel ? { action, dateLabel } : { action }) },
+    ),
   myReviews: (businessId: string) => req<ReviewsResp>(`/businesses/${businessId}/reviews`),
   replyReview: (businessId: string, ratingId: string, reply: string) =>
     req<{ id: string; reply: string }>(
