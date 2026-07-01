@@ -2,5 +2,16 @@
   "name": "@ayna/web-pro",
   "version": "0.0.0",
   "private": true,
-  "description": "AYNA Pro — salon ve uzman paneli (Next.js) — EPIC 3+ ile doldurulacak."
+  "description": "AYNA Pro — salon ve uzman web paneli (Next.js).",
+  "scripts": {
+    "dev": "next dev -p 3200",
+    "build": "next build",
+    "start": "next start -p 3200",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "14",
+    "react": "18",
+    "react-dom": "18"
+  }
 }
