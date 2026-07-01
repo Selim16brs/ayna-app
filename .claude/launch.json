@@ -6,12 +6,6 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@ayna/web-admin", "dev"],
       "port": 3100
-    },
-    {
-      "name": "web-pro",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@ayna/web-pro", "dev"],
-      "port": 3200
     }
   ]
 }
