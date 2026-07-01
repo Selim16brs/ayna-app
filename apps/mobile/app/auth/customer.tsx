@@ -46,7 +46,9 @@ export default function CustomerAuthScreen() {
               password: fields.password ?? '',
             });
       setAuth(session);
-      router.replace('/discover');
+      // Rol bazlı yönlendirme: işletme/uzman → panel, müşteri → keşfet
+      const isSeller = session.user.role === 'salon' || session.user.role === 'professional';
+      router.replace(isSeller ? '/seller/reports' : '/discover');
     } catch (e) {
       const msg = String((e as Error).message ?? '');
       if (msg.includes('409') || msg.includes('401') || msg.includes('400')) {

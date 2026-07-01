@@ -24,6 +24,7 @@ const makeMenuColors = (colors: ColorTokens) => [
 ];
 
 const MENU: { key: MessageKey; icon: IoniconName; danger?: boolean }[] = [
+  { key: 'profile.menu.panel', icon: 'briefcase-outline' },
   { key: 'profile.menu.passport', icon: 'card-outline' },
   { key: 'profile.menu.rewards', icon: 'gift-outline' },
   { key: 'profile.menu.budget', icon: 'wallet-outline' },
@@ -58,7 +59,8 @@ export default function ProfileScreen() {
     setPreference(value === 'system' ? null : value);
 
   const onPress = (key: MessageKey) => {
-    if (key === 'profile.menu.passport') router.push('/profile/passport');
+    if (key === 'profile.menu.panel') router.push('/seller/reports');
+    else if (key === 'profile.menu.passport') router.push('/profile/passport');
     else if (key === 'profile.menu.rewards') router.push('/rewards');
     else if (key === 'profile.menu.budget') router.push('/profile/budget');
     else if (key === 'profile.menu.safe') router.push('/profile/safe');

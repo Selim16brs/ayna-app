@@ -206,6 +206,7 @@ export const tr = {
   'profile.appearance.system': 'Sistem',
   'profile.appearance.light': 'Açık',
   'profile.appearance.dark': 'Koyu',
+  'profile.menu.panel': 'İşletme paneli',
   'profile.menu.passport': 'AYNA Passport',
   'profile.menu.rewards': 'Puanlarım',
   'profile.menu.budget': 'Bütçe',
@@ -367,6 +368,14 @@ export const tr = {
 
   // Satıcı raporları
   'reports.title': 'Raporlar',
+  'reports.panel_title': 'İşletme Paneli',
+  'reports.identity_sub': 'İşletme / Uzman hesabı',
+  'reports.customer_view': 'Müşteri görünümü',
+  'reports.performance': 'Performans',
+  'reports.action.agenda': 'Ortak takvim',
+  'reports.action.offline': 'Offline randevu',
+  'reports.action.gallery': 'Galeri',
+  'reports.action.services': 'Hizmetler',
   'reports.period.week': 'Bu hafta',
   'reports.period.month': 'Bu ay',
   'reports.period.all': 'Tümü',

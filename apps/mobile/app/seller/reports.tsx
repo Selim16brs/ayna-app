@@ -6,12 +6,28 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { api, type BookingStats } from '../../src/api';
 import { formatPrice, SELLER_DATA, type SellerMetric } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
+import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { PressableScale, Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
 type Period = 'week' | 'month' | 'all';
 type IoniconName = keyof typeof Ionicons.glyphMap;
+
+// İşletme paneli hızlı aksiyonları
+const ACTIONS: {
+  id: string;
+  icon: IoniconName;
+  labelKey: MessageKey;
+  route?: string;
+  tone: 'rose' | 'sage' | 'lavender' | 'gold';
+}[] = [
+  { id: 'agenda', icon: 'calendar', labelKey: 'reports.action.agenda', route: '/seller/agenda', tone: 'rose' },
+  { id: 'offline', icon: 'add-circle', labelKey: 'reports.action.offline', route: '/seller/offline', tone: 'sage' },
+  { id: 'gallery', icon: 'images', labelKey: 'reports.action.gallery', route: '/seller/gallery', tone: 'lavender' },
+  { id: 'services', icon: 'pricetags', labelKey: 'reports.action.services', tone: 'gold' },
+];
 
 export default function ReportsScreen() {
   const { t } = useLocale();
@@ -20,6 +36,12 @@ export default function ReportsScreen() {
   const router = useRouter();
   const [period, setPeriod] = useState<Period>('week');
   const data = SELLER_DATA[period];
+  const salonName = useStore((s) => s.currentUser?.name) ?? 'AYNA İşletme';
+
+  const actionTone = (tone: 'rose' | 'sage' | 'lavender' | 'gold') => ({
+    bg: colors[`${tone}Soft` as const],
+    fg: colors[tone],
+  });
 
   // §5 — gerçek randevulardan canlı özet (çevrimdışıysa gizlenir)
   const [stats, setStats] = useState<BookingStats | null>(null);
@@ -36,8 +58,29 @@ export default function ReportsScreen() {
 
   return (
     <Screen edges={['top']}>
-      <StackHeader title={t('reports.title')} />
+      <StackHeader title={t('reports.panel_title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* İşletme kimliği + müşteri görünümü geçişi */}
+        <View style={[styles.identity, shadow.soft]}>
+          <View style={styles.identityAvatar}>
+            <Ionicons name="storefront" size={20} color={colors.onColor} />
+          </View>
+          <View style={styles.flex}>
+            <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+              {salonName}
+            </Text>
+            <Text variant="caption" tone="muted">
+              {t('reports.identity_sub')}
+            </Text>
+          </View>
+          <PressableScale style={styles.custView} onPress={() => router.push('/discover')}>
+            <Ionicons name="eye-outline" size={14} color={colors.rose} />
+            <Text variant="caption" tone="rose" style={styles.custViewText}>
+              {t('reports.customer_view')}
+            </Text>
+          </PressableScale>
+        </View>
+
         {/* Canlı özet (gerçek veriler) */}
         {stats ? (
           <LinearGradient colors={gradients.plum} style={[styles.live, shadow.card]}>
@@ -64,38 +107,35 @@ export default function ReportsScreen() {
           </LinearGradient>
         ) : null}
 
-        {/* Ortak takvim girişi (§5) */}
-        <PressableScale style={styles.agendaLink} onPress={() => router.push('/seller/agenda')}>
-          <View style={styles.agendaIcon}>
-            <Ionicons name="calendar" size={18} color={colors.onColor} />
-          </View>
-          <View style={styles.agendaText}>
-            <Text variant="bodyStrong" tone="ink">
-              {t('agenda.title')}
-            </Text>
-            <Text variant="caption" tone="muted">
-              {t('reports.agenda_sub')}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-        </PressableScale>
+        {/* Panel hızlı aksiyonları */}
+        <View style={styles.actionGrid}>
+          {ACTIONS.map((a) => {
+            const c = actionTone(a.tone);
+            return (
+              <PressableScale
+                key={a.id}
+                style={[styles.action, shadow.soft]}
+                onPress={() => (a.route ? router.push(a.route) : undefined)}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: c.bg }]}>
+                  <Ionicons name={a.icon} size={22} color={c.fg} />
+                </View>
+                <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                  {t(a.labelKey)}
+                </Text>
+                {!a.route ? (
+                  <Text variant="caption" tone="muted">
+                    {t('common.soon')}
+                  </Text>
+                ) : null}
+              </PressableScale>
+            );
+          })}
+        </View>
 
-        {/* Galeri yönetimi girişi (§6.A) */}
-        <PressableScale style={styles.agendaLink} onPress={() => router.push('/seller/gallery')}>
-          <View style={[styles.agendaIcon, { backgroundColor: colors.plum }]}>
-            <Ionicons name="images" size={18} color={colors.onColor} />
-          </View>
-          <View style={styles.agendaText}>
-            <Text variant="bodyStrong" tone="ink">
-              {t('gallery.manage_title')}
-            </Text>
-            <Text variant="caption" tone="muted">
-              {t('gallery.manage_hint')}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-        </PressableScale>
-
+        <Text variant="bodyStrong" tone="ink" style={styles.perfTitle}>
+          {t('reports.performance')}
+        </Text>
         <Segmented
           options={[
             { value: 'week', label: t('reports.period.week') },
@@ -196,6 +236,59 @@ function Metric({ metric }: { metric: SellerMetric }) {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingBottom: space(4) },
+    flex: { flex: 1 },
+    // İşletme kimliği
+    identity: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(1.75),
+      marginBottom: space(2),
+    },
+    identityAvatar: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.rose,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    custView: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.roseSoft,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+    },
+    custViewText: { fontWeight: '600' },
+    // Aksiyon ızgarası
+    actionGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space(1.5),
+      marginBottom: space(1),
+    },
+    action: {
+      width: '47%',
+      flexGrow: 1,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(1.75),
+      gap: space(0.75),
+    },
+    actionIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space(0.5),
+    },
+    perfTitle: { marginTop: space(3), marginBottom: space(1.5) },
     // §5 canlı özet
     live: { borderRadius: radius.lg, padding: space(2), marginBottom: space(2), gap: space(1.5) },
     liveHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
