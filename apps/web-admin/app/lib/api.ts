@@ -69,6 +69,14 @@ export const api = {
   bookings: (status?: string) =>
     req<AdminBooking[]>(`/admin/bookings${status && status !== 'all' ? `?status=${status}` : ''}`),
   quoteRequests: () => req<QuoteReq[]>('/admin/quote-requests'),
+  loyalty: () => req<Loyalty>('/admin/loyalty'),
+  featureFlags: () => req<FeatureFlag[]>('/admin/feature-flags'),
+  setFeatureFlag: (key: string, enabled: boolean, description?: string) =>
+    req<FeatureFlag>('/admin/feature-flags', {
+      method: 'POST',
+      body: JSON.stringify(description !== undefined ? { key, enabled, description } : { key, enabled }),
+    }),
+  auditLogs: () => req<AuditEntry[]>('/admin/audit-logs'),
   campaigns: () => req<Campaign[]>('/admin/campaigns'),
   createCampaign: (c: NewCampaign) =>
     req<Campaign>('/admin/campaigns', { method: 'POST', body: JSON.stringify(c) }),
@@ -238,6 +246,33 @@ export interface QuoteReq {
   status: string;
   quoteCount: number;
   bestPrice: number | null;
+  createdAt: string;
+}
+export interface Loyalty {
+  totals: { earned: number; spent: number; balance: number };
+  entries: {
+    id: string;
+    userName: string;
+    kind: string;
+    reason: string;
+    detail: string;
+    points: number;
+    createdAt: string;
+  }[];
+}
+export interface FeatureFlag {
+  key: string;
+  enabled: boolean;
+  description?: string | null;
+  updatedAt: string;
+}
+export interface AuditEntry {
+  id: string;
+  action: string;
+  resourceType: string;
+  resourceId: string;
+  actorRole: string;
+  requestId: string;
   createdAt: string;
 }
 export interface Campaign {

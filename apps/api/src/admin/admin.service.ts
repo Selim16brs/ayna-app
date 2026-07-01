@@ -460,6 +460,62 @@ export class AdminService {
     }));
   }
 
+  // Sadakat (puan defteri) — bakiye/borç ledger'dan türetilir (finans kuralı)
+  async loyalty() {
+    const [earnAgg, spendAgg, entries] = await Promise.all([
+      this.prisma.loyaltyEntry.aggregate({ _sum: { points: true }, where: { points: { gt: 0 } } }),
+      this.prisma.loyaltyEntry.aggregate({ _sum: { points: true }, where: { points: { lt: 0 } } }),
+      this.prisma.loyaltyEntry.findMany({ orderBy: { createdAt: 'desc' }, take: 100 }),
+    ]);
+    const earned = earnAgg._sum.points ?? 0;
+    const spent = -(spendAgg._sum.points ?? 0);
+    const userIds = [...new Set(entries.map((e) => e.userId))];
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true },
+    });
+    const nameById = new Map(users.map((u) => [u.id, u.name]));
+    return {
+      totals: { earned, spent, balance: earned - spent }, // dolaşımdaki puan = platform yükümlülüğü
+      entries: entries.map((e) => ({
+        id: e.id,
+        userName: nameById.get(e.userId) || '—',
+        kind: e.kind,
+        reason: e.reason,
+        detail: e.detail,
+        points: e.points,
+        createdAt: e.createdAt,
+      })),
+    };
+  }
+
+  // Feature flag yönetimi
+  async featureFlags() {
+    return this.prisma.featureFlag.findMany({ orderBy: { key: 'asc' } });
+  }
+
+  async setFeatureFlag(key: string, enabled: boolean, description?: string | undefined) {
+    return this.prisma.featureFlag.upsert({
+      where: { key },
+      create: { key, enabled, description: description ?? null },
+      update: { enabled, ...(description !== undefined ? { description } : {}) },
+    });
+  }
+
+  // Denetim kaydı (audit log) — kritik eylemler; PII yok (yalnızca hash/rol)
+  async auditLogs() {
+    const rows = await this.prisma.auditLog.findMany({ orderBy: { createdAt: 'desc' }, take: 200 });
+    return rows.map((a) => ({
+      id: a.id,
+      action: a.action,
+      resourceType: a.resourceType,
+      resourceId: a.resourceId ?? '',
+      actorRole: a.actorRole ?? '',
+      requestId: a.requestId ?? '',
+      createdAt: a.createdAt,
+    }));
+  }
+
   // Kampanya / banner yönetimi
   async campaigns() {
     return this.prisma.campaign.findMany({ orderBy: { sortOrder: 'asc' } });

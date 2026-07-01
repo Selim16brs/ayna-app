@@ -61,6 +61,11 @@ const marketSchema = z.object({
 const userRoleSchema = z.object({ role: z.enum(['user', 'professional', 'salon', 'moderator', 'admin']) });
 const userStatusSchema = z.object({ status: z.enum(['active', 'suspended', 'deleted']) });
 const premiumSchema = z.object({ isPremium: z.boolean() });
+const flagSchema = z.object({
+  key: z.string().min(1).max(60),
+  enabled: z.boolean(),
+  description: z.string().max(200).optional(),
+});
 
 // Tüm admin uçları AdminGuard arkasında (yalnızca admin rolü)
 @ApiTags('admin')
@@ -150,6 +155,29 @@ export class AdminController {
   @Get('quote-requests')
   quoteRequests() {
     return this.admin.quoteRequests();
+  }
+
+  // Sadakat (puan defteri)
+  @Get('loyalty')
+  loyalty() {
+    return this.admin.loyalty();
+  }
+
+  // Feature flag yönetimi
+  @Get('feature-flags')
+  featureFlags() {
+    return this.admin.featureFlags();
+  }
+
+  @Post('feature-flags')
+  setFeatureFlag(@Body(new ZodValidationPipe(flagSchema)) body: z.infer<typeof flagSchema>) {
+    return this.admin.setFeatureFlag(body.key, body.enabled, body.description);
+  }
+
+  // Denetim kaydı
+  @Get('audit-logs')
+  auditLogs() {
+    return this.admin.auditLogs();
   }
 
   // Kampanya / banner yönetimi

@@ -6,7 +6,10 @@ import {
   type AdBanner,
   type AdminBooking,
   type AdminReview,
+  type AuditEntry,
   type Business,
+  type FeatureFlag,
+  type Loyalty,
   type QuoteReq,
   type BusinessDetail,
   type Campaign,
@@ -36,7 +39,10 @@ type Tab =
   | 'campaigns'
   | 'ads'
   | 'moderation'
-  | 'users';
+  | 'users'
+  | 'loyalty'
+  | 'flags'
+  | 'audit';
 const TL = (n: number) => '₸' + n.toLocaleString('tr-TR');
 
 export default function AdminApp() {
@@ -71,6 +77,9 @@ export default function AdminApp() {
     { id: 'ads', label: 'Reklamlar', icon: '📢' },
     { id: 'moderation', label: 'Moderasyon', icon: '🛡️' },
     { id: 'users', label: 'Kullanıcılar', icon: '👥' },
+    { id: 'loyalty', label: 'Sadakat', icon: '🎁' },
+    { id: 'flags', label: 'Feature Flag', icon: '🚩' },
+    { id: 'audit', label: 'Denetim Kaydı', icon: '📜' },
   ];
 
   return (
@@ -104,6 +113,9 @@ export default function AdminApp() {
         {tab === 'ads' && <AdsView />}
         {tab === 'moderation' && <ModerationView />}
         {tab === 'users' && <UsersView />}
+        {tab === 'loyalty' && <LoyaltyView />}
+        {tab === 'flags' && <FlagsView />}
+        {tab === 'audit' && <AuditView />}
       </main>
     </div>
   );
@@ -1477,6 +1489,128 @@ function QuotesView() {
               <span className={`pill ${q.status === 'open' ? 'pending' : 'approved'}`}>
                 {q.status === 'open' ? 'Açık' : 'Kapalı'}
               </span>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+function LoyaltyView() {
+  const { data } = useAsync<Loyalty>(() => api.loyalty(), []);
+  return (
+    <>
+      <h1 className="page-title">Sadakat</h1>
+      <p className="page-sub">Puan defteri (append-only) — bakiye dolaşımdaki puan = platform yükümlülüğü</p>
+      {!data ? (
+        <div className="empty">Yükleniyor…</div>
+      ) : (
+        <>
+          <div className="stat-grid">
+            <Stat v={data.totals.earned.toLocaleString('tr-TR')} l="Kazanılan puan" />
+            <Stat v={data.totals.spent.toLocaleString('tr-TR')} l="Harcanan puan" />
+            <Stat v={data.totals.balance.toLocaleString('tr-TR')} l="Dolaşımdaki (yükümlülük)" />
+          </div>
+          <div className="section-title">Son hareketler</div>
+          <div className="card">
+            {data.entries.length === 0 ? (
+              <div className="empty">Hareket yok</div>
+            ) : (
+              data.entries.map((e) => (
+                <div key={e.id} className="list-row">
+                  <div className="grow">
+                    <div className="name">{e.userName}</div>
+                    <div className="meta">
+                      {e.reason}
+                      {e.detail ? ` · ${e.detail}` : ''}
+                    </div>
+                  </div>
+                  <span className={`pill ${e.points >= 0 ? 'approved' : 'rejected'}`}>
+                    {e.points >= 0 ? `+${e.points}` : e.points} puan
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+function FlagsView() {
+  const { data, reload } = useAsync<FeatureFlag[]>(() => api.featureFlags(), []);
+  const [form, setForm] = useState({ key: '', description: '' });
+  const create = async () => {
+    if (!form.key) return;
+    await api.setFeatureFlag(form.key, false, form.description || undefined);
+    setForm({ key: '', description: '' });
+    reload();
+  };
+  return (
+    <>
+      <h1 className="page-title">Feature Flag</h1>
+      <p className="page-sub">Özellik açma/kapama (kademeli yayın)</p>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="form-inline">
+          <input className="input" placeholder="Anahtar (örn. new_booking_flow)" value={form.key} onChange={(e) => setForm({ ...form, key: e.target.value })} />
+          <input className="input" placeholder="Açıklama" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          <button className="btn-sm btn-ok full" onClick={create}>+ Flag ekle (kapalı)</button>
+        </div>
+      </div>
+      <div className="card">
+        {!data ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : data.length === 0 ? (
+          <div className="empty">Flag yok</div>
+        ) : (
+          data.map((f) => (
+            <div key={f.key} className="list-row">
+              <div className="grow">
+                <div className="name">{f.key}</div>
+                <div className="meta">{f.description || 'Açıklama yok'}</div>
+              </div>
+              <button
+                className={`switch ${f.enabled ? 'on' : 'off'}`}
+                onClick={async () => {
+                  await api.setFeatureFlag(f.key, !f.enabled);
+                  reload();
+                }}
+              >
+                {f.enabled ? 'Açık' : 'Kapalı'}
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+function AuditView() {
+  const { data } = useAsync<AuditEntry[]>(() => api.auditLogs(), []);
+  return (
+    <>
+      <h1 className="page-title">Denetim Kaydı</h1>
+      <p className="page-sub">Kritik eylemlerin izi (PII yok — yalnızca rol/kaynak/hash)</p>
+      <div className="card">
+        {!data ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : data.length === 0 ? (
+          <div className="empty">Kayıt yok</div>
+        ) : (
+          data.map((a) => (
+            <div key={a.id} className="list-row">
+              <div className="grow">
+                <div className="name">
+                  {a.action} · {a.resourceType}
+                </div>
+                <div className="meta">
+                  {a.resourceId ? `#${a.resourceId.slice(0, 8)} · ` : ''}
+                  {a.actorRole || 'sistem'} · {new Date(a.createdAt).toLocaleString('tr-TR')}
+                </div>
+              </div>
             </div>
           ))
         )}
