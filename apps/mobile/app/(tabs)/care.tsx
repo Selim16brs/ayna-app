@@ -71,12 +71,12 @@ export default function BenimIcinScreen() {
   return (
     <Screen edges={['top']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Selamlama */}
+        {/* Selamlama — referans dili: küçük etiket + dev kalın başlık */}
         <Animated.View entering={FadeInDown.duration(340)} style={styles.header}>
-          <Text variant="caption" tone="muted">
+          <Text variant="label" tone="muted" style={styles.greetingLabel}>
             {t(greetingKey())}
           </Text>
-          <Text variant="title" tone="ink">
+          <Text variant="display" tone="ink" style={styles.greetingName}>
             {firstName}
           </Text>
         </Animated.View>
@@ -139,7 +139,7 @@ export default function BenimIcinScreen() {
 
         {/* Hızlı ekle */}
         <Animated.View entering={FadeInDown.duration(360).delay(220)}>
-          <Text variant="bodyStrong" tone="ink" style={styles.quickTitle}>
+          <Text variant="label" tone="muted" style={styles.quickTitle}>
             {t('benim.quick_title')}
           </Text>
           <View style={styles.quickRow}>
@@ -341,7 +341,7 @@ function Section({
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <View style={styles.sectionTitleWrap}>
-          <Text variant="bodyStrong" tone="ink" style={styles.sectionTitle}>
+          <Text variant="label" tone="muted" style={styles.sectionTitle}>
             {title}
           </Text>
           {count > 0 ? (
@@ -472,6 +472,8 @@ const makeStyles = (colors: ColorTokens) =>
     flex: { flex: 1 },
     dim: { opacity: 0.9 },
     header: { paddingHorizontal: space(3), paddingTop: space(1.5), marginBottom: space(2.5) },
+    greetingLabel: { marginBottom: space(0.75) },
+    greetingName: { letterSpacing: -0.6 },
     block: { paddingHorizontal: space(3), marginBottom: space(2) },
 
     // Öne çıkan randevu
