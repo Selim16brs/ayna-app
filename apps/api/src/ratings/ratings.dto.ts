@@ -3,7 +3,8 @@ import { z } from 'zod';
 export const submitRatingSchema = z.object({
   bookingId: z.string().min(1),
   raterRole: z.enum(['user', 'specialist']),
-  subjectId: z.string().min(1),
+  // subjectId sunucuda randevudan türetilir; istemci göndermese de olur (güvenlik)
+  subjectId: z.string().min(1).optional(),
   score: z.number().int().min(1).max(5),
   comment: z.string().max(500).optional(),
   serviceTag: z.string().max(80).optional(),

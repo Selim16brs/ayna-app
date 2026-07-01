@@ -244,15 +244,18 @@ export const api = {
 
   // Puanlama (§1.8 çift-kör + §6.D yanıt/kalıcılık)
   // Gizlilik: authorLabel kimlik değildir; Rating'de kullanıcı kimliği tutulmaz
-  submitRating: (input: {
-    bookingId: string;
-    raterRole: 'user' | 'specialist';
-    subjectId: string;
-    score: number;
-    comment?: string;
-    serviceTag?: string;
-    authorLabel?: string;
-  }) => post<{ id: string; visible: boolean; bothRated: boolean }>('/ratings', input),
+  // Doğrulanmış yorum — giriş (token) zorunlu; sunucu randevu sahipliğini denetler
+  submitRating: (
+    token: string,
+    input: {
+      bookingId: string;
+      raterRole: 'user' | 'specialist';
+      score: number;
+      comment?: string;
+      serviceTag?: string;
+      authorLabel?: string;
+    },
+  ) => post<{ id: string; visible: boolean; bothRated: boolean }>('/ratings', input, token),
   ratingSummary: (subjectId: string) =>
     get<RatingSummary>(`/ratings/summary?subjectId=${encodeURIComponent(subjectId)}`),
   // Uzman/işletme görünür yoruma yanıt verir (silemez) — giriş gerekli

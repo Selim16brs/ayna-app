@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { AdminGuard } from '../common/admin.guard';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { type AuthedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
   type ReplyInput,
   replySchema,
@@ -18,9 +18,14 @@ import { RatingsService } from './ratings.service';
 export class RatingsController {
   constructor(private readonly ratings: RatingsService) {}
 
+  // Doğrulanmış yorum: giriş zorunlu; sunucu randevu sahipliğini ve tamamlanmışlığını denetler
   @Post()
-  submit(@Body(new ZodValidationPipe(submitRatingSchema)) body: SubmitRatingInput) {
-    return this.ratings.submit(body);
+  @UseGuards(JwtAuthGuard)
+  submit(
+    @Body(new ZodValidationPipe(submitRatingSchema)) body: SubmitRatingInput,
+    @Req() req: AuthedRequest,
+  ) {
+    return this.ratings.submit(body, req.user!.id);
   }
 
   @Get('summary')

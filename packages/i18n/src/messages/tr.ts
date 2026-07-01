@@ -131,6 +131,10 @@ export const tr = {
   'bookings.tab.demand': 'Talep',
   'bookings.empty': 'Bu yoldan randevun yok',
   'bookings.empty_cta': 'Keşfet’e göz at',
+  // Değerlendirme istemi — yalnızca tamamlanan randevu değerlendirilebilir (doğrulanmış yorum)
+  'bookings.review_prompt.title': 'Aldığın hizmeti değerlendir',
+  'bookings.review_prompt.desc': 'Hizmeti nasıl aldın? Puanın ve yorumun toplulukça görünür olur.',
+  'bookings.review_prompt.cta': 'Değerlendir',
   'booking.status.confirmed': 'Onaylandı',
   'booking.status.pending': 'Onay bekliyor',
   'booking.status.completed': 'Tamamlandı',

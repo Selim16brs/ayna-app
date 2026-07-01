@@ -42,6 +42,8 @@ export default function BookingsScreen() {
   const [active, setActive] = useState<BookingSource>('direct');
   const bookings = useStore((s) => s.bookings);
   const list = bookings.filter((a) => a.source === active);
+  // Değerlendirme bekleyen: tamamlanmış ama henüz yorumlanmamış randevular (tüm kaynaklar)
+  const pendingReview = bookings.filter((a) => a.status === 'completed' && !a.reviewed);
 
   return (
     <Screen edges={['top']}>
@@ -58,6 +60,30 @@ export default function BookingsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        {pendingReview.length > 0 ? (
+          <Pressable
+            style={styles.reviewPrompt}
+            onPress={() => router.push('/review/new?id=' + pendingReview[0]!.id)}
+          >
+            <View style={styles.reviewIcon}>
+              <Ionicons name="star" size={20} color={colors.gold} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text variant="bodyStrong" tone="ink">
+                {t('bookings.review_prompt.title')}
+                {pendingReview.length > 1 ? ` (${pendingReview.length})` : ''}
+              </Text>
+              <Text variant="caption" tone="muted">
+                {t('bookings.review_prompt.desc')}
+              </Text>
+            </View>
+            <View style={styles.reviewCta}>
+              <Text variant="caption" tone="onColor" style={styles.reviewCtaText}>
+                {t('bookings.review_prompt.cta')}
+              </Text>
+            </View>
+          </Pressable>
+        ) : null}
         {list.length === 0 ? (
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
@@ -179,4 +205,28 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'space-between',
       marginTop: space(0.75),
     },
+    reviewPrompt: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      backgroundColor: colors.goldSoft,
+      borderRadius: radius.lg,
+      padding: space(1.5),
+      marginBottom: space(1.5),
+    },
+    reviewIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    reviewCta: {
+      backgroundColor: colors.gold,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+    },
+    reviewCtaText: { fontSize: 12, fontWeight: '700' },
   });

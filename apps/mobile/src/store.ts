@@ -277,18 +277,20 @@ export const useStore = create<State>((set, get) => ({
         text,
         firstVisit: false,
       };
-      // En iyi çaba: backend'e de gönder (kimlik değil yalnızca etiket — provider-blind)
-      void api
-        .submitRating({
-          bookingId: b.id,
-          raterRole: 'user',
-          subjectId: b.proId,
-          score: rating,
-          comment: text,
-          serviceTag: b.service,
-          authorLabel,
-        })
-        .catch(() => undefined);
+      // Backend'e gönder — doğrulanmış yorum (giriş zorunlu; sunucu randevuyu denetler)
+      const token = get().token;
+      if (token) {
+        void api
+          .submitRating(token, {
+            bookingId: b.id,
+            raterRole: 'user',
+            score: rating,
+            comment: text,
+            serviceTag: b.service,
+            authorLabel,
+          })
+          .catch(() => undefined);
+      }
       set((s) => ({
         userReviews: { ...s.userReviews, [b.proId]: [review, ...(s.userReviews[b.proId] ?? [])] },
       }));
