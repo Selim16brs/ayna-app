@@ -39,6 +39,7 @@ export const api = {
       body: JSON.stringify({ identifier, password }),
     }),
   overview: () => req<Overview>('/admin/overview'),
+  stats: (days: number) => req<Stats>(`/admin/stats?days=${days}`),
   businesses: (status?: string) =>
     req<Business[]>(`/admin/businesses${status ? `?status=${status}` : ''}`),
   businessDetail: (id: string) => req<BusinessDetail>(`/admin/businesses/${id}`),
@@ -77,6 +78,20 @@ export interface Overview {
     revenue: number;
     currency: string;
   };
+}
+export interface StatPoint {
+  date: string;
+  fullDate: string;
+  users: number;
+  bookings: number;
+  revenue: number;
+}
+export interface Stats {
+  range: number;
+  timezone: string;
+  series: StatPoint[];
+  totals: { users: number; bookings: number; revenue: number };
+  categories: { sector: string; count: number }[];
 }
 export interface Business {
   id: string;

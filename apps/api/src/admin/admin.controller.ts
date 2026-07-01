@@ -31,6 +31,13 @@ export class AdminController {
     return this.admin.overview();
   }
 
+  // Detaylı istatistik — zaman serisi + kategori dağılımı
+  @Get('stats')
+  stats(@Query('days') days?: string) {
+    const n = Number(days);
+    return this.admin.stats(Number.isFinite(n) && n > 0 ? n : 30);
+  }
+
   // Üyelik / işletme onayları
   @Get('businesses')
   businesses(@Query('status') status?: string) {

@@ -27,6 +27,73 @@ export class AdminService {
     };
   }
 
+  // Detaylı istatistik — zaman serisi (kayıt / randevu / gelir) + kategori dağılımı
+  // Tüm createdAt UTC; kovalar kullanıcıya Asia/Almaty (IANA) yerel tarihiyle sunulur.
+  async stats(days: number) {
+    const TZ = 'Asia/Almaty';
+    const span = Math.min(Math.max(days, 7), 90);
+    const since = new Date(Date.now() - (span - 1) * 86400000);
+    since.setUTCHours(0, 0, 0, 0);
+
+    const [users, bookings, professionals] = await Promise.all([
+      this.prisma.user.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
+      this.prisma.booking.findMany({
+        where: { createdAt: { gte: since } },
+        select: { createdAt: true, status: true, price: true },
+      }),
+      this.prisma.professional.findMany({ select: { sector: true } }),
+    ]);
+
+    const fmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: TZ,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const dayKey = (d: Date) => fmt.format(d); // YYYY-MM-DD (yerel)
+
+    // Boş kovaları da içermek için tüm gün anahtarlarını üret
+    const buckets = new Map<string, { users: number; bookings: number; revenue: number }>();
+    for (let i = 0; i < span; i++) {
+      const d = new Date(since.getTime() + i * 86400000);
+      buckets.set(dayKey(d), { users: 0, bookings: 0, revenue: 0 });
+    }
+    const bump = (d: Date, fn: (b: { users: number; bookings: number; revenue: number }) => void) => {
+      const b = buckets.get(dayKey(d));
+      if (b) fn(b);
+    };
+    for (const u of users) bump(u.createdAt, (b) => (b.users += 1));
+    for (const bk of bookings) {
+      bump(bk.createdAt, (b) => {
+        b.bookings += 1;
+        if (bk.status === 'completed') b.revenue += Number(bk.price);
+      });
+    }
+
+    const series = [...buckets.entries()].map(([date, v]) => ({
+      date: date.slice(5), // MM-DD (grafik ekseni)
+      fullDate: date,
+      ...v,
+    }));
+    const totals = series.reduce(
+      (acc, s) => ({
+        users: acc.users + s.users,
+        bookings: acc.bookings + s.bookings,
+        revenue: acc.revenue + s.revenue,
+      }),
+      { users: 0, bookings: 0, revenue: 0 },
+    );
+
+    // Kategori (sektör) dağılımı — öne çıkan/uzman havuzundan
+    const bySector = new Map<string, number>();
+    for (const p of professionals) bySector.set(p.sector, (bySector.get(p.sector) ?? 0) + 1);
+    const categories = [...bySector.entries()]
+      .map(([sector, count]) => ({ sector, count }))
+      .sort((a, b) => b.count - a.count);
+
+    return { range: span, timezone: TZ, series, totals, categories };
+  }
+
   // Üyelik işlemleri — işletmeler (duruma göre)
   async businesses(status?: string) {
     const rows = await this.prisma.business.findMany({
