@@ -55,10 +55,10 @@ export default function DiscoverScreen() {
         {/* Başlık */}
         <View style={styles.header}>
           <View style={styles.headerText}>
-            <Text variant="caption" tone="inkSoft">
+            <Text variant="label" tone="muted" style={styles.greetingLabel}>
               {t('home.greeting')}
             </Text>
-            <Text variant="title" tone="rose">
+            <Text variant="display" tone="ink" style={styles.greetingName}>
               {userName}
             </Text>
           </View>
@@ -97,7 +97,7 @@ export default function DiscoverScreen() {
         {events.length > 0 ? (
           <>
             <View style={styles.sectionHeader}>
-              <Text variant="h2" tone="ink">
+              <Text variant="label" tone="muted">
                 {t('home.upcoming_events')}
               </Text>
               <Pressable onPress={() => router.push('/events')}>
@@ -149,7 +149,7 @@ export default function DiscoverScreen() {
 
         {/* Ne yapmak istersin — fotoğraflı aksiyon kartları */}
         <View style={styles.sectionHeader}>
-          <Text variant="h2" tone="ink">
+          <Text variant="label" tone="muted">
             {t('home.how')}
           </Text>
         </View>
@@ -197,7 +197,7 @@ export default function DiscoverScreen() {
 
         {/* §12 — Kampanyalar / fırsatlar vitrini */}
         <View style={styles.sectionHeader}>
-          <Text variant="h2" tone="ink">
+          <Text variant="label" tone="muted">
             {t('home.campaigns')}
           </Text>
         </View>
@@ -285,7 +285,7 @@ export default function DiscoverScreen() {
 
         {/* Senin için öneriler */}
         <View style={styles.sectionHeader}>
-          <Text variant="h2" tone="ink">
+          <Text variant="label" tone="muted">
             {t('home.recommended')}
           </Text>
           <Pressable onPress={() => router.push('/search')}>
@@ -358,6 +358,8 @@ const makeStyles = (colors: ColorTokens) =>
       marginBottom: space(2.5),
     },
     headerText: { flex: 1 },
+    greetingLabel: { marginBottom: space(0.75) },
+    greetingName: { letterSpacing: -0.6 },
     headerActions: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
     iconButton: {
       width: 42,
