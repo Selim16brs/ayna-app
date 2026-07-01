@@ -34,10 +34,17 @@ export default function AuthRoleScreen() {
           />
           <RoleCard
             grad={gradients.plum}
-            icon="business"
-            title={t('auth.role.business')}
-            sub={t('auth.role.business_sub')}
-            onPress={() => router.push('/auth/business')}
+            icon="storefront"
+            title={t('auth.role.salon')}
+            sub={t('auth.role.salon_sub')}
+            onPress={() => router.push('/auth/business/new')}
+          />
+          <RoleCard
+            grad={gradients.teal}
+            icon="sparkles"
+            title={t('auth.role.expert')}
+            sub={t('auth.role.expert_sub')}
+            onPress={() => router.push('/auth/business/join')}
           />
         </View>
       </View>
