@@ -101,8 +101,8 @@ export default function DiscoverScreen() {
             <Image source={{ uri: HERO_WOMAN }} style={styles.heroPhoto} />
           </View>
         </View>
-        {/* Lime hero'nun dalgalı alt kenarı (yeşil zemin dalgalı biter) */}
-        <WaveBottom color={colors.accent} />
+        {/* Lime hero'nun dalgalı alt kenarı + siyah kontur (referans) */}
+        <WaveBottom color={colors.accent} stroke={INK} strokeWidth={3.5} />
 
         {/* ── TEK AKSİYON: Ne yapmak istersin? (çırtlak pembe) → hub ── */}
         <Pressable style={styles.howCard} onPress={() => router.push('/quote')}>
