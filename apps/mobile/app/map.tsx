@@ -86,16 +86,16 @@ export default function MapScreen() {
           </PressableScale>
         ) : null}
 
-        {/* Seçili sağlayıcı mini kartı */}
+        {/* Seçili sağlayıcı mini kartı — kenarlıksız gölgeli SalonRow dili */}
         {selected ? (
           <View style={[styles.card, styles.cardShadow]}>
             <Pressable style={styles.cardClose} hitSlop={8} onPress={() => setSelected(null)}>
-              <Ionicons name="close" size={18} color={colors.muted} />
+              <Ionicons name="close" size={16} color={colors.muted} />
             </Pressable>
             <View style={styles.cardRow}>
               <Image source={{ uri: selected.image }} style={styles.cardImage} />
               <View style={styles.cardBody}>
-                <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                <Text variant="bodyStrong" tone="ink" style={styles.cardName} numberOfLines={1}>
                   {selected.name}
                 </Text>
                 <Text variant="caption" tone="muted" numberOfLines={1}>
@@ -134,7 +134,7 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   const styles = useThemedStyles(makeStyles);
   return (
     <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
-      <Text variant="caption" tone={active ? 'onColor' : 'inkSoft'}>
+      <Text variant="caption" tone={active ? 'onAccent' : 'inkSoft'} style={styles.chipText}>
         {label}
       </Text>
     </Pressable>
@@ -147,26 +147,23 @@ const makeStyles = (colors: ColorTokens) =>
     listBtn: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 4,
-      marginRight: space(2),
-      paddingHorizontal: space(1.5),
-      paddingVertical: space(0.75),
-      borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
-    },
-    chipsWrap: { maxHeight: 56 },
-    chips: { paddingHorizontal: space(2), gap: space(1), paddingVertical: space(1) },
-    chip: {
+      gap: 5,
+      marginRight: space(3),
       paddingHorizontal: space(1.75),
-      paddingVertical: space(0.9),
+      paddingVertical: space(1),
       borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
     },
-    chipActive: { backgroundColor: colors.rose, borderColor: colors.rose },
+    chipsWrap: { maxHeight: 58 },
+    chips: { paddingHorizontal: space(3), gap: space(1), paddingVertical: space(1) },
+    chip: {
+      paddingHorizontal: space(2),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    chipActive: { backgroundColor: colors.accent },
+    chipText: { fontWeight: '700' },
     mapWrap: { flex: 1, overflow: 'hidden' },
     bridge: {
       position: 'absolute',
@@ -184,27 +181,37 @@ const makeStyles = (colors: ColorTokens) =>
     bridgeText: { flex: 1 },
     card: {
       position: 'absolute',
-      left: space(2),
-      right: space(2),
-      bottom: space(2.5),
+      left: space(3),
+      right: space(3),
+      bottom: space(3),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       padding: space(2),
-      gap: space(1.5),
+      gap: space(1.75),
     },
     cardShadow: {
-      shadowColor: '#000',
-      shadowOpacity: 0.18,
-      shadowRadius: 18,
-      shadowOffset: { width: 0, height: 8 },
-      elevation: 8,
+      shadowColor: '#3A332B',
+      shadowOpacity: 0.16,
+      shadowRadius: 22,
+      shadowOffset: { width: 0, height: 10 },
+      elevation: 10,
     },
-    cardClose: { position: 'absolute', top: space(1.25), right: space(1.25), zIndex: 2 },
+    cardClose: {
+      position: 'absolute',
+      top: space(1.25),
+      right: space(1.25),
+      zIndex: 2,
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     cardRow: { flexDirection: 'row', gap: space(1.5), alignItems: 'center' },
-    cardImage: { width: 56, height: 56, borderRadius: radius.md, backgroundColor: colors.bgSunken },
-    cardBody: { flex: 1, gap: 2 },
+    cardImage: { width: 72, height: 72, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    cardName: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+    cardBody: { flex: 1, gap: 3 },
     cardMeta: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -215,7 +222,7 @@ const makeStyles = (colors: ColorTokens) =>
     cardBtn: {
       backgroundColor: colors.accent,
       borderRadius: radius.pill,
-      paddingVertical: space(1.25),
+      paddingVertical: space(1.5),
       alignItems: 'center',
     },
   });

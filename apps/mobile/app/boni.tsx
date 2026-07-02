@@ -164,8 +164,13 @@ export default function BoniScreen() {
                   <Ionicons name="sparkles" size={13} color={colors.onColor} />
                 </View>
               )}
-              <View style={[styles.bubble, m.role === 'user' ? styles.bubbleUser : styles.bubbleBoni]}>
-                <Text variant="body" tone={m.role === 'user' ? 'onColor' : 'ink'}>
+              <View
+                style={[
+                  styles.bubble,
+                  m.role === 'user' ? styles.bubbleUser : [styles.bubbleBoni, shadow.soft],
+                ]}
+              >
+                <Text variant="body" tone={m.role === 'user' ? 'onAccent' : 'ink'}>
                   {m.text}
                 </Text>
               </View>
@@ -177,7 +182,7 @@ export default function BoniScreen() {
               <View style={styles.bubbleAvatar}>
                 <Ionicons name="sparkles" size={13} color={colors.onColor} />
               </View>
-              <View style={[styles.bubble, styles.bubbleBoni, styles.thinking]}>
+              <View style={[styles.bubble, styles.bubbleBoni, styles.thinking, shadow.soft]}>
                 <ActivityIndicator size="small" color={colors.muted} />
                 <Text variant="caption" tone="muted">
                   {t('boni.thinking')}
@@ -220,7 +225,7 @@ export default function BoniScreen() {
                 disabled={!input.trim() || sending}
                 style={[styles.sendBtn, (!input.trim() || sending) && styles.sendBtnOff]}
               >
-                <Ionicons name="arrow-up" size={20} color={colors.onColor} />
+                <Ionicons name="arrow-up" size={20} color={colors.onAccent} />
               </Pressable>
             </View>
           )}
@@ -271,11 +276,9 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     bubble: { maxWidth: '82%', borderRadius: radius.lg, paddingHorizontal: space(1.75), paddingVertical: space(1.25) },
-    bubbleUser: { backgroundColor: colors.rose, borderBottomRightRadius: 6 },
+    bubbleUser: { backgroundColor: colors.accent, borderBottomRightRadius: 6 },
     bubbleBoni: {
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
       borderBottomLeftRadius: 6,
     },
     thinking: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
@@ -292,8 +295,6 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
       paddingTop: space(1),
       paddingBottom: space(1.5),
-      borderTopWidth: 1,
-      borderTopColor: colors.line,
       backgroundColor: colors.bg,
     },
     inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space(1) },
@@ -313,7 +314,7 @@ const makeStyles = (colors: ColorTokens) =>
       width: 44,
       height: 44,
       borderRadius: 22,
-      backgroundColor: colors.rose,
+      backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
     },

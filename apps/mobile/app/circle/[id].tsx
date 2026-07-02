@@ -16,8 +16,9 @@ import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, SectionHeader, StackHeader, Text } from '../../src/ui';
 
+// Gönderi türü çipleri — Keşfet pill dili: pastel zemin + ink metin (nötr, canlı değil).
 const makeType = (
   colors: ColorTokens,
 ): Record<CirclePostType, { key: MessageKey; bg: string; fg: string }> => ({
@@ -66,21 +67,21 @@ export default function PostDetailScreen() {
         keyboardVerticalOffset={90}
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Gönderi */}
+          {/* Gönderi kartı — kenarlıksız, yumuşak gölge */}
           <View style={[styles.card, shadow.card]}>
             <View style={styles.cardTop}>
               <View style={styles.author}>
                 <View style={styles.avatar}>
                   {post.anonymous ? (
-                    <Ionicons name="shield-checkmark" size={16} color={colors.rose} />
+                    <Ionicons name="shield-checkmark" size={18} color={colors.rose} />
                   ) : (
-                    <Text variant="caption" tone="rose">
+                    <Text variant="bodyStrong" tone="rose">
                       {post.author.charAt(0)}
                     </Text>
                   )}
                 </View>
                 <View>
-                  <Text variant="bodyStrong" tone="ink">
+                  <Text variant="bodyStrong" tone="ink" style={styles.authorName}>
                     {post.anonymous ? t('circle.verified') : post.author}
                   </Text>
                   <Text variant="caption" tone="muted">
@@ -95,22 +96,26 @@ export default function PostDetailScreen() {
               </View>
             </View>
 
-            <Text variant="body" tone="inkSoft" style={styles.postText}>
+            <Text variant="body" tone="ink" style={styles.postText}>
               {post.text}
             </Text>
 
             <View style={styles.helpfulRow}>
               <Pressable
-                style={styles.helpfulBtn}
+                style={[styles.helpfulBtn, post.helpfulByMe && styles.helpfulBtnOn]}
                 onPress={() => toggleHelpful(post.id)}
                 hitSlop={8}
               >
                 <Ionicons
                   name={post.helpfulByMe ? 'heart' : 'heart-outline'}
-                  size={18}
-                  color={post.helpfulByMe ? colors.accent : colors.muted}
+                  size={17}
+                  color={post.helpfulByMe ? colors.onAccent : colors.inkSoft}
                 />
-                <Text variant="caption" tone={post.helpfulByMe ? 'rose' : 'muted'}>
+                <Text
+                  variant="caption"
+                  tone={post.helpfulByMe ? 'onAccent' : 'inkSoft'}
+                  style={styles.helpfulText}
+                >
                   {t('circle.helpful_btn')} · {post.helpful}
                 </Text>
               </Pressable>
@@ -118,12 +123,13 @@ export default function PostDetailScreen() {
           </View>
 
           {/* Yorumlar */}
-          <Text variant="label" tone="rose" style={styles.section}>
-            {t('circle.detail.comments')}
-          </Text>
+          <SectionHeader title={t('circle.detail.comments')} />
 
           {post.comments.length === 0 ? (
             <View style={[styles.noComments, shadow.soft]}>
+              <View style={styles.noCommentsIcon}>
+                <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.inkSoft} />
+              </View>
               <Text variant="caption" tone="muted">
                 {t('circle.detail.no_comments')}
               </Text>
@@ -134,7 +140,7 @@ export default function PostDetailScreen() {
                 <View key={c.id} style={[styles.comment, shadow.soft]}>
                   <View style={styles.commentAvatar}>
                     {c.anonymous ? (
-                      <Ionicons name="shield-checkmark" size={13} color={colors.rose} />
+                      <Ionicons name="shield-checkmark" size={14} color={colors.rose} />
                     ) : (
                       <Text variant="caption" tone="rose">
                         {c.author.charAt(0)}
@@ -142,7 +148,7 @@ export default function PostDetailScreen() {
                     )}
                   </View>
                   <View style={styles.commentBody}>
-                    <Text variant="caption" tone="ink">
+                    <Text variant="caption" tone="ink" style={styles.commentAuthor}>
                       {c.anonymous ? t('circle.verified') : c.author}
                     </Text>
                     <Text variant="body" tone="inkSoft" style={styles.commentText}>
@@ -170,7 +176,7 @@ export default function PostDetailScreen() {
             onPress={send}
             disabled={draft.trim().length === 0}
           >
-            <Ionicons name="send" size={18} color={colors.onAccent} />
+            <Ionicons name="arrow-up" size={20} color={colors.onAccent} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -182,58 +188,72 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     flex: { flex: 1 },
     empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(3) },
-    content: { paddingHorizontal: space(3), paddingBottom: space(3) },
+    content: { paddingHorizontal: space(3), paddingTop: space(2.5), paddingBottom: space(3) },
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      padding: space(2),
+      padding: space(2.25),
     },
     cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    author: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    author: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
     avatar: {
-      width: 38,
-      height: 38,
-      borderRadius: 19,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       backgroundColor: colors.roseSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    typeBadge: { paddingHorizontal: space(1.25), paddingVertical: 4, borderRadius: radius.pill },
-    typeText: { fontSize: 11 },
-    postText: { marginTop: space(1.5), lineHeight: 22 },
-    helpfulRow: {
+    authorName: { fontWeight: '800', letterSpacing: -0.2 },
+    typeBadge: { paddingHorizontal: space(1.5), paddingVertical: 6, borderRadius: radius.pill },
+    typeText: { fontSize: 12, fontWeight: '700' },
+    postText: { marginTop: space(2), lineHeight: 23, fontSize: 16 },
+    helpfulRow: { flexDirection: 'row', marginTop: space(2.25) },
+    helpfulBtn: {
       flexDirection: 'row',
-      marginTop: space(2),
-      paddingTop: space(1.5),
-      borderTopWidth: 1,
-      borderTopColor: colors.line,
+      alignItems: 'center',
+      gap: 7,
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
     },
-    helpfulBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    section: { marginTop: space(3), marginBottom: space(1.5) },
+    helpfulBtnOn: { backgroundColor: colors.accent },
+    helpfulText: { fontWeight: '700' },
     noComments: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      padding: space(2.5),
+      padding: space(3),
       alignItems: 'center',
+      gap: space(1.25),
+    },
+    noCommentsIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     comments: { gap: space(1.25) },
     comment: {
       flexDirection: 'row',
-      gap: space(1),
+      gap: space(1.25),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      padding: space(1.75),
+      padding: space(2),
     },
     commentAvatar: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
       backgroundColor: colors.roseSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
     commentBody: { flex: 1 },
-    commentText: { marginTop: 2, lineHeight: 21 },
+    commentAuthor: { fontWeight: '700' },
+    commentText: { marginTop: 3, lineHeight: 22 },
     composer: {
       flexDirection: 'row',
       alignItems: 'flex-end',
@@ -241,26 +261,22 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
       paddingBottom: space(1.5),
-      borderTopWidth: 1,
-      borderTopColor: colors.line,
       backgroundColor: colors.bg,
     },
     input: {
       flex: 1,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
       borderRadius: radius.lg,
       paddingHorizontal: space(2),
-      paddingVertical: space(1.25),
+      paddingVertical: space(1.5),
       maxHeight: 110,
       fontSize: 15,
       color: colors.ink,
     },
     send: {
-      width: 46,
-      height: 46,
-      borderRadius: 23,
+      width: 48,
+      height: 48,
+      borderRadius: 24,
       backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',

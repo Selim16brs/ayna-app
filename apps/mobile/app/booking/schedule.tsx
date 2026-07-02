@@ -74,12 +74,15 @@ export default function ScheduleScreen() {
       <StackHeader title={t('booking.schedule.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.proCard, shadow.soft]}>
-          <Text variant="bodyStrong" tone="ink">
-            {pro.name}
-          </Text>
-          <Text variant="caption" tone="muted">
-            {isSalon && uzman ? `${pro.specialty} · ${uzman.name}` : pro.specialty}
-          </Text>
+          <Image source={{ uri: pro.image }} style={styles.proImage} />
+          <View style={styles.proBody}>
+            <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+              {pro.name}
+            </Text>
+            <Text variant="caption" tone="muted" numberOfLines={1}>
+              {isSalon && uzman ? `${pro.specialty} · ${uzman.name}` : pro.specialty}
+            </Text>
+          </View>
         </View>
 
         {/* Uzman seçimi (salonlarda) */}
@@ -99,10 +102,12 @@ export default function ScheduleScreen() {
                   <Pressable
                     key={u.id}
                     onPress={() => setUzmanId(u.id)}
-                    style={[styles.staffCard, on && styles.staffActive]}
+                    style={[styles.staffCard, shadow.soft, on && styles.staffActive]}
                   >
-                    <Image source={{ uri: u.image }} style={styles.staffAvatar} />
-                    <Text variant="caption" tone="ink">
+                    <View style={[styles.staffAvatarWrap, on && styles.staffAvatarOn]}>
+                      <Image source={{ uri: u.image }} style={styles.staffAvatar} />
+                    </View>
+                    <Text variant="caption" tone="ink" numberOfLines={1}>
                       {u.name}
                     </Text>
                     <Text variant="caption" tone="muted" numberOfLines={1}>
@@ -125,7 +130,7 @@ export default function ScheduleScreen() {
               onPress={() => setDay(i)}
               style={[styles.dayChip, i === day && styles.active]}
             >
-              <Text variant="caption" tone={i === day ? 'onColor' : 'inkSoft'}>
+              <Text variant="bodyStrong" tone={i === day ? 'onAccent' : 'inkSoft'}>
                 {d}
               </Text>
             </Pressable>
@@ -142,7 +147,7 @@ export default function ScheduleScreen() {
               onPress={() => setTime(tm)}
               style={[styles.timeChip, tm === time && styles.active]}
             >
-              <Text variant="bodyStrong" tone={tm === time ? 'onColor' : 'ink'}>
+              <Text variant="bodyStrong" tone={tm === time ? 'onAccent' : 'ink'}>
                 {tm}
               </Text>
             </Pressable>
@@ -166,56 +171,66 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingBottom: space(4) },
     proCard: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
-      padding: space(2),
-    },
-    label: { marginTop: space(3), marginBottom: space(1.5) },
-    staffRow: { gap: space(1.5), paddingRight: space(3) },
-    staffCard: {
-      width: 110,
+      flexDirection: 'row',
       alignItems: 'center',
+      gap: space(1.5),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
-      padding: space(1.5),
+      padding: space(1.75),
     },
-    staffActive: { borderColor: colors.rose, borderWidth: 2 },
-    staffAvatar: {
-      width: 50,
-      height: 50,
-      borderRadius: 25,
+    proImage: {
+      width: 60,
+      height: 60,
+      borderRadius: radius.md,
       backgroundColor: colors.bgSunken,
+    },
+    proBody: { flex: 1, gap: 3 },
+    label: { marginTop: space(3), marginBottom: space(1.5) },
+    staffRow: { gap: space(1.5), paddingRight: space(3), paddingVertical: space(0.5) },
+    staffCard: {
+      width: 112,
+      alignItems: 'center',
+      gap: 3,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(1.75),
+    },
+    staffActive: { backgroundColor: colors.accentSoft },
+    staffAvatarWrap: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      padding: 3,
       marginBottom: space(0.75),
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    staffAvatarOn: { borderColor: colors.accent },
+    staffAvatar: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 27,
+      backgroundColor: colors.bgSunken,
     },
     row: { flexDirection: 'row', gap: space(1), flexWrap: 'wrap' },
     dayChip: {
-      paddingHorizontal: space(2),
-      paddingVertical: space(1.25),
+      paddingHorizontal: space(2.25),
+      paddingVertical: space(1.5),
       borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
     },
     times: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.25) },
     timeChip: {
-      width: '30%',
+      width: '31%',
       alignItems: 'center',
-      paddingVertical: space(1.5),
+      paddingVertical: space(1.75),
       borderRadius: radius.md,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
     },
-    active: { backgroundColor: colors.rose, borderColor: colors.rose },
+    active: { backgroundColor: colors.accent },
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
       paddingBottom: TAB_BAR_CLEARANCE,
-      borderTopWidth: 1,
-      borderTopColor: colors.line,
     },
   });

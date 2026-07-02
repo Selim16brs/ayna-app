@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 export default function ProfileEditScreen() {
   const { t } = useLocale();
@@ -24,7 +24,7 @@ export default function ProfileEditScreen() {
   };
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={['bottom']}>
       <StackHeader title={t('profile.edit.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Field label={t('profile.edit.name')} value={name} onChangeText={setName} />
@@ -62,7 +62,7 @@ export default function ProfileEditScreen() {
   }) {
     return (
       <View style={styles.field}>
-        <Text variant="label" tone="inkSoft" style={styles.fieldLabel}>
+        <Text variant="bodyStrong" tone="ink" style={styles.fieldLabel}>
           {label}
         </Text>
         <TextInput
@@ -79,16 +79,19 @@ export default function ProfileEditScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(2) },
-    field: { gap: space(0.75) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(3),
+      paddingBottom: TAB_BAR_CLEARANCE,
+      gap: space(2.5),
+    },
+    field: { gap: space(1) },
     fieldLabel: { marginLeft: space(0.5) },
     input: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.line,
-      paddingHorizontal: space(2),
-      paddingVertical: space(1.75),
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.lg,
+      paddingHorizontal: space(2.25),
+      paddingVertical: space(2),
       fontSize: 16,
       color: colors.ink,
     },

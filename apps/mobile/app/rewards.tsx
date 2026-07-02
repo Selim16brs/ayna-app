@@ -7,9 +7,12 @@ import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import type { MessageKey } from '@ayna/i18n';
-import { Progress, Screen, StackHeader, Text } from '../src/ui';
+import { Progress, Screen, SectionHeader, StackHeader, Text } from '../src/ui';
 
 const NEXT_DRAW = '30 Haziran';
+// Keşfet canlı aksan paleti — ödül/çekiliş görsel-zengin kartlar
+const POINTS_GRAD: readonly [string, string] = ['#B06CFF', '#8A4FE0'];
+const RAFFLE_GRAD: readonly [string, string] = ['#FF2E93', '#D81F7A'];
 const TIER_LABEL: Record<'bronze' | 'silver' | 'gold', MessageKey> = {
   bronze: 'rewards.tier.bronze',
   silver: 'rewards.tier.silver',
@@ -20,7 +23,7 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 
 export default function RewardsScreen() {
   const { t } = useLocale();
-  const { colors, gradients, shadow } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
   const points = useStore((s) => s.points);
@@ -52,28 +55,33 @@ export default function RewardsScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('rewards.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Puan kartı */}
-        <LinearGradient colors={gradients.rose} style={[styles.pointsCard, shadow.card]}>
+        {/* Puan kartı — görsel-zengin mor kart, ışıltı halkaları */}
+        <LinearGradient
+          colors={POINTS_GRAD}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.pointsCard, shadow.card]}
+        >
+          <View style={styles.glowA} />
+          <View style={styles.glowB} />
           <View style={styles.pointsTop}>
             <Text variant="caption" tone="onColor" style={styles.dim}>
               {t('rewards.points')}
             </Text>
             <View style={styles.tierBadge}>
-              <Ionicons name="medal" size={12} color={colors.onColor} />
+              <Ionicons name="medal" size={13} color={colors.onColor} />
               <Text variant="caption" tone="onColor" style={styles.tierText}>
                 {t(TIER_LABEL[tierKey])}
               </Text>
             </View>
           </View>
-          <Text variant="display" tone="onColor">
-            {points}
-          </Text>
+          <Text style={styles.pointsBig}>{points}</Text>
           <View style={styles.progressWrap}>
             <Progress
               value={progress}
-              height={6}
+              height={7}
               color={colors.onColor}
-              track="rgba(255,255,255,0.3)"
+              track="rgba(255,255,255,0.28)"
             />
           </View>
           <Text variant="caption" tone="onColor" style={styles.dim}>
@@ -83,11 +91,18 @@ export default function RewardsScreen() {
           </Text>
         </LinearGradient>
 
-        {/* Çekiliş */}
-        <LinearGradient colors={gradients.plum} style={[styles.raffle, shadow.card]}>
-          <Ionicons name="gift" size={30} color={colors.onColor} />
+        {/* Çekiliş — görsel-zengin pembe kart */}
+        <LinearGradient
+          colors={RAFFLE_GRAD}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.raffle, shadow.card]}
+        >
+          <View style={styles.raffleIcon}>
+            <Ionicons name="gift" size={28} color="#FFFFFF" />
+          </View>
           <View style={styles.raffleBody}>
-            <Text variant="h2" tone="onColor">
+            <Text variant="h2" tone="onColor" style={styles.raffleTitle}>
               {raffleEntries} {t('rewards.raffle.entries')}
             </Text>
             <Text variant="caption" tone="onColor" style={styles.dim}>
@@ -100,19 +115,17 @@ export default function RewardsScreen() {
         </LinearGradient>
 
         {/* Kullan */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('rewards.redeem.title')}
-        </Text>
+        <SectionHeader title={t('rewards.redeem.title')} />
         <View style={[styles.group, shadow.soft]}>
           {REWARDS.map((r, i) => {
             const affordable = points >= r.cost;
             return (
               <View key={r.id} style={[styles.row, i < REWARDS.length - 1 && styles.rowBorder]}>
-                <View style={[styles.icon, { backgroundColor: colors.blue }]}>
-                  <Ionicons name={r.icon as IoniconName} size={17} color={colors.onColor} />
+                <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+                  <Ionicons name={r.icon as IoniconName} size={19} color={colors.onAccent} />
                 </View>
                 <View style={styles.rowLabel}>
-                  <Text variant="bodyStrong" tone="ink">
+                  <Text variant="bodyStrong" tone="ink" style={styles.rowName}>
                     {t(r.titleKey)}
                   </Text>
                   <Text variant="caption" tone="muted">
@@ -126,7 +139,7 @@ export default function RewardsScreen() {
                 >
                   <Text
                     variant="caption"
-                    style={{ color: affordable ? colors.onColor : colors.muted, fontWeight: '600' }}
+                    style={{ color: affordable ? colors.onAccent : colors.muted, fontWeight: '800' }}
                   >
                     {t('rewards.redeem.use')}
                   </Text>
@@ -137,9 +150,7 @@ export default function RewardsScreen() {
         </View>
 
         {/* Puan geçmişi */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('rewards.ledger.title')}
-        </Text>
+        <SectionHeader title={t('rewards.ledger.title')} />
         <View style={[styles.group, shadow.soft]}>
           {ledger.map((e, i) => (
             <View key={e.id} style={[styles.row, i < ledger.length - 1 && styles.rowBorder]}>
@@ -156,7 +167,7 @@ export default function RewardsScreen() {
                 />
               </View>
               <View style={styles.rowLabel}>
-                <Text variant="bodyStrong" tone="ink">
+                <Text variant="bodyStrong" tone="ink" style={styles.rowName}>
                   {t(e.labelKey)}
                 </Text>
                 <Text variant="caption" tone="muted" numberOfLines={1}>
@@ -186,26 +197,52 @@ export default function RewardsScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-    pointsCard: { borderRadius: radius.xl, padding: space(2.5) },
+    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: space(13) },
+    pointsCard: { borderRadius: radius.xl, padding: space(3), overflow: 'hidden' },
+    glowA: {
+      position: 'absolute',
+      top: -40,
+      right: -30,
+      width: 150,
+      height: 150,
+      borderRadius: 75,
+      backgroundColor: 'rgba(255,255,255,0.14)',
+    },
+    glowB: {
+      position: 'absolute',
+      bottom: -50,
+      left: -20,
+      width: 130,
+      height: 130,
+      borderRadius: 65,
+      backgroundColor: 'rgba(255,255,255,0.08)',
+    },
     pointsTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: space(0.5),
     },
-    dim: { opacity: 0.9 },
+    pointsBig: {
+      fontSize: 46,
+      lineHeight: 50,
+      fontWeight: '800',
+      letterSpacing: -1,
+      color: '#FFFFFF',
+      marginTop: space(0.5),
+    },
+    dim: { opacity: 0.92 },
     tierBadge: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 4,
-      backgroundColor: 'rgba(255,255,255,0.22)',
-      paddingHorizontal: space(1.25),
-      paddingVertical: 4,
+      gap: 5,
+      backgroundColor: 'rgba(255,255,255,0.24)',
+      paddingHorizontal: space(1.5),
+      paddingVertical: 5,
       borderRadius: radius.pill,
     },
-    tierText: { fontWeight: '600' },
-    progressWrap: { marginTop: space(1.5), marginBottom: space(1) },
+    tierText: { fontWeight: '700' },
+    progressWrap: { marginTop: space(2), marginBottom: space(1.25) },
     raffle: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -213,9 +250,18 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.lg,
       padding: space(2.5),
       marginTop: space(2),
+      overflow: 'hidden',
     },
-    raffleBody: { flex: 1, gap: 2 },
-    section: { marginTop: space(3), marginBottom: space(1.5) },
+    raffleIcon: {
+      width: 58,
+      height: 58,
+      borderRadius: 29,
+      backgroundColor: 'rgba(255,255,255,0.22)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    raffleTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
+    raffleBody: { flex: 1, gap: 3 },
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
@@ -225,22 +271,23 @@ const makeStyles = (colors: ColorTokens) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.5),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
     },
     rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
     icon: {
-      width: 38,
-      height: 38,
+      width: 44,
+      height: 44,
       borderRadius: radius.md,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    rowLabel: { flex: 1, gap: 2 },
+    rowLabel: { flex: 1, gap: 3 },
+    rowName: { fontSize: 15, fontWeight: '800', letterSpacing: -0.2 },
     redeemBtn: {
-      backgroundColor: colors.rose,
-      paddingHorizontal: space(1.5),
-      paddingVertical: space(0.75),
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
       borderRadius: radius.pill,
     },
     redeemBtnOff: { backgroundColor: colors.surfaceMuted },

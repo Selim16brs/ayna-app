@@ -25,7 +25,7 @@ const makeCatColors = (colors: ColorTokens) => [
 export default function NewDemandScreen() {
   const router = useRouter();
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const CAT_COLORS = makeCatColors(colors);
@@ -120,11 +120,15 @@ export default function NewDemandScreen() {
                   <View
                     style={[
                       styles.catTile,
-                      { backgroundColor: c.bg },
-                      active && { borderColor: colors.accent, borderWidth: 2.5 },
+                      { backgroundColor: active ? colors.accent : c.bg },
+                      active && shadow.soft,
                     ]}
                   >
-                    <Ionicons name={cat.icon as IoniconName} size={24} color={c.fg} />
+                    <Ionicons
+                      name={cat.icon as IoniconName}
+                      size={24}
+                      color={active ? colors.onAccent : c.fg}
+                    />
                   </View>
                   <Text variant="caption" tone={active ? 'ink' : 'inkSoft'} numberOfLines={1}>
                     {t(cat.labelKey)}
@@ -139,7 +143,7 @@ export default function NewDemandScreen() {
           <SelectRow icon="calendar-outline" label={t('demand.new.date')} value={t('demand.new.date_ph')} muted />
 
           {/* Bütçe (gerçek input) */}
-          <View style={styles.budgetRow}>
+          <View style={[styles.budgetRow, shadow.soft]}>
             <View style={styles.rowIcon}>
               <Ionicons name="wallet-outline" size={20} color={colors.inkSoft} />
             </View>
@@ -175,7 +179,7 @@ export default function NewDemandScreen() {
           ) : null}
 
           {/* Not ekle */}
-          <View style={styles.noteBox}>
+          <View style={[styles.noteBox, shadow.soft]}>
             <View style={styles.noteHead}>
               <Ionicons name="create-outline" size={18} color={colors.inkSoft} />
               <Text variant="bodyStrong" tone="ink">
@@ -243,10 +247,10 @@ function SelectRow({
   value: string;
   muted?: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <View style={styles.selectRow}>
+    <View style={[styles.selectRow, shadow.soft]}>
       <View style={styles.rowIcon}>
         <Ionicons name={icon} size={20} color={colors.inkSoft} />
       </View>
@@ -290,8 +294,7 @@ const makeStyles = (colors: ColorTokens) =>
       width: 44,
       height: 44,
       borderRadius: 22,
-      borderWidth: 1.5,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -309,8 +312,6 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.md,
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: 2.5,
-      borderColor: 'transparent',
     },
 
     selectRow: {
@@ -371,9 +372,6 @@ const makeStyles = (colors: ColorTokens) =>
       width: 96,
       height: 96,
       borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: colors.line,
-      borderStyle: 'dashed',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 4,

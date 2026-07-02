@@ -11,7 +11,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Screen, SectionHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -21,7 +21,7 @@ const HERO_WOMAN =
 export default function NewQuoteScreen() {
   const router = useRouter();
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const campaigns = useCampaigns();
@@ -96,7 +96,7 @@ export default function NewQuoteScreen() {
         </View>
 
         {/* ── Yükleme kutusu ── */}
-        <Pressable onPress={pickPhoto} style={styles.uploadBox}>
+        <Pressable onPress={pickPhoto} style={[styles.uploadBox, !photo && shadow.soft]}>
           {photo ? (
             <Image source={{ uri: photo }} style={styles.uploaded} />
           ) : (
@@ -154,11 +154,7 @@ export default function NewQuoteScreen() {
         </View>
 
         {/* ── Sana özel teklifler ── */}
-        <View style={styles.sectionHeader}>
-          <Text variant="h2" tone="ink" style={styles.sectionTitle}>
-            {t('quote.new.special')}
-          </Text>
-        </View>
+        <SectionHeader title={t('quote.new.special')} />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -167,7 +163,7 @@ export default function NewQuoteScreen() {
           {campaigns.map((c) => (
             <Pressable
               key={c.id}
-              style={styles.special}
+              style={[styles.special, shadow.soft]}
               onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
             >
               <Image source={{ uri: c.image }} style={styles.specialImg} />
@@ -254,9 +250,6 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(3),
       height: 168,
       borderRadius: radius.lg,
-      borderWidth: 1.5,
-      borderColor: colors.line,
-      borderStyle: 'dashed',
       alignItems: 'center',
       justifyContent: 'center',
       gap: space(0.75),
@@ -307,8 +300,6 @@ const makeStyles = (colors: ColorTokens) =>
     },
     catChipActive: { backgroundColor: colors.accent },
 
-    sectionHeader: { paddingHorizontal: space(3), marginTop: space(3.5), marginBottom: space(1.5) },
-    sectionTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.4 },
     specialRow: { paddingHorizontal: space(3), gap: space(1.5) },
     special: {
       width: 150,

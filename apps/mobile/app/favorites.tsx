@@ -61,13 +61,13 @@ export default function FavoritesScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(2), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
-    list: { gap: space(1.25) },
+    content: { paddingHorizontal: space(3), paddingTop: space(2.5), paddingBottom: TAB_BAR_CLEARANCE },
+    list: { gap: space(1.5) },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     emptyIcon: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
+      width: 72,
+      height: 72,
+      borderRadius: 36,
       backgroundColor: colors.roseSoft,
       alignItems: 'center',
       justifyContent: 'center',

@@ -8,7 +8,7 @@ import { useStore } from '../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, Text } from '../src/ui';
+import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -20,7 +20,7 @@ const GROUPS: { key: MessageKey; match: (d: number) => boolean }[] = [
 
 export default function EventsScreen() {
   const { t } = useLocale();
-  const { colors, shadow } = useTheme();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const bookings = useStore((s) => s.bookings);
   const moments = useStore((s) => s.moments);
@@ -47,12 +47,10 @@ export default function EventsScreen() {
             if (items.length === 0) return null;
             return (
               <View key={g.key}>
-                <Text variant="label" tone="rose" style={styles.section}>
-                  {t(g.key)}
-                </Text>
-                <View style={[styles.group, shadow.soft]}>
-                  {items.map((e, i) => (
-                    <Row key={e.id} event={e} border={i < items.length - 1} />
+                <SectionHeader title={t(g.key)} />
+                <View style={styles.group}>
+                  {items.map((e) => (
+                    <Row key={e.id} event={e} />
                   ))}
                 </View>
               </View>
@@ -64,24 +62,21 @@ export default function EventsScreen() {
   );
 }
 
-function Row({ event, border }: { event: UpcomingEvent; border: boolean }) {
-  const { colors } = useTheme();
+function Row({ event }: { event: UpcomingEvent }) {
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const isAppointment = event.kind === 'appointment';
+  const tileBg = event.tone === 'rose' ? colors.roseSoft : colors.goldSoft;
+  const tileInk = event.tone === 'rose' ? colors.rose : colors.gold;
 
   const inner = (
     <>
-      <View
-        style={[
-          styles.icon,
-          { backgroundColor: event.tone === 'rose' ? colors.rose : colors.gold },
-        ]}
-      >
-        <Ionicons name={event.icon as IoniconName} size={18} color={colors.onColor} />
+      <View style={[styles.icon, { backgroundColor: tileBg }]}>
+        <Ionicons name={event.icon as IoniconName} size={20} color={tileInk} />
       </View>
       <View style={styles.body}>
-        <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+        <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.rowTitle}>
           {event.title}
         </Text>
         <Text variant="caption" tone="muted" numberOfLines={1}>
@@ -89,11 +84,15 @@ function Row({ event, border }: { event: UpcomingEvent; border: boolean }) {
         </Text>
       </View>
       {isAppointment ? (
-        <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+        <View style={styles.chevron}>
+          <Ionicons name="chevron-forward" size={16} color={colors.inkSoft} />
+        </View>
       ) : (
-        <Text variant="caption" tone="inkSoft">
-          {whenShort(event.inDays)}
-        </Text>
+        <View style={styles.whenPill}>
+          <Text variant="caption" tone="inkSoft" style={styles.whenText}>
+            {whenShort(event.inDays)}
+          </Text>
+        </View>
       )}
     </>
   );
@@ -101,7 +100,7 @@ function Row({ event, border }: { event: UpcomingEvent; border: boolean }) {
   if (isAppointment) {
     return (
       <Pressable
-        style={[styles.row, border && styles.rowBorder]}
+        style={({ pressed }) => [styles.row, shadow.soft, pressed && styles.rowPressed]}
         onPress={() => router.push('/booking/' + event.refId)}
       >
         {inner}
@@ -109,12 +108,12 @@ function Row({ event, border }: { event: UpcomingEvent; border: boolean }) {
     );
   }
 
-  return <View style={[styles.row, border && styles.rowBorder]}>{inner}</View>;
+  return <View style={[styles.row, shadow.soft]}>{inner}</View>;
 }
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
+    content: { paddingHorizontal: space(3), paddingTop: space(0.5), paddingBottom: TAB_BAR_CLEARANCE },
     empty: {
       alignItems: 'center',
       justifyContent: 'center',
@@ -122,26 +121,39 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1.5),
     },
     emptyText: {},
-    section: { marginTop: space(2), marginBottom: space(1.25) },
-    group: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      overflow: 'hidden',
-    },
+    group: { gap: space(1.5) },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
       paddingHorizontal: space(1.75),
-      paddingVertical: space(1.5),
+      paddingVertical: space(1.75),
     },
-    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    rowPressed: { opacity: 0.96, transform: [{ scale: 0.99 }] },
+    rowTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
     icon: {
-      width: 40,
-      height: 40,
+      width: 48,
+      height: 48,
       borderRadius: radius.md,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    body: { flex: 1 },
+    body: { flex: 1, gap: 2 },
+    chevron: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    whenPill: {
+      backgroundColor: colors.surfaceMuted,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+    },
+    whenText: { fontWeight: '700' },
   });

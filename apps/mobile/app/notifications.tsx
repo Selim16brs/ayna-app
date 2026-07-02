@@ -21,7 +21,7 @@ const TONE: Record<NotificationType, 'rose' | 'gold' | 'sage' | 'blue' | 'lavend
 export default function NotificationsScreen() {
   const { t } = useLocale();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const items = useStore((s) => s.notifications);
   const markAll = useStore((s) => s.markAllNotificationsRead);
@@ -55,8 +55,9 @@ export default function NotificationsScreen() {
         ) : (
           <>
             <View style={styles.topRow}>
-              <Pressable onPress={markAll} hitSlop={6}>
-                <Text variant="caption" tone="rose">
+              <Pressable onPress={markAll} hitSlop={6} style={styles.markAll}>
+                <Ionicons name="checkmark-done" size={15} color={colors.onAccent} />
+                <Text variant="caption" tone="onAccent" style={styles.markAllText}>
                   {t('notifications.mark_all')}
                 </Text>
               </Pressable>
@@ -68,16 +69,17 @@ export default function NotificationsScreen() {
                   <Pressable
                     key={n.id}
                     onPress={() => onOpen(n)}
-                    style={[styles.row, !n.read && styles.rowUnread]}
+                    style={[styles.row, shadow.soft, !n.read && styles.rowUnread]}
                   >
+                    {!n.read ? <View style={styles.accentBar} /> : null}
                     <View style={[styles.iconChip, { backgroundColor: c.bg }]}>
-                      <Ionicons name={n.icon as IoniconName} size={19} color={c.fg} />
+                      <Ionicons name={n.icon as IoniconName} size={20} color={c.fg} />
                     </View>
                     <View style={styles.rowBody}>
-                      <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                      <Text variant="bodyStrong" tone="ink" style={styles.rowTitle} numberOfLines={1}>
                         {n.title}
                       </Text>
-                      <Text variant="caption" tone="muted" style={styles.body}>
+                      <Text variant="caption" tone="inkSoft" style={styles.body}>
                         {n.body}
                       </Text>
                       <Text variant="caption" tone="muted" style={styles.date}>
@@ -103,42 +105,60 @@ export default function NotificationsScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(2), paddingBottom: space(4) },
-    topRow: { alignItems: 'flex-end', paddingHorizontal: space(0.5), paddingVertical: space(1) },
-    list: { gap: space(1.25) },
+    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: space(13) },
+    topRow: { alignItems: 'flex-end', marginBottom: space(2) },
+    markAll: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(0.9),
+      borderRadius: radius.pill,
+    },
+    markAllText: { fontWeight: '800' },
+    list: { gap: space(1.5) },
     row: {
       flexDirection: 'row',
       alignItems: 'flex-start',
       gap: space(1.5),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
-      padding: space(1.75),
+      padding: space(2),
+      overflow: 'hidden',
     },
-    rowUnread: { backgroundColor: colors.surfaceMuted, borderColor: colors.roseSoft },
+    rowUnread: { backgroundColor: colors.accentSoft },
+    accentBar: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 5,
+      backgroundColor: colors.accent,
+    },
     iconChip: {
-      width: 42,
-      height: 42,
+      width: 46,
+      height: 46,
       borderRadius: radius.md,
       alignItems: 'center',
       justifyContent: 'center',
     },
     rowBody: { flex: 1 },
-    body: { marginTop: 2 },
-    date: { marginTop: space(0.75) },
+    rowTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+    body: { marginTop: 3, lineHeight: 19 },
+    date: { marginTop: space(1) },
     trailing: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), marginTop: space(0.5) },
     dot: {
       width: 9,
       height: 9,
       borderRadius: 5,
-      backgroundColor: colors.rose,
+      backgroundColor: colors.accent,
     },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     emptyIcon: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
+      width: 72,
+      height: 72,
+      borderRadius: 36,
       backgroundColor: colors.surfaceMuted,
       alignItems: 'center',
       justifyContent: 'center',

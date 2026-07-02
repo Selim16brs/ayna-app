@@ -11,7 +11,7 @@ import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
 export default function CityScreen() {
   const { t } = useLocale();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const setCity = useStore((s) => s.setCity);
@@ -33,18 +33,24 @@ export default function CityScreen() {
           return (
             <Pressable
               key={c}
-              style={[styles.row, active && styles.rowActive]}
+              style={[styles.row, shadow.soft, active && styles.rowActive]}
               onPress={() => pick(c)}
             >
-              <Ionicons
-                name="location-outline"
-                size={20}
-                color={active ? colors.onAccent : colors.inkSoft}
-              />
+              <View style={[styles.pin, active && styles.pinActive]}>
+                <Ionicons
+                  name="location"
+                  size={20}
+                  color={active ? colors.onAccent : colors.inkSoft}
+                />
+              </View>
               <Text variant="bodyStrong" tone={active ? 'onAccent' : 'ink'} style={styles.rowLabel}>
                 {c}
               </Text>
-              {active ? <Ionicons name="checkmark" size={20} color={colors.onAccent} /> : null}
+              {active ? (
+                <View style={styles.check}>
+                  <Ionicons name="checkmark" size={18} color={colors.onAccent} />
+                </View>
+              ) : null}
             </Pressable>
           );
         })}
@@ -55,17 +61,39 @@ export default function CityScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: TAB_BAR_CLEARANCE + space(6),
+      gap: space(1.5),
+    },
     hint: { marginBottom: space(1) },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
-      height: 56,
-      paddingHorizontal: space(2),
+      height: 66,
+      paddingHorizontal: space(1.75),
       borderRadius: radius.lg,
       backgroundColor: colors.surface,
     },
     rowActive: { backgroundColor: colors.accent },
-    rowLabel: { flex: 1 },
+    pin: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pinActive: { backgroundColor: 'rgba(255,255,255,0.35)' },
+    rowLabel: { flex: 1, fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+    check: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      backgroundColor: 'rgba(255,255,255,0.35)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
   });

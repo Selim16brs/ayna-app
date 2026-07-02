@@ -28,7 +28,7 @@ export default function ConfirmedScreen() {
     <Screen edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.successCircle}>
-          <Ionicons name="checkmark" size={40} color={colors.onColor} />
+          <Ionicons name="checkmark" size={42} color={colors.onAccent} />
         </View>
         <Text variant="title" tone="ink" style={styles.title}>
           {t('quote.sent.title')}
@@ -100,7 +100,7 @@ function Field({
   return (
     <View style={[styles.field, !last && styles.fieldBorder]}>
       <View style={styles.fieldIcon}>
-        <Ionicons name={icon} size={17} color={colors.rose} />
+        <Ionicons name={icon} size={17} color={colors.ink} />
       </View>
       <View style={styles.fieldText}>
         <Text variant="caption" tone="muted">
@@ -118,10 +118,10 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { padding: space(3), alignItems: 'stretch' },
     successCircle: {
-      width: 76,
-      height: 76,
-      borderRadius: 38,
-      backgroundColor: colors.success,
+      width: 84,
+      height: 84,
+      borderRadius: 42,
+      backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
       alignSelf: 'center',
@@ -132,8 +132,6 @@ const makeStyles = (colors: ColorTokens) =>
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       paddingHorizontal: space(2),
     },
     field: {
@@ -144,10 +142,10 @@ const makeStyles = (colors: ColorTokens) =>
     },
     fieldBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
     fieldIcon: {
-      width: 36,
-      height: 36,
+      width: 38,
+      height: 38,
       borderRadius: radius.md,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },

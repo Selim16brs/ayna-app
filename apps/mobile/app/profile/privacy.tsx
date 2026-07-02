@@ -6,7 +6,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 type ToggleKey = 'location' | 'anon' | 'personalized' | 'analytics' | 'marketing';
 
@@ -38,7 +38,7 @@ const TOGGLES: {
 
 export default function PrivacyScreen() {
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
   // "anon" (yorum gizliliği) gerçek store değeridir; diğerleri yerel
@@ -67,18 +67,18 @@ export default function PrivacyScreen() {
     ]);
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={['bottom']}>
       <StackHeader title={t('privacy.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text variant="caption" tone="muted" style={styles.subtitle}>
+        <Text variant="body" tone="inkSoft" style={styles.subtitle}>
           {t('privacy.subtitle')}
         </Text>
 
-        <View style={styles.group}>
+        <View style={[styles.group, shadow.soft]}>
           {TOGGLES.map((tg, i) => (
             <View key={tg.key} style={[styles.row, i < TOGGLES.length - 1 && styles.rowBorder]}>
-              <View style={[styles.icon, { backgroundColor: colors.lavenderSoft }]}>
-                <Ionicons name={tg.icon} size={18} color={colors.lavender} />
+              <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+                <Ionicons name={tg.icon} size={18} color={colors.ink} />
               </View>
               <View style={styles.rowLabel}>
                 <Text variant="bodyStrong" tone="ink">
@@ -93,17 +93,15 @@ export default function PrivacyScreen() {
               <Switch
                 value={value(tg.key)}
                 onValueChange={set(tg.key)}
-                trackColor={{ true: colors.lavender, false: colors.line }}
+                trackColor={{ true: colors.accent, false: colors.surfaceMuted }}
               />
             </View>
           ))}
         </View>
 
         {/* Verilerim */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('privacy.section.data')}
-        </Text>
-        <View style={styles.group}>
+        <SectionHeader title={t('privacy.section.data')} />
+        <View style={[styles.group, shadow.soft]}>
           <Pressable onPress={onDownload} style={[styles.row, styles.rowBorder]}>
             <View style={[styles.icon, { backgroundColor: colors.surfaceMuted }]}>
               <Ionicons name="download-outline" size={18} color={colors.inkSoft} />
@@ -129,24 +127,21 @@ export default function PrivacyScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-    subtitle: { marginBottom: space(2) },
-    section: { marginTop: space(3), marginBottom: space(1.5) },
+    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
+    subtitle: { marginBottom: space(2.5) },
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       overflow: 'hidden',
     },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.5),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
     },
-    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceMuted },
     icon: {
       width: 38,
       height: 38,

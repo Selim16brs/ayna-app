@@ -194,7 +194,7 @@ export default function ProfessionalScreen() {
                     <Pressable
                       key={s.id}
                       onPress={() => setSelected(s.id)}
-                      style={[styles.service, active && styles.serviceActive]}
+                      style={[styles.service, shadow.soft, active && styles.serviceActive]}
                     >
                       <View style={styles.serviceText}>
                         <View style={styles.serviceNameRow}>
@@ -221,7 +221,7 @@ export default function ProfessionalScreen() {
                             {formatPrice(s.price)}
                           </Text>
                         ) : null}
-                        <Text variant="bodyStrong" tone={active ? 'rose' : 'ink'}>
+                        <Text variant="bodyStrong" tone="ink">
                           {formatPrice(finalPrice)}
                         </Text>
                       </View>
@@ -467,32 +467,31 @@ const makeStyles = (colors: ColorTokens) =>
     priceCol: { alignItems: 'flex-end' },
     strike: { textDecorationLine: 'line-through' },
     check: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      borderWidth: 2,
-      borderColor: colors.line,
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: colors.surfaceMuted,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    checkOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+    checkOn: { backgroundColor: colors.accent },
     chipRow: { gap: space(1.25), paddingRight: space(3) },
     dayChip: {
-      width: 58,
+      width: 60,
       alignItems: 'center',
       gap: 2,
-      paddingVertical: space(1.25),
+      paddingVertical: space(1.5),
       borderRadius: radius.lg,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.surfaceMuted,
     },
     dayChipOn: { backgroundColor: colors.accent },
     dayNum: { fontSize: 18, fontWeight: '800' },
     timeWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     timeChip: {
-      paddingHorizontal: space(2),
+      paddingHorizontal: space(2.25),
       paddingVertical: space(1.25),
       borderRadius: radius.pill,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.surfaceMuted,
     },
     timeChipOn: { backgroundColor: colors.accent },
     timeText: { fontWeight: '600' },
@@ -532,15 +531,13 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       gap: space(1.5),
       backgroundColor: colors.bg,
-      borderTopWidth: 1,
-      borderTopColor: colors.line,
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
     },
     waitlistBtn: {
-      width: 52,
-      height: 52,
-      borderRadius: radius.lg,
+      width: 56,
+      height: 56,
+      borderRadius: radius.pill,
       backgroundColor: colors.surfaceMuted,
       alignItems: 'center',
       justifyContent: 'center',
@@ -551,8 +548,8 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      height: 52,
-      borderRadius: radius.lg,
+      height: 56,
+      borderRadius: radius.pill,
       backgroundColor: colors.accent,
     },
   });

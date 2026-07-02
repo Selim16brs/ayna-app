@@ -5,7 +5,7 @@ import { FAQ } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 export default function HelpScreen() {
   const { t } = useLocale();
@@ -16,10 +16,10 @@ export default function HelpScreen() {
   const onContact = () => Alert.alert(t('common.soon'));
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={['bottom']}>
       <StackHeader title={t('help.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text variant="caption" tone="muted" style={styles.subtitle}>
+        <Text variant="body" tone="inkSoft" style={styles.subtitle}>
           {t('help.subtitle')}
         </Text>
 
@@ -49,13 +49,11 @@ export default function HelpScreen() {
         </View>
 
         {/* Bize ulaş */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('help.contact')}
-        </Text>
+        <SectionHeader title={t('help.contact')} />
         <View style={[styles.group, shadow.soft]}>
           <Pressable onPress={onContact} style={[styles.row, styles.rowBorder]}>
-            <View style={[styles.icon, { backgroundColor: colors.roseSoft }]}>
-              <Ionicons name="chatbubbles-outline" size={18} color={colors.rose} />
+            <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+              <Ionicons name="chatbubbles-outline" size={18} color={colors.ink} />
             </View>
             <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
               {t('help.chat')}
@@ -79,34 +77,33 @@ export default function HelpScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-    subtitle: { marginBottom: space(2) },
-    section: { marginTop: space(3), marginBottom: space(1.5) },
+    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
+    subtitle: { marginBottom: space(2.5) },
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       overflow: 'hidden',
     },
-    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceMuted },
     qRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
       paddingHorizontal: space(2),
-      paddingVertical: space(1.75),
+      paddingVertical: space(2),
     },
     qText: { flex: 1 },
     aText: {
       paddingHorizontal: space(2),
-      paddingBottom: space(1.75),
+      paddingBottom: space(2),
       marginTop: -space(0.5),
     },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.5),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
     },
     icon: {
       width: 38,

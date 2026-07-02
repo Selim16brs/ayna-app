@@ -1,12 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 const BENEFITS: MessageKey[] = [
   'passport.benefit.priority',
@@ -16,7 +15,7 @@ const BENEFITS: MessageKey[] = [
 
 export default function PassportScreen() {
   const { t } = useLocale();
-  const { colors, gradients, shadow } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
   const completed = useStore((s) => s.bookings.filter((b) => b.status === 'completed').length);
@@ -25,28 +24,28 @@ export default function PassportScreen() {
   const trust = 92;
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={['bottom']}>
       <StackHeader title={t('passport.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text variant="caption" tone="muted" style={styles.subtitle}>
+        <Text variant="body" tone="inkSoft" style={styles.subtitle}>
           {t('passport.subtitle')}
         </Text>
 
-        {/* Kimlik kartı */}
-        <LinearGradient colors={gradients.rose} style={[styles.hero, shadow.card]}>
+        {/* Kimlik kartı — lime aksan */}
+        <View style={[styles.hero, shadow.card]}>
           <View style={styles.heroTop}>
             <View style={styles.avatar}>
-              <Text variant="title" tone="onColor">
+              <Text variant="title" tone="onAccent">
                 A
               </Text>
             </View>
             <View style={styles.heroText}>
-              <Text variant="h2" tone="onColor">
+              <Text variant="h2" tone="onAccent">
                 Aigerim
               </Text>
               <View style={styles.verified}>
-                <Ionicons name="shield-checkmark" size={13} color={colors.onColor} />
-                <Text variant="caption" tone="onColor" style={styles.verifiedText}>
+                <Ionicons name="shield-checkmark" size={13} color={colors.onAccent} />
+                <Text variant="caption" tone="onAccent" style={styles.verifiedText}>
                   {t('passport.verified')}
                 </Text>
               </View>
@@ -60,10 +59,10 @@ export default function PassportScreen() {
             <View style={styles.heroDivider} />
             <HeroStat value={`${trust}`} label={t('passport.trust')} />
           </View>
-        </LinearGradient>
+        </View>
 
         {/* Seviye + üyelik */}
-        <View style={[styles.group, shadow.soft]}>
+        <View style={[styles.group, styles.groupGap, shadow.soft]}>
           <View style={[styles.row, styles.rowBorder]}>
             <View style={[styles.icon, { backgroundColor: colors.goldSoft }]}>
               <Ionicons name="medal-outline" size={18} color={colors.gold} />
@@ -89,9 +88,7 @@ export default function PassportScreen() {
         </View>
 
         {/* Avantajlar */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('passport.benefits')}
-        </Text>
+        <SectionHeader title={t('passport.benefits')} />
         <View style={[styles.group, shadow.soft]}>
           {BENEFITS.map((b, i) => (
             <View key={b} style={[styles.row, i < BENEFITS.length - 1 && styles.rowBorder]}>
@@ -113,10 +110,10 @@ function HeroStat({ value, label }: { value: string; label: string }) {
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.heroStat}>
-      <Text variant="title" tone="onColor">
+      <Text variant="title" tone="onAccent">
         {value}
       </Text>
-      <Text variant="caption" tone="onColor" style={styles.dim}>
+      <Text variant="caption" tone="onAccent" style={styles.dim}>
         {label}
       </Text>
     </View>
@@ -125,15 +122,15 @@ function HeroStat({ value, label }: { value: string; label: string }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-    subtitle: { marginBottom: space(2) },
-    hero: { borderRadius: radius.xl, padding: space(2.5) },
+    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
+    subtitle: { marginBottom: space(2.5) },
+    hero: { borderRadius: radius.xl, padding: space(2.75), backgroundColor: colors.accent },
     heroTop: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
     avatar: {
       width: 60,
       height: 60,
       borderRadius: 30,
-      backgroundColor: 'rgba(255,255,255,0.25)',
+      backgroundColor: 'rgba(26,26,26,0.12)',
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -142,7 +139,7 @@ const makeStyles = (colors: ColorTokens) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      backgroundColor: 'rgba(255,255,255,0.22)',
+      backgroundColor: 'rgba(26,26,26,0.1)',
       paddingHorizontal: space(1.25),
       paddingVertical: 3,
       borderRadius: radius.pill,
@@ -155,26 +152,25 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(2.5),
       paddingTop: space(2),
       borderTopWidth: 1,
-      borderTopColor: 'rgba(255,255,255,0.25)',
+      borderTopColor: 'rgba(26,26,26,0.14)',
     },
     heroStat: { flex: 1, alignItems: 'center', gap: 2 },
-    heroDivider: { width: 1, height: 28, backgroundColor: 'rgba(255,255,255,0.3)' },
-    dim: { opacity: 0.9, textAlign: 'center' },
-    section: { marginTop: space(3), marginBottom: space(1.5) },
+    heroDivider: { width: 1, height: 28, backgroundColor: 'rgba(26,26,26,0.16)' },
+    dim: { opacity: 0.75, textAlign: 'center' },
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       overflow: 'hidden',
-      marginTop: space(2),
     },
+    groupGap: { marginTop: space(2) },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.5),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
     },
-    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceMuted },
     icon: {
       width: 38,
       height: 38,

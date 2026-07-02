@@ -88,8 +88,8 @@ function SortChip({
   const styles = useThemedStyles(makeStyles);
   return (
     <Pressable onPress={onPress} style={[styles.sortChip, active && styles.sortChipActive]}>
-      <Ionicons name={icon} size={13} color={active ? colors.onColor : colors.inkSoft} />
-      <Text variant="caption" tone={active ? 'onColor' : 'inkSoft'}>
+      <Ionicons name={icon} size={13} color={active ? colors.onAccent : colors.inkSoft} />
+      <Text variant="caption" tone={active ? 'onAccent' : 'inkSoft'}>
         {label}
       </Text>
     </Pressable>
@@ -115,9 +115,9 @@ function QuoteCard({ quote, onPick }: { quote: ApiQuote; onPick: () => void }) {
             </Text>
           </View>
           {quote.friends ? (
-            <View style={[styles.metaChip, { backgroundColor: colors.roseSoft }]}>
-              <Ionicons name="people" size={11} color={colors.rose} />
-              <Text variant="caption" style={{ color: colors.rose }}>
+            <View style={[styles.metaChip, { backgroundColor: colors.lavenderSoft }]}>
+              <Ionicons name="people" size={11} color={colors.lavender} />
+              <Text variant="caption" style={{ color: colors.lavender }}>
                 {quote.friends}
               </Text>
             </View>
@@ -132,7 +132,7 @@ function QuoteCard({ quote, onPick }: { quote: ApiQuote; onPick: () => void }) {
           {formatPrice(quote.price)}
         </Text>
         <Pressable style={styles.pick} onPress={onPick}>
-          <Text variant="caption" tone="onColor">
+          <Text variant="caption" tone="onAccent" style={styles.pickText}>
             {t('quotes.pick')}
           </Text>
         </Pressable>
@@ -153,24 +153,22 @@ const makeStyles = (colors: ColorTokens) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      paddingHorizontal: space(1.5),
-      paddingVertical: space(0.75),
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
       borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
     },
-    sortChipActive: { backgroundColor: colors.rose, borderColor: colors.rose },
-    list: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.5) },
+    sortChipActive: { backgroundColor: colors.accent },
+    list: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
     card: {
       flexDirection: 'row',
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      padding: space(1.75),
-      gap: space(1.5),
+      padding: space(2),
+      gap: space(1.75),
       alignItems: 'center',
     },
-    thumb: { width: 72, height: 72, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    thumb: { width: 76, height: 76, borderRadius: radius.md, backgroundColor: colors.bgSunken },
     info: { flex: 1 },
     metaRow: { flexDirection: 'row', gap: space(0.75), marginTop: space(0.75) },
     metaChip: {
@@ -183,11 +181,12 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     eta: { marginTop: space(0.75) },
-    right: { alignItems: 'flex-end', gap: space(1) },
+    right: { alignItems: 'flex-end', gap: space(1.25) },
     pick: {
-      backgroundColor: colors.rose,
-      paddingHorizontal: space(1.75),
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(2),
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
+    pickText: { fontWeight: '800' },
   });

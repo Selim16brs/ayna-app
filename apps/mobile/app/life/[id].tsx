@@ -30,13 +30,15 @@ export default function ArticleDetailScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('life.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Tam-kadraj kapak foto — ProCard dili: alta koyu gradient + üstte başlık */}
         <ImageBackground
           source={{ uri: article.image }}
           style={styles.hero}
           imageStyle={styles.heroImage}
         >
           <LinearGradient
-            colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.45)']}
+            colors={['rgba(24,18,22,0)', 'rgba(24,18,22,0.25)', 'rgba(24,18,22,0.9)']}
+            locations={[0, 0.5, 1]}
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.heroTag}>
@@ -44,30 +46,25 @@ export default function ArticleDetailScreen() {
               {article.tag}
             </Text>
           </View>
+          <View style={styles.heroBottom}>
+            <Text variant="title" tone="onColor" style={styles.heroTitle}>
+              {article.title}
+            </Text>
+            <View style={styles.heroMeta}>
+              <Text variant="caption" tone="onColor" style={styles.heroMetaText}>
+                {article.readMin} {t('life.read')}
+              </Text>
+            </View>
+          </View>
         </ImageBackground>
 
         <View style={styles.body}>
-          <Text variant="title" tone="ink">
-            {article.title}
-          </Text>
-          <View style={styles.meta}>
-            <Text variant="caption" tone="rose">
-              {article.tag}
-            </Text>
-            <Text variant="caption" tone="muted">
-              {'·'}
-            </Text>
-            <Text variant="caption" tone="muted">
-              {article.readMin} {t('life.read')}
-            </Text>
-          </View>
-
-          <Text variant="bodyStrong" tone="inkSoft" style={styles.lead}>
+          <Text variant="bodyStrong" tone="ink" style={styles.lead}>
             {article.excerpt}
           </Text>
 
           {article.body.map((para, i) => (
-            <Text key={i} variant="body" tone="ink" style={styles.para}>
+            <Text key={i} variant="body" tone="inkSoft" style={styles.para}>
               {para}
             </Text>
           ))}
@@ -79,33 +76,38 @@ export default function ArticleDetailScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingBottom: space(5) },
+    content: { paddingBottom: space(13) },
     empty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     hero: {
-      height: 220,
+      height: 320,
       marginHorizontal: space(3),
-      borderRadius: radius.lg,
+      marginTop: space(2.5),
+      borderRadius: radius.xl,
       overflow: 'hidden',
       justifyContent: 'flex-start',
+      backgroundColor: colors.bgSunken,
     },
-    heroImage: { borderRadius: radius.lg },
+    heroImage: { borderRadius: radius.xl },
     heroTag: {
       position: 'absolute',
-      top: space(1.5),
-      left: space(1.5),
+      top: space(2),
+      left: space(2),
       backgroundColor: colors.accent,
-      paddingHorizontal: space(1.25),
-      paddingVertical: 4,
+      paddingHorizontal: space(1.5),
+      paddingVertical: 6,
       borderRadius: radius.pill,
     },
-    heroTagText: { fontWeight: '600' },
-    body: { paddingHorizontal: space(3), paddingTop: space(2.5) },
-    meta: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(0.75),
-      marginTop: space(1),
+    heroTagText: { fontWeight: '800' },
+    heroBottom: {
+      position: 'absolute',
+      left: space(2.25),
+      right: space(2.25),
+      bottom: space(2.25),
     },
-    lead: { marginTop: space(2.5), lineHeight: 24 },
-    para: { marginTop: space(2), lineHeight: 24 },
+    heroTitle: { fontSize: 26, lineHeight: 31, fontWeight: '800', letterSpacing: -0.5 },
+    heroMeta: { flexDirection: 'row', alignItems: 'center', marginTop: space(1) },
+    heroMetaText: { opacity: 0.9, fontWeight: '600' },
+    body: { paddingHorizontal: space(3), paddingTop: space(3) },
+    lead: { fontSize: 17, lineHeight: 25 },
+    para: { marginTop: space(2.25), lineHeight: 25 },
   });

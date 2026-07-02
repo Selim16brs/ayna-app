@@ -34,7 +34,7 @@ const SORTS: { key: SortKey; label: MessageKey }[] = [
 
 export default function SearchScreen() {
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { q } = useLocalSearchParams<{ q?: string }>();
@@ -75,7 +75,7 @@ export default function SearchScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('search.title')} />
       <View style={styles.searchRow}>
-        <View style={styles.searchBar}>
+        <View style={[styles.searchBar, shadow.soft]}>
           <Ionicons name="search" size={19} color={colors.muted} />
           <TextInput
             ref={inputRef}
@@ -96,12 +96,12 @@ export default function SearchScreen() {
         {/* §7 — sıralama paneli aç/kapat */}
         <Pressable
           onPress={() => setShowSort((v) => !v)}
-          style={[styles.tune, (showSort || sort !== 'recommended') && styles.tuneOn]}
+          style={[styles.tune, (showSort || sort !== 'recommended') && styles.tuneOn, shadow.soft]}
         >
           <Ionicons
             name="options-outline"
             size={20}
-            color={showSort || sort !== 'recommended' ? colors.onColor : colors.inkSoft}
+            color={showSort || sort !== 'recommended' ? colors.onAccent : colors.inkSoft}
           />
         </Pressable>
       </View>
@@ -122,7 +122,7 @@ export default function SearchScreen() {
                 onPress={() => setSort(s.key)}
                 style={[styles.chip, on && styles.chipOn]}
               >
-                <Text variant="caption" tone={on ? 'onColor' : 'inkSoft'}>
+                <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} style={on ? styles.chipOnText : undefined}>
                   {t(s.label)}
                 </Text>
               </Pressable>
@@ -142,7 +142,11 @@ export default function SearchScreen() {
           onPress={() => setActiveCat(null)}
           style={[styles.chip, activeCat === null && styles.chipOn]}
         >
-          <Text variant="caption" tone={activeCat === null ? 'onColor' : 'inkSoft'}>
+          <Text
+            variant="caption"
+            tone={activeCat === null ? 'onAccent' : 'inkSoft'}
+            style={activeCat === null ? styles.chipOnText : undefined}
+          >
             {t('search.all_categories')}
           </Text>
         </Pressable>
@@ -154,7 +158,7 @@ export default function SearchScreen() {
               onPress={() => setActiveCat(on ? null : cat.id)}
               style={[styles.chip, on && styles.chipOn]}
             >
-              <Text variant="caption" tone={on ? 'onColor' : 'inkSoft'}>
+              <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} style={on ? styles.chipOnText : undefined}>
                 {t(cat.labelKey)}
               </Text>
             </Pressable>
@@ -214,26 +218,28 @@ export function ProRow({
       <PressableScale style={[styles.row, shadow.soft]} onPress={onPress}>
         <Image source={{ uri: pro.image }} style={styles.thumb} />
         <View style={styles.rowBody}>
-          <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+          <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.rowName}>
             {pro.name}
           </Text>
+          <View style={styles.rowRating}>
+            <Ionicons name="star" size={13} color={colors.gold} />
+            <Text variant="caption" tone="ink" style={styles.rowRatingText}>
+              {pro.rating.toFixed(1)}
+            </Text>
+          </View>
           <Text variant="caption" tone="muted" numberOfLines={1} style={styles.rowMeta}>
             {pro.specialty}
           </Text>
-          <View style={styles.rowFooter}>
-            <Ionicons name="star" size={12} color={colors.gold} />
-            <Text variant="caption" tone="inkSoft">
-              {pro.rating.toFixed(1)}
-            </Text>
-            <Text variant="caption" tone="muted">
-              ·
-            </Text>
-            <Text variant="caption" tone="inkSoft">
-              {formatPrice(pro.priceFrom)}
-            </Text>
-          </View>
         </View>
-        {right ?? <Ionicons name="chevron-forward" size={18} color={colors.muted} />}
+        {right ?? (
+          <View style={styles.rowRight}>
+            <View style={styles.pricePill}>
+              <Text variant="caption" tone="onAccent" style={styles.priceText}>
+                {formatPrice(pro.priceFrom)}
+              </Text>
+            </View>
+          </View>
+        )}
       </PressableScale>
     </Animated.View>
   );
@@ -244,78 +250,77 @@ const makeStyles = (colors: ColorTokens) =>
     searchRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: space(1),
-      paddingHorizontal: space(2),
+      gap: space(1.25),
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
     },
     tune: {
-      width: 50,
-      height: 50,
-      borderRadius: radius.md,
+      width: 52,
+      height: 52,
+      borderRadius: radius.pill,
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    tuneOn: { backgroundColor: colors.rose, borderColor: colors.rose },
+    tuneOn: { backgroundColor: colors.accent },
     searchBar: {
       flex: 1,
-      height: 50,
+      height: 52,
       backgroundColor: colors.surface,
       borderRadius: radius.pill,
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.25),
-      paddingHorizontal: space(2.25),
-      borderWidth: 1,
-      borderColor: colors.line,
+      paddingHorizontal: space(2.5),
     },
     input: { flex: 1, color: colors.ink, fontSize: 15 },
     // Yatay ScrollView dikey eksende büyümesin (dik kolon içinde doğrudan çocuk)
     chipBar: { flexGrow: 0, flexShrink: 0 },
     chips: {
-      paddingHorizontal: space(2),
+      paddingHorizontal: space(3),
       gap: space(1),
       paddingVertical: space(1.5),
       alignItems: 'center',
     },
     chip: {
       alignSelf: 'center',
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(0.9),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.1),
       borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
     },
-    chipOn: { backgroundColor: colors.rose, borderColor: colors.rose },
-    content: { paddingHorizontal: space(2), paddingBottom: TAB_BAR_CLEARANCE },
+    chipOn: { backgroundColor: colors.accent },
+    chipOnText: { fontWeight: '700' },
+    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
     count: { marginBottom: space(1.5), marginLeft: space(0.5) },
-    list: { gap: space(1.25) },
+    list: { gap: space(1.5) },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       padding: space(1.25),
     },
-    thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.bgSunken },
-    rowBody: { flex: 1 },
-    rowMeta: { marginTop: 2 },
-    rowFooter: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(0.75),
-      marginTop: space(0.75),
+    thumb: { width: 84, height: 84, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    rowBody: { flex: 1, gap: 4 },
+    rowName: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+    rowRating: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    rowRatingText: { fontWeight: '800' },
+    rowMeta: {},
+    rowRight: { alignItems: 'flex-end', justifyContent: 'center', paddingRight: space(0.5) },
+    pricePill: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
     },
+    priceText: { fontWeight: '800' },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     emptyIcon: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
+      width: 72,
+      height: 72,
+      borderRadius: 36,
       backgroundColor: colors.surfaceMuted,
       alignItems: 'center',
       justifyContent: 'center',

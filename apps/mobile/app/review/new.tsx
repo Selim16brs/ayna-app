@@ -64,7 +64,7 @@ export default function ReviewNewScreen() {
         <Text variant="h2" tone="ink" style={styles.label}>
           {t('review.rating')}
         </Text>
-        <View style={styles.stars}>
+        <View style={[styles.stars, shadow.soft]}>
           {STARS.map((s) => (
             <Pressable key={s} onPress={() => setRating(s)} hitSlop={6}>
               <Ionicons
@@ -116,19 +116,22 @@ const makeStyles = (colors: ColorTokens) =>
     proCard: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
       padding: space(2),
       gap: 2,
     },
     label: { marginTop: space(3), marginBottom: space(1.5) },
-    stars: { flexDirection: 'row', gap: space(1.5) },
-    input: {
-      minHeight: 120,
+    stars: {
+      flexDirection: 'row',
+      gap: space(1.5),
+      justifyContent: 'center',
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
+      paddingVertical: space(2.5),
+    },
+    input: {
+      minHeight: 130,
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.lg,
       padding: space(2),
       textAlignVertical: 'top',
       color: colors.ink,
@@ -138,7 +141,5 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
       paddingBottom: TAB_BAR_CLEARANCE,
-      borderTopWidth: 1,
-      borderTopColor: colors.line,
     },
   });

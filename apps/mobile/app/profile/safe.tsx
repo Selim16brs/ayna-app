@@ -4,7 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-na
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 const CONTACTS = [
   { name: 'Dana', relation: 'Kız kardeş' },
@@ -23,15 +23,15 @@ export default function SafeScreen() {
   const onAddContact = () => Alert.alert(t('common.soon'));
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={['bottom']}>
       <StackHeader title={t('safe.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text variant="caption" tone="muted" style={styles.subtitle}>
+        <Text variant="body" tone="inkSoft" style={styles.subtitle}>
           {t('safe.subtitle')}
         </Text>
 
-        {/* SOS */}
-        <Pressable onPress={onSos} style={styles.sos}>
+        {/* SOS — acil eylem (kırmızı, anlamsal) */}
+        <Pressable onPress={onSos} style={[styles.sos, shadow.card]}>
           <View style={styles.sosIcon}>
             <Ionicons name="alert-circle" size={26} color={colors.onColor} />
           </View>
@@ -46,7 +46,7 @@ export default function SafeScreen() {
         </Pressable>
 
         {/* Ayarlar */}
-        <View style={[styles.group, shadow.soft]}>
+        <View style={[styles.group, styles.groupGap, shadow.soft]}>
           <ToggleRow
             icon="location-outline"
             label={t('safe.location')}
@@ -65,17 +65,15 @@ export default function SafeScreen() {
         </View>
 
         {/* Güvendiğim kişiler */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('safe.contacts')}
-        </Text>
+        <SectionHeader title={t('safe.contacts')} />
         <Text variant="caption" tone="muted" style={styles.sectionSub}>
           {t('safe.contacts_sub')}
         </Text>
         <View style={[styles.group, shadow.soft]}>
           {CONTACTS.map((c, i) => (
             <View key={c.name} style={[styles.row, i < CONTACTS.length - 1 && styles.rowBorder]}>
-              <View style={[styles.icon, { backgroundColor: colors.lavenderSoft }]}>
-                <Ionicons name="person-outline" size={18} color={colors.lavender} />
+              <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+                <Ionicons name="person-outline" size={18} color={colors.ink} />
               </View>
               <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
                 {c.name} · {c.relation}
@@ -115,8 +113,8 @@ function ToggleRow({
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.row, border && styles.rowBorder]}>
-      <View style={[styles.icon, { backgroundColor: colors.sageSoft }]}>
-        <Ionicons name={icon} size={18} color={colors.sage} />
+      <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+        <Ionicons name={icon} size={18} color={colors.ink} />
       </View>
       <View style={styles.rowLabel}>
         <Text variant="bodyStrong" tone="ink">
@@ -129,7 +127,7 @@ function ToggleRow({
       <Switch
         value={value}
         onValueChange={onValueChange}
-        trackColor={{ true: colors.sage, false: colors.line }}
+        trackColor={{ true: colors.accent, false: colors.surfaceMuted }}
       />
     </View>
   );
@@ -137,16 +135,15 @@ function ToggleRow({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-    subtitle: { marginBottom: space(2) },
+    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
+    subtitle: { marginBottom: space(2.5) },
     sos: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.75),
       backgroundColor: colors.danger,
       borderRadius: radius.xl,
-      padding: space(2.25),
-      marginBottom: space(1),
+      padding: space(2.5),
     },
     sosIcon: {
       width: 48,
@@ -158,22 +155,21 @@ const makeStyles = (colors: ColorTokens) =>
     },
     sosText: { flex: 1, gap: 2 },
     dim: { opacity: 0.92 },
-    section: { marginTop: space(3) },
-    sectionSub: { marginTop: 2, marginBottom: space(1.5) },
+    sectionSub: { marginTop: -space(1), marginBottom: space(1.75), paddingHorizontal: space(3) },
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       overflow: 'hidden',
-      marginTop: space(2),
     },
+    groupGap: { marginTop: space(2) },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.5),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
     },
-    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceMuted },
     icon: {
       width: 38,
       height: 38,

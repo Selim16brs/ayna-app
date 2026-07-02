@@ -5,13 +5,12 @@ import { INCOMING_QUOTES, formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 export default function DemandResultsScreen() {
   const { t } = useLocale();
   const router = useRouter();
-  const { colors, gradients, shadow } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { budget } = useLocalSearchParams<{ budget: string }>();
   const budgetNum = Number(budget) || 0;
@@ -20,18 +19,22 @@ export default function DemandResultsScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('demand.results.title')} />
 
-      <LinearGradient colors={gradients.plum} style={styles.budgetBanner}>
-        <Text variant="caption" tone="onColor" style={styles.budgetLabel}>
-          {t('demand.results.budget')}
-        </Text>
-        <Text variant="title" tone="onColor">
-          {formatPrice(budgetNum)}
-        </Text>
-      </LinearGradient>
+      {/* Bütçe kartı — kenarlıksız, yumuşak gölge, lime pastel zemin */}
+      <View style={[styles.budgetBanner, shadow.soft]}>
+        <View style={styles.budgetIcon}>
+          <Ionicons name="wallet" size={22} color={colors.onAccent} />
+        </View>
+        <View style={styles.budgetText}>
+          <Text variant="caption" tone="inkSoft" style={styles.budgetLabel}>
+            {t('demand.results.budget')}
+          </Text>
+          <Text variant="title" tone="ink">
+            {formatPrice(budgetNum)}
+          </Text>
+        </View>
+      </View>
 
-      <Text variant="caption" tone="muted" style={styles.count}>
-        {INCOMING_QUOTES.length} {t('demand.results.count')}
-      </Text>
+      <SectionHeader title={`${INCOMING_QUOTES.length} ${t('demand.results.count')}`} />
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
         {INCOMING_QUOTES.map((q) => (
@@ -65,7 +68,7 @@ export default function DemandResultsScreen() {
                 })
               }
             >
-              <Text variant="caption" tone="onColor">
+              <Text variant="caption" tone="onAccent" style={styles.pickText}>
                 {t('quotes.pick')}
               </Text>
             </Pressable>
@@ -79,23 +82,35 @@ export default function DemandResultsScreen() {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     budgetBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.75),
       marginHorizontal: space(3),
+      marginTop: space(2.5),
       borderRadius: radius.lg,
-      padding: space(2),
-      marginBottom: space(2),
+      padding: space(2.25),
+      backgroundColor: colors.accentSoft,
     },
-    budgetLabel: { opacity: 0.85, marginBottom: 2 },
-    count: { paddingHorizontal: space(3), marginBottom: space(1.5) },
-    list: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.5) },
+    budgetIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: radius.md,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    budgetText: { flex: 1 },
+    budgetLabel: { marginBottom: 2 },
+    list: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
     card: {
       flexDirection: 'row',
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      padding: space(1.75),
-      gap: space(1.5),
+      padding: space(2),
+      gap: space(1.75),
       alignItems: 'center',
     },
-    thumb: { width: 60, height: 60, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.bgSunken },
     info: { flex: 1 },
     metaRow: { flexDirection: 'row', gap: space(0.75), marginTop: space(0.75) },
     metaChip: {
@@ -117,9 +132,10 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     pick: {
-      backgroundColor: colors.rose,
-      paddingHorizontal: space(1.75),
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(2),
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
+    pickText: { fontWeight: '800' },
   });

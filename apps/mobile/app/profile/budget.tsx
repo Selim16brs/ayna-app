@@ -6,7 +6,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Progress, Screen, StackHeader, Text } from '../../src/ui';
+import { Progress, Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 const LIMIT = 80000;
 
@@ -29,10 +29,10 @@ export default function BudgetScreen() {
   const categories = Object.entries(byCategory);
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={['bottom']}>
       <StackHeader title={t('budget.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text variant="caption" tone="muted" style={styles.subtitle}>
+        <Text variant="body" tone="inkSoft" style={styles.subtitle}>
           {t('budget.subtitle')}
         </Text>
 
@@ -58,11 +58,9 @@ export default function BudgetScreen() {
         </View>
 
         {/* Kategoriye göre */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('budget.by_category')}
-        </Text>
+        <SectionHeader title={t('budget.by_category')} />
         {categories.length === 0 ? (
-          <View style={[styles.group, styles.empty]}>
+          <View style={[styles.group, styles.empty, shadow.soft]}>
             <Text variant="body" tone="muted">
               {t('budget.no_spend')}
             </Text>
@@ -71,8 +69,8 @@ export default function BudgetScreen() {
           <View style={[styles.group, shadow.soft]}>
             {categories.map(([name, amount], i) => (
               <View key={name} style={[styles.row, i < categories.length - 1 && styles.rowBorder]}>
-                <View style={[styles.icon, { backgroundColor: colors.roseSoft }]}>
-                  <Ionicons name="storefront-outline" size={17} color={colors.rose} />
+                <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+                  <Ionicons name="storefront-outline" size={17} color={colors.ink} />
                 </View>
                 <Text variant="bodyStrong" tone="ink" style={styles.rowLabel} numberOfLines={1}>
                   {name}
@@ -86,11 +84,9 @@ export default function BudgetScreen() {
         )}
 
         {/* Harcama geçmişi */}
-        <Text variant="label" tone="rose" style={styles.section}>
-          {t('budget.history')}
-        </Text>
+        <SectionHeader title={t('budget.history')} />
         {completed.length === 0 ? (
-          <View style={[styles.group, styles.empty]}>
+          <View style={[styles.group, styles.empty, shadow.soft]}>
             <Text variant="body" tone="muted">
               {t('budget.no_spend')}
             </Text>
@@ -124,17 +120,16 @@ export default function BudgetScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-    subtitle: { marginBottom: space(2) },
+    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
+    subtitle: { marginBottom: space(2.5) },
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.xl,
-      padding: space(2.5),
+      padding: space(2.75),
       gap: space(0.5),
     },
     barWrap: { marginTop: space(1.5), marginBottom: space(1.25) },
     cardFoot: { flexDirection: 'row', justifyContent: 'space-between' },
-    section: { marginTop: space(3), marginBottom: space(1.5) },
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
@@ -145,10 +140,10 @@ const makeStyles = (colors: ColorTokens) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.5),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
     },
-    rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
+    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceMuted },
     icon: {
       width: 38,
       height: 38,
@@ -162,7 +157,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       gap: space(1.5),
       paddingHorizontal: space(2),
-      paddingVertical: space(1.5),
+      paddingVertical: space(1.75),
     },
     historyText: { flex: 1, gap: 2 },
   });

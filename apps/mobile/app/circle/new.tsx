@@ -59,9 +59,13 @@ export default function NewPostScreen() {
                 <Ionicons
                   name={cat.icon}
                   size={16}
-                  color={active ? colors.onColor : colors.inkSoft}
+                  color={active ? colors.onAccent : colors.inkSoft}
                 />
-                <Text variant="caption" tone={active ? 'onColor' : 'inkSoft'}>
+                <Text
+                  variant="caption"
+                  tone={active ? 'onAccent' : 'inkSoft'}
+                  style={active ? styles.chipTextActive : undefined}
+                >
                   {label}
                 </Text>
               </Pressable>
@@ -82,6 +86,9 @@ export default function NewPostScreen() {
         />
 
         <View style={styles.anonRow}>
+          <View style={styles.anonIcon}>
+            <Ionicons name="shield-checkmark" size={20} color={colors.rose} />
+          </View>
           <View style={styles.anonText}>
             <Text variant="bodyStrong" tone="ink">
               {t('circle.new.anonymous')}
@@ -90,8 +97,8 @@ export default function NewPostScreen() {
           <Switch
             value={anonymous}
             onValueChange={setAnonymous}
-            trackColor={{ false: colors.line, true: colors.rose }}
-            thumbColor={colors.onColor}
+            trackColor={{ false: colors.surfaceMuted, true: colors.accent }}
+            thumbColor={colors.surface}
           />
         </View>
       </ScrollView>
@@ -110,28 +117,25 @@ export default function NewPostScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-    label: { marginTop: space(2.5), marginBottom: space(1.5) },
+    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: space(13) },
+    label: { marginTop: space(3), marginBottom: space(1.5), fontSize: 20, fontWeight: '800', letterSpacing: -0.4 },
     categories: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     categoryChip: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
       paddingHorizontal: space(1.75),
-      paddingVertical: space(1),
+      paddingVertical: space(1.1),
       borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
     },
-    categoryActive: { backgroundColor: colors.rose, borderColor: colors.rose },
+    categoryActive: { backgroundColor: colors.accent },
+    chipTextActive: { fontWeight: '700' },
     textarea: {
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
       borderRadius: radius.lg,
       padding: space(2),
-      minHeight: 130,
+      minHeight: 140,
       textAlignVertical: 'top',
       fontWeight: '400',
       fontSize: 15,
@@ -140,21 +144,25 @@ const makeStyles = (colors: ColorTokens) =>
     anonRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
+      gap: space(1.5),
       marginTop: space(2.5),
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
       borderRadius: radius.lg,
       paddingHorizontal: space(2),
       paddingVertical: space(1.75),
+    },
+    anonIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.roseSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     anonText: { flex: 1 },
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
       paddingBottom: TAB_BAR_CLEARANCE,
-      borderTopWidth: 1,
-      borderTopColor: colors.line,
     },
   });

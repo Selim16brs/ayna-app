@@ -228,7 +228,7 @@ function Field({
   return (
     <View style={[styles.field, !last && styles.fieldBorder]}>
       <View style={styles.fieldIcon}>
-        <Ionicons name={icon} size={17} color={colors.rose} />
+        <Ionicons name={icon} size={17} color={colors.ink} />
       </View>
       <View style={styles.fieldText}>
         <Text variant="caption" tone="muted">
@@ -301,10 +301,10 @@ const makeStyles = (colors: ColorTokens) =>
     },
     fieldBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
     fieldIcon: {
-      width: 36,
-      height: 36,
+      width: 38,
+      height: 38,
       borderRadius: radius.md,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },

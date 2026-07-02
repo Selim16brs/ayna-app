@@ -8,7 +8,7 @@ import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Card, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 type FormMode = 'log' | 'routine' | 'moment';
@@ -47,7 +47,7 @@ export default function AddEntryScreen() {
 // ── Kişisel kayıt ─────────────────────────────────────────────────────────
 function LogForm({ initialKind, onDone }: { initialKind?: string; onDone: () => void }) {
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const addPersonalLog = useStore((s) => s.addPersonalLog);
 
@@ -76,7 +76,7 @@ function LogForm({ initialKind, onDone }: { initialKind?: string; onDone: () => 
   return (
     <>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Card>
+        <View style={[styles.panel, shadow.soft]}>
           <Field label={t('care.add.what')}>
             <TextInput
               value={title}
@@ -108,9 +108,13 @@ function LogForm({ initialKind, onDone }: { initialKind?: string; onDone: () => 
                     <Ionicons
                       name={q.icon as IoniconName}
                       size={15}
-                      color={active ? colors.onColor : colors.inkSoft}
+                      color={active ? colors.onAccent : colors.inkSoft}
                     />
-                    <Text variant="caption" tone={active ? 'onColor' : 'inkSoft'}>
+                    <Text
+                      variant="caption"
+                      tone={active ? 'onAccent' : 'inkSoft'}
+                      style={active ? styles.chipTextActive : undefined}
+                    >
                       {t(q.labelKey)}
                     </Text>
                   </Pressable>
@@ -118,9 +122,9 @@ function LogForm({ initialKind, onDone }: { initialKind?: string; onDone: () => 
               })}
             </View>
           </Field>
-        </Card>
+        </View>
 
-        <Card style={styles.cardGap}>
+        <View style={[styles.panel, styles.cardGap, shadow.soft]}>
           <Field label={t('care.add.note')} last>
             <TextInput
               value={note}
@@ -131,7 +135,7 @@ function LogForm({ initialKind, onDone }: { initialKind?: string; onDone: () => 
               style={styles.textarea}
             />
           </Field>
-        </Card>
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -149,7 +153,7 @@ function LogForm({ initialKind, onDone }: { initialKind?: string; onDone: () => 
 // ── Bakım hatırlatması ────────────────────────────────────────────────────
 function RoutineForm({ onDone }: { onDone: () => void }) {
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const addRoutine = useStore((s) => s.addRoutine);
   const [name, setName] = useState('');
@@ -165,7 +169,7 @@ function RoutineForm({ onDone }: { onDone: () => void }) {
   return (
     <>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Card>
+        <View style={[styles.panel, shadow.soft]}>
           <Field label={t('care.add.what')}>
             <TextInput
               value={name}
@@ -185,7 +189,7 @@ function RoutineForm({ onDone }: { onDone: () => void }) {
               style={styles.input}
             />
           </Field>
-        </Card>
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -203,7 +207,7 @@ function RoutineForm({ onDone }: { onDone: () => void }) {
 // ── Özel gün ──────────────────────────────────────────────────────────────
 function MomentForm({ onDone }: { onDone: () => void }) {
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const addMoment = useStore((s) => s.addMoment);
   const [title, setTitle] = useState('');
@@ -220,7 +224,7 @@ function MomentForm({ onDone }: { onDone: () => void }) {
   return (
     <>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Card>
+        <View style={[styles.panel, shadow.soft]}>
           <Field label={t('care.add.what')}>
             <TextInput
               value={title}
@@ -249,7 +253,7 @@ function MomentForm({ onDone }: { onDone: () => void }) {
               style={styles.input}
             />
           </Field>
-        </Card>
+        </View>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -276,7 +280,7 @@ function Field({
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.field, !last && styles.fieldGap]}>
-      <Text variant="label" tone="inkSoft" style={styles.fieldLabel}>
+      <Text variant="bodyStrong" tone="ink" style={styles.fieldLabel}>
         {label}
       </Text>
       {children}
@@ -286,15 +290,18 @@ function Field({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: space(4) },
+    content: { padding: space(3), paddingBottom: space(13) },
+    panel: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2.25),
+    },
     cardGap: { marginTop: space(2) },
     field: {},
     fieldGap: { marginBottom: space(2) },
-    fieldLabel: { marginBottom: space(1) },
+    fieldLabel: { marginBottom: space(1), fontWeight: '700' },
     input: {
-      backgroundColor: colors.bgSunken,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
       borderRadius: radius.md,
       paddingHorizontal: space(1.75),
       height: 52,
@@ -303,12 +310,10 @@ const makeStyles = (colors: ColorTokens) =>
       color: colors.ink,
     },
     textarea: {
-      backgroundColor: colors.bgSunken,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
       borderRadius: radius.md,
       padding: space(1.75),
-      minHeight: 96,
+      minHeight: 110,
       textAlignVertical: 'top',
       fontSize: 15,
       fontWeight: '400',
@@ -320,18 +325,15 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       gap: 6,
       paddingHorizontal: space(1.5),
-      paddingVertical: space(1),
+      paddingVertical: space(1.1),
       borderRadius: radius.pill,
-      backgroundColor: colors.bgSunken,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
     },
-    chipActive: { backgroundColor: colors.rose, borderColor: colors.rose },
+    chipActive: { backgroundColor: colors.accent },
+    chipTextActive: { fontWeight: '700' },
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
       paddingBottom: TAB_BAR_CLEARANCE,
-      borderTopWidth: 1,
-      borderTopColor: colors.line,
     },
   });
