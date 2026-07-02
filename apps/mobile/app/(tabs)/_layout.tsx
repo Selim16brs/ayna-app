@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocale } from '../../src/locale';
 import { space } from '../../src/theme';
@@ -51,12 +51,20 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               accessibilityLabel={label}
             >
               {focused ? (
-                <View style={[styles.activeWrap, { backgroundColor: colors.accent, shadowColor: colors.accent }]}>
-                  <Ionicons name={icon} size={24} color={colors.onAccent} />
+                <View style={[styles.activeTile, { backgroundColor: colors.accent }]}>
+                  <Ionicons name={icon} size={22} color={colors.onAccent} />
                 </View>
               ) : (
-                <Ionicons name={icon} size={23} color="rgba(255,255,255,0.55)" />
+                <View style={styles.inactiveTile}>
+                  <Ionicons name={icon} size={22} color="rgba(255,255,255,0.6)" />
+                </View>
               )}
+              <Text
+                numberOfLines={1}
+                style={[styles.label, { color: focused ? '#FFFFFF' : 'rgba(255,255,255,0.55)' }]}
+              >
+                {label}
+              </Text>
             </Pressable>
           );
         })}
@@ -85,35 +93,37 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: space(2.5),
-    paddingTop: space(4),
+    paddingHorizontal: space(2),
+    paddingTop: space(1.5),
     backgroundColor: 'transparent',
   },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    borderRadius: 30,
-    height: 64,
-    paddingHorizontal: space(1.5),
+    borderRadius: 32,
+    height: 74,
+    paddingHorizontal: space(1),
     shadowColor: '#000',
     shadowOpacity: 0.22,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 8 },
     elevation: 10,
   },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  // Aktif sekme: bardan yukarı çıkıntılı (pop) lime buton — kreatif
-  activeWrap: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  // Aktif sekme: lime yuvarlak-kare tile + altında etiket (referans)
+  activeTile: {
+    width: 44,
+    height: 40,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateY: -20 }],
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 12,
   },
+  inactiveTile: {
+    width: 44,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  label: { fontSize: 10, fontWeight: '600', letterSpacing: 0.1 },
 });

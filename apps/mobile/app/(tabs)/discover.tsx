@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CATEGORIES, formatPrice } from '../../src/data';
+import type { MessageKey } from '@ayna/i18n';
+import { formatPrice } from '../../src/data';
 import { useCampaigns, useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
@@ -29,6 +30,16 @@ const AVATAR =
 // 2 sütun ızgara kart genişliği (referans Fırsatlar/Öne çıkanlar)
 const GRID_W = (Dimensions.get('window').width - space(6) - space(1.5)) / 2;
 
+// Ana sayfa kategori seti (referans: Saç · Cilt · Nail · Makyaj · Spa · Diğer)
+const HOME_CATS: { key: MessageKey; route: string; icon: IoniconName }[] = [
+  { key: 'home.cat.hair', route: '/category/hair', icon: 'cut-outline' },
+  { key: 'home.cat.skin', route: '/category/skincare', icon: 'happy-outline' },
+  { key: 'home.cat.nail', route: '/category/nails', icon: 'color-palette-outline' },
+  { key: 'home.cat.makeup', route: '/category/makeup', icon: 'brush-outline' },
+  { key: 'home.cat.spa', route: '/category/spa', icon: 'flower-outline' },
+  { key: 'home.cat.other', route: '/search', icon: 'ellipsis-horizontal' },
+];
+
 export default function DiscoverScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
@@ -46,7 +57,6 @@ export default function DiscoverScreen() {
   const campaigns = useCampaigns();
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const userName = useStore((s) => s.currentUser?.name)?.split(' ')[0] ?? 'Aigerim';
-  const categories = CATEGORIES;
   const pros = useProfessionals();
   const featured = pros.slice(0, 4);
   const nearby = pros.slice(4, 9);
@@ -73,7 +83,7 @@ export default function DiscoverScreen() {
           <View style={styles.searchRow}>
             <Pressable style={styles.search} onPress={() => router.push('/search')}>
               <Ionicons name="search" size={19} color={colors.muted} />
-              <Text variant="body" tone="muted">
+              <Text variant="body" tone="muted" numberOfLines={1} style={styles.searchText}>
                 {t('home.search')}
               </Text>
             </Pressable>
@@ -128,26 +138,22 @@ export default function DiscoverScreen() {
           />
         </View>
 
-        {/* ── KATEGORİLER (yuvarlak) ── */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.catRow}
-        >
-          {categories.map((cat, i) => {
+        {/* ── KATEGORİLER (yuvarlak, sabit 6) ── */}
+        <View style={styles.catRow}>
+          {HOME_CATS.map((cat, i) => {
             const c = CAT_COLORS[i % CAT_COLORS.length]!;
             return (
-              <Pressable key={cat.id} style={styles.cat} onPress={() => router.push('/category/' + cat.id)}>
+              <Pressable key={cat.key} style={styles.cat} onPress={() => router.push(cat.route as never)}>
                 <View style={[styles.catTile, { backgroundColor: c.bg }]}>
-                  <Ionicons name={cat.icon as IoniconName} size={26} color={c.fg} />
+                  <Ionicons name={cat.icon} size={25} color={c.fg} />
                 </View>
                 <Text variant="caption" tone="inkSoft" style={styles.catLabel} numberOfLines={1}>
-                  {t(cat.labelKey)}
+                  {t(cat.key)}
                 </Text>
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
 
         {/* ── FIRSATLAR (2 sütun ızgara) ── */}
         <SectionHeader title={t('home.campaigns')} onSeeAll={() => router.push('/search')} />
@@ -238,10 +244,10 @@ function ActionTile({
   const styles = useThemedStyles(makeStyles);
   return (
     <Pressable style={[styles.action, { backgroundColor: bg }]} onPress={onPress}>
-      <View style={[styles.actionIcon, { backgroundColor: 'rgba(255,255,255,0.7)' }]}>
-        <Ionicons name={icon} size={20} color={fg} />
+      <View style={[styles.actionIcon, { backgroundColor: 'rgba(255,255,255,0.75)' }]}>
+        <Ionicons name={icon} size={18} color={fg} />
       </View>
-      <Text variant="caption" tone="ink" style={styles.actionTitle}>
+      <Text variant="caption" tone="ink" style={styles.actionTitle} numberOfLines={2}>
         {title}
       </Text>
     </Pressable>
@@ -332,6 +338,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surface,
       paddingHorizontal: space(2),
     },
+    searchText: { flex: 1 },
     mapChip: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -343,42 +350,55 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: 'rgba(32,36,15,0.35)',
     },
     mapChipText: { fontWeight: '700' },
-    heroBody: { flexDirection: 'row', alignItems: 'flex-end', marginTop: space(2), minHeight: 150 },
-    heroText: { flex: 1, paddingBottom: space(2), paddingTop: space(1) },
+    heroBody: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      marginTop: space(2),
+      minHeight: 150,
+      zIndex: 2,
+    },
+    heroText: { flex: 1, paddingBottom: space(2.5), paddingTop: space(1) },
     heroTitle: { fontSize: 34, lineHeight: 38, fontWeight: '800', letterSpacing: -0.8 },
     heroName: { fontSize: 34, lineHeight: 38, fontWeight: '800', letterSpacing: -0.8 },
     heroSub: { marginTop: space(1), maxWidth: 220 },
     heroPhoto: {
-      width: 158,
-      height: 196,
-      // Organik blob kesim — dikdörtgen "yapıştırma" hissini kırar (referans cut-out yaklaşımı)
-      borderTopLeftRadius: 110,
+      width: 172,
+      height: 214,
+      // Organik blob kesim + sağ kenara taşar, dalgaya doğru sarkar (referans cut-out yaklaşımı)
+      borderTopLeftRadius: 120,
       borderTopRightRadius: 90,
-      borderBottomRightRadius: 110,
-      borderBottomLeftRadius: 70,
-      marginRight: -space(1),
+      borderBottomRightRadius: 130,
+      borderBottomLeftRadius: 80,
+      marginRight: -space(3),
+      marginBottom: -space(2.5),
       backgroundColor: 'rgba(255,255,255,0.3)',
     },
 
-    // ── Aksiyon kartları (referans: ikon üst-sol, metin sola hizalı) ──
+    // ── Aksiyon kartları (referans: ikon SOL + metin SAĞ, yatay) ──
     actions: { flexDirection: 'row', gap: space(1.25), paddingHorizontal: space(3), marginTop: space(1) },
     action: {
       flex: 1,
-      borderRadius: radius.lg,
-      padding: space(1.75),
-      gap: space(1.5),
-      minHeight: 118,
-      justifyContent: 'space-between',
       alignItems: 'flex-start',
+      gap: space(1.25),
+      borderRadius: radius.lg,
+      padding: space(1.5),
+      minHeight: 96,
     },
     actionIcon: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    actionTitle: { textAlign: 'left', fontWeight: '800', lineHeight: 17 },
+    actionTitle: {
+      alignSelf: 'stretch',
+      textAlign: 'left',
+      fontSize: 12,
+      fontWeight: '800',
+      lineHeight: 15,
+      letterSpacing: -0.2,
+    },
 
     // ── 2 sütun ızgara (Fırsatlar / Öne çıkanlar) ──
     grid: {
@@ -400,13 +420,18 @@ const makeStyles = (colors: ColorTokens) =>
     promoCardSub: { fontSize: 11, lineHeight: 14 },
     promoCardImg: { width: 58, height: '100%', backgroundColor: colors.bgSunken },
 
-    // ── Kategoriler ──
-    catRow: { paddingHorizontal: space(3), gap: space(2), paddingTop: space(3.5) },
-    cat: { alignItems: 'center', width: 66 },
+    // ── Kategoriler (sabit 6, eşit dağılım) ──
+    catRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: space(3),
+      paddingTop: space(3.5),
+    },
+    cat: { alignItems: 'center', width: 54 },
     catTile: {
-      width: 62,
-      height: 62,
-      borderRadius: 31,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: space(0.75),
