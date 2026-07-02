@@ -7,7 +7,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, Segmented, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, Segmented, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 export default function NewPostScreen() {
   const router = useRouter();
@@ -35,7 +35,7 @@ export default function NewPostScreen() {
   };
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={['top', 'bottom']}>
       <StackHeader title={t('circle.new.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="h2" tone="ink" style={styles.label}>
@@ -153,6 +153,7 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
+      paddingBottom: TAB_BAR_CLEARANCE,
       borderTopWidth: 1,
       borderTopColor: colors.line,
     },

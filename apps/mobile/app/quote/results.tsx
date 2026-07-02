@@ -7,7 +7,7 @@ import { formatPrice, INCOMING_QUOTES, PROFESSIONALS } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 type Sort = 'rating' | 'price';
 
@@ -161,7 +161,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
     },
     sortChipActive: { backgroundColor: colors.rose, borderColor: colors.rose },
-    list: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
+    list: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.5) },
     card: {
       flexDirection: 'row',
       backgroundColor: colors.surface,

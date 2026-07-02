@@ -7,7 +7,7 @@ import { useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, Segmented, StackHeader, Text } from '../../src/ui';
+import { Screen, Segmented, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 import { ProRow } from '../search';
 
 type SortKey = 'rating' | 'price';
@@ -72,7 +72,7 @@ export default function CategoryScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(2), paddingBottom: space(4) },
+    content: { paddingHorizontal: space(2), paddingBottom: TAB_BAR_CLEARANCE },
     count: { marginTop: space(2), marginBottom: space(1.5), marginLeft: space(0.5) },
     list: { gap: space(1.25) },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },

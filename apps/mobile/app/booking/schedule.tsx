@@ -8,7 +8,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 const DAYS = ['Bugün', 'Yarın', 'Cmt', 'Paz', 'Pzt'];
 const TIMES = ['10:00', '11:30', '13:00', '14:30', '16:00', '17:30'];
@@ -70,7 +70,7 @@ export default function ScheduleScreen() {
   }
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={['top', 'bottom']}>
       <StackHeader title={t('booking.schedule.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.proCard, shadow.soft]}>
@@ -214,6 +214,7 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
+      paddingBottom: TAB_BAR_CLEARANCE,
       borderTopWidth: 1,
       borderTopColor: colors.line,
     },

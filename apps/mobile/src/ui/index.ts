@@ -6,6 +6,7 @@ export { Screen } from './Screen';
 export { ProCard } from './ProCard';
 export { SalonRow } from './SalonRow';
 export { WaveBottom } from './WaveBottom';
+export { AppTabBar, TAB_BAR_CLEARANCE } from './AppTabBar';
 export { Placeholder } from './Placeholder';
 export { StackHeader } from './StackHeader';
 export { Segmented } from './Segmented';

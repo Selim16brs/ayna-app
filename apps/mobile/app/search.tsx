@@ -17,7 +17,7 @@ import { useProfessionals } from '../src/catalog';
 import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { PressableScale, Screen, StackHeader, Text } from '../src/ui';
+import { PressableScale, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
 
 // Türkçe-duyarlı küçük harfe çevirme (İ/ı dahil)
 const lower = (s: string) => s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
@@ -288,7 +288,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
     },
     chipOn: { backgroundColor: colors.rose, borderColor: colors.rose },
-    content: { paddingHorizontal: space(2), paddingBottom: space(4) },
+    content: { paddingHorizontal: space(2), paddingBottom: TAB_BAR_CLEARANCE },
     count: { marginBottom: space(1.5), marginLeft: space(0.5) },
     list: { gap: space(1.25) },
     row: {

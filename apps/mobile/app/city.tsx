@@ -6,7 +6,7 @@ import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { radius, space, type ColorTokens } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, Text } from '../src/ui';
+import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
 
 export default function CityScreen() {
   const { t } = useLocale();
@@ -55,7 +55,7 @@ export default function CityScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1) },
+    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1) },
     hint: { marginBottom: space(1) },
     row: {
       flexDirection: 'row',

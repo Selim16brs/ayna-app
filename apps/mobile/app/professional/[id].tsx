@@ -11,7 +11,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Text } from '../../src/ui';
+import { TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 type Tab = 'booking' | 'portfolio' | 'reviews';
 const TIME_SLOTS = ['10:00', '10:30', '11:00', '11:30', '13:00', '14:00', '15:30', '16:30', '18:00'];
@@ -79,7 +79,7 @@ export default function ProfessionalScreen() {
 
   return (
     <View style={styles.root}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130 + TAB_BAR_CLEARANCE }}>
         {/* HERO — tam kadraj foto, altta gradient, isim/puan/rozet foto üstünde */}
         <ImageBackground source={{ uri: pro.image }} style={styles.hero} imageStyle={styles.heroImg}>
           <LinearGradient
@@ -339,7 +339,7 @@ export default function ProfessionalScreen() {
       </ScrollView>
 
       {/* CTA — coral Randevu Al */}
-      <View style={[styles.cta, { paddingBottom: insets.bottom + space(1.5) }]}>
+      <View style={[styles.cta, { paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }]}>
         <Pressable style={styles.waitlistBtn} onPress={onWaitlist}>
           <Ionicons name="time-outline" size={20} color={colors.inkSoft} />
         </Pressable>

@@ -6,7 +6,7 @@ import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, Text } from '../src/ui';
+import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
 import { ProRow } from './search';
 
 export default function FavoritesScreen() {
@@ -61,7 +61,7 @@ export default function FavoritesScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(2), paddingTop: space(1), paddingBottom: space(4) },
+    content: { paddingHorizontal: space(2), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
     list: { gap: space(1.25) },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     emptyIcon: {

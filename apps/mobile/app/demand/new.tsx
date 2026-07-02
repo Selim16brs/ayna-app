@@ -10,7 +10,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, Text } from '../../src/ui';
+import { Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -221,7 +221,7 @@ export default function NewDemandScreen() {
       </ScrollView>
 
       {/* ── CTA ── */}
-      <View style={[styles.footer, { paddingBottom: (insets.bottom || space(1.5)) + space(1) }]}>
+      <View style={[styles.footer, { paddingBottom: (insets.bottom || space(1.5)) + TAB_BAR_CLEARANCE }]}>
         <Pressable style={[styles.cta, !canSubmit && styles.ctaOff]} disabled={!canSubmit} onPress={submit}>
           <Text variant="bodyStrong" tone={canSubmit ? 'onAccent' : 'muted'} style={styles.ctaText}>
             {t('demand.new.send')}

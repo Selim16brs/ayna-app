@@ -8,7 +8,7 @@ import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Card, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Card, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 type FormMode = 'log' | 'routine' | 'moment';
@@ -31,7 +31,7 @@ export default function AddEntryScreen() {
         : 'care.add.log_title';
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={['top', 'bottom']}>
       <StackHeader title={t(titleKey)} />
       {formMode === 'log' ? (
         <LogForm initialKind={kind} onDone={() => router.back()} />
@@ -330,7 +330,7 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: space(1.5),
+      paddingBottom: TAB_BAR_CLEARANCE,
       borderTopWidth: 1,
       borderTopColor: colors.line,
     },
