@@ -63,14 +63,11 @@ export default function DiscoverScreen() {
         {/* ── LIME HERO (referans: dalgalı kesim + gerçek foto) ── */}
         <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
           <View style={styles.heroTop}>
-            <Image source={require('../../assets/logo-ayna.png')} style={styles.logo} resizeMode="contain" />
-            <Pressable style={styles.locChip} onPress={() => router.push('/city')}>
-              <Ionicons name="location" size={16} color={colors.ink} />
-              <Text variant="bodyStrong" tone="ink">
-                {city}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color={colors.ink} />
-            </Pressable>
+            <Image
+              source={require('../../assets/logo-ayna.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
           </View>
 
           <View style={styles.searchRow}>
@@ -86,11 +83,15 @@ export default function DiscoverScreen() {
                 style={styles.searchInput}
               />
             </View>
-            <Pressable style={styles.mapChip} onPress={() => router.push('/map')}>
-              <Ionicons name="map-outline" size={18} color={colors.ink} />
-              <Text variant="caption" tone="ink" style={styles.mapChipText}>
-                {t('home.map_mode')}
+            <Pressable style={styles.mapIconBtn} onPress={() => router.push('/map')}>
+              <Ionicons name="map-outline" size={20} color={colors.ink} />
+            </Pressable>
+            <Pressable style={styles.cityChip} onPress={() => router.push('/city')}>
+              <Ionicons name="location" size={14} color={colors.ink} />
+              <Text variant="caption" tone="ink" style={styles.cityText} numberOfLines={1}>
+                {city}
               </Text>
+              <Ionicons name="chevron-down" size={13} color={colors.ink} />
             </Pressable>
           </View>
 
@@ -263,15 +264,26 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.accent,
       paddingHorizontal: space(3),
     },
-    heroTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
-    logo: { width: 140, height: 58 },
-    locChip: {
-      flex: 1,
+    heroTop: { alignItems: 'center', justifyContent: 'center' },
+    logo: { width: 148, height: 56, tintColor: '#FFFFFF' },
+    mapIconBtn: {
+      width: 50,
+      height: 50,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cityChip: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'flex-end',
-      gap: 4,
+      gap: 3,
+      height: 50,
+      paddingHorizontal: space(1.5),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
     },
+    cityText: { fontWeight: '700', maxWidth: 88 },
     avatar: {
       width: 46,
       height: 46,
