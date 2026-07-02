@@ -30,6 +30,16 @@ export type BookingStatus =
   | 'REFUNDED'
   | 'CLOSED';
 
+/**
+ * UTC zaman aralığı — yarı-açık [startMs, endMs). Tüm backend zamanları UTC epoch
+ * milisaniyedir (CLAUDE.md); kullanıcıya IANA timezone ile gösterilir.
+ * Rezervasyon slot motorunun temel birimi (docs/planning/04, master §4.2).
+ */
+export interface Interval {
+  startMs: number;
+  endMs: number;
+}
+
 /** Standart API hata zarfı — docs/planning/07-api-conventions.md §4 */
 export interface ApiError {
   error: {
