@@ -15,6 +15,7 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 
 // Kategori daire zeminleri (spec §0.1) — pastel + ink ikon
 const INK = '#1A1A1A';
+const HOT_PINK = '#FF2E93'; // "Ne yapmak istersin?" kartı — çırtlak pembe
 const CAT_TINTS = ['#F6D9E4', '#E5EFC4', '#F7C9DA', '#F8DFC2', '#D9D6F0', '#E9E5DC'];
 // Fırsat / öne çıkan kart zeminleri (spec §0.1)
 const CARD_TINTS = ['#E4DEF4', '#F7DCE6', '#F6E4CE', '#E8F1C4'];
@@ -99,24 +100,24 @@ export default function DiscoverScreen() {
             </View>
             <Image source={{ uri: HERO_WOMAN }} style={styles.heroPhoto} />
           </View>
-
-          <WaveBottom color={colors.bg} />
         </View>
+        {/* Lime hero'nun dalgalı alt kenarı (yeşil zemin dalgalı biter) */}
+        <WaveBottom color={colors.accent} />
 
-        {/* ── TEK AKSİYON: Ne yapmak istersin? → hub (foto ile / talep oluştur) ── */}
+        {/* ── TEK AKSİYON: Ne yapmak istersin? (çırtlak pembe) → hub ── */}
         <Pressable style={styles.howCard} onPress={() => router.push('/quote')}>
           <View style={styles.howIcon}>
-            <Ionicons name="sparkles" size={22} color={colors.onAccent} />
+            <Ionicons name="sparkles" size={22} color={HOT_PINK} />
           </View>
           <View style={styles.howText}>
-            <Text variant="h2" tone="ink" style={styles.howTitle}>
+            <Text variant="h2" tone="onColor" style={styles.howTitle}>
               {t('home.how')}
             </Text>
-            <Text variant="caption" tone="muted" numberOfLines={1}>
+            <Text variant="caption" tone="onColor" style={styles.howSub} numberOfLines={1}>
               {t('home.how_sub')}
             </Text>
           </View>
-          <Ionicons name="arrow-forward" size={20} color={colors.ink} />
+          <Ionicons name="arrow-forward" size={20} color={colors.onColor} />
         </Pressable>
 
         {/* ── KATEGORİLER (yuvarlak, sabit 6) ── */}
@@ -319,7 +320,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: 'rgba(255,255,255,0.3)',
     },
 
-    // ── Tek aksiyon kartı: "Ne yapmak istersin?" ──
+    // ── Tek aksiyon kartı: "Ne yapmak istersin?" (çırtlak pembe) ──
     howCard: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -329,7 +330,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(2),
       paddingHorizontal: space(2),
       borderRadius: radius.lg,
-      backgroundColor: colors.accentSoft,
+      backgroundColor: HOT_PINK,
     },
     howIcon: {
       width: 46,
@@ -337,10 +338,11 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: 23,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.accent,
+      backgroundColor: '#FFFFFF',
     },
     howText: { flex: 1, gap: 2 },
     howTitle: { fontSize: 19, letterSpacing: -0.2 },
+    howSub: { opacity: 0.9 },
 
     // ── 2 sütun ızgara (Fırsatlar / Öne çıkanlar) ──
     grid: {

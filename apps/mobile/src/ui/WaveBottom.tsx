@@ -6,15 +6,16 @@ import Svg, { Path } from 'react-native-svg';
  * Lime bloğun İÇİNE, en alta yerleştirilir; `color` = sayfa zemin rengi (colors.bg),
  * dalgalı üst kenar lime'ı, düz alt kenar zemine akan içeriği verir.
  */
-export function WaveBottom({ color, height = 46 }: { color: string; height?: number }) {
+/**
+ * Lime hero'nun dalgalı ALT kenarı: `color` (lime) üstten doldurur, alt kenar dalgalıdır,
+ * altta kalan alan şeffaf → sayfa zemini görünür. Böylece "yeşil zemin dalgalı biter",
+ * yeşilin üstünde beyaz bir şekil DURMAZ.
+ */
+export function WaveBottom({ color, height = 40 }: { color: string; height?: number }) {
   return (
-    <View style={{ height, marginBottom: -1 }} pointerEvents="none">
+    <View style={{ height, marginTop: -1 }} pointerEvents="none">
       <Svg width="100%" height={height} viewBox="0 0 100 30" preserveAspectRatio="none">
-        {/* Zarif, yumuşak tek dalga (referans) — zemin lime hero'ya nazikçe kavis yapar */}
-        <Path
-          d="M0,30 L0,13 C 30,25 55,6 78,11 C 88,13 95,17 100,15 L100,30 Z"
-          fill={color}
-        />
+        <Path d="M0,0 L100,0 L100,15 C 80,26 58,6 34,14 C 18,19 8,10 0,12 Z" fill={color} />
       </Svg>
     </View>
   );
