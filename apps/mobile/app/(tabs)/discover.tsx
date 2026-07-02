@@ -45,6 +45,8 @@ export default function DiscoverScreen() {
   const campaigns = useCampaigns();
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const userName = useStore((s) => s.currentUser?.name)?.split(' ')[0] ?? 'Aigerim';
+  // Dinamik kullanıcı adı — ilk harf büyük (el yazısı katman için)
+  const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
   const pros = useProfessionals();
   const featured = pros.slice(0, 4);
   const nearby = pros.slice(4, 9);
@@ -82,12 +84,17 @@ export default function DiscoverScreen() {
 
           <View style={styles.heroBody}>
             <View style={styles.heroText}>
-              <Text variant="display" tone="ink" style={styles.heroTitle}>
-                {t('home.greeting')}
-              </Text>
-              <Text variant="display" tone="ink" style={styles.heroName}>
-                {userName}
-              </Text>
+              <View style={styles.greetWrap}>
+                <Text style={styles.greetLabel}>{t('home.greeting')}</Text>
+                <Text
+                  style={styles.greetName}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.5}
+                >
+                  {displayName}
+                </Text>
+              </View>
               <Text variant="caption" tone="inkSoft" style={styles.heroSub}>
                 {t('home.hero_subtitle')}
               </Text>
@@ -298,9 +305,28 @@ const makeStyles = (colors: ColorTokens) =>
       zIndex: 2,
     },
     heroText: { flex: 1, paddingBottom: space(2.5), paddingTop: space(1) },
-    heroTitle: { fontSize: 34, lineHeight: 38, fontWeight: '800', letterSpacing: -0.8 },
-    heroName: { fontSize: 34, lineHeight: 38, fontWeight: '800', letterSpacing: -0.8 },
-    heroSub: { marginTop: space(1), maxWidth: 220 },
+    // Katmanlı karşılama: siyah "Hoşgeldin" + üzerine binen beyaz el yazısı ad
+    greetWrap: { alignSelf: 'stretch' },
+    greetLabel: {
+      fontSize: 27,
+      lineHeight: 29,
+      fontWeight: '800',
+      letterSpacing: -0.6,
+      color: '#1A1A1A',
+      zIndex: 1,
+    },
+    greetName: {
+      fontFamily: 'DancingScript_700Bold',
+      fontSize: 50,
+      lineHeight: 52,
+      color: '#FFFFFF',
+      alignSelf: 'flex-start',
+      marginTop: -14,
+      marginLeft: -2,
+      transform: [{ rotate: '-5deg' }],
+      zIndex: 2,
+    },
+    heroSub: { marginTop: space(1.5), maxWidth: 220 },
     heroPhoto: {
       width: 172,
       height: 214,

@@ -105,6 +105,9 @@ importers:
       '@expo-google-fonts/cormorant-garamond':
         specifier: ^0.4.1
         version: 0.4.1
+      '@expo-google-fonts/dancing-script':
+        specifier: ^0.4.2
+        version: 0.4.2
       '@expo-google-fonts/fraunces':
         specifier: ^0.4.1
         version: 0.4.1
@@ -1217,6 +1220,9 @@ packages:
 
   '@expo-google-fonts/cormorant-garamond@0.4.1':
     resolution: {integrity: sha512-e8J4Cn13K1txygamg50n3odLUsYP7Ck28XOGobMi7uDsWvFmp/jgK0qcALqJTlmi9NczSWUNdERxcLauHCBa/Q==}
+
+  '@expo-google-fonts/dancing-script@0.4.2':
+    resolution: {integrity: sha512-5ASbxOM81Xm6nR9I0eE//l1PGgHtR4uGyMX3eUIw2Jeh+1LnlkrDPg55qjChGnkFfVwMge31vXEUyOZJiy9rxQ==}
 
   '@expo-google-fonts/fraunces@0.4.1':
     resolution: {integrity: sha512-gYc9P92ObyWvz1rWPOeWSvVKyBFIuA8hgOdhvo4DSiPBaWLbFA6v8uLIEIBwW+0oWTlXbBzjeBReHQI2H7UNjQ==}
@@ -6064,6 +6070,8 @@ snapshots:
       levn: 0.4.1
 
   '@expo-google-fonts/cormorant-garamond@0.4.1': {}
+
+  '@expo-google-fonts/dancing-script@0.4.2': {}
 
   '@expo-google-fonts/fraunces@0.4.1': {}
 

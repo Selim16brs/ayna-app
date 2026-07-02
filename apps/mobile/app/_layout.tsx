@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useFonts, DancingScript_700Bold } from '@expo-google-fonts/dancing-script';
 import { LocaleProvider } from '../src/locale';
 import { useStore } from '../src/store';
 import { ThemeProvider, useTheme } from '../src/theme-context';
@@ -42,6 +43,9 @@ function ThemedStack() {
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
+  const [fontsLoaded] = useFonts({ DancingScript_700Bold });
+
+  if (!fontsLoaded) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
