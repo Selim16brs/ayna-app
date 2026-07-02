@@ -104,24 +104,25 @@ export default function DiscoverScreen() {
             />
           </View>
         </View>
-        {/* Lime hero'nun dalgalı alt kenarı + siyah kontur (referans) */}
-        <WaveBottom color={colors.accent} stroke={INK} strokeWidth={3.5} />
-
-        {/* ── TEK AKSİYON: Ne yapmak istersin? (çırtlak pembe) → hub ── */}
-        <Pressable style={styles.howCard} onPress={() => router.push('/quote')}>
-          <View style={styles.howIcon}>
-            <Ionicons name="sparkles" size={22} color={HOT_PINK} />
-          </View>
-          <View style={styles.howText}>
-            <Text variant="h2" tone="onColor" style={styles.howTitle}>
-              {t('home.how')}
-            </Text>
-            <Text variant="caption" tone="onColor" style={styles.howSub} numberOfLines={1}>
-              {t('home.how_sub')}
-            </Text>
-          </View>
-          <Ionicons name="arrow-forward" size={20} color={colors.onColor} />
-        </Pressable>
+        {/* ── PEMBE BAND: yeşil→pembe dalga (siyah kontur) + "Ne yapmak istersin?" ──
+             Pembe zemin, dalganın altındaki şeffaf kısımdan yukarı siyah banda kadar dolar */}
+        <View style={styles.howBand}>
+          <WaveBottom color={colors.accent} stroke={INK} strokeWidth={3.5} />
+          <Pressable style={styles.howRow} onPress={() => router.push('/quote')}>
+            <View style={styles.howIcon}>
+              <Ionicons name="sparkles" size={22} color={HOT_PINK} />
+            </View>
+            <View style={styles.howText}>
+              <Text variant="h2" tone="onColor" style={styles.howTitle}>
+                {t('home.how')}
+              </Text>
+              <Text variant="caption" tone="onColor" style={styles.howSub} numberOfLines={1}>
+                {t('home.how_sub')}
+              </Text>
+            </View>
+            <Ionicons name="arrow-forward" size={20} color={colors.onColor} />
+          </Pressable>
+        </View>
 
         {/* ── KATEGORİLER (yuvarlak, sabit 6) ── */}
         <View style={styles.catRow}>
@@ -337,17 +338,19 @@ const makeStyles = (colors: ColorTokens) =>
       marginBottom: -space(3),
     },
 
-    // ── Tek aksiyon kartı: "Ne yapmak istersin?" (çırtlak pembe) ──
-    howCard: {
+    // ── Pembe band: "Ne yapmak istersin?" — pembe zemin dalganın altına kadar dolar ──
+    howBand: {
+      backgroundColor: HOT_PINK,
+      borderBottomLeftRadius: radius.xl,
+      borderBottomRightRadius: radius.xl,
+    },
+    howRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
-      marginHorizontal: space(3),
-      marginTop: space(1),
-      paddingVertical: space(2),
-      paddingHorizontal: space(2),
-      borderRadius: radius.lg,
-      backgroundColor: HOT_PINK,
+      paddingHorizontal: space(3),
+      paddingTop: space(0.5),
+      paddingBottom: space(2.5),
     },
     howIcon: {
       width: 46,
