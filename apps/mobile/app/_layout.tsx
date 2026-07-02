@@ -13,9 +13,14 @@ function ThemedStack() {
   const pathname = usePathname();
   const currentUser = useStore((s) => s.currentUser);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
+  const checkReminders = useStore((s) => s.checkReminders);
   useEffect(() => {
     void hydrateBookings();
   }, [hydrateBookings]);
+  // §4.1 adım 6 — her gezinmede yaklaşan randevu hatırlatmalarını üret (mock scheduler)
+  useEffect(() => {
+    checkReminders();
+  }, [checkReminders, pathname]);
 
   // Alt bar her içerik ekranında; giriş/onboarding/satıcı akışında gizli
   const hideTabBar =

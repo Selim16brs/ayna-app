@@ -8,6 +8,8 @@ import {
   type BookingSource,
   DEPOSIT_KZT,
   FREE_CANCEL_WINDOW_MS,
+  REMIND_24H_MS,
+  REMIND_2H_MS,
   buildUpcomingEvents,
   type CareRoutine,
   type CirclePost,
@@ -117,6 +119,7 @@ interface State {
   uploadRefundReceipt: (id: string, receiptUri: string) => void; // uzman iade dekontu yükler
   confirmRefund: (id: string) => void; // kullanıcı "iadeyi aldım" → kayıt kapanır
   disputeBooking: (id: string) => void; // taraflar itiraz açar (destek/admin kuyruğu)
+  checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
   reviewBooking: (id: string, rating: number, text: string) => void;
   hydrateBookings: () => Promise<void>;
 
@@ -316,6 +319,49 @@ export const useStore = create<State>((set, get) => ({
         dateLabel: 'Az önce',
         icon: 'flag-outline',
       });
+  },
+
+  // §4.1 adım 6 — onaylı randevular için 24s ve 2s hatırlatmaları (idempotent, bayrakla)
+  checkReminders: () => {
+    set((s) => {
+      const now = Date.now();
+      const news: AppNotification[] = [];
+      const bookings = s.bookings.map((b) => {
+        if (b.status !== 'confirmed') return b;
+        const left = b.startMs - now;
+        if (left <= 0) return b;
+        let nb = b;
+        if (left <= REMIND_24H_MS && !b.reminded24) {
+          news.push({
+            id: nextId('n'),
+            type: 'booking',
+            title: 'Yaklaşan randevu — 24 saat',
+            body: `${b.proName} · ${formatSlotTr(b.startMs)}`,
+            dateLabel: 'Az önce',
+            icon: 'alarm-outline',
+            read: false,
+            route: `/booking/${b.id}`,
+          });
+          nb = { ...nb, reminded24: true };
+        }
+        if (left <= REMIND_2H_MS && !nb.reminded2) {
+          news.push({
+            id: nextId('n'),
+            type: 'booking',
+            title: 'Yaklaşan randevu — 2 saat',
+            body: `${b.proName} · ${formatSlotTr(b.startMs)}`,
+            dateLabel: 'Az önce',
+            icon: 'alarm-outline',
+            read: false,
+            route: `/booking/${b.id}`,
+          });
+          nb = { ...nb, reminded2: true };
+        }
+        return nb;
+      });
+      if (news.length === 0) return {};
+      return { bookings, notifications: [...news, ...s.notifications] };
+    });
   },
 
   // §1.6 — kullanıcı uzmanın önerdiği alternatif saati kabul eder

@@ -718,6 +718,9 @@ export type BookingStatus =
 export const DEPOSIT_KZT = 1000;
 // §4.4 — serbest iptal penceresi (bundan fazla süre varsa depozito iade edilir). Parametrik.
 export const FREE_CANCEL_WINDOW_MS = 3 * 60 * 60_000;
+// §4.1 adım 6 — randevu hatırlatma pencereleri (24 saat + 2 saat önce). Parametrik.
+export const REMIND_24H_MS = 24 * 60 * 60_000;
+export const REMIND_2H_MS = 2 * 60 * 60_000;
 
 export interface Appointment {
   id: string;
@@ -737,6 +740,8 @@ export interface Appointment {
   receiptUri?: string; // §4.3 — yüklenen dekont görseli
   refundReceiptUri?: string; // §4.4 — uzmanın yüklediği iade dekontu
   depositForfeited?: boolean; // §4.4 — geç iptal/no-show: kapora uzmanda kaldı
+  reminded24?: boolean; // §4.1 — 24 saat hatırlatması gönderildi
+  reminded2?: boolean; // §4.1 — 2 saat hatırlatması gönderildi
   price: number; // kaç paraya
   status: BookingStatus;
   cancelReason?: string; // §6.C — "neden gelemiyorum"
