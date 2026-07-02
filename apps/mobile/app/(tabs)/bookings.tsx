@@ -36,6 +36,7 @@ const makeStatus = (
   refund_pending: { key: 'booking.status.refund_pending', bg: colors.goldSoft, fg: colors.gold },
   refund_submitted: { key: 'booking.status.refund_submitted', bg: colors.blueSoft, fg: colors.blue },
   disputed: { key: 'booking.status.disputed', bg: colors.dangerSoft, fg: colors.danger },
+  reassigned_pending: { key: 'booking.status.reassigned_pending', bg: colors.blueSoft, fg: colors.blue },
   no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
   waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
 });

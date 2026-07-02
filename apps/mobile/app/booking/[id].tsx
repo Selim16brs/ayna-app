@@ -39,6 +39,8 @@ export default function BookingDetailScreen() {
   const uploadRefundReceipt = useStore((s) => s.uploadRefundReceipt);
   const confirmRefund = useStore((s) => s.confirmRefund);
   const disputeBooking = useStore((s) => s.disputeBooking);
+  const acceptReassignment = useStore((s) => s.acceptReassignment);
+  const rejectReassignment = useStore((s) => s.rejectReassignment);
   const role = useStore((s) => s.currentUser?.role);
   const isProvider = !!role && role !== 'customer';
 
@@ -229,6 +231,51 @@ export default function BookingDetailScreen() {
               label={t('booking.detail.accept')}
               variant="primary"
               onPress={() => id && acceptAlternative(id)}
+            />
+          </View>
+        ) : null}
+
+        {/* §4.5 — Uzman ayrıldı, yeni uzman atandı: kullanıcı yeniden onaylar */}
+        {!isProvider && booking.status === 'reassigned_pending' ? (
+          <View style={[styles.depositCard, shadow.card]}>
+            <View style={styles.depositHead}>
+              <Ionicons name="swap-horizontal-outline" size={18} color={colors.ink} />
+              <Text variant="bodyStrong" tone="ink">
+                {t('booking.reassign.title')}
+              </Text>
+            </View>
+            <Text variant="caption" tone="muted" style={styles.depositDesc}>
+              {t('booking.reassign.desc')}
+            </Text>
+            {booking.reassignedFrom ? (
+              <View style={styles.depositRow}>
+                <Text variant="caption" tone="muted">
+                  {t('booking.reassign.from')}
+                </Text>
+                <Text variant="bodyStrong" tone="ink">
+                  {booking.reassignedFrom}
+                </Text>
+              </View>
+            ) : null}
+            {booking.uzmanName ? (
+              <View style={styles.depositRow}>
+                <Text variant="caption" tone="muted">
+                  {t('booking.reassign.to')}
+                </Text>
+                <Text variant="bodyStrong" tone="ink">
+                  {booking.uzmanName}
+                </Text>
+              </View>
+            ) : null}
+            <Button
+              label={t('booking.reassign.accept')}
+              variant="primary"
+              onPress={() => id && acceptReassignment(id)}
+            />
+            <Button
+              label={t('booking.reassign.reject')}
+              variant="ghost"
+              onPress={() => id && rejectReassignment(id)}
             />
           </View>
         ) : null}
@@ -545,6 +592,7 @@ const makeStatus = (
   refund_pending: { key: 'booking.status.refund_pending', bg: colors.goldSoft, fg: colors.gold },
   refund_submitted: { key: 'booking.status.refund_submitted', bg: colors.blueSoft, fg: colors.blue },
   disputed: { key: 'booking.status.disputed', bg: colors.dangerSoft, fg: colors.danger },
+  reassigned_pending: { key: 'booking.status.reassigned_pending', bg: colors.blueSoft, fg: colors.blue },
   no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
   waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
 });

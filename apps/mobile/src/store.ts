@@ -124,6 +124,10 @@ interface State {
   disputeBooking: (id: string) => void; // taraflar itiraz açar (destek/admin kuyruğu)
   checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
   toggleClosedDay: (dayStartMs: number) => void; // §4.6 — günü kapalı/açık işaretle
+  // §4.5 — uzman ayrılığında randevu devri (sessiz silme YASAK)
+  reassignStaffBookings: (oldUzman: string, newUzman: string) => number; // devredilen randevu sayısı
+  acceptReassignment: (id: string) => void; // kullanıcı yeni uzmanı onaylar
+  rejectReassignment: (id: string) => void; // kullanıcı reddeder → iptal
   reviewBooking: (id: string, rating: number, text: string) => void;
   hydrateBookings: () => Promise<void>;
 
@@ -376,6 +380,57 @@ export const useStore = create<State>((set, get) => ({
         ? s.closedDays.filter((d) => d !== dayStartMs)
         : [...s.closedDays, dayStartMs],
     })),
+
+  // §4.5 — uzman kadrodan çıkınca gelecek randevuları yeni uzmana devret (SESSİZ SİLME YASAK):
+  // her randevu reassigned_pending olur, kullanıcı yeniden onaylar. Devredilen sayıyı döndürür.
+  reassignStaffBookings: (oldUzman, newUzman) => {
+    const now = Date.now();
+    const affected = get().bookings.filter(
+      (b) =>
+        b.uzmanName === oldUzman &&
+        b.startMs > now &&
+        (b.status === 'confirmed' ||
+          b.status === 'deposit_pending' ||
+          b.status === 'deposit_submitted' ||
+          b.status === 'awaiting_provider'),
+    );
+    if (affected.length === 0) return 0;
+    set((s) => ({
+      bookings: s.bookings.map((b) =>
+        affected.some((a) => a.id === b.id)
+          ? { ...b, status: 'reassigned_pending', reassignedFrom: oldUzman, uzmanName: newUzman }
+          : b,
+      ),
+    }));
+    for (const b of affected)
+      get().pushNotification({
+        type: 'booking',
+        title: 'Uzmanın değişti — onayın gerekiyor',
+        body: `${b.proName} · ${oldUzman} ayrıldı, ${newUzman} atandı. Devam etmek için onayla.`,
+        dateLabel: 'Az önce',
+        icon: 'swap-horizontal-outline',
+        route: `/booking/${b.id}`,
+      });
+    return affected.length;
+  },
+
+  // §4.5 — kullanıcı yeni uzmanı kabul eder → randevu tekrar onaylı
+  acceptReassignment: (id) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) =>
+        b.id === id ? { ...b, status: 'confirmed', reassignedFrom: undefined } : b,
+      ),
+    }));
+  },
+
+  // §4.5 — kullanıcı reddeder → iptal (depozito ödediyse iade akışı ayrıca yürür)
+  rejectReassignment: (id) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) =>
+        b.id === id ? { ...b, status: 'cancelled', reassignedFrom: undefined } : b,
+      ),
+    }));
+  },
 
   // §1.6 — kullanıcı uzmanın önerdiği alternatif saati kabul eder
   acceptAlternative: (id) => {

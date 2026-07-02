@@ -711,6 +711,7 @@ export type BookingStatus =
   | 'refund_pending' // §4.4 — serbest iptal: uzman iade dekontu yükleyecek
   | 'refund_submitted' // iade dekontu yüklendi, kullanıcı "aldım" onayı bekleniyor
   | 'disputed' // §4.4 — itiraz açıldı (destek/admin kuyruğu)
+  | 'reassigned_pending' // §4.5 — uzman ayrıldı, yeni uzman atandı; kullanıcı yeniden onaylayacak
   | 'no_show'
   | 'waitlist';
 
@@ -742,6 +743,7 @@ export interface Appointment {
   depositForfeited?: boolean; // §4.4 — geç iptal/no-show: kapora uzmanda kaldı
   reminded24?: boolean; // §4.1 — 24 saat hatırlatması gönderildi
   reminded2?: boolean; // §4.1 — 2 saat hatırlatması gönderildi
+  reassignedFrom?: string; // §4.5 — ayrılan uzmanın adı (yeni uzman uzmanName'de)
   price: number; // kaç paraya
   status: BookingStatus;
   cancelReason?: string; // §6.C — "neden gelemiyorum"

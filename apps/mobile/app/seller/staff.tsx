@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { formatPrice } from '../../src/data';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SELLER_DATA, formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Progress, Screen, Segmented, StackHeader, Text } from '../../src/ui';
+import { Button, Progress, Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
 // Uzman bazlı hizmet dağılımı (mock; gerçek panelde API'den gelir)
 const SERVICES = [
@@ -29,14 +30,34 @@ type Schedule = 'standard' | 'flexible';
 
 export default function StaffDetailScreen() {
   const { t } = useLocale();
+  const router = useRouter();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const reassignStaffBookings = useStore((s) => s.reassignStaffBookings);
   const p = useLocalSearchParams<{
     name?: string;
     image?: string;
     bookings?: string;
     rating?: string;
   }>();
+
+  // §4.5 — uzmanı kadrodan çıkar → gelecek randevuları başka uzmana devret (sessiz silme YASAK)
+  function removeFromTeam() {
+    const name = p.name ?? '';
+    const fallback = SELLER_DATA.month.staff.find((s) => s.name !== name)?.name ?? '';
+    Alert.alert(t('seller.staff.remove_confirm'), t('seller.staff.remove_desc'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('seller.staff.remove'),
+        style: 'destructive',
+        onPress: () => {
+          const count = reassignStaffBookings(name, fallback);
+          Alert.alert(count > 0 ? t('seller.staff.reassigned') : t('seller.staff.removed'));
+          router.back();
+        },
+      },
+    ]);
+  }
   const bookings = Number(p.bookings ?? 0) || 0;
   const rating = Number(p.rating ?? 0) || 0;
   const revenue = bookings * 14000; // mock ortalama bilet
@@ -142,6 +163,14 @@ export default function StaffDetailScreen() {
             </View>
           ))}
         </View>
+
+        {/* §4.5 — kadrodan çıkar (randevular devredilir, sessiz silinmez) */}
+        <View style={styles.removeWrap}>
+          <Button label={t('seller.staff.remove')} variant="secondary" onPress={removeFromTeam} />
+          <Text variant="caption" tone="muted" style={styles.removeHint}>
+            {t('seller.staff.remove_hint')}
+          </Text>
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -174,6 +203,8 @@ function Stat({
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { padding: space(2), paddingBottom: space(4) },
+    removeWrap: { marginTop: space(3), gap: space(1) },
+    removeHint: { textAlign: 'center', paddingHorizontal: space(2) },
     head: { flexDirection: 'row', alignItems: 'center', gap: space(1.5), marginBottom: space(2.5) },
     avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.surfaceMuted },
     stats: {

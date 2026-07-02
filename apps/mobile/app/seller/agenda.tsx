@@ -65,6 +65,7 @@ const STATUS_LABEL: Record<BookingStatus, MessageKey> = {
   refund_pending: 'booking.status.refund_pending',
   refund_submitted: 'booking.status.refund_submitted',
   disputed: 'booking.status.disputed',
+  reassigned_pending: 'booking.status.reassigned_pending',
   no_show: 'booking.status.no_show',
   waitlist: 'booking.status.waitlist',
 };
