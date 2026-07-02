@@ -90,6 +90,7 @@ export const tr = {
   // Ana akış — giriş aksiyonları
   'home.how': 'Ne yapmak istersin?',
   'home.categories': 'Kategoriler',
+  'home.nearby': 'Sana yakın salonlar',
   'home.recommended': 'Senin için öneriler',
   'home.campaigns': 'Fırsatlar',
   'home.ad_badge': 'Premium',

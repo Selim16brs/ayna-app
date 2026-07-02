@@ -298,10 +298,10 @@ export default function DiscoverScreen() {
           ))}
         </ScrollView>
 
-        {/* Senin için öneriler */}
+        {/* Sana yakın salonlar */}
         <View style={styles.sectionHeader}>
           <Text variant="label" tone="muted">
-            {t('home.recommended')}
+            {t('home.nearby')}
           </Text>
           <Pressable onPress={() => router.push('/search')}>
             <Text variant="caption" tone="rose">
