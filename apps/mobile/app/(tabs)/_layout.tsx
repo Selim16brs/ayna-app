@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocale } from '../../src/locale';
 import { radius, space } from '../../src/theme';
 import { useTheme } from '../../src/theme-context';
-import { Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 const ICONS: Record<string, IoniconName> = {
@@ -46,17 +45,14 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             <Pressable
               key={route.key}
               onPress={onPress}
-              style={[styles.item, focused && { backgroundColor: colors.accent }]}
+              style={styles.item}
               accessibilityRole="button"
               accessibilityState={{ selected: focused }}
               accessibilityLabel={label}
             >
-              <Ionicons name={icon} size={20} color={focused ? '#FFFFFF' : 'rgba(255,255,255,0.6)'} />
-              {focused ? (
-                <Text variant="caption" tone="onColor" style={styles.label} numberOfLines={1}>
-                  {label}
-                </Text>
-              ) : null}
+              <View style={[styles.iconWrap, focused && { backgroundColor: colors.accent }]}>
+                <Ionicons name={icon} size={22} color={focused ? '#FFFFFF' : 'rgba(255,255,255,0.6)'} />
+              </View>
             </Pressable>
           );
         })}
@@ -102,13 +98,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 10,
   },
-  item: {
-    flexDirection: 'row',
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  iconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: space(1.5),
-    paddingVertical: space(1.25),
-    borderRadius: radius.pill,
+    justifyContent: 'center',
   },
-  label: { fontWeight: '700' },
 });

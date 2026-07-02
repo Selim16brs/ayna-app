@@ -28,7 +28,7 @@ export const tr = {
   'home.greeting': 'Hoş geldin',
   'home.subtitle': 'Güvendiğin uzmanı bul',
   'home.search': 'Uzman, salon veya hizmet ara',
-  'home.featured': 'Yakınında öne çıkanlar',
+  'home.featured': 'Öne çıkanlar',
 
   // Kategoriler
   'category.hair': 'Saç',

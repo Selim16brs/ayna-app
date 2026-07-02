@@ -255,7 +255,12 @@ export default function DiscoverScreen() {
           </>
         ) : null}
 
-        {/* Reklam banner (premium işletmeler) */}
+        {/* Öne çıkan (sponsorlu) işletmeler */}
+        <View style={styles.sectionHeader}>
+          <Text variant="label" tone="muted">
+            {t('home.featured')}
+          </Text>
+        </View>
         <ScrollView
           horizontal
           pagingEnabled
