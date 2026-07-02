@@ -1,21 +1,25 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../../src/api';
-import { CITIES } from '../../../src/data';
 import { useLocale } from '../../../src/locale';
 import { radius, space, type ColorTokens } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme-context';
-import { Button, Screen, Segmented, StackHeader, Text } from '../../../src/ui';
+import {
+  Button,
+  CitySelect,
+  Screen,
+  StackHeader,
+  Text,
+  WorkingHours,
+  defaultHours,
+  type DayHours,
+} from '../../../src/ui';
 
-const SECTORS: MessageKey[] = [
-  'sector.beauty',
-  'sector.hairdresser',
-  'sector.spa',
-  'sector.cosmetology',
-];
+// Salon hizmet alanları — fiyat YOK, yalnızca alan listesi (§3.2 A)
 const AREAS: MessageKey[] = [
   'category.hair',
   'category.nails',
@@ -27,65 +31,57 @@ const AREAS: MessageKey[] = [
   'category.epilation',
 ];
 
+const PHOTO_MAX = 10;
+
+// DayHours[] → kısa okunur metin (backend workingHours: string)
+function serializeHours(hours: DayHours[]): string {
+  return hours
+    .filter((d) => d.open)
+    .map((d) => `${d.wd}:${d.from}-${d.to}`)
+    .join(',');
+}
+
 export default function NewBusinessScreen() {
   const router = useRouter();
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const [kind, setKind] = useState<'salon' | 'independent'>('salon');
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [ownerPhone, setOwnerPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [birth, setBirth] = useState('');
+
   const [name, setName] = useState('');
-  const [owner, setOwner] = useState('');
-  const [sector, setSector] = useState<MessageKey>('sector.beauty');
+  const [photos, setPhotos] = useState<string[]>([]);
   const [areas, setAreas] = useState<Set<MessageKey>>(new Set(['category.hair']));
   const [city, setCity] = useState<string | null>(null);
   const [district, setDistrict] = useState('');
   const [address, setAddress] = useState('');
+  const [pinned, setPinned] = useState(false);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [hours, setHours] = useState('');
+  const [hours, setHours] = useState<DayHours[]>(defaultHours());
+  const [social, setSocial] = useState('');
+  const [desc, setDesc] = useState('');
   const [tax, setTax] = useState('');
-  const [password, setPassword] = useState('');
   const [terms, setTerms] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  async function submit() {
-    setBusy(true);
-    try {
-      const categories = [...areas].map((a) => a.replace('category.', ''));
-      await api.registerBusiness({
-        name: name.trim(),
-        ownerName: owner.trim(),
-        phone: phone.trim(),
-        password,
-        email: email.trim(),
-        sector: categories[0] ?? 'hair',
-        categories,
-        city: city ?? '',
-        district: district.trim(),
-        address: address.trim(),
-        workingHours: hours.trim(),
-        taxId: tax.trim(),
-      });
-      router.replace('/auth/business/done');
-    } catch (e) {
-      const msg = String((e as Error).message ?? '');
-      if (msg.includes('409')) Alert.alert(t('auth.error.taken'));
-      else router.replace('/auth/business/done'); // ağ hatası → demo akışı engellenmesin
-    } finally {
-      setBusy(false);
+  async function addPhotos() {
+    if (photos.length >= PHOTO_MAX) {
+      Alert.alert(t('biz.field.photos_hint'));
+      return;
     }
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      allowsMultipleSelection: true,
+      selectionLimit: PHOTO_MAX - photos.length,
+    });
+    if (!res.canceled) setPhotos((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, PHOTO_MAX));
   }
-
-  const valid =
-    name.trim().length > 1 &&
-    owner.trim().length > 1 &&
-    city !== null &&
-    district.trim().length > 1 &&
-    address.trim().length > 3 &&
-    phone.trim().length >= 7 &&
-    email.trim().length > 3 &&
-    password.length >= 6 &&
-    terms;
 
   function toggleArea(a: MessageKey) {
     setAreas((prev) => {
@@ -96,50 +92,154 @@ export default function NewBusinessScreen() {
     });
   }
 
+  const valid =
+    firstName.trim().length > 1 &&
+    lastName.trim().length > 1 &&
+    ownerPhone.trim().length >= 7 &&
+    password.length >= 6 &&
+    name.trim().length > 1 &&
+    areas.size > 0 &&
+    city !== null &&
+    district.trim().length > 1 &&
+    address.trim().length > 3 &&
+    phone.trim().length >= 7 &&
+    terms;
+
+  async function submit() {
+    setBusy(true);
+    try {
+      const categories = [...areas].map((a) => a.replace('category.', ''));
+      await api.registerBusiness({
+        name: name.trim(),
+        ownerName: `${firstName.trim()} ${lastName.trim()}`.trim(),
+        phone: ownerPhone.trim(),
+        password,
+        email: email.trim(),
+        sector: categories[0] ?? 'hair',
+        categories,
+        city: city ?? '',
+        district: district.trim(),
+        address: address.trim(),
+        workingHours: serializeHours(hours),
+        taxId: tax.trim(),
+      });
+      // NOT: fotoğraflar, harita pin, sosyal, açıklama backend'e Faz 9'da (salon profili API'si) yazılacak.
+      router.replace('/auth/business/done');
+    } catch (e) {
+      const msg = String((e as Error).message ?? '');
+      if (msg.includes('409')) Alert.alert(t('auth.error.taken'));
+      else router.replace('/auth/business/done'); // ağ hatası → demo akışı engellenmesin
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <Screen edges={[]}>
       <StackHeader title={t('biz.new.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* İşletme bilgileri */}
-        <Section text={t('biz.section.firm')} />
-        <Label text={t('biz.kind.label')} />
-        <Segmented
-          options={[
-            { value: 'salon', label: t('biz.kind.salon') },
-            { value: 'independent', label: t('biz.kind.independent') },
-          ]}
-          value={kind}
-          onChange={setKind}
+        {/* Salon sahibi bilgileri */}
+        <Section text={t('biz.section.owner')} />
+        <View style={styles.row2}>
+          <View style={styles.col}>
+            <Label text={t('biz.field.owner_first')} />
+            <Input value={firstName} onChange={setFirstName} placeholderKey="biz.field.owner_first" />
+          </View>
+          <View style={styles.col}>
+            <Label text={t('biz.field.owner_last')} />
+            <Input value={lastName} onChange={setLastName} placeholderKey="biz.field.owner_last" />
+          </View>
+        </View>
+        <Label text={t('biz.field.phone')} />
+        <Input
+          value={ownerPhone}
+          onChange={(v) => setOwnerPhone(v.replace(/[^0-9 +]/g, ''))}
+          placeholder="+7 700 123 45 67"
+          keyboardType="phone-pad"
         />
+        <Label text={t('biz.field.password')} />
+        <Input value={password} onChange={setPassword} secure />
+        <Label text={t('biz.field.birthdate')} />
+        <Input value={birth} onChange={setBirth} placeholderKey="biz.field.birthdate_ph" />
+
+        {/* Salon bilgileri */}
+        <Section text={t('biz.section.firm')} />
         <Label text={t('biz.field.name')} />
         <Input value={name} onChange={setName} placeholder="AYNA Studio" />
-        <Label text={t('biz.field.owner')} />
-        <Input value={owner} onChange={setOwner} placeholderKey="biz.field.owner_ph" />
-        <Label text={t('biz.field.sector')} />
-        <View style={styles.chips}>
-          {SECTORS.map((s) => (
-            <Chip key={s} label={t(s)} active={sector === s} onPress={() => setSector(s)} />
+
+        <Label text={`${t('biz.field.photos')}  (${photos.length}/${PHOTO_MAX})`} />
+        <Text variant="caption" tone="muted" style={styles.hint}>
+          {t('biz.field.photos_hint')}
+        </Text>
+        <View style={styles.photoGrid}>
+          {photos.length < PHOTO_MAX ? (
+            <Pressable style={styles.photoAdd} onPress={addPhotos}>
+              <Ionicons name="images-outline" size={24} color={colors.inkSoft} />
+            </Pressable>
+          ) : null}
+          {photos.map((uri, i) => (
+            <View key={`${uri}-${i}`}>
+              <Image source={{ uri }} style={styles.photoThumb} />
+              <Pressable
+                style={styles.thumbRemove}
+                hitSlop={6}
+                onPress={() => setPhotos((p) => p.filter((_, idx) => idx !== i))}
+              >
+                <Ionicons name="close-circle" size={20} color={colors.onColor} />
+              </Pressable>
+            </View>
           ))}
         </View>
+
         <Label text={t('biz.field.area')} />
+        <Text variant="caption" tone="muted" style={styles.hint}>
+          {t('biz.field.area_hint')}
+        </Text>
         <View style={styles.chips}>
           {AREAS.map((a) => (
             <Chip key={a} label={t(a)} active={areas.has(a)} onPress={() => toggleArea(a)} />
           ))}
         </View>
 
-        {/* İletişim & konum */}
+        <Label text={t('biz.field.desc')} />
+        <TextInput
+          value={desc}
+          onChangeText={setDesc}
+          placeholder={t('biz.field.desc_ph')}
+          placeholderTextColor={colors.muted}
+          multiline
+          style={styles.textarea}
+        />
+
+        {/* Adres & konum */}
         <Section text={t('biz.section.contact')} />
         <Label text={t('biz.field.city')} />
-        <View style={styles.chips}>
-          {CITIES.map((c) => (
-            <Chip key={c} label={c} active={city === c} onPress={() => setCity(c)} />
-          ))}
-        </View>
+        <CitySelect value={city} onChange={setCity} />
         <Label text={t('biz.field.district')} />
         <Input value={district} onChange={setDistrict} placeholderKey="biz.field.district_ph" />
         <Label text={t('biz.field.address')} />
         <Input value={address} onChange={setAddress} placeholderKey="biz.field.address_ph" />
+
+        <Label text={t('biz.field.map')} />
+        <Pressable
+          style={[styles.mapBox, pinned && styles.mapBoxOn]}
+          onPress={() => setPinned((v) => !v)}
+        >
+          <Ionicons
+            name={pinned ? 'location' : 'location-outline'}
+            size={22}
+            color={pinned ? colors.onAccent : colors.rose}
+          />
+          <Text variant="bodyStrong" tone={pinned ? 'onAccent' : 'rose'} style={styles.mapText}>
+            {pinned ? t('biz.field.map_pinned') : t('biz.field.map_pin')}
+          </Text>
+          {pinned ? (
+            <Text variant="caption" tone="onAccent" style={styles.mapChange}>
+              {t('biz.field.map_change')}
+            </Text>
+          ) : null}
+        </Pressable>
+
         <Label text={t('biz.field.phone')} />
         <Input
           value={phone}
@@ -148,14 +248,12 @@ export default function NewBusinessScreen() {
           keyboardType="phone-pad"
         />
         <Label text={t('biz.field.email')} />
-        <Input
-          value={email}
-          onChange={setEmail}
-          keyboardType="email-address"
-          placeholder="info@salon.kz"
-        />
+        <Input value={email} onChange={setEmail} keyboardType="email-address" placeholder="info@salon.kz" />
+        <Label text={t('biz.field.social')} />
+        <Input value={social} onChange={setSocial} placeholder="instagram.com/…" />
+
         <Label text={t('biz.field.hours')} />
-        <Input value={hours} onChange={setHours} placeholderKey="biz.field.hours_ph" />
+        <WorkingHours value={hours} onChange={setHours} />
 
         {/* Hesap & doğrulama */}
         <Section text={t('biz.section.account')} />
@@ -166,8 +264,6 @@ export default function NewBusinessScreen() {
           placeholderKey="biz.field.tax_ph"
           keyboardType="phone-pad"
         />
-        <Label text={t('biz.field.password')} />
-        <Input value={password} onChange={setPassword} secure />
         <Label text={t('biz.field.docs')} />
         <Pressable style={styles.docRow}>
           <Ionicons name="cloud-upload-outline" size={20} color={colors.rose} />
@@ -175,15 +271,11 @@ export default function NewBusinessScreen() {
             {t('biz.field.docs_add')}
           </Text>
         </Pressable>
-        <Text variant="caption" tone="muted" style={styles.docHint}>
+        <Text variant="caption" tone="muted" style={styles.hint}>
           {t('biz.field.docs_hint')}
         </Text>
 
-        <Checkbox
-          checked={terms}
-          onToggle={() => setTerms((v) => !v)}
-          label={t('biz.terms.accept')}
-        />
+        <Checkbox checked={terms} onToggle={() => setTerms((v) => !v)} label={t('biz.terms.accept')} />
       </ScrollView>
 
       <View style={styles.footer}>
@@ -201,7 +293,7 @@ export default function NewBusinessScreen() {
 function Section({ text }: { text: string }) {
   const styles = useThemedStyles(makeStyles);
   return (
-    <Text variant="label" tone="rose" style={styles.section}>
+    <Text variant="bodyStrong" tone="ink" style={styles.section}>
       {text}
     </Text>
   );
@@ -210,7 +302,7 @@ function Section({ text }: { text: string }) {
 function Label({ text }: { text: string }) {
   const styles = useThemedStyles(makeStyles);
   return (
-    <Text variant="bodyStrong" tone="ink" style={styles.label}>
+    <Text variant="caption" tone="inkSoft" style={styles.label}>
       {text}
     </Text>
   );
@@ -252,22 +344,14 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   const styles = useThemedStyles(makeStyles);
   return (
     <Pressable onPress={onPress} style={[styles.chip, active && styles.chipActive]}>
-      <Text variant="caption" tone={active ? 'onColor' : 'inkSoft'}>
+      <Text variant="caption" tone={active ? 'onAccent' : 'inkSoft'}>
         {label}
       </Text>
     </Pressable>
   );
 }
 
-function Checkbox({
-  checked,
-  onToggle,
-  label,
-}: {
-  checked: boolean;
-  onToggle: () => void;
-  label: string;
-}) {
+function Checkbox({ checked, onToggle, label }: { checked: boolean; onToggle: () => void; label: string }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
@@ -284,30 +368,68 @@ function Checkbox({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-    section: { marginTop: space(3), marginBottom: space(0.5) },
+    content: { paddingHorizontal: space(3), paddingBottom: space(4), paddingTop: space(1) },
+    section: { marginTop: space(3), marginBottom: space(1), fontSize: 17 },
     label: { marginTop: space(2), marginBottom: space(1) },
+    hint: { marginTop: -space(0.5), marginBottom: space(1) },
+    row2: { flexDirection: 'row', gap: space(1.5) },
+    col: { flex: 1 },
     input: {
       height: 54,
       paddingHorizontal: space(2),
       borderRadius: radius.lg,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
       fontWeight: '500',
       fontSize: 16,
       color: colors.ink,
+    },
+    textarea: {
+      minHeight: 96,
+      paddingHorizontal: space(2),
+      paddingTop: space(1.5),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+      fontSize: 16,
+      color: colors.ink,
+      textAlignVertical: 'top',
+    },
+    photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    photoAdd: {
+      width: 84,
+      height: 84,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    photoThumb: { width: 84, height: 84, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    thumbRemove: {
+      position: 'absolute',
+      top: -6,
+      right: -6,
+      backgroundColor: 'rgba(0,0,0,0.55)',
+      borderRadius: 11,
     },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     chip: {
       paddingHorizontal: space(1.75),
       paddingVertical: space(1),
       borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      backgroundColor: colors.surfaceMuted,
     },
-    chipActive: { backgroundColor: colors.rose, borderColor: colors.rose },
+    chipActive: { backgroundColor: colors.accent },
+    mapBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      height: 54,
+      paddingHorizontal: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+    },
+    mapBoxOn: { backgroundColor: colors.accent },
+    mapText: { flex: 1 },
+    mapChange: { fontWeight: '800', textDecorationLine: 'underline' },
     docRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -315,12 +437,8 @@ const makeStyles = (colors: ColorTokens) =>
       height: 54,
       paddingHorizontal: space(2),
       borderRadius: radius.lg,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
-      borderStyle: 'dashed',
+      backgroundColor: colors.surfaceMuted,
     },
-    docHint: { marginTop: space(0.75), marginLeft: space(0.5) },
     checkRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.25), marginTop: space(3) },
     checkbox: {
       width: 24,
@@ -333,10 +451,5 @@ const makeStyles = (colors: ColorTokens) =>
     },
     checkboxOn: { backgroundColor: colors.accent, borderColor: colors.accent },
     checkLabel: { flex: 1, lineHeight: 18 },
-    footer: {
-      paddingHorizontal: space(3),
-      paddingTop: space(1.5),
-      borderTopWidth: 1,
-      borderTopColor: colors.line,
-    },
+    footer: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(3) },
   });
