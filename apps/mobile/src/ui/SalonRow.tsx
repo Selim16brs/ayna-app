@@ -9,15 +9,13 @@ import { type ColorTokens, radius, space } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
-// Rozet renk eşlemesi — nazik soft tint (referans: %10 İndirim / Popüler / Yeni)
-const BADGE: Record<
-  Professional['badge'],
-  { key: MessageKey; bg: keyof ColorTokens; fg: keyof ColorTokens }
-> = {
-  campaign: { key: 'card.campaign', bg: 'accentSoft', fg: 'ink' },
-  verified: { key: 'card.verified', bg: 'lavenderSoft', fg: 'lavender' },
-  today: { key: 'card.today', bg: 'goldSoft', fg: 'gold' },
+// Rozet renk eşlemesi — spec §0.1 (İndirim / Popüler / Yeni), metin ink
+const BADGE: Record<Professional['badge'], { key: MessageKey; bg: string }> = {
+  campaign: { key: 'card.campaign', bg: '#DDF08A' }, // badgeDiscountBg
+  verified: { key: 'card.verified', bg: '#E1DAF3' }, // badgePopularBg
+  today: { key: 'card.today', bg: '#F8DFC2' }, // badgeNewBg
 };
+const BADGE_INK = '#1A1A1A';
 
 /**
  * Yatay salon kartı (referans "Yakındaki salonlar" dili): sol foto + isim/puan/adres +
@@ -58,8 +56,8 @@ export function SalonRow({ pro, index = 0 }: { pro: Professional; index?: number
         </View>
 
         <View style={styles.right}>
-          <View style={[styles.badge, { backgroundColor: colors[badge.bg] }]}>
-            <Text variant="caption" style={[styles.badgeText, { color: colors[badge.fg] }]}>
+          <View style={[styles.badge, { backgroundColor: badge.bg }]}>
+            <Text variant="caption" style={[styles.badgeText, { color: BADGE_INK }]}>
               {t(badge.key)}
             </Text>
           </View>

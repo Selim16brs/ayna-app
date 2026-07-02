@@ -25,10 +25,10 @@ export const lightColors = {
   muted: '#A69E92',
   onColor: '#FFFFFF',
 
-  // Birincil vurgu (CTA) — Booksy lime yeşil; ÜSTÜNDE koyu yazı (onAccent)
-  accent: '#C7F04D',
-  accentSoft: '#EEF7CE',
-  onAccent: '#20240F',
+  // Birincil vurgu (CTA) — spec limePrimary #C6E24B; ÜSTÜNDE koyu yazı (onAccent)
+  accent: '#C6E24B',
+  accentSoft: '#EEF7C8',
+  onAccent: '#1A1A1A',
 
   // Marka / nazik aksanlar
   rose: '#CC8BA0', // pudra pembesi (kadın kullanıcı + nazik vurgu)
@@ -68,8 +68,8 @@ export const darkColors: ColorTokens = {
   muted: '#857E73',
   onColor: '#FFFFFF',
 
-  // Birincil vurgu — Booksy lime (koyuda da açık; üstünde koyu yazı)
-  accent: '#C7F04D',
+  // Birincil vurgu — spec lime (koyuda da açık; üstünde koyu yazı)
+  accent: '#C6E24B',
   accentSoft: '#2E3618',
   onAccent: '#171A0C',
 
@@ -102,7 +102,7 @@ export type ThemeMode = 'light' | 'dark';
 // ── Gradyanlar (tema bazlı) ──────────────────────────────────────────────
 export const lightGradients = {
   hero: ['#F7F5F6', '#EEF2F0'] as const, // temiz nötr beyaz → çok hafif adaçayı (krem yok)
-  gold: ['#D2F566', '#BEE83C'] as const, // ana CTA: Booksy lime ombre
+  gold: ['#D2ED6E', '#C6E24B'] as const, // ana CTA: spec lime ombre
   rose: ['#DCA9B6', '#CC8BA0'] as const, // pudra
   teal: ['#A6C6B6', '#7FA992'] as const, // adaçayı
   plum: ['#C3B9E2', '#A99CD6'] as const, // lavanta

@@ -13,14 +13,11 @@ import { SalonRow, Screen, Text, WaveBottom } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-// Kategori ikon zeminleri: nazik pastel tint + renkli ikon
-const makeCatColors = (colors: ColorTokens) => [
-  { bg: colors.roseSoft, fg: colors.rose },
-  { bg: colors.sageSoft, fg: colors.sage },
-  { bg: colors.lavenderSoft, fg: colors.lavender },
-  { bg: colors.goldSoft, fg: colors.gold },
-  { bg: colors.blueSoft, fg: colors.blue },
-];
+// Kategori daire zeminleri (spec §0.1) — pastel + ink ikon
+const INK = '#1A1A1A';
+const CAT_TINTS = ['#F6D9E4', '#E5EFC4', '#F7C9DA', '#F8DFC2', '#D9D6F0', '#E9E5DC'];
+// Fırsat / öne çıkan kart zeminleri (spec §0.1)
+const CARD_TINTS = ['#E4DEF4', '#F7DCE6', '#F6E4CE', '#E8F1C4'];
 
 const HERO_WOMAN =
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=500&q=80';
@@ -44,13 +41,6 @@ export default function DiscoverScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const CAT_COLORS = makeCatColors(colors);
-  const GRID_TINTS = [
-    { bg: colors.lavenderSoft, fg: colors.lavender },
-    { bg: colors.roseSoft, fg: colors.rose },
-    { bg: colors.goldSoft, fg: colors.gold },
-    { bg: colors.sageSoft, fg: colors.sage },
-  ];
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const unread = useStore(selectUnreadCount);
@@ -141,11 +131,11 @@ export default function DiscoverScreen() {
         {/* ── KATEGORİLER (yuvarlak, sabit 6) ── */}
         <View style={styles.catRow}>
           {HOME_CATS.map((cat, i) => {
-            const c = CAT_COLORS[i % CAT_COLORS.length]!;
+            const bg = CAT_TINTS[i % CAT_TINTS.length]!;
             return (
               <Pressable key={cat.key} style={styles.cat} onPress={() => router.push(cat.route as never)}>
-                <View style={[styles.catTile, { backgroundColor: c.bg }]}>
-                  <Ionicons name={cat.icon} size={25} color={c.fg} />
+                <View style={[styles.catTile, { backgroundColor: bg }]}>
+                  <Ionicons name={cat.icon} size={25} color={INK} />
                 </View>
                 <Text variant="caption" tone="inkSoft" style={styles.catLabel} numberOfLines={1}>
                   {t(cat.key)}
@@ -158,41 +148,33 @@ export default function DiscoverScreen() {
         {/* ── FIRSATLAR (2 sütun ızgara) ── */}
         <SectionHeader title={t('home.campaigns')} onSeeAll={() => router.push('/search')} />
         <View style={styles.grid}>
-          {campaigns.map((c, i) => {
-            const g = GRID_TINTS[i % GRID_TINTS.length]!;
-            return (
-              <PromoCard
-                key={c.id}
-                title={c.title}
-                highlight={c.badge}
-                subtitle={c.subtitle}
-                image={c.image}
-                bg={g.bg}
-                hlColor={g.fg}
-                onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
-              />
-            );
-          })}
+          {campaigns.map((c, i) => (
+            <PromoCard
+              key={c.id}
+              title={c.title}
+              highlight={c.badge}
+              subtitle={c.subtitle}
+              image={c.image}
+              bg={CARD_TINTS[i % CARD_TINTS.length]!}
+              onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
+            />
+          ))}
         </View>
 
         {/* ── ÖNE ÇIKANLAR (2 sütun ızgara) ── */}
         <SectionHeader title={t('home.featured')} onSeeAll={() => router.push('/search')} />
         <View style={styles.grid}>
-          {featured.map((pro, i) => {
-            const g = GRID_TINTS[(i + 2) % GRID_TINTS.length]!;
-            return (
-              <PromoCard
-                key={pro.id}
-                title={pro.name}
-                highlight={formatPrice(pro.priceFrom)}
-                subtitle={pro.specialty}
-                image={pro.image}
-                bg={g.bg}
-                hlColor={g.fg}
-                onPress={() => router.push('/professional/' + pro.id)}
-              />
-            );
-          })}
+          {featured.map((pro, i) => (
+            <PromoCard
+              key={pro.id}
+              title={pro.name}
+              highlight={formatPrice(pro.priceFrom)}
+              subtitle={pro.specialty}
+              image={pro.image}
+              bg={CARD_TINTS[(i + 2) % CARD_TINTS.length]!}
+              onPress={() => router.push('/professional/' + pro.id)}
+            />
+          ))}
         </View>
 
         {/* ── YAKINDAKİ SALONLAR (yatay kart listesi) ── */}
@@ -260,7 +242,6 @@ function PromoCard({
   subtitle,
   image,
   bg,
-  hlColor,
   onPress,
 }: {
   title: string;
@@ -268,20 +249,19 @@ function PromoCard({
   subtitle: string;
   image: string;
   bg: string;
-  hlColor: string;
   onPress: () => void;
 }) {
   const styles = useThemedStyles(makeStyles);
   return (
     <Pressable style={[styles.promoCard, { backgroundColor: bg }]} onPress={onPress}>
       <View style={styles.promoCardLeft}>
-        <Text variant="caption" tone="ink" style={styles.promoCardTitle} numberOfLines={2}>
+        <Text style={styles.promoCardTitle} numberOfLines={2}>
           {title}
         </Text>
-        <Text variant="h2" style={[styles.promoHighlight, { color: hlColor }]} numberOfLines={1}>
+        <Text style={styles.promoHighlight} numberOfLines={1}>
           {highlight}
         </Text>
-        <Text variant="caption" tone="muted" style={styles.promoCardSub} numberOfLines={2}>
+        <Text style={styles.promoCardSub} numberOfLines={2}>
           {subtitle}
         </Text>
       </View>
@@ -415,9 +395,16 @@ const makeStyles = (colors: ColorTokens) =>
       overflow: 'hidden',
     },
     promoCardLeft: { flex: 1, padding: space(1.5), justifyContent: 'center' },
-    promoCardTitle: { fontSize: 13, fontWeight: '800', lineHeight: 16, letterSpacing: -0.1 },
-    promoHighlight: { fontSize: 18, fontWeight: '800', letterSpacing: -0.5, marginVertical: 2 },
-    promoCardSub: { fontSize: 11, lineHeight: 14 },
+    promoCardTitle: { fontSize: 13, fontWeight: '700', lineHeight: 16, letterSpacing: -0.1, color: colors.ink },
+    promoHighlight: {
+      fontFamily: 'Fraunces_900Black',
+      fontSize: 24,
+      lineHeight: 28,
+      letterSpacing: -0.3,
+      marginVertical: 2,
+      color: colors.ink,
+    },
+    promoCardSub: { fontSize: 11, lineHeight: 14, color: colors.muted },
     promoCardImg: { width: 58, height: '100%', backgroundColor: colors.bgSunken },
 
     // ── Kategoriler (sabit 6, eşit dağılım) ──
