@@ -28,6 +28,8 @@ const PROMO_GRADS: readonly (readonly [string, string])[] = [
 
 // Yatay kaydırmalı kart genişliği (referans Fırsatlar/Öne çıkanlar)
 const PROMO_W = Math.round(Dimensions.get('window').width * 0.76);
+// Kart için şeffaf konu görseli (kampanyaya özel cut-out'lar geldiğinde değiştirilecek)
+const PROMO_CUTOUT = require('../../assets/hero-user.png');
 
 // Ana sayfa kategori seti (referans: Saç · Cilt · Nail · Makyaj · Spa · Diğer)
 const HOME_CATS: { key: MessageKey; route: string; icon: IoniconName }[] = [
@@ -175,7 +177,7 @@ export default function DiscoverScreen() {
             <PromoCard
               key={c.id}
               title={c.title}
-              image={c.image}
+              cutout={PROMO_CUTOUT}
               grad={PROMO_GRADS[i % PROMO_GRADS.length]!}
               onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
             />
@@ -193,7 +195,7 @@ export default function DiscoverScreen() {
             <PromoCard
               key={pro.id}
               title={pro.name}
-              image={pro.image}
+              cutout={PROMO_CUTOUT}
               grad={PROMO_GRADS[(i + 1) % PROMO_GRADS.length]!}
               onPress={() => router.push('/professional/' + pro.id)}
             />
@@ -235,12 +237,12 @@ function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => vo
 
 function PromoCard({
   title,
-  image,
+  cutout,
   grad,
   onPress,
 }: {
   title: string;
-  image: string;
+  cutout: number; // require(...) — şeffaf konu görseli
   grad: readonly [string, string];
   onPress: () => void;
 }) {
@@ -254,14 +256,8 @@ function PromoCard({
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      {/* Sağda foto — sol kenarı karta karışır (blend) */}
-      <Image source={{ uri: image }} style={styles.promoPhoto} />
-      <LinearGradient
-        colors={[deep, 'transparent']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.promoFade}
-      />
+      {/* Sağda kesik (cut-out) konu — gradientin üstünde, arka planı yok */}
+      <Image source={cutout} style={styles.promoPhoto} resizeMode="contain" />
       {/* Sol: başlık üstte, ok altta */}
       <View style={styles.promoContent}>
         <Text style={styles.promoCardTitle} numberOfLines={2}>
@@ -426,8 +422,7 @@ const makeStyles = (colors: ColorTokens) =>
       overflow: 'hidden',
       position: 'relative',
     },
-    promoPhoto: { position: 'absolute', right: 0, top: 0, bottom: 0, width: '62%' },
-    promoFade: { position: 'absolute', right: 0, top: 0, bottom: 0, width: '62%' },
+    promoPhoto: { position: 'absolute', right: -4, bottom: 0, width: '56%', height: '112%' },
     promoContent: {
       position: 'absolute',
       left: 0,
