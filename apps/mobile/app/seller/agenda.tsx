@@ -5,12 +5,35 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
 import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
-import { almatyDayStart, almatyParts, daysUntil, formatSlot } from '../../src/datetime';
+import { almatyDayStart, almatyParts, daysUntil, formatSlot, slotTime } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, Screen, StackHeader, Text } from '../../src/ui';
+import { PressableScale, Screen, Segmented, StackHeader, Text } from '../../src/ui';
+
+type DayRow = { type: 'free'; startMs: number; endMs: number } | { type: 'busy'; b: Appointment };
+const OPEN_H = 10;
+const CLOSE_H = 19;
+
+// §4.6 uzman gün-ızgarası: açık pencere içinde boş aralıklar + randevu blokları
+function buildDayRows(dayStart: number, dayBookings: Appointment[]): DayRow[] {
+  const openStart = dayStart + OPEN_H * 3_600_000;
+  const openEnd = dayStart + CLOSE_H * 3_600_000;
+  const bs = dayBookings
+    .filter((b) => b.status !== 'cancelled')
+    .sort((a, b) => a.startMs - b.startMs);
+  const rows: DayRow[] = [];
+  let cursor = openStart;
+  for (const b of bs) {
+    const bStart = Math.max(b.startMs, openStart);
+    if (bStart > cursor) rows.push({ type: 'free', startMs: cursor, endMs: bStart });
+    rows.push({ type: 'busy', b });
+    cursor = Math.max(cursor, b.startMs + b.durationMin * 60_000);
+  }
+  if (cursor < openEnd) rows.push({ type: 'free', startMs: cursor, endMs: openEnd });
+  return rows;
+}
 
 type GroupKey = 'past' | 'today' | 'tomorrow' | 'week' | 'later';
 const GROUP_ORDER: GroupKey[] = ['today', 'tomorrow', 'week', 'later', 'past'];
@@ -55,9 +78,15 @@ export default function AgendaScreen() {
   const closedDays = useStore((s) => s.closedDays);
   const toggleClosedDay = useStore((s) => s.toggleClosedDay);
   const [items, setItems] = useState<Appointment[]>([]);
+  const [view, setView] = useState<'day' | 'list'>('day'); // §4.6 varsayılan: gün ajandası
+  const [dayIdx, setDayIdx] = useState(0);
 
-  // §4.6 — önümüzdeki 14 günün "kapalı işaretle" şeridi (izin/tatil)
-  const closeStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
+  // §4.6 — önümüzdeki 14 gün (gün seçici + kapalı işaretleme)
+  const dayStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
+  const selectedDay = dayStrip[dayIdx] ?? dayStrip[0]!;
+  const dayClosed = closedDays.includes(selectedDay);
+  const dayBookings = items.filter((b) => almatyDayStart(b.startMs, 0) === selectedDay);
+  const dayRows = buildDayRows(selectedDay, dayBookings);
 
   // Ekran her odaklandığında tazele (offline ekleme sonrası geri dönünce güncel)
   useFocusEffect(
@@ -85,43 +114,122 @@ export default function AgendaScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('agenda.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* §4.6 — Kapalı günler (izin/tatil): kullanıcı tarafında bu günler slot göstermez */}
-        <View style={styles.closeSection}>
-          <View style={styles.closeHead}>
-            <Ionicons name="calendar-clear-outline" size={16} color={colors.rose} />
-            <Text variant="label" tone="rose">
-              {t('agenda.closed_title')}
-            </Text>
-          </View>
-          <Text variant="caption" tone="muted" style={styles.closeHint}>
-            {t('agenda.closed_hint')}
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.closeStrip}>
-            {closeStrip.map((dayMs) => {
-              const p = almatyParts(dayMs);
-              const closed = closedDays.includes(dayMs);
-              return (
-                <Pressable
-                  key={dayMs}
-                  onPress={() => toggleClosedDay(dayMs)}
-                  style={[styles.closeChip, closed && styles.closeChipOn]}
-                >
-                  <Text variant="caption" tone={closed ? 'onColor' : 'muted'} style={styles.closeWd}>
-                    {t(`wd.${p.wd}` as 'wd.0')}
-                  </Text>
-                  <Text variant="bodyStrong" tone={closed ? 'onColor' : 'ink'} style={styles.closeNum}>
-                    {p.day}
-                  </Text>
-                  {closed ? (
-                    <Ionicons name="lock-closed" size={11} color={colors.onColor} />
-                  ) : null}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+        <View style={styles.toggleWrap}>
+          <Segmented
+            options={[
+              { value: 'day', label: t('agenda.view.day') },
+              { value: 'list', label: t('agenda.view.list') },
+            ]}
+            value={view}
+            onChange={setView}
+          />
         </View>
 
-        {groups.length === 0 ? (
+        {view === 'day' ? (
+          <>
+            {/* Gün seçici şeridi (kapalı günler kilitli) */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayStrip}>
+              {dayStrip.map((dayMs, i) => {
+                const p = almatyParts(dayMs);
+                const on = i === dayIdx;
+                const closed = closedDays.includes(dayMs);
+                const has = items.some(
+                  (b) => almatyDayStart(b.startMs, 0) === dayMs && b.status !== 'cancelled',
+                );
+                return (
+                  <Pressable
+                    key={dayMs}
+                    onPress={() => setDayIdx(i)}
+                    style={[styles.dayChip, on && styles.dayChipOn]}
+                  >
+                    <Text variant="caption" tone={on ? 'onAccent' : 'muted'} style={styles.closeWd}>
+                      {t(`wd.${p.wd}` as 'wd.0')}
+                    </Text>
+                    <Text variant="bodyStrong" tone={on ? 'onAccent' : 'ink'} style={styles.closeNum}>
+                      {p.day}
+                    </Text>
+                    {closed ? (
+                      <Ionicons name="lock-closed" size={11} color={on ? colors.onAccent : colors.rose} />
+                    ) : (
+                      <View style={[styles.dayDot, has ? styles.dayDotOn : styles.dayDotOff]} />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            {/* Seçili gün başlığı + Açık/Kapalı toggle */}
+            <View style={styles.dayHeader}>
+              <Text variant="bodyStrong" tone="ink">
+                {formatSlot(selectedDay, t).split(' · ')[0]} · {almatyParts(selectedDay).day}
+              </Text>
+              <Pressable
+                onPress={() => toggleClosedDay(selectedDay)}
+                style={[styles.closeToggle, dayClosed && styles.closeToggleOn]}
+              >
+                <Ionicons
+                  name={dayClosed ? 'lock-closed' : 'lock-open-outline'}
+                  size={14}
+                  color={dayClosed ? colors.onColor : colors.rose}
+                />
+                <Text variant="caption" tone={dayClosed ? 'onColor' : 'rose'} style={styles.closeToggleText}>
+                  {dayClosed ? t('agenda.mark_open') : t('agenda.mark_closed')}
+                </Text>
+              </Pressable>
+            </View>
+
+            {dayClosed ? (
+              <View style={styles.closedBanner}>
+                <Ionicons name="calendar-clear-outline" size={22} color={colors.muted} />
+                <Text variant="caption" tone="muted">
+                  {t('agenda.closed_day')}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.timeline}>
+                {dayRows.map((r, i) =>
+                  r.type === 'free' ? (
+                    <Pressable
+                      key={`free-${i}`}
+                      style={styles.freeRow}
+                      onPress={() => router.push(`/seller/offline?start=${r.startMs}`)}
+                    >
+                      <Text variant="caption" tone="muted" style={styles.timeCol}>
+                        {slotTime(r.startMs)}
+                      </Text>
+                      <View style={styles.freeBody}>
+                        <Ionicons name="add-circle-outline" size={16} color={colors.rose} />
+                        <Text variant="caption" tone="rose">
+                          {t('agenda.free_add')} · {slotTime(r.startMs)}–{slotTime(r.endMs)}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      key={r.b.id}
+                      style={styles.busyRow}
+                      onPress={() => router.push(`/booking/${r.b.id}`)}
+                    >
+                      <Text variant="caption" tone="ink" style={styles.timeCol}>
+                        {slotTime(r.b.startMs)}
+                      </Text>
+                      <View style={styles.rowBody}>
+                        <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                          {r.b.service}
+                        </Text>
+                        <Text variant="caption" tone="muted" numberOfLines={1}>
+                          {r.b.customerName ? `${r.b.customerName} · ` : ''}
+                          {r.b.uzmanName ?? r.b.proName}
+                        </Text>
+                      </View>
+                      <StatusPill status={r.b.status} />
+                    </Pressable>
+                  ),
+                )}
+              </View>
+            )}
+          </>
+        ) : groups.length === 0 ? (
           <View style={styles.empty}>
             <Ionicons name="calendar-outline" size={30} color={colors.muted} />
             <Text variant="caption" tone="muted">
@@ -222,27 +330,68 @@ function StatusPill({ status }: { status: BookingStatus }) {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(2.5), paddingBottom: space(12) },
-    closeSection: {
-      marginTop: space(1),
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(2),
-      gap: space(1),
-    },
-    closeHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
-    closeHint: { marginTop: -space(0.5) },
-    closeStrip: { gap: space(1), paddingTop: space(0.5) },
-    closeChip: {
-      width: 48,
+    toggleWrap: { marginTop: space(1), marginBottom: space(1.5) },
+    dayStrip: { gap: space(1), paddingVertical: space(0.5) },
+    dayChip: {
+      width: 50,
       paddingVertical: space(1),
       borderRadius: radius.md,
       backgroundColor: colors.surfaceMuted,
       alignItems: 'center',
-      gap: 1,
+      gap: 2,
     },
-    closeChipOn: { backgroundColor: colors.rose },
+    dayChipOn: { backgroundColor: colors.accent },
+    dayDot: { width: 5, height: 5, borderRadius: 3 },
+    dayDotOn: { backgroundColor: colors.rose },
+    dayDotOff: { backgroundColor: 'transparent' },
     closeWd: { textTransform: 'uppercase', letterSpacing: 0.4 },
     closeNum: { fontSize: 16 },
+    dayHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: space(2),
+      marginBottom: space(1),
+    },
+    closeToggle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.5),
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    closeToggleOn: { backgroundColor: colors.rose },
+    closeToggleText: { fontWeight: '700' },
+    closedBanner: {
+      alignItems: 'center',
+      gap: space(1),
+      paddingVertical: space(5),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+    },
+    timeline: { gap: space(0.75) },
+    freeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      paddingVertical: space(1.25),
+      paddingHorizontal: space(1.5),
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.line,
+      borderStyle: 'dashed',
+    },
+    freeBody: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    busyRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: space(1.5),
+    },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     group: { marginTop: space(2) },
     groupTitle: { marginBottom: space(1), marginLeft: space(0.5) },

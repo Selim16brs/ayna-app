@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { api } from '../../src/api';
 import type { Appointment } from '../../src/data';
-import { almatyDayStart } from '../../src/datetime';
+import { almatyDayStart, slotTime } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -18,10 +18,15 @@ export default function OfflineBookingScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
+  // §4.6 — ajandada boş slota dokununca gelen başlangıç (UTC ms); günü ve saati sabitler
+  const params = useLocalSearchParams<{ start?: string }>();
+  const startParam = params.start ? Number(params.start) : null;
+  const baseDay = almatyDayStart(startParam ?? Date.now(), 0);
+
   const [customer, setCustomer] = useState('');
   const [service, setService] = useState('');
   const [uzman, setUzman] = useState('');
-  const [time, setTime] = useState('15:00');
+  const [time, setTime] = useState(startParam ? slotTime(startParam) : '15:00');
   const [dur, setDur] = useState('60');
   const [price, setPrice] = useState('');
   const [kind, setKind] = useState<Kind>('normal');
@@ -37,7 +42,7 @@ export default function OfflineBookingScreen() {
     const m = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
     const h = m ? Math.min(23, Number(m[1])) : 12;
     const min = m ? Math.min(59, Number(m[2])) : 0;
-    const startMs = almatyDayStart(Date.now(), 0) + h * 3_600_000 + min * 60_000;
+    const startMs = baseDay + h * 3_600_000 + min * 60_000;
     const booking: Appointment = {
       id: `off-${Date.now()}-${seq++}`,
       source: 'direct',
