@@ -10,7 +10,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { SalonRow, Screen, Text, WaveLayered } from '../../src/ui';
+import { AngledPhoto, SalonRow, Screen, Text, WaveLayered } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -26,10 +26,9 @@ const PROMO_GRADS: readonly (readonly [string, string])[] = [
   ['#E8C7A0', '#C2A06A'], // şeftali/bal
 ];
 
-// Yatay kaydırmalı kart genişliği (referans Fırsatlar/Öne çıkanlar)
+// Yatay kaydırmalı kart ölçüsü (referans Fırsatlar/Öne çıkanlar)
 const PROMO_W = Math.round(Dimensions.get('window').width * 0.76);
-// Kart için şeffaf konu görseli (kampanyaya özel cut-out'lar geldiğinde değiştirilecek)
-const PROMO_CUTOUT = require('../../assets/hero-user.png');
+const PROMO_H = 150;
 
 // Ana sayfa kategori seti (referans: Saç · Cilt · Nail · Makyaj · Spa · Diğer)
 const HOME_CATS: { key: MessageKey; route: string; icon: IoniconName }[] = [
@@ -177,7 +176,8 @@ export default function DiscoverScreen() {
             <PromoCard
               key={c.id}
               title={c.title}
-              cutout={PROMO_CUTOUT}
+              image={c.image}
+              clipId={`promo-c-${c.id}`}
               grad={PROMO_GRADS[i % PROMO_GRADS.length]!}
               onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
             />
@@ -195,7 +195,8 @@ export default function DiscoverScreen() {
             <PromoCard
               key={pro.id}
               title={pro.name}
-              cutout={PROMO_CUTOUT}
+              image={pro.image}
+              clipId={`promo-p-${pro.id}`}
               grad={PROMO_GRADS[(i + 1) % PROMO_GRADS.length]!}
               onPress={() => router.push('/professional/' + pro.id)}
             />
@@ -237,12 +238,14 @@ function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => vo
 
 function PromoCard({
   title,
-  cutout,
+  image,
+  clipId,
   grad,
   onPress,
 }: {
   title: string;
-  cutout: number; // require(...) — şeffaf konu görseli
+  image: string;
+  clipId: string;
   grad: readonly [string, string];
   onPress: () => void;
 }) {
@@ -256,8 +259,10 @@ function PromoCard({
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      {/* Sağda kesik (cut-out) konu — gradientin üstünde, arka planı yok */}
-      <Image source={cutout} style={styles.promoPhoto} resizeMode="contain" />
+      {/* Sağda net ama açılı kesilmiş görsel — zemine gömülü */}
+      <View style={StyleSheet.absoluteFill}>
+        <AngledPhoto uri={image} width={PROMO_W} height={PROMO_H} clipId={clipId} />
+      </View>
       {/* Sol: başlık üstte, ok altta */}
       <View style={styles.promoContent}>
         <Text style={styles.promoCardTitle} numberOfLines={2}>
@@ -417,12 +422,11 @@ const makeStyles = (colors: ColorTokens) =>
     promoScroll: { paddingHorizontal: space(3), gap: space(1.5) },
     promoCard: {
       width: PROMO_W,
-      height: 150,
+      height: PROMO_H,
       borderRadius: radius.lg,
       overflow: 'hidden',
       position: 'relative',
     },
-    promoPhoto: { position: 'absolute', right: -4, bottom: 0, width: '56%', height: '112%' },
     promoContent: {
       position: 'absolute',
       left: 0,

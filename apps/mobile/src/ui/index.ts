@@ -7,6 +7,7 @@ export { ProCard } from './ProCard';
 export { SalonRow } from './SalonRow';
 export { WaveBottom } from './WaveBottom';
 export { WaveLayered } from './WaveLayered';
+export { AngledPhoto } from './AngledPhoto';
 export { AppTabBar, TAB_BAR_CLEARANCE } from './AppTabBar';
 export { Placeholder } from './Placeholder';
 export { StackHeader } from './StackHeader';
