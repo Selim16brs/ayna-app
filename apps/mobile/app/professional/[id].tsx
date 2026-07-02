@@ -38,7 +38,7 @@ export default function ProfessionalScreen() {
 
   const [tab, setTab] = useState<Tab>('booking');
   const [selected, setSelected] = useState<string>(pro.services[0]?.id ?? '');
-  const [uzmanId, setUzmanId] = useState<string>(pro.staff[0]?.id ?? '');
+  const uzmanId = pro.staff[0]?.id ?? '';
   const [dayIdx, setDayIdx] = useState(0);
   const [time, setTime] = useState(TIME_SLOTS[0]!);
   const days = useMemo(() => nextDays(10), []);
@@ -166,7 +166,7 @@ export default function ProfessionalScreen() {
                     {pro.staff.map((u) => {
                       const on = u.id === uzmanId;
                       return (
-                        <Pressable key={u.id} onPress={() => setUzmanId(u.id)} style={styles.staffCard}>
+                        <Pressable key={u.id} onPress={() => router.push('/uzman/' + u.id)} style={styles.staffCard}>
                           <View style={[styles.staffAvatarWrap, on && styles.staffAvatarOn]}>
                             <Image source={{ uri: u.image }} style={styles.staffAvatar} />
                           </View>
