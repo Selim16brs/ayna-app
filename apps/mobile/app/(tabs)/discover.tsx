@@ -171,8 +171,7 @@ export default function DiscoverScreen() {
             <PromoCard
               key={c.id}
               title={c.title}
-              highlight={c.badge}
-              subtitle={c.subtitle}
+              subtitle={c.badge}
               image={c.image}
               bg={CARD_TINTS[i % CARD_TINTS.length]!}
               onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
@@ -191,8 +190,7 @@ export default function DiscoverScreen() {
             <PromoCard
               key={pro.id}
               title={pro.name}
-              highlight={formatPrice(pro.priceFrom)}
-              subtitle={pro.specialty}
+              subtitle={formatPrice(pro.priceFrom)}
               image={pro.image}
               bg={CARD_TINTS[(i + 2) % CARD_TINTS.length]!}
               onPress={() => router.push('/professional/' + pro.id)}
@@ -235,15 +233,13 @@ function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => vo
 
 function PromoCard({
   title,
-  highlight,
   subtitle,
   image,
   bg,
   onPress,
 }: {
   title: string;
-  highlight: string;
-  subtitle: string;
+  subtitle?: string;
   image: string;
   bg: string;
   onPress: () => void;
@@ -252,15 +248,19 @@ function PromoCard({
   return (
     <Pressable style={[styles.promoCard, { backgroundColor: bg }]} onPress={onPress}>
       <View style={styles.promoCardLeft}>
-        <Text style={styles.promoCardTitle} numberOfLines={2}>
-          {title}
-        </Text>
-        <Text style={styles.promoHighlight} numberOfLines={1}>
-          {highlight}
-        </Text>
-        <Text style={styles.promoCardSub} numberOfLines={2}>
-          {subtitle}
-        </Text>
+        <View>
+          <Text style={styles.promoCardTitle} numberOfLines={2}>
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text style={styles.promoCardSub} numberOfLines={1}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+        <View style={styles.promoArrow}>
+          <Ionicons name="arrow-forward" size={18} color={bg} />
+        </View>
       </View>
       <Image source={{ uri: image }} style={styles.promoCardImg} />
     </Pressable>
@@ -418,18 +418,19 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.lg,
       overflow: 'hidden',
     },
-    promoCardLeft: { flex: 1, padding: space(1.5), justifyContent: 'center' },
-    promoCardTitle: { fontSize: 13, fontWeight: '700', lineHeight: 16, letterSpacing: -0.1, color: '#FFFFFF' },
-    promoHighlight: {
-      fontSize: 24,
-      lineHeight: 28,
-      fontWeight: '800',
-      letterSpacing: -0.3,
-      marginVertical: 2,
-      color: '#FFFFFF',
+    // Referans kart düzeni: başlık üst-sol, ok alt-sol, foto sağ
+    promoCardLeft: { flex: 1, padding: space(2), justifyContent: 'space-between' },
+    promoCardTitle: { fontSize: 16, fontWeight: '800', lineHeight: 20, letterSpacing: -0.2, color: '#FFFFFF' },
+    promoCardSub: { fontSize: 12, lineHeight: 15, marginTop: 3, color: 'rgba(255,255,255,0.92)' },
+    promoArrow: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: '#FFFFFF',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
-    promoCardSub: { fontSize: 11, lineHeight: 14, color: 'rgba(255,255,255,0.9)' },
-    promoCardImg: { width: 116, height: '100%', backgroundColor: colors.bgSunken },
+    promoCardImg: { width: 128, height: '100%', backgroundColor: colors.bgSunken },
 
     // ── Kategoriler (sabit 6, eşit dağılım) ──
     catRow: {
