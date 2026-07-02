@@ -8,6 +8,7 @@ import {
   type BookingStatus,
   formatPrice,
 } from '../../src/data';
+import { formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
@@ -137,7 +138,7 @@ function BookingCard({ appt }: { appt: Appointment }) {
           <View style={styles.metaRow}>
             <Ionicons name="time-outline" size={13} color={colors.muted} />
             <Text variant="caption" tone="inkSoft">
-              {appt.dateLabel}
+              {formatSlot(appt.startMs, t)}
             </Text>
           </View>
           <Text variant="bodyStrong" tone="ink">

@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
 import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
+import { daysUntil, formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -62,11 +63,12 @@ export default function AgendaScreen() {
     }, [storeBookings]),
   );
 
+  const now = Date.now();
   const groups = GROUP_ORDER.map((key) => ({
     key,
     rows: items
-      .filter((b) => bucket(b.inDays) === key)
-      .sort((a, b) => a.inDays - b.inDays),
+      .filter((b) => bucket(daysUntil(b.startMs, now)) === key)
+      .sort((a, b) => a.startMs - b.startMs),
   })).filter((g) => g.rows.length > 0);
 
   return (
@@ -91,7 +93,7 @@ export default function AgendaScreen() {
                   <View key={b.id} style={styles.row}>
                     <View style={styles.timeCol}>
                       <Text variant="caption" tone="muted" numberOfLines={1}>
-                        {b.dateLabel}
+                        {formatSlot(b.startMs, t)}
                       </Text>
                     </View>
                     <View style={styles.rowBody}>

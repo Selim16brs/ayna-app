@@ -630,6 +630,8 @@ export const tr = {
   'offline.service': 'Hizmet',
   'offline.uzman': 'Uzman (opsiyonel)',
   'offline.date': 'Tarih / saat',
+  'offline.time': 'Saat',
+  'offline.dur': 'Süre (dk)',
   'offline.price': 'Fiyat (₸)',
   'offline.save': 'Randevuyu ekle',
   'offline.saved': 'Offline randevu eklendi',

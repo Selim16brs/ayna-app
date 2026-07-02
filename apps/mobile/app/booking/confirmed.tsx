@@ -16,8 +16,7 @@ export default function ConfirmedScreen() {
   const styles = useThemedStyles(makeStyles);
   const params = useLocalSearchParams<{
     proId?: string;
-    day?: string;
-    time?: string;
+    slot?: string;
     uzmanName?: string;
   }>();
   const pro = useProfessionalDetail(params.proId ?? '1');
@@ -54,7 +53,7 @@ export default function ConfirmedScreen() {
           <Field
             icon="time-outline"
             labelKey="booking.field.datetime"
-            value={`${params.day ?? ''} · ${params.time ?? ''}`}
+            value={params.slot ?? ''}
           />
           <Field
             icon="pricetag-outline"

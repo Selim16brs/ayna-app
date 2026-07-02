@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { api } from '../../src/api';
 import type { Appointment } from '../../src/data';
+import { almatyDayStart } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -20,7 +21,8 @@ export default function OfflineBookingScreen() {
   const [customer, setCustomer] = useState('');
   const [service, setService] = useState('');
   const [uzman, setUzman] = useState('');
-  const [date, setDate] = useState('Bugün');
+  const [time, setTime] = useState('15:00');
+  const [dur, setDur] = useState('60');
   const [price, setPrice] = useState('');
   const [kind, setKind] = useState<Kind>('normal');
   const [groupSize, setGroupSize] = useState('3');
@@ -31,6 +33,11 @@ export default function OfflineBookingScreen() {
   async function save() {
     if (!canSave) return;
     setBusy(true);
+    // HH:MM (Almatı, bugün) → UTC startMs; geçersizse öğlen 12:00
+    const m = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
+    const h = m ? Math.min(23, Number(m[1])) : 12;
+    const min = m ? Math.min(59, Number(m[2])) : 0;
+    const startMs = almatyDayStart(Date.now(), 0) + h * 3_600_000 + min * 60_000;
     const booking: Appointment = {
       id: `off-${Date.now()}-${seq++}`,
       source: 'direct',
@@ -40,8 +47,8 @@ export default function OfflineBookingScreen() {
       proImage: '',
       uzmanName: uzman.trim() || undefined,
       customerName: customer.trim(),
-      dateLabel: date.trim() || 'Bugün',
-      inDays: 0,
+      startMs,
+      durationMin: Number(dur.replace(/[^0-9]/g, '')) || 60,
       price: Number(price.replace(/[^0-9]/g, '')) || 0,
       status: 'confirmed',
       bookingKind: kind,
@@ -90,13 +97,24 @@ export default function OfflineBookingScreen() {
           />
         </Field>
         <View style={styles.rowFields}>
-          <Field label={t('offline.date')} flex>
+          <Field label={t('offline.time')} flex>
             <TextInput
               style={styles.input}
-              value={date}
-              onChangeText={setDate}
-              placeholder="Bugün 15:00"
+              value={time}
+              onChangeText={setTime}
+              placeholder="15:00"
               placeholderTextColor={colors.muted}
+              keyboardType="numbers-and-punctuation"
+            />
+          </Field>
+          <Field label={t('offline.dur')} flex>
+            <TextInput
+              style={styles.input}
+              value={dur}
+              onChangeText={(v) => setDur(v.replace(/[^0-9]/g, ''))}
+              placeholder="60"
+              placeholderTextColor={colors.muted}
+              keyboardType="number-pad"
             />
           </Field>
           <Field label={t('offline.price')} flex>

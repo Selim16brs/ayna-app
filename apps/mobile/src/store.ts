@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { MessageKey } from '@ayna/i18n';
 import { api, type AuthSession, type AuthUser, type LoyaltyTier } from './api';
+import { formatSlotTr } from './datetime';
 import {
   type AppNotification,
   type Appointment,
@@ -42,9 +43,9 @@ export interface AddBookingInput {
   proName: string;
   proImage: string;
   uzmanName?: string;
-  dateLabel: string;
+  startMs: number;
+  durationMin: number;
   price: number;
-  inDays?: number;
   status?: Appointment['status'];
 }
 
@@ -178,8 +179,8 @@ export const useStore = create<State>((set, get) => ({
       proName: input.proName,
       proImage: input.proImage,
       ...(input.uzmanName ? { uzmanName: input.uzmanName } : {}),
-      dateLabel: input.dateLabel,
-      inDays: input.inDays ?? 2,
+      startMs: input.startMs,
+      durationMin: input.durationMin,
       price: input.price,
       // §1.6 — yeni randevu uzman onayı bekler
       status: input.status ?? 'awaiting_provider',
@@ -190,7 +191,7 @@ export const useStore = create<State>((set, get) => ({
     get().pushNotification({
       type: 'booking',
       title: 'Randevu isteğin gönderildi',
-      body: `${input.proName} · ${input.dateLabel} · uzman onayı bekleniyor`,
+      body: `${input.proName} · ${formatSlotTr(input.startMs)} · uzman onayı bekleniyor`,
       dateLabel: 'Az önce',
       icon: 'calendar-outline',
     });
@@ -207,8 +208,9 @@ export const useStore = create<State>((set, get) => ({
       proId: pro.id,
       proName: pro.name,
       proImage: pro.image,
-      dateLabel: 'Bekleme listesi',
-      inDays: 0,
+      // Bekleme listesinde henüz slot yok — yer açılınca gerçek startMs atanır (Faz 3).
+      startMs: Date.now(),
+      durationMin: 0,
       price: 0,
       status: 'waitlist',
     };
@@ -240,8 +242,8 @@ export const useStore = create<State>((set, get) => ({
           ? {
               ...b,
               status: 'confirmed',
-              dateLabel: b.proposedDateLabel ?? b.dateLabel,
-              proposedDateLabel: undefined,
+              startMs: b.proposedStartMs ?? b.startMs,
+              proposedStartMs: undefined,
             }
           : b,
       ),

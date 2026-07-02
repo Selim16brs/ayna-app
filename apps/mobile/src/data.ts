@@ -1,5 +1,6 @@
 import type { Ionicons } from '@expo/vector-icons';
 import type { MessageKey } from '@ayna/i18n';
+import { almatySlotMs, daysUntil, formatSlotTr } from './datetime';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -719,14 +720,17 @@ export interface Appointment {
   customerName?: string; // §2.2 offline randevuda müşteri adı
   bookingKind?: string; // normal | group | express (Faz 3)
   groupSize?: number; // grup randevuda kişi sayısı
-  dateLabel: string; // hangi saatte
-  proposedDateLabel?: string; // uzmanın önerdiği alternatif (§1.6)
-  inDays: number; // sıralama için (negatif = geçmiş)
+  startMs: number; // randevu başlangıcı — UTC epoch ms (Faz 2 gerçek slot modeli)
+  durationMin: number; // hizmet süresi (dk) — slot motoru buna dayanır (§4.2)
+  proposedStartMs?: number; // uzmanın önerdiği alternatif başlangıç (§1.6)
   price: number; // kaç paraya
   status: BookingStatus;
   cancelReason?: string; // §6.C — "neden gelemiyorum"
   reviewed?: boolean;
 }
+
+// Seed başlangıç anı (modül yüklenirken sabitlenir) — göreli slot'lar buna göre.
+const SEED_NOW = Date.now();
 
 export const SEED_APPOINTMENTS: Appointment[] = [
   {
@@ -737,8 +741,8 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     proName: 'Madina Studio',
     proImage: PROFESSIONALS[0]!.image,
     uzmanName: 'Aigerim',
-    dateLabel: 'Cuma · 14:00',
-    inDays: 3,
+    startMs: almatySlotMs(SEED_NOW, 3, 14, 0),
+    durationMin: 60,
     price: 9000,
     status: 'confirmed',
   },
@@ -749,8 +753,8 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     proId: '4',
     proName: 'Lotus Spa',
     proImage: PROFESSIONALS[3]!.image,
-    dateLabel: 'Geçen hafta · 16:00',
-    inDays: -7,
+    startMs: almatySlotMs(SEED_NOW, -7, 16, 0),
+    durationMin: 90,
     price: 18000,
     status: 'completed',
     reviewed: false,
@@ -762,8 +766,8 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     proId: '3',
     proName: 'Ailin Makeup',
     proImage: PROFESSIONALS[2]!.image,
-    dateLabel: 'Pazartesi · 11:00',
-    inDays: 6,
+    startMs: almatySlotMs(SEED_NOW, 6, 11, 0),
+    durationMin: 150,
     price: 21000,
     status: 'pending',
   },
@@ -774,8 +778,8 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     proId: '2',
     proName: 'Aruzhan Beauty',
     proImage: PROFESSIONALS[1]!.image,
-    dateLabel: 'Cumartesi · 09:00',
-    inDays: 4,
+    startMs: almatySlotMs(SEED_NOW, 4, 9, 0),
+    durationMin: 120,
     price: 18000,
     status: 'confirmed',
   },
@@ -787,8 +791,8 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     proName: 'Bella Nails',
     proImage: PROFESSIONALS[5]!.image,
     uzmanName: 'Kamila',
-    dateLabel: 'Geçen ay · 13:00',
-    inDays: -24,
+    startMs: almatySlotMs(SEED_NOW, -24, 13, 0),
+    durationMin: 60,
     price: 6000,
     status: 'completed',
     reviewed: true,
@@ -1069,6 +1073,7 @@ export function buildUpcomingEvents(
   moments: Moment[],
   routines: CareRoutine[],
 ): UpcomingEvent[] {
+  const now = Date.now();
   const a: UpcomingEvent[] = appts
     .filter((x) => x.status === 'confirmed' || x.status === 'pending')
     .map((x) => ({
@@ -1076,9 +1081,9 @@ export function buildUpcomingEvents(
       refId: x.id,
       kind: 'appointment',
       title: x.service,
-      subtitle: `${x.proName} · ${x.dateLabel}`,
+      subtitle: `${x.proName} · ${formatSlotTr(x.startMs)}`,
       icon: 'calendar',
-      inDays: x.inDays,
+      inDays: daysUntil(x.startMs, now),
       tone: 'rose',
     }));
   const m: UpcomingEvent[] = moments.map((x) => ({

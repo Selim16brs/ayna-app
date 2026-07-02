@@ -13,6 +13,7 @@ import {
   type PersonalTone,
   QUICK_ADD,
 } from '../../src/data';
+import { formatSlot } from '../../src/datetime';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -66,7 +67,7 @@ export default function BenimIcinScreen() {
     const active = bookings.filter((b) =>
       ['confirmed', 'pending', 'awaiting_provider', 'alternative_proposed'].includes(b.status),
     );
-    return [...active].sort((a, b) => a.inDays - b.inDays)[0];
+    return [...active].sort((a, b) => a.startMs - b.startMs)[0];
   }, [bookings]);
 
   const confirmDeleteLog = (id: string) =>
@@ -308,7 +309,7 @@ function FeatureCard({ booking, onPress }: { booking: Appointment; onPress: () =
           {booking.proName}
         </Text>
         <Text variant="caption" tone="onColor" style={styles.featureMeta} numberOfLines={1}>
-          {booking.service} · {booking.dateLabel}
+          {booking.service} · {formatSlot(booking.startMs, t)}
         </Text>
         <View style={styles.featureCta}>
           <Text variant="caption" tone="ink" style={styles.featureCtaText}>

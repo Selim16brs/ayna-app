@@ -1,17 +1,22 @@
-import { useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import { useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { computeDaySlots } from '@ayna/domain';
 import type { BookingSource } from '../../src/data';
+import { almatyDayStart, formatSlotTr } from '../../src/datetime';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, SlotPicker, StackHeader, TAB_BAR_CLEARANCE, Text, type PickerDay } from '../../src/ui';
 
-const DAYS = ['Bugün', 'Yarın', 'Cmt', 'Paz', 'Pzt'];
-const TIMES = ['10:00', '11:30', '13:00', '14:30', '16:00', '17:30'];
+// Mock çalışma penceresi: 10:00–19:00 Almatı (gerçek uzman saatleri Faz 9 persistanslığıyla).
+const OPEN_FROM_H = 10;
+const OPEN_TO_H = 19;
+const STEP_MIN = 30;
+const LEAD_H = 2; // en erken 2 saat sonrası
+const HORIZON_DAYS = 14;
 
 export default function ScheduleScreen() {
   const router = useRouter();
@@ -25,24 +30,60 @@ export default function ScheduleScreen() {
     service?: string;
   }>();
   const addBooking = useStore((s) => s.addBooking);
+  const bookings = useStore((s) => s.bookings);
   const pro = useProfessionalDetail(params.proId ?? '1');
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   const [uzmanId, setUzmanId] = useState<string>(params.uzmanId ?? pro.staff[0]?.id ?? '');
-  const [day, setDay] = useState(0);
-  const [time, setTime] = useState<string | null>(null);
+  const [selectedStartMs, setSelectedStartMs] = useState<number | null>(null);
 
   const uzman = pro.staff.find((u) => u.id === uzmanId);
 
+  // Seçili hizmet → süre (slot motorunun temel girdisi §4.2)
+  const chosenService = pro.services.find((sv) => sv.name === params.service);
+  const durationMin = chosenService?.durationMin ?? pro.services[0]?.durationMin ?? 60;
+
+  // Bu uzmanın mevcut (iptal olmayan) randevuları = meşgul aralıklar
+  const busy = useMemo(
+    () =>
+      bookings
+        .filter(
+          (b) =>
+            b.proId === pro.id &&
+            (uzman?.name ? b.uzmanName === uzman.name : true) &&
+            b.status !== 'cancelled',
+        )
+        .map((b) => ({ startMs: b.startMs, endMs: b.startMs + b.durationMin * 60_000 })),
+    [bookings, pro.id, uzman?.name],
+  );
+
+  // Slot motorunu her gün için çalıştır → müsait/dolu slotlar (uzmanId/hizmet değişince yeniden)
+  const days: PickerDay[] = useMemo(() => {
+    const now = Date.now();
+    const out: PickerDay[] = [];
+    for (let d = 0; d < HORIZON_DAYS; d++) {
+      const dayStart = almatyDayStart(now, d);
+      const openWindows = [
+        { startMs: dayStart + OPEN_FROM_H * 3_600_000, endMs: dayStart + OPEN_TO_H * 3_600_000 },
+      ];
+      const slots = computeDaySlots({
+        openWindows,
+        busy,
+        serviceDurationMs: durationMin * 60_000,
+        stepMs: STEP_MIN * 60_000,
+        nowMs: now,
+        minLeadMs: LEAD_H * 3_600_000,
+      });
+      out.push({ dateMs: dayStart + OPEN_FROM_H * 3_600_000, slots });
+    }
+    return out;
+  }, [busy, durationMin]);
+
   function confirm() {
+    if (selectedStartMs == null) return;
     const source = (params.source as BookingSource) ?? 'direct';
-    // Seçili hizmet: param ile gelen ad eşleşirse onu, yoksa ilk hizmeti / priceFrom'u kullan
-    const chosenService = pro.services.find((sv) => sv.name === params.service);
     const serviceName =
       chosenService?.name ?? params.service ?? pro.services[0]?.name ?? pro.specialty;
     const price = chosenService?.price ?? pro.services[0]?.price ?? Number(pro.priceFrom);
-    const dateLabel = `${DAYS[day]} · ${time ?? ''}`;
-    // Gün dizininden küçük pozitif inDays türet (Bugün→1, Yarın→2, ...)
-    const inDays = day + 1;
 
     const id = addBooking({
       source,
@@ -51,9 +92,9 @@ export default function ScheduleScreen() {
       proName: pro.name,
       proImage: pro.image,
       ...(uzman?.name ? { uzmanName: uzman.name } : {}),
-      dateLabel,
+      startMs: selectedStartMs,
+      durationMin,
       price,
-      inDays,
     });
 
     router.replace({
@@ -62,8 +103,7 @@ export default function ScheduleScreen() {
         id,
         proId: pro.id,
         source,
-        day: DAYS[day],
-        time: time ?? '',
+        slot: formatSlotTr(selectedStartMs),
         uzmanName: uzman?.name ?? '',
       },
     });
@@ -121,45 +161,16 @@ export default function ScheduleScreen() {
         ) : null}
 
         <Text variant="h2" tone="ink" style={styles.label}>
-          {t('booking.schedule.day')}
-        </Text>
-        <View style={styles.row}>
-          {DAYS.map((d, i) => (
-            <Pressable
-              key={d}
-              onPress={() => setDay(i)}
-              style={[styles.dayChip, i === day && styles.active]}
-            >
-              <Text variant="bodyStrong" tone={i === day ? 'onAccent' : 'inkSoft'}>
-                {d}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <Text variant="h2" tone="ink" style={styles.label}>
           {t('booking.schedule.time')}
         </Text>
-        <View style={styles.times}>
-          {TIMES.map((tm) => (
-            <Pressable
-              key={tm}
-              onPress={() => setTime(tm)}
-              style={[styles.timeChip, tm === time && styles.active]}
-            >
-              <Text variant="bodyStrong" tone={tm === time ? 'onAccent' : 'ink'}>
-                {tm}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <SlotPicker days={days} selected={selectedStartMs} onSelect={setSelectedStartMs} />
       </ScrollView>
 
       <View style={styles.footer}>
         <Button
           label={t('booking.schedule.confirm')}
-          variant={time ? 'primary' : 'secondary'}
-          disabled={!time}
+          variant={selectedStartMs != null ? 'primary' : 'secondary'}
+          disabled={selectedStartMs == null}
           onPress={confirm}
         />
       </View>

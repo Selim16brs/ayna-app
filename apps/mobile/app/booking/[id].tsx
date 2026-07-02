@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
 import { type BookingSource, formatPrice } from '../../src/data';
+import { daysUntil, formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
@@ -48,7 +49,7 @@ export default function BookingDetailScreen() {
   }
 
   function onCancel() {
-    const late = booking?.inDays === 0; // aynı gün → geç iptal uyarısı (politika)
+    const late = booking ? daysUntil(booking.startMs, Date.now()) === 0 : false; // aynı gün → geç iptal uyarısı (politika)
     const msg = late ? t('booking.cancel.late_warn') : t('booking.cancel.prompt');
     Alert.alert(t('booking.detail.cancel'), msg, [
       { text: t('booking.cancel.reason.plan'), onPress: () => doCancel(t('booking.cancel.reason.plan')) },
@@ -91,7 +92,7 @@ export default function BookingDetailScreen() {
         {/* Detaylar */}
         <View style={[styles.card, shadow.card]}>
           <Field icon="cut-outline" labelKey="booking.field.service" value={booking.service} />
-          <Field icon="time-outline" labelKey="booking.field.datetime" value={booking.dateLabel} />
+          <Field icon="time-outline" labelKey="booking.field.datetime" value={formatSlot(booking.startMs, t)} />
           {booking.uzmanName ? (
             <Field icon="person-outline" labelKey="booking.field.pro" value={booking.uzmanName} />
           ) : null}
@@ -144,13 +145,13 @@ export default function BookingDetailScreen() {
         ) : null}
 
         {/* Uzmanın önerdiği alternatif (§1.6) */}
-        {booking.status === 'alternative_proposed' && booking.proposedDateLabel ? (
+        {booking.status === 'alternative_proposed' && booking.proposedStartMs != null ? (
           <View style={[styles.proposedCard, shadow.soft]}>
             <Text variant="caption" tone="muted">
               {t('booking.detail.proposed')}
             </Text>
             <Text variant="h2" tone="ink" style={styles.proposedTime}>
-              {booking.proposedDateLabel}
+              {formatSlot(booking.proposedStartMs, t)}
             </Text>
             <Button
               label={t('booking.detail.accept')}

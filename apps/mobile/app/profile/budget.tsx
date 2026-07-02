@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { formatPrice } from '../../src/data';
+import { formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -103,7 +104,7 @@ export default function BudgetScreen() {
                     {b.proName}
                   </Text>
                   <Text variant="caption" tone="muted" numberOfLines={1}>
-                    {b.service} · {b.dateLabel}
+                    {b.service} · {formatSlot(b.startMs, t)}
                   </Text>
                 </View>
                 <Text variant="bodyStrong" tone="ink">
