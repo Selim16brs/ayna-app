@@ -1,20 +1,22 @@
 import { useRouter } from 'expo-router';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import type { Locale } from '@ayna/i18n';
 import { useLocale } from '../src/locale';
 import { Button, Screen, Text } from '../src/ui';
-import { type ColorTokens, space } from '../src/theme';
-import { useThemedStyles } from '../src/theme-context';
+import { radius, space, type ColorTokens } from '../src/theme';
+import { useTheme, useThemedStyles } from '../src/theme-context';
+
+const LANGS: { code: Locale; label: string }[] = [
+  { code: 'tr', label: 'Türkçe' },
+  { code: 'kk', label: 'Қазақша' },
+  { code: 'ru', label: 'Русский' },
+];
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { setLocale, t } = useLocale();
+  const { locale, setLocale, t } = useLocale();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-
-  function choose(locale: Locale) {
-    setLocale(locale);
-    router.push('/auth');
-  }
 
   return (
     <Screen hero>
@@ -25,18 +27,38 @@ export default function WelcomeScreen() {
             style={styles.logo}
             resizeMode="contain"
           />
-          <Text variant="caption" tone="inkSoft" style={styles.tagline}>
-            {t('app.tagline')}
+          {/* §1/§3.1 slogan — "aynası" italik + bold + büyük */}
+          <Text style={styles.slogan}>
+            {t('slogan.pre')}{' '}
+            <Text style={styles.sloganWord}>{t('slogan.word')}</Text>{' '}
+            {t('slogan.post')}
+          </Text>
+          <Text variant="caption" tone="inkSoft" style={styles.value}>
+            {t('welcome.value')}
           </Text>
         </View>
 
-        <View style={styles.choice}>
-          <Text variant="label" tone="rose" style={styles.choiceLabel}>
-            {t('language.choose')}
-          </Text>
-          <Button label="Türkçe" variant="primary" onPress={() => choose('tr')} />
-          <Button label="Қазақша" variant="secondary" onPress={() => choose('kk')} />
-          <Button label="Русский" variant="secondary" onPress={() => choose('ru')} />
+        <View style={styles.bottom}>
+          {/* Dil seçimi — kalıcı; her açılışta sorulmaz (Profil > Dil'den değişir) */}
+          <View style={styles.langRow}>
+            {LANGS.map((l) => {
+              const on = l.code === locale;
+              return (
+                <Pressable
+                  key={l.code}
+                  onPress={() => setLocale(l.code)}
+                  style={[styles.langPill, on && { backgroundColor: colors.accent }]}
+                >
+                  <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} style={styles.langText}>
+                    {l.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <Button label={t('auth.tab.login')} variant="primary" onPress={() => router.push('/auth/login')} />
+          <Button label={t('auth.tab.register')} variant="secondary" onPress={() => router.push('/auth')} />
         </View>
       </View>
     </Screen>
@@ -45,14 +67,27 @@ export default function WelcomeScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      paddingHorizontal: space(3),
-      justifyContent: 'space-between',
-    },
+    container: { flex: 1, paddingHorizontal: space(3), justifyContent: 'space-between' },
     hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    logo: { width: 260, height: 230, tintColor: colors.ink },
-    tagline: { marginTop: space(1), letterSpacing: 0.3 },
-    choice: { paddingBottom: space(4), gap: space(1.5) },
-    choiceLabel: { textAlign: 'center', marginBottom: space(1) },
+    logo: { width: 220, height: 190, tintColor: colors.ink },
+    slogan: {
+      fontSize: 26,
+      lineHeight: 34,
+      fontWeight: '700',
+      letterSpacing: -0.3,
+      color: colors.ink,
+      textAlign: 'center',
+      marginTop: space(1),
+    },
+    sloganWord: { fontStyle: 'italic', fontWeight: '800', fontSize: 30, color: colors.rose },
+    value: { textAlign: 'center', marginTop: space(1.5), maxWidth: 300, lineHeight: 19 },
+    bottom: { paddingBottom: space(4), gap: space(1.5) },
+    langRow: { flexDirection: 'row', gap: space(1), justifyContent: 'center', marginBottom: space(1) },
+    langPill: {
+      paddingHorizontal: space(2),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+    },
+    langText: { fontWeight: '700' },
   });

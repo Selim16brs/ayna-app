@@ -12,6 +12,11 @@ export const tr = {
 
   // Marka / dil
   'app.tagline': 'Her kadının bir aynası olmalı!',
+  // §3.1 Karşılama — slogan (vurgulu kelime "aynası" italik+bold+büyük) + değer önerisi
+  'slogan.pre': 'Tüm kadınların bir',
+  'slogan.word': 'aynası',
+  'slogan.post': 'olmalı',
+  'welcome.value': 'İstediğin hizmeti anlat, uzmanlar sana teklif versin.',
   'language.choose': 'Dil seçin',
   'language.tr': 'Türkçe',
   'language.kk': 'Kazakça',
@@ -401,6 +406,9 @@ export const tr = {
   'auth.city.required': 'Lütfen şehrini seç',
   'auth.error.taken': 'Bu telefon veya e-posta zaten kayıtlı',
   'auth.error.bad': 'E-posta/telefon veya şifre hatalı',
+  'auth.login.forgot': 'Şifremi unuttum',
+  'auth.login.subtitle': 'Telefonun ve şifrenle giriş yap',
+  'auth.login.reset_sent': 'Kayıtlı telefonuna sıfırlama kodu gönderdik.',
 
   // İşletme (satıcı) kaydı
   'biz.entry.title': 'İşletme kaydı',
