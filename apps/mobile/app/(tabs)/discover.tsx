@@ -64,7 +64,7 @@ export default function DiscoverScreen() {
         <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
           <View style={styles.heroTop}>
             <Image
-              source={require('../../assets/logo-ayna.png')}
+              source={require('../../assets/logo-ayna-white.png')}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -265,7 +265,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
     },
     heroTop: { alignItems: 'center', justifyContent: 'center' },
-    logo: { width: 148, height: 56, tintColor: '#FFFFFF' },
+    logo: { width: 148, height: 56 },
     mapIconBtn: {
       width: 50,
       height: 50,
