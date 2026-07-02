@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Dimensions, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MessageKey } from '@ayna/i18n';
-import { formatPrice } from '../../src/data';
 import { useCampaigns, useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -18,11 +18,15 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 const HOT_PINK = '#FF2E93'; // "Ne yapmak istersin?" kartı — çırtlak pembe
 // Canlı kategori renkleri (pembe/yeşil gibi doygun) — Saç·Cilt·Nail·Makyaj·Spa·Diğer
 const CAT_TINTS = ['#FF2E93', '#C6E24B', '#B06CFF', '#FF8A3D', '#3FC5F0', '#2ED9B0'];
-// Fırsat / öne çıkan kart zeminleri — canlı (kategorilerle aynı dil)
-const CARD_TINTS = ['#FF2E93', '#C6E24B', '#B06CFF', '#FF8A3D'];
+// Fırsat / öne çıkan kart degradeleri (referans: yumuşak diyagonal gradient) — açık→koyu
+const PROMO_GRADS: readonly (readonly [string, string])[] = [
+  ['#B7A9E0', '#9D93C9'], // lavanta
+  ['#E6A9C0', '#CC8BA0'], // pembe/gül
+  ['#A9C7DE', '#7FA3CC'], // mavi
+  ['#E8C7A0', '#C2A06A'], // şeftali/bal
+];
 
-
-// 2 sütun ızgara kart genişliği (referans Fırsatlar/Öne çıkanlar)
+// Yatay kaydırmalı kart genişliği (referans Fırsatlar/Öne çıkanlar)
 const PROMO_W = Math.round(Dimensions.get('window').width * 0.76);
 
 // Ana sayfa kategori seti (referans: Saç · Cilt · Nail · Makyaj · Spa · Diğer)
@@ -171,9 +175,8 @@ export default function DiscoverScreen() {
             <PromoCard
               key={c.id}
               title={c.title}
-              subtitle={c.badge}
               image={c.image}
-              bg={CARD_TINTS[i % CARD_TINTS.length]!}
+              grad={PROMO_GRADS[i % PROMO_GRADS.length]!}
               onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
             />
           ))}
@@ -190,9 +193,8 @@ export default function DiscoverScreen() {
             <PromoCard
               key={pro.id}
               title={pro.name}
-              subtitle={formatPrice(pro.priceFrom)}
               image={pro.image}
-              bg={CARD_TINTS[(i + 2) % CARD_TINTS.length]!}
+              grad={PROMO_GRADS[(i + 1) % PROMO_GRADS.length]!}
               onPress={() => router.push('/professional/' + pro.id)}
             />
           ))}
@@ -233,36 +235,42 @@ function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => vo
 
 function PromoCard({
   title,
-  subtitle,
   image,
-  bg,
+  grad,
   onPress,
 }: {
   title: string;
-  subtitle?: string;
   image: string;
-  bg: string;
+  grad: readonly [string, string];
   onPress: () => void;
 }) {
   const styles = useThemedStyles(makeStyles);
+  const deep = grad[1];
   return (
-    <Pressable style={[styles.promoCard, { backgroundColor: bg }]} onPress={onPress}>
-      <View style={styles.promoCardLeft}>
-        <View>
-          <Text style={styles.promoCardTitle} numberOfLines={2}>
-            {title}
-          </Text>
-          {subtitle ? (
-            <Text style={styles.promoCardSub} numberOfLines={1}>
-              {subtitle}
-            </Text>
-          ) : null}
-        </View>
+    <Pressable style={styles.promoCard} onPress={onPress}>
+      <LinearGradient
+        colors={grad}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      {/* Sağda foto — sol kenarı karta karışır (blend) */}
+      <Image source={{ uri: image }} style={styles.promoPhoto} />
+      <LinearGradient
+        colors={[deep, 'transparent']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.promoFade}
+      />
+      {/* Sol: başlık üstte, ok altta */}
+      <View style={styles.promoContent}>
+        <Text style={styles.promoCardTitle} numberOfLines={2}>
+          {title}
+        </Text>
         <View style={styles.promoArrow}>
-          <Ionicons name="arrow-forward" size={18} color={bg} />
+          <Ionicons name="arrow-forward" size={20} color={deep} />
         </View>
       </View>
-      <Image source={{ uri: image }} style={styles.promoCardImg} />
     </Pressable>
   );
 }
@@ -409,28 +417,36 @@ const makeStyles = (colors: ColorTokens) =>
     howTitle: { fontSize: 19, letterSpacing: -0.2 },
     howSub: { opacity: 0.9 },
 
-    // ── Tek satır yatay kaydırma (Fırsatlar / Öne çıkanlar) ──
+    // ── Tek satır yatay kaydırma (Fırsatlar / Öne çıkanlar) — referans gradient kart ──
     promoScroll: { paddingHorizontal: space(3), gap: space(1.5) },
     promoCard: {
       width: PROMO_W,
-      height: 138,
-      flexDirection: 'row',
+      height: 150,
       borderRadius: radius.lg,
       overflow: 'hidden',
+      position: 'relative',
     },
-    // Referans kart düzeni: başlık üst-sol, ok alt-sol, foto sağ
-    promoCardLeft: { flex: 1, padding: space(2), justifyContent: 'space-between' },
-    promoCardTitle: { fontSize: 16, fontWeight: '800', lineHeight: 20, letterSpacing: -0.2, color: '#FFFFFF' },
-    promoCardSub: { fontSize: 12, lineHeight: 15, marginTop: 3, color: 'rgba(255,255,255,0.92)' },
+    promoPhoto: { position: 'absolute', right: 0, top: 0, bottom: 0, width: '62%' },
+    promoFade: { position: 'absolute', right: 0, top: 0, bottom: 0, width: '62%' },
+    promoContent: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: '62%',
+      padding: space(2.25),
+      justifyContent: 'space-between',
+      zIndex: 2,
+    },
+    promoCardTitle: { fontSize: 18, fontWeight: '800', lineHeight: 22, letterSpacing: -0.2, color: '#FFFFFF' },
     promoArrow: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       backgroundColor: '#FFFFFF',
       alignItems: 'center',
       justifyContent: 'center',
     },
-    promoCardImg: { width: 128, height: '100%', backgroundColor: colors.bgSunken },
 
     // ── Kategoriler (sabit 6, eşit dağılım) ──
     catRow: {
