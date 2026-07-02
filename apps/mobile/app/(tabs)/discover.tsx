@@ -23,7 +23,7 @@ const CARD_TINTS = ['#FF2E93', '#C6E24B', '#B06CFF', '#FF8A3D'];
 
 
 // 2 sütun ızgara kart genişliği (referans Fırsatlar/Öne çıkanlar)
-const GRID_W = (Dimensions.get('window').width - space(6) - space(1.5)) / 2;
+const PROMO_W = Math.round(Dimensions.get('window').width * 0.76);
 
 // Ana sayfa kategori seti (referans: Saç · Cilt · Nail · Makyaj · Spa · Diğer)
 const HOME_CATS: { key: MessageKey; route: string; icon: IoniconName }[] = [
@@ -160,9 +160,13 @@ export default function DiscoverScreen() {
           })}
         </View>
 
-        {/* ── FIRSATLAR (2 sütun ızgara) ── */}
+        {/* ── FIRSATLAR (tek satır, yatay kaydırmalı) ── */}
         <SectionHeader title={t('home.campaigns')} onSeeAll={() => router.push('/search')} />
-        <View style={styles.grid}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.promoScroll}
+        >
           {campaigns.map((c, i) => (
             <PromoCard
               key={c.id}
@@ -174,11 +178,15 @@ export default function DiscoverScreen() {
               onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
             />
           ))}
-        </View>
+        </ScrollView>
 
-        {/* ── ÖNE ÇIKANLAR (2 sütun ızgara) ── */}
+        {/* ── ÖNE ÇIKANLAR (tek satır, yatay kaydırmalı) ── */}
         <SectionHeader title={t('home.featured')} onSeeAll={() => router.push('/search')} />
-        <View style={styles.grid}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.promoScroll}
+        >
           {featured.map((pro, i) => (
             <PromoCard
               key={pro.id}
@@ -190,7 +198,7 @@ export default function DiscoverScreen() {
               onPress={() => router.push('/professional/' + pro.id)}
             />
           ))}
-        </View>
+        </ScrollView>
 
         {/* ── YAKINDAKİ SALONLAR (yatay kart listesi) ── */}
         <SectionHeader title={t('home.nearby')} onSeeAll={() => router.push('/search')} />
@@ -401,16 +409,11 @@ const makeStyles = (colors: ColorTokens) =>
     howTitle: { fontSize: 19, letterSpacing: -0.2 },
     howSub: { opacity: 0.9 },
 
-    // ── 2 sütun ızgara (Fırsatlar / Öne çıkanlar) ──
-    grid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: space(1.5),
-      paddingHorizontal: space(3),
-    },
+    // ── Tek satır yatay kaydırma (Fırsatlar / Öne çıkanlar) ──
+    promoScroll: { paddingHorizontal: space(3), gap: space(1.5) },
     promoCard: {
-      width: GRID_W,
-      height: 132,
+      width: PROMO_W,
+      height: 138,
       flexDirection: 'row',
       borderRadius: radius.lg,
       overflow: 'hidden',
@@ -426,7 +429,7 @@ const makeStyles = (colors: ColorTokens) =>
       color: '#FFFFFF',
     },
     promoCardSub: { fontSize: 11, lineHeight: 14, color: 'rgba(255,255,255,0.9)' },
-    promoCardImg: { width: 58, height: '100%', backgroundColor: colors.bgSunken },
+    promoCardImg: { width: 116, height: '100%', backgroundColor: colors.bgSunken },
 
     // ── Kategoriler (sabit 6, eşit dağılım) ──
     catRow: {
