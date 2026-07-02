@@ -620,6 +620,8 @@ export const tr = {
   'agenda.title': 'Ortak takvim',
   'agenda.add_offline': 'Offline randevu',
   'agenda.empty': 'Bu aralıkta randevu yok',
+  'agenda.closed_title': 'Kapalı günler (izin / tatil)',
+  'agenda.closed_hint': 'Kapalı işaretlediğin günler kullanıcı tarafında randevuya kapalı görünür.',
   'agenda.group.past': 'Geçmiş',
   'agenda.group.today': 'Bugün',
   'agenda.group.tomorrow': 'Yarın',

@@ -83,6 +83,9 @@ export interface AddPostInput {
 
 interface State {
   bookings: Appointment[];
+  // §4.6 — uzmanın kapalı (izin/tatil) günleri: Almatı gün başlangıcı UTC ms.
+  // Kullanıcı tarafında bu günler slot göstermez. (Mock: tek sağlayıcı; backend providerId'yle anahtarlar.)
+  closedDays: number[];
   circlePosts: CirclePost[];
   careRoutines: CareRoutine[];
   personalLogs: PersonalLog[];
@@ -120,6 +123,7 @@ interface State {
   confirmRefund: (id: string) => void; // kullanıcı "iadeyi aldım" → kayıt kapanır
   disputeBooking: (id: string) => void; // taraflar itiraz açar (destek/admin kuyruğu)
   checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
+  toggleClosedDay: (dayStartMs: number) => void; // §4.6 — günü kapalı/açık işaretle
   reviewBooking: (id: string, rating: number, text: string) => void;
   hydrateBookings: () => Promise<void>;
 
@@ -158,6 +162,7 @@ interface State {
 
 export const useStore = create<State>((set, get) => ({
   bookings: SEED_APPOINTMENTS,
+  closedDays: [],
   circlePosts: SEED_CIRCLE_POSTS,
   careRoutines: SEED_CARE_ROUTINES,
   personalLogs: SEED_PERSONAL_LOGS,
@@ -363,6 +368,14 @@ export const useStore = create<State>((set, get) => ({
       return { bookings, notifications: [...news, ...s.notifications] };
     });
   },
+
+  // §4.6 — günü kapalı/açık işaretle (izin/tatil). Kullanıcı tarafında kapalı gün slot göstermez.
+  toggleClosedDay: (dayStartMs) =>
+    set((s) => ({
+      closedDays: s.closedDays.includes(dayStartMs)
+        ? s.closedDays.filter((d) => d !== dayStartMs)
+        : [...s.closedDays, dayStartMs],
+    })),
 
   // §1.6 — kullanıcı uzmanın önerdiği alternatif saati kabul eder
   acceptAlternative: (id) => {

@@ -31,6 +31,7 @@ export default function ScheduleScreen() {
   }>();
   const addBooking = useStore((s) => s.addBooking);
   const bookings = useStore((s) => s.bookings);
+  const closedDays = useStore((s) => s.closedDays);
   const pro = useProfessionalDetail(params.proId ?? '1');
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   const [uzmanId, setUzmanId] = useState<string>(params.uzmanId ?? pro.staff[0]?.id ?? '');
@@ -62,9 +63,10 @@ export default function ScheduleScreen() {
     const out: PickerDay[] = [];
     for (let d = 0; d < HORIZON_DAYS; d++) {
       const dayStart = almatyDayStart(now, d);
-      const openWindows = [
-        { startMs: dayStart + OPEN_FROM_H * 3_600_000, endMs: dayStart + OPEN_TO_H * 3_600_000 },
-      ];
+      // §4.6 — kapalı (izin/tatil) gün: hiç pencere yok → slot gösterilmez
+      const openWindows = closedDays.includes(dayStart)
+        ? []
+        : [{ startMs: dayStart + OPEN_FROM_H * 3_600_000, endMs: dayStart + OPEN_TO_H * 3_600_000 }];
       const slots = computeDaySlots({
         openWindows,
         busy,
@@ -76,7 +78,7 @@ export default function ScheduleScreen() {
       out.push({ dateMs: dayStart + OPEN_FROM_H * 3_600_000, slots });
     }
     return out;
-  }, [busy, durationMin]);
+  }, [busy, durationMin, closedDays]);
 
   function confirm() {
     if (selectedStartMs == null) return;

@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
 import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
-import { daysUntil, formatSlot } from '../../src/datetime';
+import { almatyDayStart, almatyParts, daysUntil, formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -52,7 +52,12 @@ export default function AgendaScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const storeBookings = useStore((s) => s.bookings);
+  const closedDays = useStore((s) => s.closedDays);
+  const toggleClosedDay = useStore((s) => s.toggleClosedDay);
   const [items, setItems] = useState<Appointment[]>([]);
+
+  // §4.6 — önümüzdeki 14 günün "kapalı işaretle" şeridi (izin/tatil)
+  const closeStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
 
   // Ekran her odaklandığında tazele (offline ekleme sonrası geri dönünce güncel)
   useFocusEffect(
@@ -80,6 +85,42 @@ export default function AgendaScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('agenda.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* §4.6 — Kapalı günler (izin/tatil): kullanıcı tarafında bu günler slot göstermez */}
+        <View style={styles.closeSection}>
+          <View style={styles.closeHead}>
+            <Ionicons name="calendar-clear-outline" size={16} color={colors.rose} />
+            <Text variant="label" tone="rose">
+              {t('agenda.closed_title')}
+            </Text>
+          </View>
+          <Text variant="caption" tone="muted" style={styles.closeHint}>
+            {t('agenda.closed_hint')}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.closeStrip}>
+            {closeStrip.map((dayMs) => {
+              const p = almatyParts(dayMs);
+              const closed = closedDays.includes(dayMs);
+              return (
+                <Pressable
+                  key={dayMs}
+                  onPress={() => toggleClosedDay(dayMs)}
+                  style={[styles.closeChip, closed && styles.closeChipOn]}
+                >
+                  <Text variant="caption" tone={closed ? 'onColor' : 'muted'} style={styles.closeWd}>
+                    {t(`wd.${p.wd}` as 'wd.0')}
+                  </Text>
+                  <Text variant="bodyStrong" tone={closed ? 'onColor' : 'ink'} style={styles.closeNum}>
+                    {p.day}
+                  </Text>
+                  {closed ? (
+                    <Ionicons name="lock-closed" size={11} color={colors.onColor} />
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
         {groups.length === 0 ? (
           <View style={styles.empty}>
             <Ionicons name="calendar-outline" size={30} color={colors.muted} />
@@ -181,6 +222,27 @@ function StatusPill({ status }: { status: BookingStatus }) {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(2.5), paddingBottom: space(12) },
+    closeSection: {
+      marginTop: space(1),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1),
+    },
+    closeHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    closeHint: { marginTop: -space(0.5) },
+    closeStrip: { gap: space(1), paddingTop: space(0.5) },
+    closeChip: {
+      width: 48,
+      paddingVertical: space(1),
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      gap: 1,
+    },
+    closeChipOn: { backgroundColor: colors.rose },
+    closeWd: { textTransform: 'uppercase', letterSpacing: 0.4 },
+    closeNum: { fontSize: 16 },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     group: { marginTop: space(2) },
     groupTitle: { marginBottom: space(1), marginLeft: space(0.5) },

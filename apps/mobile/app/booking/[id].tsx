@@ -27,6 +27,7 @@ export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
   const allBookings = useStore((s) => s.bookings);
+  const closedDays = useStore((s) => s.closedDays);
   const cancelBooking = useStore((s) => s.cancelBooking);
   const acceptAlternative = useStore((s) => s.acceptAlternative);
   const approveBooking = useStore((s) => s.approveBooking);
@@ -54,8 +55,11 @@ export default function BookingDetailScreen() {
     const out: PickerDay[] = [];
     for (let d = 0; d < 14; d++) {
       const dayStart = almatyDayStart(now, d);
+      const openWindows = closedDays.includes(dayStart)
+        ? []
+        : [{ startMs: dayStart + 10 * 3_600_000, endMs: dayStart + 19 * 3_600_000 }];
       const slots = computeDaySlots({
-        openWindows: [{ startMs: dayStart + 10 * 3_600_000, endMs: dayStart + 19 * 3_600_000 }],
+        openWindows,
         busy,
         serviceDurationMs: booking.durationMin * 60_000,
         stepMs: 30 * 60_000,
@@ -65,7 +69,7 @@ export default function BookingDetailScreen() {
       out.push({ dateMs: dayStart + 10 * 3_600_000, slots });
     }
     return out;
-  }, [booking, allBookings]);
+  }, [booking, allBookings, closedDays]);
 
   async function uploadReceipt() {
     if (!id) return;
