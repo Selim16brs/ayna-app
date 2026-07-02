@@ -50,9 +50,13 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               accessibilityState={{ selected: focused }}
               accessibilityLabel={label}
             >
-              <View style={[styles.iconWrap, focused && { backgroundColor: colors.accent }]}>
-                <Ionicons name={icon} size={22} color={focused ? colors.onAccent : 'rgba(255,255,255,0.6)'} />
-              </View>
+              {focused ? (
+                <View style={[styles.activeWrap, { backgroundColor: colors.accent, shadowColor: colors.accent }]}>
+                  <Ionicons name={icon} size={24} color={colors.onAccent} />
+                </View>
+              ) : (
+                <Ionicons name={icon} size={23} color="rgba(255,255,255,0.55)" />
+              )}
             </Pressable>
           );
         })}
@@ -81,8 +85,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: space(2),
-    paddingTop: space(1),
+    paddingHorizontal: space(2.5),
+    paddingTop: space(4),
     backgroundColor: 'transparent',
   },
   bar: {
@@ -90,8 +94,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-around',
     borderRadius: 30,
+    height: 64,
     paddingHorizontal: space(1.5),
-    paddingVertical: space(1.25),
     shadowColor: '#000',
     shadowOpacity: 0.22,
     shadowRadius: 16,
@@ -99,11 +103,17 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  iconWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
+  // Aktif sekme: bardan yukarı çıkıntılı (pop) lime buton — kreatif
+  activeWrap: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    transform: [{ translateY: -20 }],
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 12,
   },
 });

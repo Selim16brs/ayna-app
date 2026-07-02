@@ -495,8 +495,8 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'space-between',
       alignItems: 'baseline',
       paddingHorizontal: space(3),
-      marginTop: space(1.5),
-      marginBottom: space(2),
+      marginTop: space(3.5),
+      marginBottom: space(1.75),
     },
     upcoming: { paddingHorizontal: space(3), gap: space(1.25), paddingBottom: space(1) },
     eventCard: {
