@@ -10,12 +10,11 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { SalonRow, Screen, Text, WaveBottom } from '../../src/ui';
+import { SalonRow, Screen, Text, WaveLayered } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 // Kategori daire zeminleri (spec §0.1) — pastel + ink ikon
-const INK = '#1A1A1A';
 const HOT_PINK = '#FF2E93'; // "Ne yapmak istersin?" kartı — çırtlak pembe
 // Canlı kategori renkleri (pembe/yeşil gibi doygun) — Saç·Cilt·Nail·Makyaj·Spa·Diğer
 const CAT_TINTS = ['#FF2E93', '#C6E24B', '#B06CFF', '#FF8A3D', '#3FC5F0', '#2ED9B0'];
@@ -122,7 +121,7 @@ export default function DiscoverScreen() {
         {/* ── PEMBE BAND: yeşil→pembe dalga (siyah kontur) + "Ne yapmak istersin?" ──
              Pembe zemin, dalganın altındaki şeffaf kısımdan yukarı siyah banda kadar dolar */}
         <View style={styles.howBand}>
-          <WaveBottom color={colors.accent} stroke={INK} strokeWidth={3.5} />
+          <WaveLayered top={colors.accent} bottom={HOT_PINK} gap={colors.bg} />
           <Pressable style={styles.howRow} onPress={() => router.push('/quote')}>
             <View style={styles.howIcon}>
               <Ionicons name="sparkles" size={22} color={HOT_PINK} />
