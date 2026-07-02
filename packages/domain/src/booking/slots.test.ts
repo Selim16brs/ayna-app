@@ -5,6 +5,7 @@ import {
   MIN,
   canLock,
   computeAvailableSlots,
+  computeDaySlots,
   hasConflict,
   isValidInterval,
   overlaps,
@@ -155,6 +156,38 @@ test('computeAvailableSlots: geçersiz süre/step → boş', () => {
   const base = { openWindows: [iv(10, 13)], busy: [], stepMs: 30 * MIN, nowMs: T0 };
   assert.deepEqual(computeAvailableSlots({ ...base, serviceDurationMs: 0 }), []);
   assert.deepEqual(computeAvailableSlots({ ...base, serviceDurationMs: 60 * MIN, stepMs: 0 }), []);
+});
+
+test('computeDaySlots: dolu ve geçmiş slotlar bayrakla döner (soluk UX)', () => {
+  // 10:00–14:00, 60dk hizmet/step, 11:00–12:00 dolu, now=10:30
+  const day = computeDaySlots({
+    openWindows: [iv(10, 14)],
+    busy: [iv(11, 12)],
+    serviceDurationMs: 60 * MIN,
+    stepMs: 60 * MIN,
+    nowMs: at(10, 30),
+  });
+  assert.deepEqual(
+    day.map((s) => [s.startMs, s.available]),
+    [
+      [at(10), false], // geçmiş (now 10:30)
+      [at(11), false], // dolu
+      [at(12), true],
+      [at(13), true],
+    ],
+  );
+  // müsait alt kümesi computeAvailableSlots ile tutarlı
+  const avail = computeAvailableSlots({
+    openWindows: [iv(10, 14)],
+    busy: [iv(11, 12)],
+    serviceDurationMs: 60 * MIN,
+    stepMs: 60 * MIN,
+    nowMs: at(10, 30),
+  });
+  assert.deepEqual(
+    day.filter((s) => s.available).map((s) => s.startMs),
+    avail.map((s) => s.startMs),
+  );
 });
 
 test('canLock: temiz slot kilitlenebilir', () => {

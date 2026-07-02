@@ -81,6 +81,38 @@ export function computeAvailableSlots(params: SlotParams): Interval[] {
   return slots;
 }
 
+export interface DaySlot extends Interval {
+  /** Kilitlenebilir mi? (çakışma yok + geçmiş/tampon değil). */
+  available: boolean;
+}
+
+/**
+ * Bir günün TÜM slot adaylarını availability bayrağıyla döner (master §4.6:
+ * "dolu saatler tıklanamaz/soluk"). computeAvailableSlots yalnız müsaitleri
+ * verirken bu, UI'da soluk gösterim için dolu/geçmiş olanları da içerir.
+ */
+export function computeDaySlots(params: SlotParams): DaySlot[] {
+  const { openWindows, busy, serviceDurationMs, stepMs, nowMs } = params;
+  const minLeadMs = params.minLeadMs ?? 0;
+  if (serviceDurationMs <= 0 || stepMs <= 0) return [];
+  const earliest = nowMs + minLeadMs;
+  const seen = new Set<number>();
+  const out: DaySlot[] = [];
+
+  for (const win of openWindows) {
+    if (!isValidInterval(win)) continue;
+    for (let start = win.startMs; start + serviceDurationMs <= win.endMs; start += stepMs) {
+      if (seen.has(start)) continue;
+      seen.add(start);
+      const candidate: Interval = { startMs: start, endMs: start + serviceDurationMs };
+      const available = start >= earliest && !hasConflict(candidate, busy);
+      out.push({ ...candidate, available });
+    }
+  }
+  out.sort((a, b) => a.startMs - b.startMs);
+  return out;
+}
+
 export type LockResult =
   | { ok: true }
   | { ok: false; reason: 'INVALID' | 'CONFLICT' | 'OUT_OF_HOURS' | 'PAST' };

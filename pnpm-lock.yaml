@@ -93,6 +93,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@ayna/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@ayna/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n

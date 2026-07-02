@@ -13,6 +13,7 @@ export { SectionHeader } from './SectionHeader';
 export { CitySelect } from './CitySelect';
 export { WorkingHours, defaultHours, type DayHours } from './WorkingHours';
 export { SocialLinks, emptySocial, type SocialValue } from './SocialLinks';
+export { SlotPicker, type PickerDay } from './SlotPicker';
 export { AppTabBar, TAB_BAR_CLEARANCE } from './AppTabBar';
 export { Placeholder } from './Placeholder';
 export { StackHeader } from './StackHeader';
