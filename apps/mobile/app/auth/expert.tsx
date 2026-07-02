@@ -4,12 +4,16 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { api } from '../../src/api';
-import { CITIES } from '../../src/data';
+import { CITIES, PROFESSIONALS } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, CitySelect, Screen, StackHeader, Text } from '../../src/ui';
+
+// Sistemde kayıtlı salonlar (uzmanın bağlanacağı) — data'dan
+const SALONS = PROFESSIONALS.filter((p) => p.kind === 'salon');
+const lower = (s: string) => s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
 
 type Service = { name: string; price: string; dur: string };
 
@@ -29,11 +33,21 @@ export default function ExpertRegisterScreen() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [services, setServices] = useState<Service[]>([{ name: '', price: '', dur: '' }]);
   const [certs, setCerts] = useState<string[]>([]);
+  const [portfolio, setPortfolio] = useState<string[]>([]);
   const [social, setSocial] = useState('');
   const [hours, setHours] = useState('');
   const [bound, setBound] = useState(false);
+  const [salonQuery, setSalonQuery] = useState('');
+  const [salonId, setSalonId] = useState<string | null>(null);
+  const [salonName, setSalonName] = useState('');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
+
+  // Normal uzman 7, premium 20 (kayıtta premium değil → 7)
+  const PORTFOLIO_MAX = 7;
+  const salonResults = salonQuery.trim()
+    ? SALONS.filter((s) => lower(s.name).includes(lower(salonQuery.trim())))
+    : [];
 
   async function pickPhoto() {
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -58,6 +72,20 @@ export default function ExpertRegisterScreen() {
     if (!res.canceled && res.assets[0]) setCerts((c) => [...c, res.assets[0]!.uri]);
   }
 
+  async function addPortfolio() {
+    if (portfolio.length >= PORTFOLIO_MAX) {
+      Alert.alert(t('expert.reg.portfolio_limit'));
+      return;
+    }
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      allowsMultipleSelection: true,
+      selectionLimit: PORTFOLIO_MAX - portfolio.length,
+    });
+    if (!res.canceled) setPortfolio((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, PORTFOLIO_MAX));
+  }
+
   const setSvc = (i: number, field: keyof Service, val: string) =>
     setServices((list) => list.map((s, idx) => (idx === i ? { ...s, [field]: val } : s)));
 
@@ -69,7 +97,7 @@ export default function ExpertRegisterScreen() {
     phone.trim().length >= 7 &&
     password.length >= 6 &&
     validServices.length > 0 &&
-    (!bound || code.trim().length >= 4);
+    (!bound || (salonId !== null && code.trim().length >= 4));
 
   async function submit() {
     if (validServices.length === 0) {
@@ -84,7 +112,7 @@ export default function ExpertRegisterScreen() {
         password,
         city,
         kind: bound ? 'salon_bound' : 'independent',
-        ...(bound ? { code: code.trim() } : {}),
+        ...(bound && salonId ? { businessId: salonId, code: code.trim() } : {}),
         certificates: certs,
       });
       setAuth({
@@ -154,11 +182,7 @@ export default function ExpertRegisterScreen() {
         <Label text={t('auth.f.birthdate')} />
         <Input value={birth} onChange={setBirth} placeholder={t('auth.f.birthdate_ph')} />
         <Label text={t('auth.f.city')} />
-        <View style={styles.chips}>
-          {CITIES.map((c) => (
-            <Chip key={c} label={c} active={city === c} onPress={() => setCity(c)} />
-          ))}
-        </View>
+        <CitySelect value={city} onChange={setCity} />
 
         {/* Hizmetler — fiyat + süre zorunlu */}
         <Section text={t('expert.reg.prof')} />
@@ -224,6 +248,31 @@ export default function ExpertRegisterScreen() {
           ))}
         </View>
 
+        {/* Portfolyo — yaptığın işler (normal 7 / premium 20) */}
+        <Label text={`${t('expert.reg.portfolio')}  (${portfolio.length}/${PORTFOLIO_MAX})`} />
+        <Text variant="caption" tone="muted" style={styles.hint}>
+          {t('expert.reg.portfolio_hint')}
+        </Text>
+        <View style={styles.certRow}>
+          {portfolio.length < PORTFOLIO_MAX ? (
+            <Pressable style={styles.certAdd} onPress={addPortfolio}>
+              <Ionicons name="images-outline" size={22} color={colors.inkSoft} />
+            </Pressable>
+          ) : null}
+          {portfolio.map((uri, i) => (
+            <View key={`${uri}-${i}`}>
+              <Image source={{ uri }} style={styles.certThumb} />
+              <Pressable
+                style={styles.thumbRemove}
+                hitSlop={6}
+                onPress={() => setPortfolio((p) => p.filter((_, idx) => idx !== i))}
+              >
+                <Ionicons name="close-circle" size={20} color={colors.onColor} />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+
         <Label text={t('expert.reg.social')} />
         <Input value={social} onChange={setSocial} placeholder="instagram.com/…" />
         <Label text={t('expert.reg.hours')} />
@@ -237,11 +286,85 @@ export default function ExpertRegisterScreen() {
         </View>
         {bound ? (
           <>
-            <Label text={t('expert.reg.code')} />
-            <Text variant="caption" tone="muted" style={styles.hint}>
-              {t('expert.reg.code_hint')}
-            </Text>
-            <Input value={code} onChange={setCode} placeholder={t('expert.reg.code_ph')} />
+            {salonId ? (
+              <View style={styles.selectedSalon}>
+                <Ionicons name="storefront" size={18} color={colors.onAccent} />
+                <View style={styles.selectedText}>
+                  <Text variant="caption" tone="onAccent">
+                    {t('expert.reg.salon_selected')}
+                  </Text>
+                  <Text variant="bodyStrong" tone="onAccent" numberOfLines={1}>
+                    {salonName}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => {
+                    setSalonId(null);
+                    setSalonName('');
+                  }}
+                  hitSlop={8}
+                >
+                  <Text variant="caption" tone="onAccent" style={styles.change}>
+                    {t('expert.reg.salon_change')}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : (
+              <>
+                <Label text={t('expert.reg.salon_search')} />
+                <View style={styles.salonSearch}>
+                  <Ionicons name="search" size={18} color={colors.muted} />
+                  <TextInput
+                    value={salonQuery}
+                    onChangeText={setSalonQuery}
+                    placeholder={t('expert.reg.salon_search_ph')}
+                    placeholderTextColor={colors.muted}
+                    style={styles.salonInput}
+                  />
+                </View>
+                {salonQuery.trim() ? (
+                  <View style={styles.salonResults}>
+                    {salonResults.length === 0 ? (
+                      <Text variant="caption" tone="muted" style={styles.salonEmpty}>
+                        {t('expert.reg.salon_none')}
+                      </Text>
+                    ) : (
+                      salonResults.map((s) => (
+                        <Pressable
+                          key={s.id}
+                          style={styles.salonRow}
+                          onPress={() => {
+                            setSalonId(s.id);
+                            setSalonName(s.name);
+                            setSalonQuery('');
+                          }}
+                        >
+                          <Image source={{ uri: s.image }} style={styles.salonThumb} />
+                          <View style={styles.selectedText}>
+                            <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                              {s.name}
+                            </Text>
+                            <Text variant="caption" tone="muted" numberOfLines={1}>
+                              {s.city} · {s.district}
+                            </Text>
+                          </View>
+                          <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                        </Pressable>
+                      ))
+                    )}
+                  </View>
+                ) : null}
+              </>
+            )}
+            {salonId ? (
+              <>
+                <Label text={t('expert.reg.code')} />
+                <Text variant="caption" tone="muted" style={styles.hint}>
+                  {t('expert.reg.code_hint')}
+                </Text>
+                <Input value={code} onChange={setCode} placeholder={t('expert.reg.code_ph')} />
+              </>
+            ) : null}
           </>
         ) : null}
       </ScrollView>
@@ -393,5 +516,43 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     certThumb: { width: 72, height: 72, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    thumbRemove: {
+      position: 'absolute',
+      top: -6,
+      right: -6,
+      backgroundColor: 'rgba(0,0,0,0.55)',
+      borderRadius: 11,
+    },
+    selectedSalon: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      backgroundColor: colors.accent,
+      borderRadius: radius.lg,
+      padding: space(2),
+    },
+    selectedText: { flex: 1 },
+    change: { fontWeight: '800', textDecorationLine: 'underline' },
+    salonSearch: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      height: 52,
+      paddingHorizontal: space(2),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    salonInput: { flex: 1, fontSize: 16, color: colors.ink },
+    salonResults: { marginTop: space(1.25), gap: space(1) },
+    salonEmpty: { paddingVertical: space(2), textAlign: 'center' },
+    salonRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(1.5),
+    },
+    salonThumb: { width: 48, height: 48, borderRadius: radius.md, backgroundColor: colors.bgSunken },
     footer: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(3) },
   });
