@@ -55,7 +55,7 @@ export default function DiscoverScreen() {
         {/* ── LIME HERO (referans: dalgalı kesim + gerçek foto) ── */}
         <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
           <View style={styles.heroTop}>
-            <Image source={require('../../assets/logo-mark.png')} style={styles.logo} resizeMode="contain" />
+            <Image source={require('../../assets/logo-ayna.png')} style={styles.logo} resizeMode="contain" />
             <Pressable style={styles.locChip} onPress={() => router.push('/city')}>
               <Ionicons name="location" size={16} color={colors.ink} />
               <Text variant="bodyStrong" tone="ink">
@@ -240,7 +240,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
     },
     heroTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
-    logo: { width: 116, height: 56 },
+    logo: { width: 140, height: 58 },
     locChip: {
       flex: 1,
       flexDirection: 'row',
