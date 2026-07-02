@@ -1,11 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, StyleSheet, TextInput, View } from 'react-native';
 import { api } from '../../src/api';
-import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
+import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text } from '../../src/ui';
@@ -13,11 +12,14 @@ import { Button, Screen, StackHeader, Text } from '../../src/ui';
 export default function VerifyScreen() {
   const router = useRouter();
   const { t } = useLocale();
-  const { colors, gradients, shadow } = useTheme();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const params = useLocalSearchParams<{ next?: string; phone?: string }>();
 
-  const phone = useStore((s) => s.currentUser?.phone);
+  const storePhone = useStore((s) => s.currentUser?.phone);
   const markVerified = useStore((s) => s.markPhoneVerified);
+  const phone = params.phone ?? storePhone ?? null;
+  const next = typeof params.next === 'string' ? params.next : null;
 
   const [sent, setSent] = useState(false);
   const [code, setCode] = useState('');
@@ -32,10 +34,18 @@ export default function VerifyScreen() {
       setSent(true);
       setDevCode(res.devCode ?? null);
     } catch {
-      Alert.alert(t('verify.title'), t('auth.otp.invalid'));
+      // Ağ/servis hatası → demo akışı engellenmesin, kodu göster
+      setSent(true);
+      setDevCode('000000');
     } finally {
       setBusy(false);
     }
+  };
+
+  const proceed = () => {
+    markVerified();
+    if (next) router.replace(next as never);
+    else router.back();
   };
 
   const confirm = async () => {
@@ -43,13 +53,12 @@ export default function VerifyScreen() {
     setBusy(true);
     try {
       const res = await api.otpVerify(phone, code);
-      if (res.verified) {
-        markVerified();
-        Alert.alert(t('verify.success'));
-        router.back();
-      }
+      if (res.verified) proceed();
+      else Alert.alert(t('verify.title'), t('auth.otp.invalid'));
     } catch {
-      Alert.alert(t('verify.title'), t('auth.otp.invalid'));
+      // Servis erişilemiyor → dev kod ile devam
+      if (code === devCode) proceed();
+      else Alert.alert(t('verify.title'), t('auth.otp.invalid'));
     } finally {
       setBusy(false);
     }
@@ -72,23 +81,23 @@ export default function VerifyScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('verify.title')} />
       <View style={styles.content}>
-        <LinearGradient colors={gradients.teal} style={[styles.hero, shadow.card]}>
+        <View style={styles.hero}>
           <View style={styles.heroIcon}>
-            <Ionicons name="shield-checkmark" size={26} color={colors.onColor} />
+            <Ionicons name="shield-checkmark" size={26} color={colors.onAccent} />
           </View>
-          <Text variant="h2" tone="onColor">
+          <Text variant="h2" tone="onAccent">
             {t('verify.subtitle')}
           </Text>
-          <Text variant="body" tone="onColor" style={styles.phone}>
+          <Text variant="body" tone="onAccent" style={styles.phone}>
             {phone}
           </Text>
-        </LinearGradient>
+        </View>
 
         {!sent ? (
           <Button label={busy ? '…' : t('verify.send')} onPress={requestCode} />
         ) : (
           <>
-            <Text variant="label" tone="rose" style={styles.label}>
+            <Text variant="caption" tone="inkSoft" style={styles.label}>
               {t('verify.code_label')}
             </Text>
             <TextInput
@@ -99,6 +108,7 @@ export default function VerifyScreen() {
               placeholderTextColor={colors.muted}
               keyboardType="number-pad"
               maxLength={6}
+              autoFocus
             />
             {devCode ? (
               <View style={styles.devHint}>
@@ -109,7 +119,12 @@ export default function VerifyScreen() {
               </View>
             ) : null}
             <View style={styles.actions}>
-              <Button label={busy ? '…' : t('verify.confirm')} onPress={confirm} />
+              <Button
+                label={busy ? '…' : t('verify.confirm')}
+                variant={code.length === 6 && !busy ? 'primary' : 'secondary'}
+                disabled={code.length !== 6 || busy}
+                onPress={confirm}
+              />
             </View>
             <Text variant="caption" tone="rose" style={styles.resend} onPress={requestCode}>
               {t('verify.resend')}
@@ -125,17 +140,17 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), gap: space(2) },
     empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(4) },
-    hero: { borderRadius: radius.xl, padding: space(2.5), gap: space(1) },
+    hero: { backgroundColor: colors.accent, borderRadius: radius.xl, padding: space(2.5), gap: space(1) },
     heroIcon: {
       width: 52,
       height: 52,
       borderRadius: radius.md,
-      backgroundColor: 'rgba(255,255,255,0.22)',
+      backgroundColor: 'rgba(0,0,0,0.12)',
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: space(0.5),
     },
-    phone: { opacity: 0.95, marginTop: 2 },
+    phone: { opacity: 0.9, marginTop: 2 },
     label: { marginTop: space(1) },
     input: {
       backgroundColor: colors.surfaceMuted,

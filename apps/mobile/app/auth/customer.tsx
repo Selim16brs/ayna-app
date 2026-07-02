@@ -73,7 +73,8 @@ export default function CustomerRegisterScreen() {
       });
       // NOT: profil fotoğrafı + adres listesi backend'e Faz 9 (profil) ile yazılacak.
       setAuth(session);
-      router.replace('/discover');
+      // SMS OTP zorunlu (§3.2 C) → doğrulama sonrası keşfete.
+      router.replace('/auth/verify?next=/discover');
     } catch (e) {
       const msg = String((e as Error).message ?? '');
       if (msg.includes('409') || msg.includes('400')) Alert.alert(t('auth.error.taken'));

@@ -124,7 +124,7 @@ export default function NewBusinessScreen() {
         taxId: tax.trim(),
       });
       // NOT: fotoğraflar, harita pin, sosyal, açıklama backend'e Faz 9'da (salon profili API'si) yazılacak.
-      router.replace('/auth/business/done');
+      router.replace(`/auth/verify?phone=${encodeURIComponent(ownerPhone.trim())}&next=/auth/business/done`);
     } catch (e) {
       const msg = String((e as Error).message ?? '');
       if (msg.includes('409')) Alert.alert(t('auth.error.taken'));
