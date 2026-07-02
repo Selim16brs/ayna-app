@@ -92,7 +92,33 @@ export default function DiscoverScreen() {
           </View>
         </View>
 
-        {/* PROMO HERO — büyük carousel (Booksy indirim kartı dili) */}
+        {/* HERO — Ne yapmak istersin? (birincil aksiyon, belirgin) */}
+        <Text variant="h2" tone="ink" style={styles.heroTitle}>
+          {t('home.how')}
+        </Text>
+        <View style={styles.actions}>
+          <ActionCard
+            photo={ACTION_PHOTO_1}
+            icon="camera"
+            title={t('action.photo_quote.title')}
+            subtitle={t('action.photo_quote.subtitle')}
+            onPress={() => router.push('/quote/new')}
+          />
+          <ActionCard
+            photo={ACTION_PHOTO_2}
+            icon="pricetag"
+            title={t('action.demand.title')}
+            subtitle={t('action.demand.subtitle')}
+            onPress={() => router.push('/demand/new')}
+          />
+        </View>
+
+        {/* Fırsatlar — promo carousel */}
+        <View style={styles.sectionHeader}>
+          <Text variant="label" tone="muted">
+            {t('home.campaigns')}
+          </Text>
+        </View>
         <ScrollView
           horizontal
           pagingEnabled
@@ -197,29 +223,6 @@ export default function DiscoverScreen() {
             </ScrollView>
           </>
         ) : null}
-
-        {/* Ne yapmak istersin — fotoğraflı aksiyon kartları */}
-        <View style={styles.sectionHeader}>
-          <Text variant="label" tone="muted">
-            {t('home.how')}
-          </Text>
-        </View>
-        <View style={styles.actions}>
-          <ActionCard
-            photo={ACTION_PHOTO_1}
-            icon="camera"
-            title={t('action.photo_quote.title')}
-            subtitle={t('action.photo_quote.subtitle')}
-            onPress={() => router.push('/quote/new')}
-          />
-          <ActionCard
-            photo={ACTION_PHOTO_2}
-            icon="pricetag"
-            title={t('action.demand.title')}
-            subtitle={t('action.demand.subtitle')}
-            onPress={() => router.push('/demand/new')}
-          />
-        </View>
 
         {/* Kategoriler — pill çipleri (ilk aktif, referans dili) */}
         <ScrollView
@@ -511,16 +514,23 @@ const makeStyles = (colors: ColorTokens) =>
     },
     eventBody: { flex: 1 },
     howLabel: { paddingHorizontal: space(3), marginTop: space(1), marginBottom: space(1.25) },
+    heroTitle: {
+      fontSize: 20,
+      fontWeight: '800',
+      letterSpacing: -0.3,
+      paddingHorizontal: space(3),
+      marginBottom: space(1.5),
+    },
     actions: { flexDirection: 'row', gap: space(1.5), paddingHorizontal: space(3) },
     actionWrap: { flex: 1 },
     action: {
-      height: 150,
-      borderRadius: radius.lg,
-      padding: space(1.75),
+      height: 172,
+      borderRadius: radius.xl,
+      padding: space(2),
       justifyContent: 'flex-end',
       overflow: 'hidden',
     },
-    actionImage: { borderRadius: radius.lg },
+    actionImage: { borderRadius: radius.xl },
     actionTitle: { marginTop: space(0.75) },
     actionSubtitle: { opacity: 0.9, marginTop: 2 },
     searchRow: {
