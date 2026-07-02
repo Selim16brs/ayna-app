@@ -113,6 +113,37 @@ export default function DiscoverScreen() {
           />
         </View>
 
+        {/* Kategoriler — renkli ikon karoları (hero'nun hemen altında) */}
+        <View style={styles.sectionHeader}>
+          <Text variant="label" tone="muted">
+            {t('home.categories')}
+          </Text>
+          <Pressable onPress={() => router.push('/search')}>
+            <Text variant="caption" tone="rose">
+              {t('common.see_all')}
+            </Text>
+          </Pressable>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.catRow}
+        >
+          {categories.map((cat, i) => {
+            const c = CAT_COLORS[i % CAT_COLORS.length]!;
+            return (
+              <Pressable key={cat.id} style={styles.cat} onPress={() => router.push('/category/' + cat.id)}>
+                <View style={[styles.catTile, { backgroundColor: c.bg }]}>
+                  <Ionicons name={cat.icon as IoniconName} size={26} color={c.fg} />
+                </View>
+                <Text variant="caption" tone="inkSoft" style={styles.catLabel} numberOfLines={1}>
+                  {t(cat.labelKey)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
         {/* Fırsatlar — promo carousel */}
         <View style={styles.sectionHeader}>
           <Text variant="label" tone="muted">
@@ -223,33 +254,6 @@ export default function DiscoverScreen() {
             </ScrollView>
           </>
         ) : null}
-
-        {/* Kategoriler — pill çipleri (ilk aktif, referans dili) */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.catRow}
-        >
-          {categories.map((cat, i) => {
-            const on = i === 0;
-            return (
-              <Pressable
-                key={cat.id}
-                style={[styles.catPill, on && styles.catPillOn]}
-                onPress={() => router.push('/category/' + cat.id)}
-              >
-                <Ionicons
-                  name={cat.icon as IoniconName}
-                  size={16}
-                  color={on ? colors.onColor : colors.inkSoft}
-                />
-                <Text variant="caption" tone={on ? 'onColor' : 'inkSoft'} style={styles.catPillText}>
-                  {t(cat.labelKey)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
 
         {/* Reklam banner (premium işletmeler) */}
         <ScrollView
@@ -437,18 +441,17 @@ const makeStyles = (colors: ColorTokens) =>
     },
     promoCtaText: { fontWeight: '700' },
     // Kategori pill
-    catRow: { paddingHorizontal: space(3), gap: space(1), paddingVertical: space(0.5) },
-    catPill: {
-      flexDirection: 'row',
+    catRow: { paddingHorizontal: space(3), gap: space(2) },
+    cat: { alignItems: 'center', width: 66 },
+    catTile: {
+      width: 62,
+      height: 62,
+      borderRadius: radius.lg,
       alignItems: 'center',
-      gap: 6,
-      backgroundColor: colors.surface,
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.25),
-      borderRadius: radius.pill,
+      justifyContent: 'center',
+      marginBottom: space(0.75),
     },
-    catPillOn: { backgroundColor: colors.accent },
-    catPillText: { fontWeight: '600' },
+    catLabel: { textAlign: 'center' },
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
