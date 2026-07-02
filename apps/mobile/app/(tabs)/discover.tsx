@@ -64,7 +64,7 @@ export default function DiscoverScreen() {
         <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
           <View style={styles.heroTop}>
             <Image
-              source={require('../../assets/logo-ayna-white.png')}
+              source={require('../../assets/logo-ayna.png')}
               style={styles.logo}
               resizeMode="contain"
             />
