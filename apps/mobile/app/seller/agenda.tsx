@@ -37,6 +37,8 @@ const STATUS_LABEL: Record<BookingStatus, MessageKey> = {
   cancelled: 'booking.status.cancelled',
   awaiting_provider: 'booking.status.awaiting',
   alternative_proposed: 'booking.status.alternative',
+  deposit_pending: 'booking.status.deposit_pending',
+  deposit_submitted: 'booking.status.deposit_submitted',
   no_show: 'booking.status.no_show',
   waitlist: 'booking.status.waitlist',
 };
@@ -90,7 +92,11 @@ export default function AgendaScreen() {
               </Text>
               <View style={styles.list}>
                 {g.rows.map((b) => (
-                  <View key={b.id} style={styles.row}>
+                  <Pressable
+                    key={b.id}
+                    style={styles.row}
+                    onPress={() => router.push(`/booking/${b.id}`)}
+                  >
                     <View style={styles.timeCol}>
                       <Text variant="caption" tone="muted" numberOfLines={1}>
                         {formatSlot(b.startMs, t)}
@@ -127,7 +133,7 @@ export default function AgendaScreen() {
                         {formatPrice(b.price)}
                       </Text>
                     </View>
-                  </View>
+                  </Pressable>
                 ))}
               </View>
             </View>

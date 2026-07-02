@@ -706,8 +706,13 @@ export type BookingStatus =
   | 'cancelled'
   | 'awaiting_provider'
   | 'alternative_proposed'
+  | 'deposit_pending' // §4.3 — uzman kabul etti, kullanıcı depozito+dekont yükleyecek
+  | 'deposit_submitted' // dekont yüklendi, uzman onayı bekleniyor
   | 'no_show'
   | 'waitlist';
+
+// §4.3 — depozito/kapora tutarı. PARAMETRİK (admin panel §3.4); şimdilik sabit.
+export const DEPOSIT_KZT = 1000;
 
 export interface Appointment {
   id: string;
@@ -723,6 +728,8 @@ export interface Appointment {
   startMs: number; // randevu başlangıcı — UTC epoch ms (Faz 2 gerçek slot modeli)
   durationMin: number; // hizmet süresi (dk) — slot motoru buna dayanır (§4.2)
   proposedStartMs?: number; // uzmanın önerdiği alternatif başlangıç (§1.6)
+  depositAmount?: number; // §4.3 — beklenen depozito (₸)
+  receiptUri?: string; // §4.3 — yüklenen dekont görseli
   price: number; // kaç paraya
   status: BookingStatus;
   cancelReason?: string; // §6.C — "neden gelemiyorum"

@@ -31,6 +31,8 @@ const makeStatus = (
   cancelled: { key: 'booking.status.cancelled', bg: colors.dangerSoft, fg: colors.danger },
   awaiting_provider: { key: 'booking.status.awaiting', bg: colors.goldSoft, fg: colors.gold },
   alternative_proposed: { key: 'booking.status.alternative', bg: colors.blueSoft, fg: colors.blue },
+  deposit_pending: { key: 'booking.status.deposit_pending', bg: colors.goldSoft, fg: colors.gold },
+  deposit_submitted: { key: 'booking.status.deposit_submitted', bg: colors.blueSoft, fg: colors.blue },
   no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
   waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
 });

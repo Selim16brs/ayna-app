@@ -1,14 +1,17 @@
+import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
-import { type BookingSource, formatPrice } from '../../src/data';
-import { daysUntil, formatSlot } from '../../src/datetime';
+import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { computeDaySlots } from '@ayna/domain';
+import { DEPOSIT_KZT, type BookingSource, formatPrice } from '../../src/data';
+import { almatyDayStart, daysUntil, formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, SlotPicker, StackHeader, Text, type PickerDay } from '../../src/ui';
 
 const SOURCE_KEY: Record<BookingSource, MessageKey> = {
   direct: 'bookings.tab.direct',
@@ -23,8 +26,58 @@ export default function BookingDetailScreen() {
   const styles = useThemedStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
+  const allBookings = useStore((s) => s.bookings);
   const cancelBooking = useStore((s) => s.cancelBooking);
   const acceptAlternative = useStore((s) => s.acceptAlternative);
+  const approveBooking = useStore((s) => s.approveBooking);
+  const rejectBooking = useStore((s) => s.rejectBooking);
+  const proposeAlternative = useStore((s) => s.proposeAlternative);
+  const submitReceipt = useStore((s) => s.submitReceipt);
+  const confirmReceipt = useStore((s) => s.confirmReceipt);
+  const markNoShow = useStore((s) => s.markNoShow);
+  const role = useStore((s) => s.currentUser?.role);
+  const isProvider = !!role && role !== 'customer';
+
+  const [proposeOpen, setProposeOpen] = useState(false);
+  const [proposeSel, setProposeSel] = useState<number | null>(null);
+
+  // Alternatif-öner modalı için uzmanın boş slotları (§4.1 adım 2)
+  const proposeDays: PickerDay[] = useMemo(() => {
+    if (!booking) return [];
+    const now = Date.now();
+    const busy = allBookings
+      .filter((b) => b.id !== booking.id && b.proId === booking.proId && b.status !== 'cancelled')
+      .map((b) => ({ startMs: b.startMs, endMs: b.startMs + b.durationMin * 60_000 }));
+    const out: PickerDay[] = [];
+    for (let d = 0; d < 14; d++) {
+      const dayStart = almatyDayStart(now, d);
+      const slots = computeDaySlots({
+        openWindows: [{ startMs: dayStart + 10 * 3_600_000, endMs: dayStart + 19 * 3_600_000 }],
+        busy,
+        serviceDurationMs: booking.durationMin * 60_000,
+        stepMs: 30 * 60_000,
+        nowMs: now,
+        minLeadMs: 2 * 3_600_000,
+      });
+      out.push({ dateMs: dayStart + 10 * 3_600_000, slots });
+    }
+    return out;
+  }, [booking, allBookings]);
+
+  async function uploadReceipt() {
+    if (!id) return;
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
+    if (!res.canceled && res.assets[0]) submitReceipt(id, res.assets[0].uri);
+  }
+
+  function sendProposal() {
+    if (id && proposeSel != null) proposeAlternative(id, proposeSel);
+    setProposeOpen(false);
+    setProposeSel(null);
+  }
 
   if (!booking) {
     return (
@@ -64,7 +117,9 @@ export default function BookingDetailScreen() {
     booking.status === 'confirmed' ||
     booking.status === 'pending' ||
     booking.status === 'awaiting_provider' ||
-    booking.status === 'alternative_proposed';
+    booking.status === 'alternative_proposed' ||
+    booking.status === 'deposit_pending' ||
+    booking.status === 'deposit_submitted';
   const showContact = booking.status === 'confirmed';
 
   return (
@@ -161,6 +216,72 @@ export default function BookingDetailScreen() {
           </View>
         ) : null}
 
+        {/* §4.3 — Depozito adımı (kullanıcı: ön onaydan sonra dekont yükler) */}
+        {!isProvider && booking.status === 'deposit_pending' ? (
+          <View style={[styles.depositCard, shadow.card]}>
+            <View style={styles.depositHead}>
+              <Ionicons name="card-outline" size={18} color={colors.ink} />
+              <Text variant="bodyStrong" tone="ink">
+                {t('booking.deposit.title')}
+              </Text>
+            </View>
+            <Text variant="caption" tone="muted" style={styles.depositDesc}>
+              {t('booking.deposit.desc')}
+            </Text>
+            <View style={styles.depositRow}>
+              <Text variant="caption" tone="muted">
+                {t('booking.deposit.amount')}
+              </Text>
+              <Text variant="bodyStrong" tone="ink">
+                {formatPrice(booking.depositAmount ?? DEPOSIT_KZT)}
+              </Text>
+            </View>
+            <View style={styles.depositRow}>
+              <Text variant="caption" tone="muted">
+                {t('booking.deposit.payto')}
+              </Text>
+              <Text variant="bodyStrong" tone="ink">
+                Kaspi · +7 700 123 45 67
+              </Text>
+            </View>
+            <Text variant="caption" tone="muted" style={styles.depositNote}>
+              {t('booking.deposit.note')}
+            </Text>
+            <Button label={t('booking.deposit.upload')} variant="primary" onPress={uploadReceipt} />
+          </View>
+        ) : null}
+
+        {/* §4.3 — Dekont gönderildi (kullanıcı: uzman onayı bekleniyor) */}
+        {!isProvider && booking.status === 'deposit_submitted' ? (
+          <View style={[styles.depositCard, shadow.soft]}>
+            <View style={styles.depositHead}>
+              <Ionicons name="receipt-outline" size={18} color={colors.blue} />
+              <Text variant="bodyStrong" tone="ink">
+                {t('booking.status.deposit_submitted')}
+              </Text>
+            </View>
+            <Text variant="caption" tone="muted" style={styles.depositDesc}>
+              {t('booking.deposit.submitted_note')}
+            </Text>
+            {booking.receiptUri ? (
+              <Image source={{ uri: booking.receiptUri }} style={styles.receiptThumb} />
+            ) : null}
+          </View>
+        ) : null}
+
+        {/* §4.3 — Uzman: yüklenen dekont */}
+        {isProvider && booking.status === 'deposit_submitted' && booking.receiptUri ? (
+          <View style={[styles.depositCard, shadow.soft]}>
+            <View style={styles.depositHead}>
+              <Ionicons name="receipt-outline" size={18} color={colors.ink} />
+              <Text variant="bodyStrong" tone="ink">
+                {t('booking.provider.receipt')}
+              </Text>
+            </View>
+            <Image source={{ uri: booking.receiptUri }} style={styles.receiptThumb} />
+          </View>
+        ) : null}
+
         {/* §6.C — iptal sebebi (kullanıcı ilettiyse) */}
         {booking.status === 'cancelled' && booking.cancelReason ? (
           <View style={[styles.reasonCard, shadow.soft]}>
@@ -188,26 +309,100 @@ export default function BookingDetailScreen() {
 
         {/* Aksiyonlar */}
         <View style={styles.actions}>
-          {booking.status === 'completed' && !booking.reviewed ? (
-            <Button
-              label={t('booking.detail.review')}
-              variant="primary"
-              onPress={() => router.push('/review/new?id=' + booking.id)}
-            />
-          ) : null}
-          {booking.status === 'completed' && booking.reviewed ? (
-            <Button label={t('booking.detail.reviewed')} variant="ghost" disabled />
-          ) : null}
-          <Button
-            label={t('booking.detail.rebook')}
-            variant="ghost"
-            onPress={() => router.push('/professional/' + booking.proId)}
-          />
-          {canCancel ? (
-            <Button label={t('booking.detail.cancel')} variant="secondary" onPress={onCancel} />
-          ) : null}
+          {isProvider ? (
+            <>
+              {/* §4.1 — uzman yanıtı: kabul / alternatif / reddet */}
+              {booking.status === 'awaiting_provider' ? (
+                <>
+                  <Button
+                    label={t('booking.provider.approve')}
+                    variant="primary"
+                    onPress={() => id && approveBooking(id)}
+                  />
+                  <Button
+                    label={t('booking.provider.propose')}
+                    variant="secondary"
+                    onPress={() => setProposeOpen(true)}
+                  />
+                  <Button
+                    label={t('booking.provider.reject')}
+                    variant="ghost"
+                    onPress={() => id && rejectBooking(id)}
+                  />
+                </>
+              ) : null}
+              {booking.status === 'deposit_pending' ? (
+                <View style={styles.note}>
+                  <Ionicons name="hourglass-outline" size={14} color={colors.gold} />
+                  <Text variant="caption" tone="muted" style={styles.noteText}>
+                    {t('booking.provider.pending_receipt')}
+                  </Text>
+                </View>
+              ) : null}
+              {booking.status === 'deposit_submitted' ? (
+                <Button
+                  label={t('booking.provider.confirm_receipt')}
+                  variant="primary"
+                  onPress={() => id && confirmReceipt(id)}
+                />
+              ) : null}
+              {booking.status === 'confirmed' ? (
+                <Button
+                  label={t('booking.provider.mark_noshow')}
+                  variant="secondary"
+                  onPress={() => id && markNoShow(id)}
+                />
+              ) : null}
+            </>
+          ) : (
+            <>
+              {booking.status === 'completed' && !booking.reviewed ? (
+                <Button
+                  label={t('booking.detail.review')}
+                  variant="primary"
+                  onPress={() => router.push('/review/new?id=' + booking.id)}
+                />
+              ) : null}
+              {booking.status === 'completed' && booking.reviewed ? (
+                <Button label={t('booking.detail.reviewed')} variant="ghost" disabled />
+              ) : null}
+              <Button
+                label={t('booking.detail.rebook')}
+                variant="ghost"
+                onPress={() => router.push('/professional/' + booking.proId)}
+              />
+              {canCancel ? (
+                <Button label={t('booking.detail.cancel')} variant="secondary" onPress={onCancel} />
+              ) : null}
+            </>
+          )}
         </View>
       </ScrollView>
+
+      {/* §4.1 adım 2 — uzman alternatif saat önerir (boş slotlardan seçer) */}
+      <Modal visible={proposeOpen} transparent animationType="slide" onRequestClose={() => setProposeOpen(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHead}>
+              <Text variant="h2" tone="ink" style={styles.modalTitle}>
+                {t('booking.provider.propose')}
+              </Text>
+              <Pressable onPress={() => setProposeOpen(false)} hitSlop={8} style={styles.modalClose}>
+                <Ionicons name="close" size={22} color={colors.ink} />
+              </Pressable>
+            </View>
+            <ScrollView contentContainerStyle={styles.modalBody}>
+              <SlotPicker days={proposeDays} selected={proposeSel} onSelect={setProposeSel} />
+            </ScrollView>
+            <Button
+              label={t('booking.detail.proposed')}
+              variant={proposeSel != null ? 'primary' : 'secondary'}
+              disabled={proposeSel == null}
+              onPress={sendProposal}
+            />
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }
@@ -252,6 +447,8 @@ const makeStatus = (
   cancelled: { key: 'booking.status.cancelled', bg: colors.dangerSoft, fg: colors.danger },
   awaiting_provider: { key: 'booking.status.awaiting', bg: colors.goldSoft, fg: colors.gold },
   alternative_proposed: { key: 'booking.status.alternative', bg: colors.blueSoft, fg: colors.blue },
+  deposit_pending: { key: 'booking.status.deposit_pending', bg: colors.goldSoft, fg: colors.gold },
+  deposit_submitted: { key: 'booking.status.deposit_submitted', bg: colors.blueSoft, fg: colors.blue },
   no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
   waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
 });
@@ -335,4 +532,44 @@ const makeStyles = (colors: ColorTokens) =>
     },
     reasonHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
     actions: { marginTop: space(3), gap: space(1.25) },
+    depositCard: {
+      marginTop: space(2),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1.25),
+    },
+    depositHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    depositDesc: { lineHeight: 17 },
+    depositRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    depositNote: { lineHeight: 16, marginTop: space(0.5) },
+    receiptThumb: {
+      width: '100%',
+      height: 160,
+      borderRadius: radius.md,
+      backgroundColor: colors.bgSunken,
+      marginTop: space(0.5),
+    },
+    modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+    modalSheet: {
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
+      paddingHorizontal: space(3),
+      paddingTop: space(2.5),
+      paddingBottom: space(3),
+      maxHeight: '80%',
+      gap: space(1.5),
+    },
+    modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    modalTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
+    modalClose: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modalBody: { paddingVertical: space(1) },
   });

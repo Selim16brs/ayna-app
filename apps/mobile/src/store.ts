@@ -6,6 +6,7 @@ import {
   type AppNotification,
   type Appointment,
   type BookingSource,
+  DEPOSIT_KZT,
   buildUpcomingEvents,
   type CareRoutine,
   type CirclePost,
@@ -104,6 +105,13 @@ interface State {
   joinWaitlist: (pro: { id: string; name: string; image: string; service: string }) => void;
   cancelBooking: (id: string, reason?: string) => void;
   acceptAlternative: (id: string) => void;
+  // §4.1/§4.3 — uzman yanıtı + depozito/dekont akışı
+  approveBooking: (id: string) => void; // uzman kabul → depozito adımı açılır
+  rejectBooking: (id: string) => void; // uzman reddet → iptal
+  proposeAlternative: (id: string, startMs: number) => void; // uzman alternatif saat önerir
+  submitReceipt: (id: string, receiptUri: string) => void; // kullanıcı dekont yükler
+  confirmReceipt: (id: string) => void; // uzman "Aldım, onaylıyorum" → randevu KESİN
+  markNoShow: (id: string) => void; // §4.4 — uzman "gelmedi" işaretler
   reviewBooking: (id: string, rating: number, text: string) => void;
   hydrateBookings: () => Promise<void>;
 
@@ -249,6 +257,105 @@ export const useStore = create<State>((set, get) => ({
       ),
     }));
     void api.acceptBooking(id).catch(() => undefined);
+  },
+
+  // §4.1 adım 4 — uzman kabul etti → depozito adımı açılır (§4.3)
+  approveBooking: (id) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) =>
+        b.id === id ? { ...b, status: 'deposit_pending', depositAmount: DEPOSIT_KZT } : b,
+      ),
+    }));
+    void api.approveBooking(id).catch(() => undefined);
+    const b = get().bookings.find((x) => x.id === id);
+    if (b)
+      get().pushNotification({
+        type: 'booking',
+        title: 'Randevun ön onaylandı',
+        body: `${b.proName} · ${formatSlotTr(b.startMs)} · ${DEPOSIT_KZT}₸ depozito gönder ve dekontu yükle`,
+        dateLabel: 'Az önce',
+        icon: 'card-outline',
+        route: `/booking/${id}`,
+      });
+  },
+
+  // §4.1 — uzman reddetti
+  rejectBooking: (id) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b)),
+    }));
+    void api.cancelBooking(id, 'provider_rejected').catch(() => undefined);
+    const b = get().bookings.find((x) => x.id === id);
+    if (b)
+      get().pushNotification({
+        type: 'booking',
+        title: 'Randevu talebin yanıtlandı',
+        body: `${b.proName} · talebini şu an karşılayamadı`,
+        dateLabel: 'Az önce',
+        icon: 'close-circle-outline',
+      });
+  },
+
+  // §4.1 adım 2 — uzman alternatif saat önerir (boş slotundan seçer)
+  proposeAlternative: (id, startMs) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) =>
+        b.id === id ? { ...b, status: 'alternative_proposed', proposedStartMs: startMs } : b,
+      ),
+    }));
+    void api.proposeBooking(id, startMs).catch(() => undefined);
+    const b = get().bookings.find((x) => x.id === id);
+    if (b)
+      get().pushNotification({
+        type: 'booking',
+        title: 'Uzman alternatif saat önerdi',
+        body: `${b.proName} · ${formatSlotTr(startMs)}`,
+        dateLabel: 'Az önce',
+        icon: 'time-outline',
+        route: `/booking/${id}`,
+      });
+  },
+
+  // §4.3 adım 2 — kullanıcı depozito dekontunu yükler → uzman onayı beklenir
+  submitReceipt: (id, receiptUri) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) =>
+        b.id === id ? { ...b, status: 'deposit_submitted', receiptUri } : b,
+      ),
+    }));
+    const b = get().bookings.find((x) => x.id === id);
+    if (b)
+      get().pushNotification({
+        type: 'booking',
+        title: 'Dekontun gönderildi',
+        body: `${b.proName} · uzman onayı bekleniyor`,
+        dateLabel: 'Az önce',
+        icon: 'receipt-outline',
+      });
+  },
+
+  // §4.3 adım 3 — uzman dekontu görür → "Aldım, onaylıyorum" → randevu KESİN
+  confirmReceipt: (id) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'confirmed' } : b)),
+    }));
+    const b = get().bookings.find((x) => x.id === id);
+    if (b)
+      get().pushNotification({
+        type: 'booking',
+        title: 'Randevun kesinleşti',
+        body: `${b.proName} · ${formatSlotTr(b.startMs)}`,
+        dateLabel: 'Az önce',
+        icon: 'checkmark-circle-outline',
+        route: `/booking/${id}`,
+      });
+  },
+
+  // §4.4 — uzman kullanıcıyı "gelmedi" işaretler (istatistik bütünlüğü)
+  markNoShow: (id) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'no_show' } : b)),
+    }));
   },
 
   hydrateBookings: async () => {

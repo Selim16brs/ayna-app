@@ -710,6 +710,26 @@ export const tr = {
   'booking.status.alternative': 'Alternatif önerildi',
   'booking.status.no_show': 'Gelmedi',
   'booking.status.waitlist': 'Bekleme listesi',
+  'booking.status.deposit_pending': 'Depozito bekleniyor',
+  'booking.status.deposit_submitted': 'Dekont incelemede',
+  // §4.3 — depozito/dekont akışı (kullanıcı)
+  'booking.deposit.title': 'Depozito adımı',
+  'booking.deposit.desc': 'Randevunu kesinleştirmek için depozito gönder ve dekontunu yükle.',
+  'booking.deposit.amount': 'Depozito tutarı',
+  'booking.deposit.payto': 'Ödeme bilgileri',
+  'booking.deposit.note': 'Depozito kapora sayılır: randevuya gelirsen hizmet bedelinden düşülür. Dekontu 3 saat içinde yükle, yoksa slot açılır.',
+  'booking.deposit.upload': 'Dekont yükle',
+  'booking.deposit.reupload': 'Dekontu değiştir',
+  'booking.deposit.submit': 'Dekontu gönder',
+  'booking.deposit.submitted_note': 'Dekontun gönderildi. Uzman onayladığında randevun kesinleşecek.',
+  // §4.1/§4.3 — uzman aksiyonları (sağlayıcı)
+  'booking.provider.approve': 'Kabul et',
+  'booking.provider.reject': 'Reddet',
+  'booking.provider.propose': 'Alternatif saat öner',
+  'booking.provider.confirm_receipt': 'Dekontu onayla (Aldım)',
+  'booking.provider.receipt': 'Yüklenen dekont',
+  'booking.provider.mark_noshow': 'Gelmedi olarak işaretle',
+  'booking.provider.pending_receipt': 'Kullanıcının dekontu bekleniyor.',
   // §6.C — iptal sebebi + politika
   'booking.cancel.prompt': 'İptal nedenini seçebilirsin (opsiyonel).',
   'booking.cancel.late_warn':
