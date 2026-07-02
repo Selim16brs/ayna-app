@@ -8,6 +8,7 @@ export { SalonRow } from './SalonRow';
 export { WaveBottom } from './WaveBottom';
 export { WaveLayered } from './WaveLayered';
 export { AngledPhoto } from './AngledPhoto';
+export { TabHero } from './TabHero';
 export { AppTabBar, TAB_BAR_CLEARANCE } from './AppTabBar';
 export { Placeholder } from './Placeholder';
 export { StackHeader } from './StackHeader';

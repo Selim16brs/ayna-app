@@ -13,7 +13,7 @@ import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, Segmented, Text } from '../../src/ui';
+import { Screen, Segmented, TabHero, Text } from '../../src/ui';
 
 const TABS: { source: BookingSource; labelKey: MessageKey }[] = [
   { source: 'direct', labelKey: 'bookings.tab.direct' },
@@ -46,10 +46,8 @@ export default function BookingsScreen() {
   const pendingReview = bookings.filter((a) => a.status === 'completed' && !a.reviewed);
 
   return (
-    <Screen edges={['top']}>
-      <Text variant="display" tone="ink" style={styles.title}>
-        {t('nav.bookings')}
-      </Text>
+    <Screen edges={[]}>
+      <TabHero title={t('nav.bookings')} />
 
       <View style={styles.segmentWrap}>
         <Segmented
@@ -154,7 +152,7 @@ function BookingCard({ appt }: { appt: Appointment }) {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     title: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
-    segmentWrap: { paddingHorizontal: space(3), marginBottom: space(2) },
+    segmentWrap: { paddingHorizontal: space(3), marginTop: space(2.5), marginBottom: space(2) },
     list: { paddingHorizontal: space(3), paddingBottom: space(13), gap: space(1.5) },
     empty: {
       alignItems: 'center',

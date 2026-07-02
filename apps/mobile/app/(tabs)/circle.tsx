@@ -9,7 +9,7 @@ import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, Screen, Text } from '../../src/ui';
+import { PressableScale, Screen, TabHero, Text } from '../../src/ui';
 
 const makeType = (
   colors: ColorTokens,
@@ -40,23 +40,19 @@ export default function CircleScreen() {
   }, [posts, cat]);
 
   return (
-    <Screen edges={['top']}>
-      <View style={styles.header}>
-        <View style={styles.headerText}>
-          <Text variant="display" tone="ink" style={{ letterSpacing: -0.6 }}>
-            {t('circle.title')}
-          </Text>
-          <Text variant="caption" tone="muted" style={styles.subtitle}>
-            {t('circle.subtitle')}
-          </Text>
-        </View>
-        <Pressable style={styles.ask} onPress={() => router.push('/circle/new')}>
-          <Ionicons name="add" size={16} color={colors.onAccent} />
-          <Text variant="caption" tone="onAccent">
-            {t('circle.ask')}
-          </Text>
-        </Pressable>
-      </View>
+    <Screen edges={[]}>
+      <TabHero
+        title={t('circle.title')}
+        subtitle={t('circle.subtitle')}
+        right={
+          <Pressable style={styles.ask} onPress={() => router.push('/circle/new')}>
+            <Ionicons name="add" size={16} color={colors.onAccent} />
+            <Text variant="caption" tone="onAccent">
+              {t('circle.ask')}
+            </Text>
+          </Pressable>
+        }
+      />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* AYNA Life · Pratik Bilgiler — en başta */}
@@ -233,7 +229,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
-    scroll: { paddingBottom: space(13) },
+    scroll: { paddingTop: space(3), paddingBottom: space(13) },
     sectionTitle: { paddingHorizontal: space(3), marginBottom: space(1.5) },
     // AYNA Life kartları
     life: { paddingHorizontal: space(3), gap: space(1.5), paddingBottom: space(0.5) },
