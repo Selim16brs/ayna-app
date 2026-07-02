@@ -59,6 +59,7 @@ export interface Professional {
   priceFrom: number;
   image: string;
   badge: ProBadge;
+  city: string;
   district: string;
   experienceYears: number;
 }
@@ -374,6 +375,8 @@ export const PROFESSIONALS: Professional[] = PRO_SEEDS.map((s, i) => ({
   priceFrom: s.priceFrom,
   image: img(SALON_IMAGES[i % SALON_IMAGES.length]!),
   badge: s.badge,
+  // Şehir dağılımı: çoğunluk Almatı, bir kısmı diğer şehirler (şehir filtresi için)
+  city: i % 4 === 0 ? (CITIES[1 + ((i / 4) % (CITIES.length - 1))] ?? 'Almatı') : 'Almatı',
   district: DISTRICTS[i % DISTRICTS.length]!,
   experienceYears: 4 + (i % 12),
 }));

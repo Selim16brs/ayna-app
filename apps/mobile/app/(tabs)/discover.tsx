@@ -6,7 +6,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { formatPrice } from '../../src/data';
 import { useCampaigns, useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
-import { selectUnreadCount, useStore } from '../../src/store';
+import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { SalonRow, Screen, Text, WaveBottom } from '../../src/ui';
@@ -22,8 +22,6 @@ const CARD_TINTS = ['#E4DEF4', '#F7DCE6', '#F6E4CE', '#E8F1C4'];
 
 const HERO_WOMAN =
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=500&q=80';
-const AVATAR =
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=70';
 
 // 2 sütun ızgara kart genişliği (referans Fırsatlar/Öne çıkanlar)
 const GRID_W = (Dimensions.get('window').width - space(6) - space(1.5)) / 2;
@@ -44,7 +42,6 @@ export default function DiscoverScreen() {
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const unread = useStore(selectUnreadCount);
   const campaigns = useCampaigns();
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const userName = useStore((s) => s.currentUser?.name)?.split(' ')[0] ?? 'Aigerim';
@@ -59,15 +56,12 @@ export default function DiscoverScreen() {
         <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
           <View style={styles.heroTop}>
             <Image source={require('../../assets/logo-mark.png')} style={styles.logo} resizeMode="contain" />
-            <Pressable style={styles.locChip} onPress={() => router.push('/map')}>
+            <Pressable style={styles.locChip} onPress={() => router.push('/city')}>
+              <Ionicons name="location" size={16} color={colors.ink} />
               <Text variant="bodyStrong" tone="ink">
                 {city}
               </Text>
               <Ionicons name="chevron-down" size={16} color={colors.ink} />
-            </Pressable>
-            <Pressable onPress={() => router.push('/profile')}>
-              <Image source={{ uri: AVATAR }} style={styles.avatar} />
-              {unread > 0 ? <View style={styles.badge} /> : null}
             </Pressable>
           </View>
 
@@ -246,12 +240,12 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
     },
     heroTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
-    logo: { width: 74, height: 38 },
+    logo: { width: 116, height: 56 },
     locChip: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
+      justifyContent: 'flex-end',
       gap: 4,
     },
     avatar: {

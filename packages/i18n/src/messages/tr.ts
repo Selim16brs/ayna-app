@@ -97,6 +97,8 @@ export const tr = {
   'home.campaigns': 'Fırsatlar',
   'home.ad_badge': 'Premium',
   'home.map_mode': 'Harita modu',
+  'city.title': 'Şehir seç',
+  'city.hint': 'Seçtiğin şehre göre tüm salon ve uzmanlar güncellenir.',
   'home.hero_subtitle': 'Yakınlardaki en iyi güzellik deneyimlerini keşfet',
   'home.cat.hair': 'Saç',
   'home.cat.skin': 'Cilt',

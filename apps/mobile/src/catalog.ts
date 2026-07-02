@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
+import { useStore } from './store';
 import {
   type AdBanner,
   ADS,
@@ -22,7 +23,12 @@ export function useProfessionals(): Professional[] {
     retry: 1,
     staleTime: 60_000,
   });
-  return data && data.length > 0 ? data : PROFESSIONALS;
+  const city = useStore((s) => s.currentUser?.city);
+  // Sunucu verisinde city yoksa yerel veriye düş (şehir filtresi çalışsın)
+  const server = data && data.length > 0 ? data : null;
+  const base = server && server.some((p) => p.city) ? server : PROFESSIONALS;
+  if (!city) return base;
+  return base.filter((p) => !p.city || p.city === city);
 }
 
 // §12 — aktif kampanyalar; API erişilemezse yerel yedeğe düşer

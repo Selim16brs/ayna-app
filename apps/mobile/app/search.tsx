@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -38,6 +38,12 @@ export default function SearchScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const [query, setQuery] = useState('');
+  const inputRef = useRef<TextInput>(null);
+  // Navigasyon animasyonu bitince klavyeyi güvenilir şekilde aç (autoFocus tek başına yetmiyor)
+  useEffect(() => {
+    const id = setTimeout(() => inputRef.current?.focus(), 350);
+    return () => clearTimeout(id);
+  }, []);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>('recommended');
   const [showSort, setShowSort] = useState(false);
@@ -71,6 +77,7 @@ export default function SearchScreen() {
         <View style={styles.searchBar}>
           <Ionicons name="search" size={19} color={colors.muted} />
           <TextInput
+            ref={inputRef}
             style={styles.input}
             placeholder={t('search.placeholder')}
             placeholderTextColor={colors.muted}

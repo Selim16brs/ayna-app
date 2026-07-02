@@ -130,6 +130,9 @@ interface State {
   redeem: (reward: Reward) => Promise<boolean>;
   hydrateLoyalty: () => Promise<void>;
 
+  // şehir (global filtre)
+  setCity: (city: string) => void;
+
   // notifications
   pushNotification: (n: Omit<AppNotification, 'id' | 'read'>) => void;
   markNotificationRead: (id: string) => void;
@@ -161,6 +164,9 @@ export const useStore = create<State>((set, get) => ({
   markPhoneVerified: () =>
     set((s) => (s.currentUser ? { currentUser: { ...s.currentUser, phoneVerified: true } } : {})),
   logout: () => set({ token: null, currentUser: null }),
+
+  setCity: (city) =>
+    set((s) => (s.currentUser ? { currentUser: { ...s.currentUser, city } } : {})),
 
   addBooking: (input) => {
     const id = nextId('bk');
