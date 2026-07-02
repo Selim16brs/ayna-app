@@ -39,6 +39,9 @@ const STATUS_LABEL: Record<BookingStatus, MessageKey> = {
   alternative_proposed: 'booking.status.alternative',
   deposit_pending: 'booking.status.deposit_pending',
   deposit_submitted: 'booking.status.deposit_submitted',
+  refund_pending: 'booking.status.refund_pending',
+  refund_submitted: 'booking.status.refund_submitted',
+  disputed: 'booking.status.disputed',
   no_show: 'booking.status.no_show',
   waitlist: 'booking.status.waitlist',
 };

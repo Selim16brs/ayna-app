@@ -4,8 +4,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { computeDaySlots } from '@ayna/domain';
-import { DEPOSIT_KZT, type BookingSource, formatPrice } from '../../src/data';
-import { almatyDayStart, daysUntil, formatSlot } from '../../src/datetime';
+import { DEPOSIT_KZT, FREE_CANCEL_WINDOW_MS, type BookingSource, formatPrice } from '../../src/data';
+import { almatyDayStart, formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
@@ -35,6 +35,9 @@ export default function BookingDetailScreen() {
   const submitReceipt = useStore((s) => s.submitReceipt);
   const confirmReceipt = useStore((s) => s.confirmReceipt);
   const markNoShow = useStore((s) => s.markNoShow);
+  const uploadRefundReceipt = useStore((s) => s.uploadRefundReceipt);
+  const confirmRefund = useStore((s) => s.confirmRefund);
+  const disputeBooking = useStore((s) => s.disputeBooking);
   const role = useStore((s) => s.currentUser?.role);
   const isProvider = !!role && role !== 'customer';
 
@@ -73,6 +76,15 @@ export default function BookingDetailScreen() {
     if (!res.canceled && res.assets[0]) submitReceipt(id, res.assets[0].uri);
   }
 
+  async function uploadRefund() {
+    if (!id) return;
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
+    if (!res.canceled && res.assets[0]) uploadRefundReceipt(id, res.assets[0].uri);
+  }
+
   function sendProposal() {
     if (id && proposeSel != null) proposeAlternative(id, proposeSel);
     setProposeOpen(false);
@@ -102,7 +114,8 @@ export default function BookingDetailScreen() {
   }
 
   function onCancel() {
-    const late = booking ? daysUntil(booking.startMs, Date.now()) === 0 : false; // aynı gün → geç iptal uyarısı (politika)
+    // §4.4 — 3 saatten az kaldıysa geç iptal: depozito yanar
+    const late = booking ? booking.startMs - Date.now() <= FREE_CANCEL_WINDOW_MS : false;
     const msg = late ? t('booking.cancel.late_warn') : t('booking.cancel.prompt');
     Alert.alert(t('booking.detail.cancel'), msg, [
       { text: t('booking.cancel.reason.plan'), onPress: () => doCancel(t('booking.cancel.reason.plan')) },
@@ -282,6 +295,66 @@ export default function BookingDetailScreen() {
           </View>
         ) : null}
 
+        {/* §4.4 — İade akışı: kullanıcı bekliyor */}
+        {!isProvider && booking.status === 'refund_pending' ? (
+          <View style={styles.note}>
+            <Ionicons name="return-up-back-outline" size={14} color={colors.gold} />
+            <Text variant="caption" tone="muted" style={styles.noteText}>
+              {t('booking.refund.pending_user')}
+            </Text>
+          </View>
+        ) : null}
+
+        {/* §4.4 — İade dekontu yüklendi: kullanıcı "aldım" onaylar */}
+        {!isProvider && booking.status === 'refund_submitted' ? (
+          <View style={[styles.depositCard, shadow.card]}>
+            <View style={styles.depositHead}>
+              <Ionicons name="return-up-back-outline" size={18} color={colors.ink} />
+              <Text variant="bodyStrong" tone="ink">
+                {t('booking.refund.title')}
+              </Text>
+            </View>
+            <Text variant="caption" tone="muted" style={styles.depositDesc}>
+              {t('booking.refund.desc')}
+            </Text>
+            {booking.refundReceiptUri ? (
+              <Image source={{ uri: booking.refundReceiptUri }} style={styles.receiptThumb} />
+            ) : null}
+            <Button
+              label={t('booking.refund.confirm')}
+              variant="primary"
+              onPress={() => id && confirmRefund(id)}
+            />
+          </View>
+        ) : null}
+
+        {/* §4.4 — Ceza notu (geç iptal veya no-show → kapora yandı) + itiraz */}
+        {!isProvider && (booking.depositForfeited || booking.status === 'no_show') ? (
+          <View style={[styles.reasonCard, shadow.soft]}>
+            <View style={styles.reasonHead}>
+              <Ionicons name="alert-circle-outline" size={14} color={colors.danger} />
+              <Text variant="caption" tone="muted">
+                {t(booking.status === 'no_show' ? 'booking.penalty.noshow' : 'booking.penalty.forfeited')}
+              </Text>
+            </View>
+            <Button
+              label={t('booking.dispute.cta')}
+              variant="ghost"
+              onPress={() => id && disputeBooking(id)}
+            />
+          </View>
+        ) : null}
+
+        {/* §4.4 — İtiraz açıldı */}
+        {booking.status === 'disputed' ? (
+          <View style={styles.note}>
+            <Ionicons name="flag-outline" size={14} color={colors.gold} />
+            <Text variant="caption" tone="muted" style={styles.noteText}>
+              {t('booking.dispute.done')}
+            </Text>
+          </View>
+        ) : null}
+
         {/* §6.C — iptal sebebi (kullanıcı ilettiyse) */}
         {booking.status === 'cancelled' && booking.cancelReason ? (
           <View style={[styles.reasonCard, shadow.soft]}>
@@ -352,6 +425,22 @@ export default function BookingDetailScreen() {
                   variant="secondary"
                   onPress={() => id && markNoShow(id)}
                 />
+              ) : null}
+              {/* §4.4 — serbest iptal: uzman iade dekontunu yükler */}
+              {booking.status === 'refund_pending' ? (
+                <>
+                  <View style={styles.note}>
+                    <Ionicons name="return-up-back-outline" size={14} color={colors.gold} />
+                    <Text variant="caption" tone="muted" style={styles.noteText}>
+                      {t('booking.refund.provider_pending')}
+                    </Text>
+                  </View>
+                  <Button
+                    label={t('booking.refund.provider_upload')}
+                    variant="primary"
+                    onPress={uploadRefund}
+                  />
+                </>
               ) : null}
             </>
           ) : (
@@ -449,6 +538,9 @@ const makeStatus = (
   alternative_proposed: { key: 'booking.status.alternative', bg: colors.blueSoft, fg: colors.blue },
   deposit_pending: { key: 'booking.status.deposit_pending', bg: colors.goldSoft, fg: colors.gold },
   deposit_submitted: { key: 'booking.status.deposit_submitted', bg: colors.blueSoft, fg: colors.blue },
+  refund_pending: { key: 'booking.status.refund_pending', bg: colors.goldSoft, fg: colors.gold },
+  refund_submitted: { key: 'booking.status.refund_submitted', bg: colors.blueSoft, fg: colors.blue },
+  disputed: { key: 'booking.status.disputed', bg: colors.dangerSoft, fg: colors.danger },
   no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
   waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
 });

@@ -7,6 +7,7 @@ import {
   type Appointment,
   type BookingSource,
   DEPOSIT_KZT,
+  FREE_CANCEL_WINDOW_MS,
   buildUpcomingEvents,
   type CareRoutine,
   type CirclePost,
@@ -112,6 +113,10 @@ interface State {
   submitReceipt: (id: string, receiptUri: string) => void; // kullanıcı dekont yükler
   confirmReceipt: (id: string) => void; // uzman "Aldım, onaylıyorum" → randevu KESİN
   markNoShow: (id: string) => void; // §4.4 — uzman "gelmedi" işaretler
+  // §4.4 — iade + itiraz
+  uploadRefundReceipt: (id: string, receiptUri: string) => void; // uzman iade dekontu yükler
+  confirmRefund: (id: string) => void; // kullanıcı "iadeyi aldım" → kayıt kapanır
+  disputeBooking: (id: string) => void; // taraflar itiraz açar (destek/admin kuyruğu)
   reviewBooking: (id: string, rating: number, text: string) => void;
   hydrateBookings: () => Promise<void>;
 
@@ -233,13 +238,84 @@ export const useStore = create<State>((set, get) => ({
     });
   },
 
+  // §4.4 — kullanıcı iptali: depozito ödendiyse ve >3 saat varsa iade akışı (refund_pending);
+  // depozito ödendi + geç iptal (≤3 saat) → kapora yanar; depozito yoksa düz iptal.
   cancelBooking: (id, reason) => {
+    const b = get().bookings.find((x) => x.id === id);
+    const hasDeposit = b?.status === 'confirmed' || b?.status === 'deposit_submitted';
+    const free = b ? b.startMs - Date.now() > FREE_CANCEL_WINDOW_MS : true;
+    const next: Appointment['status'] = hasDeposit && free ? 'refund_pending' : 'cancelled';
+    const forfeited = hasDeposit && !free;
     set((s) => ({
-      bookings: s.bookings.map((b) =>
-        b.id === id ? { ...b, status: 'cancelled', cancelReason: reason } : b,
+      bookings: s.bookings.map((x) =>
+        x.id === id
+          ? { ...x, status: next, cancelReason: reason, ...(forfeited ? { depositForfeited: true } : {}) }
+          : x,
       ),
     }));
     void api.cancelBooking(id, reason).catch(() => undefined);
+    if (b) {
+      if (next === 'refund_pending')
+        get().pushNotification({
+          type: 'booking',
+          title: 'İptal alındı — iade bekleniyor',
+          body: `${b.proName} · uzman depozito iadesini yükleyecek`,
+          dateLabel: 'Az önce',
+          icon: 'return-up-back-outline',
+          route: `/booking/${id}`,
+        });
+      else if (forfeited)
+        get().pushNotification({
+          type: 'booking',
+          title: 'Geç iptal — kapora yandı',
+          body: `${b.proName} · ${DEPOSIT_KZT}₸ depozito uzmanda kaldı (§4.4)`,
+          dateLabel: 'Az önce',
+          icon: 'alert-circle-outline',
+          route: `/booking/${id}`,
+        });
+    }
+  },
+
+  // §4.4 — uzman iade dekontunu yükler → kullanıcı "aldım" onayı beklenir
+  uploadRefundReceipt: (id, receiptUri) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) =>
+        b.id === id ? { ...b, status: 'refund_submitted', refundReceiptUri: receiptUri } : b,
+      ),
+    }));
+    const b = get().bookings.find((x) => x.id === id);
+    if (b)
+      get().pushNotification({
+        type: 'booking',
+        title: 'İade dekontu yüklendi',
+        body: `${b.proName} · iadeyi aldıysan onayla`,
+        dateLabel: 'Az önce',
+        icon: 'receipt-outline',
+        route: `/booking/${id}`,
+      });
+  },
+
+  // §4.4 — kullanıcı iadeyi aldı → kayıt kapanır
+  confirmRefund: (id) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b)),
+    }));
+  },
+
+  // §4.4 — taraflar itiraz açar (destek/admin kuyruğuna düşer)
+  disputeBooking: (id) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'disputed' } : b)),
+    }));
+    const b = get().bookings.find((x) => x.id === id);
+    if (b)
+      get().pushNotification({
+        type: 'booking',
+        title: 'İtirazın alındı',
+        body: `${b.proName} · destek ekibi inceleyecek`,
+        dateLabel: 'Az önce',
+        icon: 'flag-outline',
+      });
   },
 
   // §1.6 — kullanıcı uzmanın önerdiği alternatif saati kabul eder

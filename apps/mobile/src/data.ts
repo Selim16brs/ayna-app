@@ -708,11 +708,16 @@ export type BookingStatus =
   | 'alternative_proposed'
   | 'deposit_pending' // §4.3 — uzman kabul etti, kullanıcı depozito+dekont yükleyecek
   | 'deposit_submitted' // dekont yüklendi, uzman onayı bekleniyor
+  | 'refund_pending' // §4.4 — serbest iptal: uzman iade dekontu yükleyecek
+  | 'refund_submitted' // iade dekontu yüklendi, kullanıcı "aldım" onayı bekleniyor
+  | 'disputed' // §4.4 — itiraz açıldı (destek/admin kuyruğu)
   | 'no_show'
   | 'waitlist';
 
 // §4.3 — depozito/kapora tutarı. PARAMETRİK (admin panel §3.4); şimdilik sabit.
 export const DEPOSIT_KZT = 1000;
+// §4.4 — serbest iptal penceresi (bundan fazla süre varsa depozito iade edilir). Parametrik.
+export const FREE_CANCEL_WINDOW_MS = 3 * 60 * 60_000;
 
 export interface Appointment {
   id: string;
@@ -730,6 +735,8 @@ export interface Appointment {
   proposedStartMs?: number; // uzmanın önerdiği alternatif başlangıç (§1.6)
   depositAmount?: number; // §4.3 — beklenen depozito (₸)
   receiptUri?: string; // §4.3 — yüklenen dekont görseli
+  refundReceiptUri?: string; // §4.4 — uzmanın yüklediği iade dekontu
+  depositForfeited?: boolean; // §4.4 — geç iptal/no-show: kapora uzmanda kaldı
   price: number; // kaç paraya
   status: BookingStatus;
   cancelReason?: string; // §6.C — "neden gelemiyorum"
