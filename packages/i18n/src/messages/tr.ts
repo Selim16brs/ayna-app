@@ -90,6 +90,7 @@ export const tr = {
 
   // Ana akış — giriş aksiyonları
   'home.how': 'Ne yapmak istersin?',
+  'home.how_sub': 'Fotoğrafla teklif al ya da talep oluştur',
   'home.categories': 'Kategoriler',
   'home.nearby': 'Sana yakın salonlar',
   'home.recommended': 'Senin için öneriler',
@@ -129,7 +130,7 @@ export const tr = {
   'quote.new.camera': 'Kamera ile çek',
   'quote.new.gallery': 'Galeriden seç',
   'quote.new.special': 'Sana özel teklifler',
-  'quote.new.view_offers': 'Teklifleri Gör',
+  'quote.new.view_offers': 'Teklif al',
   'quote.new.change_photo': 'Fotoğrafı değiştir',
   'quote.new.category': 'Kategori',
   'quote.new.note': 'Not (isteğe bağlı)',
@@ -149,7 +150,7 @@ export const tr = {
 
   // Model 1 — gelen teklifler
   'quotes.title': 'Gelen teklifler',
-  'quotes.count': 'satıcı teklif gönderdi',
+  'quotes.count': 'uzman teklif gönderdi',
   'quotes.sort': 'Sırala',
   'quotes.filter.rating': 'Puan',
   'quotes.filter.price': 'Fiyat',

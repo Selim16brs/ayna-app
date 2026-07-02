@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { api, type ApiQuote } from '../../src/api';
-import { formatPrice, INCOMING_QUOTES } from '../../src/data';
+import type { ApiQuote } from '../../src/api';
+import { formatPrice, INCOMING_QUOTES, PROFESSIONALS } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -17,9 +16,14 @@ export default function QuoteResultsScreen() {
   const router = useRouter();
   const styles = useThemedStyles(makeStyles);
   const [sort, setSort] = useState<Sort>('rating');
-  const { data: apiQuotes = [] } = useQuery({ queryKey: ['quotes'], queryFn: api.quotes });
-  const incoming: (ApiQuote | (typeof INCOMING_QUOTES)[number])[] =
-    apiQuotes.length > 0 ? apiQuotes : INCOMING_QUOTES;
+  // Fotoğrafla teklif YALNIZCA bağımsız uzmanlara (independent) gider — salonlar hariç
+  const incoming = useMemo(
+    () =>
+      INCOMING_QUOTES.filter(
+        (q) => PROFESSIONALS.find((p) => p.id === q.proId)?.kind === 'independent',
+      ),
+    [],
+  );
 
   const quotes = useMemo(() => {
     const list = [...incoming];

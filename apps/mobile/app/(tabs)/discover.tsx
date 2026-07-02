@@ -103,30 +103,21 @@ export default function DiscoverScreen() {
           <WaveBottom color={colors.bg} />
         </View>
 
-        {/* ── 3 AKSİYON KARTI ── */}
-        <View style={styles.actions}>
-          <ActionTile
-            bg={colors.lavenderSoft}
-            fg={colors.lavender}
-            icon="camera-outline"
-            title={t('action.photo_quote.title')}
-            onPress={() => router.push('/quote/new')}
-          />
-          <ActionTile
-            bg={colors.goldSoft}
-            fg={colors.gold}
-            icon="sparkles-outline"
-            title={t('home.how')}
-            onPress={() => router.push('/quote')}
-          />
-          <ActionTile
-            bg={colors.roseSoft}
-            fg={colors.rose}
-            icon="add-circle-outline"
-            title={t('action.demand.title')}
-            onPress={() => router.push('/demand/new')}
-          />
-        </View>
+        {/* ── TEK AKSİYON: Ne yapmak istersin? → hub (foto ile / talep oluştur) ── */}
+        <Pressable style={styles.howCard} onPress={() => router.push('/quote')}>
+          <View style={styles.howIcon}>
+            <Ionicons name="sparkles" size={22} color={colors.onAccent} />
+          </View>
+          <View style={styles.howText}>
+            <Text variant="h2" tone="ink" style={styles.howTitle}>
+              {t('home.how')}
+            </Text>
+            <Text variant="caption" tone="muted" numberOfLines={1}>
+              {t('home.how_sub')}
+            </Text>
+          </View>
+          <Ionicons name="arrow-forward" size={20} color={colors.ink} />
+        </Pressable>
 
         {/* ── KATEGORİLER (yuvarlak, sabit 6) ── */}
         <View style={styles.catRow}>
@@ -207,32 +198,6 @@ function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => vo
         </Pressable>
       ) : null}
     </View>
-  );
-}
-
-function ActionTile({
-  bg,
-  fg,
-  icon,
-  title,
-  onPress,
-}: {
-  bg: string;
-  fg: string;
-  icon: IoniconName;
-  title: string;
-  onPress: () => void;
-}) {
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <Pressable style={[styles.action, { backgroundColor: bg }]} onPress={onPress}>
-      <View style={[styles.actionIcon, { backgroundColor: 'rgba(255,255,255,0.75)' }]}>
-        <Ionicons name={icon} size={18} color={fg} />
-      </View>
-      <Text variant="caption" tone="ink" style={styles.actionTitle} numberOfLines={2}>
-        {title}
-      </Text>
-    </Pressable>
   );
 }
 
@@ -354,31 +319,28 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: 'rgba(255,255,255,0.3)',
     },
 
-    // ── Aksiyon kartları (referans: ikon SOL + metin SAĞ, yatay) ──
-    actions: { flexDirection: 'row', gap: space(1.25), paddingHorizontal: space(3), marginTop: space(1) },
-    action: {
-      flex: 1,
-      alignItems: 'flex-start',
-      gap: space(1.25),
+    // ── Tek aksiyon kartı: "Ne yapmak istersin?" ──
+    howCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      marginHorizontal: space(3),
+      marginTop: space(1),
+      paddingVertical: space(2),
+      paddingHorizontal: space(2),
       borderRadius: radius.lg,
-      padding: space(1.5),
-      minHeight: 96,
+      backgroundColor: colors.accentSoft,
     },
-    actionIcon: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
+    howIcon: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: colors.accent,
     },
-    actionTitle: {
-      alignSelf: 'stretch',
-      textAlign: 'left',
-      fontSize: 12,
-      fontWeight: '800',
-      lineHeight: 15,
-      letterSpacing: -0.2,
-    },
+    howText: { flex: 1, gap: 2 },
+    howTitle: { fontSize: 19, letterSpacing: -0.2 },
 
     // ── 2 sütun ızgara (Fırsatlar / Öne çıkanlar) ──
     grid: {

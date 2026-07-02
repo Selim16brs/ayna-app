@@ -1116,20 +1116,10 @@ export interface Quote {
   etaMin: number;
 }
 
+// Fotoğrafla teklif YALNIZCA bağımsız uzmanlara (independent) gider — hepsi uzman.
 export const INCOMING_QUOTES: Quote[] = [
   {
     id: 'q1',
-    proId: '1',
-    name: 'Madina Studio',
-    image: PROFESSIONALS[0]!.image,
-    rating: 4.9,
-    reviewCount: 312,
-    friends: 3,
-    price: 16000,
-    etaMin: 120,
-  },
-  {
-    id: 'q2',
     proId: '3',
     name: 'Ailin Makeup',
     image: PROFESSIONALS[2]!.image,
@@ -1140,7 +1130,7 @@ export const INCOMING_QUOTES: Quote[] = [
     etaMin: 90,
   },
   {
-    id: 'q3',
+    id: 'q2',
     proId: '2',
     name: 'Aruzhan Beauty',
     image: PROFESSIONALS[1]!.image,
@@ -1150,14 +1140,25 @@ export const INCOMING_QUOTES: Quote[] = [
     etaMin: 75,
   },
   {
-    id: 'q4',
-    proId: '4',
-    name: 'Lotus Spa',
-    image: PROFESSIONALS[3]!.image,
-    rating: 4.7,
-    reviewCount: 98,
-    price: 9500,
+    id: 'q3',
+    proId: '7',
+    name: 'Aru Brows',
+    image: PROFESSIONALS[6]!.image,
+    rating: 4.9,
+    reviewCount: 132,
+    friends: 2,
+    price: 9000,
     etaMin: 60,
+  },
+  {
+    id: 'q4',
+    proId: '9',
+    name: 'Sezim Hair',
+    image: PROFESSIONALS[8]!.image,
+    rating: 4.7,
+    reviewCount: 88,
+    price: 15000,
+    etaMin: 110,
   },
 ];
 
