@@ -347,8 +347,8 @@ const makeStyles = (colors: ColorTokens) =>
     },
     greetName: {
       fontFamily: 'DancingScript_700Bold',
-      fontSize: 50,
-      lineHeight: 52,
+      fontSize: 60,
+      lineHeight: 62,
       color: '#FFFFFF',
       alignSelf: 'flex-start',
       marginTop: -14,
