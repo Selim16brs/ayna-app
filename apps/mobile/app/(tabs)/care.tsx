@@ -17,7 +17,7 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, ProgressRing, Screen, Text } from '../../src/ui';
+import { PressableScale, ProgressRing, Screen, TabHero, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -76,18 +76,9 @@ export default function BenimIcinScreen() {
     ]);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
+      <TabHero title={firstName} subtitle={t(greetingKey())} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Selamlama — referans dili: küçük etiket + dev kalın başlık */}
-        <Animated.View entering={FadeInDown.duration(340)} style={styles.header}>
-          <Text variant="label" tone="muted" style={styles.greetingLabel}>
-            {t(greetingKey())}
-          </Text>
-          <Text variant="display" tone="ink" style={styles.greetingName}>
-            {firstName}
-          </Text>
-        </Animated.View>
-
         {/* Bakım skoru — halka göstergeli hero (referans dili) */}
         <Animated.View entering={FadeInDown.duration(360).delay(40)} style={styles.block}>
           {careRoutines.length > 0 ? (
@@ -549,7 +540,7 @@ function MomentRow({ moment, border }: { moment: Moment; border: boolean }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingBottom: space(13) },
+    content: { paddingTop: space(3), paddingBottom: space(13) },
     flex: { flex: 1 },
     dim: { opacity: 0.9 },
     header: { paddingHorizontal: space(3), paddingTop: space(1.5), marginBottom: space(2.5) },

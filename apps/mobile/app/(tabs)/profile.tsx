@@ -7,7 +7,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useStore } from '../../src/store';
-import { Screen, Segmented, Text } from '../../src/ui';
+import { Screen, Segmented, TabHero, Text } from '../../src/ui';
 import type { ThemeMode } from '../../src/theme';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -75,43 +75,42 @@ export default function ProfileScreen() {
   };
 
   return (
-    <Screen edges={['top']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.profileRow}>
+    <Screen edges={[]}>
+      <TabHero
+        title={userName}
+        right={
           <LinearGradient colors={gradients.rose} style={[styles.avatar, shadow.soft]}>
             <Text variant="title" tone="onColor">
               {userName.charAt(0).toUpperCase()}
             </Text>
           </LinearGradient>
-          <View style={styles.profileText}>
-            <View style={styles.nameRow}>
-              <Text variant="h2" tone="rose">
-                {userName}
+        }
+      >
+        <View style={styles.heroMeta}>
+          {phoneVerified ? (
+            <View style={styles.verifiedChip}>
+              <Ionicons name="checkmark-circle" size={13} color={colors.success} />
+              <Text variant="caption" style={styles.verifiedText}>
+                {t('profile.verify.done')}
               </Text>
-              {phoneVerified ? (
-                <View style={styles.verifiedChip}>
-                  <Ionicons name="checkmark-circle" size={13} color={colors.success} />
-                  <Text variant="caption" style={styles.verifiedText}>
-                    {t('profile.verify.done')}
-                  </Text>
-                </View>
-              ) : null}
-              {womenVerified ? (
-                <View style={styles.womenChip}>
-                  <Ionicons name="female" size={12} color={colors.rose} />
-                  <Text variant="caption" style={styles.womenText}>
-                    {t('profile.women_member')}
-                  </Text>
-                </View>
-              ) : null}
             </View>
-            <Pressable onPress={() => router.push('/profile/edit')}>
-              <Text variant="caption" tone="rose">
-                {t('profile.edit')}
+          ) : null}
+          {womenVerified ? (
+            <View style={styles.womenChip}>
+              <Ionicons name="female" size={12} color={colors.rose} />
+              <Text variant="caption" style={styles.womenText}>
+                {t('profile.women_member')}
               </Text>
-            </Pressable>
-          </View>
+            </View>
+          ) : null}
+          <Pressable onPress={() => router.push('/profile/edit')}>
+            <Text variant="caption" tone="ink" style={styles.heroEdit}>
+              {t('profile.edit')}
+            </Text>
+          </Pressable>
         </View>
+      </TabHero>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         {/* §4.6 — telefon doğrulama çağrısı (yalnızca girişli + doğrulanmamışsa) */}
         {isLoggedIn && !phoneVerified ? (
@@ -210,7 +209,15 @@ function Stat({ value, label }: { value: string; label: string }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: space(13) },
+    content: { padding: space(3), paddingTop: space(3), paddingBottom: space(13) },
+    heroMeta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: space(1),
+      marginTop: space(1.25),
+    },
+    heroEdit: { fontWeight: '700', textDecorationLine: 'underline' },
     profileRow: {
       flexDirection: 'row',
       alignItems: 'center',
