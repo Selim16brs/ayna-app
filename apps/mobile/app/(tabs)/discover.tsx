@@ -358,11 +358,11 @@ const makeStyles = (colors: ColorTokens) =>
     },
     heroSub: { marginTop: space(1.5), maxWidth: 220 },
     heroPhoto: {
-      // Zeminsiz (cut-out) kullanıcı fotoğrafı — yeşilin üstünde, alt kenarı dalgada kesilir
-      width: 172,
-      height: 215,
+      // Zeminsiz (cut-out) kullanıcı fotoğrafı — alt kenarı dalga/zemin ile aynı hizada kesilir
+      width: 176,
+      height: 220,
       marginRight: -space(1.5),
-      marginBottom: -space(3),
+      marginBottom: -space(4.5),
     },
 
     // ── Pembe band: "Ne yapmak istersin?" — pembe zemin dalganın altına kadar dolar ──
