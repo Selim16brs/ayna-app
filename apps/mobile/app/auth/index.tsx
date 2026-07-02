@@ -44,7 +44,7 @@ export default function AuthRoleScreen() {
             icon="sparkles"
             title={t('auth.role.expert')}
             sub={t('auth.role.expert_sub')}
-            onPress={() => router.push('/auth/business/join')}
+            onPress={() => router.push('/auth/expert')}
           />
         </View>
       </View>
