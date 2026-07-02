@@ -6,12 +6,13 @@ import Svg, { Path } from 'react-native-svg';
  * Lime bloğun İÇİNE, en alta yerleştirilir; `color` = sayfa zemin rengi (colors.bg),
  * dalgalı üst kenar lime'ı, düz alt kenar zemine akan içeriği verir.
  */
-export function WaveBottom({ color, height = 34 }: { color: string; height?: number }) {
+export function WaveBottom({ color, height = 56 }: { color: string; height?: number }) {
   return (
     <View style={{ height, marginBottom: -1 }} pointerEvents="none">
-      <Svg width="100%" height={height} viewBox="0 0 100 20" preserveAspectRatio="none">
+      <Svg width="100%" height={height} viewBox="0 0 100 30" preserveAspectRatio="none">
+        {/* Derin, organik scoop — zeminin lime hero'ya doğru büyük kavis yapması */}
         <Path
-          d="M0,20 L0,8 C 20,-3 38,13 60,6 C 78,0 90,7 100,3 L100,20 Z"
+          d="M0,30 L0,14 C 22,-4 40,24 58,20 C 74,17 86,4 100,10 L100,30 Z"
           fill={color}
         />
       </Svg>

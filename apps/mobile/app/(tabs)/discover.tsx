@@ -1,10 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Dimensions, Image, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CATEGORIES } from '../../src/data';
-import { useAds, useCampaigns, useProfessionals } from '../../src/catalog';
+import { CATEGORIES, formatPrice } from '../../src/data';
+import { useCampaigns, useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -23,26 +22,34 @@ const makeCatColors = (colors: ColorTokens) => [
 ];
 
 const HERO_WOMAN =
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=500&q=75';
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=500&q=80';
 const AVATAR =
   'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=70';
 
-const AD_WIDTH = Dimensions.get('window').width - space(6);
+// 2 sütun ızgara kart genişliği (referans Fırsatlar/Öne çıkanlar)
+const GRID_W = (Dimensions.get('window').width - space(6) - space(1.5)) / 2;
 
 export default function DiscoverScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const CAT_COLORS = makeCatColors(colors);
+  const GRID_TINTS = [
+    { bg: colors.lavenderSoft, fg: colors.lavender },
+    { bg: colors.roseSoft, fg: colors.rose },
+    { bg: colors.goldSoft, fg: colors.gold },
+    { bg: colors.sageSoft, fg: colors.sage },
+  ];
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const unread = useStore(selectUnreadCount);
   const campaigns = useCampaigns();
-  const ads = useAds();
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const userName = useStore((s) => s.currentUser?.name)?.split(' ')[0] ?? 'Aigerim';
   const categories = CATEGORIES;
-  const nearby = useProfessionals().slice(0, 6);
+  const pros = useProfessionals();
+  const featured = pros.slice(0, 4);
+  const nearby = pros.slice(4, 9);
 
   return (
     <Screen edges={[]}>
@@ -142,85 +149,45 @@ export default function DiscoverScreen() {
           })}
         </ScrollView>
 
-        {/* ── FIRSATLAR ── */}
+        {/* ── FIRSATLAR (2 sütun ızgara) ── */}
         <SectionHeader title={t('home.campaigns')} onSeeAll={() => router.push('/search')} />
-        <ScrollView
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.promoRow}
-          snapToInterval={AD_WIDTH + space(1.5)}
-          decelerationRate="fast"
-        >
-          {campaigns.map((c) => (
-            <Pressable
-              key={c.id}
-              style={[styles.promo, { width: AD_WIDTH }]}
-              onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
-            >
-              <View style={styles.promoLeft}>
-                {c.badge ? (
-                  <View style={styles.promoBadge}>
-                    <Text variant="caption" tone="onAccent" style={styles.promoBadgeText}>
-                      {c.badge}
-                    </Text>
-                  </View>
-                ) : null}
-                <Text variant="bodyStrong" tone="ink" style={styles.promoTitle} numberOfLines={2}>
-                  {c.title}
-                </Text>
-                <Text variant="caption" tone="muted" numberOfLines={1}>
-                  {c.subtitle}
-                </Text>
-              </View>
-              <Image source={{ uri: c.image }} style={styles.promoImg} />
-            </Pressable>
-          ))}
-        </ScrollView>
+        <View style={styles.grid}>
+          {campaigns.map((c, i) => {
+            const g = GRID_TINTS[i % GRID_TINTS.length]!;
+            return (
+              <PromoCard
+                key={c.id}
+                title={c.title}
+                highlight={c.badge}
+                subtitle={c.subtitle}
+                image={c.image}
+                bg={g.bg}
+                hlColor={g.fg}
+                onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
+              />
+            );
+          })}
+        </View>
 
-        {/* ── ÖNE ÇIKANLAR (sponsorlu) ── */}
+        {/* ── ÖNE ÇIKANLAR (2 sütun ızgara) ── */}
         <SectionHeader title={t('home.featured')} onSeeAll={() => router.push('/search')} />
-        <ScrollView
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.ads}
-          snapToInterval={AD_WIDTH + space(1.5)}
-          decelerationRate="fast"
-        >
-          {ads.map((ad) => (
-            <Pressable
-              key={ad.id}
-              style={{ width: AD_WIDTH }}
-              onPress={() => router.push('/professional/' + ad.proId)}
-            >
-              <ImageBackground
-                source={{ uri: ad.image }}
-                style={[styles.adCard, { width: AD_WIDTH }]}
-                imageStyle={styles.adImage}
-              >
-                <LinearGradient
-                  colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.82)']}
-                  style={StyleSheet.absoluteFill}
-                />
-                <View style={styles.adBadge}>
-                  <Ionicons name="star" size={11} color={colors.onColor} />
-                  <Text variant="caption" tone="onColor" style={styles.adBadgeText}>
-                    {t('home.ad_badge')}
-                  </Text>
-                </View>
-                <View style={styles.adText}>
-                  <Text variant="h2" tone="onColor">
-                    {ad.title}
-                  </Text>
-                  <Text variant="caption" tone="onColor" style={styles.adSubtitle}>
-                    {ad.subtitle}
-                  </Text>
-                </View>
-              </ImageBackground>
-            </Pressable>
-          ))}
-        </ScrollView>
+        <View style={styles.grid}>
+          {featured.map((pro, i) => {
+            const g = GRID_TINTS[(i + 2) % GRID_TINTS.length]!;
+            return (
+              <PromoCard
+                key={pro.id}
+                title={pro.name}
+                highlight={formatPrice(pro.priceFrom)}
+                subtitle={pro.specialty}
+                image={pro.image}
+                bg={g.bg}
+                hlColor={g.fg}
+                onPress={() => router.push('/professional/' + pro.id)}
+              />
+            );
+          })}
+        </View>
 
         {/* ── YAKINDAKİ SALONLAR (yatay kart listesi) ── */}
         <SectionHeader title={t('home.nearby')} onSeeAll={() => router.push('/search')} />
@@ -271,12 +238,48 @@ function ActionTile({
   const styles = useThemedStyles(makeStyles);
   return (
     <Pressable style={[styles.action, { backgroundColor: bg }]} onPress={onPress}>
-      <View style={styles.actionIcon}>
-        <Ionicons name={icon} size={22} color={fg} />
+      <View style={[styles.actionIcon, { backgroundColor: 'rgba(255,255,255,0.7)' }]}>
+        <Ionicons name={icon} size={20} color={fg} />
       </View>
       <Text variant="caption" tone="ink" style={styles.actionTitle}>
         {title}
       </Text>
+    </Pressable>
+  );
+}
+
+function PromoCard({
+  title,
+  highlight,
+  subtitle,
+  image,
+  bg,
+  hlColor,
+  onPress,
+}: {
+  title: string;
+  highlight: string;
+  subtitle: string;
+  image: string;
+  bg: string;
+  hlColor: string;
+  onPress: () => void;
+}) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable style={[styles.promoCard, { backgroundColor: bg }]} onPress={onPress}>
+      <View style={styles.promoCardLeft}>
+        <Text variant="caption" tone="ink" style={styles.promoCardTitle} numberOfLines={2}>
+          {title}
+        </Text>
+        <Text variant="h2" style={[styles.promoHighlight, { color: hlColor }]} numberOfLines={1}>
+          {highlight}
+        </Text>
+        <Text variant="caption" tone="muted" style={styles.promoCardSub} numberOfLines={2}>
+          {subtitle}
+        </Text>
+      </View>
+      <Image source={{ uri: image }} style={styles.promoCardImg} />
     </Pressable>
   );
 }
@@ -346,35 +349,56 @@ const makeStyles = (colors: ColorTokens) =>
     heroName: { fontSize: 34, lineHeight: 38, fontWeight: '800', letterSpacing: -0.8 },
     heroSub: { marginTop: space(1), maxWidth: 220 },
     heroPhoto: {
-      width: 160,
-      height: 200,
-      borderTopLeftRadius: radius.xl,
-      borderTopRightRadius: radius.md,
-      marginRight: -space(1.5),
-      backgroundColor: 'rgba(255,255,255,0.25)',
+      width: 158,
+      height: 196,
+      // Organik blob kesim — dikdörtgen "yapıştırma" hissini kırar (referans cut-out yaklaşımı)
+      borderTopLeftRadius: 110,
+      borderTopRightRadius: 90,
+      borderBottomRightRadius: 110,
+      borderBottomLeftRadius: 70,
+      marginRight: -space(1),
+      backgroundColor: 'rgba(255,255,255,0.3)',
     },
 
-    // ── Aksiyon kartları ──
+    // ── Aksiyon kartları (referans: ikon üst-sol, metin sola hizalı) ──
     actions: { flexDirection: 'row', gap: space(1.25), paddingHorizontal: space(3), marginTop: space(1) },
     action: {
       flex: 1,
       borderRadius: radius.lg,
-      paddingVertical: space(2),
-      paddingHorizontal: space(1.5),
-      alignItems: 'center',
-      gap: space(1),
-      minHeight: 110,
-      justifyContent: 'center',
+      padding: space(1.75),
+      gap: space(1.5),
+      minHeight: 118,
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
     },
     actionIcon: {
-      width: 46,
-      height: 46,
-      borderRadius: 23,
-      backgroundColor: 'rgba(255,255,255,0.65)',
+      width: 42,
+      height: 42,
+      borderRadius: 21,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    actionTitle: { textAlign: 'center', fontWeight: '700', lineHeight: 17 },
+    actionTitle: { textAlign: 'left', fontWeight: '800', lineHeight: 17 },
+
+    // ── 2 sütun ızgara (Fırsatlar / Öne çıkanlar) ──
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space(1.5),
+      paddingHorizontal: space(3),
+    },
+    promoCard: {
+      width: GRID_W,
+      height: 132,
+      flexDirection: 'row',
+      borderRadius: radius.lg,
+      overflow: 'hidden',
+    },
+    promoCardLeft: { flex: 1, padding: space(1.5), justifyContent: 'center' },
+    promoCardTitle: { fontSize: 13, fontWeight: '800', lineHeight: 16, letterSpacing: -0.1 },
+    promoHighlight: { fontSize: 18, fontWeight: '800', letterSpacing: -0.5, marginVertical: 2 },
+    promoCardSub: { fontSize: 11, lineHeight: 14 },
+    promoCardImg: { width: 58, height: '100%', backgroundColor: colors.bgSunken },
 
     // ── Kategoriler ──
     catRow: { paddingHorizontal: space(3), gap: space(2), paddingTop: space(3.5) },
