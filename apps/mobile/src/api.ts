@@ -281,6 +281,9 @@ export const api = {
     post<{ sent: boolean; expiresInSec: number; devCode?: string }>('/auth/otp/request', { phone }),
   otpVerify: (phone: string, code: string) =>
     post<{ verified: boolean; phoneVerified: boolean }>('/auth/otp/verify', { phone, code }),
+  // §3.3 — Şifre sıfırlama: kayıtlı telefona OTP → yeni şifre
+  resetPassword: (input: { phone: string; code: string; newPassword: string }) =>
+    post<{ ok: boolean }>('/auth/reset-password', input),
 
   // İşletme & uzman kaydı (Build Brief §3)
   registerBusiness: (input: RegisterBusinessInput) =>

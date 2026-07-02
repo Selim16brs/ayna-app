@@ -78,7 +78,7 @@ export default function LoginScreen() {
             variant="caption"
             tone="rose"
             style={styles.forgot}
-            onPress={() => Alert.alert(t('auth.login.reset_sent'))}
+            onPress={() => router.push('/auth/forgot')}
           >
             {t('auth.login.forgot')}
           </Text>
