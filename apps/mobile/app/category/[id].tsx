@@ -30,7 +30,7 @@ export default function CategoryScreen() {
   }, [professionals, sector, sort]);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t(categoryLabelKey(sector))} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <Segmented

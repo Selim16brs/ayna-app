@@ -22,7 +22,7 @@ export default function CityScreen() {
   }
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('city.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="caption" tone="muted" style={styles.hint}>

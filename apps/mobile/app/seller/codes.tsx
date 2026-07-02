@@ -63,7 +63,7 @@ export default function SellerCodesScreen() {
     s === 'active' ? t('seller.codes.active') : s === 'used' ? t('seller.codes.used') : t('seller.codes.revoked');
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('seller.codes.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="caption" tone="muted" style={styles.hint}>

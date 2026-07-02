@@ -31,7 +31,7 @@ export default function EventsScreen() {
   );
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('events.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {events.length === 0 ? (

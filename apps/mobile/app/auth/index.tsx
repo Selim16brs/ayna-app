@@ -25,7 +25,7 @@ export default function AuthRoleScreen() {
   }
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['bottom']}>
       <StackHeader title="" />
       <View style={styles.content}>
         <Text variant="title" tone="ink">

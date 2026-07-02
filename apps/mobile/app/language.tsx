@@ -20,7 +20,7 @@ export default function LanguageScreen() {
   const router = useRouter();
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('profile.menu.language')} />
       <View style={styles.group}>
         {OPTIONS.map((o, i) => {

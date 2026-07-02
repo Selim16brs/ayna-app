@@ -72,7 +72,7 @@ export default function SearchScreen() {
   }, [professionals, query, activeCat, sort, t]);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('search.title')} />
       <View style={styles.searchRow}>
         <View style={styles.searchBar}>

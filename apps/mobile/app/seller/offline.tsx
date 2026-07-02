@@ -59,7 +59,7 @@ export default function OfflineBookingScreen() {
   }
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('offline.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Field label={t('offline.customer')}>

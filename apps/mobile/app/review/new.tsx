@@ -24,7 +24,7 @@ export default function ReviewNewScreen() {
 
   if (!booking) {
     return (
-      <Screen edges={['top']}>
+      <Screen edges={[]}>
         <StackHeader title={t('review.title')} />
         <View style={styles.empty}>
           <Ionicons name="star-outline" size={32} color={colors.muted} />
@@ -43,7 +43,7 @@ export default function ReviewNewScreen() {
   }
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['bottom']}>
       <StackHeader title={t('review.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="caption" tone="muted" style={styles.subtitle}>

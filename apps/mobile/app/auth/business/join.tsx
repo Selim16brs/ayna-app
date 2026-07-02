@@ -18,7 +18,7 @@ export default function JoinBusinessScreen() {
   const valid = firmId.length > 0 && code.trim().length >= 4;
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('biz.join.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="h2" tone="ink" style={styles.label}>

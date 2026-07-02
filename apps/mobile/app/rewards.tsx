@@ -49,7 +49,7 @@ export default function RewardsScreen() {
   };
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('rewards.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Puan kartı */}

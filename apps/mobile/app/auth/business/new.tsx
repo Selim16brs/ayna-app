@@ -97,7 +97,7 @@ export default function NewBusinessScreen() {
   }
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('biz.new.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* İşletme bilgileri */}

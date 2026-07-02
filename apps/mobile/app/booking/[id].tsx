@@ -27,7 +27,7 @@ export default function BookingDetailScreen() {
 
   if (!booking) {
     return (
-      <Screen edges={['top']}>
+      <Screen edges={[]}>
         <StackHeader title={t('booking.detail.title')} />
         <View style={styles.empty}>
           <Ionicons name="calendar-outline" size={32} color={colors.muted} />
@@ -67,7 +67,7 @@ export default function BookingDetailScreen() {
   const showContact = booking.status === 'confirmed';
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['bottom']}>
       <StackHeader title={t('booking.detail.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Uzman / salon */}

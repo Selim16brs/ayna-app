@@ -57,7 +57,7 @@ export default function VerifyScreen() {
 
   if (!phone) {
     return (
-      <Screen edges={['top']}>
+      <Screen edges={[]}>
         <StackHeader title={t('verify.title')} />
         <View style={styles.empty}>
           <Text variant="body" tone="muted">
@@ -69,7 +69,7 @@ export default function VerifyScreen() {
   }
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('verify.title')} />
       <View style={styles.content}>
         <LinearGradient colors={gradients.teal} style={[styles.hero, shadow.card]}>

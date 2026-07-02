@@ -73,7 +73,7 @@ export default function CustomerAuthScreen() {
       : (fields.id?.trim().length ?? 0) > 3 && (fields.password?.length ?? 0) >= 6;
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('auth.customer.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Segmented

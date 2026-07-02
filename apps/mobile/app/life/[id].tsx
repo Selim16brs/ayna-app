@@ -15,7 +15,7 @@ export default function ArticleDetailScreen() {
 
   if (!article) {
     return (
-      <Screen edges={['top']}>
+      <Screen edges={[]}>
         <StackHeader title={t('life.title')} />
         <View style={styles.empty}>
           <Text variant="body" tone="muted">
@@ -27,7 +27,7 @@ export default function ArticleDetailScreen() {
   }
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('life.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ImageBackground

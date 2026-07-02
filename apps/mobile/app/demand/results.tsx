@@ -17,7 +17,7 @@ export default function DemandResultsScreen() {
   const budgetNum = Number(budget) || 0;
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('demand.results.title')} />
 
       <LinearGradient colors={gradients.plum} style={styles.budgetBanner}>

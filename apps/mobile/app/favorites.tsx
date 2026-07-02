@@ -22,7 +22,7 @@ export default function FavoritesScreen() {
     .filter((p): p is NonNullable<typeof p> => p !== undefined);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('favorites.title')} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {favs.length === 0 ? (

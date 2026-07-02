@@ -84,7 +84,7 @@ export default function BoniScreen() {
   // Premium değilse: kilit ekranı + demo aç
   if (quota && !quota.premium) {
     return (
-      <Screen edges={['top']}>
+      <Screen edges={[]}>
         <StackHeader title={t('boni.title')} />
         <View style={styles.lockWrap}>
           <LinearGradient colors={gradients.plum} style={[styles.lockIcon, shadow.card]}>
@@ -112,7 +112,7 @@ export default function BoniScreen() {
   const empty = quota ? quota.remaining <= 0 : false;
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('boni.title')} />
       <KeyboardAvoidingView
         style={styles.flex}

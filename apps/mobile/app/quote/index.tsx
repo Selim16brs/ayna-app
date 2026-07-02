@@ -19,7 +19,7 @@ export default function QuoteHubScreen() {
   const styles = useThemedStyles(makeStyles);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('quote.hub.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="display" tone="ink" style={styles.title}>

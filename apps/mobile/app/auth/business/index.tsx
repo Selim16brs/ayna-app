@@ -13,7 +13,7 @@ export default function BusinessEntryScreen() {
   const styles = useThemedStyles(makeStyles);
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['bottom']}>
       <StackHeader title={t('biz.entry.title')} />
       <View style={styles.content}>
         <Text variant="caption" tone="muted" style={styles.sub}>

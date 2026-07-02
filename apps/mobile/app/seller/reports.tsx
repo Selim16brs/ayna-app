@@ -59,7 +59,7 @@ export default function ReportsScreen() {
   }, []);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('reports.panel_title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* İşletme kimliği + müşteri görünümü geçişi */}

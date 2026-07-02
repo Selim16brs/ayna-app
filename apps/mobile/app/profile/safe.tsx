@@ -23,7 +23,7 @@ export default function SafeScreen() {
   const onAddContact = () => Alert.alert(t('common.soon'));
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('safe.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="caption" tone="muted" style={styles.subtitle}>

@@ -40,7 +40,7 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('notifications.title')} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {items.length === 0 ? (

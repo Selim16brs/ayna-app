@@ -70,7 +70,7 @@ export default function AgendaScreen() {
   })).filter((g) => g.rows.length > 0);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('agenda.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {groups.length === 0 ? (

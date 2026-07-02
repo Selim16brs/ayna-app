@@ -25,7 +25,7 @@ export default function PassportScreen() {
   const trust = 92;
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('passport.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="caption" tone="muted" style={styles.subtitle}>

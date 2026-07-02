@@ -35,7 +35,7 @@ export default function MapScreen() {
   const pros = useMemo(() => (cat ? all.filter((p) => p.sector === cat) : all), [all, cat]);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <View style={styles.headerRow}>
         <StackHeader title={t('map.title')} />
         <PressableScale style={styles.listBtn} onPress={() => router.replace('/search')}>

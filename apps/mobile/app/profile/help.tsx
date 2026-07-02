@@ -16,7 +16,7 @@ export default function HelpScreen() {
   const onContact = () => Alert.alert(t('common.soon'));
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('help.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="caption" tone="muted" style={styles.subtitle}>

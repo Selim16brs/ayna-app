@@ -33,7 +33,7 @@ export default function QuoteResultsScreen() {
   }, [incoming, sort]);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('quotes.title')} />
       <View style={styles.subtitleRow}>
         <Text variant="caption" tone="muted">

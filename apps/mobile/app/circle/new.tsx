@@ -35,7 +35,7 @@ export default function NewPostScreen() {
   };
 
   return (
-    <Screen edges={['top', 'bottom']}>
+    <Screen edges={['bottom']}>
       <StackHeader title={t('circle.new.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="h2" tone="ink" style={styles.label}>

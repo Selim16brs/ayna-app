@@ -29,7 +29,7 @@ export default function BudgetScreen() {
   const categories = Object.entries(byCategory);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('budget.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="caption" tone="muted" style={styles.subtitle}>

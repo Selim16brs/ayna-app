@@ -29,7 +29,7 @@ export default function SellerReviewsScreen() {
   }, [load]);
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('seller.reviews.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="caption" tone="muted" style={styles.hint}>

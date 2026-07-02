@@ -24,7 +24,7 @@ export default function ProfileEditScreen() {
   };
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('profile.edit.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Field label={t('profile.edit.name')} value={name} onChangeText={setName} />

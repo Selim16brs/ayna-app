@@ -38,7 +38,7 @@ export default function PostDetailScreen() {
 
   if (!post) {
     return (
-      <Screen edges={['top']}>
+      <Screen edges={[]}>
         <StackHeader title={t('circle.detail.title')} />
         <View style={styles.empty}>
           <Text variant="body" tone="muted">
@@ -58,7 +58,7 @@ export default function PostDetailScreen() {
   };
 
   return (
-    <Screen edges={['top']}>
+    <Screen edges={[]}>
       <StackHeader title={t('circle.detail.title')} />
       <KeyboardAvoidingView
         style={styles.flex}
