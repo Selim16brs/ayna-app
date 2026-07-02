@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
@@ -37,7 +37,8 @@ export default function SearchScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
-  const [query, setQuery] = useState('');
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  const [query, setQuery] = useState(typeof q === 'string' ? q : '');
   const inputRef = useRef<TextInput>(null);
   // Navigasyon animasyonu bitince klavyeyi güvenilir şekilde aç (autoFocus tek başına yetmiyor)
   useEffect(() => {

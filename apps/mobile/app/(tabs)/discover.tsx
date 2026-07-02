@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Dimensions, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MessageKey } from '@ayna/i18n';
 import { formatPrice } from '../../src/data';
@@ -16,7 +17,8 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 // Kategori daire zeminleri (spec §0.1) — pastel + ink ikon
 const INK = '#1A1A1A';
 const HOT_PINK = '#FF2E93'; // "Ne yapmak istersin?" kartı — çırtlak pembe
-const CAT_TINTS = ['#F6D9E4', '#E5EFC4', '#F7C9DA', '#F8DFC2', '#D9D6F0', '#E9E5DC'];
+// Canlı kategori renkleri (pembe/yeşil gibi doygun) — Saç·Cilt·Nail·Makyaj·Spa·Diğer
+const CAT_TINTS = ['#FF2E93', '#C6E24B', '#B06CFF', '#FF8A3D', '#3FC5F0', '#2ED9B0'];
 // Fırsat / öne çıkan kart zeminleri (spec §0.1)
 const CARD_TINTS = ['#E4DEF4', '#F7DCE6', '#F6E4CE', '#E8F1C4'];
 
@@ -48,6 +50,12 @@ export default function DiscoverScreen() {
   const pros = useProfessionals();
   const featured = pros.slice(0, 4);
   const nearby = pros.slice(4, 9);
+  const [query, setQuery] = useState('');
+
+  function runSearch() {
+    const q = query.trim();
+    router.push(q ? { pathname: '/search', params: { q } } : '/search');
+  }
 
   return (
     <Screen edges={[]}>
@@ -66,12 +74,18 @@ export default function DiscoverScreen() {
           </View>
 
           <View style={styles.searchRow}>
-            <Pressable style={styles.search} onPress={() => router.push('/search')}>
+            <View style={styles.search}>
               <Ionicons name="search" size={19} color={colors.muted} />
-              <Text variant="body" tone="muted" numberOfLines={1} style={styles.searchText}>
-                {t('home.search')}
-              </Text>
-            </Pressable>
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder={t('home.search')}
+                placeholderTextColor={colors.muted}
+                returnKeyType="search"
+                onSubmitEditing={runSearch}
+                style={styles.searchInput}
+              />
+            </View>
             <Pressable style={styles.mapChip} onPress={() => router.push('/map')}>
               <Ionicons name="map-outline" size={18} color={colors.ink} />
               <Text variant="caption" tone="ink" style={styles.mapChipText}>
@@ -289,6 +303,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(2),
     },
     searchText: { flex: 1 },
+    searchInput: { flex: 1, fontSize: 16, fontWeight: '400', color: colors.ink, padding: 0 },
     mapChip: {
       flexDirection: 'row',
       alignItems: 'center',
