@@ -136,6 +136,12 @@ export const tr = {
   'quote.new.note_ph': 'Detay ekle: saç boyu, renk, bölge...',
   'quote.new.submit': 'Teklif iste',
 
+  // Teklif akışı bildirimi (foto & bütçe) — "yeni teklifin var"
+  'quote.notif.title': 'Yeni teklifin var',
+  'quote.notif.body': 'Fotoğrafına göre uzmanlar teklif gönderdi. Tekliflerini gör.',
+  'demand.notif.title': 'Yeni teklifin var',
+  'demand.notif.body': 'Bütçene göre uzmanlar teklif gönderdi. Tekliflerini gör.',
+
   // Gönderildi
   'quote.sent.title': 'İsteğin gönderildi',
   'quote.sent.subtitle': 'Satıcılardan teklifler birazdan gelecek',

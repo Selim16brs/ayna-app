@@ -8,6 +8,7 @@ import { api } from '../../src/api';
 import { CATEGORIES } from '../../src/data';
 import { useCampaigns } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, Text } from '../../src/ui';
@@ -24,6 +25,7 @@ export default function NewQuoteScreen() {
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const campaigns = useCampaigns();
+  const pushNotification = useStore((s) => s.pushNotification);
   const [photo, setPhoto] = useState<string | null>(null);
   const [category, setCategory] = useState<string>('hair');
   const [submitting, setSubmitting] = useState(false);
@@ -31,10 +33,19 @@ export default function NewQuoteScreen() {
   async function submit() {
     setSubmitting(true);
     try {
-      await api.createQuoteRequest({ categoryId: category });
+      await api.createQuoteRequest({ categoryId: category, photoUrl: photo ?? undefined });
     } catch {
       // demo: hata olsa da sonuç ekranına geç
     }
+    // İlgili alandaki uzman/salonlar teklif verdi → kullanıcıya "yeni teklifin var" bildirimi
+    pushNotification({
+      type: 'quote',
+      title: t('quote.notif.title'),
+      body: t('quote.notif.body'),
+      dateLabel: 'Şimdi',
+      icon: 'pricetags-outline',
+      route: '/quote/results',
+    });
     router.replace('/quote/results');
   }
 

@@ -30,6 +30,7 @@ export default function NewDemandScreen() {
   const insets = useSafeAreaInsets();
   const CAT_COLORS = makeCatColors(colors);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
+  const pushNotification = useStore((s) => s.pushNotification);
   const [desc, setDesc] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [category, setCategory] = useState<string>(CATEGORIES[0]!.id);
@@ -58,6 +59,19 @@ export default function NewDemandScreen() {
   const budgetNum = Number(budget);
   const tooLow = market !== null && budgetNum > 0 && budgetNum < market.floor;
   const canSubmit = desc.trim().length > 0 && budgetNum > 0;
+
+  function submit() {
+    // İlgili alandaki uzman/salonlar bütçeyi kabul etti → "yeni teklifin var" bildirimi
+    pushNotification({
+      type: 'quote',
+      title: t('demand.notif.title'),
+      body: t('demand.notif.body'),
+      dateLabel: 'Şimdi',
+      icon: 'pricetags-outline',
+      route: '/demand/results',
+    });
+    router.replace({ pathname: '/demand/results', params: { budget } });
+  }
 
   return (
     <Screen edges={[]}>
@@ -208,11 +222,7 @@ export default function NewDemandScreen() {
 
       {/* ── CTA ── */}
       <View style={[styles.footer, { paddingBottom: (insets.bottom || space(1.5)) + space(1) }]}>
-        <Pressable
-          style={[styles.cta, !canSubmit && styles.ctaOff]}
-          disabled={!canSubmit}
-          onPress={() => router.replace({ pathname: '/demand/results', params: { budget } })}
-        >
+        <Pressable style={[styles.cta, !canSubmit && styles.ctaOff]} disabled={!canSubmit} onPress={submit}>
           <Text variant="bodyStrong" tone={canSubmit ? 'onAccent' : 'muted'} style={styles.ctaText}>
             {t('demand.new.send')}
           </Text>
