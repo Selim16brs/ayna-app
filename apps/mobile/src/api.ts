@@ -83,6 +83,7 @@ export interface SellerInviteCode {
   code: string;
   status: string;
   attempts?: number;
+  expiresAt?: string;
 }
 export interface SellerReview {
   id: string;

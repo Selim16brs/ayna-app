@@ -557,6 +557,11 @@ export const tr = {
   'seller.codes.revoke': 'İptal et',
   'seller.codes.revoke_confirm': 'Bu davet kodu iptal edilsin mi?',
   'seller.codes.no_business': 'Hesabına bağlı işletme bulunamadı.',
+  'seller.codes.rule': 'Tek kullanımlık · 24 saat geçerli',
+  'seller.codes.share': 'Kodu paylaş',
+  'seller.codes.share_msg': 'AYNA salon davet kodun',
+  'seller.codes.expires': 'Geçerlilik',
+  'seller.codes.expired': 'Süresi doldu',
   // Salon — yorumlar (yanıt)
   'seller.reviews.title': 'Yorumlar',
   'seller.reviews.hint': 'Müşteri yorumlarını gör ve yanıtla (yorum silinemez).',
