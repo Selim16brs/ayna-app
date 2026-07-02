@@ -4,6 +4,8 @@ export { Card } from './Card';
 export { Badge } from './Badge';
 export { Screen } from './Screen';
 export { ProCard } from './ProCard';
+export { SalonRow } from './SalonRow';
+export { WaveBottom } from './WaveBottom';
 export { Placeholder } from './Placeholder';
 export { StackHeader } from './StackHeader';
 export { Segmented } from './Segmented';

@@ -1,107 +1,127 @@
-import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Dimensions, Image, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { buildUpcomingEvents, CATEGORIES, whenShort } from '../../src/data';
+import { CATEGORIES } from '../../src/data';
 import { useAds, useCampaigns, useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { ProCard, Screen, Text } from '../../src/ui';
+import { SalonRow, Screen, Text, WaveBottom } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-// Kategori ikon zeminleri: nazik pastel tint + renkli ikon (wellness, gökkuşağı yok)
+// Kategori ikon zeminleri: nazik pastel tint + renkli ikon
 const makeCatColors = (colors: ColorTokens) => [
-  { bg: colors.sageSoft, fg: colors.sage },
   { bg: colors.roseSoft, fg: colors.rose },
+  { bg: colors.sageSoft, fg: colors.sage },
   { bg: colors.lavenderSoft, fg: colors.lavender },
-  { bg: colors.blueSoft, fg: colors.blue },
   { bg: colors.goldSoft, fg: colors.gold },
+  { bg: colors.blueSoft, fg: colors.blue },
 ];
 
-const ACTION_PHOTO_1 =
-  'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=70';
-const ACTION_PHOTO_2 =
-  'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=600&q=70';
+const HERO_WOMAN =
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=500&q=75';
+const AVATAR =
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=70';
 
 const AD_WIDTH = Dimensions.get('window').width - space(6);
 
 export default function DiscoverScreen() {
   const { t } = useLocale();
-  const { colors, gradients, shadow } = useTheme();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const CAT_COLORS = makeCatColors(colors);
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const bookings = useStore((s) => s.bookings);
-  const moments = useStore((s) => s.moments);
-  const routines = useStore((s) => s.careRoutines);
-  const events = useMemo(
-    () => buildUpcomingEvents(bookings, moments, routines).slice(0, 3),
-    [bookings, moments, routines],
-  );
   const unread = useStore(selectUnreadCount);
   const campaigns = useCampaigns();
   const ads = useAds();
+  const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const userName = useStore((s) => s.currentUser?.name)?.split(' ')[0] ?? 'Aigerim';
   const categories = CATEGORIES;
-  const featured = useProfessionals().slice(0, 8);
+  const nearby = useProfessionals().slice(0, 6);
 
   return (
     <Screen edges={[]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* Booksy header — temiz beyaz: arama + avatar */}
-        <View style={[styles.bkHdr, { paddingTop: insets.top + space(1) }]}>
-          <Pressable style={styles.bkSearch} onPress={() => router.push('/search')}>
-            <Ionicons name="search" size={19} color={colors.muted} />
-            <Text variant="body" tone="muted">
-              {t('home.search')}
-            </Text>
-          </Pressable>
-          <Pressable style={styles.bkAvatar} onPress={() => router.push('/profile')}>
-            <Text variant="bodyStrong" tone="onAccent">
-              {userName.charAt(0).toUpperCase()}
-            </Text>
-            {unread > 0 ? <View style={styles.badge} /> : null}
-          </Pressable>
+        {/* ── LIME HERO (referans: dalgalı kesim + gerçek foto) ── */}
+        <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
+          <View style={styles.heroTop}>
+            <Image source={require('../../assets/logo-mark.png')} style={styles.logo} resizeMode="contain" />
+            <Pressable style={styles.locChip} onPress={() => router.push('/map')}>
+              <Text variant="bodyStrong" tone="ink">
+                {city}
+              </Text>
+              <Ionicons name="chevron-down" size={16} color={colors.ink} />
+            </Pressable>
+            <Pressable onPress={() => router.push('/profile')}>
+              <Image source={{ uri: AVATAR }} style={styles.avatar} />
+              {unread > 0 ? <View style={styles.badge} /> : null}
+            </Pressable>
+          </View>
+
+          <View style={styles.searchRow}>
+            <Pressable style={styles.search} onPress={() => router.push('/search')}>
+              <Ionicons name="search" size={19} color={colors.muted} />
+              <Text variant="body" tone="muted">
+                {t('home.search')}
+              </Text>
+            </Pressable>
+            <Pressable style={styles.mapChip} onPress={() => router.push('/map')}>
+              <Ionicons name="map-outline" size={18} color={colors.ink} />
+              <Text variant="caption" tone="ink" style={styles.mapChipText}>
+                {t('home.map_mode')}
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.heroBody}>
+            <View style={styles.heroText}>
+              <Text variant="display" tone="ink" style={styles.heroTitle}>
+                {t('home.greeting')}
+              </Text>
+              <Text variant="display" tone="ink" style={styles.heroName}>
+                {userName}
+              </Text>
+              <Text variant="caption" tone="inkSoft" style={styles.heroSub}>
+                {t('home.hero_subtitle')}
+              </Text>
+            </View>
+            <Image source={{ uri: HERO_WOMAN }} style={styles.heroPhoto} />
+          </View>
+
+          <WaveBottom color={colors.bg} />
         </View>
 
-        {/* HERO — Ne yapmak istersin? (birincil aksiyon, belirgin) */}
-        <Text variant="h2" tone="ink" style={styles.heroTitle}>
-          {t('home.how')}
-        </Text>
+        {/* ── 3 AKSİYON KARTI ── */}
         <View style={styles.actions}>
-          <ActionCard
-            photo={ACTION_PHOTO_1}
-            icon="camera"
+          <ActionTile
+            bg={colors.lavenderSoft}
+            fg={colors.lavender}
+            icon="camera-outline"
             title={t('action.photo_quote.title')}
-            subtitle={t('action.photo_quote.subtitle')}
             onPress={() => router.push('/quote/new')}
           />
-          <ActionCard
-            photo={ACTION_PHOTO_2}
-            icon="pricetag"
+          <ActionTile
+            bg={colors.goldSoft}
+            fg={colors.gold}
+            icon="sparkles-outline"
+            title={t('home.how')}
+            onPress={() => router.push('/quote')}
+          />
+          <ActionTile
+            bg={colors.roseSoft}
+            fg={colors.rose}
+            icon="add-circle-outline"
             title={t('action.demand.title')}
-            subtitle={t('action.demand.subtitle')}
             onPress={() => router.push('/demand/new')}
           />
         </View>
 
-        {/* Kategoriler — renkli ikon karoları (hero'nun hemen altında) */}
-        <View style={styles.sectionHeader}>
-          <Text variant="label" tone="muted">
-            {t('home.categories')}
-          </Text>
-          <Pressable onPress={() => router.push('/search')}>
-            <Text variant="caption" tone="rose">
-              {t('common.see_all')}
-            </Text>
-          </Pressable>
-        </View>
+        {/* ── KATEGORİLER (yuvarlak) ── */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -122,12 +142,8 @@ export default function DiscoverScreen() {
           })}
         </ScrollView>
 
-        {/* Fırsatlar — promo carousel */}
-        <View style={styles.sectionHeader}>
-          <Text variant="label" tone="muted">
-            {t('home.campaigns')}
-          </Text>
-        </View>
+        {/* ── FIRSATLAR ── */}
+        <SectionHeader title={t('home.campaigns')} onSeeAll={() => router.push('/search')} />
         <ScrollView
           horizontal
           pagingEnabled
@@ -156,77 +172,14 @@ export default function DiscoverScreen() {
                 <Text variant="caption" tone="muted" numberOfLines={1}>
                   {c.subtitle}
                 </Text>
-                <View style={styles.promoCta}>
-                  <Text variant="caption" tone="onAccent" style={styles.promoCtaText}>
-                    {t('common.see_all')}
-                  </Text>
-                </View>
               </View>
               <Image source={{ uri: c.image }} style={styles.promoImg} />
             </Pressable>
           ))}
         </ScrollView>
 
-        {/* Yaklaşan etkinlikler — kompakt, ilk 3 */}
-        {events.length > 0 ? (
-          <>
-            <View style={styles.sectionHeader}>
-              <Text variant="label" tone="muted">
-                {t('home.upcoming_events')}
-              </Text>
-              <Pressable onPress={() => router.push('/events')}>
-                <Text variant="caption" tone="rose">
-                  {t('common.see_all')}
-                </Text>
-              </Pressable>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.upcoming}
-            >
-              {events.map((e) => (
-                <Pressable
-                  key={e.id}
-                  style={[styles.eventCard, shadow.soft]}
-                  onPress={() =>
-                    e.kind === 'appointment'
-                      ? router.push('/booking/' + e.refId)
-                      : router.push('/events')
-                  }
-                >
-                  <View
-                    style={[
-                      styles.eventIcon,
-                      { backgroundColor: e.tone === 'rose' ? colors.roseSoft : colors.sageSoft },
-                    ]}
-                  >
-                    <Ionicons
-                      name={e.icon as IoniconName}
-                      size={18}
-                      color={e.tone === 'rose' ? colors.rose : colors.sage}
-                    />
-                  </View>
-                  <View style={styles.eventBody}>
-                    <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                      {e.title}
-                    </Text>
-                    <Text variant="caption" tone="muted">
-                      {whenShort(e.inDays)}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </>
-        ) : null}
-
-        {/* Öne çıkan (sponsorlu) işletmeler */}
-        <View style={styles.sectionHeader}>
-          <Text variant="label" tone="muted">
-            {t('home.featured')}
-          </Text>
-        </View>
+        {/* ── ÖNE ÇIKANLAR (sponsorlu) ── */}
+        <SectionHeader title={t('home.featured')} onSeeAll={() => router.push('/search')} />
         <ScrollView
           horizontal
           pagingEnabled
@@ -269,65 +222,61 @@ export default function DiscoverScreen() {
           ))}
         </ScrollView>
 
-        {/* Sana yakın salonlar */}
-        <View style={styles.sectionHeader}>
-          <Text variant="label" tone="muted">
-            {t('home.nearby')}
-          </Text>
-          <Pressable onPress={() => router.push('/search')}>
-            <Text variant="caption" tone="rose">
-              {t('common.see_all')}
-            </Text>
-          </Pressable>
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.featured}
-        >
-          {featured.map((pro, i) => (
-            <ProCard key={pro.id} pro={pro} index={i} />
+        {/* ── YAKINDAKİ SALONLAR (yatay kart listesi) ── */}
+        <SectionHeader title={t('home.nearby')} onSeeAll={() => router.push('/search')} />
+        <View style={styles.nearby}>
+          {nearby.map((pro, i) => (
+            <SalonRow key={pro.id} pro={pro} index={i} />
           ))}
-        </ScrollView>
+        </View>
       </ScrollView>
     </Screen>
   );
 }
 
-function ActionCard({
-  photo,
-  icon,
-  title,
-  subtitle,
-  onPress,
-}: {
-  photo: string;
-  icon: IoniconName;
-  title: string;
-  subtitle: string;
-  onPress: () => void;
-}) {
-  const { colors, shadow } = useTheme();
+function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => void }) {
+  const { t } = useLocale();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <Pressable style={styles.actionWrap} onPress={onPress}>
-      <ImageBackground
-        source={{ uri: photo }}
-        style={[styles.action, shadow.soft]}
-        imageStyle={styles.actionImage}
-      >
-        <LinearGradient
-          colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.8)']}
-          style={StyleSheet.absoluteFill}
-        />
-        <Ionicons name={icon} size={24} color={colors.onColor} />
-        <Text variant="bodyStrong" tone="onColor" style={styles.actionTitle}>
-          {title}
-        </Text>
-        <Text variant="caption" tone="onColor" style={styles.actionSubtitle}>
-          {subtitle}
-        </Text>
-      </ImageBackground>
+    <View style={styles.sectionHeader}>
+      <Text variant="h2" tone="ink" style={styles.sectionTitle}>
+        {title}
+      </Text>
+      {onSeeAll ? (
+        <Pressable onPress={onSeeAll} style={styles.seeAll}>
+          <Text variant="caption" tone="muted">
+            {t('common.see_all')}
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.muted} />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+function ActionTile({
+  bg,
+  fg,
+  icon,
+  title,
+  onPress,
+}: {
+  bg: string;
+  fg: string;
+  icon: IoniconName;
+  title: string;
+  onPress: () => void;
+}) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable style={[styles.action, { backgroundColor: bg }]} onPress={onPress}>
+      <View style={styles.actionIcon}>
+        <Ionicons name={icon} size={22} color={fg} />
+      </View>
+      <Text variant="caption" tone="ink" style={styles.actionTitle}>
+        {title}
+      </Text>
     </Pressable>
   );
 }
@@ -335,85 +284,127 @@ function ActionCard({
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: space(13) },
-    // Booksy header — beyaz: arama + avatar
-    bkHdr: {
+
+    // ── Lime hero ──
+    hero: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(3),
+    },
+    heroTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
+    logo: { width: 74, height: 38 },
+    locChip: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: space(1.5),
-      paddingHorizontal: space(3),
-      paddingBottom: space(2),
+      justifyContent: 'center',
+      gap: 4,
     },
-    bkSearch: {
+    avatar: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      borderWidth: 2,
+      borderColor: 'rgba(255,255,255,0.7)',
+      backgroundColor: colors.bgSunken,
+    },
+    badge: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: 12,
+      height: 12,
+      borderRadius: 6,
+      backgroundColor: colors.rose,
+      borderWidth: 2,
+      borderColor: colors.accent,
+    },
+    searchRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.25), marginTop: space(2) },
+    search: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1),
-      height: 48,
-      borderRadius: radius.lg,
-      backgroundColor: colors.surfaceMuted,
-      paddingHorizontal: space(1.75),
-    },
-    bkAvatar: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      backgroundColor: colors.accent,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    // Coral header (eski, kullanılmıyor)
-    hdr: {
-      backgroundColor: colors.accent,
-      borderBottomLeftRadius: radius.xl,
-      borderBottomRightRadius: radius.xl,
-      paddingHorizontal: space(3),
-      paddingBottom: space(2.5),
-      marginBottom: space(2.5),
-    },
-    hdrTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
-    hdrAvatar: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      backgroundColor: 'rgba(255,255,255,0.25)',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    hdrLoc: { flex: 1 },
-    hdrHi: { color: 'rgba(255,255,255,0.8)' },
-    hdrLocRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 1 },
-    hdrBell: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    hdrSearchRow: { flexDirection: 'row', gap: space(1.25), marginTop: space(2) },
-    hdrSearch: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1),
-      height: 48,
-      borderRadius: radius.lg,
+      height: 50,
+      borderRadius: radius.pill,
       backgroundColor: colors.surface,
-      paddingHorizontal: space(1.75),
+      paddingHorizontal: space(2),
     },
-    hdrFilter: {
-      width: 48,
-      height: 48,
+    mapChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      height: 50,
+      borderRadius: radius.pill,
+      paddingHorizontal: space(2),
+      borderWidth: 1.5,
+      borderColor: 'rgba(32,36,15,0.35)',
+    },
+    mapChipText: { fontWeight: '700' },
+    heroBody: { flexDirection: 'row', alignItems: 'flex-end', marginTop: space(2), minHeight: 150 },
+    heroText: { flex: 1, paddingBottom: space(2), paddingTop: space(1) },
+    heroTitle: { fontSize: 34, lineHeight: 38, fontWeight: '800', letterSpacing: -0.8 },
+    heroName: { fontSize: 34, lineHeight: 38, fontWeight: '800', letterSpacing: -0.8 },
+    heroSub: { marginTop: space(1), maxWidth: 220 },
+    heroPhoto: {
+      width: 160,
+      height: 200,
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.md,
+      marginRight: -space(1.5),
+      backgroundColor: 'rgba(255,255,255,0.25)',
+    },
+
+    // ── Aksiyon kartları ──
+    actions: { flexDirection: 'row', gap: space(1.25), paddingHorizontal: space(3), marginTop: space(1) },
+    action: {
+      flex: 1,
       borderRadius: radius.lg,
-      backgroundColor: 'rgba(255,255,255,0.22)',
+      paddingVertical: space(2),
+      paddingHorizontal: space(1.5),
+      alignItems: 'center',
+      gap: space(1),
+      minHeight: 110,
+      justifyContent: 'center',
+    },
+    actionIcon: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      backgroundColor: 'rgba(255,255,255,0.65)',
       alignItems: 'center',
       justifyContent: 'center',
     },
-    // Promo hero
-    // Booksy promo — açık kart: sol metin + coral pill, sağ foto
+    actionTitle: { textAlign: 'center', fontWeight: '700', lineHeight: 17 },
+
+    // ── Kategoriler ──
+    catRow: { paddingHorizontal: space(3), gap: space(2), paddingTop: space(3.5) },
+    cat: { alignItems: 'center', width: 66 },
+    catTile: {
+      width: 62,
+      height: 62,
+      borderRadius: 31,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space(0.75),
+    },
+    catLabel: { textAlign: 'center' },
+
+    // ── Bölüm başlığı ──
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: space(3),
+      marginTop: space(3.5),
+      marginBottom: space(1.75),
+    },
+    sectionTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.4 },
+    seeAll: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+
+    // ── Fırsatlar ──
     promoRow: { paddingHorizontal: space(3), gap: space(1.5) },
     promo: {
-      height: 150,
+      height: 148,
       flexDirection: 'row',
       borderRadius: radius.xl,
       backgroundColor: colors.lavenderSoft,
@@ -431,154 +422,11 @@ const makeStyles = (colors: ColorTokens) =>
     },
     promoBadgeText: { fontWeight: '800' },
     promoTitle: { fontSize: 17, fontWeight: '800', letterSpacing: -0.2, marginBottom: 2 },
-    promoCta: {
-      alignSelf: 'flex-start',
-      backgroundColor: colors.accent,
-      paddingHorizontal: space(2),
-      paddingVertical: space(1),
-      borderRadius: radius.pill,
-      marginTop: space(1.5),
-    },
-    promoCtaText: { fontWeight: '800' },
-    // Kategori — yuvarlak görsel (Booksy)
-    catRow: { paddingHorizontal: space(3), gap: space(2) },
-    cat: { alignItems: 'center', width: 66 },
-    catTile: {
-      width: 62,
-      height: 62,
-      borderRadius: 31,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: space(0.75),
-    },
-    catLabel: { textAlign: 'center' },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: space(3),
-      paddingTop: space(1),
-      marginBottom: space(2.5),
-    },
-    headerText: { flex: 1 },
-    greetingLabel: { marginBottom: space(0.75) },
-    greetingName: { letterSpacing: -0.6 },
-    headerActions: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
-    iconButton: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    avatar: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    badge: {
-      position: 'absolute',
-      top: 9,
-      right: 10,
-      width: 9,
-      height: 9,
-      borderRadius: 5,
-      backgroundColor: colors.rose,
-      borderWidth: 1.5,
-      borderColor: colors.surface,
-    },
-    sectionHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'baseline',
-      paddingHorizontal: space(3),
-      marginTop: space(3.5),
-      marginBottom: space(1.75),
-    },
-    upcoming: { paddingHorizontal: space(3), gap: space(1.25), paddingBottom: space(1) },
-    eventCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1.25),
-      width: 210,
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(1.5),
-    },
-    eventIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: radius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    eventBody: { flex: 1 },
-    howLabel: { paddingHorizontal: space(3), marginTop: space(1), marginBottom: space(1.25) },
-    heroTitle: {
-      fontSize: 20,
-      fontWeight: '800',
-      letterSpacing: -0.3,
-      paddingHorizontal: space(3),
-      marginBottom: space(1.5),
-    },
-    actions: { flexDirection: 'row', gap: space(1.5), paddingHorizontal: space(3) },
-    actionWrap: { flex: 1 },
-    action: {
-      height: 172,
-      borderRadius: radius.xl,
-      padding: space(2),
-      justifyContent: 'flex-end',
-      overflow: 'hidden',
-    },
-    actionImage: { borderRadius: radius.xl },
-    actionTitle: { marginTop: space(0.75) },
-    actionSubtitle: { opacity: 0.9, marginTop: 2 },
-    searchRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1.25),
-      paddingHorizontal: space(3),
-      marginBottom: space(1),
-    },
-    search: {
-      flex: 1,
-      height: 52,
-      backgroundColor: colors.surface,
-      borderRadius: radius.pill,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1.25),
-      paddingHorizontal: space(2.25),
-    },
-    mapBtn: {
-      width: 52,
-      height: 52,
-      borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    categories: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(1) },
-    category: { alignItems: 'center', width: 64 },
-    categoryIcon: {
-      width: 60,
-      height: 60,
-      borderRadius: radius.lg,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    categoryLabel: { marginTop: space(0.75), textAlign: 'center' },
-    ads: { paddingHorizontal: space(3), gap: space(1.5), marginTop: space(2.5) },
-    adCard: {
-      height: 160,
-      borderRadius: radius.lg,
-      overflow: 'hidden',
-      justifyContent: 'flex-end',
-    },
-    adImage: { borderRadius: radius.lg },
+
+    // ── Öne çıkanlar (sponsorlu) ──
+    ads: { paddingHorizontal: space(3), gap: space(1.5) },
+    adCard: { height: 160, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end' },
+    adImage: { borderRadius: radius.xl },
     adBadge: {
       position: 'absolute',
       top: space(1.5),
@@ -594,27 +442,7 @@ const makeStyles = (colors: ColorTokens) =>
     adBadgeText: { fontWeight: '600' },
     adText: { padding: space(2) },
     adSubtitle: { opacity: 0.9, marginTop: 2 },
-    featured: { paddingHorizontal: space(3), gap: space(2), paddingBottom: space(2) },
-    // §12 kampanya vitrini
-    campaigns: { paddingHorizontal: space(3), gap: space(1.5) },
-    campaignCard: {
-      width: 240,
-      height: 130,
-      borderRadius: radius.lg,
-      overflow: 'hidden',
-      justifyContent: 'flex-end',
-    },
-    campaignImage: { borderRadius: radius.lg },
-    campaignBadge: {
-      position: 'absolute',
-      top: space(1.25),
-      left: space(1.25),
-      backgroundColor: colors.rose,
-      paddingHorizontal: space(1),
-      paddingVertical: 3,
-      borderRadius: radius.pill,
-    },
-    campaignBadgeText: { fontWeight: '700' },
-    campaignText: { padding: space(1.75) },
-    campaignSub: { opacity: 0.9, marginTop: 2 },
+
+    // ── Yakındaki salonlar ──
+    nearby: { paddingHorizontal: space(3), gap: space(1.5) },
   });
