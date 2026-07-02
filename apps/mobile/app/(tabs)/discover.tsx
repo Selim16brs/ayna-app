@@ -19,8 +19,8 @@ const INK = '#1A1A1A';
 const HOT_PINK = '#FF2E93'; // "Ne yapmak istersin?" kartı — çırtlak pembe
 // Canlı kategori renkleri (pembe/yeşil gibi doygun) — Saç·Cilt·Nail·Makyaj·Spa·Diğer
 const CAT_TINTS = ['#FF2E93', '#C6E24B', '#B06CFF', '#FF8A3D', '#3FC5F0', '#2ED9B0'];
-// Fırsat / öne çıkan kart zeminleri (spec §0.1)
-const CARD_TINTS = ['#E4DEF4', '#F7DCE6', '#F6E4CE', '#E8F1C4'];
+// Fırsat / öne çıkan kart zeminleri — canlı (kategorilerle aynı dil)
+const CARD_TINTS = ['#FF2E93', '#C6E24B', '#B06CFF', '#FF8A3D'];
 
 
 // 2 sütun ızgara kart genişliği (referans Fırsatlar/Öne çıkanlar)
@@ -145,7 +145,7 @@ export default function DiscoverScreen() {
             return (
               <Pressable key={cat.key} style={styles.cat} onPress={() => router.push(cat.route as never)}>
                 <View style={[styles.catTile, { backgroundColor: bg }]}>
-                  <Ionicons name={cat.icon} size={25} color={INK} />
+                  <Ionicons name={cat.icon} size={25} color="#FFFFFF" />
                 </View>
                 <Text variant="caption" tone="inkSoft" style={styles.catLabel} numberOfLines={1}>
                   {t(cat.key)}
@@ -394,16 +394,16 @@ const makeStyles = (colors: ColorTokens) =>
       overflow: 'hidden',
     },
     promoCardLeft: { flex: 1, padding: space(1.5), justifyContent: 'center' },
-    promoCardTitle: { fontSize: 13, fontWeight: '700', lineHeight: 16, letterSpacing: -0.1, color: colors.ink },
+    promoCardTitle: { fontSize: 13, fontWeight: '700', lineHeight: 16, letterSpacing: -0.1, color: '#FFFFFF' },
     promoHighlight: {
       fontSize: 24,
       lineHeight: 28,
       fontWeight: '800',
       letterSpacing: -0.3,
       marginVertical: 2,
-      color: colors.ink,
+      color: '#FFFFFF',
     },
-    promoCardSub: { fontSize: 11, lineHeight: 14, color: colors.muted },
+    promoCardSub: { fontSize: 11, lineHeight: 14, color: 'rgba(255,255,255,0.9)' },
     promoCardImg: { width: 58, height: '100%', backgroundColor: colors.bgSunken },
 
     // ── Kategoriler (sabit 6, eşit dağılım) ──
