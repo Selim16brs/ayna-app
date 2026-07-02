@@ -16,10 +16,9 @@ export function Text({ variant = 'body', tone = 'ink', style, ...rest }: TextPro
 }
 
 const styles = StyleSheet.create({
-  // Büyük başlıklar (hero / ekran başlığı): yüksek kontrastlı serif (Fraunces) — spec §0.2
-  display: { fontFamily: 'Fraunces_900Black', fontSize: 34, lineHeight: 40, letterSpacing: 0.2 },
-  title: { fontFamily: 'Fraunces_700Bold', fontSize: 28, lineHeight: 34, letterSpacing: 0.2 },
-  // Bölüm başlıkları sans kalır (spec §0.2 sectionTitle)
+  // Tüm tipografi = SF Pro (iOS sistem fontu, Apple web dili) — fontFamily verilmez
+  display: { fontSize: 34, lineHeight: 40, fontWeight: '700', letterSpacing: 0.37 },
+  title: { fontSize: 28, lineHeight: 34, fontWeight: '700', letterSpacing: 0.36 },
   h2: { fontSize: 20, lineHeight: 25, fontWeight: '700', letterSpacing: 0.2 },
   body: { fontSize: 16, lineHeight: 22, fontWeight: '400' },
   bodyStrong: { fontSize: 16, lineHeight: 22, fontWeight: '600' },

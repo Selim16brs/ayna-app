@@ -355,9 +355,9 @@ const makeStyles = (colors: ColorTokens) =>
     promoCardLeft: { flex: 1, padding: space(1.5), justifyContent: 'center' },
     promoCardTitle: { fontSize: 13, fontWeight: '700', lineHeight: 16, letterSpacing: -0.1, color: colors.ink },
     promoHighlight: {
-      fontFamily: 'Fraunces_900Black',
       fontSize: 24,
       lineHeight: 28,
+      fontWeight: '800',
       letterSpacing: -0.3,
       marginVertical: 2,
       color: colors.ink,
