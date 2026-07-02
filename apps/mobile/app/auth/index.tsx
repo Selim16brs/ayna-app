@@ -3,7 +3,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
@@ -13,16 +12,6 @@ export default function AuthRoleScreen() {
   const { t } = useLocale();
   const { gradients } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const setAuth = useStore((s) => s.setAuth);
-
-  // Şimdilik giriş/şifre atlanıyor: rol seçilince demo oturum açılıp direkt ilgili sayfaya gidilir
-  function enter(role: string, name: string, dest: string) {
-    setAuth({
-      token: 'demo-token',
-      user: { id: `demo-${role}`, name, role, phone: '+7 700 000 00 00', city: 'Almatı', phoneVerified: true },
-    });
-    router.replace(dest as never);
-  }
 
   return (
     <Screen edges={['bottom']}>
@@ -41,21 +30,21 @@ export default function AuthRoleScreen() {
             icon="person"
             title={t('auth.role.customer')}
             sub={t('auth.role.customer_sub')}
-            onPress={() => enter('customer', 'Aigerim', '/discover')}
+            onPress={() => router.push('/auth/customer')}
           />
           <RoleCard
             grad={gradients.plum}
             icon="storefront"
             title={t('auth.role.salon')}
             sub={t('auth.role.salon_sub')}
-            onPress={() => enter('salon', 'Glamour Studio', '/seller/reports')}
+            onPress={() => router.push('/auth/business/new')}
           />
           <RoleCard
             grad={gradients.teal}
             icon="sparkles"
             title={t('auth.role.expert')}
             sub={t('auth.role.expert_sub')}
-            onPress={() => enter('specialist', 'Aygerim', '/seller/reports')}
+            onPress={() => router.push('/auth/business/join')}
           />
         </View>
       </View>
