@@ -2,7 +2,7 @@ import { Text as RNText, type TextProps as RNTextProps, StyleSheet } from 'react
 import { useTheme } from '../theme-context';
 
 type Variant = 'display' | 'title' | 'h2' | 'body' | 'bodyStrong' | 'label' | 'caption';
-type Tone = 'ink' | 'inkSoft' | 'muted' | 'rose' | 'gold' | 'onColor';
+type Tone = 'ink' | 'inkSoft' | 'muted' | 'rose' | 'gold' | 'onColor' | 'onAccent';
 
 interface TextProps extends RNTextProps {
   variant?: Variant;

@@ -63,7 +63,7 @@ export default function DiscoverScreen() {
             </Text>
           </Pressable>
           <Pressable style={styles.bkAvatar} onPress={() => router.push('/profile')}>
-            <Text variant="bodyStrong" tone="onColor">
+            <Text variant="bodyStrong" tone="onAccent">
               {userName.charAt(0).toUpperCase()}
             </Text>
             {unread > 0 ? <View style={styles.badge} /> : null}
@@ -145,7 +145,7 @@ export default function DiscoverScreen() {
               <View style={styles.promoLeft}>
                 {c.badge ? (
                   <View style={styles.promoBadge}>
-                    <Text variant="caption" tone="onColor" style={styles.promoBadgeText}>
+                    <Text variant="caption" tone="onAccent" style={styles.promoBadgeText}>
                       {c.badge}
                     </Text>
                   </View>
@@ -157,7 +157,7 @@ export default function DiscoverScreen() {
                   {c.subtitle}
                 </Text>
                 <View style={styles.promoCta}>
-                  <Text variant="caption" tone="onColor" style={styles.promoCtaText}>
+                  <Text variant="caption" tone="onAccent" style={styles.promoCtaText}>
                     {t('common.see_all')}
                   </Text>
                 </View>

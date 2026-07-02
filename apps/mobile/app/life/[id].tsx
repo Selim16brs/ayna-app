@@ -40,7 +40,7 @@ export default function ArticleDetailScreen() {
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.heroTag}>
-            <Text variant="caption" tone="onColor" style={styles.heroTagText}>
+            <Text variant="caption" tone="onAccent" style={styles.heroTagText}>
               {article.tag}
             </Text>
           </View>

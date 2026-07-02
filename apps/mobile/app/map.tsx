@@ -79,8 +79,8 @@ export default function MapScreen() {
         {/* Teklif motoru köprüsü (denge kuralı §7.4) */}
         {!selected ? (
           <PressableScale style={styles.bridge} onPress={() => router.push('/quote/new')}>
-            <Ionicons name="sparkles" size={15} color={colors.onColor} />
-            <Text variant="caption" tone="onColor" style={styles.bridgeText} numberOfLines={2}>
+            <Ionicons name="sparkles" size={15} color={colors.onAccent} />
+            <Text variant="caption" tone="onAccent" style={styles.bridgeText} numberOfLines={2}>
               {t('map.bridge')}
             </Text>
           </PressableScale>
@@ -119,7 +119,7 @@ export default function MapScreen() {
               style={styles.cardBtn}
               onPress={() => router.push('/professional/' + selected.id)}
             >
-              <Text variant="bodyStrong" tone="onColor">
+              <Text variant="bodyStrong" tone="onAccent">
                 {t('map.open')}
               </Text>
             </PressableScale>

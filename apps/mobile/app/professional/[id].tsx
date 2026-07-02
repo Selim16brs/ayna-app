@@ -143,7 +143,7 @@ export default function ProfessionalScreen() {
                   onPress={() => setTab(tb.id)}
                   style={[styles.tab, on && styles.tabOn]}
                 >
-                  <Text variant="bodyStrong" tone={on ? 'onColor' : 'inkSoft'}>
+                  <Text variant="bodyStrong" tone={on ? 'onAccent' : 'inkSoft'}>
                     {t(tb.key)}
                   </Text>
                 </Pressable>
@@ -226,7 +226,7 @@ export default function ProfessionalScreen() {
                         </Text>
                       </View>
                       <View style={[styles.check, active && styles.checkOn]}>
-                        {active ? <Ionicons name="checkmark" size={14} color={colors.onColor} /> : null}
+                        {active ? <Ionicons name="checkmark" size={14} color={colors.onAccent} /> : null}
                       </View>
                     </Pressable>
                   );
@@ -242,10 +242,10 @@ export default function ProfessionalScreen() {
                   const on = i === dayIdx;
                   return (
                     <Pressable key={d.key} onPress={() => setDayIdx(i)} style={[styles.dayChip, on && styles.dayChipOn]}>
-                      <Text variant="caption" tone={on ? 'onColor' : 'muted'}>
+                      <Text variant="caption" tone={on ? 'onAccent' : 'muted'}>
                         {t(`wd.${d.wd}` as 'wd.0')}
                       </Text>
-                      <Text variant="h2" tone={on ? 'onColor' : 'ink'} style={styles.dayNum}>
+                      <Text variant="h2" tone={on ? 'onAccent' : 'ink'} style={styles.dayNum}>
                         {d.day}
                       </Text>
                     </Pressable>
@@ -262,7 +262,7 @@ export default function ProfessionalScreen() {
                   const on = tm === time;
                   return (
                     <Pressable key={tm} onPress={() => setTime(tm)} style={[styles.timeChip, on && styles.timeChipOn]}>
-                      <Text variant="caption" tone={on ? 'onColor' : 'inkSoft'} style={styles.timeText}>
+                      <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} style={styles.timeText}>
                         {tm}
                       </Text>
                     </Pressable>
@@ -344,10 +344,10 @@ export default function ProfessionalScreen() {
           <Ionicons name="time-outline" size={20} color={colors.inkSoft} />
         </Pressable>
         <Pressable style={styles.bookBtn} onPress={book}>
-          <Text variant="bodyStrong" tone="onColor">
+          <Text variant="bodyStrong" tone="onAccent">
             {t('pro.book')}
           </Text>
-          <Ionicons name="arrow-forward" size={18} color={colors.onColor} />
+          <Ionicons name="arrow-forward" size={18} color={colors.onAccent} />
         </Pressable>
       </View>
     </View>

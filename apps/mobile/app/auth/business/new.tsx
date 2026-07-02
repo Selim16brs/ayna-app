@@ -273,7 +273,7 @@ function Checkbox({
   return (
     <Pressable style={styles.checkRow} onPress={onToggle}>
       <View style={[styles.checkbox, checked && styles.checkboxOn]}>
-        {checked ? <Ionicons name="checkmark" size={15} color={colors.onColor} /> : null}
+        {checked ? <Ionicons name="checkmark" size={15} color={colors.onAccent} /> : null}
       </View>
       <Text variant="caption" tone="inkSoft" style={styles.checkLabel}>
         {label}

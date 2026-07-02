@@ -125,10 +125,10 @@ export default function BenimIcinScreen() {
                 </View>
               </View>
               <View style={styles.scoreCta}>
-                <Text variant="bodyStrong" tone="onColor">
+                <Text variant="bodyStrong" tone="onAccent">
                   {t('benim.score.cta')}
                 </Text>
-                <Ionicons name="arrow-forward" size={16} color={colors.onColor} />
+                <Ionicons name="arrow-forward" size={16} color={colors.onAccent} />
               </View>
             </Pressable>
           ) : (
@@ -138,7 +138,7 @@ export default function BenimIcinScreen() {
             >
               <View style={styles.scoreTop}>
                 <View style={[styles.scoreEmptyIcon, { backgroundColor: colors.accentSoft }]}>
-                  <Ionicons name="sparkles" size={26} color={colors.accent} />
+                  <Ionicons name="sparkles" size={26} color={colors.onAccent} />
                 </View>
                 <View style={styles.scoreText}>
                   <Text variant="label" tone="muted">
@@ -153,10 +153,10 @@ export default function BenimIcinScreen() {
                 </View>
               </View>
               <View style={styles.scoreCta}>
-                <Text variant="bodyStrong" tone="onColor">
+                <Text variant="bodyStrong" tone="onAccent">
                   {t('benim.score.empty_cta')}
                 </Text>
-                <Ionicons name="add" size={18} color={colors.onColor} />
+                <Ionicons name="add" size={18} color={colors.onAccent} />
               </View>
             </Pressable>
           )}

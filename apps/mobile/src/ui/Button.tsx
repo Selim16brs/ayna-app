@@ -77,7 +77,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
     },
     label: { fontSize: 16 },
-    goldLabel: { color: colors.onColor, fontWeight: '700' },
+    goldLabel: { color: colors.onAccent, fontWeight: '700' },
     secondary: {
       backgroundColor: colors.surface,
       borderWidth: 1,

@@ -51,8 +51,8 @@ export default function CircleScreen() {
           </Text>
         </View>
         <Pressable style={styles.ask} onPress={() => router.push('/circle/new')}>
-          <Ionicons name="add" size={16} color={colors.onColor} />
-          <Text variant="caption" tone="onColor">
+          <Ionicons name="add" size={16} color={colors.onAccent} />
+          <Text variant="caption" tone="onAccent">
             {t('circle.ask')}
           </Text>
         </Pressable>

@@ -170,7 +170,7 @@ export default function PostDetailScreen() {
             onPress={send}
             disabled={draft.trim().length === 0}
           >
-            <Ionicons name="send" size={18} color={colors.onColor} />
+            <Ionicons name="send" size={18} color={colors.onAccent} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>

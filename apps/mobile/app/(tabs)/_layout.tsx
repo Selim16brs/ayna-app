@@ -51,7 +51,7 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               accessibilityLabel={label}
             >
               <View style={[styles.iconWrap, focused && { backgroundColor: colors.accent }]}>
-                <Ionicons name={icon} size={22} color={focused ? '#FFFFFF' : 'rgba(255,255,255,0.6)'} />
+                <Ionicons name={icon} size={22} color={focused ? colors.onAccent : 'rgba(255,255,255,0.6)'} />
               </View>
             </Pressable>
           );
