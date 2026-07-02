@@ -9,9 +9,14 @@ export function StackHeader({ title }: { title: string }) {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const goBack = () => {
+    // Geri gidilecek ekran yoksa (ör. deep link ile direkt açılış) ana sayfaya dön
+    if (router.canGoBack()) router.back();
+    else router.replace('/discover');
+  };
   return (
     <View style={styles.header}>
-      <Pressable style={styles.back} onPress={() => router.back()} hitSlop={8}>
+      <Pressable style={styles.back} onPress={goBack} hitSlop={8}>
         <Ionicons name="chevron-back" size={22} color={colors.ink} />
       </Pressable>
       <Text variant="h2" tone="ink" numberOfLines={1} style={styles.title}>
