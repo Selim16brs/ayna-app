@@ -359,8 +359,8 @@ const makeStyles = (colors: ColorTokens) =>
     heroSub: { marginTop: space(1.5), maxWidth: 220 },
     heroPhoto: {
       // Zeminsiz (cut-out) kullanıcı fotoğrafı — yeşilin üstünde, alt kenarı dalgada kesilir
-      width: 150,
-      height: 232,
+      width: 172,
+      height: 215,
       marginRight: -space(1.5),
       marginBottom: -space(3),
     },
