@@ -12,11 +12,14 @@ import {
   Button,
   CitySelect,
   Screen,
+  SocialLinks,
   StackHeader,
   Text,
   WorkingHours,
   defaultHours,
+  emptySocial,
   type DayHours,
+  type SocialValue,
 } from '../../../src/ui';
 
 // Salon hizmet alanları — fiyat YOK, yalnızca alan listesi (§3.2 A)
@@ -63,7 +66,7 @@ export default function NewBusinessScreen() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [hours, setHours] = useState<DayHours[]>(defaultHours());
-  const [social, setSocial] = useState('');
+  const [social, setSocial] = useState<SocialValue>(emptySocial);
   const [desc, setDesc] = useState('');
   const [tax, setTax] = useState('');
   const [terms, setTerms] = useState(false);
@@ -250,7 +253,7 @@ export default function NewBusinessScreen() {
         <Label text={t('biz.field.email')} />
         <Input value={email} onChange={setEmail} keyboardType="email-address" placeholder="info@salon.kz" />
         <Label text={t('biz.field.social')} />
-        <Input value={social} onChange={setSocial} placeholder="instagram.com/…" />
+        <SocialLinks value={social} onChange={setSocial} />
 
         <Label text={t('biz.field.hours')} />
         <WorkingHours value={hours} onChange={setHours} />

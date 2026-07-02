@@ -9,7 +9,19 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, CitySelect, Screen, StackHeader, Text, WorkingHours, defaultHours, type DayHours } from '../../src/ui';
+import {
+  Button,
+  CitySelect,
+  Screen,
+  SocialLinks,
+  StackHeader,
+  Text,
+  WorkingHours,
+  defaultHours,
+  emptySocial,
+  type DayHours,
+  type SocialValue,
+} from '../../src/ui';
 
 // Sistemde kayıtlı salonlar (uzmanın bağlanacağı) — data'dan
 const SALONS = PROFESSIONALS.filter((p) => p.kind === 'salon');
@@ -29,12 +41,14 @@ export default function ExpertRegisterScreen() {
   const [password, setPassword] = useState('');
   const [birth, setBirth] = useState('');
   const [city, setCity] = useState<string>(CITIES[0]!);
+  const [district, setDistrict] = useState('');
+  const [address, setAddress] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [services, setServices] = useState<Service[]>([{ name: '', price: '', dur: '' }]);
   const [certs, setCerts] = useState<string[]>([]);
   const [portfolio, setPortfolio] = useState<string[]>([]);
-  const [social, setSocial] = useState('');
+  const [social, setSocial] = useState<SocialValue>(emptySocial);
   const [hours, setHours] = useState<DayHours[]>(defaultHours());
   const [bound, setBound] = useState(false);
   const [salonQuery, setSalonQuery] = useState('');
@@ -184,6 +198,10 @@ export default function ExpertRegisterScreen() {
         <Input value={birth} onChange={setBirth} placeholder={t('auth.f.birthdate_ph')} />
         <Label text={t('auth.f.city')} />
         <CitySelect value={city} onChange={setCity} />
+        <Label text={t('auth.f.district')} />
+        <Input value={district} onChange={setDistrict} placeholder={t('auth.f.district_ph')} />
+        <Label text={t('auth.f.address')} />
+        <Input value={address} onChange={setAddress} placeholder={t('auth.f.address_ph')} />
 
         {/* Hizmetler — fiyat + süre zorunlu */}
         <Section text={t('expert.reg.prof')} />
@@ -248,6 +266,12 @@ export default function ExpertRegisterScreen() {
             <Image key={`${uri}-${i}`} source={{ uri }} style={styles.certThumb} />
           ))}
         </View>
+        <View style={styles.warnRow}>
+          <Ionicons name="shield-checkmark-outline" size={16} color={colors.rose} />
+          <Text variant="caption" tone="rose" style={styles.warnText}>
+            {t('expert.reg.cert_warn')}
+          </Text>
+        </View>
 
         {/* Portfolyo — yaptığın işler (normal 7 / premium 20) */}
         <Label text={`${t('expert.reg.portfolio')}  (${portfolio.length}/${PORTFOLIO_MAX})`} />
@@ -275,7 +299,7 @@ export default function ExpertRegisterScreen() {
         </View>
 
         <Label text={t('expert.reg.social')} />
-        <Input value={social} onChange={setSocial} placeholder="instagram.com/…" />
+        <SocialLinks value={social} onChange={setSocial} />
         <Label text={t('expert.reg.hours')} />
         <WorkingHours value={hours} onChange={setHours} />
 
@@ -507,6 +531,8 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     addText: { fontWeight: '800' },
+    warnRow: { flexDirection: 'row', gap: space(1), marginTop: space(1.25) },
+    warnText: { flex: 1, lineHeight: 17 },
     certRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     certAdd: {
       width: 72,

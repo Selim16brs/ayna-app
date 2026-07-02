@@ -12,6 +12,7 @@ export { TabHero } from './TabHero';
 export { SectionHeader } from './SectionHeader';
 export { CitySelect } from './CitySelect';
 export { WorkingHours, defaultHours, type DayHours } from './WorkingHours';
+export { SocialLinks, emptySocial, type SocialValue } from './SocialLinks';
 export { AppTabBar, TAB_BAR_CLEARANCE } from './AppTabBar';
 export { Placeholder } from './Placeholder';
 export { StackHeader } from './StackHeader';
