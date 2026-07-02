@@ -111,17 +111,22 @@ export default function DiscoverScreen() {
                 {t('home.hero_subtitle')}
               </Text>
             </View>
-            <Image
-              source={require('../../assets/hero-user.png')}
-              style={styles.heroPhoto}
-              resizeMode="contain"
-            />
+          </View>
+
+          {/* Kullanıcı fotoğrafı — yeşilin ÖNÜNDE (zIndex 1) */}
+          <Image
+            source={require('../../assets/hero-user.png')}
+            style={styles.heroPhoto}
+            resizeMode="contain"
+          />
+          {/* Beyaz sliver + pembe dalga — fotonun ÜSTÜNDE (zIndex 2), fotoyu keser */}
+          <View style={styles.waveAbs}>
+            <WaveLayered sliver={colors.bg} bottom={HOT_PINK} />
           </View>
         </View>
-        {/* ── PEMBE BAND: yeşil→pembe dalga (siyah kontur) + "Ne yapmak istersin?" ──
-             Pembe zemin, dalganın altındaki şeffaf kısımdan yukarı siyah banda kadar dolar */}
+
+        {/* ── PEMBE BAND: "Ne yapmak istersin?" (dalganın pembe alt katmanı ile birleşir) ── */}
         <View style={styles.howBand}>
-          <WaveLayered top={colors.accent} bottom={HOT_PINK} gap={colors.bg} />
           <Pressable style={styles.howRow} onPress={() => router.push('/quote')}>
             <View style={styles.howIcon}>
               <Ionicons name="sparkles" size={22} color={HOT_PINK} />
@@ -262,7 +267,11 @@ const makeStyles = (colors: ColorTokens) =>
     hero: {
       backgroundColor: colors.accent,
       paddingHorizontal: space(3),
+      paddingBottom: space(8),
+      position: 'relative',
+      overflow: 'hidden',
     },
+    waveAbs: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 2 },
     heroTop: { alignItems: 'center', justifyContent: 'center' },
     logo: { width: 148, height: 56 },
     mapIconBtn: {
@@ -357,11 +366,13 @@ const makeStyles = (colors: ColorTokens) =>
     },
     heroSub: { marginTop: space(1.5), maxWidth: 220 },
     heroPhoto: {
-      // Zeminsiz (cut-out) kullanıcı fotoğrafı — alt kenarı dalga/zemin ile aynı hizada kesilir
+      // Zeminsiz kullanıcı fotoğrafı — yeşilin ÖNÜNDE (zIndex 1); alt kısmı dalga keser
+      position: 'absolute',
+      right: -space(1),
+      bottom: 0,
       width: 176,
       height: 220,
-      marginRight: -space(1.5),
-      marginBottom: -space(4.5),
+      zIndex: 1,
     },
 
     // ── Pembe band: "Ne yapmak istersin?" — pembe zemin dalganın altına kadar dolar ──
