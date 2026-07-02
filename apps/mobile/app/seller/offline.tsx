@@ -18,14 +18,14 @@ export default function OfflineBookingScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
-  // §4.6 — ajandada boş slota dokununca gelen başlangıç (UTC ms); günü ve saati sabitler
-  const params = useLocalSearchParams<{ start?: string }>();
+  // §4.6 — ajandada boş slota dokununca gelen başlangıç (UTC ms) + (salon görünümü) uzman adı
+  const params = useLocalSearchParams<{ start?: string; uzman?: string }>();
   const startParam = params.start ? Number(params.start) : null;
   const baseDay = almatyDayStart(startParam ?? Date.now(), 0);
 
   const [customer, setCustomer] = useState('');
   const [service, setService] = useState('');
-  const [uzman, setUzman] = useState('');
+  const [uzman, setUzman] = useState(typeof params.uzman === 'string' ? params.uzman : '');
   const [time, setTime] = useState(startParam ? slotTime(startParam) : '15:00');
   const [dur, setDur] = useState('60');
   const [price, setPrice] = useState('');

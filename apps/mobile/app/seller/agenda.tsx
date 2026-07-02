@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
-import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
+import { type Appointment, type BookingStatus, SELLER_DATA, formatPrice } from '../../src/data';
 import { almatyDayStart, almatyParts, daysUntil, formatSlot, slotTime } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -77,9 +77,13 @@ export default function AgendaScreen() {
   const storeBookings = useStore((s) => s.bookings);
   const closedDays = useStore((s) => s.closedDays);
   const toggleClosedDay = useStore((s) => s.toggleClosedDay);
+  const isSalon = useStore((s) => s.currentUser?.role === 'salon');
   const [items, setItems] = useState<Appointment[]>([]);
-  const [view, setView] = useState<'day' | 'list'>('day'); // §4.6 varsayılan: gün ajandası
+  const [view, setView] = useState<'day' | 'list' | 'salon'>('day'); // §4.6 varsayılan: gün ajandası
   const [dayIdx, setDayIdx] = useState(0);
+
+  // §4.6 salon tarafı — uzman sütunları (mock; gerçekte salonun kadrosu)
+  const staff = SELLER_DATA.month.staff;
 
   // §4.6 — önümüzdeki 14 gün (gün seçici + kapalı işaretleme)
   const dayStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
@@ -118,6 +122,7 @@ export default function AgendaScreen() {
           <Segmented
             options={[
               { value: 'day', label: t('agenda.view.day') },
+              ...(isSalon ? [{ value: 'salon' as const, label: t('agenda.view.salon') }] : []),
               { value: 'list', label: t('agenda.view.list') },
             ]}
             value={view}
@@ -228,6 +233,89 @@ export default function AgendaScreen() {
                 )}
               </View>
             )}
+          </>
+        ) : view === 'salon' ? (
+          <>
+            {/* §4.6 salon — gün seçici (yalnızca seçim; salon gün kapatamaz) */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayStrip}>
+              {dayStrip.map((dayMs, i) => {
+                const p = almatyParts(dayMs);
+                const on = i === dayIdx;
+                return (
+                  <Pressable
+                    key={dayMs}
+                    onPress={() => setDayIdx(i)}
+                    style={[styles.dayChip, on && styles.dayChipOn]}
+                  >
+                    <Text variant="caption" tone={on ? 'onAccent' : 'muted'} style={styles.closeWd}>
+                      {t(`wd.${p.wd}` as 'wd.0')}
+                    </Text>
+                    <Text variant="bodyStrong" tone={on ? 'onAccent' : 'ink'} style={styles.closeNum}>
+                      {p.day}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            {/* Uzman sütunları (yan yana, yatay kaydırma) */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.columns}>
+              {staff.map((u) => {
+                const uRows = buildDayRows(
+                  selectedDay,
+                  dayBookings.filter((b) => (b.uzmanName ?? '') === u.name),
+                );
+                return (
+                  <View key={u.name} style={styles.column}>
+                    <View style={styles.colHead}>
+                      <Image source={{ uri: u.image }} style={styles.colAvatar} />
+                      <Text variant="caption" tone="ink" numberOfLines={1} style={styles.flexShrink}>
+                        {u.name}
+                      </Text>
+                    </View>
+                    <View style={styles.colBody}>
+                      {uRows.map((r, i) =>
+                        r.type === 'free' ? (
+                          <Pressable
+                            key={`f-${i}`}
+                            style={styles.colFree}
+                            onPress={() =>
+                              router.push(
+                                `/seller/offline?start=${r.startMs}&uzman=${encodeURIComponent(u.name)}`,
+                              )
+                            }
+                          >
+                            <Ionicons name="add" size={13} color={colors.rose} />
+                            <Text variant="caption" tone="rose">
+                              {slotTime(r.startMs)}
+                            </Text>
+                          </Pressable>
+                        ) : (
+                          <Pressable
+                            key={r.b.id}
+                            style={styles.colBusy}
+                            onPress={() => router.push(`/booking/${r.b.id}`)}
+                          >
+                            <Text variant="caption" tone="ink" numberOfLines={1}>
+                              {slotTime(r.b.startMs)}
+                            </Text>
+                            <Text variant="caption" tone="muted" numberOfLines={1}>
+                              {r.b.service}
+                            </Text>
+                          </Pressable>
+                        ),
+                      )}
+                    </View>
+                  </View>
+                );
+              })}
+            </ScrollView>
+            <View style={styles.salonNote}>
+              <Ionicons name="information-circle-outline" size={14} color={colors.muted} />
+              <Text variant="caption" tone="muted" style={styles.flexShrink}>
+                {t('agenda.salon_note')}
+              </Text>
+            </View>
           </>
         ) : groups.length === 0 ? (
           <View style={styles.empty}>
@@ -370,6 +458,44 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(5),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
+    },
+    columns: { gap: space(1.25), paddingVertical: space(0.5) },
+    column: { width: 132 },
+    colHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.md,
+      paddingHorizontal: space(1),
+      paddingVertical: space(0.75),
+      marginBottom: space(0.75),
+    },
+    colAvatar: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.bgSunken },
+    colBody: { gap: space(0.5) },
+    colFree: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 3,
+      paddingVertical: space(1),
+      borderRadius: radius.sm,
+      borderWidth: 1,
+      borderColor: colors.line,
+      borderStyle: 'dashed',
+    },
+    colBusy: {
+      backgroundColor: colors.accentSoft,
+      borderRadius: radius.sm,
+      paddingVertical: space(0.75),
+      paddingHorizontal: space(1),
+      gap: 1,
+    },
+    salonNote: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      marginTop: space(1.5),
     },
     timeline: { gap: space(0.75) },
     freeRow: {
