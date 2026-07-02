@@ -4,7 +4,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocale } from '../../src/locale';
-import { radius, space } from '../../src/theme';
+import { space } from '../../src/theme';
 import { useTheme } from '../../src/theme-context';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: space(2.5),
+    paddingHorizontal: space(2),
     paddingTop: space(1),
     backgroundColor: 'transparent',
   },
@@ -89,9 +89,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    borderRadius: radius.pill,
-    paddingHorizontal: space(1),
-    paddingVertical: space(1),
+    borderRadius: 30,
+    paddingHorizontal: space(1.5),
+    paddingVertical: space(1.25),
     shadowColor: '#000',
     shadowOpacity: 0.22,
     shadowRadius: 16,
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 46,
     height: 46,
-    borderRadius: 23,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },

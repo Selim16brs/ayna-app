@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Dimensions, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Dimensions, Image, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { buildUpcomingEvents, CATEGORIES, whenShort } from '../../src/data';
 import { useAds, useCampaigns, useProfessionals } from '../../src/catalog';
@@ -54,42 +54,20 @@ export default function DiscoverScreen() {
   return (
     <Screen edges={[]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* CORAL HEADER — konum + arama + filtre (Booksy/turuncu referans dili) */}
-        <View style={[styles.hdr, { paddingTop: insets.top + space(1.5) }]}>
-          <View style={styles.hdrTop}>
-            <Pressable style={styles.hdrAvatar} onPress={() => router.push('/profile')}>
-              <Text variant="bodyStrong" tone="onColor">
-                {userName.charAt(0).toUpperCase()}
-              </Text>
-            </Pressable>
-            <View style={styles.hdrLoc}>
-              <Text variant="caption" style={styles.hdrHi}>
-                {t('home.greeting')}, {userName}
-              </Text>
-              <View style={styles.hdrLocRow}>
-                <Ionicons name="location" size={13} color={colors.onColor} />
-                <Text variant="bodyStrong" tone="onColor">
-                  Almatı, KZ
-                </Text>
-                <Ionicons name="chevron-down" size={14} color={colors.onColor} />
-              </View>
-            </View>
-            <Pressable style={styles.hdrBell} onPress={() => router.push('/notifications')}>
-              <Ionicons name="notifications-outline" size={20} color={colors.onColor} />
-              {unread > 0 ? <View style={styles.badge} /> : null}
-            </Pressable>
-          </View>
-          <View style={styles.hdrSearchRow}>
-            <Pressable style={styles.hdrSearch} onPress={() => router.push('/search')}>
-              <Ionicons name="search" size={19} color={colors.muted} />
-              <Text variant="body" tone="muted">
-                {t('home.search')}
-              </Text>
-            </Pressable>
-            <Pressable style={styles.hdrFilter} onPress={() => router.push('/map')}>
-              <Ionicons name="options-outline" size={20} color={colors.onColor} />
-            </Pressable>
-          </View>
+        {/* Booksy header — temiz beyaz: arama + avatar */}
+        <View style={[styles.bkHdr, { paddingTop: insets.top + space(1) }]}>
+          <Pressable style={styles.bkSearch} onPress={() => router.push('/search')}>
+            <Ionicons name="search" size={19} color={colors.muted} />
+            <Text variant="body" tone="muted">
+              {t('home.search')}
+            </Text>
+          </Pressable>
+          <Pressable style={styles.bkAvatar} onPress={() => router.push('/profile')}>
+            <Text variant="bodyStrong" tone="onColor">
+              {userName.charAt(0).toUpperCase()}
+            </Text>
+            {unread > 0 ? <View style={styles.badge} /> : null}
+          </Pressable>
         </View>
 
         {/* HERO — Ne yapmak istersin? (birincil aksiyon, belirgin) */}
@@ -161,42 +139,30 @@ export default function DiscoverScreen() {
           {campaigns.map((c) => (
             <Pressable
               key={c.id}
-              style={{ width: AD_WIDTH }}
+              style={[styles.promo, { width: AD_WIDTH }]}
               onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
             >
-              <ImageBackground
-                source={{ uri: c.image }}
-                style={[styles.promo, { width: AD_WIDTH }]}
-                imageStyle={styles.promoImg}
-              >
-                <LinearGradient
-                  colors={['rgba(30,24,28,0.82)', 'rgba(30,24,28,0.15)']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0.4 }}
-                  style={StyleSheet.absoluteFill}
-                />
-                <View style={styles.promoContent}>
-                  {c.badge ? (
-                    <View style={styles.promoBadge}>
-                      <Text variant="caption" tone="onColor" style={styles.promoBadgeText}>
-                        {c.badge}
-                      </Text>
-                    </View>
-                  ) : null}
-                  <Text variant="h2" tone="onColor" style={styles.promoTitle} numberOfLines={2}>
-                    {c.title}
-                  </Text>
-                  <Text variant="caption" tone="onColor" style={styles.promoSub} numberOfLines={1}>
-                    {c.subtitle}
-                  </Text>
-                  <View style={styles.promoCta}>
-                    <Text variant="caption" tone="onColor" style={styles.promoCtaText}>
-                      {t('common.see_all')}
+              <View style={styles.promoLeft}>
+                {c.badge ? (
+                  <View style={styles.promoBadge}>
+                    <Text variant="caption" tone="onColor" style={styles.promoBadgeText}>
+                      {c.badge}
                     </Text>
-                    <Ionicons name="arrow-forward" size={13} color={colors.onColor} />
                   </View>
+                ) : null}
+                <Text variant="bodyStrong" tone="ink" style={styles.promoTitle} numberOfLines={2}>
+                  {c.title}
+                </Text>
+                <Text variant="caption" tone="muted" numberOfLines={1}>
+                  {c.subtitle}
+                </Text>
+                <View style={styles.promoCta}>
+                  <Text variant="caption" tone="onColor" style={styles.promoCtaText}>
+                    {t('common.see_all')}
+                  </Text>
                 </View>
-              </ImageBackground>
+              </View>
+              <Image source={{ uri: c.image }} style={styles.promoImg} />
             </Pressable>
           ))}
         </ScrollView>
@@ -369,7 +335,33 @@ function ActionCard({
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: space(13) },
-    // Coral header
+    // Booksy header — beyaz: arama + avatar
+    bkHdr: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      paddingHorizontal: space(3),
+      paddingBottom: space(2),
+    },
+    bkSearch: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      height: 48,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+      paddingHorizontal: space(1.75),
+    },
+    bkAvatar: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    // Coral header (eski, kullanılmıyor)
     hdr: {
       backgroundColor: colors.accent,
       borderBottomLeftRadius: radius.xl,
@@ -418,10 +410,17 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     // Promo hero
+    // Booksy promo — açık kart: sol metin + coral pill, sağ foto
     promoRow: { paddingHorizontal: space(3), gap: space(1.5) },
-    promo: { height: 168, justifyContent: 'flex-end' },
-    promoImg: { borderRadius: radius.xl },
-    promoContent: { padding: space(2.25) },
+    promo: {
+      height: 150,
+      flexDirection: 'row',
+      borderRadius: radius.xl,
+      backgroundColor: colors.lavenderSoft,
+      overflow: 'hidden',
+    },
+    promoLeft: { flex: 1, padding: space(2.25), justifyContent: 'center' },
+    promoImg: { width: 128, height: '100%', backgroundColor: colors.bgSunken },
     promoBadge: {
       alignSelf: 'flex-start',
       backgroundColor: colors.accent,
@@ -431,27 +430,23 @@ const makeStyles = (colors: ColorTokens) =>
       marginBottom: space(1),
     },
     promoBadgeText: { fontWeight: '800' },
-    promoTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3, maxWidth: '75%' },
-    promoSub: { color: 'rgba(255,255,255,0.85)', marginTop: 2 },
+    promoTitle: { fontSize: 17, fontWeight: '800', letterSpacing: -0.2, marginBottom: 2 },
     promoCta: {
-      flexDirection: 'row',
-      alignItems: 'center',
       alignSelf: 'flex-start',
-      gap: 5,
-      backgroundColor: 'rgba(255,255,255,0.22)',
-      paddingHorizontal: space(1.5),
-      paddingVertical: space(0.75),
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(2),
+      paddingVertical: space(1),
       borderRadius: radius.pill,
-      marginTop: space(1.25),
+      marginTop: space(1.5),
     },
-    promoCtaText: { fontWeight: '700' },
-    // Kategori pill
+    promoCtaText: { fontWeight: '800' },
+    // Kategori — yuvarlak görsel (Booksy)
     catRow: { paddingHorizontal: space(3), gap: space(2) },
     cat: { alignItems: 'center', width: 66 },
     catTile: {
       width: 62,
       height: 62,
-      borderRadius: radius.lg,
+      borderRadius: 31,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: space(0.75),
