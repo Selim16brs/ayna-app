@@ -20,8 +20,6 @@ const CAT_TINTS = ['#F6D9E4', '#E5EFC4', '#F7C9DA', '#F8DFC2', '#D9D6F0', '#E9E5
 // Fırsat / öne çıkan kart zeminleri (spec §0.1)
 const CARD_TINTS = ['#E4DEF4', '#F7DCE6', '#F6E4CE', '#E8F1C4'];
 
-const HERO_WOMAN =
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=500&q=80';
 
 // 2 sütun ızgara kart genişliği (referans Fırsatlar/Öne çıkanlar)
 const GRID_W = (Dimensions.get('window').width - space(6) - space(1.5)) / 2;
@@ -99,7 +97,11 @@ export default function DiscoverScreen() {
                 {t('home.hero_subtitle')}
               </Text>
             </View>
-            <Image source={{ uri: HERO_WOMAN }} style={styles.heroPhoto} />
+            <Image
+              source={require('../../assets/hero-user.png')}
+              style={styles.heroPhoto}
+              resizeMode="contain"
+            />
           </View>
         </View>
         {/* Lime hero'nun dalgalı alt kenarı + siyah kontur (referans) */}
@@ -328,16 +330,11 @@ const makeStyles = (colors: ColorTokens) =>
     },
     heroSub: { marginTop: space(1.5), maxWidth: 220 },
     heroPhoto: {
-      width: 172,
-      height: 214,
-      // Organik blob kesim + sağ kenara taşar, dalgaya doğru sarkar (referans cut-out yaklaşımı)
-      borderTopLeftRadius: 120,
-      borderTopRightRadius: 90,
-      borderBottomRightRadius: 130,
-      borderBottomLeftRadius: 80,
-      marginRight: -space(3),
-      marginBottom: -space(2.5),
-      backgroundColor: 'rgba(255,255,255,0.3)',
+      // Zeminsiz (cut-out) kullanıcı fotoğrafı — yeşilin üstünde, alt kenarı dalgada kesilir
+      width: 150,
+      height: 232,
+      marginRight: -space(1.5),
+      marginBottom: -space(3),
     },
 
     // ── Tek aksiyon kartı: "Ne yapmak istersin?" (çırtlak pembe) ──
