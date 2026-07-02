@@ -9,7 +9,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, CitySelect, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, CitySelect, Screen, StackHeader, Text, WorkingHours, defaultHours, type DayHours } from '../../src/ui';
 
 // Sistemde kayıtlı salonlar (uzmanın bağlanacağı) — data'dan
 const SALONS = PROFESSIONALS.filter((p) => p.kind === 'salon');
@@ -35,7 +35,7 @@ export default function ExpertRegisterScreen() {
   const [certs, setCerts] = useState<string[]>([]);
   const [portfolio, setPortfolio] = useState<string[]>([]);
   const [social, setSocial] = useState('');
-  const [hours, setHours] = useState('');
+  const [hours, setHours] = useState<DayHours[]>(defaultHours());
   const [bound, setBound] = useState(false);
   const [salonQuery, setSalonQuery] = useState('');
   const [salonId, setSalonId] = useState<string | null>(null);
@@ -276,7 +276,7 @@ export default function ExpertRegisterScreen() {
         <Label text={t('expert.reg.social')} />
         <Input value={social} onChange={setSocial} placeholder="instagram.com/…" />
         <Label text={t('expert.reg.hours')} />
-        <Input value={hours} onChange={setHours} placeholder={t('expert.reg.hours_ph')} />
+        <WorkingHours value={hours} onChange={setHours} />
 
         {/* Salon bağlantısı */}
         <Section text={t('expert.reg.salon_q')} />
