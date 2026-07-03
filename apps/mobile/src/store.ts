@@ -424,7 +424,9 @@ export const useStore = create<State>((set, get) => ({
           : x,
       ),
     }));
-    void api.cancelBooking(id, reason).catch(() => undefined);
+    // §4.4 — backend'de doğru geçiş: iade akışı → free-cancel; aksi → düz iptal
+    if (next === 'refund_pending') void api.freeCancelBooking(id, reason).catch(() => undefined);
+    else void api.cancelBooking(id, reason).catch(() => undefined);
     if (b) {
       if (next === 'refund_pending')
         get().pushNotification({
@@ -454,6 +456,7 @@ export const useStore = create<State>((set, get) => ({
         b.id === id ? { ...b, status: 'refund_submitted', refundReceiptUri: receiptUri } : b,
       ),
     }));
+    void api.uploadRefundReceiptApi(id, receiptUri).catch(() => undefined); // §4.4 backend
     const b = get().bookings.find((x) => x.id === id);
     // §12.4 — iade dekontu admin anlaşmazlık kuyruğuna düşer (dekont görseliyle)
     const token = get().token;
@@ -484,6 +487,7 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({
       bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b)),
     }));
+    void api.confirmRefundApi(id).catch(() => undefined); // §4.4 backend
   },
 
   // §4.4 — taraflar itiraz açar (destek/admin kuyruğuna düşer)
@@ -491,6 +495,7 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({
       bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'disputed' } : b)),
     }));
+    void api.disputeBookingApi(id).catch(() => undefined); // §4.4 backend durum geçişi
     const b = get().bookings.find((x) => x.id === id);
     // §12.4 — itiraz backend anlaşmazlık kuyruğuna düşer (varsa depozito dekontuyla)
     const token = get().token;
@@ -882,6 +887,7 @@ export const useStore = create<State>((set, get) => ({
         b.id === id ? { ...b, status: 'deposit_submitted', receiptUri } : b,
       ),
     }));
+    void api.submitDepositReceipt(id, receiptUri).catch(() => undefined); // §4.2 backend
     const b = get().bookings.find((x) => x.id === id);
     if (b)
       get().pushNotification({
@@ -899,6 +905,7 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({
       bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'confirmed' } : b)),
     }));
+    void api.confirmDepositReceipt(id).catch(() => undefined); // §4.2 backend
     const b = get().bookings.find((x) => x.id === id);
     if (b)
       get().pushNotification({

@@ -256,6 +256,16 @@ export const api = {
   proposeBooking: (id: string, proposedStartMs: number) =>
     post<Appointment>(`/bookings/${id}/propose`, { proposedStartMs }),
   acceptBooking: (id: string) => post<Appointment>(`/bookings/${id}/accept`, {}),
+  // §4.2/§4.4 — depozito/iade döngüsü (backend'e taşındı)
+  submitDepositReceipt: (id: string, receiptUri: string) =>
+    post<Appointment>(`/bookings/${id}/deposit-receipt`, { receiptUri }),
+  confirmDepositReceipt: (id: string) => post<Appointment>(`/bookings/${id}/confirm-receipt`, {}),
+  freeCancelBooking: (id: string, reason?: string) =>
+    post<Appointment>(`/bookings/${id}/free-cancel`, reason ? { reason } : {}),
+  uploadRefundReceiptApi: (id: string, receiptUri: string) =>
+    post<Appointment>(`/bookings/${id}/refund-receipt`, { receiptUri }),
+  confirmRefundApi: (id: string) => post<Appointment>(`/bookings/${id}/confirm-refund`, {}),
+  disputeBookingApi: (id: string) => post<Appointment>(`/bookings/${id}/dispute`, {}),
 
   // Salon sahibi/uzman kendi işletmesi (mobil yönetim) — hepsi sahibe-kapılı
   myBusinesses: (token: string) => get<SellerBusiness[]>('/businesses/mine', token),
