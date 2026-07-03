@@ -206,6 +206,9 @@ model Booking {
   dateLabel          String        @map("date_label")
   proposedDateLabel  String?       @map("proposed_date_label")
   inDays             Int           @map("in_days")
+  // §4.2 — kesin zaman (atomik slot lock için); mobil startMs/durationMin'den
+  startAt            DateTime?     @map("start_at") @db.Timestamptz(6)
+  durationMin        Int?          @map("duration_min")
   price              Decimal       @db.Decimal(12, 2)
   status             BookingStatus @default(confirmed)
   // §6.C — iptal sebebi (kullanıcı "neden gelemiyorum" iletebilir)

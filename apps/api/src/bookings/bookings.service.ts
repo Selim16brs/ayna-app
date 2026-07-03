@@ -1,7 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import type { Booking } from '@prisma/client';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { type Booking, BookingStatus } from '@prisma/client';
+import { hasConflict } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CreateBookingInput } from './bookings.dto';
+
+// §4.2 — slot işgal eden durumlar (yalnız ONAY SONRASI; awaiting_provider hariç —
+// ters-pazaryerinde aynı slota birden çok bekleyen talep olabilir, uzman birini seçer).
+const ACTIVE_SLOT_STATUSES: BookingStatus[] = [
+  BookingStatus.confirmed,
+  BookingStatus.deposit_pending,
+  BookingStatus.deposit_submitted,
+];
 
 @Injectable()
 export class BookingsService {
@@ -41,6 +50,8 @@ export class BookingsService {
       groupSize: input.groupSize ?? null,
       dateLabel: input.dateLabel,
       inDays: input.inDays,
+      startAt: input.startMs ? new Date(input.startMs) : null,
+      durationMin: input.durationMin ?? null,
       price: input.price,
       status: input.status ?? 'confirmed',
     };
@@ -69,16 +80,53 @@ export class BookingsService {
     return s?.intValue ?? 1000;
   }
 
-  // §4.1 — uzman onaylar → KESİN DEĞİL: kullanıcı önce kaporayı yükler (deposit_pending)
+  // §4.1/§4.2 — uzman onaylar → ATOMİK slot lock (çift-rezervasyon önlenir) → deposit_pending
   async approve(id: string) {
     const amount = await this.depositAmount();
     const deadline = new Date(Date.now() + 3 * 60 * 60 * 1000); // §5.2 dekont penceresi (3 saat)
-    return this.transition(id, {
-      status: 'deposit_pending',
-      proposedDateLabel: null,
-      depositAmount: amount,
-      depositDeadline: deadline,
+    // Tek transaction içinde: çakışma kontrolü + durum güncelleme (atomik kilit)
+    const row = await this.prisma.$transaction(async (tx) => {
+      const b = await tx.booking.findUnique({ where: { id } });
+      if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+      // Kesin zaman varsa aynı uzmanda çakışan aktif randevu var mı?
+      if (b.startAt && b.durationMin && b.proId) {
+        const candidate = {
+          startMs: b.startAt.getTime(),
+          endMs: b.startAt.getTime() + b.durationMin * 60_000,
+        };
+        const others = await tx.booking.findMany({
+          where: {
+            proId: b.proId,
+            id: { not: id },
+            status: { in: ACTIVE_SLOT_STATUSES },
+            startAt: { not: null },
+          },
+          select: { startAt: true, durationMin: true },
+        });
+        const busy = others
+          .filter((o) => o.startAt && o.durationMin)
+          .map((o) => ({
+            startMs: o.startAt!.getTime(),
+            endMs: o.startAt!.getTime() + (o.durationMin ?? 0) * 60_000,
+          }));
+        if (hasConflict(candidate, busy)) {
+          throw new ConflictException({
+            code: 'SLOT_TAKEN',
+            message: 'Bu saat başka bir randevuyla dolu',
+          });
+        }
+      }
+      return tx.booking.update({
+        where: { id },
+        data: {
+          status: 'deposit_pending',
+          proposedDateLabel: null,
+          depositAmount: amount,
+          depositDeadline: deadline,
+        },
+      });
     });
+    return mapBooking(row);
   }
 
   // §4.2 — kullanıcı kapora dekontunu yükler → uzman onayı bekler
@@ -158,6 +206,8 @@ function mapBooking(b: Booking) {
     dateLabel: b.dateLabel,
     proposedDateLabel: b.proposedDateLabel ?? undefined,
     inDays: b.inDays,
+    startMs: b.startAt?.getTime() ?? undefined,
+    durationMin: b.durationMin ?? undefined,
     price: Number(b.price),
     status: b.status,
     cancelReason: b.cancelReason ?? undefined,
