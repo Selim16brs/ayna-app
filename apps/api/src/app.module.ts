@@ -7,6 +7,7 @@ import { BookingsModule } from './bookings/bookings.module';
 import { BusinessesModule } from './businesses/businesses.module';
 import { SpecialistsModule } from './specialists/specialists.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { CircleModule } from './circle/circle.module';
 import { CommissionsModule } from './commissions/commissions.module';
 import { ConfigModule } from './config/config.module';
 import { ContentModule } from './content/content.module';
@@ -40,6 +41,7 @@ import { SettingsModule } from './settings/settings.module';
     SettingsModule,
     CommissionsModule,
     DisputesModule,
+    CircleModule,
   ],
 })
 export class AppModule {}

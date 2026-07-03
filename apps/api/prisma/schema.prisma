@@ -522,6 +522,48 @@ model WeeklyTheme {
   @@map("weekly_themes")
 }
 
+// §5.5 W2W (Women to Women) — kadın topluluğu paylaşımları + moderasyon.
+// status: published | pending (moderasyon kuyruğu) | hidden (gizlendi/engellendi)
+model CirclePost {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String?  @map("user_id") @db.Uuid
+  category         String
+  text             String
+  anonymous        Boolean  @default(false)
+  authorLabel      String   @default("AYNA Üyesi") @map("author_label")
+  helpful          Int      @default(0)
+  reports          Int      @default(0)
+  status           String   @default("published")
+  moderationReason String   @default("") @map("moderation_reason")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@map("circle_posts")
+}
+
+model CircleComment {
+  id          String   @id @default(uuid()) @db.Uuid
+  postId      String   @map("post_id") @db.Uuid
+  userId      String?  @map("user_id") @db.Uuid
+  authorLabel String   @default("AYNA Üyesi") @map("author_label")
+  text        String
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([postId])
+  @@map("circle_comments")
+}
+
+model CircleReport {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  reason    String   @default("")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([postId])
+  @@map("circle_reports")
+}
+
 // §12.4/§12.3 Depozito/iade anlaşmazlık kuyruğu — dekont görselleri admin panelde incelenir.
 // kind: deposit (depozito itirazı) | refund (iade dekontu onayı) · status: open | approved | rejected
 model Dispute {
