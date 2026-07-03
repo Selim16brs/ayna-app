@@ -9,6 +9,9 @@ import {
   type DemandMode,
   type DemandRequest,
   DEPOSIT_KZT,
+  DEPOSIT_RECEIPT_WINDOW_MS,
+  DEPOSIT_RECEIPT_SHORT_MS,
+  DEPOSIT_SHORT_THRESHOLD_MS,
   FREE_CANCEL_WINDOW_MS,
   REMIND_24H_MS,
   REMIND_2H_MS,
@@ -37,6 +40,11 @@ import {
 
 let seq = 5000;
 const nextId = (prefix: string) => `${prefix}${++seq}`;
+
+// §4.3 — dekont son yükleme anı: randevuya 6 saatten az varsa 1 saat, değilse 3 saat.
+const depositDeadlineFor = (startMs: number, now: number): number =>
+  now +
+  (startMs - now < DEPOSIT_SHORT_THRESHOLD_MS ? DEPOSIT_RECEIPT_SHORT_MS : DEPOSIT_RECEIPT_WINDOW_MS);
 
 const TONE_ICON: Record<PersonalTone, string> = {
   rose: 'medkit-outline',
@@ -135,6 +143,7 @@ interface State {
   confirmRefund: (id: string) => void; // kullanıcı "iadeyi aldım" → kayıt kapanır
   disputeBooking: (id: string) => void; // taraflar itiraz açar (destek/admin kuyruğu)
   checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
+  expireDeposits: () => void; // §4.3 — dekont süresi dolan deposit_pending randevuları düşürür
   toggleClosedDay: (dayStartMs: number) => void; // §4.6 — günü kapalı/açık işaretle
   // §5.2 — teklif/talep akışı
   createDemand: (input: {
@@ -548,6 +557,28 @@ export const useStore = create<State>((set, get) => ({
     }));
   },
 
+  // §4.3 — dekont yükleme süresi dolan deposit_pending randevular otomatik düşer (slot açılır)
+  expireDeposits: () => {
+    const now = Date.now();
+    const expired = get().bookings.filter(
+      (b) => b.status === 'deposit_pending' && b.depositDeadline != null && b.depositDeadline <= now,
+    );
+    if (expired.length === 0) return;
+    set((s) => ({
+      bookings: s.bookings.map((b) =>
+        expired.some((e) => e.id === b.id) ? { ...b, status: 'cancelled' } : b,
+      ),
+    }));
+    for (const b of expired)
+      get().pushNotification({
+        type: 'booking',
+        title: 'Depozito süresi doldu',
+        body: `${b.proName} · dekont zamanında yüklenmedi, randevu düştü ve slot açıldı`,
+        dateLabel: 'Az önce',
+        icon: 'time-outline',
+      });
+  },
+
   // §5.2 — süresi dolan (teklif toplanan) talepleri işaretle
   expireDemands: () =>
     set((s) => {
@@ -630,6 +661,7 @@ export const useStore = create<State>((set, get) => ({
               ...b,
               status: 'deposit_pending',
               depositAmount: DEPOSIT_KZT,
+              depositDeadline: depositDeadlineFor(b.proposedStartMs ?? b.startMs, Date.now()),
               startMs: b.proposedStartMs ?? b.startMs,
               proposedStartMs: undefined,
             }
@@ -653,7 +685,14 @@ export const useStore = create<State>((set, get) => ({
   approveBooking: (id) => {
     set((s) => ({
       bookings: s.bookings.map((b) =>
-        b.id === id ? { ...b, status: 'deposit_pending', depositAmount: DEPOSIT_KZT } : b,
+        b.id === id
+          ? {
+              ...b,
+              status: 'deposit_pending',
+              depositAmount: DEPOSIT_KZT,
+              depositDeadline: depositDeadlineFor(b.startMs, Date.now()),
+            }
+          : b,
       ),
     }));
     void api.approveBooking(id).catch(() => undefined);

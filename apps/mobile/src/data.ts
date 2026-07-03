@@ -724,6 +724,10 @@ export type BookingStatus =
 export const DEPOSIT_KZT = 1000;
 // §4.4 — serbest iptal penceresi (bundan fazla süre varsa depozito iade edilir). Parametrik.
 export const FREE_CANCEL_WINDOW_MS = 3 * 60 * 60_000;
+// §4.3 — dekont yükleme süresi: normalde 3 saat; randevuya 6 saatten az varsa 1 saat. Parametrik.
+export const DEPOSIT_RECEIPT_WINDOW_MS = 3 * 60 * 60_000;
+export const DEPOSIT_RECEIPT_SHORT_MS = 1 * 60 * 60_000;
+export const DEPOSIT_SHORT_THRESHOLD_MS = 6 * 60 * 60_000;
 // §4.1 adım 6 — randevu hatırlatma pencereleri (24 saat + 2 saat önce). Parametrik.
 export const REMIND_24H_MS = 24 * 60 * 60_000;
 export const REMIND_2H_MS = 2 * 60 * 60_000;
@@ -743,6 +747,7 @@ export interface Appointment {
   durationMin: number; // hizmet süresi (dk) — slot motoru buna dayanır (§4.2)
   proposedStartMs?: number; // uzmanın önerdiği alternatif başlangıç (§1.6)
   depositAmount?: number; // §4.3 — beklenen depozito (₸)
+  depositDeadline?: number; // §4.3 — dekont son yükleme anı (UTC ms); geçilirse randevu düşer
   receiptUri?: string; // §4.3 — yüklenen dekont görseli
   refundReceiptUri?: string; // §4.4 — uzmanın yüklediği iade dekontu
   depositForfeited?: boolean; // §4.4 — geç iptal/no-show: kapora uzmanda kaldı

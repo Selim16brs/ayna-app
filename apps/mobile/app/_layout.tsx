@@ -15,14 +15,16 @@ function ThemedStack() {
   const hydrateBookings = useStore((s) => s.hydrateBookings);
   const checkReminders = useStore((s) => s.checkReminders);
   const expireDemands = useStore((s) => s.expireDemands);
+  const expireDeposits = useStore((s) => s.expireDeposits);
   useEffect(() => {
     void hydrateBookings();
   }, [hydrateBookings]);
-  // §4.1/§5.2 — her gezinmede: yaklaşan randevu hatırlatmaları + süresi dolan talepler (mock scheduler)
+  // §4.1/§4.3/§5.2 — her gezinmede: hatırlatmalar + süresi dolan talepler + dekont süresi (mock scheduler)
   useEffect(() => {
     checkReminders();
     expireDemands();
-  }, [checkReminders, expireDemands, pathname]);
+    expireDeposits();
+  }, [checkReminders, expireDemands, expireDeposits, pathname]);
 
   // Alt bar her içerik ekranında; giriş/onboarding/satıcı akışında gizli
   const hideTabBar =
