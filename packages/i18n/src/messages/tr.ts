@@ -147,7 +147,7 @@ export const tr = {
   'booking.field.salon': 'Salon',
 
   // Ana akış — giriş aksiyonları
-  'home.how': 'Ne yapmak istersin?',
+  'home.how': 'Teklif ve Talep Al',
   'home.how_sub': 'Fotoğrafla teklif al ya da talep oluştur',
   'home.categories': 'Kategoriler',
   'home.nearby': 'Sana yakın salonlar',

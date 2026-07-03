@@ -127,7 +127,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'pro.kind.independent': 'Тәуелсіз маман',
   'booking.schedule.uzman': 'Маман таңда',
   'booking.field.salon': 'Салон',
-  'home.how': 'Не істегің келеді?',
+  'home.how': 'Ұсыныс пен сұраныс ал',
   'home.how_sub': 'Фотомен ұсыныс ал немесе сұраныс жаса',
   'home.categories': 'Санаттар',
   'home.nearby': 'Саған жақын салондар',

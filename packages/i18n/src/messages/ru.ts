@@ -127,7 +127,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'pro.kind.independent': 'Независимый мастер',
   'booking.schedule.uzman': 'Выбери мастера',
   'booking.field.salon': 'Салон',
-  'home.how': 'Что ты хочешь сделать?',
+  'home.how': 'Получить предложение и заявку',
   'home.how_sub': 'Получи предложение по фото или создай заявку',
   'home.categories': 'Категории',
   'home.nearby': 'Салоны рядом с тобой',
