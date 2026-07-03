@@ -10,6 +10,7 @@ import { CatalogModule } from './catalog/catalog.module';
 import { CircleModule } from './circle/circle.module';
 import { CommissionsModule } from './commissions/commissions.module';
 import { ConfigModule } from './config/config.module';
+import { CutoutModule } from './cutout/cutout.module';
 import { ContentModule } from './content/content.module';
 import { DisputesModule } from './disputes/disputes.module';
 import { FeatureFlagModule } from './feature-flags/feature-flag.module';
@@ -42,6 +43,7 @@ import { SettingsModule } from './settings/settings.module';
     CommissionsModule,
     DisputesModule,
     CircleModule,
+    CutoutModule,
   ],
 })
 export class AppModule {}
