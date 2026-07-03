@@ -40,3 +40,13 @@ export const citiesSchema = z.object({
   soon: z.array(z.string().min(1)).max(200),
 });
 export type CitiesInput = z.infer<typeof citiesSchema>;
+
+// §12.9 — kategori başına bakım periyodu (gün) + hizmet süresi (dk)
+export const categoryConfigSchema = z.record(
+  z.string(),
+  z.object({
+    maintenanceDays: z.number().int().min(0).max(365),
+    serviceMin: z.number().int().min(0).max(1440),
+  }),
+);
+export type CategoryConfigInput = z.infer<typeof categoryConfigSchema>;

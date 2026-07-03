@@ -433,6 +433,8 @@ export interface AppConfig {
   };
   cities: { active: string[]; soon: string[] };
   features: { removebg: boolean; openai: boolean; sms: boolean };
+  // §12.9 — kategori bakım periyodu (gün) + hizmet süresi (dk)
+  categories?: Record<string, { maintenanceDays: number; serviceMin: number }>;
 }
 
 export interface ApiAnnouncement {

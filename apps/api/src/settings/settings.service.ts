@@ -13,6 +13,19 @@ const CITIES_SOON_KEY = 'cities.soon';
 const DEFAULT_ACTIVE = ['Almatı'];
 const DEFAULT_SOON = ['Astana', 'Şımkent'];
 
+// §12.9 — kategori başına bakım periyodu (gün) + standart hizmet süresi (dk). Parametrik.
+const CATEGORY_CONFIG_KEY = 'category.config';
+const DEFAULT_CATEGORY_CONFIG: Record<string, { maintenanceDays: number; serviceMin: number }> = {
+  hair: { maintenanceDays: 35, serviceMin: 90 },
+  nails: { maintenanceDays: 15, serviceMin: 60 },
+  brows: { maintenanceDays: 21, serviceMin: 30 },
+  lashes: { maintenanceDays: 21, serviceMin: 120 },
+  makeup: { maintenanceDays: 0, serviceMin: 60 },
+  skincare: { maintenanceDays: 30, serviceMin: 60 },
+  spa: { maintenanceDays: 30, serviceMin: 90 },
+  epilation: { maintenanceDays: 28, serviceMin: 45 },
+};
+
 // Anahtarı maskele: sk-****…3f2a (ilk 3 + son 4; arası gizli). Ham değer asla sızmaz.
 export function maskKey(value: string | null): string {
   if (!value) return '';
@@ -128,6 +141,30 @@ export class SettingsService {
     return this.cities();
   }
 
+  // ── §12.9 Kategori ayarları (bakım periyodu + hizmet süresi) ────────────
+  async categoryConfig(): Promise<Record<string, { maintenanceDays: number; serviceMin: number }>> {
+    const row = await this.prisma.setting.findUnique({ where: { key: CATEGORY_CONFIG_KEY } });
+    if (!row?.strValue) return DEFAULT_CATEGORY_CONFIG;
+    try {
+      return { ...DEFAULT_CATEGORY_CONFIG, ...JSON.parse(row.strValue) };
+    } catch {
+      return DEFAULT_CATEGORY_CONFIG;
+    }
+  }
+
+  async setCategoryConfig(
+    config: Record<string, { maintenanceDays: number; serviceMin: number }>,
+    actorId?: string,
+  ) {
+    await this.prisma.setting.upsert({
+      where: { key: CATEGORY_CONFIG_KEY },
+      create: { key: CATEGORY_CONFIG_KEY, intValue: 0, strValue: JSON.stringify(config) },
+      update: { strValue: JSON.stringify(config) },
+    });
+    await this.audit('category.config.set', 'category', actorId);
+    return this.categoryConfig();
+  }
+
   // ── Public config (app tüketir; gizli anahtar sızmaz) ──────────────────
   async publicConfig() {
     const rateRows = await this.rates();
@@ -135,7 +172,9 @@ export class SettingsService {
     const keys = await this.apiKeys();
     const feature = (provider: string) => keys.find((k) => k.provider === provider)?.configured ?? false;
     const cities = await this.cities();
+    const categories = await this.categoryConfig();
     return {
+      categories, // §12.9 — bakım periyodu + hizmet süresi (app bakım takvimi + slot süresi)
       rates: {
         commissionPct: rate('commission.rate'),
         depositKzt: rate('rate.deposit_kzt'),

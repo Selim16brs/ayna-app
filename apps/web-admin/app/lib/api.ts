@@ -177,7 +177,13 @@ export const api = {
     }),
   setCities: (active: string[], soon: string[]) =>
     req<Cities>('/admin/system/cities', { method: 'POST', body: JSON.stringify({ active, soon }) }),
+  // §12.9 — kategori bakım periyodu + hizmet süresi
+  categoryConfig: () => req<CategoryConfig>('/admin/system/categories'),
+  setCategoryConfig: (config: CategoryConfig) =>
+    req<CategoryConfig>('/admin/system/categories', { method: 'POST', body: JSON.stringify(config) }),
 };
+
+export type CategoryConfig = Record<string, { maintenanceDays: number; serviceMin: number }>;
 
 export interface RateSetting {
   key: string;

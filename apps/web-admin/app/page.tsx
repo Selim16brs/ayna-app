@@ -31,6 +31,7 @@ import {
   type Pro,
   type ProInput,
   type AdminUser,
+  type CategoryConfig,
   type Penalty,
   type ReviewApplication,
   type Stats,
@@ -2527,6 +2528,72 @@ function SystemView() {
               />
               <button className="btn-sm btn-ok full" onClick={saveCities}>
                 Şehirleri güncelle
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      <CategorySection />
+    </>
+  );
+}
+
+// §12.9 — kategori bakım periyodu (gün) + standart hizmet süresi (dk)
+function CategorySection() {
+  const { data, reload } = useAsync<CategoryConfig>(() => api.categoryConfig(), []);
+  const [edits, setEdits] = useState<CategoryConfig>({});
+  const save = async () => {
+    if (!data) return;
+    await api.setCategoryConfig({ ...data, ...edits });
+    setEdits({});
+    reload();
+  };
+  const set = (cat: string, field: 'maintenanceDays' | 'serviceMin', v: string) => {
+    const base = data?.[cat] ?? { maintenanceDays: 0, serviceMin: 0 };
+    setEdits((s) => ({ ...s, [cat]: { ...base, ...s[cat], [field]: Number(v) } }));
+  };
+  const val = (cat: string, field: 'maintenanceDays' | 'serviceMin') =>
+    edits[cat]?.[field] ?? data?.[cat]?.[field] ?? 0;
+  return (
+    <>
+      <h2 className="section-head">Kategori ayarları — bakım periyodu & hizmet süresi</h2>
+      <p className="page-sub">Bakım Takvimi periyodu (gün) + slot motoru varsayılan süresi (dk).</p>
+      <div className="card">
+        {!data ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : (
+          <>
+            {Object.keys(data).map((cat) => (
+              <div key={cat} className="list-row">
+                <div className="grow">
+                  <div className="name">{cat}</div>
+                </div>
+                <label className="meta">
+                  Bakım (gün)
+                  <input
+                    className="input"
+                    style={{ width: 80 }}
+                    type="number"
+                    value={val(cat, 'maintenanceDays')}
+                    onChange={(e) => set(cat, 'maintenanceDays', e.target.value)}
+                  />
+                </label>
+                <label className="meta">
+                  Süre (dk)
+                  <input
+                    className="input"
+                    style={{ width: 80 }}
+                    type="number"
+                    value={val(cat, 'serviceMin')}
+                    onChange={(e) => set(cat, 'serviceMin', e.target.value)}
+                  />
+                </label>
+              </div>
+            ))}
+            <div style={{ padding: 16 }}>
+              <button className="btn-sm btn-ok" onClick={save} disabled={Object.keys(edits).length === 0}>
+                Kategori ayarlarını kaydet
               </button>
             </div>
           </>

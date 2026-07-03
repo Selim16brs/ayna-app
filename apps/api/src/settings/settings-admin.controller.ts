@@ -5,9 +5,11 @@ import { AdminGuard } from '../common/admin.guard';
 import type { AuthedRequest } from '../auth/jwt-auth.guard';
 import {
   type ApiKeyInput,
+  type CategoryConfigInput,
   type CitiesInput,
   type RateInput,
   apiKeySchema,
+  categoryConfigSchema,
   citiesSchema,
   rateSchema,
 } from './settings.dto';
@@ -52,5 +54,19 @@ export class SettingsAdminController {
   @Post('cities')
   setCities(@Req() req: AuthedRequest, @Body(new ZodValidationPipe(citiesSchema)) body: CitiesInput) {
     return this.settings.setCities(body, req.user?.id);
+  }
+
+  // §12.9 — kategori bakım periyodu + hizmet süresi
+  @Get('categories')
+  categories() {
+    return this.settings.categoryConfig();
+  }
+
+  @Post('categories')
+  setCategories(
+    @Req() req: AuthedRequest,
+    @Body(new ZodValidationPipe(categoryConfigSchema)) body: CategoryConfigInput,
+  ) {
+    return this.settings.setCategoryConfig(body, req.user?.id);
   }
 }
