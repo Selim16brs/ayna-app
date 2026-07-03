@@ -256,10 +256,6 @@ export const tr = {
   'demand.market.avg': 'Ortalama piyasa fiyatı',
   'demand.market.low':
     'Verdiğiniz teklif genel fiyatların çok altında olduğundan uzmanlar tarafından teklif verilmeyebilir.',
-  'demand.results.title': 'Gelen kabuller',
-  'demand.results.count': 'satıcı bütçeni kabul etti',
-  'demand.results.budget': 'Bütçen',
-  'demand.accepted': 'Kabul etti',
 
   // Randevular (kaynağa göre ayrı sekmeler)
   'bookings.tab.direct': 'Arama',
