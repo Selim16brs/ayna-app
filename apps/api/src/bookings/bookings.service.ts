@@ -159,26 +159,33 @@ export class BookingsService {
     return this.transition(id, { status: 'disputed' });
   }
 
-  // §1.6 — uzman alternatif saat önerir
-  async propose(id: string, dateLabel: string) {
-    return this.transition(id, { status: 'alternative_proposed', proposedDateLabel: dateLabel });
+  // §1.6 — uzman alternatif saat önerir (mobil epoch ms; proposedStartAt olarak saklanır)
+  async propose(id: string, proposedStartMs: number) {
+    return this.transition(id, {
+      status: 'alternative_proposed',
+      proposedStartAt: new Date(proposedStartMs),
+    });
   }
 
-  // §1.6 — kullanıcı önerilen alternatifi kabul eder (tarih güncellenir, onaylanır)
+  // §1.6 — kullanıcı önerilen alternatifi kabul eder (başlangıç güncellenir, onaylanır)
   async accept(id: string) {
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (!b)
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     return this.transition(id, {
       status: 'confirmed',
-      dateLabel: b.proposedDateLabel ?? b.dateLabel,
-      proposedDateLabel: null,
+      startAt: b.proposedStartAt ?? b.startAt,
+      proposedStartAt: null,
     });
   }
 
-  // §1.6 — kullanıcı karşı öneri yapar (yeni tarih, tekrar uzman onayına döner)
-  async counter(id: string, dateLabel: string) {
-    return this.transition(id, { status: 'awaiting_provider', dateLabel, proposedDateLabel: null });
+  // §1.6 — kullanıcı karşı öneri yapar (yeni başlangıç, tekrar uzman onayına döner)
+  async counter(id: string, proposedStartMs: number) {
+    return this.transition(id, {
+      status: 'awaiting_provider',
+      startAt: new Date(proposedStartMs),
+      proposedStartAt: null,
+    });
   }
 
   private async transition(id: string, data: Record<string, unknown>) {
@@ -207,13 +214,14 @@ function mapBooking(b: Booking) {
     proposedDateLabel: b.proposedDateLabel ?? undefined,
     inDays: b.inDays,
     startMs: b.startAt?.getTime() ?? undefined,
+    proposedStartMs: b.proposedStartAt?.getTime() ?? undefined,
     durationMin: b.durationMin ?? undefined,
     price: Number(b.price),
     status: b.status,
     cancelReason: b.cancelReason ?? undefined,
-    // §4.1-4.4 — depozito/iade alanları
+    // §4.1-4.4 — depozito/iade alanları (mobil Appointment alan adlarıyla hizalı)
     depositAmount: b.depositAmount ?? undefined,
-    depositReceiptUri: b.depositReceiptUri ?? undefined,
+    receiptUri: b.depositReceiptUri ?? undefined, // mobil `receiptUri` bekler (hydrate uyumu)
     refundReceiptUri: b.refundReceiptUri ?? undefined,
     depositDeadline: b.depositDeadline ?? undefined,
     depositForfeited: b.depositForfeited,

@@ -15,7 +15,7 @@ import { BusinessesService } from './businesses.service';
 const replySchema = z.object({ reply: z.string().min(1).max(500) });
 const bookingActionSchema = z.object({
   action: z.enum(['approve', 'no-show', 'cancel', 'propose']),
-  dateLabel: z.string().min(1).max(80).optional(),
+  proposedStartMs: z.number().int().optional(), // §4.1 alternatif öneri (epoch ms)
 });
 
 @ApiTags('businesses')
@@ -81,10 +81,16 @@ export class BusinessesController {
     @Param('id') id: string,
     @Param('bookingId') bookingId: string,
     @Body(new ZodValidationPipe(bookingActionSchema))
-    body: { action: 'approve' | 'no-show' | 'cancel' | 'propose'; dateLabel?: string },
+    body: { action: 'approve' | 'no-show' | 'cancel' | 'propose'; proposedStartMs?: number },
     @Req() req: AuthedRequest,
   ) {
-    return this.businesses.bookingAction(id, bookingId, body.action, req.user!.id, body.dateLabel);
+    return this.businesses.bookingAction(
+      id,
+      bookingId,
+      body.action,
+      req.user!.id,
+      body.proposedStartMs,
+    );
   }
 
   // Salon paneli — kendi yorumları (provider-blind)

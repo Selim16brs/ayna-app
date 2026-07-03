@@ -13,8 +13,8 @@ import {
   cancelSchema,
   type CreateBookingInput,
   createBookingSchema,
-  type DateLabelInput,
-  dateLabelSchema,
+  type ProposeInput,
+  proposeSchema,
 } from './bookings.dto';
 import { BookingsService } from './bookings.service';
 
@@ -84,9 +84,9 @@ export class BookingsController {
   @Post(':id/propose')
   propose(
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(dateLabelSchema)) body: DateLabelInput,
+    @Body(new ZodValidationPipe(proposeSchema)) body: ProposeInput,
   ) {
-    return this.bookings.propose(id, body.dateLabel);
+    return this.bookings.propose(id, body.proposedStartMs);
   }
 
   @Post(':id/accept')
@@ -97,9 +97,9 @@ export class BookingsController {
   @Post(':id/counter')
   counter(
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(dateLabelSchema)) body: DateLabelInput,
+    @Body(new ZodValidationPipe(proposeSchema)) body: ProposeInput,
   ) {
-    return this.bookings.counter(id, body.dateLabel);
+    return this.bookings.counter(id, body.proposedStartMs);
   }
 
   // §4.2 — kullanıcı kapora dekontunu yükler

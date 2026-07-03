@@ -171,7 +171,7 @@ export class BusinessesService {
     bookingId: string,
     action: 'approve' | 'no-show' | 'cancel' | 'propose',
     ownerUserId: string,
-    dateLabel?: string,
+    proposedStartMs?: number,
   ) {
     const b = await this.assertOwner(businessId, ownerUserId);
     const bk = await this.prisma.booking.findUnique({ where: { id: bookingId } });
@@ -186,10 +186,10 @@ export class BusinessesService {
       case 'cancel':
         return this.bookings.cancel(bookingId);
       case 'propose':
-        if (!dateLabel) {
-          throw new NotFoundException({ code: 'BAD_INPUT', message: 'Tarih gerekli' });
+        if (proposedStartMs == null) {
+          throw new NotFoundException({ code: 'BAD_INPUT', message: 'Önerilen saat gerekli' });
         }
-        return this.bookings.propose(bookingId, dateLabel);
+        return this.bookings.propose(bookingId, proposedStartMs);
     }
   }
 

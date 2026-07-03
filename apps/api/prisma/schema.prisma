@@ -209,6 +209,8 @@ model Booking {
   // §4.2 — kesin zaman (atomik slot lock için); mobil startMs/durationMin'den
   startAt            DateTime?     @map("start_at") @db.Timestamptz(6)
   durationMin        Int?          @map("duration_min")
+  // §4.1 — uzmanın önerdiği alternatif başlangıç (mobil proposedStartMs ile hizalı)
+  proposedStartAt    DateTime?     @map("proposed_start_at") @db.Timestamptz(6)
   price              Decimal       @db.Decimal(12, 2)
   status             BookingStatus @default(confirmed)
   // §6.C — iptal sebebi (kullanıcı "neden gelemiyorum" iletebilir)

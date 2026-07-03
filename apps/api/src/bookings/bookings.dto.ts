@@ -39,6 +39,10 @@ export const createBookingSchema = z.object({
 
 export const dateLabelSchema = z.object({ dateLabel: z.string().min(1) });
 
+// §4.1 — alternatif saat önerisi/karşı öneri: mobil epoch ms gönderir
+export const proposeSchema = z.object({ proposedStartMs: z.number().int() });
+export type ProposeInput = z.infer<typeof proposeSchema>;
+
 // §6.C — iptal sebebi (opsiyonel)
 export const cancelSchema = z.object({ reason: z.string().max(300).optional() });
 
