@@ -106,9 +106,30 @@ export default function QuoteResultsScreen() {
       </ScrollView>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-        {offers.map((o) => (
-          <OfferCard key={o.id} offer={o} disabled={demand.status !== 'collecting'} onPick={(slot) => pick(o, slot)} />
-        ))}
+        {offers.length === 0 ? (
+          // §5.2 — hiç teklif yok: toplanıyorsa bekleme, süre dolduysa "uzat/bütçeyi gözden geçir"
+          <View style={styles.listEmpty}>
+            <Ionicons
+              name={collecting ? 'time-outline' : 'sad-outline'}
+              size={34}
+              color={colors.muted}
+            />
+            <Text variant="body" tone="muted" style={styles.listEmptyText}>
+              {t(collecting ? 'quotes.empty_collecting' : 'quotes.empty_expired')}
+            </Text>
+            {!collecting && demand.status !== 'booked' ? (
+              <Pressable style={styles.listEmptyCta} onPress={() => router.push('/demand/new')}>
+                <Text variant="bodyStrong" tone="onAccent">
+                  {t('quotes.empty_cta')}
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : (
+          offers.map((o) => (
+            <OfferCard key={o.id} offer={o} disabled={demand.status !== 'collecting'} onPick={(slot) => pick(o, slot)} />
+          ))
+        )}
       </ScrollView>
     </Screen>
   );
@@ -216,6 +237,15 @@ const makeStyles = (colors: ColorTokens) =>
     },
     sortChipOn: { backgroundColor: colors.accent },
     list: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
+    listEmpty: { alignItems: 'center', gap: space(1.5), paddingTop: space(8), paddingHorizontal: space(4) },
+    listEmptyText: { textAlign: 'center' },
+    listEmptyCta: {
+      marginTop: space(1),
+      backgroundColor: colors.accent,
+      borderRadius: radius.pill,
+      paddingHorizontal: space(3),
+      paddingVertical: space(1.5),
+    },
     card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2), gap: space(1.25) },
     cardTop: { flexDirection: 'row', gap: space(1.5), alignItems: 'center' },
     thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.bgSunken },
