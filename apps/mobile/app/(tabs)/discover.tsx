@@ -215,6 +215,7 @@ export default function DiscoverScreen() {
                   image={c.image}
                   clipId={`promo-c-${c.id}`}
                   grad={PROMO_GRADS[i % PROMO_GRADS.length]!}
+                  sponsored
                   onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
                 />
               ))}
@@ -280,13 +281,16 @@ function PromoCard({
   clipId,
   grad,
   onPress,
+  sponsored,
 }: {
   title: string;
   image: string;
   clipId: string;
   grad: readonly [string, string];
   onPress: () => void;
+  sponsored?: boolean;
 }) {
+  const { t } = useLocale();
   const styles = useThemedStyles(makeStyles);
   const deep = grad[1];
   return (
@@ -301,6 +305,12 @@ function PromoCard({
       <View style={StyleSheet.absoluteFill}>
         <AngledPhoto uri={image} width={PROMO_W} height={PROMO_H} clipId={clipId} />
       </View>
+      {/* §5.1.6 — sponsorlu işareti (zarif köşe etiketi) */}
+      {sponsored ? (
+        <View style={styles.sponsorTag}>
+          <Text style={styles.sponsorText}>{t('home.sponsored')}</Text>
+        </View>
+      ) : null}
       {/* Sol: başlık üstte, ok altta */}
       <View style={styles.promoContent}>
         <Text style={styles.promoCardTitle} numberOfLines={2}>
@@ -476,6 +486,16 @@ const makeStyles = (colors: ColorTokens) =>
       zIndex: 2,
     },
     promoCardTitle: { fontSize: 18, fontWeight: '800', lineHeight: 22, letterSpacing: -0.2, color: '#FFFFFF' },
+    sponsorTag: {
+      position: 'absolute',
+      top: space(1),
+      right: space(1),
+      backgroundColor: 'rgba(0,0,0,0.35)',
+      paddingHorizontal: space(1),
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+    },
+    sponsorText: { color: 'rgba(255,255,255,0.95)', fontSize: 10, fontWeight: '700' },
     promoArrow: {
       width: 44,
       height: 44,

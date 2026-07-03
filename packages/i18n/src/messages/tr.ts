@@ -156,6 +156,7 @@ export const tr = {
   'home.city_empty.cta': 'Haber ver',
   'nearby.empty': 'Şehrinde yakın salon bulunamadı',
   'nearby.premium': 'Premium',
+  'home.sponsored': 'Sponsorlu',
   'home.map_mode': 'Harita modu',
   'city.title': 'Şehir seç',
   'city.hint': 'Seçtiğin şehre göre tüm salon ve uzmanlar güncellenir.',
