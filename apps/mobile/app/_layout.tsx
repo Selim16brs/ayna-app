@@ -6,12 +6,13 @@ import { useFonts, DancingScript_700Bold } from '@expo-google-fonts/dancing-scri
 import { LocaleProvider } from '../src/locale';
 import { useStore } from '../src/store';
 import { ThemeProvider, useTheme } from '../src/theme-context';
-import { AppTabBar, NailCursor } from '../src/ui';
+import { AppTabBar, NailCursor, SellerModeReturn, SellerTabBar } from '../src/ui';
 
 function ThemedStack() {
   const { colors, isDark } = useTheme();
   const pathname = usePathname();
   const currentUser = useStore((s) => s.currentUser);
+  const sellerViewMode = useStore((s) => s.sellerViewMode);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
   const loadContent = useStore((s) => s.loadContent);
   const checkReminders = useStore((s) => s.checkReminders);
@@ -34,13 +35,15 @@ function ThemedStack() {
     pruneNotifications(); // §5.7 — 30 günden eski bildirimleri temizle
   }, [checkReminders, expireDemands, expireDeposits, pruneNotifications, pathname]);
 
-  // Alt bar her içerik ekranında; giriş/onboarding/satıcı akışında gizli
-  const hideTabBar =
+  // §9.1 — satıcı (uzman/salon) modunda SellerTabBar; kullanıcı modunda/müşteride AppTabBar.
+  const role = currentUser?.role;
+  const isSeller = role === 'salon' || role === 'professional';
+  const sellerMode = isSeller && sellerViewMode === 'seller';
+  const baseHidden =
     !currentUser ||
     pathname === '/' ||
     pathname.startsWith('/auth') ||
-    pathname.startsWith('/language') ||
-    pathname.startsWith('/seller');
+    pathname.startsWith('/language');
 
   return (
     <>
@@ -53,7 +56,13 @@ function ThemedStack() {
           }}
         />
       </NailCursor>
-      {hideTabBar ? null : <AppTabBar />}
+      {baseHidden ? null : sellerMode ? (
+        <SellerTabBar />
+      ) : pathname.startsWith('/seller') ? null : (
+        <AppTabBar />
+      )}
+      {/* §9.5/§10.3 — kullanıcı modundaki satıcı için kalıcı dönüş butonu */}
+      <SellerModeReturn />
     </>
   );
 }

@@ -73,6 +73,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'nav.circle': 'W2W',
   'nav.care': 'Для меня',
   'nav.profile': 'Профиль',
+  // §9.1 — нижняя панель продавца (мастер/салон)
+  'seller.nav.home': 'Главная',
+  'seller.nav.requests': 'Заявки',
+  'seller.nav.agenda': 'Календарь',
+  'seller.nav.profile': 'Профиль',
+  'seller.mode.to_user': 'Перейти в режим пользователя',
+  'seller.mode.back': 'Вернуться в режим бизнеса',
   'home.greeting': 'Добро пожаловать',
   'home.subtitle': 'Найди мастера, которому доверяешь',
   'home.search': 'Поиск мастера, салона или услуги',

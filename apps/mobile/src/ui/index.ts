@@ -15,6 +15,8 @@ export { WorkingHours, defaultHours, type DayHours } from './WorkingHours';
 export { SocialLinks, emptySocial, type SocialValue } from './SocialLinks';
 export { SlotPicker, type PickerDay } from './SlotPicker';
 export { AppTabBar, TAB_BAR_CLEARANCE } from './AppTabBar';
+export { SellerTabBar } from './SellerTabBar';
+export { SellerModeReturn } from './SellerModeReturn';
 export { Placeholder } from './Placeholder';
 export { StackHeader } from './StackHeader';
 export { Segmented } from './Segmented';

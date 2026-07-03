@@ -73,6 +73,13 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'nav.circle': 'W2W',
   'nav.care': 'Мен үшін',
   'nav.profile': 'Профиль',
+  // §9.1 — сатушы (маман/салон) төменгі жолағы
+  'seller.nav.home': 'Басты бет',
+  'seller.nav.requests': 'Сұраныстар',
+  'seller.nav.agenda': 'Күнтізбе',
+  'seller.nav.profile': 'Профиль',
+  'seller.mode.to_user': 'Пайдаланушы режиміне өту',
+  'seller.mode.back': 'Бизнес режиміне қайту',
   'home.greeting': 'Қош келдің',
   'home.subtitle': 'Сенетін маманыңды тап',
   'home.search': 'Маман, салон немесе қызмет іздеу',

@@ -81,6 +81,13 @@ export const tr = {
   'nav.circle': 'W2W',
   'nav.care': 'Benim İçin',
   'nav.profile': 'Profil',
+  // §9.1 — satıcı (uzman/salon) alt barı
+  'seller.nav.home': 'Ana Sayfa',
+  'seller.nav.requests': 'Talepler',
+  'seller.nav.agenda': 'Takvim',
+  'seller.nav.profile': 'Profil',
+  'seller.mode.to_user': 'Kullanıcı moduna geç',
+  'seller.mode.back': 'İşletme Moduna Dön',
 
   // Keşfet (ana ekran)
   'home.greeting': 'Hoş geldin',

@@ -139,6 +139,9 @@ interface State {
   notifications: AppNotification[];
   token: string | null;
   currentUser: AuthUser | null;
+  // §9.5/§10.3 — satıcı hesabı kullanıcı moduna geçebilir; 'seller' varsayılan
+  sellerViewMode: 'seller' | 'user';
+  setSellerViewMode: (m: 'seller' | 'user') => void;
 
   // auth
   setAuth: (session: AuthSession) => void;
@@ -368,8 +371,11 @@ export const useStore = create<State>((set, get) => ({
   token: null,
   currentUser: null,
 
+  sellerViewMode: 'seller',
+  setSellerViewMode: (m) => set({ sellerViewMode: m }),
   setAuth: (session) => {
-    set({ token: session.token, currentUser: session.user });
+    // Satıcı girişinde işletme modu; her girişte varsayılana döner
+    set({ token: session.token, currentUser: session.user, sellerViewMode: 'seller' });
     void get().hydrateLoyalty();
     void get().hydrateBookings();
   },

@@ -26,6 +26,7 @@ const makeMenuColors = (colors: ColorTokens) => [
 // §5.6 nihai menü. 'panel' yalnızca satıcı hesabında; 'AYNA Safe' KALDIRILDI.
 const MENU: { key: MessageKey; icon: IoniconName; danger?: boolean; sellerOnly?: boolean }[] = [
   { key: 'profile.menu.panel', icon: 'briefcase-outline', sellerOnly: true },
+  { key: 'seller.mode.to_user', icon: 'people-outline', sellerOnly: true },
   { key: 'profile.menu.passport', icon: 'card-outline' },
   { key: 'profile.menu.rewards', icon: 'gift-outline' },
   { key: 'profile.menu.budget', icon: 'wallet-outline' },
@@ -58,6 +59,7 @@ export default function ProfileScreen() {
   const restrictedDaysLeft = useStore((s) => s.currentUser?.restrictedDaysLeft ?? 0);
   const womenVerified = useStore((s) => s.currentUser?.womenVerified ?? false);
   const logout = useStore((s) => s.logout);
+  const setSellerViewMode = useStore((s) => s.setSellerViewMode);
   // §5.6 — 'İşletme paneli' yalnızca salon/uzman hesabında görünür
   const role = useStore((s) => s.currentUser?.role);
   const isSeller = role === 'salon' || role === 'professional';
@@ -69,6 +71,11 @@ export default function ProfileScreen() {
 
   const onPress = (key: MessageKey) => {
     if (key === 'profile.menu.panel') router.push('/seller/reports');
+    else if (key === 'seller.mode.to_user') {
+      // §9.5/§10.3 — kullanıcı moduna geç (kalıcı dönüş butonu görünür)
+      setSellerViewMode('user');
+      router.replace('/discover');
+    }
     else if (key === 'profile.menu.passport') router.push('/profile/passport');
     else if (key === 'profile.menu.rewards') router.push('/rewards');
     else if (key === 'profile.menu.budget') router.push('/profile/budget');
