@@ -1339,6 +1339,10 @@ export const SEED_DEMANDS: DemandRequest[] = [
 ];
 
 // ── Sadakat: kazanım/harcama defteri + çekiliş + ödüller ─────────────────
+// §8.2 — çekiliş bilet maliyeti + puan harcama tavanı. PARAMETRİK (admin panel).
+export const RAFFLE_COST = 500;
+export const POINTS_SPEND_CAP_PCT = 50; // bir ödemenin en fazla %50'si puanla
+export const POINTS_EXPIRY_MONTHS = 12; // 12 ay hareketsizse yanar
 export type LedgerKind = 'earn' | 'spend';
 export interface LedgerEntry {
   id: string;

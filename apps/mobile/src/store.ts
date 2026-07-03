@@ -24,6 +24,7 @@ import {
   type PersonalTone,
   type Review,
   type Reward,
+  RAFFLE_COST,
   SEED_APPOINTMENTS,
   SEED_CARE_ROUTINES,
   SEED_CIRCLE_POSTS,
@@ -191,6 +192,7 @@ interface State {
   // loyalty
   earn: (points: number, labelKey: MessageKey, detail: string) => void;
   redeem: (reward: Reward) => Promise<boolean>;
+  enterRaffle: () => boolean; // §8.2 — 500 puan = 1 çekiliş bileti
   hydrateLoyalty: () => Promise<void>;
 
   // şehir (global filtre)
@@ -962,6 +964,27 @@ export const useStore = create<State>((set, get) => ({
           labelKey: reward.titleKey,
           detail: 'Ödül kullanıldı',
           points: -reward.cost,
+          dateLabel: 'Az önce',
+        },
+        ...s.ledger,
+      ],
+    }));
+    return true;
+  },
+
+  // §8.2 — çekilişe katıl: 500 puan öde → +1 bilet
+  enterRaffle: () => {
+    if (get().points < RAFFLE_COST) return false;
+    set((s) => ({
+      points: s.points - RAFFLE_COST,
+      raffleEntries: s.raffleEntries + 1,
+      ledger: [
+        {
+          id: nextId('le'),
+          kind: 'spend',
+          labelKey: 'rewards.raffle.entry',
+          detail: 'Çekiliş bileti',
+          points: -RAFFLE_COST,
           dateLabel: 'Az önce',
         },
         ...s.ledger,

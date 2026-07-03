@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { REWARDS, type Reward } from '../src/data';
+import { POINTS_EXPIRY_MONTHS, POINTS_SPEND_CAP_PCT, RAFFLE_COST, REWARDS, type Reward } from '../src/data';
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
@@ -31,6 +31,18 @@ export default function RewardsScreen() {
   const tier = useStore((s) => s.tier);
   const ledger = useStore((s) => s.ledger);
   const redeem = useStore((s) => s.redeem);
+  const enterRaffle = useStore((s) => s.enterRaffle);
+
+  const onJoinRaffle = () => {
+    Alert.alert(t('rewards.raffle.join_confirm'), t('rewards.raffle.cost'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('rewards.raffle.join'),
+        onPress: () =>
+          Alert.alert(enterRaffle() ? t('rewards.raffle.joined') : t('rewards.redeem.insufficient')),
+      },
+    ]);
+  };
 
   // §11 — sunucudan türetilen seviye; yoksa makul varsayılan
   const tierKey = tier?.key ?? 'bronze';
@@ -112,7 +124,29 @@ export default function RewardsScreen() {
               {t('rewards.raffle.prize')}
             </Text>
           </View>
+          <Pressable
+            style={[styles.raffleJoin, points < RAFFLE_COST && styles.raffleJoinOff]}
+            disabled={points < RAFFLE_COST}
+            onPress={onJoinRaffle}
+          >
+            <Text variant="caption" style={styles.raffleJoinText}>
+              {t('rewards.raffle.join')}
+            </Text>
+            <Text variant="caption" style={styles.raffleJoinSub}>
+              {RAFFLE_COST}
+            </Text>
+          </Pressable>
         </LinearGradient>
+
+        {/* §8.2 — son kullanma uyarısı (12 ay hareketsizse yanar) */}
+        {points > 0 ? (
+          <View style={styles.expiryBanner}>
+            <Ionicons name="hourglass-outline" size={16} color={colors.gold} />
+            <Text variant="caption" tone="ink" style={styles.expiryText}>
+              {t('rewards.expiry_warn')}
+            </Text>
+          </View>
+        ) : null}
 
         {/* Kullan */}
         <SectionHeader title={t('rewards.redeem.title')} />
@@ -184,6 +218,15 @@ export default function RewardsScreen() {
           ))}
         </View>
 
+        {/* §8.1/8.2 — puan kuralları (şeffaflık) */}
+        <SectionHeader title={t('rewards.rules.title')} />
+        <View style={[styles.group, shadow.soft]}>
+          <RuleRow icon="cash-outline" text={t('rewards.rules.earn')} />
+          <RuleRow icon="people-outline" text={t('rewards.rules.channels')} />
+          <RuleRow icon="pie-chart-outline" text={`${t('rewards.rules.cap')} (%${POINTS_SPEND_CAP_PCT})`} />
+          <RuleRow icon="hourglass-outline" text={`${t('rewards.rules.expire')} (${POINTS_EXPIRY_MONTHS} ay)`} last />
+        </View>
+
         <View style={styles.note}>
           <Ionicons name="lock-closed" size={13} color={colors.muted} />
           <Text variant="caption" tone="muted" style={styles.noteText}>
@@ -195,9 +238,45 @@ export default function RewardsScreen() {
   );
 }
 
+function RuleRow({ icon, text, last }: { icon: IoniconName; text: string; last?: boolean }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={[styles.row, !last && styles.rowBorder]}>
+      <View style={[styles.icon, { backgroundColor: colors.roseSoft }]}>
+        <Ionicons name={icon} size={18} color={colors.rose} />
+      </View>
+      <Text variant="caption" tone="ink" style={styles.ruleText}>
+        {text}
+      </Text>
+    </View>
+  );
+}
+
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: space(13) },
+    raffleJoin: {
+      backgroundColor: 'rgba(255,255,255,0.22)',
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      alignItems: 'center',
+    },
+    raffleJoinOff: { opacity: 0.5 },
+    raffleJoinText: { color: '#FFFFFF', fontWeight: '800' },
+    raffleJoinSub: { color: 'rgba(255,255,255,0.9)', fontSize: 10 },
+    expiryBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.goldSoft,
+      borderRadius: radius.lg,
+      padding: space(1.75),
+      marginTop: space(2),
+    },
+    expiryText: { flex: 1 },
+    ruleText: { flex: 1, lineHeight: 18 },
     pointsCard: { borderRadius: radius.xl, padding: space(3), overflow: 'hidden' },
     glowA: {
       position: 'absolute',
