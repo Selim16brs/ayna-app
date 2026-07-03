@@ -606,22 +606,30 @@ export const useStore = create<State>((set, get) => ({
   },
 
   // §4.5 — kullanıcı reddeder → iptal (depozito ödediyse iade akışı ayrıca yürür)
+  // §4.5 — kullanıcı yeni uzmanı reddeder. Depozito ödediyse KUSURSUZ iptal (uzman ayrıldı)
+  // → iade akışı; ödemediyse düz iptal. (Önceki hata: her koşulda kapora yakılıyordu.)
   rejectReassignment: (id) => {
+    const b = get().bookings.find((x) => x.id === id);
+    const paid = b?.status === 'reassigned_pending' && b.depositAmount != null;
     set((s) => ({
-      bookings: s.bookings.map((b) =>
-        b.id === id ? { ...b, status: 'cancelled', reassignedFrom: undefined } : b,
+      bookings: s.bookings.map((x) =>
+        x.id === id
+          ? { ...x, status: paid ? 'refund_pending' : 'cancelled', reassignedFrom: undefined }
+          : x,
       ),
     }));
   },
 
-  // §1.6 — kullanıcı uzmanın önerdiği alternatif saati kabul eder
+  // §1.6/§4.1 — kullanıcı uzmanın önerdiği alternatif saati kabul eder → DEPOZİTO adımı
+  // (Önceki hata: doğrudan 'confirmed' yapıp depozitoyu atlıyordu.)
   acceptAlternative: (id) => {
     set((s) => ({
       bookings: s.bookings.map((b) =>
         b.id === id
           ? {
               ...b,
-              status: 'confirmed',
+              status: 'deposit_pending',
+              depositAmount: DEPOSIT_KZT,
               startMs: b.proposedStartMs ?? b.startMs,
               proposedStartMs: undefined,
             }
@@ -629,6 +637,16 @@ export const useStore = create<State>((set, get) => ({
       ),
     }));
     void api.acceptBooking(id).catch(() => undefined);
+    const b = get().bookings.find((x) => x.id === id);
+    if (b)
+      get().pushNotification({
+        type: 'booking',
+        title: 'Alternatif saat onaylandı',
+        body: `${b.proName} · ${formatSlotTr(b.startMs)} · ${DEPOSIT_KZT}₸ depozito gönder ve dekontu yükle`,
+        dateLabel: 'Az önce',
+        icon: 'card-outline',
+        route: `/booking/${id}`,
+      });
   },
 
   // §4.1 adım 4 — uzman kabul etti → depozito adımı açılır (§4.3)
@@ -723,10 +741,12 @@ export const useStore = create<State>((set, get) => ({
       });
   },
 
-  // §4.4 — uzman kullanıcıyı "gelmedi" işaretler (istatistik bütünlüğü)
+  // §4.4 — uzman kullanıcıyı "gelmedi" işaretler → kapora uzmanda kalır (depositForfeited)
   markNoShow: (id) => {
     set((s) => ({
-      bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'no_show' } : b)),
+      bookings: s.bookings.map((b) =>
+        b.id === id ? { ...b, status: 'no_show', depositForfeited: true } : b,
+      ),
     }));
   },
 

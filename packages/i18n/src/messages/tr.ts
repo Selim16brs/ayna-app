@@ -706,6 +706,8 @@ export const tr = {
   'offline.date': 'Tarih / saat',
   'offline.time': 'Saat',
   'offline.dur': 'Süre (dk)',
+  'offline.conflict_title': 'Saat dolu',
+  'offline.conflict': 'Bu uzmanın seçtiğin saatte çakışan bir randevusu var. Farklı bir saat seç.',
   'offline.price': 'Fiyat (₸)',
   'offline.save': 'Randevuyu ekle',
   'offline.saved': 'Offline randevu eklendi',

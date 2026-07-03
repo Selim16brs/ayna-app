@@ -164,24 +164,35 @@ export default function AgendaScreen() {
               })}
             </ScrollView>
 
-            {/* Seçili gün başlığı + Açık/Kapalı toggle */}
+            {/* Seçili gün başlığı + Açık/Kapalı toggle. §4.6: salon uzmanın izin gününe DOKUNAMAZ. */}
             <View style={styles.dayHeader}>
               <Text variant="bodyStrong" tone="ink">
                 {formatSlot(selectedDay, t).split(' · ')[0]} · {almatyParts(selectedDay).day}
               </Text>
-              <Pressable
-                onPress={() => toggleClosedDay(selectedDay)}
-                style={[styles.closeToggle, dayClosed && styles.closeToggleOn]}
-              >
-                <Ionicons
-                  name={dayClosed ? 'lock-closed' : 'lock-open-outline'}
-                  size={14}
-                  color={dayClosed ? colors.onColor : colors.rose}
-                />
-                <Text variant="caption" tone={dayClosed ? 'onColor' : 'rose'} style={styles.closeToggleText}>
-                  {dayClosed ? t('agenda.mark_open') : t('agenda.mark_closed')}
-                </Text>
-              </Pressable>
+              {isSalon ? (
+                dayClosed ? (
+                  <View style={styles.closedTag}>
+                    <Ionicons name="lock-closed" size={13} color={colors.muted} />
+                    <Text variant="caption" tone="muted">
+                      {t('hours.closed')}
+                    </Text>
+                  </View>
+                ) : null
+              ) : (
+                <Pressable
+                  onPress={() => toggleClosedDay(selectedDay)}
+                  style={[styles.closeToggle, dayClosed && styles.closeToggleOn]}
+                >
+                  <Ionicons
+                    name={dayClosed ? 'lock-closed' : 'lock-open-outline'}
+                    size={14}
+                    color={dayClosed ? colors.onColor : colors.rose}
+                  />
+                  <Text variant="caption" tone={dayClosed ? 'onColor' : 'rose'} style={styles.closeToggleText}>
+                    {dayClosed ? t('agenda.mark_open') : t('agenda.mark_closed')}
+                  </Text>
+                </Pressable>
+              )}
             </View>
 
             {dayClosed ? (
@@ -453,6 +464,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     closeToggleOn: { backgroundColor: colors.rose },
     closeToggleText: { fontWeight: '700' },
+    closedTag: { flexDirection: 'row', alignItems: 'center', gap: space(0.5) },
     closedBanner: {
       alignItems: 'center',
       gap: space(1),

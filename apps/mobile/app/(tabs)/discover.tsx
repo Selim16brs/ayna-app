@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MessageKey } from '@ayna/i18n';
 import { useCampaigns, useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
+import { selectUnreadCount, useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { AngledPhoto, SalonRow, Screen, Text, WaveLayered } from '../../src/ui';
@@ -48,6 +48,7 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const campaigns = useCampaigns();
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
+  const unread = useStore(selectUnreadCount);
   const userName = useStore((s) => s.currentUser?.name)?.split(' ')[0] ?? 'Aigerim';
   // Dinamik kullanıcı adı — ilk harf büyük (el yazısı katman için)
   const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
@@ -87,6 +88,15 @@ export default function DiscoverScreen() {
               style={styles.logo}
               resizeMode="contain"
             />
+            {/* §5.1 madde 1 — sağ üstte zil (bildirimler) */}
+            <Pressable style={styles.bell} onPress={() => router.push('/notifications')} hitSlop={8}>
+              <Ionicons name="notifications-outline" size={22} color={colors.onAccent} />
+              {unread > 0 ? (
+                <View style={styles.bellBadge}>
+                  <Text style={styles.bellBadgeText}>{unread > 9 ? '9+' : unread}</Text>
+                </View>
+              ) : null}
+            </Pressable>
           </View>
 
           <View style={styles.searchRow}>
@@ -339,6 +349,20 @@ const makeStyles = (colors: ColorTokens) =>
     waveAbs: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 2 },
     heroTop: { alignItems: 'center', justifyContent: 'center' },
     logo: { width: 148, height: 56 },
+    bell: { position: 'absolute', right: 0, top: 0, bottom: 0, justifyContent: 'center' },
+    bellBadge: {
+      position: 'absolute',
+      top: 6,
+      right: -4,
+      minWidth: 16,
+      height: 16,
+      borderRadius: 8,
+      paddingHorizontal: 3,
+      backgroundColor: colors.rose,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bellBadgeText: { color: '#FFFFFF', fontSize: 9, fontWeight: '800' },
     mapIconBtn: {
       width: 50,
       height: 50,

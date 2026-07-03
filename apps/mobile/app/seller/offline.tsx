@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { hasConflict } from '@ayna/domain';
 import { api } from '../../src/api';
 import type { Appointment } from '../../src/data';
 import { almatyDayStart, slotTime } from '../../src/datetime';
+import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -32,17 +34,31 @@ export default function OfflineBookingScreen() {
   const [kind, setKind] = useState<Kind>('normal');
   const [groupSize, setGroupSize] = useState('3');
   const [busy, setBusy] = useState(false);
+  const bookings = useStore((s) => s.bookings);
 
   const canSave = customer.trim().length > 1 && service.trim().length > 1 && !busy;
 
   async function save() {
     if (!canSave) return;
-    setBusy(true);
     // HH:MM (Almatı, bugün) → UTC startMs; geçersizse öğlen 12:00
     const m = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
     const h = m ? Math.min(23, Number(m[1])) : 12;
     const min = m ? Math.min(59, Number(m[2])) : 0;
     const startMs = baseDay + h * 3_600_000 + min * 60_000;
+    const durationMin = Number(dur.replace(/[^0-9]/g, '')) || 60;
+    // §4.2 — çift rezervasyon önlemi: aynı uzmanın çakışan randevusu varsa engelle
+    const candidate = { startMs, endMs: startMs + durationMin * 60_000 };
+    const uzmanName = uzman.trim();
+    const conflictBusy = bookings
+      .filter(
+        (b) => b.status !== 'cancelled' && (uzmanName ? b.uzmanName === uzmanName : true),
+      )
+      .map((b) => ({ startMs: b.startMs, endMs: b.startMs + b.durationMin * 60_000 }));
+    if (hasConflict(candidate, conflictBusy)) {
+      Alert.alert(t('offline.conflict_title'), t('offline.conflict'));
+      return;
+    }
+    setBusy(true);
     const booking: Appointment = {
       id: `off-${Date.now()}-${seq++}`,
       source: 'direct',
@@ -53,7 +69,7 @@ export default function OfflineBookingScreen() {
       uzmanName: uzman.trim() || undefined,
       customerName: customer.trim(),
       startMs,
-      durationMin: Number(dur.replace(/[^0-9]/g, '')) || 60,
+      durationMin,
       price: Number(price.replace(/[^0-9]/g, '')) || 0,
       status: 'confirmed',
       bookingKind: kind,

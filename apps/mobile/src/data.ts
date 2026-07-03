@@ -1138,64 +1138,8 @@ export function buildUpcomingEvents(
   return [...a, ...m, ...c].sort((x, y) => x.inDays - y.inDays);
 }
 
-// ── Teklifler (foto-teklif / talep sonuçları) ────────────────────────────
-export interface Quote {
-  id: string;
-  proId: string;
-  name: string;
-  image: string;
-  rating: number;
-  reviewCount: number;
-  friends?: number;
-  price: number;
-  etaMin: number;
-}
-
-// Fotoğrafla teklif YALNIZCA bağımsız uzmanlara (independent) gider — hepsi uzman.
-export const INCOMING_QUOTES: Quote[] = [
-  {
-    id: 'q1',
-    proId: '3',
-    name: 'Ailin Makeup',
-    image: PROFESSIONALS[2]!.image,
-    rating: 5.0,
-    reviewCount: 204,
-    friends: 5,
-    price: 21000,
-    etaMin: 90,
-  },
-  {
-    id: 'q2',
-    proId: '2',
-    name: 'Aruzhan Beauty',
-    image: PROFESSIONALS[1]!.image,
-    rating: 4.8,
-    reviewCount: 156,
-    price: 12000,
-    etaMin: 75,
-  },
-  {
-    id: 'q3',
-    proId: '7',
-    name: 'Aru Brows',
-    image: PROFESSIONALS[6]!.image,
-    rating: 4.9,
-    reviewCount: 132,
-    friends: 2,
-    price: 9000,
-    etaMin: 60,
-  },
-  {
-    id: 'q4',
-    proId: '9',
-    name: 'Sezim Hair',
-    image: PROFESSIONALS[8]!.image,
-    rating: 4.7,
-    reviewCount: 88,
-    price: 15000,
-    etaMin: 110,
-  },
-];
+// (Eski statik INCOMING_QUOTES + demand/results ekranı kaldırıldı — teklifler artık
+//  store'daki gerçek DemandRequest.offers'tan gelir; bkz. §5.2 quote/results.)
 
 // ── Teklif/Talep akışı (reverse marketplace çekirdeği §5.2) ──────────────
 export type DemandMode = 'photo' | 'describe';
@@ -1411,7 +1355,7 @@ export interface AppNotification {
 // Bildirim türüne göre varsayılan hedef ekran
 export const NOTIFICATION_ROUTE: Record<NotificationType, string | null> = {
   booking: '/bookings',
-  quote: '/demand/results',
+  quote: '/bookings', // §5.3 Taleplerim (belirli talep varsa bildirimin kendi route'u kullanılır)
   loyalty: '/rewards',
   circle: '/circle',
   system: null,
@@ -1431,10 +1375,11 @@ export const SEED_NOTIFICATIONS: AppNotification[] = [
     id: 'n2',
     type: 'quote',
     title: 'Yeni teklif geldi',
-    body: 'Balayage talebine 4 işletme teklif verdi.',
+    body: 'Talebine işletmeler teklif verdi.',
     dateLabel: 'Dün',
     icon: 'pricetags-outline',
     read: false,
+    route: '/quote/results?id=dm-seed-1',
   },
   {
     id: 'n3',

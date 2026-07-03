@@ -134,7 +134,8 @@ export default function ExpertRegisterScreen() {
         user: {
           id: res.specialist.id,
           name: name.trim(),
-          role: 'specialist',
+          // Backend uzmana 'professional' rolü verir; login guard'ı da bunu bekler.
+          role: 'professional',
           phone: phone.trim(),
           city,
           phoneVerified: false,
