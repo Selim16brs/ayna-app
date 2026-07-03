@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { type AppNotification, NOTIFICATION_ROUTE, type NotificationType } from '../src/data';
-import { useLocale } from '../src/locale';
+import { fillParams, useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -77,10 +77,10 @@ export default function NotificationsScreen() {
                     </View>
                     <View style={styles.rowBody}>
                       <Text variant="bodyStrong" tone="ink" style={styles.rowTitle} numberOfLines={1}>
-                        {n.title}
+                        {n.titleKey ? fillParams(t(n.titleKey), n.params) : (n.title ?? '')}
                       </Text>
                       <Text variant="caption" tone="inkSoft" style={styles.body}>
-                        {n.body}
+                        {n.bodyKey ? fillParams(t(n.bodyKey), n.params) : (n.body ?? '')}
                       </Text>
                       <Text variant="caption" tone="muted" style={styles.date}>
                         {n.dateLabel}

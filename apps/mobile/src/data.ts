@@ -1371,8 +1371,13 @@ export type NotificationType = 'booking' | 'quote' | 'loyalty' | 'circle' | 'sys
 export interface AppNotification {
   id: string;
   type: NotificationType;
-  title: string;
-  body: string;
+  // §14.5 — uygulama-üretimi bildirimler i18n anahtarı + params ile (render anında 3 dilde çözülür);
+  // seed/duyuru gibi dinamik metinler doğrudan title/body kullanır.
+  titleKey?: MessageKey;
+  bodyKey?: MessageKey;
+  params?: Record<string, string | number>;
+  title?: string;
+  body?: string;
   dateLabel: string;
   icon: string;
   read: boolean;

@@ -401,8 +401,9 @@ export const useStore = create<State>((set, get) => ({
     void api.createBooking(booking, get().token ?? undefined).catch(() => undefined);
     get().pushNotification({
       type: 'booking',
-      title: 'Randevu isteğin gönderildi',
-      body: `${input.proName} · ${formatSlotTr(input.startMs)} · uzman onayı bekleniyor`,
+      titleKey: 'notif.booking_sent',
+      bodyKey: 'notif.booking_sent_b',
+      params: { pro: input.proName, slot: formatSlotTr(input.startMs) },
       dateLabel: 'Az önce',
       icon: 'calendar-outline',
       route: `/booking/${id}`,
@@ -430,8 +431,9 @@ export const useStore = create<State>((set, get) => ({
     void api.createBooking(booking, get().token ?? undefined).catch(() => undefined);
     get().pushNotification({
       type: 'booking',
-      title: 'Bekleme listesine eklendin',
-      body: `${pro.name} · yer açılınca öncelikli bildirim alacaksın`,
+      titleKey: 'notif.waitlist',
+      bodyKey: 'notif.waitlist_b',
+      params: { pro: pro.name },
       dateLabel: 'Az önce',
       icon: 'hourglass-outline',
       route: `/booking/${id}`,
@@ -460,8 +462,9 @@ export const useStore = create<State>((set, get) => ({
       if (next === 'refund_pending')
         get().pushNotification({
           type: 'booking',
-          title: 'İptal alındı — iade bekleniyor',
-          body: `${b.proName} · uzman depozito iadesini yükleyecek`,
+          titleKey: 'notif.cancel_refund',
+          bodyKey: 'notif.cancel_refund_b',
+          params: { pro: b.proName },
           dateLabel: 'Az önce',
           icon: 'return-up-back-outline',
           route: `/booking/${id}`,
@@ -469,8 +472,9 @@ export const useStore = create<State>((set, get) => ({
       else if (forfeited)
         get().pushNotification({
           type: 'booking',
-          title: 'Geç iptal — kapora yandı',
-          body: `${b.proName} · ${DEPOSIT_KZT}₸ depozito uzmanda kaldı (§4.4)`,
+          titleKey: 'notif.late_cancel',
+          bodyKey: 'notif.late_cancel_b',
+          params: { pro: b.proName, deposit: DEPOSIT_KZT },
           dateLabel: 'Az önce',
           icon: 'alert-circle-outline',
           route: `/booking/${id}`,
@@ -503,8 +507,9 @@ export const useStore = create<State>((set, get) => ({
     if (b)
       get().pushNotification({
         type: 'booking',
-        title: 'İade dekontu yüklendi',
-        body: `${b.proName} · iadeyi aldıysan onayla`,
+        titleKey: 'notif.refund_uploaded',
+        bodyKey: 'notif.refund_uploaded_b',
+        params: { pro: b.proName },
         dateLabel: 'Az önce',
         icon: 'receipt-outline',
         route: `/booking/${id}`,
@@ -543,8 +548,9 @@ export const useStore = create<State>((set, get) => ({
     if (b)
       get().pushNotification({
         type: 'booking',
-        title: 'İtirazın alındı',
-        body: `${b.proName} · destek ekibi inceleyecek`,
+        titleKey: 'notif.dispute',
+        bodyKey: 'notif.dispute_b',
+        params: { pro: b.proName },
         dateLabel: 'Az önce',
         icon: 'flag-outline',
         route: `/booking/${id}`,
@@ -566,8 +572,9 @@ export const useStore = create<State>((set, get) => ({
           news.push({
             id: nextId('n'),
             type: 'booking',
-            title: 'Yaklaşan randevu — 24 saat',
-            body: `${b.proName} · ${formatSlotTr(b.startMs)}`,
+            titleKey: 'notif.remind_24',
+            bodyKey: 'notif.remind_24_b',
+            params: { pro: b.proName, slot: formatSlotTr(b.startMs) },
             dateLabel: 'Az önce',
             icon: 'alarm-outline',
             read: false,
@@ -579,8 +586,9 @@ export const useStore = create<State>((set, get) => ({
           news.push({
             id: nextId('n'),
             type: 'booking',
-            title: 'Yaklaşan randevu — 2 saat',
-            body: `${b.proName} · ${formatSlotTr(b.startMs)}`,
+            titleKey: 'notif.remind_2',
+            bodyKey: 'notif.remind_2_b',
+            params: { pro: b.proName, slot: formatSlotTr(b.startMs) },
             dateLabel: 'Az önce',
             icon: 'alarm-outline',
             read: false,
@@ -624,8 +632,9 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({ demands: [demand, ...s.demands] }));
     get().pushNotification({
       type: 'quote',
-      title: 'Teklifler gelmeye başladı',
-      body: `${demand.offers.length} uzman talebini yanıtladı`,
+      titleKey: 'notif.offers_started',
+      bodyKey: 'notif.offers_started_b',
+      params: { n: demand.offers.length },
       dateLabel: 'Az önce',
       icon: 'pricetags-outline',
       route: `/quote/results?id=${id}`,
@@ -660,8 +669,9 @@ export const useStore = create<State>((set, get) => ({
     if (others > 0)
       get().pushNotification({
         type: 'quote',
-        title: 'Teklif kapandı',
-        body: `${others} uzmana nazik kapanış bildirimi gönderildi`,
+        titleKey: 'notif.demand_closed',
+        bodyKey: 'notif.demand_closed_b',
+        params: { others },
         dateLabel: 'Az önce',
         icon: 'checkmark-done-outline',
       });
@@ -699,8 +709,8 @@ export const useStore = create<State>((set, get) => ({
     }));
     get().pushNotification({
       type: 'quote',
-      title: 'Teklifin gönderildi',
-      body: 'Kullanıcı teklifini görüntüleyecek',
+      titleKey: 'notif.offer_sent',
+      bodyKey: 'notif.offer_sent_b',
       dateLabel: 'Az önce',
       icon: 'pricetag-outline',
     });
@@ -734,8 +744,9 @@ export const useStore = create<State>((set, get) => ({
     for (const b of expired)
       get().pushNotification({
         type: 'booking',
-        title: 'Depozito süresi doldu',
-        body: `${b.proName} · dekont zamanında yüklenmedi, randevu düştü ve slot açıldı`,
+        titleKey: 'notif.deposit_expired',
+        bodyKey: 'notif.deposit_expired_b',
+        params: { pro: b.proName },
         dateLabel: 'Az önce',
         icon: 'time-outline',
         route: `/booking/${b.id}`,
@@ -781,8 +792,9 @@ export const useStore = create<State>((set, get) => ({
     for (const b of affected)
       get().pushNotification({
         type: 'booking',
-        title: 'Uzmanın değişti — onayın gerekiyor',
-        body: `${b.proName} · ${oldUzman} ayrıldı, ${newUzman} atandı. Devam etmek için onayla.`,
+        titleKey: 'notif.reassigned',
+        bodyKey: 'notif.reassigned_b',
+        params: { pro: b.proName, old: oldUzman, new: newUzman },
         dateLabel: 'Az önce',
         icon: 'swap-horizontal-outline',
         route: `/booking/${b.id}`,
@@ -836,8 +848,9 @@ export const useStore = create<State>((set, get) => ({
     if (b)
       get().pushNotification({
         type: 'booking',
-        title: 'Alternatif saat onaylandı',
-        body: `${b.proName} · ${formatSlotTr(b.startMs)} · ${DEPOSIT_KZT}₸ depozito gönder ve dekontu yükle`,
+        titleKey: 'notif.alt_approved',
+        bodyKey: 'notif.alt_approved_b',
+        params: { pro: b.proName, slot: formatSlotTr(b.startMs), deposit: DEPOSIT_KZT },
         dateLabel: 'Az önce',
         icon: 'card-outline',
         route: `/booking/${id}`,
@@ -863,8 +876,9 @@ export const useStore = create<State>((set, get) => ({
     if (b)
       get().pushNotification({
         type: 'booking',
-        title: 'Randevun ön onaylandı',
-        body: `${b.proName} · ${formatSlotTr(b.startMs)} · ${DEPOSIT_KZT}₸ depozito gönder ve dekontu yükle`,
+        titleKey: 'notif.pre_approved',
+        bodyKey: 'notif.pre_approved_b',
+        params: { pro: b.proName, slot: formatSlotTr(b.startMs), deposit: DEPOSIT_KZT },
         dateLabel: 'Az önce',
         icon: 'card-outline',
         route: `/booking/${id}`,
@@ -881,8 +895,9 @@ export const useStore = create<State>((set, get) => ({
     if (b)
       get().pushNotification({
         type: 'booking',
-        title: 'Randevu talebin yanıtlandı',
-        body: `${b.proName} · talebini şu an karşılayamadı`,
+        titleKey: 'notif.rejected',
+        bodyKey: 'notif.rejected_b',
+        params: { pro: b.proName },
         dateLabel: 'Az önce',
         icon: 'close-circle-outline',
         route: `/booking/${id}`,
@@ -901,8 +916,9 @@ export const useStore = create<State>((set, get) => ({
     if (b)
       get().pushNotification({
         type: 'booking',
-        title: 'Uzman alternatif saat önerdi',
-        body: `${b.proName} · ${formatSlotTr(startMs)}`,
+        titleKey: 'notif.alt_proposed',
+        bodyKey: 'notif.alt_proposed_b',
+        params: { pro: b.proName, slot: formatSlotTr(startMs) },
         dateLabel: 'Az önce',
         icon: 'time-outline',
         route: `/booking/${id}`,
@@ -921,8 +937,9 @@ export const useStore = create<State>((set, get) => ({
     if (b)
       get().pushNotification({
         type: 'booking',
-        title: 'Dekontun gönderildi',
-        body: `${b.proName} · uzman onayı bekleniyor`,
+        titleKey: 'notif.receipt_sent',
+        bodyKey: 'notif.receipt_sent_b',
+        params: { pro: b.proName },
         dateLabel: 'Az önce',
         icon: 'receipt-outline',
         route: `/booking/${id}`,
@@ -939,8 +956,9 @@ export const useStore = create<State>((set, get) => ({
     if (b)
       get().pushNotification({
         type: 'booking',
-        title: 'Randevun kesinleşti',
-        body: `${b.proName} · ${formatSlotTr(b.startMs)}`,
+        titleKey: 'notif.confirmed',
+        bodyKey: 'notif.confirmed_b',
+        params: { pro: b.proName, slot: formatSlotTr(b.startMs) },
         dateLabel: 'Az önce',
         icon: 'checkmark-circle-outline',
         route: `/booking/${id}`,
@@ -972,8 +990,9 @@ export const useStore = create<State>((set, get) => ({
     get().earn(1000, 'rewards.earn.provider_noshow', b.proName);
     get().pushNotification({
       type: 'loyalty',
-      title: 'Uzman gelmedi — telafi puanın eklendi',
-      body: `${b.proName} · 1.000 puan hesabına eklendi, depozito iaden başlatıldı`,
+      titleKey: 'notif.provider_noshow',
+      bodyKey: 'notif.provider_noshow_b',
+      params: { pro: b.proName },
       dateLabel: 'Az önce',
       icon: 'gift-outline',
       route: `/booking/${id}`,
@@ -1074,8 +1093,8 @@ export const useStore = create<State>((set, get) => ({
     }));
     get().pushNotification({
       type: 'system',
-      title: 'İtirazın alındı',
-      body: 'Yorum incelenene kadar görünür kalır; yalnızca kural ihlali varsa kaldırılır.',
+      titleKey: 'notif.review_dispute',
+      bodyKey: 'notif.review_dispute_b',
       dateLabel: 'Az önce',
       icon: 'flag-outline',
     });
@@ -1233,8 +1252,8 @@ export const useStore = create<State>((set, get) => ({
     if (token) void api.reportCirclePost(token, postId).catch(() => undefined); // §5.5 backend
     get().pushNotification({
       type: 'system',
-      title: 'Şikâyetin alındı',
-      body: 'İçerik moderasyon ekibince incelenecek. Teşekkürler.',
+      titleKey: 'notif.report_received',
+      bodyKey: 'notif.report_received_b',
       dateLabel: 'Az önce',
       icon: 'flag-outline',
     });

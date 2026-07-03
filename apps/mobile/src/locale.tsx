@@ -25,3 +25,11 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 export function useLocale(): LocaleContextValue {
   return useContext(LocaleContext);
 }
+
+// §14.5 — çevrilmiş metindeki {placeholder}'ları params ile doldurur (basit interpolasyon).
+export function fillParams(str: string, params?: Record<string, string | number>): string {
+  if (!params) return str;
+  return str.replace(/\{(\w+)\}/g, (_, k: string) =>
+    params[k] != null ? String(params[k]) : `{${k}}`,
+  );
+}
