@@ -372,11 +372,23 @@ export const api = {
   fileDispute: (token: string, input: DisputeInput) =>
     post<{ id: string; status: string }>('/disputes', input, token),
   // §5.5 — W2W topluluk (moderasyon backend'de)
+  circlePosts: () => get<ApiCirclePost[]>('/circle/posts'),
   createCirclePost: (token: string, input: { category: string; text: string; anonymous?: boolean }) =>
     post<{ id: string; status: string; moderationReason: string }>('/circle/posts', input, token),
   reportCirclePost: (token: string, id: string, reason?: string) =>
     post<{ reports: number; hidden: boolean }>(`/circle/posts/${id}/report`, { reason }, token),
 };
+
+export interface ApiCirclePost {
+  id: string;
+  category: string;
+  text: string;
+  anonymous: boolean;
+  authorLabel: string;
+  helpful: number;
+  comments: number;
+  createdAt: string;
+}
 
 export interface DisputeInput {
   bookingRef: string;

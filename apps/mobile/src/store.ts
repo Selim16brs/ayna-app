@@ -281,6 +281,28 @@ export const useStore = create<State>((set, get) => ({
     } catch {
       // Backend erişilemezse seed makaleler + varsayılan config ile devam
     }
+    // §5.5 — backend'de yayınlanmış W2W gönderilerini akışa ekle (additive; yereli silmez)
+    try {
+      const backendPosts = await api.circlePosts();
+      set((s) => {
+        const have = new Set(s.circlePosts.map((p) => p.id));
+        const fresh: CirclePost[] = backendPosts
+          .filter((p) => !have.has(p.id))
+          .map((p) => ({
+            id: p.id,
+            type: 'experience' as CirclePostType,
+            category: p.category,
+            author: p.authorLabel,
+            anonymous: p.anonymous,
+            text: p.text,
+            helpful: p.helpful,
+            comments: [], // backend yorum SAYISI döner; detay senkronu ayrı (şimdilik boş)
+          }));
+        return fresh.length ? { circlePosts: [...fresh, ...s.circlePosts] } : {};
+      });
+    } catch {
+      // Backend erişilemezse seed gönderilerle devam
+    }
     // §12.10 — segmentine uyan toplu duyuruları bildirim listesine ekle (girişliyse)
     const token = get().token;
     if (!token) return;
