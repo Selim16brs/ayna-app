@@ -12,6 +12,7 @@ import {
   FREE_CANCEL_WINDOW_MS,
   REMIND_24H_MS,
   REMIND_2H_MS,
+  SEED_DEMANDS,
   buildOffers,
   buildUpcomingEvents,
   type CareRoutine,
@@ -140,6 +141,11 @@ interface State {
   }) => string;
   selectOffer: (demandId: string, offerId: string, slotMs: number) => string; // → booking id
   expireDemands: () => void; // süresi dolan talepleri işaretle
+  // §5.2 uzman tarafı — açık talebe teklif ver
+  submitOffer: (
+    demandId: string,
+    offer: { price: number; etaMin: number; note?: string; slots: number[] },
+  ) => void;
   // §4.5 — uzman ayrılığında randevu devri (sessiz silme YASAK)
   reassignStaffBookings: (oldUzman: string, newUzman: string) => number; // devredilen randevu sayısı
   acceptReassignment: (id: string) => void; // kullanıcı yeni uzmanı onaylar
@@ -182,7 +188,7 @@ interface State {
 
 export const useStore = create<State>((set, get) => ({
   bookings: SEED_APPOINTMENTS,
-  demands: [],
+  demands: SEED_DEMANDS,
   closedDays: [],
   circlePosts: SEED_CIRCLE_POSTS,
   careRoutines: SEED_CARE_ROUTINES,
@@ -461,6 +467,44 @@ export const useStore = create<State>((set, get) => ({
         icon: 'checkmark-done-outline',
       });
     return bookingId;
+  },
+
+  // §5.2 uzman tarafı — açık talebe teklif ver (uzman/salon hesabı)
+  submitOffer: (demandId, offer) => {
+    const u = get().currentUser;
+    const proName = u?.name ?? 'Uzman';
+    set((s) => ({
+      demands: s.demands.map((d) =>
+        d.id === demandId
+          ? {
+              ...d,
+              offers: [
+                {
+                  id: nextId('of'),
+                  proId: u?.id ?? 'me',
+                  proName,
+                  proImage: '',
+                  rating: 4.8,
+                  reviewCount: 0,
+                  distanceKm: 2,
+                  price: offer.price,
+                  etaMin: offer.etaMin,
+                  ...(offer.note ? { note: offer.note } : {}),
+                  slots: offer.slots,
+                },
+                ...d.offers,
+              ],
+            }
+          : d,
+      ),
+    }));
+    get().pushNotification({
+      type: 'quote',
+      title: 'Teklifin gönderildi',
+      body: 'Kullanıcı teklifini görüntüleyecek',
+      dateLabel: 'Az önce',
+      icon: 'pricetag-outline',
+    });
   },
 
   // §5.2 — süresi dolan (teklif toplanan) talepleri işaretle

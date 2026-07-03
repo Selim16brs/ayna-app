@@ -24,6 +24,7 @@ const ACTIONS: {
   tone: 'rose' | 'sage' | 'lavender' | 'gold';
 }[] = [
   { id: 'agenda', icon: 'calendar', labelKey: 'reports.action.agenda', route: '/seller/agenda', tone: 'rose' },
+  { id: 'requests', icon: 'pricetags', labelKey: 'reports.action.requests', route: '/seller/requests', tone: 'rose' },
   { id: 'offline', icon: 'add-circle', labelKey: 'reports.action.offline', route: '/seller/offline', tone: 'sage' },
   { id: 'reviews', icon: 'star', labelKey: 'reports.action.reviews', route: '/seller/reviews', tone: 'gold' },
   { id: 'codes', icon: 'key', labelKey: 'reports.action.codes', route: '/seller/codes', tone: 'lavender' },

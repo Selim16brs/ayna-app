@@ -1222,6 +1222,7 @@ export interface DemandRequest {
   status: DemandStatus;
   offers: DemandOffer[];
   bookedOfferId?: string;
+  seeded?: boolean; // uzman "Talepler" havuzu için tohum talep (kullanıcının Taleplerim'inde görünmez)
 }
 
 // §5.2 — teklif toplama süresi seçenekleri (dk): 1s / 3s / 12s / 24s. Varsayılan 3s.
@@ -1288,6 +1289,48 @@ export function sortOffers(offers: DemandOffer[], by: OfferSort): DemandOffer[] 
   const score = (o: DemandOffer) => o.rating * 20 - o.distanceKm * 2 - o.price / 2000;
   return arr.sort((a, b) => score(b) - score(a));
 }
+
+// Uzman "Talepler" havuzu — şehirdeki açık talepler (mock; gerçekte diğer kullanıcılardan)
+const DM_NOW = Date.now();
+export const SEED_DEMANDS: DemandRequest[] = [
+  {
+    id: 'dm-seed-1',
+    mode: 'describe',
+    category: 'hair',
+    note: 'Düğün için topuz ve saç tasarımı istiyorum, öğleden sonra müsaitim.',
+    budget: 20000,
+    collectMin: 180,
+    createdAt: DM_NOW,
+    expiresAt: DM_NOW + 150 * 60_000,
+    status: 'collecting',
+    offers: buildOffers('hair', 'Almatı', 20000, DM_NOW).slice(0, 2),
+    seeded: true,
+  },
+  {
+    id: 'dm-seed-2',
+    mode: 'photo',
+    category: 'nails',
+    collectMin: 720,
+    createdAt: DM_NOW,
+    expiresAt: DM_NOW + 400 * 60_000,
+    status: 'collecting',
+    offers: buildOffers('nails', 'Almatı', undefined, DM_NOW).slice(0, 1),
+    seeded: true,
+  },
+  {
+    id: 'dm-seed-3',
+    mode: 'describe',
+    category: 'lashes',
+    note: 'Klasik ipek kirpik, ilk kez yaptıracağım.',
+    budget: 12000,
+    collectMin: 180,
+    createdAt: DM_NOW,
+    expiresAt: DM_NOW + 60 * 60_000,
+    status: 'collecting',
+    offers: [],
+    seeded: true,
+  },
+];
 
 // ── Sadakat: kazanım/harcama defteri + çekiliş + ödüller ─────────────────
 export type LedgerKind = 'earn' | 'spend';

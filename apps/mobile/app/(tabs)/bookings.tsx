@@ -54,7 +54,8 @@ export default function BookingsScreen() {
   const router = useRouter();
   const [active, setActive] = useState<Seg>('upcoming');
   const bookings = useStore((s) => s.bookings);
-  const demands = useStore((s) => s.demands);
+  // Kullanıcının kendi talepleri (uzman havuzu için tohumlanan talepler hariç)
+  const demands = useStore((s) => s.demands.filter((d) => !d.seeded));
   const now = Date.now();
 
   const isUpcoming = (a: Appointment) =>
