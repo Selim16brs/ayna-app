@@ -77,8 +77,8 @@ export const tr = {
 
   // Sekmeler
   'nav.discover': 'Keşfet',
-  'nav.bookings': 'Randevular',
-  'nav.circle': 'Circle',
+  'nav.bookings': 'Randevularım',
+  'nav.circle': 'W2W',
   'nav.care': 'Benim İçin',
   'nav.profile': 'Profil',
 

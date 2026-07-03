@@ -9,11 +9,12 @@ import { useTheme } from '../theme-context';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
+// MD §5.0 — sıra ve ikon: Keşfet(pusula) · Randevularım(takvim) · Benim İçin(kalp) · W2W(ikili kişi) · Profil(kişi)
 const TABS: { route: string; name: string; icon: IoniconName; labelKey: MessageKey }[] = [
   { route: '/discover', name: 'discover', icon: 'compass', labelKey: 'nav.discover' },
   { route: '/bookings', name: 'bookings', icon: 'calendar', labelKey: 'nav.bookings' },
-  { route: '/circle', name: 'circle', icon: 'people', labelKey: 'nav.circle' },
   { route: '/care', name: 'care', icon: 'heart', labelKey: 'nav.care' },
+  { route: '/circle', name: 'circle', icon: 'people', labelKey: 'nav.circle' },
   { route: '/profile', name: 'profile', icon: 'person', labelKey: 'nav.profile' },
 ];
 
