@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS } from '../../src/data';
 import { useCampaigns } from '../../src/catalog';
@@ -26,12 +26,18 @@ export default function NewQuoteScreen() {
   const insets = useSafeAreaInsets();
   const campaigns = useCampaigns();
   const createDemand = useStore((s) => s.createDemand);
+  const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [category, setCategory] = useState<string>('hair');
   const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
   const [submitting, setSubmitting] = useState(false);
 
   function submit() {
+    // §12.3 — kısıtlı modda yeni talep engellenir
+    if (restricted) {
+      Alert.alert(t('restricted.title'), t('restricted.body'));
+      return;
+    }
     setSubmitting(true);
     // §5.2 Mod 1 — fotoğrafla teklif: talep aç, kategorideki uzmanlardan teklifler gelir
     const id = createDemand({

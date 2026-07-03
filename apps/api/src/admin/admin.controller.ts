@@ -6,6 +6,7 @@ import { AdminGuard } from '../common/admin.guard';
 import { AdminService } from './admin.service';
 
 const rejectSchema = z.object({ reason: z.string().max(300).optional() });
+const restrictSchema = z.object({ reason: z.string().min(1).max(300) });
 const featuredSchema = z.object({ featured: z.boolean() });
 const activeSchema = z.object({ active: z.boolean() });
 const thresholdSchema = z.object({ value: z.number().int().min(1).max(50) });
@@ -143,6 +144,25 @@ export class AdminController {
   @Post('users/:id/premium')
   setUserPremium(@Param('id') id: string, @Body(new ZodValidationPipe(premiumSchema)) body: { isPremium: boolean }) {
     return this.admin.setUserPremium(id, body.isPremium);
+  }
+
+  // §12.3 Ceza takip — kısıtlı hesaplar (7 gün sayaçlı) + kısıt aç/kapa
+  @Get('penalties')
+  penalties() {
+    return this.admin.penalties();
+  }
+
+  @Post('users/:id/restrict')
+  restrictUser(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(restrictSchema)) body: { reason: string },
+  ) {
+    return this.admin.restrictUser(id, body.reason);
+  }
+
+  @Post('users/:id/unrestrict')
+  unrestrictUser(@Param('id') id: string) {
+    return this.admin.unrestrictUser(id);
   }
 
   // Randevular (platform geneli)

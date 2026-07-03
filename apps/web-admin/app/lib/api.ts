@@ -66,6 +66,12 @@ export const api = {
     req(`/admin/users/${id}/status`, { method: 'POST', body: JSON.stringify({ status }) }),
   setUserPremium: (id: string, isPremium: boolean) =>
     req(`/admin/users/${id}/premium`, { method: 'POST', body: JSON.stringify({ isPremium }) }),
+  // §12.3 Ceza takip
+  penalties: () => req<Penalty[]>('/admin/penalties'),
+  restrictUser: (id: string, reason: string) =>
+    req(`/admin/users/${id}/restrict`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  unrestrictUser: (id: string) =>
+    req(`/admin/users/${id}/unrestrict`, { method: 'POST' }),
   bookings: (status?: string) =>
     req<AdminBooking[]>(`/admin/bookings${status && status !== 'all' ? `?status=${status}` : ''}`),
   quoteRequests: () => req<QuoteReq[]>('/admin/quote-requests'),
@@ -364,6 +370,18 @@ export interface AdminUser {
   phoneVerified: boolean;
   isPremium: boolean;
   createdAt: string;
+}
+export interface Penalty {
+  id: string;
+  name: string;
+  role: string;
+  city: string | null;
+  status: string;
+  restrictedAt: string | null;
+  restrictReason: string;
+  daysElapsed: number;
+  daysRemaining: number;
+  banEligible: boolean;
 }
 export interface AdminBooking {
   id: string;

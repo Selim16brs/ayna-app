@@ -412,8 +412,76 @@ export class AdminService {
     if (u.role === 'admin' && status !== 'active') {
       throw new BadRequestException({ code: 'CANNOT_SUSPEND_ADMIN', message: 'Admin askıya alınamaz' });
     }
-    const updated = await this.prisma.user.update({ where: { id }, data: { status } });
+    // Aktife dönerse kısıt bayrağı da temizlenir
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: status === 'active' ? { status, restrictedAt: null, restrictReason: null } : { status },
+    });
     return { id: updated.id, status: updated.status };
+  }
+
+  // §12.3 Ceza takip — 7 gün sayaçlı kısıtlı mod
+  private static RESTRICT_WINDOW_DAYS = 7;
+
+  async restrictUser(id: string, reason: string) {
+    const u = await this.prisma.user.findUnique({ where: { id } });
+    if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
+    if (u.role === 'admin') {
+      throw new BadRequestException({ code: 'CANNOT_RESTRICT_ADMIN', message: 'Admin kısıtlanamaz' });
+    }
+    const updated = await this.prisma.user.update({
+      where: { id },
+      // İlk kısıtsa sayaç şimdi başlar; zaten kısıtlıysa süre korunur (yalnız gerekçe güncellenir)
+      data: { restrictedAt: u.restrictedAt ?? new Date(), restrictReason: reason || u.restrictReason },
+    });
+    return { id: updated.id, restrictedAt: updated.restrictedAt };
+  }
+
+  async unrestrictUser(id: string) {
+    const u = await this.prisma.user.findUnique({ where: { id } });
+    if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: { restrictedAt: null, restrictReason: null },
+    });
+    return { id: updated.id, restrictedAt: updated.restrictedAt };
+  }
+
+  // Kısıtlı hesaplar + 7 gün sayacı (geçen/kalan gün; süre dolan kalıcı engel adayı)
+  async penalties() {
+    const rows = await this.prisma.user.findMany({
+      where: { restrictedAt: { not: null } },
+      orderBy: { restrictedAt: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        city: true,
+        status: true,
+        restrictedAt: true,
+        restrictReason: true,
+      },
+    });
+    const dayMs = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const window = AdminService.RESTRICT_WINDOW_DAYS;
+    return rows.map((r) => {
+      const elapsed = r.restrictedAt ? Math.floor((now - r.restrictedAt.getTime()) / dayMs) : 0;
+      const remaining = Math.max(0, window - elapsed);
+      return {
+        id: r.id,
+        name: r.name,
+        role: r.role,
+        city: r.city,
+        status: r.status,
+        restrictedAt: r.restrictedAt,
+        restrictReason: r.restrictReason ?? '',
+        daysElapsed: elapsed,
+        daysRemaining: remaining,
+        // Süre doldu → kalıcı engel adayı
+        banEligible: remaining === 0,
+      };
+    });
   }
 
   async setUserPremium(id: string, isPremium: boolean) {

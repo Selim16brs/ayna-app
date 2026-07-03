@@ -155,6 +155,8 @@ export interface AuthUser {
   phoneVerified?: boolean;
   gender?: string;
   womenVerified?: boolean;
+  // §12.3 — admin ceza takip: kısıtlı mod (yeni talep oluşturamaz)
+  restricted?: boolean;
 }
 
 export interface RegisterInput {
@@ -349,6 +351,8 @@ export const api = {
   announcements: (token: string) => get<ApiAnnouncement[]>('/content/announcements', token),
   // §12.9 — parametrik oranlar + aktif şehirler + özellik erişimi (gizli anahtar sızmaz)
   appConfig: () => get<AppConfig>('/config'),
+  // §12.3 — güncel kullanıcı (kısıt durumu tazelemek için)
+  me: (token: string) => get<AuthUser>('/auth/me', token),
 };
 
 export interface AppConfig {

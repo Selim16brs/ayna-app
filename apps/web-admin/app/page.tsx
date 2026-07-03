@@ -28,6 +28,7 @@ import {
   type Pro,
   type ProInput,
   type AdminUser,
+  type Penalty,
   type ReviewApplication,
   type Stats,
   type SystemSettings,
@@ -51,6 +52,7 @@ type Tab =
   | 'content'
   | 'announcements'
   | 'users'
+  | 'penalties'
   | 'loyalty'
   | 'flags'
   | 'system'
@@ -91,6 +93,7 @@ export default function AdminApp() {
     { id: 'content', label: 'İçerik & Blog', icon: '📝' },
     { id: 'announcements', label: 'Bildirimler', icon: '📣' },
     { id: 'users', label: 'Kullanıcılar', icon: '👥' },
+    { id: 'penalties', label: 'Ceza Takip', icon: '⛔' },
     { id: 'loyalty', label: 'Sadakat', icon: '🎁' },
     { id: 'flags', label: 'Feature Flag', icon: '🚩' },
     { id: 'system', label: 'Sistem Ayarları', icon: '⚙️' },
@@ -130,6 +133,7 @@ export default function AdminApp() {
         {tab === 'content' && <ContentView />}
         {tab === 'announcements' && <AnnouncementsView />}
         {tab === 'users' && <UsersView />}
+        {tab === 'penalties' && <PenaltiesView />}
         {tab === 'loyalty' && <LoyaltyView />}
         {tab === 'flags' && <FlagsView />}
         {tab === 'system' && <SystemView />}
@@ -1754,6 +1758,64 @@ const ROLE_TR: Record<string, string> = {
   admin: 'Admin',
 };
 
+// §12.3 Ceza Takip — 7 gün sayaçlı kısıtlı hesaplar + kalıcı engel
+function PenaltiesView() {
+  const { data, reload } = useAsync<Penalty[]>(() => api.penalties(), []);
+  return (
+    <>
+      <h1 className="page-title">Ceza Takip</h1>
+      <p className="page-sub">
+        Kısıtlı hesaplar (yeni talep göremez) · 7 gün sayacı dolunca kalıcı engel adayı
+      </p>
+      <div className="card">
+        {!data ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : data.length === 0 ? (
+          <div className="empty">Kısıtlı hesap yok</div>
+        ) : (
+          data.map((p) => (
+            <div key={p.id} className="list-row">
+              <div className="grow">
+                <div className="name">
+                  {p.name || '—'} · {ROLE_TR[p.role] ?? p.role}
+                  {p.banEligible ? ' · ⚠️ süre doldu' : ''}
+                </div>
+                <div className="meta">
+                  {p.restrictReason || 'gerekçe yok'}
+                  {p.city ? ` · ${p.city}` : ''} · geçen {p.daysElapsed}g · kalan{' '}
+                  <strong style={{ color: p.banEligible ? 'var(--danger)' : 'var(--gold)' }}>
+                    {p.daysRemaining}g
+                  </strong>
+                </div>
+              </div>
+              <button
+                className="btn-sm btn-ok"
+                onClick={async () => {
+                  await api.unrestrictUser(p.id);
+                  reload();
+                }}
+              >
+                Kısıtı kaldır
+              </button>
+              <button
+                className="btn-sm btn-danger"
+                onClick={async () => {
+                  if (confirm(`${p.name || 'Hesap'} kalıcı olarak engellensin mi?`)) {
+                    await api.setUserStatus(p.id, 'suspended');
+                    reload();
+                  }
+                }}
+              >
+                Kalıcı engel
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
 function UsersView() {
   const { data, reload } = useAsync<AdminUser[]>(() => api.users(), []);
   const [q, setQ] = useState('');
@@ -1825,6 +1887,20 @@ function UsersView() {
               >
                 {u.isPremium ? 'Premium' : 'Normal'}
               </button>
+              {u.status === 'active' && u.role !== 'admin' && (
+                <button
+                  className="btn-sm"
+                  onClick={async () => {
+                    const reason = prompt('Kısıtlama gerekçesi (7 gün sayaçlı kısıtlı mod):');
+                    if (reason && reason.trim()) {
+                      await api.restrictUser(u.id, reason.trim());
+                      reload();
+                    }
+                  }}
+                >
+                  Kısıtla
+                </button>
+              )}
               {u.status === 'active' ? (
                 <button
                   className="btn-sm btn-danger"

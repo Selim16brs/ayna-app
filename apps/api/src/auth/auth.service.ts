@@ -214,6 +214,8 @@ export class AuthService {
       gender: user.gender,
       // women-only: kadın olarak kayıtlı doğrulanmış üye
       womenVerified: user.gender === 'female',
+      // §12.3 — kısıtlı mod (admin ceza takip); app yeni talep oluşturmayı engeller
+      restricted: !!user.restrictedAt,
       phone: decryptField(Buffer.from(user.phoneEnc), this.env.FIELD_ENCRYPTION_KEY),
     };
   }

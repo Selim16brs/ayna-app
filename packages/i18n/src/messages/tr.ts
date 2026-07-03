@@ -11,6 +11,9 @@ export const tr = {
   'common.see_all': 'Tümü',
   'common.soon': 'Çok yakında',
   'common.error': 'Bir hata oluştu, tekrar dene',
+  // §12.3 — kısıtlı mod uyarısı (admin ceza takip)
+  'restricted.title': 'Hesabın şu an kısıtlı',
+  'restricted.body': 'Kısıtlı modda yeni talep oluşturamazsın. Bekleyen yükümlülüğün çözülünce hesabın otomatik açılır.',
 
   // Marka / dil
   'app.tagline': 'Her kadının bir aynası olmalı!',

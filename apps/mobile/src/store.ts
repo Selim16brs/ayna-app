@@ -281,6 +281,15 @@ export const useStore = create<State>((set, get) => ({
     // §12.10 — segmentine uyan toplu duyuruları bildirim listesine ekle (girişliyse)
     const token = get().token;
     if (!token) return;
+    // §12.3 — kısıt durumunu tazele (admin ceza uygularsa re-login gerekmesin)
+    try {
+      const me = await api.me(token);
+      set((s) =>
+        s.currentUser ? { currentUser: { ...s.currentUser, restricted: me.restricted } } : {},
+      );
+    } catch {
+      // /me erişilemezse mevcut currentUser korunur
+    }
     try {
       const anns = await api.announcements(token);
       set((s) => {

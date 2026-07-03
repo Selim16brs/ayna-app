@@ -39,6 +39,9 @@ model User {
   passwordHash  String     @default("") @map("password_hash")
   role          UserRole   @default(user)
   status        UserStatus @default(active)
+  // §12.3 ceza takip — kısıtlı mod (7 gün sayaçlı); süre dolunca kalıcı engel adayı
+  restrictedAt  DateTime?  @map("restricted_at") @db.Timestamptz(6)
+  restrictReason String?   @map("restrict_reason")
   // AI (§13.5): premium + ortak aylık kota sayacı
   isPremium     Boolean    @default(false) @map("is_premium")
   aiUsed        Int        @default(0) @map("ai_used")

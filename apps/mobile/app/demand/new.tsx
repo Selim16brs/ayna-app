@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/api';
 import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS, formatPrice } from '../../src/data';
@@ -32,6 +32,8 @@ export default function NewDemandScreen() {
   const CAT_COLORS = makeCatColors(colors);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const createDemand = useStore((s) => s.createDemand);
+  // §12.3 — kısıtlı hesap yeni talep açamaz
+  const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   // §12.6 — blog "Teklif al" CTA'sından gelen kategori ön-seçimi
   const { category: catParam } = useLocalSearchParams<{ category?: string }>();
   const initialCat = CATEGORIES.some((c) => c.id === catParam) ? catParam! : CATEGORIES[0]!.id;
@@ -67,6 +69,11 @@ export default function NewDemandScreen() {
   const canSubmit = desc.trim().length > 0 && budgetNum > 0 && !tooLow;
 
   function submit() {
+    // §12.3 — kısıtlı modda yeni talep engellenir (ör. komisyon gecikmesi)
+    if (restricted) {
+      Alert.alert(t('restricted.title'), t('restricted.body'));
+      return;
+    }
     // §5.2 Mod 2 — anlatarak teklif: talep aç, kategorideki uzmanlardan teklifler gelir
     const id = createDemand({
       mode: 'describe',
