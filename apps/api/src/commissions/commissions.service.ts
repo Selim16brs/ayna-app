@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DAY_MS, commissionFor, overdueDaysBetween } from './commissions.calc';
 import type { ClosePeriodInput } from './commissions.dto';
 
-const DEFAULT_COMMISSION_RATE = 10;
+const DEFAULT_COMMISSION_RATE = 15; // MD §"gelir" — komisyon %15 (içinden %3 kullanıcıya puan)
 const OVERDUE_RESTRICT_DAYS = 7; // vade + 7 gün gecikmede kısıtlı mod (§12.8)
 
 @Injectable()

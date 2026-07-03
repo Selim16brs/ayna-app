@@ -6,8 +6,8 @@ import { computeBookingStats } from '../bookings/bookings.service';
 const DEFAULT_PRO_IMAGE =
   'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=70';
 
-// Platform komisyon oranı (yüzde) — app sahibi her online randevudan bu oranı kazanır
-const DEFAULT_COMMISSION_RATE = 10;
+// Platform komisyon oranı (yüzde) — app sahibi her online randevudan bu oranı kazanır (MD: %15)
+const DEFAULT_COMMISSION_RATE = 15;
 
 interface ProInput {
   name: string;
