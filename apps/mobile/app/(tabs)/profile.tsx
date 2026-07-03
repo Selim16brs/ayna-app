@@ -65,7 +65,7 @@ export default function ProfileScreen() {
     else if (key === 'profile.menu.budget') router.push('/profile/budget');
     else if (key === 'profile.menu.safe') router.push('/profile/safe');
     else if (key === 'profile.menu.privacy') router.push('/profile/privacy');
-    else if (key === 'profile.menu.notifications') router.push('/notifications');
+    else if (key === 'profile.menu.notifications') router.push('/profile/notifications');
     else if (key === 'profile.menu.help') router.push('/profile/help');
     else if (key === 'profile.menu.language') router.push('/language');
     else if (key === 'profile.menu.logout') {

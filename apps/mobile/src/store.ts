@@ -92,6 +92,8 @@ interface State {
   demands: DemandRequest[];
   // §5.1.2 — son aramalar (boş arama kutusunda gösterilir)
   recentSearches: string[];
+  // §5.4 — bildirim grupları aç/kapa (bakım / özel gün / kişisel kayıt / randevu)
+  notifPrefs: { care: boolean; moment: boolean; personal: boolean; booking: boolean };
   // §4.6 — uzmanın kapalı (izin/tatil) günleri: Almatı gün başlangıcı UTC ms.
   // Kullanıcı tarafında bu günler slot göstermez. (Mock: tek sağlayıcı; backend providerId'yle anahtarlar.)
   closedDays: number[];
@@ -146,6 +148,7 @@ interface State {
   selectOffer: (demandId: string, offerId: string, slotMs: number) => string; // → booking id
   expireDemands: () => void; // süresi dolan talepleri işaretle
   addRecentSearch: (q: string) => void; // §5.1.2 — son aramaya ekle (dedup, en fazla 8)
+  toggleNotifPref: (key: 'care' | 'moment' | 'personal' | 'booking') => void; // §5.4
   // §5.2 uzman tarafı — açık talebe teklif ver
   submitOffer: (
     demandId: string,
@@ -208,6 +211,7 @@ export const useStore = create<State>((set, get) => ({
   bookings: SEED_APPOINTMENTS,
   demands: SEED_DEMANDS,
   recentSearches: [],
+  notifPrefs: { care: true, moment: true, personal: true, booking: true },
   closedDays: [],
   circlePosts: SEED_CIRCLE_POSTS,
   careRoutines: SEED_CARE_ROUTINES,
@@ -374,6 +378,7 @@ export const useStore = create<State>((set, get) => ({
 
   // §4.1 adım 6 — onaylı randevular için 24s ve 2s hatırlatmaları (idempotent, bayrakla)
   checkReminders: () => {
+    if (!get().notifPrefs.booking) return; // §5.4 — randevu bildirimleri kapalıysa üretme
     set((s) => {
       const now = Date.now();
       const news: AppNotification[] = [];
@@ -525,6 +530,10 @@ export const useStore = create<State>((set, get) => ({
       icon: 'pricetag-outline',
     });
   },
+
+  // §5.4 — bildirim grubunu aç/kapa
+  toggleNotifPref: (key) =>
+    set((s) => ({ notifPrefs: { ...s.notifPrefs, [key]: !s.notifPrefs[key] } })),
 
   // §5.1.2 — son aramaya ekle (en yeni başta, dedup, maks 8)
   addRecentSearch: (q) => {
