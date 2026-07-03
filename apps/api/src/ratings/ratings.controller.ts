@@ -33,6 +33,12 @@ export class RatingsController {
     return this.ratings.summary(subjectId);
   }
 
+  // §7.1 — salon skoru (%60 salon + %40 uzman ortalaması)
+  @Get('salon-score')
+  salonScore(@Query('subjectId') subjectId: string) {
+    return this.ratings.salonScore(subjectId);
+  }
+
   // §6.D — uzman/işletme yorumu yanıtlar (giriş gerekli; yorum silinemez, yalnızca yanıt)
   @Post(':id/reply')
   @UseGuards(JwtAuthGuard)

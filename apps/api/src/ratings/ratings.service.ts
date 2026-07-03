@@ -11,6 +11,19 @@ import type { SubmitRatingInput } from './ratings.dto';
 const THRESHOLD_KEY = 'rating.threshold';
 const DEFAULT_THRESHOLD = 3;
 
+// §7.1 — salon skoru = %60 salon doğrudan puanı + %40 bağlı uzmanların ortalaması. Saf, testli.
+export function blendedSalonScore(
+  salonAvg: number | null,
+  specialistAvgs: readonly (number | null)[],
+): number | null {
+  const specs = specialistAvgs.filter((n): n is number => n != null);
+  const specAvg = specs.length ? specs.reduce((a, b) => a + b, 0) / specs.length : null;
+  if (salonAvg == null && specAvg == null) return null;
+  if (specAvg == null) return salonAvg;
+  if (salonAvg == null) return Math.round(specAvg * 10) / 10;
+  return Math.round((salonAvg * 0.6 + specAvg * 0.4) * 10) / 10;
+}
+
 @Injectable()
 export class RatingsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -104,6 +117,39 @@ export class RatingsService {
   }
 
   // §1.8 — agregat yalnızca eşik aşılınca görünür.
+  // §7.1 — salon skoru: salon doğrudan + bağlı uzman ortalaması (blended)
+  async salonScore(salonProId: string) {
+    const salon = await this.summary(salonProId);
+    const salonAvg = salon.average;
+    const biz = await this.prisma.business.findFirst({
+      where: { professionalId: salonProId },
+      select: { id: true },
+    });
+    let specialistAvgs: (number | null)[] = [];
+    if (biz) {
+      const specs = await this.prisma.specialist.findMany({
+        where: { businessId: biz.id },
+        select: { userId: true },
+      });
+      // Uzman puanı subjectId=userId ile aranır (per-uzman puanlama modeli geldiğinde dolar)
+      specialistAvgs = await Promise.all(
+        specs.map(async (s) => {
+          const rows = await this.prisma.rating.findMany({
+            where: { subjectId: s.userId, visible: true },
+            select: { score: true },
+          });
+          return rows.length ? rows.reduce((a, r) => a + r.score, 0) / rows.length : null;
+        }),
+      );
+    }
+    return {
+      salonProId,
+      salonAvg,
+      specialistCount: specialistAvgs.filter((x) => x != null).length,
+      score: blendedSalonScore(salonAvg, specialistAvgs),
+    };
+  }
+
   async summary(subjectId: string) {
     const threshold = await this.threshold();
     const visible = await this.prisma.rating.findMany({
