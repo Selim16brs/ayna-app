@@ -824,6 +824,14 @@ export const tr = {
   'review.comment_ph': 'Deneyimini birkaç cümleyle anlat...',
   'review.anonymous': 'Anonim olarak paylaş',
   'review.submit': 'Değerlendirmeyi gönder',
+  'review.next': 'Devam et',
+  'review.step.uzman': 'Uzmanı değerlendir',
+  'review.step.salon': 'Salonu değerlendir',
+  'review.tags_label': 'Öne çıkanlar (isteğe bağlı)',
+  'review.tag.quality': 'Hizmet kalitesi',
+  'review.tag.clean': 'Temizlik',
+  'review.tag.comm': 'İletişim',
+  'review.tag.timing': 'Zamanlama',
   'review.thanks': 'Teşekkürler! +40 puan kazandın',
 
   // Circle — gönderi oluştur

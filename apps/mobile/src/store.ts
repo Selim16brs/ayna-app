@@ -153,7 +153,19 @@ interface State {
   reassignStaffBookings: (oldUzman: string, newUzman: string) => number; // devredilen randevu sayısı
   acceptReassignment: (id: string) => void; // kullanıcı yeni uzmanı onaylar
   rejectReassignment: (id: string) => void; // kullanıcı reddeder → iptal
-  reviewBooking: (id: string, rating: number, text: string) => void;
+  // §7.1 — çift puanlama (uzman + ops. salon) + alt kırılım etiketleri
+  reviewBooking: (
+    id: string,
+    input: {
+      rating: number;
+      text: string;
+      tags: string[];
+      salon?: { rating: number; text: string; tags: string[] };
+    },
+  ) => void;
+  // §7.2 — uzman/salon: yoruma tek yanıt + itiraz
+  replyToReview: (proId: string, reviewId: string, reply: string) => void;
+  disputeReview: (proId: string, reviewId: string) => void;
   hydrateBookings: () => Promise<void>;
 
   // gizlilik: değerlendirmede kimliği gizle (salon/uzman yorum sahibini göremez)
@@ -717,7 +729,7 @@ export const useStore = create<State>((set, get) => ({
 
   setReviewAnonymous: (v) => set({ reviewAnonymous: v }),
 
-  reviewBooking: (id, rating, text) => {
+  reviewBooking: (id, input) => {
     const b = get().bookings.find((x) => x.id === id);
     const anon = get().reviewAnonymous;
     // Gizlilik: anonimse "Doğrulanmış üye"; değilse kullanıcının ilk adı
@@ -726,35 +738,69 @@ export const useStore = create<State>((set, get) => ({
     set((s) => ({
       bookings: s.bookings.map((x) => (x.id === id ? { ...x, reviewed: true } : x)),
     }));
-    if (b) {
-      const review: Review = {
-        id: nextId('rv'),
-        author: authorLabel,
-        period: 'Az önce',
-        rating,
-        service: b.service,
-        text,
-        firstVisit: false,
-      };
-      // Backend'e gönder — doğrulanmış yorum (giriş zorunlu; sunucu randevuyu denetler)
-      const token = get().token;
-      if (token) {
-        void api
-          .submitRating(token, {
-            bookingId: b.id,
-            raterRole: 'user',
-            score: rating,
-            comment: text,
-            serviceTag: b.service,
-            authorLabel,
-          })
-          .catch(() => undefined);
-      }
-      set((s) => ({
-        userReviews: { ...s.userReviews, [b.proId]: [review, ...(s.userReviews[b.proId] ?? [])] },
-      }));
-      get().earn(40, 'rewards.earn.review', b.proName);
+    if (!b) return;
+    // §7.1 — uzman değerlendirmesi (birincil, kamuya açık)
+    const mk = (rating: number, text: string, tags: string[], suffix?: string): Review => ({
+      id: nextId('rv'),
+      author: authorLabel,
+      period: 'Az önce',
+      rating,
+      service: suffix ? `${b.service} · ${suffix}` : b.service,
+      text,
+      firstVisit: false,
+      ...(tags.length ? { tags } : {}),
+    });
+    const reviews = [mk(input.rating, input.text, input.tags)];
+    // §7.1 — salon randevusuysa ikinci adım: salon puanı da kaydedilir
+    if (input.salon) reviews.push(mk(input.salon.rating, input.salon.text, input.salon.tags, 'Salon'));
+    // Backend'e gönder — doğrulanmış yorum (giriş zorunlu; sunucu randevuyu denetler)
+    const token = get().token;
+    if (token) {
+      void api
+        .submitRating(token, {
+          bookingId: b.id,
+          raterRole: 'user',
+          score: input.rating,
+          comment: input.text,
+          serviceTag: b.service,
+          authorLabel,
+        })
+        .catch(() => undefined);
     }
+    set((s) => ({
+      userReviews: { ...s.userReviews, [b.proId]: [...reviews, ...(s.userReviews[b.proId] ?? [])] },
+    }));
+    get().earn(40, 'rewards.earn.review', b.proName);
+  },
+
+  // §7.2 — uzman/salon yoruma tek yanıt yazar (yanıt kalıcı; bir kez)
+  replyToReview: (proId, reviewId, reply) =>
+    set((s) => ({
+      userReviews: {
+        ...s.userReviews,
+        [proId]: (s.userReviews[proId] ?? []).map((r) =>
+          r.id === reviewId && !r.reply ? { ...r, reply: reply.trim() } : r,
+        ),
+      },
+    })),
+
+  // §7.2 — negatif yoruma itiraz (admin kuyruğu; yorum görünür kalır — otomatik gizleme YOK)
+  disputeReview: (proId, reviewId) => {
+    set((s) => ({
+      userReviews: {
+        ...s.userReviews,
+        [proId]: (s.userReviews[proId] ?? []).map((r) =>
+          r.id === reviewId ? { ...r, disputed: true } : r,
+        ),
+      },
+    }));
+    get().pushNotification({
+      type: 'system',
+      title: 'İtirazın alındı',
+      body: 'Yorum incelenene kadar görünür kalır; yalnızca kural ihlali varsa kaldırılır.',
+      dateLabel: 'Az önce',
+      icon: 'flag-outline',
+    });
   },
 
   toggleFavorite: (proId) =>

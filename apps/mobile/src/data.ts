@@ -526,8 +526,11 @@ export interface Review {
   service: string;
   text: string;
   firstVisit: boolean;
-  // §6.D — uzman/işletme yanıtı (açılınca kalıcı; yanıt silinemez)
+  tags?: string[]; // §7.1 — alt kırılım (hizmet kalitesi / temizlik / iletişim / zamanlama)
+  // §6.D/§7.2 — uzman/işletme tek yanıt hakkı (açılınca kalıcı; yanıt silinemez)
   reply?: string;
+  // §7.2 — negatif yorum itirazı (admin kuyruğuna düşer; yorum görünür kalır)
+  disputed?: boolean;
 }
 
 export interface ProfessionalDetail extends Professional {
