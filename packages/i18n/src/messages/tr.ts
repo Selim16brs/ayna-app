@@ -151,6 +151,9 @@ export const tr = {
   'home.recommended': 'Senin için öneriler',
   'home.campaigns': 'Fırsatlar',
   'home.ad_badge': 'Premium',
+  'home.city_empty.title': 'AYNA yakında şehrinde!',
+  'home.city_empty.sub': 'Şehrinde henüz hizmet veren yok. Açıldığında ilk sen haberdar ol.',
+  'home.city_empty.cta': 'Haber ver',
   'home.map_mode': 'Harita modu',
   'city.title': 'Şehir seç',
   'city.hint': 'Seçtiğin şehre göre tüm salon ve uzmanlar güncellenir.',
@@ -726,6 +729,7 @@ export const tr = {
   'category.sort.rating': 'Puana göre',
   'category.sort.price': 'Fiyata göre',
   'category.empty': 'Bu kategoride henüz uzman yok',
+  'category.demand_cta': 'İstediğin hizmeti anlat, uzmanlar sana teklif versin → Teklif Al',
 
   // Kaydedilenler (favoriler)
   'favorites.title': 'Kaydedilenler',

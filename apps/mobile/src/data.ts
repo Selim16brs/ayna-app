@@ -63,6 +63,7 @@ export interface Professional {
   city: string;
   district: string;
   experienceYears: number;
+  isPremium: boolean; // §5.1.6-8 — Premium Görünürlük Paketi (Fırsatlar/Öne Çıkanlar/Sana Yakın)
 }
 
 /** Salon içindeki bir uzman (kadro). Bağımsız uzmanlarda kadro yoktur. */
@@ -380,6 +381,7 @@ export const PROFESSIONALS: Professional[] = PRO_SEEDS.map((s, i) => ({
   city: i % 4 === 0 ? (CITIES[1 + ((i / 4) % (CITIES.length - 1))] ?? 'Almatı') : 'Almatı',
   district: DISTRICTS[i % DISTRICTS.length]!,
   experienceYears: 4 + (i % 12),
+  isPremium: i % 3 === 0, // deterministik premium dağılımı (mock)
 }));
 
 // Ana ekranda öne çıkanlar (ilk birkaç)

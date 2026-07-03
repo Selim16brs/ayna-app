@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { categoryLabelKey } from '../../src/data';
 import { useProfessionals } from '../../src/catalog';
+import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -26,18 +27,33 @@ export default function CategoryScreen() {
   const [sort, setSort] = useState<SortKey>('rating');
   const sector = id ?? '';
   const professionals = useProfessionals();
+  // §5.1.4 — şehir tüm listeyi filtreler (salona bağlı uzmanlar tek başına listelenmez: zaten staff)
+  const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
 
   const results = useMemo(() => {
-    const list = professionals.filter((p) => p.sector === sector);
+    const list = professionals.filter((p) => p.sector === sector && p.city === city);
     return [...list].sort((a, b) =>
       sort === 'rating' ? b.rating - a.rating : a.priceFrom - b.priceFrom,
     );
-  }, [professionals, sector, sort]);
+  }, [professionals, sector, city, sort]);
 
   return (
     <Screen edges={[]}>
       <StackHeader title={t(categoryLabelKey(sector))} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {/* §5.1.5 Anayasa şeridi — talep akışı BİRİNCİL yol, liste ikincil */}
+        <Pressable style={styles.constBanner} onPress={() => router.push('/demand/new')}>
+          <View style={styles.constIcon}>
+            <Ionicons name="chatbubbles" size={20} color={colors.onAccent} />
+          </View>
+          <View style={styles.constText}>
+            <Text variant="bodyStrong" tone="onAccent" numberOfLines={2}>
+              {t('category.demand_cta')}
+            </Text>
+          </View>
+          <Ionicons name="arrow-forward" size={20} color={colors.onAccent} />
+        </Pressable>
+
         <View style={styles.filterRow}>
           {SORTS.map((s) => {
             const on = s.key === sort;
@@ -90,6 +106,24 @@ export default function CategoryScreen() {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingTop: space(2.5), paddingBottom: TAB_BAR_CLEARANCE },
+    constBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      backgroundColor: colors.accent,
+      borderRadius: radius.lg,
+      padding: space(2),
+      marginBottom: space(2.5),
+    },
+    constIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.md,
+      backgroundColor: 'rgba(0,0,0,0.12)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    constText: { flex: 1 },
     filterRow: { flexDirection: 'row', gap: space(1) },
     filterChip: {
       paddingHorizontal: space(2),

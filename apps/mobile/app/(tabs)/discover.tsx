@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Dimensions, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -52,8 +52,23 @@ export default function DiscoverScreen() {
   // Dinamik kullanıcı adı — ilk harf büyük (el yazısı katman için)
   const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
   const pros = useProfessionals();
-  const featured = pros.slice(0, 4);
-  const nearby = pros.slice(4, 9);
+  // §5.1.4 — şehir tüm Keşfet'i filtreler
+  const cityPros = pros.filter((p) => p.city === city);
+  // §5.1.7 Öne Çıkanlar: premium × kalite (premium önce, sonra puan)
+  const featured = [...cityPros]
+    .sort((a, b) => Number(b.isPremium) - Number(a.isPremium) || b.rating - a.rating)
+    .slice(0, 4);
+  // §5.1.8 Sana Yakın: 3 premium salon (yoksa premium-olmayanla doldur) + günlük hafif rotasyon
+  const nearby = useMemo(() => {
+    const salons = cityPros.filter((p) => p.kind === 'salon');
+    const premium = salons.filter((p) => p.isPremium);
+    const pool = premium.length >= 3 ? premium : [...premium, ...salons.filter((p) => !p.isPremium)];
+    if (pool.length === 0) return [];
+    // Günlük rotasyon: aynı 3 salon kilitlenmez (premium satış değeri korunur)
+    const offset = Math.floor(Date.now() / (24 * 60 * 60_000)) % pool.length;
+    return Array.from({ length: Math.min(3, pool.length) }, (_, i) => pool[(offset + i) % pool.length]!);
+  }, [cityPros]);
+  const cityEmpty = cityPros.length === 0;
   const [query, setQuery] = useState('');
 
   function runSearch() {
@@ -165,51 +180,74 @@ export default function DiscoverScreen() {
           })}
         </View>
 
-        {/* ── FIRSATLAR (tek satır, yatay kaydırmalı) ── */}
-        <SectionHeader title={t('home.campaigns')} onSeeAll={() => router.push('/search')} />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.promoScroll}
-        >
-          {campaigns.map((c, i) => (
-            <PromoCard
-              key={c.id}
-              title={c.title}
-              image={c.image}
-              clipId={`promo-c-${c.id}`}
-              grad={PROMO_GRADS[i % PROMO_GRADS.length]!}
-              onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
-            />
-          ))}
-        </ScrollView>
+        {cityEmpty ? (
+          /* §5.1.4 — hizmet veren olmayan şehir: boş durum (asla beyaz boşluk) */
+          <View style={styles.cityEmpty}>
+            <View style={styles.cityEmptyIcon}>
+              <Ionicons name="rocket-outline" size={30} color={colors.rose} />
+            </View>
+            <Text variant="bodyStrong" tone="ink" style={styles.cityEmptyTitle}>
+              {t('home.city_empty.title')}
+            </Text>
+            <Text variant="caption" tone="muted" style={styles.cityEmptySub}>
+              {t('home.city_empty.sub')}
+            </Text>
+            <Pressable style={styles.cityEmptyCta} onPress={() => router.push('/city')}>
+              <Ionicons name="notifications-outline" size={16} color={colors.onAccent} />
+              <Text variant="caption" tone="onAccent" style={styles.cityEmptyCtaText}>
+                {t('home.city_empty.cta')}
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <>
+            {/* ── FIRSATLAR (tek satır, yatay kaydırmalı) ── */}
+            <SectionHeader title={t('home.campaigns')} onSeeAll={() => router.push('/search')} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.promoScroll}
+            >
+              {campaigns.map((c, i) => (
+                <PromoCard
+                  key={c.id}
+                  title={c.title}
+                  image={c.image}
+                  clipId={`promo-c-${c.id}`}
+                  grad={PROMO_GRADS[i % PROMO_GRADS.length]!}
+                  onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
+                />
+              ))}
+            </ScrollView>
 
-        {/* ── ÖNE ÇIKANLAR (tek satır, yatay kaydırmalı) ── */}
-        <SectionHeader title={t('home.featured')} onSeeAll={() => router.push('/search')} />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.promoScroll}
-        >
-          {featured.map((pro, i) => (
-            <PromoCard
-              key={pro.id}
-              title={pro.name}
-              image={pro.image}
-              clipId={`promo-p-${pro.id}`}
-              grad={PROMO_GRADS[(i + 1) % PROMO_GRADS.length]!}
-              onPress={() => router.push('/professional/' + pro.id)}
-            />
-          ))}
-        </ScrollView>
+            {/* ── ÖNE ÇIKANLAR (tek satır, yatay kaydırmalı) ── */}
+            <SectionHeader title={t('home.featured')} onSeeAll={() => router.push('/search')} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.promoScroll}
+            >
+              {featured.map((pro, i) => (
+                <PromoCard
+                  key={pro.id}
+                  title={pro.name}
+                  image={pro.image}
+                  clipId={`promo-p-${pro.id}`}
+                  grad={PROMO_GRADS[(i + 1) % PROMO_GRADS.length]!}
+                  onPress={() => router.push('/professional/' + pro.id)}
+                />
+              ))}
+            </ScrollView>
 
-        {/* ── YAKINDAKİ SALONLAR (yatay kart listesi) ── */}
-        <SectionHeader title={t('home.nearby')} onSeeAll={() => router.push('/search')} />
-        <View style={styles.nearby}>
-          {nearby.map((pro, i) => (
-            <SalonRow key={pro.id} pro={pro} index={i} />
-          ))}
-        </View>
+            {/* ── SANA YAKIN SALONLAR (premium önce + rotasyon) ── */}
+            <SectionHeader title={t('home.nearby')} onSeeAll={() => router.push('/search')} />
+            <View style={styles.nearby}>
+              {nearby.map((pro, i) => (
+                <SalonRow key={pro.id} pro={pro} index={i} />
+              ))}
+            </View>
+          </>
+        )}
       </ScrollView>
     </Screen>
   );
@@ -521,4 +559,35 @@ const makeStyles = (colors: ColorTokens) =>
 
     // ── Yakındaki salonlar ──
     nearby: { paddingHorizontal: space(3), gap: space(1.5) },
+    cityEmpty: {
+      marginHorizontal: space(3),
+      marginTop: space(3),
+      backgroundColor: colors.surface,
+      borderRadius: radius.xl,
+      padding: space(3),
+      alignItems: 'center',
+      gap: space(1),
+    },
+    cityEmptyIcon: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: colors.roseSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space(0.5),
+    },
+    cityEmptyTitle: { textAlign: 'center' },
+    cityEmptySub: { textAlign: 'center', lineHeight: 18, maxWidth: 280 },
+    cityEmptyCta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.25),
+      borderRadius: radius.pill,
+      marginTop: space(1),
+    },
+    cityEmptyCtaText: { fontWeight: '800' },
   });
