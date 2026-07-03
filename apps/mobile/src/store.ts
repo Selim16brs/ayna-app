@@ -966,6 +966,8 @@ export const useStore = create<State>((set, get) => ({
         x.id === id ? { ...x, status: 'refund_pending', providerNoShow: true } : x,
       ),
     }));
+    // §4.4-b backend: iade akışı + 1000₸ uzmanın komisyon borcuna (best-effort)
+    void api.providerNoShowApi(id).catch(() => undefined);
     // Telafi puanı — yerel + backend loyalty ledger (earn zaten api.earnPoints çağırır)
     get().earn(1000, 'rewards.earn.provider_noshow', b.proName);
     get().pushNotification({

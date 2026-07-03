@@ -266,6 +266,8 @@ export const api = {
     post<Appointment>(`/bookings/${id}/refund-receipt`, { receiptUri }),
   confirmRefundApi: (id: string) => post<Appointment>(`/bookings/${id}/confirm-refund`, {}),
   disputeBookingApi: (id: string) => post<Appointment>(`/bookings/${id}/dispute`, {}),
+  // §4.4-b — uzman gelmedi: iade + uzman komisyon borcu (backend)
+  providerNoShowApi: (id: string) => post<Appointment>(`/bookings/${id}/provider-no-show`, {}),
 
   // Salon sahibi/uzman kendi işletmesi (mobil yönetim) — hepsi sahibe-kapılı
   myBusinesses: (token: string) => get<SellerBusiness[]>('/businesses/mine', token),

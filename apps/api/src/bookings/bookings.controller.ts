@@ -146,4 +146,10 @@ export class BookingsController {
   dispute(@Param('id') id: string) {
     return this.bookings.dispute(id);
   }
+
+  // §4.4-b — uzman gelmedi (kullanıcı bildirir) → iade + komisyon borcu
+  @Post(':id/provider-no-show')
+  providerNoShow(@Param('id') id: string) {
+    return this.bookings.providerNoShow(id);
+  }
 }

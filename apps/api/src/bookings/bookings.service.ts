@@ -159,6 +159,40 @@ export class BookingsService {
     return this.transition(id, { status: 'disputed' });
   }
 
+  // §4.4-b — UZMAN gelmedi: iade akışı + 1.000 ₸ uzmanın komisyon borcuna (ceza faturası).
+  // (Kullanıcıya 1000 puan telafisi mobil earn ile verilir; burada komisyon borcu doğar.)
+  async providerNoShow(id: string) {
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    const updated = await this.prisma.booking.update({
+      where: { id },
+      data: { status: 'refund_pending', providerNoShow: true },
+    });
+    if (b.proId) {
+      const amount = await this.depositAmount(); // 1.000 ₸ (parametrik)
+      const biz = await this.prisma.business.findFirst({
+        where: { professionalId: b.proId },
+        select: { ownerUserId: true },
+      });
+      const now = new Date();
+      await this.prisma.commissionInvoice.create({
+        data: {
+          proId: b.proId,
+          proName: b.proName,
+          ownerUserId: biz?.ownerUserId ?? null,
+          periodStart: now,
+          periodEnd: now,
+          bookingsCount: 0,
+          grossRevenue: 0,
+          commissionAmount: amount, // no-show cezası uzmanın komisyon borcuna eklenir
+          dueDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+          status: 'pending',
+        },
+      });
+    }
+    return mapBooking(updated);
+  }
+
   // §1.6 — uzman alternatif saat önerir (mobil epoch ms; proposedStartAt olarak saklanır)
   async propose(id: string, proposedStartMs: number) {
     return this.transition(id, {
