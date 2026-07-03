@@ -126,6 +126,7 @@ interface State {
   submitReceipt: (id: string, receiptUri: string) => void; // kullanıcı dekont yükler
   confirmReceipt: (id: string) => void; // uzman "Aldım, onaylıyorum" → randevu KESİN
   markNoShow: (id: string) => void; // §4.4 — uzman "gelmedi" işaretler
+  giveCustomerSignal: (id: string, signal: 'up' | 'down') => void; // §7.3 — gizli operasyonel sinyal
   // §4.4 — iade + itiraz
   uploadRefundReceipt: (id: string, receiptUri: string) => void; // uzman iade dekontu yükler
   confirmRefund: (id: string) => void; // kullanıcı "iadeyi aldım" → kayıt kapanır
@@ -711,6 +712,13 @@ export const useStore = create<State>((set, get) => ({
   markNoShow: (id) => {
     set((s) => ({
       bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'no_show' } : b)),
+    }));
+  },
+
+  // §7.3 — uzmanın kullanıcıya GİZLİ sinyali (kamuya açık değil; yalnız sisteme akar)
+  giveCustomerSignal: (id, signal) => {
+    set((s) => ({
+      bookings: s.bookings.map((b) => (b.id === id ? { ...b, providerSignal: signal } : b)),
     }));
   },
 

@@ -749,6 +749,7 @@ export interface Appointment {
   reminded24?: boolean; // §4.1 — 24 saat hatırlatması gönderildi
   reminded2?: boolean; // §4.1 — 2 saat hatırlatması gönderildi
   reassignedFrom?: string; // §4.5 — ayrılan uzmanın adı (yeni uzman uzmanName'de)
+  providerSignal?: 'up' | 'down'; // §7.3 — uzmanın kullanıcıya GİZLİ sinyali (kamuya kapalı)
   price: number; // kaç paraya
   status: BookingStatus;
   cancelReason?: string; // §6.C — "neden gelemiyorum"

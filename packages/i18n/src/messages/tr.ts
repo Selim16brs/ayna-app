@@ -805,6 +805,11 @@ export const tr = {
   'booking.provider.receipt': 'Yüklenen dekont',
   'booking.provider.mark_noshow': 'Gelmedi olarak işaretle',
   'booking.provider.pending_receipt': 'Kullanıcının dekontu bekleniyor.',
+  'booking.signal.title': 'Müşteri sinyali (gizli)',
+  'booking.signal.desc': 'Yalnızca sisteme akar; müşteri veya kimse görmez. Randevu deneyimin nasıldı?',
+  'booking.signal.up': 'Sorunsuz',
+  'booking.signal.down': 'Sorunlu',
+  'booking.signal.saved': 'Sinyalin kaydedildi (gizli).',
   // §6.C — iptal sebebi + politika
   'booking.cancel.prompt': 'İptal nedenini seçebilirsin (opsiyonel).',
   'booking.cancel.late_warn':

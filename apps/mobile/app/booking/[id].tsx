@@ -36,6 +36,7 @@ export default function BookingDetailScreen() {
   const submitReceipt = useStore((s) => s.submitReceipt);
   const confirmReceipt = useStore((s) => s.confirmReceipt);
   const markNoShow = useStore((s) => s.markNoShow);
+  const giveCustomerSignal = useStore((s) => s.giveCustomerSignal);
   const uploadRefundReceipt = useStore((s) => s.uploadRefundReceipt);
   const confirmRefund = useStore((s) => s.confirmRefund);
   const disputeBooking = useStore((s) => s.disputeBooking);
@@ -477,6 +478,41 @@ export default function BookingDetailScreen() {
                   onPress={() => id && markNoShow(id)}
                 />
               ) : null}
+              {/* §7.3 — hizmet sonrası GİZLİ müşteri sinyali (👍/👎; kamuya açık değil) */}
+              {booking.status === 'confirmed' && booking.startMs < Date.now() ? (
+                <View style={styles.signalCard}>
+                  <View style={styles.depositHead}>
+                    <Ionicons name="eye-off-outline" size={16} color={colors.muted} />
+                    <Text variant="bodyStrong" tone="ink">
+                      {t('booking.signal.title')}
+                    </Text>
+                  </View>
+                  <Text variant="caption" tone="muted" style={styles.depositDesc}>
+                    {t('booking.signal.desc')}
+                  </Text>
+                  {booking.providerSignal ? (
+                    <Text variant="caption" tone="rose">
+                      {t('booking.signal.saved')}
+                    </Text>
+                  ) : (
+                    <View style={styles.signalRow}>
+                      <Pressable style={styles.signalBtn} onPress={() => id && giveCustomerSignal(id, 'up')}>
+                        <Ionicons name="thumbs-up-outline" size={20} color={colors.success} />
+                        <Text variant="caption" tone="ink">
+                          {t('booking.signal.up')}
+                        </Text>
+                      </Pressable>
+                      <Pressable style={styles.signalBtn} onPress={() => id && giveCustomerSignal(id, 'down')}>
+                        <Ionicons name="thumbs-down-outline" size={20} color={colors.danger} />
+                        <Text variant="caption" tone="ink">
+                          {t('booking.signal.down')}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+              ) : null}
+
               {/* §4.4 — serbest iptal: uzman iade dekontunu yükler */}
               {booking.status === 'refund_pending' ? (
                 <>
@@ -684,6 +720,23 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1.25),
     },
     depositHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    signalCard: {
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1),
+    },
+    signalRow: { flexDirection: 'row', gap: space(1), marginTop: space(0.5) },
+    signalBtn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space(0.75),
+      paddingVertical: space(1.25),
+      borderRadius: radius.md,
+      backgroundColor: colors.surface,
+    },
     depositDesc: { lineHeight: 17 },
     depositRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     depositNote: { lineHeight: 16, marginTop: space(0.5) },
