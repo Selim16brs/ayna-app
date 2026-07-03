@@ -1396,6 +1396,7 @@ export const SEED_NOTIFICATIONS: AppNotification[] = [
     dateLabel: '2 saat önce',
     icon: 'calendar-outline',
     read: false,
+    route: '/booking/a1',
   },
   {
     id: 'n2',
@@ -1424,6 +1425,7 @@ export const SEED_NOTIFICATIONS: AppNotification[] = [
     dateLabel: '4 gün önce',
     icon: 'chatbubble-outline',
     read: true,
+    route: '/circle/c1',
   },
 ];
 

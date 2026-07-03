@@ -289,6 +289,7 @@ export const useStore = create<State>((set, get) => ({
       body: `${input.proName} · ${formatSlotTr(input.startMs)} · uzman onayı bekleniyor`,
       dateLabel: 'Az önce',
       icon: 'calendar-outline',
+      route: `/booking/${id}`,
     });
     return id;
   },
@@ -317,6 +318,7 @@ export const useStore = create<State>((set, get) => ({
       body: `${pro.name} · yer açılınca öncelikli bildirim alacaksın`,
       dateLabel: 'Az önce',
       icon: 'hourglass-outline',
+      route: `/booking/${id}`,
     });
   },
 
@@ -397,6 +399,7 @@ export const useStore = create<State>((set, get) => ({
         body: `${b.proName} · destek ekibi inceleyecek`,
         dateLabel: 'Az önce',
         icon: 'flag-outline',
+        route: `/booking/${id}`,
       });
   },
 
@@ -587,6 +590,7 @@ export const useStore = create<State>((set, get) => ({
         body: `${b.proName} · dekont zamanında yüklenmedi, randevu düştü ve slot açıldı`,
         dateLabel: 'Az önce',
         icon: 'time-outline',
+        route: `/booking/${b.id}`,
       });
   },
 
@@ -733,6 +737,7 @@ export const useStore = create<State>((set, get) => ({
         body: `${b.proName} · talebini şu an karşılayamadı`,
         dateLabel: 'Az önce',
         icon: 'close-circle-outline',
+        route: `/booking/${id}`,
       });
   },
 
@@ -771,6 +776,7 @@ export const useStore = create<State>((set, get) => ({
         body: `${b.proName} · uzman onayı bekleniyor`,
         dateLabel: 'Az önce',
         icon: 'receipt-outline',
+        route: `/booking/${id}`,
       });
   },
 
