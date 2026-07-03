@@ -996,6 +996,7 @@ export interface LifeArticle {
   image: string;
   excerpt: string;
   body: string[];
+  categoryCode?: string | null; // §12.6 — yazıya bağlı kategori → "Teklif al" CTA
 }
 
 const lifeImg = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=70`;

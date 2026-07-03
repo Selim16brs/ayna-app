@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/api';
@@ -32,9 +32,12 @@ export default function NewDemandScreen() {
   const CAT_COLORS = makeCatColors(colors);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const createDemand = useStore((s) => s.createDemand);
+  // §12.6 — blog "Teklif al" CTA'sından gelen kategori ön-seçimi
+  const { category: catParam } = useLocalSearchParams<{ category?: string }>();
+  const initialCat = CATEGORIES.some((c) => c.id === catParam) ? catParam! : CATEGORIES[0]!.id;
   const [desc, setDesc] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
-  const [category, setCategory] = useState<string>(CATEGORIES[0]!.id);
+  const [category, setCategory] = useState<string>(initialCat);
   const [budget, setBudget] = useState('');
   const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
   const [market, setMarket] = useState<{ average: number; floor: number } | null>(null);

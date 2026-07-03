@@ -8,6 +8,7 @@ import { BusinessesModule } from './businesses/businesses.module';
 import { SpecialistsModule } from './specialists/specialists.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { ConfigModule } from './config/config.module';
+import { ContentModule } from './content/content.module';
 import { FeatureFlagModule } from './feature-flags/feature-flag.module';
 import { HealthModule } from './health/health.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
@@ -32,6 +33,7 @@ import { RatingsModule } from './ratings/ratings.module';
     RatingsModule,
     AiModule,
     AdminModule,
+    ContentModule,
   ],
 })
 export class AppModule {}

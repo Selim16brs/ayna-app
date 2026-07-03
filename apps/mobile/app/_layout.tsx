@@ -13,12 +13,15 @@ function ThemedStack() {
   const pathname = usePathname();
   const currentUser = useStore((s) => s.currentUser);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
+  const loadContent = useStore((s) => s.loadContent);
   const checkReminders = useStore((s) => s.checkReminders);
   const expireDemands = useStore((s) => s.expireDemands);
   const expireDeposits = useStore((s) => s.expireDeposits);
   useEffect(() => {
     void hydrateBookings();
-  }, [hydrateBookings]);
+    // §12.6 — admin'in yayınladığı blog + haftalık temayı çek (başarısızsa seed)
+    void loadContent();
+  }, [hydrateBookings, loadContent]);
   // §4.1/§4.3/§5.2 — her gezinmede: hatırlatmalar + süresi dolan talepler + dekont süresi (mock scheduler)
   useEffect(() => {
     checkReminders();

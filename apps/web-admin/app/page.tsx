@@ -6,7 +6,10 @@ import {
   type AdBanner,
   type AdminBooking,
   type AdminReview,
+  type ArticleInput,
   type AuditEntry,
+  type BlogApplication,
+  type BlogArticle,
   type Business,
   type FeatureFlag,
   type Loyalty,
@@ -22,7 +25,9 @@ import {
   type Pro,
   type ProInput,
   type AdminUser,
+  type ReviewApplication,
   type Stats,
+  type WeeklyTheme,
   setToken,
 } from './lib/api';
 
@@ -39,6 +44,7 @@ type Tab =
   | 'campaigns'
   | 'ads'
   | 'moderation'
+  | 'content'
   | 'users'
   | 'loyalty'
   | 'flags'
@@ -76,6 +82,7 @@ export default function AdminApp() {
     { id: 'campaigns', label: 'Kampanya & Banner', icon: '🎯' },
     { id: 'ads', label: 'Reklamlar', icon: '📢' },
     { id: 'moderation', label: 'Moderasyon', icon: '🛡️' },
+    { id: 'content', label: 'İçerik & Blog', icon: '📝' },
     { id: 'users', label: 'Kullanıcılar', icon: '👥' },
     { id: 'loyalty', label: 'Sadakat', icon: '🎁' },
     { id: 'flags', label: 'Feature Flag', icon: '🚩' },
@@ -112,6 +119,7 @@ export default function AdminApp() {
         {tab === 'campaigns' && <CampaignsView />}
         {tab === 'ads' && <AdsView />}
         {tab === 'moderation' && <ModerationView />}
+        {tab === 'content' && <ContentView />}
         {tab === 'users' && <UsersView />}
         {tab === 'loyalty' && <LoyaltyView />}
         {tab === 'flags' && <FlagsView />}
@@ -801,6 +809,330 @@ function CampaignsView() {
               >
                 Sil
               </button>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+// §12.6 İçerik Yönetimi — Blog editörü + kullanıcı başvuruları + haftalık W2W teması
+function ContentView() {
+  const { data: articles, reload: reloadArticles } = useAsync<BlogArticle[]>(
+    () => api.blogArticles(),
+    [],
+  );
+  const { data: apps, reload: reloadApps } = useAsync<BlogApplication[]>(
+    () => api.blogApplications(),
+    [],
+  );
+  const { data: themes, reload: reloadThemes } = useAsync<WeeklyTheme[]>(() => api.themes(), []);
+
+  const empty: ArticleInput = {
+    title: '',
+    tag: '',
+    categoryCode: '',
+    readMin: 3,
+    image: '',
+    excerpt: '',
+    body: [''],
+    published: true,
+  };
+  const [form, setForm] = useState<ArticleInput>(empty);
+  const [editId, setEditId] = useState<string | null>(null);
+
+  const bodyText = (form.body ?? []).join('\n');
+  const setBody = (text: string) => setForm({ ...form, body: text.split('\n') });
+
+  const save = async () => {
+    const body = (form.body ?? []).map((p) => p.trim()).filter(Boolean);
+    if (form.title.length < 3 || !form.tag || !form.excerpt || body.length === 0) return;
+    const payload: ArticleInput = { ...form, body, categoryCode: form.categoryCode || null };
+    if (editId) await api.updateArticle(editId, payload);
+    else await api.createArticle(payload);
+    setForm(empty);
+    setEditId(null);
+    reloadArticles();
+  };
+
+  const edit = (a: BlogArticle) => {
+    setEditId(a.id);
+    setForm({
+      title: a.title,
+      tag: a.tag,
+      categoryCode: a.categoryCode ?? '',
+      readMin: a.readMin,
+      image: a.image,
+      excerpt: a.excerpt,
+      body: a.body.length ? a.body : [''],
+      published: a.published,
+    });
+  };
+
+  const [themeForm, setThemeForm] = useState({ title: '', prompt: '', weekStart: '' });
+  const createTheme = async () => {
+    if (themeForm.title.length < 2 || themeForm.prompt.length < 2) return;
+    await api.createTheme({
+      title: themeForm.title,
+      prompt: themeForm.prompt,
+      weekStart: themeForm.weekStart || new Date().toISOString(),
+    });
+    setThemeForm({ title: '', prompt: '', weekStart: '' });
+    reloadThemes();
+  };
+
+  const pending = (apps ?? []).filter((a) => a.status === 'pending');
+  const reviewed = (apps ?? []).filter((a) => a.status !== 'pending');
+
+  return (
+    <>
+      <h1 className="page-title">İçerik & Blog</h1>
+      <p className="page-sub">
+        AYNA Blog editörü · kullanıcı başvuruları (onayla → puan) · haftalık W2W teması
+      </p>
+
+      {/* Blog editörü */}
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="section-title">{editId ? 'Yazıyı düzenle' : 'Yeni yazı'}</div>
+        <div className="form-inline">
+          <input
+            className="input"
+            placeholder="Başlık"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Etiket (örn. Bakım)"
+            value={form.tag}
+            onChange={(e) => setForm({ ...form, tag: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Kategori kodu → Teklif al CTA (örn. hair)"
+            value={form.categoryCode ?? ''}
+            onChange={(e) => setForm({ ...form, categoryCode: e.target.value })}
+          />
+          <input
+            className="input"
+            type="number"
+            placeholder="Okuma dk"
+            value={form.readMin ?? 3}
+            onChange={(e) => setForm({ ...form, readMin: Number(e.target.value) })}
+          />
+          <input
+            className="input full"
+            placeholder="Görsel URL (https://...)"
+            value={form.image ?? ''}
+            onChange={(e) => setForm({ ...form, image: e.target.value })}
+          />
+          <input
+            className="input full"
+            placeholder="Özet (kart altında görünür)"
+            value={form.excerpt}
+            onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+          />
+          <textarea
+            className="input full"
+            placeholder="İçerik — her satır bir paragraf"
+            rows={6}
+            value={bodyText}
+            onChange={(e) => setBody(e.target.value)}
+          />
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={form.published ?? false}
+              onChange={(e) => setForm({ ...form, published: e.target.checked })}
+            />
+            Yayında
+          </label>
+          <button className="btn-sm btn-ok" onClick={save}>
+            {editId ? 'Kaydet' : '+ Yazı ekle'}
+          </button>
+          {editId && (
+            <button
+              className="btn-sm"
+              onClick={() => {
+                setForm(empty);
+                setEditId(null);
+              }}
+            >
+              Vazgeç
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: 28 }}>
+        {!articles || articles.length === 0 ? (
+          <div className="empty">Yazı yok</div>
+        ) : (
+          articles.map((a) => (
+            <div key={a.id} className="list-row">
+              {a.image ? <img className="thumb" src={a.image} alt="" /> : <div className="thumb" />}
+              <div className="grow">
+                <div className="name">
+                  {a.tag} · {a.title}
+                </div>
+                <div className="meta">
+                  {a.excerpt}
+                  {a.categoryCode ? ` · CTA: ${a.categoryCode}` : ''} · {a.readMin} dk
+                </div>
+              </div>
+              <button
+                className={`switch ${a.published ? 'on' : 'off'}`}
+                onClick={async () => {
+                  await api.updateArticle(a.id, { published: !a.published });
+                  reloadArticles();
+                }}
+              >
+                {a.published ? 'Yayında' : 'Taslak'}
+              </button>
+              <button className="btn-sm" onClick={() => edit(a)}>
+                Düzenle
+              </button>
+              <button
+                className="btn-sm btn-danger"
+                onClick={async () => {
+                  if (confirm('Yazı silinsin mi?')) {
+                    await api.deleteArticle(a.id);
+                    reloadArticles();
+                  }
+                }}
+              >
+                Sil
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Kullanıcı blog başvuruları */}
+      <h2 className="section-head">Kullanıcı blog başvuruları</h2>
+      <p className="page-sub">Onaylanan başvuru otomatik yayına alınır ve yazara 200 puan verilir.</p>
+      <div className="card" style={{ marginBottom: 28 }}>
+        {pending.length === 0 ? (
+          <div className="empty">Bekleyen başvuru yok</div>
+        ) : (
+          pending.map((a) => (
+            <div key={a.id} className="list-col">
+              <div className="name">{a.title}</div>
+              <div className="meta">
+                {a.authorName} · {a.tag || 'Topluluk'} ·{' '}
+                {new Date(a.createdAt).toLocaleDateString('tr-TR')}
+              </div>
+              <div className="meta" style={{ marginTop: 6 }}>
+                {a.excerpt || a.body[0]?.slice(0, 140)}
+              </div>
+              <div className="form-inline" style={{ marginTop: 10 }}>
+                <input
+                  className="input"
+                  placeholder="Kategori kodu (opsiyonel)"
+                  id={`cat-${a.id}`}
+                />
+                <input className="input" placeholder="Görsel URL (opsiyonel)" id={`img-${a.id}`} />
+                <button
+                  className="btn-sm btn-ok"
+                  onClick={async () => {
+                    const cat = (document.getElementById(`cat-${a.id}`) as HTMLInputElement)?.value;
+                    const img = (document.getElementById(`img-${a.id}`) as HTMLInputElement)?.value;
+                    const body: ReviewApplication = { decision: 'approve' };
+                    if (cat) body.categoryCode = cat;
+                    if (img) body.image = img;
+                    await api.reviewApplication(a.id, body);
+                    reloadApps();
+                    reloadArticles();
+                  }}
+                >
+                  Onayla → yayınla + 200 puan
+                </button>
+                <button
+                  className="btn-sm btn-danger"
+                  onClick={async () => {
+                    const note = prompt('Red gerekçesi (opsiyonel):') ?? '';
+                    await api.reviewApplication(a.id, { decision: 'reject', note });
+                    reloadApps();
+                  }}
+                >
+                  Reddet
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+        {reviewed.length > 0 && (
+          <div style={{ marginTop: 12, opacity: 0.7 }}>
+            {reviewed.map((a) => (
+              <div key={a.id} className="list-row">
+                <div className="grow">
+                  <div className="name">{a.title}</div>
+                  <div className="meta">
+                    {a.authorName} ·{' '}
+                    {a.status === 'approved' ? `onaylandı (+${a.points} puan)` : 'reddedildi'}
+                    {a.note ? ` · ${a.note}` : ''}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Haftalık W2W teması */}
+      <h2 className="section-head">Haftalık W2W teması</h2>
+      <p className="page-sub">App&apos;te haftanın sorusu/teması. Tek tema aktif olabilir.</p>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="form-inline">
+          <input
+            className="input"
+            placeholder="Tema başlığı"
+            value={themeForm.title}
+            onChange={(e) => setThemeForm({ ...themeForm, title: e.target.value })}
+          />
+          <input
+            className="input full"
+            placeholder="Soru / yönlendirme metni"
+            value={themeForm.prompt}
+            onChange={(e) => setThemeForm({ ...themeForm, prompt: e.target.value })}
+          />
+          <input
+            className="input"
+            type="date"
+            value={themeForm.weekStart}
+            onChange={(e) => setThemeForm({ ...themeForm, weekStart: e.target.value })}
+          />
+          <button className="btn-sm btn-ok" onClick={createTheme}>
+            + Tema ekle
+          </button>
+        </div>
+      </div>
+      <div className="card">
+        {!themes || themes.length === 0 ? (
+          <div className="empty">Tema yok</div>
+        ) : (
+          themes.map((th) => (
+            <div key={th.id} className="list-row">
+              <div className="grow">
+                <div className="name">{th.title}</div>
+                <div className="meta">
+                  {th.prompt} · {new Date(th.weekStart).toLocaleDateString('tr-TR')}
+                </div>
+              </div>
+              {th.active ? (
+                <span className="switch on">Aktif</span>
+              ) : (
+                <button
+                  className="btn-sm"
+                  onClick={async () => {
+                    await api.activateTheme(th.id);
+                    reloadThemes();
+                  }}
+                >
+                  Aktifleştir
+                </button>
+              )}
             </div>
           ))
         )}

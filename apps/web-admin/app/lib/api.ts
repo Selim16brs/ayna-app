@@ -109,7 +109,81 @@ export const api = {
   marketPrices: () => req<MarketPrice[]>('/admin/market-prices'),
   setMarketPrice: (m: { category: string; city?: string; basePrice: number }) =>
     req<MarketPrice>('/admin/market-prices', { method: 'POST', body: JSON.stringify(m) }),
+
+  // §12.6 İçerik Yönetimi — Blog
+  blogArticles: () => req<BlogArticle[]>('/admin/content/articles'),
+  createArticle: (a: ArticleInput) =>
+    req<BlogArticle>('/admin/content/articles', { method: 'POST', body: JSON.stringify(a) }),
+  updateArticle: (id: string, a: Partial<ArticleInput>) =>
+    req<BlogArticle>(`/admin/content/articles/${id}`, { method: 'PATCH', body: JSON.stringify(a) }),
+  deleteArticle: (id: string) =>
+    req(`/admin/content/articles/${id}`, { method: 'DELETE' }),
+  blogApplications: () => req<BlogApplication[]>('/admin/content/applications'),
+  reviewApplication: (id: string, body: ReviewApplication) =>
+    req(`/admin/content/applications/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  themes: () => req<WeeklyTheme[]>('/admin/content/themes'),
+  createTheme: (t: { title: string; prompt: string; weekStart: string }) =>
+    req<WeeklyTheme>('/admin/content/themes', { method: 'POST', body: JSON.stringify(t) }),
+  activateTheme: (id: string) =>
+    req<WeeklyTheme>(`/admin/content/themes/${id}/activate`, { method: 'POST' }),
 };
+
+export interface BlogArticle {
+  id: string;
+  title: string;
+  tag: string;
+  categoryCode: string | null;
+  readMin: number;
+  image: string;
+  excerpt: string;
+  body: string[];
+  published: boolean;
+  publishedAt: string | null;
+  createdAt: string;
+}
+
+export interface ArticleInput {
+  title: string;
+  tag: string;
+  categoryCode?: string | null;
+  readMin?: number;
+  image?: string;
+  excerpt: string;
+  body: string[];
+  published?: boolean;
+}
+
+export interface BlogApplication {
+  id: string;
+  userId: string | null;
+  authorName: string;
+  title: string;
+  excerpt: string;
+  body: string[];
+  tag: string;
+  status: 'pending' | 'approved' | 'rejected';
+  points: number;
+  note: string;
+  createdAt: string;
+  reviewedAt: string | null;
+}
+
+export interface ReviewApplication {
+  decision: 'approve' | 'reject';
+  note?: string;
+  categoryCode?: string;
+  image?: string;
+  points?: number;
+}
+
+export interface WeeklyTheme {
+  id: string;
+  title: string;
+  prompt: string;
+  weekStart: string;
+  active: boolean;
+  createdAt: string;
+}
 
 export interface Overview {
   users: number;

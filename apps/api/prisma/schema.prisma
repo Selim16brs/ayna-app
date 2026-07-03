@@ -448,3 +448,55 @@ model Setting {
 
   @@map("settings")
 }
+
+// ── §12.6 İçerik Yönetimi — AYNA Blog ────────────────────────────────────
+// Admin yazar/yayınlar; yazıya kategori bağlanır → app'te otomatik "Teklif al" CTA'sı.
+model BlogArticle {
+  id            String    @id @default(uuid()) @db.Uuid
+  title         String
+  tag           String // görünen etiket ("Sağlık", "Bakım"…)
+  categoryCode  String?   @map("category_code") // ServiceCategory.code → app CTA
+  readMin       Int       @default(3) @map("read_min")
+  image         String    @default("")
+  excerpt       String
+  body          String[] // paragraf dizisi
+  published     Boolean   @default(false)
+  publishedAt   DateTime? @map("published_at") @db.Timestamptz(6)
+  applicationId String?   @unique @map("application_id") @db.Uuid // hangi başvurudan geldi
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([published])
+  @@map("blog_articles")
+}
+
+// Kullanıcı blog başvurusu — admin onaylar → puan otomatik verilir (loyalty ledger).
+model BlogApplication {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String?   @map("user_id") @db.Uuid
+  authorName String    @map("author_name")
+  title      String
+  excerpt    String    @default("")
+  body       String[]
+  tag        String    @default("")
+  status     String    @default("pending") // pending | approved | rejected
+  points     Int       @default(0) // onayda verilen puan
+  note       String    @default("") // red gerekçesi
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  reviewedAt DateTime? @map("reviewed_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@map("blog_applications")
+}
+
+// Haftalık W2W (Women to Women) teması — app'te haftanın sorusu/teması.
+model WeeklyTheme {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String
+  prompt    String
+  weekStart DateTime @map("week_start") @db.Timestamptz(6)
+  active    Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("weekly_themes")
+}

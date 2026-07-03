@@ -339,4 +339,37 @@ export const api = {
     post<LoyaltySummary>('/loyalty/earn', { points, reason, detail }, token),
   redeemReward: (token: string, rewardId: string) =>
     post<LoyaltySummary>('/loyalty/redeem', { rewardId }, token),
+
+  // §12.6 İçerik — admin'in yayınladığı blog + haftalık tema
+  contentArticles: () => get<ApiArticle[]>('/content/articles'),
+  contentTheme: () => get<ApiWeeklyTheme | null>('/content/theme'),
+  submitBlog: (token: string, input: BlogSubmission) =>
+    post<{ id: string; status: string }>('/content/applications', input, token),
 };
+
+export interface ApiArticle {
+  id: string;
+  title: string;
+  tag: string;
+  categoryCode: string | null;
+  readMin: number;
+  image: string;
+  excerpt: string;
+  body: string[];
+}
+
+export interface ApiWeeklyTheme {
+  id: string;
+  title: string;
+  prompt: string;
+  weekStart: string;
+  active: boolean;
+}
+
+export interface BlogSubmission {
+  authorName: string;
+  title: string;
+  excerpt?: string;
+  body: string[];
+  tag?: string;
+}

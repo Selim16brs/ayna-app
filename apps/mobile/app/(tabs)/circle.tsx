@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { type CirclePost, type CirclePostType, LIFE_ARTICLES } from '../../src/data';
+import type { CirclePost, CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
@@ -25,6 +25,9 @@ export default function CircleScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const posts = useStore((s) => s.circlePosts);
+  // §12.6 — admin blog (fetch başarısızsa seed) + haftalık W2W teması
+  const articles = useStore((s) => s.articles);
+  const weeklyTheme = useStore((s) => s.weeklyTheme);
   // §5.5 — uzman/salon W2W'de gönderi PAYLAŞAMAZ (yalnız okur + yorum yapar)
   const role = useStore((s) => s.currentUser?.role);
   const canPost = role !== 'professional' && role !== 'salon';
@@ -60,6 +63,19 @@ export default function CircleScreen() {
       />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* §12.6 — admin'in belirlediği haftalık W2W teması */}
+        {weeklyTheme ? (
+          <View style={styles.themeBanner}>
+            <Ionicons name="sparkles" size={16} color={colors.ink} />
+            <View style={styles.themeBody}>
+              <Text variant="bodyStrong">{weeklyTheme.title}</Text>
+              <Text variant="caption" tone="muted">
+                {weeklyTheme.prompt}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
         {/* AYNA Life · Pratik Bilgiler — en başta */}
         <Text variant="label" tone="muted" style={styles.sectionTitle}>
           {t('circle.life_section')}
@@ -69,7 +85,7 @@ export default function CircleScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.life}
         >
-          {LIFE_ARTICLES.map((a) => (
+          {articles.map((a) => (
             <PressableScale key={a.id} onPress={() => router.push('/life/' + a.id)}>
               <ImageBackground
                 source={{ uri: a.image }}
@@ -236,6 +252,18 @@ const makeStyles = (colors: ColorTokens) =>
     },
     scroll: { paddingTop: space(3), paddingBottom: space(13) },
     sectionTitle: { paddingHorizontal: space(3), marginBottom: space(1.5) },
+    // §12.6 haftalık tema banner'ı
+    themeBanner: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space(1.5),
+      marginHorizontal: space(3),
+      marginBottom: space(2),
+      padding: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.accentSoft,
+    },
+    themeBody: { flex: 1, gap: space(0.25) },
     // AYNA Life kartları
     life: { paddingHorizontal: space(3), gap: space(1.5), paddingBottom: space(0.5) },
     lifeCard: {

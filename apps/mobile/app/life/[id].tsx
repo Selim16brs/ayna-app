@@ -4,6 +4,7 @@ import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-
 import { LinearGradient } from 'expo-linear-gradient';
 import { getArticle } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
@@ -14,7 +15,9 @@ export default function ArticleDetailScreen() {
   const router = useRouter();
   const styles = useThemedStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
-  const article = getArticle(id ?? '');
+  // §12.6 — önce admin blog listesi (store), yoksa seed
+  const articles = useStore((s) => s.articles);
+  const article = articles.find((a) => a.id === id) ?? getArticle(id ?? '');
 
   if (!article) {
     return (
@@ -72,8 +75,17 @@ export default function ArticleDetailScreen() {
             </Text>
           ))}
 
-          {/* §5.5 — yazı sonunda bağlamsal teklif köprüsü */}
-          <Pressable style={styles.cta} onPress={() => router.push('/demand/new')}>
+          {/* §5.5 — yazı sonunda bağlamsal teklif köprüsü (yazının kategorisi ön-seçili) */}
+          <Pressable
+            style={styles.cta}
+            onPress={() =>
+              router.push(
+                article.categoryCode
+                  ? { pathname: '/demand/new', params: { category: article.categoryCode } }
+                  : '/demand/new',
+              )
+            }
+          >
             <View style={styles.ctaIcon}>
               <Ionicons name="pricetags" size={18} color={colors.onAccent} />
             </View>

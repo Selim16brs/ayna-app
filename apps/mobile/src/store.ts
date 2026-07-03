@@ -22,6 +22,8 @@ import {
   type CirclePost,
   type CirclePostType,
   type LedgerEntry,
+  type LifeArticle,
+  LIFE_ARTICLES,
   type Moment,
   type PersonalLog,
   type PersonalTone,
@@ -107,6 +109,10 @@ interface State {
   // Kullanıcı tarafında bu günler slot göstermez. (Mock: tek sağlayıcı; backend providerId'yle anahtarlar.)
   closedDays: number[];
   circlePosts: CirclePost[];
+  // §12.6 — AYNA Blog (admin yayınlar → app gösterir; fetch başarısızsa seed)
+  articles: LifeArticle[];
+  weeklyTheme: { id: string; title: string; prompt: string } | null;
+  loadContent: () => Promise<void>;
   careRoutines: CareRoutine[];
   personalLogs: PersonalLog[];
   moments: Moment[];
@@ -236,6 +242,20 @@ export const useStore = create<State>((set, get) => ({
   closedDays: [],
   circlePosts: SEED_CIRCLE_POSTS,
   reportedPosts: [],
+  articles: LIFE_ARTICLES,
+  weeklyTheme: null,
+  loadContent: async () => {
+    try {
+      const [rows, theme] = await Promise.all([api.contentArticles(), api.contentTheme()]);
+      set({
+        // Backend'de yayınlanmış yazı yoksa seed'i koru (app boş kalmasın)
+        articles: rows.length > 0 ? rows : LIFE_ARTICLES,
+        weeklyTheme: theme ? { id: theme.id, title: theme.title, prompt: theme.prompt } : null,
+      });
+    } catch {
+      // Backend erişilemezse seed makalelerle devam
+    }
+  },
   careRoutines: SEED_CARE_ROUTINES,
   personalLogs: SEED_PERSONAL_LOGS,
   moments: SEED_MOMENTS,
