@@ -151,6 +151,13 @@ export const api = {
   sendAnnouncement: (a: AnnouncementInput) =>
     req<Announcement>('/admin/content/announcements', { method: 'POST', body: JSON.stringify(a) }),
 
+  // §12.4 Anlaşmazlık kuyruğu (depozito/iade dekontları)
+  disputes: () => req<Dispute[]>('/admin/disputes'),
+  resolveDispute: (id: string, decision: 'approve' | 'reject', resolution?: string) =>
+    req<Dispute>(`/admin/disputes/${id}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify({ decision, ...(resolution ? { resolution } : {}) }),
+    }),
   // §12.9 Sistem Ayarları
   systemSettings: () => req<SystemSettings>('/admin/system'),
   setRate: (key: string, value: number) =>
@@ -284,6 +291,20 @@ export interface Overview {
     revenue: number;
     currency: string;
   };
+}
+export interface Dispute {
+  id: string;
+  bookingRef: string;
+  proName: string;
+  service: string;
+  kind: 'deposit' | 'refund';
+  amount: number;
+  receiptUri: string | null;
+  note: string;
+  status: 'open' | 'approved' | 'rejected';
+  resolution: string;
+  createdAt: string;
+  resolvedAt: string | null;
 }
 export interface CommissionInvoice {
   id: string;

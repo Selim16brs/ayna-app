@@ -22,6 +22,7 @@ import {
   type Category,
   type CommissionInvoice,
   type Commissions,
+  type Dispute,
   clearToken,
   getToken,
   type MarketPrice,
@@ -46,6 +47,7 @@ type Tab =
   | 'services'
   | 'prices'
   | 'bookings'
+  | 'disputes'
   | 'quotes'
   | 'campaigns'
   | 'ads'
@@ -87,6 +89,7 @@ export default function AdminApp() {
     { id: 'services', label: 'Hizmetler', icon: '🗂️' },
     { id: 'prices', label: 'Fiyatlar', icon: '🏷️' },
     { id: 'bookings', label: 'Randevular', icon: '📅' },
+    { id: 'disputes', label: 'Anlaşmazlık', icon: '⚖️' },
     { id: 'quotes', label: 'Teklifler', icon: '📩' },
     { id: 'campaigns', label: 'Kampanya & Banner', icon: '🎯' },
     { id: 'ads', label: 'Reklamlar', icon: '📢' },
@@ -127,6 +130,7 @@ export default function AdminApp() {
         {tab === 'services' && <ServicesView />}
         {tab === 'prices' && <PricesView />}
         {tab === 'bookings' && <BookingsAdminView />}
+        {tab === 'disputes' && <DisputesView />}
         {tab === 'quotes' && <QuotesView />}
         {tab === 'campaigns' && <CampaignsView />}
         {tab === 'ads' && <AdsView />}
@@ -2100,6 +2104,97 @@ function BookingsAdminView() {
           ))
         )}
       </div>
+    </>
+  );
+}
+
+// §12.4 Anlaşmazlık kuyruğu — depozito/iade dekont görselleri incelenir, karar verilir
+function DisputesView() {
+  const { data, reload } = useAsync<Dispute[]>(() => api.disputes(), []);
+  const open = (data ?? []).filter((d) => d.status === 'open');
+  const resolved = (data ?? []).filter((d) => d.status !== 'open');
+
+  const kindLabel = (k: string) => (k === 'refund' ? 'İade dekontu' : 'Depozito itirazı');
+  const statusLabel = (s: string) =>
+    s === 'approved' ? 'Onaylandı' : s === 'rejected' ? 'Reddedildi' : 'Açık';
+  const statusPill = (s: string) =>
+    s === 'approved' ? 'approved' : s === 'rejected' ? 'rejected' : 'pending';
+
+  const resolve = async (d: Dispute, decision: 'approve' | 'reject') => {
+    const resolution = prompt(
+      `${kindLabel(d.kind)} — ${decision === 'approve' ? 'onay' : 'ret'} notu (ops.):`,
+    );
+    if (resolution === null) return;
+    await api.resolveDispute(d.id, decision, resolution || undefined);
+    reload();
+  };
+
+  const row = (d: Dispute) => (
+    <div key={d.id} className="list-col">
+      <div className="name">
+        {kindLabel(d.kind)} · {d.proName} · {TL(d.amount)}
+      </div>
+      <div className="meta" style={{ marginTop: 4 }}>
+        Randevu #{d.bookingRef} {d.service ? `· ${d.service}` : ''} ·{' '}
+        {new Date(d.createdAt).toLocaleString('tr-TR')}
+        {d.note ? ` · "${d.note}"` : ''}
+      </div>
+      {d.resolution ? (
+        <div className="meta" style={{ marginTop: 2 }}>
+          Karar notu: {d.resolution}
+        </div>
+      ) : null}
+      <div className="form-inline" style={{ marginTop: 10 }}>
+        {d.receiptUri ? (
+          <a
+            className="btn-sm"
+            href={d.receiptUri}
+            target="_blank"
+            rel="noreferrer"
+            style={{ textDecoration: 'none' }}
+          >
+            🧾 Dekontu incele
+          </a>
+        ) : (
+          <span className="meta">Dekont yok</span>
+        )}
+        {d.status === 'open' ? (
+          <>
+            <button className="btn-sm btn-ok" onClick={() => resolve(d, 'approve')}>
+              Onayla
+            </button>
+            <button className="btn-sm btn-danger" onClick={() => resolve(d, 'reject')}>
+              Reddet
+            </button>
+          </>
+        ) : (
+          <span className={`pill ${statusPill(d.status)}`}>{statusLabel(d.status)}</span>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <h1 className="page-title">Anlaşmazlık Kuyruğu</h1>
+      <p className="page-sub">
+        Depozito itirazları ve iade dekontları — dekont görselleri burada incelenir. Sabit ilke:
+        dürüst eleştiri/haklı iade reddedilmez.
+      </p>
+
+      <div className="section-title">Bekleyen ({open.length})</div>
+      <div className="card" style={{ marginBottom: 20 }}>
+        {open.length === 0 ? <div className="empty">Bekleyen anlaşmazlık yok</div> : open.map(row)}
+      </div>
+
+      {resolved.length > 0 && (
+        <>
+          <div className="section-title">Çözülenler ({resolved.length})</div>
+          <div className="card" style={{ opacity: 0.8 }}>
+            {resolved.map(row)}
+          </div>
+        </>
+      )}
     </>
   );
 }

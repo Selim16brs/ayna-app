@@ -443,6 +443,19 @@ export const useStore = create<State>((set, get) => ({
       ),
     }));
     const b = get().bookings.find((x) => x.id === id);
+    // §12.4 — iade dekontu admin anlaşmazlık kuyruğuna düşer (dekont görseliyle)
+    const token = get().token;
+    if (b && token)
+      void api
+        .fileDispute(token, {
+          bookingRef: id,
+          proName: b.proName,
+          service: b.service,
+          kind: 'refund',
+          amount: b.depositAmount ?? 0,
+          receiptUri,
+        })
+        .catch(() => undefined);
     if (b)
       get().pushNotification({
         type: 'booking',
@@ -467,6 +480,20 @@ export const useStore = create<State>((set, get) => ({
       bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'disputed' } : b)),
     }));
     const b = get().bookings.find((x) => x.id === id);
+    // §12.4 — itiraz backend anlaşmazlık kuyruğuna düşer (varsa depozito dekontuyla)
+    const token = get().token;
+    if (b && token)
+      void api
+        .fileDispute(token, {
+          bookingRef: id,
+          proName: b.proName,
+          service: b.service,
+          kind: 'deposit',
+          amount: b.depositAmount ?? 0,
+          ...(b.receiptUri ? { receiptUri: b.receiptUri } : {}),
+          note: 'Kullanıcı itirazı',
+        })
+        .catch(() => undefined);
     if (b)
       get().pushNotification({
         type: 'booking',

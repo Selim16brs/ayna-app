@@ -10,6 +10,7 @@ import { CatalogModule } from './catalog/catalog.module';
 import { CommissionsModule } from './commissions/commissions.module';
 import { ConfigModule } from './config/config.module';
 import { ContentModule } from './content/content.module';
+import { DisputesModule } from './disputes/disputes.module';
 import { FeatureFlagModule } from './feature-flags/feature-flag.module';
 import { HealthModule } from './health/health.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
@@ -38,6 +39,7 @@ import { SettingsModule } from './settings/settings.module';
     ContentModule,
     SettingsModule,
     CommissionsModule,
+    DisputesModule,
   ],
 })
 export class AppModule {}

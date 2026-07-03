@@ -506,6 +506,27 @@ model WeeklyTheme {
   @@map("weekly_themes")
 }
 
+// §12.4/§12.3 Depozito/iade anlaşmazlık kuyruğu — dekont görselleri admin panelde incelenir.
+// kind: deposit (depozito itirazı) | refund (iade dekontu onayı) · status: open | approved | rejected
+model Dispute {
+  id         String    @id @default(uuid()) @db.Uuid
+  bookingRef String    @map("booking_ref") // mobil randevu id'si
+  userId     String?   @map("user_id") @db.Uuid
+  proName    String    @map("pro_name")
+  service    String    @default("")
+  kind       String    @default("deposit")
+  amount     Decimal   @default(0) @db.Decimal(12, 2)
+  receiptUri String?   @map("receipt_uri") // incelenecek dekont görseli
+  note       String    @default("") // açan tarafın açıklaması
+  status     String    @default("open")
+  resolution String    @default("") // admin karar notu
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  resolvedAt DateTime? @map("resolved_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@map("disputes")
+}
+
 // §12.8 Komisyon dönem faturası — aylık tahakkuk→tahsilat döngüsü.
 // status: pending (bekliyor) | collected (ödendi) | overdue (gecikti)
 model CommissionInvoice {

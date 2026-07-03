@@ -357,7 +357,20 @@ export const api = {
   myCommissions: (token: string) => get<CommissionInvoice[]>('/commissions/mine', token),
   uploadCommissionReceipt: (token: string, id: string, receiptUri: string) =>
     post<CommissionInvoice>(`/commissions/${id}/receipt`, { receiptUri }, token),
+  // §12.4 — depozito itirazı / iade dekontunu admin kuyruğuna bildir
+  fileDispute: (token: string, input: DisputeInput) =>
+    post<{ id: string; status: string }>('/disputes', input, token),
 };
+
+export interface DisputeInput {
+  bookingRef: string;
+  proName: string;
+  service?: string;
+  kind: 'deposit' | 'refund';
+  amount?: number;
+  receiptUri?: string;
+  note?: string;
+}
 
 export interface CommissionInvoice {
   id: string;
