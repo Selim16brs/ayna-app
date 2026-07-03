@@ -12,6 +12,7 @@ import {
   proCoords,
 } from '../src/data';
 import { useProfessionals } from '../src/catalog';
+import { useStore } from '../src/store';
 import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -29,10 +30,15 @@ export default function MapScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const all = useProfessionals();
+  // §5.1.4 — harita da şehre göre filtreli (salona bağlı uzmanlar zaten listede tek başına yok)
+  const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const [cat, setCat] = useState<string | null>(null);
   const [selected, setSelected] = useState<Professional | null>(null);
 
-  const pros = useMemo(() => (cat ? all.filter((p) => p.sector === cat) : all), [all, cat]);
+  const pros = useMemo(
+    () => all.filter((p) => p.city === city && (!cat || p.sector === cat)),
+    [all, city, cat],
+  );
 
   return (
     <Screen edges={[]}>
@@ -70,7 +76,8 @@ export default function MapScreen() {
             <Marker
               key={p.id}
               coordinate={proCoords(p.id)}
-              pinColor={colors.rose}
+              // §5.1.3 — salon vs bağımsız uzman pinleri görsel ayrı
+              pinColor={p.kind === 'salon' ? colors.rose : colors.blue}
               onPress={() => setSelected(p)}
             />
           ))}

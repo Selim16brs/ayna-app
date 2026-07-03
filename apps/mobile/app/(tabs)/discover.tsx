@@ -240,7 +240,7 @@ export default function DiscoverScreen() {
             </ScrollView>
 
             {/* ── SANA YAKIN SALONLAR (premium önce + rotasyon) ── */}
-            <SectionHeader title={t('home.nearby')} onSeeAll={() => router.push('/search')} />
+            <SectionHeader title={t('home.nearby')} onSeeAll={() => router.push('/nearby')} />
             <View style={styles.nearby}>
               {nearby.map((pro, i) => (
                 <SalonRow key={pro.id} pro={pro} index={i} />

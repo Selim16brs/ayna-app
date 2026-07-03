@@ -154,6 +154,8 @@ export const tr = {
   'home.city_empty.title': 'AYNA yakında şehrinde!',
   'home.city_empty.sub': 'Şehrinde henüz hizmet veren yok. Açıldığında ilk sen haberdar ol.',
   'home.city_empty.cta': 'Haber ver',
+  'nearby.empty': 'Şehrinde yakın salon bulunamadı',
+  'nearby.premium': 'Premium',
   'home.map_mode': 'Harita modu',
   'city.title': 'Şehir seç',
   'city.hint': 'Seçtiğin şehre göre tüm salon ve uzmanlar güncellenir.',
