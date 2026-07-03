@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { MessageKey } from '@ayna/i18n';
-import { api, type AuthSession, type AuthUser, type LoyaltyTier } from './api';
+import { api, type AppConfig, type AuthSession, type AuthUser, type LoyaltyTier } from './api';
 import { formatSlotTr } from './datetime';
 import {
   type AppNotification,
@@ -9,6 +9,8 @@ import {
   type DemandMode,
   type DemandRequest,
   DEPOSIT_KZT,
+  POINTS_SPEND_CAP_PCT,
+  PREMIUM_PRICE_KZT,
   DEPOSIT_RECEIPT_WINDOW_MS,
   DEPOSIT_RECEIPT_SHORT_MS,
   DEPOSIT_SHORT_THRESHOLD_MS,
@@ -112,6 +114,8 @@ interface State {
   // §12.6 — AYNA Blog (admin yayınlar → app gösterir; fetch başarısızsa seed)
   articles: LifeArticle[];
   weeklyTheme: { id: string; title: string; prompt: string } | null;
+  // §12.9 — admin'in belirlediği parametrik oranlar/şehirler (fetch başarısızsa sabit varsayılan)
+  config: AppConfig;
   loadContent: () => Promise<void>;
   careRoutines: CareRoutine[];
   personalLogs: PersonalLog[];
@@ -244,16 +248,35 @@ export const useStore = create<State>((set, get) => ({
   reportedPosts: [],
   articles: LIFE_ARTICLES,
   weeklyTheme: null,
+  config: {
+    rates: {
+      commissionPct: 10,
+      depositKzt: DEPOSIT_KZT,
+      cancelWindowH: 3,
+      lateCancelPct: 3,
+      pointsCapPct: POINTS_SPEND_CAP_PCT,
+      premiumUserKzt: PREMIUM_PRICE_KZT,
+      premiumSalonKzt: 4990,
+      raffleCost: RAFFLE_COST,
+    },
+    cities: { active: ['Almatı'], soon: ['Astana', 'Şımkent'] },
+    features: { removebg: false, openai: false, sms: false },
+  },
   loadContent: async () => {
     try {
-      const [rows, theme] = await Promise.all([api.contentArticles(), api.contentTheme()]);
+      const [rows, theme, cfg] = await Promise.all([
+        api.contentArticles(),
+        api.contentTheme(),
+        api.appConfig(),
+      ]);
       set({
         // Backend'de yayınlanmış yazı yoksa seed'i koru (app boş kalmasın)
         articles: rows.length > 0 ? rows : LIFE_ARTICLES,
         weeklyTheme: theme ? { id: theme.id, title: theme.title, prompt: theme.prompt } : null,
+        config: cfg,
       });
     } catch {
-      // Backend erişilemezse seed makalelerle devam
+      // Backend erişilemezse seed makaleler + varsayılan config ile devam
     }
     // §12.10 — segmentine uyan toplu duyuruları bildirim listesine ekle (girişliyse)
     const token = get().token;

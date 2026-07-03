@@ -15,6 +15,7 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
 import { MarketModule } from './market/market.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RatingsModule } from './ratings/ratings.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { RatingsModule } from './ratings/ratings.module';
     AiModule,
     AdminModule,
     ContentModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}

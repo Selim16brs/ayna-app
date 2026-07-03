@@ -131,7 +131,48 @@ export const api = {
   announcements: () => req<Announcement[]>('/admin/content/announcements'),
   sendAnnouncement: (a: AnnouncementInput) =>
     req<Announcement>('/admin/content/announcements', { method: 'POST', body: JSON.stringify(a) }),
+
+  // §12.9 Sistem Ayarları
+  systemSettings: () => req<SystemSettings>('/admin/system'),
+  setRate: (key: string, value: number) =>
+    req<RateSetting[]>('/admin/system/rate', { method: 'POST', body: JSON.stringify({ key, value }) }),
+  setApiKey: (provider: string, value: string) =>
+    req<ApiKeyStatus[]>('/admin/system/api-key', {
+      method: 'POST',
+      body: JSON.stringify({ provider, value }),
+    }),
+  testApiKey: (provider: string) =>
+    req<{ ok: boolean; message: string }>(`/admin/system/api-key/${provider}/test`, {
+      method: 'POST',
+    }),
+  setCities: (active: string[], soon: string[]) =>
+    req<Cities>('/admin/system/cities', { method: 'POST', body: JSON.stringify({ active, soon }) }),
 };
+
+export interface RateSetting {
+  key: string;
+  label: string;
+  suffix: string;
+  value: number;
+}
+
+export interface ApiKeyStatus {
+  provider: string;
+  label: string;
+  masked: string;
+  configured: boolean;
+}
+
+export interface Cities {
+  active: string[];
+  soon: string[];
+}
+
+export interface SystemSettings {
+  rates: RateSetting[];
+  apiKeys: ApiKeyStatus[];
+  cities: Cities;
+}
 
 export type AnnouncementSegment = 'all' | 'premium' | 'professionals' | 'salons' | 'city';
 

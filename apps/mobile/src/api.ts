@@ -347,7 +347,24 @@ export const api = {
     post<{ id: string; status: string }>('/content/applications', input, token),
   // §12.10 — kullanıcının segmentine uyan toplu duyurular
   announcements: (token: string) => get<ApiAnnouncement[]>('/content/announcements', token),
+  // §12.9 — parametrik oranlar + aktif şehirler + özellik erişimi (gizli anahtar sızmaz)
+  appConfig: () => get<AppConfig>('/config'),
 };
+
+export interface AppConfig {
+  rates: {
+    commissionPct: number;
+    depositKzt: number;
+    cancelWindowH: number;
+    lateCancelPct: number;
+    pointsCapPct: number;
+    premiumUserKzt: number;
+    premiumSalonKzt: number;
+    raffleCost: number;
+  };
+  cities: { active: string[]; soon: string[] };
+  features: { removebg: boolean; openai: boolean; sms: boolean };
+}
 
 export interface ApiAnnouncement {
   id: string;

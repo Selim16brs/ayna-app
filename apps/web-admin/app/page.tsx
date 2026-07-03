@@ -8,6 +8,7 @@ import {
   type AdminReview,
   type Announcement,
   type AnnouncementSegment,
+  type ApiKeyStatus,
   type ArticleInput,
   type AuditEntry,
   type BlogApplication,
@@ -29,6 +30,7 @@ import {
   type AdminUser,
   type ReviewApplication,
   type Stats,
+  type SystemSettings,
   type WeeklyTheme,
   setToken,
 } from './lib/api';
@@ -51,6 +53,7 @@ type Tab =
   | 'users'
   | 'loyalty'
   | 'flags'
+  | 'system'
   | 'audit';
 const TL = (n: number) => '₸' + n.toLocaleString('tr-TR');
 
@@ -90,6 +93,7 @@ export default function AdminApp() {
     { id: 'users', label: 'Kullanıcılar', icon: '👥' },
     { id: 'loyalty', label: 'Sadakat', icon: '🎁' },
     { id: 'flags', label: 'Feature Flag', icon: '🚩' },
+    { id: 'system', label: 'Sistem Ayarları', icon: '⚙️' },
     { id: 'audit', label: 'Denetim Kaydı', icon: '📜' },
   ];
 
@@ -128,6 +132,7 @@ export default function AdminApp() {
         {tab === 'users' && <UsersView />}
         {tab === 'loyalty' && <LoyaltyView />}
         {tab === 'flags' && <FlagsView />}
+        {tab === 'system' && <SystemView />}
         {tab === 'audit' && <AuditView />}
       </main>
     </div>
@@ -2029,6 +2034,170 @@ function FlagsView() {
               </button>
             </div>
           ))
+        )}
+      </div>
+    </>
+  );
+}
+
+// §12.9 Sistem Ayarları — parametrik oranlar + API anahtarları + şehir yönetimi
+function SystemView() {
+  const { data, reload } = useAsync<SystemSettings>(() => api.systemSettings(), []);
+  const [rateEdits, setRateEdits] = useState<Record<string, string>>({});
+  const [keyEdits, setKeyEdits] = useState<Record<string, string>>({});
+  const [tests, setTests] = useState<Record<string, { ok: boolean; message: string }>>({});
+  const [cityActive, setCityActive] = useState('');
+  const [citySoon, setCitySoon] = useState('');
+
+  const saveRate = async (key: string) => {
+    const raw = rateEdits[key];
+    if (raw === undefined || raw === '') return;
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value < 0) return;
+    await api.setRate(key, Math.round(value));
+    setRateEdits((s) => ({ ...s, [key]: '' }));
+    reload();
+  };
+
+  const saveKey = async (provider: string) => {
+    const value = keyEdits[provider] ?? '';
+    await api.setApiKey(provider, value);
+    setKeyEdits((s) => ({ ...s, [provider]: '' }));
+    reload();
+  };
+
+  const test = async (provider: string) => {
+    const res = await api.testApiKey(provider);
+    setTests((s) => ({ ...s, [provider]: res }));
+  };
+
+  const saveCities = async () => {
+    const active = cityActive
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean);
+    const soon = citySoon
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean);
+    if (active.length === 0) return;
+    await api.setCities(active, soon);
+    setCityActive('');
+    setCitySoon('');
+    reload();
+  };
+
+  return (
+    <>
+      <h1 className="page-title">Sistem Ayarları</h1>
+      <p className="page-sub">Parametrik oranlar · dış servis anahtarları · şehir yönetimi</p>
+
+      {/* Parametrik oranlar */}
+      <h2 className="section-head">Ceza / depozito tutarları ve oranlar</h2>
+      <p className="page-sub">Değişiklikler app&apos;e `/config` üzerinden yansır.</p>
+      <div className="card" style={{ marginBottom: 28 }}>
+        {!data ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : (
+          data.rates.map((r) => (
+            <div key={r.key} className="list-row">
+              <div className="grow">
+                <div className="name">{r.label}</div>
+                <div className="meta">
+                  {r.key} · güncel: {r.value} {r.suffix}
+                </div>
+              </div>
+              <input
+                className="input"
+                style={{ width: 120 }}
+                type="number"
+                placeholder={String(r.value)}
+                value={rateEdits[r.key] ?? ''}
+                onChange={(e) => setRateEdits((s) => ({ ...s, [r.key]: e.target.value }))}
+              />
+              <button className="btn-sm btn-ok" onClick={() => saveRate(r.key)}>
+                Kaydet
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* API anahtarları */}
+      <h2 className="section-head">API anahtarları</h2>
+      <p className="page-sub">
+        Maskeli görünüm — değer asla panele/app&apos;e dönmez. &quot;Test Et&quot; biçim/varlık
+        kontrolü yapar.
+      </p>
+      <div className="card" style={{ marginBottom: 28 }}>
+        {!data ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : (
+          data.apiKeys.map((k: ApiKeyStatus) => (
+            <div key={k.provider} className="list-col">
+              <div className="name">{k.label}</div>
+              <div className="meta">
+                {k.configured ? `Tanımlı: ${k.masked}` : 'Tanımsız'}
+                {tests[k.provider] && (
+                  <span style={{ color: tests[k.provider]!.ok ? 'var(--success)' : 'var(--danger)' }}>
+                    {' '}
+                    · {tests[k.provider]!.ok ? '✓' : '✗'} {tests[k.provider]!.message}
+                  </span>
+                )}
+              </div>
+              <div className="form-inline" style={{ marginTop: 10 }}>
+                <input
+                  className="input"
+                  placeholder="Yeni anahtar (boş = temizle)"
+                  value={keyEdits[k.provider] ?? ''}
+                  onChange={(e) => setKeyEdits((s) => ({ ...s, [k.provider]: e.target.value }))}
+                />
+                <button className="btn-sm btn-ok" onClick={() => saveKey(k.provider)}>
+                  Kaydet
+                </button>
+                <button className="btn-sm" onClick={() => test(k.provider)}>
+                  Test Et
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Şehir yönetimi */}
+      <h2 className="section-head">Şehir yönetimi</h2>
+      <p className="page-sub">Aktif şehirler + &quot;yakında&quot; listesi (virgülle ayır).</p>
+      <div className="card">
+        {!data ? (
+          <div className="empty">Yükleniyor…</div>
+        ) : (
+          <>
+            <div className="list-col">
+              <div className="name">Aktif şehirler</div>
+              <div className="meta">{data.cities.active.join(', ') || '—'}</div>
+            </div>
+            <div className="list-col">
+              <div className="name">Yakında</div>
+              <div className="meta">{data.cities.soon.join(', ') || '—'}</div>
+            </div>
+            <div className="form-inline">
+              <input
+                className="input"
+                placeholder={`Aktif (örn. ${data.cities.active.join(', ')})`}
+                value={cityActive}
+                onChange={(e) => setCityActive(e.target.value)}
+              />
+              <input
+                className="input"
+                placeholder={`Yakında (örn. ${data.cities.soon.join(', ')})`}
+                value={citySoon}
+                onChange={(e) => setCitySoon(e.target.value)}
+              />
+              <button className="btn-sm btn-ok full" onClick={saveCities}>
+                Şehirleri güncelle
+              </button>
+            </div>
+          </>
         )}
       </div>
     </>

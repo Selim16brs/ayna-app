@@ -442,9 +442,11 @@ model AdBanner {
 }
 
 // Admin ayarlanabilir parametreler (örn. puan görünürlük eşiği).
+// §12.9 — sayısal oranlar intValue'da; API anahtarı / şehir listesi gibi metinler strValue'da.
 model Setting {
-  key      String @id
-  intValue Int    @map("int_value")
+  key      String  @id
+  intValue Int     @default(0) @map("int_value")
+  strValue String? @map("str_value")
 
   @@map("settings")
 }

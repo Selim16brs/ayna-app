@@ -31,6 +31,8 @@ export default function PassportScreen() {
   const points = useStore((s) => s.points);
   const premium = useStore((s) => s.premium);
   const setPremium = useStore((s) => s.setPremium);
+  // §12.9 — premium fiyatı admin-parametrik (config); fetch yoksa sabit varsayılan
+  const premiumPrice = useStore((s) => s.config.rates.premiumUserKzt) || PREMIUM_PRICE_KZT;
   const trust = 92;
 
   const buy = () =>
@@ -135,7 +137,7 @@ export default function PassportScreen() {
             </View>
             {!premium ? (
               <Text variant="bodyStrong" tone="ink">
-                {PREMIUM_PRICE_KZT} ₸/{t('passport.premium.month')}
+                {premiumPrice} ₸/{t('passport.premium.month')}
               </Text>
             ) : null}
           </View>
@@ -168,7 +170,7 @@ export default function PassportScreen() {
               </Text>
             </Pressable>
           ) : (
-            <Button label={`${t('passport.premium.cta')} — ${PREMIUM_PRICE_KZT} ₸/${t('passport.premium.month')}`} variant="primary" onPress={buy} />
+            <Button label={`${t('passport.premium.cta')} — ${premiumPrice} ₸/${t('passport.premium.month')}`} variant="primary" onPress={buy} />
           )}
         </View>
       </ScrollView>
