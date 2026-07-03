@@ -1,9 +1,9 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { DAY_MS, commissionFor, overdueDaysBetween } from './commissions.calc';
 import type { ClosePeriodInput } from './commissions.dto';
 
 const DEFAULT_COMMISSION_RATE = 10;
-const DAY_MS = 24 * 60 * 60 * 1000;
 const OVERDUE_RESTRICT_DAYS = 7; // vade + 7 gün gecikmede kısıtlı mod (§12.8)
 
 @Injectable()
@@ -55,7 +55,7 @@ export class CommissionsService {
 
     const created: unknown[] = [];
     for (const [proId, g] of byPro) {
-      const commission = Math.round(g.gross * rate) / 100;
+      const commission = commissionFor(g.gross, rate);
       if (commission <= 0) continue;
       // İdempotent — aynı pro+dönem için fatura varsa atla
       const existing = await this.prisma.commissionInvoice.findFirst({
@@ -100,9 +100,8 @@ export class CommissionsService {
     collectedAt: Date | null;
     createdAt: Date;
   }) {
-    const now = Date.now();
     const overdueDays =
-      inv.status !== 'collected' ? Math.max(0, Math.floor((now - inv.dueDate.getTime()) / DAY_MS)) : 0;
+      inv.status !== 'collected' ? overdueDaysBetween(inv.dueDate, new Date()) : 0;
     return {
       id: inv.id,
       proId: inv.proId,

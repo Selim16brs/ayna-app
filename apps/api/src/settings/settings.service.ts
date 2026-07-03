@@ -13,8 +13,8 @@ const CITIES_SOON_KEY = 'cities.soon';
 const DEFAULT_ACTIVE = ['Almatı'];
 const DEFAULT_SOON = ['Astana', 'Şımkent'];
 
-// Anahtarı maskele: sk-****...3f2a (ilk 3 + son 4; arası gizli)
-function mask(value: string | null): string {
+// Anahtarı maskele: sk-****…3f2a (ilk 3 + son 4; arası gizli). Ham değer asla sızmaz.
+export function maskKey(value: string | null): string {
   if (!value) return '';
   if (value.length <= 8) return '****';
   return `${value.slice(0, 3)}****…${value.slice(-4)}`;
@@ -62,7 +62,7 @@ export class SettingsService {
     const byKey = new Map(rows.map((r) => [r.key, r.strValue ?? null]));
     return API_KEY_DEFS.map((k) => {
       const raw = byKey.get(k.key) ?? null;
-      return { provider: k.provider, label: k.label, masked: mask(raw), configured: !!raw };
+      return { provider: k.provider, label: k.label, masked: maskKey(raw), configured: !!raw };
     });
   }
 
