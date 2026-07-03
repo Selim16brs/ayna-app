@@ -353,7 +353,29 @@ export const api = {
   appConfig: () => get<AppConfig>('/config'),
   // §12.3 — güncel kullanıcı (kısıt durumu tazelemek için)
   me: (token: string) => get<AuthUser>('/auth/me', token),
+  // §12.8 — pro'nun komisyon faturaları + dekont yükleme
+  myCommissions: (token: string) => get<CommissionInvoice[]>('/commissions/mine', token),
+  uploadCommissionReceipt: (token: string, id: string, receiptUri: string) =>
+    post<CommissionInvoice>(`/commissions/${id}/receipt`, { receiptUri }, token),
 };
+
+export interface CommissionInvoice {
+  id: string;
+  proId: string;
+  proName: string;
+  periodStart: string;
+  periodEnd: string;
+  bookingsCount: number;
+  grossRevenue: number;
+  commissionAmount: number;
+  dueDate: string;
+  status: 'pending' | 'collected' | 'overdue';
+  receiptUri: string | null;
+  receiptAt: string | null;
+  collectedAt: string | null;
+  overdueDays: number;
+  currency: string;
+}
 
 export interface AppConfig {
   rates: {

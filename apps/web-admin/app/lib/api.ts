@@ -51,6 +51,19 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(p),
     }),
+  // §12.8 Komisyon tahsilat döngüsü
+  commissionInvoices: () => req<CommissionInvoice[]>('/admin/commissions/invoices'),
+  closePeriod: (periodStart: string, periodEnd: string, dueDate?: string) =>
+    req<{ created: number; dueDate: string; rate: number }>('/admin/commissions/close-period', {
+      method: 'POST',
+      body: JSON.stringify({ periodStart, periodEnd, ...(dueDate ? { dueDate } : {}) }),
+    }),
+  collectInvoice: (id: string) =>
+    req<CommissionInvoice>(`/admin/commissions/invoices/${id}/collect`, { method: 'POST' }),
+  runOverdue: () =>
+    req<{ markedOverdue: number; restricted: number }>('/admin/commissions/run-overdue', {
+      method: 'POST',
+    }),
   businesses: (status?: string) =>
     req<Business[]>(`/admin/businesses${status ? `?status=${status}` : ''}`),
   businessDetail: (id: string) => req<BusinessDetail>(`/admin/businesses/${id}`),
@@ -271,6 +284,23 @@ export interface Overview {
     revenue: number;
     currency: string;
   };
+}
+export interface CommissionInvoice {
+  id: string;
+  proId: string;
+  proName: string;
+  periodStart: string;
+  periodEnd: string;
+  bookingsCount: number;
+  grossRevenue: number;
+  commissionAmount: number;
+  dueDate: string;
+  status: 'pending' | 'collected' | 'overdue';
+  receiptUri: string | null;
+  receiptAt: string | null;
+  collectedAt: string | null;
+  overdueDays: number;
+  currency: string;
 }
 export interface Commissions {
   rate: number;

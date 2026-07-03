@@ -20,6 +20,7 @@ import {
   type BusinessDetail,
   type Campaign,
   type Category,
+  type CommissionInvoice,
   type Commissions,
   clearToken,
   getToken,
@@ -432,6 +433,118 @@ function CategoryBars({ items }: { items: { sector: string; count: number }[] })
   );
 }
 
+// §12.8 Komisyon tahsilat döngüsü — dönem faturaları (Ödendi/Bekliyor/Gecikti)
+function InvoicesSection() {
+  const { data, reload } = useAsync<CommissionInvoice[]>(() => api.commissionInvoices(), []);
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [due, setDue] = useState('');
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const close = async () => {
+    if (!start || !end) return;
+    const res = await api.closePeriod(start, end, due || undefined);
+    setMsg(`Dönem kapandı — ${res.created} fatura üretildi (son ödeme: ${res.dueDate.slice(0, 10)})`);
+    setStart('');
+    setEnd('');
+    setDue('');
+    reload();
+  };
+
+  const runOverdue = async () => {
+    const res = await api.runOverdue();
+    setMsg(`Gecikme taraması — ${res.markedOverdue} gecikti, ${res.restricted} hesap kısıtlandı`);
+    reload();
+  };
+
+  const statusPill = (s: string) =>
+    s === 'collected' ? 'approved' : s === 'overdue' ? 'rejected' : 'pending';
+  const statusLabel = (s: string) =>
+    s === 'collected' ? 'Ödendi' : s === 'overdue' ? 'Gecikti' : 'Bekliyor';
+
+  return (
+    <>
+      <div className="section-title">Dönem faturaları — tahsilat döngüsü (§12.8)</div>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="form-inline">
+          <label className="meta">
+            Dönem başı
+            <input className="input" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+          </label>
+          <label className="meta">
+            Dönem sonu
+            <input className="input" type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+          </label>
+          <label className="meta">
+            Son ödeme (ops.)
+            <input className="input" type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+          </label>
+          <button className="btn-sm btn-ok" onClick={close}>
+            Dönemi kapat → fatura üret
+          </button>
+          <button className="btn-sm" onClick={runOverdue}>
+            Gecikmeleri işle (7g → kısıt)
+          </button>
+          {msg && (
+            <div className="meta full" style={{ color: 'var(--success)' }}>
+              {msg}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="card">
+        {!data || data.length === 0 ? (
+          <div className="empty">Fatura yok — bir dönem kapatın</div>
+        ) : (
+          data.map((inv) => (
+            <div key={inv.id} className="list-row">
+              <div className="grow">
+                <div className="name">
+                  {inv.proName} · {TL(inv.commissionAmount)}
+                </div>
+                <div className="meta">
+                  {inv.periodStart.slice(0, 10)} – {inv.periodEnd.slice(0, 10)} ·{' '}
+                  {inv.bookingsCount} randevu · ciro {TL(inv.grossRevenue)} · son ödeme{' '}
+                  {inv.dueDate.slice(0, 10)}
+                  {inv.status !== 'collected' && inv.overdueDays > 0
+                    ? ` · ${inv.overdueDays}g gecikme`
+                    : ''}
+                  {inv.receiptUri ? ' · 🧾 dekont var' : ''}
+                </div>
+              </div>
+              <span className={`pill ${statusPill(inv.status)}`}>{statusLabel(inv.status)}</span>
+              {inv.receiptUri ? (
+                <a
+                  className="btn-sm"
+                  href={inv.receiptUri}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ textDecoration: 'none' }}
+                >
+                  Dekont
+                </a>
+              ) : null}
+              {inv.status !== 'collected' ? (
+                <button
+                  className="btn-sm btn-ok"
+                  onClick={async () => {
+                    if (confirm(`${inv.proName} faturası tahsil edildi olarak işaretlensin mi?`)) {
+                      await api.collectInvoice(inv.id);
+                      reload();
+                    }
+                  }}
+                >
+                  Tahsil edildi
+                </button>
+              ) : null}
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
 function CommissionsView() {
   const { data, loading, reload } = useAsync<Commissions>(() => api.commissions(), []);
   const [rateInput, setRateInput] = useState('');
@@ -570,6 +683,8 @@ function CommissionsView() {
               </div>
             </>
           ) : null}
+
+          <InvoicesSection />
 
           <div className="section-title">Randevu kayıtları ({data.items.length})</div>
           <div className="card">

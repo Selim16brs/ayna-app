@@ -506,6 +506,32 @@ model WeeklyTheme {
   @@map("weekly_themes")
 }
 
+// §12.8 Komisyon dönem faturası — aylık tahakkuk→tahsilat döngüsü.
+// status: pending (bekliyor) | collected (ödendi) | overdue (gecikti)
+model CommissionInvoice {
+  id               String    @id @default(uuid()) @db.Uuid
+  proId            String    @map("pro_id") // keşif listesi id'si (booking.proId)
+  proName          String    @map("pro_name")
+  ownerUserId      String?   @map("owner_user_id") @db.Uuid // salon sahibi hesabı (bildirim + kısıt)
+  periodStart      DateTime  @map("period_start") @db.Timestamptz(6)
+  periodEnd        DateTime  @map("period_end") @db.Timestamptz(6)
+  bookingsCount    Int       @default(0) @map("bookings_count")
+  grossRevenue     Decimal   @default(0) @map("gross_revenue") @db.Decimal(12, 2)
+  commissionAmount Decimal   @default(0) @map("commission_amount") @db.Decimal(12, 2)
+  dueDate          DateTime  @map("due_date") @db.Timestamptz(6)
+  status           String    @default("pending")
+  receiptUri       String?   @map("receipt_uri") // pro'nun yüklediği ödeme dekontu
+  receiptAt        DateTime? @map("receipt_at") @db.Timestamptz(6)
+  collectedAt      DateTime? @map("collected_at") @db.Timestamptz(6)
+  restrictedApplied Boolean  @default(false) @map("restricted_applied") // gecikme kısıtı uygulandı mı
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([proId])
+  @@index([status])
+  @@index([ownerUserId])
+  @@map("commission_invoices")
+}
+
 // §12.10 Bildirim Merkezi — segment bazlı toplu duyuru + gönderim geçmişi.
 // segment: all | premium | professionals | salons | city
 model Announcement {

@@ -7,6 +7,7 @@ import { BookingsModule } from './bookings/bookings.module';
 import { BusinessesModule } from './businesses/businesses.module';
 import { SpecialistsModule } from './specialists/specialists.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { CommissionsModule } from './commissions/commissions.module';
 import { ConfigModule } from './config/config.module';
 import { ContentModule } from './content/content.module';
 import { FeatureFlagModule } from './feature-flags/feature-flag.module';
@@ -36,6 +37,7 @@ import { SettingsModule } from './settings/settings.module';
     AdminModule,
     ContentModule,
     SettingsModule,
+    CommissionsModule,
   ],
 })
 export class AppModule {}

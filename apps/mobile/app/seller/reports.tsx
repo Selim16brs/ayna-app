@@ -27,6 +27,7 @@ const ACTIONS: {
   { id: 'requests', icon: 'pricetags', labelKey: 'reports.action.requests', route: '/seller/requests', tone: 'rose' },
   { id: 'offline', icon: 'add-circle', labelKey: 'reports.action.offline', route: '/seller/offline', tone: 'sage' },
   { id: 'reviews', icon: 'star', labelKey: 'reports.action.reviews', route: '/seller/reviews', tone: 'gold' },
+  { id: 'commissions', icon: 'card', labelKey: 'reports.action.commissions', route: '/seller/commissions', tone: 'sage' },
   { id: 'codes', icon: 'key', labelKey: 'reports.action.codes', route: '/seller/codes', tone: 'lavender' },
   { id: 'gallery', icon: 'images', labelKey: 'reports.action.gallery', route: '/seller/gallery', tone: 'lavender' },
   { id: 'services', icon: 'pricetags', labelKey: 'reports.action.services', tone: 'gold' },
