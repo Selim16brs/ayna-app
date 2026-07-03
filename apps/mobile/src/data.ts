@@ -1311,6 +1311,8 @@ export const SEED_DEMANDS: DemandRequest[] = [
 export const RAFFLE_COST = 500;
 export const POINTS_SPEND_CAP_PCT = 50; // bir ödemenin en fazla %50'si puanla
 export const POINTS_EXPIRY_MONTHS = 12; // 12 ay hareketsizse yanar
+// §2/§5.6.2 — kullanıcı premium aylık bedeli. PARAMETRİK (admin panel).
+export const PREMIUM_PRICE_KZT = 999;
 export type LedgerKind = 'earn' | 'spend';
 export interface LedgerEntry {
   id: string;

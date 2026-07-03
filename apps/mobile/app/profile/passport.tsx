@@ -1,16 +1,24 @@
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
+import { PREMIUM_PRICE_KZT } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 const BENEFITS: MessageKey[] = [
   'passport.benefit.priority',
   'passport.benefit.support',
   'passport.benefit.raffle',
+];
+// §5.6.2 — premium avantaj karşılaştırması (ücretsizde YOK, premiumda VAR)
+const PREMIUM_PERKS: MessageKey[] = [
+  'passport.perk.boni',
+  'passport.perk.cutout',
+  'passport.perk.visibility',
+  'passport.perk.support',
 ];
 
 export default function PassportScreen() {
@@ -21,7 +29,20 @@ export default function PassportScreen() {
   const completed = useStore((s) => s.bookings.filter((b) => b.status === 'completed').length);
   const reviews = useStore((s) => Object.values(s.userReviews).reduce((n, a) => n + a.length, 0));
   const points = useStore((s) => s.points);
+  const premium = useStore((s) => s.premium);
+  const setPremium = useStore((s) => s.setPremium);
   const trust = 92;
+
+  const buy = () =>
+    Alert.alert(t('passport.premium.confirm'), t('passport.premium.confirm_note'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('passport.premium.cta'), onPress: () => setPremium(true) },
+    ]);
+  const cancel = () =>
+    Alert.alert(t('passport.premium.cancel_confirm'), undefined, [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('passport.premium.cancel'), style: 'destructive', onPress: () => setPremium(false) },
+    ]);
 
   return (
     <Screen edges={['bottom']}>
@@ -101,6 +122,55 @@ export default function PassportScreen() {
             </View>
           ))}
         </View>
+
+        {/* §5.6.2 — Premium üyelik vitrini */}
+        <SectionHeader title={t('passport.premium.title')} />
+        <View style={[styles.premiumCard, shadow.card]}>
+          <View style={styles.premiumHead}>
+            <View style={styles.premiumBadge}>
+              <Ionicons name={premium ? 'star' : 'star-outline'} size={16} color={colors.onAccent} />
+              <Text variant="caption" tone="onAccent" style={styles.premiumBadgeText}>
+                {premium ? t('passport.premium.active') : t('passport.premium.free')}
+              </Text>
+            </View>
+            {!premium ? (
+              <Text variant="bodyStrong" tone="ink">
+                {PREMIUM_PRICE_KZT} ₸/{t('passport.premium.month')}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* Karşılaştırma: her avantaj free ✗ / premium ✓ */}
+          <View style={styles.perks}>
+            {PREMIUM_PERKS.map((p) => (
+              <View key={p} style={styles.perkRow}>
+                <Ionicons
+                  name={premium ? 'checkmark-circle' : 'lock-closed'}
+                  size={16}
+                  color={premium ? colors.success : colors.muted}
+                />
+                <Text variant="caption" tone="ink" style={styles.perkText}>
+                  {t(p)}
+                </Text>
+                {!premium ? (
+                  <Text variant="caption" tone="rose" style={styles.perkPremiumOnly}>
+                    {t('passport.premium.only')}
+                  </Text>
+                ) : null}
+              </View>
+            ))}
+          </View>
+
+          {premium ? (
+            <Pressable onPress={cancel} style={styles.manageLink}>
+              <Text variant="caption" tone="muted" style={styles.manageText}>
+                {t('passport.premium.manage')}
+              </Text>
+            </Pressable>
+          ) : (
+            <Button label={`${t('passport.premium.cta')} — ${PREMIUM_PRICE_KZT} ₸/${t('passport.premium.month')}`} variant="primary" onPress={buy} />
+          )}
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -179,4 +249,22 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     rowLabel: { flex: 1 },
+    premiumCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2.5), gap: space(1.75) },
+    premiumHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    premiumBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.5),
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+    },
+    premiumBadgeText: { fontWeight: '800' },
+    perks: { gap: space(1.25) },
+    perkRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    perkText: { flex: 1 },
+    perkPremiumOnly: { fontWeight: '700' },
+    manageLink: { alignSelf: 'center' },
+    manageText: { textDecorationLine: 'underline' },
   });

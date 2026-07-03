@@ -113,6 +113,9 @@ interface State {
   favorites: string[];
   // §5.6 — kullanıcı adresleri (ev/iş)
   addresses: UserAddress[];
+  // §5.6.2 — premium üyelik durumu (satın alma app-dışı; burada mock bayrak)
+  premium: boolean;
+  setPremium: (v: boolean) => void;
   points: number;
   raffleEntries: number;
   tier: LoyaltyTier | null;
@@ -238,6 +241,7 @@ export const useStore = create<State>((set, get) => ({
   moments: SEED_MOMENTS,
   favorites: ['3'],
   addresses: [{ id: 'ad1', label: 'home', detail: 'Almatı, Dostyk 12' }],
+  premium: false,
   points: 340,
   raffleEntries: 5,
   tier: null,
@@ -908,6 +912,9 @@ export const useStore = create<State>((set, get) => ({
   },
   removeAddress: (id) =>
     set((s) => ({ addresses: s.addresses.filter((a) => a.id !== id) })),
+
+  // §5.6.2 — premium aç/kapa (gerçekte app-dışı ödeme; burada mock)
+  setPremium: (v) => set({ premium: v }),
 
   addPersonalLog: (input) =>
     set((s) => ({
