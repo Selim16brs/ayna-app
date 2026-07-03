@@ -20,6 +20,7 @@ import {
   type BusinessDetail,
   type Campaign,
   type Category,
+  type CirclePost,
   type CommissionInvoice,
   type Commissions,
   type Dispute,
@@ -837,16 +838,61 @@ function KV({ k, v }: { k: string; v: string }) {
 
 function ModerationView() {
   const { data, reload } = useAsync<AdminReview[]>(() => api.reviews(), []);
+  const { data: circle, reload: reloadCircle } = useAsync<CirclePost[]>(() => api.circleQueue(), []);
   const hide = async (id: string) => {
     if (confirm('Bu yorumu gizle? (moderasyon)')) {
       await api.hideReview(id);
       reload();
     }
   };
+  const moderateCircle = async (id: string, decision: 'approve' | 'hide') => {
+    await api.moderateCircle(id, decision);
+    reloadCircle();
+  };
   return (
     <>
-      <h1 className="page-title">Moderasyon</h1>
-      <p className="page-sub">Görünür yorumlar — uygunsuz içeriği gizle</p>
+      <h1 className="page-title">Moderasyon Merkezi</h1>
+      <p className="page-sub">
+        W2W onay kuyruğu (otomatik filtre + şikâyet) · görünür yorumlar. Sabit ilke: dürüst eleştiri
+        silinmez.
+      </p>
+
+      {/* §12.5 — W2W moderasyon kuyruğu (pending + şikâyetle gizlenen) */}
+      <h2 className="section-head">W2W kuyruğu ({circle?.length ?? 0})</h2>
+      <div className="card" style={{ marginBottom: 24 }}>
+        {!circle || circle.length === 0 ? (
+          <div className="empty">Bekleyen W2W içeriği yok</div>
+        ) : (
+          circle.map((p) => (
+            <div key={p.id} className="list-col">
+              <div className="name">
+                {p.category} · {p.authorLabel}{' '}
+                <span className={`pill ${p.status === 'hidden' ? 'rejected' : 'pending'}`}>
+                  {p.status === 'hidden' ? `${p.reports} şikâyet` : 'moderasyon'}
+                </span>
+              </div>
+              <div className="meta" style={{ marginTop: 4 }}>
+                {p.text}
+              </div>
+              {p.moderationReason ? (
+                <div className="meta" style={{ marginTop: 2 }}>
+                  Sebep: {p.moderationReason}
+                </div>
+              ) : null}
+              <div className="form-inline" style={{ marginTop: 10 }}>
+                <button className="btn-sm btn-ok" onClick={() => moderateCircle(p.id, 'approve')}>
+                  Onayla (yayınla)
+                </button>
+                <button className="btn-sm btn-danger" onClick={() => moderateCircle(p.id, 'hide')}>
+                  Gizle
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <h2 className="section-head">Görünür yorumlar</h2>
       <div className="card">
         {!data || data.length === 0 ? (
           <div className="empty">Görünür yorum yok</div>

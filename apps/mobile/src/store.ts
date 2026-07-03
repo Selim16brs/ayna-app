@@ -1132,6 +1132,16 @@ export const useStore = create<State>((set, get) => ({
         ...s.circlePosts,
       ],
     }));
+    // §5.5 — backend moderasyonuna gönder (şüpheli→pending; best-effort)
+    const token = get().token;
+    if (token)
+      void api
+        .createCirclePost(token, {
+          category: input.category,
+          text: input.text,
+          anonymous: input.anonymous,
+        })
+        .catch(() => undefined);
     return id;
   },
 
@@ -1168,10 +1178,12 @@ export const useStore = create<State>((set, get) => ({
       ),
     })),
 
-  // §5.5 moderasyon katman 2 — şikâyet: içerik yayında kalır, admin kuyruğuna düşer
+  // §5.5 moderasyon katman 2 — şikâyet: eşik aşınca backend otomatik gizler + admin kuyruğu
   reportPost: (postId) => {
     if (get().reportedPosts.includes(postId)) return;
     set((s) => ({ reportedPosts: [...s.reportedPosts, postId] }));
+    const token = get().token;
+    if (token) void api.reportCirclePost(token, postId).catch(() => undefined); // §5.5 backend
     get().pushNotification({
       type: 'system',
       title: 'Şikâyetin alındı',

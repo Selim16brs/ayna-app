@@ -371,6 +371,11 @@ export const api = {
   // §12.4 — depozito itirazı / iade dekontunu admin kuyruğuna bildir
   fileDispute: (token: string, input: DisputeInput) =>
     post<{ id: string; status: string }>('/disputes', input, token),
+  // §5.5 — W2W topluluk (moderasyon backend'de)
+  createCirclePost: (token: string, input: { category: string; text: string; anonymous?: boolean }) =>
+    post<{ id: string; status: string; moderationReason: string }>('/circle/posts', input, token),
+  reportCirclePost: (token: string, id: string, reason?: string) =>
+    post<{ reports: number; hidden: boolean }>(`/circle/posts/${id}/report`, { reason }, token),
 };
 
 export interface DisputeInput {

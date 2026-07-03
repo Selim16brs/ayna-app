@@ -151,6 +151,10 @@ export const api = {
   sendAnnouncement: (a: AnnouncementInput) =>
     req<Announcement>('/admin/content/announcements', { method: 'POST', body: JSON.stringify(a) }),
 
+  // §12.5 W2W moderasyon kuyruğu
+  circleQueue: () => req<CirclePost[]>('/admin/circle/queue'),
+  moderateCircle: (id: string, decision: 'approve' | 'hide') =>
+    req(`/admin/circle/posts/${id}/moderate`, { method: 'POST', body: JSON.stringify({ decision }) }),
   // §12.4 Anlaşmazlık kuyruğu (depozito/iade dekontları)
   disputes: () => req<Dispute[]>('/admin/disputes'),
   resolveDispute: (id: string, decision: 'approve' | 'reject', resolution?: string) =>
@@ -291,6 +295,16 @@ export interface Overview {
     revenue: number;
     currency: string;
   };
+}
+export interface CirclePost {
+  id: string;
+  category: string;
+  text: string;
+  authorLabel: string;
+  status: 'pending' | 'hidden' | 'published';
+  reports: number;
+  moderationReason: string;
+  createdAt: string;
 }
 export interface Dispute {
   id: string;
