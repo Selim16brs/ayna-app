@@ -253,7 +253,7 @@ export const useStore = create<State>((set, get) => ({
   weeklyTheme: null,
   config: {
     rates: {
-      commissionPct: 10,
+      commissionPct: 15, // MD %15 (fetch başarısızsa fallback)
       depositKzt: DEPOSIT_KZT,
       cancelWindowH: 3,
       lateCancelPct: 3,
