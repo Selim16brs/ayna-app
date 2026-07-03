@@ -50,9 +50,11 @@ function ThemedStack() {
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
-  const [fontsLoaded] = useFonts({ DancingScript_700Bold });
+  // Font yüklenmezse (hata) uygulama BEYAZ ekranda kalmasın — hata olsa da devam et,
+  // el yazısı font sistem fontuna düşer.
+  const [fontsLoaded, fontError] = useFonts({ DancingScript_700Bold });
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
