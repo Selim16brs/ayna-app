@@ -259,6 +259,11 @@ export const tr = {
   'bookings.tab.direct': 'Arama',
   'bookings.tab.photo': 'Foto teklif',
   'bookings.tab.demand': 'Talep',
+  'bookings.seg.requests': 'Taleplerim',
+  'bookings.seg.upcoming': 'Randevularım',
+  'bookings.seg.past': 'Geçmiş',
+  'bookings.requests_empty': 'Henüz açık talebin yok',
+  'demand.card.view': 'Teklifleri gör →',
   'bookings.empty': 'Bu yoldan randevun yok',
   'bookings.empty_cta': 'Keşfet’e göz at',
   // Değerlendirme istemi — yalnızca tamamlanan randevu değerlendirilebilir (doğrulanmış yorum)

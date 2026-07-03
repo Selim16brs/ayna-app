@@ -4,8 +4,9 @@ import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   type Appointment,
-  type BookingSource,
   type BookingStatus,
+  CATEGORIES,
+  type DemandRequest,
   formatPrice,
 } from '../../src/data';
 import { formatSlot } from '../../src/datetime';
@@ -16,11 +17,16 @@ import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, Segmented, TabHero, Text } from '../../src/ui';
 
-const TABS: { source: BookingSource; labelKey: MessageKey }[] = [
-  { source: 'direct', labelKey: 'bookings.tab.direct' },
-  { source: 'photo_quote', labelKey: 'bookings.tab.photo' },
-  { source: 'demand', labelKey: 'bookings.tab.demand' },
+// §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş
+type Seg = 'requests' | 'upcoming' | 'past';
+const SEGS: { value: Seg; labelKey: MessageKey }[] = [
+  { value: 'requests', labelKey: 'bookings.seg.requests' },
+  { value: 'upcoming', labelKey: 'bookings.seg.upcoming' },
+  { value: 'past', labelKey: 'bookings.seg.past' },
 ];
+
+const catLabel = (id: string): MessageKey =>
+  (CATEGORIES.find((c) => c.id === id)?.labelKey ?? 'nav.bookings') as MessageKey;
 
 const makeStatus = (
   colors: ColorTokens,
@@ -46,11 +52,23 @@ export default function BookingsScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
-  const [active, setActive] = useState<BookingSource>('direct');
+  const [active, setActive] = useState<Seg>('upcoming');
   const bookings = useStore((s) => s.bookings);
-  const list = bookings.filter((a) => a.source === active);
-  // Değerlendirme bekleyen: tamamlanmış ama henüz yorumlanmamış randevular (tüm kaynaklar)
+  const demands = useStore((s) => s.demands);
+  const now = Date.now();
+
+  const isUpcoming = (a: Appointment) =>
+    a.startMs >= now && !['completed', 'cancelled', 'no_show'].includes(a.status);
+  const upcoming = bookings
+    .filter(isUpcoming)
+    .sort((a, b) => a.startMs - b.startMs);
+  const past = bookings.filter((a) => !isUpcoming(a)).sort((a, b) => b.startMs - a.startMs);
   const pendingReview = bookings.filter((a) => a.status === 'completed' && !a.reviewed);
+
+  const showEmpty =
+    (active === 'requests' && demands.length === 0) ||
+    (active === 'upcoming' && upcoming.length === 0) ||
+    (active === 'past' && past.length === 0);
 
   return (
     <Screen edges={[]}>
@@ -58,14 +76,15 @@ export default function BookingsScreen() {
 
       <View style={styles.segmentWrap}>
         <Segmented
-          options={TABS.map((tab) => ({ value: tab.source, label: t(tab.labelKey) }))}
+          options={SEGS.map((s) => ({ value: s.value, label: t(s.labelKey) }))}
           value={active}
           onChange={setActive}
         />
       </View>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-        {pendingReview.length > 0 ? (
+        {/* Değerlendirme daveti — Geçmiş sekmesinde (§5.3) */}
+        {active === 'past' && pendingReview.length > 0 ? (
           <Pressable
             style={styles.reviewPrompt}
             onPress={() => router.push('/review/new?id=' + pendingReview[0]!.id)}
@@ -89,22 +108,34 @@ export default function BookingsScreen() {
             </View>
           </Pressable>
         ) : null}
-        {list.length === 0 ? (
+
+        {showEmpty ? (
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
-              <Ionicons name="calendar-outline" size={28} color={colors.rose} />
+              <Ionicons
+                name={active === 'requests' ? 'pricetags-outline' : 'calendar-outline'}
+                size={28}
+                color={colors.rose}
+              />
             </View>
             <Text variant="bodyStrong" tone="ink">
-              {t('bookings.empty')}
+              {t(active === 'requests' ? 'bookings.requests_empty' : 'bookings.empty')}
             </Text>
-            <Pressable style={styles.emptyCta} onPress={() => router.push('/discover')}>
+            <Pressable
+              style={styles.emptyCta}
+              onPress={() => router.push(active === 'requests' ? '/quote' : '/discover')}
+            >
               <Text variant="caption" tone="onColor" style={styles.emptyCtaText}>
                 {t('bookings.empty_cta')}
               </Text>
             </Pressable>
           </View>
+        ) : active === 'requests' ? (
+          demands.map((d) => <DemandCard key={d.id} demand={d} />)
+        ) : active === 'upcoming' ? (
+          upcoming.map((a) => <BookingCard key={a.id} appt={a} />)
         ) : (
-          list.map((a) => <BookingCard key={a.id} appt={a} />)
+          past.map((a) => <BookingCard key={a.id} appt={a} />)
         )}
       </ScrollView>
     </Screen>
@@ -156,9 +187,75 @@ function BookingCard({ appt }: { appt: Appointment }) {
   );
 }
 
+// §5.3 Taleplerim — talep kartı: kategori + durum (geri sayım / X teklif / süre doldu / dönüştü)
+function DemandCard({ demand }: { demand: DemandRequest }) {
+  const { t } = useLocale();
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
+  const remainMin = Math.max(0, Math.round((demand.expiresAt - Date.now()) / 60_000));
+  const collecting = demand.status === 'collecting';
+
+  const badge =
+    demand.status === 'booked'
+      ? { text: t('quotes.booked'), bg: colors.successSoft, fg: colors.success }
+      : demand.status === 'expired'
+        ? { text: t('quotes.expired'), bg: colors.surfaceMuted, fg: colors.inkSoft }
+        : { text: `${remainMin} ${t('quotes.remain')}`, bg: colors.goldSoft, fg: colors.gold };
+
+  return (
+    <Pressable
+      style={[styles.card, shadow.soft]}
+      onPress={() => router.push(`/quote/results?id=${demand.id}`)}
+    >
+      <View style={styles.demandIcon}>
+        <Ionicons
+          name={demand.mode === 'photo' ? 'image-outline' : 'chatbubble-ellipses-outline'}
+          size={22}
+          color={colors.rose}
+        />
+      </View>
+      <View style={styles.body}>
+        <View style={styles.topRow}>
+          <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.service}>
+            {t(catLabel(demand.category))}
+          </Text>
+          <View style={[styles.status, { backgroundColor: badge.bg }]}>
+            <Text variant="caption" style={[styles.statusText, { color: badge.fg }]}>
+              {badge.text}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.bottomRow}>
+          <View style={styles.metaRow}>
+            <Ionicons name="pricetags-outline" size={13} color={colors.muted} />
+            <Text variant="caption" tone="inkSoft">
+              {demand.offers.length} {t('quotes.count')}
+            </Text>
+          </View>
+          {collecting ? (
+            <Text variant="caption" tone="rose" style={styles.demandCta}>
+              {t('demand.card.view')}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     title: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
+    demandIcon: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.md,
+      backgroundColor: colors.roseSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    demandCta: { fontWeight: '700' },
     segmentWrap: { paddingHorizontal: space(3), marginTop: space(2.5), marginBottom: space(2) },
     list: { paddingHorizontal: space(3), paddingBottom: space(13), gap: space(1.5) },
     empty: {
