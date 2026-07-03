@@ -309,6 +309,15 @@ export const tr = {
   'circle.recommendations': 'Tavsiyeler',
   'circle.sort_by_rating': 'Değerlendirmeye göre',
   'circle.all_categories': 'Tümü',
+  // §5.5 (MD satır 238) — sabit W2W kategori şeridi
+  'circle.cat.all': 'Tümü',
+  'circle.cat.hair': 'Saç',
+  'circle.cat.skincare': 'Cilt Bakımı',
+  'circle.cat.makeup': 'Makyaj',
+  'circle.cat.nails': 'Tırnak',
+  'circle.cat.experience': 'Deneyimlerim',
+  'circle.cat.asking': 'Tavsiye Arıyorum',
+  'circle.cat.chat': 'Sohbet',
 
   // Benim İçin (kişisel hub: kayıtlar + bakım + özel günler + AYNA Life)
   'benim.title': 'Benim İçin',

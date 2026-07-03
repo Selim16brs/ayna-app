@@ -19,6 +19,19 @@ const makeType = (
   experience: { key: 'circle.type.experience', bg: colors.roseSoft, fg: colors.rose },
 });
 
+// §5.5 (MD satır 238) — SABİT W2W kategori şeridi (post'lardan türetilmez).
+// Hizmet kategorileri post.category (TR etiket veya kod) ile; içerik türleri post.type ile eşlenir.
+const W2W_FILTERS: { id: string; labelKey: MessageKey; match: (p: CirclePost) => boolean }[] = [
+  { id: 'all', labelKey: 'circle.cat.all', match: () => true },
+  { id: 'hair', labelKey: 'circle.cat.hair', match: (p) => p.category === 'Saç' || p.category === 'hair' },
+  { id: 'skincare', labelKey: 'circle.cat.skincare', match: (p) => p.category === 'Cilt Bakımı' || p.category === 'skincare' },
+  { id: 'makeup', labelKey: 'circle.cat.makeup', match: (p) => p.category === 'Makyaj' || p.category === 'makeup' },
+  { id: 'nails', labelKey: 'circle.cat.nails', match: (p) => p.category === 'Tırnak' || p.category === 'nails' },
+  { id: 'experience', labelKey: 'circle.cat.experience', match: (p) => p.type === 'experience' },
+  { id: 'asking', labelKey: 'circle.cat.asking', match: (p) => p.type === 'asking' },
+  { id: 'chat', labelKey: 'circle.cat.chat', match: (p) => p.type === 'recommend' },
+];
+
 export default function CircleScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
@@ -33,16 +46,10 @@ export default function CircleScreen() {
   const canPost = role !== 'professional' && role !== 'salon';
   const [cat, setCat] = useState<string>('all');
 
-  // Kategoriler gönderilerden türetilir (kullanıcı arttıkça otomatik genişler)
-  const categories = useMemo(() => {
-    const set = new Set(posts.map((p) => p.category));
-    return ['all', ...Array.from(set)];
-  }, [posts]);
-
-  // Filtre + öncelik: değerlendirme notu (faydalı) en yüksek üstte
+  // §5.5 — sabit kategori şeridi (W2W_FILTERS); seçili filtrenin match'iyle süz + faydalı üstte
   const visible = useMemo(() => {
-    const filtered = cat === 'all' ? posts : posts.filter((p) => p.category === cat);
-    return [...filtered].sort((a, b) => b.helpful - a.helpful);
+    const f = W2W_FILTERS.find((x) => x.id === cat) ?? W2W_FILTERS[0]!;
+    return posts.filter(f.match).sort((a, b) => b.helpful - a.helpful);
   }, [posts, cat]);
 
   return (
@@ -134,16 +141,16 @@ export default function CircleScreen() {
           style={styles.chipBar}
           contentContainerStyle={styles.chips}
         >
-          {categories.map((c) => {
-            const on = c === cat;
+          {W2W_FILTERS.map((f) => {
+            const on = f.id === cat;
             return (
               <Pressable
-                key={c}
-                onPress={() => setCat(c)}
+                key={f.id}
+                onPress={() => setCat(f.id)}
                 style={[styles.chip, on && styles.chipOn]}
               >
                 <Text variant="caption" tone={on ? 'onColor' : 'inkSoft'}>
-                  {c === 'all' ? t('circle.all_categories') : c}
+                  {t(f.labelKey)}
                 </Text>
               </Pressable>
             );
