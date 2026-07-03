@@ -345,7 +345,19 @@ export const api = {
   contentTheme: () => get<ApiWeeklyTheme | null>('/content/theme'),
   submitBlog: (token: string, input: BlogSubmission) =>
     post<{ id: string; status: string }>('/content/applications', input, token),
+  // §12.10 — kullanıcının segmentine uyan toplu duyurular
+  announcements: (token: string) => get<ApiAnnouncement[]>('/content/announcements', token),
 };
+
+export interface ApiAnnouncement {
+  id: string;
+  title: string;
+  body: string;
+  segment: string;
+  city: string | null;
+  recipientCount: number;
+  createdAt: string;
+}
 
 export interface ApiArticle {
   id: string;

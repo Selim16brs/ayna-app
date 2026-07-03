@@ -6,6 +6,8 @@ import {
   type AdBanner,
   type AdminBooking,
   type AdminReview,
+  type Announcement,
+  type AnnouncementSegment,
   type ArticleInput,
   type AuditEntry,
   type BlogApplication,
@@ -45,6 +47,7 @@ type Tab =
   | 'ads'
   | 'moderation'
   | 'content'
+  | 'announcements'
   | 'users'
   | 'loyalty'
   | 'flags'
@@ -83,6 +86,7 @@ export default function AdminApp() {
     { id: 'ads', label: 'Reklamlar', icon: '📢' },
     { id: 'moderation', label: 'Moderasyon', icon: '🛡️' },
     { id: 'content', label: 'İçerik & Blog', icon: '📝' },
+    { id: 'announcements', label: 'Bildirimler', icon: '📣' },
     { id: 'users', label: 'Kullanıcılar', icon: '👥' },
     { id: 'loyalty', label: 'Sadakat', icon: '🎁' },
     { id: 'flags', label: 'Feature Flag', icon: '🚩' },
@@ -120,6 +124,7 @@ export default function AdminApp() {
         {tab === 'ads' && <AdsView />}
         {tab === 'moderation' && <ModerationView />}
         {tab === 'content' && <ContentView />}
+        {tab === 'announcements' && <AnnouncementsView />}
         {tab === 'users' && <UsersView />}
         {tab === 'loyalty' && <LoyaltyView />}
         {tab === 'flags' && <FlagsView />}
@@ -1133,6 +1138,116 @@ function ContentView() {
                   Aktifleştir
                 </button>
               )}
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
+// §12.10 Bildirim Merkezi — segment bazlı toplu duyuru + gönderim geçmişi
+const SEGMENTS: { id: AnnouncementSegment; label: string }[] = [
+  { id: 'all', label: 'Tüm kullanıcılar' },
+  { id: 'premium', label: 'Premium üyeler' },
+  { id: 'professionals', label: 'Uzmanlar' },
+  { id: 'salons', label: 'Salonlar' },
+  { id: 'city', label: 'Şehir bazlı' },
+];
+
+function AnnouncementsView() {
+  const { data, reload } = useAsync<Announcement[]>(() => api.announcements(), []);
+  const [form, setForm] = useState<{
+    title: string;
+    body: string;
+    segment: AnnouncementSegment;
+    city: string;
+  }>({ title: '', body: '', segment: 'all', city: '' });
+  const [sent, setSent] = useState<string | null>(null);
+
+  const send = async () => {
+    if (form.title.length < 2 || form.body.length < 2) return;
+    if (form.segment === 'city' && !form.city) return;
+    if (!confirm(`"${form.title}" duyurusu gönderilsin mi?`)) return;
+    const res = await api.sendAnnouncement({
+      title: form.title,
+      body: form.body,
+      segment: form.segment,
+      city: form.segment === 'city' ? form.city : undefined,
+    });
+    setSent(`Gönderildi — ${res.recipientCount} alıcı`);
+    setForm({ title: '', body: '', segment: 'all', city: '' });
+    reload();
+  };
+
+  const segLabel = (s: AnnouncementSegment) => SEGMENTS.find((x) => x.id === s)?.label ?? s;
+
+  return (
+    <>
+      <h1 className="page-title">Bildirimler</h1>
+      <p className="page-sub">Segment bazlı toplu duyuru — app bildirim listesine düşer</p>
+
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="form-inline">
+          <input
+            className="input full"
+            placeholder="Duyuru başlığı"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
+          <textarea
+            className="input full"
+            placeholder="Duyuru metni"
+            rows={3}
+            value={form.body}
+            onChange={(e) => setForm({ ...form, body: e.target.value })}
+          />
+          <select
+            className="input"
+            value={form.segment}
+            onChange={(e) => setForm({ ...form, segment: e.target.value as AnnouncementSegment })}
+          >
+            {SEGMENTS.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          {form.segment === 'city' && (
+            <input
+              className="input"
+              placeholder="Şehir (örn. Almatı)"
+              value={form.city}
+              onChange={(e) => setForm({ ...form, city: e.target.value })}
+            />
+          )}
+          <button className="btn-sm btn-ok full" onClick={send}>
+            📣 Duyuruyu gönder
+          </button>
+          {sent && (
+            <div className="meta full" style={{ color: 'var(--success)' }}>
+              {sent}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <h2 className="section-head">Gönderim geçmişi</h2>
+      <div className="card">
+        {!data || data.length === 0 ? (
+          <div className="empty">Henüz duyuru gönderilmedi</div>
+        ) : (
+          data.map((a) => (
+            <div key={a.id} className="list-col">
+              <div className="name">{a.title}</div>
+              <div className="meta" style={{ marginTop: 4 }}>
+                {a.body}
+              </div>
+              <div className="meta" style={{ marginTop: 6 }}>
+                {segLabel(a.segment)}
+                {a.city ? ` · ${a.city}` : ''} · {a.recipientCount} alıcı ·{' '}
+                {new Date(a.createdAt).toLocaleString('tr-TR')}
+              </div>
             </div>
           ))
         )}

@@ -35,4 +35,11 @@ export class ContentController {
   ) {
     return this.content.submitApplication(body, req.user?.id);
   }
+
+  // §12.10 — girişli kullanıcının segmentine uyan toplu duyurular
+  @Get('announcements')
+  @UseGuards(JwtAuthGuard)
+  announcements(@Req() req: AuthedRequest) {
+    return this.content.announcementsForUser(req.user?.id ?? '');
+  }
 }

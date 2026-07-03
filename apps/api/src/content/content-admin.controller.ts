@@ -4,10 +4,12 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { AdminGuard } from '../common/admin.guard';
 import type { AuthedRequest } from '../auth/jwt-auth.guard';
 import {
+  type AnnouncementInput,
   type ArticleInput,
   type ArticlePatchInput,
   type ReviewApplicationInput,
   type ThemeInput,
+  announcementSchema,
   articlePatchSchema,
   articleSchema,
   reviewApplicationSchema,
@@ -82,5 +84,19 @@ export class ContentAdminController {
   @Post('themes/:id/activate')
   activate(@Req() req: AuthedRequest, @Param('id') id: string) {
     return this.content.activateTheme(id, req.user?.id);
+  }
+
+  // §12.10 Bildirim Merkezi — segment bazlı toplu duyuru + geçmiş
+  @Get('announcements')
+  announcements() {
+    return this.content.announcementHistory();
+  }
+
+  @Post('announcements')
+  sendAnnouncement(
+    @Req() req: AuthedRequest,
+    @Body(new ZodValidationPipe(announcementSchema)) body: AnnouncementInput,
+  ) {
+    return this.content.createAnnouncement(body, req.user?.id);
   }
 }

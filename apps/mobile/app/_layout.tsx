@@ -19,9 +19,12 @@ function ThemedStack() {
   const expireDeposits = useStore((s) => s.expireDeposits);
   useEffect(() => {
     void hydrateBookings();
-    // §12.6 — admin'in yayınladığı blog + haftalık temayı çek (başarısızsa seed)
+  }, [hydrateBookings]);
+  // §12.6/§12.10 — blog + haftalık tema + segmentine uyan toplu duyurular.
+  // currentUser değişince tekrar çağrılır ki giriş sonrası duyurular da düşsün.
+  useEffect(() => {
     void loadContent();
-  }, [hydrateBookings, loadContent]);
+  }, [loadContent, currentUser]);
   // §4.1/§4.3/§5.2 — her gezinmede: hatırlatmalar + süresi dolan talepler + dekont süresi (mock scheduler)
   useEffect(() => {
     checkReminders();

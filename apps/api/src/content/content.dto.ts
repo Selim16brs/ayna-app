@@ -43,3 +43,17 @@ export const themeSchema = z.object({
   weekStart: z.string(), // ISO tarih
 });
 export type ThemeInput = z.infer<typeof themeSchema>;
+
+// §12.10 Toplu duyuru — segment bazlı
+export const announcementSchema = z
+  .object({
+    title: z.string().min(2),
+    body: z.string().min(2),
+    segment: z.enum(['all', 'premium', 'professionals', 'salons', 'city']),
+    city: z.string().optional(),
+  })
+  .refine((v) => v.segment !== 'city' || (v.city && v.city.length > 0), {
+    message: 'Şehir segmenti için şehir gerekli',
+    path: ['city'],
+  });
+export type AnnouncementInput = z.infer<typeof announcementSchema>;

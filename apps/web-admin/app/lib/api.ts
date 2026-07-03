@@ -126,7 +126,31 @@ export const api = {
     req<WeeklyTheme>('/admin/content/themes', { method: 'POST', body: JSON.stringify(t) }),
   activateTheme: (id: string) =>
     req<WeeklyTheme>(`/admin/content/themes/${id}/activate`, { method: 'POST' }),
+
+  // §12.10 Bildirim Merkezi
+  announcements: () => req<Announcement[]>('/admin/content/announcements'),
+  sendAnnouncement: (a: AnnouncementInput) =>
+    req<Announcement>('/admin/content/announcements', { method: 'POST', body: JSON.stringify(a) }),
 };
+
+export type AnnouncementSegment = 'all' | 'premium' | 'professionals' | 'salons' | 'city';
+
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  segment: AnnouncementSegment;
+  city: string | null;
+  recipientCount: number;
+  createdAt: string;
+}
+
+export interface AnnouncementInput {
+  title: string;
+  body: string;
+  segment: AnnouncementSegment;
+  city?: string;
+}
 
 export interface BlogArticle {
   id: string;

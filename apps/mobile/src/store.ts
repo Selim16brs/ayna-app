@@ -255,6 +255,29 @@ export const useStore = create<State>((set, get) => ({
     } catch {
       // Backend erişilemezse seed makalelerle devam
     }
+    // §12.10 — segmentine uyan toplu duyuruları bildirim listesine ekle (girişliyse)
+    const token = get().token;
+    if (!token) return;
+    try {
+      const anns = await api.announcements(token);
+      set((s) => {
+        const have = new Set(s.notifications.map((n) => n.id));
+        const fresh: AppNotification[] = anns
+          .filter((a) => !have.has(`ann-${a.id}`))
+          .map((a) => ({
+            id: `ann-${a.id}`,
+            type: 'system' as const,
+            title: a.title,
+            body: a.body,
+            dateLabel: new Date(a.createdAt).toLocaleDateString('tr-TR'),
+            icon: 'megaphone-outline',
+            read: false,
+          }));
+        return fresh.length ? { notifications: [...fresh, ...s.notifications] } : {};
+      });
+    } catch {
+      // Duyuru çekilemezse sessizce geç
+    }
   },
   careRoutines: SEED_CARE_ROUTINES,
   personalLogs: SEED_PERSONAL_LOGS,

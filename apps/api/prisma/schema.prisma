@@ -500,3 +500,18 @@ model WeeklyTheme {
 
   @@map("weekly_themes")
 }
+
+// §12.10 Bildirim Merkezi — segment bazlı toplu duyuru + gönderim geçmişi.
+// segment: all | premium | professionals | salons | city
+model Announcement {
+  id             String   @id @default(uuid()) @db.Uuid
+  title          String
+  body           String
+  segment        String   @default("all")
+  city           String?  // segment=city ise hedef şehir
+  recipientCount Int      @default(0) @map("recipient_count")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([createdAt])
+  @@map("announcements")
+}

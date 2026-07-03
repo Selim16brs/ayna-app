@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import type { Prisma } from '@prisma/client';
 import type {
+  AnnouncementInput,
   ApplicationInput,
   ArticleInput,
   ArticlePatchInput,
@@ -232,5 +234,63 @@ export class ContentService {
     const t = await this.prisma.weeklyTheme.update({ where: { id }, data: { active: true } });
     await this.audit('theme.activate', id, actorId);
     return t;
+  }
+
+  // ── §12.10 Bildirim Merkezi — toplu duyuru ─────────────────────────────
+  // Segment → hedef kullanıcı filtresi (yalnızca aktif hesaplar erişilebilir)
+  private segmentWhere(segment: string, city?: string | null): Prisma.UserWhereInput {
+    const base: Prisma.UserWhereInput = { status: 'active' };
+    switch (segment) {
+      case 'premium':
+        return { ...base, isPremium: true };
+      case 'professionals':
+        return { ...base, role: 'professional' };
+      case 'salons':
+        return { ...base, role: 'salon' };
+      case 'city':
+        return { ...base, city: city ?? '' };
+      default:
+        return base; // all
+    }
+  }
+
+  async createAnnouncement(input: AnnouncementInput, actorId?: string) {
+    const recipientCount = await this.prisma.user.count({
+      where: this.segmentWhere(input.segment, input.city ?? null),
+    });
+    const a = await this.prisma.announcement.create({
+      data: {
+        title: input.title,
+        body: input.body,
+        segment: input.segment,
+        city: input.segment === 'city' ? (input.city ?? null) : null,
+        recipientCount,
+      },
+    });
+    await this.audit('announcement.send', a.id, actorId);
+    return a;
+  }
+
+  async announcementHistory() {
+    return this.prisma.announcement.findMany({ orderBy: { createdAt: 'desc' }, take: 200 });
+  }
+
+  // Girişli kullanıcının segmentine uyan duyurular (app bildirim listesine enjekte eder)
+  async announcementsForUser(userId: string) {
+    const u = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true, city: true, isPremium: true },
+    });
+    if (!u) return [];
+    const or: Prisma.AnnouncementWhereInput[] = [{ segment: 'all' }];
+    if (u.isPremium) or.push({ segment: 'premium' });
+    if (u.role === 'professional') or.push({ segment: 'professionals' });
+    if (u.role === 'salon') or.push({ segment: 'salons' });
+    if (u.city) or.push({ segment: 'city', city: u.city });
+    return this.prisma.announcement.findMany({
+      where: { OR: or },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
   }
 }
