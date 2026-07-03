@@ -27,11 +27,14 @@ export default function WelcomeScreen() {
             style={styles.logo}
             resizeMode="contain"
           />
-          {/* §1/§3.1 slogan — "aynası" italik + bold + büyük */}
+          {/* §1/§3.1 slogan — iki satır; "kadınların" ve "aynası" canlı pembe el yazısı */}
           <Text style={styles.slogan}>
-            {t('slogan.pre')}{' '}
-            <Text style={styles.sloganWord}>{t('slogan.word')}</Text>{' '}
-            {t('slogan.post')}
+            {t('slogan.l1a')}
+            <Text style={styles.sloganWord}>{t('slogan.w1')}</Text>
+            {'\n'}
+            {t('slogan.l2a')}
+            <Text style={styles.sloganWord}>{t('slogan.w2')}</Text>
+            {t('slogan.l2b')}
           </Text>
           <Text variant="caption" tone="inkSoft" style={styles.value}>
             {t('welcome.value')}
@@ -71,15 +74,20 @@ const makeStyles = (colors: ColorTokens) =>
     hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     logo: { width: 220, height: 190, tintColor: colors.ink },
     slogan: {
-      fontSize: 26,
-      lineHeight: 34,
+      fontSize: 27,
+      lineHeight: 46,
       fontWeight: '700',
       letterSpacing: -0.3,
       color: colors.ink,
       textAlign: 'center',
       marginTop: space(1),
     },
-    sloganWord: { fontStyle: 'italic', fontWeight: '800', fontSize: 30, color: colors.rose },
+    // "kadınların" ve "aynası" — canlı pembe, el yazısı (DancingScript)
+    sloganWord: {
+      fontFamily: 'DancingScript_700Bold',
+      fontSize: 40,
+      color: '#FF2D78',
+    },
     value: { textAlign: 'center', marginTop: space(1.5), maxWidth: 300, lineHeight: 19 },
     bottom: { paddingBottom: space(4), gap: space(1.5) },
     langRow: { flexDirection: 'row', gap: space(1), justifyContent: 'center', marginBottom: space(1) },

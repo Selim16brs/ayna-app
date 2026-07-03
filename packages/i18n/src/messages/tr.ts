@@ -15,9 +15,11 @@ export const tr = {
   // Marka / dil
   'app.tagline': 'Her kadının bir aynası olmalı!',
   // §3.1 Karşılama — slogan (vurgulu kelime "aynası" italik+bold+büyük) + değer önerisi
-  'slogan.pre': 'Tüm kadınların bir',
-  'slogan.word': 'aynası',
-  'slogan.post': 'olmalı',
+  'slogan.l1a': 'Tüm ',
+  'slogan.w1': 'kadınların',
+  'slogan.l2a': 'bir ',
+  'slogan.w2': 'aynası',
+  'slogan.l2b': ' olmalı...',
   'welcome.value': 'İstediğin hizmeti anlat, uzmanlar sana teklif versin.',
 
   // §3.2 B — Bireysel/Salona bağlı Uzman kaydı
