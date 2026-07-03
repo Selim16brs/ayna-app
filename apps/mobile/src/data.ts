@@ -762,6 +762,7 @@ export interface Appointment {
   receiptUri?: string; // §4.3 — yüklenen dekont görseli
   refundReceiptUri?: string; // §4.4 — uzmanın yüklediği iade dekontu
   depositForfeited?: boolean; // §4.4 — geç iptal/no-show: kapora uzmanda kaldı
+  providerNoShow?: boolean; // §4.4-b — uzman gelmedi: müşteriye 1000 puan telafi verildi
   reminded24?: boolean; // §4.1 — 24 saat hatırlatması gönderildi
   reminded2?: boolean; // §4.1 — 2 saat hatırlatması gönderildi
   reassignedFrom?: string; // §4.5 — ayrılan uzmanın adı (yeni uzman uzmanName'de)
@@ -1377,7 +1378,13 @@ export interface AppNotification {
   read: boolean;
   // Tıklanınca gidilecek ekran (yoksa türe göre varsayılan kullanılır)
   route?: string;
+  // §5.7 — oluşturulma zamanı (ms); 30 günden eski bildirimler otomatik temizlenir.
+  // Seed'lerde yok (demo kalıcı); gerçek bildirimler push anında damgalanır.
+  createdAt?: number;
 }
+
+// §5.7 — bildirim otomatik temizlik penceresi
+export const NOTIFICATION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 // Bildirim türüne göre varsayılan hedef ekran
 export const NOTIFICATION_ROUTE: Record<NotificationType, string | null> = {

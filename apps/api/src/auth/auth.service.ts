@@ -216,6 +216,13 @@ export class AuthService {
       womenVerified: user.gender === 'female',
       // §12.3 — kısıtlı mod (admin ceza takip); app yeni talep oluşturmayı engeller
       restricted: !!user.restrictedAt,
+      // 7 gün penceresinde kalan gün (0 = süre doldu / kısıt yok) — kullanıcı bilgilendirme
+      restrictedDaysLeft: user.restrictedAt
+        ? Math.max(
+            0,
+            7 - Math.floor((Date.now() - user.restrictedAt.getTime()) / (24 * 60 * 60 * 1000)),
+          )
+        : 0,
       phone: decryptField(Buffer.from(user.phoneEnc), this.env.FIELD_ENCRYPTION_KEY),
     };
   }

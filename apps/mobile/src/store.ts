@@ -38,6 +38,7 @@ import {
   SEED_LEDGER,
   SEED_MOMENTS,
   SEED_NOTIFICATIONS,
+  NOTIFICATION_TTL_MS,
   SEED_PERSONAL_LOGS,
   type UpcomingEvent,
   type UserAddress,
@@ -152,7 +153,8 @@ interface State {
   proposeAlternative: (id: string, startMs: number) => void; // uzman alternatif saat önerir
   submitReceipt: (id: string, receiptUri: string) => void; // kullanıcı dekont yükler
   confirmReceipt: (id: string) => void; // uzman "Aldım, onaylıyorum" → randevu KESİN
-  markNoShow: (id: string) => void; // §4.4 — uzman "gelmedi" işaretler
+  markNoShow: (id: string) => void; // §4.4 — uzman müşteriyi "gelmedi" işaretler (kapora yanar)
+  reportProviderNoShow: (id: string) => void; // §4.4-b — uzman gelmedi → müşteriye 1000 puan telafi
   giveCustomerSignal: (id: string, signal: 'up' | 'down') => void; // §7.3 — gizli operasyonel sinyal
   // §4.4 — iade + itiraz
   uploadRefundReceipt: (id: string, receiptUri: string) => void; // uzman iade dekontu yükler
@@ -234,6 +236,7 @@ interface State {
 
   // notifications
   pushNotification: (n: Omit<AppNotification, 'id' | 'read'>) => void;
+  pruneNotifications: () => void; // §5.7 — 30 günden eski bildirimleri temizle
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
 }
@@ -285,7 +288,15 @@ export const useStore = create<State>((set, get) => ({
     try {
       const me = await api.me(token);
       set((s) =>
-        s.currentUser ? { currentUser: { ...s.currentUser, restricted: me.restricted } } : {},
+        s.currentUser
+          ? {
+              currentUser: {
+                ...s.currentUser,
+                restricted: me.restricted,
+                restrictedDaysLeft: me.restrictedDaysLeft,
+              },
+            }
+          : {},
       );
     } catch {
       // /me erişilemezse mevcut currentUser korunur
@@ -304,6 +315,7 @@ export const useStore = create<State>((set, get) => ({
             dateLabel: new Date(a.createdAt).toLocaleDateString('tr-TR'),
             icon: 'megaphone-outline',
             read: false,
+            createdAt: new Date(a.createdAt).getTime(), // §5.7 — 30 gün temizlik için
           }));
         return fresh.length ? { notifications: [...fresh, ...s.notifications] } : {};
       });
@@ -908,6 +920,28 @@ export const useStore = create<State>((set, get) => ({
     }));
   },
 
+  // §4.4-b — UZMAN gelmedi: müşteriye 1.000 puan telafi (loyalty ledger) + uzman iade borçlu
+  reportProviderNoShow: (id) => {
+    const b = get().bookings.find((x) => x.id === id);
+    if (!b || b.providerNoShow) return; // tekrar telafi verme
+    set((s) => ({
+      // Uzman iade etmekle yükümlü → refund_pending; kapora yanmaz
+      bookings: s.bookings.map((x) =>
+        x.id === id ? { ...x, status: 'refund_pending', providerNoShow: true } : x,
+      ),
+    }));
+    // Telafi puanı — yerel + backend loyalty ledger (earn zaten api.earnPoints çağırır)
+    get().earn(1000, 'rewards.earn.provider_noshow', b.proName);
+    get().pushNotification({
+      type: 'loyalty',
+      title: 'Uzman gelmedi — telafi puanın eklendi',
+      body: `${b.proName} · 1.000 puan hesabına eklendi, depozito iaden başlatıldı`,
+      dateLabel: 'Az önce',
+      icon: 'gift-outline',
+      route: `/booking/${id}`,
+    });
+  },
+
   // §7.3 — uzmanın kullanıcıya GİZLİ sinyali (kamuya açık değil; yalnız sisteme akar)
   giveCustomerSignal: (id, signal) => {
     set((s) => ({
@@ -1228,8 +1262,20 @@ export const useStore = create<State>((set, get) => ({
 
   pushNotification: (n) =>
     set((s) => ({
-      notifications: [{ ...n, id: nextId('n'), read: false }, ...s.notifications],
+      // §5.7 — gerçek bildirimler push anında zamanla damgalanır (30 gün temizlik için)
+      notifications: [
+        { ...n, id: nextId('n'), read: false, createdAt: n.createdAt ?? Date.now() },
+        ...s.notifications,
+      ],
     })),
+
+  // §5.7 — 30 günden eski (zaman damgalı) bildirimleri temizle; seed'ler (damgasız) korunur
+  pruneNotifications: () =>
+    set((s) => {
+      const cutoff = Date.now() - NOTIFICATION_TTL_MS;
+      const kept = s.notifications.filter((n) => n.createdAt === undefined || n.createdAt >= cutoff);
+      return kept.length === s.notifications.length ? {} : { notifications: kept };
+    }),
 
   markNotificationRead: (id) =>
     set((s) => ({

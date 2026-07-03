@@ -53,6 +53,9 @@ export default function ProfileScreen() {
   const userName = useStore((s) => s.currentUser?.name) ?? 'Aigerim';
   const isLoggedIn = useStore((s) => s.currentUser != null);
   const phoneVerified = useStore((s) => s.currentUser?.phoneVerified ?? false);
+  // §12.3 — kısıtlı mod bilgilendirmesi + 7 gün geri sayım
+  const restricted = useStore((s) => s.currentUser?.restricted ?? false);
+  const restrictedDaysLeft = useStore((s) => s.currentUser?.restrictedDaysLeft ?? 0);
   const womenVerified = useStore((s) => s.currentUser?.womenVerified ?? false);
   const logout = useStore((s) => s.logout);
   // §5.6 — 'İşletme paneli' yalnızca salon/uzman hesabında görünür
@@ -118,6 +121,23 @@ export default function ProfileScreen() {
         </View>
       </TabHero>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+        {/* §12.3 — kısıtlı mod uyarısı (7 gün penceresinde kalan gün) */}
+        {restricted ? (
+          <View style={[styles.restrictBanner, shadow.soft]}>
+            <Ionicons name="alert-circle" size={18} color={colors.danger} />
+            <View style={styles.verifyText}>
+              <Text variant="bodyStrong" tone="ink">
+                {t('profile.restricted.title')}
+              </Text>
+              <Text variant="caption" tone="muted">
+                {restrictedDaysLeft > 0
+                  ? t('profile.restricted.days').replace('{n}', String(restrictedDaysLeft))
+                  : t('profile.restricted.desc')}
+              </Text>
+            </View>
+          </View>
+        ) : null}
 
         {/* §4.6 — telefon doğrulama çağrısı (yalnızca girişli + doğrulanmamışsa) */}
         {isLoggedIn && !phoneVerified ? (
@@ -265,6 +285,15 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       gap: space(1.5),
       backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(1.75),
+      marginBottom: space(2),
+    },
+    restrictBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      backgroundColor: colors.dangerSoft,
       borderRadius: radius.lg,
       padding: space(1.75),
       marginBottom: space(2),

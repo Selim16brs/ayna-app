@@ -17,6 +17,7 @@ function ThemedStack() {
   const checkReminders = useStore((s) => s.checkReminders);
   const expireDemands = useStore((s) => s.expireDemands);
   const expireDeposits = useStore((s) => s.expireDeposits);
+  const pruneNotifications = useStore((s) => s.pruneNotifications);
   useEffect(() => {
     void hydrateBookings();
   }, [hydrateBookings]);
@@ -30,7 +31,8 @@ function ThemedStack() {
     checkReminders();
     expireDemands();
     expireDeposits();
-  }, [checkReminders, expireDemands, expireDeposits, pathname]);
+    pruneNotifications(); // §5.7 — 30 günden eski bildirimleri temizle
+  }, [checkReminders, expireDemands, expireDeposits, pruneNotifications, pathname]);
 
   // Alt bar her içerik ekranında; giriş/onboarding/satıcı akışında gizli
   const hideTabBar =

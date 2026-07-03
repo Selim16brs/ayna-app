@@ -157,6 +157,7 @@ export interface AuthUser {
   womenVerified?: boolean;
   // §12.3 — admin ceza takip: kısıtlı mod (yeni talep oluşturamaz)
   restricted?: boolean;
+  restrictedDaysLeft?: number; // 7 gün penceresinde kalan gün
 }
 
 export interface RegisterInput {

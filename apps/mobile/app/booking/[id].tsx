@@ -36,6 +36,7 @@ export default function BookingDetailScreen() {
   const submitReceipt = useStore((s) => s.submitReceipt);
   const confirmReceipt = useStore((s) => s.confirmReceipt);
   const markNoShow = useStore((s) => s.markNoShow);
+  const reportProviderNoShow = useStore((s) => s.reportProviderNoShow);
   const giveCustomerSignal = useStore((s) => s.giveCustomerSignal);
   const uploadRefundReceipt = useStore((s) => s.uploadRefundReceipt);
   const confirmRefund = useStore((s) => s.confirmRefund);
@@ -540,6 +541,23 @@ export default function BookingDetailScreen() {
               ) : null}
               {booking.status === 'completed' && booking.reviewed ? (
                 <Button label={t('booking.detail.reviewed')} variant="ghost" disabled />
+              ) : null}
+              {/* §4.4-b — geçmiş onaylı randevuda uzman gelmediyse müşteri bildirir → 1000 puan telafi */}
+              {booking.status === 'confirmed' && booking.startMs < Date.now() ? (
+                <Button
+                  label={t('booking.provider_noshow.cta')}
+                  variant="secondary"
+                  onPress={() =>
+                    Alert.alert(
+                      t('booking.provider_noshow.confirm'),
+                      t('booking.provider_noshow.note'),
+                      [
+                        { text: t('common.cancel'), style: 'cancel' },
+                        { text: t('booking.provider_noshow.cta'), onPress: () => id && reportProviderNoShow(id) },
+                      ],
+                    )
+                  }
+                />
               ) : null}
               <Button
                 label={t('booking.detail.rebook')}
