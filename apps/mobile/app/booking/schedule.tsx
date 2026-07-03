@@ -63,10 +63,11 @@ export default function ScheduleScreen() {
     const out: PickerDay[] = [];
     for (let d = 0; d < HORIZON_DAYS; d++) {
       const dayStart = almatyDayStart(now, d);
-      // §4.6 — kapalı (izin/tatil) gün: hiç pencere yok → slot gösterilmez
-      const openWindows = closedDays.includes(dayStart)
-        ? []
-        : [{ startMs: dayStart + OPEN_FROM_H * 3_600_000, endMs: dayStart + OPEN_TO_H * 3_600_000 }];
+      // §4.6 — kapalı (izin/tatil) gün kullanıcı tarafında OTOMATİK GÖRÜNMEZ: gün şeride hiç eklenmez
+      if (closedDays.includes(dayStart)) continue;
+      const openWindows = [
+        { startMs: dayStart + OPEN_FROM_H * 3_600_000, endMs: dayStart + OPEN_TO_H * 3_600_000 },
+      ];
       const slots = computeDaySlots({
         openWindows,
         busy,

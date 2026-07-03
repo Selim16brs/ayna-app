@@ -58,9 +58,8 @@ export default function BookingDetailScreen() {
     const out: PickerDay[] = [];
     for (let d = 0; d < 14; d++) {
       const dayStart = almatyDayStart(now, d);
-      const openWindows = closedDays.includes(dayStart)
-        ? []
-        : [{ startMs: dayStart + 10 * 3_600_000, endMs: dayStart + 19 * 3_600_000 }];
+      if (closedDays.includes(dayStart)) continue; // §4.6 kapalı gün kullanıcıda görünmez
+      const openWindows = [{ startMs: dayStart + 10 * 3_600_000, endMs: dayStart + 19 * 3_600_000 }];
       const slots = computeDaySlots({
         openWindows,
         busy,
