@@ -80,6 +80,33 @@ export default function BenimIcinScreen() {
     <Screen edges={[]}>
       <TabHero title={firstName} subtitle={t(greetingKey())} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* §5.4 #2 — yaklaşan randevu (karşılamadan hemen sonra) */}
+        <Animated.View entering={FadeInDown.duration(360).delay(40)} style={styles.block}>
+          {nextBooking ? (
+            <FeatureCard booking={nextBooking} onPress={() => router.push('/booking/' + nextBooking.id)} />
+          ) : (
+            <Pressable style={styles.emptyFeature} onPress={() => router.push('/discover')}>
+              <View style={styles.emptyFeatureIcon}>
+                <Ionicons name="calendar-outline" size={22} color={colors.rose} />
+              </View>
+              <View style={styles.flex}>
+                <Text variant="bodyStrong" tone="ink">
+                  {t('benim.feature.empty')}
+                </Text>
+                <Text variant="caption" tone="muted" style={styles.emptyFeatureSub}>
+                  {t('benim.feature.empty_sub')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            </Pressable>
+          )}
+        </Animated.View>
+
+        {/* §5.4 #3 — Boni */}
+        <Animated.View entering={FadeInDown.duration(360).delay(60)} style={styles.block}>
+          <BoniCard onPress={() => router.push('/boni')} />
+        </Animated.View>
+
         {/* Bakım skoru — halka göstergeli hero (referans dili) */}
         <Animated.View entering={FadeInDown.duration(360).delay(40)} style={styles.block}>
           {careRoutines.length > 0 ? (
@@ -154,28 +181,6 @@ export default function BenimIcinScreen() {
           )}
         </Animated.View>
 
-        {/* Öne çıkan: yaklaşan randevu */}
-        <Animated.View entering={FadeInDown.duration(360).delay(60)} style={styles.block}>
-          {nextBooking ? (
-            <FeatureCard booking={nextBooking} onPress={() => router.push('/booking/' + nextBooking.id)} />
-          ) : (
-            <Pressable style={styles.emptyFeature} onPress={() => router.push('/discover')}>
-              <View style={styles.emptyFeatureIcon}>
-                <Ionicons name="calendar-outline" size={22} color={colors.rose} />
-              </View>
-              <View style={styles.flex}>
-                <Text variant="bodyStrong" tone="ink">
-                  {t('benim.feature.empty')}
-                </Text>
-                <Text variant="caption" tone="muted" style={styles.emptyFeatureSub}>
-                  {t('benim.feature.empty_sub')}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-            </Pressable>
-          )}
-        </Animated.View>
-
         {/* İstatistik şeridi */}
         <Animated.View entering={FadeInDown.duration(360).delay(120)} style={styles.block}>
           <View style={[styles.statStrip, shadow.soft]}>
@@ -203,11 +208,6 @@ export default function BenimIcinScreen() {
               onPress={() => router.push('/bookings')}
             />
           </View>
-        </Animated.View>
-
-        {/* Boni — AI danışman */}
-        <Animated.View entering={FadeInDown.duration(360).delay(180)} style={styles.block}>
-          <BoniCard onPress={() => router.push('/boni')} />
         </Animated.View>
 
         {/* Hızlı ekle */}
