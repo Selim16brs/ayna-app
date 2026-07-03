@@ -154,6 +154,8 @@ model LoyaltyEntry {
   reason    String // i18n anahtarı (örn. 'rewards.earn.review')
   detail    String      @default("")
   points    Int // earn pozitif, spend negatif
+  // §8 — kazanılan puanın son kullanma tarihi (12 ay); spend/expire kayıtlarında null
+  expiresAt DateTime?   @map("expires_at") @db.Timestamptz(6)
   createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([userId])

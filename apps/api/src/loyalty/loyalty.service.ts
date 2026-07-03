@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import type { LoyaltyEntry } from '@prisma/client';
+import { computeAvailableBalance } from '@ayna/domain';
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { EarnInput } from './loyalty.dto';
+import { expiringSoon, expiryDateFrom } from './loyalty.expiry';
 
 // Ödül kataloğu (mobil REWARDS ile aynı) — maliyet ve i18n etiketi sunucuda doğrulanır
 const REWARDS: Record<string, { cost: number; key: string }> = {
@@ -52,18 +54,34 @@ export class LoyaltyService {
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
-    const points = entries.reduce((sum, e) => sum + e.points, 0);
+    const now = new Date();
+    // §8 — kullanılabilir bakiye süresi dolan puanları HARİÇ tutar (domain saf mantığı)
+    const points = computeAvailableBalance(
+      entries.map((e) => ({
+        transactionType: e.kind === 'earn' ? ('earn' as const) : ('spend' as const),
+        amount: e.points,
+        expiresAt: e.expiresAt ?? null,
+      })),
+      now,
+    );
     const lifetimeEarned = entries
       .filter((e) => e.kind === 'earn')
       .reduce((sum, e) => sum + e.points, 0);
     const raffleEntries = entries.filter(
       (e) => e.kind === 'spend' && e.reason === 'rewards.redeem.raffle',
     ).length;
+    // §8 — 30 gün içinde sona erecek puan uyarısı ("puanların yanmasın 🎁")
+    const expiring = expiringSoon(
+      entries.map((e) => ({ kind: e.kind, points: e.points, expiresAt: e.expiresAt ?? null })),
+      now,
+    );
     return {
       points,
       raffleEntries,
       tier: computeTier(lifetimeEarned),
       ledger: entries.map(mapEntry),
+      expiringPoints: expiring.points,
+      nextExpiry: expiring.nextExpiry,
     };
   }
 
@@ -75,6 +93,8 @@ export class LoyaltyService {
         reason: input.reason,
         detail: input.detail ?? '',
         points: input.points,
+        // §8 — kazanılan puan 12 ay sonra sona erer
+        expiresAt: expiryDateFrom(new Date()),
       },
     });
     return this.summary(userId);
