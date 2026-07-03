@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { api, type SellerReview, type SellerReviews } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -84,6 +84,15 @@ function ReviewRow({
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
+  const [disputed, setDisputed] = useState(false);
+
+  // §7.2 — negatif yoruma itiraz: admin kuyruğuna düşer, yorum GÖRÜNÜR kalır (otomatik gizleme yok)
+  const dispute = () => {
+    Alert.alert(t('seller.reviews.dispute_confirm'), t('seller.reviews.dispute_note'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('seller.reviews.dispute'), onPress: () => setDisputed(true) },
+    ]);
+  };
 
   const send = async () => {
     if (!token || !businessId || !text.trim()) return;
@@ -137,9 +146,20 @@ function ReviewRow({
           <Button label={busy ? '…' : t('seller.reviews.send')} onPress={send} disabled={busy || !text.trim()} />
         </View>
       ) : (
-        <Text variant="caption" tone="rose" style={styles.replyLink} onPress={() => setOpen(true)}>
-          {t('seller.reviews.reply')}
-        </Text>
+        <View style={styles.actionRow}>
+          <Text variant="caption" tone="rose" style={styles.replyLink} onPress={() => setOpen(true)}>
+            {t('seller.reviews.reply')}
+          </Text>
+          {disputed ? (
+            <Text variant="caption" tone="muted" style={styles.disputedTag}>
+              {t('seller.reviews.disputed')}
+            </Text>
+          ) : (
+            <Text variant="caption" tone="muted" style={styles.replyLink} onPress={dispute}>
+              {t('seller.reviews.dispute')}
+            </Text>
+          )}
+        </View>
       )}
     </View>
   );
@@ -165,4 +185,6 @@ const makeStyles = (colors: ColorTokens) =>
       textAlignVertical: 'top',
     },
     replyLink: { marginTop: space(1), fontWeight: '600' },
+    actionRow: { flexDirection: 'row', alignItems: 'center', gap: space(2.5) },
+    disputedTag: { marginTop: space(1), fontStyle: 'italic' },
   });
