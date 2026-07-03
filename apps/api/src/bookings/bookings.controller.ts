@@ -7,6 +7,8 @@ import { verifyJwt } from '../common/crypto';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { type AuthedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
+  type BookingReceiptInput,
+  bookingReceiptSchema,
   type CancelInput,
   cancelSchema,
   type CreateBookingInput,
@@ -98,5 +100,50 @@ export class BookingsController {
     @Body(new ZodValidationPipe(dateLabelSchema)) body: DateLabelInput,
   ) {
     return this.bookings.counter(id, body.dateLabel);
+  }
+
+  // §4.2 — kullanıcı kapora dekontunu yükler
+  @Post(':id/deposit-receipt')
+  submitDepositReceipt(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(bookingReceiptSchema)) body: BookingReceiptInput,
+  ) {
+    return this.bookings.submitDepositReceipt(id, body.receiptUri);
+  }
+
+  // §4.2 — uzman kaporayı onaylar → randevu kesinleşir
+  @Post(':id/confirm-receipt')
+  confirmDepositReceipt(@Param('id') id: string) {
+    return this.bookings.confirmDepositReceipt(id);
+  }
+
+  // §4.4 — kullanıcı serbest iptal başlatır (uzman iade edecek)
+  @Post(':id/free-cancel')
+  freeCancel(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(cancelSchema)) body: CancelInput,
+  ) {
+    return this.bookings.freeCancel(id, body.reason);
+  }
+
+  // §4.4 — uzman iade dekontunu yükler
+  @Post(':id/refund-receipt')
+  uploadRefundReceipt(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(bookingReceiptSchema)) body: BookingReceiptInput,
+  ) {
+    return this.bookings.uploadRefundReceipt(id, body.receiptUri);
+  }
+
+  // §4.4 — kullanıcı iadeyi aldı → kayıt kapanır
+  @Post(':id/confirm-refund')
+  confirmRefund(@Param('id') id: string) {
+    return this.bookings.confirmRefund(id);
+  }
+
+  // §4.4 — taraflar itiraz açar → admin anlaşmazlık kuyruğu
+  @Post(':id/dispute')
+  dispute(@Param('id') id: string) {
+    return this.bookings.dispute(id);
   }
 }

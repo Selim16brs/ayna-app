@@ -24,6 +24,12 @@ export const createBookingSchema = z.object({
       'alternative_proposed',
       'no_show',
       'waitlist',
+      'deposit_pending',
+      'deposit_submitted',
+      'refund_pending',
+      'refund_submitted',
+      'disputed',
+      'reassigned_pending',
     ])
     .optional(),
 });
@@ -33,6 +39,10 @@ export const dateLabelSchema = z.object({ dateLabel: z.string().min(1) });
 // §6.C — iptal sebebi (opsiyonel)
 export const cancelSchema = z.object({ reason: z.string().max(300).optional() });
 
+// §4.2/§4.4 — dekont yükleme (kapora veya iade)
+export const bookingReceiptSchema = z.object({ receiptUri: z.string().min(1).max(600) });
+
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type DateLabelInput = z.infer<typeof dateLabelSchema>;
 export type CancelInput = z.infer<typeof cancelSchema>;
+export type BookingReceiptInput = z.infer<typeof bookingReceiptSchema>;

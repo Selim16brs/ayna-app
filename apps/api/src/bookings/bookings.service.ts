@@ -60,12 +60,55 @@ export class BookingsService {
 
   // §6.C — uzman/işletme randevuyu "gelmedi" işaretler (CRM tarafı)
   async noShow(id: string) {
-    return this.transition(id, { status: 'no_show' });
+    return this.transition(id, { status: 'no_show', depositForfeited: true });
   }
 
-  // §1.6 — uzman randevuyu onaylar
+  // Kapora tutarı — admin parametresi (varsayılan 1000 ₸)
+  private async depositAmount(): Promise<number> {
+    const s = await this.prisma.setting.findUnique({ where: { key: 'rate.deposit_kzt' } });
+    return s?.intValue ?? 1000;
+  }
+
+  // §4.1 — uzman onaylar → KESİN DEĞİL: kullanıcı önce kaporayı yükler (deposit_pending)
   async approve(id: string) {
-    return this.transition(id, { status: 'confirmed', proposedDateLabel: null });
+    const amount = await this.depositAmount();
+    const deadline = new Date(Date.now() + 3 * 60 * 60 * 1000); // §5.2 dekont penceresi (3 saat)
+    return this.transition(id, {
+      status: 'deposit_pending',
+      proposedDateLabel: null,
+      depositAmount: amount,
+      depositDeadline: deadline,
+    });
+  }
+
+  // §4.2 — kullanıcı kapora dekontunu yükler → uzman onayı bekler
+  async submitDepositReceipt(id: string, receiptUri: string) {
+    return this.transition(id, { status: 'deposit_submitted', depositReceiptUri: receiptUri });
+  }
+
+  // §4.2 — uzman kaporayı onaylar → randevu KESİN
+  async confirmDepositReceipt(id: string) {
+    return this.transition(id, { status: 'confirmed' });
+  }
+
+  // §4.4 — kullanıcı serbest iptal başlatır → uzman iade edecek (refund_pending)
+  async freeCancel(id: string, reason?: string) {
+    return this.transition(id, { status: 'refund_pending', cancelReason: reason ?? null });
+  }
+
+  // §4.4 — uzman iade dekontunu yükler → kullanıcı onayı bekler
+  async uploadRefundReceipt(id: string, receiptUri: string) {
+    return this.transition(id, { status: 'refund_submitted', refundReceiptUri: receiptUri });
+  }
+
+  // §4.4 — kullanıcı iadeyi aldı → kayıt kapanır
+  async confirmRefund(id: string) {
+    return this.transition(id, { status: 'cancelled' });
+  }
+
+  // §4.4 — taraflar itiraz açar → admin anlaşmazlık kuyruğu
+  async dispute(id: string) {
+    return this.transition(id, { status: 'disputed' });
   }
 
   // §1.6 — uzman alternatif saat önerir
@@ -118,6 +161,13 @@ function mapBooking(b: Booking) {
     price: Number(b.price),
     status: b.status,
     cancelReason: b.cancelReason ?? undefined,
+    // §4.1-4.4 — depozito/iade alanları
+    depositAmount: b.depositAmount ?? undefined,
+    depositReceiptUri: b.depositReceiptUri ?? undefined,
+    refundReceiptUri: b.refundReceiptUri ?? undefined,
+    depositDeadline: b.depositDeadline ?? undefined,
+    depositForfeited: b.depositForfeited,
+    providerNoShow: b.providerNoShow,
     reviewed: b.reviewed,
   };
 }

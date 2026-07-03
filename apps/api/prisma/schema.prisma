@@ -177,6 +177,13 @@ enum BookingStatus {
   alternative_proposed
   no_show
   waitlist
+  // §4.1-4.4 — depozito/iade yaşam döngüsü (backend'e taşındı)
+  deposit_pending // uzman onayladı → kullanıcı kaporayı yükleyecek
+  deposit_submitted // kullanıcı dekont yükledi → uzman onayı bekleniyor
+  refund_pending // serbest iptal → uzman iade edecek
+  refund_submitted // uzman iade dekontu yükledi → kullanıcı onayı bekleniyor
+  disputed // taraflar itiraz açtı (admin kuyruğu)
+  reassigned_pending // uzman ayrıldı → yeni uzman atandı, kullanıcı onayı bekleniyor
 }
 
 // Randevu kaydı. id istemci tarafından üretilir (mobil store ile tutarlı).
@@ -203,6 +210,13 @@ model Booking {
   status             BookingStatus @default(confirmed)
   // §6.C — iptal sebebi (kullanıcı "neden gelemiyorum" iletebilir)
   cancelReason       String?       @map("cancel_reason")
+  // §4.1-4.4 — depozito/iade alanları
+  depositAmount      Int?          @map("deposit_amount") // KZT kapora tutarı
+  depositReceiptUri  String?       @map("deposit_receipt_uri") // kullanıcının kapora dekontu
+  refundReceiptUri   String?       @map("refund_receipt_uri") // uzmanın iade dekontu
+  depositDeadline    DateTime?     @map("deposit_deadline") @db.Timestamptz(6) // dekont son yükleme
+  depositForfeited   Boolean       @default(false) @map("deposit_forfeited") // geç iptal/no-show: kapora yandı
+  providerNoShow     Boolean       @default(false) @map("provider_no_show") // uzman gelmedi
   reviewed           Boolean       @default(false)
   createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
