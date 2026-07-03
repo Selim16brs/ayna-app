@@ -487,27 +487,38 @@ function RoutineRow({ routine, border }: { routine: CareRoutine; border: boolean
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
   const completeRoutine = useStore((s) => s.completeRoutine);
   const due = dueLabel(routine.dueDays, t);
   return (
-    <View style={[styles.row, border && styles.rowBorder]}>
-      <View style={[styles.iconChip, { backgroundColor: colors.sageSoft }]}>
-        <Ionicons name={routine.icon as IoniconName} size={18} color={colors.sage} />
-      </View>
-      <Text variant="bodyStrong" tone="ink" style={styles.rowText} numberOfLines={1}>
-        {routine.name}
-      </Text>
-      <View style={[styles.duePill, due.danger && styles.dueDanger]}>
-        <Text variant="caption" style={{ color: due.danger ? colors.danger : colors.inkSoft }}>
-          {due.text}
+    <View style={[styles.routineRow, border && styles.rowBorder]}>
+      <View style={styles.routineTop}>
+        <View style={[styles.iconChip, { backgroundColor: colors.sageSoft }]}>
+          <Ionicons name={routine.icon as IoniconName} size={18} color={colors.sage} />
+        </View>
+        <Text variant="bodyStrong" tone="ink" style={styles.rowText} numberOfLines={1}>
+          {routine.name}
         </Text>
+        <View style={[styles.duePill, due.danger && styles.dueDanger]}>
+          <Text variant="caption" style={{ color: due.danger ? colors.danger : colors.inkSoft }}>
+            {due.text}
+          </Text>
+        </View>
+        <Pressable
+          hitSlop={8}
+          onPress={() => completeRoutine(routine.id)}
+          style={[styles.checkBtn, { backgroundColor: colors.sage }]}
+        >
+          <Ionicons name="checkmark" size={16} color={colors.onColor} />
+        </Pressable>
       </View>
-      <Pressable
-        hitSlop={8}
-        onPress={() => completeRoutine(routine.id)}
-        style={[styles.checkBtn, { backgroundColor: colors.sage }]}
-      >
-        <Ionicons name="checkmark" size={16} color={colors.onColor} />
+      {/* §5.4.5 — her hatırlatmada "Teklif Al" kısayolu → talep akışı (retention→gelir) */}
+      <Pressable style={styles.offerLink} onPress={() => router.push('/demand/new')}>
+        <Ionicons name="pricetags-outline" size={13} color={colors.rose} />
+        <Text variant="caption" tone="rose" style={styles.offerText}>
+          {t('care.get_offer')}
+        </Text>
+        <Ionicons name="arrow-forward" size={12} color={colors.rose} />
       </Pressable>
     </View>
   );
@@ -732,6 +743,17 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(1.75),
     },
     rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
+    routineRow: { paddingHorizontal: space(2), paddingVertical: space(1.5) },
+    routineTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
+    offerLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.5),
+      alignSelf: 'flex-start',
+      marginTop: space(1),
+      marginLeft: space(7),
+    },
+    offerText: { fontWeight: '700' },
     iconChip: {
       width: 42,
       height: 42,

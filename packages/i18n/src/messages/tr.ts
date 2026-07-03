@@ -362,6 +362,7 @@ export const tr = {
   'care.section.routines': 'Bakım takvimi',
   'care.section.moments': 'Özel günler',
   'care.due_in': 'gün kaldı',
+  'care.get_offer': 'Bunun için teklif al',
   'care.overdue': 'gecikti',
   'care.today': 'bugün',
   'care.add': 'Hatırlatma ekle',
