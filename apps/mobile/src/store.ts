@@ -129,6 +129,10 @@ interface State {
   setPremium: (v: boolean) => void;
   points: number;
   raffleEntries: number;
+  // §8.1 — puan kazanım limitleri: ilk randevu 300 (tek seferlik) + W2W beğeni 1/ay maks 100
+  firstBookingBonusGiven: boolean;
+  w2wLikeMonth: string;
+  w2wLikePoints: number;
   tier: LoyaltyTier | null;
   ledger: LedgerEntry[];
   userReviews: Record<string, Review[]>;
@@ -353,6 +357,9 @@ export const useStore = create<State>((set, get) => ({
   premium: false,
   points: 340,
   raffleEntries: 5,
+  firstBookingBonusGiven: false,
+  w2wLikeMonth: '',
+  w2wLikePoints: 0,
   tier: null,
   ledger: SEED_LEDGER,
   userReviews: {},
@@ -1035,6 +1042,11 @@ export const useStore = create<State>((set, get) => ({
       userReviews: { ...s.userReviews, [b.proId]: [...reviews, ...(s.userReviews[b.proId] ?? [])] },
     }));
     get().earn(40, 'rewards.earn.review', b.proName);
+    // §8.1 — ilk randevu tamamlama (değerlendirme = tamamlanmış hizmet) → 300 puan, tek seferlik
+    if (!get().firstBookingBonusGiven) {
+      set({ firstBookingBonusGiven: true });
+      get().earn(300, 'rewards.earn.first_booking', b.proName);
+    }
   },
 
   // §7.2 — uzman/salon yoruma tek yanıt yazar (yanıt kalıcı; bir kez)
@@ -1167,18 +1179,29 @@ export const useStore = create<State>((set, get) => ({
     return id;
   },
 
-  toggleHelpful: (postId) =>
+  toggleHelpful: (postId) => {
+    const post = get().circlePosts.find((p) => p.id === postId);
+    const liking = post ? !post.helpfulByMe : false;
     set((s) => ({
       circlePosts: s.circlePosts.map((p) =>
         p.id === postId
-          ? {
-              ...p,
-              helpfulByMe: !p.helpfulByMe,
-              helpful: p.helpful + (p.helpfulByMe ? -1 : 1),
-            }
+          ? { ...p, helpfulByMe: !p.helpfulByMe, helpful: p.helpful + (p.helpfulByMe ? -1 : 1) }
           : p,
       ),
-    })),
+    }));
+    // §8.1 — beğenirken 1 puan; ayda maks 100 (geri alınca puan iade edilmez)
+    if (liking) {
+      const month = new Date().toISOString().slice(0, 7);
+      const s = get();
+      const monthPts = s.w2wLikeMonth === month ? s.w2wLikePoints : 0;
+      if (monthPts < 100) {
+        set({ w2wLikeMonth: month, w2wLikePoints: monthPts + 1 });
+        get().earn(1, 'rewards.earn.w2w_like', '');
+      } else {
+        set({ w2wLikeMonth: month, w2wLikePoints: monthPts });
+      }
+    }
+  },
 
   addComment: (postId, text, anonymous) =>
     set((s) => ({

@@ -411,6 +411,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'rewards.earn.booking': 'Заверши запись из приложения',
   'rewards.earn.review': 'Оставь подтверждённую оценку',
   'rewards.earn.provider_noshow': 'Компенсация за неявку мастера',
+  'rewards.earn.first_booking': 'Завершение первой записи',
+  'rewards.earn.w2w_like': 'Лайк в W2W',
   'rewards.earn.referral': 'Пригласи друга',
   'rewards.earn.photo': 'Поделись фото до и после',
   'rewards.redeem.title': 'Используй баллы',

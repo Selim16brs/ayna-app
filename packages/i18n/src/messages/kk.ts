@@ -411,6 +411,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'rewards.earn.booking': 'Қосымшадан жазылуды аяқта',
   'rewards.earn.review': 'Расталған бағалау жаса',
   'rewards.earn.provider_noshow': 'Маман келмеген өтемақы',
+  'rewards.earn.first_booking': 'Алғашқы жазылуды аяқтау',
+  'rewards.earn.w2w_like': 'W2W ұнатуы',
   'rewards.earn.referral': 'Досыңды шақыр',
   'rewards.earn.photo': 'Дейінгі-кейінгі фотоны бөліс',
   'rewards.redeem.title': 'Ұпайыңды пайдалан',

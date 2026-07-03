@@ -464,6 +464,8 @@ export const tr = {
   'rewards.earn.booking': 'Uygulamadan randevu tamamla',
   'rewards.earn.review': 'Doğrulanmış değerlendirme yap',
   'rewards.earn.provider_noshow': 'Uzman gelmedi telafisi',
+  'rewards.earn.first_booking': 'İlk randevu tamamlama',
+  'rewards.earn.w2w_like': 'W2W beğenisi',
   'rewards.earn.referral': 'Arkadaşını davet et',
   'rewards.earn.photo': 'Öncesi-sonrası fotoğraf paylaş',
   'rewards.redeem.title': 'Puanını kullan',
