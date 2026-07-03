@@ -355,6 +355,7 @@ export const tr = {
   'record.personal': 'Kişisel',
   'record.reminder': 'Hatırlatma',
   'life.read': 'dk okuma',
+  'life.cta': 'Bu hizmet için teklif al',
 
   // Bakım (Care + Moments)
   'care.title': 'Bakım',
@@ -881,6 +882,10 @@ export const tr = {
   'circle.detail.no_comments': 'İlk yorumu sen yap',
   'circle.detail.comment_ph': 'Yorum yaz...',
   'circle.helpful_btn': 'Faydalı',
+  'circle.report': 'Şikâyet et',
+  'circle.reported': 'Şikâyet edildi',
+  'circle.report_confirm': 'Bu gönderiyi şikâyet et',
+  'circle.report_note': 'İçerik moderasyon ekibince incelenecek; kural ihlali varsa kaldırılır.',
 
   // Benim İçin — ekleme akışı
   'benim.add.choose': 'Ne eklemek istersin?',

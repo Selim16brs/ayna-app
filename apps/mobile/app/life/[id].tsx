@@ -1,14 +1,17 @@
-import { useLocalSearchParams } from 'expo-router';
-import { ImageBackground, ScrollView, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getArticle } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
-import { useThemedStyles } from '../../src/theme-context';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
 
 export default function ArticleDetailScreen() {
   const { t } = useLocale();
+  const { colors } = useTheme();
+  const router = useRouter();
   const styles = useThemedStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const article = getArticle(id ?? '');
@@ -68,6 +71,17 @@ export default function ArticleDetailScreen() {
               {para}
             </Text>
           ))}
+
+          {/* §5.5 — yazı sonunda bağlamsal teklif köprüsü */}
+          <Pressable style={styles.cta} onPress={() => router.push('/demand/new')}>
+            <View style={styles.ctaIcon}>
+              <Ionicons name="pricetags" size={18} color={colors.onAccent} />
+            </View>
+            <Text variant="bodyStrong" tone="onAccent" style={styles.ctaText}>
+              {t('life.cta')}
+            </Text>
+            <Ionicons name="arrow-forward" size={18} color={colors.onAccent} />
+          </Pressable>
         </View>
       </ScrollView>
     </Screen>
@@ -110,4 +124,22 @@ const makeStyles = (colors: ColorTokens) =>
     body: { paddingHorizontal: space(3), paddingTop: space(3) },
     lead: { fontSize: 17, lineHeight: 25 },
     para: { marginTop: space(2.25), lineHeight: 25 },
+    cta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      backgroundColor: colors.accent,
+      borderRadius: radius.lg,
+      padding: space(2),
+      marginTop: space(3),
+    },
+    ctaIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.md,
+      backgroundColor: 'rgba(0,0,0,0.12)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    ctaText: { flex: 1 },
   });

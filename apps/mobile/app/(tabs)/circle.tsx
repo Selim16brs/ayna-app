@@ -25,6 +25,9 @@ export default function CircleScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const posts = useStore((s) => s.circlePosts);
+  // §5.5 — uzman/salon W2W'de gönderi PAYLAŞAMAZ (yalnız okur + yorum yapar)
+  const role = useStore((s) => s.currentUser?.role);
+  const canPost = role !== 'professional' && role !== 'salon';
   const [cat, setCat] = useState<string>('all');
 
   // Kategoriler gönderilerden türetilir (kullanıcı arttıkça otomatik genişler)
@@ -45,12 +48,14 @@ export default function CircleScreen() {
         title={t('circle.title')}
         subtitle={t('circle.subtitle')}
         right={
-          <Pressable style={styles.ask} onPress={() => router.push('/circle/new')}>
-            <Ionicons name="add" size={16} color={colors.onAccent} />
-            <Text variant="caption" tone="onAccent">
-              {t('circle.ask')}
-            </Text>
-          </Pressable>
+          canPost ? (
+            <Pressable style={styles.ask} onPress={() => router.push('/circle/new')}>
+              <Ionicons name="add" size={16} color={colors.onAccent} />
+              <Text variant="caption" tone="onAccent">
+                {t('circle.ask')}
+              </Text>
+            </Pressable>
+          ) : undefined
         }
       />
 

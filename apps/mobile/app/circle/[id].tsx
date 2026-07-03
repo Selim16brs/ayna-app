@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -35,7 +36,18 @@ export default function PostDetailScreen() {
   const post = useStore((s) => s.circlePosts.find((p) => p.id === id));
   const toggleHelpful = useStore((s) => s.toggleHelpful);
   const addComment = useStore((s) => s.addComment);
+  const reportPost = useStore((s) => s.reportPost);
+  const reported = useStore((s) => s.reportedPosts.includes(id ?? ''));
   const [draft, setDraft] = useState('');
+
+  // §5.5 — şikâyet: içerik görünür kalır, admin kuyruğuna düşer
+  const onReport = () => {
+    if (!id || reported) return;
+    Alert.alert(t('circle.report_confirm'), t('circle.report_note'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('circle.report'), style: 'destructive', onPress: () => reportPost(id) },
+    ]);
+  };
 
   if (!post) {
     return (
@@ -117,6 +129,12 @@ export default function PostDetailScreen() {
                   style={styles.helpfulText}
                 >
                   {t('circle.helpful_btn')} · {post.helpful}
+                </Text>
+              </Pressable>
+              <Pressable style={styles.reportBtn} onPress={onReport} hitSlop={8} disabled={reported}>
+                <Ionicons name="flag-outline" size={15} color={colors.muted} />
+                <Text variant="caption" tone="muted">
+                  {reported ? t('circle.reported') : t('circle.report')}
                 </Text>
               </Pressable>
             </View>
@@ -208,7 +226,8 @@ const makeStyles = (colors: ColorTokens) =>
     typeBadge: { paddingHorizontal: space(1.5), paddingVertical: 6, borderRadius: radius.pill },
     typeText: { fontSize: 12, fontWeight: '700' },
     postText: { marginTop: space(2), lineHeight: 23, fontSize: 16 },
-    helpfulRow: { flexDirection: 'row', marginTop: space(2.25) },
+    helpfulRow: { flexDirection: 'row', alignItems: 'center', marginTop: space(2.25) },
+    reportBtn: { flexDirection: 'row', alignItems: 'center', gap: space(0.5), marginLeft: 'auto' },
     helpfulBtn: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -191,6 +191,9 @@ interface State {
   addPost: (input: AddPostInput) => string;
   toggleHelpful: (postId: string) => void;
   addComment: (postId: string, text: string, anonymous: boolean) => void;
+  // §5.5 — moderasyon katman 2: şikâyet et (eşik aşınca gizlenir + admin kuyruğu)
+  reportedPosts: string[];
+  reportPost: (postId: string) => void;
 
   // loyalty
   earn: (points: number, labelKey: MessageKey, detail: string) => void;
@@ -214,6 +217,7 @@ export const useStore = create<State>((set, get) => ({
   notifPrefs: { care: true, moment: true, personal: true, booking: true },
   closedDays: [],
   circlePosts: SEED_CIRCLE_POSTS,
+  reportedPosts: [],
   careRoutines: SEED_CARE_ROUTINES,
   personalLogs: SEED_PERSONAL_LOGS,
   moments: SEED_MOMENTS,
@@ -931,6 +935,19 @@ export const useStore = create<State>((set, get) => ({
           : p,
       ),
     })),
+
+  // §5.5 moderasyon katman 2 — şikâyet: içerik yayında kalır, admin kuyruğuna düşer
+  reportPost: (postId) => {
+    if (get().reportedPosts.includes(postId)) return;
+    set((s) => ({ reportedPosts: [...s.reportedPosts, postId] }));
+    get().pushNotification({
+      type: 'system',
+      title: 'Şikâyetin alındı',
+      body: 'İçerik moderasyon ekibince incelenecek. Teşekkürler.',
+      dateLabel: 'Az önce',
+      icon: 'flag-outline',
+    });
+  },
 
   earn: (points, labelKey, detail) => {
     // Optimistik yerel güncelleme (anında UI); oturum varsa sunucuya da yaz
