@@ -1191,6 +1191,104 @@ export const INCOMING_QUOTES: Quote[] = [
   },
 ];
 
+// ── Teklif/Talep akışı (reverse marketplace çekirdeği §5.2) ──────────────
+export type DemandMode = 'photo' | 'describe';
+export type DemandStatus = 'collecting' | 'expired' | 'booked';
+
+export interface DemandOffer {
+  id: string;
+  proId: string;
+  proName: string;
+  proImage: string;
+  rating: number;
+  reviewCount: number;
+  distanceKm: number;
+  price: number;
+  etaMin: number; // tahmini süre (dk)
+  note?: string; // uzmanın kısa notu
+  slots: number[]; // uzmanın önerdiği 2-3 müsait başlangıç (UTC ms)
+}
+
+export interface DemandRequest {
+  id: string;
+  mode: DemandMode;
+  category: string;
+  note?: string; // Mod 2 açıklama
+  photoUrl?: string;
+  budget?: number; // Mod 2 bütçe (₸)
+  collectMin: number; // teklif toplama süresi (dk)
+  createdAt: number;
+  expiresAt: number;
+  status: DemandStatus;
+  offers: DemandOffer[];
+  bookedOfferId?: string;
+}
+
+// §5.2 — teklif toplama süresi seçenekleri (dk): 1s / 3s / 12s / 24s. Varsayılan 3s.
+export const COLLECT_OPTIONS = [60, 180, 720, 1440] as const;
+export const COLLECT_DEFAULT = 180;
+
+// Kategori bazlı tahmini süre (dk) — teklif üretiminde kullanılır (mock; admin panelde tanımlı olacak)
+const CAT_ETA: Record<string, number> = {
+  hair: 90,
+  nails: 60,
+  brows: 45,
+  lashes: 120,
+  makeup: 90,
+  skincare: 60,
+  spa: 90,
+  epilation: 60,
+};
+
+const OFFER_NOTES = [
+  'Bu iş için ideal ürünlerim mevcut, memnun kalacaksın.',
+  'Benzer çalışmalarımı profilimde görebilirsin.',
+  'İlk randevuya özel küçük bir ikramım olacak.',
+];
+
+// Deterministik teklif üretimi: aynı şehirdeki kategori uzmanlarından mock teklifler (§5.2)
+export function buildOffers(category: string, city: string, budget: number | undefined, nowMs: number): DemandOffer[] {
+  const sameCity = PROFESSIONALS.filter((p) => p.sector === category && p.city === city);
+  const byCat = sameCity.length ? sameCity : PROFESSIONALS.filter((p) => p.sector === category);
+  const pool = (byCat.length ? byCat : PROFESSIONALS).slice(0, 5);
+  const eta = CAT_ETA[category] ?? 60;
+  return pool.map((p, i) => {
+    const base = budget && budget > 0 ? budget : p.priceFrom;
+    const price = Math.max(1000, Math.round((base * (0.85 + 0.08 * i)) / 500) * 500);
+    // 3 müsait başlangıç önerisi (deterministik, Almatı saati)
+    const slots = [
+      almatySlotMs(nowMs, i + 1, 11 + (i % 3), 0),
+      almatySlotMs(nowMs, i + 2, 14, 30),
+      almatySlotMs(nowMs, i + 2, 16, 0),
+    ];
+    return {
+      id: `of-${p.id}`,
+      proId: p.id,
+      proName: p.name,
+      proImage: p.image,
+      rating: p.rating,
+      reviewCount: p.reviewCount,
+      distanceKm: 1 + ((i * 2) % 8),
+      price,
+      etaMin: eta,
+      ...(i % 2 === 1 ? { note: OFFER_NOTES[i % OFFER_NOTES.length] } : {}),
+      slots,
+    };
+  });
+}
+
+export type OfferSort = 'recommended' | 'price' | 'distance' | 'rating';
+
+// §5.2 — varsayılan "Önerilen": puan ağırlıklı + makul fiyat + yakınlık dengeli skor
+export function sortOffers(offers: DemandOffer[], by: OfferSort): DemandOffer[] {
+  const arr = [...offers];
+  if (by === 'price') return arr.sort((a, b) => a.price - b.price);
+  if (by === 'distance') return arr.sort((a, b) => a.distanceKm - b.distanceKm);
+  if (by === 'rating') return arr.sort((a, b) => b.rating - a.rating);
+  const score = (o: DemandOffer) => o.rating * 20 - o.distanceKm * 2 - o.price / 2000;
+  return arr.sort((a, b) => score(b) - score(a));
+}
+
 // ── Sadakat: kazanım/harcama defteri + çekiliş + ödüller ─────────────────
 export type LedgerKind = 'earn' | 'spend';
 export interface LedgerEntry {

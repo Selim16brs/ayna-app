@@ -4,9 +4,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { api } from '../../src/api';
-import { CATEGORIES } from '../../src/data';
+import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS } from '../../src/data';
 import { useCampaigns } from '../../src/catalog';
+import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -25,28 +25,22 @@ export default function NewQuoteScreen() {
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const campaigns = useCampaigns();
-  const pushNotification = useStore((s) => s.pushNotification);
+  const createDemand = useStore((s) => s.createDemand);
   const [photo, setPhoto] = useState<string | null>(null);
   const [category, setCategory] = useState<string>('hair');
+  const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
   const [submitting, setSubmitting] = useState(false);
 
-  async function submit() {
+  function submit() {
     setSubmitting(true);
-    try {
-      await api.createQuoteRequest({ categoryId: category, photoUrl: photo ?? undefined });
-    } catch {
-      // demo: hata olsa da sonuç ekranına geç
-    }
-    // İlgili alandaki uzman/salonlar teklif verdi → kullanıcıya "yeni teklifin var" bildirimi
-    pushNotification({
-      type: 'quote',
-      title: t('quote.notif.title'),
-      body: t('quote.notif.body'),
-      dateLabel: 'Şimdi',
-      icon: 'pricetags-outline',
-      route: '/quote/results',
+    // §5.2 Mod 1 — fotoğrafla teklif: talep aç, kategorideki uzmanlardan teklifler gelir
+    const id = createDemand({
+      mode: 'photo',
+      category,
+      collectMin,
+      ...(photo ? { photoUrl: photo } : {}),
     });
-    router.replace('/quote/results');
+    router.replace(`/quote/results?id=${id}`);
   }
 
   async function pickPhoto() {
@@ -147,6 +141,27 @@ export default function NewQuoteScreen() {
                 />
                 <Text variant="caption" tone={active ? 'onAccent' : 'inkSoft'}>
                   {t(cat.labelKey)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* ── Teklif toplama süresi (§5.2) ── */}
+        <Text variant="bodyStrong" tone="ink" style={styles.durLabel}>
+          {t('quote.duration')}
+        </Text>
+        <View style={styles.durRow}>
+          {COLLECT_OPTIONS.map((m) => {
+            const active = m === collectMin;
+            return (
+              <Pressable
+                key={m}
+                onPress={() => setCollectMin(m)}
+                style={[styles.durChip, active && styles.durChipActive]}
+              >
+                <Text variant="caption" tone={active ? 'onAccent' : 'inkSoft'} style={styles.durText}>
+                  {t(`dur.${m}` as MessageKey)}
                 </Text>
               </Pressable>
             );
@@ -299,6 +314,17 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     catChipActive: { backgroundColor: colors.accent },
+
+    durLabel: { paddingHorizontal: space(3), marginTop: space(2.5), marginBottom: space(1) },
+    durRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1), paddingHorizontal: space(3) },
+    durChip: {
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    durChipActive: { backgroundColor: colors.accent },
+    durText: { fontWeight: '700' },
 
     specialRow: { paddingHorizontal: space(3), gap: space(1.5) },
     special: {

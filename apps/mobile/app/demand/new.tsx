@@ -5,7 +5,8 @@ import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/api';
-import { CATEGORIES, formatPrice } from '../../src/data';
+import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS, formatPrice } from '../../src/data';
+import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -30,11 +31,12 @@ export default function NewDemandScreen() {
   const insets = useSafeAreaInsets();
   const CAT_COLORS = makeCatColors(colors);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
-  const pushNotification = useStore((s) => s.pushNotification);
+  const createDemand = useStore((s) => s.createDemand);
   const [desc, setDesc] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [category, setCategory] = useState<string>(CATEGORIES[0]!.id);
   const [budget, setBudget] = useState('');
+  const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
   const [market, setMarket] = useState<{ average: number; floor: number } | null>(null);
 
   async function addPhoto() {
@@ -58,19 +60,20 @@ export default function NewDemandScreen() {
 
   const budgetNum = Number(budget);
   const tooLow = market !== null && budgetNum > 0 && budgetNum < market.floor;
-  const canSubmit = desc.trim().length > 0 && budgetNum > 0;
+  // §5.2 — bütçe taban fiyatın altındaysa teklif alınamaz (gönderim bloklanır)
+  const canSubmit = desc.trim().length > 0 && budgetNum > 0 && !tooLow;
 
   function submit() {
-    // İlgili alandaki uzman/salonlar bütçeyi kabul etti → "yeni teklifin var" bildirimi
-    pushNotification({
-      type: 'quote',
-      title: t('demand.notif.title'),
-      body: t('demand.notif.body'),
-      dateLabel: 'Şimdi',
-      icon: 'pricetags-outline',
-      route: '/demand/results',
+    // §5.2 Mod 2 — anlatarak teklif: talep aç, kategorideki uzmanlardan teklifler gelir
+    const id = createDemand({
+      mode: 'describe',
+      category,
+      note: desc.trim(),
+      budget: budgetNum,
+      collectMin,
+      ...(photos[0] ? { photoUrl: photos[0] } : {}),
     });
-    router.replace({ pathname: '/demand/results', params: { budget } });
+    router.replace(`/quote/results?id=${id}`);
   }
 
   return (
@@ -221,6 +224,27 @@ export default function NewDemandScreen() {
               {t('demand.new.photo_privacy')}
             </Text>
           </View>
+
+          {/* Teklif toplama süresi (§5.2) */}
+          <Text variant="bodyStrong" tone="ink" style={styles.label}>
+            {t('quote.duration')}
+          </Text>
+          <View style={styles.durRow}>
+            {COLLECT_OPTIONS.map((m) => {
+              const active = m === collectMin;
+              return (
+                <Pressable
+                  key={m}
+                  onPress={() => setCollectMin(m)}
+                  style={[styles.durChip, active && styles.durChipActive]}
+                >
+                  <Text variant="caption" tone={active ? 'onAccent' : 'inkSoft'} style={styles.durText}>
+                    {t(`dur.${m}` as MessageKey)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
       </ScrollView>
 
@@ -303,6 +327,15 @@ const makeStyles = (colors: ColorTokens) =>
     subtitle: { marginTop: 2 },
 
     label: { marginTop: space(3), marginBottom: space(1.5) },
+    durRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    durChip: {
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    durChipActive: { backgroundColor: colors.accent },
+    durText: { fontWeight: '700' },
 
     catRow: { gap: space(1.5), paddingRight: space(2) },
     cat: { alignItems: 'center', width: 72, gap: space(0.75) },

@@ -6,10 +6,13 @@ import {
   type AppNotification,
   type Appointment,
   type BookingSource,
+  type DemandMode,
+  type DemandRequest,
   DEPOSIT_KZT,
   FREE_CANCEL_WINDOW_MS,
   REMIND_24H_MS,
   REMIND_2H_MS,
+  buildOffers,
   buildUpcomingEvents,
   type CareRoutine,
   type CirclePost,
@@ -83,6 +86,8 @@ export interface AddPostInput {
 
 interface State {
   bookings: Appointment[];
+  // §5.2 — açılan teklif/talep istekleri (reverse marketplace)
+  demands: DemandRequest[];
   // §4.6 — uzmanın kapalı (izin/tatil) günleri: Almatı gün başlangıcı UTC ms.
   // Kullanıcı tarafında bu günler slot göstermez. (Mock: tek sağlayıcı; backend providerId'yle anahtarlar.)
   closedDays: number[];
@@ -124,6 +129,17 @@ interface State {
   disputeBooking: (id: string) => void; // taraflar itiraz açar (destek/admin kuyruğu)
   checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
   toggleClosedDay: (dayStartMs: number) => void; // §4.6 — günü kapalı/açık işaretle
+  // §5.2 — teklif/talep akışı
+  createDemand: (input: {
+    mode: DemandMode;
+    category: string;
+    note?: string;
+    photoUrl?: string;
+    budget?: number;
+    collectMin: number;
+  }) => string;
+  selectOffer: (demandId: string, offerId: string, slotMs: number) => string; // → booking id
+  expireDemands: () => void; // süresi dolan talepleri işaretle
   // §4.5 — uzman ayrılığında randevu devri (sessiz silme YASAK)
   reassignStaffBookings: (oldUzman: string, newUzman: string) => number; // devredilen randevu sayısı
   acceptReassignment: (id: string) => void; // kullanıcı yeni uzmanı onaylar
@@ -166,6 +182,7 @@ interface State {
 
 export const useStore = create<State>((set, get) => ({
   bookings: SEED_APPOINTMENTS,
+  demands: [],
   closedDays: [],
   circlePosts: SEED_CIRCLE_POSTS,
   careRoutines: SEED_CARE_ROUTINES,
@@ -380,6 +397,86 @@ export const useStore = create<State>((set, get) => ({
         ? s.closedDays.filter((d) => d !== dayStartMs)
         : [...s.closedDays, dayStartMs],
     })),
+
+  // §5.2 — teklif/talep aç: aynı şehirdeki kategori uzmanlarından mock teklifler üretir
+  createDemand: (input) => {
+    const id = nextId('dm');
+    const now = Date.now();
+    const city = get().currentUser?.city ?? 'Almatı';
+    const demand: DemandRequest = {
+      id,
+      mode: input.mode,
+      category: input.category,
+      ...(input.note ? { note: input.note } : {}),
+      ...(input.photoUrl ? { photoUrl: input.photoUrl } : {}),
+      ...(input.budget ? { budget: input.budget } : {}),
+      collectMin: input.collectMin,
+      createdAt: now,
+      expiresAt: now + input.collectMin * 60_000,
+      status: 'collecting',
+      offers: buildOffers(input.category, city, input.budget, now),
+    };
+    set((s) => ({ demands: [demand, ...s.demands] }));
+    get().pushNotification({
+      type: 'quote',
+      title: 'Teklifler gelmeye başladı',
+      body: `${demand.offers.length} uzman talebini yanıtladı`,
+      dateLabel: 'Az önce',
+      icon: 'pricetags-outline',
+      route: `/quote/results?id=${id}`,
+    });
+    return id;
+  },
+
+  // §5.2 — kullanıcı teklifi seçer → randevu akışı başlar; seçilmeyenlere kapanış bildirimi
+  selectOffer: (demandId, offerId, slotMs) => {
+    const demand = get().demands.find((d) => d.id === demandId);
+    const offer = demand?.offers.find((o) => o.id === offerId);
+    if (!demand || !offer) return '';
+    const bookingId = get().addBooking({
+      source: demand.mode === 'photo' ? 'photo_quote' : 'demand',
+      service: `${demand.category} (teklif)`,
+      proId: offer.proId,
+      proName: offer.proName,
+      proImage: offer.proImage,
+      startMs: slotMs,
+      durationMin: offer.etaMin,
+      price: offer.price,
+    });
+    // Teklif zaten uzmanın kabulüdür → doğrudan depozito adımına (§4.3)
+    get().approveBooking(bookingId);
+    set((s) => ({
+      demands: s.demands.map((d) =>
+        d.id === demandId ? { ...d, status: 'booked', bookedOfferId: offerId } : d,
+      ),
+    }));
+    // Seçilmeyen uzmanlara nazik kapanış bildirimi (özet — mock)
+    const others = demand.offers.filter((o) => o.id !== offerId).length;
+    if (others > 0)
+      get().pushNotification({
+        type: 'quote',
+        title: 'Teklif kapandı',
+        body: `${others} uzmana nazik kapanış bildirimi gönderildi`,
+        dateLabel: 'Az önce',
+        icon: 'checkmark-done-outline',
+      });
+    return bookingId;
+  },
+
+  // §5.2 — süresi dolan (teklif toplanan) talepleri işaretle
+  expireDemands: () =>
+    set((s) => {
+      const now = Date.now();
+      let changed = false;
+      const demands = s.demands.map((d) => {
+        if (d.status === 'collecting' && d.expiresAt <= now) {
+          changed = true;
+          return { ...d, status: 'expired' as const };
+        }
+        return d;
+      });
+      return changed ? { demands } : {};
+    }),
 
   // §4.5 — uzman kadrodan çıkınca gelecek randevuları yeni uzmana devret (SESSİZ SİLME YASAK):
   // her randevu reassigned_pending olur, kullanıcı yeniden onaylar. Devredilen sayıyı döndürür.

@@ -211,6 +211,16 @@ export const tr = {
   'quotes.filter.price': 'Fiyat',
   'quotes.pick': 'Saat seç',
   'quotes.eta': 'tahmini süre',
+  'quotes.slots': 'Uzmanın önerdiği saatler — dokun ve randevunu netleştir',
+  'quotes.remain': 'dk kaldı',
+  'quotes.expired': 'Süre doldu',
+  'quotes.booked': 'Randevuya dönüştü',
+  'quotes.none': 'Bu talep bulunamadı',
+  'quote.duration': 'Teklif toplama süresi',
+  'dur.60': '1 saat',
+  'dur.180': '3 saat',
+  'dur.720': '12 saat',
+  'dur.1440': '24 saat',
 
   // Model 2 — talep oluştur
   'demand.new.title': 'Talep oluştur',
