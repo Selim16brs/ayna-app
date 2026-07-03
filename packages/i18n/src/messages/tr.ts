@@ -717,6 +717,8 @@ export const tr = {
   'search.empty_sub': 'Farklı bir kelime dene',
   'search.results': 'sonuç',
   'search.all_categories': 'Tüm kategoriler',
+  'search.recent': 'Son aramalar',
+  'search.popular': 'Popüler kategoriler',
   // §7 — sıralama
   'search.sort.recommended': 'Önerilen',
   'search.sort.rating': 'Puan',

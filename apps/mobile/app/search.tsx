@@ -14,6 +14,7 @@ import {
 } from '../src/data';
 import type { MessageKey } from '@ayna/i18n';
 import { useProfessionals } from '../src/catalog';
+import { useStore } from '../src/store';
 import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -49,10 +50,16 @@ export default function SearchScreen() {
   const [sort, setSort] = useState<SortKey>('recommended');
   const [showSort, setShowSort] = useState(false);
   const professionals = useProfessionals();
+  // §5.1.4 — arama da şehre göre filtreli
+  const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
+  const recentSearches = useStore((s) => s.recentSearches);
+  const addRecentSearch = useStore((s) => s.addRecentSearch);
+  const isEmpty = query.trim().length === 0 && activeCat === null;
 
   const results = useMemo(() => {
     const q = lower(query.trim());
     const filtered = professionals.filter((p) => {
+      if (p.city !== city) return false;
       if (activeCat && p.sector !== activeCat) return false;
       if (!q) return true;
       const sectorLabel = lower(t(categoryLabelKey(p.sector)));
@@ -69,7 +76,9 @@ export default function SearchScreen() {
           distanceKm(ALMATY, proCoords(a.id)) - distanceKm(ALMATY, proCoords(b.id)),
       );
     return sorted;
-  }, [professionals, query, activeCat, sort, t]);
+  }, [professionals, query, activeCat, sort, city, t]);
+
+  const submit = () => addRecentSearch(query);
 
   return (
     <Screen edges={[]}>
@@ -84,6 +93,7 @@ export default function SearchScreen() {
             placeholderTextColor={colors.muted}
             value={query}
             onChangeText={setQuery}
+            onSubmitEditing={submit}
             autoFocus
             returnKeyType="search"
           />
@@ -167,6 +177,42 @@ export default function SearchScreen() {
       </ScrollView>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {isEmpty ? (
+          /* §5.1.2 — boş kutu: son aramalar + popüler kategoriler */
+          <View style={styles.emptyBox}>
+            {recentSearches.length > 0 ? (
+              <>
+                <Text variant="label" tone="rose" style={styles.blockLabel}>
+                  {t('search.recent')}
+                </Text>
+                <View style={styles.wrapChips}>
+                  {recentSearches.map((r) => (
+                    <Pressable key={r} style={styles.recentChip} onPress={() => setQuery(r)}>
+                      <Ionicons name="time-outline" size={13} color={colors.inkSoft} />
+                      <Text variant="caption" tone="inkSoft">
+                        {r}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </>
+            ) : null}
+            <Text variant="label" tone="rose" style={styles.blockLabel}>
+              {t('search.popular')}
+            </Text>
+            <View style={styles.wrapChips}>
+              {CATEGORIES.map((cat) => (
+                <Pressable key={cat.id} style={styles.popChip} onPress={() => setActiveCat(cat.id)}>
+                  <Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={14} color={colors.rose} />
+                  <Text variant="caption" tone="ink">
+                    {t(cat.labelKey)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : (
+          <>
         <Text variant="caption" tone="muted" style={styles.count}>
           {results.length} {t('search.results')}
         </Text>
@@ -189,10 +235,15 @@ export default function SearchScreen() {
                 key={p.id}
                 pro={p}
                 index={i}
-                onPress={() => router.push('/professional/' + p.id)}
+                onPress={() => {
+                  submit();
+                  router.push('/professional/' + p.id);
+                }}
               />
             ))}
           </View>
+        )}
+          </>
         )}
       </ScrollView>
     </Screen>
@@ -293,6 +344,27 @@ const makeStyles = (colors: ColorTokens) =>
     chipOnText: { fontWeight: '700' },
     content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
     count: { marginBottom: space(1.5), marginLeft: space(0.5) },
+    emptyBox: { gap: space(1), paddingTop: space(1) },
+    blockLabel: { marginTop: space(2), marginBottom: space(0.5), marginLeft: space(0.5) },
+    wrapChips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    recentChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.5),
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    popChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.roseSoft,
+    },
     list: { gap: space(1.5) },
     row: {
       flexDirection: 'row',

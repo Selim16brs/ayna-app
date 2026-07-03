@@ -89,6 +89,8 @@ interface State {
   bookings: Appointment[];
   // §5.2 — açılan teklif/talep istekleri (reverse marketplace)
   demands: DemandRequest[];
+  // §5.1.2 — son aramalar (boş arama kutusunda gösterilir)
+  recentSearches: string[];
   // §4.6 — uzmanın kapalı (izin/tatil) günleri: Almatı gün başlangıcı UTC ms.
   // Kullanıcı tarafında bu günler slot göstermez. (Mock: tek sağlayıcı; backend providerId'yle anahtarlar.)
   closedDays: number[];
@@ -141,6 +143,7 @@ interface State {
   }) => string;
   selectOffer: (demandId: string, offerId: string, slotMs: number) => string; // → booking id
   expireDemands: () => void; // süresi dolan talepleri işaretle
+  addRecentSearch: (q: string) => void; // §5.1.2 — son aramaya ekle (dedup, en fazla 8)
   // §5.2 uzman tarafı — açık talebe teklif ver
   submitOffer: (
     demandId: string,
@@ -189,6 +192,7 @@ interface State {
 export const useStore = create<State>((set, get) => ({
   bookings: SEED_APPOINTMENTS,
   demands: SEED_DEMANDS,
+  recentSearches: [],
   closedDays: [],
   circlePosts: SEED_CIRCLE_POSTS,
   careRoutines: SEED_CARE_ROUTINES,
@@ -505,6 +509,15 @@ export const useStore = create<State>((set, get) => ({
       dateLabel: 'Az önce',
       icon: 'pricetag-outline',
     });
+  },
+
+  // §5.1.2 — son aramaya ekle (en yeni başta, dedup, maks 8)
+  addRecentSearch: (q) => {
+    const term = q.trim();
+    if (!term) return;
+    set((s) => ({
+      recentSearches: [term, ...s.recentSearches.filter((x) => x !== term)].slice(0, 8),
+    }));
   },
 
   // §5.2 — süresi dolan (teklif toplanan) talepleri işaretle
