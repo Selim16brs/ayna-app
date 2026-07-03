@@ -30,9 +30,10 @@ export default function LoginScreen() {
     try {
       const session = await api.login({ identifier: id.trim(), password });
       setAuth(session);
-      // §3.3 rol bazlı yönlendirme
+      // §3.3 rol bazlı yönlendirme: salon/uzman → panel, kullanıcı (user) → keşfet
       const role = session.user.role;
-      router.replace(role === 'customer' ? '/discover' : '/seller/reports');
+      const isSeller = role === 'salon' || role === 'professional';
+      router.replace(isSeller ? '/seller/reports' : '/discover');
     } catch {
       Alert.alert(t('auth.error.bad'));
     } finally {
