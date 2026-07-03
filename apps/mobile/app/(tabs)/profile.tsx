@@ -23,12 +23,14 @@ const makeMenuColors = (colors: ColorTokens) => [
   colors.teal,
 ];
 
-const MENU: { key: MessageKey; icon: IoniconName; danger?: boolean }[] = [
-  { key: 'profile.menu.panel', icon: 'briefcase-outline' },
+// §5.6 nihai menü. 'panel' yalnızca satıcı hesabında; 'AYNA Safe' KALDIRILDI.
+const MENU: { key: MessageKey; icon: IoniconName; danger?: boolean; sellerOnly?: boolean }[] = [
+  { key: 'profile.menu.panel', icon: 'briefcase-outline', sellerOnly: true },
   { key: 'profile.menu.passport', icon: 'card-outline' },
   { key: 'profile.menu.rewards', icon: 'gift-outline' },
   { key: 'profile.menu.budget', icon: 'wallet-outline' },
-  { key: 'profile.menu.safe', icon: 'shield-checkmark-outline' },
+  { key: 'profile.menu.saved', icon: 'bookmark-outline' },
+  { key: 'profile.menu.addresses', icon: 'location-outline' },
   { key: 'profile.menu.privacy', icon: 'lock-closed-outline' },
   { key: 'profile.menu.notifications', icon: 'notifications-outline' },
   { key: 'profile.menu.language', icon: 'language-outline' },
@@ -53,6 +55,10 @@ export default function ProfileScreen() {
   const phoneVerified = useStore((s) => s.currentUser?.phoneVerified ?? false);
   const womenVerified = useStore((s) => s.currentUser?.womenVerified ?? false);
   const logout = useStore((s) => s.logout);
+  // §5.6 — 'İşletme paneli' yalnızca salon/uzman hesabında görünür
+  const role = useStore((s) => s.currentUser?.role);
+  const isSeller = role === 'salon' || role === 'professional';
+  const menu = MENU.filter((m) => !m.sellerOnly || isSeller);
 
   const appearance: 'system' | ThemeMode = preference ?? 'system';
   const onAppearance = (value: 'system' | ThemeMode) =>
@@ -63,7 +69,8 @@ export default function ProfileScreen() {
     else if (key === 'profile.menu.passport') router.push('/profile/passport');
     else if (key === 'profile.menu.rewards') router.push('/rewards');
     else if (key === 'profile.menu.budget') router.push('/profile/budget');
-    else if (key === 'profile.menu.safe') router.push('/profile/safe');
+    else if (key === 'profile.menu.saved') router.push('/favorites');
+    else if (key === 'profile.menu.addresses') router.push('/profile/addresses');
     else if (key === 'profile.menu.privacy') router.push('/profile/privacy');
     else if (key === 'profile.menu.notifications') router.push('/profile/notifications');
     else if (key === 'profile.menu.help') router.push('/profile/help');
@@ -157,7 +164,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={[styles.group, shadow.soft]}>
-          {MENU.filter((m) => !m.danger).map((m, i, arr) => (
+          {menu.filter((m) => !m.danger).map((m, i, arr) => (
             <Pressable
               key={m.key}
               style={[styles.row, i < arr.length - 1 && styles.rowBorder]}
@@ -177,7 +184,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={[styles.group, styles.groupGap, shadow.soft]}>
-          {MENU.filter((m) => m.danger).map((m) => (
+          {menu.filter((m) => m.danger).map((m) => (
             <Pressable key={m.key} style={styles.row} onPress={() => onPress(m.key)}>
               <View style={[styles.menuIcon, styles.menuIconDanger]}>
                 <Ionicons name={m.icon} size={18} color={colors.onColor} />

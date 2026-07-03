@@ -36,6 +36,7 @@ import {
   SEED_NOTIFICATIONS,
   SEED_PERSONAL_LOGS,
   type UpcomingEvent,
+  type UserAddress,
 } from './data';
 
 let seq = 5000;
@@ -110,6 +111,8 @@ interface State {
   personalLogs: PersonalLog[];
   moments: Moment[];
   favorites: string[];
+  // §5.6 — kullanıcı adresleri (ev/iş)
+  addresses: UserAddress[];
   points: number;
   raffleEntries: number;
   tier: LoyaltyTier | null;
@@ -188,6 +191,9 @@ interface State {
 
   // favorites
   toggleFavorite: (proId: string) => void;
+  // §5.6 — adres yönetimi
+  addAddress: (label: UserAddress['label'], detail: string) => void;
+  removeAddress: (id: string) => void;
 
   // personal
   addPersonalLog: (input: AddPersonalLogInput) => void;
@@ -231,6 +237,7 @@ export const useStore = create<State>((set, get) => ({
   personalLogs: SEED_PERSONAL_LOGS,
   moments: SEED_MOMENTS,
   favorites: ['3'],
+  addresses: [{ id: 'ad1', label: 'home', detail: 'Almatı, Dostyk 12' }],
   points: 340,
   raffleEntries: 5,
   tier: null,
@@ -891,6 +898,16 @@ export const useStore = create<State>((set, get) => ({
         ? s.favorites.filter((x) => x !== proId)
         : [proId, ...s.favorites],
     })),
+
+  // §5.6 — adres ekle/kaldır
+  addAddress: (label, detail) => {
+    if (!detail.trim()) return;
+    set((s) => ({
+      addresses: [...s.addresses, { id: nextId('ad'), label, detail: detail.trim() }],
+    }));
+  },
+  removeAddress: (id) =>
+    set((s) => ({ addresses: s.addresses.filter((a) => a.id !== id) })),
 
   addPersonalLog: (input) =>
     set((s) => ({

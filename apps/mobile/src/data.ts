@@ -842,6 +842,14 @@ export const SEED_APPOINTMENTS: Appointment[] = [
   },
 ];
 
+// §5.6 — kullanıcı adresleri (çoklu: ev/iş). "Sana Yakın" ve mesafe için (§3.2 C).
+export type AddressLabel = 'home' | 'work';
+export interface UserAddress {
+  id: string;
+  label: AddressLabel;
+  detail: string;
+}
+
 // ── Circle (topluluk) ────────────────────────────────────────────────────
 export type CirclePostType = 'recommend' | 'asking' | 'experience';
 export interface CircleComment {
