@@ -7,7 +7,7 @@ import {
   ALMATY,
   CATEGORIES,
   distanceKm,
-  formatPrice,
+  priceLabel,
   type Professional,
   proCoords,
 } from '../src/data';
@@ -117,7 +117,7 @@ export default function MapScreen() {
                     · {distanceKm(ALMATY, proCoords(selected.id))} {t('map.distance')}
                   </Text>
                   <Text variant="caption" tone="muted">
-                    · {formatPrice(selected.priceFrom)}
+                    · {priceLabel(selected)}
                   </Text>
                 </View>
               </View>

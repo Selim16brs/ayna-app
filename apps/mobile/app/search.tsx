@@ -8,7 +8,7 @@ import {
   CATEGORIES,
   categoryLabelKey,
   distanceKm,
-  formatPrice,
+  priceLabel,
   type Professional,
   proCoords,
 } from '../src/data';
@@ -286,7 +286,7 @@ export function ProRow({
           <View style={styles.rowRight}>
             <View style={styles.pricePill}>
               <Text variant="caption" tone="onAccent" style={styles.priceText}>
-                {formatPrice(pro.priceFrom)}
+                {priceLabel(pro)}
               </Text>
             </View>
           </View>

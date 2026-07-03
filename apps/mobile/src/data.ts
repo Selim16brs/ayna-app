@@ -58,6 +58,7 @@ export interface Professional {
   reviewCount: number;
   friends?: number;
   priceFrom: number;
+  priceTo: number; // §5.1.5 — salon kartında fiyat ARALIĞI için üst sınır (uzman fiyatları)
   image: string;
   badge: ProBadge;
   city: string;
@@ -375,6 +376,8 @@ export const PROFESSIONALS: Professional[] = PRO_SEEDS.map((s, i) => ({
   reviewCount: s.reviewCount,
   ...(s.friends !== undefined ? { friends: s.friends } : {}),
   priceFrom: s.priceFrom,
+  // Salon: uzman fiyat aralığı üst sınırı (deterministik ~2.2x); bağımsız uzmanda kart tek fiyat gösterir.
+  priceTo: Math.round((s.priceFrom * 2.2) / 500) * 500,
   image: img(SALON_IMAGES[i % SALON_IMAGES.length]!),
   badge: s.badge,
   // Şehir dağılımı: çoğunluk Almatı, bir kısmı diğer şehirler (şehir filtresi için)
@@ -389,6 +392,14 @@ export const FEATURED: Professional[] = PROFESSIONALS.slice(0, 8);
 
 export function formatPrice(value: number): string {
   return `₸${value.toLocaleString('ru-RU')}`;
+}
+
+// §5.1.5 — salon kartı fiyat ARALIĞI (uzman fiyatları), bağımsız uzman tek fiyat gösterir.
+export function priceLabel(pro: Pick<Professional, 'kind' | 'priceFrom' | 'priceTo'>): string {
+  if (pro.kind === 'salon') {
+    return `₸${pro.priceFrom.toLocaleString('ru-RU')}–${pro.priceTo.toLocaleString('ru-RU')}`;
+  }
+  return formatPrice(pro.priceFrom);
 }
 
 // ── Harita (§8) — Almatı merkezli koordinatlar ───────────────────────────
