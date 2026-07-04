@@ -27,6 +27,12 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       /* yoksay */
     }
+    // §admin — geçersiz/eski oturum: token varken 401 → otomatik çıkış + giriş ekranı
+    // (login uçları hariç). Böylece hiçbir sekme sonsuz "Yükleniyor"da kalmaz.
+    if (res.status === 401 && !path.startsWith('/auth/') && getToken()) {
+      clearToken();
+      if (typeof window !== 'undefined') window.location.reload();
+    }
     throw new Error(code);
   }
   return res.json() as Promise<T>;
