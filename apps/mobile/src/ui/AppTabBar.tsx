@@ -19,7 +19,10 @@ const TABS: { route: string; name: string; icon: IoniconName; labelKey: MessageK
 ];
 
 // İçeriğin alt bar altında kalmaması için ekranların ayırması gereken boşluk
-export const TAB_BAR_CLEARANCE = 92;
+export const TAB_BAR_CLEARANCE = 88;
+
+// Aktif sekme foreground'u: marka lime'ının beyazda okunur koyu tonu (aynı hue ailesi)
+const ACTIVE = '#6F8C1B';
 
 // Aktif sekme: pathname'e göre (push edilen ekranlar ilgili sekmeye eşlenir)
 function activeName(pathname: string): string {
@@ -30,88 +33,66 @@ function activeName(pathname: string): string {
   return 'discover';
 }
 
-/** Tüm içerik ekranlarında görünen global alt menü (yüzen koyu bar + etiketli sekmeler). */
+/** Global alt menü — VELOURA stili: düz beyaz bar, outline ikon + etiket, aktif yeşil. */
 export function AppTabBar() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { t } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const barBg = isDark ? colors.surfaceMuted : '#201C1B';
   const active = activeName(pathname);
 
   return (
     <View
-      style={[styles.wrap, { paddingBottom: insets.bottom || space(1.5) }]}
-      pointerEvents="box-none"
+      style={[
+        styles.bar,
+        {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.line,
+          paddingBottom: (insets.bottom || space(1.5)) + space(0.5),
+        },
+      ]}
     >
-      <View style={[styles.bar, { backgroundColor: barBg }]}>
-        {TABS.map((tab) => {
-          const focused = tab.name === active;
-          const icon = (focused ? tab.icon : `${tab.icon}-outline`) as IoniconName;
-          return (
-            <Pressable
-              key={tab.name}
-              onPress={() => router.navigate(tab.route as never)}
-              style={styles.item}
-              accessibilityRole="button"
-              accessibilityState={{ selected: focused }}
-              accessibilityLabel={t(tab.labelKey)}
+      {TABS.map((tab) => {
+        const focused = tab.name === active;
+        const icon = (focused ? tab.icon : `${tab.icon}-outline`) as IoniconName;
+        const color = focused ? ACTIVE : colors.muted;
+        return (
+          <Pressable
+            key={tab.name}
+            onPress={() => router.navigate(tab.route as never)}
+            style={styles.item}
+            accessibilityRole="button"
+            accessibilityState={{ selected: focused }}
+            accessibilityLabel={t(tab.labelKey)}
+          >
+            <Ionicons name={icon} size={24} color={color} />
+            <Text
+              numberOfLines={1}
+              style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}
             >
-              {focused ? (
-                <View style={[styles.activeTile, { backgroundColor: colors.accent }]}>
-                  <Ionicons name={icon} size={22} color={colors.onAccent} />
-                </View>
-              ) : (
-                <View style={styles.inactiveTile}>
-                  <Ionicons name={icon} size={22} color="rgba(255,255,255,0.6)" />
-                </View>
-              )}
-              <Text
-                numberOfLines={1}
-                style={[styles.label, { color: focused ? '#FFFFFF' : 'rgba(255,255,255,0.55)' }]}
-              >
-                {t(tab.labelKey)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+              {t(tab.labelKey)}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
+  bar: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: space(2),
-    paddingTop: space(1.5),
-    backgroundColor: 'transparent',
-  },
-  bar: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-around',
-    borderRadius: 32,
-    height: 74,
+    paddingTop: space(1.25),
     paddingHorizontal: space(1),
-    shadowColor: '#000',
-    shadowOpacity: 0.22,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
-  activeTile: {
-    width: 44,
-    height: 40,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inactiveTile: { width: 44, height: 40, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 10, fontWeight: '600', letterSpacing: 0.1 },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  label: { fontSize: 11, letterSpacing: 0.1 },
 });

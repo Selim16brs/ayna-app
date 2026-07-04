@@ -4,7 +4,8 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../locale';
-import type { Professional } from '../data';
+import { cityCenter, distanceKm, type Professional, proCoords } from '../data';
+import { useStore } from '../store';
 import { type ColorTokens, radius, space } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
@@ -27,7 +28,9 @@ export function SalonRow({ pro, index = 0 }: { pro: Professional; index?: number
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const badge = BADGE[pro.badge];
-  const km = (0.8 + index * 0.5).toFixed(1);
+  // Gerçek mesafe = kullanıcının şehir merkezi → sağlayıcı (harita ile tutarlı)
+  const city = useStore((s) => s.currentUser?.city);
+  const km = distanceKm(cityCenter(city), proCoords(pro.id)).toFixed(1);
 
   return (
     <Animated.View entering={FadeInDown.duration(340).delay(index * 70)}>

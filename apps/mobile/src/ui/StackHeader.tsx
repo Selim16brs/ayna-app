@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -10,7 +11,7 @@ import { Text } from './Text';
  * Alt sayfa başlığı — Keşfet tasarım dili: lime hero bant, beyaz yuvarlak geri butonu,
  * dev başlık, alt köşeler yuvarlak. Üst güvenli alanı kendisi ekler (Screen edges={[]}).
  */
-export function StackHeader({ title }: { title: string }) {
+export function StackHeader({ title, right }: { title: string; right?: ReactNode }) {
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -21,9 +22,12 @@ export function StackHeader({ title }: { title: string }) {
   };
   return (
     <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
-      <Pressable style={styles.back} onPress={goBack} hitSlop={8}>
-        <Ionicons name="chevron-back" size={22} color={colors.ink} />
-      </Pressable>
+      <View style={styles.topRow}>
+        <Pressable style={styles.back} onPress={goBack} hitSlop={8}>
+          <Ionicons name="chevron-back" size={22} color={colors.ink} />
+        </Pressable>
+        {right ?? null}
+      </View>
       {title ? (
         <Text variant="display" tone="ink" numberOfLines={1} style={styles.title}>
           {title}
@@ -42,6 +46,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderBottomLeftRadius: radius.xl,
       borderBottomRightRadius: radius.xl,
     },
+    topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     back: {
       width: 44,
       height: 44,

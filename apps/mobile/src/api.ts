@@ -40,6 +40,10 @@ export interface BookingStats {
   noShowRate: number;
   upcoming: number;
   revenue: number;
+  // §12.8 — komisyon tabanı (online ciro) + ödenecek komisyon + oran(%)
+  commissionBase: number;
+  commission: number;
+  commissionRate: number;
   currency: string;
 }
 
@@ -154,6 +158,8 @@ export interface AuthUser {
   phone: string;
   phoneVerified?: boolean;
   gender?: string;
+  // §3/§6.1 — uzman/salon bağı: bağlı olduğu salon adı (yoksa Bireysel Uzman)
+  businessName?: string;
   womenVerified?: boolean;
   // §12.3 — admin ceza takip: kısıtlı mod (yeni talep oluşturamaz)
   restricted?: boolean;
@@ -214,6 +220,7 @@ export interface RegisterSpecialistInput {
   businessId?: string;
   code?: string;
   certificates?: string[];
+  deviceFp?: string; // §4.4 — cihaz parmak izi (kalıcı engel 2. katman)
 }
 
 export interface ApiQuote {
@@ -268,6 +275,8 @@ export const api = {
   disputeBookingApi: (id: string) => post<Appointment>(`/bookings/${id}/dispute`, {}),
   // §4.4-b — uzman gelmedi: iade + uzman komisyon borcu (backend)
   providerNoShowApi: (id: string) => post<Appointment>(`/bookings/${id}/provider-no-show`, {}),
+  // §4.1.7 — uzman hizmeti tamamladı (backend'e taşındı)
+  completeBookingApi: (id: string) => post<Appointment>(`/bookings/${id}/complete`, {}),
 
   // Salon sahibi/uzman kendi işletmesi (mobil yönetim) — hepsi sahibe-kapılı
   myBusinesses: (token: string) => get<SellerBusiness[]>('/businesses/mine', token),
@@ -283,6 +292,21 @@ export const api = {
     post<{ id: string; reply: string }>(
       `/businesses/${businessId}/reviews/${ratingId}/reply`,
       { reply },
+      token,
+    ),
+  // §7 — bağımsız uzman: kendi işlerine yazılan yorumlar + tek yanıt hakkı
+  mySpecialistReviews: (token: string) => get<SellerReviews>('/specialists/me/reviews', token),
+  replySpecialistReview: (token: string, ratingId: string, reply: string) =>
+    post<{ id: string; reply: string }>(
+      `/specialists/me/reviews/${ratingId}/reply`,
+      { reply },
+      token,
+    ),
+  // §7.2 — uzman kendi yorumuna itiraz eder (admin kuyruğuna düşer; yorum görünür kalır)
+  disputeSpecialistReview: (token: string, ratingId: string, reason: string) =>
+    post<{ id: string; disputed: boolean }>(
+      `/specialists/me/reviews/${ratingId}/dispute`,
+      { reason },
       token,
     ),
 

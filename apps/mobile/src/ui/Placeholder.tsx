@@ -17,7 +17,7 @@ export function Placeholder({ icon, titleKey }: { icon: IoniconName; titleKey: M
     <Screen edges={['top']}>
       <View style={styles.container}>
         <View style={styles.iconCircle}>
-          <Ionicons name={icon} size={34} color={colors.rose} />
+          <Ionicons name={icon} size={34} color={colors.accentFg} />
         </View>
         <Text variant="title" tone="ink" style={styles.title}>
           {t(titleKey)}
@@ -37,7 +37,7 @@ const makeStyles = (colors: ColorTokens) =>
       width: 84,
       height: 84,
       borderRadius: radius.xl,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: space(2.5),

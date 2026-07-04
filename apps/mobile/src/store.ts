@@ -1,4 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import type { MessageKey } from '@ayna/i18n';
 import { api, type AppConfig, type AuthSession, type AuthUser, type LoyaltyTier } from './api';
 import { formatSlotTr } from './datetime';
@@ -8,6 +10,8 @@ import {
   type BookingSource,
   type DemandMode,
   type DemandRequest,
+  type Promotion,
+  SEED_PROMOTIONS,
   DEPOSIT_KZT,
   POINTS_SPEND_CAP_PCT,
   PREMIUM_PRICE_KZT,
@@ -17,6 +21,7 @@ import {
   FREE_CANCEL_WINDOW_MS,
   REMIND_24H_MS,
   REMIND_2H_MS,
+  RESPONSE_WINDOW_MS,
   SEED_DEMANDS,
   buildOffers,
   buildUpcomingEvents,
@@ -29,6 +34,7 @@ import {
   type Moment,
   type PersonalLog,
   type PersonalTone,
+  type QuickAddKind,
   type Review,
   type Reward,
   RAFFLE_COST,
@@ -43,9 +49,26 @@ import {
   type UpcomingEvent,
   type UserAddress,
 } from './data';
+import { servicesOf } from './taxonomy';
+import { defaultHours, type DayHours } from './ui/WorkingHours';
+import { emptySocial, type SocialValue } from './ui/SocialLinks';
 
 let seq = 5000;
 const nextId = (prefix: string) => `${prefix}${++seq}`;
+
+// §6.1 — uzman/salon hizmet kataloğu satırı: taksonomi hizmet id'sine bağlı fiyat/süre (₸ / dk, string form).
+export type SellerServiceRow = { price: string; dur: string };
+
+// Uzmanın MÜŞTERİLERİNE SUNDUĞU hazır hizmet menüsü (Hizmetler ekranından yönetilir).
+// Demo hesabı bir saç uzmanı → başlangıçta kendi uzmanlığındaki hizmetlerle gelir (generic
+// çok-kategorili katalog DEĞİL). Gerçek uygulamada bu liste uzmanın kaydından türer.
+const seedSellerServices = (): Record<string, SellerServiceRow> => {
+  const init: Record<string, SellerServiceRow> = {};
+  for (const s of servicesOf('hair')) {
+    init[s.id] = { price: String(s.price), dur: String(s.durationMin) };
+  }
+  return init;
+};
 
 // §4.3 — dekont son yükleme anı: randevuya 6 saatten az varsa 1 saat, değilse 3 saat.
 const depositDeadlineFor = (startMs: number, now: number): number =>
@@ -78,6 +101,8 @@ export interface AddPersonalLogInput {
   tone: PersonalTone;
   icon?: string;
   note?: string;
+  kind?: QuickAddKind;
+  dateMs?: number;
 }
 
 export interface AddMomentInput {
@@ -91,6 +116,7 @@ export interface AddRoutineInput {
   name: string;
   dueDays: number;
   icon?: string;
+  categoryCode?: string; // "Teklif Al" ön-seçimi için
 }
 
 export interface AddPostInput {
@@ -104,10 +130,23 @@ interface State {
   bookings: Appointment[];
   // §5.2 — açılan teklif/talep istekleri (reverse marketplace)
   demands: DemandRequest[];
+  // §10.1/§5.1.6 — salon/uzman promosyonları (Fırsatlar vitrini içeriği)
+  promotions: Promotion[];
+  createPromotion: (input: {
+    title: string;
+    desc: string;
+    discountPct?: number;
+    startLabel: string;
+    endLabel: string;
+    imageUri?: string;
+  }) => void;
   // §5.1.2 — son aramalar (boş arama kutusunda gösterilir)
   recentSearches: string[];
   // §5.4 — bildirim grupları aç/kapa (bakım / özel gün / kişisel kayıt / randevu)
   notifPrefs: { care: boolean; moment: boolean; personal: boolean; booking: boolean };
+  // §9.3 — uzman talep bildirim tercihleri: kategori (boş = tümü) + saat aralığı (Almatı saati)
+  demandNotif: { cats: string[]; from: number; to: number };
+  setDemandNotif: (p: Partial<{ cats: string[]; from: number; to: number }>) => void;
   // §4.6 — uzmanın kapalı (izin/tatil) günleri: Almatı gün başlangıcı UTC ms.
   // Kullanıcı tarafında bu günler slot göstermez. (Mock: tek sağlayıcı; backend providerId'yle anahtarlar.)
   closedDays: number[];
@@ -122,6 +161,9 @@ interface State {
   personalLogs: PersonalLog[];
   moments: Moment[];
   favorites: string[];
+  // W2W — takip edilen kişiler (yazar adı) + beni takip eden kişiler (mock liste)
+  following: string[];
+  followerNames: string[];
   // §5.6 — kullanıcı adresleri (ev/iş)
   addresses: UserAddress[];
   // §5.6.2 — premium üyelik durumu (satın alma app-dışı; burada mock bayrak)
@@ -139,9 +181,18 @@ interface State {
   notifications: AppNotification[];
   token: string | null;
   currentUser: AuthUser | null;
-  // §9.5/§10.3 — satıcı hesabı kullanıcı moduna geçebilir; 'seller' varsayılan
-  sellerViewMode: 'seller' | 'user';
-  setSellerViewMode: (m: 'seller' | 'user') => void;
+  // Profil fotoğrafı (galeri/kamera; kaldırılabilir). Kalıcı saklanır.
+  avatarUri: string | null;
+  setAvatar: (uri: string | null) => void;
+  // §6.1 — uzman/salon hizmet kataloğu (taksonomi id → fiyat/süre). Profil "Hizmetler" ekranından
+  // yönetilir; offline randevu akışında hazır (accordion) seçim olarak kullanılır. Kalıcı saklanır.
+  sellerServices: Record<string, SellerServiceRow>;
+  setSellerServices: (map: Record<string, SellerServiceRow>) => void;
+  // §9.5 — uzman/salon profil verileri (kayıt sonrası düzenlenebilir). Kalıcı saklanır.
+  sellerSocial: SocialValue;
+  sellerHours: DayHours[];
+  sellerCerts: string[];
+  setSellerProfile: (p: { social?: SocialValue; hours?: DayHours[]; certs?: string[] }) => void;
 
   // auth
   setAuth: (session: AuthSession) => void;
@@ -161,6 +212,7 @@ interface State {
   submitReceipt: (id: string, receiptUri: string) => void; // kullanıcı dekont yükler
   confirmReceipt: (id: string) => void; // uzman "Aldım, onaylıyorum" → randevu KESİN
   markNoShow: (id: string) => void; // §4.4 — uzman müşteriyi "gelmedi" işaretler (kapora yanar)
+  completeBooking: (id: string) => void; // §4.1.7 — uzman hizmeti tamamladı → değerlendirme daveti
   reportProviderNoShow: (id: string) => void; // §4.4-b — uzman gelmedi → müşteriye 1000 puan telafi
   giveCustomerSignal: (id: string, signal: 'up' | 'down') => void; // §7.3 — gizli operasyonel sinyal
   // §4.4 — iade + itiraz
@@ -169,6 +221,7 @@ interface State {
   disputeBooking: (id: string) => void; // taraflar itiraz açar (destek/admin kuyruğu)
   checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
   expireDeposits: () => void; // §4.3 — dekont süresi dolan deposit_pending randevuları düşürür
+  expireResponses: () => void; // §4.1.3 — uzman yanıt süresi dolan talepleri düşürür
   toggleClosedDay: (dayStartMs: number) => void; // §4.6 — günü kapalı/açık işaretle
   // §5.2 — teklif/talep akışı
   createDemand: (input: {
@@ -178,6 +231,8 @@ interface State {
     photoUrl?: string;
     budget?: number;
     collectMin: number;
+    serviceId?: string;
+    addressId?: string;
   }) => string;
   selectOffer: (demandId: string, offerId: string, slotMs: number) => string; // → booking id
   expireDemands: () => void; // süresi dolan talepleri işaretle
@@ -213,12 +268,15 @@ interface State {
 
   // favorites
   toggleFavorite: (proId: string) => void;
+  toggleFollow: (author: string) => void;
+  removeFollower: (name: string) => void;
   // §5.6 — adres yönetimi
   addAddress: (label: UserAddress['label'], detail: string) => void;
   removeAddress: (id: string) => void;
 
   // personal
   addPersonalLog: (input: AddPersonalLogInput) => void;
+  updatePersonalLog: (id: string, patch: AddPersonalLogInput) => void;
   deletePersonalLog: (id: string) => void;
   addMoment: (input: AddMomentInput) => void;
   addRoutine: (input: AddRoutineInput) => void;
@@ -248,11 +306,17 @@ interface State {
   markAllNotificationsRead: () => void;
 }
 
-export const useStore = create<State>((set, get) => ({
+// Oturum (token/kullanıcı/mod) AsyncStorage'da KALICI saklanır — reload'da çıkış yapılmaz,
+// alt bar kaybolmaz. Diğer state (mock bookings vb.) persist edilmez.
+export const useStore = create<State>()(
+  persist(
+    (set, get) => ({
   bookings: SEED_APPOINTMENTS,
   demands: SEED_DEMANDS,
+  promotions: SEED_PROMOTIONS,
   recentSearches: [],
   notifPrefs: { care: true, moment: true, personal: true, booking: true },
+  demandNotif: { cats: [], from: 8, to: 22 },
   closedDays: [],
   circlePosts: SEED_CIRCLE_POSTS,
   reportedPosts: [],
@@ -356,6 +420,8 @@ export const useStore = create<State>((set, get) => ({
   personalLogs: SEED_PERSONAL_LOGS,
   moments: SEED_MOMENTS,
   favorites: ['3'],
+  following: ['Dana'],
+  followerNames: ['Aizhan', 'Gulnara', 'Madina', 'Saule', 'Zhanar', 'Kamila', 'Aruzhan', 'Nazerke'],
   addresses: [{ id: 'ad1', label: 'home', detail: 'Almatı, Dostyk 12' }],
   premium: false,
   points: 340,
@@ -370,12 +436,24 @@ export const useStore = create<State>((set, get) => ({
   notifications: SEED_NOTIFICATIONS,
   token: null,
   currentUser: null,
+  // Mevcut profilde başlangıç fotoğrafı (kullanıcı değiştirebilir/kaldırabilir)
+  avatarUri:
+    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=240&h=240&fit=crop&crop=faces&q=80',
+  setAvatar: (uri) => set({ avatarUri: uri }),
+  sellerServices: seedSellerServices(),
+  setSellerServices: (map) => set({ sellerServices: map }),
+  sellerSocial: emptySocial,
+  sellerHours: defaultHours(),
+  sellerCerts: [],
+  setSellerProfile: (p) =>
+    set((s) => ({
+      ...(p.social ? { sellerSocial: p.social } : {}),
+      ...(p.hours ? { sellerHours: p.hours } : {}),
+      ...(p.certs ? { sellerCerts: p.certs } : {}),
+    })),
 
-  sellerViewMode: 'seller',
-  setSellerViewMode: (m) => set({ sellerViewMode: m }),
   setAuth: (session) => {
-    // Satıcı girişinde işletme modu; her girişte varsayılana döner
-    set({ token: session.token, currentUser: session.user, sellerViewMode: 'seller' });
+    set({ token: session.token, currentUser: session.user });
     void get().hydrateLoyalty();
     void get().hydrateBookings();
   },
@@ -401,6 +479,10 @@ export const useStore = create<State>((set, get) => ({
       price: input.price,
       // §1.6 — yeni randevu uzman onayı bekler
       status: input.status ?? 'awaiting_provider',
+      // §4.1.3 — uzman yanıt son anı (yalnız onay bekleyen taleplerde)
+      ...((input.status ?? 'awaiting_provider') === 'awaiting_provider'
+        ? { responseDeadline: Date.now() + RESPONSE_WINDOW_MS }
+        : {}),
     };
     set((s) => ({ bookings: [booking, ...s.bookings] }));
     // Backend'e yaz (best-effort; offline'da sessizce geçilir). Token → sahibine bağlanır.
@@ -617,6 +699,25 @@ export const useStore = create<State>((set, get) => ({
         : [...s.closedDays, dayStartMs],
     })),
 
+  // §10.1/§12.7 — promosyon oluştur → admin onayına düşer (status 'pending')
+  createPromotion: (input) =>
+    set((s) => ({
+      promotions: [
+        {
+          id: nextId('promo'),
+          title: input.title.trim(),
+          desc: input.desc.trim(),
+          ...(input.discountPct ? { discountPct: input.discountPct } : {}),
+          startLabel: input.startLabel,
+          endLabel: input.endLabel,
+          ...(input.imageUri ? { imageUri: input.imageUri } : {}),
+          status: 'pending' as const,
+          createdAt: Date.now(),
+        },
+        ...s.promotions,
+      ],
+    })),
+
   // §5.2 — teklif/talep aç: aynı şehirdeki kategori uzmanlarından mock teklifler üretir
   createDemand: (input) => {
     const id = nextId('dm');
@@ -626,9 +727,12 @@ export const useStore = create<State>((set, get) => ({
       id,
       mode: input.mode,
       category: input.category,
+      city, // §9.3 — talep, oluşturan kullanıcının şehrine ait; uzman Talepler'i şehirle filtreler
       ...(input.note ? { note: input.note } : {}),
       ...(input.photoUrl ? { photoUrl: input.photoUrl } : {}),
       ...(input.budget ? { budget: input.budget } : {}),
+      ...(input.serviceId ? { serviceId: input.serviceId } : {}),
+      ...(input.addressId ? { addressId: input.addressId } : {}),
       collectMin: input.collectMin,
       createdAt: now,
       expiresAt: now + input.collectMin * 60_000,
@@ -636,8 +740,10 @@ export const useStore = create<State>((set, get) => ({
       offers: buildOffers(input.category, city, input.budget, now),
     };
     set((s) => ({ demands: [demand, ...s.demands] }));
+    // Müşteri tarafı: teklif toplama başladı (yalnızca müşteri modunda görünür)
     get().pushNotification({
       type: 'quote',
+      audience: 'user',
       titleKey: 'notif.offers_started',
       bodyKey: 'notif.offers_started_b',
       params: { n: demand.offers.length },
@@ -645,6 +751,23 @@ export const useStore = create<State>((set, get) => ({
       icon: 'pricetags-outline',
       route: `/quote/results?id=${id}`,
     });
+    // §5.2/§5.7/§9.3 — talep, o ŞEHİRDEKİ uzmanlara "yeni talep" bildirimi olarak gider (konum bazlı).
+    // Uzman tercihleri: kategori (boş = tümü) + saat aralığı (Almatı saati) dışıysa bildirim düşmez.
+    const pref = get().demandNotif;
+    const hour = new Date(now).getHours();
+    const catOk = pref.cats.length === 0 || pref.cats.includes(input.category);
+    const hourOk = hour >= pref.from && hour < pref.to;
+    if (catOk && hourOk)
+      get().pushNotification({
+        type: 'quote',
+        audience: 'seller',
+        titleKey: 'notif.new_demand',
+        bodyKey: 'notif.new_demand_b',
+        params: { city },
+        dateLabel: 'Az önce',
+        icon: 'pricetags-outline',
+        route: '/seller/requests',
+      });
     return id;
   },
 
@@ -726,6 +849,8 @@ export const useStore = create<State>((set, get) => ({
   toggleNotifPref: (key) =>
     set((s) => ({ notifPrefs: { ...s.notifPrefs, [key]: !s.notifPrefs[key] } })),
 
+  setDemandNotif: (p) => set((s) => ({ demandNotif: { ...s.demandNotif, ...p } })),
+
   // §5.1.2 — son aramaya ekle (en yeni başta, dedup, maks 8)
   addRecentSearch: (q) => {
     const term = q.trim();
@@ -752,6 +877,35 @@ export const useStore = create<State>((set, get) => ({
         type: 'booking',
         titleKey: 'notif.deposit_expired',
         bodyKey: 'notif.deposit_expired_b',
+        params: { pro: b.proName },
+        dateLabel: 'Az önce',
+        icon: 'time-outline',
+        route: `/booking/${b.id}`,
+      });
+  },
+
+  // §4.1.3 — uzman belirlenen sürede yanıtlamadıysa talep otomatik düşer + kullanıcıya bildirim
+  expireResponses: () => {
+    const now = Date.now();
+    const expired = get().bookings.filter(
+      (b) =>
+        b.status === 'awaiting_provider' &&
+        b.responseDeadline != null &&
+        b.responseDeadline <= now,
+    );
+    if (expired.length === 0) return;
+    set((s) => ({
+      bookings: s.bookings.map((b) =>
+        expired.some((e) => e.id === b.id)
+          ? { ...b, status: 'cancelled', cancelReason: 'response_timeout' }
+          : b,
+      ),
+    }));
+    for (const b of expired)
+      get().pushNotification({
+        type: 'booking',
+        titleKey: 'notif.response_expired',
+        bodyKey: 'notif.response_expired_b',
         params: { pro: b.proName },
         dateLabel: 'Az önce',
         icon: 'time-outline',
@@ -871,6 +1025,7 @@ export const useStore = create<State>((set, get) => ({
           ? {
               ...b,
               status: 'deposit_pending',
+              respondedAt: Date.now(),
               depositAmount: DEPOSIT_KZT,
               depositDeadline: depositDeadlineFor(b.startMs, Date.now()),
             }
@@ -894,7 +1049,9 @@ export const useStore = create<State>((set, get) => ({
   // §4.1 — uzman reddetti
   rejectBooking: (id) => {
     set((s) => ({
-      bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b)),
+      bookings: s.bookings.map((b) =>
+        b.id === id ? { ...b, status: 'cancelled', respondedAt: Date.now() } : b,
+      ),
     }));
     void api.cancelBooking(id, 'provider_rejected').catch(() => undefined);
     const b = get().bookings.find((x) => x.id === id);
@@ -914,7 +1071,9 @@ export const useStore = create<State>((set, get) => ({
   proposeAlternative: (id, startMs) => {
     set((s) => ({
       bookings: s.bookings.map((b) =>
-        b.id === id ? { ...b, status: 'alternative_proposed', proposedStartMs: startMs } : b,
+        b.id === id
+          ? { ...b, status: 'alternative_proposed', proposedStartMs: startMs, respondedAt: Date.now() }
+          : b,
       ),
     }));
     void api.proposeBooking(id, startMs).catch(() => undefined);
@@ -978,6 +1137,27 @@ export const useStore = create<State>((set, get) => ({
         b.id === id ? { ...b, status: 'no_show', depositForfeited: true } : b,
       ),
     }));
+  },
+
+  // §4.1.7 — uzman hizmeti tamamladı: randevu 'completed' + kullanıcıya değerlendirme daveti
+  completeBooking: (id) => {
+    const b = get().bookings.find((x) => x.id === id);
+    if (!b || b.status === 'completed') return;
+    set((s) => ({
+      bookings: s.bookings.map((x) => (x.id === id ? { ...x, status: 'completed' } : x)),
+    }));
+    void api.completeBookingApi(id).catch(() => undefined); // backend'e taşı (best-effort)
+    // §7.1 — yalnız AYNA (online) randevularında kullanıcıya değerlendirme daveti (offline'da müşteri hesabı yok)
+    if (b.source !== 'direct')
+      get().pushNotification({
+        type: 'booking',
+        titleKey: 'notif.review_invite',
+        bodyKey: 'notif.review_invite_b',
+        params: { pro: b.proName },
+        dateLabel: 'Az önce',
+        icon: 'star-outline',
+        route: `/review/new?id=${id}`,
+      });
   },
 
   // §4.4-b — UZMAN gelmedi: müşteriye 1.000 puan telafi (loyalty ledger) + uzman iade borçlu
@@ -1113,6 +1293,18 @@ export const useStore = create<State>((set, get) => ({
         : [proId, ...s.favorites],
     })),
 
+  // W2W — kişi takip et / bırak (yazar adına göre)
+  toggleFollow: (author) =>
+    set((s) => ({
+      following: s.following.includes(author)
+        ? s.following.filter((x) => x !== author)
+        : [author, ...s.following],
+    })),
+
+  // W2W — takipçiyi kaldır (mock listeden çıkar)
+  removeFollower: (name) =>
+    set((s) => ({ followerNames: s.followerNames.filter((x) => x !== name) })),
+
   // §5.6 — adres ekle/kaldır
   addAddress: (label, detail) => {
     if (!detail.trim()) return;
@@ -1136,9 +1328,30 @@ export const useStore = create<State>((set, get) => ({
           icon: input.icon ?? TONE_ICON[input.tone],
           tone: input.tone,
           ...(input.note ? { note: input.note } : {}),
+          ...(input.kind ? { kind: input.kind } : {}),
+          ...(input.dateMs ? { dateMs: input.dateMs } : {}),
         },
         ...s.personalLogs,
       ],
+    })),
+
+  // §5.4 — kişisel kaydı düzenle (detay ekranından); note boşsa alanı temizle
+  updatePersonalLog: (id, patch) =>
+    set((s) => ({
+      personalLogs: s.personalLogs.map((x) =>
+        x.id === id
+          ? {
+              ...x,
+              title: patch.title,
+              dateLabel: patch.dateLabel,
+              tone: patch.tone,
+              icon: patch.icon ?? TONE_ICON[patch.tone],
+              note: patch.note?.trim() ? patch.note : undefined,
+              ...(patch.kind ? { kind: patch.kind } : {}),
+              ...(patch.dateMs ? { dateMs: patch.dateMs } : {}),
+            }
+          : x,
+      ),
     })),
 
   deletePersonalLog: (id) =>
@@ -1165,15 +1378,20 @@ export const useStore = create<State>((set, get) => ({
           id: nextId('cr'),
           name: input.name,
           dueDays: input.dueDays,
+          periodDays: input.dueDays, // ilk süre = döngü; "tamamladım" buna göre sıfırlar
           icon: input.icon ?? 'sparkles-outline',
+          ...(input.categoryCode ? { categoryCode: input.categoryCode } : {}),
         },
         ...s.careRoutines,
       ],
     })),
 
+  // "Tamamladım" → sayaç bakımın KENDİ periyoduna göre yeniden başlar (rastgele 30 değil)
   completeRoutine: (id) =>
     set((s) => ({
-      careRoutines: s.careRoutines.map((x) => (x.id === id ? { ...x, dueDays: 30 } : x)),
+      careRoutines: s.careRoutines.map((x) =>
+        x.id === id ? { ...x, dueDays: x.periodDays > 0 ? x.periodDays : 30 } : x,
+      ),
     })),
 
   addPost: (input) => {
@@ -1375,14 +1593,53 @@ export const useStore = create<State>((set, get) => ({
 
   markAllNotificationsRead: () =>
     set((s) => ({ notifications: s.notifications.map((x) => ({ ...x, read: true })) })),
-}));
+    }),
+    {
+      name: 'ayna-session',
+      storage: createJSONStorage(() => AsyncStorage),
+      // v1: hizmet menüsü artık uzmanlık-odaklı seed (eski generic çok-kategorili liste kalıcıysa atılır).
+      version: 1,
+      migrate: (persisted, version) => {
+        if (version < 1 && persisted && typeof persisted === 'object') {
+          const rest = { ...(persisted as Record<string, unknown>) };
+          delete rest.sellerServices; // düş → varsayılan (yeni) seed uygulanır; oturum korunur
+          return rest as typeof persisted;
+        }
+        return persisted;
+      },
+      // Yalnız oturumu kalıcı sakla; mock veriler (bookings/demands vb.) her açılışta seed'den.
+      partialize: (s) => ({
+        token: s.token,
+        currentUser: s.currentUser,
+        avatarUri: s.avatarUri,
+        sellerServices: s.sellerServices,
+        sellerSocial: s.sellerSocial,
+        sellerHours: s.sellerHours,
+        sellerCerts: s.sellerCerts,
+        demandNotif: s.demandNotif,
+      }),
+    },
+  ),
+);
 
 // ── Türetilmiş seçiciler (hook'larda kullanılabilir) ─────────────────────
 export const selectUpcomingEvents = (s: State): UpcomingEvent[] =>
   buildUpcomingEvents(s.bookings, s.moments, s.careRoutines);
 
-export const selectUnreadCount = (s: State): number =>
-  s.notifications.filter((n) => !n.read).length;
+// §9.1/§10 — aktif moda göre bildirim kitlesi: uzman/salon paneli 'seller', aksi 'user'.
+// Kitlesi tanımsız bildirimler (ortak/sistem) her iki modda görünür.
+// Satıcı hesabı (uzman/salon) her zaman panel bağlamındadır (müşteri modu kaldırıldı).
+// selectSellerView primitive (boolean) döndürür → hook seçici olarak güvenli (yeni-ref tuzağı yok).
+export const selectSellerView = (s: State): boolean =>
+  s.currentUser?.role === 'professional' || s.currentUser?.role === 'salon';
+
+export const inAudience = (n: { audience?: 'user' | 'seller' }, seller: boolean): boolean =>
+  n.audience === undefined || n.audience === (seller ? 'seller' : 'user');
+
+export const selectUnreadCount = (s: State): number => {
+  const seller = selectSellerView(s);
+  return s.notifications.filter((n) => !n.read && inAudience(n, seller)).length;
+};
 
 export const selectActiveBookings = (s: State): Appointment[] =>
   s.bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending');

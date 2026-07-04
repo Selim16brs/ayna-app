@@ -3,13 +3,13 @@ import { radius, space } from '../theme';
 import { useTheme } from '../theme-context';
 import { Text } from './Text';
 
-type Tone = 'rose' | 'gold' | 'neutral';
+type Tone = 'accent' | 'gold' | 'neutral';
 
-export function Badge({ label, tone = 'rose' }: { label: string; tone?: Tone }) {
+export function Badge({ label, tone = 'accent' }: { label: string; tone?: Tone }) {
   const { colors } = useTheme();
   const bg =
-    tone === 'rose' ? colors.roseSoft : tone === 'gold' ? colors.goldSoft : colors.surfaceMuted;
-  const fg = tone === 'rose' ? colors.rose : tone === 'gold' ? colors.gold : colors.inkSoft;
+    tone === 'accent' ? colors.accentSoft : tone === 'gold' ? colors.goldSoft : colors.surfaceMuted;
+  const fg = tone === 'accent' ? colors.accentFg : tone === 'gold' ? colors.gold : colors.inkSoft;
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}>
       <Text variant="caption" style={[styles.text, { color: fg }]}>

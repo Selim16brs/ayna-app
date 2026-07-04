@@ -1,6 +1,7 @@
 import type { Ionicons } from '@expo/vector-icons';
 import type { MessageKey } from '@ayna/i18n';
 import { almatySlotMs, daysUntil, formatSlotTr } from './datetime';
+import { TAXONOMY, type Tri, activeCategories, tri } from './taxonomy';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -12,16 +13,13 @@ export interface Category {
   tone: 'rose' | 'gold';
 }
 
-export const CATEGORIES: Category[] = [
-  { id: 'hair', labelKey: 'category.hair', icon: 'cut-outline', tone: 'rose' },
-  { id: 'nails', labelKey: 'category.nails', icon: 'color-palette-outline', tone: 'gold' },
-  { id: 'brows', labelKey: 'category.brows', icon: 'eye-outline', tone: 'rose' },
-  { id: 'lashes', labelKey: 'category.lashes', icon: 'sparkles-outline', tone: 'gold' },
-  { id: 'makeup', labelKey: 'category.makeup', icon: 'brush-outline', tone: 'rose' },
-  { id: 'skincare', labelKey: 'category.skincare', icon: 'water-outline', tone: 'gold' },
-  { id: 'spa', labelKey: 'category.spa', icon: 'flower-outline', tone: 'rose' },
-  { id: 'epilation', labelKey: 'category.epilation', icon: 'flash-outline', tone: 'gold' },
-];
+// Keşfet/talep akışı ana kategorileri = MERKEZİ taksonomideki AKTİF kategoriler (tek kaynak).
+export const CATEGORIES: Category[] = activeCategories().map((c, i) => ({
+  id: c.id,
+  labelKey: c.labelKey,
+  icon: c.icon,
+  tone: i % 2 === 0 ? 'rose' : 'gold',
+}));
 
 export const categoryLabelKey = (id: string): MessageKey =>
   CATEGORIES.find((c) => c.id === id)?.labelKey ?? 'category.hair';
@@ -105,14 +103,18 @@ const FACES = [
   'photo-1502823403499-6ccfcf4fb453',
 ];
 
-const DISTRICTS = [
-  'Almatı · Medeu',
-  'Almatı · Bostandık',
-  'Almatı · Almalı',
-  'Astana · Esil',
-  'Astana · Almatı',
-  'Şımkent · Merkez',
-];
+// Şehre göre semtler — semt ETİKETİ sağlayıcının GERÇEK şehriyle eşleşmeli
+// (Almatı seçili kullanıcı Astana semti görmesin).
+const CITY_DISTRICTS: Record<string, string[]> = {
+  Almatı: ['Medeu', 'Bostandık', 'Almalı', 'Auezov', 'Türksib'],
+  Astana: ['Esil', 'Almatı', 'Saryarka', 'Baykoñyr'],
+  Şımkent: ['Al-Farabi', 'Enbekşi', 'Karatau', 'Abay'],
+};
+const DEFAULT_DISTRICTS = ['Merkez', 'Jaña qala'];
+function districtFor(city: string, i: number): string {
+  const list = CITY_DISTRICTS[city] ?? DEFAULT_DISTRICTS;
+  return `${city} · ${list[i % list.length]}`;
+}
 
 const SECTOR_SPECIALTY: Record<string, string> = {
   hair: 'Saç boyama · Balayage',
@@ -123,6 +125,10 @@ const SECTOR_SPECIALTY: Record<string, string> = {
   skincare: 'Cilt bakımı · Hydrafacial',
   spa: 'Masaj · Vücut bakımı',
   epilation: 'Lazer · Ağda',
+  pmu: 'Kalıcı makyaj · Dudak & kaş',
+  bridal: 'Gelin başı · Özel gün',
+  wellness: 'Fitness · Yoga · Pilates',
+  style: 'Kişisel stil · Renk analizi',
 };
 
 // ── İşletmeler / uzmanlar (zengin liste) ─────────────────────────────────
@@ -364,28 +370,69 @@ const PRO_SEEDS: ProSeed[] = [
     priceFrom: 13000,
     badge: 'verified',
   },
+  // ── Yeni kategoriler (v1) için tohum sağlayıcılar — boş kategori olmasın ──
+  {
+    name: 'Aizada PMU Studio',
+    sector: 'pmu',
+    kind: 'salon',
+    rating: 4.9,
+    reviewCount: 132,
+    priceFrom: 30000,
+    badge: 'verified',
+  },
+  {
+    name: 'Perluza Permanent',
+    sector: 'pmu',
+    kind: 'independent',
+    rating: 4.7,
+    reviewCount: 78,
+    priceFrom: 28000,
+    badge: 'today',
+  },
+  {
+    name: 'Aq Qanat Gelin Evi',
+    sector: 'bridal',
+    kind: 'salon',
+    rating: 5.0,
+    reviewCount: 214,
+    friends: 6,
+    priceFrom: 45000,
+    badge: 'campaign',
+  },
+  {
+    name: 'Aruna Bridal Studio',
+    sector: 'bridal',
+    kind: 'salon',
+    rating: 4.8,
+    reviewCount: 96,
+    priceFrom: 40000,
+    badge: 'verified',
+  },
 ];
 
-export const PROFESSIONALS: Professional[] = PRO_SEEDS.map((s, i) => ({
-  id: String(i + 1),
-  name: s.name,
-  specialty: SECTOR_SPECIALTY[s.sector] ?? s.name,
-  sector: s.sector,
-  kind: s.kind,
-  rating: s.rating,
-  reviewCount: s.reviewCount,
-  ...(s.friends !== undefined ? { friends: s.friends } : {}),
-  priceFrom: s.priceFrom,
-  // Salon: uzman fiyat aralığı üst sınırı (deterministik ~2.2x); bağımsız uzmanda kart tek fiyat gösterir.
-  priceTo: Math.round((s.priceFrom * 2.2) / 500) * 500,
-  image: img(SALON_IMAGES[i % SALON_IMAGES.length]!),
-  badge: s.badge,
+export const PROFESSIONALS: Professional[] = PRO_SEEDS.map((s, i) => {
   // Şehir dağılımı: çoğunluk Almatı, bir kısmı diğer şehirler (şehir filtresi için)
-  city: i % 4 === 0 ? (CITIES[1 + ((i / 4) % (CITIES.length - 1))] ?? 'Almatı') : 'Almatı',
-  district: DISTRICTS[i % DISTRICTS.length]!,
-  experienceYears: 4 + (i % 12),
-  isPremium: i % 3 === 0, // deterministik premium dağılımı (mock)
-}));
+  const city = i % 4 === 0 ? (CITIES[1 + ((i / 4) % (CITIES.length - 1))] ?? 'Almatı') : 'Almatı';
+  return {
+    id: String(i + 1),
+    name: s.name,
+    specialty: SECTOR_SPECIALTY[s.sector] ?? s.name,
+    sector: s.sector,
+    kind: s.kind,
+    rating: s.rating,
+    reviewCount: s.reviewCount,
+    ...(s.friends !== undefined ? { friends: s.friends } : {}),
+    priceFrom: s.priceFrom,
+    // Salon: uzman fiyat aralığı üst sınırı (deterministik ~2.2x); bağımsız uzmanda kart tek fiyat gösterir.
+    priceTo: Math.round((s.priceFrom * 2.2) / 500) * 500,
+    image: img(SALON_IMAGES[i % SALON_IMAGES.length]!),
+    badge: s.badge,
+    city,
+    district: districtFor(city, i), // semt = sağlayıcının GERÇEK şehriyle uyumlu
+    experienceYears: 4 + (i % 12),
+    isPremium: i % 3 === 0, // deterministik premium dağılımı (mock)
+  };
+});
 
 // Ana ekranda öne çıkanlar (ilk birkaç)
 export const FEATURED: Professional[] = PROFESSIONALS.slice(0, 8);
@@ -410,13 +457,37 @@ export interface LatLng {
 
 export const ALMATY: LatLng = { latitude: 43.2389, longitude: 76.8897 };
 
-/** İşletme/uzman için deterministik koordinat (Almatı çevresi; demo — gerçek değil). */
+// Şehir merkezleri (KZ başlıca şehirler) — harita + mesafe için (demo koordinatlar).
+export const CITY_COORDS: Record<string, LatLng> = {
+  Almatı: { latitude: 43.2389, longitude: 76.8897 },
+  Astana: { latitude: 51.1605, longitude: 71.4704 },
+  Şımkent: { latitude: 42.3417, longitude: 69.5901 },
+  Karagandı: { latitude: 49.8047, longitude: 73.1094 },
+  Aktöbe: { latitude: 50.2839, longitude: 57.167 },
+  Taraz: { latitude: 42.9, longitude: 71.3667 },
+  Pavlodar: { latitude: 52.287, longitude: 76.9674 },
+  Öskemen: { latitude: 49.948, longitude: 82.6144 },
+  Semey: { latitude: 50.4111, longitude: 80.2275 },
+  Atırav: { latitude: 47.0945, longitude: 51.9238 },
+  Kostanay: { latitude: 53.2144, longitude: 63.6246 },
+  Kızılorda: { latitude: 44.8479, longitude: 65.4823 },
+  Oral: { latitude: 51.2333, longitude: 51.3667 },
+  Aktau: { latitude: 43.641, longitude: 51.198 },
+};
+
+/** Şehir merkezi koordinatı (bilinmeyen şehir → Almatı). */
+export function cityCenter(city?: string): LatLng {
+  return (city && CITY_COORDS[city]) || ALMATY;
+}
+
+/** İşletme/uzman için deterministik koordinat — sağlayıcının KENDİ şehrinin çevresi (demo). */
 export function proCoords(id: string): LatLng {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
   const dlat = ((h % 1000) / 1000 - 0.5) * 0.09;
   const dlng = (((h >>> 10) % 1000) / 1000 - 0.5) * 0.13;
-  return { latitude: ALMATY.latitude + dlat, longitude: ALMATY.longitude + dlng };
+  const center = cityCenter(PROFESSIONALS.find((p) => p.id === id)?.city);
+  return { latitude: center.latitude + dlat, longitude: center.longitude + dlng };
 }
 
 /** İki nokta arası mesafe (km, haversine). */
@@ -516,7 +587,8 @@ export const ADS: AdBanner[] = [
 // ── İşletme detayı ───────────────────────────────────────────────────────
 export interface ServiceItem {
   id: string;
-  name: string;
+  name: string; // TR (varsayılan); 3 dil için label kullan
+  label?: Tri; // taksonomi 3-dil etiketi (ekranlar tri(label, locale) ile yerelleştirir)
   durationMin: number;
   price: number;
   // §6.E — popülerlik & şeffaflık (otomatik türetilir)
@@ -544,6 +616,9 @@ export interface Review {
   disputed?: boolean;
 }
 
+// §6.1/§7.1 — alt kırılım (hizmet kalitesi/temizlik/iletişim/zamanlama) özet çubukları
+export type RatingBreakdown = { key: 'quality' | 'hygiene' | 'communication' | 'timing'; score: number };
+
 export interface ProfessionalDetail extends Professional {
   staff: Uzman[];
   about: string;
@@ -551,60 +626,29 @@ export interface ProfessionalDetail extends Professional {
   services: ServiceItem[];
   portfolio: string[];
   reviews: Review[];
+  // §6.1 — yıldız dağılımı [1★..5★ sayıları] + alt kırılım + sertifika + sosyal + bağlı salon
+  starDist: number[];
+  breakdown: RatingBreakdown[];
+  certs: string[];
+  social: { instagram: string; tiktok: string };
+  salon?: { id: string; name: string };
 }
 
-const SECTOR_SERVICES: Record<string, ServiceItem[]> = {
-  hair: [
-    { id: 'hair-1', name: 'Saç kesimi & fön', durationMin: 60, price: 9000 },
-    { id: 'hair-2', name: 'Saç boyama', durationMin: 90, price: 15000 },
-    { id: 'hair-3', name: 'Balayage', durationMin: 150, price: 28000 },
-    { id: 'hair-4', name: 'Keratin bakımı', durationMin: 120, price: 22000 },
-    { id: 'hair-5', name: 'Topuz / saç tasarımı', durationMin: 60, price: 12000 },
-  ],
-  nails: [
-    { id: 'nails-1', name: 'Manikür', durationMin: 45, price: 6000 },
-    { id: 'nails-2', name: 'Kalıcı oje', durationMin: 60, price: 9000 },
-    { id: 'nails-3', name: 'Nail art', durationMin: 90, price: 13000 },
-    { id: 'nails-4', name: 'Pedikür', durationMin: 60, price: 8000 },
-    { id: 'nails-5', name: 'Protez tırnak', durationMin: 120, price: 18000 },
-  ],
-  brows: [
-    { id: 'brows-1', name: 'Kaş şekillendirme', durationMin: 30, price: 4000 },
-    { id: 'brows-2', name: 'Kaş laminasyon', durationMin: 60, price: 11000 },
-    { id: 'brows-3', name: 'Kaş boyama', durationMin: 30, price: 5000 },
-    { id: 'brows-4', name: 'Microblading', durationMin: 120, price: 30000 },
-  ],
-  lashes: [
-    { id: 'lashes-1', name: 'İpek kirpik', durationMin: 90, price: 14000 },
-    { id: 'lashes-2', name: 'Hacimli kirpik', durationMin: 120, price: 18000 },
-    { id: 'lashes-3', name: 'Kirpik lifting', durationMin: 60, price: 10000 },
-    { id: 'lashes-4', name: 'Kirpik bakımı', durationMin: 30, price: 5000 },
-  ],
-  makeup: [
-    { id: 'makeup-1', name: 'Gündüz makyajı', durationMin: 45, price: 9000 },
-    { id: 'makeup-2', name: 'Gece makyajı', durationMin: 60, price: 14000 },
-    { id: 'makeup-3', name: 'Gelin makyajı', durationMin: 120, price: 30000 },
-    { id: 'makeup-4', name: 'Makyaj dersi', durationMin: 90, price: 16000 },
-  ],
-  skincare: [
-    { id: 'skin-1', name: 'Cilt analizi', durationMin: 30, price: 5000 },
-    { id: 'skin-2', name: 'Klasik cilt bakımı', durationMin: 60, price: 12000 },
-    { id: 'skin-3', name: 'Hydrafacial', durationMin: 75, price: 20000 },
-    { id: 'skin-4', name: 'Anti-aging bakım', durationMin: 90, price: 25000 },
-  ],
-  spa: [
-    { id: 'spa-1', name: 'İsveç masajı', durationMin: 60, price: 15000 },
-    { id: 'spa-2', name: 'Aroma terapi', durationMin: 75, price: 18000 },
-    { id: 'spa-3', name: 'Sıcak taş masajı', durationMin: 90, price: 22000 },
-    { id: 'spa-4', name: 'Vücut bakımı', durationMin: 90, price: 20000 },
-  ],
-  epilation: [
-    { id: 'epi-1', name: 'Lazer (tek bölge)', durationMin: 30, price: 8000 },
-    { id: 'epi-2', name: 'Tüm vücut lazer', durationMin: 120, price: 35000 },
-    { id: 'epi-3', name: 'Ağda', durationMin: 45, price: 6000 },
-    { id: 'epi-4', name: 'İğneli epilasyon', durationMin: 60, price: 12000 },
-  ],
-};
+// Sektör hizmet menüsü = MERKEZİ taksonomiden türetilir (tek kaynak). Ad = TR (varsayılan dil);
+// kk/ru için ekranlar taxonomy.tri() ile yerelleştirir. Uzman kaydında fiyat/süre bunlardan.
+const SECTOR_SERVICES: Record<string, ServiceItem[]> = Object.fromEntries(
+  TAXONOMY.map((c) => [
+    c.id,
+    c.services.map((s) => ({
+      id: s.id,
+      name: tri(s.label, 'tr'),
+      label: s.label,
+      durationMin: s.durationMin,
+      price: s.price,
+      ...(s.popular ? { popular: true } : {}),
+    })),
+  ]),
+);
 
 const STAFF_NAMES: { name: string; role: string }[] = [
   { name: 'Madina', role: 'Renk uzmanı' },
@@ -701,6 +745,31 @@ export function getProfessionalDetail(id: string): ProfessionalDetail {
     service: services[i % services.length]!.name,
   }));
   const portfolio = PORTFOLIO_POOL.map((p) => portfolioImg(p));
+  // §6.1 — yıldız dağılımı: toplam yorumu 5★ ağırlıklı böl (deterministik)
+  const rc = base.reviewCount;
+  const starDist = [
+    Math.round(rc * 0.01), // 1★
+    Math.round(rc * 0.03), // 2★
+    Math.round(rc * 0.07), // 3★
+    Math.round(rc * 0.19), // 4★
+    Math.max(0, rc - Math.round(rc * (0.01 + 0.03 + 0.07 + 0.19))), // 5★ (kalan)
+  ];
+  // §7.1 — alt kırılım: genel puana yakın, boyuta göre küçük sapmalı
+  const dim = (off: number) => Math.max(4, Math.min(5, Math.round((base.rating + off) * 10) / 10));
+  const breakdown: RatingBreakdown[] = [
+    { key: 'quality', score: dim(0.1) },
+    { key: 'hygiene', score: dim(0.2) },
+    { key: 'communication', score: dim(-0.1) },
+    { key: 'timing', score: dim(0) },
+  ];
+  const certs = ['photo-1584515933487-779824d29309', 'photo-1526045431048-f857369baa09'].map(portfolioImg);
+  const social = { instagram: base.name.toLowerCase().replace(/\s+/g, '_'), tiktok: base.name.split(' ')[0]!.toLowerCase() };
+  // §6.1 — bağımsız uzman bir salona bağlıysa bağlı salon gösterilir (mock: deterministik yarısı)
+  const salonBase = PROFESSIONALS.find((p) => p.kind === 'salon' && p.id !== base.id);
+  const salon =
+    base.kind !== 'salon' && salonBase && idx % 2 === 0
+      ? { id: salonBase.id, name: salonBase.name }
+      : undefined;
   return {
     ...base,
     staff,
@@ -710,6 +779,11 @@ export function getProfessionalDetail(id: string): ProfessionalDetail {
     services,
     portfolio,
     reviews,
+    starDist,
+    breakdown,
+    certs,
+    social,
+    ...(salon ? { salon } : {}),
   };
 }
 
@@ -742,6 +816,8 @@ export const DEPOSIT_SHORT_THRESHOLD_MS = 6 * 60 * 60_000;
 // §4.1 adım 6 — randevu hatırlatma pencereleri (24 saat + 2 saat önce). Parametrik.
 export const REMIND_24H_MS = 24 * 60 * 60_000;
 export const REMIND_2H_MS = 2 * 60 * 60_000;
+// §4.1.3 — uzman yanıt penceresi: bu süre içinde yanıtlanmayan talep otomatik düşer. Parametrik.
+export const RESPONSE_WINDOW_MS = 6 * 60 * 60_000;
 
 export interface Appointment {
   id: string;
@@ -763,10 +839,13 @@ export interface Appointment {
   refundReceiptUri?: string; // §4.4 — uzmanın yüklediği iade dekontu
   depositForfeited?: boolean; // §4.4 — geç iptal/no-show: kapora uzmanda kaldı
   providerNoShow?: boolean; // §4.4-b — uzman gelmedi: müşteriye 1000 puan telafi verildi
+  responseDeadline?: number; // §4.1.3 — uzman yanıt son anı (UTC ms); geçilirse talep düşer
+  respondedAt?: number; // §9.2 — uzmanın yanıt verdiği an (UTC ms); ortalama yanıt süresi metriği
   reminded24?: boolean; // §4.1 — 24 saat hatırlatması gönderildi
   reminded2?: boolean; // §4.1 — 2 saat hatırlatması gönderildi
   reassignedFrom?: string; // §4.5 — ayrılan uzmanın adı (yeni uzman uzmanName'de)
   providerSignal?: 'up' | 'down'; // §7.3 — uzmanın kullanıcıya GİZLİ sinyali (kamuya kapalı)
+  customerTrusted?: boolean; // §7.3 — POZİTİF rozet: yüksek tamamlanma oranlı "Güvenilir müşteri" (negatif asla)
   price: number; // kaç paraya
   status: BookingStatus;
   cancelReason?: string; // §6.C — "neden gelemiyorum"
@@ -789,6 +868,9 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     durationMin: 60,
     price: 9000,
     status: 'confirmed',
+    // §9.2 — yanıt süresi metriği demo verisi: 18 dk'da yanıtlandı
+    responseDeadline: SEED_NOW - 3 * 24 * 60 * 60_000 + RESPONSE_WINDOW_MS,
+    respondedAt: SEED_NOW - 3 * 24 * 60 * 60_000 + 18 * 60_000,
   },
   {
     id: 'a2',
@@ -797,11 +879,15 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     proId: '4',
     proName: 'Lotus Spa',
     proImage: PROFESSIONALS[3]!.image,
+    uzmanName: 'Saule', // §7.1 salon randevusu → uzman puanlaması için uzman adı zorunlu
     startMs: almatySlotMs(SEED_NOW, -7, 16, 0),
     durationMin: 90,
     price: 18000,
     status: 'completed',
     reviewed: false,
+    // §9.2 — yanıt süresi metriği demo verisi: 42 dk'da yanıtlandı
+    responseDeadline: SEED_NOW - 8 * 24 * 60 * 60_000 + RESPONSE_WINDOW_MS,
+    respondedAt: SEED_NOW - 8 * 24 * 60 * 60_000 + 42 * 60_000,
   },
   {
     id: 'a3',
@@ -826,6 +912,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     durationMin: 120,
     price: 18000,
     status: 'confirmed',
+    customerTrusted: true, // §7.3 — pozitif rozet demo
   },
   {
     id: 'a5',
@@ -840,6 +927,22 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     price: 6000,
     status: 'completed',
     reviewed: true,
+  },
+  {
+    // §4.3/§9.2 — dekont yüklendi, UZMAN onayı bekliyor (dashboard "bekleyen dekont" sayacı)
+    id: 'a6',
+    source: 'direct',
+    service: 'Saç boyama (kök)',
+    proId: '1',
+    proName: 'Madina Studio',
+    proImage: PROFESSIONALS[0]!.image,
+    uzmanName: 'Aigerim',
+    startMs: almatySlotMs(SEED_NOW, 1, 12, 0),
+    durationMin: 90,
+    price: 15000,
+    status: 'deposit_submitted',
+    depositAmount: 1000,
+    receiptUri: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&q=80',
   },
 ];
 
@@ -925,13 +1028,15 @@ export interface CareRoutine {
   name: string;
   icon: string;
   dueDays: number; // <0 gecikmiş, 0 bugün
+  periodDays: number; // bakım döngüsü — "tamamladım" sayacı buna göre yeniden başlar
+  categoryCode?: string; // §5.4.5 — "Teklif Al" kategoriyi otomatik seçsin (nails, hair…)
 }
 
 export const SEED_CARE_ROUTINES: CareRoutine[] = [
-  { id: 'cr1', name: 'Kalıcı oje yenileme', icon: 'color-palette-outline', dueDays: 2 },
-  { id: 'cr2', name: 'Saç dip boyası', icon: 'cut-outline', dueDays: -3 },
-  { id: 'cr3', name: 'Cilt bakımı', icon: 'sparkles-outline', dueDays: 9 },
-  { id: 'cr4', name: 'Lazer epilasyon seansı', icon: 'flash-outline', dueDays: 0 },
+  { id: 'cr1', name: 'Kalıcı oje yenileme', icon: 'color-palette-outline', dueDays: 2, periodDays: 15, categoryCode: 'nails' },
+  { id: 'cr2', name: 'Saç dip boyası', icon: 'cut-outline', dueDays: -3, periodDays: 42, categoryCode: 'hair' },
+  { id: 'cr3', name: 'Cilt bakımı', icon: 'sparkles-outline', dueDays: 9, periodDays: 30, categoryCode: 'skincare' },
+  { id: 'cr4', name: 'Lazer epilasyon seansı', icon: 'flash-outline', dueDays: 0, periodDays: 30, categoryCode: 'epilation' },
 ];
 
 // ── Kişisel kayıtlar (kullanıcının kendi girdiği — pazaryeri değil) ──────
@@ -943,6 +1048,8 @@ export interface PersonalLog {
   icon: string;
   tone: PersonalTone;
   note?: string;
+  kind?: QuickAddKind; // düzenleme ekranında tür çipini geri yükleyebilmek için
+  dateMs?: number; // düzenlemede tarih seçiciyi doğru tarihe açmak için (epoch)
 }
 
 export const SEED_PERSONAL_LOGS: PersonalLog[] = [
@@ -1189,15 +1296,23 @@ export interface DemandRequest {
   id: string;
   mode: DemandMode;
   category: string;
+  // §5.2/§9.3 — teklif hakkı aynı şehirdeki TÜM uzmanlarda; Talepler sekmesi ŞEHRE göre filtrelenir.
+  city: string;
   note?: string; // Mod 2 açıklama
   photoUrl?: string;
   budget?: number; // Mod 2 bütçe (₸)
   collectMin: number; // teklif toplama süresi (dk)
+  serviceId?: string; // opsiyonel alt hizmet (taksonomi) — talebi spesifikleştirir
+  // §privacy — yalnızca yakın salon sıralaması için kullanıcı adresi; UZMANA ASLA GÖSTERİLMEZ
+  addressId?: string;
   createdAt: number;
   expiresAt: number;
   status: DemandStatus;
   offers: DemandOffer[];
   bookedOfferId?: string;
+  // §7.3 — POZİTİF rozet: yüksek tamamlanma oranındaki kullanıcı "Güvenilir müşteri" (var/yok).
+  // Negatif sinyal ASLA gösterilmez; kullanıcı puanı uzmana açılmaz.
+  trusted?: boolean;
   seeded?: boolean; // uzman "Talepler" havuzu için tohum talep (kullanıcının Taleplerim'inde görünmez)
 }
 
@@ -1215,6 +1330,10 @@ const CAT_ETA: Record<string, number> = {
   skincare: 60,
   spa: 90,
   epilation: 60,
+  pmu: 120,
+  bridal: 180,
+  wellness: 60,
+  style: 90,
 };
 
 const OFFER_NOTES = [
@@ -1273,6 +1392,7 @@ export const SEED_DEMANDS: DemandRequest[] = [
     id: 'dm-seed-1',
     mode: 'describe',
     category: 'hair',
+    city: 'Almatı',
     note: 'Düğün için topuz ve saç tasarımı istiyorum, öğleden sonra müsaitim.',
     budget: 20000,
     collectMin: 180,
@@ -1280,12 +1400,14 @@ export const SEED_DEMANDS: DemandRequest[] = [
     expiresAt: DM_NOW + 150 * 60_000,
     status: 'collecting',
     offers: buildOffers('hair', 'Almatı', 20000, DM_NOW).slice(0, 2),
+    trusted: true, // §7.3 — yüksek tamamlanma oranlı kullanıcı (pozitif rozet demo)
     seeded: true,
   },
   {
     id: 'dm-seed-2',
     mode: 'photo',
     category: 'nails',
+    city: 'Almatı',
     collectMin: 720,
     createdAt: DM_NOW,
     expiresAt: DM_NOW + 400 * 60_000,
@@ -1297,6 +1419,7 @@ export const SEED_DEMANDS: DemandRequest[] = [
     id: 'dm-seed-3',
     mode: 'describe',
     category: 'lashes',
+    city: 'Almatı',
     note: 'Klasik ipek kirpik, ilk kez yaptıracağım.',
     budget: 12000,
     collectMin: 180,
@@ -1305,6 +1428,98 @@ export const SEED_DEMANDS: DemandRequest[] = [
     status: 'collecting',
     offers: [],
     seeded: true,
+  },
+];
+
+// ── §10.1/§5.1.6 Promosyon (Fırsatlar vitrini içeriği) — premium salon/uzman üretir ────
+// §12.7 — her promosyon admin onayına düşer; onaylanınca kullanıcı tarafı Fırsatlar'da yayınlanır.
+export type PromotionStatus = 'pending' | 'live' | 'rejected' | 'expired';
+export interface Promotion {
+  id: string;
+  title: string;
+  desc: string;
+  discountPct?: number; // ops. indirim yüzdesi (rozet)
+  startLabel: string; // gösterim tarih etiketi (TR)
+  endLabel: string;
+  imageUri?: string;
+  status: PromotionStatus;
+  createdAt: number;
+}
+
+const PROMO_NOW = Date.now();
+export const SEED_PROMOTIONS: Promotion[] = [
+  {
+    id: 'promo-seed-1',
+    title: 'Kışa özel saç bakımı',
+    desc: 'Keratin bakım + fön ilk 20 randevuda indirimli.',
+    discountPct: 25,
+    startLabel: '5 Tem',
+    endLabel: '31 Tem',
+    status: 'live',
+    createdAt: PROMO_NOW - 12 * 86_400_000,
+  },
+  {
+    id: 'promo-seed-2',
+    title: 'Yeni müşteriye ilk manikür',
+    desc: 'İlk kez gelen misafirlere jel manikürde özel fiyat.',
+    discountPct: 15,
+    startLabel: '10 Tem',
+    endLabel: '20 Tem',
+    status: 'pending',
+    createdAt: PROMO_NOW - 9 * 86_400_000,
+  },
+];
+
+// ── Tedarikçi reklamları (YENİ) — uzman/salon paneli orta alanı ──────────
+// Uzmanın sektörüne göre malzeme/ürün satan firmaların reklamları. Admin panelinden
+// yüklenir ve sektör/şehir kırılımıyla ilgili uzman/salon panellerine hedeflenir.
+export interface SupplierAd {
+  id: string;
+  brand: string; // tedarikçi firma
+  title: string;
+  subtitle: string;
+  ctaLabel: string;
+  tone: 'rose' | 'plum' | 'teal';
+  icon: string; // Ionicon adı
+  sector?: string; // hedef sektör (taxonomy kategori id); boşsa tüm sektörler
+  city?: string; // hedef şehir; boşsa tüm şehirler
+  imageUri?: string;
+}
+
+export const SEED_SUPPLIER_ADS: SupplierAd[] = [
+  {
+    id: 'ad-1',
+    brand: 'Almaty Beauty Supply',
+    title: 'Profesyonel saç bakım ürünleri',
+    subtitle: 'Salonlara özel toptan fiyatlar',
+    ctaLabel: 'İncele',
+    tone: 'plum',
+    icon: 'cut',
+    sector: 'hair',
+    city: 'Almatı',
+    imageUri: adImg('photo-1560066984-138dadb4c035'),
+  },
+  {
+    id: 'ad-2',
+    brand: 'NailPro KZ',
+    title: 'Jel & kalıcı oje setleri',
+    subtitle: 'Yeni koleksiyon %20 indirimli',
+    ctaLabel: 'Kataloğa bak',
+    tone: 'rose',
+    icon: 'color-palette',
+    sector: 'nails',
+    imageUri: adImg('photo-1604654894610-df63bc536371'),
+  },
+  {
+    id: 'ad-3',
+    brand: 'Derma Studio Pro',
+    title: 'Cilt bakımı cihaz ve serumları',
+    subtitle: 'Uzman fiyatlarıyla, hızlı teslimat',
+    ctaLabel: 'İncele',
+    tone: 'teal',
+    icon: 'sparkles',
+    sector: 'skincare',
+    imageUri: adImg('photo-1487412947147-5cebf100ffc2'),
   },
 ];
 
@@ -1381,6 +1596,9 @@ export interface AppNotification {
   dateLabel: string;
   icon: string;
   read: boolean;
+  // §9.1/§10 — hedef kitle: 'user' müşteri modunda, 'seller' uzman/salon panelinde görünür.
+  // Tanımsız = ortak (her iki modda görünür; sistem/duyuru bildirimleri).
+  audience?: 'user' | 'seller';
   // Tıklanınca gidilecek ekran (yoksa türe göre varsayılan kullanılır)
   route?: string;
   // §5.7 — oluşturulma zamanı (ms); 30 günden eski bildirimler otomatik temizlenir.
@@ -1467,8 +1685,8 @@ export const FAQ: Faq[] = [
   },
   {
     id: 'f4',
-    q: 'Adresim ve numaram ne zaman paylaşılır?',
-    a: 'İletişim ve konum bilgilerin yalnızca randevu onaylandıktan sonra ilgili işletmeyle paylaşılır.',
+    q: 'Adresim işletmeyle paylaşılır mı?',
+    a: 'Hayır. Adresin yalnızca sana en yakın salonları ve mesafeyi göstermek için kullanılır; hiçbir işletme veya uzmanla paylaşılmaz — randevunu onaylasan bile. Randevu onaylanınca gitmen için SALONUN adresi sana gösterilir.',
   },
   {
     id: 'f5',

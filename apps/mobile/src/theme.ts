@@ -29,6 +29,7 @@ export const lightColors = {
   accent: '#C6E24B',
   accentSoft: '#EEF7C8',
   onAccent: '#1A1A1A',
+  accentFg: '#6F8C1B', // beyaz zeminde okunur koyu lime — metin/ikon vurgusu (VELOURA)
 
   // Marka / nazik aksanlar
   rose: '#CC8BA0', // pudra pembesi (kadın kullanıcı + nazik vurgu)
@@ -72,6 +73,7 @@ export const darkColors: ColorTokens = {
   accent: '#C6E24B',
   accentSoft: '#2E3618',
   onAccent: '#171A0C',
+  accentFg: '#B7D94E', // koyu zeminde okunur lime — metin/ikon vurgusu
 
   // Marka / nazik aksanlar (koyu zeminde okunur tonlar; *Soft = koyu tint)
   rose: '#D89AAD',
