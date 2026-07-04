@@ -1,12 +1,10 @@
-import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { api, type BookingStats } from '../../src/api';
-import { formatPrice, SEED_SUPPLIER_ADS, SELLER_DATA, type SupplierAd } from '../../src/data';
+import { SEED_SUPPLIER_ADS, SELLER_DATA, type SupplierAd } from '../../src/data';
 import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
@@ -32,18 +30,6 @@ export default function SalonHomeScreen() {
   const staff = SELLER_DATA.month.staff;
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const ads = SEED_SUPPLIER_ADS.filter((a) => !a.city || a.city === city);
-
-  const [stats, setStats] = useState<BookingStats | null>(null);
-  useEffect(() => {
-    let alive = true;
-    api
-      .bookingStats()
-      .then((s) => alive && setStats(s))
-      .catch(() => undefined);
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   // §10.1 — salon kapak fotoğrafı: uzman profil fotosuyla AYNI yerden (avatar) düzenlenebilir
   const editCover = async () => {
@@ -109,33 +95,7 @@ export default function SalonHomeScreen() {
         </View>
 
         <View style={styles.body}>
-          {/* Canlı özet */}
-          {stats ? (
-            <LinearGradient colors={gradients.plum} style={[styles.liveBand, shadow.soft]}>
-              <View style={styles.liveRow}>
-                <LiveTile value={String(stats.upcoming)} label={t('reports.live.upcoming')} />
-                <LiveTile value={String(stats.completed)} label={t('reports.live.completed')} />
-                <LiveTile value={`%${stats.noShowRate}`} label={t('reports.live.noshow')} />
-              </View>
-              <View style={styles.liveDivider} />
-              <View style={styles.liveRevenue}>
-                <Text variant="caption" tone="onColor" style={styles.dim}>
-                  {t('reports.live.revenue')}
-                </Text>
-                <Text variant="h2" tone="onColor">
-                  {formatPrice(stats.revenue)}
-                </Text>
-              </View>
-              <View style={styles.liveRevenue}>
-                <Text variant="caption" tone="onColor" style={styles.dim}>
-                  {t('reports.live.commission')} (%{stats.commissionRate})
-                </Text>
-                <Text variant="bodyStrong" tone="onColor">
-                  {formatPrice(stats.commission)}
-                </Text>
-              </View>
-            </LinearGradient>
-          ) : null}
+          {/* §10 gizlilik — salon panelinde gelir/komisyon GÖSTERİLMEZ (uzmanın şahsi para alanı) */}
 
           {/* §11.2 — görünürlük upsell */}
           {!premium ? (
@@ -279,20 +239,6 @@ function PerfChip({ icon, tint, value, label }: { icon: IoniconName; tint: strin
   );
 }
 
-function LiveTile({ value, label }: { value: string; label: string }) {
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={styles.liveTile}>
-      <Text variant="h2" tone="onColor">
-        {value}
-      </Text>
-      <Text variant="caption" tone="onColor" style={styles.dim} numberOfLines={1}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: TAB_BAR_CLEARANCE + space(2) },
@@ -341,19 +287,6 @@ const makeStyles = (colors: ColorTokens) =>
     heroGreet: { color: 'rgba(255,255,255,0.9)', fontWeight: '600' },
     heroName: { color: '#FFFFFF', letterSpacing: -0.3 },
     body: { paddingHorizontal: space(3), paddingTop: space(2) },
-    liveBand: {
-      paddingHorizontal: space(2.25),
-      paddingTop: space(1.5),
-      paddingBottom: space(1.5),
-      gap: space(0.75),
-      borderRadius: radius.xl,
-      marginBottom: space(2.5),
-    },
-    liveRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    liveTile: { flex: 1, alignItems: 'center', gap: 2 },
-    liveDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.25)' },
-    liveRevenue: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    dim: { opacity: 0.9 },
     upsell: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -212,7 +212,6 @@ interface State {
     service: string;
     startMs: number;
     durationMin: number;
-    price: number;
   }) => string;
   // Faz 3 — dolu uzmana bekleme listesine eklenme
   joinWaitlist: (pro: { id: string; name: string; image: string; service: string }) => void;
@@ -535,9 +534,10 @@ export const useStore = create<State>()(
       customerName: input.customerName,
       startMs: input.startMs,
       durationMin: input.durationMin,
-      price: input.price,
+      price: 0, // §10 — salon panelinde para yok; ücret uzman ↔ müşteri arasında
       status: 'awaiting_provider', // uzman onayı bekliyor (§4.6)
       responseDeadline: Date.now() + RESPONSE_WINDOW_MS,
+      bySalon: true, // §10 — salon panelinde yalnız salonun aldığı randevular görünür
     };
     set((s) => ({ bookings: [booking, ...s.bookings] }));
     void api.createBooking(booking, get().token ?? undefined).catch(() => undefined);

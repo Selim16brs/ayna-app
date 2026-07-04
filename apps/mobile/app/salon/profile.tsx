@@ -20,8 +20,8 @@ export default function SalonProfileHub() {
   const salonName = useStore((s) => s.currentUser?.name) ?? 'Salon';
   const avatarUri = useStore((s) => s.avatarUri);
 
+  // §10 gizlilik — Komisyon/para salon panelinde YOK (uzmanın şahsi alanı). Yalnız değerlendirme + promosyon.
   const MANAGE: { icon: IoniconName; label: MessageKey; route: string }[] = [
-    { icon: 'cash-outline', label: 'salon.quick.commissions', route: '/seller/commissions' },
     { icon: 'star-outline', label: 'salon.quick.reviews', route: '/seller/reviews' },
     { icon: 'pricetags-outline', label: 'salon.quick.promotions', route: '/seller/promotions' },
   ];

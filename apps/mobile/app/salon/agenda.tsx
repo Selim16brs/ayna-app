@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
-import { type Appointment, type BookingStatus, SELLER_DATA, formatPrice } from '../../src/data';
+import { type Appointment, type BookingStatus, SELLER_DATA } from '../../src/data';
 import { almatyDayStart, slotTime } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -44,10 +44,10 @@ export default function SalonAgendaScreen() {
 
   const [tab, setTab] = useState<'list' | 'add'>('list');
 
-  // Randevular — tüm alınmış randevular (bağlı uzman takvimleri dahil), gün gruplu
+  // §10 gizlilik — salon YALNIZ kendi aldığı offline randevuları görür (uzmanın kendi randevuları paylaşılmaz)
   const grouped = useMemo(() => {
     const active = bookings
-      .filter((b) => b.status !== 'cancelled')
+      .filter((b) => b.bySalon && b.status !== 'cancelled')
       .sort((a, b) => a.startMs - b.startMs);
     const map = new Map<number, Appointment[]>();
     for (const b of active) {
@@ -126,15 +126,13 @@ export default function SalonAgendaScreen() {
                           </Text>
                         </View>
                       </View>
+                      {/* §10 — salon panelinde FİYAT YOK (uzmanın şahsi alanı); yalnız durum */}
                       <View style={styles.apptRight}>
                         {key ? (
                           <View style={[styles.badge, { backgroundColor: statusTone(b.status) }]}>
                             <Text style={styles.badgeText}>{t(key)}</Text>
                           </View>
                         ) : null}
-                        <Text variant="caption" tone="inkSoft">
-                          {formatPrice(b.price)}
-                        </Text>
                       </View>
                     </PressableScale>
                   );
@@ -173,7 +171,6 @@ function AddTab({
     service: string;
     startMs: number;
     durationMin: number;
-    price: number;
   }) => void;
   locale: string;
 }) {
@@ -185,7 +182,6 @@ function AddTab({
   const [service, setService] = useState('');
   const [when, setWhen] = useState<Date>(() => new Date(Date.now() + 3_600_000));
   const [dur, setDur] = useState('60');
-  const [price, setPrice] = useState('');
 
   const canAdd = uzman && customer.trim().length > 1 && service.trim().length > 1;
 
@@ -243,27 +239,15 @@ function AddTab({
         />
       </Field>
       <DateField label={t('offline.datetime')} value={when} onChange={setWhen} mode="datetime" />
-      <View style={styles.row}>
-        <Field label={t('offline.dur')} flex>
-          <TextInput
-            style={styles.input}
-            value={dur}
-            onChangeText={(v) => setDur(v.replace(/[^0-9]/g, ''))}
-            keyboardType="number-pad"
-            placeholderTextColor={colors.muted}
-          />
-        </Field>
-        <Field label={t('offline.price')} flex>
-          <TextInput
-            style={styles.input}
-            value={price}
-            onChangeText={(v) => setPrice(v.replace(/[^0-9]/g, ''))}
-            keyboardType="number-pad"
-            placeholder="9000"
-            placeholderTextColor={colors.muted}
-          />
-        </Field>
-      </View>
+      <Field label={t('offline.dur')}>
+        <TextInput
+          style={styles.input}
+          value={dur}
+          onChangeText={(v) => setDur(v.replace(/[^0-9]/g, ''))}
+          keyboardType="number-pad"
+          placeholderTextColor={colors.muted}
+        />
+      </Field>
 
       <View style={styles.submit}>
         <Button
@@ -277,7 +261,6 @@ function AddTab({
               service: service.trim(),
               startMs: when.getTime(),
               durationMin: Number(dur) || 60,
-              price: Number(price) || 0,
             })
           }
         />

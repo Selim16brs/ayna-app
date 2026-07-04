@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SELLER_DATA, formatPrice } from '../../src/data';
+import { SELLER_DATA } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -60,7 +60,6 @@ export default function StaffDetailScreen() {
   }
   const bookings = Number(p.bookings ?? 0) || 0;
   const rating = Number(p.rating ?? 0) || 0;
-  const revenue = bookings * 14000; // mock ortalama bilet
 
   // §5.1 — uzmana atanan hizmetler + çalışma grafiği tipi
   const [assigned, setAssigned] = useState<Set<string>>(new Set(SALON_POOL.slice(0, 3)));
@@ -89,6 +88,7 @@ export default function StaffDetailScreen() {
           </View>
         </View>
 
+        {/* §10 gizlilik — salon uzmanın GELİRİNİ görmez (uzmanın şahsi para alanı); yalnız performans */}
         <View style={styles.stats}>
           <Stat
             icon="calendar-outline"
@@ -98,11 +98,7 @@ export default function StaffDetailScreen() {
           <View style={styles.divider} />
           <Stat icon="star-outline" value={rating.toFixed(1)} label={t('seller.staff.rating')} />
           <View style={styles.divider} />
-          <Stat
-            icon="cash-outline"
-            value={formatPrice(revenue)}
-            label={t('seller.staff.revenue')}
-          />
+          <Stat icon="pie-chart-outline" value={`%${60 + (bookings % 38)}`} label={t('salon.metric.occupancy')} />
         </View>
 
         {/* §5.1 — çalışma grafiği tipi */}

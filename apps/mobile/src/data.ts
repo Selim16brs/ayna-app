@@ -846,6 +846,9 @@ export interface Appointment {
   reassignedFrom?: string; // §4.5 — ayrılan uzmanın adı (yeni uzman uzmanName'de)
   providerSignal?: 'up' | 'down'; // §7.3 — uzmanın kullanıcıya GİZLİ sinyali (kamuya kapalı)
   customerTrusted?: boolean; // §7.3 — POZİTİF rozet: yüksek tamamlanma oranlı "Güvenilir müşteri" (negatif asla)
+  // §10 gizlilik — SALONUN uzman için aldığı offline randevu. Yalnız bunlar salon panelinde görünür;
+  // uzmanın kendi (app/offline) randevuları ve TÜM para bilgisi salonla PAYLAŞILMAZ (uzmanın şahsi alanı).
+  bySalon?: boolean;
   price: number; // kaç paraya
   status: BookingStatus;
   cancelReason?: string; // §6.C — "neden gelemiyorum"
@@ -943,6 +946,38 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     status: 'deposit_submitted',
     depositAmount: 1000,
     receiptUri: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&q=80',
+  },
+  {
+    // §10 — SALONUN Aigerim için aldığı offline randevu (uzman onayı bekliyor)
+    id: 'sof-seed-1',
+    source: 'direct',
+    service: 'Saç kesimi & fön',
+    proId: '',
+    proName: 'Glamour Salon',
+    proImage: '',
+    uzmanName: 'Aigerim',
+    customerName: 'Dilnaz S.',
+    startMs: almatySlotMs(SEED_NOW, 2, 15, 0),
+    durationMin: 60,
+    price: 0,
+    status: 'awaiting_provider',
+    bySalon: true,
+  },
+  {
+    // §10 — SALONUN Madina için aldığı offline randevu (uzman onayladı)
+    id: 'sof-seed-2',
+    source: 'direct',
+    service: 'Saç boyama',
+    proId: '',
+    proName: 'Glamour Salon',
+    proImage: '',
+    uzmanName: 'Madina',
+    customerName: 'Ayana K.',
+    startMs: almatySlotMs(SEED_NOW, 3, 11, 0),
+    durationMin: 90,
+    price: 0,
+    status: 'confirmed',
+    bySalon: true,
   },
 ];
 
