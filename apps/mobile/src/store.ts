@@ -46,11 +46,12 @@ import {
   SEED_NOTIFICATIONS,
   NOTIFICATION_TTL_MS,
   SEED_PERSONAL_LOGS,
+  SELLER_PAST_CLIENTS,
   reengageTemplate,
   type UpcomingEvent,
   type UserAddress,
 } from './data';
-import { servicesOf } from './taxonomy';
+import { findServiceWithCategory, servicesOf, tri } from './taxonomy';
 import { defaultHours, type DayHours } from './ui/WorkingHours';
 import { emptySocial, type SocialValue } from './ui/SocialLinks';
 
@@ -217,8 +218,12 @@ interface State {
     durationMin: number;
     price: number;
   }) => string;
-  // §10/§4 — GERİ ÇAĞIRMA: uzman, hizmet periyodu dolan memnun müşteriye sıcak bildirim gönderir (retention)
+  // §10/§4/§11 — GERİ ÇAĞIRMA: hizmet periyodu dolan memnun müşteriye sıcak bildirim.
+  // PREMIUM özellik; sistem OTOMATİK gönderir; premium uzman aç/kapat edebilir.
   reengagedIds: string[];
+  autoReengageEnabled: boolean; // premium uzman toggle'ı (varsayılan açık)
+  setAutoReengage: (v: boolean) => void;
+  runAutoReengage: (locale: string) => void; // sistem tetiklemesi (app açılış/periyodik)
   sendReengage: (input: {
     clientId: string;
     customerName: string;
@@ -450,6 +455,7 @@ export const useStore = create<State>()(
   addresses: [{ id: 'ad1', label: 'home', detail: 'Almatı, Dostyk 12' }],
   premium: false,
   reengagedIds: [],
+  autoReengageEnabled: true,
   points: 340,
   raffleEntries: 5,
   firstBookingBonusGiven: false,
@@ -571,7 +577,35 @@ export const useStore = create<State>()(
     return id;
   },
 
-  // §10/§4 — GERİ ÇAĞIRMA: uzman, periyodu dolan memnun müşteriye sıcak bir bildirim gönderir.
+  // §11 — premium uzman otomatik geri-çağırmayı aç/kapat eder
+  setAutoReengage: (v) => set({ autoReengageEnabled: v }),
+
+  // §10/§4/§11 — SİSTEM OTOMATİK geri çağırma: premium + toggle açık uzmanda,
+  // periyodu dolan (ve daha önce çağrılmamış) her müşteriye sıcak bildirim gönderir.
+  runAutoReengage: (locale) => {
+    const s = get();
+    if (s.currentUser?.role !== 'professional') return; // yalnız uzman
+    if (!s.premium) return; // §11 — PREMIUM özelliği
+    if (!s.autoReengageEnabled) return; // uzman kapatmışsa gönderme
+    const now = Date.now();
+    const expertName = s.currentUser?.name ?? 'Uzman';
+    for (const c of SELLER_PAST_CLIENTS) {
+      if (s.reengagedIds.includes(c.id)) continue; // idempotent — tekrar gönderme
+      const found = findServiceWithCategory(c.serviceId);
+      const period = found?.service.periodDays ?? 30;
+      if (now - c.lastVisitMs < period * 24 * 60 * 60_000) continue; // periyot dolmadı
+      const label = found ? tri(found.service.label, locale) : c.serviceId;
+      get().sendReengage({
+        clientId: c.id,
+        customerName: c.name,
+        serviceLabel: label,
+        categoryId: found?.categoryId ?? '',
+        expertName,
+      });
+    }
+  },
+
+  // §10/§4 — memnun müşteriye sıcak bildirim gönderir (runAutoReengage çağırır).
   // Bildirim müşteri modunda görünür (audience 'user'); kategoriye göre samimi şablon + emoji.
   sendReengage: (input) => {
     if (get().reengagedIds.includes(input.clientId)) return; // aynı döngüde tekrar gönderme (spam önleme)
@@ -1707,6 +1741,8 @@ export const useStore = create<State>()(
         sellerCerts: s.sellerCerts,
         salonProfile: s.salonProfile,
         demandNotif: s.demandNotif,
+        premium: s.premium, // §11 — satın alınan paket app yeniden açılınca korunmalı
+        autoReengageEnabled: s.autoReengageEnabled,
       }),
     },
   ),

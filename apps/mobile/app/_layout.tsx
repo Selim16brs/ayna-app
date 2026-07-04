@@ -12,7 +12,7 @@ import { AppTabBar, NailCursor, SalonTabBar, SellerTabBar } from '../src/ui';
 
 function ThemedStack() {
   const { colors, isDark } = useTheme();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const pathname = usePathname();
   const currentUser = useStore((s) => s.currentUser);
   const bookings = useStore((s) => s.bookings);
@@ -23,6 +23,7 @@ function ThemedStack() {
   const expireDeposits = useStore((s) => s.expireDeposits);
   const expireResponses = useStore((s) => s.expireResponses);
   const pruneNotifications = useStore((s) => s.pruneNotifications);
+  const runAutoReengage = useStore((s) => s.runAutoReengage);
   useEffect(() => {
     void hydrateBookings();
   }, [hydrateBookings]);
@@ -42,7 +43,8 @@ function ThemedStack() {
     expireDeposits();
     expireResponses(); // §4.1.3 — uzman yanıt süresi dolan talepleri düşür
     pruneNotifications(); // §5.7 — 30 günden eski bildirimleri temizle
-  }, [checkReminders, expireDemands, expireDeposits, expireResponses, pruneNotifications, pathname]);
+    runAutoReengage(locale); // §11 — premium uzmanda periyodu dolan müşterilere otomatik geri çağırma
+  }, [checkReminders, expireDemands, expireDeposits, expireResponses, pruneNotifications, runAutoReengage, locale, pathname]);
 
   // §9/§10 — panel giriş ROLÜNE göre AYRI: salon → SalonTabBar, uzman → SellerTabBar. Müşteri modu kaldırıldı.
   const role = currentUser?.role;
