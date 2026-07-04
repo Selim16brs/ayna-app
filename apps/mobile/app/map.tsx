@@ -4,8 +4,8 @@ import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import {
-  ALMATY,
   CATEGORIES,
+  cityCenter,
   distanceKm,
   priceLabel,
   type Professional,
@@ -18,12 +18,6 @@ import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { PressableScale, Screen, StackHeader, Text } from '../src/ui';
 
-const REGION: Region = {
-  ...ALMATY,
-  latitudeDelta: 0.12,
-  longitudeDelta: 0.12,
-};
-
 export default function MapScreen() {
   const router = useRouter();
   const { t } = useLocale();
@@ -34,6 +28,10 @@ export default function MapScreen() {
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const [cat, setCat] = useState<string | null>(null);
   const [selected, setSelected] = useState<Professional | null>(null);
+
+  // Harita seçili ŞEHRİN merkezine odaklanır (Almatı seçince Almatı, Astana seçince Astana).
+  const center = cityCenter(city);
+  const region: Region = { ...center, latitudeDelta: 0.14, longitudeDelta: 0.14 };
 
   const pros = useMemo(
     () => all.filter((p) => p.city === city && (!cat || p.sector === cat)),
@@ -71,13 +69,13 @@ export default function MapScreen() {
       </ScrollView>
 
       <View style={styles.mapWrap}>
-        <MapView style={StyleSheet.absoluteFill} initialRegion={REGION}>
+        <MapView key={city} style={StyleSheet.absoluteFill} initialRegion={region}>
           {pros.map((p) => (
             <Marker
               key={p.id}
               coordinate={proCoords(p.id)}
               // §5.1.3 — salon vs bağımsız uzman pinleri görsel ayrı
-              pinColor={p.kind === 'salon' ? colors.rose : colors.blue}
+              pinColor={p.kind === 'salon' ? colors.accentFg : colors.blue}
               onPress={() => setSelected(p)}
             />
           ))}
@@ -114,7 +112,7 @@ export default function MapScreen() {
                     {selected.rating.toFixed(1)}
                   </Text>
                   <Text variant="caption" tone="muted">
-                    · {distanceKm(ALMATY, proCoords(selected.id))} {t('map.distance')}
+                    · {distanceKm(center, proCoords(selected.id))} {t('map.distance')}
                   </Text>
                   <Text variant="caption" tone="muted">
                     · {priceLabel(selected)}

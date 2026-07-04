@@ -1,32 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useStore } from '../../src/store';
-import { Screen, Segmented, TabHero, Text } from '../../src/ui';
+import { Screen, Segmented, Text } from '../../src/ui';
 import type { ThemeMode } from '../../src/theme';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-const makeMenuColors = (colors: ColorTokens) => [
-  colors.rose,
-  colors.orange,
-  colors.teal,
-  colors.blue,
-  colors.plum,
-  colors.rose,
-  colors.orange,
-  colors.teal,
-];
-
 // §5.6 nihai menü. 'panel' yalnızca satıcı hesabında; 'AYNA Safe' KALDIRILDI.
 const MENU: { key: MessageKey; icon: IoniconName; danger?: boolean; sellerOnly?: boolean }[] = [
   { key: 'profile.menu.panel', icon: 'briefcase-outline', sellerOnly: true },
-  { key: 'seller.mode.to_user', icon: 'people-outline', sellerOnly: true },
   { key: 'profile.menu.passport', icon: 'card-outline' },
   { key: 'profile.menu.rewards', icon: 'gift-outline' },
   { key: 'profile.menu.budget', icon: 'wallet-outline' },
@@ -43,7 +32,7 @@ export default function ProfileScreen() {
   const { t } = useLocale();
   const { colors, gradients, shadow, preference, setPreference } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const MENU_COLORS = makeMenuColors(colors);
+  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   const completedCount = useStore((s) => s.bookings.filter((b) => b.status === 'completed').length);
@@ -51,19 +40,23 @@ export default function ProfileScreen() {
   const reviewCount = useStore((s) =>
     Object.values(s.userReviews).reduce((n, a) => n + a.length, 0),
   );
+  const following = useStore((s) => s.following);
+  const followerNames = useStore((s) => s.followerNames);
+  const avatarUri = useStore((s) => s.avatarUri);
   const userName = useStore((s) => s.currentUser?.name) ?? 'Aigerim';
+  const phone = useStore((s) => s.currentUser?.phone) ?? '';
   const isLoggedIn = useStore((s) => s.currentUser != null);
   const phoneVerified = useStore((s) => s.currentUser?.phoneVerified ?? false);
-  // §12.3 — kısıtlı mod bilgilendirmesi + 7 gün geri sayım
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   const restrictedDaysLeft = useStore((s) => s.currentUser?.restrictedDaysLeft ?? 0);
-  const womenVerified = useStore((s) => s.currentUser?.womenVerified ?? false);
+  const premium = useStore((s) => s.premium);
   const logout = useStore((s) => s.logout);
-  const setSellerViewMode = useStore((s) => s.setSellerViewMode);
-  // §5.6 — 'İşletme paneli' yalnızca salon/uzman hesabında görünür
   const role = useStore((s) => s.currentUser?.role);
   const isSeller = role === 'salon' || role === 'professional';
   const menu = MENU.filter((m) => !m.sellerOnly || isSeller);
+  // §9/§10 — panel etiketi rol-duyarlı: uzman "Uzman paneli", salon "İşletme paneli"
+  const menuLabel = (key: MessageKey): string =>
+    key === 'profile.menu.panel' && role === 'professional' ? t('profile.menu.panel_expert') : t(key);
 
   const appearance: 'system' | ThemeMode = preference ?? 'system';
   const onAppearance = (value: 'system' | ThemeMode) =>
@@ -71,11 +64,6 @@ export default function ProfileScreen() {
 
   const onPress = (key: MessageKey) => {
     if (key === 'profile.menu.panel') router.push('/seller/reports');
-    else if (key === 'seller.mode.to_user') {
-      // §9.5/§10.3 — kullanıcı moduna geç (kalıcı dönüş butonu görünür)
-      setSellerViewMode('user');
-      router.replace('/discover');
-    }
     else if (key === 'profile.menu.passport') router.push('/profile/passport');
     else if (key === 'profile.menu.rewards') router.push('/rewards');
     else if (key === 'profile.menu.budget') router.push('/profile/budget');
@@ -93,47 +81,123 @@ export default function ProfileScreen() {
 
   return (
     <Screen edges={[]}>
-      <TabHero
-        title={userName}
-        right={
-          <LinearGradient colors={gradients.rose} style={[styles.avatar, shadow.soft]}>
-            <Text variant="title" tone="onColor">
+      {/* ── Yeşil gradient başlık + ortalı kimlik (VELOURA "Account") ── */}
+      <LinearGradient
+        colors={gradients.gold}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + space(1) }]}
+      >
+        <Text variant="bodyStrong" tone="onAccent" style={styles.headerTitle}>
+          {t('nav.profile')}
+        </Text>
+        <View style={[styles.avatar, shadow.soft]}>
+          {avatarUri ? (
+            <Image source={{ uri: avatarUri }} style={styles.avatarImg} />
+          ) : (
+            <Text variant="h2" tone="ink">
               {userName.charAt(0).toUpperCase()}
             </Text>
-          </LinearGradient>
-        }
-      >
-        <View style={styles.heroMeta}>
+          )}
+        </View>
+        <Pressable style={styles.nameRow} onPress={() => router.push('/profile/edit')}>
+          <Text variant="title" tone="onAccent">
+            {userName}
+          </Text>
+          <Ionicons name="create-outline" size={18} color={colors.onAccent} />
+        </Pressable>
+        <View style={styles.contactRow}>
+          <Ionicons name="call-outline" size={13} color={colors.onAccent} />
+          <Text variant="caption" tone="onAccent" style={styles.contactText}>
+            {phone || t('nav.profile')}
+          </Text>
+        </View>
+        <View style={styles.badgeRow}>
           {phoneVerified ? (
-            <View style={styles.verifiedChip}>
-              <Ionicons name="checkmark-circle" size={13} color={colors.success} />
-              <Text variant="caption" style={styles.verifiedText}>
+            <View style={styles.badge}>
+              <Ionicons name="checkmark-circle" size={12} color={colors.success} />
+              <Text variant="caption" style={styles.badgeText}>
                 {t('profile.verify.done')}
               </Text>
             </View>
           ) : null}
-          {womenVerified ? (
-            <View style={styles.womenChip}>
-              <Ionicons name="female" size={12} color={colors.rose} />
-              <Text variant="caption" style={styles.womenText}>
-                {t('profile.women_member')}
-              </Text>
-            </View>
-          ) : null}
-          <Pressable onPress={() => router.push('/profile/edit')}>
-            <Text variant="caption" tone="ink" style={styles.heroEdit}>
-              {t('profile.edit')}
+          {/* Üyelik durumu — Standart / Premium */}
+          <View style={styles.badge}>
+            <Ionicons
+              name={premium ? 'star' : 'person-circle-outline'}
+              size={12}
+              color={premium ? colors.gold : colors.accentFg}
+            />
+            <Text variant="caption" style={styles.badgeText}>
+              {t(premium ? 'profile.premium_member' : 'profile.standard_member')}
             </Text>
-          </Pressable>
+          </View>
         </View>
-      </TabHero>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      </LinearGradient>
 
-        {/* §12.3 — kısıtlı mod uyarısı (7 gün penceresinde kalan gün) */}
+      {/* ── Üste binen beyaz sheet ── */}
+      <ScrollView
+        style={styles.sheet}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* İstatistikler — sayıya tıkla → ilgili detay */}
+        <View style={styles.stats}>
+          <Stat
+            value={`${completedCount}`}
+            label={t('profile.stat.bookings')}
+            onPress={() => router.push('/bookings')}
+          />
+          <View style={styles.statDivider} />
+          <Stat
+            value={`${points}`}
+            label={t('profile.stat.points')}
+            onPress={() => router.push('/rewards')}
+          />
+          <View style={styles.statDivider} />
+          <Stat
+            value={`${reviewCount || 5}`}
+            label={t('profile.stat.reviews')}
+            onPress={() => router.push('/profile/reviews')}
+          />
+        </View>
+
+        {/* ── W2W Takip Ettiklerim: sayıya tıkla → liste sayfası (silme orada) ── */}
+        <View style={styles.followCard}>
+          <Text variant="bodyStrong" tone="ink" style={styles.followTitle}>
+            {t('profile.following_title')}
+          </Text>
+          <View style={styles.followStats}>
+            <Pressable
+              style={styles.followStat}
+              onPress={() => router.push('/profile/follows?tab=followers')}
+            >
+              <Text variant="title" tone="ink">
+                {followerNames.length}
+              </Text>
+              <Text variant="caption" tone="muted">
+                {t('profile.followers')}
+              </Text>
+            </Pressable>
+            <View style={styles.statDivider} />
+            <Pressable
+              style={styles.followStat}
+              onPress={() => router.push('/profile/follows?tab=following')}
+            >
+              <Text variant="title" tone="ink">
+                {following.length}
+              </Text>
+              <Text variant="caption" tone="muted">
+                {t('profile.following')}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
         {restricted ? (
-          <View style={[styles.restrictBanner, shadow.soft]}>
+          <View style={styles.banner}>
             <Ionicons name="alert-circle" size={18} color={colors.danger} />
-            <View style={styles.verifyText}>
+            <View style={styles.bannerText}>
               <Text variant="bodyStrong" tone="ink">
                 {t('profile.restricted.title')}
               </Text>
@@ -146,13 +210,12 @@ export default function ProfileScreen() {
           </View>
         ) : null}
 
-        {/* §4.6 — telefon doğrulama çağrısı (yalnızca girişli + doğrulanmamışsa) */}
         {isLoggedIn && !phoneVerified ? (
-          <Pressable style={[styles.verifyBanner, shadow.soft]} onPress={() => router.push('/auth/verify')}>
+          <Pressable style={styles.verifyRow} onPress={() => router.push('/auth/verify')}>
             <View style={styles.verifyIcon}>
-              <Ionicons name="shield-checkmark" size={18} color={colors.onColor} />
+              <Ionicons name="shield-checkmark" size={18} color={colors.onAccent} />
             </View>
-            <View style={styles.verifyText}>
+            <View style={styles.bannerText}>
               <Text variant="bodyStrong" tone="ink">
                 {t('profile.verify.cta')}
               </Text>
@@ -164,18 +227,11 @@ export default function ProfileScreen() {
           </Pressable>
         ) : null}
 
-        <View style={[styles.stats, shadow.soft]}>
-          <Stat value={`${completedCount}`} label={t('profile.stat.bookings')} />
-          <View style={styles.statDivider} />
-          <Stat value={`${points}`} label={t('profile.stat.points')} />
-          <View style={styles.statDivider} />
-          <Stat value={`${reviewCount || 5}`} label={t('profile.stat.reviews')} />
-        </View>
-
-        <View style={[styles.appearance, shadow.soft]}>
+        {/* Görünüm */}
+        <View style={styles.appearance}>
           <View style={styles.appearanceHead}>
             <Ionicons name="contrast-outline" size={18} color={colors.inkSoft} />
-            <Text variant="bodyStrong" tone="ink" style={styles.appearanceTitle}>
+            <Text variant="bodyStrong" tone="ink" style={styles.flex}>
               {t('profile.appearance')}
             </Text>
           </View>
@@ -190,33 +246,29 @@ export default function ProfileScreen() {
           />
         </View>
 
-        <View style={[styles.group, shadow.soft]}>
+        {/* Menü — sade ikon + etiket + chevron + ince ayraç */}
+        <View style={styles.menuCard}>
           {menu.filter((m) => !m.danger).map((m, i, arr) => (
             <Pressable
               key={m.key}
               style={[styles.row, i < arr.length - 1 && styles.rowBorder]}
               onPress={() => onPress(m.key)}
             >
-              <View
-                style={[styles.menuIcon, { backgroundColor: MENU_COLORS[i % MENU_COLORS.length] }]}
-              >
-                <Ionicons name={m.icon} size={18} color={colors.onColor} />
-              </View>
-              <Text variant="bodyStrong" tone="ink" style={styles.menuLabel}>
-                {t(m.key)}
+              <Ionicons name={m.icon} size={22} color={colors.ink} style={styles.rowIcon} />
+              <Text variant="bodyStrong" tone="ink" style={styles.flex}>
+                {menuLabel(m.key)}
               </Text>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />
             </Pressable>
           ))}
-        </View>
-
-        <View style={[styles.group, styles.groupGap, shadow.soft]}>
           {menu.filter((m) => m.danger).map((m) => (
-            <Pressable key={m.key} style={styles.row} onPress={() => onPress(m.key)}>
-              <View style={[styles.menuIcon, styles.menuIconDanger]}>
-                <Ionicons name={m.icon} size={18} color={colors.onColor} />
-              </View>
-              <Text variant="bodyStrong" tone="rose" style={styles.menuLabel}>
+            <Pressable
+              key={m.key}
+              style={[styles.row, styles.rowBorder]}
+              onPress={() => onPress(m.key)}
+            >
+              <Ionicons name={m.icon} size={22} color={colors.danger} style={styles.rowIcon} />
+              <Text variant="bodyStrong" style={[styles.flex, { color: colors.danger }]}>
                 {t(m.key)}
               </Text>
             </Pressable>
@@ -227,76 +279,88 @@ export default function ProfileScreen() {
   );
 }
 
-function Stat({ value, label }: { value: string; label: string }) {
+function Stat({ value, label, onPress }: { value: string; label: string; onPress?: () => void }) {
   const styles = useThemedStyles(makeStyles);
   return (
-    <View style={styles.stat}>
+    <Pressable style={styles.stat} onPress={onPress}>
       <Text variant="title" tone="ink">
         {value}
       </Text>
       <Text variant="caption" tone="muted">
         {label}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingTop: space(3), paddingBottom: space(13) },
-    heroMeta: {
-      flexDirection: 'row',
+    header: {
       alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: space(1),
-      marginTop: space(1.25),
+      paddingHorizontal: space(3),
+      paddingBottom: space(5),
     },
-    heroEdit: { fontWeight: '700', textDecorationLine: 'underline' },
-    profileRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(2),
-      marginBottom: space(2.5),
-    },
+    headerTitle: { marginBottom: space(2) },
     avatar: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
+      width: 92,
+      height: 92,
+      borderRadius: 46,
+      backgroundColor: colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
+      marginBottom: space(1.5),
+      overflow: 'hidden',
     },
-    profileText: { gap: 4, flex: 1 },
-    nameRow: { flexDirection: 'row', alignItems: 'center', gap: space(1), flexWrap: 'wrap' },
-    verifiedChip: {
+    avatarImg: { width: '100%', height: '100%' },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    contactRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
+    contactText: { opacity: 0.9 },
+    badgeRow: { flexDirection: 'row', gap: space(1), marginTop: space(1.25) },
+    badge: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 3,
-      backgroundColor: colors.successSoft,
-      paddingHorizontal: space(1),
-      paddingVertical: 3,
+      backgroundColor: colors.surface,
+      paddingHorizontal: space(1.25),
+      paddingVertical: 4,
       borderRadius: radius.pill,
     },
-    verifiedText: { color: colors.success, fontWeight: '600' },
-    womenChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 3,
-      backgroundColor: colors.roseSoft,
-      paddingHorizontal: space(1),
-      paddingVertical: 3,
-      borderRadius: radius.pill,
+    badgeText: { color: colors.ink, fontWeight: '600' },
+
+    // Üste binen beyaz sheet
+    sheet: {
+      flex: 1,
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      marginTop: -space(3),
     },
-    womenText: { color: colors.rose, fontWeight: '600' },
-    verifyBanner: {
+    content: { padding: space(3), paddingTop: space(3), paddingBottom: space(13) },
+
+    stats: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: space(1.5),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      padding: space(1.75),
+      paddingVertical: space(2),
       marginBottom: space(2),
     },
-    restrictBanner: {
+    stat: { flex: 1, alignItems: 'center' },
+    statDivider: { width: 1, height: 30, backgroundColor: colors.line },
+
+    // W2W Takip Ettiklerim kartı
+    followCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      marginBottom: space(2),
+      gap: space(1.5),
+    },
+    followTitle: {},
+    followStats: { flexDirection: 'row', alignItems: 'center' },
+    followStat: { flex: 1, alignItems: 'center' },
+
+    banner: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
@@ -305,25 +369,25 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(1.75),
       marginBottom: space(2),
     },
+    verifyRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(1.75),
+      marginBottom: space(2),
+    },
     verifyIcon: {
       width: 40,
       height: 40,
       borderRadius: radius.md,
-      backgroundColor: colors.teal,
+      backgroundColor: colors.accent,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    verifyText: { flex: 1, gap: 2 },
-    stats: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      paddingVertical: space(2),
-      marginBottom: space(3),
-    },
-    stat: { flex: 1, alignItems: 'center' },
-    statDivider: { width: 1, height: 30, backgroundColor: colors.line },
+    bannerText: { flex: 1, gap: 2 },
+
     appearance: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
@@ -332,29 +396,19 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1.5),
     },
     appearanceHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
-    appearanceTitle: { flex: 1 },
-    group: {
+
+    menuCard: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      overflow: 'hidden',
+      paddingHorizontal: space(2),
     },
-    groupGap: { marginTop: space(2) },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.5),
+      paddingVertical: space(1.9),
     },
     rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
-    menuIcon: {
-      width: 38,
-      height: 38,
-      borderRadius: radius.md,
-      backgroundColor: colors.surfaceMuted,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    menuIconDanger: { backgroundColor: colors.danger },
-    menuLabel: { flex: 1 },
+    rowIcon: { width: 26, textAlign: 'center' },
+    flex: { flex: 1 },
   });

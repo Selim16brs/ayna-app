@@ -155,7 +155,7 @@ export default function PassportScreen() {
                   {t(p)}
                 </Text>
                 {!premium ? (
-                  <Text variant="caption" tone="rose" style={styles.perkPremiumOnly}>
+                  <Text variant="caption" tone="accentFg" style={styles.perkPremiumOnly}>
                     {t('passport.premium.only')}
                   </Text>
                 ) : null}

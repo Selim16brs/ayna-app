@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -11,40 +12,48 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 
 /**
  * Teklif Al — ayrı alan. Önce SOR: kullanıcı foto ile mi yoksa fiyat/talep ile mi
- * teklif almak istiyor? Seçtikten sonra ilgili akışa (referans tasarımlar) gider.
+ * teklif almak istiyor? Premium seçim kartları.
  */
 export default function QuoteHubScreen() {
   const { t } = useLocale();
   const router = useRouter();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+
+  const cards = [
+    {
+      icon: 'camera' as IoniconName,
+      badge: t('quote.hub.badge.photo'),
+      title: t('quote.hub.photo.title'),
+      desc: t('quote.hub.photo.desc'),
+      cta: t('quote.hub.start'),
+      grad: ['#EFE7FA', '#FBE3EE'] as const,
+      accent: colors.lavender,
+      onPress: () => router.push('/quote/new'),
+    },
+    {
+      icon: 'wallet' as IoniconName,
+      badge: t('quote.hub.badge.demand'),
+      title: t('quote.hub.demand.title'),
+      desc: t('quote.hub.demand.desc'),
+      cta: t('quote.hub.start'),
+      grad: ['#EEF7C8', '#D6EE94'] as const,
+      accent: colors.accentFg,
+      onPress: () => router.push('/demand/new'),
+    },
+  ];
 
   return (
     <Screen edges={[]}>
       <StackHeader title={t('quote.hub.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text variant="display" tone="ink" style={styles.title}>
-          {t('quote.hub.title')}
-        </Text>
         <Text variant="body" tone="inkSoft" style={styles.subtitle}>
           {t('quote.hub.subtitle')}
         </Text>
 
-        <ChoiceCard
-          index={0}
-          icon="camera"
-          badge={t('quote.hub.badge.photo')}
-          title={t('quote.hub.photo.title')}
-          desc={t('quote.hub.photo.desc')}
-          onPress={() => router.push('/quote/new')}
-        />
-        <ChoiceCard
-          index={1}
-          icon="wallet"
-          badge={t('quote.hub.badge.demand')}
-          title={t('quote.hub.demand.title')}
-          desc={t('quote.hub.demand.desc')}
-          onPress={() => router.push('/demand/new')}
-        />
+        {cards.map((c, i) => (
+          <ChoiceCard key={c.title} index={i} {...c} />
+        ))}
       </ScrollView>
     </Screen>
   );
@@ -56,6 +65,9 @@ function ChoiceCard({
   badge,
   title,
   desc,
+  cta,
+  grad,
+  accent,
   onPress,
 }: {
   index: number;
@@ -63,34 +75,51 @@ function ChoiceCard({
   badge: string;
   title: string;
   desc: string;
+  cta: string;
+  grad: readonly [string, string];
+  accent: string;
   onPress: () => void;
 }) {
-  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { shadow } = useTheme();
   return (
-    <Animated.View entering={FadeInDown.duration(360).delay(index * 90)}>
+    <Animated.View entering={FadeInDown.duration(380).delay(index * 110)}>
       <Pressable
         onPress={onPress}
         style={({ pressed }) => [styles.card, shadow.card, pressed && styles.pressed]}
       >
+        <LinearGradient
+          colors={grad}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        {/* Derinlik için köşede soluk dev ikon */}
+        <Ionicons name={icon} size={140} color="rgba(255,255,255,0.5)" style={styles.ghost} />
+
         <View style={styles.cardTop}>
           <View style={styles.iconTile}>
-            <Ionicons name={icon} size={26} color={colors.onAccent} />
+            <Ionicons name={icon} size={26} color={accent} />
           </View>
           <View style={styles.badge}>
-            <Text variant="caption" tone="onAccent" style={styles.badgeText}>
+            <Text variant="caption" style={[styles.badgeText, { color: accent }]}>
               {badge}
             </Text>
           </View>
         </View>
+
         <Text variant="h2" tone="ink" style={styles.cardTitle}>
           {title}
         </Text>
-        <Text variant="caption" tone="muted" style={styles.cardDesc}>
+        <Text variant="caption" tone="inkSoft" style={styles.cardDesc}>
           {desc}
         </Text>
-        <View style={styles.arrow}>
-          <Ionicons name="arrow-forward" size={18} color={colors.onAccent} />
+
+        <View style={[styles.startPill, { backgroundColor: accent }]}>
+          <Ionicons name="sparkles" size={13} color="#FFFFFF" />
+          <Text variant="caption" style={styles.startText}>
+            {cta}
+          </Text>
         </View>
       </Pressable>
     </Animated.View>
@@ -99,42 +128,44 @@ function ChoiceCard({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
-    title: { fontSize: 32, fontWeight: '800', letterSpacing: -0.6, marginTop: space(1) },
-    subtitle: { marginTop: space(1), marginBottom: space(3) },
+    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: space(4) },
+    subtitle: { marginBottom: space(3) },
     card: {
-      backgroundColor: colors.surface,
       borderRadius: radius.xl,
-      padding: space(2.5),
+      padding: space(2.75),
       marginBottom: space(2),
+      overflow: 'hidden',
+      minHeight: 168,
     },
-    pressed: { opacity: 0.97, transform: [{ scale: 0.99 }] },
+    pressed: { opacity: 0.97, transform: [{ scale: 0.985 }] },
+    ghost: { position: 'absolute', right: -18, bottom: -26 },
     cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     iconTile: {
       width: 56,
       height: 56,
       borderRadius: radius.md,
-      backgroundColor: colors.accent,
+      backgroundColor: '#FFFFFF',
       alignItems: 'center',
       justifyContent: 'center',
     },
     badge: {
-      backgroundColor: colors.accentSoft,
+      backgroundColor: 'rgba(255,255,255,0.75)',
       paddingHorizontal: space(1.5),
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
     badgeText: { fontWeight: '800' },
-    cardTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3, marginTop: space(2) },
-    cardDesc: { marginTop: space(1), lineHeight: 19 },
-    arrow: {
-      alignSelf: 'flex-end',
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: colors.accent,
+    cardTitle: { fontSize: 21, fontWeight: '800', letterSpacing: -0.3, marginTop: space(2.25) },
+    cardDesc: { marginTop: space(1), lineHeight: 19, maxWidth: '82%' },
+    startPill: {
+      flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: space(1.5),
+      alignSelf: 'flex-start',
+      gap: 5,
+      marginTop: space(2),
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
     },
+    startText: { color: '#FFFFFF', fontWeight: '800' },
   });

@@ -20,8 +20,10 @@ const CLOSE_H = 19;
 function buildDayRows(dayStart: number, dayBookings: Appointment[]): DayRow[] {
   const openStart = dayStart + OPEN_H * 3_600_000;
   const openEnd = dayStart + CLOSE_H * 3_600_000;
+  // §4.6/§4.1 — takvimde YALNIZ kesinleşmiş randevular: onaylı (confirmed) + tamamlanan.
+  // Bekleyen/onay-öncesi talepler ana ızgarada değil, ayrı "Bekleyen Talepler" akışındadır.
   const bs = dayBookings
-    .filter((b) => b.status !== 'cancelled')
+    .filter((b) => b.status === 'confirmed' || b.status === 'completed')
     .sort((a, b) => a.startMs - b.startMs);
   const rows: DayRow[] = [];
   let cursor = openStart;
@@ -73,9 +75,11 @@ const STATUS_LABEL: Record<BookingStatus, MessageKey> = {
 export default function AgendaScreen() {
   const { t } = useLocale();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const storeBookings = useStore((s) => s.bookings);
+  const approveBooking = useStore((s) => s.approveBooking);
+  const rejectBooking = useStore((s) => s.rejectBooking);
   const closedDays = useStore((s) => s.closedDays);
   const toggleClosedDay = useStore((s) => s.toggleClosedDay);
   const isSalon = useStore((s) => s.currentUser?.role === 'salon');
@@ -87,22 +91,36 @@ export default function AgendaScreen() {
   const staff = SELLER_DATA.month.staff;
 
   // §4.6 — önümüzdeki 14 gün (gün seçici + kapalı işaretleme)
+  // §9.4 — bekleyen talepler (uzman onayı bekleyen randevular): takvim üstünde şerit
+  const pending = storeBookings.filter((b) => b.status === 'awaiting_provider');
   const dayStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
   const selectedDay = dayStrip[dayIdx] ?? dayStrip[0]!;
   const dayClosed = closedDays.includes(selectedDay);
   const dayBookings = items.filter((b) => almatyDayStart(b.startMs, 0) === selectedDay);
   const dayRows = buildDayRows(selectedDay, dayBookings);
+  // Gün özeti: kesinleşmiş randevu sayısı + günün cirosu
+  const dayBusy = dayRows.filter((r): r is { type: 'busy'; b: Appointment } => r.type === 'busy');
+  const dayTotal = dayBusy.reduce((s, r) => s + r.b.price, 0);
+  // §4.6 renk kodu (sol şerit): tamamlanan → nötr, onaylı → lime, diğer → altın
+  const barColor = (b: Appointment) =>
+    b.status === 'completed' ? colors.muted : b.status === 'confirmed' ? colors.accent : colors.gold;
+  const endTime = (b: Appointment) => slotTime(b.startMs + b.durationMin * 60_000);
 
-  // Ekran her odaklandığında tazele (offline ekleme sonrası geri dönünce güncel)
+  // §4.2 — ekran odaklıyken takvimi otomatik tazele (near-realtime; her 20 sn sunucudan çek).
+  // Gerçek push/websocket ayrı faz; polling yeni randevuları yenileme gerekmeden getirir.
   useFocusEffect(
     useCallback(() => {
       let alive = true;
-      api
-        .bookings()
-        .then((b) => alive && setItems(b))
-        .catch(() => alive && setItems(storeBookings)); // çevrimdışı: yerel veriler
+      const pull = () =>
+        api
+          .bookings()
+          .then((b) => alive && setItems(b))
+          .catch(() => alive && setItems(storeBookings)); // çevrimdışı: yerel veriler
+      void pull();
+      const timer = setInterval(pull, 20_000);
       return () => {
         alive = false;
+        clearInterval(timer);
       };
     }, [storeBookings]),
   );
@@ -117,7 +135,7 @@ export default function AgendaScreen() {
 
   return (
     <Screen edges={[]}>
-      <StackHeader title={t('agenda.title')} />
+      <StackHeader title={t(isSalon ? 'agenda.title' : 'agenda.title_own')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.toggleWrap}>
           <Segmented
@@ -130,6 +148,50 @@ export default function AgendaScreen() {
             onChange={setView}
           />
         </View>
+
+        {/* §9.4 — Bekleyen Talepler şeridi: Kabul / Alternatif / Reddet */}
+        {pending.length > 0 ? (
+          <View style={styles.pendingWrap}>
+            <View style={styles.pendingHead}>
+              <Ionicons name="hourglass-outline" size={15} color={colors.accentFg} />
+              <Text variant="label" tone="accentFg">
+                {t('agenda.pending.title')}
+              </Text>
+              <View style={styles.pendingBadge}>
+                <Text style={styles.pendingBadgeText}>{pending.length}</Text>
+              </View>
+            </View>
+            {pending.map((b) => (
+              <View key={b.id} style={styles.pendingCard}>
+                <Pressable style={styles.pendingInfo} onPress={() => router.push(`/booking/${b.id}`)}>
+                  <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                    {b.service}
+                  </Text>
+                  <Text variant="caption" tone="muted" numberOfLines={1}>
+                    {formatSlot(b.startMs, t)} · {formatPrice(b.price)}
+                  </Text>
+                </Pressable>
+                <View style={styles.pendingActions}>
+                  <Pressable
+                    style={[styles.pendingBtn, styles.pendingAccept]}
+                    onPress={() => approveBooking(b.id)}
+                  >
+                    <Ionicons name="checkmark" size={18} color={colors.onAccent} />
+                  </Pressable>
+                  <Pressable
+                    style={styles.pendingBtn}
+                    onPress={() => router.push(`/booking/${b.id}`)}
+                  >
+                    <Ionicons name="time-outline" size={17} color={colors.accentFg} />
+                  </Pressable>
+                  <Pressable style={styles.pendingBtn} onPress={() => rejectBooking(b.id)}>
+                    <Ionicons name="close" size={18} color={colors.danger} />
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         {view === 'day' ? (
           <>
@@ -155,7 +217,7 @@ export default function AgendaScreen() {
                       {p.day}
                     </Text>
                     {closed ? (
-                      <Ionicons name="lock-closed" size={11} color={on ? colors.onAccent : colors.rose} />
+                      <Ionicons name="lock-closed" size={11} color={on ? colors.onAccent : colors.accentFg} />
                     ) : (
                       <View style={[styles.dayDot, has ? styles.dayDotOn : styles.dayDotOff]} />
                     )}
@@ -164,11 +226,18 @@ export default function AgendaScreen() {
               })}
             </ScrollView>
 
-            {/* Seçili gün başlığı + Açık/Kapalı toggle. §4.6: salon uzmanın izin gününe DOKUNAMAZ. */}
+            {/* Seçili gün özeti + Açık/Kapalı toggle. §4.6: salon uzmanın izin gününe DOKUNAMAZ. */}
             <View style={styles.dayHeader}>
-              <Text variant="bodyStrong" tone="ink">
-                {formatSlot(selectedDay, t).split(' · ')[0]} · {almatyParts(selectedDay).day}
-              </Text>
+              <View style={styles.flexShrink}>
+                <Text variant="bodyStrong" tone="ink">
+                  {formatSlot(selectedDay, t).split(' · ')[0]} · {almatyParts(selectedDay).day}
+                </Text>
+                <Text variant="caption" tone="muted">
+                  {dayClosed
+                    ? t('hours.closed')
+                    : `${dayBusy.length} ${t('agenda.count')}${dayTotal > 0 ? ` · ${formatPrice(dayTotal)}` : ''}`}
+                </Text>
+              </View>
               {isSalon ? (
                 dayClosed ? (
                   <View style={styles.closedTag}>
@@ -186,9 +255,9 @@ export default function AgendaScreen() {
                   <Ionicons
                     name={dayClosed ? 'lock-closed' : 'lock-open-outline'}
                     size={14}
-                    color={dayClosed ? colors.onColor : colors.rose}
+                    color={dayClosed ? colors.onColor : colors.accentFg}
                   />
-                  <Text variant="caption" tone={dayClosed ? 'onColor' : 'rose'} style={styles.closeToggleText}>
+                  <Text variant="caption" tone={dayClosed ? 'onColor' : 'accentFg'} style={styles.closeToggleText}>
                     {dayClosed ? t('agenda.mark_open') : t('agenda.mark_closed')}
                   </Text>
                 </Pressable>
@@ -197,49 +266,103 @@ export default function AgendaScreen() {
 
             {dayClosed ? (
               <View style={styles.closedBanner}>
-                <Ionicons name="calendar-clear-outline" size={22} color={colors.muted} />
+                <Ionicons name="calendar-clear-outline" size={26} color={colors.muted} />
                 <Text variant="caption" tone="muted">
                   {t('agenda.closed_day')}
                 </Text>
               </View>
+            ) : dayBusy.length === 0 ? (
+              <Pressable
+                style={styles.dayEmpty}
+                onPress={() => router.push(`/seller/offline?start=${selectedDay + OPEN_H * 3_600_000}`)}
+              >
+                <View style={styles.dayEmptyIcon}>
+                  <Ionicons name="calendar-outline" size={26} color={colors.accentFg} />
+                </View>
+                <Text variant="bodyStrong" tone="ink">
+                  {t('agenda.day_empty')}
+                </Text>
+                <View style={styles.dayEmptyCta}>
+                  <Ionicons name="add" size={15} color={colors.accentFg} />
+                  <Text variant="caption" tone="accentFg" style={styles.closeToggleText}>
+                    {t('agenda.add_offline')}
+                  </Text>
+                </View>
+              </Pressable>
             ) : (
               <View style={styles.timeline}>
                 {dayRows.map((r, i) =>
                   r.type === 'free' ? (
                     <Pressable
                       key={`free-${i}`}
-                      style={styles.freeRow}
+                      style={styles.freeSlot}
                       onPress={() => router.push(`/seller/offline?start=${r.startMs}`)}
                     >
-                      <Text variant="caption" tone="muted" style={styles.timeCol}>
+                      <Text variant="caption" tone="muted" style={styles.freeTime}>
                         {slotTime(r.startMs)}
                       </Text>
-                      <View style={styles.freeBody}>
-                        <Ionicons name="add-circle-outline" size={16} color={colors.rose} />
-                        <Text variant="caption" tone="rose">
-                          {t('agenda.free_add')} · {slotTime(r.startMs)}–{slotTime(r.endMs)}
-                        </Text>
-                      </View>
+                      <View style={styles.freeDivider} />
+                      <Ionicons name="add" size={13} color={colors.accentFg} />
+                      <Text variant="caption" tone="accentFg">
+                        {t('agenda.free_add')}
+                      </Text>
                     </Pressable>
                   ) : (
                     <Pressable
                       key={r.b.id}
-                      style={styles.busyRow}
+                      style={[styles.apptCard, shadow.soft]}
                       onPress={() => router.push(`/booking/${r.b.id}`)}
                     >
-                      <Text variant="caption" tone="ink" style={styles.timeCol}>
-                        {slotTime(r.b.startMs)}
-                      </Text>
-                      <View style={styles.rowBody}>
-                        <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                          {r.b.service}
+                      <View style={[styles.apptBar, { backgroundColor: barColor(r.b) }]} />
+                      <View style={styles.apptTime}>
+                        <Text variant="bodyStrong" tone="ink" style={styles.apptStart}>
+                          {slotTime(r.b.startMs)}
                         </Text>
-                        <Text variant="caption" tone="muted" numberOfLines={1}>
-                          {r.b.customerName ? `${r.b.customerName} · ` : ''}
-                          {r.b.uzmanName ?? r.b.proName}
+                        <Text variant="caption" tone="muted">
+                          {endTime(r.b)}
                         </Text>
                       </View>
-                      <StatusPill status={r.b.status} />
+                      <View style={styles.apptBody}>
+                        <View style={styles.serviceRow}>
+                          <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.flexShrink}>
+                            {r.b.service}
+                          </Text>
+                          {/* §4.6 — kaynak ayrımı: offline (elle) vs AYNA (online) */}
+                          <View style={[styles.srcTag, r.b.customerName ? styles.srcOffline : styles.srcAyna]}>
+                            <Ionicons
+                              name={r.b.customerName ? 'walk-outline' : 'phone-portrait-outline'}
+                              size={9}
+                              color={r.b.customerName ? colors.inkSoft : colors.accentFg}
+                            />
+                            <Text
+                              variant="caption"
+                              style={[styles.srcText, { color: r.b.customerName ? colors.inkSoft : colors.accentFg }]}
+                            >
+                              {t(r.b.customerName ? 'agenda.src.offline' : 'agenda.src.ayna')}
+                            </Text>
+                          </View>
+                          {r.b.bookingKind === 'group' ? (
+                            <View style={styles.kindTag}>
+                              <Text variant="caption" style={styles.kindText}>
+                                {t('agenda.group')}
+                                {r.b.groupSize ? ` ${r.b.groupSize}` : ''}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </View>
+                        <View style={styles.apptMeta}>
+                          <Ionicons name="person-outline" size={11} color={colors.muted} />
+                          <Text variant="caption" tone="muted" numberOfLines={1} style={styles.flexShrink}>
+                            {r.b.customerName ?? r.b.uzmanName ?? r.b.proName}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.apptRight}>
+                        <StatusPill status={r.b.status} />
+                        <Text variant="caption" tone="inkSoft" style={styles.apptPrice}>
+                          {formatPrice(r.b.price)}
+                        </Text>
+                      </View>
                     </Pressable>
                   ),
                 )}
@@ -297,8 +420,8 @@ export default function AgendaScreen() {
                               )
                             }
                           >
-                            <Ionicons name="add" size={13} color={colors.rose} />
-                            <Text variant="caption" tone="rose">
+                            <Ionicons name="add" size={13} color={colors.accentFg} />
+                            <Text variant="caption" tone="accentFg">
                               {slotTime(r.startMs)}
                             </Text>
                           </Pressable>
@@ -339,7 +462,7 @@ export default function AgendaScreen() {
         ) : (
           groups.map((g) => (
             <View key={g.key} style={styles.group}>
-              <Text variant="label" tone="rose" style={styles.groupTitle}>
+              <Text variant="label" tone="accentFg" style={styles.groupTitle}>
                 {t(GROUP_LABEL[g.key])} · {g.rows.length}
               </Text>
               <View style={styles.list}>
@@ -431,6 +554,58 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(2.5), paddingBottom: space(12) },
     toggleWrap: { marginTop: space(1), marginBottom: space(1.5) },
+    // §4.6 kaynak etiketi (offline/AYNA)
+    srcTag: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      paddingHorizontal: space(0.75),
+      paddingVertical: 2,
+      borderRadius: radius.pill,
+    },
+    srcOffline: { backgroundColor: colors.surfaceMuted },
+    srcAyna: { backgroundColor: colors.accentSoft },
+    srcText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.2 },
+    // §9.4 bekleyen talepler şeridi
+    pendingWrap: {
+      backgroundColor: colors.accentSoft,
+      borderRadius: radius.lg,
+      padding: space(1.5),
+      gap: space(1),
+      marginBottom: space(1.5),
+    },
+    pendingHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    pendingBadge: {
+      minWidth: 20,
+      height: 20,
+      borderRadius: 10,
+      paddingHorizontal: 6,
+      backgroundColor: colors.accentFg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pendingBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
+    pendingCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: space(1.25),
+    },
+    pendingInfo: { flex: 1, gap: 2 },
+    pendingActions: { flexDirection: 'row', gap: space(0.75) },
+    pendingBtn: {
+      width: 38,
+      height: 38,
+      borderRadius: 19,
+      borderWidth: 1,
+      borderColor: colors.line,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+    },
+    pendingAccept: { backgroundColor: colors.accent, borderColor: colors.accent },
     dayStrip: { gap: space(1), paddingVertical: space(0.5) },
     dayChip: {
       width: 50,
@@ -442,7 +617,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     dayChipOn: { backgroundColor: colors.accent },
     dayDot: { width: 5, height: 5, borderRadius: 3 },
-    dayDotOn: { backgroundColor: colors.rose },
+    dayDotOn: { backgroundColor: colors.accentFg },
     dayDotOff: { backgroundColor: 'transparent' },
     closeWd: { textTransform: 'uppercase', letterSpacing: 0.4 },
     closeNum: { fontSize: 16 },
@@ -462,7 +637,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       backgroundColor: colors.surfaceMuted,
     },
-    closeToggleOn: { backgroundColor: colors.rose },
+    closeToggleOn: { backgroundColor: colors.accentFg },
     closeToggleText: { fontWeight: '700' },
     closedTag: { flexDirection: 'row', alignItems: 'center', gap: space(0.5) },
     closedBanner: {
@@ -510,26 +685,60 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(0.75),
       marginTop: space(1.5),
     },
-    timeline: { gap: space(0.75) },
-    freeRow: {
+    timeline: { gap: space(1) },
+    // Boş slot — ince, sade ekleme satırı
+    freeSlot: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: space(1),
-      paddingVertical: space(1.25),
-      paddingHorizontal: space(1.5),
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.line,
-      borderStyle: 'dashed',
+      gap: space(0.75),
+      paddingVertical: space(0.75),
+      paddingHorizontal: space(0.5),
     },
-    freeBody: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
-    busyRow: {
+    freeTime: { width: 44 },
+    freeDivider: { flex: 1, height: 1, borderBottomWidth: 1, borderColor: colors.line, borderStyle: 'dashed' },
+    // Randevu kartı — sol renk şeridi + saat aralığı + içerik + durum/fiyat
+    apptCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: space(1),
       backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      padding: space(1.5),
+      borderRadius: radius.lg,
+      paddingRight: space(1.75),
+      overflow: 'hidden',
+      gap: space(1.25),
+    },
+    apptBar: { width: 5, alignSelf: 'stretch' },
+    apptTime: { width: 46, alignItems: 'center', paddingVertical: space(1.5) },
+    apptStart: { fontSize: 15 },
+    apptBody: { flex: 1, gap: 3, paddingVertical: space(1.5) },
+    apptMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    apptRight: { alignItems: 'flex-end', gap: 5, paddingVertical: space(1.5) },
+    apptPrice: { fontWeight: '700' },
+    // Boş gün — dostane durum
+    dayEmpty: {
+      alignItems: 'center',
+      gap: space(1),
+      paddingVertical: space(5),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+    },
+    dayEmptyIcon: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space(0.5),
+    },
+    dayEmptyCta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: colors.accentSoft,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      marginTop: space(0.5),
     },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     group: { marginTop: space(2) },
@@ -572,7 +781,7 @@ const makeStyles = (colors: ColorTokens) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(0.75),
-      backgroundColor: colors.rose,
+      backgroundColor: colors.accentFg,
       paddingHorizontal: space(2.5),
       paddingVertical: space(1.5),
       borderRadius: radius.pill,

@@ -1,7 +1,8 @@
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import type { Locale } from '@ayna/i18n';
 import { useLocale } from '../src/locale';
+import { useStore } from '../src/store';
 import { Button, Screen, Text } from '../src/ui';
 import { radius, space, type ColorTokens } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -17,6 +18,16 @@ export default function WelcomeScreen() {
   const { locale, setLocale, t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const currentUser = useStore((s) => s.currentUser);
+
+  // Oturum AsyncStorage'dan geri yüklendiyse (persist) karşılama ekranını atla — kullanıcı
+  // her reload'da yeniden giriş yapmasın. <Redirect> navigasyon HAZIR olunca yönlendirir;
+  // böylece cold-start'ta "navigate before mounting Root Layout" hatası oluşmaz.
+  if (currentUser) {
+    // Satıcı (uzman/salon) her zaman kendi paneline; müşteri modu kaldırıldı.
+    const isSeller = currentUser.role === 'salon' || currentUser.role === 'professional';
+    return <Redirect href={isSeller ? '/seller/reports' : '/discover'} />;
+  }
 
   return (
     <Screen hero>
@@ -82,9 +93,9 @@ const makeStyles = (colors: ColorTokens) =>
       textAlign: 'center',
       marginTop: space(1),
     },
-    // "kadınların" ve "aynası" — canlı pembe, el yazısı (DancingScript)
+    // "kadınların" ve "aynası" — canlı pembe, el yazısı (Caveat; Latin+Kiril+Kazakça)
     sloganWord: {
-      fontFamily: 'DancingScript_700Bold',
+      fontFamily: 'Caveat_700Bold',
       fontSize: 40,
       color: '#FF2D78',
     },

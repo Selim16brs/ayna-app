@@ -1,23 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { api, type AiQuota } from '../src/api';
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../src/ui';
 
 interface Msg {
   id: string;

@@ -6,7 +6,7 @@ import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 're
 import { computeDaySlots } from '@ayna/domain';
 import { DEPOSIT_KZT, FREE_CANCEL_WINDOW_MS, type BookingSource, formatPrice } from '../../src/data';
 import { almatyDayStart, formatSlot } from '../../src/datetime';
-import { useLocale } from '../../src/locale';
+import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -36,6 +36,7 @@ export default function BookingDetailScreen() {
   const submitReceipt = useStore((s) => s.submitReceipt);
   const confirmReceipt = useStore((s) => s.confirmReceipt);
   const markNoShow = useStore((s) => s.markNoShow);
+  const completeBooking = useStore((s) => s.completeBooking);
   const reportProviderNoShow = useStore((s) => s.reportProviderNoShow);
   const giveCustomerSignal = useStore((s) => s.giveCustomerSignal);
   const uploadRefundReceipt = useStore((s) => s.uploadRefundReceipt);
@@ -163,6 +164,16 @@ export default function BookingDetailScreen() {
             </View>
           </View>
         </View>
+
+        {/* §7.3 — uzmana yalnız POZİTİF rozet gösterilir (kullanıcı puanı/negatif sinyal ASLA) */}
+        {isProvider && booking.customerTrusted ? (
+          <View style={styles.trustRow}>
+            <Ionicons name="shield-checkmark" size={15} color={colors.success} />
+            <Text variant="caption" style={styles.trustRowText}>
+              {t('trust.reliable')}
+            </Text>
+          </View>
+        ) : null}
 
         {/* Detaylar */}
         <View style={[styles.card, shadow.card]}>
@@ -439,6 +450,20 @@ export default function BookingDetailScreen() {
               {/* §4.1 — uzman yanıtı: kabul / alternatif / reddet */}
               {booking.status === 'awaiting_provider' ? (
                 <>
+                  {/* §4.1.3 — yanıt süresi uyarısı: süre dolunca talep başka uzmana yönlenir */}
+                  {booking.responseDeadline != null ? (
+                    <View style={styles.deadlineWarn}>
+                      <Ionicons name="timer-outline" size={16} color={colors.danger} />
+                      <Text variant="caption" tone="ink" style={styles.deadlineText}>
+                        {fillParams(t('booking.provider.deadline'), {
+                          h: Math.max(
+                            0,
+                            Math.ceil((booking.responseDeadline - Date.now()) / 3_600_000),
+                          ),
+                        })}
+                      </Text>
+                    </View>
+                  ) : null}
                   <Button
                     label={t('booking.provider.approve')}
                     variant="primary"
@@ -471,6 +496,14 @@ export default function BookingDetailScreen() {
                   onPress={() => id && confirmReceipt(id)}
                 />
               ) : null}
+              {/* §4.1.7 — randevu saati geçtiyse uzman hizmeti tamamlar (birincil) veya gelmedi işaretler */}
+              {booking.status === 'confirmed' && booking.startMs <= Date.now() ? (
+                <Button
+                  label={t('booking.provider.complete')}
+                  variant="primary"
+                  onPress={() => id && completeBooking(id)}
+                />
+              ) : null}
               {booking.status === 'confirmed' ? (
                 <Button
                   label={t('booking.provider.mark_noshow')}
@@ -491,7 +524,7 @@ export default function BookingDetailScreen() {
                     {t('booking.signal.desc')}
                   </Text>
                   {booking.providerSignal ? (
-                    <Text variant="caption" tone="rose">
+                    <Text variant="caption" tone="accentFg">
                       {t('booking.signal.saved')}
                     </Text>
                   ) : (
@@ -712,6 +745,29 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1),
     },
     noteText: { flex: 1 },
+    deadlineWarn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.dangerSoft,
+      borderRadius: radius.md,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1.25),
+      marginBottom: space(1),
+    },
+    deadlineText: { flex: 1, lineHeight: 17 },
+    trustRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      alignSelf: 'flex-start',
+      backgroundColor: colors.successSoft,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      marginBottom: space(1),
+    },
+    trustRowText: { color: colors.success, fontWeight: '700' },
     proposedCard: {
       marginTop: space(2),
       backgroundColor: colors.blueSoft,

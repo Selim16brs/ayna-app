@@ -49,7 +49,7 @@ export default function CommissionsScreen() {
   };
 
   const statusTone = (s: string) =>
-    s === 'collected' ? colors.success : s === 'overdue' ? colors.rose : colors.gold;
+    s === 'collected' ? colors.success : s === 'overdue' ? colors.accentFg : colors.gold;
   const statusLabel = (s: string) =>
     s === 'collected'
       ? t('commission.status.collected')
@@ -91,7 +91,7 @@ export default function CommissionsScreen() {
               </Text>
               <Text
                 variant="caption"
-                style={{ color: inv.status === 'overdue' ? colors.rose : colors.inkSoft }}
+                style={{ color: inv.status === 'overdue' ? colors.accentFg : colors.inkSoft }}
               >
                 {t('commission.due')}: {inv.dueDate.slice(0, 10)}
                 {inv.status !== 'collected' && inv.overdueDays > 0

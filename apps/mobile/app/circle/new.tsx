@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { CATEGORIES, type CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, Segmented, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, Segmented, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
 
 export default function NewPostScreen() {
   const router = useRouter();
@@ -87,7 +87,7 @@ export default function NewPostScreen() {
 
         <View style={styles.anonRow}>
           <View style={styles.anonIcon}>
-            <Ionicons name="shield-checkmark" size={20} color={colors.rose} />
+            <Ionicons name="shield-checkmark" size={20} color={colors.accentFg} />
           </View>
           <View style={styles.anonText}>
             <Text variant="bodyStrong" tone="ink">
@@ -155,7 +155,7 @@ const makeStyles = (colors: ColorTokens) =>
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },

@@ -28,7 +28,7 @@ export default function FavoritesScreen() {
         {favs.length === 0 ? (
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
-              <Ionicons name="heart-outline" size={30} color={colors.rose} />
+              <Ionicons name="heart-outline" size={30} color={colors.accentFg} />
             </View>
             <Text variant="bodyStrong" tone="ink" style={styles.emptyTitle}>
               {t('favorites.empty')}
@@ -47,7 +47,7 @@ export default function FavoritesScreen() {
                 onPress={() => router.push('/professional/' + p.id)}
                 right={
                   <Pressable onPress={() => toggleFavorite(p.id)} hitSlop={10}>
-                    <Ionicons name="heart" size={22} color={colors.rose} />
+                    <Ionicons name="heart" size={22} color={colors.accentFg} />
                   </Pressable>
                 }
               />
@@ -68,7 +68,7 @@ const makeStyles = (colors: ColorTokens) =>
       width: 72,
       height: 72,
       borderRadius: 36,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: space(1),

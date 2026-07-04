@@ -50,8 +50,8 @@ export default function GalleryScreen() {
         <View style={styles.grid}>
           {/* Ekle kutusu */}
           <Pressable style={[styles.cell, styles.addCell]} onPress={addPhoto}>
-            <Ionicons name="add" size={26} color={colors.rose} />
-            <Text variant="caption" tone="rose">
+            <Ionicons name="add" size={26} color={colors.accentFg} />
+            <Text variant="caption" tone="accentFg">
               {t('gallery.add')}
             </Text>
           </Pressable>
@@ -82,9 +82,9 @@ const makeStyles = (colors: ColorTokens) =>
       overflow: 'hidden',
     },
     addCell: {
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       borderWidth: 1,
-      borderColor: colors.rose,
+      borderColor: colors.accentFg,
       borderStyle: 'dashed',
       alignItems: 'center',
       justifyContent: 'center',

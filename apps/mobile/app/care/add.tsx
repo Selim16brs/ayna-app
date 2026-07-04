@@ -1,26 +1,46 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { QUICK_ADD, type PersonalTone, type QuickAddKind, quickAddMeta } from '../../src/data';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  CATEGORIES,
+  QUICK_ADD,
+  categoryLabelKey,
+  type PersonalTone,
+  type QuickAddKind,
+  quickAddMeta,
+} from '../../src/data';
+import { servicesOf, tri } from '../../src/taxonomy';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, DateField, formatTrDate, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 type FormMode = 'log' | 'routine' | 'moment';
 
 const KNOWN_KINDS: QuickAddKind[] = ['doctor', 'gym', 'personal', 'reminder'];
 
+// Özel gün (doğum günü/yıldönümü) yıllık tekrarlar → seçilen gün/ay'ın BİR SONRAKİ
+// gelişine kalan gün sayısı otomatik hesaplanır (kullanıcı elle "kaç gün" girmez).
+function daysUntilNextOccurrence(target: Date): number {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let next = new Date(now.getFullYear(), target.getMonth(), target.getDate());
+  if (next.getTime() < today.getTime()) {
+    next = new Date(now.getFullYear() + 1, target.getMonth(), target.getDate());
+  }
+  return Math.round((next.getTime() - today.getTime()) / 86_400_000);
+}
+
 export default function AddEntryScreen() {
   const router = useRouter();
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { kind, mode } = useLocalSearchParams<{ kind?: string; mode?: string }>();
+  const { kind, mode, id } = useLocalSearchParams<{ kind?: string; mode?: string; id?: string }>();
 
   const formMode: FormMode = mode === 'routine' ? 'routine' : mode === 'moment' ? 'moment' : 'log';
   const titleKey: MessageKey =
@@ -28,13 +48,15 @@ export default function AddEntryScreen() {
       ? 'care.add.routine_title'
       : formMode === 'moment'
         ? 'care.add.moment_title'
-        : 'care.add.log_title';
+        : id
+          ? 'care.add.log_edit_title'
+          : 'care.add.log_title';
 
   return (
     <Screen edges={['bottom']}>
       <StackHeader title={t(titleKey)} />
       {formMode === 'log' ? (
-        <LogForm initialKind={kind} onDone={() => router.back()} />
+        <LogForm initialKind={kind} editId={id} onDone={() => router.back()} />
       ) : formMode === 'routine' ? (
         <RoutineForm onDone={() => router.back()} />
       ) : (
@@ -44,33 +66,66 @@ export default function AddEntryScreen() {
   );
 }
 
-// ── Kişisel kayıt ─────────────────────────────────────────────────────────
-function LogForm({ initialKind, onDone }: { initialKind?: string; onDone: () => void }) {
+// ── Kişisel kayıt (ekle / düzenle) ────────────────────────────────────────
+function LogForm({
+  initialKind,
+  editId,
+  onDone,
+}: {
+  initialKind?: string;
+  editId?: string;
+  onDone: () => void;
+}) {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const addPersonalLog = useStore((s) => s.addPersonalLog);
+  const updatePersonalLog = useStore((s) => s.updatePersonalLog);
+  const deletePersonalLog = useStore((s) => s.deletePersonalLog);
+  // Düzenleme: mevcut kaydı bul (varsa alanları ön-doldur)
+  const existing = useStore((s) =>
+    editId ? s.personalLogs.find((x) => x.id === editId) : undefined,
+  );
 
-  const startKind: QuickAddKind = KNOWN_KINDS.includes(initialKind as QuickAddKind)
-    ? (initialKind as QuickAddKind)
-    : 'personal';
+  const startKind: QuickAddKind =
+    existing?.kind ??
+    (KNOWN_KINDS.includes(initialKind as QuickAddKind) ? (initialKind as QuickAddKind) : 'personal');
   const [selKind, setSelKind] = useState<QuickAddKind>(startKind);
-  const [title, setTitle] = useState('');
-  const [dateLabel, setDateLabel] = useState('');
-  const [note, setNote] = useState('');
+  const [title, setTitle] = useState(existing?.title ?? '');
+  const [date, setDate] = useState(() => (existing?.dateMs ? new Date(existing.dateMs) : new Date()));
+  const [note, setNote] = useState(existing?.note ?? '');
 
   const canSave = title.trim().length > 0;
 
   const save = () => {
     const meta = quickAddMeta(selKind);
-    addPersonalLog({
+    const payload = {
       title: title.trim(),
-      dateLabel: dateLabel.trim(),
+      dateLabel: formatTrDate(date, true),
       tone: meta.tone,
       icon: meta.icon,
+      kind: selKind,
+      dateMs: date.getTime(),
       ...(note.trim() ? { note: note.trim() } : {}),
-    });
+    };
+    if (editId) updatePersonalLog(editId, payload);
+    else addPersonalLog(payload);
     onDone();
+  };
+
+  const remove = () => {
+    if (!editId) return;
+    Alert.alert(t('care.add.delete_confirm'), undefined, [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: () => {
+          deletePersonalLog(editId);
+          onDone();
+        },
+      },
+    ]);
   };
 
   return (
@@ -86,15 +141,7 @@ function LogForm({ initialKind, onDone }: { initialKind?: string; onDone: () => 
               style={styles.input}
             />
           </Field>
-          <Field label={t('care.add.date')}>
-            <TextInput
-              value={dateLabel}
-              onChangeText={setDateLabel}
-              placeholder={t('care.add.date_ph')}
-              placeholderTextColor={colors.muted}
-              style={styles.input}
-            />
-          </Field>
+          <DateField label={t('care.add.date')} value={date} onChange={setDate} mode="datetime" />
           <Field label={t('care.add.type')} last>
             <View style={styles.chips}>
               {QUICK_ADD.map((q) => {
@@ -136,6 +183,16 @@ function LogForm({ initialKind, onDone }: { initialKind?: string; onDone: () => 
             />
           </Field>
         </View>
+
+        {/* Düzenlemede sil seçeneği — doğrudan silmek yerine detay ekranından onaylı */}
+        {editId ? (
+          <Pressable style={styles.deleteRow} onPress={remove}>
+            <Ionicons name="trash-outline" size={18} color={colors.danger} />
+            <Text variant="bodyStrong" style={{ color: colors.danger }}>
+              {t('care.add.delete')}
+            </Text>
+          </Pressable>
+        ) : null}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -152,17 +209,32 @@ function LogForm({ initialKind, onDone }: { initialKind?: string; onDone: () => 
 
 // ── Bakım hatırlatması ────────────────────────────────────────────────────
 function RoutineForm({ onDone }: { onDone: () => void }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const addRoutine = useStore((s) => s.addRoutine);
   const [name, setName] = useState('');
   const [days, setDays] = useState('');
+  const [catId, setCatId] = useState<string>(CATEGORIES[0]!.id);
+  const [svcId, setSvcId] = useState<string | null>(null);
+
+  // Alt hizmet seçilince ad + bakım periyodu (taksonomiden) otomatik dolar
+  const pickService = (s: { id: string; label: { tr: string; kk: string; ru: string }; periodDays?: number }) => {
+    setSvcId(s.id);
+    setName(tri(s.label, locale));
+    if (s.periodDays) setDays(String(s.periodDays));
+  };
 
   const canSave = name.trim().length > 0 && Number(days) > 0;
 
   const save = () => {
-    addRoutine({ name: name.trim(), dueDays: Number(days) });
+    const cat = CATEGORIES.find((c) => c.id === catId);
+    addRoutine({
+      name: name.trim(),
+      dueDays: Number(days),
+      categoryCode: catId,
+      ...(cat ? { icon: cat.icon } : {}),
+    });
     onDone();
   };
 
@@ -178,6 +250,60 @@ function RoutineForm({ onDone }: { onDone: () => void }) {
               placeholderTextColor={colors.muted}
               style={styles.input}
             />
+          </Field>
+          {/* Kategori — "Teklif Al" kısayolu doğru kategoriyi otomatik açsın */}
+          <Field label={t('care.add.category')}>
+            <View style={styles.chips}>
+              {CATEGORIES.map((c) => {
+                const active = c.id === catId;
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => {
+                      setCatId(c.id);
+                      setSvcId(null);
+                    }}
+                    style={[styles.chip, active && styles.chipActive]}
+                  >
+                    <Ionicons
+                      name={c.icon as IoniconName}
+                      size={15}
+                      color={active ? colors.onAccent : colors.inkSoft}
+                    />
+                    <Text
+                      variant="caption"
+                      tone={active ? 'onAccent' : 'inkSoft'}
+                      style={active ? styles.chipTextActive : undefined}
+                    >
+                      {t(categoryLabelKey(c.id))}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </Field>
+          {/* Alt hizmet — seçince bakım periyodu otomatik gelir (taksonomi) */}
+          <Field label={t('care.add.service')}>
+            <View style={styles.chips}>
+              {servicesOf(catId).map((s) => {
+                const active = s.id === svcId;
+                return (
+                  <Pressable
+                    key={s.id}
+                    onPress={() => pickService(s)}
+                    style={[styles.chip, active && styles.chipActive]}
+                  >
+                    <Text
+                      variant="caption"
+                      tone={active ? 'onAccent' : 'inkSoft'}
+                      style={active ? styles.chipTextActive : undefined}
+                    >
+                      {tri(s.label, locale)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </Field>
           <Field label={t('care.add.in_days')} last>
             <TextInput
@@ -211,13 +337,17 @@ function MomentForm({ onDone }: { onDone: () => void }) {
   const styles = useThemedStyles(makeStyles);
   const addMoment = useStore((s) => s.addMoment);
   const [title, setTitle] = useState('');
-  const [dateLabel, setDateLabel] = useState('');
-  const [days, setDays] = useState('');
+  const [date, setDate] = useState(() => new Date());
 
-  const canSave = title.trim().length > 0 && Number(days) > 0;
+  const canSave = title.trim().length > 0;
 
   const save = () => {
-    addMoment({ title: title.trim(), dateLabel: dateLabel.trim(), daysLeft: Number(days) });
+    // Özel gün yıllık tekrarlar → kalan gün seçilen tarihten otomatik hesaplanır.
+    addMoment({
+      title: title.trim(),
+      dateLabel: formatTrDate(date, false),
+      daysLeft: daysUntilNextOccurrence(date),
+    });
     onDone();
   };
 
@@ -234,25 +364,7 @@ function MomentForm({ onDone }: { onDone: () => void }) {
               style={styles.input}
             />
           </Field>
-          <Field label={t('care.add.date')}>
-            <TextInput
-              value={dateLabel}
-              onChangeText={setDateLabel}
-              placeholder={t('care.add.date_ph')}
-              placeholderTextColor={colors.muted}
-              style={styles.input}
-            />
-          </Field>
-          <Field label={t('care.add.in_days')} last>
-            <TextInput
-              value={days}
-              onChangeText={(v) => setDays(v.replace(/[^0-9]/g, ''))}
-              placeholder={t('care.add.in_days_ph')}
-              placeholderTextColor={colors.muted}
-              keyboardType="number-pad"
-              style={styles.input}
-            />
-          </Field>
+          <DateField label={t('care.add.date')} value={date} onChange={setDate} mode="date" last />
         </View>
       </ScrollView>
 
@@ -318,6 +430,17 @@ const makeStyles = (colors: ColorTokens) =>
       fontSize: 15,
       fontWeight: '400',
       color: colors.ink,
+    },
+    // iOS kompakt tarih seçici sola hizalı dursun (varsayılan sağa yaslı gelir)
+    iosPickerRow: { flexDirection: 'row', alignItems: 'center', minHeight: 40 },
+    dateText: { height: 52, lineHeight: 52, fontSize: 16 },
+    deleteRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space(1),
+      marginTop: space(2.5),
+      paddingVertical: space(1.5),
     },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     chip: {

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
 /**
  * §3.3 — TEK giriş ekranı: telefon/e-posta + şifre. Sistem rolü tanır ve ilgili arayüze
@@ -77,7 +77,7 @@ export default function LoginScreen() {
         <View style={styles.forgotRow}>
           <Text
             variant="caption"
-            tone="rose"
+            tone="accentFg"
             style={styles.forgot}
             onPress={() => router.push('/auth/forgot')}
           >

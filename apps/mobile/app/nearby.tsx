@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { ALMATY, distanceKm, proCoords } from '../src/data';
+import { cityCenter, distanceKm, proCoords } from '../src/data';
 import { useProfessionals } from '../src/catalog';
 import { useStore } from '../src/store';
 import { useLocale } from '../src/locale';
@@ -21,7 +21,7 @@ export default function NearbyScreen() {
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
 
   const salons = useMemo(() => {
-    const dist = (id: string) => distanceKm(ALMATY, proCoords(id));
+    const dist = (id: string) => distanceKm(cityCenter(city), proCoords(id));
     return all
       .filter((p) => p.city === city && p.kind === 'salon')
       .sort(

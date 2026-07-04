@@ -4,7 +4,7 @@ import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import type { MessageKey } from '@ayna/i18n';
+import { greetingKey } from '../../src/greeting';
 import {
   type Appointment,
   type CareRoutine,
@@ -15,7 +15,7 @@ import {
 } from '../../src/data';
 import { formatSlot } from '../../src/datetime';
 import { useStore } from '../../src/store';
-import { useLocale } from '../../src/locale';
+import { fillParams, useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { PressableScale, ProgressRing, Screen, TabHero, Text } from '../../src/ui';
@@ -23,18 +23,12 @@ import { PressableScale, ProgressRing, Screen, TabHero, Text } from '../../src/u
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 const makeTone = (colors: ColorTokens): Record<PersonalTone, { bg: string; fg: string }> => ({
-  rose: { bg: colors.roseSoft, fg: colors.rose },
+  // 'rose' anahtarı korunur ama pembe yerine sıcak bal (VELOURA — pembe kaldırıldı)
+  rose: { bg: colors.goldSoft, fg: colors.gold },
   sage: { bg: colors.sageSoft, fg: colors.sage },
   lavender: { bg: colors.lavenderSoft, fg: colors.lavender },
   blue: { bg: colors.blueSoft, fg: colors.blue },
 });
-
-function greetingKey(): MessageKey {
-  const h = new Date().getHours();
-  if (h < 12) return 'benim.hello.morning';
-  if (h < 18) return 'benim.hello.day';
-  return 'benim.hello.evening';
-}
 
 export default function BenimIcinScreen() {
   const router = useRouter();
@@ -45,7 +39,6 @@ export default function BenimIcinScreen() {
   const personalLogs = useStore((s) => s.personalLogs);
   const careRoutines = useStore((s) => s.careRoutines);
   const moments = useStore((s) => s.moments);
-  const deletePersonalLog = useStore((s) => s.deletePersonalLog);
   const bookings = useStore((s) => s.bookings);
   const points = useStore((s) => s.points);
   const favCount = useStore((s) => s.favorites.length);
@@ -70,11 +63,6 @@ export default function BenimIcinScreen() {
     return [...active].sort((a, b) => a.startMs - b.startMs)[0];
   }, [bookings]);
 
-  const confirmDeleteLog = (id: string) =>
-    Alert.alert(t('care.add.delete_confirm'), undefined, [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: () => deletePersonalLog(id) },
-    ]);
 
   return (
     <Screen edges={[]}>
@@ -87,7 +75,7 @@ export default function BenimIcinScreen() {
           ) : (
             <Pressable style={styles.emptyFeature} onPress={() => router.push('/discover')}>
               <View style={styles.emptyFeatureIcon}>
-                <Ionicons name="calendar-outline" size={22} color={colors.rose} />
+                <Ionicons name="calendar-outline" size={22} color={colors.accentFg} />
               </View>
               <View style={styles.flex}>
                 <Text variant="bodyStrong" tone="ink">
@@ -110,10 +98,7 @@ export default function BenimIcinScreen() {
         {/* Bakım skoru — halka göstergeli hero (referans dili) */}
         <Animated.View entering={FadeInDown.duration(360).delay(40)} style={styles.block}>
           {careRoutines.length > 0 ? (
-            <Pressable
-              style={[styles.scoreCard, shadow.card]}
-              onPress={() => router.push('/care/add?mode=routine')}
-            >
+            <Pressable style={[styles.scoreCard, shadow.card]} onPress={() => router.push('/care/routines')}>
               <View style={styles.scoreTop}>
                 <ProgressRing
                   size={94}
@@ -194,7 +179,7 @@ export default function BenimIcinScreen() {
             <View style={styles.statDivider} />
             <StatSegment
               icon="heart-outline"
-              tone="rose"
+              tone="accentFg"
               value={String(favCount)}
               label={t('benim.summary.saved')}
               onPress={() => router.push('/favorites')}
@@ -244,26 +229,11 @@ export default function BenimIcinScreen() {
           empty={personalLogs.length === 0 ? t('benim.empty.records') : undefined}
         >
           {personalLogs.map((p, i) => (
-            <LogRow
-              key={p.id}
-              log={p}
-              border={i < personalLogs.length - 1}
-              onDelete={() => confirmDeleteLog(p.id)}
-            />
+            <LogRow key={p.id} log={p} border={i < personalLogs.length - 1} />
           ))}
         </Section>
 
-        {/* Bakım takvimi */}
-        <Section
-          title={t('benim.section.care')}
-          count={careRoutines.length}
-          onAdd={() => router.push('/care/add?mode=routine')}
-          empty={careRoutines.length === 0 ? t('benim.empty.care') : undefined}
-        >
-          {careRoutines.map((r, i) => (
-            <RoutineRow key={r.id} routine={r} border={i < careRoutines.length - 1} />
-          ))}
-        </Section>
+        {/* Bakım takvimi artık ayrı sayfada (Bakım skoru kartındaki "Rutinlerini gör" → /care/routines) */}
 
         {/* Özel günler */}
         <Section
@@ -330,14 +300,14 @@ function StatSegment({
   onPress,
 }: {
   icon: IoniconName;
-  tone: 'gold' | 'rose' | 'sage';
+  tone: 'gold' | 'accentFg' | 'sage';
   value: string;
   label: string;
   onPress: () => void;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const fg = tone === 'gold' ? colors.gold : tone === 'rose' ? colors.rose : colors.sage;
+  const fg = tone === 'gold' ? colors.gold : tone === 'accentFg' ? colors.accentFg : colors.sage;
   return (
     <Pressable style={styles.statSegment} onPress={onPress}>
       <Ionicons name={icon} size={17} color={fg} />
@@ -426,8 +396,8 @@ function Section({
           ) : null}
         </View>
         <Pressable hitSlop={8} onPress={onAdd} style={styles.addBtn}>
-          <Ionicons name="add" size={15} color={colors.rose} />
-          <Text variant="caption" tone="rose">
+          <Ionicons name="add" size={15} color={colors.accentFg} />
+          <Text variant="caption" tone="accentFg">
             {t('common.add')}
           </Text>
         </Pressable>
@@ -445,20 +415,15 @@ function Section({
   );
 }
 
-function LogRow({
-  log,
-  border,
-  onDelete,
-}: {
-  log: PersonalLog;
-  border: boolean;
-  onDelete: () => void;
-}) {
+function LogRow({ log, border }: { log: PersonalLog; border: boolean }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
   const c = makeTone(colors)[log.tone];
+  // Karta/… dokununca detay-düzenleme ekranı açılır (orada düzenle + sil)
+  const openDetail = () => router.push(`/care/add?id=${log.id}`);
   return (
-    <Pressable onLongPress={onDelete} style={[styles.row, border && styles.rowBorder]}>
+    <Pressable onPress={openDetail} style={[styles.row, border && styles.rowBorder]}>
       <View style={[styles.iconChip, { backgroundColor: c.bg }]}>
         <Ionicons name={log.icon as IoniconName} size={18} color={c.fg} />
       </View>
@@ -470,7 +435,7 @@ function LogRow({
           {log.dateLabel}
         </Text>
       </View>
-      <Pressable hitSlop={10} onPress={onDelete} style={styles.trash}>
+      <Pressable hitSlop={10} onPress={openDetail} style={styles.trash}>
         <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} />
       </Pressable>
     </Pressable>
@@ -483,13 +448,23 @@ function dueLabel(days: number, t: (k: 'care.due_in' | 'care.overdue' | 'care.to
   return { text: `${days} ${t('care.due_in')}`, danger: false };
 }
 
-function RoutineRow({ routine, border }: { routine: CareRoutine; border: boolean }) {
+export function RoutineRow({ routine, border }: { routine: CareRoutine; border: boolean }) {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const completeRoutine = useStore((s) => s.completeRoutine);
   const due = dueLabel(routine.dueDays, t);
+  // Yeşil tik → onaylı "tamamladım": kazara sıfırlamayı önler, ne olacağını açıklar
+  const markDone = () =>
+    Alert.alert(
+      t('care.done.confirm_title'),
+      fillParams(t('care.done.confirm_body'), { name: routine.name, days: routine.periodDays }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('care.done.confirm_yes'), onPress: () => completeRoutine(routine.id) },
+      ],
+    );
   return (
     <View style={[styles.routineRow, border && styles.rowBorder]}>
       <View style={styles.routineTop}>
@@ -506,19 +481,27 @@ function RoutineRow({ routine, border }: { routine: CareRoutine; border: boolean
         </View>
         <Pressable
           hitSlop={8}
-          onPress={() => completeRoutine(routine.id)}
+          onPress={markDone}
           style={[styles.checkBtn, { backgroundColor: colors.sage }]}
         >
           <Ionicons name="checkmark" size={16} color={colors.onColor} />
         </Pressable>
       </View>
-      {/* §5.4.5 — her hatırlatmada "Teklif Al" kısayolu → talep akışı (retention→gelir) */}
-      <Pressable style={styles.offerLink} onPress={() => router.push('/demand/new')}>
-        <Ionicons name="pricetags-outline" size={13} color={colors.rose} />
-        <Text variant="caption" tone="rose" style={styles.offerText}>
+      {/* §5.4.5 — her hatırlatmada "Teklif Al" kısayolu → talep akışı (retention→gelir).
+          Bakım kategorisi (Kalıcı oje→Tırnak vb.) talep ekranında otomatik seçilir. */}
+      <Pressable
+        style={styles.offerLink}
+        onPress={() =>
+          router.push(
+            routine.categoryCode ? `/demand/new?category=${routine.categoryCode}` : '/demand/new',
+          )
+        }
+      >
+        <Ionicons name="pricetags-outline" size={13} color={colors.accentFg} />
+        <Text variant="caption" tone="accentFg" style={styles.offerText}>
           {t('care.get_offer')}
         </Text>
-        <Ionicons name="arrow-forward" size={12} color={colors.rose} />
+        <Ionicons name="arrow-forward" size={12} color={colors.accentFg} />
       </Pressable>
     </View>
   );
@@ -637,7 +620,7 @@ const makeStyles = (colors: ColorTokens) =>
       width: 44,
       height: 44,
       borderRadius: radius.md,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -718,7 +701,16 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
       alignItems: 'center',
     },
-    addBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    // Belirgin hap — düz metin kolayca kaçırılıyordu (keşfedilebilirlik)
+    addBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      backgroundColor: colors.accentSoft,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.6),
+      borderRadius: radius.pill,
+    },
     emptyRow: {
       marginHorizontal: space(3),
       backgroundColor: colors.surface,

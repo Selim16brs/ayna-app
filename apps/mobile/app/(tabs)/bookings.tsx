@@ -15,7 +15,7 @@ import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, Segmented, TabHero, Text } from '../../src/ui';
+import { Screen, TabHero, Text } from '../../src/ui';
 
 // §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş
 type Seg = 'requests' | 'upcoming' | 'past';
@@ -54,15 +54,13 @@ export default function BookingsScreen() {
   const router = useRouter();
   const [active, setActive] = useState<Seg>('upcoming');
   const bookings = useStore((s) => s.bookings);
-  // Kullanıcının kendi talepleri (uzman havuzu için tohumlanan talepler hariç)
-  const demands = useStore((s) => s.demands.filter((d) => !d.seeded));
+  const allDemands = useStore((s) => s.demands);
+  const demands = allDemands.filter((d) => !d.seeded);
   const now = Date.now();
 
   const isUpcoming = (a: Appointment) =>
     a.startMs >= now && !['completed', 'cancelled', 'no_show'].includes(a.status);
-  const upcoming = bookings
-    .filter(isUpcoming)
-    .sort((a, b) => a.startMs - b.startMs);
+  const upcoming = bookings.filter(isUpcoming).sort((a, b) => a.startMs - b.startMs);
   const past = bookings.filter((a) => !isUpcoming(a)).sort((a, b) => b.startMs - a.startMs);
   const pendingReview = bookings.filter((a) => a.status === 'completed' && !a.reviewed);
 
@@ -73,18 +71,25 @@ export default function BookingsScreen() {
 
   return (
     <Screen edges={[]}>
+      {/* Diğer sekmelerle tutarlı yeşil hero başlık */}
       <TabHero title={t('nav.bookings')} />
 
-      <View style={styles.segmentWrap}>
-        <Segmented
-          options={SEGS.map((s) => ({ value: s.value, label: t(s.labelKey) }))}
-          value={active}
-          onChange={setActive}
-        />
+      {/* Alt-çizgili sekmeler */}
+      <View style={styles.tabs}>
+        {SEGS.map((s) => {
+          const on = s.value === active;
+          return (
+            <Pressable key={s.value} style={styles.tab} onPress={() => setActive(s.value)}>
+              <Text variant="bodyStrong" style={[styles.tabText, on ? styles.tabOn : styles.tabOff]}>
+                {t(s.labelKey)}
+              </Text>
+              {on ? <View style={styles.tabBar} /> : null}
+            </Pressable>
+          );
+        })}
       </View>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-        {/* Değerlendirme daveti — Geçmiş sekmesinde (§5.3) */}
         {active === 'past' && pendingReview.length > 0 ? (
           <Pressable
             style={styles.reviewPrompt}
@@ -93,7 +98,7 @@ export default function BookingsScreen() {
             <View style={styles.reviewIcon}>
               <Ionicons name="star" size={20} color={colors.gold} />
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={styles.flex}>
               <Text variant="bodyStrong" tone="ink">
                 {t('bookings.review_prompt.title')}
                 {pendingReview.length > 1 ? ` (${pendingReview.length})` : ''}
@@ -103,7 +108,7 @@ export default function BookingsScreen() {
               </Text>
             </View>
             <View style={styles.reviewCta}>
-              <Text variant="caption" tone="onColor" style={styles.reviewCtaText}>
+              <Text variant="caption" tone="onAccent" style={styles.reviewCtaText}>
                 {t('bookings.review_prompt.cta')}
               </Text>
             </View>
@@ -115,8 +120,8 @@ export default function BookingsScreen() {
             <View style={styles.emptyIcon}>
               <Ionicons
                 name={active === 'requests' ? 'pricetags-outline' : 'calendar-outline'}
-                size={28}
-                color={colors.rose}
+                size={30}
+                color={colors.inkSoft}
               />
             </View>
             <Text variant="bodyStrong" tone="ink">
@@ -126,7 +131,7 @@ export default function BookingsScreen() {
               style={styles.emptyCta}
               onPress={() => router.push(active === 'requests' ? '/quote' : '/discover')}
             >
-              <Text variant="caption" tone="onColor" style={styles.emptyCtaText}>
+              <Text variant="bodyStrong" tone="onAccent">
                 {t('bookings.empty_cta')}
               </Text>
             </Pressable>
@@ -134,7 +139,7 @@ export default function BookingsScreen() {
         ) : active === 'requests' ? (
           demands.map((d) => <DemandCard key={d.id} demand={d} />)
         ) : active === 'upcoming' ? (
-          upcoming.map((a) => <BookingCard key={a.id} appt={a} />)
+          upcoming.map((a) => <BookingCard key={a.id} appt={a} upcoming />)
         ) : (
           past.map((a) => <BookingCard key={a.id} appt={a} />)
         )}
@@ -143,48 +148,61 @@ export default function BookingsScreen() {
   );
 }
 
-function BookingCard({ appt }: { appt: Appointment }) {
+// VELOURA "My Booking" kartı: üst satır tarih·saat + durum pili → thumbnail + ad/hizmet/fiyat → aksiyonlar
+function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean }) {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const st = makeStatus(colors)[appt.status];
+  const toDetail = () => router.push('/booking/' + appt.id);
   return (
-    <Pressable
-      style={[styles.card, shadow.soft]}
-      onPress={() => router.push('/booking/' + appt.id)}
-    >
-      <Image source={{ uri: appt.proImage }} style={styles.thumb} />
-      <View style={styles.body}>
-        <View style={styles.topRow}>
-          <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.service}>
-            {appt.service}
-          </Text>
-          <View style={[styles.status, { backgroundColor: st.bg }]}>
-            <Text variant="caption" style={[styles.statusText, { color: st.fg }]}>
-              {t(st.key)}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.metaRow}>
-          <Ionicons name="person-outline" size={13} color={colors.muted} />
-          <Text variant="caption" tone="inkSoft">
-            {appt.proName}
-          </Text>
-        </View>
-        <View style={styles.bottomRow}>
-          <View style={styles.metaRow}>
-            <Ionicons name="time-outline" size={13} color={colors.muted} />
-            <Text variant="caption" tone="inkSoft">
-              {formatSlot(appt.startMs, t)}
-            </Text>
-          </View>
-          <Text variant="bodyStrong" tone="ink">
-            {formatPrice(appt.price)}
+    <View style={[styles.card, shadow.soft]}>
+      <View style={styles.cardHead}>
+        <Text variant="caption" tone="inkSoft" style={styles.cardDate}>
+          {formatSlot(appt.startMs, t)}
+        </Text>
+        <View style={[styles.status, { backgroundColor: st.bg }]}>
+          <Text variant="caption" style={[styles.statusText, { color: st.fg }]}>
+            {t(st.key)}
           </Text>
         </View>
       </View>
-    </Pressable>
+      <View style={styles.divider} />
+      <Pressable style={styles.cardMain} onPress={toDetail}>
+        <Image source={{ uri: appt.proImage }} style={styles.thumb} />
+        <View style={styles.flex}>
+          <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+            {appt.proName}
+          </Text>
+          <Text variant="caption" tone="muted" numberOfLines={1} style={styles.cardSub}>
+            {appt.service}
+          </Text>
+          {appt.uzmanName ? (
+            <Text variant="caption" tone="inkSoft" numberOfLines={1} style={styles.cardSub}>
+              {appt.uzmanName}
+            </Text>
+          ) : null}
+          <Text variant="bodyStrong" tone="ink" style={styles.cardPrice}>
+            {formatPrice(appt.price)}
+          </Text>
+        </View>
+      </Pressable>
+      {upcoming ? (
+        <View style={styles.actions}>
+          <Pressable style={[styles.btn, styles.btnOutline]} onPress={toDetail}>
+            <Text variant="caption" style={[styles.btnText, { color: colors.danger }]}>
+              {t('common.cancel')}
+            </Text>
+          </Pressable>
+          <Pressable style={[styles.btn, styles.btnFilled]} onPress={toDetail}>
+            <Text variant="caption" tone="onAccent" style={styles.btnText}>
+              {t('bookings.action.detail')}
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -206,39 +224,41 @@ function DemandCard({ demand }: { demand: DemandRequest }) {
 
   return (
     <Pressable
-      style={[styles.card, shadow.soft]}
+      style={[styles.card, styles.cardPad, shadow.soft]}
       onPress={() => router.push(`/quote/results?id=${demand.id}`)}
     >
-      <View style={styles.demandIcon}>
-        <Ionicons
-          name={demand.mode === 'photo' ? 'image-outline' : 'chatbubble-ellipses-outline'}
-          size={22}
-          color={colors.rose}
-        />
-      </View>
-      <View style={styles.body}>
-        <View style={styles.topRow}>
-          <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.service}>
-            {t(catLabel(demand.category))}
-          </Text>
-          <View style={[styles.status, { backgroundColor: badge.bg }]}>
-            <Text variant="caption" style={[styles.statusText, { color: badge.fg }]}>
-              {badge.text}
-            </Text>
-          </View>
+      <View style={styles.demandRow}>
+        <View style={styles.demandIcon}>
+          <Ionicons
+            name={demand.mode === 'photo' ? 'image-outline' : 'chatbubble-ellipses-outline'}
+            size={22}
+            color={colors.ink}
+          />
         </View>
-        <View style={styles.bottomRow}>
-          <View style={styles.metaRow}>
-            <Ionicons name="pricetags-outline" size={13} color={colors.muted} />
-            <Text variant="caption" tone="inkSoft">
-              {demand.offers.length} {t('quotes.count')}
+        <View style={styles.flex}>
+          <View style={styles.cardHead}>
+            <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.flex}>
+              {t(catLabel(demand.category))}
             </Text>
+            <View style={[styles.status, { backgroundColor: badge.bg }]}>
+              <Text variant="caption" style={[styles.statusText, { color: badge.fg }]}>
+                {badge.text}
+              </Text>
+            </View>
           </View>
-          {collecting ? (
-            <Text variant="caption" tone="rose" style={styles.demandCta}>
-              {t('demand.card.view')}
-            </Text>
-          ) : null}
+          <View style={styles.demandMeta}>
+            <View style={styles.metaRow}>
+              <Ionicons name="pricetags-outline" size={13} color={colors.muted} />
+              <Text variant="caption" tone="inkSoft">
+                {demand.offers.length} {t('quotes.count')}
+              </Text>
+            </View>
+            {collecting ? (
+              <Text variant="caption" style={styles.demandCta}>
+                {t('demand.card.view')}
+              </Text>
+            ) : null}
+          </View>
         </View>
       </View>
     </Pressable>
@@ -247,66 +267,94 @@ function DemandCard({ demand }: { demand: DemandRequest }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    title: { paddingHorizontal: space(3), paddingTop: space(1), marginBottom: space(2) },
-    demandIcon: {
-      width: 56,
-      height: 56,
-      borderRadius: radius.md,
-      backgroundColor: colors.roseSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    demandCta: { fontWeight: '700' },
-    segmentWrap: { paddingHorizontal: space(3), marginTop: space(2.5), marginBottom: space(2) },
-    list: { paddingHorizontal: space(3), paddingBottom: space(13), gap: space(1.5) },
-    empty: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingTop: space(9),
-      gap: space(1.5),
-    },
-    emptyIcon: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
-      backgroundColor: colors.roseSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: space(0.5),
-    },
-    emptyCta: {
-      backgroundColor: colors.rose,
-      paddingHorizontal: space(2.5),
-      paddingVertical: space(1.25),
-      borderRadius: radius.pill,
-      marginTop: space(0.5),
-    },
-    emptyCtaText: { fontWeight: '600' },
-    card: {
+    flex: { flex: 1 },
+    tabs: {
       flexDirection: 'row',
-      alignItems: 'center',
       backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(1.75),
-      gap: space(1.75),
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.line,
+      paddingHorizontal: space(2),
     },
-    thumb: { width: 72, height: 72, borderRadius: radius.md, backgroundColor: colors.bgSunken },
-    body: { flex: 1 },
-    topRow: {
+    tab: { flex: 1, alignItems: 'center', paddingVertical: space(1.5), gap: space(1) },
+    tabText: { fontSize: 15 },
+    tabOn: { color: '#6F8C1B' },
+    tabOff: { color: colors.muted },
+    tabBar: {
+      position: 'absolute',
+      bottom: -StyleSheet.hairlineWidth,
+      height: 2.5,
+      width: '60%',
+      borderRadius: 2,
+      backgroundColor: '#6F8C1B',
+    },
+    list: { padding: space(2.5), paddingBottom: space(13), gap: space(2) },
+
+    card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
+    cardPad: {},
+    cardHead: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: space(1),
     },
-    service: { flex: 1 },
-    status: { paddingHorizontal: space(1), paddingVertical: 3, borderRadius: radius.pill },
-    statusText: { fontSize: 11 },
-    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: space(0.75) },
-    bottomRow: {
+    cardDate: { fontSize: 12.5 },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.line,
+      marginVertical: space(1.5),
+    },
+    cardMain: { flexDirection: 'row', gap: space(1.75), alignItems: 'center' },
+    thumb: { width: 76, height: 76, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    cardSub: { marginTop: 2 },
+    cardPrice: { marginTop: space(0.75) },
+    status: { paddingHorizontal: space(1.25), paddingVertical: 4, borderRadius: radius.pill },
+    statusText: { fontSize: 11, fontWeight: '600' },
+
+    actions: { flexDirection: 'row', gap: space(1.25), marginTop: space(1.75) },
+    btn: {
+      flex: 1,
+      height: 36,
+      borderRadius: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    btnOutline: { borderWidth: 1.25, borderColor: colors.line },
+    btnFilled: { backgroundColor: colors.accent },
+    btnText: { fontSize: 13.5, fontWeight: '700' },
+
+    demandRow: { flexDirection: 'row', gap: space(1.5), alignItems: 'center' },
+    demandIcon: {
+      width: 52,
+      height: 52,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    demandMeta: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       marginTop: space(0.75),
+    },
+    demandCta: { fontWeight: '700', color: '#6F8C1B' },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+
+    empty: { alignItems: 'center', justifyContent: 'center', paddingTop: space(9), gap: space(1.5) },
+    emptyIcon: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    emptyCta: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(3),
+      paddingVertical: space(1.5),
+      borderRadius: radius.pill,
+      marginTop: space(0.5),
     },
     reviewPrompt: {
       flexDirection: 'row',
@@ -314,8 +362,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1.25),
       backgroundColor: colors.goldSoft,
       borderRadius: radius.lg,
-      padding: space(1.5),
-      marginBottom: space(1.5),
+      padding: space(1.75),
     },
     reviewIcon: {
       width: 40,
@@ -326,9 +373,9 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     reviewCta: {
-      backgroundColor: colors.gold,
-      paddingHorizontal: space(1.5),
-      paddingVertical: space(0.75),
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(0.9),
       borderRadius: radius.pill,
     },
     reviewCtaText: { fontSize: 12, fontWeight: '700' },

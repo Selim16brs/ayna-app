@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
 type Step = 'phone' | 'code' | 'password';
 

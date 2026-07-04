@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { api, type SellerReview, type SellerReviews } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
 export default function SellerReviewsScreen() {
   const { t } = useLocale();
@@ -21,7 +21,14 @@ export default function SellerReviewsScreen() {
     const biz = await api.myBusinesses(token).catch(() => []);
     const id = biz[0]?.id ?? null;
     setBusinessId(id);
-    setData(id ? await api.businessReviews(token, id).catch(() => null) : { linked: false, average: null, count: 0, reviews: [] });
+    // Salon/işletme → business yorumları; bağımsız uzman → kendi işlerinin yorumları (§7)
+    setData(
+      id
+        ? await api.businessReviews(token, id).catch(() => null)
+        : await api
+            .mySpecialistReviews(token)
+            .catch(() => ({ linked: false, average: null, count: 0, reviews: [] })),
+    );
   }, [token]);
 
   useEffect(() => {
@@ -55,7 +62,7 @@ export default function SellerReviewsScreen() {
               <ReviewRow
                 key={r.id}
                 review={r}
-                businessId={businessId!}
+                businessId={businessId}
                 token={token}
                 onReplied={load}
               />
@@ -74,7 +81,7 @@ function ReviewRow({
   onReplied,
 }: {
   review: SellerReview;
-  businessId: string;
+  businessId: string | null;
   token: string | null;
   onReplied: () => void;
 }) {
@@ -90,15 +97,25 @@ function ReviewRow({
   const dispute = () => {
     Alert.alert(t('seller.reviews.dispute_confirm'), t('seller.reviews.dispute_note'), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('seller.reviews.dispute'), onPress: () => setDisputed(true) },
+      {
+        text: t('seller.reviews.dispute'),
+        onPress: () => {
+          setDisputed(true);
+          // Bağımsız uzman → backend itiraz kuyruğu; salon yorumu şimdilik yerel işaretlenir
+          if (!businessId && token)
+            void api.disputeSpecialistReview(token, review.id, '').catch(() => undefined);
+        },
+      },
     ]);
   };
 
   const send = async () => {
-    if (!token || !businessId || !text.trim()) return;
+    if (!token || !text.trim()) return;
     setBusy(true);
     try {
-      await api.replyBusinessReview(token, businessId, review.id, text.trim());
+      // Salon → business yanıtı; bağımsız uzman → specialist yanıtı (§7.2)
+      if (businessId) await api.replyBusinessReview(token, businessId, review.id, text.trim());
+      else await api.replySpecialistReview(token, review.id, text.trim());
       setText('');
       setOpen(false);
       onReplied();
@@ -147,7 +164,7 @@ function ReviewRow({
         </View>
       ) : (
         <View style={styles.actionRow}>
-          <Text variant="caption" tone="rose" style={styles.replyLink} onPress={() => setOpen(true)}>
+          <Text variant="caption" tone="accentFg" style={styles.replyLink} onPress={() => setOpen(true)}>
             {t('seller.reviews.reply')}
           </Text>
           {disputed ? (
@@ -173,7 +190,7 @@ const makeStyles = (colors: ColorTokens) =>
     card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2), gap: space(0.5) },
     stars: { flexDirection: 'row', alignItems: 'center', gap: 2 },
     comment: { marginTop: space(0.5) },
-    reply: { backgroundColor: colors.roseSoft, borderRadius: radius.md, padding: space(1.25), marginTop: space(1) },
+    reply: { backgroundColor: colors.accentSoft, borderRadius: radius.md, padding: space(1.25), marginTop: space(1) },
     replyBox: { marginTop: space(1), gap: space(1) },
     input: {
       borderWidth: 1,

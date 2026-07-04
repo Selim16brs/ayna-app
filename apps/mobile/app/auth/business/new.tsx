@@ -1,38 +1,18 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../../src/api';
+import { activeCategories } from '../../../src/taxonomy';
 import { useLocale } from '../../../src/locale';
 import { radius, space, type ColorTokens } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme-context';
-import {
-  Button,
-  CitySelect,
-  Screen,
-  SocialLinks,
-  StackHeader,
-  Text,
-  WorkingHours,
-  defaultHours,
-  emptySocial,
-  type DayHours,
-  type SocialValue,
-} from '../../../src/ui';
+import { Button, CitySelect, defaultHours, emptySocial, Screen, SocialLinks, StackHeader, Text, TextInput, type DayHours, type SocialValue, WorkingHours } from '../../../src/ui';
 
-// Salon hizmet alanları — fiyat YOK, yalnızca alan listesi (§3.2 A)
-const AREAS: MessageKey[] = [
-  'category.hair',
-  'category.nails',
-  'category.brows',
-  'category.lashes',
-  'category.makeup',
-  'category.skincare',
-  'category.spa',
-  'category.epilation',
-];
+// Salon hizmet alanları — MERKEZİ taksonomideki AKTİF kategoriler (fiyat YOK, yalnızca alan; §3.2 A)
+const AREAS: MessageKey[] = activeCategories().map((c) => c.labelKey);
 
 const PHOTO_MAX = 10;
 
@@ -231,9 +211,9 @@ export default function NewBusinessScreen() {
           <Ionicons
             name={pinned ? 'location' : 'location-outline'}
             size={22}
-            color={pinned ? colors.onAccent : colors.rose}
+            color={pinned ? colors.onAccent : colors.accentFg}
           />
-          <Text variant="bodyStrong" tone={pinned ? 'onAccent' : 'rose'} style={styles.mapText}>
+          <Text variant="bodyStrong" tone={pinned ? 'onAccent' : 'accentFg'} style={styles.mapText}>
             {pinned ? t('biz.field.map_pinned') : t('biz.field.map_pin')}
           </Text>
           {pinned ? (
@@ -269,8 +249,8 @@ export default function NewBusinessScreen() {
         />
         <Label text={t('biz.field.docs')} />
         <Pressable style={styles.docRow}>
-          <Ionicons name="cloud-upload-outline" size={20} color={colors.rose} />
-          <Text variant="bodyStrong" tone="rose">
+          <Ionicons name="cloud-upload-outline" size={20} color={colors.accentFg} />
+          <Text variant="bodyStrong" tone="accentFg">
             {t('biz.field.docs_add')}
           </Text>
         </Pressable>

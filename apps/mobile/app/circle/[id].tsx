@@ -1,23 +1,14 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { type CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, SectionHeader, StackHeader, Text } from '../../src/ui';
+import { Screen, SectionHeader, StackHeader, Text, TextInput } from '../../src/ui';
 
 // Gönderi türü çipleri — Keşfet pill dili: pastel zemin + ink metin (nötr, canlı değil).
 const makeType = (
@@ -25,7 +16,7 @@ const makeType = (
 ): Record<CirclePostType, { key: MessageKey; bg: string; fg: string }> => ({
   recommend: { key: 'circle.type.recommend', bg: colors.successSoft, fg: colors.success },
   asking: { key: 'circle.type.asking', bg: colors.goldSoft, fg: colors.gold },
-  experience: { key: 'circle.type.experience', bg: colors.roseSoft, fg: colors.rose },
+  experience: { key: 'circle.type.experience', bg: colors.blueSoft, fg: colors.blue },
 });
 
 export default function PostDetailScreen() {
@@ -38,6 +29,8 @@ export default function PostDetailScreen() {
   const addComment = useStore((s) => s.addComment);
   const reportPost = useStore((s) => s.reportPost);
   const reported = useStore((s) => s.reportedPosts.includes(id ?? ''));
+  const following = useStore((s) => s.following);
+  const toggleFollow = useStore((s) => s.toggleFollow);
   const [draft, setDraft] = useState('');
 
   // §5.5 — şikâyet: içerik görünür kalır, admin kuyruğuna düşer
@@ -63,6 +56,7 @@ export default function PostDetailScreen() {
   }
 
   const ty = makeType(colors)[post.type];
+  const isFollowing = following.includes(post.author);
 
   const send = () => {
     if (draft.trim().length === 0) return;
@@ -85,9 +79,9 @@ export default function PostDetailScreen() {
               <View style={styles.author}>
                 <View style={styles.avatar}>
                   {post.anonymous ? (
-                    <Ionicons name="shield-checkmark" size={18} color={colors.rose} />
+                    <Ionicons name="shield-checkmark" size={18} color={colors.accentFg} />
                   ) : (
-                    <Text variant="bodyStrong" tone="rose">
+                    <Text variant="bodyStrong" tone="accentFg">
                       {post.author.charAt(0)}
                     </Text>
                   )}
@@ -100,6 +94,27 @@ export default function PostDetailScreen() {
                     {post.category}
                   </Text>
                 </View>
+                {/* §W2W — kişiyi takip et (anonim hariç) */}
+                {!post.anonymous ? (
+                  <Pressable
+                    style={[styles.followBtn, isFollowing && styles.followBtnOn]}
+                    onPress={() => toggleFollow(post.author)}
+                    hitSlop={6}
+                  >
+                    <Ionicons
+                      name={isFollowing ? 'checkmark' : 'add'}
+                      size={14}
+                      color={isFollowing ? colors.onAccent : colors.accentFg}
+                    />
+                    <Text
+                      variant="caption"
+                      tone={isFollowing ? 'onAccent' : 'accentFg'}
+                      style={styles.followText}
+                    >
+                      {isFollowing ? t('circle.following') : t('circle.follow')}
+                    </Text>
+                  </Pressable>
+                ) : null}
               </View>
               <View style={[styles.typeBadge, { backgroundColor: ty.bg }]}>
                 <Text variant="caption" style={[styles.typeText, { color: ty.fg }]}>
@@ -158,9 +173,9 @@ export default function PostDetailScreen() {
                 <View key={c.id} style={[styles.comment, shadow.soft]}>
                   <View style={styles.commentAvatar}>
                     {c.anonymous ? (
-                      <Ionicons name="shield-checkmark" size={14} color={colors.rose} />
+                      <Ionicons name="shield-checkmark" size={14} color={colors.accentFg} />
                     ) : (
-                      <Text variant="caption" tone="rose">
+                      <Text variant="caption" tone="accentFg">
                         {c.author.charAt(0)}
                       </Text>
                     )}
@@ -212,13 +227,25 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.lg,
       padding: space(2.25),
     },
-    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    author: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
+    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space(1) },
+    author: { flexDirection: 'row', alignItems: 'center', gap: space(1.25), flexShrink: 1 },
+    followBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      paddingHorizontal: space(1.25),
+      paddingVertical: 5,
+      borderRadius: radius.pill,
+      borderWidth: 1.25,
+      borderColor: colors.accent,
+    },
+    followBtnOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+    followText: { fontWeight: '700' },
     avatar: {
       width: 44,
       height: 44,
       borderRadius: 22,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -266,7 +293,7 @@ const makeStyles = (colors: ColorTokens) =>
       width: 34,
       height: 34,
       borderRadius: 17,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },

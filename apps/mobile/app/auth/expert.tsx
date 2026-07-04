@@ -2,36 +2,34 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api } from '../../src/api';
 import { CITIES, PROFESSIONALS } from '../../src/data';
+import { getDeviceFingerprint } from '../../src/device';
+import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  CitySelect,
-  Screen,
-  SocialLinks,
-  StackHeader,
-  Text,
-  WorkingHours,
-  defaultHours,
-  emptySocial,
-  type DayHours,
-  type SocialValue,
-} from '../../src/ui';
+import { Button, CitySelect, defaultHours, emptySocial, Screen, SocialLinks, StackHeader, Text, TextInput, type DayHours, type SocialValue, WorkingHours } from '../../src/ui';
 
 // Sistemde kayıtlı salonlar (uzmanın bağlanacağı) — data'dan
 const SALONS = PROFESSIONALS.filter((p) => p.kind === 'salon');
 const lower = (s: string) => s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
 
-type Service = { name: string; price: string; dur: string };
+const SERVICE_CATS = activeCategories();
+// §6.1 — kayıt profil fotoğrafı için örnek çekimler (beyaz zemin referansı)
+const EXAMPLES = [
+  require('../../assets/reg-ex-1.png'),
+  require('../../assets/reg-ex-2.png'),
+  require('../../assets/reg-ex-3.png'),
+];
+// Etkin alt hizmet: serviceId → { price, dur } (taksonomi varsayılanıyla ön-dolu)
+type SvcRow = { price: string; dur: string };
 
 export default function ExpertRegisterScreen() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const setAuth = useStore((s) => s.setAuth);
@@ -45,7 +43,8 @@ export default function ExpertRegisterScreen() {
   const [address, setAddress] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
-  const [services, setServices] = useState<Service[]>([{ name: '', price: '', dur: '' }]);
+  const [svcCat, setSvcCat] = useState<string>(SERVICE_CATS[0]!.id);
+  const [svc, setSvc] = useState<Record<string, SvcRow>>({});
   const [certs, setCerts] = useState<string[]>([]);
   const [portfolio, setPortfolio] = useState<string[]>([]);
   const [social, setSocial] = useState<SocialValue>(emptySocial);
@@ -100,12 +99,20 @@ export default function ExpertRegisterScreen() {
     if (!res.canceled) setPortfolio((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, PORTFOLIO_MAX));
   }
 
-  const setSvc = (i: number, field: keyof Service, val: string) =>
-    setServices((list) => list.map((s, idx) => (idx === i ? { ...s, [field]: val } : s)));
+  // Alt hizmeti aç/kapa (açınca taksonomi varsayılan fiyat/süresiyle gelir)
+  const toggleSvc = (s: TaxService) =>
+    setSvc((m) => {
+      if (m[s.id]) {
+        const next = { ...m };
+        delete next[s.id];
+        return next;
+      }
+      return { ...m, [s.id]: { price: String(s.price), dur: String(s.durationMin) } };
+    });
+  const editSvc = (id: string, field: keyof SvcRow, val: string) =>
+    setSvc((m) => (m[id] ? { ...m, [id]: { ...m[id]!, [field]: val.replace(/[^0-9]/g, '') } } : m));
 
-  const validServices = services.filter(
-    (s) => s.name.trim() && Number(s.price) > 0 && Number(s.dur) > 0,
-  );
+  const validServices = Object.values(svc).filter((r) => Number(r.price) > 0 && Number(r.dur) > 0);
   const valid =
     name.trim().length > 1 &&
     phone.trim().length >= 7 &&
@@ -120,6 +127,8 @@ export default function ExpertRegisterScreen() {
     }
     setBusy(true);
     try {
+      // §4.4 — kalıcı engel 2. katmanı için cihaz parmak izi (best-effort)
+      const deviceFp = await getDeviceFingerprint();
       const res = await api.registerSpecialist({
         name: name.trim(),
         phone: phone.trim(),
@@ -128,6 +137,7 @@ export default function ExpertRegisterScreen() {
         kind: bound ? 'salon_bound' : 'independent',
         ...(bound && salonId ? { businessId: salonId, code: code.trim() } : {}),
         certificates: certs,
+        ...(deviceFp ? { deviceFp } : {}),
       });
       setAuth({
         token: res.token,
@@ -156,8 +166,27 @@ export default function ExpertRegisterScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('expert.reg.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profil fotoğrafı */}
-        <Section text={t('expert.reg.personal')} />
+        {/* Profil fotoğrafı — örnek çekimler + otomatik cut-out anlatımı */}
+        <Section text={t('expert.reg.photo')} />
+        <Text variant="caption" tone="muted" style={styles.photoLead}>
+          {t('expert.reg.photo_lead')}
+        </Text>
+        <View style={styles.exampleRow}>
+          {EXAMPLES.map((src, i) => (
+            <View key={i} style={styles.exampleCard}>
+              <Image source={src} style={styles.exampleImg} resizeMode="cover" />
+              <View style={styles.exampleTick}>
+                <Ionicons name="checkmark" size={11} color={colors.onAccent} />
+              </View>
+            </View>
+          ))}
+        </View>
+        <View style={styles.autoRow}>
+          <Ionicons name="sparkles" size={14} color={colors.accentFg} />
+          <Text variant="caption" tone="accentFg" style={styles.autoText}>
+            {t('expert.reg.photo_auto')}
+          </Text>
+        </View>
         <Pressable style={styles.photoBox} onPress={pickPhoto}>
           {photo ? (
             <>
@@ -204,58 +233,69 @@ export default function ExpertRegisterScreen() {
         <Label text={t('auth.f.address')} />
         <Input value={address} onChange={setAddress} placeholder={t('auth.f.address_ph')} />
 
-        {/* Hizmetler — fiyat + süre zorunlu */}
+        {/* Hizmetler — MERKEZİ taksonomiden: alan seç → alt hizmetleri aç + fiyat/süre gir */}
         <Section text={t('expert.reg.prof')} />
+        <Label text={t('expert.reg.service_area')} />
+        <View style={styles.chips}>
+          {SERVICE_CATS.map((c) => {
+            const on = c.id === svcCat;
+            return (
+              <Pressable
+                key={c.id}
+                onPress={() => setSvcCat(c.id)}
+                style={[styles.chip, on && styles.chipActive]}
+              >
+                <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
+                  {t(c.labelKey)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
         <Label text={t('expert.reg.services')} />
         <Text variant="caption" tone="muted" style={styles.hint}>
           {t('expert.reg.services_hint')}
         </Text>
-        {services.map((s, i) => (
-          <View key={i} style={styles.svcCard}>
-            <View style={styles.svcTop}>
-              <TextInput
-                value={s.name}
-                onChangeText={(v) => setSvc(i, 'name', v)}
-                placeholder={t('expert.reg.service_name')}
-                placeholderTextColor={colors.muted}
-                style={styles.svcName}
-              />
-              {services.length > 1 ? (
-                <Pressable onPress={() => setServices((l) => l.filter((_, idx) => idx !== i))} hitSlop={8}>
-                  <Ionicons name="close-circle" size={22} color={colors.muted} />
-                </Pressable>
+        {servicesOf(svcCat).map((s) => {
+          const row = svc[s.id];
+          const on = !!row;
+          return (
+            <View key={s.id} style={styles.svcCard}>
+              <Pressable style={styles.svcTop} onPress={() => toggleSvc(s)}>
+                <View style={[styles.check, on && styles.checkOn]}>
+                  {on ? <Ionicons name="checkmark" size={14} color={colors.onAccent} /> : null}
+                </View>
+                <Text variant="bodyStrong" tone="ink" style={styles.svcNameText} numberOfLines={1}>
+                  {tri(s.label, locale)}
+                </Text>
+              </Pressable>
+              {on ? (
+                <View style={styles.svcRow}>
+                  <View style={styles.svcField}>
+                    <TextInput
+                      value={row.price}
+                      onChangeText={(v) => editSvc(s.id, 'price', v)}
+                      placeholder={t('expert.reg.service_price')}
+                      placeholderTextColor={colors.muted}
+                      keyboardType="number-pad"
+                      style={styles.svcInput}
+                    />
+                  </View>
+                  <View style={styles.svcField}>
+                    <TextInput
+                      value={row.dur}
+                      onChangeText={(v) => editSvc(s.id, 'dur', v)}
+                      placeholder={t('expert.reg.service_dur')}
+                      placeholderTextColor={colors.muted}
+                      keyboardType="number-pad"
+                      style={styles.svcInput}
+                    />
+                  </View>
+                </View>
               ) : null}
             </View>
-            <View style={styles.svcRow}>
-              <View style={styles.svcField}>
-                <TextInput
-                  value={s.price}
-                  onChangeText={(v) => setSvc(i, 'price', v.replace(/[^0-9]/g, ''))}
-                  placeholder={t('expert.reg.service_price')}
-                  placeholderTextColor={colors.muted}
-                  keyboardType="number-pad"
-                  style={styles.svcInput}
-                />
-              </View>
-              <View style={styles.svcField}>
-                <TextInput
-                  value={s.dur}
-                  onChangeText={(v) => setSvc(i, 'dur', v.replace(/[^0-9]/g, ''))}
-                  placeholder={t('expert.reg.service_dur')}
-                  placeholderTextColor={colors.muted}
-                  keyboardType="number-pad"
-                  style={styles.svcInput}
-                />
-              </View>
-            </View>
-          </View>
-        ))}
-        <Pressable style={styles.addBtn} onPress={() => setServices((l) => [...l, { name: '', price: '', dur: '' }])}>
-          <Ionicons name="add" size={18} color={colors.onAccent} />
-          <Text variant="caption" tone="onAccent" style={styles.addText}>
-            {t('expert.reg.add_service')}
-          </Text>
-        </Pressable>
+          );
+        })}
 
         {/* Sertifikalar */}
         <Label text={t('expert.reg.cert')} />
@@ -268,8 +308,8 @@ export default function ExpertRegisterScreen() {
           ))}
         </View>
         <View style={styles.warnRow}>
-          <Ionicons name="shield-checkmark-outline" size={16} color={colors.rose} />
-          <Text variant="caption" tone="rose" style={styles.warnText}>
+          <Ionicons name="shield-checkmark-outline" size={16} color={colors.accentFg} />
+          <Text variant="caption" tone="accentFg" style={styles.warnText}>
             {t('expert.reg.cert_warn')}
           </Text>
         </View>
@@ -476,6 +516,40 @@ const makeStyles = (colors: ColorTokens) =>
       fontSize: 16,
       color: colors.ink,
     },
+    // Örnek çekimler + otomatik cut-out anlatımı
+    photoLead: { marginTop: -space(0.5), marginBottom: space(1.5), lineHeight: 18 },
+    exampleRow: { flexDirection: 'row', gap: space(1), marginBottom: space(1.25) },
+    exampleCard: {
+      flex: 1,
+      aspectRatio: 0.8,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+      overflow: 'hidden',
+      position: 'relative',
+    },
+    exampleImg: { width: '100%', height: '100%' },
+    exampleTick: {
+      position: 'absolute',
+      top: 6,
+      right: 6,
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    autoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: colors.accentSoft,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1),
+      borderRadius: radius.md,
+      marginBottom: space(1.5),
+    },
+    autoText: { flex: 1, fontWeight: '600', lineHeight: 17 },
     photoBox: {
       height: 160,
       borderRadius: radius.lg,
@@ -516,6 +590,17 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1),
     },
     svcTop: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    svcNameText: { flex: 1 },
+    check: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkOn: { backgroundColor: colors.accent, borderColor: colors.accent },
     svcName: { flex: 1, fontWeight: '700', fontSize: 15, color: colors.ink, padding: 0 },
     svcRow: { flexDirection: 'row', gap: space(1) },
     svcField: { flex: 1, backgroundColor: colors.surfaceMuted, borderRadius: radius.md, paddingHorizontal: space(1.5) },

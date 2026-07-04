@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, TextInput as RNTextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
-  ALMATY,
   CATEGORIES,
   categoryLabelKey,
+  cityCenter,
   distanceKm,
   priceLabel,
   type Professional,
@@ -40,7 +40,7 @@ export default function SearchScreen() {
   const router = useRouter();
   const { q } = useLocalSearchParams<{ q?: string }>();
   const [query, setQuery] = useState(typeof q === 'string' ? q : '');
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<RNTextInput>(null);
   // Navigasyon animasyonu bitince klavyeyi güvenilir şekilde aç (autoFocus tek başına yetmiyor)
   useEffect(() => {
     const id = setTimeout(() => inputRef.current?.focus(), 350);
@@ -70,11 +70,10 @@ export default function SearchScreen() {
     if (sort === 'rating') sorted.sort((a, b) => b.rating - a.rating);
     else if (sort === 'price') sorted.sort((a, b) => a.priceFrom - b.priceFrom);
     else if (sort === 'popular') sorted.sort((a, b) => b.reviewCount - a.reviewCount);
-    else if (sort === 'distance')
-      sorted.sort(
-        (a, b) =>
-          distanceKm(ALMATY, proCoords(a.id)) - distanceKm(ALMATY, proCoords(b.id)),
-      );
+    else if (sort === 'distance') {
+      const c = cityCenter(city);
+      sorted.sort((a, b) => distanceKm(c, proCoords(a.id)) - distanceKm(c, proCoords(b.id)));
+    }
     return sorted;
   }, [professionals, query, activeCat, sort, city, t]);
 
@@ -86,7 +85,7 @@ export default function SearchScreen() {
       <View style={styles.searchRow}>
         <View style={[styles.searchBar, shadow.soft]}>
           <Ionicons name="search" size={19} color={colors.muted} />
-          <TextInput
+          <RNTextInput
             ref={inputRef}
             style={styles.input}
             placeholder={t('search.placeholder')}
@@ -182,7 +181,7 @@ export default function SearchScreen() {
           <View style={styles.emptyBox}>
             {recentSearches.length > 0 ? (
               <>
-                <Text variant="label" tone="rose" style={styles.blockLabel}>
+                <Text variant="label" tone="accentFg" style={styles.blockLabel}>
                   {t('search.recent')}
                 </Text>
                 <View style={styles.wrapChips}>
@@ -197,13 +196,13 @@ export default function SearchScreen() {
                 </View>
               </>
             ) : null}
-            <Text variant="label" tone="rose" style={styles.blockLabel}>
+            <Text variant="label" tone="accentFg" style={styles.blockLabel}>
               {t('search.popular')}
             </Text>
             <View style={styles.wrapChips}>
               {CATEGORIES.map((cat) => (
                 <Pressable key={cat.id} style={styles.popChip} onPress={() => setActiveCat(cat.id)}>
-                  <Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={14} color={colors.rose} />
+                  <Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={14} color={colors.accentFg} />
                   <Text variant="caption" tone="ink">
                     {t(cat.labelKey)}
                   </Text>
@@ -264,6 +263,9 @@ export function ProRow({
 }) {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  // Kullanıcının şehir merkezinden gerçek mesafe (harita/SalonRow ile tutarlı)
+  const city = useStore((s) => s.currentUser?.city);
+  const km = distanceKm(cityCenter(city), proCoords(pro.id)).toFixed(1);
   return (
     <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 50)}>
       <PressableScale style={[styles.row, shadow.soft]} onPress={onPress}>
@@ -278,9 +280,12 @@ export function ProRow({
               {pro.rating.toFixed(1)}
             </Text>
           </View>
-          <Text variant="caption" tone="muted" numberOfLines={1} style={styles.rowMeta}>
-            {pro.specialty}
-          </Text>
+          <View style={styles.rowMetaRow}>
+            <Ionicons name="location-outline" size={12} color={colors.muted} />
+            <Text variant="caption" tone="muted" numberOfLines={1} style={styles.rowMeta}>
+              {km} km • {pro.specialty}
+            </Text>
+          </View>
         </View>
         {right ?? (
           <View style={styles.rowRight}>
@@ -363,7 +368,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1.5),
       paddingVertical: space(1),
       borderRadius: radius.pill,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
     },
     list: { gap: space(1.5) },
     row: {
@@ -379,7 +384,8 @@ const makeStyles = (colors: ColorTokens) =>
     rowName: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
     rowRating: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     rowRatingText: { fontWeight: '800' },
-    rowMeta: {},
+    rowMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    rowMeta: { flex: 1 },
     rowRight: { alignItems: 'flex-end', justifyContent: 'center', paddingRight: space(0.5) },
     pricePill: {
       backgroundColor: colors.accent,

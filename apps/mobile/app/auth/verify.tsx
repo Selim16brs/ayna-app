@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { api } from '../../src/api';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
 export default function VerifyScreen() {
   const router = useRouter();
@@ -126,7 +126,7 @@ export default function VerifyScreen() {
                 onPress={confirm}
               />
             </View>
-            <Text variant="caption" tone="rose" style={styles.resend} onPress={requestCode}>
+            <Text variant="caption" tone="accentFg" style={styles.resend} onPress={requestCode}>
               {t('verify.resend')}
             </Text>
           </>

@@ -67,8 +67,8 @@ function Row({ event }: { event: UpcomingEvent }) {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const isAppointment = event.kind === 'appointment';
-  const tileBg = event.tone === 'rose' ? colors.roseSoft : colors.goldSoft;
-  const tileInk = event.tone === 'rose' ? colors.rose : colors.gold;
+  const tileBg = event.tone === 'rose' ? colors.accentSoft : colors.goldSoft;
+  const tileInk = event.tone === 'rose' ? colors.accentFg : colors.gold;
 
   const inner = (
     <>

@@ -16,7 +16,7 @@ const makeType = (
 ): Record<CirclePostType, { key: MessageKey; bg: string; fg: string }> => ({
   recommend: { key: 'circle.type.recommend', bg: colors.successSoft, fg: colors.success },
   asking: { key: 'circle.type.asking', bg: colors.goldSoft, fg: colors.gold },
-  experience: { key: 'circle.type.experience', bg: colors.roseSoft, fg: colors.rose },
+  experience: { key: 'circle.type.experience', bg: colors.blueSoft, fg: colors.blue },
 });
 
 // §5.5 (MD satır 238) — SABİT W2W kategori şeridi (post'lardan türetilmez).
@@ -104,7 +104,7 @@ export default function CircleScreen() {
                   style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.lifeTag}>
-                  <Text variant="caption" tone="onColor" style={styles.lifeTagText}>
+                  <Text variant="caption" tone="onAccent" style={styles.lifeTagText}>
                     {a.tag}
                   </Text>
                 </View>
@@ -127,10 +127,10 @@ export default function CircleScreen() {
             {t('circle.recommendations')}
           </Text>
           <View style={styles.sortLabel}>
-            <Text variant="caption" tone="rose" style={styles.sortText}>
+            <Text variant="caption" tone="accentFg" style={styles.sortText}>
               {t('circle.sort_by_rating')}
             </Text>
-            <Ionicons name="swap-vertical" size={14} color={colors.rose} />
+            <Ionicons name="swap-vertical" size={14} color={colors.accentFg} />
           </View>
         </View>
 
@@ -149,7 +149,7 @@ export default function CircleScreen() {
                 onPress={() => setCat(f.id)}
                 style={[styles.chip, on && styles.chipOn]}
               >
-                <Text variant="caption" tone={on ? 'onColor' : 'inkSoft'}>
+                <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
                   {t(f.labelKey)}
                 </Text>
               </Pressable>
@@ -173,6 +173,8 @@ function PostCard({ post }: { post: CirclePost }) {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const toggleHelpful = useStore((s) => s.toggleHelpful);
+  const toggleFollow = useStore((s) => s.toggleFollow);
+  const isFollowing = useStore((s) => s.following.includes(post.author));
   const ty = makeType(colors)[post.type];
   return (
     <Pressable style={[styles.card, shadow.card]} onPress={() => router.push('/circle/' + post.id)}>
@@ -180,15 +182,15 @@ function PostCard({ post }: { post: CirclePost }) {
         <View style={styles.author}>
           <View style={styles.avatar}>
             {post.anonymous ? (
-              <Ionicons name="shield-checkmark" size={15} color={colors.rose} />
+              <Ionicons name="shield-checkmark" size={15} color={colors.accentFg} />
             ) : (
-              <Text variant="caption" tone="rose">
+              <Text variant="caption" tone="accentFg">
                 {post.author.charAt(0)}
               </Text>
             )}
           </View>
-          <View>
-            <Text variant="caption" tone="ink">
+          <View style={styles.flex}>
+            <Text variant="caption" tone="ink" numberOfLines={1}>
               {post.anonymous ? t('circle.verified') : post.author}
             </Text>
             <Text variant="caption" tone="muted">
@@ -196,12 +198,33 @@ function PostCard({ post }: { post: CirclePost }) {
             </Text>
           </View>
         </View>
-        {/* Değerlendirme notu — kart üstünde belirgin (sıralama bu değere göre) */}
-        <View style={styles.scorePill}>
-          <Ionicons name="heart" size={12} color={colors.rose} />
-          <Text variant="caption" tone="rose" style={styles.scoreText}>
-            {post.helpful}
-          </Text>
+        <View style={styles.topRight}>
+          {/* §W2W — beğendiğin kişiyi takip et (anonim yazar takip edilemez) */}
+          {!post.anonymous ? (
+            <Pressable
+              style={[styles.followBtn, isFollowing && styles.followBtnOn]}
+              onPress={() => toggleFollow(post.author)}
+              hitSlop={6}
+            >
+              {isFollowing ? (
+                <Ionicons name="checkmark" size={13} color={colors.onAccent} />
+              ) : (
+                <Ionicons name="add" size={14} color={colors.accentFg} />
+              )}
+              {!isFollowing ? (
+                <Text variant="caption" tone="accentFg" style={styles.followText}>
+                  {t('circle.follow')}
+                </Text>
+              ) : null}
+            </Pressable>
+          ) : null}
+          {/* Değerlendirme notu — sıralama bu değere göre */}
+          <View style={styles.scorePill}>
+            <Ionicons name="heart" size={12} color={colors.accentFg} />
+            <Text variant="caption" tone="accentFg" style={styles.scoreText}>
+              {post.helpful}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -221,7 +244,7 @@ function PostCard({ post }: { post: CirclePost }) {
             size={15}
             color={post.helpfulByMe ? colors.accent : colors.muted}
           />
-          <Text variant="caption" tone={post.helpfulByMe ? 'rose' : 'muted'}>
+          <Text variant="caption" tone={post.helpfulByMe ? 'accentFg' : 'muted'}>
             {t('circle.helpful')}
           </Text>
         </Pressable>
@@ -252,7 +275,7 @@ const makeStyles = (colors: ColorTokens) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-      backgroundColor: colors.rose,
+      backgroundColor: colors.surface,
       paddingHorizontal: space(1.5),
       paddingVertical: space(1),
       borderRadius: radius.pill,
@@ -316,7 +339,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderWidth: 1,
       borderColor: colors.line,
     },
-    chipOn: { backgroundColor: colors.rose, borderColor: colors.rose },
+    chipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
     list: { paddingHorizontal: space(3), paddingTop: space(1.5), gap: space(1.5) },
     card: {
       backgroundColor: colors.surface,
@@ -325,13 +348,27 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
       padding: space(2),
     },
-    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    author: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space(1) },
+    author: { flexDirection: 'row', alignItems: 'center', gap: space(1), flexShrink: 1 },
+    flex: { flex: 1, minWidth: 0 },
+    topRight: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    followBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      paddingHorizontal: space(1.25),
+      paddingVertical: 5,
+      borderRadius: radius.pill,
+      borderWidth: 1.25,
+      borderColor: colors.accent,
+    },
+    followBtnOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+    followText: { fontWeight: '700' },
     avatar: {
       width: 34,
       height: 34,
       borderRadius: 17,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -339,7 +376,7 @@ const makeStyles = (colors: ColorTokens) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       paddingHorizontal: space(1),
       paddingVertical: 4,
       borderRadius: radius.pill,

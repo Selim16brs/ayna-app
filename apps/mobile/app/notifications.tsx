@@ -3,7 +3,8 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { type AppNotification, NOTIFICATION_ROUTE, type NotificationType } from '../src/data';
 import { fillParams, useLocale } from '../src/locale';
-import { useStore } from '../src/store';
+import { useMemo } from 'react';
+import { inAudience, selectSellerView, useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Screen, StackHeader, Text } from '../src/ui';
@@ -11,7 +12,7 @@ import { Screen, StackHeader, Text } from '../src/ui';
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 const TONE: Record<NotificationType, 'rose' | 'gold' | 'sage' | 'blue' | 'lavender'> = {
-  booking: 'rose',
+  booking: 'sage',
   quote: 'gold',
   loyalty: 'gold',
   circle: 'blue',
@@ -23,7 +24,10 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const items = useStore((s) => s.notifications);
+  const allItems = useStore((s) => s.notifications);
+  const seller = useStore(selectSellerView);
+  // §9.1/§10 — aktif moda göre filtrelenir (useMemo: yeni-ref sonsuz döngü tuzağından kaçınır)
+  const items = useMemo(() => allItems.filter((n) => inAudience(n, seller)), [allItems, seller]);
   const markAll = useStore((s) => s.markAllNotificationsRead);
   const markRead = useStore((s) => s.markNotificationRead);
 

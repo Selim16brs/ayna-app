@@ -115,7 +115,7 @@ export default function PrivacyScreen() {
             <View style={[styles.icon, { backgroundColor: colors.dangerSoft }]}>
               <Ionicons name="trash-outline" size={18} color={colors.danger} />
             </View>
-            <Text variant="bodyStrong" tone="rose" style={styles.actionLabel}>
+            <Text variant="bodyStrong" tone="accentFg" style={styles.actionLabel}>
               {t('privacy.delete')}
             </Text>
           </Pressable>

@@ -26,7 +26,7 @@ export default function AuthRoleScreen() {
 
         <View style={styles.cards}>
           <RoleCard
-            grad={gradients.rose}
+            grad={gradients.gold}
             icon="person"
             title={t('auth.role.customer')}
             sub={t('auth.role.customer_sub')}

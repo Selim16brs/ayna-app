@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/api';
 import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS, formatPrice } from '../../src/data';
@@ -11,12 +11,12 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Screen, ServiceChips, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 const makeCatColors = (colors: ColorTokens) => [
-  { bg: colors.roseSoft, fg: colors.rose },
+  { bg: colors.accentSoft, fg: colors.accentFg },
   { bg: colors.sageSoft, fg: colors.sage },
   { bg: colors.lavenderSoft, fg: colors.lavender },
   { bg: colors.goldSoft, fg: colors.gold },
@@ -31,18 +31,27 @@ export default function NewDemandScreen() {
   const insets = useSafeAreaInsets();
   const CAT_COLORS = makeCatColors(colors);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
+  const addresses = useStore((s) => s.addresses);
   const createDemand = useStore((s) => s.createDemand);
   // §12.3 — kısıtlı hesap yeni talep açamaz
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
-  // §12.6 — blog "Teklif al" CTA'sından gelen kategori ön-seçimi
-  const { category: catParam } = useLocalSearchParams<{ category?: string }>();
+  // §12.6 — CTA'dan gelen kategori + alt hizmet ön-seçimi
+  const { category: catParam, service: svcParam } = useLocalSearchParams<{
+    category?: string;
+    service?: string;
+  }>();
   const initialCat = CATEGORIES.some((c) => c.id === catParam) ? catParam! : CATEGORIES[0]!.id;
   const [desc, setDesc] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [category, setCategory] = useState<string>(initialCat);
+  const [serviceId, setServiceId] = useState<string | null>(
+    typeof svcParam === 'string' ? svcParam : null,
+  );
   const [budget, setBudget] = useState('');
   const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
   const [market, setMarket] = useState<{ average: number; floor: number } | null>(null);
+  // §privacy — yakın salon sıralaması için adres seçimi (varsayılan: ilk kayıtlı adres)
+  const [addressId, setAddressId] = useState<string | undefined>(() => addresses[0]?.id);
 
   async function addPhoto() {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -81,6 +90,8 @@ export default function NewDemandScreen() {
       note: desc.trim(),
       budget: budgetNum,
       collectMin,
+      ...(serviceId ? { serviceId } : {}),
+      ...(addressId ? { addressId } : {}),
       ...(photos[0] ? { photoUrl: photos[0] } : {}),
     });
     router.replace(`/quote/results?id=${id}`);
@@ -129,7 +140,14 @@ export default function NewDemandScreen() {
               const c = CAT_COLORS[i % CAT_COLORS.length]!;
               const active = cat.id === category;
               return (
-                <Pressable key={cat.id} style={styles.cat} onPress={() => setCategory(cat.id)}>
+                <Pressable
+                  key={cat.id}
+                  style={styles.cat}
+                  onPress={() => {
+                    setCategory(cat.id);
+                    setServiceId(null);
+                  }}
+                >
                   <View
                     style={[
                       styles.catTile,
@@ -151,9 +169,78 @@ export default function NewDemandScreen() {
             })}
           </ScrollView>
 
-          {/* Konum / Tarih satırları */}
-          <SelectRow icon="location-outline" label={t('demand.new.location')} value={city} />
-          <SelectRow icon="calendar-outline" label={t('demand.new.date')} value={t('demand.new.date_ph')} muted />
+          {/* Alt hizmet (opsiyonel) — talebi spesifikleştir (MERKEZİ taksonomi) */}
+          <Text variant="bodyStrong" tone="ink" style={styles.label}>
+            {t('demand.new.service')}
+          </Text>
+          <ServiceChips categoryId={category} value={serviceId} onChange={setServiceId} />
+
+          {/* Konum — yakın salon sıralaması için adres seçimi. Adres uzmana ASLA gösterilmez;
+              talepte tarih YOK (uygun saati uzmanlar teklifleriyle önerir §5.2). */}
+          <Text variant="bodyStrong" tone="ink" style={styles.label}>
+            {t('demand.new.address')}
+          </Text>
+          {addresses.length > 0 ? (
+            <View style={styles.addrList}>
+              {addresses.map((a) => {
+                const active = a.id === addressId;
+                return (
+                  <Pressable
+                    key={a.id}
+                    onPress={() => setAddressId(a.id)}
+                    style={[styles.addrRow, shadow.soft, active && styles.addrRowActive]}
+                  >
+                    <View style={[styles.rowIcon, styles.addrIcon, active && styles.addrIconActive]}>
+                      <Ionicons
+                        name={a.label === 'home' ? 'home' : 'briefcase'}
+                        size={17}
+                        color={active ? colors.onAccent : colors.inkSoft}
+                      />
+                    </View>
+                    <View style={styles.addrText}>
+                      <Text variant="bodyStrong" tone="ink">
+                        {t(a.label === 'home' ? 'auth.address.home' : 'auth.address.work')}
+                      </Text>
+                      <Text variant="caption" tone="muted" numberOfLines={1}>
+                        {a.detail}
+                      </Text>
+                    </View>
+                    <View style={[styles.radio, active && styles.radioOn]}>
+                      {active ? <Ionicons name="checkmark" size={14} color={colors.onAccent} /> : null}
+                    </View>
+                  </Pressable>
+                );
+              })}
+              <Pressable style={styles.addrAdd} onPress={() => router.push('/profile/addresses')}>
+                <Ionicons name="add" size={16} color={colors.accentFg} />
+                <Text variant="caption" tone="accentFg" style={styles.addrAddText}>
+                  {t('addresses.add')}
+                </Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable
+              style={[styles.selectRow, shadow.soft]}
+              onPress={() => router.push('/profile/addresses')}
+            >
+              <View style={styles.rowIcon}>
+                <Ionicons name="location-outline" size={20} color={colors.inkSoft} />
+              </View>
+              <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
+                {city}
+              </Text>
+              <Text variant="caption" tone="accentFg">
+                {t('addresses.add')}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.muted} style={styles.rowChevron} />
+            </Pressable>
+          )}
+          <View style={styles.privacyRow}>
+            <Ionicons name="lock-closed" size={13} color={colors.muted} />
+            <Text variant="caption" tone="muted" style={styles.flexText}>
+              {t('demand.new.address_privacy')}
+            </Text>
+          </View>
 
           {/* Bütçe (gerçek input) */}
           <View style={[styles.budgetRow, shadow.soft]}>
@@ -270,35 +357,6 @@ export default function NewDemandScreen() {
   );
 }
 
-function SelectRow({
-  icon,
-  label,
-  value,
-  muted,
-}: {
-  icon: IoniconName;
-  label: string;
-  value: string;
-  muted?: boolean;
-}) {
-  const { colors, shadow } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={[styles.selectRow, shadow.soft]}>
-      <View style={styles.rowIcon}>
-        <Ionicons name={icon} size={20} color={colors.inkSoft} />
-      </View>
-      <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
-        {label}
-      </Text>
-      <Text variant="caption" tone={muted ? 'muted' : 'inkSoft'}>
-        {value}
-      </Text>
-      <Ionicons name="chevron-forward" size={16} color={colors.muted} style={styles.rowChevron} />
-    </View>
-  );
-}
-
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: space(3) },
@@ -370,6 +428,50 @@ const makeStyles = (colors: ColorTokens) =>
     rowIcon: { width: 24, alignItems: 'center' },
     rowLabel: { flex: 1 },
     rowChevron: { marginLeft: space(0.5) },
+
+    // Adres seçici (yakın salon sıralaması için)
+    addrList: { gap: space(1.25) },
+    addrRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.5),
+      borderWidth: 1.5,
+      borderColor: 'transparent',
+    },
+    addrRowActive: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
+    addrIcon: {
+      width: 38,
+      height: 38,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    addrIconActive: { backgroundColor: colors.accent },
+    addrText: { flex: 1, gap: 1 },
+    radio: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: colors.line,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+    addrAdd: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 5,
+      paddingVertical: space(1),
+    },
+    addrAddText: { fontWeight: '700' },
+    flexText: { flex: 1 },
 
     budgetRow: {
       flexDirection: 'row',

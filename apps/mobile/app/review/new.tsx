@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { PROFESSIONALS } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
 
 const STARS = [1, 2, 3, 4, 5];
 // §7.1 — alt kırılım etiketleri (hızlı, isteğe bağlı)
@@ -31,9 +31,10 @@ export default function ReviewNewScreen() {
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
   const reviewBooking = useStore((s) => s.reviewBooking);
 
-  // §7.1 — salon randevusu ise iki adım (önce uzman, sonra salon); bireyselse tek adım
+  // §7.1 — salon randevusu ise iki adım (önce uzman, sonra salon); bireyselse tek adım.
+  // Uzman adımı ancak uzman adı biliniyorsa açılır; yoksa salon adı "Uzman" gibi görünmesin.
   const pro = PROFESSIONALS.find((p) => p.id === booking?.proId);
-  const isSalon = pro?.kind === 'salon';
+  const isSalon = pro?.kind === 'salon' && !!booking?.uzmanName;
 
   const [step, setStep] = useState<'uzman' | 'salon'>('uzman');
   const [uzman, setUzman] = useState<Rate>(emptyRate);

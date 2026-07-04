@@ -243,8 +243,8 @@ function RuleRow({ icon, text, last }: { icon: IoniconName; text: string; last?:
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.row, !last && styles.rowBorder]}>
-      <View style={[styles.icon, { backgroundColor: colors.roseSoft }]}>
-        <Ionicons name={icon} size={18} color={colors.rose} />
+      <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+        <Ionicons name={icon} size={18} color={colors.accentFg} />
       </View>
       <Text variant="caption" tone="ink" style={styles.ruleText}>
         {text}

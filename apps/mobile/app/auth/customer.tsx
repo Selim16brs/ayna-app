@@ -2,16 +2,15 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, CitySelect, Screen, Segmented, StackHeader, Text } from '../../src/ui';
+import { Button, CitySelect, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
-type Gender = 'female' | 'other';
 type AddrLabel = 'home' | 'work';
 type Address = { label: AddrLabel; detail: string };
 
@@ -25,7 +24,6 @@ export default function CustomerRegisterScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [birth, setBirth] = useState('');
-  const [gender, setGender] = useState<Gender>('female');
   const [photo, setPhoto] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -67,7 +65,7 @@ export default function CustomerRegisterScreen() {
         name: `${firstName.trim()} ${lastName.trim()}`.trim(),
         phone: phone.trim(),
         password,
-        gender: gender === 'female' ? 'female' : 'unspecified',
+        gender: 'unspecified',
         ...(email.trim() ? { email: email.trim() } : {}),
         ...(city ? { city } : {}),
       });
@@ -120,15 +118,6 @@ export default function CustomerRegisterScreen() {
         </View>
         <Label text={t('auth.f.birthdate')} />
         <Input value={birth} onChange={setBirth} placeholderKey="auth.f.birthdate_ph" />
-        <Label text={t('auth.f.gender')} />
-        <Segmented
-          options={[
-            { value: 'female', label: t('auth.gender.female') },
-            { value: 'other', label: t('auth.gender.other') },
-          ]}
-          value={gender}
-          onChange={setGender}
-        />
 
         {/* Adres & konum */}
         <Section text={t('auth.section.address')} />
@@ -139,9 +128,9 @@ export default function CustomerRegisterScreen() {
           <Ionicons
             name={gps ? 'navigate' : 'navigate-outline'}
             size={20}
-            color={gps ? colors.onAccent : colors.rose}
+            color={gps ? colors.onAccent : colors.accentFg}
           />
-          <Text variant="bodyStrong" tone={gps ? 'onAccent' : 'rose'} style={styles.gpsText}>
+          <Text variant="bodyStrong" tone={gps ? 'onAccent' : 'accentFg'} style={styles.gpsText}>
             {gps ? t('auth.location.detected') : t('auth.location.use_gps')}
           </Text>
           {gps ? <Ionicons name="checkmark-circle" size={20} color={colors.onAccent} /> : null}

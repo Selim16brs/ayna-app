@@ -24,8 +24,8 @@ export default function BusinessEntryScreen() {
           style={[styles.card, shadow.soft]}
           onPress={() => router.push('/auth/business/new')}
         >
-          <View style={[styles.icon, { backgroundColor: colors.roseSoft }]}>
-            <Ionicons name="storefront-outline" size={24} color={colors.rose} />
+          <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+            <Ionicons name="storefront-outline" size={24} color={colors.accentFg} />
           </View>
           <View style={styles.cardText}>
             <Text variant="h2" tone="ink">

@@ -1,61 +1,152 @@
 import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
+import { hasConflict } from '@ayna/domain';
 import { CATEGORIES, type DemandRequest, formatPrice } from '../../src/data';
-import { almatySlotMs } from '../../src/datetime';
+import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
 const catLabel = (id: string): MessageKey =>
   (CATEGORIES.find((c) => c.id === id)?.labelKey ?? 'nav.discover') as MessageKey;
+
+// §9.3 — yaklaşık mesafe (deterministik, talep id'sinden 1–9 km). Gerçek adres kullanılmaz (privacy).
+const estKm = (id: string): number => {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return 1 + (Math.abs(h) % 9);
+};
 
 export default function SellerRequestsScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const demands = useStore((s) => s.demands);
+  const bookings = useStore((s) => s.bookings);
   const submitOffer = useStore((s) => s.submitOffer);
+  // §9.3 — yalnızca uzmanın ŞEHRİNDEKİ açık talepler.
+  const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
+  // §11 — açık taleplere YANIT VERMEK premium'a özel; premium olmayan görür ama teklif veremez.
+  const premium = useStore((s) => s.premium);
+  // §4.4 — kısıtlı mod: ceza doğunca uzman yeni talep göremez/teklif veremez.
+  const restricted = useStore((s) => s.currentUser?.restricted ?? false);
+  const router = useRouter();
+  const upsell = () =>
+    Alert.alert(t('requests.premium_title'), t('requests.premium_body'), [
+      { text: t('promo.later'), style: 'cancel' },
+      { text: t('promo.upsell_cta'), onPress: () => router.push('/seller/premium') },
+    ]);
 
   const open = useMemo(
-    () => demands.filter((d) => d.status === 'collecting').sort((a, b) => a.expiresAt - b.expiresAt),
-    [demands],
+    () =>
+      demands
+        .filter((d) => d.status === 'collecting' && d.city === city)
+        .sort((a, b) => a.expiresAt - b.expiresAt),
+    [demands, city],
   );
 
   const [form, setForm] = useState<{ id: string } | null>(null);
   const [price, setPrice] = useState('');
   const [eta, setEta] = useState('60');
   const [note, setNote] = useState('');
+  // §4.1.2 — uzman KENDİ boş saatlerinden 2-3 slot seçer (elle saat yazmaz)
+  const [picked, setPicked] = useState<number[]>([]);
+
+  // Aday slotlar: önümüzdeki 3 gün × birkaç saat; mevcut randevularla çakışanlar elenir (süre = eta)
+  const candidates = useMemo(() => {
+    if (!form) return [];
+    const now = Date.now();
+    const dur = (Number(eta) || 60) * 60_000;
+    const busy = bookings
+      .filter((b) => b.status !== 'cancelled' && b.status !== 'no_show')
+      .map((b) => ({ startMs: b.startMs, endMs: b.startMs + b.durationMin * 60_000 }));
+    const grid: number[] = [];
+    for (let d = 1; d <= 3; d++) for (const h of [11, 15, 18]) grid.push(almatySlotMs(now, d, h, 0));
+    return grid
+      .filter((ms) => ms > now && !hasConflict({ startMs: ms, endMs: ms + dur }, busy))
+      .slice(0, 6);
+  }, [form, eta, bookings]);
+
+  const toggleSlot = (ms: number) =>
+    setPicked((p) => (p.includes(ms) ? p.filter((x) => x !== ms) : p.length >= 3 ? p : [...p, ms]));
 
   function openForm(id: string) {
     setPrice('');
     setEta('60');
     setNote('');
+    setPicked([]);
     setForm({ id });
   }
 
   function send() {
     if (!form) return;
-    const now = Date.now();
-    const slots = [almatySlotMs(now, 1, 11, 0), almatySlotMs(now, 1, 15, 0), almatySlotMs(now, 2, 13, 0)];
+    if (!premium) {
+      setForm(null);
+      upsell();
+      return;
+    }
     submitOffer(form.id, {
       price: Number(price) || 0,
       etaMin: Number(eta) || 60,
       ...(note.trim() ? { note: note.trim() } : {}),
-      slots,
+      slots: [...picked].sort((a, b) => a - b),
     });
     setForm(null);
   }
 
-  const canSend = Number(price) > 0 && Number(eta) > 0;
+  const canSend = Number(price) > 0 && Number(eta) > 0 && picked.length > 0;
 
   return (
     <Screen edges={[]}>
       <StackHeader title={t('seller.requests.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* §4.4 — kısıtlı mod: talep listesi gizlenir, yükümlülük çözümü yönlendirilir */}
+        {restricted ? (
+          <View style={styles.restrictBox}>
+            <View style={styles.restrictHead}>
+              <Ionicons name="alert-circle" size={20} color={colors.danger} />
+              <Text variant="bodyStrong" tone="ink" style={styles.flex}>
+                {t('restricted.title')}
+              </Text>
+            </View>
+            <Text variant="caption" tone="inkSoft" style={styles.restrictBody}>
+              {t('restricted.locked_offer')}
+            </Text>
+            <Button
+              label={t('restricted.cta')}
+              variant="primary"
+              onPress={() => router.push('/seller/commissions')}
+            />
+          </View>
+        ) : (
+          <>
+        {/* §11 — premium değilse: görebilir ama yanıt veremez (upsell) */}
+        {!premium ? (
+          <Pressable style={styles.premiumBanner} onPress={upsell}>
+            <View style={styles.premiumIcon}>
+              <Ionicons name="lock-closed" size={16} color={colors.accentFg} />
+            </View>
+            <View style={styles.flex}>
+              <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                {t('requests.premium_title')}
+              </Text>
+              <Text variant="caption" tone="muted" numberOfLines={2}>
+                {t('requests.premium_banner')}
+              </Text>
+            </View>
+            <View style={styles.premiumCta}>
+              <Text variant="caption" tone="accentFg" style={styles.premiumCtaText}>
+                {t('promo.upsell_cta')}
+              </Text>
+            </View>
+          </Pressable>
+        ) : null}
+
         {open.length === 0 ? (
           <View style={styles.empty}>
             <Ionicons name="pricetags-outline" size={30} color={colors.muted} />
@@ -64,7 +155,16 @@ export default function SellerRequestsScreen() {
             </Text>
           </View>
         ) : (
-          open.map((d) => <RequestCard key={d.id} demand={d} onGive={() => openForm(d.id)} />)
+          open.map((d) => (
+            <RequestCard
+              key={d.id}
+              demand={d}
+              locked={!premium}
+              onGive={() => (premium ? openForm(d.id) : upsell())}
+            />
+          ))
+        )}
+          </>
         )}
       </ScrollView>
 
@@ -112,12 +212,38 @@ export default function SellerRequestsScreen() {
               placeholderTextColor={colors.muted}
               style={styles.input}
             />
+            <Text variant="caption" tone="inkSoft" style={styles.label}>
+              {t('offer.form.slots')}
+            </Text>
             <View style={styles.slotHint}>
               <Ionicons name="time-outline" size={14} color={colors.muted} />
-              <Text variant="caption" tone="muted">
+              <Text variant="caption" tone="muted" style={styles.flex}>
                 {t('offer.form.slots_note')}
               </Text>
             </View>
+            {candidates.length === 0 ? (
+              <Text variant="caption" tone="muted" style={styles.noSlots}>
+                {t('offer.form.no_slots')}
+              </Text>
+            ) : (
+              <View style={styles.slotGrid}>
+                {candidates.map((ms) => {
+                  const on = picked.includes(ms);
+                  return (
+                    <Pressable
+                      key={ms}
+                      style={[styles.slotChip, on && styles.slotChipOn]}
+                      onPress={() => toggleSlot(ms)}
+                    >
+                      {on ? <Ionicons name="checkmark" size={13} color={colors.onAccent} /> : null}
+                      <Text variant="caption" tone={on ? 'onAccent' : 'ink'} style={styles.slotChipText}>
+                        {formatSlotTr(ms)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
             <Button
               label={t('offer.form.send')}
               variant={canSend ? 'primary' : 'secondary'}
@@ -131,7 +257,15 @@ export default function SellerRequestsScreen() {
   );
 }
 
-function RequestCard({ demand, onGive }: { demand: DemandRequest; onGive: () => void }) {
+function RequestCard({
+  demand,
+  onGive,
+  locked,
+}: {
+  demand: DemandRequest;
+  onGive: () => void;
+  locked?: boolean;
+}) {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -145,7 +279,7 @@ function RequestCard({ demand, onGive }: { demand: DemandRequest; onGive: () => 
           <Ionicons
             name={demand.mode === 'photo' ? 'image-outline' : 'chatbubble-ellipses-outline'}
             size={20}
-            color={colors.rose}
+            color={colors.accentFg}
           />
         </View>
         <Text variant="bodyStrong" tone="ink" style={styles.flex}>
@@ -166,11 +300,27 @@ function RequestCard({ demand, onGive }: { demand: DemandRequest; onGive: () => 
       ) : null}
 
       <View style={styles.metaRow}>
+        {/* §9.3 — mesafe/şehir (privacy: kullanıcı adresi ASLA gösterilmez, yalnızca yaklaşık) */}
+        <View style={styles.metaChip}>
+          <Ionicons name="location-outline" size={12} color={colors.inkSoft} />
+          <Text variant="caption" tone="inkSoft">
+            {demand.city} · ~{estKm(demand.id)} km
+          </Text>
+        </View>
         {demand.budget ? (
           <View style={styles.metaChip}>
             <Ionicons name="wallet-outline" size={12} color={colors.inkSoft} />
             <Text variant="caption" tone="inkSoft">
               {t('seller.requests.budget')}: {formatPrice(demand.budget)}
+            </Text>
+          </View>
+        ) : null}
+        {/* §7.3 — yalnız POZİTİF rozet (yüksek tamamlanma); negatif sinyal asla gösterilmez */}
+        {demand.trusted ? (
+          <View style={[styles.metaChip, styles.trustChip]}>
+            <Ionicons name="shield-checkmark" size={12} color={colors.success} />
+            <Text variant="caption" style={styles.trustText}>
+              {t('trust.reliable')}
             </Text>
           </View>
         ) : null}
@@ -182,7 +332,11 @@ function RequestCard({ demand, onGive }: { demand: DemandRequest; onGive: () => 
         </View>
       </View>
 
-      <Button label={t('seller.requests.give')} variant="primary" onPress={onGive} />
+      <Button
+        label={locked ? t('requests.give_premium') : t('seller.requests.give')}
+        variant={locked ? 'secondary' : 'primary'}
+        onPress={onGive}
+      />
     </View>
   );
 }
@@ -190,6 +344,42 @@ function RequestCard({ demand, onGive }: { demand: DemandRequest; onGive: () => 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { padding: space(3), paddingBottom: space(6), gap: space(1.5) },
+    // §4.4 kısıtlı mod kutusu
+    restrictBox: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.danger,
+      padding: space(2),
+      gap: space(1.25),
+      marginTop: space(2),
+    },
+    restrictHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    restrictBody: { lineHeight: 18 },
+    // §11 premium gate banner
+    premiumBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      backgroundColor: colors.accentSoft,
+      borderRadius: radius.lg,
+      padding: space(1.5),
+    },
+    premiumIcon: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    premiumCta: {
+      backgroundColor: colors.surface,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+    },
+    premiumCtaText: { fontWeight: '800' },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2), gap: space(1.25) },
     cardTop: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
@@ -197,7 +387,7 @@ const makeStyles = (colors: ColorTokens) =>
       width: 40,
       height: 40,
       borderRadius: radius.md,
-      backgroundColor: colors.roseSoft,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -223,6 +413,8 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 4,
       borderRadius: radius.pill,
     },
+    trustChip: { backgroundColor: colors.successSoft },
+    trustText: { color: colors.success, fontWeight: '700' },
     backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
     sheet: {
       backgroundColor: colors.bg,
@@ -245,5 +437,20 @@ const makeStyles = (colors: ColorTokens) =>
       fontSize: 16,
       color: colors.ink,
     },
-    slotHint: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), marginTop: space(1.5), marginBottom: space(2) },
+    slotHint: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), marginTop: space(0.5), marginBottom: space(1.25) },
+    noSlots: { lineHeight: 17, marginBottom: space(2) },
+    slotGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1), marginBottom: space(2) },
+    slotChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      borderWidth: 1.25,
+      borderColor: colors.line,
+      backgroundColor: colors.surface,
+    },
+    slotChipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+    slotChipText: { fontWeight: '600' },
   });

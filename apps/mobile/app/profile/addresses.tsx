@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { UserAddress } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
 export default function AddressesScreen() {
   const { t } = useLocale();
@@ -36,8 +36,8 @@ export default function AddressesScreen() {
           <View style={styles.list}>
             {addresses.map((a) => (
               <View key={a.id} style={[styles.row, shadow.soft]}>
-                <View style={[styles.icon, { backgroundColor: colors.roseSoft }]}>
-                  <Ionicons name={a.label === 'home' ? 'home' : 'briefcase'} size={18} color={colors.rose} />
+                <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+                  <Ionicons name={a.label === 'home' ? 'home' : 'briefcase'} size={18} color={colors.accentFg} />
                 </View>
                 <View style={styles.rowText}>
                   <Text variant="bodyStrong" tone="ink">
@@ -63,7 +63,7 @@ export default function AddressesScreen() {
         )}
 
         {/* Yeni adres ekle */}
-        <Text variant="label" tone="rose" style={styles.addLabel}>
+        <Text variant="label" tone="accentFg" style={styles.addLabel}>
           {t('addresses.add')}
         </Text>
         <View style={styles.chips}>

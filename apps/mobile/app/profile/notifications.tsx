@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
+import { activeCategories } from '../../src/taxonomy';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
@@ -23,6 +24,23 @@ export default function NotificationPrefsScreen() {
   const router = useRouter();
   const prefs = useStore((s) => s.notifPrefs);
   const toggle = useStore((s) => s.toggleNotifPref);
+  // §9.3 — uzman/salon: talep bildirim filtreleri (kategori + saat aralığı)
+  const isSeller = useStore((s) => s.currentUser?.role === 'professional' || s.currentUser?.role === 'salon');
+  const demandNotif = useStore((s) => s.demandNotif);
+  const setDemandNotif = useStore((s) => s.setDemandNotif);
+  const cats = activeCategories();
+  const toggleCat = (id: string) =>
+    setDemandNotif({
+      cats: demandNotif.cats.includes(id)
+        ? demandNotif.cats.filter((x) => x !== id)
+        : [...demandNotif.cats, id],
+    });
+  const stepHour = (which: 'from' | 'to', delta: number) => {
+    if (which === 'from')
+      setDemandNotif({ from: Math.max(0, Math.min(demandNotif.to - 1, demandNotif.from + delta)) });
+    else setDemandNotif({ to: Math.max(demandNotif.from + 1, Math.min(24, demandNotif.to + delta)) });
+  };
+  const hh = (n: number) => `${String(n).padStart(2, '0')}:00`;
 
   return (
     <Screen edges={[]}>
@@ -35,8 +53,8 @@ export default function NotificationPrefsScreen() {
         <View style={[styles.group, shadow.soft]}>
           {GROUPS.map((g, i) => (
             <View key={g.key} style={[styles.row, i < GROUPS.length - 1 && styles.rowBorder]}>
-              <View style={[styles.icon, { backgroundColor: colors.roseSoft }]}>
-                <Ionicons name={g.icon} size={19} color={colors.rose} />
+              <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+                <Ionicons name={g.icon} size={19} color={colors.accentFg} />
               </View>
               <View style={styles.rowText}>
                 <Text variant="bodyStrong" tone="ink">
@@ -55,6 +73,68 @@ export default function NotificationPrefsScreen() {
             </View>
           ))}
         </View>
+
+        {/* §9.3 — uzman/salon: talep bildirim filtreleri */}
+        {isSeller ? (
+          <View style={[styles.demandBox, shadow.soft]}>
+            <Text variant="bodyStrong" tone="ink">
+              {t('notifprefs.demand_title')}
+            </Text>
+            <Text variant="caption" tone="muted" style={styles.demandHint}>
+              {t('notifprefs.demand_hint')}
+            </Text>
+
+            <Text variant="caption" tone="accentFg" style={styles.demandLabel}>
+              {t('notifprefs.demand_cats')}
+            </Text>
+            <View style={styles.catRow}>
+              {cats.map((c) => {
+                const on = demandNotif.cats.length === 0 || demandNotif.cats.includes(c.id);
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => toggleCat(c.id)}
+                    style={[styles.catChip, demandNotif.cats.includes(c.id) && styles.catChipOn]}
+                  >
+                    <Ionicons name={c.icon} size={13} color={on ? colors.accentFg : colors.muted} />
+                    <Text variant="caption" tone={on ? 'ink' : 'muted'}>
+                      {t(c.labelKey)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text variant="caption" tone="accentFg" style={styles.demandLabel}>
+              {t('notifprefs.demand_hours')}
+            </Text>
+            <View style={styles.hourRow}>
+              <View style={styles.hourStepper}>
+                <Pressable style={styles.stepBtn} onPress={() => stepHour('from', -1)}>
+                  <Ionicons name="remove" size={16} color={colors.ink} />
+                </Pressable>
+                <Text variant="bodyStrong" tone="ink" style={styles.hourVal}>
+                  {hh(demandNotif.from)}
+                </Text>
+                <Pressable style={styles.stepBtn} onPress={() => stepHour('from', 1)}>
+                  <Ionicons name="add" size={16} color={colors.ink} />
+                </Pressable>
+              </View>
+              <Ionicons name="arrow-forward" size={16} color={colors.muted} />
+              <View style={styles.hourStepper}>
+                <Pressable style={styles.stepBtn} onPress={() => stepHour('to', -1)}>
+                  <Ionicons name="remove" size={16} color={colors.ink} />
+                </Pressable>
+                <Text variant="bodyStrong" tone="ink" style={styles.hourVal}>
+                  {hh(demandNotif.to)}
+                </Text>
+                <Pressable style={styles.stepBtn} onPress={() => stepHour('to', 1)}>
+                  <Ionicons name="add" size={16} color={colors.ink} />
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        ) : null}
 
         {/* Bildirim kutusuna köprü */}
         <Pressable style={[styles.inboxRow, shadow.soft]} onPress={() => router.push('/notifications')}>
@@ -87,4 +167,32 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(2),
     },
     inboxText: { flex: 1 },
+    demandBox: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2), gap: space(1) },
+    demandHint: { lineHeight: 17 },
+    demandLabel: { marginTop: space(1), fontWeight: '700' },
+    catRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    catChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      borderWidth: 1.25,
+      borderColor: colors.line,
+      backgroundColor: colors.surface,
+    },
+    catChipOn: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
+    hourRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
+    hourStepper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.pill,
+      paddingHorizontal: space(0.75),
+      paddingVertical: space(0.5),
+    },
+    stepBtn: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
+    hourVal: { minWidth: 48, textAlign: 'center' },
   });

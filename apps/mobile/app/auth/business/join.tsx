@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { FEATURED } from '../../../src/data';
 import { useLocale } from '../../../src/locale';
 import { radius, space, type ColorTokens } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../../../src/ui';
 
 export default function JoinBusinessScreen() {
   const router = useRouter();
@@ -95,17 +95,17 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
       padding: space(1.75),
     },
-    firmActive: { borderColor: colors.rose },
+    firmActive: { borderColor: colors.accentFg },
     radio: {
       width: 20,
       height: 20,
       borderRadius: 10,
       borderWidth: 2,
-      borderColor: colors.rose,
+      borderColor: colors.accentFg,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.rose },
+    radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accentFg },
     firmName: { flexShrink: 0 },
     codeSub: { marginBottom: space(1.25) },
     input: {

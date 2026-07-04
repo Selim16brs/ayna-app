@@ -1,34 +1,25 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatPrice } from '../../src/data';
+import { formatSlotTr } from '../../src/datetime';
+import { tri } from '../../src/taxonomy';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { DateField, TAB_BAR_CLEARANCE, Text, WaveLayered } from '../../src/ui';
 
-const TIME_SLOTS = ['10:00', '10:30', '11:00', '11:30', '13:00', '14:00', '15:30', '16:30', '18:00'];
-
-function nextDays(count: number) {
-  const base = Date.now();
-  const out: { key: string; wd: number; day: number }[] = [];
-  for (let i = 0; i < count; i++) {
-    const d = new Date(base + i * 86400000);
-    out.push({ key: `${d.getMonth()}-${d.getDate()}`, wd: d.getDay(), day: d.getDate() });
-  }
-  return out;
-}
+const HOT_PINK = '#FF2E93'; // favori (kalp) aktif rengi
 
 export default function UzmanScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -37,12 +28,13 @@ export default function UzmanScreen() {
   const uzman = salon.staff.find((u) => u.id === id) ?? salon.staff[0];
 
   const [selected, setSelected] = useState<string>(salon.services[0]?.id ?? '');
-  const [dayIdx, setDayIdx] = useState(0);
-  const [time, setTime] = useState(TIME_SLOTS[0]!);
-  const days = useMemo(() => nextDays(10), []);
+  const minDate = new Date(Date.now() + 2 * 3_600_000);
+  minDate.setMinutes(0, 0, 0);
+  const [when, setWhen] = useState<Date>(() => new Date(minDate));
 
   const toggleFavorite = useStore((s) => s.toggleFavorite);
   const isFav = useStore((s) => s.favorites.includes(salonId));
+  const addBooking = useStore((s) => s.addBooking);
 
   // Uzman kaydı yoksa (ör. bağımsız) salon detayına düş
   if (!uzman) {
@@ -50,17 +42,29 @@ export default function UzmanScreen() {
     return null;
   }
 
+  // Tarih/saat detay sayfasında seçildi → doğrudan randevu oluştur
   const book = () => {
-    const d = days[dayIdx]!;
-    router.push({
-      pathname: '/booking/schedule',
+    const svc = salon.services.find((s) => s.id === selected);
+    const startMs = when.getTime();
+    const bid = addBooking({
+      source: 'direct',
+      service: svc ? (svc.label ? tri(svc.label, locale) : svc.name) : salon.specialty,
+      proId: salon.id,
+      proName: salon.name,
+      proImage: salon.image,
+      uzmanName: uzman.name,
+      startMs,
+      durationMin: svc?.durationMin ?? 60,
+      price: svc?.price ?? Number(salon.priceFrom),
+    });
+    router.replace({
+      pathname: '/booking/confirmed',
       params: {
+        id: bid,
         proId: salon.id,
         source: 'direct',
-        uzmanId: uzman.id,
+        slot: formatSlotTr(startMs),
         uzmanName: uzman.name,
-        serviceId: selected,
-        dateLabel: `${t(`wd.${d.wd}` as 'wd.0')} ${d.day} · ${time}`,
       },
     });
   };
@@ -71,49 +75,50 @@ export default function UzmanScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 130 + TAB_BAR_CLEARANCE }}
       >
-        {/* HERO — tam kadraj uzman fotoğrafı */}
-        <ImageBackground source={{ uri: uzman.image }} style={styles.hero} imageStyle={styles.heroImg}>
-          <LinearGradient
-            colors={['rgba(30,24,28,0.35)', 'rgba(30,24,28,0)', 'rgba(30,24,28,0.9)']}
-            locations={[0, 0.4, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={[styles.heroTop, { top: insets.top + 6 }]}>
+        {/* HERO — lime bant (Keşfet dili): çerçeveli portre + isim/puan/salon bağı + dalga */}
+        <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
+          <View style={styles.heroTop}>
             <Pressable style={styles.circleBtn} onPress={() => router.back()}>
-              <Ionicons name="chevron-back" size={22} color={colors.onColor} />
+              <Ionicons name="chevron-back" size={22} color={colors.ink} />
             </Pressable>
             <Pressable style={styles.circleBtn} onPress={() => toggleFavorite(salonId)}>
-              <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={colors.onColor} />
+              <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? HOT_PINK : colors.ink} />
             </Pressable>
           </View>
 
-          <View style={styles.heroInfo}>
-            <View style={styles.badgePill}>
-              <Ionicons name="sparkles" size={12} color={colors.onColor} />
-              <Text variant="caption" tone="onColor" style={styles.badgePillText}>
-                {uzman.role}
-              </Text>
-            </View>
-            <Text variant="display" tone="onColor" style={styles.heroName} numberOfLines={1}>
-              {uzman.name}
-            </Text>
-            <View style={styles.heroStats}>
-              <View style={styles.ratingPill}>
-                <Ionicons name="star" size={13} color={colors.gold} />
-                <Text variant="bodyStrong" tone="onColor" style={styles.ratingPillText}>
-                  {uzman.rating.toFixed(1)}
+          <View style={styles.heroBody}>
+            <View style={styles.heroInfo}>
+              <View style={styles.badgePill}>
+                <Ionicons name="sparkles" size={12} color={colors.accentFg} />
+                <Text variant="caption" tone="ink" style={styles.badgePillText}>
+                  {uzman.role}
                 </Text>
               </View>
-              <Pressable style={styles.salonPill} onPress={() => router.push('/professional/' + salonId)}>
-                <Ionicons name="storefront-outline" size={12} color={colors.onColor} />
-                <Text variant="caption" tone="onColor" style={styles.salonPillText} numberOfLines={1}>
-                  {salon.name}
-                </Text>
-                <Ionicons name="chevron-forward" size={12} color={colors.onColor} />
-              </Pressable>
+              <Text variant="display" tone="ink" style={styles.heroName} numberOfLines={2}>
+                {uzman.name}
+              </Text>
+              <View style={styles.heroStats}>
+                <View style={styles.ratingPill}>
+                  <Ionicons name="star" size={13} color={colors.gold} />
+                  <Text variant="bodyStrong" tone="ink" style={styles.ratingPillText}>
+                    {uzman.rating.toFixed(1)}
+                  </Text>
+                </View>
+                <Pressable style={styles.salonPill} onPress={() => router.push('/professional/' + salonId)}>
+                  <Ionicons name="storefront-outline" size={12} color={colors.ink} />
+                  <Text variant="caption" tone="ink" style={styles.salonPillText} numberOfLines={1}>
+                    {salon.name}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={12} color={colors.ink} />
+                </Pressable>
+              </View>
             </View>
+            <Image source={{ uri: uzman.image }} style={styles.heroPortrait} />
           </View>
-        </ImageBackground>
+          <View style={styles.waveAbs}>
+            <WaveLayered sliver={colors.bg} bottom={colors.bg} height={70} />
+          </View>
+        </View>
 
         {/* SHEET */}
         <View style={styles.sheet}>
@@ -156,39 +161,19 @@ export default function UzmanScreen() {
             })}
           </View>
 
+          {/* Tarih & saat — Benim İçin kayıt eklemeleriyle AYNI native seçici */}
           <Text variant="bodyStrong" tone="ink" style={styles.section}>
-            {t('pro.select_date')}
+            {t('booking.schedule.time')}
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-            {days.map((d, i) => {
-              const on = i === dayIdx;
-              return (
-                <Pressable key={d.key} onPress={() => setDayIdx(i)} style={[styles.dayChip, on && styles.dayChipOn]}>
-                  <Text variant="caption" tone={on ? 'onAccent' : 'muted'}>
-                    {t(`wd.${d.wd}` as 'wd.0')}
-                  </Text>
-                  <Text variant="h2" tone={on ? 'onAccent' : 'ink'} style={styles.dayNum}>
-                    {d.day}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
-          <Text variant="bodyStrong" tone="ink" style={styles.section}>
-            {t('pro.select_time')}
-          </Text>
-          <View style={styles.timeWrap}>
-            {TIME_SLOTS.map((tm) => {
-              const on = tm === time;
-              return (
-                <Pressable key={tm} onPress={() => setTime(tm)} style={[styles.timeChip, on && styles.timeChipOn]}>
-                  <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} style={styles.timeText}>
-                    {tm}
-                  </Text>
-                </Pressable>
-              );
-            })}
+          <View style={[styles.dateCard, shadow.soft]}>
+            <DateField
+              label={t('booking.schedule.datetime')}
+              value={when}
+              onChange={setWhen}
+              mode="datetime"
+              minimumDate={minDate}
+              last
+            />
           </View>
         </View>
       </ScrollView>
@@ -208,43 +193,45 @@ export default function UzmanScreen() {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.bg },
-    hero: { height: 360, justifyContent: 'flex-end' },
-    heroImg: { backgroundColor: colors.bgSunken },
-    heroTop: {
-      position: 'absolute',
-      left: space(2),
-      right: space(2),
-      flexDirection: 'row',
-      justifyContent: 'space-between',
+    // ── Lime hero (Keşfet dili) ──
+    hero: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: space(3),
+      paddingBottom: space(5),
+      position: 'relative',
+      overflow: 'hidden',
     },
+    waveAbs: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 2 },
+    heroTop: { flexDirection: 'row', justifyContent: 'space-between' },
     circleBtn: {
-      width: 42,
-      height: 42,
-      borderRadius: 21,
-      backgroundColor: 'rgba(0,0,0,0.32)',
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    heroInfo: { padding: space(3), paddingBottom: space(4) },
+    heroBody: { flexDirection: 'row', alignItems: 'flex-end', marginTop: space(2), zIndex: 2 },
+    heroInfo: { flex: 1, paddingRight: space(1.5), paddingBottom: space(1) },
     badgePill: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
       alignSelf: 'flex-start',
-      backgroundColor: 'rgba(0,0,0,0.32)',
+      backgroundColor: 'rgba(255,255,255,0.7)',
       paddingHorizontal: space(1.25),
       paddingVertical: 5,
       borderRadius: radius.pill,
       marginBottom: space(1),
     },
     badgePillText: { fontWeight: '700' },
-    heroName: { fontSize: 30, fontWeight: '800', letterSpacing: -0.4 },
-    heroStats: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginTop: space(1) },
+    heroName: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.4 },
+    heroStats: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginTop: space(1), flexWrap: 'wrap' },
     ratingPill: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      backgroundColor: 'rgba(255,255,255,0.18)',
+      backgroundColor: 'rgba(255,255,255,0.7)',
       paddingHorizontal: space(1.25),
       paddingVertical: 5,
       borderRadius: radius.pill,
@@ -254,24 +241,33 @@ const makeStyles = (colors: ColorTokens) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-      flex: 1,
-      backgroundColor: 'rgba(255,255,255,0.18)',
+      backgroundColor: 'rgba(255,255,255,0.7)',
       paddingHorizontal: space(1.25),
       paddingVertical: 6,
       borderRadius: radius.pill,
+      maxWidth: 190,
     },
-    salonPillText: { flex: 1, fontWeight: '600' },
+    salonPillText: { flexShrink: 1, fontWeight: '600' },
+    heroPortrait: {
+      width: 128,
+      height: 168,
+      borderRadius: radius.lg,
+      borderWidth: 3,
+      borderColor: colors.surface,
+      backgroundColor: colors.bgSunken,
+    },
     sheet: {
       backgroundColor: colors.bg,
       borderTopLeftRadius: radius.xl,
       borderTopRightRadius: radius.xl,
-      marginTop: -space(3),
+      marginTop: 0,
       paddingHorizontal: space(3),
       paddingTop: space(3),
     },
     about: { lineHeight: 21 },
     section: { marginTop: space(3), marginBottom: space(1.5), fontSize: 17 },
     services: { gap: space(1.25) },
+    dateCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
     service: {
       flexDirection: 'row',
       alignItems: 'center',

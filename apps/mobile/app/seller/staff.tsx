@@ -106,7 +106,7 @@ export default function StaffDetailScreen() {
         </View>
 
         {/* §5.1 — çalışma grafiği tipi */}
-        <Text variant="label" tone="rose" style={styles.section}>
+        <Text variant="label" tone="accentFg" style={styles.section}>
           {t('seller.staff.schedule')}
         </Text>
         <Segmented
@@ -125,7 +125,7 @@ export default function StaffDetailScreen() {
         </View>
 
         {/* §5.1 — salon havuzundan uzmana hizmet atama */}
-        <Text variant="label" tone="rose" style={styles.section}>
+        <Text variant="label" tone="accentFg" style={styles.section}>
           {t('seller.staff.assign')}
         </Text>
         <Text variant="caption" tone="muted" style={styles.assignHint}>
@@ -145,7 +145,7 @@ export default function StaffDetailScreen() {
           })}
         </View>
 
-        <Text variant="label" tone="rose" style={styles.section}>
+        <Text variant="label" tone="accentFg" style={styles.section}>
           {t('seller.staff.services')}
         </Text>
         <View style={styles.group}>
@@ -159,7 +159,7 @@ export default function StaffDetailScreen() {
                   %{Math.round(s.share * 100)}
                 </Text>
               </View>
-              <Progress value={s.share} color={colors.rose} />
+              <Progress value={s.share} color={colors.accentFg} />
             </View>
           ))}
         </View>
@@ -189,7 +189,7 @@ function Stat({
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.stat}>
-      <Ionicons name={icon} size={18} color={colors.rose} />
+      <Ionicons name={icon} size={18} color={colors.accentFg} />
       <Text variant="bodyStrong" tone="ink" style={styles.statValue}>
         {value}
       </Text>
@@ -250,5 +250,5 @@ const makeStyles = (colors: ColorTokens) =>
       borderWidth: 1,
       borderColor: colors.line,
     },
-    poolChipOn: { backgroundColor: colors.rose, borderColor: colors.rose },
+    poolChipOn: { backgroundColor: colors.accentFg, borderColor: colors.accentFg },
   });
