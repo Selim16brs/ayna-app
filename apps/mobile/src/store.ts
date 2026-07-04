@@ -204,6 +204,16 @@ interface State {
 
   // bookings
   addBooking: (input: AddBookingInput) => string;
+  // §4.6/§10.2 — salon offline randevu ekler → uzman onayına gider
+  salonAddOffline: (input: {
+    salonName: string;
+    uzmanName: string;
+    customerName: string;
+    service: string;
+    startMs: number;
+    durationMin: number;
+    price: number;
+  }) => string;
   // Faz 3 — dolu uzmana bekleme listesine eklenme
   joinWaitlist: (pro: { id: string; name: string; image: string; service: string }) => void;
   cancelBooking: (id: string, reason?: string) => void;
@@ -505,6 +515,40 @@ export const useStore = create<State>()(
       params: { pro: input.proName, slot: formatSlotTr(input.startMs) },
       dateLabel: 'Az önce',
       icon: 'calendar-outline',
+      route: `/booking/${id}`,
+    });
+    return id;
+  },
+
+  // §4.6/§10.2 — SALON offline randevu ekler → ilgili UZMANIN ONAYINA gider (awaiting_provider) + bildirim.
+  // Salon silemez; her ekleme uzmana bildirimle düşer, uzman panelinde Kabul/Reddet ile teyit eder.
+  salonAddOffline: (input) => {
+    const id = nextId('sof');
+    const booking: Appointment = {
+      id,
+      source: 'direct',
+      service: input.service,
+      proId: '',
+      proName: input.salonName,
+      proImage: '',
+      uzmanName: input.uzmanName,
+      customerName: input.customerName,
+      startMs: input.startMs,
+      durationMin: input.durationMin,
+      price: input.price,
+      status: 'awaiting_provider', // uzman onayı bekliyor (§4.6)
+      responseDeadline: Date.now() + RESPONSE_WINDOW_MS,
+    };
+    set((s) => ({ bookings: [booking, ...s.bookings] }));
+    void api.createBooking(booking, get().token ?? undefined).catch(() => undefined);
+    get().pushNotification({
+      type: 'booking',
+      audience: 'seller',
+      titleKey: 'notif.salon_offline_pending',
+      bodyKey: 'notif.salon_offline_pending_b',
+      params: { uzman: input.uzmanName, slot: formatSlotTr(input.startMs) },
+      dateLabel: 'Az önce',
+      icon: 'time-outline',
       route: `/booking/${id}`,
     });
     return id;

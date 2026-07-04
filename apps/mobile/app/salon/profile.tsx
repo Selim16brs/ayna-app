@@ -1,143 +1,94 @@
-import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
+import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { activeCategories } from '../../src/taxonomy';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  Screen,
-  SocialLinks,
-  StackHeader,
-  TAB_BAR_CLEARANCE,
-  Text,
-  TextInput,
-  WorkingHours,
-} from '../../src/ui';
+import { PressableScale, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
-// §10.1/§6.2 — SALON profil düzenleme: fotoğraflar, adres, iletişim, hizmet alanları, saatler, sosyal.
-export default function SalonProfileScreen() {
+type IoniconName = keyof typeof Ionicons.glyphMap;
+
+// §10.1 — SALON Profil hub'ı: düzenleme + yönetim (komisyon/değerlendirme/promosyon) + hesap.
+export default function SalonProfileHub() {
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const logout = useStore((s) => s.logout);
-
   const salonName = useStore((s) => s.currentUser?.name) ?? 'Salon';
-  const salonProfile = useStore((s) => s.salonProfile);
-  const setSalonProfile = useStore((s) => s.setSalonProfile);
-  const sellerSocial = useStore((s) => s.sellerSocial);
-  const sellerHours = useStore((s) => s.sellerHours);
-  const setSellerProfile = useStore((s) => s.setSellerProfile);
+  const avatarUri = useStore((s) => s.avatarUri);
 
-  const [photos, setPhotos] = useState(salonProfile.photos);
-  const [about, setAbout] = useState(salonProfile.about);
-  const [address, setAddress] = useState(salonProfile.address);
-  const [contact, setContact] = useState(salonProfile.contact);
-  const [areas, setAreas] = useState(salonProfile.areas);
-  const [social, setSocial] = useState(sellerSocial);
-  const [hours, setHours] = useState(sellerHours);
-  const cats = activeCategories();
-
-  const addPhoto = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-    });
-    if (!res.canceled && res.assets[0]) setPhotos((p) => [...p, res.assets[0]!.uri]);
-  };
-  const removePhoto = (uri: string) =>
-    Alert.alert(t('salon.profile.photos'), undefined, [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('profile.photo.remove'), style: 'destructive', onPress: () => setPhotos((p) => p.filter((x) => x !== uri)) },
-    ]);
-  const toggleArea = (id: string) =>
-    setAreas((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
-
-  const onSave = () => {
-    setSalonProfile({ photos, about, address, contact, areas });
-    setSellerProfile({ social, hours });
-    Alert.alert(t('salon.profile.saved'), undefined, [{ text: t('common.save') }]);
-  };
+  const MANAGE: { icon: IoniconName; label: MessageKey; route: string }[] = [
+    { icon: 'cash-outline', label: 'salon.quick.commissions', route: '/seller/commissions' },
+    { icon: 'star-outline', label: 'salon.quick.reviews', route: '/seller/reviews' },
+    { icon: 'pricetags-outline', label: 'salon.quick.promotions', route: '/seller/promotions' },
+  ];
 
   return (
     <Screen edges={[]}>
-      <StackHeader title={t('salon.profile.title')} />
+      <StackHeader title={t('salon.nav.profile')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text variant="caption" tone="muted" style={styles.intro}>
-          {t('salon.profile.intro')}
-        </Text>
+        {/* Salon başlık kartı */}
+        <View style={[styles.headerCard, shadow.soft]}>
+          <View style={styles.avatar}>
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.avatarImg} />
+            ) : (
+              <Ionicons name="business" size={26} color={colors.accentFg} />
+            )}
+          </View>
+          <View style={styles.flex}>
+            <Text variant="h2" tone="ink" numberOfLines={1}>
+              {salonName}
+            </Text>
+            <Text variant="caption" tone="muted">
+              {t('reports.identity.salon')}
+            </Text>
+          </View>
+        </View>
 
-        {/* Salon fotoğrafları */}
-        <Label text={t('salon.profile.photos')} />
-        <View style={styles.photoRow}>
-          <Pressable style={styles.photoAdd} onPress={addPhoto}>
-            <Ionicons name="camera" size={22} color={colors.inkSoft} />
-          </Pressable>
-          {photos.map((uri, i) => (
-            <Pressable key={`${uri}-${i}`} onPress={() => removePhoto(uri)}>
-              <Image source={{ uri }} style={styles.photo} />
-            </Pressable>
+        {/* Profili düzenle */}
+        <PressableScale style={[styles.editBtn, shadow.soft]} onPress={() => router.push('/salon/edit')}>
+          <Ionicons name="create-outline" size={19} color={colors.onAccent} />
+          <Text variant="bodyStrong" tone="onAccent" style={styles.editText}>
+            {t('salon.edit.title')}
+          </Text>
+        </PressableScale>
+
+        {/* Yönetim: komisyon · değerlendirmeler · promosyonlar */}
+        <View style={[styles.group, shadow.soft]}>
+          {MANAGE.map((m, i) => (
+            <PressableScale
+              key={m.route}
+              style={[styles.row, i < MANAGE.length - 1 && styles.rowBorder]}
+              onPress={() => router.push(m.route as never)}
+            >
+              <View style={styles.rowIcon}>
+                <Ionicons name={m.icon} size={19} color={colors.accentFg} />
+              </View>
+              <Text variant="body" tone="ink" style={styles.flex}>
+                {t(m.label)}
+              </Text>
+              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            </PressableScale>
           ))}
         </View>
 
-        {/* Salon adı (kimlik — üstte, salt bilgi) */}
-        <View style={[styles.nameCard]}>
-          <Ionicons name="business" size={16} color={colors.accentFg} />
-          <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.flex}>
-            {salonName}
-          </Text>
-        </View>
-
-        <Field label={t('salon.profile.about')} value={about} onChangeText={setAbout} multiline />
-        <Field label={t('salon.profile.address')} value={address} onChangeText={setAddress} />
-        <Field label={t('salon.profile.contact')} value={contact} onChangeText={setContact} keyboardType="phone-pad" />
-
-        {/* Hizmet alanları */}
-        <Label text={t('salon.profile.areas')} />
-        <View style={styles.areaRow}>
-          {cats.map((c) => {
-            const on = areas.includes(c.id);
-            return (
-              <Pressable
-                key={c.id}
-                onPress={() => toggleArea(c.id)}
-                style={[styles.areaChip, on && styles.areaChipOn]}
-              >
-                <Ionicons name={c.icon} size={13} color={on ? colors.onAccent : colors.muted} />
-                <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
-                  {t(c.labelKey)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {/* Çalışma saatleri + sosyal medya */}
-        <Label text={t('salon.profile.hours')} />
-        <WorkingHours value={hours} onChange={setHours} />
-        <Label text={t('salon.profile.social')} />
-        <SocialLinks value={social} onChange={setSocial} />
-
-        <View style={styles.save}>
-          <Button label={t('common.save')} variant="primary" onPress={onSave} />
-        </View>
-
         {/* Hesap: bildirim tercihleri + çıkış */}
-        <View style={styles.account}>
-          <Pressable style={styles.acctRow} onPress={() => router.push('/profile/notifications')}>
-            <Ionicons name="notifications-outline" size={18} color={colors.ink} />
+        <View style={[styles.group, shadow.soft]}>
+          <PressableScale style={[styles.row, styles.rowBorder]} onPress={() => router.push('/profile/notifications')}>
+            <View style={styles.rowIcon}>
+              <Ionicons name="notifications-outline" size={19} color={colors.accentFg} />
+            </View>
             <Text variant="body" tone="ink" style={styles.flex}>
               {t('notifprefs.title')}
             </Text>
             <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-          </Pressable>
-          <Pressable
-            style={styles.acctRow}
+          </PressableScale>
+          <PressableScale
+            style={styles.row}
             onPress={() =>
               Alert.alert(t('profile.menu.logout'), undefined, [
                 { text: t('common.cancel'), style: 'cancel' },
@@ -152,125 +103,60 @@ export default function SalonProfileScreen() {
               ])
             }
           >
-            <Ionicons name="log-out-outline" size={18} color={colors.danger} />
+            <View style={[styles.rowIcon, { backgroundColor: colors.dangerSoft }]}>
+              <Ionicons name="log-out-outline" size={19} color={colors.danger} />
+            </View>
             <Text variant="body" style={[styles.flex, { color: colors.danger }]}>
               {t('profile.menu.logout')}
             </Text>
-          </Pressable>
+          </PressableScale>
         </View>
       </ScrollView>
     </Screen>
   );
-
-  function Label({ text }: { text: string }) {
-    return (
-      <Text variant="label" tone="accentFg" style={styles.label}>
-        {text}
-      </Text>
-    );
-  }
-
-  function Field({
-    label,
-    value,
-    onChangeText,
-    keyboardType,
-    multiline,
-  }: {
-    label: string;
-    value: string;
-    onChangeText: (v: string) => void;
-    keyboardType?: 'default' | 'phone-pad';
-    multiline?: boolean;
-  }) {
-    return (
-      <View style={styles.field}>
-        <Text variant="label" tone="accentFg" style={styles.label}>
-          {label}
-        </Text>
-        <TextInput
-          style={[styles.input, multiline && styles.inputMulti]}
-          value={value}
-          onChangeText={onChangeText}
-          keyboardType={keyboardType}
-          multiline={multiline}
-          placeholderTextColor={colors.muted}
-        />
-      </View>
-    );
-  }
 }
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(1) },
-    intro: { lineHeight: 18, marginBottom: space(1) },
+    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(2) },
     flex: { flex: 1 },
-    label: { marginTop: space(1.5), marginBottom: space(0.5) },
-    photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
-    photoAdd: {
-      width: 84,
-      height: 84,
-      borderRadius: radius.md,
-      borderWidth: 1.5,
-      borderColor: colors.line,
-      borderStyle: 'dashed',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.surface,
-    },
-    photo: { width: 84, height: 84, borderRadius: radius.md, backgroundColor: colors.surfaceMuted },
-    nameCard: {
+    headerCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: space(1),
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.line,
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.5),
-      marginTop: space(1.5),
-    },
-    field: { gap: space(0.5) },
-    input: {
-      backgroundColor: colors.surfaceMuted,
-      borderRadius: radius.md,
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.5),
-      color: colors.ink,
-      fontSize: 15,
-    },
-    inputMulti: { minHeight: 72, textAlignVertical: 'top' },
-    areaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
-    areaChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 5,
-      paddingHorizontal: space(1.25),
-      paddingVertical: space(0.75),
-      borderRadius: radius.pill,
-      borderWidth: 1.25,
-      borderColor: colors.line,
-      backgroundColor: colors.surface,
-    },
-    areaChipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-    save: { marginTop: space(2.5) },
-    account: {
-      marginTop: space(3),
+      gap: space(1.5),
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
+      padding: space(2),
+    },
+    avatar: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
       overflow: 'hidden',
     },
-    acctRow: {
+    avatarImg: { width: '100%', height: '100%' },
+    editBtn: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: space(1.25),
-      paddingHorizontal: space(2),
+      justifyContent: 'center',
+      gap: space(1),
+      backgroundColor: colors.accentFg,
+      borderRadius: radius.pill,
       paddingVertical: space(1.75),
-      borderBottomWidth: StyleSheet.hairlineWidth,
-      borderBottomColor: colors.line,
+    },
+    editText: { fontSize: 15 },
+    group: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space(1.25), paddingHorizontal: space(2), paddingVertical: space(1.75) },
+    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
+    rowIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.md,
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
   });

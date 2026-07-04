@@ -1,3 +1,359 @@
-// §10.2 — SALON rezervasyon takvimi = uzman-sütunlu görünüm.
-// Aynı takvim bileşeni salon rolünde sütunlu görünümü açar (kod tekrarını önlemek için yeniden dışa aktarım).
-export { default } from '../seller/agenda';
+import { useMemo, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import type { MessageKey } from '@ayna/i18n';
+import { type Appointment, type BookingStatus, SELLER_DATA, formatPrice } from '../../src/data';
+import { almatyDayStart, slotTime } from '../../src/datetime';
+import { fillParams, useLocale } from '../../src/locale';
+import { useStore } from '../../src/store';
+import { type ColorTokens, radius, space } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
+import {
+  Button,
+  DateField,
+  PressableScale,
+  Screen,
+  Segmented,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+  TextInput,
+  formatTrDate,
+} from '../../src/ui';
+
+// §10.2 — SALON rezervasyon takvimi: iki sekme (Randevular · Randevu ekle).
+const STATUS_KEY: Partial<Record<BookingStatus, MessageKey>> = {
+  confirmed: 'booking.status.confirmed',
+  completed: 'booking.status.completed',
+  awaiting_provider: 'booking.status.awaiting',
+  deposit_pending: 'booking.status.awaiting',
+  deposit_submitted: 'booking.status.awaiting',
+};
+
+export default function SalonAgendaScreen() {
+  const { t, locale } = useLocale();
+  const { colors, shadow } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
+
+  const bookings = useStore((s) => s.bookings);
+  const salonAddOffline = useStore((s) => s.salonAddOffline);
+  const salonName = useStore((s) => s.currentUser?.name) ?? 'Salon';
+  const staff = SELLER_DATA.month.staff;
+
+  const [tab, setTab] = useState<'list' | 'add'>('list');
+
+  // Randevular — tüm alınmış randevular (bağlı uzman takvimleri dahil), gün gruplu
+  const grouped = useMemo(() => {
+    const active = bookings
+      .filter((b) => b.status !== 'cancelled')
+      .sort((a, b) => a.startMs - b.startMs);
+    const map = new Map<number, Appointment[]>();
+    for (const b of active) {
+      const d = almatyDayStart(b.startMs, 0);
+      const arr = map.get(d);
+      if (arr) arr.push(b);
+      else map.set(d, [b]);
+    }
+    return [...map.entries()].sort((a, b) => a[0] - b[0]);
+  }, [bookings]);
+
+  const statusTone = (s: BookingStatus) =>
+    s === 'confirmed'
+      ? colors.accent
+      : s === 'completed'
+        ? colors.muted
+        : s === 'no_show' || s === 'cancelled'
+          ? colors.danger
+          : colors.gold; // awaiting/deposit → onay bekliyor
+
+  return (
+    <Screen edges={[]}>
+      <StackHeader title={t('salon.nav.agenda')} />
+      <View style={styles.segWrap}>
+        <Segmented
+          options={[
+            { value: 'list', label: t('salon.cal.appointments') },
+            { value: 'add', label: t('salon.cal.add') },
+          ]}
+          value={tab}
+          onChange={setTab}
+        />
+      </View>
+
+      {tab === 'list' ? (
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          {grouped.length === 0 ? (
+            <View style={[styles.card, shadow.soft]}>
+              <Text variant="caption" tone="muted">
+                {t('salon.cal.empty')}
+              </Text>
+            </View>
+          ) : (
+            grouped.map(([dayMs, rows]) => (
+              <View key={dayMs} style={styles.dayGroup}>
+                <Text variant="label" tone="accentFg" style={styles.dayHead}>
+                  {formatTrDate(new Date(dayMs), false)}
+                </Text>
+                {rows.map((b) => {
+                  const end = slotTime(b.startMs + b.durationMin * 60_000);
+                  const key = STATUS_KEY[b.status];
+                  return (
+                    <PressableScale
+                      key={b.id}
+                      style={[styles.appt, shadow.soft]}
+                      onPress={() => router.push(`/booking/${b.id}`)}
+                    >
+                      <View style={styles.apptTime}>
+                        <Text variant="bodyStrong" tone="ink">
+                          {slotTime(b.startMs)}
+                        </Text>
+                        <Text variant="caption" tone="muted">
+                          {end}
+                        </Text>
+                      </View>
+                      <View style={[styles.apptBar, { backgroundColor: statusTone(b.status) }]} />
+                      <View style={styles.apptBody}>
+                        <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                          {b.service}
+                        </Text>
+                        <View style={styles.apptMeta}>
+                          <Ionicons name="person-outline" size={11} color={colors.muted} />
+                          <Text variant="caption" tone="muted" numberOfLines={1}>
+                            {b.uzmanName ?? '—'}
+                            {b.customerName ? ` · ${b.customerName}` : ''}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.apptRight}>
+                        {key ? (
+                          <View style={[styles.badge, { backgroundColor: statusTone(b.status) }]}>
+                            <Text style={styles.badgeText}>{t(key)}</Text>
+                          </View>
+                        ) : null}
+                        <Text variant="caption" tone="inkSoft">
+                          {formatPrice(b.price)}
+                        </Text>
+                      </View>
+                    </PressableScale>
+                  );
+                })}
+              </View>
+            ))
+          )}
+        </ScrollView>
+      ) : (
+        <AddTab
+          staff={staff.map((u) => u.name)}
+          salonName={salonName}
+          onSubmit={(v) => {
+            salonAddOffline({ salonName, ...v });
+            Alert.alert(t('salon.add.sent_title'), fillParams(t('salon.add.sent_body'), { uzman: v.uzmanName }));
+            setTab('list');
+          }}
+          locale={locale}
+        />
+      )}
+    </Screen>
+  );
+}
+
+function AddTab({
+  staff,
+  salonName: _salonName,
+  onSubmit,
+  locale: _locale,
+}: {
+  staff: string[];
+  salonName: string;
+  onSubmit: (v: {
+    uzmanName: string;
+    customerName: string;
+    service: string;
+    startMs: number;
+    durationMin: number;
+    price: number;
+  }) => void;
+  locale: string;
+}) {
+  const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const [uzman, setUzman] = useState(staff[0] ?? '');
+  const [customer, setCustomer] = useState('');
+  const [service, setService] = useState('');
+  const [when, setWhen] = useState<Date>(() => new Date(Date.now() + 3_600_000));
+  const [dur, setDur] = useState('60');
+  const [price, setPrice] = useState('');
+
+  const canAdd = uzman && customer.trim().length > 1 && service.trim().length > 1;
+
+  return (
+    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {/* §4.6 — salon eklemesi uzman onayına gider */}
+      <View style={styles.noteBox}>
+        <Ionicons name="information-circle-outline" size={16} color={colors.accentFg} />
+        <Text variant="caption" tone="inkSoft" style={styles.flex}>
+          {t('salon.add.note')}
+        </Text>
+      </View>
+
+      <Text variant="label" tone="accentFg" style={styles.label}>
+        {t('salon.add.uzman')}
+      </Text>
+      <View style={styles.uzmanRow}>
+        {staff.map((name) => {
+          const on = uzman === name;
+          return (
+            <Pressable
+              key={name}
+              onPress={() => setUzman(name)}
+              style={[styles.uzmanChip, on && styles.uzmanChipOn]}
+            >
+              <Ionicons
+                name={on ? 'person' : 'person-outline'}
+                size={13}
+                color={on ? colors.onAccent : colors.muted}
+              />
+              <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
+                {name}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Field label={t('offline.customer')}>
+        <TextInput
+          style={styles.input}
+          value={customer}
+          onChangeText={setCustomer}
+          placeholder="Ayşe K."
+          placeholderTextColor={colors.muted}
+        />
+      </Field>
+      <Field label={t('offline.service')}>
+        <TextInput
+          style={styles.input}
+          value={service}
+          onChangeText={setService}
+          placeholder="Saç kesimi & fön"
+          placeholderTextColor={colors.muted}
+        />
+      </Field>
+      <DateField label={t('offline.datetime')} value={when} onChange={setWhen} mode="datetime" />
+      <View style={styles.row}>
+        <Field label={t('offline.dur')} flex>
+          <TextInput
+            style={styles.input}
+            value={dur}
+            onChangeText={(v) => setDur(v.replace(/[^0-9]/g, ''))}
+            keyboardType="number-pad"
+            placeholderTextColor={colors.muted}
+          />
+        </Field>
+        <Field label={t('offline.price')} flex>
+          <TextInput
+            style={styles.input}
+            value={price}
+            onChangeText={(v) => setPrice(v.replace(/[^0-9]/g, ''))}
+            keyboardType="number-pad"
+            placeholder="9000"
+            placeholderTextColor={colors.muted}
+          />
+        </Field>
+      </View>
+
+      <View style={styles.submit}>
+        <Button
+          label={t('salon.add.submit')}
+          variant="primary"
+          disabled={!canAdd}
+          onPress={() =>
+            onSubmit({
+              uzmanName: uzman,
+              customerName: customer.trim(),
+              service: service.trim(),
+              startMs: when.getTime(),
+              durationMin: Number(dur) || 60,
+              price: Number(price) || 0,
+            })
+          }
+        />
+      </View>
+    </ScrollView>
+  );
+}
+
+function Field({ label, children, flex }: { label: string; children: React.ReactNode; flex?: boolean }) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={[styles.field, flex && styles.flex]}>
+      <Text variant="label" tone="accentFg" style={styles.label}>
+        {label}
+      </Text>
+      {children}
+    </View>
+  );
+}
+
+const makeStyles = (colors: ColorTokens) =>
+  StyleSheet.create({
+    segWrap: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(1) },
+    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(1.25) },
+    flex: { flex: 1 },
+    card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
+    dayGroup: { gap: space(1) },
+    dayHead: { marginTop: space(1.5) },
+    appt: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(1.5),
+    },
+    apptTime: { width: 52, gap: 1 },
+    apptBar: { width: 4, alignSelf: 'stretch', borderRadius: 2 },
+    apptBody: { flex: 1, gap: 3 },
+    apptMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    apptRight: { alignItems: 'flex-end', gap: 4 },
+    badge: { paddingHorizontal: space(1), paddingVertical: 2, borderRadius: radius.pill },
+    badgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+    // Randevu ekle
+    noteBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.accentSoft,
+      borderRadius: radius.md,
+      padding: space(1.5),
+      marginTop: space(0.5),
+    },
+    label: { marginTop: space(1.25), marginBottom: space(0.5) },
+    uzmanRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    uzmanChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      borderWidth: 1.25,
+      borderColor: colors.line,
+      backgroundColor: colors.surface,
+    },
+    uzmanChipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+    field: { gap: space(0.5) },
+    row: { flexDirection: 'row', gap: space(1.5) },
+    input: {
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.md,
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1.5),
+      color: colors.ink,
+      fontSize: 15,
+    },
+    submit: { marginTop: space(2.5) },
+  });
