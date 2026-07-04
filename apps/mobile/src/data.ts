@@ -858,6 +858,8 @@ export interface Appointment {
 
 // Seed başlangıç anı (modül yüklenirken sabitlenir) — göreli slot'lar buna göre.
 const SEED_NOW = Date.now();
+// Salon randevularının görseli (booking detay hero'su)
+const SALON_IMG = 'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=200&q=80';
 
 export const SEED_APPOINTMENTS: Appointment[] = [
   {
@@ -981,6 +983,73 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     price: 15000,
     status: 'confirmed',
     bySalon: true,
+  },
+  // ── Glamour Salon uzmanlarının KENDİ (app/offline) işleri — bySalon DEĞİL; Genel takvimde görünür (fiyatsız) ──
+  {
+    id: 'gs-1',
+    source: 'direct',
+    service: 'Kesim & fön',
+    proId: '',
+    proName: 'Glamour Salon',
+    proImage: SALON_IMG,
+    uzmanName: 'Aigerim',
+    startMs: almatySlotMs(SEED_NOW, 1, 13, 0),
+    durationMin: 60,
+    price: 9000,
+    status: 'confirmed',
+  },
+  {
+    id: 'gs-2',
+    source: 'demand',
+    service: 'Saç boyama (kök)',
+    proId: '',
+    proName: 'Glamour Salon',
+    proImage: SALON_IMG,
+    uzmanName: 'Madina',
+    startMs: almatySlotMs(SEED_NOW, 1, 16, 0),
+    durationMin: 90,
+    price: 15000,
+    status: 'awaiting_provider',
+    responseDeadline: SEED_NOW + 5 * 60 * 60_000,
+  },
+  {
+    id: 'gs-3',
+    source: 'direct',
+    service: 'Keratin bakımı',
+    proId: '',
+    proName: 'Glamour Salon',
+    proImage: SALON_IMG,
+    uzmanName: 'Saule',
+    startMs: almatySlotMs(SEED_NOW, 2, 12, 30),
+    durationMin: 120,
+    price: 22000,
+    status: 'confirmed',
+  },
+  {
+    id: 'gs-4',
+    source: 'photo_quote',
+    service: 'Gelin saçı',
+    proId: '',
+    proName: 'Glamour Salon',
+    proImage: SALON_IMG,
+    uzmanName: 'Aigerim',
+    startMs: almatySlotMs(SEED_NOW, -4, 10, 0),
+    durationMin: 90,
+    price: 20000,
+    status: 'completed',
+  },
+  {
+    id: 'gs-5',
+    source: 'direct',
+    service: 'Röfle / Balayage',
+    proId: '',
+    proName: 'Glamour Salon',
+    proImage: SALON_IMG,
+    uzmanName: 'Madina',
+    startMs: almatySlotMs(SEED_NOW, -9, 15, 0),
+    durationMin: 150,
+    price: 28000,
+    status: 'completed',
   },
 ];
 

@@ -55,10 +55,12 @@ export default function SalonAgendaScreen() {
     }
     return [...map.entries()].sort((a, b) => a[0] - b[0]);
   };
-  // §10.2 GENEL — TÜM uzmanların TÜM randevuları (operasyonel görünürlük; §10 gereği FİYATSIZ)
-  const allGrouped = useMemo(() => groupByDay(bookings), [bookings]);
+  // YALNIZ BU SALONA ait randevular (başka salon/uzmanların işleri ASLA görünmez)
+  const mine = useMemo(() => bookings.filter((b) => b.proName === salonName), [bookings, salonName]);
+  // §10.2 GENEL — salonun TÜM uzmanlarının TÜM randevuları (operasyonel görünürlük; §10 gereği FİYATSIZ)
+  const allGrouped = useMemo(() => groupByDay(mine), [mine]);
   // RANDEVULAR — yalnız salonun KENDİ aldığı offline randevular (fiyatlı; salon belirledi)
-  const salonGrouped = useMemo(() => groupByDay(bookings.filter((b) => b.bySalon)), [bookings]);
+  const salonGrouped = useMemo(() => groupByDay(mine.filter((b) => b.bySalon)), [mine]);
 
   const statusTone = (s: BookingStatus) =>
     s === 'confirmed'

@@ -46,6 +46,8 @@ export default function BookingDetailScreen() {
   const rejectReassignment = useStore((s) => s.rejectReassignment);
   const role = useStore((s) => s.currentUser?.role);
   const isProvider = !!role && role !== 'customer';
+  // §10 gizlilik — SALON, uzmanın KENDİ işinin (bySalon değil) parasını/adresini görmez.
+  const salonHidesMoney = role === 'salon' && !booking?.bySalon;
 
   const [proposeOpen, setProposeOpen] = useState(false);
   const [proposeSel, setProposeSel] = useState<number | null>(null);
@@ -186,13 +188,17 @@ export default function BookingDetailScreen() {
             icon="git-branch-outline"
             labelKey="booking.detail.source"
             value={t(SOURCE_KEY[booking.source])}
+            last={salonHidesMoney}
           />
-          <Field
-            icon="pricetag-outline"
-            labelKey="booking.field.price"
-            value={formatPrice(booking.price)}
-            last
-          />
+          {/* §10 gizlilik — salon uzmanın kendi işinin fiyatını görmez */}
+          {salonHidesMoney ? null : (
+            <Field
+              icon="pricetag-outline"
+              labelKey="booking.field.price"
+              value={formatPrice(booking.price)}
+              last
+            />
+          )}
         </View>
 
         {/* İletişim: offline/salon randevusunda ADRES YOK (zaten salonda) → müşteri adı + telefon */}
@@ -210,8 +216,8 @@ export default function BookingDetailScreen() {
               last
             />
           </View>
-        ) : showContact ? (
-          // Online AYNA randevusu → salon adresi + telefon (müşteri nereye gideceğini bilir)
+        ) : !isProvider && showContact ? (
+          // Online AYNA randevusu → salon adresi + telefon YALNIZ müşteriye (uzman/salon için kendi adresi, gereksiz)
           <>
             <View style={[styles.card, shadow.card]}>
               <Field
@@ -458,9 +464,9 @@ export default function BookingDetailScreen() {
           </View>
         ) : null}
 
-        {/* Aksiyonlar */}
+        {/* Aksiyonlar — §4.6: SALON randevuyu değiştiremez (yalnız Randevu ekle ile ekler), aksiyon görmez */}
         <View style={styles.actions}>
-          {isProvider ? (
+          {role === 'salon' ? null : isProvider ? (
             <>
               {/* §4.1 — uzman yanıtı: kabul / alternatif / reddet */}
               {booking.status === 'awaiting_provider' ? (
