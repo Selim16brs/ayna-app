@@ -1053,6 +1053,53 @@ export const SEED_APPOINTMENTS: Appointment[] = [
   },
 ];
 
+// §10/§4 — UZMANIN GEÇMİŞ MÜŞTERİLERİ (geri-çağırma listesi kaynağı).
+// Her hizmet periyodiktir (taksonomi periodDays); son gelişten periyot kadar geçince
+// uzman memnun müşteriyi sıcak bir bildirimle geri çağırabilir → retention + gelir köprüsü.
+export interface PastClient {
+  id: string;
+  name: string;
+  image?: string;
+  serviceId: string; // taksonomi hizmeti — periyot + etiket buradan gelir
+  lastVisitMs: number; // son geliş zamanı
+}
+const DAY_MS = 24 * 60 * 60_000;
+export const SELLER_PAST_CLIENTS: PastClient[] = [
+  // periyodu GEÇMİŞ (zamanı geldi) — kart üstte, vurgulu
+  { id: 'pc-1', name: 'Zhanel S.', image: avatar(FACES[3]!), serviceId: 'nails-gel', lastVisitMs: SEED_NOW - 27 * DAY_MS }, // periyot 21 → 6 gün geçti
+  { id: 'pc-2', name: 'Dana K.', image: avatar(FACES[4]!), serviceId: 'lashes-classic', lastVisitMs: SEED_NOW - 26 * DAY_MS }, // periyot 21 → 5 gün geçti
+  { id: 'pc-3', name: 'Saule N.', image: avatar(FACES[5]!), serviceId: 'skin-facial', lastVisitMs: SEED_NOW - 44 * DAY_MS }, // periyot 30 → 14 gün geçti
+  { id: 'pc-4', name: 'Aigerim T.', image: avatar(FACES[6]!), serviceId: 'hair-color', lastVisitMs: SEED_NOW - 43 * DAY_MS }, // periyot 42 → 1 gün geçti
+  // periyodu YAKLAŞAN (birkaç gün kaldı)
+  { id: 'pc-5', name: 'Madina B.', image: avatar(FACES[7]!), serviceId: 'nails-classic', lastVisitMs: SEED_NOW - 12 * DAY_MS }, // periyot 15 → 3 gün kaldı
+  { id: 'pc-6', name: 'Aruzhan M.', image: avatar(FACES[0]!), serviceId: 'brows-shape', lastVisitMs: SEED_NOW - 17 * DAY_MS }, // periyot 21 → 4 gün kaldı
+];
+
+// §10/§4/§14.5 — kategoriye göre SICAK "geri çağırma" bildirim şablonu (params: {expert}, {service}).
+// Metinler i18n'de 3 dilde; emoji ile samimi ton. Uzman + ekran ortak kullanır.
+export interface ReengageTemplate {
+  titleKey: MessageKey;
+  bodyKey: MessageKey;
+  icon: string;
+}
+export const REENGAGE_TEMPLATES: Record<string, ReengageTemplate> = {
+  hair: { titleKey: 'notif.reengage.hair_t', bodyKey: 'notif.reengage.hair_b', icon: 'cut-outline' },
+  nails: { titleKey: 'notif.reengage.nails_t', bodyKey: 'notif.reengage.nails_b', icon: 'color-palette-outline' },
+  lashes: { titleKey: 'notif.reengage.lashes_t', bodyKey: 'notif.reengage.lashes_b', icon: 'sparkles-outline' },
+  brows: { titleKey: 'notif.reengage.brows_t', bodyKey: 'notif.reengage.brows_b', icon: 'eye-outline' },
+  skincare: { titleKey: 'notif.reengage.skincare_t', bodyKey: 'notif.reengage.skincare_b', icon: 'water-outline' },
+  epilation: { titleKey: 'notif.reengage.epilation_t', bodyKey: 'notif.reengage.epilation_b', icon: 'flash-outline' },
+  spa: { titleKey: 'notif.reengage.spa_t', bodyKey: 'notif.reengage.spa_b', icon: 'body-outline' },
+  pmu: { titleKey: 'notif.reengage.pmu_t', bodyKey: 'notif.reengage.pmu_b', icon: 'color-wand-outline' },
+};
+export const REENGAGE_FALLBACK: ReengageTemplate = {
+  titleKey: 'notif.reengage.generic_t',
+  bodyKey: 'notif.reengage.generic_b',
+  icon: 'heart-outline',
+};
+export const reengageTemplate = (categoryId: string): ReengageTemplate =>
+  REENGAGE_TEMPLATES[categoryId] ?? REENGAGE_FALLBACK;
+
 // §5.6 — kullanıcı adresleri (çoklu: ev/iş). "Sana Yakın" ve mesafe için (§3.2 C).
 export type AddressLabel = 'home' | 'work';
 export interface UserAddress {

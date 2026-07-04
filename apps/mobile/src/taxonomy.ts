@@ -49,11 +49,11 @@ export const TAXONOMY: TaxCategory[] = [
     icon: 'cut-outline',
     active: true,
     services: [
-      { id: 'hair-cut', label: { tr: 'Kesim & fön', kk: 'Қию & кептіру', ru: 'Стрижка и укладка' }, durationMin: 60, price: 9000, popular: true },
+      { id: 'hair-cut', label: { tr: 'Kesim & fön', kk: 'Қию & кептіру', ru: 'Стрижка и укладка' }, durationMin: 60, price: 9000, periodDays: 49, popular: true },
       { id: 'hair-color', label: { tr: 'Saç boyama (kök)', kk: 'Шаш бояу (түбір)', ru: 'Окрашивание (корни)' }, durationMin: 90, price: 15000, periodDays: 42, popular: true },
-      { id: 'hair-balayage', label: { tr: 'Röfle / Balayage', kk: 'Мелирлеу / Балаяж', ru: 'Мелирование / Балаяж' }, durationMin: 150, price: 28000 },
+      { id: 'hair-balayage', label: { tr: 'Röfle / Balayage', kk: 'Мелирлеу / Балаяж', ru: 'Мелирование / Балаяж' }, durationMin: 150, price: 28000, periodDays: 90 },
       { id: 'hair-keratin', label: { tr: 'Keratin / Botoks', kk: 'Кератин / Ботокс', ru: 'Кератин / Ботокс' }, durationMin: 120, price: 22000, periodDays: 120 },
-      { id: 'hair-care', label: { tr: 'Saç bakımı', kk: 'Шаш күтімі', ru: 'Уход за волосами' }, durationMin: 60, price: 12000 },
+      { id: 'hair-care', label: { tr: 'Saç bakımı', kk: 'Шаш күтімі', ru: 'Уход за волосами' }, durationMin: 60, price: 12000, periodDays: 30 },
       { id: 'hair-style', label: { tr: 'Şekillendirme / Fön', kk: 'Сәндеу / Кептіру', ru: 'Укладка' }, durationMin: 45, price: 7000 },
       { id: 'hair-braid', label: { tr: 'Örgü', kk: 'Өру', ru: 'Плетение' }, durationMin: 60, price: 8000 },
       { id: 'hair-bridal', label: { tr: 'Gelin saçı', kk: 'Қалыңдық шашы', ru: 'Свадебная причёска' }, durationMin: 90, price: 20000 },
@@ -69,7 +69,7 @@ export const TAXONOMY: TaxCategory[] = [
       { id: 'nails-hardware', label: { tr: 'Aparat manikür', kk: 'Аппараттық маникюр', ru: 'Аппаратный маникюр' }, durationMin: 60, price: 7000, periodDays: 18 },
       { id: 'nails-gel', label: { tr: 'Jel / Kalıcı oje', kk: 'Гель-лак', ru: 'Гель-лак' }, durationMin: 60, price: 9000, periodDays: 21, popular: true },
       { id: 'nails-extension', label: { tr: 'Protez tırnak', kk: 'Тырнақ ұзарту', ru: 'Наращивание ногтей' }, durationMin: 120, price: 18000, periodDays: 21 },
-      { id: 'nails-art', label: { tr: 'Nail art', kk: 'Nail art', ru: 'Дизайн ногтей' }, durationMin: 90, price: 13000 },
+      { id: 'nails-art', label: { tr: 'Nail art', kk: 'Nail art', ru: 'Дизайн ногтей' }, durationMin: 90, price: 13000, periodDays: 21 },
       { id: 'nails-pedi', label: { tr: 'Pedikür', kk: 'Педикюр', ru: 'Педикюр' }, durationMin: 60, price: 8000, periodDays: 30 },
     ],
   },
@@ -82,7 +82,7 @@ export const TAXONOMY: TaxCategory[] = [
       { id: 'lashes-classic', label: { tr: 'İpek kirpik', kk: 'Классикалық кірпік', ru: 'Классическое наращивание' }, durationMin: 90, price: 14000, periodDays: 21, popular: true },
       { id: 'lashes-volume', label: { tr: 'Volüm teknikleri', kk: 'Көлемді кірпік', ru: 'Объёмное наращивание' }, durationMin: 120, price: 18000, periodDays: 21 },
       { id: 'lashes-lift', label: { tr: 'Lifting / Laminasyon', kk: 'Лифтинг / Ламинация', ru: 'Ламинирование ресниц' }, durationMin: 60, price: 10000, periodDays: 42 },
-      { id: 'lashes-tint', label: { tr: 'Kirpik boyama', kk: 'Кірпік бояу', ru: 'Окрашивание ресниц' }, durationMin: 30, price: 5000 },
+      { id: 'lashes-tint', label: { tr: 'Kirpik boyama', kk: 'Кірпік бояу', ru: 'Окрашивание ресниц' }, durationMin: 30, price: 5000, periodDays: 28 },
     ],
   },
   {
@@ -95,7 +95,7 @@ export const TAXONOMY: TaxCategory[] = [
       { id: 'brows-lam', label: { tr: 'Laminasyon', kk: 'Қас ламинациясы', ru: 'Ламинирование бровей' }, durationMin: 60, price: 11000, periodDays: 42 },
       { id: 'brows-tint', label: { tr: 'Boyama', kk: 'Қас бояу', ru: 'Окрашивание бровей' }, durationMin: 30, price: 5000, periodDays: 30 },
       { id: 'brows-henna', label: { tr: 'Kına', kk: 'Хна', ru: 'Хна для бровей' }, durationMin: 40, price: 6000, periodDays: 30 },
-      { id: 'brows-micro', label: { tr: 'Microblading / Powder', kk: 'Микроблейдинг / Pudra', ru: 'Микроблейдинг / Пудровые' }, durationMin: 120, price: 30000 },
+      { id: 'brows-micro', label: { tr: 'Microblading / Powder', kk: 'Микроблейдинг / Pudra', ru: 'Микроблейдинг / Пудровые' }, durationMin: 120, price: 30000, periodDays: 365 },
     ],
   },
   {
@@ -119,8 +119,8 @@ export const TAXONOMY: TaxCategory[] = [
       { id: 'skin-facial', label: { tr: 'Klasik yüz bakımı', kk: 'Классикалық бет күтімі', ru: 'Классический уход за лицом' }, durationMin: 60, price: 12000, periodDays: 30, popular: true },
       { id: 'skin-clean', label: { tr: 'Temizleme', kk: 'Тазалау', ru: 'Чистка лица' }, durationMin: 75, price: 14000, periodDays: 30 },
       { id: 'skin-peel', label: { tr: 'Peeling', kk: 'Пилинг', ru: 'Пилинг' }, durationMin: 45, price: 13000, periodDays: 30 },
-      { id: 'skin-antiage', label: { tr: 'Anti-age uygulama', kk: 'Анти-эйдж процедурасы', ru: 'Анти-возрастной уход' }, durationMin: 60, price: 18000 },
-      { id: 'skin-massage', label: { tr: 'Yüz masajı', kk: 'Бет массажы', ru: 'Массаж лица' }, durationMin: 45, price: 9000 },
+      { id: 'skin-antiage', label: { tr: 'Anti-age uygulama', kk: 'Анти-эйдж процедурасы', ru: 'Анти-возрастной уход' }, durationMin: 60, price: 18000, periodDays: 30 },
+      { id: 'skin-massage', label: { tr: 'Yüz masajı', kk: 'Бет массажы', ru: 'Массаж лица' }, durationMin: 45, price: 9000, periodDays: 21 },
     ],
   },
   {
@@ -140,10 +140,10 @@ export const TAXONOMY: TaxCategory[] = [
     icon: 'body-outline',
     active: true,
     services: [
-      { id: 'spa-relax', label: { tr: 'Klasik / Relax masaj', kk: 'Классикалық массаж', ru: 'Классический массаж' }, durationMin: 60, price: 12000, popular: true },
-      { id: 'spa-cellulite', label: { tr: 'Anti-selülit masaj', kk: 'Анти-целлюлит массаж', ru: 'Антицеллюлитный массаж' }, durationMin: 60, price: 14000 },
-      { id: 'spa-ritual', label: { tr: 'SPA ritüeli', kk: 'SPA рәсімі', ru: 'SPA-ритуал' }, durationMin: 90, price: 20000 },
-      { id: 'spa-wrap', label: { tr: 'Vücut sargısı', kk: 'Дене орау', ru: 'Обёртывание' }, durationMin: 75, price: 16000 },
+      { id: 'spa-relax', label: { tr: 'Klasik / Relax masaj', kk: 'Классикалық массаж', ru: 'Классический массаж' }, durationMin: 60, price: 12000, periodDays: 30, popular: true },
+      { id: 'spa-cellulite', label: { tr: 'Anti-selülit masaj', kk: 'Анти-целлюлит массаж', ru: 'Антицеллюлитный массаж' }, durationMin: 60, price: 14000, periodDays: 14 },
+      { id: 'spa-ritual', label: { tr: 'SPA ritüeli', kk: 'SPA рәсімі', ru: 'SPA-ритуал' }, durationMin: 90, price: 20000, periodDays: 45 },
+      { id: 'spa-wrap', label: { tr: 'Vücut sargısı', kk: 'Дене орау', ru: 'Обёртывание' }, durationMin: 75, price: 16000, periodDays: 21 },
     ],
   },
   {
@@ -152,9 +152,9 @@ export const TAXONOMY: TaxCategory[] = [
     icon: 'color-wand-outline',
     active: true,
     services: [
-      { id: 'pmu-lip', label: { tr: 'Dudak', kk: 'Ерін', ru: 'Перманент губ' }, durationMin: 120, price: 35000, popular: true },
-      { id: 'pmu-eyeliner', label: { tr: 'Eyeliner', kk: 'Көз айналасы', ru: 'Перманент век' }, durationMin: 120, price: 30000 },
-      { id: 'pmu-brow', label: { tr: 'Kaş (microblading)', kk: 'Қас (микроблейдинг)', ru: 'Перманент бровей' }, durationMin: 120, price: 32000 },
+      { id: 'pmu-lip', label: { tr: 'Dudak', kk: 'Ерін', ru: 'Перманент губ' }, durationMin: 120, price: 35000, periodDays: 365, popular: true },
+      { id: 'pmu-eyeliner', label: { tr: 'Eyeliner', kk: 'Көз айналасы', ru: 'Перманент век' }, durationMin: 120, price: 30000, periodDays: 540 },
+      { id: 'pmu-brow', label: { tr: 'Kaş (microblading)', kk: 'Қас (микроблейдинг)', ru: 'Перманент бровей' }, durationMin: 120, price: 32000, periodDays: 365 },
     ],
   },
   {
@@ -202,6 +202,16 @@ export const servicesOf = (categoryId: string): TaxService[] => findCategory(cat
 export const allServices = (): TaxService[] => TAXONOMY.flatMap((c) => c.services);
 export const findService = (id: string): TaxService | undefined =>
   allServices().find((s) => s.id === id);
+/** Hizmeti kategorisiyle birlikte bul (geri-çağırma bildirimi kategori tonunu kullanır). */
+export const findServiceWithCategory = (
+  id: string,
+): { categoryId: string; service: TaxService } | undefined => {
+  for (const c of TAXONOMY) {
+    const service = c.services.find((s) => s.id === id);
+    if (service) return { categoryId: c.id, service };
+  }
+  return undefined;
+};
 /** Bakım döngüsü olan hizmetler (bakım takvimi seçimi için). */
 export const careableServices = (): { categoryId: string; service: TaxService }[] =>
   TAXONOMY.flatMap((c) => c.services.filter((s) => s.periodDays != null).map((service) => ({ categoryId: c.id, service })));

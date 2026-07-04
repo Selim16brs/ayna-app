@@ -46,6 +46,7 @@ import {
   SEED_NOTIFICATIONS,
   NOTIFICATION_TTL_MS,
   SEED_PERSONAL_LOGS,
+  reengageTemplate,
   type UpcomingEvent,
   type UserAddress,
 } from './data';
@@ -81,6 +82,7 @@ const TONE_ICON: Record<PersonalTone, string> = {
   lavender: 'calendar-outline',
   blue: 'notifications-outline',
 };
+
 
 export interface AddBookingInput {
   source: BookingSource;
@@ -215,6 +217,15 @@ interface State {
     durationMin: number;
     price: number;
   }) => string;
+  // §10/§4 — GERİ ÇAĞIRMA: uzman, hizmet periyodu dolan memnun müşteriye sıcak bildirim gönderir (retention)
+  reengagedIds: string[];
+  sendReengage: (input: {
+    clientId: string;
+    customerName: string;
+    serviceLabel: string;
+    categoryId: string;
+    expertName: string;
+  }) => void;
   // Faz 3 — dolu uzmana bekleme listesine eklenme
   joinWaitlist: (pro: { id: string; name: string; image: string; service: string }) => void;
   cancelBooking: (id: string, reason?: string) => void;
@@ -438,6 +449,7 @@ export const useStore = create<State>()(
   followerNames: ['Aizhan', 'Gulnara', 'Madina', 'Saule', 'Zhanar', 'Kamila', 'Aruzhan', 'Nazerke'],
   addresses: [{ id: 'ad1', label: 'home', detail: 'Almatı, Dostyk 12' }],
   premium: false,
+  reengagedIds: [],
   points: 340,
   raffleEntries: 5,
   firstBookingBonusGiven: false,
@@ -557,6 +569,23 @@ export const useStore = create<State>()(
       route: `/booking/${id}`,
     });
     return id;
+  },
+
+  // §10/§4 — GERİ ÇAĞIRMA: uzman, periyodu dolan memnun müşteriye sıcak bir bildirim gönderir.
+  // Bildirim müşteri modunda görünür (audience 'user'); kategoriye göre samimi şablon + emoji.
+  sendReengage: (input) => {
+    if (get().reengagedIds.includes(input.clientId)) return; // aynı döngüde tekrar gönderme (spam önleme)
+    const tpl = reengageTemplate(input.categoryId);
+    get().pushNotification({
+      type: 'quote', // dokununca talep/randevu köprüsüne gider (retention → gelir)
+      audience: 'user',
+      titleKey: tpl.titleKey,
+      bodyKey: tpl.bodyKey,
+      params: { expert: input.expertName, service: input.serviceLabel },
+      dateLabel: 'Az önce',
+      icon: tpl.icon,
+    });
+    set((s) => ({ reengagedIds: [...s.reengagedIds, input.clientId] }));
   },
 
   // Faz 3 — bekleme listesi: dolu uzmana eklenir, yer açılınca bildirilir (auto-promote ileride)
