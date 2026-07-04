@@ -139,20 +139,27 @@ export default function SalonHomeScreen() {
             </>
           ) : null}
 
-          {/* §10.1 — uzman performansları (çekirdek) */}
+          {/* §10.1 — uzman performansları (çekirdek). Reklam bloğundan NET ayrım için ayırıcı + accent başlık */}
+          <View style={styles.sectionDivider} />
           <View style={styles.sectionHead}>
-            <Text variant="bodyStrong" tone="ink">
-              {t('salon.home.staff_title')}
-            </Text>
-            <PressableScale onPress={() => router.push('/salon/staff')}>
+            <View style={styles.sectionTitleWrap}>
+              <View style={styles.sectionAccent} />
+              <View style={styles.flex}>
+                <Text variant="bodyStrong" tone="ink">
+                  {t('salon.home.staff_title')}
+                </Text>
+                <Text variant="caption" tone="muted" style={styles.sectionSub}>
+                  {t('salon.home.staff_sub')}
+                </Text>
+              </View>
+            </View>
+            <PressableScale onPress={() => router.push('/salon/staff')} style={styles.seeAllBtn}>
               <Text variant="caption" tone="accentFg" style={styles.seeAll}>
                 {t('salon.quick.staff')}
               </Text>
+              <Ionicons name="chevron-forward" size={13} color={colors.accentFg} />
             </PressableScale>
           </View>
-          <Text variant="caption" tone="muted" style={styles.sectionSub}>
-            {t('salon.home.staff_sub')}
-          </Text>
           <View style={styles.staffList}>
             {staff.map((u) => {
               const p = perf(u.name, u.rating);
@@ -299,9 +306,27 @@ const makeStyles = (colors: ColorTokens) =>
     },
     upsellIcon: { width: 42, height: 42, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
     upsellCta: { fontWeight: '800', marginTop: 3 },
-    sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    sectionDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.line,
+      marginTop: space(3.5),
+      marginBottom: space(2.5),
+    },
+    sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space(1.75) },
+    sectionTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: space(1.25), flex: 1 },
+    sectionAccent: { width: 3, height: 30, borderRadius: 2, backgroundColor: colors.accentFg },
+    seeAllBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+      backgroundColor: colors.accentSoft,
+      paddingLeft: space(1.25),
+      paddingRight: space(0.75),
+      paddingVertical: space(0.5),
+      borderRadius: radius.pill,
+    },
     seeAll: { fontWeight: '700' },
-    sectionSub: { marginTop: 2, marginBottom: space(1.5) },
+    sectionSub: { marginTop: 1 },
     staffList: { gap: space(1.25) },
     staffCard: {
       flexDirection: 'row',
