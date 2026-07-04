@@ -7,6 +7,8 @@ import { AdminService } from './admin.service';
 
 const rejectSchema = z.object({ reason: z.string().max(300).optional() });
 const restrictSchema = z.object({ reason: z.string().min(1).max(300) });
+// §7.2 — itiraz kararı: yorumu tut (keep) veya kural ihlalinde gizle (remove)
+const resolveDisputeSchema = z.object({ action: z.enum(['keep', 'remove']) });
 const featuredSchema = z.object({ featured: z.boolean() });
 const activeSchema = z.object({ active: z.boolean() });
 const thresholdSchema = z.object({ value: z.number().int().min(1).max(50) });
@@ -163,6 +165,20 @@ export class AdminController {
   @Post('users/:id/unrestrict')
   unrestrictUser(@Param('id') id: string) {
     return this.admin.unrestrictUser(id);
+  }
+
+  // §7.2 — yorum itiraz kuyruğu + karar (tut/gizle). Dürüst negatif yorum silinmez.
+  @Get('reviews/disputes')
+  disputedReviews() {
+    return this.admin.disputedReviews();
+  }
+
+  @Post('reviews/:id/resolve')
+  resolveDispute(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(resolveDisputeSchema)) body: { action: 'keep' | 'remove' },
+  ) {
+    return this.admin.resolveDispute(id, body.action);
   }
 
   // Randevular (platform geneli)

@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { type Booking, BookingStatus } from '@prisma/client';
 import { hasConflict } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
+import { commissionFor } from '../commissions/commissions.calc';
 import type { CreateBookingInput } from './bookings.dto';
 
 // §4.2 — slot işgal eden durumlar (yalnız ONAY SONRASI; awaiting_provider hariç —
@@ -33,7 +34,14 @@ export class BookingsService {
   // §5 — CRM özet istatistiği: doluluk/gelir + no-show (gerçek randevulardan)
   async stats() {
     const rows = await this.prisma.booking.findMany();
-    return computeBookingStats(rows.map((b) => ({ status: b.status, price: Number(b.price) })));
+    const base = computeBookingStats(
+      rows.map((b) => ({ status: b.status, price: Number(b.price), userId: b.userId })),
+    );
+    // §12.8 — ödenecek komisyon: online ciro × oran(%); oran admin parametresi (varsayılan %15)
+    const s = await this.prisma.setting.findUnique({ where: { key: 'commission.rate' } });
+    const commissionRate = s?.intValue ?? 10;
+    const commission = commissionFor(base.commissionBase, commissionRate);
+    return { ...base, commission, commissionRate };
   }
 
   async create(input: CreateBookingInput, userId?: string) {
@@ -72,6 +80,11 @@ export class BookingsService {
   // §6.C — uzman/işletme randevuyu "gelmedi" işaretler (CRM tarafı)
   async noShow(id: string) {
     return this.transition(id, { status: 'no_show', depositForfeited: true });
+  }
+
+  // §4.1.7 — uzman hizmeti tamamladı → randevu 'completed' (değerlendirme daveti uçları buna dayanır)
+  async complete(id: string) {
+    return this.transition(id, { status: 'completed' });
   }
 
   // Kapora tutarı — admin parametresi (varsayılan 1000 ₸)
@@ -265,10 +278,16 @@ function mapBooking(b: Booking) {
 }
 
 // §5 — saf istatistik hesabı (DB'den bağımsız; test edilebilir)
-export function computeBookingStats(rows: { status: string; price: number }[]) {
+export function computeBookingStats(
+  rows: { status: string; price: number; userId?: string | null }[],
+) {
   const count = (s: string) => rows.filter((b) => b.status === s).length;
   const completedRows = rows.filter((b) => b.status === 'completed');
   const revenue = completedRows.reduce((sum, b) => sum + b.price, 0);
+  // §gelir modeli — komisyon TABANI yalnız online (AYNA aracılı, userId dolu) randevular; offline hariç.
+  const commissionBase = completedRows
+    .filter((b) => b.userId != null)
+    .reduce((sum, b) => sum + b.price, 0);
   const noShow = count('no_show');
   const cancelled = count('cancelled');
   const upcoming = rows.filter((b) =>
@@ -284,6 +303,7 @@ export function computeBookingStats(rows: { status: string; price: number }[]) {
     noShowRate,
     upcoming,
     revenue,
+    commissionBase,
     currency: 'KZT' as const,
   };
 }

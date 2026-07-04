@@ -7,7 +7,7 @@ const DEFAULT_PRO_IMAGE =
   'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=70';
 
 // Platform komisyon oranı (yüzde) — app sahibi her online randevudan bu oranı kazanır (MD: %15)
-const DEFAULT_COMMISSION_RATE = 15;
+const DEFAULT_COMMISSION_RATE = 10;
 
 interface ProInput {
   name: string;
@@ -482,6 +482,41 @@ export class AdminService {
         banEligible: remaining === 0,
       };
     });
+  }
+
+  // §7.2 — itiraz kuyruğu: uzman/işletmenin itiraz ettiği yorumlar (görünür kalır, admin karar verir)
+  async disputedReviews() {
+    const rows = await this.prisma.rating.findMany({
+      where: { disputed: true },
+      orderBy: { disputedAt: 'asc' },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      subjectId: r.subjectId,
+      score: r.score,
+      comment: r.comment,
+      authorLabel: r.authorLabel,
+      reply: r.reply,
+      disputeReason: r.disputeReason ?? '',
+      disputedAt: r.disputedAt,
+      visible: r.visible,
+    }));
+  }
+
+  // §7.2 — admin kararı: 'keep' (itirazı kapat, yorum kalır) | 'remove' (yalnız kural ihlalinde gizle)
+  async resolveDispute(id: string, action: 'keep' | 'remove') {
+    const r = await this.prisma.rating.findUnique({ where: { id } }).catch(() => null);
+    if (!r) throw new NotFoundException({ code: 'RATING_NOT_FOUND', message: 'Yorum yok' });
+    const updated = await this.prisma.rating.update({
+      where: { id },
+      data: {
+        disputed: false,
+        disputedAt: null,
+        // "Beğenmedim" tarzı dürüst negatif yorum SİLİNMEZ; yalnız kural ihlalinde gizlenir
+        ...(action === 'remove' ? { visible: false } : {}),
+      },
+    });
+    return { id: updated.id, visible: updated.visible, action };
   }
 
   async setUserPremium(id: string, isPremium: boolean) {

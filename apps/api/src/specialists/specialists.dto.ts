@@ -11,6 +11,8 @@ export const registerSpecialistSchema = z.object({
   businessId: z.string().optional(),
   code: z.string().optional(),
   certificates: z.array(z.string()).default([]),
+  // §4.4 — cihaz parmak izi (platform-izinli tanımlayıcı); kalıcı engel kontrolü için
+  deviceFp: z.string().max(200).optional(),
 });
 
 export type RegisterSpecialistInput = z.infer<typeof registerSpecialistSchema>;

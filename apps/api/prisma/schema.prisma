@@ -42,6 +42,9 @@ model User {
   // §12.3 ceza takip — kısıtlı mod (7 gün sayaçlı); süre dolunca kalıcı engel adayı
   restrictedAt  DateTime?  @map("restricted_at") @db.Timestamptz(6)
   restrictReason String?   @map("restrict_reason")
+  // §4.4 — kalıcı engel 2. katman: cihaz parmak izi (HMAC'lenmiş, platform-izinli tanımlayıcı).
+  // Telefon OTP birinci katman; yüz eşleşme (biyometrik) ileri faz — burada TUTULMAZ.
+  deviceHash    String?    @map("device_hash")
   // AI (§13.5): premium + ortak aylık kota sayacı
   isPremium     Boolean    @default(false) @map("is_premium")
   aiUsed        Int        @default(0) @map("ai_used")
@@ -305,6 +308,8 @@ model Specialist {
   id           String         @id @default(uuid()) @db.Uuid
   userId       String         @unique @map("user_id") @db.Uuid
   businessId   String?        @map("business_id") @db.Uuid
+  // §7 — uzmanın keşif kataloğundaki karşılığı (Professional.id); yorumlar subjectId = bu id.
+  proId        String?        @map("pro_id")
   kind         SpecialistKind @default(independent)
   bio          String         @default("")
   certificates String[]       @default([])
@@ -397,10 +402,15 @@ model Rating {
   // §6.D — açılınca kalıcı (silme yolu YOK); uzman/işletme yanıt verebilir (silemez)
   reply      String    @default("")
   repliedAt  DateTime? @map("replied_at") @db.Timestamptz(6)
+  // §7.2 — negatif yorum itirazı: admin kuyruğuna düşer; yorum SÜREÇ BOYUNCA görünür kalır (otomatik gizleme YOK)
+  disputed      Boolean   @default(false)
+  disputeReason String?   @map("dispute_reason")
+  disputedAt    DateTime? @map("disputed_at") @db.Timestamptz(6)
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([subjectId, visible])
   @@index([bookingId])
+  @@index([disputed])
   @@map("ratings")
 }
 

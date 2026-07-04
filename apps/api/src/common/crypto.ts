@@ -51,6 +51,11 @@ export function phoneHash(phone: string, secret: string): string {
   return createHmac('sha256', secret).update(normalizePhone(phone)).digest('hex');
 }
 
+// §4.4 — cihaz parmak izi HMAC'i (ham tanımlayıcı saklanmaz; kalıcı engel 2. katmanı)
+export function deviceHash(fingerprint: string, secret: string): string {
+  return createHmac('sha256', secret).update(`dev:${fingerprint.trim()}`).digest('hex');
+}
+
 // --- OTP (§4.6): kod düz metin saklanmaz; HMAC ile karşılaştırılır ---
 export function hashOtp(code: string, secret: string): string {
   return createHmac('sha256', secret).update(`otp:${code}`).digest('hex');

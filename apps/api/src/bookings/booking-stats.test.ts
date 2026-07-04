@@ -27,3 +27,14 @@ test('§5/§6.C — gelir yalnızca tamamlanan; no-show oranı gerçekleşen üz
   // realized = 2 completed + 1 no_show = 3 → 1/3 ≈ %33
   assert.equal(s.noShowRate, 33);
 });
+
+test('§12.8 — komisyon tabanı yalnız online (userId dolu) tamamlanan; offline/userId-yok hariç', () => {
+  const s = computeBookingStats([
+    { status: 'completed', price: 10000, userId: 'u1' }, // online
+    { status: 'completed', price: 8000, userId: null }, // offline walk-in
+    { status: 'completed', price: 5000 }, // userId yok → offline sayılır
+    { status: 'no_show', price: 6000, userId: 'u2' },
+  ]);
+  assert.equal(s.revenue, 23000, 'gelir = tüm tamamlananlar (online + offline)');
+  assert.equal(s.commissionBase, 10000, 'komisyon tabanı = yalnız online tamamlananlar');
+});

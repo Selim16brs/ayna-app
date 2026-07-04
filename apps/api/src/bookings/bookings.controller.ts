@@ -75,6 +75,12 @@ export class BookingsController {
     return this.bookings.noShow(id);
   }
 
+  // §4.1.7 — uzman hizmeti tamamladı
+  @Post(':id/complete')
+  complete(@Param('id') id: string) {
+    return this.bookings.complete(id);
+  }
+
   // §1.6 — onay/alternatif pazarlık döngüsü
   @Post(':id/approve')
   approve(@Param('id') id: string) {

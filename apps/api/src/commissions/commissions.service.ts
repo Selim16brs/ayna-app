@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { DAY_MS, commissionFor, overdueDaysBetween } from './commissions.calc';
 import type { ClosePeriodInput } from './commissions.dto';
 
-const DEFAULT_COMMISSION_RATE = 15; // MD §"gelir" — komisyon %15 (içinden %3 kullanıcıya puan)
+const DEFAULT_COMMISSION_RATE = 10; // komisyon %10 (uzman/salon → AYNA); parametrik (admin panel)
 const OVERDUE_RESTRICT_DAYS = 7; // vade + 7 gün gecikmede kısıtlı mod (§12.8)
 
 @Injectable()
@@ -38,8 +38,14 @@ export class CommissionsService {
     const due = input.dueDate ? new Date(input.dueDate) : new Date(end.getTime() + 7 * DAY_MS);
     const rate = await this.rate();
 
+    // Komisyon YALNIZ online (AYNA aracılı, userId dolu) randevulardan — offline walk-in'ler hariç.
+    // (admin.commissions() ile AYNI kural → panel = fatura = admin tutarlı)
     const bookings = await this.prisma.booking.findMany({
-      where: { status: 'completed', createdAt: { gte: start, lt: end } },
+      where: {
+        status: 'completed',
+        userId: { not: null },
+        createdAt: { gte: start, lt: end },
+      },
       select: { proId: true, proName: true, price: true },
     });
 

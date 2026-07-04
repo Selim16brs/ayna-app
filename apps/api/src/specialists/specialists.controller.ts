@@ -14,6 +14,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { type AuthedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { type RegisterSpecialistInput, registerSpecialistSchema } from './specialists.dto';
+import { disputeSchema, replySchema } from '../ratings/ratings.dto';
 import { SpecialistsService } from './specialists.service';
 import {
   type AvailabilityInput,
@@ -34,6 +35,34 @@ export class SpecialistsController {
   @Post()
   register(@Body(new ZodValidationPipe(registerSpecialistSchema)) body: RegisterSpecialistInput) {
     return this.specialists.register(body);
+  }
+
+  // §7 — uzmanın kendi işlerine yazılan yorumlar + tek yanıt hakkı
+  @Get('me/reviews')
+  @UseGuards(JwtAuthGuard)
+  myReviews(@Req() req: AuthedRequest) {
+    return this.specialists.myReviews(req.user!.id);
+  }
+
+  @Post('me/reviews/:id/reply')
+  @UseGuards(JwtAuthGuard)
+  replyReview(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(replySchema)) body: { reply: string },
+  ) {
+    return this.specialists.replyReview(req.user!.id, id, body.reply);
+  }
+
+  // §7.2 — uzman kendi yorumuna itiraz eder (admin kuyruğu); yorum görünür kalır
+  @Post('me/reviews/:id/dispute')
+  @UseGuards(JwtAuthGuard)
+  disputeReview(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(disputeSchema)) body: { reason: string },
+  ) {
+    return this.specialists.disputeReview(req.user!.id, id, body.reason);
   }
 
   // --- Takvim: müsaitlik (uzman kendi profili) ---

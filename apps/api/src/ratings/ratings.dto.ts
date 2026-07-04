@@ -17,6 +17,10 @@ export const thresholdSchema = z.object({ value: z.number().int().min(1).max(50)
 // §6.D — uzman/işletme yanıtı
 export const replySchema = z.object({ reply: z.string().min(1).max(500) });
 
+// §7.2 — negatif yoruma itiraz (kısa gerekçe; opsiyonel)
+export const disputeSchema = z.object({ reason: z.string().max(500).optional().default('') });
+
 export type SubmitRatingInput = z.infer<typeof submitRatingSchema>;
 export type ThresholdInput = z.infer<typeof thresholdSchema>;
 export type ReplyInput = z.infer<typeof replySchema>;
+export type DisputeInput = z.infer<typeof disputeSchema>;
