@@ -27,6 +27,9 @@ import {
 const isPending = (s: BookingStatus) =>
   s === 'awaiting_provider' || s === 'deposit_pending' || s === 'deposit_submitted';
 
+// §10.2 — onaylanan randevu, başlangıç saatinden 3 saat sonra (iptal yoksa) Genel takvimden otomatik düşer.
+const AUTO_HIDE_AFTER_MS = 3 * 60 * 60_000;
+
 const STATUS_KEY: Partial<Record<BookingStatus, MessageKey>> = {
   confirmed: 'booking.status.confirmed',
   completed: 'booking.status.completed',
@@ -63,7 +66,13 @@ export default function SalonAgendaScreen() {
   const mine = useMemo(() => bookings.filter((b) => b.proName === salonName), [bookings, salonName]);
   // §10.2 GENEL — salonun TÜM uzmanlarının ONAYLI/gerçek randevuları (operasyonel takvim; §10 gereği FİYATSIZ).
   // Onay bekleyenler burada YOK; uzman onaylayınca (status confirmed) otomatik buraya düşer.
-  const allGrouped = useMemo(() => groupByDay(mine.filter((b) => !isPending(b.status))), [mine]);
+  // İptal edilmemiş randevu, saatinden 3 saat sonra takvimden otomatik düşer (geçmiş temizliği).
+  const allGrouped = useMemo(() => {
+    const now = Date.now();
+    return groupByDay(
+      mine.filter((b) => !isPending(b.status) && b.startMs + AUTO_HIDE_AFTER_MS >= now),
+    );
+  }, [mine]);
   // ONAY BEKLEYEN — yalnız salonun KENDİ aldığı, uzman onayı bekleyen offline randevular (fiyatlı; salon belirledi)
   const pendingList = useMemo(() => mine.filter((b) => b.bySalon && isPending(b.status)), [mine]);
   const pendingGroups = useMemo(() => groupByDay(pendingList), [pendingList]);
