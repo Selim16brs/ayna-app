@@ -18,7 +18,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { selectCommissionRate, selectUnreadCount, useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, Screen, Segmented, TAB_BAR_CLEARANCE, Text, WaveLayered } from '../../src/ui';
+import { PressableScale, Screen, Segmented, TAB_BAR_CLEARANCE, Text, TierUpsell, WaveLayered } from '../../src/ui';
 
 type Period = 'week' | 'month' | 'all';
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -179,6 +179,10 @@ export default function ReportsScreen() {
         ) : null}
 
         <View style={styles.body}>
+        {/* §11 — üyelik teşviki (free → Premium/Platinum, premium → Platinum, platinum → gizli) */}
+        <View style={styles.upsellSlot}>
+          <TierUpsell />
+        </View>
         {/* §4.4/§9.2 — ceza/kısıt uyarısı: 7 gün sayacı + ödeme talimatı */}
         {restricted ? (
           <View style={[styles.restrictBox, shadow.soft]}>
@@ -497,6 +501,7 @@ const makeStyles = (colors: ColorTokens) =>
     content: { paddingBottom: TAB_BAR_CLEARANCE + space(2) },
     flex: { flex: 1 },
     body: { paddingHorizontal: space(3), paddingTop: space(2.5) },
+    upsellSlot: { marginBottom: space(2) },
     // Canlı Özet — iki yanda beyaz kalan DAR bant; üstü yeşilin dibine tuck (bağlı), yazılar yukarı+sıkı
     liveBand: {
       marginHorizontal: space(3),

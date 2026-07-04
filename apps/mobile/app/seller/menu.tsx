@@ -7,7 +7,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text, TierUpsell } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -56,6 +56,8 @@ export default function SellerMenuScreen() {
         </Text>
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* §11 — üyelik teşviki (katman-farkında) */}
+        <TierUpsell />
         {items.map((it) => {
           const c = tone(it.tone);
           return (

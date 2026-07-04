@@ -1200,6 +1200,13 @@ export const tr = {
   'premium.b.always_d': 'Müşterilerinle karşılıklı bağ + toplu bildirim',
   'premium.b.commission': 'Düşük komisyon: %8,5',
   'premium.b.commission_d': 'Online randevularda %10 yerine %8,5',
+  // §11 — katman-farkında üyelik teşviki
+  'upsell.toPrem.title': 'Daha çok müşteriye ulaş ✨',
+  'upsell.toPrem.body': 'Premium ile öne çık; Platinum ile sadık müşteri portföyü + düşük komisyon.',
+  'upsell.toPrem.cta': 'Paketleri keşfet',
+  'upsell.toPlat.title': "Platinum'a yüksel 💎",
+  'upsell.toPlat.body': 'Always sadık müşteri portföyü, toplu bildirim ve komisyon %8,5.',
+  'upsell.toPlat.cta': "Platinum'a geç",
   // geri çağırma ekranı (uzman)
   'reengage.title': 'Müşterini geri çağır',
   'reengage.sub': 'Hizmet periyodu dolan memnun müşterilerine sıcak bir hatırlatma gönder.',

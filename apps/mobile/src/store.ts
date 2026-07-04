@@ -1860,6 +1860,10 @@ export const inAudience = (n: { audience?: 'user' | 'seller' }, seller: boolean)
 export const selectCommissionRate = (s: State): number =>
   s.platinum ? COMMISSION_PCT_PLATINUM : COMMISSION_PCT_STANDARD;
 
+// §11 — üyelik katmanı (upsell teşviki bunu kullanır). Primitive string → hook için güvenli.
+export const selectTier = (s: State): 'free' | 'premium' | 'platinum' =>
+  s.platinum ? 'platinum' : s.premium ? 'premium' : 'free';
+
 // §11 — ALWAYS: geçerli oturumun (uzman/salon ya da müşteri) bağları.
 // NOT: bunlar SAF yardımcılar (bileşende useMemo ile çağrılır) — doğrudan useStore
 // selektörü olarak KULLANMA (her render yeni dizi → sonsuz render döngüsü).

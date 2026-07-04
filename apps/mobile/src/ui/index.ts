@@ -26,6 +26,7 @@ export { SalonTabBar } from './SalonTabBar';
 export { Placeholder } from './Placeholder';
 export { StackHeader } from './StackHeader';
 export { Segmented } from './Segmented';
+export { TierUpsell } from './TierUpsell';
 export { NailCursor } from './NailCursor';
 export { PressableScale } from './PressableScale';
 export { Progress } from './Progress';

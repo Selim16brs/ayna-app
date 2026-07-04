@@ -6,11 +6,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SEED_SUPPLIER_ADS, SELLER_DATA, type SupplierAd } from '../../src/data';
 import { greetingKey } from '../../src/greeting';
-import { fillParams, useLocale } from '../../src/locale';
+import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text, TierUpsell } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -24,7 +24,6 @@ export default function SalonHomeScreen() {
 
   const salonName = useStore((s) => s.currentUser?.name) ?? 'Salon';
   const unread = useStore(selectUnreadCount);
-  const premium = useStore((s) => s.premium);
   const avatarUri = useStore((s) => s.avatarUri);
   const setAvatar = useStore((s) => s.setAvatar);
   const staff = SELLER_DATA.month.staff;
@@ -97,25 +96,8 @@ export default function SalonHomeScreen() {
         <View style={styles.body}>
           {/* §10 gizlilik — salon panelinde gelir/komisyon GÖSTERİLMEZ (uzmanın şahsi para alanı) */}
 
-          {/* §11.2 — görünürlük upsell */}
-          {!premium ? (
-            <PressableScale style={[styles.upsell, shadow.soft]} onPress={() => router.push('/seller/premium')}>
-              <LinearGradient colors={gradients.gold} style={styles.upsellIcon}>
-                <Ionicons name="sparkles" size={18} color={colors.onAccent} />
-              </LinearGradient>
-              <View style={styles.flex}>
-                <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                  {t('salon.upsell.title')}
-                </Text>
-                <Text variant="caption" tone="muted" numberOfLines={2}>
-                  {fillParams(t('salon.upsell.body'), { n: 7 })}
-                </Text>
-                <Text variant="caption" tone="accentFg" style={styles.upsellCta}>
-                  {t('salon.upsell.cta')} →
-                </Text>
-              </View>
-            </PressableScale>
-          ) : null}
+          {/* §11 — katman-farkında üyelik teşviki (free → Premium/Platinum, premium → Platinum) */}
+          <TierUpsell />
 
           {/* §5.1.6 tarzı — sponsorlu tedarikçi reklamları (uzman performanslarının ÜSTÜNDE) */}
           {ads.length > 0 ? (

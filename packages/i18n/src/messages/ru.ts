@@ -1117,6 +1117,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'premium.b.always_d': 'Взаимная связь с клиентами + рассылка',
   'premium.b.commission': 'Низкая комиссия: 8,5%',
   'premium.b.commission_d': 'На онлайн-записях 8,5% вместо 10%',
+  // §11 — многоуровневое поощрение подписки
+  'upsell.toPrem.title': 'Больше клиентов ✨',
+  'upsell.toPrem.body': 'С Premium — выше в поиске; с Platinum — список постоянных клиентов + низкая комиссия.',
+  'upsell.toPrem.cta': 'Смотреть пакеты',
+  'upsell.toPlat.title': 'Перейди на Platinum 💎',
+  'upsell.toPlat.body': 'Список постоянных клиентов Always, рассылка и комиссия 8,5%.',
+  'upsell.toPlat.cta': 'Перейти на Platinum',
   // экран возврата клиента (мастер)
   'reengage.title': 'Вернуть клиента',
   'reengage.sub': 'Отправь тёплое напоминание довольным клиентам, у кого истёк период услуги.',

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { formatPrice, PLATINUM_PRICE_KZT, PREMIUM_PRICE_KZT } from '../../src/data';
@@ -36,7 +36,8 @@ export default function SellerPremiumScreen() {
   const setPremium = useStore((s) => s.setPremium);
   const setPlatinum = useStore((s) => s.setPlatinum);
 
-  const [tier, setTier] = useState<'premium' | 'platinum'>('platinum');
+  const { tier: tierParam } = useLocalSearchParams<{ tier?: string }>();
+  const [tier, setTier] = useState<'premium' | 'platinum'>(tierParam === 'premium' ? 'premium' : 'platinum');
   const isPlat = tier === 'platinum';
   const tierPrice = isPlat ? PLATINUM_PRICE_KZT : PREMIUM_PRICE_KZT;
   const benefits = isPlat ? [...BENEFITS, ...PLATINUM_BENEFITS] : BENEFITS;

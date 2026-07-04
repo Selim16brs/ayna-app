@@ -1117,6 +1117,13 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'premium.b.always_d': 'Клиенттермен өзара байланыс + топтық хабарлама',
   'premium.b.commission': 'Төмен комиссия: 8,5%',
   'premium.b.commission_d': 'Онлайн жазылуларда 10% орнына 8,5%',
+  // §11 — деңгейге сай мүшелік ынталандыруы
+  'upsell.toPrem.title': 'Көбірек клиентке жет ✨',
+  'upsell.toPrem.body': 'Premium-мен алда бол; Platinum-мен адал клиент портфолиосы + төмен комиссия.',
+  'upsell.toPrem.cta': 'Пакеттерді ашу',
+  'upsell.toPlat.title': "Platinum'ға көтеріл 💎",
+  'upsell.toPlat.body': 'Always адал клиент портфолиосы, топтық хабарлама және комиссия 8,5%.',
+  'upsell.toPlat.cta': "Platinum'ға өту",
   // қайта шақыру экраны (маман)
   'reengage.title': 'Клиентіңді қайта шақыр',
   'reengage.sub': 'Қызмет кезеңі аяқталған риза клиенттеріңе жылы еске салу жібер.',
