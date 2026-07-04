@@ -22,7 +22,11 @@ import {
   formatTrDate,
 } from '../../src/ui';
 
-// §10.2 — SALON rezervasyon takvimi: iki sekme (Randevular · Randevu ekle).
+// §10.2 — SALON rezervasyon takvimi: üç sekme (Genel · Randevular · Ekle).
+// Randevular kendi içinde onay bekleyen ↔ onaylanan olarak ayrılır.
+const isPending = (s: BookingStatus) =>
+  s === 'awaiting_provider' || s === 'deposit_pending' || s === 'deposit_submitted';
+
 const STATUS_KEY: Partial<Record<BookingStatus, MessageKey>> = {
   confirmed: 'booking.status.confirmed',
   completed: 'booking.status.completed',
@@ -43,6 +47,7 @@ export default function SalonAgendaScreen() {
   const staff = SELLER_DATA.month.staff;
 
   const [tab, setTab] = useState<'all' | 'list' | 'add'>('all');
+  const [listSub, setListSub] = useState<'pending' | 'confirmed'>('pending');
 
   const groupByDay = (list: Appointment[]) => {
     const active = list.filter((b) => b.status !== 'cancelled').sort((a, b) => a.startMs - b.startMs);
@@ -59,8 +64,13 @@ export default function SalonAgendaScreen() {
   const mine = useMemo(() => bookings.filter((b) => b.proName === salonName), [bookings, salonName]);
   // §10.2 GENEL — salonun TÜM uzmanlarının TÜM randevuları (operasyonel görünürlük; §10 gereği FİYATSIZ)
   const allGrouped = useMemo(() => groupByDay(mine), [mine]);
-  // RANDEVULAR — yalnız salonun KENDİ aldığı offline randevular (fiyatlı; salon belirledi)
-  const salonGrouped = useMemo(() => groupByDay(mine.filter((b) => b.bySalon)), [mine]);
+  // RANDEVULAR — yalnız salonun KENDİ aldığı offline randevular (fiyatlı; salon belirledi),
+  // kendi içinde onay bekleyen ↔ onaylanan diye ayrılır
+  const salonBookings = useMemo(() => mine.filter((b) => b.bySalon && b.status !== 'cancelled'), [mine]);
+  const pendingList = useMemo(() => salonBookings.filter((b) => isPending(b.status)), [salonBookings]);
+  const confirmedList = useMemo(() => salonBookings.filter((b) => !isPending(b.status)), [salonBookings]);
+  const pendingGroups = useMemo(() => groupByDay(pendingList), [pendingList]);
+  const confirmedGroups = useMemo(() => groupByDay(confirmedList), [confirmedList]);
 
   const statusTone = (s: BookingStatus) =>
     s === 'confirmed'
@@ -167,7 +177,28 @@ export default function SalonAgendaScreen() {
       ) : tab === 'all' ? (
         renderList(allGrouped, false, 'salon.cal.all_empty')
       ) : (
-        renderList(salonGrouped, true, 'salon.cal.empty')
+        <>
+          {/* Randevular içi ayrım: onay bekleyen ↔ onaylanan */}
+          <View style={styles.subSegWrap}>
+            <Segmented
+              options={[
+                {
+                  value: 'pending',
+                  label: `${t('salon.cal.sub_pending')}${pendingList.length ? ` (${pendingList.length})` : ''}`,
+                },
+                {
+                  value: 'confirmed',
+                  label: `${t('salon.cal.sub_confirmed')}${confirmedList.length ? ` (${confirmedList.length})` : ''}`,
+                },
+              ]}
+              value={listSub}
+              onChange={setListSub}
+            />
+          </View>
+          {listSub === 'pending'
+            ? renderList(pendingGroups, true, 'salon.cal.pending_empty')
+            : renderList(confirmedGroups, true, 'salon.cal.confirmed_empty')}
+        </>
       )}
     </Screen>
   );
@@ -329,6 +360,7 @@ function Field({ label, children, flex }: { label: string; children: React.React
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     segWrap: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(1) },
+    subSegWrap: { paddingHorizontal: space(3), paddingBottom: space(0.5) },
     content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(1.25) },
     flex: { flex: 1 },
     card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
