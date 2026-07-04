@@ -24,6 +24,7 @@ import {
   type CommissionInvoice,
   type Commissions,
   type Dispute,
+  type ReviewDispute,
   clearToken,
   getToken,
   type MarketPrice,
@@ -50,6 +51,7 @@ type Tab =
   | 'prices'
   | 'bookings'
   | 'disputes'
+  | 'reviewDisputes'
   | 'quotes'
   | 'campaigns'
   | 'ads'
@@ -92,6 +94,7 @@ export default function AdminApp() {
     { id: 'prices', label: 'Fiyatlar', icon: '🏷️' },
     { id: 'bookings', label: 'Randevular', icon: '📅' },
     { id: 'disputes', label: 'Anlaşmazlık', icon: '⚖️' },
+    { id: 'reviewDisputes', label: 'Yorum İtirazı', icon: '🗣️' },
     { id: 'quotes', label: 'Teklifler', icon: '📩' },
     { id: 'campaigns', label: 'Kampanya & Banner', icon: '🎯' },
     { id: 'ads', label: 'Reklamlar', icon: '📢' },
@@ -133,6 +136,7 @@ export default function AdminApp() {
         {tab === 'prices' && <PricesView />}
         {tab === 'bookings' && <BookingsAdminView />}
         {tab === 'disputes' && <DisputesView />}
+        {tab === 'reviewDisputes' && <ReviewDisputesView />}
         {tab === 'quotes' && <QuotesView />}
         {tab === 'campaigns' && <CampaignsView />}
         {tab === 'ads' && <AdsView />}
@@ -2242,6 +2246,70 @@ function DisputesView() {
           </div>
         </>
       )}
+    </>
+  );
+}
+
+// §7.2 — yorum itiraz kuyruğu: uzman/işletme itirazı; yorum görünür kalır, admin tut/gizle karar verir.
+function ReviewDisputesView() {
+  const { data, reload } = useAsync<ReviewDispute[]>(() => api.reviewDisputes(), []);
+  const list = data ?? [];
+
+  const resolve = async (d: ReviewDispute, action: 'keep' | 'remove') => {
+    const msg =
+      action === 'remove'
+        ? 'Bu yorumu GİZLE? Yalnızca kural ihlali (hakaret, kişisel bilgi, alakasız içerik, sahte yorum) varsa yapılır. Dürüst negatif yorum silinmez.'
+        : 'İtirazı kapat ve yorumu OLDUĞU GİBİ tut?';
+    if (!confirm(msg)) return;
+    await api.resolveReviewDispute(d.id, action);
+    reload();
+  };
+
+  const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
+
+  return (
+    <>
+      <h1 className="page-title">Yorum İtiraz Kuyruğu</h1>
+      <p className="page-sub">
+        Uzman/işletmenin itiraz ettiği yorumlar. Sabit ilke: yorum inceleme boyunca görünür kalır;
+        yalnızca kural ihlalinde gizlenir — “hizmeti beğenmedim” türü dürüst negatif yorum SİLİNMEZ.
+      </p>
+
+      <div className="section-title">Bekleyen ({list.length})</div>
+      <div className="card">
+        {list.length === 0 ? (
+          <div className="empty">Bekleyen itiraz yok</div>
+        ) : (
+          list.map((d) => (
+            <div key={d.id} className="list-col">
+              <div className="name">
+                {stars(d.score)} · {d.authorLabel}
+                {d.visible ? '' : ' · (gizli)'}
+              </div>
+              <div className="meta" style={{ marginTop: 4 }}>
+                “{d.comment || '—'}”
+              </div>
+              {d.reply ? (
+                <div className="meta" style={{ marginTop: 2 }}>
+                  Uzman yanıtı: {d.reply}
+                </div>
+              ) : null}
+              <div className="meta" style={{ marginTop: 2 }}>
+                İtiraz gerekçesi: {d.disputeReason || '—'}
+                {d.disputedAt ? ` · ${new Date(d.disputedAt).toLocaleString('tr-TR')}` : ''}
+              </div>
+              <div className="form-inline" style={{ marginTop: 10 }}>
+                <button className="btn-sm" onClick={() => resolve(d, 'keep')}>
+                  Yorumu tut
+                </button>
+                <button className="btn-sm btn-danger" onClick={() => resolve(d, 'remove')}>
+                  Kural ihlali — gizle
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </>
   );
 }

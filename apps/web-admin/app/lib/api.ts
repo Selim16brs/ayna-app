@@ -162,6 +162,13 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ decision, ...(resolution ? { resolution } : {}) }),
     }),
+  // §7.2 Yorum itiraz kuyruğu (uzman/işletme itirazı; yorum İNCELEME BOYUNCA görünür kalır)
+  reviewDisputes: () => req<ReviewDispute[]>('/admin/reviews/disputes'),
+  resolveReviewDispute: (id: string, action: 'keep' | 'remove') =>
+    req<{ id: string; visible: boolean; action: string }>(`/admin/reviews/${id}/resolve`, {
+      method: 'POST',
+      body: JSON.stringify({ action }),
+    }),
   // §12.9 Sistem Ayarları
   systemSettings: () => req<SystemSettings>('/admin/system'),
   setRate: (key: string, value: number) =>
@@ -325,6 +332,18 @@ export interface Dispute {
   resolution: string;
   createdAt: string;
   resolvedAt: string | null;
+}
+// §7.2 — yorum itirazı (uzman/işletme itiraz etti; yorum görünür kalır, admin karar verir)
+export interface ReviewDispute {
+  id: string;
+  subjectId: string;
+  score: number;
+  comment: string;
+  authorLabel: string;
+  reply: string;
+  disputeReason: string;
+  disputedAt: string | null;
+  visible: boolean;
 }
 export interface CommissionInvoice {
   id: string;
