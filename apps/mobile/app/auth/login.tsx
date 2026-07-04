@@ -30,10 +30,11 @@ export default function LoginScreen() {
     try {
       const session = await api.login({ identifier: id.trim(), password });
       setAuth(session);
-      // §3.3 rol bazlı yönlendirme: salon/uzman → panel, kullanıcı (user) → keşfet
+      // §3.3/§9/§10 rol bazlı yönlendirme: SALON → salon paneli, UZMAN → uzman paneli, kullanıcı → keşfet
       const role = session.user.role;
-      const isSeller = role === 'salon' || role === 'professional';
-      router.replace(isSeller ? '/seller/reports' : '/discover');
+      router.replace(
+        role === 'salon' ? '/salon/home' : role === 'professional' ? '/seller/reports' : '/discover',
+      );
     } catch {
       Alert.alert(t('auth.error.bad'));
     } finally {

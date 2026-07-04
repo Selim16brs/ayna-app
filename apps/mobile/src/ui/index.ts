@@ -22,6 +22,7 @@ export { Marquee } from './Marquee';
 export { LampIcon } from './LampIcon';
 export { AppTabBar, TAB_BAR_CLEARANCE } from './AppTabBar';
 export { SellerTabBar } from './SellerTabBar';
+export { SalonTabBar } from './SalonTabBar';
 export { Placeholder } from './Placeholder';
 export { StackHeader } from './StackHeader';
 export { Segmented } from './Segmented';

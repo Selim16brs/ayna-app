@@ -84,13 +84,17 @@ export default function AgendaScreen() {
   const toggleClosedDay = useStore((s) => s.toggleClosedDay);
   const isSalon = useStore((s) => s.currentUser?.role === 'salon');
   const [items, setItems] = useState<Appointment[]>([]);
-  const [view, setView] = useState<'day' | 'list' | 'salon'>('day'); // §4.6 varsayılan: gün ajandası
+  // §4.6/§10.2 — salon varsayılanı uzman-sütunlu görünüm; uzman varsayılanı dikey gün ajandası
+  const [view, setView] = useState<'day' | 'list' | 'salon'>(isSalon ? 'salon' : 'day');
   const [dayIdx, setDayIdx] = useState(0);
 
   // §4.6 salon tarafı — uzman sütunları (mock; gerçekte salonun kadrosu)
   const staff = SELLER_DATA.month.staff;
 
   // §4.6 — önümüzdeki 14 gün (gün seçici + kapalı işaretleme)
+  // §10.2 — salon takviminde uzman filtresi (null = tümü)
+  const [staffFilter, setStaffFilter] = useState<string | null>(null);
+  const shownStaff = staffFilter ? staff.filter((u) => u.name === staffFilter) : staff;
   // §9.4 — bekleyen talepler (uzman onayı bekleyen randevular): takvim üstünde şerit
   const pending = storeBookings.filter((b) => b.status === 'awaiting_provider');
   const dayStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
@@ -393,9 +397,35 @@ export default function AgendaScreen() {
               })}
             </ScrollView>
 
+            {/* §10.2 — uzman filtresi */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+              <Pressable
+                onPress={() => setStaffFilter(null)}
+                style={[styles.filterChip, staffFilter === null && styles.filterChipOn]}
+              >
+                <Text variant="caption" tone={staffFilter === null ? 'onAccent' : 'inkSoft'}>
+                  {t('agenda.filter.all')}
+                </Text>
+              </Pressable>
+              {staff.map((u) => {
+                const on = staffFilter === u.name;
+                return (
+                  <Pressable
+                    key={u.name}
+                    onPress={() => setStaffFilter(on ? null : u.name)}
+                    style={[styles.filterChip, on && styles.filterChipOn]}
+                  >
+                    <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} numberOfLines={1}>
+                      {u.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
             {/* Uzman sütunları (yan yana, yatay kaydırma) */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.columns}>
-              {staff.map((u) => {
+              {shownStaff.map((u) => {
                 const uRows = buildDayRows(
                   selectedDay,
                   dayBookings.filter((b) => (b.uzmanName ?? '') === u.name),
@@ -647,6 +677,17 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
     },
+    filterRow: { gap: space(0.75), paddingVertical: space(1) },
+    filterChip: {
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      borderWidth: 1.25,
+      borderColor: colors.line,
+      backgroundColor: colors.surface,
+      maxWidth: 130,
+    },
+    filterChipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
     columns: { gap: space(1.25), paddingVertical: space(0.5) },
     column: { width: 132 },
     colHead: {

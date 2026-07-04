@@ -8,7 +8,7 @@ import { LocaleProvider, useLocale } from '../src/locale';
 import { syncBookingReminders } from '../src/notifications';
 import { useStore } from '../src/store';
 import { ThemeProvider, useTheme } from '../src/theme-context';
-import { AppTabBar, NailCursor, SellerTabBar } from '../src/ui';
+import { AppTabBar, NailCursor, SalonTabBar, SellerTabBar } from '../src/ui';
 
 function ThemedStack() {
   const { colors, isDark } = useTheme();
@@ -44,10 +44,10 @@ function ThemedStack() {
     pruneNotifications(); // §5.7 — 30 günden eski bildirimleri temizle
   }, [checkReminders, expireDemands, expireDeposits, expireResponses, pruneNotifications, pathname]);
 
-  // §9.1 — satıcı (uzman/salon) her zaman panelde (SellerTabBar); müşteri modu kaldırıldı.
+  // §9/§10 — panel giriş ROLÜNE göre AYRI: salon → SalonTabBar, uzman → SellerTabBar. Müşteri modu kaldırıldı.
   const role = currentUser?.role;
-  const isSeller = role === 'salon' || role === 'professional';
-  const sellerMode = isSeller;
+  const isSalon = role === 'salon';
+  const isExpert = role === 'professional';
   const baseHidden =
     !currentUser ||
     pathname === '/' ||
@@ -65,9 +65,11 @@ function ThemedStack() {
           }}
         />
       </NailCursor>
-      {baseHidden ? null : sellerMode ? (
+      {baseHidden ? null : isSalon ? (
+        <SalonTabBar />
+      ) : isExpert ? (
         <SellerTabBar />
-      ) : pathname.startsWith('/seller') ? null : (
+      ) : pathname.startsWith('/seller') || pathname.startsWith('/salon') ? null : (
         <AppTabBar />
       )}
     </>

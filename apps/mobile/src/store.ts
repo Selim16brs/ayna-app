@@ -193,6 +193,9 @@ interface State {
   sellerHours: DayHours[];
   sellerCerts: string[];
   setSellerProfile: (p: { social?: SocialValue; hours?: DayHours[]; certs?: string[] }) => void;
+  // §10.1/§6.2 — salon-seviyesi profil (uzman profilinden AYRI). Kalıcı saklanır.
+  salonProfile: { photos: string[]; about: string; address: string; contact: string; areas: string[] };
+  setSalonProfile: (p: Partial<State['salonProfile']>) => void;
 
   // auth
   setAuth: (session: AuthSession) => void;
@@ -451,6 +454,14 @@ export const useStore = create<State>()(
       ...(p.hours ? { sellerHours: p.hours } : {}),
       ...(p.certs ? { sellerCerts: p.certs } : {}),
     })),
+  salonProfile: {
+    photos: [],
+    about: 'Almatı merkezde, hijyen ve kaliteye önem veren güzellik salonu.',
+    address: 'Almatı, Dostyk 12',
+    contact: '+7 727 000 00 00',
+    areas: ['hair', 'nails', 'brows'],
+  },
+  setSalonProfile: (p) => set((s) => ({ salonProfile: { ...s.salonProfile, ...p } })),
 
   setAuth: (session) => {
     set({ token: session.token, currentUser: session.user });
@@ -1616,6 +1627,7 @@ export const useStore = create<State>()(
         sellerSocial: s.sellerSocial,
         sellerHours: s.sellerHours,
         sellerCerts: s.sellerCerts,
+        salonProfile: s.salonProfile,
         demandNotif: s.demandNotif,
       }),
     },

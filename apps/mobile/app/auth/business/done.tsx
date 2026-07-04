@@ -29,7 +29,7 @@ export default function BusinessDoneScreen() {
         <Button
           label={t('biz.done.cta')}
           variant="primary"
-          onPress={() => router.replace('/seller/reports')}
+          onPress={() => router.replace('/salon/home')}
         />
       </View>
     </Screen>
