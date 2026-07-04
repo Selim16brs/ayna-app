@@ -46,8 +46,7 @@ export default function SalonAgendaScreen() {
   const salonName = useStore((s) => s.currentUser?.name) ?? 'Salon';
   const staff = SELLER_DATA.month.staff;
 
-  const [tab, setTab] = useState<'all' | 'list' | 'add'>('all');
-  const [listSub, setListSub] = useState<'pending' | 'confirmed'>('pending');
+  const [tab, setTab] = useState<'all' | 'add' | 'pending'>('all');
 
   const groupByDay = (list: Appointment[]) => {
     const active = list.filter((b) => b.status !== 'cancelled').sort((a, b) => a.startMs - b.startMs);
@@ -62,15 +61,12 @@ export default function SalonAgendaScreen() {
   };
   // YALNIZ BU SALONA ait randevular (başka salon/uzmanların işleri ASLA görünmez)
   const mine = useMemo(() => bookings.filter((b) => b.proName === salonName), [bookings, salonName]);
-  // §10.2 GENEL — salonun TÜM uzmanlarının TÜM randevuları (operasyonel görünürlük; §10 gereği FİYATSIZ)
-  const allGrouped = useMemo(() => groupByDay(mine), [mine]);
-  // RANDEVULAR — yalnız salonun KENDİ aldığı offline randevular (fiyatlı; salon belirledi),
-  // kendi içinde onay bekleyen ↔ onaylanan diye ayrılır
-  const salonBookings = useMemo(() => mine.filter((b) => b.bySalon && b.status !== 'cancelled'), [mine]);
-  const pendingList = useMemo(() => salonBookings.filter((b) => isPending(b.status)), [salonBookings]);
-  const confirmedList = useMemo(() => salonBookings.filter((b) => !isPending(b.status)), [salonBookings]);
+  // §10.2 GENEL — salonun TÜM uzmanlarının ONAYLI/gerçek randevuları (operasyonel takvim; §10 gereği FİYATSIZ).
+  // Onay bekleyenler burada YOK; uzman onaylayınca (status confirmed) otomatik buraya düşer.
+  const allGrouped = useMemo(() => groupByDay(mine.filter((b) => !isPending(b.status))), [mine]);
+  // ONAY BEKLEYEN — yalnız salonun KENDİ aldığı, uzman onayı bekleyen offline randevular (fiyatlı; salon belirledi)
+  const pendingList = useMemo(() => mine.filter((b) => b.bySalon && isPending(b.status)), [mine]);
   const pendingGroups = useMemo(() => groupByDay(pendingList), [pendingList]);
-  const confirmedGroups = useMemo(() => groupByDay(confirmedList), [confirmedList]);
 
   const statusTone = (s: BookingStatus) =>
     s === 'confirmed'
@@ -155,8 +151,11 @@ export default function SalonAgendaScreen() {
         <Segmented
           options={[
             { value: 'all', label: t('salon.cal.all') },
-            { value: 'list', label: t('salon.cal.appointments') },
             { value: 'add', label: t('salon.cal.add_short') },
+            {
+              value: 'pending',
+              label: `${t('salon.cal.sub_pending')}${pendingList.length ? ` (${pendingList.length})` : ''}`,
+            },
           ]}
           value={tab}
           onChange={setTab}
@@ -170,35 +169,14 @@ export default function SalonAgendaScreen() {
           onSubmit={(v) => {
             salonAddOffline({ salonName, ...v });
             Alert.alert(t('salon.add.sent_title'), fillParams(t('salon.add.sent_body'), { uzman: v.uzmanName }));
-            setTab('list');
+            setTab('pending');
           }}
           locale={locale}
         />
       ) : tab === 'all' ? (
         renderList(allGrouped, false, 'salon.cal.all_empty')
       ) : (
-        <>
-          {/* Randevular içi ayrım: onay bekleyen ↔ onaylanan */}
-          <View style={styles.subSegWrap}>
-            <Segmented
-              options={[
-                {
-                  value: 'pending',
-                  label: `${t('salon.cal.sub_pending')}${pendingList.length ? ` (${pendingList.length})` : ''}`,
-                },
-                {
-                  value: 'confirmed',
-                  label: `${t('salon.cal.sub_confirmed')}${confirmedList.length ? ` (${confirmedList.length})` : ''}`,
-                },
-              ]}
-              value={listSub}
-              onChange={setListSub}
-            />
-          </View>
-          {listSub === 'pending'
-            ? renderList(pendingGroups, true, 'salon.cal.pending_empty')
-            : renderList(confirmedGroups, true, 'salon.cal.confirmed_empty')}
-        </>
+        renderList(pendingGroups, true, 'salon.cal.pending_empty')
       )}
     </Screen>
   );
@@ -360,7 +338,6 @@ function Field({ label, children, flex }: { label: string; children: React.React
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     segWrap: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(1) },
-    subSegWrap: { paddingHorizontal: space(3), paddingBottom: space(0.5) },
     content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(1.25) },
     flex: { flex: 1 },
     card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
