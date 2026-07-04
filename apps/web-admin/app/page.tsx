@@ -216,26 +216,72 @@ function Login({ onDone }: { onDone: () => void }) {
 function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const run = useCallback(() => {
     setLoading(true);
+    setError(null);
     fn()
-      .then(setData)
-      .catch(() => setData(null))
+      .then((d) => {
+        setData(d);
+        setError(null);
+      })
+      .catch((e: unknown) => {
+        setData(null);
+        // §admin — hatayı YÜZEYE çıkar (sessiz yutma → sonsuz "Yükleniyor" bug'ı giderildi)
+        setError(e instanceof Error ? e.message : 'Bağlantı hatası');
+      })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
   useEffect(run, [run]);
-  return { data, loading, reload: run };
+  return { data, loading, error, reload: run };
+}
+
+// §admin — paylaşımlı yükleme/hata durumu (sonsuz "Yükleniyor" yerine gerçek hata)
+function Gate({ loading, error, onRetry }: { loading: boolean; error: string | null; onRetry?: () => void }) {
+  if (loading) return <div className="empty">Yükleniyor…</div>;
+  const isAuth = error === 'UNAUTHENTICATED' || error === '401' || error === 'FORBIDDEN' || error === '403';
+  return (
+    <div className="empty">
+      <div style={{ color: 'var(--danger)', fontWeight: 700, marginBottom: 8 }}>
+        {isAuth ? 'Oturum geçersiz' : 'Veri yüklenemedi'}
+      </div>
+      <div style={{ fontSize: 13, marginBottom: 14 }}>
+        {isAuth
+          ? 'Oturumun süresi dolmuş ya da geçersiz. Çıkış yapıp yeniden giriş yap.'
+          : error === 'Failed to fetch'
+            ? 'API sunucusuna ulaşılamıyor (http://localhost:3000 çalışıyor mu?).'
+            : `Hata: ${error ?? 'bilinmiyor'}`}
+      </div>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+        {isAuth ? (
+          <button
+            className="btn-sm"
+            onClick={() => {
+              clearToken();
+              window.location.reload();
+            }}
+          >
+            Çıkış yap & yeniden gir
+          </button>
+        ) : onRetry ? (
+          <button className="btn-sm" onClick={onRetry}>
+            Tekrar dene
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 function OverviewView() {
-  const { data } = useAsync<Overview>(() => api.overview(), []);
+  const { data, loading, error, reload } = useAsync<Overview>(() => api.overview(), []);
   return (
     <>
       <h1 className="page-title">Genel Bakış</h1>
       <p className="page-sub">Platform geneli canlı metrikler</p>
       {!data ? (
-        <div className="empty">Yükleniyor…</div>
+        <Gate loading={loading} error={error} onRetry={reload} />
       ) : (
         <>
           <div className="stat-grid">
