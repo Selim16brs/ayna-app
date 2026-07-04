@@ -828,6 +828,7 @@ export interface Appointment {
   proImage: string;
   uzmanName?: string; // hangi uzmandan
   customerName?: string; // §2.2 offline randevuda müşteri adı
+  customerPhone?: string; // offline/salon randevusunda müşteri telefonu (koordinasyon için)
   bookingKind?: string; // normal | group | express (Faz 3)
   groupSize?: number; // grup randevuda kişi sayısı
   startMs: number; // randevu başlangıcı — UTC epoch ms (Faz 2 gerçek slot modeli)
@@ -957,6 +958,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     proImage: '',
     uzmanName: 'Aigerim',
     customerName: 'Dilnaz S.',
+    customerPhone: '+7 701 234 56 78',
     startMs: almatySlotMs(SEED_NOW, 2, 15, 0),
     durationMin: 60,
     price: 9000,
@@ -973,6 +975,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     proImage: '',
     uzmanName: 'Madina',
     customerName: 'Ayana K.',
+    customerPhone: '+7 702 345 67 89',
     startMs: almatySlotMs(SEED_NOW, 3, 11, 0),
     durationMin: 90,
     price: 15000,

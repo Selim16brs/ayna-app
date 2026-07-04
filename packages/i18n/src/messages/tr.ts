@@ -147,6 +147,7 @@ export const tr = {
   'salon.cal.all_empty': 'Bu aralıkta uzman randevusu yok.',
   'salon.cal.empty': 'Henüz randevu yok. “Randevu ekle” ile başlat.',
   'salon.add.uzman': 'Uzman seç',
+  'salon.add.phone': 'Müşteri telefonu',
   'salon.add.submit': 'Uzmana gönder',
   'salon.add.note': 'Salon randevusu ilgili uzmanın onayına gider; uzman kabul edince kesinleşir (§4.6).',
   'salon.add.sent_title': 'Uzman onayına gönderildi',
@@ -571,6 +572,7 @@ export const tr = {
   'booking.field.price': 'Fiyat',
   'booking.field.address': 'Adres',
   'booking.field.phone': 'Telefon',
+  'booking.field.customer': 'Müşteri',
   'booking.address_note': 'Salonun adresi onay sonrası sana gösterilir; senin adresin uzmanla asla paylaşılmaz',
   'booking.confirmed.done': 'Randevularıma git',
 

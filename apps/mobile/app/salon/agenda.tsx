@@ -181,6 +181,7 @@ function AddTab({
   onSubmit: (v: {
     uzmanName: string;
     customerName: string;
+    customerPhone: string;
     service: string;
     startMs: number;
     durationMin: number;
@@ -193,6 +194,7 @@ function AddTab({
   const styles = useThemedStyles(makeStyles);
   const [uzman, setUzman] = useState(staff[0] ?? '');
   const [customer, setCustomer] = useState('');
+  const [phone, setPhone] = useState('');
   const [service, setService] = useState('');
   const [when, setWhen] = useState<Date>(() => new Date(Date.now() + 3_600_000));
   const [dur, setDur] = useState('60');
@@ -244,6 +246,16 @@ function AddTab({
           placeholderTextColor={colors.muted}
         />
       </Field>
+      <Field label={t('salon.add.phone')}>
+        <TextInput
+          style={styles.input}
+          value={phone}
+          onChangeText={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
+          placeholder="+7 700 000 00 00"
+          keyboardType="phone-pad"
+          placeholderTextColor={colors.muted}
+        />
+      </Field>
       <Field label={t('offline.service')}>
         <TextInput
           style={styles.input}
@@ -286,6 +298,7 @@ function AddTab({
             onSubmit({
               uzmanName: uzman,
               customerName: customer.trim(),
+              customerPhone: phone.trim(),
               service: service.trim(),
               startMs: when.getTime(),
               durationMin: Number(dur) || 60,

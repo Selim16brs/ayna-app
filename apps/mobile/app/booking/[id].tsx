@@ -195,8 +195,23 @@ export default function BookingDetailScreen() {
           />
         </View>
 
-        {/* İletişim — yalnızca onaylı randevularda (privacy-by-design) */}
-        {showContact ? (
+        {/* İletişim: offline/salon randevusunda ADRES YOK (zaten salonda) → müşteri adı + telefon */}
+        {booking.customerName ? (
+          <View style={[styles.card, shadow.card]}>
+            <Field
+              icon="person-outline"
+              labelKey="booking.field.customer"
+              value={booking.customerName}
+            />
+            <Field
+              icon="call-outline"
+              labelKey="booking.field.phone"
+              value={booking.customerPhone ?? '—'}
+              last
+            />
+          </View>
+        ) : showContact ? (
+          // Online AYNA randevusu → salon adresi + telefon (müşteri nereye gideceğini bilir)
           <>
             <View style={[styles.card, shadow.card]}>
               <Field

@@ -209,6 +209,7 @@ interface State {
     salonName: string;
     uzmanName: string;
     customerName: string;
+    customerPhone: string;
     service: string;
     startMs: number;
     durationMin: number;
@@ -533,6 +534,7 @@ export const useStore = create<State>()(
       proImage: '',
       uzmanName: input.uzmanName,
       customerName: input.customerName,
+      ...(input.customerPhone ? { customerPhone: input.customerPhone } : {}),
       startMs: input.startMs,
       durationMin: input.durationMin,
       // §10 — salon KENDİ aldığı offline randevuda ücreti belirler (uzman fee'yi bilir). Uzmanın
