@@ -201,8 +201,9 @@ export default function BookingDetailScreen() {
           )}
         </View>
 
-        {/* İletişim: offline/salon randevusunda ADRES YOK (zaten salonda) → müşteri adı + telefon */}
-        {booking.customerName ? (
+        {/* İletişim: offline/salon randevusunda ADRES YOK (zaten salonda) → müşteri adı + telefon.
+            salonHidesMoney = salon, uzmanın KENDİ işine bakıyor → müşteri kimliği de gizli (yalnız bySalon'da görünür) */}
+        {booking.customerName && !salonHidesMoney ? (
           <View style={[styles.card, shadow.card]}>
             <Field
               icon="person-outline"

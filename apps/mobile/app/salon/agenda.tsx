@@ -111,7 +111,8 @@ export default function SalonAgendaScreen() {
                       <Ionicons name="person-outline" size={11} color={colors.muted} />
                       <Text variant="caption" tone="muted" numberOfLines={1}>
                         {b.uzmanName ?? '—'}
-                        {b.customerName ? ` · ${b.customerName}` : ''}
+                        {/* Müşteri adı YALNIZ salonun kendi eklediği randevuda (uzmanın kendi müşterisi gizli) */}
+                        {b.bySalon && b.customerName ? ` · ${b.customerName}` : ''}
                       </Text>
                     </View>
                   </View>
