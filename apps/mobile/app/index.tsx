@@ -24,9 +24,14 @@ export default function WelcomeScreen() {
   // her reload'da yeniden giriş yapmasın. <Redirect> navigasyon HAZIR olunca yönlendirir;
   // böylece cold-start'ta "navigate before mounting Root Layout" hatası oluşmaz.
   if (currentUser) {
-    // Satıcı (uzman/salon) her zaman kendi paneline; müşteri modu kaldırıldı.
-    const isSeller = currentUser.role === 'salon' || currentUser.role === 'professional';
-    return <Redirect href={isSeller ? '/seller/reports' : '/discover'} />;
+    // §9/§10 — rol bazlı panel: SALON → salon paneli, UZMAN → uzman paneli, kullanıcı → keşfet.
+    const href =
+      currentUser.role === 'salon'
+        ? '/salon/home'
+        : currentUser.role === 'professional'
+          ? '/seller/reports'
+          : '/discover';
+    return <Redirect href={href} />;
   }
 
   return (
