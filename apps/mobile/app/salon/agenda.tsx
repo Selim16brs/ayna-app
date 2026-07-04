@@ -42,13 +42,10 @@ export default function SalonAgendaScreen() {
   const salonName = useStore((s) => s.currentUser?.name) ?? 'Salon';
   const staff = SELLER_DATA.month.staff;
 
-  const [tab, setTab] = useState<'list' | 'add'>('list');
+  const [tab, setTab] = useState<'all' | 'list' | 'add'>('all');
 
-  // §10 gizlilik — salon YALNIZ kendi aldığı offline randevuları görür (uzmanın kendi randevuları paylaşılmaz)
-  const grouped = useMemo(() => {
-    const active = bookings
-      .filter((b) => b.bySalon && b.status !== 'cancelled')
-      .sort((a, b) => a.startMs - b.startMs);
+  const groupByDay = (list: Appointment[]) => {
+    const active = list.filter((b) => b.status !== 'cancelled').sort((a, b) => a.startMs - b.startMs);
     const map = new Map<number, Appointment[]>();
     for (const b of active) {
       const d = almatyDayStart(b.startMs, 0);
@@ -57,7 +54,11 @@ export default function SalonAgendaScreen() {
       else map.set(d, [b]);
     }
     return [...map.entries()].sort((a, b) => a[0] - b[0]);
-  }, [bookings]);
+  };
+  // §10.2 GENEL — TÜM uzmanların TÜM randevuları (operasyonel görünürlük; §10 gereği FİYATSIZ)
+  const allGrouped = useMemo(() => groupByDay(bookings), [bookings]);
+  // RANDEVULAR — yalnız salonun KENDİ aldığı offline randevular (fiyatlı; salon belirledi)
+  const salonGrouped = useMemo(() => groupByDay(bookings.filter((b) => b.bySalon)), [bookings]);
 
   const statusTone = (s: BookingStatus) =>
     s === 'confirmed'
@@ -68,85 +69,88 @@ export default function SalonAgendaScreen() {
           ? colors.danger
           : colors.gold; // awaiting/deposit → onay bekliyor
 
+  const renderList = (groups: [number, Appointment[]][], showPrice: boolean, emptyKey: MessageKey) => (
+    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {groups.length === 0 ? (
+        <View style={[styles.card, shadow.soft]}>
+          <Text variant="caption" tone="muted">
+            {t(emptyKey)}
+          </Text>
+        </View>
+      ) : (
+        groups.map(([dayMs, rows]) => (
+          <View key={dayMs} style={styles.dayGroup}>
+            <Text variant="label" tone="accentFg" style={styles.dayHead}>
+              {formatTrDate(new Date(dayMs), false)}
+            </Text>
+            {rows.map((b) => {
+              const end = slotTime(b.startMs + b.durationMin * 60_000);
+              const key = STATUS_KEY[b.status];
+              return (
+                <PressableScale
+                  key={b.id}
+                  style={[styles.appt, shadow.soft]}
+                  onPress={() => router.push(`/booking/${b.id}`)}
+                >
+                  <View style={styles.apptTime}>
+                    <Text variant="bodyStrong" tone="ink">
+                      {slotTime(b.startMs)}
+                    </Text>
+                    <Text variant="caption" tone="muted">
+                      {end}
+                    </Text>
+                  </View>
+                  <View style={[styles.apptBar, { backgroundColor: statusTone(b.status) }]} />
+                  <View style={styles.apptBody}>
+                    <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                      {b.service}
+                    </Text>
+                    <View style={styles.apptMeta}>
+                      <Ionicons name="person-outline" size={11} color={colors.muted} />
+                      <Text variant="caption" tone="muted" numberOfLines={1}>
+                        {b.uzmanName ?? '—'}
+                        {b.customerName ? ` · ${b.customerName}` : ''}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.apptRight}>
+                    {key ? (
+                      <View style={[styles.badge, { backgroundColor: statusTone(b.status) }]}>
+                        <Text style={styles.badgeText}>{t(key)}</Text>
+                      </View>
+                    ) : null}
+                    {/* Fiyat YALNIZ salonun kendi aldığı randevularda (uzmanın işinin ücreti gizli) */}
+                    {showPrice && b.price > 0 ? (
+                      <Text variant="caption" tone="inkSoft">
+                        {formatPrice(b.price)}
+                      </Text>
+                    ) : null}
+                  </View>
+                </PressableScale>
+              );
+            })}
+          </View>
+        ))
+      )}
+    </ScrollView>
+  );
+
   return (
     <Screen edges={[]}>
       <StackHeader title={t('salon.nav.agenda')} />
       <View style={styles.segWrap}>
         <Segmented
           options={[
+            { value: 'all', label: t('salon.cal.all') },
             { value: 'list', label: t('salon.cal.appointments') },
-            { value: 'add', label: t('salon.cal.add') },
+            { value: 'add', label: t('salon.cal.add_short') },
           ]}
           value={tab}
           onChange={setTab}
         />
       </View>
 
-      {tab === 'list' ? (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {grouped.length === 0 ? (
-            <View style={[styles.card, shadow.soft]}>
-              <Text variant="caption" tone="muted">
-                {t('salon.cal.empty')}
-              </Text>
-            </View>
-          ) : (
-            grouped.map(([dayMs, rows]) => (
-              <View key={dayMs} style={styles.dayGroup}>
-                <Text variant="label" tone="accentFg" style={styles.dayHead}>
-                  {formatTrDate(new Date(dayMs), false)}
-                </Text>
-                {rows.map((b) => {
-                  const end = slotTime(b.startMs + b.durationMin * 60_000);
-                  const key = STATUS_KEY[b.status];
-                  return (
-                    <PressableScale
-                      key={b.id}
-                      style={[styles.appt, shadow.soft]}
-                      onPress={() => router.push(`/booking/${b.id}`)}
-                    >
-                      <View style={styles.apptTime}>
-                        <Text variant="bodyStrong" tone="ink">
-                          {slotTime(b.startMs)}
-                        </Text>
-                        <Text variant="caption" tone="muted">
-                          {end}
-                        </Text>
-                      </View>
-                      <View style={[styles.apptBar, { backgroundColor: statusTone(b.status) }]} />
-                      <View style={styles.apptBody}>
-                        <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                          {b.service}
-                        </Text>
-                        <View style={styles.apptMeta}>
-                          <Ionicons name="person-outline" size={11} color={colors.muted} />
-                          <Text variant="caption" tone="muted" numberOfLines={1}>
-                            {b.uzmanName ?? '—'}
-                            {b.customerName ? ` · ${b.customerName}` : ''}
-                          </Text>
-                        </View>
-                      </View>
-                      {/* Salonun KENDİ aldığı randevu → ücreti salon belirledi, gösterilir */}
-                      <View style={styles.apptRight}>
-                        {key ? (
-                          <View style={[styles.badge, { backgroundColor: statusTone(b.status) }]}>
-                            <Text style={styles.badgeText}>{t(key)}</Text>
-                          </View>
-                        ) : null}
-                        {b.price > 0 ? (
-                          <Text variant="caption" tone="inkSoft">
-                            {formatPrice(b.price)}
-                          </Text>
-                        ) : null}
-                      </View>
-                    </PressableScale>
-                  );
-                })}
-              </View>
-            ))
-          )}
-        </ScrollView>
-      ) : (
+      {tab === 'add' ? (
         <AddTab
           staff={staff.map((u) => u.name)}
           salonName={salonName}
@@ -157,6 +161,10 @@ export default function SalonAgendaScreen() {
           }}
           locale={locale}
         />
+      ) : tab === 'all' ? (
+        renderList(allGrouped, false, 'salon.cal.all_empty')
+      ) : (
+        renderList(salonGrouped, true, 'salon.cal.empty')
       )}
     </Screen>
   );
