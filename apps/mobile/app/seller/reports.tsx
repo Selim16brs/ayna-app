@@ -15,7 +15,7 @@ import {
 } from '../../src/data';
 import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
-import { selectUnreadCount, useStore } from '../../src/store';
+import { selectCommissionRate, selectUnreadCount, useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { PressableScale, Screen, Segmented, TAB_BAR_CLEARANCE, Text, WaveLayered } from '../../src/ui';
@@ -36,6 +36,7 @@ export default function ReportsScreen() {
   const firstRaw = salonName.split(' ')[0] || salonName;
   const firstName = firstRaw.charAt(0).toLocaleUpperCase('tr-TR') + firstRaw.slice(1);
   const unread = useStore(selectUnreadCount);
+  const commissionRate = useStore(selectCommissionRate); // §11 — Platinum'da %8,5
   // §3/§6.1 — hesabın bağı: salon rolü = salon; uzman = bağlı salon adı veya "Bireysel Uzman"
   const role = useStore((s) => s.currentUser?.role);
   const isSalon = role === 'salon'; // §9 uzman ↔ §10 salon ayrımı
@@ -168,7 +169,7 @@ export default function ReportsScreen() {
             {/* §12.8 — ödenecek komisyon (online ciro × oran); yalnız online randevulardan */}
             <View style={styles.liveRevenue}>
               <Text variant="caption" tone="onColor" style={styles.dim}>
-                {t('reports.live.commission')} (%{stats.commissionRate})
+                {t('reports.live.commission')} (%{commissionRate})
               </Text>
               <Text variant="bodyStrong" tone="onColor">
                 {formatPrice(stats.commission)}

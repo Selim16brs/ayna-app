@@ -47,7 +47,11 @@ import {
   NOTIFICATION_TTL_MS,
   SEED_PERSONAL_LOGS,
   SELLER_PAST_CLIENTS,
-  reengageTemplate,
+  type AlwaysBond,
+  SEED_ALWAYS_BONDS,
+  COMMISSION_PCT_STANDARD,
+  COMMISSION_PCT_PLATINUM,
+  reengageMessage,
   type UpcomingEvent,
   type UserAddress,
 } from './data';
@@ -227,11 +231,28 @@ interface State {
   sendReengage: (input: {
     clientId: string;
     stage: 'pre' | 'due'; // 'pre' = periyot bitişine 1 gün kala, 'due' = bitiş günü
+    serviceId: string; // hizmete özel mesaj için
     customerName: string;
     serviceLabel: string;
-    categoryId: string;
     expertName: string;
   }) => void;
+  // §11 — PLATINUM paket + ALWAYS (karşılıklı sadık-müşteri bağı) + toplu bildirim
+  platinum: boolean;
+  setPlatinum: (v: boolean) => void;
+  alwaysBonds: AlwaysBond[];
+  requestAlways: (input: {
+    providerName: string;
+    providerImage?: string;
+    customerName: string;
+    customerImage?: string;
+    initiator: 'provider' | 'customer';
+    lastServiceId?: string;
+  }) => void;
+  acceptAlways: (id: string) => void;
+  declineAlways: (id: string) => void;
+  removeAlways: (id: string) => void;
+  // Platinum toplu bildirim — Always listesindeki müşterilere; kaç alıcıya gittiğini döndürür
+  sendAlwaysBroadcast: (input: { title: string; body: string }) => number;
   // Faz 3 — dolu uzmana bekleme listesine eklenme
   joinWaitlist: (pro: { id: string; name: string; image: string; service: string }) => void;
   cancelBooking: (id: string, reason?: string) => void;
@@ -455,8 +476,10 @@ export const useStore = create<State>()(
   followerNames: ['Aizhan', 'Gulnara', 'Madina', 'Saule', 'Zhanar', 'Kamila', 'Aruzhan', 'Nazerke'],
   addresses: [{ id: 'ad1', label: 'home', detail: 'Almatı, Dostyk 12' }],
   premium: false,
+  platinum: false,
   reengagedIds: [],
   autoReengageEnabled: true,
+  alwaysBonds: SEED_ALWAYS_BONDS,
   points: 340,
   raffleEntries: 5,
   firstBookingBonusGiven: false,
@@ -605,9 +628,9 @@ export const useStore = create<State>()(
       get().sendReengage({
         clientId: c.id,
         stage,
+        serviceId: c.serviceId,
         customerName: c.name,
         serviceLabel: label,
-        categoryId: found?.categoryId ?? '',
         expertName,
       });
     }
@@ -619,10 +642,7 @@ export const useStore = create<State>()(
   sendReengage: (input) => {
     const key = `${input.clientId}#${input.stage}`;
     if (get().reengagedIds.includes(key)) return; // aynı aşama tekrar gönderilmez (spam önleme)
-    const tpl =
-      input.stage === 'pre'
-        ? { titleKey: 'notif.reengage.soon_t' as const, bodyKey: 'notif.reengage.soon_b' as const, icon: 'time-outline' }
-        : reengageTemplate(input.categoryId);
+    const tpl = reengageMessage(input.serviceId, input.stage); // §11 — hizmete özel 2 mesajdan biri
     get().pushNotification({
       type: 'quote', // dokununca talep/randevu köprüsüne gider (retention → gelir)
       audience: 'user',
@@ -633,6 +653,66 @@ export const useStore = create<State>()(
       icon: tpl.icon,
     });
     set((s) => ({ reengagedIds: [...s.reengagedIds, key] }));
+  },
+
+  // §11 — PLATINUM paket aç/kapat (satın alma). Komisyon oranını da etkiler (%10 → %8,5).
+  setPlatinum: (v) => set({ platinum: v, ...(v ? { premium: true } : {}) }), // platinum → premium da açık
+
+  // §11 — ALWAYS bağ isteği aç (karşı taraf kabul edene kadar 'pending')
+  requestAlways: (input) => {
+    const bond: AlwaysBond = {
+      id: nextId('ab'),
+      providerName: input.providerName,
+      ...(input.providerImage ? { providerImage: input.providerImage } : {}),
+      customerName: input.customerName,
+      ...(input.customerImage ? { customerImage: input.customerImage } : {}),
+      initiator: input.initiator,
+      status: 'pending',
+      ...(input.lastServiceId ? { lastServiceId: input.lastServiceId } : {}),
+      createdMs: Date.now(),
+    };
+    set((s) => ({ alwaysBonds: [bond, ...s.alwaysBonds] }));
+    // karşı tarafa bildirim (demo: audience karşı role göre)
+    get().pushNotification({
+      type: 'system',
+      audience: input.initiator === 'provider' ? 'user' : 'seller',
+      titleKey: 'notif.always_request',
+      bodyKey: 'notif.always_request_b',
+      params: { name: input.initiator === 'provider' ? input.providerName : input.customerName },
+      dateLabel: 'Az önce',
+      icon: 'heart-circle-outline',
+      route: '/always',
+    });
+  },
+
+  // §11 — gelen ALWAYS isteğini kabul et → bağ kurulur
+  acceptAlways: (id) =>
+    set((s) => ({ alwaysBonds: s.alwaysBonds.map((b) => (b.id === id ? { ...b, status: 'accepted' } : b)) })),
+
+  // §11 — gelen isteği reddet / bağı kaldır (sessiz)
+  declineAlways: (id) => set((s) => ({ alwaysBonds: s.alwaysBonds.filter((b) => b.id !== id) })),
+  removeAlways: (id) => set((s) => ({ alwaysBonds: s.alwaysBonds.filter((b) => b.id !== id) })),
+
+  // §11 — PLATINUM toplu bildirim: Always listesindeki (kabul edilmiş) müşterilere.
+  // SORUMLULUK: içerik uzman/salona aittir (sözleşme §sorumluluk). Kaç alıcıya gittiğini döndürür.
+  sendAlwaysBroadcast: (input) => {
+    const s = get();
+    const me = s.currentUser?.name ?? '';
+    const isProvider = s.currentUser?.role === 'professional' || s.currentUser?.role === 'salon';
+    const recipients = s.alwaysBonds.filter(
+      (b) => b.status === 'accepted' && (isProvider ? b.providerName === me : b.customerName === me),
+    );
+    if (recipients.length === 0) return 0;
+    // Demo: tek özet bildirim (gerçekte her alıcıya sunucu-taraflı push). audience müşteri.
+    get().pushNotification({
+      type: 'system',
+      audience: 'user',
+      title: input.title,
+      body: input.body,
+      dateLabel: 'Az önce',
+      icon: 'megaphone-outline',
+    });
+    return recipients.length;
   },
 
   // Faz 3 — bekleme listesi: dolu uzmana eklenir, yer açılınca bildirilir (auto-promote ileride)
@@ -1755,6 +1835,7 @@ export const useStore = create<State>()(
         salonProfile: s.salonProfile,
         demandNotif: s.demandNotif,
         premium: s.premium, // §11 — satın alınan paket app yeniden açılınca korunmalı
+        platinum: s.platinum,
         autoReengageEnabled: s.autoReengageEnabled,
       }),
     },
@@ -1774,6 +1855,35 @@ export const selectSellerView = (s: State): boolean =>
 
 export const inAudience = (n: { audience?: 'user' | 'seller' }, seller: boolean): boolean =>
   n.audience === undefined || n.audience === (seller ? 'seller' : 'user');
+
+// §12.8 — komisyon oranı: Platinum üyede %8,5, diğerlerinde %10.
+export const selectCommissionRate = (s: State): number =>
+  s.platinum ? COMMISSION_PCT_PLATINUM : COMMISSION_PCT_STANDARD;
+
+// §11 — ALWAYS: geçerli oturumun (uzman/salon ya da müşteri) bağları.
+const bondIsMine = (b: AlwaysBond, me: string, isProvider: boolean): boolean =>
+  isProvider ? b.providerName === me : b.customerName === me;
+const bondInitiatedByOther = (b: AlwaysBond, isProvider: boolean): boolean =>
+  isProvider ? b.initiator === 'customer' : b.initiator === 'provider';
+export const selectAlwaysAccepted = (s: State): AlwaysBond[] => {
+  const me = s.currentUser?.name ?? '';
+  const isProvider = selectSellerView(s);
+  return s.alwaysBonds.filter((b) => b.status === 'accepted' && bondIsMine(b, me, isProvider));
+};
+export const selectAlwaysIncoming = (s: State): AlwaysBond[] => {
+  const me = s.currentUser?.name ?? '';
+  const isProvider = selectSellerView(s);
+  return s.alwaysBonds.filter(
+    (b) => b.status === 'pending' && bondIsMine(b, me, isProvider) && bondInitiatedByOther(b, isProvider),
+  );
+};
+export const selectAlwaysOutgoing = (s: State): AlwaysBond[] => {
+  const me = s.currentUser?.name ?? '';
+  const isProvider = selectSellerView(s);
+  return s.alwaysBonds.filter(
+    (b) => b.status === 'pending' && bondIsMine(b, me, isProvider) && !bondInitiatedByOther(b, isProvider),
+  );
+};
 
 export const selectUnreadCount = (s: State): number => {
   const seller = selectSellerView(s);

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, Switch, View } from 'react-native';
-import { SELLER_PAST_CLIENTS, reengageTemplate } from '../../src/data';
+import { SELLER_PAST_CLIENTS, reengageMessage } from '../../src/data';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { findServiceWithCategory, tri } from '../../src/taxonomy';
@@ -61,13 +61,14 @@ export default function ReengageScreen() {
     const found = findServiceWithCategory(c.serviceId);
     const period = found?.service.periodDays ?? 30;
     const label = found ? tri(found.service.label, locale) : c.serviceId;
-    const categoryId = found?.categoryId ?? '';
     const dueMs = c.lastVisitMs + period * DAY;
     const daysUntil = Math.round((dueMs - now) / DAY); // 1 = yarın biter, 0 = bugün biter
     const daysSince = Math.round((now - c.lastVisitMs) / DAY);
     const preSent = reengagedIds.includes(`${c.id}#pre`);
     const dueSent = reengagedIds.includes(`${c.id}#due`);
-    const preview = fillParams(t(reengageTemplate(categoryId).bodyKey), { expert: expertName, service: label });
+    // Önizleme: 'due' zaten gittiyse onu, değilse 'pre' (sıradaki) mesajı göster
+    const stage: 'pre' | 'due' = dueSent ? 'due' : 'pre';
+    const preview = fillParams(t(reengageMessage(c.serviceId, stage).bodyKey), { expert: expertName, service: label });
     return { c, label, period, daysUntil, daysSince, preSent, dueSent, sent: preSent || dueSent, preview };
   }).sort((a, b) => a.daysUntil - b.daysUntil);
 

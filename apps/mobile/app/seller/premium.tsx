@@ -1,14 +1,15 @@
+import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
-import { formatPrice, PREMIUM_PRICE_KZT } from '../../src/data';
+import { formatPrice, PLATINUM_PRICE_KZT, PREMIUM_PRICE_KZT } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 // §11.1 — satıcı (uzman/salon) premium GÖRÜNÜRLÜK PAKETİ
@@ -19,6 +20,11 @@ const BENEFITS: { icon: IoniconName; title: MessageKey; desc: MessageKey }[] = [
   { icon: 'chatbubbles', title: 'premium.b.demands', desc: 'premium.b.demands_d' },
   { icon: 'megaphone', title: 'premium.b.promo', desc: 'premium.b.promo_d' },
 ];
+// §11 — Platinum'a özel ek avantajlar (Premium'un ÜSTÜNE)
+const PLATINUM_BENEFITS: { icon: IoniconName; title: MessageKey; desc: MessageKey }[] = [
+  { icon: 'infinite', title: 'premium.b.always', desc: 'premium.b.always_d' },
+  { icon: 'trending-down', title: 'premium.b.commission', desc: 'premium.b.commission_d' },
+];
 
 export default function SellerPremiumScreen() {
   const { t } = useLocale();
@@ -26,11 +32,21 @@ export default function SellerPremiumScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const premium = useStore((s) => s.premium);
+  const platinum = useStore((s) => s.platinum);
   const setPremium = useStore((s) => s.setPremium);
+  const setPlatinum = useStore((s) => s.setPlatinum);
+
+  const [tier, setTier] = useState<'premium' | 'platinum'>('platinum');
+  const isPlat = tier === 'platinum';
+  const tierPrice = isPlat ? PLATINUM_PRICE_KZT : PREMIUM_PRICE_KZT;
+  const benefits = isPlat ? [...BENEFITS, ...PLATINUM_BENEFITS] : BENEFITS;
+  // 'platinum' sekmesi → platinum sahip mi; 'premium' sekmesi → premium (ya da platinum) sahip mi
+  const owned = isPlat ? platinum : premium || platinum;
 
   // §460 — gerçek ödeme app DIŞINDA (banka/Kaspi + dekont); burada demo aktivasyon + onay.
   const purchase = () => {
-    setPremium(true);
+    if (isPlat) setPlatinum(true);
+    else setPremium(true);
     Alert.alert(t('premium.activated_title'), t('premium.activated_body'), [
       { text: t('common.ok'), onPress: () => router.back() },
     ]);
@@ -40,33 +56,55 @@ export default function SellerPremiumScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('premium.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* §11 — paket seçimi: Premium ↔ Platinum */}
+        <View style={styles.tierWrap}>
+          <Segmented
+            options={[
+              { value: 'premium', label: t('premium.tier_premium') },
+              { value: 'platinum', label: t('premium.tier_platinum') },
+            ]}
+            value={tier}
+            onChange={setTier}
+          />
+        </View>
+
         {/* Plan kartı */}
         <LinearGradient colors={gradients.gold} style={styles.plan}>
           <View style={styles.crown}>
-            <Ionicons name="star" size={26} color={colors.onAccent} />
+            <Ionicons name={isPlat ? 'infinite' : 'star'} size={26} color={colors.onAccent} />
           </View>
           <Text variant="bodyStrong" tone="onAccent" style={styles.planName}>
-            {t('premium.plan_name')}
+            {isPlat ? t('premium.platinum_name') : t('premium.plan_name')}
           </Text>
           <View style={styles.priceRow}>
             <Text variant="display" tone="onAccent" style={styles.price}>
-              {formatPrice(PREMIUM_PRICE_KZT)}
+              {formatPrice(tierPrice)}
             </Text>
             <Text variant="bodyStrong" tone="onAccent" style={styles.perMonth}>
               {t('premium.per_month')}
             </Text>
           </View>
           <Text variant="caption" tone="onAccent" style={styles.tagline}>
-            {t('premium.tagline')}
+            {isPlat ? t('premium.platinum_tagline') : t('premium.tagline')}
           </Text>
         </LinearGradient>
+
+        {/* §11 — Platinum komisyon avantajı vurgusu */}
+        {isPlat ? (
+          <View style={styles.commissionNote}>
+            <Ionicons name="trending-down" size={15} color={colors.accentFg} />
+            <Text variant="caption" tone="accentFg" style={styles.flex}>
+              {t('premium.commission_note')}
+            </Text>
+          </View>
+        ) : null}
 
         {/* Avantajlar — görünürlük paketi (ikon + başlık + açıklama) */}
         <Text variant="bodyStrong" tone="ink" style={styles.sectionTitle}>
           {t('premium.section')}
         </Text>
         <View style={styles.benefits}>
-          {BENEFITS.map((b) => (
+          {benefits.map((b) => (
             <View key={b.title} style={[styles.benefitRow, shadow.soft]}>
               <View style={styles.benefitIcon}>
                 <Ionicons name={b.icon} size={19} color={colors.accentFg} />
@@ -98,7 +136,7 @@ export default function SellerPremiumScreen() {
 
       {/* Alt sabit CTA */}
       <View style={styles.footer}>
-        {premium ? (
+        {owned ? (
           <View style={styles.activeTag}>
             <Ionicons name="checkmark-circle" size={18} color={colors.success} />
             <Text variant="bodyStrong" tone="ink">
@@ -106,7 +144,11 @@ export default function SellerPremiumScreen() {
             </Text>
           </View>
         ) : (
-          <Button label={`${t('premium.cta')} · ${formatPrice(PREMIUM_PRICE_KZT)}`} variant="primary" onPress={purchase} />
+          <Button
+            label={`${isPlat ? t('premium.platinum_cta') : t('premium.cta')} · ${formatPrice(tierPrice)}`}
+            variant="primary"
+            onPress={purchase}
+          />
         )}
       </View>
     </Screen>
@@ -117,6 +159,16 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingTop: space(2.5), paddingBottom: space(4) },
     flex: { flex: 1 },
+    tierWrap: { marginBottom: space(2) },
+    commissionNote: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.accentSoft,
+      borderRadius: radius.md,
+      padding: space(1.5),
+      marginTop: space(1.5),
+    },
     plan: { borderRadius: radius.xl, padding: space(3), alignItems: 'center', gap: space(0.5) },
     crown: {
       width: 56,

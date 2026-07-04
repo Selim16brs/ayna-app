@@ -22,6 +22,7 @@ const ITEMS: {
   salonOnly?: boolean;
 }[] = [
   { id: 'reengage', icon: 'heart', labelKey: 'seller.menu.reengage', descKey: 'seller.menu.reengage_d', route: '/seller/reengage', tone: 'accent' },
+  { id: 'always', icon: 'infinite', labelKey: 'seller.menu.always', descKey: 'seller.menu.always_d', route: '/always', tone: 'lavender' },
   { id: 'services', icon: 'pricetags', labelKey: 'reports.action.services', descKey: 'seller.menu.services_d', route: '/seller/services', tone: 'gold' },
   { id: 'commissions', icon: 'card', labelKey: 'reports.action.commissions', descKey: 'seller.menu.commissions_d', route: '/seller/commissions', tone: 'sage' },
   { id: 'reviews', icon: 'star', labelKey: 'reports.action.reviews', descKey: 'seller.menu.reviews_d', route: '/seller/reviews', tone: 'gold' },

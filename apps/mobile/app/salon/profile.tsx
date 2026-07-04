@@ -22,6 +22,7 @@ export default function SalonProfileHub() {
 
   // §10 gizlilik — Komisyon/para salon panelinde YOK (uzmanın şahsi alanı). Yalnız değerlendirme + promosyon.
   const MANAGE: { icon: IoniconName; label: MessageKey; route: string }[] = [
+    { icon: 'infinite-outline', label: 'seller.menu.always', route: '/always' },
     { icon: 'star-outline', label: 'salon.quick.reviews', route: '/seller/reviews' },
     { icon: 'pricetags-outline', label: 'salon.quick.promotions', route: '/seller/promotions' },
   ];

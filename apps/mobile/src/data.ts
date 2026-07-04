@@ -1103,6 +1103,19 @@ export const REENGAGE_FALLBACK: ReengageTemplate = {
 export const reengageTemplate = (categoryId: string): ReengageTemplate =>
   REENGAGE_TEMPLATES[categoryId] ?? REENGAGE_FALLBACK;
 
+// §11 — HER HİZMET için 2 ayrı mesaj: 'pre' (1 gün kala) + 'due' (bitiş günü).
+// Gövde hizmete özel + samimi; başlık aşamaya göre genel ({service} içerir).
+// Anahtar deseni: notif.re.<serviceId>.<stage> (i18n'de 3 dil). Periyodu olmayan
+// hizmet buraya hiç gelmez (bildirim yalnız periyodik hizmetlerde çalışır).
+export const reengageMessage = (
+  serviceId: string,
+  stage: 'pre' | 'due',
+): ReengageTemplate => ({
+  titleKey: (stage === 'pre' ? 'notif.reengage.soon_t' : 'notif.reengage.due_t') as MessageKey,
+  bodyKey: `notif.re.${serviceId}.${stage}` as MessageKey,
+  icon: stage === 'pre' ? 'time-outline' : 'heart-outline',
+});
+
 // §5.6 — kullanıcı adresleri (çoklu: ev/iş). "Sana Yakın" ve mesafe için (§3.2 C).
 export type AddressLabel = 'home' | 'work';
 export interface UserAddress {
@@ -1707,6 +1720,40 @@ export const POINTS_SPEND_CAP_PCT = 50; // bir ödemenin en fazla %50'si puanla
 export const POINTS_EXPIRY_MONTHS = 12; // 12 ay hareketsizse yanar
 // §2/§5.6.2 — kullanıcı premium aylık bedeli. PARAMETRİK (admin panel).
 export const PREMIUM_PRICE_KZT = 999;
+// §11 — Platinum paket (Premium üstü): tüm premium + Always (sadık müşteri bağı) + toplu bildirim.
+export const PLATINUM_PRICE_KZT = 1999;
+// §12.8 — komisyon oranı pakete göre: standart %10, Platinum %8,5.
+export const COMMISSION_PCT_STANDARD = 10;
+export const COMMISSION_PCT_PLATINUM = 8.5;
+
+// §11 — ALWAYS: uzman/salon ↔ müşteri KARŞILIKLI (iki taraf onaylı) sadık-müşteri bağı.
+// İstek tek taraf açar, karşı taraf kabul edince 'accepted' olur (Instagram takip / FB arkadaşlık gibi).
+export type AlwaysStatus = 'pending' | 'accepted';
+export interface AlwaysBond {
+  id: string;
+  providerName: string; // uzman/salon
+  providerImage?: string;
+  customerName: string; // müşteri
+  customerImage?: string;
+  initiator: 'provider' | 'customer'; // isteği kim başlattı → karşı taraf kabul eder
+  status: AlwaysStatus;
+  lastServiceId?: string; // müşterinin en son aldığı hizmet (bağlam)
+  createdMs: number;
+}
+
+// Demo tohumları — uzman 'Aigerim' ve müşteri 'Aruzhan' oturumlarının ikisini de anlamlı gösterir.
+export const SEED_ALWAYS_BONDS: AlwaysBond[] = [
+  // Aigerim (uzman) — kabul edilmiş sadık müşteriler
+  { id: 'ab-1', providerName: 'Aigerim', providerImage: avatar(FACES[1]!), customerName: 'Zhanel S.', customerImage: avatar(FACES[3]!), initiator: 'customer', status: 'accepted', lastServiceId: 'nails-gel', createdMs: SEED_NOW - 40 * DAY_MS },
+  { id: 'ab-2', providerName: 'Aigerim', providerImage: avatar(FACES[1]!), customerName: 'Dana K.', customerImage: avatar(FACES[4]!), initiator: 'provider', status: 'accepted', lastServiceId: 'lashes-classic', createdMs: SEED_NOW - 33 * DAY_MS },
+  { id: 'ab-3', providerName: 'Aigerim', providerImage: avatar(FACES[1]!), customerName: 'Saule N.', customerImage: avatar(FACES[5]!), initiator: 'customer', status: 'accepted', lastServiceId: 'skin-facial', createdMs: SEED_NOW - 20 * DAY_MS },
+  // Aigerim — kabul bekleyen GELEN istekler (müşteri başlattı → uzman kabul eder)
+  { id: 'ab-4', providerName: 'Aigerim', providerImage: avatar(FACES[1]!), customerName: 'Madina B.', customerImage: avatar(FACES[7]!), initiator: 'customer', status: 'pending', lastServiceId: 'nails-classic', createdMs: SEED_NOW - 2 * DAY_MS },
+  { id: 'ab-5', providerName: 'Aigerim', providerImage: avatar(FACES[1]!), customerName: 'Kamila T.', customerImage: avatar(FACES[6]!), initiator: 'customer', status: 'pending', lastServiceId: 'brows-shape', createdMs: SEED_NOW - 1 * DAY_MS },
+  // Müşteri (Aruzhan) tarafı — Glamour Salon'dan GELEN istek (müşteri kabul eder) + kurulmuş bağ
+  { id: 'ab-6', providerName: 'Glamour Salon', providerImage: SALON_IMG, customerName: 'Aruzhan', customerImage: avatar(FACES[0]!), initiator: 'provider', status: 'pending', createdMs: SEED_NOW - 1 * DAY_MS },
+  { id: 'ab-7', providerName: 'Madina Studio', providerImage: avatar(FACES[2]!), customerName: 'Aruzhan', customerImage: avatar(FACES[0]!), initiator: 'customer', status: 'accepted', lastServiceId: 'hair-color', createdMs: SEED_NOW - 15 * DAY_MS },
+];
 export type LedgerKind = 'earn' | 'spend';
 export interface LedgerEntry {
   id: string;

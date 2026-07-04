@@ -17,6 +17,7 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 const MENU: { key: MessageKey; icon: IoniconName; danger?: boolean; sellerOnly?: boolean }[] = [
   { key: 'profile.menu.panel', icon: 'briefcase-outline', sellerOnly: true },
   { key: 'profile.menu.passport', icon: 'card-outline' },
+  { key: 'profile.menu.always', icon: 'infinite-outline' },
   { key: 'profile.menu.rewards', icon: 'gift-outline' },
   { key: 'profile.menu.budget', icon: 'wallet-outline' },
   { key: 'profile.menu.saved', icon: 'bookmark-outline' },
@@ -65,6 +66,7 @@ export default function ProfileScreen() {
   const onPress = (key: MessageKey) => {
     if (key === 'profile.menu.panel') router.push('/seller/reports');
     else if (key === 'profile.menu.passport') router.push('/profile/passport');
+    else if (key === 'profile.menu.always') router.push('/always');
     else if (key === 'profile.menu.rewards') router.push('/rewards');
     else if (key === 'profile.menu.budget') router.push('/profile/budget');
     else if (key === 'profile.menu.saved') router.push('/favorites');

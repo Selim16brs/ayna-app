@@ -259,6 +259,10 @@ export default function NewBusinessScreen() {
         </Text>
 
         <Checkbox checked={terms} onToggle={() => setTerms((v) => !v)} label={t('biz.terms.accept')} />
+        {/* §11/§sözleşme — Always toplu bildirim sorumluluk beyanı */}
+        <Text variant="caption" tone="muted" style={styles.liability}>
+          {t('biz.terms.always_liability')}
+        </Text>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -435,4 +439,5 @@ const makeStyles = (colors: ColorTokens) =>
     checkboxOn: { backgroundColor: colors.accent, borderColor: colors.accent },
     checkLabel: { flex: 1, lineHeight: 18 },
     footer: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(3) },
+    liability: { marginTop: space(1), lineHeight: 17 },
   });
