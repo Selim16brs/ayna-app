@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { fillParams, useLocale } from '../src/locale';
-import { selectAlwaysAccepted, useStore } from '../src/store';
+import { filterAlwaysAccepted, selectSellerView, useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../src/ui';
@@ -15,12 +15,12 @@ export default function AlwaysBroadcastScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
 
-  const accepted = useStore(selectAlwaysAccepted);
+  // primitive (sayı) selektör → yeni-dizi döngüsü riski yok
+  const count = useStore((s) => filterAlwaysAccepted(s.alwaysBonds, s.currentUser?.name ?? '', selectSellerView(s)).length);
   const sendAlwaysBroadcast = useStore((s) => s.sendAlwaysBroadcast);
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const count = accepted.length;
   const canSend = title.trim().length > 1 && body.trim().length > 2 && count > 0;
 
   const onSend = () => {
@@ -104,7 +104,7 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: space(3),
+      paddingBottom: TAB_BAR_CLEARANCE, // §ui — global tab bar üstünde kalsın
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.line,
       backgroundColor: colors.bg,

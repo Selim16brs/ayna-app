@@ -1844,6 +1844,17 @@ export const NOTIFICATION_ROUTE: Record<NotificationType, string | null> = {
 
 export const SEED_NOTIFICATIONS: AppNotification[] = [
   {
+    // §11 — Always toplu bildirimi (Platinum uzman/salondan; müşteri panelinde görünür)
+    id: 'n-always-bc',
+    type: 'system',
+    title: 'Madina Studio · Bu haftaya özel %20',
+    body: 'Sevgili müşterim, bu hafta tüm bakımlarda %20 indirim seni bekliyor 💌',
+    dateLabel: 'Bugün',
+    icon: 'megaphone-outline',
+    read: false,
+    audience: 'user',
+  },
+  {
     // §10/§4 — uzmandan gelen sıcak "geri çağırma" bildirimi (müşteri panelinde görünür)
     id: 'n-reengage',
     type: 'quote',

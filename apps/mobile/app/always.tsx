@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { fillParams, useLocale } from '../src/locale';
 import {
-  selectAlwaysAccepted,
-  selectAlwaysIncoming,
+  filterAlwaysAccepted,
+  filterAlwaysIncoming,
   selectSellerView,
   useStore,
 } from '../src/store';
@@ -32,8 +32,10 @@ export default function AlwaysScreen() {
 
   const isProvider = useStore(selectSellerView);
   const platinum = useStore((s) => s.platinum);
-  const accepted = useStore(selectAlwaysAccepted);
-  const incoming = useStore(selectAlwaysIncoming);
+  const bonds = useStore((s) => s.alwaysBonds);
+  const me = useStore((s) => s.currentUser?.name) ?? '';
+  const accepted = useMemo(() => filterAlwaysAccepted(bonds, me, isProvider), [bonds, me, isProvider]);
+  const incoming = useMemo(() => filterAlwaysIncoming(bonds, me, isProvider), [bonds, me, isProvider]);
   const acceptAlways = useStore((s) => s.acceptAlways);
   const declineAlways = useStore((s) => s.declineAlways);
   const removeAlways = useStore((s) => s.removeAlways);
@@ -216,7 +218,7 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: space(3),
+      paddingBottom: TAB_BAR_CLEARANCE, // §ui — global tab bar'ın (88px) üstünde kalsın
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.line,
       backgroundColor: colors.bg,

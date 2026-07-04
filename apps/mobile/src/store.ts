@@ -1861,29 +1861,18 @@ export const selectCommissionRate = (s: State): number =>
   s.platinum ? COMMISSION_PCT_PLATINUM : COMMISSION_PCT_STANDARD;
 
 // §11 — ALWAYS: geçerli oturumun (uzman/salon ya da müşteri) bağları.
+// NOT: bunlar SAF yardımcılar (bileşende useMemo ile çağrılır) — doğrudan useStore
+// selektörü olarak KULLANMA (her render yeni dizi → sonsuz render döngüsü).
 const bondIsMine = (b: AlwaysBond, me: string, isProvider: boolean): boolean =>
   isProvider ? b.providerName === me : b.customerName === me;
 const bondInitiatedByOther = (b: AlwaysBond, isProvider: boolean): boolean =>
   isProvider ? b.initiator === 'customer' : b.initiator === 'provider';
-export const selectAlwaysAccepted = (s: State): AlwaysBond[] => {
-  const me = s.currentUser?.name ?? '';
-  const isProvider = selectSellerView(s);
-  return s.alwaysBonds.filter((b) => b.status === 'accepted' && bondIsMine(b, me, isProvider));
-};
-export const selectAlwaysIncoming = (s: State): AlwaysBond[] => {
-  const me = s.currentUser?.name ?? '';
-  const isProvider = selectSellerView(s);
-  return s.alwaysBonds.filter(
-    (b) => b.status === 'pending' && bondIsMine(b, me, isProvider) && bondInitiatedByOther(b, isProvider),
-  );
-};
-export const selectAlwaysOutgoing = (s: State): AlwaysBond[] => {
-  const me = s.currentUser?.name ?? '';
-  const isProvider = selectSellerView(s);
-  return s.alwaysBonds.filter(
-    (b) => b.status === 'pending' && bondIsMine(b, me, isProvider) && !bondInitiatedByOther(b, isProvider),
-  );
-};
+export const filterAlwaysAccepted = (bonds: AlwaysBond[], me: string, isProvider: boolean): AlwaysBond[] =>
+  bonds.filter((b) => b.status === 'accepted' && bondIsMine(b, me, isProvider));
+export const filterAlwaysIncoming = (bonds: AlwaysBond[], me: string, isProvider: boolean): AlwaysBond[] =>
+  bonds.filter((b) => b.status === 'pending' && bondIsMine(b, me, isProvider) && bondInitiatedByOther(b, isProvider));
+export const filterAlwaysOutgoing = (bonds: AlwaysBond[], me: string, isProvider: boolean): AlwaysBond[] =>
+  bonds.filter((b) => b.status === 'pending' && bondIsMine(b, me, isProvider) && !bondInitiatedByOther(b, isProvider));
 
 export const selectUnreadCount = (s: State): number => {
   const seller = selectSellerView(s);
