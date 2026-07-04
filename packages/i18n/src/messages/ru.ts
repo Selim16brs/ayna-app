@@ -993,6 +993,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'notif.reengage.pmu_b': '{expert} ждёт тебя на коррекцию ✨',
   'notif.reengage.generic_t': 'Время для «{service}» 💖',
   'notif.reengage.generic_b': '{expert} ждёт тебя — подготовимся заново? ✨',
+  // §11 — напоминание за 1 день до конца периода
+  'notif.reengage.soon_t': 'Скоро время «{service}» ⏳',
+  'notif.reengage.soon_b': '{expert} ждёт тебя завтра — подготовимся? 💕',
   // экран возврата клиента (мастер)
   'reengage.title': 'Вернуть клиента',
   'reengage.sub': 'Отправь тёплое напоминание довольным клиентам, у кого истёк период услуги.',
@@ -1017,6 +1020,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reengage.section_done': 'Отправлено',
   'reengage.section_queue': 'В очереди',
   'reengage.status_sent': 'Отправлено автоматически',
+  'reengage.status_sent_due': 'Отправлено сегодня',
+  'reengage.status_sent_pre': 'Отправлено за 1 день',
   'reengage.status_upcoming': 'через {n} дн.',
   'notif.reassigned': 'Мастер сменился — нужно подтверждение',
   'notif.reassigned_b': '{pro} · {old} ушёл, назначен {new}. Подтверди, чтобы продолжить.',

@@ -55,18 +55,21 @@ export default function ReengageScreen() {
   }
 
   // ── PREMIUM → toggle + otomatik durum listesi ──
+  // §11 — bildirim yalnız periyot bitişine 1 gün kala ('pre') ve bitiş günü ('due') gider.
   const now = Date.now();
   const rows = SELLER_PAST_CLIENTS.map((c) => {
     const found = findServiceWithCategory(c.serviceId);
     const period = found?.service.periodDays ?? 30;
     const label = found ? tri(found.service.label, locale) : c.serviceId;
     const categoryId = found?.categoryId ?? '';
+    const dueMs = c.lastVisitMs + period * DAY;
+    const daysUntil = Math.round((dueMs - now) / DAY); // 1 = yarın biter, 0 = bugün biter
     const daysSince = Math.round((now - c.lastVisitMs) / DAY);
-    const over = daysSince - period;
-    const tpl = reengageTemplate(categoryId);
-    const preview = fillParams(t(tpl.bodyKey), { expert: expertName, service: label });
-    return { c, label, period, daysSince, over, preview, sent: reengagedIds.includes(c.id) };
-  }).sort((a, b) => b.over - a.over);
+    const preSent = reengagedIds.includes(`${c.id}#pre`);
+    const dueSent = reengagedIds.includes(`${c.id}#due`);
+    const preview = fillParams(t(reengageTemplate(categoryId).bodyKey), { expert: expertName, service: label });
+    return { c, label, period, daysUntil, daysSince, preSent, dueSent, sent: preSent || dueSent, preview };
+  }).sort((a, b) => a.daysUntil - b.daysUntil);
 
   const done = rows.filter((r) => r.sent);
   const queue = rows.filter((r) => !r.sent);
@@ -87,14 +90,14 @@ export default function ReengageScreen() {
           <View style={[styles.chip, { backgroundColor: colors.surfaceMuted }]}>
             <Ionicons name="checkmark-circle" size={12} color={colors.success} />
             <Text variant="caption" style={[styles.chipText, { color: colors.success }]}>
-              {t('reengage.status_sent')}
+              {t(r.dueSent ? 'reengage.status_sent_due' : 'reengage.status_sent_pre')}
             </Text>
           </View>
         ) : (
           <View style={[styles.chip, { backgroundColor: colors.surfaceMuted }]}>
             <Ionicons name="hourglass-outline" size={11} color={colors.muted} />
             <Text variant="caption" tone="muted" style={styles.chipText}>
-              {r.over >= 0 ? fillParams(t('reengage.overdue'), { n: r.over }) : fillParams(t('reengage.status_upcoming'), { n: -r.over })}
+              {fillParams(t('reengage.status_upcoming'), { n: Math.max(r.daysUntil, 0) })}
             </Text>
           </View>
         )}

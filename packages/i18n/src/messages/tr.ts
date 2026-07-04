@@ -1076,6 +1076,9 @@ export const tr = {
   'notif.reengage.pmu_b': '{expert} rötuş için seni bekliyor ✨',
   'notif.reengage.generic_t': '{service} vakti geldi 💖',
   'notif.reengage.generic_b': '{expert} seni bekliyor — yeniden hazırlanalım mı? ✨',
+  // §11 — periyot bitişine 1 gün kala gönderilen "yaklaşıyor" hatırlatması
+  'notif.reengage.soon_t': '{service} vakti yaklaşıyor ⏳',
+  'notif.reengage.soon_b': '{expert} seni yarın bekliyor — hazırlanalım mı? 💕',
   // geri çağırma ekranı (uzman)
   'reengage.title': 'Müşterini geri çağır',
   'reengage.sub': 'Hizmet periyodu dolan memnun müşterilerine sıcak bir hatırlatma gönder.',
@@ -1100,6 +1103,8 @@ export const tr = {
   'reengage.section_done': 'Gönderildi',
   'reengage.section_queue': 'Sırada',
   'reengage.status_sent': 'Otomatik gönderildi',
+  'reengage.status_sent_due': 'Bugün gönderildi',
+  'reengage.status_sent_pre': '1 gün kala gönderildi',
   'reengage.status_upcoming': '{n} gün sonra',
   'notif.reassigned': 'Uzmanın değişti — onayın gerekiyor',
   'notif.reassigned_b': '{pro} · {old} ayrıldı, {new} atandı. Devam etmek için onayla.',

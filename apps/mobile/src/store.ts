@@ -226,6 +226,7 @@ interface State {
   runAutoReengage: (locale: string) => void; // sistem tetiklemesi (app açılış/periyodik)
   sendReengage: (input: {
     clientId: string;
+    stage: 'pre' | 'due'; // 'pre' = periyot bitişine 1 gün kala, 'due' = bitiş günü
     customerName: string;
     serviceLabel: string;
     categoryId: string;
@@ -580,8 +581,9 @@ export const useStore = create<State>()(
   // §11 — premium uzman otomatik geri-çağırmayı aç/kapat eder
   setAutoReengage: (v) => set({ autoReengageEnabled: v }),
 
-  // §10/§4/§11 — SİSTEM OTOMATİK geri çağırma: premium + toggle açık uzmanda,
-  // periyodu dolan (ve daha önce çağrılmamış) her müşteriye sıcak bildirim gönderir.
+  // §10/§4/§11 — SİSTEM OTOMATİK geri çağırma: premium + toggle açık uzmanda.
+  // KURAL (spam önleme): yalnız TAM İKİ bildirim — periyot bitişine 1 gün kala ('pre')
+  // ve bitiş günü ('due'). Ne öncesi ne sonrası; alakasız zamanlarda GÖNDERİLMEZ.
   runAutoReengage: (locale) => {
     const s = get();
     if (s.currentUser?.role !== 'professional') return; // yalnız uzman
@@ -590,13 +592,19 @@ export const useStore = create<State>()(
     const now = Date.now();
     const expertName = s.currentUser?.name ?? 'Uzman';
     for (const c of SELLER_PAST_CLIENTS) {
-      if (s.reengagedIds.includes(c.id)) continue; // idempotent — tekrar gönderme
       const found = findServiceWithCategory(c.serviceId);
       const period = found?.service.periodDays ?? 30;
-      if (now - c.lastVisitMs < period * 24 * 60 * 60_000) continue; // periyot dolmadı
+      const dueMs = c.lastVisitMs + period * 24 * 60 * 60_000; // periyot bitiş anı
+      const daysUntil = Math.round((dueMs - now) / (24 * 60 * 60_000)); // +1 = yarın, 0 = bugün
+      let stage: 'pre' | 'due' | null = null;
+      if (daysUntil === 1) stage = 'pre'; // 1 gün kala
+      else if (daysUntil === 0) stage = 'due'; // bitiş günü
+      if (!stage) continue; // pencere dışı → gönderme
+      if (s.reengagedIds.includes(`${c.id}#${stage}`)) continue; // bu aşama zaten gitti (idempotent)
       const label = found ? tri(found.service.label, locale) : c.serviceId;
       get().sendReengage({
         clientId: c.id,
+        stage,
         customerName: c.name,
         serviceLabel: label,
         categoryId: found?.categoryId ?? '',
@@ -606,10 +614,15 @@ export const useStore = create<State>()(
   },
 
   // §10/§4 — memnun müşteriye sıcak bildirim gönderir (runAutoReengage çağırır).
-  // Bildirim müşteri modunda görünür (audience 'user'); kategoriye göre samimi şablon + emoji.
+  // 'pre' (1 gün kala) → genel "yaklaşıyor" şablonu; 'due' (bitiş günü) → kategoriye özel samimi şablon.
+  // Bildirim müşteri modunda görünür (audience 'user').
   sendReengage: (input) => {
-    if (get().reengagedIds.includes(input.clientId)) return; // aynı döngüde tekrar gönderme (spam önleme)
-    const tpl = reengageTemplate(input.categoryId);
+    const key = `${input.clientId}#${input.stage}`;
+    if (get().reengagedIds.includes(key)) return; // aynı aşama tekrar gönderilmez (spam önleme)
+    const tpl =
+      input.stage === 'pre'
+        ? { titleKey: 'notif.reengage.soon_t' as const, bodyKey: 'notif.reengage.soon_b' as const, icon: 'time-outline' }
+        : reengageTemplate(input.categoryId);
     get().pushNotification({
       type: 'quote', // dokununca talep/randevu köprüsüne gider (retention → gelir)
       audience: 'user',
@@ -619,7 +632,7 @@ export const useStore = create<State>()(
       dateLabel: 'Az önce',
       icon: tpl.icon,
     });
-    set((s) => ({ reengagedIds: [...s.reengagedIds, input.clientId] }));
+    set((s) => ({ reengagedIds: [...s.reengagedIds, key] }));
   },
 
   // Faz 3 — bekleme listesi: dolu uzmana eklenir, yer açılınca bildirilir (auto-promote ileride)

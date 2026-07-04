@@ -1064,15 +1064,18 @@ export interface PastClient {
   lastVisitMs: number; // son geliş zamanı
 }
 const DAY_MS = 24 * 60 * 60_000;
+// §11 — bildirim yalnız periyot bitişine 1 gün kala ve bitiş günü gider.
+// Seed: son geliş = SEED_NOW - (periyot - kalan gün) → bitiş bugün/yarın/ileride ayarlanır.
 export const SELLER_PAST_CLIENTS: PastClient[] = [
-  // periyodu GEÇMİŞ (zamanı geldi) — kart üstte, vurgulu
-  { id: 'pc-1', name: 'Zhanel S.', image: avatar(FACES[3]!), serviceId: 'nails-gel', lastVisitMs: SEED_NOW - 27 * DAY_MS }, // periyot 21 → 6 gün geçti
-  { id: 'pc-2', name: 'Dana K.', image: avatar(FACES[4]!), serviceId: 'lashes-classic', lastVisitMs: SEED_NOW - 26 * DAY_MS }, // periyot 21 → 5 gün geçti
-  { id: 'pc-3', name: 'Saule N.', image: avatar(FACES[5]!), serviceId: 'skin-facial', lastVisitMs: SEED_NOW - 44 * DAY_MS }, // periyot 30 → 14 gün geçti
-  { id: 'pc-4', name: 'Aigerim T.', image: avatar(FACES[6]!), serviceId: 'hair-color', lastVisitMs: SEED_NOW - 43 * DAY_MS }, // periyot 42 → 1 gün geçti
-  // periyodu YAKLAŞAN (birkaç gün kaldı)
-  { id: 'pc-5', name: 'Madina B.', image: avatar(FACES[7]!), serviceId: 'nails-classic', lastVisitMs: SEED_NOW - 12 * DAY_MS }, // periyot 15 → 3 gün kaldı
-  { id: 'pc-6', name: 'Aruzhan M.', image: avatar(FACES[0]!), serviceId: 'brows-shape', lastVisitMs: SEED_NOW - 17 * DAY_MS }, // periyot 21 → 4 gün kaldı
+  // BUGÜN biten (bitiş günü — 'due' bildirimi gider)
+  { id: 'pc-1', name: 'Zhanel S.', image: avatar(FACES[3]!), serviceId: 'nails-gel', lastVisitMs: SEED_NOW - 21 * DAY_MS }, // periyot 21 → bugün
+  { id: 'pc-3', name: 'Saule N.', image: avatar(FACES[5]!), serviceId: 'skin-facial', lastVisitMs: SEED_NOW - 30 * DAY_MS }, // periyot 30 → bugün
+  // YARIN biten (1 gün kala — 'pre' bildirimi gider)
+  { id: 'pc-2', name: 'Dana K.', image: avatar(FACES[4]!), serviceId: 'lashes-classic', lastVisitMs: SEED_NOW - 20 * DAY_MS }, // periyot 21 → yarın
+  { id: 'pc-6', name: 'Aruzhan M.', image: avatar(FACES[0]!), serviceId: 'brows-shape', lastVisitMs: SEED_NOW - 20 * DAY_MS }, // periyot 21 → yarın
+  // İLERİDE (henüz bildirim yok — sırada)
+  { id: 'pc-5', name: 'Madina B.', image: avatar(FACES[7]!), serviceId: 'nails-classic', lastVisitMs: SEED_NOW - 13 * DAY_MS }, // periyot 15 → 2 gün sonra
+  { id: 'pc-4', name: 'Aigerim T.', image: avatar(FACES[6]!), serviceId: 'hair-color', lastVisitMs: SEED_NOW - 39 * DAY_MS }, // periyot 42 → 3 gün sonra
 ];
 
 // §10/§4/§14.5 — kategoriye göre SICAK "geri çağırma" bildirim şablonu (params: {expert}, {service}).

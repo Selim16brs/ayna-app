@@ -993,6 +993,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'notif.reengage.pmu_b': '{expert} түзету үшін сені күтуде ✨',
   'notif.reengage.generic_t': '{service} уақыты келді 💖',
   'notif.reengage.generic_b': '{expert} сені күтуде — қайта дайындалайық па? ✨',
+  // §11 — кезең аяқталуына 1 күн қала жіберілетін "жақындап қалды" еске салуы
+  'notif.reengage.soon_t': '{service} уақыты жақындап қалды ⏳',
+  'notif.reengage.soon_b': '{expert} сені ертең күтеді — дайындалайық па? 💕',
   // қайта шақыру экраны (маман)
   'reengage.title': 'Клиентіңді қайта шақыр',
   'reengage.sub': 'Қызмет кезеңі аяқталған риза клиенттеріңе жылы еске салу жібер.',
@@ -1017,6 +1020,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reengage.section_done': 'Жіберілді',
   'reengage.section_queue': 'Кезекте',
   'reengage.status_sent': 'Автоматты жіберілді',
+  'reengage.status_sent_due': 'Бүгін жіберілді',
+  'reengage.status_sent_pre': '1 күн қала жіберілді',
   'reengage.status_upcoming': '{n} күннен кейін',
   'notif.reassigned': 'Маманың ауысты — растауың қажет',
   'notif.reassigned_b': '{pro} · {old} кетті, {new} тағайындалды. Жалғастыру үшін растап қой.',
