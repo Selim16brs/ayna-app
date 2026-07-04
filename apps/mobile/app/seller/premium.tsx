@@ -10,12 +10,19 @@ import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text } from '../../src/ui';
 
-// §11 — satıcı (uzman/salon) premium avantajları
-const BENEFITS: MessageKey[] = ['promo.upsell_b1', 'promo.upsell_b2', 'promo.upsell_b3'];
+type IoniconName = keyof typeof Ionicons.glyphMap;
+// §11.1 — satıcı (uzman/salon) premium GÖRÜNÜRLÜK PAKETİ
+const BENEFITS: { icon: IoniconName; title: MessageKey; desc: MessageKey }[] = [
+  { icon: 'star', title: 'premium.b.featured', desc: 'premium.b.featured_d' },
+  { icon: 'location', title: 'premium.b.nearby', desc: 'premium.b.nearby_d' },
+  { icon: 'pricetags', title: 'premium.b.showcase', desc: 'premium.b.showcase_d' },
+  { icon: 'chatbubbles', title: 'premium.b.demands', desc: 'premium.b.demands_d' },
+  { icon: 'megaphone', title: 'premium.b.promo', desc: 'premium.b.promo_d' },
+];
 
 export default function SellerPremiumScreen() {
   const { t } = useLocale();
-  const { colors, gradients } = useTheme();
+  const { colors, gradients, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const premium = useStore((s) => s.premium);
@@ -54,16 +61,24 @@ export default function SellerPremiumScreen() {
           </Text>
         </LinearGradient>
 
-        {/* Avantajlar */}
+        {/* Avantajlar — görünürlük paketi (ikon + başlık + açıklama) */}
+        <Text variant="bodyStrong" tone="ink" style={styles.sectionTitle}>
+          {t('premium.section')}
+        </Text>
         <View style={styles.benefits}>
-          {BENEFITS.map((k) => (
-            <View key={k} style={styles.benefitRow}>
-              <View style={styles.check}>
-                <Ionicons name="checkmark" size={14} color={colors.onAccent} />
+          {BENEFITS.map((b) => (
+            <View key={b.title} style={[styles.benefitRow, shadow.soft]}>
+              <View style={styles.benefitIcon}>
+                <Ionicons name={b.icon} size={19} color={colors.accentFg} />
               </View>
-              <Text variant="body" tone="ink" style={styles.flex}>
-                {t(k)}
-              </Text>
+              <View style={styles.flex}>
+                <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                  {t(b.title)}
+                </Text>
+                <Text variant="caption" tone="muted">
+                  {t(b.desc)}
+                </Text>
+              </View>
             </View>
           ))}
         </View>
@@ -117,13 +132,21 @@ const makeStyles = (colors: ColorTokens) =>
     price: { fontSize: 40, letterSpacing: -1 },
     perMonth: { marginBottom: space(1), opacity: 0.9 },
     tagline: { opacity: 0.9, textAlign: 'center' },
-    benefits: { marginTop: space(3), gap: space(1.5) },
-    benefitRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
-    check: {
-      width: 26,
-      height: 26,
-      borderRadius: 13,
-      backgroundColor: colors.accentFg,
+    sectionTitle: { marginTop: space(3), marginBottom: space(1.5) },
+    benefits: { gap: space(1.25) },
+    benefitRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(1.75),
+    },
+    benefitIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },

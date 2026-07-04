@@ -395,8 +395,9 @@ function AdCard({ ad }: { ad: SupplierAd }) {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
   return (
-    <PressableScale style={styles.adCard}>
+    <PressableScale style={styles.adCard} onPress={() => router.push(`/ad/${ad.id}`)}>
       <Image source={{ uri: ad.imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
       <LinearGradient
         colors={['rgba(20,18,22,0)', 'rgba(20,18,22,0.35)', 'rgba(20,18,22,0.88)']}

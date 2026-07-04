@@ -1522,6 +1522,11 @@ export interface SupplierAd {
   sector?: string; // hedef sektör (taxonomy kategori id); boşsa tüm sektörler
   city?: string; // hedef şehir; boşsa tüm şehirler
   imageUri?: string;
+  // Kampanya detay sayfası (§5.1.6 sponsorlu firma)
+  description?: string; // kampanya açıklaması
+  offer?: string; // öne çıkan teklif rozeti (ör. "%20 indirim")
+  contact?: string; // iletişim (telefon/WhatsApp)
+  perks?: string[]; // kampanya avantaj maddeleri
 }
 
 export const SEED_SUPPLIER_ADS: SupplierAd[] = [
@@ -1536,6 +1541,11 @@ export const SEED_SUPPLIER_ADS: SupplierAd[] = [
     sector: 'hair',
     city: 'Almatı',
     imageUri: adImg('photo-1560066984-138dadb4c035'),
+    offer: 'Salonlara %25 toptan indirim',
+    description:
+      'Kazakistan’ın önde gelen profesyonel saç bakım tedarikçisi. Keratin, boya, bakım ve şekillendirme ürünlerinde salon hesaplarına özel toptan fiyat. Almatı içi aynı gün teslimat.',
+    perks: ['İlk siparişte %25 indirim', 'Almatı içi ücretsiz teslimat', 'Kurumsal fatura + kredili ödeme'],
+    contact: '+7 727 350 10 20',
   },
   {
     id: 'ad-2',
@@ -1547,6 +1557,11 @@ export const SEED_SUPPLIER_ADS: SupplierAd[] = [
     icon: 'color-palette',
     sector: 'nails',
     imageUri: adImg('photo-1604654894610-df63bc536371'),
+    offer: 'Yeni koleksiyon %20 indirim',
+    description:
+      'Manikür & tırnak stüdyoları için jel, kalıcı oje, aparat ve tek kullanımlık malzeme. 300+ renk yeni sezon koleksiyonu profesyonel hesaplara özel fiyatla.',
+    perks: ['Yeni sezon %20 indirim', '300+ renk stokta', 'Uzmanlara ücretsiz numune paketi'],
+    contact: '+7 727 350 20 30',
   },
   {
     id: 'ad-3',
@@ -1558,6 +1573,11 @@ export const SEED_SUPPLIER_ADS: SupplierAd[] = [
     icon: 'sparkles',
     sector: 'skincare',
     imageUri: adImg('photo-1487412947147-5cebf100ffc2'),
+    offer: '2 alana 1 serum hediye',
+    description:
+      'Cilt bakımı uzmanları için profesyonel cihaz, peeling ve serum. CE sertifikalı cihazlarda 24 ay garanti; uzman eğitimi dahil.',
+    perks: ['2 cihaza 1 serum hediye', '24 ay cihaz garantisi', 'Ücretsiz uygulama eğitimi'],
+    contact: '+7 727 350 30 40',
   },
 ];
 
