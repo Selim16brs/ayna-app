@@ -1794,6 +1794,18 @@ export const NOTIFICATION_ROUTE: Record<NotificationType, string | null> = {
 
 export const SEED_NOTIFICATIONS: AppNotification[] = [
   {
+    // §10/§4 — uzmandan gelen sıcak "geri çağırma" bildirimi (müşteri panelinde görünür)
+    id: 'n-reengage',
+    type: 'quote',
+    titleKey: 'notif.reengage.nails_t',
+    bodyKey: 'notif.reengage.nails_b',
+    params: { expert: 'Aigerim', service: 'Jel / Kalıcı oje' },
+    dateLabel: 'Dün',
+    icon: 'color-palette-outline',
+    read: false,
+    audience: 'user',
+  },
+  {
     id: 'n1',
     type: 'booking',
     title: 'Randevun onaylandı',
