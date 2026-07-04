@@ -1842,6 +1842,14 @@ export interface SellerPeriodData {
   staff: SellerStaffRow[];
 }
 
+// §5.1/§10 — her uzmanın KENDİ panelinde tanımladığı hizmetler (tek doğruluk kaynağı).
+// Salon uzman detayında bunları YALNIZ görüntüler; değiştiremez.
+export const STAFF_SERVICES: Record<string, string[]> = {
+  Madina: ['Saç boyama', 'Röfle / Balayage', 'Keratin bakımı'],
+  Aigerim: ['Saç kesimi & fön', 'Gelin saçı', 'Topuz / saç tasarımı'],
+  Saule: ['Keratin bakımı', 'Saç bakımı', 'Fön'],
+};
+
 export const SELLER_DATA: Record<'week' | 'month' | 'all', SellerPeriodData> = {
   week: {
     metrics: [

@@ -1350,7 +1350,9 @@ export const tr = {
   'seller.staff.schedule.standard_desc': 'Her gün aynı saatler (10:00–19:00).',
   'seller.staff.schedule.flexible_desc': 'Günlere göre vardiya / değişken saatler.',
   'seller.staff.assign': 'Uzmanın hizmetleri',
-  'seller.staff.assign_hint': 'Salon havuzundan bu uzmana atanan hizmetleri seç.',
+  'seller.staff.assign_hint': 'Bu hizmetleri uzman kendi panelinde belirler; salon değiştiremez.',
+  'seller.staff.readonly': 'Salt-okunur',
+  'seller.staff.no_services': 'Uzman henüz hizmet tanımlamadı.',
 
   // Boni — AI güzellik danışmanı (§13.5)
   'boni.title': 'Boni',

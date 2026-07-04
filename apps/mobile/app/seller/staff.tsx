@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SELLER_DATA } from '../../src/data';
+import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { SELLER_DATA, STAFF_SERVICES } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -14,16 +14,6 @@ const SERVICES = [
   { name: 'Saç boyama', share: 0.42 },
   { name: 'Kesim & fön', share: 0.31 },
   { name: 'Bakım', share: 0.27 },
-];
-
-// §5.1 — salon hizmet havuzu (uzmana atanabilir)
-const SALON_POOL = [
-  'Saç kesimi & fön',
-  'Saç boyama',
-  'Balayage',
-  'Keratin bakımı',
-  'Topuz / saç tasarımı',
-  'Gelin saçı',
 ];
 
 type Schedule = 'standard' | 'flexible';
@@ -61,16 +51,9 @@ export default function StaffDetailScreen() {
   const bookings = Number(p.bookings ?? 0) || 0;
   const rating = Number(p.rating ?? 0) || 0;
 
-  // §5.1 — uzmana atanan hizmetler + çalışma grafiği tipi
-  const [assigned, setAssigned] = useState<Set<string>>(new Set(SALON_POOL.slice(0, 3)));
+  // §5.1/§10 — uzmanın hizmetleri: uzmanın KENDİ panelinde tanımladığı liste (salt-okunur; salon değiştiremez)
+  const ownServices = STAFF_SERVICES[p.name ?? ''] ?? [];
   const [schedule, setSchedule] = useState<Schedule>('standard');
-  const toggle = (s: string) =>
-    setAssigned((prev) => {
-      const next = new Set(prev);
-      if (next.has(s)) next.delete(s);
-      else next.add(s);
-      return next;
-    });
 
   return (
     <Screen edges={[]}>
@@ -120,26 +103,37 @@ export default function StaffDetailScreen() {
           </Text>
         </View>
 
-        {/* §5.1 — salon havuzundan uzmana hizmet atama */}
-        <Text variant="label" tone="accentFg" style={styles.section}>
-          {t('seller.staff.assign')}
-        </Text>
+        {/* §5.1/§10 — uzmanın hizmetleri: uzmanın KENDİ panelinden otomatik gelir, salon değiştiremez (salt-okunur) */}
+        <View style={styles.sectionRow}>
+          <Text variant="label" tone="accentFg">
+            {t('seller.staff.assign')}
+          </Text>
+          <View style={styles.roLock}>
+            <Ionicons name="lock-closed" size={10} color={colors.muted} />
+            <Text variant="caption" tone="muted" style={styles.roLockText}>
+              {t('seller.staff.readonly')}
+            </Text>
+          </View>
+        </View>
         <Text variant="caption" tone="muted" style={styles.assignHint}>
           {t('seller.staff.assign_hint')}
         </Text>
-        <View style={styles.poolWrap}>
-          {SALON_POOL.map((s) => {
-            const on = assigned.has(s);
-            return (
-              <Pressable key={s} onPress={() => toggle(s)} style={[styles.poolChip, on && styles.poolChipOn]}>
-                {on ? <Ionicons name="checkmark" size={13} color={colors.onColor} /> : null}
-                <Text variant="caption" tone={on ? 'onColor' : 'inkSoft'}>
+        {ownServices.length > 0 ? (
+          <View style={styles.poolWrap}>
+            {ownServices.map((s) => (
+              <View key={s} style={styles.poolChip}>
+                <Ionicons name="cut-outline" size={12} color={colors.accentFg} />
+                <Text variant="caption" tone="inkSoft">
                   {s}
                 </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text variant="caption" tone="muted" style={styles.assignHint}>
+            {t('seller.staff.no_services')}
+          </Text>
+        )}
 
         <Text variant="label" tone="accentFg" style={styles.section}>
           {t('seller.staff.services')}
@@ -215,6 +209,24 @@ const makeStyles = (colors: ColorTokens) =>
     statValue: { marginTop: 2 },
     divider: { width: 1, backgroundColor: colors.line, marginVertical: space(1) },
     section: { paddingHorizontal: space(1), marginTop: space(3), marginBottom: space(1.5) },
+    sectionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space(1),
+      marginTop: space(3),
+      marginBottom: space(0.5),
+    },
+    roLock: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      backgroundColor: colors.surfaceMuted,
+      paddingHorizontal: space(0.75),
+      paddingVertical: 2,
+      borderRadius: radius.pill,
+    },
+    roLockText: { fontSize: 10 },
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
@@ -246,5 +258,4 @@ const makeStyles = (colors: ColorTokens) =>
       borderWidth: 1,
       borderColor: colors.line,
     },
-    poolChipOn: { backgroundColor: colors.accentFg, borderColor: colors.accentFg },
   });
