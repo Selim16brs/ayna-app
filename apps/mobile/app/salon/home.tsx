@@ -117,6 +117,28 @@ export default function SalonHomeScreen() {
             </PressableScale>
           ) : null}
 
+          {/* §5.1.6 tarzı — sponsorlu tedarikçi reklamları (uzman performanslarının ÜSTÜNDE) */}
+          {ads.length > 0 ? (
+            <>
+              <View style={styles.adsHead}>
+                <Text variant="label" tone="accentFg">
+                  {t('seller.ads.title')}
+                </Text>
+                <View style={styles.sponsoredTag}>
+                  <Ionicons name="pricetag" size={9} color={colors.muted} />
+                  <Text variant="caption" tone="muted" style={styles.sponsoredText}>
+                    {t('seller.ads.sponsored')}
+                  </Text>
+                </View>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.adsRow}>
+                {ads.map((ad) => (
+                  <AdCard key={ad.id} ad={ad} />
+                ))}
+              </ScrollView>
+            </>
+          ) : null}
+
           {/* §10.1 — uzman performansları (çekirdek) */}
           <View style={styles.sectionHead}>
             <Text variant="bodyStrong" tone="ink">
@@ -161,28 +183,6 @@ export default function SalonHomeScreen() {
               );
             })}
           </View>
-
-          {/* §5.1.6 tarzı — sponsorlu tedarikçi reklamları (uzman panelindeki gibi) */}
-          {ads.length > 0 ? (
-            <>
-              <View style={styles.adsHead}>
-                <Text variant="label" tone="accentFg">
-                  {t('seller.ads.title')}
-                </Text>
-                <View style={styles.sponsoredTag}>
-                  <Ionicons name="pricetag" size={9} color={colors.muted} />
-                  <Text variant="caption" tone="muted" style={styles.sponsoredText}>
-                    {t('seller.ads.sponsored')}
-                  </Text>
-                </View>
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.adsRow}>
-                {ads.map((ad) => (
-                  <AdCard key={ad.id} ad={ad} />
-                ))}
-              </ScrollView>
-            </>
-          ) : null}
         </View>
       </ScrollView>
     </Screen>
