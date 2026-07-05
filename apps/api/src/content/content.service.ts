@@ -264,6 +264,7 @@ export class ContentService {
       data: {
         title: input.title,
         body: input.body,
+        ...(input.i18n ? { i18n: input.i18n as object } : {}), // §14.5 — kk/ru override
         segment: input.segment,
         city: input.segment === 'city' ? (input.city ?? null) : null,
         recipientCount,
@@ -277,8 +278,20 @@ export class ContentService {
     return this.prisma.announcement.findMany({ orderBy: { createdAt: 'desc' }, take: 200 });
   }
 
+  // §14.5 — base(tr) satırını i18n{kk,ru} ile locale'e göre çöz (boş override → tr'ye düşer)
+  private localize<T extends { i18n?: unknown }>(row: T, locale: string | undefined, fields: string[]): T {
+    const i18n = row.i18n as { kk?: Record<string, string>; ru?: Record<string, string> } | null | undefined;
+    if (!i18n || !locale || (locale !== 'kk' && locale !== 'ru')) return row;
+    const ov = i18n[locale];
+    if (!ov) return row;
+    const out = { ...row } as Record<string, unknown>;
+    for (const f of fields) if (ov[f]) out[f] = ov[f];
+    return out as T;
+  }
+
   // Girişli kullanıcının segmentine uyan duyurular (app bildirim listesine enjekte eder)
-  async announcementsForUser(userId: string) {
+  // locale: kullanıcının uygulama içi dili (kk/ru/tr) → başlık/gövde o dilde döner
+  async announcementsForUser(userId: string, locale?: string) {
     const u = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { role: true, city: true, isPremium: true, membershipTier: true },
@@ -290,10 +303,11 @@ export class ContentService {
     if (u.role === 'professional') or.push({ segment: 'professionals' });
     if (u.role === 'salon') or.push({ segment: 'salons' });
     if (u.city) or.push({ segment: 'city', city: u.city });
-    return this.prisma.announcement.findMany({
+    const rows = await this.prisma.announcement.findMany({
       where: { OR: or },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
+    return rows.map((r) => this.localize(r, locale, ['title', 'body']));
   }
 }

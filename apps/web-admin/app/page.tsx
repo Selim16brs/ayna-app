@@ -23,6 +23,7 @@ import {
   type CirclePost,
   type CommissionInvoice,
   type Subscription,
+  type I18nOverride,
   type Commissions,
   type Dispute,
   type ReviewDispute,
@@ -276,6 +277,32 @@ function Gate({ loading, error, onRetry }: { loading: boolean; error: string | n
       </div>
     </div>
   );
+}
+
+// §14.5 — 3 DİL form yardımcıları: app'e ulaşan içerik tr(base)+kk+ru girilir
+type Lang = 'tr' | 'kk' | 'ru';
+const LANGS: Lang[] = ['tr', 'kk', 'ru'];
+function LangTabs({ lang, setLang, filled }: { lang: Lang; setLang: (l: Lang) => void; filled: (l: Lang) => boolean }) {
+  return (
+    <div className="toolbar full" style={{ marginBottom: 0 }}>
+      {LANGS.map((l) => (
+        <button key={l} type="button" className={`chip ${lang === l ? 'on' : ''}`} onClick={() => setLang(l)}>
+          {l.toUpperCase()}
+          {l === 'tr' ? ' (kaynak)' : filled(l) ? ' ✓' : ' —'}
+        </button>
+      ))}
+    </div>
+  );
+}
+// kk/ru alanlarından i18n objesi kur (yalnız dolu alanlar; hiçbiri yoksa undefined → yalnız tr)
+function buildI18n(fields: Record<string, { kk: string; ru: string }>): I18nOverride | undefined {
+  const out: I18nOverride = {};
+  for (const loc of ['kk', 'ru'] as const) {
+    const o: Record<string, string> = {};
+    for (const [k, v] of Object.entries(fields)) if (v[loc].trim()) o[k] = v[loc].trim();
+    if (Object.keys(o).length) out[loc] = o;
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 // §11 — üyelik abonelik kuyruğu (Premium/Platinum dekont onayı)
@@ -1479,26 +1506,37 @@ const SEGMENTS: { id: AnnouncementSegment; label: string }[] = [
 
 function AnnouncementsView() {
   const { data, reload } = useAsync<Announcement[]>(() => api.announcements(), []);
-  const [form, setForm] = useState<{
-    title: string;
-    body: string;
-    segment: AnnouncementSegment;
-    city: string;
-  }>({ title: '', body: '', segment: 'all', city: '' });
+  const empty = {
+    title: '', body: '',
+    titleKk: '', bodyKk: '',
+    titleRu: '', bodyRu: '',
+    segment: 'all' as AnnouncementSegment, city: '',
+  };
+  const [form, setForm] = useState(empty);
+  const [lang, setLang] = useState<Lang>('tr');
   const [sent, setSent] = useState<string | null>(null);
+  // aktif dile göre başlık/gövde alan adları
+  const tKey = (lang === 'tr' ? 'title' : lang === 'kk' ? 'titleKk' : 'titleRu') as keyof typeof form;
+  const bKey = (lang === 'tr' ? 'body' : lang === 'kk' ? 'bodyKk' : 'bodyRu') as keyof typeof form;
 
   const send = async () => {
-    if (form.title.length < 2 || form.body.length < 2) return;
+    if (form.title.length < 2 || form.body.length < 2) return; // tr (kaynak) zorunlu
     if (form.segment === 'city' && !form.city) return;
     if (!confirm(`"${form.title}" duyurusu gönderilsin mi?`)) return;
+    const i18n = buildI18n({
+      title: { kk: form.titleKk, ru: form.titleRu },
+      body: { kk: form.bodyKk, ru: form.bodyRu },
+    });
     const res = await api.sendAnnouncement({
       title: form.title,
       body: form.body,
+      i18n,
       segment: form.segment,
       city: form.segment === 'city' ? form.city : undefined,
     });
     setSent(`Gönderildi — ${res.recipientCount} alıcı`);
-    setForm({ title: '', body: '', segment: 'all', city: '' });
+    setForm(empty);
+    setLang('tr');
     reload();
   };
 
@@ -1511,18 +1549,23 @@ function AnnouncementsView() {
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
+          <LangTabs
+            lang={lang}
+            setLang={setLang}
+            filled={(l) => (l === 'kk' ? !!form.titleKk || !!form.bodyKk : !!form.titleRu || !!form.bodyRu)}
+          />
           <input
             className="input full"
-            placeholder="Duyuru başlığı"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            placeholder={lang === 'tr' ? 'Duyuru başlığı (TR — kaynak)' : `Başlık (${lang.toUpperCase()})`}
+            value={form[tKey]}
+            onChange={(e) => setForm({ ...form, [tKey]: e.target.value })}
           />
           <textarea
             className="input full"
-            placeholder="Duyuru metni"
+            placeholder={lang === 'tr' ? 'Duyuru metni (TR — kaynak)' : `Metin (${lang.toUpperCase()})`}
             rows={3}
-            value={form.body}
-            onChange={(e) => setForm({ ...form, body: e.target.value })}
+            value={form[bKey]}
+            onChange={(e) => setForm({ ...form, [bKey]: e.target.value })}
           />
           <select
             className="input"

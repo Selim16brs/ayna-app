@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard, type AuthedRequest } from '../auth/jwt-auth.guard';
@@ -39,7 +39,7 @@ export class ContentController {
   // §12.10 — girişli kullanıcının segmentine uyan toplu duyurular
   @Get('announcements')
   @UseGuards(JwtAuthGuard)
-  announcements(@Req() req: AuthedRequest) {
-    return this.content.announcementsForUser(req.user?.id ?? '');
+  announcements(@Req() req: AuthedRequest, @Query('locale') locale?: string) {
+    return this.content.announcementsForUser(req.user?.id ?? '', locale);
   }
 }

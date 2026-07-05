@@ -45,10 +45,15 @@ export const themeSchema = z.object({
 export type ThemeInput = z.infer<typeof themeSchema>;
 
 // §12.10 Toplu duyuru — segment bazlı
+// §14.5 — kk/ru dil override'ları (opsiyonel; boş bırakılan alan tr'ye düşer)
+const localeFields = z.object({ title: z.string().optional(), body: z.string().optional() }).partial();
+export const i18nSchema = z.object({ kk: localeFields.optional(), ru: localeFields.optional() }).optional();
+
 export const announcementSchema = z
   .object({
     title: z.string().min(2),
     body: z.string().min(2),
+    i18n: i18nSchema, // { kk?: {title,body}, ru?: {title,body} }
     segment: z.enum(['all', 'premium', 'platinum', 'professionals', 'salons', 'city']),
     city: z.string().optional(),
   })

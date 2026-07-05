@@ -249,9 +249,15 @@ export interface Announcement {
   createdAt: string;
 }
 
+// §14.5 — 3 dil override'ları (kk/ru). Base alanlar tr; boş bırakılan tr'ye düşer.
+export interface I18nOverride {
+  kk?: Record<string, string>;
+  ru?: Record<string, string>;
+}
 export interface AnnouncementInput {
   title: string;
   body: string;
+  i18n?: I18nOverride;
   segment: AnnouncementSegment;
   city?: string;
 }

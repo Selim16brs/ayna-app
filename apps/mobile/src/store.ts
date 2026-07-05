@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { MessageKey } from '@ayna/i18n';
 import { api, type AppConfig, type AuthSession, type AuthUser, type LoyaltyTier } from './api';
 import { formatSlotTr } from './datetime';
+import { getCurrentLocale } from './locale';
 import {
   type AppNotification,
   type Appointment,
@@ -453,7 +454,7 @@ export const useStore = create<State>()(
       // /me erişilemezse mevcut currentUser korunur
     }
     try {
-      const anns = await api.announcements(token);
+      const anns = await api.announcements(token, getCurrentLocale()); // §14.5 — kullanıcı dilinde
       set((s) => {
         const have = new Set(s.notifications.map((n) => n.id));
         const fresh: AppNotification[] = anns

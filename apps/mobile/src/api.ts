@@ -403,7 +403,9 @@ export const api = {
   submitBlog: (token: string, input: BlogSubmission) =>
     post<{ id: string; status: string }>('/content/applications', input, token),
   // §12.10 — kullanıcının segmentine uyan toplu duyurular
-  announcements: (token: string) => get<ApiAnnouncement[]>('/content/announcements', token),
+  // §14.5 — locale ile: başlık/gövde kullanıcının dilinde (kk/ru override, yoksa tr)
+  announcements: (token: string, locale?: string) =>
+    get<ApiAnnouncement[]>(`/content/announcements${locale ? `?locale=${locale}` : ''}`, token),
   // §12.9 — parametrik oranlar + aktif şehirler + özellik erişimi (gizli anahtar sızmaz)
   appConfig: () => get<AppConfig>('/config'),
   // §12.3 — güncel kullanıcı (kısıt durumu tazelemek için)

@@ -13,8 +13,16 @@ const LocaleContext = createContext<LocaleContextValue>({
   t: (key) => translate(DEFAULT_LOCALE, key),
 });
 
+// §14.5 — hook-DIŞI erişim (store gibi): geçerli dili modül değişkeninde tutar.
+let _currentLocale: Locale = DEFAULT_LOCALE;
+export const getCurrentLocale = (): Locale => _currentLocale;
+
 export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
+  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+  const setLocale = (l: Locale) => {
+    _currentLocale = l;
+    setLocaleState(l);
+  };
   const value = useMemo<LocaleContextValue>(
     () => ({ locale, setLocale, t: (key) => translate(locale, key) }),
     [locale],

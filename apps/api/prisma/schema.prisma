@@ -440,6 +440,7 @@ model Campaign {
   badge     String   @default("") // örn "%20", "2+1"
   category  String? // hedef kategori kodu (varsa o kategoriye köprü)
   image     String
+  i18n      Json? // §14.5 — 3 dil: kk/ru title/subtitle override'ları
   tone      String   @default("rose")
   sortOrder Int      @default(0) @map("sort_order")
   active    Boolean  @default(true)
@@ -470,6 +471,7 @@ model AdBanner {
   title     String
   subtitle  String   @default("")
   image     String
+  i18n      Json? // §14.5 — 3 dil: kk/ru title/subtitle override'ları
   sortOrder Int      @default(0) @map("sort_order")
   active    Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -499,6 +501,7 @@ model BlogArticle {
   image         String    @default("")
   excerpt       String
   body          String[] // paragraf dizisi
+  i18n          Json? // §14.5 — 3 dil: kk/ru title/tag/excerpt/body override'ları
   published     Boolean   @default(false)
   publishedAt   DateTime? @map("published_at") @db.Timestamptz(6)
   applicationId String?   @unique @map("application_id") @db.Uuid // hangi başvurudan geldi
@@ -533,6 +536,7 @@ model WeeklyTheme {
   id        String   @id @default(uuid()) @db.Uuid
   title     String
   prompt    String
+  i18n      Json? // §14.5 — 3 dil: kk/ru title/prompt override'ları
   weekStart DateTime @map("week_start") @db.Timestamptz(6)
   active    Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -656,6 +660,8 @@ model Announcement {
   id             String   @id @default(uuid()) @db.Uuid
   title          String
   body           String
+  // §14.5 — 3 dil: base alanlar tr (kaynak); i18n = { kk: {...}, ru: {...} } üzerine yazar
+  i18n           Json?
   segment        String   @default("all")
   city           String?  // segment=city ise hedef şehir
   recipientCount Int      @default(0) @map("recipient_count")
