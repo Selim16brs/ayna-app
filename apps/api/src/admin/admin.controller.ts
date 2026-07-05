@@ -64,6 +64,7 @@ const marketSchema = z.object({
 const userRoleSchema = z.object({ role: z.enum(['user', 'professional', 'salon', 'moderator', 'admin']) });
 const userStatusSchema = z.object({ status: z.enum(['active', 'suspended', 'deleted']) });
 const premiumSchema = z.object({ isPremium: z.boolean() });
+const tierSchema = z.object({ tier: z.enum(['free', 'premium', 'platinum']) });
 const flagSchema = z.object({
   key: z.string().min(1).max(60),
   enabled: z.boolean(),
@@ -146,6 +147,15 @@ export class AdminController {
   @Post('users/:id/premium')
   setUserPremium(@Param('id') id: string, @Body(new ZodValidationPipe(premiumSchema)) body: { isPremium: boolean }) {
     return this.admin.setUserPremium(id, body.isPremium);
+  }
+
+  // §11 — manuel üyelik katmanı (free | premium | platinum)
+  @Post('users/:id/tier')
+  setUserTier(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(tierSchema)) body: { tier: 'free' | 'premium' | 'platinum' },
+  ) {
+    return this.admin.setUserTier(id, body.tier);
   }
 
   // §12.3 Ceza takip — kısıtlı hesaplar (7 gün sayaçlı) + kısıt aç/kapa

@@ -393,6 +393,8 @@ export class AdminService {
         gender: true,
         phoneVerified: true,
         isPremium: true,
+        membershipTier: true,
+        membershipUntil: true,
         createdAt: true,
       },
     });
@@ -524,6 +526,19 @@ export class AdminService {
     if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
     const updated = await this.prisma.user.update({ where: { id }, data: { isPremium } });
     return { id: updated.id, isPremium: updated.isPremium };
+  }
+
+  // §11 — admin manuel üyelik katmanı atar (free | premium | platinum). Abonelik onayı
+  // dışında elle düzeltme için. Platinum/premium → +30 gün; free → sıfırla.
+  async setUserTier(id: string, tier: 'free' | 'premium' | 'platinum') {
+    const u = await this.prisma.user.findUnique({ where: { id } });
+    if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
+    const until = tier === 'free' ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const updated = await this.prisma.user.update({
+      where: { id },
+      data: { membershipTier: tier, membershipUntil: until, isPremium: tier !== 'free' },
+    });
+    return { id: updated.id, membershipTier: updated.membershipTier, membershipUntil: updated.membershipUntil };
   }
 
   // Randevular — platform geneli (admin görünürlüğü)

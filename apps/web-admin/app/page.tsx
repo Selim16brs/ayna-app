@@ -1471,6 +1471,7 @@ function ContentView() {
 const SEGMENTS: { id: AnnouncementSegment; label: string }[] = [
   { id: 'all', label: 'Tüm kullanıcılar' },
   { id: 'premium', label: 'Premium üyeler' },
+  { id: 'platinum', label: '💎 Platinum üyeler' },
   { id: 'professionals', label: 'Uzmanlar' },
   { id: 'salons', label: 'Salonlar' },
   { id: 'city', label: 'Şehir bazlı' },
@@ -2166,7 +2167,7 @@ function UsersView() {
               <div className="grow">
                 <div className="name">
                   {u.name || '—'}
-                  {u.isPremium ? ' · ⭐' : ''}
+                  {u.membershipTier === 'platinum' ? ' · 💎' : u.membershipTier === 'premium' || u.isPremium ? ' · ⭐' : ''}
                   {u.status !== 'active' ? ' · ⛔' : ''}
                 </div>
                 <div className="meta">
@@ -2190,15 +2191,19 @@ function UsersView() {
                   </option>
                 ))}
               </select>
-              <button
-                className={`switch ${u.isPremium ? 'on' : 'off'}`}
-                onClick={async () => {
-                  await api.setUserPremium(u.id, !u.isPremium);
+              <select
+                className="input"
+                style={{ height: 32, maxWidth: 120 }}
+                value={u.membershipTier ?? (u.isPremium ? 'premium' : 'free')}
+                onChange={async (e) => {
+                  await api.setUserTier(u.id, e.target.value as 'free' | 'premium' | 'platinum');
                   reload();
                 }}
               >
-                {u.isPremium ? 'Premium' : 'Normal'}
-              </button>
+                <option value="free">Normal</option>
+                <option value="premium">Premium</option>
+                <option value="platinum">Platinum</option>
+              </select>
               {u.status === 'active' && u.role !== 'admin' && (
                 <button
                   className="btn-sm"

@@ -96,6 +96,9 @@ export const api = {
     req(`/admin/users/${id}/status`, { method: 'POST', body: JSON.stringify({ status }) }),
   setUserPremium: (id: string, isPremium: boolean) =>
     req(`/admin/users/${id}/premium`, { method: 'POST', body: JSON.stringify({ isPremium }) }),
+  // §11 — manuel üyelik katmanı (free | premium | platinum)
+  setUserTier: (id: string, tier: 'free' | 'premium' | 'platinum') =>
+    req(`/admin/users/${id}/tier`, { method: 'POST', body: JSON.stringify({ tier }) }),
   // §12.3 Ceza takip
   penalties: () => req<Penalty[]>('/admin/penalties'),
   restrictUser: (id: string, reason: string) =>
@@ -234,7 +237,7 @@ export interface SystemSettings {
   cities: Cities;
 }
 
-export type AnnouncementSegment = 'all' | 'premium' | 'professionals' | 'salons' | 'city';
+export type AnnouncementSegment = 'all' | 'premium' | 'platinum' | 'professionals' | 'salons' | 'city';
 
 export interface Announcement {
   id: string;
@@ -490,6 +493,8 @@ export interface AdminUser {
   gender: string;
   phoneVerified: boolean;
   isPremium: boolean;
+  membershipTier?: 'free' | 'premium' | 'platinum';
+  membershipUntil?: string | null;
   createdAt: string;
 }
 export interface Penalty {

@@ -243,6 +243,8 @@ export class ContentService {
     switch (segment) {
       case 'premium':
         return { ...base, isPremium: true };
+      case 'platinum':
+        return { ...base, membershipTier: 'platinum' };
       case 'professionals':
         return { ...base, role: 'professional' };
       case 'salons':
@@ -279,11 +281,12 @@ export class ContentService {
   async announcementsForUser(userId: string) {
     const u = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { role: true, city: true, isPremium: true },
+      select: { role: true, city: true, isPremium: true, membershipTier: true },
     });
     if (!u) return [];
     const or: Prisma.AnnouncementWhereInput[] = [{ segment: 'all' }];
     if (u.isPremium) or.push({ segment: 'premium' });
+    if (u.membershipTier === 'platinum') or.push({ segment: 'platinum' });
     if (u.role === 'professional') or.push({ segment: 'professionals' });
     if (u.role === 'salon') or.push({ segment: 'salons' });
     if (u.city) or.push({ segment: 'city', city: u.city });

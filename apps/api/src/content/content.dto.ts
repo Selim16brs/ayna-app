@@ -49,7 +49,7 @@ export const announcementSchema = z
   .object({
     title: z.string().min(2),
     body: z.string().min(2),
-    segment: z.enum(['all', 'premium', 'professionals', 'salons', 'city']),
+    segment: z.enum(['all', 'premium', 'platinum', 'professionals', 'salons', 'city']),
     city: z.string().optional(),
   })
   .refine((v) => v.segment !== 'city' || (v.city && v.city.length > 0), {
