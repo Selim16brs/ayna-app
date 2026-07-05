@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
+import { api } from '../../src/api';
 import { formatPrice, PLATINUM_PRICE_KZT, PREMIUM_PRICE_KZT } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -33,8 +34,8 @@ export default function SellerPremiumScreen() {
   const router = useRouter();
   const premium = useStore((s) => s.premium);
   const platinum = useStore((s) => s.platinum);
-  const setPremium = useStore((s) => s.setPremium);
-  const setPlatinum = useStore((s) => s.setPlatinum);
+  const token = useStore((s) => s.token);
+  const [busy, setBusy] = useState(false);
 
   const { tier: tierParam } = useLocalSearchParams<{ tier?: string }>();
   const [tier, setTier] = useState<'premium' | 'platinum'>(tierParam === 'premium' ? 'premium' : 'platinum');
@@ -44,13 +45,22 @@ export default function SellerPremiumScreen() {
   // 'platinum' sekmesi → platinum sahip mi; 'premium' sekmesi → premium (ya da platinum) sahip mi
   const owned = isPlat ? platinum : premium || platinum;
 
-  // §460 — gerçek ödeme app DIŞINDA (banka/Kaspi + dekont); burada demo aktivasyon + onay.
-  const purchase = () => {
-    if (isPlat) setPlatinum(true);
-    else setPremium(true);
-    Alert.alert(t('premium.activated_title'), t('premium.activated_body'), [
-      { text: t('common.ok'), onPress: () => router.back() },
-    ]);
+  // §11/§460 — satın alma: backend'de abonelik talebi oluştur → dekont ekranı → admin onayı.
+  // Gerçek ödeme app DIŞINDA (Kaspi/banka); tier admin dekontu onaylayınca aktifleşir.
+  const purchase = async () => {
+    if (!token || busy) return;
+    setBusy(true);
+    try {
+      const sub = await api.createSubscription(tier, token);
+      router.replace({
+        pathname: '/seller/sub-receipt',
+        params: { id: sub.id, tier, amount: String(tierPrice) },
+      });
+    } catch {
+      Alert.alert(t('premium.title'), t('sub.error'));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -148,6 +158,7 @@ export default function SellerPremiumScreen() {
           <Button
             label={`${isPlat ? t('premium.platinum_cta') : t('premium.cta')} · ${formatPrice(tierPrice)}`}
             variant="primary"
+            disabled={busy}
             onPress={purchase}
           />
         )}

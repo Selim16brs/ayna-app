@@ -432,6 +432,8 @@ export const useStore = create<State>()(
     // §12.3 — kısıt durumunu tazele (admin ceza uygularsa re-login gerekmesin)
     try {
       const me = await api.me(token);
+      // §11 — üyelik katmanını backend'den senkronla (admin onayı sonrası premium/platinum açılır)
+      const tier = me.membershipTier ?? 'free';
       set((s) =>
         s.currentUser
           ? {
@@ -439,7 +441,11 @@ export const useStore = create<State>()(
                 ...s.currentUser,
                 restricted: me.restricted,
                 restrictedDaysLeft: me.restrictedDaysLeft,
+                membershipTier: tier,
+                membershipUntil: me.membershipUntil ?? null,
               },
+              premium: tier === 'premium' || tier === 'platinum',
+              platinum: tier === 'platinum',
             }
           : {},
       );

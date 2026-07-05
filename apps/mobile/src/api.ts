@@ -164,6 +164,24 @@ export interface AuthUser {
   // §12.3 — admin ceza takip: kısıtlı mod (yeni talep oluşturamaz)
   restricted?: boolean;
   restrictedDaysLeft?: number; // 7 gün penceresinde kalan gün
+  // §11 — üyelik katmanı (admin onayıyla aktif): free | premium | platinum
+  membershipTier?: string;
+  membershipUntil?: string | null;
+}
+
+// §11 — üyelik aboneliği (Premium/Platinum satın alma + dekont)
+export interface Subscription {
+  id: string;
+  tier: string;
+  amount: number;
+  status: string; // pending | active | rejected | expired
+  receiptUri?: string | null;
+  periodEnd?: string | null;
+}
+export interface MySubscription {
+  tier: string;
+  until: string | null;
+  latest: Subscription | null;
 }
 
 export interface RegisterInput {
@@ -390,6 +408,12 @@ export const api = {
   appConfig: () => get<AppConfig>('/config'),
   // §12.3 — güncel kullanıcı (kısıt durumu tazelemek için)
   me: (token: string) => get<AuthUser>('/auth/me', token),
+  // §11 — üyelik aboneliği: talep oluştur, dekont yükle, güncel katmanı oku
+  createSubscription: (tier: 'premium' | 'platinum', token: string) =>
+    post<Subscription>('/subscriptions', { tier }, token),
+  uploadSubReceipt: (id: string, receiptUri: string, token: string) =>
+    post<Subscription>(`/subscriptions/${id}/receipt`, { receiptUri }, token),
+  mySubscription: (token: string) => get<MySubscription>('/subscriptions/mine', token),
   // §12.8 — pro'nun komisyon faturaları + dekont yükleme
   myCommissions: (token: string) => get<CommissionInvoice[]>('/commissions/mine', token),
   uploadCommissionReceipt: (token: string, id: string, receiptUri: string) =>

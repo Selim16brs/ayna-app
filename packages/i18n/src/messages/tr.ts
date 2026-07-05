@@ -1207,6 +1207,18 @@ export const tr = {
   'upsell.toPlat.title': "Platinum'a yüksel 💎",
   'upsell.toPlat.body': 'Always sadık müşteri portföyü, toplu bildirim ve komisyon %8,5.',
   'upsell.toPlat.cta': "Platinum'a geç",
+  // §11 — üyelik ödeme/dekont akışı
+  'sub.error': 'İşlem başarısız — tekrar dene.',
+  'sub.receipt_title': 'Ödeme dekontu',
+  'sub.pay_title': '{tier} üyelik ödemesi',
+  'sub.pay_desc': 'Ödeme uygulama dışında (Kaspi / banka havalesi). Ödemeyi yaptıktan sonra dekontunu yükle.',
+  'sub.receipt_label': 'Dekont görseli',
+  'sub.pick': 'Dekont yükle',
+  'sub.pick_hint': 'Kaspi / banka ödeme ekran görüntüsü',
+  'sub.approve_note': 'Dekontun admin tarafından doğrulanınca üyeliğin aktifleşir.',
+  'sub.submit': 'Gönder',
+  'sub.sent_t': 'Talebin alındı',
+  'sub.sent_b': 'Admin dekontu onaylayınca üyeliğin aktifleşecek.',
   // geri çağırma ekranı (uzman)
   'reengage.title': 'Müşterini geri çağır',
   'reengage.sub': 'Hizmet periyodu dolan memnun müşterilerine sıcak bir hatırlatma gönder.',
