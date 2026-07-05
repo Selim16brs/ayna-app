@@ -70,6 +70,17 @@ export const api = {
     req<{ markedOverdue: number; restricted: number }>('/admin/commissions/run-overdue', {
       method: 'POST',
     }),
+  // §11 — üyelik abonelikleri (Premium/Platinum dekont onayı)
+  subscriptions: (status?: string) =>
+    req<Subscription[]>(`/admin/subscriptions${status ? `?status=${status}` : ''}`),
+  approveSubscription: (id: string, months = 1) =>
+    req<Subscription>(`/admin/subscriptions/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ months }),
+    }),
+  rejectSubscription: (id: string) =>
+    req<Subscription>(`/admin/subscriptions/${id}/reject`, { method: 'POST' }),
+  runSubExpire: () => req<{ expired: number }>('/admin/subscriptions/run-expire', { method: 'POST' }),
   businesses: (status?: string) =>
     req<Business[]>(`/admin/businesses${status ? `?status=${status}` : ''}`),
   businessDetail: (id: string) => req<BusinessDetail>(`/admin/businesses/${id}`),
@@ -367,6 +378,20 @@ export interface CommissionInvoice {
   collectedAt: string | null;
   overdueDays: number;
   currency: string;
+}
+// §11 — üyelik aboneliği (Premium/Platinum)
+export interface Subscription {
+  id: string;
+  userId: string;
+  userName: string;
+  tier: 'premium' | 'platinum';
+  amount: number;
+  status: 'pending' | 'active' | 'rejected' | 'expired';
+  receiptUri: string | null;
+  receiptAt: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  createdAt: string;
 }
 export interface Commissions {
   rate: number;

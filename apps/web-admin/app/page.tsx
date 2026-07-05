@@ -22,6 +22,7 @@ import {
   type Category,
   type CirclePost,
   type CommissionInvoice,
+  type Subscription,
   type Commissions,
   type Dispute,
   type ReviewDispute,
@@ -45,6 +46,7 @@ type Tab =
   | 'overview'
   | 'stats'
   | 'commissions'
+  | 'subscriptions'
   | 'businesses'
   | 'professionals'
   | 'services'
@@ -88,6 +90,7 @@ export default function AdminApp() {
     { id: 'overview', label: 'Genel Bakış', icon: '📊' },
     { id: 'stats', label: 'İstatistik', icon: '📈' },
     { id: 'commissions', label: 'Komisyon', icon: '💰' },
+    { id: 'subscriptions', label: 'Abonelikler', icon: '💎' },
     { id: 'businesses', label: 'Üyelikler', icon: '🏪' },
     { id: 'professionals', label: 'Uzmanlar', icon: '💇' },
     { id: 'services', label: 'Hizmetler', icon: '🗂️' },
@@ -130,6 +133,7 @@ export default function AdminApp() {
         {tab === 'overview' && <OverviewView />}
         {tab === 'stats' && <StatsView />}
         {tab === 'commissions' && <CommissionsView />}
+        {tab === 'subscriptions' && <SubscriptionsView />}
         {tab === 'businesses' && <BusinessesView />}
         {tab === 'professionals' && <ProfessionalsView />}
         {tab === 'services' && <ServicesView />}
@@ -271,6 +275,98 @@ function Gate({ loading, error, onRetry }: { loading: boolean; error: string | n
         ) : null}
       </div>
     </div>
+  );
+}
+
+// §11 — üyelik abonelik kuyruğu (Premium/Platinum dekont onayı)
+function SubscriptionsView() {
+  const [status, setStatus] = useState<string>('pending');
+  const { data, loading, error, reload } = useAsync<Subscription[]>(
+    () => api.subscriptions(status || undefined),
+    [status],
+  );
+  const [busy, setBusy] = useState<string | null>(null);
+  const act = async (fn: () => Promise<unknown>, id: string) => {
+    setBusy(id);
+    try {
+      await fn();
+      reload();
+    } finally {
+      setBusy(null);
+    }
+  };
+  const FILTERS: [string, string][] = [
+    ['pending', 'Bekleyen'],
+    ['active', 'Aktif'],
+    ['rejected', 'Reddedilen'],
+    ['expired', 'Süresi dolan'],
+    ['', 'Tümü'],
+  ];
+  const statusPill = (s: Subscription['status']) =>
+    s === 'active' ? 'approved' : s === 'pending' ? 'pending' : 'rejected';
+  const statusTr = (s: Subscription['status']) =>
+    s === 'active' ? 'Aktif' : s === 'pending' ? 'Bekliyor' : s === 'rejected' ? 'Reddedildi' : 'Süresi doldu';
+  return (
+    <>
+      <h1 className="page-title">Abonelikler</h1>
+      <p className="page-sub">Premium / Platinum üyelik dekont onayı ({data?.length ?? 0} kayıt)</p>
+      <div className="toolbar">
+        {FILTERS.map(([s, label]) => (
+          <button key={s || 'all'} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>
+            {label}
+          </button>
+        ))}
+        <button className="btn-sm btn-ghost" onClick={() => api.runSubExpire().then(reload)}>
+          Süre dolanları düşür
+        </button>
+      </div>
+      {!data ? (
+        <Gate loading={loading} error={error} onRetry={reload} />
+      ) : data.length === 0 ? (
+        <div className="card">
+          <div className="empty">Kayıt yok.</div>
+        </div>
+      ) : (
+        <div className="card">
+          {data.map((s) => (
+            <div className="list-row" key={s.id}>
+              <div className="grow">
+                <div className="name">
+                  {s.userName}{' '}
+                  <span className={`pill ${s.tier === 'platinum' ? 'accent' : 'info'}`}>
+                    {s.tier === 'platinum' ? '💎 Platinum' : 'Premium'}
+                  </span>
+                </div>
+                <div className="meta">
+                  {TL(s.amount)} · {new Date(s.createdAt).toLocaleDateString('tr-TR')}
+                  {s.periodEnd ? ` · bitiş ${new Date(s.periodEnd).toLocaleDateString('tr-TR')}` : ''}
+                  {s.receiptUri ? ' · 📎 dekont yüklü' : ' · ⚠ dekont yok'}
+                </div>
+              </div>
+              <span className={`pill ${statusPill(s.status)}`}>{statusTr(s.status)}</span>
+              {s.status === 'pending' ? (
+                <div className="actions">
+                  <button
+                    className="btn-sm btn-ok"
+                    disabled={busy === s.id}
+                    onClick={() => act(() => api.approveSubscription(s.id, 1), s.id)}
+                  >
+                    Onayla (1 ay)
+                  </button>
+                  <button
+                    className="btn-sm btn-danger"
+                    disabled={busy === s.id}
+                    onClick={() => act(() => api.rejectSubscription(s.id), s.id)}
+                  >
+                    Reddet
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
