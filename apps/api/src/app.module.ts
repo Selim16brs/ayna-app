@@ -20,6 +20,7 @@ import { MarketModule } from './market/market.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { SettingsModule } from './settings/settings.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { SettingsModule } from './settings/settings.module';
     ContentModule,
     SettingsModule,
     CommissionsModule,
+    SubscriptionsModule,
     DisputesModule,
     CircleModule,
     CutoutModule,

@@ -49,6 +49,9 @@ model User {
   isPremium     Boolean    @default(false) @map("is_premium")
   aiUsed        Int        @default(0) @map("ai_used")
   aiPeriod      String     @default("") @map("ai_period")
+  // §11 — üyelik katmanı (free | premium | platinum) + bitiş; admin onayıyla aktifleşir.
+  membershipTier  String    @default("free") @map("membership_tier")
+  membershipUntil DateTime? @map("membership_until") @db.Timestamptz(6)
   // §4.6 — telefon OTP doğrulaması (mock SMS)
   phoneVerified Boolean    @default(false) @map("phone_verified")
   defaultLocale String     @default("ru") @map("default_locale")
@@ -624,6 +627,27 @@ model CommissionInvoice {
   @@index([status])
   @@index([ownerUserId])
   @@map("commission_invoices")
+}
+
+// §11 — ÜYELİK ABONELİĞİ: uzman/salon Premium/Platinum satın alır (app-dışı ödeme + dekont),
+// admin dekontu doğrulayıp aktive eder. status: pending | active | rejected | expired.
+model Subscription {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  userName    String    @map("user_name")
+  tier        String // premium | platinum
+  amount      Decimal   @default(0) @db.Decimal(12, 2)
+  status      String    @default("pending")
+  receiptUri  String?   @map("receipt_uri") // app-dışı ödeme dekontu (Kaspi/banka)
+  receiptAt   DateTime? @map("receipt_at") @db.Timestamptz(6)
+  periodStart DateTime? @map("period_start") @db.Timestamptz(6)
+  periodEnd   DateTime? @map("period_end") @db.Timestamptz(6)
+  reviewedAt  DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
 }
 
 // §12.10 Bildirim Merkezi — segment bazlı toplu duyuru + gönderim geçmişi.
