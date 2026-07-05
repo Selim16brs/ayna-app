@@ -351,6 +351,11 @@ interface State {
 
   // şehir (global filtre)
   setCity: (city: string) => void;
+  // §9.5 — müşteri profilini anında günceller (salon/uzman admin onayı ister)
+  updateMyProfile: (patch: Partial<Pick<AuthUser, 'name' | 'email' | 'city'>>) => void;
+  // §profil-onay — salon/uzman değişikliğini admin onay kuyruğuna gönderir
+  submitProfileChange: (changes: Record<string, unknown>) => Promise<void>;
+  applyApprovedProfileChanges: () => Promise<void>;
 
   // notifications
   pushNotification: (n: Omit<AppNotification, 'id' | 'read'>) => void;
@@ -534,6 +539,39 @@ export const useStore = create<State>()(
 
   setCity: (city) =>
     set((s) => (s.currentUser ? { currentUser: { ...s.currentUser, city } } : {})),
+
+  // §9.5 — MÜŞTERİ profil güncelleme: anında uygulanır (currentUser persist edilir).
+  // Salon/uzman DEĞİL — onların değişikliği admin onayına gider (submitProfileChange).
+  updateMyProfile: (patch) =>
+    set((s) => (s.currentUser ? { currentUser: { ...s.currentUser, ...patch } } : {})),
+
+  // §profil-onay — SALON/UZMAN değişikliğini admin onay kuyruğuna gönderir (yerelde UYGULANMAZ)
+  submitProfileChange: async (changes) => {
+    const token = get().token;
+    if (!token) return;
+    await api.submitProfileChange(changes, token);
+  },
+  // Admin onayladıysa onaylı değişiklikleri yerelde uygula (app açılışında çağrılır)
+  applyApprovedProfileChanges: async () => {
+    const token = get().token;
+    if (!token) return;
+    try {
+      const req = await api.myProfileChange(token);
+      if (!req || req.status !== 'approved') return;
+      const c = req.changes as Record<string, unknown>;
+      if (typeof c.name === 'string' && c.name.trim()) {
+        set((s) => (s.currentUser ? { currentUser: { ...s.currentUser, name: c.name as string } } : {}));
+      }
+      const sp: { social?: SocialValue; hours?: DayHours[]; certs?: string[] } = {};
+      if (c.social) sp.social = c.social as SocialValue;
+      if (c.hours) sp.hours = c.hours as DayHours[];
+      if (c.certs) sp.certs = c.certs as string[];
+      if (Object.keys(sp).length) get().setSellerProfile(sp);
+      if (c.salonProfile) get().setSalonProfile(c.salonProfile as Partial<State['salonProfile']>);
+    } catch {
+      // erişilemezse yoksay
+    }
+  },
 
   addBooking: (input) => {
     const id = nextId('bk');

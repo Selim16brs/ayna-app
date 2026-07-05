@@ -654,6 +654,23 @@ model Subscription {
   @@map("subscriptions")
 }
 
+// §profil-onay — SALON/UZMAN profil değişikliği admin onayı olmadan uygulanmaz.
+// changes: önerilen alanların JSON'u. status: pending | approved | rejected.
+model ProfileChangeRequest {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  userName   String    @map("user_name")
+  role       String // professional | salon
+  changes    Json // önerilen değişiklikler (name, social, hours, certs, about, address...)
+  status     String    @default("pending")
+  reviewedAt DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@index([status])
+  @@map("profile_change_requests")
+}
+
 // §12.10 Bildirim Merkezi — segment bazlı toplu duyuru + gönderim geçmişi.
 // segment: all | premium | professionals | salons | city
 model Announcement {

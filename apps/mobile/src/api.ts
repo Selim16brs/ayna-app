@@ -184,6 +184,14 @@ export interface MySubscription {
   latest: Subscription | null;
 }
 
+// §profil-onay — salon/uzman profil değişiklik talebi
+export interface ProfileChangeReq {
+  id: string;
+  status: string; // pending | approved | rejected
+  changes: Record<string, unknown>;
+  createdAt: string;
+}
+
 export interface RegisterInput {
   name: string;
   phone: string;
@@ -416,6 +424,10 @@ export const api = {
   uploadSubReceipt: (id: string, receiptUri: string, token: string) =>
     post<Subscription>(`/subscriptions/${id}/receipt`, { receiptUri }, token),
   mySubscription: (token: string) => get<MySubscription>('/subscriptions/mine', token),
+  // §profil-onay — salon/uzman profil değişiklik talebi + son talep durumu
+  submitProfileChange: (changes: Record<string, unknown>, token: string) =>
+    post<ProfileChangeReq>('/profile-changes', { changes }, token),
+  myProfileChange: (token: string) => get<ProfileChangeReq | null>('/profile-changes/mine', token),
   // §12.8 — pro'nun komisyon faturaları + dekont yükleme
   myCommissions: (token: string) => get<CommissionInvoice[]>('/commissions/mine', token),
   uploadCommissionReceipt: (token: string, id: string, receiptUri: string) =>

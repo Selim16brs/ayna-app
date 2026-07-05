@@ -81,6 +81,13 @@ export const api = {
   rejectSubscription: (id: string) =>
     req<Subscription>(`/admin/subscriptions/${id}/reject`, { method: 'POST' }),
   runSubExpire: () => req<{ expired: number }>('/admin/subscriptions/run-expire', { method: 'POST' }),
+  // §profil-onay — salon/uzman profil değişiklik onay kuyruğu
+  profileChanges: (status?: string) =>
+    req<ProfileChange[]>(`/admin/profile-changes${status ? `?status=${status}` : ''}`),
+  approveProfileChange: (id: string) =>
+    req<ProfileChange>(`/admin/profile-changes/${id}/approve`, { method: 'POST' }),
+  rejectProfileChange: (id: string) =>
+    req<ProfileChange>(`/admin/profile-changes/${id}/reject`, { method: 'POST' }),
   businesses: (status?: string) =>
     req<Business[]>(`/admin/businesses${status ? `?status=${status}` : ''}`),
   businessDetail: (id: string) => req<BusinessDetail>(`/admin/businesses/${id}`),
@@ -400,6 +407,16 @@ export interface Subscription {
   receiptAt: string | null;
   periodStart: string | null;
   periodEnd: string | null;
+  createdAt: string;
+}
+// §profil-onay — salon/uzman profil değişiklik talebi
+export interface ProfileChange {
+  id: string;
+  userId: string;
+  userName: string;
+  role: 'professional' | 'salon';
+  changes: Record<string, unknown>;
+  status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
 }
 export interface Commissions {

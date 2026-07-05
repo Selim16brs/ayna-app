@@ -24,6 +24,7 @@ function ThemedStack() {
   const expireResponses = useStore((s) => s.expireResponses);
   const pruneNotifications = useStore((s) => s.pruneNotifications);
   const runAutoReengage = useStore((s) => s.runAutoReengage);
+  const applyApprovedProfileChanges = useStore((s) => s.applyApprovedProfileChanges);
   useEffect(() => {
     void hydrateBookings();
   }, [hydrateBookings]);
@@ -44,7 +45,8 @@ function ThemedStack() {
     expireResponses(); // §4.1.3 — uzman yanıt süresi dolan talepleri düşür
     pruneNotifications(); // §5.7 — 30 günden eski bildirimleri temizle
     runAutoReengage(locale); // §11 — premium uzmanda periyodu dolan müşterilere otomatik geri çağırma
-  }, [checkReminders, expireDemands, expireDeposits, expireResponses, pruneNotifications, runAutoReengage, locale, pathname]);
+    void applyApprovedProfileChanges(); // §profil-onay — admin onayladıysa salon/uzman değişikliğini uygula
+  }, [checkReminders, expireDemands, expireDeposits, expireResponses, pruneNotifications, runAutoReengage, applyApprovedProfileChanges, locale, pathname]);
 
   // §9/§10 — panel giriş ROLÜNE göre AYRI: salon → SalonTabBar, uzman → SellerTabBar. Müşteri modu kaldırıldı.
   const role = currentUser?.role;

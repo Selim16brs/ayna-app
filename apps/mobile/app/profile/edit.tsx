@@ -34,6 +34,8 @@ export default function ProfileEditScreen() {
   const sellerHours = useStore((s) => s.sellerHours);
   const sellerCerts = useStore((s) => s.sellerCerts);
   const setSellerProfile = useStore((s) => s.setSellerProfile);
+  const updateMyProfile = useStore((s) => s.updateMyProfile);
+  const submitProfileChange = useStore((s) => s.submitProfileChange);
 
   const [name, setName] = useState(storeName ?? 'Aigerim');
   const [email, setEmail] = useState('aigerim@mail.kz');
@@ -88,11 +90,20 @@ export default function ProfileEditScreen() {
       { text: t('profile.photo.remove'), style: 'destructive', onPress: () => setAvatar(null) },
     ]);
 
-  const onSave = () => {
-    if (isSeller) setSellerProfile({ social, hours, certs });
-    Alert.alert(t('profile.edit.saved'), undefined, [
-      { text: t('common.save'), onPress: () => router.back() },
-    ]);
+  const onSave = async () => {
+    if (isSeller) {
+      // §profil-onay — salon/uzman: değişiklik ADMIN ONAYINA gider, yerelde uygulanmaz
+      await submitProfileChange({ name, social, hours, certs });
+      Alert.alert(t('profile.edit.pending_t'), t('profile.edit.pending_b'), [
+        { text: t('common.ok'), onPress: () => router.back() },
+      ]);
+    } else {
+      // müşteri: anında uygula
+      updateMyProfile({ name });
+      Alert.alert(t('profile.edit.saved'), undefined, [
+        { text: t('common.save'), onPress: () => router.back() },
+      ]);
+    }
   };
 
   return (

@@ -23,6 +23,7 @@ import {
   type CirclePost,
   type CommissionInvoice,
   type Subscription,
+  type ProfileChange,
   type I18nOverride,
   type Commissions,
   type Dispute,
@@ -48,6 +49,7 @@ type Tab =
   | 'stats'
   | 'commissions'
   | 'subscriptions'
+  | 'profileChanges'
   | 'businesses'
   | 'professionals'
   | 'services'
@@ -92,6 +94,7 @@ export default function AdminApp() {
     { id: 'stats', label: 'İstatistik', icon: '📈' },
     { id: 'commissions', label: 'Komisyon', icon: '💰' },
     { id: 'subscriptions', label: 'Abonelikler', icon: '💎' },
+    { id: 'profileChanges', label: 'Profil Onayları', icon: '📝' },
     { id: 'businesses', label: 'Üyelikler', icon: '🏪' },
     { id: 'professionals', label: 'Uzmanlar', icon: '💇' },
     { id: 'services', label: 'Hizmetler', icon: '🗂️' },
@@ -135,6 +138,7 @@ export default function AdminApp() {
         {tab === 'stats' && <StatsView />}
         {tab === 'commissions' && <CommissionsView />}
         {tab === 'subscriptions' && <SubscriptionsView />}
+        {tab === 'profileChanges' && <ProfileChangesView />}
         {tab === 'businesses' && <BusinessesView />}
         {tab === 'professionals' && <ProfessionalsView />}
         {tab === 'services' && <ServicesView />}
@@ -303,6 +307,99 @@ function buildI18n(fields: Record<string, { kk: string; ru: string }>): I18nOver
     if (Object.keys(o).length) out[loc] = o;
   }
   return Object.keys(out).length ? out : undefined;
+}
+
+// §profil-onay — salon/uzman profil değişiklik onay kuyruğu
+function ProfileChangesView() {
+  const [status, setStatus] = useState<string>('pending');
+  const { data, loading, error, reload } = useAsync<ProfileChange[]>(
+    () => api.profileChanges(status || undefined),
+    [status],
+  );
+  const [busy, setBusy] = useState<string | null>(null);
+  const act = async (fn: () => Promise<unknown>, id: string) => {
+    setBusy(id);
+    try {
+      await fn();
+      reload();
+    } finally {
+      setBusy(null);
+    }
+  };
+  // değişiklik JSON'unu okunur özetle
+  const summarize = (c: Record<string, unknown>): string => {
+    const parts: string[] = [];
+    if (typeof c.name === 'string') parts.push(`İsim → "${c.name}"`);
+    const sp = c.salonProfile as Record<string, unknown> | undefined;
+    if (sp) {
+      if (sp.about) parts.push('Hakkında');
+      if (sp.address) parts.push('Adres');
+      if (sp.contact) parts.push('İletişim');
+      if (Array.isArray(sp.photos)) parts.push(`${(sp.photos as unknown[]).length} foto`);
+      if (Array.isArray(sp.areas)) parts.push('Hizmet alanları');
+    }
+    if (c.social) parts.push('Sosyal medya');
+    if (c.hours) parts.push('Çalışma saatleri');
+    if (Array.isArray(c.certs)) parts.push(`${(c.certs as unknown[]).length} sertifika`);
+    return parts.length ? parts.join(' · ') : 'Değişiklik';
+  };
+  const FILTERS: [string, string][] = [
+    ['pending', 'Bekleyen'],
+    ['approved', 'Onaylanan'],
+    ['rejected', 'Reddedilen'],
+    ['', 'Tümü'],
+  ];
+  return (
+    <>
+      <h1 className="page-title">Profil Onayları</h1>
+      <p className="page-sub">Salon/uzman profil değişiklikleri admin onayı olmadan yayınlanmaz ({data?.length ?? 0} kayıt)</p>
+      <div className="toolbar">
+        {FILTERS.map(([s, label]) => (
+          <button key={s || 'all'} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {!data ? (
+        <Gate loading={loading} error={error} onRetry={reload} />
+      ) : data.length === 0 ? (
+        <div className="card">
+          <div className="empty">Kayıt yok.</div>
+        </div>
+      ) : (
+        <div className="card">
+          {data.map((p) => (
+            <div className="list-row" key={p.id}>
+              <div className="grow">
+                <div className="name">
+                  {p.userName}{' '}
+                  <span className={`pill ${p.role === 'salon' ? 'info' : 'accent'}`}>
+                    {p.role === 'salon' ? 'Salon' : 'Uzman'}
+                  </span>
+                </div>
+                <div className="meta">
+                  {summarize(p.changes)} · {new Date(p.createdAt).toLocaleDateString('tr-TR')}
+                </div>
+              </div>
+              <span className={`pill ${p.status === 'approved' ? 'approved' : p.status === 'pending' ? 'pending' : 'rejected'}`}>
+                {p.status === 'approved' ? 'Onaylandı' : p.status === 'pending' ? 'Bekliyor' : 'Reddedildi'}
+              </span>
+              {p.status === 'pending' ? (
+                <div className="actions">
+                  <button className="btn-sm btn-ok" disabled={busy === p.id} onClick={() => act(() => api.approveProfileChange(p.id), p.id)}>
+                    Onayla
+                  </button>
+                  <button className="btn-sm btn-danger" disabled={busy === p.id} onClick={() => act(() => api.rejectProfileChange(p.id), p.id)}>
+                    Reddet
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
 }
 
 // §11 — üyelik abonelik kuyruğu (Premium/Platinum dekont onayı)

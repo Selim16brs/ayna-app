@@ -34,6 +34,7 @@ export default function SalonEditScreen() {
   const sellerSocial = useStore((s) => s.sellerSocial);
   const sellerHours = useStore((s) => s.sellerHours);
   const setSellerProfile = useStore((s) => s.setSellerProfile);
+  const submitProfileChange = useStore((s) => s.submitProfileChange);
 
   const [photos, setPhotos] = useState(salonProfile.photos);
   const [about, setAbout] = useState(salonProfile.about);
@@ -68,10 +69,16 @@ export default function SalonEditScreen() {
   const toggleArea = (id: string) =>
     setAreas((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
 
-  const onSave = () => {
-    setSalonProfile({ photos, about, address, contact, areas });
-    setSellerProfile({ social, hours });
-    Alert.alert(t('salon.profile.saved'), undefined, [{ text: t('common.save'), onPress: () => router.back() }]);
+  // §profil-onay — salon profil değişikliği ADMIN ONAYINA gider (yerelde uygulanmaz)
+  const onSave = async () => {
+    await submitProfileChange({
+      salonProfile: { photos, about, address, contact, areas },
+      social,
+      hours,
+    });
+    Alert.alert(t('profile.edit.pending_t'), t('profile.edit.pending_b'), [
+      { text: t('common.ok'), onPress: () => router.back() },
+    ]);
   };
 
   return (

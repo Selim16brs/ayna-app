@@ -21,6 +21,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { SettingsModule } from './settings/settings.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { ProfileChangesModule } from './profile-changes/profile-changes.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     SettingsModule,
     CommissionsModule,
     SubscriptionsModule,
+    ProfileChangesModule,
     DisputesModule,
     CircleModule,
     CutoutModule,
