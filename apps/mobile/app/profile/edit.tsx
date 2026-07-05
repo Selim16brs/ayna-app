@@ -37,7 +37,7 @@ export default function ProfileEditScreen() {
   const updateMyProfile = useStore((s) => s.updateMyProfile);
   const submitProfileChange = useStore((s) => s.submitProfileChange);
 
-  const [name, setName] = useState(storeName ?? 'Aigerim');
+  const [name, setName] = useState(storeName || 'Aigerim');
   const [email, setEmail] = useState('aigerim@mail.kz');
   const [phone, setPhone] = useState('+7 700 123 45 67');
   const [city, setCity] = useState('Almatı');
@@ -98,8 +98,9 @@ export default function ProfileEditScreen() {
         { text: t('common.ok'), onPress: () => router.back() },
       ]);
     } else {
-      // müşteri: anında uygula
-      updateMyProfile({ name });
+      // müşteri: anında uygula (boş isim kaydetme — Keşfet ismi boşalmasın)
+      const trimmed = name.trim();
+      if (trimmed) updateMyProfile({ name: trimmed });
       Alert.alert(t('profile.edit.saved'), undefined, [
         { text: t('common.save'), onPress: () => router.back() },
       ]);
@@ -208,33 +209,37 @@ export default function ProfileEditScreen() {
       </ScrollView>
     </Screen>
   );
+}
 
-  function Field({
-    label,
-    value,
-    onChangeText,
-    keyboardType,
-  }: {
-    label: string;
-    value: string;
-    onChangeText: (v: string) => void;
-    keyboardType?: 'default' | 'email-address' | 'phone-pad';
-  }) {
-    return (
-      <View style={styles.field}>
-        <Text variant="bodyStrong" tone="ink" style={styles.fieldLabel}>
-          {label}
-        </Text>
-        <TextInput
-          style={styles.input}
-          value={value}
-          onChangeText={onChangeText}
-          keyboardType={keyboardType}
-          placeholderTextColor={colors.muted}
-        />
-      </View>
-    );
-  }
+// §fix — Field MODÜL SEVİYESİNDE (component içinde tanımlıydı → her render yeni referans
+// → input unmount/remount → her karakterde odak kaybı). Modül-seviye = stabil, odak korunur.
+function Field({
+  label,
+  value,
+  onChangeText,
+  keyboardType,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (v: string) => void;
+  keyboardType?: 'default' | 'email-address' | 'phone-pad';
+}) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.field}>
+      <Text variant="bodyStrong" tone="ink" style={styles.fieldLabel}>
+        {label}
+      </Text>
+      <TextInput
+        style={styles.input}
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType={keyboardType}
+        placeholderTextColor={colors.muted}
+      />
+    </View>
+  );
 }
 
 const makeStyles = (colors: ColorTokens) =>

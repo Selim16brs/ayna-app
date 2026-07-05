@@ -35,7 +35,8 @@ export default function DiscoverScreen() {
   const campaigns = useCampaigns();
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const unread = useStore(selectUnreadCount);
-  const userName = useStore((s) => s.currentUser?.name)?.split(' ')[0] ?? 'Aigerim';
+  // §fix — boş isimde de fallback (|| ; '' ?? x boş string'e düşmez → Keşfet ismi boş görünüyordu)
+  const userName = useStore((s) => s.currentUser?.name)?.trim().split(' ')[0] || 'Aigerim';
   // Dinamik kullanıcı adı — ilk harf büyük (el yazısı katman için)
   const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
   const pros = useProfessionals();
@@ -458,6 +459,10 @@ const makeStyles = (colors: ColorTokens) =>
       alignSelf: 'flex-start',
       marginTop: -6,
       marginLeft: -2,
+      // §fix — Caveat script fontunun son glifi kendi kutusunca kırpılıyordu (isim sağdan kesik).
+      // Sağ dolgu + marginRight ile taşmaya yer; sola kaydırmadan hizayı korur.
+      paddingRight: space(3),
+      marginRight: -space(3),
       transform: [{ rotate: '-9deg' }],
       zIndex: 2,
       // %15 opasiteli, yumuşak/blurlu alt gölge
