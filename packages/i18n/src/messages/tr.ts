@@ -1567,6 +1567,11 @@ export const tr = {
   'payment.failed': 'Ödeme alınamadı, tekrar dene.',
   'payment.paid': 'Ödeme tamamlandı',
 
+  // §5.1.1 — remove.bg cut-out profil fotosu
+  'cutout.done': 'Fotoğrafın hazır — arka planı temizlendi ✨',
+  'cutout.upsell_title': 'Premium’da profilin böyle görünürdü ✨',
+  'cutout.upsell_body': 'Premium üyelikte profil fotoğrafının arka planı otomatik temizlenir ve ana sayfanda öne çıkar.',
+
   // Profil — Gizlilik
   'privacy.title': 'Gizlilik',
   'privacy.subtitle': 'Verilerin üzerindeki kontrol sende',

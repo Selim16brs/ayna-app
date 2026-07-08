@@ -5,7 +5,13 @@ import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CutoutService } from './cutout.service';
 
-const cutoutSchema = z.object({ imageUrl: z.string().url() });
+// Kaynak: public URL VEYA yerel fotonun base64'ü (en az biri zorunlu)
+const cutoutSchema = z
+  .object({
+    imageUrl: z.string().url().optional(),
+    imageB64: z.string().min(1).max(12_000_000).optional(),
+  })
+  .refine((d) => !!d.imageUrl || !!d.imageB64, { message: 'imageUrl veya imageB64 gerekli' });
 
 // §5.1.1/§13 — remove.bg cut-out (girişli; premium/uzman foto işleme)
 @ApiTags('cutout')
@@ -20,7 +26,7 @@ export class CutoutController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  process(@Body(new ZodValidationPipe(cutoutSchema)) body: { imageUrl: string }) {
-    return this.cutout.cutout(body.imageUrl);
+  process(@Body(new ZodValidationPipe(cutoutSchema)) body: { imageUrl?: string; imageB64?: string }) {
+    return this.cutout.cutout({ imageUrl: body.imageUrl, imageB64: body.imageB64 });
   }
 }

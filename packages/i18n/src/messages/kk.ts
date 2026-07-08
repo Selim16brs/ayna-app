@@ -1457,6 +1457,11 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'payment.success_sub': 'Операция нөмірі: {ref}',
   'payment.failed': 'Төлем қабылданбады, қайта көріңіз.',
   'payment.paid': 'Төлем аяқталды',
+
+  // §5.1.1 — фоны алынған профиль фотосы (remove.bg)
+  'cutout.done': 'Фотоң дайын — фоны алынды ✨',
+  'cutout.upsell_title': 'Premium-да профиль осылай көрінер еді ✨',
+  'cutout.upsell_body': 'Premium жазылымда профиль фотосының фоны автоматты алынып, басты бетте ерекшеленеді.',
   'privacy.title': 'Құпиялылық',
   'privacy.subtitle': 'Деректеріңізді бақылау сізде',
   'privacy.location': 'Орналасқан жерді бөлісу',

@@ -431,6 +431,9 @@ export const api = {
     get<ApiAnnouncement[]>(`/content/announcements${locale ? `?locale=${locale}` : ''}`, token),
   // §12.9 — parametrik oranlar + aktif şehirler + özellik erişimi (gizli anahtar sızmaz)
   appConfig: () => get<AppConfig>('/config'),
+  // §5.1.1 — remove.bg cut-out: yerel foto base64 → şeffaf PNG (data URL). Premium/uzman foto.
+  cutout: (token: string, source: { imageUrl?: string; imageB64?: string }) =>
+    post<{ dataUrl: string }>('/cutout', source, token),
   // §12.3 — güncel kullanıcı (kısıt durumu tazelemek için)
   me: (token: string) => get<AuthUser>('/auth/me', token),
   // §11 — üyelik aboneliği: talep oluştur, dekont yükle, güncel katmanı oku

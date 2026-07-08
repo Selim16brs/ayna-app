@@ -31,6 +31,7 @@ export default function ReportsScreen() {
   const [period, setPeriod] = useState<Period>('week');
   const data = SELLER_DATA[period];
   const salonName = useStore((s) => s.currentUser?.name) ?? 'AYNA İşletme';
+  const cutoutUri = useStore((s) => s.cutoutUri); // §5.1.1 — uzman cut-out portresi
   const insets = useSafeAreaInsets();
   // Karşılama için ad (Keşfet dili) — ilk isim, ilk harf büyük (el yazısı katman)
   const firstRaw = salonName.split(' ')[0] || salonName;
@@ -132,8 +133,9 @@ export default function ReportsScreen() {
               </Text>
             </View>
           </View>
+          {/* §5.1.1 — uzmanın cut-out portresi varsa göster; yoksa varsayılan çizim */}
           <Image
-            source={require('../../assets/hero-expert.png')}
+            source={cutoutUri ? { uri: cutoutUri } : require('../../assets/hero-expert.png')}
             style={styles.heroPhoto}
             resizeMode="contain"
           />

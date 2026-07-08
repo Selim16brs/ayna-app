@@ -26,6 +26,7 @@ export default function ProfileEditScreen() {
 
   const avatarUri = useStore((s) => s.avatarUri);
   const setAvatar = useStore((s) => s.setAvatar);
+  const applyProfileCutout = useStore((s) => s.applyProfileCutout); // §5.1.1 — remove.bg
   const storeName = useStore((s) => s.currentUser?.name);
   // §9.5 — uzman/salon: kayıt sonrası sertifika/sosyal medya/çalışma saatleri düzenleme
   const role = useStore((s) => s.currentUser?.role);
@@ -58,6 +59,19 @@ export default function ProfileEditScreen() {
       { text: t('profile.photo.remove'), style: 'destructive', onPress: () => setCerts((c) => c.filter((x) => x !== uri)) },
     ]);
 
+  // §5.1.1 — foto seçildi: normal avatarı ayarla + (premium & removebg ise) arka planı
+  // remove.bg ile temizle (Keşfet/uzman hero'sunda kullanılır). Premium değilse upsell.
+  const onPhotoPicked = async (asset: ImagePicker.ImagePickerAsset) => {
+    setAvatar(asset.uri);
+    if (!asset.base64) return;
+    const res = await applyProfileCutout(asset.base64);
+    if (res === 'not_premium') {
+      Alert.alert(t('cutout.upsell_title'), t('cutout.upsell_body'));
+    } else if (res === 'ok') {
+      Alert.alert(t('cutout.done'));
+    }
+  };
+
   // Galeriden fotoğraf seç (kare kırpma)
   const pickFromGallery = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -65,8 +79,9 @@ export default function ProfileEditScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.85,
+      base64: true,
     });
-    if (!res.canceled && res.assets[0]) setAvatar(res.assets[0].uri);
+    if (!res.canceled && res.assets[0]) void onPhotoPicked(res.assets[0]);
   };
 
   // Kamera ile çek (izin iste)
@@ -80,8 +95,9 @@ export default function ProfileEditScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.85,
+      base64: true,
     });
-    if (!res.canceled && res.assets[0]) setAvatar(res.assets[0].uri);
+    if (!res.canceled && res.assets[0]) void onPhotoPicked(res.assets[0]);
   };
 
   const removePhoto = () =>

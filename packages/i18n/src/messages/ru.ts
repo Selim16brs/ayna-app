@@ -1457,6 +1457,11 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'payment.success_sub': 'Номер операции: {ref}',
   'payment.failed': 'Не удалось принять оплату, попробуйте снова.',
   'payment.paid': 'Оплата завершена',
+
+  // §5.1.1 — фото профиля с удалённым фоном (remove.bg)
+  'cutout.done': 'Фото готово — фон удалён ✨',
+  'cutout.upsell_title': 'В Premium профиль выглядел бы так ✨',
+  'cutout.upsell_body': 'В Premium фон фото профиля удаляется автоматически и выделяется на главной.',
   'privacy.title': 'Конфиденциальность',
   'privacy.subtitle': 'Контроль над вашими данными — у вас',
   'privacy.location': 'Передача местоположения',

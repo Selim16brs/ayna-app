@@ -192,6 +192,11 @@ interface State {
   // Profil fotoğrafı (galeri/kamera; kaldırılabilir). Kalıcı saklanır.
   avatarUri: string | null;
   setAvatar: (uri: string | null) => void;
+  // §5.1.1 — remove.bg cut-out (arka planı temizlenmiş şeffaf PNG). Keşfet/uzman ana sayfa hero'sunda.
+  cutoutUri: string | null;
+  setCutout: (uri: string | null) => void;
+  // Yerel foto base64 → cut-out uygula. Sonuç: 'ok' | 'not_premium' | 'unavailable' | 'error'.
+  applyProfileCutout: (base64: string) => Promise<'ok' | 'not_premium' | 'unavailable' | 'error'>;
   // §6.1 — uzman/salon hizmet kataloğu (taksonomi id → fiyat/süre). Profil "Hizmetler" ekranından
   // yönetilir; offline randevu akışında hazır (accordion) seçim olarak kullanılır. Kalıcı saklanır.
   sellerServices: Record<string, SellerServiceRow>;
@@ -509,6 +514,22 @@ export const useStore = create<State>()(
   avatarUri:
     'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=240&h=240&fit=crop&crop=faces&q=80',
   setAvatar: (uri) => set({ avatarUri: uri }),
+  cutoutUri: null,
+  setCutout: (uri) => set({ cutoutUri: uri }),
+  applyProfileCutout: async (base64) => {
+    if (!get().config.features.removebg) return 'unavailable';
+    const tier = get().currentUser?.membershipTier ?? 'free';
+    if (tier === 'free') return 'not_premium'; // §5.1.1 — cut-out yalnız premium/platinum
+    const token = get().token;
+    if (!token) return 'error';
+    try {
+      const { dataUrl } = await api.cutout(token, { imageB64: base64 });
+      set({ cutoutUri: dataUrl });
+      return 'ok';
+    } catch {
+      return 'error';
+    }
+  },
   sellerServices: seedSellerServices(),
   setSellerServices: (map) => set({ sellerServices: map }),
   sellerSocial: emptySocial,
@@ -1876,6 +1897,7 @@ export const useStore = create<State>()(
         token: s.token,
         currentUser: s.currentUser,
         avatarUri: s.avatarUri,
+        cutoutUri: s.cutoutUri, // §5.1.1 — cut-out foto app yeniden açılınca korunur
         sellerServices: s.sellerServices,
         sellerSocial: s.sellerSocial,
         sellerHours: s.sellerHours,
