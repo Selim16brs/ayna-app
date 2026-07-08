@@ -342,6 +342,11 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'quote.new.submit': 'Ұсыныс сұрау',
   'quote.new.submit_err': 'Сұраныс жіберілмеді — байланысты тексеріп, қайта көр.',
   'quotes.pick_err': 'Таңдау аяқталмады — қайта көр.',
+  'seller.requests.pref': 'Қалаған уақыт',
+  'offer.form.pref': 'Пайдаланушы қалаған уақыттар — қолайлы болса түртіп, ұсынысыңмен раста',
+  'offer.form.pref_busy_t': 'Кестең бос емес ⛔',
+  'offer.form.pref_busy':
+    'Бұл уақытта жазылымың бар. Балама уақыт ұсыну үшін төмендегі бос уақыттардан таңда.',
   'offer.form.send_err': 'Ұсыныс жіберілмеді — байланысты тексеріп, қайта көр.',
   'seller.requests.offered': 'Ұсынысың жіберілді — жаңарту',
   'quote.notif.title': 'Жаңа ұсынысың бар',
@@ -382,6 +387,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'dur.180': '3 сағат',
   'dur.720': '12 сағат',
   'dur.1440': '24 сағат',
+  'demand.pref.title': 'Қалаған күн мен уақыт (міндетті емес)',
+  'demand.pref.hint':
+    'Ең көбі 2 нұсқа белгіле — маман қолайлы болса растайды, болмаса балама уақыт ұсынады.',
   'demand.new.title': 'Сұраныс құру',
   'demand.new.subtitle': 'Қажеттілігіңді таңда, саған ең қолайлы мамандарды табайық.',
   'demand.new.category': 'Санат таңдау',

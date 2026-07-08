@@ -278,6 +278,65 @@ export default function SellerRequestsScreen() {
                   placeholderTextColor={colors.muted}
                   style={styles.input}
                 />
+                {/* Kullanıcının istediği saatler: müsaitse TEK DOKUNUŞLA okey; doluysa ⛔ uyarı (§4.1) */}
+                {(() => {
+                  const d = form ? pool.find((x) => x.id === form.id) : null;
+                  const prefs = d?.preferredSlots ?? [];
+                  if (prefs.length === 0) return null;
+                  const dur = (Number(eta) || 60) * 60_000;
+                  const busySet = bookings
+                    .filter((b) => b.status !== 'cancelled' && b.status !== 'no_show')
+                    .map((b) => ({
+                      startMs: b.startMs,
+                      endMs: b.startMs + b.durationMin * 60_000,
+                    }));
+                  return (
+                    <>
+                      <Text variant="caption" tone="inkSoft" style={styles.label}>
+                        {t('offer.form.pref')}
+                      </Text>
+                      <View style={styles.slotGrid}>
+                        {prefs.map((ms) => {
+                          const busy = hasConflict({ startMs: ms, endMs: ms + dur }, busySet);
+                          const on = picked.includes(ms);
+                          return (
+                            <Pressable
+                              key={ms}
+                              style={[
+                                styles.slotChip,
+                                on && styles.slotChipOn,
+                                busy && { opacity: 0.45 },
+                              ]}
+                              onPress={() => {
+                                if (busy) {
+                                  Alert.alert(
+                                    t('offer.form.pref_busy_t'),
+                                    t('offer.form.pref_busy'),
+                                  );
+                                  return;
+                                }
+                                toggleSlot(ms);
+                              }}
+                            >
+                              {busy ? (
+                                <Ionicons name="close-circle" size={13} color={colors.danger} />
+                              ) : on ? (
+                                <Ionicons name="checkmark" size={13} color={colors.onAccent} />
+                              ) : null}
+                              <Text
+                                variant="caption"
+                                tone={on ? 'onAccent' : 'ink'}
+                                style={styles.slotChipText}
+                              >
+                                {formatSlotTr(ms)}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    </>
+                  );
+                })()}
                 <Text variant="caption" tone="inkSoft" style={styles.label}>
                   {t('offer.form.slots')}
                 </Text>

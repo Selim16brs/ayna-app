@@ -289,6 +289,7 @@ interface State {
     collectMin: number;
     serviceId?: string;
     addressId?: string;
+    preferredSlots?: number[];
   }) => Promise<string | null>; // → talep id (backend) | null = hata
   hydrateDemands: () => Promise<void>; // taleplerim + gelen teklifleri buluttan çek
   selectOffer: (demandId: string, offerId: string, slotMs: number) => Promise<string | null>; // → booking id
@@ -1149,6 +1150,7 @@ export const useStore = create<State>()(
             ...(input.budget ? { budget: input.budget } : {}),
             collectMin: input.collectMin,
             ...(input.serviceId ? { serviceId: input.serviceId } : {}),
+            ...(input.preferredSlots?.length ? { preferredSlots: input.preferredSlots } : {}),
           });
           set((s) => ({ demands: [demand, ...s.demands.filter((d) => d.id !== demand.id)] }));
           // Müşteri tarafı: teklif toplama başladı (uygulama-içi bildirim)

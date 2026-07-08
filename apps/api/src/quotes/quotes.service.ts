@@ -122,6 +122,16 @@ export class QuotesService {
       ...(r.budget != null ? { budget: Number(r.budget) } : {}),
       collectMin: r.collectMin,
       ...(r.serviceId ? { serviceId: r.serviceId } : {}),
+      preferredSlots: ((): number[] => {
+        try {
+          const v: unknown = JSON.parse(
+            (r as { preferredSlotsJson?: string }).preferredSlotsJson ?? '[]',
+          );
+          return Array.isArray(v) ? v.filter((x): x is number => typeof x === 'number') : [];
+        } catch {
+          return [];
+        }
+      })(),
       createdAt: r.createdAt.getTime(),
       expiresAt: expiresMs,
       status,
@@ -164,6 +174,7 @@ export class QuotesService {
         collectMin: input.collectMin,
         expiresAt: new Date(now + input.collectMin * 60_000),
         serviceId: input.serviceId ?? null,
+        preferredSlotsJson: JSON.stringify(input.preferredSlots ?? []),
       },
       include: { category: { select: { code: true } } },
     });

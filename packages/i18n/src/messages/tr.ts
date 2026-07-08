@@ -370,6 +370,11 @@ export const tr = {
   'quote.new.submit': 'Teklif iste',
   'quote.new.submit_err': 'Talep gönderilemedi — bağlantını kontrol edip tekrar dene.',
   'quotes.pick_err': 'Seçim tamamlanamadı — tekrar dene.',
+  'seller.requests.pref': 'İstenen saat',
+  'offer.form.pref': 'Kullanıcının istediği saatler — müsaitsen dokun, teklifinle onayla',
+  'offer.form.pref_busy_t': 'Takvimin dolu ⛔',
+  'offer.form.pref_busy':
+    'Bu saatte mevcut bir randevun var. Alternatif saat önermek için aşağıdaki boş saatlerinden seç.',
   'offer.form.send_err': 'Teklif gönderilemedi — bağlantını kontrol edip tekrar dene.',
   'seller.requests.offered': 'Teklifin gönderildi — güncelle',
 
@@ -418,6 +423,9 @@ export const tr = {
   'dur.1440': '24 saat',
 
   // Model 2 — talep oluştur
+  'demand.pref.title': 'İstediğin tarih & saat (isteğe bağlı)',
+  'demand.pref.hint':
+    'En fazla 2 seçenek işaretle — uzman uygunsa okeyler, değilse alternatif saat önerir.',
   'demand.new.title': 'Talep oluştur',
   'demand.new.subtitle': 'İhtiyacını seç, sana en uygun uzmanları bulalım.',
   'demand.new.category': 'Kategori seç',

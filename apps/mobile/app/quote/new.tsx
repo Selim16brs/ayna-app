@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS } from '../../src/data';
 import { useCampaigns } from '../../src/catalog';
 import type { MessageKey } from '@ayna/i18n';
+import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -30,6 +31,8 @@ export default function NewQuoteScreen() {
   const [photo, setPhoto] = useState<{ uri: string; base64?: string } | null>(null);
   const [category, setCategory] = useState<string>('hair');
   const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
+  const [preferred, setPreferred] = useState<number[]>([]);
+
   const [submitting, setSubmitting] = useState(false);
 
   async function submit() {
@@ -46,6 +49,7 @@ export default function NewQuoteScreen() {
         mode: 'photo',
         category,
         collectMin,
+        ...(preferred.length ? { preferredSlots: preferred } : {}),
         ...(photo?.base64 ? { photoDataUrl: `data:image/jpeg;base64,${photo.base64}` } : {}),
       });
       if (!id) {
@@ -170,6 +174,44 @@ export default function NewQuoteScreen() {
               </Pressable>
             );
           })}
+        </View>
+        {/* İstenen tarih & saat (ops.) — uzman okeyler ya da alternatif önerir (§4.1) */}
+        <Text variant="bodyStrong" tone="ink" style={styles.durLabel}>
+          {t('demand.pref.title')}
+        </Text>
+        <Text variant="caption" tone="muted" style={{ marginBottom: 8 }}>
+          {t('demand.pref.hint')}
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+          {Array.from({ length: 3 }, (_, d) =>
+            [11, 15, 18].map((h) => almatySlotMs(Date.now(), d + 1, h, 0)),
+          )
+            .flat()
+            .map((ms) => {
+              const on = preferred.includes(ms);
+              return (
+                <Pressable
+                  key={ms}
+                  onPress={() =>
+                    setPreferred((p) =>
+                      p.includes(ms) ? p.filter((x) => x !== ms) : p.length >= 2 ? p : [...p, ms],
+                    )
+                  }
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 999,
+                    borderWidth: 1.25,
+                    borderColor: on ? colors.accent : colors.line,
+                    backgroundColor: on ? colors.accent : colors.surface,
+                  }}
+                >
+                  <Text variant="caption" tone={on ? 'onAccent' : 'ink'}>
+                    {formatSlotTr(ms)}
+                  </Text>
+                </Pressable>
+              );
+            })}
         </View>
 
         {/* ── Teklif toplama süresi (§5.2) ── */}

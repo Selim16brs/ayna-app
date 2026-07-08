@@ -10,6 +10,7 @@ export const createQuoteRequestSchema = z.object({
   budget: z.number().int().positive().max(10_000_000).optional(),
   collectMin: z.number().int().min(60).max(1440).default(180),
   serviceId: z.string().max(60).optional(),
+  preferredSlots: z.array(z.number().int().positive()).max(3).optional(), // istenen tarih-saat(ler)
 });
 
 // Uzman teklifi: fiyat + süre + not + önerilen 1-3 müsait başlangıç (UTC ms)

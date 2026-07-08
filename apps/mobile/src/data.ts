@@ -1619,6 +1619,7 @@ export interface DemandRequest {
   serviceId?: string; // opsiyonel alt hizmet (taksonomi) — talebi spesifikleştirir
   // §privacy — yalnızca yakın salon sıralaması için kullanıcı adresi; UZMANA ASLA GÖSTERİLMEZ
   addressId?: string;
+  preferredSlots?: number[]; // kullanıcının İSTEDİĞİ tarih-saat(ler) — uzman okeyler ya da alternatif verir
   createdAt: number;
   expiresAt: number;
   status: DemandStatus;

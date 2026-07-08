@@ -262,6 +262,7 @@ model QuoteRequest {
   serviceId       String? @map("service_id") // taksonomi alt hizmet (opsiyonel)
   bookingId       String? @map("booking_id") // seçim sonrası oluşan randevu
   selectedQuoteId String? @map("selected_quote_id") // kazanan teklif
+  preferredSlotsJson String @default("[]") @map("preferred_slots_json") // kullanıcının İSTEDİĞİ saatler (UTC ms)
 
   category ServiceCategory @relation(fields: [categoryId], references: [id])
   quotes   Quote[]

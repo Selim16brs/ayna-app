@@ -372,6 +372,7 @@ export const api = {
       budget?: number;
       collectMin: number;
       serviceId?: string;
+      preferredSlots?: number[];
     },
   ) => post<DemandRequest>('/quote-requests', input, token),
   openQuoteRequests: (token: string) =>

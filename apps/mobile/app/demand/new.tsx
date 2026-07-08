@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/api';
 import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS, formatPrice } from '../../src/data';
 import type { MessageKey } from '@ayna/i18n';
+import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -50,6 +51,8 @@ export default function NewDemandScreen() {
   );
   const [budget, setBudget] = useState('');
   const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
+  const [preferred, setPreferred] = useState<number[]>([]);
+
   const [market, setMarket] = useState<{ average: number; floor: number } | null>(null);
   // §privacy — yakın salon sıralaması için adres seçimi (varsayılan: ilk kayıtlı adres)
   const [addressId, setAddressId] = useState<string | undefined>(() => addresses[0]?.id);
@@ -102,6 +105,7 @@ export default function NewDemandScreen() {
         note: desc.trim(),
         budget: budgetNum,
         collectMin,
+        ...(preferred.length ? { preferredSlots: preferred } : {}),
         ...(serviceId ? { serviceId } : {}),
         ...(addressId ? { addressId } : {}),
         ...(photos[0]?.base64
@@ -355,6 +359,44 @@ export default function NewDemandScreen() {
             <Text variant="caption" tone="muted">
               {t('demand.new.photo_privacy')}
             </Text>
+          </View>
+          {/* İstenen tarih & saat (ops.) — uzman okeyler ya da alternatif önerir (§4.1) */}
+          <Text variant="bodyStrong" tone="ink" style={styles.label}>
+            {t('demand.pref.title')}
+          </Text>
+          <Text variant="caption" tone="muted" style={{ marginBottom: 8 }}>
+            {t('demand.pref.hint')}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+            {Array.from({ length: 3 }, (_, d) =>
+              [11, 15, 18].map((h) => almatySlotMs(Date.now(), d + 1, h, 0)),
+            )
+              .flat()
+              .map((ms) => {
+                const on = preferred.includes(ms);
+                return (
+                  <Pressable
+                    key={ms}
+                    onPress={() =>
+                      setPreferred((p) =>
+                        p.includes(ms) ? p.filter((x) => x !== ms) : p.length >= 2 ? p : [...p, ms],
+                      )
+                    }
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 999,
+                      borderWidth: 1.25,
+                      borderColor: on ? colors.accent : colors.line,
+                      backgroundColor: on ? colors.accent : colors.surface,
+                    }}
+                  >
+                    <Text variant="caption" tone={on ? 'onAccent' : 'ink'}>
+                      {formatSlotTr(ms)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
           </View>
 
           {/* Teklif toplama süresi (§5.2) */}
