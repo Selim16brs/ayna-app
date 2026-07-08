@@ -111,6 +111,9 @@ export const api = {
   // §11 — manuel üyelik katmanı (free | premium | platinum)
   setUserTier: (id: string, tier: 'free' | 'premium' | 'platinum') =>
     req(`/admin/users/${id}/tier`, { method: 'POST', body: JSON.stringify({ tier }) }),
+  // §12.2 — üyenin parolasını değiştir
+  setUserPassword: (id: string, password: string) =>
+    req(`/admin/users/${id}/password`, { method: 'POST', body: JSON.stringify({ password }) }),
   // §12.3 Ceza takip
   penalties: () => req<Penalty[]>('/admin/penalties'),
   restrictUser: (id: string, reason: string) =>

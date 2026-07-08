@@ -1541,17 +1541,23 @@ export const useStore = create<State>()(
       },
 
       hydrateBookings: async () => {
+        const token = get().token;
+        // Giriş YOK → demo tohum (SEED_APPOINTMENTS) korunur.
+        if (!token) return;
         try {
-          // Giriş yapıldıysa yalnızca kullanıcının randevuları; yoksa yerel tohum korunur
-          const token = get().token;
-          const remote = token ? await api.myBookings(token) : [];
-          if (remote.length === 0) return;
+          const remote = await api.myBookings(token);
           const remoteIds = new Set(remote.map((b) => b.id));
+          const seedIds = new Set(SEED_APPOINTMENTS.map((b) => b.id));
+          // Giriş YAPILDI → hesabın GERÇEK randevuları esas; mock tohumu AT (yeni hesap sıfır görünsün).
+          // Yerelde oluşturulan (tohum olmayan) senkronlanmamış kayıtlar korunur.
           set((s) => ({
-            bookings: [...remote, ...s.bookings.filter((b) => !remoteIds.has(b.id))],
+            bookings: [
+              ...remote,
+              ...s.bookings.filter((b) => !remoteIds.has(b.id) && !seedIds.has(b.id)),
+            ],
           }));
         } catch {
-          // API erişilemez → yerel tohum korunur (offline-first)
+          // API erişilemez → mevcut veriler korunur (offline-first)
         }
       },
 

@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { hashPassword } from '../common/crypto';
 import { computeBookingStats } from '../bookings/bookings.service';
 
 // Onayda otomatik keşif listesi için varsayılan görsel (işletme foto yüklemediyse)
@@ -587,6 +588,14 @@ export class AdminService {
       membershipTier: updated.membershipTier,
       membershipUntil: updated.membershipUntil,
     };
+  }
+
+  // §12.2 — admin herhangi bir üyenin parolasını sıfırlar (hash'lenerek saklanır).
+  async setUserPassword(id: string, password: string) {
+    const u = await this.prisma.user.findUnique({ where: { id } });
+    if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
+    await this.prisma.user.update({ where: { id }, data: { passwordHash: hashPassword(password) } });
+    return { id, ok: true };
   }
 
   // Randevular — platform geneli (admin görünürlüğü)

@@ -103,6 +103,29 @@ export default function ReportsScreen() {
     };
   }, []);
 
+  // §9.2 — performans metrikleri GERÇEK stats'tan türetilir (mock DEĞİL): yeni hesapta 0 görünür.
+  // Puan/tekrar-müşteri için henüz gerçek kaynak yok → yeterli veri birikene kadar '–'.
+  const metrics: SellerMetric[] = [
+    {
+      id: 'rev',
+      labelKey: 'seller.metric.revenue',
+      value: stats ? formatPrice(stats.revenue) : '₸0',
+      delta: '',
+      positive: true,
+      icon: 'cash-outline',
+    },
+    {
+      id: 'bk',
+      labelKey: 'seller.metric.bookings',
+      value: String(stats?.completed ?? 0),
+      delta: '',
+      positive: true,
+      icon: 'calendar-outline',
+    },
+    { id: 'rt', labelKey: 'seller.metric.rating', value: '–', delta: '', positive: true, icon: 'star-outline' },
+    { id: 'rp', labelKey: 'seller.metric.repeat', value: '–', delta: '', positive: true, icon: 'repeat-outline' },
+  ];
+
   return (
     <Screen edges={[]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -325,7 +348,7 @@ export default function ReportsScreen() {
           />
 
           <View style={styles.grid}>
-            {data.metrics.map((m) => (
+            {metrics.map((m) => (
               <Metric key={m.id} metric={m} />
             ))}
           </View>

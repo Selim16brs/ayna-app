@@ -98,7 +98,7 @@ export default function AdminApp() {
     { id: 'subscriptions', label: 'Abonelikler', icon: '💎' },
     { id: 'profileChanges', label: 'Profil Onayları', icon: '📝' },
     { id: 'kyc', label: 'Kimlik Doğrulama', icon: '🛡️' },
-    { id: 'businesses', label: 'Üyelikler', icon: '🏪' },
+    { id: 'businesses', label: 'Salon Onay', icon: '🏪' },
     { id: 'professionals', label: 'Uzmanlar', icon: '💇' },
     { id: 'services', label: 'Hizmetler', icon: '🗂️' },
     { id: 'prices', label: 'Fiyatlar', icon: '🏷️' },
@@ -112,7 +112,7 @@ export default function AdminApp() {
     { id: 'moderation', label: 'Moderasyon', icon: '🛡️' },
     { id: 'content', label: 'İçerik & Blog', icon: '📝' },
     { id: 'announcements', label: 'Bildirimler', icon: '📣' },
-    { id: 'users', label: 'Kullanıcılar', icon: '👥' },
+    { id: 'users', label: 'Üyeler', icon: '👥' },
     { id: 'penalties', label: 'Ceza Takip', icon: '⛔' },
     { id: 'loyalty', label: 'Sadakat', icon: '🎁' },
     { id: 'flags', label: 'Feature Flag', icon: '🚩' },
@@ -1180,8 +1180,8 @@ function BusinessesView() {
   const openDetail = async (id: string) => setDetail(await api.businessDetail(id));
   return (
     <>
-      <h1 className="page-title">Üyelikler</h1>
-      <p className="page-sub">İşletme kayıt onayları ve durum yönetimi</p>
+      <h1 className="page-title">Salon Onay</h1>
+      <p className="page-sub">Salon (işletme) kayıt onayları ve durum yönetimi</p>
       <div className="toolbar">
         {['pending', 'approved', 'rejected'].map((s) => (
           <button
@@ -2809,8 +2809,11 @@ function UsersView() {
   );
   return (
     <>
-      <h1 className="page-title">Kullanıcılar</h1>
-      <p className="page-sub">Rol, durum ve premium yönetimi ({data?.length ?? 0} kayıt)</p>
+      <h1 className="page-title">Üyeler</h1>
+      <p className="page-sub">
+        Uygulamaya kayıtlı herkes — kullanıcı, uzman, salon. Üyelik seviyesi + parola yönetimi (
+        {data?.length ?? 0} kayıt)
+      </p>
       <div className="toolbar">
         {['all', 'user', 'salon', 'professional', 'moderator', 'admin'].map((r) => (
           <button key={r} className={`chip ${role === r ? 'on' : ''}`} onClick={() => setRole(r)}>
@@ -2863,6 +2866,21 @@ function UsersView() {
                 ))}
               </select>
               <TierEditor user={u} onSaved={reload} />
+              <button
+                className="btn-sm"
+                onClick={async () => {
+                  const pw = prompt(`${u.name || 'Üye'} için yeni parola (en az 6 karakter):`);
+                  if (pw === null) return;
+                  if (pw.trim().length < 6) {
+                    alert('Parola en az 6 karakter olmalı.');
+                    return;
+                  }
+                  await api.setUserPassword(u.id, pw.trim());
+                  alert('Parola güncellendi ✓');
+                }}
+              >
+                Şifre
+              </button>
               {u.status === 'active' && u.role !== 'admin' && (
                 <button
                   className="btn-sm"

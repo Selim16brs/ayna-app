@@ -80,6 +80,7 @@ const userRoleSchema = z.object({
 const userStatusSchema = z.object({ status: z.enum(['active', 'suspended', 'deleted']) });
 const premiumSchema = z.object({ isPremium: z.boolean() });
 const tierSchema = z.object({ tier: z.enum(['free', 'premium', 'platinum']) });
+const passwordSchema = z.object({ password: z.string().min(6).max(100) });
 const flagSchema = z.object({
   key: z.string().min(1).max(60),
   enabled: z.boolean(),
@@ -183,6 +184,15 @@ export class AdminController {
     @Body(new ZodValidationPipe(tierSchema)) body: { tier: 'free' | 'premium' | 'platinum' },
   ) {
     return this.admin.setUserTier(id, body.tier);
+  }
+
+  // §12.2 — admin herhangi bir üyenin parolasını değiştirir
+  @Post('users/:id/password')
+  setUserPassword(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(passwordSchema)) body: { password: string },
+  ) {
+    return this.admin.setUserPassword(id, body.password);
   }
 
   // §12.3 Ceza takip — kısıtlı hesaplar (7 gün sayaçlı) + kısıt aç/kapa
