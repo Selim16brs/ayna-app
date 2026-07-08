@@ -1286,9 +1286,10 @@ export const tr = {
   'sub.pick': 'Dekont yükle',
   'sub.pick_hint': 'Kaspi / banka ödeme ekran görüntüsü',
   'sub.approve_note': 'Dekontun admin tarafından doğrulanınca üyeliğin aktifleşir.',
-  'sub.submit': 'Gönder',
-  'sub.sent_t': 'Talebin alındı',
-  'sub.sent_b': 'Admin dekontu onaylayınca üyeliğin aktifleşecek.',
+  'sub.submit': 'Üyeliği Aktif Et — Onaya Gönder',
+  'sub.sent_t': 'Üyelik işlemin admine iletildi ✅',
+  'sub.sent_b':
+    'Dekontun onay kuyruğuna düştü. Onay sonrası yeni üyelik paketini kullanmaya başlayabilirsin — onaylanınca bildirim alacaksın.',
   // geri çağırma ekranı (uzman)
   'reengage.title': 'Müşterini geri çağır',
   'reengage.sub': 'Hizmet periyodu dolan memnun müşterilerine sıcak bir hatırlatma gönder.',

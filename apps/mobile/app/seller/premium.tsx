@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
@@ -34,6 +34,13 @@ export default function SellerPremiumScreen() {
   const router = useRouter();
   const premium = useStore((s) => s.premium);
   const platinum = useStore((s) => s.platinum);
+  const refreshMembership = useStore((s) => s.refreshMembership);
+  // §11 — onay push'undan gelindiğinde: tier'ı sunucudan tazele → haklar anında açılır
+  useFocusEffect(
+    useCallback(() => {
+      void refreshMembership();
+    }, [refreshMembership]),
+  );
   const token = useStore((s) => s.token);
   const [busy, setBusy] = useState(false);
 

@@ -4,7 +4,8 @@ import { z } from 'zod';
 export const createSubSchema = z.object({ tier: z.enum(['premium', 'platinum']) });
 export type CreateSubInput = z.infer<typeof createSubSchema>;
 
-export const subReceiptSchema = z.object({ receiptUri: z.string().min(1).max(600) });
+// Dekont data URL taşır (admin panelde görüntülenir); 15MB gövde limiti main.ts'te
+export const subReceiptSchema = z.object({ receiptUri: z.string().min(1).max(12_000_000) });
 export type SubReceiptInput = z.infer<typeof subReceiptSchema>;
 
 // admin onayı — kaç ay aktive edilecek (varsayılan 1)

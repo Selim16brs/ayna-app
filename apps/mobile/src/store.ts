@@ -353,6 +353,7 @@ interface State {
   redeem: (reward: Reward) => Promise<boolean>;
   enterRaffle: () => boolean; // §8.2 — 500 puan = 1 çekiliş bileti
   hydrateLoyalty: () => Promise<void>;
+  refreshMembership: () => Promise<void>; // §11 — tier'ı sunucudan tazele (onay sonrası haklar açılır)
 
   // şehir (global filtre)
   setCity: (city: string) => void;
@@ -1919,6 +1920,23 @@ export const useStore = create<State>()(
           ],
         }));
         return true;
+      },
+
+      // §11 — admin onayı sonrası: me() → membershipTier → premium/platinum bayrakları
+      refreshMembership: async () => {
+        const token = get().token;
+        if (!token) return;
+        try {
+          const me = await api.me(token);
+          const tier = me.membershipTier ?? 'free';
+          set((s) => ({
+            currentUser: s.currentUser ? { ...s.currentUser, membershipTier: tier } : s.currentUser,
+            premium: tier === 'premium' || tier === 'platinum',
+            platinum: tier === 'platinum',
+          }));
+        } catch {
+          /* çevrimdışı: mevcut durum korunur */
+        }
       },
 
       hydrateLoyalty: async () => {

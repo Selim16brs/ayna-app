@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../push/push.service';
 
 // §11 — paket fiyatları (mobil ile aynı; parametrik ileri faz)
 const PRICE: Record<string, number> = { premium: 999, platinum: 1999 };
@@ -7,7 +8,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class SubscriptionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly push: PushService,
+  ) {}
 
   private notFound(): never {
     throw new NotFoundException({ code: 'NOT_FOUND', message: 'Abonelik bulunamadı' });
@@ -84,6 +88,12 @@ export class SubscriptionsService {
       }),
     ]);
     await this.audit('subscription.approve', id, actorId);
+    // §11 — kullanıcıya push: üyelik yükseltildi → app tier'ı tazeleyip hakları açar
+    void this.push.sendToUser(sub!.userId, {
+      title: 'Üyeliğin yükseltildi 🎉',
+      body: `${sub!.tier === 'platinum' ? 'Platinum' : 'Premium'} üyeliğin aktif — tüm ayrıcalıkların açıldı.`,
+      data: { route: '/seller/premium' },
+    });
     return updated;
   }
 
@@ -95,6 +105,11 @@ export class SubscriptionsService {
       data: { status: 'rejected', reviewedAt: new Date() },
     });
     await this.audit('subscription.reject', id, actorId);
+    void this.push.sendToUser(sub!.userId, {
+      title: 'Üyelik dekontu onaylanmadı',
+      body: 'Dekont doğrulanamadı — kontrol edip yeniden yükleyebilirsin.',
+      data: { route: '/seller/premium' },
+    });
     return updated;
   }
 

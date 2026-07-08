@@ -56,6 +56,8 @@ export default function CustomerRegisterScreen() {
   async function pickPhoto() {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true, // kare kırpma — yatay foto önizlemede ezilmesin
+      aspect: [1, 1],
       quality: 0.3,
       base64: true,
     });
