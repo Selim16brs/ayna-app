@@ -27,12 +27,11 @@ jobs:
       FIELD_ENCRYPTION_KEY: ci-field-encryption-key-0000
     steps:
       - uses: actions/checkout@v4
+      # pnpm sürümü package.json'daki "packageManager" alanından okunur (çift tanım = hata)
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ayna/api db:generate
