@@ -81,6 +81,7 @@ export class SpecialistsService {
         passwordHash: hashPassword(input.password),
         name: input.name,
         role: 'professional',
+        ...(input.photoDataUrl ? { avatarUrl: input.photoDataUrl } : {}),
         defaultLocale: 'tr',
         ...(input.email ? { email: input.email } : {}),
         ...(input.city ? { city: input.city } : {}),

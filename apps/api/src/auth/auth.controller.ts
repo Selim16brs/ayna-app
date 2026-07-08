@@ -29,6 +29,15 @@ export class AuthController {
     return this.auth.login(body);
   }
 
+  // Profil fotoğrafı güncelle (data URL; null = kaldır)
+  @Post('me/avatar')
+  @UseGuards(JwtAuthGuard)
+  setAvatar(@Req() req: AuthedRequest, @Body() body: { photoDataUrl?: string | null }) {
+    const v =
+      typeof body?.photoDataUrl === 'string' ? body.photoDataUrl.slice(0, 12_000_000) : null;
+    return this.auth.setAvatar(req.user!.id, v);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@Req() req: AuthedRequest) {

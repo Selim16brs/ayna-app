@@ -71,6 +71,7 @@ export default function ExpertRegisterScreen() {
   const [district, setDistrict] = useState('');
   const [address, setAddress] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
+  const [photoB64, setPhotoB64] = useState<string | null>(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [svcCat, setSvcCat] = useState<string>(SERVICE_CATS[0]!.id);
   const [svc, setSvc] = useState<Record<string, SvcRow>>({});
@@ -108,9 +109,11 @@ export default function ExpertRegisterScreen() {
   async function pickPhoto() {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
+      quality: 0.3,
+      base64: true,
     });
     if (res.canceled || !res.assets[0]) return;
+    if (res.assets[0].base64) setPhotoB64(res.assets[0].base64);
     const uri = res.assets[0].uri;
     // remove.bg + yüz tespiti (mock — gerçek anahtar admin §12.9 ile bağlanacak)
     setPhotoBusy(true);
@@ -182,6 +185,7 @@ export default function ExpertRegisterScreen() {
         kind: bound ? 'salon_bound' : 'independent',
         ...(bound && salonId ? { businessId: salonId, code: code.trim() } : {}),
         certificates: certs,
+        ...(photoB64 ? { photoDataUrl: `data:image/jpeg;base64,${photoB64}` } : {}),
         ...(deviceFp ? { deviceFp } : {}),
       });
       void res;

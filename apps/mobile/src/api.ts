@@ -171,6 +171,7 @@ export interface AuthUser {
   email?: string;
   city?: string;
   role: string;
+  avatarUrl?: string | null; // profil foto (data URL) — hesapla gezer
   phone: string;
   phoneVerified?: boolean;
   gender?: string;
@@ -209,6 +210,7 @@ export interface ProfileChangeReq {
 }
 
 export interface RegisterInput {
+  photoDataUrl?: string;
   name: string;
   phone: string;
   password: string;
@@ -252,6 +254,7 @@ export interface SearchableBusiness {
 }
 
 export interface RegisterSpecialistInput {
+  photoDataUrl?: string;
   name: string;
   phone: string;
   password: string;
@@ -466,6 +469,8 @@ export const api = {
     post<{ dataUrl: string }>('/cutout', source, token),
   // §12.3 — güncel kullanıcı (kısıt durumu tazelemek için)
   me: (token: string) => get<AuthUser>('/auth/me', token),
+  setAvatar: (token: string, photoDataUrl: string | null) =>
+    post<AuthUser>('/auth/me/avatar', { photoDataUrl }, token),
   // §11 — üyelik aboneliği: talep oluştur, dekont yükle, güncel katmanı oku
   createSubscription: (tier: 'premium' | 'platinum', token: string) =>
     post<Subscription>('/subscriptions', { tier }, token),

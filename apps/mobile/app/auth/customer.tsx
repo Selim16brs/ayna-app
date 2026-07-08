@@ -40,7 +40,7 @@ export default function CustomerRegisterScreen() {
   const [lastName, setLastName] = useState('');
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [showDate, setShowDate] = useState(false);
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<{ uri: string; base64?: string } | null>(null);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -56,9 +56,14 @@ export default function CustomerRegisterScreen() {
   async function pickPhoto() {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
+      quality: 0.3,
+      base64: true,
     });
-    if (!res.canceled && res.assets[0]) setPhoto(res.assets[0].uri);
+    if (!res.canceled && res.assets[0])
+      setPhoto({
+        uri: res.assets[0].uri,
+        ...(res.assets[0].base64 ? { base64: res.assets[0].base64 } : {}),
+      });
   }
 
   function addAddress() {
@@ -84,6 +89,7 @@ export default function CustomerRegisterScreen() {
         phone: phone.trim(),
         password,
         gender: 'unspecified',
+        ...(photo?.base64 ? { photoDataUrl: `data:image/jpeg;base64,${photo.base64}` } : {}),
         ...(email.trim() ? { email: email.trim() } : {}),
         ...(city ? { city } : {}),
       });
@@ -112,7 +118,7 @@ export default function CustomerRegisterScreen() {
         <Pressable style={styles.photoRow} onPress={pickPhoto}>
           <View style={styles.avatar}>
             {photo ? (
-              <Image source={{ uri: photo }} style={styles.avatarImg} />
+              <Image source={{ uri: photo.uri }} style={styles.avatarImg} />
             ) : (
               <Ionicons name="camera-outline" size={24} color={colors.inkSoft} />
             )}

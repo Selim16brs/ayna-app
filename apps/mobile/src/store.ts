@@ -545,7 +545,13 @@ export const useStore = create<State>()(
       sellerTrialStart: null,
       // Mevcut profilde başlangıç fotoğrafı (kullanıcı değiştirebilir/kaldırabilir)
       avatarUri: null,
-      setAvatar: (uri) => set({ avatarUri: uri }),
+      setAvatar: (uri) => {
+        set({ avatarUri: uri });
+        // Foto HESABIN parçası: buluta da yaz (data URL ise) — diğer cihaz/girişte aynı görünür
+        const token = get().token;
+        if (token && (uri == null || uri.startsWith('data:')))
+          void api.setAvatar(token, uri).catch(() => undefined);
+      },
       cutoutUri: null,
       setCutout: (uri) => set({ cutoutUri: uri }),
       applyProfileCutout: async (base64) => {
@@ -604,7 +610,7 @@ export const useStore = create<State>()(
             ? {}
             : {
                 ...SEEDED_PERSONAL_RESET,
-                avatarUri: null,
+                avatarUri: session.user.avatarUrl ?? null, // hesabın fotosu her cihazda
                 cutoutUri: null,
                 premium: false,
                 platinum: false,
@@ -616,6 +622,8 @@ export const useStore = create<State>()(
             currentUser: session.user,
             sellerTrialStart,
             ...personalReset,
+            // aynı kullanıcı yeniden girdi + sunucuda foto varsa yereli tazele
+            ...(sameUser && session.user.avatarUrl ? { avatarUri: session.user.avatarUrl } : {}),
           };
         });
         void get().hydrateLoyalty();

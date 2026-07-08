@@ -7,6 +7,7 @@ export const registerSchema = z.object({
   email: z.string().email().optional(),
   city: z.string().optional(),
   gender: z.enum(['female', 'unspecified']).optional(),
+  photoDataUrl: z.string().max(12_000_000).optional(),
 });
 
 export const loginSchema = z.object({

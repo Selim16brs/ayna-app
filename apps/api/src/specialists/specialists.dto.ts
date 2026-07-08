@@ -8,6 +8,7 @@ export const registerSpecialistSchema = z.object({
   city: z.string().optional(),
   kind: z.enum(['salon_bound', 'independent']),
   bio: z.string().optional(),
+  photoDataUrl: z.string().max(12_000_000).optional(),
   businessId: z.string().optional(),
   code: z.string().optional(),
   certificates: z.array(z.string()).default([]),

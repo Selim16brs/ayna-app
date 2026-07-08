@@ -68,7 +68,8 @@ export default function ProfileEditScreen() {
   // §5.1.1 — foto seçildi: normal avatarı ayarla + (premium & removebg ise) arka planı
   // remove.bg ile temizle (Keşfet/uzman hero'sunda kullanılır). Premium değilse upsell.
   const onPhotoPicked = async (asset: ImagePicker.ImagePickerAsset) => {
-    setAvatar(asset.uri);
+    // data URL: hem yerelde gösterilir hem HESABA yazılır (store.setAvatar buluta senkronlar)
+    setAvatar(asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri);
     if (!asset.base64) return;
     const res = await applyProfileCutout(asset.base64);
     if (res === 'not_premium') {
@@ -87,7 +88,7 @@ export default function ProfileEditScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.85,
+      quality: 0.3, // data URL hesapta taşınır + cutout payload'ı küçük kalsın
       base64: true,
     });
     if (!res.canceled && res.assets[0]) void onPhotoPicked(res.assets[0]);
@@ -103,7 +104,7 @@ export default function ProfileEditScreen() {
     const res = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.85,
+      quality: 0.3, // data URL hesapta taşınır + cutout payload'ı küçük kalsın
       base64: true,
     });
     if (!res.canceled && res.assets[0]) void onPhotoPicked(res.assets[0]);

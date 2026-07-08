@@ -60,6 +60,7 @@ export class AuthService {
         defaultLocale: 'tr',
         gender: input.gender ?? 'unspecified',
         ...(input.email ? { email: input.email } : {}),
+        ...(input.photoDataUrl ? { avatarUrl: input.photoDataUrl } : {}),
         ...(input.city ? { city: input.city } : {}),
       },
     });
@@ -100,6 +101,15 @@ export class AuthService {
       }
     }
     return this.session(user);
+  }
+
+  // Profil fotoğrafı güncelle (data URL) — profil düzenle ekranından
+  async setAvatar(userId: string, photoDataUrl: string | null) {
+    const u = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl: photoDataUrl },
+    });
+    return this.safe(u);
   }
 
   async me(userId: string) {
@@ -216,6 +226,7 @@ export class AuthService {
       email: user.email ?? undefined,
       city: user.city ?? undefined,
       role: user.role,
+      avatarUrl: user.avatarUrl ?? null, // profil foto (data URL) — tüm cihazlarda aynı
       phoneVerified: user.phoneVerified,
       gender: user.gender,
       // §11 — üyelik katmanı + bitiş (mobil premium/platinum bunu okur; admin onayıyla set edilir)
