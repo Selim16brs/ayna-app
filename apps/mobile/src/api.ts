@@ -492,7 +492,19 @@ export const api = {
     post<{ ok: boolean }>('/push/tokens', { token: expoToken, platform }, token),
   removePushToken: (token: string, expoToken: string) =>
     post<{ ok: boolean }>('/push/tokens/remove', { token: expoToken }, token),
+  // EK Z.6 — müşteri referans programı
+  referralMine: (token: string) => get<MyReferral>('/referral/mine', token),
+  redeemReferral: (token: string, code: string) =>
+    post<{ ok: boolean; pointsAwarded: number; referrerName: string }>('/referral/redeem', { code }, token),
 };
+
+// EK Z.6 — referans tipi
+export interface MyReferral {
+  code: string;
+  invited: number;
+  pointsEarned: number;
+  rewardPoints: number;
+}
 
 // EK Z.3 — KYC tipleri
 export type KycDocType = 'id_card' | 'passport' | 'certificate';

@@ -1530,6 +1530,22 @@ export const tr = {
   'seller.menu.kyc': 'Kimlik doğrulama',
   'seller.menu.kyc_d': 'Belge yükle, "Doğrulanmış" rozeti kazan',
 
+  // EK Z.6 — müşteri referans programı
+  'referral.title': 'Arkadaşını davet et',
+  'referral.subtitle': 'Kodunu paylaş — arkadaşın ilk katıldığında ikiniz de {points} puan kazanın.',
+  'referral.your_code': 'DAVET KODUN',
+  'referral.share': 'Kodu paylaş',
+  'referral.share_message': 'AYNA’ya katıl! Davet kodum: {code} — ikimiz de {points} puan kazanalım ✨',
+  'referral.invited': 'Davet edilen',
+  'referral.points_earned': 'Kazanılan puan',
+  'referral.have_code': 'Davet kodun var mı?',
+  'referral.enter_code': 'Kodu gir',
+  'referral.redeem': 'Kullan',
+  'referral.redeemed_title': 'Tebrikler! 🎁',
+  'referral.redeemed_sub': '{name} sayesinde {points} puan kazandın.',
+  'referral.redeem_failed': 'Kod kullanılamadı. Zaten bir kod kullanmış olabilirsin.',
+  'profile.menu.referral': 'Arkadaşını davet et',
+
   // Profil — Gizlilik
   'privacy.title': 'Gizlilik',
   'privacy.subtitle': 'Verilerin üzerindeki kontrol sende',

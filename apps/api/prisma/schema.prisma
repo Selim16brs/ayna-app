@@ -57,6 +57,9 @@ model User {
   // EK Z.3 — ağır KYC (uzman/salon belge doğrulaması): none | pending | approved | rejected
   kycStatus     String     @default("none") @map("kyc_status")
   kycVerifiedAt DateTime?  @map("kyc_verified_at") @db.Timestamptz(6)
+  // EK Z.6 — müşteri referans programı: kişiye özel kod + davet eden (tek sefer set)
+  referralCode  String?    @unique @map("referral_code")
+  referredBy    String?    @map("referred_by") @db.Uuid
   defaultLocale String     @default("ru") @map("default_locale")
   timezone      String     @default("Asia/Almaty")
   createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
