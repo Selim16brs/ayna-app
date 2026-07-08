@@ -547,7 +547,13 @@ export const useStore = create<State>()(
           void api.setAvatar(token, uri).catch(() => undefined);
       },
       cutoutUri: null,
-      setCutout: (uri) => set({ cutoutUri: uri }),
+      setCutout: (uri) => {
+        set({ cutoutUri: uri });
+        // Kesik portre HESABIN parçası: buluta yaz → yeniden giriş/yeni cihazda kredi YAKMADAN geri gelir
+        const token = get().token;
+        if (token && (uri == null || uri.startsWith('data:')))
+          void api.setCutoutRemote(token, uri).catch(() => undefined);
+      },
       applyProfileCutout: async (base64) => {
         // Bayrak stale olabilir (açılış config isteği o an düşmüş olabilir) → anında SUNUCUDAN tazele.
         let cfg = get().config;
@@ -570,7 +576,7 @@ export const useStore = create<State>()(
         if (!token) return 'error';
         try {
           const { dataUrl } = await api.cutout(token, { imageB64: base64 });
-          set({ cutoutUri: dataUrl });
+          get().setCutout(dataUrl); // yerel + buluta (hesapta kalıcı)
           return 'ok';
         } catch {
           return 'error';
@@ -615,7 +621,7 @@ export const useStore = create<State>()(
             : {
                 ...SEEDED_PERSONAL_RESET,
                 avatarUri: session.user.avatarUrl ?? null, // hesabın fotosu her cihazda
-                cutoutUri: null,
+                cutoutUri: session.user.cutoutUrl ?? null, // kesik portre hesaptan (kredi yok)
                 premium: false,
                 platinum: false,
                 sellerSocial: emptySocial,
@@ -628,6 +634,7 @@ export const useStore = create<State>()(
             ...personalReset,
             // aynı kullanıcı yeniden girdi + sunucuda foto varsa yereli tazele
             ...(sameUser && session.user.avatarUrl ? { avatarUri: session.user.avatarUrl } : {}),
+            ...(sameUser && session.user.cutoutUrl ? { cutoutUri: session.user.cutoutUrl } : {}),
           };
         });
         void get().hydrateLoyalty();

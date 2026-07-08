@@ -38,6 +38,15 @@ export class AuthController {
     return this.auth.setAvatar(req.user!.id, v);
   }
 
+  // Kesik portre güncelle (data URL; null = kaldır)
+  @Post('me/cutout')
+  @UseGuards(JwtAuthGuard)
+  setCutout(@Req() req: AuthedRequest, @Body() body: { cutoutDataUrl?: string | null }) {
+    const v =
+      typeof body?.cutoutDataUrl === 'string' ? body.cutoutDataUrl.slice(0, 12_000_000) : null;
+    return this.auth.setCutout(req.user!.id, v);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@Req() req: AuthedRequest) {

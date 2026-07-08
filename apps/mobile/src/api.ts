@@ -172,6 +172,7 @@ export interface AuthUser {
   city?: string;
   role: string;
   avatarUrl?: string | null; // profil foto (data URL) — hesapla gezer
+  cutoutUrl?: string | null; // kesik portre — girişte geri gelir (kredi yakmadan)
   phone: string;
   phoneVerified?: boolean;
   gender?: string;
@@ -472,6 +473,8 @@ export const api = {
   me: (token: string) => get<AuthUser>('/auth/me', token),
   setAvatar: (token: string, photoDataUrl: string | null) =>
     post<AuthUser>('/auth/me/avatar', { photoDataUrl }, token),
+  setCutoutRemote: (token: string, cutoutDataUrl: string | null) =>
+    post<AuthUser>('/auth/me/cutout', { cutoutDataUrl }, token),
   // §11 — üyelik aboneliği: talep oluştur, dekont yükle, güncel katmanı oku
   createSubscription: (tier: 'premium' | 'platinum', token: string) =>
     post<Subscription>('/subscriptions', { tier }, token),

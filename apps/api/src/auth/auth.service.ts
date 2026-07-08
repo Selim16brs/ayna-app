@@ -112,6 +112,15 @@ export class AuthService {
     return this.safe(u);
   }
 
+  // §5.1.1 — kesik portreyi hesaba yaz (bir kez üretilir, hep hesapla gezer)
+  async setCutout(userId: string, cutoutDataUrl: string | null) {
+    const u = await this.prisma.user.update({
+      where: { id: userId },
+      data: { cutoutUrl: cutoutDataUrl },
+    });
+    return this.safe(u);
+  }
+
   async me(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException({ code: 'NO_USER', message: 'Kullanıcı yok' });
@@ -227,6 +236,7 @@ export class AuthService {
       city: user.city ?? undefined,
       role: user.role,
       avatarUrl: user.avatarUrl ?? null, // profil foto (data URL) — tüm cihazlarda aynı
+      cutoutUrl: user.cutoutUrl ?? null, // kesik portre — girişte geri yüklenir (kredi yakmadan)
       phoneVerified: user.phoneVerified,
       gender: user.gender,
       // §11 — üyelik katmanı + bitiş (mobil premium/platinum bunu okur; admin onayıyla set edilir)

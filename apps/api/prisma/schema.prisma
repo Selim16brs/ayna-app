@@ -51,6 +51,7 @@ model User {
   aiPeriod      String     @default("") @map("ai_period")
   // §11 — üyelik katmanı (free | premium | platinum) + bitiş; admin onayıyla aktifleşir.
   avatarUrl       String?   @map("avatar_url") // profil foto (data URL; medya fazında objeye taşınır)
+  cutoutUrl       String?   @map("cutout_url") // §5.1.1 arka planı kesik portre — kredi tekrar YANMAZ
   membershipTier  String    @default("free") @map("membership_tier")
   membershipUntil DateTime? @map("membership_until") @db.Timestamptz(6)
   // §4.6 — telefon OTP doğrulaması (mock SMS)
