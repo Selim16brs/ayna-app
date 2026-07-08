@@ -66,7 +66,8 @@ export default function BookingDetailScreen() {
   const acceptReassignment = useStore((s) => s.acceptReassignment);
   const rejectReassignment = useStore((s) => s.rejectReassignment);
   const role = useStore((s) => s.currentUser?.role);
-  const isProvider = !!role && role !== 'customer';
+  // DİKKAT: müşteri rolü 'user' (eski 'customer' karşılaştırması HER müşteriyi provider sayıyordu)
+  const isProvider = role === 'professional' || role === 'salon';
   // §10 gizlilik — SALON, uzmanın KENDİ işinin (bySalon değil) parasını/adresini görmez.
   const salonHidesMoney = role === 'salon' && !booking?.bySalon;
 

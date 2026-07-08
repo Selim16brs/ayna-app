@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import {
   Alert,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -382,6 +383,10 @@ function RequestCard({
         </View>
       ) : (
         <>
+          {/* Kullanıcının yüklediği referans fotoğrafı — teklif verirken görülür (§5.2) */}
+          {demand.photoUrl ? (
+            <Image source={{ uri: demand.photoUrl }} style={styles.reqPhoto} resizeMode="cover" />
+          ) : null}
           {demand.note ? (
             <Text variant="caption" tone="inkSoft" style={styles.note} numberOfLines={2}>
               {demand.note}
@@ -517,6 +522,12 @@ const makeStyles = (colors: ColorTokens) =>
     },
     countdownUrgent: { backgroundColor: colors.danger },
     note: { lineHeight: 18 },
+    reqPhoto: {
+      width: '100%',
+      height: 160,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+    },
     metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     metaChip: {
       flexDirection: 'row',
