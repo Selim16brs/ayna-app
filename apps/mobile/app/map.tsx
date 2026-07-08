@@ -69,7 +69,13 @@ export default function MapScreen() {
       </ScrollView>
 
       <View style={styles.mapWrap}>
-        <MapView key={city} style={StyleSheet.absoluteFill} initialRegion={region}>
+        <MapView
+          key={city}
+          style={StyleSheet.absoluteFill}
+          initialRegion={region}
+          showsUserLocation
+          showsMyLocationButton
+        >
           {pros.map((p) => (
             <Marker
               key={p.id}

@@ -25,21 +25,36 @@ export const categoryLabelKey = (id: string): MessageKey =>
   CATEGORIES.find((c) => c.id === id)?.labelKey ?? 'category.hair';
 
 // Kazakistan başlıca şehirleri (kayıt / şehir seçimi)
+// §5.1.4 — Kazakistan'ın başlıca şehirleri (bölge merkezleri + büyük şehirler), alfabetik.
+// Her şehrin CITY_COORDS'ta koordinatı var (GPS ile en yakın şehir + harita için).
 export const CITIES: string[] = [
-  'Almatı',
-  'Astana',
-  'Şımkent',
-  'Karagandı',
-  'Aktöbe',
-  'Taraz',
-  'Pavlodar',
-  'Öskemen',
-  'Semey',
-  'Atırav',
-  'Kostanay',
-  'Kızılorda',
-  'Oral',
   'Aktau',
+  'Aktöbe',
+  'Almatı',
+  'Arkalık',
+  'Astana',
+  'Atırav',
+  'Balkaş',
+  'Ekibastuz',
+  'Jezkazgan',
+  'Janaözen',
+  'Karagandı',
+  'Kentau',
+  'Kızılorda',
+  'Kökşetau',
+  'Kostanay',
+  'Oral',
+  'Öskemen',
+  'Pavlodar',
+  'Ridder',
+  'Rudnıy',
+  'Sarıağaş',
+  'Semey',
+  'Stepnogorsk',
+  'Şımkent',
+  'Taldıkorgan',
+  'Taraz',
+  'Temirtau',
   'Türkistan',
 ];
 
@@ -473,6 +488,20 @@ export const CITY_COORDS: Record<string, LatLng> = {
   Kızılorda: { latitude: 44.8479, longitude: 65.4823 },
   Oral: { latitude: 51.2333, longitude: 51.3667 },
   Aktau: { latitude: 43.641, longitude: 51.198 },
+  Türkistan: { latitude: 43.3017, longitude: 68.2691 },
+  Kökşetau: { latitude: 53.2833, longitude: 69.3833 },
+  Taldıkorgan: { latitude: 45.0156, longitude: 78.3739 },
+  Temirtau: { latitude: 50.0547, longitude: 72.9644 },
+  Ekibastuz: { latitude: 51.7297, longitude: 75.3264 },
+  Ridder: { latitude: 50.3439, longitude: 83.5147 },
+  Jezkazgan: { latitude: 47.7833, longitude: 67.7667 },
+  Balkaş: { latitude: 46.8481, longitude: 74.995 },
+  Kentau: { latitude: 43.5167, longitude: 68.5 },
+  Rudnıy: { latitude: 52.9678, longitude: 63.1256 },
+  Janaözen: { latitude: 43.3411, longitude: 52.8617 },
+  Sarıağaş: { latitude: 41.4514, longitude: 69.1697 },
+  Arkalık: { latitude: 50.2489, longitude: 66.9114 },
+  Stepnogorsk: { latitude: 52.35, longitude: 71.8833 },
 };
 
 /** Şehir merkezi koordinatı (bilinmeyen şehir → Almatı). */
@@ -499,6 +528,20 @@ export function distanceKm(a: LatLng, b: LatLng): number {
   const lat2 = (b.latitude * Math.PI) / 180;
   const x = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
   return Math.round(R * 2 * Math.asin(Math.sqrt(x)) * 10) / 10;
+}
+
+/** §5.1.4 — GPS koordinatına en yakın şehir (CITY_COORDS içinden). */
+export function nearestCity(coords: LatLng): string {
+  let best = CITIES[0]!;
+  let bestD = Infinity;
+  for (const [name, c] of Object.entries(CITY_COORDS)) {
+    const d = distanceKm(coords, c);
+    if (d < bestD) {
+      bestD = d;
+      best = name;
+    }
+  }
+  return best;
 }
 
 // ── §12 Kampanyalar (keşif vitrini) ──────────────────────────────────────
