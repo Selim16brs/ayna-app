@@ -9,7 +9,8 @@
     "android": "expo start --android",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test \"src/**/*.test.ts\""
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "eas-build-post-install": "pnpm --filter @ayna/i18n --filter @ayna/domain --filter @ayna/types --filter @ayna/validation run build"
   },
   "dependencies": {
     "@ayna/domain": "workspace:*",
