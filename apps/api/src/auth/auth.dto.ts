@@ -12,8 +12,8 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  identifier: z.string().min(3), // e-posta veya telefon
-  password: z.string().min(6),
+  identifier: z.string().min(3), // e-posta, telefon ya da 'admin' takma adı
+  password: z.string().min(5),
 });
 
 // §4.6 — OTP

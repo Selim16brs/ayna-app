@@ -321,7 +321,7 @@ function Login({ onDone }: { onDone: () => void }) {
             className="input"
             value={id}
             onChange={(e) => setId(e.target.value)}
-            placeholder="admin@ayna.kz"
+            placeholder="admin"
             autoFocus
           />
         </div>

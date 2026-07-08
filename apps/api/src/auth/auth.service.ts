@@ -80,10 +80,13 @@ export class AuthService {
 
   async login(input: LoginInput) {
     const key = this.env.FIELD_ENCRYPTION_KEY;
-    const user = input.identifier.includes('@')
-      ? await this.prisma.user.findUnique({ where: { email: input.identifier } })
+    // 'admin' takma adı → yönetici e-postası (panel girişi kısayolu)
+    const ident =
+      input.identifier.trim().toLowerCase() === 'admin' ? 'admin@ayna.kz' : input.identifier;
+    const user = ident.includes('@')
+      ? await this.prisma.user.findUnique({ where: { email: ident } })
       : await this.prisma.user.findUnique({
-          where: { phoneHash: phoneHash(input.identifier, key) },
+          where: { phoneHash: phoneHash(ident, key) },
         });
     if (!user || !verifyPassword(input.password, user.passwordHash)) {
       throw new UnauthorizedException({ code: 'BAD_CREDENTIALS', message: 'Bilgiler hatalı' });
