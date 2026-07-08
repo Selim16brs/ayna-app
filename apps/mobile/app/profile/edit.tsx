@@ -69,6 +69,9 @@ export default function ProfileEditScreen() {
       Alert.alert(t('cutout.upsell_title'), t('cutout.upsell_body'));
     } else if (res === 'ok') {
       Alert.alert(t('cutout.done'));
+    } else if (res === 'error' || res === 'unavailable') {
+      // Sessizce geçme: arka plan temizlenemedi → kullanıcı ham fotonun kullanıldığını bilsin.
+      Alert.alert(t('cutout.failed'));
     }
   };
 

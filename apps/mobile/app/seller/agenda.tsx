@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -15,15 +15,23 @@ import { PressableScale, Screen, Segmented, StackHeader, Text } from '../../src/
 type DayRow = { type: 'free'; startMs: number; endMs: number } | { type: 'busy'; b: Appointment };
 const OPEN_H = 10;
 const CLOSE_H = 19;
+// Takvimde SLOT'U TUTAN durumlar: onaylı + tamamlanan + uzman onayı sonrası depozito bekleyenler.
+const CALENDAR_STATUSES: BookingStatus[] = [
+  'confirmed',
+  'completed',
+  'deposit_pending',
+  'deposit_submitted',
+];
 
 // §4.6 uzman gün-ızgarası: açık pencere içinde boş aralıklar + randevu blokları
 function buildDayRows(dayStart: number, dayBookings: Appointment[]): DayRow[] {
   const openStart = dayStart + OPEN_H * 3_600_000;
   const openEnd = dayStart + CLOSE_H * 3_600_000;
-  // §4.6/§4.1 — takvimde YALNIZ kesinleşmiş randevular: onaylı (confirmed) + tamamlanan.
-  // Bekleyen/onay-öncesi talepler ana ızgarada değil, ayrı "Bekleyen Talepler" akışındadır.
+  // §4.1/§4.6 — takvimde SLOT'U TUTAN randevular: onaylı + tamamlanan + uzman ONAYLADIKTAN sonra
+  // depozito bekleyenler (deposit_pending/submitted). Uzman kabul edince slot HEMEN takvimde görünür
+  // (gold=bekliyor). Yalnız onay-ÖNCESİ (awaiting_provider) ayrı "Bekleyen Talepler" şeridindedir.
   const bs = dayBookings
-    .filter((b) => b.status === 'confirmed' || b.status === 'completed')
+    .filter((b) => CALENDAR_STATUSES.includes(b.status))
     .sort((a, b) => a.startMs - b.startMs);
   const rows: DayRow[] = [];
   let cursor = openStart;
@@ -100,7 +108,15 @@ export default function AgendaScreen() {
   const dayStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
   const selectedDay = dayStrip[dayIdx] ?? dayStrip[0]!;
   const dayClosed = closedDays.includes(selectedDay);
-  const dayBookings = items.filter((b) => almatyDayStart(b.startMs, 0) === selectedDay);
+  // §4.2 — takvim kaynağı: API polling (items) + YEREL store birleşir; aynı id'de YEREL kazanır
+  // (uzman onayı anında yansısın; polling'in stale hali onayı ezmesin).
+  const calBookings = useMemo(() => {
+    const map = new Map<string, Appointment>();
+    for (const b of items) map.set(b.id, b);
+    for (const b of storeBookings) map.set(b.id, b);
+    return [...map.values()];
+  }, [items, storeBookings]);
+  const dayBookings = calBookings.filter((b) => almatyDayStart(b.startMs, 0) === selectedDay);
   const dayRows = buildDayRows(selectedDay, dayBookings);
   // Gün özeti: kesinleşmiş randevu sayısı + günün cirosu
   const dayBusy = dayRows.filter((r): r is { type: 'busy'; b: Appointment } => r.type === 'busy');
@@ -132,7 +148,7 @@ export default function AgendaScreen() {
   const now = Date.now();
   const groups = GROUP_ORDER.map((key) => ({
     key,
-    rows: items
+    rows: calBookings
       .filter((b) => bucket(daysUntil(b.startMs, now)) === key)
       .sort((a, b) => a.startMs - b.startMs),
   })).filter((g) => g.rows.length > 0);

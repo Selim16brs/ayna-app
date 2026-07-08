@@ -102,7 +102,8 @@ export default function AdminApp() {
     { id: 'professionals', label: 'Uzmanlar', icon: '💇' },
     { id: 'services', label: 'Hizmetler', icon: '🗂️' },
     { id: 'prices', label: 'Fiyatlar', icon: '🏷️' },
-    { id: 'bookings', label: 'Randevular', icon: '📅' },
+    // §12.8 — "Randevular" menüsü kaldırıldı: randevular yalnız komisyon hesabını ilgilendirir
+    // (matematiksel olarak Komisyon sekmesinde tutulur). Ayrı menü başlığına gerek yok.
     { id: 'disputes', label: 'Anlaşmazlık', icon: '⚖️' },
     { id: 'reviewDisputes', label: 'Yorum İtirazı', icon: '🗣️' },
     { id: 'quotes', label: 'Teklifler', icon: '📩' },

@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import 'dotenv/config';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { loadEnv } from '@ayna/config/env';
 import { AppModule } from './app.module';
@@ -10,7 +11,15 @@ import { requestIdMiddleware } from './common/middleware/request-id.middleware';
 
 async function bootstrap(): Promise<void> {
   const env = loadEnv();
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  // §5.1.1 — cut-out için telefon fotoğrafı base64 gövdesi MB'larca olabilir; Express varsayılan
+  // ~100KB limiti bu istekleri 500 ile düşürüyordu. Varsayılan parser'ı kapat, 15MB'lık kendimizinkini
+  // kaydet (schema tavanı ~12M karakter). Böylece çakışma olmaz.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+    bodyParser: false,
+  });
+  app.useBodyParser('json', { limit: '15mb' });
+  app.useBodyParser('urlencoded', { limit: '15mb', extended: true });
 
   app.setGlobalPrefix(env.API_GLOBAL_PREFIX);
   // Admin web paneli + mobil için CORS (dev: tüm origin'ler)
