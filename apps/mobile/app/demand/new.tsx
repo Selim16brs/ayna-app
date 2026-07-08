@@ -94,7 +94,8 @@ export default function NewDemandScreen() {
       ...(addressId ? { addressId } : {}),
       ...(photos[0] ? { photoUrl: photos[0] } : {}),
     });
-    router.replace(`/quote/results?id=${id}`);
+    // §5.2 — doğrudan sonuçlara DÜŞME; önce "talep uzmanlara gitti" onay ekranı.
+    router.replace(`/quote/sent?id=${id}`);
   }
 
   return (

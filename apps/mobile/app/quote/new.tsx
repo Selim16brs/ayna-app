@@ -46,7 +46,8 @@ export default function NewQuoteScreen() {
       collectMin,
       ...(photo ? { photoUrl: photo } : {}),
     });
-    router.replace(`/quote/results?id=${id}`);
+    // §5.2 — doğrudan sonuçlara DÜŞME; önce "talep uzmanlara gitti" onay ekranı.
+    router.replace(`/quote/sent?id=${id}`);
   }
 
   async function pickPhoto() {

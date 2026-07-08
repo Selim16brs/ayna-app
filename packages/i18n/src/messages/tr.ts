@@ -359,10 +359,17 @@ export const tr = {
   'demand.notif.title': 'Yeni teklifin var',
   'demand.notif.body': 'Bütçene göre uzmanlar teklif gönderdi. Tekliflerini gör.',
 
-  // Gönderildi
-  'quote.sent.title': 'İsteğin gönderildi',
-  'quote.sent.subtitle': 'Satıcılardan teklifler birazdan gelecek',
-  'quote.sent.view': 'Teklifleri gör',
+  // Gönderildi — talep yakındaki uzmanlara dağıtıldı (§5.2)
+  'quote.sent.title': 'Talebin uzmanlara ulaştı',
+  'quote.sent.subtitle': 'AYNA senin için en doğru uzmanı buluyor.',
+  'quote.sent.p1.title': 'Yakındaki tüm uzmanlara gitti',
+  'quote.sent.p1.body': 'Talebin, şehrindeki uygun uzmanlara bildirim olarak iletildi.',
+  'quote.sent.p2.title': 'Teklifler birazdan gelecek',
+  'quote.sent.p2.body': 'Gelen teklifleri en kısa sürede “Tekliflerim” sayfasında göreceksin.',
+  'quote.sent.p3.title': 'AYNA seni en doğru uzmanla buluşturur',
+  'quote.sent.p3.body': 'En profesyonel ve sana en uygun uzmanla bağlantını AYNA kurar.',
+  'quote.sent.view': 'Tekliflerimi gör',
+  'quote.sent.back': 'Keşfet’e dön',
 
   // Model 1 — gelen teklifler
   'quotes.title': 'Gelen teklifler',
