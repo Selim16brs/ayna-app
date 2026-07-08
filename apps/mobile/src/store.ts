@@ -518,8 +518,12 @@ export const useStore = create<State>()(
   setCutout: (uri) => set({ cutoutUri: uri }),
   applyProfileCutout: async (base64) => {
     if (!get().config.features.removebg) return 'unavailable';
+    const role = get().currentUser?.role;
+    const isSeller = role === 'professional' || role === 'salon';
     const tier = get().currentUser?.membershipTier ?? 'free';
-    if (tier === 'free') return 'not_premium'; // §5.1.1 — cut-out yalnız premium/platinum
+    // §5.1.1 — cut-out portre uzman/salonun TEMEL sunumu → tier'dan bağımsız çalışır.
+    // Müşteri avatarı için cut-out yalnız premium/platinum (loyalty perk).
+    if (!isSeller && tier === 'free') return 'not_premium';
     const token = get().token;
     if (!token) return 'error';
     try {
