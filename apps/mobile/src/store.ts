@@ -378,6 +378,8 @@ interface State {
 // (avatar/cutout/premium gibi PERSIST edilen kullanıcı verileri BURADA sıfırlanmaz.)
 const SEEDED_PERSONAL_RESET: Partial<State> = {
   bookings: [],
+  following: [],
+  followerNames: [],
   circlePosts: [], // W2W tohumları da girişli hesapta yok; gerçek gönderiler loadContent ile gelir
 
   demands: [],
@@ -514,17 +516,8 @@ export const useStore = create<State>()(
       personalLogs: [],
       moments: [],
       favorites: [],
-      following: ['Dana'],
-      followerNames: [
-        'Aizhan',
-        'Gulnara',
-        'Madina',
-        'Saule',
-        'Zhanar',
-        'Kamila',
-        'Aruzhan',
-        'Nazerke',
-      ],
+      following: [],
+      followerNames: [],
       addresses: [],
       premium: false,
       platinum: false,
