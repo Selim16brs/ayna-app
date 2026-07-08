@@ -1546,6 +1546,21 @@ export const tr = {
   'referral.redeem_failed': 'Kod kullanılamadı. Zaten bir kod kullanmış olabilirsin.',
   'profile.menu.referral': 'Arkadaşını davet et',
 
+  // EK Z.8 — in-app Kaspi ödeme
+  'payment.title': 'Ödeme',
+  'payment.pay_cta': 'Uygulamadan öde (Kaspi)',
+  'payment.service_amount': 'Hizmet bedeli',
+  'payment.use_points': 'Puanlarımı kullan',
+  'payment.points_hint': 'En fazla {max} puan (ödemenin %50’si)',
+  'payment.points_applied': 'Puan indirimi',
+  'payment.cash_due': 'Kaspi ile ödenecek',
+  'payment.pay_kaspi': 'Kaspi ile öde',
+  'payment.sim_note': 'Ödeme şu an simülasyon modunda; gerçek para tahsil edilmez.',
+  'payment.success_title': 'Ödeme alındı ✓',
+  'payment.success_sub': 'İşlem referansı: {ref}',
+  'payment.failed': 'Ödeme alınamadı, tekrar dene.',
+  'payment.paid': 'Ödeme tamamlandı',
+
   // Profil — Gizlilik
   'privacy.title': 'Gizlilik',
   'privacy.subtitle': 'Verilerin üzerindeki kontrol sende',

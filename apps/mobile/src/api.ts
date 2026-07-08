@@ -496,7 +496,27 @@ export const api = {
   referralMine: (token: string) => get<MyReferral>('/referral/mine', token),
   redeemReferral: (token: string, code: string) =>
     post<{ ok: boolean; pointsAwarded: number; referrerName: string }>('/referral/redeem', { code }, token),
+  // EK Z.8 — in-app Kaspi ödeme (simülasyon)
+  paymentFor: (token: string, bookingId: string) =>
+    get<PaymentIntent | null>(`/payment/mine?bookingId=${encodeURIComponent(bookingId)}`, token),
+  createPayment: (token: string, bookingId: string, pointsRequested: number) =>
+    post<PaymentIntent>('/payment', { bookingId, pointsRequested }, token),
+  confirmPayment: (token: string, id: string) =>
+    post<PaymentIntent>(`/payment/${id}/confirm`, {}, token),
 };
+
+// EK Z.8 — ödeme tipi
+export interface PaymentIntent {
+  id: string;
+  bookingId: string;
+  amount: number;
+  pointsUsed: number;
+  cashAmount: number;
+  method: string;
+  status: 'pending' | 'paid' | 'failed' | 'refunded';
+  providerRef: string | null;
+  paidAt: string | null;
+}
 
 // EK Z.6 — referans tipi
 export interface MyReferral {

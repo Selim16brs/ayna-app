@@ -239,6 +239,12 @@ export default function BookingDetailScreen() {
                 {t('booking.address_note')}
               </Text>
             </View>
+            {/* EK Z.8 — uygulamadan Kaspi ile öde (simülasyon) */}
+            <Button
+              label={t('payment.pay_cta')}
+              variant="secondary"
+              onPress={() => id && router.push(`/payment/${id}`)}
+            />
           </>
         ) : null}
 

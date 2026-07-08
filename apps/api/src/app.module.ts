@@ -27,6 +27,7 @@ import { SafetyModule } from './safety/safety.module';
 import { KycModule } from './kyc/kyc.module';
 import { PushModule } from './push/push.module';
 import { ReferralModule } from './referral/referral.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { ReferralModule } from './referral/referral.module';
     KycModule,
     PushModule,
     ReferralModule,
+    PaymentModule,
   ],
 })
 export class AppModule {}
