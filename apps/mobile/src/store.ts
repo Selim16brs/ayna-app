@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadMediaCache, saveMediaCache } from './media-cache';
+import { setApiToken } from './api';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { MessageKey } from '@ayna/i18n';
@@ -420,7 +421,7 @@ export const useStore = create<State>()(
       weeklyTheme: null,
       config: {
         rates: {
-          commissionPct: 15, // MD %15 (fetch başarısızsa fallback)
+          commissionPct: 10, // kurucu kararı: online randevudan %10 (fetch başarısızsa fallback)
           depositKzt: DEPOSIT_KZT,
           cancelWindowH: 3,
           lateCancelPct: 3,
@@ -600,17 +601,18 @@ export const useStore = create<State>()(
       sellerHours: defaultHours(),
       sellerCerts: [],
       setSellerProfile: (p) =>
-        set((s) => ({
+        set(() => ({
           ...(p.social ? { sellerSocial: p.social } : {}),
           ...(p.hours ? { sellerHours: p.hours } : {}),
           ...(p.certs ? { sellerCerts: p.certs } : {}),
         })),
+      // Sıfır-demo: salon profili BOŞ başlar — kayıtta/düzenlemede salon kendi doldurur
       salonProfile: {
         photos: [],
-        about: 'Almatı merkezde, hijyen ve kaliteye önem veren güzellik salonu.',
-        address: 'Almatı, Dostyk 12',
-        contact: '+7 727 000 00 00',
-        areas: ['hair', 'nails', 'brows'],
+        about: '',
+        address: '',
+        contact: '',
+        areas: [],
       },
       setSalonProfile: (p) => set((s) => ({ salonProfile: { ...s.salonProfile, ...p } })),
 
@@ -639,6 +641,7 @@ export const useStore = create<State>()(
                 sellerSocial: emptySocial,
                 sellerCerts: [],
               };
+          setApiToken(session.token);
           return {
             token: session.token,
             currentUser: session.user,
@@ -657,7 +660,10 @@ export const useStore = create<State>()(
         set((s) =>
           s.currentUser ? { currentUser: { ...s.currentUser, phoneVerified: true } } : {},
         ),
-      logout: () => set({ token: null, currentUser: null }),
+      logout: () => {
+        setApiToken(null);
+        set({ token: null, currentUser: null });
+      },
 
       setCity: (city) =>
         set((s) => (s.currentUser ? { currentUser: { ...s.currentUser, city } } : {})),
@@ -1185,12 +1191,8 @@ export const useStore = create<State>()(
         if (!token) return;
         try {
           const remote = await api.myQuoteRequests(token);
-          const remoteIds = new Set(remote.map((d) => d.id));
-          set((s) => ({
-            // Sunucudakiler esas; yerelde kalan (tohum/uzman-havuzu) kayıtlar kullanıcının
-            // Taleplerim'ine karışmasın diye yalnız 'seeded' olanlar korunur.
-            demands: remote,
-          }));
+          // Sunucudakiler esas — yerel artıklar kullanıcının Taleplerim'ine karışmaz.
+          set(() => ({ demands: remote }));
         } catch {
           // çevrimdışı: eldeki liste korunur
         }
@@ -1698,7 +1700,7 @@ export const useStore = create<State>()(
       },
 
       // §7.2 — uzman/salon yoruma tek yanıt yazar (yanıt kalıcı; bir kez)
-      replyToReview: (proId, reviewId, reply) =>
+      replyToReview: (proId, reviewId, reply) => {
         set((s) => ({
           userReviews: {
             ...s.userReviews,
@@ -1706,7 +1708,11 @@ export const useStore = create<State>()(
               r.id === reviewId && !r.reply ? { ...r, reply: reply.trim() } : r,
             ),
           },
-        })),
+        }));
+        // §7.2 — yanıt SUNUCUYA da yazılır (public profildeki yorum kartında görünür)
+        const tk = get().token;
+        if (tk) void api.replySpecialistReview(tk, reviewId, reply).catch(() => undefined);
+      },
 
       // §7.2 — negatif yoruma itiraz (admin kuyruğu; yorum görünür kalır — otomatik gizleme YOK)
       disputeReview: (proId, reviewId) => {
@@ -1718,6 +1724,9 @@ export const useStore = create<State>()(
             ),
           },
         }));
+        // §7.2 — itiraz SUNUCUDAKİ admin kuyruğuna düşer (yorum süreç boyunca görünür kalır)
+        const tk = get().token;
+        if (tk) void api.disputeSpecialistReview(tk, reviewId, '').catch(() => undefined);
         get().pushNotification({
           type: 'system',
           titleKey: 'notif.review_dispute',
@@ -1727,12 +1736,15 @@ export const useStore = create<State>()(
         });
       },
 
-      toggleFavorite: (proId) =>
+      toggleFavorite: (proId) => {
         set((s) => ({
           favorites: s.favorites.includes(proId)
             ? s.favorites.filter((x) => x !== proId)
             : [proId, ...s.favorites],
-        })),
+        }));
+        // §5.6 — favoriler HESAPTA da yaşar (cihaz/yeniden giriş kaybetmez)
+        void api.setPrefs({ favorites: get().favorites }).catch(() => undefined);
+      },
 
       // W2W — kişi takip et / bırak (yazar adına göre)
       toggleFollow: (author) =>
@@ -1752,8 +1764,12 @@ export const useStore = create<State>()(
         set((s) => ({
           addresses: [...s.addresses, { id: nextId('ad'), label, detail: detail.trim() }],
         }));
+        void api.setPrefs({ addresses: get().addresses }).catch(() => undefined);
       },
-      removeAddress: (id) => set((s) => ({ addresses: s.addresses.filter((a) => a.id !== id) })),
+      removeAddress: (id) => {
+        set((s) => ({ addresses: s.addresses.filter((a) => a.id !== id) }));
+        void api.setPrefs({ addresses: get().addresses }).catch(() => undefined);
+      },
 
       // §5.6.2 — premium aç/kapa (gerçekte app-dışı ödeme; burada mock)
       setPremium: (v) => set({ premium: v }),
@@ -2025,6 +2041,11 @@ export const useStore = create<State>()(
           }));
           const uid = get().currentUser?.id;
           if (uid) saveMediaCache(uid, { avatar: nextAvatar, cutout: nextCutout });
+          // §5.6 — favoriler/adresler hesaptan (sunucuda veri varsa o esas; boşsa yerel korunur)
+          const prefs = (me as { prefs?: { favorites?: string[]; addresses?: UserAddress[] } })
+            .prefs;
+          if (prefs?.favorites?.length) set({ favorites: prefs.favorites });
+          if (prefs?.addresses?.length) set({ addresses: prefs.addresses });
           // Push gelmese bile: yükselme ALGILANDIĞINDA uygulama-içi bildirim (§11)
           if (!wasPremium && (tier === 'premium' || tier === 'platinum'))
             get().pushNotification({
@@ -2122,6 +2143,7 @@ export const useStore = create<State>()(
 // tohum bildirim/randevu/talep/bakım günlüğü) her açılışta initial-state'ten geri geliyordu.
 // Oturum varsa bunlar sıfırlanır; gerçek değerleri _layout'taki hydrate* çağrıları doldurur.
 useStore.persist.onFinishHydration((state) => {
+  setApiToken(state.token);
   if (state.token) useStore.setState(SEEDED_PERSONAL_RESET);
   // Medya önbelleği: persist DIŞI tutulan foto/portre açılışta cihaz önbelleğinden anında gelir;
   // refreshMembership ardından hesapla eşitler (hesap boşsa self-heal yükler).

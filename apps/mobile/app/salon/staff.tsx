@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
-import { SELLER_DATA } from '../../src/data';
+import { useSalonStaff } from '../../src/staff';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -13,7 +13,8 @@ export default function SalonStaffScreen() {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
-  const staff = SELLER_DATA.month.staff;
+  // Sıfır-demo: kadro GERÇEK — bu salona kodla bağlanan uzmanlar (boşsa dürüst boş durum)
+  const { staff } = useSalonStaff();
 
   return (
     <Screen edges={[]}>

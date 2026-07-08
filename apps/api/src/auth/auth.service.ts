@@ -117,6 +117,24 @@ export class AuthService {
   }
 
   // §5.1.1 — kesik portreyi hesaba yaz (bir kez üretilir, hep hesapla gezer)
+  // §5.6 — favoriler + adresler hesapta yaşar (cihaz/yeniden giriş kaybetmez)
+  async setPrefs(userId: string, prefs: { favorites?: string[]; addresses?: unknown[] }) {
+    const u = await this.prisma.user.findUnique({ where: { id: userId } });
+    let cur: Record<string, unknown> = {};
+    try {
+      cur = JSON.parse(u?.prefsJson ?? '{}') as Record<string, unknown>;
+    } catch {
+      cur = {};
+    }
+    if (prefs.favorites) cur.favorites = prefs.favorites.slice(0, 200);
+    if (prefs.addresses) cur.addresses = prefs.addresses.slice(0, 20);
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { prefsJson: JSON.stringify(cur) },
+    });
+    return this.safe(updated);
+  }
+
   async setCutout(userId: string, cutoutDataUrl: string | null) {
     const u = await this.prisma.user.update({
       where: { id: userId },
@@ -246,6 +264,8 @@ export class AuthService {
       // §11 — üyelik katmanı + bitiş (mobil premium/platinum bunu okur; admin onayıyla set edilir)
       membershipTier: user.membershipTier,
       membershipUntil: user.membershipUntil ? user.membershipUntil.toISOString() : null,
+      // §5.6 — favoriler + adresler (hesap verisi; mobil açılışta bunlarla eşitler)
+      prefs: parsePrefs(user.prefsJson),
       // EK Z.3 — ağır KYC durumu (none|pending|approved|rejected); "doğrulanmış uzman" rozeti
       kycStatus: user.kycStatus,
       // women-only: kadın olarak kayıtlı doğrulanmış üye
@@ -261,5 +281,18 @@ export class AuthService {
         : 0,
       phone: decryptField(Buffer.from(user.phoneEnc), this.env.FIELD_ENCRYPTION_KEY),
     };
+  }
+}
+
+// prefsJson güvenli çözümü (bozuk veri oturum açmayı düşürmesin)
+function parsePrefs(raw: string): { favorites: string[]; addresses: unknown[] } {
+  try {
+    const p = JSON.parse(raw) as { favorites?: unknown; addresses?: unknown };
+    return {
+      favorites: Array.isArray(p.favorites) ? (p.favorites as string[]) : [],
+      addresses: Array.isArray(p.addresses) ? p.addresses : [],
+    };
+  } catch {
+    return { favorites: [], addresses: [] };
   }
 }

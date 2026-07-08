@@ -28,7 +28,8 @@ export default function ReviewNewScreen() {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const params = useLocalSearchParams<{ id?: string; bookingId?: string }>();
+  const id = params.id ?? params.bookingId; // push rotası bookingId, ekran içi rotalar id gönderir
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
   const reviewBooking = useStore((s) => s.reviewBooking);
 

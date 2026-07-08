@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   BadRequestException,
   ConflictException,
   Injectable,
@@ -92,21 +93,29 @@ export class BookingsService {
 
   // §6.C/§4.4 — iptal. Kapora yakma/iade kararını SUNUCU verir (client'a güvenilmez):
   // geç iptal (<3sa, kapora ödenmiş) → kapora yanar; serbest iptal → uzman iade eder.
-  async cancel(id: string, reason?: string) {
+  async cancel(id: string, reason?: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'either');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (!b)
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     const outcome = cancelOutcome(b.status, b.startAt?.getTime() ?? null, Date.now());
-    return this.transition(id, {
+    const row = await this.transition(id, {
       status: outcome.status,
       cancelReason: reason ?? null,
       ...(outcome.forfeit ? { depositForfeited: true } : {}),
     });
+    this.notifyParties(
+      id,
+      'Randevu iptal edildi',
+      reason ? `Sebep: ${reason}` : 'Detay için randevuya dokun',
+    );
+    return row;
   }
 
   // §6.C — uzman/işletme randevuyu "gelmedi" işaretler (CRM tarafı).
   // Kural: randevu saatinin üzerinden EN AZ 1 saat geçmeden işaretlenemez (erken damga önlenir).
-  async noShow(id: string) {
+  async noShow(id: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'provider');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (b?.startAt && Date.now() < b.startAt.getTime() + 60 * 60 * 1000) {
       throw new BadRequestException({
@@ -114,12 +123,25 @@ export class BookingsService {
         message: 'Gelmedi işareti randevu saatinden 1 saat sonra açılır',
       });
     }
-    return this.transition(id, { status: 'no_show', depositForfeited: true });
+    const row = await this.transition(id, { status: 'no_show', depositForfeited: true });
+    this.notifyParties(id, 'Randevu: gelmedi olarak işaretlendi', 'Kapora uzmanda kaldı (§4.4)');
+    return row;
   }
 
   // §4.1.7 — uzman hizmeti tamamladı → randevu 'completed' (değerlendirme daveti uçları buna dayanır)
-  async complete(id: string) {
-    return this.transition(id, { status: 'completed' });
+  async complete(id: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'provider');
+    const row = await this.transition(id, { status: 'completed' });
+    // §7.1 — müşteriye değerlendirme daveti push'u (3 saat sonrası anket mobilde ayrıca)
+    void this.prisma.booking.findUnique({ where: { id } }).then((b) => {
+      if (b?.userId)
+        void this.push.sendToUser(b.userId, {
+          title: 'Hizmetin tamamlandı ✨',
+          body: 'Deneyimini değerlendir — 30 saniye sürer',
+          data: { route: `/review/new?id=${id}` },
+        });
+    });
+    return row;
   }
 
   // Kapora tutarı — admin parametresi (varsayılan 1000 ₸)
@@ -129,7 +151,8 @@ export class BookingsService {
   }
 
   // §4.1/§4.2 — uzman onaylar → ATOMİK slot lock (çift-rezervasyon önlenir) → deposit_pending
-  async approve(id: string) {
+  async approve(id: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'provider');
     const amount = await this.depositAmount();
     const deadline = new Date(Date.now() + 3 * 60 * 60 * 1000); // §5.2 dekont penceresi (3 saat)
     // Tek transaction içinde: çakışma kontrolü + durum güncelleme (atomik kilit)
@@ -179,7 +202,8 @@ export class BookingsService {
   }
 
   // §4.2 — kullanıcı kapora dekontunu yükler → uzman onayı bekler
-  async submitDepositReceipt(id: string, receiptUri: string) {
+  async submitDepositReceipt(id: string, receiptUri: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'owner');
     const res = await this.transition(id, {
       status: 'deposit_submitted',
       depositReceiptUri: receiptUri,
@@ -197,7 +221,8 @@ export class BookingsService {
   }
 
   // §4.2 — uzman kaporayı onaylar → randevu KESİN
-  async confirmDepositReceipt(id: string) {
+  async confirmDepositReceipt(id: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'provider');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     const res = await this.transition(id, { status: 'confirmed' });
     if (b?.userId)
@@ -211,26 +236,35 @@ export class BookingsService {
 
   // §4.4 — kullanıcı serbest iptal başlatır. SUNUCU pencereyi doğrular: client geç
   // iptali "serbest" diye göndermeye çalışsa bile <3sa ise kapora yakılır.
-  async freeCancel(id: string, reason?: string) {
+  async freeCancel(id: string, reason?: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'owner');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (!b)
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     const outcome = cancelOutcome(b.status, b.startAt?.getTime() ?? null, Date.now());
-    return this.transition(id, {
+    const row = await this.transition(id, {
       status: outcome.status,
       cancelReason: reason ?? null,
       ...(outcome.forfeit ? { depositForfeited: true } : {}),
     });
+    this.notifyParties(
+      id,
+      'Randevu iptal edildi',
+      reason ? `Sebep: ${reason}` : 'Detay için randevuya dokun',
+    );
+    return row;
   }
 
   // §4.4 — uzman iade dekontunu yükler → kullanıcı onayı bekler
-  async uploadRefundReceipt(id: string, receiptUri: string) {
+  async uploadRefundReceipt(id: string, receiptUri: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'provider');
     return this.transition(id, { status: 'refund_submitted', refundReceiptUri: receiptUri });
   }
 
   // §4.4 — kullanıcı iadeyi aldı → kayıt kapanır. Uzman no-show iade yükümlülüğü
   // yerine geldiyse kısıtlı mod kalkar (yalnız bu sebeple konmuşsa).
-  async confirmRefund(id: string) {
+  async confirmRefund(id: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'owner');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     const res = await this.transition(id, { status: 'cancelled' });
     if (b?.providerNoShow && b.proId) {
@@ -246,7 +280,8 @@ export class BookingsService {
   }
 
   // §4.4 — taraflar itiraz açar → admin anlaşmazlık kuyruğu
-  async dispute(id: string) {
+  async dispute(id: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'either');
     return this.transition(id, { status: 'disputed' });
   }
 
@@ -267,7 +302,8 @@ export class BookingsService {
     return sp?.userId ?? null;
   }
 
-  async providerNoShow(id: string) {
+  async providerNoShow(id: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'owner');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (!b)
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
@@ -305,7 +341,8 @@ export class BookingsService {
   }
 
   // §1.6 — uzman alternatif saat önerir (mobil epoch ms; proposedStartAt olarak saklanır)
-  async propose(id: string, proposedStartMs: number) {
+  async propose(id: string, proposedStartMs: number, actorId?: string) {
+    await this.assertParty(id, actorId, 'provider');
     return this.transition(id, {
       status: 'alternative_proposed',
       proposedStartAt: new Date(proposedStartMs),
@@ -313,7 +350,8 @@ export class BookingsService {
   }
 
   // §1.6 — kullanıcı önerilen alternatifi kabul eder (başlangıç güncellenir, onaylanır)
-  async accept(id: string) {
+  async accept(id: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'owner');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (!b)
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
@@ -325,7 +363,8 @@ export class BookingsService {
   }
 
   // §1.6 — kullanıcı karşı öneri yapar (yeni başlangıç, tekrar uzman onayına döner)
-  async counter(id: string, proposedStartMs: number) {
+  async counter(id: string, proposedStartMs: number, actorId?: string) {
+    await this.assertParty(id, actorId, 'owner');
     return this.transition(id, {
       status: 'awaiting_provider',
       startAt: new Date(proposedStartMs),
@@ -333,13 +372,71 @@ export class BookingsService {
     });
   }
 
+  // §güvenlik — eylemi yapan, randevunun TARAFI olmalı (owner=müşteri, provider=uzman/salon).
+  // actorId verilmediyse (iç çağrı) kontrol atlanır; admin rolü her eylemi yapabilir.
+  private async assertParty(
+    bookingId: string,
+    actorId: string | undefined,
+    who: 'owner' | 'provider' | 'either',
+  ): Promise<void> {
+    if (!actorId) return;
+    const [b, actor] = await Promise.all([
+      this.prisma.booking.findUnique({ where: { id: bookingId } }),
+      this.prisma.user.findUnique({ where: { id: actorId } }),
+    ]);
+    if (!b)
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    if (actor?.role === 'admin') return;
+    const isOwner = !!b.userId && b.userId === actorId;
+    let isProvider = false;
+    if (b.proId) {
+      const uid = await this.expertUserIdFor(bookingId);
+      isProvider = uid === actorId;
+      if (!isProvider) {
+        const biz = await this.prisma.business.findFirst({ where: { professionalId: b.proId } });
+        isProvider = biz?.ownerUserId === actorId;
+      }
+    }
+    const ok = who === 'owner' ? isOwner : who === 'provider' ? isProvider : isOwner || isProvider;
+    if (!ok)
+      throw new ForbiddenException({
+        code: 'NOT_BOOKING_PARTY',
+        message: 'Bu randevu üzerinde işlem yetkin yok',
+      });
+  }
+
   private async transition(id: string, data: Record<string, unknown>) {
     const existing = await this.prisma.booking.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     }
+    // §4 — durum makinesi: kapalı durumlardan geri dönüş YOK (cancelled→completed gibi
+    // geçersiz geçişler reddedilir; çift POST idempotent kabul edilir: aynı hedef → mevcut döner)
+    const target = typeof data.status === 'string' ? data.status : null;
+    if (target) {
+      if (existing.status === target) return mapBooking(existing); // idempotent tekrar
+      const CLOSED = ['cancelled', 'completed', 'no_show', 'refunded'];
+      if (CLOSED.includes(existing.status)) {
+        throw new BadRequestException({
+          code: 'INVALID_TRANSITION',
+          message: `Kapalı randevu (${existing.status}) '${target}' durumuna geçemez`,
+        });
+      }
+    }
     const row = await this.prisma.booking.update({ where: { id }, data });
     return mapBooking(row);
+  }
+
+  // Durum geçişlerinde İKİ TARAFA push (sahip müşteri + uzman) — kapalıyken de haber gitsin
+  private notifyParties(bookingId: string, title: string, body: string): void {
+    void this.prisma.booking.findUnique({ where: { id: bookingId } }).then((b) => {
+      if (!b) return;
+      const data = { route: `/booking/${bookingId}` };
+      if (b.userId) void this.push.sendToUser(b.userId, { title, body, data });
+      void this.expertUserIdFor(bookingId).then((uid) => {
+        if (uid && uid !== b.userId) void this.push.sendToUser(uid, { title, body, data });
+      });
+    });
   }
 }
 

@@ -54,6 +54,7 @@ model User {
   birthDate       DateTime? @map("birth_date") @db.Timestamptz(6) // doğum günü kutlamaları (§CRM)
   cutoutUrl       String?   @map("cutout_url") // §5.1.1 arka planı kesik portre — kredi tekrar YANMAZ
   membershipTier  String    @default("free") @map("membership_tier")
+  prefsJson       String    @default("{}") @map("prefs_json") // favoriler+adresler (hesap verisi)
   membershipUntil DateTime? @map("membership_until") @db.Timestamptz(6)
   // §4.6 — telefon OTP doğrulaması (mock SMS)
   phoneVerified Boolean    @default(false) @map("phone_verified")

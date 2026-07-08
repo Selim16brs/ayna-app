@@ -53,6 +53,25 @@ export class AuthController {
     return this.auth.me(req.user!.id);
   }
 
+  // §5.6 — favoriler + adresler hesapta (cihaz değişse de kaybolmaz)
+  @Post('me/prefs')
+  @UseGuards(JwtAuthGuard)
+  setPrefs(
+    @Req() req: AuthedRequest,
+    @Body() body: { favorites?: string[]; addresses?: unknown[] },
+  ) {
+    return this.auth.setPrefs(req.user!.id, {
+      ...(Array.isArray(body?.favorites)
+        ? {
+            favorites: body.favorites
+              .filter((x) => typeof x === 'string')
+              .map((x) => x.slice(0, 60)),
+          }
+        : {}),
+      ...(Array.isArray(body?.addresses) ? { addresses: body.addresses } : {}),
+    });
+  }
+
   // §4.6 — OTP iste / doğrula (mock SMS)
   @Post('otp/request')
   otpRequest(@Body(new ZodValidationPipe(otpRequestSchema)) body: OtpRequestInput) {

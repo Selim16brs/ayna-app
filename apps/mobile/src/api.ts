@@ -130,8 +130,15 @@ function authHeader(token?: string): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+// Oturum token'ı (store girişte set eder) — açıkça token geçilmeyen çağrılar da kimlikli
+// gider; backend'deki JwtAuthGuard'lı yazma uçları böylece kırılmadan korunur.
+let sessionToken: string | undefined;
+export function setApiToken(token: string | null | undefined): void {
+  sessionToken = token ?? undefined;
+}
+
 async function get<T>(path: string, token?: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, { headers: authHeader(token) });
+  const res = await fetch(`${API_BASE}${path}`, { headers: authHeader(token ?? sessionToken) });
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
   return res.json() as Promise<T>;
 }
@@ -139,7 +146,7 @@ async function get<T>(path: string, token?: string): Promise<T> {
 async function post<T>(path: string, body: unknown, token?: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeader(token) },
+    headers: { 'Content-Type': 'application/json', ...authHeader(token ?? sessionToken) },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
@@ -492,6 +499,8 @@ export const api = {
     get<{ id: string; name: string }[]>('/specialists/me/birthdays', token),
   celebrateBirthday: (token: string, userId: string) =>
     post<{ ok: boolean }>(`/specialists/me/birthdays/${userId}/celebrate`, {}, token),
+  setPrefs: (prefs: { favorites?: string[]; addresses?: unknown[] }) =>
+    post<unknown>('/auth/me/prefs', prefs),
   setCutoutRemote: (token: string, cutoutDataUrl: string | null) =>
     post<AuthUser>('/auth/me/cutout', { cutoutDataUrl }, token),
   // §11 — üyelik aboneliği: talep oluştur, dekont yükle, güncel katmanı oku

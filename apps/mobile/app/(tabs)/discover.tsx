@@ -48,7 +48,7 @@ export default function DiscoverScreen() {
   const userName =
     useStore((s) => s.currentUser?.name)
       ?.trim()
-      .split(' ')[0] || 'Aigerim';
+      .split(' ')[0] || '';
   const cutoutUri = useStore((s) => s.cutoutUri); // §5.1.1 — premium cut-out profil fotosu
   const avatarUri = useStore((s) => s.avatarUri); // cut-out yoksa yüklenen ham foto
   // Dinamik kullanıcı adı — ilk harf büyük (el yazısı katman için)

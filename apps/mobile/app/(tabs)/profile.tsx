@@ -48,7 +48,7 @@ export default function ProfileScreen() {
   const following = useStore((s) => s.following);
   const followerNames = useStore((s) => s.followerNames);
   const avatarUri = useStore((s) => s.avatarUri);
-  const userName = useStore((s) => s.currentUser?.name) ?? 'Aigerim';
+  const userName = useStore((s) => s.currentUser?.name) ?? '';
   const phone = useStore((s) => s.currentUser?.phone) ?? '';
   const isLoggedIn = useStore((s) => s.currentUser != null);
   const phoneVerified = useStore((s) => s.currentUser?.phoneVerified ?? false);
@@ -174,7 +174,7 @@ export default function ProfileScreen() {
           />
           <View style={styles.statDivider} />
           <Stat
-            value={`${reviewCount || 5}`}
+            value={`${reviewCount}`}
             label={t('profile.stat.reviews')}
             onPress={() => router.push('/profile/reviews')}
           />

@@ -2,19 +2,13 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
-import { SELLER_DATA, STAFF_SERVICES } from '../../src/data';
+import { STAFF_SERVICES } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { useSalonStaff } from '../../src/staff';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Progress, Screen, Segmented, StackHeader, Text } from '../../src/ui';
-
-// Uzman bazlı hizmet dağılımı (mock; gerçek panelde API'den gelir)
-const SERVICES = [
-  { name: 'Saç boyama', share: 0.42 },
-  { name: 'Kesim & fön', share: 0.31 },
-  { name: 'Bakım', share: 0.27 },
-];
+import { Button, Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
 type Schedule = 'standard' | 'flexible';
 
@@ -24,6 +18,7 @@ export default function StaffDetailScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const reassignStaffBookings = useStore((s) => s.reassignStaffBookings);
+  const { staff: staffPool } = useSalonStaff(); // gerçek kadro (devir hedefi buradan)
   const p = useLocalSearchParams<{
     name?: string;
     image?: string;
@@ -34,7 +29,8 @@ export default function StaffDetailScreen() {
   // §4.5 — uzmanı kadrodan çıkar → gelecek randevuları başka uzmana devret (sessiz silme YASAK)
   function removeFromTeam() {
     const name = p.name ?? '';
-    const fallback = SELLER_DATA.month.staff.find((s) => s.name !== name)?.name ?? '';
+    // Devir hedefi: gerçek kadrodan bir başka uzman (yoksa boş — randevular devredilmeden uyarı)
+    const fallback = staffPool.find((s) => s.name !== name)?.name ?? '';
     Alert.alert(t('seller.staff.remove_confirm'), t('seller.staff.remove_desc'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
@@ -142,25 +138,6 @@ export default function StaffDetailScreen() {
             {t('seller.staff.no_services')}
           </Text>
         )}
-
-        <Text variant="label" tone="accentFg" style={styles.section}>
-          {t('seller.staff.services')}
-        </Text>
-        <View style={styles.group}>
-          {SERVICES.map((s, i) => (
-            <View key={s.name} style={[styles.svc, i < SERVICES.length - 1 && styles.svcBorder]}>
-              <View style={styles.svcHead}>
-                <Text variant="bodyStrong" tone="ink">
-                  {s.name}
-                </Text>
-                <Text variant="caption" tone="inkSoft">
-                  %{Math.round(s.share * 100)}
-                </Text>
-              </View>
-              <Progress value={s.share} color={colors.accentFg} />
-            </View>
-          ))}
-        </View>
 
         {/* §4.5 — kadrodan çıkar (randevular devredilir, sessiz silinmez) */}
         <View style={styles.removeWrap}>
