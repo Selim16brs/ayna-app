@@ -364,6 +364,10 @@ export const tr = {
   'quote.new.note': 'Not (isteğe bağlı)',
   'quote.new.note_ph': 'Detay ekle: saç boyu, renk, bölge...',
   'quote.new.submit': 'Teklif iste',
+  'quote.new.submit_err': 'Talep gönderilemedi — bağlantını kontrol edip tekrar dene.',
+  'quotes.pick_err': 'Seçim tamamlanamadı — tekrar dene.',
+  'offer.form.send_err': 'Teklif gönderilemedi — bağlantını kontrol edip tekrar dene.',
+  'seller.requests.offered': 'Teklifin gönderildi — güncelle',
 
   // Teklif akışı bildirimi (foto & bütçe) — "yeni teklifin var"
   'quote.notif.title': 'Yeni teklifin var',

@@ -24,7 +24,6 @@ import {
   REMIND_2H_MS,
   RESPONSE_WINDOW_MS,
   SEED_DEMANDS,
-  buildOffers,
   buildUpcomingEvents,
   type CareRoutine,
   type CirclePost,
@@ -291,26 +290,27 @@ interface State {
   expireDeposits: () => void; // §4.3 — dekont süresi dolan deposit_pending randevuları düşürür
   expireResponses: () => void; // §4.1.3 — uzman yanıt süresi dolan talepleri düşürür
   toggleClosedDay: (dayStartMs: number) => void; // §4.6 — günü kapalı/açık işaretle
-  // §5.2 — teklif/talep akışı
+  // §5.2 Faz A — teklif/talep akışı BULUTTAN (iki cihaz arasında gerçek çalışır)
   createDemand: (input: {
     mode: DemandMode;
     category: string;
     note?: string;
-    photoUrl?: string;
+    photoDataUrl?: string;
     budget?: number;
     collectMin: number;
     serviceId?: string;
     addressId?: string;
-  }) => string;
-  selectOffer: (demandId: string, offerId: string, slotMs: number) => string; // → booking id
+  }) => Promise<string | null>; // → talep id (backend) | null = hata
+  hydrateDemands: () => Promise<void>; // taleplerim + gelen teklifleri buluttan çek
+  selectOffer: (demandId: string, offerId: string, slotMs: number) => Promise<string | null>; // → booking id
   expireDemands: () => void; // süresi dolan talepleri işaretle
   addRecentSearch: (q: string) => void; // §5.1.2 — son aramaya ekle (dedup, en fazla 8)
   toggleNotifPref: (key: 'care' | 'moment' | 'personal' | 'booking') => void; // §5.4
-  // §5.2 uzman tarafı — açık talebe teklif ver
+  // §5.2 Faz A — uzman tarafı: açık talebe teklif BULUTA gider (true=başarılı)
   submitOffer: (
     demandId: string,
     offer: { price: number; etaMin: number; note?: string; slots: number[] },
-  ) => void;
+  ) => Promise<boolean>;
   // §4.5 — uzman ayrılığında randevu devri (sessiz silme YASAK)
   reassignStaffBookings: (oldUzman: string, newUzman: string) => number; // devredilen randevu sayısı
   acceptReassignment: (id: string) => void; // kullanıcı yeni uzmanı onaylar
@@ -1056,130 +1056,95 @@ export const useStore = create<State>()(
         })),
 
       // §5.2 — teklif/talep aç: aynı şehirdeki kategori uzmanlarından mock teklifler üretir
-      createDemand: (input) => {
-        const id = nextId('dm');
-        const now = Date.now();
-        const city = get().currentUser?.city ?? 'Almatı';
-        const demand: DemandRequest = {
-          id,
-          mode: input.mode,
-          category: input.category,
-          city, // §9.3 — talep, oluşturan kullanıcının şehrine ait; uzman Talepler'i şehirle filtreler
-          ...(input.note ? { note: input.note } : {}),
-          ...(input.photoUrl ? { photoUrl: input.photoUrl } : {}),
-          ...(input.budget ? { budget: input.budget } : {}),
-          ...(input.serviceId ? { serviceId: input.serviceId } : {}),
-          ...(input.addressId ? { addressId: input.addressId } : {}),
-          collectMin: input.collectMin,
-          createdAt: now,
-          expiresAt: now + input.collectMin * 60_000,
-          status: 'collecting',
-          offers: buildOffers(input.category, city, input.budget, now),
-        };
-        set((s) => ({ demands: [demand, ...s.demands] }));
-        // Müşteri tarafı: teklif toplama başladı (yalnızca müşteri modunda görünür)
-        get().pushNotification({
-          type: 'quote',
-          audience: 'user',
-          titleKey: 'notif.offers_started',
-          bodyKey: 'notif.offers_started_b',
-          params: { n: demand.offers.length },
-          dateLabel: 'Az önce',
-          icon: 'pricetags-outline',
-          route: `/quote/results?id=${id}`,
-        });
-        // §5.2/§5.7/§9.3 — talep, o ŞEHİRDEKİ uzmanlara "yeni talep" bildirimi olarak gider (konum bazlı).
-        // Uzman tercihleri: kategori (boş = tümü) + saat aralığı (Almatı saati) dışıysa bildirim düşmez.
-        const pref = get().demandNotif;
-        const hour = new Date(now).getHours();
-        const catOk = pref.cats.length === 0 || pref.cats.includes(input.category);
-        const hourOk = hour >= pref.from && hour < pref.to;
-        if (catOk && hourOk)
+      // §5.2 Faz A — talep BULUTA açılır; aynı şehirdeki uzmanlara GERÇEK push gider.
+      // Sahte teklif üretimi YOK: teklifler yalnızca gerçek uzmanlardan gelir.
+      createDemand: async (input) => {
+        const token = get().token;
+        if (!token) return null;
+        try {
+          const demand = await api.createQuoteRequest(token, {
+            category: input.category,
+            mode: input.mode,
+            ...(input.note ? { note: input.note } : {}),
+            ...(input.photoDataUrl ? { photoDataUrl: input.photoDataUrl } : {}),
+            ...(input.budget ? { budget: input.budget } : {}),
+            collectMin: input.collectMin,
+            ...(input.serviceId ? { serviceId: input.serviceId } : {}),
+          });
+          set((s) => ({ demands: [demand, ...s.demands.filter((d) => d.id !== demand.id)] }));
+          // Müşteri tarafı: teklif toplama başladı (uygulama-içi bildirim)
           get().pushNotification({
             type: 'quote',
-            audience: 'seller',
-            titleKey: 'notif.new_demand',
-            bodyKey: 'notif.new_demand_b',
-            params: { city },
+            audience: 'user',
+            titleKey: 'notif.offers_started',
+            bodyKey: 'notif.offers_started_b',
+            params: { n: 0 },
             dateLabel: 'Az önce',
             icon: 'pricetags-outline',
-            route: '/seller/requests',
+            route: `/quote/results?id=${demand.id}`,
           });
-        return id;
+          return demand.id;
+        } catch {
+          return null; // ekran kullanıcıya hata gösterir; sahte veriye DÜŞÜLMEZ
+        }
       },
 
-      // §5.2 — kullanıcı teklifi seçer → randevu akışı başlar; seçilmeyenlere kapanış bildirimi
-      selectOffer: (demandId, offerId, slotMs) => {
-        const demand = get().demands.find((d) => d.id === demandId);
-        const offer = demand?.offers.find((o) => o.id === offerId);
-        if (!demand || !offer) return '';
-        const bookingId = get().addBooking({
-          source: demand.mode === 'photo' ? 'photo_quote' : 'demand',
-          service: `${demand.category} (teklif)`,
-          proId: offer.proId,
-          proName: offer.proName,
-          proImage: offer.proImage,
-          startMs: slotMs,
-          durationMin: offer.etaMin,
-          price: offer.price,
-        });
-        // Teklif zaten uzmanın kabulüdür → doğrudan depozito adımına (§4.3)
-        get().approveBooking(bookingId);
-        set((s) => ({
-          demands: s.demands.map((d) =>
-            d.id === demandId ? { ...d, status: 'booked', bookedOfferId: offerId } : d,
-          ),
-        }));
-        // Seçilmeyen uzmanlara nazik kapanış bildirimi (özet — mock)
-        const others = demand.offers.filter((o) => o.id !== offerId).length;
-        if (others > 0)
+      // §5.2 Faz A — taleplerim + gelen teklifler buluttan (girişli hesapta tek gerçek kaynak)
+      hydrateDemands: async () => {
+        const token = get().token;
+        if (!token) return;
+        try {
+          const remote = await api.myQuoteRequests(token);
+          const remoteIds = new Set(remote.map((d) => d.id));
+          set((s) => ({
+            // Sunucudakiler esas; yerelde kalan (tohum/uzman-havuzu) kayıtlar kullanıcının
+            // Taleplerim'ine karışmasın diye yalnız 'seeded' olanlar korunur.
+            demands: [...remote, ...s.demands.filter((d) => d.seeded && !remoteIds.has(d.id))],
+          }));
+        } catch {
+          // çevrimdışı: eldeki liste korunur
+        }
+      },
+
+      // §5.2 Faz A — seçim BULUTTA: randevu sunucuda doğar (deposit_pending), kazanan uzmana
+      // ve seçilmeyenlere GERÇEK push sunucudan gider.
+      selectOffer: async (demandId, offerId, slotMs) => {
+        const token = get().token;
+        if (!token) return null;
+        try {
+          const res = await api.selectQuote(token, demandId, { quoteId: offerId, slotMs });
+          set((s) => ({
+            demands: s.demands.map((d) =>
+              d.id === demandId ? { ...d, status: 'booked', bookedOfferId: offerId } : d,
+            ),
+          }));
+          // Randevu listesi sunucudan tazelensin (yeni booking düşsün)
+          void get().hydrateBookings();
+          return res.bookingId;
+        } catch {
+          return null;
+        }
+      },
+
+      // §5.2 Faz A — teklif BULUTA gider (api.submitQuote); yerelde yalnız bildirim düşer.
+      // Talep havuzu seller/requests ekranında doğrudan API'den beslendiği için burada
+      // demands listesine yazmayız (uzman kendi teklifini havuzda 'myQuoteId' ile görür).
+      submitOffer: async (demandId, offer) => {
+        const token = get().token;
+        if (!token) return false;
+        try {
+          await api.submitQuote(token, demandId, offer);
           get().pushNotification({
             type: 'quote',
-            titleKey: 'notif.demand_closed',
-            bodyKey: 'notif.demand_closed_b',
-            params: { others },
+            titleKey: 'notif.offer_sent',
+            bodyKey: 'notif.offer_sent_b',
             dateLabel: 'Az önce',
-            icon: 'checkmark-done-outline',
+            icon: 'pricetag-outline',
           });
-        return bookingId;
-      },
-
-      // §5.2 uzman tarafı — açık talebe teklif ver (uzman/salon hesabı)
-      submitOffer: (demandId, offer) => {
-        const u = get().currentUser;
-        const proName = u?.name ?? 'Uzman';
-        set((s) => ({
-          demands: s.demands.map((d) =>
-            d.id === demandId
-              ? {
-                  ...d,
-                  offers: [
-                    {
-                      id: nextId('of'),
-                      proId: u?.id ?? 'me',
-                      proName,
-                      proImage: '',
-                      rating: 4.8,
-                      reviewCount: 0,
-                      distanceKm: 2,
-                      price: offer.price,
-                      etaMin: offer.etaMin,
-                      ...(offer.note ? { note: offer.note } : {}),
-                      slots: offer.slots,
-                    },
-                    ...d.offers,
-                  ],
-                }
-              : d,
-          ),
-        }));
-        get().pushNotification({
-          type: 'quote',
-          titleKey: 'notif.offer_sent',
-          bodyKey: 'notif.offer_sent_b',
-          dateLabel: 'Az önce',
-          icon: 'pricetag-outline',
-        });
+          return true;
+        } catch {
+          return false;
+        }
       },
 
       // §5.4 — bildirim grubunu aç/kapa

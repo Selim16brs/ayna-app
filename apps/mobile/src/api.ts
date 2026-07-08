@@ -3,6 +3,8 @@ import type {
   AdBanner,
   Appointment,
   Campaign,
+  DemandMode,
+  DemandRequest,
   LedgerEntry,
   Professional,
   ProfessionalDetail,
@@ -285,8 +287,6 @@ export const api = {
   professionals: () => get<Professional[]>('/professionals'),
   professional: (id: string) => get<ProfessionalDetail>(`/professionals/${id}`),
   quotes: () => get<ApiQuote[]>('/quotes'),
-  createQuoteRequest: (input: { categoryId: string; note?: string; photoUrl?: string }) =>
-    post<{ id: string; status: string }>('/quote-requests', input),
 
   // Randevular (yazma yolu) — id mobilde üretilir, API upsert ile idempotent
   bookings: () => get<Appointment[]>('/bookings'),
@@ -349,6 +349,30 @@ export const api = {
       { reason },
       token,
     ),
+
+  // §5.2 Faz A — reverse marketplace GERÇEK akış (talep→teklif→seçim buluttan)
+  createQuoteRequest: (
+    token: string,
+    input: {
+      category: string;
+      mode: DemandMode;
+      note?: string;
+      photoDataUrl?: string;
+      budget?: number;
+      collectMin: number;
+      serviceId?: string;
+    },
+  ) => post<DemandRequest>('/quote-requests', input, token),
+  openQuoteRequests: (token: string) =>
+    get<(DemandRequest & { myQuoteId: string | null })[]>('/quote-requests/open', token),
+  myQuoteRequests: (token: string) => get<DemandRequest[]>('/quote-requests/mine', token),
+  submitQuote: (
+    token: string,
+    requestId: string,
+    input: { price: number; etaMin: number; note?: string; slots: number[] },
+  ) => post<{ id: string; ok: boolean }>(`/quote-requests/${requestId}/quotes`, input, token),
+  selectQuote: (token: string, requestId: string, input: { quoteId: string; slotMs: number }) =>
+    post<{ bookingId: string; ok: boolean }>(`/quote-requests/${requestId}/select`, input, token),
 
   // Auth (parola tabanlı; telefon sunucuda şifreli saklanır)
   register: (input: RegisterInput) => post<AuthSession>('/auth/register', input),

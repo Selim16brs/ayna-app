@@ -27,42 +27,54 @@ export default function NewQuoteScreen() {
   const campaigns = useCampaigns();
   const createDemand = useStore((s) => s.createDemand);
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<{ uri: string; base64?: string } | null>(null);
   const [category, setCategory] = useState<string>('hair');
   const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
   const [submitting, setSubmitting] = useState(false);
 
-  function submit() {
+  async function submit() {
     // §12.3 — kısıtlı modda yeni talep engellenir
     if (restricted) {
       Alert.alert(t('restricted.title'), t('restricted.body'));
       return;
     }
+    if (submitting) return;
     setSubmitting(true);
-    // §5.2 Mod 1 — fotoğrafla teklif: talep aç, kategorideki uzmanlardan teklifler gelir
-    const id = createDemand({
-      mode: 'photo',
-      category,
-      collectMin,
-      ...(photo ? { photoUrl: photo } : {}),
-    });
-    // §5.2 — doğrudan sonuçlara DÜŞME; önce "talep uzmanlara gitti" onay ekranı.
-    router.replace(`/quote/sent?id=${id}`);
+    try {
+      // §5.2 Faz A — talep BULUTA açılır; şehirdeki uzmanlara gerçek push gider.
+      const id = await createDemand({
+        mode: 'photo',
+        category,
+        collectMin,
+        ...(photo?.base64 ? { photoDataUrl: `data:image/jpeg;base64,${photo.base64}` } : {}),
+      });
+      if (!id) {
+        Alert.alert(t('common.error'), t('quote.new.submit_err'));
+        return;
+      }
+      // §5.2 — doğrudan sonuçlara DÜŞME; önce "talep uzmanlara gitti" onay ekranı.
+      router.replace(`/quote/sent?id=${id}`);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function pickPhoto() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
+      quality: 0.4, // foto data URL olarak buluta gider — küçük tut
+      base64: true,
     });
-    if (!result.canceled && result.assets[0]) setPhoto(result.assets[0].uri);
+    if (!result.canceled && result.assets[0])
+      setPhoto({ uri: result.assets[0].uri, ...(result.assets[0].base64 ? { base64: result.assets[0].base64 } : {}) });
   }
 
   async function takePhoto() {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) return;
-    const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
-    if (!result.canceled && result.assets[0]) setPhoto(result.assets[0].uri);
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.4, base64: true });
+    if (!result.canceled && result.assets[0])
+      setPhoto({ uri: result.assets[0].uri, ...(result.assets[0].base64 ? { base64: result.assets[0].base64 } : {}) });
   }
 
   return (
@@ -99,7 +111,7 @@ export default function NewQuoteScreen() {
         {/* ── Yükleme kutusu ── */}
         <Pressable onPress={pickPhoto} style={[styles.uploadBox, !photo && shadow.soft]}>
           {photo ? (
-            <Image source={{ uri: photo }} style={styles.uploaded} />
+            <Image source={{ uri: photo.uri }} style={styles.uploaded} />
           ) : (
             <>
               <View style={styles.uploadIcon}>

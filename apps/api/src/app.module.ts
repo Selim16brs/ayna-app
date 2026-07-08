@@ -26,6 +26,7 @@ import { MessagingModule } from './messaging/messaging.module';
 import { SafetyModule } from './safety/safety.module';
 import { KycModule } from './kyc/kyc.module';
 import { PushModule } from './push/push.module';
+import { QuotesModule } from './quotes/quotes.module';
 import { ReferralModule } from './referral/referral.module';
 import { PaymentModule } from './payment/payment.module';
 
@@ -58,6 +59,7 @@ import { PaymentModule } from './payment/payment.module';
     SafetyModule,
     KycModule,
     PushModule,
+    QuotesModule,
     ReferralModule,
     PaymentModule,
   ],

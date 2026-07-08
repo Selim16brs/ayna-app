@@ -26,5 +26,7 @@ RUN pnpm --filter @ayna/api exec prisma generate \
 ENV NODE_ENV=production
 WORKDIR /app/apps/api
 
-# Başlangıçta: şemayı buluttaki boş DB'ye uygula (idempotent) → API'yi başlat.
-CMD ["sh", "-c", "pnpm exec prisma db push --skip-generate && node dist/main.js"]
+# Başlangıçta: şemayı buluttaki DB'ye uygula (idempotent) → API'yi başlat.
+# --accept-data-loss: unique-constraint gibi uyarılar non-interactive ortamda deploy'u
+# bloklamasın (test ortamı; migration'lı üretim akışı EPIC ilerleyince gelecek).
+CMD ["sh", "-c", "pnpm exec prisma db push --skip-generate --accept-data-loss && node dist/main.js"]

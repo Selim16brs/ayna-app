@@ -108,7 +108,9 @@ export class CatalogService {
       include: { professional: true },
       orderBy: { createdAt: 'asc' },
     });
-    return rows.map((q: Quote & { professional: Professional }) => ({
+    return rows
+      .filter((q): q is Quote & { professional: Professional } => q.professional !== null)
+      .map((q) => ({
       id: q.id,
       proId: q.professionalId,
       name: q.professional.name,

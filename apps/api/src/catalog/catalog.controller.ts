@@ -1,7 +1,5 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { type CreateQuoteRequestInput, createQuoteRequestSchema } from './catalog.dto';
 import { CatalogService } from './catalog.service';
 
 @ApiTags('catalog')
@@ -39,10 +37,6 @@ export class CatalogController {
     return this.catalog.quotes();
   }
 
-  @Post('quote-requests')
-  createQuoteRequest(
-    @Body(new ZodValidationPipe(createQuoteRequestSchema)) body: CreateQuoteRequestInput,
-  ) {
-    return this.catalog.createQuoteRequest(body);
-  }
+  // NOT: Eski girişsiz POST /quote-requests KALDIRILDI (Faz A) — gerçek akış
+  // quotes/quotes.controller.ts'te (JWT'li, şehir hedeflemeli, push bildirimli).
 }

@@ -42,7 +42,8 @@ export default function NewDemandScreen() {
   }>();
   const initialCat = CATEGORIES.some((c) => c.id === catParam) ? catParam! : CATEGORIES[0]!.id;
   const [desc, setDesc] = useState('');
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<{ uri: string; base64?: string }[]>([]);
+  const [submitting, setSubmitting] = useState(false);
   const [category, setCategory] = useState<string>(initialCat);
   const [serviceId, setServiceId] = useState<string | null>(
     typeof svcParam === 'string' ? svcParam : null,
@@ -56,9 +57,17 @@ export default function NewDemandScreen() {
   async function addPhoto() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
+      quality: 0.4, // foto data URL olarak buluta gider — küçük tut
+      base64: true,
     });
-    if (!result.canceled && result.assets[0]) setPhotos((p) => [...p, result.assets[0]!.uri]);
+    if (!result.canceled && result.assets[0])
+      setPhotos((p) => [
+        ...p,
+        {
+          uri: result.assets[0]!.uri,
+          ...(result.assets[0]!.base64 ? { base64: result.assets[0]!.base64 } : {}),
+        },
+      ]);
   }
 
   useEffect(() => {
@@ -77,25 +86,35 @@ export default function NewDemandScreen() {
   // §5.2 — bütçe taban fiyatın altındaysa teklif alınamaz (gönderim bloklanır)
   const canSubmit = desc.trim().length > 0 && budgetNum > 0 && !tooLow;
 
-  function submit() {
+  async function submit() {
     // §12.3 — kısıtlı modda yeni talep engellenir (ör. komisyon gecikmesi)
     if (restricted) {
       Alert.alert(t('restricted.title'), t('restricted.body'));
       return;
     }
-    // §5.2 Mod 2 — anlatarak teklif: talep aç, kategorideki uzmanlardan teklifler gelir
-    const id = createDemand({
-      mode: 'describe',
-      category,
-      note: desc.trim(),
-      budget: budgetNum,
-      collectMin,
-      ...(serviceId ? { serviceId } : {}),
-      ...(addressId ? { addressId } : {}),
-      ...(photos[0] ? { photoUrl: photos[0] } : {}),
-    });
-    // §5.2 — doğrudan sonuçlara DÜŞME; önce "talep uzmanlara gitti" onay ekranı.
-    router.replace(`/quote/sent?id=${id}`);
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      // §5.2 Faz A — talep BULUTA açılır; şehirdeki uzmanlara gerçek push gider.
+      const id = await createDemand({
+        mode: 'describe',
+        category,
+        note: desc.trim(),
+        budget: budgetNum,
+        collectMin,
+        ...(serviceId ? { serviceId } : {}),
+        ...(addressId ? { addressId } : {}),
+        ...(photos[0]?.base64 ? { photoDataUrl: `data:image/jpeg;base64,${photos[0].base64}` } : {}),
+      });
+      if (!id) {
+        Alert.alert(t('common.error'), t('quote.new.submit_err'));
+        return;
+      }
+      // §5.2 — doğrudan sonuçlara DÜŞME; önce "talep uzmanlara gitti" onay ekranı.
+      router.replace(`/quote/sent?id=${id}`);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -325,8 +344,8 @@ export default function NewDemandScreen() {
                 {t('demand.new.photo_add')}
               </Text>
             </Pressable>
-            {photos.map((uri, i) => (
-              <Image key={`${uri}-${i}`} source={{ uri }} style={styles.photoThumb} />
+            {photos.map((p, i) => (
+              <Image key={`${p.uri}-${i}`} source={{ uri: p.uri }} style={styles.photoThumb} />
             ))}
           </ScrollView>
           <View style={styles.privacyRow}>

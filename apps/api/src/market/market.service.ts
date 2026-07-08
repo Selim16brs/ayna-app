@@ -14,7 +14,9 @@ export class MarketService {
     const quotes = await this.prisma.quote.findMany({ include: { professional: true } });
     const matching = quotes.filter(
       (q) =>
-        q.professional.sector === category && (!city || q.professional.district.startsWith(city)),
+        q.professional != null &&
+        q.professional.sector === category &&
+        (!city || q.professional.district.startsWith(city)),
     );
 
     let average: number;

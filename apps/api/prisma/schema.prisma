@@ -250,24 +250,42 @@ model QuoteRequest {
   status     QuoteRequestStatus @default(open)
   createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
 
+  // §5.2 Faz A — reverse marketplace gerçek akış alanları
+  mode       String    @default("photo") // photo | describe
+  city       String    @default("") // §9.3 — teklif hakkı aynı şehirdeki uzmanlarda
+  budget     Decimal?  @db.Decimal(12, 2)
+  collectMin Int       @default(180) @map("collect_min")
+  expiresAt  DateTime? @map("expires_at") @db.Timestamptz(6)
+  serviceId       String? @map("service_id") // taksonomi alt hizmet (opsiyonel)
+  bookingId       String? @map("booking_id") // seçim sonrası oluşan randevu
+  selectedQuoteId String? @map("selected_quote_id") // kazanan teklif
+
   category ServiceCategory @relation(fields: [categoryId], references: [id])
   quotes   Quote[]
 
   @@index([categoryId])
+  @@index([city, status])
   @@map("quote_requests")
 }
 
 model Quote {
   id             String   @id @default(uuid()) @db.Uuid
   requestId      String?  @map("request_id") @db.Uuid
-  professionalId String   @map("professional_id") @db.Uuid
+  // Keşif kataloğu bağı (bağımsız uzmanlarda dolu; profil/puan gösterimi için)
+  professionalId String?  @map("professional_id") @db.Uuid
+  // §5.2 Faz A — teklifi veren uzmanın HESABI (bildirim + mükerrer teklif önleme)
+  userId         String?  @map("user_id") @db.Uuid
   price          Decimal  @db.Decimal(12, 2)
   etaMin         Int      @map("eta_min")
+  note           String?
+  // Uzmanın önerdiği müsait başlangıçlar (UTC ms listesi, JSON)
+  slotsJson      String   @default("[]") @map("slots_json")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  professional Professional  @relation(fields: [professionalId], references: [id])
+  professional Professional? @relation(fields: [professionalId], references: [id])
   request      QuoteRequest? @relation(fields: [requestId], references: [id])
 
+  @@unique([requestId, userId]) // uzman başına 1 teklif
   @@index([requestId])
   @@map("quotes")
 }

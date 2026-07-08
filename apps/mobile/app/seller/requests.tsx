@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { hasConflict } from '@ayna/domain';
+import { api } from '../../src/api';
 import { CATEGORIES, type DemandRequest, formatPrice } from '../../src/data';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
@@ -26,11 +27,27 @@ export default function SellerRequestsScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const demands = useStore((s) => s.demands);
   const bookings = useStore((s) => s.bookings);
   const submitOffer = useStore((s) => s.submitOffer);
-  // §9.3 — yalnızca uzmanın ŞEHRİNDEKİ açık talepler.
-  const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
+  const token = useStore((s) => s.token);
+  // §5.2 Faz A — açık talepler BULUTTAN (sunucu şehir filtresini uygular §9.3).
+  // Uzmanın kendi teklifi 'myQuoteId' ile işaretli gelir.
+  const [pool, setPool] = useState<(DemandRequest & { myQuoteId: string | null })[]>([]);
+  const refreshPool = useCallback(async () => {
+    if (!token) return;
+    try {
+      setPool(await api.openQuoteRequests(token));
+    } catch {
+      // çevrimdışı: eldeki liste korunur
+    }
+  }, [token]);
+  useFocusEffect(
+    useCallback(() => {
+      void refreshPool();
+      const timer = setInterval(() => void refreshPool(), 20_000);
+      return () => clearInterval(timer);
+    }, [refreshPool]),
+  );
   // §11 — açık taleplere YANIT VERMEK premium'a özel; premium olmayan görür ama teklif veremez.
   const premium = useStore((s) => s.premium);
   // §11 — kayıttan itibaren 3 gün ÜCRETSİZ deneme: bu sürede premium gibi tam erişim.
@@ -48,11 +65,8 @@ export default function SellerRequestsScreen() {
     ]);
 
   const open = useMemo(
-    () =>
-      demands
-        .filter((d) => d.status === 'collecting' && d.city === city)
-        .sort((a, b) => a.expiresAt - b.expiresAt),
-    [demands, city],
+    () => pool.filter((d) => d.status === 'collecting').sort((a, b) => a.expiresAt - b.expiresAt),
+    [pool],
   );
 
   const [form, setForm] = useState<{ id: string } | null>(null);
@@ -89,20 +103,23 @@ export default function SellerRequestsScreen() {
     setForm({ id });
   }
 
-  function send() {
+  async function send() {
     if (!form) return;
     if (!canAccess) {
       setForm(null);
       upsell();
       return;
     }
-    submitOffer(form.id, {
+    // §5.2 Faz A — teklif BULUTA gider; talep sahibine gerçek push düşer.
+    const ok = await submitOffer(form.id, {
       price: Number(price) || 0,
       etaMin: Number(eta) || 60,
       ...(note.trim() ? { note: note.trim() } : {}),
       slots: [...picked].sort((a, b) => a - b),
     });
     setForm(null);
+    if (ok) void refreshPool();
+    else Alert.alert(t('common.error'), t('offer.form.send_err'));
   }
 
   const canSend = Number(price) > 0 && Number(eta) > 0 && picked.length > 0;
@@ -183,6 +200,7 @@ export default function SellerRequestsScreen() {
                   key={d.id}
                   demand={d}
                   locked={!canAccess}
+                  offered={!!d.myQuoteId}
                   onGive={() => (canAccess ? openForm(d.id) : upsell())}
                 />
               ))
@@ -293,10 +311,12 @@ function RequestCard({
   demand,
   onGive,
   locked,
+  offered,
 }: {
   demand: DemandRequest;
   onGive: () => void;
   locked?: boolean;
+  offered?: boolean; // §5.2 Faz A — bu talebe teklifim var (buton "güncelle" olur)
 }) {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
@@ -381,8 +401,14 @@ function RequestCard({
       )}
 
       <Button
-        label={locked ? t('requests.give_premium') : t('seller.requests.give')}
-        variant={locked ? 'secondary' : 'primary'}
+        label={
+          locked
+            ? t('requests.give_premium')
+            : offered
+              ? t('seller.requests.offered')
+              : t('seller.requests.give')
+        }
+        variant={locked || offered ? 'secondary' : 'primary'}
         onPress={onGive}
       />
     </View>

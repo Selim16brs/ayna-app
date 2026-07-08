@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { type DemandOffer, type OfferSort, formatPrice, sortOffers } from '../../src/data';
 import { slotTime, formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
@@ -25,17 +25,35 @@ export default function QuoteResultsScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const demand = useStore((s) => s.demands.find((d) => d.id === id));
   const selectOffer = useStore((s) => s.selectOffer);
+  const hydrateDemands = useStore((s) => s.hydrateDemands);
   const [sort, setSort] = useState<OfferSort>('recommended');
+  const [picking, setPicking] = useState(false);
+
+  // §5.2 Faz A — teklifler BULUTTAN gelir: ekran odaklıyken 15 sn'de bir tazele
+  // (uzman teklif verdikçe liste kendiliğinden dolar).
+  useFocusEffect(
+    useCallback(() => {
+      void hydrateDemands();
+      const timer = setInterval(() => void hydrateDemands(), 15_000);
+      return () => clearInterval(timer);
+    }, [hydrateDemands]),
+  );
 
   const offers = useMemo(() => (demand ? sortOffers(demand.offers, sort) : []), [demand, sort]);
 
   const remainMin = demand ? Math.max(0, Math.round((demand.expiresAt - Date.now()) / 60_000)) : 0;
   const collecting = demand?.status === 'collecting';
 
-  function pick(offer: DemandOffer, slotMs: number) {
-    if (!demand) return;
-    const bookingId = selectOffer(demand.id, offer.id, slotMs);
-    if (bookingId) router.replace(`/booking/${bookingId}`);
+  async function pick(offer: DemandOffer, slotMs: number) {
+    if (!demand || picking) return;
+    setPicking(true);
+    try {
+      const bookingId = await selectOffer(demand.id, offer.id, slotMs);
+      if (bookingId) router.replace(`/booking/${bookingId}`);
+      else Alert.alert(t('common.error'), t('quotes.pick_err'));
+    } finally {
+      setPicking(false);
+    }
   }
 
   if (!demand) {
