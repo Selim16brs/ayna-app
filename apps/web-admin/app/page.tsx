@@ -3346,9 +3346,10 @@ function QuotesView() {
   const { data } = useAsync<QuoteReq[]>(() => api.quoteRequests(), []);
   return (
     <>
-      <h1 className="page-title">Teklifler</h1>
+      <h1 className="page-title">Canlı Talepler</h1>
       <p className="page-sub">
-        Foto teklif / talep istekleri ve gelen teklifler ({data?.length ?? 0})
+        §12.4 — talep akışı: kim açtı, şehir, bütçe, gelen teklifler, randevuya dönüşüm (
+        {data?.length ?? 0})
       </p>
       <div className="card">
         {!data ? (
@@ -3362,15 +3363,20 @@ function QuotesView() {
                 <div className="name">
                   {q.category}
                   {q.hasPhoto ? ' · 📷' : ''}
+                  {q.mode === 'describe' ? ' · ✍️' : ''}
                 </div>
-                <div className="meta">{q.note || 'Not yok'}</div>
+                <div className="meta">
+                  {q.userName} · {q.city || '—'}
+                  {q.budget != null ? ` · bütçe ${TL(q.budget)}` : ''} ·{' '}
+                  {q.note ? q.note.slice(0, 60) : 'Not yok'}
+                </div>
               </div>
               <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>
                 {q.quoteCount} teklif
               </span>
               {q.bestPrice != null ? <div className="kv-v">min {TL(q.bestPrice)}</div> : null}
               <span className={`pill ${q.status === 'open' ? 'pending' : 'approved'}`}>
-                {q.status === 'open' ? 'Açık' : 'Kapalı'}
+                {q.bookingId ? '✓ Randevu' : q.status === 'open' ? 'Açık' : 'Kapalı'}
               </span>
             </div>
           ))

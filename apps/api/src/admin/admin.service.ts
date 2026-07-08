@@ -645,12 +645,27 @@ export class AdminService {
       take: 200,
       include: { category: true, quotes: true },
     });
+    // §12.4 — talep sahibi adları (canlı akışta kim açtı görünür)
+    const userIds = [...new Set(rows.map((r) => r.userId).filter((x): x is string => !!x))];
+    const users = userIds.length
+      ? await this.prisma.user.findMany({
+          where: { id: { in: userIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const names = new Map(users.map((u) => [u.id, u.name]));
     return rows.map((q) => ({
       id: q.id,
       category: q.category?.nameTr ?? '—',
+      userName: q.userId ? (names.get(q.userId) ?? '—') : '—',
+      city: q.city,
+      mode: q.mode,
+      budget: q.budget != null ? Number(q.budget) : null,
       note: q.note ?? '',
       hasPhoto: !!q.photoUrl,
       status: q.status,
+      expiresAt: q.expiresAt,
+      bookingId: q.bookingId,
       quoteCount: q.quotes.length,
       bestPrice: q.quotes.length ? Math.min(...q.quotes.map((x) => Number(x.price))) : null,
       createdAt: q.createdAt,

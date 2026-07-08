@@ -580,9 +580,15 @@ export interface AdminBooking {
 export interface QuoteReq {
   id: string;
   category: string;
+  userName: string;
+  city: string;
+  mode: string;
+  budget: number | null;
   note: string;
   hasPhoto: boolean;
   status: string;
+  expiresAt: string | null;
+  bookingId: string | null;
   quoteCount: number;
   bestPrice: number | null;
   createdAt: string;
