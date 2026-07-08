@@ -3,6 +3,7 @@ import { type Booking, BookingStatus } from '@prisma/client';
 import { hasConflict } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { commissionFor } from '../commissions/commissions.calc';
+import { cancelOutcome } from './bookings.policy';
 import type { CreateBookingInput } from './bookings.dto';
 
 // §4.2 — slot işgal eden durumlar (yalnız ONAY SONRASI; awaiting_provider hariç —
@@ -72,9 +73,17 @@ export class BookingsService {
     return mapBooking(row);
   }
 
-  // §6.C — iptal (opsiyonel "neden gelemiyorum" sebebiyle)
+  // §6.C/§4.4 — iptal. Kapora yakma/iade kararını SUNUCU verir (client'a güvenilmez):
+  // geç iptal (<3sa, kapora ödenmiş) → kapora yanar; serbest iptal → uzman iade eder.
   async cancel(id: string, reason?: string) {
-    return this.transition(id, { status: 'cancelled', cancelReason: reason ?? null });
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    const outcome = cancelOutcome(b.status, b.startAt?.getTime() ?? null, Date.now());
+    return this.transition(id, {
+      status: outcome.status,
+      cancelReason: reason ?? null,
+      ...(outcome.forfeit ? { depositForfeited: true } : {}),
+    });
   }
 
   // §6.C — uzman/işletme randevuyu "gelmedi" işaretler (CRM tarafı)
@@ -152,9 +161,17 @@ export class BookingsService {
     return this.transition(id, { status: 'confirmed' });
   }
 
-  // §4.4 — kullanıcı serbest iptal başlatır → uzman iade edecek (refund_pending)
+  // §4.4 — kullanıcı serbest iptal başlatır. SUNUCU pencereyi doğrular: client geç
+  // iptali "serbest" diye göndermeye çalışsa bile <3sa ise kapora yakılır.
   async freeCancel(id: string, reason?: string) {
-    return this.transition(id, { status: 'refund_pending', cancelReason: reason ?? null });
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    const outcome = cancelOutcome(b.status, b.startAt?.getTime() ?? null, Date.now());
+    return this.transition(id, {
+      status: outcome.status,
+      cancelReason: reason ?? null,
+      ...(outcome.forfeit ? { depositForfeited: true } : {}),
+    });
   }
 
   // §4.4 — uzman iade dekontunu yükler → kullanıcı onayı bekler
@@ -162,9 +179,24 @@ export class BookingsService {
     return this.transition(id, { status: 'refund_submitted', refundReceiptUri: receiptUri });
   }
 
-  // §4.4 — kullanıcı iadeyi aldı → kayıt kapanır
+  // §4.4 — kullanıcı iadeyi aldı → kayıt kapanır. Uzman no-show iade yükümlülüğü
+  // yerine geldiyse kısıtlı mod kalkar (yalnız bu sebeple konmuşsa).
   async confirmRefund(id: string) {
-    return this.transition(id, { status: 'cancelled' });
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    const res = await this.transition(id, { status: 'cancelled' });
+    if (b?.providerNoShow && b.proId) {
+      const biz = await this.prisma.business.findFirst({
+        where: { professionalId: b.proId },
+        select: { ownerUserId: true },
+      });
+      if (biz?.ownerUserId) {
+        await this.prisma.user.updateMany({
+          where: { id: biz.ownerUserId, restrictReason: 'provider_noshow_refund' },
+          data: { restrictedAt: null, restrictReason: null },
+        });
+      }
+    }
+    return res;
   }
 
   // §4.4 — taraflar itiraz açar → admin anlaşmazlık kuyruğu
@@ -202,6 +234,14 @@ export class BookingsService {
           status: 'pending',
         },
       });
+      // §4.4 — ceza doğduğu an uzman hesabı KISITLI MODA düşer (7 gün sayacı; iade
+      // yükümlülüğü yerine gelene / süre dolana dek yeni talep alamaz). Salon sahibi User'ı.
+      if (biz?.ownerUserId) {
+        await this.prisma.user.update({
+          where: { id: biz.ownerUserId },
+          data: { restrictedAt: now, restrictReason: 'provider_noshow_refund' },
+        });
+      }
     }
     return mapBooking(updated);
   }
