@@ -98,7 +98,7 @@ export class CatalogService {
       staff,
       serviceRatings,
       services,
-      portfolio: PORTFOLIO.map(portfolioImg),
+      portfolio: [], // demo portfolyo YOK — uzman kendi yükleyecek (Faz: medya)
       reviews,
     };
   }

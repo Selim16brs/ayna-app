@@ -12,7 +12,6 @@ import {
   type DemandMode,
   type DemandRequest,
   type Promotion,
-  SEED_PROMOTIONS,
   DEPOSIT_KZT,
   POINTS_SPEND_CAP_PCT,
   PREMIUM_PRICE_KZT,
@@ -23,14 +22,12 @@ import {
   REMIND_24H_MS,
   REMIND_2H_MS,
   RESPONSE_WINDOW_MS,
-  SEED_DEMANDS,
   buildUpcomingEvents,
   type CareRoutine,
   type CirclePost,
   type CirclePostType,
   type LedgerEntry,
   type LifeArticle,
-  LIFE_ARTICLES,
   type Moment,
   type PersonalLog,
   type PersonalTone,
@@ -38,17 +35,9 @@ import {
   type Review,
   type Reward,
   RAFFLE_COST,
-  SEED_APPOINTMENTS,
-  SEED_CARE_ROUTINES,
-  SEED_CIRCLE_POSTS,
-  SEED_LEDGER,
-  SEED_MOMENTS,
-  SEED_NOTIFICATIONS,
   NOTIFICATION_TTL_MS,
-  SEED_PERSONAL_LOGS,
   SELLER_PAST_CLIENTS,
   type AlwaysBond,
-  SEED_ALWAYS_BONDS,
   COMMISSION_PCT_STANDARD,
   COMMISSION_PCT_PLATINUM,
   reengageMessage,
@@ -409,16 +398,16 @@ const SEEDED_PERSONAL_RESET: Partial<State> = {
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
-      bookings: SEED_APPOINTMENTS,
-      demands: SEED_DEMANDS,
-      promotions: SEED_PROMOTIONS,
+      bookings: [],
+      demands: [],
+      promotions: [],
       recentSearches: [],
       notifPrefs: { care: true, moment: true, personal: true, booking: true },
       demandNotif: { cats: [], from: 8, to: 22 },
       closedDays: [],
-      circlePosts: SEED_CIRCLE_POSTS,
+      circlePosts: [],
       reportedPosts: [],
-      articles: LIFE_ARTICLES,
+      articles: [],
       weeklyTheme: null,
       config: {
         rates: {
@@ -443,7 +432,7 @@ export const useStore = create<State>()(
           ]);
           set({
             // Backend'de yayınlanmış yazı yoksa seed'i koru (app boş kalmasın)
-            articles: rows.length > 0 ? rows : LIFE_ARTICLES,
+            articles: rows,
             weeklyTheme: theme ? { id: theme.id, title: theme.title, prompt: theme.prompt } : null,
             config: cfg,
           });
@@ -520,10 +509,10 @@ export const useStore = create<State>()(
           // Duyuru çekilemezse sessizce geç
         }
       },
-      careRoutines: SEED_CARE_ROUTINES,
-      personalLogs: SEED_PERSONAL_LOGS,
-      moments: SEED_MOMENTS,
-      favorites: ['3'],
+      careRoutines: [],
+      personalLogs: [],
+      moments: [],
+      favorites: [],
       following: ['Dana'],
       followerNames: [
         'Aizhan',
@@ -535,28 +524,27 @@ export const useStore = create<State>()(
         'Aruzhan',
         'Nazerke',
       ],
-      addresses: [{ id: 'ad1', label: 'home', detail: 'Almatı, Dostyk 12' }],
+      addresses: [],
       premium: false,
       platinum: false,
       reengagedIds: [],
       autoReengageEnabled: true,
-      alwaysBonds: SEED_ALWAYS_BONDS,
-      points: 340,
-      raffleEntries: 5,
+      alwaysBonds: [],
+      points: 0,
+      raffleEntries: 0,
       firstBookingBonusGiven: false,
       w2wLikeMonth: '',
       w2wLikePoints: 0,
       tier: null,
-      ledger: SEED_LEDGER,
+      ledger: [],
       userReviews: {},
       reviewAnonymous: true,
-      notifications: SEED_NOTIFICATIONS,
+      notifications: [],
       token: null,
       currentUser: null,
       sellerTrialStart: null,
       // Mevcut profilde başlangıç fotoğrafı (kullanıcı değiştirebilir/kaldırabilir)
-      avatarUri:
-        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=240&h=240&fit=crop&crop=faces&q=80',
+      avatarUri: null,
       setAvatar: (uri) => set({ avatarUri: uri }),
       cutoutUri: null,
       setCutout: (uri) => set({ cutoutUri: uri }),
@@ -1143,7 +1131,7 @@ export const useStore = create<State>()(
           set((s) => ({
             // Sunucudakiler esas; yerelde kalan (tohum/uzman-havuzu) kayıtlar kullanıcının
             // Taleplerim'ine karışmasın diye yalnız 'seeded' olanlar korunur.
-            demands: [...remote, ...s.demands.filter((d) => d.seeded && !remoteIds.has(d.id))],
+            demands: remote,
           }));
         } catch {
           // çevrimdışı: eldeki liste korunur
@@ -1556,14 +1544,10 @@ export const useStore = create<State>()(
         try {
           const remote = await api.myBookings(token);
           const remoteIds = new Set(remote.map((b) => b.id));
-          const seedIds = new Set(SEED_APPOINTMENTS.map((b) => b.id));
           // Giriş YAPILDI → hesabın GERÇEK randevuları esas; mock tohumu AT (yeni hesap sıfır görünsün).
           // Yerelde oluşturulan (tohum olmayan) senkronlanmamış kayıtlar korunur.
           set((s) => ({
-            bookings: [
-              ...remote,
-              ...s.bookings.filter((b) => !remoteIds.has(b.id) && !seedIds.has(b.id)),
-            ],
+            bookings: [...remote, ...s.bookings.filter((b) => !remoteIds.has(b.id))],
           }));
         } catch {
           // API erişilemez → mevcut veriler korunur (offline-first)

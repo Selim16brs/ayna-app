@@ -19,7 +19,7 @@ export default function ConfirmedScreen() {
     slot?: string;
     uzmanName?: string;
   }>();
-  const pro = useProfessionalDetail(params.proId ?? '1');
+  const pro = useProfessionalDetail(params.proId ?? '');
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   const price = pro.services[0]?.price ?? Number(pro.priceFrom);
 

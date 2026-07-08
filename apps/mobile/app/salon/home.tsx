@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SEED_SUPPLIER_ADS, type SupplierAd } from '../../src/data';
+import { type SupplierAd } from '../../src/data';
 import { useSalonStaff } from '../../src/staff';
 import { greetingKey } from '../../src/greeting';
 import { useLocale } from '../../src/locale';
@@ -30,7 +30,7 @@ export default function SalonHomeScreen() {
   // Faz C — GERÇEK kadro (davet koduyla bağlı uzmanlar); mock Madina/Aigerim yok.
   const { staff } = useSalonStaff();
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
-  const ads = SEED_SUPPLIER_ADS.filter((a) => !a.city || a.city === city);
+  const ads: SupplierAd[] = []; // demo tedarikçi reklamı YOK (admin ucu bağlanınca gerçek veri)
 
   // §10.1 — salon kapak fotoğrafı: uzman profil fotosuyla AYNI yerden (avatar) düzenlenebilir
   const editCover = async () => {

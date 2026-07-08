@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
-import { PROFESSIONALS } from '../../src/data';
+import { useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -34,7 +34,8 @@ export default function ReviewNewScreen() {
 
   // §7.1 — salon randevusu ise iki adım (önce uzman, sonra salon); bireyselse tek adım.
   // Uzman adımı ancak uzman adı biliniyorsa açılır; yoksa salon adı "Uzman" gibi görünmesin.
-  const pro = PROFESSIONALS.find((p) => p.id === booking?.proId);
+  const pros = useProfessionals();
+  const pro = pros.find((p) => p.id === booking?.proId);
   const isSalon = pro?.kind === 'salon' && !!booking?.uzmanName;
 
   const [step, setStep] = useState<'uzman' | 'salon'>('uzman');

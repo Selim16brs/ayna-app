@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
 import { Image, Linking, ScrollView, StyleSheet, View } from 'react-native';
-import { SEED_SUPPLIER_ADS } from '../../src/data';
+
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -14,7 +14,7 @@ export default function SupplierAdScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
-  const ad = SEED_SUPPLIER_ADS.find((a) => a.id === id);
+  const ad = undefined as import('../../src/data').SupplierAd | undefined; // demo reklam kaldırıldı — boş-durum
 
   if (!ad) {
     return (

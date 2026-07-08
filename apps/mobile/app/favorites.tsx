@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { PROFESSIONALS } from '../src/data';
+import { useProfessionals } from '../src/catalog';
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, space } from '../src/theme';
@@ -10,6 +10,7 @@ import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
 import { ProRow } from './search';
 
 export default function FavoritesScreen() {
+  const pros = useProfessionals();
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -18,7 +19,7 @@ export default function FavoritesScreen() {
   const toggleFavorite = useStore((s) => s.toggleFavorite);
 
   const favs = favIds
-    .map((id) => PROFESSIONALS.find((p) => p.id === id))
+    .map((id) => pros.find((p) => p.id === id))
     .filter((p): p is NonNullable<typeof p> => p !== undefined);
 
   return (

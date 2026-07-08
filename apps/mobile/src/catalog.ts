@@ -1,16 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
 import { useStore } from './store';
-import {
-  type AdBanner,
-  ADS,
-  type Campaign,
-  CAMPAIGNS,
-  getProfessionalDetail,
-  type Professional,
-  type ProfessionalDetail,
-  PROFESSIONALS,
-} from './data';
+import { type AdBanner, type Campaign, type Professional, type ProfessionalDetail } from './data';
 
 /**
  * İşletme kataloğu backend'den; API erişilemezse yerel veriye düşer (offline-first).
@@ -23,11 +14,10 @@ export function useProfessionals(): Professional[] {
     retry: 1,
     staleTime: 60_000,
   });
-  const token = useStore((s) => s.token);
   const city = useStore((s) => s.currentUser?.city);
   // Faz B — SUNUCU CEVAP VERDİYSE o liste ESASTIR (boşsa boş: gerçek boş-durum görünür).
   // Yerel mock kataloğa yalnız girişsiz demo + sunucuya ulaşılamadığında düşülür.
-  const base = data ?? (token ? [] : PROFESSIONALS);
+  const base = data ?? []; // sunucu tek kaynak — demo katalog YOK
   if (!city) return base;
   return base.filter((p) => !p.city || p.city === city);
 }
@@ -40,7 +30,7 @@ export function useCampaigns(): Campaign[] {
     retry: 1,
     staleTime: 60_000,
   });
-  return data && data.length > 0 ? data : CAMPAIGNS;
+  return data ?? []; // demo kampanya YOK — yalnız admin içeriği
 }
 
 // Reklam banner'ları (admin yönetimli); API erişilemezse yerel yedeğe düşer
@@ -51,8 +41,37 @@ export function useAds(): AdBanner[] {
     retry: 1,
     staleTime: 60_000,
   });
-  return data && data.length > 0 ? data : ADS;
+  return data ?? []; // demo reklam YOK — yalnız admin içeriği
 }
+
+// Yükleme/bulunamama durumunda SAHTE kişilik yerine boş iskelet döner (ekranlar kırılmaz)
+const EMPTY_DETAIL: ProfessionalDetail = {
+  id: '',
+  name: '',
+  specialty: '',
+  sector: '',
+  kind: 'independent',
+  rating: 0,
+  reviewCount: 0,
+  priceFrom: 0,
+  priceTo: 0,
+  image: '',
+  badge: 'verified', // iskelet hiç kart olarak çizilmez; alan zorunlu
+  city: '',
+  district: '',
+  experienceYears: 0,
+  isPremium: false,
+  staff: [],
+  about: '',
+  serviceRatings: [],
+  services: [],
+  portfolio: [],
+  reviews: [],
+  starDist: [0, 0, 0, 0, 0],
+  breakdown: [],
+  certs: [],
+  social: { instagram: '', tiktok: '' },
+};
 
 export function useProfessionalDetail(id: string): ProfessionalDetail {
   const { data } = useQuery({
@@ -61,5 +80,5 @@ export function useProfessionalDetail(id: string): ProfessionalDetail {
     retry: 1,
     staleTime: 60_000,
   });
-  return data ?? getProfessionalDetail(id);
+  return data ?? EMPTY_DETAIL; // demo profil YOK — sunucu tek kaynak
 }

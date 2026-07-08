@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { PROFESSIONALS } from '../../src/data';
+import { useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -9,6 +9,7 @@ import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 // Profil > Değerlendirme sayısına tıklayınca: kullanıcının yazdığı tüm yorumlar
 export default function MyReviewsScreen() {
+  const pros = useProfessionals();
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -17,7 +18,7 @@ export default function MyReviewsScreen() {
   const items = Object.entries(userReviews).flatMap(([proId, list]) =>
     list.map((r) => ({
       ...r,
-      proName: PROFESSIONALS.find((p) => p.id === proId)?.name ?? proId,
+      proName: pros.find((p) => p.id === proId)?.name ?? proId,
     })),
   );
 

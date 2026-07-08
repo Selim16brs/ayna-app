@@ -8,7 +8,6 @@ import { api, type BookingStats } from '../../src/api';
 import {
   formatPrice,
   RESPONSE_WINDOW_MS,
-  SEED_SUPPLIER_ADS,
   type SellerMetric,
   type SupplierAd,
 } from '../../src/data';
@@ -66,7 +65,7 @@ export default function ReportsScreen() {
   const openDemands = useStore(
     (s) => s.demands.filter((d) => d.status === 'collecting' && d.city === city).length,
   );
-  const ads = SEED_SUPPLIER_ADS.filter((a) => !a.city || a.city === city);
+  const ads: SupplierAd[] = []; // demo tedarikçi reklamı YOK (admin ucu bağlanınca gerçek veri)
 
   // §9.2 — yanıt & kalite metrikleri (yerel randevulardan türer)
   const bookings = useStore((s) => s.bookings);
