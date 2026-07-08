@@ -73,6 +73,20 @@ type Tab =
   | 'audit';
 const TL = (n: number) => '₸' + n.toLocaleString('tr-TR');
 
+// §12 — her liste Excel'e aktarılabilir: CSV (UTF-8 BOM → Excel Türkçe uyumlu)
+function exportCsv(filename: string, rows: Record<string, unknown>[]) {
+  if (rows.length === 0) return;
+  const cols = Object.keys(rows[0]!);
+  const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const csv = [cols.join(';'), ...rows.map((r) => cols.map((c) => esc(r[c])).join(';'))].join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 type PendingCounts = {
   businesses: number;
   kyc: number;
@@ -241,7 +255,7 @@ export default function AdminApp() {
         </button>
       </aside>
       <main className="main">
-        {tab === 'overview' && <OverviewView />}
+        {tab === 'overview' && <OverviewView onGo={setTab} />}
         {tab === 'stats' && <StatsView />}
         {tab === 'commissions' && <CommissionsView />}
         {tab === 'subscriptions' && <SubscriptionsView />}
@@ -761,8 +775,19 @@ function SubscriptionsView() {
   );
 }
 
-function OverviewView() {
+function OverviewView({ onGo }: { onGo: (t: Tab) => void }) {
   const { data, loading, error, reload } = useAsync<Overview>(() => api.overview(), []);
+  // §12.1 — Bekleyen İşler: tıklanabilir kuyruk kartları (rozetlerin dashboard karşılığı)
+  const pend = (data as unknown as { pending?: Record<string, number> })?.pending;
+  const QUEUES: { key: string; label: string; tab: Tab }[] = [
+    { key: 'businesses', label: 'Salon Onayı', tab: 'businesses' },
+    { key: 'kyc', label: 'Kimlik (KYC)', tab: 'kyc' },
+    { key: 'profileChanges', label: 'Profil Değişikliği', tab: 'profileChanges' },
+    { key: 'subscriptions', label: 'Abonelik Dekontu', tab: 'subscriptions' },
+    { key: 'disputes', label: 'Depozito İtirazı', tab: 'disputes' },
+    { key: 'reviewDisputes', label: 'Yorum İtirazı', tab: 'reviewDisputes' },
+    { key: 'circle', label: 'W2W Moderasyon', tab: 'moderation' },
+  ];
   return (
     <>
       <h1 className="page-title">Genel Bakış</h1>
@@ -771,6 +796,30 @@ function OverviewView() {
         <Gate loading={loading} error={error} onRetry={reload} />
       ) : (
         <>
+          <div className="section-title">Bekleyen İşler</div>
+          <div className="stat-grid">
+            {QUEUES.map((qd) => {
+              const n = pend?.[qd.key] ?? 0;
+              return (
+                <button
+                  key={qd.key}
+                  onClick={() => onGo(qd.tab)}
+                  className="stat"
+                  style={{
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    border: n > 0 ? '1.5px solid #e5484d' : undefined,
+                  }}
+                >
+                  <div className="stat-v" style={{ color: n > 0 ? '#e5484d' : undefined }}>
+                    {n}
+                  </div>
+                  <div className="stat-l">{qd.label}</div>
+                </button>
+              );
+            })}
+          </div>
+          <div className="section-title">Platform</div>
           <div className="stat-grid">
             <Stat v={String(data.users)} l="Kullanıcı" />
             <Stat v={String(data.professionals)} l="İşletme / Uzman" />
@@ -1124,7 +1173,31 @@ function CommissionsView() {
 
   return (
     <>
-      <h1 className="page-title">Komisyon</h1>
+      <h1 className="page-title">
+        Komisyon{' '}
+        {data ? (
+          <button
+            className="btn-sm"
+            style={{ marginLeft: 8, verticalAlign: 'middle' }}
+            onClick={() =>
+              exportCsv(
+                'ayna-komisyon.csv',
+                data.salons.map((r) => ({
+                  uzman_salon: r.proName,
+                  randevu: r.count,
+                  ciro: r.gmv,
+                  komisyon: r.earned,
+                  bekleyen: r.pending,
+                  tahsil: r.collected,
+                  kalan: r.outstanding,
+                })),
+              )
+            }
+          >
+            ⬇ Excel
+          </button>
+        ) : null}
+      </h1>
       <p className="page-sub">
         App üzerinden alınan online randevulardan platform komisyonu (offline salon kayıtları hariç)
       </p>
@@ -2930,6 +3003,24 @@ function UsersView() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
+        <button
+          className="btn-sm"
+          onClick={() =>
+            exportCsv(
+              'ayna-uyeler.csv',
+              list.map((u) => ({
+                isim: u.name,
+                rol: u.role,
+                sehir: u.city ?? '',
+                eposta: u.email ?? '',
+                uyelik: u.membershipTier ?? 'free',
+                durum: u.status,
+              })),
+            )
+          }
+        >
+          ⬇ Excel
+        </button>
       </div>
       <div className="card">
         {list.length === 0 ? (
