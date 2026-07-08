@@ -195,6 +195,7 @@ export default function ExpertRegisterScreen() {
             ),
           )?.id ?? 'hair',
         ...(photoB64 ? { photoDataUrl: `data:image/jpeg;base64,${photoB64}` } : {}),
+        ...(birthDate ? { birthDateMs: birthDate.getTime() } : {}),
         ...(deviceFp ? { deviceFp } : {}),
       });
       void res;

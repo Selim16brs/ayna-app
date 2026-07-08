@@ -212,6 +212,7 @@ export interface ProfileChangeReq {
 
 export interface RegisterInput {
   photoDataUrl?: string;
+  birthDateMs?: number;
   name: string;
   phone: string;
   password: string;
@@ -256,6 +257,7 @@ export interface SearchableBusiness {
 
 export interface RegisterSpecialistInput {
   photoDataUrl?: string;
+  birthDateMs?: number;
   sector?: string;
   name: string;
   phone: string;
@@ -474,6 +476,10 @@ export const api = {
   me: (token: string) => get<AuthUser>('/auth/me', token),
   setAvatar: (token: string, photoDataUrl: string | null) =>
     post<AuthUser>('/auth/me/avatar', { photoDataUrl }, token),
+  sellerBirthdays: (token: string) =>
+    get<{ id: string; name: string }[]>('/specialists/me/birthdays', token),
+  celebrateBirthday: (token: string, userId: string) =>
+    post<{ ok: boolean }>(`/specialists/me/birthdays/${userId}/celebrate`, {}, token),
   setCutoutRemote: (token: string, cutoutDataUrl: string | null) =>
     post<AuthUser>('/auth/me/cutout', { cutoutDataUrl }, token),
   // §11 — üyelik aboneliği: talep oluştur, dekont yükle, güncel katmanı oku

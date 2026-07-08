@@ -18,12 +18,14 @@ import {
   signJwt,
 } from '../common/crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../push/push.service';
 import type { RegisterSpecialistInput } from './specialists.dto';
 
 @Injectable()
 export class SpecialistsService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly push: PushService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -82,6 +84,7 @@ export class SpecialistsService {
         name: input.name,
         role: 'professional',
         ...(input.photoDataUrl ? { avatarUrl: input.photoDataUrl } : {}),
+        ...(input.birthDateMs ? { birthDate: new Date(input.birthDateMs) } : {}),
         defaultLocale: 'tr',
         ...(input.email ? { email: input.email } : {}),
         ...(input.city ? { city: input.city } : {}),
@@ -206,6 +209,42 @@ export class SpecialistsService {
       this.env.JWT_ACCESS_SECRET,
       this.env.JWT_ACCESS_TTL,
     );
+  }
+
+  // §CRM — BUGÜN doğum günü olan MÜŞTERİLER (uzmana randevu bağı olan gerçek kişiler)
+  async birthdaysToday(expertUserId: string) {
+    const sp = await this.prisma.specialist.findUnique({ where: { userId: expertUserId } });
+    if (!sp?.proId) return [];
+    const bookings = await this.prisma.booking.findMany({
+      where: { proId: sp.proId, userId: { not: null } },
+      select: { userId: true },
+    });
+    const ids = [...new Set(bookings.map((b) => b.userId).filter((x): x is string => !!x))];
+    if (ids.length === 0) return [];
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: ids }, birthDate: { not: null } },
+      select: { id: true, name: true, birthDate: true },
+    });
+    const now = new Date(Date.now() + 5 * 60 * 60 * 1000); // Almatı günü
+    const m = now.getUTCMonth();
+    const d = now.getUTCDate();
+    return users
+      .filter((u) => u.birthDate!.getUTCMonth() === m && u.birthDate!.getUTCDate() === d)
+      .map((u) => ({ id: u.id, name: u.name }));
+  }
+
+  // §CRM — kutlama: müşteriye push doğum günü mesajı (uzman adına)
+  async celebrate(expertUserId: string, customerId: string) {
+    const expert = await this.prisma.user.findUnique({
+      where: { id: expertUserId },
+      select: { name: true },
+    });
+    void this.push.sendToUser(customerId, {
+      title: 'İyi ki doğdun! 🎂',
+      body: `${expert?.name ?? 'Uzmanın'} doğum gününü kutluyor — nice mutlu, güzel yıllara! ✨`,
+      data: { route: '/notifications' },
+    });
+    return { ok: true };
   }
 }
 

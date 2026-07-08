@@ -92,6 +92,7 @@ export default function CustomerRegisterScreen() {
         password,
         gender: 'unspecified',
         ...(photo?.base64 ? { photoDataUrl: `data:image/jpeg;base64,${photo.base64}` } : {}),
+        ...(birthDate ? { birthDateMs: birthDate.getTime() } : {}),
         ...(email.trim() ? { email: email.trim() } : {}),
         ...(city ? { city } : {}),
       });

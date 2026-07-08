@@ -38,6 +38,19 @@ export class SpecialistsController {
   }
 
   // §7 — uzmanın kendi işlerine yazılan yorumlar + tek yanıt hakkı
+  // §CRM — bugün doğum günü olan müşterilerim + kutlama gönder
+  @Get('me/birthdays')
+  @UseGuards(JwtAuthGuard)
+  birthdays(@Req() req: AuthedRequest) {
+    return this.specialists.birthdaysToday(req.user!.id);
+  }
+
+  @Post('me/birthdays/:userId/celebrate')
+  @UseGuards(JwtAuthGuard)
+  celebrate(@Req() req: AuthedRequest, @Param('userId') userId: string) {
+    return this.specialists.celebrate(req.user!.id, userId);
+  }
+
   @Get('me/reviews')
   @UseGuards(JwtAuthGuard)
   myReviews(@Req() req: AuthedRequest) {

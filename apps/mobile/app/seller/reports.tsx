@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, type BookingStats } from '../../src/api';
@@ -65,6 +65,8 @@ export default function ReportsScreen() {
   // §9.3 — Talepler rozeti: şehirdeki AÇIK talepler BULUTTAN sayılır (ekran odaklandıkça tazelenir)
   const token = useStore((s) => s.token);
   const [openDemands, setOpenDemands] = useState(0);
+  // §CRM — bugün doğum günü olan müşterilerim (tıkla → kutlama push'u)
+  const [bdays, setBdays] = useState<{ id: string; name: string }[]>([]);
   useFocusEffect(
     useCallback(() => {
       if (!token) return;
@@ -337,6 +339,45 @@ export default function ReportsScreen() {
               </Text>
             </View>
           </View>
+
+          {/* §CRM — Bugün doğum günü 🎂: müşterine tek dokunuşla kutlama gönder */}
+          {bdays.length > 0 ? (
+            <View style={[styles.group, { padding: space(2), gap: space(1) }]}>
+              <Text variant="label" tone="accentFg">
+                {t('bday.section')}
+              </Text>
+              {bdays.map((u) => (
+                <PressableScale
+                  key={u.id}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: space(1) }}
+                  onPress={() =>
+                    Alert.alert('🎂 ' + u.name, t('bday.send_q'), [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      {
+                        text: t('bday.send'),
+                        onPress: async () => {
+                          const token = useStore.getState().token;
+                          if (!token) return;
+                          try {
+                            await api.celebrateBirthday(token, u.id);
+                            Alert.alert(t('bday.sent'));
+                          } catch {
+                            Alert.alert(t('common.error'));
+                          }
+                        },
+                      },
+                    ])
+                  }
+                >
+                  <Text style={{ fontSize: 22 }}>🎂</Text>
+                  <Text variant="bodyStrong" tone="ink" style={{ flex: 1 }}>
+                    {u.name}
+                  </Text>
+                  <Ionicons name="paper-plane-outline" size={18} color={colors.accentFg} />
+                </PressableScale>
+              ))}
+            </View>
+          ) : null}
 
           {/* Tedarikçi reklamları — sektör malzemeleri (admin panelinden hedeflenir) */}
           {ads.length > 0 ? (

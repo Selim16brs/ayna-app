@@ -1404,6 +1404,11 @@ export const tr = {
     'Onaylarsan 1.000 puan telafi hesabına eklenir ve depozito iaden başlatılır.',
   'booking.dispute.done': 'İtirazın destek ekibine iletildi.',
   // §4.3 — depozito/dekont akışı (kullanıcı)
+  'bday.section': 'Bugün doğum günü 🎂',
+  'bday.send_q':
+    'Doğum günü kutlaması gönderilsin mi? Müşterine senin adına tatlı bir bildirim gider.',
+  'bday.send': 'Kutlama gönder 🎉',
+  'bday.sent': 'Kutlaman gönderildi 🎂✨',
   'booking.deposit.kaspi': 'Kaspi ile depozito öde',
   'booking.deposit.remaining': 'Kalan (hizmet sonrası yerinde ödenir)',
   'survey.title': 'Deneyimin nasıldı? ⭐',

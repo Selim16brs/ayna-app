@@ -61,6 +61,7 @@ export class AuthService {
         gender: input.gender ?? 'unspecified',
         ...(input.email ? { email: input.email } : {}),
         ...(input.photoDataUrl ? { avatarUrl: input.photoDataUrl } : {}),
+        ...(input.birthDateMs ? { birthDate: new Date(input.birthDateMs) } : {}),
         ...(input.city ? { city: input.city } : {}),
       },
     });

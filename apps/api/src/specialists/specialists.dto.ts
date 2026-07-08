@@ -10,6 +10,7 @@ export const registerSpecialistSchema = z.object({
   sector: z.string().max(40).optional(), // uzmanın ana kategorisi (harita/kategori filtresi)
   bio: z.string().optional(),
   photoDataUrl: z.string().max(12_000_000).optional(),
+  birthDateMs: z.number().int().positive().optional(),
   businessId: z.string().optional(),
   code: z.string().optional(),
   certificates: z.array(z.string()).default([]),
