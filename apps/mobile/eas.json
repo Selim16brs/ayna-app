@@ -1,0 +1,15 @@
+{
+  "cli": { "appVersion": "remote" },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "channel": "production",
+      "env": { "EXPO_PUBLIC_API_URL": "https://ayna-app-production.up.railway.app" }
+    },
+    "production": {
+      "channel": "production",
+      "env": { "EXPO_PUBLIC_API_URL": "https://ayna-app-production.up.railway.app" }
+    }
+  }
+}
