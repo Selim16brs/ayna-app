@@ -83,5 +83,7 @@ export function useProfessionalDetail(id: string): ProfessionalDetail {
   });
   // Sunucu yanıtı EMPTY_DETAIL üstüne bindirilir: eksik alan (certs/social/starDist…)
   // undefined kalıp ekranı ÇÖKERTEMEZ (Öne Çıkanlar → profil patlaması bununla çözüldü).
-  return data ? { ...EMPTY_DETAIL, ...data } : EMPTY_DETAIL;
+  if (!data) return EMPTY_DETAIL;
+  const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v != null));
+  return { ...EMPTY_DETAIL, ...clean } as ProfessionalDetail;
 }

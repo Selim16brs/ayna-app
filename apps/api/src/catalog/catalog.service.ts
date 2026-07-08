@@ -62,25 +62,63 @@ export class CatalogService {
       throw new NotFoundException({ code: 'PRO_NOT_FOUND', message: 'İşletme bulunamadı' });
     }
     const services = decorateServices(SECTOR_SERVICES[p.sector] ?? SECTOR_SERVICES.hair!, p.id);
+    // Sıfır-demo: kadro GERÇEK — bu salona bağlı kayıtlı uzmanlar (yoksa boş; sahte isim/yüz YOK)
     const staff =
       p.kind === 'salon'
-        ? STAFF.slice(0, 3).map((s, i) => ({
-            id: `${p.id}-u${i + 1}`,
-            name: s.name,
-            role: s.role,
-            image: avatar(FACES[i % FACES.length]!),
-            rating: Math.round((4.6 + (i % 4) * 0.1) * 10) / 10,
-          }))
+        ? await (async () => {
+            const biz = await this.prisma.business.findFirst({ where: { professionalId: p.id } });
+            if (!biz) return [];
+            const members = await this.prisma.specialist.findMany({
+              where: { businessId: biz.id },
+              take: 12,
+            });
+            const users = await this.prisma.user.findMany({
+              where: { id: { in: members.map((m) => m.userId) } },
+              select: { id: true, name: true, avatarUrl: true },
+            });
+            const byId = new Map(users.map((u) => [u.id, u]));
+            return members.map((m) => ({
+              id: m.userId,
+              name: byId.get(m.userId)?.name ?? '',
+              role: m.bio.slice(0, 40),
+              image: byId.get(m.userId)?.avatarUrl ?? '',
+              rating: 0,
+            }));
+          })()
         : [];
-    const serviceRatings = services.slice(0, 4).map((s, i) => ({
-      name: s.name,
-      score: i === 3 ? null : Math.round((4.5 + (i % 5) * 0.1) * 10) / 10,
+    // Sıfır-demo: yorumlar GERÇEK — yalnız tamamlanmış randevuya bağlı, admin görünür yaptıkları
+    const ratings = await this.prisma.rating.findMany({
+      where: { subjectId: p.id, raterRole: 'user', visible: true },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+    const reviews = ratings.slice(0, 10).map((r) => ({
+      id: r.id,
+      author: r.authorLabel,
+      period: periodLabel(r.createdAt),
+      rating: r.score,
+      text: r.comment,
+      firstVisit: false,
+      service: r.serviceTag,
+      photos: Array.isArray(r.photos) ? (r.photos as string[]) : [],
+      ...(r.reply ? { reply: r.reply } : {}),
     }));
-    const reviews = REVIEW_POOL.slice(0, 4).map((r, i) => ({
-      ...r,
-      id: `${p.id}-r${i + 1}`,
-      service: services[i % services.length]!.name,
-    }));
+    const starDist = [1, 2, 3, 4, 5].map((star) => ratings.filter((r) => r.score === star).length);
+    // Hizmet kırılımı: gerçek yorumların hizmet etiketinden; puan yoksa null (uydurma skor YOK)
+    const byTag = new Map<string, number[]>();
+    for (const r of ratings) {
+      if (!r.serviceTag) continue;
+      byTag.set(r.serviceTag, [...(byTag.get(r.serviceTag) ?? []), r.score]);
+    }
+    const serviceRatings = services.slice(0, 4).map((s) => {
+      const scores = byTag.get(s.name);
+      return {
+        name: s.name,
+        score: scores?.length
+          ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10
+          : null,
+      };
+    });
     // EK Z — sahip hesap bağı: Specialist(proId→userId) join. Kayıtlı bağımsız uzmanda
     // dolu; demo/seed pro'da null. Bağ varsa DM CTA + KYC rozeti (EK Z.1/Z.3) çalışır.
     const sp = await this.prisma.specialist.findFirst({
@@ -102,6 +140,7 @@ export class CatalogService {
       portfolio: p.portfolio, // uzmanın KENDİ yüklediği galeri (hesap verisi)
       promotions: parsePromos(p.promoJson), // §11 — Platinum'un profilinde yayınladığı promosyonlar
       reviews,
+      starDist,
     };
   }
 
@@ -163,49 +202,15 @@ function mapPro(p: Professional) {
 }
 
 // --- Detay sentezi (sektör bazlı; mobil ile aynı mantık) ---
-const avatar = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=200&q=70`;
-const FACES = [
-  'photo-1487412720507-e7ab37603c6f',
-  'photo-1494790108377-be9c29b29330',
-  'photo-1438761681033-6461ffad8d80',
-];
+// Sıfır-demo: sahte STAFF/REVIEW havuzları KALDIRILDI — kadro ve yorumlar gerçek kayıtlardan.
 
-const STAFF = [
-  { name: 'Madina', role: 'Renk uzmanı' },
-  { name: 'Aigerim', role: 'Kesim & fön' },
-  { name: 'Saule', role: 'Bakım & keratin' },
-];
-
-const REVIEW_POOL = [
-  {
-    author: 'Dana',
-    period: 'Son 30 gün içinde',
-    rating: 5,
-    text: 'Sonuç tam istediğim gibiydi, fiyat baştan açıktı. Kesinlikle tekrar geleceğim.',
-    firstVisit: true,
-  },
-  {
-    author: 'Doğrulanmış üye',
-    period: '1–3 ay önce',
-    rating: 4,
-    text: 'Usta çok dikkatliydi ve zamanında başladı. Memnun kaldım.',
-    firstVisit: false,
-  },
-  {
-    author: 'Aizhan',
-    period: 'Son 30 gün içinde',
-    rating: 5,
-    text: 'Hijyen mükemmeldi, her şey gözümün önünde sterilize edildi.',
-    firstVisit: true,
-  },
-  {
-    author: 'Gulnara',
-    period: '1–3 ay önce',
-    rating: 5,
-    text: 'Çok ilgili bir ekip, sonuçtan ailem bile etkilendi.',
-    firstVisit: false,
-  },
-];
+// Yorum yaş etiketi (kimlik gizliliği: kesin tarih verilmez — §6.D)
+function periodLabel(d: Date): string {
+  const days = Math.floor((Date.now() - d.getTime()) / 86_400_000);
+  if (days <= 30) return 'Son 30 gün içinde';
+  if (days <= 90) return '1–3 ay önce';
+  return '3 aydan eski';
+}
 
 interface SvcItem {
   id: string;
