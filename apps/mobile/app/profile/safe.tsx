@@ -7,7 +7,15 @@ import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import {
+  Button,
+  Screen,
+  SectionHeader,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+  TextInput,
+} from '../../src/ui';
 
 // EK Z.2 — Randevu güvenlik katmanı: güvenilen kişiler + SOS + canlı konum oturumu.
 // Konum paylaşımı VARSAYILAN KAPALI; kullanıcı açıkça başlatır (safety.share.default_off).
@@ -106,10 +114,17 @@ export default function SafeScreen() {
       // Anlık konumu da iliştir (izin varsa)
       const perm = await Location.getForegroundPermissionsAsync();
       if (perm.status === 'granted') {
-        const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        await api.sendSafetyLocation(token, res.id, pos.coords.latitude, pos.coords.longitude).catch(() => {});
+        const pos = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        await api
+          .sendSafetyLocation(token, res.id, pos.coords.latitude, pos.coords.longitude)
+          .catch(() => {});
       }
-      Alert.alert(t('safe.sos_sent'), fillParams(t('safe.sos_sent_sub'), { n: res.notifiedContacts }));
+      Alert.alert(
+        t('safe.sos_sent'),
+        fillParams(t('safe.sos_sent_sub'), { n: res.notifiedContacts }),
+      );
     } catch {
       Alert.alert(t('safe.sos'), t('safe.sos_sub'));
     }
@@ -173,8 +188,14 @@ export default function SafeScreen() {
         {/* Güvenli mod (canlı konum) — varsayılan kapalı */}
         <View style={[styles.group, styles.groupGap, shadow.soft]}>
           <View style={styles.row}>
-            <View style={[styles.icon, { backgroundColor: active ? colors.accent : colors.accentSoft }]}>
-              <Ionicons name="location-outline" size={18} color={active ? colors.onAccent : colors.ink} />
+            <View
+              style={[styles.icon, { backgroundColor: active ? colors.accent : colors.accentSoft }]}
+            >
+              <Ionicons
+                name="location-outline"
+                size={18}
+                color={active ? colors.onAccent : colors.ink}
+              />
             </View>
             <View style={styles.rowLabel}>
               <Text variant="bodyStrong" tone="ink">
@@ -215,7 +236,10 @@ export default function SafeScreen() {
             </View>
           ) : null}
           {contacts.map((c, i) => (
-            <View key={c.id} style={[styles.row, (i < contacts.length - 1 || adding) && styles.rowBorder]}>
+            <View
+              key={c.id}
+              style={[styles.row, (i < contacts.length - 1 || adding) && styles.rowBorder]}
+            >
               <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
                 <Ionicons name="person-outline" size={18} color={colors.ink} />
               </View>
@@ -260,7 +284,10 @@ export default function SafeScreen() {
               />
             </View>
           ) : (
-            <Pressable onPress={() => setAdding(true)} style={[styles.row, contacts.length > 0 && styles.rowBorder]}>
+            <Pressable
+              onPress={() => setAdding(true)}
+              style={[styles.row, contacts.length > 0 && styles.rowBorder]}
+            >
               <View style={[styles.icon, { backgroundColor: colors.surfaceMuted }]}>
                 <Ionicons name="add" size={20} color={colors.inkSoft} />
               </View>
@@ -277,7 +304,11 @@ export default function SafeScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     subtitle: { marginBottom: space(2.5) },
     sos: {
       flexDirection: 'row',
@@ -309,8 +340,17 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(2),
       paddingVertical: space(1.75),
     },
-    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceMuted },
-    icon: { width: 38, height: 38, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+    rowBorder: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.surfaceMuted,
+    },
+    icon: {
+      width: 38,
+      height: 38,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     rowLabel: { flex: 1, gap: 2 },
     form: { padding: space(2), gap: space(1.5) },
     input: {

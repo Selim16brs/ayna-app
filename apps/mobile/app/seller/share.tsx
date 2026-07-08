@@ -78,7 +78,7 @@ export default function SellerShareScreen() {
 
   const name = clip(rawName, 18);
   const subtitle = clip(
-    isSalon ? t('reports.identity.salon') : businessName ?? t('reports.identity.independent'),
+    isSalon ? t('reports.identity.salon') : (businessName ?? t('reports.identity.independent')),
     22,
   );
 
@@ -104,11 +104,10 @@ export default function SellerShareScreen() {
       }
       ref.toDataURL((b) => (b ? resolve(b) : reject(new Error('empty'))), { width: W, height: H });
     });
-    const out = await ImageManipulator.manipulateAsync(
-      `data:image/png;base64,${base64}`,
-      [],
-      { compress: 0.92, format: ImageManipulator.SaveFormat.JPEG },
-    );
+    const out = await ImageManipulator.manipulateAsync(`data:image/png;base64,${base64}`, [], {
+      compress: 0.92,
+      format: ImageManipulator.SaveFormat.JPEG,
+    });
     return out.uri;
   };
 
@@ -166,17 +165,17 @@ export default function SellerShareScreen() {
 
             {/* lime hero panel */}
             <Rect x={56} y={56} width={968} height={940} rx={64} fill="url(#lime)" />
-            <SvgText
-              x={112}
-              y={196}
-              fontSize={78}
-              fontWeight="800"
-              fill={C.ink}
-              letterSpacing={8}
-            >
+            <SvgText x={112} y={196} fontSize={78} fontWeight="800" fill={C.ink} letterSpacing={8}>
               AYNA
             </SvgText>
-            <SvgText x={116} y={250} fontSize={30} fontWeight="600" fill={C.limeDeep} letterSpacing={4}>
+            <SvgText
+              x={116}
+              y={250}
+              fontSize={30}
+              fontWeight="600"
+              fill={C.limeDeep}
+              letterSpacing={4}
+            >
               GÜZELLİK & BAKIM
             </SvgText>
 
@@ -234,7 +233,16 @@ export default function SellerShareScreen() {
 
             {/* QR + market rozetleri */}
             <G transform="translate(96,1496)">
-              <Rect x={0} y={0} width={300} height={300} rx={36} fill={C.white} stroke={C.line} strokeWidth={2} />
+              <Rect
+                x={0}
+                y={0}
+                width={300}
+                height={300}
+                rx={36}
+                fill={C.white}
+                stroke={C.line}
+                strokeWidth={2}
+              />
               <Path d={qrD} fill={C.ink} />
             </G>
 
@@ -264,7 +272,14 @@ export default function SellerShareScreen() {
             </SvgText>
 
             {/* alt marka */}
-            <SvgText x={540} y={1876} fontSize={36} fontWeight="700" fill={C.limeDeep} textAnchor="middle">
+            <SvgText
+              x={540}
+              y={1876}
+              fontSize={36}
+              fontWeight="700"
+              fill={C.limeDeep}
+              textAnchor="middle"
+            >
               ayna.kz
             </SvgText>
           </Svg>
@@ -302,5 +317,10 @@ const makeStyles = (colors: ColorTokens) =>
       shadowOffset: { width: 0, height: 10 },
       elevation: 8,
     },
-    actions: { paddingHorizontal: space(3), paddingBottom: space(3), paddingTop: space(1.5), gap: space(1.25) },
+    actions: {
+      paddingHorizontal: space(3),
+      paddingBottom: space(3),
+      paddingTop: space(1.5),
+      gap: space(1.25),
+    },
   });

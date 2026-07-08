@@ -7,7 +7,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'premium.plan_name': 'AYNA Premium',
   'premium.per_month': '/ ай',
   'premium.tagline': 'Ісіңді өсір, көбірек клиентке жет.',
-  'premium.pay_note': 'Төлем банк/Kaspi арқылы қолданбадан тыс жасалады; расталғаннан кейін Premium іске қосылады.',
+  'premium.pay_note':
+    'Төлем банк/Kaspi арқылы қолданбадан тыс жасалады; расталғаннан кейін Premium іске қосылады.',
   'premium.cancel': 'Қалаған уақытта бас тарта аласың.',
   'premium.cta': 'Premium-ға өту',
   'premium.section': 'Premium-мен не аласың',
@@ -33,9 +34,11 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'common.error': 'Қате шықты, қайталап көріңіз',
   // §12.3 — шектеулі режим ескертуі
   'restricted.title': 'Есептік жазбаңыз қазір шектеулі',
-  'restricted.body': 'Шектеулі режимде жаңа сұраныс жасай алмайсыз. Күтіп тұрған міндеттемеңіз шешілгеннен кейін есептік жазбаңыз автоматты түрде ашылады.',
+  'restricted.body':
+    'Шектеулі режимде жаңа сұраныс жасай алмайсыз. Күтіп тұрған міндеттемеңіз шешілгеннен кейін есептік жазбаңыз автоматты түрде ашылады.',
   'restricted.days_left': 'Қалған уақыт: {n} күн',
-  'restricted.pay': 'Күтіп тұрған қайтарым түбіртегін жүкте немесе комиссия қарызын өте — есептік жазбаң автоматты ашылады.',
+  'restricted.pay':
+    'Күтіп тұрған қайтарым түбіртегін жүкте немесе комиссия қарызын өте — есептік жазбаң автоматты ашылады.',
   'restricted.cta': 'Комиссия & түбіртек',
   'restricted.locked_offer': 'Шектеулі режимде ұсыныс бере алмайсың. Алдымен міндеттемеңді жап.',
   'app.tagline': 'Әр әйелдің өз айнасы болуы керек!',
@@ -52,7 +55,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'expert.reg.title': 'Маман тіркеуі',
   'expert.reg.personal': 'Жеке мәліметтер',
   'expert.reg.photo': 'Профиль фотоң',
-  'expert.reg.photo_lead': 'Ақ фонда, мысалдардағыдай жалғыз әрі анық тұр. Осындай кадр жеткілікті.',
+  'expert.reg.photo_lead':
+    'Ақ фонда, мысалдардағыдай жалғыз әрі анық тұр. Осындай кадр жеткілікті.',
   'expert.reg.photo_auto': 'Фонды жүйеміз автоматты кеседі — сен ешнәрсемен әуре болмайсың.',
   'expert.reg.photo_ex': 'Үлгі кадрлар',
   'expert.reg.photo_hint': 'Арт фоны автоматты тазаланады (remove.bg) және бет тексеріледі.',
@@ -62,14 +66,16 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'expert.reg.prof': 'Кәсіби мәліметтер',
   'expert.reg.service_area': 'Қызмет саласы',
   'expert.reg.services': 'Қызметтерің',
-  'expert.reg.services_hint': 'Әр қызмет үшін баға мен ұзақтық міндетті — ұзақтық жазылу слоттары үшін қажет.',
+  'expert.reg.services_hint':
+    'Әр қызмет үшін баға мен ұзақтық міндетті — ұзақтық жазылу слоттары үшін қажет.',
   'expert.reg.service_name': 'Қызмет атауы',
   'expert.reg.service_price': 'Баға (₸)',
   'expert.reg.service_dur': 'Ұзақтығы (мин)',
   'expert.reg.add_service': 'Қызмет қосу',
   'expert.reg.cert': 'Сертификаттар (қалауыңша)',
   'expert.reg.cert_add': 'Сертификат қосу',
-  'expert.reg.cert_warn': 'Пайдаланушыларға дұрыс емес мәлімет берсеңіз, сенім мәселесі туындауы мүмкін. Сондықтан тек өз атыңызға тіркелген сертификаттарды бөлісіңіз.',
+  'expert.reg.cert_warn':
+    'Пайдаланушыларға дұрыс емес мәлімет берсеңіз, сенім мәселесі туындауы мүмкін. Сондықтан тек өз атыңызға тіркелген сертификаттарды бөлісіңіз.',
   'expert.reg.social': 'Әлеуметтік желі (қалауыңша)',
   'expert.reg.hours': 'Жұмыс уақыты',
   'expert.reg.hours_ph': 'Мыс. Дс–Сб 10:00–20:00',
@@ -144,7 +150,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'salon.staff.perf': 'көрсеткіш',
   'agenda.filter.all': 'Барлығы',
   'salon.upsell.title': 'Салоныңның көрінуін арттыр ✨',
-  'salon.upsell.body': 'Premium-мен салонын Таңдаулылар мен Саған жақын алғашқы 3-те көрінеді — осы аптада {n} рет көріне алар едің.',
+  'salon.upsell.body':
+    'Premium-мен салонын Таңдаулылар мен Саған жақын алғашқы 3-те көрінеді — осы аптада {n} рет көріне алар едің.',
   'salon.upsell.cta': 'Premium-ға өту',
   'salon.cal.all': 'Жалпы',
   'salon.cal.add': 'Жазылу қосу',
@@ -156,7 +163,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'salon.add.uzman': 'Маман таңда',
   'salon.add.phone': 'Клиент телефоны',
   'salon.add.submit': 'Маманға жіберу',
-  'salon.add.note': 'Салон жазылуы маман растауына жіберіледі; маман қабылдағанда бекітіледі (§4.6).',
+  'salon.add.note':
+    'Салон жазылуы маман растауына жіберіледі; маман қабылдағанда бекітіледі (§4.6).',
   'salon.add.sent_title': 'Маман растауына жіберілді',
   'salon.add.sent_body': '{uzman} растағанда жазылу бекітіледі.',
   'salon.edit.title': 'Профильді өңдеу',
@@ -182,7 +190,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'ad.about': 'Науқан туралы',
   'ad.perks': 'Артықшылықтар',
   'ad.contact': 'Байланысу',
-  'ad.disclosure': 'Бұл мазмұн демеушілік. AYNA сатып алуға кепілдік бермейді; шарттар фирмаға тиесілі.',
+  'ad.disclosure':
+    'Бұл мазмұн демеушілік. AYNA сатып алуға кепілдік бермейді; шарттар фирмаға тиесілі.',
   'ad.not_found': 'Науқан табылмады.',
   'seller.menu.services_d': 'Қызмет, баға және ұзақтық',
   'seller.menu.reengage': 'Клиентіңді қайта шақыр',
@@ -197,7 +206,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.nav.agenda': 'Күнтізбе',
   'seller.nav.profile': 'Профиль',
   'seller.services.title': 'Менің қызметтерім',
-  'seller.services.subtitle': 'Қызметтерді, бағаларды және ұзақтықты басқар. Ұзақтық жазылу слоттары үшін қажет.',
+  'seller.services.subtitle':
+    'Қызметтерді, бағаларды және ұзақтықты басқар. Ұзақтық жазылу слоттары үшін қажет.',
   'seller.services.active_unit': 'белсенді қызмет',
   'seller.services.empty': 'Бұл санатта әлі қызмет таңдалмаған.',
   'seller.services.saved': 'Қызметтерің жаңартылды.',
@@ -311,7 +321,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'quote.hub.badge.photo': 'Суреттен',
   'quote.hub.badge.demand': 'Бюджеттен',
   'quote.new.title': 'Фото арқылы ұсыныстар',
-  'quote.new.subtitle': 'Өз сұлулық фотоңды жүкте, саған ең қолайлы күтім мен сұлулық ұсыныстарын бірден аш.',
+  'quote.new.subtitle':
+    'Өз сұлулық фотоңды жүкте, саған ең қолайлы күтім мен сұлулық ұсыныстарын бірден аш.',
   'quote.new.photo': 'Фото қосу',
   'quote.new.photo_hint': 'Қалаған үлгіңнің фотосын жүкте',
   'quote.new.upload': 'Фотоңды жүкте',
@@ -387,7 +398,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'demand.new.budget_ph': 'Баға (₸)',
   'demand.new.submit': 'Сұранысты жариялау',
   'demand.market.avg': 'Орташа нарық бағасы',
-  'demand.market.low': 'Бергеніңіз ұсыныс жалпы бағалардан әлдеқайда төмен болғандықтан мамандар ұсыныс бермеуі мүмкін.',
+  'demand.market.low':
+    'Бергеніңіз ұсыныс жалпы бағалардан әлдеқайда төмен болғандықтан мамандар ұсыныс бермеуі мүмкін.',
   'bookings.tab.direct': 'Іздеу',
   'bookings.tab.photo': 'Фото ұсыныс',
   'bookings.tab.demand': 'Сұраныс',
@@ -403,12 +415,15 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.requests.give': 'Ұсыныс беру',
   'requests.give_premium': 'Мүшелігіңді жоғарылат',
   'requests.premium_title': 'Ұсыныс беру мүшелерге арналған',
-  'requests.premium_body': 'Сұраныс мәліметтерін көру және ұсыныс беру үшін Premium немесе Platinum мүшелікке өт.',
+  'requests.premium_body':
+    'Сұраныс мәліметтерін көру және ұсыныс беру үшін Premium немесе Platinum мүшелікке өт.',
   'requests.premium_banner': 'Мәліметтер Premium/Platinum-мен ашылады — мүшелігіңді жоғарылат.',
   // §11 — маман 3 күн тегін сынақ
   'requests.trial_title': 'Тегін сынақ басталды 🎁',
-  'requests.trial_banner': '{n} күн бойы барлық сұранысты көріп, ұсыныс бере аласың. Мерзім біткенде мүшелікпен жалғас.',
-  'requests.locked_hint': 'Сұраныс мәліметтері Premium/Platinum мүшелерге ашық. Көру және ұсыныс беру үшін мүшелігіңді жоғарылат.',
+  'requests.trial_banner':
+    '{n} күн бойы барлық сұранысты көріп, ұсыныс бере аласың. Мерзім біткенде мүшелікпен жалғас.',
+  'requests.locked_hint':
+    'Сұраныс мәліметтері Premium/Platinum мүшелерге ашық. Көру және ұсыныс беру үшін мүшелігіңді жоғарылат.',
   'offer.form.title': 'Ұсыныс беру',
   'offer.form.price': 'Баға (₸)',
   'offer.form.eta': 'Болжамды уақыт (мин)',
@@ -505,9 +520,11 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'care.due_in': 'күн қалды',
   'care.get_offer': 'Бұл үшін ұсыныс алу',
   'notifprefs.title': 'Хабарлама теңшелімдері',
-  'notifprefs.hint': 'Қандай хабарлама топтарын алғың келетінін таңда. Күнделікті хабарламалар ақылмен топтастырылады.',
+  'notifprefs.hint':
+    'Қандай хабарлама топтарын алғың келетінін таңда. Күнделікті хабарламалар ақылмен топтастырылады.',
   'notifprefs.demand_title': 'Сұраныс хабарламалары',
-  'notifprefs.demand_hint': 'Қай санатта және қай сағат аралығында жаңа сұраныс хабарламасын алғың келеді?',
+  'notifprefs.demand_hint':
+    'Қай санатта және қай сағат аралығында жаңа сұраныс хабарламасын алғың келеді?',
   'notifprefs.demand_cats': 'Санаттар (ешқайсысы таңдалмаса — барлығы)',
   'notifprefs.demand_hours': 'Сағат аралығы',
   'notifprefs.booking': 'Жазылу хабарламалары',
@@ -544,7 +561,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'profile.menu.safety': 'Қауіпсіздік',
   'profile.menu.addresses': 'Мекенжайларым',
   'addresses.title': 'Мекенжайларым',
-  'addresses.hint': 'Үй және жұмыс мекенжайларыңды басқар — "Саған жақын" және қашықтық есебі үшін қолданылады.',
+  'addresses.hint':
+    'Үй және жұмыс мекенжайларыңды басқар — "Саған жақын" және қашықтық есебі үшін қолданылады.',
   'addresses.add': 'Мекенжай қосу',
   'addresses.empty': 'Әзірге мекенжай қоспадың',
   'profile.menu.safe': 'AYNA Safe',
@@ -567,7 +585,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.field.address': 'Мекенжай',
   'booking.field.phone': 'Телефон',
   'booking.field.customer': 'Клиент',
-  'booking.address_note': 'Салонның мекенжайы растаудан кейін көрсетіледі; сіздің мекенжайыңыз маманға берілмейді',
+  'booking.address_note':
+    'Салонның мекенжайы растаудан кейін көрсетіледі; сіздің мекенжайыңыз маманға берілмейді',
   'booking.confirmed.done': 'Жазылуларыма өту',
   'screen.placeholder': 'Бұл бөлім жақында осында болады',
   'rewards.title': 'Ұпайларым',
@@ -589,10 +608,12 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'rewards.raffle.join_confirm': 'Ұтыс ойынына қатысу үшін 500 ұпай жұмсалсын ба?',
   'rewards.raffle.joined': 'Ұтыс билетің алынды! Сәттілік 🎁',
   'rewards.raffle.entry': 'Ұтыс билеті',
-  'rewards.expiry_warn': 'Ұпайларың жанбасын — 12 ай ішінде пайдалан. Жанғанға 30 күн бұрын еске саламыз.',
+  'rewards.expiry_warn':
+    'Ұпайларың жанбасын — 12 ай ішінде пайдалан. Жанғанға 30 күн бұрын еске саламыз.',
   'rewards.rules.title': 'Ұпай ережелері',
   'rewards.rules.earn': 'Әр аяқталған қызметтен %3 қайтарып ал.',
-  'rewards.rules.channels': 'W2W ұнатумен, блогпен, алғашқы жазылумен және шақырумен де тап (айлық шектеулермен).',
+  'rewards.rules.channels':
+    'W2W ұнатумен, блогпен, алғашқы жазылумен және шақырумен де тап (айлық шектеулермен).',
   'rewards.rules.cap': 'Ұпайлар бір төлемнің ең көбі жартысында пайдаланылады',
   'rewards.rules.expire': 'Қозғалыссыз ұпайлар жанады',
   'rewards.earn.title': 'Ұпайды қалай табасың?',
@@ -687,7 +708,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'auth.section.address': 'Мекенжай және орналасу',
   'auth.location.use_gps': 'Орнымды пайдалану',
   'auth.location.detected': 'Орналасу алынды',
-  'auth.location.hint': 'Орналасу "Саған жақын салондар" және қашықтық үшін пайдаланылады. Қаласаң мекенжайды қолмен де енгізе аласың.',
+  'auth.location.hint':
+    'Орналасу "Саған жақын салондар" және қашықтық үшін пайдаланылады. Қаласаң мекенжайды қолмен де енгізе аласың.',
   'auth.address.label': 'Мекенжай белгісі',
   'auth.address.home': 'Үй',
   'auth.address.work': 'Жұмыс',
@@ -729,7 +751,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'biz.field.docs_add': 'Құжат қосу',
   'biz.field.docs_hint': 'Кәсіпорын лицензиясы және гигиена сертификаты (растау үшін)',
   'biz.terms.accept': 'Кәсіпорын шартын және құпиялылық саясатын қабылдаймын.',
-  'biz.terms.always_liability': 'Жауапкершілік: Always топтық хабарламаларымен клиенттерге жіберген мазмұныңа тек өзің жауаптысың. Заңсыз, жаңылыстыратын немесе мазалайтын хабарлама жіберілсе, барлық құқықтық жауапкершілік маман/салонға тиесілі; AYNA жауап бермейді.',
+  'biz.terms.always_liability':
+    'Жауапкершілік: Always топтық хабарламаларымен клиенттерге жіберген мазмұныңа тек өзің жауаптысың. Заңсыз, жаңылыстыратын немесе мазалайтын хабарлама жіберілсе, барлық құқықтық жауапкершілік маман/салонға тиесілі; AYNA жауап бермейді.',
   'biz.new.submit': 'Тіркеуді аяқтау',
   'biz.section.owner': 'Салон иесі туралы ақпарат',
   'biz.section.about': 'Салон туралы',
@@ -743,7 +766,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'biz.field.map_pin': 'Картада белгіле',
   'biz.field.map_pinned': 'Орналасу белгіленді',
   'biz.field.map_change': 'Өзгерту',
-  'biz.field.area_hint': 'Салон ұсынатын қызмет бағыттары — баға жоқ. Бағалар салонға тіркелген мамандардың профильдерінен келеді.',
+  'biz.field.area_hint':
+    'Салон ұсынатын қызмет бағыттары — баға жоқ. Бағалар салонға тіркелген мамандардың профильдерінен келеді.',
   'biz.field.social': 'Әлеуметтік желі',
   'biz.field.desc': 'Салон сипаттамасы',
   'biz.field.desc_ph': 'Салоныңды бірнеше сөйлеммен таныстыр…',
@@ -773,7 +797,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reports.action.services': 'Қызметтер',
   'reports.action.promotions': 'Жарнамалар',
   'promo.title': 'Жарнамалар',
-  'promo.intro': 'Жасаған науқандарың админ мақұлдағаннан кейін пайдаланушылардың «Мүмкіндіктер» бөлімінде жарияланады.',
+  'promo.intro':
+    'Жасаған науқандарың админ мақұлдағаннан кейін пайдаланушылардың «Мүмкіндіктер» бөлімінде жарияланады.',
   'promo.new': 'Жаңа жарнама жасау',
   'promo.empty': 'Әзірге жарнамаң жоқ. Алғашқы мүмкіндігіңді жаса.',
   'promo.status.pending': 'Мақұлдау күтілуде',
@@ -781,7 +806,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'promo.status.rejected': 'Қабылданбады',
   'promo.status.expired': 'Мерзімі өтті',
   'promo.upsell_title': 'Мүмкіндіктер витринінде көзге түс',
-  'promo.upsell_body': 'Premium арқылы жарнамаларың «Ашу» бетіндегі Мүмкіндіктерде жарияланып, көбірек клиентке жетеді.',
+  'promo.upsell_body':
+    'Premium арқылы жарнамаларың «Ашу» бетіндегі Мүмкіндіктерде жарияланып, көбірек клиентке жетеді.',
   'promo.upsell_b1': 'Маңайыңдағы пайдаланушылардың ашық сұраныстарына жауап бер',
   'promo.upsell_b2': 'Жарнамаларың Мүмкіндіктер витринінде жарияланады',
   'promo.upsell_b3': 'Аптасына 1 жарнама жаса',
@@ -801,13 +827,15 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'promo.form.approve_note': 'Жарнама жарияланбас бұрын админ мақұлдауынан өтеді.',
   'promo.form.submit': 'Мақұлдауға жіберу',
   'promo.submitted_title': 'Жіберілді',
-  'promo.submitted_body': 'Жарнамаң админ мақұлдауына жіберілді. Мақұлданғанда Мүмкіндіктерде жарияланады.',
+  'promo.submitted_body':
+    'Жарнамаң админ мақұлдауына жіберілді. Мақұлданғанда Мүмкіндіктерде жарияланады.',
   'reports.action.codes': 'Шақыру кодтары',
   'reports.action.reviews': 'Пікірлер',
   'reports.action.commissions': 'Комиссия',
   // §12.8 комиссия шоттары (про жағы)
   'commission.title': 'Комиссия төлемдері',
-  'commission.intro': 'Айлық платформа комиссияларың. Төле, түбіртекті жүкте; админ растағанда жабылады.',
+  'commission.intro':
+    'Айлық платформа комиссияларың. Төле, түбіртекті жүкте; админ растағанда жабылады.',
   'commission.empty': 'Әзірге комиссия шотың жоқ.',
   'commission.status.pending': 'Күтілуде',
   'commission.status.overdue': 'Кешікті',
@@ -844,7 +872,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.reviews.dispute': 'Шағымдану',
   'seller.reviews.disputed': 'Шағымданылды · қаралуда',
   'seller.reviews.dispute_confirm': 'Осы пікірге шағымданылсын ба?',
-  'seller.reviews.dispute_note': 'Пікір қаралу барысында көрінетін болып қалады. Тек қорлау, жеке ақпаратты ашу немесе жалған пікір жойылады; адал сын өшірілмейді.',
+  'seller.reviews.dispute_note':
+    'Пікір қаралу барысында көрінетін болып қалады. Тек қорлау, жеке ақпаратты ашу немесе жалған пікір жойылады; адал сын өшірілмейді.',
   'seller.reviews.not_linked': 'Кәсіпорын әзірге іздеу тізіміне тіркелмеген.',
   'reports.period.week': 'Осы апта',
   'reports.period.month': 'Осы ай',
@@ -882,14 +911,17 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'agenda.add_offline': 'Офлайн жазылу',
   'agenda.empty': 'Осы аралықта жазылу жоқ',
   'agenda.closed_title': 'Жабық күндер (демалыс / мереке)',
-  'agenda.closed_hint': 'Жабық деп белгілеген күндерің пайдаланушы жағында жазылуға жабық болып көрінеді.',
+  'agenda.closed_hint':
+    'Жабық деп белгілеген күндерің пайдаланушы жағында жазылуға жабық болып көрінеді.',
   'agenda.view.day': 'Күн',
   'agenda.view.list': 'Тізім',
   'agenda.view.salon': 'Салон',
-  'agenda.salon_note': 'Маман күнтізбелеріне тек жазылу ҚОСА АЛАСЫҢ; жоя алмайсың немесе демалыс күндеріне тие алмайсың. Әр қосу маманға хабарланады.',
+  'agenda.salon_note':
+    'Маман күнтізбелеріне тек жазылу ҚОСА АЛАСЫҢ; жоя алмайсың немесе демалыс күндеріне тие алмайсың. Әр қосу маманға хабарланады.',
   'agenda.mark_closed': 'Жабық деп белгіле',
   'agenda.mark_open': 'Ашық деп белгіле',
-  'agenda.closed_day': 'Бұл күн жабық (демалыс / мереке). Пайдаланушыға жазылуға жабық болып көрінеді.',
+  'agenda.closed_day':
+    'Бұл күн жабық (демалыс / мереке). Пайдаланушыға жазылуға жабық болып көрінеді.',
   'agenda.count': 'жазылу',
   'agenda.day_empty': 'Бұл күні жазылуың жоқ',
   'agenda.free_add': 'Бос — офлайн қос',
@@ -906,7 +938,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'offline.service': 'Қызмет',
   'offline.service_pick': 'Қызметтеріңнен таңда',
   'offline.service_manual': 'Қолмен енгізу',
-  'offline.service_none': 'Профиліңде тіркелген қызмет жоқ. “Қызметтер” бөлімінен қосуға немесе қолмен жазуға болады.',
+  'offline.service_none':
+    'Профиліңде тіркелген қызмет жоқ. “Қызметтер” бөлімінен қосуға немесе қолмен жазуға болады.',
   'offline.svc_count': '{n} қызмет таңдалды · ұзақтық пен баға қосылды',
   'offline.uzman': 'Маман (міндетті емес)',
   'offline.date': 'Күні / уақыты',
@@ -914,11 +947,13 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'offline.datetime': 'Күні мен уақыты',
   'offline.dur': 'Ұзақтығы (мин)',
   'offline.conflict_title': 'Уақыт бос емес',
-  'offline.conflict': 'Бұл маманның таңдаған уақытыңда қабаттасатын жазылуы бар. Басқа уақыт таңда.',
+  'offline.conflict':
+    'Бұл маманның таңдаған уақытыңда қабаттасатын жазылуы бар. Басқа уақыт таңда.',
   'offline.price': 'Баға (₸)',
   'offline.save': 'Жазылуды қосу',
   'offline.saved': 'Офлайн жазылу қосылды',
-  'offline.note': 'Салонда/телефонмен алынған жазылулар осында қосылады; ортақ күнтізбеде көрінеді.',
+  'offline.note':
+    'Салонда/телефонмен алынған жазылулар осында қосылады; ортақ күнтізбеде көрінеді.',
   'offline.kind': 'Жазылу түрі',
   'offline.kind.normal': 'Қалыпты',
   'offline.kind.group': 'Топтық',
@@ -998,7 +1033,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'notif.deposit_expired': 'Депозит мерзімі бітті',
   'notif.deposit_expired_b': '{pro} · түбіртек уақтылы жүктелмеді, жазылу түсті және орын босады',
   'notif.response_expired': 'Маман уақтылы жауап бермеді',
-  'notif.response_expired_b': '{pro} сұранысыңа уақтылы жауап бермеді — саған жақын басқа мамандарды ұсынамыз',
+  'notif.response_expired_b':
+    '{pro} сұранысыңа уақтылы жауап бермеді — саған жақын басқа мамандарды ұсынамыз',
   'notif.salon_offline_pending': 'Жазылу маман растауына жіберілді',
   'notif.salon_offline_pending_b': '{uzman} · {slot} — маман растағанда бекітіледі',
   // §10/§4 — қайта шақыру жылы хабарлама шаблондары (params {expert} {service})
@@ -1100,8 +1136,10 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'notif.always_request_b': '{name} сенімен Always байланысын құрғысы келеді',
   'always.brand': 'Always',
   'always.title': 'Always',
-  'always.sub': 'Саған байланысты адал клиенттерің — науқандарың мен жаңалықтарыңды солармен бөліс.',
-  'always.cust_sub': 'Байланыс құрған маман мен салондарың — жаңалықтарынан бірінші сен хабардар бол.',
+  'always.sub':
+    'Саған байланысты адал клиенттерің — науқандарың мен жаңалықтарыңды солармен бөліс.',
+  'always.cust_sub':
+    'Байланыс құрған маман мен салондарың — жаңалықтарынан бірінші сен хабардар бол.',
   'always.tab_list': 'Байланыстарым',
   'always.tab_requests': 'Сұраулар',
   'always.empty_list': 'Әзірге Always байланысың жоқ.',
@@ -1123,9 +1161,11 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'always.broadcast_sent_t': 'Хабарлама жіберілді',
   'always.broadcast_sent_b': '{n} адал клиентіңе жетті 💌',
   'always.broadcast_none': 'Әзірге байланысты клиентің жоқ — алдымен Always тізіміңді құр.',
-  'always.disclaimer': 'Бұл хабарламалардың мазмұнына тек жіберуші жауапты. Заңсыз, жаңылыстыратын немесе мазалайтын мазмұн жіберуге болмайды; болмаса барлық жауапкершілік маман/салонға тиесілі. AYNA бұл мазмұнға жауап бермейді.',
+  'always.disclaimer':
+    'Бұл хабарламалардың мазмұнына тек жіберуші жауапты. Заңсыз, жаңылыстыратын немесе мазалайтын мазмұн жіберуге болмайды; болмаса барлық жауапкершілік маман/салонға тиесілі. AYNA бұл мазмұнға жауап бермейді.',
   'always.platinum_title': 'Platinum мүмкіндігі',
-  'always.platinum_body': 'Өз адал клиент портфолиоңды құр және науқандарыңды бір рет жеткіз. Always — Platinum мүшелерге арналған.',
+  'always.platinum_body':
+    'Өз адал клиент портфолиоңды құр және науқандарыңды бір рет жеткіз. Always — Platinum мүшелерге арналған.',
   'always.platinum_cta': "Platinum'ға өту",
   'always.request_cta': 'Always бол',
   'always.requested': 'Сұрау жіберілді',
@@ -1144,7 +1184,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'premium.b.commission_d': 'Онлайн жазылуларда 10% орнына 8,5%',
   // §11 — деңгейге сай мүшелік ынталандыруы
   'upsell.toPrem.title': 'Көбірек клиентке жет ✨',
-  'upsell.toPrem.body': 'Premium-мен алда бол; Platinum-мен адал клиент портфолиосы + төмен комиссия.',
+  'upsell.toPrem.body':
+    'Premium-мен алда бол; Platinum-мен адал клиент портфолиосы + төмен комиссия.',
   'upsell.toPrem.cta': 'Пакеттерді ашу',
   'upsell.toPlat.title': "Platinum'ға көтеріл 💎",
   'upsell.toPlat.body': 'Always адал клиент портфолиосы, топтық хабарлама және комиссия 8,5%.',
@@ -1153,7 +1194,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'sub.error': 'Әрекет сәтсіз — қайта көр.',
   'sub.receipt_title': 'Төлем түбіртегі',
   'sub.pay_title': '{tier} мүшелік төлемі',
-  'sub.pay_desc': 'Төлем қосымшадан тыс (Kaspi / банк аударымы). Төлегеннен кейін түбіртекті жүкте.',
+  'sub.pay_desc':
+    'Төлем қосымшадан тыс (Kaspi / банк аударымы). Төлегеннен кейін түбіртекті жүкте.',
   'sub.receipt_label': 'Түбіртек суреті',
   'sub.pick': 'Түбіртек жүкте',
   'sub.pick_hint': 'Kaspi / банк төлем скриншоты',
@@ -1164,7 +1206,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   // қайта шақыру экраны (маман)
   'reengage.title': 'Клиентіңді қайта шақыр',
   'reengage.sub': 'Қызмет кезеңі аяқталған риза клиенттеріңе жылы еске салу жібер.',
-  'reengage.info': 'Хабарлама клиентке қосымша ішінде барады; телефон/байланыс деректері бөлісілмейді.',
+  'reengage.info':
+    'Хабарлама клиентке қосымша ішінде барады; телефон/байланыс деректері бөлісілмейді.',
   'reengage.due': 'Уақыты келді',
   'reengage.soon': 'Жақындап қалды',
   'reengage.overdue': '{n} күн өтті',
@@ -1177,11 +1220,14 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reengage.empty': 'Әзірге қайта шақыратын клиент жоқ.',
   // §11 — premium + автоматты қайта шақыру
   'reengage.premium_title': 'Premium мүмкіндік',
-  'reengage.premium_body': 'Автоматты клиент қайта шақыру — Premium мамандарға арналған. Кезеңі аяқталған клиенттерің сен әуре болмай, жылы хабарламамен қайта оралсын.',
+  'reengage.premium_body':
+    'Автоматты клиент қайта шақыру — Premium мамандарға арналған. Кезеңі аяқталған клиенттерің сен әуре болмай, жылы хабарламамен қайта оралсын.',
   'reengage.premium_cta': "Premium'ға өту",
   'reengage.auto_title': 'Автоматты қайта шақыру',
-  'reengage.auto_desc': 'Жүйе кезеңі аяқталған риза клиенттеріңе сенің орныңа жылы еске салу жібереді.',
-  'reengage.off_note': 'Автоматты қайта шақыру өшірулі. Қосқанда жүйе кезеңі аяқталған клиенттерге еске салу жібереді.',
+  'reengage.auto_desc':
+    'Жүйе кезеңі аяқталған риза клиенттеріңе сенің орныңа жылы еске салу жібереді.',
+  'reengage.off_note':
+    'Автоматты қайта шақыру өшірулі. Қосқанда жүйе кезеңі аяқталған клиенттерге еске салу жібереді.',
   'reengage.section_done': 'Жіберілді',
   'reengage.section_queue': 'Кезекте',
   'reengage.status_sent': 'Автоматты жіберілді',
@@ -1231,36 +1277,43 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.status.disputed': 'Шағым ашылды',
   'booking.status.reassigned_pending': 'Маман өзгерді — растауды күтуде',
   'booking.reassign.title': 'Маманың өзгерді',
-  'booking.reassign.desc': 'Таңдаған маманың салоннан кетті. Жазылуың жаңа маманға тағайындалды; жалғастырғың келсе, растап қой.',
+  'booking.reassign.desc':
+    'Таңдаған маманың салоннан кетті. Жазылуың жаңа маманға тағайындалды; жалғастырғың келсе, растап қой.',
   'booking.reassign.from': 'Кеткен маман',
   'booking.reassign.to': 'Тағайындалған маман',
   'booking.reassign.accept': 'Жаңа маманды растау',
   'booking.reassign.reject': 'Бас тарту / болдырмау',
   'booking.refund.pending_user': 'Бас тартуың қабылданды. Маман депозит қайтарымын жүктейді.',
   'booking.refund.title': 'Қайтарымды растау',
-  'booking.refund.desc': 'Маман қайтарым түбіртегін жүктеді. Қайтарымды шотыңнан көрсең, растап қой.',
+  'booking.refund.desc':
+    'Маман қайтарым түбіртегін жүктеді. Қайтарымды шотыңнан көрсең, растап қой.',
   'booking.refund.confirm': 'Қайтарымды алдым, растау',
   'booking.refund.provider_upload': 'Қайтарым түбіртегін жүктеу',
-  'booking.refund.provider_pending': 'Еркін бас тарту — депозитті қайтар және түбіртекті жүкте (§4.4).',
+  'booking.refund.provider_pending':
+    'Еркін бас тарту — депозитті қайтар және түбіртекті жүкте (§4.4).',
   'booking.penalty.forfeited': 'Кеш бас тартылғандықтан депозит маманда қалды.',
   'booking.penalty.noshow': 'Жазылуға келмегендіктен депозит маманда қалды.',
   'booking.dispute.cta': 'Шағым білдіру',
   'booking.provider_noshow.cta': 'Маман келмеді',
   'booking.provider_noshow.confirm': 'Маман кездесуге келмеді ме?',
-  'booking.provider_noshow.note': 'Растасаң, 1 000 ұпай өтемақы есебіңе қосылады және депозитіңнің қайтарылуы басталады.',
+  'booking.provider_noshow.note':
+    'Растасаң, 1 000 ұпай өтемақы есебіңе қосылады және депозитіңнің қайтарылуы басталады.',
   'booking.dispute.done': 'Шағымың қолдау тобына жіберілді.',
   'booking.deposit.title': 'Депозит қадамы',
   'booking.deposit.desc': 'Жазылуыңды түпкілікті ету үшін депозит жібер және түбіртегіңді жүкте.',
   'booking.deposit.amount': 'Депозит сомасы',
   'booking.deposit.payto': 'Төлем мәліметтері',
-  'booking.deposit.note': 'Депозит кепіл болып саналады: жазылуға келсең, қызмет құнынан шегеріледі. Түбіртекті 3 сағат ішінде жүкте, әйтпесе слот босайды.',
+  'booking.deposit.note':
+    'Депозит кепіл болып саналады: жазылуға келсең, қызмет құнынан шегеріледі. Түбіртекті 3 сағат ішінде жүкте, әйтпесе слот босайды.',
   'booking.deposit.upload': 'Түбіртек жүктеу',
   'booking.deposit.reupload': 'Түбіртекті ауыстыру',
   'booking.deposit.submit': 'Түбіртекті жіберу',
-  'booking.deposit.submitted_note': 'Түбіртегің жіберілді. Маман растағанда жазылуың түпкілікті болады.',
+  'booking.deposit.submitted_note':
+    'Түбіртегің жіберілді. Маман растағанда жазылуың түпкілікті болады.',
   'booking.provider.approve': 'Қабылдау',
   'booking.provider.reject': 'Қабылдамау',
-  'booking.provider.deadline': '{h} сағат ішінде жауап бер — әйтпесе сұраныс басқа маманға жіберіледі.',
+  'booking.provider.deadline':
+    '{h} сағат ішінде жауап бер — әйтпесе сұраныс басқа маманға жіберіледі.',
   'booking.provider.propose': 'Балама уақыт ұсыну',
   'booking.provider.confirm_receipt': 'Түбіртекті растау (Алдым)',
   'booking.provider.receipt': 'Жүктелген түбіртек',
@@ -1268,7 +1321,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.provider.complete': 'Қызметті аяқтадым',
   'booking.provider.pending_receipt': 'Пайдаланушының түбіртегі күтілуде.',
   'booking.signal.title': 'Клиент сигналы (құпия)',
-  'booking.signal.desc': 'Тек жүйеге ғана ағады; клиент немесе ешкім көрмейді. Жазылу тәжірибең қалай болды?',
+  'booking.signal.desc':
+    'Тек жүйеге ғана ағады; клиент немесе ешкім көрмейді. Жазылу тәжірибең қалай болды?',
   'booking.signal.up': 'Мәселесіз',
   'booking.signal.down': 'Мәселелі',
   'booking.signal.saved': 'Сигналың сақталды (құпия).',
@@ -1283,7 +1337,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.detail.awaiting_note': 'Маманың растауы күтілуде.',
   'booking.detail.proposed': 'Маман ұсынған жаңа уақыт',
   'booking.detail.accept': 'Осы уақытты қабылдау',
-  'booking.confirmed.awaiting': 'Маман растауы күтілуде — расталғанда мекенжай мен телефон бөлісіледі',
+  'booking.confirmed.awaiting':
+    'Маман растауы күтілуде — расталғанда мекенжай мен телефон бөлісіледі',
   'review.title': 'Бағалау',
   'review.subtitle': 'Тәжірибеңмен бөліс, басқаларға жол көрсет',
   'review.rating': 'Ұпайың',
@@ -1331,7 +1386,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'care.add.service': 'Қызмет',
   'care.add.delete': 'Бұл жазбаны жою',
   'care.done.confirm_title': 'Күтімді аяқтадың ба?',
-  'care.done.confirm_body': '«{name}» орындалды деп белгіленсін бе? Санауыш {days} күннен кейінге қойылады.',
+  'care.done.confirm_body':
+    '«{name}» орындалды деп белгіленсін бе? Санауыш {days} күннен кейінге қойылады.',
   'care.done.confirm_yes': 'Аяқтадым',
   'care.add.routine_title': 'Күтім еске салғышын қосу',
   'care.add.moment_title': 'Ерекше күн қосу',
@@ -1355,7 +1411,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'profile.edit.city': 'Қала',
   'profile.edit.saved': 'Профиль жаңартылды',
   'profile.edit.pending_t': 'Өзгеріс растауға жіберілді',
-  'profile.edit.pending_b': 'Салон/маман профиль өзгерістері AYNA админ растауынан кейін жарияланады. Расталған соң профиль жаңарады.',
+  'profile.edit.pending_b':
+    'Салон/маман профиль өзгерістері AYNA админ растауынан кейін жарияланады. Расталған соң профиль жаңарады.',
   'profile.edit.approval_note': 'Профиль өзгерістерің админ растауынан кейін жарияланады.',
   'profile.photo.gallery': 'Галереядан',
   'profile.photo.camera': 'Камера',
@@ -1379,7 +1436,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'passport.premium.only': 'Premium',
   'passport.premium.cta': 'Premium-ға өту',
   'passport.premium.confirm': 'Premium-ға өтілсін бе?',
-  'passport.premium.confirm_note': 'Төлем қосымшадан тыс (банк/Kaspi) алынады. Растағанда премиум артықшылықтары ашылады.',
+  'passport.premium.confirm_note':
+    'Төлем қосымшадан тыс (банк/Kaspi) алынады. Растағанда премиум артықшылықтары ашылады.',
   'passport.premium.manage': 'Мүшелікті басқару · бас тарту',
   'passport.premium.cancel': 'Бас тарту',
   'passport.premium.cancel_confirm': 'Премиум мүшелігің тоқтатылсын ба?',
@@ -1423,7 +1481,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
 
   // EK Z.3 — маман тексеруі (KYC)
   'kyc.title': 'Жеке басын растау',
-  'kyc.subtitle': 'Құжаттарыңызды жүктеңіз — тексерілгеннен кейін профильде «Расталған» белгісі көрінеді.',
+  'kyc.subtitle':
+    'Құжаттарыңызды жүктеңіз — тексерілгеннен кейін профильде «Расталған» белгісі көрінеді.',
   'kyc.status_none': 'Әзірше құжат жіберген жоқсыз',
   'kyc.status_pending': 'Тексерілуде',
   'kyc.status_approved': 'Расталды ✓',
@@ -1443,7 +1502,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'referral.subtitle': 'Кодыңды бөліс — досың алғаш қосылғанда екеуің де {points} ұпай аласыңдар.',
   'referral.your_code': 'ШАҚЫРУ КОДЫҢ',
   'referral.share': 'Кодты бөлісу',
-  'referral.share_message': 'AYNA-ға қосыл! Шақыру кодым: {code} — екеуміз де {points} ұпай алайық ✨',
+  'referral.share_message':
+    'AYNA-ға қосыл! Шақыру кодым: {code} — екеуміз де {points} ұпай алайық ✨',
   'referral.invited': 'Шақырылған',
   'referral.points_earned': 'Жиналған ұпай',
   'referral.have_code': 'Шақыру кодың бар ма?',
@@ -1473,7 +1533,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'cutout.done': 'Фотоң дайын — фоны алынды ✨',
   'cutout.failed': 'Фон қазір алынбады; қалыпты фотоң қолданылды. Сәлден соң қайта көр.',
   'cutout.upsell_title': 'Premium-да профиль осылай көрінер еді ✨',
-  'cutout.upsell_body': 'Premium жазылымда профиль фотосының фоны автоматты алынып, басты бетте ерекшеленеді.',
+  'cutout.upsell_body':
+    'Premium жазылымда профиль фотосының фоны автоматты алынып, басты бетте ерекшеленеді.',
   'privacy.title': 'Құпиялылық',
   'privacy.subtitle': 'Деректеріңізді бақылау сізде',
   'privacy.location': 'Орналасқан жерді бөлісу',
@@ -1506,10 +1567,13 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.metric.repeat': 'Қайталанатын клиент',
   'seller.staff.title': 'Маман мәліметі',
   'seller.staff.remove': 'Құрамнан шығару',
-  'seller.staff.remove_hint': 'Маман кеткенде болашақ жазылулары басқа маманға беріледі; пайдаланушы қайта растайды. Жазылулар үнсіз жойылмайды (§4.5).',
+  'seller.staff.remove_hint':
+    'Маман кеткенде болашақ жазылулары басқа маманға беріледі; пайдаланушы қайта растайды. Жазылулар үнсіз жойылмайды (§4.5).',
   'seller.staff.remove_confirm': 'Маман құрамнан шығарылсын ба?',
-  'seller.staff.remove_desc': 'Болашақ жазылулары басқа маманға беріледі және пайдаланушыдан қайта растау сұралады.',
-  'seller.staff.reassigned': 'Маман шығарылды; болашақ жазылулар берілді, пайдаланушы растауы күтілуде.',
+  'seller.staff.remove_desc':
+    'Болашақ жазылулары басқа маманға беріледі және пайдаланушыдан қайта растау сұралады.',
+  'seller.staff.reassigned':
+    'Маман шығарылды; болашақ жазылулар берілді, пайдаланушы растауы күтілуде.',
   'seller.staff.removed': 'Маман құрамнан шығарылды.',
   'seller.staff.period': 'Осы ай',
   'seller.staff.bookings': 'Жазылу',
@@ -1522,13 +1586,15 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.staff.schedule.standard_desc': 'Күн сайын бірдей сағаттар (10:00–19:00).',
   'seller.staff.schedule.flexible_desc': 'Күндерге қарай ауысым / өзгермелі сағаттар.',
   'seller.staff.assign': 'Маманның қызметтері',
-  'seller.staff.assign_hint': 'Бұл қызметтерді маман өз панелінде белгілейді; салон өзгерте алмайды.',
+  'seller.staff.assign_hint':
+    'Бұл қызметтерді маман өз панелінде белгілейді; салон өзгерте алмайды.',
   'seller.staff.readonly': 'Тек оқуға',
   'seller.staff.no_services': 'Маман әзірге қызмет қоспаған.',
   'boni.title': 'Boni',
   'boni.subtitle': 'AI сұлулық кеңесшіңіз',
   'boni.entry': 'Boni-ден сұраңыз',
-  'boni.intro': 'Тері, шаш немесе күтім туралы қызықтырған нәрсеңізді сұраңыз; сізге арнайы ұсыныс берейін.',
+  'boni.intro':
+    'Тері, шаш немесе күтім туралы қызықтырған нәрсеңізді сұраңыз; сізге арнайы ұсыныс берейін.',
   'boni.placeholder': 'Мысалы, құрғақ теріме не ұсынасыз?',
   'boni.send': 'Сұрау',
   'boni.thinking': 'Boni ойлануда…',
@@ -1553,8 +1619,10 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'verify.no_phone': 'Растау үшін алдымен кіріңіз.',
   'profile.verify.cta': 'Телефоныңызды растаңыз',
   'profile.restricted.title': 'Есептік жазбаң шектеулі',
-  'profile.restricted.days': 'Шектеу терезесі: {n} күн. Күтіп тұрған міндеттемеңді шеш, есептік жазбаң ашылады.',
-  'profile.restricted.desc': 'Күтіп тұрған міндеттемең шешілгенде есептік жазбаң автоматты ашылады.',
+  'profile.restricted.days':
+    'Шектеу терезесі: {n} күн. Күтіп тұрған міндеттемеңді шеш, есептік жазбаң ашылады.',
+  'profile.restricted.desc':
+    'Күтіп тұрған міндеттемең шешілгенде есептік жазбаң автоматты ашылады.',
   'profile.verify.desc': 'Есептік жазбаңызды қорғау үшін нөміріңізді растаңыз',
   'profile.verify.done': 'Телефон расталды',
   'profile.women_member': 'Әйел мүше',

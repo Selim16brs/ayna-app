@@ -82,7 +82,11 @@ export default function UzmanScreen() {
               <Ionicons name="chevron-back" size={22} color={colors.ink} />
             </Pressable>
             <Pressable style={styles.circleBtn} onPress={() => toggleFavorite(salonId)}>
-              <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? HOT_PINK : colors.ink} />
+              <Ionicons
+                name={isFav ? 'heart' : 'heart-outline'}
+                size={20}
+                color={isFav ? HOT_PINK : colors.ink}
+              />
             </Pressable>
           </View>
 
@@ -104,7 +108,10 @@ export default function UzmanScreen() {
                     {uzman.rating.toFixed(1)}
                   </Text>
                 </View>
-                <Pressable style={styles.salonPill} onPress={() => router.push('/professional/' + salonId)}>
+                <Pressable
+                  style={styles.salonPill}
+                  onPress={() => router.push('/professional/' + salonId)}
+                >
                   <Ionicons name="storefront-outline" size={12} color={colors.ink} />
                   <Text variant="caption" tone="ink" style={styles.salonPillText} numberOfLines={1}>
                     {salon.name}
@@ -154,7 +161,9 @@ export default function UzmanScreen() {
                     {formatPrice(finalPrice)}
                   </Text>
                   <View style={[styles.check, active && styles.checkOn]}>
-                    {active ? <Ionicons name="checkmark" size={14} color={colors.onAccent} /> : null}
+                    {active ? (
+                      <Ionicons name="checkmark" size={14} color={colors.onAccent} />
+                    ) : null}
                   </View>
                 </Pressable>
               );
@@ -226,7 +235,13 @@ const makeStyles = (colors: ColorTokens) =>
     },
     badgePillText: { fontWeight: '700' },
     heroName: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.4 },
-    heroStats: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginTop: space(1), flexWrap: 'wrap' },
+    heroStats: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      marginTop: space(1),
+      flexWrap: 'wrap',
+    },
     ratingPill: {
       flexDirection: 'row',
       alignItems: 'center',

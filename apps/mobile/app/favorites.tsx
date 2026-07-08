@@ -61,7 +61,11 @@ export default function FavoritesScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2.5), paddingBottom: TAB_BAR_CLEARANCE },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2.5),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     list: { gap: space(1.5) },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     emptyIcon: {

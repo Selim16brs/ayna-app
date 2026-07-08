@@ -29,8 +29,14 @@ export class PushService {
   // Bir kullanıcının tüm cihazlarına push (deep-link data ile). Hata yutulur.
   async sendToUser(userId: string, payload: PushPayload): Promise<void> {
     try {
-      const rows = await this.prisma.pushToken.findMany({ where: { userId }, select: { token: true } });
-      const messages = buildExpoMessages(rows.map((r) => r.token), payload);
+      const rows = await this.prisma.pushToken.findMany({
+        where: { userId },
+        select: { token: true },
+      });
+      const messages = buildExpoMessages(
+        rows.map((r) => r.token),
+        payload,
+      );
       if (messages.length === 0) return;
       await fetch(EXPO_PUSH_URL, {
         method: 'POST',

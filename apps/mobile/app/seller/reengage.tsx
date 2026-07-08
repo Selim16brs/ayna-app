@@ -47,7 +47,11 @@ export default function ReengageScreen() {
             {t('reengage.premium_body')}
           </Text>
           <View style={styles.upsellCta}>
-            <Button label={t('reengage.premium_cta')} variant="primary" onPress={() => router.push('/seller/premium')} />
+            <Button
+              label={t('reengage.premium_cta')}
+              variant="primary"
+              onPress={() => router.push('/seller/premium')}
+            />
           </View>
         </View>
       </Screen>
@@ -68,8 +72,21 @@ export default function ReengageScreen() {
     const dueSent = reengagedIds.includes(`${c.id}#due`);
     // Önizleme: 'due' zaten gittiyse onu, değilse 'pre' (sıradaki) mesajı göster
     const stage: 'pre' | 'due' = dueSent ? 'due' : 'pre';
-    const preview = fillParams(t(reengageMessage(c.serviceId, stage).bodyKey), { expert: expertName, service: label });
-    return { c, label, period, daysUntil, daysSince, preSent, dueSent, sent: preSent || dueSent, preview };
+    const preview = fillParams(t(reengageMessage(c.serviceId, stage).bodyKey), {
+      expert: expertName,
+      service: label,
+    });
+    return {
+      c,
+      label,
+      period,
+      daysUntil,
+      daysSince,
+      preSent,
+      dueSent,
+      sent: preSent || dueSent,
+      preview,
+    };
   }).sort((a, b) => a.daysUntil - b.daysUntil);
 
   const done = rows.filter((r) => r.sent);
@@ -199,7 +216,12 @@ export default function ReengageScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(1.25) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      gap: space(1.25),
+    },
     flex: { flex: 1 },
     shadowSoft: {
       shadowColor: '#000',
@@ -209,7 +231,13 @@ const makeStyles = (colors: ColorTokens) =>
       elevation: 1,
     },
     // upsell
-    upsellWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space(4), gap: space(1.5) },
+    upsellWrap: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: space(4),
+      gap: space(1.5),
+    },
     upsellIcon: {
       width: 72,
       height: 72,
@@ -249,10 +277,22 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(1.5),
     },
     section: { marginTop: space(1.5), marginBottom: space(0.25) },
-    card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(1.75), gap: space(1.25) },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(1.75),
+      gap: space(1.25),
+    },
     head: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
     avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.surfaceMuted },
-    chip: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: space(1), paddingVertical: 3, borderRadius: radius.pill },
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      paddingHorizontal: space(1),
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+    },
     chipText: { fontWeight: '800', fontSize: 11 },
     meta: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
     preview: {

@@ -69,7 +69,7 @@ export default function ReviewNewScreen() {
   const onUzman = step === 'uzman';
   const cur = onUzman ? uzman : salon;
   const setCur = onUzman ? setUzman : setSalon;
-  const targetName = onUzman ? booking.uzmanName ?? booking.proName : booking.proName;
+  const targetName = onUzman ? (booking.uzmanName ?? booking.proName) : booking.proName;
   const toggleTag = (key: string) =>
     setCur((r) => ({
       ...r,
@@ -109,7 +109,11 @@ export default function ReviewNewScreen() {
         ) : null}
 
         <Text variant="caption" tone="muted" style={styles.subtitle}>
-          {onUzman && isSalon ? t('review.step.uzman') : isSalon ? t('review.step.salon') : t('review.subtitle')}
+          {onUzman && isSalon
+            ? t('review.step.uzman')
+            : isSalon
+              ? t('review.step.salon')
+              : t('review.subtitle')}
         </Text>
 
         <View style={[styles.proCard, shadow.soft]}>
@@ -127,7 +131,11 @@ export default function ReviewNewScreen() {
         <View style={[styles.stars, shadow.soft]}>
           {STARS.map((s) => (
             <Pressable key={s} onPress={() => setCur((r) => ({ ...r, rating: s }))} hitSlop={6}>
-              <Ionicons name={s <= cur.rating ? 'star' : 'star-outline'} size={36} color={colors.gold} />
+              <Ionicons
+                name={s <= cur.rating ? 'star' : 'star-outline'}
+                size={36}
+                color={colors.gold}
+              />
             </Pressable>
           ))}
         </View>
@@ -145,7 +153,11 @@ export default function ReviewNewScreen() {
                 onPress={() => toggleTag(tg.key)}
                 style={[styles.tag, on && styles.tagOn]}
               >
-                <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} style={on ? styles.tagOnText : undefined}>
+                <Text
+                  variant="caption"
+                  tone={on ? 'onAccent' : 'inkSoft'}
+                  style={on ? styles.tagOnText : undefined}
+                >
                   {t(tg.label)}
                 </Text>
               </Pressable>
@@ -178,13 +190,19 @@ export default function ReviewNewScreen() {
               {photos.map((uri, i) => (
                 <View key={`${uri}-${i}`} style={styles.photoThumb}>
                   <Image source={{ uri }} style={styles.photoImg} />
-                  <Pressable onPress={() => setPhotos((p) => p.filter((_, x) => x !== i))} style={styles.photoRemove}>
+                  <Pressable
+                    onPress={() => setPhotos((p) => p.filter((_, x) => x !== i))}
+                    style={styles.photoRemove}
+                  >
                     <Ionicons name="close" size={14} color={colors.onColor} />
                   </Pressable>
                 </View>
               ))}
               {photos.length < 4 ? (
-                <Pressable onPress={pickPhoto} style={[styles.photoAdd, { borderColor: colors.line }]}>
+                <Pressable
+                  onPress={pickPhoto}
+                  style={[styles.photoAdd, { borderColor: colors.line }]}
+                >
                   <Ionicons name="camera-outline" size={22} color={colors.muted} />
                 </Pressable>
               ) : null}
@@ -227,7 +245,13 @@ function StepDot({ label, active, done }: { label: string; active: boolean; done
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingBottom: space(4), paddingTop: space(1) },
-    steps: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space(1), marginBottom: space(2) },
+    steps: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space(1),
+      marginBottom: space(2),
+    },
     stepDot: { alignItems: 'center', gap: space(0.5) },
     stepCircle: {
       width: 26,
@@ -242,9 +266,19 @@ const makeStyles = (colors: ColorTokens) =>
     stepInnerOn: { backgroundColor: colors.onAccent },
     stepLine: { width: 40, height: 2, backgroundColor: colors.line, marginBottom: space(2) },
     subtitle: { marginBottom: space(2) },
-    empty: { alignItems: 'center', justifyContent: 'center', paddingTop: space(8), gap: space(1.5) },
+    empty: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: space(8),
+      gap: space(1.5),
+    },
     emptyText: {},
-    proCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2), gap: 2 },
+    proCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: 2,
+    },
     label: { marginTop: space(3), marginBottom: space(1.5) },
     stars: {
       flexDirection: 'row',
@@ -272,7 +306,11 @@ const makeStyles = (colors: ColorTokens) =>
       color: colors.ink,
       fontSize: 15,
     },
-    footer: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: TAB_BAR_CLEARANCE },
+    footer: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     photoHint: { marginTop: -space(1), marginBottom: space(1) },
     photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5) },
     photoThumb: { width: 84, height: 84, borderRadius: radius.md, overflow: 'hidden' },

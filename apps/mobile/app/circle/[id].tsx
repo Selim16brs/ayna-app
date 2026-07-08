@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { type CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -146,7 +154,12 @@ export default function PostDetailScreen() {
                   {t('circle.helpful_btn')} · {post.helpful}
                 </Text>
               </Pressable>
-              <Pressable style={styles.reportBtn} onPress={onReport} hitSlop={8} disabled={reported}>
+              <Pressable
+                style={styles.reportBtn}
+                onPress={onReport}
+                hitSlop={8}
+                disabled={reported}
+              >
                 <Ionicons name="flag-outline" size={15} color={colors.muted} />
                 <Text variant="caption" tone="muted">
                   {reported ? t('circle.reported') : t('circle.report')}
@@ -227,7 +240,12 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.lg,
       padding: space(2.25),
     },
-    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space(1) },
+    cardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: space(1),
+    },
     author: { flexDirection: 'row', alignItems: 'center', gap: space(1.25), flexShrink: 1 },
     followBtn: {
       flexDirection: 'row',

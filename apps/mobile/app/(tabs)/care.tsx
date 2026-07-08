@@ -63,7 +63,6 @@ export default function BenimIcinScreen() {
     return [...active].sort((a, b) => a.startMs - b.startMs)[0];
   }, [bookings]);
 
-
   return (
     <Screen edges={[]}>
       <TabHero title={firstName} subtitle={t(greetingKey())} />
@@ -71,7 +70,10 @@ export default function BenimIcinScreen() {
         {/* §5.4 #2 — yaklaşan randevu (karşılamadan hemen sonra) */}
         <Animated.View entering={FadeInDown.duration(360).delay(40)} style={styles.block}>
           {nextBooking ? (
-            <FeatureCard booking={nextBooking} onPress={() => router.push('/booking/' + nextBooking.id)} />
+            <FeatureCard
+              booking={nextBooking}
+              onPress={() => router.push('/booking/' + nextBooking.id)}
+            />
           ) : (
             <Pressable style={styles.emptyFeature} onPress={() => router.push('/discover')}>
               <View style={styles.emptyFeatureIcon}>
@@ -98,7 +100,10 @@ export default function BenimIcinScreen() {
         {/* Bakım skoru — halka göstergeli hero (referans dili) */}
         <Animated.View entering={FadeInDown.duration(360).delay(40)} style={styles.block}>
           {careRoutines.length > 0 ? (
-            <Pressable style={[styles.scoreCard, shadow.card]} onPress={() => router.push('/care/routines')}>
+            <Pressable
+              style={[styles.scoreCard, shadow.card]}
+              onPress={() => router.push('/care/routines')}
+            >
               <View style={styles.scoreTop}>
                 <ProgressRing
                   size={94}
@@ -212,7 +217,12 @@ export default function BenimIcinScreen() {
                   <View style={[styles.quickIcon, { backgroundColor: c.bg }]}>
                     <Ionicons name={q.icon as IoniconName} size={22} color={c.fg} />
                   </View>
-                  <Text variant="caption" tone="inkSoft" style={styles.quickLabel} numberOfLines={1}>
+                  <Text
+                    variant="caption"
+                    tone="inkSoft"
+                    style={styles.quickLabel}
+                    numberOfLines={1}
+                  >
                     {t(q.labelKey)}
                   </Text>
                 </PressableScale>

@@ -15,8 +15,14 @@ export interface CancelOutcome {
 // - Kapora ödenmemişse → düz iptal (yakma/iade yok).
 // - Kapora ödenmiş + geç iptal (<3sa) → kapora yanar (ceza).
 // - Kapora ödenmiş + serbest iptal (>3sa) → uzman iade eder (refund_pending).
-export function cancelOutcome(status: string, startAtMs: number | null, nowMs: number): CancelOutcome {
+export function cancelOutcome(
+  status: string,
+  startAtMs: number | null,
+  nowMs: number,
+): CancelOutcome {
   if (!DEPOSIT_PAID_STATUSES.includes(status)) return { status: 'cancelled', forfeit: false };
   const late = startAtMs != null && startAtMs - nowMs <= FREE_CANCEL_WINDOW_MS;
-  return late ? { status: 'cancelled', forfeit: true } : { status: 'refund_pending', forfeit: false };
+  return late
+    ? { status: 'cancelled', forfeit: true }
+    : { status: 'refund_pending', forfeit: false };
 }

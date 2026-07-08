@@ -23,10 +23,7 @@ export default function QuoteSentScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.circle}>
           <Ionicons name="paper-plane" size={38} color={colors.onColor} />
         </View>
@@ -60,9 +57,7 @@ export default function QuoteSentScreen() {
         <Button
           label={t('quote.sent.view')}
           variant="primary"
-          onPress={() =>
-            router.replace(id ? `/quote/results?id=${id}` : '/quote/results')
-          }
+          onPress={() => router.replace(id ? `/quote/results?id=${id}` : '/quote/results')}
         />
         <Button
           label={t('quote.sent.back')}

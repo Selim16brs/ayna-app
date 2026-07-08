@@ -34,7 +34,10 @@ export default function PaymentScreen() {
   const load = useCallback(async () => {
     if (!token || !bookingId) return;
     try {
-      const [sum, existing] = await Promise.all([api.loyalty(token), api.paymentFor(token, bookingId)]);
+      const [sum, existing] = await Promise.all([
+        api.loyalty(token),
+        api.paymentFor(token, bookingId),
+      ]);
       setBalance(sum.points);
       if (existing?.status === 'paid') setPaid(existing);
     } catch {
@@ -54,7 +57,10 @@ export default function PaymentScreen() {
       const done = await api.confirmPayment(token, intent.id);
       setPaid(done);
       await hydrateLoyalty();
-      Alert.alert(t('payment.success_title'), fillParams(t('payment.success_sub'), { ref: done.providerRef ?? '' }));
+      Alert.alert(
+        t('payment.success_title'),
+        fillParams(t('payment.success_sub'), { ref: done.providerRef ?? '' }),
+      );
     } catch {
       Alert.alert(t('payment.title'), t('payment.failed'));
     } finally {
@@ -101,7 +107,11 @@ export default function PaymentScreen() {
                 </View>
               ) : null}
               {pointsApplied > 0 ? (
-                <Row label={t('payment.points_applied')} value={`− ${formatPrice(pointsApplied)}`} tone="accentFg" />
+                <Row
+                  label={t('payment.points_applied')}
+                  value={`− ${formatPrice(pointsApplied)}`}
+                  tone="accentFg"
+                />
               ) : null}
               <View style={styles.divider} />
               <Row label={t('payment.cash_due')} value={formatPrice(cashDue)} strong />
@@ -119,7 +129,17 @@ export default function PaymentScreen() {
   );
 }
 
-function Row({ label, value, strong, tone }: { label: string; value: string; strong?: boolean; tone?: 'ink' | 'accentFg' }) {
+function Row({
+  label,
+  value,
+  strong,
+  tone,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  tone?: 'ink' | 'accentFg';
+}) {
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
@@ -136,9 +156,19 @@ function Row({ label, value, strong, tone }: { label: string; value: string; str
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingTop: space(2), gap: space(2) },
-    card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2.5), gap: space(1.5) },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2.5),
+      gap: space(1.5),
+    },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    pointsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space(2) },
+    pointsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: space(2),
+    },
     pointsText: { flex: 1, gap: 2 },
     divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
     simNote: { textAlign: 'center', paddingHorizontal: space(2) },

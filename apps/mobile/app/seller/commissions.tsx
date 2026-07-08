@@ -100,14 +100,20 @@ export default function CommissionsScreen() {
               </Text>
 
               {inv.status !== 'collected' ? (
-                <Pressable style={styles.cta} onPress={() => uploadReceipt(inv)} disabled={busy === inv.id}>
+                <Pressable
+                  style={styles.cta}
+                  onPress={() => uploadReceipt(inv)}
+                  disabled={busy === inv.id}
+                >
                   <Ionicons
                     name={inv.receiptUri ? 'checkmark-circle' : 'cloud-upload-outline'}
                     size={18}
                     color={colors.onAccent}
                   />
                   <Text variant="bodyStrong" tone="onAccent" style={styles.ctaText}>
-                    {inv.receiptUri ? t('commission.receipt_change') : t('commission.receipt_upload')}
+                    {inv.receiptUri
+                      ? t('commission.receipt_change')
+                      : t('commission.receipt_upload')}
                   </Text>
                 </Pressable>
               ) : (

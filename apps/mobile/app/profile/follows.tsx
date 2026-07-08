@@ -25,7 +25,9 @@ export default function FollowsScreen() {
 
   return (
     <Screen edges={[]}>
-      <StackHeader title={isFollowing ? t('profile.following_title') : t('profile.followers_title')} />
+      <StackHeader
+        title={isFollowing ? t('profile.following_title') : t('profile.followers_title')}
+      />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {list.length === 0 ? (
           <View style={styles.empty}>
@@ -64,7 +66,11 @@ export default function FollowsScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: TAB_BAR_CLEARANCE },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     list: { gap: space(1.25) },
     row: {
       flexDirection: 'row',

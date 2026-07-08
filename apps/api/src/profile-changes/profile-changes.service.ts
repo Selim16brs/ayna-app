@@ -12,7 +12,13 @@ export class ProfileChangesService {
 
   private async audit(action: string, resourceId: string, actorId?: string) {
     await this.prisma.auditLog.create({
-      data: { action, resourceType: 'profile_change', resourceId, actorId: actorId ?? null, actorRole: 'admin' },
+      data: {
+        action,
+        resourceType: 'profile_change',
+        resourceId,
+        actorId: actorId ?? null,
+        actorRole: 'admin',
+      },
     });
   }
 
@@ -26,7 +32,13 @@ export class ProfileChangesService {
       data: { status: 'rejected', reviewedAt: new Date() },
     });
     return this.prisma.profileChangeRequest.create({
-      data: { userId, userName: user!.name, role: user!.role, changes: changes as object, status: 'pending' },
+      data: {
+        userId,
+        userName: user!.name,
+        role: user!.role,
+        changes: changes as object,
+        status: 'pending',
+      },
     });
   }
 
@@ -54,7 +66,10 @@ export class ProfileChangesService {
     if (!req) this.notFound();
     const changes = (req!.changes ?? {}) as Record<string, unknown>;
     if (typeof changes.name === 'string' && changes.name.trim()) {
-      await this.prisma.user.update({ where: { id: req!.userId }, data: { name: changes.name.trim() } });
+      await this.prisma.user.update({
+        where: { id: req!.userId },
+        data: { name: changes.name.trim() },
+      });
     }
     const updated = await this.prisma.profileChangeRequest.update({
       where: { id },

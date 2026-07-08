@@ -29,7 +29,13 @@ export function WaveBottom({
       <Svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
         <Path d={fill} fill={color} />
         {stroke ? (
-          <Path d={edge} fill="none" stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" />
+          <Path
+            d={edge}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+          />
         ) : null}
       </Svg>
     </View>

@@ -77,7 +77,11 @@ export default function WelcomeScreen() {
                   onPress={() => setLocale(l.code)}
                   style={[styles.langPill, on && { backgroundColor: colors.accent }]}
                 >
-                  <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} style={styles.langText}>
+                  <Text
+                    variant="caption"
+                    tone={on ? 'onAccent' : 'inkSoft'}
+                    style={styles.langText}
+                  >
                     {l.label}
                   </Text>
                 </Pressable>
@@ -85,8 +89,16 @@ export default function WelcomeScreen() {
             })}
           </View>
 
-          <Button label={t('auth.tab.login')} variant="primary" onPress={() => router.push('/auth/login')} />
-          <Button label={t('auth.tab.register')} variant="secondary" onPress={() => router.push('/auth')} />
+          <Button
+            label={t('auth.tab.login')}
+            variant="primary"
+            onPress={() => router.push('/auth/login')}
+          />
+          <Button
+            label={t('auth.tab.register')}
+            variant="secondary"
+            onPress={() => router.push('/auth')}
+          />
         </View>
       </View>
     </Screen>
@@ -114,11 +126,21 @@ const makeStyles = (colors: ColorTokens) =>
       color: '#FF2D78',
     },
     value: { textAlign: 'center', marginTop: space(1.5), maxWidth: 300, lineHeight: 19 },
-    bullets: { marginTop: space(2.5), gap: space(1), alignSelf: 'stretch', paddingHorizontal: space(2) },
+    bullets: {
+      marginTop: space(2.5),
+      gap: space(1),
+      alignSelf: 'stretch',
+      paddingHorizontal: space(2),
+    },
     bulletRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     bulletText: { flex: 1, lineHeight: 18 },
     bottom: { paddingBottom: space(4), gap: space(1.5) },
-    langRow: { flexDirection: 'row', gap: space(1), justifyContent: 'center', marginBottom: space(1) },
+    langRow: {
+      flexDirection: 'row',
+      gap: space(1),
+      justifyContent: 'center',
+      marginBottom: space(1),
+    },
     langPill: {
       paddingHorizontal: space(2),
       paddingVertical: space(1),

@@ -43,7 +43,11 @@ export default function PassportScreen() {
   const cancel = () =>
     Alert.alert(t('passport.premium.cancel_confirm'), undefined, [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('passport.premium.cancel'), style: 'destructive', onPress: () => setPremium(false) },
+      {
+        text: t('passport.premium.cancel'),
+        style: 'destructive',
+        onPress: () => setPremium(false),
+      },
     ]);
 
   return (
@@ -130,7 +134,11 @@ export default function PassportScreen() {
         <View style={[styles.premiumCard, shadow.card]}>
           <View style={styles.premiumHead}>
             <View style={styles.premiumBadge}>
-              <Ionicons name={premium ? 'star' : 'star-outline'} size={16} color={colors.onAccent} />
+              <Ionicons
+                name={premium ? 'star' : 'star-outline'}
+                size={16}
+                color={colors.onAccent}
+              />
               <Text variant="caption" tone="onAccent" style={styles.premiumBadgeText}>
                 {premium ? t('passport.premium.active') : t('passport.premium.free')}
               </Text>
@@ -170,7 +178,11 @@ export default function PassportScreen() {
               </Text>
             </Pressable>
           ) : (
-            <Button label={`${t('passport.premium.cta')} — ${premiumPrice} ₸/${t('passport.premium.month')}`} variant="primary" onPress={buy} />
+            <Button
+              label={`${t('passport.premium.cta')} — ${premiumPrice} ₸/${t('passport.premium.month')}`}
+              variant="primary"
+              onPress={buy}
+            />
           )}
         </View>
       </ScrollView>
@@ -194,7 +206,11 @@ function HeroStat({ value, label }: { value: string; label: string }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     subtitle: { marginBottom: space(2.5) },
     hero: { borderRadius: radius.xl, padding: space(2.75), backgroundColor: colors.accent },
     heroTop: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
@@ -242,7 +258,10 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(2),
       paddingVertical: space(1.75),
     },
-    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceMuted },
+    rowBorder: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.surfaceMuted,
+    },
     icon: {
       width: 38,
       height: 38,
@@ -251,7 +270,12 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     rowLabel: { flex: 1 },
-    premiumCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2.5), gap: space(1.75) },
+    premiumCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2.5),
+      gap: space(1.75),
+    },
     premiumHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     premiumBadge: {
       flexDirection: 'row',

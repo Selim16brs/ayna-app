@@ -51,7 +51,12 @@ const makeStyles = (colors: ColorTokens) =>
       borderBottomLeftRadius: radius.xl,
       borderBottomRightRadius: radius.xl,
     },
-    row: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: space(1.5) },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      gap: space(1.5),
+    },
     textCol: { flex: 1 },
     title: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.6 },
     sub: { marginTop: space(0.75) },

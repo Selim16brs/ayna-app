@@ -73,7 +73,10 @@ export default function SalonHomeScreen() {
               <PressableScale style={styles.circleBtn} onPress={editCover}>
                 <Ionicons name="camera" size={18} color="#FFFFFF" />
               </PressableScale>
-              <PressableScale style={styles.circleBtn} onPress={() => router.push('/notifications')}>
+              <PressableScale
+                style={styles.circleBtn}
+                onPress={() => router.push('/notifications')}
+              >
                 <Ionicons name="notifications-outline" size={18} color="#FFFFFF" />
                 {unread > 0 ? (
                   <View style={styles.bellBadge}>
@@ -113,7 +116,11 @@ export default function SalonHomeScreen() {
                   </Text>
                 </View>
               </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.adsRow}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.adsRow}
+              >
                 {ads.map((ad) => (
                   <AdCard key={ad.id} ad={ad} />
                 ))}
@@ -152,7 +159,12 @@ export default function SalonHomeScreen() {
                   onPress={() =>
                     router.push({
                       pathname: '/seller/staff',
-                      params: { name: u.name, image: u.image, bookings: String(u.bookings), rating: String(u.rating) },
+                      params: {
+                        name: u.name,
+                        image: u.image,
+                        bookings: String(u.bookings),
+                        rating: String(u.rating),
+                      },
                     })
                   }
                 >
@@ -162,9 +174,24 @@ export default function SalonHomeScreen() {
                       {u.name}
                     </Text>
                     <View style={styles.perfRow}>
-                      <PerfChip icon="star" tint={colors.gold} value={p.rating.toFixed(1)} label={t('salon.metric.rating')} />
-                      <PerfChip icon="pie-chart" tint={colors.accentFg} value={`%${p.occupancy}`} label={t('salon.metric.occupancy')} />
-                      <PerfChip icon="time" tint={colors.inkSoft} value={`${p.response}dk`} label={t('salon.metric.response')} />
+                      <PerfChip
+                        icon="star"
+                        tint={colors.gold}
+                        value={p.rating.toFixed(1)}
+                        label={t('salon.metric.rating')}
+                      />
+                      <PerfChip
+                        icon="pie-chart"
+                        tint={colors.accentFg}
+                        value={`%${p.occupancy}`}
+                        label={t('salon.metric.occupancy')}
+                      />
+                      <PerfChip
+                        icon="time"
+                        tint={colors.inkSoft}
+                        value={`${p.response}dk`}
+                        label={t('salon.metric.response')}
+                      />
                     </View>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color={colors.muted} />
@@ -214,7 +241,17 @@ function AdCard({ ad }: { ad: SupplierAd }) {
   );
 }
 
-function PerfChip({ icon, tint, value, label }: { icon: IoniconName; tint: string; value: string; label: string }) {
+function PerfChip({
+  icon,
+  tint,
+  value,
+  label,
+}: {
+  icon: IoniconName;
+  tint: string;
+  value: string;
+  label: string;
+}) {
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.perfChip}>
@@ -272,7 +309,13 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    bellBadgeText: { color: '#FFFFFF', fontSize: 10, lineHeight: 12, fontWeight: '800', includeFontPadding: false },
+    bellBadgeText: {
+      color: '#FFFFFF',
+      fontSize: 10,
+      lineHeight: 12,
+      fontWeight: '800',
+      includeFontPadding: false,
+    },
     heroBottom: { paddingHorizontal: space(3), paddingBottom: space(2.5) },
     heroGreet: { color: 'rgba(255,255,255,0.9)', fontWeight: '600' },
     heroName: { color: '#FFFFFF', letterSpacing: -0.3 },
@@ -286,7 +329,13 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(1.75),
       marginBottom: space(2.5),
     },
-    upsellIcon: { width: 42, height: 42, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+    upsellIcon: {
+      width: 42,
+      height: 42,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     upsellCta: { fontWeight: '800', marginTop: 3 },
     sectionDivider: {
       height: StyleSheet.hairlineWidth,
@@ -294,7 +343,12 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(3.5),
       marginBottom: space(2.5),
     },
-    sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space(1.75) },
+    sectionHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: space(1.75),
+    },
     sectionTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: space(1.25), flex: 1 },
     sectionAccent: { width: 3, height: 30, borderRadius: 2, backgroundColor: colors.accentFg },
     seeAllBtn: {
@@ -333,7 +387,13 @@ const makeStyles = (colors: ColorTokens) =>
     perfVal: { fontWeight: '800', fontSize: 11 },
     perfLbl: { fontSize: 10 },
     // reklamlar
-    adsHead: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginTop: space(3), marginBottom: space(1.25) },
+    adsHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      marginTop: space(3),
+      marginBottom: space(1.25),
+    },
     sponsoredTag: {
       flexDirection: 'row',
       alignItems: 'center',

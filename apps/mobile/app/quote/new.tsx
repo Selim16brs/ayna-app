@@ -167,7 +167,11 @@ export default function NewQuoteScreen() {
                 onPress={() => setCollectMin(m)}
                 style={[styles.durChip, active && styles.durChipActive]}
               >
-                <Text variant="caption" tone={active ? 'onAccent' : 'inkSoft'} style={styles.durText}>
+                <Text
+                  variant="caption"
+                  tone={active ? 'onAccent' : 'inkSoft'}
+                  style={styles.durText}
+                >
                   {t(`dur.${m}` as MessageKey)}
                 </Text>
               </Pressable>
@@ -205,7 +209,12 @@ export default function NewQuoteScreen() {
       </ScrollView>
 
       {/* ── CTA ── */}
-      <View style={[styles.footer, { paddingBottom: (insets.bottom || space(1.5)) + TAB_BAR_CLEARANCE }]}>
+      <View
+        style={[
+          styles.footer,
+          { paddingBottom: (insets.bottom || space(1.5)) + TAB_BAR_CLEARANCE },
+        ]}
+      >
         <Pressable style={styles.cta} onPress={submit} disabled={submitting}>
           <Text variant="bodyStrong" tone="onAccent" style={styles.ctaText}>
             {t('quote.new.view_offers')}
@@ -290,7 +299,12 @@ const makeStyles = (colors: ColorTokens) =>
     },
     uploadTitle: { fontWeight: '800' },
 
-    pickRow: { flexDirection: 'row', gap: space(1.5), paddingHorizontal: space(3), marginTop: space(2) },
+    pickRow: {
+      flexDirection: 'row',
+      gap: space(1.5),
+      paddingHorizontal: space(3),
+      marginTop: space(2),
+    },
     pickBtn: {
       flex: 1,
       flexDirection: 'row',

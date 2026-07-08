@@ -22,7 +22,10 @@ import {
 } from '../../src/ui';
 
 // §12.7 — durum rozetleri
-const STATUS: Record<PromotionStatus, { key: MessageKey; tone: 'gold' | 'success' | 'danger' | 'muted' }> = {
+const STATUS: Record<
+  PromotionStatus,
+  { key: MessageKey; tone: 'gold' | 'success' | 'danger' | 'muted' }
+> = {
   pending: { key: 'promo.status.pending', tone: 'gold' },
   live: { key: 'promo.status.live', tone: 'success' },
   rejected: { key: 'promo.status.rejected', tone: 'danger' },
@@ -104,17 +107,23 @@ export default function SellerPromotionsScreen() {
             <Text variant="body" tone="onAccent" style={styles.upsellBody}>
               {t('promo.upsell_body')}
             </Text>
-            {(['promo.upsell_b1', 'promo.upsell_b2', 'promo.upsell_b3'] as MessageKey[]).map((k) => (
-              <View key={k} style={styles.upsellRow}>
-                <Ionicons name="checkmark-circle" size={16} color={colors.onAccent} />
-                <Text variant="caption" tone="onAccent" style={styles.upsellRowText}>
-                  {t(k)}
-                </Text>
-              </View>
-            ))}
+            {(['promo.upsell_b1', 'promo.upsell_b2', 'promo.upsell_b3'] as MessageKey[]).map(
+              (k) => (
+                <View key={k} style={styles.upsellRow}>
+                  <Ionicons name="checkmark-circle" size={16} color={colors.onAccent} />
+                  <Text variant="caption" tone="onAccent" style={styles.upsellRowText}>
+                    {t(k)}
+                  </Text>
+                </View>
+              ),
+            )}
           </LinearGradient>
           <View style={styles.upsellCta}>
-            <Button label={t('promo.upsell_cta')} variant="primary" onPress={() => router.push('/seller/premium')} />
+            <Button
+              label={t('promo.upsell_cta')}
+              variant="primary"
+              onPress={() => router.push('/seller/premium')}
+            />
           </View>
           <Pressable onPress={() => router.back()} style={styles.laterBtn}>
             <Text variant="bodyStrong" tone="muted">
@@ -207,10 +216,22 @@ export default function SellerPromotionsScreen() {
               </Field>
               <View style={styles.dateRow}>
                 <View style={styles.flex}>
-                  <DateField label={t('promo.form.start')} value={start} onChange={setStart} mode="date" minimumDate={now} />
+                  <DateField
+                    label={t('promo.form.start')}
+                    value={start}
+                    onChange={setStart}
+                    mode="date"
+                    minimumDate={now}
+                  />
                 </View>
                 <View style={styles.flex}>
-                  <DateField label={t('promo.form.end')} value={end} onChange={setEnd} mode="date" minimumDate={start} />
+                  <DateField
+                    label={t('promo.form.end')}
+                    value={end}
+                    onChange={setEnd}
+                    mode="date"
+                    minimumDate={start}
+                  />
                 </View>
               </View>
               <Field label={t('promo.form.image')}>

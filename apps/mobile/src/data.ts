@@ -661,7 +661,10 @@ export interface Review {
 }
 
 // §6.1/§7.1 — alt kırılım (hizmet kalitesi/temizlik/iletişim/zamanlama) özet çubukları
-export type RatingBreakdown = { key: 'quality' | 'hygiene' | 'communication' | 'timing'; score: number };
+export type RatingBreakdown = {
+  key: 'quality' | 'hygiene' | 'communication' | 'timing';
+  score: number;
+};
 
 export interface ProfessionalDetail extends Professional {
   staff: Uzman[];
@@ -809,8 +812,13 @@ export function getProfessionalDetail(id: string): ProfessionalDetail {
     { key: 'communication', score: dim(-0.1) },
     { key: 'timing', score: dim(0) },
   ];
-  const certs = ['photo-1584515933487-779824d29309', 'photo-1526045431048-f857369baa09'].map(portfolioImg);
-  const social = { instagram: base.name.toLowerCase().replace(/\s+/g, '_'), tiktok: base.name.split(' ')[0]!.toLowerCase() };
+  const certs = ['photo-1584515933487-779824d29309', 'photo-1526045431048-f857369baa09'].map(
+    portfolioImg,
+  );
+  const social = {
+    instagram: base.name.toLowerCase().replace(/\s+/g, '_'),
+    tiktok: base.name.split(' ')[0]!.toLowerCase(),
+  };
   // §6.1 — bağımsız uzman bir salona bağlıysa bağlı salon gösterilir (mock: deterministik yarısı)
   const salonBase = PROFESSIONALS.find((p) => p.kind === 'salon' && p.id !== base.id);
   const salon =
@@ -1115,14 +1123,50 @@ const DAY_MS = 24 * 60 * 60_000;
 // Seed: son geliş = SEED_NOW - (periyot - kalan gün) → bitiş bugün/yarın/ileride ayarlanır.
 export const SELLER_PAST_CLIENTS: PastClient[] = [
   // BUGÜN biten (bitiş günü — 'due' bildirimi gider)
-  { id: 'pc-1', name: 'Zhanel S.', image: avatar(FACES[3]!), serviceId: 'nails-gel', lastVisitMs: SEED_NOW - 21 * DAY_MS }, // periyot 21 → bugün
-  { id: 'pc-3', name: 'Saule N.', image: avatar(FACES[5]!), serviceId: 'skin-facial', lastVisitMs: SEED_NOW - 30 * DAY_MS }, // periyot 30 → bugün
+  {
+    id: 'pc-1',
+    name: 'Zhanel S.',
+    image: avatar(FACES[3]!),
+    serviceId: 'nails-gel',
+    lastVisitMs: SEED_NOW - 21 * DAY_MS,
+  }, // periyot 21 → bugün
+  {
+    id: 'pc-3',
+    name: 'Saule N.',
+    image: avatar(FACES[5]!),
+    serviceId: 'skin-facial',
+    lastVisitMs: SEED_NOW - 30 * DAY_MS,
+  }, // periyot 30 → bugün
   // YARIN biten (1 gün kala — 'pre' bildirimi gider)
-  { id: 'pc-2', name: 'Dana K.', image: avatar(FACES[4]!), serviceId: 'lashes-classic', lastVisitMs: SEED_NOW - 20 * DAY_MS }, // periyot 21 → yarın
-  { id: 'pc-6', name: 'Aruzhan M.', image: avatar(FACES[0]!), serviceId: 'brows-shape', lastVisitMs: SEED_NOW - 20 * DAY_MS }, // periyot 21 → yarın
+  {
+    id: 'pc-2',
+    name: 'Dana K.',
+    image: avatar(FACES[4]!),
+    serviceId: 'lashes-classic',
+    lastVisitMs: SEED_NOW - 20 * DAY_MS,
+  }, // periyot 21 → yarın
+  {
+    id: 'pc-6',
+    name: 'Aruzhan M.',
+    image: avatar(FACES[0]!),
+    serviceId: 'brows-shape',
+    lastVisitMs: SEED_NOW - 20 * DAY_MS,
+  }, // periyot 21 → yarın
   // İLERİDE (henüz bildirim yok — sırada)
-  { id: 'pc-5', name: 'Madina B.', image: avatar(FACES[7]!), serviceId: 'nails-classic', lastVisitMs: SEED_NOW - 13 * DAY_MS }, // periyot 15 → 2 gün sonra
-  { id: 'pc-4', name: 'Aigerim T.', image: avatar(FACES[6]!), serviceId: 'hair-color', lastVisitMs: SEED_NOW - 39 * DAY_MS }, // periyot 42 → 3 gün sonra
+  {
+    id: 'pc-5',
+    name: 'Madina B.',
+    image: avatar(FACES[7]!),
+    serviceId: 'nails-classic',
+    lastVisitMs: SEED_NOW - 13 * DAY_MS,
+  }, // periyot 15 → 2 gün sonra
+  {
+    id: 'pc-4',
+    name: 'Aigerim T.',
+    image: avatar(FACES[6]!),
+    serviceId: 'hair-color',
+    lastVisitMs: SEED_NOW - 39 * DAY_MS,
+  }, // periyot 42 → 3 gün sonra
 ];
 
 // §10/§4/§14.5 — kategoriye göre SICAK "geri çağırma" bildirim şablonu (params: {expert}, {service}).
@@ -1133,14 +1177,42 @@ export interface ReengageTemplate {
   icon: string;
 }
 export const REENGAGE_TEMPLATES: Record<string, ReengageTemplate> = {
-  hair: { titleKey: 'notif.reengage.hair_t', bodyKey: 'notif.reengage.hair_b', icon: 'cut-outline' },
-  nails: { titleKey: 'notif.reengage.nails_t', bodyKey: 'notif.reengage.nails_b', icon: 'color-palette-outline' },
-  lashes: { titleKey: 'notif.reengage.lashes_t', bodyKey: 'notif.reengage.lashes_b', icon: 'sparkles-outline' },
-  brows: { titleKey: 'notif.reengage.brows_t', bodyKey: 'notif.reengage.brows_b', icon: 'eye-outline' },
-  skincare: { titleKey: 'notif.reengage.skincare_t', bodyKey: 'notif.reengage.skincare_b', icon: 'water-outline' },
-  epilation: { titleKey: 'notif.reengage.epilation_t', bodyKey: 'notif.reengage.epilation_b', icon: 'flash-outline' },
+  hair: {
+    titleKey: 'notif.reengage.hair_t',
+    bodyKey: 'notif.reengage.hair_b',
+    icon: 'cut-outline',
+  },
+  nails: {
+    titleKey: 'notif.reengage.nails_t',
+    bodyKey: 'notif.reengage.nails_b',
+    icon: 'color-palette-outline',
+  },
+  lashes: {
+    titleKey: 'notif.reengage.lashes_t',
+    bodyKey: 'notif.reengage.lashes_b',
+    icon: 'sparkles-outline',
+  },
+  brows: {
+    titleKey: 'notif.reengage.brows_t',
+    bodyKey: 'notif.reengage.brows_b',
+    icon: 'eye-outline',
+  },
+  skincare: {
+    titleKey: 'notif.reengage.skincare_t',
+    bodyKey: 'notif.reengage.skincare_b',
+    icon: 'water-outline',
+  },
+  epilation: {
+    titleKey: 'notif.reengage.epilation_t',
+    bodyKey: 'notif.reengage.epilation_b',
+    icon: 'flash-outline',
+  },
   spa: { titleKey: 'notif.reengage.spa_t', bodyKey: 'notif.reengage.spa_b', icon: 'body-outline' },
-  pmu: { titleKey: 'notif.reengage.pmu_t', bodyKey: 'notif.reengage.pmu_b', icon: 'color-wand-outline' },
+  pmu: {
+    titleKey: 'notif.reengage.pmu_t',
+    bodyKey: 'notif.reengage.pmu_b',
+    icon: 'color-wand-outline',
+  },
 };
 export const REENGAGE_FALLBACK: ReengageTemplate = {
   titleKey: 'notif.reengage.generic_t',
@@ -1154,10 +1226,7 @@ export const reengageTemplate = (categoryId: string): ReengageTemplate =>
 // Gövde hizmete özel + samimi; başlık aşamaya göre genel ({service} içerir).
 // Anahtar deseni: notif.re.<serviceId>.<stage> (i18n'de 3 dil). Periyodu olmayan
 // hizmet buraya hiç gelmez (bildirim yalnız periyodik hizmetlerde çalışır).
-export const reengageMessage = (
-  serviceId: string,
-  stage: 'pre' | 'due',
-): ReengageTemplate => ({
+export const reengageMessage = (serviceId: string, stage: 'pre' | 'due'): ReengageTemplate => ({
   titleKey: (stage === 'pre' ? 'notif.reengage.soon_t' : 'notif.reengage.due_t') as MessageKey,
   bodyKey: `notif.re.${serviceId}.${stage}` as MessageKey,
   icon: stage === 'pre' ? 'time-outline' : 'heart-outline',
@@ -1250,10 +1319,38 @@ export interface CareRoutine {
 }
 
 export const SEED_CARE_ROUTINES: CareRoutine[] = [
-  { id: 'cr1', name: 'Kalıcı oje yenileme', icon: 'color-palette-outline', dueDays: 2, periodDays: 15, categoryCode: 'nails' },
-  { id: 'cr2', name: 'Saç dip boyası', icon: 'cut-outline', dueDays: -3, periodDays: 42, categoryCode: 'hair' },
-  { id: 'cr3', name: 'Cilt bakımı', icon: 'sparkles-outline', dueDays: 9, periodDays: 30, categoryCode: 'skincare' },
-  { id: 'cr4', name: 'Lazer epilasyon seansı', icon: 'flash-outline', dueDays: 0, periodDays: 30, categoryCode: 'epilation' },
+  {
+    id: 'cr1',
+    name: 'Kalıcı oje yenileme',
+    icon: 'color-palette-outline',
+    dueDays: 2,
+    periodDays: 15,
+    categoryCode: 'nails',
+  },
+  {
+    id: 'cr2',
+    name: 'Saç dip boyası',
+    icon: 'cut-outline',
+    dueDays: -3,
+    periodDays: 42,
+    categoryCode: 'hair',
+  },
+  {
+    id: 'cr3',
+    name: 'Cilt bakımı',
+    icon: 'sparkles-outline',
+    dueDays: 9,
+    periodDays: 30,
+    categoryCode: 'skincare',
+  },
+  {
+    id: 'cr4',
+    name: 'Lazer epilasyon seansı',
+    icon: 'flash-outline',
+    dueDays: 0,
+    periodDays: 30,
+    categoryCode: 'epilation',
+  },
 ];
 
 // ── Kişisel kayıtlar (kullanıcının kendi girdiği — pazaryeri değil) ──────
@@ -1560,7 +1657,12 @@ const OFFER_NOTES = [
 ];
 
 // Deterministik teklif üretimi: aynı şehirdeki kategori uzmanlarından mock teklifler (§5.2)
-export function buildOffers(category: string, city: string, budget: number | undefined, nowMs: number): DemandOffer[] {
+export function buildOffers(
+  category: string,
+  city: string,
+  budget: number | undefined,
+  nowMs: number,
+): DemandOffer[] {
   const sameCity = PROFESSIONALS.filter((p) => p.sector === category && p.city === city);
   const byCat = sameCity.length ? sameCity : PROFESSIONALS.filter((p) => p.sector === category);
   const pool = (byCat.length ? byCat : PROFESSIONALS).slice(0, 5);
@@ -1723,7 +1825,11 @@ export const SEED_SUPPLIER_ADS: SupplierAd[] = [
     offer: 'Salonlara %25 toptan indirim',
     description:
       'Kazakistan’ın önde gelen profesyonel saç bakım tedarikçisi. Keratin, boya, bakım ve şekillendirme ürünlerinde salon hesaplarına özel toptan fiyat. Almatı içi aynı gün teslimat.',
-    perks: ['İlk siparişte %25 indirim', 'Almatı içi ücretsiz teslimat', 'Kurumsal fatura + kredili ödeme'],
+    perks: [
+      'İlk siparişte %25 indirim',
+      'Almatı içi ücretsiz teslimat',
+      'Kurumsal fatura + kredili ödeme',
+    ],
     contact: '+7 727 350 10 20',
   },
   {
@@ -1791,15 +1897,84 @@ export interface AlwaysBond {
 // Demo tohumları — uzman 'Aigerim' ve müşteri 'Aruzhan' oturumlarının ikisini de anlamlı gösterir.
 export const SEED_ALWAYS_BONDS: AlwaysBond[] = [
   // Aigerim (uzman) — kabul edilmiş sadık müşteriler
-  { id: 'ab-1', providerName: 'Aigerim', providerImage: avatar(FACES[1]!), customerName: 'Zhanel S.', customerImage: avatar(FACES[3]!), initiator: 'customer', status: 'accepted', lastServiceId: 'nails-gel', createdMs: SEED_NOW - 40 * DAY_MS },
-  { id: 'ab-2', providerName: 'Aigerim', providerImage: avatar(FACES[1]!), customerName: 'Dana K.', customerImage: avatar(FACES[4]!), initiator: 'provider', status: 'accepted', lastServiceId: 'lashes-classic', createdMs: SEED_NOW - 33 * DAY_MS },
-  { id: 'ab-3', providerName: 'Aigerim', providerImage: avatar(FACES[1]!), customerName: 'Saule N.', customerImage: avatar(FACES[5]!), initiator: 'customer', status: 'accepted', lastServiceId: 'skin-facial', createdMs: SEED_NOW - 20 * DAY_MS },
+  {
+    id: 'ab-1',
+    providerName: 'Aigerim',
+    providerImage: avatar(FACES[1]!),
+    customerName: 'Zhanel S.',
+    customerImage: avatar(FACES[3]!),
+    initiator: 'customer',
+    status: 'accepted',
+    lastServiceId: 'nails-gel',
+    createdMs: SEED_NOW - 40 * DAY_MS,
+  },
+  {
+    id: 'ab-2',
+    providerName: 'Aigerim',
+    providerImage: avatar(FACES[1]!),
+    customerName: 'Dana K.',
+    customerImage: avatar(FACES[4]!),
+    initiator: 'provider',
+    status: 'accepted',
+    lastServiceId: 'lashes-classic',
+    createdMs: SEED_NOW - 33 * DAY_MS,
+  },
+  {
+    id: 'ab-3',
+    providerName: 'Aigerim',
+    providerImage: avatar(FACES[1]!),
+    customerName: 'Saule N.',
+    customerImage: avatar(FACES[5]!),
+    initiator: 'customer',
+    status: 'accepted',
+    lastServiceId: 'skin-facial',
+    createdMs: SEED_NOW - 20 * DAY_MS,
+  },
   // Aigerim — kabul bekleyen GELEN istekler (müşteri başlattı → uzman kabul eder)
-  { id: 'ab-4', providerName: 'Aigerim', providerImage: avatar(FACES[1]!), customerName: 'Madina B.', customerImage: avatar(FACES[7]!), initiator: 'customer', status: 'pending', lastServiceId: 'nails-classic', createdMs: SEED_NOW - 2 * DAY_MS },
-  { id: 'ab-5', providerName: 'Aigerim', providerImage: avatar(FACES[1]!), customerName: 'Kamila T.', customerImage: avatar(FACES[6]!), initiator: 'customer', status: 'pending', lastServiceId: 'brows-shape', createdMs: SEED_NOW - 1 * DAY_MS },
+  {
+    id: 'ab-4',
+    providerName: 'Aigerim',
+    providerImage: avatar(FACES[1]!),
+    customerName: 'Madina B.',
+    customerImage: avatar(FACES[7]!),
+    initiator: 'customer',
+    status: 'pending',
+    lastServiceId: 'nails-classic',
+    createdMs: SEED_NOW - 2 * DAY_MS,
+  },
+  {
+    id: 'ab-5',
+    providerName: 'Aigerim',
+    providerImage: avatar(FACES[1]!),
+    customerName: 'Kamila T.',
+    customerImage: avatar(FACES[6]!),
+    initiator: 'customer',
+    status: 'pending',
+    lastServiceId: 'brows-shape',
+    createdMs: SEED_NOW - 1 * DAY_MS,
+  },
   // Müşteri (Aruzhan) tarafı — Glamour Salon'dan GELEN istek (müşteri kabul eder) + kurulmuş bağ
-  { id: 'ab-6', providerName: 'Glamour Salon', providerImage: SALON_IMG, customerName: 'Aruzhan', customerImage: avatar(FACES[0]!), initiator: 'provider', status: 'pending', createdMs: SEED_NOW - 1 * DAY_MS },
-  { id: 'ab-7', providerName: 'Madina Studio', providerImage: avatar(FACES[2]!), customerName: 'Aruzhan', customerImage: avatar(FACES[0]!), initiator: 'customer', status: 'accepted', lastServiceId: 'hair-color', createdMs: SEED_NOW - 15 * DAY_MS },
+  {
+    id: 'ab-6',
+    providerName: 'Glamour Salon',
+    providerImage: SALON_IMG,
+    customerName: 'Aruzhan',
+    customerImage: avatar(FACES[0]!),
+    initiator: 'provider',
+    status: 'pending',
+    createdMs: SEED_NOW - 1 * DAY_MS,
+  },
+  {
+    id: 'ab-7',
+    providerName: 'Madina Studio',
+    providerImage: avatar(FACES[2]!),
+    customerName: 'Aruzhan',
+    customerImage: avatar(FACES[0]!),
+    initiator: 'customer',
+    status: 'accepted',
+    lastServiceId: 'hair-color',
+    createdMs: SEED_NOW - 15 * DAY_MS,
+  },
 ];
 export type LedgerKind = 'earn' | 'spend';
 export interface LedgerEntry {

@@ -38,7 +38,12 @@ export function CitySelect({
     <>
       <Pressable style={styles.field} onPress={() => setOpen(true)}>
         <Ionicons name="location-outline" size={18} color={colors.inkSoft} />
-        <Text variant="body" tone={value ? 'ink' : 'muted'} style={styles.fieldText} numberOfLines={1}>
+        <Text
+          variant="body"
+          tone={value ? 'ink' : 'muted'}
+          style={styles.fieldText}
+          numberOfLines={1}
+        >
           {value ?? t('city.select.placeholder')}
         </Text>
         <Ionicons name="chevron-down" size={18} color={colors.muted} />

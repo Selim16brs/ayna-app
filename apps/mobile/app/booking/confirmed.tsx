@@ -50,11 +50,7 @@ export default function ConfirmedScreen() {
           ) : (
             <Field icon="person-outline" labelKey="booking.field.pro" value={pro.name} />
           )}
-          <Field
-            icon="time-outline"
-            labelKey="booking.field.datetime"
-            value={params.slot ?? ''}
-          />
+          <Field icon="time-outline" labelKey="booking.field.datetime" value={params.slot ?? ''} />
           <Field
             icon="pricetag-outline"
             labelKey="booking.field.price"

@@ -27,9 +27,26 @@ test('tr kaynak dili boş değil', () => {
 // çevrilmemiş (Türkçe kalmış) sinyalidir. İstisna: marka/özel/uluslararası terimler
 // ve salt-interpolasyon değerleri (tüm dillerde aynı kalır).
 const ALLOWED_IDENTICAL = new Set([
-  'AYNA', 'AYNA Life', 'AYNA Passport', 'AYNA Platinum', 'AYNA Premium', 'AYNA Safe',
-  'AYNA W2W', 'Always', 'Always ✓', 'App Store', 'Boni', 'Express', 'Google Play',
-  'Nail', 'No-show', 'Offline', 'Platinum', 'Premium', 'Spa & Wellness', 'TOP',
+  'AYNA',
+  'AYNA Life',
+  'AYNA Passport',
+  'AYNA Platinum',
+  'AYNA Premium',
+  'AYNA Safe',
+  'AYNA W2W',
+  'Always',
+  'Always ✓',
+  'App Store',
+  'Boni',
+  'Express',
+  'Google Play',
+  'Nail',
+  'No-show',
+  'Offline',
+  'Platinum',
+  'Premium',
+  'Spa & Wellness',
+  'TOP',
   '{pro} · {slot}',
 ]);
 const hasCyrillic = (s: string) => /[а-яА-ЯёЁ]/.test(s);

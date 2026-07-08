@@ -52,7 +52,10 @@ export class SettingsAdminController {
   }
 
   @Post('cities')
-  setCities(@Req() req: AuthedRequest, @Body(new ZodValidationPipe(citiesSchema)) body: CitiesInput) {
+  setCities(
+    @Req() req: AuthedRequest,
+    @Body(new ZodValidationPipe(citiesSchema)) body: CitiesInput,
+  ) {
     return this.settings.setCities(body, req.user?.id);
   }
 

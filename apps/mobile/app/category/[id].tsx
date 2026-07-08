@@ -53,7 +53,10 @@ export default function CategoryScreen() {
         <ServiceCards categoryId={sector} value={svc} onChange={setSvc} />
 
         {/* ── Talep akışı (BİRİNCİL yol) — premium lime gradient kart ── */}
-        <Pressable style={[styles.demandCard, shadow.card]} onPress={() => router.push(demandRoute as never)}>
+        <Pressable
+          style={[styles.demandCard, shadow.card]}
+          onPress={() => router.push(demandRoute as never)}
+        >
           <LinearGradient
             colors={gradients.gold}
             start={{ x: 0, y: 0 }}
@@ -140,7 +143,11 @@ export default function CategoryScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2.5), paddingBottom: TAB_BAR_CLEARANCE },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2.5),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     eyebrow: { marginBottom: space(1.25) },
 
     // Premium talep kartı (lime gradient)
@@ -175,7 +182,12 @@ const makeStyles = (colors: ColorTokens) =>
     },
 
     // Uzmanlar başlığı + sayı
-    providersHead: { flexDirection: 'row', alignItems: 'baseline', gap: space(1), marginBottom: space(1.5) },
+    providersHead: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: space(1),
+      marginBottom: space(1.5),
+    },
     count: {},
 
     sortRow: { flexDirection: 'row', gap: space(1), marginBottom: space(2) },

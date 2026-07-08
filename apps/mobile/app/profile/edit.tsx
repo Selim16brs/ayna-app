@@ -56,7 +56,11 @@ export default function ProfileEditScreen() {
   const removeCert = (uri: string) =>
     Alert.alert(t('expert.reg.cert'), undefined, [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('profile.photo.remove'), style: 'destructive', onPress: () => setCerts((c) => c.filter((x) => x !== uri)) },
+      {
+        text: t('profile.photo.remove'),
+        style: 'destructive',
+        onPress: () => setCerts((c) => c.filter((x) => x !== uri)),
+      },
     ]);
 
   // §5.1.1 — foto seçildi: normal avatarı ayarla + (premium & removebg ise) arka planı
@@ -331,5 +335,10 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
       backgroundColor: colors.surface,
     },
-    certThumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.surfaceMuted },
+    certThumb: {
+      width: 64,
+      height: 64,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+    },
   });

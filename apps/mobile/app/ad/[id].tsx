@@ -36,7 +36,11 @@ export default function SupplierAdScreen() {
         {/* Kapak görseli + marka/başlık + Sponsorlu rozeti */}
         <View style={styles.hero}>
           {ad.imageUri ? (
-            <Image source={{ uri: ad.imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+            <Image
+              source={{ uri: ad.imageUri }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+            />
           ) : (
             <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceMuted }]} />
           )}
@@ -117,7 +121,9 @@ export default function SupplierAdScreen() {
           <Button
             label={`${t('ad.contact')} · ${ad.contact}`}
             variant="primary"
-            onPress={() => Linking.openURL(`tel:${ad.contact!.replace(/[^0-9+]/g, '')}`).catch(() => undefined)}
+            onPress={() =>
+              Linking.openURL(`tel:${ad.contact!.replace(/[^0-9+]/g, '')}`).catch(() => undefined)
+            }
           />
         </View>
       ) : null}

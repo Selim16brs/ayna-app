@@ -37,7 +37,9 @@ export default function SubReceiptScreen() {
     setBusy(true);
     try {
       await api.uploadSubReceipt(id, uri, token);
-      Alert.alert(t('sub.sent_t'), t('sub.sent_b'), [{ text: t('common.ok'), onPress: () => router.replace('/seller/reports') }]);
+      Alert.alert(t('sub.sent_t'), t('sub.sent_b'), [
+        { text: t('common.ok'), onPress: () => router.replace('/seller/reports') },
+      ]);
     } catch {
       Alert.alert(t('premium.title'), t('sub.error'));
     } finally {
@@ -93,7 +95,12 @@ export default function SubReceiptScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button label={t('sub.submit')} variant="primary" disabled={!uri || busy} onPress={submit} />
+        <Button
+          label={t('sub.submit')}
+          variant="primary"
+          disabled={!uri || busy}
+          onPress={submit}
+        />
       </View>
     </Screen>
   );
@@ -101,9 +108,19 @@ export default function SubReceiptScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(0.5) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      gap: space(0.5),
+    },
     flex: { flex: 1 },
-    payBox: { backgroundColor: colors.accentSoft, borderRadius: radius.lg, padding: space(2), gap: space(0.5) },
+    payBox: {
+      backgroundColor: colors.accentSoft,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(0.5),
+    },
     payHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     amount: { fontSize: 34, letterSpacing: -0.5, marginTop: space(0.5) },
     payDesc: { lineHeight: 18 },
@@ -119,7 +136,12 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.lg,
       paddingVertical: space(4),
     },
-    preview: { width: '100%', height: 240, borderRadius: radius.lg, backgroundColor: colors.surfaceMuted },
+    preview: {
+      width: '100%',
+      height: 240,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+    },
     note: {
       flexDirection: 'row',
       gap: space(1),

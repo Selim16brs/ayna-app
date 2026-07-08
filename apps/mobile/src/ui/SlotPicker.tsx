@@ -73,14 +73,23 @@ export function SlotPicker({
           const on = i === dayIdx;
           const hasFree = d.slots.some((s) => s.available);
           return (
-            <Pressable key={d.dateMs} style={[styles.dayChip, on && styles.dayChipOn]} onPress={() => setDayIdx(i)}>
+            <Pressable
+              key={d.dateMs}
+              style={[styles.dayChip, on && styles.dayChipOn]}
+              onPress={() => setDayIdx(i)}
+            >
               <Text variant="caption" tone={on ? 'onAccent' : 'muted'} style={styles.dayWd}>
                 {t(`wd.${p.wd}` as 'wd.0')}
               </Text>
               <Text variant="bodyStrong" tone={on ? 'onAccent' : 'ink'} style={styles.dayNum}>
                 {p.day}
               </Text>
-              <View style={[styles.dot, hasFree ? (on ? styles.dotOnFree : styles.dotFree) : styles.dotNone]} />
+              <View
+                style={[
+                  styles.dot,
+                  hasFree ? (on ? styles.dotOnFree : styles.dotFree) : styles.dotNone,
+                ]}
+              />
             </Pressable>
           );
         })}

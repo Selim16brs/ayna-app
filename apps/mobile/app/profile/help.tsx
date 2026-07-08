@@ -77,14 +77,21 @@ export default function HelpScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     subtitle: { marginBottom: space(2.5) },
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       overflow: 'hidden',
     },
-    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceMuted },
+    rowBorder: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.surfaceMuted,
+    },
     qRow: {
       flexDirection: 'row',
       alignItems: 'center',

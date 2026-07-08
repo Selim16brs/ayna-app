@@ -128,7 +128,12 @@ function ReviewRow({
     <View style={[styles.card, shadow.soft]}>
       <View style={styles.stars}>
         {[1, 2, 3, 4, 5].map((s) => (
-          <Ionicons key={s} name={s <= review.score ? 'star' : 'star-outline'} size={15} color={colors.gold} />
+          <Ionicons
+            key={s}
+            name={s <= review.score ? 'star' : 'star-outline'}
+            size={15}
+            color={colors.gold}
+          />
         ))}
         {review.serviceTag ? (
           <Text variant="caption" tone="muted">
@@ -160,11 +165,20 @@ function ReviewRow({
             placeholderTextColor={colors.muted}
             multiline
           />
-          <Button label={busy ? '…' : t('seller.reviews.send')} onPress={send} disabled={busy || !text.trim()} />
+          <Button
+            label={busy ? '…' : t('seller.reviews.send')}
+            onPress={send}
+            disabled={busy || !text.trim()}
+          />
         </View>
       ) : (
         <View style={styles.actionRow}>
-          <Text variant="caption" tone="accentFg" style={styles.replyLink} onPress={() => setOpen(true)}>
+          <Text
+            variant="caption"
+            tone="accentFg"
+            style={styles.replyLink}
+            onPress={() => setOpen(true)}
+          >
             {t('seller.reviews.reply')}
           </Text>
           {disputed ? (
@@ -187,10 +201,20 @@ const makeStyles = (colors: ColorTokens) =>
     content: { padding: space(3), paddingBottom: space(4), gap: space(1.5) },
     hint: { marginBottom: space(0.5) },
     list: { gap: space(1.25) },
-    card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2), gap: space(0.5) },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(0.5),
+    },
     stars: { flexDirection: 'row', alignItems: 'center', gap: 2 },
     comment: { marginTop: space(0.5) },
-    reply: { backgroundColor: colors.accentSoft, borderRadius: radius.md, padding: space(1.25), marginTop: space(1) },
+    reply: {
+      backgroundColor: colors.accentSoft,
+      borderRadius: radius.md,
+      padding: space(1.25),
+      marginTop: space(1),
+    },
     replyBox: { marginTop: space(1), gap: space(1) },
     input: {
       borderWidth: 1,

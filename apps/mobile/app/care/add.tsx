@@ -16,7 +16,16 @@ import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, DateField, formatTrDate, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import {
+  Button,
+  DateField,
+  formatTrDate,
+  Screen,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+  TextInput,
+} from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 type FormMode = 'log' | 'routine' | 'moment';
@@ -89,10 +98,14 @@ function LogForm({
 
   const startKind: QuickAddKind =
     existing?.kind ??
-    (KNOWN_KINDS.includes(initialKind as QuickAddKind) ? (initialKind as QuickAddKind) : 'personal');
+    (KNOWN_KINDS.includes(initialKind as QuickAddKind)
+      ? (initialKind as QuickAddKind)
+      : 'personal');
   const [selKind, setSelKind] = useState<QuickAddKind>(startKind);
   const [title, setTitle] = useState(existing?.title ?? '');
-  const [date, setDate] = useState(() => (existing?.dateMs ? new Date(existing.dateMs) : new Date()));
+  const [date, setDate] = useState(() =>
+    existing?.dateMs ? new Date(existing.dateMs) : new Date(),
+  );
   const [note, setNote] = useState(existing?.note ?? '');
 
   const canSave = title.trim().length > 0;
@@ -219,7 +232,11 @@ function RoutineForm({ onDone }: { onDone: () => void }) {
   const [svcId, setSvcId] = useState<string | null>(null);
 
   // Alt hizmet seçilince ad + bakım periyodu (taksonomiden) otomatik dolar
-  const pickService = (s: { id: string; label: { tr: string; kk: string; ru: string }; periodDays?: number }) => {
+  const pickService = (s: {
+    id: string;
+    label: { tr: string; kk: string; ru: string };
+    periodDays?: number;
+  }) => {
     setSvcId(s.id);
     setName(tri(s.label, locale));
     if (s.periodDays) setDays(String(s.periodDays));

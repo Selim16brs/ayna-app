@@ -62,10 +62,7 @@ export class BookingsController {
 
   // §6.C — iptal (opsiyonel sebep gövdede)
   @Post(':id/cancel')
-  cancel(
-    @Param('id') id: string,
-    @Body(new ZodValidationPipe(cancelSchema)) body: CancelInput,
-  ) {
+  cancel(@Param('id') id: string, @Body(new ZodValidationPipe(cancelSchema)) body: CancelInput) {
     return this.bookings.cancel(id, body.reason);
   }
 
@@ -88,10 +85,7 @@ export class BookingsController {
   }
 
   @Post(':id/propose')
-  propose(
-    @Param('id') id: string,
-    @Body(new ZodValidationPipe(proposeSchema)) body: ProposeInput,
-  ) {
+  propose(@Param('id') id: string, @Body(new ZodValidationPipe(proposeSchema)) body: ProposeInput) {
     return this.bookings.propose(id, body.proposedStartMs);
   }
 
@@ -101,10 +95,7 @@ export class BookingsController {
   }
 
   @Post(':id/counter')
-  counter(
-    @Param('id') id: string,
-    @Body(new ZodValidationPipe(proposeSchema)) body: ProposeInput,
-  ) {
+  counter(@Param('id') id: string, @Body(new ZodValidationPipe(proposeSchema)) body: ProposeInput) {
     return this.bookings.counter(id, body.proposedStartMs);
   }
 

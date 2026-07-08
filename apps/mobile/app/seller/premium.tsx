@@ -38,7 +38,9 @@ export default function SellerPremiumScreen() {
   const [busy, setBusy] = useState(false);
 
   const { tier: tierParam } = useLocalSearchParams<{ tier?: string }>();
-  const [tier, setTier] = useState<'premium' | 'platinum'>(tierParam === 'premium' ? 'premium' : 'platinum');
+  const [tier, setTier] = useState<'premium' | 'platinum'>(
+    tierParam === 'premium' ? 'premium' : 'platinum',
+  );
   const isPlat = tier === 'platinum';
   const tierPrice = isPlat ? PLATINUM_PRICE_KZT : PREMIUM_PRICE_KZT;
   const benefits = isPlat ? [...BENEFITS, ...PLATINUM_BENEFITS] : BENEFITS;
@@ -232,5 +234,10 @@ const makeStyles = (colors: ColorTokens) =>
       borderTopColor: colors.line,
       backgroundColor: colors.bg,
     },
-    activeTag: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space(0.75) },
+    activeTag: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space(0.75),
+    },
   });

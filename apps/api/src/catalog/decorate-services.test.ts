@@ -34,8 +34,7 @@ test('indirim deterministik ve tek hizmette', () => {
 });
 
 test('farklı pro id farklı indirim hizmeti seçebilir', () => {
-  const idxFor = (pid: string) =>
-    decorateServices(POOL, pid).findIndex((s) => s.discountPct > 0);
+  const idxFor = (pid: string) => decorateServices(POOL, pid).findIndex((s) => s.discountPct > 0);
   // En az iki farklı pro id arasında indirim indeksi değişmeli (deterministik dağılım)
   const indices = new Set(['x1', 'y22', 'z333', 'aaaa'].map(idxFor));
   assert.ok(indices.size >= 2);

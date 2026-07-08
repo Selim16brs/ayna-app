@@ -58,6 +58,12 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(1.75),
     },
     flex: { flex: 1 },
-    icon: { width: 42, height: 42, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+    icon: {
+      width: 42,
+      height: 42,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     cta: { fontWeight: '800', marginTop: 3 },
   });

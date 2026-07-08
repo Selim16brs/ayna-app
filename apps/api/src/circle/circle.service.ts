@@ -132,7 +132,8 @@ export class CircleService {
   // §5.5 — şikâyet; eşik aşınca otomatik gizle + admin kuyruğu
   async report(userId: string | undefined, postId: string, reason?: string) {
     const post = await this.prisma.circlePost.findUnique({ where: { id: postId } });
-    if (!post) throw new NotFoundException({ code: 'POST_NOT_FOUND', message: 'Gönderi bulunamadı' });
+    if (!post)
+      throw new NotFoundException({ code: 'POST_NOT_FOUND', message: 'Gönderi bulunamadı' });
     await this.prisma.circleReport.create({
       data: { postId, userId: userId ?? null, reason: reason ?? '' },
     });
@@ -170,7 +171,8 @@ export class CircleService {
 
   async resolve(postId: string, decision: 'approve' | 'hide', actorId?: string) {
     const post = await this.prisma.circlePost.findUnique({ where: { id: postId } });
-    if (!post) throw new NotFoundException({ code: 'POST_NOT_FOUND', message: 'Gönderi bulunamadı' });
+    if (!post)
+      throw new NotFoundException({ code: 'POST_NOT_FOUND', message: 'Gönderi bulunamadı' });
     const updated = await this.prisma.circlePost.update({
       where: { id: postId },
       data: {

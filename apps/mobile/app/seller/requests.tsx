@@ -71,7 +71,8 @@ export default function SellerRequestsScreen() {
       .filter((b) => b.status !== 'cancelled' && b.status !== 'no_show')
       .map((b) => ({ startMs: b.startMs, endMs: b.startMs + b.durationMin * 60_000 }));
     const grid: number[] = [];
-    for (let d = 1; d <= 3; d++) for (const h of [11, 15, 18]) grid.push(almatySlotMs(now, d, h, 0));
+    for (let d = 1; d <= 3; d++)
+      for (const h of [11, 15, 18]) grid.push(almatySlotMs(now, d, h, 0));
     return grid
       .filter((ms) => ms > now && !hasConflict({ startMs: ms, endMs: ms + dur }, busy))
       .slice(0, 6);
@@ -130,67 +131,72 @@ export default function SellerRequestsScreen() {
           </View>
         ) : (
           <>
-        {/* §11 — ücretsiz deneme sürüyor: davetkâr bilgi şeridi (kilit değil) */}
-        {trial.active && !premium ? (
-          <View style={[styles.premiumBanner, styles.trialBanner]}>
-            <View style={styles.premiumIcon}>
-              <Ionicons name="gift" size={16} color={colors.accentFg} />
-            </View>
-            <View style={styles.flex}>
-              <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                {t('requests.trial_title')}
-              </Text>
-              <Text variant="caption" tone="muted" numberOfLines={2}>
-                {fillParams(t('requests.trial_banner'), { n: trial.daysLeft })}
-              </Text>
-            </View>
-          </View>
-        ) : null}
+            {/* §11 — ücretsiz deneme sürüyor: davetkâr bilgi şeridi (kilit değil) */}
+            {trial.active && !premium ? (
+              <View style={[styles.premiumBanner, styles.trialBanner]}>
+                <View style={styles.premiumIcon}>
+                  <Ionicons name="gift" size={16} color={colors.accentFg} />
+                </View>
+                <View style={styles.flex}>
+                  <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                    {t('requests.trial_title')}
+                  </Text>
+                  <Text variant="caption" tone="muted" numberOfLines={2}>
+                    {fillParams(t('requests.trial_banner'), { n: trial.daysLeft })}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
 
-        {/* §11 — deneme bitti + premium değil: görebildiği tek şey kilit; teklif veremez, detay göremez */}
-        {!canAccess ? (
-          <Pressable style={styles.premiumBanner} onPress={upsell}>
-            <View style={styles.premiumIcon}>
-              <Ionicons name="sparkles" size={16} color={colors.accentFg} />
-            </View>
-            <View style={styles.flex}>
-              <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                {t('requests.premium_title')}
-              </Text>
-              <Text variant="caption" tone="muted" numberOfLines={2}>
-                {t('requests.premium_banner')}
-              </Text>
-            </View>
-            <View style={styles.premiumCta}>
-              <Text variant="caption" tone="accentFg" style={styles.premiumCtaText}>
-                {t('promo.upsell_cta')}
-              </Text>
-            </View>
-          </Pressable>
-        ) : null}
+            {/* §11 — deneme bitti + premium değil: görebildiği tek şey kilit; teklif veremez, detay göremez */}
+            {!canAccess ? (
+              <Pressable style={styles.premiumBanner} onPress={upsell}>
+                <View style={styles.premiumIcon}>
+                  <Ionicons name="sparkles" size={16} color={colors.accentFg} />
+                </View>
+                <View style={styles.flex}>
+                  <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                    {t('requests.premium_title')}
+                  </Text>
+                  <Text variant="caption" tone="muted" numberOfLines={2}>
+                    {t('requests.premium_banner')}
+                  </Text>
+                </View>
+                <View style={styles.premiumCta}>
+                  <Text variant="caption" tone="accentFg" style={styles.premiumCtaText}>
+                    {t('promo.upsell_cta')}
+                  </Text>
+                </View>
+              </Pressable>
+            ) : null}
 
-        {open.length === 0 ? (
-          <View style={styles.empty}>
-            <Ionicons name="pricetags-outline" size={30} color={colors.muted} />
-            <Text variant="caption" tone="muted">
-              {t('seller.requests.empty')}
-            </Text>
-          </View>
-        ) : (
-          open.map((d) => (
-            <RequestCard
-              key={d.id}
-              demand={d}
-              locked={!canAccess}
-              onGive={() => (canAccess ? openForm(d.id) : upsell())}
-            />
-          ))
-        )}
+            {open.length === 0 ? (
+              <View style={styles.empty}>
+                <Ionicons name="pricetags-outline" size={30} color={colors.muted} />
+                <Text variant="caption" tone="muted">
+                  {t('seller.requests.empty')}
+                </Text>
+              </View>
+            ) : (
+              open.map((d) => (
+                <RequestCard
+                  key={d.id}
+                  demand={d}
+                  locked={!canAccess}
+                  onGive={() => (canAccess ? openForm(d.id) : upsell())}
+                />
+              ))
+            )}
           </>
         )}
       </ScrollView>
 
-      <Modal visible={form !== null} transparent animationType="slide" onRequestClose={() => setForm(null)}>
+      <Modal
+        visible={form !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setForm(null)}
+      >
         <View style={styles.backdrop}>
           <View style={styles.sheet}>
             <View style={styles.sheetHead}>
@@ -258,7 +264,11 @@ export default function SellerRequestsScreen() {
                       onPress={() => toggleSlot(ms)}
                     >
                       {on ? <Ionicons name="checkmark" size={13} color={colors.onAccent} /> : null}
-                      <Text variant="caption" tone={on ? 'onAccent' : 'ink'} style={styles.slotChipText}>
+                      <Text
+                        variant="caption"
+                        tone={on ? 'onAccent' : 'ink'}
+                        style={styles.slotChipText}
+                      >
                         {formatSlotTr(ms)}
                       </Text>
                     </Pressable>
@@ -309,7 +319,10 @@ function RequestCard({
         </Text>
         <View style={[styles.countdown, urgent && styles.countdownUrgent]}>
           <Ionicons name="alarm-outline" size={12} color={urgent ? colors.onColor : colors.gold} />
-          <Text variant="caption" style={{ color: urgent ? colors.onColor : colors.gold, fontWeight: '700' }}>
+          <Text
+            variant="caption"
+            style={{ color: urgent ? colors.onColor : colors.gold, fontWeight: '700' }}
+          >
             {t('seller.requests.last')} {remainMin} {t('quotes.remain')}
           </Text>
         </View>
@@ -428,7 +441,12 @@ const makeStyles = (colors: ColorTokens) =>
     },
     premiumCtaText: { fontWeight: '800' },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
-    card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2), gap: space(1.25) },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1.25),
+    },
     cardTop: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     catIcon: {
       width: 40,
@@ -472,9 +490,21 @@ const makeStyles = (colors: ColorTokens) =>
       paddingBottom: space(3),
       gap: space(0.5),
     },
-    sheetHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space(1) },
+    sheetHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: space(1),
+    },
     sheetTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
-    close: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' },
+    close: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     label: { marginTop: space(1.5), marginBottom: space(0.75) },
     input: {
       height: 52,
@@ -484,7 +514,13 @@ const makeStyles = (colors: ColorTokens) =>
       fontSize: 16,
       color: colors.ink,
     },
-    slotHint: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), marginTop: space(0.5), marginBottom: space(1.25) },
+    slotHint: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      marginTop: space(0.5),
+      marginBottom: space(1.25),
+    },
     noSlots: { lineHeight: 17, marginBottom: space(2) },
     slotGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1), marginBottom: space(2) },
     slotChip: {

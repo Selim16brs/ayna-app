@@ -210,7 +210,13 @@ const makeStyles = (colors: ColorTokens) =>
       color: colors.ink,
     },
     codeInput: { fontSize: 22, letterSpacing: 8, textAlign: 'center' },
-    devHint: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space(1), paddingHorizontal: space(0.5) },
+    devHint: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: space(1),
+      paddingHorizontal: space(0.5),
+    },
     pwHint: { marginTop: space(0.75), marginLeft: space(0.5) },
     footer: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(3) },
   });

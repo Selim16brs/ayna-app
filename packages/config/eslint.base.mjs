@@ -13,7 +13,9 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
-      eqeqeq: ['error', 'always'],
+      // `== null` / `!= null` deyimine izin ver (hem null hem undefined kontrolü — kasıtlı);
+      // diğer tüm gevşek karşılaştırmalar hata olarak kalır.
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
     },
   },
 );

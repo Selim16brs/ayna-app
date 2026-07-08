@@ -113,7 +113,11 @@ function Row({ event }: { event: UpcomingEvent }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(0.5), paddingBottom: TAB_BAR_CLEARANCE },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(0.5),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     empty: {
       alignItems: 'center',
       justifyContent: 'center',

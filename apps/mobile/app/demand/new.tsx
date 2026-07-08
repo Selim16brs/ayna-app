@@ -103,7 +103,11 @@ export default function NewDemandScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* ── Lime üst şerit ── */}
         <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
-          <Image source={require('../../assets/logo-mark.png')} style={styles.logo} resizeMode="contain" />
+          <Image
+            source={require('../../assets/logo-mark.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <View style={styles.locChip}>
             <Text variant="caption" tone="ink" style={styles.locText}>
               {city}
@@ -191,7 +195,9 @@ export default function NewDemandScreen() {
                     onPress={() => setAddressId(a.id)}
                     style={[styles.addrRow, shadow.soft, active && styles.addrRowActive]}
                   >
-                    <View style={[styles.rowIcon, styles.addrIcon, active && styles.addrIconActive]}>
+                    <View
+                      style={[styles.rowIcon, styles.addrIcon, active && styles.addrIconActive]}
+                    >
                       <Ionicons
                         name={a.label === 'home' ? 'home' : 'briefcase'}
                         size={17}
@@ -207,7 +213,9 @@ export default function NewDemandScreen() {
                       </Text>
                     </View>
                     <View style={[styles.radio, active && styles.radioOn]}>
-                      {active ? <Ionicons name="checkmark" size={14} color={colors.onAccent} /> : null}
+                      {active ? (
+                        <Ionicons name="checkmark" size={14} color={colors.onAccent} />
+                      ) : null}
                     </View>
                   </Pressable>
                 );
@@ -233,7 +241,12 @@ export default function NewDemandScreen() {
               <Text variant="caption" tone="accentFg">
                 {t('addresses.add')}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.muted} style={styles.rowChevron} />
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={colors.muted}
+                style={styles.rowChevron}
+              />
             </Pressable>
           )}
           <View style={styles.privacyRow}>
@@ -336,7 +349,11 @@ export default function NewDemandScreen() {
                   onPress={() => setCollectMin(m)}
                   style={[styles.durChip, active && styles.durChipActive]}
                 >
-                  <Text variant="caption" tone={active ? 'onAccent' : 'inkSoft'} style={styles.durText}>
+                  <Text
+                    variant="caption"
+                    tone={active ? 'onAccent' : 'inkSoft'}
+                    style={styles.durText}
+                  >
                     {t(`dur.${m}` as MessageKey)}
                   </Text>
                 </Pressable>
@@ -347,8 +364,17 @@ export default function NewDemandScreen() {
       </ScrollView>
 
       {/* ── CTA ── */}
-      <View style={[styles.footer, { paddingBottom: (insets.bottom || space(1.5)) + TAB_BAR_CLEARANCE }]}>
-        <Pressable style={[styles.cta, !canSubmit && styles.ctaOff]} disabled={!canSubmit} onPress={submit}>
+      <View
+        style={[
+          styles.footer,
+          { paddingBottom: (insets.bottom || space(1.5)) + TAB_BAR_CLEARANCE },
+        ]}
+      >
+        <Pressable
+          style={[styles.cta, !canSubmit && styles.ctaOff]}
+          disabled={!canSubmit}
+          onPress={submit}
+        >
           <Text variant="bodyStrong" tone={canSubmit ? 'onAccent' : 'muted'} style={styles.ctaText}>
             {t('demand.new.send')}
           </Text>
@@ -485,7 +511,13 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(1.5),
     },
     budgetInputWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    budgetInput: { minWidth: 130, textAlign: 'right', fontSize: 16, fontWeight: '700', color: colors.ink },
+    budgetInput: {
+      minWidth: 130,
+      textAlign: 'right',
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.ink,
+    },
     marketHint: { marginTop: space(1), marginLeft: space(1) },
     warnBox: {
       flexDirection: 'row',
@@ -524,7 +556,12 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.accentSoft,
     },
     photoAddText: { textAlign: 'center' },
-    photoThumb: { width: 96, height: 96, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    photoThumb: {
+      width: 96,
+      height: 96,
+      borderRadius: radius.md,
+      backgroundColor: colors.bgSunken,
+    },
     privacyRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space(1.25) },
 
     footer: {

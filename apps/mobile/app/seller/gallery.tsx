@@ -36,7 +36,11 @@ export default function GalleryScreen() {
   function remove(uri: string) {
     Alert.alert(t('gallery.remove_confirm'), undefined, [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive', onPress: () => setPhotos((p) => p.filter((x) => x !== uri)) },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: () => setPhotos((p) => p.filter((x) => x !== uri)),
+      },
     ]);
   }
 

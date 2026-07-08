@@ -55,5 +55,11 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
       backgroundColor: colors.surface,
     },
-    title: { fontSize: 28, lineHeight: 32, fontWeight: '800', letterSpacing: -0.5, marginTop: space(1.5) },
+    title: {
+      fontSize: 28,
+      lineHeight: 32,
+      fontWeight: '800',
+      letterSpacing: -0.5,
+      marginTop: space(1.5),
+    },
   });

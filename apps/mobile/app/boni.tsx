@@ -1,7 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { api, type AiQuota } from '../src/api';
 import { useLocale } from '../src/locale';
@@ -62,7 +70,9 @@ export default function BoniScreen() {
     try {
       const res = await api.aiBoni(token, q);
       setMessages((m) => [...m, { id: `b${m.length}`, role: 'boni', text: res.answer }]);
-      setQuota((prev) => (prev ? { ...prev, remaining: res.remaining, used: prev.used + 1 } : prev));
+      setQuota((prev) =>
+        prev ? { ...prev, remaining: res.remaining, used: prev.used + 1 } : prev,
+      );
     } catch {
       setMessages((m) => [...m, { id: `e${m.length}`, role: 'boni', text: t('boni.error') }]);
       void loadQuota();
@@ -266,7 +276,12 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    bubble: { maxWidth: '82%', borderRadius: radius.lg, paddingHorizontal: space(1.75), paddingVertical: space(1.25) },
+    bubble: {
+      maxWidth: '82%',
+      borderRadius: radius.lg,
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1.25),
+    },
     bubbleUser: { backgroundColor: colors.accent, borderBottomRightRadius: 6 },
     bubbleBoni: {
       backgroundColor: colors.surface,
@@ -310,10 +325,21 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     sendBtnOff: { backgroundColor: colors.surfaceMuted },
-    emptyNote: { flexDirection: 'row', alignItems: 'center', gap: space(1), paddingVertical: space(1) },
+    emptyNote: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      paddingVertical: space(1),
+    },
 
     // Kilit ekranı
-    lockWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space(4), gap: space(1.5) },
+    lockWrap: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: space(4),
+      gap: space(1.5),
+    },
     lockIcon: {
       width: 76,
       height: 76,

@@ -10,11 +10,31 @@ import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
 
 type Key = 'care' | 'moment' | 'personal' | 'booking';
-const GROUPS: { key: Key; icon: keyof typeof Ionicons.glyphMap; label: MessageKey; desc: MessageKey }[] = [
-  { key: 'booking', icon: 'calendar-outline', label: 'notifprefs.booking', desc: 'notifprefs.booking_desc' },
+const GROUPS: {
+  key: Key;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: MessageKey;
+  desc: MessageKey;
+}[] = [
+  {
+    key: 'booking',
+    icon: 'calendar-outline',
+    label: 'notifprefs.booking',
+    desc: 'notifprefs.booking_desc',
+  },
   { key: 'care', icon: 'sparkles-outline', label: 'notifprefs.care', desc: 'notifprefs.care_desc' },
-  { key: 'moment', icon: 'gift-outline', label: 'notifprefs.moment', desc: 'notifprefs.moment_desc' },
-  { key: 'personal', icon: 'create-outline', label: 'notifprefs.personal', desc: 'notifprefs.personal_desc' },
+  {
+    key: 'moment',
+    icon: 'gift-outline',
+    label: 'notifprefs.moment',
+    desc: 'notifprefs.moment_desc',
+  },
+  {
+    key: 'personal',
+    icon: 'create-outline',
+    label: 'notifprefs.personal',
+    desc: 'notifprefs.personal_desc',
+  },
 ];
 
 export default function NotificationPrefsScreen() {
@@ -25,7 +45,9 @@ export default function NotificationPrefsScreen() {
   const prefs = useStore((s) => s.notifPrefs);
   const toggle = useStore((s) => s.toggleNotifPref);
   // §9.3 — uzman/salon: talep bildirim filtreleri (kategori + saat aralığı)
-  const isSeller = useStore((s) => s.currentUser?.role === 'professional' || s.currentUser?.role === 'salon');
+  const isSeller = useStore(
+    (s) => s.currentUser?.role === 'professional' || s.currentUser?.role === 'salon',
+  );
   const demandNotif = useStore((s) => s.demandNotif);
   const setDemandNotif = useStore((s) => s.setDemandNotif);
   const cats = activeCategories();
@@ -38,7 +60,8 @@ export default function NotificationPrefsScreen() {
   const stepHour = (which: 'from' | 'to', delta: number) => {
     if (which === 'from')
       setDemandNotif({ from: Math.max(0, Math.min(demandNotif.to - 1, demandNotif.from + delta)) });
-    else setDemandNotif({ to: Math.max(demandNotif.from + 1, Math.min(24, demandNotif.to + delta)) });
+    else
+      setDemandNotif({ to: Math.max(demandNotif.from + 1, Math.min(24, demandNotif.to + delta)) });
   };
   const hh = (n: number) => `${String(n).padStart(2, '0')}:00`;
 
@@ -137,7 +160,10 @@ export default function NotificationPrefsScreen() {
         ) : null}
 
         {/* Bildirim kutusuna köprü */}
-        <Pressable style={[styles.inboxRow, shadow.soft]} onPress={() => router.push('/notifications')}>
+        <Pressable
+          style={[styles.inboxRow, shadow.soft]}
+          onPress={() => router.push('/notifications')}
+        >
           <Ionicons name="mail-outline" size={19} color={colors.ink} />
           <Text variant="bodyStrong" tone="ink" style={styles.inboxText}>
             {t('notifprefs.view_inbox')}
@@ -151,12 +177,29 @@ export default function NotificationPrefsScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: space(6), gap: space(2) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: space(6),
+      gap: space(2),
+    },
     hint: { marginLeft: space(0.5) },
     group: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
-    row: { flexDirection: 'row', alignItems: 'center', gap: space(1.5), paddingHorizontal: space(2), paddingVertical: space(1.75) },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
+    },
     rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
-    icon: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+    icon: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     rowText: { flex: 1, gap: 2 },
     inboxRow: {
       flexDirection: 'row',
@@ -167,7 +210,12 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(2),
     },
     inboxText: { flex: 1 },
-    demandBox: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2), gap: space(1) },
+    demandBox: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1),
+    },
     demandHint: { lineHeight: 17 },
     demandLabel: { marginTop: space(1), fontWeight: '700' },
     catRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
@@ -193,6 +241,13 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(0.75),
       paddingVertical: space(0.5),
     },
-    stepBtn: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
+    stepBtn: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+    },
     hourVal: { minWidth: 48, textAlign: 'center' },
   });

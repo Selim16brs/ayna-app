@@ -123,7 +123,11 @@ export default function AgendaScreen() {
   const dayTotal = dayBusy.reduce((s, r) => s + r.b.price, 0);
   // §4.6 renk kodu (sol şerit): tamamlanan → nötr, onaylı → lime, diğer → altın
   const barColor = (b: Appointment) =>
-    b.status === 'completed' ? colors.muted : b.status === 'confirmed' ? colors.accent : colors.gold;
+    b.status === 'completed'
+      ? colors.muted
+      : b.status === 'confirmed'
+        ? colors.accent
+        : colors.gold;
   const endTime = (b: Appointment) => slotTime(b.startMs + b.durationMin * 60_000);
 
   // §4.2 — ekran odaklıyken takvimi otomatik tazele (near-realtime; her 20 sn sunucudan çek).
@@ -183,7 +187,10 @@ export default function AgendaScreen() {
             </View>
             {pending.map((b) => (
               <View key={b.id} style={styles.pendingCard}>
-                <Pressable style={styles.pendingInfo} onPress={() => router.push(`/booking/${b.id}`)}>
+                <Pressable
+                  style={styles.pendingInfo}
+                  onPress={() => router.push(`/booking/${b.id}`)}
+                >
                   <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
                     {b.service}
                   </Text>
@@ -216,7 +223,11 @@ export default function AgendaScreen() {
         {view === 'day' ? (
           <>
             {/* Gün seçici şeridi (kapalı günler kilitli) */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayStrip}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.dayStrip}
+            >
               {dayStrip.map((dayMs, i) => {
                 const p = almatyParts(dayMs);
                 const on = i === dayIdx;
@@ -233,11 +244,19 @@ export default function AgendaScreen() {
                     <Text variant="caption" tone={on ? 'onAccent' : 'muted'} style={styles.closeWd}>
                       {t(`wd.${p.wd}` as 'wd.0')}
                     </Text>
-                    <Text variant="bodyStrong" tone={on ? 'onAccent' : 'ink'} style={styles.closeNum}>
+                    <Text
+                      variant="bodyStrong"
+                      tone={on ? 'onAccent' : 'ink'}
+                      style={styles.closeNum}
+                    >
                       {p.day}
                     </Text>
                     {closed ? (
-                      <Ionicons name="lock-closed" size={11} color={on ? colors.onAccent : colors.accentFg} />
+                      <Ionicons
+                        name="lock-closed"
+                        size={11}
+                        color={on ? colors.onAccent : colors.accentFg}
+                      />
                     ) : (
                       <View style={[styles.dayDot, has ? styles.dayDotOn : styles.dayDotOff]} />
                     )}
@@ -277,7 +296,11 @@ export default function AgendaScreen() {
                     size={14}
                     color={dayClosed ? colors.onColor : colors.accentFg}
                   />
-                  <Text variant="caption" tone={dayClosed ? 'onColor' : 'accentFg'} style={styles.closeToggleText}>
+                  <Text
+                    variant="caption"
+                    tone={dayClosed ? 'onColor' : 'accentFg'}
+                    style={styles.closeToggleText}
+                  >
                     {dayClosed ? t('agenda.mark_open') : t('agenda.mark_closed')}
                   </Text>
                 </Pressable>
@@ -294,7 +317,9 @@ export default function AgendaScreen() {
             ) : dayBusy.length === 0 ? (
               <Pressable
                 style={styles.dayEmpty}
-                onPress={() => router.push(`/seller/offline?start=${selectedDay + OPEN_H * 3_600_000}`)}
+                onPress={() =>
+                  router.push(`/seller/offline?start=${selectedDay + OPEN_H * 3_600_000}`)
+                }
               >
                 <View style={styles.dayEmptyIcon}>
                   <Ionicons name="calendar-outline" size={26} color={colors.accentFg} />
@@ -344,11 +369,21 @@ export default function AgendaScreen() {
                       </View>
                       <View style={styles.apptBody}>
                         <View style={styles.serviceRow}>
-                          <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.flexShrink}>
+                          <Text
+                            variant="bodyStrong"
+                            tone="ink"
+                            numberOfLines={1}
+                            style={styles.flexShrink}
+                          >
                             {r.b.service}
                           </Text>
                           {/* §4.6 — kaynak ayrımı: offline (elle) vs AYNA (online) */}
-                          <View style={[styles.srcTag, r.b.customerName ? styles.srcOffline : styles.srcAyna]}>
+                          <View
+                            style={[
+                              styles.srcTag,
+                              r.b.customerName ? styles.srcOffline : styles.srcAyna,
+                            ]}
+                          >
                             <Ionicons
                               name={r.b.customerName ? 'walk-outline' : 'phone-portrait-outline'}
                               size={9}
@@ -356,7 +391,10 @@ export default function AgendaScreen() {
                             />
                             <Text
                               variant="caption"
-                              style={[styles.srcText, { color: r.b.customerName ? colors.inkSoft : colors.accentFg }]}
+                              style={[
+                                styles.srcText,
+                                { color: r.b.customerName ? colors.inkSoft : colors.accentFg },
+                              ]}
                             >
                               {t(r.b.customerName ? 'agenda.src.offline' : 'agenda.src.ayna')}
                             </Text>
@@ -372,7 +410,12 @@ export default function AgendaScreen() {
                         </View>
                         <View style={styles.apptMeta}>
                           <Ionicons name="person-outline" size={11} color={colors.muted} />
-                          <Text variant="caption" tone="muted" numberOfLines={1} style={styles.flexShrink}>
+                          <Text
+                            variant="caption"
+                            tone="muted"
+                            numberOfLines={1}
+                            style={styles.flexShrink}
+                          >
                             {r.b.customerName ?? r.b.uzmanName ?? r.b.proName}
                           </Text>
                         </View>
@@ -392,7 +435,11 @@ export default function AgendaScreen() {
         ) : view === 'salon' ? (
           <>
             {/* §4.6 salon — gün seçici (yalnızca seçim; salon gün kapatamaz) */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayStrip}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.dayStrip}
+            >
               {dayStrip.map((dayMs, i) => {
                 const p = almatyParts(dayMs);
                 const on = i === dayIdx;
@@ -405,7 +452,11 @@ export default function AgendaScreen() {
                     <Text variant="caption" tone={on ? 'onAccent' : 'muted'} style={styles.closeWd}>
                       {t(`wd.${p.wd}` as 'wd.0')}
                     </Text>
-                    <Text variant="bodyStrong" tone={on ? 'onAccent' : 'ink'} style={styles.closeNum}>
+                    <Text
+                      variant="bodyStrong"
+                      tone={on ? 'onAccent' : 'ink'}
+                      style={styles.closeNum}
+                    >
                       {p.day}
                     </Text>
                   </Pressable>
@@ -414,7 +465,11 @@ export default function AgendaScreen() {
             </ScrollView>
 
             {/* §10.2 — uzman filtresi */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterRow}
+            >
               <Pressable
                 onPress={() => setStaffFilter(null)}
                 style={[styles.filterChip, staffFilter === null && styles.filterChipOn]}
@@ -440,7 +495,11 @@ export default function AgendaScreen() {
             </ScrollView>
 
             {/* Uzman sütunları (yan yana, yatay kaydırma) */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.columns}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.columns}
+            >
               {shownStaff.map((u) => {
                 const uRows = buildDayRows(
                   selectedDay,
@@ -450,7 +509,12 @@ export default function AgendaScreen() {
                   <View key={u.name} style={styles.column}>
                     <View style={styles.colHead}>
                       <Image source={{ uri: u.image }} style={styles.colAvatar} />
-                      <Text variant="caption" tone="ink" numberOfLines={1} style={styles.flexShrink}>
+                      <Text
+                        variant="caption"
+                        tone="ink"
+                        numberOfLines={1}
+                        style={styles.flexShrink}
+                      >
                         {u.name}
                       </Text>
                     </View>
@@ -525,7 +589,12 @@ export default function AgendaScreen() {
                     </View>
                     <View style={styles.rowBody}>
                       <View style={styles.serviceRow}>
-                        <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.flexShrink}>
+                        <Text
+                          variant="bodyStrong"
+                          tone="ink"
+                          numberOfLines={1}
+                          style={styles.flexShrink}
+                        >
                           {b.service}
                         </Text>
                         {b.bookingKind === 'group' ? (
@@ -752,7 +821,13 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(0.5),
     },
     freeTime: { width: 44 },
-    freeDivider: { flex: 1, height: 1, borderBottomWidth: 1, borderColor: colors.line, borderStyle: 'dashed' },
+    freeDivider: {
+      flex: 1,
+      height: 1,
+      borderBottomWidth: 1,
+      borderColor: colors.line,
+      borderStyle: 'dashed',
+    },
     // Randevu kartı — sol renk şeridi + saat aralığı + içerik + durum/fiyat
     apptCard: {
       flexDirection: 'row',

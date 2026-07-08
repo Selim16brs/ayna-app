@@ -7,7 +7,14 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Progress, Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import {
+  Progress,
+  Screen,
+  SectionHeader,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+} from '../../src/ui';
 
 const LIMIT = 80000;
 
@@ -121,7 +128,11 @@ export default function BudgetScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     subtitle: { marginBottom: space(2.5) },
     card: {
       backgroundColor: colors.surface,
@@ -144,7 +155,10 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(2),
       paddingVertical: space(1.75),
     },
-    rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.surfaceMuted },
+    rowBorder: {
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.surfaceMuted,
+    },
     icon: {
       width: 38,
       height: 38,

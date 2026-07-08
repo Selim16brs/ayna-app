@@ -32,7 +32,11 @@ export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number 
         onPress={() => router.push(`/professional/${pro.id}`)}
         style={({ pressed }) => [styles.card, shadow.card, pressed && styles.pressed]}
       >
-        <ImageBackground source={{ uri: pro.image }} style={styles.image} imageStyle={styles.imageRadius}>
+        <ImageBackground
+          source={{ uri: pro.image }}
+          style={styles.image}
+          imageStyle={styles.imageRadius}
+        >
           <LinearGradient
             colors={['rgba(30,24,28,0)', 'rgba(30,24,28,0.15)', 'rgba(30,24,28,0.82)']}
             locations={[0, 0.45, 1]}

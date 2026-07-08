@@ -124,7 +124,10 @@ export default function CustomerRegisterScreen() {
         <Label text={t('auth.f.city')} />
         <CitySelect value={city} onChange={setCity} />
 
-        <Pressable style={[styles.gpsBox, gps && styles.gpsBoxOn]} onPress={() => setGps((v) => !v)}>
+        <Pressable
+          style={[styles.gpsBox, gps && styles.gpsBoxOn]}
+          onPress={() => setGps((v) => !v)}
+        >
           <Ionicons
             name={gps ? 'navigate' : 'navigate-outline'}
             size={20}
@@ -141,8 +144,16 @@ export default function CustomerRegisterScreen() {
 
         <Label text={t('auth.address.label')} />
         <View style={styles.chips}>
-          <Chip label={t('auth.address.home')} active={addrLabel === 'home'} onPress={() => setAddrLabel('home')} />
-          <Chip label={t('auth.address.work')} active={addrLabel === 'work'} onPress={() => setAddrLabel('work')} />
+          <Chip
+            label={t('auth.address.home')}
+            active={addrLabel === 'home'}
+            onPress={() => setAddrLabel('home')}
+          />
+          <Chip
+            label={t('auth.address.work')}
+            active={addrLabel === 'work'}
+            onPress={() => setAddrLabel('work')}
+          />
         </View>
         <View style={styles.addrRow}>
           <TextInput
@@ -168,7 +179,10 @@ export default function CustomerRegisterScreen() {
                 <Text variant="caption" tone="ink" style={styles.addrChipText} numberOfLines={1}>
                   {t(a.label === 'home' ? 'auth.address.home' : 'auth.address.work')} · {a.detail}
                 </Text>
-                <Pressable onPress={() => setAddresses((l) => l.filter((_, idx) => idx !== i))} hitSlop={6}>
+                <Pressable
+                  onPress={() => setAddresses((l) => l.filter((_, idx) => idx !== i))}
+                  hitSlop={6}
+                >
                   <Ionicons name="close-circle" size={18} color={colors.muted} />
                 </Pressable>
               </View>
@@ -186,14 +200,23 @@ export default function CustomerRegisterScreen() {
           placeholder="+7 700 123 45 67"
         />
         <Label text={t('auth.f.email')} />
-        <Input value={email} onChange={setEmail} keyboardType="email-address" placeholder="ornek@mail.kz" />
+        <Input
+          value={email}
+          onChange={setEmail}
+          keyboardType="email-address"
+          placeholder="ornek@mail.kz"
+        />
         <Label text={t('auth.f.password')} />
         <Input value={password} onChange={setPassword} secure />
         <Text variant="caption" tone="muted" style={styles.hint}>
           {t('auth.f.password_hint')}
         </Text>
 
-        <Checkbox checked={terms} onToggle={() => setTerms((v) => !v)} label={t('auth.terms.accept')} />
+        <Checkbox
+          checked={terms}
+          onToggle={() => setTerms((v) => !v)}
+          label={t('auth.terms.accept')}
+        />
       </ScrollView>
 
       <View style={styles.footer}>
@@ -269,7 +292,15 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   );
 }
 
-function Checkbox({ checked, onToggle, label }: { checked: boolean; onToggle: () => void; label: string }) {
+function Checkbox({
+  checked,
+  onToggle,
+  label,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (

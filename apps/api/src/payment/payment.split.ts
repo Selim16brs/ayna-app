@@ -10,7 +10,11 @@ export interface PaymentSplit {
 
 // amount: hizmet bedeli (KZT). pointsRequested: kullanıcının kullanmak istediği puan.
 // pointsBalance: mevcut puan bakiyesi. 1 puan = 1 KZT.
-export function paymentSplit(amount: number, pointsRequested: number, pointsBalance: number): PaymentSplit {
+export function paymentSplit(
+  amount: number,
+  pointsRequested: number,
+  pointsBalance: number,
+): PaymentSplit {
   const cap = Math.floor(amount * POINTS_MAX_RATIO); // §8.2 %50 tavan
   const pointsUsed = Math.max(0, Math.min(pointsRequested, cap, pointsBalance));
   return { pointsUsed, cashAmount: amount - pointsUsed };

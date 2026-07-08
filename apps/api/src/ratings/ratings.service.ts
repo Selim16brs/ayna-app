@@ -52,24 +52,39 @@ export class RatingsService {
     let subjectId: string;
     if (input.raterRole === 'user') {
       if (!booking.userId || booking.userId !== raterUserId) {
-        throw new ForbiddenException({ code: 'NOT_YOUR_BOOKING', message: 'Bu randevu size ait değil' });
+        throw new ForbiddenException({
+          code: 'NOT_YOUR_BOOKING',
+          message: 'Bu randevu size ait değil',
+        });
       }
       if (!booking.proId) {
-        throw new BadRequestException({ code: 'NO_SUBJECT', message: 'Randevu bir uzmana bağlı değil' });
+        throw new BadRequestException({
+          code: 'NO_SUBJECT',
+          message: 'Randevu bir uzmana bağlı değil',
+        });
       }
       subjectId = booking.proId;
     } else {
       if (!booking.proId) {
-        throw new BadRequestException({ code: 'NO_SUBJECT', message: 'Randevu bir uzmana bağlı değil' });
+        throw new BadRequestException({
+          code: 'NO_SUBJECT',
+          message: 'Randevu bir uzmana bağlı değil',
+        });
       }
       const biz = await this.prisma.business.findFirst({
         where: { professionalId: booking.proId, ownerUserId: raterUserId },
       });
       if (!biz) {
-        throw new ForbiddenException({ code: 'NOT_YOUR_BOOKING', message: 'Bu randevu size ait değil' });
+        throw new ForbiddenException({
+          code: 'NOT_YOUR_BOOKING',
+          message: 'Bu randevu size ait değil',
+        });
       }
       if (!booking.userId) {
-        throw new BadRequestException({ code: 'NO_SUBJECT', message: 'Offline randevu müşterisi değerlendirilemez' });
+        throw new BadRequestException({
+          code: 'NO_SUBJECT',
+          message: 'Offline randevu müşterisi değerlendirilemez',
+        });
       }
       subjectId = booking.userId;
     }
@@ -79,7 +94,10 @@ export class RatingsService {
       where: { bookingId: input.bookingId, raterRole: input.raterRole },
     });
     if (existing) {
-      throw new ConflictException({ code: 'ALREADY_REVIEWED', message: 'Bu randevuyu zaten değerlendirdiniz' });
+      throw new ConflictException({
+        code: 'ALREADY_REVIEWED',
+        message: 'Bu randevuyu zaten değerlendirdiniz',
+      });
     }
 
     const created = await this.prisma.rating.create({
@@ -97,7 +115,10 @@ export class RatingsService {
     });
 
     if (input.raterRole === 'user') {
-      await this.prisma.booking.update({ where: { id: input.bookingId }, data: { reviewed: true } });
+      await this.prisma.booking.update({
+        where: { id: input.bookingId },
+        data: { reviewed: true },
+      });
     }
 
     // Aynı randevuda hem kullanıcı hem uzman puan verdiyse → ikisini de görünür yap

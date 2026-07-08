@@ -80,7 +80,12 @@ export default function NotificationsScreen() {
                       <Ionicons name={n.icon as IoniconName} size={20} color={c.fg} />
                     </View>
                     <View style={styles.rowBody}>
-                      <Text variant="bodyStrong" tone="ink" style={styles.rowTitle} numberOfLines={1}>
+                      <Text
+                        variant="bodyStrong"
+                        tone="ink"
+                        style={styles.rowTitle}
+                        numberOfLines={1}
+                      >
                         {n.titleKey ? fillParams(t(n.titleKey), n.params) : (n.title ?? '')}
                       </Text>
                       <Text variant="caption" tone="inkSoft" style={styles.body}>
@@ -151,7 +156,12 @@ const makeStyles = (colors: ColorTokens) =>
     rowTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
     body: { marginTop: 3, lineHeight: 19 },
     date: { marginTop: space(1) },
-    trailing: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), marginTop: space(0.5) },
+    trailing: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      marginTop: space(0.5),
+    },
     dot: {
       width: 9,
       height: 9,

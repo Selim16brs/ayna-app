@@ -18,7 +18,10 @@ export class CutoutService {
 
   // Görselin arka planını temizler (cut-out). Anahtar yoksa "şu an kullanılamıyor" (§12.9).
   // Kaynak: public URL (imageUrl) VEYA telefondan seçilen yerel fotonun base64'ü (imageB64).
-  async cutout(source: { imageUrl?: string | undefined; imageB64?: string | undefined }): Promise<{ dataUrl: string }> {
+  async cutout(source: {
+    imageUrl?: string | undefined;
+    imageB64?: string | undefined;
+  }): Promise<{ dataUrl: string }> {
     const key = await this.apiKey();
     if (!key) {
       throw new ServiceUnavailableException({
@@ -33,7 +36,10 @@ export class CutoutService {
     } else if (source.imageUrl) {
       params.image_url = source.imageUrl;
     } else {
-      throw new ServiceUnavailableException({ code: 'CUTOUT_NO_SOURCE', message: 'Görsel kaynağı yok' });
+      throw new ServiceUnavailableException({
+        code: 'CUTOUT_NO_SOURCE',
+        message: 'Görsel kaynağı yok',
+      });
     }
     const form = new URLSearchParams(params);
     const res = await fetch('https://api.remove.bg/v1.0/removebg', {

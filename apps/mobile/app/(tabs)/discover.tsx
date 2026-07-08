@@ -12,7 +12,16 @@ import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { LampIcon, Marquee, PressableScale, SalonRow, Screen, Text, TextInput, WaveLayered } from '../../src/ui';
+import {
+  LampIcon,
+  Marquee,
+  PressableScale,
+  SalonRow,
+  Screen,
+  Text,
+  TextInput,
+  WaveLayered,
+} from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -36,7 +45,10 @@ export default function DiscoverScreen() {
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const unread = useStore(selectUnreadCount);
   // §fix — boş isimde de fallback (|| ; '' ?? x boş string'e düşmez → Keşfet ismi boş görünüyordu)
-  const userName = useStore((s) => s.currentUser?.name)?.trim().split(' ')[0] || 'Aigerim';
+  const userName =
+    useStore((s) => s.currentUser?.name)
+      ?.trim()
+      .split(' ')[0] || 'Aigerim';
   const cutoutUri = useStore((s) => s.cutoutUri); // §5.1.1 — premium cut-out profil fotosu
   // Dinamik kullanıcı adı — ilk harf büyük (el yazısı katman için)
   const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
@@ -51,11 +63,15 @@ export default function DiscoverScreen() {
   const nearby = useMemo(() => {
     const salons = cityPros.filter((p) => p.kind === 'salon');
     const premium = salons.filter((p) => p.isPremium);
-    const pool = premium.length >= 3 ? premium : [...premium, ...salons.filter((p) => !p.isPremium)];
+    const pool =
+      premium.length >= 3 ? premium : [...premium, ...salons.filter((p) => !p.isPremium)];
     if (pool.length === 0) return [];
     // Günlük rotasyon: aynı 3 salon kilitlenmez (premium satış değeri korunur)
     const offset = Math.floor(Date.now() / (24 * 60 * 60_000)) % pool.length;
-    return Array.from({ length: Math.min(3, pool.length) }, (_, i) => pool[(offset + i) % pool.length]!);
+    return Array.from(
+      { length: Math.min(3, pool.length) },
+      (_, i) => pool[(offset + i) % pool.length]!,
+    );
   }, [cityPros]);
   const cityEmpty = cityPros.length === 0;
   const [query, setQuery] = useState('');
@@ -77,7 +93,11 @@ export default function DiscoverScreen() {
               style={styles.logo}
               resizeMode="contain"
             />
-            <Pressable style={styles.bell} onPress={() => router.push('/notifications')} hitSlop={8}>
+            <Pressable
+              style={styles.bell}
+              onPress={() => router.push('/notifications')}
+              hitSlop={8}
+            >
               <View style={styles.bellCircle}>
                 <Ionicons name="notifications-outline" size={20} color={colors.ink} />
                 {unread > 0 ? (
@@ -619,7 +639,12 @@ const makeStyles = (colors: ColorTokens) =>
 
     // ── Öne çıkanlar (sponsorlu) ──
     ads: { paddingHorizontal: space(3), gap: space(1.5) },
-    adCard: { height: 160, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end' },
+    adCard: {
+      height: 160,
+      borderRadius: radius.xl,
+      overflow: 'hidden',
+      justifyContent: 'flex-end',
+    },
     adImage: { borderRadius: radius.xl },
     adBadge: {
       position: 'absolute',

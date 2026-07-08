@@ -6,7 +6,20 @@ import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
 // TR kısa ay adları — tarih etiketini serbest metin yerine seçilen tarihten üretiriz.
-const TR_MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+const TR_MONTHS = [
+  'Oca',
+  'Şub',
+  'Mar',
+  'Nis',
+  'May',
+  'Haz',
+  'Tem',
+  'Ağu',
+  'Eyl',
+  'Eki',
+  'Kas',
+  'Ara',
+];
 const two = (n: number) => (n < 10 ? `0${n}` : `${n}`);
 
 export function formatTrDate(d: Date, withTime: boolean): string {

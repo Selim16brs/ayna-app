@@ -14,7 +14,11 @@ export function isValidExpoToken(t: string): boolean {
 
 // Token listesi + payload → Expo push mesaj gövdeleri (geçersiz token'lar elenir).
 export function buildExpoMessages(tokens: string[], p: PushPayload) {
-  return tokens
-    .filter(isValidExpoToken)
-    .map((to) => ({ to, title: p.title, body: p.body, sound: 'default' as const, data: p.data ?? {} }));
+  return tokens.filter(isValidExpoToken).map((to) => ({
+    to,
+    title: p.title,
+    body: p.body,
+    sound: 'default' as const,
+    data: p.data ?? {},
+  }));
 }

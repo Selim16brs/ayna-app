@@ -92,9 +92,17 @@ export default function CityScreen() {
                 onPress={() => pick(c)}
               >
                 <View style={[styles.pin, active && styles.pinActive]}>
-                  <Ionicons name="location" size={20} color={active ? colors.onAccent : colors.inkSoft} />
+                  <Ionicons
+                    name="location"
+                    size={20}
+                    color={active ? colors.onAccent : colors.inkSoft}
+                  />
                 </View>
-                <Text variant="bodyStrong" tone={active ? 'onAccent' : 'ink'} style={styles.rowLabel}>
+                <Text
+                  variant="bodyStrong"
+                  tone={active ? 'onAccent' : 'ink'}
+                  style={styles.rowLabel}
+                >
                   {c}
                 </Text>
                 {active ? (

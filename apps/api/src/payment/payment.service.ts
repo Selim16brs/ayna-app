@@ -12,16 +12,21 @@ export class PaymentService {
   ) {}
 
   private async pointsBalance(userId: string): Promise<number> {
-    const agg = await this.prisma.loyaltyEntry.aggregate({ where: { userId }, _sum: { points: true } });
+    const agg = await this.prisma.loyaltyEntry.aggregate({
+      where: { userId },
+      _sum: { points: true },
+    });
     return agg._sum.points ?? 0;
   }
 
   // Ödeme niyeti oluştur — bedel = randevu fiyatı; puan tavan+bakiye ile sınırlanır.
   async createIntent(userId: string, bookingId: string, pointsRequested: number) {
     const booking = await this.prisma.booking.findUnique({ where: { id: bookingId } });
-    if (!booking) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    if (!booking)
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     const amount = Math.round(Number(booking.price));
-    if (amount <= 0) throw new BadRequestException({ code: 'BAD_AMOUNT', message: 'Geçersiz tutar' });
+    if (amount <= 0)
+      throw new BadRequestException({ code: 'BAD_AMOUNT', message: 'Geçersiz tutar' });
     const balance = await this.pointsBalance(userId);
     const split = paymentSplit(amount, Math.max(0, Math.floor(pointsRequested || 0)), balance);
     const p = await this.prisma.payment.create({
@@ -41,15 +46,24 @@ export class PaymentService {
   // Ödemeyi onayla → sağlayıcıdan nakit tahsilatı (sim) + puan harcaması (ledger).
   async confirm(userId: string, paymentId: string) {
     const p = await this.prisma.payment.findUnique({ where: { id: paymentId } });
-    if (!p || p.userId !== userId) throw new NotFoundException({ code: 'PAYMENT_NOT_FOUND', message: 'Ödeme bulunamadı' });
-    if (p.status !== 'pending') throw new BadRequestException({ code: 'ALREADY_PROCESSED', message: 'Ödeme zaten işlendi' });
+    if (!p || p.userId !== userId)
+      throw new NotFoundException({ code: 'PAYMENT_NOT_FOUND', message: 'Ödeme bulunamadı' });
+    if (p.status !== 'pending')
+      throw new BadRequestException({ code: 'ALREADY_PROCESSED', message: 'Ödeme zaten işlendi' });
 
     // Puan bakiyesini tekrar doğrula (aradaki harcamalara karşı)
     if (p.pointsUsed > 0 && (await this.pointsBalance(userId)) < p.pointsUsed) {
-      throw new BadRequestException({ code: 'INSUFFICIENT_POINTS', message: 'Puan bakiyesi yetersiz' });
+      throw new BadRequestException({
+        code: 'INSUFFICIENT_POINTS',
+        message: 'Puan bakiyesi yetersiz',
+      });
     }
 
-    const charge = await this.provider.charge({ paymentId: p.id, amount: Number(p.cashAmount), currency: 'KZT' });
+    const charge = await this.provider.charge({
+      paymentId: p.id,
+      amount: Number(p.cashAmount),
+      currency: 'KZT',
+    });
     if (!charge.ok) {
       await this.prisma.payment.update({ where: { id: p.id }, data: { status: 'failed' } });
       throw new BadRequestException({ code: 'CHARGE_FAILED', message: 'Ödeme alınamadı' });
@@ -58,7 +72,13 @@ export class PaymentService {
     // Puan harcaması — sadakat defterine (negatif)
     if (p.pointsUsed > 0) {
       await this.prisma.loyaltyEntry.create({
-        data: { userId, kind: 'spend', reason: 'rewards.spend.payment', detail: p.bookingId, points: -p.pointsUsed },
+        data: {
+          userId,
+          kind: 'spend',
+          reason: 'rewards.spend.payment',
+          detail: p.bookingId,
+          points: -p.pointsUsed,
+        },
       });
     }
     const paid = await this.prisma.payment.update({

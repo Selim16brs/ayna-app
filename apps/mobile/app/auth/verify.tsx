@@ -140,7 +140,12 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), gap: space(2) },
     empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(4) },
-    hero: { backgroundColor: colors.accent, borderRadius: radius.xl, padding: space(2.5), gap: space(1) },
+    hero: {
+      backgroundColor: colors.accent,
+      borderRadius: radius.xl,
+      padding: space(2.5),
+      gap: space(1),
+    },
     heroIcon: {
       width: 52,
       height: 52,

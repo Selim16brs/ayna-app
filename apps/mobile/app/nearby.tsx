@@ -25,9 +25,7 @@ export default function NearbyScreen() {
     const dist = (id: string) => distanceKm(cityCenter(city), proCoords(id));
     return all
       .filter((p) => p.city === city && p.kind === 'salon')
-      .sort(
-        (a, b) => Number(b.isPremium) - Number(a.isPremium) || dist(a.id) - dist(b.id),
-      );
+      .sort((a, b) => Number(b.isPremium) - Number(a.isPremium) || dist(a.id) - dist(b.id));
   }, [all, city]);
 
   return (
@@ -46,8 +44,16 @@ export default function NearbyScreen() {
             <Text variant="caption" tone="muted" style={styles.emptySub}>
               {t('nearby.empty_sub')}
             </Text>
-            <Pressable onPress={() => setNotified(true)} disabled={notified} style={[styles.notify, notified && styles.notifyDone]}>
-              <Ionicons name={notified ? 'checkmark' : 'notifications-outline'} size={16} color={colors.onAccent} />
+            <Pressable
+              onPress={() => setNotified(true)}
+              disabled={notified}
+              style={[styles.notify, notified && styles.notifyDone]}
+            >
+              <Ionicons
+                name={notified ? 'checkmark' : 'notifications-outline'}
+                size={16}
+                color={colors.onAccent}
+              />
               <Text variant="caption" tone="onAccent" style={styles.notifyText}>
                 {notified ? t('nearby.notified') : t('nearby.notify')}
               </Text>
@@ -82,7 +88,11 @@ export default function NearbyScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: TAB_BAR_CLEARANCE },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     list: { gap: space(1.5) },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     emptyIcon: {

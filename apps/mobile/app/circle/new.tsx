@@ -7,7 +7,15 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, Segmented, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import {
+  Button,
+  Screen,
+  Segmented,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+  TextInput,
+} from '../../src/ui';
 
 export default function NewPostScreen() {
   const router = useRouter();
@@ -118,7 +126,13 @@ export default function NewPostScreen() {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: space(13) },
-    label: { marginTop: space(3), marginBottom: space(1.5), fontSize: 20, fontWeight: '800', letterSpacing: -0.4 },
+    label: {
+      marginTop: space(3),
+      marginBottom: space(1.5),
+      fontSize: 20,
+      fontWeight: '800',
+      letterSpacing: -0.4,
+    },
     categories: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     categoryChip: {
       flexDirection: 'row',

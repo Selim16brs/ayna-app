@@ -48,16 +48,10 @@ export function ServiceCards({
               >
                 {tri(s.label, locale)}
               </Text>
-              {on ? (
-                <Ionicons name="checkmark-circle" size={16} color={colors.onAccent} />
-              ) : null}
+              {on ? <Ionicons name="checkmark-circle" size={16} color={colors.onAccent} /> : null}
             </View>
             <View style={styles.metaRow}>
-              <Ionicons
-                name="time-outline"
-                size={11}
-                color={on ? colors.onAccent : colors.muted}
-              />
+              <Ionicons name="time-outline" size={11} color={on ? colors.onAccent : colors.muted} />
               <Text variant="caption" tone={on ? 'onAccent' : 'muted'} style={styles.meta}>
                 {s.durationMin} dk
               </Text>

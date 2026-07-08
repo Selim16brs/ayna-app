@@ -37,7 +37,11 @@ export default function AddressesScreen() {
             {addresses.map((a) => (
               <View key={a.id} style={[styles.row, shadow.soft]}>
                 <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
-                  <Ionicons name={a.label === 'home' ? 'home' : 'briefcase'} size={18} color={colors.accentFg} />
+                  <Ionicons
+                    name={a.label === 'home' ? 'home' : 'briefcase'}
+                    size={18}
+                    color={colors.accentFg}
+                  />
                 </View>
                 <View style={styles.rowText}>
                   <Text variant="bodyStrong" tone="ink">
@@ -67,8 +71,16 @@ export default function AddressesScreen() {
           {t('addresses.add')}
         </Text>
         <View style={styles.chips}>
-          <Chip label={t('auth.address.home')} active={label === 'home'} onPress={() => setLabel('home')} />
-          <Chip label={t('auth.address.work')} active={label === 'work'} onPress={() => setLabel('work')} />
+          <Chip
+            label={t('auth.address.home')}
+            active={label === 'home'}
+            onPress={() => setLabel('home')}
+          />
+          <Chip
+            label={t('auth.address.work')}
+            active={label === 'work'}
+            onPress={() => setLabel('work')}
+          />
         </View>
         <TextInput
           value={detail}
@@ -101,7 +113,12 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: space(6), gap: space(1.5) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: space(6),
+      gap: space(1.5),
+    },
     hint: { marginLeft: space(0.5) },
     list: { gap: space(1.25) },
     row: {
@@ -112,7 +129,13 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.lg,
       padding: space(2),
     },
-    icon: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+    icon: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     rowText: { flex: 1, gap: 2 },
     empty: { alignItems: 'center', paddingVertical: space(4), gap: space(1) },
     addLabel: { marginTop: space(2), marginLeft: space(0.5) },

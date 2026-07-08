@@ -17,7 +17,13 @@ export class CommissionsService {
 
   private async audit(action: string, resourceId: string, actorId?: string) {
     await this.prisma.auditLog.create({
-      data: { action, resourceType: 'commission', resourceId, actorId: actorId ?? null, actorRole: 'admin' },
+      data: {
+        action,
+        resourceType: 'commission',
+        resourceId,
+        actorId: actorId ?? null,
+        actorRole: 'admin',
+      },
     });
   }
 

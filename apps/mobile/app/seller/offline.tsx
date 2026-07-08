@@ -92,9 +92,7 @@ export default function OfflineBookingScreen() {
     const candidate = { startMs, endMs: startMs + durationMin * 60_000 };
     const uzmanName = uzman.trim();
     const conflictBusy = bookings
-      .filter(
-        (b) => b.status !== 'cancelled' && (uzmanName ? b.uzmanName === uzmanName : true),
-      )
+      .filter((b) => b.status !== 'cancelled' && (uzmanName ? b.uzmanName === uzmanName : true))
       .map((b) => ({ startMs: b.startMs, endMs: b.startMs + b.durationMin * 60_000 }));
     if (hasConflict(candidate, conflictBusy)) {
       Alert.alert(t('offline.conflict_title'), t('offline.conflict'));
@@ -186,7 +184,12 @@ export default function OfflineBookingScreen() {
                       onPress={() => setOpenCat(open ? null : cat.id)}
                     >
                       <Ionicons name={cat.icon} size={17} color={colors.accentFg} />
-                      <Text variant="bodyStrong" tone="ink" style={styles.accTitle} numberOfLines={1}>
+                      <Text
+                        variant="bodyStrong"
+                        tone="ink"
+                        style={styles.accTitle}
+                        numberOfLines={1}
+                      >
                         {t(cat.labelKey)}
                       </Text>
                       {picked > 0 ? <View style={styles.accDot} /> : null}
@@ -215,7 +218,12 @@ export default function OfflineBookingScreen() {
                                   <Ionicons name="checkmark" size={13} color={colors.onAccent} />
                                 ) : null}
                               </View>
-                              <Text variant="body" tone="ink" style={styles.accName} numberOfLines={1}>
+                              <Text
+                                variant="body"
+                                tone="ink"
+                                style={styles.accName}
+                                numberOfLines={1}
+                              >
                                 {tri(s.label, locale)}
                               </Text>
                               {row ? (
@@ -344,7 +352,12 @@ function Field({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2.5), paddingBottom: space(4), gap: space(1.5) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2.5),
+      paddingBottom: space(4),
+      gap: space(1.5),
+    },
     field: { gap: space(0.75) },
     fieldFlex: { flex: 1 },
     label: {},

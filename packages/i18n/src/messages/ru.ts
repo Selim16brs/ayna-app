@@ -7,7 +7,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'premium.plan_name': 'AYNA Premium',
   'premium.per_month': '/ мес',
   'premium.tagline': 'Развивайте дело и привлекайте больше клиентов.',
-  'premium.pay_note': 'Оплата производится вне приложения (банк/Kaspi); после подтверждения Premium активируется.',
+  'premium.pay_note':
+    'Оплата производится вне приложения (банк/Kaspi); после подтверждения Premium активируется.',
   'premium.cancel': 'Можно отменить в любой момент.',
   'premium.cta': 'Перейти на Premium',
   'premium.section': 'Что даёт Premium',
@@ -33,11 +34,14 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'common.error': 'Произошла ошибка, попробуйте ещё раз',
   // §12.3 — предупреждение об ограниченном режиме
   'restricted.title': 'Ваш аккаунт сейчас ограничен',
-  'restricted.body': 'В ограниченном режиме нельзя создавать новые заявки. После погашения обязательства аккаунт откроется автоматически.',
+  'restricted.body':
+    'В ограниченном режиме нельзя создавать новые заявки. После погашения обязательства аккаунт откроется автоматически.',
   'restricted.days_left': 'Осталось: {n} дн.',
-  'restricted.pay': 'Загрузи квитанцию о возврате или погаси комиссионный долг — аккаунт откроется автоматически.',
+  'restricted.pay':
+    'Загрузи квитанцию о возврате или погаси комиссионный долг — аккаунт откроется автоматически.',
   'restricted.cta': 'Комиссия и квитанции',
-  'restricted.locked_offer': 'В ограниченном режиме нельзя оставлять предложения. Сначала погаси обязательство.',
+  'restricted.locked_offer':
+    'В ограниченном режиме нельзя оставлять предложения. Сначала погаси обязательство.',
   'app.tagline': 'У каждой женщины должно быть своё зеркало!',
   'slogan.l1a': 'У всех ',
   'slogan.w1': 'женщин',
@@ -52,7 +56,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'expert.reg.title': 'Регистрация мастера',
   'expert.reg.personal': 'Личные данные',
   'expert.reg.photo': 'Ваше фото профиля',
-  'expert.reg.photo_lead': 'На белом фоне, как в примерах — одна и чётко в кадре. Такого снимка достаточно.',
+  'expert.reg.photo_lead':
+    'На белом фоне, как в примерах — одна и чётко в кадре. Такого снимка достаточно.',
   'expert.reg.photo_auto': 'Фон уберём автоматически — вам ничего делать не нужно.',
   'expert.reg.photo_ex': 'Примеры снимков',
   'expert.reg.photo_hint': 'Фон удаляется автоматически (remove.bg), а лицо проверяется.',
@@ -62,14 +67,16 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'expert.reg.prof': 'Профессиональные данные',
   'expert.reg.service_area': 'Сфера услуг',
   'expert.reg.services': 'Твои услуги',
-  'expert.reg.services_hint': 'Для каждой услуги цена и длительность обязательны — длительность нужна для слотов записи.',
+  'expert.reg.services_hint':
+    'Для каждой услуги цена и длительность обязательны — длительность нужна для слотов записи.',
   'expert.reg.service_name': 'Название услуги',
   'expert.reg.service_price': 'Цена (₸)',
   'expert.reg.service_dur': 'Длительность (мин)',
   'expert.reg.add_service': 'Добавить услугу',
   'expert.reg.cert': 'Сертификаты (по желанию)',
   'expert.reg.cert_add': 'Добавить сертификат',
-  'expert.reg.cert_warn': 'Если вы предоставите пользователям неверную информацию, это может подорвать доверие. Поэтому делитесь только сертификатами, оформленными на ваше имя.',
+  'expert.reg.cert_warn':
+    'Если вы предоставите пользователям неверную информацию, это может подорвать доверие. Поэтому делитесь только сертификатами, оформленными на ваше имя.',
   'expert.reg.social': 'Соцсети (по желанию)',
   'expert.reg.hours': 'Часы работы',
   'expert.reg.hours_ph': 'Напр. Пн–Сб 10:00–20:00',
@@ -144,7 +151,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'salon.staff.perf': 'показатель',
   'agenda.filter.all': 'Все',
   'salon.upsell.title': 'Повысь видимость салона ✨',
-  'salon.upsell.body': 'С Premium салон показывается в «Рекомендуемые» и топ-3 «Рядом» — на этой неделе тебя могли увидеть {n} раз.',
+  'salon.upsell.body':
+    'С Premium салон показывается в «Рекомендуемые» и топ-3 «Рядом» — на этой неделе тебя могли увидеть {n} раз.',
   'salon.upsell.cta': 'Перейти на Premium',
   'salon.cal.all': 'Общий',
   'salon.cal.add': 'Добавить запись',
@@ -156,7 +164,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'salon.add.uzman': 'Выбери мастера',
   'salon.add.phone': 'Телефон клиента',
   'salon.add.submit': 'Отправить мастеру',
-  'salon.add.note': 'Запись салона отправляется на подтверждение мастеру; фиксируется после согласия (§4.6).',
+  'salon.add.note':
+    'Запись салона отправляется на подтверждение мастеру; фиксируется после согласия (§4.6).',
   'salon.add.sent_title': 'Отправлено на подтверждение мастеру',
   'salon.add.sent_body': 'Запись подтвердится после согласия {uzman}.',
   'salon.edit.title': 'Редактировать профиль',
@@ -182,7 +191,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'ad.about': 'О кампании',
   'ad.perks': 'Преимущества',
   'ad.contact': 'Связаться',
-  'ad.disclosure': 'Это рекламный материал. AYNA не гарантирует покупку; условия определяет компания.',
+  'ad.disclosure':
+    'Это рекламный материал. AYNA не гарантирует покупку; условия определяет компания.',
   'ad.not_found': 'Кампания не найдена.',
   'seller.menu.services_d': 'Услуги, цены и длительность',
   'seller.menu.reengage': 'Вернуть клиента',
@@ -197,7 +207,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.nav.agenda': 'Календарь',
   'seller.nav.profile': 'Профиль',
   'seller.services.title': 'Мои услуги',
-  'seller.services.subtitle': 'Управляйте услугами, ценами и длительностью. Длительность нужна для слотов записи.',
+  'seller.services.subtitle':
+    'Управляйте услугами, ценами и длительностью. Длительность нужна для слотов записи.',
   'seller.services.active_unit': 'активных услуг',
   'seller.services.empty': 'В этой категории услуги ещё не выбраны.',
   'seller.services.saved': 'Ваши услуги обновлены.',
@@ -290,7 +301,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'city.search_placeholder': 'Поиск города',
   'city.no_match': 'Город не найден',
   'home.hero_subtitle': 'Открой лучшие бьюти-впечатления поблизости',
-  'home.marquee': 'Самые профессиональные мастера здесь для тебя  ·  У каждой женщины должно быть своё зеркало',
+  'home.marquee':
+    'Самые профессиональные мастера здесь для тебя  ·  У каждой женщины должно быть своё зеркало',
   'home.cat.hair': 'Волосы',
   'home.cat.skin': 'Кожа',
   'home.cat.nail': 'Nail',
@@ -307,11 +319,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'quote.hub.photo.title': 'Предложение по фото',
   'quote.hub.photo.desc': 'Загрузи фото желаемого образа, и мастера предложат тебе цену.',
   'quote.hub.demand.title': 'Заявка с указанием цены',
-  'quote.hub.demand.desc': 'Напиши свой бюджет и потребность, и согласные мастера свяжутся с тобой.',
+  'quote.hub.demand.desc':
+    'Напиши свой бюджет и потребность, и согласные мастера свяжутся с тобой.',
   'quote.hub.badge.photo': 'По фото',
   'quote.hub.badge.demand': 'По бюджету',
   'quote.new.title': 'Предложения по фото',
-  'quote.new.subtitle': 'Загрузи своё фото, и мгновенно открой самые подходящие тебе предложения по уходу и красоте.',
+  'quote.new.subtitle':
+    'Загрузи своё фото, и мгновенно открой самые подходящие тебе предложения по уходу и красоте.',
   'quote.new.photo': 'Добавить фото',
   'quote.new.photo_hint': 'Загрузи фото желаемого образа',
   'quote.new.upload': 'Загрузи своё фото',
@@ -332,7 +346,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'quote.sent.title': 'Твоя заявка дошла до мастеров',
   'quote.sent.subtitle': 'AYNA подбирает для тебя самого подходящего мастера.',
   'quote.sent.p1.title': 'Отправлено всем мастерам поблизости',
-  'quote.sent.p1.body': 'Твоя заявка отправлена как уведомление подходящим мастерам в твоём городе.',
+  'quote.sent.p1.body':
+    'Твоя заявка отправлена как уведомление подходящим мастерам в твоём городе.',
   'quote.sent.p2.title': 'Предложения скоро придут',
   'quote.sent.p2.body': 'Полученные предложения ты вскоре увидишь на странице «Мои заявки».',
   'quote.sent.p3.title': 'AYNA сведёт тебя с лучшим мастером',
@@ -387,7 +402,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'demand.new.budget_ph': 'Цена (₸)',
   'demand.new.submit': 'Опубликовать заявку',
   'demand.market.avg': 'Средняя рыночная цена',
-  'demand.market.low': 'Поскольку ваше предложение намного ниже общих цен, мастера могут не откликнуться.',
+  'demand.market.low':
+    'Поскольку ваше предложение намного ниже общих цен, мастера могут не откликнуться.',
   'bookings.tab.direct': 'Поиск',
   'bookings.tab.photo': 'Фото предложение',
   'bookings.tab.demand': 'Заявка',
@@ -403,12 +419,15 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.requests.give': 'Дать предложение',
   'requests.give_premium': 'Повысить членство',
   'requests.premium_title': 'Предложения — для участников',
-  'requests.premium_body': 'Чтобы видеть детали заявки и отправлять предложения, перейди на Premium или Platinum.',
+  'requests.premium_body':
+    'Чтобы видеть детали заявки и отправлять предложения, перейди на Premium или Platinum.',
   'requests.premium_banner': 'Детали открываются с Premium/Platinum — повысь членство.',
   // §11 — 3 дня бесплатного пробного периода для мастера
   'requests.trial_title': 'Бесплатный период начался 🎁',
-  'requests.trial_banner': '{n} дн. ты можешь видеть все заявки и отправлять предложения. По окончании — продолжи с членством.',
-  'requests.locked_hint': 'Детали заявки доступны участникам Premium/Platinum. Чтобы видеть и предлагать, повысь членство.',
+  'requests.trial_banner':
+    '{n} дн. ты можешь видеть все заявки и отправлять предложения. По окончании — продолжи с членством.',
+  'requests.locked_hint':
+    'Детали заявки доступны участникам Premium/Platinum. Чтобы видеть и предлагать, повысь членство.',
   'offer.form.title': 'Дать предложение',
   'offer.form.price': 'Цена (₸)',
   'offer.form.eta': 'Примерное время (мин)',
@@ -416,7 +435,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'offer.form.note_ph': 'Краткая заметка пользователю…',
   'offer.form.slots': 'Свободные слоты',
   'offer.form.slots_note': 'Выбери до 3 свободных слотов (клиент подтвердит один).',
-  'offer.form.no_slots': 'Нет свободного времени под эту длительность. Сократи время или открой календарь.',
+  'offer.form.no_slots':
+    'Нет свободного времени под эту длительность. Сократи время или открой календарь.',
   'offer.form.send': 'Отправить предложение',
   'bookings.empty': 'У тебя нет записей этим путём',
   'bookings.empty_cta': 'Загляни в Обзор',
@@ -505,9 +525,11 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'care.due_in': 'дней осталось',
   'care.get_offer': 'Получить предложение на это',
   'notifprefs.title': 'Настройки уведомлений',
-  'notifprefs.hint': 'Выбери, какие группы уведомлений хочешь получать. Ежедневные уведомления умно группируются.',
+  'notifprefs.hint':
+    'Выбери, какие группы уведомлений хочешь получать. Ежедневные уведомления умно группируются.',
   'notifprefs.demand_title': 'Уведомления о заявках',
-  'notifprefs.demand_hint': 'В какой категории и в какие часы получать уведомления о новых заявках?',
+  'notifprefs.demand_hint':
+    'В какой категории и в какие часы получать уведомления о новых заявках?',
   'notifprefs.demand_cats': 'Категории (если ничего не выбрано — все)',
   'notifprefs.demand_hours': 'Часовой интервал',
   'notifprefs.booking': 'Уведомления о записи',
@@ -544,7 +566,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'profile.menu.safety': 'Безопасность',
   'profile.menu.addresses': 'Мои адреса',
   'addresses.title': 'Мои адреса',
-  'addresses.hint': 'Управляй домашним и рабочим адресами — используются для «Рядом с тобой» и расчёта расстояния.',
+  'addresses.hint':
+    'Управляй домашним и рабочим адресами — используются для «Рядом с тобой» и расчёта расстояния.',
   'addresses.add': 'Добавить адрес',
   'addresses.empty': 'Ты ещё не добавила адрес',
   'profile.menu.safe': 'AYNA Safe',
@@ -567,7 +590,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.field.address': 'Адрес',
   'booking.field.phone': 'Телефон',
   'booking.field.customer': 'Клиент',
-  'booking.address_note': 'Адрес салона показывается после подтверждения; ваш адрес мастеру не передаётся',
+  'booking.address_note':
+    'Адрес салона показывается после подтверждения; ваш адрес мастеру не передаётся',
   'booking.confirmed.done': 'Перейти к моим записям',
   'screen.placeholder': 'Этот раздел скоро появится здесь',
   'rewards.title': 'Мои баллы',
@@ -589,10 +613,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'rewards.raffle.join_confirm': 'Использовать 500 баллов для участия в розыгрыше?',
   'rewards.raffle.joined': 'Твой билет розыгрыша получен! Удачи 🎁',
   'rewards.raffle.entry': 'Билет розыгрыша',
-  'rewards.expiry_warn': 'Не дай баллам сгореть — используй в течение 12 месяцев. Напомним за 30 дней до сгорания.',
+  'rewards.expiry_warn':
+    'Не дай баллам сгореть — используй в течение 12 месяцев. Напомним за 30 дней до сгорания.',
   'rewards.rules.title': 'Правила баллов',
   'rewards.rules.earn': 'Возвращай %3 за каждую завершённую услугу.',
-  'rewards.rules.channels': 'Зарабатывай также лайками W2W, блогом, первой записью и приглашением (с месячными лимитами).',
+  'rewards.rules.channels':
+    'Зарабатывай также лайками W2W, блогом, первой записью и приглашением (с месячными лимитами).',
   'rewards.rules.cap': 'Баллами оплачивается не более половины платежа',
   'rewards.rules.expire': 'Неактивные баллы сгорают',
   'rewards.earn.title': 'Как заработать баллы?',
@@ -661,7 +687,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'auth.section.personal': 'Личные данные',
   'auth.section.account': 'Безопасность аккаунта',
   'auth.section.location': 'Местоположение',
-  'auth.terms.accept': 'Я прочитал(а) условия использования и политику конфиденциальности, принимаю.',
+  'auth.terms.accept':
+    'Я прочитал(а) условия использования и политику конфиденциальности, принимаю.',
   'auth.city.required': 'Пожалуйста, выбери свой город',
   'auth.error.taken': 'Этот телефон или электронная почта уже зарегистрированы',
   'auth.error.bad': 'Электронная почта/телефон или пароль неверны',
@@ -687,7 +714,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'auth.section.address': 'Адрес и местоположение',
   'auth.location.use_gps': 'Использовать моё местоположение',
   'auth.location.detected': 'Местоположение получено',
-  'auth.location.hint': 'Местоположение используется для «Салоны рядом с тобой» и расчёта расстояния. При желании можешь ввести адрес вручную.',
+  'auth.location.hint':
+    'Местоположение используется для «Салоны рядом с тобой» и расчёта расстояния. При желании можешь ввести адрес вручную.',
   'auth.address.label': 'Метка адреса',
   'auth.address.home': 'Дом',
   'auth.address.work': 'Работа',
@@ -729,7 +757,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'biz.field.docs_add': 'Добавить документ',
   'biz.field.docs_hint': 'Лицензия бизнеса и сертификат гигиены (для проверки)',
   'biz.terms.accept': 'Я принимаю договор с бизнесом и политику конфиденциальности.',
-  'biz.terms.always_liability': 'Ответственность: за содержание, отправленное клиентам через рассылки Always, отвечаешь только ты. При отправке незаконных, вводящих в заблуждение или навязчивых сообщений вся правовая ответственность лежит на мастере/салоне; AYNA ответственности не несёт.',
+  'biz.terms.always_liability':
+    'Ответственность: за содержание, отправленное клиентам через рассылки Always, отвечаешь только ты. При отправке незаконных, вводящих в заблуждение или навязчивых сообщений вся правовая ответственность лежит на мастере/салоне; AYNA ответственности не несёт.',
   'biz.new.submit': 'Завершить регистрацию',
   'biz.section.owner': 'Информация о владельце салона',
   'biz.section.about': 'О салоне',
@@ -743,7 +772,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'biz.field.map_pin': 'Отметить на карте',
   'biz.field.map_pinned': 'Местоположение отмечено',
   'biz.field.map_change': 'Изменить',
-  'biz.field.area_hint': 'Направления услуг, которые предлагает салон — без цен. Цены берутся из профилей мастеров, привязанных к салону.',
+  'biz.field.area_hint':
+    'Направления услуг, которые предлагает салон — без цен. Цены берутся из профилей мастеров, привязанных к салону.',
   'biz.field.social': 'Социальные сети',
   'biz.field.desc': 'Описание салона',
   'biz.field.desc_ph': 'Представьте свой салон в нескольких предложениях…',
@@ -773,7 +803,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reports.action.services': 'Услуги',
   'reports.action.promotions': 'Акции',
   'promo.title': 'Акции',
-  'promo.intro': 'Созданные акции после одобрения администратором публикуются в разделе «Предложения» у пользователей.',
+  'promo.intro':
+    'Созданные акции после одобрения администратором публикуются в разделе «Предложения» у пользователей.',
   'promo.new': 'Создать акцию',
   'promo.empty': 'У вас пока нет акций. Создайте первое предложение.',
   'promo.status.pending': 'На одобрении',
@@ -781,11 +812,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'promo.status.rejected': 'Отклонено',
   'promo.status.expired': 'Истекло',
   'promo.upsell_title': 'Выделяйтесь в витрине предложений',
-  'promo.upsell_body': 'С Premium ваши акции публикуются в разделе «Предложения» на Обзоре и охватывают больше клиентов.',
+  'promo.upsell_body':
+    'С Premium ваши акции публикуются в разделе «Предложения» на Обзоре и охватывают больше клиентов.',
   'promo.upsell_b1': 'Отвечайте на открытые заявки пользователей рядом с вами',
   'promo.upsell_b2': 'Ваши акции публикуются в витрине «Предложения»',
   'promo.upsell_b3': 'Создавайте 1 акцию в неделю',
-  'promo.week_limit': 'Можно создать только 1 акцию в неделю. Для новой дождитесь следующей недели.',
+  'promo.week_limit':
+    'Можно создать только 1 акцию в неделю. Для новой дождитесь следующей недели.',
   'promo.upsell_cta': 'Перейти на Premium',
   'promo.later': 'Позже',
   'promo.form.title': 'Новая акция',
@@ -801,13 +834,15 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'promo.form.approve_note': 'Акция проходит одобрение администратора перед публикацией.',
   'promo.form.submit': 'Отправить на одобрение',
   'promo.submitted_title': 'Отправлено',
-  'promo.submitted_body': 'Ваша акция отправлена на одобрение администратора. После одобрения она появится в «Предложениях».',
+  'promo.submitted_body':
+    'Ваша акция отправлена на одобрение администратора. После одобрения она появится в «Предложениях».',
   'reports.action.codes': 'Коды приглашения',
   'reports.action.reviews': 'Отзывы',
   'reports.action.commissions': 'Комиссия',
   // §12.8 счета комиссии (сторона про)
   'commission.title': 'Платежи комиссии',
-  'commission.intro': 'Ежемесячная комиссия платформы. Оплати, загрузи чек; после подтверждения админом закрывается.',
+  'commission.intro':
+    'Ежемесячная комиссия платформы. Оплати, загрузи чек; после подтверждения админом закрывается.',
   'commission.empty': 'У тебя пока нет счетов комиссии.',
   'commission.status.pending': 'Ожидает',
   'commission.status.overdue': 'Просрочено',
@@ -820,7 +855,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'commission.receipt_change': 'Изменить чек',
   'commission.paid_note': 'За этот период оплачено. Спасибо!',
   'seller.codes.title': 'Коды приглашения',
-  'seller.codes.hint': 'Мастера присоединяются к вашей команде через мобильное приложение по этому коду.',
+  'seller.codes.hint':
+    'Мастера присоединяются к вашей команде через мобильное приложение по этому коду.',
   'seller.codes.generate': 'Создать новый код приглашения',
   'seller.codes.empty': 'Пока нет кодов приглашения',
   'seller.codes.active': 'Активен',
@@ -844,7 +880,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.reviews.dispute': 'Оспорить',
   'seller.reviews.disputed': 'Оспорено · на рассмотрении',
   'seller.reviews.dispute_confirm': 'Оспорить этот отзыв?',
-  'seller.reviews.dispute_note': 'Отзыв остаётся видимым на время рассмотрения. Удаляются только оскорбления, раскрытие личной информации или фальшивые отзывы; честная критика не удаляется.',
+  'seller.reviews.dispute_note':
+    'Отзыв остаётся видимым на время рассмотрения. Удаляются только оскорбления, раскрытие личной информации или фальшивые отзывы; честная критика не удаляется.',
   'seller.reviews.not_linked': 'Бизнес пока не привязан к списку поиска.',
   'reports.period.week': 'На этой неделе',
   'reports.period.month': 'В этом месяце',
@@ -882,14 +919,17 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'agenda.add_offline': 'Офлайн-запись',
   'agenda.empty': 'В этом интервале нет записей',
   'agenda.closed_title': 'Закрытые дни (отпуск / праздник)',
-  'agenda.closed_hint': 'Дни, отмеченные как закрытые, отображаются у пользователя как недоступные для записи.',
+  'agenda.closed_hint':
+    'Дни, отмеченные как закрытые, отображаются у пользователя как недоступные для записи.',
   'agenda.view.day': 'День',
   'agenda.view.list': 'Список',
   'agenda.view.salon': 'Салон',
-  'agenda.salon_note': 'В календари мастеров вы можете только ДОБАВЛЯТЬ записи; не можете удалять или трогать дни отпуска. О каждом добавлении уведомляется мастер.',
+  'agenda.salon_note':
+    'В календари мастеров вы можете только ДОБАВЛЯТЬ записи; не можете удалять или трогать дни отпуска. О каждом добавлении уведомляется мастер.',
   'agenda.mark_closed': 'Отметить закрытым',
   'agenda.mark_open': 'Отметить открытым',
-  'agenda.closed_day': 'Этот день закрыт (отпуск / праздник). У пользователя отображается как недоступный для записи.',
+  'agenda.closed_day':
+    'Этот день закрыт (отпуск / праздник). У пользователя отображается как недоступный для записи.',
   'agenda.count': 'записей',
   'agenda.day_empty': 'На этот день записей нет',
   'agenda.free_add': 'Свободно — добавить офлайн',
@@ -906,7 +946,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'offline.service': 'Услуга',
   'offline.service_pick': 'Выбери из своих услуг',
   'offline.service_manual': 'Ввести вручную',
-  'offline.service_none': 'В профиле нет сохранённых услуг. Добавь их в разделе «Услуги» или впиши вручную.',
+  'offline.service_none':
+    'В профиле нет сохранённых услуг. Добавь их в разделе «Услуги» или впиши вручную.',
   'offline.svc_count': 'Выбрано услуг: {n} · длительность и цена суммированы',
   'offline.uzman': 'Мастер (необязательно)',
   'offline.date': 'Дата / время',
@@ -914,11 +955,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'offline.datetime': 'Дата и время',
   'offline.dur': 'Длительность (мин)',
   'offline.conflict_title': 'Время занято',
-  'offline.conflict': 'У этого мастера есть пересекающаяся запись на выбранное вами время. Выберите другое время.',
+  'offline.conflict':
+    'У этого мастера есть пересекающаяся запись на выбранное вами время. Выберите другое время.',
   'offline.price': 'Цена (₸)',
   'offline.save': 'Добавить запись',
   'offline.saved': 'Офлайн-запись добавлена',
-  'offline.note': 'Записи, полученные в салоне/по телефону, добавляются сюда; отображаются в общем календаре.',
+  'offline.note':
+    'Записи, полученные в салоне/по телефону, добавляются сюда; отображаются в общем календаре.',
   'offline.kind': 'Тип записи',
   'offline.kind.normal': 'Обычная',
   'offline.kind.group': 'Групповая',
@@ -961,7 +1004,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'category.sort.rating': 'По баллу',
   'category.sort.price': 'По цене',
   'category.empty': 'В этой категории пока нет мастеров',
-  'category.demand_cta': 'Опишите нужную услугу, и мастера сделают вам предложение → Получить предложение',
+  'category.demand_cta':
+    'Опишите нужную услугу, и мастера сделают вам предложение → Получить предложение',
   'category.services_title': 'Что ищешь?',
   'category.providers': 'Мастера',
   'category.demand_title': 'Опиши нужную услугу',
@@ -998,7 +1042,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'notif.deposit_expired': 'Срок депозита истёк',
   'notif.deposit_expired_b': '{pro} · чек не загружен вовремя, запись отменена и слот освобождён',
   'notif.response_expired': 'Мастер не ответил вовремя',
-  'notif.response_expired_b': '{pro} не ответил на твою заявку вовремя — предлагаем других мастеров рядом',
+  'notif.response_expired_b':
+    '{pro} не ответил на твою заявку вовремя — предлагаем других мастеров рядом',
   'notif.salon_offline_pending': 'Запись отправлена на подтверждение мастеру',
   'notif.salon_offline_pending_b': '{uzman} · {slot} — подтвердится после согласия мастера',
   // §10/§4 — тёплые шаблоны уведомления «вернуть клиента» (params {expert} {service})
@@ -1123,9 +1168,11 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'always.broadcast_sent_t': 'Рассылка отправлена',
   'always.broadcast_sent_b': 'Дошла до {n} постоянных клиентов 💌',
   'always.broadcast_none': 'Пока нет связанных клиентов — сначала собери список Always.',
-  'always.disclaimer': 'За содержание этих сообщений отвечает только отправитель. Запрещено отправлять незаконный, вводящий в заблуждение или навязчивый контент; иначе вся ответственность на мастере/салоне. AYNA не несёт ответственности за этот контент.',
+  'always.disclaimer':
+    'За содержание этих сообщений отвечает только отправитель. Запрещено отправлять незаконный, вводящий в заблуждение или навязчивый контент; иначе вся ответственность на мастере/салоне. AYNA не несёт ответственности за этот контент.',
   'always.platinum_title': 'Функция Platinum',
-  'always.platinum_body': 'Собери собственный список постоянных клиентов и оповещай их об акциях в одно касание. Always доступен участникам Platinum.',
+  'always.platinum_body':
+    'Собери собственный список постоянных клиентов и оповещай их об акциях в одно касание. Always доступен участникам Platinum.',
   'always.platinum_cta': 'Перейти на Platinum',
   'always.request_cta': 'Стать Always',
   'always.requested': 'Запрос отправлен',
@@ -1144,7 +1191,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'premium.b.commission_d': 'На онлайн-записях 8,5% вместо 10%',
   // §11 — многоуровневое поощрение подписки
   'upsell.toPrem.title': 'Больше клиентов ✨',
-  'upsell.toPrem.body': 'С Premium — выше в поиске; с Platinum — список постоянных клиентов + низкая комиссия.',
+  'upsell.toPrem.body':
+    'С Premium — выше в поиске; с Platinum — список постоянных клиентов + низкая комиссия.',
   'upsell.toPrem.cta': 'Смотреть пакеты',
   'upsell.toPlat.title': 'Перейди на Platinum 💎',
   'upsell.toPlat.body': 'Список постоянных клиентов Always, рассылка и комиссия 8,5%.',
@@ -1177,11 +1225,14 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reengage.empty': 'Пока некого возвращать.',
   // §11 — premium + автоматический возврат
   'reengage.premium_title': 'Premium-функция',
-  'reengage.premium_body': 'Автоматический возврат клиентов доступен мастерам Premium. Клиенты, у кого истёк период, вернутся сами — с тёплым сообщением, без твоих усилий.',
+  'reengage.premium_body':
+    'Автоматический возврат клиентов доступен мастерам Premium. Клиенты, у кого истёк период, вернутся сами — с тёплым сообщением, без твоих усилий.',
   'reengage.premium_cta': 'Перейти на Premium',
   'reengage.auto_title': 'Автовозврат клиентов',
-  'reengage.auto_desc': 'Система сама отправляет тёплое напоминание довольным клиентам, у кого истёк период услуги.',
-  'reengage.off_note': 'Автовозврат выключен. Включи — и система будет напоминать клиентам, у кого истёк период.',
+  'reengage.auto_desc':
+    'Система сама отправляет тёплое напоминание довольным клиентам, у кого истёк период услуги.',
+  'reengage.off_note':
+    'Автовозврат выключен. Включи — и система будет напоминать клиентам, у кого истёк период.',
   'reengage.section_done': 'Отправлено',
   'reengage.section_queue': 'В очереди',
   'reengage.status_sent': 'Отправлено автоматически',
@@ -1205,7 +1256,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'notif.provider_noshow': 'Мастер не пришёл — начислены баллы компенсации',
   'notif.provider_noshow_b': '{pro} · 1 000 баллов начислено, возврат депозита начат',
   'notif.review_dispute': 'Твоё возражение принято',
-  'notif.review_dispute_b': 'Отзыв остаётся видимым до проверки; удаляется только при нарушении правил.',
+  'notif.review_dispute_b':
+    'Отзыв остаётся видимым до проверки; удаляется только при нарушении правил.',
   'notif.review_invite': 'Оцени свой опыт',
   'notif.review_invite_b': 'Запись с {pro} завершена — оставь короткий отзыв.',
   'notif.report_received': 'Твоя жалоба принята',
@@ -1231,33 +1283,40 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.status.disputed': 'Открыт спор',
   'booking.status.reassigned_pending': 'Мастер изменён — ожидает подтверждения',
   'booking.reassign.title': 'Ваш мастер изменился',
-  'booking.reassign.desc': 'Выбранный вами мастер ушёл из салона. Ваша запись назначена новому мастеру; если хотите продолжить, подтвердите.',
+  'booking.reassign.desc':
+    'Выбранный вами мастер ушёл из салона. Ваша запись назначена новому мастеру; если хотите продолжить, подтвердите.',
   'booking.reassign.from': 'Ушедший мастер',
   'booking.reassign.to': 'Назначенный мастер',
   'booking.reassign.accept': 'Подтвердить нового мастера',
   'booking.reassign.reject': 'Отказаться / отменить',
   'booking.refund.pending_user': 'Ваша отмена принята. Мастер загрузит возврат депозита.',
   'booking.refund.title': 'Подтверждение возврата',
-  'booking.refund.desc': 'Мастер загрузил квитанцию возврата. Если вы увидели возврат на счёте, подтвердите.',
+  'booking.refund.desc':
+    'Мастер загрузил квитанцию возврата. Если вы увидели возврат на счёте, подтвердите.',
   'booking.refund.confirm': 'Возврат получен, подтвердить',
   'booking.refund.provider_upload': 'Загрузить квитанцию возврата',
-  'booking.refund.provider_pending': 'Свободная отмена — верните депозит и загрузите квитанцию (§4.4).',
+  'booking.refund.provider_pending':
+    'Свободная отмена — верните депозит и загрузите квитанцию (§4.4).',
   'booking.penalty.forfeited': 'Из-за поздней отмены депозит остался у мастера.',
   'booking.penalty.noshow': 'Из-за неявки на запись депозит остался у мастера.',
   'booking.dispute.cta': 'Оспорить',
   'booking.provider_noshow.cta': 'Мастер не пришёл',
   'booking.provider_noshow.confirm': 'Мастер не пришёл на приём?',
-  'booking.provider_noshow.note': 'После подтверждения на счёт добавится 1 000 баллов компенсации и начнётся возврат депозита.',
+  'booking.provider_noshow.note':
+    'После подтверждения на счёт добавится 1 000 баллов компенсации и начнётся возврат депозита.',
   'booking.dispute.done': 'Ваш спор передан команде поддержки.',
   'booking.deposit.title': 'Шаг депозита',
-  'booking.deposit.desc': 'Чтобы окончательно оформить запись, отправьте депозит и загрузите квитанцию.',
+  'booking.deposit.desc':
+    'Чтобы окончательно оформить запись, отправьте депозит и загрузите квитанцию.',
   'booking.deposit.amount': 'Сумма депозита',
   'booking.deposit.payto': 'Платёжные реквизиты',
-  'booking.deposit.note': 'Депозит считается задатком: если вы придёте на запись, он вычитается из стоимости услуги. Загрузите квитанцию в течение 3 часов, иначе слот освободится.',
+  'booking.deposit.note':
+    'Депозит считается задатком: если вы придёте на запись, он вычитается из стоимости услуги. Загрузите квитанцию в течение 3 часов, иначе слот освободится.',
   'booking.deposit.upload': 'Загрузить квитанцию',
   'booking.deposit.reupload': 'Заменить квитанцию',
   'booking.deposit.submit': 'Отправить квитанцию',
-  'booking.deposit.submitted_note': 'Ваша квитанция отправлена. Когда мастер подтвердит, запись станет окончательной.',
+  'booking.deposit.submitted_note':
+    'Ваша квитанция отправлена. Когда мастер подтвердит, запись станет окончательной.',
   'booking.provider.approve': 'Принять',
   'booking.provider.reject': 'Отклонить',
   'booking.provider.deadline': 'Ответь в течение {h} ч — иначе заявка уйдёт другому мастеру.',
@@ -1268,12 +1327,14 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.provider.complete': 'Услуга оказана',
   'booking.provider.pending_receipt': 'Ожидается квитанция пользователя.',
   'booking.signal.title': 'Сигнал клиента (скрытый)',
-  'booking.signal.desc': 'Поступает только в систему; клиент или кто-либо не видит. Каким был ваш опыт записи?',
+  'booking.signal.desc':
+    'Поступает только в систему; клиент или кто-либо не видит. Каким был ваш опыт записи?',
   'booking.signal.up': 'Без проблем',
   'booking.signal.down': 'С проблемами',
   'booking.signal.saved': 'Ваш сигнал сохранён (скрытый).',
   'booking.cancel.prompt': 'Вы можете выбрать причину отмены (необязательно).',
-  'booking.cancel.late_warn': 'Ваша запись сегодня. Поздняя отмена может повлиять на балл лояльности.',
+  'booking.cancel.late_warn':
+    'Ваша запись сегодня. Поздняя отмена может повлиять на балл лояльности.',
   'booking.cancel.reason.plan': 'Мои планы изменились',
   'booking.cancel.reason.time': 'Хочу другое время',
   'booking.cancel.reason.price': 'Цена/услуга не подходит',
@@ -1283,7 +1344,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.detail.awaiting_note': 'Ожидается подтверждение мастера.',
   'booking.detail.proposed': 'Новое время, предложенное мастером',
   'booking.detail.accept': 'Принять это время',
-  'booking.confirmed.awaiting': 'Ожидается подтверждение мастера — после подтверждения будут переданы адрес и телефон',
+  'booking.confirmed.awaiting':
+    'Ожидается подтверждение мастера — после подтверждения будут переданы адрес и телефон',
   'review.title': 'Оценить',
   'review.subtitle': 'Поделитесь опытом, подскажите другим',
   'review.rating': 'Ваш балл',
@@ -1317,7 +1379,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'circle.report': 'Пожаловаться',
   'circle.reported': 'Жалоба отправлена',
   'circle.report_confirm': 'Пожаловаться на этот пост',
-  'circle.report_note': 'Контент будет проверен командой модерации; при нарушении правил будет удалён.',
+  'circle.report_note':
+    'Контент будет проверен командой модерации; при нарушении правил будет удалён.',
   'benim.add.choose': 'Что хотите добавить?',
   'benim.add.log': 'Личная запись',
   'benim.add.log_sub': 'Врач, спорт, личная запись',
@@ -1331,7 +1394,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'care.add.service': 'Услуга',
   'care.add.delete': 'Удалить эту запись',
   'care.done.confirm_title': 'Уход выполнен?',
-  'care.done.confirm_body': 'Отметить «{name}» как выполненное? Счётчик установится на {days} дней.',
+  'care.done.confirm_body':
+    'Отметить «{name}» как выполненное? Счётчик установится на {days} дней.',
   'care.done.confirm_yes': 'Выполнено',
   'care.add.routine_title': 'Добавить напоминание об уходе',
   'care.add.moment_title': 'Добавить особый день',
@@ -1355,7 +1419,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'profile.edit.city': 'Город',
   'profile.edit.saved': 'Профиль обновлён',
   'profile.edit.pending_t': 'Изменение отправлено на одобрение',
-  'profile.edit.pending_b': 'Изменения профиля салона/мастера публикуются после одобрения администратора AYNA. После одобрения профиль обновится.',
+  'profile.edit.pending_b':
+    'Изменения профиля салона/мастера публикуются после одобрения администратора AYNA. После одобрения профиль обновится.',
   'profile.edit.approval_note': 'Изменения профиля публикуются после одобрения администратора.',
   'profile.photo.gallery': 'Из галереи',
   'profile.photo.camera': 'Камера',
@@ -1379,7 +1444,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'passport.premium.only': 'Premium',
   'passport.premium.cta': 'Перейти на Premium',
   'passport.premium.confirm': 'Перейти на Premium?',
-  'passport.premium.confirm_note': 'Оплата вне приложения (банк/Kaspi). После подтверждения откроются премиум-преимущества.',
+  'passport.premium.confirm_note':
+    'Оплата вне приложения (банк/Kaspi). После подтверждения откроются премиум-преимущества.',
   'passport.premium.manage': 'Управление подпиской · отмена',
   'passport.premium.cancel': 'Отменить',
   'passport.premium.cancel_confirm': 'Отменить твою Premium-подписку?',
@@ -1408,7 +1474,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'safe.sos_sub': 'Одним касанием отправьте местоположение + предупреждение',
   'safe.mode_on': 'Безопасный режим включён — местоположение передаётся',
   'safe.mode_off': 'Безопасный режим выключен',
-  'safe.mode_hint': 'При включении ваше местоположение передаётся доверенным людям на время записи.',
+  'safe.mode_hint':
+    'При включении ваше местоположение передаётся доверенным людям на время записи.',
   'safe.checkin': 'Я в безопасности (завершить)',
   'safe.need_contact': 'Сначала добавьте хотя бы одного доверенного человека.',
   'safe.perm_denied': 'Доступ к местоположению не предоставлен.',
@@ -1440,7 +1507,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
 
   // EK Z.6 — реферальная программа
   'referral.title': 'Пригласи подругу',
-  'referral.subtitle': 'Поделись кодом — когда подруга присоединится, вы обе получите по {points} баллов.',
+  'referral.subtitle':
+    'Поделись кодом — когда подруга присоединится, вы обе получите по {points} баллов.',
   'referral.your_code': 'ТВОЙ КОД',
   'referral.share': 'Поделиться кодом',
   'referral.share_message': 'Присоединяйся к AYNA! Мой код: {code} — получим по {points} баллов ✨',
@@ -1473,7 +1541,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'cutout.done': 'Фото готово — фон удалён ✨',
   'cutout.failed': 'Фон сейчас не удалось убрать; использовано обычное фото. Попробуй чуть позже.',
   'cutout.upsell_title': 'В Premium профиль выглядел бы так ✨',
-  'cutout.upsell_body': 'В Premium фон фото профиля удаляется автоматически и выделяется на главной.',
+  'cutout.upsell_body':
+    'В Premium фон фото профиля удаляется автоматически и выделяется на главной.',
   'privacy.title': 'Конфиденциальность',
   'privacy.subtitle': 'Контроль над вашими данными — у вас',
   'privacy.location': 'Передача местоположения',
@@ -1506,10 +1575,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.metric.repeat': 'Повторные клиенты',
   'seller.staff.title': 'Данные мастера',
   'seller.staff.remove': 'Убрать из состава',
-  'seller.staff.remove_hint': 'При уходе мастера его будущие записи передаются другому мастеру; пользователь подтверждает заново. Записи не удаляются молча (§4.5).',
+  'seller.staff.remove_hint':
+    'При уходе мастера его будущие записи передаются другому мастеру; пользователь подтверждает заново. Записи не удаляются молча (§4.5).',
   'seller.staff.remove_confirm': 'Убрать мастера из состава?',
-  'seller.staff.remove_desc': 'Его будущие записи будут переданы другому мастеру, а у пользователя запросят повторное подтверждение.',
-  'seller.staff.reassigned': 'Мастер убран; будущие записи переданы, ожидается подтверждение пользователя.',
+  'seller.staff.remove_desc':
+    'Его будущие записи будут переданы другому мастеру, а у пользователя запросят повторное подтверждение.',
+  'seller.staff.reassigned':
+    'Мастер убран; будущие записи переданы, ожидается подтверждение пользователя.',
   'seller.staff.removed': 'Мастер убран из состава.',
   'seller.staff.period': 'Этот месяц',
   'seller.staff.bookings': 'Записи',
@@ -1528,7 +1600,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'boni.title': 'Boni',
   'boni.subtitle': 'Ваш AI-консультант по красоте',
   'boni.entry': 'Спросить Boni',
-  'boni.intro': 'Спросите о том, что вас интересует про кожу, волосы или уход; дам вам персональную рекомендацию.',
+  'boni.intro':
+    'Спросите о том, что вас интересует про кожу, волосы или уход; дам вам персональную рекомендацию.',
   'boni.placeholder': 'Напр. что посоветуете для сухой кожи?',
   'boni.send': 'Спросить',
   'boni.thinking': 'Boni думает…',
@@ -1537,10 +1610,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'boni.quota.empty': 'Ваше AI-право на этот месяц исчерпано. Обновится в следующем месяце.',
   'boni.error': 'Boni сейчас не смог ответить, попробуйте снова.',
   'boni.premium.locked': 'Boni доступен только премиум-участникам',
-  'boni.premium.desc': 'AI-консультант по красоте, умный поиск и фотоанализ открываются с премиумом.',
+  'boni.premium.desc':
+    'AI-консультант по красоте, умный поиск и фотоанализ открываются с премиумом.',
   'boni.premium.cta': 'Перейти на премиум',
   'boni.premium.demo': 'Попробовать премиум (демо)',
-  'boni.disclaimer': 'Boni не даёт медицинских советов; при необходимости обратитесь к специалисту.',
+  'boni.disclaimer':
+    'Boni не даёт медицинских советов; при необходимости обратитесь к специалисту.',
   'verify.title': 'Подтвердить телефон',
   'verify.subtitle': 'Подтвердите номер, чтобы защитить аккаунт.',
   'verify.send': 'Отправить код',

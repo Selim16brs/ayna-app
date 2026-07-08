@@ -77,7 +77,11 @@ export default function SellerCodesScreen() {
   };
 
   const statusLabel = (s: string) =>
-    s === 'active' ? t('seller.codes.active') : s === 'used' ? t('seller.codes.used') : t('seller.codes.revoked');
+    s === 'active'
+      ? t('seller.codes.active')
+      : s === 'used'
+        ? t('seller.codes.used')
+        : t('seller.codes.revoked');
 
   return (
     <Screen edges={[]}>
@@ -97,7 +101,11 @@ export default function SellerCodesScreen() {
         </View>
 
         {businessId ? (
-          <Button label={busy ? '…' : t('seller.codes.generate')} onPress={generate} disabled={busy} />
+          <Button
+            label={busy ? '…' : t('seller.codes.generate')}
+            onPress={generate}
+            disabled={busy}
+          />
         ) : null}
 
         {codes === null ? null : !businessId ? (
@@ -125,8 +133,14 @@ export default function SellerCodesScreen() {
                       {c.code}
                     </Text>
                     <View style={styles.metaRow}>
-                      <View style={[styles.statusPill, active ? styles.pillActive : styles.pillMuted]}>
-                        <Text variant="caption" tone={active ? 'onAccent' : 'muted'} style={styles.pillText}>
+                      <View
+                        style={[styles.statusPill, active ? styles.pillActive : styles.pillMuted]}
+                      >
+                        <Text
+                          variant="caption"
+                          tone={active ? 'onAccent' : 'muted'}
+                          style={styles.pillText}
+                        >
                           {statusLabel(c.status)}
                         </Text>
                       </View>

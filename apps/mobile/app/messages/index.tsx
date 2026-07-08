@@ -32,7 +32,10 @@ export default function MessagesScreen() {
   }, [load]);
 
   const open = (c: ConversationSummary) => {
-    router.push({ pathname: '/messages/[id]', params: { id: c.id, name: c.otherName, otherId: c.otherId } });
+    router.push({
+      pathname: '/messages/[id]',
+      params: { id: c.id, name: c.otherName, otherId: c.otherId },
+    });
   };
 
   return (

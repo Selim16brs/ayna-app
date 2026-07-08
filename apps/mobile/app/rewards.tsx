@@ -1,7 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { POINTS_EXPIRY_MONTHS, POINTS_SPEND_CAP_PCT, RAFFLE_COST, REWARDS, type Reward } from '../src/data';
+import {
+  POINTS_EXPIRY_MONTHS,
+  POINTS_SPEND_CAP_PCT,
+  RAFFLE_COST,
+  REWARDS,
+  type Reward,
+} from '../src/data';
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
@@ -39,7 +45,9 @@ export default function RewardsScreen() {
       {
         text: t('rewards.raffle.join'),
         onPress: () =>
-          Alert.alert(enterRaffle() ? t('rewards.raffle.joined') : t('rewards.redeem.insufficient')),
+          Alert.alert(
+            enterRaffle() ? t('rewards.raffle.joined') : t('rewards.redeem.insufficient'),
+          ),
       },
     ]);
   };
@@ -173,7 +181,10 @@ export default function RewardsScreen() {
                 >
                   <Text
                     variant="caption"
-                    style={{ color: affordable ? colors.onAccent : colors.muted, fontWeight: '800' }}
+                    style={{
+                      color: affordable ? colors.onAccent : colors.muted,
+                      fontWeight: '800',
+                    }}
                   >
                     {t('rewards.redeem.use')}
                   </Text>
@@ -223,8 +234,15 @@ export default function RewardsScreen() {
         <View style={[styles.group, shadow.soft]}>
           <RuleRow icon="cash-outline" text={t('rewards.rules.earn')} />
           <RuleRow icon="people-outline" text={t('rewards.rules.channels')} />
-          <RuleRow icon="pie-chart-outline" text={`${t('rewards.rules.cap')} (%${POINTS_SPEND_CAP_PCT})`} />
-          <RuleRow icon="hourglass-outline" text={`${t('rewards.rules.expire')} (${POINTS_EXPIRY_MONTHS} ay)`} last />
+          <RuleRow
+            icon="pie-chart-outline"
+            text={`${t('rewards.rules.cap')} (%${POINTS_SPEND_CAP_PCT})`}
+          />
+          <RuleRow
+            icon="hourglass-outline"
+            text={`${t('rewards.rules.expire')} (${POINTS_EXPIRY_MONTHS} ay)`}
+            last
+          />
         </View>
 
         <View style={styles.note}>

@@ -53,7 +53,13 @@ export class ContentService {
   // Kritik eylem izi — PII yok (yalnızca rol/kaynak)
   private async audit(action: string, resourceId: string, actorId?: string) {
     await this.prisma.auditLog.create({
-      data: { action, resourceType: 'blog', resourceId, actorId: actorId ?? null, actorRole: 'admin' },
+      data: {
+        action,
+        resourceType: 'blog',
+        resourceId,
+        actorId: actorId ?? null,
+        actorRole: 'admin',
+      },
     });
   }
 
@@ -123,7 +129,8 @@ export class ContentService {
 
   async updateArticle(id: string, patch: ArticlePatchInput, actorId?: string) {
     const existing = await this.prisma.blogArticle.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException({ code: 'ARTICLE_NOT_FOUND', message: 'Yazı bulunamadı' });
+    if (!existing)
+      throw new NotFoundException({ code: 'ARTICLE_NOT_FOUND', message: 'Yazı bulunamadı' });
     // Yayına ilk kez alınıyorsa publishedAt damgala
     const publishedAt =
       patch.published === true && !existing.publishedAt ? new Date() : existing.publishedAt;
@@ -173,9 +180,13 @@ export class ContentService {
 
   async reviewApplication(id: string, input: ReviewApplicationInput, actorId?: string) {
     const app = await this.prisma.blogApplication.findUnique({ where: { id } });
-    if (!app) throw new NotFoundException({ code: 'APPLICATION_NOT_FOUND', message: 'Başvuru bulunamadı' });
+    if (!app)
+      throw new NotFoundException({ code: 'APPLICATION_NOT_FOUND', message: 'Başvuru bulunamadı' });
     if (app.status !== 'pending') {
-      throw new NotFoundException({ code: 'ALREADY_REVIEWED', message: 'Başvuru zaten değerlendirildi' });
+      throw new NotFoundException({
+        code: 'ALREADY_REVIEWED',
+        message: 'Başvuru zaten değerlendirildi',
+      });
     }
 
     if (input.decision === 'reject') {

@@ -56,7 +56,10 @@ export default function ProfessionalScreen() {
     if (!token || !pro.ownerUserId) return;
     try {
       const { id } = await api.startConversation(token, pro.ownerUserId);
-      router.push({ pathname: '/messages/[id]', params: { id, name: pro.name, otherId: pro.ownerUserId } });
+      router.push({
+        pathname: '/messages/[id]',
+        params: { id, name: pro.name, otherId: pro.ownerUserId },
+      });
     } catch {
       /* yut */
     }
@@ -98,7 +101,10 @@ export default function ProfessionalScreen() {
 
   return (
     <View style={styles.root}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 130 + TAB_BAR_CLEARANCE }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 130 + TAB_BAR_CLEARANCE }}
+      >
         {/* HERO — lime bant (Keşfet dili): çerçeveli portre + isim/puan/bağ + dalga geçişi */}
         <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
           <View style={styles.heroTop}>
@@ -106,7 +112,11 @@ export default function ProfessionalScreen() {
               <Ionicons name="chevron-back" size={22} color={colors.ink} />
             </Pressable>
             <Pressable style={styles.circleBtn} onPress={() => toggleFavorite(proId)}>
-              <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? HOT_PINK : colors.ink} />
+              <Ionicons
+                name={isFav ? 'heart' : 'heart-outline'}
+                size={20}
+                color={isFav ? HOT_PINK : colors.ink}
+              />
             </Pressable>
           </View>
 
@@ -124,7 +134,12 @@ export default function ProfessionalScreen() {
                 </Text>
                 {/* EK Z.3 — doğrulanmış uzman rozeti (KYC onaylı hesap) */}
                 {pro.kycVerified ? (
-                  <Ionicons name="shield-checkmark" size={22} color={colors.ink} style={styles.verifiedIcon} />
+                  <Ionicons
+                    name="shield-checkmark"
+                    size={22}
+                    color={colors.ink}
+                    style={styles.verifiedIcon}
+                  />
                 ) : null}
               </View>
               <Text variant="caption" tone="inkSoft" style={styles.heroMeta} numberOfLines={1}>
@@ -188,15 +203,28 @@ export default function ProfessionalScreen() {
                   <Text variant="bodyStrong" tone="ink" style={styles.section}>
                     {t('pro.staff')}
                   </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.staffRow}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.staffRow}
+                  >
                     {pro.staff.map((u) => {
                       const on = u.id === uzmanId;
                       return (
-                        <Pressable key={u.id} onPress={() => router.push('/uzman/' + u.id)} style={styles.staffCard}>
+                        <Pressable
+                          key={u.id}
+                          onPress={() => router.push('/uzman/' + u.id)}
+                          style={styles.staffCard}
+                        >
                           <View style={[styles.staffAvatarWrap, on && styles.staffAvatarOn]}>
                             <Image source={{ uri: u.image }} style={styles.staffAvatar} />
                           </View>
-                          <Text variant="caption" tone={on ? 'ink' : 'inkSoft'} style={styles.staffName} numberOfLines={1}>
+                          <Text
+                            variant="caption"
+                            tone={on ? 'ink' : 'inkSoft'}
+                            style={styles.staffName}
+                            numberOfLines={1}
+                          >
                             {u.name}
                           </Text>
                         </Pressable>
@@ -301,7 +329,9 @@ export default function ProfessionalScreen() {
                         </Text>
                       </View>
                       <View style={[styles.check, active && styles.checkOn]}>
-                        {active ? <Ionicons name="checkmark" size={14} color={colors.onAccent} /> : null}
+                        {active ? (
+                          <Ionicons name="checkmark" size={14} color={colors.onAccent} />
+                        ) : null}
                       </View>
                     </Pressable>
                   );
@@ -419,7 +449,12 @@ export default function ProfessionalScreen() {
                     </View>
                     <View style={styles.reviewStars}>
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <Ionicons key={i} name="star" size={12} color={i < r.rating ? colors.gold : colors.line} />
+                        <Ionicons
+                          key={i}
+                          name="star"
+                          size={12}
+                          color={i < r.rating ? colors.gold : colors.line}
+                        />
                       ))}
                     </View>
                   </View>
@@ -512,10 +547,22 @@ const makeStyles = (colors: ColorTokens) =>
     },
     badgePillText: { fontWeight: '700' },
     heroNameRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
-    heroName: { flexShrink: 1, fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.6 },
+    heroName: {
+      flexShrink: 1,
+      fontSize: 30,
+      lineHeight: 34,
+      fontWeight: '800',
+      letterSpacing: -0.6,
+    },
     verifiedIcon: { marginTop: space(0.5) },
     heroMeta: { marginTop: 2 },
-    heroStats: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginTop: space(1.5), flexWrap: 'wrap' },
+    heroStats: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      marginTop: space(1.5),
+      flexWrap: 'wrap',
+    },
     ratingPill: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -583,7 +630,12 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: 'transparent',
     },
     staffAvatarOn: { borderColor: colors.accent },
-    staffAvatar: { width: '100%', height: '100%', borderRadius: 30, backgroundColor: colors.bgSunken },
+    staffAvatar: {
+      width: '100%',
+      height: '100%',
+      borderRadius: 30,
+      backgroundColor: colors.bgSunken,
+    },
     staffName: { marginTop: space(0.75) },
     services: { gap: space(1.25) },
     dateCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
@@ -641,7 +693,12 @@ const makeStyles = (colors: ColorTokens) =>
     timeText: { fontWeight: '600' },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5), marginTop: space(1) },
     gridCell: { width: '47.5%', aspectRatio: 0.82 },
-    gridImg: { width: '100%', height: '100%', borderRadius: radius.lg, backgroundColor: colors.bgSunken },
+    gridImg: {
+      width: '100%',
+      height: '100%',
+      borderRadius: radius.lg,
+      backgroundColor: colors.bgSunken,
+    },
     // §6.1 bağlı salon + sertifika/sosyal
     salonLink: {
       flexDirection: 'row',
@@ -661,7 +718,12 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     certRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1), alignItems: 'center' },
-    certThumb: { width: 60, height: 60, borderRadius: radius.md, backgroundColor: colors.surfaceMuted },
+    certThumb: {
+      width: 60,
+      height: 60,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+    },
     socialInline: { gap: space(0.75) },
     socialChip: {
       flexDirection: 'row',
@@ -684,7 +746,13 @@ const makeStyles = (colors: ColorTokens) =>
     ratingBars: { flex: 1, justifyContent: 'center', gap: space(0.5) },
     distRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     distStar: { width: 10, textAlign: 'center' },
-    distTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.surfaceMuted, overflow: 'hidden' },
+    distTrack: {
+      flex: 1,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors.surfaceMuted,
+      overflow: 'hidden',
+    },
     distFill: { height: 6, borderRadius: 3, backgroundColor: colors.gold },
     breakdownCard: {
       backgroundColor: colors.surface,
@@ -694,7 +762,13 @@ const makeStyles = (colors: ColorTokens) =>
     },
     bdRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     bdLabel: { width: 84 },
-    bdTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surfaceMuted, overflow: 'hidden' },
+    bdTrack: {
+      flex: 1,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.surfaceMuted,
+      overflow: 'hidden',
+    },
     bdFill: { height: 8, borderRadius: 4, backgroundColor: colors.accent },
     bdScore: { width: 26, textAlign: 'right', fontWeight: '700' },
     reviews: { gap: space(1.5), marginTop: space(1) },

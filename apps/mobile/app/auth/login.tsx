@@ -33,7 +33,11 @@ export default function LoginScreen() {
       // §3.3/§9/§10 rol bazlı yönlendirme: SALON → salon paneli, UZMAN → uzman paneli, kullanıcı → keşfet
       const role = session.user.role;
       router.replace(
-        role === 'salon' ? '/salon/home' : role === 'professional' ? '/seller/reports' : '/discover',
+        role === 'salon'
+          ? '/salon/home'
+          : role === 'professional'
+            ? '/seller/reports'
+            : '/discover',
       );
     } catch {
       Alert.alert(t('auth.error.bad'));

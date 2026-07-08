@@ -11,7 +11,20 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, CitySelect, defaultHours, emptySocial, Screen, SocialLinks, StackHeader, Text, TextInput, type DayHours, type SocialValue, WorkingHours } from '../../src/ui';
+import {
+  Button,
+  CitySelect,
+  defaultHours,
+  emptySocial,
+  Screen,
+  SocialLinks,
+  StackHeader,
+  Text,
+  TextInput,
+  type DayHours,
+  type SocialValue,
+  WorkingHours,
+} from '../../src/ui';
 
 // Sistemde kayıtlı salonlar (uzmanın bağlanacağı) — data'dan
 const SALONS = PROFESSIONALS.filter((p) => p.kind === 'salon');
@@ -96,7 +109,8 @@ export default function ExpertRegisterScreen() {
       allowsMultipleSelection: true,
       selectionLimit: PORTFOLIO_MAX - portfolio.length,
     });
-    if (!res.canceled) setPortfolio((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, PORTFOLIO_MAX));
+    if (!res.canceled)
+      setPortfolio((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, PORTFOLIO_MAX));
   }
 
   // Alt hizmeti aç/kapa (açınca taksonomi varsayılan fiyat/süresiyle gelir)
@@ -221,7 +235,12 @@ export default function ExpertRegisterScreen() {
         <Label text={t('auth.f.name')} />
         <Input value={name} onChange={setName} placeholder={t('auth.profile.name_ph')} />
         <Label text={t('auth.f.phone')} />
-        <Input value={phone} onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))} placeholder="+7 700 123 45 67" keyboardType="phone-pad" />
+        <Input
+          value={phone}
+          onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
+          placeholder="+7 700 123 45 67"
+          keyboardType="phone-pad"
+        />
         <Label text={t('auth.f.password')} />
         <Input value={password} onChange={setPassword} secure />
         <Label text={t('auth.f.birthdate')} />
@@ -603,7 +622,12 @@ const makeStyles = (colors: ColorTokens) =>
     checkOn: { backgroundColor: colors.accent, borderColor: colors.accent },
     svcName: { flex: 1, fontWeight: '700', fontSize: 15, color: colors.ink, padding: 0 },
     svcRow: { flexDirection: 'row', gap: space(1) },
-    svcField: { flex: 1, backgroundColor: colors.surfaceMuted, borderRadius: radius.md, paddingHorizontal: space(1.5) },
+    svcField: {
+      flex: 1,
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.md,
+      paddingHorizontal: space(1.5),
+    },
     svcInput: { height: 46, fontSize: 15, fontWeight: '600', color: colors.ink },
     addBtn: {
       flexDirection: 'row',
@@ -666,6 +690,11 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.lg,
       padding: space(1.5),
     },
-    salonThumb: { width: 48, height: 48, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    salonThumb: {
+      width: 48,
+      height: 48,
+      borderRadius: radius.md,
+      backgroundColor: colors.bgSunken,
+    },
     footer: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(3) },
   });

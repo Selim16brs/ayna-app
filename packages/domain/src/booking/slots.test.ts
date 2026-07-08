@@ -224,11 +224,14 @@ test('canLock: geçmiş/tampon içi reddedilir (PAST)', () => {
 });
 
 test('canLock: geçersiz aralık reddedilir (INVALID)', () => {
-  const res = canLock({ startMs: at(12), endMs: at(11) }, {
-    openWindows: [iv(10, 18)],
-    busy: [],
-    nowMs: T0,
-  });
+  const res = canLock(
+    { startMs: at(12), endMs: at(11) },
+    {
+      openWindows: [iv(10, 18)],
+      busy: [],
+      nowMs: T0,
+    },
+  );
   assert.deepEqual(res, { ok: false, reason: 'INVALID' });
 });
 

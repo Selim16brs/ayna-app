@@ -79,7 +79,9 @@ export class SafetyService {
           orderBy: { startedAt: 'desc' },
         });
     if (!session) {
-      session = await this.prisma.safetySession.create({ data: { userId, status: 'sos', sosAt: new Date() } });
+      session = await this.prisma.safetySession.create({
+        data: { userId, status: 'sos', sosAt: new Date() },
+      });
     } else if (session.status !== 'sos') {
       session = await this.prisma.safetySession.update({
         where: { id: session.id },
@@ -88,7 +90,13 @@ export class SafetyService {
     }
     // Kritik eylem izi — yalnız eylem + kullanıcı; konum/PII YOK.
     await this.prisma.auditLog.create({
-      data: { action: 'safety.sos', resourceType: 'safety_session', resourceId: session.id, actorId: userId, actorRole: 'user' },
+      data: {
+        action: 'safety.sos',
+        resourceType: 'safety_session',
+        resourceId: session.id,
+        actorId: userId,
+        actorRole: 'user',
+      },
     });
     // Güvenilen kişilere bildirim gönderimi = gerçek push (EK Z.5) ile bağlanır.
     const contactCount = await this.prisma.trustedContact.count({ where: { userId } });

@@ -77,7 +77,8 @@ export class BookingsService {
   // geç iptal (<3sa, kapora ödenmiş) → kapora yanar; serbest iptal → uzman iade eder.
   async cancel(id: string, reason?: string) {
     const b = await this.prisma.booking.findUnique({ where: { id } });
-    if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    if (!b)
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     const outcome = cancelOutcome(b.status, b.startAt?.getTime() ?? null, Date.now());
     return this.transition(id, {
       status: outcome.status,
@@ -109,7 +110,8 @@ export class BookingsService {
     // Tek transaction içinde: çakışma kontrolü + durum güncelleme (atomik kilit)
     const row = await this.prisma.$transaction(async (tx) => {
       const b = await tx.booking.findUnique({ where: { id } });
-      if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+      if (!b)
+        throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
       // Kesin zaman varsa aynı uzmanda çakışan aktif randevu var mı?
       if (b.startAt && b.durationMin && b.proId) {
         const candidate = {
@@ -165,7 +167,8 @@ export class BookingsService {
   // iptali "serbest" diye göndermeye çalışsa bile <3sa ise kapora yakılır.
   async freeCancel(id: string, reason?: string) {
     const b = await this.prisma.booking.findUnique({ where: { id } });
-    if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    if (!b)
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     const outcome = cancelOutcome(b.status, b.startAt?.getTime() ?? null, Date.now());
     return this.transition(id, {
       status: outcome.status,
@@ -211,13 +214,17 @@ export class BookingsService {
       select: { ownerUserId: true },
     });
     if (biz?.ownerUserId) return biz.ownerUserId;
-    const sp = await this.prisma.specialist.findFirst({ where: { proId }, select: { userId: true } });
+    const sp = await this.prisma.specialist.findFirst({
+      where: { proId },
+      select: { userId: true },
+    });
     return sp?.userId ?? null;
   }
 
   async providerNoShow(id: string) {
     const b = await this.prisma.booking.findUnique({ where: { id } });
-    if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    if (!b)
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     const updated = await this.prisma.booking.update({
       where: { id },
       data: { status: 'refund_pending', providerNoShow: true },

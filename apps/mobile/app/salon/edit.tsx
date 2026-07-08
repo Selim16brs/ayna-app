@@ -64,7 +64,11 @@ export default function SalonEditScreen() {
   const removePhoto = (uri: string) =>
     Alert.alert(t('salon.profile.photos'), undefined, [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('profile.photo.remove'), style: 'destructive', onPress: () => setPhotos((p) => p.filter((x) => x !== uri)) },
+      {
+        text: t('profile.photo.remove'),
+        style: 'destructive',
+        onPress: () => setPhotos((p) => p.filter((x) => x !== uri)),
+      },
     ]);
   const toggleArea = (id: string) =>
     setAreas((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
@@ -121,14 +125,23 @@ export default function SalonEditScreen() {
 
         <Field label={t('salon.profile.about')} value={about} onChangeText={setAbout} multiline />
         <Field label={t('salon.profile.address')} value={address} onChangeText={setAddress} />
-        <Field label={t('salon.profile.contact')} value={contact} onChangeText={setContact} keyboardType="phone-pad" />
+        <Field
+          label={t('salon.profile.contact')}
+          value={contact}
+          onChangeText={setContact}
+          keyboardType="phone-pad"
+        />
 
         <Label text={t('salon.profile.areas')} />
         <View style={styles.areaRow}>
           {cats.map((c) => {
             const on = areas.includes(c.id);
             return (
-              <Pressable key={c.id} onPress={() => toggleArea(c.id)} style={[styles.areaChip, on && styles.areaChipOn]}>
+              <Pressable
+                key={c.id}
+                onPress={() => toggleArea(c.id)}
+                style={[styles.areaChip, on && styles.areaChipOn]}
+              >
                 <Ionicons name={c.icon} size={13} color={on ? colors.onAccent : colors.muted} />
                 <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
                   {t(c.labelKey)}
@@ -191,7 +204,12 @@ export default function SalonEditScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(1) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      gap: space(1),
+    },
     intro: { lineHeight: 18, marginBottom: space(1) },
     flex: { flex: 1 },
     label: { marginTop: space(1.5), marginBottom: space(0.5) },

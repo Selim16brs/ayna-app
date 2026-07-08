@@ -2,12 +2,7 @@ import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import {
-  type DemandOffer,
-  type OfferSort,
-  formatPrice,
-  sortOffers,
-} from '../../src/data';
+import { type DemandOffer, type OfferSort, formatPrice, sortOffers } from '../../src/data';
 import { slotTime, formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -34,9 +29,7 @@ export default function QuoteResultsScreen() {
 
   const offers = useMemo(() => (demand ? sortOffers(demand.offers, sort) : []), [demand, sort]);
 
-  const remainMin = demand
-    ? Math.max(0, Math.round((demand.expiresAt - Date.now()) / 60_000))
-    : 0;
+  const remainMin = demand ? Math.max(0, Math.round((demand.expiresAt - Date.now()) / 60_000)) : 0;
   const collecting = demand?.status === 'collecting';
 
   function pick(offer: DemandOffer, slotMs: number) {
@@ -91,11 +84,19 @@ export default function QuoteResultsScreen() {
       </View>
 
       {/* Sıralama */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sortRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.sortRow}
+      >
         {SORTS.map((s) => {
           const on = s.key === sort;
           return (
-            <Pressable key={s.key} onPress={() => setSort(s.key)} style={[styles.sortChip, on && styles.sortChipOn]}>
+            <Pressable
+              key={s.key}
+              onPress={() => setSort(s.key)}
+              style={[styles.sortChip, on && styles.sortChipOn]}
+            >
               <Ionicons name={s.icon} size={13} color={on ? colors.onAccent : colors.inkSoft} />
               <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
                 {s.label}
@@ -127,7 +128,12 @@ export default function QuoteResultsScreen() {
           </View>
         ) : (
           offers.map((o) => (
-            <OfferCard key={o.id} offer={o} disabled={demand.status !== 'collecting'} onPick={(slot) => pick(o, slot)} />
+            <OfferCard
+              key={o.id}
+              offer={o}
+              disabled={demand.status !== 'collecting'}
+              onPick={(slot) => pick(o, slot)}
+            />
           ))
         )}
       </ScrollView>
@@ -237,7 +243,12 @@ const makeStyles = (colors: ColorTokens) =>
     },
     sortChipOn: { backgroundColor: colors.accent },
     list: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
-    listEmpty: { alignItems: 'center', gap: space(1.5), paddingTop: space(8), paddingHorizontal: space(4) },
+    listEmpty: {
+      alignItems: 'center',
+      gap: space(1.5),
+      paddingTop: space(8),
+      paddingHorizontal: space(4),
+    },
     listEmptyText: { textAlign: 'center' },
     listEmptyCta: {
       marginTop: space(1),
@@ -246,7 +257,12 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
       paddingVertical: space(1.5),
     },
-    card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2), gap: space(1.25) },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1.25),
+    },
     cardTop: { flexDirection: 'row', gap: space(1.5), alignItems: 'center' },
     thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.bgSunken },
     info: { flex: 1 },

@@ -9,7 +9,20 @@ import { activeCategories } from '../../../src/taxonomy';
 import { useLocale } from '../../../src/locale';
 import { radius, space, type ColorTokens } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme-context';
-import { Button, CitySelect, defaultHours, emptySocial, Screen, SocialLinks, StackHeader, Text, TextInput, type DayHours, type SocialValue, WorkingHours } from '../../../src/ui';
+import {
+  Button,
+  CitySelect,
+  defaultHours,
+  emptySocial,
+  Screen,
+  SocialLinks,
+  StackHeader,
+  Text,
+  TextInput,
+  type DayHours,
+  type SocialValue,
+  WorkingHours,
+} from '../../../src/ui';
 
 // Salon hizmet alanları — MERKEZİ taksonomideki AKTİF kategoriler (fiyat YOK, yalnızca alan; §3.2 A)
 const AREAS: MessageKey[] = activeCategories().map((c) => c.labelKey);
@@ -63,7 +76,8 @@ export default function NewBusinessScreen() {
       allowsMultipleSelection: true,
       selectionLimit: PHOTO_MAX - photos.length,
     });
-    if (!res.canceled) setPhotos((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, PHOTO_MAX));
+    if (!res.canceled)
+      setPhotos((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, PHOTO_MAX));
   }
 
   function toggleArea(a: MessageKey) {
@@ -127,7 +141,11 @@ export default function NewBusinessScreen() {
         <View style={styles.row2}>
           <View style={styles.col}>
             <Label text={t('biz.field.owner_first')} />
-            <Input value={firstName} onChange={setFirstName} placeholderKey="biz.field.owner_first" />
+            <Input
+              value={firstName}
+              onChange={setFirstName}
+              placeholderKey="biz.field.owner_first"
+            />
           </View>
           <View style={styles.col}>
             <Label text={t('biz.field.owner_last')} />
@@ -232,7 +250,12 @@ export default function NewBusinessScreen() {
           keyboardType="phone-pad"
         />
         <Label text={t('biz.field.email')} />
-        <Input value={email} onChange={setEmail} keyboardType="email-address" placeholder="info@salon.kz" />
+        <Input
+          value={email}
+          onChange={setEmail}
+          keyboardType="email-address"
+          placeholder="info@salon.kz"
+        />
         <Label text={t('biz.field.social')} />
         <SocialLinks value={social} onChange={setSocial} />
 
@@ -259,7 +282,11 @@ export default function NewBusinessScreen() {
           {t('biz.field.docs_hint')}
         </Text>
 
-        <Checkbox checked={terms} onToggle={() => setTerms((v) => !v)} label={t('biz.terms.accept')} />
+        <Checkbox
+          checked={terms}
+          onToggle={() => setTerms((v) => !v)}
+          label={t('biz.terms.accept')}
+        />
         {/* §11/§sözleşme — Always toplu bildirim sorumluluk beyanı */}
         <Text variant="caption" tone="muted" style={styles.liability}>
           {t('biz.terms.always_liability')}
@@ -339,7 +366,15 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
   );
 }
 
-function Checkbox({ checked, onToggle, label }: { checked: boolean; onToggle: () => void; label: string }) {
+function Checkbox({
+  checked,
+  onToggle,
+  label,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  label: string;
+}) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
@@ -390,7 +425,12 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    photoThumb: { width: 84, height: 84, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    photoThumb: {
+      width: 84,
+      height: 84,
+      borderRadius: radius.md,
+      backgroundColor: colors.bgSunken,
+    },
     thumbRemove: {
       position: 'absolute',
       top: -6,

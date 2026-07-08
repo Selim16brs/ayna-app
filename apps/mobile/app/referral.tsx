@@ -36,7 +36,10 @@ export default function ReferralScreen() {
   const share = async () => {
     if (!data) return;
     await Share.share({
-      message: fillParams(t('referral.share_message'), { code: data.code, points: data.rewardPoints }),
+      message: fillParams(t('referral.share_message'), {
+        code: data.code,
+        points: data.rewardPoints,
+      }),
     });
   };
 
@@ -50,7 +53,10 @@ export default function ReferralScreen() {
       await Promise.all([load(), hydrateLoyalty()]);
       Alert.alert(
         t('referral.redeemed_title'),
-        fillParams(t('referral.redeemed_sub'), { points: res.pointsAwarded, name: res.referrerName }),
+        fillParams(t('referral.redeemed_sub'), {
+          points: res.pointsAwarded,
+          name: res.referrerName,
+        }),
       );
     } catch {
       Alert.alert(t('referral.title'), t('referral.redeem_failed'));
@@ -98,7 +104,12 @@ export default function ReferralScreen() {
               autoCapitalize="characters"
               style={styles.input}
             />
-            <Button label={t('referral.redeem')} variant="secondary" onPress={redeem} disabled={busy || code.trim().length < 4} />
+            <Button
+              label={t('referral.redeem')}
+              variant="secondary"
+              onPress={redeem}
+              disabled={busy || code.trim().length < 4}
+            />
           </View>
         </View>
       </View>
@@ -122,7 +133,12 @@ function Stat({ value, label }: { value: string; label: string }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: TAB_BAR_CLEARANCE,
+      gap: space(2),
+    },
     subtitle: {},
     codeCard: {
       backgroundColor: colors.accent,
@@ -136,7 +152,11 @@ const makeStyles = (colors: ColorTokens) =>
     stats: { flexDirection: 'row', alignItems: 'center', gap: space(2), marginTop: space(1) },
     stat: { alignItems: 'center' },
     statLabel: { opacity: 0.9 },
-    statDivider: { width: StyleSheet.hairlineWidth, height: 32, backgroundColor: 'rgba(255,255,255,0.4)' },
+    statDivider: {
+      width: StyleSheet.hairlineWidth,
+      height: 32,
+      backgroundColor: 'rgba(255,255,255,0.4)',
+    },
     redeemBox: { gap: space(1), marginTop: space(1) },
     redeemRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     input: {

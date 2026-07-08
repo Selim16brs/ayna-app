@@ -23,10 +23,26 @@ const makeType = (
 // Hizmet kategorileri post.category (TR etiket veya kod) ile; içerik türleri post.type ile eşlenir.
 const W2W_FILTERS: { id: string; labelKey: MessageKey; match: (p: CirclePost) => boolean }[] = [
   { id: 'all', labelKey: 'circle.cat.all', match: () => true },
-  { id: 'hair', labelKey: 'circle.cat.hair', match: (p) => p.category === 'Saç' || p.category === 'hair' },
-  { id: 'skincare', labelKey: 'circle.cat.skincare', match: (p) => p.category === 'Cilt Bakımı' || p.category === 'skincare' },
-  { id: 'makeup', labelKey: 'circle.cat.makeup', match: (p) => p.category === 'Makyaj' || p.category === 'makeup' },
-  { id: 'nails', labelKey: 'circle.cat.nails', match: (p) => p.category === 'Tırnak' || p.category === 'nails' },
+  {
+    id: 'hair',
+    labelKey: 'circle.cat.hair',
+    match: (p) => p.category === 'Saç' || p.category === 'hair',
+  },
+  {
+    id: 'skincare',
+    labelKey: 'circle.cat.skincare',
+    match: (p) => p.category === 'Cilt Bakımı' || p.category === 'skincare',
+  },
+  {
+    id: 'makeup',
+    labelKey: 'circle.cat.makeup',
+    match: (p) => p.category === 'Makyaj' || p.category === 'makeup',
+  },
+  {
+    id: 'nails',
+    labelKey: 'circle.cat.nails',
+    match: (p) => p.category === 'Tırnak' || p.category === 'nails',
+  },
   { id: 'experience', labelKey: 'circle.cat.experience', match: (p) => p.type === 'experience' },
   { id: 'asking', labelKey: 'circle.cat.asking', match: (p) => p.type === 'asking' },
   { id: 'chat', labelKey: 'circle.cat.chat', match: (p) => p.type === 'recommend' },
@@ -348,7 +364,12 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
       padding: space(2),
     },
-    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space(1) },
+    cardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: space(1),
+    },
     author: { flexDirection: 'row', alignItems: 'center', gap: space(1), flexShrink: 1 },
     flex: { flex: 1, minWidth: 0 },
     topRight: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },

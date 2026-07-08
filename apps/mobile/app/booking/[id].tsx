@@ -4,7 +4,12 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { computeDaySlots } from '@ayna/domain';
-import { DEPOSIT_KZT, FREE_CANCEL_WINDOW_MS, type BookingSource, formatPrice } from '../../src/data';
+import {
+  DEPOSIT_KZT,
+  FREE_CANCEL_WINDOW_MS,
+  type BookingSource,
+  formatPrice,
+} from '../../src/data';
 import { almatyDayStart, formatSlot } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -63,7 +68,9 @@ export default function BookingDetailScreen() {
     for (let d = 0; d < 14; d++) {
       const dayStart = almatyDayStart(now, d);
       if (closedDays.includes(dayStart)) continue; // §4.6 kapalı gün kullanıcıda görünmez
-      const openWindows = [{ startMs: dayStart + 10 * 3_600_000, endMs: dayStart + 19 * 3_600_000 }];
+      const openWindows = [
+        { startMs: dayStart + 10 * 3_600_000, endMs: dayStart + 19 * 3_600_000 },
+      ];
       const slots = computeDaySlots({
         openWindows,
         busy,
@@ -128,10 +135,23 @@ export default function BookingDetailScreen() {
     const late = booking ? booking.startMs - Date.now() <= FREE_CANCEL_WINDOW_MS : false;
     const msg = late ? t('booking.cancel.late_warn') : t('booking.cancel.prompt');
     Alert.alert(t('booking.detail.cancel'), msg, [
-      { text: t('booking.cancel.reason.plan'), onPress: () => doCancel(t('booking.cancel.reason.plan')) },
-      { text: t('booking.cancel.reason.time'), onPress: () => doCancel(t('booking.cancel.reason.time')) },
-      { text: t('booking.cancel.reason.price'), onPress: () => doCancel(t('booking.cancel.reason.price')) },
-      { text: t('booking.cancel.no_reason'), style: 'destructive', onPress: () => doCancel(undefined) },
+      {
+        text: t('booking.cancel.reason.plan'),
+        onPress: () => doCancel(t('booking.cancel.reason.plan')),
+      },
+      {
+        text: t('booking.cancel.reason.time'),
+        onPress: () => doCancel(t('booking.cancel.reason.time')),
+      },
+      {
+        text: t('booking.cancel.reason.price'),
+        onPress: () => doCancel(t('booking.cancel.reason.price')),
+      },
+      {
+        text: t('booking.cancel.no_reason'),
+        style: 'destructive',
+        onPress: () => doCancel(undefined),
+      },
       { text: t('common.cancel'), style: 'cancel' },
     ]);
   }
@@ -180,7 +200,11 @@ export default function BookingDetailScreen() {
         {/* Detaylar */}
         <View style={[styles.card, shadow.card]}>
           <Field icon="cut-outline" labelKey="booking.field.service" value={booking.service} />
-          <Field icon="time-outline" labelKey="booking.field.datetime" value={formatSlot(booking.startMs, t)} />
+          <Field
+            icon="time-outline"
+            labelKey="booking.field.datetime"
+            value={formatSlot(booking.startMs, t)}
+          />
           {booking.uzmanName ? (
             <Field icon="person-outline" labelKey="booking.field.pro" value={booking.uzmanName} />
           ) : null}
@@ -425,7 +449,11 @@ export default function BookingDetailScreen() {
             <View style={styles.reasonHead}>
               <Ionicons name="alert-circle-outline" size={14} color={colors.danger} />
               <Text variant="caption" tone="muted">
-                {t(booking.status === 'no_show' ? 'booking.penalty.noshow' : 'booking.penalty.forfeited')}
+                {t(
+                  booking.status === 'no_show'
+                    ? 'booking.penalty.noshow'
+                    : 'booking.penalty.forfeited',
+                )}
               </Text>
             </View>
             <Button
@@ -557,13 +585,19 @@ export default function BookingDetailScreen() {
                     </Text>
                   ) : (
                     <View style={styles.signalRow}>
-                      <Pressable style={styles.signalBtn} onPress={() => id && giveCustomerSignal(id, 'up')}>
+                      <Pressable
+                        style={styles.signalBtn}
+                        onPress={() => id && giveCustomerSignal(id, 'up')}
+                      >
                         <Ionicons name="thumbs-up-outline" size={20} color={colors.success} />
                         <Text variant="caption" tone="ink">
                           {t('booking.signal.up')}
                         </Text>
                       </Pressable>
-                      <Pressable style={styles.signalBtn} onPress={() => id && giveCustomerSignal(id, 'down')}>
+                      <Pressable
+                        style={styles.signalBtn}
+                        onPress={() => id && giveCustomerSignal(id, 'down')}
+                      >
                         <Ionicons name="thumbs-down-outline" size={20} color={colors.danger} />
                         <Text variant="caption" tone="ink">
                           {t('booking.signal.down')}
@@ -614,7 +648,10 @@ export default function BookingDetailScreen() {
                       t('booking.provider_noshow.note'),
                       [
                         { text: t('common.cancel'), style: 'cancel' },
-                        { text: t('booking.provider_noshow.cta'), onPress: () => id && reportProviderNoShow(id) },
+                        {
+                          text: t('booking.provider_noshow.cta'),
+                          onPress: () => id && reportProviderNoShow(id),
+                        },
                       ],
                     )
                   }
@@ -634,14 +671,23 @@ export default function BookingDetailScreen() {
       </ScrollView>
 
       {/* §4.1 adım 2 — uzman alternatif saat önerir (boş slotlardan seçer) */}
-      <Modal visible={proposeOpen} transparent animationType="slide" onRequestClose={() => setProposeOpen(false)}>
+      <Modal
+        visible={proposeOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setProposeOpen(false)}
+      >
         <View style={styles.modalBackdrop}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHead}>
               <Text variant="h2" tone="ink" style={styles.modalTitle}>
                 {t('booking.provider.propose')}
               </Text>
-              <Pressable onPress={() => setProposeOpen(false)} hitSlop={8} style={styles.modalClose}>
+              <Pressable
+                onPress={() => setProposeOpen(false)}
+                hitSlop={8}
+                style={styles.modalClose}
+              >
                 <Ionicons name="close" size={22} color={colors.ink} />
               </Pressable>
             </View>
@@ -702,11 +748,23 @@ const makeStatus = (
   awaiting_provider: { key: 'booking.status.awaiting', bg: colors.goldSoft, fg: colors.gold },
   alternative_proposed: { key: 'booking.status.alternative', bg: colors.blueSoft, fg: colors.blue },
   deposit_pending: { key: 'booking.status.deposit_pending', bg: colors.goldSoft, fg: colors.gold },
-  deposit_submitted: { key: 'booking.status.deposit_submitted', bg: colors.blueSoft, fg: colors.blue },
+  deposit_submitted: {
+    key: 'booking.status.deposit_submitted',
+    bg: colors.blueSoft,
+    fg: colors.blue,
+  },
   refund_pending: { key: 'booking.status.refund_pending', bg: colors.goldSoft, fg: colors.gold },
-  refund_submitted: { key: 'booking.status.refund_submitted', bg: colors.blueSoft, fg: colors.blue },
+  refund_submitted: {
+    key: 'booking.status.refund_submitted',
+    bg: colors.blueSoft,
+    fg: colors.blue,
+  },
   disputed: { key: 'booking.status.disputed', bg: colors.dangerSoft, fg: colors.danger },
-  reassigned_pending: { key: 'booking.status.reassigned_pending', bg: colors.blueSoft, fg: colors.blue },
+  reassigned_pending: {
+    key: 'booking.status.reassigned_pending',
+    bg: colors.blueSoft,
+    fg: colors.blue,
+  },
   no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
   waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
 });

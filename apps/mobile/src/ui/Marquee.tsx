@@ -73,10 +73,20 @@ export function Marquee({
 
       {w > 0 ? (
         <Animated.View style={[styles.track, anim]}>
-          <Text variant="caption" tone="inkSoft" numberOfLines={1} style={[styles.text, { width: w }, textStyle]}>
+          <Text
+            variant="caption"
+            tone="inkSoft"
+            numberOfLines={1}
+            style={[styles.text, { width: w }, textStyle]}
+          >
             {text}
           </Text>
-          <Text variant="caption" tone="inkSoft" numberOfLines={1} style={[styles.text, { width: w }, textStyle]}>
+          <Text
+            variant="caption"
+            tone="inkSoft"
+            numberOfLines={1}
+            style={[styles.text, { width: w }, textStyle]}
+          >
             {text}
           </Text>
         </Animated.View>

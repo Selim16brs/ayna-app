@@ -168,7 +168,10 @@ export class AuthService {
       orderBy: { createdAt: 'desc' },
     });
     if (!otp) {
-      throw new BadRequestException({ code: 'OTP_INVALID', message: 'Kod geçersiz veya süresi doldu' });
+      throw new BadRequestException({
+        code: 'OTP_INVALID',
+        message: 'Kod geçersiz veya süresi doldu',
+      });
     }
     if (otp.attempts >= OTP_MAX_ATTEMPTS) {
       throw new BadRequestException({ code: 'OTP_INVALID', message: 'Çok fazla yanlış deneme' });
@@ -178,7 +181,10 @@ export class AuthService {
         where: { id: otp.id },
         data: { attempts: { increment: 1 } },
       });
-      throw new BadRequestException({ code: 'OTP_INVALID', message: 'Kod geçersiz veya süresi doldu' });
+      throw new BadRequestException({
+        code: 'OTP_INVALID',
+        message: 'Kod geçersiz veya süresi doldu',
+      });
     }
 
     await this.prisma.otpCode.update({

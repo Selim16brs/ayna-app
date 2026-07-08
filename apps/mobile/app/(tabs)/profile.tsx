@@ -60,7 +60,9 @@ export default function ProfileScreen() {
   const menu = MENU.filter((m) => !m.sellerOnly || isSeller);
   // §9/§10 — panel etiketi rol-duyarlı: uzman "Uzman paneli", salon "İşletme paneli"
   const menuLabel = (key: MessageKey): string =>
-    key === 'profile.menu.panel' && role === 'professional' ? t('profile.menu.panel_expert') : t(key);
+    key === 'profile.menu.panel' && role === 'professional'
+      ? t('profile.menu.panel_expert')
+      : t(key);
 
   const appearance: 'system' | ThemeMode = preference ?? 'system';
   const onAppearance = (value: 'system' | ThemeMode) =>
@@ -256,31 +258,35 @@ export default function ProfileScreen() {
 
         {/* Menü — sade ikon + etiket + chevron + ince ayraç */}
         <View style={styles.menuCard}>
-          {menu.filter((m) => !m.danger).map((m, i, arr) => (
-            <Pressable
-              key={m.key}
-              style={[styles.row, i < arr.length - 1 && styles.rowBorder]}
-              onPress={() => onPress(m.key)}
-            >
-              <Ionicons name={m.icon} size={22} color={colors.ink} style={styles.rowIcon} />
-              <Text variant="bodyStrong" tone="ink" style={styles.flex}>
-                {menuLabel(m.key)}
-              </Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-            </Pressable>
-          ))}
-          {menu.filter((m) => m.danger).map((m) => (
-            <Pressable
-              key={m.key}
-              style={[styles.row, styles.rowBorder]}
-              onPress={() => onPress(m.key)}
-            >
-              <Ionicons name={m.icon} size={22} color={colors.danger} style={styles.rowIcon} />
-              <Text variant="bodyStrong" style={[styles.flex, { color: colors.danger }]}>
-                {t(m.key)}
-              </Text>
-            </Pressable>
-          ))}
+          {menu
+            .filter((m) => !m.danger)
+            .map((m, i, arr) => (
+              <Pressable
+                key={m.key}
+                style={[styles.row, i < arr.length - 1 && styles.rowBorder]}
+                onPress={() => onPress(m.key)}
+              >
+                <Ionicons name={m.icon} size={22} color={colors.ink} style={styles.rowIcon} />
+                <Text variant="bodyStrong" tone="ink" style={styles.flex}>
+                  {menuLabel(m.key)}
+                </Text>
+                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+              </Pressable>
+            ))}
+          {menu
+            .filter((m) => m.danger)
+            .map((m) => (
+              <Pressable
+                key={m.key}
+                style={[styles.row, styles.rowBorder]}
+                onPress={() => onPress(m.key)}
+              >
+                <Ionicons name={m.icon} size={22} color={colors.danger} style={styles.rowIcon} />
+                <Text variant="bodyStrong" style={[styles.flex, { color: colors.danger }]}>
+                  {t(m.key)}
+                </Text>
+              </Pressable>
+            ))}
         </View>
       </ScrollView>
     </Screen>

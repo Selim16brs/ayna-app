@@ -70,7 +70,9 @@ export class AdminService {
     ]);
     const bizByStatus = { pending: 0, approved: 0, rejected: 0 } as Record<string, number>;
     for (const g of businesses) bizByStatus[g.status] = g._count;
-    const stats = computeBookingStats(bookings.map((b) => ({ status: b.status, price: Number(b.price) })));
+    const stats = computeBookingStats(
+      bookings.map((b) => ({ status: b.status, price: Number(b.price) })),
+    );
     return {
       users,
       professionals,
@@ -89,7 +91,10 @@ export class AdminService {
     since.setUTCHours(0, 0, 0, 0);
 
     const [users, bookings, professionals] = await Promise.all([
-      this.prisma.user.findMany({ where: { createdAt: { gte: since } }, select: { createdAt: true } }),
+      this.prisma.user.findMany({
+        where: { createdAt: { gte: since } },
+        select: { createdAt: true },
+      }),
       this.prisma.booking.findMany({
         where: { createdAt: { gte: since } },
         select: { createdAt: true, status: true, price: true },
@@ -111,7 +116,10 @@ export class AdminService {
       const d = new Date(since.getTime() + i * 86400000);
       buckets.set(dayKey(d), { users: 0, bookings: 0, revenue: 0 });
     }
-    const bump = (d: Date, fn: (b: { users: number; bookings: number; revenue: number }) => void) => {
+    const bump = (
+      d: Date,
+      fn: (b: { users: number; bookings: number; revenue: number }) => void,
+    ) => {
       const b = buckets.get(dayKey(d));
       if (b) fn(b);
     };
@@ -187,13 +195,26 @@ export class AdminService {
     }
 
     const EARNED = ['completed'];
-    const PENDING = ['confirmed', 'pending', 'awaiting_provider', 'alternative_proposed', 'waitlist'];
+    const PENDING = [
+      'confirmed',
+      'pending',
+      'awaiting_provider',
+      'alternative_proposed',
+      'waitlist',
+    ];
     // kuruş cinsinden komisyon: round(priceMinor * rate / 100)
     const commMinor = (price: number) => Math.round(Math.round(price * 100) * rate) / 100;
 
     const bySalon = new Map<
       string,
-      { proId: string; proName: string; count: number; gmv: number; earned: number; pending: number }
+      {
+        proId: string;
+        proName: string;
+        count: number;
+        gmv: number;
+        earned: number;
+        pending: number;
+      }
     >();
     const totals = { count: rows.length, gmv: 0, earned: 0, pending: 0, voided: 0 };
     const items = rows.map((r) => {
@@ -202,9 +223,14 @@ export class AdminService {
       const isEarned = EARNED.includes(r.status);
       const isPending = PENDING.includes(r.status);
       const key = r.proId || r.proName;
-      const s =
-        bySalon.get(key) ??
-        { proId: r.proId ?? '', proName: r.proName, count: 0, gmv: 0, earned: 0, pending: 0 };
+      const s = bySalon.get(key) ?? {
+        proId: r.proId ?? '',
+        proName: r.proName,
+        count: 0,
+        gmv: 0,
+        earned: 0,
+        pending: 0,
+      };
       s.count += 1;
       if (isEarned || isPending) {
         s.gmv += price;
@@ -272,7 +298,12 @@ export class AdminService {
   }
 
   // Komisyon tahsilatı kaydet (append-only ledger girişi)
-  async addPayout(input: { proId: string; proName: string; amount: number; note?: string | undefined }) {
+  async addPayout(input: {
+    proId: string;
+    proName: string;
+    amount: number;
+    note?: string | undefined;
+  }) {
     if (!(input.amount > 0)) {
       throw new BadRequestException({ code: 'BAD_VALUE', message: 'Tutar pozitif olmalı' });
     }
@@ -339,7 +370,11 @@ export class AdminService {
       rejectReason: b.rejectReason ?? undefined,
       createdAt: b.createdAt,
       specialistCount: specialists.length,
-      inviteCodes: inviteCodes.map((c) => ({ code: c.code, status: c.status, attempts: c.attempts })),
+      inviteCodes: inviteCodes.map((c) => ({
+        code: c.code,
+        status: c.status,
+        attempts: c.attempts,
+      })),
     };
   }
 
@@ -412,7 +447,10 @@ export class AdminService {
     const u = await this.prisma.user.findUnique({ where: { id } });
     if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
     if (u.role === 'admin' && status !== 'active') {
-      throw new BadRequestException({ code: 'CANNOT_SUSPEND_ADMIN', message: 'Admin askıya alınamaz' });
+      throw new BadRequestException({
+        code: 'CANNOT_SUSPEND_ADMIN',
+        message: 'Admin askıya alınamaz',
+      });
     }
     // Aktife dönerse kısıt bayrağı da temizlenir
     const updated = await this.prisma.user.update({
@@ -429,12 +467,18 @@ export class AdminService {
     const u = await this.prisma.user.findUnique({ where: { id } });
     if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
     if (u.role === 'admin') {
-      throw new BadRequestException({ code: 'CANNOT_RESTRICT_ADMIN', message: 'Admin kısıtlanamaz' });
+      throw new BadRequestException({
+        code: 'CANNOT_RESTRICT_ADMIN',
+        message: 'Admin kısıtlanamaz',
+      });
     }
     const updated = await this.prisma.user.update({
       where: { id },
       // İlk kısıtsa sayaç şimdi başlar; zaten kısıtlıysa süre korunur (yalnız gerekçe güncellenir)
-      data: { restrictedAt: u.restrictedAt ?? new Date(), restrictReason: reason || u.restrictReason },
+      data: {
+        restrictedAt: u.restrictedAt ?? new Date(),
+        restrictReason: reason || u.restrictReason,
+      },
     });
     return { id: updated.id, restrictedAt: updated.restrictedAt };
   }
@@ -538,7 +582,11 @@ export class AdminService {
       where: { id },
       data: { membershipTier: tier, membershipUntil: until, isPremium: tier !== 'free' },
     });
-    return { id: updated.id, membershipTier: updated.membershipTier, membershipUntil: updated.membershipUntil };
+    return {
+      id: updated.id,
+      membershipTier: updated.membershipTier,
+      membershipUntil: updated.membershipUntil,
+    };
   }
 
   // Randevular — platform geneli (admin görünürlüğü)
@@ -813,7 +861,12 @@ export class AdminService {
 
   async updateCategory(
     id: string,
-    input: { nameTr?: string | undefined; icon?: string | undefined; tone?: string | undefined; sortOrder?: number | undefined },
+    input: {
+      nameTr?: string | undefined;
+      icon?: string | undefined;
+      tone?: string | undefined;
+      sortOrder?: number | undefined;
+    },
   ) {
     const c = await this.prisma.serviceCategory.findUnique({ where: { id } });
     if (!c) throw new NotFoundException({ code: 'CAT_NOT_FOUND', message: 'Kategori yok' });
@@ -837,7 +890,9 @@ export class AdminService {
 
   // Piyasa fiyatları (kategori × şehir taban fiyatı — teklif tabanı)
   async marketPrices() {
-    const rows = await this.prisma.marketPrice.findMany({ orderBy: [{ category: 'asc' }, { city: 'asc' }] });
+    const rows = await this.prisma.marketPrice.findMany({
+      orderBy: [{ category: 'asc' }, { city: 'asc' }],
+    });
     return rows.map((m) => ({
       id: m.id,
       category: m.category,

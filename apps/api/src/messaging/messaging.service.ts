@@ -19,17 +19,22 @@ export class MessagingService {
   ) {}
 
   private async userRole(id: string): Promise<{ name: string; role: string } | null> {
-    const u = await this.prisma.user.findUnique({ where: { id }, select: { name: true, role: true } });
+    const u = await this.prisma.user.findUnique({
+      where: { id },
+      select: { name: true, role: true },
+    });
     return u ?? null;
   }
 
   // İki yönlü engel kontrolü
   private async isBlockedBetween(a: string, b: string): Promise<boolean> {
     const n = await this.prisma.userBlock.count({
-      where: { OR: [
-        { blockerId: a, blockedId: b },
-        { blockerId: b, blockedId: a },
-      ] },
+      where: {
+        OR: [
+          { blockerId: a, blockedId: b },
+          { blockerId: b, blockedId: a },
+        ],
+      },
     });
     return n > 0;
   }
@@ -41,9 +46,11 @@ export class MessagingService {
     targetUserId: string,
     ctx: { bookingId?: string | undefined; requestId?: string | undefined },
   ) {
-    if (targetUserId === meId) throw new BadRequestException({ code: 'SELF_CHAT', message: 'Kendinle sohbet açamazsın' });
+    if (targetUserId === meId)
+      throw new BadRequestException({ code: 'SELF_CHAT', message: 'Kendinle sohbet açamazsın' });
     const target = await this.userRole(targetUserId);
-    if (!target) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı bulunamadı' });
+    if (!target)
+      throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı bulunamadı' });
     const pair = resolvePair(meId, meRole, targetUserId, target.role);
     if (!pair) {
       throw new BadRequestException({
@@ -52,7 +59,10 @@ export class MessagingService {
       });
     }
     if (await this.isBlockedBetween(meId, targetUserId)) {
-      throw new ForbiddenException({ code: 'BLOCKED', message: 'Bu kullanıcıyla mesajlaşma engellenmiş' });
+      throw new ForbiddenException({
+        code: 'BLOCKED',
+        message: 'Bu kullanıcıyla mesajlaşma engellenmiş',
+      });
     }
     const conv = await this.prisma.conversation.upsert({
       where: { customerId_proUserId: { customerId: pair.customerId, proUserId: pair.proUserId } },
@@ -79,7 +89,10 @@ export class MessagingService {
     const conv = await this.assertParticipant(meId, conversationId);
     const otherId = conv.customerId === meId ? conv.proUserId : conv.customerId;
     if (await this.isBlockedBetween(meId, otherId)) {
-      throw new ForbiddenException({ code: 'BLOCKED', message: 'Bu kullanıcıyla mesajlaşma engellenmiş' });
+      throw new ForbiddenException({
+        code: 'BLOCKED',
+        message: 'Bu kullanıcıyla mesajlaşma engellenmiş',
+      });
     }
     const { body, verdict } = processMessage(rawBody);
     if (!body) throw new BadRequestException({ code: 'EMPTY', message: 'Boş mesaj gönderilemez' });
@@ -105,7 +118,10 @@ export class MessagingService {
         data: { lastMessageAt: msg.createdAt },
       });
       // EK Z.5 — alıcıya uzaktan push (DEEP-LINK: doğrudan sohbete). Fire-and-forget.
-      const sender = await this.prisma.user.findUnique({ where: { id: meId }, select: { name: true } });
+      const sender = await this.prisma.user.findUnique({
+        where: { id: meId },
+        select: { name: true },
+      });
       void this.push.sendToUser(otherId, {
         title: sender?.name || 'Yeni mesaj',
         body: body.length > 80 ? `${body.slice(0, 80)}…` : body,
@@ -152,7 +168,10 @@ export class MessagingService {
     });
     const otherIds = rows.map((c) => (c.customerId === meId ? c.proUserId : c.customerId));
     const users = otherIds.length
-      ? await this.prisma.user.findMany({ where: { id: { in: otherIds } }, select: { id: true, name: true } })
+      ? await this.prisma.user.findMany({
+          where: { id: { in: otherIds } },
+          select: { id: true, name: true },
+        })
       : [];
     const nameOf = new Map(users.map((u) => [u.id, u.name]));
     const out = [];
@@ -179,7 +198,8 @@ export class MessagingService {
 
   // Kullanıcı engelle (idempotent) — mevcut sohbette mesajlaşmayı keser
   async block(meId: string, targetUserId: string) {
-    if (targetUserId === meId) throw new BadRequestException({ code: 'SELF_BLOCK', message: 'Kendini engelleyemezsin' });
+    if (targetUserId === meId)
+      throw new BadRequestException({ code: 'SELF_BLOCK', message: 'Kendini engelleyemezsin' });
     await this.prisma.userBlock.upsert({
       where: { blockerId_blockedId: { blockerId: meId, blockedId: targetUserId } },
       create: { blockerId: meId, blockedId: targetUserId },
@@ -197,9 +217,16 @@ export class MessagingService {
     const rows = await this.prisma.userBlock.findMany({ where: { blockerId: meId } });
     const ids = rows.map((r) => r.blockedId);
     const users = ids.length
-      ? await this.prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } })
+      ? await this.prisma.user.findMany({
+          where: { id: { in: ids } },
+          select: { id: true, name: true },
+        })
       : [];
     const nameOf = new Map(users.map((u) => [u.id, u.name]));
-    return rows.map((r) => ({ id: r.blockedId, name: nameOf.get(r.blockedId) ?? '', since: r.createdAt }));
+    return rows.map((r) => ({
+      id: r.blockedId,
+      name: nameOf.get(r.blockedId) ?? '',
+      since: r.createdAt,
+    }));
   }
 }

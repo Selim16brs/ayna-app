@@ -81,7 +81,11 @@ export default function ChatThreadScreen() {
 
   const blockBtn = params.otherId ? (
     <Pressable onPress={toggleBlock} hitSlop={8}>
-      <Ionicons name={blocked ? 'lock-open-outline' : 'ban-outline'} size={20} color={colors.danger} />
+      <Ionicons
+        name={blocked ? 'lock-open-outline' : 'ban-outline'}
+        size={20}
+        color={colors.danger}
+      />
     </Pressable>
   ) : undefined;
 
@@ -160,14 +164,30 @@ export default function ChatThreadScreen() {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     flex: { flex: 1 },
-    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: space(3), gap: space(1) },
-    hintRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space(0.5), marginBottom: space(1) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1),
+      paddingBottom: space(3),
+      gap: space(1),
+    },
+    hintRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space(0.5),
+      marginBottom: space(1),
+    },
     hintText: { fontSize: 11 },
     threadEmpty: { textAlign: 'center', paddingVertical: space(6) },
     bubbleRow: { flexDirection: 'row' },
     rowMine: { justifyContent: 'flex-end' },
     rowTheirs: { justifyContent: 'flex-start' },
-    bubble: { maxWidth: '80%', paddingHorizontal: space(1.75), paddingVertical: space(1.25), borderRadius: radius.md },
+    bubble: {
+      maxWidth: '80%',
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1.25),
+      borderRadius: radius.md,
+    },
     bubbleMine: { backgroundColor: colors.accent, borderBottomRightRadius: 6 },
     bubbleTheirs: { backgroundColor: colors.surfaceMuted, borderBottomLeftRadius: 6 },
     hiddenText: { fontStyle: 'italic' },

@@ -38,11 +38,23 @@ const makeStatus = (
   awaiting_provider: { key: 'booking.status.awaiting', bg: colors.goldSoft, fg: colors.gold },
   alternative_proposed: { key: 'booking.status.alternative', bg: colors.blueSoft, fg: colors.blue },
   deposit_pending: { key: 'booking.status.deposit_pending', bg: colors.goldSoft, fg: colors.gold },
-  deposit_submitted: { key: 'booking.status.deposit_submitted', bg: colors.blueSoft, fg: colors.blue },
+  deposit_submitted: {
+    key: 'booking.status.deposit_submitted',
+    bg: colors.blueSoft,
+    fg: colors.blue,
+  },
   refund_pending: { key: 'booking.status.refund_pending', bg: colors.goldSoft, fg: colors.gold },
-  refund_submitted: { key: 'booking.status.refund_submitted', bg: colors.blueSoft, fg: colors.blue },
+  refund_submitted: {
+    key: 'booking.status.refund_submitted',
+    bg: colors.blueSoft,
+    fg: colors.blue,
+  },
   disputed: { key: 'booking.status.disputed', bg: colors.dangerSoft, fg: colors.danger },
-  reassigned_pending: { key: 'booking.status.reassigned_pending', bg: colors.blueSoft, fg: colors.blue },
+  reassigned_pending: {
+    key: 'booking.status.reassigned_pending',
+    bg: colors.blueSoft,
+    fg: colors.blue,
+  },
   no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
   waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
 });
@@ -80,7 +92,10 @@ export default function BookingsScreen() {
           const on = s.value === active;
           return (
             <Pressable key={s.value} style={styles.tab} onPress={() => setActive(s.value)}>
-              <Text variant="bodyStrong" style={[styles.tabText, on ? styles.tabOn : styles.tabOff]}>
+              <Text
+                variant="bodyStrong"
+                style={[styles.tabText, on ? styles.tabOn : styles.tabOff]}
+              >
                 {t(s.labelKey)}
               </Text>
               {on ? <View style={styles.tabBar} /> : null}
@@ -340,7 +355,12 @@ const makeStyles = (colors: ColorTokens) =>
     demandCta: { fontWeight: '700', color: '#6F8C1B' },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
 
-    empty: { alignItems: 'center', justifyContent: 'center', paddingTop: space(9), gap: space(1.5) },
+    empty: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingTop: space(9),
+      gap: space(1.5),
+    },
     emptyIcon: {
       width: 72,
       height: 72,

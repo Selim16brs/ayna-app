@@ -42,7 +42,10 @@ export class AiController {
 
   // Dev/demo: premium aç/kapat (üretimde ödeme akışı yönetir)
   @Post('dev/premium')
-  setPremium(@Req() req: AuthedRequest, @Body(new ZodValidationPipe(premiumSchema)) body: PremiumInput) {
+  setPremium(
+    @Req() req: AuthedRequest,
+    @Body(new ZodValidationPipe(premiumSchema)) body: PremiumInput,
+  ) {
     return this.ai.setPremium(req.user!.id, body.value);
   }
 }

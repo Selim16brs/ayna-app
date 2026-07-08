@@ -14,7 +14,8 @@ const ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 const TIMES: string[] = (() => {
   const out: string[] = [];
-  for (let h = 0; h < 24; h++) for (const m of [0, 30]) out.push(`${String(h).padStart(2, '0')}:${m === 0 ? '00' : '30'}`);
+  for (let h = 0; h < 24; h++)
+    for (const m of [0, 30]) out.push(`${String(h).padStart(2, '0')}:${m === 0 ? '00' : '30'}`);
   return out;
 })();
 
@@ -91,7 +92,12 @@ export function WorkingHours({
         </View>
       ))}
 
-      <Modal visible={picker !== null} transparent animationType="slide" onRequestClose={() => setPicker(null)}>
+      <Modal
+        visible={picker !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPicker(null)}
+      >
         <View style={styles.backdrop}>
           <View style={[styles.sheet, { paddingBottom: insets.bottom + space(2) }]}>
             <View style={styles.sheetHead}>
@@ -131,10 +137,21 @@ export function WorkingHours({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    wrap: { gap: space(1), backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
+    wrap: {
+      gap: space(1),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+    },
     dayRow: { flexDirection: 'row', alignItems: 'center', gap: space(1), minHeight: 40 },
     dayName: { width: 40 },
-    toggle: { paddingHorizontal: space(1.5), paddingVertical: space(0.75), borderRadius: radius.pill, width: 70, alignItems: 'center' },
+    toggle: {
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      width: 70,
+      alignItems: 'center',
+    },
     toggleOn: { backgroundColor: colors.accent },
     toggleOff: { backgroundColor: colors.surfaceMuted },
     toggleText: { fontWeight: '700' },
@@ -159,8 +176,21 @@ const makeStyles = (colors: ColorTokens) =>
     },
     sheetHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     sheetTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
-    close: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' },
+    close: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     timeList: { paddingVertical: space(1.5), gap: space(0.5) },
-    timeRow: { paddingVertical: space(1.5), paddingHorizontal: space(2), borderRadius: radius.md, backgroundColor: colors.surface, alignItems: 'center' },
+    timeRow: {
+      paddingVertical: space(1.5),
+      paddingHorizontal: space(2),
+      borderRadius: radius.md,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+    },
     timeRowOn: { backgroundColor: colors.accent },
   });

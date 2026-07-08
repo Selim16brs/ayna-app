@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { SubmitKycInput } from './kyc.dto';
 
@@ -12,7 +17,10 @@ export class KycService {
   // Uzman/salon başvuru gönderir (pending). Mevcut pending varsa yenisiyle değişir.
   async submit(userId: string, role: string, input: SubmitKycInput) {
     if (role !== 'professional' && role !== 'salon') {
-      throw new ForbiddenException({ code: 'PRO_ONLY', message: 'Yalnızca uzman/salon doğrulama gönderebilir' });
+      throw new ForbiddenException({
+        code: 'PRO_ONLY',
+        message: 'Yalnızca uzman/salon doğrulama gönderebilir',
+      });
     }
     // Aynı kullanıcının bekleyen başvurusunu temizle (tek aktif başvuru)
     await this.prisma.kycVerification.deleteMany({ where: { userId, status: 'pending' } });
@@ -25,8 +33,14 @@ export class KycService {
 
   async mine(userId: string) {
     const [u, v] = await Promise.all([
-      this.prisma.user.findUnique({ where: { id: userId }, select: { kycStatus: true, kycVerifiedAt: true } }),
-      this.prisma.kycVerification.findFirst({ where: { userId }, orderBy: { submittedAt: 'desc' } }),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { kycStatus: true, kycVerifiedAt: true },
+      }),
+      this.prisma.kycVerification.findFirst({
+        where: { userId },
+        orderBy: { submittedAt: 'desc' },
+      }),
     ]);
     return {
       status: u?.kycStatus ?? 'none',
@@ -44,7 +58,10 @@ export class KycService {
     });
     const ids = rows.map((r) => r.userId);
     const users = ids.length
-      ? await this.prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, role: true } })
+      ? await this.prisma.user.findMany({
+          where: { id: { in: ids } },
+          select: { id: true, name: true, role: true },
+        })
       : [];
     const uMap = new Map(users.map((u) => [u.id, u]));
     return rows.map((r) => ({
@@ -57,7 +74,11 @@ export class KycService {
   async approve(id: string, actorId?: string) {
     const v = await this.prisma.kycVerification.findUnique({ where: { id } });
     if (!v) throw new NotFoundException({ code: 'KYC_NOT_FOUND', message: 'Başvuru bulunamadı' });
-    if (v.status !== 'pending') throw new BadRequestException({ code: 'ALREADY_REVIEWED', message: 'Başvuru zaten değerlendirildi' });
+    if (v.status !== 'pending')
+      throw new BadRequestException({
+        code: 'ALREADY_REVIEWED',
+        message: 'Başvuru zaten değerlendirildi',
+      });
     const updated = await this.prisma.kycVerification.update({
       where: { id },
       data: { status: 'approved', reviewedAt: new Date() },
@@ -73,7 +94,11 @@ export class KycService {
   async reject(id: string, note: string | undefined, actorId?: string) {
     const v = await this.prisma.kycVerification.findUnique({ where: { id } });
     if (!v) throw new NotFoundException({ code: 'KYC_NOT_FOUND', message: 'Başvuru bulunamadı' });
-    if (v.status !== 'pending') throw new BadRequestException({ code: 'ALREADY_REVIEWED', message: 'Başvuru zaten değerlendirildi' });
+    if (v.status !== 'pending')
+      throw new BadRequestException({
+        code: 'ALREADY_REVIEWED',
+        message: 'Başvuru zaten değerlendirildi',
+      });
     const updated = await this.prisma.kycVerification.update({
       where: { id },
       data: { status: 'rejected', note: note ?? '', reviewedAt: new Date() },
@@ -85,7 +110,13 @@ export class KycService {
 
   private async audit(action: string, resourceId: string, actorId?: string) {
     await this.prisma.auditLog.create({
-      data: { action, resourceType: 'kyc', resourceId, actorId: actorId ?? null, actorRole: 'admin' },
+      data: {
+        action,
+        resourceType: 'kyc',
+        resourceId,
+        actorId: actorId ?? null,
+        actorRole: 'admin',
+      },
     });
   }
 

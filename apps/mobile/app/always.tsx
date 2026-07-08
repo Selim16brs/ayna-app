@@ -34,8 +34,14 @@ export default function AlwaysScreen() {
   const platinum = useStore((s) => s.platinum);
   const bonds = useStore((s) => s.alwaysBonds);
   const me = useStore((s) => s.currentUser?.name) ?? '';
-  const accepted = useMemo(() => filterAlwaysAccepted(bonds, me, isProvider), [bonds, me, isProvider]);
-  const incoming = useMemo(() => filterAlwaysIncoming(bonds, me, isProvider), [bonds, me, isProvider]);
+  const accepted = useMemo(
+    () => filterAlwaysAccepted(bonds, me, isProvider),
+    [bonds, me, isProvider],
+  );
+  const incoming = useMemo(
+    () => filterAlwaysIncoming(bonds, me, isProvider),
+    [bonds, me, isProvider],
+  );
   const acceptAlways = useStore((s) => s.acceptAlways);
   const declineAlways = useStore((s) => s.declineAlways);
   const removeAlways = useStore((s) => s.removeAlways);
@@ -58,7 +64,11 @@ export default function AlwaysScreen() {
             {t('always.platinum_body')}
           </Text>
           <View style={styles.lockCta}>
-            <Button label={t('always.platinum_cta')} variant="primary" onPress={() => router.push('/seller/premium')} />
+            <Button
+              label={t('always.platinum_cta')}
+              variant="primary"
+              onPress={() => router.push('/seller/premium')}
+            />
           </View>
         </View>
       </Screen>
@@ -82,8 +92,14 @@ export default function AlwaysScreen() {
       <View style={styles.segWrap}>
         <Segmented
           options={[
-            { value: 'list', label: `${t('always.tab_list')}${accepted.length ? ` (${accepted.length})` : ''}` },
-            { value: 'requests', label: `${t('always.tab_requests')}${incoming.length ? ` (${incoming.length})` : ''}` },
+            {
+              value: 'list',
+              label: `${t('always.tab_list')}${accepted.length ? ` (${accepted.length})` : ''}`,
+            },
+            {
+              value: 'requests',
+              label: `${t('always.tab_requests')}${incoming.length ? ` (${incoming.length})` : ''}`,
+            },
           ]}
           value={tab}
           onChange={setTab}
@@ -107,7 +123,11 @@ export default function AlwaysScreen() {
               const svc = serviceLabel(b.lastServiceId);
               return (
                 <View key={b.id} style={[styles.row, shadow.soft]}>
-                  {imgOf(b) ? <Image source={{ uri: imgOf(b) }} style={styles.avatar} /> : <View style={styles.avatar} />}
+                  {imgOf(b) ? (
+                    <Image source={{ uri: imgOf(b) }} style={styles.avatar} />
+                  ) : (
+                    <View style={styles.avatar} />
+                  )}
                   <View style={styles.flex}>
                     <View style={styles.nameRow}>
                       <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
@@ -143,7 +163,11 @@ export default function AlwaysScreen() {
           incoming.map((b) => (
             <View key={b.id} style={[styles.card, shadow.soft]}>
               <View style={styles.reqHead}>
-                {imgOf(b) ? <Image source={{ uri: imgOf(b) }} style={styles.avatar} /> : <View style={styles.avatar} />}
+                {imgOf(b) ? (
+                  <Image source={{ uri: imgOf(b) }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatar} />
+                )}
                 <View style={styles.flex}>
                   <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
                     {nameOf(b)}
@@ -155,10 +179,18 @@ export default function AlwaysScreen() {
               </View>
               <View style={styles.reqActions}>
                 <View style={styles.flex}>
-                  <Button label={t('always.accept')} variant="primary" onPress={() => acceptAlways(b.id)} />
+                  <Button
+                    label={t('always.accept')}
+                    variant="primary"
+                    onPress={() => acceptAlways(b.id)}
+                  />
                 </View>
                 <View style={styles.flex}>
-                  <Button label={t('always.decline')} variant="secondary" onPress={() => declineAlways(b.id)} />
+                  <Button
+                    label={t('always.decline')}
+                    variant="secondary"
+                    onPress={() => declineAlways(b.id)}
+                  />
                 </View>
               </View>
             </View>
@@ -183,11 +215,20 @@ export default function AlwaysScreen() {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     segWrap: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(1) },
-    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(1.25) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      gap: space(1.25),
+    },
     flex: { flex: 1 },
     sub: { marginBottom: space(0.5) },
     center: { textAlign: 'center' },
-    card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(1.75), gap: space(1.25) },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(1.75),
+      gap: space(1.25),
+    },
     row: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -211,8 +252,21 @@ const makeStyles = (colors: ColorTokens) =>
     reqHead: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
     reqActions: { flexDirection: 'row', gap: space(1) },
     // Platinum kilit
-    lockWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space(4), gap: space(1.5) },
-    lockIcon: { width: 76, height: 76, borderRadius: 38, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
+    lockWrap: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: space(4),
+      gap: space(1.5),
+    },
+    lockIcon: {
+      width: 76,
+      height: 76,
+      borderRadius: 38,
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     lockBody: { textAlign: 'center', lineHeight: 22 },
     lockCta: { alignSelf: 'stretch', marginTop: space(1) },
     footer: {

@@ -81,7 +81,11 @@ export default function StaffDetailScreen() {
           <View style={styles.divider} />
           <Stat icon="star-outline" value={rating.toFixed(1)} label={t('seller.staff.rating')} />
           <View style={styles.divider} />
-          <Stat icon="pie-chart-outline" value={`%${60 + (bookings % 38)}`} label={t('salon.metric.occupancy')} />
+          <Stat
+            icon="pie-chart-outline"
+            value={`%${60 + (bookings % 38)}`}
+            label={t('salon.metric.occupancy')}
+          />
         </View>
 
         {/* §5.1 — çalışma grafiği tipi */}
@@ -99,7 +103,11 @@ export default function StaffDetailScreen() {
         <View style={styles.scheduleNote}>
           <Ionicons name="time-outline" size={14} color={colors.muted} />
           <Text variant="caption" tone="muted" style={styles.flex}>
-            {t(schedule === 'standard' ? 'seller.staff.schedule.standard_desc' : 'seller.staff.schedule.flexible_desc')}
+            {t(
+              schedule === 'standard'
+                ? 'seller.staff.schedule.standard_desc'
+                : 'seller.staff.schedule.flexible_desc',
+            )}
           </Text>
         </View>
 

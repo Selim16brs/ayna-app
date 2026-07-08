@@ -252,9 +252,18 @@ function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {
 }
 
 // §admin — paylaşımlı yükleme/hata durumu (sonsuz "Yükleniyor" yerine gerçek hata)
-function Gate({ loading, error, onRetry }: { loading: boolean; error: string | null; onRetry?: () => void }) {
+function Gate({
+  loading,
+  error,
+  onRetry,
+}: {
+  loading: boolean;
+  error: string | null;
+  onRetry?: () => void;
+}) {
   if (loading) return <div className="empty">Yükleniyor…</div>;
-  const isAuth = error === 'UNAUTHENTICATED' || error === '401' || error === 'FORBIDDEN' || error === '403';
+  const isAuth =
+    error === 'UNAUTHENTICATED' || error === '401' || error === 'FORBIDDEN' || error === '403';
   return (
     <div className="empty">
       <div style={{ color: 'var(--danger)', fontWeight: 700, marginBottom: 8 }}>
@@ -291,11 +300,24 @@ function Gate({ loading, error, onRetry }: { loading: boolean; error: string | n
 // §14.5 — 3 DİL form yardımcıları: app'e ulaşan içerik tr(base)+kk+ru girilir
 type Lang = 'tr' | 'kk' | 'ru';
 const LANGS: Lang[] = ['tr', 'kk', 'ru'];
-function LangTabs({ lang, setLang, filled }: { lang: Lang; setLang: (l: Lang) => void; filled: (l: Lang) => boolean }) {
+function LangTabs({
+  lang,
+  setLang,
+  filled,
+}: {
+  lang: Lang;
+  setLang: (l: Lang) => void;
+  filled: (l: Lang) => boolean;
+}) {
   return (
     <div className="toolbar full" style={{ marginBottom: 0 }}>
       {LANGS.map((l) => (
-        <button key={l} type="button" className={`chip ${lang === l ? 'on' : ''}`} onClick={() => setLang(l)}>
+        <button
+          key={l}
+          type="button"
+          className={`chip ${lang === l ? 'on' : ''}`}
+          onClick={() => setLang(l)}
+        >
           {l.toUpperCase()}
           {l === 'tr' ? ' (kaynak)' : filled(l) ? ' ✓' : ' —'}
         </button>
@@ -357,10 +379,17 @@ function ProfileChangesView() {
   return (
     <>
       <h1 className="page-title">Profil Onayları</h1>
-      <p className="page-sub">Salon/uzman profil değişiklikleri admin onayı olmadan yayınlanmaz ({data?.length ?? 0} kayıt)</p>
+      <p className="page-sub">
+        Salon/uzman profil değişiklikleri admin onayı olmadan yayınlanmaz ({data?.length ?? 0}{' '}
+        kayıt)
+      </p>
       <div className="toolbar">
         {FILTERS.map(([s, label]) => (
-          <button key={s || 'all'} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>
+          <button
+            key={s || 'all'}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
             {label}
           </button>
         ))}
@@ -386,15 +415,29 @@ function ProfileChangesView() {
                   {summarize(p.changes)} · {new Date(p.createdAt).toLocaleDateString('tr-TR')}
                 </div>
               </div>
-              <span className={`pill ${p.status === 'approved' ? 'approved' : p.status === 'pending' ? 'pending' : 'rejected'}`}>
-                {p.status === 'approved' ? 'Onaylandı' : p.status === 'pending' ? 'Bekliyor' : 'Reddedildi'}
+              <span
+                className={`pill ${p.status === 'approved' ? 'approved' : p.status === 'pending' ? 'pending' : 'rejected'}`}
+              >
+                {p.status === 'approved'
+                  ? 'Onaylandı'
+                  : p.status === 'pending'
+                    ? 'Bekliyor'
+                    : 'Reddedildi'}
               </span>
               {p.status === 'pending' ? (
                 <div className="actions">
-                  <button className="btn-sm btn-ok" disabled={busy === p.id} onClick={() => act(() => api.approveProfileChange(p.id), p.id)}>
+                  <button
+                    className="btn-sm btn-ok"
+                    disabled={busy === p.id}
+                    onClick={() => act(() => api.approveProfileChange(p.id), p.id)}
+                  >
                     Onayla
                   </button>
-                  <button className="btn-sm btn-danger" disabled={busy === p.id} onClick={() => act(() => api.rejectProfileChange(p.id), p.id)}>
+                  <button
+                    className="btn-sm btn-danger"
+                    disabled={busy === p.id}
+                    onClick={() => act(() => api.rejectProfileChange(p.id), p.id)}
+                  >
                     Reddet
                   </button>
                 </div>
@@ -424,7 +467,11 @@ function KycView() {
       setBusy(null);
     }
   };
-  const DOC: Record<string, string> = { id_card: 'Kimlik', passport: 'Pasaport', certificate: 'Sertifika' };
+  const DOC: Record<string, string> = {
+    id_card: 'Kimlik',
+    passport: 'Pasaport',
+    certificate: 'Sertifika',
+  };
   const FILTERS: [string, string][] = [
     ['pending', 'Bekleyen'],
     ['approved', 'Onaylanan'],
@@ -434,10 +481,17 @@ function KycView() {
   return (
     <>
       <h1 className="page-title">Kimlik Doğrulama (KYC)</h1>
-      <p className="page-sub">Uzman/salon belge doğrulama kuyruğu — onaylanınca profilde &quot;Doğrulanmış&quot; rozeti ({data?.length ?? 0} kayıt)</p>
+      <p className="page-sub">
+        Uzman/salon belge doğrulama kuyruğu — onaylanınca profilde &quot;Doğrulanmış&quot; rozeti (
+        {data?.length ?? 0} kayıt)
+      </p>
       <div className="toolbar">
         {FILTERS.map(([s, label]) => (
-          <button key={s || 'all'} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>
+          <button
+            key={s || 'all'}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
             {label}
           </button>
         ))}
@@ -465,12 +519,22 @@ function KycView() {
                   {k.status === 'rejected' && k.note ? ` · Ret: ${k.note}` : ''}
                 </div>
               </div>
-              <span className={`pill ${k.status === 'approved' ? 'approved' : k.status === 'pending' ? 'pending' : 'rejected'}`}>
-                {k.status === 'approved' ? 'Onaylandı' : k.status === 'pending' ? 'Bekliyor' : 'Reddedildi'}
+              <span
+                className={`pill ${k.status === 'approved' ? 'approved' : k.status === 'pending' ? 'pending' : 'rejected'}`}
+              >
+                {k.status === 'approved'
+                  ? 'Onaylandı'
+                  : k.status === 'pending'
+                    ? 'Bekliyor'
+                    : 'Reddedildi'}
               </span>
               {k.status === 'pending' ? (
                 <div className="actions">
-                  <button className="btn-sm btn-ok" disabled={busy === k.id} onClick={() => act(() => api.approveKyc(k.id), k.id)}>
+                  <button
+                    className="btn-sm btn-ok"
+                    disabled={busy === k.id}
+                    onClick={() => act(() => api.approveKyc(k.id), k.id)}
+                  >
                     Onayla
                   </button>
                   <button
@@ -517,14 +581,24 @@ function SubscriptionsView() {
   const statusPill = (s: Subscription['status']) =>
     s === 'active' ? 'approved' : s === 'pending' ? 'pending' : 'rejected';
   const statusTr = (s: Subscription['status']) =>
-    s === 'active' ? 'Aktif' : s === 'pending' ? 'Bekliyor' : s === 'rejected' ? 'Reddedildi' : 'Süresi doldu';
+    s === 'active'
+      ? 'Aktif'
+      : s === 'pending'
+        ? 'Bekliyor'
+        : s === 'rejected'
+          ? 'Reddedildi'
+          : 'Süresi doldu';
   return (
     <>
       <h1 className="page-title">Abonelikler</h1>
       <p className="page-sub">Premium / Platinum üyelik dekont onayı ({data?.length ?? 0} kayıt)</p>
       <div className="toolbar">
         {FILTERS.map(([s, label]) => (
-          <button key={s || 'all'} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>
+          <button
+            key={s || 'all'}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
             {label}
           </button>
         ))}
@@ -551,7 +625,9 @@ function SubscriptionsView() {
                 </div>
                 <div className="meta">
                   {TL(s.amount)} · {new Date(s.createdAt).toLocaleDateString('tr-TR')}
-                  {s.periodEnd ? ` · bitiş ${new Date(s.periodEnd).toLocaleDateString('tr-TR')}` : ''}
+                  {s.periodEnd
+                    ? ` · bitiş ${new Date(s.periodEnd).toLocaleDateString('tr-TR')}`
+                    : ''}
                   {s.receiptUri ? ' · 📎 dekont yüklü' : ' · ⚠ dekont yok'}
                 </div>
               </div>
@@ -752,13 +828,7 @@ function BarChart({
               </title>
             </rect>
             {i % labelEvery === 0 ? (
-              <text
-                x={x + bw / 2}
-                y={H - 8}
-                fontSize={10}
-                fill="#8b8479"
-                textAnchor="middle"
-              >
+              <text x={x + bw / 2} y={H - 8} fontSize={10} fill="#8b8479" textAnchor="middle">
                 {p.label}
               </text>
             ) : null}
@@ -808,7 +878,9 @@ function InvoicesSection() {
   const close = async () => {
     if (!start || !end) return;
     const res = await api.closePeriod(start, end, due || undefined);
-    setMsg(`Dönem kapandı — ${res.created} fatura üretildi (son ödeme: ${res.dueDate.slice(0, 10)})`);
+    setMsg(
+      `Dönem kapandı — ${res.created} fatura üretildi (son ödeme: ${res.dueDate.slice(0, 10)})`,
+    );
     setStart('');
     setEnd('');
     setDue('');
@@ -833,15 +905,30 @@ function InvoicesSection() {
         <div className="form-inline">
           <label className="meta">
             Dönem başı
-            <input className="input" type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+            <input
+              className="input"
+              type="date"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+            />
           </label>
           <label className="meta">
             Dönem sonu
-            <input className="input" type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+            <input
+              className="input"
+              type="date"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+            />
           </label>
           <label className="meta">
             Son ödeme (ops.)
-            <input className="input" type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+            <input
+              className="input"
+              type="date"
+              value={due}
+              onChange={(e) => setDue(e.target.value)}
+            />
           </label>
           <button className="btn-sm btn-ok" onClick={close}>
             Dönemi kapat → fatura üret
@@ -995,7 +1082,10 @@ function CommissionsView() {
                   ) : s.earned > 0 ? (
                     <span className="pill approved">Tahsil edildi</span>
                   ) : (
-                    <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>
+                    <span
+                      className="pill"
+                      style={{ background: 'var(--line)', color: 'var(--muted)' }}
+                    >
                       Alacak yok
                     </span>
                   )}
@@ -1094,7 +1184,11 @@ function BusinessesView() {
       <p className="page-sub">İşletme kayıt onayları ve durum yönetimi</p>
       <div className="toolbar">
         {['pending', 'approved', 'rejected'].map((s) => (
-          <button key={s} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>
+          <button
+            key={s}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
             {s === 'pending' ? 'Onay bekleyen' : s === 'approved' ? 'Onaylı' : 'Reddedilen'}
           </button>
         ))}
@@ -1164,9 +1258,7 @@ function BusinessesView() {
               <KV k="Belge" v={detail.docUrl ? 'Yüklendi' : 'Yok'} />
             </div>
             {detail.about ? <p className="about">{detail.about}</p> : null}
-            {detail.rejectReason ? (
-              <p className="err">Red sebebi: {detail.rejectReason}</p>
-            ) : null}
+            {detail.rejectReason ? <p className="err">Red sebebi: {detail.rejectReason}</p> : null}
             <div className="modal-actions">
               {detail.status !== 'approved' ? (
                 <button className="btn-sm btn-ok" onClick={() => act(detail.id, 'approve')}>
@@ -1197,7 +1289,10 @@ function KV({ k, v }: { k: string; v: string }) {
 
 function ModerationView() {
   const { data, reload } = useAsync<AdminReview[]>(() => api.reviews(), []);
-  const { data: circle, reload: reloadCircle } = useAsync<CirclePost[]>(() => api.circleQueue(), []);
+  const { data: circle, reload: reloadCircle } = useAsync<CirclePost[]>(
+    () => api.circleQueue(),
+    [],
+  );
   const hide = async (id: string) => {
     if (confirm('Bu yorumu gizle? (moderasyon)')) {
       await api.hideReview(id);
@@ -1282,14 +1377,24 @@ function ModerationView() {
 function CampaignsView() {
   const { data, reload } = useAsync<Campaign[]>(() => api.campaigns(), []);
   const empty = {
-    title: '', subtitle: '',
-    titleKk: '', subtitleKk: '', titleRu: '', subtitleRu: '',
-    badge: '', image: '', category: '',
+    title: '',
+    subtitle: '',
+    titleKk: '',
+    subtitleKk: '',
+    titleRu: '',
+    subtitleRu: '',
+    badge: '',
+    image: '',
+    category: '',
   };
   const [form, setForm] = useState(empty);
   const [lang, setLang] = useState<Lang>('tr');
-  const tKey = (lang === 'tr' ? 'title' : lang === 'kk' ? 'titleKk' : 'titleRu') as keyof typeof form;
-  const sKey = (lang === 'tr' ? 'subtitle' : lang === 'kk' ? 'subtitleKk' : 'subtitleRu') as keyof typeof form;
+  const tKey = (
+    lang === 'tr' ? 'title' : lang === 'kk' ? 'titleKk' : 'titleRu'
+  ) as keyof typeof form;
+  const sKey = (
+    lang === 'tr' ? 'subtitle' : lang === 'kk' ? 'subtitleKk' : 'subtitleRu'
+  ) as keyof typeof form;
   const create = async () => {
     if (form.title.length < 2 || !form.image) return; // tr (kaynak) zorunlu
     await api.createCampaign({
@@ -1314,13 +1419,46 @@ function CampaignsView() {
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
-          <LangTabs lang={lang} setLang={setLang} filled={(l) => (l === 'kk' ? !!form.titleKk || !!form.subtitleKk : !!form.titleRu || !!form.subtitleRu)} />
-          <input className="input" placeholder={lang === 'tr' ? 'Başlık (TR — kaynak)' : `Başlık (${lang.toUpperCase()})`} value={form[tKey]} onChange={(e) => setForm({ ...form, [tKey]: e.target.value })} />
-          <input className="input" placeholder={lang === 'tr' ? 'Alt başlık (TR)' : `Alt başlık (${lang.toUpperCase()})`} value={form[sKey]} onChange={(e) => setForm({ ...form, [sKey]: e.target.value })} />
-          <input className="input" placeholder="Rozet (örn. %25) — dilden bağımsız" value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} />
-          <input className="input" placeholder="Kategori kodu (örn. hair)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
-          <input className="input full" placeholder="Görsel URL (https://...)" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
-          <button className="btn-sm btn-ok full" onClick={create}>+ Kampanya ekle</button>
+          <LangTabs
+            lang={lang}
+            setLang={setLang}
+            filled={(l) =>
+              l === 'kk' ? !!form.titleKk || !!form.subtitleKk : !!form.titleRu || !!form.subtitleRu
+            }
+          />
+          <input
+            className="input"
+            placeholder={lang === 'tr' ? 'Başlık (TR — kaynak)' : `Başlık (${lang.toUpperCase()})`}
+            value={form[tKey]}
+            onChange={(e) => setForm({ ...form, [tKey]: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder={lang === 'tr' ? 'Alt başlık (TR)' : `Alt başlık (${lang.toUpperCase()})`}
+            value={form[sKey]}
+            onChange={(e) => setForm({ ...form, [sKey]: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Rozet (örn. %25) — dilden bağımsız"
+            value={form.badge}
+            onChange={(e) => setForm({ ...form, badge: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Kategori kodu (örn. hair)"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+          />
+          <input
+            className="input full"
+            placeholder="Görsel URL (https://...)"
+            value={form.image}
+            onChange={(e) => setForm({ ...form, image: e.target.value })}
+          />
+          <button className="btn-sm btn-ok full" onClick={create}>
+            + Kampanya ekle
+          </button>
         </div>
       </div>
 
@@ -1394,13 +1532,17 @@ function ContentView() {
   const [form, setForm] = useState<ArticleInput>(empty);
   const [editId, setEditId] = useState<string | null>(null);
   // §14.5 — kk/ru override alanları (blog: title/tag/excerpt/body). body = satır bazlı metin.
-  const blankOv = { kk: { title: '', tag: '', excerpt: '', body: '' }, ru: { title: '', tag: '', excerpt: '', body: '' } };
+  const blankOv = {
+    kk: { title: '', tag: '', excerpt: '', body: '' },
+    ru: { title: '', tag: '', excerpt: '', body: '' },
+  };
   const [ov, setOv] = useState(blankOv);
   const [lang, setLang] = useState<Lang>('tr');
 
   type BField = 'title' | 'tag' | 'excerpt' | 'body';
   const fieldVal = (f: BField): string => {
-    if (lang === 'tr') return f === 'body' ? (form.body ?? []).join('\n') : ((form[f] as string) ?? '');
+    if (lang === 'tr')
+      return f === 'body' ? (form.body ?? []).join('\n') : ((form[f] as string) ?? '');
     return ov[lang][f];
   };
   const setFieldVal = (f: BField, v: string) => {
@@ -1419,7 +1561,10 @@ function ContentView() {
       if (o.title.trim()) entry.title = o.title.trim();
       if (o.tag.trim()) entry.tag = o.tag.trim();
       if (o.excerpt.trim()) entry.excerpt = o.excerpt.trim();
-      const b = o.body.split('\n').map((p) => p.trim()).filter(Boolean);
+      const b = o.body
+        .split('\n')
+        .map((p) => p.trim())
+        .filter(Boolean);
       if (b.length) entry.body = b;
       if (Object.keys(entry).length) out[loc] = entry;
     }
@@ -1435,7 +1580,12 @@ function ContentView() {
   const save = async () => {
     const body = (form.body ?? []).map((p) => p.trim()).filter(Boolean);
     if (form.title.length < 3 || !form.tag || !form.excerpt || body.length === 0) return; // tr (kaynak) zorunlu
-    const payload: ArticleInput = { ...form, body, i18n: buildArticleI18n(), categoryCode: form.categoryCode || null };
+    const payload: ArticleInput = {
+      ...form,
+      body,
+      i18n: buildArticleI18n(),
+      categoryCode: form.categoryCode || null,
+    };
     if (editId) await api.updateArticle(editId, payload);
     else await api.createArticle(payload);
     resetForm();
@@ -1456,19 +1606,42 @@ function ContentView() {
     });
     // §14.5 — mevcut kk/ru override'ları ön-doldur (varsa)
     const i = a.i18n ?? {};
-    const asStr = (v: unknown): string => (Array.isArray(v) ? v.join('\n') : typeof v === 'string' ? v : '');
+    const asStr = (v: unknown): string =>
+      Array.isArray(v) ? v.join('\n') : typeof v === 'string' ? v : '';
     setOv({
-      kk: { title: asStr(i.kk?.title), tag: asStr(i.kk?.tag), excerpt: asStr(i.kk?.excerpt), body: asStr(i.kk?.body) },
-      ru: { title: asStr(i.ru?.title), tag: asStr(i.ru?.tag), excerpt: asStr(i.ru?.excerpt), body: asStr(i.ru?.body) },
+      kk: {
+        title: asStr(i.kk?.title),
+        tag: asStr(i.kk?.tag),
+        excerpt: asStr(i.kk?.excerpt),
+        body: asStr(i.kk?.body),
+      },
+      ru: {
+        title: asStr(i.ru?.title),
+        tag: asStr(i.ru?.tag),
+        excerpt: asStr(i.ru?.excerpt),
+        body: asStr(i.ru?.body),
+      },
     });
     setLang('tr');
   };
 
-  const emptyTheme = { title: '', prompt: '', titleKk: '', promptKk: '', titleRu: '', promptRu: '', weekStart: '' };
+  const emptyTheme = {
+    title: '',
+    prompt: '',
+    titleKk: '',
+    promptKk: '',
+    titleRu: '',
+    promptRu: '',
+    weekStart: '',
+  };
   const [themeForm, setThemeForm] = useState(emptyTheme);
   const [themeLang, setThemeLang] = useState<Lang>('tr');
-  const thT = (themeLang === 'tr' ? 'title' : themeLang === 'kk' ? 'titleKk' : 'titleRu') as keyof typeof themeForm;
-  const thP = (themeLang === 'tr' ? 'prompt' : themeLang === 'kk' ? 'promptKk' : 'promptRu') as keyof typeof themeForm;
+  const thT = (
+    themeLang === 'tr' ? 'title' : themeLang === 'kk' ? 'titleKk' : 'titleRu'
+  ) as keyof typeof themeForm;
+  const thP = (
+    themeLang === 'tr' ? 'prompt' : themeLang === 'kk' ? 'promptKk' : 'promptRu'
+  ) as keyof typeof themeForm;
   const createTheme = async () => {
     if (themeForm.title.length < 2 || themeForm.prompt.length < 2) return; // tr (kaynak) zorunlu
     await api.createTheme({
@@ -1537,13 +1710,19 @@ function ContentView() {
           />
           <input
             className="input full"
-            placeholder={lang === 'tr' ? 'Özet (kart altında görünür)' : `Özet (${lang.toUpperCase()})`}
+            placeholder={
+              lang === 'tr' ? 'Özet (kart altında görünür)' : `Özet (${lang.toUpperCase()})`
+            }
             value={fieldVal('excerpt')}
             onChange={(e) => setFieldVal('excerpt', e.target.value)}
           />
           <textarea
             className="input full"
-            placeholder={lang === 'tr' ? 'İçerik — her satır bir paragraf' : `İçerik (${lang.toUpperCase()}) — her satır bir paragraf`}
+            placeholder={
+              lang === 'tr'
+                ? 'İçerik — her satır bir paragraf'
+                : `İçerik (${lang.toUpperCase()}) — her satır bir paragraf`
+            }
             rows={6}
             value={fieldVal('body')}
             onChange={(e) => setFieldVal('body', e.target.value)}
@@ -1613,7 +1792,9 @@ function ContentView() {
 
       {/* Kullanıcı blog başvuruları */}
       <h2 className="section-head">Kullanıcı blog başvuruları</h2>
-      <p className="page-sub">Onaylanan başvuru otomatik yayına alınır ve yazara 200 puan verilir.</p>
+      <p className="page-sub">
+        Onaylanan başvuru otomatik yayına alınır ve yazara 200 puan verilir.
+      </p>
       <div className="card" style={{ marginBottom: 28 }}>
         {pending.length === 0 ? (
           <div className="empty">Bekleyen başvuru yok</div>
@@ -1690,17 +1871,29 @@ function ContentView() {
           <LangTabs
             lang={themeLang}
             setLang={setThemeLang}
-            filled={(l) => (l === 'kk' ? !!themeForm.titleKk || !!themeForm.promptKk : !!themeForm.titleRu || !!themeForm.promptRu)}
+            filled={(l) =>
+              l === 'kk'
+                ? !!themeForm.titleKk || !!themeForm.promptKk
+                : !!themeForm.titleRu || !!themeForm.promptRu
+            }
           />
           <input
             className="input"
-            placeholder={themeLang === 'tr' ? 'Tema başlığı (TR — kaynak)' : `Tema başlığı (${themeLang.toUpperCase()})`}
+            placeholder={
+              themeLang === 'tr'
+                ? 'Tema başlığı (TR — kaynak)'
+                : `Tema başlığı (${themeLang.toUpperCase()})`
+            }
             value={themeForm[thT]}
             onChange={(e) => setThemeForm({ ...themeForm, [thT]: e.target.value })}
           />
           <input
             className="input full"
-            placeholder={themeLang === 'tr' ? 'Soru / yönlendirme metni' : `Soru / yönlendirme (${themeLang.toUpperCase()})`}
+            placeholder={
+              themeLang === 'tr'
+                ? 'Soru / yönlendirme metni'
+                : `Soru / yönlendirme (${themeLang.toUpperCase()})`
+            }
             value={themeForm[thP]}
             onChange={(e) => setThemeForm({ ...themeForm, [thP]: e.target.value })}
           />
@@ -1761,16 +1954,22 @@ const SEGMENTS: { id: AnnouncementSegment; label: string }[] = [
 function AnnouncementsView() {
   const { data, reload } = useAsync<Announcement[]>(() => api.announcements(), []);
   const empty = {
-    title: '', body: '',
-    titleKk: '', bodyKk: '',
-    titleRu: '', bodyRu: '',
-    segment: 'all' as AnnouncementSegment, city: '',
+    title: '',
+    body: '',
+    titleKk: '',
+    bodyKk: '',
+    titleRu: '',
+    bodyRu: '',
+    segment: 'all' as AnnouncementSegment,
+    city: '',
   };
   const [form, setForm] = useState(empty);
   const [lang, setLang] = useState<Lang>('tr');
   const [sent, setSent] = useState<string | null>(null);
   // aktif dile göre başlık/gövde alan adları
-  const tKey = (lang === 'tr' ? 'title' : lang === 'kk' ? 'titleKk' : 'titleRu') as keyof typeof form;
+  const tKey = (
+    lang === 'tr' ? 'title' : lang === 'kk' ? 'titleKk' : 'titleRu'
+  ) as keyof typeof form;
   const bKey = (lang === 'tr' ? 'body' : lang === 'kk' ? 'bodyKk' : 'bodyRu') as keyof typeof form;
 
   const send = async () => {
@@ -1806,17 +2005,23 @@ function AnnouncementsView() {
           <LangTabs
             lang={lang}
             setLang={setLang}
-            filled={(l) => (l === 'kk' ? !!form.titleKk || !!form.bodyKk : !!form.titleRu || !!form.bodyRu)}
+            filled={(l) =>
+              l === 'kk' ? !!form.titleKk || !!form.bodyKk : !!form.titleRu || !!form.bodyRu
+            }
           />
           <input
             className="input full"
-            placeholder={lang === 'tr' ? 'Duyuru başlığı (TR — kaynak)' : `Başlık (${lang.toUpperCase()})`}
+            placeholder={
+              lang === 'tr' ? 'Duyuru başlığı (TR — kaynak)' : `Başlık (${lang.toUpperCase()})`
+            }
             value={form[tKey]}
             onChange={(e) => setForm({ ...form, [tKey]: e.target.value })}
           />
           <textarea
             className="input full"
-            placeholder={lang === 'tr' ? 'Duyuru metni (TR — kaynak)' : `Metin (${lang.toUpperCase()})`}
+            placeholder={
+              lang === 'tr' ? 'Duyuru metni (TR — kaynak)' : `Metin (${lang.toUpperCase()})`
+            }
             rows={3}
             value={form[bKey]}
             onChange={(e) => setForm({ ...form, [bKey]: e.target.value })}
@@ -1878,11 +2083,24 @@ function AnnouncementsView() {
 function AdsView() {
   const { data: ads, reload } = useAsync<AdBanner[]>(() => api.ads(), []);
   const { data: pros } = useAsync<Pro[]>(() => api.professionals(), []);
-  const empty = { proId: '', title: '', subtitle: '', titleKk: '', subtitleKk: '', titleRu: '', subtitleRu: '', image: '' };
+  const empty = {
+    proId: '',
+    title: '',
+    subtitle: '',
+    titleKk: '',
+    subtitleKk: '',
+    titleRu: '',
+    subtitleRu: '',
+    image: '',
+  };
   const [form, setForm] = useState(empty);
   const [lang, setLang] = useState<Lang>('tr');
-  const tKey = (lang === 'tr' ? 'title' : lang === 'kk' ? 'titleKk' : 'titleRu') as keyof typeof form;
-  const sKey = (lang === 'tr' ? 'subtitle' : lang === 'kk' ? 'subtitleKk' : 'subtitleRu') as keyof typeof form;
+  const tKey = (
+    lang === 'tr' ? 'title' : lang === 'kk' ? 'titleKk' : 'titleRu'
+  ) as keyof typeof form;
+  const sKey = (
+    lang === 'tr' ? 'subtitle' : lang === 'kk' ? 'subtitleKk' : 'subtitleRu'
+  ) as keyof typeof form;
   const proName = (id: string) => pros?.find((p) => p.id === id)?.name ?? id;
 
   const create = async () => {
@@ -1924,7 +2142,13 @@ function AdsView() {
               </option>
             ))}
           </select>
-          <LangTabs lang={lang} setLang={setLang} filled={(l) => (l === 'kk' ? !!form.titleKk || !!form.subtitleKk : !!form.titleRu || !!form.subtitleRu)} />
+          <LangTabs
+            lang={lang}
+            setLang={setLang}
+            filled={(l) =>
+              l === 'kk' ? !!form.titleKk || !!form.subtitleKk : !!form.titleRu || !!form.subtitleRu
+            }
+          />
           <input
             className="input"
             placeholder={lang === 'tr' ? 'Başlık (TR — kaynak)' : `Başlık (${lang.toUpperCase()})`}
@@ -2011,7 +2235,8 @@ function ProfessionalsView() {
   const [q, setQ] = useState('');
 
   const list = (data ?? []).filter(
-    (p) => !q || p.name.toLowerCase().includes(q.toLowerCase()) || p.sector.includes(q.toLowerCase()),
+    (p) =>
+      !q || p.name.toLowerCase().includes(q.toLowerCase()) || p.sector.includes(q.toLowerCase()),
   );
   const save = async () => {
     if (!edit) return;
@@ -2037,7 +2262,9 @@ function ProfessionalsView() {
   return (
     <>
       <h1 className="page-title">Uzmanlar</h1>
-      <p className="page-sub">Keşif listesindeki uzman/salonlar — ekle, düzenle, fiyat, öne çıkar, sil</p>
+      <p className="page-sub">
+        Keşif listesindeki uzman/salonlar — ekle, düzenle, fiyat, öne çıkar, sil
+      </p>
       <div className="toolbar">
         <button className="btn-sm btn-ok" onClick={() => setEdit({ form: { ...EMPTY_PRO } })}>
           + Yeni uzman
@@ -2061,15 +2288,20 @@ function ProfessionalsView() {
         ) : (
           list.map((p) => (
             <div key={p.id} className="list-row">
-              {p.imageUrl ? <img className="thumb" src={p.imageUrl} alt="" /> : <div className="thumb" />}
+              {p.imageUrl ? (
+                <img className="thumb" src={p.imageUrl} alt="" />
+              ) : (
+                <div className="thumb" />
+              )}
               <div className="grow">
                 <div className="name">
                   {p.name}
                   {p.featured ? ' · ⭐' : ''}
                 </div>
                 <div className="meta">
-                  {p.sector} · {p.district || '—'} · {p.priceFrom > 0 ? TL(p.priceFrom) + '+' : 'fiyat yok'}{' '}
-                  · ★ {p.rating.toFixed(1)} ({p.reviewCount})
+                  {p.sector} · {p.district || '—'} ·{' '}
+                  {p.priceFrom > 0 ? TL(p.priceFrom) + '+' : 'fiyat yok'} · ★ {p.rating.toFixed(1)}{' '}
+                  ({p.reviewCount})
                 </div>
               </div>
               <button
@@ -2126,14 +2358,18 @@ function ProfessionalsView() {
                 <input
                   className="input"
                   value={edit.form.name}
-                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, name: e.target.value } })}
+                  onChange={(e) =>
+                    setEdit({ ...edit, form: { ...edit.form, name: e.target.value } })
+                  }
                 />
               </F>
               <F label="Sektör *">
                 <select
                   className="input"
                   value={edit.form.sector}
-                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, sector: e.target.value } })}
+                  onChange={(e) =>
+                    setEdit({ ...edit, form: { ...edit.form, sector: e.target.value } })
+                  }
                 >
                   {(cats ?? []).map((c) => (
                     <option key={c.id} value={c.code}>
@@ -2146,14 +2382,18 @@ function ProfessionalsView() {
                 <input
                   className="input"
                   value={edit.form.specialty ?? ''}
-                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, specialty: e.target.value } })}
+                  onChange={(e) =>
+                    setEdit({ ...edit, form: { ...edit.form, specialty: e.target.value } })
+                  }
                 />
               </F>
               <F label="Tür">
                 <select
                   className="input"
                   value={edit.form.kind ?? 'salon'}
-                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, kind: e.target.value } })}
+                  onChange={(e) =>
+                    setEdit({ ...edit, form: { ...edit.form, kind: e.target.value } })
+                  }
                 >
                   <option value="salon">Salon</option>
                   <option value="independent">Bağımsız uzman</option>
@@ -2163,7 +2403,9 @@ function ProfessionalsView() {
                 <input
                   className="input"
                   value={edit.form.district ?? ''}
-                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, district: e.target.value } })}
+                  onChange={(e) =>
+                    setEdit({ ...edit, form: { ...edit.form, district: e.target.value } })
+                  }
                 />
               </F>
               <F label="Başlangıç fiyatı (KZT)">
@@ -2182,7 +2424,10 @@ function ProfessionalsView() {
                   type="number"
                   value={edit.form.experienceYears ?? 0}
                   onChange={(e) =>
-                    setEdit({ ...edit, form: { ...edit.form, experienceYears: Number(e.target.value) } })
+                    setEdit({
+                      ...edit,
+                      form: { ...edit.form, experienceYears: Number(e.target.value) },
+                    })
                   }
                 />
               </F>
@@ -2190,14 +2435,18 @@ function ProfessionalsView() {
                 <input
                   className="input"
                   value={edit.form.imageUrl ?? ''}
-                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, imageUrl: e.target.value } })}
+                  onChange={(e) =>
+                    setEdit({ ...edit, form: { ...edit.form, imageUrl: e.target.value } })
+                  }
                 />
               </F>
               <F label="Hakkında" full>
                 <input
                   className="input"
                   value={edit.form.about ?? ''}
-                  onChange={(e) => setEdit({ ...edit, form: { ...edit.form, about: e.target.value } })}
+                  onChange={(e) =>
+                    setEdit({ ...edit, form: { ...edit.form, about: e.target.value } })
+                  }
                 />
               </F>
               <button className="btn-sm btn-ok full" onClick={save}>
@@ -2211,7 +2460,15 @@ function ProfessionalsView() {
   );
 }
 
-function F({ label, children, full }: { label: string; children: React.ReactNode; full?: boolean }) {
+function F({
+  label,
+  children,
+  full,
+}: {
+  label: string;
+  children: React.ReactNode;
+  full?: boolean;
+}) {
   return (
     <div className={full ? 'full' : ''}>
       <div className="kv-k" style={{ marginBottom: 6 }}>
@@ -2224,7 +2481,13 @@ function F({ label, children, full }: { label: string; children: React.ReactNode
 
 function ServicesView() {
   const { data, reload } = useAsync<Category[]>(() => api.categories(), []);
-  const [form, setForm] = useState({ code: '', nameTr: '', icon: '✨', tone: 'rose', sortOrder: '' });
+  const [form, setForm] = useState({
+    code: '',
+    nameTr: '',
+    icon: '✨',
+    tone: 'rose',
+    sortOrder: '',
+  });
   const create = async () => {
     if (!form.code || !form.nameTr) return;
     await api.createCategory({
@@ -2240,15 +2503,40 @@ function ServicesView() {
   return (
     <>
       <h1 className="page-title">Hizmetler</h1>
-      <p className="page-sub">Keşif kategorileri (saç, tırnak, makyaj…) — ekle, düzenle, sırala, sil</p>
+      <p className="page-sub">
+        Keşif kategorileri (saç, tırnak, makyaj…) — ekle, düzenle, sırala, sil
+      </p>
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
-          <input className="input" placeholder="Kod (örn. hair)" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
-          <input className="input" placeholder="Ad (TR)" value={form.nameTr} onChange={(e) => setForm({ ...form, nameTr: e.target.value })} />
-          <input className="input" placeholder="İkon (emoji)" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} />
-          <input className="input" placeholder="Sıra" type="number" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} />
-          <button className="btn-sm btn-ok full" onClick={create}>+ Hizmet ekle</button>
+          <input
+            className="input"
+            placeholder="Kod (örn. hair)"
+            value={form.code}
+            onChange={(e) => setForm({ ...form, code: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Ad (TR)"
+            value={form.nameTr}
+            onChange={(e) => setForm({ ...form, nameTr: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="İkon (emoji)"
+            value={form.icon}
+            onChange={(e) => setForm({ ...form, icon: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Sıra"
+            type="number"
+            value={form.sortOrder}
+            onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
+          />
+          <button className="btn-sm btn-ok full" onClick={create}>
+            + Hizmet ekle
+          </button>
         </div>
       </div>
 
@@ -2279,9 +2567,22 @@ function CategoryRow({ cat, onChanged }: { cat: Category; onChanged: () => void 
         placeholder="ikon"
         onChange={(e) => setIcon(e.target.value)}
       />
-      <input className="input" style={{ height: 34, flex: 1 }} value={name} onChange={(e) => setName(e.target.value)} />
-      <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>{cat.code}</span>
-      <input className="input" style={{ height: 34, maxWidth: 70 }} type="number" value={order} onChange={(e) => setOrder(e.target.value)} />
+      <input
+        className="input"
+        style={{ height: 34, flex: 1 }}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
+      <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>
+        {cat.code}
+      </span>
+      <input
+        className="input"
+        style={{ height: 34, maxWidth: 70 }}
+        type="number"
+        value={order}
+        onChange={(e) => setOrder(e.target.value)}
+      />
       {dirty ? (
         <button
           className="btn-sm btn-ok"
@@ -2333,7 +2634,11 @@ function PricesView() {
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
-          <select className="input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+          <select
+            className="input"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+          >
             <option value="">Kategori seç…</option>
             {(cats ?? []).map((c) => (
               <option key={c.id} value={c.code}>
@@ -2341,9 +2646,22 @@ function PricesView() {
               </option>
             ))}
           </select>
-          <input className="input" placeholder="Şehir (boş = genel)" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-          <input className="input" placeholder="Taban fiyat (KZT)" type="number" value={form.basePrice} onChange={(e) => setForm({ ...form, basePrice: e.target.value })} />
-          <button className="btn-sm btn-ok full" onClick={save}>Kaydet / güncelle</button>
+          <input
+            className="input"
+            placeholder="Şehir (boş = genel)"
+            value={form.city}
+            onChange={(e) => setForm({ ...form, city: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Taban fiyat (KZT)"
+            type="number"
+            value={form.basePrice}
+            onChange={(e) => setForm({ ...form, basePrice: e.target.value })}
+          />
+          <button className="btn-sm btn-ok full" onClick={save}>
+            Kaydet / güncelle
+          </button>
         </div>
       </div>
 
@@ -2474,7 +2792,11 @@ function UsersView() {
               <div className="grow">
                 <div className="name">
                   {u.name || '—'}
-                  {u.membershipTier === 'platinum' ? ' · 💎' : u.membershipTier === 'premium' || u.isPremium ? ' · ⭐' : ''}
+                  {u.membershipTier === 'platinum'
+                    ? ' · 💎'
+                    : u.membershipTier === 'premium' || u.isPremium
+                      ? ' · ⭐'
+                      : ''}
                   {u.status !== 'active' ? ' · ⛔' : ''}
                 </div>
                 <div className="meta">
@@ -2573,14 +2895,22 @@ function BookingsAdminView() {
   const { data } = useAsync<AdminBooking[]>(() => api.bookings(status), [status]);
   const STATES = ['all', 'confirmed', 'completed', 'cancelled', 'no_show', 'waitlist'];
   const pill = (s: string) =>
-    s === 'completed' || s === 'confirmed' ? 'approved' : s === 'cancelled' || s === 'no_show' ? 'rejected' : 'pending';
+    s === 'completed' || s === 'confirmed'
+      ? 'approved'
+      : s === 'cancelled' || s === 'no_show'
+        ? 'rejected'
+        : 'pending';
   return (
     <>
       <h1 className="page-title">Randevular</h1>
       <p className="page-sub">Platform geneli tüm randevular ({data?.length ?? 0})</p>
       <div className="toolbar">
         {STATES.map((s) => (
-          <button key={s} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>
+          <button
+            key={s}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
             {s === 'all' ? 'Hepsi' : BOOKING_STATUS_TR[s]}
           </button>
         ))}
@@ -2604,7 +2934,9 @@ function BookingsAdminView() {
                 </div>
               </div>
               <div className="kv-v">{b.price > 0 ? TL(b.price) : '—'}</div>
-              <span className={`pill ${pill(b.status)}`}>{BOOKING_STATUS_TR[b.status] ?? b.status}</span>
+              <span className={`pill ${pill(b.status)}`}>
+                {BOOKING_STATUS_TR[b.status] ?? b.status}
+              </span>
             </div>
           ))
         )}
@@ -2773,7 +3105,9 @@ function QuotesView() {
   return (
     <>
       <h1 className="page-title">Teklifler</h1>
-      <p className="page-sub">Foto teklif / talep istekleri ve gelen teklifler ({data?.length ?? 0})</p>
+      <p className="page-sub">
+        Foto teklif / talep istekleri ve gelen teklifler ({data?.length ?? 0})
+      </p>
       <div className="card">
         {!data ? (
           <div className="empty">Yükleniyor…</div>
@@ -2809,7 +3143,9 @@ function LoyaltyView() {
   return (
     <>
       <h1 className="page-title">Sadakat</h1>
-      <p className="page-sub">Puan defteri (append-only) — bakiye dolaşımdaki puan = platform yükümlülüğü</p>
+      <p className="page-sub">
+        Puan defteri (append-only) — bakiye dolaşımdaki puan = platform yükümlülüğü
+      </p>
       {!data ? (
         <div className="empty">Yükleniyor…</div>
       ) : (
@@ -2861,9 +3197,21 @@ function FlagsView() {
       <p className="page-sub">Özellik açma/kapama (kademeli yayın)</p>
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
-          <input className="input" placeholder="Anahtar (örn. new_booking_flow)" value={form.key} onChange={(e) => setForm({ ...form, key: e.target.value })} />
-          <input className="input" placeholder="Açıklama" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          <button className="btn-sm btn-ok full" onClick={create}>+ Flag ekle (kapalı)</button>
+          <input
+            className="input"
+            placeholder="Anahtar (örn. new_booking_flow)"
+            value={form.key}
+            onChange={(e) => setForm({ ...form, key: e.target.value })}
+          />
+          <input
+            className="input"
+            placeholder="Açıklama"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+          <button className="btn-sm btn-ok full" onClick={create}>
+            + Flag ekle (kapalı)
+          </button>
         </div>
       </div>
       <div className="card">
@@ -2994,7 +3342,9 @@ function SystemView() {
               <div className="meta">
                 {k.configured ? `Tanımlı: ${k.masked}` : 'Tanımsız'}
                 {tests[k.provider] && (
-                  <span style={{ color: tests[k.provider]!.ok ? 'var(--success)' : 'var(--danger)' }}>
+                  <span
+                    style={{ color: tests[k.provider]!.ok ? 'var(--success)' : 'var(--danger)' }}
+                  >
                     {' '}
                     · {tests[k.provider]!.ok ? '✓' : '✗'} {tests[k.provider]!.message}
                   </span>
@@ -3114,7 +3464,11 @@ function CategorySection() {
               </div>
             ))}
             <div style={{ padding: 16 }}>
-              <button className="btn-sm btn-ok" onClick={save} disabled={Object.keys(edits).length === 0}>
+              <button
+                className="btn-sm btn-ok"
+                onClick={save}
+                disabled={Object.keys(edits).length === 0}
+              >
                 Kategori ayarlarını kaydet
               </button>
             </div>

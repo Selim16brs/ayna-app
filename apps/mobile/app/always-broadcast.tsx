@@ -16,7 +16,10 @@ export default function AlwaysBroadcastScreen() {
   const router = useRouter();
 
   // primitive (sayı) selektör → yeni-dizi döngüsü riski yok
-  const count = useStore((s) => filterAlwaysAccepted(s.alwaysBonds, s.currentUser?.name ?? '', selectSellerView(s)).length);
+  const count = useStore(
+    (s) =>
+      filterAlwaysAccepted(s.alwaysBonds, s.currentUser?.name ?? '', selectSellerView(s)).length,
+  );
   const sendAlwaysBroadcast = useStore((s) => s.sendAlwaysBroadcast);
 
   const [title, setTitle] = useState('');
@@ -35,7 +38,9 @@ export default function AlwaysBroadcastScreen() {
       <StackHeader title={t('always.broadcast_title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text variant="caption" tone="muted">
-          {count > 0 ? fillParams(t('always.broadcast_sub'), { n: count }) : t('always.broadcast_none')}
+          {count > 0
+            ? fillParams(t('always.broadcast_sub'), { n: count })
+            : t('always.broadcast_none')}
         </Text>
 
         <Text variant="label" tone="accentFg" style={styles.label}>
@@ -73,7 +78,12 @@ export default function AlwaysBroadcastScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button label={t('always.broadcast_send')} variant="primary" disabled={!canSend} onPress={onSend} />
+        <Button
+          label={t('always.broadcast_send')}
+          variant="primary"
+          disabled={!canSend}
+          onPress={onSend}
+        />
       </View>
     </Screen>
   );
@@ -81,7 +91,12 @@ export default function AlwaysBroadcastScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(0.5) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      gap: space(0.5),
+    },
     flex: { flex: 1 },
     label: { marginTop: space(2), marginBottom: space(0.75) },
     input: {

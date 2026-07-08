@@ -32,5 +32,7 @@ export interface ModerationVerdict {
 export function keywordModeration(text: string): ModerationVerdict {
   const norm = text.toLowerCase();
   const hit = BLOCKLIST.find((w) => norm.includes(w));
-  return hit ? { flagged: true, reason: `Yasaklı ifade: "${hit}"` } : { flagged: false, reason: '' };
+  return hit
+    ? { flagged: true, reason: `Yasaklı ifade: "${hit}"` }
+    : { flagged: false, reason: '' };
 }

@@ -52,7 +52,9 @@ export default function SalonAgendaScreen() {
   const [tab, setTab] = useState<'all' | 'add' | 'pending'>('all');
 
   const groupByDay = (list: Appointment[]) => {
-    const active = list.filter((b) => b.status !== 'cancelled').sort((a, b) => a.startMs - b.startMs);
+    const active = list
+      .filter((b) => b.status !== 'cancelled')
+      .sort((a, b) => a.startMs - b.startMs);
     const map = new Map<number, Appointment[]>();
     for (const b of active) {
       const d = almatyDayStart(b.startMs, 0);
@@ -63,7 +65,10 @@ export default function SalonAgendaScreen() {
     return [...map.entries()].sort((a, b) => a[0] - b[0]);
   };
   // YALNIZ BU SALONA ait randevular (başka salon/uzmanların işleri ASLA görünmez)
-  const mine = useMemo(() => bookings.filter((b) => b.proName === salonName), [bookings, salonName]);
+  const mine = useMemo(
+    () => bookings.filter((b) => b.proName === salonName),
+    [bookings, salonName],
+  );
   // §10.2 GENEL — salonun TÜM uzmanlarının ONAYLI/gerçek randevuları (operasyonel takvim; §10 gereği FİYATSIZ).
   // Onay bekleyenler burada YOK; uzman onaylayınca (status confirmed) otomatik buraya düşer.
   // İptal edilmemiş randevu, saatinden 3 saat sonra takvimden otomatik düşer (geçmiş temizliği).
@@ -86,7 +91,11 @@ export default function SalonAgendaScreen() {
           ? colors.danger
           : colors.gold; // awaiting/deposit → onay bekliyor
 
-  const renderList = (groups: [number, Appointment[]][], showPrice: boolean, emptyKey: MessageKey) => (
+  const renderList = (
+    groups: [number, Appointment[]][],
+    showPrice: boolean,
+    emptyKey: MessageKey,
+  ) => (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       {groups.length === 0 ? (
         <View style={[styles.card, shadow.soft]}>
@@ -177,7 +186,10 @@ export default function SalonAgendaScreen() {
           salonName={salonName}
           onSubmit={(v) => {
             salonAddOffline({ salonName, ...v });
-            Alert.alert(t('salon.add.sent_title'), fillParams(t('salon.add.sent_body'), { uzman: v.uzmanName }));
+            Alert.alert(
+              t('salon.add.sent_title'),
+              fillParams(t('salon.add.sent_body'), { uzman: v.uzmanName }),
+            );
             setTab('pending');
           }}
           locale={locale}
@@ -332,7 +344,15 @@ function AddTab({
   );
 }
 
-function Field({ label, children, flex }: { label: string; children: React.ReactNode; flex?: boolean }) {
+function Field({
+  label,
+  children,
+  flex,
+}: {
+  label: string;
+  children: React.ReactNode;
+  flex?: boolean;
+}) {
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.field, flex && styles.flex]}>
@@ -347,7 +367,11 @@ function Field({ label, children, flex }: { label: string; children: React.React
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     segWrap: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(1) },
-    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(1.25) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      gap: space(1.25),
+    },
     flex: { flex: 1 },
     card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
     dayGroup: { gap: space(1) },

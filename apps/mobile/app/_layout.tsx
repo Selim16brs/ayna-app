@@ -5,7 +5,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Caveat_700Bold } from '@expo-google-fonts/caveat';
 import { LocaleProvider, useLocale } from '../src/locale';
-import { addPushDeepLinkListener, registerForRemotePush, syncBookingReminders } from '../src/notifications';
+import {
+  addPushDeepLinkListener,
+  registerForRemotePush,
+  syncBookingReminders,
+} from '../src/notifications';
 import { useStore } from '../src/store';
 import { ThemeProvider, useTheme } from '../src/theme-context';
 import { AppTabBar, NailCursor, SalonTabBar, SellerTabBar } from '../src/ui';
@@ -57,7 +61,17 @@ function ThemedStack() {
     pruneNotifications(); // §5.7 — 30 günden eski bildirimleri temizle
     runAutoReengage(locale); // §11 — premium uzmanda periyodu dolan müşterilere otomatik geri çağırma
     void applyApprovedProfileChanges(); // §profil-onay — admin onayladıysa salon/uzman değişikliğini uygula
-  }, [checkReminders, expireDemands, expireDeposits, expireResponses, pruneNotifications, runAutoReengage, applyApprovedProfileChanges, locale, pathname]);
+  }, [
+    checkReminders,
+    expireDemands,
+    expireDeposits,
+    expireResponses,
+    pruneNotifications,
+    runAutoReengage,
+    applyApprovedProfileChanges,
+    locale,
+    pathname,
+  ]);
 
   // §9/§10 — panel giriş ROLÜNE göre AYRI: salon → SalonTabBar, uzman → SellerTabBar. Müşteri modu kaldırıldı.
   const role = currentUser?.role;

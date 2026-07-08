@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, TextInput as RNTextInput, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput as RNTextInput,
+  View,
+} from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   CATEGORIES,
@@ -131,7 +138,11 @@ export default function SearchScreen() {
                 onPress={() => setSort(s.key)}
                 style={[styles.chip, on && styles.chipOn]}
               >
-                <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} style={on ? styles.chipOnText : undefined}>
+                <Text
+                  variant="caption"
+                  tone={on ? 'onAccent' : 'inkSoft'}
+                  style={on ? styles.chipOnText : undefined}
+                >
                   {t(s.label)}
                 </Text>
               </Pressable>
@@ -167,7 +178,11 @@ export default function SearchScreen() {
               onPress={() => setActiveCat(on ? null : cat.id)}
               style={[styles.chip, on && styles.chipOn]}
             >
-              <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} style={on ? styles.chipOnText : undefined}>
+              <Text
+                variant="caption"
+                tone={on ? 'onAccent' : 'inkSoft'}
+                style={on ? styles.chipOnText : undefined}
+              >
                 {t(cat.labelKey)}
               </Text>
             </Pressable>
@@ -202,7 +217,11 @@ export default function SearchScreen() {
             <View style={styles.wrapChips}>
               {CATEGORIES.map((cat) => (
                 <Pressable key={cat.id} style={styles.popChip} onPress={() => setActiveCat(cat.id)}>
-                  <Ionicons name={cat.icon as keyof typeof Ionicons.glyphMap} size={14} color={colors.accentFg} />
+                  <Ionicons
+                    name={cat.icon as keyof typeof Ionicons.glyphMap}
+                    size={14}
+                    color={colors.accentFg}
+                  />
                   <Text variant="caption" tone="ink">
                     {t(cat.labelKey)}
                   </Text>
@@ -212,36 +231,36 @@ export default function SearchScreen() {
           </View>
         ) : (
           <>
-        <Text variant="caption" tone="muted" style={styles.count}>
-          {results.length} {t('search.results')}
-        </Text>
-        {results.length === 0 ? (
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}>
-              <Ionicons name="search-outline" size={30} color={colors.muted} />
-            </View>
-            <Text variant="bodyStrong" tone="ink" style={styles.emptyTitle}>
-              {t('search.empty')}
+            <Text variant="caption" tone="muted" style={styles.count}>
+              {results.length} {t('search.results')}
             </Text>
-            <Text variant="caption" tone="muted">
-              {t('search.empty_sub')}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.list}>
-            {results.map((p, i) => (
-              <ProRow
-                key={p.id}
-                pro={p}
-                index={i}
-                onPress={() => {
-                  submit();
-                  router.push('/professional/' + p.id);
-                }}
-              />
-            ))}
-          </View>
-        )}
+            {results.length === 0 ? (
+              <View style={styles.empty}>
+                <View style={styles.emptyIcon}>
+                  <Ionicons name="search-outline" size={30} color={colors.muted} />
+                </View>
+                <Text variant="bodyStrong" tone="ink" style={styles.emptyTitle}>
+                  {t('search.empty')}
+                </Text>
+                <Text variant="caption" tone="muted">
+                  {t('search.empty_sub')}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.list}>
+                {results.map((p, i) => (
+                  <ProRow
+                    key={p.id}
+                    pro={p}
+                    index={i}
+                    onPress={() => {
+                      submit();
+                      router.push('/professional/' + p.id);
+                    }}
+                  />
+                ))}
+              </View>
+            )}
           </>
         )}
       </ScrollView>
@@ -347,7 +366,11 @@ const makeStyles = (colors: ColorTokens) =>
     },
     chipOn: { backgroundColor: colors.accent },
     chipOnText: { fontWeight: '700' },
-    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     count: { marginBottom: space(1.5), marginLeft: space(0.5) },
     emptyBox: { gap: space(1), paddingTop: space(1) },
     blockLabel: { marginTop: space(2), marginBottom: space(0.5), marginLeft: space(0.5) },

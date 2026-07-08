@@ -26,7 +26,9 @@ export class CutoutController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  process(@Body(new ZodValidationPipe(cutoutSchema)) body: { imageUrl?: string; imageB64?: string }) {
+  process(
+    @Body(new ZodValidationPipe(cutoutSchema)) body: { imageUrl?: string; imageB64?: string },
+  ) {
     return this.cutout.cutout({ imageUrl: body.imageUrl, imageB64: body.imageB64 });
   }
 }

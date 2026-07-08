@@ -87,7 +87,11 @@ export default function MyReviewsScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: TAB_BAR_CLEARANCE },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     list: { gap: space(1.5) },
     card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
     cardTop: { flexDirection: 'row', alignItems: 'center', gap: space(1) },

@@ -59,7 +59,10 @@ export default function KycScreen() {
   };
 
   const status = kyc?.status ?? 'none';
-  const statusTone: Record<string, { bg: string; fg: string; icon: keyof typeof Ionicons.glyphMap }> = {
+  const statusTone: Record<
+    string,
+    { bg: string; fg: string; icon: keyof typeof Ionicons.glyphMap }
+  > = {
     none: { bg: colors.surfaceMuted, fg: colors.inkSoft, icon: 'shield-outline' },
     pending: { bg: colors.goldSoft, fg: colors.gold, icon: 'hourglass-outline' },
     approved: { bg: colors.sageSoft, fg: colors.sage, icon: 'shield-checkmark' },
@@ -109,7 +112,10 @@ export default function KycScreen() {
               {docs.map((uri, i) => (
                 <View key={`${uri}-${i}`} style={styles.docThumb}>
                   <Image source={{ uri }} style={styles.docImg} />
-                  <Pressable onPress={() => setDocs((p) => p.filter((_, x) => x !== i))} style={styles.docRemove}>
+                  <Pressable
+                    onPress={() => setDocs((p) => p.filter((_, x) => x !== i))}
+                    style={styles.docRemove}
+                  >
                     <Ionicons name="close" size={14} color={colors.onColor} />
                   </Pressable>
                 </View>
@@ -135,9 +141,20 @@ export default function KycScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1),
+      paddingBottom: TAB_BAR_CLEARANCE,
+      gap: space(2),
+    },
     subtitle: {},
-    statusCard: { flexDirection: 'row', alignItems: 'center', gap: space(1.5), borderRadius: radius.lg, padding: space(2) },
+    statusCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      borderRadius: radius.lg,
+      padding: space(2),
+    },
     statusText: { flex: 1, gap: 2 },
     label: { marginTop: space(1) },
     docGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5) },

@@ -18,7 +18,15 @@ import { fillParams, useLocale } from '../../src/locale';
 import { selectCommissionRate, selectUnreadCount, useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, Screen, Segmented, TAB_BAR_CLEARANCE, Text, TierUpsell, WaveLayered } from '../../src/ui';
+import {
+  PressableScale,
+  Screen,
+  Segmented,
+  TAB_BAR_CLEARANCE,
+  Text,
+  TierUpsell,
+  WaveLayered,
+} from '../../src/ui';
 
 type Period = 'week' | 'month' | 'all';
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -67,9 +75,7 @@ export default function ReportsScreen() {
     const noShow = bookings.filter((b) => b.status === 'no_show').length;
     const finished = done + noShow;
     const completion = finished > 0 ? Math.round((done / finished) * 100) : null;
-    const responded = bookings.filter(
-      (b) => b.respondedAt != null && b.responseDeadline != null,
-    );
+    const responded = bookings.filter((b) => b.respondedAt != null && b.responseDeadline != null);
     const avgMin =
       responded.length > 0
         ? Math.round(
@@ -188,178 +194,189 @@ export default function ReportsScreen() {
         ) : null}
 
         <View style={styles.body}>
-        {/* §11 — üyelik teşviki (free → Premium/Platinum, premium → Platinum, platinum → gizli) */}
-        <View style={styles.upsellSlot}>
-          <TierUpsell />
-        </View>
-        {/* §4.4/§9.2 — ceza/kısıt uyarısı: 7 gün sayacı + ödeme talimatı */}
-        {restricted ? (
-          <View style={[styles.restrictBox, shadow.soft]}>
-            <View style={styles.restrictHead}>
-              <Ionicons name="alert-circle" size={20} color={colors.danger} />
-              <Text variant="bodyStrong" tone="ink" style={styles.restrictTitle}>
-                {t('restricted.title')}
-              </Text>
-              <View style={styles.restrictDays}>
-                <Ionicons name="time-outline" size={12} color={colors.danger} />
-                <Text variant="caption" style={styles.restrictDaysText}>
-                  {fillParams(t('restricted.days_left'), { n: restrictedDays })}
+          {/* §11 — üyelik teşviki (free → Premium/Platinum, premium → Platinum, platinum → gizli) */}
+          <View style={styles.upsellSlot}>
+            <TierUpsell />
+          </View>
+          {/* §4.4/§9.2 — ceza/kısıt uyarısı: 7 gün sayacı + ödeme talimatı */}
+          {restricted ? (
+            <View style={[styles.restrictBox, shadow.soft]}>
+              <View style={styles.restrictHead}>
+                <Ionicons name="alert-circle" size={20} color={colors.danger} />
+                <Text variant="bodyStrong" tone="ink" style={styles.restrictTitle}>
+                  {t('restricted.title')}
                 </Text>
+                <View style={styles.restrictDays}>
+                  <Ionicons name="time-outline" size={12} color={colors.danger} />
+                  <Text variant="caption" style={styles.restrictDaysText}>
+                    {fillParams(t('restricted.days_left'), { n: restrictedDays })}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <Text variant="caption" tone="inkSoft" style={styles.restrictBody}>
-              {t('restricted.pay')}
-            </Text>
-            <PressableScale
-              style={styles.restrictCta}
-              onPress={() => router.push('/seller/commissions')}
-            >
-              <Ionicons name="receipt-outline" size={15} color={colors.onAccent} />
-              <Text variant="bodyStrong" tone="onAccent" style={styles.restrictCtaText}>
-                {t('restricted.cta')}
+              <Text variant="caption" tone="inkSoft" style={styles.restrictBody}>
+                {t('restricted.pay')}
               </Text>
-            </PressableScale>
-          </View>
-        ) : null}
+              <PressableScale
+                style={styles.restrictCta}
+                onPress={() => router.push('/seller/commissions')}
+              >
+                <Ionicons name="receipt-outline" size={15} color={colors.onAccent} />
+                <Text variant="bodyStrong" tone="onAccent" style={styles.restrictCtaText}>
+                  {t('restricted.cta')}
+                </Text>
+              </PressableScale>
+            </View>
+          ) : null}
 
-        {/* İki ana operasyonel kart: Talepler + Takvim */}
-        <View style={styles.primaryRow}>
-          <PrimaryCard
-            icon="pricetags"
-            title={t('reports.action.requests')}
-            sub={t('seller.card.requests_sub')}
-            badge={openDemands}
-            onPress={() => router.push('/seller/requests')}
-          />
-          <PrimaryCard
-            icon="calendar"
-            title={t('reports.action.agenda_own')}
-            sub={t('seller.card.agenda_sub')}
-            badge={stats?.upcoming ?? 0}
-            onPress={() => router.push('/seller/agenda')}
-          />
-        </View>
-
-        {/* §9.2 — yanıt & kalite: ort. yanıt süresi + bekleyen dekont + tamamlanma oranı */}
-        <View style={[styles.qualityCard, shadow.soft]}>
-          <View style={styles.qualityHead}>
-            <Ionicons name="speedometer-outline" size={15} color={colors.accentFg} />
-            <Text variant="label" tone="accentFg">
-              {t('reports.quality.title')}
-            </Text>
-          </View>
-          <View style={styles.qualityRow}>
-            <QualityTile
-              value={quality.avgMin != null ? `${quality.avgMin} ${t('pro.min')}` : t('reports.quality.none')}
-              label={t('reports.quality.avg_response')}
+          {/* İki ana operasyonel kart: Talepler + Takvim */}
+          <View style={styles.primaryRow}>
+            <PrimaryCard
+              icon="pricetags"
+              title={t('reports.action.requests')}
+              sub={t('seller.card.requests_sub')}
+              badge={openDemands}
+              onPress={() => router.push('/seller/requests')}
             />
-            <View style={styles.qualitySep} />
-            <QualityTile
-              value={String(quality.depositPending)}
-              label={t('reports.quality.deposit_pending')}
-              alert={quality.depositPending > 0}
-            />
-            <View style={styles.qualitySep} />
-            <QualityTile
-              value={quality.completion != null ? `%${quality.completion}` : t('reports.quality.none')}
-              label={t('reports.quality.completion')}
+            <PrimaryCard
+              icon="calendar"
+              title={t('reports.action.agenda_own')}
+              sub={t('seller.card.agenda_sub')}
+              badge={stats?.upcoming ?? 0}
+              onPress={() => router.push('/seller/agenda')}
             />
           </View>
-          <View style={styles.qualityTip}>
-            <Ionicons name="flash-outline" size={12} color={colors.accentFg} />
-            <Text variant="caption" tone="muted" style={styles.qualityTipText}>
-              {t('reports.quality.tip')}
-            </Text>
-          </View>
-        </View>
 
-        {/* Tedarikçi reklamları — sektör malzemeleri (admin panelinden hedeflenir) */}
-        {ads.length > 0 ? (
-          <>
-            <View style={styles.adsHead}>
+          {/* §9.2 — yanıt & kalite: ort. yanıt süresi + bekleyen dekont + tamamlanma oranı */}
+          <View style={[styles.qualityCard, shadow.soft]}>
+            <View style={styles.qualityHead}>
+              <Ionicons name="speedometer-outline" size={15} color={colors.accentFg} />
               <Text variant="label" tone="accentFg">
-                {t('seller.ads.title')}
+                {t('reports.quality.title')}
               </Text>
-              <View style={styles.sponsoredTag}>
-                <Ionicons name="pricetag" size={9} color={colors.muted} />
-                <Text variant="caption" tone="muted" style={styles.sponsoredText}>
-                  {t('seller.ads.sponsored')}
-                </Text>
-              </View>
             </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.adsRow}
-            >
-              {ads.map((ad) => (
-                <AdCard key={ad.id} ad={ad} />
-              ))}
-            </ScrollView>
-          </>
-        ) : null}
-
-        <Text variant="bodyStrong" tone="ink" style={styles.perfTitle}>
-          {t('reports.performance')}
-        </Text>
-        <Segmented
-          options={[
-            { value: 'week', label: t('reports.period.week') },
-            { value: 'month', label: t('reports.period.month') },
-            { value: 'all', label: t('reports.period.all') },
-          ]}
-          value={period}
-          onChange={setPeriod}
-        />
-
-        <View style={styles.grid}>
-          {data.metrics.map((m) => (
-            <Metric key={m.id} metric={m} />
-          ))}
-        </View>
-
-        {/* Uzman performansı — §10.1 SALON'a özel (uzmanın kadrosu yoktur) */}
-        {isSalon ? (
-          <>
-        <Text variant="label" tone="accentFg" style={styles.section}>
-          {t('reports.section.staff')}
-        </Text>
-        <View style={styles.group}>
-          {data.staff.map((u, i) => (
-            <PressableScale
-              key={u.name}
-              style={[styles.staffRow, i < data.staff.length - 1 && styles.border]}
-              onPress={() =>
-                router.push({
-                  pathname: '/seller/staff',
-                  params: {
-                    name: u.name,
-                    image: u.image,
-                    bookings: String(u.bookings),
-                    rating: String(u.rating),
-                  },
-                })
-              }
-            >
-              <Image source={{ uri: u.image }} style={styles.staffImage} />
-              <Text variant="bodyStrong" tone="ink" style={styles.staffName} numberOfLines={1}>
-                {u.name}
+            <View style={styles.qualityRow}>
+              <QualityTile
+                value={
+                  quality.avgMin != null
+                    ? `${quality.avgMin} ${t('pro.min')}`
+                    : t('reports.quality.none')
+                }
+                label={t('reports.quality.avg_response')}
+              />
+              <View style={styles.qualitySep} />
+              <QualityTile
+                value={String(quality.depositPending)}
+                label={t('reports.quality.deposit_pending')}
+                alert={quality.depositPending > 0}
+              />
+              <View style={styles.qualitySep} />
+              <QualityTile
+                value={
+                  quality.completion != null ? `%${quality.completion}` : t('reports.quality.none')
+                }
+                label={t('reports.quality.completion')}
+              />
+            </View>
+            <View style={styles.qualityTip}>
+              <Ionicons name="flash-outline" size={12} color={colors.accentFg} />
+              <Text variant="caption" tone="muted" style={styles.qualityTipText}>
+                {t('reports.quality.tip')}
               </Text>
-              <Text variant="caption" tone="muted">
-                {u.bookings} {t('reports.bookings')}
-              </Text>
-              <View style={styles.staffMeta}>
-                <Ionicons name="star" size={12} color={colors.gold} />
-                <Text variant="caption" tone="inkSoft">
-                  {u.rating.toFixed(1)}
+            </View>
+          </View>
+
+          {/* Tedarikçi reklamları — sektör malzemeleri (admin panelinden hedeflenir) */}
+          {ads.length > 0 ? (
+            <>
+              <View style={styles.adsHead}>
+                <Text variant="label" tone="accentFg">
+                  {t('seller.ads.title')}
                 </Text>
-                <Ionicons name="chevron-forward" size={14} color={colors.muted} />
+                <View style={styles.sponsoredTag}>
+                  <Ionicons name="pricetag" size={9} color={colors.muted} />
+                  <Text variant="caption" tone="muted" style={styles.sponsoredText}>
+                    {t('seller.ads.sponsored')}
+                  </Text>
+                </View>
               </View>
-            </PressableScale>
-          ))}
-        </View>
-          </>
-        ) : null}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.adsRow}
+              >
+                {ads.map((ad) => (
+                  <AdCard key={ad.id} ad={ad} />
+                ))}
+              </ScrollView>
+            </>
+          ) : null}
+
+          <Text variant="bodyStrong" tone="ink" style={styles.perfTitle}>
+            {t('reports.performance')}
+          </Text>
+          <Segmented
+            options={[
+              { value: 'week', label: t('reports.period.week') },
+              { value: 'month', label: t('reports.period.month') },
+              { value: 'all', label: t('reports.period.all') },
+            ]}
+            value={period}
+            onChange={setPeriod}
+          />
+
+          <View style={styles.grid}>
+            {data.metrics.map((m) => (
+              <Metric key={m.id} metric={m} />
+            ))}
+          </View>
+
+          {/* Uzman performansı — §10.1 SALON'a özel (uzmanın kadrosu yoktur) */}
+          {isSalon ? (
+            <>
+              <Text variant="label" tone="accentFg" style={styles.section}>
+                {t('reports.section.staff')}
+              </Text>
+              <View style={styles.group}>
+                {data.staff.map((u, i) => (
+                  <PressableScale
+                    key={u.name}
+                    style={[styles.staffRow, i < data.staff.length - 1 && styles.border]}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/seller/staff',
+                        params: {
+                          name: u.name,
+                          image: u.image,
+                          bookings: String(u.bookings),
+                          rating: String(u.rating),
+                        },
+                      })
+                    }
+                  >
+                    <Image source={{ uri: u.image }} style={styles.staffImage} />
+                    <Text
+                      variant="bodyStrong"
+                      tone="ink"
+                      style={styles.staffName}
+                      numberOfLines={1}
+                    >
+                      {u.name}
+                    </Text>
+                    <Text variant="caption" tone="muted">
+                      {u.bookings} {t('reports.bookings')}
+                    </Text>
+                    <View style={styles.staffMeta}>
+                      <Ionicons name="star" size={12} color={colors.gold} />
+                      <Text variant="caption" tone="inkSoft">
+                        {u.rating.toFixed(1)}
+                      </Text>
+                      <Ionicons name="chevron-forward" size={14} color={colors.muted} />
+                    </View>
+                  </PressableScale>
+                ))}
+              </View>
+            </>
+          ) : null}
         </View>
       </ScrollView>
     </Screen>
@@ -444,15 +461,7 @@ function AdCard({ ad }: { ad: SupplierAd }) {
   );
 }
 
-function QualityTile({
-  value,
-  label,
-  alert,
-}: {
-  value: string;
-  label: string;
-  alert?: boolean;
-}) {
+function QualityTile({ value, label, alert }: { value: string; label: string; alert?: boolean }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
@@ -533,7 +542,13 @@ const makeStyles = (colors: ColorTokens) =>
     },
     waveAbs: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 1 },
     heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    heroBody: { flexDirection: 'row', alignItems: 'center', marginTop: space(2.5), minHeight: 175, zIndex: 2 },
+    heroBody: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: space(2.5),
+      minHeight: 175,
+      zIndex: 2,
+    },
     heroText: { flex: 1, justifyContent: 'center', paddingRight: space(1) },
     greetLabel: {
       fontSize: 25,
@@ -682,7 +697,12 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(0.5),
       minHeight: 108,
     },
-    primaryTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space(0.75) },
+    primaryTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: space(0.75),
+    },
     primaryIcon: {
       width: 44,
       height: 44,
@@ -704,7 +724,12 @@ const makeStyles = (colors: ColorTokens) =>
     primaryTitle: { fontSize: 16 },
 
     // Tedarikçi reklamları
-    adsHead: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginBottom: space(1.25) },
+    adsHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      marginBottom: space(1.25),
+    },
     sponsoredTag: {
       flexDirection: 'row',
       alignItems: 'center',

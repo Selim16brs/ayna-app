@@ -24,7 +24,11 @@ export default function SalonStaffScreen() {
         </Text>
 
         {/* §3.4 — Uzman davet et (tek kullanımlık, 24s kod) */}
-        <Button label={t('salon.staff.invite')} variant="primary" onPress={() => router.push('/seller/codes')} />
+        <Button
+          label={t('salon.staff.invite')}
+          variant="primary"
+          onPress={() => router.push('/seller/codes')}
+        />
 
         <View style={styles.list}>
           {staff.map((u) => (
@@ -69,7 +73,12 @@ export default function SalonStaffScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(1.5) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      gap: space(1.5),
+    },
     intro: { lineHeight: 18 },
     list: { gap: space(1.25), marginTop: space(0.5) },
     card: {

@@ -114,8 +114,7 @@ export function computeDaySlots(params: SlotParams): DaySlot[] {
 }
 
 export type LockResult =
-  | { ok: true }
-  | { ok: false; reason: 'INVALID' | 'CONFLICT' | 'OUT_OF_HOURS' | 'PAST' };
+  { ok: true } | { ok: false; reason: 'INVALID' | 'CONFLICT' | 'OUT_OF_HOURS' | 'PAST' };
 
 /**
  * Slot kilit önkoşulu (master §4.2 "atomik kilit"). Sunucu bunu transaction içinde,

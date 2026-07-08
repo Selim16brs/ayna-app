@@ -35,10 +35,16 @@ export class AiService {
   }
 
   // Premium + ortak kota kontrolü; AI çağrısı BAŞARILIYSA 1 hak düşülür (atomik).
-  private async runWithQuota(userId: string, messages: ChatMsg[]): Promise<{ text: string; remaining: number }> {
+  private async runWithQuota(
+    userId: string,
+    messages: ChatMsg[],
+  ): Promise<{ text: string; remaining: number }> {
     const u = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!u || !u.isPremium) {
-      throw new ForbiddenException({ code: 'PREMIUM_REQUIRED', message: 'AI yalnızca premium üyelerde' });
+      throw new ForbiddenException({
+        code: 'PREMIUM_REQUIRED',
+        message: 'AI yalnızca premium üyelerde',
+      });
     }
     const cur = this.period();
     const used = u.aiPeriod === cur ? u.aiUsed : 0;
@@ -105,7 +111,10 @@ export class AiService {
       body: JSON.stringify({ model: 'gpt-4o', messages, max_tokens: 400, temperature: 0.6 }),
     });
     if (!res.ok) {
-      throw new HttpException({ code: 'AI_FAILED', message: 'AI çağrısı başarısız' }, HttpStatus.BAD_GATEWAY);
+      throw new HttpException(
+        { code: 'AI_FAILED', message: 'AI çağrısı başarısız' },
+        HttpStatus.BAD_GATEWAY,
+      );
     }
     const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     return data.choices?.[0]?.message?.content ?? mockReply(messages);

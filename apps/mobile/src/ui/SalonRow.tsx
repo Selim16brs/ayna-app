@@ -97,7 +97,12 @@ const makeStyles = (colors: ColorTokens) =>
     ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     rating: { fontWeight: '800' },
     meta: {},
-    right: { alignItems: 'flex-end', justifyContent: 'space-between', height: 84, paddingVertical: 2 },
+    right: {
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      height: 84,
+      paddingVertical: 2,
+    },
     badge: {
       paddingHorizontal: space(1.25),
       paddingVertical: 5,

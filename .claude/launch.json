@@ -6,6 +6,18 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@ayna/web-admin", "dev"],
       "port": 3100
+    },
+    {
+      "name": "memining-yeniweb",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8902",
+        "-d",
+        "/Users/selimvurgungmail.com/Desktop/BTC/yeniweb"
+      ],
+      "port": 8902
     }
   ]
 }

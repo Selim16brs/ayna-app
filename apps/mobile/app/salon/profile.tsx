@@ -51,7 +51,10 @@ export default function SalonProfileHub() {
         </View>
 
         {/* Profili düzenle */}
-        <PressableScale style={[styles.editBtn, shadow.soft]} onPress={() => router.push('/salon/edit')}>
+        <PressableScale
+          style={[styles.editBtn, shadow.soft]}
+          onPress={() => router.push('/salon/edit')}
+        >
           <Ionicons name="create-outline" size={19} color={colors.onAccent} />
           <Text variant="bodyStrong" tone="onAccent" style={styles.editText}>
             {t('salon.edit.title')}
@@ -79,7 +82,10 @@ export default function SalonProfileHub() {
 
         {/* Hesap: bildirim tercihleri + çıkış */}
         <View style={[styles.group, shadow.soft]}>
-          <PressableScale style={[styles.row, styles.rowBorder]} onPress={() => router.push('/profile/notifications')}>
+          <PressableScale
+            style={[styles.row, styles.rowBorder]}
+            onPress={() => router.push('/profile/notifications')}
+          >
             <View style={styles.rowIcon}>
               <Ionicons name="notifications-outline" size={19} color={colors.accentFg} />
             </View>
@@ -119,7 +125,12 @@ export default function SalonProfileHub() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(2) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      gap: space(2),
+    },
     flex: { flex: 1 },
     headerCard: {
       flexDirection: 'row',
@@ -150,7 +161,13 @@ const makeStyles = (colors: ColorTokens) =>
     },
     editText: { fontSize: 15 },
     group: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
-    row: { flexDirection: 'row', alignItems: 'center', gap: space(1.25), paddingHorizontal: space(2), paddingVertical: space(1.75) },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.75),
+    },
     rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
     rowIcon: {
       width: 40,

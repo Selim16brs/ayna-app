@@ -93,11 +93,8 @@ export async function registerForRemotePush(authToken: string): Promise<void> {
   try {
     if (!Device.isDevice) return; // simülatör gerçek push token üretmez
     if (!(await ensurePermission())) return;
-    const projectId =
-      Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-    const tok = await Notifications.getExpoPushTokenAsync(
-      projectId ? { projectId } : undefined,
-    );
+    const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+    const tok = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
     await api.registerPushToken(authToken, tok.data, Platform.OS);
   } catch {
     // Remote push opsiyonel — hata uygulamayı etkilemez

@@ -39,7 +39,13 @@ export class SettingsService {
 
   private async audit(action: string, resourceId: string, actorId?: string) {
     await this.prisma.auditLog.create({
-      data: { action, resourceType: 'setting', resourceId, actorId: actorId ?? null, actorRole: 'admin' },
+      data: {
+        action,
+        resourceType: 'setting',
+        resourceId,
+        actorId: actorId ?? null,
+        actorRole: 'admin',
+      },
     });
   }
 
@@ -170,7 +176,8 @@ export class SettingsService {
     const rateRows = await this.rates();
     const rate = (key: string) => rateRows.find((r) => r.key === key)?.value ?? 0;
     const keys = await this.apiKeys();
-    const feature = (provider: string) => keys.find((k) => k.provider === provider)?.configured ?? false;
+    const feature = (provider: string) =>
+      keys.find((k) => k.provider === provider)?.configured ?? false;
     const cities = await this.cities();
     const categories = await this.categoryConfig();
     return {

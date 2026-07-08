@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
@@ -64,7 +74,9 @@ const marketSchema = z.object({
   city: z.string().max(60).optional(),
   basePrice: z.number().min(0).max(100_000_000),
 });
-const userRoleSchema = z.object({ role: z.enum(['user', 'professional', 'salon', 'moderator', 'admin']) });
+const userRoleSchema = z.object({
+  role: z.enum(['user', 'professional', 'salon', 'moderator', 'admin']),
+});
 const userStatusSchema = z.object({ status: z.enum(['active', 'suspended', 'deleted']) });
 const premiumSchema = z.object({ isPremium: z.boolean() });
 const tierSchema = z.object({ tier: z.enum(['free', 'premium', 'platinum']) });
@@ -127,7 +139,10 @@ export class AdminController {
   }
 
   @Post('businesses/:id/reject')
-  reject(@Param('id') id: string, @Body(new ZodValidationPipe(rejectSchema)) body: { reason?: string }) {
+  reject(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(rejectSchema)) body: { reason?: string },
+  ) {
     return this.admin.setBusinessStatus(id, 'rejected', body.reason);
   }
 
@@ -138,17 +153,26 @@ export class AdminController {
   }
 
   @Post('users/:id/role')
-  setUserRole(@Param('id') id: string, @Body(new ZodValidationPipe(userRoleSchema)) body: z.infer<typeof userRoleSchema>) {
+  setUserRole(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(userRoleSchema)) body: z.infer<typeof userRoleSchema>,
+  ) {
     return this.admin.setUserRole(id, body.role);
   }
 
   @Post('users/:id/status')
-  setUserStatus(@Param('id') id: string, @Body(new ZodValidationPipe(userStatusSchema)) body: z.infer<typeof userStatusSchema>) {
+  setUserStatus(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(userStatusSchema)) body: z.infer<typeof userStatusSchema>,
+  ) {
     return this.admin.setUserStatus(id, body.status);
   }
 
   @Post('users/:id/premium')
-  setUserPremium(@Param('id') id: string, @Body(new ZodValidationPipe(premiumSchema)) body: { isPremium: boolean }) {
+  setUserPremium(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(premiumSchema)) body: { isPremium: boolean },
+  ) {
     return this.admin.setUserPremium(id, body.isPremium);
   }
 
@@ -236,12 +260,17 @@ export class AdminController {
   }
 
   @Post('campaigns')
-  createCampaign(@Body(new ZodValidationPipe(campaignSchema)) body: z.infer<typeof campaignSchema>) {
+  createCampaign(
+    @Body(new ZodValidationPipe(campaignSchema)) body: z.infer<typeof campaignSchema>,
+  ) {
     return this.admin.createCampaign(body);
   }
 
   @Post('campaigns/:id/active')
-  setActive(@Param('id') id: string, @Body(new ZodValidationPipe(activeSchema)) body: { active: boolean }) {
+  setActive(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(activeSchema)) body: { active: boolean },
+  ) {
     return this.admin.setCampaignActive(id, body.active);
   }
 
@@ -262,7 +291,10 @@ export class AdminController {
   }
 
   @Post('ads/:id/active')
-  setAdActive(@Param('id') id: string, @Body(new ZodValidationPipe(activeSchema)) body: { active: boolean }) {
+  setAdActive(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(activeSchema)) body: { active: boolean },
+  ) {
     return this.admin.setAdActive(id, body.active);
   }
 
@@ -296,7 +328,10 @@ export class AdminController {
   }
 
   @Post('professionals/:id/feature')
-  setFeatured(@Param('id') id: string, @Body(new ZodValidationPipe(featuredSchema)) body: { featured: boolean }) {
+  setFeatured(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(featuredSchema)) body: { featured: boolean },
+  ) {
     return this.admin.setFeatured(id, body.featured);
   }
 
@@ -307,7 +342,9 @@ export class AdminController {
   }
 
   @Post('categories')
-  createCategory(@Body(new ZodValidationPipe(categorySchema)) body: z.infer<typeof categorySchema>) {
+  createCategory(
+    @Body(new ZodValidationPipe(categorySchema)) body: z.infer<typeof categorySchema>,
+  ) {
     return this.admin.createCategory(body);
   }
 

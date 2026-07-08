@@ -455,7 +455,10 @@ export const api = {
     post<{ id: string; status: string }>('/disputes', input, token),
   // §5.5 — W2W topluluk (moderasyon backend'de)
   circlePosts: () => get<ApiCirclePost[]>('/circle/posts'),
-  createCirclePost: (token: string, input: { category: string; text: string; anonymous?: boolean }) =>
+  createCirclePost: (
+    token: string,
+    input: { category: string; text: string; anonymous?: boolean },
+  ) =>
     post<{ id: string; status: string; moderationReason: string }>('/circle/posts', input, token),
   reportCirclePost: (token: string, id: string, reason?: string) =>
     post<{ reports: number; hidden: boolean }>(`/circle/posts/${id}/report`, { reason }, token),
@@ -506,7 +509,11 @@ export const api = {
   // EK Z.6 — müşteri referans programı
   referralMine: (token: string) => get<MyReferral>('/referral/mine', token),
   redeemReferral: (token: string, code: string) =>
-    post<{ ok: boolean; pointsAwarded: number; referrerName: string }>('/referral/redeem', { code }, token),
+    post<{ ok: boolean; pointsAwarded: number; referrerName: string }>(
+      '/referral/redeem',
+      { code },
+      token,
+    ),
   // EK Z.8 — in-app Kaspi ödeme (simülasyon)
   paymentFor: (token: string, bookingId: string) =>
     get<PaymentIntent | null>(`/payment/mine?bookingId=${encodeURIComponent(bookingId)}`, token),

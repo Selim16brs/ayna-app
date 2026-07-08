@@ -1,6 +1,5 @@
 // AYNA Admin — API istemcisi (admin token localStorage'da)
-export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:3000/api/v1';
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:3000/api/v1';
 
 const TOKEN_KEY = 'ayna_admin_token';
 
@@ -80,7 +79,8 @@ export const api = {
     }),
   rejectSubscription: (id: string) =>
     req<Subscription>(`/admin/subscriptions/${id}/reject`, { method: 'POST' }),
-  runSubExpire: () => req<{ expired: number }>('/admin/subscriptions/run-expire', { method: 'POST' }),
+  runSubExpire: () =>
+    req<{ expired: number }>('/admin/subscriptions/run-expire', { method: 'POST' }),
   // §profil-onay — salon/uzman profil değişiklik onay kuyruğu
   profileChanges: (status?: string) =>
     req<ProfileChange[]>(`/admin/profile-changes${status ? `?status=${status}` : ''}`),
@@ -89,8 +89,7 @@ export const api = {
   rejectProfileChange: (id: string) =>
     req<ProfileChange>(`/admin/profile-changes/${id}/reject`, { method: 'POST' }),
   // EK Z.3 — KYC uzman doğrulama kuyruğu
-  kycQueue: (status?: string) =>
-    req<KycRow[]>(`/admin/kyc${status ? `?status=${status}` : ''}`),
+  kycQueue: (status?: string) => req<KycRow[]>(`/admin/kyc${status ? `?status=${status}` : ''}`),
   approveKyc: (id: string) => req<KycRow>(`/admin/kyc/${id}/approve`, { method: 'POST' }),
   rejectKyc: (id: string, note?: string) =>
     req<KycRow>(`/admin/kyc/${id}/reject`, { method: 'POST', body: JSON.stringify({ note }) }),
@@ -116,8 +115,7 @@ export const api = {
   penalties: () => req<Penalty[]>('/admin/penalties'),
   restrictUser: (id: string, reason: string) =>
     req(`/admin/users/${id}/restrict`, { method: 'POST', body: JSON.stringify({ reason }) }),
-  unrestrictUser: (id: string) =>
-    req(`/admin/users/${id}/unrestrict`, { method: 'POST' }),
+  unrestrictUser: (id: string) => req(`/admin/users/${id}/unrestrict`, { method: 'POST' }),
   bookings: (status?: string) =>
     req<AdminBooking[]>(`/admin/bookings${status && status !== 'all' ? `?status=${status}` : ''}`),
   quoteRequests: () => req<QuoteReq[]>('/admin/quote-requests'),
@@ -126,7 +124,9 @@ export const api = {
   setFeatureFlag: (key: string, enabled: boolean, description?: string) =>
     req<FeatureFlag>('/admin/feature-flags', {
       method: 'POST',
-      body: JSON.stringify(description !== undefined ? { key, enabled, description } : { key, enabled }),
+      body: JSON.stringify(
+        description !== undefined ? { key, enabled, description } : { key, enabled },
+      ),
     }),
   auditLogs: () => req<AuditEntry[]>('/admin/audit-logs'),
   campaigns: () => req<Campaign[]>('/admin/campaigns'),
@@ -145,8 +145,7 @@ export const api = {
     req<Pro>('/admin/professionals', { method: 'POST', body: JSON.stringify(p) }),
   updateProfessional: (id: string, p: Partial<ProInput>) =>
     req<Pro>(`/admin/professionals/${id}`, { method: 'PATCH', body: JSON.stringify(p) }),
-  deleteProfessional: (id: string) =>
-    req(`/admin/professionals/${id}`, { method: 'DELETE' }),
+  deleteProfessional: (id: string) => req(`/admin/professionals/${id}`, { method: 'DELETE' }),
   setFeatured: (id: string, featured: boolean) =>
     req(`/admin/professionals/${id}/feature`, {
       method: 'POST',
@@ -168,8 +167,7 @@ export const api = {
     req<BlogArticle>('/admin/content/articles', { method: 'POST', body: JSON.stringify(a) }),
   updateArticle: (id: string, a: Partial<ArticleInput>) =>
     req<BlogArticle>(`/admin/content/articles/${id}`, { method: 'PATCH', body: JSON.stringify(a) }),
-  deleteArticle: (id: string) =>
-    req(`/admin/content/articles/${id}`, { method: 'DELETE' }),
+  deleteArticle: (id: string) => req(`/admin/content/articles/${id}`, { method: 'DELETE' }),
   blogApplications: () => req<BlogApplication[]>('/admin/content/applications'),
   reviewApplication: (id: string, body: ReviewApplication) =>
     req(`/admin/content/applications/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
@@ -187,7 +185,10 @@ export const api = {
   // §12.5 W2W moderasyon kuyruğu
   circleQueue: () => req<CirclePost[]>('/admin/circle/queue'),
   moderateCircle: (id: string, decision: 'approve' | 'hide') =>
-    req(`/admin/circle/posts/${id}/moderate`, { method: 'POST', body: JSON.stringify({ decision }) }),
+    req(`/admin/circle/posts/${id}/moderate`, {
+      method: 'POST',
+      body: JSON.stringify({ decision }),
+    }),
   // §12.4 Anlaşmazlık kuyruğu (depozito/iade dekontları)
   disputes: () => req<Dispute[]>('/admin/disputes'),
   resolveDispute: (id: string, decision: 'approve' | 'reject', resolution?: string) =>
@@ -205,7 +206,10 @@ export const api = {
   // §12.9 Sistem Ayarları
   systemSettings: () => req<SystemSettings>('/admin/system'),
   setRate: (key: string, value: number) =>
-    req<RateSetting[]>('/admin/system/rate', { method: 'POST', body: JSON.stringify({ key, value }) }),
+    req<RateSetting[]>('/admin/system/rate', {
+      method: 'POST',
+      body: JSON.stringify({ key, value }),
+    }),
   setApiKey: (provider: string, value: string) =>
     req<ApiKeyStatus[]>('/admin/system/api-key', {
       method: 'POST',
@@ -220,7 +224,10 @@ export const api = {
   // §12.9 — kategori bakım periyodu + hizmet süresi
   categoryConfig: () => req<CategoryConfig>('/admin/system/categories'),
   setCategoryConfig: (config: CategoryConfig) =>
-    req<CategoryConfig>('/admin/system/categories', { method: 'POST', body: JSON.stringify(config) }),
+    req<CategoryConfig>('/admin/system/categories', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    }),
 };
 
 export type CategoryConfig = Record<string, { maintenanceDays: number; serviceMin: number }>;
@@ -250,7 +257,8 @@ export interface SystemSettings {
   cities: Cities;
 }
 
-export type AnnouncementSegment = 'all' | 'premium' | 'platinum' | 'professionals' | 'salons' | 'city';
+export type AnnouncementSegment =
+  'all' | 'premium' | 'platinum' | 'professionals' | 'salons' | 'city';
 
 export interface Announcement {
   id: string;

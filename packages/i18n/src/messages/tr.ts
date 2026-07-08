@@ -9,7 +9,8 @@ export const tr = {
   'premium.plan_name': 'AYNA Premium',
   'premium.per_month': '/ ay',
   'premium.tagline': 'İşini büyüt, daha çok müşteriye ulaş.',
-  'premium.pay_note': 'Ödeme banka/Kaspi ile app dışında yapılır; onaydan sonra Premium aktifleşir.',
+  'premium.pay_note':
+    'Ödeme banka/Kaspi ile app dışında yapılır; onaydan sonra Premium aktifleşir.',
   'premium.cancel': 'İstediğin zaman iptal edebilirsin.',
   'premium.cta': 'Premium’a geç',
   'premium.section': 'Premium ile neler kazanırsın',
@@ -35,9 +36,11 @@ export const tr = {
   'common.error': 'Bir hata oluştu, tekrar dene',
   // §12.3 — kısıtlı mod uyarısı (admin ceza takip)
   'restricted.title': 'Hesabın şu an kısıtlı',
-  'restricted.body': 'Kısıtlı modda yeni talep oluşturamazsın. Bekleyen yükümlülüğün çözülünce hesabın otomatik açılır.',
+  'restricted.body':
+    'Kısıtlı modda yeni talep oluşturamazsın. Bekleyen yükümlülüğün çözülünce hesabın otomatik açılır.',
   'restricted.days_left': 'Kalan süre: {n} gün',
-  'restricted.pay': 'Bekleyen iade dekontunu yükle ya da komisyon borcunu kapat — hesabın otomatik açılır.',
+  'restricted.pay':
+    'Bekleyen iade dekontunu yükle ya da komisyon borcunu kapat — hesabın otomatik açılır.',
   'restricted.cta': 'Komisyon & dekont',
   'restricted.locked_offer': 'Kısıtlı modda teklif veremezsin. Önce yükümlülüğünü kapat.',
 
@@ -59,7 +62,8 @@ export const tr = {
   'expert.reg.title': 'Uzman kaydı',
   'expert.reg.personal': 'Kişisel bilgiler',
   'expert.reg.photo': 'Profil fotoğrafın',
-  'expert.reg.photo_lead': 'Beyaz zeminde, örneklerdeki gibi tek başına ve net dur. Böyle bir kare yeterli.',
+  'expert.reg.photo_lead':
+    'Beyaz zeminde, örneklerdeki gibi tek başına ve net dur. Böyle bir kare yeterli.',
   'expert.reg.photo_auto': 'Arka planı sistemimiz otomatik keser — sen hiç uğraşmazsın.',
   'expert.reg.photo_ex': 'Örnek çekimler',
   'expert.reg.photo_hint': 'Arka planı otomatik temizlenir (remove.bg) ve yüz doğrulanır.',
@@ -69,14 +73,16 @@ export const tr = {
   'expert.reg.prof': 'Mesleki bilgiler',
   'expert.reg.service_area': 'Hizmet alanı',
   'expert.reg.services': 'Hizmetlerin',
-  'expert.reg.services_hint': 'Her hizmet için fiyat ve süre zorunlu — süre, randevu slotları için gereklidir.',
+  'expert.reg.services_hint':
+    'Her hizmet için fiyat ve süre zorunlu — süre, randevu slotları için gereklidir.',
   'expert.reg.service_name': 'Hizmet adı',
   'expert.reg.service_price': 'Fiyat (₸)',
   'expert.reg.service_dur': 'Süre (dk)',
   'expert.reg.add_service': 'Hizmet ekle',
   'expert.reg.cert': 'Sertifikalar (isteğe bağlı)',
   'expert.reg.cert_add': 'Sertifika ekle',
-  'expert.reg.cert_warn': 'Kullanıcılara doğru bilgiler vermemeniz durumunda güven sorunu oluşabilir. Bu yüzden yalnızca kendi adınıza kayıtlı sertifikaları paylaşınız.',
+  'expert.reg.cert_warn':
+    'Kullanıcılara doğru bilgiler vermemeniz durumunda güven sorunu oluşabilir. Bu yüzden yalnızca kendi adınıza kayıtlı sertifikaları paylaşınız.',
   'expert.reg.social': 'Sosyal medya (isteğe bağlı)',
   'expert.reg.hours': 'Çalışma saatleri',
   'expert.reg.hours_ph': 'Örn. Pzt–Cmt 10:00–20:00',
@@ -89,7 +95,8 @@ export const tr = {
   'slots.tz': 'Almatı saati',
   'expert.reg.portfolio': 'Portfolyo — yaptığın işler',
   'expert.reg.portfolio_hint': 'Önceki işlerinden fotoğraflar ekle (normal: 7, Premium: 20).',
-  'expert.reg.portfolio_limit': 'Fotoğraf sınırına ulaştın. Premium ile 20 fotoğraf ekleyebilirsin.',
+  'expert.reg.portfolio_limit':
+    'Fotoğraf sınırına ulaştın. Premium ile 20 fotoğraf ekleyebilirsin.',
   'expert.reg.salon_q': 'Bir salona bağlı mısın?',
   'expert.reg.salon_search': 'Salonunu ara',
   'expert.reg.salon_search_ph': 'Salon adı yaz…',
@@ -153,7 +160,8 @@ export const tr = {
   'salon.staff.perf': 'performans',
   'agenda.filter.all': 'Tümü',
   'salon.upsell.title': 'Salonunun görünürlüğünü artır ✨',
-  'salon.upsell.body': 'Premium ile salonun Öne Çıkanlar ve Sana Yakın ilk 3’te görünür — bu hafta {n} kez görünebilirdin.',
+  'salon.upsell.body':
+    'Premium ile salonun Öne Çıkanlar ve Sana Yakın ilk 3’te görünür — bu hafta {n} kez görünebilirdin.',
   'salon.upsell.cta': 'Premium’a geç',
   'salon.cal.all': 'Genel',
   'salon.cal.add': 'Randevu ekle',
@@ -165,7 +173,8 @@ export const tr = {
   'salon.add.uzman': 'Uzman seç',
   'salon.add.phone': 'Müşteri telefonu',
   'salon.add.submit': 'Uzmana gönder',
-  'salon.add.note': 'Salon randevusu ilgili uzmanın onayına gider; uzman kabul edince kesinleşir (§4.6).',
+  'salon.add.note':
+    'Salon randevusu ilgili uzmanın onayına gider; uzman kabul edince kesinleşir (§4.6).',
   'salon.add.sent_title': 'Uzman onayına gönderildi',
   'salon.add.sent_body': '{uzman} onaylayınca randevu kesinleşir.',
   'salon.edit.title': 'Profili düzenle',
@@ -192,7 +201,8 @@ export const tr = {
   'ad.about': 'Kampanya hakkında',
   'ad.perks': 'Avantajlar',
   'ad.contact': 'İletişime geç',
-  'ad.disclosure': 'Bu içerik sponsorludur. AYNA satın alma garantisi vermez; koşullar firmaya aittir.',
+  'ad.disclosure':
+    'Bu içerik sponsorludur. AYNA satın alma garantisi vermez; koşullar firmaya aittir.',
   'ad.not_found': 'Kampanya bulunamadı.',
   'seller.menu.services_d': 'Hizmet, fiyat ve süreler',
   'seller.menu.reengage': 'Müşterini geri çağır',
@@ -207,7 +217,8 @@ export const tr = {
   'seller.nav.agenda': 'Takvim',
   'seller.nav.profile': 'Profil',
   'seller.services.title': 'Hizmetlerim',
-  'seller.services.subtitle': 'Sunduğun hizmetleri, fiyatları ve süreleri yönet. Süre randevu slotları için gereklidir.',
+  'seller.services.subtitle':
+    'Sunduğun hizmetleri, fiyatları ve süreleri yönet. Süre randevu slotları için gereklidir.',
   'seller.services.active_unit': 'aktif hizmet',
   'seller.services.empty': 'Bu kategoride henüz hizmet seçmedin.',
   'seller.services.saved': 'Hizmetlerin güncellendi.',
@@ -329,7 +340,8 @@ export const tr = {
   'quote.hub.subtitle': 'Nasıl teklif almak istersin? Sana en uygun yöntemi seç.',
   'quote.hub.start': 'Başla',
   'quote.hub.photo.title': 'Fotoğraf ile teklif',
-  'quote.hub.photo.desc': 'İstediğin görünümün fotoğrafını yükle, uzmanlar sana fiyat teklif etsin.',
+  'quote.hub.photo.desc':
+    'İstediğin görünümün fotoğrafını yükle, uzmanlar sana fiyat teklif etsin.',
   'quote.hub.demand.title': 'Fiyat belirleyerek talep',
   'quote.hub.demand.desc': 'Bütçeni ve ihtiyacını yaz, kabul eden uzmanlar sana ulaşsın.',
   'quote.hub.badge.photo': 'Görselden',
@@ -441,12 +453,15 @@ export const tr = {
   'seller.requests.give': 'Teklif ver',
   'requests.give_premium': 'Üyeliğini yükselt',
   'requests.premium_title': 'Teklif vermek üyelere özel',
-  'requests.premium_body': 'Talep detaylarını görmek ve teklif vermek için Premium veya Platinum üyeliğe geç.',
+  'requests.premium_body':
+    'Talep detaylarını görmek ve teklif vermek için Premium veya Platinum üyeliğe geç.',
   'requests.premium_banner': 'Detaylar Premium/Platinum ile açılır — üyeliğini yükselt.',
   // §11 — uzman 3 gün ücretsiz deneme
   'requests.trial_title': 'Ücretsiz deneme başladı 🎁',
-  'requests.trial_banner': '{n} gün boyunca tüm talepleri görüp teklif verebilirsin. Süre bitince üyelikle devam.',
-  'requests.locked_hint': 'Talep detayları Premium/Platinum üyelere açık. Görmek ve teklif vermek için üyeliğini yükselt.',
+  'requests.trial_banner':
+    '{n} gün boyunca tüm talepleri görüp teklif verebilirsin. Süre bitince üyelikle devam.',
+  'requests.locked_hint':
+    'Talep detayları Premium/Platinum üyelere açık. Görmek ve teklif vermek için üyeliğini yükselt.',
   'offer.form.title': 'Teklif ver',
   'offer.form.price': 'Fiyat (₸)',
   'offer.form.eta': 'Tahmini süre (dk)',
@@ -552,9 +567,11 @@ export const tr = {
   'care.due_in': 'gün kaldı',
   'care.get_offer': 'Bunun için teklif al',
   'notifprefs.title': 'Bildirim tercihleri',
-  'notifprefs.hint': 'Hangi bildirim gruplarını almak istediğini seç. Günlük bildirimler akıllıca gruplanır.',
+  'notifprefs.hint':
+    'Hangi bildirim gruplarını almak istediğini seç. Günlük bildirimler akıllıca gruplanır.',
   'notifprefs.demand_title': 'Talep bildirimleri',
-  'notifprefs.demand_hint': 'Hangi kategoride ve hangi saat aralığında yeni talep bildirimi almak istersin?',
+  'notifprefs.demand_hint':
+    'Hangi kategoride ve hangi saat aralığında yeni talep bildirimi almak istersin?',
   'notifprefs.demand_cats': 'Kategoriler (hiçbiri seçili değilse tümü)',
   'notifprefs.demand_hours': 'Saat aralığı',
   'notifprefs.booking': 'Randevu bildirimleri',
@@ -618,7 +635,8 @@ export const tr = {
   'booking.field.address': 'Adres',
   'booking.field.phone': 'Telefon',
   'booking.field.customer': 'Müşteri',
-  'booking.address_note': 'Salonun adresi onay sonrası sana gösterilir; senin adresin uzmanla asla paylaşılmaz',
+  'booking.address_note':
+    'Salonun adresi onay sonrası sana gösterilir; senin adresin uzmanla asla paylaşılmaz',
   'booking.confirmed.done': 'Randevularıma git',
 
   'screen.placeholder': 'Bu bölüm yakında burada olacak',
@@ -644,7 +662,8 @@ export const tr = {
   'rewards.raffle.join_confirm': 'Çekilişe katılmak için 500 puan kullanılsın mı?',
   'rewards.raffle.joined': 'Çekiliş biletin alındı! Bol şans 🎁',
   'rewards.raffle.entry': 'Çekiliş bileti',
-  'rewards.expiry_warn': 'Puanların yanmasın — 12 ay içinde kullan. Yanmadan 30 gün önce hatırlatırız.',
+  'rewards.expiry_warn':
+    'Puanların yanmasın — 12 ay içinde kullan. Yanmadan 30 gün önce hatırlatırız.',
   'rewards.rules.title': 'Puan kuralları',
   'rewards.rules.earn': 'Her tamamlanan hizmette %3 geri kazan.',
   'rewards.rules.channels': 'W2W beğeni, blog, ilk randevu ve davetle de kazan (aylık limitlerle).',
@@ -746,7 +765,8 @@ export const tr = {
   'auth.section.address': 'Adres & konum',
   'auth.location.use_gps': 'Konumumu kullan',
   'auth.location.detected': 'Konum alındı',
-  'auth.location.hint': 'Konum, "Sana Yakın Salonlar" ve mesafe için kullanılır. İstersen adresi elle de girebilirsin.',
+  'auth.location.hint':
+    'Konum, "Sana Yakın Salonlar" ve mesafe için kullanılır. İstersen adresi elle de girebilirsin.',
   'auth.address.label': 'Adres etiketi',
   'auth.address.home': 'Ev',
   'auth.address.work': 'İş',
@@ -790,7 +810,8 @@ export const tr = {
   'biz.field.docs_add': 'Belge ekle',
   'biz.field.docs_hint': 'İşletme lisansı ve hijyen sertifikası (doğrulama için)',
   'biz.terms.accept': 'İşletme sözleşmesi ve gizlilik politikasını kabul ediyorum.',
-  'biz.terms.always_liability': 'Sorumluluk: Always toplu bildirimleriyle müşterilere gönderdiğin içerikten yalnızca sen sorumlusun. Yasa dışı, yanıltıcı veya rahatsız edici bildirim gönderilmesi hâlinde tüm hukuki sorumluluk uzman/salona aittir; AYNA sorumluluk kabul etmez.',
+  'biz.terms.always_liability':
+    'Sorumluluk: Always toplu bildirimleriyle müşterilere gönderdiğin içerikten yalnızca sen sorumlusun. Yasa dışı, yanıltıcı veya rahatsız edici bildirim gönderilmesi hâlinde tüm hukuki sorumluluk uzman/salona aittir; AYNA sorumluluk kabul etmez.',
   'biz.new.submit': 'Kaydı tamamla',
   'biz.section.owner': 'Salon sahibi bilgileri',
   'biz.section.about': 'Salon hakkında',
@@ -804,7 +825,8 @@ export const tr = {
   'biz.field.map_pin': 'Haritada işaretle',
   'biz.field.map_pinned': 'Konum işaretlendi',
   'biz.field.map_change': 'Değiştir',
-  'biz.field.area_hint': 'Salonun sunduğu hizmet alanları — fiyat yok. Fiyatlar salona bağlı uzmanların profillerinden gelir.',
+  'biz.field.area_hint':
+    'Salonun sunduğu hizmet alanları — fiyat yok. Fiyatlar salona bağlı uzmanların profillerinden gelir.',
   'biz.field.social': 'Sosyal medya',
   'biz.field.desc': 'Salon açıklaması',
   'biz.field.desc_ph': 'Salonunu birkaç cümleyle tanıt…',
@@ -837,7 +859,8 @@ export const tr = {
   'reports.action.promotions': 'Promosyonlar',
   // §10.1/§5.1.6/§12.7 — promosyon (Fırsatlar vitrini)
   'promo.title': 'Promosyonlar',
-  'promo.intro': 'Oluşturduğun fırsatlar admin onayından sonra kullanıcıların Fırsatlar alanında yayınlanır.',
+  'promo.intro':
+    'Oluşturduğun fırsatlar admin onayından sonra kullanıcıların Fırsatlar alanında yayınlanır.',
   'promo.new': 'Yeni promosyon oluştur',
   'promo.empty': 'Henüz promosyonun yok. İlk fırsatını oluştur.',
   'promo.status.pending': 'Onay bekliyor',
@@ -845,11 +868,13 @@ export const tr = {
   'promo.status.rejected': 'Reddedildi',
   'promo.status.expired': 'Süresi doldu',
   'promo.upsell_title': 'Fırsatlar vitrininde öne çık',
-  'promo.upsell_body': 'Premium ile promosyonların Keşfet’teki Fırsatlar alanında yayınlanır, daha çok müşteriye ulaşır.',
+  'promo.upsell_body':
+    'Premium ile promosyonların Keşfet’teki Fırsatlar alanında yayınlanır, daha çok müşteriye ulaşır.',
   'promo.upsell_b1': 'Yakınındaki kullanıcıların açık taleplerine yanıt ver',
   'promo.upsell_b2': 'Promosyonların Fırsatlar vitrininde yayınlanır',
   'promo.upsell_b3': 'Haftada 1 promosyon oluştur',
-  'promo.week_limit': 'Haftada yalnızca 1 promosyon oluşturabilirsin. Yeni promosyon için sonraki haftayı bekle.',
+  'promo.week_limit':
+    'Haftada yalnızca 1 promosyon oluşturabilirsin. Yeni promosyon için sonraki haftayı bekle.',
   'promo.upsell_cta': 'Premium’a geç',
   'promo.later': 'Daha sonra',
   'promo.form.title': 'Yeni promosyon',
@@ -865,7 +890,8 @@ export const tr = {
   'promo.form.approve_note': 'Promosyonun yayınlanmadan önce admin onayından geçer.',
   'promo.form.submit': 'Onaya gönder',
   'promo.submitted_title': 'Gönderildi',
-  'promo.submitted_body': 'Promosyonun admin onayına gönderildi. Onaylanınca Fırsatlar’da yayınlanır.',
+  'promo.submitted_body':
+    'Promosyonun admin onayına gönderildi. Onaylanınca Fırsatlar’da yayınlanır.',
   'reports.action.codes': 'Davet kodları',
   'reports.action.reviews': 'Yorumlar',
   'reports.action.commissions': 'Komisyon',
@@ -910,7 +936,8 @@ export const tr = {
   'seller.reviews.dispute': 'İtiraz et',
   'seller.reviews.disputed': 'İtiraz edildi · inceleniyor',
   'seller.reviews.dispute_confirm': 'Bu yoruma itiraz edilsin mi?',
-  'seller.reviews.dispute_note': 'Yorum inceleme boyunca görünür kalır. Yalnızca hakaret, kişisel bilgi ifşası veya sahte yorum kaldırılır; dürüst eleştiri silinmez.',
+  'seller.reviews.dispute_note':
+    'Yorum inceleme boyunca görünür kalır. Yalnızca hakaret, kişisel bilgi ifşası veya sahte yorum kaldırılır; dürüst eleştiri silinmez.',
   'seller.reviews.not_linked': 'İşletme henüz keşif listesine bağlı değil.',
   'reports.period.week': 'Bu hafta',
   'reports.period.month': 'Bu ay',
@@ -955,7 +982,8 @@ export const tr = {
   'agenda.view.day': 'Gün',
   'agenda.view.list': 'Liste',
   'agenda.view.salon': 'Salon',
-  'agenda.salon_note': 'Uzman takvimlerine yalnızca randevu EKLEYEBİLİRSİN; silemez veya izin günlerine dokunamazsın. Her ekleme uzmana bildirilir.',
+  'agenda.salon_note':
+    'Uzman takvimlerine yalnızca randevu EKLEYEBİLİRSİN; silemez veya izin günlerine dokunamazsın. Her ekleme uzmana bildirilir.',
   'agenda.mark_closed': 'Kapalı işaretle',
   'agenda.mark_open': 'Açık işaretle',
   'agenda.closed_day': 'Bu gün kapalı (izin / tatil). Kullanıcıya randevuya kapalı görünür.',
@@ -975,7 +1003,8 @@ export const tr = {
   'offline.service': 'Hizmet',
   'offline.service_pick': 'Hizmetlerinden seç',
   'offline.service_manual': 'Elle gir',
-  'offline.service_none': 'Profilinde kayıtlı hizmet yok. “Hizmetler” bölümünden ekleyebilir ya da elle yazabilirsin.',
+  'offline.service_none':
+    'Profilinde kayıtlı hizmet yok. “Hizmetler” bölümünden ekleyebilir ya da elle yazabilirsin.',
   'offline.svc_count': '{n} hizmet seçildi · süre ve ücret toplandı',
   'offline.uzman': 'Uzman (opsiyonel)',
   'offline.date': 'Tarih / saat',
@@ -1081,7 +1110,8 @@ export const tr = {
   'notif.deposit_expired': 'Depozito süresi doldu',
   'notif.deposit_expired_b': '{pro} · dekont zamanında yüklenmedi, randevu düştü ve slot açıldı',
   'notif.response_expired': 'Uzman zamanında yanıtlamadı',
-  'notif.response_expired_b': '{pro} talebini zamanında yanıtlamadı — sana yakın başka uzmanları öneriyoruz',
+  'notif.response_expired_b':
+    '{pro} talebini zamanında yanıtlamadı — sana yakın başka uzmanları öneriyoruz',
   'notif.salon_offline_pending': 'Randevu uzman onayına gönderildi',
   'notif.salon_offline_pending_b': '{uzman} · {slot} — uzman onaylayınca kesinleşir',
   // §10/§4 — geri çağırma sıcak bildirim şablonları (params {expert} {service})
@@ -1206,9 +1236,11 @@ export const tr = {
   'always.broadcast_sent_t': 'Bildirim gönderildi',
   'always.broadcast_sent_b': '{n} sadık müşterine ulaştı 💌',
   'always.broadcast_none': 'Henüz bağlı müşterin yok — önce Always listeni oluştur.',
-  'always.disclaimer': 'Bu bildirimlerin içeriğinden yalnızca gönderen sorumludur. Yasa dışı, yanıltıcı veya rahatsız edici içerik gönderilemez; aksi halde tüm sorumluluk uzman/salona aittir. AYNA bu içeriklerden sorumlu değildir.',
+  'always.disclaimer':
+    'Bu bildirimlerin içeriğinden yalnızca gönderen sorumludur. Yasa dışı, yanıltıcı veya rahatsız edici içerik gönderilemez; aksi halde tüm sorumluluk uzman/salona aittir. AYNA bu içeriklerden sorumlu değildir.',
   'always.platinum_title': 'Platinum özelliği',
-  'always.platinum_body': 'Kendi sadık müşteri portföyünü oluştur ve kampanyalarını tek dokunuşla duyur. Always, Platinum üyelere özeldir.',
+  'always.platinum_body':
+    'Kendi sadık müşteri portföyünü oluştur ve kampanyalarını tek dokunuşla duyur. Always, Platinum üyelere özeldir.',
   'always.platinum_cta': "Platinum'a geç",
   'always.request_cta': 'Always ol',
   'always.requested': 'İstek gönderildi',
@@ -1227,7 +1259,8 @@ export const tr = {
   'premium.b.commission_d': 'Online randevularda %10 yerine %8,5',
   // §11 — katman-farkında üyelik teşviki
   'upsell.toPrem.title': 'Daha çok müşteriye ulaş ✨',
-  'upsell.toPrem.body': 'Premium ile öne çık; Platinum ile sadık müşteri portföyü + düşük komisyon.',
+  'upsell.toPrem.body':
+    'Premium ile öne çık; Platinum ile sadık müşteri portföyü + düşük komisyon.',
   'upsell.toPrem.cta': 'Paketleri keşfet',
   'upsell.toPlat.title': "Platinum'a yüksel 💎",
   'upsell.toPlat.body': 'Always sadık müşteri portföyü, toplu bildirim ve komisyon %8,5.',
@@ -1236,7 +1269,8 @@ export const tr = {
   'sub.error': 'İşlem başarısız — tekrar dene.',
   'sub.receipt_title': 'Ödeme dekontu',
   'sub.pay_title': '{tier} üyelik ödemesi',
-  'sub.pay_desc': 'Ödeme uygulama dışında (Kaspi / banka havalesi). Ödemeyi yaptıktan sonra dekontunu yükle.',
+  'sub.pay_desc':
+    'Ödeme uygulama dışında (Kaspi / banka havalesi). Ödemeyi yaptıktan sonra dekontunu yükle.',
   'sub.receipt_label': 'Dekont görseli',
   'sub.pick': 'Dekont yükle',
   'sub.pick_hint': 'Kaspi / banka ödeme ekran görüntüsü',
@@ -1247,7 +1281,8 @@ export const tr = {
   // geri çağırma ekranı (uzman)
   'reengage.title': 'Müşterini geri çağır',
   'reengage.sub': 'Hizmet periyodu dolan memnun müşterilerine sıcak bir hatırlatma gönder.',
-  'reengage.info': 'Bildirim müşteriye uygulama içinden gider; telefon/iletişim bilgisi paylaşılmaz.',
+  'reengage.info':
+    'Bildirim müşteriye uygulama içinden gider; telefon/iletişim bilgisi paylaşılmaz.',
   'reengage.due': 'Zamanı geldi',
   'reengage.soon': 'Yaklaşıyor',
   'reengage.overdue': '{n} gün geçti',
@@ -1260,11 +1295,14 @@ export const tr = {
   'reengage.empty': 'Şimdilik geri çağrılacak müşteri yok.',
   // §11 — premium + otomatik geri çağırma
   'reengage.premium_title': 'Premium özellik',
-  'reengage.premium_body': 'Otomatik müşteri geri çağırma Premium uzmanlara özel. Periyodu dolan müşterilerin, sen uğraşmadan sıcak bir mesajla geri gelsin.',
+  'reengage.premium_body':
+    'Otomatik müşteri geri çağırma Premium uzmanlara özel. Periyodu dolan müşterilerin, sen uğraşmadan sıcak bir mesajla geri gelsin.',
   'reengage.premium_cta': "Premium'a geç",
   'reengage.auto_title': 'Otomatik geri çağırma',
-  'reengage.auto_desc': 'Sistem, periyodu dolan memnun müşterilerine senin yerine sıcak bir hatırlatma gönderir.',
-  'reengage.off_note': 'Otomatik geri çağırma kapalı. Açınca sistem periyodu dolan müşterilerine hatırlatma gönderir.',
+  'reengage.auto_desc':
+    'Sistem, periyodu dolan memnun müşterilerine senin yerine sıcak bir hatırlatma gönderir.',
+  'reengage.off_note':
+    'Otomatik geri çağırma kapalı. Açınca sistem periyodu dolan müşterilerine hatırlatma gönderir.',
   'reengage.section_done': 'Gönderildi',
   'reengage.section_queue': 'Sırada',
   'reengage.status_sent': 'Otomatik gönderildi',
@@ -1288,7 +1326,8 @@ export const tr = {
   'notif.provider_noshow': 'Uzman gelmedi — telafi puanın eklendi',
   'notif.provider_noshow_b': '{pro} · 1.000 puan hesabına eklendi, depozito iaden başlatıldı',
   'notif.review_dispute': 'İtirazın alındı',
-  'notif.review_dispute_b': 'Yorum incelenene kadar görünür kalır; yalnızca kural ihlali varsa kaldırılır.',
+  'notif.review_dispute_b':
+    'Yorum incelenene kadar görünür kalır; yalnızca kural ihlali varsa kaldırılır.',
   'notif.review_invite': 'Deneyimini değerlendir',
   'notif.review_invite_b': '{pro} ile randevun tamamlandı — kısa bir değerlendirme bırak.',
   'notif.report_received': 'Şikâyetin alındı',
@@ -1317,7 +1356,8 @@ export const tr = {
   'booking.status.reassigned_pending': 'Uzman değişti — onay bekliyor',
   // §4.5 — uzman ayrılığında devir
   'booking.reassign.title': 'Uzmanın değişti',
-  'booking.reassign.desc': 'Seçtiğin uzman salondan ayrıldı. Randevun yeni bir uzmana atandı; devam etmek istersen onayla.',
+  'booking.reassign.desc':
+    'Seçtiğin uzman salondan ayrıldı. Randevun yeni bir uzmana atandı; devam etmek istersen onayla.',
   'booking.reassign.from': 'Ayrılan uzman',
   'booking.reassign.to': 'Atanan uzman',
   'booking.reassign.accept': 'Yeni uzmanı onayla',
@@ -1334,18 +1374,21 @@ export const tr = {
   'booking.dispute.cta': 'İtiraz et',
   'booking.provider_noshow.cta': 'Uzman gelmedi',
   'booking.provider_noshow.confirm': 'Uzman randevuya gelmedi mi?',
-  'booking.provider_noshow.note': 'Onaylarsan 1.000 puan telafi hesabına eklenir ve depozito iaden başlatılır.',
+  'booking.provider_noshow.note':
+    'Onaylarsan 1.000 puan telafi hesabına eklenir ve depozito iaden başlatılır.',
   'booking.dispute.done': 'İtirazın destek ekibine iletildi.',
   // §4.3 — depozito/dekont akışı (kullanıcı)
   'booking.deposit.title': 'Depozito adımı',
   'booking.deposit.desc': 'Randevunu kesinleştirmek için depozito gönder ve dekontunu yükle.',
   'booking.deposit.amount': 'Depozito tutarı',
   'booking.deposit.payto': 'Ödeme bilgileri',
-  'booking.deposit.note': 'Depozito kapora sayılır: randevuya gelirsen hizmet bedelinden düşülür. Dekontu 3 saat içinde yükle, yoksa slot açılır.',
+  'booking.deposit.note':
+    'Depozito kapora sayılır: randevuya gelirsen hizmet bedelinden düşülür. Dekontu 3 saat içinde yükle, yoksa slot açılır.',
   'booking.deposit.upload': 'Dekont yükle',
   'booking.deposit.reupload': 'Dekontu değiştir',
   'booking.deposit.submit': 'Dekontu gönder',
-  'booking.deposit.submitted_note': 'Dekontun gönderildi. Uzman onayladığında randevun kesinleşecek.',
+  'booking.deposit.submitted_note':
+    'Dekontun gönderildi. Uzman onayladığında randevun kesinleşecek.',
   // §4.1/§4.3 — uzman aksiyonları (sağlayıcı)
   'booking.provider.approve': 'Kabul et',
   'booking.provider.reject': 'Reddet',
@@ -1357,14 +1400,14 @@ export const tr = {
   'booking.provider.complete': 'Hizmeti tamamladım',
   'booking.provider.pending_receipt': 'Kullanıcının dekontu bekleniyor.',
   'booking.signal.title': 'Müşteri sinyali (gizli)',
-  'booking.signal.desc': 'Yalnızca sisteme akar; müşteri veya kimse görmez. Randevu deneyimin nasıldı?',
+  'booking.signal.desc':
+    'Yalnızca sisteme akar; müşteri veya kimse görmez. Randevu deneyimin nasıldı?',
   'booking.signal.up': 'Sorunsuz',
   'booking.signal.down': 'Sorunlu',
   'booking.signal.saved': 'Sinyalin kaydedildi (gizli).',
   // §6.C — iptal sebebi + politika
   'booking.cancel.prompt': 'İptal nedenini seçebilirsin (opsiyonel).',
-  'booking.cancel.late_warn':
-    'Randevun bugün. Geç iptal sadakat puanını etkileyebilir.',
+  'booking.cancel.late_warn': 'Randevun bugün. Geç iptal sadakat puanını etkileyebilir.',
   'booking.cancel.reason.plan': 'Planım değişti',
   'booking.cancel.reason.time': 'Başka bir zaman istiyorum',
   'booking.cancel.reason.price': 'Fiyat/hizmet uygun değil',
@@ -1430,7 +1473,8 @@ export const tr = {
   'care.add.service': 'Hizmet',
   'care.add.delete': 'Bu kaydı sil',
   'care.done.confirm_title': 'Bakımı tamamladın mı?',
-  'care.done.confirm_body': '«{name}» yapıldı olarak işaretlensin mi? Sayaç {days} gün sonrasına ayarlanır.',
+  'care.done.confirm_body':
+    '«{name}» yapıldı olarak işaretlensin mi? Sayaç {days} gün sonrasına ayarlanır.',
   'care.done.confirm_yes': 'Tamamladım',
   'care.add.routine_title': 'Bakım hatırlatması ekle',
   'care.add.moment_title': 'Özel gün ekle',
@@ -1458,7 +1502,8 @@ export const tr = {
   'profile.edit.city': 'Şehir',
   'profile.edit.saved': 'Profil güncellendi',
   'profile.edit.pending_t': 'Değişiklik onaya gönderildi',
-  'profile.edit.pending_b': 'Salon/uzman profil değişiklikleri AYNA admin onayından sonra yayınlanır. Onaylanınca profilin güncellenecek.',
+  'profile.edit.pending_b':
+    'Salon/uzman profil değişiklikleri AYNA admin onayından sonra yayınlanır. Onaylanınca profilin güncellenecek.',
   'profile.edit.approval_note': 'Profil değişikliklerin admin onayından sonra yayınlanır.',
   'profile.photo.gallery': 'Galeriden',
   'profile.photo.camera': 'Kamera',
@@ -1484,7 +1529,8 @@ export const tr = {
   'passport.premium.only': 'Premium',
   'passport.premium.cta': 'Premium’a geç',
   'passport.premium.confirm': 'Premium’a geçilsin mi?',
-  'passport.premium.confirm_note': 'Ödeme uygulama dışında (banka/Kaspi) alınır. Onayınca premium avantajları açılır.',
+  'passport.premium.confirm_note':
+    'Ödeme uygulama dışında (banka/Kaspi) alınır. Onayınca premium avantajları açılır.',
   'passport.premium.manage': 'Üyeliği yönet · iptal et',
   'passport.premium.cancel': 'İptal et',
   'passport.premium.cancel_confirm': 'Premium üyeliğin iptal edilsin mi?',
@@ -1532,7 +1578,8 @@ export const tr = {
 
   // EK Z.3 — KYC uzman doğrulama
   'kyc.title': 'Kimlik doğrulama',
-  'kyc.subtitle': 'Belgelerini yükle, ekibimiz onaylasın — profilinde "Doğrulanmış" rozeti görünsün.',
+  'kyc.subtitle':
+    'Belgelerini yükle, ekibimiz onaylasın — profilinde "Doğrulanmış" rozeti görünsün.',
   'kyc.status_none': 'Henüz doğrulama göndermedin',
   'kyc.status_pending': 'İnceleniyor',
   'kyc.status_approved': 'Doğrulandı ✓',
@@ -1549,10 +1596,12 @@ export const tr = {
 
   // EK Z.6 — müşteri referans programı
   'referral.title': 'Arkadaşını davet et',
-  'referral.subtitle': 'Kodunu paylaş — arkadaşın ilk katıldığında ikiniz de {points} puan kazanın.',
+  'referral.subtitle':
+    'Kodunu paylaş — arkadaşın ilk katıldığında ikiniz de {points} puan kazanın.',
   'referral.your_code': 'DAVET KODUN',
   'referral.share': 'Kodu paylaş',
-  'referral.share_message': 'AYNA’ya katıl! Davet kodum: {code} — ikimiz de {points} puan kazanalım ✨',
+  'referral.share_message':
+    'AYNA’ya katıl! Davet kodum: {code} — ikimiz de {points} puan kazanalım ✨',
   'referral.invited': 'Davet edilen',
   'referral.points_earned': 'Kazanılan puan',
   'referral.have_code': 'Davet kodun var mı?',
@@ -1580,9 +1629,11 @@ export const tr = {
 
   // §5.1.1 — remove.bg cut-out profil fotosu
   'cutout.done': 'Fotoğrafın hazır — arka planı temizlendi ✨',
-  'cutout.failed': 'Arka plan şu an temizlenemedi; normal fotoğrafın kullanıldı. Birazdan tekrar dene.',
+  'cutout.failed':
+    'Arka plan şu an temizlenemedi; normal fotoğrafın kullanıldı. Birazdan tekrar dene.',
   'cutout.upsell_title': 'Premium’da profilin böyle görünürdü ✨',
-  'cutout.upsell_body': 'Premium üyelikte profil fotoğrafının arka planı otomatik temizlenir ve ana sayfanda öne çıkar.',
+  'cutout.upsell_body':
+    'Premium üyelikte profil fotoğrafının arka planı otomatik temizlenir ve ana sayfanda öne çıkar.',
 
   // Profil — Gizlilik
   'privacy.title': 'Gizlilik',
@@ -1623,10 +1674,13 @@ export const tr = {
   'seller.metric.repeat': 'Tekrar müşteri',
   'seller.staff.title': 'Uzman detayı',
   'seller.staff.remove': 'Kadrodan çıkar',
-  'seller.staff.remove_hint': 'Uzman ayrılınca gelecek randevuları başka bir uzmana devredilir; kullanıcı yeniden onaylar. Randevular sessizce silinmez (§4.5).',
+  'seller.staff.remove_hint':
+    'Uzman ayrılınca gelecek randevuları başka bir uzmana devredilir; kullanıcı yeniden onaylar. Randevular sessizce silinmez (§4.5).',
   'seller.staff.remove_confirm': 'Uzman kadrodan çıkarılsın mı?',
-  'seller.staff.remove_desc': 'Gelecek randevuları başka bir uzmana devredilecek ve kullanıcıdan yeniden onay istenecek.',
-  'seller.staff.reassigned': 'Uzman çıkarıldı; gelecek randevular devredildi, kullanıcı onayı bekleniyor.',
+  'seller.staff.remove_desc':
+    'Gelecek randevuları başka bir uzmana devredilecek ve kullanıcıdan yeniden onay istenecek.',
+  'seller.staff.reassigned':
+    'Uzman çıkarıldı; gelecek randevular devredildi, kullanıcı onayı bekleniyor.',
   'seller.staff.removed': 'Uzman kadrodan çıkarıldı.',
   'seller.staff.period': 'Bu ay',
   'seller.staff.bookings': 'Randevu',
@@ -1675,7 +1729,8 @@ export const tr = {
   'verify.no_phone': 'Doğrulamak için önce giriş yap.',
   'profile.verify.cta': 'Telefonunu doğrula',
   'profile.restricted.title': 'Hesabın kısıtlı',
-  'profile.restricted.days': 'Kısıt penceresi: {n} gün. Bekleyen yükümlülüğünü çöz, hesabın açılır.',
+  'profile.restricted.days':
+    'Kısıt penceresi: {n} gün. Bekleyen yükümlülüğünü çöz, hesabın açılır.',
   'profile.restricted.desc': 'Bekleyen yükümlülüğün çözülünce hesabın otomatik açılır.',
   'profile.verify.desc': 'Hesabını güvene almak için numaranı onayla',
   'profile.verify.done': 'Telefon doğrulandı',
