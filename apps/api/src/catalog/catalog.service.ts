@@ -81,9 +81,17 @@ export class CatalogService {
       id: `${p.id}-r${i + 1}`,
       service: services[i % services.length]!.name,
     }));
+    // EK Z — sahip hesap bağı: Specialist(proId→userId) join. Kayıtlı bağımsız uzmanda
+    // dolu; demo/seed pro'da null. Bağ varsa DM CTA + KYC rozeti (EK Z.1/Z.3) çalışır.
+    const sp = await this.prisma.specialist.findFirst({ where: { proId: p.id }, select: { userId: true } });
+    const owner = sp
+      ? await this.prisma.user.findUnique({ where: { id: sp.userId }, select: { kycStatus: true } })
+      : null;
     return {
       ...mapPro(p),
       about: p.about,
+      ownerUserId: sp?.userId ?? null, // EK Z.1 — DM başlatma hedefi
+      kycVerified: owner?.kycStatus === 'approved', // EK Z.3 — doğrulanmış uzman rozeti
       staff,
       serviceRatings,
       services,

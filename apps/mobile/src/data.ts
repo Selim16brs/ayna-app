@@ -676,6 +676,9 @@ export interface ProfessionalDetail extends Professional {
   certs: string[];
   social: { instagram: string; tiktok: string };
   salon?: { id: string; name: string };
+  // EK Z — sahip hesap bağı (Specialist join): DM CTA + KYC rozeti için (null = demo/seed pro)
+  ownerUserId?: string | null;
+  kycVerified?: boolean;
 }
 
 // Sektör hizmet menüsü = MERKEZİ taksonomiden türetilir (tek kaynak). Ad = TR (varsayılan dil);

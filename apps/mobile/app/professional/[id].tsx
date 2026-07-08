@@ -7,6 +7,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { formatPrice } from '../../src/data';
 import { formatSlotTr } from '../../src/datetime';
 import { tri } from '../../src/taxonomy';
+import { api } from '../../src/api';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -38,6 +39,7 @@ export default function ProfessionalScreen() {
 
   const toggleFavorite = useStore((s) => s.toggleFavorite);
   const isFav = useStore((s) => s.favorites.includes(proId));
+  const token = useStore((s) => s.token);
   const joinWaitlist = useStore((s) => s.joinWaitlist);
   const addBooking = useStore((s) => s.addBooking);
   const userReviewsMap = useStore((s) => s.userReviews);
@@ -47,6 +49,17 @@ export default function ProfessionalScreen() {
     const svc = pro.services.find((s) => s.id === selected)?.name ?? pro.services[0]?.name ?? '';
     joinWaitlist({ id: pro.id, name: pro.name, image: pro.image, service: svc });
     Alert.alert(t('pro.waitlist_joined'));
+  };
+
+  // EK Z.1 — uzmana DM başlat (yalnız hesap bağı olan gerçek uzmanda; Specialist→userId)
+  const messagePro = async () => {
+    if (!token || !pro.ownerUserId) return;
+    try {
+      const { id } = await api.startConversation(token, pro.ownerUserId);
+      router.push({ pathname: '/messages/[id]', params: { id, name: pro.name, otherId: pro.ownerUserId } });
+    } catch {
+      /* yut */
+    }
   };
 
   // Tarih/saat detay sayfasında seçildi → doğrudan randevu oluştur (ayrı adım yok)
@@ -105,9 +118,15 @@ export default function ProfessionalScreen() {
                   {t(isSalon ? 'pro.kind.salon' : 'pro.kind.independent')}
                 </Text>
               </View>
-              <Text variant="display" tone="ink" style={styles.heroName} numberOfLines={2}>
-                {pro.name}
-              </Text>
+              <View style={styles.heroNameRow}>
+                <Text variant="display" tone="ink" style={styles.heroName} numberOfLines={2}>
+                  {pro.name}
+                </Text>
+                {/* EK Z.3 — doğrulanmış uzman rozeti (KYC onaylı hesap) */}
+                {pro.kycVerified ? (
+                  <Ionicons name="shield-checkmark" size={22} color={colors.ink} style={styles.verifiedIcon} />
+                ) : null}
+              </View>
               <Text variant="caption" tone="inkSoft" style={styles.heroMeta} numberOfLines={1}>
                 {pro.specialty} · {pro.district}
               </Text>
@@ -440,6 +459,12 @@ export default function ProfessionalScreen() {
         <Pressable style={styles.waitlistBtn} onPress={onWaitlist}>
           <Ionicons name="time-outline" size={20} color={colors.inkSoft} />
         </Pressable>
+        {/* EK Z.1 — DM: yalnız hesabı bağlı (gerçek) uzmanda görünür */}
+        {pro.ownerUserId && token ? (
+          <Pressable style={styles.waitlistBtn} onPress={messagePro}>
+            <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.inkSoft} />
+          </Pressable>
+        ) : null}
         <Pressable style={styles.bookBtn} onPress={book}>
           <Text variant="bodyStrong" tone="onAccent">
             {t('pro.book')}
@@ -486,7 +511,9 @@ const makeStyles = (colors: ColorTokens) =>
       marginBottom: space(1),
     },
     badgePillText: { fontWeight: '700' },
-    heroName: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.6 },
+    heroNameRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    heroName: { flexShrink: 1, fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.6 },
+    verifiedIcon: { marginTop: space(0.5) },
     heroMeta: { marginTop: 2 },
     heroStats: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginTop: space(1.5), flexWrap: 'wrap' },
     ratingPill: {
