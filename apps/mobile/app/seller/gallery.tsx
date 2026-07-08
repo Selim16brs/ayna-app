@@ -7,21 +7,14 @@ import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
 
-const img = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=400&q=70`;
-
 // Kayıttan gelen başlangıç galerisi (demo)
-const SEED_GALLERY = [
-  img('photo-1633681926022-84c23e8cb2d6'),
-  img('photo-1595476108010-b4d1f102b1b1'),
-  img('photo-1560066984-138dadb4c035'),
-  img('photo-1521590832167-7bcbfaa6381f'),
-];
 
 export default function GalleryScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const [photos, setPhotos] = useState<string[]>(SEED_GALLERY);
+  // Faz sıfır-demo: galeri BOŞ başlar — uzman kendi çalışmalarını ekler (stok görsel YOK)
+  const [photos, setPhotos] = useState<string[]>([]);
 
   async function addPhoto() {
     const result = await ImagePicker.launchImageLibraryAsync({

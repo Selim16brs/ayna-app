@@ -15,8 +15,8 @@ import { Screen, SectionHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-const HERO_WOMAN =
-  'https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?auto=format&fit=crop&w=500&q=75';
+// Sıfır-demo: stok model fotoğrafı yerine kendi çizim asset'imiz
+const HERO_WOMAN = require('../../assets/hero-user.png');
 
 export default function NewQuoteScreen() {
   const router = useRouter();
@@ -106,7 +106,7 @@ export default function NewQuoteScreen() {
               </Text>
             </View>
             <View style={styles.heroPhotoWrap}>
-              <Image source={{ uri: HERO_WOMAN }} style={styles.heroPhoto} />
+              <Image source={HERO_WOMAN} style={styles.heroPhoto} resizeMode="contain" />
               <View style={styles.magicFab}>
                 <Ionicons name="color-wand" size={20} color={colors.onAccent} />
               </View>
