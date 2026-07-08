@@ -187,6 +187,13 @@ export default function ExpertRegisterScreen() {
         kind: bound ? 'salon_bound' : 'independent',
         ...(bound && salonId ? { businessId: salonId, code: code.trim() } : {}),
         certificates: certs,
+        // Uzmanın ana kategorisi: fiyat girilen İLK hizmetin kategorisi (harita/kategori filtresi)
+        sector:
+          SERVICE_CATS.find((c) =>
+            servicesOf(c.id).some(
+              (x) => Number(svc[x.id]?.price) > 0 && Number(svc[x.id]?.dur) > 0,
+            ),
+          )?.id ?? 'hair',
         ...(photoB64 ? { photoDataUrl: `data:image/jpeg;base64,${photoB64}` } : {}),
         ...(deviceFp ? { deviceFp } : {}),
       });
@@ -404,7 +411,24 @@ export default function ExpertRegisterScreen() {
             <Ionicons name="add" size={24} color={colors.inkSoft} />
           </Pressable>
           {certs.map((uri, i) => (
-            <Image key={`${uri}-${i}`} source={{ uri }} style={styles.certThumb} />
+            <Pressable
+              key={`${uri}-${i}`}
+              onPress={() =>
+                Alert.alert(t('expert.reg.cert'), t('expert.reg.cert_remove_q'), [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  {
+                    text: t('profile.photo.remove'),
+                    style: 'destructive',
+                    onPress: () => setCerts((c) => c.filter((_, idx) => idx !== i)),
+                  },
+                ])
+              }
+            >
+              <Image source={{ uri }} style={styles.certThumb} />
+              <View style={styles.certRemove}>
+                <Ionicons name="close" size={12} color="#fff" />
+              </View>
+            </Pressable>
           ))}
         </View>
         <View style={styles.warnRow}>
@@ -791,6 +815,17 @@ const makeStyles = (colors: ColorTokens) =>
       height: 72,
       borderRadius: radius.md,
       backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    certRemove: {
+      position: 'absolute',
+      top: -6,
+      right: -6,
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: colors.danger,
       alignItems: 'center',
       justifyContent: 'center',
     },

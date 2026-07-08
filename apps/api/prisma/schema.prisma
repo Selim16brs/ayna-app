@@ -133,6 +133,7 @@ model Professional {
   specialty       String
   sector          String       @default("hair")
   kind            ProviderKind @default(salon)
+  city            String       @default("") // §5.1.4 — harita/arama şehir filtresi
   district        String       @default("")
   about           String       @default("")
   rating          Decimal      @default(0) @db.Decimal(2, 1)

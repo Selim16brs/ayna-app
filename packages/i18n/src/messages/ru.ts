@@ -74,6 +74,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'expert.reg.service_dur': 'Длительность (мин)',
   'expert.reg.add_service': 'Добавить услугу',
   'expert.reg.cert': 'Сертификаты (по желанию)',
+  'expert.reg.cert_remove_q': 'Убрать этот сертификат?',
   'expert.reg.cert_add': 'Добавить сертификат',
   'expert.reg.cert_warn':
     'Если вы предоставите пользователям неверную информацию, это может подорвать доверие. Поэтому делитесь только сертификатами, оформленными на ваше имя.',

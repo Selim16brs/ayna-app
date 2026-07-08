@@ -115,8 +115,9 @@ export class SpecialistsService {
           data: {
             name: input.name,
             specialty: (input.bio ?? '').slice(0, 60) || input.name,
-            sector: 'hair',
+            sector: input.sector ?? 'hair',
             kind: 'independent',
+            city: input.city ?? '', // §5.1.4 — harita/arama şehir eşleşmesi
             district: input.city ?? '',
             imageUrl: '',
           },

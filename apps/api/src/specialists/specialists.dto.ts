@@ -7,6 +7,7 @@ export const registerSpecialistSchema = z.object({
   email: z.string().email().optional(),
   city: z.string().optional(),
   kind: z.enum(['salon_bound', 'independent']),
+  sector: z.string().max(40).optional(), // uzmanın ana kategorisi (harita/kategori filtresi)
   bio: z.string().optional(),
   photoDataUrl: z.string().max(12_000_000).optional(),
   businessId: z.string().optional(),

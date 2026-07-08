@@ -73,6 +73,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'expert.reg.service_dur': 'Ұзақтығы (мин)',
   'expert.reg.add_service': 'Қызмет қосу',
   'expert.reg.cert': 'Сертификаттар (қалауыңша)',
+  'expert.reg.cert_remove_q': 'Бұл сертификатты алып тастайсың ба?',
   'expert.reg.cert_add': 'Сертификат қосу',
   'expert.reg.cert_warn':
     'Пайдаланушыларға дұрыс емес мәлімет берсеңіз, сенім мәселесі туындауы мүмкін. Сондықтан тек өз атыңызға тіркелген сертификаттарды бөлісіңіз.',

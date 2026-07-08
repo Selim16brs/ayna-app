@@ -80,6 +80,7 @@ export const tr = {
   'expert.reg.service_dur': 'Süre (dk)',
   'expert.reg.add_service': 'Hizmet ekle',
   'expert.reg.cert': 'Sertifikalar (isteğe bağlı)',
+  'expert.reg.cert_remove_q': 'Bu sertifikayı kaldırmak istiyor musun?',
   'expert.reg.cert_add': 'Sertifika ekle',
   'expert.reg.cert_warn':
     'Kullanıcılara doğru bilgiler vermemeniz durumunda güven sorunu oluşabilir. Bu yüzden yalnızca kendi adınıza kayıtlı sertifikaları paylaşınız.',

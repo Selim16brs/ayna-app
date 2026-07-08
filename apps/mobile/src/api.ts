@@ -255,6 +255,7 @@ export interface SearchableBusiness {
 
 export interface RegisterSpecialistInput {
   photoDataUrl?: string;
+  sector?: string;
   name: string;
   phone: string;
   password: string;

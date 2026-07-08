@@ -154,6 +154,7 @@ function mapPro(p: Professional) {
     priceFrom: Number(p.priceFrom),
     image: p.imageUrl,
     badge: p.badge,
+    city: p.city, // §5.1.4 — harita/arama şehir eşleşmesi
     district: p.district,
     experienceYears: p.experienceYears,
   };

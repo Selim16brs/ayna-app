@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { MessageKey } from '@ayna/i18n';
 import { PREMIUM_PRICE_KZT } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { api } from '../../src/api';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -21,7 +22,10 @@ const PREMIUM_PERKS: MessageKey[] = [
   'passport.perk.support',
 ];
 
+import { useRouter } from 'expo-router';
+
 export default function PassportScreen() {
+  const router = useRouter();
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -35,10 +39,26 @@ export default function PassportScreen() {
   const premiumPrice = useStore((s) => s.config.rates.premiumUserKzt) || PREMIUM_PRICE_KZT;
   const trust = 92;
 
+  // §11 — GERÇEK satın alma: abonelik talebi → dekont yükle → admin onayı → push → haklar açılır
   const buy = () =>
     Alert.alert(t('passport.premium.confirm'), t('passport.premium.confirm_note'), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('passport.premium.cta'), onPress: () => setPremium(true) },
+      {
+        text: t('passport.premium.cta'),
+        onPress: async () => {
+          const token = useStore.getState().token;
+          if (!token) return;
+          try {
+            const sub = await api.createSubscription('premium', token);
+            router.push({
+              pathname: '/seller/sub-receipt',
+              params: { id: sub.id, tier: 'premium', amount: String(premiumPrice) },
+            });
+          } catch {
+            Alert.alert(t('premium.title'), t('sub.error'));
+          }
+        },
+      },
     ]);
   const cancel = () =>
     Alert.alert(t('passport.premium.cancel_confirm'), undefined, [
