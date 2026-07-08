@@ -69,6 +69,16 @@ export class AdminService {
       this.prisma.professional.count(),
       this.prisma.campaign.count({ where: { active: true } }),
     ]);
+    // §12.1 — BEKLEYEN İŞLER: tüm onay kuyruklarının sayacı (dashboard kartları + nav rozetleri)
+    const [kycPending, profilePending, subsPending, disputesOpen, reviewDisputes, circleQueue] =
+      await Promise.all([
+        this.prisma.kycVerification.count({ where: { status: 'pending' } }),
+        this.prisma.profileChangeRequest.count({ where: { status: 'pending' } }),
+        this.prisma.subscription.count({ where: { status: 'pending', receiptUri: { not: null } } }),
+        this.prisma.dispute.count({ where: { status: 'open' } }),
+        this.prisma.rating.count({ where: { disputed: true, visible: true } }),
+        this.prisma.circlePost.count({ where: { status: 'pending' } }),
+      ]);
     const bizByStatus = { pending: 0, approved: 0, rejected: 0 } as Record<string, number>;
     for (const g of businesses) bizByStatus[g.status] = g._count;
     const stats = computeBookingStats(
@@ -80,6 +90,15 @@ export class AdminService {
       activeCampaigns: campaigns,
       businesses: bizByStatus,
       bookings: stats,
+      pending: {
+        businesses: bizByStatus.pending ?? 0,
+        kyc: kycPending,
+        profileChanges: profilePending,
+        subscriptions: subsPending,
+        disputes: disputesOpen,
+        reviewDisputes,
+        circle: circleQueue,
+      },
     };
   }
 

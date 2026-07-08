@@ -73,15 +73,43 @@ type Tab =
   | 'audit';
 const TL = (n: number) => '₸' + n.toLocaleString('tr-TR');
 
+type PendingCounts = {
+  businesses: number;
+  kyc: number;
+  profileChanges: number;
+  subscriptions: number;
+  disputes: number;
+  reviewDisputes: number;
+  circle: number;
+};
+
 export default function AdminApp() {
   const [authed, setAuthed] = useState(false);
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState<Tab>('overview');
+  // §12.1 — bekleyen iş sayaçları (nav rozetleri): 30 sn'de bir tazelenir
+  const [pendingCounts, setPendingCounts] = useState<PendingCounts | null>(null);
 
   useEffect(() => {
     setAuthed(!!getToken());
     setReady(true);
   }, []);
+
+  useEffect(() => {
+    if (!authed) return;
+    let alive = true;
+    const pull = () =>
+      api
+        .overview()
+        .then((o) => alive && setPendingCounts((o as { pending?: PendingCounts }).pending ?? null))
+        .catch(() => undefined);
+    void pull();
+    const timer = setInterval(pull, 30_000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [authed, tab]);
 
   if (!ready) return null;
   if (!authed) return <Login onDone={() => setAuthed(true)} />;
@@ -91,47 +119,122 @@ export default function AdminApp() {
     setAuthed(false);
   };
 
-  const NAV: { id: Tab; label: string; icon: string }[] = [
-    { id: 'overview', label: 'Genel Bakış', icon: '📊' },
-    { id: 'stats', label: 'İstatistik', icon: '📈' },
-    { id: 'commissions', label: 'Komisyon', icon: '💰' },
-    { id: 'subscriptions', label: 'Abonelikler', icon: '💎' },
-    { id: 'profileChanges', label: 'Profil Onayları', icon: '📝' },
-    { id: 'kyc', label: 'Kimlik Doğrulama', icon: '🛡️' },
-    { id: 'businesses', label: 'Salon Onay', icon: '🏪' },
-    { id: 'professionals', label: 'Uzmanlar', icon: '💇' },
-    { id: 'services', label: 'Hizmetler', icon: '🗂️' },
-    { id: 'prices', label: 'Fiyatlar', icon: '🏷️' },
-    // §12.8 — "Randevular" menüsü kaldırıldı: randevular yalnız komisyon hesabını ilgilendirir
-    // (matematiksel olarak Komisyon sekmesinde tutulur). Ayrı menü başlığına gerek yok.
-    { id: 'disputes', label: 'Anlaşmazlık', icon: '⚖️' },
-    { id: 'reviewDisputes', label: 'Yorum İtirazı', icon: '🗣️' },
-    { id: 'quotes', label: 'Teklifler', icon: '📩' },
-    { id: 'campaigns', label: 'Kampanya & Banner', icon: '🎯' },
-    { id: 'ads', label: 'Reklamlar', icon: '📢' },
-    { id: 'moderation', label: 'Moderasyon', icon: '🛡️' },
-    { id: 'content', label: 'İçerik & Blog', icon: '📝' },
-    { id: 'announcements', label: 'Bildirimler', icon: '📣' },
-    { id: 'users', label: 'Üyeler', icon: '👥' },
-    { id: 'penalties', label: 'Ceza Takip', icon: '⛔' },
-    { id: 'loyalty', label: 'Sadakat', icon: '🎁' },
-    { id: 'flags', label: 'Feature Flag', icon: '🚩' },
-    { id: 'system', label: 'Sistem Ayarları', icon: '⚙️' },
-    { id: 'audit', label: 'Denetim Kaydı', icon: '📜' },
+  // §12 — bilgi mimarisi: işletim mantığına göre GRUPLU nav. "Onay Kuyruğu" panelin kalbi:
+  // bekleyen iş sayaçları (rozet) /admin/overview.pending'den gelir, 30 sn'de bir tazelenir.
+  type NavItem = { id: Tab; label: string; icon: string; badge?: number };
+  const q = pendingCounts;
+  const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
+    {
+      title: 'PANO',
+      items: [
+        { id: 'overview', label: 'Genel Bakış', icon: '📊' },
+        { id: 'stats', label: 'İstatistik', icon: '📈' },
+      ],
+    },
+    {
+      title: 'ONAY KUYRUĞU',
+      items: [
+        { id: 'businesses', label: 'Salon Onayları', icon: '🏪', badge: q?.businesses },
+        { id: 'kyc', label: 'Kimlik (KYC)', icon: '🪪', badge: q?.kyc },
+        {
+          id: 'profileChanges',
+          label: 'Profil Değişiklikleri',
+          icon: '📝',
+          badge: q?.profileChanges,
+        },
+        { id: 'subscriptions', label: 'Abonelik Dekontları', icon: '💎', badge: q?.subscriptions },
+        { id: 'disputes', label: 'Depozito İtirazları', icon: '⚖️', badge: q?.disputes },
+        { id: 'reviewDisputes', label: 'Yorum İtirazları', icon: '🗣️', badge: q?.reviewDisputes },
+        { id: 'moderation', label: 'W2W Moderasyon', icon: '🛡️', badge: q?.circle },
+      ],
+    },
+    {
+      title: 'ÜYELER',
+      items: [
+        { id: 'users', label: 'Tüm Üyeler', icon: '👥' },
+        { id: 'penalties', label: 'Ceza Takibi', icon: '⛔' },
+      ],
+    },
+    {
+      title: 'PAZAR',
+      items: [
+        { id: 'quotes', label: 'Canlı Talepler', icon: '📩' },
+        { id: 'professionals', label: 'Keşfet Kataloğu', icon: '💇' },
+        { id: 'services', label: 'Hizmet Kategorileri', icon: '🗂️' },
+        { id: 'prices', label: 'Taban Fiyatlar', icon: '🏷️' },
+      ],
+    },
+    {
+      title: 'İÇERİK & PAZARLAMA',
+      items: [
+        { id: 'content', label: 'Blog & Tema', icon: '📰' },
+        { id: 'announcements', label: 'Duyurular', icon: '📣' },
+        { id: 'campaigns', label: 'Kampanyalar', icon: '🎯' },
+        { id: 'ads', label: 'Tedarikçi Reklamları', icon: '📢' },
+      ],
+    },
+    {
+      title: 'FİNANS',
+      items: [
+        { id: 'commissions', label: 'Komisyon Takibi', icon: '💰' },
+        { id: 'loyalty', label: 'Puan Ekonomisi', icon: '🎁' },
+      ],
+    },
+    {
+      title: 'SİSTEM',
+      items: [
+        { id: 'system', label: 'Ayarlar & API', icon: '⚙️' },
+        { id: 'flags', label: 'Özellik Anahtarları', icon: '🚩' },
+        { id: 'audit', label: 'Denetim Kaydı', icon: '📜' },
+      ],
+    },
   ];
 
   return (
     <div className="shell">
-      <aside className="sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
+      <aside
+        className="sidebar"
+        style={{ display: 'flex', flexDirection: 'column', overflowY: 'auto' }}
+      >
         <div className="side-brand">AYNA</div>
-        {NAV.map((n) => (
-          <button
-            key={n.id}
-            className={`nav-item ${tab === n.id ? 'active' : ''}`}
-            onClick={() => setTab(n.id)}
-          >
-            <span>{n.icon}</span> {n.label}
-          </button>
+        {NAV_GROUPS.map((g) => (
+          <div key={g.title}>
+            <div
+              style={{
+                padding: '10px 14px 4px',
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: 1,
+                opacity: 0.55,
+              }}
+            >
+              {g.title}
+            </div>
+            {g.items.map((n) => (
+              <button
+                key={n.id}
+                className={`nav-item ${tab === n.id ? 'active' : ''}`}
+                onClick={() => setTab(n.id)}
+              >
+                <span>{n.icon}</span> {n.label}
+                {n.badge ? (
+                  <span
+                    style={{
+                      marginLeft: 'auto',
+                      background: '#e5484d',
+                      color: '#fff',
+                      borderRadius: 999,
+                      fontSize: 11,
+                      fontWeight: 800,
+                      padding: '1px 7px',
+                    }}
+                  >
+                    {n.badge}
+                  </span>
+                ) : null}
+              </button>
+            ))}
+          </div>
         ))}
         <button className="nav-item logout" onClick={logout}>
           <span>↩</span> Çıkış
