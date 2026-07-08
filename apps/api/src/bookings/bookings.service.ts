@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { type Booking, BookingStatus } from '@prisma/client';
 import { hasConflict } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../push/push.service';
 import { commissionFor } from '../commissions/commissions.calc';
 import { cancelOutcome } from './bookings.policy';
 import type { CreateBookingInput } from './bookings.dto';
@@ -16,7 +17,18 @@ const ACTIVE_SLOT_STATUSES: BookingStatus[] = [
 
 @Injectable()
 export class BookingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly push: PushService,
+  ) {}
+
+  // Dekont akışı pushları: uzmanın hesabı Specialist.proId ↔ Booking.proId üzerinden bulunur
+  private async expertUserIdFor(bookingId: string): Promise<string | null> {
+    const b = await this.prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!b?.proId) return null;
+    const sp = await this.prisma.specialist.findFirst({ where: { proId: b.proId } });
+    return sp?.userId ?? null;
+  }
 
   async list() {
     const rows = await this.prisma.booking.findMany({ orderBy: { inDays: 'asc' } });
@@ -155,12 +167,33 @@ export class BookingsService {
 
   // §4.2 — kullanıcı kapora dekontunu yükler → uzman onayı bekler
   async submitDepositReceipt(id: string, receiptUri: string) {
-    return this.transition(id, { status: 'deposit_submitted', depositReceiptUri: receiptUri });
+    const res = await this.transition(id, {
+      status: 'deposit_submitted',
+      depositReceiptUri: receiptUri,
+    });
+    // §4.3 — uzmana gerçek push: dekont geldi, onayla
+    void this.expertUserIdFor(id).then((uid) => {
+      if (uid)
+        void this.push.sendToUser(uid, {
+          title: 'Depozito dekontu geldi 🧾',
+          body: 'Müşteri dekont yükledi — kontrol edip onayla, randevu kesinleşsin.',
+          data: { route: `/booking/${id}` },
+        });
+    });
+    return res;
   }
 
   // §4.2 — uzman kaporayı onaylar → randevu KESİN
   async confirmDepositReceipt(id: string) {
-    return this.transition(id, { status: 'confirmed' });
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    const res = await this.transition(id, { status: 'confirmed' });
+    if (b?.userId)
+      void this.push.sendToUser(b.userId, {
+        title: 'Randevun kesinleşti 🎉',
+        body: 'Depozito onaylandı — randevun artık kesin. Detaylara göz at.',
+        data: { route: `/booking/${id}` },
+      });
+    return res;
   }
 
   // §4.4 — kullanıcı serbest iptal başlatır. SUNUCU pencereyi doğrular: client geç

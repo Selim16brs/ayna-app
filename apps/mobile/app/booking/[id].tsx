@@ -1,15 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { computeDaySlots } from '@ayna/domain';
 import {
+  type Appointment,
   DEPOSIT_KZT,
   FREE_CANCEL_WINDOW_MS,
   type BookingSource,
   formatPrice,
 } from '../../src/data';
+import { api } from '../../src/api';
 import { almatyDayStart, formatSlot } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -30,8 +32,22 @@ export default function BookingDetailScreen() {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
-  const booking = useStore((s) => s.bookings.find((b) => b.id === id));
+  const localBooking = useStore((s) => s.bookings.find((b) => b.id === id));
   const allBookings = useStore((s) => s.bookings);
+  // §4.2 — uzman tarafı: randevu yerel store'da yoksa (push'tan gelindi) sunucudan çek
+  const [remoteBooking, setRemoteBooking] = useState<Appointment | null>(null);
+  useEffect(() => {
+    if (localBooking || !id) return;
+    let alive = true;
+    api
+      .bookings()
+      .then((rows) => alive && setRemoteBooking(rows.find((b) => b.id === id) ?? null))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [localBooking, id]);
+  const booking = localBooking ?? remoteBooking ?? undefined;
   const closedDays = useStore((s) => s.closedDays);
   const cancelBooking = useStore((s) => s.cancelBooking);
   const acceptAlternative = useStore((s) => s.acceptAlternative);
@@ -84,22 +100,31 @@ export default function BookingDetailScreen() {
     return out;
   }, [booking, allBookings, closedDays]);
 
+  // Dekontlar DATA URL olarak yüklenir (yerel dosya yolu karşı cihazda açılmaz — §4.3)
   async function uploadReceipt() {
     if (!id) return;
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
+      quality: 0.35,
+      base64: true,
     });
-    if (!res.canceled && res.assets[0]) submitReceipt(id, res.assets[0].uri);
+    if (!res.canceled && res.assets[0]) {
+      const a = res.assets[0];
+      submitReceipt(id, a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+    }
   }
 
   async function uploadRefund() {
     if (!id) return;
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
+      quality: 0.35,
+      base64: true,
     });
-    if (!res.canceled && res.assets[0]) uploadRefundReceipt(id, res.assets[0].uri);
+    if (!res.canceled && res.assets[0]) {
+      const a = res.assets[0];
+      uploadRefundReceipt(id, a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+    }
   }
 
   function sendProposal() {
