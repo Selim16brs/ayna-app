@@ -2754,6 +2754,48 @@ function PenaltiesView() {
   );
 }
 
+// §11 — Üyelik seviyesi düzenleyici: seç → "Kaydet" → anında backend'e işlenir (app senkronda yansıtır).
+// Kullanıcı/salon/uzman (hepsi User) için aynı bileşen. onChange değil; kasıtlı Kaydet butonu.
+function TierEditor({ user, onSaved }: { user: AdminUser; onSaved: () => void }) {
+  const current: 'free' | 'premium' | 'platinum' =
+    user.membershipTier ?? (user.isPremium ? 'premium' : 'free');
+  const [tier, setTier] = useState<'free' | 'premium' | 'platinum'>(current);
+  const [saving, setSaving] = useState(false);
+  // reload sonrası (kaydedilen değer gelince) seçimi güncel değere çek → "kirli" durum sıfırlanır
+  useEffect(() => setTier(current), [current]);
+  const dirty = tier !== current;
+  return (
+    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+      <select
+        className="input"
+        style={{ height: 32, maxWidth: 120 }}
+        value={tier}
+        onChange={(e) => setTier(e.target.value as 'free' | 'premium' | 'platinum')}
+      >
+        <option value="free">Normal</option>
+        <option value="premium">Premium</option>
+        <option value="platinum">Platinum</option>
+      </select>
+      <button
+        className="btn-sm"
+        disabled={!dirty || saving}
+        style={{ opacity: dirty && !saving ? 1 : 0.5, fontWeight: 700 }}
+        onClick={async () => {
+          setSaving(true);
+          try {
+            await api.setUserTier(user.id, tier);
+            onSaved();
+          } finally {
+            setSaving(false);
+          }
+        }}
+      >
+        {saving ? '…' : 'Kaydet'}
+      </button>
+    </div>
+  );
+}
+
 function UsersView() {
   const { data, reload } = useAsync<AdminUser[]>(() => api.users(), []);
   const [q, setQ] = useState('');
@@ -2820,19 +2862,7 @@ function UsersView() {
                   </option>
                 ))}
               </select>
-              <select
-                className="input"
-                style={{ height: 32, maxWidth: 120 }}
-                value={u.membershipTier ?? (u.isPremium ? 'premium' : 'free')}
-                onChange={async (e) => {
-                  await api.setUserTier(u.id, e.target.value as 'free' | 'premium' | 'platinum');
-                  reload();
-                }}
-              >
-                <option value="free">Normal</option>
-                <option value="premium">Premium</option>
-                <option value="platinum">Platinum</option>
-              </select>
+              <TierEditor user={u} onSaved={reload} />
               {u.status === 'active' && u.role !== 'admin' && (
                 <button
                   className="btn-sm"
