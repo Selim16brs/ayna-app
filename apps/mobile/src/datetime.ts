@@ -12,6 +12,7 @@ const two = (n: number) => String(n).padStart(2, '0');
 
 export interface AlmatyParts {
   wd: number; // 0=Paz … 6=Cmt
+  year: number;
   day: number;
   month: number; // 0-11
   h: number;
@@ -22,6 +23,7 @@ export function almatyParts(ms: number): AlmatyParts {
   const d = new Date(ms + ALMATY_OFFSET_MS);
   return {
     wd: d.getUTCDay(),
+    year: d.getUTCFullYear(),
     day: d.getUTCDate(),
     month: d.getUTCMonth(),
     h: d.getUTCHours(),
@@ -38,7 +40,7 @@ export function slotTime(ms: number): string {
 /** Randevu etiketi: "Cuma 10.07 · 14:00" (hafta günü i18n + TARİH + Almatı saati). */
 export function formatSlot(ms: number, t: (k: MessageKey) => string): string {
   const p = almatyParts(ms);
-  return `${t(`wd.${p.wd}` as MessageKey)} ${two(p.day)}.${two(p.month + 1)} · ${two(p.h)}:${two(p.min)}`;
+  return `${t(`wd.${p.wd}` as MessageKey)} ${two(p.day)}.${two(p.month + 1)}.${p.year} · ${two(p.h)}:${two(p.min)}`;
 }
 
 // TR-öncelikli hafta günü — hook dışı bağlamlar (store bildirimleri, türetilmiş
@@ -49,7 +51,7 @@ const WD_TR = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 export function formatSlotTr(ms: number): string {
   const p = almatyParts(ms);
   // Tarih ŞART: yalnız haftagünü+saat belirsizdi ("Per · 11:00" hangi Perşembe?)
-  return `${WD_TR[p.wd]} ${two(p.day)}.${two(p.month + 1)} · ${two(p.h)}:${two(p.min)}`;
+  return `${WD_TR[p.wd]} ${two(p.day)}.${two(p.month + 1)}.${p.year} · ${two(p.h)}:${two(p.min)}`;
 }
 
 /**

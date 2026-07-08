@@ -3,6 +3,7 @@
 // Not: Pazar dilleri Kazakça (kk) ve Rusça (ru); önce Türkçe tamamlanır, sonra çevrilir.
 export const tr = {
   // Genel
+  'common.loading': 'Yükleniyor…',
   'common.ok': 'Tamam',
   // §11 satıcı premium ödeme ekranı
   'premium.title': 'Premium',

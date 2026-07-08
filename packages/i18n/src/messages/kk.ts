@@ -2,6 +2,7 @@ import type { MessageKey } from './tr.js';
 
 // Kazakça metinler (Kiril). Pazar dili. tr.ts kaynak; eksik anahtarlar tr'ye düşer.
 export const kk: Partial<Record<MessageKey, string>> = {
+  'common.loading': 'Жүктелуде…',
   'common.ok': 'Жарайды',
   'premium.title': 'Premium',
   'premium.plan_name': 'AYNA Premium',

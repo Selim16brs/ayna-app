@@ -86,6 +86,8 @@ export default function SellerRequestsScreen() {
   const [note, setNote] = useState('');
   // §4.1.2 — uzman KENDİ boş saatlerinden 2-3 slot seçer (elle saat yazmaz)
   const [picked, setPicked] = useState<number[]>([]);
+  // Talep fotoğrafını tam ekran görüntüle (karttan ve teklif formundan)
+  const [viewPhoto, setViewPhoto] = useState<string | null>(null);
 
   // Aday slotlar: önümüzdeki 3 gün × birkaç saat; mevcut randevularla çakışanlar elenir (süre = eta)
   const candidates = useMemo(() => {
@@ -212,6 +214,7 @@ export default function SellerRequestsScreen() {
                   demand={d}
                   locked={!canAccess}
                   offered={!!d.myQuoteId}
+                  onViewPhoto={setViewPhoto}
                   onGive={() => (canAccess ? openForm(d.id) : upsell())}
                 />
               ))
@@ -386,6 +389,30 @@ export default function SellerRequestsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Tam ekran fotoğraf görüntüleyici */}
+      <Modal
+        visible={!!viewPhoto}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setViewPhoto(null)}
+      >
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center' }}
+          onPress={() => setViewPhoto(null)}
+        >
+          {viewPhoto ? (
+            <Image
+              source={{ uri: viewPhoto }}
+              style={{ width: '100%', height: '80%' }}
+              resizeMode="contain"
+            />
+          ) : null}
+          <View style={{ position: 'absolute', top: 60, right: 24 }}>
+            <Ionicons name="close-circle" size={36} color="#fff" />
+          </View>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
@@ -395,11 +422,13 @@ function RequestCard({
   onGive,
   locked,
   offered,
+  onViewPhoto,
 }: {
   demand: DemandRequest;
   onGive: () => void;
   locked?: boolean;
   offered?: boolean; // §5.2 Faz A — bu talebe teklifim var (buton "güncelle" olur)
+  onViewPhoto?: (uri: string) => void;
 }) {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
@@ -444,7 +473,9 @@ function RequestCard({
         <>
           {/* Kullanıcının yüklediği referans fotoğrafı — teklif verirken görülür (§5.2) */}
           {demand.photoUrl ? (
-            <Image source={{ uri: demand.photoUrl }} style={styles.reqPhoto} resizeMode="cover" />
+            <Pressable onPress={() => onViewPhoto?.(demand.photoUrl!)}>
+              <Image source={{ uri: demand.photoUrl }} style={styles.reqPhoto} resizeMode="cover" />
+            </Pressable>
           ) : null}
           {demand.note ? (
             <Text variant="caption" tone="inkSoft" style={styles.note} numberOfLines={2}>

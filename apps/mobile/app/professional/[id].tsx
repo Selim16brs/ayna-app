@@ -27,6 +27,17 @@ export default function ProfessionalScreen() {
   const styles = useThemedStyles(makeStyles);
   const proId = id ?? '1';
   const pro = useProfessionalDetail(proId);
+  // Sunucudan profil henüz gelmediyse/bulunamadıysa: tam render yerine güvenli durum (çökme önlenir)
+  if (!pro.id) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <Ionicons name="hourglass-outline" size={30} color="#999" />
+        <Text variant="caption" tone="muted">
+          {t('common.loading')}
+        </Text>
+      </View>
+    );
+  }
 
   const [tab, setTab] = useState<Tab>('booking');
   const [selected, setSelected] = useState<string>(pro.services[0]?.id ?? '');
