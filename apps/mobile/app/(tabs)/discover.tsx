@@ -56,10 +56,9 @@ export default function DiscoverScreen() {
   const pros = useProfessionals();
   // §5.1.4 — şehir tüm Keşfet'i filtreler
   const cityPros = pros.filter((p) => p.city === city);
-  // §5.1.7 Öne Çıkanlar: premium × kalite (premium önce, sonra puan)
-  const featured = [...cityPros]
-    .sort((a, b) => Number(b.isPremium) - Number(a.isPremium) || b.rating - a.rating)
-    .slice(0, 4);
+  // §5.1.7 REVİZE — Öne Çıkanlar SPONSORLU alan: yalnız admin panelinden ⭐ işaretlenenler
+  // (badge 'campaign'); otomatik doldurma YOK — admin seçmediyse bölüm görünmez.
+  const featured = cityPros.filter((p) => p.badge === 'campaign').slice(0, 6);
   // §5.1.8 Sana Yakın: 3 premium salon (yoksa premium-olmayanla doldur) + günlük hafif rotasyon
   const nearby = useMemo(() => {
     const salons = cityPros.filter((p) => p.kind === 'salon');
@@ -253,23 +252,28 @@ export default function DiscoverScreen() {
               ))}
             </ScrollView>
 
-            {/* ── ÖNE ÇIKANLAR (tek satır, yatay kaydırmalı) ── */}
-            <SectionHeader title={t('home.featured')} onSeeAll={() => router.push('/search')} />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.promoScroll}
-            >
-              {featured.map((pro) => (
-                <PromoCard
-                  key={pro.id}
-                  title={pro.name}
-                  image={pro.image}
-                  tag={`★ ${pro.rating.toFixed(1)}`}
-                  onPress={() => router.push('/professional/' + pro.id)}
-                />
-              ))}
-            </ScrollView>
+            {/* ── ÖNE ÇIKANLAR — SPONSORLU: yalnız admin'in seçtikleri; boşsa bölüm gizli ── */}
+            {featured.length > 0 ? (
+              <>
+                <SectionHeader title={t('home.featured')} onSeeAll={() => router.push('/search')} />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.promoScroll}
+                >
+                  {featured.map((pro) => (
+                    <PromoCard
+                      key={pro.id}
+                      title={pro.name}
+                      image={pro.image}
+                      sponsored
+                      tag={`★ ${pro.rating.toFixed(1)}`}
+                      onPress={() => router.push('/professional/' + pro.id)}
+                    />
+                  ))}
+                </ScrollView>
+              </>
+            ) : null}
 
             {/* ── SANA YAKIN SALONLAR (premium önce + rotasyon) ── */}
             <SectionHeader title={t('home.nearby')} onSeeAll={() => router.push('/nearby')} />

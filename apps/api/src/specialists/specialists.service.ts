@@ -251,6 +251,39 @@ export class SpecialistsService {
     return { photos: pro.portfolio };
   }
 
+  // §11 — hesabın katalog karşılığı: uzman (Specialist.proId) ya da salon (Business.professionalId)
+  private async proIdFor(userId: string): Promise<string | null> {
+    const sp = await this.prisma.specialist.findUnique({ where: { userId } });
+    if (sp?.proId) return sp.proId;
+    const biz = await this.prisma.business.findFirst({ where: { ownerUserId: userId } });
+    return biz?.professionalId ?? null;
+  }
+
+  // §11 — Platinum promosyonları: profil sayfasında yayınlanır (Keşfet vitrini DEĞİL — o admin'in)
+  async myPromotions(userId: string) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { promotions: [] };
+    const pro = await this.prisma.professional.findUnique({ where: { id: proId } });
+    return { promotions: safeParse(pro?.promoJson) };
+  }
+
+  async setMyPromotions(userId: string, promotions: unknown[]) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (user?.membershipTier !== 'platinum') {
+      throw new ForbiddenException({
+        code: 'PLATINUM_REQUIRED',
+        message: 'Promosyon oluşturma yalnız Platinum üyelikte',
+      });
+    }
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { promotions: [] };
+    const pro = await this.prisma.professional.update({
+      where: { id: proId },
+      data: { promoJson: JSON.stringify(promotions.slice(0, 10)) },
+    });
+    return { promotions: safeParse(pro.promoJson) };
+  }
+
   // §CRM — kutlama: müşteriye push doğum günü mesajı (uzman adına)
   async celebrate(expertUserId: string, customerId: string) {
     const expert = await this.prisma.user.findUnique({
@@ -274,4 +307,13 @@ function mapSpecialist(s: Specialist) {
     bio: s.bio,
     featured: s.featured,
   };
+}
+
+function safeParse(raw?: string): unknown[] {
+  try {
+    const arr = JSON.parse(raw ?? '[]') as unknown;
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
 }

@@ -672,6 +672,7 @@ export interface ProfessionalDetail extends Professional {
   serviceRatings: ServiceRating[];
   services: ServiceItem[];
   portfolio: string[];
+  promotions?: Promotion[]; // §11 — Platinum'un profilinde yayınladığı promosyonlar
   reviews: Review[];
   // §6.1 — yıldız dağılımı [1★..5★ sayıları] + alt kırılım + sertifika + sosyal + bağlı salon
   starDist: number[];

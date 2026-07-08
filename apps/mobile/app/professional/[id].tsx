@@ -209,6 +209,49 @@ export default function ProfessionalScreen() {
                 {pro.about}
               </Text>
 
+              {/* §11 — Platinum promosyonları: uzman/salon kendi profilinde yayınlar */}
+              {(pro.promotions ?? []).length > 0 ? (
+                <>
+                  <Text variant="bodyStrong" tone="ink" style={styles.section}>
+                    {t('pro.promos')}
+                  </Text>
+                  <View style={styles.promoList}>
+                    {(pro.promotions ?? []).map((pm) => (
+                      <View key={pm.id} style={[styles.promoCard, shadow.soft]}>
+                        {pm.imageUri ? (
+                          <Image source={{ uri: pm.imageUri }} style={styles.promoImage} />
+                        ) : null}
+                        <View style={styles.promoBody}>
+                          <View style={styles.promoTop}>
+                            <Text
+                              variant="bodyStrong"
+                              tone="ink"
+                              style={styles.flex}
+                              numberOfLines={1}
+                            >
+                              {pm.title}
+                            </Text>
+                            {pm.discountPct ? (
+                              <View style={styles.promoPct}>
+                                <Text variant="caption" tone="onAccent" style={styles.promoPctText}>
+                                  %{pm.discountPct}
+                                </Text>
+                              </View>
+                            ) : null}
+                          </View>
+                          <Text variant="caption" tone="inkSoft" numberOfLines={2}>
+                            {pm.desc}
+                          </Text>
+                          <Text variant="caption" tone="muted">
+                            {pm.startLabel} – {pm.endLabel}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              ) : null}
+
               {isSalon ? (
                 <>
                   <Text variant="bodyStrong" tone="ink" style={styles.section}>
@@ -630,6 +673,18 @@ const makeStyles = (colors: ColorTokens) =>
     },
     about: { marginTop: space(2.5), lineHeight: 22 },
     section: { marginTop: space(3), marginBottom: space(1.5) },
+    promoList: { gap: space(1.5) },
+    promoCard: { backgroundColor: colors.surface, borderRadius: radius.lg, overflow: 'hidden' },
+    promoImage: { width: '100%', height: 110, backgroundColor: colors.surfaceMuted },
+    promoBody: { padding: space(1.75), gap: space(0.75) },
+    promoTop: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    promoPct: {
+      backgroundColor: colors.accentFg,
+      borderRadius: radius.pill,
+      paddingHorizontal: space(1),
+      paddingVertical: 2,
+    },
+    promoPctText: { fontWeight: '800' },
     staffRow: { gap: space(2), paddingRight: space(3) },
     staffCard: { alignItems: 'center', width: 68 },
     staffAvatarWrap: {

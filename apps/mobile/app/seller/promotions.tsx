@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { type Promotion, type PromotionStatus } from '../../src/data';
+import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -37,9 +38,24 @@ export default function SellerPromotionsScreen() {
   const { colors, gradients } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
-  const premium = useStore((s) => s.premium);
-  const promotions = useStore((s) => s.promotions);
-  const createPromotion = useStore((s) => s.createPromotion);
+  // §11 REVİZE — promosyon YALNIZ Platinum'a açık (standart/premium oluşturamaz);
+  // liste HESAPTA tutulur (buluttan gelir) ve uzman/salonun public profilinde yayınlanır.
+  const platinum = useStore((s) => s.platinum);
+  const token = useStore((s) => s.token);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      let alive = true;
+      void api
+        .myPromotions(token)
+        .then((r) => alive && setPromotions(r.promotions))
+        .catch(() => undefined);
+      return () => {
+        alive = false;
+      };
+    }, [token]),
+  );
   // §11 — premium uzman/salon haftada YALNIZ 1 promosyon oluşturabilir
   const WEEK_MS = 7 * 86_400_000;
   const madeThisWeek = promotions.some((p) => Date.now() - p.createdAt < WEEK_MS);
@@ -67,9 +83,13 @@ export default function SellerPromotionsScreen() {
   const pickImage = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
+      quality: 0.35,
+      base64: true, // data URL → müşteri cihazında da açılır
     });
-    if (!res.canceled && res.assets[0]) setImage(res.assets[0].uri);
+    if (!res.canceled && res.assets[0]) {
+      const a = res.assets[0];
+      setImage(a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+    }
   };
 
   const submit = () => {
@@ -78,21 +98,27 @@ export default function SellerPromotionsScreen() {
       Alert.alert(t('promo.title'), t('promo.week_limit'));
       return;
     }
-    createPromotion({
-      title,
-      desc,
+    const promo: Promotion = {
+      id: `promo_${Date.now().toString(36)}`,
+      title: title.trim(),
+      desc: desc.trim(),
       ...(Number(discount) > 0 ? { discountPct: Number(discount) } : {}),
       startLabel: formatTrDate(start, false),
       endLabel: formatTrDate(end, false),
       ...(image ? { imageUri: image } : {}),
-    });
+      status: 'live',
+      createdAt: Date.now(),
+    };
+    const next = [promo, ...promotions];
+    setPromotions(next);
+    if (token) void api.setMyPromotions(token, next).catch(() => undefined);
     setOpen(false);
     reset();
     Alert.alert(t('promo.submitted_title'), t('promo.submitted_body'));
   };
 
-  // ── PREMIUM DEĞİL → §11 upsell (davetkâr; "kilitli" dili yok) ──
-  if (!premium) {
+  // ── PLATINUM DEĞİL → §11 upsell (standart VE premium oluşturamaz) ──
+  if (!platinum) {
     return (
       <Screen edges={[]}>
         <StackHeader title={t('promo.title')} />
@@ -135,7 +161,7 @@ export default function SellerPromotionsScreen() {
     );
   }
 
-  // ── PREMIUM → liste + oluştur ──
+  // ── PLATINUM → liste + oluştur ──
   return (
     <Screen edges={[]}>
       <StackHeader title={t('promo.title')} />

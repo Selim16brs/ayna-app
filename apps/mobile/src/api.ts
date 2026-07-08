@@ -477,6 +477,14 @@ export const api = {
   me: (token: string) => get<AuthUser>('/auth/me', token),
   setAvatar: (token: string, photoDataUrl: string | null) =>
     post<AuthUser>('/auth/me/avatar', { photoDataUrl }, token),
+  myPromotions: (token: string) =>
+    get<{ promotions: import('./data').Promotion[] }>('/specialists/me/promotions', token),
+  setMyPromotions: (token: string, promotions: import('./data').Promotion[]) =>
+    post<{ promotions: import('./data').Promotion[] }>(
+      '/specialists/me/promotions',
+      { promotions },
+      token,
+    ),
   myPortfolio: (token: string) => get<{ photos: string[] }>('/specialists/me/portfolio', token),
   setMyPortfolio: (token: string, photos: string[]) =>
     post<{ photos: string[] }>('/specialists/me/portfolio', { photos }, token),

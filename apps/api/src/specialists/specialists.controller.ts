@@ -54,6 +54,20 @@ export class SpecialistsController {
     return this.specialists.setMyPortfolio(req.user!.id, photos);
   }
 
+  // §11 — Platinum promosyonları (kendi profil sayfasında yayınlanır)
+  @Get('me/promotions')
+  @UseGuards(JwtAuthGuard)
+  myPromotions(@Req() req: AuthedRequest) {
+    return this.specialists.myPromotions(req.user!.id);
+  }
+
+  @Post('me/promotions')
+  @UseGuards(JwtAuthGuard)
+  setPromotions(@Req() req: AuthedRequest, @Body() body: { promotions?: unknown[] }) {
+    const list = Array.isArray(body?.promotions) ? body.promotions : [];
+    return this.specialists.setMyPromotions(req.user!.id, list);
+  }
+
   // §CRM — bugün doğum günü olan müşterilerim + kutlama gönder
   @Get('me/birthdays')
   @UseGuards(JwtAuthGuard)

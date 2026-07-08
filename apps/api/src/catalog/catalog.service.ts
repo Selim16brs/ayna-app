@@ -99,6 +99,7 @@ export class CatalogService {
       serviceRatings,
       services,
       portfolio: p.portfolio, // uzmanın KENDİ yüklediği galeri (hesap verisi)
+      promotions: parsePromos(p.promoJson), // §11 — Platinum'un profilinde yayınladığı promosyonlar
       reviews,
     };
   }
@@ -283,3 +284,13 @@ const SECTOR_SERVICES: Record<string, SvcItem[]> = {
     { id: 'epi-4', name: 'İğneli epilasyon', durationMin: 60, price: 12000 },
   ],
 };
+
+// §11 — promoJson güvenli çözümü (bozuk veri profili düşürmesin)
+function parsePromos(raw: string): unknown[] {
+  try {
+    const arr = JSON.parse(raw) as unknown;
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}

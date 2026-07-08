@@ -66,6 +66,7 @@ const EMPTY_DETAIL: ProfessionalDetail = {
   serviceRatings: [],
   services: [],
   portfolio: [],
+  promotions: [],
   reviews: [],
   starDist: [0, 0, 0, 0, 0],
   breakdown: [],
