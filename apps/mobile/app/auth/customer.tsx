@@ -3,7 +3,16 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 
 // Doğum tarihi gösterimi: GG.AA.YYYY
 function fmtDate(d: Date): string {
@@ -86,7 +95,9 @@ export default function CustomerRegisterScreen() {
       ]);
     } catch (e) {
       const msg = String((e as Error).message ?? '');
-      Alert.alert(msg.includes('409') || msg.includes('400') ? t('auth.error.taken') : t('common.error'));
+      Alert.alert(
+        msg.includes('409') || msg.includes('400') ? t('auth.error.taken') : t('common.error'),
+      );
     } finally {
       setBusy(false);
     }
@@ -148,7 +159,12 @@ export default function CustomerRegisterScreen() {
           />
         ) : null}
         {Platform.OS === 'ios' ? (
-          <Modal visible={showDate} transparent animationType="slide" onRequestClose={() => setShowDate(false)}>
+          <Modal
+            visible={showDate}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowDate(false)}
+          >
             <Pressable style={styles.dateBackdrop} onPress={() => setShowDate(false)}>
               <Pressable style={styles.dateSheet} onPress={(e) => e.stopPropagation()}>
                 <DateTimePicker

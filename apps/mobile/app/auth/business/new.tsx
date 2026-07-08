@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
@@ -200,7 +209,12 @@ export default function NewBusinessScreen() {
           />
         ) : null}
         {Platform.OS === 'ios' ? (
-          <Modal visible={showDate} transparent animationType="slide" onRequestClose={() => setShowDate(false)}>
+          <Modal
+            visible={showDate}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowDate(false)}
+          >
             <Pressable style={styles.dateBackdrop} onPress={() => setShowDate(false)}>
               <Pressable style={styles.dateSheet} onPress={(e) => e.stopPropagation()}>
                 <DateTimePicker

@@ -9,12 +9,12 @@ import {
   formatPrice,
   RESPONSE_WINDOW_MS,
   SEED_SUPPLIER_ADS,
-  SELLER_DATA,
   type SellerMetric,
   type SupplierAd,
 } from '../../src/data';
 import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
+import { useSalonStaff } from '../../src/staff';
 import { selectCommissionRate, selectUnreadCount, useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -37,7 +37,6 @@ export default function ReportsScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const [period, setPeriod] = useState<Period>('week');
-  const data = SELLER_DATA[period];
   const salonName = useStore((s) => s.currentUser?.name) ?? 'AYNA İşletme';
   const cutoutUri = useStore((s) => s.cutoutUri); // §5.1.1 — uzman cut-out portresi
   const avatarUri = useStore((s) => s.avatarUri); // cutout yoksa yüklenen ham foto (yine de home'da görünsün)
@@ -50,6 +49,8 @@ export default function ReportsScreen() {
   // §3/§6.1 — hesabın bağı: salon rolü = salon; uzman = bağlı salon adı veya "Bireysel Uzman"
   const role = useStore((s) => s.currentUser?.role);
   const isSalon = role === 'salon'; // §9 uzman ↔ §10 salon ayrımı
+  // Faz C — GERÇEK kadro (mock Madina/Aigerim değil); yalnız salon rolünde sorgulanır
+  const { staff: salonStaff } = useSalonStaff();
   const businessName = useStore((s) => s.currentUser?.businessName);
   // §4.4/§9.2 — ceza/kısıt durumu: hesap kısıtlıysa dashboard'da 7 gün sayaçlı uyarı
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
@@ -122,8 +123,22 @@ export default function ReportsScreen() {
       positive: true,
       icon: 'calendar-outline',
     },
-    { id: 'rt', labelKey: 'seller.metric.rating', value: '–', delta: '', positive: true, icon: 'star-outline' },
-    { id: 'rp', labelKey: 'seller.metric.repeat', value: '–', delta: '', positive: true, icon: 'repeat-outline' },
+    {
+      id: 'rt',
+      labelKey: 'seller.metric.rating',
+      value: '–',
+      delta: '',
+      positive: true,
+      icon: 'star-outline',
+    },
+    {
+      id: 'rp',
+      labelKey: 'seller.metric.repeat',
+      value: '–',
+      delta: '',
+      positive: true,
+      icon: 'repeat-outline',
+    },
   ];
 
   return (
@@ -353,50 +368,67 @@ export default function ReportsScreen() {
             ))}
           </View>
 
-          {/* Uzman performansı — §10.1 SALON'a özel (uzmanın kadrosu yoktur) */}
+          {/* Uzman performansı — §10.1 SALON'a özel; Faz C: GERÇEK kadro (mock yok) */}
           {isSalon ? (
             <>
               <Text variant="label" tone="accentFg" style={styles.section}>
                 {t('reports.section.staff')}
               </Text>
               <View style={styles.group}>
-                {data.staff.map((u, i) => (
+                {salonStaff.length === 0 ? (
                   <PressableScale
-                    key={u.name}
-                    style={[styles.staffRow, i < data.staff.length - 1 && styles.border]}
-                    onPress={() =>
-                      router.push({
-                        pathname: '/seller/staff',
-                        params: {
-                          name: u.name,
-                          image: u.image,
-                          bookings: String(u.bookings),
-                          rating: String(u.rating),
-                        },
-                      })
-                    }
+                    style={styles.staffRow}
+                    onPress={() => router.push('/seller/codes')}
                   >
-                    <Image source={{ uri: u.image }} style={styles.staffImage} />
-                    <Text
-                      variant="bodyStrong"
-                      tone="ink"
-                      style={styles.staffName}
-                      numberOfLines={1}
-                    >
-                      {u.name}
-                    </Text>
-                    <Text variant="caption" tone="muted">
-                      {u.bookings} {t('reports.bookings')}
-                    </Text>
-                    <View style={styles.staffMeta}>
-                      <Ionicons name="star" size={12} color={colors.gold} />
-                      <Text variant="caption" tone="inkSoft">
-                        {u.rating.toFixed(1)}
-                      </Text>
-                      <Ionicons name="chevron-forward" size={14} color={colors.muted} />
+                    <View style={[styles.staffImage, styles.staffInitial]}>
+                      <Ionicons name="person-add-outline" size={16} color={colors.inkSoft} />
                     </View>
+                    <Text variant="caption" tone="muted" style={styles.staffName}>
+                      {t('salon.staff.empty_b')}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={14} color={colors.muted} />
                   </PressableScale>
-                ))}
+                ) : (
+                  salonStaff.map((u, i) => (
+                    <PressableScale
+                      key={u.name}
+                      style={[styles.staffRow, i < salonStaff.length - 1 && styles.border]}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/seller/staff',
+                          params: {
+                            name: u.name,
+                            image: u.image,
+                            bookings: String(u.bookings),
+                            rating: String(u.rating),
+                          },
+                        })
+                      }
+                    >
+                      <View style={[styles.staffImage, styles.staffInitial]}>
+                        <Text variant="caption" tone="inkSoft">
+                          {u.name.charAt(0).toLocaleUpperCase('tr-TR')}
+                        </Text>
+                      </View>
+                      <Text
+                        variant="bodyStrong"
+                        tone="ink"
+                        style={styles.staffName}
+                        numberOfLines={1}
+                      >
+                        {u.name}
+                      </Text>
+                      <Text variant="caption" tone="muted">
+                        {u.bookings > 0
+                          ? `${u.bookings} ${t('reports.bookings')}`
+                          : t('salon.staff.new')}
+                      </Text>
+                      <View style={styles.staffMeta}>
+                        <Ionicons name="chevron-forward" size={14} color={colors.muted} />
+                      </View>
+                    </PressableScale>
+                  ))
+                )}
               </View>
             </>
           ) : null}
@@ -870,6 +902,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(1.5),
     },
     staffImage: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surfaceMuted },
+    staffInitial: { alignItems: 'center', justifyContent: 'center' },
     staffName: { flex: 1 },
     staffMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   });

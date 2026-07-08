@@ -66,7 +66,10 @@ export default function NewQuoteScreen() {
       base64: true,
     });
     if (!result.canceled && result.assets[0])
-      setPhoto({ uri: result.assets[0].uri, ...(result.assets[0].base64 ? { base64: result.assets[0].base64 } : {}) });
+      setPhoto({
+        uri: result.assets[0].uri,
+        ...(result.assets[0].base64 ? { base64: result.assets[0].base64 } : {}),
+      });
   }
 
   async function takePhoto() {
@@ -74,7 +77,10 @@ export default function NewQuoteScreen() {
     if (!perm.granted) return;
     const result = await ImagePicker.launchCameraAsync({ quality: 0.4, base64: true });
     if (!result.canceled && result.assets[0])
-      setPhoto({ uri: result.assets[0].uri, ...(result.assets[0].base64 ? { base64: result.assets[0].base64 } : {}) });
+      setPhoto({
+        uri: result.assets[0].uri,
+        ...(result.assets[0].base64 ? { base64: result.assets[0].base64 } : {}),
+      });
   }
 
   return (

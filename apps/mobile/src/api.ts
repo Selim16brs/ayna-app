@@ -320,6 +320,12 @@ export const api = {
 
   // Salon sahibi/uzman kendi işletmesi (mobil yönetim) — hepsi sahibe-kapılı
   myBusinesses: (token: string) => get<SellerBusiness[]>('/businesses/mine', token),
+  // Faz C — salonun gerçek kadrosu (davet koduyla bağlı uzmanlar)
+  businessStaff: (token: string, businessId: string) =>
+    get<{ id: string; name: string; bio: string; kind: string }[]>(
+      `/businesses/${businessId}/staff`,
+      token,
+    ),
   inviteCodes: (token: string, businessId: string) =>
     get<SellerInviteCode[]>(`/businesses/${businessId}/invite-codes`, token),
   createInviteCode: (token: string, businessId: string) =>

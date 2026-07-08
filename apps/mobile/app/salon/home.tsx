@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SEED_SUPPLIER_ADS, SELLER_DATA, type SupplierAd } from '../../src/data';
+import { SEED_SUPPLIER_ADS, type SupplierAd } from '../../src/data';
+import { useSalonStaff } from '../../src/staff';
 import { greetingKey } from '../../src/greeting';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
@@ -26,7 +27,8 @@ export default function SalonHomeScreen() {
   const unread = useStore(selectUnreadCount);
   const avatarUri = useStore((s) => s.avatarUri);
   const setAvatar = useStore((s) => s.setAvatar);
-  const staff = SELLER_DATA.month.staff;
+  // Faz C — GERÇEK kadro (davet koduyla bağlı uzmanlar); mock Madina/Aigerim yok.
+  const { staff } = useSalonStaff();
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const ads = SEED_SUPPLIER_ADS.filter((a) => !a.city || a.city === city);
 
@@ -39,12 +41,6 @@ export default function SalonHomeScreen() {
       quality: 0.8,
     });
     if (!res.canceled && res.assets[0]) setAvatar(res.assets[0].uri);
-  };
-
-  const perf = (name: string, rating: number) => {
-    let h = 0;
-    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
-    return { occupancy: 60 + (Math.abs(h) % 38), response: 8 + (Math.abs(h >> 3) % 34), rating };
   };
 
   return (
@@ -150,9 +146,27 @@ export default function SalonHomeScreen() {
             </PressableScale>
           </View>
           <View style={styles.staffList}>
-            {staff.map((u) => {
-              const p = perf(u.name, u.rating);
-              return (
+            {staff.length === 0 ? (
+              /* Faz C — dürüst boş-durum: kadro yok → davet koduyla uzman ekle */
+              <PressableScale
+                style={[styles.staffCard, shadow.soft]}
+                onPress={() => router.push('/seller/codes')}
+              >
+                <View style={[styles.staffImg, styles.staffInitial]}>
+                  <Ionicons name="person-add-outline" size={22} color={colors.inkSoft} />
+                </View>
+                <View style={styles.staffInfo}>
+                  <Text variant="bodyStrong" tone="ink">
+                    {t('salon.staff.empty_t')}
+                  </Text>
+                  <Text variant="caption" tone="muted">
+                    {t('salon.staff.empty_b')}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+              </PressableScale>
+            ) : (
+              staff.map((u) => (
                 <PressableScale
                   key={u.name}
                   style={[styles.staffCard, shadow.soft]}
@@ -168,36 +182,30 @@ export default function SalonHomeScreen() {
                     })
                   }
                 >
-                  <Image source={{ uri: u.image }} style={styles.staffImg} />
+                  {u.image ? (
+                    <Image source={{ uri: u.image }} style={styles.staffImg} />
+                  ) : (
+                    <View style={[styles.staffImg, styles.staffInitial]}>
+                      <Text variant="bodyStrong" tone="inkSoft">
+                        {u.name.charAt(0).toLocaleUpperCase('tr-TR')}
+                      </Text>
+                    </View>
+                  )}
                   <View style={styles.staffInfo}>
                     <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
                       {u.name}
                     </Text>
-                    <View style={styles.perfRow}>
-                      <PerfChip
-                        icon="star"
-                        tint={colors.gold}
-                        value={p.rating.toFixed(1)}
-                        label={t('salon.metric.rating')}
-                      />
-                      <PerfChip
-                        icon="pie-chart"
-                        tint={colors.accentFg}
-                        value={`%${p.occupancy}`}
-                        label={t('salon.metric.occupancy')}
-                      />
-                      <PerfChip
-                        icon="time"
-                        tint={colors.inkSoft}
-                        value={`${p.response}dk`}
-                        label={t('salon.metric.response')}
-                      />
-                    </View>
+                    {/* Gerçek geçmiş birikene kadar sahte metrik YOK — dürüst "yeni" etiketi */}
+                    <Text variant="caption" tone="muted">
+                      {u.bookings > 0
+                        ? `${u.bookings} · ${u.rating.toFixed(1)}`
+                        : t('salon.staff.new')}
+                    </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color={colors.muted} />
                 </PressableScale>
-              );
-            })}
+              ))
+            )}
           </View>
         </View>
       </ScrollView>
@@ -238,31 +246,6 @@ function AdCard({ ad }: { ad: SupplierAd }) {
         </View>
       </View>
     </PressableScale>
-  );
-}
-
-function PerfChip({
-  icon,
-  tint,
-  value,
-  label,
-}: {
-  icon: IoniconName;
-  tint: string;
-  value: string;
-  label: string;
-}) {
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={styles.perfChip}>
-      <Ionicons name={icon} size={11} color={tint} />
-      <Text variant="caption" tone="ink" style={styles.perfVal}>
-        {value}
-      </Text>
-      <Text variant="caption" tone="muted" style={styles.perfLbl}>
-        {label}
-      </Text>
-    </View>
   );
 }
 
@@ -373,6 +356,7 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(1.5),
     },
     staffImg: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.surfaceMuted },
+    staffInitial: { alignItems: 'center', justifyContent: 'center' },
     staffInfo: { flex: 1, gap: space(0.75) },
     perfRow: { flexDirection: 'row', gap: space(0.75), flexWrap: 'wrap' },
     perfChip: {

@@ -4,12 +4,13 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
-import { type Appointment, type BookingStatus, SELLER_DATA, formatPrice } from '../../src/data';
+import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
 import { almatyDayStart, almatyParts, daysUntil, formatSlot, slotTime } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { useSalonStaff } from '../../src/staff';
 import { PressableScale, Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
 type DayRow = { type: 'free'; startMs: number; endMs: number } | { type: 'busy'; b: Appointment };
@@ -97,7 +98,7 @@ export default function AgendaScreen() {
   const [dayIdx, setDayIdx] = useState(0);
 
   // §4.6 salon tarafı — uzman sütunları (mock; gerçekte salonun kadrosu)
-  const staff = SELLER_DATA.month.staff;
+  const { staff } = useSalonStaff(); // Faz C — GERÇEK kadro (mock değil)
 
   // §4.6 — önümüzdeki 14 gün (gün seçici + kapalı işaretleme)
   // §10.2 — salon takviminde uzman filtresi (null = tümü)

@@ -104,7 +104,9 @@ export default function NewDemandScreen() {
         collectMin,
         ...(serviceId ? { serviceId } : {}),
         ...(addressId ? { addressId } : {}),
-        ...(photos[0]?.base64 ? { photoDataUrl: `data:image/jpeg;base64,${photos[0].base64}` } : {}),
+        ...(photos[0]?.base64
+          ? { photoDataUrl: `data:image/jpeg;base64,${photos[0].base64}` }
+          : {}),
       });
       if (!id) {
         Alert.alert(t('common.error'), t('quote.new.submit_err'));

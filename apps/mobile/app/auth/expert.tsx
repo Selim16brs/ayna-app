@@ -3,7 +3,16 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 
 // Doğum tarihi gösterimi: GG.AA.YYYY
 function fmtDate(d: Date): string {
@@ -79,7 +88,9 @@ export default function ExpertRegisterScreen() {
   // Normal uzman 7, premium 20 (kayıtta premium değil → 7)
   const PORTFOLIO_MAX = 7;
   // Faz B — kayıtlı işletmeler backend'den (onaylı + onay bekleyen; mock DEĞİL)
-  const [salons, setSalons] = useState<{ id: string; name: string; city: string; sector: string }[]>([]);
+  const [salons, setSalons] = useState<
+    { id: string; name: string; city: string; sector: string }[]
+  >([]);
   useEffect(() => {
     let alive = true;
     api
@@ -255,7 +266,12 @@ export default function ExpertRegisterScreen() {
         <Label text={t('auth.f.password')} />
         <Input value={password} onChange={setPassword} secure placeholder={t('auth.f.password')} />
         <Label text={t('auth.f.password2')} />
-        <Input value={password2} onChange={setPassword2} secure placeholder={t('auth.f.password2')} />
+        <Input
+          value={password2}
+          onChange={setPassword2}
+          secure
+          placeholder={t('auth.f.password2')}
+        />
         {password2.length > 0 && password !== password2 ? (
           <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
             {t('auth.f.password_mismatch')}
@@ -282,7 +298,12 @@ export default function ExpertRegisterScreen() {
           />
         ) : null}
         {Platform.OS === 'ios' ? (
-          <Modal visible={showDate} transparent animationType="slide" onRequestClose={() => setShowDate(false)}>
+          <Modal
+            visible={showDate}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowDate(false)}
+          >
             <Pressable style={styles.dateBackdrop} onPress={() => setShowDate(false)}>
               <Pressable style={styles.dateSheet} onPress={(e) => e.stopPropagation()}>
                 <DateTimePicker

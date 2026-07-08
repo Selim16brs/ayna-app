@@ -594,7 +594,10 @@ export class AdminService {
   async setUserPassword(id: string, password: string) {
     const u = await this.prisma.user.findUnique({ where: { id } });
     if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
-    await this.prisma.user.update({ where: { id }, data: { passwordHash: hashPassword(password) } });
+    await this.prisma.user.update({
+      where: { id },
+      data: { passwordHash: hashPassword(password) },
+    });
     return { id, ok: true };
   }
 

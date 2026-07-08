@@ -3,12 +3,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
-import { type Appointment, type BookingStatus, SELLER_DATA, formatPrice } from '../../src/data';
+import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
 import { almatyDayStart, slotTime } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { useSalonStaff } from '../../src/staff';
 import {
   Button,
   DateField,
@@ -47,7 +48,7 @@ export default function SalonAgendaScreen() {
   const bookings = useStore((s) => s.bookings);
   const salonAddOffline = useStore((s) => s.salonAddOffline);
   const salonName = useStore((s) => s.currentUser?.name) ?? 'Salon';
-  const staff = SELLER_DATA.month.staff;
+  const { staff } = useSalonStaff(); // Faz C — GERÇEK kadro (mock değil)
 
   const [tab, setTab] = useState<'all' | 'add' | 'pending'>('all');
 

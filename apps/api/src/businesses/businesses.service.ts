@@ -103,6 +103,27 @@ export class BusinessesService {
     return mapBusiness(b);
   }
 
+  // Faz C — salonun GERÇEK kadrosu: davet koduyla bağlanan uzmanlar (mock kadro değil).
+  async staff(businessId: string, ownerUserId: string) {
+    await this.assertOwner(businessId, ownerUserId);
+    const rows = await this.prisma.specialist.findMany({
+      where: { businessId },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (rows.length === 0) return [];
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: rows.map((r) => r.userId) } },
+      select: { id: true, name: true },
+    });
+    const names = new Map(users.map((u) => [u.id, u.name]));
+    return rows.map((r) => ({
+      id: r.id,
+      name: names.get(r.userId) ?? 'Uzman',
+      bio: r.bio,
+      kind: r.kind,
+    }));
+  }
+
   async approve(id: string, adminId: string) {
     const b = await this.prisma.business.update({ where: { id }, data: { status: 'approved' } });
     await this.audit.record({

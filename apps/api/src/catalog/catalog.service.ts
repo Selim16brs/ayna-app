@@ -111,16 +111,16 @@ export class CatalogService {
     return rows
       .filter((q): q is Quote & { professional: Professional } => q.professional !== null)
       .map((q) => ({
-      id: q.id,
-      proId: q.professionalId,
-      name: q.professional.name,
-      image: q.professional.imageUrl,
-      rating: Number(q.professional.rating),
-      reviewCount: q.professional.reviewCount,
-      friends: q.professional.friends ?? undefined,
-      price: Number(q.price),
-      etaMin: q.etaMin,
-    }));
+        id: q.id,
+        proId: q.professionalId,
+        name: q.professional.name,
+        image: q.professional.imageUrl,
+        rating: Number(q.professional.rating),
+        reviewCount: q.professional.reviewCount,
+        friends: q.professional.friends ?? undefined,
+        price: Number(q.price),
+        etaMin: q.etaMin,
+      }));
   }
 
   async createQuoteRequest(input: CreateQuoteRequestInput) {

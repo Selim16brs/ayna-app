@@ -44,6 +44,13 @@ export class BusinessesController {
     return this.businesses.mine(req.user!.id);
   }
 
+  // Faz C — salonun gerçek kadrosu (davet koduyla bağlı uzmanlar)
+  @Get(':id/staff')
+  @UseGuards(JwtAuthGuard)
+  staff(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.businesses.staff(id, req.user!.id);
+  }
+
   @Get(':id')
   get(@Param('id') id: string) {
     return this.businesses.get(id);

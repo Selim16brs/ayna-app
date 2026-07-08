@@ -270,7 +270,10 @@ export class QuotesService {
     if (req.status !== 'open' || expired)
       throw new BadRequestException({ code: 'REQUEST_CLOSED', message: 'Talep kapandı' });
     if (req.userId === expertUserId)
-      throw new BadRequestException({ code: 'OWN_REQUEST', message: 'Kendi talebine teklif veremezsin' });
+      throw new BadRequestException({
+        code: 'OWN_REQUEST',
+        message: 'Kendi talebine teklif veremezsin',
+      });
 
     // Uzmanın keşif kataloğu bağı (bağımsız uzmanda dolu) — profil/puan gösterimi için
     const specialist = await this.prisma.specialist.findUnique({
