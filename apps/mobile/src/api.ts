@@ -322,6 +322,7 @@ export const api = {
   disputeBookingApi: (id: string) => post<Appointment>(`/bookings/${id}/dispute`, {}),
   // §4.4-b — uzman gelmedi: iade + uzman komisyon borcu (backend)
   providerNoShowApi: (id: string) => post<Appointment>(`/bookings/${id}/provider-no-show`, {}),
+  noShowApi: (id: string) => post<Appointment>(`/bookings/${id}/no-show`, {}),
   // §4.1.7 — uzman hizmeti tamamladı (backend'e taşındı)
   completeBookingApi: (id: string) => post<Appointment>(`/bookings/${id}/complete`, {}),
 

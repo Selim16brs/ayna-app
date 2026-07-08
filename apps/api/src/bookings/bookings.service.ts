@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { type Booking, BookingStatus } from '@prisma/client';
 import { hasConflict } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
@@ -99,8 +104,16 @@ export class BookingsService {
     });
   }
 
-  // §6.C — uzman/işletme randevuyu "gelmedi" işaretler (CRM tarafı)
+  // §6.C — uzman/işletme randevuyu "gelmedi" işaretler (CRM tarafı).
+  // Kural: randevu saatinin üzerinden EN AZ 1 saat geçmeden işaretlenemez (erken damga önlenir).
   async noShow(id: string) {
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (b?.startAt && Date.now() < b.startAt.getTime() + 60 * 60 * 1000) {
+      throw new BadRequestException({
+        code: 'NO_SHOW_TOO_EARLY',
+        message: 'Gelmedi işareti randevu saatinden 1 saat sonra açılır',
+      });
+    }
     return this.transition(id, { status: 'no_show', depositForfeited: true });
   }
 

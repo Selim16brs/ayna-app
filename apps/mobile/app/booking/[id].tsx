@@ -604,12 +604,20 @@ export default function BookingDetailScreen() {
                   onPress={() => id && completeBooking(id)}
                 />
               ) : null}
-              {booking.status === 'confirmed' ? (
+              {/* §4.4 — "gelmedi" ancak randevu saatinden 1 SAAT sonra işaretlenebilir */}
+              {booking.status === 'confirmed' && Date.now() >= booking.startMs + 60 * 60 * 1000 ? (
                 <Button
                   label={t('booking.provider.mark_noshow')}
                   variant="secondary"
                   onPress={() => id && markNoShow(id)}
                 />
+              ) : booking.status === 'confirmed' && booking.startMs <= Date.now() ? (
+                <View style={styles.note}>
+                  <Ionicons name="time-outline" size={14} color={colors.muted} />
+                  <Text variant="caption" tone="muted" style={styles.noteText}>
+                    {t('booking.provider.noshow_wait')}
+                  </Text>
+                </View>
               ) : null}
               {/* §7.3 — hizmet sonrası GİZLİ müşteri sinyali (👍/👎; kamuya açık değil) */}
               {booking.status === 'confirmed' && booking.startMs < Date.now() ? (

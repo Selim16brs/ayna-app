@@ -1358,6 +1358,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.provider.confirm_receipt': 'Түбіртекті растау (Алдым)',
   'booking.provider.receipt': 'Жүктелген түбіртек',
   'booking.provider.mark_noshow': 'Келмеді деп белгілеу',
+  'booking.provider.noshow_wait': 'Келмеді белгісі жазылу уақытынан 1 сағаттан кейін ашылады.',
   'booking.provider.complete': 'Қызметті аяқтадым',
   'booking.provider.pending_receipt': 'Пайдаланушының түбіртегі күтілуде.',
   'booking.signal.title': 'Клиент сигналы (құпия)',

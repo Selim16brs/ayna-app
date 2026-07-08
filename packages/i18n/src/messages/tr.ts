@@ -1437,6 +1437,7 @@ export const tr = {
   'booking.provider.confirm_receipt': 'Dekontu onayla (Aldım)',
   'booking.provider.receipt': 'Yüklenen dekont',
   'booking.provider.mark_noshow': 'Gelmedi olarak işaretle',
+  'booking.provider.noshow_wait': 'Gelmedi işareti randevu saatinden 1 saat sonra açılır.',
   'booking.provider.complete': 'Hizmeti tamamladım',
   'booking.provider.pending_receipt': 'Kullanıcının dekontu bekleniyor.',
   'booking.signal.title': 'Müşteri sinyali (gizli)',

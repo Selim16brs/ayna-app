@@ -1363,6 +1363,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.provider.confirm_receipt': 'Подтвердить квитанцию (Получил)',
   'booking.provider.receipt': 'Загруженная квитанция',
   'booking.provider.mark_noshow': 'Отметить как не пришёл',
+  'booking.provider.noshow_wait': 'Отметка «не пришла» откроется через 1 час после времени записи.',
   'booking.provider.complete': 'Услуга оказана',
   'booking.provider.pending_receipt': 'Ожидается квитанция пользователя.',
   'booking.signal.title': 'Сигнал клиента (скрытый)',

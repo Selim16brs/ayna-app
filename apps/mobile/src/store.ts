@@ -1546,13 +1546,17 @@ export const useStore = create<State>()(
           });
       },
 
-      // §4.4 — uzman kullanıcıyı "gelmedi" işaretler → kapora uzmanda kalır (depositForfeited)
+      // §4.4 — uzman kullanıcıyı "gelmedi" işaretler → kapora uzmanda kalır (depositForfeited).
+      // Kural: randevu saatinin üzerinden 1 saat geçmeden işaretlenemez (UI da gizler; bu son savunma).
       markNoShow: (id) => {
+        const bk = get().bookings.find((b) => b.id === id);
+        if (bk?.startMs && Date.now() < bk.startMs + 60 * 60 * 1000) return;
         set((s) => ({
           bookings: s.bookings.map((b) =>
             b.id === id ? { ...b, status: 'no_show', depositForfeited: true } : b,
           ),
         }));
+        void api.noShowApi(id).catch(() => undefined); // buluta taşı (best-effort)
       },
 
       // §4.1.7 — uzman hizmeti tamamladı: randevu 'completed' + kullanıcıya değerlendirme daveti
