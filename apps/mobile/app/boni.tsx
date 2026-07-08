@@ -16,7 +16,7 @@ import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Button, Screen, StackHeader, Text, TextInput } from '../src/ui';
+import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../src/ui';
 
 interface Msg {
   id: string;
@@ -300,7 +300,7 @@ const makeStyles = (colors: ColorTokens) =>
     inputBar: {
       paddingHorizontal: space(3),
       paddingTop: space(1),
-      paddingBottom: space(1.5),
+      paddingBottom: TAB_BAR_CLEARANCE, // alt sekme çubuğu girdiyi ÖRTMESİN
       backgroundColor: colors.bg,
     },
     inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space(1) },

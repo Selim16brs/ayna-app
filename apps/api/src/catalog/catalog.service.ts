@@ -85,7 +85,7 @@ export class CatalogService {
     // dolu; demo/seed pro'da null. Bağ varsa DM CTA + KYC rozeti (EK Z.1/Z.3) çalışır.
     const sp = await this.prisma.specialist.findFirst({
       where: { proId: p.id },
-      select: { userId: true },
+      select: { userId: true, certificates: true },
     });
     const owner = sp
       ? await this.prisma.user.findUnique({ where: { id: sp.userId }, select: { kycStatus: true } })
@@ -98,6 +98,7 @@ export class CatalogService {
       staff,
       serviceRatings,
       services,
+      certs: sp?.certificates ?? [], // §6.1 — uzmanın yüklediği gerçek sertifikalar
       portfolio: p.portfolio, // uzmanın KENDİ yüklediği galeri (hesap verisi)
       promotions: parsePromos(p.promoJson), // §11 — Platinum'un profilinde yayınladığı promosyonlar
       reviews,

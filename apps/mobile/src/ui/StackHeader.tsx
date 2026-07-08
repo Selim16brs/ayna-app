@@ -29,7 +29,7 @@ export function StackHeader({ title, right }: { title: string; right?: ReactNode
         {right ?? null}
       </View>
       {title ? (
-        <Text variant="display" tone="ink" numberOfLines={1} style={styles.title}>
+        <Text variant="display" tone="onAccent" numberOfLines={1} style={styles.title}>
           {title}
         </Text>
       ) : null}

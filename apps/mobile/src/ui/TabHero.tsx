@@ -26,11 +26,12 @@ export function TabHero({
     <View style={[styles.hero, { paddingTop: insets.top + space(1.5) }]}>
       <View style={styles.row}>
         <View style={styles.textCol}>
-          <Text variant="display" tone="ink" style={styles.title}>
+          {/* Lime zemin AÇIK renk → yazı iki temada da KOYU (onAccent); ink dark'ta beyazlaşıp okunmuyordu */}
+          <Text variant="display" tone="onAccent" style={styles.title}>
             {title}
           </Text>
           {subtitle ? (
-            <Text variant="caption" tone="inkSoft" style={styles.sub}>
+            <Text variant="caption" tone="onAccent" style={styles.sub}>
               {subtitle}
             </Text>
           ) : null}
@@ -59,5 +60,5 @@ const makeStyles = (colors: ColorTokens) =>
     },
     textCol: { flex: 1 },
     title: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.6 },
-    sub: { marginTop: space(0.75) },
+    sub: { marginTop: space(0.75), opacity: 0.65 },
   });

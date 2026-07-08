@@ -76,8 +76,8 @@ export default function CircleScreen() {
         right={
           canPost ? (
             <Pressable style={styles.ask} onPress={() => router.push('/circle/new')}>
-              <Ionicons name="add" size={16} color={colors.onAccent} />
-              <Text variant="caption" tone="onAccent">
+              <Ionicons name="add" size={16} color={colors.ink} />
+              <Text variant="caption" tone="ink">
                 {t('circle.ask')}
               </Text>
             </Pressable>

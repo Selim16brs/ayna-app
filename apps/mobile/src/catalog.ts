@@ -81,5 +81,7 @@ export function useProfessionalDetail(id: string): ProfessionalDetail {
     retry: 1,
     staleTime: 60_000,
   });
-  return data ?? EMPTY_DETAIL; // demo profil YOK — sunucu tek kaynak
+  // Sunucu yanıtı EMPTY_DETAIL üstüne bindirilir: eksik alan (certs/social/starDist…)
+  // undefined kalıp ekranı ÇÖKERTEMEZ (Öne Çıkanlar → profil patlaması bununla çözüldü).
+  return data ? { ...EMPTY_DETAIL, ...data } : EMPTY_DETAIL;
 }

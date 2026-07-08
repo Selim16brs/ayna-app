@@ -15,7 +15,6 @@ import {
   categoryLabelKey,
   cityCenter,
   distanceKm,
-  priceLabel,
   type Professional,
   proCoords,
 } from '../src/data';
@@ -31,11 +30,10 @@ import { PressableScale, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '..
 const lower = (s: string) => s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
 
 // §7 — sıralama seçenekleri
-type SortKey = 'recommended' | 'rating' | 'price' | 'distance' | 'popular';
+type SortKey = 'recommended' | 'rating' | 'distance' | 'popular';
 const SORTS: { key: SortKey; label: MessageKey }[] = [
   { key: 'recommended', label: 'search.sort.recommended' },
   { key: 'rating', label: 'search.sort.rating' },
-  { key: 'price', label: 'search.sort.price' },
   { key: 'distance', label: 'search.sort.distance' },
   { key: 'popular', label: 'search.sort.popular' },
 ];
@@ -75,7 +73,6 @@ export default function SearchScreen() {
     // §7 — sıralama
     const sorted = [...filtered];
     if (sort === 'rating') sorted.sort((a, b) => b.rating - a.rating);
-    else if (sort === 'price') sorted.sort((a, b) => a.priceFrom - b.priceFrom);
     else if (sort === 'popular') sorted.sort((a, b) => b.reviewCount - a.reviewCount);
     else if (sort === 'distance') {
       const c = cityCenter(city);
@@ -306,13 +303,10 @@ export function ProRow({
             </Text>
           </View>
         </View>
+        {/* §10 gizlilik — uzmanın fiyat/para bilgisi kartlarda GÖSTERİLMEZ (yalnız kendisi görür) */}
         {right ?? (
           <View style={styles.rowRight}>
-            <View style={styles.pricePill}>
-              <Text variant="caption" tone="onAccent" style={styles.priceText}>
-                {priceLabel(pro)}
-              </Text>
-            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
           </View>
         )}
       </PressableScale>

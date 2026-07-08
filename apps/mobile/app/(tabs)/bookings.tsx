@@ -67,7 +67,8 @@ export default function BookingsScreen() {
   const [active, setActive] = useState<Seg>('upcoming');
   const bookings = useStore((s) => s.bookings);
   const allDemands = useStore((s) => s.demands);
-  const demands = allDemands.filter((d) => !d.seeded);
+  // §5.2 — randevuya DÖNÜŞEN (booked) talep artık talep değildir: Randevular'da yaşar
+  const demands = allDemands.filter((d) => !d.seeded && d.status !== 'booked');
   const now = Date.now();
 
   const isUpcoming = (a: Appointment) =>

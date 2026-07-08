@@ -5,7 +5,7 @@ import { ImageBackground, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../locale';
-import { type Professional, formatPrice } from '../data';
+import { type Professional } from '../data';
 import { type ColorTokens, radius, space } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
@@ -78,14 +78,6 @@ export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number 
                     ({pro.reviewCount})
                   </Text>
                 ) : null}
-              </View>
-              <View style={styles.priceTag}>
-                <Text variant="caption" style={styles.priceFrom}>
-                  {t('card.starting')}
-                </Text>
-                <Text variant="bodyStrong" tone="onColor" style={styles.price}>
-                  {formatPrice(pro.priceFrom)}
-                </Text>
               </View>
             </View>
           </View>

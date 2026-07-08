@@ -320,18 +320,22 @@ export default function ProfessionalScreen() {
                       <Image key={uri} source={{ uri }} style={styles.certThumb} />
                     ))}
                     <View style={styles.socialInline}>
-                      <View style={styles.socialChip}>
-                        <Ionicons name="logo-instagram" size={13} color={colors.accentFg} />
-                        <Text variant="caption" tone="inkSoft">
-                          @{pro.social.instagram}
-                        </Text>
-                      </View>
-                      <View style={styles.socialChip}>
-                        <Ionicons name="logo-tiktok" size={13} color={colors.accentFg} />
-                        <Text variant="caption" tone="inkSoft">
-                          @{pro.social.tiktok}
-                        </Text>
-                      </View>
+                      {pro.social.instagram ? (
+                        <View style={styles.socialChip}>
+                          <Ionicons name="logo-instagram" size={13} color={colors.accentFg} />
+                          <Text variant="caption" tone="inkSoft">
+                            @{pro.social.instagram}
+                          </Text>
+                        </View>
+                      ) : null}
+                      {pro.social.tiktok ? (
+                        <View style={styles.socialChip}>
+                          <Ionicons name="logo-tiktok" size={13} color={colors.accentFg} />
+                          <Text variant="caption" tone="inkSoft">
+                            @{pro.social.tiktok}
+                          </Text>
+                        </View>
+                      ) : null}
                     </View>
                   </View>
                 </>
