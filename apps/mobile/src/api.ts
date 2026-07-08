@@ -483,7 +483,29 @@ export const api = {
       {},
       token,
     ),
+  // EK Z.3 — uzman/salon KYC belge doğrulaması
+  myKyc: (token: string) => get<MyKyc>('/kyc/mine', token),
+  submitKyc: (token: string, input: { docType: KycDocType; documents: string[] }) =>
+    post<KycVerification>('/kyc', input, token),
 };
+
+// EK Z.3 — KYC tipleri
+export type KycDocType = 'id_card' | 'passport' | 'certificate';
+export type KycStatus = 'none' | 'pending' | 'approved' | 'rejected';
+export interface KycVerification {
+  id: string;
+  docType: KycDocType;
+  documents: string[];
+  status: KycStatus;
+  note: string;
+  submittedAt: string;
+  reviewedAt: string | null;
+}
+export interface MyKyc {
+  status: KycStatus;
+  verifiedAt: string | null;
+  latest: KycVerification | null;
+}
 
 // EK Z.2 — güvenlik tipleri
 export interface TrustedContact {

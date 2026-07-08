@@ -88,6 +88,12 @@ export const api = {
     req<ProfileChange>(`/admin/profile-changes/${id}/approve`, { method: 'POST' }),
   rejectProfileChange: (id: string) =>
     req<ProfileChange>(`/admin/profile-changes/${id}/reject`, { method: 'POST' }),
+  // EK Z.3 — KYC uzman doğrulama kuyruğu
+  kycQueue: (status?: string) =>
+    req<KycRow[]>(`/admin/kyc${status ? `?status=${status}` : ''}`),
+  approveKyc: (id: string) => req<KycRow>(`/admin/kyc/${id}/approve`, { method: 'POST' }),
+  rejectKyc: (id: string, note?: string) =>
+    req<KycRow>(`/admin/kyc/${id}/reject`, { method: 'POST', body: JSON.stringify({ note }) }),
   businesses: (status?: string) =>
     req<Business[]>(`/admin/businesses${status ? `?status=${status}` : ''}`),
   businessDetail: (id: string) => req<BusinessDetail>(`/admin/businesses/${id}`),
@@ -421,6 +427,19 @@ export interface ProfileChange {
   changes: Record<string, unknown>;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+}
+// EK Z.3 — KYC doğrulama kuyruğu satırı
+export interface KycRow {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole: string;
+  docType: string;
+  documents: string[];
+  status: 'pending' | 'approved' | 'rejected';
+  note: string;
+  submittedAt: string;
+  reviewedAt: string | null;
 }
 export interface Commissions {
   rate: number;

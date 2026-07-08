@@ -24,6 +24,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ProfileChangesModule } from './profile-changes/profile-changes.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { SafetyModule } from './safety/safety.module';
+import { KycModule } from './kyc/kyc.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { SafetyModule } from './safety/safety.module';
     CutoutModule,
     MessagingModule,
     SafetyModule,
+    KycModule,
   ],
 })
 export class AppModule {}

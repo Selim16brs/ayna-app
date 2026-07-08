@@ -54,6 +54,9 @@ model User {
   membershipUntil DateTime? @map("membership_until") @db.Timestamptz(6)
   // §4.6 — telefon OTP doğrulaması (mock SMS)
   phoneVerified Boolean    @default(false) @map("phone_verified")
+  // EK Z.3 — ağır KYC (uzman/salon belge doğrulaması): none | pending | approved | rejected
+  kycStatus     String     @default("none") @map("kyc_status")
+  kycVerifiedAt DateTime?  @map("kyc_verified_at") @db.Timestamptz(6)
   defaultLocale String     @default("ru") @map("default_locale")
   timezone      String     @default("Asia/Almaty")
   createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -722,6 +725,23 @@ model Message {
 
   @@index([conversationId])
   @@map("messages")
+}
+
+// EK Z.3 — Ağır KYC: uzman/salon belge doğrulaması (OTP+yüz tespiti self-publish'e EK).
+// documents: string[] belge görsel URI'leri. status: pending | approved | rejected.
+model KycVerification {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  docType     String    @map("doc_type")
+  documents   Json
+  status      String    @default("pending")
+  note        String    @default("")
+  submittedAt DateTime  @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  reviewedAt  DateTime? @map("reviewed_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@index([status])
+  @@map("kyc_verifications")
 }
 
 // EK Z.2 — Randevu güvenlik katmanı. Güvenilen kişi (acil durum kişisi).

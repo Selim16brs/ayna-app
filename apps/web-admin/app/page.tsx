@@ -24,6 +24,7 @@ import {
   type CommissionInvoice,
   type Subscription,
   type ProfileChange,
+  type KycRow,
   type I18nOverride,
   type Commissions,
   type Dispute,
@@ -50,6 +51,7 @@ type Tab =
   | 'commissions'
   | 'subscriptions'
   | 'profileChanges'
+  | 'kyc'
   | 'businesses'
   | 'professionals'
   | 'services'
@@ -95,6 +97,7 @@ export default function AdminApp() {
     { id: 'commissions', label: 'Komisyon', icon: '💰' },
     { id: 'subscriptions', label: 'Abonelikler', icon: '💎' },
     { id: 'profileChanges', label: 'Profil Onayları', icon: '📝' },
+    { id: 'kyc', label: 'Kimlik Doğrulama', icon: '🛡️' },
     { id: 'businesses', label: 'Üyelikler', icon: '🏪' },
     { id: 'professionals', label: 'Uzmanlar', icon: '💇' },
     { id: 'services', label: 'Hizmetler', icon: '🗂️' },
@@ -139,6 +142,7 @@ export default function AdminApp() {
         {tab === 'commissions' && <CommissionsView />}
         {tab === 'subscriptions' && <SubscriptionsView />}
         {tab === 'profileChanges' && <ProfileChangesView />}
+        {tab === 'kyc' && <KycView />}
         {tab === 'businesses' && <BusinessesView />}
         {tab === 'professionals' && <ProfessionalsView />}
         {tab === 'services' && <ServicesView />}
@@ -390,6 +394,89 @@ function ProfileChangesView() {
                     Onayla
                   </button>
                   <button className="btn-sm btn-danger" disabled={busy === p.id} onClick={() => act(() => api.rejectProfileChange(p.id), p.id)}>
+                    Reddet
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+// EK Z.3 — KYC uzman/salon belge doğrulama kuyruğu
+function KycView() {
+  const [status, setStatus] = useState<string>('pending');
+  const { data, loading, error, reload } = useAsync<KycRow[]>(
+    () => api.kycQueue(status || undefined),
+    [status],
+  );
+  const [busy, setBusy] = useState<string | null>(null);
+  const act = async (fn: () => Promise<unknown>, id: string) => {
+    setBusy(id);
+    try {
+      await fn();
+      reload();
+    } finally {
+      setBusy(null);
+    }
+  };
+  const DOC: Record<string, string> = { id_card: 'Kimlik', passport: 'Pasaport', certificate: 'Sertifika' };
+  const FILTERS: [string, string][] = [
+    ['pending', 'Bekleyen'],
+    ['approved', 'Onaylanan'],
+    ['rejected', 'Reddedilen'],
+    ['', 'Tümü'],
+  ];
+  return (
+    <>
+      <h1 className="page-title">Kimlik Doğrulama (KYC)</h1>
+      <p className="page-sub">Uzman/salon belge doğrulama kuyruğu — onaylanınca profilde &quot;Doğrulanmış&quot; rozeti ({data?.length ?? 0} kayıt)</p>
+      <div className="toolbar">
+        {FILTERS.map(([s, label]) => (
+          <button key={s || 'all'} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>
+            {label}
+          </button>
+        ))}
+      </div>
+      {!data ? (
+        <Gate loading={loading} error={error} onRetry={reload} />
+      ) : data.length === 0 ? (
+        <div className="card">
+          <div className="empty">Kayıt yok.</div>
+        </div>
+      ) : (
+        <div className="card">
+          {data.map((k) => (
+            <div className="list-row" key={k.id}>
+              <div className="grow">
+                <div className="name">
+                  {k.userName}{' '}
+                  <span className={`pill ${k.userRole === 'salon' ? 'info' : 'accent'}`}>
+                    {k.userRole === 'salon' ? 'Salon' : 'Uzman'}
+                  </span>
+                </div>
+                <div className="meta">
+                  {DOC[k.docType] ?? k.docType} · {k.documents.length} belge ·{' '}
+                  {new Date(k.submittedAt).toLocaleDateString('tr-TR')}
+                  {k.status === 'rejected' && k.note ? ` · Ret: ${k.note}` : ''}
+                </div>
+              </div>
+              <span className={`pill ${k.status === 'approved' ? 'approved' : k.status === 'pending' ? 'pending' : 'rejected'}`}>
+                {k.status === 'approved' ? 'Onaylandı' : k.status === 'pending' ? 'Bekliyor' : 'Reddedildi'}
+              </span>
+              {k.status === 'pending' ? (
+                <div className="actions">
+                  <button className="btn-sm btn-ok" disabled={busy === k.id} onClick={() => act(() => api.approveKyc(k.id), k.id)}>
+                    Onayla
+                  </button>
+                  <button
+                    className="btn-sm btn-danger"
+                    disabled={busy === k.id}
+                    onClick={() => act(() => api.rejectKyc(k.id, 'Belgeler yetersiz'), k.id)}
+                  >
                     Reddet
                   </button>
                 </div>

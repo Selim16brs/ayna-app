@@ -215,6 +215,8 @@ export class AuthService {
       // §11 — üyelik katmanı + bitiş (mobil premium/platinum bunu okur; admin onayıyla set edilir)
       membershipTier: user.membershipTier,
       membershipUntil: user.membershipUntil ? user.membershipUntil.toISOString() : null,
+      // EK Z.3 — ağır KYC durumu (none|pending|approved|rejected); "doğrulanmış uzman" rozeti
+      kycStatus: user.kycStatus,
       // women-only: kadın olarak kayıtlı doğrulanmış üye
       womenVerified: user.gender === 'female',
       // §12.3 — kısıtlı mod (admin ceza takip); app yeni talep oluşturmayı engeller

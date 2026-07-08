@@ -1505,6 +1505,23 @@ export const tr = {
   'safe.save': 'Kaydet',
   'safe.remove': 'Kaldır',
 
+  // EK Z.3 — KYC uzman doğrulama
+  'kyc.title': 'Kimlik doğrulama',
+  'kyc.subtitle': 'Belgelerini yükle, ekibimiz onaylasın — profilinde "Doğrulanmış" rozeti görünsün.',
+  'kyc.status_none': 'Henüz doğrulama göndermedin',
+  'kyc.status_pending': 'İnceleniyor',
+  'kyc.status_approved': 'Doğrulandı ✓',
+  'kyc.status_rejected': 'Reddedildi — tekrar gönderebilirsin',
+  'kyc.doc_type': 'Belge türü',
+  'kyc.documents': 'Belgeler',
+  'kyc.doctype.id_card': 'Kimlik',
+  'kyc.doctype.passport': 'Pasaport',
+  'kyc.doctype.certificate': 'Sertifika',
+  'kyc.submit': 'Doğrulamaya gönder',
+  'kyc.resubmit': 'Yeniden gönder',
+  'seller.menu.kyc': 'Kimlik doğrulama',
+  'seller.menu.kyc_d': 'Belge yükle, "Doğrulanmış" rozeti kazan',
+
   // Profil — Gizlilik
   'privacy.title': 'Gizlilik',
   'privacy.subtitle': 'Verilerin üzerindeki kontrol sende',
