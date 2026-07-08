@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../push/push.service';
 import { PAYMENT_PROVIDER, type PaymentProvider } from './payment.provider';
 import { paymentSplit } from './payment.split';
 
@@ -8,6 +9,7 @@ import { paymentSplit } from './payment.split';
 export class PaymentService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly push: PushService,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
   ) {}
 
@@ -85,6 +87,24 @@ export class PaymentService {
       where: { id: p.id },
       data: { status: 'paid', providerRef: charge.providerRef, paidAt: new Date() },
     });
+    // §4.3 — depozito Kaspi ile ödendiyse: randevu 'deposit_submitted' + uzmana push
+    // (uzman 'Aldım, onaylıyorum' der → randevu KESİN; akış dekont yüklemeyle birebir aynı)
+    const b = await this.prisma.booking.findUnique({ where: { id: p.bookingId } });
+    if (b?.status === 'deposit_pending') {
+      await this.prisma.booking.update({
+        where: { id: b.id },
+        data: { status: 'deposit_submitted', depositReceiptUri: `kaspi:${paid.id}` },
+      });
+      if (b.proId) {
+        const sp = await this.prisma.specialist.findFirst({ where: { proId: b.proId } });
+        if (sp)
+          void this.push.sendToUser(sp.userId, {
+            title: 'Depozito Kaspi ile ödendi 💳',
+            body: 'Müşteri depozitoyu uygulama içinden ödedi — onayla, randevu kesinleşsin.',
+            data: { route: `/booking/${b.id}` },
+          });
+      }
+    }
     return this.map(paid);
   }
 

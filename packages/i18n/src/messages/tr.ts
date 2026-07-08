@@ -1393,6 +1393,11 @@ export const tr = {
     'Onaylarsan 1.000 puan telafi hesabına eklenir ve depozito iaden başlatılır.',
   'booking.dispute.done': 'İtirazın destek ekibine iletildi.',
   // §4.3 — depozito/dekont akışı (kullanıcı)
+  'booking.deposit.kaspi': 'Kaspi ile depozito öde',
+  'booking.deposit.remaining': 'Kalan (hizmet sonrası yerinde ödenir)',
+  'survey.title': 'Deneyimin nasıldı? ⭐',
+  'survey.body':
+    '{pro} ile randevun tamamlandı — kısa bir değerlendirme bırakır mısın? Puanın uzmanın profiline işlenir.',
   'booking.deposit.title': 'Depozito adımı',
   'booking.deposit.desc': 'Randevunu kesinleştirmek için depozito gönder ve dekontunu yükle.',
   'booking.deposit.amount': 'Depozito tutarı',

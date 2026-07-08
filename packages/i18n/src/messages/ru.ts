@@ -1320,6 +1320,11 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.provider_noshow.note':
     'После подтверждения на счёт добавится 1 000 баллов компенсации и начнётся возврат депозита.',
   'booking.dispute.done': 'Ваш спор передан команде поддержки.',
+  'booking.deposit.kaspi': 'Оплатить депозит через Kaspi',
+  'booking.deposit.remaining': 'Остаток (оплачивается на месте после услуги)',
+  'survey.title': 'Как прошёл визит? ⭐',
+  'survey.body':
+    'Приём у {pro} завершён — оставишь короткий отзыв? Оценка попадёт в профиль мастера.',
   'booking.deposit.title': 'Шаг депозита',
   'booking.deposit.desc':
     'Чтобы окончательно оформить запись, отправьте депозит и загрузите квитанцию.',

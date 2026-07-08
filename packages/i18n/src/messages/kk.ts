@@ -1314,6 +1314,11 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.provider_noshow.note':
     'Растасаң, 1 000 ұпай өтемақы есебіңе қосылады және депозитіңнің қайтарылуы басталады.',
   'booking.dispute.done': 'Шағымың қолдау тобына жіберілді.',
+  'booking.deposit.kaspi': 'Kaspi арқылы кепілпұл төле',
+  'booking.deposit.remaining': 'Қалғаны (қызметтен кейін орнында төленеді)',
+  'survey.title': 'Тәжірибең қалай өтті? ⭐',
+  'survey.body':
+    '{pro} қабылдауың аяқталды — қысқа баға қалдырасың ба? Бағаң маман профиліне жазылады.',
   'booking.deposit.title': 'Депозит қадамы',
   'booking.deposit.desc': 'Жазылуыңды түпкілікті ету үшін депозит жібер және түбіртегіңді жүкте.',
   'booking.deposit.amount': 'Депозит сомасы',

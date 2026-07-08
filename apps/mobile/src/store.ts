@@ -322,6 +322,7 @@ interface State {
 
   // gizlilik: değerlendirmede kimliği gizle (salon/uzman yorum sahibini göremez)
   reviewAnonymous: boolean;
+  surveyAskedIds: string[]; // §7 — anket daveti gönderilen randevular (tek sefer)
   setReviewAnonymous: (v: boolean) => void;
 
   // favorites
@@ -533,6 +534,7 @@ export const useStore = create<State>()(
       ledger: [],
       userReviews: {},
       reviewAnonymous: true,
+      surveyAskedIds: [],
       notifications: [],
       token: null,
       currentUser: null,
@@ -1035,6 +1037,31 @@ export const useStore = create<State>()(
 
       // §4.1 adım 6 — onaylı randevular için 24s ve 2s hatırlatmaları (idempotent, bayrakla)
       checkReminders: () => {
+        // §7 — hizmet bitiminden 3 SAAT sonra değerlendirme anketi (tek sefer; puan uzmana işler)
+        {
+          const now = Date.now();
+          const asked = get().surveyAskedIds;
+          const due = get().bookings.filter(
+            (b) =>
+              b.status === 'completed' &&
+              !asked.includes(b.id) &&
+              now >= b.startMs + b.durationMin * 60_000 + 3 * 60 * 60_000,
+          );
+          if (due.length > 0) {
+            set((s) => ({ surveyAskedIds: [...s.surveyAskedIds, ...due.map((b) => b.id)] }));
+            for (const b of due)
+              get().pushNotification({
+                type: 'booking',
+                titleKey: 'survey.title',
+                bodyKey: 'survey.body',
+                params: { pro: b.proName },
+                dateLabel: 'Az önce',
+                icon: 'star-outline',
+                route: `/review/new?bookingId=${b.id}`,
+              });
+          }
+        }
+
         if (!get().notifPrefs.booking) return; // §5.4 — randevu bildirimleri kapalıysa üretme
         set((s) => {
           const now = Date.now();

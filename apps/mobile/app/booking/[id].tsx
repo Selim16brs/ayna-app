@@ -400,7 +400,25 @@ export default function BookingDetailScreen() {
             <Text variant="caption" tone="muted" style={styles.depositNote}>
               {t('booking.deposit.note')}
             </Text>
-            <Button label={t('booking.deposit.upload')} variant="primary" onPress={uploadReceipt} />
+            {/* Kalan tutar: toplam − depozito, hizmet sonrası YERİNDE ödenir (§4.3) */}
+            <View style={styles.depositRow}>
+              <Text variant="caption" tone="muted">
+                {t('booking.deposit.remaining')}
+              </Text>
+              <Text variant="bodyStrong" tone="ink">
+                {formatPrice(Math.max(0, booking.price - (booking.depositAmount ?? DEPOSIT_KZT)))}
+              </Text>
+            </View>
+            <Button
+              label={t('booking.deposit.kaspi')}
+              variant="primary"
+              onPress={() => id && router.push(`/payment/${id}`)}
+            />
+            <Button
+              label={t('booking.deposit.upload')}
+              variant="secondary"
+              onPress={uploadReceipt}
+            />
           </View>
         ) : null}
 
