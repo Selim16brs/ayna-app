@@ -35,10 +35,10 @@ export function slotTime(ms: number): string {
   return `${two(p.h)}:${two(p.min)}`;
 }
 
-/** Randevu etiketi: "Cuma · 14:00" (hafta günü i18n + Almatı saati). */
+/** Randevu etiketi: "Cuma 10.07 · 14:00" (hafta günü i18n + TARİH + Almatı saati). */
 export function formatSlot(ms: number, t: (k: MessageKey) => string): string {
   const p = almatyParts(ms);
-  return `${t(`wd.${p.wd}` as MessageKey)} · ${two(p.h)}:${two(p.min)}`;
+  return `${t(`wd.${p.wd}` as MessageKey)} ${two(p.day)}.${two(p.month + 1)} · ${two(p.h)}:${two(p.min)}`;
 }
 
 // TR-öncelikli hafta günü — hook dışı bağlamlar (store bildirimleri, türetilmiş
@@ -48,7 +48,8 @@ const WD_TR = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 /** Randevu etiketi (TR sabit): "Cuma · 14:00". t gerektirmez. */
 export function formatSlotTr(ms: number): string {
   const p = almatyParts(ms);
-  return `${WD_TR[p.wd]} · ${two(p.h)}:${two(p.min)}`;
+  // Tarih ŞART: yalnız haftagünü+saat belirsizdi ("Per · 11:00" hangi Perşembe?)
+  return `${WD_TR[p.wd]} ${two(p.day)}.${two(p.month + 1)} · ${two(p.h)}:${two(p.min)}`;
 }
 
 /**
