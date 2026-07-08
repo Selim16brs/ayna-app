@@ -1,7 +1,17 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { hasConflict } from '@ayna/domain';
 import { api } from '../../src/api';
@@ -215,93 +225,106 @@ export default function SellerRequestsScreen() {
         animationType="slide"
         onRequestClose={() => setForm(null)}
       >
-        <View style={styles.backdrop}>
+        <KeyboardAvoidingView
+          style={styles.backdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <View style={styles.sheet}>
-            <View style={styles.sheetHead}>
-              <Text variant="h2" tone="ink" style={styles.sheetTitle}>
-                {t('offer.form.title')}
-              </Text>
-              <Pressable onPress={() => setForm(null)} hitSlop={8} style={styles.close}>
-                <Ionicons name="close" size={22} color={colors.ink} />
-              </Pressable>
-            </View>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.sheetScroll}
+            >
+              <Pressable onPress={Keyboard.dismiss}>
+                <View style={styles.sheetHead}>
+                  <Text variant="h2" tone="ink" style={styles.sheetTitle}>
+                    {t('offer.form.title')}
+                  </Text>
+                  <Pressable onPress={() => setForm(null)} hitSlop={8} style={styles.close}>
+                    <Ionicons name="close" size={22} color={colors.ink} />
+                  </Pressable>
+                </View>
 
-            <Text variant="caption" tone="inkSoft" style={styles.label}>
-              {t('offer.form.price')}
-            </Text>
-            <TextInput
-              value={price}
-              onChangeText={(v) => setPrice(v.replace(/[^0-9]/g, ''))}
-              placeholder="9000"
-              placeholderTextColor={colors.muted}
-              keyboardType="number-pad"
-              style={styles.input}
-            />
-            <Text variant="caption" tone="inkSoft" style={styles.label}>
-              {t('offer.form.eta')}
-            </Text>
-            <TextInput
-              value={eta}
-              onChangeText={(v) => setEta(v.replace(/[^0-9]/g, ''))}
-              placeholder="60"
-              placeholderTextColor={colors.muted}
-              keyboardType="number-pad"
-              style={styles.input}
-            />
-            <Text variant="caption" tone="inkSoft" style={styles.label}>
-              {t('offer.form.note')}
-            </Text>
-            <TextInput
-              value={note}
-              onChangeText={setNote}
-              placeholder={t('offer.form.note_ph')}
-              placeholderTextColor={colors.muted}
-              style={styles.input}
-            />
-            <Text variant="caption" tone="inkSoft" style={styles.label}>
-              {t('offer.form.slots')}
-            </Text>
-            <View style={styles.slotHint}>
-              <Ionicons name="time-outline" size={14} color={colors.muted} />
-              <Text variant="caption" tone="muted" style={styles.flex}>
-                {t('offer.form.slots_note')}
-              </Text>
-            </View>
-            {candidates.length === 0 ? (
-              <Text variant="caption" tone="muted" style={styles.noSlots}>
-                {t('offer.form.no_slots')}
-              </Text>
-            ) : (
-              <View style={styles.slotGrid}>
-                {candidates.map((ms) => {
-                  const on = picked.includes(ms);
-                  return (
-                    <Pressable
-                      key={ms}
-                      style={[styles.slotChip, on && styles.slotChipOn]}
-                      onPress={() => toggleSlot(ms)}
-                    >
-                      {on ? <Ionicons name="checkmark" size={13} color={colors.onAccent} /> : null}
-                      <Text
-                        variant="caption"
-                        tone={on ? 'onAccent' : 'ink'}
-                        style={styles.slotChipText}
-                      >
-                        {formatSlotTr(ms)}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            )}
-            <Button
-              label={t('offer.form.send')}
-              variant={canSend ? 'primary' : 'secondary'}
-              disabled={!canSend}
-              onPress={send}
-            />
+                <Text variant="caption" tone="inkSoft" style={styles.label}>
+                  {t('offer.form.price')}
+                </Text>
+                <TextInput
+                  value={price}
+                  onChangeText={(v) => setPrice(v.replace(/[^0-9]/g, ''))}
+                  placeholder="9000"
+                  placeholderTextColor={colors.muted}
+                  keyboardType="number-pad"
+                  style={styles.input}
+                />
+                <Text variant="caption" tone="inkSoft" style={styles.label}>
+                  {t('offer.form.eta')}
+                </Text>
+                <TextInput
+                  value={eta}
+                  onChangeText={(v) => setEta(v.replace(/[^0-9]/g, ''))}
+                  placeholder="60"
+                  placeholderTextColor={colors.muted}
+                  keyboardType="number-pad"
+                  style={styles.input}
+                />
+                <Text variant="caption" tone="inkSoft" style={styles.label}>
+                  {t('offer.form.note')}
+                </Text>
+                <TextInput
+                  value={note}
+                  onChangeText={setNote}
+                  placeholder={t('offer.form.note_ph')}
+                  placeholderTextColor={colors.muted}
+                  style={styles.input}
+                />
+                <Text variant="caption" tone="inkSoft" style={styles.label}>
+                  {t('offer.form.slots')}
+                </Text>
+                <View style={styles.slotHint}>
+                  <Ionicons name="time-outline" size={14} color={colors.muted} />
+                  <Text variant="caption" tone="muted" style={styles.flex}>
+                    {t('offer.form.slots_note')}
+                  </Text>
+                </View>
+                {candidates.length === 0 ? (
+                  <Text variant="caption" tone="muted" style={styles.noSlots}>
+                    {t('offer.form.no_slots')}
+                  </Text>
+                ) : (
+                  <View style={styles.slotGrid}>
+                    {candidates.map((ms) => {
+                      const on = picked.includes(ms);
+                      return (
+                        <Pressable
+                          key={ms}
+                          style={[styles.slotChip, on && styles.slotChipOn]}
+                          onPress={() => toggleSlot(ms)}
+                        >
+                          {on ? (
+                            <Ionicons name="checkmark" size={13} color={colors.onAccent} />
+                          ) : null}
+                          <Text
+                            variant="caption"
+                            tone={on ? 'onAccent' : 'ink'}
+                            style={styles.slotChipText}
+                          >
+                            {formatSlotTr(ms)}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                )}
+                <Button
+                  label={t('offer.form.send')}
+                  variant={canSend ? 'primary' : 'secondary'}
+                  disabled={!canSend}
+                  onPress={send}
+                />
+              </Pressable>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </Screen>
   );
@@ -507,6 +530,7 @@ const makeStyles = (colors: ColorTokens) =>
     trustChip: { backgroundColor: colors.successSoft },
     trustText: { color: colors.success, fontWeight: '700' },
     backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+    sheetScroll: { paddingBottom: space(1) },
     sheet: {
       backgroundColor: colors.bg,
       borderTopLeftRadius: radius.xl,
@@ -515,6 +539,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingTop: space(2.5),
       paddingBottom: space(3),
       gap: space(0.5),
+      maxHeight: '88%',
     },
     sheetHead: {
       flexDirection: 'row',
