@@ -113,10 +113,16 @@ export interface SellerReviews {
   reviews: SellerReview[];
 }
 
-// API taban adresi: Expo dev host IP'sinden türetilir (simülatör + cihaz uyumlu).
+// API taban adresi.
+// Öncelik: EXPO_PUBLIC_API_URL (uzaktan/çok kişili test için public tünel ya da deploy URL'i,
+//   ör. https://xxxx.trycloudflare.com). Ayarlıysa uygulama buna bağlanır — farklı şehirler çalışır.
+// Yoksa: Expo dev host IP'sinden türet (yerel simülatör + aynı ağdaki cihaz).
+const explicitApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 const hostUri = Constants.expoConfig?.hostUri ?? '';
 const host = hostUri.split(':')[0] || 'localhost';
-export const API_BASE = `http://${host}:3000/api/v1`;
+export const API_BASE = explicitApiUrl
+  ? `${explicitApiUrl.replace(/\/+$/, '')}/api/v1`
+  : `http://${host}:3000/api/v1`;
 
 function authHeader(token?: string): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
