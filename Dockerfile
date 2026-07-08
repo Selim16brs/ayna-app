@@ -17,9 +17,11 @@ COPY . .
 # Böylece mobile/web-admin'in ağır bağımlılıkları kurulmaz. (pnpm: sondaki ... = bağımlılıklar)
 RUN pnpm install --frozen-lockfile --filter "@ayna/api..."
 
-# Bağımlı paketler + api pnpm ile topolojik sırayla derlenir (deps önce, api sonra) + Prisma client.
-RUN pnpm --filter "@ayna/api..." run build \
-    && pnpm --filter @ayna/api exec prisma generate
+# ÖNCE Prisma client üretilir — tsc, generated model tiplerine ihtiyaç duyar; yoksa sorgular
+# 'any' döner ve callback'ler TS7006 verir (taze kurulumda @prisma/client generate edilmemiş gelir).
+# SONRA bağımlı paketler + api pnpm ile topolojik sırayla derlenir (deps önce, api sonra).
+RUN pnpm --filter @ayna/api exec prisma generate \
+    && pnpm --filter "@ayna/api..." run build
 
 ENV NODE_ENV=production
 WORKDIR /app/apps/api
