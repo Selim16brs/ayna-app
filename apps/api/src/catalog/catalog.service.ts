@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Professional, Quote, ServiceCategory } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { localizeRows } from '../common/i18n';
 import type { CreateQuoteRequestInput } from './catalog.dto';
 
 @Injectable()
@@ -18,12 +19,13 @@ export class CatalogService {
   }
 
   // §12 — aktif kampanyalar (keşif vitrini)
-  async campaigns() {
+  async campaigns(locale?: string) {
     const rows = await this.prisma.campaign.findMany({
       where: { active: true },
       orderBy: { sortOrder: 'asc' },
     });
-    return rows.map((c) => ({
+    // §14.5 — kullanıcı diline çöz (title/subtitle), sonra DTO'ya map
+    return localizeRows(rows, locale, ['title', 'subtitle']).map((c) => ({
       id: c.id,
       title: c.title,
       subtitle: c.subtitle,
@@ -35,12 +37,12 @@ export class CatalogService {
   }
 
   // Reklam banner'ları (keşif ekranı sponsorlu şerit)
-  async ads() {
+  async ads(locale?: string) {
     const rows = await this.prisma.adBanner.findMany({
       where: { active: true },
       orderBy: { sortOrder: 'asc' },
     });
-    return rows.map((a) => ({
+    return localizeRows(rows, locale, ['title', 'subtitle']).map((a) => ({
       id: a.id,
       proId: a.proId,
       title: a.title,

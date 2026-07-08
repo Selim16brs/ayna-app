@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { type CreateQuoteRequestInput, createQuoteRequestSchema } from './catalog.dto';
@@ -15,13 +15,13 @@ export class CatalogController {
   }
 
   @Get('campaigns')
-  campaigns() {
-    return this.catalog.campaigns();
+  campaigns(@Query('locale') locale?: string) {
+    return this.catalog.campaigns(locale);
   }
 
   @Get('ads')
-  ads() {
-    return this.catalog.ads();
+  ads(@Query('locale') locale?: string) {
+    return this.catalog.ads(locale);
   }
 
   @Get('professionals')

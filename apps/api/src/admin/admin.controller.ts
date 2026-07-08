@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { AdminGuard } from '../common/admin.guard';
+import { i18nSchema } from '../content/content.dto';
 import { AdminService } from './admin.service';
 
 const rejectSchema = z.object({ reason: z.string().max(300).optional() });
@@ -22,6 +23,7 @@ const payoutSchema = z.object({
 const campaignSchema = z.object({
   title: z.string().min(2).max(80),
   subtitle: z.string().max(120).optional(),
+  i18n: i18nSchema, // §14.5 — kk/ru title/subtitle
   badge: z.string().max(12).optional(),
   category: z.string().max(40).optional(),
   image: z.string().url(),
@@ -32,6 +34,7 @@ const adSchema = z.object({
   proId: z.string().min(1).max(64),
   title: z.string().min(2).max(80),
   subtitle: z.string().max(120).optional(),
+  i18n: i18nSchema, // §14.5 — kk/ru title/subtitle
   image: z.string().url(),
   sortOrder: z.number().int().optional(),
 });

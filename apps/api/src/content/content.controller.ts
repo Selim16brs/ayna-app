@@ -12,18 +12,18 @@ export class ContentController {
   constructor(private readonly content: ContentService) {}
 
   @Get('articles')
-  articles() {
-    return this.content.publicArticles();
+  articles(@Query('locale') locale?: string) {
+    return this.content.publicArticles(locale);
   }
 
   @Get('articles/:id')
-  article(@Param('id') id: string) {
-    return this.content.publicArticle(id);
+  article(@Param('id') id: string, @Query('locale') locale?: string) {
+    return this.content.publicArticle(id, locale);
   }
 
   @Get('theme')
-  theme() {
-    return this.content.activeTheme();
+  theme(@Query('locale') locale?: string) {
+    return this.content.activeTheme(locale);
   }
 
   // Kullanıcı blog başvurusu (girişli kullanıcı → puan hedefi userId)

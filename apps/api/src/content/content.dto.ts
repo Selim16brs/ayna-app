@@ -1,8 +1,16 @@
 import { z } from 'zod';
 
+// §14.5 — GENEL kk/ru dil override'ları: her alan string ya da string[] (blog body paragrafları).
+// Boş bırakılan alan tr'ye (base) düşer. Duyuru/kampanya/reklam/blog/tema ortak kullanır.
+const localeOverride = z.record(z.string(), z.union([z.string(), z.array(z.string())]));
+export const i18nSchema = z
+  .object({ kk: localeOverride.optional(), ru: localeOverride.optional() })
+  .optional();
+
 // §12.6 Blog editörü — admin yazar/yayınlar
 export const articleSchema = z.object({
   title: z.string().min(3),
+  i18n: i18nSchema,
   tag: z.string().min(1),
   categoryCode: z.string().optional(), // ServiceCategory.code → app "Teklif al" CTA
   readMin: z.number().int().min(1).max(60).optional(),
@@ -40,15 +48,12 @@ export type ReviewApplicationInput = z.infer<typeof reviewApplicationSchema>;
 export const themeSchema = z.object({
   title: z.string().min(2),
   prompt: z.string().min(2),
+  i18n: i18nSchema,
   weekStart: z.string(), // ISO tarih
 });
 export type ThemeInput = z.infer<typeof themeSchema>;
 
-// §12.10 Toplu duyuru — segment bazlı
-// §14.5 — kk/ru dil override'ları (opsiyonel; boş bırakılan alan tr'ye düşer)
-const localeFields = z.object({ title: z.string().optional(), body: z.string().optional() }).partial();
-export const i18nSchema = z.object({ kk: localeFields.optional(), ru: localeFields.optional() }).optional();
-
+// §12.10 Toplu duyuru — segment bazlı (i18nSchema yukarıda tanımlı)
 export const announcementSchema = z
   .object({
     title: z.string().min(2),

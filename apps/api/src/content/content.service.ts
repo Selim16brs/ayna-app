@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Prisma } from '@prisma/client';
+import { localizeRow, localizeRows } from '../common/i18n';
 import type {
   AnnouncementInput,
   ApplicationInput,
@@ -22,6 +23,7 @@ interface ArticleRow {
   image: string;
   excerpt: string;
   body: string[];
+  i18n?: unknown; // §14.5 — admin edit ön-doldurma için
   published: boolean;
   publishedAt: Date | null;
   createdAt: Date;
@@ -37,6 +39,7 @@ function mapArticle(a: ArticleRow) {
     image: a.image,
     excerpt: a.excerpt,
     body: a.body,
+    i18n: a.i18n ?? null, // §14.5 — kk/ru override'ları (admin edit için)
     published: a.published,
     publishedAt: a.publishedAt,
     createdAt: a.createdAt,
@@ -55,26 +58,27 @@ export class ContentService {
   }
 
   // ── Public (app) ───────────────────────────────────────────────────────
-  async publicArticles() {
+  async publicArticles(locale?: string) {
     const rows = await this.prisma.blogArticle.findMany({
       where: { published: true },
       orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
     });
-    return rows.map(mapArticle);
+    // §14.5 — kullanıcı diline çöz (title/tag/excerpt/body), sonra DTO'ya map
+    return localizeRows(rows, locale, ['title', 'tag', 'excerpt', 'body']).map(mapArticle);
   }
 
-  async publicArticle(id: string) {
+  async publicArticle(id: string, locale?: string) {
     const a = await this.prisma.blogArticle.findFirst({ where: { id, published: true } });
     if (!a) throw new NotFoundException({ code: 'ARTICLE_NOT_FOUND', message: 'Yazı bulunamadı' });
-    return mapArticle(a);
+    return mapArticle(localizeRow(a, locale, ['title', 'tag', 'excerpt', 'body']));
   }
 
-  async activeTheme() {
+  async activeTheme(locale?: string) {
     const t = await this.prisma.weeklyTheme.findFirst({
       where: { active: true },
       orderBy: { weekStart: 'desc' },
     });
-    return t ?? null;
+    return t ? localizeRow(t, locale, ['title', 'prompt']) : null;
   }
 
   async submitApplication(input: ApplicationInput, userId?: string) {
@@ -108,6 +112,7 @@ export class ContentService {
         image: input.image ?? '',
         excerpt: input.excerpt,
         body: input.body,
+        ...(input.i18n ? { i18n: input.i18n as object } : {}), // §14.5 — kk/ru override
         published,
         publishedAt: published ? new Date() : null,
       },
@@ -132,6 +137,7 @@ export class ContentService {
         ...(patch.image !== undefined ? { image: patch.image } : {}),
         ...(patch.excerpt !== undefined ? { excerpt: patch.excerpt } : {}),
         ...(patch.body !== undefined ? { body: patch.body } : {}),
+        ...(patch.i18n !== undefined ? { i18n: patch.i18n as object } : {}), // §14.5 — kk/ru
         ...(patch.published !== undefined ? { published: patch.published } : {}),
         publishedAt,
       },
@@ -222,7 +228,12 @@ export class ContentService {
 
   async createTheme(input: ThemeInput, actorId?: string) {
     const t = await this.prisma.weeklyTheme.create({
-      data: { title: input.title, prompt: input.prompt, weekStart: new Date(input.weekStart) },
+      data: {
+        title: input.title,
+        prompt: input.prompt,
+        weekStart: new Date(input.weekStart),
+        ...(input.i18n ? { i18n: input.i18n as object } : {}), // §14.5 — kk/ru override
+      },
     });
     await this.audit('theme.create', t.id, actorId);
     return t;
@@ -278,17 +289,6 @@ export class ContentService {
     return this.prisma.announcement.findMany({ orderBy: { createdAt: 'desc' }, take: 200 });
   }
 
-  // §14.5 — base(tr) satırını i18n{kk,ru} ile locale'e göre çöz (boş override → tr'ye düşer)
-  private localize<T extends { i18n?: unknown }>(row: T, locale: string | undefined, fields: string[]): T {
-    const i18n = row.i18n as { kk?: Record<string, string>; ru?: Record<string, string> } | null | undefined;
-    if (!i18n || !locale || (locale !== 'kk' && locale !== 'ru')) return row;
-    const ov = i18n[locale];
-    if (!ov) return row;
-    const out = { ...row } as Record<string, unknown>;
-    for (const f of fields) if (ov[f]) out[f] = ov[f];
-    return out as T;
-  }
-
   // Girişli kullanıcının segmentine uyan duyurular (app bildirim listesine enjekte eder)
   // locale: kullanıcının uygulama içi dili (kk/ru/tr) → başlık/gövde o dilde döner
   async announcementsForUser(userId: string, locale?: string) {
@@ -308,6 +308,6 @@ export class ContentService {
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
-    return rows.map((r) => this.localize(r, locale, ['title', 'body']));
+    return localizeRows(rows, locale, ['title', 'body']);
   }
 }

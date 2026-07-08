@@ -168,7 +168,7 @@ export const api = {
   reviewApplication: (id: string, body: ReviewApplication) =>
     req(`/admin/content/applications/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   themes: () => req<WeeklyTheme[]>('/admin/content/themes'),
-  createTheme: (t: { title: string; prompt: string; weekStart: string }) =>
+  createTheme: (t: { title: string; prompt: string; weekStart: string; i18n?: I18nOverride }) =>
     req<WeeklyTheme>('/admin/content/themes', { method: 'POST', body: JSON.stringify(t) }),
   activateTheme: (id: string) =>
     req<WeeklyTheme>(`/admin/content/themes/${id}/activate`, { method: 'POST' }),
@@ -257,9 +257,10 @@ export interface Announcement {
 }
 
 // §14.5 — 3 dil override'ları (kk/ru). Base alanlar tr; boş bırakılan tr'ye düşer.
+// Değer string (title/tag…) veya string[] (blog body satırları) olabilir.
 export interface I18nOverride {
-  kk?: Record<string, string>;
-  ru?: Record<string, string>;
+  kk?: Record<string, string | string[]>;
+  ru?: Record<string, string | string[]>;
 }
 export interface AnnouncementInput {
   title: string;
@@ -278,6 +279,7 @@ export interface BlogArticle {
   image: string;
   excerpt: string;
   body: string[];
+  i18n?: { kk?: Record<string, string | string[]>; ru?: Record<string, string | string[]> } | null;
   published: boolean;
   publishedAt: string | null;
   createdAt: string;
@@ -286,6 +288,7 @@ export interface BlogArticle {
 export interface ArticleInput {
   title: string;
   tag: string;
+  i18n?: I18nOverride;
   categoryCode?: string | null;
   readMin?: number;
   image?: string;
@@ -595,6 +598,7 @@ export interface Campaign {
 export type NewCampaign = {
   title: string;
   subtitle?: string;
+  i18n?: I18nOverride;
   badge?: string;
   category?: string;
   image: string;
@@ -614,6 +618,7 @@ export type NewAd = {
   proId: string;
   title: string;
   subtitle?: string;
+  i18n?: I18nOverride;
   image: string;
   sortOrder?: number;
 };

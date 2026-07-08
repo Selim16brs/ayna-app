@@ -1193,17 +1193,30 @@ function ModerationView() {
 
 function CampaignsView() {
   const { data, reload } = useAsync<Campaign[]>(() => api.campaigns(), []);
-  const [form, setForm] = useState({ title: '', subtitle: '', badge: '', image: '', category: '' });
+  const empty = {
+    title: '', subtitle: '',
+    titleKk: '', subtitleKk: '', titleRu: '', subtitleRu: '',
+    badge: '', image: '', category: '',
+  };
+  const [form, setForm] = useState(empty);
+  const [lang, setLang] = useState<Lang>('tr');
+  const tKey = (lang === 'tr' ? 'title' : lang === 'kk' ? 'titleKk' : 'titleRu') as keyof typeof form;
+  const sKey = (lang === 'tr' ? 'subtitle' : lang === 'kk' ? 'subtitleKk' : 'subtitleRu') as keyof typeof form;
   const create = async () => {
-    if (form.title.length < 2 || !form.image) return;
+    if (form.title.length < 2 || !form.image) return; // tr (kaynak) zorunlu
     await api.createCampaign({
       title: form.title,
       subtitle: form.subtitle || undefined,
+      i18n: buildI18n({
+        title: { kk: form.titleKk, ru: form.titleRu },
+        subtitle: { kk: form.subtitleKk, ru: form.subtitleRu },
+      }),
       badge: form.badge || undefined,
       image: form.image,
       category: form.category || undefined,
     });
-    setForm({ title: '', subtitle: '', badge: '', image: '', category: '' });
+    setForm(empty);
+    setLang('tr');
     reload();
   };
   return (
@@ -1213,9 +1226,10 @@ function CampaignsView() {
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
-          <input className="input" placeholder="Başlık" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          <input className="input" placeholder="Alt başlık" value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} />
-          <input className="input" placeholder="Rozet (örn. %25)" value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} />
+          <LangTabs lang={lang} setLang={setLang} filled={(l) => (l === 'kk' ? !!form.titleKk || !!form.subtitleKk : !!form.titleRu || !!form.subtitleRu)} />
+          <input className="input" placeholder={lang === 'tr' ? 'Başlık (TR — kaynak)' : `Başlık (${lang.toUpperCase()})`} value={form[tKey]} onChange={(e) => setForm({ ...form, [tKey]: e.target.value })} />
+          <input className="input" placeholder={lang === 'tr' ? 'Alt başlık (TR)' : `Alt başlık (${lang.toUpperCase()})`} value={form[sKey]} onChange={(e) => setForm({ ...form, [sKey]: e.target.value })} />
+          <input className="input" placeholder="Rozet (örn. %25) — dilden bağımsız" value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })} />
           <input className="input" placeholder="Kategori kodu (örn. hair)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
           <input className="input full" placeholder="Görsel URL (https://...)" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
           <button className="btn-sm btn-ok full" onClick={create}>+ Kampanya ekle</button>
@@ -1291,18 +1305,52 @@ function ContentView() {
   };
   const [form, setForm] = useState<ArticleInput>(empty);
   const [editId, setEditId] = useState<string | null>(null);
+  // §14.5 — kk/ru override alanları (blog: title/tag/excerpt/body). body = satır bazlı metin.
+  const blankOv = { kk: { title: '', tag: '', excerpt: '', body: '' }, ru: { title: '', tag: '', excerpt: '', body: '' } };
+  const [ov, setOv] = useState(blankOv);
+  const [lang, setLang] = useState<Lang>('tr');
 
-  const bodyText = (form.body ?? []).join('\n');
-  const setBody = (text: string) => setForm({ ...form, body: text.split('\n') });
+  type BField = 'title' | 'tag' | 'excerpt' | 'body';
+  const fieldVal = (f: BField): string => {
+    if (lang === 'tr') return f === 'body' ? (form.body ?? []).join('\n') : ((form[f] as string) ?? '');
+    return ov[lang][f];
+  };
+  const setFieldVal = (f: BField, v: string) => {
+    if (lang === 'tr') {
+      if (f === 'body') setForm({ ...form, body: v.split('\n') });
+      else setForm({ ...form, [f]: v });
+    } else {
+      setOv({ ...ov, [lang]: { ...ov[lang], [f]: v } });
+    }
+  };
+  const buildArticleI18n = (): I18nOverride | undefined => {
+    const out: I18nOverride = {};
+    for (const loc of ['kk', 'ru'] as const) {
+      const o = ov[loc];
+      const entry: Record<string, string | string[]> = {};
+      if (o.title.trim()) entry.title = o.title.trim();
+      if (o.tag.trim()) entry.tag = o.tag.trim();
+      if (o.excerpt.trim()) entry.excerpt = o.excerpt.trim();
+      const b = o.body.split('\n').map((p) => p.trim()).filter(Boolean);
+      if (b.length) entry.body = b;
+      if (Object.keys(entry).length) out[loc] = entry;
+    }
+    return Object.keys(out).length ? out : undefined;
+  };
+  const resetForm = () => {
+    setForm(empty);
+    setOv(blankOv);
+    setLang('tr');
+    setEditId(null);
+  };
 
   const save = async () => {
     const body = (form.body ?? []).map((p) => p.trim()).filter(Boolean);
-    if (form.title.length < 3 || !form.tag || !form.excerpt || body.length === 0) return;
-    const payload: ArticleInput = { ...form, body, categoryCode: form.categoryCode || null };
+    if (form.title.length < 3 || !form.tag || !form.excerpt || body.length === 0) return; // tr (kaynak) zorunlu
+    const payload: ArticleInput = { ...form, body, i18n: buildArticleI18n(), categoryCode: form.categoryCode || null };
     if (editId) await api.updateArticle(editId, payload);
     else await api.createArticle(payload);
-    setForm(empty);
-    setEditId(null);
+    resetForm();
     reloadArticles();
   };
 
@@ -1318,17 +1366,34 @@ function ContentView() {
       body: a.body.length ? a.body : [''],
       published: a.published,
     });
+    // §14.5 — mevcut kk/ru override'ları ön-doldur (varsa)
+    const i = a.i18n ?? {};
+    const asStr = (v: unknown): string => (Array.isArray(v) ? v.join('\n') : typeof v === 'string' ? v : '');
+    setOv({
+      kk: { title: asStr(i.kk?.title), tag: asStr(i.kk?.tag), excerpt: asStr(i.kk?.excerpt), body: asStr(i.kk?.body) },
+      ru: { title: asStr(i.ru?.title), tag: asStr(i.ru?.tag), excerpt: asStr(i.ru?.excerpt), body: asStr(i.ru?.body) },
+    });
+    setLang('tr');
   };
 
-  const [themeForm, setThemeForm] = useState({ title: '', prompt: '', weekStart: '' });
+  const emptyTheme = { title: '', prompt: '', titleKk: '', promptKk: '', titleRu: '', promptRu: '', weekStart: '' };
+  const [themeForm, setThemeForm] = useState(emptyTheme);
+  const [themeLang, setThemeLang] = useState<Lang>('tr');
+  const thT = (themeLang === 'tr' ? 'title' : themeLang === 'kk' ? 'titleKk' : 'titleRu') as keyof typeof themeForm;
+  const thP = (themeLang === 'tr' ? 'prompt' : themeLang === 'kk' ? 'promptKk' : 'promptRu') as keyof typeof themeForm;
   const createTheme = async () => {
-    if (themeForm.title.length < 2 || themeForm.prompt.length < 2) return;
+    if (themeForm.title.length < 2 || themeForm.prompt.length < 2) return; // tr (kaynak) zorunlu
     await api.createTheme({
       title: themeForm.title,
       prompt: themeForm.prompt,
       weekStart: themeForm.weekStart || new Date().toISOString(),
+      i18n: buildI18n({
+        title: { kk: themeForm.titleKk, ru: themeForm.titleRu },
+        prompt: { kk: themeForm.promptKk, ru: themeForm.promptRu },
+      }),
     });
-    setThemeForm({ title: '', prompt: '', weekStart: '' });
+    setThemeForm(emptyTheme);
+    setThemeLang('tr');
     reloadThemes();
   };
 
@@ -1346,17 +1411,22 @@ function ContentView() {
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="section-title">{editId ? 'Yazıyı düzenle' : 'Yeni yazı'}</div>
         <div className="form-inline">
-          <input
-            className="input"
-            placeholder="Başlık"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          <LangTabs
+            lang={lang}
+            setLang={setLang}
+            filled={(l) => l !== 'tr' && Object.values(ov[l]).some((v) => !!v.trim())}
           />
           <input
             className="input"
-            placeholder="Etiket (örn. Bakım)"
-            value={form.tag}
-            onChange={(e) => setForm({ ...form, tag: e.target.value })}
+            placeholder={lang === 'tr' ? 'Başlık (TR — kaynak)' : `Başlık (${lang.toUpperCase()})`}
+            value={fieldVal('title')}
+            onChange={(e) => setFieldVal('title', e.target.value)}
+          />
+          <input
+            className="input"
+            placeholder={lang === 'tr' ? 'Etiket (örn. Bakım)' : `Etiket (${lang.toUpperCase()})`}
+            value={fieldVal('tag')}
+            onChange={(e) => setFieldVal('tag', e.target.value)}
           />
           <input
             className="input"
@@ -1379,16 +1449,16 @@ function ContentView() {
           />
           <input
             className="input full"
-            placeholder="Özet (kart altında görünür)"
-            value={form.excerpt}
-            onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+            placeholder={lang === 'tr' ? 'Özet (kart altında görünür)' : `Özet (${lang.toUpperCase()})`}
+            value={fieldVal('excerpt')}
+            onChange={(e) => setFieldVal('excerpt', e.target.value)}
           />
           <textarea
             className="input full"
-            placeholder="İçerik — her satır bir paragraf"
+            placeholder={lang === 'tr' ? 'İçerik — her satır bir paragraf' : `İçerik (${lang.toUpperCase()}) — her satır bir paragraf`}
             rows={6}
-            value={bodyText}
-            onChange={(e) => setBody(e.target.value)}
+            value={fieldVal('body')}
+            onChange={(e) => setFieldVal('body', e.target.value)}
           />
           <label className="check">
             <input
@@ -1402,13 +1472,7 @@ function ContentView() {
             {editId ? 'Kaydet' : '+ Yazı ekle'}
           </button>
           {editId && (
-            <button
-              className="btn-sm"
-              onClick={() => {
-                setForm(empty);
-                setEditId(null);
-              }}
-            >
+            <button className="btn-sm" onClick={resetForm}>
               Vazgeç
             </button>
           )}
@@ -1535,17 +1599,22 @@ function ContentView() {
       <p className="page-sub">App&apos;te haftanın sorusu/teması. Tek tema aktif olabilir.</p>
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
+          <LangTabs
+            lang={themeLang}
+            setLang={setThemeLang}
+            filled={(l) => (l === 'kk' ? !!themeForm.titleKk || !!themeForm.promptKk : !!themeForm.titleRu || !!themeForm.promptRu)}
+          />
           <input
             className="input"
-            placeholder="Tema başlığı"
-            value={themeForm.title}
-            onChange={(e) => setThemeForm({ ...themeForm, title: e.target.value })}
+            placeholder={themeLang === 'tr' ? 'Tema başlığı (TR — kaynak)' : `Tema başlığı (${themeLang.toUpperCase()})`}
+            value={themeForm[thT]}
+            onChange={(e) => setThemeForm({ ...themeForm, [thT]: e.target.value })}
           />
           <input
             className="input full"
-            placeholder="Soru / yönlendirme metni"
-            value={themeForm.prompt}
-            onChange={(e) => setThemeForm({ ...themeForm, prompt: e.target.value })}
+            placeholder={themeLang === 'tr' ? 'Soru / yönlendirme metni' : `Soru / yönlendirme (${themeLang.toUpperCase()})`}
+            value={themeForm[thP]}
+            onChange={(e) => setThemeForm({ ...themeForm, [thP]: e.target.value })}
           />
           <input
             className="input"
@@ -1721,18 +1790,27 @@ function AnnouncementsView() {
 function AdsView() {
   const { data: ads, reload } = useAsync<AdBanner[]>(() => api.ads(), []);
   const { data: pros } = useAsync<Pro[]>(() => api.professionals(), []);
-  const [form, setForm] = useState({ proId: '', title: '', subtitle: '', image: '' });
+  const empty = { proId: '', title: '', subtitle: '', titleKk: '', subtitleKk: '', titleRu: '', subtitleRu: '', image: '' };
+  const [form, setForm] = useState(empty);
+  const [lang, setLang] = useState<Lang>('tr');
+  const tKey = (lang === 'tr' ? 'title' : lang === 'kk' ? 'titleKk' : 'titleRu') as keyof typeof form;
+  const sKey = (lang === 'tr' ? 'subtitle' : lang === 'kk' ? 'subtitleKk' : 'subtitleRu') as keyof typeof form;
   const proName = (id: string) => pros?.find((p) => p.id === id)?.name ?? id;
 
   const create = async () => {
-    if (!form.proId || form.title.length < 2 || !form.image) return;
+    if (!form.proId || form.title.length < 2 || !form.image) return; // tr (kaynak) zorunlu
     await api.createAd({
       proId: form.proId,
       title: form.title,
       subtitle: form.subtitle || undefined,
+      i18n: buildI18n({
+        title: { kk: form.titleKk, ru: form.titleRu },
+        subtitle: { kk: form.subtitleKk, ru: form.subtitleRu },
+      }),
       image: form.image,
     });
-    setForm({ proId: '', title: '', subtitle: '', image: '' });
+    setForm(empty);
+    setLang('tr');
     reload();
   };
 
@@ -1758,17 +1836,18 @@ function AdsView() {
               </option>
             ))}
           </select>
+          <LangTabs lang={lang} setLang={setLang} filled={(l) => (l === 'kk' ? !!form.titleKk || !!form.subtitleKk : !!form.titleRu || !!form.subtitleRu)} />
           <input
             className="input"
-            placeholder="Başlık"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            placeholder={lang === 'tr' ? 'Başlık (TR — kaynak)' : `Başlık (${lang.toUpperCase()})`}
+            value={form[tKey]}
+            onChange={(e) => setForm({ ...form, [tKey]: e.target.value })}
           />
           <input
             className="input"
-            placeholder="Alt başlık (örn. Balayage'de %30)"
-            value={form.subtitle}
-            onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+            placeholder={lang === 'tr' ? 'Alt başlık (TR)' : `Alt başlık (${lang.toUpperCase()})`}
+            value={form[sKey]}
+            onChange={(e) => setForm({ ...form, [sKey]: e.target.value })}
           />
           <input
             className="input"

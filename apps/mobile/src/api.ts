@@ -7,6 +7,13 @@ import type {
   Professional,
   ProfessionalDetail,
 } from './data';
+import { getCurrentLocale } from './locale';
+
+// §14.5 — admin→app içeriklerini kullanıcı dilinde çöz (kk/ru override, tr fallback)
+function localeQuery(): string {
+  const l = getCurrentLocale();
+  return l && l !== 'tr' ? `?locale=${l}` : '';
+}
 
 export type LoyaltyTierKey = 'bronze' | 'silver' | 'gold';
 
@@ -264,9 +271,9 @@ export interface ApiQuote {
 export const api = {
   categories: () => get<ApiCategory[]>('/categories'),
   // §12 — kampanyalar (keşif vitrini)
-  campaigns: () => get<Campaign[]>('/campaigns'),
+  campaigns: () => get<Campaign[]>(`/campaigns${localeQuery()}`),
   // Reklam banner'ları (keşif ekranı sponsorlu şerit)
-  ads: () => get<AdBanner[]>('/ads'),
+  ads: () => get<AdBanner[]>(`/ads${localeQuery()}`),
   // Backend artık sector/kind/district/experienceYears döndürür → mobil Professional ile uyumlu
   professionals: () => get<Professional[]>('/professionals'),
   professional: (id: string) => get<ProfessionalDetail>(`/professionals/${id}`),
@@ -406,8 +413,8 @@ export const api = {
     post<LoyaltySummary>('/loyalty/redeem', { rewardId }, token),
 
   // §12.6 İçerik — admin'in yayınladığı blog + haftalık tema
-  contentArticles: () => get<ApiArticle[]>('/content/articles'),
-  contentTheme: () => get<ApiWeeklyTheme | null>('/content/theme'),
+  contentArticles: () => get<ApiArticle[]>(`/content/articles${localeQuery()}`),
+  contentTheme: () => get<ApiWeeklyTheme | null>(`/content/theme${localeQuery()}`),
   submitBlog: (token: string, input: BlogSubmission) =>
     post<{ id: string; status: string }>('/content/applications', input, token),
   // §12.10 — kullanıcının segmentine uyan toplu duyurular

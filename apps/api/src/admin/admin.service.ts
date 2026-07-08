@@ -642,6 +642,7 @@ export class AdminService {
   async createCampaign(input: {
     title: string;
     subtitle?: string | undefined;
+    i18n?: unknown;
     badge?: string | undefined;
     category?: string | undefined;
     image: string;
@@ -652,6 +653,7 @@ export class AdminService {
       data: {
         title: input.title,
         subtitle: input.subtitle ?? '',
+        ...(input.i18n ? { i18n: input.i18n as object } : {}), // §14.5 — kk/ru
         badge: input.badge ?? '',
         category: input.category ?? null,
         image: input.image,
@@ -683,6 +685,7 @@ export class AdminService {
     proId: string;
     title: string;
     subtitle?: string | undefined;
+    i18n?: unknown;
     image: string;
     sortOrder?: number | undefined;
   }) {
@@ -691,6 +694,7 @@ export class AdminService {
         proId: input.proId,
         title: input.title,
         subtitle: input.subtitle ?? '',
+        ...(input.i18n ? { i18n: input.i18n as object } : {}), // §14.5 — kk/ru
         image: input.image,
         sortOrder: input.sortOrder ?? 0,
       },
