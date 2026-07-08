@@ -6,8 +6,8 @@ import type { MessageKey } from '@ayna/i18n';
 import { hasConflict } from '@ayna/domain';
 import { CATEGORIES, type DemandRequest, formatPrice } from '../../src/data';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
-import { useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
+import { fillParams, useLocale } from '../../src/locale';
+import { sellerTrialInfo, useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
@@ -33,6 +33,11 @@ export default function SellerRequestsScreen() {
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   // §11 — açık taleplere YANIT VERMEK premium'a özel; premium olmayan görür ama teklif veremez.
   const premium = useStore((s) => s.premium);
+  // §11 — kayıttan itibaren 3 gün ÜCRETSİZ deneme: bu sürede premium gibi tam erişim.
+  const trialStart = useStore((s) => s.sellerTrialStart);
+  const trial = sellerTrialInfo(trialStart);
+  // Tam erişim = premium/platinum VEYA deneme süresi devam ediyor.
+  const canAccess = premium || trial.active;
   // §4.4 — kısıtlı mod: ceza doğunca uzman yeni talep göremez/teklif veremez.
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   const router = useRouter();
@@ -85,7 +90,7 @@ export default function SellerRequestsScreen() {
 
   function send() {
     if (!form) return;
-    if (!premium) {
+    if (!canAccess) {
       setForm(null);
       upsell();
       return;
@@ -125,11 +130,28 @@ export default function SellerRequestsScreen() {
           </View>
         ) : (
           <>
-        {/* §11 — premium değilse: görebilir ama yanıt veremez (upsell) */}
-        {!premium ? (
+        {/* §11 — ücretsiz deneme sürüyor: davetkâr bilgi şeridi (kilit değil) */}
+        {trial.active && !premium ? (
+          <View style={[styles.premiumBanner, styles.trialBanner]}>
+            <View style={styles.premiumIcon}>
+              <Ionicons name="gift" size={16} color={colors.accentFg} />
+            </View>
+            <View style={styles.flex}>
+              <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                {t('requests.trial_title')}
+              </Text>
+              <Text variant="caption" tone="muted" numberOfLines={2}>
+                {fillParams(t('requests.trial_banner'), { n: trial.daysLeft })}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
+        {/* §11 — deneme bitti + premium değil: görebildiği tek şey kilit; teklif veremez, detay göremez */}
+        {!canAccess ? (
           <Pressable style={styles.premiumBanner} onPress={upsell}>
             <View style={styles.premiumIcon}>
-              <Ionicons name="lock-closed" size={16} color={colors.accentFg} />
+              <Ionicons name="sparkles" size={16} color={colors.accentFg} />
             </View>
             <View style={styles.flex}>
               <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
@@ -159,8 +181,8 @@ export default function SellerRequestsScreen() {
             <RequestCard
               key={d.id}
               demand={d}
-              locked={!premium}
-              onGive={() => (premium ? openForm(d.id) : upsell())}
+              locked={!canAccess}
+              onGive={() => (canAccess ? openForm(d.id) : upsell())}
             />
           ))
         )}
@@ -293,44 +315,57 @@ function RequestCard({
         </View>
       </View>
 
-      {demand.note ? (
-        <Text variant="caption" tone="inkSoft" style={styles.note} numberOfLines={2}>
-          {demand.note}
-        </Text>
-      ) : null}
+      {locked ? (
+        /* §11 — deneme bitti + premium değil: DETAYLAR gizli (not/mesafe/bütçe/teklif sayısı).
+           Yalnızca kategori + geri sayım görünür; içerik için üyelik yükseltme daveti. */
+        <View style={styles.lockedBox}>
+          <Ionicons name="sparkles" size={15} color={colors.accentFg} />
+          <Text variant="caption" tone="inkSoft" style={styles.flex}>
+            {t('requests.locked_hint')}
+          </Text>
+        </View>
+      ) : (
+        <>
+          {demand.note ? (
+            <Text variant="caption" tone="inkSoft" style={styles.note} numberOfLines={2}>
+              {demand.note}
+            </Text>
+          ) : null}
 
-      <View style={styles.metaRow}>
-        {/* §9.3 — mesafe/şehir (privacy: kullanıcı adresi ASLA gösterilmez, yalnızca yaklaşık) */}
-        <View style={styles.metaChip}>
-          <Ionicons name="location-outline" size={12} color={colors.inkSoft} />
-          <Text variant="caption" tone="inkSoft">
-            {demand.city} · ~{estKm(demand.id)} km
-          </Text>
-        </View>
-        {demand.budget ? (
-          <View style={styles.metaChip}>
-            <Ionicons name="wallet-outline" size={12} color={colors.inkSoft} />
-            <Text variant="caption" tone="inkSoft">
-              {t('seller.requests.budget')}: {formatPrice(demand.budget)}
-            </Text>
+          <View style={styles.metaRow}>
+            {/* §9.3 — mesafe/şehir (privacy: kullanıcı adresi ASLA gösterilmez, yalnızca yaklaşık) */}
+            <View style={styles.metaChip}>
+              <Ionicons name="location-outline" size={12} color={colors.inkSoft} />
+              <Text variant="caption" tone="inkSoft">
+                {demand.city} · ~{estKm(demand.id)} km
+              </Text>
+            </View>
+            {demand.budget ? (
+              <View style={styles.metaChip}>
+                <Ionicons name="wallet-outline" size={12} color={colors.inkSoft} />
+                <Text variant="caption" tone="inkSoft">
+                  {t('seller.requests.budget')}: {formatPrice(demand.budget)}
+                </Text>
+              </View>
+            ) : null}
+            {/* §7.3 — yalnız POZİTİF rozet (yüksek tamamlanma); negatif sinyal asla gösterilmez */}
+            {demand.trusted ? (
+              <View style={[styles.metaChip, styles.trustChip]}>
+                <Ionicons name="shield-checkmark" size={12} color={colors.success} />
+                <Text variant="caption" style={styles.trustText}>
+                  {t('trust.reliable')}
+                </Text>
+              </View>
+            ) : null}
+            <View style={styles.metaChip}>
+              <Ionicons name="pricetags-outline" size={12} color={colors.inkSoft} />
+              <Text variant="caption" tone="inkSoft">
+                {demand.offers.length} {t('quotes.count')}
+              </Text>
+            </View>
           </View>
-        ) : null}
-        {/* §7.3 — yalnız POZİTİF rozet (yüksek tamamlanma); negatif sinyal asla gösterilmez */}
-        {demand.trusted ? (
-          <View style={[styles.metaChip, styles.trustChip]}>
-            <Ionicons name="shield-checkmark" size={12} color={colors.success} />
-            <Text variant="caption" style={styles.trustText}>
-              {t('trust.reliable')}
-            </Text>
-          </View>
-        ) : null}
-        <View style={styles.metaChip}>
-          <Ionicons name="pricetags-outline" size={12} color={colors.inkSoft} />
-          <Text variant="caption" tone="inkSoft">
-            {demand.offers.length} {t('quotes.count')}
-          </Text>
-        </View>
-      </View>
+        </>
+      )}
 
       <Button
         label={locked ? t('requests.give_premium') : t('seller.requests.give')}
@@ -364,6 +399,18 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.accentSoft,
       borderRadius: radius.lg,
       padding: space(1.5),
+    },
+    // §11 — ücretsiz deneme şeridi (davetkâr, kilit değil)
+    trialBanner: { backgroundColor: colors.successSoft },
+    // §11 — kilitli kartta detay yerine gösterilen davet kutusu
+    lockedBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      backgroundColor: colors.accentSoft,
+      borderRadius: radius.md,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(1),
     },
     premiumIcon: {
       width: 36,

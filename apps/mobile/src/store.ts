@@ -177,6 +177,9 @@ interface State {
   // §5.6.2 — premium üyelik durumu (satın alma app-dışı; burada mock bayrak)
   premium: boolean;
   setPremium: (v: boolean) => void;
+  // §11 — uzman kaydından itibaren 3 gün ÜCRETSİZ deneme: bu sürede tüm talepleri görüp
+  // teklif verebilir. Süre bitince premium/platinum değilse detay+teklif kilitlenir.
+  sellerTrialStart: number | null;
   points: number;
   raffleEntries: number;
   // §8.1 — puan kazanım limitleri: ilk randevu 300 (tek seferlik) + W2W beğeni 1/ay maks 100
@@ -510,6 +513,7 @@ export const useStore = create<State>()(
   notifications: SEED_NOTIFICATIONS,
   token: null,
   currentUser: null,
+  sellerTrialStart: null,
   // Mevcut profilde başlangıç fotoğrafı (kullanıcı değiştirebilir/kaldırabilir)
   avatarUri:
     'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=240&h=240&fit=crop&crop=faces&q=80',
@@ -555,7 +559,18 @@ export const useStore = create<State>()(
   setSalonProfile: (p) => set((s) => ({ salonProfile: { ...s.salonProfile, ...p } })),
 
   setAuth: (session) => {
-    set({ token: session.token, currentUser: session.user });
+    set((s) => {
+      // §11 — uzman/salon ise 3 günlük ücretsiz deneme sayacını başlat. Aynı kullanıcı tekrar
+      // giriş yaparsa mevcut başlangıç korunur; farklı kullanıcı/rol için sıfırlanır.
+      const isSeller = session.user.role === 'professional' || session.user.role === 'salon';
+      const sameUser = s.currentUser?.id === session.user.id;
+      const sellerTrialStart = isSeller
+        ? sameUser && s.sellerTrialStart != null
+          ? s.sellerTrialStart
+          : Date.now()
+        : null;
+      return { token: session.token, currentUser: session.user, sellerTrialStart };
+    });
     void get().hydrateLoyalty();
     void get().hydrateBookings();
   },
@@ -1900,6 +1915,7 @@ export const useStore = create<State>()(
       partialize: (s) => ({
         token: s.token,
         currentUser: s.currentUser,
+        sellerTrialStart: s.sellerTrialStart, // §11 — 3 günlük ücretsiz deneme sayacı korunur
         avatarUri: s.avatarUri,
         cutoutUri: s.cutoutUri, // §5.1.1 — cut-out foto app yeniden açılınca korunur
         sellerServices: s.sellerServices,
@@ -1937,6 +1953,17 @@ export const selectCommissionRate = (s: State): number =>
 // §11 — üyelik katmanı (upsell teşviki bunu kullanır). Primitive string → hook için güvenli.
 export const selectTier = (s: State): 'free' | 'premium' | 'platinum' =>
   s.platinum ? 'platinum' : s.premium ? 'premium' : 'free';
+
+// §11 — uzman ücretsiz deneme: kayıttan itibaren 3 gün. SAF yardımcı (bileşende çağrılır,
+// useStore selektörü olarak KULLANMA — her render yeni obje döner). daysLeft: kalan tam gün (yukarı).
+export const SELLER_TRIAL_DAYS = 3;
+const SELLER_TRIAL_MS = SELLER_TRIAL_DAYS * 24 * 60 * 60 * 1000;
+export const sellerTrialInfo = (start: number | null): { active: boolean; daysLeft: number } => {
+  if (start == null) return { active: false, daysLeft: 0 };
+  const elapsed = Date.now() - start;
+  const active = elapsed < SELLER_TRIAL_MS;
+  return { active, daysLeft: active ? Math.max(1, Math.ceil((SELLER_TRIAL_MS - elapsed) / 86_400_000)) : 0 };
+};
 
 // §11 — ALWAYS: geçerli oturumun (uzman/salon ya da müşteri) bağları.
 // NOT: bunlar SAF yardımcılar (bileşende useMemo ile çağrılır) — doğrudan useStore
