@@ -144,17 +144,14 @@ export default function DiscoverScreen() {
             </View>
           </View>
           {/* §5.1.1 — premium cut-out foto varsa onu göster; yoksa varsayılan çizim */}
-          <Image
-            source={
-              cutoutUri
-                ? { uri: cutoutUri }
-                : avatarUri
-                  ? { uri: avatarUri }
-                  : require('../../assets/hero-user.png')
-            }
-            style={styles.heroPhoto}
-            resizeMode="contain"
-          />
+          {/* Sıfır-demo: kullanıcının KENDİ fotosu yoksa sahte model gösterilmez */}
+          {cutoutUri || avatarUri ? (
+            <Image
+              source={{ uri: cutoutUri ?? avatarUri ?? '' }}
+              style={styles.heroPhoto}
+              resizeMode="contain"
+            />
+          ) : null}
 
           {/* Dalga geçişi — yeşilden beyaza (pembe DEĞİL; "Dileğin Nedir?" ayrı kart) */}
           <View style={styles.waveAbs}>

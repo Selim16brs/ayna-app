@@ -74,11 +74,8 @@ export default function SellerShareScreen() {
   const cutoutUri = useStore((s) => s.cutoutUri);
   const avatarUri = useStore((s) => s.avatarUri);
   // Karttaki portre GERÇEK: cut-out > yüklenen foto > nötr çizim (stok model DEĞİL)
-  const portrait = cutoutUri
-    ? { uri: cutoutUri }
-    : avatarUri
-      ? { uri: avatarUri }
-      : require('../../assets/hero-expert.png');
+  // Sıfır-demo: foto yoksa sahte model YOK — portre alanı boş kalır
+  const portrait = cutoutUri ? { uri: cutoutUri } : avatarUri ? { uri: avatarUri } : null;
   const isSalon = useStore((s) => s.currentUser?.role === 'salon');
   const businessName = useStore((s) => s.currentUser?.businessName);
   const svgRef = useRef<Svg>(null);
@@ -191,14 +188,16 @@ export default function SellerShareScreen() {
             </SvgText>
 
             {/* uzman cut-out fotoğrafı (panel bandında) */}
-            <SvgImage
-              href={portrait}
-              x={470}
-              y={176}
-              width={546}
-              height={820}
-              preserveAspectRatio="xMidYMax meet"
-            />
+            {portrait ? (
+              <SvgImage
+                href={portrait}
+                x={470}
+                y={176}
+                width={546}
+                height={820}
+                preserveAspectRatio="xMidYMax meet"
+              />
+            ) : null}
 
             {/* beyaz kimlik kartı (paneli örter) */}
             <Rect

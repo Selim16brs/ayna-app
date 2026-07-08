@@ -178,17 +178,14 @@ export default function ReportsScreen() {
             </View>
           </View>
           {/* §5.1.1 — cut-out portre varsa onu; yoksa yüklenen ham foto; o da yoksa varsayılan çizim */}
-          <Image
-            source={
-              cutoutUri
-                ? { uri: cutoutUri }
-                : avatarUri
-                  ? { uri: avatarUri }
-                  : require('../../assets/hero-expert.png')
-            }
-            style={styles.heroPhoto}
-            resizeMode="contain"
-          />
+          {/* Sıfır-demo: uzmanın KENDİ fotosu yoksa sahte model gösterilmez */}
+          {cutoutUri || avatarUri ? (
+            <Image
+              source={{ uri: cutoutUri ?? avatarUri ?? '' }}
+              style={styles.heroPhoto}
+              resizeMode="contain"
+            />
+          ) : null}
           {/* Yeşilin dalgalı bitişi (dalgalanma) */}
           <View style={styles.waveAbs}>
             <WaveLayered sliver={colors.bg} bottom={colors.bg} height={44} />
