@@ -23,10 +23,11 @@ export function useProfessionals(): Professional[] {
     retry: 1,
     staleTime: 60_000,
   });
+  const token = useStore((s) => s.token);
   const city = useStore((s) => s.currentUser?.city);
-  // Sunucu verisinde city yoksa yerel veriye düş (şehir filtresi çalışsın)
-  const server = data && data.length > 0 ? data : null;
-  const base = server && server.some((p) => p.city) ? server : PROFESSIONALS;
+  // Faz B — SUNUCU CEVAP VERDİYSE o liste ESASTIR (boşsa boş: gerçek boş-durum görünür).
+  // Yerel mock kataloğa yalnız girişsiz demo + sunucuya ulaşılamadığında düşülür.
+  const base = data ?? (token ? [] : PROFESSIONALS);
   if (!city) return base;
   return base.filter((p) => !p.city || p.city === city);
 }

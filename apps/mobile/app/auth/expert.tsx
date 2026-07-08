@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
@@ -11,7 +11,7 @@ function fmtDate(d: Date): string {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 import { api } from '../../src/api';
-import { CITIES, PROFESSIONALS } from '../../src/data';
+import { CITIES } from '../../src/data';
 import { getDeviceFingerprint } from '../../src/device';
 import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
 import { useLocale } from '../../src/locale';
@@ -33,8 +33,7 @@ import {
   WorkingHours,
 } from '../../src/ui';
 
-// Sistemde kayıtlı salonlar (uzmanın bağlanacağı) — data'dan
-const SALONS = PROFESSIONALS.filter((p) => p.kind === 'salon');
+// Faz B — uzmanın bağlanacağı salonlar GERÇEK kayıtlı işletmelerden gelir (mock değil).
 const lower = (s: string) => s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
 
 const SERVICE_CATS = activeCategories();
@@ -79,8 +78,20 @@ export default function ExpertRegisterScreen() {
 
   // Normal uzman 7, premium 20 (kayıtta premium değil → 7)
   const PORTFOLIO_MAX = 7;
+  // Faz B — kayıtlı işletmeler backend'den (onaylı + onay bekleyen; mock DEĞİL)
+  const [salons, setSalons] = useState<{ id: string; name: string; city: string; sector: string }[]>([]);
+  useEffect(() => {
+    let alive = true;
+    api
+      .searchableBusinesses()
+      .then((rows) => alive && setSalons(rows))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, []);
   const salonResults = salonQuery.trim()
-    ? SALONS.filter((s) => lower(s.name).includes(lower(salonQuery.trim())))
+    ? salons.filter((s) => lower(s.name).includes(lower(salonQuery.trim())))
     : [];
 
   async function pickPhoto() {
@@ -467,13 +478,15 @@ export default function ExpertRegisterScreen() {
                             setSalonQuery('');
                           }}
                         >
-                          <Image source={{ uri: s.image }} style={styles.salonThumb} />
+                          <View style={[styles.salonThumb, styles.salonThumbIcon]}>
+                            <Ionicons name="storefront-outline" size={20} color={colors.inkSoft} />
+                          </View>
                           <View style={styles.selectedText}>
                             <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
                               {s.name}
                             </Text>
                             <Text variant="caption" tone="muted" numberOfLines={1}>
-                              {s.city} · {s.district}
+                              {s.city} · {s.sector}
                             </Text>
                           </View>
                           <Ionicons name="chevron-forward" size={18} color={colors.muted} />
@@ -798,5 +811,6 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.md,
       backgroundColor: colors.bgSunken,
     },
+    salonThumbIcon: { alignItems: 'center', justifyContent: 'center' },
     footer: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(3) },
   });

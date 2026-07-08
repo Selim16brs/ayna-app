@@ -382,6 +382,28 @@ interface State {
 
 // Oturum (token/kullanıcı/mod) AsyncStorage'da KALICI saklanır — reload'da çıkış yapılmaz,
 // alt bar kaybolmaz. Diğer state (mock bookings vb.) persist edilmez.
+// Faz B — GİRİŞLİ hesapta tohum/mock KİŞİSEL veri asla görünmez. Bu dilimler persist
+// EDİLMEZ (her açılışta initial-state tohumlarından gelir) → girişli açılışta sıfırlanır;
+// gerçek değerleri hydrateLoyalty/hydrateBookings/hydrateDemands doldurur.
+// (avatar/cutout/premium gibi PERSIST edilen kullanıcı verileri BURADA sıfırlanmaz.)
+const SEEDED_PERSONAL_RESET: Partial<State> = {
+  bookings: [],
+  demands: [],
+  points: 0,
+  raffleEntries: 0,
+  tier: null,
+  ledger: [],
+  notifications: [],
+  userReviews: {},
+  favorites: [],
+  addresses: [],
+  careRoutines: [],
+  personalLogs: [],
+  firstBookingBonusGiven: false,
+  w2wLikeMonth: '',
+  w2wLikePoints: 0,
+};
+
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
@@ -585,10 +607,30 @@ export const useStore = create<State>()(
               ? s.sellerTrialStart
               : Date.now()
             : null;
-          return { token: session.token, currentUser: session.user, sellerTrialStart };
+          // Faz B — FARKLI kullanıcı girişinde tüm kişisel dilimler sıfırlanır: tohumlar +
+          // önceki kullanıcının persist edilen verileri (avatar/cutout/premium/sertifika)
+          // yeni hesaba SIZMAZ. Gerçek veriler hydrate* ile dolar.
+          const personalReset = sameUser
+            ? {}
+            : {
+                ...SEEDED_PERSONAL_RESET,
+                avatarUri: null,
+                cutoutUri: null,
+                premium: false,
+                platinum: false,
+                sellerSocial: emptySocial,
+                sellerCerts: [],
+              };
+          return {
+            token: session.token,
+            currentUser: session.user,
+            sellerTrialStart,
+            ...personalReset,
+          };
         });
         void get().hydrateLoyalty();
         void get().hydrateBookings();
+        void get().hydrateDemands();
       },
       markPhoneVerified: () =>
         set((s) =>
@@ -1961,6 +2003,13 @@ export const useStore = create<State>()(
     },
   ),
 );
+
+// Faz B — GİRİŞLİ açılışta tohumları at: persist edilmeyen kişisel dilimler (puan 340,
+// tohum bildirim/randevu/talep/bakım günlüğü) her açılışta initial-state'ten geri geliyordu.
+// Oturum varsa bunlar sıfırlanır; gerçek değerleri _layout'taki hydrate* çağrıları doldurur.
+useStore.persist.onFinishHydration((state) => {
+  if (state.token) useStore.setState(SEEDED_PERSONAL_RESET);
+});
 
 // ── Türetilmiş seçiciler (hook'larda kullanılabilir) ─────────────────────
 export const selectUpcomingEvents = (s: State): UpcomingEvent[] =>

@@ -38,10 +38,12 @@ export default function ProfileEditScreen() {
   const updateMyProfile = useStore((s) => s.updateMyProfile);
   const submitProfileChange = useStore((s) => s.submitProfileChange);
 
-  const [name, setName] = useState(storeName || 'Aigerim');
-  const [email, setEmail] = useState('aigerim@mail.kz');
-  const [phone, setPhone] = useState('+7 700 123 45 67');
-  const [city, setCity] = useState('Almatı');
+  // Faz B — alanlar GERÇEK hesaptan gelir (hardcode yok); boşsa boş görünür.
+  const me = useStore((s) => s.currentUser);
+  const [name, setName] = useState(storeName ?? '');
+  const [email, setEmail] = useState(me?.email ?? '');
+  const [phone, setPhone] = useState(me?.phone ?? '');
+  const [city, setCity] = useState(me?.city ?? '');
   const [social, setSocial] = useState(sellerSocial);
   const [hours, setHours] = useState(sellerHours);
   const [certs, setCerts] = useState(sellerCerts);
