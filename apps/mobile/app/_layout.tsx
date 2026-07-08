@@ -4,7 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Caveat_700Bold } from '@expo-google-fonts/caveat';
-import { LocaleProvider, useLocale } from '../src/locale';
+import { Alert } from 'react-native';
+import { fillParams, LocaleProvider, useLocale } from '../src/locale';
 import {
   addPushDeepLinkListener,
   registerForRemotePush,
@@ -36,7 +37,25 @@ function ThemedStack() {
   const applyApprovedProfileChanges = useStore((s) => s.applyApprovedProfileChanges);
   useEffect(() => {
     void hydrateBookings();
-    void hydrateDemands(); // §5.2 Faz A — taleplerim + gelen teklifler buluttan
+    // §5.2 — açılışta talepler buluttan gelir; SON KAPANIŞTAN BERİ yeni teklif düştüyse pop-up
+    void hydrateDemands().then(() => {
+      const s = useStore.getState();
+      if (!s.token || s.currentUser?.role !== 'user') return;
+      const fresh = s.takeNewOffers();
+      if (fresh.count > 0)
+        Alert.alert(t('newoffers.t'), fillParams(t('newoffers.b'), { n: fresh.count }), [
+          { text: t('promo.later'), style: 'cancel' },
+          {
+            text: t('newoffers.cta'),
+            onPress: () =>
+              router.push(
+                fresh.demandId
+                  ? (`/quote/results?id=${fresh.demandId}` as never)
+                  : ('/bookings' as never),
+              ),
+          },
+        ]);
+    });
     void hydrateLoyalty(); // Faz B — puan/çekiliş/ledger yeniden açılışta da buluttan
     void refreshMembership(); // medya (foto/cutout) + tier açılışta HESAPTAN (bayat yerel kopya ezilir)
   }, [hydrateBookings, hydrateDemands, hydrateLoyalty, refreshMembership]);

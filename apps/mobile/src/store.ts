@@ -324,6 +324,9 @@ interface State {
   // gizlilik: değerlendirmede kimliği gizle (salon/uzman yorum sahibini göremez)
   reviewAnonymous: boolean;
   surveyAskedIds: string[]; // §7 — anket daveti gönderilen randevular (tek sefer)
+  // Açılış pop-up'ı: talep başına GÖRÜLEN teklif sayısı (persist) → açılışta farkla 'yeni tekliflerin var'
+  offersSeen: Record<string, number>;
+  takeNewOffers: () => { count: number; demandId: string | null }; // farkı hesapla + görüldü işaretle
   setReviewAnonymous: (v: boolean) => void;
 
   // favorites
@@ -536,6 +539,7 @@ export const useStore = create<State>()(
       userReviews: {},
       reviewAnonymous: true,
       surveyAskedIds: [],
+      offersSeen: {},
       notifications: [],
       token: null,
       currentUser: null,
@@ -1185,6 +1189,24 @@ export const useStore = create<State>()(
         } catch {
           // çevrimdışı: eldeki liste korunur
         }
+      },
+
+      // Açılışta: son kapanıştan beri YENİ teklif geldiyse say + görüldü olarak işaretle
+      takeNewOffers: () => {
+        const seen = get().offersSeen;
+        let count = 0;
+        let demandId: string | null = null;
+        const nextSeen: Record<string, number> = { ...seen };
+        for (const d of get().demands) {
+          const fresh = Math.max(0, d.offers.length - (seen[d.id] ?? 0));
+          if (fresh > 0 && d.status === 'collecting') {
+            count += fresh;
+            if (!demandId) demandId = d.id;
+          }
+          nextSeen[d.id] = d.offers.length;
+        }
+        set({ offersSeen: nextSeen });
+        return { count, demandId };
       },
 
       // §5.2 Faz A — seçim BULUTTA: randevu sunucuda doğar (deposit_pending), kazanan uzmana
@@ -2062,6 +2084,7 @@ export const useStore = create<State>()(
         sellerCerts: s.sellerCerts,
         salonProfile: s.salonProfile,
         demandNotif: s.demandNotif,
+        offersSeen: s.offersSeen, // açılış 'yeni teklif' pop-up sayacı
         premium: s.premium, // §11 — satın alınan paket app yeniden açılınca korunmalı
         platinum: s.platinum,
         autoReengageEnabled: s.autoReengageEnabled,

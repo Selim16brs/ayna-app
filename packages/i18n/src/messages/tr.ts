@@ -398,6 +398,9 @@ export const tr = {
   'quote.sent.back': 'Keşfet’e dön',
 
   // Model 1 — gelen teklifler
+  'newoffers.t': 'Yeni tekliflerin var! 💌',
+  'newoffers.b': 'Sen yokken taleplerine {n} yeni teklif geldi. Hemen incele!',
+  'newoffers.cta': 'Teklifleri gör',
   'quotes.title': 'Gelen teklifler',
   'quotes.count': 'uzman teklif gönderdi',
   'trust.reliable': 'Güvenilir müşteri',
