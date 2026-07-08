@@ -4,7 +4,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { type DemandOffer, type OfferSort, formatPrice, sortOffers } from '../../src/data';
 import { slotTime, formatSlot } from '../../src/datetime';
-import { useLocale } from '../../src/locale';
+import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -44,7 +44,24 @@ export default function QuoteResultsScreen() {
   const remainMin = demand ? Math.max(0, Math.round((demand.expiresAt - Date.now()) / 60_000)) : 0;
   const collecting = demand?.status === 'collecting';
 
-  async function pick(offer: DemandOffer, slotMs: number) {
+  function pick(offer: DemandOffer, slotMs: number) {
+    if (!demand || picking) return;
+    // §4.1 — dokunuş = onay DEĞİL: önce açık onay sor (yanlışlıkla randevu oluşmasın)
+    Alert.alert(
+      t('quotes.confirm_t'),
+      fillParams(t('quotes.confirm_b'), {
+        pro: offer.proName,
+        slot: formatSlot(slotMs, t),
+        price: formatPrice(offer.price),
+      }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('quotes.confirm_cta'), onPress: () => void doPick(offer, slotMs) },
+      ],
+    );
+  }
+
+  async function doPick(offer: DemandOffer, slotMs: number) {
     if (!demand || picking) return;
     setPicking(true);
     try {
