@@ -161,22 +161,10 @@ function mapPro(p: Professional) {
 
 // --- Detay sentezi (sektör bazlı; mobil ile aynı mantık) ---
 const avatar = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=200&q=70`;
-const portfolioImg = (id: string) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=400&q=70`;
-
 const FACES = [
   'photo-1487412720507-e7ab37603c6f',
   'photo-1494790108377-be9c29b29330',
   'photo-1438761681033-6461ffad8d80',
-];
-
-const PORTFOLIO = [
-  'photo-1562322140-8baeececf3df',
-  'photo-1595476108010-b4d1f102b1b1',
-  'photo-1633681926022-84c23e8cb2d6',
-  'photo-1521590832167-7bcbfaa6381f',
-  'photo-1516975080664-ed2fc6a32937',
-  'photo-1588776814546-1ffcf47267a5',
 ];
 
 const STAFF = [
