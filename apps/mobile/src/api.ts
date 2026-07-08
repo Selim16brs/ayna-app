@@ -476,6 +476,9 @@ export const api = {
   me: (token: string) => get<AuthUser>('/auth/me', token),
   setAvatar: (token: string, photoDataUrl: string | null) =>
     post<AuthUser>('/auth/me/avatar', { photoDataUrl }, token),
+  myPortfolio: (token: string) => get<{ photos: string[] }>('/specialists/me/portfolio', token),
+  setMyPortfolio: (token: string, photos: string[]) =>
+    post<{ photos: string[] }>('/specialists/me/portfolio', { photos }, token),
   sellerBirthdays: (token: string) =>
     get<{ id: string; name: string }[]>('/specialists/me/birthdays', token),
   celebrateBirthday: (token: string, userId: string) =>

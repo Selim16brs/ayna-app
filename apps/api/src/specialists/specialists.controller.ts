@@ -38,6 +38,22 @@ export class SpecialistsController {
   }
 
   // §7 — uzmanın kendi işlerine yazılan yorumlar + tek yanıt hakkı
+  // §6.1 — uzman galerisi (hesapta kalıcı; sayfa değişince kaybolmaz)
+  @Get('me/portfolio')
+  @UseGuards(JwtAuthGuard)
+  myPortfolio(@Req() req: AuthedRequest) {
+    return this.specialists.myPortfolio(req.user!.id);
+  }
+
+  @Post('me/portfolio')
+  @UseGuards(JwtAuthGuard)
+  setPortfolio(@Req() req: AuthedRequest, @Body() body: { photos?: string[] }) {
+    const photos = Array.isArray(body?.photos)
+      ? body.photos.filter((x) => typeof x === 'string').map((x) => x.slice(0, 2_000_000))
+      : [];
+    return this.specialists.setMyPortfolio(req.user!.id, photos);
+  }
+
   // §CRM — bugün doğum günü olan müşterilerim + kutlama gönder
   @Get('me/birthdays')
   @UseGuards(JwtAuthGuard)

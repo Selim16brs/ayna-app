@@ -144,6 +144,7 @@ model Professional {
   priceFrom       Decimal      @default(0) @map("price_from") @db.Decimal(12, 2)
   friends         Int?
   imageUrl        String       @map("image_url")
+  portfolio       String[]     @default([]) // uzman galerisi (data URL; medya fazında objeye)
   badge           ProBadge     @default(verified)
   createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
 

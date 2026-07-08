@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { api } from '../../src/api';
+import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -13,16 +16,37 @@ export default function GalleryScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  // Faz sıfır-demo: galeri BOŞ başlar — uzman kendi çalışmalarını ekler (stok görsel YOK)
+  // §6.1 — galeri HESAPTA: açılışta buluttan gelir; ekle/sil ANINDA buluta kaydedilir
+  const token = useStore((s) => s.token);
   const [photos, setPhotos] = useState<string[]>([]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      let alive = true;
+      void api
+        .myPortfolio(token)
+        .then((r) => alive && setPhotos(r.photos))
+        .catch(() => undefined);
+      return () => {
+        alive = false;
+      };
+    }, [token]),
+  );
+  const persist = (next: string[]) => {
+    setPhotos(next);
+    if (token) void api.setMyPortfolio(token, next).catch(() => undefined);
+  };
 
   async function addPhoto() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
+      quality: 0.35,
+      base64: true, // data URL → hesapta kalıcı + public profilde görünür
     });
     if (!result.canceled && result.assets[0]) {
-      setPhotos((p) => [result.assets[0]!.uri, ...p]);
+      const a = result.assets[0];
+      const uri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
+      persist([uri, ...photos].slice(0, 20));
     }
   }
 
@@ -32,7 +56,7 @@ export default function GalleryScreen() {
       {
         text: t('common.delete'),
         style: 'destructive',
-        onPress: () => setPhotos((p) => p.filter((x) => x !== uri)),
+        onPress: () => persist(photos.filter((x) => x !== uri)),
       },
     ]);
   }

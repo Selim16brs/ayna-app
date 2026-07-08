@@ -233,6 +233,24 @@ export class SpecialistsService {
       .map((u) => ({ id: u.id, name: u.name }));
   }
 
+  // §6.1 — uzman galerisi (portfolyo): hesap verisi; public profil de bundan beslenir
+  async myPortfolio(expertUserId: string) {
+    const sp = await this.prisma.specialist.findUnique({ where: { userId: expertUserId } });
+    if (!sp?.proId) return { photos: [] };
+    const pro = await this.prisma.professional.findUnique({ where: { id: sp.proId } });
+    return { photos: pro?.portfolio ?? [] };
+  }
+
+  async setMyPortfolio(expertUserId: string, photos: string[]) {
+    const sp = await this.prisma.specialist.findUnique({ where: { userId: expertUserId } });
+    if (!sp?.proId) return { photos: [] };
+    const pro = await this.prisma.professional.update({
+      where: { id: sp.proId },
+      data: { portfolio: photos.slice(0, 20) },
+    });
+    return { photos: pro.portfolio };
+  }
+
   // §CRM — kutlama: müşteriye push doğum günü mesajı (uzman adına)
   async celebrate(expertUserId: string, customerId: string) {
     const expert = await this.prisma.user.findUnique({
