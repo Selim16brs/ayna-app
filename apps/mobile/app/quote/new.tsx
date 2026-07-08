@@ -12,7 +12,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, SectionHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Screen, SectionHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -31,6 +31,7 @@ export default function NewQuoteScreen() {
   const [photo, setPhoto] = useState<{ uri: string; base64?: string } | null>(null);
   const [category, setCategory] = useState<string>('hair');
   const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
+  const [note, setNote] = useState('');
   const [preferred, setPreferred] = useState<number[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
@@ -49,6 +50,7 @@ export default function NewQuoteScreen() {
         mode: 'photo',
         category,
         collectMin,
+        ...(note.trim() ? { note: note.trim() } : {}),
         ...(preferred.length ? { preferredSlots: preferred } : {}),
         ...(photo?.base64 ? { photoDataUrl: `data:image/jpeg;base64,${photo.base64}` } : {}),
       });
@@ -396,6 +398,17 @@ const makeStyles = (colors: ColorTokens) =>
     },
     catChipActive: { backgroundColor: colors.accent },
 
+    noteInput: {
+      minHeight: 76,
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.5),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      fontSize: 15,
+      color: colors.ink,
+      textAlignVertical: 'top',
+      marginHorizontal: space(3),
+    },
     durLabel: { paddingHorizontal: space(3), marginTop: space(2.5), marginBottom: space(1) },
     durRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1), paddingHorizontal: space(3) },
     durChip: {
