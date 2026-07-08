@@ -1,4 +1,4 @@
-# AYNA API — Railway/bulut deploy. pnpm + Turborepo monorepo'dan yalnız @ayna/api'yi kurar/derler.
+# AYNA API — Railway/bulut deploy. pnpm monorepo'dan yalnız @ayna/api + bağımlılıklarını kurar/derler.
 FROM node:20-bookworm-slim
 
 # Prisma engine için openssl + sertifikalar
@@ -13,17 +13,16 @@ WORKDIR /app
 # Tüm monorepo (deploy'da .dockerignore gereksizleri eler)
 COPY . .
 
-# Yalnız @ayna/api + bağımlı workspace paketlerini kur (mobile/web-admin dev bağımlılıkları hariç)
+# "@ayna/api..." = api + BAĞIMLILIKLARI (config/domain/i18n/types/validation/analytics).
+# Böylece mobile/web-admin'in ağır bağımlılıkları kurulmaz. (pnpm: sondaki ... = bağımlılıklar)
 RUN pnpm install --frozen-lockfile --filter "@ayna/api..."
 
-# Bağımlı paketler + api derlenir (turbo bağımlılık grafiğine göre sıralar) + Prisma client üretilir
-RUN pnpm turbo run build --filter=@ayna/api \
+# Bağımlı paketler + api pnpm ile topolojik sırayla derlenir (deps önce, api sonra) + Prisma client.
+RUN pnpm --filter "@ayna/api..." run build \
     && pnpm --filter @ayna/api exec prisma generate
 
 ENV NODE_ENV=production
 WORKDIR /app/apps/api
 
 # Başlangıçta: şemayı buluttaki boş DB'ye uygula (idempotent) → API'yi başlat.
-# Not: seed OTOMATİK çalışmaz (create tabanlı, tekrar-güvenli değil) — ilk deploy sonrası
-# tek sefer elle çalıştırılır (pnpm db:seed).
 CMD ["sh", "-c", "pnpm exec prisma db push --skip-generate && node dist/main.js"]
