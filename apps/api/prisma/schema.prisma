@@ -724,6 +724,38 @@ model Message {
   @@map("messages")
 }
 
+// EK Z.2 — Randevu güvenlik katmanı. Güvenilen kişi (acil durum kişisi).
+// phone: PII — ASLA log/analytics'e yazılmaz (CLAUDE.md privacy-by-design).
+model TrustedContact {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String
+  phone     String
+  relation  String   @default("")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("trusted_contacts")
+}
+
+// Güvenli mod oturumu — konum paylaşımı VARSAYILAN KAPALI; oturum açmak açık rızadır.
+// status: active | sos | ended. Ham konum (lastLat/lastLng) log/audit'e yazılmaz.
+model SafetySession {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  bookingId      String?   @map("booking_id")
+  status         String    @default("active")
+  lastLat        Float?    @map("last_lat")
+  lastLng        Float?    @map("last_lng")
+  lastLocationAt DateTime? @map("last_location_at") @db.Timestamptz(6)
+  sosAt          DateTime? @map("sos_at") @db.Timestamptz(6)
+  startedAt      DateTime  @default(now()) @map("started_at") @db.Timestamptz(6)
+  endedAt        DateTime? @map("ended_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("safety_sessions")
+}
+
 // Kullanıcı-kullanıcı engelleme (spec satır 242/257) — engellinin içeriği/mesajı görünmez.
 model UserBlock {
   id        String   @id @default(uuid()) @db.Uuid

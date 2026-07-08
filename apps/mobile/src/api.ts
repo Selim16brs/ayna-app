@@ -464,7 +464,44 @@ export const api = {
     post<{ ok: boolean }>('/messaging/blocks', { targetUserId }, token),
   unblockUser: (token: string, targetUserId: string) =>
     post<{ ok: boolean }>(`/messaging/blocks/${targetUserId}/remove`, {}, token),
+  // EK Z.2 — randevu güvenlik katmanı (güvenilen kişi + SOS + canlı konum oturumu)
+  safetyContacts: (token: string) => get<TrustedContact[]>('/safety/contacts', token),
+  addTrustedContact: (token: string, input: { name: string; phone: string; relation?: string }) =>
+    post<TrustedContact>('/safety/contacts', input, token),
+  removeTrustedContact: (token: string, id: string) =>
+    post<{ ok: boolean }>(`/safety/contacts/${id}/remove`, {}, token),
+  safetySession: (token: string) => get<SafetySession | null>('/safety/session', token),
+  startSafetySession: (token: string, bookingId?: string) =>
+    post<SafetySession>('/safety/session', bookingId ? { bookingId } : {}, token),
+  sendSafetyLocation: (token: string, id: string, lat: number, lng: number) =>
+    post<SafetySession>(`/safety/session/${id}/location`, { lat, lng }, token),
+  safetyCheckIn: (token: string, id: string) =>
+    post<SafetySession>(`/safety/session/${id}/checkin`, {}, token),
+  safetySos: (token: string, id?: string) =>
+    post<SafetySession & { notifiedContacts: number }>(
+      id ? `/safety/session/${id}/sos` : '/safety/sos',
+      {},
+      token,
+    ),
 };
+
+// EK Z.2 — güvenlik tipleri
+export interface TrustedContact {
+  id: string;
+  name: string;
+  phone: string;
+  relation: string;
+}
+export interface SafetySession {
+  id: string;
+  bookingId: string | null;
+  status: 'active' | 'sos' | 'ended';
+  hasLocation: boolean;
+  lastLocationAt: string | null;
+  sosAt: string | null;
+  startedAt: string;
+  endedAt: string | null;
+}
 
 // EK Z.1 — DM mesajlaşma tipleri
 export interface ConversationSummary {

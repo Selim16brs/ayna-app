@@ -23,6 +23,7 @@ import { SettingsModule } from './settings/settings.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ProfileChangesModule } from './profile-changes/profile-changes.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { SafetyModule } from './safety/safety.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { MessagingModule } from './messaging/messaging.module';
     CircleModule,
     CutoutModule,
     MessagingModule,
+    SafetyModule,
   ],
 })
 export class AppModule {}
