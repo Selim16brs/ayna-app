@@ -50,6 +50,10 @@ export const tr = {
   'slogan.w2': 'aynası',
   'slogan.l2b': ' olmalı...',
   'welcome.value': 'İstediğin hizmeti anlat, uzmanlar sana teklif versin.',
+  // §3.1 — karşılama değer önerisi maddeleri (reverse marketplace)
+  'welcome.bullet1': 'İstediğin hizmeti anlat, teklifler sana gelsin',
+  'welcome.bullet2': 'Doğrulanmış uzmanlar, gerçek yorumlar',
+  'welcome.bullet3': 'Güvenli, kadın odaklı topluluk',
 
   // §3.2 B — Bireysel/Salona bağlı Uzman kaydı
   'expert.reg.title': 'Uzman kaydı',

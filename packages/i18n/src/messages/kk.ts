@@ -45,6 +45,10 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'slogan.w2': 'айнасы',
   'slogan.l2b': ' болуы керек...',
   'welcome.value': 'Қалаған қызметіңді сипатта, мамандар саған ұсыныс берсін.',
+  // §3.1 — құндылық ұсынысы тармақтары (reverse marketplace)
+  'welcome.bullet1': 'Қалаған қызметіңді сипатта — ұсыныстар өзіңе келсін',
+  'welcome.bullet2': 'Расталған мамандар, шынайы пікірлер',
+  'welcome.bullet3': 'Қауіпсіз, әйелдерге арналған қауымдастық',
   'expert.reg.title': 'Маман тіркеуі',
   'expert.reg.personal': 'Жеке мәліметтер',
   'expert.reg.photo': 'Профиль фотоң',

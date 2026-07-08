@@ -45,6 +45,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'slogan.w2': 'зеркало',
   'slogan.l2b': '...',
   'welcome.value': 'Опиши услугу, которую хочешь, и мастера сделают тебе предложение.',
+  // §3.1 — пункты ценностного предложения (reverse marketplace)
+  'welcome.bullet1': 'Опиши услугу — предложения придут к тебе',
+  'welcome.bullet2': 'Проверенные мастера, настоящие отзывы',
+  'welcome.bullet3': 'Безопасное сообщество для женщин',
   'expert.reg.title': 'Регистрация мастера',
   'expert.reg.personal': 'Личные данные',
   'expert.reg.photo': 'Ваше фото профиля',

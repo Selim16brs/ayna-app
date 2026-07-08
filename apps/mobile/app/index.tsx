@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import type { Locale } from '@ayna/i18n';
@@ -52,9 +53,17 @@ export default function WelcomeScreen() {
             <Text style={styles.sloganWord}>{t('slogan.w2')}</Text>
             {t('slogan.l2b')}
           </Text>
-          <Text variant="caption" tone="inkSoft" style={styles.value}>
-            {t('welcome.value')}
-          </Text>
+          {/* §3.1 — değer önerisi maddeleri (reverse marketplace) */}
+          <View style={styles.bullets}>
+            {(['welcome.bullet1', 'welcome.bullet2', 'welcome.bullet3'] as const).map((k) => (
+              <View key={k} style={styles.bulletRow}>
+                <Ionicons name="checkmark-circle" size={16} color={colors.accentFg} />
+                <Text variant="caption" tone="inkSoft" style={styles.bulletText}>
+                  {t(k)}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
 
         <View style={styles.bottom}>
@@ -105,6 +114,9 @@ const makeStyles = (colors: ColorTokens) =>
       color: '#FF2D78',
     },
     value: { textAlign: 'center', marginTop: space(1.5), maxWidth: 300, lineHeight: 19 },
+    bullets: { marginTop: space(2.5), gap: space(1), alignSelf: 'stretch', paddingHorizontal: space(2) },
+    bulletRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    bulletText: { flex: 1, lineHeight: 18 },
     bottom: { paddingBottom: space(4), gap: space(1.5) },
     langRow: { flexDirection: 'row', gap: space(1), justifyContent: 'center', marginBottom: space(1) },
     langPill: {
