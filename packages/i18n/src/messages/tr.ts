@@ -1367,6 +1367,8 @@ export const tr = {
   'review.rating': 'Puanın',
   'review.comment': 'Yorumun',
   'review.comment_ph': 'Deneyimini birkaç cümleyle anlat...',
+  'review.photos': 'Öncesi / sonrası foto',
+  'review.photos_hint': 'İstersen sonucu göster (en fazla 4). Kimliğin gizli kalır.',
   'review.anonymous': 'Anonim olarak paylaş',
   'review.submit': 'Değerlendirmeyi gönder',
   'review.next': 'Devam et',

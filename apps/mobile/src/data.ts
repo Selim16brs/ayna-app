@@ -653,6 +653,7 @@ export interface Review {
   text: string;
   firstVisit: boolean;
   tags?: string[]; // §7.1 — alt kırılım (hizmet kalitesi / temizlik / iletişim / zamanlama)
+  photos?: string[]; // EK Z.10 — öncesi/sonrası foto galerisi
   // §6.D/§7.2 — uzman/işletme tek yanıt hakkı (açılınca kalıcı; yanıt silinemez)
   reply?: string;
   // §7.2 — negatif yorum itirazı (admin kuyruğuna düşer; yorum görünür kalır)

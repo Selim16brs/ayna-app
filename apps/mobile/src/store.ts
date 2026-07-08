@@ -307,6 +307,7 @@ interface State {
       rating: number;
       text: string;
       tags: string[];
+      photos?: string[]; // EK Z.10 — öncesi/sonrası galeri
       salon?: { rating: number; text: string; tags: string[] };
     },
   ) => void;
@@ -1479,7 +1480,7 @@ export const useStore = create<State>()(
     }));
     if (!b) return;
     // §7.1 — uzman değerlendirmesi (birincil, kamuya açık)
-    const mk = (rating: number, text: string, tags: string[], suffix?: string): Review => ({
+    const mk = (rating: number, text: string, tags: string[], suffix?: string, photos?: string[]): Review => ({
       id: nextId('rv'),
       author: authorLabel,
       period: 'Az önce',
@@ -1488,8 +1489,9 @@ export const useStore = create<State>()(
       text,
       firstVisit: false,
       ...(tags.length ? { tags } : {}),
+      ...(photos && photos.length ? { photos } : {}), // EK Z.10
     });
-    const reviews = [mk(input.rating, input.text, input.tags)];
+    const reviews = [mk(input.rating, input.text, input.tags, undefined, input.photos)];
     // §7.1 — salon randevusuysa ikinci adım: salon puanı da kaydedilir
     if (input.salon) reviews.push(mk(input.salon.rating, input.salon.text, input.salon.tags, 'Salon'));
     // Backend'e gönder — doğrulanmış yorum (giriş zorunlu; sunucu randevuyu denetler)
@@ -1503,6 +1505,7 @@ export const useStore = create<State>()(
           comment: input.text,
           serviceTag: b.service,
           authorLabel,
+          ...(input.photos && input.photos.length ? { photos: input.photos } : {}), // EK Z.10
         })
         .catch(() => undefined);
     }

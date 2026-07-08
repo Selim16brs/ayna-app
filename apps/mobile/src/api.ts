@@ -59,6 +59,7 @@ export interface RatingReview {
   score: number;
   comment: string;
   serviceTag: string;
+  photos?: string[]; // EK Z.10 — öncesi/sonrası galeri
   createdAt: string;
   reply: string;
   repliedAt: string | null;
@@ -385,6 +386,7 @@ export const api = {
       comment?: string;
       serviceTag?: string;
       authorLabel?: string;
+      photos?: string[]; // EK Z.10 — öncesi/sonrası galeri
     },
   ) => post<{ id: string; visible: boolean; bothRated: boolean }>('/ratings', input, token),
   ratingSummary: (subjectId: string) =>

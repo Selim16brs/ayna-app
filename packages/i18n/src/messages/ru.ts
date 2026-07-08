@@ -1274,6 +1274,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'review.rating': 'Ваш балл',
   'review.comment': 'Ваш отзыв',
   'review.comment_ph': 'Расскажите об опыте в нескольких предложениях...',
+  'review.photos': 'Фото до / после',
+  'review.photos_hint': 'Можно показать результат (до 4). Ваша личность остаётся скрытой.',
   'review.anonymous': 'Поделиться анонимно',
   'review.submit': 'Отправить оценку',
   'review.next': 'Продолжить',

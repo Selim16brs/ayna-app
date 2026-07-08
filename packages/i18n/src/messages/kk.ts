@@ -1274,6 +1274,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'review.rating': 'Ұпайың',
   'review.comment': 'Пікірің',
   'review.comment_ph': 'Тәжірибеңді бірнеше сөйлеммен айтып бер...',
+  'review.photos': 'Дейінгі / кейінгі фото',
+  'review.photos_hint': 'Қаласаң нәтижені көрсет (ең көбі 4). Жеке басың құпия қалады.',
   'review.anonymous': 'Анонимді түрде бөлісу',
   'review.submit': 'Бағалауды жіберу',
   'review.next': 'Жалғастыру',

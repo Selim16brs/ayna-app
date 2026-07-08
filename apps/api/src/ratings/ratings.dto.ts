@@ -10,6 +10,8 @@ export const submitRatingSchema = z.object({
   serviceTag: z.string().max(80).optional(),
   // Gizlilik: kullanıcının seçtiği görünen ad (anonim ise "Doğrulanmış üye")
   authorLabel: z.string().max(60).optional(),
+  // EK Z.10 — öncesi/sonrası foto galerisi (URI listesi, en fazla 4)
+  photos: z.array(z.string().min(1).max(600)).max(4).optional(),
 });
 
 export const thresholdSchema = z.object({ value: z.number().int().min(1).max(50) });

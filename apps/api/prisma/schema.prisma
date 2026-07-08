@@ -404,6 +404,9 @@ model Rating {
   score      Int
   comment    String    @default("")
   serviceTag String    @default("") @map("service_tag") // §6.D opsiyonel hizmet etiketi
+  // EK Z.10 — öncesi/sonrası foto galerisi (string[] URI). Mahremiyet: yorum sahibinin
+  // kimliği yine gizli (authorLabel); foto app içinde indirilemez (istemci kuralı).
+  photos     Json?
   // Gizlilik: salon/uzman yorum sahibinin KİMLİĞİNİ göremez — yalnızca bu etiket
   // ("Doğrulanmış üye" ya da kullanıcının seçtiği ad). Rating'de userId tutulmaz.
   authorLabel String   @default("Doğrulanmış üye") @map("author_label")

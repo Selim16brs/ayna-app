@@ -407,6 +407,14 @@ export default function ProfessionalScreen() {
                   <Text variant="body" tone="inkSoft" style={styles.reviewText}>
                     {r.text}
                   </Text>
+                  {/* EK Z.10 — öncesi/sonrası foto galerisi */}
+                  {r.photos && r.photos.length ? (
+                    <View style={styles.reviewPhotos}>
+                      {r.photos.map((uri, pi) => (
+                        <Image key={`${uri}-${pi}`} source={{ uri }} style={styles.reviewPhoto} />
+                      ))}
+                    </View>
+                  ) : null}
                   {r.reply ? (
                     <View style={styles.replyBox}>
                       <View style={styles.replyHead}>
@@ -677,6 +685,8 @@ const makeStyles = (colors: ColorTokens) =>
     },
     reviewStars: { flexDirection: 'row', gap: 2 },
     reviewText: { marginTop: space(1.25) },
+    reviewPhotos: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1), marginTop: space(1.25) },
+    reviewPhoto: { width: 72, height: 72, borderRadius: radius.md },
     replyBox: {
       marginTop: space(1.25),
       padding: space(1.5),

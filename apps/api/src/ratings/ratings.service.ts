@@ -91,6 +91,7 @@ export class RatingsService {
         comment: input.comment ?? '',
         serviceTag: input.serviceTag ?? '',
         authorLabel: input.authorLabel?.trim() || 'Doğrulanmış üye',
+        ...(input.photos && input.photos.length ? { photos: input.photos } : {}), // EK Z.10
         visible: false,
       },
     });
@@ -174,6 +175,7 @@ export class RatingsService {
             comment: r.comment,
             serviceTag: r.serviceTag,
             authorLabel: r.authorLabel, // kimlik değil, yalnızca etiket (provider-blind)
+            photos: (r.photos as string[] | null) ?? [], // EK Z.10 — öncesi/sonrası galeri
             createdAt: r.createdAt,
             reply: r.reply,
             repliedAt: r.repliedAt,

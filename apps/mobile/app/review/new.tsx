@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { PROFESSIONALS } from '../../src/data';
 import { useLocale } from '../../src/locale';
@@ -39,6 +40,17 @@ export default function ReviewNewScreen() {
   const [step, setStep] = useState<'uzman' | 'salon'>('uzman');
   const [uzman, setUzman] = useState<Rate>(emptyRate);
   const [salon, setSalon] = useState<Rate>(emptyRate);
+  const [photos, setPhotos] = useState<string[]>([]); // EK Z.10 — öncesi/sonrası galeri
+
+  async function pickPhoto() {
+    if (photos.length >= 4) return;
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
+    if (res.canceled || !res.assets[0]) return;
+    setPhotos((p) => [...p, res.assets[0]!.uri]);
+  }
 
   if (!booking) {
     return (
@@ -75,6 +87,7 @@ export default function ReviewNewScreen() {
       rating: uzman.rating,
       text: uzman.text.trim(),
       tags: uzman.tags,
+      ...(photos.length ? { photos } : {}), // EK Z.10 — öncesi/sonrası galeri
       ...(isSalon
         ? { salon: { rating: salon.rating, text: salon.text.trim(), tags: salon.tags } }
         : {}),
@@ -151,6 +164,33 @@ export default function ReviewNewScreen() {
           multiline
           style={styles.input}
         />
+
+        {/* EK Z.10 — öncesi/sonrası foto (yalnız uzman adımı) */}
+        {step === 'uzman' ? (
+          <>
+            <Text variant="h2" tone="ink" style={styles.label}>
+              {t('review.photos')}
+            </Text>
+            <Text variant="caption" tone="muted" style={styles.photoHint}>
+              {t('review.photos_hint')}
+            </Text>
+            <View style={styles.photoGrid}>
+              {photos.map((uri, i) => (
+                <View key={`${uri}-${i}`} style={styles.photoThumb}>
+                  <Image source={{ uri }} style={styles.photoImg} />
+                  <Pressable onPress={() => setPhotos((p) => p.filter((_, x) => x !== i))} style={styles.photoRemove}>
+                    <Ionicons name="close" size={14} color={colors.onColor} />
+                  </Pressable>
+                </View>
+              ))}
+              {photos.length < 4 ? (
+                <Pressable onPress={pickPhoto} style={[styles.photoAdd, { borderColor: colors.line }]}>
+                  <Ionicons name="camera-outline" size={22} color={colors.muted} />
+                </Pressable>
+              ) : null}
+            </View>
+          </>
+        ) : null}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -233,4 +273,28 @@ const makeStyles = (colors: ColorTokens) =>
       fontSize: 15,
     },
     footer: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: TAB_BAR_CLEARANCE },
+    photoHint: { marginTop: -space(1), marginBottom: space(1) },
+    photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5) },
+    photoThumb: { width: 84, height: 84, borderRadius: radius.md, overflow: 'hidden' },
+    photoImg: { width: '100%', height: '100%' },
+    photoRemove: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: 'rgba(0,0,0,0.55)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    photoAdd: {
+      width: 84,
+      height: 84,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
   });
