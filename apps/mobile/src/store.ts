@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loadMediaCache, saveMediaCache } from './media-cache';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { MessageKey } from '@ayna/i18n';
@@ -550,6 +551,8 @@ export const useStore = create<State>()(
         set({ avatarUri: uri });
         // Foto HESABIN parçası: buluta da yaz (data URL ise) — diğer cihaz/girişte aynı görünür
         const token = get().token;
+        const uid = get().currentUser?.id;
+        if (uid) saveMediaCache(uid, { avatar: uri, cutout: get().cutoutUri });
         if (token && (uri == null || uri.startsWith('data:')))
           void api.setAvatar(token, uri).catch(() => undefined);
       },
@@ -558,6 +561,8 @@ export const useStore = create<State>()(
         set({ cutoutUri: uri });
         // Kesik portre HESABIN parçası: buluta yaz → yeniden giriş/yeni cihazda kredi YAKMADAN geri gelir
         const token = get().token;
+        const uid = get().currentUser?.id;
+        if (uid) saveMediaCache(uid, { avatar: get().avatarUri, cutout: uri });
         if (token && (uri == null || uri.startsWith('data:')))
           void api.setCutoutRemote(token, uri).catch(() => undefined);
       },
@@ -1996,14 +2001,30 @@ export const useStore = create<State>()(
           const me = await api.me(token);
           const tier = me.membershipTier ?? 'free';
           const wasPremium = get().premium;
+          // Medya = HESAP verisi; ama hesap BOŞ ve yerelde data URL varsa yereli KORU ve
+          // hesaba GERİ YÜKLE (self-heal). Böylece bir kez temizlenen portre asla kaybolmaz
+          // ve remove.bg kredisi ikinci kez yakılmaz.
+          const localAvatar = get().avatarUri;
+          const localCutout = get().cutoutUri;
+          const serverAvatar = me.avatarUrl ?? null;
+          const serverCutout = me.cutoutUrl ?? null;
+          const nextAvatar =
+            serverAvatar ?? (localAvatar?.startsWith('data:') ? localAvatar : null);
+          const nextCutout =
+            serverCutout ?? (localCutout?.startsWith('data:') ? localCutout : null);
+          if (!serverAvatar && nextAvatar)
+            void api.setAvatar(token, nextAvatar).catch(() => undefined);
+          if (!serverCutout && nextCutout)
+            void api.setCutoutRemote(token, nextCutout).catch(() => undefined);
           set((s) => ({
             currentUser: s.currentUser ? { ...s.currentUser, membershipTier: tier } : s.currentUser,
             premium: tier === 'premium' || tier === 'platinum',
             platinum: tier === 'platinum',
-            // Medya = HESAP verisi: açılış/odak tazelemesinde hesaptaki foto+cutout esas
-            ...(me.avatarUrl !== undefined ? { avatarUri: me.avatarUrl ?? null } : {}),
-            ...(me.cutoutUrl !== undefined ? { cutoutUri: me.cutoutUrl ?? null } : {}),
+            avatarUri: nextAvatar,
+            cutoutUri: nextCutout,
           }));
+          const uid = get().currentUser?.id;
+          if (uid) saveMediaCache(uid, { avatar: nextAvatar, cutout: nextCutout });
           // Push gelmese bile: yükselme ALGILANDIĞINDA uygulama-içi bildirim (§11)
           if (!wasPremium && (tier === 'premium' || tier === 'platinum'))
             get().pushNotification({
@@ -2102,6 +2123,18 @@ export const useStore = create<State>()(
 // Oturum varsa bunlar sıfırlanır; gerçek değerleri _layout'taki hydrate* çağrıları doldurur.
 useStore.persist.onFinishHydration((state) => {
   if (state.token) useStore.setState(SEEDED_PERSONAL_RESET);
+  // Medya önbelleği: persist DIŞI tutulan foto/portre açılışta cihaz önbelleğinden anında gelir;
+  // refreshMembership ardından hesapla eşitler (hesap boşsa self-heal yükler).
+  const uid = state.currentUser?.id;
+  if (uid)
+    void loadMediaCache(uid).then((m) => {
+      if (!m) return;
+      const cur = useStore.getState();
+      useStore.setState({
+        ...(cur.avatarUri == null && m.avatar ? { avatarUri: m.avatar } : {}),
+        ...(cur.cutoutUri == null && m.cutout ? { cutoutUri: m.cutout } : {}),
+      });
+    });
 });
 
 // ── Türetilmiş seçiciler (hook'larda kullanılabilir) ─────────────────────

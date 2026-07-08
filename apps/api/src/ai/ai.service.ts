@@ -26,12 +26,19 @@ export class AiService {
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
   }
 
+  // §11 — premium: eski isPremium bayrağı YA DA üyelik katmanı (dekont onayı tier yazar)
+  private isPaid(u: { isPremium: boolean; membershipTier: string } | null): boolean {
+    return (
+      !!u && (u.isPremium || u.membershipTier === 'premium' || u.membershipTier === 'platinum')
+    );
+  }
+
   async quota(userId: string) {
     const u = await this.prisma.user.findUnique({ where: { id: userId } });
     const cur = this.period();
     const used = u && u.aiPeriod === cur ? u.aiUsed : 0;
     const limit = this.env.AI_MONTHLY_QUOTA;
-    return { premium: u?.isPremium ?? false, used, limit, remaining: Math.max(0, limit - used) };
+    return { premium: this.isPaid(u), used, limit, remaining: Math.max(0, limit - used) };
   }
 
   // Premium + ortak kota kontrolü; AI çağrısı BAŞARILIYSA 1 hak düşülür (atomik).
@@ -40,7 +47,7 @@ export class AiService {
     messages: ChatMsg[],
   ): Promise<{ text: string; remaining: number }> {
     const u = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!u || !u.isPremium) {
+    if (!u || !this.isPaid(u)) {
       throw new ForbiddenException({
         code: 'PREMIUM_REQUIRED',
         message: 'AI yalnızca premium üyelerde',
@@ -101,9 +108,14 @@ export class AiService {
     return { premium: u.isPremium };
   }
 
-  // OpenAI proxy — anahtar yoksa güvenli mock (geliştirme/demo)
+  // OpenAI proxy — anahtar ADMIN PANELİNDEN (apikey.openai) gelir; env yedek. Yoksa güvenli mock.
+  private async apiKey(): Promise<string | null> {
+    const row = await this.prisma.setting.findUnique({ where: { key: 'apikey.openai' } });
+    return row?.strValue?.trim() || this.env.OPENAI_API_KEY || null;
+  }
+
   private async callModel(messages: ChatMsg[]): Promise<string> {
-    const key = this.env.OPENAI_API_KEY;
+    const key = await this.apiKey();
     if (!key) return mockReply(messages);
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
