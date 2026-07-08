@@ -50,6 +50,7 @@ export default function DiscoverScreen() {
       ?.trim()
       .split(' ')[0] || 'Aigerim';
   const cutoutUri = useStore((s) => s.cutoutUri); // §5.1.1 — premium cut-out profil fotosu
+  const avatarUri = useStore((s) => s.avatarUri); // cut-out yoksa yüklenen ham foto
   // Dinamik kullanıcı adı — ilk harf büyük (el yazısı katman için)
   const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
   const pros = useProfessionals();
@@ -144,7 +145,13 @@ export default function DiscoverScreen() {
           </View>
           {/* §5.1.1 — premium cut-out foto varsa onu göster; yoksa varsayılan çizim */}
           <Image
-            source={cutoutUri ? { uri: cutoutUri } : require('../../assets/hero-user.png')}
+            source={
+              cutoutUri
+                ? { uri: cutoutUri }
+                : avatarUri
+                  ? { uri: avatarUri }
+                  : require('../../assets/hero-user.png')
+            }
             style={styles.heroPhoto}
             resizeMode="contain"
           />
