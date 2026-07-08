@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import {
+  formatPrice,
   CATEGORIES,
   cityCenter,
   distanceKm,
@@ -16,6 +17,7 @@ import { useStore } from '../src/store';
 import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
+import { useProfessionalDetail } from '../src/catalog';
 import { PressableScale, Screen, StackHeader, Text } from '../src/ui';
 
 export default function MapScreen() {
@@ -28,6 +30,9 @@ export default function MapScreen() {
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const [cat, setCat] = useState<string | null>(null);
   const [selected, setSelected] = useState<Professional | null>(null);
+  // §5.1.3 — karta dokun → POPUP profil (kapatınca haritaya dönülür)
+  const [profileOpen, setProfileOpen] = useState(false);
+  const detail = useProfessionalDetail(selected?.id ?? '');
 
   // Harita seçili ŞEHRİN merkezine odaklanır (Almatı seçince Almatı, Astana seçince Astana).
   const center = cityCenter(city);
@@ -103,7 +108,7 @@ export default function MapScreen() {
             <Pressable style={styles.cardClose} hitSlop={8} onPress={() => setSelected(null)}>
               <Ionicons name="close" size={16} color={colors.muted} />
             </Pressable>
-            <View style={styles.cardRow}>
+            <Pressable style={styles.cardRow} onPress={() => setProfileOpen(true)}>
               <Image source={{ uri: selected.image }} style={styles.cardImage} />
               <View style={styles.cardBody}>
                 <Text variant="bodyStrong" tone="ink" style={styles.cardName} numberOfLines={1}>
@@ -125,17 +130,117 @@ export default function MapScreen() {
                   </Text>
                 </View>
               </View>
-            </View>
-            <PressableScale
-              style={styles.cardBtn}
-              onPress={() => router.push('/professional/' + selected.id)}
-            >
+            </Pressable>
+            <PressableScale style={styles.cardBtn} onPress={() => setProfileOpen(true)}>
               <Text variant="bodyStrong" tone="onAccent">
                 {t('map.open')}
               </Text>
             </PressableScale>
           </View>
         ) : null}
+
+        {/* §5.1.3 — POPUP profil: bilgiler modal'da; kapatınca harita aynen kalır */}
+        <Modal
+          visible={profileOpen && !!selected}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setProfileOpen(false)}
+        >
+          <View style={styles.sheetRoot}>
+            <View style={styles.sheetHead}>
+              <Text variant="h2" tone="ink" numberOfLines={1} style={styles.sheetTitle}>
+                {selected?.name ?? ''}
+              </Text>
+              <Pressable
+                style={styles.sheetClose}
+                hitSlop={8}
+                onPress={() => setProfileOpen(false)}
+              >
+                <Ionicons name="close" size={22} color={colors.ink} />
+              </Pressable>
+            </View>
+            <ScrollView
+              contentContainerStyle={styles.sheetBody}
+              showsVerticalScrollIndicator={false}
+            >
+              {selected?.image || detail.image ? (
+                <Image
+                  source={{ uri: detail.image || selected?.image }}
+                  style={styles.sheetPhoto}
+                  resizeMode="cover"
+                />
+              ) : null}
+              <Text variant="bodyStrong" tone="ink">
+                {detail.specialty || selected?.specialty}
+              </Text>
+              <View style={styles.sheetMeta}>
+                <Ionicons name="location-outline" size={14} color={colors.inkSoft} />
+                <Text variant="caption" tone="inkSoft">
+                  {selected
+                    ? `${selected.city || city} · ${distanceKm(center, proCoords(selected.id))} ${t('map.distance')}`
+                    : ''}
+                </Text>
+                {detail.reviewCount > 0 ? (
+                  <>
+                    <Ionicons name="star" size={14} color={colors.gold} />
+                    <Text variant="caption" tone="inkSoft">
+                      {detail.rating.toFixed(1)} ({detail.reviewCount})
+                    </Text>
+                  </>
+                ) : (
+                  <Text variant="caption" tone="muted">
+                    ✨ Yeni
+                  </Text>
+                )}
+              </View>
+              {detail.about ? (
+                <>
+                  <Text variant="label" tone="accentFg" style={styles.sheetSection}>
+                    {t('pro.about')}
+                  </Text>
+                  <Text variant="caption" tone="inkSoft" style={styles.sheetAbout}>
+                    {detail.about}
+                  </Text>
+                </>
+              ) : null}
+              {detail.services.length > 0 ? (
+                <>
+                  <Text variant="label" tone="accentFg" style={styles.sheetSection}>
+                    {t('pro.services')}
+                  </Text>
+                  {detail.services.slice(0, 6).map((sv) => (
+                    <View key={sv.id} style={styles.sheetSvcRow}>
+                      <Text
+                        variant="caption"
+                        tone="ink"
+                        style={styles.sheetSvcName}
+                        numberOfLines={1}
+                      >
+                        {sv.name}
+                      </Text>
+                      <Text variant="caption" tone="inkSoft">
+                        {formatPrice(sv.price)}
+                      </Text>
+                    </View>
+                  ))}
+                </>
+              ) : null}
+            </ScrollView>
+            <View style={styles.sheetFoot}>
+              <PressableScale
+                style={styles.cardBtn}
+                onPress={() => {
+                  setProfileOpen(false);
+                  if (selected) router.push('/professional/' + selected.id);
+                }}
+              >
+                <Text variant="bodyStrong" tone="onAccent">
+                  {t('map.book')}
+                </Text>
+              </PressableScale>
+            </View>
+          </View>
+        </Modal>
       </View>
     </Screen>
   );
@@ -154,6 +259,43 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    sheetRoot: { flex: 1, backgroundColor: colors.bg },
+    sheetHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space(3),
+      paddingTop: space(2.5),
+      paddingBottom: space(1),
+    },
+    sheetTitle: { flex: 1, marginRight: space(1) },
+    sheetClose: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    sheetBody: { paddingHorizontal: space(3), paddingBottom: space(3), gap: space(1) },
+    sheetPhoto: {
+      width: '100%',
+      height: 220,
+      borderRadius: radius.xl,
+      backgroundColor: colors.surfaceMuted,
+    },
+    sheetMeta: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), flexWrap: 'wrap' },
+    sheetSection: { marginTop: space(1.5) },
+    sheetAbout: { lineHeight: 19 },
+    sheetSvcRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: space(1),
+      borderBottomWidth: 1,
+      borderBottomColor: colors.line,
+    },
+    sheetSvcName: { flex: 1, marginRight: space(1) },
+    sheetFoot: { padding: space(3), paddingTop: space(1) },
     headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     listBtn: {
       flexDirection: 'row',
