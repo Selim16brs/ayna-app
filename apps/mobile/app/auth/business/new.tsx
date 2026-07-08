@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
+
+// Doğum tarihi gösterimi: GG.AA.YYYY
+function fmtDate(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
+}
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../../src/api';
 import { activeCategories } from '../../../src/taxonomy';
@@ -47,7 +54,9 @@ export default function NewBusinessScreen() {
   const [lastName, setLastName] = useState('');
   const [ownerPhone, setOwnerPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [birth, setBirth] = useState('');
+  const [password2, setPassword2] = useState('');
+  const [birthDate, setBirthDate] = useState<Date | null>(null);
+  const [showDate, setShowDate] = useState(false);
 
   const [name, setName] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
@@ -94,6 +103,7 @@ export default function NewBusinessScreen() {
     lastName.trim().length > 1 &&
     ownerPhone.trim().length >= 7 &&
     password.length >= 6 &&
+    password === password2 &&
     name.trim().length > 1 &&
     areas.size > 0 &&
     city !== null &&
@@ -121,12 +131,13 @@ export default function NewBusinessScreen() {
         taxId: tax.trim(),
       });
       // NOT: fotoğraflar, harita pin, sosyal, açıklama backend'e Faz 9'da (salon profili API'si) yazılacak.
-      // SMS OTP kaldırıldı — kayıt sonrası doğrudan "kayıt alındı" ekranına.
-      router.replace('/auth/business/done');
+      // Otomatik giriş YOK — kayıt tamamlandı (salon admin onayı bekler); giriş ekranına yönlendir.
+      Alert.alert(t('auth.register.done_t'), t('auth.register.done_b'), [
+        { text: t('common.ok'), onPress: () => router.replace('/auth/login') },
+      ]);
     } catch (e) {
       const msg = String((e as Error).message ?? '');
-      if (msg.includes('409')) Alert.alert(t('auth.error.taken'));
-      else router.replace('/auth/business/done'); // ağ hatası → demo akışı engellenmesin
+      Alert.alert(msg.includes('409') ? t('auth.error.taken') : t('common.error'));
     } finally {
       setBusy(false);
     }
@@ -160,9 +171,52 @@ export default function NewBusinessScreen() {
           keyboardType="phone-pad"
         />
         <Label text={t('biz.field.password')} />
-        <Input value={password} onChange={setPassword} secure />
+        <Input value={password} onChange={setPassword} secure placeholderKey="biz.field.password" />
+        <Label text={t('auth.f.password2')} />
+        <Input value={password2} onChange={setPassword2} secure placeholderKey="auth.f.password2" />
+        {password2.length > 0 && password !== password2 ? (
+          <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
+            {t('auth.f.password_mismatch')}
+          </Text>
+        ) : null}
         <Label text={t('biz.field.birthdate')} />
-        <Input value={birth} onChange={setBirth} placeholderKey="biz.field.birthdate_ph" />
+        <Pressable style={styles.dateBtn} onPress={() => setShowDate(true)}>
+          <Ionicons name="calendar-outline" size={20} color={colors.inkSoft} />
+          <Text variant="body" tone={birthDate ? 'ink' : 'muted'} style={styles.dateText}>
+            {birthDate ? fmtDate(birthDate) : t('biz.field.birthdate_ph')}
+          </Text>
+          <Ionicons name="chevron-down" size={18} color={colors.muted} />
+        </Pressable>
+        {showDate && Platform.OS === 'android' ? (
+          <DateTimePicker
+            value={birthDate ?? new Date(1990, 0, 1)}
+            mode="date"
+            display="default"
+            maximumDate={new Date()}
+            onChange={(_e, d) => {
+              setShowDate(false);
+              if (d) setBirthDate(d);
+            }}
+          />
+        ) : null}
+        {Platform.OS === 'ios' ? (
+          <Modal visible={showDate} transparent animationType="slide" onRequestClose={() => setShowDate(false)}>
+            <Pressable style={styles.dateBackdrop} onPress={() => setShowDate(false)}>
+              <Pressable style={styles.dateSheet} onPress={(e) => e.stopPropagation()}>
+                <DateTimePicker
+                  value={birthDate ?? new Date(1990, 0, 1)}
+                  mode="date"
+                  display="spinner"
+                  maximumDate={new Date()}
+                  onChange={(_e, d) => {
+                    if (d) setBirthDate(d);
+                  }}
+                />
+                <Button label={t('common.ok')} onPress={() => setShowDate(false)} />
+              </Pressable>
+            </Pressable>
+          </Modal>
+        ) : null}
 
         {/* Salon bilgileri */}
         <Section text={t('biz.section.firm')} />
@@ -341,14 +395,38 @@ function Input({
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const [hidden, setHidden] = useState(true);
+  const ph = placeholder ?? (placeholderKey ? t(placeholderKey) : undefined);
+  if (secure) {
+    return (
+      <View style={styles.secureWrap}>
+        <TextInput
+          value={value}
+          onChangeText={onChange}
+          secureTextEntry={hidden}
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholder={ph}
+          placeholderTextColor={colors.muted}
+          style={styles.secureInput}
+        />
+        <Pressable onPress={() => setHidden((h) => !h)} hitSlop={10} style={styles.eyeBtn}>
+          <Ionicons
+            name={hidden ? 'eye-outline' : 'eye-off-outline'}
+            size={20}
+            color={colors.inkSoft}
+          />
+        </Pressable>
+      </View>
+    );
+  }
   return (
     <TextInput
       value={value}
       onChangeText={onChange}
-      secureTextEntry={secure}
       keyboardType={keyboardType ?? 'default'}
       autoCapitalize={keyboardType === 'email-address' ? 'none' : 'sentences'}
-      placeholder={placeholder ?? (placeholderKey ? t(placeholderKey) : undefined)}
+      placeholder={ph}
       placeholderTextColor={colors.muted}
       style={styles.input}
     />
@@ -393,6 +471,42 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingBottom: space(4), paddingTop: space(1) },
     section: { marginTop: space(3), marginBottom: space(1), fontSize: 17 },
+    secureWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: 54,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+      paddingRight: space(1.5),
+    },
+    secureInput: {
+      flex: 1,
+      height: '100%',
+      paddingHorizontal: space(2),
+      fontWeight: '500',
+      fontSize: 16,
+      color: colors.ink,
+    },
+    eyeBtn: { padding: space(0.75) },
+    dateBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      height: 54,
+      paddingHorizontal: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+    },
+    dateText: { flex: 1 },
+    dateBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+    dateSheet: {
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: space(3),
+    },
     label: { marginTop: space(2), marginBottom: space(1) },
     hint: { marginTop: -space(0.5), marginBottom: space(1) },
     row2: { flexDirection: 'row', gap: space(1.5) },
