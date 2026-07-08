@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -68,10 +69,22 @@ export default function ProfileEditScreen() {
   // §5.1.1 — foto seçildi: normal avatarı ayarla + (premium & removebg ise) arka planı
   // remove.bg ile temizle (Keşfet/uzman hero'sunda kullanılır). Premium değilse upsell.
   const onPhotoPicked = async (asset: ImagePicker.ImagePickerAsset) => {
+    // Payload GARANTİSİ: foto 1000px'e küçültülür (remove.bg + sunucu limitleri asla aşılmaz)
+    let b64 = asset.base64 ?? null;
+    try {
+      const small = await ImageManipulator.manipulateAsync(
+        asset.uri,
+        [{ resize: { width: 1000 } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true },
+      );
+      if (small.base64) b64 = small.base64;
+    } catch {
+      /* küçültme başarısızsa orijinal base64 ile devam */
+    }
     // data URL: hem yerelde gösterilir hem HESABA yazılır (store.setAvatar buluta senkronlar)
-    setAvatar(asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri);
-    if (!asset.base64) return;
-    const res = await applyProfileCutout(asset.base64);
+    setAvatar(b64 ? `data:image/jpeg;base64,${b64}` : asset.uri);
+    if (!b64) return;
+    const res = await applyProfileCutout(b64);
     if (res === 'not_premium') {
       Alert.alert(t('cutout.upsell_title'), t('cutout.upsell_body'));
     } else if (res === 'ok') {

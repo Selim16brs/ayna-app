@@ -556,7 +556,17 @@ export const useStore = create<State>()(
       cutoutUri: null,
       setCutout: (uri) => set({ cutoutUri: uri }),
       applyProfileCutout: async (base64) => {
-        if (!get().config.features.removebg) return 'unavailable';
+        // Bayrak stale olabilir (açılış config isteği o an düşmüş olabilir) → anında SUNUCUDAN tazele.
+        let cfg = get().config;
+        if (!cfg.features.removebg) {
+          try {
+            cfg = await api.appConfig();
+            set({ config: cfg });
+          } catch {
+            /* çevrimdışı: mevcut bayrakla devam */
+          }
+        }
+        if (!cfg.features.removebg) return 'unavailable';
         const role = get().currentUser?.role;
         const isSeller = role === 'professional' || role === 'salon';
         const tier = get().currentUser?.membershipTier ?? 'free';
