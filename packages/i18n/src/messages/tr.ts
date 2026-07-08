@@ -1288,6 +1288,8 @@ export const tr = {
   'sub.pick_hint': 'Kaspi / banka ödeme ekran görüntüsü',
   'sub.approve_note': 'Dekontun admin tarafından doğrulanınca üyeliğin aktifleşir.',
   'sub.submit': 'Üyeliği Aktif Et — Onaya Gönder',
+  'sub.upgraded_t': 'Üyeliğin yükseltildi 🎉',
+  'sub.upgraded_b': 'Yeni paketin aktif — tüm ayrıcalıkların açıldı.',
   'sub.sent_t': 'Üyelik işlemin admine iletildi ✅',
   'sub.sent_b':
     'Dekontun onay kuyruğuna düştü. Onay sonrası yeni üyelik paketini kullanmaya başlayabilirsin — onaylanınca bildirim alacaksın.',

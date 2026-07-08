@@ -1932,11 +1932,22 @@ export const useStore = create<State>()(
         try {
           const me = await api.me(token);
           const tier = me.membershipTier ?? 'free';
+          const wasPremium = get().premium;
           set((s) => ({
             currentUser: s.currentUser ? { ...s.currentUser, membershipTier: tier } : s.currentUser,
             premium: tier === 'premium' || tier === 'platinum',
             platinum: tier === 'platinum',
           }));
+          // Push gelmese bile: yükselme ALGILANDIĞINDA uygulama-içi bildirim (§11)
+          if (!wasPremium && (tier === 'premium' || tier === 'platinum'))
+            get().pushNotification({
+              type: 'system',
+              titleKey: 'sub.upgraded_t',
+              bodyKey: 'sub.upgraded_b',
+              dateLabel: 'Az önce',
+              icon: 'diamond-outline',
+              route: '/profile/passport',
+            });
         } catch {
           /* çevrimdışı: mevcut durum korunur */
         }

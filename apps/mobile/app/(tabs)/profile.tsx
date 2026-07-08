@@ -1,6 +1,7 @@
+import { useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocale } from '../../src/locale';
@@ -54,6 +55,13 @@ export default function ProfileScreen() {
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   const restrictedDaysLeft = useStore((s) => s.currentUser?.restrictedDaysLeft ?? 0);
   const premium = useStore((s) => s.premium);
+  const refreshMembership = useStore((s) => s.refreshMembership);
+  // §11 — Profil'e her gelişte üyelik durumu sunucudan tazelenir (onay anında yansır)
+  useFocusEffect(
+    useCallback(() => {
+      void refreshMembership();
+    }, [refreshMembership]),
+  );
   const logout = useStore((s) => s.logout);
   const role = useStore((s) => s.currentUser?.role);
   const isSeller = role === 'salon' || role === 'professional';
