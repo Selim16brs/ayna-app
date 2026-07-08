@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -62,8 +62,27 @@ export default function ReportsScreen() {
         : { icon: 'person' as const, text: t('reports.identity.independent') };
   // Talepler rozeti = şehirdeki açık talepler; reklamlar şehre göre hedeflenir (sektör admin ucunda)
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
-  const openDemands = useStore(
-    (s) => s.demands.filter((d) => d.status === 'collecting' && d.city === city).length,
+  // §9.3 — Talepler rozeti: şehirdeki AÇIK talepler BULUTTAN sayılır (ekran odaklandıkça tazelenir)
+  const token = useStore((s) => s.token);
+  const [openDemands, setOpenDemands] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      let alive = true;
+      const pull = () =>
+        api
+          .openQuoteRequests(token)
+          .then(
+            (rows) => alive && setOpenDemands(rows.filter((d) => d.status === 'collecting').length),
+          )
+          .catch(() => undefined);
+      void pull();
+      const timer = setInterval(pull, 30_000);
+      return () => {
+        alive = false;
+        clearInterval(timer);
+      };
+    }, [token]),
   );
   const ads: SupplierAd[] = []; // demo tedarikçi reklamı YOK (admin ucu bağlanınca gerçek veri)
 
