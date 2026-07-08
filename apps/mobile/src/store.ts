@@ -388,6 +388,8 @@ interface State {
 // (avatar/cutout/premium gibi PERSIST edilen kullanıcı verileri BURADA sıfırlanmaz.)
 const SEEDED_PERSONAL_RESET: Partial<State> = {
   bookings: [],
+  circlePosts: [], // W2W tohumları da girişli hesapta yok; gerçek gönderiler loadContent ile gelir
+
   demands: [],
   points: 0,
   raffleEntries: 0,
