@@ -152,8 +152,8 @@ export default function ExpertRegisterScreen() {
         },
       });
       // NOT: hizmet+fiyat+süre listesi backend'e Faz 9'da (uzman profili API'si) yazılacak.
-      // SMS OTP zorunlu (§3.2) → doğrulama sonrası panele.
-      router.replace('/auth/verify?next=/seller/reports');
+      // SMS OTP kaldırıldı — kayıt sonrası doğrudan panele.
+      router.replace('/seller/reports');
     } catch (e) {
       const msg = String((e as Error).message ?? '');
       Alert.alert(msg.includes('409') ? t('auth.error.taken') : t('common.error'));
