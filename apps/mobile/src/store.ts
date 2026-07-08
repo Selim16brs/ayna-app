@@ -933,9 +933,10 @@ export const useStore = create<State>()(
           ),
         }));
         // §4.4 — backend'de doğru geçiş: iade akışı → free-cancel; aksi → düz iptal
-        if (next === 'refund_pending')
-          void api.freeCancelBooking(id, reason).catch(() => undefined);
-        else void api.cancelBooking(id, reason).catch(() => undefined);
+        // Sunucu reddederse yereli SUNUCU GERÇEĞİNE geri çek (UI asla yalan durumda kalmaz)
+        const restore = () => void get().hydrateBookings();
+        if (next === 'refund_pending') void api.freeCancelBooking(id, reason).catch(restore);
+        else void api.cancelBooking(id, reason).catch(restore);
         if (b) {
           if (next === 'refund_pending')
             get().pushNotification({
