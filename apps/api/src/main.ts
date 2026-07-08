@@ -28,8 +28,11 @@ async function bootstrap(): Promise<void> {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);
 
-  await app.listen(env.API_PORT);
-  Logger.log(`AYNA API http://localhost:${env.API_PORT}/${env.API_GLOBAL_PREFIX}`, 'Bootstrap');
+  // Bulut sağlayıcıları (Railway vb.) PORT enjekte eder; yoksa yerel API_PORT.
+  // 0.0.0.0 bind → konteyner dışından erişilebilir.
+  const port = process.env.PORT ? Number(process.env.PORT) : env.API_PORT;
+  await app.listen(port, '0.0.0.0');
+  Logger.log(`AYNA API listening on :${port}/${env.API_GLOBAL_PREFIX}`, 'Bootstrap');
 }
 
 void bootstrap();

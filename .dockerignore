@@ -1,0 +1,14 @@
+# Bağımlılıklar konteynerde yeniden kurulur
+**/node_modules
+# Yerel derleme çıktıları (konteynerde yeniden derlenir)
+**/dist
+**/.next
+**/.expo
+**/.turbo
+# Git + sırlar (ASLA imaja girmez)
+.git
+**/.env
+**/.env.*
+# Yerel/geçici
+*.log
+.DS_Store
