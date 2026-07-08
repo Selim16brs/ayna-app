@@ -185,13 +185,10 @@ export class BookingsService {
     const b = await this.prisma.booking.findUnique({ where: { id } });
     const res = await this.transition(id, { status: 'cancelled' });
     if (b?.providerNoShow && b.proId) {
-      const biz = await this.prisma.business.findFirst({
-        where: { professionalId: b.proId },
-        select: { ownerUserId: true },
-      });
-      if (biz?.ownerUserId) {
+      const ownerUserId = await this.proOwnerUserId(b.proId);
+      if (ownerUserId) {
         await this.prisma.user.updateMany({
-          where: { id: biz.ownerUserId, restrictReason: 'provider_noshow_refund' },
+          where: { id: ownerUserId, restrictReason: 'provider_noshow_refund' },
           data: { restrictedAt: null, restrictReason: null },
         });
       }
@@ -206,6 +203,18 @@ export class BookingsService {
 
   // §4.4-b — UZMAN gelmedi: iade akışı + 1.000 ₸ uzmanın komisyon borcuna (ceza faturası).
   // (Kullanıcıya 1000 puan telafisi mobil earn ile verilir; burada komisyon borcu doğar.)
+  // §4.4 — bir Professional'ın sahip User'ı: önce salon (Business.ownerUserId),
+  // yoksa bağımsız uzman (Specialist.proId → userId). Böylece bağımsız uzman da kısıtlanır.
+  private async proOwnerUserId(proId: string): Promise<string | null> {
+    const biz = await this.prisma.business.findFirst({
+      where: { professionalId: proId },
+      select: { ownerUserId: true },
+    });
+    if (biz?.ownerUserId) return biz.ownerUserId;
+    const sp = await this.prisma.specialist.findFirst({ where: { proId }, select: { userId: true } });
+    return sp?.userId ?? null;
+  }
+
   async providerNoShow(id: string) {
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
@@ -215,16 +224,13 @@ export class BookingsService {
     });
     if (b.proId) {
       const amount = await this.depositAmount(); // 1.000 ₸ (parametrik)
-      const biz = await this.prisma.business.findFirst({
-        where: { professionalId: b.proId },
-        select: { ownerUserId: true },
-      });
+      const ownerUserId = await this.proOwnerUserId(b.proId);
       const now = new Date();
       await this.prisma.commissionInvoice.create({
         data: {
           proId: b.proId,
           proName: b.proName,
-          ownerUserId: biz?.ownerUserId ?? null,
+          ownerUserId: ownerUserId ?? null,
           periodStart: now,
           periodEnd: now,
           bookingsCount: 0,
@@ -234,11 +240,10 @@ export class BookingsService {
           status: 'pending',
         },
       });
-      // §4.4 — ceza doğduğu an uzman hesabı KISITLI MODA düşer (7 gün sayacı; iade
-      // yükümlülüğü yerine gelene / süre dolana dek yeni talep alamaz). Salon sahibi User'ı.
-      if (biz?.ownerUserId) {
+      // §4.4 — ceza doğduğu an uzman hesabı KISITLI MODA düşer (salon VEYA bağımsız uzman).
+      if (ownerUserId) {
         await this.prisma.user.update({
-          where: { id: biz.ownerUserId },
+          where: { id: ownerUserId },
           data: { restrictedAt: now, restrictReason: 'provider_noshow_refund' },
         });
       }
