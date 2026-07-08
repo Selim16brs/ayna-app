@@ -1,8 +1,11 @@
-// §4.1 (adım 6) — randevu hatırlatmaları YEREL OS bildirimi olarak (Expo Go'da local çalışır).
-// Not: sunucu-taraflı remote push (Expo push token + backend gönderim) ayrı bir altyapı fazıdır.
+// §4.1 (adım 6) — randevu hatırlatmaları YEREL OS bildirimi.
+// EK Z.5 — ayrıca sunucu-taraflı remote push (Expo push token kaydı + deep-link).
+import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
+import { api } from './api';
 import type { Appointment } from './data';
 import { REMIND_24H_MS, REMIND_2H_MS } from './data';
 import { formatSlotTr } from './datetime';
@@ -83,4 +86,28 @@ export async function syncBookingReminders(bookings: Appointment[], t: Tr): Prom
   } catch {
     // Bildirim planlaması best-effort — hata uygulamayı etkilemez
   }
+}
+
+// EK Z.5 — Expo push token al + backend'e kaydet (giriş sonrası). Best-effort.
+export async function registerForRemotePush(authToken: string): Promise<void> {
+  try {
+    if (!Device.isDevice) return; // simülatör gerçek push token üretmez
+    if (!(await ensurePermission())) return;
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+    const tok = await Notifications.getExpoPushTokenAsync(
+      projectId ? { projectId } : undefined,
+    );
+    await api.registerPushToken(authToken, tok.data, Platform.OS);
+  } catch {
+    // Remote push opsiyonel — hata uygulamayı etkilemez
+  }
+}
+
+// EK Z.5 — bildirime dokunma → DEEP-LINK (MD_000 satır 266: doğrudan ilgili ekrana).
+export function addPushDeepLinkListener(onRoute: (route: string) => void) {
+  return Notifications.addNotificationResponseReceivedListener((resp) => {
+    const route = resp.notification.request.content.data?.route;
+    if (typeof route === 'string' && route.startsWith('/')) onRoute(route);
+  });
 }

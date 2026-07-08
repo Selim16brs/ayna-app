@@ -727,6 +727,18 @@ model Message {
   @@map("messages")
 }
 
+// EK Z.5 — Uzaktan push: cihaz Expo push token kaydı. token benzersiz (cihaz başına tek).
+model PushToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique
+  platform  String   @default("")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("push_tokens")
+}
+
 // EK Z.3 — Ağır KYC: uzman/salon belge doğrulaması (OTP+yüz tespiti self-publish'e EK).
 // documents: string[] belge görsel URI'leri. status: pending | approved | rejected.
 model KycVerification {

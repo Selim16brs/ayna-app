@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Stack, usePathname } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Caveat_700Bold } from '@expo-google-fonts/caveat';
 import { LocaleProvider, useLocale } from '../src/locale';
-import { syncBookingReminders } from '../src/notifications';
+import { addPushDeepLinkListener, registerForRemotePush, syncBookingReminders } from '../src/notifications';
 import { useStore } from '../src/store';
 import { ThemeProvider, useTheme } from '../src/theme-context';
 import { AppTabBar, NailCursor, SalonTabBar, SellerTabBar } from '../src/ui';
@@ -14,7 +14,9 @@ function ThemedStack() {
   const { colors, isDark } = useTheme();
   const { t, locale } = useLocale();
   const pathname = usePathname();
+  const router = useRouter();
   const currentUser = useStore((s) => s.currentUser);
+  const token = useStore((s) => s.token);
   const bookings = useStore((s) => s.bookings);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
   const loadContent = useStore((s) => s.loadContent);
@@ -28,6 +30,15 @@ function ThemedStack() {
   useEffect(() => {
     void hydrateBookings();
   }, [hydrateBookings]);
+  // EK Z.5 — giriş yapıldığında (token gelince) Expo push token'ı backend'e kaydet
+  useEffect(() => {
+    if (token) void registerForRemotePush(token);
+  }, [token]);
+  // EK Z.5 — push bildirimine dokunma → DEEP-LINK (doğrudan ilgili ekrana)
+  useEffect(() => {
+    const sub = addPushDeepLinkListener((route) => router.push(route as never));
+    return () => sub.remove();
+  }, [router]);
   // §4.1 — onaylı randevular için 24s/2s YEREL OS bildirimi planla (randevu listesi değişince eşitle)
   useEffect(() => {
     void syncBookingReminders(bookings, t);

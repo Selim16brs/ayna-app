@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../push/push.service';
 import { processMessage, resolvePair } from './messaging.util';
 
 // EK Z.1 — Uygulama-içi DM mesajlaşma servisi.
@@ -12,7 +13,10 @@ import { processMessage, resolvePair } from './messaging.util';
 // yasaklı ifade alıcıya gösterilmez (audit'e düşer); telefon numarası maskelenir.
 @Injectable()
 export class MessagingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly push: PushService,
+  ) {}
 
   private async userRole(id: string): Promise<{ name: string; role: string } | null> {
     const u = await this.prisma.user.findUnique({ where: { id }, select: { name: true, role: true } });
@@ -99,6 +103,13 @@ export class MessagingService {
       await this.prisma.conversation.update({
         where: { id: conversationId },
         data: { lastMessageAt: msg.createdAt },
+      });
+      // EK Z.5 — alıcıya uzaktan push (DEEP-LINK: doğrudan sohbete). Fire-and-forget.
+      const sender = await this.prisma.user.findUnique({ where: { id: meId }, select: { name: true } });
+      void this.push.sendToUser(otherId, {
+        title: sender?.name || 'Yeni mesaj',
+        body: body.length > 80 ? `${body.slice(0, 80)}…` : body,
+        data: { route: `/messages/${conversationId}` },
       });
     }
     return { id: msg.id, moderation, body: msg.body, createdAt: msg.createdAt };

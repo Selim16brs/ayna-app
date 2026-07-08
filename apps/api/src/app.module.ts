@@ -25,6 +25,7 @@ import { ProfileChangesModule } from './profile-changes/profile-changes.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { SafetyModule } from './safety/safety.module';
 import { KycModule } from './kyc/kyc.module';
+import { PushModule } from './push/push.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { KycModule } from './kyc/kyc.module';
     MessagingModule,
     SafetyModule,
     KycModule,
+    PushModule,
   ],
 })
 export class AppModule {}

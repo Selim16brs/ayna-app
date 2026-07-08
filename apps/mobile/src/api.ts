@@ -487,6 +487,11 @@ export const api = {
   myKyc: (token: string) => get<MyKyc>('/kyc/mine', token),
   submitKyc: (token: string, input: { docType: KycDocType; documents: string[] }) =>
     post<KycVerification>('/kyc', input, token),
+  // EK Z.5 — uzaktan push token kaydı/silme
+  registerPushToken: (token: string, expoToken: string, platform: string) =>
+    post<{ ok: boolean }>('/push/tokens', { token: expoToken, platform }, token),
+  removePushToken: (token: string, expoToken: string) =>
+    post<{ ok: boolean }>('/push/tokens/remove', { token: expoToken }, token),
 };
 
 // EK Z.3 — KYC tipleri
