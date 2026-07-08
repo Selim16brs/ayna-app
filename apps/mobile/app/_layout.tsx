@@ -93,13 +93,11 @@ function ThemedStack() {
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
-  // Gövde/UI fontu = SF (sistem, RN varsayılanı — fontFamily verilmez). Sadece Caveat el yazısı yüklenir.
-  // Font yüklenmezse (hata) uygulama BEYAZ ekranda kalmasın — hata olsa da devam et.
-  const [fontsLoaded, fontError] = useFonts({
-    Caveat_700Bold,
-  });
-
-  if (!fontsLoaded && !fontError) return null;
+  // Gövde/UI fontu = SF (sistem, RN varsayılanı). Caveat yalnız dekoratif el yazısı.
+  // NOT: font yüklemesini BLOKE ETMİYORUZ — EAS Update/Expo Go'da font asset'i asılı
+  // kalırsa uygulama sonsuza kadar beyaz kalıyordu. Uygulama hemen açılır; Caveat
+  // yüklenince kendiliğinden yerine oturur (o ana kadar sistem fontuna düşer).
+  useFonts({ Caveat_700Bold });
 
   return (
     <QueryClientProvider client={queryClient}>
