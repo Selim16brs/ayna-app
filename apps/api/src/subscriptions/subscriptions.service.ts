@@ -89,10 +89,12 @@ export class SubscriptionsService {
     ]);
     await this.audit('subscription.approve', id, actorId);
     // §11 — kullanıcıya push: üyelik yükseltildi → app tier'ı tazeleyip hakları açar
+    const buyer = await this.prisma.user.findUnique({ where: { id: sub!.userId } });
+    const route = buyer?.role === 'user' ? '/profile/passport' : '/seller/premium';
     void this.push.sendToUser(sub!.userId, {
       title: 'Üyeliğin yükseltildi 🎉',
       body: `${sub!.tier === 'platinum' ? 'Platinum' : 'Premium'} üyeliğin aktif — tüm ayrıcalıkların açıldı.`,
-      data: { route: '/seller/premium' },
+      data: { route },
     });
     return updated;
   }

@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MessageKey } from '@ayna/i18n';
@@ -22,10 +23,16 @@ const PREMIUM_PERKS: MessageKey[] = [
   'passport.perk.support',
 ];
 
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 export default function PassportScreen() {
   const router = useRouter();
+  const refreshMembership = useStore((s) => s.refreshMembership);
+  useFocusEffect(
+    useCallback(() => {
+      void refreshMembership(); // §11 — onay sonrası haklar anında açılsın
+    }, [refreshMembership]),
+  );
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);

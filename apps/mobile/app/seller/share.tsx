@@ -71,6 +71,14 @@ export default function SellerShareScreen() {
   const { t } = useLocale();
   const styles = useThemedStyles(makeStyles);
   const rawName = useStore((s) => s.currentUser?.name) ?? 'AYNA';
+  const cutoutUri = useStore((s) => s.cutoutUri);
+  const avatarUri = useStore((s) => s.avatarUri);
+  // Karttaki portre GERÇEK: cut-out > yüklenen foto > nötr çizim (stok model DEĞİL)
+  const portrait = cutoutUri
+    ? { uri: cutoutUri }
+    : avatarUri
+      ? { uri: avatarUri }
+      : require('../../assets/hero-expert.png');
   const isSalon = useStore((s) => s.currentUser?.role === 'salon');
   const businessName = useStore((s) => s.currentUser?.businessName);
   const svgRef = useRef<Svg>(null);
@@ -102,12 +110,15 @@ export default function SellerShareScreen() {
         reject(new Error('no-capture'));
         return;
       }
-      ref.toDataURL((b) => (b ? resolve(b) : reject(new Error('empty'))), { width: W, height: H });
+      // NOT: {width,height} opsiyonu SVG'yi önizleme boyutunda çizip dev tuvalin köşesine
+      // yapıştırıyordu (kart minicik görünüyordu). Boyutsuz yakala → 1080'e ölçekle.
+      ref.toDataURL((b) => (b ? resolve(b) : reject(new Error('empty'))));
     });
-    const out = await ImageManipulator.manipulateAsync(`data:image/png;base64,${base64}`, [], {
-      compress: 0.92,
-      format: ImageManipulator.SaveFormat.JPEG,
-    });
+    const out = await ImageManipulator.manipulateAsync(
+      `data:image/png;base64,${base64}`,
+      [{ resize: { width: W } }],
+      { compress: 0.92, format: ImageManipulator.SaveFormat.JPEG },
+    );
     return out.uri;
   };
 
@@ -181,7 +192,7 @@ export default function SellerShareScreen() {
 
             {/* uzman cut-out fotoğrafı (panel bandında) */}
             <SvgImage
-              href={require('../../assets/hero-expert.png')}
+              href={portrait}
               x={470}
               y={176}
               width={546}
@@ -209,13 +220,10 @@ export default function SellerShareScreen() {
             <SvgText x={148} y={1085} fontSize={32} fontWeight="700" fill={C.limeDeep}>
               {subtitle}
             </SvgText>
-            {/* puan rozeti */}
-            <Rect x={ratingX} y={1042} width={168} height={66} rx={33} fill={C.goldSoft} />
-            <SvgText x={ratingX + 32} y={1085} fontSize={32} fontWeight="700" fill={C.gold}>
-              ★
-            </SvgText>
-            <SvgText x={ratingX + 70} y={1085} fontSize={32} fontWeight="700" fill={C.body}>
-              4.9
+            {/* rozet: gerçek puan birikene kadar dürüst 'Yeni ✨' (sabit 4.9 KALDIRILDI) */}
+            <Rect x={ratingX} y={1042} width={190} height={66} rx={33} fill={C.goldSoft} />
+            <SvgText x={ratingX + 36} y={1085} fontSize={30} fontWeight="700" fill={C.gold}>
+              ✨ Yeni
             </SvgText>
 
             {/* CTA pill */}

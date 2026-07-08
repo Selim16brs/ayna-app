@@ -745,9 +745,27 @@ function SubscriptionsView() {
                   {s.periodEnd
                     ? ` · bitiş ${new Date(s.periodEnd).toLocaleDateString('tr-TR')}`
                     : ''}
-                  {s.receiptUri ? ' · 📎 dekont yüklü' : ' · ⚠ dekont yok'}
+                  {s.receiptUri ? ' · 📎 dekont:' : ' · ⚠ dekont yok'}
                 </div>
               </div>
+              {s.receiptUri ? (
+                <img
+                  src={s.receiptUri}
+                  alt="dekont"
+                  style={{
+                    width: 72,
+                    height: 72,
+                    objectFit: 'cover',
+                    borderRadius: 8,
+                    cursor: 'zoom-in',
+                  }}
+                  onClick={(e) => {
+                    const img = e.currentTarget;
+                    img.style.width = img.style.width === '72px' ? '360px' : '72px';
+                    img.style.height = 'auto';
+                  }}
+                />
+              ) : null}
               <span className={`pill ${statusPill(s.status)}`}>{statusTr(s.status)}</span>
               {s.status === 'pending' ? (
                 <div className="actions">
