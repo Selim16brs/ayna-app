@@ -22,6 +22,7 @@ import { RatingsModule } from './ratings/ratings.module';
 import { SettingsModule } from './settings/settings.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ProfileChangesModule } from './profile-changes/profile-changes.module';
+import { MessagingModule } from './messaging/messaging.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ProfileChangesModule } from './profile-changes/profile-changes.module';
     DisputesModule,
     CircleModule,
     CutoutModule,
+    MessagingModule,
   ],
 })
 export class AppModule {}

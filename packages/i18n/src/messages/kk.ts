@@ -517,6 +517,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'profile.menu.rewards': 'Ұпайларым',
   'profile.menu.budget': 'Бюджет',
   'profile.menu.saved': 'Сақталғандар',
+  'profile.menu.messages': 'Хабарламалар',
   'profile.menu.addresses': 'Мекенжайларым',
   'addresses.title': 'Мекенжайларым',
   'addresses.hint': 'Үй және жұмыс мекенжайларыңды басқар — "Саған жақын" және қашықтық есебі үшін қолданылады.',
@@ -1478,4 +1479,17 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.invalid_transition': 'Жазылу күйін өзгерту мүмкін емес',
   'review.not_eligible': 'Бұл жазылуды бағалау мүмкін емес',
   'safety.share.default_off': 'Орналасқан жерді бөлісу әдепкі бойынша өшірулі',
+
+  // EK Z.1 — жеке хабарламалар
+  'messages.title': 'Хабарламалар',
+  'messages.empty': 'Әзірше хабарламаңыз жоқ. Маманмен сөйлесуді бастаңыз.',
+  'messages.thread_empty': 'Алғашқы хабарламаны жазыңыз.',
+  'messages.input_placeholder': 'Хабарлама жазу…',
+  'messages.send': 'Жіберу',
+  'messages.start': 'Хабарлама жіберу',
+  'messages.hidden': 'Бұл хабарлама ережеге қайшы болғандықтан жасырылды',
+  'messages.number_hint': 'Қауіпсіздік үшін телефон нөмірлері жасырылады',
+  'messages.block': 'Бұғаттау',
+  'messages.unblock': 'Бұғаттаудан шығару',
+  'messages.blocked_notice': 'Бұл пайдаланушымен хат алмасу бұғатталды',
 };

@@ -21,6 +21,7 @@ const MENU: { key: MessageKey; icon: IoniconName; danger?: boolean; sellerOnly?:
   { key: 'profile.menu.rewards', icon: 'gift-outline' },
   { key: 'profile.menu.budget', icon: 'wallet-outline' },
   { key: 'profile.menu.saved', icon: 'bookmark-outline' },
+  { key: 'profile.menu.messages', icon: 'chatbubbles-outline' },
   { key: 'profile.menu.addresses', icon: 'location-outline' },
   { key: 'profile.menu.privacy', icon: 'lock-closed-outline' },
   { key: 'profile.menu.notifications', icon: 'notifications-outline' },
@@ -70,6 +71,7 @@ export default function ProfileScreen() {
     else if (key === 'profile.menu.rewards') router.push('/rewards');
     else if (key === 'profile.menu.budget') router.push('/profile/budget');
     else if (key === 'profile.menu.saved') router.push('/favorites');
+    else if (key === 'profile.menu.messages') router.push('/messages');
     else if (key === 'profile.menu.addresses') router.push('/profile/addresses');
     else if (key === 'profile.menu.privacy') router.push('/profile/privacy');
     else if (key === 'profile.menu.notifications') router.push('/profile/notifications');

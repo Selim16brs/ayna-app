@@ -517,6 +517,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'profile.menu.rewards': 'Мои баллы',
   'profile.menu.budget': 'Бюджет',
   'profile.menu.saved': 'Сохранённые',
+  'profile.menu.messages': 'Сообщения',
   'profile.menu.addresses': 'Мои адреса',
   'addresses.title': 'Мои адреса',
   'addresses.hint': 'Управляй домашним и рабочим адресами — используются для «Рядом с тобой» и расчёта расстояния.',
@@ -1478,4 +1479,17 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.invalid_transition': 'Невозможно изменить статус записи',
   'review.not_eligible': 'Эту запись нельзя оценить',
   'safety.share.default_off': 'Передача местоположения по умолчанию отключена',
+
+  // EK Z.1 — личные сообщения
+  'messages.title': 'Сообщения',
+  'messages.empty': 'У вас пока нет сообщений. Начните чат со специалистом.',
+  'messages.thread_empty': 'Напишите первое сообщение.',
+  'messages.input_placeholder': 'Написать сообщение…',
+  'messages.send': 'Отправить',
+  'messages.start': 'Написать сообщение',
+  'messages.hidden': 'Это сообщение скрыто из-за нарушения правил',
+  'messages.number_hint': 'В целях безопасности номера телефонов скрываются',
+  'messages.block': 'Заблокировать',
+  'messages.unblock': 'Разблокировать',
+  'messages.blocked_notice': 'Переписка с этим пользователем заблокирована',
 };

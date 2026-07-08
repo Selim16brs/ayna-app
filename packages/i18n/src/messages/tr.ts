@@ -566,6 +566,7 @@ export const tr = {
   'profile.menu.rewards': 'Puanlarım',
   'profile.menu.budget': 'Bütçe',
   'profile.menu.saved': 'Kaydedilenler',
+  'profile.menu.messages': 'Mesajlar',
   'profile.menu.addresses': 'Adreslerim',
   'addresses.title': 'Adreslerim',
   'addresses.hint': 'Ev ve iş adreslerini yönet — "Sana Yakın" ve mesafe hesabı için kullanılır.',
@@ -1602,6 +1603,19 @@ export const tr = {
   'booking.invalid_transition': 'Randevu durumu değiştirilemez',
   'review.not_eligible': 'Bu randevu değerlendirilemez',
   'safety.share.default_off': 'Konum paylaşımı varsayılan olarak kapalı',
+
+  // EK Z.1 — DM mesajlaşma
+  'messages.title': 'Mesajlar',
+  'messages.empty': 'Henüz mesajın yok. Bir uzmanla sohbet başlat.',
+  'messages.thread_empty': 'İlk mesajı sen yaz.',
+  'messages.input_placeholder': 'Mesaj yaz…',
+  'messages.send': 'Gönder',
+  'messages.start': 'Mesaj gönder',
+  'messages.hidden': 'Bu mesaj kurallara aykırı olduğu için gizlendi',
+  'messages.number_hint': 'Güvenliğin için telefon numaraları gizlenir',
+  'messages.block': 'Engelle',
+  'messages.unblock': 'Engeli kaldır',
+  'messages.blocked_notice': 'Bu kullanıcıyla mesajlaşma engellendi',
 } as const;
 
 export type MessageKey = keyof typeof tr;

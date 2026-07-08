@@ -448,7 +448,47 @@ export const api = {
     post<{ id: string; status: string; moderationReason: string }>('/circle/posts', input, token),
   reportCirclePost: (token: string, id: string, reason?: string) =>
     post<{ reports: number; hidden: boolean }>(`/circle/posts/${id}/report`, { reason }, token),
+  // EK Z.1 — DM mesajlaşma (müşteri ↔ uzman/salon; moderasyon + numara maskeleme backend'de)
+  conversations: (token: string) => get<ConversationSummary[]>('/messaging/conversations', token),
+  startConversation: (
+    token: string,
+    targetUserId: string,
+    ctx?: { bookingId?: string; requestId?: string },
+  ) => post<{ id: string }>('/messaging/conversations', { targetUserId, ...(ctx ?? {}) }, token),
+  chatMessages: (token: string, id: string) =>
+    get<ChatMessage[]>(`/messaging/conversations/${id}/messages`, token),
+  sendChatMessage: (token: string, id: string, body: string) =>
+    post<ChatMessage>(`/messaging/conversations/${id}/messages`, { body }, token),
+  blockedUsers: (token: string) => get<BlockedUser[]>('/messaging/blocks', token),
+  blockUser: (token: string, targetUserId: string) =>
+    post<{ ok: boolean }>('/messaging/blocks', { targetUserId }, token),
+  unblockUser: (token: string, targetUserId: string) =>
+    post<{ ok: boolean }>(`/messaging/blocks/${targetUserId}/remove`, {}, token),
 };
+
+// EK Z.1 — DM mesajlaşma tipleri
+export interface ConversationSummary {
+  id: string;
+  otherId: string;
+  otherName: string;
+  lastBody: string;
+  lastAt: string;
+  unread: number;
+}
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  mine: boolean;
+  body: string;
+  hidden: boolean;
+  readAt: string | null;
+  createdAt: string;
+}
+export interface BlockedUser {
+  id: string;
+  name: string;
+  since: string;
+}
 
 export interface ApiCirclePost {
   id: string;
