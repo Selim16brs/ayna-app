@@ -1974,6 +1974,9 @@ export const useStore = create<State>()(
             currentUser: s.currentUser ? { ...s.currentUser, membershipTier: tier } : s.currentUser,
             premium: tier === 'premium' || tier === 'platinum',
             platinum: tier === 'platinum',
+            // Medya = HESAP verisi: açılış/odak tazelemesinde hesaptaki foto+cutout esas
+            ...(me.avatarUrl !== undefined ? { avatarUri: me.avatarUrl ?? null } : {}),
+            ...(me.cutoutUrl !== undefined ? { cutoutUri: me.cutoutUrl ?? null } : {}),
           }));
           // Push gelmese bile: yükselme ALGILANDIĞINDA uygulama-içi bildirim (§11)
           if (!wasPremium && (tier === 'premium' || tier === 'platinum'))
@@ -2051,8 +2054,8 @@ export const useStore = create<State>()(
         token: s.token,
         currentUser: s.currentUser,
         sellerTrialStart: s.sellerTrialStart, // §11 — 3 günlük ücretsiz deneme sayacı korunur
-        avatarUri: s.avatarUri,
-        cutoutUri: s.cutoutUri, // §5.1.1 — cut-out foto app yeniden açılınca korunur
+        // PERF: avatar/cutout PERSIST EDİLMEZ — MB'lık data-URL'ler her state değişiminde
+        // diske yazılıp uygulamayı yavaşlatıyordu. Açılışta HESAPTAN geri yüklenir (tek kaynak).
         sellerServices: s.sellerServices,
         sellerSocial: s.sellerSocial,
         sellerHours: s.sellerHours,

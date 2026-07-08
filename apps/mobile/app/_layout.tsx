@@ -25,6 +25,7 @@ function ThemedStack() {
   const hydrateBookings = useStore((s) => s.hydrateBookings);
   const hydrateDemands = useStore((s) => s.hydrateDemands);
   const hydrateLoyalty = useStore((s) => s.hydrateLoyalty);
+  const refreshMembership = useStore((s) => s.refreshMembership);
   const loadContent = useStore((s) => s.loadContent);
   const checkReminders = useStore((s) => s.checkReminders);
   const expireDemands = useStore((s) => s.expireDemands);
@@ -37,7 +38,8 @@ function ThemedStack() {
     void hydrateBookings();
     void hydrateDemands(); // §5.2 Faz A — taleplerim + gelen teklifler buluttan
     void hydrateLoyalty(); // Faz B — puan/çekiliş/ledger yeniden açılışta da buluttan
-  }, [hydrateBookings, hydrateDemands, hydrateLoyalty]);
+    void refreshMembership(); // medya (foto/cutout) + tier açılışta HESAPTAN (bayat yerel kopya ezilir)
+  }, [hydrateBookings, hydrateDemands, hydrateLoyalty, refreshMembership]);
   // EK Z.5 — giriş yapıldığında (token gelince) Expo push token'ı backend'e kaydet
   useEffect(() => {
     if (token) void registerForRemotePush(token);
