@@ -15,12 +15,20 @@ import type { ThemeMode } from '../../src/theme';
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 // §5.6 nihai menü. 'panel' yalnızca satıcı hesabında; 'AYNA Safe' KALDIRILDI.
-const MENU: { key: MessageKey; icon: IoniconName; danger?: boolean; sellerOnly?: boolean }[] = [
+const MENU: {
+  key: MessageKey;
+  icon: IoniconName;
+  danger?: boolean;
+  sellerOnly?: boolean;
+  customerOnly?: boolean;
+}[] = [
   { key: 'profile.menu.panel', icon: 'briefcase-outline', sellerOnly: true },
+  // §9.2 — uzman/salon: kazandığı paralar (müşteri 'Bütçe'sinin satıcı karşılığı)
+  { key: 'profile.menu.earnings', icon: 'cash-outline', sellerOnly: true },
   { key: 'profile.menu.passport', icon: 'card-outline' },
   { key: 'profile.menu.always', icon: 'infinite-outline' },
   { key: 'profile.menu.rewards', icon: 'gift-outline' },
-  { key: 'profile.menu.budget', icon: 'wallet-outline' },
+  { key: 'profile.menu.budget', icon: 'wallet-outline', customerOnly: true },
   { key: 'profile.menu.saved', icon: 'bookmark-outline' },
   { key: 'profile.menu.messages', icon: 'chatbubbles-outline' },
   { key: 'profile.menu.referral', icon: 'gift-outline' },
@@ -65,7 +73,7 @@ export default function ProfileScreen() {
   const logout = useStore((s) => s.logout);
   const role = useStore((s) => s.currentUser?.role);
   const isSeller = role === 'salon' || role === 'professional';
-  const menu = MENU.filter((m) => !m.sellerOnly || isSeller);
+  const menu = MENU.filter((m) => (!m.sellerOnly || isSeller) && (!m.customerOnly || !isSeller));
   // §9/§10 — panel etiketi rol-duyarlı: uzman "Uzman paneli", salon "İşletme paneli"
   const menuLabel = (key: MessageKey): string =>
     key === 'profile.menu.panel' && role === 'professional'
@@ -82,6 +90,8 @@ export default function ProfileScreen() {
     else if (key === 'profile.menu.always') router.push('/always');
     else if (key === 'profile.menu.rewards') router.push('/rewards');
     else if (key === 'profile.menu.budget') router.push('/profile/budget');
+    else if (key === 'profile.menu.earnings')
+      router.push(role === 'salon' ? '/salon/home' : '/seller/reports');
     else if (key === 'profile.menu.saved') router.push('/favorites');
     else if (key === 'profile.menu.messages') router.push('/messages');
     else if (key === 'profile.menu.referral') router.push('/referral');

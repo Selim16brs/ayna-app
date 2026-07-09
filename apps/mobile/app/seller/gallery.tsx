@@ -2,13 +2,21 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { api } from '../../src/api';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 // Kayıttan gelen başlangıç galerisi (demo)
 
@@ -19,6 +27,7 @@ export default function GalleryScreen() {
   // §6.1 — galeri HESAPTA: açılışta buluttan gelir; ekle/sil ANINDA buluta kaydedilir
   const token = useStore((s) => s.token);
   const [photos, setPhotos] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
   useFocusEffect(
     useCallback(() => {
       if (!token) return;
@@ -32,10 +41,25 @@ export default function GalleryScreen() {
       };
     }, [token]),
   );
+  // Ekle/sil ANINDA hesaba kaydeder (sessiz otokayıt) — foto asla kaybolmaz.
   const persist = (next: string[]) => {
     setPhotos(next);
     if (token) void api.setMyPortfolio(token, next).catch(() => undefined);
   };
+
+  // Açık 'Yükle' butonu: hesaba yazıp onay göster (kullanıcıya güven).
+  async function saveNow() {
+    if (!token || saving) return;
+    setSaving(true);
+    try {
+      await api.setMyPortfolio(token, photos);
+      Alert.alert(t('gallery.saved_t'), t('gallery.saved_b'));
+    } catch {
+      Alert.alert(t('gallery.manage_title'), t('gallery.save_err'));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function addPhoto() {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -85,6 +109,27 @@ export default function GalleryScreen() {
             </Pressable>
           ))}
         </View>
+
+        {photos.length > 0 ? (
+          <View style={styles.saveWrap}>
+            <Button
+              label={saving ? '…' : t('gallery.save_cta')}
+              variant="primary"
+              disabled={saving}
+              onPress={saveNow}
+            />
+            <View style={styles.savedHint}>
+              {saving ? (
+                <ActivityIndicator size="small" color={colors.muted} />
+              ) : (
+                <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+              )}
+              <Text variant="caption" tone="muted">
+                {saving ? t('gallery.saving') : t('gallery.autosaved')}
+              </Text>
+            </View>
+          </View>
+        ) : null}
       </ScrollView>
     </Screen>
   );
@@ -93,7 +138,9 @@ export default function GalleryScreen() {
 const GAP = space(1);
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: space(4) },
+    content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE + space(2) },
+    saveWrap: { marginTop: space(2.5), gap: space(1) },
+    savedHint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
     hint: { marginBottom: space(1.5) },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP },
     cell: {
