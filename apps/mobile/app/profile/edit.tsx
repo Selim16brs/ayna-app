@@ -36,6 +36,7 @@ export default function ProfileEditScreen() {
   const sellerHours = useStore((s) => s.sellerHours);
   const sellerCerts = useStore((s) => s.sellerCerts);
   const updateMyProfile = useStore((s) => s.updateMyProfile);
+  const setSellerProfile = useStore((s) => s.setSellerProfile);
   const submitProfileChange = useStore((s) => s.submitProfileChange);
 
   // Faz B — alanlar GERÇEK hesaptan gelir (hardcode yok); boşsa boş görünür.
@@ -135,11 +136,17 @@ export default function ProfileEditScreen() {
 
   const onSave = async () => {
     if (isSeller) {
-      // §profil-onay — salon/uzman: değişiklik ADMIN ONAYINA gider, yerelde uygulanmaz
-      await submitProfileChange({ name, social, hours, certs });
-      Alert.alert(t('profile.edit.pending_t'), t('profile.edit.pending_b'), [
-        { text: t('common.ok'), onPress: () => router.back() },
-      ]);
+      try {
+        // Sertifikalar ANINDA uygulanır (hesaba yazılır + yerel) — admin onayı beklemez
+        setSellerProfile({ certs });
+        // İsim/sosyal/saatler admin onayına gider (§profil-onay)
+        await submitProfileChange({ name, social, hours, certs });
+        Alert.alert(t('profile.edit.pending_t'), t('profile.edit.pending_b'), [
+          { text: t('common.ok'), onPress: () => router.back() },
+        ]);
+      } catch {
+        Alert.alert(t('profile.edit.title'), t('profile.edit.save_err'));
+      }
     } else {
       // müşteri: anında uygula (boş isim kaydetme — Keşfet ismi boşalmasın)
       const trimmed = name.trim();

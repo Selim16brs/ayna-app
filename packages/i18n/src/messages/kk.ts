@@ -1461,6 +1461,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'care.add.delete_confirm': 'Осы жазбаны жойғыңыз келе ме?',
   'life.title': 'AYNA Life',
   'profile.edit.title': 'Профильді өңдеу',
+  'profile.edit.save_err':
+    'Сақталмады — қайталап көр. (Сессия жаңарған болуы мүмкін; шығып-кіріп көр.)',
   'profile.edit.name': 'Аты-жөні',
   'profile.edit.email': 'Электрондық пошта',
   'profile.edit.phone': 'Телефон',

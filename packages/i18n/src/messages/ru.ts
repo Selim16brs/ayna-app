@@ -1467,6 +1467,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'care.add.delete_confirm': 'Удалить эту запись?',
   'life.title': 'AYNA Life',
   'profile.edit.title': 'Редактировать профиль',
+  'profile.edit.save_err':
+    'Не удалось сохранить — попробуйте снова. (Сессия могла обновиться; выйдите и войдите.)',
   'profile.edit.name': 'Имя и фамилия',
   'profile.edit.email': 'Эл. почта',
   'profile.edit.phone': 'Телефон',

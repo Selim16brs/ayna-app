@@ -33,6 +33,8 @@ export default function SalonEditScreen() {
   const sellerSocial = useStore((s) => s.sellerSocial);
   const sellerHours = useStore((s) => s.sellerHours);
   const submitProfileChange = useStore((s) => s.submitProfileChange);
+  const setSalonProfile = useStore((s) => s.setSalonProfile);
+  const setSellerProfile = useStore((s) => s.setSellerProfile);
 
   const [photos, setPhotos] = useState(salonProfile.photos);
   const [about, setAbout] = useState(salonProfile.about);
@@ -83,14 +85,22 @@ export default function SalonEditScreen() {
 
   // §profil-onay — salon profil değişikliği ADMIN ONAYINA gider (yerelde uygulanmaz)
   const onSave = async () => {
-    await submitProfileChange({
-      salonProfile: { photos, about, address, contact, areas },
-      social,
-      hours,
-    });
-    Alert.alert(t('profile.edit.pending_t'), t('profile.edit.pending_b'), [
-      { text: t('common.ok'), onPress: () => router.back() },
-    ]);
+    // Değişiklik ANINDA yerelde uygulanır (salon kendi düzenlemesini hemen görür) +
+    // admin onayına gönderilir (§profil-onay). Sertifika/foto data URL olarak kalıcıdır.
+    setSalonProfile({ photos, about, address, contact, areas });
+    setSellerProfile({ social, hours });
+    try {
+      await submitProfileChange({
+        salonProfile: { photos, about, address, contact, areas },
+        social,
+        hours,
+      });
+      Alert.alert(t('profile.edit.pending_t'), t('profile.edit.pending_b'), [
+        { text: t('common.ok'), onPress: () => router.back() },
+      ]);
+    } catch {
+      Alert.alert(t('profile.edit.title'), t('profile.edit.save_err'));
+    }
   };
 
   return (

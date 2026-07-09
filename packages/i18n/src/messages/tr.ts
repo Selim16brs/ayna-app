@@ -1552,6 +1552,8 @@ export const tr = {
 
   // Profil — düzenle
   'profile.edit.title': 'Profili düzenle',
+  'profile.edit.save_err':
+    'Kaydedilemedi — tekrar dene. (Oturumun yenilenmiş olabilir; çıkış-giriş dene.)',
   'profile.edit.name': 'Ad Soyad',
   'profile.edit.email': 'E-posta',
   'profile.edit.phone': 'Telefon',
