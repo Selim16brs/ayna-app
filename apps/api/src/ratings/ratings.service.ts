@@ -100,6 +100,10 @@ export class RatingsService {
       });
     }
 
+    // §7.2/§10.1 — MÜŞTERİ→UZMAN yorumu kamuya açıktır ve HEMEN görünür (otomatik gizleme YOK;
+    //   yalnız admin itiraz süreciyle silinebilir). Profilde gösterim ayrıca reveal-eşiği ile korunur.
+    // §7.3 — UZMAN→MÜŞTERİ puanı GİZLİ operasyonel sinyaldir; kamuya ASLA açılmaz (visible=false).
+    const publicReview = input.raterRole === 'user';
     const created = await this.prisma.rating.create({
       data: {
         bookingId: input.bookingId,
@@ -110,7 +114,7 @@ export class RatingsService {
         serviceTag: input.serviceTag ?? '',
         authorLabel: input.authorLabel?.trim() || 'Doğrulanmış üye',
         ...(input.photos && input.photos.length ? { photos: input.photos } : {}), // EK Z.10
-        visible: false,
+        visible: publicReview,
       },
     });
 
@@ -121,21 +125,7 @@ export class RatingsService {
       });
     }
 
-    // Aynı randevuda hem kullanıcı hem uzman puan verdiyse → ikisini de görünür yap
-    const roles = await this.prisma.rating.findMany({
-      where: { bookingId: input.bookingId },
-      select: { raterRole: true },
-    });
-    const bothRated =
-      roles.some((r) => r.raterRole === 'user') && roles.some((r) => r.raterRole === 'specialist');
-    if (bothRated) {
-      await this.prisma.rating.updateMany({
-        where: { bookingId: input.bookingId },
-        data: { visible: true },
-      });
-    }
-
-    return { id: created.id, visible: bothRated, bothRated };
+    return { id: created.id, visible: publicReview };
   }
 
   // §1.8 — agregat yalnızca eşik aşılınca görünür.
