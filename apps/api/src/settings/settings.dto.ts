@@ -17,7 +17,12 @@ export const RATE_KEYS = RATE_DEFS.map((r) => r.key);
 // §12.9 — dış servis API anahtarları
 export const API_KEY_DEFS = [
   { provider: 'removebg', label: 'remove.bg (§5.1.1 arka plan kesimi)', key: 'apikey.removebg' },
-  { provider: 'openai', label: 'OpenAI (Boni AI asistanı)', key: 'apikey.openai' },
+  {
+    provider: 'anthropic',
+    label: 'Claude / Anthropic (Boni AI — ÖNERİLEN)',
+    key: 'apikey.anthropic',
+  },
+  { provider: 'openai', label: 'OpenAI (Boni AI — alternatif)', key: 'apikey.openai' },
   { provider: 'sms', label: 'SMS sağlayıcısı (OTP)', key: 'apikey.sms' },
 ] as const;
 

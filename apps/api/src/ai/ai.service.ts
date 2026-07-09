@@ -9,10 +9,11 @@ interface ChatMsg {
 }
 
 const BONI_SYSTEM =
-  "Sen AYNA'nın güzellik danışmanı Boni'sin. Kadınlara güzellik ve kişisel bakım " +
-  'konusunda kısa, sıcak ve net yardım edersin. Tıbbi teşhis koymaz, gerektiğinde ' +
-  'bir uzmana danışmayı veya AYNA üzerinden randevu almayı önerirsin. Kullanıcının ' +
-  'diline (TR/RU/KK) uygun yanıt ver.';
+  "Sen AYNA'nın güzellik danışmanı Boni'sin — meraklı, sıcak, çalışkan bir kedi karakteri. " +
+  'Kadınlara güzellik ve kişisel bakım konusunda KISA (2-4 cümle), samimi ve net yardım edersin. ' +
+  'Tıbbi teşhis KOYMAZSIN; ciddi/sağlık konusunda nazikçe bir uzmana danışmayı önerirsin. ' +
+  'Uygun olduğunda AYNA üzerinden teklif almayı veya randevu almayı öner. ' +
+  "Kullanıcının yazdığı dile (Türkçe/Rusça/Kazakça) aynı dilde yanıt ver. Emoji'yi ölçülü kullan.";
 
 @Injectable()
 export class AiService {
@@ -70,9 +71,59 @@ export class AiService {
     return { text, remaining: Math.max(0, limit - used - 1) };
   }
 
+  // §5.4 — Boni GERÇEK randevu/talep verisine bağlı yanıt verir ("yarın randevun var mı?").
+  // Yalnız kullanıcının KENDİ verisi, kendi sorusu için; telefon/adres GÖNDERİLMEZ (gizlilik).
+  private async userContext(userId: string): Promise<string> {
+    const now = new Date();
+    const [bookings, demands] = await Promise.all([
+      this.prisma.booking.findMany({
+        where: {
+          userId,
+          startAt: { gte: now },
+          status: {
+            in: ['confirmed', 'deposit_pending', 'deposit_submitted', 'awaiting_provider'],
+          },
+        },
+        orderBy: { startAt: 'asc' },
+        take: 5,
+      }),
+      this.prisma.quoteRequest.findMany({
+        where: { userId, status: 'open' },
+        orderBy: { createdAt: 'desc' },
+        take: 3,
+      }),
+    ]);
+    const lines: string[] = [];
+    if (bookings.length) {
+      lines.push('Yaklaşan randevuları:');
+      for (const b of bookings) {
+        const when = b.startAt
+          ? b.startAt.toLocaleString('tr-TR', {
+              timeZone: 'Asia/Almaty',
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            })
+          : b.dateLabel;
+        lines.push(`- ${b.service} · ${b.proName} · ${when} · durum: ${b.status}`);
+      }
+    } else {
+      lines.push('Yaklaşan onaylı randevusu yok.');
+    }
+    if (demands.length) {
+      lines.push('Açık teklif talepleri:');
+      for (const d of demands) lines.push(`- ${d.categoryId} (teklif topluyor)`);
+    }
+    return lines.join('\n');
+  }
+
   async boni(userId: string, question: string) {
+    // §5.4 — kullanıcı bağlamını sistem mesajına ekle (gerçek randevu/talep farkındalığı)
+    const ctx = await this.userContext(userId);
     const { text, remaining } = await this.runWithQuota(userId, [
-      { role: 'system', content: BONI_SYSTEM },
+      {
+        role: 'system',
+        content: `${BONI_SYSTEM}\n\n[Kullanıcının güncel AYNA durumu — sorusu ilgiliyse bunu kullan, değilse yok say]\n${ctx}`,
+      },
       { role: 'user', content: question },
     ]);
     return { answer: text, remaining };
@@ -108,23 +159,64 @@ export class AiService {
     return { premium: u.isPremium };
   }
 
-  // OpenAI proxy — anahtar ADMIN PANELİNDEN (apikey.openai) gelir; env yedek. Yoksa güvenli mock.
-  private async apiKey(): Promise<string | null> {
-    const row = await this.prisma.setting.findUnique({ where: { key: 'apikey.openai' } });
-    return row?.strValue?.trim() || this.env.OPENAI_API_KEY || null;
+  // Anahtarlar ADMIN PANELİNDEN (apikey.anthropic / apikey.openai) gelir; env yedek.
+  private async keyFor(provider: 'anthropic' | 'openai'): Promise<string | null> {
+    const row = await this.prisma.setting.findUnique({ where: { key: `apikey.${provider}` } });
+    const envKey = provider === 'anthropic' ? this.env.ANTHROPIC_API_KEY : this.env.OPENAI_API_KEY;
+    return row?.strValue?.trim() || envKey || null;
   }
 
+  // §5.4 — LLM çağrısı: ÖNCE Claude (en yetenekli), yoksa OpenAI, o da yoksa güvenli mock.
   private async callModel(messages: ChatMsg[]): Promise<string> {
-    const key = await this.apiKey();
-    if (!key) return mockReply(messages);
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const anthropicKey = await this.keyFor('anthropic');
+    if (anthropicKey) return this.callAnthropic(messages, anthropicKey);
+    const openaiKey = await this.keyFor('openai');
+    if (openaiKey) return this.callOpenAI(messages, openaiKey);
+    return mockReply(messages);
+  }
+
+  private async callAnthropic(messages: ChatMsg[], key: string): Promise<string> {
+    const system = messages
+      .filter((m) => m.role === 'system')
+      .map((m) => m.content)
+      .join('\n\n');
+    const userMsgs = messages
+      .filter((m) => m.role === 'user')
+      .map((m) => ({ role: 'user' as const, content: m.content }));
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'gpt-4o', messages, max_tokens: 400, temperature: 0.6 }),
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-5',
+        max_tokens: 500,
+        system,
+        messages: userMsgs,
+      }),
     });
     if (!res.ok) {
       throw new HttpException(
-        { code: 'AI_FAILED', message: 'AI çağrısı başarısız' },
+        { code: 'AI_FAILED', message: `Claude çağrısı başarısız (${res.status})` },
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
+    const data = (await res.json()) as { content?: { type: string; text?: string }[] };
+    const text = data.content?.find((c) => c.type === 'text')?.text;
+    return text ?? mockReply(messages);
+  }
+
+  private async callOpenAI(messages: ChatMsg[], key: string): Promise<string> {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'gpt-4o', messages, max_tokens: 500, temperature: 0.6 }),
+    });
+    if (!res.ok) {
+      throw new HttpException(
+        { code: 'AI_FAILED', message: `OpenAI çağrısı başarısız (${res.status})` },
         HttpStatus.BAD_GATEWAY,
       );
     }
@@ -133,13 +225,12 @@ export class AiService {
   }
 }
 
-// Anahtar yokken makul, güvenli demo yanıtı (TR)
+// Anahtar yokken makul, güvenli demo yanıtı (TR) — asla hard-error verme.
 function mockReply(messages: ChatMsg[]): string {
   const q = messages.find((m) => m.role === 'user')?.content ?? '';
   return (
-    `Boni 💬 (demo): "${q.slice(0, 60)}" sorun için kısa önerim — ` +
-    'cilt/saç tipine uygun, nazik ürünlerle başla ve işlemi alanında deneyimli bir ' +
-    'uzmana yaptır. Emin değilsen AYNA’dan bir uzmana danışabilir veya randevu alabilirsin. ' +
-    '(Gerçek OpenAI yanıtı için backend’e OPENAI_API_KEY ekle.)'
+    `Boni 💬 "${q.slice(0, 60)}" için kısa önerim — cilt/saç tipine uygun, nazik ürünlerle ` +
+    'başla ve işlemi alanında deneyimli bir uzmana yaptır. AYNA’dan teklif alarak en doğru ' +
+    'uzmanla eşleşebilirsin. (Not: Boni’nin tam zekâsı için admin panelden bir AI anahtarı eklenmeli.)'
   );
 }

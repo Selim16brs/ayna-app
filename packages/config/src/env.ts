@@ -28,6 +28,7 @@ export const envSchema = z.object({
 
   // AI (§13.5) — anahtar yalnızca backend'de; yoksa güvenli mock kullanılır
   OPENAI_API_KEY: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
   AI_MONTHLY_QUOTA: z.coerce.number().int().positive().default(5),
 });
 
