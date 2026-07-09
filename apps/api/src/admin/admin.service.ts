@@ -416,6 +416,9 @@ export class AdminService {
           city: b.city,
           district: b.district,
           about: b.about,
+          // §5.1.4 — salonun haritadan seçtiği gerçek konum keşif haritasına taşınır
+          ...(b.lat != null ? { lat: b.lat } : {}),
+          ...(b.lng != null ? { lng: b.lng } : {}),
           imageUrl: b.photos[0] ?? DEFAULT_PRO_IMAGE,
           badge: 'verified',
         },

@@ -11,6 +11,9 @@ export const registerBusinessSchema = z.object({
   city: z.string().min(1),
   district: z.string().min(1),
   address: z.string().min(3),
+  // §5.1.4 — haritadan iğneyle seçilen konum (opsiyonel)
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
   workingHours: z.string().optional(),
   taxId: z.string().optional(),
   docUrl: z.string().optional(),

@@ -208,6 +208,9 @@ function mapPro(p: Professional) {
     badge: p.badge,
     city: p.city, // §5.1.4 — harita/arama şehir eşleşmesi
     district: p.district,
+    // §5.1.4 — gerçek konum (kayıtta haritadan seçildi); yoksa null → mobil şehir merkezine yakın
+    lat: p.lat ?? undefined,
+    lng: p.lng ?? undefined,
     experienceYears: p.experienceYears,
   };
 }

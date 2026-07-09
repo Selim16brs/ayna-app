@@ -138,6 +138,8 @@ model Professional {
   kind            ProviderKind @default(salon)
   city            String       @default("") // §5.1.4 — harita/arama şehir filtresi
   district        String       @default("")
+  lat             Float? // §5.1.4 — gerçek konum (kayıtta haritadan seçildi); yoksa şehir merkezine yakın
+  lng             Float?
   about           String       @default("")
   rating          Decimal      @default(0) @db.Decimal(2, 1)
   reviewCount     Int          @default(0) @map("review_count")
@@ -319,6 +321,9 @@ model Business {
   city         String         @default("")
   district     String         @default("")
   address      String         @default("")
+  // §5.1.4 — kayıtta haritadan iğneyle seçilen gerçek konum (keşif haritasında salonun yeri)
+  lat          Float?
+  lng          Float?
   phone        String         @default("")
   email        String         @default("")
   workingHours String         @default("") @map("working_hours")

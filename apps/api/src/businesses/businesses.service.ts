@@ -81,6 +81,8 @@ export class BusinessesService {
         city: input.city,
         district: input.district,
         address: input.address,
+        ...(input.lat != null ? { lat: input.lat } : {}),
+        ...(input.lng != null ? { lng: input.lng } : {}),
         phone: input.phone,
         email: input.email ?? '',
         workingHours: input.workingHours ?? '',
@@ -154,6 +156,8 @@ export class BusinessesService {
             kind: 'salon',
             city: b.city ?? '',
             district: b.district ?? '',
+            ...(b.lat != null ? { lat: b.lat } : {}),
+            ...(b.lng != null ? { lng: b.lng } : {}),
             imageUrl: '',
           },
         });
