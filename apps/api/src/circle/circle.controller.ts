@@ -42,6 +42,12 @@ export class CircleController {
     return this.circle.addComment(req.user?.id, req.user?.role, id, body);
   }
 
+  @Post('posts/:id/helpful')
+  @UseGuards(JwtAuthGuard)
+  helpful(@Param('id') id: string, @Body() body: { on?: boolean }) {
+    return this.circle.setHelpful(id, body?.on !== false);
+  }
+
   @Post('posts/:id/report')
   @UseGuards(JwtAuthGuard)
   report(

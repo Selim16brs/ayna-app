@@ -1908,6 +1908,8 @@ export const useStore = create<State>()(
               : p,
           ),
         }));
+        // §5.5 — beğeni SUNUCU sayacına da yazılır (diğer kullanıcılar aynı sayıyı görür)
+        void api.circleHelpful(postId, liking).catch(() => undefined);
         // §8.1 — beğenirken 1 puan; ayda maks 100 (geri alınca puan iade edilmez)
         if (liking) {
           const month = new Date().toISOString().slice(0, 7);
@@ -1922,7 +1924,9 @@ export const useStore = create<State>()(
         }
       },
 
-      addComment: (postId, text, anonymous) =>
+      addComment: (postId, text, anonymous) => {
+        // §5.5 — yorum SUNUCUYA yazılır (moderasyon + diğer kullanıcılar görür)
+        void api.circleComment(postId, text, anonymous).catch(() => undefined);
         set((s) => ({
           circlePosts: s.circlePosts.map((p) =>
             p.id === postId
@@ -1940,7 +1944,8 @@ export const useStore = create<State>()(
                 }
               : p,
           ),
-        })),
+        }));
+      },
 
       // §5.5 moderasyon katman 2 — şikâyet: eşik aşınca backend otomatik gizler + admin kuyruğu
       reportPost: (postId) => {

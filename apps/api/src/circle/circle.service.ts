@@ -103,6 +103,18 @@ export class CircleService {
     return { id: post.id, status: post.status, moderationReason: post.moderationReason };
   }
 
+  // §5.5/§8 — "faydalı" oyu: on=true +1, on=false -1 (taban 0). Puan limiti §8.1 ayrı motorda.
+  async setHelpful(postId: string, on: boolean) {
+    const post = await this.prisma.circlePost.findUnique({ where: { id: postId } });
+    if (!post) return { helpful: 0 };
+    const next = Math.max(0, post.helpful + (on ? 1 : -1));
+    const row = await this.prisma.circlePost.update({
+      where: { id: postId },
+      data: { helpful: next },
+    });
+    return { helpful: row.helpful };
+  }
+
   async addComment(
     userId: string | undefined,
     role: string | undefined,

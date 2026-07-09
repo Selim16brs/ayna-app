@@ -531,6 +531,10 @@ export const api = {
     post<{ id: string; status: string }>('/disputes', input, token),
   // §5.5 — W2W topluluk (moderasyon backend'de)
   circlePosts: () => get<ApiCirclePost[]>('/circle/posts'),
+  circleHelpful: (postId: string, on: boolean) =>
+    post<{ helpful: number }>(`/circle/posts/${postId}/helpful`, { on }),
+  circleComment: (postId: string, text: string, anonymous: boolean) =>
+    post<unknown>(`/circle/posts/${postId}/comments`, { text, anonymous }),
   createCirclePost: (
     token: string,
     input: { category: string; text: string; anonymous?: boolean },
