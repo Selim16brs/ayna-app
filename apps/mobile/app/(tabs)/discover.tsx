@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import { Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useFonts } from 'expo-font';
+import { Caveat_700Bold } from '@expo-google-fonts/caveat';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORIES } from '../../src/data';
 import { useCampaigns, useProfessionals } from '../../src/catalog';
@@ -53,6 +55,9 @@ export default function DiscoverScreen() {
   const avatarUri = useStore((s) => s.avatarUri); // cut-out yoksa yüklenen ham foto
   // Dinamik kullanıcı adı — ilk harf büyük (el yazısı katman için)
   const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
+  // §fix — Caveat el yazısı fontu geç yüklenince isim önce SİSTEM fontuyla yanıp sönüyordu.
+  // Font hazır olana kadar ismi gizle (yer korunur), hazır olunca göster: FOUT biter.
+  const [caveatReady] = useFonts({ Caveat_700Bold });
   const pros = useProfessionals();
   // §5.1.4 — şehir tüm Keşfet'i filtreler
   const cityPros = pros.filter((p) => p.city === city);
@@ -133,7 +138,7 @@ export default function DiscoverScreen() {
             <View style={styles.heroText}>
               <Text style={styles.greetLabel}>{t(greetingKey())}</Text>
               <Text
-                style={styles.greetName}
+                style={[styles.greetName, { opacity: caveatReady ? 1 : 0 }]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.5}

@@ -991,6 +991,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'agenda.express': 'Express',
   'pro.waitlist': 'Күту тізіміне қосу',
   'pro.waitlist_joined': 'Күту тізіміне қосылдың 🤍',
+  'pro.already_queued_t': 'Сен қазірдің өзінде кезектесің',
+  'pro.already_queued_b':
+    'Бұл маманда белсенді жазылуың/өтінішің бар. «Жазылуларым» бөлімінен қарай аласың.',
   'common.delete': 'Жою',
   'common.save': 'Сақтау',
   'common.add': 'Қосу',
@@ -1697,4 +1700,10 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'messages.block': 'Бұғаттау',
   'messages.unblock': 'Бұғаттаудан шығару',
   'messages.blocked_notice': 'Бұл пайдаланушымен хат алмасу бұғатталды',
+  'messages.need_login': 'Хабарласу үшін кіріңіз.',
+  'messages.unavailable_t': 'Хабарласу қолжетімсіз',
+  'messages.unavailable_b':
+    'Бұл маманмен әзірге хабарласу мүмкін емес. Тіркелген мамандармен хабарласа аласың.',
+  'messages.invalid_pair': 'Хабарласу тек клиент пен маман/салон арасында ашылады.',
+  'messages.start_err': 'Сұхбат басталмады, сәл кейін қайталап көр.',
 };

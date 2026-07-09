@@ -999,6 +999,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'agenda.express': 'Express',
   'pro.waitlist': 'Добавить в лист ожидания',
   'pro.waitlist_joined': 'Вы добавлены в лист ожидания 🤍',
+  'pro.already_queued_t': 'Вы уже в очереди',
+  'pro.already_queued_b':
+    'У вас уже есть активная запись/заявка к этому мастеру. Смотрите в «Мои записи».',
   'common.delete': 'Удалить',
   'common.save': 'Сохранить',
   'common.add': 'Добавить',
@@ -1703,4 +1706,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'messages.block': 'Заблокировать',
   'messages.unblock': 'Разблокировать',
   'messages.blocked_notice': 'Переписка с этим пользователем заблокирована',
+  'messages.need_login': 'Войдите, чтобы писать сообщения.',
+  'messages.unavailable_t': 'Сообщения недоступны',
+  'messages.unavailable_b':
+    'С этим мастером пока нельзя переписываться. Пишите зарегистрированным мастерам.',
+  'messages.invalid_pair': 'Чат доступен только между клиентом и мастером/салоном.',
+  'messages.start_err': 'Не удалось начать чат, попробуйте позже.',
 };

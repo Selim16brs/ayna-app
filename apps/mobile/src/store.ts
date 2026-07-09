@@ -2048,11 +2048,13 @@ export const useStore = create<State>()(
           const me = await api.me(token);
           const tier = me.membershipTier ?? 'free';
           const wasPremium = get().premium;
-          // Medya = HESAP verisi; ama hesap BOŞ ve yerelde data URL varsa yereli KORU ve
-          // hesaba GERİ YÜKLE (self-heal). Böylece bir kez temizlenen portre asla kaybolmaz
-          // ve remove.bg kredisi ikinci kez yakılmaz.
-          const localAvatar = get().avatarUri;
-          const localCutout = get().cutoutUri;
+          // Medya = HESAP verisi; ama hesap BOŞ ve yerelde/cache'te data URL varsa KORU ve
+          // hesaba GERİ YÜKLE (self-heal). avatarUri persist EDİLMEZ → soğuk açılışta yerel
+          // null olabilir; bu yüzden CİHAZ ÖNBELLEĞİNİ de danış (yoksa foto siliniyordu).
+          const uid = get().currentUser?.id;
+          const cached = uid ? await loadMediaCache(uid) : null;
+          const localAvatar = get().avatarUri ?? cached?.avatar ?? null;
+          const localCutout = get().cutoutUri ?? cached?.cutout ?? null;
           const serverAvatar = me.avatarUrl ?? null;
           const serverCutout = me.cutoutUrl ?? null;
           const nextAvatar =
@@ -2070,8 +2072,9 @@ export const useStore = create<State>()(
             avatarUri: nextAvatar,
             cutoutUri: nextCutout,
           }));
-          const uid = get().currentUser?.id;
-          if (uid) saveMediaCache(uid, { avatar: nextAvatar, cutout: nextCutout });
+          // Önbelleği yalnız bir şey VARSA güncelle — geçici null cache'i EZMESİN.
+          if (uid && (nextAvatar || nextCutout))
+            saveMediaCache(uid, { avatar: nextAvatar, cutout: nextCutout });
           // §5.6 — favoriler/adresler hesaptan (sunucuda veri varsa o esas; boşsa yerel korunur)
           const prefs = (me as { prefs?: { favorites?: string[]; addresses?: UserAddress[] } })
             .prefs;

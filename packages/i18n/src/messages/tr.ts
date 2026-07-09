@@ -1055,6 +1055,9 @@ export const tr = {
   'agenda.express': 'Express',
   'pro.waitlist': 'Bekleme listesine ekle',
   'pro.waitlist_joined': 'Bekleme listesine eklendin 🤍',
+  'pro.already_queued_t': 'Zaten sıradasın',
+  'pro.already_queued_b':
+    'Bu uzmanda aktif bir randevun/talebin var. Randevularım’dan takip edebilirsin.',
 
   // Ortak (yeni)
   'common.delete': 'Sil',
@@ -1808,6 +1811,12 @@ export const tr = {
   'messages.block': 'Engelle',
   'messages.unblock': 'Engeli kaldır',
   'messages.blocked_notice': 'Bu kullanıcıyla mesajlaşma engellendi',
+  'messages.need_login': 'Mesajlaşmak için giriş yap.',
+  'messages.unavailable_t': 'Mesajlaşma kullanılamıyor',
+  'messages.unavailable_b':
+    'Bu uzmanla henüz mesajlaşılamıyor. Kayıtlı uzmanlarla mesajlaşabilirsin.',
+  'messages.invalid_pair': 'Mesajlaşma yalnızca müşteri ile uzman/salon arasında açılır.',
+  'messages.start_err': 'Sohbet başlatılamadı, birazdan tekrar dene.',
 } as const;
 
 export type MessageKey = keyof typeof tr;

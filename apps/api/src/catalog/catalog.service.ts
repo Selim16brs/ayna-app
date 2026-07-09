@@ -131,10 +131,16 @@ export class CatalogService {
       select: { userId: true, certificates: true },
     });
     const owner = sp
-      ? await this.prisma.user.findUnique({ where: { id: sp.userId }, select: { kycStatus: true } })
+      ? await this.prisma.user.findUnique({
+          where: { id: sp.userId },
+          select: { kycStatus: true, avatarUrl: true, cutoutUrl: true },
+        })
       : null;
+    // §6.1 — public profil fotosu: uzmanın KENDİ yüklediği foto (cutout>avatar); Professional.imageUrl boşsa bu.
+    const ownerImage = owner?.cutoutUrl || owner?.avatarUrl || '';
     return {
       ...mapPro(p),
+      image: ownerImage || p.imageUrl, // uzmanın gerçek fotosu esas (hesap verisi)
       about: p.about,
       ownerUserId: sp?.userId ?? null, // EK Z.1 — DM başlatma hedefi
       kycVerified: owner?.kycStatus === 'approved', // EK Z.3 — doğrulanmış uzman rozeti

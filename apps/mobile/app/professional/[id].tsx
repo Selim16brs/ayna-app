@@ -7,7 +7,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { formatPrice } from '../../src/data';
 import { formatSlotTr } from '../../src/datetime';
 import { tri } from '../../src/taxonomy';
-import { api } from '../../src/api';
+import { ApiError, api } from '../../src/api';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -52,11 +52,26 @@ export default function ProfessionalScreen() {
   const isFav = useStore((s) => s.favorites.includes(proId));
   const token = useStore((s) => s.token);
   const joinWaitlist = useStore((s) => s.joinWaitlist);
+  const myBookings = useStore((s) => s.bookings);
   const addBooking = useStore((s) => s.addBooking);
   const userReviewsMap = useStore((s) => s.userReviews);
   const reviews = [...(userReviewsMap[proId] ?? []), ...pro.reviews];
 
   const onWaitlist = () => {
+    // §4.1 — bu uzmanda zaten aktif kaydı/sırası varsa tekrar ekleme; kibarca hatırlat.
+    const ACTIVE = [
+      'waitlist',
+      'pending',
+      'awaiting_provider',
+      'alternative_proposed',
+      'deposit_pending',
+      'deposit_submitted',
+      'confirmed',
+    ];
+    if (myBookings.some((b) => b.proId === pro.id && ACTIVE.includes(b.status))) {
+      Alert.alert(t('pro.already_queued_t'), t('pro.already_queued_b'));
+      return;
+    }
     const svc = pro.services.find((s) => s.id === selected)?.name ?? pro.services[0]?.name ?? '';
     joinWaitlist({ id: pro.id, name: pro.name, image: pro.image, service: svc });
     Alert.alert(t('pro.waitlist_joined'));
@@ -64,20 +79,50 @@ export default function ProfessionalScreen() {
 
   // EK Z.1 — uzmana DM başlat (yalnız hesap bağı olan gerçek uzmanda; Specialist→userId)
   const messagePro = async () => {
-    if (!token || !pro.ownerUserId) return;
+    if (!token) {
+      Alert.alert(t('messages.need_login'));
+      return;
+    }
+    if (!pro.ownerUserId) {
+      // Demo/seed uzmanda hesap bağı yok → mesajlaşma yalnız KAYITLI uzmanlarda
+      Alert.alert(t('messages.unavailable_t'), t('messages.unavailable_b'));
+      return;
+    }
     try {
       const { id } = await api.startConversation(token, pro.ownerUserId);
       router.push({
         pathname: '/messages/[id]',
         params: { id, name: pro.name, otherId: pro.ownerUserId },
       });
-    } catch {
-      /* yut */
+    } catch (err) {
+      // Sessiz kalma: sebebi göster (ör. uzman↔uzman geçersiz çift, engelli)
+      const code = err instanceof ApiError ? err.code : '';
+      const msg =
+        code === 'INVALID_PAIR'
+          ? t('messages.invalid_pair')
+          : code === 'BLOCKED'
+            ? t('messages.blocked_notice')
+            : t('messages.start_err');
+      Alert.alert(t('messages.title'), msg);
     }
   };
 
   // Tarih/saat detay sayfasında seçildi → doğrudan randevu oluştur (ayrı adım yok)
   const book = () => {
+    // §4.1 — bu uzmanda zaten aktif randevu/sıra varsa ikinciyi engelle (kibar uyarı)
+    const ACTIVE = [
+      'waitlist',
+      'pending',
+      'awaiting_provider',
+      'alternative_proposed',
+      'deposit_pending',
+      'deposit_submitted',
+      'confirmed',
+    ];
+    if (myBookings.some((b) => b.proId === pro.id && ACTIVE.includes(b.status))) {
+      Alert.alert(t('pro.already_queued_t'), t('pro.already_queued_b'));
+      return;
+    }
     const svc = pro.services.find((s) => s.id === selected);
     const uzman = pro.staff.find((u) => u.id === uzmanId);
     const startMs = when.getTime();
@@ -316,8 +361,19 @@ export default function ProfessionalScreen() {
                     {t('pro.certs')}
                   </Text>
                   <View style={styles.certRow}>
-                    {pro.certs.map((uri) => (
-                      <Image key={uri} source={{ uri }} style={styles.certThumb} />
+                    {pro.certs.map((uri, ci) => (
+                      // §6.1 — sertifikaya dokun → tam ekran (portfolyo ile aynı viewer)
+                      <Pressable
+                        key={uri}
+                        onPress={() =>
+                          router.push({
+                            pathname: '/gallery',
+                            params: { images: JSON.stringify(pro.certs), index: String(ci) },
+                          })
+                        }
+                      >
+                        <Image source={{ uri }} style={styles.certThumb} />
+                      </Pressable>
                     ))}
                     <View style={styles.socialInline}>
                       {pro.social.instagram ? (
