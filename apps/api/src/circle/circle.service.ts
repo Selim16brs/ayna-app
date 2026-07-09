@@ -78,6 +78,7 @@ export class CircleService {
       text: p.text,
       anonymous: p.anonymous,
       authorLabel: p.authorLabel,
+      authorUserId: p.anonymous ? null : p.userId, // §5.5 takip hedefi (anonimde ASLA açılmaz)
       helpful: p.helpful,
       comments: byPost.get(p.id) ?? 0,
       createdAt: p.createdAt,
@@ -104,6 +105,49 @@ export class CircleService {
   }
 
   // §5.5/§8 — "faydalı" oyu: on=true +1, on=false -1 (taban 0). Puan limiti §8.1 ayrı motorda.
+  // §5.5 — takip: on=true takip et (idempotent), on=false bırak
+  async setFollow(followerId: string, targetId: string, on: boolean) {
+    if (followerId === targetId) return { following: false };
+    if (on) {
+      await this.prisma.circleFollow.upsert({
+        where: { followerId_targetId: { followerId, targetId } },
+        create: { followerId, targetId },
+        update: {},
+      });
+    } else {
+      await this.prisma.circleFollow.deleteMany({ where: { followerId, targetId } });
+    }
+    return { following: on };
+  }
+
+  async myFollows(userId: string) {
+    const [followingRows, followerRows] = await Promise.all([
+      this.prisma.circleFollow.findMany({ where: { followerId: userId } }),
+      this.prisma.circleFollow.findMany({ where: { targetId: userId } }),
+    ]);
+    const ids = [
+      ...new Set([
+        ...followingRows.map((r) => r.targetId),
+        ...followerRows.map((r) => r.followerId),
+      ]),
+    ];
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, name: true },
+    });
+    const nameOf = new Map(users.map((u) => [u.id, u.name]));
+    return {
+      following: followingRows.map((r) => ({
+        userId: r.targetId,
+        name: nameOf.get(r.targetId) ?? 'AYNA Üyesi',
+      })),
+      followers: followerRows.map((r) => ({
+        userId: r.followerId,
+        name: nameOf.get(r.followerId) ?? 'AYNA Üyesi',
+      })),
+    };
+  }
+
   async setHelpful(postId: string, on: boolean) {
     const post = await this.prisma.circlePost.findUnique({ where: { id: postId } });
     if (!post) return { helpful: 0 };

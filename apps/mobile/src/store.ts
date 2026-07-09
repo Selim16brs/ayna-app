@@ -333,7 +333,7 @@ interface State {
 
   // favorites
   toggleFavorite: (proId: string) => void;
-  toggleFollow: (author: string) => void;
+  toggleFollow: (author: string, targetUserId?: string | null) => void;
   removeFollower: (name: string) => void;
   // §5.6 — adres yönetimi
   addAddress: (label: UserAddress['label'], detail: string) => void;
@@ -461,6 +461,7 @@ export const useStore = create<State>()(
                 type: 'experience' as CirclePostType,
                 category: p.category,
                 author: p.authorLabel,
+                authorUserId: p.authorUserId ?? null,
                 anonymous: p.anonymous,
                 text: p.text,
                 helpful: p.helpful,
@@ -1770,12 +1771,14 @@ export const useStore = create<State>()(
       },
 
       // W2W — kişi takip et / bırak (yazar adına göre)
-      toggleFollow: (author) =>
+      toggleFollow: (author, targetUserId) => {
+        const on = !get().following.includes(author);
         set((s) => ({
-          following: s.following.includes(author)
-            ? s.following.filter((x) => x !== author)
-            : [author, ...s.following],
-        })),
+          following: on ? [author, ...s.following] : s.following.filter((x) => x !== author),
+        }));
+        // §5.5 — gerçek sosyal graf: hedefin kullanıcı kimliği varsa SUNUCUYA yazılır
+        if (targetUserId) void api.circleFollow(targetUserId, on).catch(() => undefined);
+      },
 
       // W2W — takipçiyi kaldır (mock listeden çıkar)
       removeFollower: (name) =>
@@ -2093,6 +2096,17 @@ export const useStore = create<State>()(
                 if (r.hours.length) set({ sellerHours: r.hours });
               })
               .catch(() => undefined);
+            void 0;
+          }
+          // §5.5 — takip/takipçi hesaptan (rol farketmez)
+          void api
+            .myFollows()
+            .then((r) => {
+              if (r.following.length) set({ following: r.following.map((x) => x.name) });
+              if (r.followers.length) set({ followerNames: r.followers.map((x) => x.name) });
+            })
+            .catch(() => undefined);
+          if (role === 'professional' || role === 'salon') {
             void api
               .myClosedDays()
               .then((r) => {

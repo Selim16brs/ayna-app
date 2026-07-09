@@ -42,6 +42,19 @@ export class CircleController {
     return this.circle.addComment(req.user?.id, req.user?.role, id, body);
   }
 
+  @Post('follow')
+  @UseGuards(JwtAuthGuard)
+  follow(@Req() req: AuthedRequest, @Body() body: { targetUserId?: string; on?: boolean }) {
+    if (!body?.targetUserId) return { following: false };
+    return this.circle.setFollow(req.user!.id, body.targetUserId, body?.on !== false);
+  }
+
+  @Get('follows')
+  @UseGuards(JwtAuthGuard)
+  follows(@Req() req: AuthedRequest) {
+    return this.circle.myFollows(req.user!.id);
+  }
+
   @Post('posts/:id/helpful')
   @UseGuards(JwtAuthGuard)
   helpful(@Param('id') id: string, @Body() body: { on?: boolean }) {

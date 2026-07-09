@@ -219,7 +219,7 @@ function PostCard({ post }: { post: CirclePost }) {
           {!post.anonymous ? (
             <Pressable
               style={[styles.followBtn, isFollowing && styles.followBtnOn]}
-              onPress={() => toggleFollow(post.author)}
+              onPress={() => toggleFollow(post.author, post.authorUserId)}
               hitSlop={6}
             >
               {isFollowing ? (

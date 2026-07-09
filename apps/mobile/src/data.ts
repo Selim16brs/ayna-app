@@ -1254,6 +1254,7 @@ export interface CirclePost {
   type: CirclePostType;
   category: string;
   author: string;
+  authorUserId?: string | null; // §5.5 — takip hedefi (anonimde null)
   anonymous: boolean;
   text: string;
   helpful: number;

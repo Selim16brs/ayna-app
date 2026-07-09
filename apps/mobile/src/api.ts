@@ -535,6 +535,13 @@ export const api = {
     post<{ id: string; status: string }>('/disputes', input, token),
   // §5.5 — W2W topluluk (moderasyon backend'de)
   circlePosts: () => get<ApiCirclePost[]>('/circle/posts'),
+  circleFollow: (targetUserId: string, on: boolean) =>
+    post<{ following: boolean }>('/circle/follow', { targetUserId, on }),
+  myFollows: () =>
+    get<{
+      following: { userId: string; name: string }[];
+      followers: { userId: string; name: string }[];
+    }>('/circle/follows'),
   circleHelpful: (postId: string, on: boolean) =>
     post<{ helpful: number }>(`/circle/posts/${postId}/helpful`, { on }),
   circleComment: (postId: string, text: string, anonymous: boolean) =>
@@ -689,6 +696,7 @@ export interface BlockedUser {
 }
 
 export interface ApiCirclePost {
+  authorUserId?: string | null;
   id: string;
   category: string;
   text: string;

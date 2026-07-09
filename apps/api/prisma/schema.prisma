@@ -601,6 +601,18 @@ model CirclePost {
   @@map("circle_posts")
 }
 
+// §5.5 — W2W takip grafiği: kullanıcı-kimliğiyle (isim değil)
+model CircleFollow {
+  id         String   @id @default(uuid()) @db.Uuid
+  followerId String   @map("follower_id") @db.Uuid
+  targetId   String   @map("target_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([followerId, targetId])
+  @@index([targetId])
+  @@map("circle_follows")
+}
+
 model CircleComment {
   id          String   @id @default(uuid()) @db.Uuid
   postId      String   @map("post_id") @db.Uuid
