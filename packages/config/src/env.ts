@@ -12,7 +12,7 @@ export const envSchema = z.object({
   API_GLOBAL_PREFIX: z.string().default('api/v1'),
 
   DATABASE_URL: z.string().url(),
-  REDIS_URL: z.string().url(),
+  REDIS_URL: z.string().url().optional(), // kullanılmıyor — zorunlu değil (kurtarma yüzeyini küçültür)
 
   JWT_ACCESS_SECRET: z.string().min(16),
   JWT_REFRESH_SECRET: z.string().min(16),
