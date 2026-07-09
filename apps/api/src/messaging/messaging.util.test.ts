@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { maskContact, processMessage, resolvePair, sideOf } from './messaging.util';
+import {
+  canSendDecision,
+  maskContact,
+  processMessage,
+  resolvePair,
+  sideOf,
+} from './messaging.util';
 
 test('sideOf: rol → taraf', () => {
   assert.equal(sideOf('user'), 'customer');
@@ -40,4 +46,65 @@ test('processMessage: numara maskele + moderasyon', () => {
   assert.equal(clean.verdict.flagged, false);
   const bad = processMessage('salak seni');
   assert.equal(bad.verdict.flagged, true);
+});
+
+// Kurucu izin modeli — canSendDecision
+const base = {
+  senderIsCustomer: true,
+  meFollowsOther: false,
+  otherFollowsMe: false,
+  custMsgs: 0,
+  proMsgs: 0,
+};
+
+test('izin: karşılıklı takip → her koşulda serbest', () => {
+  assert.deepEqual(
+    canSendDecision({ ...base, meFollowsOther: true, otherFollowsMe: true, custMsgs: 9 }),
+    { ok: true },
+  );
+  // uzman yönünde de karşılıklı takip serbest
+  assert.deepEqual(
+    canSendDecision({
+      ...base,
+      senderIsCustomer: false,
+      meFollowsOther: true,
+      otherFollowsMe: true,
+    }),
+    { ok: true },
+  );
+});
+
+test('izin: kullanıcı→uzman ilk mesaj serbest, ikinci mesaj AWAIT_REPLY', () => {
+  // ilk açılış mesajı (henüz kimse yazmamış)
+  assert.deepEqual(canSendDecision({ ...base, custMsgs: 0, proMsgs: 0 }), { ok: true });
+  // kullanıcı 1 yazdı, uzman yanıtlamadı → ikinci mesaj engellenir
+  assert.deepEqual(canSendDecision({ ...base, custMsgs: 1, proMsgs: 0 }), {
+    ok: false,
+    code: 'AWAIT_REPLY',
+  });
+});
+
+test('izin: uzman yanıtlayınca kullanıcı serbest devam eder', () => {
+  assert.deepEqual(canSendDecision({ ...base, custMsgs: 1, proMsgs: 1 }), { ok: true });
+  assert.deepEqual(canSendDecision({ ...base, custMsgs: 5, proMsgs: 2 }), { ok: true });
+});
+
+test('izin: uzman→kullanıcı, kullanıcı hiç yazmadı + takip yok → FOLLOW_REQUIRED', () => {
+  assert.deepEqual(canSendDecision({ ...base, senderIsCustomer: false, custMsgs: 0, proMsgs: 0 }), {
+    ok: false,
+    code: 'FOLLOW_REQUIRED',
+  });
+});
+
+test('izin: uzman→kullanıcı, uzman kullanıcıyı takip ediyorsa ilk mesaj serbest', () => {
+  assert.deepEqual(
+    canSendDecision({ ...base, senderIsCustomer: false, meFollowsOther: true, custMsgs: 0 }),
+    { ok: true },
+  );
+});
+
+test('izin: uzman→kullanıcı, kullanıcı önce yazdıysa uzman yanıtlar (takip gerekmez)', () => {
+  assert.deepEqual(canSendDecision({ ...base, senderIsCustomer: false, custMsgs: 1, proMsgs: 0 }), {
+    ok: true,
+  });
 });

@@ -9,7 +9,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { api, type ChatMessage } from '../../src/api';
+import { api, ApiError, type ChatMessage } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -28,6 +28,7 @@ export default function ChatThreadScreen() {
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [blocked, setBlocked] = useState(false);
+  const [notice, setNotice] = useState('');
   const scrollRef = useRef<ScrollView>(null);
 
   const load = useCallback(async () => {
@@ -56,13 +57,24 @@ export default function ChatThreadScreen() {
     const body = draft.trim();
     if (!body || !token || sending) return;
     setSending(true);
+    setNotice('');
     try {
       await api.sendChatMessage(token, convId, body);
       setDraft('');
       await load();
       requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
-    } catch {
-      // 403 (engelli) veya ağ — sessiz; kullanıcı engel notuyla bilgilendirilir
+    } catch (err) {
+      // Kurucu izin modeli: tek-mesaj / takip / engel kurallarını kullanıcıya açıkla
+      const code = err instanceof ApiError ? err.code : '';
+      setNotice(
+        code === 'AWAIT_REPLY'
+          ? t('messages.await_reply')
+          : code === 'FOLLOW_REQUIRED'
+            ? t('messages.follow_required')
+            : code === 'BLOCKED'
+              ? t('messages.blocked_notice')
+              : t('messages.start_err'),
+      );
     } finally {
       setSending(false);
     }
@@ -138,22 +150,35 @@ export default function ChatThreadScreen() {
             </Text>
           </View>
         ) : (
-          <View style={styles.composer}>
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              placeholder={t('messages.input_placeholder')}
-              placeholderTextColor={colors.muted}
-              style={styles.input}
-              multiline
-            />
-            <Pressable
-              onPress={send}
-              disabled={!draft.trim() || sending}
-              style={[styles.sendBtn, (!draft.trim() || sending) && styles.sendBtnOff]}
-            >
-              <Ionicons name="send" size={18} color={colors.onAccent} />
-            </Pressable>
+          <View>
+            {notice ? (
+              <View style={styles.noticeBar}>
+                <Ionicons name="information-circle-outline" size={14} color={colors.muted} />
+                <Text variant="caption" tone="muted" style={styles.noticeText}>
+                  {notice}
+                </Text>
+              </View>
+            ) : null}
+            <View style={styles.composer}>
+              <TextInput
+                value={draft}
+                onChangeText={(v) => {
+                  setDraft(v);
+                  if (notice) setNotice('');
+                }}
+                placeholder={t('messages.input_placeholder')}
+                placeholderTextColor={colors.muted}
+                style={styles.input}
+                multiline
+              />
+              <Pressable
+                onPress={send}
+                disabled={!draft.trim() || sending}
+                style={[styles.sendBtn, (!draft.trim() || sending) && styles.sendBtnOff]}
+              >
+                <Ionicons name="send" size={18} color={colors.onAccent} />
+              </Pressable>
+            </View>
           </View>
         )}
       </KeyboardAvoidingView>
@@ -227,4 +252,13 @@ const makeStyles = (colors: ColorTokens) =>
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.line,
     },
+    noticeBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      paddingHorizontal: space(3),
+      paddingVertical: space(1),
+      backgroundColor: colors.surfaceMuted,
+    },
+    noticeText: { flex: 1 },
   });

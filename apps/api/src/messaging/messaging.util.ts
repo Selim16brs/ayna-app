@@ -25,6 +25,30 @@ export function resolvePair(
     : { customerId: targetId, proUserId: meId };
 }
 
+// Kurucu izin modeli — SAF karar (DB'siz, test edilebilir):
+//  • Karşılıklı takip → her zaman serbest.
+//  • Kullanıcı → uzman/salon: uzman yanıtladıysa serbest; yanıtlamadıysa TEK açılış mesajı.
+//  • Uzman/salon → kullanıcı: kullanıcı yazdıysa yanıtlanır; yazmadıysa yalnız uzman kullanıcıyı
+//    takip ediyorsa ilk mesaj atılabilir (uygulama-dışı reklam/spam engeli).
+export type SendDecision = { ok: true } | { ok: false; code: 'AWAIT_REPLY' | 'FOLLOW_REQUIRED' };
+export function canSendDecision(input: {
+  senderIsCustomer: boolean;
+  meFollowsOther: boolean; // gönderen karşı tarafı takip ediyor mu
+  otherFollowsMe: boolean; // karşı taraf göndereni takip ediyor mu
+  custMsgs: number; // sohbette müşterinin mevcut mesaj sayısı (yeni mesaj hariç)
+  proMsgs: number; // sohbette uzman/salonun mevcut mesaj sayısı
+}): SendDecision {
+  if (input.meFollowsOther && input.otherFollowsMe) return { ok: true }; // karşılıklı takip
+  if (input.senderIsCustomer) {
+    if (input.proMsgs > 0) return { ok: true }; // uzman yanıtladı → sohbet açık
+    if (input.custMsgs === 0) return { ok: true }; // ilk (ve tek) açılış mesajı
+    return { ok: false, code: 'AWAIT_REPLY' };
+  }
+  if (input.custMsgs > 0) return { ok: true }; // kullanıcı önce yazdı → uzman yanıtlar
+  if (input.meFollowsOther) return { ok: true }; // uzman kullanıcıyı takip ediyor → ilk mesaj
+  return { ok: false, code: 'FOLLOW_REQUIRED' };
+}
+
 // Telefon numarası sızdırma koruması — 7+ rakam içeren dizi (arada boşluk/tire/parantez) maskelenir.
 export function maskContact(text: string): string {
   return text.replace(/(?:\d[\s().-]?){7,}/g, '•••');

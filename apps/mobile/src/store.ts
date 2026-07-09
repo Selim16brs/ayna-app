@@ -259,8 +259,6 @@ interface State {
   removeAlways: (id: string) => void;
   // Platinum toplu bildirim — Always listesindeki müşterilere; kaç alıcıya gittiğini döndürür
   sendAlwaysBroadcast: (input: { title: string; body: string }) => number;
-  // Faz 3 — dolu uzmana bekleme listesine eklenme
-  joinWaitlist: (pro: { id: string; name: string; image: string; service: string }) => void;
   cancelBooking: (id: string, reason?: string) => void;
   acceptAlternative: (id: string) => void;
   // §4.1/§4.3 — uzman yanıtı + depozito/dekont akışı
@@ -919,35 +917,6 @@ export const useStore = create<State>()(
           icon: 'megaphone-outline',
         });
         return recipients.length;
-      },
-
-      // Faz 3 — bekleme listesi: dolu uzmana eklenir, yer açılınca bildirilir (auto-promote ileride)
-      joinWaitlist: (pro) => {
-        const id = nextId('bk');
-        const booking: Appointment = {
-          id,
-          source: 'direct',
-          service: pro.service,
-          proId: pro.id,
-          proName: pro.name,
-          proImage: pro.image,
-          // Bekleme listesinde henüz slot yok — yer açılınca gerçek startMs atanır (Faz 3).
-          startMs: Date.now(),
-          durationMin: 0,
-          price: 0,
-          status: 'waitlist',
-        };
-        set((s) => ({ bookings: [booking, ...s.bookings] }));
-        void api.createBooking(booking, get().token ?? undefined).catch(() => undefined);
-        get().pushNotification({
-          type: 'booking',
-          titleKey: 'notif.waitlist',
-          bodyKey: 'notif.waitlist_b',
-          params: { pro: pro.name },
-          dateLabel: 'Az önce',
-          icon: 'hourglass-outline',
-          route: `/booking/${id}`,
-        });
       },
 
       // §4.4 — kullanıcı iptali: depozito ödendiyse ve >3 saat varsa iade akışı (refund_pending);

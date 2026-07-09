@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
-import { processMessage, resolvePair } from './messaging.util';
+import { canSendDecision, processMessage, resolvePair } from './messaging.util';
 
 // EK Z.1 — Uygulama-içi DM mesajlaşma servisi.
 // Kurallar: çift başına tek konuşma; yalnız katılımcı görür; engellenen gönderemez;
@@ -39,6 +39,48 @@ export class MessagingService {
     return n > 0;
   }
 
+  // a, b'yi takip ediyor mu? (W2W circle takip ilişkisi)
+  private async follows(a: string, b: string): Promise<boolean> {
+    const n = await this.prisma.circleFollow.count({
+      where: { followerId: a, targetId: b },
+    });
+    return n > 0;
+  }
+
+  // Kurucu izin modeli — kimin ne zaman mesaj atabileceği:
+  //  • Karşılıklı takip → serbest (iki yön, sınırsız).
+  //  • Kullanıcı → uzman/salon (takip karşılıklı değil): uzman yanıtlayana kadar TEK mesaj hakkı;
+  //    uzman bir kez yanıtlarsa sohbet açılır ve serbest devam eder.
+  //  • Uzman/salon → kullanıcı: kullanıcı henüz yazmadıysa uzman ANCAK kullanıcıyı takip ediyorsa
+  //    yazabilir; aksi halde yasak (uygulama-dışı reklam/spam engeli). Kullanıcı yazdıysa uzman yanıtlar.
+  private async assertCanSendBy(
+    conv: { id: string; customerId: string; proUserId: string },
+    senderId: string,
+  ): Promise<void> {
+    const other = conv.customerId === senderId ? conv.proUserId : conv.customerId;
+    const [meFollowsOther, otherFollowsMe, custMsgs, proMsgs] = await Promise.all([
+      this.follows(senderId, other),
+      this.follows(other, senderId),
+      this.prisma.message.count({ where: { conversationId: conv.id, senderId: conv.customerId } }),
+      this.prisma.message.count({ where: { conversationId: conv.id, senderId: conv.proUserId } }),
+    ]);
+    const decision = canSendDecision({
+      senderIsCustomer: senderId === conv.customerId,
+      meFollowsOther,
+      otherFollowsMe,
+      custMsgs,
+      proMsgs,
+    });
+    if (decision.ok) return;
+    throw new ForbiddenException({
+      code: decision.code,
+      message:
+        decision.code === 'AWAIT_REPLY'
+          ? 'Uzman yanıtlayana kadar yalnızca bir mesaj gönderebilirsin'
+          : 'Takip etmediğin bir kullanıcıya ilk mesajı gönderemezsin',
+    });
+  }
+
   // Sohbet başlat / getir (idempotent — çift benzersiz)
   async startConversation(
     meId: string,
@@ -63,6 +105,20 @@ export class MessagingService {
         code: 'BLOCKED',
         message: 'Bu kullanıcıyla mesajlaşma engellenmiş',
       });
+    }
+    // Uzman/salon YENİ sohbet AÇIYORSA (meId = proUserId) ve kullanıcı henüz hiç yazmamışsa:
+    // yalnız kullanıcıyı takip ediyorsa açabilir (uygulama-dışı reklam/spam engeli).
+    const existing = await this.prisma.conversation.findUnique({
+      where: { customerId_proUserId: { customerId: pair.customerId, proUserId: pair.proUserId } },
+    });
+    if (!existing && meId === pair.proUserId) {
+      const proFollowsUser = await this.follows(pair.proUserId, pair.customerId);
+      if (!proFollowsUser) {
+        throw new ForbiddenException({
+          code: 'FOLLOW_REQUIRED',
+          message: 'Takip etmediğin bir kullanıcıya sohbet başlatamazsın',
+        });
+      }
     }
     const conv = await this.prisma.conversation.upsert({
       where: { customerId_proUserId: { customerId: pair.customerId, proUserId: pair.proUserId } },
@@ -94,6 +150,8 @@ export class MessagingService {
         message: 'Bu kullanıcıyla mesajlaşma engellenmiş',
       });
     }
+    // Kurucu izin modeli (takip/tek-mesaj/reklam engeli) — mesaj yazılmadan önce
+    await this.assertCanSendBy(conv, meId);
     const { body, verdict } = processMessage(rawBody);
     if (!body) throw new BadRequestException({ code: 'EMPTY', message: 'Boş mesaj gönderilemez' });
     const moderation = verdict.flagged ? 'flagged' : 'ok';

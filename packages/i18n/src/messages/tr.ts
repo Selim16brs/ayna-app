@@ -1849,6 +1849,8 @@ export const tr = {
   'messages.block': 'Engelle',
   'messages.unblock': 'Engeli kaldır',
   'messages.blocked_notice': 'Bu kullanıcıyla mesajlaşma engellendi',
+  'messages.await_reply': 'İlk mesajın gönderildi. Uzman yanıtlayınca sohbete devam edebilirsin.',
+  'messages.follow_required': 'Takip etmediğin bir kullanıcıya ilk mesajı gönderemezsin.',
   'messages.need_login': 'Mesajlaşmak için giriş yap.',
   'messages.unavailable_t': 'Mesajlaşma kullanılamıyor',
   'messages.unavailable_b':

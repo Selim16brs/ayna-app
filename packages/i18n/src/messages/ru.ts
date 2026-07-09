@@ -1743,6 +1743,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'messages.block': 'Заблокировать',
   'messages.unblock': 'Разблокировать',
   'messages.blocked_notice': 'Переписка с этим пользователем заблокирована',
+  'messages.await_reply':
+    'Первое сообщение отправлено. Продолжить переписку можно после ответа мастера.',
+  'messages.follow_required':
+    'Нельзя написать первое сообщение пользователю, которого вы не подписаны.',
   'messages.need_login': 'Войдите, чтобы писать сообщения.',
   'messages.unavailable_t': 'Сообщения недоступны',
   'messages.unavailable_b':

@@ -39,8 +39,6 @@ export default function ProfessionalScreen() {
   const toggleFavorite = useStore((s) => s.toggleFavorite);
   const isFav = useStore((s) => s.favorites.includes(proId));
   const token = useStore((s) => s.token);
-  const joinWaitlist = useStore((s) => s.joinWaitlist);
-  const myBookings = useStore((s) => s.bookings);
   const addBooking = useStore((s) => s.addBooking);
   const userReviewsMap = useStore((s) => s.userReviews);
 
@@ -76,29 +74,6 @@ export default function ProfessionalScreen() {
     );
   }
 
-  const onWaitlist = () => {
-    // §4.1 — bu uzmanda zaten aktif kaydı/sırası varsa tekrar ekleme; kibarca hatırlat.
-    const ACTIVE = [
-      'waitlist',
-      'pending',
-      'awaiting_provider',
-      'alternative_proposed',
-      'deposit_pending',
-      'deposit_submitted',
-      'confirmed',
-    ];
-    if (myBookings.some((b) => b.proId === pro.id && ACTIVE.includes(b.status))) {
-      Alert.alert(t('pro.already_queued_t'), t('pro.already_queued_b'));
-      return;
-    }
-    const svc =
-      chosen.map((s) => (s.label ? tri(s.label, locale) : s.name)).join(' + ') ||
-      pro.services[0]?.name ||
-      '';
-    joinWaitlist({ id: pro.id, name: pro.name, image: pro.image, service: svc });
-    Alert.alert(t('pro.waitlist_joined'));
-  };
-
   // EK Z.1 — uzmana DM başlat (yalnız hesap bağı olan gerçek uzmanda; Specialist→userId)
   const messagePro = async () => {
     if (!token) {
@@ -129,22 +104,9 @@ export default function ProfessionalScreen() {
     }
   };
 
-  // Tarih/saat detay sayfasında seçildi → doğrudan randevu oluştur (ayrı adım yok)
+  // Tarih/saat detay sayfasında seçildi → doğrudan randevu oluştur (ayrı adım yok).
+  // Sıra/tek-randevu kısıtı KALDIRILDI — kullanıcı dilediği kadar uzmandan randevu/teklif alabilir.
   const book = () => {
-    // §4.1 — bu uzmanda zaten aktif randevu/sıra varsa ikinciyi engelle (kibar uyarı)
-    const ACTIVE = [
-      'waitlist',
-      'pending',
-      'awaiting_provider',
-      'alternative_proposed',
-      'deposit_pending',
-      'deposit_submitted',
-      'confirmed',
-    ];
-    if (myBookings.some((b) => b.proId === pro.id && ACTIVE.includes(b.status))) {
-      Alert.alert(t('pro.already_queued_t'), t('pro.already_queued_b'));
-      return;
-    }
     const svcNames =
       chosen.map((s) => (s.label ? tri(s.label, locale) : s.name)).join(' + ') || pro.specialty;
     const uzman = pro.staff.find((u) => u.id === uzmanId);
@@ -626,12 +588,9 @@ export default function ProfessionalScreen() {
 
       {/* CTA — coral Randevu Al */}
       <View style={[styles.cta, { paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }]}>
-        <Pressable style={styles.waitlistBtn} onPress={onWaitlist}>
-          <Ionicons name="time-outline" size={20} color={colors.inkSoft} />
-        </Pressable>
         {/* EK Z.1 — DM: yalnız hesabı bağlı (gerçek) uzmanda görünür */}
         {pro.ownerUserId && token ? (
-          <Pressable style={styles.waitlistBtn} onPress={messagePro}>
+          <Pressable style={styles.iconBtn} onPress={messagePro}>
             <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.inkSoft} />
           </Pressable>
         ) : null}
@@ -958,7 +917,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
     },
-    waitlistBtn: {
+    iconBtn: {
       width: 56,
       height: 56,
       borderRadius: radius.pill,

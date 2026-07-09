@@ -1737,6 +1737,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'messages.block': 'Бұғаттау',
   'messages.unblock': 'Бұғаттаудан шығару',
   'messages.blocked_notice': 'Бұл пайдаланушымен хат алмасу бұғатталды',
+  'messages.await_reply':
+    'Алғашқы хабарың жіберілді. Маман жауап бергенде сөйлесуді жалғастыра аласың.',
+  'messages.follow_required': 'Өзің қаламайтын пайдаланушыға алғашқы хабар жібере алмайсың.',
   'messages.need_login': 'Хабарласу үшін кіріңіз.',
   'messages.unavailable_t': 'Хабарласу қолжетімсіз',
   'messages.unavailable_b':
