@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
+import { StorageService } from '../storage/storage.service';
 
 // §11 — paket fiyatları (mobil ile aynı; parametrik ileri faz)
 const PRICE: Record<string, number> = { premium: 999, platinum: 1999 };
@@ -11,6 +12,7 @@ export class SubscriptionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly push: PushService,
+    private readonly storage: StorageService,
   ) {}
 
   private notFound(): never {
@@ -39,7 +41,8 @@ export class SubscriptionsService {
     });
   }
 
-  async uploadReceipt(userId: string, id: string, receiptUri: string) {
+  async uploadReceipt(userId: string, id: string, receiptUriRaw: string) {
+    const receiptUri = (await this.storage.put(receiptUriRaw, 'receipts')) ?? receiptUriRaw;
     const sub = await this.prisma.subscription.findUnique({ where: { id } });
     if (!sub || sub.userId !== userId) this.notFound();
     return this.prisma.subscription.update({

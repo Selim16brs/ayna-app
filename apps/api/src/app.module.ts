@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { StorageModule } from './storage/storage.module';
 import { AdminModule } from './admin/admin.module';
 import { AiModule } from './ai/ai.module';
 import { AuditModule } from './audit/audit.module';
@@ -32,6 +33,7 @@ import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
+    StorageModule,
     ConfigModule,
     PrismaModule,
     AuditModule,

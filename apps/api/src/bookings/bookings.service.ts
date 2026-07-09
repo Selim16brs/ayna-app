@@ -9,6 +9,7 @@ import { type Booking, BookingStatus } from '@prisma/client';
 import { hasConflict } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
+import { StorageService } from '../storage/storage.service';
 import { commissionFor } from '../commissions/commissions.calc';
 import { cancelOutcome } from './bookings.policy';
 import type { CreateBookingInput } from './bookings.dto';
@@ -26,6 +27,7 @@ export class BookingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly push: PushService,
+    private readonly storage: StorageService,
   ) {}
 
   // Dekont akışı pushları: uzmanın hesabı Specialist.proId ↔ Booking.proId üzerinden bulunur
@@ -219,7 +221,8 @@ export class BookingsService {
   }
 
   // §4.2 — kullanıcı kapora dekontunu yükler → uzman onayı bekler
-  async submitDepositReceipt(id: string, receiptUri: string, actorId?: string) {
+  async submitDepositReceipt(id: string, receiptUriRaw: string, actorId?: string) {
+    const receiptUri = (await this.storage.put(receiptUriRaw, 'receipts')) ?? receiptUriRaw;
     await this.assertParty(id, actorId, 'owner');
     const res = await this.transition(id, {
       status: 'deposit_submitted',
@@ -273,7 +276,8 @@ export class BookingsService {
   }
 
   // §4.4 — uzman iade dekontunu yükler → kullanıcı onayı bekler
-  async uploadRefundReceipt(id: string, receiptUri: string, actorId?: string) {
+  async uploadRefundReceipt(id: string, receiptUriRaw: string, actorId?: string) {
+    const receiptUri = (await this.storage.put(receiptUriRaw, 'receipts')) ?? receiptUriRaw;
     await this.assertParty(id, actorId, 'provider');
     return this.transition(id, { status: 'refund_submitted', refundReceiptUri: receiptUri });
   }

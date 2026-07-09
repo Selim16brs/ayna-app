@@ -19,6 +19,7 @@ import {
 } from '../common/crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
+import { StorageService } from '../storage/storage.service';
 import type { RegisterSpecialistInput } from './specialists.dto';
 
 @Injectable()
@@ -26,6 +27,7 @@ export class SpecialistsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly push: PushService,
+    private readonly storage: StorageService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -384,9 +386,10 @@ export class SpecialistsService {
   async setCertificates(userId: string, certificates: string[]) {
     const sp = await this.prisma.specialist.findUnique({ where: { userId } });
     if (!sp) return { certificates: [] };
+    const stored = await this.storage.putMany(certificates, 'certificates');
     const row = await this.prisma.specialist.update({
       where: { userId },
-      data: { certificates },
+      data: { certificates: stored },
     });
     return { certificates: row.certificates };
   }

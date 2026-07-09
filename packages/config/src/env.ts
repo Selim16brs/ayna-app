@@ -25,6 +25,12 @@ export const envSchema = z.object({
   SMS_PROVIDER: z.enum(['mock']).default('mock'),
   MAP_PROVIDER: z.enum(['mock']).default('mock'),
   STORAGE_PROVIDER: z.enum(['mock']).default('mock'),
+  // §medya — Cloudflare R2 (S3 uyumlu). Hepsi doluysa foto R2'ye yüklenir; boşsa data URL kalır.
+  R2_ACCOUNT_ID: z.string().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  R2_BUCKET: z.string().optional(),
+  R2_PUBLIC_URL: z.string().optional(),
 
   // AI (§13.5) — anahtar yalnızca backend'de; yoksa güvenli mock kullanılır
   OPENAI_API_KEY: z.string().optional(),

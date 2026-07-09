@@ -11,6 +11,7 @@ import type { User } from '@prisma/client';
 import type { Env } from '@ayna/config/env';
 import { ENV } from '../config/config.module';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { AuditService } from '../audit/audit.service';
 import {
   decryptField,
@@ -34,6 +35,7 @@ const OTP_RESEND_COOLDOWN_SEC = 30; // yeni kod isteme aralığı
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
     private readonly audit: AuditService,
     @Inject(ENV) private readonly env: Env,
   ) {}
@@ -51,6 +53,7 @@ export class AuthService {
         throw new ConflictException({ code: 'EMAIL_TAKEN', message: 'Bu e-posta zaten kayıtlı' });
       }
     }
+    const avatarUrl = await this.storage.put(input.photoDataUrl ?? null, 'avatars/reg');
     const user = await this.prisma.user.create({
       data: {
         phoneHash: ph,
@@ -60,7 +63,7 @@ export class AuthService {
         defaultLocale: 'tr',
         gender: input.gender ?? 'unspecified',
         ...(input.email ? { email: input.email } : {}),
-        ...(input.photoDataUrl ? { avatarUrl: input.photoDataUrl } : {}),
+        ...(avatarUrl ? { avatarUrl } : {}),
         ...(input.birthDateMs ? { birthDate: new Date(input.birthDateMs) } : {}),
         ...(input.city ? { city: input.city } : {}),
       },
@@ -109,9 +112,10 @@ export class AuthService {
 
   // Profil fotoğrafı güncelle (data URL) — profil düzenle ekranından
   async setAvatar(userId: string, photoDataUrl: string | null) {
+    const url = await this.storage.put(photoDataUrl, `avatars/${userId}`);
     const u = await this.prisma.user.update({
       where: { id: userId },
-      data: { avatarUrl: photoDataUrl },
+      data: { avatarUrl: url },
     });
     return this.safe(u);
   }
@@ -136,9 +140,10 @@ export class AuthService {
   }
 
   async setCutout(userId: string, cutoutDataUrl: string | null) {
+    const url = await this.storage.put(cutoutDataUrl, `cutouts/${userId}`);
     const u = await this.prisma.user.update({
       where: { id: userId },
-      data: { cutoutUrl: cutoutDataUrl },
+      data: { cutoutUrl: url },
     });
     return this.safe(u);
   }

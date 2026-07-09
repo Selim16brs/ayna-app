@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { StorageService } from '../storage/storage.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { DAY_MS, commissionFor, overdueDaysBetween } from './commissions.calc';
 import type { ClosePeriodInput } from './commissions.dto';
@@ -8,7 +9,10 @@ const OVERDUE_RESTRICT_DAYS = 7; // vade + 7 gün gecikmede kısıtlı mod (§12
 
 @Injectable()
 export class CommissionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
   private async rate(): Promise<number> {
     const s = await this.prisma.setting.findUnique({ where: { key: 'commission.rate' } });
@@ -228,7 +232,8 @@ export class CommissionsService {
     return rows.map((r) => this.map(r));
   }
 
-  async uploadReceipt(userId: string, id: string, receiptUri: string) {
+  async uploadReceipt(userId: string, id: string, receiptUriRaw: string) {
+    const receiptUri = (await this.storage.put(receiptUriRaw, 'receipts')) ?? receiptUriRaw;
     const inv = await this.prisma.commissionInvoice.findUnique({ where: { id } });
     if (!inv) throw new NotFoundException({ code: 'INVOICE_NOT_FOUND', message: 'Fatura yok' });
     if (inv.ownerUserId !== userId) {
