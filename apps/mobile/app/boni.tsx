@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { api, type AiQuota } from '../src/api';
+import { ApiError, api, type AiQuota } from '../src/api';
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
@@ -73,8 +73,16 @@ export default function BoniScreen() {
       setQuota((prev) =>
         prev ? { ...prev, remaining: res.remaining, used: prev.used + 1 } : prev,
       );
-    } catch {
-      setMessages((m) => [...m, { id: `e${m.length}`, role: 'boni', text: t('boni.error') }]);
+    } catch (err) {
+      // Sebebe özel mesaj: kota bitti / AI servisi (anahtar) sorunu / genel
+      const code = err instanceof ApiError ? err.code : '';
+      const key =
+        code === 'QUOTA_EXCEEDED'
+          ? 'boni.quota.empty'
+          : code === 'AI_FAILED'
+            ? 'boni.err.service'
+            : 'boni.error';
+      setMessages((m) => [...m, { id: `e${m.length}`, role: 'boni', text: t(key as never) }]);
       void loadQuota();
     } finally {
       setSending(false);

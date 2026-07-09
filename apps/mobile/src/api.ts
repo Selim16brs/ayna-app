@@ -143,13 +143,34 @@ async function get<T>(path: string, token?: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+// Backend hata kodunu (ör. PREMIUM_REQUIRED, QUOTA_EXCEEDED, AI_FAILED) taşıyan hata —
+// çağıran ekran kullanıcıya SEBEBE ÖZEL mesaj gösterebilsin diye.
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 async function post<T>(path: string, body: unknown, token?: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeader(token ?? sessionToken) },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`POST ${path} → ${res.status}`);
+  if (!res.ok) {
+    let code = '';
+    try {
+      const j = (await res.json()) as { error?: { code?: string } };
+      code = j?.error?.code ?? '';
+    } catch {
+      /* gövde yoksa boş kod */
+    }
+    throw new ApiError(res.status, code, `POST ${path} → ${res.status}`);
+  }
   return res.json() as Promise<T>;
 }
 

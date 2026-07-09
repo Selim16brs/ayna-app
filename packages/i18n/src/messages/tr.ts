@@ -1752,6 +1752,7 @@ export const tr = {
   'boni.quota.shared': 'Premium üyeler için ortak aylık hak',
   'boni.quota.empty': 'Bu ayki AI hakkın doldu. Gelecek ay yenilenir.',
   'boni.error': 'Boni şu an yanıt veremedi, tekrar dene.',
+  'boni.err.service': 'Boni’ye şu an ulaşılamıyor (AI servisi). Birazdan tekrar dene.',
   'boni.premium.locked': 'Boni premium üyelere özel',
   'boni.premium.desc': 'AI güzellik danışmanı, akıllı arama ve foto analizi premium ile açılır.',
   'boni.premium.cta': 'Premium’a geç',

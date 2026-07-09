@@ -1644,6 +1644,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'boni.quota.shared': 'Премиум мүшелерге ортақ айлық құқық',
   'boni.quota.empty': 'Осы айғы AI құқығыңыз бітті. Келесі айда жаңарады.',
   'boni.error': 'Boni қазір жауап бере алмады, қайталап көріңіз.',
+  'boni.err.service': 'Boni қазір қолжетімсіз (AI қызметі). Сәл кейін қайталап көр.',
   'boni.premium.locked': 'Boni премиум мүшелерге арналған',
   'boni.premium.desc': 'AI сұлулық кеңесшісі, ақылды іздеу және фото талдау премиуммен ашылады.',
   'boni.premium.cta': 'Премиумға өту',
