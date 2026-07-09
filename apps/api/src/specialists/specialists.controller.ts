@@ -38,6 +38,13 @@ export class SpecialistsController {
   }
 
   // §7 — uzmanın kendi işlerine yazılan yorumlar + tek yanıt hakkı
+  // §9.5 — bağımsız uzman koda göre salona katılır
+  @Post('me/join-business')
+  @UseGuards(JwtAuthGuard)
+  joinBusiness(@Req() req: AuthedRequest, @Body() body: { code?: string }) {
+    return this.specialists.joinBusinessByCode(req.user!.id, String(body?.code ?? ''));
+  }
+
   // §6.1 — uzman galerisi (hesapta kalıcı; sayfa değişince kaybolmaz)
   @Get('me/portfolio')
   @UseGuards(JwtAuthGuard)

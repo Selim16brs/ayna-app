@@ -20,6 +20,7 @@ const ITEMS: {
   route: string;
   tone: 'accent' | 'sage' | 'lavender' | 'gold';
   salonOnly?: boolean;
+  independentOnly?: boolean;
 }[] = [
   {
     id: 'kyc',
@@ -93,6 +94,16 @@ const ITEMS: {
     route: '/seller/share',
     tone: 'accent',
   },
+  // §9.5 — bağımsız uzman sonradan salona katılır (kod ile)
+  {
+    id: 'join-salon',
+    icon: 'enter',
+    labelKey: 'seller.menu.join_salon',
+    descKey: 'seller.menu.join_salon_d',
+    route: '/seller/join-salon',
+    tone: 'accent',
+    independentOnly: true,
+  },
   // §10.1 — davet kodu üretici yalnız salonda
   {
     id: 'codes',
@@ -112,7 +123,11 @@ export default function SellerMenuScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const isSalon = useStore((s) => s.currentUser?.role === 'salon');
-  const items = ITEMS.filter((i) => !i.salonOnly || isSalon);
+  const isExpert = useStore((s) => s.currentUser?.role === 'professional');
+  const hasBusiness = useStore((s) => !!s.currentUser?.businessName);
+  const items = ITEMS.filter(
+    (i) => (!i.salonOnly || isSalon) && (!i.independentOnly || (isExpert && !hasBusiness)),
+  );
 
   const tone = (k: 'accent' | 'sage' | 'lavender' | 'gold') =>
     k === 'accent'

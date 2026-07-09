@@ -1540,6 +1540,17 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'kyc.submit': 'Тексеруге жіберу',
   'kyc.resubmit': 'Қайта жіберу',
   'seller.menu.kyc': 'Жеке басын растау',
+  'seller.menu.join_salon': 'Салонға қосылу',
+  'seller.menu.join_salon_d': 'Салонның шақыру кодымен құрамына қосыл',
+  'joinsalon.title': 'Салонға қосылу',
+  'joinsalon.desc': 'Салонға қосылу үшін салон берген шақыру кодын енгіз.',
+  'joinsalon.code_ph': 'ШАҚЫРУ КОДЫ',
+  'joinsalon.cta': 'Қосылу',
+  'joinsalon.note': 'Қосылғанда жазылуларың мен күнтізбең салонмен ортақ болады. Код бір реттік.',
+  'joinsalon.ok_t': 'Салонға қосылдың 🎉',
+  'joinsalon.ok_b': 'Енді құрамдасың:',
+  'joinsalon.err_code': 'Код жарамсыз не қолданылған.',
+  'joinsalon.err_already': 'Сен қазірдің өзінде салондасың.',
   'seller.menu.kyc_d': 'Құжат жүктеп, «Расталған» белгісін алыңыз',
 
   // EK Z.6 — рефералдық бағдарлама

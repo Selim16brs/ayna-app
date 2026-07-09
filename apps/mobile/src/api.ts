@@ -512,6 +512,8 @@ export const api = {
     ),
   setMyServices: (services: { id: string; name: string; price: number; durationMin: number }[]) =>
     post<unknown>('/specialists/me/services', { services }),
+  joinBusiness: (code: string) =>
+    post<{ ok: boolean; businessName: string }>('/specialists/me/join-business', { code }),
   setMyCertificates: (certificates: string[]) =>
     post<{ certificates: string[] }>('/specialists/me/certificates', { certificates }),
   myClosedDays: () => get<{ days: number[] }>('/specialists/me/closed-days'),

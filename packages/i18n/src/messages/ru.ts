@@ -1547,6 +1547,18 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'kyc.submit': 'Отправить на проверку',
   'kyc.resubmit': 'Отправить снова',
   'seller.menu.kyc': 'Подтверждение личности',
+  'seller.menu.join_salon': 'Присоединиться к салону',
+  'seller.menu.join_salon_d': 'Войдите в состав салона по коду приглашения',
+  'joinsalon.title': 'Присоединиться к салону',
+  'joinsalon.desc': 'Введите код приглашения, который дал вам салон.',
+  'joinsalon.code_ph': 'КОД ПРИГЛАШЕНИЯ',
+  'joinsalon.cta': 'Присоединиться',
+  'joinsalon.note':
+    'После присоединения ваши записи и календарь делятся с салоном. Код одноразовый.',
+  'joinsalon.ok_t': 'Вы в салоне 🎉',
+  'joinsalon.ok_b': 'Теперь вы в составе:',
+  'joinsalon.err_code': 'Код неверный или использован.',
+  'joinsalon.err_already': 'Вы уже привязаны к салону.',
   'seller.menu.kyc_d': 'Загрузите документы, получите значок «Проверен»',
 
   // EK Z.6 — реферальная программа

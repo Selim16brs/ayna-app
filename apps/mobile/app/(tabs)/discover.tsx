@@ -64,12 +64,16 @@ export default function DiscoverScreen() {
   // §5.1.7 REVİZE — Öne Çıkanlar SPONSORLU alan: yalnız admin panelinden ⭐ işaretlenenler
   // (badge 'campaign'); otomatik doldurma YOK — admin seçmediyse bölüm görünmez.
   const featured = cityPros.filter((p) => p.badge === 'campaign').slice(0, 6);
-  // §5.1.8 Sana Yakın: 3 premium salon (yoksa premium-olmayanla doldur) + günlük hafif rotasyon
+  // §5.1.8 Sana Yakın: premium salon önce; YETMEZSE diğer salonlar + bağımsız uzmanlar
+  // (yeni pazarda salon az olabilir — kayıtlı uzmanlar da keşfette görünsün). Günlük rotasyon.
   const nearby = useMemo(() => {
     const salons = cityPros.filter((p) => p.kind === 'salon');
+    const experts = cityPros.filter((p) => p.kind !== 'salon');
     const premium = salons.filter((p) => p.isPremium);
     const pool =
-      premium.length >= 3 ? premium : [...premium, ...salons.filter((p) => !p.isPremium)];
+      premium.length >= 3
+        ? premium
+        : [...premium, ...salons.filter((p) => !p.isPremium), ...experts];
     if (pool.length === 0) return [];
     // Günlük rotasyon: aynı 3 salon kilitlenmez (premium satış değeri korunur)
     const offset = Math.floor(Date.now() / (24 * 60 * 60_000)) % pool.length;

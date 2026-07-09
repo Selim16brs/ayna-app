@@ -1637,6 +1637,18 @@ export const tr = {
   'kyc.submit': 'Doğrulamaya gönder',
   'kyc.resubmit': 'Yeniden gönder',
   'seller.menu.kyc': 'Kimlik doğrulama',
+  'seller.menu.join_salon': 'Salona Katıl',
+  'seller.menu.join_salon_d': 'Bir salonun davet koduyla kadrosuna katıl',
+  'joinsalon.title': 'Salona Katıl',
+  'joinsalon.desc': 'Bir salona bağlanmak için salonun sana verdiği davet kodunu gir.',
+  'joinsalon.code_ph': 'DAVET KODU',
+  'joinsalon.cta': 'Katıl',
+  'joinsalon.note':
+    'Katıldığında randevuların ve takvimin salonla paylaşılır. Kod tek kullanımlıktır.',
+  'joinsalon.ok_t': 'Salona katıldın 🎉',
+  'joinsalon.ok_b': 'Artık kadrosundasın:',
+  'joinsalon.err_code': 'Kod geçersiz ya da kullanılmış.',
+  'joinsalon.err_already': 'Zaten bir salona bağlısın.',
   'seller.menu.kyc_d': 'Belge yükle, "Doğrulanmış" rozeti kazan',
 
   // EK Z.6 — müşteri referans programı

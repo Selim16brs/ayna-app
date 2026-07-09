@@ -233,6 +233,49 @@ export class SpecialistsService {
       .map((u) => ({ id: u.id, name: u.name }));
   }
 
+  // §9.5 — KAYITLI bağımsız uzman sonradan salona katılır (kod ile). Business.professionalId
+  // bağı kurulur; salon uzmanı kadrosunda görür (§10.1). Zaten salondaysa reddedilir.
+  async joinBusinessByCode(userId: string, code: string) {
+    const sp = await this.prisma.specialist.findUnique({ where: { userId } });
+    if (!sp)
+      throw new BadRequestException({ code: 'NOT_SPECIALIST', message: 'Uzman kaydı bulunamadı' });
+    if (sp.businessId)
+      throw new BadRequestException({
+        code: 'ALREADY_IN_BUSINESS',
+        message: 'Zaten bir salona bağlısın',
+      });
+    const c = await this.prisma.businessInviteCode.findUnique({ where: { code: code.trim() } });
+    if (!c || c.status !== 'active') {
+      if (c)
+        await this.prisma.businessInviteCode.update({
+          where: { id: c.id },
+          data: { attempts: { increment: 1 } },
+        });
+      throw new BadRequestException({
+        code: 'INVALID_CODE',
+        message: 'Kod geçersiz ya da kullanılmış',
+      });
+    }
+    await this.prisma.$transaction([
+      this.prisma.specialist.update({
+        where: { userId },
+        data: { businessId: c.businessId, kind: 'salon_bound' },
+      }),
+      this.prisma.businessInviteCode.update({ where: { id: c.id }, data: { status: 'used' } }),
+    ]);
+    const biz = await this.prisma.business.findUnique({ where: { id: c.businessId } });
+    // Salona bildirim (yeni kadro üyesi)
+    if (biz?.ownerUserId)
+      void this.push
+        .sendToUser(biz.ownerUserId, {
+          title: 'Yeni kadro üyesi',
+          body: 'Bir uzman salonuna katıldı',
+          data: { route: '/salon/staff' },
+        })
+        .catch(() => undefined);
+    return { ok: true, businessName: biz?.name ?? '' };
+  }
+
   // §6.1 — uzman galerisi (portfolyo): hesap verisi; public profil de bundan beslenir
   async myPortfolio(expertUserId: string) {
     const sp = await this.prisma.specialist.findUnique({ where: { userId: expertUserId } });
