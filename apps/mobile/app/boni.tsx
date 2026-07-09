@@ -97,7 +97,7 @@ export default function BoniScreen() {
   if (quota && !quota.premium) {
     return (
       <Screen edges={[]}>
-        <StackHeader title={t('boni.title')} right={boniAvatar} />
+        <StackHeader title={t('boni.title')} heroImage={boniAvatar} />
         <View style={styles.lockWrap}>
           <LinearGradient colors={gradients.plum} style={[styles.lockIcon, shadow.card]}>
             <Ionicons name="sparkles" size={34} color={colors.onColor} />
@@ -125,7 +125,7 @@ export default function BoniScreen() {
 
   return (
     <Screen edges={[]}>
-      <StackHeader title={t('boni.title')} right={boniAvatar} />
+      <StackHeader title={t('boni.title')} heroImage={boniAvatar} />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -249,7 +249,7 @@ export default function BoniScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    headerCat: { width: 96, height: 116, resizeMode: 'contain', marginBottom: -18 },
+    headerCat: { width: 120, height: 150, resizeMode: 'contain', transform: [{ scaleX: -1 }] },
     flex: { flex: 1 },
     content: { paddingHorizontal: space(3), paddingBottom: space(3), gap: space(1.5) },
     dim: { opacity: 0.9 },

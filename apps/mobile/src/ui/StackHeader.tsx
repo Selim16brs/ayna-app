@@ -11,7 +11,16 @@ import { Text } from './Text';
  * Alt sayfa başlığı — Keşfet tasarım dili: lime hero bant, beyaz yuvarlak geri butonu,
  * dev başlık, alt köşeler yuvarlak. Üst güvenli alanı kendisi ekler (Screen edges={[]}).
  */
-export function StackHeader({ title, right }: { title: string; right?: ReactNode }) {
+export function StackHeader({
+  title,
+  right,
+  heroImage,
+}: {
+  title: string;
+  right?: ReactNode;
+  // Bandın SAĞ ALTINA sabitlenen görsel (ör. Boni kedisi) — alt kenarı bantla aynı yerde biter.
+  heroImage?: ReactNode;
+}) {
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -33,6 +42,7 @@ export function StackHeader({ title, right }: { title: string; right?: ReactNode
           {title}
         </Text>
       ) : null}
+      {heroImage ? <View style={styles.heroImageWrap}>{heroImage}</View> : null}
     </View>
   );
 }
@@ -45,7 +55,11 @@ const makeStyles = (colors: ColorTokens) =>
       paddingBottom: space(2.5),
       borderBottomLeftRadius: radius.xl,
       borderBottomRightRadius: radius.xl,
+      position: 'relative',
+      overflow: 'hidden', // bant-altı görsel alt kenarda biter (taşan kısım kırpılır)
     },
+    // Bandın SAĞ ALTI — görselin alt kenarı bantla aynı hizada biter
+    heroImageWrap: { position: 'absolute', right: space(2), bottom: 0, zIndex: 1 },
     topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     back: {
       width: 44,
