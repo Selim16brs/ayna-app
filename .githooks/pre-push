@@ -1,0 +1,14 @@
+#!/bin/sh
+# Push öncesi CI'ın TAM aynısını yerelde koştur — kırmızı koşu artık uzaktan değil,
+# burada yakalanır (turbo cache sayesinde saniyeler sürer). Başarısızsa push iptal.
+# Kurulum: git config core.hooksPath .githooks  (bir kez; repo'ya bağlı)
+echo "→ pre-push: format:check + lint (CI ile aynı)…"
+if ! pnpm format:check; then
+  echo "✖ Formatlanmamış dosya var. Düzelt: pnpm format" >&2
+  exit 1
+fi
+if ! pnpm lint; then
+  echo "✖ Lint hatası. Düzelt ve tekrar push et." >&2
+  exit 1
+fi
+echo "✓ Yerel kontroller geçti — push ediliyor."

@@ -16,7 +16,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,md}\"",
     "db:generate": "pnpm --filter @ayna/api db:generate",
-    "db:migrate": "pnpm --filter @ayna/api db:migrate"
+    "db:migrate": "pnpm --filter @ayna/api db:migrate",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "devDependencies": {
     "@ayna/config": "workspace:*",
