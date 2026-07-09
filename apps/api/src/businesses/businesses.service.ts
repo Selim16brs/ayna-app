@@ -126,6 +126,26 @@ export class BusinessesService {
 
   async approve(id: string, adminId: string) {
     const b = await this.prisma.business.update({ where: { id }, data: { status: 'approved' } });
+    // §5.1.5/§5.1.8 — onaylanan salon KATALOG'a girer: müşteri keşfeder + bookinglenebilir;
+    // salon sahibinin listForProvider'ı bu proId ile gelen randevuları görür. Zaten varsa tekrar oluşturma.
+    if (!b.professionalId) {
+      try {
+        const pro = await this.prisma.professional.create({
+          data: {
+            name: b.name,
+            specialty: b.about?.slice(0, 60) || b.name,
+            sector: b.sector || b.categories[0] || 'hair',
+            kind: 'salon',
+            city: b.city ?? '',
+            district: b.district ?? '',
+            imageUrl: '',
+          },
+        });
+        await this.prisma.business.update({ where: { id }, data: { professionalId: pro.id } });
+      } catch {
+        // keşif kaydı oluşturulamazsa onay yine geçerli (professionalId null kalır)
+      }
+    }
     await this.audit.record({
       actorId: adminId,
       actorRole: 'admin',
