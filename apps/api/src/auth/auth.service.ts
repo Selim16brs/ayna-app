@@ -283,8 +283,17 @@ export class AuthService {
             7 - Math.floor((Date.now() - user.restrictedAt.getTime()) / (24 * 60 * 60 * 1000)),
           )
         : 0,
-      phone: decryptField(Buffer.from(user.phoneEnc), this.env.FIELD_ENCRYPTION_KEY),
+      // Eski FIELD_ENCRYPTION_KEY ile şifrelenmiş telefon YENİ anahtarla çözülemez → çökme yerine boş.
+      phone: this.safePhone(user.phoneEnc),
     };
+  }
+
+  private safePhone(enc: Uint8Array): string {
+    try {
+      return decryptField(Buffer.from(enc), this.env.FIELD_ENCRYPTION_KEY);
+    } catch {
+      return ''; // anahtar döndüyse eski kayıt çözülemez — uygulama çalışmaya devam eder
+    }
   }
 }
 
