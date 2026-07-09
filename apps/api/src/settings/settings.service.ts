@@ -108,9 +108,6 @@ export class SettingsService {
     if (provider === 'openai' && !value.startsWith('sk-')) {
       return { ok: false, message: 'OpenAI anahtarı "sk-" ile başlamalı' };
     }
-    if (provider === 'anthropic' && !value.startsWith('sk-ant-')) {
-      return { ok: false, message: 'Claude anahtarı "sk-ant-" ile başlamalı' };
-    }
     if (value.length < 12) return { ok: false, message: 'Anahtar çok kısa görünüyor' };
     return { ok: true, message: 'Anahtar biçimi geçerli' };
   }

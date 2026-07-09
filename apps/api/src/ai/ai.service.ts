@@ -159,60 +159,25 @@ export class AiService {
     return { premium: u.isPremium };
   }
 
-  // Anahtarlar ADMIN PANELİNDEN (apikey.anthropic / apikey.openai) gelir; env yedek.
-  private async keyFor(provider: 'anthropic' | 'openai'): Promise<string | null> {
-    const row = await this.prisma.setting.findUnique({ where: { key: `apikey.${provider}` } });
-    const envKey = provider === 'anthropic' ? this.env.ANTHROPIC_API_KEY : this.env.OPENAI_API_KEY;
-    return row?.strValue?.trim() || envKey || null;
+  // TEK sağlayıcı: OpenAI. Anahtar admin panel (apikey.openai) ya da env'den; yoksa güvenli mock.
+  private async apiKey(): Promise<string | null> {
+    const row = await this.prisma.setting.findUnique({ where: { key: 'apikey.openai' } });
+    return row?.strValue?.trim() || this.env.OPENAI_API_KEY || null;
   }
 
-  // §5.4 — LLM çağrısı: ÖNCE Claude (en yetenekli), yoksa OpenAI, o da yoksa güvenli mock.
+  // §5.4 — Boni LLM çağrısı (OpenAI); anahtar yoksa güvenli mock (asla hard-error).
   private async callModel(messages: ChatMsg[]): Promise<string> {
-    const anthropicKey = await this.keyFor('anthropic');
-    if (anthropicKey) return this.callAnthropic(messages, anthropicKey);
-    const openaiKey = await this.keyFor('openai');
-    if (openaiKey) return this.callOpenAI(messages, openaiKey);
-    return mockReply(messages);
-  }
-
-  private async callAnthropic(messages: ChatMsg[], key: string): Promise<string> {
-    const system = messages
-      .filter((m) => m.role === 'system')
-      .map((m) => m.content)
-      .join('\n\n');
-    const userMsgs = messages
-      .filter((m) => m.role === 'user')
-      .map((m) => ({ role: 'user' as const, content: m.content }));
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 500,
-        system,
-        messages: userMsgs,
-      }),
-    });
-    if (!res.ok) {
-      throw new HttpException(
-        { code: 'AI_FAILED', message: `Claude çağrısı başarısız (${res.status})` },
-        HttpStatus.BAD_GATEWAY,
-      );
-    }
-    const data = (await res.json()) as { content?: { type: string; text?: string }[] };
-    const text = data.content?.find((c) => c.type === 'text')?.text;
-    return text ?? mockReply(messages);
+    const key = await this.apiKey();
+    if (!key) return mockReply(messages);
+    return this.callOpenAI(messages, key);
   }
 
   private async callOpenAI(messages: ChatMsg[], key: string): Promise<string> {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'gpt-4o', messages, max_tokens: 500, temperature: 0.6 }),
+      // gpt-4o-mini: Boni'nin kısa sohbeti için fazlasıyla yeterli + en düşük maliyet
+      body: JSON.stringify({ model: 'gpt-4o-mini', messages, max_tokens: 500, temperature: 0.6 }),
     });
     if (!res.ok) {
       throw new HttpException(
@@ -231,6 +196,6 @@ function mockReply(messages: ChatMsg[]): string {
   return (
     `Boni 💬 "${q.slice(0, 60)}" için kısa önerim — cilt/saç tipine uygun, nazik ürünlerle ` +
     'başla ve işlemi alanında deneyimli bir uzmana yaptır. AYNA’dan teklif alarak en doğru ' +
-    'uzmanla eşleşebilirsin. (Not: Boni’nin tam zekâsı için admin panelden bir AI anahtarı eklenmeli.)'
+    'uzmanla eşleşebilirsin. (Not: Boni’nin tam zekâsı için admin panel → Ayarlar’a OpenAI anahtarı eklenmeli.)'
   );
 }
