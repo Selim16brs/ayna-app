@@ -61,12 +61,11 @@ export default function ReportsScreen() {
         ? { icon: 'link' as const, text: businessName }
         : { icon: 'person' as const, text: t('reports.identity.independent') };
   // Talepler rozeti = şehirdeki açık talepler; reklamlar şehre göre hedeflenir (sektör admin ucunda)
-  const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   // §9.3 — Talepler rozeti: şehirdeki AÇIK talepler BULUTTAN sayılır (ekran odaklandıkça tazelenir)
   const token = useStore((s) => s.token);
   const [openDemands, setOpenDemands] = useState(0);
   // §CRM — bugün doğum günü olan müşterilerim (tıkla → kutlama push'u)
-  const [bdays, setBdays] = useState<{ id: string; name: string }[]>([]);
+  const [bdays] = useState<{ id: string; name: string }[]>([]);
   useFocusEffect(
     useCallback(() => {
       if (!token) return;

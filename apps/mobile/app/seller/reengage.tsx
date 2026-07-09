@@ -8,7 +8,7 @@ import { useStore } from '../../src/store';
 import { findServiceWithCategory, tri } from '../../src/taxonomy';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, PressableScale, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 // §10/§4/§11 — GERİ ÇAĞIRMA yönetimi: PREMIUM özellik, sistem OTOMATİK gönderir; uzman aç/kapat eder.
 const DAY = 24 * 60 * 60_000;

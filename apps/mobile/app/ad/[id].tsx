@@ -13,7 +13,6 @@ export default function SupplierAdScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { id } = useLocalSearchParams<{ id: string }>();
   const ad = undefined as import('../../src/data').SupplierAd | undefined; // demo reklam kaldırıldı — boş-durum
 
   if (!ad) {

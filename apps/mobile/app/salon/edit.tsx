@@ -30,10 +30,8 @@ export default function SalonEditScreen() {
   const avatarUri = useStore((s) => s.avatarUri);
   const setAvatar = useStore((s) => s.setAvatar);
   const salonProfile = useStore((s) => s.salonProfile);
-  const setSalonProfile = useStore((s) => s.setSalonProfile);
   const sellerSocial = useStore((s) => s.sellerSocial);
   const sellerHours = useStore((s) => s.sellerHours);
-  const setSellerProfile = useStore((s) => s.setSellerProfile);
   const submitProfileChange = useStore((s) => s.submitProfileChange);
 
   const [photos, setPhotos] = useState(salonProfile.photos);

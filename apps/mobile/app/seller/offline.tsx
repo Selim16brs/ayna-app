@@ -5,6 +5,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { hasConflict } from '@ayna/domain';
 import { api } from '../../src/api';
 import type { Appointment } from '../../src/data';
+import { localWallClockToAlmatyMs } from '../../src/datetime';
 import { useStore } from '../../src/store';
 import { fillParams, useLocale } from '../../src/locale';
 import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
@@ -86,7 +87,8 @@ export default function OfflineBookingScreen() {
 
   async function save() {
     if (!canSave) return;
-    const startMs = when.getTime();
+    // §4.2 — seçilen duvar-saati ALMATI saatidir (cihaz TR'de olsa bile kayma olmaz)
+    const startMs = localWallClockToAlmatyMs(when);
     const durationMin = Number(dur.replace(/[^0-9]/g, '')) || 60;
     // §4.2 — çift rezervasyon önlemi: aynı uzmanın çakışan randevusu varsa engelle
     const candidate = { startMs, endMs: startMs + durationMin * 60_000 };

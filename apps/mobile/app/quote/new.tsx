@@ -177,6 +177,17 @@ export default function NewQuoteScreen() {
             );
           })}
         </View>
+        {/* Açıklama (ops.) — kurucu isteği: fotoğrafla talepte not uzmanlara İLETİLİR */}
+        <TextInput
+          style={styles.noteInput}
+          value={note}
+          onChangeText={setNote}
+          placeholder={t('quote.new.note_ph')}
+          placeholderTextColor={colors.muted}
+          multiline
+          maxLength={600}
+        />
+
         {/* İstenen tarih & saat (ops.) — uzman okeyler ya da alternatif önerir (§4.1) */}
         <Text variant="bodyStrong" tone="ink" style={styles.durLabel}>
           {t('demand.pref.title')}

@@ -13,12 +13,10 @@ import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text, TierUpsell } from '../../src/ui';
 
-type IoniconName = keyof typeof Ionicons.glyphMap;
-
 // §10.1 — SALON dashboard: kadro-merkezli. Üstte salon kapak fotoğrafı; yönetim öğeleri Profil'de.
 export default function SalonHomeScreen() {
   const { t } = useLocale();
-  const { colors, gradients, shadow } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -29,7 +27,6 @@ export default function SalonHomeScreen() {
   const setAvatar = useStore((s) => s.setAvatar);
   // Faz C — GERÇEK kadro (davet koduyla bağlı uzmanlar); mock Madina/Aigerim yok.
   const { staff } = useSalonStaff();
-  const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const ads: SupplierAd[] = []; // demo tedarikçi reklamı YOK (admin ucu bağlanınca gerçek veri)
 
   // §10.1 — salon kapak fotoğrafı: uzman profil fotosuyla AYNI yerden (avatar) düzenlenebilir

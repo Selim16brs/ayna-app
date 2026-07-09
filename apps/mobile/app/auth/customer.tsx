@@ -22,7 +22,6 @@ function fmtDate(d: Date): string {
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, CitySelect, Screen, StackHeader, Text, TextInput } from '../../src/ui';

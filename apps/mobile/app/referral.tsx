@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Share, StyleSheet, View } from 'react-native';
 import { api, type MyReferral } from '../src/api';

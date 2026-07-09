@@ -24,7 +24,6 @@ import { CITIES } from '../../src/data';
 import { getDeviceFingerprint } from '../../src/device';
 import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
 import { useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {

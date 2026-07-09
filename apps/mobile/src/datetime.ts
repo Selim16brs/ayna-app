@@ -70,6 +70,22 @@ export function almatyDayStart(nowMs: number, addDays = 0): number {
   return localMidnight - ALMATY_OFFSET_MS;
 }
 
+/**
+ * Native picker'dan gelen Date'in CİHAZ yerelindeki duvar-saatini (Y/M/D H:M)
+ * ALMATI duvar-saati olarak yorumlayıp UTC ms döndürür. Uzman İstanbul'dan
+ * "15:00" seçtiyse randevu Almatı 15:00 olur (§4.2: saat dilimi Almatı sabit).
+ */
+export function localWallClockToAlmatyMs(d: Date): number {
+  const utcWall = Date.UTC(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate(),
+    d.getHours(),
+    d.getMinutes(),
+  );
+  return utcWall - ALMATY_OFFSET_MS;
+}
+
 /** Almatı yerel saat:dakikayı, verilen günde UTC ms'e çevirir. */
 export function almatySlotMs(nowMs: number, addDays: number, h: number, min = 0): number {
   return almatyDayStart(nowMs, addDays) + h * 60 * 60_000 + min * 60_000;

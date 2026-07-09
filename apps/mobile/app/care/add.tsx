@@ -47,8 +47,6 @@ function daysUntilNextOccurrence(target: Date): number {
 export default function AddEntryScreen() {
   const router = useRouter();
   const { t } = useLocale();
-  const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
   const { kind, mode, id } = useLocalSearchParams<{ kind?: string; mode?: string; id?: string }>();
 
   const formMode: FormMode = mode === 'routine' ? 'routine' : mode === 'moment' ? 'moment' : 'log';

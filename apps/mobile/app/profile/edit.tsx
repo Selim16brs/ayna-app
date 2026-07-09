@@ -35,7 +35,6 @@ export default function ProfileEditScreen() {
   const sellerSocial = useStore((s) => s.sellerSocial);
   const sellerHours = useStore((s) => s.sellerHours);
   const sellerCerts = useStore((s) => s.sellerCerts);
-  const setSellerProfile = useStore((s) => s.setSellerProfile);
   const updateMyProfile = useStore((s) => s.updateMyProfile);
   const submitProfileChange = useStore((s) => s.submitProfileChange);
 
