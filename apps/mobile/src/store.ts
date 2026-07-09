@@ -1648,10 +1648,20 @@ export const useStore = create<State>()(
         // Giriş YOK → demo tohum (SEED_APPOINTMENTS) korunur.
         if (!token) return;
         try {
-          const remote = await api.myBookings(token);
+          const role = get().currentUser?.role;
+          const isProvider = role === 'professional' || role === 'salon';
+          // Müşteri: kendi randevuları. Uzman/salon: SAĞLAYICI olduğu gelen randevular
+          // ('Randevu Al' talepleri) + varsa kendi müşteri randevuları — ikisi birleşik.
+          const [mine, provider] = await Promise.all([
+            api.myBookings(token).catch(() => [] as Appointment[]),
+            isProvider
+              ? api.providerBookings(token).catch(() => [] as Appointment[])
+              : Promise.resolve([] as Appointment[]),
+          ]);
+          const byId = new Map<string, (typeof mine)[number]>();
+          for (const b of [...mine, ...provider]) byId.set(b.id, b);
+          const remote = [...byId.values()];
           const remoteIds = new Set(remote.map((b) => b.id));
-          // Giriş YAPILDI → hesabın GERÇEK randevuları esas; mock tohumu AT (yeni hesap sıfır görünsün).
-          // Yerelde oluşturulan (tohum olmayan) senkronlanmamış kayıtlar korunur.
           set((s) => ({
             bookings: [...remote, ...s.bookings.filter((b) => !remoteIds.has(b.id))],
           }));

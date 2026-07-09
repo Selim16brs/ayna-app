@@ -327,6 +327,7 @@ export const api = {
   bookings: () => get<Appointment[]>('/bookings'),
   // §5.6 önkoşulu — yalnızca giriş yapan kullanıcının randevuları
   myBookings: (token: string) => get<Appointment[]>('/bookings/mine', token),
+  providerBookings: (token: string) => get<Appointment[]>('/bookings/provider', token),
   // §5 — CRM özet istatistiği (doluluk/gelir/no-show)
   bookingStats: () => get<BookingStats>('/bookings/stats'),
   // token verilirse randevu sahibine bağlanır (offline seller girişinde verilmez)

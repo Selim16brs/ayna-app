@@ -42,6 +42,13 @@ export class BookingsController {
     return this.bookings.listForUser(req.user!.id);
   }
 
+  // §9.4 — uzman/salon: SAĞLAYICI olduğu gelen randevular ('Randevu Al' talepleri dahil)
+  @Get('provider')
+  @UseGuards(JwtAuthGuard)
+  provider(@Req() req: AuthedRequest) {
+    return this.bookings.listForProvider(req.user!.id);
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   create(

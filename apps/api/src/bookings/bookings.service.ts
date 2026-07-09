@@ -41,10 +41,27 @@ export class BookingsService {
     return rows.map(mapBooking);
   }
 
-  // §5.6 önkoşulu — kullanıcıya bağlı randevular
+  // §5.6 önkoşulu — kullanıcıya bağlı randevular (MÜŞTERİ olarak)
   async listForUser(userId: string) {
     const rows = await this.prisma.booking.findMany({
       where: { userId },
+      orderBy: { inDays: 'asc' },
+    });
+    return rows.map(mapBooking);
+  }
+
+  // §9.4 — SAĞLAYICI olarak gelen randevular: uzman (Specialist.proId) veya salon
+  // (Business.professionalId) → booking.proId eşleşmesi. Gelen 'Randevu Al' talepleri buradan görünür.
+  async listForProvider(userId: string) {
+    const sp = await this.prisma.specialist.findUnique({ where: { userId } });
+    let proId = sp?.proId ?? null;
+    if (!proId) {
+      const biz = await this.prisma.business.findFirst({ where: { ownerUserId: userId } });
+      proId = biz?.professionalId ?? null;
+    }
+    if (!proId) return [];
+    const rows = await this.prisma.booking.findMany({
+      where: { proId },
       orderBy: { inDays: 'asc' },
     });
     return rows.map(mapBooking);
