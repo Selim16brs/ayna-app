@@ -147,6 +147,8 @@ model Professional {
   imageUrl        String       @map("image_url")
   portfolio       String[]     @default([]) // uzman galerisi (data URL; medya fazında objeye)
   promoJson       String       @default("[]") @map("promo_json") // §11 Platinum promosyonları (kendi profilinde görünür)
+  servicesJson    String       @default("[]") @map("services_json") // §9.5 uzmanın GERÇEK hizmet/fiyat listesi
+  hoursJson       String       @default("[]") @map("hours_json") // §9.5 çalışma saatleri (DayHours[])
   badge           ProBadge     @default(verified)
   createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
 

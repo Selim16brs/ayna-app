@@ -284,6 +284,41 @@ export class SpecialistsService {
     return { promotions: safeParse(pro.promoJson) };
   }
 
+  // §9.5 — uzmanın hizmet/fiyat listesi + çalışma saatleri HESAPTA (public profil bunlardan beslenir)
+  async myServices(userId: string) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { services: [] };
+    const pro = await this.prisma.professional.findUnique({ where: { id: proId } });
+    return { services: safeParse(pro?.servicesJson) };
+  }
+
+  async setMyServices(userId: string, services: unknown[]) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { services: [] };
+    const pro = await this.prisma.professional.update({
+      where: { id: proId },
+      data: { servicesJson: JSON.stringify(services.slice(0, 60)) },
+    });
+    return { services: safeParse(pro.servicesJson) };
+  }
+
+  async myHours(userId: string) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { hours: [] };
+    const pro = await this.prisma.professional.findUnique({ where: { id: proId } });
+    return { hours: safeParse(pro?.hoursJson) };
+  }
+
+  async setMyHours(userId: string, hours: unknown[]) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { hours: [] };
+    const pro = await this.prisma.professional.update({
+      where: { id: proId },
+      data: { hoursJson: JSON.stringify(hours.slice(0, 7)) },
+    });
+    return { hours: safeParse(pro.hoursJson) };
+  }
+
   // §CRM — kutlama: müşteriye push doğum günü mesajı (uzman adına)
   async celebrate(expertUserId: string, customerId: string) {
     const expert = await this.prisma.user.findUnique({

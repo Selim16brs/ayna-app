@@ -61,7 +61,12 @@ export class CatalogService {
     if (!p) {
       throw new NotFoundException({ code: 'PRO_NOT_FOUND', message: 'İşletme bulunamadı' });
     }
-    const services = decorateServices(SECTOR_SERVICES[p.sector] ?? SECTOR_SERVICES.hair!, p.id);
+    // §9.5 — uzman kendi hizmet/fiyat listesini girdiyse PUBLIC profil ONU gösterir;
+    // sektör şablonu yalnız liste boşken (yeni hesap) menü iskeleti olarak kalır.
+    const own = safeParseServices(p.servicesJson);
+    const services = own.length
+      ? own
+      : decorateServices(SECTOR_SERVICES[p.sector] ?? SECTOR_SERVICES.hair!, p.id);
     // Sıfır-demo: kadro GERÇEK — bu salona bağlı kayıtlı uzmanlar (yoksa boş; sahte isim/yüz YOK)
     const staff =
       p.kind === 'salon'
@@ -296,6 +301,36 @@ function parsePromos(raw: string): unknown[] {
   try {
     const arr = JSON.parse(raw) as unknown;
     return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+// §9.5 — servicesJson çözümü: {id,name,price,durationMin} dizisi (bozuksa boş)
+function safeParseServices(
+  raw: string,
+): {
+  id: string;
+  name: string;
+  durationMin: number;
+  price: number;
+  popular: boolean;
+  discountPct: number;
+}[] {
+  try {
+    const arr = JSON.parse(raw) as unknown;
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((x): x is Record<string, unknown> => !!x && typeof x === 'object')
+      .map((x, i) => ({
+        id: String(x.id ?? `svc-${i}`),
+        name: String(x.name ?? ''),
+        durationMin: Number(x.durationMin) || 60,
+        price: Number(x.price) || 0,
+        popular: false,
+        discountPct: 0,
+      }))
+      .filter((x) => x.name);
   } catch {
     return [];
   }

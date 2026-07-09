@@ -68,6 +68,34 @@ export class SpecialistsController {
     return this.specialists.setMyPromotions(req.user!.id, list);
   }
 
+  // §9.5 — hizmet/fiyat listesi + çalışma saatleri (hesap verisi)
+  @Get('me/services')
+  @UseGuards(JwtAuthGuard)
+  myServices(@Req() req: AuthedRequest) {
+    return this.specialists.myServices(req.user!.id);
+  }
+
+  @Post('me/services')
+  @UseGuards(JwtAuthGuard)
+  setServices(@Req() req: AuthedRequest, @Body() body: { services?: unknown[] }) {
+    return this.specialists.setMyServices(
+      req.user!.id,
+      Array.isArray(body?.services) ? body.services : [],
+    );
+  }
+
+  @Get('me/hours')
+  @UseGuards(JwtAuthGuard)
+  myHours(@Req() req: AuthedRequest) {
+    return this.specialists.myHours(req.user!.id);
+  }
+
+  @Post('me/hours')
+  @UseGuards(JwtAuthGuard)
+  setHours(@Req() req: AuthedRequest, @Body() body: { hours?: unknown[] }) {
+    return this.specialists.setMyHours(req.user!.id, Array.isArray(body?.hours) ? body.hours : []);
+  }
+
   // §CRM — bugün doğum günü olan müşterilerim + kutlama gönder
   @Get('me/birthdays')
   @UseGuards(JwtAuthGuard)

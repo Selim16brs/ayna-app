@@ -596,16 +596,34 @@ export const useStore = create<State>()(
         }
       },
       sellerServices: seedSellerServices(),
-      setSellerServices: (map) => set({ sellerServices: map }),
+      setSellerServices: (map) => {
+        set({ sellerServices: map });
+        // §9.5 — hizmet listesi HESABIN parçası: public profil de bundan beslenir
+        const rows = Object.entries(map)
+          .map(([id, r]) => {
+            const svc = findServiceWithCategory(id);
+            return {
+              id,
+              name: svc?.service.label.tr ?? id,
+              price: Number(r.price) || 0,
+              durationMin: Number(r.dur) || 60,
+            };
+          })
+          .filter((x) => x.price > 0);
+        void api.setMyServices(rows).catch(() => undefined);
+      },
       sellerSocial: emptySocial,
       sellerHours: defaultHours(),
       sellerCerts: [],
-      setSellerProfile: (p) =>
+      setSellerProfile: (p) => {
         set(() => ({
           ...(p.social ? { sellerSocial: p.social } : {}),
           ...(p.hours ? { sellerHours: p.hours } : {}),
           ...(p.certs ? { sellerCerts: p.certs } : {}),
-        })),
+        }));
+        // §9.5 — çalışma saatleri HESAPTA (teklif slotları + public profil bunları kullanır)
+        if (p.hours) void api.setMyHours(p.hours).catch(() => undefined);
+      },
       // Sıfır-demo: salon profili BOŞ başlar — kayıtta/düzenlemede salon kendi doldurur
       salonProfile: {
         photos: [],
@@ -2046,6 +2064,26 @@ export const useStore = create<State>()(
             .prefs;
           if (prefs?.favorites?.length) set({ favorites: prefs.favorites });
           if (prefs?.addresses?.length) set({ addresses: prefs.addresses });
+          // §9.5 — uzman/salon: hizmet listesi + çalışma saatleri hesaptan gelir
+          const role = get().currentUser?.role;
+          if (role === 'professional' || role === 'salon') {
+            void api
+              .myServices()
+              .then((r) => {
+                if (!r.services.length) return;
+                const map: Record<string, SellerServiceRow> = {};
+                for (const svc of r.services)
+                  map[svc.id] = { price: String(svc.price), dur: String(svc.durationMin) };
+                set({ sellerServices: map });
+              })
+              .catch(() => undefined);
+            void api
+              .myHours()
+              .then((r) => {
+                if (r.hours.length) set({ sellerHours: r.hours });
+              })
+              .catch(() => undefined);
+          }
           // Push gelmese bile: yükselme ALGILANDIĞINDA uygulama-içi bildirim (§11)
           if (!wasPremium && (tier === 'premium' || tier === 'platinum'))
             get().pushNotification({

@@ -484,6 +484,15 @@ export const api = {
   me: (token: string) => get<AuthUser>('/auth/me', token),
   setAvatar: (token: string, photoDataUrl: string | null) =>
     post<AuthUser>('/auth/me/avatar', { photoDataUrl }, token),
+  myServices: () =>
+    get<{ services: { id: string; name: string; price: number; durationMin: number }[] }>(
+      '/specialists/me/services',
+    ),
+  setMyServices: (services: { id: string; name: string; price: number; durationMin: number }[]) =>
+    post<unknown>('/specialists/me/services', { services }),
+  myHours: () => get<{ hours: import('./ui/WorkingHours').DayHours[] }>('/specialists/me/hours'),
+  setMyHours: (hours: import('./ui/WorkingHours').DayHours[]) =>
+    post<unknown>('/specialists/me/hours', { hours }),
   myPromotions: (token: string) =>
     get<{ promotions: import('./data').Promotion[] }>('/specialists/me/promotions', token),
   setMyPromotions: (token: string, promotions: import('./data').Promotion[]) =>

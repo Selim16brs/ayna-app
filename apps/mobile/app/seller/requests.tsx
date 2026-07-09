@@ -39,6 +39,7 @@ export default function SellerRequestsScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const bookings = useStore((s) => s.bookings);
+  const hours = useStore((s) => s.sellerHours);
   const submitOffer = useStore((s) => s.submitOffer);
   const token = useStore((s) => s.token);
   // §5.2 Faz A — açık talepler BULUTTAN (sunucu şehir filtresini uygular §9.3).
@@ -97,9 +98,18 @@ export default function SellerRequestsScreen() {
     const busy = bookings
       .filter((b) => b.status !== 'cancelled' && b.status !== 'no_show')
       .map((b) => ({ startMs: b.startMs, endMs: b.startMs + b.durationMin * 60_000 }));
+    // §9.5 — slot ızgarası uzmanın ÇALIŞMA SAATLERİNDEN (kapalı gün atlanır; saat yoksa 10-19 varsayılan)
     const grid: number[] = [];
-    for (let d = 1; d <= 3; d++)
-      for (const h of [11, 15, 18]) grid.push(almatySlotMs(now, d, h, 0));
+    for (let d = 1; d <= 3; d++) {
+      const wd = new Date(now + d * 86_400_000).getDay();
+      const day = hours.find((x) => x.wd === wd);
+      if (day && !day.open) continue;
+      const fromH = day ? Number(day.from.split(':')[0]) : 10;
+      const toH = day ? Number(day.to.split(':')[0]) : 19;
+      const mid = Math.floor((fromH + toH) / 2);
+      for (const h of [...new Set([fromH + 1, mid, toH - 1])])
+        if (h > fromH - 1 && h <= toH) grid.push(almatySlotMs(now, d, h, 0));
+    }
     return grid
       .filter((ms) => ms > now && !hasConflict({ startMs: ms, endMs: ms + dur }, busy))
       .slice(0, 6);
