@@ -623,6 +623,8 @@ export const useStore = create<State>()(
         }));
         // §9.5 — çalışma saatleri HESAPTA (teklif slotları + public profil bunları kullanır)
         if (p.hours) void api.setMyHours(p.hours).catch(() => undefined);
+        // §9.5 — sertifikalar HESAPTA (public profil certs alanı bundan beslenir)
+        if (p.certs) void api.setMyCertificates(p.certs).catch(() => undefined);
       },
       // Sıfır-demo: salon profili BOŞ başlar — kayıtta/düzenlemede salon kendi doldurur
       salonProfile: {

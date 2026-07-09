@@ -111,6 +111,19 @@ export class SpecialistsController {
     );
   }
 
+  // §9.5 — sertifika listesi güncelle (data URL; public profil certs bundan beslenir)
+  @Post('me/certificates')
+  @UseGuards(JwtAuthGuard)
+  setCertificates(@Req() req: AuthedRequest, @Body() body: { certificates?: string[] }) {
+    const list = Array.isArray(body?.certificates)
+      ? body.certificates
+          .filter((x) => typeof x === 'string')
+          .map((x) => x.slice(0, 2_000_000))
+          .slice(0, 10)
+      : [];
+    return this.specialists.setCertificates(req.user!.id, list);
+  }
+
   // §CRM — bugün doğum günü olan müşterilerim + kutlama gönder
   @Get('me/birthdays')
   @UseGuards(JwtAuthGuard)

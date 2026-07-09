@@ -338,6 +338,16 @@ export class SpecialistsService {
     return { days: safeParse(pro.closedDaysJson) };
   }
 
+  async setCertificates(userId: string, certificates: string[]) {
+    const sp = await this.prisma.specialist.findUnique({ where: { userId } });
+    if (!sp) return { certificates: [] };
+    const row = await this.prisma.specialist.update({
+      where: { userId },
+      data: { certificates },
+    });
+    return { certificates: row.certificates };
+  }
+
   // §CRM — kutlama: müşteriye push doğum günü mesajı (uzman adına)
   async celebrate(expertUserId: string, customerId: string) {
     const expert = await this.prisma.user.findUnique({

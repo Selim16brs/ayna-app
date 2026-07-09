@@ -128,9 +128,14 @@ export default function ExpertRegisterScreen() {
   async function addCert() {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
+      quality: 0.35,
+      base64: true, // data URL → sertifika HESAPTA taşınır, müşteri cihazında da görünür
     });
-    if (!res.canceled && res.assets[0]) setCerts((c) => [...c, res.assets[0]!.uri]);
+    if (!res.canceled && res.assets[0]) {
+      const a = res.assets[0];
+      const uri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
+      setCerts((c) => [...c, uri]);
+    }
   }
 
   async function addPortfolio() {
