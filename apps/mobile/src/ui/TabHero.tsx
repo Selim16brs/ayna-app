@@ -57,6 +57,9 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'flex-end',
       justifyContent: 'space-between',
       gap: space(1.5),
+      // Sabit içerik yüksekliği: alt yazısı olan (Benim İçin/W2W) ve olmayan (Randevularım)
+      // sekmelerin yeşil bantları AYNI boyda görünsün — içerik alta hizalı.
+      minHeight: 52,
     },
     textCol: { flex: 1 },
     title: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.6 },

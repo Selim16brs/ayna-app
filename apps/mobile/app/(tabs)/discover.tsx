@@ -500,13 +500,14 @@ const makeStyles = (colors: ColorTokens) =>
       textShadowOffset: { width: 0, height: 3 },
       textShadowRadius: 8,
     },
-    // Zeminsiz kullanıcı fotoğrafı — sağ altta, yeşilin ÖNÜNDE; alt kısmını dalga keser
+    // Zeminsiz kullanıcı fotoğrafı — sağ altta, yeşilin ÖNÜNDE; alt kısmını dalga keser.
+    // Daha büyük alan (kurucu isteği: foto küçük kalıyordu).
     heroPhoto: {
       position: 'absolute',
       right: -space(1),
       bottom: 0,
-      width: 176,
-      height: 220,
+      width: 210,
+      height: 262,
       zIndex: 1,
     },
 

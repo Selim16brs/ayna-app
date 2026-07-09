@@ -646,7 +646,7 @@ const makeStyles = (colors: ColorTokens) =>
     hero: {
       backgroundColor: colors.accent,
       paddingHorizontal: space(3),
-      paddingBottom: space(5),
+      paddingBottom: space(6),
       position: 'relative',
       overflow: 'hidden',
     },
@@ -696,12 +696,13 @@ const makeStyles = (colors: ColorTokens) =>
     bindingPillText: { fontWeight: '700' },
     // §6.1 — profil fotoğrafı GÜVENLİ ALANI (safe zone): sabit çerçeve + resizeMode="contain".
     // Kayıt olan her uzmanın cut-out'u bu çerçeveye sığdırılır → zilden uzak, taşmaz, standart.
+    // Daha büyük foto alanı (kullanıcı Keşfet ile tutarlı; kurucu isteği).
     heroPhoto: {
       position: 'absolute',
-      right: space(1.5),
+      right: space(1),
       bottom: 0,
-      width: 168,
-      height: 210,
+      width: 210,
+      height: 262,
       zIndex: 1,
     },
     // Bildirim zili (hero sağ)
