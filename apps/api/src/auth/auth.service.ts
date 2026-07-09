@@ -45,12 +45,24 @@ export class AuthService {
     const ph = phoneHash(input.phone, key);
     const existing = await this.prisma.user.findUnique({ where: { phoneHash: ph } });
     if (existing) {
-      throw new ConflictException({ code: 'PHONE_TAKEN', message: 'Bu telefon zaten kayıtlı' });
+      // Silinmiş hesap telefonu SERBEST bırakır (yeniden kayıt olabilsin); değilse çakışma.
+      if (existing.status === 'deleted') {
+        await this.prisma.user.update({
+          where: { id: existing.id },
+          data: { phoneHash: `deleted:${existing.id}`, email: null },
+        });
+      } else {
+        throw new ConflictException({ code: 'PHONE_TAKEN', message: 'Bu telefon zaten kayıtlı' });
+      }
     }
     if (input.email) {
       const byEmail = await this.prisma.user.findUnique({ where: { email: input.email } });
       if (byEmail) {
-        throw new ConflictException({ code: 'EMAIL_TAKEN', message: 'Bu e-posta zaten kayıtlı' });
+        if (byEmail.status === 'deleted') {
+          await this.prisma.user.update({ where: { id: byEmail.id }, data: { email: null } });
+        } else {
+          throw new ConflictException({ code: 'EMAIL_TAKEN', message: 'Bu e-posta zaten kayıtlı' });
+        }
       }
     }
     const avatarUrl = await this.storage.put(input.photoDataUrl ?? null, 'avatars/reg');

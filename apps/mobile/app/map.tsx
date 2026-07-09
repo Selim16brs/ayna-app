@@ -84,7 +84,7 @@ export default function MapScreen() {
           {pros.map((p) => (
             <Marker
               key={p.id}
-              coordinate={proCoords(p.id)}
+              coordinate={proCoords(p.id, p.lat, p.lng)}
               // §5.1.3 — salon vs bağımsız uzman pinleri görsel ayrı
               pinColor={p.kind === 'salon' ? colors.accentFg : colors.blue}
               onPress={() => setSelected(p)}
@@ -123,7 +123,8 @@ export default function MapScreen() {
                     {selected.rating.toFixed(1)}
                   </Text>
                   <Text variant="caption" tone="muted">
-                    · {distanceKm(center, proCoords(selected.id))} {t('map.distance')}
+                    · {distanceKm(center, proCoords(selected.id, selected.lat, selected.lng))}{' '}
+                    {t('map.distance')}
                   </Text>
                   <Text variant="caption" tone="muted">
                     · {priceLabel(selected)}
@@ -177,7 +178,7 @@ export default function MapScreen() {
                 <Ionicons name="location-outline" size={14} color={colors.inkSoft} />
                 <Text variant="caption" tone="inkSoft">
                   {selected
-                    ? `${selected.city || city} · ${distanceKm(center, proCoords(selected.id))} ${t('map.distance')}`
+                    ? `${selected.city || city} · ${distanceKm(center, proCoords(selected.id, selected.lat, selected.lng))} ${t('map.distance')}`
                     : ''}
                 </Text>
                 {detail.reviewCount > 0 ? (

@@ -773,6 +773,9 @@ export const tr = {
   'auth.terms.accept': 'Kullanım koşulları ve gizlilik politikasını okudum, onaylıyorum.',
   'auth.city.required': 'Lütfen şehrini seç',
   'auth.error.taken': 'Bu telefon veya e-posta zaten kayıtlı',
+  'auth.error.invalid': 'Bilgileri kontrol et ve tekrar dene',
+  'auth.error.server': 'Sunucuya ulaşılamadı, birazdan tekrar dene',
+  'auth.error.network': 'Bağlantı hatası — internetini kontrol et',
   'auth.error.bad': 'E-posta/telefon veya şifre hatalı',
   'auth.login.forgot': 'Şifremi unuttum',
   'auth.login.subtitle': 'Telefonun ve şifrenle giriş yap',
@@ -839,6 +842,7 @@ export const tr = {
   'biz.field.password': 'Hesap şifresi',
   'biz.field.docs': 'Belgeler (lisans / hijyen)',
   'biz.field.docs_add': 'Belge ekle',
+  'biz.field.docs_added': 'Belge eklendi ✓ — değiştir',
   'biz.field.docs_hint': 'İşletme lisansı ve hijyen sertifikası (doğrulama için)',
   'biz.terms.accept': 'İşletme sözleşmesi ve gizlilik politikasını kabul ediyorum.',
   'biz.terms.always_liability':
@@ -854,6 +858,9 @@ export const tr = {
   'biz.field.photos_hint': 'En fazla 10 fotoğraf — vitrin, iç mekân, çalışmalar',
   'biz.field.map': 'Haritada konum',
   'biz.field.map_pin': 'Haritada işaretle',
+  'addr.map_title': 'Konumu işaretle',
+  'addr.map_hint': 'Haritayı kaydır, iğneyi tam konumuna getir',
+  'addr.use_location': 'Bu konumu kullan',
   'biz.field.map_pinned': 'Konum işaretlendi',
   'biz.field.map_change': 'Değiştir',
   'biz.field.area_hint':

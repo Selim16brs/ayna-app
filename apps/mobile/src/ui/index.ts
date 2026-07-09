@@ -31,3 +31,4 @@ export { NailCursor } from './NailCursor';
 export { PressableScale } from './PressableScale';
 export { Progress } from './Progress';
 export { ProgressRing } from './ProgressRing';
+export { AddressPicker, type PickedAddress } from './AddressPicker';

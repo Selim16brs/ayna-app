@@ -722,6 +722,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
     'Я прочитал(а) условия использования и политику конфиденциальности, принимаю.',
   'auth.city.required': 'Пожалуйста, выбери свой город',
   'auth.error.taken': 'Этот телефон или электронная почта уже зарегистрированы',
+  'auth.error.invalid': 'Проверьте данные и попробуйте снова',
+  'auth.error.server': 'Не удалось связаться с сервером, попробуйте позже',
+  'auth.error.network': 'Ошибка соединения — проверьте интернет',
   'auth.error.bad': 'Электронная почта/телефон или пароль неверны',
   'auth.login.forgot': 'Забыл(а) пароль',
   'auth.login.subtitle': 'Войди с телефоном и паролем',
@@ -786,6 +789,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'biz.field.password': 'Пароль аккаунта',
   'biz.field.docs': 'Документы (лицензия / гигиена)',
   'biz.field.docs_add': 'Добавить документ',
+  'biz.field.docs_added': 'Документ добавлен ✓ — изменить',
   'biz.field.docs_hint': 'Лицензия бизнеса и сертификат гигиены (для проверки)',
   'biz.terms.accept': 'Я принимаю договор с бизнесом и политику конфиденциальности.',
   'biz.terms.always_liability':
@@ -801,6 +805,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'biz.field.photos_hint': 'Не более 10 фотографий — витрина, интерьер, работы',
   'biz.field.map': 'Местоположение на карте',
   'biz.field.map_pin': 'Отметить на карте',
+  'addr.map_title': 'Отметьте местоположение',
+  'addr.map_hint': 'Двигайте карту, наведите булавку на точное место',
+  'addr.use_location': 'Использовать это место',
   'biz.field.map_pinned': 'Местоположение отмечено',
   'biz.field.map_change': 'Изменить',
   'biz.field.area_hint':

@@ -265,6 +265,8 @@ export interface RegisterBusinessInput {
   city: string;
   district: string;
   address: string;
+  lat?: number;
+  lng?: number;
   workingHours?: string;
   taxId?: string;
 }

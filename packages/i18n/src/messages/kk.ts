@@ -716,6 +716,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'auth.terms.accept': 'Пайдалану шарттары мен құпиялылық саясатын оқыдым, қабылдаймын.',
   'auth.city.required': 'Қалаңды таңда',
   'auth.error.taken': 'Бұл телефон немесе электрондық пошта тіркелген',
+  'auth.error.invalid': 'Деректерді тексеріп, қайта көр',
+  'auth.error.server': 'Серверге қосылу мүмкін болмады, сәл кейін көр',
+  'auth.error.network': 'Байланыс қатесі — интернетіңді тексер',
   'auth.error.bad': 'Электрондық пошта/телефон немесе құпия сөз қате',
   'auth.login.forgot': 'Құпия сөзді ұмыттым',
   'auth.login.subtitle': 'Телефоның мен құпия сөзіңмен кір',
@@ -780,6 +783,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'biz.field.password': 'Есептік жазба құпиясөзі',
   'biz.field.docs': 'Құжаттар (лицензия / гигиена)',
   'biz.field.docs_add': 'Құжат қосу',
+  'biz.field.docs_added': 'Құжат қосылды ✓ — өзгерту',
   'biz.field.docs_hint': 'Кәсіпорын лицензиясы және гигиена сертификаты (растау үшін)',
   'biz.terms.accept': 'Кәсіпорын шартын және құпиялылық саясатын қабылдаймын.',
   'biz.terms.always_liability':
@@ -795,6 +799,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'biz.field.photos_hint': 'Ең көбі 10 фотосурет — витрина, ішкі кеңістік, жұмыстар',
   'biz.field.map': 'Картадағы орналасу',
   'biz.field.map_pin': 'Картада белгіле',
+  'addr.map_title': 'Орналасқан жерді белгіле',
+  'addr.map_hint': 'Картаны жылжыт, инені нақты орныңа қой',
+  'addr.use_location': 'Осы орынды қолдану',
   'biz.field.map_pinned': 'Орналасу белгіленді',
   'biz.field.map_change': 'Өзгерту',
   'biz.field.area_hint':

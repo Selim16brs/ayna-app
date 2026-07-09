@@ -21,6 +21,7 @@ function fmtDate(d: Date): string {
 }
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
+import { registerErrorMessage } from '../../src/authError';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -102,10 +103,7 @@ export default function CustomerRegisterScreen() {
         { text: t('common.ok'), onPress: () => router.replace('/auth/login') },
       ]);
     } catch (e) {
-      const msg = String((e as Error).message ?? '');
-      Alert.alert(
-        msg.includes('409') || msg.includes('400') ? t('auth.error.taken') : t('common.error'),
-      );
+      Alert.alert(registerErrorMessage(e, t));
     } finally {
       setBusy(false);
     }

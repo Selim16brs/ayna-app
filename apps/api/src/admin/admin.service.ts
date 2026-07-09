@@ -413,6 +413,7 @@ export class AdminService {
           specialty: b.about?.slice(0, 60) || 'Güzellik & bakım',
           sector,
           kind: 'salon',
+          city: b.city,
           district: b.district,
           about: b.about,
           imageUrl: b.photos[0] ?? DEFAULT_PRO_IMAGE,

@@ -76,6 +76,8 @@ export interface Professional {
   badge: ProBadge;
   city: string;
   district: string;
+  lat?: number; // §5.1.4 — gerçek konum (kayıtta haritadan seçildi); yoksa şehir merkezine yakın
+  lng?: number;
   experienceYears: number;
   isPremium: boolean; // §5.1.6-8 — Premium Görünürlük Paketi (Fırsatlar/Öne Çıkanlar/Sana Yakın)
 }
@@ -510,7 +512,10 @@ export function cityCenter(city?: string): LatLng {
 }
 
 /** İşletme/uzman için deterministik koordinat — sağlayıcının KENDİ şehrinin çevresi (demo). */
-export function proCoords(id: string): LatLng {
+// §5.1.4 — GERÇEK konum varsa (kayıtta haritadan seçildi) onu kullan; yoksa şehir merkezine
+// yakın deterministik dağılım (eski davranış — konumu olmayan/eski kayıtlar için).
+export function proCoords(id: string, lat?: number | null, lng?: number | null): LatLng {
+  if (lat != null && lng != null) return { latitude: lat, longitude: lng };
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
   const dlat = ((h % 1000) / 1000 - 0.5) * 0.09;

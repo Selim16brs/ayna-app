@@ -37,11 +37,27 @@ export class BusinessesService {
   async register(input: RegisterBusinessInput) {
     const key = this.env.FIELD_ENCRYPTION_KEY;
     const ph = phoneHash(input.phone, key);
-    if (await this.prisma.user.findUnique({ where: { phoneHash: ph } })) {
-      throw new ConflictException({ code: 'PHONE_TAKEN', message: 'Bu telefon zaten kayıtlı' });
+    const existing = await this.prisma.user.findUnique({ where: { phoneHash: ph } });
+    if (existing) {
+      // Silinmiş hesap telefonu SERBEST bırakır (yeniden kayıt olabilsin); değilse çakışma.
+      if (existing.status === 'deleted') {
+        await this.prisma.user.update({
+          where: { id: existing.id },
+          data: { phoneHash: `deleted:${existing.id}`, email: null },
+        });
+      } else {
+        throw new ConflictException({ code: 'PHONE_TAKEN', message: 'Bu telefon zaten kayıtlı' });
+      }
     }
-    if (input.email && (await this.prisma.user.findUnique({ where: { email: input.email } }))) {
-      throw new ConflictException({ code: 'EMAIL_TAKEN', message: 'Bu e-posta zaten kayıtlı' });
+    if (input.email) {
+      const byEmail = await this.prisma.user.findUnique({ where: { email: input.email } });
+      if (byEmail) {
+        if (byEmail.status === 'deleted') {
+          await this.prisma.user.update({ where: { id: byEmail.id }, data: { email: null } });
+        } else {
+          throw new ConflictException({ code: 'EMAIL_TAKEN', message: 'Bu e-posta zaten kayıtlı' });
+        }
+      }
     }
     const owner = await this.prisma.user.create({
       data: {

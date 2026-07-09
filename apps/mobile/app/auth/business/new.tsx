@@ -21,11 +21,13 @@ function fmtDate(d: Date): string {
 }
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../../src/api';
+import { registerErrorMessage } from '../../../src/authError';
 import { activeCategories } from '../../../src/taxonomy';
 import { useLocale } from '../../../src/locale';
 import { radius, space, type ColorTokens } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme-context';
 import {
+  AddressPicker,
   Button,
   CitySelect,
   defaultHours,
@@ -74,6 +76,9 @@ export default function NewBusinessScreen() {
   const [district, setDistrict] = useState('');
   const [address, setAddress] = useState('');
   const [pinned, setPinned] = useState(false);
+  const [coord, setCoord] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapOpen, setMapOpen] = useState(false);
+  const [docUrl, setDocUrl] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [hours, setHours] = useState<DayHours[]>(defaultHours());
@@ -102,6 +107,18 @@ export default function NewBusinessScreen() {
           ...res.assets.map((a) => (a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri)),
         ].slice(0, PHOTO_MAX),
       );
+  }
+
+  // §3.2 — işletme belgesi (ruhsat/vergi vb.) — galeriden görsel; data URL olarak kayda gider.
+  async function addDoc() {
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.4,
+      base64: true,
+    });
+    if (!res.canceled && res.assets[0]?.base64) {
+      setDocUrl(`data:image/jpeg;base64,${res.assets[0].base64}`);
+    }
   }
 
   function toggleArea(a: MessageKey) {
@@ -142,17 +159,18 @@ export default function NewBusinessScreen() {
         city: city ?? '',
         district: district.trim(),
         address: address.trim(),
+        ...(coord ? { lat: coord.lat, lng: coord.lng } : {}),
+        ...(docUrl ? { docUrl } : {}),
         workingHours: serializeHours(hours),
         taxId: tax.trim(),
       });
-      // NOT: fotoğraflar, harita pin, sosyal, açıklama backend'e Faz 9'da (salon profili API'si) yazılacak.
+      // NOT: fotoğraflar, sosyal, açıklama backend'e Faz 9'da (salon profili API'si) yazılacak.
       // Otomatik giriş YOK — kayıt tamamlandı (salon admin onayı bekler); giriş ekranına yönlendir.
       Alert.alert(t('auth.register.done_t'), t('auth.register.done_b'), [
         { text: t('common.ok'), onPress: () => router.replace('/auth/login') },
       ]);
     } catch (e) {
-      const msg = String((e as Error).message ?? '');
-      Alert.alert(msg.includes('409') ? t('auth.error.taken') : t('common.error'));
+      Alert.alert(registerErrorMessage(e, t));
     } finally {
       setBusy(false);
     }
@@ -299,7 +317,7 @@ export default function NewBusinessScreen() {
         <Label text={t('biz.field.map')} />
         <Pressable
           style={[styles.mapBox, pinned && styles.mapBoxOn]}
-          onPress={() => setPinned((v) => !v)}
+          onPress={() => setMapOpen(true)}
         >
           <Ionicons
             name={pinned ? 'location' : 'location-outline'}
@@ -315,6 +333,19 @@ export default function NewBusinessScreen() {
             </Text>
           ) : null}
         </Pressable>
+        <AddressPicker
+          visible={mapOpen}
+          initialCity={city ?? undefined}
+          initialCoord={coord ? { latitude: coord.lat, longitude: coord.lng } : undefined}
+          onClose={() => setMapOpen(false)}
+          onPick={(r) => {
+            setCoord({ lat: r.lat, lng: r.lng });
+            setPinned(true);
+            if (r.address) setAddress(r.address);
+            if (r.district) setDistrict(r.district);
+            if (r.city && !city) setCity(r.city);
+          }}
+        />
 
         <Label text={t('biz.field.phone')} />
         <Input
@@ -346,10 +377,14 @@ export default function NewBusinessScreen() {
           keyboardType="phone-pad"
         />
         <Label text={t('biz.field.docs')} />
-        <Pressable style={styles.docRow}>
-          <Ionicons name="cloud-upload-outline" size={20} color={colors.accentFg} />
-          <Text variant="bodyStrong" tone="accentFg">
-            {t('biz.field.docs_add')}
+        <Pressable style={[styles.docRow, docUrl && styles.docRowOn]} onPress={addDoc}>
+          <Ionicons
+            name={docUrl ? 'checkmark-circle' : 'cloud-upload-outline'}
+            size={20}
+            color={docUrl ? colors.onAccent : colors.accentFg}
+          />
+          <Text variant="bodyStrong" tone={docUrl ? 'onAccent' : 'accentFg'}>
+            {docUrl ? t('biz.field.docs_added') : t('biz.field.docs_add')}
           </Text>
         </Pressable>
         <Text variant="caption" tone="muted" style={styles.hint}>
@@ -601,6 +636,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.lg,
       backgroundColor: colors.surfaceMuted,
     },
+    docRowOn: { backgroundColor: colors.accent },
     checkRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.25), marginTop: space(3) },
     checkbox: {
       width: 24,
