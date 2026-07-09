@@ -253,7 +253,9 @@ export default function BoniScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    headerCat: { width: 96, height: 122, resizeMode: 'contain', transform: [{ scaleX: -1 }] },
+    // Görsel oranı (1024×1536 ≈ 0.667) ile eşleşen kutu → contain'de yatay boşluk kalmaz,
+    // banda sağdan tam yaslanır. Yükseklik 122 → genişlik = 122×0.667 ≈ 81.
+    headerCat: { width: 81, height: 122, resizeMode: 'contain', transform: [{ scaleX: -1 }] },
     flex: { flex: 1 },
     content: { paddingHorizontal: space(3), paddingBottom: space(3), gap: space(1.5) },
     dim: { opacity: 0.9 },
