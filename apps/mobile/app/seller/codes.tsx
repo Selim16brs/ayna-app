@@ -42,11 +42,18 @@ export default function SellerCodesScreen() {
   }, [load]);
 
   const generate = async () => {
-    if (!token || !businessId) return;
+    if (!token) return;
+    // İşletme bulunamadıysa (onay bekliyor / oturum tazelenmeli) sessiz kalma — açıkla.
+    if (!businessId) {
+      Alert.alert(t('seller.codes.title'), t('seller.codes.no_business'));
+      return;
+    }
     setBusy(true);
     try {
       await api.createInviteCode(token, businessId);
       await load();
+    } catch {
+      Alert.alert(t('seller.codes.title'), t('seller.codes.gen_err'));
     } finally {
       setBusy(false);
     }

@@ -939,6 +939,8 @@ export const tr = {
   'commission.paid_note': 'Bu dönem tahsil edildi. Teşekkürler!',
   // Salon — davet kodları (uzman ekibe davet)
   'seller.codes.title': 'Davet kodları',
+  'seller.codes.gen_err':
+    'Kod üretilemedi — tekrar dene. (Oturum tazelenmiş olabilir; çıkış-giriş dene.)',
   'seller.codes.hint': 'Uzmanların bu kodla mobil uygulamadan ekibine katılır.',
   'seller.codes.generate': 'Yeni davet kodu üret',
   'seller.codes.empty': 'Henüz davet kodu yok',
@@ -1572,6 +1574,7 @@ export const tr = {
   'passport.title': 'AYNA Passport',
   'passport.subtitle': 'Doğrulanmış kimliğin ve güven puanın',
   'passport.member_since': 'Üyelik',
+  'passport.member': 'AYNA Üyesi',
   'passport.trust': 'Güven puanı',
   'passport.verified': 'Doğrulanmış üye',
   'passport.completed': 'Tamamlanan randevu',

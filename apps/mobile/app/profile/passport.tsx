@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MessageKey } from '@ayna/i18n';
 import { PREMIUM_PRICE_KZT } from '../../src/data';
@@ -37,6 +37,11 @@ export default function PassportScreen() {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
+  // GERÇEK kullanıcı — pasaport ile profil AYNI veriyi gösterir (sabit 'Aigerim' saçmalığı kaldırıldı)
+  const userName = (useStore((s) => s.currentUser?.name) ?? '').trim();
+  const displayName = userName || t('passport.member');
+  const photo = useStore((s) => s.cutoutUri ?? s.avatarUri);
+  const womenVerified = useStore((s) => s.currentUser?.womenVerified ?? false);
   const completed = useStore((s) => s.bookings.filter((b) => b.status === 'completed').length);
   const reviews = useStore((s) => Object.values(s.userReviews).reduce((n, a) => n + a.length, 0));
   const points = useStore((s) => s.points);
@@ -89,20 +94,26 @@ export default function PassportScreen() {
         <View style={[styles.hero, shadow.card]}>
           <View style={styles.heroTop}>
             <View style={styles.avatar}>
-              <Text variant="title" tone="onAccent">
-                A
-              </Text>
+              {photo ? (
+                <Image source={{ uri: photo }} style={styles.avatarImg} resizeMode="cover" />
+              ) : (
+                <Text variant="title" tone="onAccent">
+                  {displayName.charAt(0).toLocaleUpperCase('tr-TR')}
+                </Text>
+              )}
             </View>
             <View style={styles.heroText}>
-              <Text variant="h2" tone="onAccent">
-                Aigerim
+              <Text variant="h2" tone="onAccent" numberOfLines={1}>
+                {displayName}
               </Text>
-              <View style={styles.verified}>
-                <Ionicons name="shield-checkmark" size={13} color={colors.onAccent} />
-                <Text variant="caption" tone="onAccent" style={styles.verifiedText}>
-                  {t('passport.verified')}
-                </Text>
-              </View>
+              {womenVerified ? (
+                <View style={styles.verified}>
+                  <Ionicons name="shield-checkmark" size={13} color={colors.onAccent} />
+                  <Text variant="caption" tone="onAccent" style={styles.verifiedText}>
+                    {t('passport.verified')}
+                  </Text>
+                </View>
+              ) : null}
             </View>
           </View>
 
@@ -248,7 +259,9 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: 'rgba(26,26,26,0.12)',
       alignItems: 'center',
       justifyContent: 'center',
+      overflow: 'hidden',
     },
+    avatarImg: { width: '100%', height: '100%' },
     heroText: { gap: 4 },
     verified: {
       flexDirection: 'row',

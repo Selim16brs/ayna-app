@@ -883,6 +883,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'commission.receipt_change': 'Изменить чек',
   'commission.paid_note': 'За этот период оплачено. Спасибо!',
   'seller.codes.title': 'Коды приглашения',
+  'seller.codes.gen_err':
+    'Не удалось создать код — попробуйте снова. (Сессия могла обновиться; выйдите и войдите.)',
   'seller.codes.hint':
     'Мастера присоединяются к вашей команде через мобильное приложение по этому коду.',
   'seller.codes.generate': 'Создать новый код приглашения',
@@ -1485,6 +1487,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'passport.title': 'AYNA Passport',
   'passport.subtitle': 'Ваша подтверждённая личность и балл доверия',
   'passport.member_since': 'Членство',
+  'passport.member': 'Участница AYNA',
   'passport.trust': 'Балл доверия',
   'passport.verified': 'Подтверждённый участник',
   'passport.completed': 'Завершённых записей',

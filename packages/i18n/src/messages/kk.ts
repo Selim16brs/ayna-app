@@ -876,6 +876,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'commission.receipt_change': 'Түбіртекті ауыстыр',
   'commission.paid_note': 'Бұл кезең өндірілді. Рақмет!',
   'seller.codes.title': 'Шақыру кодтары',
+  'seller.codes.gen_err':
+    'Код жасалмады — қайталап көр. (Сессия жаңарған болуы мүмкін; шығып-кіріп көр.)',
   'seller.codes.hint': 'Мамандар осы кодпен мобильді қосымшадан командаңа қосылады.',
   'seller.codes.generate': 'Жаңа шақыру коды жасау',
   'seller.codes.empty': 'Әзірге шақыру коды жоқ',
@@ -1479,6 +1481,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'passport.title': 'AYNA Passport',
   'passport.subtitle': 'Расталған жеке басыңыз және сенім ұпайыңыз',
   'passport.member_since': 'Мүшелік',
+  'passport.member': 'AYNA Мүшесі',
   'passport.trust': 'Сенім ұпайы',
   'passport.verified': 'Расталған мүше',
   'passport.completed': 'Аяқталған жазылу',
