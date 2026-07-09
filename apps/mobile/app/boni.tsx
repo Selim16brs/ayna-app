@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -35,6 +36,8 @@ export default function BoniScreen() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  // §5.4 — Boni karakteri: üst bar sağında kedi portresi
+  const boniAvatar = <Image source={require('../assets/boni-cat.png')} style={styles.headerCat} />;
 
   const loadQuota = useCallback(async () => {
     if (!token) return;
@@ -94,7 +97,7 @@ export default function BoniScreen() {
   if (quota && !quota.premium) {
     return (
       <Screen edges={[]}>
-        <StackHeader title={t('boni.title')} />
+        <StackHeader title={t('boni.title')} right={boniAvatar} />
         <View style={styles.lockWrap}>
           <LinearGradient colors={gradients.plum} style={[styles.lockIcon, shadow.card]}>
             <Ionicons name="sparkles" size={34} color={colors.onColor} />
@@ -122,7 +125,7 @@ export default function BoniScreen() {
 
   return (
     <Screen edges={[]}>
-      <StackHeader title={t('boni.title')} />
+      <StackHeader title={t('boni.title')} right={boniAvatar} />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -246,6 +249,7 @@ export default function BoniScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    headerCat: { width: 60, height: 60, resizeMode: 'contain' },
     flex: { flex: 1 },
     content: { paddingHorizontal: space(3), paddingBottom: space(3), gap: space(1.5) },
     dim: { opacity: 0.9 },
