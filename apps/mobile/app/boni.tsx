@@ -249,7 +249,7 @@ export default function BoniScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    headerCat: { width: 60, height: 60, resizeMode: 'contain' },
+    headerCat: { width: 96, height: 116, resizeMode: 'contain', marginBottom: -18 },
     flex: { flex: 1 },
     content: { paddingHorizontal: space(3), paddingBottom: space(3), gap: space(1.5) },
     dim: { opacity: 0.9 },

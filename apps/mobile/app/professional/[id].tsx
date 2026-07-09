@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -27,7 +27,44 @@ export default function ProfessionalScreen() {
   const styles = useThemedStyles(makeStyles);
   const proId = id ?? '1';
   const pro = useProfessionalDetail(proId);
-  // Sunucudan profil henüz gelmediyse/bulunamadıysa: tam render yerine güvenli durum (çökme önlenir)
+
+  // TÜM hook'lar KOŞULSUZ çağrılır (React kuralı) — erken dönüş aşağıda, hook'lardan SONRA.
+  const [tab, setTab] = useState<Tab>('booking');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [when, setWhen] = useState<Date>(() => {
+    const d = new Date(Date.now() + 2 * 3_600_000);
+    d.setMinutes(0, 0, 0);
+    return d;
+  });
+  const toggleFavorite = useStore((s) => s.toggleFavorite);
+  const isFav = useStore((s) => s.favorites.includes(proId));
+  const token = useStore((s) => s.token);
+  const joinWaitlist = useStore((s) => s.joinWaitlist);
+  const myBookings = useStore((s) => s.bookings);
+  const addBooking = useStore((s) => s.addBooking);
+  const userReviewsMap = useStore((s) => s.userReviews);
+
+  const uzmanId = pro.staff[0]?.id ?? '';
+  const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
+  const minDate = new Date(Date.now() + 2 * 3_600_000);
+  minDate.setMinutes(0, 0, 0);
+  const reviews = [...(userReviewsMap[proId] ?? []), ...pro.reviews];
+  // §4 — ÇOKLU hizmet: kullanıcı birden fazla hizmet seçip tek randevuda alabilir.
+  // Liste yüklenince ilk hizmet seçili başlar; en az 1 seçili kalır.
+  useEffect(() => {
+    if (pro.services.length && selectedIds.length === 0) setSelectedIds([pro.services[0]!.id]);
+  }, [pro.services, selectedIds.length]);
+  const finalPriceOf = (s: (typeof pro.services)[number]) =>
+    s.discountPct ? Math.round((s.price * (100 - s.discountPct)) / 100) : s.price;
+  const chosen = pro.services.filter((s) => selectedIds.includes(s.id));
+  const totalPrice = chosen.reduce((n, s) => n + finalPriceOf(s), 0);
+  const totalDur = chosen.reduce((n, s) => n + s.durationMin, 0);
+  const toggleService = (sid: string) =>
+    setSelectedIds((cur) =>
+      cur.includes(sid) ? (cur.length > 1 ? cur.filter((x) => x !== sid) : cur) : [...cur, sid],
+    );
+
+  // Sunucudan profil henüz gelmediyse/bulunamadıysa: güvenli yükleme durumu (tüm hook'lardan SONRA)
   if (!pro.id) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -38,24 +75,6 @@ export default function ProfessionalScreen() {
       </View>
     );
   }
-
-  const [tab, setTab] = useState<Tab>('booking');
-  const [selected, setSelected] = useState<string>(pro.services[0]?.id ?? '');
-  const uzmanId = pro.staff[0]?.id ?? '';
-  const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
-  // Benim İçin kayıt eklemeleriyle AYNI native tarih/saat modeli (en erken şimdi + 2 saat)
-  const minDate = new Date(Date.now() + 2 * 3_600_000);
-  minDate.setMinutes(0, 0, 0);
-  const [when, setWhen] = useState<Date>(() => new Date(minDate));
-
-  const toggleFavorite = useStore((s) => s.toggleFavorite);
-  const isFav = useStore((s) => s.favorites.includes(proId));
-  const token = useStore((s) => s.token);
-  const joinWaitlist = useStore((s) => s.joinWaitlist);
-  const myBookings = useStore((s) => s.bookings);
-  const addBooking = useStore((s) => s.addBooking);
-  const userReviewsMap = useStore((s) => s.userReviews);
-  const reviews = [...(userReviewsMap[proId] ?? []), ...pro.reviews];
 
   const onWaitlist = () => {
     // §4.1 — bu uzmanda zaten aktif kaydı/sırası varsa tekrar ekleme; kibarca hatırlat.
@@ -72,7 +91,10 @@ export default function ProfessionalScreen() {
       Alert.alert(t('pro.already_queued_t'), t('pro.already_queued_b'));
       return;
     }
-    const svc = pro.services.find((s) => s.id === selected)?.name ?? pro.services[0]?.name ?? '';
+    const svc =
+      chosen.map((s) => (s.label ? tri(s.label, locale) : s.name)).join(' + ') ||
+      pro.services[0]?.name ||
+      '';
     joinWaitlist({ id: pro.id, name: pro.name, image: pro.image, service: svc });
     Alert.alert(t('pro.waitlist_joined'));
   };
@@ -123,19 +145,20 @@ export default function ProfessionalScreen() {
       Alert.alert(t('pro.already_queued_t'), t('pro.already_queued_b'));
       return;
     }
-    const svc = pro.services.find((s) => s.id === selected);
+    const svcNames =
+      chosen.map((s) => (s.label ? tri(s.label, locale) : s.name)).join(' + ') || pro.specialty;
     const uzman = pro.staff.find((u) => u.id === uzmanId);
     const startMs = when.getTime();
     const bid = addBooking({
       source: 'direct',
-      service: svc ? (svc.label ? tri(svc.label, locale) : svc.name) : pro.specialty,
+      service: svcNames, // §4 — birden fazla hizmet tek randevuda ('A + B')
       proId: pro.id,
       proName: pro.name,
       proImage: pro.image,
       ...(uzman?.name ? { uzmanName: uzman.name } : {}),
       startMs,
-      durationMin: svc?.durationMin ?? 60,
-      price: svc?.price ?? Number(pro.priceFrom),
+      durationMin: totalDur || 60,
+      price: totalPrice || Number(pro.priceFrom),
     });
     router.replace({
       pathname: '/booking/confirmed',
@@ -403,14 +426,12 @@ export default function ProfessionalScreen() {
               </Text>
               <View style={styles.services}>
                 {pro.services.map((s) => {
-                  const active = s.id === selected;
-                  const finalPrice = s.discountPct
-                    ? Math.round((s.price * (100 - s.discountPct)) / 100)
-                    : s.price;
+                  const active = selectedIds.includes(s.id);
+                  const finalPrice = finalPriceOf(s);
                   return (
                     <Pressable
                       key={s.id}
-                      onPress={() => setSelected(s.id)}
+                      onPress={() => toggleService(s.id)}
                       style={[styles.service, shadow.soft, active && styles.serviceActive]}
                     >
                       <View style={styles.serviceText}>
@@ -617,6 +638,8 @@ export default function ProfessionalScreen() {
         <Pressable style={styles.bookBtn} onPress={book}>
           <Text variant="bodyStrong" tone="onAccent">
             {t('pro.book')}
+            {chosen.length > 1 ? ` · ${chosen.length} ${t('pro.services_short')}` : ''}
+            {totalPrice > 0 ? ` · ${formatPrice(totalPrice)}` : ''}
           </Text>
           <Ionicons name="arrow-forward" size={18} color={colors.onAccent} />
         </Pressable>

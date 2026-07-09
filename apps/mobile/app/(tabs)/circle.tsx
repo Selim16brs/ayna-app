@@ -190,7 +190,15 @@ function PostCard({ post }: { post: CirclePost }) {
   const router = useRouter();
   const toggleHelpful = useStore((s) => s.toggleHelpful);
   const toggleFollow = useStore((s) => s.toggleFollow);
+  const myId = useStore((s) => s.currentUser?.id);
   const isFollowing = useStore((s) => s.following.includes(post.author));
+  // §W2W — kendi gönderin: yazar 'Sen', takip butonu YOK (kendini takip edemezsin)
+  const isMine = post.author === 'Sen' || (!!post.authorUserId && post.authorUserId === myId);
+  const shownAuthor = post.anonymous
+    ? t('circle.verified')
+    : isMine
+      ? t('circle.you')
+      : post.author;
   const ty = makeType(colors)[post.type];
   return (
     <Pressable style={[styles.card, shadow.card]} onPress={() => router.push('/circle/' + post.id)}>
@@ -201,13 +209,13 @@ function PostCard({ post }: { post: CirclePost }) {
               <Ionicons name="shield-checkmark" size={15} color={colors.accentFg} />
             ) : (
               <Text variant="caption" tone="accentFg">
-                {post.author.charAt(0)}
+                {shownAuthor.charAt(0)}
               </Text>
             )}
           </View>
           <View style={styles.flex}>
             <Text variant="caption" tone="ink" numberOfLines={1}>
-              {post.anonymous ? t('circle.verified') : post.author}
+              {shownAuthor}
             </Text>
             <Text variant="caption" tone="muted">
               {post.category}
@@ -215,8 +223,8 @@ function PostCard({ post }: { post: CirclePost }) {
           </View>
         </View>
         <View style={styles.topRight}>
-          {/* §W2W — beğendiğin kişiyi takip et (anonim yazar takip edilemez) */}
-          {!post.anonymous ? (
+          {/* §W2W — takip: anonim değil VE kendi gönderin değil */}
+          {!post.anonymous && !isMine ? (
             <Pressable
               style={[styles.followBtn, isFollowing && styles.followBtnOn]}
               onPress={() => toggleFollow(post.author, post.authorUserId)}
