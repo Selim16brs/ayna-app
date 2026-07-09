@@ -267,6 +267,7 @@ interface State {
   approveBooking: (id: string) => void; // uzman kabul → depozito adımı açılır
   rejectBooking: (id: string) => void; // uzman reddet → iptal
   proposeAlternative: (id: string, startMs: number) => void; // uzman alternatif saat önerir
+  rescheduleBooking: (id: string, startMs: number) => void; // §4.4 — KULLANICI yeni saat önerir (iptal yerine)
   submitReceipt: (id: string, receiptUri: string) => void; // kullanıcı dekont yükler
   confirmReceipt: (id: string) => void; // uzman "Aldım, onaylıyorum" → randevu KESİN
   markNoShow: (id: string) => void; // §4.4 — uzman müşteriyi "gelmedi" işaretler (kapora yanar)
@@ -1510,6 +1511,31 @@ export const useStore = create<State>()(
       },
 
       // §4.1 adım 2 — uzman alternatif saat önerir (boş slotundan seçer)
+      rescheduleBooking: (id, startMs) => {
+        // §4.4 retention — iptal yerine: randevu korunur, yeni saat uzman onayına gider
+        set((s) => ({
+          bookings: s.bookings.map((b) =>
+            b.id === id
+              ? {
+                  ...b,
+                  startMs,
+                  status: 'awaiting_provider',
+                  responseDeadline: Date.now() + RESPONSE_WINDOW_MS,
+                }
+              : b,
+          ),
+        }));
+        void api.counterBooking(id, startMs).catch(() => undefined);
+        get().pushNotification({
+          type: 'booking',
+          titleKey: 'notif.reschedule',
+          bodyKey: 'notif.reschedule_b',
+          dateLabel: 'Az önce',
+          icon: 'time-outline',
+          route: `/booking/${id}`,
+        });
+      },
+
       proposeAlternative: (id, startMs) => {
         set((s) => ({
           bookings: s.bookings.map((b) =>

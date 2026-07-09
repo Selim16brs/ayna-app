@@ -73,6 +73,9 @@ export default function BookingDetailScreen() {
 
   const [proposeOpen, setProposeOpen] = useState(false);
   const [proposeSel, setProposeSel] = useState<number | null>(null);
+  // §4.4 retention — modal amacı: uzman 'alternatif önerir' | müşteri 'yeni saat ister (reschedule)'
+  const [proposeMode, setProposeMode] = useState<'provider' | 'reschedule'>('provider');
+  const rescheduleBooking = useStore((s) => s.rescheduleBooking);
 
   // Alternatif-öner modalı için uzmanın boş slotları (§4.1 adım 2)
   const proposeDays: PickerDay[] = useMemo(() => {
@@ -129,9 +132,14 @@ export default function BookingDetailScreen() {
   }
 
   function sendProposal() {
-    if (id && proposeSel != null) proposeAlternative(id, proposeSel);
+    if (id && proposeSel != null) {
+      // §4.4 — müşteri modunda 'yeni saat iste' (iptal yerine), uzman modunda 'alternatif öner'
+      if (proposeMode === 'reschedule') rescheduleBooking(id, proposeSel);
+      else proposeAlternative(id, proposeSel);
+    }
     setProposeOpen(false);
     setProposeSel(null);
+    setProposeMode('provider');
   }
 
   if (!booking) {
@@ -156,6 +164,45 @@ export default function BookingDetailScreen() {
     router.back();
   }
 
+  // §4.4 retention — "başka zaman istiyorum": iptal etme, YENİ SAAT öner (randevu korunur)
+  function offerReschedule() {
+    Alert.alert(t('booking.cancel.reschedule_t'), t('booking.cancel.reschedule_b'), [
+      {
+        text: t('booking.cancel.reschedule_cta'),
+        onPress: () => {
+          setProposeMode('reschedule');
+          setProposeSel(null);
+          setProposeOpen(true); // yeni saat seçimi modalı açılır
+        },
+      },
+      {
+        text: t('booking.cancel.anyway'),
+        style: 'destructive',
+        onPress: () => doCancel(t('booking.cancel.reason.time')),
+      },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  }
+
+  // §4.4 retention — "fiyat uygun değil": kaçırma, DAHA UYGUN TEKLİF AL (reverse marketplace)
+  function offerRequote() {
+    Alert.alert(t('booking.cancel.requote_t'), t('booking.cancel.requote_b'), [
+      {
+        text: t('booking.cancel.requote_cta'),
+        onPress: () => {
+          doCancel(t('booking.cancel.reason.price'));
+          router.replace('/demand/new');
+        },
+      },
+      {
+        text: t('booking.cancel.anyway'),
+        style: 'destructive',
+        onPress: () => doCancel(t('booking.cancel.reason.price')),
+      },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  }
+
   function onCancel() {
     // §4.4 — 3 saatten az kaldıysa geç iptal: depozito yanar
     const late = booking ? booking.startMs - Date.now() <= FREE_CANCEL_WINDOW_MS : false;
@@ -165,14 +212,9 @@ export default function BookingDetailScreen() {
         text: t('booking.cancel.reason.plan'),
         onPress: () => doCancel(t('booking.cancel.reason.plan')),
       },
-      {
-        text: t('booking.cancel.reason.time'),
-        onPress: () => doCancel(t('booking.cancel.reason.time')),
-      },
-      {
-        text: t('booking.cancel.reason.price'),
-        onPress: () => doCancel(t('booking.cancel.reason.price')),
-      },
+      // Akıllı öneriler — müşteri kaçmasın (§4.4): saat → yeniden planla, fiyat → yeni teklif
+      { text: t('booking.cancel.reason.time'), onPress: offerReschedule },
+      { text: t('booking.cancel.reason.price'), onPress: offerRequote },
       {
         text: t('booking.cancel.no_reason'),
         style: 'destructive',

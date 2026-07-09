@@ -350,6 +350,8 @@ export const api = {
   confirmRefundApi: (id: string) => post<Appointment>(`/bookings/${id}/confirm-refund`, {}),
   disputeBookingApi: (id: string) => post<Appointment>(`/bookings/${id}/dispute`, {}),
   // §4.4-b — uzman gelmedi: iade + uzman komisyon borcu (backend)
+  counterBooking: (id: string, proposedStartMs: number) =>
+    post<Appointment>(`/bookings/${id}/counter`, { proposedStartMs }),
   providerNoShowApi: (id: string) => post<Appointment>(`/bookings/${id}/provider-no-show`, {}),
   noShowApi: (id: string) => post<Appointment>(`/bookings/${id}/no-show`, {}),
   // §4.1.7 — uzman hizmeti tamamladı (backend'e taşındı)
