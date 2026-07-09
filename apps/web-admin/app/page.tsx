@@ -3152,7 +3152,21 @@ const BOOKING_STATUS_TR: Record<string, string> = {
 
 function BookingsAdminView() {
   const [status, setStatus] = useState('all');
-  const { data } = useAsync<AdminBooking[]>(() => api.bookings(status), [status]);
+  const [q, setQ] = useState('');
+  const { data, reload: run } = useAsync<AdminBooking[]>(() => api.bookings(status), [status]);
+  const act = async (fn: () => Promise<unknown>, msg: string) => {
+    if (!confirm(msg)) return;
+    try {
+      await fn();
+      run();
+    } catch {
+      alert('İşlem başarısız (durum geçişi geçersiz olabilir)');
+    }
+  };
+  const rows = (data ?? []).filter((b) => {
+    const hay = `${b.proName} ${b.service} ${b.customerName ?? ''}`.toLowerCase();
+    return hay.includes(q.trim().toLowerCase());
+  });
   const STATES = ['all', 'confirmed', 'completed', 'cancelled', 'no_show', 'waitlist'];
   const pill = (s: string) =>
     s === 'completed' || s === 'confirmed'
@@ -3174,14 +3188,21 @@ function BookingsAdminView() {
             {s === 'all' ? 'Hepsi' : BOOKING_STATUS_TR[s]}
           </button>
         ))}
+        <input
+          className="input"
+          style={{ maxWidth: 260, marginLeft: 'auto' }}
+          placeholder="Ara: uzman / hizmet / müşteri"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
       </div>
       <div className="card">
         {!data ? (
           <div className="empty">Yükleniyor…</div>
-        ) : data.length === 0 ? (
+        ) : rows.length === 0 ? (
           <div className="empty">Randevu yok</div>
         ) : (
-          data.map((b) => (
+          rows.map((b) => (
             <div key={b.id} className="list-row">
               <div className="grow">
                 <div className="name">
@@ -3197,6 +3218,26 @@ function BookingsAdminView() {
               <span className={`pill ${pill(b.status)}`}>
                 {BOOKING_STATUS_TR[b.status] ?? b.status}
               </span>
+              {!['cancelled', 'completed', 'no_show', 'refunded'].includes(b.status) ? (
+                <>
+                  <button
+                    className="btn small"
+                    onClick={() =>
+                      act(() => api.completeBooking(b.id), `Tamamlandı işaretle? (${b.service})`)
+                    }
+                  >
+                    Tamamlandı
+                  </button>
+                  <button
+                    className="btn small danger"
+                    onClick={() =>
+                      act(() => api.cancelBooking(b.id), `Randevu iptal edilsin mi? (${b.service})`)
+                    }
+                  >
+                    İptal
+                  </button>
+                </>
+              ) : null}
             </div>
           ))
         )}
