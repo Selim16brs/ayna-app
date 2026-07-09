@@ -90,12 +90,18 @@ export default function NewBusinessScreen() {
     }
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
+      quality: 0.35,
+      base64: true,
       allowsMultipleSelection: true,
       selectionLimit: PHOTO_MAX - photos.length,
     });
     if (!res.canceled)
-      setPhotos((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, PHOTO_MAX));
+      setPhotos((p) =>
+        [
+          ...p,
+          ...res.assets.map((a) => (a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri)),
+        ].slice(0, PHOTO_MAX),
+      );
   }
 
   function toggleArea(a: MessageKey) {

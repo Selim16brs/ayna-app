@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
-import { api } from '../../src/api';
+import { ApiError, api } from '../../src/api';
 import { formatPrice } from '../../src/data';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -44,8 +44,9 @@ export default function SubReceiptScreen() {
       Alert.alert(t('sub.sent_t'), t('sub.sent_b'), [
         { text: t('common.ok'), onPress: () => router.replace('/seller/reports') },
       ]);
-    } catch {
-      Alert.alert(t('premium.title'), t('sub.error'));
+    } catch (err) {
+      const code = err instanceof ApiError ? `${err.code || err.status}` : '';
+      Alert.alert(t('premium.title'), code ? `${t('sub.error')} (${code})` : t('sub.error'));
     } finally {
       setBusy(false);
     }

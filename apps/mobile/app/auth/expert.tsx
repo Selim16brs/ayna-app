@@ -144,12 +144,18 @@ export default function ExpertRegisterScreen() {
     }
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
+      quality: 0.35,
+      base64: true,
       allowsMultipleSelection: true,
       selectionLimit: PORTFOLIO_MAX - portfolio.length,
     });
     if (!res.canceled)
-      setPortfolio((p) => [...p, ...res.assets.map((a) => a.uri)].slice(0, PORTFOLIO_MAX));
+      setPortfolio((p) =>
+        [
+          ...p,
+          ...res.assets.map((a) => (a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri)),
+        ].slice(0, PORTFOLIO_MAX),
+      );
   }
 
   // Alt hizmeti aç/kapa (açınca taksonomi varsayılan fiyat/süresiyle gelir)

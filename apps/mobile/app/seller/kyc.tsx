@@ -40,10 +40,12 @@ export default function KycScreen() {
     if (docs.length >= 5) return;
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
+      quality: 0.35,
+      base64: true,
     });
     if (res.canceled || !res.assets[0]) return;
-    setDocs((prev) => [...prev, res.assets[0]!.uri]);
+    const a = res.assets[0];
+    setDocs((prev) => [...prev, a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri]);
   };
 
   const submit = async () => {

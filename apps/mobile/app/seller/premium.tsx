@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
-import { api } from '../../src/api';
+import { ApiError, api } from '../../src/api';
 import { formatPrice, PLATINUM_PRICE_KZT, PREMIUM_PRICE_KZT } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -65,8 +65,9 @@ export default function SellerPremiumScreen() {
         pathname: '/seller/sub-receipt',
         params: { id: sub.id, tier, amount: String(tierPrice) },
       });
-    } catch {
-      Alert.alert(t('premium.title'), t('sub.error'));
+    } catch (err) {
+      const code = err instanceof ApiError ? `${err.code || err.status}` : '';
+      Alert.alert(t('premium.title'), code ? `${t('sub.error')} (${code})` : t('sub.error'));
     } finally {
       setBusy(false);
     }

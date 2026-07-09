@@ -36,12 +36,15 @@ export default function CommissionsScreen() {
     if (!token) return;
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
+      quality: 0.35,
+      base64: true,
     });
     if (res.canceled || !res.assets[0]) return;
     setBusy(inv.id);
     try {
-      await api.uploadCommissionReceipt(token, inv.id, res.assets[0].uri);
+      const a = res.assets[0];
+      const uri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
+      await api.uploadCommissionReceipt(token, inv.id, uri);
       await load();
     } finally {
       setBusy(null);

@@ -35,9 +35,13 @@ export default function SalonHomeScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [16, 10],
-      quality: 0.8,
+      quality: 0.35,
+      base64: true,
     });
-    if (!res.canceled && res.assets[0]) setAvatar(res.assets[0].uri);
+    if (!res.canceled && res.assets[0]) {
+      const a = res.assets[0];
+      setAvatar(a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+    }
   };
 
   return (

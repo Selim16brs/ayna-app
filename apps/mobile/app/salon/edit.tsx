@@ -43,21 +43,31 @@ export default function SalonEditScreen() {
   const [hours, setHours] = useState(sellerHours);
   const cats = activeCategories();
 
+  // KRİTİK: foto DATA URL olarak saklanır — file:// yerel yol uygulama kapanınca SİLİNİR (veri kaybı).
   const editCover = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [16, 10],
-      quality: 0.8,
+      quality: 0.35,
+      base64: true,
     });
-    if (!res.canceled && res.assets[0]) setAvatar(res.assets[0].uri);
+    if (!res.canceled && res.assets[0]) {
+      const a = res.assets[0];
+      setAvatar(a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+    }
   };
   const addPhoto = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
+      quality: 0.35,
+      base64: true,
     });
-    if (!res.canceled && res.assets[0]) setPhotos((p) => [...p, res.assets[0]!.uri]);
+    if (!res.canceled && res.assets[0]) {
+      const a = res.assets[0];
+      const uri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
+      setPhotos((p) => [...p, uri]);
+    }
   };
   const removePhoto = (uri: string) =>
     Alert.alert(t('salon.profile.photos'), undefined, [
