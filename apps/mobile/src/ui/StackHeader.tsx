@@ -13,10 +13,12 @@ import { Text } from './Text';
  */
 export function StackHeader({
   title,
+  subtitle,
   right,
   heroImage,
 }: {
   title: string;
+  subtitle?: string;
   right?: ReactNode;
   // Bandın SAĞ ALTINA sabitlenen görsel (ör. Boni kedisi) — alt kenarı bantla aynı yerde biter.
   heroImage?: ReactNode;
@@ -42,6 +44,11 @@ export function StackHeader({
           {title}
         </Text>
       ) : null}
+      {subtitle ? (
+        <Text variant="caption" tone="onAccent" numberOfLines={1} style={styles.subtitle}>
+          {subtitle}
+        </Text>
+      ) : null}
       {heroImage ? <View style={styles.heroImageWrap}>{heroImage}</View> : null}
     </View>
   );
@@ -59,7 +66,7 @@ const makeStyles = (colors: ColorTokens) =>
       overflow: 'hidden', // bant-altı görsel alt kenarda biter (taşan kısım kırpılır)
     },
     // Bandın SAĞ ALTI — görselin alt kenarı bantla aynı hizada biter
-    heroImageWrap: { position: 'absolute', right: space(2), bottom: 0, zIndex: 1 },
+    heroImageWrap: { position: 'absolute', right: 0, bottom: 0, zIndex: 1 },
     topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     back: {
       width: 44,
@@ -76,4 +83,5 @@ const makeStyles = (colors: ColorTokens) =>
       letterSpacing: -0.5,
       marginTop: space(1.5),
     },
+    subtitle: { marginTop: 2, opacity: 0.6 },
   });

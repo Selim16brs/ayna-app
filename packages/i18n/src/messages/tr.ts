@@ -1782,6 +1782,7 @@ export const tr = {
 
   // Boni — AI güzellik danışmanı (§13.5)
   'boni.title': 'Boni',
+  'boni.header_sub': 'AYNA ekibinin kedisi',
   'boni.subtitle': 'AI güzellik danışmanın',
   'boni.entry': 'Boni’ye sor',
   'boni.intro': 'Cilt, saç ya da bakım hakkında merak ettiğini sor; sana özel öneri vereyim.',

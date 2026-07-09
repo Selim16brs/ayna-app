@@ -1672,6 +1672,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.staff.readonly': 'Тек оқуға',
   'seller.staff.no_services': 'Маман әзірге қызмет қоспаған.',
   'boni.title': 'Boni',
+  'boni.header_sub': 'AYNA командасының мысығы',
   'boni.subtitle': 'AI сұлулық кеңесшіңіз',
   'boni.entry': 'Boni-ден сұраңыз',
   'boni.intro':

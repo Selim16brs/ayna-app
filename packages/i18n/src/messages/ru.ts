@@ -1678,6 +1678,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.staff.readonly': 'Только чтение',
   'seller.staff.no_services': 'Мастер ещё не добавил услуги.',
   'boni.title': 'Boni',
+  'boni.header_sub': 'Кошка команды AYNA',
   'boni.subtitle': 'Ваш AI-консультант по красоте',
   'boni.entry': 'Спросить Boni',
   'boni.intro':
