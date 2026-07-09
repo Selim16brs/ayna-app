@@ -46,10 +46,9 @@ export function AddressPicker({
   const centerRef = useRef<LatLng>(start);
   const [resolving, setResolving] = useState(false);
 
-  // Modal her açıldığında haritayı başlangıç bölgesine getir.
+  // Modal her açıldığında merkez referansını başlangıç konumuna sıfırla (yalnız görünürlük değişince).
   useEffect(() => {
     if (visible) centerRef.current = start;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const region: Region = {
