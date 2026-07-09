@@ -106,6 +106,17 @@ export class AuthService {
     if (!user || !verifyPassword(input.password, user.passwordHash)) {
       throw new UnauthorizedException({ code: 'BAD_CREDENTIALS', message: 'Bilgiler hatalı' });
     }
+    // Silinmiş hesap giriş yapamaz (kimlik ifşası olmasın diye BAD_CREDENTIALS ile aynı);
+    // askıya alınmış hesap ayrı sinyalle bilgilendirilir.
+    if (user.status === 'deleted') {
+      throw new UnauthorizedException({ code: 'BAD_CREDENTIALS', message: 'Bilgiler hatalı' });
+    }
+    if (user.status === 'suspended') {
+      throw new UnauthorizedException({
+        code: 'ACCOUNT_SUSPENDED',
+        message: 'Hesap askıya alındı',
+      });
+    }
     // §3.2 — İşletme admin onayı olmadan giriş yapamaz
     if (user.role === 'salon') {
       const business = await this.prisma.business.findFirst({ where: { ownerUserId: user.id } });
