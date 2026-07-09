@@ -490,6 +490,8 @@ export const api = {
     ),
   setMyServices: (services: { id: string; name: string; price: number; durationMin: number }[]) =>
     post<unknown>('/specialists/me/services', { services }),
+  myClosedDays: () => get<{ days: number[] }>('/specialists/me/closed-days'),
+  setMyClosedDays: (days: number[]) => post<unknown>('/specialists/me/closed-days', { days }),
   myHours: () => get<{ hours: import('./ui/WorkingHours').DayHours[] }>('/specialists/me/hours'),
   setMyHours: (hours: import('./ui/WorkingHours').DayHours[]) =>
     post<unknown>('/specialists/me/hours', { hours }),

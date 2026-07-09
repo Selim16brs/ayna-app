@@ -96,6 +96,21 @@ export class SpecialistsController {
     return this.specialists.setMyHours(req.user!.id, Array.isArray(body?.hours) ? body.hours : []);
   }
 
+  @Get('me/closed-days')
+  @UseGuards(JwtAuthGuard)
+  myClosedDays(@Req() req: AuthedRequest) {
+    return this.specialists.myClosedDays(req.user!.id);
+  }
+
+  @Post('me/closed-days')
+  @UseGuards(JwtAuthGuard)
+  setClosedDays(@Req() req: AuthedRequest, @Body() body: { days?: unknown[] }) {
+    return this.specialists.setMyClosedDays(
+      req.user!.id,
+      Array.isArray(body?.days) ? body.days : [],
+    );
+  }
+
   // §CRM — bugün doğum günü olan müşterilerim + kutlama gönder
   @Get('me/birthdays')
   @UseGuards(JwtAuthGuard)

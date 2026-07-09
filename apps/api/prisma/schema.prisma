@@ -149,6 +149,7 @@ model Professional {
   promoJson       String       @default("[]") @map("promo_json") // §11 Platinum promosyonları (kendi profilinde görünür)
   servicesJson    String       @default("[]") @map("services_json") // §9.5 uzmanın GERÇEK hizmet/fiyat listesi
   hoursJson       String       @default("[]") @map("hours_json") // §9.5 çalışma saatleri (DayHours[])
+  closedDaysJson  String       @default("[]") @map("closed_days_json") // §4.6 izin/tatil günleri (UTC ms)
   badge           ProBadge     @default(verified)
   createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
 

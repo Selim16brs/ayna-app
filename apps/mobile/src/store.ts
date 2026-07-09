@@ -1142,12 +1142,15 @@ export const useStore = create<State>()(
       },
 
       // §4.6 — günü kapalı/açık işaretle (izin/tatil). Kullanıcı tarafında kapalı gün slot göstermez.
-      toggleClosedDay: (dayStartMs) =>
+      toggleClosedDay: (dayStartMs) => {
         set((s) => ({
           closedDays: s.closedDays.includes(dayStartMs)
             ? s.closedDays.filter((d) => d !== dayStartMs)
             : [...s.closedDays, dayStartMs],
-        })),
+        }));
+        // §4.6 — izin günleri HESAPTA (kullanıcı tarafı slotları da bunlara göre kapanır)
+        void api.setMyClosedDays(get().closedDays).catch(() => undefined);
+      },
 
       // §10.1/§12.7 — promosyon oluştur → admin onayına düşer (status 'pending')
       createPromotion: (input) =>
@@ -2086,6 +2089,12 @@ export const useStore = create<State>()(
               .myHours()
               .then((r) => {
                 if (r.hours.length) set({ sellerHours: r.hours });
+              })
+              .catch(() => undefined);
+            void api
+              .myClosedDays()
+              .then((r) => {
+                if (r.days.length) set({ closedDays: r.days });
               })
               .catch(() => undefined);
           }

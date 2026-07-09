@@ -379,6 +379,7 @@ export class BookingsService {
     actorId: string | undefined,
     who: 'owner' | 'provider' | 'either',
   ): Promise<void> {
+    this.lastActorId = actorId;
     if (!actorId) return;
     const [b, actor] = await Promise.all([
       this.prisma.booking.findUnique({ where: { id: bookingId } }),
@@ -424,8 +425,24 @@ export class BookingsService {
       }
     }
     const row = await this.prisma.booking.update({ where: { id }, data });
+    // §12 — kritik eylem audit log'u (kim, ne zaman, hangi geçiş)
+    if (target)
+      void this.prisma.auditLog
+        .create({
+          data: {
+            action: `booking.${target}`,
+            resourceType: 'booking',
+            resourceId: id,
+            actorId: this.lastActorId ?? null,
+            actorRole: this.lastActorId ? 'party' : 'system',
+          },
+        })
+        .catch(() => undefined);
     return mapBooking(row);
   }
+
+  // assertParty'den geçen son aktör — transition audit'i için (istek başına tek akış)
+  private lastActorId: string | undefined;
 
   // Durum geçişlerinde İKİ TARAFA push (sahip müşteri + uzman) — kapalıyken de haber gitsin
   private notifyParties(bookingId: string, title: string, body: string): void {

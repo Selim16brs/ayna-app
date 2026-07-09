@@ -319,6 +319,25 @@ export class SpecialistsService {
     return { hours: safeParse(pro.hoursJson) };
   }
 
+  async myClosedDays(userId: string) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { days: [] };
+    const pro = await this.prisma.professional.findUnique({ where: { id: proId } });
+    return { days: safeParse(pro?.closedDaysJson) };
+  }
+
+  async setMyClosedDays(userId: string, days: unknown[]) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { days: [] };
+    const pro = await this.prisma.professional.update({
+      where: { id: proId },
+      data: {
+        closedDaysJson: JSON.stringify(days.filter((x) => typeof x === 'number').slice(0, 120)),
+      },
+    });
+    return { days: safeParse(pro.closedDaysJson) };
+  }
+
   // §CRM — kutlama: müşteriye push doğum günü mesajı (uzman adına)
   async celebrate(expertUserId: string, customerId: string) {
     const expert = await this.prisma.user.findUnique({
