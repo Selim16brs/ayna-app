@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams } from 'expo-router';
 import { Image, Linking, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useLocale } from '../../src/locale';

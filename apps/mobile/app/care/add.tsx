@@ -6,7 +6,6 @@ import {
   CATEGORIES,
   QUICK_ADD,
   categoryLabelKey,
-  type PersonalTone,
   type QuickAddKind,
   quickAddMeta,
 } from '../../src/data';

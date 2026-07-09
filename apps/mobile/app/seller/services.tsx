@@ -29,7 +29,8 @@ export default function SellerServicesScreen() {
   const toggle = (s: TaxService) =>
     setSvc((m) => {
       if (m[s.id]) {
-        const { [s.id]: _drop, ...rest } = m;
+        const rest = { ...m };
+        delete rest[s.id];
         return rest;
       }
       return { ...m, [s.id]: { price: String(s.price), dur: String(s.durationMin) } };

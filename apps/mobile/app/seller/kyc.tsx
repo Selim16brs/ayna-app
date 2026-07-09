@@ -139,7 +139,7 @@ export default function KycScreen() {
   );
 }
 
-const makeStyles = (colors: ColorTokens) =>
+const makeStyles = (_colors: ColorTokens) =>
   StyleSheet.create({
     content: {
       paddingHorizontal: space(3),

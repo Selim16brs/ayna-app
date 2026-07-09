@@ -92,7 +92,7 @@ function RoleCard({
   );
 }
 
-const makeStyles = (colors: ColorTokens) =>
+const makeStyles = (_colors: ColorTokens) =>
   StyleSheet.create({
     content: { flex: 1, paddingHorizontal: space(3), paddingTop: space(2) },
     sub: { marginTop: space(0.5), marginBottom: space(4) },

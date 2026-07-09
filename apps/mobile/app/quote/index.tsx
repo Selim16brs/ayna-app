@@ -126,7 +126,7 @@ function ChoiceCard({
   );
 }
 
-const makeStyles = (colors: ColorTokens) =>
+const makeStyles = (_colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: space(4) },
     subtitle: { marginBottom: space(3) },

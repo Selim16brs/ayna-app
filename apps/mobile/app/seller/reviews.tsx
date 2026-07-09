@@ -10,7 +10,7 @@ import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
 export default function SellerReviewsScreen() {
   const { t } = useLocale();
-  const { colors, shadow } = useTheme();
+  const { shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const token = useStore((s) => s.token);
   const [businessId, setBusinessId] = useState<string | null>(null);
