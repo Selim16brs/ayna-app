@@ -42,6 +42,26 @@ export default function ProfessionalScreen() {
   const addBooking = useStore((s) => s.addBooking);
   const userReviewsMap = useStore((s) => s.userReviews);
 
+  // §5.5 — uzmanı takip et (karşılıklı takip → serbest DM). Yalnız hesabı bağlı gerçek uzmanda.
+  const [following, setFollowing] = useState(false);
+  useEffect(() => {
+    if (!token || !pro.ownerUserId) return;
+    void api
+      .myFollows()
+      .then((r) => setFollowing(r.following.some((f) => f.userId === pro.ownerUserId)))
+      .catch(() => undefined);
+  }, [token, pro.ownerUserId]);
+  const toggleFollow = async () => {
+    if (!token || !pro.ownerUserId) return;
+    const next = !following;
+    setFollowing(next);
+    try {
+      await api.circleFollow(pro.ownerUserId, next);
+    } catch {
+      setFollowing(!next); // geri al
+    }
+  };
+
   const uzmanId = pro.staff[0]?.id ?? '';
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   const minDate = new Date(Date.now() + 2 * 3_600_000);
@@ -588,6 +608,19 @@ export default function ProfessionalScreen() {
 
       {/* CTA — coral Randevu Al */}
       <View style={[styles.cta, { paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }]}>
+        {/* §5.5 — Takip et: karşılıklı takip serbest DM açar. Yalnız gerçek uzmanda. */}
+        {pro.ownerUserId && token ? (
+          <Pressable
+            style={[styles.iconBtn, following && styles.iconBtnActive]}
+            onPress={toggleFollow}
+          >
+            <Ionicons
+              name={following ? 'person-remove' : 'person-add-outline'}
+              size={20}
+              color={following ? colors.onAccent : colors.inkSoft}
+            />
+          </Pressable>
+        ) : null}
         {/* EK Z.1 — DM: yalnız hesabı bağlı (gerçek) uzmanda görünür */}
         {pro.ownerUserId && token ? (
           <Pressable style={styles.iconBtn} onPress={messagePro}>
@@ -925,6 +958,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+    iconBtnActive: { backgroundColor: colors.accent },
     bookBtn: {
       flex: 1,
       flexDirection: 'row',

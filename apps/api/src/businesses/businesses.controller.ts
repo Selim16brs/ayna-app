@@ -13,6 +13,7 @@ import {
 import { BusinessesService } from './businesses.service';
 
 const replySchema = z.object({ reply: z.string().min(1).max(500) });
+const disputeReasonSchema = z.object({ reason: z.string().max(500).optional() });
 const bookingActionSchema = z.object({
   action: z.enum(['approve', 'no-show', 'cancel', 'propose']),
   proposedStartMs: z.number().int().optional(), // §4.1 alternatif öneri (epoch ms)
@@ -117,6 +118,18 @@ export class BusinessesController {
     @Req() req: AuthedRequest,
   ) {
     return this.businesses.replyToReview(id, ratingId, body.reply, req.user!.id);
+  }
+
+  // §7.2 — salon kendi yorumuna itiraz eder → admin kuyruğu (yorum görünür kalır)
+  @Post(':id/reviews/:ratingId/dispute')
+  @UseGuards(JwtAuthGuard)
+  disputeReview(
+    @Param('id') id: string,
+    @Param('ratingId') ratingId: string,
+    @Body(new ZodValidationPipe(disputeReasonSchema)) body: { reason?: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.businesses.disputeReview(id, ratingId, body.reason ?? '', req.user!.id);
   }
 
   @Post(':id/approve')

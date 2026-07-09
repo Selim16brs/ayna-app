@@ -101,9 +101,11 @@ function ReviewRow({
         text: t('seller.reviews.dispute'),
         onPress: () => {
           setDisputed(true);
-          // Bağımsız uzman → backend itiraz kuyruğu; salon yorumu şimdilik yerel işaretlenir
-          if (!businessId && token)
-            void api.disputeSpecialistReview(token, review.id, '').catch(() => undefined);
+          // §7.2 — her iki rolde de admin itiraz kuyruğuna düşer (yorum görünür kalır)
+          if (!token) return;
+          if (businessId)
+            void api.disputeBusinessReview(token, businessId, review.id, '').catch(() => undefined);
+          else void api.disputeSpecialistReview(token, review.id, '').catch(() => undefined);
         },
       },
     ]);

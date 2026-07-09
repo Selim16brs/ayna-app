@@ -29,6 +29,7 @@ export default function ChatThreadScreen() {
   const [sending, setSending] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [notice, setNotice] = useState('');
+  const [following, setFollowing] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
   const load = useCallback(async () => {
@@ -52,6 +53,26 @@ export default function ChatThreadScreen() {
       .then((list) => setBlocked(list.some((b) => b.id === params.otherId)))
       .catch(() => {});
   }, [token, params.otherId]);
+
+  // §5.5 — karşı tarafı takip ediyor muyum? (karşılıklı takip → serbest DM)
+  useEffect(() => {
+    if (!token || !params.otherId) return;
+    void api
+      .myFollows()
+      .then((r) => setFollowing(r.following.some((f) => f.userId === params.otherId)))
+      .catch(() => {});
+  }, [token, params.otherId]);
+
+  const toggleFollow = async () => {
+    if (!token || !params.otherId) return;
+    const next = !following;
+    setFollowing(next);
+    try {
+      await api.circleFollow(params.otherId, next);
+    } catch {
+      setFollowing(!next);
+    }
+  };
 
   const send = async () => {
     const body = draft.trim();
@@ -91,19 +112,28 @@ export default function ChatThreadScreen() {
     }
   };
 
-  const blockBtn = params.otherId ? (
-    <Pressable onPress={toggleBlock} hitSlop={8}>
-      <Ionicons
-        name={blocked ? 'lock-open-outline' : 'ban-outline'}
-        size={20}
-        color={colors.danger}
-      />
-    </Pressable>
+  const headerActions = params.otherId ? (
+    <View style={styles.headerActions}>
+      <Pressable onPress={toggleFollow} hitSlop={8}>
+        <Ionicons
+          name={following ? 'person-remove' : 'person-add-outline'}
+          size={20}
+          color={following ? colors.accent : colors.inkSoft}
+        />
+      </Pressable>
+      <Pressable onPress={toggleBlock} hitSlop={8}>
+        <Ionicons
+          name={blocked ? 'lock-open-outline' : 'ban-outline'}
+          size={20}
+          color={colors.danger}
+        />
+      </Pressable>
+    </View>
   ) : undefined;
 
   return (
     <Screen edges={[]}>
-      <StackHeader title={params.name || t('messages.title')} right={blockBtn} />
+      <StackHeader title={params.name || t('messages.title')} right={headerActions} />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -261,4 +291,5 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     noticeText: { flex: 1 },
+    headerActions: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
   });

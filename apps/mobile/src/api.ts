@@ -379,6 +379,13 @@ export const api = {
       { reply },
       token,
     ),
+  // §7.2 — salon kendi yorumuna itiraz eder (admin kuyruğuna düşer; yorum görünür kalır)
+  disputeBusinessReview: (token: string, businessId: string, ratingId: string, reason: string) =>
+    post<{ id: string; disputed: boolean }>(
+      `/businesses/${businessId}/reviews/${ratingId}/dispute`,
+      { reason },
+      token,
+    ),
   // §7 — bağımsız uzman: kendi işlerine yazılan yorumlar + tek yanıt hakkı
   mySpecialistReviews: (token: string) => get<SellerReviews>('/specialists/me/reviews', token),
   replySpecialistReview: (token: string, ratingId: string, reply: string) =>
@@ -464,7 +471,7 @@ export const api = {
       authorLabel?: string;
       photos?: string[]; // EK Z.10 — öncesi/sonrası galeri
     },
-  ) => post<{ id: string; visible: boolean; bothRated: boolean }>('/ratings', input, token),
+  ) => post<{ id: string; visible: boolean }>('/ratings', input, token),
   ratingSummary: (subjectId: string) =>
     get<RatingSummary>(`/ratings/summary?subjectId=${encodeURIComponent(subjectId)}`),
   // Uzman/işletme görünür yoruma yanıt verir (silemez) — giriş gerekli

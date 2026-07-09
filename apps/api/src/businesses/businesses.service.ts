@@ -276,6 +276,28 @@ export class BusinessesService {
     return { id: updated.id, reply: updated.reply };
   }
 
+  // Salon paneli — kendi yorumuna itiraz (§7.2). Bağımsız uzmandaki akışla aynı: yorum
+  // inceleme boyunca GÖRÜNÜR kalır (visible değişmez), yalnız disputed işaretlenir → admin kuyruğu.
+  async disputeReview(businessId: string, ratingId: string, reason: string, ownerUserId: string) {
+    const b = await this.assertOwner(businessId, ownerUserId);
+    const r = await this.prisma.rating.findUnique({ where: { id: ratingId } });
+    if (!r || r.subjectId !== b.professionalId) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Yorum bulunamadı' });
+    }
+    const updated = await this.prisma.rating.update({
+      where: { id: ratingId },
+      data: { disputed: true, disputeReason: reason || null, disputedAt: new Date() },
+    });
+    await this.audit.record({
+      actorId: ownerUserId,
+      actorRole: 'salon',
+      action: 'rating.dispute',
+      resourceType: 'rating',
+      resourceId: ratingId,
+    });
+    return { id: updated.id, disputed: updated.disputed };
+  }
+
   async createInviteCode(businessId: string, ownerUserId: string) {
     await this.assertOwner(businessId, ownerUserId);
     let code = randomCode();

@@ -9,7 +9,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import type { SubmitRatingInput } from './ratings.dto';
 
 const THRESHOLD_KEY = 'rating.threshold';
-const DEFAULT_THRESHOLD = 3;
+// Lansman: tek yorum bile profilde görünür (admin 'ratings.reveal.threshold' ile yükseltebilir).
+const DEFAULT_THRESHOLD = 1;
 
 // §7.1 — salon skoru = %60 salon doğrudan puanı + %40 bağlı uzmanların ortalaması. Saf, testli.
 export function blendedSalonScore(
