@@ -242,11 +242,10 @@ export class AuthService {
   }
 
   private session(user: User) {
-    const token = signJwt(
-      { sub: user.id, role: user.role },
-      this.env.JWT_ACCESS_SECRET,
-      this.env.JWT_ACCESS_TTL,
-    );
+    // Mobilde token YENİLEME akışı yok → kısa TTL (env'de 900=15dk) giriş sonrası tüm işlemleri
+    // UNAUTHENTICATED'e düşürüyordu. En az 30 gün garanti et (Railway env override edemesin).
+    const ttl = Math.max(this.env.JWT_ACCESS_TTL, 30 * 24 * 60 * 60);
+    const token = signJwt({ sub: user.id, role: user.role }, this.env.JWT_ACCESS_SECRET, ttl);
     return { token, user: this.safe(user) };
   }
 
