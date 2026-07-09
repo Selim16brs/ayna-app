@@ -307,9 +307,7 @@ function parsePromos(raw: string): unknown[] {
 }
 
 // §9.5 — servicesJson çözümü: {id,name,price,durationMin} dizisi (bozuksa boş)
-function safeParseServices(
-  raw: string,
-): {
+function safeParseServices(raw: string): {
   id: string;
   name: string;
   durationMin: number;

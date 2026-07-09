@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../push/push.service';
 import type { FileDisputeInput, ResolveDisputeInput } from './disputes.dto';
 
 @Injectable()
 export class DisputesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly push: PushService,
+  ) {}
 
   private map(d: {
     id: string;
@@ -104,6 +108,13 @@ export class DisputesService {
         actorRole: 'admin',
       },
     });
+    // §7.2/§4.4 — karar itiraz SAHİBİNE push ile döner (süreç şeffaf)
+    if (updated.userId)
+      void this.push.sendToUser(updated.userId, {
+        title: input.decision === 'approve' ? 'İtirazın kabul edildi' : 'İtirazın reddedildi',
+        body: input.resolution?.trim() || 'Detay için uygulamadaki kaydına bak',
+        data: { route: '/notifications' },
+      });
     return this.map(updated);
   }
 }
