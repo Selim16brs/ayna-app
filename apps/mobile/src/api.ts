@@ -137,8 +137,37 @@ export function setApiToken(token: string | null | undefined): void {
   sessionToken = token ?? undefined;
 }
 
+// Ağ/erişim hatası — fetch reddedildi (AYNA sunucusuna ULAŞILAMADI) ya da istek zaman aşımına
+// uğradı. ApiError'dan (sunucu yanıt verdi ama hata döndü) ayrıdır. Böylece kullanıcıya
+// haksız yere "internetini kontrol et" yerine SEBEBE UYGUN mesaj gösterebiliriz: telefonun
+// interneti çalışsa bile sunucuya erişilemiyor olabilir (yanlış API adresi, sunucu kapalı, farklı ağ).
+export class NetworkError extends Error {
+  constructor(public reason: 'timeout' | 'unreachable') {
+    super(reason === 'timeout' ? 'İstek zaman aşımına uğradı' : 'Sunucuya ulaşılamadı');
+  }
+}
+
+// Askıda kalan bir isteğin (ör. erişilemeyen sunucuya SYN) kullanıcıyı sonsuza dek bekletmemesi için.
+const REQUEST_TIMEOUT_MS = 15_000;
+
+// fetch'i zaman aşımıyla sarar ve düşük seviye hataları NetworkError'a çevirir:
+// abort → 'timeout', diğer her fetch reddi (DNS/bağlantı reddi/TLS) → 'unreachable'.
+async function doFetch(path: string, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(`${API_BASE}${path}`, { ...init, signal: controller.signal });
+  } catch (e) {
+    throw new NetworkError(
+      (e as { name?: string } | null)?.name === 'AbortError' ? 'timeout' : 'unreachable',
+    );
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function get<T>(path: string, token?: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, { headers: authHeader(token ?? sessionToken) });
+  const res = await doFetch(path, { headers: authHeader(token ?? sessionToken) });
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
   return res.json() as Promise<T>;
 }
@@ -156,7 +185,7 @@ export class ApiError extends Error {
 }
 
 async function post<T>(path: string, body: unknown, token?: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await doFetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeader(token ?? sessionToken) },
     body: JSON.stringify(body),
