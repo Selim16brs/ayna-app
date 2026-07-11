@@ -7,6 +7,9 @@ import { ApiError, NetworkError } from './api';
 export function registerErrorMessage(e: unknown, t: (k: MessageKey) => string): string {
   if (e instanceof ApiError) {
     if (e.code === 'PHONE_TAKEN' || e.code === 'EMAIL_TAKEN') return t('auth.error.taken');
+    if (e.code === 'DEVICE_BANNED') return t('auth.error.device_banned');
+    if (e.code === 'INVALID_CODE' || e.code === 'CODE_REQUIRED')
+      return t('auth.error.invalid_code');
     if (e.code === 'VALIDATION_ERROR') return t('auth.error.invalid');
     if (e.status >= 500) return t('auth.error.server');
     return t('common.error');

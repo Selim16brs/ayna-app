@@ -20,6 +20,7 @@ function fmtDate(d: Date): string {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 import { api } from '../../src/api';
+import { registerErrorMessage } from '../../src/authError';
 import { CITIES } from '../../src/data';
 import { getDeviceFingerprint } from '../../src/device';
 import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
@@ -215,8 +216,9 @@ export default function ExpertRegisterScreen() {
         { text: t('common.ok'), onPress: () => router.replace('/auth/login') },
       ]);
     } catch (e) {
-      const msg = String((e as Error).message ?? '');
-      Alert.alert(msg.includes('409') ? t('auth.error.taken') : t('common.error'));
+      // Diğer kayıt ekranlarıyla aynı SEBEBE ÖZEL mesaj: telefon/e-posta kayıtlı, kod geçersiz,
+      // cihaz engelli, sunucu hatası, sunucuya ulaşılamadı vb. — hepsi "Bir hata oluştu"ya inmez.
+      Alert.alert(registerErrorMessage(e, t));
     } finally {
       setBusy(false);
     }

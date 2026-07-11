@@ -777,6 +777,8 @@ export const tr = {
   'auth.error.server': 'Sunucuya ulaşılamadı, birazdan tekrar dene',
   'auth.error.network': 'AYNA sunucusuna ulaşılamadı. İnternetin açıksa birazdan tekrar dene.',
   'auth.error.timeout': 'Bağlantı çok yavaş — az sonra tekrar dene',
+  'auth.error.device_banned': 'Bu cihaz kalıcı olarak engellenmiş. Destek ile iletişime geç.',
+  'auth.error.invalid_code': 'Davet kodu geçersiz. Bir işletmeye bağlı değilsen bireysel kayıt aç.',
   'auth.error.bad': 'E-posta/telefon veya şifre hatalı',
   'auth.login.forgot': 'Şifremi unuttum',
   'auth.login.subtitle': 'Telefonun ve şifrenle giriş yap',
