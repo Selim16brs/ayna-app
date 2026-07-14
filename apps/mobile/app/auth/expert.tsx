@@ -43,11 +43,22 @@ import {
   WorkingHours,
 } from '../../src/ui';
 import { type AutofillKind, autofillProps, missingLabels } from '../../src/formValidation';
+import type { MessageKey } from '@ayna/i18n';
 
 // Faz B — uzmanın bağlanacağı salonlar GERÇEK kayıtlı işletmelerden gelir (mock değil).
 const lower = (s: string) => s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
 
 const SERVICE_CATS = activeCategories();
+// §uzman onboarding — uzman türü: serbest (kayıtsız) | kayıtlı ИП (IIN ile)
+type ExpertEntity = 'freelance' | 'ip';
+const STEP_TITLES: MessageKey[] = [
+  'expert.reg.step.identity',
+  'expert.reg.step.location',
+  'expert.reg.step.services',
+  'expert.reg.step.extra',
+  'expert.reg.step.finish',
+];
+const STEP_COUNT = STEP_TITLES.length;
 // §6.1 — kayıt profil fotoğrafı için örnek çekimler (beyaz zemin referansı)
 const EXAMPLES = [
   require('../../assets/reg-ex-1.png'),
@@ -63,6 +74,9 @@ export default function ExpertRegisterScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
+  const [step, setStep] = useState(0);
+  const [entityType, setEntityType] = useState<ExpertEntity | null>(null);
+  const [iin, setIin] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
@@ -176,17 +190,30 @@ export default function ExpertRegisterScreen() {
     setSvc((m) => (m[id] ? { ...m, [id]: { ...m[id]!, [field]: val.replace(/[^0-9]/g, '') } } : m));
 
   const validServices = Object.values(svc).filter((r) => Number(r.price) > 0 && Number(r.dur) > 0);
-  const valid =
+  const iinOk = entityType !== 'ip' || /^\d{12}$/.test(iin.trim());
+  const identityOk =
+    entityType !== null &&
     firstName.trim().length > 1 &&
     lastName.trim().length > 1 &&
     phone.trim().length >= 7 &&
     password.length >= 6 &&
     password === password2 &&
-    validServices.length > 0 &&
-    (!bound || (salonId !== null && code.trim().length >= 4));
+    iinOk;
+  const bindingOk = !bound || (salonId !== null && code.trim().length >= 4);
+  // §uzman onboarding — adım geçit koşulları (salon sihirbazı paralel)
+  const stepOk = [
+    identityOk, // 0 · kimlik & hesap
+    true, // 1 · konum & foto (şehir varsayılan; foto opsiyonel)
+    validServices.length > 0, // 2 · uzmanlık & hizmet
+    true, // 3 · portföy & iletişim (opsiyonel)
+    bindingOk, // 4 · önizleme & tamamla
+  ];
+  const valid = identityOk && validServices.length > 0 && bindingOk;
   const touched = !!(firstName || lastName || phone || password);
   const missing = missingLabels([
+    { ok: entityType !== null, key: 'expert.reg.entity_q' },
     { ok: firstName.trim().length > 1 && lastName.trim().length > 1, key: 'auth.miss.name' },
+    { ok: iinOk, key: 'expert.reg.iin' },
     { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
     { ok: password.length >= 6, key: 'auth.f.password' },
     { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
@@ -208,6 +235,8 @@ export default function ExpertRegisterScreen() {
         password,
         city,
         kind: bound ? 'salon_bound' : 'independent',
+        entityType: entityType ?? 'freelance',
+        ...(entityType === 'ip' ? { iin: iin.trim() } : {}),
         ...(bound && salonId ? { businessId: salonId, code: code.trim() } : {}),
         certificates: certs,
         // Uzmanın ana kategorisi: fiyat girilen İLK hizmetin kategorisi (harita/kategori filtresi)
@@ -239,392 +268,568 @@ export default function ExpertRegisterScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('expert.reg.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profil fotoğrafı — örnek çekimler + otomatik cut-out anlatımı */}
-        <Section text={t('expert.reg.photo')} />
-        <Text variant="caption" tone="muted" style={styles.photoLead}>
-          {t('expert.reg.photo_lead')}
-        </Text>
-        <View style={styles.exampleRow}>
-          {EXAMPLES.map((src, i) => (
-            <View key={i} style={styles.exampleCard}>
-              <Image source={src} style={styles.exampleImg} resizeMode="cover" />
-              <View style={styles.exampleTick}>
-                <Ionicons name="checkmark" size={11} color={colors.onAccent} />
-              </View>
-            </View>
-          ))}
-        </View>
-        <View style={styles.autoRow}>
-          <Ionicons name="sparkles" size={14} color={colors.accentFg} />
-          <Text variant="caption" tone="accentFg" style={styles.autoText}>
-            {t('expert.reg.photo_auto')}
-          </Text>
-        </View>
-        <Pressable style={styles.photoBox} onPress={pickPhoto}>
-          {photo ? (
-            <>
-              <Image source={{ uri: photo }} style={styles.photo} />
-              <View style={styles.faceBadge}>
-                <Ionicons name="checkmark-circle" size={14} color={colors.onAccent} />
-                <Text variant="caption" tone="onAccent" style={styles.faceText}>
-                  {t('expert.reg.face_ok')}
-                </Text>
-              </View>
-            </>
-          ) : photoBusy ? (
-            <View style={styles.photoEmpty}>
-              <Ionicons name="sparkles" size={26} color={colors.accent} />
-              <Text variant="caption" tone="muted">
-                {t('expert.reg.photo_processing')}
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.photoEmpty}>
-              <Ionicons name="camera-outline" size={26} color={colors.inkSoft} />
-              <Text variant="bodyStrong" tone="ink">
-                {t('expert.reg.photo_add')}
-              </Text>
-              <Text variant="caption" tone="muted" style={styles.photoHint}>
-                {t('expert.reg.photo_hint')}
-              </Text>
-            </View>
-          )}
-        </Pressable>
+        <StepBar step={step} titles={STEP_TITLES} />
 
-        <View style={styles.row2}>
-          <View style={styles.col}>
-            <Label text={t('auth.f.firstname')} />
-            <Input
-              value={firstName}
-              onChange={setFirstName}
-              placeholder={t('auth.f.firstname')}
-              autofill="name"
-            />
-          </View>
-          <View style={styles.col}>
-            <Label text={t('auth.f.lastname')} />
-            <Input
-              value={lastName}
-              onChange={setLastName}
-              placeholder={t('auth.f.lastname')}
-              autofill="name"
-            />
-          </View>
-        </View>
-        <Label text={t('auth.f.phone')} />
-        <Input
-          value={phone}
-          onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
-          placeholder="+7 700 123 45 67"
-          keyboardType="phone-pad"
-          autofill="tel"
-        />
-        <Label text={t('auth.f.password')} />
-        <Input
-          value={password}
-          onChange={setPassword}
-          secure
-          placeholder={t('auth.f.password')}
-          autofill="newPassword"
-        />
-        <Text variant="caption" tone="muted" style={{ marginTop: space(0.75) }}>
-          {t('auth.f.password_hint')}
-        </Text>
-        <PasswordStrength password={password} />
-        <Label text={t('auth.f.password2')} />
-        <Input
-          value={password2}
-          onChange={setPassword2}
-          secure
-          placeholder={t('auth.f.password2')}
-          autofill="newPassword"
-        />
-        {password2.length > 0 && password !== password2 ? (
-          <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
-            {t('auth.f.password_mismatch')}
-          </Text>
-        ) : null}
-        <Label text={t('auth.f.birthdate')} />
-        <Pressable style={styles.dateBtn} onPress={() => setShowDate(true)}>
-          <Ionicons name="calendar-outline" size={20} color={colors.inkSoft} />
-          <Text variant="body" tone={birthDate ? 'ink' : 'muted'} style={styles.dateText}>
-            {birthDate ? fmtDate(birthDate) : t('auth.f.birthdate_ph')}
-          </Text>
-          <Ionicons name="chevron-down" size={18} color={colors.muted} />
-        </Pressable>
-        {showDate && Platform.OS === 'android' ? (
-          <DateTimePicker
-            value={birthDate ?? new Date(2000, 0, 1)}
-            mode="date"
-            display="default"
-            maximumDate={new Date()}
-            onChange={(_e, d) => {
-              setShowDate(false);
-              if (d) setBirthDate(d);
-            }}
-          />
-        ) : null}
-        {Platform.OS === 'ios' ? (
-          <Modal
-            visible={showDate}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowDate(false)}
-          >
-            <Pressable style={styles.dateBackdrop} onPress={() => setShowDate(false)}>
-              <Pressable style={styles.dateSheet} onPress={(e) => e.stopPropagation()}>
-                <DateTimePicker
-                  value={birthDate ?? new Date(2000, 0, 1)}
-                  mode="date"
-                  display="spinner"
-                  maximumDate={new Date()}
-                  onChange={(_e, d) => {
-                    if (d) setBirthDate(d);
-                  }}
-                />
-                <Button label={t('common.ok')} onPress={() => setShowDate(false)} />
-              </Pressable>
-            </Pressable>
-          </Modal>
-        ) : null}
-        <Label text={t('auth.f.city')} />
-        <CitySelect value={city} onChange={setCity} />
-        <Label text={t('auth.f.district')} />
-        <Input value={district} onChange={setDistrict} placeholder={t('auth.f.district_ph')} />
-        <Label text={t('auth.f.address')} />
-        <Input value={address} onChange={setAddress} placeholder={t('auth.f.address_ph')} />
-
-        {/* Hizmetler — MERKEZİ taksonomiden: alan seç → alt hizmetleri aç + fiyat/süre gir */}
-        <Section text={t('expert.reg.prof')} />
-        <Label text={t('expert.reg.service_area')} />
-        <View style={styles.chips}>
-          {SERVICE_CATS.map((c) => {
-            const on = c.id === svcCat;
-            return (
-              <Pressable
-                key={c.id}
-                onPress={() => setSvcCat(c.id)}
-                style={[styles.chip, on && styles.chipActive]}
-              >
-                <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
-                  {t(c.labelKey)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <Label text={t('expert.reg.services')} />
-        <Text variant="caption" tone="muted" style={styles.hint}>
-          {t('expert.reg.services_hint')}
-        </Text>
-        {servicesOf(svcCat).map((s) => {
-          const row = svc[s.id];
-          const on = !!row;
-          return (
-            <View key={s.id} style={styles.svcCard}>
-              <Pressable style={styles.svcTop} onPress={() => toggleSvc(s)}>
-                <View style={[styles.check, on && styles.checkOn]}>
-                  {on ? <Ionicons name="checkmark" size={14} color={colors.onAccent} /> : null}
-                </View>
-                <Text variant="bodyStrong" tone="ink" style={styles.svcNameText} numberOfLines={1}>
-                  {tri(s.label, locale)}
-                </Text>
-              </Pressable>
-              {on ? (
-                <View style={styles.svcRow}>
-                  <View style={styles.svcField}>
-                    <TextInput
-                      value={row.price}
-                      onChangeText={(v) => editSvc(s.id, 'price', v)}
-                      placeholder={t('expert.reg.service_price')}
-                      placeholderTextColor={colors.muted}
-                      keyboardType="number-pad"
-                      style={styles.svcInput}
-                    />
-                  </View>
-                  <View style={styles.svcField}>
-                    <TextInput
-                      value={row.dur}
-                      onChangeText={(v) => editSvc(s.id, 'dur', v)}
-                      placeholder={t('expert.reg.service_dur')}
-                      placeholderTextColor={colors.muted}
-                      keyboardType="number-pad"
-                      style={styles.svcInput}
-                    />
-                  </View>
-                </View>
-              ) : null}
-            </View>
-          );
-        })}
-
-        {/* Sertifikalar */}
-        <Label text={t('expert.reg.cert')} />
-        <View style={styles.certRow}>
-          <Pressable style={styles.certAdd} onPress={addCert}>
-            <Ionicons name="add" size={24} color={colors.inkSoft} />
-          </Pressable>
-          {certs.map((uri, i) => (
-            <Pressable
-              key={`${uri}-${i}`}
-              onPress={() =>
-                Alert.alert(t('expert.reg.cert'), t('expert.reg.cert_remove_q'), [
-                  { text: t('common.cancel'), style: 'cancel' },
-                  {
-                    text: t('profile.photo.remove'),
-                    style: 'destructive',
-                    onPress: () => setCerts((c) => c.filter((_, idx) => idx !== i)),
-                  },
-                ])
-              }
-            >
-              <Image source={{ uri }} style={styles.certThumb} />
-              <View style={styles.certRemove}>
-                <Ionicons name="close" size={12} color="#fff" />
-              </View>
-            </Pressable>
-          ))}
-        </View>
-        <View style={styles.warnRow}>
-          <Ionicons name="shield-checkmark-outline" size={16} color={colors.accentFg} />
-          <Text variant="caption" tone="accentFg" style={styles.warnText}>
-            {t('expert.reg.cert_warn')}
-          </Text>
-        </View>
-
-        {/* Portfolyo — yaptığın işler (normal 7 / premium 20) */}
-        <Label text={`${t('expert.reg.portfolio')}  (${portfolio.length}/${PORTFOLIO_MAX})`} />
-        <Text variant="caption" tone="muted" style={styles.hint}>
-          {t('expert.reg.portfolio_hint')}
-        </Text>
-        <View style={styles.certRow}>
-          {portfolio.length < PORTFOLIO_MAX ? (
-            <Pressable style={styles.certAdd} onPress={addPortfolio}>
-              <Ionicons name="images-outline" size={22} color={colors.inkSoft} />
-            </Pressable>
-          ) : null}
-          {portfolio.map((uri, i) => (
-            <View key={`${uri}-${i}`}>
-              <Image source={{ uri }} style={styles.certThumb} />
-              <Pressable
-                style={styles.thumbRemove}
-                hitSlop={6}
-                onPress={() => setPortfolio((p) => p.filter((_, idx) => idx !== i))}
-              >
-                <Ionicons name="close-circle" size={20} color={colors.onColor} />
-              </Pressable>
-            </View>
-          ))}
-        </View>
-
-        <Label text={t('expert.reg.social')} />
-        <SocialLinks value={social} onChange={setSocial} />
-        <Label text={t('expert.reg.hours')} />
-        <WorkingHours value={hours} onChange={setHours} />
-
-        {/* Salon bağlantısı */}
-        <Section text={t('expert.reg.salon_q')} />
-        <View style={styles.chips}>
-          <Chip label={t('common.no')} active={!bound} onPress={() => setBound(false)} />
-          <Chip label={t('common.yes')} active={bound} onPress={() => setBound(true)} />
-        </View>
-        {bound ? (
+        {step === 1 && (
           <>
-            {salonId ? (
-              <View style={styles.selectedSalon}>
-                <Ionicons name="storefront" size={18} color={colors.onAccent} />
-                <View style={styles.selectedText}>
-                  <Text variant="caption" tone="onAccent">
-                    {t('expert.reg.salon_selected')}
+            {/* Profil fotoğrafı — örnek çekimler + otomatik cut-out anlatımı */}
+            <Section text={t('expert.reg.photo')} />
+            <Text variant="caption" tone="muted" style={styles.photoLead}>
+              {t('expert.reg.photo_lead')}
+            </Text>
+            <View style={styles.exampleRow}>
+              {EXAMPLES.map((src, i) => (
+                <View key={i} style={styles.exampleCard}>
+                  <Image source={src} style={styles.exampleImg} resizeMode="cover" />
+                  <View style={styles.exampleTick}>
+                    <Ionicons name="checkmark" size={11} color={colors.onAccent} />
+                  </View>
+                </View>
+              ))}
+            </View>
+            <View style={styles.autoRow}>
+              <Ionicons name="sparkles" size={14} color={colors.accentFg} />
+              <Text variant="caption" tone="accentFg" style={styles.autoText}>
+                {t('expert.reg.photo_auto')}
+              </Text>
+            </View>
+            <Pressable style={styles.photoBox} onPress={pickPhoto}>
+              {photo ? (
+                <>
+                  <Image source={{ uri: photo }} style={styles.photo} />
+                  <View style={styles.faceBadge}>
+                    <Ionicons name="checkmark-circle" size={14} color={colors.onAccent} />
+                    <Text variant="caption" tone="onAccent" style={styles.faceText}>
+                      {t('expert.reg.face_ok')}
+                    </Text>
+                  </View>
+                </>
+              ) : photoBusy ? (
+                <View style={styles.photoEmpty}>
+                  <Ionicons name="sparkles" size={26} color={colors.accent} />
+                  <Text variant="caption" tone="muted">
+                    {t('expert.reg.photo_processing')}
                   </Text>
-                  <Text variant="bodyStrong" tone="onAccent" numberOfLines={1}>
+                </View>
+              ) : (
+                <View style={styles.photoEmpty}>
+                  <Ionicons name="camera-outline" size={26} color={colors.inkSoft} />
+                  <Text variant="bodyStrong" tone="ink">
+                    {t('expert.reg.photo_add')}
+                  </Text>
+                  <Text variant="caption" tone="muted" style={styles.photoHint}>
+                    {t('expert.reg.photo_hint')}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          </>
+        )}
+
+        {step === 0 && (
+          <>
+            {/* §uzman onboarding — uzman türü: serbest vs kayıtlı ИП (koşullu IIN) */}
+            <Section text={t('expert.reg.entity_q')} />
+            <Text variant="caption" tone="muted" style={styles.hint}>
+              {t('expert.reg.entity_hint')}
+            </Text>
+            <View style={styles.entityGrid}>
+              {(['freelance', 'ip'] as ExpertEntity[]).map((et) => {
+                const on = entityType === et;
+                return (
+                  <Pressable
+                    key={et}
+                    style={[styles.entityCard, on && styles.entityCardOn]}
+                    onPress={() => setEntityType(et)}
+                  >
+                    <Ionicons
+                      name={et === 'ip' ? 'ribbon-outline' : 'person-outline'}
+                      size={20}
+                      color={on ? colors.onAccent : colors.accentFg}
+                    />
+                    <Text
+                      variant="bodyStrong"
+                      tone={on ? 'onAccent' : 'ink'}
+                      style={styles.entityTitle}
+                    >
+                      {t(`expert.reg.entity.${et}` as MessageKey)}
+                    </Text>
+                    <Text variant="caption" tone={on ? 'onAccent' : 'muted'}>
+                      {t(`expert.reg.entity.${et}_d` as MessageKey)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            {entityType === 'ip' ? (
+              <>
+                <Label text={t('expert.reg.iin')} />
+                <Input
+                  value={iin}
+                  onChange={(v) => setIin(v.replace(/[^0-9]/g, '').slice(0, 12))}
+                  placeholder={t('expert.reg.iin_ph')}
+                  keyboardType="number-pad"
+                />
+                <Text variant="caption" tone="muted" style={styles.hint}>
+                  {t('expert.reg.iin_hint')}
+                </Text>
+              </>
+            ) : null}
+
+            <View style={styles.row2}>
+              <View style={styles.col}>
+                <Label text={t('auth.f.firstname')} />
+                <Input
+                  value={firstName}
+                  onChange={setFirstName}
+                  placeholder={t('auth.f.firstname')}
+                  autofill="name"
+                />
+              </View>
+              <View style={styles.col}>
+                <Label text={t('auth.f.lastname')} />
+                <Input
+                  value={lastName}
+                  onChange={setLastName}
+                  placeholder={t('auth.f.lastname')}
+                  autofill="name"
+                />
+              </View>
+            </View>
+            <Label text={t('auth.f.phone')} />
+            <Input
+              value={phone}
+              onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
+              placeholder="+7 700 123 45 67"
+              keyboardType="phone-pad"
+              autofill="tel"
+            />
+            <Label text={t('auth.f.password')} />
+            <Input
+              value={password}
+              onChange={setPassword}
+              secure
+              placeholder={t('auth.f.password')}
+              autofill="newPassword"
+            />
+            <Text variant="caption" tone="muted" style={{ marginTop: space(0.75) }}>
+              {t('auth.f.password_hint')}
+            </Text>
+            <PasswordStrength password={password} />
+            <Label text={t('auth.f.password2')} />
+            <Input
+              value={password2}
+              onChange={setPassword2}
+              secure
+              placeholder={t('auth.f.password2')}
+              autofill="newPassword"
+            />
+            {password2.length > 0 && password !== password2 ? (
+              <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
+                {t('auth.f.password_mismatch')}
+              </Text>
+            ) : null}
+            <Label text={t('auth.f.birthdate')} />
+            <Pressable style={styles.dateBtn} onPress={() => setShowDate(true)}>
+              <Ionicons name="calendar-outline" size={20} color={colors.inkSoft} />
+              <Text variant="body" tone={birthDate ? 'ink' : 'muted'} style={styles.dateText}>
+                {birthDate ? fmtDate(birthDate) : t('auth.f.birthdate_ph')}
+              </Text>
+              <Ionicons name="chevron-down" size={18} color={colors.muted} />
+            </Pressable>
+            {showDate && Platform.OS === 'android' ? (
+              <DateTimePicker
+                value={birthDate ?? new Date(2000, 0, 1)}
+                mode="date"
+                display="default"
+                maximumDate={new Date()}
+                onChange={(_e, d) => {
+                  setShowDate(false);
+                  if (d) setBirthDate(d);
+                }}
+              />
+            ) : null}
+            {Platform.OS === 'ios' ? (
+              <Modal
+                visible={showDate}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowDate(false)}
+              >
+                <Pressable style={styles.dateBackdrop} onPress={() => setShowDate(false)}>
+                  <Pressable style={styles.dateSheet} onPress={(e) => e.stopPropagation()}>
+                    <DateTimePicker
+                      value={birthDate ?? new Date(2000, 0, 1)}
+                      mode="date"
+                      display="spinner"
+                      maximumDate={new Date()}
+                      onChange={(_e, d) => {
+                        if (d) setBirthDate(d);
+                      }}
+                    />
+                    <Button label={t('common.ok')} onPress={() => setShowDate(false)} />
+                  </Pressable>
+                </Pressable>
+              </Modal>
+            ) : null}
+          </>
+        )}
+
+        {step === 1 && (
+          <>
+            <Label text={t('auth.f.city')} />
+            <CitySelect value={city} onChange={setCity} />
+            <Label text={t('auth.f.district')} />
+            <Input value={district} onChange={setDistrict} placeholder={t('auth.f.district_ph')} />
+            <Label text={t('auth.f.address')} />
+            <Input value={address} onChange={setAddress} placeholder={t('auth.f.address_ph')} />
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            {/* Hizmetler — MERKEZİ taksonomiden: alan seç → alt hizmetleri aç + fiyat/süre gir */}
+            <Section text={t('expert.reg.prof')} />
+            <Label text={t('expert.reg.service_area')} />
+            <View style={styles.chips}>
+              {SERVICE_CATS.map((c) => {
+                const on = c.id === svcCat;
+                return (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => setSvcCat(c.id)}
+                    style={[styles.chip, on && styles.chipActive]}
+                  >
+                    <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
+                      {t(c.labelKey)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Label text={t('expert.reg.services')} />
+            <Text variant="caption" tone="muted" style={styles.hint}>
+              {t('expert.reg.services_hint')}
+            </Text>
+            {servicesOf(svcCat).map((s) => {
+              const row = svc[s.id];
+              const on = !!row;
+              return (
+                <View key={s.id} style={styles.svcCard}>
+                  <Pressable style={styles.svcTop} onPress={() => toggleSvc(s)}>
+                    <View style={[styles.check, on && styles.checkOn]}>
+                      {on ? <Ionicons name="checkmark" size={14} color={colors.onAccent} /> : null}
+                    </View>
+                    <Text
+                      variant="bodyStrong"
+                      tone="ink"
+                      style={styles.svcNameText}
+                      numberOfLines={1}
+                    >
+                      {tri(s.label, locale)}
+                    </Text>
+                  </Pressable>
+                  {on ? (
+                    <View style={styles.svcRow}>
+                      <View style={styles.svcField}>
+                        <TextInput
+                          value={row.price}
+                          onChangeText={(v) => editSvc(s.id, 'price', v)}
+                          placeholder={t('expert.reg.service_price')}
+                          placeholderTextColor={colors.muted}
+                          keyboardType="number-pad"
+                          style={styles.svcInput}
+                        />
+                      </View>
+                      <View style={styles.svcField}>
+                        <TextInput
+                          value={row.dur}
+                          onChangeText={(v) => editSvc(s.id, 'dur', v)}
+                          placeholder={t('expert.reg.service_dur')}
+                          placeholderTextColor={colors.muted}
+                          keyboardType="number-pad"
+                          style={styles.svcInput}
+                        />
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            {/* Sertifikalar */}
+            <Label text={t('expert.reg.cert')} />
+            <View style={styles.certRow}>
+              <Pressable style={styles.certAdd} onPress={addCert}>
+                <Ionicons name="add" size={24} color={colors.inkSoft} />
+              </Pressable>
+              {certs.map((uri, i) => (
+                <Pressable
+                  key={`${uri}-${i}`}
+                  onPress={() =>
+                    Alert.alert(t('expert.reg.cert'), t('expert.reg.cert_remove_q'), [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      {
+                        text: t('profile.photo.remove'),
+                        style: 'destructive',
+                        onPress: () => setCerts((c) => c.filter((_, idx) => idx !== i)),
+                      },
+                    ])
+                  }
+                >
+                  <Image source={{ uri }} style={styles.certThumb} />
+                  <View style={styles.certRemove}>
+                    <Ionicons name="close" size={12} color="#fff" />
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+            <View style={styles.warnRow}>
+              <Ionicons name="shield-checkmark-outline" size={16} color={colors.accentFg} />
+              <Text variant="caption" tone="accentFg" style={styles.warnText}>
+                {t('expert.reg.cert_warn')}
+              </Text>
+            </View>
+
+            {/* Portfolyo — yaptığın işler (normal 7 / premium 20) */}
+            <Label text={`${t('expert.reg.portfolio')}  (${portfolio.length}/${PORTFOLIO_MAX})`} />
+            <Text variant="caption" tone="muted" style={styles.hint}>
+              {t('expert.reg.portfolio_hint')}
+            </Text>
+            <View style={styles.certRow}>
+              {portfolio.length < PORTFOLIO_MAX ? (
+                <Pressable style={styles.certAdd} onPress={addPortfolio}>
+                  <Ionicons name="images-outline" size={22} color={colors.inkSoft} />
+                </Pressable>
+              ) : null}
+              {portfolio.map((uri, i) => (
+                <View key={`${uri}-${i}`}>
+                  <Image source={{ uri }} style={styles.certThumb} />
+                  <Pressable
+                    style={styles.thumbRemove}
+                    hitSlop={6}
+                    onPress={() => setPortfolio((p) => p.filter((_, idx) => idx !== i))}
+                  >
+                    <Ionicons name="close-circle" size={20} color={colors.onColor} />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+
+            <Label text={t('expert.reg.social')} />
+            <SocialLinks value={social} onChange={setSocial} />
+            <Label text={t('expert.reg.hours')} />
+            <WorkingHours value={hours} onChange={setHours} />
+          </>
+        )}
+
+        {step === 4 && (
+          <>
+            {/* Salon bağlantısı */}
+            <Section text={t('expert.reg.salon_q')} />
+            <View style={styles.chips}>
+              <Chip label={t('common.no')} active={!bound} onPress={() => setBound(false)} />
+              <Chip label={t('common.yes')} active={bound} onPress={() => setBound(true)} />
+            </View>
+            {bound ? (
+              <>
+                {salonId ? (
+                  <View style={styles.selectedSalon}>
+                    <Ionicons name="storefront" size={18} color={colors.onAccent} />
+                    <View style={styles.selectedText}>
+                      <Text variant="caption" tone="onAccent">
+                        {t('expert.reg.salon_selected')}
+                      </Text>
+                      <Text variant="bodyStrong" tone="onAccent" numberOfLines={1}>
+                        {salonName}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => {
+                        setSalonId(null);
+                        setSalonName('');
+                      }}
+                      hitSlop={8}
+                    >
+                      <Text variant="caption" tone="onAccent" style={styles.change}>
+                        {t('expert.reg.salon_change')}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <>
+                    <Label text={t('expert.reg.salon_search')} />
+                    <View style={styles.salonSearch}>
+                      <Ionicons name="search" size={18} color={colors.muted} />
+                      <TextInput
+                        value={salonQuery}
+                        onChangeText={setSalonQuery}
+                        placeholder={t('expert.reg.salon_search_ph')}
+                        placeholderTextColor={colors.muted}
+                        style={styles.salonInput}
+                      />
+                    </View>
+                    {salonQuery.trim() ? (
+                      <View style={styles.salonResults}>
+                        {salonResults.length === 0 ? (
+                          <Text variant="caption" tone="muted" style={styles.salonEmpty}>
+                            {t('expert.reg.salon_none')}
+                          </Text>
+                        ) : (
+                          salonResults.map((s) => (
+                            <Pressable
+                              key={s.id}
+                              style={styles.salonRow}
+                              onPress={() => {
+                                setSalonId(s.id);
+                                setSalonName(s.name);
+                                setSalonQuery('');
+                              }}
+                            >
+                              <View style={[styles.salonThumb, styles.salonThumbIcon]}>
+                                <Ionicons
+                                  name="storefront-outline"
+                                  size={20}
+                                  color={colors.inkSoft}
+                                />
+                              </View>
+                              <View style={styles.selectedText}>
+                                <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                                  {s.name}
+                                </Text>
+                                <Text variant="caption" tone="muted" numberOfLines={1}>
+                                  {s.city} · {s.sector}
+                                </Text>
+                              </View>
+                              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                            </Pressable>
+                          ))
+                        )}
+                      </View>
+                    ) : null}
+                  </>
+                )}
+                {salonId ? (
+                  <>
+                    <Label text={t('expert.reg.code')} />
+                    <Text variant="caption" tone="muted" style={styles.hint}>
+                      {t('expert.reg.code_hint')}
+                    </Text>
+                    <Input value={code} onChange={setCode} placeholder={t('expert.reg.code_ph')} />
+                  </>
+                ) : null}
+              </>
+            ) : null}
+
+            {/* §uzman onboarding — önizleme: müşteriye yaklaşık görünüm */}
+            <Section text={t('expert.reg.step.finish')} />
+            <View style={styles.preview}>
+              <Text variant="bodyStrong" tone="ink" style={styles.previewName}>
+                {`${firstName.trim()} ${lastName.trim()}`.trim() || t('expert.reg.title')}
+              </Text>
+              <View style={styles.previewRow}>
+                <Ionicons name="person-outline" size={15} color={colors.muted} />
+                <Text variant="caption" tone="muted">
+                  {t('expert.reg.preview_role')}:{' '}
+                  {entityType ? t(`expert.reg.entity.${entityType}` as MessageKey) : '—'}
+                </Text>
+              </View>
+              <View style={styles.previewRow}>
+                <Ionicons name="location-outline" size={15} color={colors.muted} />
+                <Text variant="caption" tone="muted">
+                  {city}
+                  {district ? ` · ${district}` : ''}
+                </Text>
+              </View>
+              <View style={styles.previewRow}>
+                <Ionicons name="cut-outline" size={15} color={colors.muted} />
+                <Text variant="caption" tone="muted">
+                  {t('expert.reg.preview_services')}: {validServices.length}
+                </Text>
+              </View>
+              {bound && salonName ? (
+                <View style={styles.previewRow}>
+                  <Ionicons name="storefront-outline" size={15} color={colors.muted} />
+                  <Text variant="caption" tone="muted" numberOfLines={1}>
                     {salonName}
                   </Text>
                 </View>
-                <Pressable
-                  onPress={() => {
-                    setSalonId(null);
-                    setSalonName('');
-                  }}
-                  hitSlop={8}
-                >
-                  <Text variant="caption" tone="onAccent" style={styles.change}>
-                    {t('expert.reg.salon_change')}
-                  </Text>
-                </Pressable>
-              </View>
-            ) : (
-              <>
-                <Label text={t('expert.reg.salon_search')} />
-                <View style={styles.salonSearch}>
-                  <Ionicons name="search" size={18} color={colors.muted} />
-                  <TextInput
-                    value={salonQuery}
-                    onChangeText={setSalonQuery}
-                    placeholder={t('expert.reg.salon_search_ph')}
-                    placeholderTextColor={colors.muted}
-                    style={styles.salonInput}
-                  />
-                </View>
-                {salonQuery.trim() ? (
-                  <View style={styles.salonResults}>
-                    {salonResults.length === 0 ? (
-                      <Text variant="caption" tone="muted" style={styles.salonEmpty}>
-                        {t('expert.reg.salon_none')}
-                      </Text>
-                    ) : (
-                      salonResults.map((s) => (
-                        <Pressable
-                          key={s.id}
-                          style={styles.salonRow}
-                          onPress={() => {
-                            setSalonId(s.id);
-                            setSalonName(s.name);
-                            setSalonQuery('');
-                          }}
-                        >
-                          <View style={[styles.salonThumb, styles.salonThumbIcon]}>
-                            <Ionicons name="storefront-outline" size={20} color={colors.inkSoft} />
-                          </View>
-                          <View style={styles.selectedText}>
-                            <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                              {s.name}
-                            </Text>
-                            <Text variant="caption" tone="muted" numberOfLines={1}>
-                              {s.city} · {s.sector}
-                            </Text>
-                          </View>
-                          <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-                        </Pressable>
-                      ))
-                    )}
-                  </View>
-                ) : null}
-              </>
-            )}
-            {salonId ? (
-              <>
-                <Label text={t('expert.reg.code')} />
-                <Text variant="caption" tone="muted" style={styles.hint}>
-                  {t('expert.reg.code_hint')}
-                </Text>
-                <Input value={code} onChange={setCode} placeholder={t('expert.reg.code_ph')} />
-              </>
-            ) : null}
+              ) : null}
+              <Text variant="caption" tone="muted" style={styles.previewNote}>
+                {t('expert.reg.preview_note')}
+              </Text>
+            </View>
           </>
-        ) : null}
+        )}
       </ScrollView>
 
       <View style={styles.footer}>
-        {touched && !valid ? <MissingFields keys={missing} /> : null}
-        <Button
-          label={t('expert.reg.submit')}
-          variant={valid && !busy ? 'primary' : 'secondary'}
-          disabled={!valid || busy}
-          onPress={submit}
-        />
+        {step === STEP_COUNT - 1 ? (
+          <>
+            {touched && !valid ? <MissingFields keys={missing} /> : null}
+            <View style={styles.navRow}>
+              <Button
+                label={t('common.back')}
+                variant="secondary"
+                onPress={() => setStep((s) => s - 1)}
+              />
+              <View style={styles.navSpacer} />
+              <Button
+                label={t('expert.reg.submit')}
+                variant={valid && !busy ? 'primary' : 'secondary'}
+                disabled={!valid || busy}
+                onPress={submit}
+              />
+            </View>
+          </>
+        ) : (
+          <View style={styles.navRow}>
+            {step > 0 ? (
+              <Button
+                label={t('common.back')}
+                variant="secondary"
+                onPress={() => setStep((s) => s - 1)}
+              />
+            ) : (
+              <View style={{ flex: 1 }} />
+            )}
+            <View style={styles.navSpacer} />
+            <Button
+              label={t('common.next')}
+              variant={stepOk[step] ? 'primary' : 'secondary'}
+              disabled={!stepOk[step]}
+              onPress={() => setStep((s) => Math.min(STEP_COUNT - 1, s + 1))}
+            />
+          </View>
+        )}
       </View>
     </Screen>
+  );
+}
+
+// §uzman onboarding — sihirbaz ilerleme çubuğu (salon paralel)
+function StepBar({ step, titles }: { step: number; titles: MessageKey[] }) {
+  const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.stepBarWrap}>
+      <View style={styles.stepBar}>
+        {titles.map((_, i) => (
+          <View
+            key={i}
+            style={[styles.stepSeg, { backgroundColor: i <= step ? colors.accentFg : colors.line }]}
+          />
+        ))}
+      </View>
+      <Text variant="caption" tone="inkSoft" style={styles.stepLabel}>
+        {t('biz.step.step')} {step + 1}/{titles.length} · {t(titles[step] ?? titles[0]!)}
+      </Text>
+    </View>
   );
 }
 
@@ -938,4 +1143,34 @@ const makeStyles = (colors: ColorTokens) =>
     },
     salonThumbIcon: { alignItems: 'center', justifyContent: 'center' },
     footer: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(3) },
+    // §uzman onboarding — sihirbaz
+    stepBarWrap: { gap: space(0.75), marginBottom: space(1.5) },
+    stepBar: { flexDirection: 'row', gap: space(0.5) },
+    stepSeg: { flex: 1, height: 5, borderRadius: radius.pill },
+    stepLabel: { fontWeight: '600' },
+    navRow: { flexDirection: 'row', alignItems: 'center' },
+    navSpacer: { width: space(1.5) },
+    entityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.25), marginTop: space(1) },
+    entityCard: {
+      width: '47%',
+      flexGrow: 1,
+      gap: space(0.5),
+      padding: space(1.75),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+      borderWidth: 1.5,
+      borderColor: 'transparent',
+    },
+    entityCardOn: { backgroundColor: colors.accent, borderColor: colors.accentFg },
+    entityTitle: { fontSize: 15 },
+    preview: {
+      gap: space(0.75),
+      padding: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+      marginBottom: space(1),
+    },
+    previewName: { fontSize: 17 },
+    previewRow: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    previewNote: { marginTop: space(0.5) },
   });

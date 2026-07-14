@@ -15,6 +15,7 @@ type Verification = {
   bin: boolean;
   address: boolean;
   social: boolean;
+  cert?: boolean; // §uzman onboarding — uzmana özel: doğrulanmış sertifika
 };
 
 // §3.3 — KATMANLI güven rozetleri. Hepsi aynı anlama gelmez: AYNA Verified üst rozet (vurgulu),
@@ -35,6 +36,7 @@ export function VerificationBadges({
     { on: verification.business, icon: 'business-outline', key: 'verify.business' },
     { on: verification.bin, icon: 'document-text-outline', key: 'verify.bin' },
     { on: verification.address, icon: 'location-outline', key: 'verify.address' },
+    { on: verification.cert ?? false, icon: 'ribbon-outline', key: 'verify.cert' },
     { on: verification.social, icon: 'share-social-outline', key: 'verify.social' },
   ];
   const items = all.filter((i) => i.on);

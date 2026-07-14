@@ -19,6 +19,8 @@ import {
   type QuoteReq,
   type BusinessDetail,
   type BizVerification,
+  type SpecialistRow,
+  type SpecialistDetail,
   type Campaign,
   type Category,
   type CirclePost,
@@ -54,6 +56,7 @@ type Tab =
   | 'profileChanges'
   | 'kyc'
   | 'businesses'
+  | 'specialists'
   | 'professionals'
   | 'services'
   | 'prices'
@@ -150,6 +153,7 @@ export default function AdminApp() {
       title: 'ONAY KUYRUĞU',
       items: [
         { id: 'businesses', label: 'Salon Onayları', icon: '🏪', badge: q?.businesses },
+        { id: 'specialists', label: 'Uzman Doğrulama', icon: '💇', badge: undefined },
         { id: 'kyc', label: 'Kimlik (KYC)', icon: '🪪', badge: q?.kyc },
         {
           id: 'profileChanges',
@@ -263,6 +267,7 @@ export default function AdminApp() {
         {tab === 'profileChanges' && <ProfileChangesView />}
         {tab === 'kyc' && <KycView />}
         {tab === 'businesses' && <BusinessesView />}
+        {tab === 'specialists' && <SpecialistsView />}
         {tab === 'professionals' && <ProfessionalsView />}
         {tab === 'services' && <ServicesView />}
         {tab === 'prices' && <PricesView />}
@@ -1545,6 +1550,139 @@ function BusinessesView() {
                 </button>
               ) : null}
             </div>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+// §uzman onboarding — admin uzman doğrulama kontrol listesi
+const SP_ENTITY_LABEL: Record<string, string> = {
+  freelance: 'Serbest çalışan',
+  ip: 'ИП (kayıtlı bireysel girişimci)',
+};
+// Kimlik = KYC (ayrı kuyruk, salt-okunur burada). Sertifika + Sosyal = admin işaretler.
+const SP_VERIFY_CHECKS: { key: 'cert' | 'social'; label: string }[] = [
+  { key: 'cert', label: 'Sertifika' },
+  { key: 'social', label: 'Sosyal medya' },
+];
+
+function SpecialistsView() {
+  const [detail, setDetail] = useState<SpecialistDetail | null>(null);
+  const { data } = useAsync<SpecialistRow[]>(() => api.specialists(), []);
+  const openDetail = async (id: string) => setDetail(await api.specialistDetail(id));
+  const toggleVerify = async (key: 'cert' | 'social', on: boolean) => {
+    if (!detail) return;
+    const r = await api.verifySpecialist(detail.id, { [key]: on });
+    setDetail({
+      ...detail,
+      verification: {
+        ...detail.verification,
+        cert: r.verification.cert,
+        social: r.verification.social,
+      },
+      aynaVerified: detail.verification.identity && (r.verification.cert || r.verification.social),
+    });
+  };
+  return (
+    <>
+      <h1 className="page-title">Uzman Doğrulama</h1>
+      <p className="page-sub">
+        Bağımsız uzman katmanlı doğrulama — kimlik (KYC), sertifika, sosyal medya → AYNA Onaylı
+      </p>
+      <div className="card">
+        {!data || data.length === 0 ? (
+          <div className="empty">Kayıt yok</div>
+        ) : (
+          data.map((s) => (
+            <div key={s.id} className="list-row">
+              <div className="grow" style={{ cursor: 'pointer' }} onClick={() => openDetail(s.id)}>
+                <div className="name">
+                  {s.name} {s.aynaVerified ? '🛡️' : ''}
+                </div>
+                <div className="meta">
+                  {SP_ENTITY_LABEL[s.entityType] ?? s.entityType} · {s.city || '—'} · KYC:{' '}
+                  {s.kycStatus}
+                  {s.verification.cert ? ' · ✓Sertifika' : ''}
+                  {s.verification.social ? ' · ✓Sosyal' : ''}
+                </div>
+              </div>
+              <button className="btn-sm btn-ghost" onClick={() => openDetail(s.id)}>
+                Detay
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {detail ? (
+        <div className="modal-backdrop" onClick={() => setDetail(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <div>
+                <div className="page-title" style={{ fontSize: 20 }}>
+                  {detail.name} {detail.aynaVerified ? '🛡️ AYNA Onaylı' : ''}
+                </div>
+                <span
+                  className={`pill ${detail.kycStatus === 'approved' ? 'approved' : 'pending'}`}
+                >
+                  KYC: {detail.kycStatus}
+                </span>
+              </div>
+              <button className="btn-sm btn-ghost" onClick={() => setDetail(null)}>
+                Kapat
+              </button>
+            </div>
+            <div className="kv-grid">
+              <KV k="Uzman türü" v={SP_ENTITY_LABEL[detail.entityType] ?? detail.entityType} />
+              <KV k="IIN" v={detail.iin || '—'} />
+              <KV k="Şehir" v={detail.city || '—'} />
+              <KV k="Sertifika sayısı" v={String(detail.certificates.length)} />
+              <KV k="Instagram" v={detail.socialInstagram || '—'} />
+              <KV k="Sosyal doğrulama kodu" v={detail.socialVerifyCode || '—'} />
+              <KV k="Bio" v={detail.bio || '—'} />
+            </div>
+
+            <h3 className="section-head" style={{ marginTop: 14 }}>
+              Doğrulama kontrol listesi
+            </h3>
+            <p className="page-sub" style={{ marginTop: 0 }}>
+              Kimlik, KYC kuyruğundan onaylanır. Sertifika ve sosyal medyayı burada işaretle.
+            </p>
+            <div className="verify-grid">
+              <div className={`verify-chip ${detail.verification.identity ? 'on' : ''}`}>
+                {detail.verification.identity ? '✓' : '○'} Kimlik (KYC)
+              </div>
+              {SP_VERIFY_CHECKS.map((vc) => {
+                const on = detail.verification[vc.key];
+                return (
+                  <button
+                    key={vc.key}
+                    className={`verify-chip ${on ? 'on' : ''}`}
+                    onClick={() => toggleVerify(vc.key, !on)}
+                  >
+                    {on ? '✓' : '○'} {vc.label}
+                  </button>
+                );
+              })}
+            </div>
+            {detail.certificates.length > 0 ? (
+              <div
+                className="cert-thumbs"
+                style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}
+              >
+                {detail.certificates.map((c, i) => (
+                  <a key={i} href={c} target="_blank" rel="noreferrer">
+                    <img
+                      src={c}
+                      alt={`sertifika ${i + 1}`}
+                      style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8 }}
+                    />
+                  </a>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}

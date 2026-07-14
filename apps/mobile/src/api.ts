@@ -99,6 +99,7 @@ export interface SellerBusiness {
     bin: boolean;
     address: boolean;
     social: boolean;
+    cert?: boolean; // §uzman onboarding — uzmana özel doğrulanmış sertifika
   };
 }
 export interface SellerInviteCode {
@@ -328,6 +329,8 @@ export interface RegisterSpecialistInput {
   businessId?: string;
   code?: string;
   certificates?: string[];
+  entityType?: 'freelance' | 'ip'; // §uzman onboarding — serbest | kayıtlı ИП
+  iin?: string; // 12 hane; yalnız ИП uzman
   deviceFp?: string; // §4.4 — cihaz parmak izi (kalıcı engel 2. katman)
 }
 

@@ -112,6 +112,14 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(flags),
     }),
+  // §uzman onboarding — uzman doğrulama kuyruğu
+  specialists: () => req<SpecialistRow[]>('/admin/specialists'),
+  specialistDetail: (id: string) => req<SpecialistDetail>(`/admin/specialists/${id}`),
+  verifySpecialist: (id: string, flags: Record<string, boolean>) =>
+    req<{ verification: { cert: boolean; social: boolean } }>(`/admin/specialists/${id}/verify`, {
+      method: 'POST',
+      body: JSON.stringify(flags),
+    }),
   users: () => req<AdminUser[]>('/admin/users'),
   setUserRole: (id: string, role: string) =>
     req(`/admin/users/${id}/role`, { method: 'POST', body: JSON.stringify({ role }) }),
@@ -563,6 +571,31 @@ export interface BusinessDetail extends Business {
   socialInstagram?: string;
   socialTiktok?: string;
   verification?: BizVerification;
+}
+// §uzman onboarding — admin uzman doğrulama
+export interface SpVerification {
+  identity: boolean;
+  cert: boolean;
+  social: boolean;
+}
+export interface SpecialistRow {
+  id: string;
+  name: string;
+  city: string;
+  entityType: string;
+  hasIin: boolean;
+  kycStatus: string;
+  verification: SpVerification;
+  aynaVerified: boolean;
+  createdAt: string;
+}
+export interface SpecialistDetail extends SpecialistRow {
+  bio: string;
+  iin: string;
+  certificates: string[];
+  kycVerifiedAt?: string | null;
+  socialInstagram: string;
+  socialVerifyCode: string;
 }
 export interface AdminReview {
   id: string;
