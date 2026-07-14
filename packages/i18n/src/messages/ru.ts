@@ -149,6 +149,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'salon.profile.areas': 'Направления услуг',
   'salon.profile.hours': 'Часы работы',
   'salon.profile.social': 'Соцсети',
+  'salon.social.verify_title': 'Подтверждение владения Instagram',
+  'salon.social.verify_hint':
+    'Введите имя пользователя → мы дадим код. Добавьте код в описание профиля Instagram; команда проверит и подтвердит аккаунт.',
+  'salon.social.get_code': 'Получить код',
+  'salon.social.add_to_bio': 'Добавьте этот код в описание Instagram:',
+  'salon.social.pending_admin': 'После добавления кода команда проверит и выдаст значок «Соцсети».',
+  'salon.social.verified': 'Instagram подтверждён ✓',
   'salon.profile.saved': 'Профиль салона сохранён',
   'salon.staff.title': 'Команда',
   'salon.staff.intro': 'Управляй мастерами: приглашай, смотри показатели, удаляй.',

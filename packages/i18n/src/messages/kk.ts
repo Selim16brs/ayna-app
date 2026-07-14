@@ -148,6 +148,13 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'salon.profile.areas': 'Қызмет салалары',
   'salon.profile.hours': 'Жұмыс уақыты',
   'salon.profile.social': 'Әлеуметтік желі',
+  'salon.social.verify_title': 'Instagram иелігін растау',
+  'salon.social.verify_hint':
+    'Пайдаланушы атыңды енгіз → саған арнайы код береміз. Кодты Instagram биосына қос; біздің команда тексеріп аккаунтты растайды.',
+  'salon.social.get_code': 'Код алу',
+  'salon.social.add_to_bio': 'Бұл кодты Instagram биосына қос:',
+  'salon.social.pending_admin': 'Кодты қосқаннан кейін команда тексеріп Әлеумет белгісін береді.',
+  'salon.social.verified': 'Instagram расталды ✓',
   'salon.profile.saved': 'Салон профилі сақталды',
   'salon.staff.title': 'Құрам',
   'salon.staff.intro': 'Мамандарыңды басқар: шақыр, көрсеткішті көр, шығар.',

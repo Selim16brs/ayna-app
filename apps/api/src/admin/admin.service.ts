@@ -402,6 +402,7 @@ export class AdminService {
       womenOnly: b.womenOnly,
       socialInstagram: b.socialInstagram,
       socialTiktok: b.socialTiktok,
+      socialVerifyCode: b.socialVerifyCode,
       verification: {
         identity: b.identityVerified,
         business: b.businessVerified,

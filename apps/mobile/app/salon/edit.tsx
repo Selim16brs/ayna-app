@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { activeCategories } from '../../src/taxonomy';
@@ -44,6 +45,41 @@ export default function SalonEditScreen() {
   const [social, setSocial] = useState(sellerSocial);
   const [hours, setHours] = useState(sellerHours);
   const cats = activeCategories();
+
+  // §5.5 Faz 4 — sosyal medya sahiplik doğrulama (AYN-XXXX kodu Instagram bio'ya)
+  const token = useStore((s) => s.token);
+  const [bizId, setBizId] = useState<string | null>(null);
+  const [igUser, setIgUser] = useState('');
+  const [igCode, setIgCode] = useState('');
+  const [igVerified, setIgVerified] = useState(false);
+  const [igBusy, setIgBusy] = useState(false);
+  useEffect(() => {
+    if (!token) return;
+    void api
+      .myBusinesses(token)
+      .then((list) => {
+        const b = list[0];
+        if (!b) return;
+        setBizId(b.id);
+        if (b.socialInstagram) setIgUser(b.socialInstagram);
+        if (b.socialVerifyCode) setIgCode(b.socialVerifyCode);
+        setIgVerified(b.verification?.social ?? false);
+      })
+      .catch(() => undefined);
+  }, [token]);
+  const genSocialCode = async () => {
+    if (!token || !bizId || igUser.trim().length < 1) return;
+    setIgBusy(true);
+    try {
+      const r = await api.socialVerifyCode(token, bizId, igUser.trim());
+      setIgCode(r.code);
+      setIgVerified(r.verified);
+    } catch {
+      Alert.alert(t('common.error'));
+    } finally {
+      setIgBusy(false);
+    }
+  };
 
   // KRİTİK: foto DATA URL olarak saklanır — file:// yerel yol uygulama kapanınca SİLİNİR (veri kaybı).
   const editCover = async () => {
@@ -174,6 +210,58 @@ export default function SalonEditScreen() {
         <Label text={t('salon.profile.social')} />
         <SocialLinks value={social} onChange={setSocial} />
 
+        {/* §5.5 Faz 4 — Instagram sahiplik doğrulama (kod-bio yöntemi) */}
+        {bizId ? (
+          <>
+            <Label text={t('salon.social.verify_title')} />
+            {igVerified ? (
+              <View style={styles.igVerified}>
+                <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+                <Text variant="body" tone="ink">
+                  {t('salon.social.verified')} @{igUser}
+                </Text>
+              </View>
+            ) : (
+              <>
+                <Text variant="caption" tone="muted" style={styles.igHint}>
+                  {t('salon.social.verify_hint')}
+                </Text>
+                <View style={styles.igRow}>
+                  <View style={styles.igInput}>
+                    <TextInput
+                      value={igUser}
+                      onChangeText={(v) => setIgUser(v.replace(/^@+/, ''))}
+                      placeholder="kullanici_adi"
+                      placeholderTextColor={colors.muted}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      style={styles.igField}
+                    />
+                  </View>
+                  <Button
+                    label={t('salon.social.get_code')}
+                    variant={igUser.trim() && !igBusy ? 'primary' : 'secondary'}
+                    onPress={genSocialCode}
+                  />
+                </View>
+                {igCode ? (
+                  <View style={styles.igCodeBox}>
+                    <Text variant="caption" tone="muted">
+                      {t('salon.social.add_to_bio')}
+                    </Text>
+                    <Text variant="display" tone="accentFg" style={styles.igCode}>
+                      {igCode}
+                    </Text>
+                    <Text variant="caption" tone="muted">
+                      {t('salon.social.pending_admin')}
+                    </Text>
+                  </View>
+                ) : null}
+              </>
+            )}
+          </>
+        ) : null}
+
         <View style={styles.save}>
           <Button label={t('common.save')} variant="primary" onPress={onSave} />
         </View>
@@ -297,4 +385,30 @@ const makeStyles = (colors: ColorTokens) =>
     },
     areaChipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
     save: { marginTop: space(2.5) },
+    igHint: { marginBottom: space(1) },
+    igRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    igInput: { flex: 1 },
+    igField: {
+      height: 48,
+      paddingHorizontal: space(1.75),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+      color: colors.ink,
+      fontSize: 15,
+    },
+    igCodeBox: {
+      marginTop: space(1.5),
+      padding: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      gap: space(0.5),
+    },
+    igCode: { fontSize: 26, fontWeight: '900', letterSpacing: 2 },
+    igVerified: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      marginTop: space(0.5),
+    },
   });

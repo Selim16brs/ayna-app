@@ -91,6 +91,15 @@ export interface SellerBusiness {
   workingHours: string;
   status: string;
   rejectReason?: string;
+  socialInstagram?: string;
+  socialVerifyCode?: string;
+  verification?: {
+    identity: boolean;
+    business: boolean;
+    bin: boolean;
+    address: boolean;
+    social: boolean;
+  };
 }
 export interface SellerInviteCode {
   id: string;
@@ -381,6 +390,13 @@ export const api = {
 
   // Salon sahibi/uzman kendi işletmesi (mobil yönetim) — hepsi sahibe-kapılı
   myBusinesses: (token: string) => get<SellerBusiness[]>('/businesses/mine', token),
+  // §5.5 Faz 4 — sosyal medya sahiplik doğrulama kodu (Instagram kullanıcı adı → AYN-XXXX)
+  socialVerifyCode: (token: string, businessId: string, username: string) =>
+    post<{ username: string; code: string; verified: boolean }>(
+      `/businesses/${businessId}/social/verify-code`,
+      { username },
+      token,
+    ),
   // Faz C — salonun gerçek kadrosu (davet koduyla bağlı uzmanlar)
   businessStaff: (token: string, businessId: string) =>
     get<{ id: string; name: string; bio: string; kind: string }[]>(

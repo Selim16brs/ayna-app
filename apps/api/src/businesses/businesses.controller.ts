@@ -14,6 +14,7 @@ import { BusinessesService } from './businesses.service';
 
 const replySchema = z.object({ reply: z.string().min(1).max(500) });
 const disputeReasonSchema = z.object({ reason: z.string().max(500).optional() });
+const socialCodeSchema = z.object({ username: z.string().min(1).max(60) });
 const bookingActionSchema = z.object({
   action: z.enum(['approve', 'no-show', 'cancel', 'propose']),
   proposedStartMs: z.number().int().optional(), // §4.1 alternatif öneri (epoch ms)
@@ -61,6 +62,17 @@ export class BusinessesController {
   @UseGuards(JwtAuthGuard)
   createCode(@Param('id') id: string, @Req() req: AuthedRequest) {
     return this.businesses.createInviteCode(id, req.user!.id);
+  }
+
+  // §5.5 Faz 4 — sosyal medya sahiplik doğrulama kodu üret (salon Instagram kullanıcı adını verir)
+  @Post(':id/social/verify-code')
+  @UseGuards(JwtAuthGuard)
+  socialVerifyCode(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(socialCodeSchema)) body: { username: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.businesses.setSocialVerifyCode(id, req.user!.id, body.username);
   }
 
   @Get(':id/invite-codes')

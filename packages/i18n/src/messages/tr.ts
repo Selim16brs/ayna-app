@@ -158,6 +158,14 @@ export const tr = {
   'salon.profile.areas': 'Hizmet alanları',
   'salon.profile.hours': 'Çalışma saatleri',
   'salon.profile.social': 'Sosyal medya',
+  'salon.social.verify_title': 'Instagram sahiplik doğrulama',
+  'salon.social.verify_hint':
+    'Kullanıcı adını gir → sana özel bir kod verelim. Kodu Instagram biyografine ekle; ekibimiz kontrol edip hesabını doğrulayacak.',
+  'salon.social.get_code': 'Kod al',
+  'salon.social.add_to_bio': 'Bu kodu Instagram biyografine ekle:',
+  'salon.social.pending_admin':
+    'Kodu ekledikten sonra ekibimiz kontrol edip Sosyal rozetini verecek.',
+  'salon.social.verified': 'Instagram doğrulandı ✓',
   'salon.profile.saved': 'Salon profili kaydedildi',
   'salon.staff.title': 'Kadro',
   'salon.staff.intro': 'Uzmanlarını yönet: davet et, performans gör, çıkar.',

@@ -343,6 +343,28 @@ export class BusinessesService {
     return { id: updated.id, disputed: updated.disputed };
   }
 
+  // §5.5 Faz 4 — sosyal medya sahiplik doğrulama: salon Instagram kullanıcı adını girer,
+  // AYN-XXXX kodu üretilir; salon bunu bio'suna ekler; admin kontrol edip social rozetini işaretler.
+  async setSocialVerifyCode(businessId: string, ownerUserId: string, username: string) {
+    await this.assertOwner(businessId, ownerUserId);
+    const handle = username.replace(/^@+/, '').trim().slice(0, 60);
+    const code = `AYN-${randomCode(4)}`;
+    const updated = await this.prisma.business.update({
+      where: { id: businessId },
+      // Kullanıcı adı değiştiyse doğrulama sıfırlanır (yeni hesap yeniden doğrulanmalı)
+      data: {
+        socialInstagram: handle,
+        socialVerifyCode: code,
+        ...(handle !== '' ? { socialVerified: false } : {}),
+      },
+    });
+    return {
+      username: updated.socialInstagram,
+      code: updated.socialVerifyCode,
+      verified: updated.socialVerified,
+    };
+  }
+
   async createInviteCode(businessId: string, ownerUserId: string) {
     await this.assertOwner(businessId, ownerUserId);
     let code = randomCode();
@@ -409,6 +431,10 @@ function mapBusiness(b: Business) {
     foundedYear: b.foundedYear ?? undefined,
     womenOnly: b.womenOnly,
     hasBin: /^\d{12}$/.test(b.bin),
+    // §5.5 — sosyal medya (kullanıcı adı + doğrulama kodu bio'ya eklenmek üzere; kod herkese açık)
+    socialInstagram: b.socialInstagram,
+    socialTiktok: b.socialTiktok,
+    socialVerifyCode: b.socialVerifyCode,
     // §3.3 katmanlı doğrulama rozetleri
     verification: {
       identity: b.identityVerified,
