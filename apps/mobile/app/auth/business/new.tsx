@@ -86,6 +86,8 @@ export default function NewBusinessScreen() {
   const [vatPayer, setVatPayer] = useState(false);
 
   const [name, setName] = useState('');
+  const [foundedYear, setFoundedYear] = useState('');
+  const [womenOnly, setWomenOnly] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [areas, setAreas] = useState<Set<MessageKey>>(new Set(['category.hair']));
   const [city, setCity] = useState<string | null>(null);
@@ -232,6 +234,8 @@ export default function NewBusinessScreen() {
         ...(managerName.trim() ? { managerName: managerName.trim() } : {}),
         ...(oked.trim() ? { oked: oked.trim() } : {}),
         vatPayer,
+        ...(foundedYear.length === 4 ? { foundedYear: Number(foundedYear) } : {}),
+        womenOnly,
         workingHours: serializeHours(hours),
         taxId: tax.trim(),
       });
@@ -493,6 +497,23 @@ export default function NewBusinessScreen() {
               multiline
               style={styles.textarea}
             />
+            <Label text={t('biz.field.founded')} />
+            <Input
+              value={foundedYear}
+              onChange={(v) => setFoundedYear(v.replace(/[^0-9]/g, '').slice(0, 4))}
+              placeholder="2020"
+              keyboardType="phone-pad"
+            />
+            <Pressable style={styles.vatRow} onPress={() => setWomenOnly((v) => !v)}>
+              <Ionicons
+                name={womenOnly ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={womenOnly ? colors.accentFg : colors.inkSoft}
+              />
+              <Text variant="body" tone="ink" style={styles.vatText}>
+                {t('biz.field.women_only')}
+              </Text>
+            </Pressable>
           </>
         )}
 

@@ -831,6 +831,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'biz.field.manager_ph': 'ФИО',
   'biz.field.oked': 'Код деятельности ОКЭД',
   'biz.field.vat': 'Я плательщик НДС',
+  'biz.field.founded': 'Год основания',
+  'biz.field.women_only': 'Обслуживание только женщин',
   'biz.section.about': 'О салоне',
   'biz.field.owner_first': 'Имя',
   'biz.field.owner_last': 'Фамилия',

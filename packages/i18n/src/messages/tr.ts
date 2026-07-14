@@ -885,6 +885,8 @@ export const tr = {
   'biz.field.manager_ph': 'Ad Soyad',
   'biz.field.oked': 'OKED faaliyet kodu',
   'biz.field.vat': 'KDV mükellefiyim',
+  'biz.field.founded': 'Kuruluş yılı',
+  'biz.field.women_only': 'Yalnızca kadınlara hizmet',
   'biz.section.about': 'Salon hakkında',
   'biz.field.owner_first': 'Ad',
   'biz.field.owner_last': 'Soyad',

@@ -825,6 +825,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'biz.field.manager_ph': 'Аты-жөні',
   'biz.field.oked': 'ЭҚЖЖ қызмет коды',
   'biz.field.vat': 'ҚҚС төлеушісімін',
+  'biz.field.founded': 'Құрылған жылы',
+  'biz.field.women_only': 'Тек әйелдерге қызмет',
   'biz.section.about': 'Салон туралы',
   'biz.field.owner_first': 'Аты',
   'biz.field.owner_last': 'Тегі',
