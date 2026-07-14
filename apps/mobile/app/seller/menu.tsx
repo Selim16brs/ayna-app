@@ -31,6 +31,14 @@ const ITEMS: {
     tone: 'sage',
   },
   {
+    id: 'verification',
+    icon: 'ribbon',
+    labelKey: 'seller.menu.verify',
+    descKey: 'seller.menu.verify_d',
+    route: '/seller/verification',
+    tone: 'accent',
+  },
+  {
     id: 'reengage',
     icon: 'heart',
     labelKey: 'seller.menu.reengage',

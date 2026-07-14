@@ -400,6 +400,23 @@ export const api = {
       { username },
       token,
     ),
+  // §uzman onboarding — uzmanın katmanlı doğrulama durumu + sosyal sahiplik
+  myVerification: (token: string) =>
+    get<{
+      verification: { identity: boolean; cert: boolean; social: boolean; business: boolean };
+      aynaVerified: boolean;
+      entityType: string;
+      hasIin: boolean;
+      socialInstagram: string;
+      socialVerifyCode: string;
+      kycStatus: string;
+    }>('/specialists/me/verification', token),
+  specialistSocialVerifyCode: (token: string, username: string) =>
+    post<{ username: string; code: string }>(
+      '/specialists/me/social/verify-code',
+      { username },
+      token,
+    ),
   // Faz C — salonun gerçek kadrosu (davet koduyla bağlı uzmanlar)
   businessStaff: (token: string, businessId: string) =>
     get<{ id: string; name: string; bio: string; kind: string }[]>(
