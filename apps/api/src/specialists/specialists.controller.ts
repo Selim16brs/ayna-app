@@ -131,6 +131,20 @@ export class SpecialistsController {
     return this.specialists.setCertificates(req.user!.id, list);
   }
 
+  // §uzman onboarding — kendi doğrulama durumum (kimlik/sertifika/sosyal + AYNA Onaylı)
+  @Get('me/verification')
+  @UseGuards(JwtAuthGuard)
+  myVerification(@Req() req: AuthedRequest) {
+    return this.specialists.myVerification(req.user!.id);
+  }
+
+  // §uzman onboarding Faz 4 — Instagram sahiplik doğrulama kodu al (AYN-XXXX)
+  @Post('me/social/verify-code')
+  @UseGuards(JwtAuthGuard)
+  socialVerifyCode(@Req() req: AuthedRequest, @Body() body: { username?: string }) {
+    return this.specialists.setSocialVerifyCode(req.user!.id, String(body?.username ?? ''));
+  }
+
   // §CRM — bugün doğum günü olan müşterilerim + kutlama gönder
   @Get('me/birthdays')
   @UseGuards(JwtAuthGuard)

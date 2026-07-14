@@ -30,6 +30,12 @@ const bizVerifySchema = z.object({
   social: z.boolean().optional(),
 });
 type BizVerifyInput = z.infer<typeof bizVerifySchema>;
+// §uzman onboarding — uzman katmanlı doğrulama (kimlik=KYC ayrı akış; burada sertifika+sosyal)
+const spVerifySchema = z.object({
+  cert: z.boolean().optional(),
+  social: z.boolean().optional(),
+});
+type SpVerifyInput = z.infer<typeof spVerifySchema>;
 const restrictSchema = z.object({ reason: z.string().min(1).max(300) });
 // §7.2 — itiraz kararı: yorumu tut (keep) veya kural ihlalinde gizle (remove)
 const resolveDisputeSchema = z.object({ action: z.enum(['keep', 'remove']) });
@@ -176,6 +182,25 @@ export class AdminController {
     @Body(new ZodValidationPipe(bizVerifySchema)) body: BizVerifyInput,
   ) {
     return this.admin.setBusinessVerification(id, body);
+  }
+
+  // §uzman onboarding — admin uzman doğrulama kuyruğu
+  @Get('specialists')
+  specialists() {
+    return this.admin.specialists();
+  }
+
+  @Get('specialists/:id')
+  specialistDetail(@Param('id') id: string) {
+    return this.admin.specialistDetail(id);
+  }
+
+  @Post('specialists/:id/verify')
+  verifySpecialist(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(spVerifySchema)) body: SpVerifyInput,
+  ) {
+    return this.admin.setSpecialistVerification(id, body);
   }
 
   // Kullanıcı yönetimi

@@ -128,7 +128,14 @@ export class CatalogService {
     // dolu; demo/seed pro'da null. Bağ varsa DM CTA + KYC rozeti (EK Z.1/Z.3) çalışır.
     const sp = await this.prisma.specialist.findFirst({
       where: { proId: p.id },
-      select: { userId: true, certificates: true },
+      select: {
+        userId: true,
+        certificates: true,
+        entityType: true,
+        iin: true,
+        certVerified: true,
+        socialVerified: true,
+      },
     });
     const owner = sp
       ? await this.prisma.user.findUnique({
@@ -153,15 +160,22 @@ export class CatalogService {
             },
           })
         : null;
+    // §uzman onboarding — uzman resmî kaydı: kayıtlı ИП + geçerli IIN (public'te açık IIN yok)
+    const expertRegistered = sp?.entityType === 'ip' && /^\d{12}$/.test(sp?.iin ?? '');
     const verification = {
       identity: salonBiz?.identityVerified ?? kyc,
-      business: salonBiz?.businessVerified ?? false,
-      bin: salonBiz?.binVerified ?? false,
+      business: salonBiz?.businessVerified ?? expertRegistered,
+      bin: salonBiz?.binVerified ?? expertRegistered,
       address: salonBiz?.addressVerified ?? false,
-      social: salonBiz?.socialVerified ?? false,
+      social: salonBiz?.socialVerified ?? sp?.socialVerified ?? false,
+      // uzmana özel katman: doğrulanmış sertifika (salonda yok)
+      cert: p.kind === 'salon' ? false : (sp?.certVerified ?? false),
     };
-    // AYNA Verified (üst rozet): kimlik + (işletme veya BİN) doğrulandığında.
-    const aynaVerified = verification.identity && (verification.business || verification.bin);
+    // AYNA Verified (üst rozet): salon → kimlik + (işletme|BİN); uzman → kimlik + (sertifika|sosyal|kayıt).
+    const aynaVerified =
+      p.kind === 'salon'
+        ? verification.identity && (verification.business || verification.bin)
+        : verification.identity && (verification.cert || verification.social || expertRegistered);
     return {
       ...mapPro(p),
       image: ownerImage || p.imageUrl, // uzmanın gerçek fotosu esas (hesap verisi)

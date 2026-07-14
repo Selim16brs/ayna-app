@@ -499,6 +499,88 @@ export class AdminService {
     };
   }
 
+  // §uzman onboarding — admin uzman doğrulama kuyruğu (bağımsız uzmanlar)
+  async specialists() {
+    const rows = await this.prisma.specialist.findMany({
+      where: { kind: 'independent' },
+      orderBy: { createdAt: 'desc' },
+      take: 300,
+    });
+    const userIds = rows.map((s) => s.userId);
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, city: true, kycStatus: true },
+    });
+    const byId = new Map(users.map((u) => [u.id, u]));
+    return rows.map((s) => {
+      const u = byId.get(s.userId);
+      const identity = u?.kycStatus === 'approved';
+      return {
+        id: s.id,
+        name: u?.name ?? '',
+        city: u?.city ?? '',
+        entityType: s.entityType,
+        hasIin: /^\d{12}$/.test(s.iin),
+        kycStatus: u?.kycStatus ?? 'none',
+        verification: {
+          identity,
+          cert: s.certVerified,
+          social: s.socialVerified,
+        },
+        aynaVerified: identity && (s.certVerified || s.socialVerified),
+        createdAt: s.createdAt,
+      };
+    });
+  }
+
+  async specialistDetail(id: string) {
+    const s = await this.prisma.specialist.findUnique({ where: { id } });
+    if (!s) throw new NotFoundException({ code: 'SPECIALIST_NOT_FOUND', message: 'Uzman yok' });
+    const u = await this.prisma.user.findUnique({
+      where: { id: s.userId },
+      select: { name: true, city: true, kycStatus: true, kycVerifiedAt: true },
+    });
+    const identity = u?.kycStatus === 'approved';
+    return {
+      id: s.id,
+      name: u?.name ?? '',
+      city: u?.city ?? '',
+      bio: s.bio,
+      entityType: s.entityType,
+      iin: s.iin, // admin resmî kaydı görür (public'te açık değil)
+      certificates: s.certificates,
+      kycStatus: u?.kycStatus ?? 'none',
+      kycVerifiedAt: u?.kycVerifiedAt ?? null,
+      socialInstagram: s.socialInstagram,
+      socialVerifyCode: s.socialVerifyCode,
+      verification: {
+        identity,
+        cert: s.certVerified,
+        social: s.socialVerified,
+      },
+      aynaVerified: identity && (s.certVerified || s.socialVerified),
+    };
+  }
+
+  async setSpecialistVerification(
+    id: string,
+    flags: { cert?: boolean | undefined; social?: boolean | undefined },
+  ) {
+    const s = await this.prisma.specialist.findUnique({ where: { id } });
+    if (!s) throw new NotFoundException({ code: 'SPECIALIST_NOT_FOUND', message: 'Uzman yok' });
+    const updated = await this.prisma.specialist.update({
+      where: { id },
+      data: {
+        ...(flags.cert != null ? { certVerified: flags.cert } : {}),
+        ...(flags.social != null ? { socialVerified: flags.social } : {}),
+      },
+    });
+    return {
+      id: updated.id,
+      verification: { cert: updated.certVerified, social: updated.socialVerified },
+    };
+  }
+
   // Kullanıcılar (temel liste; PII/telefon gösterilmez)
   async users() {
     const rows = await this.prisma.user.findMany({

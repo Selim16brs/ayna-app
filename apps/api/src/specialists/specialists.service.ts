@@ -6,6 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
 import type { Specialist, User } from '@prisma/client';
 import type { Env } from '@ayna/config/env';
 import { ENV } from '../config/config.module';
@@ -21,6 +22,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
 import { StorageService } from '../storage/storage.service';
 import type { RegisterSpecialistInput } from './specialists.dto';
+
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function randomCode(len = 4): string {
+  const bytes = randomBytes(len);
+  let out = '';
+  for (let i = 0; i < len; i++) out += CODE_CHARS[bytes[i]! % CODE_CHARS.length];
+  return out;
+}
 
 @Injectable()
 export class SpecialistsService {
@@ -54,6 +63,18 @@ export class SpecialistsService {
         });
       }
       businessId = input.businessId;
+    }
+
+    // §uzman onboarding — kayıtlı ИП uzman: 12 haneli IIN + mükerrer kontrol (Seviye-1)
+    const iin = input.entityType === 'ip' ? (input.iin ?? '') : '';
+    if (input.entityType === 'ip' && /^\d{12}$/.test(iin)) {
+      const dup = await this.prisma.specialist.findFirst({ where: { iin } });
+      if (dup) {
+        throw new ConflictException({
+          code: 'IIN_TAKEN',
+          message: 'Bu IIN zaten kayıtlı',
+        });
+      }
     }
 
     const key = this.env.FIELD_ENCRYPTION_KEY;
@@ -102,6 +123,8 @@ export class SpecialistsService {
         bio: input.bio ?? '',
         certificates: input.certificates,
         featured: input.certificates.length > 0, // sertifika → öne çıkma (§3.3)
+        entityType: input.entityType,
+        iin,
       },
     });
 
@@ -394,6 +417,51 @@ export class SpecialistsService {
     return { certificates: row.certificates };
   }
 
+  // §uzman onboarding Faz 4 — Instagram sahiplik doğrulama: kullanıcı adı → AYN-XXXX kodu.
+  // Uzman bunu bio'suna ekler; admin kontrol edip social rozetini işaretler (salon paralel).
+  async setSocialVerifyCode(userId: string, username: string) {
+    const sp = await this.prisma.specialist.findUnique({ where: { userId } });
+    if (!sp) throw new BadRequestException({ code: 'NOT_SPECIALIST', message: 'Uzman kaydı yok' });
+    const handle = username.trim().replace(/^@/, '').slice(0, 40);
+    if (!handle)
+      throw new BadRequestException({
+        code: 'USERNAME_REQUIRED',
+        message: 'Kullanıcı adı gerekli',
+      });
+    const code = `AYN-${randomCode(4)}`;
+    const updated = await this.prisma.specialist.update({
+      where: { userId },
+      data: {
+        socialInstagram: handle,
+        socialVerifyCode: code,
+        socialVerified: false, // yeni kod → doğrulama sıfırlanır, admin yeniden onaylar
+      },
+    });
+    return { username: updated.socialInstagram, code: updated.socialVerifyCode };
+  }
+
+  // §uzman onboarding — uzmanın kendi doğrulama durumu (panel/profil için)
+  async myVerification(userId: string) {
+    const sp = await this.prisma.specialist.findUnique({ where: { userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { kycStatus: true },
+    });
+    const identity = user?.kycStatus === 'approved';
+    const cert = sp?.certVerified ?? false;
+    const social = sp?.socialVerified ?? false;
+    const business = sp?.entityType === 'ip' && /^\d{12}$/.test(sp?.iin ?? '');
+    return {
+      verification: { identity, cert, social, business },
+      aynaVerified: identity && (cert || social),
+      entityType: sp?.entityType ?? 'freelance',
+      hasIin: /^\d{12}$/.test(sp?.iin ?? ''),
+      socialInstagram: sp?.socialInstagram ?? '',
+      socialVerifyCode: sp?.socialVerifyCode ?? '',
+      kycStatus: user?.kycStatus ?? 'none',
+    };
+  }
+
   // §CRM — kutlama: müşteriye push doğum günü mesajı (uzman adına)
   async celebrate(expertUserId: string, customerId: string) {
     const expert = await this.prisma.user.findUnique({
@@ -416,6 +484,9 @@ function mapSpecialist(s: Specialist) {
     businessId: s.businessId ?? undefined,
     bio: s.bio,
     featured: s.featured,
+    entityType: s.entityType,
+    // IIN public'te ASLA açık dönmez — yalnız varlık bilgisi
+    hasIin: /^\d{12}$/.test(s.iin),
   };
 }
 

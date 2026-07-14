@@ -389,6 +389,15 @@ model Specialist {
   bio          String         @default("")
   certificates String[]       @default([])
   featured     Boolean        @default(false)
+  // §uzman onboarding — resmî/kimlik & katmanlı doğrulama (salon epic paralel)
+  // entityType: freelance (serbest, kayıtsız) | ip (kayıtlı bireysel girişimci ИП)
+  entityType      String  @default("freelance") @map("entity_type")
+  iin             String  @default("") // 12 hane; yalnızca kayıtlı ИП uzmanlar; public'te ASLA açık dönmez
+  // Katmanlı rozet bayrakları (kimlik = User.kycStatus; diğerleri admin/otomatik)
+  certVerified    Boolean @default(false) @map("cert_verified")
+  socialVerified  Boolean @default(false) @map("social_verified")
+  socialInstagram String  @default("") @map("social_instagram")
+  socialVerifyCode String @default("") @map("social_verify_code")
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([businessId])
