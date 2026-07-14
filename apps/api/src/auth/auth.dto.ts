@@ -23,7 +23,15 @@ export const otpVerifySchema = z.object({
   code: z.string().regex(/^\d{6}$/, '6 haneli kod'),
 });
 
+// §3.3 — Şifre sıfırlama: OTP doğrulanmış telefona yeni parola
+export const resetPasswordSchema = z.object({
+  phone: z.string().min(7),
+  code: z.string().regex(/^\d{6}$/, '6 haneli kod'),
+  newPassword: z.string().min(6),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type OtpRequestInput = z.infer<typeof otpRequestSchema>;
 export type OtpVerifyInput = z.infer<typeof otpVerifySchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

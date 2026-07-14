@@ -269,6 +269,62 @@ export class AuthService {
     return { verified: true, phoneVerified: updated.count > 0 };
   }
 
+  // §3.3 — Şifre sıfırlama. Mobil akış: otp/request → otp/verify (kodu TÜKETİR) →
+  // reset-password AYNI kodla gelir. Bu yüzden eşleşen kod, tüketilmişse de son 10 dk
+  // içinde tüketildiyse kabul edilir (tek pencere; kod yeniden kullanılamaz hale gelir).
+  async resetPassword(phone: string, code: string, newPassword: string) {
+    const key = this.env.FIELD_ENCRYPTION_KEY;
+    const ph = phoneHash(phone, key);
+    const codeHash = hashOtp(code, key);
+
+    const recentWindow = new Date(Date.now() - 10 * 60 * 1000);
+    const otp = await this.prisma.otpCode.findFirst({
+      where: {
+        phoneHash: ph,
+        codeHash,
+        // attempts MAX'a çekilerek tüketildiği için aynı kodla 2. sıfırlama da engellenir
+        attempts: { lt: OTP_MAX_ATTEMPTS },
+        OR: [
+          { consumedAt: null, expiresAt: { gt: new Date() } },
+          { consumedAt: { gt: recentWindow } },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!otp) {
+      throw new BadRequestException({
+        code: 'OTP_INVALID',
+        message: 'Kod geçersiz veya süresi doldu',
+      });
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { phoneHash: ph } });
+    if (!user || user.status === 'deleted') {
+      throw new BadRequestException({
+        code: 'PHONE_NOT_FOUND',
+        message: 'Bu telefonla kayıtlı hesap bulunamadı',
+      });
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: hashPassword(newPassword), phoneVerified: true },
+      }),
+      // Kod bu işlemle kesin tüketilir; aynı kodla ikinci sıfırlama yapılamaz
+      this.prisma.otpCode.update({
+        where: { id: otp.id },
+        data: { consumedAt: otp.consumedAt ?? new Date(), attempts: OTP_MAX_ATTEMPTS },
+      }),
+    ]);
+    await this.audit.record({
+      action: 'auth.password_reset',
+      resourceType: 'user',
+      resourceId: user.id,
+    });
+    return { ok: true };
+  }
+
   private session(user: User) {
     // Mobilde token YENİLEME akışı yok → kısa TTL (env'de 900=15dk) giriş sonrası tüm işlemleri
     // UNAUTHENTICATED'e düşürüyordu. En az 30 gün garanti et (Railway env override edemesin).

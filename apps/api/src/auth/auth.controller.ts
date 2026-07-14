@@ -11,6 +11,8 @@ import {
   otpVerifySchema,
   type RegisterInput,
   registerSchema,
+  type ResetPasswordInput,
+  resetPasswordSchema,
 } from './auth.dto';
 import { type AuthedRequest, JwtAuthGuard } from './jwt-auth.guard';
 
@@ -81,5 +83,11 @@ export class AuthController {
   @Post('otp/verify')
   otpVerify(@Body(new ZodValidationPipe(otpVerifySchema)) body: OtpVerifyInput) {
     return this.auth.verifyOtp(body.phone, body.code);
+  }
+
+  // §3.3 — Şifre sıfırlama: OTP ile doğrulanan telefona yeni parola
+  @Post('reset-password')
+  resetPassword(@Body(new ZodValidationPipe(resetPasswordSchema)) body: ResetPasswordInput) {
+    return this.auth.resetPassword(body.phone, body.code, body.newPassword);
   }
 }
