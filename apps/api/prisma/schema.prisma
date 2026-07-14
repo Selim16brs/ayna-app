@@ -309,12 +309,22 @@ enum BusinessStatus {
   pending
   approved
   rejected
+  needs_docs // §3 — ek belge gerekli (admin geri gönderdi)
+  under_review // §3 — belge incelemede
+}
+
+// §3.1 — KZ işletme türü. Seçime göre zorunlu resmî alanlar değişir.
+enum BusinessEntityType {
+  llp // ТОО / LLP — tüzel kişi (BİN)
+  ip // ИП — bireysel girişimci (IIN)
+  freelance // serbest çalışan uzman
+  branch // salon şubesi
 }
 
 model Business {
   id           String         @id @default(uuid()) @db.Uuid
   ownerUserId  String         @map("owner_user_id") @db.Uuid
-  name         String
+  name         String // marka / görünen ad
   ownerName    String         @default("") @map("owner_name")
   sector       String         @default("")
   about        String         @default("")
@@ -331,14 +341,36 @@ model Business {
   categories   String[]       @default([])
   photos       String[]       @default([])
   docUrl       String?        @map("doc_url")
+  // §3.1/§3.2 — resmî işletme kimliği (KZ)
+  entityType   BusinessEntityType? @map("entity_type")
+  bin          String         @default("") // BİN (LLP, 12 hane) veya IIN (ИП, 12 hane) — gizli, yalnız doğrulama
+  legalName    String         @default("") @map("legal_name") // resmî tüzel/işletme adı
+  managerName  String         @default("") @map("manager_name") // yönetici/yetkili (LLP)
+  oked         String         @default("") // OKED faaliyet kodu
+  vatPayer     Boolean        @default(false) @map("vat_payer") // KDV mükellefi mi
+  foundedYear  Int?           @map("founded_year")
+  womenOnly    Boolean        @default(false) @map("women_only") // kadınlara özel mi
+  docType      String         @default("") @map("doc_type") // yüklenen belgenin türü
+  // §3.3 — KATMANLI doğrulama rozetleri (admin/otomatik işaretler)
+  identityVerified Boolean    @default(false) @map("identity_verified")
+  businessVerified Boolean    @default(false) @map("business_verified")
+  binVerified      Boolean    @default(false) @map("bin_verified")
+  addressVerified  Boolean    @default(false) @map("address_verified")
+  socialVerified   Boolean    @default(false) @map("social_verified")
+  // §5.5 — sosyal medya sahiplik doğrulama (kod-bio yöntemi, Faz 4)
+  socialInstagram  String     @default("") @map("social_instagram")
+  socialTiktok     String     @default("") @map("social_tiktok")
+  socialVerifyCode String     @default("") @map("social_verify_code")
   // Keşif listesine (professionals) köprü — salon panelinde randevu/yorum kapsamı için
   professionalId String?      @map("professional_id")
   status       BusinessStatus @default(pending)
   rejectReason String?        @map("reject_reason")
+  reviewNote   String?        @map("review_note") // admin notu (ek belge sebebi vb.)
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([status])
   @@index([ownerUserId])
+  @@index([bin])
   @@map("businesses")
 }
 

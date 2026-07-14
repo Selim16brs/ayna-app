@@ -59,6 +59,19 @@ export class BusinessesService {
         }
       }
     }
+    // §3.2 Seviye-1 — BİN/IIN mükerrer kontrolü (LLP/ИП): aynı BİN başka salonda kullanılamaz.
+    const bin = input.bin ?? '';
+    if ((input.entityType === 'llp' || input.entityType === 'ip') && /^\d{12}$/.test(bin)) {
+      const dup = await this.prisma.business.findFirst({
+        where: { bin, status: { not: 'rejected' } },
+      });
+      if (dup) {
+        throw new ConflictException({
+          code: 'BIN_TAKEN',
+          message: 'Bu BİN/IIN başka bir işletmede kayıtlı',
+        });
+      }
+    }
     const owner = await this.prisma.user.create({
       data: {
         phoneHash: ph,
@@ -88,6 +101,18 @@ export class BusinessesService {
         workingHours: input.workingHours ?? '',
         taxId: input.taxId ?? '',
         ...(input.docUrl ? { docUrl: input.docUrl } : {}),
+        // §3.1/§3.2 — resmî işletme kimliği
+        entityType: input.entityType,
+        bin: input.bin ?? '',
+        legalName: input.legalName ?? '',
+        managerName: input.managerName ?? '',
+        oked: input.oked ?? '',
+        vatPayer: input.vatPayer ?? false,
+        ...(input.foundedYear != null ? { foundedYear: input.foundedYear } : {}),
+        womenOnly: input.womenOnly ?? false,
+        docType: input.docType ?? '',
+        socialInstagram: input.socialInstagram ?? '',
+        socialTiktok: input.socialTiktok ?? '',
       },
     });
     return { business: mapBusiness(business) };
@@ -358,6 +383,7 @@ export class BusinessesService {
   }
 }
 
+// Sahip/genel görünüm — BİN/IIN ASLA açık dönmez (gizlilik §3.2); yalnız "girildi mi" bilgisi.
 function mapBusiness(b: Business) {
   return {
     id: b.id,
@@ -373,5 +399,23 @@ function mapBusiness(b: Business) {
     workingHours: b.workingHours,
     status: b.status,
     rejectReason: b.rejectReason ?? undefined,
+    reviewNote: b.reviewNote ?? undefined,
+    // §3.1 resmî bilgiler (BİN hariç — gizli)
+    entityType: b.entityType ?? undefined,
+    legalName: b.legalName,
+    managerName: b.managerName,
+    oked: b.oked,
+    vatPayer: b.vatPayer,
+    foundedYear: b.foundedYear ?? undefined,
+    womenOnly: b.womenOnly,
+    hasBin: /^\d{12}$/.test(b.bin),
+    // §3.3 katmanlı doğrulama rozetleri
+    verification: {
+      identity: b.identityVerified,
+      business: b.businessVerified,
+      bin: b.binVerified,
+      address: b.addressVerified,
+      social: b.socialVerified,
+    },
   };
 }

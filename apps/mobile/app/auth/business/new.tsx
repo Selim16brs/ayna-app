@@ -20,7 +20,7 @@ function fmtDate(d: Date): string {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 import type { MessageKey } from '@ayna/i18n';
-import { api } from '../../../src/api';
+import { api, type BusinessEntityType } from '../../../src/api';
 import { registerErrorMessage } from '../../../src/authError';
 import {
   type AutofillKind,
@@ -76,6 +76,14 @@ export default function NewBusinessScreen() {
   const [password2, setPassword2] = useState('');
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [showDate, setShowDate] = useState(false);
+
+  // §3.1 — resmî işletme kimliği
+  const [entityType, setEntityType] = useState<BusinessEntityType | null>(null);
+  const [bin, setBin] = useState('');
+  const [legalName, setLegalName] = useState('');
+  const [managerName, setManagerName] = useState('');
+  const [oked, setOked] = useState('');
+  const [vatPayer, setVatPayer] = useState(false);
 
   const [name, setName] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
@@ -139,7 +147,14 @@ export default function NewBusinessScreen() {
   }
 
   const emailInvalid = email.trim().length > 0 && !isValidEmail(email);
+  // §3.2 — LLP/ИП için BİN/IIN 12 hane + resmî ad zorunlu; serbest/şubede resmî alan istenmez.
+  const official = entityType === 'llp' || entityType === 'ip';
+  const binValid = /^\d{12}$/.test(bin);
+  const binInvalid = official && bin.length > 0 && !binValid;
+  const officialOk = !official || (binValid && legalName.trim().length > 1);
   const valid =
+    entityType !== null &&
+    officialOk &&
     firstName.trim().length > 1 &&
     lastName.trim().length > 1 &&
     ownerPhone.trim().length >= 7 &&
@@ -153,8 +168,10 @@ export default function NewBusinessScreen() {
     phone.trim().length >= 7 &&
     !emailInvalid &&
     terms;
-  const touched = !!(firstName || lastName || ownerPhone || password || name);
+  const touched = !!(entityType || firstName || lastName || ownerPhone || password || name);
   const missing = missingLabels([
+    { ok: entityType !== null, key: 'biz.entity.label' },
+    { ok: officialOk, key: 'biz.field.bin' },
     { ok: firstName.trim().length > 1 && lastName.trim().length > 1, key: 'auth.miss.name' },
     { ok: name.trim().length > 1, key: 'biz.field.name' },
     {
@@ -183,6 +200,12 @@ export default function NewBusinessScreen() {
         address: address.trim(),
         ...(coord ? { lat: coord.lat, lng: coord.lng } : {}),
         ...(docUrl ? { docUrl } : {}),
+        // §3.1/§3.2 — resmî işletme kimliği
+        entityType: entityType ?? 'freelance',
+        ...(official ? { bin: bin.trim(), legalName: legalName.trim() } : {}),
+        ...(managerName.trim() ? { managerName: managerName.trim() } : {}),
+        ...(oked.trim() ? { oked: oked.trim() } : {}),
+        vatPayer,
         workingHours: serializeHours(hours),
         taxId: tax.trim(),
       });
@@ -202,6 +225,84 @@ export default function NewBusinessScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('biz.new.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* §3.1 — İLK SORU: işletme türü. Seçime göre resmî alanlar açılır. */}
+        <Section text={t('biz.entity.label')} />
+        <Text variant="caption" tone="muted" style={styles.hint}>
+          {t('biz.entity.hint')}
+        </Text>
+        <View style={styles.entityGrid}>
+          {(['llp', 'ip', 'freelance', 'branch'] as BusinessEntityType[]).map((et) => (
+            <Pressable
+              key={et}
+              style={[styles.entityCard, entityType === et && styles.entityCardOn]}
+              onPress={() => setEntityType(et)}
+            >
+              <Text
+                variant="bodyStrong"
+                tone={entityType === et ? 'onAccent' : 'ink'}
+                style={styles.entityTitle}
+              >
+                {t(`biz.entity.${et}` as MessageKey)}
+              </Text>
+              <Text
+                variant="caption"
+                tone={entityType === et ? 'onAccent' : 'muted'}
+                numberOfLines={2}
+              >
+                {t(`biz.entity.${et}_desc` as MessageKey)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* §3.2 — Resmî bilgiler: yalnız tüzel kişi (LLP) / bireysel girişimci (ИП) için */}
+        {official ? (
+          <>
+            <Section text={t('biz.section.official')} />
+            <Label text={entityType === 'ip' ? t('biz.field.iin') : t('biz.field.bin')} />
+            <Input
+              value={bin}
+              onChange={(v) => setBin(v.replace(/[^0-9]/g, '').slice(0, 12))}
+              placeholder="XXXXXXXXXXXX"
+              keyboardType="phone-pad"
+            />
+            {binInvalid ? (
+              <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
+                {t('biz.field.bin_invalid')}
+              </Text>
+            ) : null}
+            <Label text={t('biz.field.legal_name')} />
+            <Input
+              value={legalName}
+              onChange={setLegalName}
+              placeholderKey="biz.field.legal_name_ph"
+            />
+            {entityType === 'llp' ? (
+              <>
+                <Label text={t('biz.field.manager')} />
+                <Input
+                  value={managerName}
+                  onChange={setManagerName}
+                  placeholderKey="biz.field.manager_ph"
+                  autofill="name"
+                />
+              </>
+            ) : null}
+            <Label text={t('biz.field.oked')} />
+            <Input value={oked} onChange={setOked} placeholder="96.02.0" keyboardType="default" />
+            <Pressable style={styles.vatRow} onPress={() => setVatPayer((v) => !v)}>
+              <Ionicons
+                name={vatPayer ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={vatPayer ? colors.accentFg : colors.inkSoft}
+              />
+              <Text variant="body" tone="ink" style={styles.vatText}>
+                {t('biz.field.vat')}
+              </Text>
+            </Pressable>
+          </>
+        ) : null}
+
         {/* Salon sahibi bilgileri */}
         <Section text={t('biz.section.owner')} />
         <View style={styles.row2}>
@@ -697,6 +798,26 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     docRowOn: { backgroundColor: colors.accent },
+    entityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.25), marginTop: space(1) },
+    entityCard: {
+      width: '47%',
+      flexGrow: 1,
+      gap: space(0.5),
+      padding: space(1.75),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+      borderWidth: 1.5,
+      borderColor: 'transparent',
+    },
+    entityCardOn: { backgroundColor: colors.accent, borderColor: colors.accentFg },
+    entityTitle: { fontSize: 15 },
+    vatRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      marginTop: space(1.5),
+    },
+    vatText: { flex: 1 },
     checkRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.25), marginTop: space(3) },
     checkbox: {
       width: 24,

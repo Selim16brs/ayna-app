@@ -386,9 +386,29 @@ export class AdminService {
       workingHours: b.workingHours,
       categories: b.categories,
       docUrl: b.docUrl ?? undefined,
+      docType: b.docType,
       status: b.status,
       rejectReason: b.rejectReason ?? undefined,
+      reviewNote: b.reviewNote ?? undefined,
       createdAt: b.createdAt,
+      // §3 — resmî doğrulama alanları (admin BİN'i görür; doğrulama için)
+      entityType: b.entityType ?? undefined,
+      bin: b.bin,
+      legalName: b.legalName,
+      managerName: b.managerName,
+      oked: b.oked,
+      vatPayer: b.vatPayer,
+      foundedYear: b.foundedYear ?? undefined,
+      womenOnly: b.womenOnly,
+      socialInstagram: b.socialInstagram,
+      socialTiktok: b.socialTiktok,
+      verification: {
+        identity: b.identityVerified,
+        business: b.businessVerified,
+        bin: b.binVerified,
+        address: b.addressVerified,
+        social: b.socialVerified,
+      },
       specialistCount: specialists.length,
       inviteCodes: inviteCodes.map((c) => ({
         code: c.code,
@@ -398,7 +418,11 @@ export class AdminService {
     };
   }
 
-  async setBusinessStatus(id: string, status: 'approved' | 'rejected', reason?: string) {
+  async setBusinessStatus(
+    id: string,
+    status: 'approved' | 'rejected' | 'needs_docs' | 'under_review',
+    reason?: string,
+  ) {
     const b = await this.prisma.business.findUnique({ where: { id } });
     if (!b) throw new NotFoundException({ code: 'BUSINESS_NOT_FOUND', message: 'İşletme yok' });
 
@@ -431,10 +455,47 @@ export class AdminService {
       data: {
         status,
         rejectReason: status === 'rejected' ? (reason ?? '') : null,
+        reviewNote:
+          status === 'needs_docs' || status === 'under_review' ? (reason ?? '') : b.reviewNote,
         ...(professionalId && professionalId !== b.professionalId ? { professionalId } : {}),
       },
     });
     return { id: updated.id, status: updated.status, professionalId: updated.professionalId };
+  }
+
+  // §3.3 — katmanlı doğrulama rozetlerini admin işaretler (kimlik/işletme/BİN/adres/sosyal).
+  async setBusinessVerification(
+    id: string,
+    flags: {
+      identity?: boolean | undefined;
+      business?: boolean | undefined;
+      bin?: boolean | undefined;
+      address?: boolean | undefined;
+      social?: boolean | undefined;
+    },
+  ) {
+    const b = await this.prisma.business.findUnique({ where: { id } });
+    if (!b) throw new NotFoundException({ code: 'BUSINESS_NOT_FOUND', message: 'İşletme yok' });
+    const updated = await this.prisma.business.update({
+      where: { id },
+      data: {
+        ...(flags.identity != null ? { identityVerified: flags.identity } : {}),
+        ...(flags.business != null ? { businessVerified: flags.business } : {}),
+        ...(flags.bin != null ? { binVerified: flags.bin } : {}),
+        ...(flags.address != null ? { addressVerified: flags.address } : {}),
+        ...(flags.social != null ? { socialVerified: flags.social } : {}),
+      },
+    });
+    return {
+      id: updated.id,
+      verification: {
+        identity: updated.identityVerified,
+        business: updated.businessVerified,
+        bin: updated.binVerified,
+        address: updated.addressVerified,
+        social: updated.socialVerified,
+      },
+    };
   }
 
   // Kullanıcılar (temel liste; PII/telefon gösterilmez)

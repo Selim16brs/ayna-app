@@ -259,6 +259,8 @@ export interface AuthSession {
   user: AuthUser;
 }
 
+export type BusinessEntityType = 'llp' | 'ip' | 'freelance' | 'branch';
+
 export interface RegisterBusinessInput {
   name: string;
   ownerName: string;
@@ -274,6 +276,19 @@ export interface RegisterBusinessInput {
   lng?: number;
   workingHours?: string;
   taxId?: string;
+  docUrl?: string;
+  // §3.1/§3.2 — resmî işletme kimliği (KZ)
+  entityType: BusinessEntityType;
+  bin?: string;
+  legalName?: string;
+  managerName?: string;
+  oked?: string;
+  vatPayer?: boolean;
+  foundedYear?: number;
+  womenOnly?: boolean;
+  docType?: string;
+  socialInstagram?: string;
+  socialTiktok?: string;
 }
 
 export interface BusinessSummary {

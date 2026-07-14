@@ -17,6 +17,19 @@ import { i18nSchema } from '../content/content.dto';
 import { AdminService } from './admin.service';
 
 const rejectSchema = z.object({ reason: z.string().max(300).optional() });
+const bizDecisionSchema = z.object({
+  status: z.enum(['approved', 'rejected', 'needs_docs', 'under_review']),
+  reason: z.string().max(300).optional(),
+});
+type BizDecisionInput = z.infer<typeof bizDecisionSchema>;
+const bizVerifySchema = z.object({
+  identity: z.boolean().optional(),
+  business: z.boolean().optional(),
+  bin: z.boolean().optional(),
+  address: z.boolean().optional(),
+  social: z.boolean().optional(),
+});
+type BizVerifyInput = z.infer<typeof bizVerifySchema>;
 const restrictSchema = z.object({ reason: z.string().min(1).max(300) });
 // §7.2 — itiraz kararı: yorumu tut (keep) veya kural ihlalinde gizle (remove)
 const resolveDisputeSchema = z.object({ action: z.enum(['keep', 'remove']) });
@@ -145,6 +158,24 @@ export class AdminController {
     @Body(new ZodValidationPipe(rejectSchema)) body: { reason?: string },
   ) {
     return this.admin.setBusinessStatus(id, 'rejected', body.reason);
+  }
+
+  // §3 — genişletilmiş admin kararı: ek belge iste / incelemeye al / onayla / reddet
+  @Post('businesses/:id/decision')
+  decision(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(bizDecisionSchema)) body: BizDecisionInput,
+  ) {
+    return this.admin.setBusinessStatus(id, body.status, body.reason);
+  }
+
+  // §3.3 — katmanlı doğrulama rozetlerini işaretle
+  @Post('businesses/:id/verify')
+  verifyBusiness(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(bizVerifySchema)) body: BizVerifyInput,
+  ) {
+    return this.admin.setBusinessVerification(id, body);
   }
 
   // Kullanıcı yönetimi
