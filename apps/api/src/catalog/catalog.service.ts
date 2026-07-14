@@ -138,12 +138,38 @@ export class CatalogService {
       : null;
     // §6.1 — public profil fotosu: uzmanın KENDİ yüklediği foto (cutout>avatar); Professional.imageUrl boşsa bu.
     const ownerImage = owner?.cutoutUrl || owner?.avatarUrl || '';
+    // §3.3 — KATMANLI doğrulama rozetleri. Salon: Business bayrakları; uzman: KYC = kimlik.
+    const kyc = owner?.kycStatus === 'approved';
+    const salonBiz =
+      p.kind === 'salon'
+        ? await this.prisma.business.findFirst({
+            where: { professionalId: p.id },
+            select: {
+              identityVerified: true,
+              businessVerified: true,
+              binVerified: true,
+              addressVerified: true,
+              socialVerified: true,
+            },
+          })
+        : null;
+    const verification = {
+      identity: salonBiz?.identityVerified ?? kyc,
+      business: salonBiz?.businessVerified ?? false,
+      bin: salonBiz?.binVerified ?? false,
+      address: salonBiz?.addressVerified ?? false,
+      social: salonBiz?.socialVerified ?? false,
+    };
+    // AYNA Verified (üst rozet): kimlik + (işletme veya BİN) doğrulandığında.
+    const aynaVerified = verification.identity && (verification.business || verification.bin);
     return {
       ...mapPro(p),
       image: ownerImage || p.imageUrl, // uzmanın gerçek fotosu esas (hesap verisi)
       about: p.about,
       ownerUserId: sp?.userId ?? null, // EK Z.1 — DM başlatma hedefi
-      kycVerified: owner?.kycStatus === 'approved', // EK Z.3 — doğrulanmış uzman rozeti
+      kycVerified: kyc, // EK Z.3 — doğrulanmış uzman rozeti
+      verification, // §3.3 — katmanlı rozetler
+      aynaVerified,
       staff,
       serviceRatings,
       services,

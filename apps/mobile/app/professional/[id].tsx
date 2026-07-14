@@ -13,7 +13,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { DateField, TAB_BAR_CLEARANCE, Text, WaveLayered } from '../../src/ui';
+import { DateField, TAB_BAR_CLEARANCE, Text, VerificationBadges, WaveLayered } from '../../src/ui';
 
 type Tab = 'booking' | 'portfolio' | 'reviews';
 const HOT_PINK = '#FF2E93'; // favori (kalp) aktif rengi
@@ -206,6 +206,8 @@ export default function ProfessionalScreen() {
               <Text variant="caption" tone="inkSoft" style={styles.heroMeta} numberOfLines={1}>
                 {pro.specialty} · {pro.district}
               </Text>
+              {/* §3.3 — katmanlı güven rozetleri (AYNA Onaylı + kimlik/işletme/BİN/adres/sosyal) */}
+              <VerificationBadges verification={pro.verification} aynaVerified={pro.aynaVerified} />
               <View style={styles.heroStats}>
                 <View style={styles.ratingPill}>
                   <Ionicons name="star" size={13} color={colors.gold} />

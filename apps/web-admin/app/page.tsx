@@ -18,6 +18,7 @@ import {
   type Loyalty,
   type QuoteReq,
   type BusinessDetail,
+  type BizVerification,
   type Campaign,
   type Category,
   type CirclePost,
@@ -1361,6 +1362,20 @@ function CommissionsView() {
   );
 }
 
+const ENTITY_LABEL: Record<string, string> = {
+  llp: 'ТОО / LLP (tüzel kişi)',
+  ip: 'ИП (bireysel girişimci)',
+  freelance: 'Serbest uzman',
+  branch: 'Salon şubesi',
+};
+const VERIFY_CHECKS: { key: keyof BizVerification; label: string }[] = [
+  { key: 'identity', label: 'Kimlik' },
+  { key: 'business', label: 'İşletme' },
+  { key: 'bin', label: 'BİN' },
+  { key: 'address', label: 'Adres' },
+  { key: 'social', label: 'Sosyal medya' },
+];
+
 function BusinessesView() {
   const [status, setStatus] = useState<string>('pending');
   const [detail, setDetail] = useState<BusinessDetail | null>(null);
@@ -1370,6 +1385,18 @@ function BusinessesView() {
     else await api.rejectBusiness(id, prompt('Red sebebi:') ?? '');
     setDetail(null);
     reload();
+  };
+  const decide = async (id: string, status: string, defaultReason?: string) => {
+    const reason =
+      status === 'needs_docs' ? (prompt('Hangi belge/eksik?', defaultReason) ?? '') : undefined;
+    await api.decisionBusiness(id, status, reason);
+    setDetail(null);
+    reload();
+  };
+  const toggleVerify = async (key: keyof BizVerification, on: boolean) => {
+    if (!detail) return;
+    const r = await api.verifyBusiness(detail.id, { [key]: on });
+    setDetail({ ...detail, verification: r.verification });
   };
   const openDetail = async (id: string) => setDetail(await api.businessDetail(id));
   return (
@@ -1439,18 +1466,59 @@ function BusinessesView() {
               </button>
             </div>
             <div className="kv-grid">
+              <KV k="İşletme türü" v={ENTITY_LABEL[detail.entityType ?? ''] ?? '—'} />
+              <KV k="BİN / IIN" v={detail.bin || '—'} />
+              <KV k="Resmî ad" v={detail.legalName || '—'} />
+              <KV k="Yönetici" v={detail.managerName || '—'} />
+              <KV k="OKED" v={detail.oked || '—'} />
+              <KV k="KDV mükellefi" v={detail.vatPayer ? 'Evet' : 'Hayır'} />
               <KV k="Sahip" v={detail.ownerName} />
               <KV k="Sektör" v={detail.sector} />
               <KV k="Telefon" v={detail.phone} />
               <KV k="E-posta" v={detail.email || '—'} />
-              <KV k="Vergi/kayıt no" v={detail.taxId || '—'} />
+              <KV k="Instagram" v={detail.socialInstagram || '—'} />
               <KV k="Çalışma saatleri" v={detail.workingHours || '—'} />
               <KV k="Adres" v={`${detail.city} / ${detail.district} ${detail.address}`.trim()} />
               <KV k="Kategoriler" v={detail.categories.join(', ') || '—'} />
               <KV k="Ekip (uzman)" v={String(detail.specialistCount)} />
-              <KV k="Davet kodu" v={String(detail.inviteCodes.length)} />
-              <KV k="Belge" v={detail.docUrl ? 'Yüklendi' : 'Yok'} />
+              <KV
+                k="Belge"
+                v={
+                  detail.docUrl ? `Yüklendi${detail.docType ? ' · ' + detail.docType : ''}` : 'Yok'
+                }
+              />
             </div>
+
+            {/* §3.3 — Katmanlı doğrulama kontrol listesi (admin işaretler) */}
+            <h3 className="section-head" style={{ marginTop: 14 }}>
+              Doğrulama kontrol listesi
+            </h3>
+            <div className="verify-grid">
+              {VERIFY_CHECKS.map((vc) => {
+                const on = detail.verification?.[vc.key] ?? false;
+                return (
+                  <button
+                    key={vc.key}
+                    className={`verify-chip ${on ? 'on' : ''}`}
+                    onClick={() => toggleVerify(vc.key, !on)}
+                  >
+                    {on ? '✓' : '○'} {vc.label}
+                  </button>
+                );
+              })}
+            </div>
+            {detail.docUrl ? (
+              <a
+                className="btn-sm btn-ghost"
+                href={detail.docUrl}
+                target="_blank"
+                rel="noreferrer"
+                style={{ marginTop: 8, display: 'inline-block' }}
+              >
+                Belgeyi aç ↗
+              </a>
+            ) : null}
+            {detail.reviewNote ? <p className="page-sub">Not: {detail.reviewNote}</p> : null}
             {detail.about ? <p className="about">{detail.about}</p> : null}
             {detail.rejectReason ? <p className="err">Red sebebi: {detail.rejectReason}</p> : null}
             <div className="modal-actions">
@@ -1459,6 +1527,18 @@ function BusinessesView() {
                   Onayla
                 </button>
               ) : null}
+              <button
+                className="btn-sm btn-ghost"
+                onClick={() => decide(detail.id, 'needs_docs', 'Ek belge gerekli')}
+              >
+                Ek belge iste
+              </button>
+              <button
+                className="btn-sm btn-ghost"
+                onClick={() => decide(detail.id, 'under_review')}
+              >
+                İncelemeye al
+              </button>
               {detail.status !== 'rejected' ? (
                 <button className="btn-sm btn-danger" onClick={() => act(detail.id, 'reject')}>
                   Reddet

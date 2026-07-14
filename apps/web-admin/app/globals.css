@@ -175,3 +175,12 @@ textarea.input { height: auto; min-height: 120px; padding: 12px 14px; line-heigh
 .list-col .meta { color: var(--muted); font-size: 13px; }
 .check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
 .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+/* §3.3 — salon doğrulama kontrol listesi */
+.verify-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.verify-chip {
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line, #e5e5e5);
+  background: var(--surface-muted, #f4f4f5); color: var(--ink, #222);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.verify-chip.on { background: #16a34a; border-color: #16a34a; color: #fff; }

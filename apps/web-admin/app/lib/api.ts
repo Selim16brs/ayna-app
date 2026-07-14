@@ -101,6 +101,17 @@ export const api = {
   approveBusiness: (id: string) => req(`/admin/businesses/${id}/approve`, { method: 'POST' }),
   rejectBusiness: (id: string, reason: string) =>
     req(`/admin/businesses/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  // §3 — genişletilmiş karar (ek belge iste / incelemeye al) + katmanlı doğrulama rozetleri
+  decisionBusiness: (id: string, status: string, reason?: string) =>
+    req(`/admin/businesses/${id}/decision`, {
+      method: 'POST',
+      body: JSON.stringify({ status, reason }),
+    }),
+  verifyBusiness: (id: string, flags: Record<string, boolean>) =>
+    req<{ verification: BizVerification }>(`/admin/businesses/${id}/verify`, {
+      method: 'POST',
+      body: JSON.stringify(flags),
+    }),
   users: () => req<AdminUser[]>('/admin/users'),
   setUserRole: (id: string, role: string) =>
     req(`/admin/users/${id}/role`, { method: 'POST', body: JSON.stringify({ role }) }),
@@ -524,14 +535,34 @@ export interface Business {
   rejectReason?: string;
   createdAt: string;
 }
+export interface BizVerification {
+  identity: boolean;
+  business: boolean;
+  bin: boolean;
+  address: boolean;
+  social: boolean;
+}
 export interface BusinessDetail extends Business {
   about: string;
   address: string;
   workingHours: string;
   categories: string[];
   docUrl?: string;
+  docType?: string;
   specialistCount: number;
   inviteCodes: { code: string; status: string; attempts: number }[];
+  reviewNote?: string;
+  // §3 — resmî doğrulama
+  entityType?: string;
+  bin?: string;
+  legalName?: string;
+  managerName?: string;
+  oked?: string;
+  vatPayer?: boolean;
+  foundedYear?: number;
+  socialInstagram?: string;
+  socialTiktok?: string;
+  verification?: BizVerification;
 }
 export interface AdminReview {
   id: string;
