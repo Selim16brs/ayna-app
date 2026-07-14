@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { AuthService } from './auth.service';
 import {
@@ -26,6 +27,8 @@ export class AuthController {
     return this.auth.register(body);
   }
 
+  // Brute-force önleme: IP başına dakikada 10 giriş denemesi
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('login')
   login(@Body(new ZodValidationPipe(loginSchema)) body: LoginInput) {
     return this.auth.login(body);
@@ -74,18 +77,22 @@ export class AuthController {
     });
   }
 
-  // §4.6 — OTP iste / doğrula (mock SMS)
+  // §4.6 — OTP iste / doğrula (mock SMS). Sıkı limit: SMS maliyet bombardımanı +
+  // kod brute-force önleme (gerçek SMS sağlayıcı bağlanınca da hazır).
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('otp/request')
   otpRequest(@Body(new ZodValidationPipe(otpRequestSchema)) body: OtpRequestInput) {
     return this.auth.requestOtp(body.phone);
   }
 
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('otp/verify')
   otpVerify(@Body(new ZodValidationPipe(otpVerifySchema)) body: OtpVerifyInput) {
     return this.auth.verifyOtp(body.phone, body.code);
   }
 
   // §3.3 — Şifre sıfırlama: OTP ile doğrulanan telefona yeni parola
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('reset-password')
   resetPassword(@Body(new ZodValidationPipe(resetPasswordSchema)) body: ResetPasswordInput) {
     return this.auth.resetPassword(body.phone, body.code, body.newPassword);

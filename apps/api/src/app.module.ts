@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { StorageModule } from './storage/storage.module';
 import { AdminModule } from './admin/admin.module';
 import { AiModule } from './ai/ai.module';
@@ -33,6 +35,10 @@ import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
+    // Küresel hız limiti: IP başına 60 sn'de 300 istek (normal mobil kullanımın çok
+    // üstünde; brute-force/flood'u keser). Hassas auth uçları kendi sıkı limitini
+    // @Throttle ile ayrıca tanımlar. trust proxy main.ts'te (Railway X-Forwarded-For).
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 300 }]),
     StorageModule,
     ConfigModule,
     PrismaModule,
@@ -65,5 +71,6 @@ import { PaymentModule } from './payment/payment.module';
     ReferralModule,
     PaymentModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
