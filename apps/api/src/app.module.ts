@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
 import { StorageModule } from './storage/storage.module';
 import { AdminModule } from './admin/admin.module';
 import { AiModule } from './ai/ai.module';
@@ -71,6 +72,6 @@ import { PaymentModule } from './payment/payment.module';
     ReferralModule,
     PaymentModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],
 })
 export class AppModule {}
