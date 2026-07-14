@@ -25,7 +25,22 @@ import { registerErrorMessage } from '../../src/authError';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, CitySelect, Screen, StackHeader, Text, TextInput } from '../../src/ui';
+import {
+  Button,
+  CitySelect,
+  MissingFields,
+  PasswordStrength,
+  Screen,
+  StackHeader,
+  Text,
+  TextInput,
+} from '../../src/ui';
+import {
+  type AutofillKind,
+  autofillProps,
+  isValidEmail,
+  missingLabels,
+} from '../../src/formValidation';
 
 type AddrLabel = 'home' | 'work';
 type Address = { label: AddrLabel; detail: string };
@@ -74,6 +89,7 @@ export default function CustomerRegisterScreen() {
     setAddrDetail('');
   }
 
+  const emailInvalid = email.trim().length > 0 && !isValidEmail(email);
   const valid =
     firstName.trim().length > 1 &&
     lastName.trim().length > 1 &&
@@ -81,7 +97,17 @@ export default function CustomerRegisterScreen() {
     password.length >= 6 &&
     password === password2 &&
     city !== null &&
+    !emailInvalid &&
     terms;
+  const touched = !!(firstName || lastName || phone || password || email);
+  const missing = missingLabels([
+    { ok: firstName.trim().length > 1 && lastName.trim().length > 1, key: 'auth.miss.name' },
+    { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
+    { ok: city !== null, key: 'auth.f.city' },
+    { ok: password.length >= 6, key: 'auth.f.password' },
+    { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
+    { ok: terms, key: 'auth.miss.terms' },
+  ]);
 
   async function submit() {
     setBusy(true);
@@ -136,11 +162,21 @@ export default function CustomerRegisterScreen() {
         <View style={styles.row2}>
           <View style={styles.col}>
             <Label text={t('auth.f.firstname')} />
-            <Input value={firstName} onChange={setFirstName} placeholderKey="auth.f.firstname" />
+            <Input
+              value={firstName}
+              onChange={setFirstName}
+              placeholderKey="auth.f.firstname"
+              autofill="name"
+            />
           </View>
           <View style={styles.col}>
             <Label text={t('auth.f.lastname')} />
-            <Input value={lastName} onChange={setLastName} placeholderKey="auth.f.lastname" />
+            <Input
+              value={lastName}
+              onChange={setLastName}
+              placeholderKey="auth.f.lastname"
+              autofill="name"
+            />
           </View>
         </View>
         <Label text={t('auth.f.birthdate')} />
@@ -267,6 +303,7 @@ export default function CustomerRegisterScreen() {
           onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
           keyboardType="phone-pad"
           placeholder="+7 700 123 45 67"
+          autofill="tel"
         />
         <Label text={t('auth.f.email')} />
         <Input
@@ -274,14 +311,33 @@ export default function CustomerRegisterScreen() {
           onChange={setEmail}
           keyboardType="email-address"
           placeholder="ornek@mail.kz"
+          autofill="email"
         />
+        {emailInvalid ? (
+          <Text variant="caption" style={[styles.hint, { color: colors.danger }]}>
+            {t('auth.f.email_invalid')}
+          </Text>
+        ) : null}
         <Label text={t('auth.f.password')} />
-        <Input value={password} onChange={setPassword} secure placeholderKey="auth.f.password" />
+        <Input
+          value={password}
+          onChange={setPassword}
+          secure
+          placeholderKey="auth.f.password"
+          autofill="newPassword"
+        />
         <Text variant="caption" tone="muted" style={styles.hint}>
           {t('auth.f.password_hint')}
         </Text>
+        <PasswordStrength password={password} />
         <Label text={t('auth.f.password2')} />
-        <Input value={password2} onChange={setPassword2} secure placeholderKey="auth.f.password2" />
+        <Input
+          value={password2}
+          onChange={setPassword2}
+          secure
+          placeholderKey="auth.f.password2"
+          autofill="newPassword"
+        />
         {password2.length > 0 && password !== password2 ? (
           <Text variant="caption" style={[styles.hint, { color: colors.danger }]}>
             {t('auth.f.password_mismatch')}
@@ -296,6 +352,7 @@ export default function CustomerRegisterScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
+        {touched && !valid ? <MissingFields keys={missing} /> : null}
         <Button
           label={t('auth.tab.register')}
           variant={valid && !busy ? 'primary' : 'secondary'}
@@ -332,6 +389,7 @@ function Input({
   placeholderKey,
   secure,
   keyboardType,
+  autofill,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -339,12 +397,14 @@ function Input({
   placeholderKey?: MessageKey;
   secure?: boolean;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  autofill?: AutofillKind;
 }) {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [hidden, setHidden] = useState(true);
   const ph = placeholder ?? (placeholderKey ? t(placeholderKey) : undefined);
+  const af = autofillProps(autofill);
   // Şifre alanı: sağda göz ikonu ile göster/gizle
   if (secure) {
     return (
@@ -358,6 +418,7 @@ function Input({
           placeholder={ph}
           placeholderTextColor={colors.muted}
           style={styles.secureInput}
+          {...af}
         />
         <Pressable onPress={() => setHidden((h) => !h)} hitSlop={10} style={styles.eyeBtn}>
           <Ionicons
@@ -374,10 +435,13 @@ function Input({
       value={value}
       onChangeText={onChange}
       keyboardType={keyboardType ?? 'default'}
-      autoCapitalize={keyboardType === 'email-address' ? 'none' : 'sentences'}
+      autoCapitalize={
+        keyboardType === 'email-address' ? 'none' : autofill === 'name' ? 'words' : 'sentences'
+      }
       placeholder={ph}
       placeholderTextColor={colors.muted}
       style={styles.input}
+      {...af}
     />
   );
 }

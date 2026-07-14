@@ -22,6 +22,12 @@ function fmtDate(d: Date): string {
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../../src/api';
 import { registerErrorMessage } from '../../../src/authError';
+import {
+  type AutofillKind,
+  autofillProps,
+  isValidEmail,
+  missingLabels,
+} from '../../../src/formValidation';
 import { activeCategories } from '../../../src/taxonomy';
 import { useLocale } from '../../../src/locale';
 import { radius, space, type ColorTokens } from '../../../src/theme';
@@ -32,6 +38,8 @@ import {
   CitySelect,
   defaultHours,
   emptySocial,
+  MissingFields,
+  PasswordStrength,
   Screen,
   SocialLinks,
   StackHeader,
@@ -130,6 +138,7 @@ export default function NewBusinessScreen() {
     });
   }
 
+  const emailInvalid = email.trim().length > 0 && !isValidEmail(email);
   const valid =
     firstName.trim().length > 1 &&
     lastName.trim().length > 1 &&
@@ -142,7 +151,20 @@ export default function NewBusinessScreen() {
     district.trim().length > 1 &&
     address.trim().length > 3 &&
     phone.trim().length >= 7 &&
+    !emailInvalid &&
     terms;
+  const touched = !!(firstName || lastName || ownerPhone || password || name);
+  const missing = missingLabels([
+    { ok: firstName.trim().length > 1 && lastName.trim().length > 1, key: 'auth.miss.name' },
+    { ok: name.trim().length > 1, key: 'biz.field.name' },
+    {
+      ok: city !== null && district.trim().length > 1 && address.trim().length > 3,
+      key: 'biz.field.address',
+    },
+    { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
+    { ok: password.length >= 6 && password === password2, key: 'auth.f.password' },
+    { ok: terms, key: 'auth.miss.terms' },
+  ]);
 
   async function submit() {
     setBusy(true);
@@ -189,11 +211,17 @@ export default function NewBusinessScreen() {
               value={firstName}
               onChange={setFirstName}
               placeholderKey="biz.field.owner_first"
+              autofill="name"
             />
           </View>
           <View style={styles.col}>
             <Label text={t('biz.field.owner_last')} />
-            <Input value={lastName} onChange={setLastName} placeholderKey="biz.field.owner_last" />
+            <Input
+              value={lastName}
+              onChange={setLastName}
+              placeholderKey="biz.field.owner_last"
+              autofill="name"
+            />
           </View>
         </View>
         <Label text={t('biz.field.phone')} />
@@ -202,14 +230,28 @@ export default function NewBusinessScreen() {
           onChange={(v) => setOwnerPhone(v.replace(/[^0-9 +]/g, ''))}
           placeholder="+7 700 123 45 67"
           keyboardType="phone-pad"
+          autofill="tel"
         />
         <Label text={t('biz.field.password')} />
-        <Input value={password} onChange={setPassword} secure placeholderKey="biz.field.password" />
+        <Input
+          value={password}
+          onChange={setPassword}
+          secure
+          placeholderKey="biz.field.password"
+          autofill="newPassword"
+        />
         <Text variant="caption" tone="muted" style={{ marginTop: space(0.75) }}>
           {t('auth.f.password_hint')}
         </Text>
+        <PasswordStrength password={password} />
         <Label text={t('auth.f.password2')} />
-        <Input value={password2} onChange={setPassword2} secure placeholderKey="auth.f.password2" />
+        <Input
+          value={password2}
+          onChange={setPassword2}
+          secure
+          placeholderKey="auth.f.password2"
+          autofill="newPassword"
+        />
         {password2.length > 0 && password !== password2 ? (
           <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
             {t('auth.f.password_mismatch')}
@@ -356,6 +398,7 @@ export default function NewBusinessScreen() {
           onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
           placeholder="+7 700 123 45 67"
           keyboardType="phone-pad"
+          autofill="tel"
         />
         <Label text={t('biz.field.email')} />
         <Input
@@ -363,7 +406,13 @@ export default function NewBusinessScreen() {
           onChange={setEmail}
           keyboardType="email-address"
           placeholder="info@salon.kz"
+          autofill="email"
         />
+        {emailInvalid ? (
+          <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
+            {t('auth.f.email_invalid')}
+          </Text>
+        ) : null}
         <Label text={t('biz.field.social')} />
         <SocialLinks value={social} onChange={setSocial} />
 
@@ -406,6 +455,7 @@ export default function NewBusinessScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
+        {touched && !valid ? <MissingFields keys={missing} /> : null}
         <Button
           label={t('biz.new.submit')}
           variant={valid && !busy ? 'primary' : 'secondary'}
@@ -442,6 +492,7 @@ function Input({
   placeholderKey,
   secure,
   keyboardType,
+  autofill,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -449,12 +500,14 @@ function Input({
   placeholderKey?: MessageKey;
   secure?: boolean;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  autofill?: AutofillKind;
 }) {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [hidden, setHidden] = useState(true);
   const ph = placeholder ?? (placeholderKey ? t(placeholderKey) : undefined);
+  const af = autofillProps(autofill);
   if (secure) {
     return (
       <View style={styles.secureWrap}>
@@ -467,6 +520,7 @@ function Input({
           placeholder={ph}
           placeholderTextColor={colors.muted}
           style={styles.secureInput}
+          {...af}
         />
         <Pressable onPress={() => setHidden((h) => !h)} hitSlop={10} style={styles.eyeBtn}>
           <Ionicons
@@ -483,10 +537,13 @@ function Input({
       value={value}
       onChangeText={onChange}
       keyboardType={keyboardType ?? 'default'}
-      autoCapitalize={keyboardType === 'email-address' ? 'none' : 'sentences'}
+      autoCapitalize={
+        keyboardType === 'email-address' ? 'none' : autofill === 'name' ? 'words' : 'sentences'
+      }
       placeholder={ph}
       placeholderTextColor={colors.muted}
       style={styles.input}
+      {...af}
     />
   );
 }

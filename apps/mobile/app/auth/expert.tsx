@@ -31,6 +31,8 @@ import {
   CitySelect,
   defaultHours,
   emptySocial,
+  MissingFields,
+  PasswordStrength,
   Screen,
   SocialLinks,
   StackHeader,
@@ -40,6 +42,7 @@ import {
   type SocialValue,
   WorkingHours,
 } from '../../src/ui';
+import { type AutofillKind, autofillProps, missingLabels } from '../../src/formValidation';
 
 // Faz B — uzmanın bağlanacağı salonlar GERÇEK kayıtlı işletmelerden gelir (mock değil).
 const lower = (s: string) => s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
@@ -181,6 +184,14 @@ export default function ExpertRegisterScreen() {
     password === password2 &&
     validServices.length > 0 &&
     (!bound || (salonId !== null && code.trim().length >= 4));
+  const touched = !!(firstName || lastName || phone || password);
+  const missing = missingLabels([
+    { ok: firstName.trim().length > 1 && lastName.trim().length > 1, key: 'auth.miss.name' },
+    { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
+    { ok: password.length >= 6, key: 'auth.f.password' },
+    { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
+    { ok: validServices.length > 0, key: 'auth.miss.services' },
+  ]);
 
   async function submit() {
     if (validServices.length === 0) {
@@ -283,11 +294,21 @@ export default function ExpertRegisterScreen() {
         <View style={styles.row2}>
           <View style={styles.col}>
             <Label text={t('auth.f.firstname')} />
-            <Input value={firstName} onChange={setFirstName} placeholder={t('auth.f.firstname')} />
+            <Input
+              value={firstName}
+              onChange={setFirstName}
+              placeholder={t('auth.f.firstname')}
+              autofill="name"
+            />
           </View>
           <View style={styles.col}>
             <Label text={t('auth.f.lastname')} />
-            <Input value={lastName} onChange={setLastName} placeholder={t('auth.f.lastname')} />
+            <Input
+              value={lastName}
+              onChange={setLastName}
+              placeholder={t('auth.f.lastname')}
+              autofill="name"
+            />
           </View>
         </View>
         <Label text={t('auth.f.phone')} />
@@ -296,18 +317,27 @@ export default function ExpertRegisterScreen() {
           onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
           placeholder="+7 700 123 45 67"
           keyboardType="phone-pad"
+          autofill="tel"
         />
         <Label text={t('auth.f.password')} />
-        <Input value={password} onChange={setPassword} secure placeholder={t('auth.f.password')} />
+        <Input
+          value={password}
+          onChange={setPassword}
+          secure
+          placeholder={t('auth.f.password')}
+          autofill="newPassword"
+        />
         <Text variant="caption" tone="muted" style={{ marginTop: space(0.75) }}>
           {t('auth.f.password_hint')}
         </Text>
+        <PasswordStrength password={password} />
         <Label text={t('auth.f.password2')} />
         <Input
           value={password2}
           onChange={setPassword2}
           secure
           placeholder={t('auth.f.password2')}
+          autofill="newPassword"
         />
         {password2.length > 0 && password !== password2 ? (
           <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
@@ -586,6 +616,7 @@ export default function ExpertRegisterScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
+        {touched && !valid ? <MissingFields keys={missing} /> : null}
         <Button
           label={t('expert.reg.submit')}
           variant={valid && !busy ? 'primary' : 'secondary'}
@@ -619,16 +650,19 @@ function Input({
   placeholder,
   secure,
   keyboardType,
+  autofill,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   secure?: boolean;
   keyboardType?: 'default' | 'phone-pad' | 'number-pad';
+  autofill?: AutofillKind;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [hidden, setHidden] = useState(true);
+  const af = autofillProps(autofill);
   if (secure) {
     return (
       <View style={styles.secureWrap}>
@@ -641,6 +675,7 @@ function Input({
           placeholder={placeholder}
           placeholderTextColor={colors.muted}
           style={styles.secureInput}
+          {...af}
         />
         <Pressable onPress={() => setHidden((h) => !h)} hitSlop={10} style={styles.eyeBtn}>
           <Ionicons
@@ -657,9 +692,11 @@ function Input({
       value={value}
       onChangeText={onChange}
       keyboardType={keyboardType ?? 'default'}
+      autoCapitalize={autofill === 'name' ? 'words' : 'sentences'}
       placeholder={placeholder}
       placeholderTextColor={colors.muted}
       style={styles.input}
+      {...af}
     />
   );
 }
