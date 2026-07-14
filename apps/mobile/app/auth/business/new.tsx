@@ -103,6 +103,9 @@ export default function NewBusinessScreen() {
   const [tax, setTax] = useState('');
   const [terms, setTerms] = useState(false);
   const [busy, setBusy] = useState(false);
+  // §3 — çok adımlı sihirbaz: 0 Tür+Resmî · 1 Sahip+Hesap · 2 Salon · 3 İletişim · 4 Belge+Önizleme
+  const [step, setStep] = useState(0);
+  const STEP_COUNT = 5;
 
   async function addPhotos() {
     if (photos.length >= PHOTO_MAX) {
@@ -182,6 +185,29 @@ export default function NewBusinessScreen() {
     { ok: password.length >= 6 && password === password2, key: 'auth.f.password' },
     { ok: terms, key: 'auth.miss.terms' },
   ]);
+  // Adım başına geçiş koşulu (İleri butonu için)
+  const stepOk = [
+    entityType !== null && officialOk,
+    firstName.trim().length > 1 &&
+      lastName.trim().length > 1 &&
+      ownerPhone.trim().length >= 7 &&
+      password.length >= 6 &&
+      password === password2,
+    name.trim().length > 1 && areas.size > 0,
+    city !== null &&
+      district.trim().length > 1 &&
+      address.trim().length > 3 &&
+      phone.trim().length >= 7 &&
+      !emailInvalid,
+    terms,
+  ];
+  const STEP_TITLES: MessageKey[] = [
+    'biz.step.official',
+    'biz.step.owner',
+    'biz.step.salon',
+    'biz.step.contact',
+    'biz.step.review',
+  ];
 
   async function submit() {
     setBusy(true);
@@ -225,344 +251,443 @@ export default function NewBusinessScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('biz.new.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* §3.1 — İLK SORU: işletme türü. Seçime göre resmî alanlar açılır. */}
-        <Section text={t('biz.entity.label')} />
-        <Text variant="caption" tone="muted" style={styles.hint}>
-          {t('biz.entity.hint')}
-        </Text>
-        <View style={styles.entityGrid}>
-          {(['llp', 'ip', 'freelance', 'branch'] as BusinessEntityType[]).map((et) => (
-            <Pressable
-              key={et}
-              style={[styles.entityCard, entityType === et && styles.entityCardOn]}
-              onPress={() => setEntityType(et)}
-            >
-              <Text
-                variant="bodyStrong"
-                tone={entityType === et ? 'onAccent' : 'ink'}
-                style={styles.entityTitle}
-              >
-                {t(`biz.entity.${et}` as MessageKey)}
-              </Text>
-              <Text
-                variant="caption"
-                tone={entityType === et ? 'onAccent' : 'muted'}
-                numberOfLines={2}
-              >
-                {t(`biz.entity.${et}_desc` as MessageKey)}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <StepBar step={step} titles={STEP_TITLES} />
 
-        {/* §3.2 — Resmî bilgiler: yalnız tüzel kişi (LLP) / bireysel girişimci (ИП) için */}
-        {official ? (
+        {step === 0 && (
           <>
-            <Section text={t('biz.section.official')} />
-            <Label text={entityType === 'ip' ? t('biz.field.iin') : t('biz.field.bin')} />
-            <Input
-              value={bin}
-              onChange={(v) => setBin(v.replace(/[^0-9]/g, '').slice(0, 12))}
-              placeholder="XXXXXXXXXXXX"
-              keyboardType="phone-pad"
-            />
-            {binInvalid ? (
-              <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
-                {t('biz.field.bin_invalid')}
-              </Text>
-            ) : null}
-            <Label text={t('biz.field.legal_name')} />
-            <Input
-              value={legalName}
-              onChange={setLegalName}
-              placeholderKey="biz.field.legal_name_ph"
-            />
-            {entityType === 'llp' ? (
+            {/* §3.1 — İLK SORU: işletme türü. Seçime göre resmî alanlar açılır. */}
+            <Section text={t('biz.entity.label')} />
+            <Text variant="caption" tone="muted" style={styles.hint}>
+              {t('biz.entity.hint')}
+            </Text>
+            <View style={styles.entityGrid}>
+              {(['llp', 'ip', 'freelance', 'branch'] as BusinessEntityType[]).map((et) => (
+                <Pressable
+                  key={et}
+                  style={[styles.entityCard, entityType === et && styles.entityCardOn]}
+                  onPress={() => setEntityType(et)}
+                >
+                  <Text
+                    variant="bodyStrong"
+                    tone={entityType === et ? 'onAccent' : 'ink'}
+                    style={styles.entityTitle}
+                  >
+                    {t(`biz.entity.${et}` as MessageKey)}
+                  </Text>
+                  <Text
+                    variant="caption"
+                    tone={entityType === et ? 'onAccent' : 'muted'}
+                    numberOfLines={2}
+                  >
+                    {t(`biz.entity.${et}_desc` as MessageKey)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            {/* §3.2 — Resmî bilgiler: yalnız tüzel kişi (LLP) / bireysel girişimci (ИП) için */}
+            {official ? (
               <>
-                <Label text={t('biz.field.manager')} />
+                <Section text={t('biz.section.official')} />
+                <Label text={entityType === 'ip' ? t('biz.field.iin') : t('biz.field.bin')} />
                 <Input
-                  value={managerName}
-                  onChange={setManagerName}
-                  placeholderKey="biz.field.manager_ph"
-                  autofill="name"
+                  value={bin}
+                  onChange={(v) => setBin(v.replace(/[^0-9]/g, '').slice(0, 12))}
+                  placeholder="XXXXXXXXXXXX"
+                  keyboardType="phone-pad"
                 />
+                {binInvalid ? (
+                  <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
+                    {t('biz.field.bin_invalid')}
+                  </Text>
+                ) : null}
+                <Label text={t('biz.field.legal_name')} />
+                <Input
+                  value={legalName}
+                  onChange={setLegalName}
+                  placeholderKey="biz.field.legal_name_ph"
+                />
+                {entityType === 'llp' ? (
+                  <>
+                    <Label text={t('biz.field.manager')} />
+                    <Input
+                      value={managerName}
+                      onChange={setManagerName}
+                      placeholderKey="biz.field.manager_ph"
+                      autofill="name"
+                    />
+                  </>
+                ) : null}
+                <Label text={t('biz.field.oked')} />
+                <Input
+                  value={oked}
+                  onChange={setOked}
+                  placeholder="96.02.0"
+                  keyboardType="default"
+                />
+                <Pressable style={styles.vatRow} onPress={() => setVatPayer((v) => !v)}>
+                  <Ionicons
+                    name={vatPayer ? 'checkbox' : 'square-outline'}
+                    size={22}
+                    color={vatPayer ? colors.accentFg : colors.inkSoft}
+                  />
+                  <Text variant="body" tone="ink" style={styles.vatText}>
+                    {t('biz.field.vat')}
+                  </Text>
+                </Pressable>
               </>
             ) : null}
-            <Label text={t('biz.field.oked')} />
-            <Input value={oked} onChange={setOked} placeholder="96.02.0" keyboardType="default" />
-            <Pressable style={styles.vatRow} onPress={() => setVatPayer((v) => !v)}>
-              <Ionicons
-                name={vatPayer ? 'checkbox' : 'square-outline'}
-                size={22}
-                color={vatPayer ? colors.accentFg : colors.inkSoft}
+          </>
+        )}
+
+        {step === 1 && (
+          <>
+            {/* Salon sahibi bilgileri */}
+            <Section text={t('biz.section.owner')} />
+            <View style={styles.row2}>
+              <View style={styles.col}>
+                <Label text={t('biz.field.owner_first')} />
+                <Input
+                  value={firstName}
+                  onChange={setFirstName}
+                  placeholderKey="biz.field.owner_first"
+                  autofill="name"
+                />
+              </View>
+              <View style={styles.col}>
+                <Label text={t('biz.field.owner_last')} />
+                <Input
+                  value={lastName}
+                  onChange={setLastName}
+                  placeholderKey="biz.field.owner_last"
+                  autofill="name"
+                />
+              </View>
+            </View>
+            <Label text={t('biz.field.phone')} />
+            <Input
+              value={ownerPhone}
+              onChange={(v) => setOwnerPhone(v.replace(/[^0-9 +]/g, ''))}
+              placeholder="+7 700 123 45 67"
+              keyboardType="phone-pad"
+              autofill="tel"
+            />
+            <Label text={t('biz.field.password')} />
+            <Input
+              value={password}
+              onChange={setPassword}
+              secure
+              placeholderKey="biz.field.password"
+              autofill="newPassword"
+            />
+            <Text variant="caption" tone="muted" style={{ marginTop: space(0.75) }}>
+              {t('auth.f.password_hint')}
+            </Text>
+            <PasswordStrength password={password} />
+            <Label text={t('auth.f.password2')} />
+            <Input
+              value={password2}
+              onChange={setPassword2}
+              secure
+              placeholderKey="auth.f.password2"
+              autofill="newPassword"
+            />
+            {password2.length > 0 && password !== password2 ? (
+              <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
+                {t('auth.f.password_mismatch')}
+              </Text>
+            ) : null}
+            <Label text={t('biz.field.birthdate')} />
+            <Pressable style={styles.dateBtn} onPress={() => setShowDate(true)}>
+              <Ionicons name="calendar-outline" size={20} color={colors.inkSoft} />
+              <Text variant="body" tone={birthDate ? 'ink' : 'muted'} style={styles.dateText}>
+                {birthDate ? fmtDate(birthDate) : t('biz.field.birthdate_ph')}
+              </Text>
+              <Ionicons name="chevron-down" size={18} color={colors.muted} />
+            </Pressable>
+            {showDate && Platform.OS === 'android' ? (
+              <DateTimePicker
+                value={birthDate ?? new Date(1990, 0, 1)}
+                mode="date"
+                display="default"
+                maximumDate={new Date()}
+                onChange={(_e, d) => {
+                  setShowDate(false);
+                  if (d) setBirthDate(d);
+                }}
               />
-              <Text variant="body" tone="ink" style={styles.vatText}>
-                {t('biz.field.vat')}
+            ) : null}
+            {Platform.OS === 'ios' ? (
+              <Modal
+                visible={showDate}
+                transparent
+                animationType="slide"
+                onRequestClose={() => setShowDate(false)}
+              >
+                <Pressable style={styles.dateBackdrop} onPress={() => setShowDate(false)}>
+                  <Pressable style={styles.dateSheet} onPress={(e) => e.stopPropagation()}>
+                    <DateTimePicker
+                      value={birthDate ?? new Date(1990, 0, 1)}
+                      mode="date"
+                      display="spinner"
+                      maximumDate={new Date()}
+                      onChange={(_e, d) => {
+                        if (d) setBirthDate(d);
+                      }}
+                    />
+                    <Button label={t('common.ok')} onPress={() => setShowDate(false)} />
+                  </Pressable>
+                </Pressable>
+              </Modal>
+            ) : null}
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            {/* Salon bilgileri */}
+            <Section text={t('biz.section.firm')} />
+            <Label text={t('biz.field.name')} />
+            <Input value={name} onChange={setName} placeholder="AYNA Studio" />
+
+            <Label text={`${t('biz.field.photos')}  (${photos.length}/${PHOTO_MAX})`} />
+            <Text variant="caption" tone="muted" style={styles.hint}>
+              {t('biz.field.photos_hint')}
+            </Text>
+            <View style={styles.photoGrid}>
+              {photos.length < PHOTO_MAX ? (
+                <Pressable style={styles.photoAdd} onPress={addPhotos}>
+                  <Ionicons name="images-outline" size={24} color={colors.inkSoft} />
+                </Pressable>
+              ) : null}
+              {photos.map((uri, i) => (
+                <View key={`${uri}-${i}`}>
+                  <Image source={{ uri }} style={styles.photoThumb} />
+                  <Pressable
+                    style={styles.thumbRemove}
+                    hitSlop={6}
+                    onPress={() => setPhotos((p) => p.filter((_, idx) => idx !== i))}
+                  >
+                    <Ionicons name="close-circle" size={20} color={colors.onColor} />
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+
+            <Label text={t('biz.field.area')} />
+            <Text variant="caption" tone="muted" style={styles.hint}>
+              {t('biz.field.area_hint')}
+            </Text>
+            <View style={styles.chips}>
+              {AREAS.map((a) => (
+                <Chip key={a} label={t(a)} active={areas.has(a)} onPress={() => toggleArea(a)} />
+              ))}
+            </View>
+
+            <Label text={t('biz.field.desc')} />
+            <TextInput
+              value={desc}
+              onChangeText={setDesc}
+              placeholder={t('biz.field.desc_ph')}
+              placeholderTextColor={colors.muted}
+              multiline
+              style={styles.textarea}
+            />
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            {/* Adres & konum */}
+            <Section text={t('biz.section.contact')} />
+            <Label text={t('biz.field.city')} />
+            <CitySelect value={city} onChange={setCity} />
+            <Label text={t('biz.field.district')} />
+            <Input value={district} onChange={setDistrict} placeholderKey="biz.field.district_ph" />
+            <Label text={t('biz.field.address')} />
+            <Input value={address} onChange={setAddress} placeholderKey="biz.field.address_ph" />
+
+            <Label text={t('biz.field.map')} />
+            <Pressable
+              style={[styles.mapBox, pinned && styles.mapBoxOn]}
+              onPress={() => setMapOpen(true)}
+            >
+              <Ionicons
+                name={pinned ? 'location' : 'location-outline'}
+                size={22}
+                color={pinned ? colors.onAccent : colors.accentFg}
+              />
+              <Text
+                variant="bodyStrong"
+                tone={pinned ? 'onAccent' : 'accentFg'}
+                style={styles.mapText}
+              >
+                {pinned ? t('biz.field.map_pinned') : t('biz.field.map_pin')}
+              </Text>
+              {pinned ? (
+                <Text variant="caption" tone="onAccent" style={styles.mapChange}>
+                  {t('biz.field.map_change')}
+                </Text>
+              ) : null}
+            </Pressable>
+            <AddressPicker
+              visible={mapOpen}
+              initialCity={city ?? undefined}
+              initialCoord={coord ? { latitude: coord.lat, longitude: coord.lng } : undefined}
+              onClose={() => setMapOpen(false)}
+              onPick={(r) => {
+                setCoord({ lat: r.lat, lng: r.lng });
+                setPinned(true);
+                if (r.address) setAddress(r.address);
+                if (r.district) setDistrict(r.district);
+                if (r.city && !city) setCity(r.city);
+              }}
+            />
+
+            <Label text={t('biz.field.phone')} />
+            <Input
+              value={phone}
+              onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
+              placeholder="+7 700 123 45 67"
+              keyboardType="phone-pad"
+              autofill="tel"
+            />
+            <Label text={t('biz.field.email')} />
+            <Input
+              value={email}
+              onChange={setEmail}
+              keyboardType="email-address"
+              placeholder="info@salon.kz"
+              autofill="email"
+            />
+            {emailInvalid ? (
+              <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
+                {t('auth.f.email_invalid')}
+              </Text>
+            ) : null}
+            <Label text={t('biz.field.social')} />
+            <SocialLinks value={social} onChange={setSocial} />
+
+            <Label text={t('biz.field.hours')} />
+            <WorkingHours value={hours} onChange={setHours} />
+          </>
+        )}
+
+        {step === 4 && (
+          <>
+            {/* §6 — kayıt öncesi müşteri önizlemesi */}
+            <Section text={t('biz.step.review')} />
+            <View style={styles.preview}>
+              <Text variant="bodyStrong" tone="ink" style={styles.previewName}>
+                {name.trim() || t('biz.field.name')}
+              </Text>
+              <View style={styles.previewRow}>
+                <Ionicons name="business-outline" size={14} color={colors.inkSoft} />
+                <Text variant="caption" tone="inkSoft">
+                  {entityType ? t(`biz.entity.${entityType}` as MessageKey) : '—'}
+                  {official ? ' · ' + t('biz.field.bin') + ' ✓' : ''}
+                </Text>
+              </View>
+              <View style={styles.previewRow}>
+                <Ionicons name="location-outline" size={14} color={colors.inkSoft} />
+                <Text variant="caption" tone="inkSoft" numberOfLines={1}>
+                  {[city, district, address.trim()].filter(Boolean).join(', ') || '—'}
+                </Text>
+              </View>
+              <View style={styles.previewRow}>
+                <Ionicons name="call-outline" size={14} color={colors.inkSoft} />
+                <Text variant="caption" tone="inkSoft">
+                  {phone.trim() || '—'}
+                  {email.trim() ? ' · ' + email.trim() : ''}
+                </Text>
+              </View>
+              <View style={styles.previewRow}>
+                <Ionicons name="cut-outline" size={14} color={colors.inkSoft} />
+                <Text variant="caption" tone="inkSoft" numberOfLines={1}>
+                  {[...areas].map((a) => t(a)).join(', ') || '—'}
+                </Text>
+              </View>
+              <Text variant="caption" tone="muted" style={styles.previewNote}>
+                {t('biz.preview.note')}
+              </Text>
+            </View>
+
+            {/* Hesap & doğrulama */}
+            <Section text={t('biz.section.account')} />
+            <Label text={t('biz.field.tax')} />
+            <Input
+              value={tax}
+              onChange={(v) => setTax(v.replace(/[^0-9]/g, ''))}
+              placeholderKey="biz.field.tax_ph"
+              keyboardType="phone-pad"
+            />
+            <Label text={t('biz.field.docs')} />
+            <Pressable style={[styles.docRow, docUrl && styles.docRowOn]} onPress={addDoc}>
+              <Ionicons
+                name={docUrl ? 'checkmark-circle' : 'cloud-upload-outline'}
+                size={20}
+                color={docUrl ? colors.onAccent : colors.accentFg}
+              />
+              <Text variant="bodyStrong" tone={docUrl ? 'onAccent' : 'accentFg'}>
+                {docUrl ? t('biz.field.docs_added') : t('biz.field.docs_add')}
               </Text>
             </Pressable>
-          </>
-        ) : null}
-
-        {/* Salon sahibi bilgileri */}
-        <Section text={t('biz.section.owner')} />
-        <View style={styles.row2}>
-          <View style={styles.col}>
-            <Label text={t('biz.field.owner_first')} />
-            <Input
-              value={firstName}
-              onChange={setFirstName}
-              placeholderKey="biz.field.owner_first"
-              autofill="name"
-            />
-          </View>
-          <View style={styles.col}>
-            <Label text={t('biz.field.owner_last')} />
-            <Input
-              value={lastName}
-              onChange={setLastName}
-              placeholderKey="biz.field.owner_last"
-              autofill="name"
-            />
-          </View>
-        </View>
-        <Label text={t('biz.field.phone')} />
-        <Input
-          value={ownerPhone}
-          onChange={(v) => setOwnerPhone(v.replace(/[^0-9 +]/g, ''))}
-          placeholder="+7 700 123 45 67"
-          keyboardType="phone-pad"
-          autofill="tel"
-        />
-        <Label text={t('biz.field.password')} />
-        <Input
-          value={password}
-          onChange={setPassword}
-          secure
-          placeholderKey="biz.field.password"
-          autofill="newPassword"
-        />
-        <Text variant="caption" tone="muted" style={{ marginTop: space(0.75) }}>
-          {t('auth.f.password_hint')}
-        </Text>
-        <PasswordStrength password={password} />
-        <Label text={t('auth.f.password2')} />
-        <Input
-          value={password2}
-          onChange={setPassword2}
-          secure
-          placeholderKey="auth.f.password2"
-          autofill="newPassword"
-        />
-        {password2.length > 0 && password !== password2 ? (
-          <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
-            {t('auth.f.password_mismatch')}
-          </Text>
-        ) : null}
-        <Label text={t('biz.field.birthdate')} />
-        <Pressable style={styles.dateBtn} onPress={() => setShowDate(true)}>
-          <Ionicons name="calendar-outline" size={20} color={colors.inkSoft} />
-          <Text variant="body" tone={birthDate ? 'ink' : 'muted'} style={styles.dateText}>
-            {birthDate ? fmtDate(birthDate) : t('biz.field.birthdate_ph')}
-          </Text>
-          <Ionicons name="chevron-down" size={18} color={colors.muted} />
-        </Pressable>
-        {showDate && Platform.OS === 'android' ? (
-          <DateTimePicker
-            value={birthDate ?? new Date(1990, 0, 1)}
-            mode="date"
-            display="default"
-            maximumDate={new Date()}
-            onChange={(_e, d) => {
-              setShowDate(false);
-              if (d) setBirthDate(d);
-            }}
-          />
-        ) : null}
-        {Platform.OS === 'ios' ? (
-          <Modal
-            visible={showDate}
-            transparent
-            animationType="slide"
-            onRequestClose={() => setShowDate(false)}
-          >
-            <Pressable style={styles.dateBackdrop} onPress={() => setShowDate(false)}>
-              <Pressable style={styles.dateSheet} onPress={(e) => e.stopPropagation()}>
-                <DateTimePicker
-                  value={birthDate ?? new Date(1990, 0, 1)}
-                  mode="date"
-                  display="spinner"
-                  maximumDate={new Date()}
-                  onChange={(_e, d) => {
-                    if (d) setBirthDate(d);
-                  }}
-                />
-                <Button label={t('common.ok')} onPress={() => setShowDate(false)} />
-              </Pressable>
-            </Pressable>
-          </Modal>
-        ) : null}
-
-        {/* Salon bilgileri */}
-        <Section text={t('biz.section.firm')} />
-        <Label text={t('biz.field.name')} />
-        <Input value={name} onChange={setName} placeholder="AYNA Studio" />
-
-        <Label text={`${t('biz.field.photos')}  (${photos.length}/${PHOTO_MAX})`} />
-        <Text variant="caption" tone="muted" style={styles.hint}>
-          {t('biz.field.photos_hint')}
-        </Text>
-        <View style={styles.photoGrid}>
-          {photos.length < PHOTO_MAX ? (
-            <Pressable style={styles.photoAdd} onPress={addPhotos}>
-              <Ionicons name="images-outline" size={24} color={colors.inkSoft} />
-            </Pressable>
-          ) : null}
-          {photos.map((uri, i) => (
-            <View key={`${uri}-${i}`}>
-              <Image source={{ uri }} style={styles.photoThumb} />
-              <Pressable
-                style={styles.thumbRemove}
-                hitSlop={6}
-                onPress={() => setPhotos((p) => p.filter((_, idx) => idx !== i))}
-              >
-                <Ionicons name="close-circle" size={20} color={colors.onColor} />
-              </Pressable>
-            </View>
-          ))}
-        </View>
-
-        <Label text={t('biz.field.area')} />
-        <Text variant="caption" tone="muted" style={styles.hint}>
-          {t('biz.field.area_hint')}
-        </Text>
-        <View style={styles.chips}>
-          {AREAS.map((a) => (
-            <Chip key={a} label={t(a)} active={areas.has(a)} onPress={() => toggleArea(a)} />
-          ))}
-        </View>
-
-        <Label text={t('biz.field.desc')} />
-        <TextInput
-          value={desc}
-          onChangeText={setDesc}
-          placeholder={t('biz.field.desc_ph')}
-          placeholderTextColor={colors.muted}
-          multiline
-          style={styles.textarea}
-        />
-
-        {/* Adres & konum */}
-        <Section text={t('biz.section.contact')} />
-        <Label text={t('biz.field.city')} />
-        <CitySelect value={city} onChange={setCity} />
-        <Label text={t('biz.field.district')} />
-        <Input value={district} onChange={setDistrict} placeholderKey="biz.field.district_ph" />
-        <Label text={t('biz.field.address')} />
-        <Input value={address} onChange={setAddress} placeholderKey="biz.field.address_ph" />
-
-        <Label text={t('biz.field.map')} />
-        <Pressable
-          style={[styles.mapBox, pinned && styles.mapBoxOn]}
-          onPress={() => setMapOpen(true)}
-        >
-          <Ionicons
-            name={pinned ? 'location' : 'location-outline'}
-            size={22}
-            color={pinned ? colors.onAccent : colors.accentFg}
-          />
-          <Text variant="bodyStrong" tone={pinned ? 'onAccent' : 'accentFg'} style={styles.mapText}>
-            {pinned ? t('biz.field.map_pinned') : t('biz.field.map_pin')}
-          </Text>
-          {pinned ? (
-            <Text variant="caption" tone="onAccent" style={styles.mapChange}>
-              {t('biz.field.map_change')}
+            <Text variant="caption" tone="muted" style={styles.hint}>
+              {t('biz.field.docs_hint')}
             </Text>
-          ) : null}
-        </Pressable>
-        <AddressPicker
-          visible={mapOpen}
-          initialCity={city ?? undefined}
-          initialCoord={coord ? { latitude: coord.lat, longitude: coord.lng } : undefined}
-          onClose={() => setMapOpen(false)}
-          onPick={(r) => {
-            setCoord({ lat: r.lat, lng: r.lng });
-            setPinned(true);
-            if (r.address) setAddress(r.address);
-            if (r.district) setDistrict(r.district);
-            if (r.city && !city) setCity(r.city);
-          }}
-        />
 
-        <Label text={t('biz.field.phone')} />
-        <Input
-          value={phone}
-          onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
-          placeholder="+7 700 123 45 67"
-          keyboardType="phone-pad"
-          autofill="tel"
-        />
-        <Label text={t('biz.field.email')} />
-        <Input
-          value={email}
-          onChange={setEmail}
-          keyboardType="email-address"
-          placeholder="info@salon.kz"
-          autofill="email"
-        />
-        {emailInvalid ? (
-          <Text variant="caption" style={{ color: colors.danger, marginTop: space(0.75) }}>
-            {t('auth.f.email_invalid')}
-          </Text>
-        ) : null}
-        <Label text={t('biz.field.social')} />
-        <SocialLinks value={social} onChange={setSocial} />
-
-        <Label text={t('biz.field.hours')} />
-        <WorkingHours value={hours} onChange={setHours} />
-
-        {/* Hesap & doğrulama */}
-        <Section text={t('biz.section.account')} />
-        <Label text={t('biz.field.tax')} />
-        <Input
-          value={tax}
-          onChange={(v) => setTax(v.replace(/[^0-9]/g, ''))}
-          placeholderKey="biz.field.tax_ph"
-          keyboardType="phone-pad"
-        />
-        <Label text={t('biz.field.docs')} />
-        <Pressable style={[styles.docRow, docUrl && styles.docRowOn]} onPress={addDoc}>
-          <Ionicons
-            name={docUrl ? 'checkmark-circle' : 'cloud-upload-outline'}
-            size={20}
-            color={docUrl ? colors.onAccent : colors.accentFg}
-          />
-          <Text variant="bodyStrong" tone={docUrl ? 'onAccent' : 'accentFg'}>
-            {docUrl ? t('biz.field.docs_added') : t('biz.field.docs_add')}
-          </Text>
-        </Pressable>
-        <Text variant="caption" tone="muted" style={styles.hint}>
-          {t('biz.field.docs_hint')}
-        </Text>
-
-        <Checkbox
-          checked={terms}
-          onToggle={() => setTerms((v) => !v)}
-          label={t('biz.terms.accept')}
-        />
-        {/* §11/§sözleşme — Always toplu bildirim sorumluluk beyanı */}
-        <Text variant="caption" tone="muted" style={styles.liability}>
-          {t('biz.terms.always_liability')}
-        </Text>
+            <Checkbox
+              checked={terms}
+              onToggle={() => setTerms((v) => !v)}
+              label={t('biz.terms.accept')}
+            />
+            {/* §11/§sözleşme — Always toplu bildirim sorumluluk beyanı */}
+            <Text variant="caption" tone="muted" style={styles.liability}>
+              {t('biz.terms.always_liability')}
+            </Text>
+          </>
+        )}
       </ScrollView>
 
       <View style={styles.footer}>
-        {touched && !valid ? <MissingFields keys={missing} /> : null}
-        <Button
-          label={t('biz.new.submit')}
-          variant={valid && !busy ? 'primary' : 'secondary'}
-          disabled={!valid || busy}
-          onPress={submit}
-        />
+        {step === STEP_COUNT - 1 ? (
+          <>
+            {touched && !valid ? <MissingFields keys={missing} /> : null}
+            <View style={styles.navRow}>
+              <Button
+                label={t('common.back')}
+                variant="secondary"
+                onPress={() => setStep((s) => s - 1)}
+              />
+              <View style={styles.navSpacer} />
+              <Button
+                label={t('biz.new.submit')}
+                variant={valid && !busy ? 'primary' : 'secondary'}
+                disabled={!valid || busy}
+                onPress={submit}
+              />
+            </View>
+          </>
+        ) : (
+          <View style={styles.navRow}>
+            {step > 0 ? (
+              <Button
+                label={t('common.back')}
+                variant="secondary"
+                onPress={() => setStep((s) => s - 1)}
+              />
+            ) : (
+              <View style={{ flex: 1 }} />
+            )}
+            <View style={styles.navSpacer} />
+            <Button
+              label={t('common.next')}
+              variant={stepOk[step] ? 'primary' : 'secondary'}
+              disabled={!stepOk[step]}
+              onPress={() => setStep((s) => Math.min(STEP_COUNT - 1, s + 1))}
+            />
+          </View>
+        )}
       </View>
     </Screen>
   );
@@ -574,6 +699,28 @@ function Section({ text }: { text: string }) {
     <Text variant="bodyStrong" tone="ink" style={styles.section}>
       {text}
     </Text>
+  );
+}
+
+// §3 — sihirbaz ilerleme çubuğu: aktif/tamamlanan adımlar renkli; başlık altında.
+function StepBar({ step, titles }: { step: number; titles: MessageKey[] }) {
+  const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.stepBarWrap}>
+      <View style={styles.stepBar}>
+        {titles.map((_, i) => (
+          <View
+            key={i}
+            style={[styles.stepSeg, { backgroundColor: i <= step ? colors.accentFg : colors.line }]}
+          />
+        ))}
+      </View>
+      <Text variant="caption" tone="inkSoft" style={styles.stepLabel}>
+        {t('biz.step.step')} {step + 1}/{titles.length} · {t(titles[step] ?? titles[0]!)}
+      </Text>
+    </View>
   );
 }
 
@@ -811,6 +958,22 @@ const makeStyles = (colors: ColorTokens) =>
     },
     entityCardOn: { backgroundColor: colors.accent, borderColor: colors.accentFg },
     entityTitle: { fontSize: 15 },
+    stepBarWrap: { gap: space(0.75), marginBottom: space(1.5) },
+    stepBar: { flexDirection: 'row', gap: space(0.5) },
+    stepSeg: { flex: 1, height: 5, borderRadius: radius.pill },
+    stepLabel: { fontWeight: '600' },
+    navRow: { flexDirection: 'row', alignItems: 'center' },
+    navSpacer: { width: space(1.5) },
+    preview: {
+      gap: space(0.75),
+      padding: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+      marginBottom: space(1),
+    },
+    previewName: { fontSize: 17 },
+    previewRow: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    previewNote: { marginTop: space(0.5) },
     vatRow: {
       flexDirection: 'row',
       alignItems: 'center',
