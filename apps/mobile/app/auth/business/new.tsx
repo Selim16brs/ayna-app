@@ -205,6 +205,9 @@ export default function NewBusinessScreen() {
         />
         <Label text={t('biz.field.password')} />
         <Input value={password} onChange={setPassword} secure placeholderKey="biz.field.password" />
+        <Text variant="caption" tone="muted" style={{ marginTop: space(0.75) }}>
+          {t('auth.f.password_hint')}
+        </Text>
         <Label text={t('auth.f.password2')} />
         <Input value={password2} onChange={setPassword2} secure placeholderKey="auth.f.password2" />
         {password2.length > 0 && password !== password2 ? (

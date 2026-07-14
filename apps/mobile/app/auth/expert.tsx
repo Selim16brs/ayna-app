@@ -60,7 +60,8 @@ export default function ExpertRegisterScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
@@ -173,7 +174,8 @@ export default function ExpertRegisterScreen() {
 
   const validServices = Object.values(svc).filter((r) => Number(r.price) > 0 && Number(r.dur) > 0);
   const valid =
-    name.trim().length > 1 &&
+    firstName.trim().length > 1 &&
+    lastName.trim().length > 1 &&
     phone.trim().length >= 7 &&
     password.length >= 6 &&
     password === password2 &&
@@ -190,7 +192,7 @@ export default function ExpertRegisterScreen() {
       // §4.4 — kalıcı engel 2. katmanı için cihaz parmak izi (best-effort)
       const deviceFp = await getDeviceFingerprint();
       const res = await api.registerSpecialist({
-        name: name.trim(),
+        name: `${firstName.trim()} ${lastName.trim()}`.trim(),
         phone: phone.trim(),
         password,
         city,
@@ -278,8 +280,16 @@ export default function ExpertRegisterScreen() {
           )}
         </Pressable>
 
-        <Label text={t('auth.f.name')} />
-        <Input value={name} onChange={setName} placeholder={t('auth.profile.name_ph')} />
+        <View style={styles.row2}>
+          <View style={styles.col}>
+            <Label text={t('auth.f.firstname')} />
+            <Input value={firstName} onChange={setFirstName} placeholder={t('auth.f.firstname')} />
+          </View>
+          <View style={styles.col}>
+            <Label text={t('auth.f.lastname')} />
+            <Input value={lastName} onChange={setLastName} placeholder={t('auth.f.lastname')} />
+          </View>
+        </View>
         <Label text={t('auth.f.phone')} />
         <Input
           value={phone}
@@ -289,6 +299,9 @@ export default function ExpertRegisterScreen() {
         />
         <Label text={t('auth.f.password')} />
         <Input value={password} onChange={setPassword} secure placeholder={t('auth.f.password')} />
+        <Text variant="caption" tone="muted" style={{ marginTop: space(0.75) }}>
+          {t('auth.f.password_hint')}
+        </Text>
         <Label text={t('auth.f.password2')} />
         <Input
           value={password2}
@@ -666,6 +679,8 @@ const makeStyles = (colors: ColorTokens) =>
     content: { paddingHorizontal: space(3), paddingBottom: space(4), paddingTop: space(1) },
     section: { marginTop: space(3), marginBottom: space(1), fontSize: 17 },
     label: { marginTop: space(2), marginBottom: space(1) },
+    row2: { flexDirection: 'row', gap: space(1.5) },
+    col: { flex: 1 },
     hint: { marginTop: -space(0.5), marginBottom: space(1) },
     input: {
       height: 54,
