@@ -122,9 +122,14 @@ export interface SellerReviews {
 const explicitApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 const hostUri = Constants.expoConfig?.hostUri ?? '';
 const host = hostUri.split(':')[0] || 'localhost';
+// Üretim yayını için sabit bulut adresi — EXPO_PUBLIC_API_URL verilmese bile production
+// bundle ASLA localhost'a düşmez (iPhone uzaktan bağlanamama sorununun kökü buydu).
+const PROD_API_URL = 'https://ayna-app-production.up.railway.app';
 export const API_BASE = explicitApiUrl
   ? `${explicitApiUrl.replace(/\/+$/, '')}/api/v1`
-  : `http://${host}:3000/api/v1`;
+  : __DEV__
+    ? `http://${host}:3000/api/v1` // yerel geliştirme (simülatör + aynı ağdaki cihaz)
+    : `${PROD_API_URL}/api/v1`; // üretim yayını (EAS Update) — bulut backend
 
 function authHeader(token?: string): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
