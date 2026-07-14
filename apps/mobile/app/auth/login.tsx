@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
-import { api } from '../../src/api';
+import { api, ApiError } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -39,8 +39,13 @@ export default function LoginScreen() {
             ? '/seller/reports'
             : '/discover',
       );
-    } catch {
-      Alert.alert(t('auth.error.bad'));
+    } catch (e) {
+      // 429 = hız limiti: "şifre hatalı" DEĞİL — kullanıcıya beklemesini söyle
+      Alert.alert(
+        e instanceof ApiError && e.status === 429
+          ? t('auth.error.rate_limited')
+          : t('auth.error.bad'),
+      );
     } finally {
       setBusy(false);
     }

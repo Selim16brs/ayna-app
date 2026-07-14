@@ -760,6 +760,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'auth.error.invalid': 'Проверьте данные и попробуйте снова',
   'auth.error.server': 'Не удалось связаться с сервером, попробуйте позже',
   'auth.error.network': 'Ошибка соединения — проверьте интернет',
+  'auth.error.rate_limited': 'Слишком много попыток — подождите 1 минуту и попробуйте снова',
   'auth.error.bad': 'Электронная почта/телефон или пароль неверны',
   'auth.login.forgot': 'Забыл(а) пароль',
   'auth.login.subtitle': 'Войди с телефоном и паролем',

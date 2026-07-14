@@ -7,6 +7,7 @@ export function registerErrorMessage(e: unknown, t: (k: MessageKey) => string): 
   if (e instanceof ApiError) {
     if (e.code === 'PHONE_TAKEN' || e.code === 'EMAIL_TAKEN') return t('auth.error.taken');
     if (e.code === 'VALIDATION_ERROR') return t('auth.error.invalid');
+    if (e.status === 429) return t('auth.error.rate_limited');
     if (e.status >= 500) return t('auth.error.server');
     return t('common.error');
   }

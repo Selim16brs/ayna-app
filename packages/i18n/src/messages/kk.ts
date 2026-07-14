@@ -773,6 +773,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'auth.error.invalid': 'Деректерді тексеріп, қайта көр',
   'auth.error.server': 'Серверге қосылу мүмкін болмады, сәл кейін көр',
   'auth.error.network': 'Байланыс қатесі — интернетіңді тексер',
+  'auth.error.rate_limited': 'Тым көп әрекет жасалды — 1 минут күтіп, қайта көріңіз',
   'auth.error.bad': 'Электрондық пошта/телефон немесе құпия сөз қате',
   'auth.login.forgot': 'Құпия сөзді ұмыттым',
   'auth.login.subtitle': 'Телефоның мен құпия сөзіңмен кір',

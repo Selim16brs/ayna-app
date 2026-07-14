@@ -832,6 +832,7 @@ export const tr = {
   'auth.error.invalid': 'Bilgileri kontrol et ve tekrar dene',
   'auth.error.server': 'Sunucuya ulaşılamadı, birazdan tekrar dene',
   'auth.error.network': 'Bağlantı hatası — internetini kontrol et',
+  'auth.error.rate_limited': 'Çok fazla deneme yapıldı — 1 dakika bekleyip tekrar dene',
   'auth.error.bad': 'E-posta/telefon veya şifre hatalı',
   'auth.login.forgot': 'Şifremi unuttum',
   'auth.login.subtitle': 'Telefonun ve şifrenle giriş yap',

@@ -29,6 +29,9 @@ async function bootstrap(): Promise<void> {
   app.enableCors({ origin: true, credentials: true });
   app.use(requestIdMiddleware);
   app.useGlobalFilters(new AllExceptionsFilter());
+  // SIGTERM'de (Railway deploy/restart) Prisma onModuleDestroy çalışsın — bağlantılar
+  // düzgün kapansın; yarım kalan istekler bekletilmeden havuz sızıntısı önlenir.
+  app.enableShutdownHooks();
   // Not: Girdi doğrulama Zod ile yapılır (packages/validation). NestJS'in
   // class-validator tabanlı ValidationPipe'ı kullanılmaz; Zod pipe EPIC 2'de eklenir.
 
