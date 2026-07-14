@@ -203,6 +203,12 @@ export class AdminController {
     return this.admin.setSpecialistVerification(id, body);
   }
 
+  // Test/spam uzman kaydını katalogdan + hesaptan kaldır (zero-demo temizliği)
+  @Delete('specialists/:id')
+  removeSpecialist(@Param('id') id: string) {
+    return this.admin.removeSpecialist(id);
+  }
+
   // Kullanıcı yönetimi
   @Get('users')
   users() {

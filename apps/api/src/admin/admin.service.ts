@@ -581,6 +581,23 @@ export class AdminService {
     };
   }
 
+  // §uzman onboarding — test/spam uzman kaydını tamamen kaldır: katalog (Professional) +
+  // Specialist + kullanıcıyı soft-delete. Zero-demo temizliği + spam yönetimi için.
+  async removeSpecialist(id: string) {
+    const sp = await this.prisma.specialist.findUnique({ where: { id } });
+    if (!sp) throw new NotFoundException({ code: 'SPECIALIST_NOT_FOUND', message: 'Uzman yok' });
+    // Katalog karşılığını (varsa) kaldır — böylece keşifte görünmez.
+    if (sp.proId) {
+      await this.prisma.professional.delete({ where: { id: sp.proId } }).catch(() => undefined);
+    }
+    await this.prisma.specialist.delete({ where: { id } }).catch(() => undefined);
+    // Kullanıcıyı soft-delete (FK güvenli): giriş kapanır, PII kalır ama pasif.
+    await this.prisma.user
+      .update({ where: { id: sp.userId }, data: { status: 'deleted' } })
+      .catch(() => undefined);
+    return { ok: true };
+  }
+
   // Kullanıcılar (temel liste; PII/telefon gösterilmez)
   async users() {
     const rows = await this.prisma.user.findMany({
