@@ -334,6 +334,11 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'home.nearby': 'Саған жақын салондар',
   'home.recommended': 'Сен үшін ұсыныстар',
   'home.campaigns': 'Мүмкіндіктер',
+  'offer.form.discount': 'Жеңілдік (міндетті емес — ⚡Мүмкіндік белгісі)',
+  'offer.form.discount_none': 'Жоқ',
+  'offer.form.discount_hint':
+    'Бос сағаттарыңды толтыру үшін жеңілдік бер — ұсынысың клиентте ⚡Мүмкіндік белгісімен ерекшеленеді. Баға өрісіне жеңілдікті түпкі бағаны жаз.',
+  'quotes.deal': 'Мүмкіндік',
   'offers.title': 'Салон және маман науқандары',
   'offers.empty': 'Қазір белсенді науқан жоқ — жақында мұнда ұсыныстар болады.',
   'offers.fixed_badge': 'Науқан бағасы',

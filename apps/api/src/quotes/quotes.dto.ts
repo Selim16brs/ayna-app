@@ -16,6 +16,10 @@ export const createQuoteRequestSchema = z.object({
 // Uzman teklifi: fiyat + süre + not + önerilen 1-3 müsait başlangıç (UTC ms)
 export const submitQuoteSchema = z.object({
   price: z.number().int().positive().max(10_000_000),
+  // §A2 akıllı fiyatlama — opsiyonel indirim (tavan %30, fiyat erozyonu önlemi);
+  // price İNDİRİMLİ nihai fiyattır; discountPercent yalnız rozet/analitik içindir.
+  discountPercent: z.number().int().min(0).max(30).default(0),
+  discountReason: z.enum(['off_peak', 'last_minute', 'flash']).optional(),
   etaMin: z.number().int().min(5).max(600),
   note: z.string().max(300).optional(),
   slots: z.array(z.number().int().positive()).min(1).max(3),

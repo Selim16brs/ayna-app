@@ -360,6 +360,11 @@ export const tr = {
   'home.recommended': 'Senin için öneriler',
   'home.campaigns': 'Fırsatlar',
   // §keşif Modül 2 — kampanyalar (Offers)
+  'offer.form.discount': 'İndirim (opsiyonel — ⚡Fırsat rozeti)',
+  'offer.form.discount_none': 'Yok',
+  'offer.form.discount_hint':
+    'Sakin saatlerini doldurmak için indirim ver — teklifin müşteride ⚡Fırsat rozetiyle öne çıkar. Fiyat alanına indirimli nihai fiyatı yaz.',
+  'quotes.deal': 'Fırsat',
   'offers.title': 'Salon & uzman kampanyaları',
   'offers.empty': 'Şu an aktif kampanya yok — yakında burada fırsatlar olacak.',
   'offers.fixed_badge': 'Kampanya fiyatı',

@@ -301,7 +301,14 @@ interface State {
   // §5.2 Faz A — uzman tarafı: açık talebe teklif BULUTA gider (true=başarılı)
   submitOffer: (
     demandId: string,
-    offer: { price: number; etaMin: number; note?: string; slots: number[] },
+    offer: {
+      price: number;
+      discountPercent?: number;
+      discountReason?: string;
+      etaMin: number;
+      note?: string;
+      slots: number[];
+    },
   ) => Promise<boolean>;
   // §4.5 — uzman ayrılığında randevu devri (sessiz silme YASAK)
   reassignStaffBookings: (oldUzman: string, newUzman: string) => number; // devredilen randevu sayısı

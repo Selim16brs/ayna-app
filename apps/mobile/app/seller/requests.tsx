@@ -85,6 +85,8 @@ export default function SellerRequestsScreen() {
   const [price, setPrice] = useState('');
   const [eta, setEta] = useState('60');
   const [note, setNote] = useState('');
+  // §A2 akıllı fiyatlama — opsiyonel indirim (0/10/20/30); sebep slot yakınlığından türetilir
+  const [discount, setDiscount] = useState(0);
   // §4.1.2 — uzman KENDİ boş saatlerinden 2-3 slot seçer (elle saat yazmaz)
   const [picked, setPicked] = useState<number[]>([]);
   // Talep fotoğrafını tam ekran görüntüle (karttan ve teklif formundan)
@@ -123,6 +125,7 @@ export default function SellerRequestsScreen() {
     setEta('60');
     setNote('');
     setPicked([]);
+    setDiscount(0);
     setForm({ id });
   }
 
@@ -134,8 +137,16 @@ export default function SellerRequestsScreen() {
       return;
     }
     // §5.2 Faz A — teklif BULUTA gider; talep sahibine gerçek push düşer.
+    const soonest = Math.min(...(picked.length ? picked : [Date.now()]));
     const ok = await submitOffer(form.id, {
       price: Number(price) || 0,
+      ...(discount > 0
+        ? {
+            discountPercent: discount,
+            // en erken önerilen slot 24 saat içindeyse "son dakika", değilse "sakin saat"
+            discountReason: soonest - Date.now() < 24 * 3600 * 1000 ? 'last_minute' : 'off_peak',
+          }
+        : {}),
       etaMin: Number(eta) || 60,
       ...(note.trim() ? { note: note.trim() } : {}),
       slots: [...picked].sort((a, b) => a - b),
@@ -270,6 +281,31 @@ export default function SellerRequestsScreen() {
                   keyboardType="number-pad"
                   style={styles.input}
                 />
+                {/* §A2 — akıllı fiyatlama: sakin saat/son dakika indirimi (⚡Fırsat rozeti) */}
+                <Text variant="caption" tone="inkSoft" style={styles.label}>
+                  {t('offer.form.discount')}
+                </Text>
+                <View style={styles.discountRow}>
+                  {[0, 10, 20, 30].map((d) => {
+                    const on = discount === d;
+                    return (
+                      <Pressable
+                        key={d}
+                        onPress={() => setDiscount(d)}
+                        style={[styles.discountChip, on && styles.discountChipOn]}
+                      >
+                        <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
+                          {d === 0 ? t('offer.form.discount_none') : `-%${d}`}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                {discount > 0 ? (
+                  <Text variant="caption" tone="muted" style={styles.discountHint}>
+                    {t('offer.form.discount_hint')}
+                  </Text>
+                ) : null}
                 <Text variant="caption" tone="inkSoft" style={styles.label}>
                   {t('offer.form.eta')}
                 </Text>
@@ -668,6 +704,15 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     label: { marginTop: space(1.5), marginBottom: space(0.75) },
+    discountRow: { flexDirection: 'row', gap: space(0.75), flexWrap: 'wrap' },
+    discountChip: {
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    discountChipOn: { backgroundColor: colors.accent },
+    discountHint: { marginTop: space(0.5), lineHeight: 16 },
     input: {
       height: 52,
       paddingHorizontal: space(2),

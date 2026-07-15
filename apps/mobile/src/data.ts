@@ -1618,6 +1618,8 @@ export interface DemandOffer {
   reviewCount: number;
   distanceKm: number;
   price: number;
+  discountPercent?: number; // §A2 — ⚡Fırsat teklifi (0 = indirimsiz)
+  discountReason?: string; // off_peak | last_minute | flash
   etaMin: number; // tahmini süre (dk)
   note?: string; // uzmanın kısa notu
   slots: number[]; // uzmanın önerdiği 2-3 müsait başlangıç (UTC ms)

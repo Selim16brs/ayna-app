@@ -526,7 +526,14 @@ export const api = {
   submitQuote: (
     token: string,
     requestId: string,
-    input: { price: number; etaMin: number; note?: string; slots: number[] },
+    input: {
+      price: number;
+      discountPercent?: number;
+      discountReason?: string;
+      etaMin: number;
+      note?: string;
+      slots: number[];
+    },
   ) => post<{ id: string; ok: boolean }>(`/quote-requests/${requestId}/quotes`, input, token),
   selectQuote: (token: string, requestId: string, input: { quoteId: string; slotMs: number }) =>
     post<{ bookingId: string; ok: boolean }>(`/quote-requests/${requestId}/select`, input, token),

@@ -291,6 +291,9 @@ model Quote {
   // §5.2 Faz A — teklifi veren uzmanın HESABI (bildirim + mükerrer teklif önleme)
   userId         String?  @map("user_id") @db.Uuid
   price          Decimal  @db.Decimal(12, 2)
+  // §A2 akıllı fiyatlama — ölü saat/son dakika indirimi (tavan %30; komisyon indirimli fiyattan)
+  discountPercent Int     @default(0) @map("discount_percent")
+  discountReason  String  @default("") @map("discount_reason") // off_peak | last_minute | flash
   etaMin         Int      @map("eta_min")
   note           String?
   // Uzmanın önerdiği müsait başlangıçlar (UTC ms listesi, JSON)

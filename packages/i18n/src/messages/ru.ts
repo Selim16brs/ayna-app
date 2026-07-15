@@ -316,6 +316,11 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'home.nearby': 'Салоны рядом с тобой',
   'home.recommended': 'Рекомендации для тебя',
   'home.campaigns': 'Возможности',
+  'offer.form.discount': 'Скидка (необязательно — значок ⚡Выгода)',
+  'offer.form.discount_none': 'Нет',
+  'offer.form.discount_hint':
+    'Дай скидку, чтобы заполнить свободные часы — твоё предложение выделится значком ⚡Выгода. В поле цены укажи итоговую цену со скидкой.',
+  'quotes.deal': 'Выгода',
   'offers.title': 'Акции салонов и мастеров',
   'offers.empty': 'Сейчас активных акций нет — скоро здесь появятся предложения.',
   'offers.fixed_badge': 'Цена по акции',

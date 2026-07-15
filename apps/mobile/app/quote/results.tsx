@@ -214,9 +214,20 @@ function OfferCard({
             {offer.etaMin} {t('pro.min')} · {t('quotes.eta')}
           </Text>
         </View>
-        <Text variant="h2" tone="ink">
-          {formatPrice(offer.price)}
-        </Text>
+        <View style={styles.priceCol}>
+          {/* §A2 — ⚡Fırsat teklifi (sakin saat/son dakika indirimi) */}
+          {(offer.discountPercent ?? 0) > 0 ? (
+            <View style={styles.dealBadge}>
+              <Ionicons name="flash" size={11} color={colors.onAccent} />
+              <Text variant="caption" tone="onAccent" style={styles.dealText}>
+                {t('quotes.deal')} -%{offer.discountPercent}
+              </Text>
+            </View>
+          ) : null}
+          <Text variant="h2" tone="ink">
+            {formatPrice(offer.price)}
+          </Text>
+        </View>
       </View>
 
       {offer.note ? (
@@ -312,6 +323,17 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     eta: { marginTop: space(0.5) },
+    priceCol: { alignItems: 'flex-end', gap: 4 },
+    dealBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+      backgroundColor: colors.accentFg,
+      paddingHorizontal: space(1),
+      paddingVertical: 3,
+      borderRadius: radius.pill,
+    },
+    dealText: { fontWeight: '800' },
     note: { fontStyle: 'italic', lineHeight: 18 },
     slotLabel: { marginTop: space(0.5) },
     slotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },

@@ -20,6 +20,8 @@ type QuoteRow = {
   professionalId: string | null;
   userId: string | null;
   price: unknown;
+  discountPercent: number;
+  discountReason: string;
   etaMin: number;
   note: string | null;
   slotsJson: string;
@@ -75,6 +77,9 @@ export class QuotesService {
       reviewCount: pro?.reviewCount ?? 0,
       distanceKm: estKm(q.id),
       price: Number(q.price),
+      // §A2 — ⚡Fırsat rozeti (indirim >0 ise müşteri kartında görünür)
+      discountPercent: q.discountPercent,
+      discountReason: q.discountReason,
       etaMin: q.etaMin,
       ...(q.note ? { note: q.note } : {}),
       slots,
@@ -299,12 +304,16 @@ export class QuotesService {
         userId: expertUserId,
         professionalId: proId,
         price: input.price,
+        discountPercent: input.discountPercent,
+        discountReason: input.discountReason ?? '',
         etaMin: input.etaMin,
         note: input.note ?? null,
         slotsJson: JSON.stringify(input.slots),
       },
       update: {
         price: input.price,
+        discountPercent: input.discountPercent,
+        discountReason: input.discountReason ?? '',
         etaMin: input.etaMin,
         note: input.note ?? null,
         slotsJson: JSON.stringify(input.slots),
