@@ -13,6 +13,8 @@ export const createBookingSchema = z.object({
   groupSize: z.number().int().min(2).max(20).optional(),
   dateLabel: z.string().min(1),
   inDays: z.number().int(),
+  // §keşif Modül 2 — kampanyadan gelen randevu (sunucu doğrular: aktif+gün/saat+kota+fiyat)
+  offerId: z.string().uuid().optional(),
   // §4.2 — kesin zaman (atomik slot lock); mobil epoch ms + süre
   startMs: z.number().int().optional(),
   durationMin: z.number().int().positive().max(1440).optional(),

@@ -246,6 +246,8 @@ model Booking {
   depositDeadline    DateTime?     @map("deposit_deadline") @db.Timestamptz(6) // dekont son yükleme
   depositForfeited   Boolean       @default(false) @map("deposit_forfeited") // geç iptal/no-show: kapora yandı
   providerNoShow     Boolean       @default(false) @map("provider_no_show") // uzman gelmedi
+  // §keşif Modül 2 — kampanyadan gelen randevu (iptal/no-show'da kota iade edilir)
+  offerId            String?       @map("offer_id") @db.Uuid
   reviewed           Boolean       @default(false)
   createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
@@ -912,4 +914,45 @@ model UserBlock {
   @@unique([blockerId, blockedId])
   @@index([blockedId])
   @@map("user_blocks")
+}
+
+// §keşif katmanı Modül 2 — salon/uzman kampanyaları (Offers). Admin vitrin Campaign'den
+// AYRI: sahipli, self-publish (otomatik kural kontrollü), süreli, kotali; randevu kısayolu.
+enum OfferStatus {
+  draft
+  active
+  paused
+  expired
+  removed
+}
+
+model Offer {
+  id            String      @id @default(uuid()) @db.Uuid
+  ownerType     String      @map("owner_type") // salon | expert (hesaptan türetilir)
+  ownerUserId   String      @map("owner_user_id") @db.Uuid
+  // Randevu hedefi: sahibin keşif kartı (Specialist.proId | Business.professionalId)
+  proId         String      @map("pro_id")
+  status        OfferStatus @default(active)
+  title         String
+  description   String      @default("")
+  i18n          Json? // kk/ru başlık/açıklama override'ları (mevcut kampanya deseni)
+  sector        String      @default("hair") // taksonomi kategori kodu
+  discountType  String      @default("percent") @map("discount_type") // percent | fixed_price
+  discountValue Decimal     @default(0) @map("discount_value") @db.Decimal(12, 2)
+  basePrice     Decimal     @map("base_price") @db.Decimal(12, 2) // indirimsiz referans (KZT)
+  finalPrice    Decimal     @map("final_price") @db.Decimal(12, 2) // kampanyalı fiyat
+  validDays     Int[]       @default([]) @map("valid_days") // 0=Paz..6=Cmt; boş = her gün
+  timeFrom      String      @default("") @map("time_from") // "14:00"; boş = tüm gün (ölü saat hedefi)
+  timeTo        String      @default("") @map("time_to")
+  startsAt      DateTime    @map("starts_at") @db.Timestamptz(6)
+  endsAt        DateTime    @map("ends_at") @db.Timestamptz(6) // maks 30 gün
+  slotQuota     Int?        @map("slot_quota") // toplam kullanım kotası (null = sınırsız)
+  usedCount     Int         @default(0) @map("used_count")
+  imageUrl      String      @default("") @map("image_url")
+  city          String      @default("") // sahibin şehri (keşif filtresi)
+  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([status, endsAt])
+  @@index([ownerUserId])
+  @@map("offers")
 }

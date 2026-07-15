@@ -209,6 +209,17 @@ export class AdminController {
     return this.admin.removeSpecialist(id);
   }
 
+  // §keşif Modül 2 — kampanya gözetimi
+  @Get('offers')
+  offers() {
+    return this.admin.offers();
+  }
+
+  @Delete('offers/:id')
+  removeOffer(@Param('id') id: string) {
+    return this.admin.removeOffer(id);
+  }
+
   // Kullanıcı yönetimi
   @Get('users')
   users() {

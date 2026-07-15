@@ -665,7 +665,50 @@ export class AdminService {
         restrictReason: reason || u.restrictReason,
       },
     });
+    // §keşif Modül 2 kural 2.5.5 — ceza penceresine giren hesabın tüm aktif kampanyaları duraklar
+    await this.prisma.offer.updateMany({
+      where: { ownerUserId: id, status: 'active' },
+      data: { status: 'paused' },
+    });
     return { id: updated.id, restrictedAt: updated.restrictedAt };
+  }
+
+  // §keşif Modül 2 — admin kampanya gözetimi
+  async offers() {
+    const rows = await this.prisma.offer.findMany({
+      where: { status: { not: 'removed' } },
+      orderBy: { createdAt: 'desc' },
+      take: 300,
+    });
+    const owners = await this.prisma.user.findMany({
+      where: { id: { in: [...new Set(rows.map((r) => r.ownerUserId))] } },
+      select: { id: true, name: true },
+    });
+    const byId = new Map(owners.map((o) => [o.id, o.name]));
+    return rows.map((r) => ({
+      id: r.id,
+      ownerName: byId.get(r.ownerUserId) ?? '',
+      ownerType: r.ownerType,
+      status: r.status,
+      title: r.title,
+      sector: r.sector,
+      discountType: r.discountType,
+      discountValue: Number(r.discountValue),
+      basePrice: Number(r.basePrice),
+      finalPrice: Number(r.finalPrice),
+      startsAt: r.startsAt,
+      endsAt: r.endsAt,
+      usedCount: r.usedCount,
+      slotQuota: r.slotQuota,
+      city: r.city,
+    }));
+  }
+
+  async removeOffer(id: string) {
+    const o = await this.prisma.offer.findUnique({ where: { id } });
+    if (!o) throw new NotFoundException({ code: 'OFFER_NOT_FOUND', message: 'Kampanya yok' });
+    await this.prisma.offer.update({ where: { id }, data: { status: 'removed' } });
+    return { ok: true };
   }
 
   async unrestrictUser(id: string) {
