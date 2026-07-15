@@ -359,6 +359,7 @@ export const tr = {
   'home.nearby': 'Sana yakın salonlar',
   'home.recommended': 'Senin için öneriler',
   'home.campaigns': 'Fırsatlar',
+  'home.trend': 'Bu hafta trend ⚡',
   // §keşif Modül 2 — kampanyalar (Offers)
   'waitlist.join': 'Uzman dolu mu? Bekleme listesine katıl',
   'waitlist.joined_t': 'Bekleme listesindesin 🎉',

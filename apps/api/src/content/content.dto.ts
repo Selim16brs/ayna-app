@@ -13,6 +13,8 @@ export const articleSchema = z.object({
   i18n: i18nSchema,
   tag: z.string().min(1),
   categoryCode: z.string().optional(), // ServiceCategory.code → app "Teklif al" CTA
+  // §keşif Modül 1 — içerik tipi; 'trend' Keşfet trend bandında görünür (A4)
+  contentType: z.enum(['trend', 'guide', 'care_plan', 'expert_spotlight', 'listicle']).optional(),
   readMin: z.number().int().min(1).max(60).optional(),
   image: z.string().optional(),
   excerpt: z.string().min(1),

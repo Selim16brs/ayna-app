@@ -586,6 +586,9 @@ model BlogArticle {
   title         String
   tag           String // görünen etiket ("Sağlık", "Bakım"…)
   categoryCode  String?   @map("category_code") // ServiceCategory.code → app CTA
+  // §keşif Modül 1 — içerik tipi: trend | guide | care_plan | expert_spotlight | listicle
+  // 'trend' olanlar Keşfet'te "Bu Hafta Trend" bandında görünür (A4 — ön-dolu talep akışı)
+  contentType   String    @default("guide") @map("content_type")
   readMin       Int       @default(3) @map("read_min")
   image         String    @default("")
   excerpt       String

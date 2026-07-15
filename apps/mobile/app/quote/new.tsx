@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS } from '../../src/data';
@@ -29,9 +29,11 @@ export default function NewQuoteScreen() {
   const createDemand = useStore((s) => s.createDemand);
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   const [photo, setPhoto] = useState<{ uri: string; base64?: string } | null>(null);
-  const [category, setCategory] = useState<string>('hair');
+  // §A4 trend akışı — ön-dolu talep: kategori + not paramla gelir (3 dokunuş kuralı)
+  const preset = useLocalSearchParams<{ category?: string; note?: string }>();
+  const [category, setCategory] = useState<string>(preset.category || 'hair');
   const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(preset.note ?? '');
   const [preferred, setPreferred] = useState<number[]>([]);
 
   const [submitting, setSubmitting] = useState(false);

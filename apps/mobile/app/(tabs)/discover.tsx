@@ -45,6 +45,8 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const campaigns = useCampaigns();
   const offers = useOffers();
+  // §A4 — trend içerikleri (admin 'trend' tipli yayınlar); boşsa bant gizli
+  const trends = useStore((s) => s.articles.filter((a) => a.contentType === 'trend'));
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const unread = useStore(selectUnreadCount);
   // §fix — boş isimde de fallback (|| ; '' ?? x boş string'e düşmez → Keşfet ismi boş görünüyordu)
@@ -261,6 +263,36 @@ export default function DiscoverScreen() {
                 />
               ))}
             </ScrollView>
+
+            {/* ── BU HAFTA TREND (A4 — ilhamdan talebe 3 dokunuş) ── */}
+            {trends.length > 0 ? (
+              <>
+                <SectionHeader title={t('home.trend')} />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.promoScroll}
+                >
+                  {trends.slice(0, 8).map((a) => (
+                    <PromoCard
+                      key={a.id}
+                      title={a.title}
+                      image={
+                        a.image ||
+                        'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=400&q=60'
+                      }
+                      tag={a.tag}
+                      onPress={() =>
+                        router.push({
+                          pathname: '/quote/new',
+                          params: { category: a.categoryCode ?? 'hair', note: a.title },
+                        })
+                      }
+                    />
+                  ))}
+                </ScrollView>
+              </>
+            ) : null}
 
             {/* ── SALON/UZMAN KAMPANYALARI (Modül 2 — süreli indirimler) ── */}
             {offers.length > 0 ? (

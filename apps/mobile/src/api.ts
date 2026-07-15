@@ -911,6 +911,7 @@ export interface ApiArticle {
   title: string;
   tag: string;
   categoryCode: string | null;
+  contentType?: string; // §keşif Modül 1 — trend | guide | care_plan | expert_spotlight | listicle
   readMin: number;
   image: string;
   excerpt: string;

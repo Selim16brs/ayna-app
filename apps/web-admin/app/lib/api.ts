@@ -315,6 +315,7 @@ export interface BlogArticle {
   title: string;
   tag: string;
   categoryCode: string | null;
+  contentType?: string;
   readMin: number;
   image: string;
   excerpt: string;
@@ -330,6 +331,7 @@ export interface ArticleInput {
   tag: string;
   i18n?: I18nOverride;
   categoryCode?: string | null;
+  contentType?: string; // guide | trend | care_plan | expert_spotlight | listicle
   readMin?: number;
   image?: string;
   excerpt: string;

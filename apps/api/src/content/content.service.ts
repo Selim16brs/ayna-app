@@ -19,6 +19,7 @@ interface ArticleRow {
   title: string;
   tag: string;
   categoryCode: string | null;
+  contentType: string;
   readMin: number;
   image: string;
   excerpt: string;
@@ -35,6 +36,7 @@ function mapArticle(a: ArticleRow) {
     title: a.title,
     tag: a.tag,
     categoryCode: a.categoryCode ?? null,
+    contentType: a.contentType,
     readMin: a.readMin,
     image: a.image,
     excerpt: a.excerpt,
@@ -114,6 +116,7 @@ export class ContentService {
         title: input.title,
         tag: input.tag,
         categoryCode: input.categoryCode ?? null,
+        contentType: input.contentType ?? 'guide',
         readMin: input.readMin ?? 3,
         image: input.image ?? '',
         excerpt: input.excerpt,
@@ -140,6 +143,7 @@ export class ContentService {
         ...(patch.title !== undefined ? { title: patch.title } : {}),
         ...(patch.tag !== undefined ? { tag: patch.tag } : {}),
         ...(patch.categoryCode !== undefined ? { categoryCode: patch.categoryCode || null } : {}),
+        ...(patch.contentType !== undefined ? { contentType: patch.contentType } : {}),
         ...(patch.readMin !== undefined ? { readMin: patch.readMin } : {}),
         ...(patch.image !== undefined ? { image: patch.image } : {}),
         ...(patch.excerpt !== undefined ? { excerpt: patch.excerpt } : {}),

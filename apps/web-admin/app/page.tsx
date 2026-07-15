@@ -1935,6 +1935,7 @@ function ContentView() {
     title: '',
     tag: '',
     categoryCode: '',
+    contentType: 'guide',
     readMin: 3,
     image: '',
     excerpt: '',
@@ -1997,6 +1998,7 @@ function ContentView() {
       body,
       i18n: buildArticleI18n(),
       categoryCode: form.categoryCode || null,
+      contentType: form.contentType || 'guide',
     };
     if (editId) await api.updateArticle(editId, payload);
     else await api.createArticle(payload);
@@ -2010,6 +2012,7 @@ function ContentView() {
       title: a.title,
       tag: a.tag,
       categoryCode: a.categoryCode ?? '',
+      contentType: (a as { contentType?: string }).contentType ?? 'guide',
       readMin: a.readMin,
       image: a.image,
       excerpt: a.excerpt,
@@ -2107,6 +2110,16 @@ function ContentView() {
             value={form.categoryCode ?? ''}
             onChange={(e) => setForm({ ...form, categoryCode: e.target.value })}
           />
+          <select
+            value={form.contentType ?? 'guide'}
+            onChange={(e) => setForm({ ...form, contentType: e.target.value })}
+          >
+            <option value="guide">Rehber</option>
+            <option value="trend">Trend (Keşfet bandı)</option>
+            <option value="care_plan">Bakım planı</option>
+            <option value="expert_spotlight">Uzman vitrini</option>
+            <option value="listicle">Listicle</option>
+          </select>
           <input
             className="input"
             type="number"

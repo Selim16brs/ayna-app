@@ -316,6 +316,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'home.nearby': 'Салоны рядом с тобой',
   'home.recommended': 'Рекомендации для тебя',
   'home.campaigns': 'Возможности',
+  'home.trend': 'Тренды недели ⚡',
   'waitlist.join': 'Мастер занят? Встань в лист ожидания',
   'waitlist.joined_t': 'Ты в листе ожидания 🎉',
   'waitlist.joined_b':

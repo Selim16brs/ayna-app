@@ -1436,6 +1436,7 @@ export interface LifeArticle {
   excerpt: string;
   body: string[];
   categoryCode?: string | null; // §12.6 — yazıya bağlı kategori → "Teklif al" CTA
+  contentType?: string; // §keşif Modül 1 — 'trend' olanlar Keşfet trend bandında
 }
 
 const lifeImg = (id: string) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=70`;
