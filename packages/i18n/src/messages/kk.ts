@@ -344,6 +344,11 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'offer.form.discount_hint':
     'Бос сағаттарыңды толтыру үшін жеңілдік бер — ұсынысың клиентте ⚡Мүмкіндік белгісімен ерекшеленеді. Баға өрісіне жеңілдікті түпкі бағаны жаз.',
   'quotes.deal': 'Мүмкіндік',
+  'collections.title': 'Топтама',
+  'collections.empty': 'Топтама табылмады.',
+  'collections.item.category': 'Бір басумен сұраныс аш',
+  'collections.item.article': 'Нұсқаулық мақала',
+  'collections.item.offer': 'Науқан',
   'offers.title': 'Салон және маман науқандары',
   'offers.empty': 'Қазір белсенді науқан жоқ — жақында мұнда ұсыныстар болады.',
   'offers.fixed_badge': 'Науқан бағасы',

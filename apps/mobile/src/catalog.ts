@@ -23,6 +23,17 @@ export function useProfessionals(): Professional[] {
 }
 
 // §12 — aktif kampanyalar; API erişilemezse yerel yedeğe düşer
+// §keşif Modül 3 — aktif dönemsel koleksiyonlar (tarih penceresi sunucuda)
+export function useCollections() {
+  const { data } = useQuery({
+    queryKey: ['collections'],
+    queryFn: api.collections,
+    retry: 1,
+    staleTime: 300_000,
+  });
+  return data ?? [];
+}
+
 // §keşif Modül 2 — aktif salon/uzman kampanyaları (Offers)
 export function useOffers() {
   const { data } = useQuery({

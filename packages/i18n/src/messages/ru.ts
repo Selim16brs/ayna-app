@@ -326,6 +326,11 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'offer.form.discount_hint':
     'Дай скидку, чтобы заполнить свободные часы — твоё предложение выделится значком ⚡Выгода. В поле цены укажи итоговую цену со скидкой.',
   'quotes.deal': 'Выгода',
+  'collections.title': 'Подборка',
+  'collections.empty': 'Подборка не найдена.',
+  'collections.item.category': 'Создай запрос в одно касание',
+  'collections.item.article': 'Статья-гид',
+  'collections.item.offer': 'Акция',
   'offers.title': 'Акции салонов и мастеров',
   'offers.empty': 'Сейчас активных акций нет — скоро здесь появятся предложения.',
   'offers.fixed_badge': 'Цена по акции',

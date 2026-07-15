@@ -370,6 +370,11 @@ export const tr = {
   'offer.form.discount_hint':
     'Sakin saatlerini doldurmak için indirim ver — teklifin müşteride ⚡Fırsat rozetiyle öne çıkar. Fiyat alanına indirimli nihai fiyatı yaz.',
   'quotes.deal': 'Fırsat',
+  'collections.title': 'Koleksiyon',
+  'collections.empty': 'Koleksiyon bulunamadı.',
+  'collections.item.category': 'Tek dokunuşla talep aç',
+  'collections.item.article': 'Rehber yazısı',
+  'collections.item.offer': 'Kampanya',
   'offers.title': 'Salon & uzman kampanyaları',
   'offers.empty': 'Şu an aktif kampanya yok — yakında burada fırsatlar olacak.',
   'offers.fixed_badge': 'Kampanya fiyatı',

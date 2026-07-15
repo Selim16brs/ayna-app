@@ -8,7 +8,7 @@ import { useFonts } from 'expo-font';
 import { Caveat_700Bold } from '@expo-google-fonts/caveat';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORIES } from '../../src/data';
-import { useCampaigns, useOffers, useProfessionals } from '../../src/catalog';
+import { useCampaigns, useCollections, useOffers, useProfessionals } from '../../src/catalog';
 import { greetingKey } from '../../src/greeting';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
@@ -47,6 +47,8 @@ export default function DiscoverScreen() {
   const offers = useOffers();
   // §A4 — trend içerikleri (admin 'trend' tipli yayınlar); boşsa bant gizli
   const trends = useStore((s) => s.articles.filter((a) => a.contentType === 'trend'));
+  // §keşif Modül 3 — aktif koleksiyon hero'ları (maks 2; priority sunucudan sıralı)
+  const collections = useCollections().slice(0, 2);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const unread = useStore(selectUnreadCount);
   // §fix — boş isimde de fallback (|| ; '' ?? x boş string'e düşmez → Keşfet ismi boş görünüyordu)
@@ -263,6 +265,39 @@ export default function DiscoverScreen() {
                 />
               ))}
             </ScrollView>
+
+            {/* ── DÖNEMSEL KOLEKSİYON HERO (Modül 3 — maks 2, tarih penceresi otomatik) ── */}
+            {collections.map((c) => (
+              <Pressable
+                key={c.id}
+                style={styles.collectionHero}
+                onPress={() => router.push(`/collection/${c.id}`)}
+              >
+                <Image
+                  source={{
+                    uri:
+                      c.heroImage ||
+                      'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=60',
+                  }}
+                  style={styles.collectionImg}
+                />
+                <View style={styles.collectionOverlay}>
+                  <Text
+                    variant="bodyStrong"
+                    tone="onColor"
+                    numberOfLines={1}
+                    style={styles.collectionTitle}
+                  >
+                    {c.title}
+                  </Text>
+                  {c.subtitle ? (
+                    <Text variant="caption" tone="onColor" numberOfLines={1}>
+                      {c.subtitle}
+                    </Text>
+                  ) : null}
+                </View>
+              </Pressable>
+            ))}
 
             {/* ── BU HAFTA TREND (A4 — ilhamdan talebe 3 dokunuş) ── */}
             {trends.length > 0 ? (
@@ -623,6 +658,22 @@ const makeStyles = (colors: ColorTokens) =>
 
     // ── Tek satır yatay kaydırma (Fırsatlar / Öne çıkanlar) — referans gradient kart ──
     promoScroll: { paddingHorizontal: space(3), gap: space(1.5) },
+    collectionHero: {
+      height: 120,
+      borderRadius: radius.xl,
+      overflow: 'hidden',
+      marginBottom: space(1.5),
+    },
+    collectionImg: { width: '100%', height: '100%' },
+    collectionOverlay: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      padding: space(1.75),
+      backgroundColor: 'rgba(0,0,0,0.38)',
+    },
+    collectionTitle: { fontSize: 16 },
     promoCard: {
       width: PROMO_W,
       height: PROMO_H,

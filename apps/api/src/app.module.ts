@@ -30,6 +30,7 @@ import { MessagingModule } from './messaging/messaging.module';
 import { SafetyModule } from './safety/safety.module';
 import { KycModule } from './kyc/kyc.module';
 import { PushModule } from './push/push.module';
+import { CollectionsModule } from './collections/collections.module';
 import { OffersModule } from './offers/offers.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { ReferralModule } from './referral/referral.module';
@@ -69,6 +70,7 @@ import { PaymentModule } from './payment/payment.module';
     SafetyModule,
     KycModule,
     PushModule,
+    CollectionsModule,
     OffersModule,
     QuotesModule,
     ReferralModule,

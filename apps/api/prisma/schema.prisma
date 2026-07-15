@@ -962,3 +962,27 @@ model Offer {
   @@index([ownerUserId])
   @@map("offers")
 }
+
+// §keşif Modül 3 — dönemsel kürasyon (Seasonal Collections): occasion bazlı koleksiyon;
+// tarih penceresiyle OTOMATİK yayına girer/çıkar (yıl başında kurulur, elle müdahale yok).
+model Collection {
+  id        String   @id @default(uuid()) @db.Uuid
+  slug      String   @unique
+  title     String
+  subtitle  String   @default("")
+  i18n      Json? // kk/ru title/subtitle override'ları
+  // wedding | graduation | nauryz | march8 | ramadan_eid | new_year | summer | custom
+  occasion  String   @default("custom")
+  heroImage String   @default("") @map("hero_image")
+  tone      String   @default("rose") // mevcut paletten (palet dışı renk yok)
+  startsAt  DateTime @map("starts_at") @db.Timestamptz(6)
+  endsAt    DateTime @map("ends_at") @db.Timestamptz(6)
+  priority  Int      @default(0) // aynı anda çok aktif varsa sıralama (maks 2 hero)
+  // Kürasyon öğeleri: [{type:'category'|'article'|'offer'|'expert', id, sort}]
+  // (promoJson/servicesJson deseniyle JSON — ayrı tablo yerine yapıya uygun yol)
+  itemsJson String   @default("[]") @map("items_json")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([startsAt, endsAt])
+  @@map("collections")
+}

@@ -315,6 +315,35 @@ export interface SearchableBusiness {
   sector: string;
 }
 
+// §keşif Modül 3 — dönemsel koleksiyonlar
+export interface ApiCollection {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string;
+  occasion: string;
+  heroImage: string;
+  tone: string;
+  priority: number;
+}
+export type ApiCollectionItem =
+  | { type: 'category'; id: string; title: string; icon: string }
+  | { type: 'article'; id: string; title: string; image: string; tag: string }
+  | {
+      type: 'offer';
+      id: string;
+      title: string;
+      image: string;
+      proId: string;
+      basePrice: number;
+      finalPrice: number;
+      discountValue: number;
+    }
+  | { type: 'expert'; id: string; title: string; image: string; subtitle: string };
+export interface ApiCollectionDetail extends ApiCollection {
+  items: ApiCollectionItem[];
+}
+
 // §keşif Modül 2 — salon/uzman kampanyası (Offers)
 export interface ApiOffer {
   id: string;
@@ -412,6 +441,10 @@ export const api = {
   createOffer: (token: string, input: CreateOfferInput) => post<ApiOffer>('/offers', input, token),
   offerAction: (token: string, id: string, action: 'pause' | 'resume' | 'remove') =>
     post<ApiOffer>(`/offers/${id}/${action}`, {}, token),
+  // §keşif Modül 3 — koleksiyonlar
+  collections: () => get<ApiCollection[]>(`/collections${localeQuery()}`),
+  collectionDetail: (idOrSlug: string) =>
+    get<ApiCollectionDetail>(`/collections/${idOrSlug}${localeQuery()}`),
   cancelBooking: (id: string, reason?: string) =>
     post<Appointment>(`/bookings/${id}/cancel`, reason ? { reason } : {}),
   // Onay/alternatif pazarlık döngüsü (§1.6)
