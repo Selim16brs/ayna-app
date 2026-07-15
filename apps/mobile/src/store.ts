@@ -412,6 +412,35 @@ const SEEDED_PERSONAL_RESET: Partial<State> = {
   w2wLikePoints: 0,
 };
 
+// GİZLİLİK KAPISI — hesap değişimi/çıkışta İSTİSNASIZ sıfırlanan kullanıcı-verisi.
+// Yeni üye aynı cihazda önceki üyeye ait HİÇBİR şeyi göremez (randevu, kazanç,
+// hizmet menüsü, sertifika, salon profili, özel günler, Always bağları...).
+// Yeni kullanıcı-alanı eklerken BURAYA da ekle (store.reset.test.ts bekçidir).
+export const userScopedReset = (): Partial<State> => ({
+  ...SEEDED_PERSONAL_RESET,
+  moments: [],
+  closedDays: [],
+  promotions: [],
+  recentSearches: [],
+  reportedPosts: [],
+  reengagedIds: [],
+  alwaysBonds: [],
+  offersSeen: {},
+  demandNotif: { cats: [], from: 8, to: 22 },
+  sellerServices: seedSellerServices(),
+  sellerHours: defaultHours(),
+  sellerSocial: emptySocial,
+  sellerCerts: [],
+  salonProfile: { photos: [], about: '', address: '', contact: '', areas: [] },
+  premium: false,
+  platinum: false,
+  autoReengageEnabled: true,
+  avatarUri: null,
+  cutoutUri: null,
+  sellerTrialStart: null,
+  reviewAnonymous: true,
+});
+
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
@@ -661,20 +690,17 @@ export const useStore = create<State>()(
           const personalReset = sameUser
             ? {}
             : {
-                ...SEEDED_PERSONAL_RESET,
+                ...userScopedReset(), // TAM gizlilik sıfırlaması (eksik alan = sızıntı)
                 avatarUri: session.user.avatarUrl ?? null, // hesabın fotosu her cihazda
                 cutoutUri: session.user.cutoutUrl ?? null, // kesik portre hesaptan (kredi yok)
-                premium: false,
-                platinum: false,
-                sellerSocial: emptySocial,
-                sellerCerts: [],
               };
           setApiToken(session.token);
           return {
             token: session.token,
             currentUser: session.user,
-            sellerTrialStart,
             ...personalReset,
+            // reset'in sellerTrialStart:null'unu EZMESİ için resetten SONRA yazılır
+            sellerTrialStart,
             // aynı kullanıcı yeniden girdi + sunucuda foto varsa yereli tazele
             ...(sameUser && session.user.avatarUrl ? { avatarUri: session.user.avatarUrl } : {}),
             ...(sameUser && session.user.cutoutUrl ? { cutoutUri: session.user.cutoutUrl } : {}),
@@ -690,7 +716,9 @@ export const useStore = create<State>()(
         ),
       logout: () => {
         setApiToken(null);
-        set({ token: null, currentUser: null });
+        // GİZLİLİK — çıkışta kullanıcıya ait HER ŞEY bellekten ve persist'ten silinir;
+        // sonraki üye (kayıt/giriş) sıfır durumla başlar.
+        set({ token: null, currentUser: null, ...userScopedReset() });
       },
 
       setCity: (city) =>
