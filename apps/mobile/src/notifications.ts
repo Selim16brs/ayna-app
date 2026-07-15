@@ -102,6 +102,12 @@ export async function registerForRemotePush(authToken: string): Promise<void> {
 }
 
 // EK Z.5 — bildirime dokunma → DEEP-LINK (MD_000 satır 266: doğrudan ilgili ekrana).
+// Uygulama AÇIKKEN push düşerse çağrılır — ekranlar yenileme beklemeden tazelenir
+// (MD_000 §4.2: "uzman ekranı açıkken yeni talep anında düşer").
+export function addPushReceivedListener(onReceive: () => void) {
+  return Notifications.addNotificationReceivedListener(() => onReceive());
+}
+
 export function addPushDeepLinkListener(onRoute: (route: string) => void) {
   return Notifications.addNotificationResponseReceivedListener((resp) => {
     const route = resp.notification.request.content.data?.route;

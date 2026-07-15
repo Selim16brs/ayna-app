@@ -87,6 +87,16 @@ export default function AgendaScreen() {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const storeBookings = useStore((s) => s.bookings);
+  // MD_000 §4.2 — takvim açıkken yeni talep kendiliğinden düşer: odakta hemen +
+  // 30 sn'de bir buluttan tazele (push tetiklemesi _layout'ta ayrıca var)
+  const hydrateBookings = useStore((s) => s.hydrateBookings);
+  useFocusEffect(
+    useCallback(() => {
+      void hydrateBookings();
+      const timer = setInterval(() => void hydrateBookings(), 30_000);
+      return () => clearInterval(timer);
+    }, [hydrateBookings]),
+  );
   const approveBooking = useStore((s) => s.approveBooking);
   const rejectBooking = useStore((s) => s.rejectBooking);
   const closedDays = useStore((s) => s.closedDays);

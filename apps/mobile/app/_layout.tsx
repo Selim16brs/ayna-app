@@ -8,6 +8,7 @@ import { Alert } from 'react-native';
 import { fillParams, LocaleProvider, useLocale } from '../src/locale';
 import {
   addPushDeepLinkListener,
+  addPushReceivedListener,
   registerForRemotePush,
   syncBookingReminders,
 } from '../src/notifications';
@@ -63,6 +64,14 @@ function ThemedStack() {
   useEffect(() => {
     if (token) void registerForRemotePush(token);
   }, [token]);
+  // MD_000 §4.2 — uygulama AÇIKKEN push düşerse randevu/talep listeleri anında tazelenir
+  useEffect(() => {
+    const sub = addPushReceivedListener(() => {
+      void hydrateBookings();
+      void hydrateDemands();
+    });
+    return () => sub.remove();
+  }, [hydrateBookings, hydrateDemands]);
   // EK Z.5 — push bildirimine dokunma → DEEP-LINK (doğrudan ilgili ekrana)
   useEffect(() => {
     const sub = addPushDeepLinkListener((route) => router.push(route as never));
