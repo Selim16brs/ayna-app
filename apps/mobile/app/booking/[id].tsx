@@ -237,13 +237,23 @@ export default function BookingDetailScreen() {
     <Screen edges={['bottom']}>
       <StackHeader title={t('booking.detail.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Uzman / salon */}
-        <View style={[styles.proCard, shadow.card]}>
+        {/* Uzman / salon — dokun → public profil (ticari veri içermez); offline
+            kayıtlarda proId boş olabilir, o zaman düz kart kalır */}
+        <Pressable
+          style={[styles.proCard, shadow.card]}
+          disabled={!booking.proId}
+          onPress={() => booking.proId && router.push(`/professional/${booking.proId}`)}
+        >
           <Image source={{ uri: booking.proImage }} style={styles.proImage} />
           <View style={styles.proBody}>
-            <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-              {booking.proName}
-            </Text>
+            <View style={styles.proNameRow}>
+              <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.proNameText}>
+                {booking.proName}
+              </Text>
+              {booking.proId ? (
+                <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+              ) : null}
+            </View>
             <Text variant="caption" tone="muted" numberOfLines={1}>
               {booking.service}
             </Text>
@@ -253,7 +263,7 @@ export default function BookingDetailScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </Pressable>
 
         {/* §7.3 — uzmana yalnız POZİTİF rozet gösterilir (kullanıcı puanı/negatif sinyal ASLA) */}
         {isProvider && booking.customerTrusted ? (
@@ -888,6 +898,8 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.bgSunken,
     },
     proBody: { flex: 1, gap: 3, alignItems: 'flex-start' },
+    proNameRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    proNameText: { flexShrink: 1 },
     status: {
       paddingHorizontal: space(1),
       paddingVertical: 3,

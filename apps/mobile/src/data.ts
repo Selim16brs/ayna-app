@@ -1613,6 +1613,7 @@ export type DemandStatus = 'collecting' | 'expired' | 'booked';
 export interface DemandOffer {
   id: string;
   proId: string;
+  profileId?: string | null; // keşif kartı olan uzmanda dolu → isim profil butonu olur
   proName: string;
   proImage: string;
   rating: number;

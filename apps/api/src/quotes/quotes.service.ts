@@ -71,6 +71,9 @@ export class QuotesService {
     return {
       id: q.id,
       proId: pro?.id ?? q.userId ?? q.id,
+      // §müşteri→uzman profili: yalnız keşif kartı OLAN uzmanda gezinilebilir
+      // (salon-bağlı uzmanın kendi kartı yok — null ise isim buton olmaz)
+      profileId: pro?.id ?? null,
       proName: pro?.name ?? (q.userId ? (expertNames.get(q.userId) ?? 'Uzman') : 'Uzman'),
       proImage: pro?.imageUrl ?? '',
       rating: pro ? Number(pro.rating) : 0,

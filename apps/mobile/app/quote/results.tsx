@@ -185,17 +185,29 @@ function OfferCard({
   disabled: boolean;
   onPick: (slotMs: number) => void;
 }) {
+  const router = useRouter();
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.card, shadow.card]}>
-      <View style={styles.cardTop}>
+      {/* Uzman başlığı = profil butonu (yalnız keşif kartı olan uzmanda) — ticari
+          veri İÇERMEYEN public profile gider */}
+      <Pressable
+        style={styles.cardTop}
+        disabled={!offer.profileId}
+        onPress={() => offer.profileId && router.push(`/professional/${offer.profileId}`)}
+      >
         <Image source={{ uri: offer.proImage }} style={styles.thumb} />
         <View style={styles.info}>
-          <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-            {offer.proName}
-          </Text>
+          <View style={styles.nameRow}>
+            <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.nameText}>
+              {offer.proName}
+            </Text>
+            {offer.profileId ? (
+              <Ionicons name="chevron-forward" size={15} color={colors.muted} />
+            ) : null}
+          </View>
           <View style={styles.metaRow}>
             <View style={styles.metaChip}>
               <Ionicons name="star" size={11} color={colors.gold} />
@@ -228,7 +240,7 @@ function OfferCard({
             {formatPrice(offer.price)}
           </Text>
         </View>
-      </View>
+      </Pressable>
 
       {offer.note ? (
         <Text variant="caption" tone="inkSoft" style={styles.note}>
@@ -312,6 +324,8 @@ const makeStyles = (colors: ColorTokens) =>
     cardTop: { flexDirection: 'row', gap: space(1.5), alignItems: 'center' },
     thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.bgSunken },
     info: { flex: 1 },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    nameText: { flexShrink: 1 },
     metaRow: { flexDirection: 'row', gap: space(0.75), marginTop: space(0.5) },
     metaChip: {
       flexDirection: 'row',
