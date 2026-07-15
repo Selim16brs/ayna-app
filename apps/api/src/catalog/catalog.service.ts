@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Professional, Quote, ServiceCategory } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { CutoutService } from '../cutout/cutout.service';
 import { StorageService } from '../storage/storage.service';
 import { localizeRows } from '../common/i18n';
 import type { CreateQuoteRequestInput } from './catalog.dto';
@@ -10,6 +11,7 @@ export class CatalogService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
+    private readonly cutout: CutoutService,
   ) {}
 
   // §medya taşıma — R2 öncesi kayıtlarda base64 data-URL görseller JSON yanıtı MB'larca
@@ -201,6 +203,24 @@ export class CatalogService {
       sp && owner
         ? await this.migrateOwnerMedia(sp.userId, owner.avatarUrl, owner.cutoutUrl)
         : { avatarUrl: owner?.avatarUrl ?? null, cutoutUrl: owner?.cutoutUrl ?? null };
+    // §5.1.1 — kesik portre YOKSA ve remove.bg anahtarı tanımlıysa BİR KEZ üret + kalıcılaştır
+    // (kredi tekrar yanmaz; başarısızlık profili bozmaz — düz avatarla devam edilir)
+    if (sp && !media.cutoutUrl && media.avatarUrl?.startsWith('http')) {
+      try {
+        if (await this.cutout.available()) {
+          const { dataUrl } = await this.cutout.cutout({ imageUrl: media.avatarUrl });
+          const stored = await this.storage.put(dataUrl, 'avatars');
+          if (stored?.startsWith('http')) {
+            media.cutoutUrl = stored;
+            await this.prisma.user
+              .update({ where: { id: sp.userId }, data: { cutoutUrl: stored } })
+              .catch(() => undefined);
+          }
+        }
+      } catch {
+        // remove.bg hatası/kota → sessiz geç, avatar gösterilir
+      }
+    }
     // §6.1 — public profil fotosu: uzmanın KENDİ yüklediği foto (cutout>avatar); Professional.imageUrl boşsa bu.
     const ownerImage = media.cutoutUrl || media.avatarUrl || '';
     // §3.3 — KATMANLI doğrulama rozetleri. Salon: Business bayrakları; uzman: KYC = kimlik.

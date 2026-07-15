@@ -5,5 +5,6 @@ import { CutoutService } from './cutout.service';
 @Module({
   controllers: [CutoutController],
   providers: [CutoutService],
+  exports: [CutoutService],
 })
 export class CutoutModule {}
