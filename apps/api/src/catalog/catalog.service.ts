@@ -1,12 +1,49 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Professional, Quote, ServiceCategory } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { localizeRows } from '../common/i18n';
 import type { CreateQuoteRequestInput } from './catalog.dto';
 
 @Injectable()
 export class CatalogService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
+
+  // §medya taşıma — R2 öncesi kayıtlarda base64 data-URL görseller JSON yanıtı MB'larca
+  // şişiriyordu (2.9MB profil = mobilde donma). Okuma anında TEMBEL taşıma: data-URL
+  // görülünce R2'ye yüklenir, kayda URL yazılır; sonraki okumalar küçük ve hızlıdır.
+  private async migrateOwnerMedia(
+    userId: string,
+    avatarUrl: string | null,
+    cutoutUrl: string | null,
+  ): Promise<{ avatarUrl: string | null; cutoutUrl: string | null }> {
+    const needsA = !!avatarUrl?.startsWith('data:');
+    const needsC = !!cutoutUrl?.startsWith('data:');
+    if (!needsA && !needsC) return { avatarUrl, cutoutUrl };
+    const a = needsA ? await this.storage.put(avatarUrl, 'avatars') : avatarUrl;
+    const c = needsC ? await this.storage.put(cutoutUrl, 'avatars') : cutoutUrl;
+    // Yükleme başarılıysa (URL döndüyse) kalıcılaştır — başarısızsa data URL kalır (geri düşüş)
+    if ((needsA && a !== avatarUrl) || (needsC && c !== cutoutUrl)) {
+      await this.prisma.user
+        .update({ where: { id: userId }, data: { avatarUrl: a, cutoutUrl: c } })
+        .catch(() => undefined);
+    }
+    return { avatarUrl: a, cutoutUrl: c };
+  }
+
+  private async migrateList(
+    values: string[],
+    prefix: string,
+    persist: (next: string[]) => Promise<unknown>,
+  ): Promise<string[]> {
+    if (!values.some((v) => v.startsWith('data:'))) return values;
+    const next = await this.storage.putMany(values, prefix);
+    if (next.some((v, i) => v !== values[i])) await persist(next).catch(() => undefined);
+    return next;
+  }
 
   async categories() {
     const rows = await this.prisma.serviceCategory.findMany({ orderBy: { sortOrder: 'asc' } });
@@ -82,13 +119,29 @@ export class CatalogService {
               select: { id: true, name: true, avatarUrl: true },
             });
             const byId = new Map(users.map((u) => [u.id, u]));
-            return members.map((m) => ({
-              id: m.userId,
-              name: byId.get(m.userId)?.name ?? '',
-              role: m.bio.slice(0, 40),
-              image: byId.get(m.userId)?.avatarUrl ?? '',
-              rating: 0,
-            }));
+            // Kadro avatarları da base64 olabilir → tembel taşı (kalıcılaştırarak)
+            return Promise.all(
+              members.map(async (m) => {
+                const u = byId.get(m.userId);
+                let img = u?.avatarUrl ?? '';
+                if (img.startsWith('data:')) {
+                  const moved = (await this.storage.put(img, 'avatars')) ?? img;
+                  if (moved !== img) {
+                    await this.prisma.user
+                      .update({ where: { id: m.userId }, data: { avatarUrl: moved } })
+                      .catch(() => undefined);
+                    img = moved;
+                  }
+                }
+                return {
+                  id: m.userId,
+                  name: u?.name ?? '',
+                  role: m.bio.slice(0, 40),
+                  image: img,
+                  rating: 0,
+                };
+              }),
+            );
           })()
         : [];
     // Sıfır-demo: yorumlar GERÇEK — yalnız tamamlanmış randevuya bağlı, admin görünür yaptıkları
@@ -143,8 +196,13 @@ export class CatalogService {
           select: { kycStatus: true, avatarUrl: true, cutoutUrl: true },
         })
       : null;
+    // §medya taşıma — base64 ise R2'ye tembel taşı (2.9MB yanıt donması düzeltmesi)
+    const media =
+      sp && owner
+        ? await this.migrateOwnerMedia(sp.userId, owner.avatarUrl, owner.cutoutUrl)
+        : { avatarUrl: owner?.avatarUrl ?? null, cutoutUrl: owner?.cutoutUrl ?? null };
     // §6.1 — public profil fotosu: uzmanın KENDİ yüklediği foto (cutout>avatar); Professional.imageUrl boşsa bu.
-    const ownerImage = owner?.cutoutUrl || owner?.avatarUrl || '';
+    const ownerImage = media.cutoutUrl || media.avatarUrl || '';
     // §3.3 — KATMANLI doğrulama rozetleri. Salon: Business bayrakları; uzman: KYC = kimlik.
     const kyc = owner?.kycStatus === 'approved';
     const salonBiz =
@@ -187,8 +245,18 @@ export class CatalogService {
       staff,
       serviceRatings,
       services,
-      certs: sp?.certificates ?? [], // §6.1 — uzmanın yüklediği gerçek sertifikalar
-      portfolio: p.portfolio, // uzmanın KENDİ yüklediği galeri (hesap verisi)
+      // §6.1 — sertifika/galeri: base64 ise R2'ye tembel taşınır (yanıt küçük kalır)
+      certs: sp
+        ? await this.migrateList(sp.certificates, 'certificates', (next) =>
+            this.prisma.specialist.update({
+              where: { userId: sp.userId },
+              data: { certificates: next },
+            }),
+          )
+        : [],
+      portfolio: await this.migrateList(p.portfolio, 'portfolio', (next) =>
+        this.prisma.professional.update({ where: { id: p.id }, data: { portfolio: next } }),
+      ),
       promotions: parsePromos(p.promoJson), // §11 — Platinum'un profilinde yayınladığı promosyonlar
       reviews,
       starDist,
