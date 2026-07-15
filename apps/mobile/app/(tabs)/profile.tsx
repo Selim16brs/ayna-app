@@ -90,8 +90,7 @@ export default function ProfileScreen() {
     else if (key === 'profile.menu.always') router.push('/always');
     else if (key === 'profile.menu.rewards') router.push('/rewards');
     else if (key === 'profile.menu.budget') router.push('/profile/budget');
-    else if (key === 'profile.menu.earnings')
-      router.push(role === 'salon' ? '/salon/home' : '/seller/reports');
+    else if (key === 'profile.menu.earnings') router.push('/seller/earnings');
     else if (key === 'profile.menu.saved') router.push('/favorites');
     else if (key === 'profile.menu.messages') router.push('/messages');
     else if (key === 'profile.menu.referral') router.push('/referral');
