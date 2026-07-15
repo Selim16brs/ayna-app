@@ -46,7 +46,11 @@ export default function DiscoverScreen() {
   const campaigns = useCampaigns();
   const offers = useOffers();
   // §A4 — trend içerikleri (admin 'trend' tipli yayınlar); boşsa bant gizli
-  const trends = useStore((s) => s.articles.filter((a) => a.contentType === 'trend'));
+  // DİKKAT: seçici içinde .filter() YENİ dizi üretir → useSyncExternalStore
+  // "getSnapshot should be cached" sonsuz döngüsü = açılışta beyaz ekran.
+  // Ham diziyi seç, türetmeyi useMemo ile yap.
+  const articles = useStore((s) => s.articles);
+  const trends = useMemo(() => articles.filter((a) => a.contentType === 'trend'), [articles]);
   // §keşif Modül 3 — aktif koleksiyon hero'ları (maks 2; priority sunucudan sıralı)
   const collections = useCollections().slice(0, 2);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
