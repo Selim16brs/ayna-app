@@ -60,8 +60,12 @@ export class CollectionsService {
 
   // Koleksiyon sayfası: kürasyonlu karma liste — üç modül burada birleşir
   async detail(idOrSlug: string, locale?: string) {
+    // UUID değilse yalnız slug ile ara (uuid kolonuna slug verilirse Prisma P2023 fırlatır)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
     const c = await this.prisma.collection
-      .findFirst({ where: { OR: [{ id: idOrSlug }, { slug: idOrSlug }] } })
+      .findFirst({
+        where: isUuid ? { OR: [{ id: idOrSlug }, { slug: idOrSlug }] } : { slug: idOrSlug },
+      })
       .catch(() => null);
     if (!c) {
       throw new NotFoundException({ code: 'COLLECTION_NOT_FOUND', message: 'Koleksiyon yok' });
