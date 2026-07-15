@@ -9,7 +9,15 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, DateField, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import {
+  Button,
+  DateField,
+  RulesCard,
+  Screen,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+} from '../../src/ui';
 
 const LEAD_H = 2; // en erken 2 saat sonrası
 
@@ -216,6 +224,9 @@ export default function ScheduleScreen() {
             last
           />
         </View>
+
+        {/* §B5 — kurallar kartı: kapora/iptal/no-show her zaman görünür */}
+        <RulesCard />
       </ScrollView>
 
       <View style={styles.footer}>

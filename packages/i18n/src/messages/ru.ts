@@ -331,6 +331,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'collections.item.category': 'Создай запрос в одно касание',
   'collections.item.article': 'Статья-гид',
   'collections.item.offer': 'Акция',
+  'rules.title': 'Правила записи — без сюрпризов',
+  'rules.deposit': 'Депозит (закрепляет запись, вычитается из услуги)',
+  'rules.cancel_a': 'При отмене менее чем за',
+  'rules.cancel_b': 'ч. до записи депозит сгорает; более ранняя отмена бесплатна.',
+  'rules.noshow':
+    'Если не придёшь (no-show), депозит остаётся у мастера, на аккаунт начисляется штраф.',
   'offers.title': 'Акции салонов и мастеров',
   'offers.empty': 'Сейчас активных акций нет — скоро здесь появятся предложения.',
   'offers.fixed_badge': 'Цена по акции',

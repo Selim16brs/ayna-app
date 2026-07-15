@@ -12,7 +12,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, SectionHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import { RulesCard, Screen, SectionHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -281,6 +281,9 @@ export default function NewQuoteScreen() {
             </Pressable>
           ))}
         </ScrollView>
+
+        {/* §B5 — kurallar kartı (sürpriz yok → itiraz yok) */}
+        <RulesCard />
       </ScrollView>
 
       {/* ── CTA ── */}

@@ -223,11 +223,18 @@ export class QuotesService {
   async openForExpert(expertUserId: string) {
     const me = await this.prisma.user.findUnique({ where: { id: expertUserId } });
     if (!me) throw new NotFoundException({ code: 'NO_USER', message: 'Kullanıcı yok' });
+    // §B5 (ayna2) — uzmanın SESSİZCE engellediği müşterilerin talepleri havuza düşmez
+    // (platform banından bağımsız kişisel tercih; UserBlock DM engeliyle ortak tablo)
+    const blocked = await this.prisma.userBlock.findMany({
+      where: { blockerId: expertUserId },
+      select: { blockedId: true },
+    });
+    const blockedIds = blocked.map((b) => b.blockedId);
     const rows = await this.prisma.quoteRequest.findMany({
       where: {
         status: 'open',
         expiresAt: { gt: new Date() },
-        userId: { not: expertUserId },
+        userId: { not: expertUserId, ...(blockedIds.length ? { notIn: blockedIds } : {}) },
         ...(me.city ? { city: me.city } : {}),
       },
       orderBy: { expiresAt: 'asc' },
