@@ -334,6 +334,10 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'home.nearby': 'Саған жақын салондар',
   'home.recommended': 'Сен үшін ұсыныстар',
   'home.campaigns': 'Мүмкіндіктер',
+  'waitlist.join': 'Маман бос емес пе? Күту тізіміне қосыл',
+  'waitlist.joined_t': 'Күту тізіміндесің 🎉',
+  'waitlist.joined_b':
+    'Орын босаса, саған бірден хабарлама жібереміз — бірінші растаған жазылуды алады.',
   'offer.form.discount': 'Жеңілдік (міндетті емес — ⚡Мүмкіндік белгісі)',
   'offer.form.discount_none': 'Жоқ',
   'offer.form.discount_hint':

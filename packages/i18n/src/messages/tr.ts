@@ -360,6 +360,10 @@ export const tr = {
   'home.recommended': 'Senin için öneriler',
   'home.campaigns': 'Fırsatlar',
   // §keşif Modül 2 — kampanyalar (Offers)
+  'waitlist.join': 'Uzman dolu mu? Bekleme listesine katıl',
+  'waitlist.joined_t': 'Bekleme listesindesin 🎉',
+  'waitlist.joined_b':
+    'Bir yer açılırsa sana anında bildirim göndereceğiz — ilk onaylayan randevuyu alır.',
   'offer.form.discount': 'İndirim (opsiyonel — ⚡Fırsat rozeti)',
   'offer.form.discount_none': 'Yok',
   'offer.form.discount_hint':
