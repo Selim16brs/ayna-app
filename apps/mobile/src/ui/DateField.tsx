@@ -38,6 +38,7 @@ export function DateField({
   onChange,
   mode,
   minimumDate,
+  maximumDate,
   last,
 }: {
   label: string;
@@ -45,6 +46,7 @@ export function DateField({
   onChange: (d: Date) => void;
   mode: 'date' | 'datetime';
   minimumDate?: Date;
+  maximumDate?: Date;
   last?: boolean;
 }) {
   const { colors } = useTheme();
@@ -64,6 +66,7 @@ export function DateField({
             themeVariant={colors.bg === '#191E1B' ? 'dark' : 'light'}
             locale="tr-TR"
             minimumDate={minimumDate}
+            maximumDate={maximumDate}
             onChange={(_, d) => d && onChange(d)}
           />
         </View>
@@ -79,6 +82,7 @@ export function DateField({
               value={value}
               mode="date"
               minimumDate={minimumDate}
+              maximumDate={maximumDate}
               onChange={(_, d) => {
                 setShow(false);
                 if (d) onChange(d);

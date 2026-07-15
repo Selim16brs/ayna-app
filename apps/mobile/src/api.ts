@@ -315,6 +315,46 @@ export interface SearchableBusiness {
   sector: string;
 }
 
+// §keşif Modül 2 — salon/uzman kampanyası (Offers)
+export interface ApiOffer {
+  id: string;
+  ownerType: 'salon' | 'expert';
+  proId: string;
+  status: string;
+  title: string;
+  description: string;
+  sector: string;
+  discountType: 'percent' | 'fixed_price';
+  discountValue: number;
+  basePrice: number;
+  finalPrice: number;
+  validDays: number[];
+  timeFrom: string;
+  timeTo: string;
+  startsAt: string;
+  endsAt: string;
+  lastChance: boolean;
+  slotQuota: number | null;
+  imageUrl: string;
+  city: string;
+  usedCount?: number;
+}
+export interface CreateOfferInput {
+  title: string;
+  description?: string;
+  sector?: string;
+  discountType?: 'percent' | 'fixed_price';
+  discountValue: number;
+  basePrice: number;
+  validDays?: number[];
+  timeFrom?: string;
+  timeTo?: string;
+  startsAtMs: number;
+  endsAtMs: number;
+  slotQuota?: number;
+  imageDataUrl?: string;
+}
+
 export interface RegisterSpecialistInput {
   photoDataUrl?: string;
   birthDateMs?: number;
@@ -366,6 +406,12 @@ export const api = {
   bookingStats: () => get<BookingStats>('/bookings/stats'),
   // token verilirse randevu sahibine bağlanır (offline seller girişinde verilmez)
   createBooking: (b: Appointment, token?: string) => post<Appointment>('/bookings', b, token),
+  // §keşif Modül 2 — kampanyalar
+  offers: () => get<ApiOffer[]>(`/offers${localeQuery()}`),
+  myOffers: (token: string) => get<ApiOffer[]>('/offers/mine', token),
+  createOffer: (token: string, input: CreateOfferInput) => post<ApiOffer>('/offers', input, token),
+  offerAction: (token: string, id: string, action: 'pause' | 'resume' | 'remove') =>
+    post<ApiOffer>(`/offers/${id}/${action}`, {}, token),
   cancelBooking: (id: string, reason?: string) =>
     post<Appointment>(`/bookings/${id}/cancel`, reason ? { reason } : {}),
   // Onay/alternatif pazarlık döngüsü (§1.6)

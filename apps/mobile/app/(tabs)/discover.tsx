@@ -8,7 +8,7 @@ import { useFonts } from 'expo-font';
 import { Caveat_700Bold } from '@expo-google-fonts/caveat';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORIES } from '../../src/data';
-import { useCampaigns, useProfessionals } from '../../src/catalog';
+import { useCampaigns, useOffers, useProfessionals } from '../../src/catalog';
 import { greetingKey } from '../../src/greeting';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
@@ -44,6 +44,7 @@ export default function DiscoverScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const campaigns = useCampaigns();
+  const offers = useOffers();
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const unread = useStore(selectUnreadCount);
   // §fix — boş isimde de fallback (|| ; '' ?? x boş string'e düşmez → Keşfet ismi boş görünüyordu)
@@ -260,6 +261,40 @@ export default function DiscoverScreen() {
                 />
               ))}
             </ScrollView>
+
+            {/* ── SALON/UZMAN KAMPANYALARI (Modül 2 — süreli indirimler) ── */}
+            {offers.length > 0 ? (
+              <>
+                <SectionHeader title={t('offers.title')} onSeeAll={() => router.push('/offers')} />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.promoScroll}
+                >
+                  {offers.slice(0, 8).map((o) => (
+                    <PromoCard
+                      key={o.id}
+                      title={o.title}
+                      image={
+                        o.imageUrl ||
+                        'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&q=60'
+                      }
+                      tag={
+                        o.discountType === 'percent'
+                          ? `-%${o.discountValue}`
+                          : `${o.finalPrice.toLocaleString('tr-TR')} ₸`
+                      }
+                      onPress={() =>
+                        router.push({
+                          pathname: '/booking/schedule',
+                          params: { proId: o.proId, offerId: o.id, source: 'direct' },
+                        })
+                      }
+                    />
+                  ))}
+                </ScrollView>
+              </>
+            ) : null}
 
             {/* ── ÖNE ÇIKANLAR — SPONSORLU: yalnız admin'in seçtikleri; boşsa bölüm gizli ── */}
             {featured.length > 0 ? (

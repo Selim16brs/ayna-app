@@ -39,6 +39,14 @@ const ITEMS: {
     tone: 'accent',
   },
   {
+    id: 'offers',
+    icon: 'pricetags',
+    labelKey: 'seller.menu.offers',
+    descKey: 'seller.menu.offers_d',
+    route: '/seller/offers',
+    tone: 'gold',
+  },
+  {
     id: 'reengage',
     icon: 'heart',
     labelKey: 'seller.menu.reengage',

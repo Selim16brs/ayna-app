@@ -920,6 +920,7 @@ export interface Appointment {
   // §10 gizlilik — SALONUN uzman için aldığı offline randevu. Yalnız bunlar salon panelinde görünür;
   // uzmanın kendi (app/offline) randevuları ve TÜM para bilgisi salonla PAYLAŞILMAZ (uzmanın şahsi alanı).
   bySalon?: boolean;
+  offerId?: string; // §keşif Modül 2 — kampanyadan gelen randevu (fiyat sunucuda sabitlenir)
   price: number; // kaç paraya
   status: BookingStatus;
   cancelReason?: string; // §6.C — "neden gelemiyorum"

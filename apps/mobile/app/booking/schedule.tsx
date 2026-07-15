@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { BookingSource } from '../../src/data';
 import { formatSlotTr } from '../../src/datetime';
+import { api, type ApiOffer } from '../../src/api';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -22,7 +23,21 @@ export default function ScheduleScreen() {
     source?: string;
     uzmanId?: string;
     service?: string;
+    offerId?: string;
   }>();
+  // §keşif Modül 2 — kampanyadan gelindi: fiyat/hizmet kampanyadan, saat penceresi kısıtlı
+  const [offer, setOffer] = useState<ApiOffer | null>(null);
+  useEffect(() => {
+    if (!params.offerId) return;
+    let alive = true;
+    api
+      .offers()
+      .then((rows) => alive && setOffer(rows.find((o) => o.id === params.offerId) ?? null))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [params.offerId]);
   const addBooking = useStore((s) => s.addBooking);
   const pro = useProfessionalDetail(params.proId ?? '1');
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
@@ -38,12 +53,29 @@ export default function ScheduleScreen() {
   const chosenService = pro.services.find((sv) => sv.name === params.service);
   const durationMin = chosenService?.durationMin ?? pro.services[0]?.durationMin ?? 60;
 
+  // Kampanya gün/saat penceresi (Almatı UTC+5) — sunucu ayrıca doğrular
+  function inOfferWindow(ms: number): boolean {
+    if (!offer) return true;
+    const local = new Date(ms + 5 * 3600 * 1000);
+    const wd = local.getUTCDay();
+    if (offer.validDays.length > 0 && !offer.validDays.includes(wd)) return false;
+    if (offer.timeFrom && offer.timeTo) {
+      const hm = `${String(local.getUTCHours()).padStart(2, '0')}:${String(local.getUTCMinutes()).padStart(2, '0')}`;
+      if (hm < offer.timeFrom || hm >= offer.timeTo) return false;
+    }
+    return true;
+  }
+  const offerWindowOk = inOfferWindow(when.getTime());
+
   function confirm() {
     const startMs = when.getTime();
     const source = (params.source as BookingSource) ?? 'direct';
-    const serviceName =
-      chosenService?.name ?? params.service ?? pro.services[0]?.name ?? pro.specialty;
-    const price = chosenService?.price ?? pro.services[0]?.price ?? Number(pro.priceFrom);
+    const serviceName = offer
+      ? offer.title
+      : (chosenService?.name ?? params.service ?? pro.services[0]?.name ?? pro.specialty);
+    const price = offer
+      ? offer.finalPrice
+      : (chosenService?.price ?? pro.services[0]?.price ?? Number(pro.priceFrom));
 
     const id = addBooking({
       source,
@@ -52,6 +84,7 @@ export default function ScheduleScreen() {
       proName: pro.name,
       proImage: pro.image,
       ...(uzman?.name ? { uzmanName: uzman.name } : {}),
+      ...(offer ? { offerId: offer.id } : {}),
       startMs,
       durationMin,
       price,
@@ -120,6 +153,29 @@ export default function ScheduleScreen() {
           </>
         ) : null}
 
+        {/* §keşif Modül 2 — kampanya bilgisi + fiyat (sunucu fiyatı ayrıca sabitler) */}
+        {offer ? (
+          <View style={styles.offerBox}>
+            <Text variant="bodyStrong" tone="onAccent" numberOfLines={2}>
+              {offer.title}
+            </Text>
+            <View style={styles.offerPriceRow}>
+              <Text variant="caption" tone="onAccent" style={styles.offerOld}>
+                {offer.basePrice.toLocaleString('tr-TR')} ₸
+              </Text>
+              <Text variant="bodyStrong" tone="onAccent">
+                {offer.finalPrice.toLocaleString('tr-TR')} ₸
+              </Text>
+            </View>
+            {offer.timeFrom || offer.validDays.length > 0 ? (
+              <Text variant="caption" tone="onAccent">
+                {t('offers.window_hint')}
+                {offer.timeFrom ? ` · ${offer.timeFrom}–${offer.timeTo}` : ''}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+
         <Text variant="h2" tone="ink" style={styles.label}>
           {t('booking.schedule.time')}
         </Text>
@@ -137,7 +193,17 @@ export default function ScheduleScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button label={t('booking.schedule.confirm')} variant="primary" onPress={confirm} />
+        {offer && !offerWindowOk ? (
+          <Text variant="caption" style={styles.windowWarn}>
+            {t('offers.window_invalid')}
+          </Text>
+        ) : null}
+        <Button
+          label={t('booking.schedule.confirm')}
+          variant={offerWindowOk ? 'primary' : 'secondary'}
+          disabled={!offerWindowOk}
+          onPress={confirm}
+        />
       </View>
     </Screen>
   );
@@ -209,6 +275,16 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     active: { backgroundColor: colors.accent },
+    offerBox: {
+      backgroundColor: colors.accentFg,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: 4,
+      marginTop: space(2),
+    },
+    offerPriceRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    offerOld: { textDecorationLine: 'line-through', opacity: 0.7 },
+    windowWarn: { color: colors.danger, textAlign: 'center', marginBottom: space(1) },
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),

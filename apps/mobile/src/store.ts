@@ -91,6 +91,7 @@ export interface AddBookingInput {
   startMs: number;
   durationMin: number;
   price: number;
+  offerId?: string; // §keşif Modül 2 — kampanya bağlantısı
   status?: Appointment['status'];
 }
 
@@ -734,6 +735,7 @@ export const useStore = create<State>()(
           proName: input.proName,
           proImage: input.proImage,
           ...(input.uzmanName ? { uzmanName: input.uzmanName } : {}),
+          ...(input.offerId ? { offerId: input.offerId } : {}),
           startMs: input.startMs,
           durationMin: input.durationMin,
           price: input.price,
