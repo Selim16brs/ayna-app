@@ -252,24 +252,6 @@ export default function DiscoverScreen() {
           </View>
         ) : (
           <>
-            {/* ── FIRSATLAR (tek satır, yatay kaydırmalı) ── */}
-            <SectionHeader title={t('home.campaigns')} onSeeAll={() => router.push('/search')} />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.promoScroll}
-            >
-              {campaigns.map((c) => (
-                <PromoCard
-                  key={c.id}
-                  title={c.title}
-                  image={c.image}
-                  sponsored
-                  onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
-                />
-              ))}
-            </ScrollView>
-
             {/* ── DÖNEMSEL KOLEKSİYON HERO (Modül 3 — maks 2, tarih penceresi otomatik) ── */}
             {collections.map((c) => (
               <Pressable
@@ -302,6 +284,24 @@ export default function DiscoverScreen() {
                 </View>
               </Pressable>
             ))}
+
+            {/* ── FIRSATLAR (tek satır, yatay kaydırmalı) ── */}
+            <SectionHeader title={t('home.campaigns')} onSeeAll={() => router.push('/search')} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.promoScroll}
+            >
+              {campaigns.map((c) => (
+                <PromoCard
+                  key={c.id}
+                  title={c.title}
+                  image={c.image}
+                  sponsored
+                  onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
+                />
+              ))}
+            </ScrollView>
 
             {/* ── BU HAFTA TREND (A4 — ilhamdan talebe 3 dokunuş) ── */}
             {trends.length > 0 ? (
@@ -663,10 +663,12 @@ const makeStyles = (colors: ColorTokens) =>
     // ── Tek satır yatay kaydırma (Fırsatlar / Öne çıkanlar) — referans gradient kart ──
     promoScroll: { paddingHorizontal: space(3), gap: space(1.5) },
     collectionHero: {
-      height: 120,
+      height: 148,
       borderRadius: radius.xl,
       overflow: 'hidden',
-      marginBottom: space(1.5),
+      marginHorizontal: space(3), // bölümlerle aynı hiza (tam-genişlik taşma düzeltmesi)
+      marginTop: space(1),
+      marginBottom: space(2),
     },
     collectionImg: { width: '100%', height: '100%' },
     collectionOverlay: {
@@ -674,10 +676,12 @@ const makeStyles = (colors: ColorTokens) =>
       left: 0,
       right: 0,
       bottom: 0,
-      padding: space(1.75),
-      backgroundColor: 'rgba(0,0,0,0.38)',
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.5),
+      backgroundColor: 'rgba(0,0,0,0.45)',
+      gap: 2,
     },
-    collectionTitle: { fontSize: 16 },
+    collectionTitle: { fontSize: 18, letterSpacing: -0.3 },
     promoCard: {
       width: PROMO_W,
       height: PROMO_H,

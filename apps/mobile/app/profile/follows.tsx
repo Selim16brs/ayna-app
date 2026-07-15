@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -13,7 +14,12 @@ export default function FollowsScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { tab } = useLocalSearchParams<{ tab?: string }>();
+  const router = useRouter();
   const isFollowing = tab === 'following';
+  // Takip edilen ad katalogdaki bir uzman/salonsa satır PROFİL BUTONU olur
+  // (public profil — ticari veri içermez). Sıradan kullanıcının public sayfası yok.
+  const pros = useProfessionals();
+  const proByName = new Map(pros.map((p) => [p.name.trim().toLocaleLowerCase('tr-TR'), p.id]));
 
   const followerNames = useStore((s) => s.followerNames);
   const following = useStore((s) => s.following);
@@ -40,23 +46,35 @@ export default function FollowsScreen() {
           </View>
         ) : (
           <View style={styles.list}>
-            {list.map((name) => (
-              <View key={name} style={styles.row}>
-                <View style={styles.avatar}>
-                  <Text variant="bodyStrong" tone="accentFg">
-                    {name.charAt(0)}
-                  </Text>
+            {list.map((name) => {
+              const proId = proByName.get(name.trim().toLocaleLowerCase('tr-TR'));
+              return (
+                <View key={name} style={styles.row}>
+                  <Pressable
+                    style={styles.person}
+                    disabled={!proId}
+                    onPress={() => proId && router.push(`/professional/${proId}`)}
+                  >
+                    <View style={styles.avatar}>
+                      <Text variant="bodyStrong" tone="accentFg">
+                        {name.charAt(0)}
+                      </Text>
+                    </View>
+                    <Text variant="bodyStrong" tone="ink" style={styles.name} numberOfLines={1}>
+                      {name}
+                    </Text>
+                    {proId ? (
+                      <Ionicons name="chevron-forward" size={15} color={colors.muted} />
+                    ) : null}
+                  </Pressable>
+                  <Pressable style={styles.removeBtn} onPress={() => onRemove(name)} hitSlop={6}>
+                    <Text variant="caption" tone="inkSoft" style={styles.removeText}>
+                      {t(isFollowing ? 'profile.follow.unfollow' : 'profile.follow.remove')}
+                    </Text>
+                  </Pressable>
                 </View>
-                <Text variant="bodyStrong" tone="ink" style={styles.name} numberOfLines={1}>
-                  {name}
-                </Text>
-                <Pressable style={styles.removeBtn} onPress={() => onRemove(name)} hitSlop={6}>
-                  <Text variant="caption" tone="inkSoft" style={styles.removeText}>
-                    {t(isFollowing ? 'profile.follow.unfollow' : 'profile.follow.remove')}
-                  </Text>
-                </Pressable>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
       </ScrollView>
@@ -90,6 +108,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     name: { flex: 1 },
+    person: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
     removeBtn: {
       paddingHorizontal: space(1.5),
       paddingVertical: space(0.9),
