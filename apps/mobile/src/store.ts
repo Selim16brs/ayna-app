@@ -427,6 +427,7 @@ export const userScopedReset = (): Partial<State> => ({
   alwaysBonds: [],
   offersSeen: {},
   demandNotif: { cats: [], from: 8, to: 22 },
+  notifPrefs: { care: true, moment: true, personal: true, booking: true },
   sellerServices: seedSellerServices(),
   sellerHours: defaultHours(),
   sellerSocial: emptySocial,
