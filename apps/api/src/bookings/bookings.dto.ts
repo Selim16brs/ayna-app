@@ -13,8 +13,11 @@ export const createBookingSchema = z.object({
   bySalon: z.boolean().optional(), // §10 — salonun aldığı kayıt (para görünürlüğü kuralı)
   bookingKind: z.enum(['normal', 'group', 'express']).optional(),
   groupSize: z.number().int().min(2).max(20).optional(),
-  dateLabel: z.string().min(1),
-  inDays: z.number().int(),
+  // Mobil istemci bu iki alanı GÖNDERMİYOR (Appointment tipinde yok) — zorunlu
+  // tutulunca her mobil randevu yazımı sessizce VALIDATION_ERROR ile düşüyordu.
+  // Opsiyonel: eksikse sunucu startMs'ten türetir (bookings.service.create).
+  dateLabel: z.string().min(1).optional(),
+  inDays: z.number().int().optional(),
   // §keşif Modül 2 — kampanyadan gelen randevu (sunucu doğrular: aktif+gün/saat+kota+fiyat)
   offerId: z.string().uuid().optional(),
   // §4.2 — kesin zaman (atomik slot lock); mobil epoch ms + süre

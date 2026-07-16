@@ -24,9 +24,12 @@ export class BookingsController {
     @Inject(ENV) private readonly env: Env,
   ) {}
 
+  // GİZLİLİK: filtresiz global liste YOK — kimliğe göre müşteri+sağlayıcı birleşimi.
+  // (Eski istemci bu ucu token'sız çağırırsa 401 alır; kimseye yabancı kayıt dönmez.)
   @Get()
-  list() {
-    return this.bookings.list();
+  @UseGuards(JwtAuthGuard)
+  list(@Req() req: AuthedRequest) {
+    return this.bookings.listCombined(req.user!.id);
   }
 
   // §5 — CRM özet istatistiği (doluluk/gelir/no-show)
