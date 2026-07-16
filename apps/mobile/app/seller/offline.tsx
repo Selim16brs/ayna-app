@@ -58,6 +58,7 @@ export default function OfflineBookingScreen() {
   const [groupSize, setGroupSize] = useState('3');
   const [busy, setBusy] = useState(false);
   const bookings = useStore((s) => s.bookings);
+  const token = useStore((s) => s.token);
 
   // Taksonomi id → TaxService (seçili hizmetlerin ad/fiyat/süresini toplamak için)
   const svcById = useMemo(() => {
@@ -118,7 +119,8 @@ export default function OfflineBookingScreen() {
       ...(kind === 'group' ? { groupSize: Number(groupSize) || 2 } : {}),
     };
     try {
-      await api.createBooking(booking);
+      // POST /bookings JWT korumalı — token'sız çağrı 401 ile düşüyordu
+      await api.createBooking(booking, token ?? undefined);
       Alert.alert(t('offline.saved'));
       router.back();
     } catch {
@@ -357,7 +359,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2.5),
-      paddingBottom: space(4),
+      // Tab bar yüksekliği kadar pay — yoksa "Randevuyu ekle" butonu bar arkasında
+      // kalıyor ve kaydırma limiti butona erişimi engelliyor.
+      paddingBottom: space(14),
       gap: space(1.5),
     },
     field: { gap: space(0.75) },
