@@ -9,6 +9,8 @@ export const createBookingSchema = z.object({
   proImage: z.string(),
   uzmanName: z.string().optional(),
   customerName: z.string().max(80).optional(),
+  customerPhone: z.string().max(40).optional(), // salon offline koordinasyonu
+  bySalon: z.boolean().optional(), // §10 — salonun aldığı kayıt (para görünürlüğü kuralı)
   bookingKind: z.enum(['normal', 'group', 'express']).optional(),
   groupSize: z.number().int().min(2).max(20).optional(),
   dateLabel: z.string().min(1),

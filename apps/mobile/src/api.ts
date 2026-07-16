@@ -155,7 +155,11 @@ export function setApiToken(token: string | null | undefined): void {
 async function get<T>(path: string, token?: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, { headers: authHeader(token ?? sessionToken) });
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
-  return res.json() as Promise<T>;
+  // Bazı uçlar 200 + BOŞ gövde döner (ör. aktif tema yokken /content/theme, ilk ödeme
+  // öncesi /payment/mine). res.json() boş gövdede patlar ve Promise.all zincirindeki
+  // TÜM hidrasyonu öldürürdü (içerik+config+puan+güvenlik) → boş gövde = null.
+  const text = await res.text();
+  return (text ? JSON.parse(text) : null) as T;
 }
 
 // Backend hata kodunu (ör. PREMIUM_REQUIRED, QUOTA_EXCEEDED, AI_FAILED) taşıyan hata —
@@ -186,7 +190,8 @@ async function post<T>(path: string, body: unknown, token?: string): Promise<T> 
     }
     throw new ApiError(res.status, code, `POST ${path} → ${res.status}`);
   }
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  return (text ? JSON.parse(text) : null) as T;
 }
 
 export interface ApiCategory {

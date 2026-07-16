@@ -533,22 +533,24 @@ export default function ProfessionalScreen() {
                 </View>
               </View>
 
-              {/* §7.1 — alt kırılım çubukları (hizmet kalitesi/temizlik/iletişim/zamanlama) */}
-              <View style={[styles.breakdownCard, shadow.soft]}>
-                {pro.breakdown.map((b) => (
-                  <View key={b.key} style={styles.bdRow}>
-                    <Text variant="caption" tone="inkSoft" style={styles.bdLabel}>
-                      {t(`pro.dim.${b.key}` as 'pro.dim.quality')}
-                    </Text>
-                    <View style={styles.bdTrack}>
-                      <View style={[styles.bdFill, { width: `${(b.score / 5) * 100}%` }]} />
+              {/* §7.1 — alt kırılım çubukları; gerçek veri yoksa BOŞ KART çizilmez */}
+              {pro.breakdown.length === 0 ? null : (
+                <View style={[styles.breakdownCard, shadow.soft]}>
+                  {pro.breakdown.map((b) => (
+                    <View key={b.key} style={styles.bdRow}>
+                      <Text variant="caption" tone="inkSoft" style={styles.bdLabel}>
+                        {t(`pro.dim.${b.key}` as 'pro.dim.quality')}
+                      </Text>
+                      <View style={styles.bdTrack}>
+                        <View style={[styles.bdFill, { width: `${(b.score / 5) * 100}%` }]} />
+                      </View>
+                      <Text variant="caption" tone="ink" style={styles.bdScore}>
+                        {b.score.toFixed(1)}
+                      </Text>
                     </View>
-                    <Text variant="caption" tone="ink" style={styles.bdScore}>
-                      {b.score.toFixed(1)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
+                  ))}
+                </View>
+              )}
 
               {reviews.map((r) => (
                 <View key={r.id} style={[styles.review, shadow.soft]}>

@@ -92,7 +92,51 @@ export class CatalogService {
 
   async professionals() {
     const rows = await this.prisma.professional.findMany({ orderBy: { rating: 'desc' } });
-    return rows.map(mapPro);
+    // §5.1.4-8 — liste eksik alanları: konum (harita), fiyat aralığı üstü, premium rozeti.
+    // Sahip eşleşmesi iki toplu sorguyla (N+1 yok): Specialist.proId + Business.professionalId.
+    const ids = rows.map((r) => r.id);
+    const [sps, bizs] = await Promise.all([
+      this.prisma.specialist.findMany({
+        where: { proId: { in: ids } },
+        select: { proId: true, userId: true },
+      }),
+      this.prisma.business.findMany({
+        where: { professionalId: { in: ids } },
+        select: { professionalId: true, ownerUserId: true },
+      }),
+    ]);
+    const ownerByPro = new Map<string, string>();
+    for (const x of sps) if (x.proId) ownerByPro.set(x.proId, x.userId);
+    for (const x of bizs) if (x.professionalId) ownerByPro.set(x.professionalId, x.ownerUserId);
+    const owners = [...new Set(ownerByPro.values())];
+    const users = owners.length
+      ? await this.prisma.user.findMany({
+          where: { id: { in: owners } },
+          select: { id: true, membershipTier: true, membershipUntil: true },
+        })
+      : [];
+    const now = Date.now();
+    const premiumUsers = new Set(
+      users
+        .filter(
+          (u) =>
+            (u.membershipTier === 'premium' || u.membershipTier === 'platinum') &&
+            (!u.membershipUntil || u.membershipUntil.getTime() > now),
+        )
+        .map((u) => u.id),
+    );
+    return rows.map((r) => {
+      const services = safeParseServices(r.servicesJson);
+      const prices = services.map((x) => x.price).filter((p) => p > 0);
+      const owner = ownerByPro.get(r.id);
+      return {
+        ...mapPro(r),
+        lat: r.lat ?? undefined,
+        lng: r.lng ?? undefined,
+        priceTo: prices.length ? Math.max(...prices) : Number(r.priceFrom),
+        isPremium: owner ? premiumUsers.has(owner) : false,
+      };
+    });
   }
 
   async professional(id: string) {
@@ -190,6 +234,7 @@ export class CatalogService {
         iin: true,
         certVerified: true,
         socialVerified: true,
+        socialInstagram: true,
       },
     });
     const owner = sp
@@ -235,9 +280,19 @@ export class CatalogService {
               binVerified: true,
               addressVerified: true,
               socialVerified: true,
+              socialInstagram: true,
+              socialTiktok: true,
             },
           })
         : null;
+    // §6.1 — sosyal chip'ler: uzmanın/salonun bağladığı hesaplar (yoksa boş → chip çizilmez)
+    const social = {
+      instagram:
+        (sp as { socialInstagram?: string } | null)?.socialInstagram ||
+        salonBiz?.socialInstagram ||
+        '',
+      tiktok: salonBiz?.socialTiktok || '',
+    };
     // §uzman onboarding — uzman resmî kaydı: kayıtlı ИП + geçerli IIN (public'te açık IIN yok)
     const expertRegistered = sp?.entityType === 'ip' && /^\d{12}$/.test(sp?.iin ?? '');
     const verification = {
@@ -263,6 +318,7 @@ export class CatalogService {
       verification, // §3.3 — katmanlı rozetler
       aynaVerified,
       staff,
+      social,
       serviceRatings,
       services,
       // §6.1 — sertifika/galeri: base64 ise R2'ye tembel taşınır (yanıt küçük kalır)

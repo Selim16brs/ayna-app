@@ -59,6 +59,23 @@ export class QuotesService {
     private readonly push: PushService,
   ) {}
 
+  // §7.3 — güvenilir müşteri kümesi: ≥3 tamamlanan randevu + hiç no-show (tek toplu sorgu)
+  private async trustedUserSet(userIds: string[]): Promise<Set<string>> {
+    if (userIds.length === 0) return new Set();
+    const rows = await this.prisma.booking.findMany({
+      where: { userId: { in: userIds }, status: { in: ['completed', 'no_show'] } },
+      select: { userId: true, status: true },
+    });
+    const done = new Map<string, number>();
+    const bad = new Set<string>();
+    for (const b of rows) {
+      if (!b.userId) continue;
+      if (b.status === 'no_show') bad.add(b.userId);
+      else done.set(b.userId, (done.get(b.userId) ?? 0) + 1);
+    }
+    return new Set(userIds.filter((u) => (done.get(u) ?? 0) >= 3 && !bad.has(u)));
+  }
+
   private mapOffer(q: QuoteRow, expertNames: Map<string, string>) {
     const pro = q.professional;
     let slots: number[] = [];
@@ -238,7 +255,8 @@ export class QuotesService {
         status: 'open',
         expiresAt: { gt: new Date() },
         userId: { not: expertUserId, ...(blockedIds.length ? { notIn: blockedIds } : {}) },
-        ...(me.city ? { city: me.city } : {}),
+        // Şehri boş müşterinin talebi de görünür (yoksa talep kimseye düşmüyordu)
+        ...(me.city ? { city: { in: [me.city, ''] } } : {}),
       },
       orderBy: { expiresAt: 'asc' },
       take: 100,
@@ -282,7 +300,13 @@ export class QuotesService {
     });
     const allQuotes = rows.flatMap((r) => r.quotes as unknown as QuoteRow[]);
     const names = await this.expertNamesFor(allQuotes);
-    return rows.map((r) => this.mapRequest(r, r.quotes as unknown as QuoteRow[], names));
+    // §7.3 — Güvenilir müşteri rozeti (yalnız POZİTİF sinyal): ≥3 tamamlanan + 0 no-show
+    const ownerIds = [...new Set(rows.map((r) => r.userId).filter((x): x is string => !!x))];
+    const trustedSet = await this.trustedUserSet(ownerIds);
+    return rows.map((r) => ({
+      ...this.mapRequest(r, r.quotes as unknown as QuoteRow[], names),
+      trusted: !!r.userId && trustedSet.has(r.userId),
+    }));
   }
 
   // ── Teklif ver (uzman/salon) ──────────────────────────────────────────

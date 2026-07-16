@@ -31,8 +31,9 @@ export class BookingsController {
 
   // §5 — CRM özet istatistiği (doluluk/gelir/no-show)
   @Get('stats')
-  stats() {
-    return this.bookings.stats();
+  @UseGuards(JwtAuthGuard)
+  stats(@Req() req: AuthedRequest) {
+    return this.bookings.stats(req.user!.id);
   }
 
   // §5.6 önkoşulu — yalnızca giriş yapan kullanıcının randevuları

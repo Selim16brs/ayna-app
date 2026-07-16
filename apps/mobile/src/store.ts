@@ -472,17 +472,20 @@ export const useStore = create<State>()(
       },
       loadContent: async () => {
         try {
-          const [rows, theme, cfg] = await Promise.all([
+          // allSettled: tek ucun hatası (ör. tema yok) makale+config'i DÜŞÜRMEZ
+          const [rowsR, themeR, cfgR] = await Promise.allSettled([
             api.contentArticles(),
             api.contentTheme(),
             api.appConfig(),
           ]);
-          set({
-            // Backend'de yayınlanmış yazı yoksa seed'i koru (app boş kalmasın)
-            articles: rows,
+          const rows = rowsR.status === 'fulfilled' ? rowsR.value : null;
+          const theme = themeR.status === 'fulfilled' ? themeR.value : null;
+          const cfg = cfgR.status === 'fulfilled' ? cfgR.value : null;
+          set((s) => ({
+            articles: rows ?? s.articles,
             weeklyTheme: theme ? { id: theme.id, title: theme.title, prompt: theme.prompt } : null,
-            config: cfg,
-          });
+            config: cfg ?? s.config,
+          }));
         } catch {
           // Backend erişilemezse seed makaleler + varsayılan config ile devam
         }
