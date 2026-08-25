@@ -23,6 +23,13 @@ export const envSchema = z.object({
 
   PAYMENT_PROVIDER: z.enum(['mock']).default('mock'),
   SMS_PROVIDER: z.enum(['mock']).default('mock'),
+  // GÜVENLİK (P0): OTP kodunun API yanıtında dönmesi YALNIZ bu bayrak açıkken olur.
+  // Varsayılan KAPALI — üretimde kod asla sızmaz (hesap ele geçirme açığı kapatıldı).
+  // Yerel geliştirmede apps/api/.env içine OTP_DEBUG_CODES=true yazılır.
+  OTP_DEBUG_CODES: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true'),
   MAP_PROVIDER: z.enum(['mock']).default('mock'),
   STORAGE_PROVIDER: z.enum(['mock']).default('mock'),
   // §medya — Cloudflare R2 (S3 uyumlu). Hepsi doluysa foto R2'ye yüklenir; boşsa data URL kalır.
