@@ -164,6 +164,7 @@ interface State {
   favorites: string[];
   // W2W — takip edilen kişiler (yazar adı) + beni takip eden kişiler (mock liste)
   following: string[];
+  followingIds: string[]; // §5.5 — takip KİMLİK seti (görünen ad değişse de doğru eşleşir)
   followerNames: string[];
   // §5.6 — kullanıcı adresleri (ev/iş)
   addresses: UserAddress[];
@@ -399,6 +400,7 @@ interface State {
 const SEEDED_PERSONAL_RESET: Partial<State> = {
   bookings: [],
   following: [],
+  followingIds: [],
   followerNames: [],
   circlePosts: [], // W2W tohumları da girişli hesapta yok; gerçek gönderiler loadContent ile gelir
 
@@ -572,6 +574,7 @@ export const useStore = create<State>()(
       moments: [],
       favorites: [],
       following: [],
+      followingIds: [],
       followerNames: [],
       addresses: [],
       premium: false,
@@ -1871,9 +1874,20 @@ export const useStore = create<State>()(
 
       // W2W — kişi takip et / bırak (yazar adına göre)
       toggleFollow: (author, targetUserId) => {
-        const on = !get().following.includes(author);
+        // §5.5 — takip durumu KİMLİKLE izlenir (görünen ad ≠ hesap adı olabilir; buton
+        // "takip ediyor ama Takip Et duruyor" hatasının kökü isim eşleşmesiydi)
+        const on = targetUserId
+          ? !get().followingIds.includes(targetUserId)
+          : !get().following.includes(author);
         set((s) => ({
           following: on ? [author, ...s.following] : s.following.filter((x) => x !== author),
+          ...(targetUserId
+            ? {
+                followingIds: on
+                  ? [targetUserId, ...s.followingIds]
+                  : s.followingIds.filter((x) => x !== targetUserId),
+              }
+            : {}),
         }));
         // §5.5 — gerçek sosyal graf: hedefin kullanıcı kimliği varsa SUNUCUYA yazılır
         if (targetUserId) void api.circleFollow(targetUserId, on).catch(() => undefined);
@@ -2204,7 +2218,11 @@ export const useStore = create<State>()(
           void api
             .myFollows()
             .then((r) => {
-              if (r.following.length) set({ following: r.following.map((x) => x.name) });
+              if (r.following.length)
+                set({
+                  following: r.following.map((x) => x.name),
+                  followingIds: r.following.map((x) => x.userId),
+                });
               if (r.followers.length) set({ followerNames: r.followers.map((x) => x.name) });
             })
             .catch(() => undefined);

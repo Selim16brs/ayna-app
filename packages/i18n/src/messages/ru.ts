@@ -718,6 +718,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.schedule.time': 'Время',
   'booking.schedule.datetime': 'Дата и время',
   'booking.schedule.confirm': 'Подтвердить запись',
+  'booking.schedule.slot_busy': 'Занято',
+  'booking.schedule.pick_slot': 'Сначала выберите день и время',
   'booking.schedule.busy_title': 'Занятые часы в выбранный день',
   'booking.schedule.busy_none': 'В выбранный день все часы свободны',
   'booking.schedule.busy_conflict':

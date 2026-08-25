@@ -5,7 +5,7 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MessageKey } from '@ayna/i18n';
 import { formatPrice } from '../../src/data';
-import { formatSlotTr } from '../../src/datetime';
+import { almatyDayStart, almatyParts, formatSlotTr, slotTime } from '../../src/datetime';
 import { tri } from '../../src/taxonomy';
 import { ApiError, api } from '../../src/api';
 import { useProfessionalDetail } from '../../src/catalog';
@@ -13,7 +13,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { DateField, TAB_BAR_CLEARANCE, Text, VerificationBadges, WaveLayered } from '../../src/ui';
+import { TAB_BAR_CLEARANCE, Text, VerificationBadges, WaveLayered } from '../../src/ui';
 
 type Tab = 'booking' | 'portfolio' | 'reviews';
 const HOT_PINK = '#FF2E93'; // favori (kalp) aktif rengi
@@ -31,11 +31,10 @@ export default function ProfessionalScreen() {
   // TÜM hook'lar KOŞULSUZ çağrılır (React kuralı) — erken dönüş aşağıda, hook'lardan SONRA.
   const [tab, setTab] = useState<Tab>('booking');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [when, setWhen] = useState<Date>(() => {
-    const d = new Date(Date.now() + 2 * 3_600_000);
-    d.setMinutes(0, 0, 0);
-    return d;
-  });
+  // §4.2 — İKİ AŞAMALI seçim: önce GÜN, sonra o günün saat ızgarasından SLOT
+  // (kullanıcı isteği: gün seçilince uzmanın o güne ait dolu/boş ekranı çıksın).
+  const [selectedDay, setSelectedDay] = useState<number>(() => almatyDayStart(Date.now(), 0));
+  const [slotMs, setSlotMs] = useState<number | null>(null);
   const toggleFavorite = useStore((s) => s.toggleFavorite);
   const isFav = useStore((s) => s.favorites.includes(proId));
   const token = useStore((s) => s.token);
@@ -77,6 +76,37 @@ export default function ProfessionalScreen() {
   const chosen = pro.services.filter((s) => selectedIds.includes(s.id));
   const totalPrice = chosen.reduce((n, s) => n + finalPriceOf(s), 0);
   const totalDur = chosen.reduce((n, s) => n + s.durationMin, 0);
+
+  // §4.2 — uzmanın DOLU aralıkları: müşteri saat seçerken dolu yerler görünür, dolu slot seçilemez
+  // (çifte iş biter). Sunucu yalnız zaman aralığı döner — müşteri bilgisi asla (gizlilik).
+  const [busyRanges, setBusyRanges] = useState<{ startMs: number; endMs: number }[]>([]);
+  useEffect(() => {
+    if (!pro.id) return;
+    let alive = true;
+    void api
+      .proBusy(pro.id, Date.now(), Date.now() + 14 * 86_400_000)
+      .then((rows) => alive && setBusyRanges(Array.isArray(rows) ? rows : []))
+      .catch(() => undefined); // uç erişilemezse gösterge yok — randevu akışı engellenmez
+    return () => {
+      alive = false;
+    };
+  }, [pro.id]);
+  // Gün şeridi (bugün + 13 gün) ve seçili günün saat ızgarası (10:00–20:00, 60 dk adım).
+  // Dolu aralıkla çakışan slot 'Dolu' işaretlenir ve SEÇİLEMEZ.
+  const dayStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
+  const overlapsBusy = (startMs: number, endMs: number) =>
+    busyRanges.some((b) => startMs < b.endMs && endMs > b.startMs);
+  const daySlots = Array.from({ length: 10 }, (_, i) => {
+    const start = selectedDay + (10 + i) * 3_600_000; // almatyDayStart + saat (Almatı 10:00–19:00 başlangıçları)
+    const end = start + (totalDur || 60) * 60_000;
+    return {
+      startMs: start,
+      busy: overlapsBusy(start, end),
+      past: start < minDate.getTime(),
+    };
+  });
+  const slotBusy = slotMs != null && overlapsBusy(slotMs, slotMs + (totalDur || 60) * 60_000);
+  const dayBusy = busyRanges.filter((b) => almatyDayStart(b.startMs, 0) === selectedDay);
   const toggleService = (sid: string) =>
     setSelectedIds((cur) =>
       cur.includes(sid) ? (cur.length > 1 ? cur.filter((x) => x !== sid) : cur) : [...cur, sid],
@@ -127,10 +157,19 @@ export default function ProfessionalScreen() {
   // Tarih/saat detay sayfasında seçildi → doğrudan randevu oluştur (ayrı adım yok).
   // Sıra/tek-randevu kısıtı KALDIRILDI — kullanıcı dilediği kadar uzmandan randevu/teklif alabilir.
   const book = () => {
+    // §4.2 — saat seçilmeden ve dolu slota randevu OLUŞTURULMAZ (çifte iş biter)
+    if (slotMs == null) {
+      Alert.alert(t('booking.schedule.time'), t('booking.schedule.pick_slot'));
+      return;
+    }
+    if (slotBusy) {
+      Alert.alert(t('booking.schedule.time'), t('booking.schedule.busy_conflict'));
+      return;
+    }
     const svcNames =
       chosen.map((s) => (s.label ? tri(s.label, locale) : s.name)).join(' + ') || pro.specialty;
     const uzman = pro.staff.find((u) => u.id === uzmanId);
-    const startMs = when.getTime();
+    const startMs = slotMs;
     const bid = addBooking({
       source: 'direct',
       service: svcNames, // §4 — birden fazla hizmet tek randevuda ('A + B')
@@ -457,19 +496,79 @@ export default function ProfessionalScreen() {
                 })}
               </View>
 
-              {/* Tarih & saat — Benim İçin kayıt eklemeleriyle AYNI native seçici */}
+              {/* §4.2 — ADIM 1: gün seç (14 günlük şerit) */}
               <Text variant="bodyStrong" tone="ink" style={styles.section}>
-                {t('booking.schedule.time')}
+                {t('pro.select_date')}
               </Text>
-              <View style={[styles.dateCard, shadow.soft]}>
-                <DateField
-                  label={t('booking.schedule.datetime')}
-                  value={when}
-                  onChange={setWhen}
-                  mode="datetime"
-                  minimumDate={minDate}
-                  last
-                />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.dayStrip}
+              >
+                {dayStrip.map((dayMs) => {
+                  const p = almatyParts(dayMs);
+                  const on = dayMs === selectedDay;
+                  return (
+                    <Pressable
+                      key={dayMs}
+                      onPress={() => {
+                        setSelectedDay(dayMs);
+                        setSlotMs(null); // gün değişince saat seçimi sıfırlanır
+                      }}
+                      style={[styles.dayChip, shadow.soft, on && styles.dayChipOn]}
+                    >
+                      <Text variant="caption" tone={on ? 'onAccent' : 'muted'}>
+                        {t(`wd.${p.wd}` as MessageKey)}
+                      </Text>
+                      <Text variant="bodyStrong" tone={on ? 'onAccent' : 'ink'}>
+                        {p.day}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+
+              {/* §4.2 — ADIM 2: seçilen günün DOLU/BOŞ saat ızgarası (uzmanın ajandası) */}
+              <Text variant="bodyStrong" tone="ink" style={styles.section}>
+                {t('pro.select_time')}
+                {dayBusy.length === 0 ? (
+                  <Text variant="caption" tone="muted">
+                    {'  ·  '}
+                    {t('booking.schedule.busy_none')}
+                  </Text>
+                ) : null}
+              </Text>
+              <View style={styles.slotGrid}>
+                {daySlots.map((s) => {
+                  const on = slotMs === s.startMs;
+                  const disabled = s.busy || s.past;
+                  return (
+                    <Pressable
+                      key={s.startMs}
+                      disabled={disabled}
+                      onPress={() => setSlotMs(s.startMs)}
+                      style={[
+                        styles.slotChip,
+                        s.busy && styles.slotChipBusy,
+                        s.past && styles.slotChipPast,
+                        on && styles.slotChipOn,
+                      ]}
+                    >
+                      <Text
+                        variant="caption"
+                        tone={on ? 'onAccent' : s.busy ? undefined : s.past ? 'muted' : 'ink'}
+                        style={s.busy ? styles.slotBusyText : undefined}
+                      >
+                        {slotTime(s.startMs)}
+                      </Text>
+                      {s.busy ? (
+                        <Text variant="caption" style={styles.slotBusyText}>
+                          {t('booking.schedule.slot_busy')}
+                        </Text>
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
               </View>
             </>
           ) : null}
@@ -783,7 +882,30 @@ const makeStyles = (colors: ColorTokens) =>
     },
     staffName: { marginTop: space(0.75) },
     services: { gap: space(1.25) },
-    dateCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
+    dayStrip: { gap: space(1), paddingRight: space(3), paddingVertical: space(0.5) },
+    dayChip: {
+      width: 56,
+      alignItems: 'center',
+      gap: 2,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      paddingVertical: space(1),
+    },
+    dayChipOn: { backgroundColor: colors.accent },
+    slotGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    slotChip: {
+      minWidth: 76,
+      alignItems: 'center',
+      gap: 1,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      paddingVertical: space(1),
+      paddingHorizontal: space(1.25),
+    },
+    slotChipBusy: { backgroundColor: colors.dangerSoft },
+    slotChipPast: { opacity: 0.4 },
+    slotChipOn: { backgroundColor: colors.accent },
+    slotBusyText: { color: colors.danger },
     service: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -817,25 +939,6 @@ const makeStyles = (colors: ColorTokens) =>
     },
     checkOn: { backgroundColor: colors.accent },
     chipRow: { gap: space(1.25), paddingRight: space(3) },
-    dayChip: {
-      width: 60,
-      alignItems: 'center',
-      gap: 2,
-      paddingVertical: space(1.5),
-      borderRadius: radius.lg,
-      backgroundColor: colors.surfaceMuted,
-    },
-    dayChipOn: { backgroundColor: colors.accent },
-    dayNum: { fontSize: 18, fontWeight: '800' },
-    timeWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
-    timeChip: {
-      paddingHorizontal: space(2.25),
-      paddingVertical: space(1.25),
-      borderRadius: radius.pill,
-      backgroundColor: colors.surfaceMuted,
-    },
-    timeChipOn: { backgroundColor: colors.accent },
-    timeText: { fontWeight: '600' },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5), marginTop: space(1) },
     gridCell: { width: '47.5%', aspectRatio: 0.82 },
     gridImg: {

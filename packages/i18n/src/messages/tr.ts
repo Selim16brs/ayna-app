@@ -785,6 +785,8 @@ export const tr = {
   'booking.schedule.time': 'Saat',
   'booking.schedule.datetime': 'Tarih ve saat',
   'booking.schedule.confirm': 'Randevuyu onayla',
+  'booking.schedule.slot_busy': 'Dolu',
+  'booking.schedule.pick_slot': 'Önce gün ve saat seç',
   'booking.schedule.busy_title': 'Seçilen günde dolu saatler',
   'booking.schedule.busy_none': 'Seçilen günde tüm saatler boş görünüyor',
   'booking.schedule.busy_conflict': 'Bu saat dolu — başka saat seç ya da bekleme listesine yazıl',
