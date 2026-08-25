@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseGuards, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
@@ -47,6 +47,22 @@ export class BusinessesController {
   }
 
   // Faz C — salonun gerçek kadrosu (davet koduyla bağlı uzmanlar)
+  // Faz 4 (§14) — kadronun KİŞİSEL doluluk blokları: yalnız zaman; müşteri/fiyat/hizmet ASLA
+  @Get(':id/staff-busy')
+  staffBusy(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.businesses.staffBusy(
+      id,
+      req.user!.id,
+      Number(from) || undefined,
+      Number(to) || undefined,
+    );
+  }
+
   @Get(':id/staff')
   @UseGuards(JwtAuthGuard)
   staff(@Req() req: AuthedRequest, @Param('id') id: string) {

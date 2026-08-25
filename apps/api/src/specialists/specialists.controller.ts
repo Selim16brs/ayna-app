@@ -46,6 +46,17 @@ export class SpecialistsController {
   }
 
   // §6.1 — uzman galerisi (hesapta kalıcı; sayfa değişince kaybolmaz)
+  // Faz 4 (§15) — uzman, salonun takvim yetkisini belirler
+  @Get('me/calendar-permission')
+  calendarPermission(@Req() req: AuthedRequest) {
+    return this.specialists.getCalendarPermission(req.user!.id);
+  }
+
+  @Post('me/calendar-permission')
+  setCalendarPermission(@Req() req: AuthedRequest, @Body() body: { mode?: string }) {
+    return this.specialists.setCalendarPermission(req.user!.id, String(body?.mode ?? ''));
+  }
+
   @Get('me/portfolio')
   @UseGuards(JwtAuthGuard)
   myPortfolio(@Req() req: AuthedRequest) {

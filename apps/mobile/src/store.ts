@@ -1732,7 +1732,10 @@ export const useStore = create<State>()(
           } catch (err) {
             // Faz 1/3 — SLOT_CONFLICT kalıcı reddir: sonsuz tekrar yerine kuyruktan düşür,
             // kaydı cancelled işaretle ve kullanıcıya bildir (yeni saat seçmesi gerekir).
-            if (err instanceof ApiError && err.code === 'SLOT_CONFLICT') {
+            if (
+              err instanceof ApiError &&
+              (err.code === 'SLOT_CONFLICT' || err.code === 'CALENDAR_FORBIDDEN')
+            ) {
               set((s) => ({
                 pendingBookingSync: s.pendingBookingSync.filter((x) => x !== id),
                 bookings: s.bookings.map((x) =>

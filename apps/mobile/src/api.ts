@@ -489,6 +489,16 @@ export const api = {
 
   // Salon sahibi/uzman kendi işletmesi (mobil yönetim) — hepsi sahibe-kapılı
   myBusinesses: (token: string) => get<SellerBusiness[]>('/businesses/mine', token),
+  // Faz 4 (§14) — kadronun kişisel doluluk blokları (yalnız zaman; detay yok)
+  staffBusy: (token: string, businessId: string, fromMs: number, toMs: number) =>
+    get<{ specialistId: string; name: string; blocks: { startMs: number; endMs: number }[] }[]>(
+      `/businesses/${businessId}/staff-busy?from=${fromMs}&to=${toMs}`,
+      token,
+    ),
+  // Faz 4 (§15) — uzmanın salon-takvim yetki modu
+  myCalendarPermission: () => get<{ mode: string }>('/specialists/me/calendar-permission'),
+  setCalendarPermission: (mode: string) =>
+    post<{ mode: string }>('/specialists/me/calendar-permission', { mode }),
   // §5.5 Faz 4 — sosyal medya sahiplik doğrulama kodu (Instagram kullanıcı adı → AYN-XXXX)
   socialVerifyCode: (token: string, businessId: string, username: string) =>
     post<{ username: string; code: string; verified: boolean }>(
@@ -515,7 +525,7 @@ export const api = {
     ),
   // Faz C — salonun gerçek kadrosu (davet koduyla bağlı uzmanlar)
   businessStaff: (token: string, businessId: string) =>
-    get<{ id: string; name: string; bio: string; kind: string }[]>(
+    get<{ id: string; name: string; bio: string; kind: string; calendarPermission?: string }[]>(
       `/businesses/${businessId}/staff`,
       token,
     ),

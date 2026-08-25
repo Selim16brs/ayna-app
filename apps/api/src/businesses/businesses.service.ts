@@ -164,7 +164,59 @@ export class BusinessesService {
       name: names.get(r.userId) ?? 'Uzman',
       bio: r.bio,
       kind: r.kind,
+      calendarPermission: r.calendarPermission, // Faz 4 — kadro ekranında yetki rozeti
     }));
+  }
+
+  // Faz 4 (§14) — kadronun KİŞİSEL randevu dolulukları: SALT zaman bloğu.
+  // GİZLİLİK: müşteri, fiyat, hizmet, kaynak alanları response'a HİÇ konmaz
+  // (null bile değil) — salon çakışmayı görür, detayı okuyamaz.
+  async staffBusy(businessId: string, ownerUserId: string, fromMs?: number, toMs?: number) {
+    await this.assertOwner(businessId, ownerUserId);
+    const from = new Date(fromMs ?? Date.now());
+    const to = new Date(toMs ?? Date.now() + 14 * 86_400_000);
+    const members = await this.prisma.specialist.findMany({
+      where: { businessId },
+      select: { id: true, userId: true, proId: true },
+    });
+    const memberUsers = await this.prisma.user.findMany({
+      where: { id: { in: members.map((m) => m.userId) } },
+      select: { id: true, name: true },
+    });
+    const memberNames = new Map(memberUsers.map((u) => [u.id, u.name]));
+    const out: {
+      specialistId: string;
+      name: string;
+      blocks: { startMs: number; endMs: number }[];
+    }[] = [];
+    for (const m of members) {
+      if (!m.proId) {
+        out.push({ specialistId: m.id, name: memberNames.get(m.userId) ?? 'Uzman', blocks: [] });
+        continue;
+      }
+      const rows = await this.prisma.booking.findMany({
+        where: {
+          proId: m.proId,
+          bySalon: false, // yalnız uzmanın KENDİ işleri (salonunkiler zaten salonda tam görünür)
+          status: { in: ['confirmed', 'deposit_pending', 'deposit_submitted'] },
+          startAt: { gte: from, lte: to },
+        },
+        select: { startAt: true, durationMin: true },
+        orderBy: { startAt: 'asc' },
+        take: 300,
+      });
+      out.push({
+        specialistId: m.id,
+        name: memberNames.get(m.userId) ?? 'Uzman',
+        blocks: rows
+          .filter((r) => r.startAt)
+          .map((r) => ({
+            startMs: r.startAt!.getTime(),
+            endMs: r.startAt!.getTime() + (r.durationMin ?? 60) * 60_000,
+          })),
+      });
+    }
+    return out;
   }
 
   async approve(id: string, adminId: string) {

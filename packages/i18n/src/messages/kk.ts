@@ -1509,6 +1509,13 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.status.awaiting': 'Растауды күтуде',
   'booking.status.alternative': 'Балама ұсынылды',
   'booking.status.no_show': 'Келмеді',
+  'salon.busy_personal': 'Бос емес (жеке жазба — детальдар жабық)',
+  'seller.calperm.desc': 'Салонның күнтізбеңізде не істей алатынын өзіңіз шешіңіз',
+  'seller.calperm.title': 'Салон күнтізбе рұқсаты',
+  'seller.calperm.view': 'Тек көрсін',
+  'seller.calperm.approval': 'Қоссын, менің растауыммен',
+  'seller.calperm.manage': 'Тікелей қоса алсын',
+  'seller.calperm.saved': 'Күнтізбе рұқсаты жаңартылды',
   'logout.pending_t': 'Жіберілмеген жазба бар',
   'logout.pending_b':
     '{n} жазылу серверге әлі синхрондалмады. Шықсаңыз, олар бұл құрылғыдан өшеді.',

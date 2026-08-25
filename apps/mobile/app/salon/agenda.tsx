@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
 import { almatyDayStart, slotTime } from '../../src/datetime';
+import { api } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -51,6 +52,46 @@ export default function SalonAgendaScreen() {
   const { staff } = useSalonStaff(); // Faz C — GERÇEK kadro (mock değil)
 
   const [tab, setTab] = useState<'all' | 'add' | 'pending'>('all');
+
+  // Faz 4 (§14) — kadronun KİŞİSEL doluluk blokları: salon çakışmayı görür, detayı asla.
+  const token = useStore((s) => s.token);
+  const [busyByDay, setBusyByDay] = useState<
+    Map<number, { name: string; startMs: number; endMs: number }[]>
+  >(new Map());
+  useEffect(() => {
+    if (!token) return;
+    let alive = true;
+    void api
+      .myBusinesses(token)
+      .then((bs) => {
+        const first = bs[0];
+        if (!first) return [] as { name: string; blocks: { startMs: number; endMs: number }[] }[];
+        return api.staffBusy(
+          token,
+          first.id,
+          Date.now() - 86_400_000,
+          Date.now() + 14 * 86_400_000,
+        );
+      })
+      .then((rows) => {
+        if (!alive || !Array.isArray(rows)) return;
+        const map = new Map<number, { name: string; startMs: number; endMs: number }[]>();
+        for (const r of rows) {
+          for (const b of r.blocks) {
+            const d = almatyDayStart(b.startMs, 0);
+            const arr = map.get(d) ?? [];
+            arr.push({ name: r.name, startMs: b.startMs, endMs: b.endMs });
+            map.set(d, arr);
+          }
+        }
+        for (const arr of map.values()) arr.sort((a, b) => a.startMs - b.startMs);
+        setBusyByDay(map);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [token]);
 
   const groupByDay = (list: Appointment[]) => {
     const active = list
@@ -110,6 +151,31 @@ export default function SalonAgendaScreen() {
             <Text variant="label" tone="accentFg" style={styles.dayHead}>
               {formatTrDate(new Date(dayMs), false)}
             </Text>
+            {(busyByDay.get(dayMs) ?? []).map((bb) => (
+              <View
+                key={`busy-${bb.startMs}-${bb.name}`}
+                style={[styles.appt, shadow.soft, styles.busyRow]}
+              >
+                <View style={styles.apptTime}>
+                  <Text variant="bodyStrong" tone="inkSoft">
+                    {slotTime(bb.startMs)}
+                  </Text>
+                  <Text variant="caption" tone="muted">
+                    {slotTime(bb.endMs)}
+                  </Text>
+                </View>
+                <View style={[styles.apptBar, { backgroundColor: colors.muted }]} />
+                <View style={styles.flex}>
+                  <Text variant="bodyStrong" tone="inkSoft" numberOfLines={1}>
+                    {bb.name}
+                  </Text>
+                  <Text variant="caption" tone="muted">
+                    {t('salon.busy_personal')}
+                  </Text>
+                </View>
+                <Ionicons name="lock-closed-outline" size={16} color={colors.muted} />
+              </View>
+            ))}
             {rows.map((b) => {
               const end = slotTime(b.startMs + b.durationMin * 60_000);
               const key = STATUS_KEY[b.status];
@@ -377,6 +443,7 @@ const makeStyles = (colors: ColorTokens) =>
     card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
     dayGroup: { gap: space(1) },
     dayHead: { marginTop: space(1.5) },
+    busyRow: { opacity: 0.75 },
     appt: {
       flexDirection: 'row',
       alignItems: 'center',
