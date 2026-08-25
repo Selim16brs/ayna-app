@@ -23,6 +23,14 @@ const ITEMS: {
   independentOnly?: boolean;
 }[] = [
   {
+    id: 'calperm',
+    icon: 'calendar',
+    labelKey: 'seller.calperm.title',
+    descKey: 'seller.calperm.desc',
+    route: '/seller/calendar-permission',
+    tone: 'sage',
+  },
+  {
     id: 'kyc',
     icon: 'shield-checkmark',
     labelKey: 'seller.menu.kyc',

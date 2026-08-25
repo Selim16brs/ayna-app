@@ -1494,6 +1494,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.status.awaiting': 'Ожидает подтверждения',
   'booking.status.alternative': 'Предложена альтернатива',
   'booking.status.no_show': 'Не пришёл',
+  'salon.busy_personal': 'Занято (личная запись — детали скрыты)',
+  'seller.calperm.desc': 'Вы решаете, что салон может делать в вашем календаре',
+  'seller.calperm.title': 'Доступ салона к календарю',
+  'seller.calperm.view': 'Только просмотр',
+  'seller.calperm.approval': 'Добавляет с моим подтверждением',
+  'seller.calperm.manage': 'Может добавлять напрямую',
+  'seller.calperm.saved': 'Доступ к календарю обновлён',
   'logout.pending_t': 'Есть неотправленные записи',
   'logout.pending_b':
     '{n} записей ещё не синхронизированы с сервером. При выходе они удалятся с устройства.',

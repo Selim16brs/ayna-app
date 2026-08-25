@@ -19,6 +19,13 @@ enum UserRole {
   admin
 }
 
+// Faz 4 (§15) — salonun, üyenin takvimi üzerindeki yetkisi (UZMAN belirler)
+enum CalendarPermission {
+  view_availability_only // salon yalnız dolu/boş görür; adına kayıt ekleyemez
+  create_requires_approval // salon ekler → uzman onayına düşer (varsayılan)
+  manage_calendar // salon eklemesi doğrudan kesinleşir (fiyat/gelir görünürlüğü VERMEZ)
+}
+
 enum UserStatus {
   active
   suspended
@@ -397,25 +404,27 @@ enum SpecialistKind {
 }
 
 model Specialist {
-  id               String         @id @default(uuid()) @db.Uuid
-  userId           String         @unique @map("user_id") @db.Uuid
-  businessId       String?        @map("business_id") @db.Uuid
+  // Faz 4 — salon-takvim yetki modu (uzman kendisi seçer; varsayılan güvenli)
+  calendarPermission CalendarPermission @default(create_requires_approval) @map("calendar_permission")
+  id                 String             @id @default(uuid()) @db.Uuid
+  userId             String             @unique @map("user_id") @db.Uuid
+  businessId         String?            @map("business_id") @db.Uuid
   // §7 — uzmanın keşif kataloğundaki karşılığı (Professional.id); yorumlar subjectId = bu id.
-  proId            String?        @map("pro_id")
-  kind             SpecialistKind @default(independent)
-  bio              String         @default("")
-  certificates     String[]       @default([])
-  featured         Boolean        @default(false)
+  proId              String?            @map("pro_id")
+  kind               SpecialistKind     @default(independent)
+  bio                String             @default("")
+  certificates       String[]           @default([])
+  featured           Boolean            @default(false)
   // §uzman onboarding — resmî/kimlik & katmanlı doğrulama (salon epic paralel)
   // entityType: freelance (serbest, kayıtsız) | ip (kayıtlı bireysel girişimci ИП)
-  entityType       String         @default("freelance") @map("entity_type")
-  iin              String         @default("") // 12 hane; yalnızca kayıtlı ИП uzmanlar; public'te ASLA açık dönmez
+  entityType         String             @default("freelance") @map("entity_type")
+  iin                String             @default("") // 12 hane; yalnızca kayıtlı ИП uzmanlar; public'te ASLA açık dönmez
   // Katmanlı rozet bayrakları (kimlik = User.kycStatus; diğerleri admin/otomatik)
-  certVerified     Boolean        @default(false) @map("cert_verified")
-  socialVerified   Boolean        @default(false) @map("social_verified")
-  socialInstagram  String         @default("") @map("social_instagram")
-  socialVerifyCode String         @default("") @map("social_verify_code")
-  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  certVerified       Boolean            @default(false) @map("cert_verified")
+  socialVerified     Boolean            @default(false) @map("social_verified")
+  socialInstagram    String             @default("") @map("social_instagram")
+  socialVerifyCode   String             @default("") @map("social_verify_code")
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([businessId])
   @@map("specialists")

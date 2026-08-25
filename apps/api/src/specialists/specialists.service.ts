@@ -370,6 +370,51 @@ export class SpecialistsService {
     return { services: safeParse(pro.servicesJson) };
   }
 
+  // Faz 4 (§15) — salon-takvim yetki modu: UZMAN seçer; değişiklik salona bildirilir + audit
+  async getCalendarPermission(userId: string) {
+    const sp = await this.prisma.specialist.findUnique({ where: { userId } });
+    return { mode: sp?.calendarPermission ?? 'create_requires_approval' };
+  }
+
+  async setCalendarPermission(userId: string, mode: string) {
+    const allowed = ['view_availability_only', 'create_requires_approval', 'manage_calendar'];
+    if (!allowed.includes(mode)) {
+      throw new BadRequestException({ code: 'INVALID_MODE', message: 'Geçersiz yetki modu' });
+    }
+    const sp = await this.prisma.specialist.findUnique({ where: { userId } });
+    if (!sp) throw new NotFoundException({ code: 'SPECIALIST_NOT_FOUND', message: 'Uzman yok' });
+    await this.prisma.specialist.update({
+      where: { id: sp.id },
+      data: { calendarPermission: mode as never },
+    });
+    await this.prisma.auditLog
+      .create({
+        data: {
+          action: 'specialist.calendar_permission',
+          resourceType: 'specialist',
+          resourceId: sp.id,
+          actorId: userId,
+          actorRole: 'professional',
+          safeDiff: { mode },
+        },
+      })
+      .catch(() => undefined);
+    // İki tarafa bildirim: salona push (uzmanın adı + yeni mod)
+    if (sp.businessId) {
+      const biz = await this.prisma.business.findUnique({ where: { id: sp.businessId } });
+      if (biz?.ownerUserId) {
+        void this.push
+          .sendToUser(biz.ownerUserId, {
+            title: 'Takvim yetkisi güncellendi',
+            body: `${(await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true } }))?.name ?? 'Uzman'} salon-takvim iznini değiştirdi.`,
+            data: { route: '/salon/staff' },
+          })
+          .catch(() => undefined);
+      }
+    }
+    return { mode };
+  }
+
   async myHours(userId: string) {
     const proId = await this.proIdFor(userId);
     if (!proId) return { hours: [] };
