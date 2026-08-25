@@ -80,6 +80,7 @@ const STATUS_LABEL: Record<BookingStatus, MessageKey> = {
   no_show: 'booking.status.no_show',
   waitlist: 'booking.status.waitlist',
   expired: 'booking.status.expired',
+  completed_pending: 'booking.status.completed_pending',
 };
 
 export default function AgendaScreen() {

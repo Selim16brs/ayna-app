@@ -464,6 +464,8 @@ export const api = {
     post<Appointment>(`/bookings/${id}/cancel`, reason ? { reason } : {}),
   // Onay/alternatif pazarlık döngüsü (§1.6)
   approveBooking: (id: string) => post<Appointment>(`/bookings/${id}/approve`, {}),
+  // Faz 2 — müşteri 'hizmet tamamlandı' teyidi
+  confirmCompletionApi: (id: string) => post<Appointment>(`/bookings/${id}/confirm-completion`, {}),
   proposeBooking: (id: string, proposedStartMs: number) =>
     post<Appointment>(`/bookings/${id}/propose`, { proposedStartMs }),
   acceptBooking: (id: string) => post<Appointment>(`/bookings/${id}/accept`, {}),

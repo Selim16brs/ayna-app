@@ -84,9 +84,38 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    if (expiredRequests.length || expiredDeposits.length) {
+    // 3) Faz 2 — teyit penceresi dolan 'tamamlandı' beyanları otomatik kesinleşir
+    const finalize = await this.prisma.booking.findMany({
+      where: { status: 'completed_pending', finalizeDeadline: { lt: now } },
+      select: { id: true, userId: true },
+      take: 200,
+    });
+    if (finalize.length) {
+      await this.prisma.booking.updateMany({
+        where: { id: { in: finalize.map((b) => b.id) } },
+        data: { status: 'completed' },
+      });
+      for (const b of finalize) {
+        if (!b.userId) continue;
+        void this.push
+          .sendToUser(b.userId, {
+            title: 'Hizmetin tamamlandı ✨',
+            body: 'Deneyimini değerlendir — 30 saniye sürer',
+            data: { route: `/review/new?id=${b.id}` },
+          })
+          .catch(() => undefined);
+      }
+    }
+
+    // 4) Faz 2 — no-show teyit penceresi doldu (itiraz yok) → kapora yanar (kesinleşme)
+    const forfeit = await this.prisma.booking.updateMany({
+      where: { status: 'no_show', finalizeDeadline: { lt: now }, depositForfeited: false },
+      data: { depositForfeited: true, finalizeDeadline: null },
+    });
+
+    if (expiredRequests.length || expiredDeposits.length || finalize.length || forfeit.count) {
       this.log.log(
-        `süre aşımı: talep=${expiredRequests.length} kapora=${expiredDeposits.length} düşürüldü`,
+        `süre aşımı: talep=${expiredRequests.length} kapora=${expiredDeposits.length} kesinleşen=${finalize.length} no-show-forfeit=${forfeit.count}`,
       );
     }
   }

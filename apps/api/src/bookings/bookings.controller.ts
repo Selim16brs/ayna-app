@@ -168,6 +168,13 @@ export class BookingsController {
   }
 
   // §4.4 — taraflar itiraz açar → admin anlaşmazlık kuyruğu
+  // Faz 2 — müşteri 'hizmet tamamlandı' teyidi (pencere beklemeden kesinleştirir)
+  @Post(':id/confirm-completion')
+  @UseGuards(JwtAuthGuard)
+  confirmCompletion(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.bookings.confirmCompletion(id, req.user!.id);
+  }
+
   @Post(':id/dispute')
   @UseGuards(JwtAuthGuard)
   dispute(@Req() req: AuthedRequest, @Param('id') id: string) {

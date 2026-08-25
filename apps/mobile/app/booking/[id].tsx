@@ -74,6 +74,7 @@ export default function BookingDetailScreen() {
   const uploadRefundReceipt = useStore((s) => s.uploadRefundReceipt);
   const confirmRefund = useStore((s) => s.confirmRefund);
   const disputeBooking = useStore((s) => s.disputeBooking);
+  const hydrateBookings = useStore((s) => s.hydrateBookings);
   const acceptReassignment = useStore((s) => s.acceptReassignment);
   const rejectReassignment = useStore((s) => s.rejectReassignment);
   const role = useStore((s) => s.currentUser?.role);
@@ -434,6 +435,39 @@ export default function BookingDetailScreen() {
         ) : null}
 
         {/* §4.3 — Depozito adımı (kullanıcı: ön onaydan sonra dekont yükler) */}
+        {/* Faz 2 — uzman 'tamamlandı' dedi: müşteri onaylar (kesinleşir) ya da itiraz eder */}
+        {!isProvider && booking.status === 'completed_pending' ? (
+          <View style={[styles.depositCard, shadow.card]}>
+            <View style={styles.depositHead}>
+              <Ionicons name="checkmark-done-outline" size={18} color={colors.ink} />
+              <Text variant="bodyStrong" tone="ink">
+                {t('booking.status.completed_pending')}
+              </Text>
+            </View>
+            <Text variant="caption" tone="muted" style={styles.depositDesc}>
+              {t('booking.confirm_completion_hint')}
+            </Text>
+            <Pressable
+              style={styles.primaryBtn}
+              onPress={() => {
+                void api
+                  .confirmCompletionApi(booking.id)
+                  .then(() => hydrateBookings())
+                  .catch(() => undefined);
+              }}
+            >
+              <Text variant="bodyStrong" tone="onAccent">
+                {t('booking.confirm_completion')}
+              </Text>
+            </Pressable>
+            <Pressable style={styles.ghostBtn} onPress={() => disputeBooking(booking.id)}>
+              <Text variant="caption" tone="inkSoft">
+                {t('seller.reviews.dispute')}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         {!isProvider && booking.status === 'deposit_pending' ? (
           <View style={[styles.depositCard, shadow.card]}>
             <View style={styles.depositHead}>
@@ -1003,6 +1037,14 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1),
     },
     signalRow: { flexDirection: 'row', gap: space(1), marginTop: space(0.5) },
+    primaryBtn: {
+      backgroundColor: colors.accent,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      paddingVertical: space(1.5),
+      marginTop: space(1.5),
+    },
+    ghostBtn: { alignItems: 'center', paddingVertical: space(1.25) },
     signalBtn: {
       flex: 1,
       flexDirection: 'row',
