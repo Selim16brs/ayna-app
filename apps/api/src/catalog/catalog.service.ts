@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Professional, Quote, ServiceCategory } from '@prisma/client';
+import { computeDaySlots } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { CutoutService } from '../cutout/cutout.service';
 import { StorageService } from '../storage/storage.service';
@@ -146,6 +147,46 @@ export class CatalogService {
           isPremium: owner ? premiumUsers.has(owner) : false,
         };
       });
+  }
+
+  // §4.6 — GERÇEK slot üretimi (Faz 1): çalışma saati + izin günü + mevcut randevular +
+  // hizmet süresi + lead tamponu → sunucu hesaplar (istemcideki sabit 10-20 ızgara yerine).
+  // Adım ve tampon admin ayarı: slot.step_min (30), slot.lead_min (120).
+  async professionalSlots(id: string, dayMs: number, durationMin: number) {
+    const p = await this.prisma.professional.findUnique({ where: { id } });
+    if (!p) {
+      throw new NotFoundException({ code: 'PRO_NOT_FOUND', message: 'İşletme bulunamadı' });
+    }
+    // İzin/kapalı gün → hiç slot yok (kabul kriteri: izin gününde slot oluşmaz)
+    const closed = safeParseNumbers(p.closedDaysJson);
+    if (closed.includes(dayMs)) return { slots: [], closed: true };
+
+    // Çalışma penceresi: DayHours[] {wd, open, from:'HH:MM', to:'HH:MM'}; boşsa 10:00–20:00
+    const wd = almatyWeekday(dayMs);
+    const hours = safeParseHours(p.hoursJson);
+    const day = hours.find((h) => h.wd === wd);
+    if (hours.length > 0 && day && !day.open) return { slots: [], closed: true };
+    const from = day?.open ? day.from : '10:00';
+    const to = day?.open ? day.to : '20:00';
+    const openWindows = [{ startMs: hmToMs(dayMs, from), endMs: hmToMs(dayMs, to) }];
+
+    const [stepSetting, leadSetting] = await Promise.all([
+      this.prisma.setting.findUnique({ where: { key: 'slot.step_min' } }),
+      this.prisma.setting.findUnique({ where: { key: 'slot.lead_min' } }),
+    ]);
+    const stepMs = (stepSetting?.intValue ?? 30) * 60_000;
+    const minLeadMs = (leadSetting?.intValue ?? 120) * 60_000;
+
+    const busy = await this.professionalBusy(id, dayMs - 86_400_000, dayMs + 2 * 86_400_000);
+    const slots = computeDaySlots({
+      openWindows,
+      busy,
+      serviceDurationMs: Math.max(15, durationMin) * 60_000,
+      stepMs,
+      nowMs: Date.now(),
+      minLeadMs,
+    });
+    return { slots, closed: false };
   }
 
   // §4.2 — uzmanın dolu aralıkları: yalnız SLOT İŞGAL EDEN durumlar (onaylı/kapora aşaması).
@@ -426,6 +467,46 @@ export class CatalogService {
       },
     });
     return { id: created.id, status: created.status };
+  }
+}
+
+// §4.6 slot yardımcıları — timezone Intl ile çözülür (sabit UTC offset YOK; plan §5)
+function almatyWeekday(ms: number): number {
+  const wd = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Almaty', weekday: 'short' }).format(
+    new Date(ms),
+  );
+  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(wd);
+}
+
+function hmToMs(dayStartMs: number, hm: string): number {
+  const [h, m] = hm.split(':').map(Number);
+  return dayStartMs + ((h ?? 0) * 60 + (m ?? 0)) * 60_000;
+}
+
+function safeParseNumbers(raw: string): number[] {
+  try {
+    const v: unknown = JSON.parse(raw);
+    return Array.isArray(v) ? v.filter((x): x is number => typeof x === 'number') : [];
+  } catch {
+    return [];
+  }
+}
+
+type DayHoursRow = { wd: number; open: boolean; from: string; to: string };
+function safeParseHours(raw: string): DayHoursRow[] {
+  try {
+    const v: unknown = JSON.parse(raw);
+    if (!Array.isArray(v)) return [];
+    return v.filter(
+      (x): x is DayHoursRow =>
+        typeof x === 'object' &&
+        x !== null &&
+        typeof (x as DayHoursRow).wd === 'number' &&
+        typeof (x as DayHoursRow).from === 'string' &&
+        typeof (x as DayHoursRow).to === 'string',
+    );
+  } catch {
+    return [];
   }
 }
 

@@ -733,6 +733,10 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.schedule.time': 'Уақыт',
   'booking.schedule.datetime': 'Күні мен уақыты',
   'booking.schedule.confirm': 'Жазылуды растау',
+  'notif.slot_conflict': 'Уақыт қайшылығы ⚠️',
+  'notif.slot_conflict_b':
+    '{slot} үшін таңдалған уақыт басқа жазылумен қайшы келді — жаңа уақыт таңдаңыз.',
+  'booking.schedule.day_closed': 'Бұл күні маман демалыста — басқа күнді таңдаңыз',
   'booking.schedule.slot_busy': 'Бос емес',
   'booking.schedule.pick_slot': 'Алдымен күн мен уақытты таңдаңыз',
   'booking.schedule.busy_title': 'Таңдалған күнгі бос емес уақыттар',
@@ -1505,6 +1509,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.status.awaiting': 'Растауды күтуде',
   'booking.status.alternative': 'Балама ұсынылды',
   'booking.status.no_show': 'Келмеді',
+  'booking.status.expired': 'Мерзімі өтті',
   'booking.status.waitlist': 'Кезек тізімі',
   'booking.status.deposit_pending': 'Депозит күтілуде',
   'booking.status.deposit_submitted': 'Түбіртек тексерілуде',

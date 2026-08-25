@@ -40,6 +40,7 @@ export const createBookingSchema = z.object({
       'refund_submitted',
       'disputed',
       'reassigned_pending',
+      'expired',
     ])
     .optional(),
 });

@@ -871,7 +871,8 @@ export type BookingStatus =
   | 'refund_pending' // §4.4 — serbest iptal: uzman iade dekontu yükleyecek
   | 'refund_submitted' // iade dekontu yüklendi, kullanıcı "aldım" onayı bekleniyor
   | 'disputed' // §4.4 — itiraz açıldı (destek/admin kuyruğu)
-  | 'reassigned_pending' // §4.5 — uzman ayrıldı, yeni uzman atandı; kullanıcı yeniden onaylayacak
+  | 'reassigned_pending' // §4.5 — uzman ayrıldı, yeni uzman atandı
+  | 'expired' // Faz 1 — yanıt/dekont penceresi sunucu işiyle doldu; kullanıcı yeniden onaylayacak
   | 'no_show'
   | 'waitlist';
 

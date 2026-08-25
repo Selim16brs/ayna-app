@@ -32,6 +32,16 @@ export class CatalogController {
     return this.catalog.professional(id);
   }
 
+  // §4.6 — GERÇEK slot listesi (Faz 1): çalışma saati+izin+dolu randevular sunucuda hesaplanır
+  @Get('professionals/:id/slots')
+  professionalSlots(
+    @Param('id') id: string,
+    @Query('day') day?: string,
+    @Query('durationMin') durationMin?: string,
+  ) {
+    return this.catalog.professionalSlots(id, Number(day) || Date.now(), Number(durationMin) || 60);
+  }
+
   // §4.2 — randevu alma ekranı: uzmanın DOLU aralıkları (yalnız zaman; müşteri bilgisi ASLA dönmez).
   // Müşteri dolu saati seçemez → çifte iş/karşılıklı öneri turu ortadan kalkar.
   @Get('professionals/:id/busy')
