@@ -148,6 +148,30 @@ export class CatalogService {
       });
   }
 
+  // §4.2 — uzmanın dolu aralıkları: yalnız SLOT İŞGAL EDEN durumlar (onaylı/kapora aşaması).
+  // awaiting_provider dahil DEĞİL (ters pazaryeri: aynı slota birden çok bekleyen talep olabilir).
+  // GİZLİLİK: müşteri adı/telefonu/hizmeti dönmez — sadece zaman aralıkları.
+  async professionalBusy(id: string, fromMs?: number, toMs?: number) {
+    const from = new Date(fromMs ?? Date.now());
+    const to = new Date(toMs ?? Date.now() + 14 * 86_400_000); // varsayılan: önümüzdeki 14 gün
+    const rows = await this.prisma.booking.findMany({
+      where: {
+        proId: id,
+        status: { in: ['confirmed', 'deposit_pending', 'deposit_submitted'] },
+        startAt: { gte: from, lte: to },
+      },
+      select: { startAt: true, durationMin: true },
+      orderBy: { startAt: 'asc' },
+      take: 500,
+    });
+    return rows
+      .filter((r) => r.startAt)
+      .map((r) => ({
+        startMs: r.startAt!.getTime(),
+        endMs: r.startAt!.getTime() + (r.durationMin ?? 60) * 60_000,
+      }));
+  }
+
   async professional(id: string) {
     const p = await this.prisma.professional.findUnique({ where: { id } });
     if (!p) {

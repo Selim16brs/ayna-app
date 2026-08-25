@@ -34,6 +34,8 @@ test('setAuth farklı kullanıcıda tam sıfırlama uygular', () => {
 // partialize'daki oturum-dışı her kullanıcı alanı reset'te OLMAK ZORUNDA
 // (token/currentUser oturumun kendisidir; onları setAuth/logout ayrıca yönetir).
 const PERSISTED_USER_KEYS = [
+  'bookings', // veri kaybı yasağı — cihazda kalıcı; çıkışta SEEDED_PERSONAL_RESET sıfırlar
+  'pendingBookingSync', // sunucuya yazılamayan randevu kuyruğu — hesap değişiminde taşınmaz
   'sellerTrialStart',
   'sellerServices',
   'sellerSocial',

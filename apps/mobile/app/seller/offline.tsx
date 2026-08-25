@@ -3,7 +3,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { hasConflict } from '@ayna/domain';
-import { api } from '../../src/api';
 import type { Appointment } from '../../src/data';
 import { localWallClockToAlmatyMs } from '../../src/datetime';
 import { useStore } from '../../src/store';
@@ -58,7 +57,7 @@ export default function OfflineBookingScreen() {
   const [groupSize, setGroupSize] = useState('3');
   const [busy, setBusy] = useState(false);
   const bookings = useStore((s) => s.bookings);
-  const token = useStore((s) => s.token);
+  const queueOfflineBooking = useStore((s) => s.queueOfflineBooking);
 
   // Taksonomi id → TaxService (seçili hizmetlerin ad/fiyat/süresini toplamak için)
   const svcById = useMemo(() => {
@@ -118,16 +117,12 @@ export default function OfflineBookingScreen() {
       bookingKind: kind,
       ...(kind === 'group' ? { groupSize: Number(groupSize) || 2 } : {}),
     };
-    try {
-      // POST /bookings JWT korumalı — token'sız çağrı 401 ile düşüyordu
-      await api.createBooking(booking, token ?? undefined);
-      Alert.alert(t('offline.saved'));
-      router.back();
-    } catch {
-      Alert.alert(t('offline.title'), t('common.error') as string);
-    } finally {
-      setBusy(false);
-    }
+    // VERİ KAYBI YASAĞI — önce yerel kalıcı kayıt + eşitleme kuyruğu; sunucu yazımı
+    // başarısız olsa bile randevu cihazda durur ve bağlantı gelince otomatik eşitlenir.
+    queueOfflineBooking(booking);
+    Alert.alert(t('offline.saved'));
+    setBusy(false);
+    router.back();
   }
 
   return (

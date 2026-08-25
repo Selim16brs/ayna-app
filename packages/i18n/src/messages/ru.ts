@@ -718,6 +718,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.schedule.time': 'Время',
   'booking.schedule.datetime': 'Дата и время',
   'booking.schedule.confirm': 'Подтвердить запись',
+  'booking.schedule.busy_title': 'Занятые часы в выбранный день',
+  'booking.schedule.busy_none': 'В выбранный день все часы свободны',
+  'booking.schedule.busy_conflict':
+    'Это время занято — выберите другое или встаньте в лист ожидания',
   'booking.confirmed.title': 'Запись создана',
   'booking.confirmed.subtitle': 'Продавец подтвердил — информация ниже',
   'booking.field.service': 'Услуга',
