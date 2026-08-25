@@ -1494,6 +1494,17 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.status.awaiting': 'Ожидает подтверждения',
   'booking.status.alternative': 'Предложена альтернатива',
   'booking.status.no_show': 'Не пришёл',
+  'logout.pending_t': 'Есть неотправленные записи',
+  'logout.pending_b':
+    '{n} записей ещё не синхронизированы с сервером. При выходе они удалятся с устройства.',
+  'logout.pending_sync': 'Сначала синхронизировать',
+  'logout.pending_force': 'Всё равно выйти',
+  'logout.pending_fail': 'Синхронизация не завершена — проверьте соединение',
+  'booking.status.sync_conflict': 'Конфликт времени',
+  'booking.sync_conflict_hint':
+    'Эта офлайн-запись при синхронизации пересеклась с другой. Выберите новое время или удалите запись.',
+  'booking.sync_conflict_pick': 'Выбрать новое время',
+  'booking.sync_conflict_drop': 'Удалить запись',
   'booking.status.completed_pending': 'Ожидает подтверждения',
   'booking.confirm_completion': 'Подтвердить услугу',
   'booking.confirm_completion_hint':

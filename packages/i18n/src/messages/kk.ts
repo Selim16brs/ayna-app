@@ -1509,6 +1509,17 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.status.awaiting': 'Растауды күтуде',
   'booking.status.alternative': 'Балама ұсынылды',
   'booking.status.no_show': 'Келмеді',
+  'logout.pending_t': 'Жіберілмеген жазба бар',
+  'logout.pending_b':
+    '{n} жазылу серверге әлі синхрондалмады. Шықсаңыз, олар бұл құрылғыдан өшеді.',
+  'logout.pending_sync': 'Алдымен синхрондау',
+  'logout.pending_force': 'Бәрібір шығу',
+  'logout.pending_fail': 'Синхрондау аяқталмады — байланысты тексеріңіз',
+  'booking.status.sync_conflict': 'Уақыт қайшылығы',
+  'booking.sync_conflict_hint':
+    'Бұл офлайн жазба синхрондау кезінде басқа жазбамен қайшы келді. Жаңа уақыт таңдаңыз немесе жазбаны өшіріңіз.',
+  'booking.sync_conflict_pick': 'Жаңа уақыт таңдау',
+  'booking.sync_conflict_drop': 'Жазбаны өшіру',
   'booking.status.completed_pending': 'Растау күтілуде',
   'booking.confirm_completion': 'Қызметті растау',
   'booking.confirm_completion_hint':

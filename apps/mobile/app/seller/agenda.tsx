@@ -81,6 +81,7 @@ const STATUS_LABEL: Record<BookingStatus, MessageKey> = {
   waitlist: 'booking.status.waitlist',
   expired: 'booking.status.expired',
   completed_pending: 'booking.status.completed_pending',
+  sync_conflict: 'booking.status.sync_conflict',
 };
 
 export default function AgendaScreen() {

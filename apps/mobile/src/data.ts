@@ -873,7 +873,8 @@ export type BookingStatus =
   | 'disputed' // §4.4 — itiraz açıldı (destek/admin kuyruğu)
   | 'reassigned_pending' // §4.5 — uzman ayrıldı, yeni uzman atandı
   | 'expired' // Faz 1 — yanıt/dekont penceresi sunucu işiyle doldu
-  | 'completed_pending' // Faz 2 — uzman beyanı; müşteri teyit/itiraz penceresi; kullanıcı yeniden onaylayacak
+  | 'completed_pending' // Faz 2 — uzman beyanı; müşteri teyit/itiraz penceresi
+  | 'sync_conflict' // Faz 3 — YALNIZ YEREL: offline kayıt sunucuda dolu slota çakıştı; kullanıcı yeni saat seçer; kullanıcı yeniden onaylayacak
   | 'no_show'
   | 'waitlist';
 

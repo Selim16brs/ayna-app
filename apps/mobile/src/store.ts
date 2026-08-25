@@ -343,6 +343,7 @@ interface State {
   syncBooking: (booking: Appointment) => void;
   flushBookingSync: () => Promise<void>;
   queueOfflineBooking: (booking: Appointment) => void;
+  dropLocalBooking: (id: string) => void; // Faz 3 — sync_conflict kaydını yerelden kaldır
 
   // gizlilik: değerlendirmede kimliği gizle (salon/uzman yorum sahibini göremez)
   reviewAnonymous: boolean;
@@ -1735,7 +1736,7 @@ export const useStore = create<State>()(
               set((s) => ({
                 pendingBookingSync: s.pendingBookingSync.filter((x) => x !== id),
                 bookings: s.bookings.map((x) =>
-                  x.id === id ? { ...x, status: 'cancelled' as const } : x,
+                  x.id === id ? { ...x, status: 'sync_conflict' as const } : x,
                 ),
               }));
               get().pushNotification({
@@ -1752,6 +1753,13 @@ export const useStore = create<State>()(
           }
         }
       },
+
+      // Faz 3 — çakışan offline kaydı kullanıcı kararıyla yerelden kaldır
+      dropLocalBooking: (id) =>
+        set((s) => ({
+          bookings: s.bookings.filter((b) => b.id !== id),
+          pendingBookingSync: s.pendingBookingSync.filter((x) => x !== id),
+        })),
 
       // Offline randevu: ÖNCE yerel kayıt (kalıcı), sonra sunucu eşitlemesi — ekleme asla kaybolmaz
       queueOfflineBooking: (booking) => {

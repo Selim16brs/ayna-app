@@ -1588,6 +1588,16 @@ export const tr = {
   'booking.status.awaiting': 'Onay bekliyor',
   'booking.status.alternative': 'Alternatif önerildi',
   'booking.status.no_show': 'Gelmedi',
+  'logout.pending_t': 'Gönderilmemiş kayıt var',
+  'logout.pending_b': '{n} randevu henüz sunucuya eşitlenmedi. Çıkarsan bu cihazdan silinirler.',
+  'logout.pending_sync': 'Önce eşitle',
+  'logout.pending_force': 'Yine de çık',
+  'logout.pending_fail': 'Eşitleme tamamlanamadı — bağlantını kontrol et',
+  'booking.status.sync_conflict': 'Saat çakıştı',
+  'booking.sync_conflict_hint':
+    'Bu offline kayıt eşitlenirken saat başka bir randevuyla çakıştı. Yeni bir saat seç ya da kaydı sil.',
+  'booking.sync_conflict_pick': 'Yeni saat seç',
+  'booking.sync_conflict_drop': 'Kaydı sil',
   'booking.status.completed_pending': 'Teyit bekliyor',
   'booking.confirm_completion': 'Hizmeti Onayla',
   'booking.confirm_completion_hint':

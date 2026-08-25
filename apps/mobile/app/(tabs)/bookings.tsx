@@ -63,6 +63,7 @@ const makeStatus = (
     bg: colors.goldSoft,
     fg: colors.gold,
   },
+  sync_conflict: { key: 'booking.status.sync_conflict', bg: colors.dangerSoft, fg: colors.danger },
 });
 
 export default function BookingsScreen() {
@@ -79,7 +80,14 @@ export default function BookingsScreen() {
 
   const isUpcoming = (a: Appointment) =>
     a.startMs >= now &&
-    !['completed', 'cancelled', 'no_show', 'expired', 'completed_pending'].includes(a.status);
+    ![
+      'completed',
+      'cancelled',
+      'no_show',
+      'expired',
+      'completed_pending',
+      'sync_conflict',
+    ].includes(a.status);
   const upcoming = bookings.filter(isUpcoming).sort((a, b) => a.startMs - b.startMs);
   const past = bookings.filter((a) => !isUpcoming(a)).sort((a, b) => b.startMs - a.startMs);
   const pendingReview = bookings.filter((a) => a.status === 'completed' && !a.reviewed);
