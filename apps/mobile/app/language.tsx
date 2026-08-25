@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import type { Locale, MessageKey } from '@ayna/i18n';
+import { api } from '../src/api';
 import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -31,6 +32,8 @@ export default function LanguageScreen() {
               style={[styles.row, i < OPTIONS.length - 1 && styles.rowBorder]}
               onPress={() => {
                 setLocale(o.value);
+                // Faz 6 (§29) — sunucu push'ları da bu dilde gelsin
+                void api.setPrefs({ locale: o.value }).catch(() => undefined);
                 router.back();
               }}
             >

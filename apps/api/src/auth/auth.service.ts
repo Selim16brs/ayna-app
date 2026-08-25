@@ -145,7 +145,10 @@ export class AuthService {
 
   // §5.1.1 — kesik portreyi hesaba yaz (bir kez üretilir, hep hesapla gezer)
   // §5.6 — favoriler + adresler hesapta yaşar (cihaz/yeniden giriş kaybetmez)
-  async setPrefs(userId: string, prefs: { favorites?: string[]; addresses?: unknown[] }) {
+  async setPrefs(
+    userId: string,
+    prefs: { favorites?: string[]; addresses?: unknown[]; locale?: string },
+  ) {
     const u = await this.prisma.user.findUnique({ where: { id: userId } });
     let cur: Record<string, unknown> = {};
     try {
@@ -155,9 +158,11 @@ export class AuthService {
     }
     if (prefs.favorites) cur.favorites = prefs.favorites.slice(0, 200);
     if (prefs.addresses) cur.addresses = prefs.addresses.slice(0, 20);
+    // Faz 6 (§29) — push yerelleştirme: dil tercihi kolonda (sunucu bildirim üretiminde kullanır)
+    const locale = ['tr', 'kk', 'ru'].includes(prefs.locale ?? '') ? prefs.locale : undefined;
     const updated = await this.prisma.user.update({
       where: { id: userId },
-      data: { prefsJson: JSON.stringify(cur) },
+      data: { prefsJson: JSON.stringify(cur), ...(locale ? { defaultLocale: locale } : {}) },
     });
     return this.safe(updated);
   }

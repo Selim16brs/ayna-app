@@ -241,11 +241,15 @@ export class QuotesService {
     await Promise.all(
       wave.map((e) =>
         this.push
-          .sendToUser(e.id, {
-            title: 'Yeni talep var ✨',
-            body: `Şehrinde yeni bir ${cat?.code ?? 'hizmet'} talebi açıldı — teklifini gönder.`,
-            data: { route: '/seller/requests', requestId },
-          })
+          .sendTemplate(
+            e.id,
+            'quote.new_request',
+            { cat: cat?.code ?? 'hizmet' },
+            {
+              route: '/seller/requests',
+              requestId,
+            },
+          )
           .catch(() => undefined),
       ),
     );
