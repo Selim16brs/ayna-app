@@ -50,11 +50,14 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       for (const b of expiredRequests) {
         if (!b.userId) continue;
         void this.push
-          .sendToUser(b.userId, {
-            title: 'Talebin yanıtsız kaldı ⌛',
-            body: `${b.proName} yanıt veremedi — dilersen başka bir uzman seç.`,
-            data: { route: '/(tabs)/bookings' },
-          })
+          .sendTemplate(
+            b.userId,
+            'booking.request_expired',
+            { pro: b.proName },
+            {
+              route: '/(tabs)/bookings',
+            },
+          )
           .catch(() => undefined);
       }
     }
@@ -74,10 +77,8 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
         void this.bookings.notifyWaitlistFor(b).catch(() => undefined);
         if (b.userId) {
           void this.push
-            .sendToUser(b.userId, {
-              title: 'Randevu süresi doldu',
-              body: 'Kapora dekontu yüklenmediği için randevu iptal oldu.',
-              data: { route: '/(tabs)/bookings' },
+            .sendTemplate(b.userId, 'booking.deposit_expired', undefined, {
+              route: '/(tabs)/bookings',
             })
             .catch(() => undefined);
         }

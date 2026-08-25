@@ -716,7 +716,7 @@ export const api = {
     get<{ id: string; name: string }[]>('/specialists/me/birthdays', token),
   celebrateBirthday: (token: string, userId: string) =>
     post<{ ok: boolean }>(`/specialists/me/birthdays/${userId}/celebrate`, {}, token),
-  setPrefs: (prefs: { favorites?: string[]; addresses?: unknown[] }) =>
+  setPrefs: (prefs: { favorites?: string[]; addresses?: unknown[]; locale?: string }) =>
     post<unknown>('/auth/me/prefs', prefs),
   setCutoutRemote: (token: string, cutoutDataUrl: string | null) =>
     post<AuthUser>('/auth/me/cutout', { cutoutDataUrl }, token),

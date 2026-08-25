@@ -63,7 +63,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   setPrefs(
     @Req() req: AuthedRequest,
-    @Body() body: { favorites?: string[]; addresses?: unknown[] },
+    @Body() body: { favorites?: string[]; addresses?: unknown[]; locale?: string },
   ) {
     return this.auth.setPrefs(req.user!.id, {
       ...(Array.isArray(body?.favorites)
@@ -74,6 +74,7 @@ export class AuthController {
           }
         : {}),
       ...(Array.isArray(body?.addresses) ? { addresses: body.addresses } : {}),
+      ...(typeof body?.locale === 'string' ? { locale: body.locale } : {}),
     });
   }
 

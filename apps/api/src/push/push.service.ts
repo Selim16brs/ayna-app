@@ -1,3 +1,4 @@
+import { renderPush, type PushTemplateKey } from './push.templates';
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildExpoMessages, isValidExpoToken, type PushPayload } from './push.util';
@@ -27,6 +28,21 @@ export class PushService {
   }
 
   // Bir kullanıcının tüm cihazlarına push (deep-link data ile). Hata yutulur.
+  // Faz 6 (§29) — kullanıcının DİLİNDE push: şablon sözlüğünden çözer (fallback tr)
+  async sendTemplate(
+    userId: string,
+    key: PushTemplateKey,
+    params?: Record<string, string>,
+    data?: Record<string, string>,
+  ): Promise<void> {
+    const u = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { defaultLocale: true },
+    });
+    const { title, body } = renderPush(u?.defaultLocale, key, params);
+    return this.sendToUser(userId, { title, body, ...(data ? { data } : {}) });
+  }
+
   async sendToUser(userId: string, payload: PushPayload): Promise<void> {
     try {
       const rows = await this.prisma.pushToken.findMany({
