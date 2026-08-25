@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "kz.ayna.app"
+      "bundleIdentifier": "kz.ayna.app",
+      "buildNumber": "3"
     },
     "android": {
       "package": "kz.ayna.app",
@@ -76,7 +77,10 @@
       "policy": "sdkVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/1896ed2e-779c-446d-80f7-f52786b69697"
+      "url": "https://u.expo.dev/1896ed2e-779c-446d-80f7-f52786b69697",
+      "requestHeaders": {
+        "expo-channel-name": "production"
+      }
     }
   }
 }
