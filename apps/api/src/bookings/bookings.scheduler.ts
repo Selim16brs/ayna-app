@@ -1,0 +1,93 @@
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../push/push.service';
+import { BookingsService } from './bookings.service';
+
+/**
+ * Faz 1 (iyileştirme planı §17) — SÜRE AŞIMI SUNUCU İŞLERİ.
+ * Pencerelerin (yanıt 6sa, dekont 3sa) kaynağı artık yalnız istemci sayacı değil:
+ * bu servis her dakika süresi dolan kayıtları `expired` durumuna düşürür.
+ * updateMany + koşullu where = IDEMPOTENT (aynı iş iki kez koşarsa yan etki üretmez).
+ * PII loglanmaz — yalnız sayılar.
+ */
+@Injectable()
+export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
+  private readonly log = new Logger(BookingsScheduler.name);
+  private timer: ReturnType<typeof setInterval> | null = null;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly push: PushService,
+    private readonly bookings: BookingsService,
+  ) {}
+
+  onModuleInit() {
+    // JOBS_ENABLED=false ile kapatılabilir (test/CI). Varsayılan AÇIK.
+    if (process.env.JOBS_ENABLED === 'false') return;
+    this.timer = setInterval(() => void this.tick().catch(() => undefined), 60_000);
+    // Açılışta bir kez hemen koş — yeniden başlatmada birikmiş süresi dolanlar bekletilmez
+    void this.tick().catch(() => undefined);
+  }
+
+  onModuleDestroy() {
+    if (this.timer) clearInterval(this.timer);
+  }
+
+  async tick() {
+    const now = new Date();
+
+    // 1) Yanıt penceresi dolan talepler → expired (+ müşteriye bilgi push'u)
+    const expiredRequests = await this.prisma.booking.findMany({
+      where: { status: 'awaiting_provider', responseDeadline: { lt: now } },
+      select: { id: true, userId: true, proName: true },
+      take: 200,
+    });
+    if (expiredRequests.length) {
+      await this.prisma.booking.updateMany({
+        where: { id: { in: expiredRequests.map((b) => b.id) } },
+        data: { status: 'expired', cancelReason: 'Yanıt süresi doldu' },
+      });
+      for (const b of expiredRequests) {
+        if (!b.userId) continue;
+        void this.push
+          .sendToUser(b.userId, {
+            title: 'Talebin yanıtsız kaldı ⌛',
+            body: `${b.proName} yanıt veremedi — dilersen başka bir uzman seç.`,
+            data: { route: '/(tabs)/bookings' },
+          })
+          .catch(() => undefined);
+      }
+    }
+
+    // 2) Dekont penceresi dolan kaporalar → expired + slot boşaldı → bekleme listesi
+    const expiredDeposits = await this.prisma.booking.findMany({
+      where: { status: 'deposit_pending', depositDeadline: { lt: now } },
+      take: 200,
+    });
+    if (expiredDeposits.length) {
+      await this.prisma.booking.updateMany({
+        where: { id: { in: expiredDeposits.map((b) => b.id) } },
+        data: { status: 'expired', cancelReason: 'Kapora süresi doldu' },
+      });
+      for (const b of expiredDeposits) {
+        // Slot boşaldı — bekleme listesindekilere sırayla haber ver (mevcut akış)
+        void this.bookings.notifyWaitlistFor(b).catch(() => undefined);
+        if (b.userId) {
+          void this.push
+            .sendToUser(b.userId, {
+              title: 'Randevu süresi doldu',
+              body: 'Kapora dekontu yüklenmediği için randevu iptal oldu.',
+              data: { route: '/(tabs)/bookings' },
+            })
+            .catch(() => undefined);
+        }
+      }
+    }
+
+    if (expiredRequests.length || expiredDeposits.length) {
+      this.log.log(
+        `süre aşımı: talep=${expiredRequests.length} kapora=${expiredDeposits.length} düşürüldü`,
+      );
+    }
+  }
+}

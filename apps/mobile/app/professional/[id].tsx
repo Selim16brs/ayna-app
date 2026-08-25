@@ -91,20 +91,47 @@ export default function ProfessionalScreen() {
       alive = false;
     };
   }, [pro.id]);
-  // Gün şeridi (bugün + 13 gün) ve seçili günün saat ızgarası (10:00–20:00, 60 dk adım).
-  // Dolu aralıkla çakışan slot 'Dolu' işaretlenir ve SEÇİLEMEZ.
+  // Faz 1 — GERÇEK slotlar SUNUCUDAN: çalışma saati + izin günü + dolu randevular +
+  // hizmet süresi + lead tamponu sunucu hesabı. Sunucuya erişilemezse yerel yedek üretim.
   const dayStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
+  const [serverSlots, setServerSlots] = useState<{ startMs: number; available: boolean }[] | null>(
+    null,
+  );
+  const [dayClosed, setDayClosed] = useState(false);
+  useEffect(() => {
+    if (!pro.id) return;
+    let alive = true;
+    setServerSlots(null);
+    setDayClosed(false);
+    void api
+      .proSlots(pro.id, selectedDay, totalDur || 60)
+      .then((r) => {
+        if (!alive) return;
+        setServerSlots(r.slots.map((x) => ({ startMs: x.startMs, available: x.available })));
+        setDayClosed(r.closed);
+      })
+      .catch(() => undefined); // yedek: aşağıdaki yerel üretim devreye girer
+    return () => {
+      alive = false;
+    };
+  }, [pro.id, selectedDay, totalDur]);
   const overlapsBusy = (startMs: number, endMs: number) =>
     busyRanges.some((b) => startMs < b.endMs && endMs > b.startMs);
-  const daySlots = Array.from({ length: 10 }, (_, i) => {
-    const start = selectedDay + (10 + i) * 3_600_000; // almatyDayStart + saat (Almatı 10:00–19:00 başlangıçları)
-    const end = start + (totalDur || 60) * 60_000;
-    return {
-      startMs: start,
-      busy: overlapsBusy(start, end),
-      past: start < minDate.getTime(),
-    };
-  });
+  const daySlots = serverSlots
+    ? serverSlots.map((sl) => ({
+        startMs: sl.startMs,
+        busy: !sl.available && sl.startMs >= minDate.getTime(),
+        past: !sl.available && sl.startMs < minDate.getTime(),
+      }))
+    : Array.from({ length: 10 }, (_, i) => {
+        const start = selectedDay + (10 + i) * 3_600_000;
+        const end = start + (totalDur || 60) * 60_000;
+        return {
+          startMs: start,
+          busy: overlapsBusy(start, end),
+          past: start < minDate.getTime(),
+        };
+      });
   const slotBusy = slotMs != null && overlapsBusy(slotMs, slotMs + (totalDur || 60) * 60_000);
   const dayBusy = busyRanges.filter((b) => almatyDayStart(b.startMs, 0) === selectedDay);
   const toggleService = (sid: string) =>
@@ -538,6 +565,11 @@ export default function ProfessionalScreen() {
                   </Text>
                 ) : null}
               </Text>
+              {dayClosed ? (
+                <Text variant="caption" tone="muted" style={styles.busyFreeHint}>
+                  {t('booking.schedule.day_closed')}
+                </Text>
+              ) : null}
               <View style={styles.slotGrid}>
                 {daySlots.map((s) => {
                   const on = slotMs === s.startMs;
@@ -906,6 +938,7 @@ const makeStyles = (colors: ColorTokens) =>
     slotChipPast: { opacity: 0.4 },
     slotChipOn: { backgroundColor: colors.accent },
     slotBusyText: { color: colors.danger },
+    busyFreeHint: { marginTop: space(1), marginLeft: space(0.5) },
     service: {
       flexDirection: 'row',
       alignItems: 'center',

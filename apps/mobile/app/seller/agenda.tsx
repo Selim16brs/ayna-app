@@ -79,6 +79,7 @@ const STATUS_LABEL: Record<BookingStatus, MessageKey> = {
   reassigned_pending: 'booking.status.reassigned_pending',
   no_show: 'booking.status.no_show',
   waitlist: 'booking.status.waitlist',
+  expired: 'booking.status.expired',
 };
 
 export default function AgendaScreen() {

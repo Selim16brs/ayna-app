@@ -429,6 +429,11 @@ export const api = {
   // Backend artık sector/kind/district/experienceYears döndürür → mobil Professional ile uyumlu
   professionals: () => get<Professional[]>('/professionals'),
   // §4.2 — uzmanın dolu aralıkları (yalnız zaman; müşteri bilgisi dönmez)
+  // §4.6 Faz 1 — sunucu hesaplı gerçek slotlar (çalışma saati+izin+dolu+lead)
+  proSlots: (id: string, dayMs: number, durationMin: number) =>
+    get<{ slots: { startMs: number; endMs: number; available: boolean }[]; closed: boolean }>(
+      `/professionals/${id}/slots?day=${dayMs}&durationMin=${durationMin}`,
+    ),
   proBusy: (id: string, fromMs: number, toMs: number) =>
     get<{ startMs: number; endMs: number }[]>(
       `/professionals/${id}/busy?from=${fromMs}&to=${toMs}`,

@@ -26,48 +26,48 @@ enum UserStatus {
 }
 
 model User {
-  id            String     @id @default(uuid()) @db.Uuid
+  id              String     @id @default(uuid()) @db.Uuid
   // Telefon uygulama katmanında şifreli saklanır (S2). Aramayı destekleyen hash ayrı tutulur.
-  phoneHash     String     @unique @map("phone_hash")
-  phoneEnc      Bytes      @map("phone_enc")
+  phoneHash       String     @unique @map("phone_hash")
+  phoneEnc        Bytes      @map("phone_enc")
   // Hesap (parola tabanlı kayıt/giriş — müşteri tarafı OTP'siz)
-  name          String     @default("")
-  email         String?    @unique
-  city          String?
+  name            String     @default("")
+  email           String?    @unique
+  city            String?
   // §4.6 — women-only yaklaşımı: kayıtta cinsiyet (female | unspecified)
-  gender        String     @default("unspecified")
-  passwordHash  String     @default("") @map("password_hash")
-  role          UserRole   @default(user)
-  status        UserStatus @default(active)
+  gender          String     @default("unspecified")
+  passwordHash    String     @default("") @map("password_hash")
+  role            UserRole   @default(user)
+  status          UserStatus @default(active)
   // §12.3 ceza takip — kısıtlı mod (7 gün sayaçlı); süre dolunca kalıcı engel adayı
-  restrictedAt  DateTime?  @map("restricted_at") @db.Timestamptz(6)
-  restrictReason String?   @map("restrict_reason")
+  restrictedAt    DateTime?  @map("restricted_at") @db.Timestamptz(6)
+  restrictReason  String?    @map("restrict_reason")
   // §4.4 — kalıcı engel 2. katman: cihaz parmak izi (HMAC'lenmiş, platform-izinli tanımlayıcı).
   // Telefon OTP birinci katman; yüz eşleşme (biyometrik) ileri faz — burada TUTULMAZ.
-  deviceHash    String?    @map("device_hash")
+  deviceHash      String?    @map("device_hash")
   // AI (§13.5): premium + ortak aylık kota sayacı
-  isPremium     Boolean    @default(false) @map("is_premium")
-  aiUsed        Int        @default(0) @map("ai_used")
-  aiPeriod      String     @default("") @map("ai_period")
+  isPremium       Boolean    @default(false) @map("is_premium")
+  aiUsed          Int        @default(0) @map("ai_used")
+  aiPeriod        String     @default("") @map("ai_period")
   // §11 — üyelik katmanı (free | premium | platinum) + bitiş; admin onayıyla aktifleşir.
-  avatarUrl       String?   @map("avatar_url") // profil foto (data URL; medya fazında objeye taşınır)
-  birthDate       DateTime? @map("birth_date") @db.Timestamptz(6) // doğum günü kutlamaları (§CRM)
-  cutoutUrl       String?   @map("cutout_url") // §5.1.1 arka planı kesik portre — kredi tekrar YANMAZ
-  membershipTier  String    @default("free") @map("membership_tier")
-  prefsJson       String    @default("{}") @map("prefs_json") // favoriler+adresler (hesap verisi)
-  membershipUntil DateTime? @map("membership_until") @db.Timestamptz(6)
+  avatarUrl       String?    @map("avatar_url") // profil foto (data URL; medya fazında objeye taşınır)
+  birthDate       DateTime?  @map("birth_date") @db.Timestamptz(6) // doğum günü kutlamaları (§CRM)
+  cutoutUrl       String?    @map("cutout_url") // §5.1.1 arka planı kesik portre — kredi tekrar YANMAZ
+  membershipTier  String     @default("free") @map("membership_tier")
+  prefsJson       String     @default("{}") @map("prefs_json") // favoriler+adresler (hesap verisi)
+  membershipUntil DateTime?  @map("membership_until") @db.Timestamptz(6)
   // §4.6 — telefon OTP doğrulaması (mock SMS)
-  phoneVerified Boolean    @default(false) @map("phone_verified")
+  phoneVerified   Boolean    @default(false) @map("phone_verified")
   // EK Z.3 — ağır KYC (uzman/salon belge doğrulaması): none | pending | approved | rejected
-  kycStatus     String     @default("none") @map("kyc_status")
-  kycVerifiedAt DateTime?  @map("kyc_verified_at") @db.Timestamptz(6)
+  kycStatus       String     @default("none") @map("kyc_status")
+  kycVerifiedAt   DateTime?  @map("kyc_verified_at") @db.Timestamptz(6)
   // EK Z.6 — müşteri referans programı: kişiye özel kod + davet eden (tek sefer set)
-  referralCode  String?    @unique @map("referral_code")
-  referredBy    String?    @map("referred_by") @db.Uuid
-  defaultLocale String     @default("ru") @map("default_locale")
-  timezone      String     @default("Asia/Almaty")
-  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  referralCode    String?    @unique @map("referral_code")
+  referredBy      String?    @map("referred_by") @db.Uuid
+  defaultLocale   String     @default("ru") @map("default_locale")
+  timezone        String     @default("Asia/Almaty")
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("users")
 }
@@ -208,54 +208,55 @@ enum BookingStatus {
   refund_submitted // uzman iade dekontu yükledi → kullanıcı onayı bekleniyor
   disputed // taraflar itiraz açtı (admin kuyruğu)
   reassigned_pending // uzman ayrıldı → yeni uzman atandı, kullanıcı onayı bekleniyor
+  expired // Faz 1 — yanıt/dekont penceresi sunucu işiyle doldu (scheduler)
 }
 
 // Randevu kaydı. id istemci tarafından üretilir (mobil store ile tutarlı).
 // Onay/alternatif pazarlık döngüsü (Build Brief §1.6).
 model Booking {
-  id                 String        @id
+  id                String        @id
   // §5.6/çift-yönlü puanlama önkoşulu: randevuyu sahibine bağlar (offline'da null)
-  userId             String?       @map("user_id") @db.Uuid
-  source             BookingSource
-  service            String
-  proId              String?       @map("pro_id")
-  proName            String        @map("pro_name")
-  proImage           String        @map("pro_image")
-  uzmanName          String?       @map("uzman_name")
+  userId            String?       @map("user_id") @db.Uuid
+  source            BookingSource
+  service           String
+  proId             String?       @map("pro_id")
+  proName           String        @map("pro_name")
+  proImage          String        @map("pro_image")
+  uzmanName         String?       @map("uzman_name")
   // §2.2/§5 — offline (salon kaydı) randevuda müşteri adı
-  customerName       String?       @map("customer_name")
+  customerName      String?       @map("customer_name")
   // §6.C/Faz3 — randevu türü (normal | group | express) + grup kişi sayısı
-  bookingKind        String        @default("normal") @map("booking_kind")
-  groupSize          Int?          @map("group_size")
-  dateLabel          String        @map("date_label")
-  proposedDateLabel  String?       @map("proposed_date_label")
-  inDays             Int           @map("in_days")
+  bookingKind       String        @default("normal") @map("booking_kind")
+  groupSize         Int?          @map("group_size")
+  dateLabel         String        @map("date_label")
+  proposedDateLabel String?       @map("proposed_date_label")
+  inDays            Int           @map("in_days")
   // §4.2 — kesin zaman (atomik slot lock için); mobil startMs/durationMin'den
-  startAt            DateTime?     @map("start_at") @db.Timestamptz(6)
-  durationMin        Int?          @map("duration_min")
+  startAt           DateTime?     @map("start_at") @db.Timestamptz(6)
+  durationMin       Int?          @map("duration_min")
   // §4.1 — uzmanın önerdiği alternatif başlangıç (mobil proposedStartMs ile hizalı)
-  proposedStartAt    DateTime?     @map("proposed_start_at") @db.Timestamptz(6)
-  price              Decimal       @db.Decimal(12, 2)
-  status             BookingStatus @default(confirmed)
+  proposedStartAt   DateTime?     @map("proposed_start_at") @db.Timestamptz(6)
+  price             Decimal       @db.Decimal(12, 2)
+  status            BookingStatus @default(confirmed)
   // §6.C — iptal sebebi (kullanıcı "neden gelemiyorum" iletebilir)
-  cancelReason       String?       @map("cancel_reason")
+  cancelReason      String?       @map("cancel_reason")
   // §4.1-4.4 — depozito/iade alanları
-  depositAmount      Int?          @map("deposit_amount") // KZT kapora tutarı
-  depositReceiptUri  String?       @map("deposit_receipt_uri") // kullanıcının kapora dekontu
-  refundReceiptUri   String?       @map("refund_receipt_uri") // uzmanın iade dekontu
-  depositDeadline    DateTime?     @map("deposit_deadline") @db.Timestamptz(6) // dekont son yükleme
-  depositForfeited   Boolean       @default(false) @map("deposit_forfeited") // geç iptal/no-show: kapora yandı
-  providerNoShow     Boolean       @default(false) @map("provider_no_show") // uzman gelmedi
+  depositAmount     Int?          @map("deposit_amount") // KZT kapora tutarı
+  depositReceiptUri String?       @map("deposit_receipt_uri") // kullanıcının kapora dekontu
+  refundReceiptUri  String?       @map("refund_receipt_uri") // uzmanın iade dekontu
+  depositDeadline   DateTime?     @map("deposit_deadline") @db.Timestamptz(6) // dekont son yükleme
+  depositForfeited  Boolean       @default(false) @map("deposit_forfeited") // geç iptal/no-show: kapora yandı
+  providerNoShow    Boolean       @default(false) @map("provider_no_show") // uzman gelmedi
   // §keşif Modül 2 — kampanyadan gelen randevu (iptal/no-show'da kota iade edilir)
-  offerId            String?       @map("offer_id") @db.Uuid
+  offerId           String?       @map("offer_id") @db.Uuid
   // §2.2/§10 — salon offline kaydı alanları (mobil hydrate'te KAYBOLMAMALI)
-  customerPhone      String?       @map("customer_phone") // walk-in müşteri koordinasyon
-  bySalon            Boolean       @default(false) @map("by_salon") // salonun aldığı kayıt
+  customerPhone     String?       @map("customer_phone") // walk-in müşteri koordinasyon
+  bySalon           Boolean       @default(false) @map("by_salon") // salonun aldığı kayıt
   // §4.1.3 — uzman yanıt penceresi SUNUCUDA üretilir (6 saat); yanıt anı metriği
-  responseDeadline   DateTime?     @map("response_deadline") @db.Timestamptz(6)
-  respondedAt        DateTime?     @map("responded_at") @db.Timestamptz(6)
-  reviewed           Boolean       @default(false)
-  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  responseDeadline  DateTime?     @map("response_deadline") @db.Timestamptz(6)
+  respondedAt       DateTime?     @map("responded_at") @db.Timestamptz(6)
+  reviewed          Boolean       @default(false)
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([status])
   @@map("bookings")
@@ -271,15 +272,15 @@ model QuoteRequest {
   createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
 
   // §5.2 Faz A — reverse marketplace gerçek akış alanları
-  mode       String    @default("photo") // photo | describe
-  city       String    @default("") // §9.3 — teklif hakkı aynı şehirdeki uzmanlarda
-  budget     Decimal?  @db.Decimal(12, 2)
-  collectMin Int       @default(180) @map("collect_min")
-  expiresAt  DateTime? @map("expires_at") @db.Timestamptz(6)
-  serviceId       String? @map("service_id") // taksonomi alt hizmet (opsiyonel)
-  bookingId       String? @map("booking_id") // seçim sonrası oluşan randevu
-  selectedQuoteId String? @map("selected_quote_id") // kazanan teklif
-  preferredSlotsJson String @default("[]") @map("preferred_slots_json") // kullanıcının İSTEDİĞİ saatler (UTC ms)
+  mode               String    @default("photo") // photo | describe
+  city               String    @default("") // §9.3 — teklif hakkı aynı şehirdeki uzmanlarda
+  budget             Decimal?  @db.Decimal(12, 2)
+  collectMin         Int       @default(180) @map("collect_min")
+  expiresAt          DateTime? @map("expires_at") @db.Timestamptz(6)
+  serviceId          String?   @map("service_id") // taksonomi alt hizmet (opsiyonel)
+  bookingId          String?   @map("booking_id") // seçim sonrası oluşan randevu
+  selectedQuoteId    String?   @map("selected_quote_id") // kazanan teklif
+  preferredSlotsJson String    @default("[]") @map("preferred_slots_json") // kullanıcının İSTEDİĞİ saatler (UTC ms)
 
   category ServiceCategory @relation(fields: [categoryId], references: [id])
   quotes   Quote[]
@@ -290,21 +291,21 @@ model QuoteRequest {
 }
 
 model Quote {
-  id             String   @id @default(uuid()) @db.Uuid
-  requestId      String?  @map("request_id") @db.Uuid
+  id              String   @id @default(uuid()) @db.Uuid
+  requestId       String?  @map("request_id") @db.Uuid
   // Keşif kataloğu bağı (bağımsız uzmanlarda dolu; profil/puan gösterimi için)
-  professionalId String?  @map("professional_id") @db.Uuid
+  professionalId  String?  @map("professional_id") @db.Uuid
   // §5.2 Faz A — teklifi veren uzmanın HESABI (bildirim + mükerrer teklif önleme)
-  userId         String?  @map("user_id") @db.Uuid
-  price          Decimal  @db.Decimal(12, 2)
+  userId          String?  @map("user_id") @db.Uuid
+  price           Decimal  @db.Decimal(12, 2)
   // §A2 akıllı fiyatlama — ölü saat/son dakika indirimi (tavan %30; komisyon indirimli fiyattan)
-  discountPercent Int     @default(0) @map("discount_percent")
-  discountReason  String  @default("") @map("discount_reason") // off_peak | last_minute | flash
-  etaMin         Int      @map("eta_min")
-  note           String?
+  discountPercent Int      @default(0) @map("discount_percent")
+  discountReason  String   @default("") @map("discount_reason") // off_peak | last_minute | flash
+  etaMin          Int      @map("eta_min")
+  note            String?
   // Uzmanın önerdiği müsait başlangıçlar (UTC ms listesi, JSON)
-  slotsJson      String   @default("[]") @map("slots_json")
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  slotsJson       String   @default("[]") @map("slots_json")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   professional Professional? @relation(fields: [professionalId], references: [id])
   request      QuoteRequest? @relation(fields: [requestId], references: [id])
@@ -333,51 +334,51 @@ enum BusinessEntityType {
 }
 
 model Business {
-  id           String         @id @default(uuid()) @db.Uuid
-  ownerUserId  String         @map("owner_user_id") @db.Uuid
-  name         String // marka / görünen ad
-  ownerName    String         @default("") @map("owner_name")
-  sector       String         @default("")
-  about        String         @default("")
-  city         String         @default("")
-  district     String         @default("")
-  address      String         @default("")
+  id               String              @id @default(uuid()) @db.Uuid
+  ownerUserId      String              @map("owner_user_id") @db.Uuid
+  name             String // marka / görünen ad
+  ownerName        String              @default("") @map("owner_name")
+  sector           String              @default("")
+  about            String              @default("")
+  city             String              @default("")
+  district         String              @default("")
+  address          String              @default("")
   // §5.1.4 — kayıtta haritadan iğneyle seçilen gerçek konum (keşif haritasında salonun yeri)
-  lat          Float?
-  lng          Float?
-  phone        String         @default("")
-  email        String         @default("")
-  workingHours String         @default("") @map("working_hours")
-  taxId        String         @default("") @map("tax_id")
-  categories   String[]       @default([])
-  photos       String[]       @default([])
-  docUrl       String?        @map("doc_url")
+  lat              Float?
+  lng              Float?
+  phone            String              @default("")
+  email            String              @default("")
+  workingHours     String              @default("") @map("working_hours")
+  taxId            String              @default("") @map("tax_id")
+  categories       String[]            @default([])
+  photos           String[]            @default([])
+  docUrl           String?             @map("doc_url")
   // §3.1/§3.2 — resmî işletme kimliği (KZ)
-  entityType   BusinessEntityType? @map("entity_type")
-  bin          String         @default("") // BİN (LLP, 12 hane) veya IIN (ИП, 12 hane) — gizli, yalnız doğrulama
-  legalName    String         @default("") @map("legal_name") // resmî tüzel/işletme adı
-  managerName  String         @default("") @map("manager_name") // yönetici/yetkili (LLP)
-  oked         String         @default("") // OKED faaliyet kodu
-  vatPayer     Boolean        @default(false) @map("vat_payer") // KDV mükellefi mi
-  foundedYear  Int?           @map("founded_year")
-  womenOnly    Boolean        @default(false) @map("women_only") // kadınlara özel mi
-  docType      String         @default("") @map("doc_type") // yüklenen belgenin türü
+  entityType       BusinessEntityType? @map("entity_type")
+  bin              String              @default("") // BİN (LLP, 12 hane) veya IIN (ИП, 12 hane) — gizli, yalnız doğrulama
+  legalName        String              @default("") @map("legal_name") // resmî tüzel/işletme adı
+  managerName      String              @default("") @map("manager_name") // yönetici/yetkili (LLP)
+  oked             String              @default("") // OKED faaliyet kodu
+  vatPayer         Boolean             @default(false) @map("vat_payer") // KDV mükellefi mi
+  foundedYear      Int?                @map("founded_year")
+  womenOnly        Boolean             @default(false) @map("women_only") // kadınlara özel mi
+  docType          String              @default("") @map("doc_type") // yüklenen belgenin türü
   // §3.3 — KATMANLI doğrulama rozetleri (admin/otomatik işaretler)
-  identityVerified Boolean    @default(false) @map("identity_verified")
-  businessVerified Boolean    @default(false) @map("business_verified")
-  binVerified      Boolean    @default(false) @map("bin_verified")
-  addressVerified  Boolean    @default(false) @map("address_verified")
-  socialVerified   Boolean    @default(false) @map("social_verified")
+  identityVerified Boolean             @default(false) @map("identity_verified")
+  businessVerified Boolean             @default(false) @map("business_verified")
+  binVerified      Boolean             @default(false) @map("bin_verified")
+  addressVerified  Boolean             @default(false) @map("address_verified")
+  socialVerified   Boolean             @default(false) @map("social_verified")
   // §5.5 — sosyal medya sahiplik doğrulama (kod-bio yöntemi, Faz 4)
-  socialInstagram  String     @default("") @map("social_instagram")
-  socialTiktok     String     @default("") @map("social_tiktok")
-  socialVerifyCode String     @default("") @map("social_verify_code")
+  socialInstagram  String              @default("") @map("social_instagram")
+  socialTiktok     String              @default("") @map("social_tiktok")
+  socialVerifyCode String              @default("") @map("social_verify_code")
   // Keşif listesine (professionals) köprü — salon panelinde randevu/yorum kapsamı için
-  professionalId String?      @map("professional_id")
-  status       BusinessStatus @default(pending)
-  rejectReason String?        @map("reject_reason")
-  reviewNote   String?        @map("review_note") // admin notu (ek belge sebebi vb.)
-  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  professionalId   String?             @map("professional_id")
+  status           BusinessStatus      @default(pending)
+  rejectReason     String?             @map("reject_reason")
+  reviewNote       String?             @map("review_note") // admin notu (ek belge sebebi vb.)
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([status])
   @@index([ownerUserId])
@@ -391,25 +392,25 @@ enum SpecialistKind {
 }
 
 model Specialist {
-  id           String         @id @default(uuid()) @db.Uuid
-  userId       String         @unique @map("user_id") @db.Uuid
-  businessId   String?        @map("business_id") @db.Uuid
+  id               String         @id @default(uuid()) @db.Uuid
+  userId           String         @unique @map("user_id") @db.Uuid
+  businessId       String?        @map("business_id") @db.Uuid
   // §7 — uzmanın keşif kataloğundaki karşılığı (Professional.id); yorumlar subjectId = bu id.
-  proId        String?        @map("pro_id")
-  kind         SpecialistKind @default(independent)
-  bio          String         @default("")
-  certificates String[]       @default([])
-  featured     Boolean        @default(false)
+  proId            String?        @map("pro_id")
+  kind             SpecialistKind @default(independent)
+  bio              String         @default("")
+  certificates     String[]       @default([])
+  featured         Boolean        @default(false)
   // §uzman onboarding — resmî/kimlik & katmanlı doğrulama (salon epic paralel)
   // entityType: freelance (serbest, kayıtsız) | ip (kayıtlı bireysel girişimci ИП)
-  entityType      String  @default("freelance") @map("entity_type")
-  iin             String  @default("") // 12 hane; yalnızca kayıtlı ИП uzmanlar; public'te ASLA açık dönmez
+  entityType       String         @default("freelance") @map("entity_type")
+  iin              String         @default("") // 12 hane; yalnızca kayıtlı ИП uzmanlar; public'te ASLA açık dönmez
   // Katmanlı rozet bayrakları (kimlik = User.kycStatus; diğerleri admin/otomatik)
-  certVerified    Boolean @default(false) @map("cert_verified")
-  socialVerified  Boolean @default(false) @map("social_verified")
-  socialInstagram String  @default("") @map("social_instagram")
-  socialVerifyCode String @default("") @map("social_verify_code")
-  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  certVerified     Boolean        @default(false) @map("cert_verified")
+  socialVerified   Boolean        @default(false) @map("social_verified")
+  socialInstagram  String         @default("") @map("social_instagram")
+  socialVerifyCode String         @default("") @map("social_verify_code")
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([businessId])
   @@map("specialists")
@@ -483,28 +484,28 @@ model MarketPrice {
 // --- Çift-kör + eşikli puanlama (Build Brief §1.8) ---
 // Puanlar iki taraf da verene kadar gizli; agregat eşik aşılınca görünür.
 model Rating {
-  id         String    @id @default(uuid()) @db.Uuid
-  bookingId  String    @map("booking_id")
-  raterRole  String    @map("rater_role") // 'user' | 'specialist'
-  subjectId  String    @map("subject_id") // değerlendirilen (uzman/işletme veya kullanıcı)
-  score      Int
-  comment    String    @default("")
-  serviceTag String    @default("") @map("service_tag") // §6.D opsiyonel hizmet etiketi
+  id            String    @id @default(uuid()) @db.Uuid
+  bookingId     String    @map("booking_id")
+  raterRole     String    @map("rater_role") // 'user' | 'specialist'
+  subjectId     String    @map("subject_id") // değerlendirilen (uzman/işletme veya kullanıcı)
+  score         Int
+  comment       String    @default("")
+  serviceTag    String    @default("") @map("service_tag") // §6.D opsiyonel hizmet etiketi
   // EK Z.10 — öncesi/sonrası foto galerisi (string[] URI). Mahremiyet: yorum sahibinin
   // kimliği yine gizli (authorLabel); foto app içinde indirilemez (istemci kuralı).
-  photos     Json?
+  photos        Json?
   // Gizlilik: salon/uzman yorum sahibinin KİMLİĞİNİ göremez — yalnızca bu etiket
   // ("Doğrulanmış üye" ya da kullanıcının seçtiği ad). Rating'de userId tutulmaz.
-  authorLabel String   @default("Doğrulanmış üye") @map("author_label")
-  visible    Boolean   @default(false)
+  authorLabel   String    @default("Doğrulanmış üye") @map("author_label")
+  visible       Boolean   @default(false)
   // §6.D — açılınca kalıcı (silme yolu YOK); uzman/işletme yanıt verebilir (silemez)
-  reply      String    @default("")
-  repliedAt  DateTime? @map("replied_at") @db.Timestamptz(6)
+  reply         String    @default("")
+  repliedAt     DateTime? @map("replied_at") @db.Timestamptz(6)
   // §7.2 — negatif yorum itirazı: admin kuyruğuna düşer; yorum SÜREÇ BOYUNCA görünür kalır (otomatik gizleme YOK)
   disputed      Boolean   @default(false)
   disputeReason String?   @map("dispute_reason")
   disputedAt    DateTime? @map("disputed_at") @db.Timestamptz(6)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([subjectId, visible])
   @@index([bookingId])
@@ -720,22 +721,22 @@ model Dispute {
 // §12.8 Komisyon dönem faturası — aylık tahakkuk→tahsilat döngüsü.
 // status: pending (bekliyor) | collected (ödendi) | overdue (gecikti)
 model CommissionInvoice {
-  id               String    @id @default(uuid()) @db.Uuid
-  proId            String    @map("pro_id") // keşif listesi id'si (booking.proId)
-  proName          String    @map("pro_name")
-  ownerUserId      String?   @map("owner_user_id") @db.Uuid // salon sahibi hesabı (bildirim + kısıt)
-  periodStart      DateTime  @map("period_start") @db.Timestamptz(6)
-  periodEnd        DateTime  @map("period_end") @db.Timestamptz(6)
-  bookingsCount    Int       @default(0) @map("bookings_count")
-  grossRevenue     Decimal   @default(0) @map("gross_revenue") @db.Decimal(12, 2)
-  commissionAmount Decimal   @default(0) @map("commission_amount") @db.Decimal(12, 2)
-  dueDate          DateTime  @map("due_date") @db.Timestamptz(6)
-  status           String    @default("pending")
-  receiptUri       String?   @map("receipt_uri") // pro'nun yüklediği ödeme dekontu
-  receiptAt        DateTime? @map("receipt_at") @db.Timestamptz(6)
-  collectedAt      DateTime? @map("collected_at") @db.Timestamptz(6)
-  restrictedApplied Boolean  @default(false) @map("restricted_applied") // gecikme kısıtı uygulandı mı
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                String    @id @default(uuid()) @db.Uuid
+  proId             String    @map("pro_id") // keşif listesi id'si (booking.proId)
+  proName           String    @map("pro_name")
+  ownerUserId       String?   @map("owner_user_id") @db.Uuid // salon sahibi hesabı (bildirim + kısıt)
+  periodStart       DateTime  @map("period_start") @db.Timestamptz(6)
+  periodEnd         DateTime  @map("period_end") @db.Timestamptz(6)
+  bookingsCount     Int       @default(0) @map("bookings_count")
+  grossRevenue      Decimal   @default(0) @map("gross_revenue") @db.Decimal(12, 2)
+  commissionAmount  Decimal   @default(0) @map("commission_amount") @db.Decimal(12, 2)
+  dueDate           DateTime  @map("due_date") @db.Timestamptz(6)
+  status            String    @default("pending")
+  receiptUri        String?   @map("receipt_uri") // pro'nun yüklediği ödeme dekontu
+  receiptAt         DateTime? @map("receipt_at") @db.Timestamptz(6)
+  collectedAt       DateTime? @map("collected_at") @db.Timestamptz(6)
+  restrictedApplied Boolean   @default(false) @map("restricted_applied") // gecikme kısıtı uygulandı mı
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([proId])
   @@index([status])
@@ -790,7 +791,7 @@ model Announcement {
   // §14.5 — 3 dil: base alanlar tr (kaynak); i18n = { kk: {...}, ru: {...} } üzerine yazar
   i18n           Json?
   segment        String   @default("all")
-  city           String?  // segment=city ise hedef şehir
+  city           String? // segment=city ise hedef şehir
   recipientCount Int      @default(0) @map("recipient_count")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 

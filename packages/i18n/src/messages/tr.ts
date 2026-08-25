@@ -785,6 +785,10 @@ export const tr = {
   'booking.schedule.time': 'Saat',
   'booking.schedule.datetime': 'Tarih ve saat',
   'booking.schedule.confirm': 'Randevuyu onayla',
+  'notif.slot_conflict': 'Saat çakıştı ⚠️',
+  'notif.slot_conflict_b':
+    '{slot} için seçtiğin saat başka bir randevuyla çakıştı — yeni saat seç.',
+  'booking.schedule.day_closed': 'Bu gün uzman izinli — başka bir gün seç',
   'booking.schedule.slot_busy': 'Dolu',
   'booking.schedule.pick_slot': 'Önce gün ve saat seç',
   'booking.schedule.busy_title': 'Seçilen günde dolu saatler',
@@ -1584,6 +1588,7 @@ export const tr = {
   'booking.status.awaiting': 'Onay bekliyor',
   'booking.status.alternative': 'Alternatif önerildi',
   'booking.status.no_show': 'Gelmedi',
+  'booking.status.expired': 'Süresi doldu',
   'booking.status.waitlist': 'Bekleme listesi',
   'booking.status.deposit_pending': 'Depozito bekleniyor',
   'booking.status.deposit_submitted': 'Dekont incelemede',

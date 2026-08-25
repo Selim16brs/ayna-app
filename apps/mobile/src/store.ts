@@ -4,7 +4,14 @@ import { setApiToken } from './api';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { MessageKey } from '@ayna/i18n';
-import { api, type AppConfig, type AuthSession, type AuthUser, type LoyaltyTier } from './api';
+import {
+  api,
+  ApiError,
+  type AppConfig,
+  type AuthSession,
+  type AuthUser,
+  type LoyaltyTier,
+} from './api';
 import { formatSlotTr } from './datetime';
 import { getCurrentLocale } from './locale';
 import {
@@ -1721,8 +1728,27 @@ export const useStore = create<State>()(
           try {
             await api.createBooking(b, token);
             set((s) => ({ pendingBookingSync: s.pendingBookingSync.filter((x) => x !== id) }));
-          } catch {
-            // ağ yok/sunucu hatası → sıradaki denemede tekrar
+          } catch (err) {
+            // Faz 1/3 — SLOT_CONFLICT kalıcı reddir: sonsuz tekrar yerine kuyruktan düşür,
+            // kaydı cancelled işaretle ve kullanıcıya bildir (yeni saat seçmesi gerekir).
+            if (err instanceof ApiError && err.code === 'SLOT_CONFLICT') {
+              set((s) => ({
+                pendingBookingSync: s.pendingBookingSync.filter((x) => x !== id),
+                bookings: s.bookings.map((x) =>
+                  x.id === id ? { ...x, status: 'cancelled' as const } : x,
+                ),
+              }));
+              get().pushNotification({
+                type: 'booking',
+                titleKey: 'notif.slot_conflict',
+                bodyKey: 'notif.slot_conflict_b',
+                params: { slot: formatSlotTr(b.startMs) },
+                dateLabel: 'Az önce',
+                icon: 'alert-circle-outline',
+                route: `/booking/${id}`,
+              });
+            }
+            // diğer hatalar (ağ vb.) → sıradaki denemede tekrar
           }
         }
       },

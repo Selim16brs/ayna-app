@@ -57,6 +57,7 @@ const makeStatus = (
   },
   no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
   waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
+  expired: { key: 'booking.status.expired', bg: colors.surfaceMuted, fg: colors.inkSoft },
 });
 
 export default function BookingsScreen() {
@@ -72,7 +73,7 @@ export default function BookingsScreen() {
   const now = Date.now();
 
   const isUpcoming = (a: Appointment) =>
-    a.startMs >= now && !['completed', 'cancelled', 'no_show'].includes(a.status);
+    a.startMs >= now && !['completed', 'cancelled', 'no_show', 'expired'].includes(a.status);
   const upcoming = bookings.filter(isUpcoming).sort((a, b) => a.startMs - b.startMs);
   const past = bookings.filter((a) => !isUpcoming(a)).sort((a, b) => b.startMs - a.startMs);
   const pendingReview = bookings.filter((a) => a.status === 'completed' && !a.reviewed);
