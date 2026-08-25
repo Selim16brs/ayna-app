@@ -1494,6 +1494,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.status.awaiting': 'Ожидает подтверждения',
   'booking.status.alternative': 'Предложена альтернатива',
   'booking.status.no_show': 'Не пришёл',
+  'booking.status.completed_pending': 'Ожидает подтверждения',
+  'booking.confirm_completion': 'Подтвердить услугу',
+  'booking.confirm_completion_hint':
+    'Мастер отметил услугу выполненной. Подтвердите — запись зафиксируется; при проблеме откройте спор.',
   'booking.status.expired': 'Срок истёк',
   'booking.status.waitlist': 'Лист ожидания',
   'booking.status.deposit_pending': 'Ожидается депозит',

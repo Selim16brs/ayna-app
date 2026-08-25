@@ -1509,6 +1509,10 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.status.awaiting': 'Растауды күтуде',
   'booking.status.alternative': 'Балама ұсынылды',
   'booking.status.no_show': 'Келмеді',
+  'booking.status.completed_pending': 'Растау күтілуде',
+  'booking.confirm_completion': 'Қызметті растау',
+  'booking.confirm_completion_hint':
+    'Маман аяқталды деп белгіледі. Растасаңыз жазба бекітіледі; мәселе болса шағым жасаңыз.',
   'booking.status.expired': 'Мерзімі өтті',
   'booking.status.waitlist': 'Кезек тізімі',
   'booking.status.deposit_pending': 'Депозит күтілуде',

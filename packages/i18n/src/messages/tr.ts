@@ -1588,6 +1588,10 @@ export const tr = {
   'booking.status.awaiting': 'Onay bekliyor',
   'booking.status.alternative': 'Alternatif önerildi',
   'booking.status.no_show': 'Gelmedi',
+  'booking.status.completed_pending': 'Teyit bekliyor',
+  'booking.confirm_completion': 'Hizmeti Onayla',
+  'booking.confirm_completion_hint':
+    'Uzman tamamlandı olarak işaretledi. Onaylarsan kayıt kesinleşir; sorun varsa itiraz et.',
   'booking.status.expired': 'Süresi doldu',
   'booking.status.waitlist': 'Bekleme listesi',
   'booking.status.deposit_pending': 'Depozito bekleniyor',

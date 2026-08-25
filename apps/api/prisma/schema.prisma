@@ -209,6 +209,7 @@ enum BookingStatus {
   disputed // taraflar itiraz açtı (admin kuyruğu)
   reassigned_pending // uzman ayrıldı → yeni uzman atandı, kullanıcı onayı bekleniyor
   expired // Faz 1 — yanıt/dekont penceresi sunucu işiyle doldu (scheduler)
+  completed_pending // Faz 2 — uzman 'tamamlandı' dedi; müşteri teyidi/itiraz penceresi açık
 }
 
 // Randevu kaydı. id istemci tarafından üretilir (mobil store ile tutarlı).
@@ -255,6 +256,10 @@ model Booking {
   // §4.1.3 — uzman yanıt penceresi SUNUCUDA üretilir (6 saat); yanıt anı metriği
   responseDeadline  DateTime?     @map("response_deadline") @db.Timestamptz(6)
   respondedAt       DateTime?     @map("responded_at") @db.Timestamptz(6)
+  // Faz 2 — finans güvenliği
+  receiptHash       String?       @unique @map("receipt_hash") // dekont içeriği sha256 — aynı dekont iki kez kullanılamaz
+  refundReceiptHash String?       @unique @map("refund_receipt_hash")
+  finalizeDeadline  DateTime?     @map("finalize_deadline") @db.Timestamptz(6) // tamamlandı/no-show teyit penceresi sonu
   reviewed          Boolean       @default(false)
   createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
