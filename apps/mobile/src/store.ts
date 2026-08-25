@@ -43,6 +43,7 @@ import {
   COMMISSION_PCT_STANDARD,
   COMMISSION_PCT_PLATINUM,
   reengageMessage,
+  SEED_APPOINTMENTS,
   type UpcomingEvent,
   type UserAddress,
 } from './data';
@@ -329,6 +330,11 @@ interface State {
   replyToReview: (proId: string, reviewId: string, reply: string) => void;
   disputeReview: (proId: string, reviewId: string) => void;
   hydrateBookings: () => Promise<void>;
+  // VERİ KAYBI YASAĞI — sunucuya yazılamayan randevular kuyrukta bekler, bağlantı gelince eşitlenir
+  pendingBookingSync: string[];
+  syncBooking: (booking: Appointment) => void;
+  flushBookingSync: () => Promise<void>;
+  queueOfflineBooking: (booking: Appointment) => void;
 
   // gizlilik: değerlendirmede kimliği gizle (salon/uzman yorum sahibini göremez)
   reviewAnonymous: boolean;
@@ -418,6 +424,7 @@ const SEEDED_PERSONAL_RESET: Partial<State> = {
 // Yeni kullanıcı-alanı eklerken BURAYA da ekle (store.reset.test.ts bekçidir).
 export const userScopedReset = (): Partial<State> => ({
   ...SEEDED_PERSONAL_RESET,
+  pendingBookingSync: [], // önceki üyenin eşitleme kuyruğu yeni üyeye taşınmaz
   moments: [],
   closedDays: [],
   promotions: [],
@@ -786,8 +793,8 @@ export const useStore = create<State>()(
             : {}),
         };
         set((s) => ({ bookings: [booking, ...s.bookings] }));
-        // Backend'e yaz (best-effort; offline'da sessizce geçilir). Token → sahibine bağlanır.
-        void api.createBooking(booking, get().token ?? undefined).catch(() => undefined);
+        // Backend'e yaz — başarısızsa kuyrukta kalır, flushBookingSync yeniden dener (veri kaybı yasağı)
+        get().syncBooking(booking);
         get().pushNotification({
           type: 'booking',
           titleKey: 'notif.booking_sent',
@@ -824,7 +831,7 @@ export const useStore = create<State>()(
           bySalon: true, // §10 — salon panelinde yalnız salonun aldığı randevular görünür
         };
         set((s) => ({ bookings: [booking, ...s.bookings] }));
-        void api.createBooking(booking, get().token ?? undefined).catch(() => undefined);
+        get().syncBooking(booking);
         get().pushNotification({
           type: 'booking',
           audience: 'seller',
@@ -1679,10 +1686,56 @@ export const useStore = create<State>()(
         }));
       },
 
+      pendingBookingSync: [],
+
+      // Sunucuya yazımı garantile: başarısızsa id kuyrukta kalır, flushBookingSync yeniden dener.
+      // createBooking sunucuda id ile upsert (idempotent) — tekrar gönderim çift kayıt yaratmaz.
+      syncBooking: (booking) => {
+        set((s) => ({
+          pendingBookingSync: s.pendingBookingSync.includes(booking.id)
+            ? s.pendingBookingSync
+            : [...s.pendingBookingSync, booking.id],
+        }));
+        void api
+          .createBooking(booking, get().token ?? undefined)
+          .then(() =>
+            set((s) => ({
+              pendingBookingSync: s.pendingBookingSync.filter((x) => x !== booking.id),
+            })),
+          )
+          .catch(() => undefined); // kuyrukta kalır — açılışta/hydrate'te yeniden denenir
+      },
+
+      flushBookingSync: async () => {
+        const { pendingBookingSync, token } = get();
+        if (!token || pendingBookingSync.length === 0) return;
+        for (const id of [...pendingBookingSync]) {
+          const b = get().bookings.find((x) => x.id === id);
+          if (!b) {
+            set((s) => ({ pendingBookingSync: s.pendingBookingSync.filter((x) => x !== id) }));
+            continue;
+          }
+          try {
+            await api.createBooking(b, token);
+            set((s) => ({ pendingBookingSync: s.pendingBookingSync.filter((x) => x !== id) }));
+          } catch {
+            // ağ yok/sunucu hatası → sıradaki denemede tekrar
+          }
+        }
+      },
+
+      // Offline randevu: ÖNCE yerel kayıt (kalıcı), sonra sunucu eşitlemesi — ekleme asla kaybolmaz
+      queueOfflineBooking: (booking) => {
+        set((s) => ({ bookings: [booking, ...s.bookings] }));
+        get().syncBooking(booking);
+      },
+
       hydrateBookings: async () => {
         const token = get().token;
         // Giriş YOK → demo tohum (SEED_APPOINTMENTS) korunur.
         if (!token) return;
+        // Önce bekleyen yazımlar sunucuya gitsin ki tazeleme onları "sunucudan" geri getirsin
+        await get().flushBookingSync();
         try {
           const role = get().currentUser?.role;
           const isProvider = role === 'professional' || role === 'salon';
@@ -2238,6 +2291,10 @@ export const useStore = create<State>()(
       partialize: (s) => ({
         token: s.token,
         currentUser: s.currentUser,
+        // VERİ KAYBI YASAĞI — randevular + bekleyen sunucu yazımları cihazda kalıcıdır;
+        // kapat-aç sonrası sunucuya ulaşmamış talep kaybolmaz, kuyruktan eşitlenir.
+        bookings: s.bookings,
+        pendingBookingSync: s.pendingBookingSync,
         sellerTrialStart: s.sellerTrialStart, // §11 — 3 günlük ücretsiz deneme sayacı korunur
         // PERF: avatar/cutout PERSIST EDİLMEZ — MB'lık data-URL'ler her state değişiminde
         // diske yazılıp uygulamayı yavaşlatıyordu. Açılışta HESAPTAN geri yüklenir (tek kaynak).
@@ -2261,7 +2318,16 @@ export const useStore = create<State>()(
 // Oturum varsa bunlar sıfırlanır; gerçek değerleri _layout'taki hydrate* çağrıları doldurur.
 useStore.persist.onFinishHydration((state) => {
   setApiToken(state.token);
-  if (state.token) useStore.setState(SEEDED_PERSONAL_RESET);
+  if (state.token) {
+    // Tohum temizliği KALICI randevulara dokunmaz: yalnız demo id'leri ayıklanır (veri kaybı yasağı).
+    const seedIds = new Set(SEED_APPOINTMENTS.map((b) => b.id));
+    useStore.setState({
+      ...SEEDED_PERSONAL_RESET,
+      bookings: state.bookings.filter((b) => !seedIds.has(b.id)),
+    });
+    // Açılışta bekleyen sunucu yazımlarını eşitle (önceki oturumda ağ yoksa burada tamamlanır)
+    void useStore.getState().flushBookingSync();
+  }
   // Medya önbelleği: persist DIŞI tutulan foto/portre açılışta cihaz önbelleğinden anında gelir;
   // refreshMembership ardından hesapla eşitler (hesap boşsa self-heal yükler).
   const uid = state.currentUser?.id;

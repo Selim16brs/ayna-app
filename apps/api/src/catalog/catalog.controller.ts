@@ -32,6 +32,17 @@ export class CatalogController {
     return this.catalog.professional(id);
   }
 
+  // §4.2 — randevu alma ekranı: uzmanın DOLU aralıkları (yalnız zaman; müşteri bilgisi ASLA dönmez).
+  // Müşteri dolu saati seçemez → çifte iş/karşılıklı öneri turu ortadan kalkar.
+  @Get('professionals/:id/busy')
+  professionalBusy(
+    @Param('id') id: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.catalog.professionalBusy(id, Number(from) || undefined, Number(to) || undefined);
+  }
+
   @Get('quotes')
   quotes() {
     return this.catalog.quotes();

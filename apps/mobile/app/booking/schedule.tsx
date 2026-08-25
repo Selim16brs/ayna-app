@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { BookingSource } from '../../src/data';
-import { formatSlotTr } from '../../src/datetime';
+import { almatyDayStart, formatSlotTr, slotTime } from '../../src/datetime';
 import { api, type ApiOffer } from '../../src/api';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
@@ -60,6 +60,27 @@ export default function ScheduleScreen() {
   // Seçili hizmet → süre
   const chosenService = pro.services.find((sv) => sv.name === params.service);
   const durationMin = chosenService?.durationMin ?? pro.services[0]?.durationMin ?? 60;
+
+  // §4.2 — uzmanın DOLU aralıkları (önümüzdeki 14 gün): müşteri dolu saati seçemesin,
+  // karşılıklı öneri turu (çifte iş) olmasın. Sunucu yalnız zaman aralığı döner (gizlilik).
+  const [busyRanges, setBusyRanges] = useState<{ startMs: number; endMs: number }[]>([]);
+  useEffect(() => {
+    if (!pro.id) return;
+    let alive = true;
+    void api
+      .proBusy(pro.id, Date.now(), Date.now() + 14 * 86_400_000)
+      .then((rows) => alive && setBusyRanges(Array.isArray(rows) ? rows : []))
+      .catch(() => undefined); // erişilemezse gösterge yok — akış engellenmez
+    return () => {
+      alive = false;
+    };
+  }, [pro.id]);
+  const chosenStartMs = when.getTime();
+  const chosenEndMs = chosenStartMs + durationMin * 60_000;
+  const slotBusy = busyRanges.some((b) => chosenStartMs < b.endMs && chosenEndMs > b.startMs);
+  const dayBusy = busyRanges.filter(
+    (b) => almatyDayStart(b.startMs, 0) === almatyDayStart(chosenStartMs, 0),
+  );
 
   // Kampanya gün/saat penceresi (Almatı UTC+5) — sunucu ayrıca doğrular
   function inOfferWindow(ms: number): boolean {
@@ -225,6 +246,28 @@ export default function ScheduleScreen() {
           />
         </View>
 
+        {/* §4.2 — seçilen günün doluluk haritası: dolu aralıklar kırmızı çip, kalan saatler boş */}
+        {dayBusy.length > 0 ? (
+          <View style={[styles.busyCard, shadow.soft]}>
+            <Text variant="caption" tone="muted">
+              {t('booking.schedule.busy_title')}
+            </Text>
+            <View style={styles.busyChips}>
+              {dayBusy.map((b) => (
+                <View key={b.startMs} style={styles.busyChip}>
+                  <Text variant="caption" style={styles.busyChipText}>
+                    {slotTime(b.startMs)}–{slotTime(b.endMs)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : (
+          <Text variant="caption" tone="muted" style={styles.busyFreeHint}>
+            {t('booking.schedule.busy_none')}
+          </Text>
+        )}
+
         {/* §B5 — kurallar kartı: kapora/iptal/no-show her zaman görünür */}
         <RulesCard />
       </ScrollView>
@@ -235,10 +278,15 @@ export default function ScheduleScreen() {
             {t('offers.window_invalid')}
           </Text>
         ) : null}
+        {slotBusy ? (
+          <Text variant="caption" style={styles.windowWarn}>
+            {t('booking.schedule.busy_conflict')}
+          </Text>
+        ) : null}
         <Button
           label={t('booking.schedule.confirm')}
-          variant={offerWindowOk ? 'primary' : 'secondary'}
-          disabled={!offerWindowOk}
+          variant={offerWindowOk && !slotBusy ? 'primary' : 'secondary'}
+          disabled={!offerWindowOk || slotBusy}
           onPress={confirm}
         />
         {/* §A1 — dolu uzman için bekleme listesi */}
@@ -275,6 +323,22 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.bgSunken,
     },
     proBody: { flex: 1, gap: 3 },
+    busyCard: {
+      marginTop: space(1.5),
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1),
+    },
+    busyChips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    busyChip: {
+      backgroundColor: colors.dangerSoft,
+      borderRadius: radius.md,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.5),
+    },
+    busyChipText: { color: colors.danger },
+    busyFreeHint: { marginTop: space(1.5), marginLeft: space(0.5) },
     label: { marginTop: space(3), marginBottom: space(1.5) },
     staffRow: { gap: space(1.5), paddingRight: space(3), paddingVertical: space(0.5) },
     staffCard: {

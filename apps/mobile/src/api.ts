@@ -428,6 +428,11 @@ export const api = {
   ads: () => get<AdBanner[]>(`/ads${localeQuery()}`),
   // Backend artık sector/kind/district/experienceYears döndürür → mobil Professional ile uyumlu
   professionals: () => get<Professional[]>('/professionals'),
+  // §4.2 — uzmanın dolu aralıkları (yalnız zaman; müşteri bilgisi dönmez)
+  proBusy: (id: string, fromMs: number, toMs: number) =>
+    get<{ startMs: number; endMs: number }[]>(
+      `/professionals/${id}/busy?from=${fromMs}&to=${toMs}`,
+    ),
   professional: (id: string) => get<ProfessionalDetail>(`/professionals/${id}`),
   quotes: () => get<ApiQuote[]>('/quotes'),
 

@@ -733,6 +733,10 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.schedule.time': 'Уақыт',
   'booking.schedule.datetime': 'Күні мен уақыты',
   'booking.schedule.confirm': 'Жазылуды растау',
+  'booking.schedule.busy_title': 'Таңдалған күнгі бос емес уақыттар',
+  'booking.schedule.busy_none': 'Таңдалған күні барлық уақыт бос көрінеді',
+  'booking.schedule.busy_conflict':
+    'Бұл уақыт бос емес — басқа уақыт таңдаңыз немесе күту тізіміне жазылыңыз',
   'booking.confirmed.title': 'Жазылуың құрылды',
   'booking.confirmed.subtitle': 'Сатушы растады — мәліметтер төменде',
   'booking.field.service': 'Қызмет',
