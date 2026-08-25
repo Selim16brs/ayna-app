@@ -212,18 +212,19 @@ export class AuthService {
       },
     });
 
-    // Mock SMS — gerçek sağlayıcı eklenene kadar konsola yazılır (PII log'lanmaz: telefon yok)
     await this.audit.record({ action: 'otp.request', resourceType: 'otp' });
-    if (this.env.SMS_PROVIDER === 'mock') {
+    // GÜVENLİK (P0): OTP kodu yanıtta/logda YALNIZ açık bayrakla döner (varsayılan KAPALI).
+    // Eski davranış (mock modda herkese devCode) üretimde HESAP ELE GEÇİRME açığıydı:
+    // herhangi bir telefonun sıfırlama kodu response'tan okunabiliyordu.
+    const debugCodes = this.env.SMS_PROVIDER === 'mock' && this.env.OTP_DEBUG_CODES;
+    if (debugCodes) {
       // eslint-disable-next-line no-console
       console.log(`[mock-sms] OTP kodu: ${code}`);
     }
-
-    // devCode YALNIZCA mock sağlayıcıda döner; üretimde asla istemciye inmez
     return {
       sent: true,
       expiresInSec: OTP_TTL_SEC,
-      ...(this.env.SMS_PROVIDER === 'mock' ? { devCode: code } : {}),
+      ...(debugCodes ? { devCode: code } : {}),
     };
   }
 
