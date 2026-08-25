@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
-import { useLocale } from '../../src/locale';
+import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -17,6 +17,31 @@ export default function SalonProfileHub() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const logout = useStore((s) => s.logout);
+
+  // Faz 3 — VERİ KAYBI YASAĞI: çıkış öncesi eşitlenmemiş randevu kontrolü.
+  // Kuyruk doluysa kullanıcıya 'önce eşitle / yine de çık' seçenekleri sunulur.
+  const pendingSyncCount = useStore((s) => s.pendingBookingSync.length);
+  const flushBookingSync = useStore((s) => s.flushBookingSync);
+  const requestLogout = (doLogout: () => void) => {
+    if (pendingSyncCount === 0) return doLogout();
+    Alert.alert(
+      t('logout.pending_t'),
+      fillParams(t('logout.pending_b'), { n: String(pendingSyncCount) }),
+      [
+        {
+          text: t('logout.pending_sync'),
+          onPress: () => {
+            void flushBookingSync().then(() => {
+              if (useStore.getState().pendingBookingSync.length === 0) doLogout();
+              else Alert.alert(t('logout.pending_fail'));
+            });
+          },
+        },
+        { text: t('logout.pending_force'), style: 'destructive', onPress: doLogout },
+        { text: t('common.cancel'), style: 'cancel' },
+      ],
+    );
+  };
   const salonName = useStore((s) => s.currentUser?.name) ?? 'Salon';
   const avatarUri = useStore((s) => s.avatarUri);
 
@@ -102,10 +127,11 @@ export default function SalonProfileHub() {
                 {
                   text: t('profile.menu.logout'),
                   style: 'destructive',
-                  onPress: () => {
-                    logout();
-                    router.replace('/');
-                  },
+                  onPress: () =>
+                    requestLogout(() => {
+                      logout();
+                      router.replace('/');
+                    }),
                 },
               ])
             }

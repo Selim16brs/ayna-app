@@ -16,7 +16,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "kz.ayna.app",
-      "buildNumber": "3"
+      "buildNumber": "3",
+      "entitlements": {
+        "com.apple.developer.default-data-protection": "NSFileProtectionCompleteUntilFirstUserAuthentication"
+      }
     },
     "android": {
       "package": "kz.ayna.app",

@@ -2,9 +2,9 @@ import { useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocale } from '../../src/locale';
+import { fillParams, useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -71,6 +71,31 @@ export default function ProfileScreen() {
     }, [refreshMembership]),
   );
   const logout = useStore((s) => s.logout);
+
+  // Faz 3 — VERİ KAYBI YASAĞI: çıkış öncesi eşitlenmemiş randevu kontrolü.
+  // Kuyruk doluysa kullanıcıya 'önce eşitle / yine de çık' seçenekleri sunulur.
+  const pendingSyncCount = useStore((s) => s.pendingBookingSync.length);
+  const flushBookingSync = useStore((s) => s.flushBookingSync);
+  const requestLogout = (doLogout: () => void) => {
+    if (pendingSyncCount === 0) return doLogout();
+    Alert.alert(
+      t('logout.pending_t'),
+      fillParams(t('logout.pending_b'), { n: String(pendingSyncCount) }),
+      [
+        {
+          text: t('logout.pending_sync'),
+          onPress: () => {
+            void flushBookingSync().then(() => {
+              if (useStore.getState().pendingBookingSync.length === 0) doLogout();
+              else Alert.alert(t('logout.pending_fail'));
+            });
+          },
+        },
+        { text: t('logout.pending_force'), style: 'destructive', onPress: doLogout },
+        { text: t('common.cancel'), style: 'cancel' },
+      ],
+    );
+  };
   const role = useStore((s) => s.currentUser?.role);
   const isSeller = role === 'salon' || role === 'professional';
   const menu = MENU.filter((m) => (!m.sellerOnly || isSeller) && (!m.customerOnly || !isSeller));
@@ -101,8 +126,10 @@ export default function ProfileScreen() {
     else if (key === 'profile.menu.help') router.push('/profile/help');
     else if (key === 'profile.menu.language') router.push('/language');
     else if (key === 'profile.menu.logout') {
-      logout();
-      router.replace('/');
+      requestLogout(() => {
+        logout();
+        router.replace('/');
+      });
     }
   };
 

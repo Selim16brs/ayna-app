@@ -75,6 +75,7 @@ export default function BookingDetailScreen() {
   const confirmRefund = useStore((s) => s.confirmRefund);
   const disputeBooking = useStore((s) => s.disputeBooking);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
+  const dropLocalBooking = useStore((s) => s.dropLocalBooking);
   const acceptReassignment = useStore((s) => s.acceptReassignment);
   const rejectReassignment = useStore((s) => s.rejectReassignment);
   const role = useStore((s) => s.currentUser?.role);
@@ -435,6 +436,44 @@ export default function BookingDetailScreen() {
         ) : null}
 
         {/* §4.3 — Depozito adımı (kullanıcı: ön onaydan sonra dekont yükler) */}
+        {/* Faz 3 — offline kayıt eşitlenirken çakıştı: yeni saat seç ya da kaydı sil */}
+        {booking.status === 'sync_conflict' ? (
+          <View style={[styles.depositCard, shadow.card]}>
+            <View style={styles.depositHead}>
+              <Ionicons name="alert-circle-outline" size={18} color={colors.danger} />
+              <Text variant="bodyStrong" tone="ink">
+                {t('booking.status.sync_conflict')}
+              </Text>
+            </View>
+            <Text variant="caption" tone="muted" style={styles.depositDesc}>
+              {t('booking.sync_conflict_hint')}
+            </Text>
+            <Pressable
+              style={styles.primaryBtn}
+              onPress={() => {
+                dropLocalBooking(booking.id);
+                if (booking.proId) router.replace(`/professional/${booking.proId}`);
+                else router.back();
+              }}
+            >
+              <Text variant="bodyStrong" tone="onAccent">
+                {t('booking.sync_conflict_pick')}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={styles.ghostBtn}
+              onPress={() => {
+                dropLocalBooking(booking.id);
+                router.back();
+              }}
+            >
+              <Text variant="caption" tone="inkSoft">
+                {t('booking.sync_conflict_drop')}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         {/* Faz 2 — uzman 'tamamlandı' dedi: müşteri onaylar (kesinleşir) ya da itiraz eder */}
         {!isProvider && booking.status === 'completed_pending' ? (
           <View style={[styles.depositCard, shadow.card]}>
