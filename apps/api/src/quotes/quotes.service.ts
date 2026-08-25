@@ -205,38 +205,84 @@ export class QuotesService {
     });
 
     // §5.2 — bildirim hedeflemesi: aynı şehirdeki uzman/salon hesaplarına push (fire-and-forget).
-    void this.notifyCityExperts(user.city ?? '', userId, row.id, category.code);
+    void this.notifyNextWave(row.id).catch(() => undefined); // Faz 5 — ilk dalga (kademeli)
 
     return this.mapRequest({ ...row, selectedQuoteId: null }, [], new Map());
   }
 
-  private async notifyCityExperts(
-    city: string,
-    ownerId: string,
-    requestId: string,
-    categoryCode: string,
-  ) {
-    try {
-      const experts = await this.prisma.user.findMany({
-        where: {
-          role: { in: ['professional', 'salon'] },
-          id: { not: ownerId },
-          ...(city ? { city } : {}),
-        },
-        select: { id: true },
-      });
-      await Promise.all(
-        experts.map((e) =>
-          this.push.sendToUser(e.id, {
+  // Faz 5 (§19) — KADEMELİ dalga: tek talep şehirdeki HERKESE aynı anda gönderilmez.
+  // Dalga boyu Setting marketplace.wave_size (vars. 5); sıralama: kimliği doğrulanmış
+  // (KYC) uzmanlar önce, sonra kıdem. Engellenen taraflar zaten liste dışı (openForExpert).
+  // Eşleştirme kararı açıklanabilir: yalnız şehir + rol + KYC + kayıt sırası (hassas nitelik YOK).
+  async notifyNextWave(requestId: string): Promise<number> {
+    const row = await this.prisma.quoteRequest.findUnique({ where: { id: requestId } });
+    if (!row || row.status !== 'open') return 0;
+    const sizeSetting = await this.prisma.setting.findUnique({
+      where: { key: 'marketplace.wave_size' },
+    });
+    const size = sizeSetting?.intValue ?? 5;
+    const cat = await this.prisma.serviceCategory.findUnique({ where: { id: row.categoryId } });
+    const experts = await this.prisma.user.findMany({
+      where: {
+        role: { in: ['professional', 'salon'] },
+        status: 'active',
+        ...(row.userId ? { id: { not: row.userId } } : {}),
+        ...(row.city ? { city: row.city } : {}),
+      },
+      select: { id: true, kycStatus: true, createdAt: true },
+    });
+    const ordered = [...experts].sort((a, b) => {
+      const ka = a.kycStatus === 'approved' ? 0 : 1;
+      const kb = b.kycStatus === 'approved' ? 0 : 1;
+      return ka - kb || a.createdAt.getTime() - b.createdAt.getTime();
+    });
+    const wave = ordered.slice(row.notifyWave * size, (row.notifyWave + 1) * size);
+    if (wave.length === 0) return 0;
+    await Promise.all(
+      wave.map((e) =>
+        this.push
+          .sendToUser(e.id, {
             title: 'Yeni talep var ✨',
-            body: `Şehrinde yeni bir ${categoryCode} talebi açıldı — teklifini gönder.`,
+            body: `Şehrinde yeni bir ${cat?.code ?? 'hizmet'} talebi açıldı — teklifini gönder.`,
             data: { route: '/seller/requests', requestId },
-          }),
-        ),
-      );
-    } catch {
-      // bildirim akışı talebi asla bozmaz
+          })
+          .catch(() => undefined),
+      ),
+    );
+    await this.prisma.quoteRequest.update({
+      where: { id: requestId },
+      data: { notifyWave: row.notifyWave + 1, waveAt: new Date() },
+    });
+    return wave.length;
+  }
+
+  // Faz 5 — scheduler kancası: 30 dk'da yeterli teklif yoksa havuzu kademeli genişlet
+  async expandStaleWaves(): Promise<number> {
+    const cutoff = new Date(Date.now() - 30 * 60 * 1000);
+    const stale = await this.prisma.quoteRequest.findMany({
+      where: {
+        status: 'open',
+        notifyWave: { gt: 0, lt: 4 }, // en fazla 4 dalga — sonrası çekme (pull) ile
+        waveAt: { lt: cutoff },
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+      },
+      select: { id: true },
+      take: 50,
+    });
+    let sent = 0;
+    for (const r of stale) {
+      const cnt = await this.prisma.quote.count({ where: { requestId: r.id } });
+      if (cnt >= 3) {
+        // yeterli teklif geldi — dalga durdurulur (waveAt güncellenir ki tekrar bakılmasın)
+        await this.prisma.quoteRequest.update({
+          where: { id: r.id },
+          data: { notifyWave: 4 },
+        });
+        continue;
+      }
+      sent += await this.notifyNextWave(r.id);
     }
+    return sent;
   }
 
   // ── Açık talepler (uzman/salon havuzu — §9.3 şehir filtresi) ──────────
