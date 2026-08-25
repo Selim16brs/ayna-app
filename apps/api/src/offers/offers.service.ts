@@ -179,7 +179,17 @@ export class OffersService {
       take: 100,
     });
     const open = rows.filter((r) => r.slotQuota == null || r.usedCount < r.slotQuota);
-    return localizeRows(open, locale, ['title', 'description']).map((r) => mapOffer(r, false));
+    // Sahibi silinmiş/askıdaki hesabın kampanyası keşifte görünmez (katalog filtresiyle tutarlı)
+    const ownerIds = [...new Set(open.map((r) => r.ownerUserId))];
+    const owners = ownerIds.length
+      ? await this.prisma.user.findMany({
+          where: { id: { in: ownerIds } },
+          select: { id: true, status: true },
+        })
+      : [];
+    const hidden = new Set(owners.filter((u) => u.status !== 'active').map((u) => u.id));
+    const visible = open.filter((r) => !hidden.has(r.ownerUserId));
+    return localizeRows(visible, locale, ['title', 'description']).map((r) => mapOffer(r, false));
   }
 
   async listMine(userId: string) {

@@ -112,9 +112,13 @@ export class CatalogService {
     const users = owners.length
       ? await this.prisma.user.findMany({
           where: { id: { in: owners } },
-          select: { id: true, membershipTier: true, membershipUntil: true },
+          select: { id: true, status: true, membershipTier: true, membershipUntil: true },
         })
       : [];
+    // Sahibi silinmiş/askıdaki hesaplar keşifte görünmez (hesap kapansa da katalog kaydı kalabiliyor).
+    const hiddenOwners = new Set(
+      users.filter((u) => u.status === 'deleted' || u.status === 'suspended').map((u) => u.id),
+    );
     const now = Date.now();
     const premiumUsers = new Set(
       users
@@ -125,24 +129,48 @@ export class CatalogService {
         )
         .map((u) => u.id),
     );
-    return rows.map((r) => {
-      const services = safeParseServices(r.servicesJson);
-      const prices = services.map((x) => x.price).filter((p) => p > 0);
-      const owner = ownerByPro.get(r.id);
-      return {
-        ...mapPro(r),
-        lat: r.lat ?? undefined,
-        lng: r.lng ?? undefined,
-        priceTo: prices.length ? Math.max(...prices) : Number(r.priceFrom),
-        isPremium: owner ? premiumUsers.has(owner) : false,
-      };
-    });
+    return rows
+      .filter((r) => {
+        const owner = ownerByPro.get(r.id);
+        return !owner || !hiddenOwners.has(owner);
+      })
+      .map((r) => {
+        const services = safeParseServices(r.servicesJson);
+        const prices = services.map((x) => x.price).filter((p) => p > 0);
+        const owner = ownerByPro.get(r.id);
+        return {
+          ...mapPro(r),
+          lat: r.lat ?? undefined,
+          lng: r.lng ?? undefined,
+          priceTo: prices.length ? Math.max(...prices) : Number(r.priceFrom),
+          isPremium: owner ? premiumUsers.has(owner) : false,
+        };
+      });
   }
 
   async professional(id: string) {
     const p = await this.prisma.professional.findUnique({ where: { id } });
     if (!p) {
       throw new NotFoundException({ code: 'PRO_NOT_FOUND', message: 'İşletme bulunamadı' });
+    }
+    // Sahibi silinmiş/askıdaki hesabın public profili açılmaz (liste filtresiyle tutarlı; derin link koruması)
+    const ownerLink =
+      (await this.prisma.specialist.findFirst({ where: { proId: id }, select: { userId: true } }))
+        ?.userId ??
+      (
+        await this.prisma.business.findFirst({
+          where: { professionalId: id },
+          select: { ownerUserId: true },
+        })
+      )?.ownerUserId;
+    if (ownerLink) {
+      const ownerStatus = await this.prisma.user.findUnique({
+        where: { id: ownerLink },
+        select: { status: true },
+      });
+      if (ownerStatus && (ownerStatus.status === 'deleted' || ownerStatus.status === 'suspended')) {
+        throw new NotFoundException({ code: 'PRO_NOT_FOUND', message: 'İşletme bulunamadı' });
+      }
     }
     // §9.5 — uzman kendi hizmet/fiyat listesini girdiyse PUBLIC profil ONU gösterir;
     // sektör şablonu yalnız liste boşken (yeni hesap) menü iskeleti olarak kalır.

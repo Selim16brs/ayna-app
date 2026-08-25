@@ -102,6 +102,7 @@ export default function AgendaScreen() {
   const closedDays = useStore((s) => s.closedDays);
   const toggleClosedDay = useStore((s) => s.toggleClosedDay);
   const isSalon = useStore((s) => s.currentUser?.role === 'salon');
+  const token = useStore((s) => s.token);
   const [items, setItems] = useState<Appointment[]>([]);
   // §4.6/§10.2 — salon varsayılanı uzman-sütunlu görünüm; uzman varsayılanı dikey gün ajandası
   const [view, setView] = useState<'day' | 'list' | 'salon'>(isSalon ? 'salon' : 'day');
@@ -146,9 +147,10 @@ export default function AgendaScreen() {
   useFocusEffect(
     useCallback(() => {
       let alive = true;
+      // GİZLİLİK: yalnız SAĞLAYICISI olduğum randevular — filtresiz /bookings tüm
+      // kullanıcıların kayıtlarını sızdırıyordu.
       const pull = () =>
-        api
-          .bookings()
+        (token ? api.providerBookings(token) : Promise.resolve(storeBookings))
           .then((b) => alive && setItems(b))
           .catch(() => alive && setItems(storeBookings)); // çevrimdışı: yerel veriler
       void pull();
@@ -157,7 +159,7 @@ export default function AgendaScreen() {
         alive = false;
         clearInterval(timer);
       };
-    }, [storeBookings]),
+    }, [storeBookings, token]),
   );
 
   const now = Date.now();

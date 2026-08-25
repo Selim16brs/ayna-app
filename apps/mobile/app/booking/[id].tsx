@@ -36,17 +36,28 @@ export default function BookingDetailScreen() {
   const allBookings = useStore((s) => s.bookings);
   // §4.2 — uzman tarafı: randevu yerel store'da yoksa (push'tan gelindi) sunucudan çek
   const [remoteBooking, setRemoteBooking] = useState<Appointment | null>(null);
+  const token = useStore((s) => s.token);
+  const isProviderRole = useStore(
+    (s) => s.currentUser?.role === 'professional' || s.currentUser?.role === 'salon',
+  );
   useEffect(() => {
-    if (localBooking || !id) return;
+    if (localBooking || !id || !token) return;
     let alive = true;
-    api
-      .bookings()
-      .then((rows) => alive && setRemoteBooking(rows.find((b) => b.id === id) ?? null))
+    // GİZLİLİK: yalnız kendi randevularımda ara (müşteri: mine; uzman/salon: provider da)
+    void Promise.all([
+      api.myBookings(token).catch(() => []),
+      isProviderRole ? api.providerBookings(token).catch(() => []) : Promise.resolve([]),
+    ])
+      .then(([mine, prov]) => {
+        if (!alive) return;
+        const rows = [...mine, ...prov];
+        setRemoteBooking(rows.find((b) => b.id === id) ?? null);
+      })
       .catch(() => undefined);
     return () => {
       alive = false;
     };
-  }, [localBooking, id]);
+  }, [localBooking, id, token, isProviderRole]);
   const booking = localBooking ?? remoteBooking ?? undefined;
   const closedDays = useStore((s) => s.closedDays);
   const cancelBooking = useStore((s) => s.cancelBooking);

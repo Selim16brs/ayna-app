@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { api, ApiError } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -21,6 +22,7 @@ export default function LoginScreen() {
 
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
+  const [hidden, setHidden] = useState(true);
   const [busy, setBusy] = useState(false);
 
   const valid = id.trim().length > 3 && password.length >= 6;
@@ -75,14 +77,25 @@ export default function LoginScreen() {
         <Text variant="bodyStrong" tone="ink" style={styles.label}>
           {t('auth.f.password')}
         </Text>
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          placeholder="••••••"
-          placeholderTextColor={colors.muted}
-          secureTextEntry
-          style={styles.input}
-        />
+        <View style={styles.secureWrap}>
+          <TextInput
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••"
+            placeholderTextColor={colors.muted}
+            secureTextEntry={hidden}
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={styles.secureInput}
+          />
+          <Pressable onPress={() => setHidden((h) => !h)} hitSlop={10} style={styles.eyeBtn}>
+            <Ionicons
+              name={hidden ? 'eye-outline' : 'eye-off-outline'}
+              size={20}
+              color={colors.inkSoft}
+            />
+          </Pressable>
+        </View>
 
         <View style={styles.forgotRow}>
           <Text
@@ -122,6 +135,23 @@ const makeStyles = (colors: ColorTokens) =>
       fontSize: 16,
       color: colors.ink,
     },
+    secureWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: 54,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+      paddingRight: space(1.5),
+    },
+    secureInput: {
+      flex: 1,
+      height: '100%',
+      paddingHorizontal: space(2),
+      fontWeight: '500',
+      fontSize: 16,
+      color: colors.ink,
+    },
+    eyeBtn: { padding: space(0.75) },
     forgotRow: { alignItems: 'flex-end', marginTop: space(1.5) },
     forgot: { fontWeight: '700' },
     footer: {
