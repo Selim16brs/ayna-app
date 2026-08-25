@@ -191,7 +191,12 @@ function PostCard({ post }: { post: CirclePost }) {
   const toggleHelpful = useStore((s) => s.toggleHelpful);
   const toggleFollow = useStore((s) => s.toggleFollow);
   const myId = useStore((s) => s.currentUser?.id);
-  const isFollowing = useStore((s) => s.following.includes(post.author));
+  // §5.5 — kimlik öncelikli eşleşme: görünen ad hesap adından farklı olabilir
+  const isFollowing = useStore((s) =>
+    post.authorUserId
+      ? s.followingIds.includes(post.authorUserId)
+      : s.following.includes(post.author),
+  );
   // §W2W — kendi gönderin: yazar 'Sen', takip butonu YOK (kendini takip edemezsin)
   const isMine = post.author === 'Sen' || (!!post.authorUserId && post.authorUserId === myId);
   const shownAuthor = post.anonymous
