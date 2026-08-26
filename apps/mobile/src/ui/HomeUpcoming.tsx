@@ -5,6 +5,7 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import type { Appointment, BookingStatus } from '../data';
 import { daysUntil, formatSlot, slotTime } from '../datetime';
 import { useLocale } from '../locale';
+import { useProfessionals } from '../catalog';
 import { useStore } from '../store';
 import { control, font, radius, space, type ColorTokens } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
@@ -36,6 +37,11 @@ export function HomeUpcoming() {
   const router = useRouter();
   const bookings = useStore((s) => s.bookings);
   const next = useMemo(() => pickNext(bookings, Date.now()), [bookings]);
+  // Kanvas 'mesafe' istiyordu; ama mesafe kullanıcı konumu gerektirir ve konum
+  // varsayılan olarak KAPALI (gizlilik kararı). Onun yerine uzmanın mahallesi
+  // gösteriliyor — gerçek veri, izin gerektirmiyor, aynı işi görüyor.
+  const pros = useProfessionals();
+  const district = next ? (pros.find((p) => p.id === next.proId)?.district ?? '') : '';
 
   if (!next) return null;
 
@@ -75,6 +81,14 @@ export function HomeUpcoming() {
               <Text numeric style={styles.when}>
                 {when}
               </Text>
+              {district ? (
+                <View style={styles.place}>
+                  <Ionicons name="location-outline" size={12} color={colors.muted} />
+                  <Text variant="micro" tone="muted" numberOfLines={1}>
+                    {district}
+                  </Text>
+                </View>
+              ) : null}
               {onsite > 0 ? (
                 <Text numeric variant="micro" tone="muted" numberOfLines={1}>
                   {onsite.toLocaleString('tr-TR')} ₸ {t('home.next.onsite')}
@@ -158,6 +172,7 @@ const makeStyles = (colors: ColorTokens) =>
     avatarFallback: { alignItems: 'center', justifyContent: 'center' },
     headText: { flex: 1, gap: 3 },
     whenRow: { flexDirection: 'row', alignItems: 'center', gap: space(1), flexWrap: 'wrap' },
+    place: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     when: {
       fontFamily: font.semibold,
       fontSize: 14,

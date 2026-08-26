@@ -189,14 +189,47 @@ export default function DiscoverScreen() {
               ) : null}
             </View>
           </View>
-          {/* §5.1.1 — premium cut-out foto varsa onu göster; yoksa varsayılan çizim */}
-          {/* Sıfır-demo: kullanıcının KENDİ fotosu yoksa sahte model gösterilmez */}
+          {/* KESİK PORTRE + YANSIMA — AYNA'nın marka imzası.
+              Uygulamanın adı Ayna; kullanıcı ekranı açtığında kendi yansımasını görür.
+              Sıfır-demo: kullanıcının KENDİ fotosu yoksa sahte model gösterilmez —
+              onun yerine baş harfi madalyonu, aynı yansımayla. */}
           {cutoutUri || avatarUri ? (
-            <Image
-              source={{ uri: cutoutUri ?? avatarUri ?? '' }}
-              style={styles.heroPhoto}
-              resizeMode="contain"
-            />
+            <View style={styles.portraitWrap} pointerEvents="none">
+              <Image
+                source={{ uri: cutoutUri ?? avatarUri ?? '' }}
+                style={styles.portrait}
+                resizeMode="contain"
+              />
+              <View style={styles.reflection}>
+                <Image
+                  source={{ uri: cutoutUri ?? avatarUri ?? '' }}
+                  style={styles.reflectionImg}
+                  resizeMode="contain"
+                />
+                {/* Yansıma aşağı doğru sönümlenir — sert kesik ucuz durur */}
+                <LinearGradient
+                  colors={['rgba(90,42,85,0)', colors.accent]}
+                  locations={[0, 0.9]}
+                  style={StyleSheet.absoluteFill}
+                />
+              </View>
+            </View>
+          ) : displayName ? (
+            <View style={styles.portraitWrap} pointerEvents="none">
+              <View style={styles.medallion}>
+                <Text style={styles.medallionText}>{displayName.charAt(0)}</Text>
+              </View>
+              <View style={styles.reflection}>
+                <View style={[styles.medallion, styles.medallionFlip]}>
+                  <Text style={styles.medallionText}>{displayName.charAt(0)}</Text>
+                </View>
+                <LinearGradient
+                  colors={['rgba(90,42,85,0)', colors.accent]}
+                  locations={[0, 0.9]}
+                  style={StyleSheet.absoluteFill}
+                />
+              </View>
+            </View>
           ) : null}
 
           {/* Dalga geçişi — yeşilden beyaza (pembe DEĞİL; "Dileğin Nedir?" ayrı kart) */}
@@ -656,14 +689,29 @@ const makeStyles = (colors: ColorTokens) =>
     },
     // Zeminsiz kullanıcı fotoğrafı — sağ altta, yeşilin ÖNÜNDE; alt kısmını dalga keser.
     // Daha büyük alan (kurucu isteği: foto küçük kalıyordu).
-    heroPhoto: {
-      position: 'absolute',
-      right: -space(1),
-      bottom: 0,
+    // Portre yukarı alındı ki ALTINDA yansımaya yer kalsın (dalga en altta).
+    portraitWrap: { position: 'absolute', right: -space(1), bottom: 0, width: 210, zIndex: 1 },
+    portrait: { width: 210, height: 224 },
+    reflection: { height: 46, width: 210, overflow: 'hidden' },
+    reflectionImg: {
       width: 210,
-      height: 262,
-      zIndex: 1,
+      height: 224,
+      marginTop: -178,
+      transform: [{ scaleY: -1 }],
+      opacity: 0.34,
     },
+    medallion: {
+      width: 132,
+      height: 132,
+      borderRadius: 44,
+      alignSelf: 'flex-end',
+      marginRight: space(2),
+      backgroundColor: 'rgba(251,248,246,0.16)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    medallionFlip: { transform: [{ scaleY: -1 }], marginTop: -86, opacity: 0.34 },
+    medallionText: { fontFamily: font.semibold, fontSize: 58, color: '#FBF8F6' },
 
     // ── SOL: şehir (beyaz alan ortalı) + SAĞ: "Dileğin Nedir?" pembe kart (sağa sıfır) ──
     wishRow: {
