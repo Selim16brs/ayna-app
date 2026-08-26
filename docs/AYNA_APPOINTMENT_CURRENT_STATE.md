@@ -51,16 +51,27 @@ zaten **başka adla** var:
 
 Gerçekten eksik olanlar:
 
-| Eksik durum                                 | Neyi kaybediyoruz                                               |
-| ------------------------------------------- | --------------------------------------------------------------- |
-| `PREPARATION_REQUIRED` · `READY`            | Hazırlık talimatı akışı yok                                     |
-| `CUSTOMER_ON_THE_WAY` · `CUSTOMER_ARRIVED`  | Yola çıktım / geldim yok                                        |
-| `IN_PROGRESS`                               | Hizmetin başladığı an kaydedilmiyor                             |
-| `RESCHEDULE_REQUESTED`                      | Erteleme talebi ayrı durum değil                                |
-| `CUSTOMER_CANCELLED` / `PROVIDER_CANCELLED` | Tek `cancelled` var; **kimin iptal ettiği durumdan okunamıyor** |
+| Eksik durum                                 | Neyi kaybediyoruz                   |
+| ------------------------------------------- | ----------------------------------- |
+| `PREPARATION_REQUIRED` · `READY`            | Hazırlık talimatı akışı yok         |
+| `CUSTOMER_ON_THE_WAY` · `CUSTOMER_ARRIVED`  | Yola çıktım / geldim yok            |
+| `IN_PROGRESS`                               | Hizmetin başladığı an kaydedilmiyor |
+| `RESCHEDULE_REQUESTED`                      | Erteleme talebi ayrı durum değil    |
+| `CUSTOMER_CANCELLED` / `PROVIDER_CANCELLED` | ✅ Çözüldü — aşağıya bak            |
 
-Son madde önemli: iptal politikası (kim iptal etti → kapora kime kalır) durumdan
-türetilemiyor, ayrı alanlardan çıkarılmak zorunda.
+> **Çözüldü (26.08):** iptal politikası (kim iptal etti → kapora kime kalır)
+> durumdan türetilemiyordu; yalnız `depositForfeited` bayrağından dolaylı tahmin
+> edilebiliyordu. Ayrı durum eklemek yerine `bookings.cancelled_by`
+> (`customer` | `provider` | `admin` | `system`) ve `cancelled_at` eklendi.
+> Sonuç aynı, ama mevcut durum makinesi, mobil ekranlar ve geçmiş kayıtlar
+> bozulmuyor.
+>
+> Atıf iade akışı boyunca korunuyor: uzmanın iptal ettiği bir randevu, müşteri
+> iadeyi onayladığında `customer` olarak yeniden etiketlenmiyor.
+>
+> Geçmiş kayıtlarda `cancelled_by` **NULL** bırakıldı — kimin iptal ettiği
+> gerçekten bilinmiyor ve uydurmak kapora anlaşmazlıklarında yanlış kanıt
+> üretirdi.
 
 ### Durum makinesi diye bir şey yoktu
 

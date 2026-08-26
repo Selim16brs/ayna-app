@@ -21,6 +21,9 @@ import { slotAllowed } from '../offers/offers.rules';
 import { cancelOutcome } from './bookings.policy';
 import type { CreateBookingInput } from './bookings.dto';
 
+// §3 — iptali yapan taraf. `system` zamanlayıcı/iç çağrı demek.
+export type ActorRole = 'customer' | 'provider' | 'admin' | 'system';
+
 // Slot işgal eden durumlar artık ortak dosyada (üç kod yolu aynı listeyi kullanır).
 const ACTIVE_SLOT_STATUSES = SLOT_HOLDING_STATUSES;
 
@@ -373,7 +376,9 @@ export class BookingsService {
   // §6.C/§4.4 — iptal. Kapora yakma/iade kararını SUNUCU verir (client'a güvenilmez):
   // geç iptal (<3sa, kapora ödenmiş) → kapora yanar; serbest iptal → uzman iade eder.
   async cancel(id: string, reason?: string, actorId?: string) {
-    await this.assertParty(id, actorId, 'either');
+    // §3 — iptali KİM yaptı: bu uç her iki tarafa da açık, o yüzden rol
+    // assertParty'nin çözdüğü sonuçtan alınıyor.
+    const rol = await this.assertParty(id, actorId, 'either');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (!b)
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
@@ -381,6 +386,7 @@ export class BookingsService {
     const row = await this.transition(id, {
       status: outcome.status,
       cancelReason: reason ?? null,
+      cancelledBy: rol,
       ...(outcome.forfeit ? { depositForfeited: true } : {}),
     });
     // §keşif Modül 2 — kampanya randevusu iptal → kota iadesi
@@ -585,7 +591,7 @@ export class BookingsService {
   // §4.4 — kullanıcı serbest iptal başlatır. SUNUCU pencereyi doğrular: client geç
   // iptali "serbest" diye göndermeye çalışsa bile <3sa ise kapora yakılır.
   async freeCancel(id: string, reason?: string, actorId?: string) {
-    await this.assertParty(id, actorId, 'owner');
+    const rol = await this.assertParty(id, actorId, 'owner');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (!b)
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
@@ -593,6 +599,7 @@ export class BookingsService {
     const row = await this.transition(id, {
       status: outcome.status,
       cancelReason: reason ?? null,
+      cancelledBy: rol,
       ...(outcome.forfeit ? { depositForfeited: true } : {}),
     });
     // §keşif Modül 2 — kampanya randevusu iptal → kota iadesi
@@ -678,7 +685,8 @@ export class BookingsService {
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     const updated = await this.prisma.booking.update({
       where: { id },
-      data: { status: 'refund_pending', providerNoShow: true },
+      // §4.4-b — uzman gelmedi: iadeyi doğuran taraf UZMAN.
+      data: { status: 'refund_pending', providerNoShow: true, cancelledBy: 'provider' },
     });
     if (b.proId) {
       // Uzman no-show cezası: bu randevunun GERÇEK kaporası kadar komisyon borcu doğar
@@ -748,20 +756,23 @@ export class BookingsService {
 
   // §güvenlik — eylemi yapan, randevunun TARAFI olmalı (owner=müşteri, provider=uzman/salon).
   // actorId verilmediyse (iç çağrı) kontrol atlanır; admin rolü her eylemi yapabilir.
+  // Yetkiyi doğrular VE aktörün rolünü döndürür. Rol zaten burada hesaplanıyor;
+  // iptali kimin yaptığını kaydetmek için ikinci kez hesaplamak hem israf hem de
+  // iki mantığın ayrışma riski olurdu.
   private async assertParty(
     bookingId: string,
     actorId: string | undefined,
     who: 'owner' | 'provider' | 'either',
-  ): Promise<void> {
+  ): Promise<ActorRole> {
     this.lastActorId = actorId;
-    if (!actorId) return;
+    if (!actorId) return 'system';
     const [b, actor] = await Promise.all([
       this.prisma.booking.findUnique({ where: { id: bookingId } }),
       this.prisma.user.findUnique({ where: { id: actorId } }),
     ]);
     if (!b)
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
-    if (actor?.role === 'admin') return;
+    if (actor?.role === 'admin') return 'admin';
     const isOwner = !!b.userId && b.userId === actorId;
     let isProvider = false;
     if (b.proId) {
@@ -787,6 +798,7 @@ export class BookingsService {
         code: 'NOT_BOOKING_PARTY',
         message: 'Bu randevu üzerinde işlem yetkin yok',
       });
+    return isOwner ? 'customer' : 'provider';
   }
 
   private async transition(id: string, data: Record<string, unknown>) {
@@ -818,6 +830,11 @@ export class BookingsService {
     // §12.8 — tamamlanma ANI kaydedilir; komisyon dönemi buna göre belirlenir.
     // Tek geçiş noktası burası olduğu için hiçbir yol bunu atlayamaz.
     if (target === 'completed' && !existing.completedAt) data.completedAt = new Date();
+    // §3 — iptal anı tek yerde damgalanır. `refund_pending` de bir iptal yolu:
+    // iade akışı iptalle başlıyor, `cancelled` yalnız iade tamamlanınca geliyor.
+    if ((target === 'cancelled' || target === 'refund_pending') && !existing.cancelledAt) {
+      data.cancelledAt = new Date();
+    }
     const row = await this.prisma.booking.update({ where: { id }, data });
     // §12 — kritik eylem audit log'u (kim, ne zaman, hangi geçiş)
     if (target)
@@ -872,6 +889,10 @@ function mapBooking(b: Booking) {
     price: Number(b.price),
     status: b.status,
     cancelReason: b.cancelReason ?? undefined,
+    // §3 — iptali kim yaptı. İstemci "sen iptal ettin" ile "uzman iptal etti"
+    // ayrımını artık tahmin etmek yerine okuyor.
+    cancelledBy: b.cancelledBy ?? undefined,
+    cancelledAt: b.cancelledAt?.getTime() ?? undefined,
     // §4.1-4.4 — depozito/iade alanları (mobil Appointment alan adlarıyla hizalı)
     depositAmount: b.depositAmount ?? undefined,
     receiptUri: b.depositReceiptUri ?? undefined, // mobil `receiptUri` bekler (hydrate uyumu)

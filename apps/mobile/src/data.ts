@@ -927,6 +927,9 @@ export interface Appointment {
   price: number; // kaç paraya
   status: BookingStatus;
   cancelReason?: string; // §6.C — "neden gelemiyorum"
+  // §3 — iptali kim yaptı. Sunucudan gelir; istemci bunu türetmez.
+  cancelledBy?: 'customer' | 'provider' | 'admin' | 'system';
+  cancelledAt?: number;
   reviewed?: boolean;
 }
 

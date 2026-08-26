@@ -259,6 +259,18 @@ model Booking {
   status            BookingStatus @default(confirmed)
   // §6.C — iptal sebebi (kullanıcı "neden gelemiyorum" iletebilir)
   cancelReason      String?       @map("cancel_reason")
+  // §3 — İPTALİ KİM YAPTI: customer | provider | admin | system.
+  // Şartname ayrı `CUSTOMER_CANCELLED` / `PROVIDER_CANCELLED` durumları istiyor;
+  // burada tek `cancelled` durumu + bu alan kullanılıyor. Sonuç aynı (iptal
+  // politikası artık kayıttan okunabiliyor) ama mevcut durum makinesi, mobil
+  // ekranlar ve geçmiş kayıtlar bozulmuyor — şartname §"kavramsal modelleri
+  // mevcut mimariye uyarlayarak" bunu açıkça mümkün kılıyor.
+  //
+  // Eskiden bu bilgi HİÇBİR YERDE yoktu: kapora kime kalacak sorusu durumdan da
+  // alandan da türetilemiyordu, yalnız `depositForfeited` bayrağından dolaylı
+  // tahmin edilebiliyordu.
+  cancelledBy       String?       @map("cancelled_by")
+  cancelledAt       DateTime?     @map("cancelled_at") @db.Timestamptz(6)
   // §4.1-4.4 — depozito/iade alanları
   depositAmount     Int?          @map("deposit_amount") // KZT kapora tutarı
   depositReceiptUri String?       @map("deposit_receipt_uri") // kullanıcının kapora dekontu
