@@ -4,12 +4,11 @@ import { useRouter } from 'expo-router';
 import { Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useFonts } from 'expo-font';
-import { Caveat_700Bold } from '@expo-google-fonts/caveat';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORIES } from '../../src/data';
 import { useCampaigns, useCollections, useOffers, useProfessionals } from '../../src/catalog';
 import { greetingKey } from '../../src/greeting';
+import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
@@ -57,6 +56,8 @@ export default function DiscoverScreen() {
   const collections = useCollections().slice(0, 2);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const unread = useStore(selectUnreadCount);
+  const points = useStore((s) => s.points);
+  const tier = useStore((s) => s.tier);
   // §fix — boş isimde de fallback (|| ; '' ?? x boş string'e düşmez → Keşfet ismi boş görünüyordu)
   const userName =
     useStore((s) => s.currentUser?.name)
@@ -66,9 +67,6 @@ export default function DiscoverScreen() {
   const avatarUri = useStore((s) => s.avatarUri); // cut-out yoksa yüklenen ham foto
   // Dinamik kullanıcı adı — ilk harf büyük (el yazısı katman için)
   const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
-  // §fix — Caveat el yazısı fontu geç yüklenince isim önce SİSTEM fontuyla yanıp sönüyordu.
-  // Font hazır olana kadar ismi gizle (yer korunur), hazır olunca göster: FOUT biter.
-  const [caveatReady] = useFonts({ Caveat_700Bold });
   const pros = useProfessionals();
   // §5.1.4 — şehir tüm Keşfet'i filtreler
   const cityPros = pros.filter((p) => p.city === city);
@@ -113,6 +111,21 @@ export default function DiscoverScreen() {
               style={styles.logo}
               resizeMode="contain"
             />
+            {/* Konum çipi kanvasa göre ÜST SATIRDA — pembe kartın yanında sıkışmıyor */}
+            <Pressable style={styles.cityChipTop} onPress={() => router.push('/city')}>
+              <Ionicons name="location" size={14} color={colors.ink} />
+              <Text
+                variant="caption"
+                tone="ink"
+                style={styles.cityText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
+                {city}
+              </Text>
+              <Ionicons name="chevron-down" size={12} color={colors.ink} />
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t('notifications.title')}
@@ -150,18 +163,30 @@ export default function DiscoverScreen() {
             </Pressable>
           </View>
 
-          {/* Karşılama — solda büyük ve dikey ortalı; foto sağ altta (dalga keser) */}
+          {/* KİMLİK — kanvas: selamlama + isim Onest'le, altında puan/kademe.
+              El yazısı (Caveat) kaldırıldı: font kararı "yalnız Onest, ikinci
+              aile yok". Hiyerarşi boyut ve ağırlıkla kuruluyor. */}
           <View style={styles.heroBody}>
             <View style={styles.heroText}>
               <Text style={styles.greetLabel}>{t(greetingKey())}</Text>
               <Text
-                style={[styles.greetName, { opacity: caveatReady ? 1 : 0 }]}
+                style={styles.greetName}
                 numberOfLines={1}
                 adjustsFontSizeToFit
-                minimumFontScale={0.5}
+                minimumFontScale={0.6}
               >
                 {displayName}
               </Text>
+              {/* Sadakat ekranı derinlerde kalmasın — her açılışta hatırlansın */}
+              {points > 0 || tier ? (
+                <Pressable style={styles.tierRow} onPress={() => router.push('/rewards')}>
+                  <Ionicons name="star" size={13} color={colors.rose} />
+                  <Text numeric style={styles.tierText} numberOfLines={1}>
+                    {points.toLocaleString('tr-TR')} {t('rewards.points')}
+                    {tier ? ` · ${t(`rewards.tier.${tier.key}` as MessageKey)}` : ''}
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
           </View>
           {/* §5.1.1 — premium cut-out foto varsa onu göster; yoksa varsayılan çizim */}
@@ -182,22 +207,6 @@ export default function DiscoverScreen() {
 
         {/* ── SOL: şehir seçici (beyaz alan, ortalı) — SAĞ: "Dileğin Nedir?" pembe kart ── */}
         <View style={styles.wishRow}>
-          <View style={styles.wishLeft}>
-            <Pressable style={styles.cityChip} onPress={() => router.push('/city')}>
-              <Ionicons name="location" size={15} color={colors.ink} />
-              <Text
-                variant="caption"
-                tone="ink"
-                style={styles.cityText}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.85}
-              >
-                {city}
-              </Text>
-              <Ionicons name="chevron-down" size={13} color={colors.ink} />
-            </Pressable>
-          </View>
           <PressableScale style={styles.wishCard} onPress={() => router.push('/quote')}>
             <View style={styles.wishIcon}>
               <LampIcon size={30} color={HOT_PINK} />
@@ -609,7 +618,25 @@ const makeStyles = (colors: ColorTokens) =>
       zIndex: 2,
     },
     // Karşılama sola yaslı, dikey ORTALI ve BÜYÜK
-    heroText: { flex: 1, justifyContent: 'center', paddingRight: space(1) },
+    heroText: { flex: 1, justifyContent: 'center', paddingRight: space(1), gap: 2 },
+    cityChipTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      height: 40,
+      paddingHorizontal: space(1.5),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      maxWidth: 150,
+    },
+    tierRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      marginTop: space(0.75),
+      alignSelf: 'flex-start',
+    },
+    tierText: { color: 'rgba(251,248,246,0.88)', fontFamily: font.medium, fontSize: 14 },
     greetLabel: {
       fontSize: 26,
       lineHeight: 30,
@@ -619,23 +646,13 @@ const makeStyles = (colors: ColorTokens) =>
       zIndex: 1,
     },
     greetName: {
-      fontFamily: 'Caveat_700Bold',
-      fontSize: 76,
-      lineHeight: 74,
-      color: '#FFFFFF',
+      fontFamily: font.semibold,
+      fontSize: 38,
+      lineHeight: 44,
+      letterSpacing: -1,
+      color: '#FBF8F6',
       alignSelf: 'flex-start',
-      marginTop: -6,
-      marginLeft: -2,
-      // §fix — Caveat script fontunun son glifi kendi kutusunca kırpılıyordu (isim sağdan kesik).
-      // Sağ dolgu + marginRight ile taşmaya yer; sola kaydırmadan hizayı korur.
-      paddingRight: space(3),
-      marginRight: -space(3),
-      transform: [{ rotate: '-9deg' }],
       zIndex: 2,
-      // %15 opasiteli, yumuşak/blurlu alt gölge
-      textShadowColor: 'rgba(0,0,0,0.15)',
-      textShadowOffset: { width: 0, height: 3 },
-      textShadowRadius: 8,
     },
     // Zeminsiz kullanıcı fotoğrafı — sağ altta, yeşilin ÖNÜNDE; alt kısmını dalga keser.
     // Daha büyük alan (kurucu isteği: foto küçük kalıyordu).
@@ -666,7 +683,7 @@ const makeStyles = (colors: ColorTokens) =>
     wishCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      width: '58%',
+      width: '78%',
       gap: space(1.25),
       backgroundColor: HOT_PINK,
       borderTopLeftRadius: radius.lg,
