@@ -745,6 +745,28 @@ model CirclePost {
 /// uzmana da kimin kaydettiği GÖSTERİLMEZ ve sayısı da yayınlanmaz — bir
 /// uzmanın "beni kim kaydetti" diye bakabilmesi, kadınların hangi hizmeti
 /// düşündüğünü ifşa ederdi (CLAUDE.md: privacy-by-design).
+/// §destek — kullanıcının destek talebi.
+///
+/// Yardım ekranındaki "Destek ile iletişim" düğmesi HİÇBİR ŞEY YAPMIYORDU.
+/// Parası takılan, taciz bildiren ya da güvenlik sorunu yaşayan bir kadının
+/// insana ulaşacak yolu yoktu — bu ürün için kabul edilemez bir boşluk.
+model SupportTicket {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  /// Konu başlığı (ödeme | randevu | güvenlik | hesap | diğer) — yönlendirme için.
+  topic     String    @default("other")
+  body      String
+  /// open | answered | closed
+  status    String    @default("open")
+  reply     String?
+  repliedAt DateTime? @map("replied_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@index([userId])
+  @@map("support_tickets")
+}
+
 model CircleSave {
   id        String   @id @default(uuid()) @db.Uuid
   userId    String   @map("user_id") @db.Uuid

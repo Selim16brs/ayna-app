@@ -1927,6 +1927,7 @@ export const tr = {
   'care.add.delete_confirm': 'Bu kaydı silmek istiyor musun?',
 
   // AYNA Life — yazı detayı
+  'life.not_found': 'Bu yazı bulunamadı.',
   'life.title': 'AYNA Life',
 
   // Profil — düzenle
@@ -2185,6 +2186,20 @@ export const tr = {
   // Profil — Yardım
   'help.title': 'Yardım & destek',
   'help.subtitle': 'Sıkça sorulan sorular',
+  'help.topic.payment': 'Ödeme',
+  'help.topic.booking': 'Randevu',
+  'help.topic.safety': 'Güvenlik',
+  'help.topic.account': 'Hesap',
+  'help.topic.other': 'Diğer',
+  'help.placeholder': 'Ne oldu? Olabildiğince açık yaz — randevu numarası varsa ekle.',
+  'help.send': 'Gönder',
+  'help.too_short': 'Lütfen sorunu biraz anlat.',
+  'help.too_many': 'Açık talebin var. Yanıtı bekleyip oradan devam edebilirsin.',
+  'help.sent_t': 'Talebin bize ulaştı',
+  'help.sent_b': 'Yanıt geldiğinde bildirim alacaksın; bu ekranda da göreceksin.',
+  'help.my_tickets': 'Taleplerim',
+  'help.status.open': 'Yanıt bekleniyor',
+  'help.status.answered': 'Yanıtlandı',
   'help.contact': 'Bize ulaş',
   'help.chat': 'Canlı destek',
   'help.email': 'E-posta gönder',

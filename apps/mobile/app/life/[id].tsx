@@ -23,9 +23,11 @@ export default function ArticleDetailScreen() {
     return (
       <Screen edges={[]}>
         <StackHeader title={t('life.title')} />
+        {/* Bu, YAZI BULUNAMADI durumu — "Yakında" demek yanlıştı: yazı
+            gelecekte gelecek bir şey değil, silinmiş ya da hatalı bağlantı. */}
         <View style={styles.empty}>
           <Text variant="body" tone="muted">
-            {t('common.soon')}
+            {t('life.not_found')}
           </Text>
         </View>
       </Screen>
