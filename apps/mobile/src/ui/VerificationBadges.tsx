@@ -19,7 +19,12 @@ type Verification = {
 };
 
 // §3.3 — KATMANLI güven rozetleri. Hepsi aynı anlama gelmez: AYNA Verified üst rozet (vurgulu),
-// altında doğrulanan katmanlar (kimlik/işletme/BİN/adres/sosyal). Yalnız doğrulananlar gösterilir.
+// altında katmanlar (kimlik/işletme/BİN/adres/sertifika/sosyal).
+//
+// TASARIM KARARI: DOĞRULANMAYAN katman da gösterilir — soluk, üstü çizili ve
+// "doğrulanmadı" etiketiyle. Yalnız yeşilleri göstermek, eksiği gizleyip herkesi
+// "tam doğrulanmış" gibi gösterir; kullanıcı neyin EKSİK olduğunu göremez.
+// Gerçeğin kendisi, tek bir "doğrulandı" etiketinden daha çok güven verir.
 export function VerificationBadges({
   verification,
   aynaVerified,
@@ -39,8 +44,9 @@ export function VerificationBadges({
     { on: verification.cert ?? false, icon: 'ribbon-outline', key: 'verify.cert' },
     { on: verification.social, icon: 'share-social-outline', key: 'verify.social' },
   ];
-  const items = all.filter((i) => i.on);
-  if (!aynaVerified && items.length === 0) return null;
+  // Doğrulananlar önce, eksikler sonra — göz önce kazanılmışı görsün.
+  const items = [...all].sort((a, b) => Number(b.on) - Number(a.on));
+  if (!aynaVerified && all.every((i) => !i.on)) return null;
   return (
     <View style={styles.wrap}>
       {aynaVerified ? (
@@ -52,10 +58,15 @@ export function VerificationBadges({
         </View>
       ) : null}
       {items.map((i) => (
-        <View key={i.key} style={styles.badge}>
-          <Ionicons name={i.icon} size={13} color={colors.success} />
-          <Text variant="caption" tone="inkSoft">
+        <View key={i.key} style={[styles.badge, !i.on && styles.badgeOff]}>
+          <Ionicons
+            name={i.on ? i.icon : 'ellipse-outline'}
+            size={13}
+            color={i.on ? colors.success : colors.muted}
+          />
+          <Text variant="caption" tone={i.on ? 'inkSoft' : 'muted'}>
             {t(i.key)}
+            {i.on ? '' : ` · ${t('verify.not_yet')}`}
           </Text>
         </View>
       ))}
@@ -75,6 +86,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       backgroundColor: colors.surfaceMuted,
     },
+    badgeOff: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.line },
     aynaBadge: { backgroundColor: colors.accentFg },
     aynaText: { fontFamily: font.semibold },
   });

@@ -13,7 +13,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { TAB_BAR_CLEARANCE, Text, VerificationBadges, WaveLayered } from '../../src/ui';
+import { RulesCard, TAB_BAR_CLEARANCE, Text, VerificationBadges, WaveLayered } from '../../src/ui';
 
 type Tab = 'booking' | 'portfolio' | 'reviews';
 const HOT_PINK = '#D97798'; // favori (kalp) aktif rengi
@@ -66,6 +66,10 @@ export default function ProfessionalScreen() {
   const minDate = new Date(Date.now() + 2 * 3_600_000);
   minDate.setMinutes(0, 0, 0);
   const reviews = [...(userReviewsMap[proId] ?? []), ...pro.reviews];
+  // Eleştiri = 3 yıldız ve altı. Saklanmıyor, öne getiriliyor.
+  const [critic, setCritic] = useState(false);
+  const criticCount = reviews.filter((r) => r.rating <= 3).length;
+  const shownReviews = critic ? reviews.filter((r) => r.rating <= 3) : reviews;
   // §4 — ÇOKLU hizmet: kullanıcı birden fazla hizmet seçip tek randevuda alabilir.
   // Liste yüklenince ilk hizmet seçili başlar; en az 1 seçili kalır.
   useEffect(() => {
@@ -285,16 +289,44 @@ export default function ProfessionalScreen() {
               </Text>
               {/* §3.3 — katmanlı güven rozetleri (AYNA Onaylı + kimlik/işletme/BİN/adres/sosyal) */}
               <VerificationBadges verification={pro.verification} aynaVerified={pro.aynaVerified} />
-              <View style={styles.heroStats}>
-                <View style={styles.ratingPill}>
-                  <Ionicons name="star" size={13} color={colors.gold} />
-                  <Text variant="bodyStrong" tone="ink" style={styles.ratingPillText}>
-                    {pro.rating.toFixed(1)}
+              {/* İSTATİSTİK ŞERİDİ — kanvas: yıl · müşteri · puan yan yana.
+                  experienceYears veride vardı ama hiçbir ekranda gösterilmiyordu. */}
+              <View style={styles.statStrip}>
+                {pro.experienceYears > 0 ? (
+                  <>
+                    <View style={styles.statCol}>
+                      <Text numeric variant="h2" tone="ink">
+                        {pro.experienceYears}
+                      </Text>
+                      <Text variant="micro" tone="muted" numberOfLines={1}>
+                        {t('pro.stat.years')}
+                      </Text>
+                    </View>
+                    <View style={styles.statSep} />
+                  </>
+                ) : null}
+                <View style={styles.statCol}>
+                  <Text numeric variant="h2" tone="ink">
+                    {pro.reviewCount}
                   </Text>
-                  <Text variant="caption" tone="muted" style={styles.ratingPillSub}>
-                    ({pro.reviewCount})
+                  <Text variant="micro" tone="muted" numberOfLines={1}>
+                    {t('pro.stat.rating')}
                   </Text>
                 </View>
+                <View style={styles.statSep} />
+                <View style={styles.statCol}>
+                  <View style={styles.statRating}>
+                    <Ionicons name="star" size={13} color={colors.gold} />
+                    <Text numeric variant="h2" tone="ink">
+                      {pro.rating.toFixed(1)}
+                    </Text>
+                  </View>
+                  <Text variant="micro" tone="muted" numberOfLines={1}>
+                    {t('rewards.tier')}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.heroStats}>
                 {pro.friends ? (
                   <View style={styles.friendsPill}>
                     <Ionicons name="people" size={12} color={colors.ink} />
@@ -613,6 +645,13 @@ export default function ProfessionalScreen() {
                   );
                 })}
               </View>
+              {/* PARA KURALLARI — 'param ne olacak?' sorusu randevu oluşmadan ÖNCE
+                  cevaplanmalı. RulesCard kod tabanında vardı ama yalnız talep ve
+                  randevu ekranlarına basılıyordu; uzman profilinde yoktu.
+                  NOT: kanvasta kapora '%20' yazıyordu; sunucuda kapora SABİT TUTAR
+                  (rate.deposit_kzt), yüzde diye bir ayar yok. Olmayan oranı
+                  yazmaktansa gerçek tutarı gösteriyoruz. */}
+              <RulesCard />
             </>
           ) : null}
 
@@ -663,12 +702,16 @@ export default function ProfessionalScreen() {
                     const pct = Math.round((pro.starDist[star - 1]! / total) * 100);
                     return (
                       <View key={star} style={styles.distRow}>
-                        <Text variant="caption" tone="muted" style={styles.distStar}>
+                        <Text numeric variant="micro" tone="muted" style={styles.distStar}>
                           {star}
                         </Text>
                         <View style={styles.distTrack}>
                           <View style={[styles.distFill, { width: `${pct}%` }]} />
                         </View>
+                        {/* Adet ŞART: '%88' tek başına kaç kişinin yazdığını söylemez */}
+                        <Text numeric variant="micro" tone="inkSoft" style={styles.distCount}>
+                          {pro.starDist[star - 1]}
+                        </Text>
                       </View>
                     );
                   })}
@@ -694,7 +737,66 @@ export default function ProfessionalScreen() {
                 </View>
               )}
 
-              {reviews.map((r) => (
+              {/* HİZMET BAZINDA PUAN — 'kesimde 4.9 ama boyamada 4.7' bilgisi,
+                  tek ortalamadan çok daha kullanışlı. Veri (serviceRatings) kod
+                  tabanında hazırdı ama hiçbir ekranda gösterilmiyordu.
+                  Puanı olmayan hizmette UYDURMA SKOR YOK: 'değerlendirme yok'. */}
+              {pro.serviceRatings.length > 0 ? (
+                <View style={[styles.breakdownCard, shadow.soft]}>
+                  <Text variant="label" tone="muted">
+                    {t('pro.svc_rating.title')}
+                  </Text>
+                  {pro.serviceRatings.map((sr) => (
+                    <View key={sr.name} style={styles.svcRow}>
+                      <Text variant="caption" tone="inkSoft" style={styles.flex} numberOfLines={1}>
+                        {sr.name}
+                      </Text>
+                      {sr.score == null ? (
+                        <Text variant="caption" tone="muted">
+                          {t('pro.svc_rating.none')}
+                        </Text>
+                      ) : (
+                        <View style={styles.svcScore}>
+                          <Ionicons name="star" size={11} color={colors.gold} />
+                          <Text numeric variant="captionStrong" tone="ink">
+                            {sr.score.toFixed(1)}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              {/* ELEŞTİRİ FİLTRESİ — olumsuz yorumu saklamak, en pahalı güven kaybıdır.
+                  Saklamak yerine tek dokunuşla önüne getiriyoruz. */}
+              {criticCount > 0 ? (
+                <View style={styles.filterRow}>
+                  <Pressable
+                    onPress={() => setCritic(false)}
+                    style={[styles.filterChip, !critic && styles.filterChipOn]}
+                  >
+                    <Text variant="caption" tone={critic ? 'inkSoft' : 'onAccent'}>
+                      {t('pro.reviews.filter_all')} · {reviews.length}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setCritic(true)}
+                    style={[styles.filterChip, critic && styles.filterChipOn]}
+                  >
+                    <Text variant="caption" tone={critic ? 'onAccent' : 'inkSoft'}>
+                      {t('pro.reviews.filter_critic')} · {criticCount}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : null}
+              {critic ? (
+                <Text variant="caption" tone="muted" style={styles.criticNote}>
+                  {t('pro.reviews.critic_note')}
+                </Text>
+              ) : null}
+
+              {shownReviews.map((r) => (
                 <View key={r.id} style={[styles.review, shadow.soft]}>
                   <View style={styles.reviewTop}>
                     <View style={styles.reviewAuthor}>
@@ -859,6 +961,17 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(1.5),
       flexWrap: 'wrap',
     },
+    statStrip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      paddingVertical: space(1.25),
+      marginTop: space(1.25),
+    },
+    statCol: { flex: 1, alignItems: 'center', gap: 1, paddingHorizontal: space(0.5) },
+    statSep: { width: 1, alignSelf: 'stretch', backgroundColor: colors.line },
+    statRating: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     ratingPill: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -1060,6 +1173,18 @@ const makeStyles = (colors: ColorTokens) =>
     ratingAvgCol: { alignItems: 'center', gap: 4, justifyContent: 'center' },
     ratingBars: { flex: 1, justifyContent: 'center', gap: space(0.5) },
     distRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    distCount: { width: 34, textAlign: 'right' },
+    svcRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
+    svcScore: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    filterRow: { flexDirection: 'row', gap: space(1), marginBottom: space(1) },
+    filterChip: {
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    filterChipOn: { backgroundColor: colors.accent },
+    criticNote: { marginBottom: space(1.25) },
     distStar: { width: 10, textAlign: 'center' },
     distTrack: {
       flex: 1,
