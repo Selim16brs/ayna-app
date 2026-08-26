@@ -31,17 +31,21 @@ export function TabHero({
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.hero, { paddingTop: insets.top + space(1.5) }]}>
+      {/* Alt yazı KENDİ SATIRINDA, tam genişlikte.
+          Eskiden sağdaki eylem düğmesiyle aynı satırı paylaşıyordu; Rusça
+          metinler ("Настоящие советы от женщины к женщине") Türkçeden çok daha
+          uzun olduğu için dört satıra bölünüyor, altındaki başlığı da
+          sıkıştırıp "AYNA…" diye kırpıyordu. Satır genişliği DİLE GÖRE
+          değiştiği için alt yazıyı düğmeyle yan yana koymak baştan kırılgandı. */}
+      {subtitle ? (
+        <Text variant="body" tone="inkSoft" numberOfLines={2} style={styles.subtitle}>
+          {subtitle}
+        </Text>
+      ) : null}
       <View style={styles.row}>
-        <View style={styles.textCol}>
-          {subtitle ? (
-            <Text variant="body" tone="inkSoft">
-              {subtitle}
-            </Text>
-          ) : null}
-          <Text tone="ink" style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
-        </View>
+        <Text tone="ink" style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
         {right ?? null}
       </View>
       {children}
@@ -58,19 +62,18 @@ const makeStyles = (colors: ColorTokens) =>
     },
     row: {
       flexDirection: 'row',
-      alignItems: 'flex-end',
+      alignItems: 'center',
       justifyContent: 'space-between',
       gap: space(1.5),
-      // Alt yazısı olan (Benim İçin/W2W) ve olmayan (Randevularım) sekmelerin
-      // başlıkları aynı hizada başlasın.
-      minHeight: 52,
     },
-    textCol: { flex: 1, minWidth: 0 },
+    subtitle: { marginBottom: 2 },
     title: {
       fontSize: 34,
       lineHeight: 40,
       fontFamily: font.semibold,
       letterSpacing: -0.8,
-      marginTop: 3,
+      // Başlık daralabilir ama düğmeyi ezmez; düğme kendi boyunda kalır.
+      flexShrink: 1,
+      minWidth: 0,
     },
   });
