@@ -32,6 +32,12 @@ export class CircleController {
     return this.circle.createPost(req.user?.id, req.user?.role, body);
   }
 
+  /** §14 — bir sorunun cevaplarındaki fikir birliği: kimi kaç kişi önerdi. */
+  @Get('posts/:id/consensus')
+  consensus(@Param('id') id: string) {
+    return this.circle.consensus(id);
+  }
+
   @Post('posts/:id/comments')
   @UseGuards(JwtAuthGuard)
   comment(
