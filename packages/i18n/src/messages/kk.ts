@@ -869,6 +869,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'auth.error.network': 'Байланыс қатесі — интернетіңді тексер',
   'auth.error.rate_limited': 'Тым көп әрекет жасалды — 1 минут күтіп, қайта көріңіз',
   'auth.error.bad': 'Электрондық пошта/телефон немесе құпия сөз қате',
+  'auth.login.hint_id':
+    'Телефон кемінде 10 сан болуы керек (мыс. +7 700 123 45 67) немесе email енгізіңіз',
+  'auth.login.hint_pw': 'Құпиясөз кемінде 6 таңба',
   'auth.login.forgot': 'Құпия сөзді ұмыттым',
   'auth.login.subtitle': 'Телефоның мен құпия сөзіңмен кір',
   'auth.login.reset_sent': 'Тіркелген телефоныңа қалпына келтіру кодын жібердік.',
@@ -1855,6 +1858,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'rewards.redeem.cost': 'ұпай',
   'rewards.redeem.use': 'Пайдалану',
   'rewards.redeem.confirm': 'Осы сыйлықты пайдаланғыңыз келе ме?',
+  'rewards.redeem.confirm_b': '{cost} ұпай жұмсалады · {title}',
   'rewards.redeem.success': 'Сыйлық пайдаланылды',
   'rewards.redeem.insufficient': 'Ұпайыңыз жеткіліксіз',
   'rewards.ledger.title': 'Ұпай тарихы',

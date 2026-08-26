@@ -184,11 +184,8 @@ export default function ProfessionalScreen() {
   // Tarih/saat detay sayfasında seçildi → doğrudan randevu oluştur (ayrı adım yok).
   // Sıra/tek-randevu kısıtı KALDIRILDI — kullanıcı dilediği kadar uzmandan randevu/teklif alabilir.
   const book = () => {
-    // §4.2 — saat seçilmeden ve dolu slota randevu OLUŞTURULMAZ (çifte iş biter)
-    if (slotMs == null) {
-      Alert.alert(t('booking.schedule.time'), t('booking.schedule.pick_slot'));
-      return;
-    }
+    // §4.2 — saat seçilmeden randevu OLUŞTURULMAZ (buton pasif — buraya düşmez, güvenlik ağı)
+    if (slotMs == null) return;
     if (slotBusy) {
       Alert.alert(t('booking.schedule.time'), t('booking.schedule.busy_conflict'));
       return;
@@ -216,6 +213,9 @@ export default function ProfessionalScreen() {
         source: 'direct',
         slot: formatSlotTr(startMs),
         uzmanName: uzman?.name ?? '',
+        // Polish 1.1 — onay ekranı SEÇİLEN hizmeti ve gerçek toplamı göstersin
+        service: svcNames,
+        price: String(totalPrice || Number(pro.priceFrom)),
       },
     });
   };
@@ -742,6 +742,13 @@ export default function ProfessionalScreen() {
       </ScrollView>
 
       {/* CTA — coral Randevu Al */}
+      {slotMs == null && tab === 'booking' ? (
+        <View style={styles.bookHintWrap} pointerEvents="none">
+          <Text variant="caption" tone="muted">
+            {t('booking.schedule.pick_slot')}
+          </Text>
+        </View>
+      ) : null}
       <View style={[styles.cta, { paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }]}>
         {/* §5.5 — Takip et: karşılıklı takip serbest DM açar. Yalnız gerçek uzmanda. */}
         {pro.ownerUserId && token ? (
@@ -762,7 +769,13 @@ export default function ProfessionalScreen() {
             <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.inkSoft} />
           </Pressable>
         ) : null}
-        <Pressable style={styles.bookBtn} onPress={book}>
+        <Pressable
+          style={[styles.bookBtn, slotMs == null && styles.bookBtnDisabled]}
+          onPress={book}
+          disabled={slotMs == null}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: slotMs == null }}
+        >
           <Text variant="bodyStrong" tone="onAccent">
             {t('pro.book')}
             {chosen.length > 1 ? ` · ${chosen.length} ${t('pro.services_short')}` : ''}
@@ -939,6 +952,8 @@ const makeStyles = (colors: ColorTokens) =>
     slotChipOn: { backgroundColor: colors.accent },
     slotBusyText: { color: colors.danger },
     busyFreeHint: { marginTop: space(1), marginLeft: space(0.5) },
+    bookBtnDisabled: { opacity: 0.45 },
+    bookHintWrap: { alignItems: 'center', paddingBottom: space(0.75) },
     service: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -322,7 +322,7 @@ export default function OfflineBookingScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Button label={busy ? '…' : t('offline.save')} onPress={save} disabled={!canSave} />
+          <Button label={t('offline.save')} loading={busy} onPress={save} disabled={!canSave} />
         </View>
       </ScrollView>
     </Screen>

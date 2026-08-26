@@ -8,7 +8,7 @@ import {
   REWARDS,
   type Reward,
 } from '../src/data';
-import { useLocale } from '../src/locale';
+import { fillParams, useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -59,16 +59,21 @@ export default function RewardsScreen() {
   const isMaxTier = tier?.next == null;
 
   const onRedeem = (r: Reward) => {
-    Alert.alert(t('rewards.redeem.confirm'), undefined, [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.continue'),
-        onPress: async () => {
-          if (await redeem(r)) Alert.alert(t('rewards.redeem.success'));
-          else Alert.alert(t('rewards.redeem.insufficient'));
+    // Polish 1.5 — harcama tutarı onay diyaloğunda GÖRÜNÜR (kaç puan, ne için)
+    Alert.alert(
+      t('rewards.redeem.confirm'),
+      fillParams(t('rewards.redeem.confirm_b'), { cost: String(r.cost), title: t(r.titleKey) }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.continue'),
+          onPress: async () => {
+            if (await redeem(r)) Alert.alert(t('rewards.redeem.success'));
+            else Alert.alert(t('rewards.redeem.insufficient'));
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (

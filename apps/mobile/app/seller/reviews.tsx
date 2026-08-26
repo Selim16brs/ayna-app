@@ -168,7 +168,8 @@ function ReviewRow({
             multiline
           />
           <Button
-            label={busy ? '…' : t('seller.reviews.send')}
+            label={t('seller.reviews.send')}
+            loading={busy}
             onPress={send}
             disabled={busy || !text.trim()}
           />
