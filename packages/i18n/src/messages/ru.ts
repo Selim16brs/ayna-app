@@ -1730,6 +1730,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'circle.consensus.of': 'из {n}',
   'circle.consensus.rule':
     'Считаются только те, у кого была завершённая запись к этому мастеру. «Слышала, что хорошая» не считается.',
+  'circle.suggest.verified': 'была у неё',
   'circle.suggest.title': 'Посоветовать мастера',
   'circle.suggest.none': 'Чтобы советовать, нужна хотя бы одна завершённая запись.',
   'circle.suggest.clear': 'Убрать',

@@ -111,11 +111,16 @@ function ThemedStack() {
   const role = currentUser?.role;
   const isSalon = role === 'salon';
   const isExpert = role === 'professional';
+  // Alt bar GLOBAL. Ekranın en altına sabit bir yazma alanı koyan sayfalarda
+  // (sohbet, W2W yorum) barın altında kalıyor ve kullanıcı mesaj yazamıyordu.
+  // Bu ekranlar zaten yığın (stack) sayfası; kendi geri butonları var.
+  const composerScreen = /^\/messages\/[^/]+$/.test(pathname) || /^\/circle\/[^/]+$/.test(pathname);
   const baseHidden =
     !currentUser ||
     pathname === '/' ||
     pathname.startsWith('/auth') ||
-    pathname.startsWith('/language');
+    pathname.startsWith('/language') ||
+    composerScreen;
 
   return (
     <>

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { type CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { api, type CircleCommentRow } from '../../src/api';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
@@ -51,6 +52,30 @@ export default function PostDetailScreen() {
     return [...seen.entries()].map(([id, name]) => ({ id, name }));
   });
   const [suggestPro, setSuggestPro] = useState<string | null>(null);
+  // Yorumlar SUNUCUDAN okunuyor. Daha önce yalnız yerel kopya gösteriliyordu:
+  // A kullanıcısı yazıyor, B sayacın arttığını görüyor ama yorumu okuyamıyordu.
+  // (Okuma ucu PR #18 ile eklendi.)
+  const [remote, setRemote] = useState<CircleCommentRow[] | null>(null);
+  const loadComments = useCallback(() => {
+    if (!id) return;
+    void api
+      .circleComments(id)
+      .then(setRemote)
+      .catch(() => undefined);
+  }, [id]);
+  useFocusEffect(loadComments);
+  // Sunucu listesi geldiyse ONU göster (herkesin yorumu). Gelmediyse yerel
+  // kopyaya düş — çevrimdışıyken ekran boş kalmasın.
+  const shownComments: CircleCommentRow[] =
+    remote ??
+    (post?.comments ?? []).map((c) => ({
+      id: c.id,
+      authorLabel: c.anonymous ? t('circle.verified') : c.author,
+      text: c.text,
+      proId: null,
+      proVerified: false,
+      createdAt: '',
+    }));
 
   // §5.5 — şikâyet: içerik görünür kalır, admin kuyruğuna düşer
   const onReport = () => {
@@ -82,6 +107,9 @@ export default function PostDetailScreen() {
     addComment(post.id, draft.trim(), false, suggestPro ?? undefined);
     setDraft('');
     setSuggestPro(null);
+    // Sunucu doğrulamayı (proVerified) yazma anında yapıyor; listeyi tazeleyip
+    // gerçek sonucu gösteriyoruz — yerel tahmin uydurmuyoruz.
+    setTimeout(loadComments, 600);
   };
 
   return (
@@ -186,7 +214,7 @@ export default function PostDetailScreen() {
           {/* §14 — yedi yorumu okumak yerine "kimi kaç kişi önerdi" tek kartta */}
           {id ? <ConsensusCard postId={id} /> : null}
 
-          {post.comments.length === 0 ? (
+          {shownComments.length === 0 ? (
             <View style={[styles.noComments, shadow.soft]}>
               <View style={styles.noCommentsIcon}>
                 <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.inkSoft} />
@@ -197,21 +225,28 @@ export default function PostDetailScreen() {
             </View>
           ) : (
             <View style={styles.comments}>
-              {post.comments.map((c) => (
+              {shownComments.map((c) => (
                 <View key={c.id} style={[styles.comment, shadow.soft]}>
                   <View style={styles.commentAvatar}>
-                    {c.anonymous ? (
-                      <Ionicons name="shield-checkmark" size={14} color={colors.accentFg} />
-                    ) : (
-                      <Text variant="caption" tone="accentFg">
-                        {c.author.charAt(0)}
-                      </Text>
-                    )}
+                    <Ionicons name="shield-checkmark" size={14} color={colors.accentFg} />
                   </View>
                   <View style={styles.commentBody}>
-                    <Text variant="caption" tone="ink" style={styles.commentAuthor}>
-                      {c.anonymous ? t('circle.verified') : c.author}
-                    </Text>
+                    <View style={styles.commentHead}>
+                      <Text variant="caption" tone="ink" style={styles.commentAuthor}>
+                        {c.authorLabel}
+                      </Text>
+                      {/* §15 — öneri DOĞRULANMIŞSA rozet: öneren o uzmanda gerçekten
+                          hizmet almış. Doğrulanmamış öneri rozetsiz kalır ve fikir
+                          birliği sayımına da girmez. */}
+                      {c.proVerified ? (
+                        <View style={styles.verifiedTag}>
+                          <Ionicons name="checkmark-circle" size={11} color={colors.success} />
+                          <Text variant="micro" style={{ color: colors.success }}>
+                            {t('circle.suggest.verified')}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
                     <Text variant="body" tone="inkSoft" style={styles.commentText}>
                       {c.text}
                     </Text>
@@ -360,6 +395,8 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     commentBody: { flex: 1 },
+    commentHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), flexWrap: 'wrap' },
+    verifiedTag: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     commentAuthor: { fontFamily: font.semibold },
     commentText: { marginTop: 3, lineHeight: 22 },
     suggestRow: { paddingHorizontal: space(3), paddingTop: space(1), gap: space(0.75) },

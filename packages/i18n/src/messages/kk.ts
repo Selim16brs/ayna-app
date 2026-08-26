@@ -1746,6 +1746,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'circle.consensus.of': '{n} адамның',
   'circle.consensus.rule':
     'Тек сол маманда аяқталған жазылуы барлар саналады. «Естідім, жақсы екен» саналмайды.',
+  'circle.suggest.verified': 'барған',
   'circle.suggest.title': 'Маман ұсын',
   'circle.suggest.none': 'Ұсыныс жасау үшін алдымен бір жазылуың аяқталуы керек.',
   'circle.suggest.clear': 'Алып тастау',

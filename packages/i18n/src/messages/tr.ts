@@ -1836,6 +1836,7 @@ export const tr = {
   'circle.consensus.of': '{n} kişiden',
   'circle.consensus.rule':
     'Yalnız o uzmanda tamamlanmış randevusu olanlar sayılır. “Duydum ki iyiymiş” sayılmaz.',
+  'circle.suggest.verified': 'gitmiş',
   'circle.suggest.title': 'Bir uzman öner',
   'circle.suggest.none': 'Öneri yapabilmen için önce bir randevunun tamamlanmış olması gerekiyor.',
   'circle.suggest.clear': 'Öneriyi kaldır',
