@@ -38,6 +38,11 @@ export class CircleController {
     return this.circle.consensus(id);
   }
 
+  @Get('posts/:id/comments')
+  comments(@Param('id') id: string) {
+    return this.circle.listComments(id);
+  }
+
   @Post('posts/:id/comments')
   @UseGuards(JwtAuthGuard)
   comment(
