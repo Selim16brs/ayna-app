@@ -9,8 +9,23 @@ import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
 /**
- * Alt sayfa başlığı — Keşfet tasarım dili: lime hero bant, beyaz yuvarlak geri butonu,
- * dev başlık, alt köşeler yuvarlak. Üst güvenli alanı kendisi ekler (Screen edges={[]}).
+ * Alt sayfa başlığı — KANVAS kalıbı (design/*.dc.html).
+ *
+ * Burada MOR BİR BANT vardı: accent zeminli, alt köşeleri yuvarlatılmış, 28pt
+ * beyaz başlıklı bir hero. Kanvasların HİÇBİRİNDE böyle bir öğe yok — Randevu,
+ * Puanlar, Teklifler, Yorumlar, Gizlilik, Boni ve Mesajlar artboard'larının
+ * tamamı aynı kalıbı kullanıyor:
+ *
+ *     20px üst boşluk · 44×44 beyaz kart çip (geri) · 24px KOYU başlık ·
+ *     14px soluk alt başlık · sayfa zemini (#FBF8F6)
+ *
+ * Bant 73 alt ekranda ortaktı, yani "alt ekranlar hiç değişmedi" şikâyetinin
+ * tek kaynağı buydu. Tek yerde düzeltiliyor.
+ *
+ * Yan fayda: durum çubuğu yazısı açık temada KOYU (app/_layout.tsx). Mor bandın
+ * üstünde koyu saat/pil okunmuyordu; açık zeminde doğru kontrasta kavuşuyor.
+ *
+ * Üst güvenli alanı kendisi ekler (Screen edges={[]}).
  */
 export function StackHeader({
   title,
@@ -26,7 +41,7 @@ export function StackHeader({
 }) {
   const { t } = useLocale();
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, shadow } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useThemedStyles(makeStyles);
   const goBack = () => {
@@ -34,29 +49,32 @@ export function StackHeader({
     else router.replace('/discover');
   };
   return (
-    <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
-      <View style={styles.topRow}>
-        <Pressable
-          style={styles.back}
-          onPress={goBack}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.back')}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.ink} />
-        </Pressable>
-        {right ?? null}
+    <View style={[styles.hero, { paddingTop: insets.top + space(2.5) }]}>
+      <Pressable
+        style={[styles.back, shadow.soft]}
+        onPress={goBack}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.back')}
+      >
+        <Ionicons name="chevron-back" size={19} color={colors.ink} />
+      </Pressable>
+      {/* Başlık kutusu DARALABİLİR: uzun başlık geri çipini ya da sağdaki
+          eylemi ekran dışına itmesin. heroImage MUTLAK konumlu (akış dışı),
+          o yüzden başlığın altına girmesin diye sağdan yer bırakılır. */}
+      <View style={[styles.texts, heroImage ? styles.textsWithHero : null]}>
+        {title ? (
+          <Text variant="display" tone="ink" numberOfLines={1} style={styles.title}>
+            {title}
+          </Text>
+        ) : null}
+        {subtitle ? (
+          <Text variant="caption" tone="muted" numberOfLines={1}>
+            {subtitle}
+          </Text>
+        ) : null}
       </View>
-      {title ? (
-        <Text variant="display" tone="onAccent" numberOfLines={1} style={styles.title}>
-          {title}
-        </Text>
-      ) : null}
-      {subtitle ? (
-        <Text variant="caption" tone="onAccent" numberOfLines={1} style={styles.subtitle}>
-          {subtitle}
-        </Text>
-      ) : null}
+      {right ?? null}
       {heroImage ? <View style={styles.heroImageWrap}>{heroImage}</View> : null}
     </View>
   );
@@ -65,31 +83,31 @@ export function StackHeader({
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     hero: {
-      backgroundColor: colors.accent,
-      paddingHorizontal: space(3),
-      paddingBottom: space(2.5),
-      borderBottomLeftRadius: radius.xl,
-      borderBottomRightRadius: radius.xl,
+      backgroundColor: colors.bg,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      paddingHorizontal: space(2.5),
+      paddingBottom: space(1.75),
       position: 'relative',
-      overflow: 'hidden', // bant-altı görsel alt kenarda biter (taşan kısım kırpılır)
+      overflow: 'hidden', // heroImage kullanan ekranda taşan kısım kırpılır
     },
-    // Bandın SAĞ ALTI — görselin alt kenarı bantla aynı hizada biter
+    // Başlığın SAĞ ALTI — görselin alt kenarı başlıkla aynı hizada biter
     heroImageWrap: { position: 'absolute', right: 0, bottom: 0, zIndex: 1 },
-    topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     back: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: radius.xs,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.surface,
     },
+    texts: { flexGrow: 1, flexShrink: 1, minWidth: 0, gap: 1 },
+    textsWithHero: { paddingRight: 92 },
     title: {
-      fontSize: 28,
-      lineHeight: 32,
+      fontSize: 24,
+      lineHeight: 28,
       fontFamily: font.semibold,
-      letterSpacing: -0.5,
-      marginTop: space(1.5),
+      letterSpacing: -0.4,
     },
-    subtitle: { marginTop: 2, opacity: 0.6 },
   });
