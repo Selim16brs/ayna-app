@@ -143,6 +143,40 @@ export class AuthService {
 
   // §5.1.1 — kesik portreyi hesaba yaz (bir kez üretilir, hep hesapla gezer)
   // §5.6 — favoriler + adresler hesapta yaşar (cihaz/yeniden giriş kaybetmez)
+  /**
+   * §4 — müşteri kendi adını/şehrini günceller.
+   *
+   * Böyle bir uç YOKTU: mobil `updateMyProfile` yalnız yerel store'u
+   * güncelliyordu. Kullanıcı adını değiştiriyor, kaydediyor, uygulamayı
+   * yeniden açtığında SUNUCUDAKİ ESKİ AD geri geliyordu — düzenleme
+   * kaybolmuş gibi görünüyordu.
+   */
+  async updateProfile(userId: string, patch: { name?: string; city?: string }) {
+    const data: { name?: string; city?: string } = {};
+    // Boş ada izin verilmez: Keşfet ve randevu kartları isimle çiziliyor.
+    const name = patch.name?.trim();
+    if (name) data.name = name.slice(0, 80);
+    const city = patch.city?.trim();
+    if (city !== undefined) data.city = city.slice(0, 60);
+    if (Object.keys(data).length === 0) return this.me(userId);
+
+    const updated = await this.prisma.user.update({ where: { id: userId }, data });
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: userId,
+          actorRole: 'user',
+          action: 'profile.update',
+          resourceType: 'user',
+          resourceId: userId,
+          // PII yazılmaz — yalnız HANGİ alanların değiştiği.
+          safeDiff: { fields: Object.keys(data) },
+        },
+      })
+      .catch(() => undefined);
+    return this.safe(updated);
+  }
+
   async setPrefs(
     userId: string,
     prefs: { favorites?: string[]; addresses?: unknown[]; locale?: string },

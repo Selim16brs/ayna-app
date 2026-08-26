@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import {
@@ -11,6 +11,8 @@ import {
   View,
 } from 'react-native';
 import { type CirclePostType } from '../../src/data';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useKeyboardShown } from '../../src/keyboard';
 import { useLocale } from '../../src/locale';
 import { api, type CircleCommentRow } from '../../src/api';
 import { useStore } from '../../src/store';
@@ -33,6 +35,8 @@ export default function PostDetailScreen() {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const klavyeAcik = useKeyboardShown();
+  const insets = useSafeAreaInsets();
   const post = useStore((s) => s.circlePosts.find((p) => p.id === id));
   const toggleHelpful = useStore((s) => s.toggleHelpful);
   const addComment = useStore((s) => s.addComment);
@@ -44,13 +48,21 @@ export default function PostDetailScreen() {
   // §15 — Öneri seçicide YALNIZ gerçekten gidilmiş uzmanlar var. Böylece
   // sunucudaki doğrulama yapısı gereği tutuyor ve kural kullanıcıya
   // seçenekleri üzerinden öğretilmiş oluyor: gitmediğini öneremezsin.
-  const visitedPros = useStore((st) => {
+  // ÇÖKME SEBEBİ: bu seçici her çağrıda YENİ DİZİ döndürüyordu. Zustand
+  // useSyncExternalStore kullanıyor; referans her okumada değişince React
+  // "getSnapshot should be cached" sonsuz döngüsüne giriyor ve ekran açılır
+  // açılmaz uygulama kapanıyordu.
+  //
+  // Kural (discover.tsx'te de yazılı): seçici HAM veriyi seçer, türetme
+  // useMemo ile yapılır.
+  const bookings = useStore((st) => st.bookings);
+  const visitedPros = useMemo(() => {
     const seen = new Map<string, string>();
-    for (const b of st.bookings) {
+    for (const b of bookings) {
       if (b.status === 'completed' && b.proId) seen.set(b.proId, b.uzmanName ?? b.proName);
     }
-    return [...seen.entries()].map(([id, name]) => ({ id, name }));
-  });
+    return [...seen.entries()].map(([proId, name]) => ({ id: proId, name }));
+  }, [bookings]);
   const [suggestPro, setSuggestPro] = useState<string | null>(null);
   // Yorumlar SUNUCUDAN okunuyor. Daha önce yalnız yerel kopya gösteriliyordu:
   // A kullanıcısı yazıyor, B sayacın arttığını görüyor ama yorumu okuyamıyordu.
@@ -118,7 +130,10 @@ export default function PostDetailScreen() {
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={90}
+        // Sabit 90 yanlıştı: bu değer klavyenin ÜSTÜNE fazladan 90pt boşluk
+        // ekliyor, yazma alanını havada bırakıyordu. KeyboardAvoidingView
+        // başlığın altından ekran altına kadar uzandığı için doğru değer 0.
+        keyboardVerticalOffset={0}
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Gönderi kartı — kenarlıksız, yumuşak gölge */}
@@ -287,7 +302,12 @@ export default function PostDetailScreen() {
         ) : null}
 
         {/* Yorum yaz */}
-        <View style={styles.composer}>
+        <View
+          style={[
+            styles.composer,
+            { paddingBottom: klavyeAcik ? space(1.5) : insets.bottom + space(1) },
+          ]}
+        >
           <TextInput
             value={draft}
             onChangeText={setDraft}

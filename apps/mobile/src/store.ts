@@ -763,8 +763,30 @@ export const useStore = create<State>()(
 
       // §9.5 — MÜŞTERİ profil güncelleme: anında uygulanır (currentUser persist edilir).
       // Salon/uzman DEĞİL — onların değişikliği admin onayına gider (submitProfileChange).
-      updateMyProfile: (patch) =>
-        set((s) => (s.currentUser ? { currentUser: { ...s.currentUser, ...patch } } : {})),
+      updateMyProfile: (patch) => {
+        // Yerel önce: kullanıcı değişikliği ANINDA görsün.
+        set((s) => (s.currentUser ? { currentUser: { ...s.currentUser, ...patch } } : {}));
+        // SUNUCUYA DA YAZ. Eskiden yalnız yerel güncelleniyordu; uygulama
+        // yeniden açılınca hydrate sunucudaki eski adı geri getiriyor ve
+        // düzenleme kaybolmuş görünüyordu.
+        const token = get().token;
+        if (!token) return;
+        const gonder: { name?: string; city?: string } = {};
+        if (typeof patch.name === 'string') gonder.name = patch.name;
+        if (typeof patch.city === 'string') gonder.city = patch.city;
+        if (Object.keys(gonder).length === 0) return;
+        void api
+          .updateMyProfileRemote(token, gonder)
+          // Sunucu reddederse yereli SUNUCU GERÇEĞİNE çek — UI yalan durumda kalmaz.
+          .then((u) => set({ currentUser: u }))
+          .catch(() => {
+            // Yazma başarısızsa yereli sunucudakiyle değiştir.
+            void api
+              .me(token)
+              .then((u) => set({ currentUser: u }))
+              .catch(() => undefined);
+          });
+      },
 
       // §profil-onay — SALON/UZMAN değişikliğini admin onay kuyruğuna gönderir (yerelde UYGULANMAZ)
       submitProfileChange: async (changes) => {

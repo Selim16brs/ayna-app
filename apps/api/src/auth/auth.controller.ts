@@ -58,6 +58,17 @@ export class AuthController {
     return this.auth.me(req.user!.id);
   }
 
+  // §4 — müşteri adı/şehri. Bu uç YOKTU; düzenleme yalnız cihazda kalıyor ve
+  // uygulama yeniden açılınca sunucudaki eski değer geri geliyordu.
+  @Post('me/profile')
+  @UseGuards(JwtAuthGuard)
+  updateProfile(@Req() req: AuthedRequest, @Body() body: { name?: string; city?: string }) {
+    return this.auth.updateProfile(req.user!.id, {
+      ...(typeof body?.name === 'string' ? { name: body.name } : {}),
+      ...(typeof body?.city === 'string' ? { city: body.city } : {}),
+    });
+  }
+
   // §5.6 — favoriler + adresler hesapta (cihaz değişse de kaybolmaz)
   @Post('me/prefs')
   @UseGuards(JwtAuthGuard)

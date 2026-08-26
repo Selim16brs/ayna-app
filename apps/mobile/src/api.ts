@@ -714,6 +714,10 @@ export const api = {
     post<{ dataUrl: string }>('/cutout', source, token),
   // §12.3 — güncel kullanıcı (kısıt durumu tazelemek için)
   me: (token: string) => get<AuthUser>('/auth/me', token),
+  // §4 — ad/şehir sunucuya yazılır. Eskiden yalnız yerel store güncelleniyordu
+  // ve uygulama yeniden açılınca sunucudaki eski değer geri geliyordu.
+  updateMyProfileRemote: (token: string, patch: { name?: string; city?: string }) =>
+    post<AuthUser>('/auth/me/profile', patch, token),
   setAvatar: (token: string, photoDataUrl: string | null) =>
     post<AuthUser>('/auth/me/avatar', { photoDataUrl }, token),
   myServices: () =>
