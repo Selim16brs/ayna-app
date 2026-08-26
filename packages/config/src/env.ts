@@ -20,6 +20,18 @@ export const envSchema = z.object({
   JWT_REFRESH_TTL: z.coerce.number().int().positive().default(2_592_000),
 
   FIELD_ENCRYPTION_KEY: z.string().min(16),
+  /**
+   * Yönetici şifresi KURTARMA yolu.
+   *
+   * Panel girişi kilitlendiğinde (şifre kayboldu/bozuldu) yönetici hesabını
+   * yeniden kurmanın tek yolu veritabanına doğrudan erişimdi. Bu değişken
+   * ayarlıysa API açılışta `admin@ayna.kz` hesabını bu şifreyle kurar/günceller.
+   *
+   * GÜVENLİK: yalnız ortam değişkenini ayarlayabilen (yani zaten sunucuya sahip
+   * olan) biri kullanabilir; dışarıya AÇILAN BİR UÇ YOK. En az 12 karakter.
+   * İş bitince değişkeni SİL — bırakılırsa her dağıtımda şifre bu değere döner.
+   */
+  ADMIN_BOOTSTRAP_PASSWORD: z.string().min(12).optional(),
 
   PAYMENT_PROVIDER: z.enum(['mock']).default('mock'),
   SMS_PROVIDER: z.enum(['mock']).default('mock'),
