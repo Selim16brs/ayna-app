@@ -652,7 +652,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'circle.follow': 'Подписаться',
   'circle.following': 'Вы подписаны',
   'circle.subtitle': 'Настоящие советы от женщины к женщине',
-  'circle.ask': 'Спросить совет',
+  'circle.ask': 'Спросить или поделиться',
   'circle.type.recommend': 'Рекомендую',
   'circle.type.asking': 'Ищу совет',
   'circle.type.experience': 'Мой опыт',

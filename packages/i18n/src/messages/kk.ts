@@ -667,7 +667,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'circle.follow': 'Тіркелу',
   'circle.following': 'Тіркелдіңіз',
   'circle.subtitle': 'Әйелден әйелге нағыз кеңестер',
-  'circle.ask': 'Кеңес сұрау',
+  'circle.ask': 'Сұра не бөліс',
   'circle.type.recommend': 'Ұсынамын',
   'circle.type.asking': 'Кеңес іздеймін',
   'circle.type.experience': 'Тәжірибем',

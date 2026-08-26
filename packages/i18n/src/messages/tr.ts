@@ -715,7 +715,9 @@ export const tr = {
   'circle.follow': 'Takip Et',
   'circle.following': 'Takip Ediliyor',
   'circle.subtitle': 'Kadından kadına gerçek tavsiyeler',
-  'circle.ask': 'Tavsiye iste',
+  // W2W tek yönlü değil: kullanıcı hem sorar hem önerir hem deneyim paylaşır.
+  // Buton üç türü birden açtığı için etiket de genel olmalı.
+  'circle.ask': 'Sor ya da paylaş',
   'circle.type.recommend': 'Öneriyorum',
   'circle.type.asking': 'Tavsiye arıyorum',
   'circle.type.experience': 'Deneyimim',
