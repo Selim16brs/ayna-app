@@ -318,7 +318,9 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     bellBadgeText: {
-      color: '#FFFFFF',
+      // Rozet zemini sabit gül (#D97798) — üstünde KOYU yazı her iki temada
+      // da okunur; beyaz yazı 1.9:1 ile okunmuyordu.
+      color: '#261F25',
       fontSize: 10,
       lineHeight: 12,
       fontFamily: font.semibold,

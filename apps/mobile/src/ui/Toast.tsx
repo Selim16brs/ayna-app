@@ -48,7 +48,7 @@ function Toast({ message }: { message: string | null }) {
       pointerEvents="none"
       accessibilityLiveRegion="polite"
     >
-      <Text variant="caption" tone="onColor" style={styles.text}>
+      <Text variant="caption" tone="onInverse" style={styles.text}>
         {message}
       </Text>
     </Animated.View>
@@ -62,7 +62,7 @@ const makeStyles = (colors: ColorTokens) =>
       left: space(3),
       right: space(3),
       bottom: space(5),
-      backgroundColor: colors.ink,
+      backgroundColor: colors.inverse,
       borderRadius: radius.md,
       paddingVertical: space(1.5),
       paddingHorizontal: space(2),

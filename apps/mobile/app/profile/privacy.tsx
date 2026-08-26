@@ -255,14 +255,14 @@ const makeStyles = (colors: ColorTokens) =>
     },
     subtitle: { marginBottom: space(2.5) },
     promise: {
-      backgroundColor: colors.ink,
+      backgroundColor: colors.inverse,
       borderRadius: radius.xl,
       padding: space(2.5),
       gap: space(1.25),
       marginBottom: space(2.5),
     },
-    promiseTitle: { color: colors.bg },
-    promiseBody: { color: colors.muted },
+    promiseTitle: { color: colors.onInverse },
+    promiseBody: { color: colors.onInverseMuted },
     list: { paddingVertical: space(1.5), gap: space(1.5) },
     listRow: {
       flexDirection: 'row',

@@ -722,7 +722,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    pendingBadgeText: { color: '#FFFFFF', fontSize: 11, fontFamily: font.semibold },
+    pendingBadgeText: { color: colors.onAccent, fontSize: 11, fontFamily: font.semibold },
     pendingCard: {
       flexDirection: 'row',
       alignItems: 'center',
