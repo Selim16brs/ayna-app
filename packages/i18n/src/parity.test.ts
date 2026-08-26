@@ -2,13 +2,32 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { kk, ru, tr } from './index.js';
 
-// tr KAYNAK dildir ve eksiksiz olmalı. kk/ru alt küme olabilir (eksikler tr'ye düşer),
-// fakat tr'de OLMAYAN bir anahtar içeremezler (yetim çeviri = hata).
+// tr KAYNAK dildir ve eksiksiz olmalı; kk/ru onunla BİREBİR aynı anahtar kümesine
+// sahip olmalı (CLAUDE.md: "kk/ru parite testi 3 dili senkron tutar").
+//
+// Bu test eskiden yalnız TEK YÖN denetliyordu — "kk/ru'da olup tr'de olmayan"
+// yetim anahtar. Eksik yönü "alt küme olabilir, eksikler tr'ye düşer" diye
+// gerekçelendirmiştim. Geri düşüş hatayı çözmüyor, GİZLİYOR: uzman doğrulama
+// ekranının 17 anahtarı ru'ya hiç eklenmemişti ve Rus uzman ekranı baştan sona
+// Türkçe görüyordu. Çökme yok, uyarı yok — kk %100 tamdı, yani politika değil
+// unutulmuş bir çeviriydi. ru + kk birincil pazar dilleri; eksik olan hata.
 const trKeys = new Set(Object.keys(tr));
 
 test('kk/ru yalnızca tr içinde var olan anahtarları içerir', () => {
   for (const k of Object.keys(kk)) assert.ok(trKeys.has(k), `kk yetim anahtar: ${k}`);
   for (const k of Object.keys(ru)) assert.ok(trKeys.has(k), `ru yetim anahtar: ${k}`);
+});
+
+test('her tr anahtarının kk ve ru karşılığı var', () => {
+  for (const [ad, sozluk] of Object.entries({ kk, ru })) {
+    const eksik = Object.keys(tr).filter((k) => !(k in sozluk));
+    assert.deepEqual(
+      eksik,
+      [],
+      `${ad} çevirisi eksik (${eksik.length}) — kullanıcı bu ekranı Türkçe görür:\n  ` +
+        eksik.join('\n  '),
+    );
+  }
 });
 
 test('hiçbir çeviri boş değil', () => {
