@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Elle tetikleme: pull_request olayı GitHub tarafında düştüğünde (26 Ağustos
+  # 2026'da olduğu gibi PR açılıyor ama kontrol paketi hiç oluşmuyor) dalı
+  # doğrulamanın bir yolu olmalı. Aksi hâlde "yeşil mi" sorusunun cevabı
+  # yalnızca yerel çalıştırmaya kalıyor.
+  workflow_dispatch:
 
 jobs:
   build:
