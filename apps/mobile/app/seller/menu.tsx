@@ -199,12 +199,13 @@ export default function SellerMenuScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    // Ortak StackHeader'ın mor bandının elle kopyalanmış hâliydi; üstelik
+    // yazı KOYU olduğu için mor zeminde okunmuyordu. Kanvas kalıbı: sayfa
+    // zemini + koyu başlık.
     header: {
-      backgroundColor: colors.accent,
-      paddingHorizontal: space(3),
-      paddingBottom: space(2.5),
-      borderBottomLeftRadius: radius.xl,
-      borderBottomRightRadius: radius.xl,
+      backgroundColor: colors.bg,
+      paddingHorizontal: space(2.5),
+      paddingBottom: space(1.75),
     },
     headerTitle: {
       fontSize: 30,
