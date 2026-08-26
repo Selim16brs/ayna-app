@@ -106,3 +106,37 @@ test('taramanın kendisi boşuna geçmiyor', () => {
   });
   assert.ok(bakilan.length >= 40, `yalnız ${bakilan.length} ekran taranıyor — tarama daralmış`);
 });
+
+/**
+ * SABİT ALT ŞERİTLER de barı aşmalı.
+ *
+ * Kaydırma içeriğine boşluk vermek YETMEZ: ekranın altında sabit bir eylem
+ * şeridi varsa (Paylaş düğmesi, dekont yükle) barı AŞMASI GEREKEN odur.
+ * `seller/share` tam bu yüzden bozuktu — boşluk kaydırma kabına konmuştu,
+ * düğme yine barın altında kalıyordu.
+ */
+test('kaydırmadan sonra gelen sabit şeritler barı aşıyor', () => {
+  const ihlal: string[] = [];
+  for (const rel of ekranlar()) {
+    if (MENUSUZ.some((r) => r.test(rel)) || TAM_EKRAN.some((r) => r.test(rel))) continue;
+    const src = readFileSync(join(appKok, rel), 'utf8');
+    // </ScrollView> hemen ardından gelen ve ADI eylem şeridi olan kap.
+    const m =
+      /<\/ScrollView>\s*\n\s*<View style=\{(?:\[)?styles\.(actions|footer|bottomBar|cta)\b/.exec(
+        src,
+      );
+    if (!m) continue;
+    const ad = m[1];
+    // Satır içi hesaplı boşluk da geçerli (ör. insets.bottom + CLEARANCE).
+    if (new RegExp(`styles\\.${ad}[^\\n]*TAB_BAR_CLEARANCE`).test(src)) continue;
+    const sm = new RegExp(`    ${ad}: \\{[\\s\\S]*?\\n    \\},`).exec(src);
+    if (sm && /paddingBottom:[^,}\n]*TAB_BAR_CLEARANCE/.test(sm[0])) continue;
+    ihlal.push(`${rel} (styles.${ad})`);
+  }
+  assert.deepEqual(
+    ihlal,
+    [],
+    `Sabit alt şerit barın altında kalıyor:\n  ${ihlal.join('\n  ')}\n` +
+      'Şeridin paddingBottom değeri TAB_BAR_CLEARANCE içermeli.',
+  );
+});
