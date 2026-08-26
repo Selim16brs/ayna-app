@@ -762,6 +762,29 @@ export const api = {
     post<{ id: string; status: string; moderationReason: string }>('/circle/posts', input, token),
   reportCirclePost: (token: string, id: string, reason?: string) =>
     post<{ reports: number; hidden: boolean }>(`/circle/posts/${id}/report`, { reason }, token),
+  // §21 — Kullanıcı şikâyeti. ŞİKÂYET EDİLEN BUNU GÖREMEZ: sunucuda hedefe dönen
+  // ne bildirim ne okuma ucu var. Misilleme korkusu, şikâyetin önündeki asıl engel.
+  reportUser: (
+    token: string,
+    input: { targetId: string; reason: string; note?: string; threadId?: string },
+  ) => post<{ id: string; deduped: boolean }>('/reports', input, token),
+
+  // §19 — AYNA Passport: alerjiler + tercihler + erişim kaydı
+  passport: (token: string) => get<PassportData>('/passport', token),
+  savePassport: (token: string, input: Partial<PassportData>) =>
+    post<PassportData>('/passport', input, token),
+  passportAccess: (token: string) => get<PassportAccessRow[]>('/passport/access', token),
+  grantPassport: (token: string, proId: string, bookingId?: string) =>
+    post<{ id: string; expiresAt: string }>('/passport/grant', { proId, bookingId }, token),
+  revokePassportAccess: (token: string, id: string) =>
+    post<{ ok: boolean }>(`/passport/access/${id}/revoke`, {}, token),
+
+  // §14 — W2W fikir birliği: bir sorunun cevaplarında kimi kaç KİŞİ önerdi
+  circleConsensus: (postId: string) =>
+    get<{ voters: number; items: { proId: string; count: number }[] }>(
+      `/circle/posts/${postId}/consensus`,
+    ),
+
   // EK Z.1 — DM mesajlaşma (müşteri ↔ uzman/salon; moderasyon + numara maskeleme backend'de)
   conversations: (token: string) => get<ConversationSummary[]>('/messaging/conversations', token),
   startConversation: (
@@ -881,6 +904,26 @@ export interface SafetySession {
 }
 
 // EK Z.1 — DM mesajlaşma tipleri
+export interface PassportData {
+  allergies: string[];
+  quietVisit: boolean;
+  noPhotos: boolean;
+  notifyLate: boolean;
+  womenOnly: boolean;
+  traits: Record<string, string>;
+}
+
+export interface PassportAccessRow {
+  id: string;
+  proId: string;
+  bookingId: string | null;
+  grantedAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  /** Uzman gerçekten baktıysa dolu — "açıldı" ile "bakıldı" aynı şey değil. */
+  lastViewAt: string | null;
+}
+
 export interface ConversationSummary {
   id: string;
   otherId: string;

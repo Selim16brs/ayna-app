@@ -111,6 +111,33 @@ export default function ChatThreadScreen() {
     return risky.length ? risky[risky.length - 1]!.id : null;
   }, [items, guardOff]);
 
+  // §21 — Şikâyet artık GERÇEK bir yere gidiyor (POST /reports). Sunucuda hedefe
+  // dönen ne bildirim ne okuma ucu var; "ustaya gitmez" cümlesi doğru.
+  const [reported, setReported] = useState(false);
+  const onReport = () => {
+    if (!token || !params.otherId || reported) return;
+    Alert.alert(t('messages.guard.report'), t('messages.guard.report_note'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('messages.guard.report'),
+        onPress: () => {
+          setReported(true);
+          void api
+            .reportUser(token, {
+              targetId: params.otherId!,
+              reason: 'off_platform_payment',
+              threadId: convId,
+            })
+            .then(() => Alert.alert(t('messages.guard.report_done')))
+            .catch(() => {
+              setReported(false);
+              Alert.alert(t('messages.guard.report_err'));
+            });
+        },
+      },
+    ]);
+  };
+
   // Engelleme geri alınabilir ama sürpriz olmamalı: ne olacağını önce söyle.
   const onBlock = () => {
     Alert.alert(t('messages.guard.block'), t('messages.guard.block_note'), [
@@ -224,14 +251,29 @@ export default function ChatThreadScreen() {
                         {t('messages.guard.ok')}
                       </Text>
                     </Pressable>
-                    {params.otherId && !blocked ? (
-                      <Pressable style={[styles.guardBtn, styles.guardBtnDanger]} onPress={onBlock}>
+                    {params.otherId ? (
+                      <Pressable
+                        style={[styles.guardBtn, styles.guardBtnDanger]}
+                        onPress={onReport}
+                        disabled={reported}
+                      >
                         <Text variant="captionStrong" style={{ color: colors.danger }}>
-                          {t('messages.guard.block')}
+                          {t(reported ? 'messages.guard.report_done' : 'messages.guard.report')}
                         </Text>
                       </Pressable>
                     ) : null}
                   </View>
+                  {/* Misilleme korkusu, şikâyetin önündeki asıl engel — tek cümleyle kaldırıyoruz */}
+                  <Text variant="micro" tone="muted">
+                    {t('messages.guard.report_note')}
+                  </Text>
+                  {params.otherId && !blocked ? (
+                    <Pressable onPress={onBlock}>
+                      <Text variant="caption" style={{ color: colors.danger }}>
+                        {t('messages.guard.block')}
+                      </Text>
+                    </Pressable>
+                  ) : null}
                 </View>
               ) : null}
             </View>

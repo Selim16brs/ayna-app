@@ -2052,6 +2052,11 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'messages.guard.kept': 'Переписку здесь мы сохраняем; она пригодится, если откроешь спор.',
   'messages.guard.onsite': 'Остаток платится на месте, после услуги.',
   'messages.guard.ok': 'Понятно',
+  'messages.guard.report': 'Сообщить нам',
+  'messages.guard.report_note':
+    'Жалоба уходит нам, а не мастеру. Он не узнает, что ты пожаловалась.',
+  'messages.guard.report_done': 'Мы получили. Команда посмотрит.',
+  'messages.guard.report_err': 'Не отправилось — проверь связь и попробуй ещё раз.',
   'messages.guard.block': 'Заблокировать',
   'messages.guard.block_note':
     'После блокировки он не сможет тебе писать. И не увидит, что ты его заблокировала.',
