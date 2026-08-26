@@ -104,40 +104,55 @@ export default function MapScreen() {
 
         {/* Seçili sağlayıcı mini kartı — kenarlıksız gölgeli SalonRow dili */}
         {selected ? (
-          <View style={[styles.card, styles.cardShadow]}>
-            <Pressable style={styles.cardClose} hitSlop={8} onPress={() => setSelected(null)}>
-              <Ionicons name="close" size={16} color={colors.muted} />
-            </Pressable>
-            <Pressable style={styles.cardRow} onPress={() => setProfileOpen(true)}>
-              <Image source={{ uri: selected.image }} style={styles.cardImage} />
-              <View style={styles.cardBody}>
-                <Text variant="bodyStrong" tone="ink" style={styles.cardName} numberOfLines={1}>
-                  {selected.name}
-                </Text>
-                <Text variant="caption" tone="muted" numberOfLines={1}>
-                  {selected.specialty}
-                </Text>
-                <View style={styles.cardMeta}>
-                  <Ionicons name="star" size={12} color={colors.gold} />
-                  <Text variant="caption" tone="inkSoft">
-                    {selected.rating.toFixed(1)}
+          <>
+            {/* Polish 3.4 — kart DIŞINA dokunma kapatır (küçük X'e nişan almak gerekmez) */}
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setSelected(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Kartı kapat"
+            />
+            <View style={[styles.card, styles.cardShadow]}>
+              <Pressable
+                style={styles.cardClose}
+                hitSlop={16}
+                onPress={() => setSelected(null)}
+                accessibilityRole="button"
+                accessibilityLabel="Kapat"
+              >
+                <Ionicons name="close" size={16} color={colors.muted} />
+              </Pressable>
+              <Pressable style={styles.cardRow} onPress={() => setProfileOpen(true)}>
+                <Image source={{ uri: selected.image }} style={styles.cardImage} />
+                <View style={styles.cardBody}>
+                  <Text variant="bodyStrong" tone="ink" style={styles.cardName} numberOfLines={1}>
+                    {selected.name}
                   </Text>
-                  <Text variant="caption" tone="muted">
-                    · {distanceKm(center, proCoords(selected.id, selected.lat, selected.lng))}{' '}
-                    {t('map.distance')}
+                  <Text variant="caption" tone="muted" numberOfLines={1}>
+                    {selected.specialty}
                   </Text>
-                  <Text variant="caption" tone="muted">
-                    · {priceLabel(selected)}
-                  </Text>
+                  <View style={styles.cardMeta}>
+                    <Ionicons name="star" size={12} color={colors.gold} />
+                    <Text variant="caption" tone="inkSoft">
+                      {selected.rating.toFixed(1)}
+                    </Text>
+                    <Text variant="caption" tone="muted">
+                      · {distanceKm(center, proCoords(selected.id, selected.lat, selected.lng))}{' '}
+                      {t('map.distance')}
+                    </Text>
+                    <Text variant="caption" tone="muted">
+                      · {priceLabel(selected)}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </Pressable>
-            <PressableScale style={styles.cardBtn} onPress={() => setProfileOpen(true)}>
-              <Text variant="bodyStrong" tone="onAccent">
-                {t('map.open')}
-              </Text>
-            </PressableScale>
-          </View>
+              </Pressable>
+              <PressableScale style={styles.cardBtn} onPress={() => setProfileOpen(true)}>
+                <Text variant="bodyStrong" tone="onAccent">
+                  {t('map.open')}
+                </Text>
+              </PressableScale>
+            </View>
+          </>
         ) : null}
 
         {/* §5.1.3 — POPUP profil: bilgiler modal'da; kapatınca harita aynen kalır */}
@@ -344,7 +359,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1.75),
     },
     cardShadow: {
-      shadowColor: '#3A332B',
+      shadowColor: colors.ink,
       shadowOpacity: 0.16,
       shadowRadius: 22,
       shadowOffset: { width: 0, height: 10 },

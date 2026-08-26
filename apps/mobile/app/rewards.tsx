@@ -17,8 +17,6 @@ import { Progress, Screen, SectionHeader, StackHeader, Text } from '../src/ui';
 
 const NEXT_DRAW = '30 Haziran';
 // Keşfet canlı aksan paleti — ödül/çekiliş görsel-zengin kartlar
-const POINTS_GRAD: readonly [string, string] = ['#B06CFF', '#8A4FE0'];
-const RAFFLE_GRAD: readonly [string, string] = ['#FF2E93', '#D81F7A'];
 const TIER_LABEL: Record<'bronze' | 'silver' | 'gold', MessageKey> = {
   bronze: 'rewards.tier.bronze',
   silver: 'rewards.tier.silver',
@@ -29,7 +27,7 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 
 export default function RewardsScreen() {
   const { t } = useLocale();
-  const { colors, shadow } = useTheme();
+  const { colors, shadow, gradients } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
   const points = useStore((s) => s.points);
@@ -82,7 +80,7 @@ export default function RewardsScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Puan kartı — görsel-zengin mor kart, ışıltı halkaları */}
         <LinearGradient
-          colors={POINTS_GRAD}
+          colors={gradients.plum}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.pointsCard, shadow.card]}
@@ -118,7 +116,7 @@ export default function RewardsScreen() {
 
         {/* Çekiliş — görsel-zengin pembe kart */}
         <LinearGradient
-          colors={RAFFLE_GRAD}
+          colors={gradients.rose}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[styles.raffle, shadow.card]}
@@ -287,7 +285,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
     },
     raffleJoinOff: { opacity: 0.5 },
-    raffleJoinText: { color: '#FFFFFF', fontWeight: '800' },
+    raffleJoinText: { color: colors.onColor, fontWeight: '800' },
     raffleJoinSub: { color: 'rgba(255,255,255,0.9)', fontSize: 10 },
     expiryBanner: {
       flexDirection: 'row',
@@ -330,7 +328,7 @@ const makeStyles = (colors: ColorTokens) =>
       lineHeight: 50,
       fontWeight: '800',
       letterSpacing: -1,
-      color: '#FFFFFF',
+      color: colors.onColor,
       marginTop: space(0.5),
     },
     dim: { opacity: 0.92 },

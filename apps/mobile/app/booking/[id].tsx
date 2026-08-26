@@ -448,29 +448,22 @@ export default function BookingDetailScreen() {
             <Text variant="caption" tone="muted" style={styles.depositDesc}>
               {t('booking.sync_conflict_hint')}
             </Text>
-            <Pressable
-              style={styles.primaryBtn}
+            <Button
+              label={t('booking.sync_conflict_pick')}
               onPress={() => {
                 dropLocalBooking(booking.id);
                 if (booking.proId) router.replace(`/professional/${booking.proId}`);
                 else router.back();
               }}
-            >
-              <Text variant="bodyStrong" tone="onAccent">
-                {t('booking.sync_conflict_pick')}
-              </Text>
-            </Pressable>
-            <Pressable
-              style={styles.ghostBtn}
+            />
+            <Button
+              label={t('booking.sync_conflict_drop')}
+              variant="ghost"
               onPress={() => {
                 dropLocalBooking(booking.id);
                 router.back();
               }}
-            >
-              <Text variant="caption" tone="inkSoft">
-                {t('booking.sync_conflict_drop')}
-              </Text>
-            </Pressable>
+            />
           </View>
         ) : null}
 
@@ -486,24 +479,20 @@ export default function BookingDetailScreen() {
             <Text variant="caption" tone="muted" style={styles.depositDesc}>
               {t('booking.confirm_completion_hint')}
             </Text>
-            <Pressable
-              style={styles.primaryBtn}
+            <Button
+              label={t('booking.confirm_completion')}
               onPress={() => {
                 void api
                   .confirmCompletionApi(booking.id)
                   .then(() => hydrateBookings())
                   .catch(() => undefined);
               }}
-            >
-              <Text variant="bodyStrong" tone="onAccent">
-                {t('booking.confirm_completion')}
-              </Text>
-            </Pressable>
-            <Pressable style={styles.ghostBtn} onPress={() => disputeBooking(booking.id)}>
-              <Text variant="caption" tone="inkSoft">
-                {t('seller.reviews.dispute')}
-              </Text>
-            </Pressable>
+            />
+            <Button
+              label={t('seller.reviews.dispute')}
+              variant="ghost"
+              onPress={() => disputeBooking(booking.id)}
+            />
           </View>
         ) : null}
 
@@ -1076,14 +1065,6 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1),
     },
     signalRow: { flexDirection: 'row', gap: space(1), marginTop: space(0.5) },
-    primaryBtn: {
-      backgroundColor: colors.accent,
-      borderRadius: radius.md,
-      alignItems: 'center',
-      paddingVertical: space(1.5),
-      marginTop: space(1.5),
-    },
-    ghostBtn: { alignItems: 'center', paddingVertical: space(1.25) },
     signalBtn: {
       flex: 1,
       flexDirection: 'row',
