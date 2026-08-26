@@ -46,7 +46,10 @@ export default function RewardsScreen() {
   const unlockAt = spend?.unlockAt ?? rates.pointsUnlockKzt ?? POINTS_UNLOCK_KZT;
   const expiryDays = spend?.expiryDays ?? rates.pointsExpiryDays ?? POINTS_EXPIRY_DAYS;
   const earnPct = 3;
-  const unlocked = spend?.unlocked ?? false;
+  // Sunucu `spend` göndermiyorsa (henüz güncellenmemiş API) kilit kavramı da
+  // YOKTUR — o durumda "kilitli" göstermek yanlış olur. Ödeme kararını zaten
+  // sunucu veriyor; istemci yalnız gösteriyor.
+  const unlocked = spend ? spend.unlocked : true;
   const remainingToUnlock = spend?.remainingToUnlock ?? Math.max(0, unlockAt + 1 - points);
   const raffleEntries = useStore((s) => s.raffleEntries);
   const tier = useStore((s) => s.tier);

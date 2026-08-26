@@ -32,7 +32,9 @@ export default function PaymentScreen() {
   // K4 — tavan ve kilit SUNUCUDAN. Burada eskiden `amount * 0.5` sabiti vardı;
   // sunucu %25 uygularken ekran %50 gösteriyordu, yani kullanıcıya söz verilen
   // indirim ödeme anında yarıya düşecekti. Hesap sunucuyla aynı saf fonksiyon.
-  const unlocked = spendRules?.unlocked ?? false;
+  // Sunucu kural göndermiyorsa (eski API) kilit kavramı yoktur — kilitli
+  // göstermek kullanıcının kullanabileceği puanı gizlerdi.
+  const unlocked = spendRules ? spendRules.unlocked : true;
   const maxPoints = useMemo(
     () =>
       paymentSplit(amount, balance, balance, unlocked ? new Date() : null, {
