@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { api, type SafetySession, type TrustedContact } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
+import { formatSlotTr } from '../../src/datetime';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -23,6 +24,19 @@ export default function SafeScreen() {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+
+  // §güvenlik — ekran ROLE göre konuşur.
+  const role = useStore((st) => st.currentUser?.role);
+  const isSeller = role === 'professional' || role === 'salon';
+  // Güvenli modu hangi randevu için açtığını göster: bağlamsız bir anahtar
+  // unutuluyor. En yakın ONAYLI ve GELECEK randevu.
+  const bookings = useStore((st) => st.bookings);
+  const yaklasan = useMemo(() => {
+    const now = Date.now();
+    return [...bookings]
+      .filter((b) => b.status === 'confirmed' && b.startMs > now)
+      .sort((a, b) => a.startMs - b.startMs)[0];
+  }, [bookings]);
   const token = useStore((s) => s.token);
 
   const [contacts, setContacts] = useState<TrustedContact[]>([]);
@@ -166,9 +180,33 @@ export default function SafeScreen() {
     <Screen edges={['bottom']}>
       <StackHeader title={t('safe.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Metin ROLE göre: müşteri BİR YERE GİDİYOR, uzman ise çoğu zaman
+            müşterinin adresine gidiyor ya da geç saatte tek başına çalışıyor.
+            Aynı mekanizma, farklı gerçeklik — tek metin ikisine de uymuyordu. */}
         <Text variant="body" tone="inkSoft" style={styles.subtitle}>
-          {t('safe.subtitle')}
+          {t(isSeller ? 'safe.subtitle_pro' : 'safe.subtitle')}
         </Text>
+
+        {/* Güvenli modu HANGİ randevu için açtığını gör: bağlamsız bir anahtar
+            unutuluyor. Karşı tarafın KİMLİĞİ yazılmaz — bu ekran güvendiğin
+            kişilerle paylaşım içindir, müşteri/uzman teşhiri için değil. */}
+        {yaklasan ? (
+          <View style={[styles.group, shadow.soft]}>
+            <View style={styles.row}>
+              <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+                <Ionicons name="calendar-outline" size={18} color={colors.ink} />
+              </View>
+              <View style={styles.rowLabel}>
+                <Text variant="bodyStrong" tone="ink">
+                  {t('safe.next_booking')}
+                </Text>
+                <Text variant="caption" tone="muted">
+                  {formatSlotTr(yaklasan.startMs)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
 
         {/* SOS — acil eylem */}
         <Pressable onPress={onSos} style={[styles.sos, shadow.card]}>
@@ -180,7 +218,7 @@ export default function SafeScreen() {
               {t('safe.sos')}
             </Text>
             <Text variant="caption" tone="onColor" style={styles.dim}>
-              {t('safe.sos_sub')}
+              {t(isSeller ? 'safe.sos_sub_pro' : 'safe.sos_sub')}
             </Text>
           </View>
         </Pressable>
@@ -214,7 +252,7 @@ export default function SafeScreen() {
           </View>
         </View>
         <Text variant="caption" tone="muted" style={styles.hint}>
-          {t('safe.mode_hint')}
+          {t(isSeller ? 'safe.mode_hint_pro' : 'safe.mode_hint')}
         </Text>
         {active ? (
           <View style={styles.checkin}>
@@ -222,10 +260,20 @@ export default function SafeScreen() {
           </View>
         ) : null}
 
+        {/* Karşı tarafın kimliğinin PAYLAŞILMADIĞINI açıkça yaz. Sunucu
+            gerçekten de yalnız oturum + konum tutuyor (safety.service: audit
+            kaydında bile "konum/PII YOK"). Vaat kodla örtüşüyor. */}
+        <View style={styles.privacyNote}>
+          <Ionicons name="lock-closed" size={13} color={colors.muted} />
+          <Text variant="caption" tone="muted" style={styles.privacyText}>
+            {t('safe.privacy_note')}
+          </Text>
+        </View>
+
         {/* Güvendiğim kişiler */}
         <SectionHeader title={t('safe.contacts')} />
         <Text variant="caption" tone="muted" style={styles.sectionSub}>
-          {t('safe.contacts_sub')}
+          {t(isSeller ? 'safe.contacts_sub_pro' : 'safe.contacts_sub')}
         </Text>
         <View style={[styles.group, shadow.soft]}>
           {contacts.length === 0 && !adding ? (
@@ -328,6 +376,8 @@ const makeStyles = (colors: ColorTokens) =>
     },
     sosText: { flex: 1, gap: 2 },
     dim: { opacity: 0.92 },
+    privacyNote: { flexDirection: 'row', alignItems: 'flex-start', gap: space(1) },
+    privacyText: { flexGrow: 1, flexShrink: 1, minWidth: 0, lineHeight: 18 },
     hint: { marginTop: space(1), marginBottom: space(1), paddingHorizontal: space(1) },
     checkin: { marginBottom: space(2) },
     sectionSub: { marginTop: -space(1), marginBottom: space(1.75), paddingHorizontal: space(3) },

@@ -862,6 +862,7 @@ export const tr = {
   'hours.conflict_b': 'Kapattığın aralıkta onaylanmış randevular var:',
   'hours.conflict_penalty':
     'Bu randevular İPTAL OLMADI — müşteri o saate göre plan yaptı. Ya saatleri geri aç ya da randevuyu kendin iptal et. Gitmezsen “uzman gelmedi” sayılır: müşteriye telafi puanı verilir ve hesabına ceza işlenir.',
+  'profile.menu.share': 'Profilini paylaş',
   'profile.menu.membership': 'Üyeliğim',
   'profile.menu.passport': 'AYNA Passport',
   'profile.menu.always': 'Always — bağlarım',
@@ -2054,6 +2055,16 @@ export const tr = {
 
   // Profil — AYNA Safe
   'safe.title': 'AYNA Safe',
+  'safe.subtitle_pro':
+    'Müşterinin adresine giderken ya da geç saatte tek çalışırken yanında olsun.',
+  'safe.sos_sub_pro':
+    'Tek dokunuşla güvendiğin kişilere konum + uyarı gider (resmî acil servis ARANMAZ)',
+  'safe.mode_hint_pro':
+    'Açtığında randevu boyunca konumun güvendiğin kişilerle paylaşılır — işe giderken ve dönerken.',
+  'safe.contacts_sub_pro': 'Bir aksilikte aranacak kişiler. Eş, kardeş, salon arkadaşın olabilir.',
+  'safe.next_booking': 'Yaklaşan randevun',
+  'safe.privacy_note':
+    'Güvendiğin kişilere YALNIZCA senin konumun gider. Karşı tarafın adı, telefonu ve adresi paylaşılmaz.',
   'safe.subtitle': 'Güvenliğin önceliğimiz',
   'safe.location': 'Konum paylaşımı',
   'safe.location_sub': 'Randevu sırasında güvendiğin kişiyle paylaş',

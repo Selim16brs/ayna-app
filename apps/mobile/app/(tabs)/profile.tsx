@@ -31,6 +31,9 @@ const MENU: {
   // ekranına alındı (/seller/premium).
   { key: 'profile.menu.passport', icon: 'card-outline', customerOnly: true },
   { key: 'profile.menu.membership', icon: 'diamond-outline', sellerOnly: true },
+  // Profilini paylaş Menü sekmesinde de var; en çok aranan yer profil olduğu
+  // için buraya da kondu.
+  { key: 'profile.menu.share', icon: 'share-social-outline', sellerOnly: true },
   { key: 'profile.menu.always', icon: 'infinite-outline' },
   { key: 'profile.menu.rewards', icon: 'gift-outline' },
   { key: 'profile.menu.budget', icon: 'wallet-outline', customerOnly: true },
@@ -113,6 +116,10 @@ export default function ProfileScreen() {
 
   const onPress = (key: MessageKey) => {
     if (key === 'profile.menu.passport') router.push('/profile/passport');
+    // Bu satır bir önceki düzenlememde kayboldu: menüde görünüyor ama
+    // dokununca hiçbir şey olmuyordu.
+    else if (key === 'profile.menu.membership') router.push('/seller/premium');
+    else if (key === 'profile.menu.share') router.push('/seller/share');
     else if (key === 'profile.menu.always') router.push('/always');
     else if (key === 'profile.menu.rewards') router.push('/rewards');
     else if (key === 'profile.menu.budget') router.push('/profile/budget');
