@@ -22,20 +22,24 @@ const MENU: {
   sellerOnly?: boolean;
   customerOnly?: boolean;
 }[] = [
-  { key: 'profile.menu.panel', icon: 'briefcase-outline', sellerOnly: true },
   // §9.2 — uzman/salon: kazandığı paralar (müşteri 'Bütçe'sinin satıcı karşılığı)
   { key: 'profile.menu.earnings', icon: 'cash-outline', sellerOnly: true },
   // Çalışma saatleri: profil düzenleme formunun içinde değil, KENDİ girişi.
   { key: 'profile.menu.hours', icon: 'time-outline', sellerOnly: true },
-  { key: 'profile.menu.passport', icon: 'card-outline' },
+  // AYNA Passport MÜŞTERİ ürünü (alerji/tercih/erişim kaydı). Uzman panelinde
+  // işi yoktu; oradaki tek anlamlı parça üyelik işlemleriydi, o da kendi
+  // ekranına alındı (/seller/premium).
+  { key: 'profile.menu.passport', icon: 'card-outline', customerOnly: true },
+  { key: 'profile.menu.membership', icon: 'diamond-outline', sellerOnly: true },
   { key: 'profile.menu.always', icon: 'infinite-outline' },
   { key: 'profile.menu.rewards', icon: 'gift-outline' },
   { key: 'profile.menu.budget', icon: 'wallet-outline', customerOnly: true },
   { key: 'profile.menu.saved', icon: 'bookmark-outline' },
-  { key: 'profile.menu.messages', icon: 'chatbubbles-outline' },
   { key: 'profile.menu.referral', icon: 'gift-outline' },
   { key: 'profile.menu.safety', icon: 'shield-checkmark-outline' },
-  { key: 'profile.menu.addresses', icon: 'location-outline' },
+  // Adresler MÜŞTERİ kavramı (hizmetin geleceği yer). Uzmanın çalışma adresi
+  // profil bilgisinde; ayrı bir adres defteri anlamsızdı.
+  { key: 'profile.menu.addresses', icon: 'location-outline', customerOnly: true },
   { key: 'profile.menu.privacy', icon: 'lock-closed-outline' },
   { key: 'profile.menu.notifications', icon: 'notifications-outline' },
   { key: 'profile.menu.language', icon: 'language-outline' },
@@ -101,26 +105,20 @@ export default function ProfileScreen() {
   const role = useStore((s) => s.currentUser?.role);
   const isSeller = role === 'salon' || role === 'professional';
   const menu = MENU.filter((m) => (!m.sellerOnly || isSeller) && (!m.customerOnly || !isSeller));
-  // §9/§10 — panel etiketi rol-duyarlı: uzman "Uzman paneli", salon "İşletme paneli"
-  const menuLabel = (key: MessageKey): string =>
-    key === 'profile.menu.panel' && role === 'professional'
-      ? t('profile.menu.panel_expert')
-      : t(key);
+  const menuLabel = (key: MessageKey): string => t(key);
 
   const appearance: 'system' | ThemeMode = preference ?? 'system';
   const onAppearance = (value: 'system' | ThemeMode) =>
     setPreference(value === 'system' ? null : value);
 
   const onPress = (key: MessageKey) => {
-    if (key === 'profile.menu.panel') router.push('/seller/reports');
-    else if (key === 'profile.menu.passport') router.push('/profile/passport');
+    if (key === 'profile.menu.passport') router.push('/profile/passport');
     else if (key === 'profile.menu.always') router.push('/always');
     else if (key === 'profile.menu.rewards') router.push('/rewards');
     else if (key === 'profile.menu.budget') router.push('/profile/budget');
     else if (key === 'profile.menu.earnings') router.push('/seller/earnings');
     else if (key === 'profile.menu.hours') router.push('/seller/hours');
     else if (key === 'profile.menu.saved') router.push('/favorites');
-    else if (key === 'profile.menu.messages') router.push('/messages');
     else if (key === 'profile.menu.referral') router.push('/referral');
     else if (key === 'profile.menu.safety') router.push('/profile/safe');
     else if (key === 'profile.menu.addresses') router.push('/profile/addresses');
