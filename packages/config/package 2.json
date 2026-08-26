@@ -1,0 +1,32 @@
+{
+  "name": "@ayna/config",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./eslint": "./eslint.base.mjs",
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "default": "./dist/env.js"
+    }
+  },
+  "files": [
+    "dist",
+    "eslint.base.mjs"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.12.0",
+    "@types/node": "^22.7.5",
+    "eslint": "^9.12.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.8.1"
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "artboards": [
+    {
+      "file": "Marka.dc.html",
+      "title": "Marka · wordmark",
+      "x": 5190,
+      "y": -2600,
+      "w": 900,
+      "h": 1892
+    },
+    {
+      "file": "Mesajlar.dc.html",
+      "title": "15 · Mesajlar",
+      "x": 1880,
+      "y": 3000,
+      "w": 390,
+      "h": 2440
+    },
+    {
+      "file": "Passport.dc.html",
+      "title": "14 · AYNA Passport",
+      "x": 1410,
+      "y": 3000,
+      "w": 390,
+      "h": 2680
+    },
+    {
+      "file": "W2W.dc.html",
+      "title": "13 · W2W · kadından kadına",
+      "x": 940,
+      "y": 3000,
+      "w": 390,
+      "h": 2728
+    },
+    {
+      "file": "Boni.dc.html",
+      "title": "12 · Boni · AI danışman",
+      "x": 470,
+      "y": 3000,
+      "w": 390,
+      "h": 2656
+    },
+    {
+      "file": "Dilek.dc.html",
+      "title": "11 · Dileğin nedir",
+      "x": 0,
+      "y": 3000,
+      "w": 390,
+      "h": 2584
+    },
+    {
+      "file": "Main.dc.html",
+      "title": "1 · Keşfet",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2516
+    },
+    {
+      "file": "Uzman.dc.html",
+      "title": "2 · Uzman profili",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 2431
+    },
+    {
+      "file": "Yorumlar.dc.html",
+      "title": "3 · Yorumlar",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 2211
+    },
+    {
+      "file": "Randevu.dc.html",
+      "title": "4 · Randevu detayı",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 2358
+    },
+    {
+      "file": "Durumlar.dc.html",
+      "title": "5 · Randevu durumları",
+      "x": 1880,
+      "y": 0,
+      "w": 880,
+      "h": 1744
+    },
+    {
+      "file": "Teklifler.dc.html",
+      "title": "6 · Gelen teklifler",
+      "x": 2840,
+      "y": 0,
+      "w": 390,
+      "h": 2452
+    },
+    {
+      "file": "UzmanPanel.dc.html",
+      "title": "7 · Uzman paneli",
+      "x": 3310,
+      "y": 0,
+      "w": 390,
+      "h": 2512
+    },
+    {
+      "file": "Gizlilik.dc.html",
+      "title": "8 · Gizlilik ve güvenlik",
+      "x": 3780,
+      "y": 0,
+      "w": 390,
+      "h": 2608
+    },
+    {
+      "file": "SalonPanel.dc.html",
+      "title": "9 · Salon paneli",
+      "x": 4250,
+      "y": 0,
+      "w": 390,
+      "h": 2656
+    },
+    {
+      "file": "Puanlar.dc.html",
+      "title": "10 · Puanlar",
+      "x": 4720,
+      "y": 0,
+      "w": 390,
+      "h": 2596
+    },
+    {
+      "file": "Sistem.dc.html",
+      "title": "Tasarım sistemi",
+      "x": 5190,
+      "y": 0,
+      "w": 900,
+      "h": 2629
+    }
+  ],
+  "annotations": [
+    {
+      "id": "ia",
+      "x": 0,
+      "y": -430,
+      "w": 390,
+      "text": "ANA EKRAN — NEDEN BU SIRA\n\nTeşhis: mevcut ana ekran bir VİTRİN gibi kurulmuş (kampanya→kampanya→öne çıkanlar). Oysa insanların bu ekrana gelme sebeplerinin ilk ikisi orada hiç yoktu: 'randevum ne zaman?' ve 'bekleyen işim var mı?'. Kapora süresi dolan kullanıcı bunu ana ekranda göremiyordu — para ve randevu kaybı buradan başlıyor.\n\nYeni ilke: ACİLİYET → NİYET → KEŞİF → İLHAM\n\n1 KİMLİK — kesik portre + yansıma + puan/kademe\n2 ACİL — süresi işleyen tek şey (kapora sayacı / yeni teklif / alternatif saat). Yoksa kart hiç görünmez.\n3 YAKLAŞAN RANDEVU — tarih, uzman, mesafe + Ertele/Yaz/Yol\n4 DİLEĞİN NEDİR — ters pazaryerinin ana eylemi\n5 ARAMA + KATEGORİ — belirli niyet\n6 FIRSATLAR (sponsorlu, etiketli)\n7 ÖNE ÇIKAN UZMANLAR — bugün müsait rozetiyle\n8 AYNA LIFE — ilham, en altta\n\nHiçbir bölüm silinmedi; sıra değişti ve iki eksik parça (acil durum + yaklaşan randevu) eklendi."
+    },
+    {
+      "id": "cutout",
+      "x": 0,
+      "y": 2090,
+      "w": 390,
+      "text": "KESİK PORTRE — markanın tam kalbi\n\nArka planı kesilmiş profil fotoğrafı ana ekranda kahraman. Altında kendi YANSIMASI var: uygulamanın adı Ayna, kullanıcı ekranı açtığında kendi yansımasını görüyor.\n\nBu, kopyalanabilir bir efekt değil — sizde zaten var olan bir özelliğin (remove.bg kesimi) markaya bağlanmış hali. Fotoğrafı olmayan kullanıcıda: baş harfi madalyonu + aynı yansıma.\n\nYanına puan/kademe koydum (1 240 балл · Серебро): sadakat ekranı derinlerde kalmasın, her açılışta hatırlansın."
+    },
+    {
+      "id": "altsayfa",
+      "x": 5190,
+      "y": -430,
+      "w": 900,
+      "text": "ALT SEKMELER — hangi ekran nerede yaşıyor\n\nOBZOR (Keşfet) → arama, kategori, harita, yakın salonlar, koleksiyon, fırsatlar, kampanyalar, uzman profili, AYNA Life. Kural: KEŞİF ve YENİ TALEP burada.\n\nZAPISI (Randevularım) → üç sekme: Taleplerim (açık talep + gelen teklifler) · Randevularım (onay bekleyen, kapora aşaması, kesinleşen) · Geçmiş (tamamlanan + değerlendirme). Kural: bir işin YAŞAM DÖNGÜSÜ hep burada; talep ve randevu ayrı yerlere dağılmıyor. Rozet: aksiyon bekleyen sayısı.\n\nDLYA MENYA (Benim İçin) → Boni (AI danışman), bakım rutinleri, özel günler, kişisel günlük, puan özeti. Kural: kimseyle paylaşılmayan, yalnız sana ait olan.\n\nW2W → tavsiye akışı, tavsiye iste, takip. Kural: topluluk.\n\nPROFIL → hesap, AYNA Passport, adresler, bütçe, kaydedilenler, mesajlar, davet, GÜVENLİK (SOS + güvendiklerim), GİZLİLİK (konum/anonimlik/veri indirme/hesap silme), bildirim tercihleri, dil, yardım. Kural: kimlik, para ve KONTROL burada — gizlilik ayarları derine gömülmüyor, tek dokunuş uzakta.\n\nUZMAN ve SALON panelleri aynı beş-sekme mantığını izler (Ana Sayfa · Talepler/Takvim · Kadro · Menü/Profil) — böylece üç rol tek ürün gibi durur, üç ayrı uygulama gibi değil."
+    },
+    {
+      "id": "uzman",
+      "x": 470,
+      "y": -430,
+      "w": 390,
+      "text": "UZMAN PROFİLİ — güvenin kazanıldığı ekran\n\nÇözdüğü sorunlar:\n• 'Bu kim, güvenilir mi?' → dört ayrı doğrulama rozeti; DOĞRULANMAMIŞ olan da gri gösteriliyor (Соцсети не подтв.). Tek 'doğrulandı' etiketi yerine gerçeğin kendisi.\n• 'Ne kadar deneyimli?' → 5 yıl · 340 müşteri · 4.9 · ~40 dk yanıt süresi. Yanıt süresi burada kritik: ters pazaryerinde bekleme en büyük terk sebebi.\n• 'Ne kadara mal olacak?' → her hizmette süre + fiyat, indirimde üstü çizili eski fiyat, buton içinde toplam.\n• 'Hangi saat boş?' → dolu saatler kırmızımsı ve üstü çizili; efsane (свободно/занято) üstte. Tahmin yok.\n• 'Param ne olacak?' → Что нужно знать kartı: kapora tutarı ve %20 oranı, 3 saat iade eşiği, geç iptal sonucu, kazanılacak puan. Hiçbiri küçük punto değil.\n\nKesik portre burada da kahraman — yansımasıyla."
+    },
+    {
+      "id": "yorum",
+      "x": 940,
+      "y": -430,
+      "w": 390,
+      "text": "YORUMLAR — 'gerçekten ne diyorlar?'\n\n• Puan dağılımı (5→1 çubuk): 4.9 tek başına anlamsız; 128 yorumun 113'ünün 5 yıldız olduğunu görmek anlamlı. Çubuklar açılışta soldan büyüyor.\n• Hizmet kırılımı: kesim 4.9 ama boyama 4.7 — hangi işte iyi olduğunu görüyorsun. Puanı olmayan hizmette uydurma skor YOK, 'нет оценок' yazıyor.\n• Güven notu: yalnız TAMAMLANMIŞ randevudan yorum yazılabiliyor ve uzman yorum silemiyor — bu cümle ekranda açıkça duruyor.\n• 'Критика · 4' filtresi: olumsuz yorumları saklamak yerine tek dokunuşla önüne getiriyoruz. Saklanan eleştiri, en pahalı güven kaybıdır.\n• İsim gizli yorumda kalkan ikonu + kesin tarih yerine dönem ('в этом месяце') — uzman kimliği tahmin edemesin.\n• Uzman yanıtı ayrı kutuda: tek yanıt hakkı, silinemez."
+    },
+    {
+      "id": "randevu",
+      "x": 1410,
+      "y": -430,
+      "w": 390,
+      "text": "RANDEVU DETAYI — paranın ve güvenin sınandığı ekran\n\nBu ekran, 14 farklı durumun yaşadığı yer. Tasarım kararı: durum ne olursa olsun ÜÇ soru hep aynı yerde cevaplanır — nerede kaldık, sıra kimde, şimdi ne yapabilirim.\n\n• DURUM ADIM ÇUBUĞU en üstte: Заявка ✓ → Принято ✓ → Предоплата ● → Услуга ○. Şu anki adım nabız gibi atıyor; geçmiş adımlar tik, gelecek adımlar boş halka. Kullanıcı 'hangi aşamadayım' diye kimseye sormuyor.\n• SÜRE İŞLİYORSA SAYAÇ GÖRÜNÜR: 'осталось 2:14 · потом место освободится'. Eski sürümde kapora süresi sessizce doluyordu — kaybedilen randevuların ve paranın ana sebebi buydu.\n• PARA KIRILIMI hiçbir şey saklamadan: hizmet 9 000 ₸ · kapora %20 = 1 800 ₸ · yerinde 7 200 ₸ · +90 puan. Yüzde de tutar da yan yana; 'ne kadar ödeyeceğim' sorusu tek bakışta bitiyor.\n• DEKONT YÜKLEME alanı kesikli çerçeve + 'Виден только тебе и мастеру'. Gizlilik vaadi dosyanın yanında duruyor, gömülü bir ayarda değil.\n• İPTAL satırı sonucu önceden söylüyor: 'Сейчас бесплатно — чек ещё не отправлен'. Kural değiştiğinde metin de değişir (bkz. 5 · Durumlar)."
+    },
+    {
+      "id": "durumlar",
+      "x": 1880,
+      "y": -430,
+      "w": 880,
+      "text": "RANDEVU DURUMLARI — belirsizlik bırakmayan 14 hal\n\nTers pazaryerinde en pahalı hata, kullanıcının 'şimdi ne olacak?' diye kalması. Bu sayfa, sistemdeki her durumun kullanıcıya nasıl göründüğünü tek yerde topluyor — böylece geliştirme sırasında hiçbir durum 'unutulmuş ekran' olarak kalmıyor.\n\nHer kartta değişmez üç bilgi var: NE OLDU · SIRA KİMDE · ŞİMDİ NE YAPABİLİRİM. Ve iki kural:\n\n1) SÜRE İŞLİYORSA SAYAÇ GÖRÜNÜR — uzman yanıtı 6 saat, kapora dekontu 3 saat, hizmet sonrası itiraz 24 saat. Üçü de kartın üstünde rakamla duruyor, küçük puntolu bir şartname maddesinde değil.\n\n2) PARA HAREKET EDECEKSE TUTAR ÖNCE YAZILIR — geç iptal kartı kırmızı çerçeveli ve 'предоплата 1 800 ₸ останется мастеру' diyor; kullanıcı butona basmadan önce bedeli biliyor.\n\nÖzel olarak düşündüğüm haller:\n• Uzman gelmedi → sadece iade değil, 1 000 puan telafi + 'bugüne yedek uzman bulalım mı?'. Kötü deneyim, terk yerine ikinci şansa dönüyor.\n• Uzman salondan ayrıldı → salon aynı fiyat/saatle yedek öneriyor, ama ONAY OLMADAN HİÇBİR ŞEY DEĞİŞMİYOR yazıyor.\n• Offline çakışma → 'time slot conflict' gibi ham hata değil; 'Время заняли, kayıt kaybolmadı, yeni saat seç'.\n\nHam hata metni hiçbir durumda kullanıcıya gösterilmiyor."
+    },
+    {
+      "id": "teklif",
+      "x": 2840,
+      "y": -430,
+      "w": 390,
+      "text": "GELEN TEKLİFLER — ters pazaryerinin kalbi\n\nBu ekran ürünün en zayıf noktasıydı: 5 teklif geldiğinde kullanıcı fiyat, puan, mesafe ve müsaitliği kafasında karşılaştırmak zorunda kalıyordu. Karşılaştırma zihinsel yükse, insan ya en ucuzu seçip pişman olur ya da hiç seçmez. İkisi de kayıp.\n\nKendimden kattığım asıl fikir — FİYAT DAĞILIM ŞERİDİ:\nTek bakışta 7 500 – 13 000 ₸ aralığını ve her teklifin bu aralıkta nerede durduğunu gösteren bir çizelge; ortalama bir çentikle işaretli. Böylece '9 000 ₸ ucuz mu?' sorusu tahmine kalmıyor. Yanında dürüst bir cümle: 'En ucuz her zaman en iyi değil — yorumlara da bak.'\n\nDiğer kararlar:\n• BİR TEKLİF ÖNE ÇIKAR ama en ucuz olduğu için değil: 'Лучший баланс цены и отзывов'. Neden öne çıktığı yazıyor; gizli algoritma yok.\n• HER KARTTA AYNI DÖRT SAYI: fiyat + kapora · en erken saat · yanıt süresi · işin süresi. Aynı hizada olduğu için göz otomatik karşılaştırıyor.\n• YENİ UZMAN SAKLANMIYOR, AÇIKLANIYOR: 28 müşterili uzmanın kartında sarı şerit — 'belgeler doğrulandı ama sosyal medya yok, yorum az'. Ne gizliyoruz ne de cezalandırıyoruz; kullanıcı bilerek seçiyor.\n• KADEMELİ DALGA GÖRÜNÜR: 'İkinci dalga · 14 uzman gördü' + kalan süre. Sessiz bekleyiş yerine ilerleyen bir süreç.\n• PARA KURALI EN ALTTA: 'Sen seçene kadar para hareket etmiyor' + 'diğerlerine biz kibarca haber veriyoruz'. İkincisi kadın kullanıcılarda gerçek bir yük: reddetme zorunluluğunu üstümüze alıyoruz.\n• Uzun listede ilk iki teklif tam kart, gerisi tek satır — karar iki adaya odaklanıyor, ama hiçbiri kaybolmuyor."
+    },
+    {
+      "id": "uzmanpanel",
+      "x": 3310,
+      "y": -430,
+      "w": 390,
+      "text": "UZMAN PANELİ — arzın yaşadığı ekran\n\nBuraya kadar hep müşteri tarafını çizdik. Oysa ters pazaryerinde ürün, uzman tarafı çalışmazsa hiç çalışmaz: uzman kazancını, bekleyen talebini ve takvimini tek ekranda göremezse platformu bırakır.\n\nEkranın omurgası tek cümle: BUGÜN NE KAZANDIM, KİM BEKLİYOR, SIRADA NE VAR.\n\n• PARA EN ÜSTTE, KOMİSYON SAKLI DEĞİL: bugün 27 000 ₸ · ay 412 000 ₸ · AYNA komisyonu 41 200 ₸, oranı ve son ödeme günü yazılı. Komisyonu kartın dibine gizlemek en hızlı güven kaybıdır. (Not: oran şu an %10 — brief'te %15 geçiyordu, karar bekliyor.)\n• TEKLİF VERİRKEN NET KAZANÇ GÖRÜNÜR: 'Senin fiyatın 9 000 ₸ → sana kalan 8 100 ₸'. Uzman komisyonu kafasında hesaplamıyor, yanlış fiyat vermiyor.\n• SÜRE İŞLEYEN TALEP EN ÜSTTE: '47 dakika kaldı' turuncu şeritle. Uzmanın gelirini doğrudan artıran tek şey hızlı yanıt.\n• TAKVİMDE SALON SATIRI 'занято' olarak duruyor, müşteri bilgisi yok — salon-uzman yetki kuralı tasarıma da yansımış durumda.\n\nKendimden kattığım asıl fikir — 'ПОЧЕМУ ТЕБЯ ВИДЯТ' (neden görünüyorsun):\nArama sıralamasını 78/100 olarak açık açık gösteren bir sağlık ölçeri. Hangi davranışın sıralamayı yükselttiği tek tek listeli: hızlı yanıt ✓, iptal yok ✓, belgeler ✓, portfolyoda 4/8 fotoğraf (+9 puan), Instagram doğrulanmamış (+7 puan). Ve altında şu cümle duruyor: 'Sıralama satın alınamaz. Yalnız bu göstergelerden oluşur — liste tam, gizli bir şey yok.'\n\nBu, hem uzmanı doğru davranışa yönlendiriyor hem de pazaryerlerinin en büyük şikâyetini (kayırma şüphesi) baştan kesiyor. Reklam gelirini de dürüst kılıyor: sponsorlu kart etiketli, ama organik sıralamayı satmıyoruz.\n\n• YORUM YANITI kutusunda uzmana hatırlatma: kimin yazdığını göremez, silemez, tek yanıt hakkı var. Kural ekranın kendisinde yazıyor, şartnamede değil."
+    },
+    {
+      "id": "gizlilik",
+      "x": 3780,
+      "y": -430,
+      "w": 390,
+      "text": "GİZLİLİK VE GÜVENLİK — iddianın sınandığı ekran\n\n'Kadın odaklı güvenilir platform' bir slogan değilse, kanıtı bu ekrandır. Çoğu uygulamada gizlilik ayarları üç menü altına gömülür ve hukuk diliyle yazılır; burada tersini yaptım — profilin ilk seviyesinde ve gündelik dille.\n\nTASARIM İLKESİ: her ayar KİMİN NEYİ GÖRECEĞİNİ yazar, ne yaptığını değil.\n'Konum paylaşımı' demiyoruz; 'Usta bunu ancak randevuyu onayladıktan sonra görür. Ondan önce kimse görmez' diyoruz.\n\n• KONUM İKİYE AYRILDI: kesin adres (varsayılan KAPALI) ve arama için mahalle (açık). Kullanıcı mesafe hesabından faydalanırken adresini vermek zorunda kalmıyor. Altında spec'teki kural aynen duruyor: hareket geçmişi tutulmuyor, koordinat analitiğe ve log'a girmiyor.\n\n• ANONİM YORUM — asıl mesele burada. Bir ustanın o gün tek müşterisi varsa 'isim gizli' hiçbir şey gizlemez. Bu yüzden üç somut koruma listeli: kesin tarih yerine dönem, o gün tek hizmet varsa hizmet adının gizlenmesi, ustanın yorumu silememesi. Vaadi değil, mekanizmayı gösteriyoruz.\n\n• GÜVENDİKLERİM: iki kişiye YALNIZCA 'nerede ve saat kaçta' açılıyor — yorumlar, geçmiş, mesajlar değil. Ve kritik cümle: 'usta onların varlığını bilmez'. Aile denetimi ile kişisel güvenlik arasındaki fark tam olarak burada.\n\n• SOS: uzun basma, internetsiz de SMS ile çalışır. Ama dürüst sınır da yazıyor: 'AYNA bir acil yardım servisi değil — hayati tehlikede 112'. Yapamayacağımız şeyi vaat etmiyoruz.\n\n• VERİ: indirme, saklama süreleri (dekont 5 yıl kanunen, mesaj 1 yıl, konum saklanmıyor) ve hesap silme yan yana. Silmede ne kalacağı önceden söyleniyor.\n\n• EN ALT — İŞ MODELİ AÇIK: 'Verini satmıyoruz. Tamamlanan hizmetten %10 komisyon alıyoruz, hepsi bu. Bu bir gün değişirse ilk sen öğrenirsin.' Gizlilik ekranında gelir modelini yazmak alışılmadık; güveni kuran da tam olarak bu."
+    },
+    {
+      "id": "salonpanel",
+      "x": 4250,
+      "y": -430,
+      "w": 390,
+      "text": "SALON PANELİ — üçüncü rol, en hassas yetki dengesi\n\nSalon sahibi işletmeyi yönetebilmeli, ama uzmanın müşterisine ve mahremiyetine sahip olmamalı. Bu ekran tam olarak o çizgiyi çiziyor.\n\n• CİRO VE KOMİSYON en üstte, uzman panelindekiyle aynı dilde: 148 000 ₸ bugün · 2.4 mln ay · AYNA komisyonu 240 000 ₸ (%10, son ödeme 5 Eylül). Üç rolde de para aynı yerde ve aynı dürüstlükte duruyor.\n\nKendimden kattığım asıl fikir — KOLTUK DOLULUK ÇİZELGESİ:\nSaat saat doluluk çubukları, boş saatler kırmızımsı. Ama grafik tek başına yönetim yapmaz; altına eyleme dönüştüren bir satır koydum: '15:00–17:00 arası 3 koltuk boş. Bu saatlerde doluluğunuz normalde %80' → tek dokunuşla 'Bu saatlere −%15 indirim'. Salon sahibinin gerçek işi budur: boş koltuğu doldurmak. Rapor değil, karar veriyoruz.\n\n• KADRO listesinde her uzmanın bugünkü doluluk yüzdesi, randevu sayısı ve cirosu var; izinli olan ayrı etiketli. Kodla katılmak isteyen uzman en altta 'onayını bekliyor' olarak duruyor — davet kodu tek başına kadroya sokmuyor, salon onaylıyor.\n\n• DAVET KODU kartında süre ve kullanım sayısı açık: '7 gün geçerli · 4 gün kaldı · 5 kullanımın 2'si'. Kodun sınırsız olmadığını görmek güvenlik açısından önemli.\n\n• TAKVİM YETKİ MODLARI — ekranın kalbi. Üç mod da kullanıcı diliyle yazıldı:\n  1. Yalnız doluluk (varsayılan): 'занято 16:30–18:00' — isim yok, hizmet yok, tutar yok.\n  2. Doluluk + hizmet: malzeme planlaması için hizmet adı eklenir, isim yine gizli.\n  3. Tam kayıt: her şey — AMA 'bunu ancak uzmanın kendisi kabul ederse açılır; sen onun yerine açamazsın'.\n\nVe kartın altında sınır cümlesi: 'Müşteri yorumlarını salon hiçbir modda isimli göremez — tam erişim bile bunu açmaz.' Anonim yorum vaadi, salon panelinin içinde de tekrarlanıyor; çünkü bir vaat yalnız en zayıf halkası kadar sağlamdır."
+    },
+    {
+      "id": "puanlar",
+      "x": 4720,
+      "y": -430,
+      "w": 390,
+      "text": "PUANLAR — sadakat programının dürüstlük sınavı\n\nSadakat ekranları genelde şişirilmiş bir rakam gösterir ve o rakamın ne işe yaradığını söylemez. Buradaki tek kural: PUAN HİÇBİR YERDE ÇIPLAK DURMAZ.\n\n• 1 240 puanın yanında hemen '= 1 240 ₸' yazıyor ve altında: '1 puan tam olarak 1 tenge indirim. Kur yok, çeviri yok.' Kullanıcı kafasında hesap yapmıyor.\n• YANMA UYARISI saklanmıyor, öne çıkarılıyor: '180 puan 30 Eylül'de yanacak' + 'bir hafta kala tekrar hatırlatacağız ve neye yeteceğini göstereceğiz.' Sessizce yanan puan, sadakat programının güveni en hızlı yakan yanıdır.\n• 'ŞU AN NEYE YETER' bölümü puanı somut hizmete çeviriyor: manikürün tamamı (1 200), Zarina'da saç kesimi 9 000 → 7 760. Yetmeyen seçenek de listede ama soluk ve 'zaten 760 puan eksik' yazıyor — hayal kırıklığı tıklamadan önce yaşanıyor, sonra değil.\n• DÜRÜST SINIRLAR küçük puntoda değil: 'Puanla hizmetin en fazla yarısı kapatılır, kapora yine parayla gider' ve 'Puan nakde çevrilemez — bunu vaat de etmiyoruz.'\n• KAZANMA YOLLARI beklentiyi doğru kuruyor: davet puanı UYGULAMA İNDİRİLİNCE DEĞİL, arkadaşın ilk hizmeti tamamlanınca veriliyor. Sahte davet ekonomisini baştan kesiyor.\n• 'Uzman gelmedi → +1 000 puan' burada da görünüyor: özür bir metin değil, bakiyede duran bir sayı.\n\nKendimden kattığım fikir — HAREKET DEFTERİ (ledger) kullanıcıya açık:\nSpec'te finans ve sadakat için ledger zorunlu; onu arka planda bırakmak yerine ekranda gösterdim. Her satır kaynağıyla ve tarihiyle duruyor, ve altında şu cümle: 'Puanları geriye dönük değiştiremeyiz — her satır kalıcıdır. Bir rakam yanlış görünüyorsa bize o satırı göster.' Muhasebe garantisini kullanıcı vaadine çevirmek, ledger'ın asıl değeridir.\n\n• Davet kartının altında gizlilik notu: 'Rehberini okumuyoruz ve kimseye kendimiz yazmıyoruz — bağlantıyı sen gönderiyorsun.'"
+    },
+    {
+      "id": "dilek",
+      "x": 0,
+      "y": 2560,
+      "w": 390,
+      "text": "DİLEĞİN NEDİR — ters pazaryerinin giriş kapısı\n\nÜrünün en kritik dönüşüm noktası burası: kullanıcı bu formu bırakırsa hiçbir uzman, hiçbir teklif, hiçbir randevu oluşmuyor. Boş bir form ve 'ne istediğinizi yazın' kutusu, güzellik alanında en hızlı terk sebebidir — çünkü çoğu kadın istediği şeyin ADINI bilmez, GÖRÜNTÜSÜNÜ bilir.\n\n• FOTOĞRAF ÖNCE, KELİME SONRA: ekranın ilk eylemi referans fotoğrafı eklemek. 'Göster, anlatma — bir fotoğraf üç paragraftan anlaşılır.' Kelime kutusu ikinci sırada ve zaten doldurulmuş bir örnekle duruyor, boş sayfa korkusu yok.\n• İPUCU ETİKETLERİ ('ince saç', 'hassas cilt', 'ilk kez') yazmayı bilmeyene cümle kurdurmadan bilgi topluyor. Altında not: 'Bunların hiçbiri herkese açık profiline geçmiyor.'\n\nKendimden kattığım asıl fikir — CANLI PAZAR GERİ BİLDİRİMİ:\nBütçe kaydırıcısı hareket ettikçe altında gerçek cevap beliriyor: 'Bu tutara 14 uzman yanıt verir' + dağılım çubukları. Ve dürüst uyarı: '8 000 ₸'ye indirirsen dörder kişi yanıt verir, çoğu yeni. Bu bir yasak değil, önceden bilmen için.'\n\nBu tek bileşen iki sorunu birden çözüyor: kullanıcının 'normal fiyat ne?' kaygısını ve platformun 'gerçekçi olmayan bütçe → sıfır teklif → terk' döngüsünü. Kullanıcı hayal kırıklığını teklif beklerken değil, kaydırıcıyı çekerken yaşıyor — ve düzeltebiliyor.\n\n• BÜTÇE TAVANI UZMANA GÖSTERİLMİYOR: 'Uzmanlar tavanını görmez, yalnız 12 000 ₸'ye kadar aralığını görür. Kimse fiyatı maksimuma yaslamıyor.' Ters pazaryerlerinin klasik istismarını baştan kapatıyoruz.\n• ESNEKLİK ÖDÜLLENDİRİLİYOR: 'Bir saat kayabilirim' anahtarı ve yanında sebebi — 'esnek taleplere genelde daha düşük fiyat verilir'. Kullanıcı neden açtığını biliyor.\n\n• 'UZMANLAR NE GÖRECEK' KARTI — koyu zeminde, gönder butonundan hemen önce. Görülecekler yeşil tikle, GÖRÜLMEYECEKLER pembe çarpıyla: telefon numarası asla, kesin adres randevu onaylanana kadar, geçmiş yorumların hiç. Gizlilik ekranındaki vaat, tam da veri gönderilmeden önceki saniyede tekrarlanıyor — asıl işe yaradığı yer burası.\n• Butonun altında son cümle: 'Şu an para çekilmiyor. Uzmanı sen seçeceksin — ya da talebi sonuçsuz kapatacaksın.'"
+    },
+    {
+      "id": "boni",
+      "x": 470,
+      "y": 2560,
+      "w": 390,
+      "text": "BONİ — AI danışman, oyuncak sohbet botu değil\n\nÇoğu üründe AI sekmesi bir gösteriş öğesidir: sorarsın, paragraf gelir, hiçbir şey olmaz. Boni'yi ürünün döngüsüne bağladım ve üç sert sınır koydum.\n\n• CEVAP DEĞİL, KARAR: Boni'nin yanıtı paragraf yığını değil; numaralı bir plan ('şimdi bir ton + bakım, 5-6 hafta sonra ikinci ton') ve kullanıcıya verilen bir cümle: 'Uzmana şunu söyle: ince saçta koruyucu açma.' Kadın salona kelimesiyle gidiyor, tarifsiz değil.\n\nKendimden kattığım asıl fikir — SOHBETİ TALEBE ÇEVİRMEK:\nYanıtın hemen altında Boni'nin derlediği hazır talep kartı duruyor: hizmet, ince saç etiketi, gerçekçi fiyat aralığı, mahalle. 'Uzmanlara gönder' tek dokunuş. AI burada pazaryerinin girişini besliyor — sohbet, gelir üreten eyleme bağlanmış oluyor. Ve altında: 'Sen basmadan hiçbir şey gitmiyor. Boni kendi başına talep göndermez.'\n\n• SAĞLIK SINIRI AÇIK VE KESİN: bir ay süren kızarıklık sorusunda Boni duruyor — 'Burada duruyorum. Bu dermatoloğun işi, benim değil. Yanılırsam sen zaman kaybedersin.' Ve devamı daha önemli: 'Sen doktora gidene kadar yüz işlemleri önermeyeceğim — ne peeling ne temizlik.' Sınır koyup arkasında durmak, tavsiye vermekten daha zor ve daha değerli.\n• Aynı kartta veri kuralı: 'Bu soruyu saklamıyorum ve kimseye göstermiyorum.' Spec'in sağlık verisi kuralı, kullanıcının onu en çok merak ettiği anda söyleniyor.\n\n• 'BONİ NE HATIRLIYOR' KARTI — hafıza görünür ve silinebilir. Her satır kaynağıyla ('bunu temmuzda sen söyledin', 'geçmiş taleplerinden'), her satırın yanında 'Unut'. Altında en önemli cümle: 'Uzmanlar bunu görmez — tek satırını bile. Boni sana yardım eder, seni satmaz.'\n\nGizli hafıza bugün AI ürünlerinin en büyük güven sorunu; kadın odaklı bir üründe bunu görünür kılmamak lüks değil, risktir.\n\n• Başlıkta 'YAPAY ZEKÂ · İNSAN DEĞİL' rozeti ve en altta: 'Boni bir programdır, uzman değil. Yanılabilir; son söz seni gören insana aittir.' Boni'yi uzmanın yerine değil, önüne koyuyoruz."
+    },
+    {
+      "id": "w2w",
+      "x": 940,
+      "y": 2560,
+      "w": 390,
+      "text": "W2W — tavsiye akışı, sosyal medya değil\n\nBu bölümün en büyük riski Instagram'ın küçük bir kopyası olmaktı: beğeni sayıları, güzel fotoğraflar, hiçbir işe yaramayan bir akış. Ürünün gerçek sorusu şu: 'Bu şehirde kime güvenebilirim?' Tasarımı bu tek soruya bağladım.\n\nKendimden kattığım asıl fikir — FİKİR BİRLİĞİ KARTI:\nYedi kişilik bir yorum dizisi okumak yerine, cevaplar tek kartta toplanıyor: 'Zarina — 7 kişiden 4'ü' çubuklu, 'Aygerim — 2'. Kullanıcı 30 saniyede karar veriyor, 10 dakika yorum okumuyor.\n\nVe altında ölçütün kendisi yazıyor: 'Yalnız o uzmanda TAMAMLANMIŞ randevusu olan kadınlar sayılır. Duydum ki iyiymiş sayılmaz.' Böylece W2W bir dedikodu akışı değil, kanıtlanmış deneyim toplamı oluyor — sahte tavsiye ekonomisi baştan kapalı.\n\n• KARARDAN EYLEME KÖPRÜ: fikir birliği kartının altındaki buton 'Zarina'ya yaz'. Sosyal katman doğrudan pazaryerine bağlanıyor; tavsiye okunup unutulan bir şey olmuyor.\n• GÖNDERİLERDE DOĞRULAMA ROZETİ: 'Temmuzda ondaydı' — kesin tarih değil dönem, ama gerçekten gitmiş olduğu doğrulanmış. Anonim yorum kuralıyla aynı mantık: kanıt var, kimlik yok.\n• BEĞENİ YERİNE 'KAYDEDİLDİ': '34 kişi kaydetti' beğeniden daha dürüst bir sinyal — biri o uzmana gerçekten gitmeyi düşünmüş demektir. Beğeni sayısı yarışması, kadınların birbirini yargıladığı bir ortam üretir; kaydetme üretmez.\n\n• KOYU GİZLİLİK ŞERİDİ akışın ortasında: 'Buraya hiçbir şey kendiliğinden düşmez' — randevuların ve yorumların akışta yayınlanmıyor, uzmanlar kimin kendilerini kaydettiğini göremiyor, istersen 'Anonim' olarak soru sorabiliyorsun. Sosyal katman, gizlilik vaadini bozan yer olmamalı; bu yüzden vaat tam buraya konuldu.\n• Son gönderi kasıtlı olarak bir GÜVENLİK UYARISI: 'Kapora için kişisel karta para isterlerse göndermeyin.' Topluluğun kendi kendini koruduğu an, platformun en değerli anıdır — ve bunu anonim biri yazabiliyor."
+    },
+    {
+      "id": "passport",
+      "x": 1410,
+      "y": 2560,
+      "w": 390,
+      "text": "AYNA PASSPORT — taşınabilir güven, kalıcı dosya değil\n\nPassport'u bir 'profil sayfası' olarak değil, RANDEVU BAŞINA AÇILAN GEÇİCİ BİR ERİŞİM olarak kurguladım. Fark büyük: profil kalıcıdır ve unutulur; passport açılır, işini görür ve kendiliğinden kapanır.\n\n• GÜVEN İKİ YÖNLÜ ÇALIŞIR: kartın üstünde uzmanın her zaman gördüğü üç sayı var — 14 tamamlanan hizmet · 0 habersiz gelmeme · 2 önceden erteleme. Altında da gerekçesi: 'Bu üç sayıyı usta hep görür, tıpkı senin onun yorumlarını gördüğün gibi.' Ters pazaryerinde uzman da risk alıyor; bunu görmezden gelmek arz tarafını kaybettirir.\n\n• SAĞLIK İSTİSNASI AÇIKÇA İTİRAF EDİLİYOR: alerji bölümü randevu onaylanınca OTOMATİK gidiyor ve kartın üstünde şu yazıyor: 'Bu, ustaya kendiliğinden giden tek bölüm — sağlık gizlilikten önce gelir ve bu kararı bilerek verdik.' Bir istisnayı saklamak yerine gerekçesiyle yazmak, gizlilik vaadini zayıflatmaz; güçlendirir.\n\nKendimden kattığım fikirler:\n1) TERCİHLER — 'Sessiz randevu' (sohbet istemiyorum, usta önceden bilsin ve alınmasın), 'Beni fotoğraflama' (portfolyo ve story dahil, arkadan bile), 'Geç kalıyorsan haber ver', 'Yalnız kadın uzman'. Bunlar küçük ayarlar gibi görünür ama kadın kullanıcıların salonda en çok yaşadığı rahatsızlıkların birebir karşılığıdır. Söylemesi zor olan şeyi, söylemeden hallediyoruz.\n\n2) GÖRÜNÜR DENETİM KAYDI — 'Kim ne zaman baktı': her passport açılışı tarihiyle listeli, yanında 'Kapat'. Spec kritik eylemler için audit log zorunlu kılıyor; onu arka planda tutmak yerine kullanıcıya gösterdim. Altındaki cümle asıl vaat: 'Her açılış kaydediliyor — ve kaydı yalnız biz değil, sen de görüyorsun. Erişim hizmetten 24 saat sonra kendiliğinden kapanıyor.'\n\n• Butonun altındaki cümle mekanizmayı özetliyor: 'Tek usta, tek randevu, bir gün. Sana abonelik değil — istediğin saniye kapatabileceğin tek seferlik erişim.'"
+    },
+    {
+      "id": "mesajlar",
+      "x": 1880,
+      "y": 2560,
+      "w": 390,
+      "text": "MESAJLAR — platformun korumasının sınandığı yer\n\nPazaryerlerinde en büyük iki kayıp sohbet ekranında olur: kullanıcı WhatsApp'a çıkar (platform aracılığı ve komisyonu biter) ve para uygulama dışında el değiştirir (koruma biter, dolandırıcılık başlar). Bu ekranı o iki riske göre tasarladım.\n\nKendimden kattığım asıl fikir — KORUMA KARTI:\nUzman 'WhatsApp'a geçelim, kalanı şimdiden Kaspi'ye at' yazdığında, mesajın hemen altında kırmızı çerçeveli bir kart beliriyor. Kart uzmanı suçlamıyor, kullanıcıyı bilgilendiriyor:\n'Numara boşuna gizli değil. Parayı AYNA dışında gönderirsen ne geri alabiliriz ne de ödediğini kanıtlayabiliriz — koruma yalnız içeride çalışır.'\nAltında doğru davranış hatırlatılıyor (kalan 7 200 ₸ yerinde, hizmetten sonra) ve ikinci bir gerçek: 'Buradaki yazışmayı saklıyoruz — itirazda işine yarar.'\n\nVe en kritik satır şikâyet butonunun altında: 'Şikâyet bize gider, ustaya değil. Şikâyet ettiğini bilmez.' Kadın kullanıcının şikâyet etmesinin önündeki asıl engel misilleme korkusudur; bunu tek cümleyle kaldırıyoruz.\n\nDiğer kararlar:\n• RANDEVU BAĞLAMI EN ÜSTTE: 'Kaskad · bugün 16:30 · kapora 1 800 ₸ alındı'. Sohbet havada durmuyor; hangi randevu için konuşulduğu hep belli.\n• SİSTEM SATIRLARI SESSİZ AMA GÖRÜNÜR: 'Passport'u Zarina'ya açtın · yarın 17:30'da kapanacak'. Gizlilik olayları sohbet akışında da izleniyor.\n• FOTOĞRAFIN ALTINDA 'yalnız ikinize görünür' — referans fotoğrafı göndermek, kadın kullanıcıda en çok tereddüt edilen eylem.\n• HAZIR YANITLAR gerçek ihtiyaçtan seçildi: '10 dakika geç kalıyorum', 'Nasıl gelirim?', 'Teşekkürler'. Yazması zor olan şeyi tek dokunuşa indiriyoruz.\n• En altta iki kalıcı vaat: 'Telefon numaranı usta görmez ve görmeyecek' ve 'Yazışma bir yıl saklanır, sonra silinir' — Gizlilik ekranındaki saklama süresiyle birebir aynı."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}
