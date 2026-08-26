@@ -1,3 +1,4 @@
+import { sectorsFromServiceIds } from '@ayna/domain';
 import {
   BadRequestException,
   ConflictException,
@@ -137,6 +138,7 @@ export class SpecialistsService {
 
     // §7 — bağımsız uzman keşif kataloğunda da yer alır; yorumları bu Professional'a bağlanır.
     // (salon_bound uzman tek başına listelenmez — salonun kaydı üzerinden görünür)
+    const hizmetler = (input.services ?? []).slice(0, 60);
     if (input.kind === 'independent') {
       try {
         const pro = await this.prisma.professional.create({
@@ -144,6 +146,14 @@ export class SpecialistsService {
             name: input.name,
             specialty: (input.bio ?? '').slice(0, 60) || input.name,
             sector: input.sector ?? 'hair',
+            // Alan seti hizmet listesinden türetilir; boşsa ana alana düşülür
+            // ki uzman en azından kendi ana alanında bulunabilsin.
+            sectors: sectorsFromServiceIds(hizmetler.map((x) => x.id)).length
+              ? sectorsFromServiceIds(hizmetler.map((x) => x.id))
+              : [input.sector ?? 'hair'],
+            // §9.5 — kayıtta girilen gerçek hizmet/fiyat/süre listesi. Buraya
+            // yazılmadığı için profil sektörün varsayılan menüsünü uyduruyordu.
+            servicesJson: JSON.stringify(hizmetler),
             kind: 'independent',
             city: input.city ?? '', // §5.1.4 — harita/arama şehir eşleşmesi
             district: input.city ?? '',
@@ -363,9 +373,17 @@ export class SpecialistsService {
   async setMyServices(userId: string, services: unknown[]) {
     const proId = await this.proIdFor(userId);
     if (!proId) return { services: [] };
+    const kesilmis = services.slice(0, 60);
+    // Alan seti hizmet listesiyle BİRLİKTE güncellenir. Ayrı tutulsaydı,
+    // uzman tırnak hizmetlerini silince tırnak aramasında görünmeye devam
+    // ederdi (ya da tersi: yeni alan eklese aramada hiç çıkmazdı).
+    const sectors = sectorsFromServiceIds(kesilmis.map((x) => (x as { id?: unknown })?.id));
     const pro = await this.prisma.professional.update({
       where: { id: proId },
-      data: { servicesJson: JSON.stringify(services.slice(0, 60)) },
+      data: {
+        servicesJson: JSON.stringify(kesilmis),
+        ...(sectors.length ? { sectors } : {}),
+      },
     });
     return { services: safeParse(pro.servicesJson) };
   }

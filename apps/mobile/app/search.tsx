@@ -21,6 +21,7 @@ import {
 import type { MessageKey } from '@ayna/i18n';
 import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
+import { servesSector } from '@ayna/domain';
 import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -73,10 +74,13 @@ export default function SearchScreen() {
     const q = lower(query.trim());
     const filtered = professionals.filter((p) => {
       if (p.city !== city) return false;
-      if (activeCat && p.sector !== activeCat) return false;
+      if (activeCat && !servesSector(p, activeCat)) return false;
       if (!q) return true;
-      const sectorLabel = lower(t(categoryLabelKey(p.sector)));
-      return lower(p.name).includes(q) || lower(p.specialty).includes(q) || sectorLabel.includes(q);
+      // Metin araması da TÜM alanlara bakar: "tırnak" yazan biri, ana alanı
+      // saç olan ama tırnak da yapan uzmanı bulabilmeli.
+      const alanlar = p.sectors?.length ? p.sectors : [p.sector];
+      const alanEslesti = alanlar.some((a) => lower(t(categoryLabelKey(a))).includes(q));
+      return lower(p.name).includes(q) || lower(p.specialty).includes(q) || alanEslesti;
     });
     // §7 — sıralama
     const sorted = [...filtered];

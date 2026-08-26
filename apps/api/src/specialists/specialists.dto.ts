@@ -9,6 +9,20 @@ export const registerSpecialistSchema = z
     city: z.string().optional(),
     kind: z.enum(['salon_bound', 'independent']),
     sector: z.string().max(40).optional(), // uzmanın ana kategorisi (harita/kategori filtresi)
+    // §9.5 — kayıtta seçilen GERÇEK hizmet listesi. Eskiden gönderilmiyordu:
+    // servicesJson boş kalıyor, profil de sektörün VARSAYILAN menüsünü uyduruyordu
+    // (uzmanın hiç seçmediği hizmetler fiyatlarıyla listeleniyordu).
+    services: z
+      .array(
+        z.object({
+          id: z.string().min(1).max(60),
+          name: z.string().min(1).max(120),
+          price: z.number().int().nonnegative().max(100_000_000),
+          durationMin: z.number().int().positive().max(1440),
+        }),
+      )
+      .max(60)
+      .optional(),
     bio: z.string().optional(),
     photoDataUrl: z.string().max(12_000_000).optional(),
     birthDateMs: z.number().int().positive().optional(),

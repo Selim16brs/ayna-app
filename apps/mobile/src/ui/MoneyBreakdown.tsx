@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
+import { earnPoints } from '@ayna/domain';
 import { useLocale } from '../locale';
+import { useStore } from '../store';
 import { radius, space, type ColorTokens } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
@@ -27,6 +29,13 @@ export function MoneyBreakdown({
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+
+  // Kanvas (design/Randevu.dc.html §para dökümü) son satırda "hizmetten sonra
+  // kazanacağın puan"ı gösteriyor; ekranda bu satır yoktu. Oran sunucudan gelir
+  // (rate.points_earn_pct) ve hesap @ayna/domain'de — vaat edilen puan ile
+  // hizmetten sonra gerçekten yatan puan aynı formülden çıkar.
+  const earnPct = useStore((s) => s.config.rates.pointsEarnPct);
+  const kazanilacak = earnPoints(price, earnPct);
 
   const hasDeposit = typeof deposit === 'number' && deposit > 0 && deposit < price;
   const onsite = hasDeposit ? price - deposit : 0;
@@ -71,6 +80,21 @@ export function MoneyBreakdown({
             </Text>
             <Text numeric variant="title" tone="ink">
               {format(onsite)}
+            </Text>
+          </View>
+        </>
+      ) : null}
+
+      {kazanilacak > 0 ? (
+        <>
+          <View style={styles.sep} />
+          <View style={styles.row}>
+            <Ionicons name="star" size={14} color={colors.gold} />
+            <Text variant="body" tone="inkSoft" style={styles.rowLabel} numberOfLines={2}>
+              {t('booking.money.will_earn')}
+            </Text>
+            <Text numeric variant="title" style={{ color: colors.gold }}>
+              +{kazanilacak}
             </Text>
           </View>
         </>

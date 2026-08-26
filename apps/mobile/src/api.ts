@@ -409,6 +409,8 @@ export interface CreateOfferInput {
 }
 
 export interface RegisterSpecialistInput {
+  /** §9.5 — kayıtta seçilen gerçek hizmet/fiyat/süre listesi (sunucu alan setini bundan türetir). */
+  services?: { id: string; name: string; price: number; durationMin: number }[];
   photoDataUrl?: string;
   birthDateMs?: number;
   sector?: string;
@@ -1047,6 +1049,7 @@ export interface AppConfig {
     holdMinutes: number;
     cancelWindowH: number;
     lateCancelPct: number;
+    pointsEarnPct: number;
     pointsCapPct: number;
     pointsUnlockKzt: number;
     pointsExpiryDays: number;

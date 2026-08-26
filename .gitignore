@@ -30,3 +30,9 @@ android/
 # Tasarım kanvası — üretilen çıktı (kaynak .dc.html + canvas.json izlenir)
 design/ayna-arayuz-cilasi.html
 design/_check.html
+
+# iCloud çakışma kopyaları — Desktop iCloud'da senkronize olduğu için
+# "store 2.ts" gibi ikizler üretiliyor. Bunlar derleniyor, lint'e giriyor ve
+# app/ altındakiler expo-router'da SAHTE ROTA üretip OTA paketini şişiriyordu.
+* 2.*
+* 3.*

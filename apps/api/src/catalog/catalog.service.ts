@@ -237,12 +237,24 @@ export class CatalogService {
         throw new NotFoundException({ code: 'PRO_NOT_FOUND', message: 'İşletme bulunamadı' });
       }
     }
-    // §9.5 — uzman kendi hizmet/fiyat listesini girdiyse PUBLIC profil ONU gösterir;
-    // sektör şablonu yalnız liste boşken (yeni hesap) menü iskeleti olarak kalır.
+    // §9.5 — PUBLIC profil uzmanın KENDİ hizmet listesini gösterir.
+    //
+    // Liste boşken sektörün varsayılan menüsü UYDURULUYORDU: uzmanın hiç
+    // seçmediği hizmetler, hiç koymadığı fiyatlarla listeleniyordu. Müşteri
+    // bunlardan birini seçip randevu alabiliyordu — uzman o hizmeti vermiyor
+    // olsa bile. Ayrıca "her uzman her alanda çıkıyor" şikâyetinin bir
+    // parçası da buydu.
+    //
+    // Şablon yalnız SAHİPSİZ (demo/tohum) kayıtlarda kalır; gerçek bir hesaba
+    // bağlı uzmanda liste boşsa boş kalır ve ekran "henüz hizmet eklenmemiş"
+    // der. Uydurma fiyat, uydurma vaattir.
     const own = safeParseServices(p.servicesJson);
+    const gercekHesap = ownerLink != null;
     const services = own.length
       ? own
-      : decorateServices(SECTOR_SERVICES[p.sector] ?? SECTOR_SERVICES.hair!, p.id);
+      : gercekHesap
+        ? []
+        : decorateServices(SECTOR_SERVICES[p.sector] ?? SECTOR_SERVICES.hair!, p.id);
     // Sıfır-demo: kadro GERÇEK — bu salona bağlı kayıtlı uzmanlar (yoksa boş; sahte isim/yüz YOK)
     const staff =
       p.kind === 'salon'
@@ -516,6 +528,9 @@ function mapPro(p: Professional) {
     name: p.name,
     specialty: p.specialty,
     sector: p.sector,
+    // §5.1.4 — uzmanın hizmet verdiği TÜM alanlar; arama/kategori filtresi
+    // artık bunu kullanır (tek `sector` çok alanlı uzmanı gizliyordu).
+    sectors: p.sectors ?? [],
     kind: p.kind,
     rating: Number(p.rating),
     reviewCount: p.reviewCount,

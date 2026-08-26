@@ -87,6 +87,10 @@ export default function ProfessionalScreen() {
   const chosen = pro.services.filter((s) => selectedIds.includes(s.id));
   const totalPrice = chosen.reduce((n, s) => n + finalPriceOf(s), 0);
   const totalDur = chosen.reduce((n, s) => n + s.durationMin, 0);
+  // Slot YETMEZ: hizmet de seçilmiş olmalı. Uzman hiç hizmet girmemişse
+  // `chosen` boş kalıyor ve randevu, adı uzmanlık olan SIFIR fiyatlı bir kayıt
+  // olarak oluşuyordu.
+  const randevuAlinabilir = slotMs != null && chosen.length > 0;
 
   // §4.2 — uzmanın DOLU aralıkları: müşteri saat seçerken dolu yerler görünür, dolu slot seçilemez
   // (çifte iş biter). Sunucu yalnız zaman aralığı döner — müşteri bilgisi asla (gizlilik).
@@ -549,6 +553,14 @@ export default function ProfessionalScreen() {
               <Text variant="bodyStrong" tone="ink" style={styles.section}>
                 {t('pro.services')}
               </Text>
+              {/* Uzman henüz hizmet girmediyse SESSİZ BOŞLUK bırakılmaz.
+                  (Sunucu artık şablon menü uydurmuyor: uydurma fiyat, uydurma
+                  vaatti — müşteri uzmanın vermediği hizmeti seçebiliyordu.) */}
+              {pro.services.length === 0 ? (
+                <Text variant="caption" tone="muted">
+                  {t('pro.services_empty')}
+                </Text>
+              ) : null}
               <View style={styles.services}>
                 {pro.services.map((s) => {
                   const active = selectedIds.includes(s.id);
@@ -924,17 +936,31 @@ export default function ProfessionalScreen() {
           </Pressable>
         ) : null}
         <Pressable
-          style={[styles.bookBtn, slotMs == null && styles.bookBtnDisabled]}
+          style={[styles.bookBtn, !randevuAlinabilir && styles.bookBtnDisabled]}
           onPress={book}
-          disabled={slotMs == null}
+          disabled={!randevuAlinabilir}
           accessibilityRole="button"
-          accessibilityState={{ disabled: slotMs == null }}
+          accessibilityState={{ disabled: !randevuAlinabilir }}
         >
-          <Text variant="bodyStrong" tone="onAccent">
-            {t('pro.book')}
-            {chosen.length > 1 ? ` · ${chosen.length} ${t('pro.services_short')}` : ''}
-            {totalPrice > 0 ? ` · ${formatPrice(totalPrice)}` : ''}
-          </Text>
+          {/* Hepsi TEK SATIRDAYDI: iki hizmet seçilince "Randevu Al · 2 hizmet ·
+              ₸19 200" düğmeye sığmıyor, metin iki yandan kırpılıyordu (düğme
+              flex:1 ama içindeki Text daralamıyordu). Ayrıntı alt satıra alındı
+              ve metin kutusu daralabilir yapıldı — hiçbir uzunlukta taşmaz. */}
+          <View style={styles.bookLabel}>
+            <Text variant="bodyStrong" tone="onAccent" numberOfLines={1}>
+              {t('pro.book')}
+            </Text>
+            {chosen.length > 1 || totalPrice > 0 ? (
+              <Text variant="caption" tone="onAccent" numberOfLines={1} style={styles.bookSub}>
+                {[
+                  chosen.length > 1 ? `${chosen.length} ${t('pro.services_short')}` : null,
+                  totalPrice > 0 ? formatPrice(totalPrice) : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            ) : null}
+          </View>
           <Ionicons name="arrow-forward" size={18} color={colors.onAccent} />
         </Pressable>
       </View>
@@ -1287,13 +1313,20 @@ const makeStyles = (colors: ColorTokens) =>
     },
     iconBtnActive: { backgroundColor: colors.accent },
     bookBtn: {
-      flex: 1,
+      flexGrow: 1,
+      flexShrink: 1,
+      minWidth: 0,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      height: 56,
+      minHeight: 56,
+      paddingHorizontal: space(2),
+      paddingVertical: space(1),
       borderRadius: radius.pill,
       backgroundColor: colors.accent,
     },
+    // Metin kutusu DARALABİLİR olmalı; yoksa uzun etiket düğmeyi taşırır.
+    bookLabel: { flexShrink: 1, minWidth: 0, alignItems: 'center' },
+    bookSub: { opacity: 0.85 },
   });

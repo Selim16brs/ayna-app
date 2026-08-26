@@ -54,6 +54,12 @@ export function formatSlotTr(ms: number): string {
   return `${WD_TR[p.wd]} ${two(p.day)}.${two(p.month + 1)}.${p.year} · ${two(p.h)}:${two(p.min)}`;
 }
 
+/** Yalnız TARİH (saat yok) — üyelik bitişi gibi gün bazlı bilgiler için. */
+export function formatDateTr(ms: number): string {
+  const p = almatyParts(ms);
+  return `${two(p.day)}.${two(p.month + 1)}.${p.year}`;
+}
+
 /**
  * Almatı takvim günü farkı (bugün=0, yarın=1, dün=-1). Saat değil, takvim günü:
  * sıralama ve "aynı gün mü" (geç iptal politikası §4.4) için.

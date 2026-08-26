@@ -44,6 +44,8 @@ export default function PostDetailScreen() {
   const reported = useStore((s) => s.reportedPosts.includes(id ?? ''));
   const following = useStore((s) => s.following);
   const toggleFollow = useStore((s) => s.toggleFollow);
+  const followingIds = useStore((s) => s.followingIds);
+  const myId = useStore((s) => s.currentUser?.id);
   const [draft, setDraft] = useState('');
   // §15 — Öneri seçicide YALNIZ gerçekten gidilmiş uzmanlar var. Böylece
   // sunucudaki doğrulama yapısı gereği tutuyor ve kural kullanıcıya
@@ -112,7 +114,15 @@ export default function PostDetailScreen() {
   }
 
   const ty = makeType(colors)[post.type];
-  const isFollowing = following.includes(post.author);
+  // §5.5 — KİMLİK ÖNCELİKLİ eşleşme. Burada yalnız ADA bakılıyordu: takip
+  // edilen kişinin gönderisinde düğme "Takip Et" olarak duruyordu, çünkü
+  // gönderideki görünen ad hesap adıyla birebir aynı olmak zorunda değil.
+  // Liste ekranı (tabs)/circle.tsx zaten doğru eşleştiriyordu — aynı kalıp.
+  const isFollowing = post.authorUserId
+    ? followingIds.includes(post.authorUserId)
+    : following.includes(post.author);
+  // Kendi gönderinde takip düğmesi ÇIKMAMALI — kendini takip edemezsin.
+  const isMine = post.author === 'Sen' || (!!post.authorUserId && post.authorUserId === myId);
 
   const send = () => {
     if (draft.trim().length === 0) return;
@@ -158,10 +168,10 @@ export default function PostDetailScreen() {
                   </Text>
                 </View>
                 {/* §W2W — kişiyi takip et (anonim hariç) */}
-                {!post.anonymous ? (
+                {!post.anonymous && !isMine ? (
                   <Pressable
                     style={[styles.followBtn, isFollowing && styles.followBtnOn]}
-                    onPress={() => toggleFollow(post.author)}
+                    onPress={() => toggleFollow(post.author, post.authorUserId)}
                     hitSlop={6}
                   >
                     <Ionicons

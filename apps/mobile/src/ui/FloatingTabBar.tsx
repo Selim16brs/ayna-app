@@ -25,7 +25,7 @@ const PILL_H = 68;
 const PILL_SIDE = 16;
 const PILL_BOTTOM = 26;
 const FADE_H = 130;
-const HAP_MAX = 164; // aktif hapın üst sınırı
+const HAP_MAX = 176; // aktif hapın üst sınırı
 const PASIF_MIN = 40; // pasif sekmenin dokunma hedefi
 
 /** İçeriğin yüzen barın altında kalmaması için ekranların ayırması gereken boşluk. */
@@ -161,12 +161,20 @@ const styles = StyleSheet.create({
     height: 50,
     paddingHorizontal: space(1.75),
     borderRadius: 25,
-    // Hap, ayrılan kutunun tamamını kaplar; kutu genişliği yukarıda hesaplandı.
-    alignSelf: 'stretch',
+    // Hap İÇERİĞİNE GÖRE daralır ve kutunun ortasına oturur.
+    //
+    // Eskiden `alignSelf: 'stretch'` ile kutunun tamamını kaplıyordu; etiket
+    // de daralabilir olduğu için "Keşfet" gibi KISA bir ad bile "Keşf…" diye
+    // kırpılıyordu — hapta bol yer olmasına rağmen. Hap içeriğini sarınca
+    // etiket doğal genişliğini alır ve daralma hiç devreye girmez.
+    alignSelf: 'center',
+    maxWidth: '100%',
     justifyContent: 'center',
   },
   activeIcon: { flexShrink: 0 },
-  activeLabel: { fontSize: 15, fontFamily: font.semibold, flexShrink: 1 },
+  // flexShrink 0: etiket ASLA ezilmez. Sığmayan durum kutu hesabıyla
+  // (HAP_MAX) engellenir, kırpmayla değil.
+  activeLabel: { fontSize: 15, fontFamily: font.semibold, flexShrink: 0 },
   dot: {
     position: 'absolute',
     top: 16,

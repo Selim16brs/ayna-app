@@ -22,7 +22,13 @@ function fmtDate(d: Date): string {
 import { api } from '../../src/api';
 import { CITIES } from '../../src/data';
 import { getDeviceFingerprint } from '../../src/device';
-import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
+import {
+  activeCategories,
+  findService,
+  servicesOf,
+  tri,
+  type TaxService,
+} from '../../src/taxonomy';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -246,6 +252,19 @@ export default function ExpertRegisterScreen() {
               (x) => Number(svc[x.id]?.price) > 0 && Number(svc[x.id]?.dur) > 0,
             ),
           )?.id ?? 'hair',
+        // §9.5 — SEÇİLEN HİZMETLER sunucuya gider. Eskiden gönderilmiyordu
+        // ("Faz 9'da yazılacak" notu): servicesJson boş kalıyor, profil de
+        // sektörün varsayılan menüsünü uyduruyordu — uzmanın hiç seçmediği
+        // hizmetler fiyatlarıyla listeleniyor ve her uzman her alanda
+        // görünüyordu. Sunucu alan setini de bu listeden türetir.
+        services: Object.entries(svc)
+          .filter(([, r]) => Number(r.price) > 0 && Number(r.dur) > 0)
+          .map(([id, r]) => ({
+            id,
+            name: tri(findService(id)?.label ?? { tr: id, kk: id, ru: id }, locale),
+            price: Number(r.price),
+            durationMin: Number(r.dur),
+          })),
         ...(photoB64 ? { photoDataUrl: `data:image/jpeg;base64,${photoB64}` } : {}),
         ...(birthDate ? { birthDateMs: birthDate.getTime() } : {}),
         ...(deviceFp ? { deviceFp } : {}),

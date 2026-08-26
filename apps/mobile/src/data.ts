@@ -65,7 +65,13 @@ export interface Professional {
   id: string;
   name: string;
   specialty: string;
-  sector: string; // category id
+  sector: string; // ana kategori (geriye dönük uyum)
+  /**
+   * §5.1.4 — uzmanın hizmet verdiği TÜM alanlar (sunucu, hizmet listesinden
+   * türetir). Tek `sector` çok alanlı uzmanı gizliyordu: saç + tırnak yapan
+   * biri yalnız saçta çıkıyordu. Eski kayıtlarda boş gelir → `sector`e düşülür.
+   */
+  sectors?: string[];
   kind: ProviderKind;
   rating: number;
   reviewCount: number;
