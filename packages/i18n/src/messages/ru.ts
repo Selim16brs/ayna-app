@@ -2071,6 +2071,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
 
   // EK Z.1 — личные сообщения
   'messages.title': 'Сообщения',
+  'messages.empty_cta': 'Найти мастера',
   'messages.empty': 'У вас пока нет сообщений. Начните чат со специалистом.',
   'messages.thread_empty': 'Напишите первое сообщение.',
   'messages.input_placeholder': 'Написать сообщение…',

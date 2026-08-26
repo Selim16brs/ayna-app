@@ -49,9 +49,18 @@ export default function MessagesScreen() {
             <View style={styles.emptyIcon}>
               <Ionicons name="chatbubbles-outline" size={30} color={colors.muted} />
             </View>
-            <Text variant="caption" tone="muted">
+            <Text variant="caption" tone="muted" style={styles.emptyText}>
               {t('messages.empty')}
             </Text>
+            {/* ÇIKMAZ DÜZELTMESİ: "bir uzmanla sohbet başlat" diyordu ama
+                başlatacak hiçbir şey sunmuyordu. Sohbet uzman profilinden
+                başlıyor; kullanıcıyı oraya götürüyoruz. */}
+            <Pressable style={styles.emptyCta} onPress={() => router.push('/search')}>
+              <Ionicons name="search" size={16} color={colors.onAccent} />
+              <Text variant="cta" tone="onAccent">
+                {t('messages.empty_cta')}
+              </Text>
+            </Pressable>
           </View>
         ) : (
           <View style={styles.list}>
@@ -92,6 +101,16 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: space(13) },
     empty: { alignItems: 'center', gap: space(2), paddingTop: space(10) },
+    emptyText: { textAlign: 'center', paddingHorizontal: space(4) },
+    emptyCta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      height: 52,
+      paddingHorizontal: space(3),
+      borderRadius: 26,
+      backgroundColor: colors.accent,
+    },
     emptyIcon: {
       width: 64,
       height: 64,

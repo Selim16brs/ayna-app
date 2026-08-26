@@ -753,6 +753,9 @@ export const api = {
     }>('/circle/follows'),
   circleHelpful: (postId: string, on: boolean) =>
     post<{ helpful: number }>(`/circle/posts/${postId}/helpful`, { on }),
+  // Bir gönderinin yorumları. Anonim yorumda userId dışarı verilmez.
+  circleComments: (postId: string) => get<CircleCommentRow[]>(`/circle/posts/${postId}/comments`),
+
   // proId: cevapta bir uzman öneriliyorsa kime işaret ettiği. Doğrulamayı
   // SUNUCU yapar (öneren o uzmanda tamamlanmış randevusu var mı) ve dondurur.
   circleComment: (postId: string, text: string, anonymous: boolean, proId?: string) =>
@@ -910,6 +913,17 @@ export interface SafetySession {
 }
 
 // EK Z.1 — DM mesajlaşma tipleri
+export interface CircleCommentRow {
+  id: string;
+  /** Kimlik DEĞİL, yalnız etiket ("Anonim" / "AYNA Üyesi"). */
+  authorLabel: string;
+  text: string;
+  proId: string | null;
+  /** Öneren kişinin o uzmanda tamamlanmış randevusu var mıydı (yazma anında donduruldu). */
+  proVerified: boolean;
+  createdAt: string;
+}
+
 export interface PassportData {
   allergies: string[];
   quietVisit: boolean;

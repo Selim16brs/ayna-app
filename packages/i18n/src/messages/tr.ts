@@ -2203,6 +2203,7 @@ export const tr = {
 
   // EK Z.1 — DM mesajlaşma
   'messages.title': 'Mesajlar',
+  'messages.empty_cta': 'Uzmanları keşfet',
   'messages.empty': 'Henüz mesajın yok. Bir uzmanla sohbet başlat.',
   'messages.thread_empty': 'İlk mesajı sen yaz.',
   'messages.input_placeholder': 'Mesaj yaz…',

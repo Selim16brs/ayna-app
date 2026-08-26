@@ -2086,6 +2086,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
 
   // EK Z.1 — жеке хабарламалар
   'messages.title': 'Хабарламалар',
+  'messages.empty_cta': 'Мамандарды тап',
   'messages.empty': 'Әзірше хабарламаңыз жоқ. Маманмен сөйлесуді бастаңыз.',
   'messages.thread_empty': 'Алғашқы хабарламаны жазыңыз.',
   'messages.input_placeholder': 'Хабарлама жазу…',

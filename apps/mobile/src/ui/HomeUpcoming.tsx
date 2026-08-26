@@ -109,14 +109,17 @@ export function HomeUpcoming() {
             label={t('home.next.reschedule')}
             onPress={() => router.push(`/booking/${next.id}` as never)}
           />
-          {/* NOT: doğrudan sohbet açmak uzmanın ownerUserId'sini ve api.startConversation
-              çağrısını gerektiriyor; randevu kaydı bu alanı taşımıyor. Yanlış kimlikle
-              boş sohbet açmaktansa listeye gidiyoruz. Randevuya ownerUserId eklenince
-              doğrudan açılacak. */}
+          {/* Sohbet uzman profilinden başlıyor (api.startConversation + ownerUserId
+              orada, hata yönetimiyle birlikte). Mesaj listesine göndermek çıkmazdı:
+              liste boşsa kullanıcının yapabileceği hiçbir şey yoktu. */}
           <Action
             icon="chatbubble-ellipses-outline"
             label={t('home.next.message')}
-            onPress={() => router.push('/messages')}
+            onPress={() =>
+              next.proId
+                ? router.push(`/professional/${next.proId}` as never)
+                : router.push('/messages')
+            }
           />
           <Action
             icon="navigate-outline"
