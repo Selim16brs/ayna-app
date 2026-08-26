@@ -123,7 +123,7 @@ export default function SellerOffersScreen() {
       await api.offerAction(token, id, a);
       load();
     } catch {
-      Alert.alert(t('common.error'));
+      Alert.alert(t('seller.offers.title'), t('seller.offers.save_err'));
     }
   }
 

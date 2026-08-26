@@ -6,7 +6,7 @@ import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, StackHeader, Text, useToast } from '../../src/ui';
 
 /**
  * Faz 4 (§15) — UZMAN, salonun kendi takvimi üzerindeki yetkisini seçer.
@@ -28,6 +28,7 @@ export default function CalendarPermissionScreen() {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [mode, setMode] = useState<string>('create_requires_approval');
+  const toast = useToast();
 
   useEffect(() => {
     void api
@@ -41,10 +42,10 @@ export default function CalendarPermissionScreen() {
     setMode(m);
     void api
       .setCalendarPermission(m)
-      .then(() => Alert.alert(t('seller.calperm.saved')))
+      .then(() => toast.show(t('seller.calperm.saved')))
       .catch(() => {
         setMode(prev);
-        Alert.alert(t('common.error') as string);
+        Alert.alert(t('seller.calperm.title'), t('seller.calperm.save_err'));
       });
   };
 
@@ -73,6 +74,7 @@ export default function CalendarPermissionScreen() {
           );
         })}
       </ScrollView>
+      {toast.node}
     </Screen>
   );
 }

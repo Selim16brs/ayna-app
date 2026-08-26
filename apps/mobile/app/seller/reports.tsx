@@ -361,7 +361,7 @@ export default function ReportsScreen() {
                             await api.celebrateBirthday(token, u.id);
                             Alert.alert(t('bday.sent'));
                           } catch {
-                            Alert.alert(t('common.error'));
+                            Alert.alert(t('seller.reports.title'), t('seller.reports.action_err'));
                           }
                         },
                       },

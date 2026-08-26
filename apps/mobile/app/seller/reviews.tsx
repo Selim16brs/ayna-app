@@ -10,7 +10,7 @@ import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
 export default function SellerReviewsScreen() {
   const { t } = useLocale();
-  const { shadow } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const token = useStore((s) => s.token);
   const [businessId, setBusinessId] = useState<string | null>(null);
@@ -51,9 +51,13 @@ export default function SellerReviewsScreen() {
             </Text>
           </View>
         ) : data.reviews.length === 0 ? (
-          <View style={[styles.card, shadow.soft]}>
-            <Text variant="caption" tone="muted">
+          <View style={[styles.card, shadow.soft, styles.emptyCard]}>
+            <Ionicons name="chatbubble-ellipses-outline" size={30} color={colors.muted} />
+            <Text variant="bodyStrong" tone="ink">
               {t('seller.reviews.empty')}
+            </Text>
+            <Text variant="caption" tone="muted" style={styles.emptyHint}>
+              {t('seller.reviews.empty_hint')}
             </Text>
           </View>
         ) : (
@@ -204,6 +208,8 @@ const makeStyles = (colors: ColorTokens) =>
     content: { padding: space(3), paddingBottom: space(4), gap: space(1.5) },
     hint: { marginBottom: space(0.5) },
     list: { gap: space(1.25) },
+    emptyCard: { alignItems: 'center', gap: 8, paddingVertical: 24 },
+    emptyHint: { textAlign: 'center' },
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,

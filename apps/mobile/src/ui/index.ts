@@ -36,4 +36,5 @@ export { PasswordStrength } from './PasswordStrength';
 export { MissingFields } from './MissingFields';
 export { RulesCard } from './RulesCard';
 export { ListSkeleton } from './ListSkeleton';
+export { useToast } from './Toast';
 export { VerificationBadges } from './VerificationBadges';

@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { api } from '../../src/api';
 import { useStore } from '../../src/store';
-import { useLocale } from '../../src/locale';
+import { fillParams, useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
@@ -25,6 +25,20 @@ export default function VerifyScreen() {
   const [code, setCode] = useState('');
   const [devCode, setDevCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Polish 5.3 — kod geçerlilik sayacı (5 dk) + yeniden gönderim soğuması (30 sn).
+  // Sunucudaki OTP_TTL_SEC / OTP_RESEND_COOLDOWN_SEC ile aynı; kullanıcı 'kod neden
+  // geçersiz?' sürprizi yaşamaz, boşuna 'yeniden gönder'e basıp hız limitine takılmaz.
+  const [ttl, setTtl] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
+  useEffect(() => {
+    if (ttl <= 0 && cooldown <= 0) return;
+    const id = setInterval(() => {
+      setTtl((v) => (v > 0 ? v - 1 : 0));
+      setCooldown((v) => (v > 0 ? v - 1 : 0));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [ttl, cooldown]);
+  const mmss = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
 
   const requestCode = async () => {
     if (!phone || busy) return;
@@ -33,6 +47,8 @@ export default function VerifyScreen() {
       const res = await api.otpRequest(phone);
       setSent(true);
       setDevCode(res.devCode ?? null);
+      setTtl(res.expiresInSec ?? 300);
+      setCooldown(30);
     } catch {
       // Ağ/servis hatası → demo akışı engellenmesin, kodu göster
       setSent(true);
@@ -127,9 +143,21 @@ export default function VerifyScreen() {
                 onPress={confirm}
               />
             </View>
-            <Text variant="caption" tone="accentFg" style={styles.resend} onPress={requestCode}>
-              {t('verify.resend')}
+            <Text
+              variant="caption"
+              tone={cooldown > 0 ? 'muted' : 'accentFg'}
+              style={styles.resend}
+              onPress={cooldown > 0 ? undefined : requestCode}
+            >
+              {cooldown > 0
+                ? fillParams(t('verify.resend_in'), { sec: String(cooldown) })
+                : t('verify.resend')}
             </Text>
+            {ttl > 0 ? (
+              <Text variant="caption" tone="muted" style={styles.resend}>
+                {fillParams(t('verify.code_valid'), { time: mmss(ttl) })}
+              </Text>
+            ) : null}
           </>
         )}
       </View>

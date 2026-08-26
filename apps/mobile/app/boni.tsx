@@ -193,6 +193,21 @@ export default function BoniScreen() {
             </Animated.View>
           ))}
 
+          {/* Polish 5.2 — yanıt beklenirken CANLI gösterge: bekleme belirsiz kalmaz */}
+          {sending ? (
+            <View style={[styles.bubbleRow, styles.rowLeft]}>
+              <View style={styles.bubbleAvatar}>
+                <Ionicons name="sparkles" size={13} color={colors.onColor} />
+              </View>
+              <View style={[styles.bubble, styles.bubbleBoni, styles.typingBubble]}>
+                <ActivityIndicator size="small" color={colors.inkSoft} />
+                <Text variant="caption" tone="muted">
+                  {t('boni.typing')}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
           {sending && (
             <View style={[styles.bubbleRow, styles.rowLeft]}>
               <View style={styles.bubbleAvatar}>
@@ -283,6 +298,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     quotaText: { fontWeight: '600' },
 
+    typingBubble: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space(1), maxWidth: '100%' },
     rowLeft: { justifyContent: 'flex-start' },
     rowRight: { justifyContent: 'flex-end' },
