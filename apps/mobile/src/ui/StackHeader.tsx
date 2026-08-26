@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useLocale } from '../locale';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type ColorTokens, radius, space } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
@@ -23,6 +24,7 @@ export function StackHeader({
   // Bandın SAĞ ALTINA sabitlenen görsel (ör. Boni kedisi) — alt kenarı bantla aynı yerde biter.
   heroImage?: ReactNode;
 }) {
+  const { t } = useLocale();
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -34,7 +36,13 @@ export function StackHeader({
   return (
     <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
       <View style={styles.topRow}>
-        <Pressable style={styles.back} onPress={goBack} hitSlop={8}>
+        <Pressable
+          style={styles.back}
+          onPress={goBack}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+        >
           <Ionicons name="chevron-back" size={22} color={colors.ink} />
         </Pressable>
         {right ?? null}

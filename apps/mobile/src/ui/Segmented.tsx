@@ -27,6 +27,10 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
             key={o.value}
             onPress={() => onChange(o.value)}
             style={[styles.segment, on && [styles.segmentOn, shadow.soft]]}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityState={{ selected: on }}
+            accessibilityLabel={o.label}
           >
             <Text
               variant="caption"

@@ -235,10 +235,21 @@ export default function ProfessionalScreen() {
         {/* HERO — lime bant (Keşfet dili): çerçeveli portre + isim/puan/bağ + dalga geçişi */}
         <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
           <View style={styles.heroTop}>
-            <Pressable style={styles.circleBtn} onPress={() => router.back()}>
+            <Pressable
+              style={styles.circleBtn}
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.back')}
+            >
               <Ionicons name="chevron-back" size={22} color={colors.ink} />
             </Pressable>
-            <Pressable style={styles.circleBtn} onPress={() => toggleFavorite(proId)}>
+            <Pressable
+              style={styles.circleBtn}
+              onPress={() => toggleFavorite(proId)}
+              accessibilityRole="button"
+              accessibilityLabel={t('favorites.title')}
+              accessibilityState={{ selected: isFav }}
+            >
               <Ionicons
                 name={isFav ? 'heart' : 'heart-outline'}
                 size={20}
@@ -755,6 +766,9 @@ export default function ProfessionalScreen() {
           <Pressable
             style={[styles.iconBtn, following && styles.iconBtnActive]}
             onPress={toggleFollow}
+            accessibilityRole="button"
+            accessibilityLabel={t('circle.follow')}
+            accessibilityState={{ selected: following }}
           >
             <Ionicons
               name={following ? 'person-remove' : 'person-add-outline'}
@@ -765,7 +779,12 @@ export default function ProfessionalScreen() {
         ) : null}
         {/* EK Z.1 — DM: yalnız hesabı bağlı (gerçek) uzmanda görünür */}
         {pro.ownerUserId && token ? (
-          <Pressable style={styles.iconBtn} onPress={messagePro}>
+          <Pressable
+            style={styles.iconBtn}
+            onPress={messagePro}
+            accessibilityRole="button"
+            accessibilityLabel={t('messages.title')}
+          >
             <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.inkSoft} />
           </Pressable>
         ) : null}
