@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { CATEGORY_DEFAULTS } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   API_KEY_DEFS,
@@ -15,16 +16,12 @@ const DEFAULT_SOON = ['Astana', 'Şımkent'];
 
 // §12.9 — kategori başına bakım periyodu (gün) + standart hizmet süresi (dk). Parametrik.
 const CATEGORY_CONFIG_KEY = 'category.config';
-const DEFAULT_CATEGORY_CONFIG: Record<string, { maintenanceDays: number; serviceMin: number }> = {
-  hair: { maintenanceDays: 35, serviceMin: 90 },
-  nails: { maintenanceDays: 15, serviceMin: 60 },
-  brows: { maintenanceDays: 21, serviceMin: 30 },
-  lashes: { maintenanceDays: 21, serviceMin: 120 },
-  makeup: { maintenanceDays: 0, serviceMin: 60 },
-  skincare: { maintenanceDays: 30, serviceMin: 60 },
-  spa: { maintenanceDays: 30, serviceMin: 90 },
-  epilation: { maintenanceDays: 28, serviceMin: 45 },
-};
+// Kategori listesi @ayna/domain'de — mobil taksonomi ve sunucu AYNI kaynaktan
+// besleniyor. Eskiden burada elle yazılı 8 kategori vardı; uygulamada 12
+// vardı ve eksik dördün ikisi (pmu, bridal) AKTİFTİ — o kategoriler panelde
+// hiç görünmüyor, bakım periyodu/süresi ayarlanamıyordu.
+const DEFAULT_CATEGORY_CONFIG: Record<string, { maintenanceDays: number; serviceMin: number }> =
+  CATEGORY_DEFAULTS;
 
 // Anahtarı maskele: sk-****…3f2a (ilk 3 + son 4; arası gizli). Ham değer asla sızmaz.
 export function maskKey(value: string | null): string {

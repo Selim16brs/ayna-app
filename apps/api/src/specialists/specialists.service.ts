@@ -1,3 +1,8 @@
+import { cakisanRandevular, type BookingWindow, type DayHours } from '@ayna/domain';
+
+// Asia/Almaty = UTC+5, yaz saati YOK. Sunucu UTC saklıyor; uzman yerel saate
+// göre çalışıyor, ham UTC ile karşılaştırmak günü kaydırırdı.
+const ALMATY_OFFSET_MS = 5 * 60 * 60_000;
 import { sectorsFromServiceIds } from '@ayna/domain';
 import {
   BadRequestException,
@@ -440,14 +445,62 @@ export class SpecialistsService {
     return { hours: safeParse(pro?.hoursJson) };
   }
 
+  /**
+   * §9.5 — çalışma saatleri. ADMIN ONAYINA GİTMEZ: uzmanın kendi takvimi.
+   *
+   * Ama kapatılan bir aralıkta ONAYLANMIŞ müşteri randevusu varsa sessizce
+   * kaydedilmez: müşteri o saate göre plan yaptı. Çakışanlar yanıtla birlikte
+   * döner; uzman uyarıyı görüp yine de devam etmeyi seçebilir (randevular
+   * geçerli kalır — gelmemesi hâlinde §4.4-b "uzman gelmedi" cezası işler).
+   */
   async setMyHours(userId: string, hours: unknown[]) {
     const proId = await this.proIdFor(userId);
-    if (!proId) return { hours: [] };
+    if (!proId) return { hours: [], conflicts: [] };
+    const gunler = hours.slice(0, 7) as DayHours[];
+
+    // Yalnız GELECEK ve slotu tutan randevular. Geçmişi uyarmak anlamsız.
+    const simdi = new Date();
+    const aktif = await this.prisma.booking.findMany({
+      where: {
+        proId,
+        startAt: { gt: simdi },
+        status: { in: ['confirmed', 'deposit_pending', 'deposit_submitted'] },
+      },
+      select: { id: true, startAt: true, durationMin: true, customerName: true, dateLabel: true },
+      take: 200,
+    });
+
+    const pencereler: BookingWindow[] = aktif
+      .filter((b) => b.startAt != null)
+      .map((b) => {
+        // Almatı yerel gün/saati — sunucu UTC saklıyor, uzman yerel saate göre
+        // çalışıyor. Ham UTC ile karşılaştırmak günü kaydırırdı.
+        const yerel = new Date(b.startAt!.getTime() + ALMATY_OFFSET_MS);
+        return {
+          id: b.id,
+          wd: yerel.getUTCDay(),
+          startMin: yerel.getUTCHours() * 60 + yerel.getUTCMinutes(),
+          durationMin: b.durationMin ?? 60,
+        };
+      });
+
+    const cakisanlar = cakisanRandevular(gunler, pencereler);
+    const detay = new Map(aktif.map((b) => [b.id, b]));
+
     const pro = await this.prisma.professional.update({
       where: { id: proId },
-      data: { hoursJson: JSON.stringify(hours.slice(0, 7)) },
+      data: { hoursJson: JSON.stringify(gunler) },
     });
-    return { hours: safeParse(pro.hoursJson) };
+
+    return {
+      hours: safeParse(pro.hoursJson),
+      // Müşteri ADI dönmez — uzman zaten randevu ekranında görüyor; burada
+      // gereksiz PII taşımayız.
+      conflicts: cakisanlar.map((c) => ({
+        id: c.id,
+        dateLabel: detay.get(c.id)?.dateLabel ?? '',
+      })),
+    };
   }
 
   async myClosedDays(userId: string) {

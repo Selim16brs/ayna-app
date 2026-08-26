@@ -215,6 +215,8 @@ interface State {
   // §9.5 — uzman/salon profil verileri (kayıt sonrası düzenlenebilir). Kalıcı saklanır.
   sellerSocial: SocialValue;
   sellerHours: DayHours[];
+  /** Çalışma saatleri — kendi ekranından doğrudan kaydedilir (admin onayı yok). */
+  setSellerHours: (hours: DayHours[]) => void;
   sellerCerts: string[];
   setSellerProfile: (p: { social?: SocialValue; hours?: DayHours[]; certs?: string[] }) => void;
   // §10.1/§6.2 — salon-seviyesi profil (uzman profilinden AYRI). Kalıcı saklanır.
@@ -705,6 +707,7 @@ export const useStore = create<State>()(
           return 'error';
         }
       },
+      setSellerHours: (hours) => set({ sellerHours: hours }),
       sellerServices: seedSellerServices(),
       setSellerServices: (map) => {
         set({ sellerServices: map });
