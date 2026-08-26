@@ -2130,7 +2130,14 @@ export const useStore = create<State>()(
           ],
         }));
         const token = get().token;
-        if (token) void api.earnPoints(token, points, labelKey, detail).catch(() => undefined);
+        // SUNUCU OTORİTEDİR: kazanım kuralı ve günlük sınır sunucuda. Yerel artış
+        // yalnız anlık geri bildirim; sunucu yanıtı gelince bakiye onunla ezilir.
+        // (Sunucu sınırı aşan kazanımı sessizce atlar — bakiye şişmiş kalmasın.)
+        if (token)
+          void api
+            .earnPoints(token, labelKey, detail)
+            .then((sum) => set({ points: sum.points, raffleEntries: sum.raffleEntries }))
+            .catch(() => undefined);
       },
 
       redeem: async (reward) => {

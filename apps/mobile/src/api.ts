@@ -668,8 +668,14 @@ export const api = {
 
   // Sadakat (kullanıcıya bağlı; bakiye sunucuda defterden türetilir)
   loyalty: (token: string) => get<LoyaltySummary>('/loyalty', token),
-  earnPoints: (token: string, points: number, reason: string, detail?: string) =>
-    post<LoyaltySummary>('/loyalty/earn', { points, reason, detail }, token),
+  /**
+   * Puan kazanımı bildirir. TUTARI SUNUCU BELİRLER — istemci `points` GÖNDERMEZ.
+   * (Eskiden gönderiyordu ve sunucu doğrulamasız yazıyordu: her kullanıcı
+   * sınırsız puan basabiliyordu. Kural tablosu artık sunucuda.)
+   * Yerel iyimser artış, bir sonraki hydrate'te sunucu bakiyesiyle düzeltilir.
+   */
+  earnPoints: (token: string, reason: string, detail?: string) =>
+    post<LoyaltySummary>('/loyalty/earn', { reason, detail }, token),
   redeemReward: (token: string, rewardId: string) =>
     post<LoyaltySummary>('/loyalty/redeem', { rewardId }, token),
 
