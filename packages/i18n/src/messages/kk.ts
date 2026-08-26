@@ -1742,6 +1742,13 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'circle.new.anonymous': 'Анонимді бөлісу',
   'circle.new.submit': 'Бөлісу',
   'circle.detail.title': 'Жазба',
+  'circle.consensus.title': 'Кімді неше адам ұсынды',
+  'circle.consensus.of': '{n} адамның',
+  'circle.consensus.rule':
+    'Тек сол маманда аяқталған жазылуы барлар саналады. «Естідім, жақсы екен» саналмайды.',
+  'circle.suggest.title': 'Маман ұсын',
+  'circle.suggest.none': 'Ұсыныс жасау үшін алдымен бір жазылуың аяқталуы керек.',
+  'circle.suggest.clear': 'Алып тастау',
   'circle.detail.comments': 'Пікірлер',
   'circle.detail.no_comments': 'Алғашқы пікірді сен жаз',
   'circle.detail.comment_ph': 'Пікір жаз...',

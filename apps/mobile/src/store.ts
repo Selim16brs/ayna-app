@@ -372,7 +372,7 @@ interface State {
   // circle
   addPost: (input: AddPostInput) => string;
   toggleHelpful: (postId: string) => void;
-  addComment: (postId: string, text: string, anonymous: boolean) => void;
+  addComment: (postId: string, text: string, anonymous: boolean, proId?: string) => void;
   // §5.5 — moderasyon katman 2: şikâyet et (eşik aşınca gizlenir + admin kuyruğu)
   reportedPosts: string[];
   reportPost: (postId: string) => void;
@@ -2082,9 +2082,9 @@ export const useStore = create<State>()(
         }
       },
 
-      addComment: (postId, text, anonymous) => {
+      addComment: (postId, text, anonymous, proId) => {
         // §5.5 — yorum SUNUCUYA yazılır (moderasyon + diğer kullanıcılar görür)
-        void api.circleComment(postId, text, anonymous).catch(() => undefined);
+        void api.circleComment(postId, text, anonymous, proId).catch(() => undefined);
         set((s) => ({
           circlePosts: s.circlePosts.map((p) =>
             p.id === postId

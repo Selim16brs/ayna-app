@@ -16,7 +16,7 @@ import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, SectionHeader, StackHeader, Text, TextInput } from '../../src/ui';
+import { ConsensusCard, Screen, SectionHeader, StackHeader, Text, TextInput } from '../../src/ui';
 
 // Gönderi türü çipleri — Keşfet pill dili: pastel zemin + ink metin (nötr, canlı değil).
 const makeType = (
@@ -40,6 +40,17 @@ export default function PostDetailScreen() {
   const following = useStore((s) => s.following);
   const toggleFollow = useStore((s) => s.toggleFollow);
   const [draft, setDraft] = useState('');
+  // §15 — Öneri seçicide YALNIZ gerçekten gidilmiş uzmanlar var. Böylece
+  // sunucudaki doğrulama yapısı gereği tutuyor ve kural kullanıcıya
+  // seçenekleri üzerinden öğretilmiş oluyor: gitmediğini öneremezsin.
+  const visitedPros = useStore((st) => {
+    const seen = new Map<string, string>();
+    for (const b of st.bookings) {
+      if (b.status === 'completed' && b.proId) seen.set(b.proId, b.uzmanName ?? b.proName);
+    }
+    return [...seen.entries()].map(([id, name]) => ({ id, name }));
+  });
+  const [suggestPro, setSuggestPro] = useState<string | null>(null);
 
   // §5.5 — şikâyet: içerik görünür kalır, admin kuyruğuna düşer
   const onReport = () => {
@@ -68,8 +79,9 @@ export default function PostDetailScreen() {
 
   const send = () => {
     if (draft.trim().length === 0) return;
-    addComment(post.id, draft.trim(), false);
+    addComment(post.id, draft.trim(), false, suggestPro ?? undefined);
     setDraft('');
+    setSuggestPro(null);
   };
 
   return (
@@ -171,6 +183,9 @@ export default function PostDetailScreen() {
           {/* Yorumlar */}
           <SectionHeader title={t('circle.detail.comments')} />
 
+          {/* §14 — yedi yorumu okumak yerine "kimi kaç kişi önerdi" tek kartta */}
+          {id ? <ConsensusCard postId={id} /> : null}
+
           {post.comments.length === 0 ? (
             <View style={[styles.noComments, shadow.soft]}>
               <View style={styles.noCommentsIcon}>
@@ -206,6 +221,35 @@ export default function PostDetailScreen() {
             </View>
           )}
         </ScrollView>
+
+        {/* §15 — ÖNERİ SEÇİCİ: yalnız gidilmiş uzmanlar. Hiç randevusu
+            tamamlanmamış kullanıcıya sebebi yazılıyor, boş şerit gösterilmiyor. */}
+        {visitedPros.length > 0 ? (
+          <View style={styles.suggestRow}>
+            <Text variant="micro" tone="muted">
+              {t('circle.suggest.title')}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.suggestChips}>
+                {visitedPros.map((p) => {
+                  const on = suggestPro === p.id;
+                  return (
+                    <Pressable
+                      key={p.id}
+                      onPress={() => setSuggestPro(on ? null : p.id)}
+                      style={[styles.suggestChip, on && styles.suggestChipOn]}
+                    >
+                      {on ? <Ionicons name="checkmark" size={13} color={colors.onAccent} /> : null}
+                      <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} numberOfLines={1}>
+                        {p.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
+        ) : null}
 
         {/* Yorum yaz */}
         <View style={styles.composer}>
@@ -318,6 +362,19 @@ const makeStyles = (colors: ColorTokens) =>
     commentBody: { flex: 1 },
     commentAuthor: { fontFamily: font.semibold },
     commentText: { marginTop: 3, lineHeight: 22 },
+    suggestRow: { paddingHorizontal: space(3), paddingTop: space(1), gap: space(0.75) },
+    suggestChips: { flexDirection: 'row', gap: space(0.75) },
+    suggestChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      maxWidth: 180,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    suggestChipOn: { backgroundColor: colors.accent },
     composer: {
       flexDirection: 'row',
       alignItems: 'flex-end',

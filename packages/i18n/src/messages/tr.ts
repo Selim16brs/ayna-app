@@ -1830,6 +1830,13 @@ export const tr = {
 
   // Circle — gönderi detayı + yorumlar
   'circle.detail.title': 'Gönderi',
+  'circle.consensus.title': 'Kimi kaç kişi önerdi',
+  'circle.consensus.of': '{n} kişiden',
+  'circle.consensus.rule':
+    'Yalnız o uzmanda tamamlanmış randevusu olanlar sayılır. “Duydum ki iyiymiş” sayılmaz.',
+  'circle.suggest.title': 'Bir uzman öner',
+  'circle.suggest.none': 'Öneri yapabilmen için önce bir randevunun tamamlanmış olması gerekiyor.',
+  'circle.suggest.clear': 'Öneriyi kaldır',
   'circle.detail.comments': 'Yorumlar',
   'circle.detail.no_comments': 'İlk yorumu sen yap',
   'circle.detail.comment_ph': 'Yorum yaz...',

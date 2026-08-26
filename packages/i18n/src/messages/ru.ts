@@ -1726,6 +1726,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'circle.new.anonymous': 'Поделиться анонимно',
   'circle.new.submit': 'Поделиться',
   'circle.detail.title': 'Пост',
+  'circle.consensus.title': 'Кого сколько человек посоветовали',
+  'circle.consensus.of': 'из {n}',
+  'circle.consensus.rule':
+    'Считаются только те, у кого была завершённая запись к этому мастеру. «Слышала, что хорошая» не считается.',
+  'circle.suggest.title': 'Посоветовать мастера',
+  'circle.suggest.none': 'Чтобы советовать, нужна хотя бы одна завершённая запись.',
+  'circle.suggest.clear': 'Убрать',
   'circle.detail.comments': 'Комментарии',
   'circle.detail.no_comments': 'Оставьте первый комментарий',
   'circle.detail.comment_ph': 'Написать комментарий...',

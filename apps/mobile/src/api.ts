@@ -753,8 +753,14 @@ export const api = {
     }>('/circle/follows'),
   circleHelpful: (postId: string, on: boolean) =>
     post<{ helpful: number }>(`/circle/posts/${postId}/helpful`, { on }),
-  circleComment: (postId: string, text: string, anonymous: boolean) =>
-    post<unknown>(`/circle/posts/${postId}/comments`, { text, anonymous }),
+  // proId: cevapta bir uzman öneriliyorsa kime işaret ettiği. Doğrulamayı
+  // SUNUCU yapar (öneren o uzmanda tamamlanmış randevusu var mı) ve dondurur.
+  circleComment: (postId: string, text: string, anonymous: boolean, proId?: string) =>
+    post<{ id: string; proVerified: boolean }>(`/circle/posts/${postId}/comments`, {
+      text,
+      anonymous,
+      proId,
+    }),
   createCirclePost: (
     token: string,
     input: { category: string; text: string; anonymous?: boolean },
