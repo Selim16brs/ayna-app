@@ -4,6 +4,9 @@ import type { MessageKey } from './tr.js';
 export const ru: Partial<Record<MessageKey, string>> = {
   'common.retry': 'Повторить',
   'passport.care.load_err': 'Не удалось загрузить данные. Проверьте соединение.',
+  'passport.care.allergy_ph': 'Добавить аллергию — напр. аммиак, латекс',
+  'passport.care.allergy_max': 'Можно добавить не более 20 аллергий.',
+  'passport.care.allergy_remove_t': 'Удалить аллергию',
   'common.loading': 'Загрузка…',
   'common.ok': 'Хорошо',
   'premium.title': 'Premium',

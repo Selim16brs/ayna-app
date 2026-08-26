@@ -4,6 +4,9 @@ import type { MessageKey } from './tr.js';
 export const kk: Partial<Record<MessageKey, string>> = {
   'common.retry': 'Қайталау',
   'passport.care.load_err': 'Деректер жүктелмеді. Байланысты тексеріңіз.',
+  'passport.care.allergy_ph': 'Аллергия қосу — мыс. аммиак, латекс',
+  'passport.care.allergy_max': 'Ең көбі 20 аллергия қосуға болады.',
+  'passport.care.allergy_remove_t': 'Аллергияны жою',
   'common.loading': 'Жүктелуде…',
   'common.ok': 'Жарайды',
   'premium.title': 'Premium',
