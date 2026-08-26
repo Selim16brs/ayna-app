@@ -1988,7 +1988,12 @@ export const tr = {
   'passport.premium.confirm': 'Premium’a geçilsin mi?',
   'passport.premium.confirm_note':
     'Ödeme uygulama dışında (banka/Kaspi) alınır. Onayınca premium avantajları açılır.',
-  'passport.premium.manage': 'Üyeliği yönet · iptal et',
+  'passport.premium.manage': 'Üyeliği yönet',
+  'passport.premium.manage_t': 'Premium üyeliğin',
+  'passport.premium.until': 'Bitiş tarihi',
+  'passport.premium.until_unknown': 'Onay bekleniyor',
+  'passport.premium.no_autorenew':
+    'Üyelik otomatik yenilenmez ve kayıtlı kartın yoktur. Bu tarihte kendiliğinden sona erer — iptal etmen gereken bir şey yok. Devam etmek istersen o zaman yeniden satın alabilirsin.',
   'passport.premium.cancel': 'İptal et',
   'passport.premium.cancel_confirm': 'Premium üyeliğin iptal edilsin mi?',
   'passport.perk.boni': 'Boni — AI güzellik danışmanı',

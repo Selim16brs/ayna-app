@@ -1875,7 +1875,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'passport.premium.confirm': 'Перейти на Premium?',
   'passport.premium.confirm_note':
     'Оплата вне приложения (банк/Kaspi). После подтверждения откроются премиум-преимущества.',
-  'passport.premium.manage': 'Управление подпиской · отмена',
+  'passport.premium.manage': 'Управление подпиской',
+  'passport.premium.manage_t': 'Твоё Premium',
+  'passport.premium.until': 'Действует до',
+  'passport.premium.until_unknown': 'Ожидает подтверждения',
+  'passport.premium.no_autorenew':
+    'Подписка не продлевается автоматически, карта не сохраняется. Она просто закончится в эту дату — отменять ничего не нужно. Захочешь продолжить — оформишь заново.',
   'passport.premium.cancel': 'Отменить',
   'passport.premium.cancel_confirm': 'Отменить твою Premium-подписку?',
   'passport.perk.boni': 'Boni — AI-консультант по красоте',

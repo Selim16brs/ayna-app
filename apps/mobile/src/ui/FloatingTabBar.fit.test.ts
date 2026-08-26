@@ -16,7 +16,7 @@ import { kk, ru, tr } from '@ayna/i18n';
 
 const PILL_SIDE = 16;
 const IC_BOSLUK = 8;
-const HAP_MAX = 164;
+const HAP_MAX = 176;
 const PASIF_MIN = 40;
 
 /** FloatingTabBar içindeki hesabın AYNISI. */
@@ -73,7 +73,12 @@ test('en dar cihazda bile aktif hap ikon + etikete yer bırakır', () => {
 });
 
 // Etiketin ayrılan hapa sığıp sığmadığı — 15px Onest semibold ≈ 8.3pt/karakter.
-const metinGenisligi = (etiket: string) => 19 + 7 + etiket.length * 8.3 + 28;
+//
+// Tahmin PAYLI tutulur: hap artık içeriğine göre daralıyor ve etiket
+// ezilmiyor (flexShrink 0), yani sığmayan bir etiket kırpılmak yerine hapı
+// taşırır. Bu yüzden model gerçekten sığdığından emin olmalı.
+const PAY = 1.15;
+const metinGenisligi = (etiket: string) => 19 + 7 + etiket.length * 8.3 * PAY + 28;
 
 const NAV_KEYS = ['nav.discover', 'nav.bookings', 'nav.care', 'nav.circle', 'nav.profile'] as const;
 

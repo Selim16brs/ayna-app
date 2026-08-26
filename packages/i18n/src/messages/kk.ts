@@ -1889,7 +1889,12 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'passport.premium.confirm': 'Premium-ға өтілсін бе?',
   'passport.premium.confirm_note':
     'Төлем қосымшадан тыс (банк/Kaspi) алынады. Растағанда премиум артықшылықтары ашылады.',
-  'passport.premium.manage': 'Мүшелікті басқару · бас тарту',
+  'passport.premium.manage': 'Жазылымды басқару',
+  'passport.premium.manage_t': 'Сенің Premium',
+  'passport.premium.until': 'Аяқталу күні',
+  'passport.premium.until_unknown': 'Растауды күтуде',
+  'passport.premium.no_autorenew':
+    'Жазылым автоматты түрде жаңартылмайды, сақталған картаң жоқ. Ол осы күні өздігінен аяқталады — бас тарту қажет емес. Жалғастырғың келсе, қайта сатып аласың.',
   'passport.premium.cancel': 'Бас тарту',
   'passport.premium.cancel_confirm': 'Премиум мүшелігің тоқтатылсын ба?',
   'passport.perk.boni': 'Boni — AI сұлулық кеңесшісі',

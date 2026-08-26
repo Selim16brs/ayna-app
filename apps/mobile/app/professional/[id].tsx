@@ -930,11 +930,25 @@ export default function ProfessionalScreen() {
           accessibilityRole="button"
           accessibilityState={{ disabled: slotMs == null }}
         >
-          <Text variant="bodyStrong" tone="onAccent">
-            {t('pro.book')}
-            {chosen.length > 1 ? ` · ${chosen.length} ${t('pro.services_short')}` : ''}
-            {totalPrice > 0 ? ` · ${formatPrice(totalPrice)}` : ''}
-          </Text>
+          {/* Hepsi TEK SATIRDAYDI: iki hizmet seçilince "Randevu Al · 2 hizmet ·
+              ₸19 200" düğmeye sığmıyor, metin iki yandan kırpılıyordu (düğme
+              flex:1 ama içindeki Text daralamıyordu). Ayrıntı alt satıra alındı
+              ve metin kutusu daralabilir yapıldı — hiçbir uzunlukta taşmaz. */}
+          <View style={styles.bookLabel}>
+            <Text variant="bodyStrong" tone="onAccent" numberOfLines={1}>
+              {t('pro.book')}
+            </Text>
+            {chosen.length > 1 || totalPrice > 0 ? (
+              <Text variant="caption" tone="onAccent" numberOfLines={1} style={styles.bookSub}>
+                {[
+                  chosen.length > 1 ? `${chosen.length} ${t('pro.services_short')}` : null,
+                  totalPrice > 0 ? formatPrice(totalPrice) : null,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            ) : null}
+          </View>
           <Ionicons name="arrow-forward" size={18} color={colors.onAccent} />
         </Pressable>
       </View>
@@ -1287,13 +1301,20 @@ const makeStyles = (colors: ColorTokens) =>
     },
     iconBtnActive: { backgroundColor: colors.accent },
     bookBtn: {
-      flex: 1,
+      flexGrow: 1,
+      flexShrink: 1,
+      minWidth: 0,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      height: 56,
+      minHeight: 56,
+      paddingHorizontal: space(2),
+      paddingVertical: space(1),
       borderRadius: radius.pill,
       backgroundColor: colors.accent,
     },
+    // Metin kutusu DARALABİLİR olmalı; yoksa uzun etiket düğmeyi taşırır.
+    bookLabel: { flexShrink: 1, minWidth: 0, alignItems: 'center' },
+    bookSub: { opacity: 0.85 },
   });

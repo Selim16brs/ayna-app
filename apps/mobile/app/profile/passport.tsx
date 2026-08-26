@@ -3,6 +3,7 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-nat
 import { Ionicons } from '@expo/vector-icons';
 import type { MessageKey } from '@ayna/i18n';
 import { PREMIUM_PRICE_KZT } from '../../src/data';
+import { formatDateTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { api } from '../../src/api';
 import { useStore } from '../../src/store';
@@ -53,7 +54,7 @@ export default function PassportScreen() {
   const reviews = useStore((s) => Object.values(s.userReviews).reduce((n, a) => n + a.length, 0));
   const points = useStore((s) => s.points);
   const premium = useStore((s) => s.premium);
-  const setPremium = useStore((s) => s.setPremium);
+  const membershipUntil = useStore((s) => s.currentUser?.membershipUntil ?? null);
   // §12.9 — premium fiyatı admin-parametrik (config); fetch yoksa sabit varsayılan
   const premiumPrice = useStore((s) => s.config.rates.premiumUserKzt) || PREMIUM_PRICE_KZT;
   // KALDIRILDI: `const trust = 92` — sabit bir sayı, kullanıcıya hesaplanmış bir
@@ -82,15 +83,24 @@ export default function PassportScreen() {
         },
       },
     ]);
-  const cancel = () =>
-    Alert.alert(t('passport.premium.cancel_confirm'), undefined, [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('passport.premium.cancel'),
-        style: 'destructive',
-        onPress: () => setPremium(false),
-      },
-    ]);
+  // ÜYELİĞİ YÖNET — eskiden bu bağlantı doğrudan "iptal et" onayına gidiyordu
+  // ve onay `setPremium(false)` ile YALNIZ YEREL bayrağı çeviriyordu. İki ayrı
+  // yanlış vardı:
+  //  1) Bağlantı "yönet" diyordu, yönetim diye bir şey yoktu.
+  //  2) Abonelik OTOMATİK YENİLENMİYOR (kayıtlı kart yok; kullanıcı bir kez
+  //     ödüyor, admin onaylıyor, periodEnd'de expireDue() kendiliğinden
+  //     bitiriyor). Yani iptal edilecek bir tahsilat yoktu — yerel bayrak
+  //     uygulamayı kapatıp açınca refreshMembership ile geri geliyordu.
+  // Doğrusu: ne zaman bittiğini söylemek ve yenilenmediğini açıkça yazmak.
+  const manage = () => {
+    const ms = membershipUntil ? Date.parse(membershipUntil) : Number.NaN;
+    const bitis = Number.isFinite(ms) ? formatDateTr(ms) : t('passport.premium.until_unknown');
+    Alert.alert(
+      t('passport.premium.manage_t'),
+      `${t('passport.premium.until')}: ${bitis}\n\n${t('passport.premium.no_autorenew')}`,
+      [{ text: t('common.ok') }],
+    );
+  };
 
   return (
     <Screen edges={['bottom']}>
@@ -220,7 +230,7 @@ export default function PassportScreen() {
           </View>
 
           {premium ? (
-            <Pressable onPress={cancel} style={styles.manageLink}>
+            <Pressable onPress={manage} style={styles.manageLink}>
               <Text variant="caption" tone="muted" style={styles.manageText}>
                 {t('passport.premium.manage')}
               </Text>
