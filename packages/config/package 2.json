@@ -9,10 +9,7 @@
       "default": "./dist/env.js"
     }
   },
-  "files": [
-    "dist",
-    "eslint.base.mjs"
-  ],
+  "files": ["dist", "eslint.base.mjs"],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit -p tsconfig.json",
