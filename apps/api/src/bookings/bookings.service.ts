@@ -7,8 +7,9 @@ import {
 } from '@nestjs/common';
 import type { Booking } from '@prisma/client';
 import { createHash } from 'node:crypto';
-import { depositFor, hasConflict } from '@ayna/domain';
+import { canTransition, depositFor, hasConflict, isBookingState } from '@ayna/domain';
 import { loadDepositRules } from './deposit.rules';
+import { holdDeadline, loadWindows, responseDeadline } from './booking-windows';
 import { SLOT_HOLDING_STATUSES } from './slot-statuses';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
@@ -217,6 +218,8 @@ export class BookingsService {
       offerPrice = Number(offer.finalPrice);
     }
 
+    // §5.3 — zaman pencereleri admin ayarından; kod içine gömülü değil.
+    const windows = await loadWindows(this.prisma);
     // id istemciden gelir → upsert ile idempotent (tekrar gönderim güvenli)
     const data = {
       source: input.source,
@@ -237,9 +240,9 @@ export class BookingsService {
       price: offerPrice ?? input.price,
       status: input.status ?? 'confirmed',
       ...(input.offerId ? { offerId: input.offerId } : {}),
-      // §4.1.3 — yanıt penceresi SUNUCUDA üretilir (6 saat); mobil sayaç buna bakar
+      // §4.1.3 — yanıt penceresi SUNUCUDA üretilir; mobil sayaç buna bakar
       ...((input.status ?? 'confirmed') === 'awaiting_provider'
-        ? { responseDeadline: new Date(Date.now() + 6 * 60 * 60 * 1000) }
+        ? { responseDeadline: responseDeadline(windows) }
         : {}),
     };
     const existing = await this.prisma.booking.findUnique({ where: { id: input.id } });
@@ -272,7 +275,7 @@ export class BookingsService {
       }
       if (mode === 'create_requires_approval' && data.status === 'confirmed') {
         data.status = 'awaiting_provider';
-        data.responseDeadline = new Date(Date.now() + 6 * 60 * 60 * 1000);
+        data.responseDeadline = responseDeadline(windows);
       }
       // manage_calendar → confirmed kalabilir; aşağıdaki çakışma kontrolü yine çalışır
     }
@@ -463,7 +466,8 @@ export class BookingsService {
   // §4.1/§4.2 — uzman onaylar → ATOMİK slot lock (çift-rezervasyon önlenir) → deposit_pending
   async approve(id: string, actorId?: string) {
     await this.assertParty(id, actorId, 'provider');
-    const deadline = new Date(Date.now() + 3 * 60 * 60 * 1000); // §5.2 dekont penceresi (3 saat)
+    // §5.3 — hold (dekont) penceresi admin ayarı; kod içine gömülü değil.
+    const deadline = holdDeadline(await loadWindows(this.prisma));
     // Tek transaction içinde: çakışma kontrolü + durum güncelleme (atomik kilit)
     const row = await this.prisma.$transaction(async (tx) => {
       const b = await tx.booking.findUnique({ where: { id } });
@@ -786,23 +790,24 @@ export class BookingsService {
     if (!existing) {
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     }
-    // §4 — durum makinesi: kapalı durumlardan geri dönüş YOK (cancelled→completed gibi
-    // geçersiz geçişler reddedilir; çift POST idempotent kabul edilir: aynı hedef → mevcut döner)
+    // §4 — durum makinesi. Eskiden burada bir KARA LİSTE vardı: yalnız kapalı
+    // durumlardan çıkış engelleniyordu, dolayısıyla `deposit_pending → completed`
+    // gibi kapora adımını tümden atlayan geçişler serbestti. Artık BEYAZ LİSTE
+    // (`@ayna/domain`): izin verilmeyen her geçiş reddedilir.
+    // Çift POST idempotent kabul edilir: aynı hedef → mevcut kayıt döner.
     const target = typeof data.status === 'string' ? data.status : null;
     if (target) {
       if (existing.status === target) return mapBooking(existing); // idempotent tekrar
-      const CLOSED = ['cancelled', 'completed', 'refunded', 'expired'];
-      // Faz 2 — no_show YARI kapalı: teyit penceresinde yalnız itiraza (disputed) açılır
-      if (existing.status === 'no_show' && target !== 'disputed') {
+      if (!isBookingState(target)) {
         throw new BadRequestException({
           code: 'INVALID_TRANSITION',
-          message: `no_show yalnız itirazla değişebilir ('${target}' reddedildi)`,
+          message: `Bilinmeyen randevu durumu: ${target}`,
         });
       }
-      if (CLOSED.includes(existing.status)) {
+      if (!canTransition(existing.status, target)) {
         throw new BadRequestException({
           code: 'INVALID_TRANSITION',
-          message: `Kapalı randevu (${existing.status}) '${target}' durumuna geçemez`,
+          message: `Randevu '${existing.status}' durumundan '${target}' durumuna geçemez`,
         });
       }
     }

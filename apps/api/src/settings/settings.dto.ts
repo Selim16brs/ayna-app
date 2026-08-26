@@ -14,6 +14,9 @@ export const RATE_DEFS = [
   // `rate.deposit_min` bunu ezer. Panelde kalıyor ki eski değer görünür olsun.
   { key: 'rate.deposit_kzt', label: 'Kapora (eski sabit tutar)', suffix: '₸', default: 1000 },
   { key: 'rate.cancel_window_h', label: 'Ücretsiz iptal penceresi', suffix: 'saat', default: 3 },
+  // §5.3 — hold ve yanıt pencereleri (slotu doğrudan etkiler)
+  { key: 'policy.hold_minutes', label: 'Kapora (slot tutma) süresi', suffix: 'dk', default: 180 },
+  { key: 'policy.response_hours', label: 'Uzman yanıt süresi', suffix: 'saat', default: 6 },
   { key: 'rate.late_cancel_pct', label: 'Geç iptal / no-show cezası', suffix: '%', default: 3 },
   // K4 — para puan modeli
   { key: 'rate.points_cap_pct', label: 'Puan harcama tavanı', suffix: '%', default: 25 },

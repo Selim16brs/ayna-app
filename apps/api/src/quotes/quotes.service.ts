@@ -10,6 +10,7 @@ import { depositFor, hasConflict } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
 import { loadDepositRules } from '../bookings/deposit.rules';
+import { holdDeadline, loadWindows } from '../bookings/booking-windows';
 import { SLOT_HOLDING_STATUSES } from '../bookings/slot-statuses';
 import type { CreateQuoteRequestInput, SelectQuoteInput, SubmitQuoteInput } from './quotes.dto';
 
@@ -448,6 +449,10 @@ export class QuotesService {
     // §4.3 — teklif zaten uzmanın kabulü → randevu doğrudan DEPOZİTO adımına doğar.
     // K1 — kapora oranlı; uzmanın onay yoluyla aynı hesap (`@ayna/domain`).
     const deposit = depositFor(Number(quote.price), await loadDepositRules(this.prisma));
+    // Bu yol `depositDeadline` YAZMIYORDU. `deposit_pending` slotu işgal ettiği için
+    // ödemeyen müşterinin randevusu o saati süresiz kilitliyordu: scheduler'ın süre
+    // dolum sorgusu `depositDeadline: { lt: now }` arıyor, NULL olan kayda hiç değmiyor.
+    const holdUntil = holdDeadline(await loadWindows(this.prisma));
     const bookingId = `bk_q_${randomUUID().slice(0, 8)}`;
     const inDays = Math.max(0, Math.round((input.slotMs - Date.now()) / 86_400_000));
     const durationMin = quote.etaMin ?? 60;
@@ -501,6 +506,7 @@ export class QuotesService {
           price: Number(quote.price),
           status: 'deposit_pending',
           depositAmount: deposit,
+          depositDeadline: holdUntil,
         },
       });
       await tx.quoteRequest.update({

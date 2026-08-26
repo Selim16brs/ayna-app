@@ -28,22 +28,50 @@ reassigned_pending · expired · completed_pending
 (`apps/mobile/src/data.ts:877`), çevrimdışı kaydın sunucuda dolu slota
 çakışmasını anlatıyor.
 
-**Şartname 31 durum istiyor.** Eksik olanların işlevsel karşılığı da yok:
+**Şartname 31 durum istiyor** — ama sayı yanıltıcı. Şartnamenin kendisi
+"kavramsal modelleri mevcut mimariye uyarlayarak" diyor, ve durumların bir kısmı
+zaten **başka adla** var:
 
-| Eksik durum                                 | Neyi kaybediyoruz                                                   |
-| ------------------------------------------- | ------------------------------------------------------------------- |
-| `HELD`                                      | Slot tutma kavramı yok — ödeme sırasında saat kimseye kilitlenmiyor |
-| `DEPOSIT_REVIEW`                            | Dekont incelenirken ayrı durum yok                                  |
-| `PREPARATION_REQUIRED` · `READY`            | Hazırlık talimatı akışı yok                                         |
-| `CUSTOMER_ON_THE_WAY` · `CUSTOMER_ARRIVED`  | Yola çıktım / geldim yok                                            |
-| `IN_PROGRESS`                               | Hizmetin başladığı an kaydedilmiyor                                 |
-| `RESCHEDULE_REQUESTED`                      | Erteleme talebi ayrı durum değil                                    |
-| `NO_SHOW_REPORTED`                          | Uzman "gelmedi" dediğinde itiraz penceresi yok                      |
-| `PAYMENT_REJECTED`                          | Reddedilen dekont ayrı durum değil                                  |
-| `CUSTOMER_CANCELLED` / `PROVIDER_CANCELLED` | Tek `cancelled` var; **kimin iptal ettiği durumdan okunamıyor**     |
+| Şartname durumu                  | Kodda karşılığı                                    |
+| -------------------------------- | -------------------------------------------------- |
+| `HELD`                           | ✅ `deposit_pending` — slotu tutar, süresi işler   |
+| `DEPOSIT_REVIEW`                 | ✅ `deposit_submitted`                             |
+| `COMPLETED_PENDING_CONFIRMATION` | ✅ `completed_pending`                             |
+| `NO_SHOW_REPORTED` / `_CONFIRMED`| ✅ `no_show` + `finalizeDeadline` teyit penceresi   |
+| `PAYMENT_REJECTED`               | ⚠️ ayrı durum yok; `deposit_pending`'e geri dönüş  |
+
+> **Düzeltme (26.08):** bu belgenin ilk sürümü "`HELD` yok, slot tutma kavramı
+> yok" ve "uzman gelmedi dediğinde itiraz penceresi yok" diyordu. **İkisi de
+> yanlıştı.** `deposit_pending` slotu tutuyor ve süresi doluyor; no-show'da
+> kapora yakma anında değil, `policy.confirm_hours` penceresinin sonunda
+> scheduler tarafından uygulanıyor (`bookings.service.ts:405-411`,
+> `bookings.scheduler.ts:113`).
+
+Gerçekten eksik olanlar:
+
+| Eksik durum                                 | Neyi kaybediyoruz                                               |
+| ------------------------------------------- | --------------------------------------------------------------- |
+| `PREPARATION_REQUIRED` · `READY`            | Hazırlık talimatı akışı yok                                     |
+| `CUSTOMER_ON_THE_WAY` · `CUSTOMER_ARRIVED`  | Yola çıktım / geldim yok                                        |
+| `IN_PROGRESS`                               | Hizmetin başladığı an kaydedilmiyor                             |
+| `RESCHEDULE_REQUESTED`                      | Erteleme talebi ayrı durum değil                                |
+| `CUSTOMER_CANCELLED` / `PROVIDER_CANCELLED` | Tek `cancelled` var; **kimin iptal ettiği durumdan okunamıyor** |
 
 Son madde önemli: iptal politikası (kim iptal etti → kapora kime kalır) durumdan
 türetilemiyor, ayrı alanlardan çıkarılmak zorunda.
+
+### Durum makinesi diye bir şey yoktu
+
+`packages/domain/src/booking/state-machine.ts` bir durum makinesi taşıyor ama
+**planlama belgesinin sözlüğüyle** yazılmış (`SCHEDULED`, `CHECK_IN_AVAILABLE`,
+`CLOSED`…) ve Prisma enum'uyla hiç örtüşmüyor. **Sıfır tüketicisi vardı.**
+
+Gerçek koruma `bookings.service.transition()` içindeki dört elemanlı bir kara
+listeydi: yalnız `cancelled/completed/expired`'dan çıkış engelleniyordu (listede
+`refunded` de vardı — Prisma enum'unda böyle bir durum yok, yani ölü madde).
+
+Kara listenin bıraktığı boşluk: `deposit_pending → completed` serbestti. Yani
+**kapora hiç ödenmeden randevu tamamlanmış sayılabiliyordu.**
 
 ---
 
@@ -100,8 +128,21 @@ korunmalı.
 | Geç iptal        | Kapora yakma, 3 saat penceresi                     | `bookings.policy.ts:4,23-27` |
 
 Kapora tarafı şaşırtıcı derecede sağlam — dekont tekrarı, karşılıklı teyit ve
-süre dolumu hepsi sunucuda. **Eksik olan tek şey tutarın oranlı hesaplanması**
-(kullanıcı kararı: `clamp(fiyat × %10, 1.000, 5.000)`).
+süre dolumu hepsi sunucuda.
+
+> **Düzeltme (26.08):** "Tutar sabit" satırı yalnız **teklif seçme** yolu için
+> doğruydu. Uzmanın onay yolu zaten oranlı hesap yapıyordu (%20, 100 ₸'ye
+> yuvarlamalı, `bookings.service.ts:462`) — ama o hesabın okuduğu üç ayar
+> panelde tanımlı değildi, yani hiç değiştirilemiyordu. Yani aynı fiyata iki
+> yoldan iki farklı kapora isteniyordu.
+
+**İki gerçek boşluk:**
+
+1. Hesabın iki yerde ayrı yaşaması (K1 ile tek yere alındı).
+2. **Teklif seçme yolu `depositDeadline` hiç yazmıyordu.** `deposit_pending`
+   slotu işgal ettiği için, ödemeyen müşterinin randevusu o saati **süresiz**
+   kilitliyordu: scheduler'ın sorgusu `depositDeadline: { lt: now }` arıyor,
+   NULL olan kayda hiç değmiyor.
 
 ---
 
