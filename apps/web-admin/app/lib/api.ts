@@ -89,6 +89,20 @@ export const api = {
   rejectProfileChange: (id: string) =>
     req<ProfileChange>(`/admin/profile-changes/${id}/reject`, { method: 'POST' }),
   // EK Z.3 — KYC uzman doğrulama kuyruğu
+  // §destek — kullanıcı destek talepleri
+  supportList: (status?: string) =>
+    req<SupportRow[]>(`/admin/support${status ? `?status=${status}` : ''}`),
+  supportReply: (id: string, reply: string) =>
+    req<{ id: string }>(`/admin/support/${id}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ reply }),
+    }),
+  supportClose: (id: string) =>
+    req<{ id: string }>(`/admin/support/${id}/close`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
   kycQueue: (status?: string) => req<KycRow[]>(`/admin/kyc${status ? `?status=${status}` : ''}`),
   approveKyc: (id: string) => req<KycRow>(`/admin/kyc/${id}/approve`, { method: 'POST' }),
   rejectKyc: (id: string, note?: string) =>
@@ -776,4 +790,16 @@ export interface MarketPrice {
   category: string;
   city: string;
   basePrice: number;
+}
+
+export interface SupportRow {
+  id: string;
+  userId: string;
+  userName: string;
+  topic: string;
+  body: string;
+  status: string;
+  reply: string | null;
+  repliedAt: string | null;
+  createdAt: string;
 }

@@ -1,11 +1,26 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { api, ApiError, type SupportTicket } from '../../src/api';
 import { FAQ } from '../../src/data';
+import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import {
+  Button,
+  Screen,
+  SectionHeader,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+  TextInput,
+} from '../../src/ui';
+
+// Yönlendirme başlıkları — sunucudaki TOPICS ile aynı.
+const KONULAR = ['payment', 'booking', 'safety', 'account', 'other'] as const;
+type Konu = (typeof KONULAR)[number];
 
 export default function HelpScreen() {
   const { t } = useLocale();
@@ -13,7 +28,45 @@ export default function HelpScreen() {
   const styles = useThemedStyles(makeStyles);
   const [open, setOpen] = useState<string | null>(null);
 
-  const onContact = () => Alert.alert(t('common.soon'));
+  // DESTEK TALEBİ — bu düğme eskiden hiçbir şey yapmıyordu ("Yakında").
+  // Parası takılan ya da güvenlik sorunu yaşayan biri için kabul edilemezdi.
+  const token = useStore((s) => s.token);
+  const [konu, setKonu] = useState<Konu>('other');
+  const [metin, setMetin] = useState('');
+  const [gonderiliyor, setGonderiliyor] = useState(false);
+  const [talepler, setTalepler] = useState<SupportTicket[]>([]);
+
+  const talepleriYukle = useCallback(() => {
+    if (!token) return;
+    void api
+      .mySupportTickets(token)
+      .then(setTalepler)
+      .catch(() => undefined);
+  }, [token]);
+  useFocusEffect(talepleriYukle);
+
+  const gonder = async () => {
+    if (!token || gonderiliyor) return;
+    if (metin.trim().length < 5) {
+      Alert.alert(t('help.contact'), t('help.too_short'));
+      return;
+    }
+    setGonderiliyor(true);
+    try {
+      await api.createSupportTicket(token, konu, metin.trim());
+      setMetin('');
+      talepleriYukle();
+      Alert.alert(t('help.sent_t'), t('help.sent_b'));
+    } catch (e) {
+      const kod = e instanceof ApiError ? e.code : '';
+      Alert.alert(
+        t('help.contact'),
+        kod === 'TOO_MANY_OPEN' ? t('help.too_many') : t('common.error'),
+      );
+    } finally {
+      setGonderiliyor(false);
+    }
+  };
 
   return (
     <Screen edges={['bottom']}>
@@ -48,28 +101,73 @@ export default function HelpScreen() {
           })}
         </View>
 
-        {/* Bize ulaş */}
+        {/* BİZE ULAŞ — iki ölü satır yerine gerçek bir form.
+            Konu başlığı yönlendirme için: güvenlik talebi ile fatura talebi
+            aynı kuyrukta beklememeli. */}
         <SectionHeader title={t('help.contact')} />
-        <View style={[styles.group, shadow.soft]}>
-          <Pressable onPress={onContact} style={[styles.row, styles.rowBorder]}>
-            <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
-              <Ionicons name="chatbubbles-outline" size={18} color={colors.ink} />
-            </View>
-            <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
-              {t('help.chat')}
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-          </Pressable>
-          <Pressable onPress={onContact} style={styles.row}>
-            <View style={[styles.icon, { backgroundColor: colors.blueSoft }]}>
-              <Ionicons name="mail-outline" size={18} color={colors.blue} />
-            </View>
-            <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
-              {t('help.email')}
-            </Text>
-            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
-          </Pressable>
+        <View style={[styles.group, shadow.soft, styles.form]}>
+          <View style={styles.konular}>
+            {KONULAR.map((k) => (
+              <Pressable
+                key={k}
+                onPress={() => setKonu(k)}
+                style={[styles.konu, konu === k && styles.konuOn]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: konu === k }}
+              >
+                <Text variant="caption" tone={konu === k ? 'onAccent' : 'inkSoft'}>
+                  {t(`help.topic.${k}` as 'help.topic.other')}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          <TextInput
+            value={metin}
+            onChangeText={setMetin}
+            placeholder={t('help.placeholder')}
+            multiline
+            style={styles.formInput}
+          />
+          <Button
+            label={gonderiliyor ? t('common.loading') : t('help.send')}
+            variant="primary"
+            onPress={gonder}
+          />
         </View>
+
+        {/* Taleplerim + yanıtlar */}
+        {talepler.length ? (
+          <>
+            <SectionHeader title={t('help.my_tickets')} />
+            <View style={[styles.group, shadow.soft]}>
+              {talepler.map((tk, i) => (
+                <View key={tk.id} style={i < talepler.length - 1 ? styles.rowBorder : undefined}>
+                  <View style={styles.ticketHead}>
+                    <Text variant="caption" tone="muted" style={styles.rowLabel}>
+                      {t(`help.topic.${tk.topic}` as 'help.topic.other')}
+                    </Text>
+                    <Text
+                      variant="micro"
+                      style={{ color: tk.reply ? colors.success : colors.gold }}
+                    >
+                      {t(tk.reply ? 'help.status.answered' : 'help.status.open')}
+                    </Text>
+                  </View>
+                  <Text variant="body" tone="ink" style={styles.aText}>
+                    {tk.body}
+                  </Text>
+                  {tk.reply ? (
+                    <View style={styles.reply}>
+                      <Text variant="caption" tone="inkSoft">
+                        {tk.reply}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          </>
+        ) : null}
       </ScrollView>
     </Screen>
   );
@@ -100,6 +198,31 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(2),
     },
     qText: { flex: 1 },
+    form: { gap: space(1.5) },
+    konular: { flexDirection: 'row', flexWrap: 'wrap', gap: space(0.75) },
+    konu: {
+      paddingHorizontal: space(1.5),
+      height: 34,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surfaceMuted,
+    },
+    konuOn: { backgroundColor: colors.accent },
+    formInput: { minHeight: 96, textAlignVertical: 'top' },
+    ticketHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      paddingTop: space(1.5),
+    },
+    reply: {
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.md,
+      padding: space(1.5),
+      marginTop: space(1),
+      marginBottom: space(1.5),
+    },
     aText: {
       paddingHorizontal: space(2),
       paddingBottom: space(2),

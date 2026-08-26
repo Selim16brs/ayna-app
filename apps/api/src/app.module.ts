@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
+import { SupportModule } from './support/support.module';
 import { StorageModule } from './storage/storage.module';
 import { AdminModule } from './admin/admin.module';
 import { AiModule } from './ai/ai.module';
@@ -45,6 +46,7 @@ import { PaymentModule } from './payment/payment.module';
     // @Throttle ile ayrıca tanımlar. trust proxy main.ts'te (Railway X-Forwarded-For).
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 300 }]),
     StorageModule,
+    SupportModule,
     ConfigModule,
     PrismaModule,
     AuditModule,

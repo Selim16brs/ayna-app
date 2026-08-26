@@ -46,6 +46,7 @@ import {
   type SystemSettings,
   type WeeklyTheme,
   setToken,
+  SupportRow,
 } from './lib/api';
 
 type Tab =
@@ -55,6 +56,7 @@ type Tab =
   | 'subscriptions'
   | 'profileChanges'
   | 'kyc'
+  | 'support'
   | 'businesses'
   | 'specialists'
   | 'professionals'
@@ -155,6 +157,7 @@ export default function AdminApp() {
         { id: 'businesses', label: 'Salon Onayları', icon: '🏪', badge: q?.businesses },
         { id: 'specialists', label: 'Uzman Doğrulama', icon: '💇', badge: undefined },
         { id: 'kyc', label: 'Kimlik (KYC)', icon: '🪪', badge: q?.kyc },
+        { id: 'support', label: 'Destek Talepleri', icon: '🆘', badge: undefined },
         {
           id: 'profileChanges',
           label: 'Profil Değişiklikleri',
@@ -266,6 +269,7 @@ export default function AdminApp() {
         {tab === 'subscriptions' && <SubscriptionsView />}
         {tab === 'profileChanges' && <ProfileChangesView />}
         {tab === 'kyc' && <KycView />}
+        {tab === 'support' && <SupportView />}
         {tab === 'businesses' && <BusinessesView />}
         {tab === 'specialists' && <SpecialistsView />}
         {tab === 'professionals' && <ProfessionalsView />}
@@ -574,6 +578,118 @@ function ProfileChangesView() {
 }
 
 // EK Z.3 — KYC uzman/salon belge doğrulama kuyruğu
+/**
+ * §destek — kullanıcı talepleri kuyruğu.
+ *
+ * Yardım ekranındaki "Destek ile iletişim" düğmesi hiçbir şey yapmıyordu ve
+ * talepleri görecek bir yer de yoktu. Yanıt yazılmayan bir kutu, kutu olmayan
+ * kutudan daha kötüdür — bu yüzden yanıt yazılınca kullanıcıya push gider.
+ */
+function SupportView() {
+  const [status, setStatus] = useState<string>('open');
+  const { data, loading, error, reload } = useAsync<SupportRow[]>(
+    () => api.supportList(status || undefined),
+    [status],
+  );
+  const [busy, setBusy] = useState<string | null>(null);
+  const [taslak, setTaslak] = useState<Record<string, string>>({});
+  const KONU: Record<string, string> = {
+    payment: 'Ödeme',
+    booking: 'Randevu',
+    safety: 'Güvenlik',
+    account: 'Hesap',
+    other: 'Diğer',
+  };
+  const FILTERS: [string, string][] = [
+    ['open', 'Açık'],
+    ['answered', 'Yanıtlanan'],
+    ['closed', 'Kapalı'],
+    ['', 'Tümü'],
+  ];
+  const act = async (fn: () => Promise<unknown>, id: string) => {
+    setBusy(id);
+    try {
+      await fn();
+      reload();
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <>
+      <h1 className="page-title">Destek Talepleri</h1>
+      <p className="page-sub">
+        Kullanıcıdan gelen talepler. Güvenlik başlıklı olanlar önce okunmalı. ({data?.length ?? 0}{' '}
+        kayıt)
+      </p>
+      <div className="toolbar">
+        {FILTERS.map(([s, label]) => (
+          <button
+            key={s || 'all'}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {!data ? (
+        <Gate loading={loading} error={error} onRetry={reload} />
+      ) : data.length === 0 ? (
+        <div className="card">
+          <div className="empty">Talep yok.</div>
+        </div>
+      ) : (
+        <div className="card">
+          {data.map((t) => (
+            <div className="list-row" key={t.id}>
+              <div className="grow">
+                <div className="name">
+                  {t.userName}{' '}
+                  <span className={`pill ${t.topic === 'safety' ? 'danger' : 'info'}`}>
+                    {KONU[t.topic] ?? t.topic}
+                  </span>
+                </div>
+                <div className="meta">{new Date(t.createdAt).toLocaleString('tr-TR')}</div>
+                <p style={{ whiteSpace: 'pre-wrap', margin: '8px 0' }}>{t.body}</p>
+                {t.reply ? (
+                  <p style={{ opacity: 0.75, margin: '4px 0' }}>↳ {t.reply}</p>
+                ) : (
+                  <>
+                    <textarea
+                      rows={3}
+                      style={{ width: '100%' }}
+                      placeholder="Yanıt yaz…"
+                      value={taslak[t.id] ?? ''}
+                      onChange={(e) => setTaslak((d) => ({ ...d, [t.id]: e.target.value }))}
+                    />
+                    <button
+                      className="btn"
+                      disabled={busy === t.id || !(taslak[t.id] ?? '').trim()}
+                      onClick={() => act(() => api.supportReply(t.id, taslak[t.id] ?? ''), t.id)}
+                    >
+                      Yanıtla
+                    </button>
+                  </>
+                )}
+              </div>
+              {t.status !== 'closed' ? (
+                <button
+                  className="btn ghost"
+                  disabled={busy === t.id}
+                  onClick={() => act(() => api.supportClose(t.id), t.id)}
+                >
+                  Kapat
+                </button>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 function KycView() {
   const [status, setStatus] = useState<string>('pending');
   const { data, loading, error, reload } = useAsync<KycRow[]>(

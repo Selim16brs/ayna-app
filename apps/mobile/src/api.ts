@@ -729,6 +729,12 @@ export const api = {
   me: (token: string) => get<AuthUser>('/auth/me', token),
   // Kişisel veri mevzuatı: verilerini indir + hesabını sil. İkisi de gizlilik
   // ekranında düğme olarak duruyordu ama sunucu tarafı hiç yazılmamıştı.
+  // §destek — talep aç / kendi taleplerini oku. Yardım ekranındaki düğme
+  // eskiden hiçbir şey yapmıyordu.
+  createSupportTicket: (token: string, topic: string, body: string) =>
+    post<{ id: string; status: string }>('/support', { topic, body }, token),
+  mySupportTickets: (token: string) => get<SupportTicket[]>('/support/mine', token),
+
   exportMyData: (token: string) => get<Record<string, unknown>>('/auth/me/export', token),
   deleteMyAccount: (token: string) =>
     post<{ deleted: boolean }>('/auth/me/delete', { confirm: 'SIL' }, token),
@@ -1133,4 +1139,15 @@ export interface BlogSubmission {
   excerpt?: string;
   body: string[];
   tag?: string;
+}
+
+export interface SupportTicket {
+  id: string;
+  topic: string;
+  body: string;
+  /** open | answered | closed */
+  status: string;
+  reply: string | null;
+  repliedAt: string | null;
+  createdAt: string;
 }
