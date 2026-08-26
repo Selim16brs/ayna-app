@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MessageKey } from '@ayna/i18n';
 import { formatPrice } from '../../src/data';
@@ -13,7 +14,13 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { RulesCard, TAB_BAR_CLEARANCE, Text, VerificationBadges, WaveLayered } from '../../src/ui';
+import {
+  PressableScale,
+  RulesCard,
+  TAB_BAR_CLEARANCE,
+  Text,
+  VerificationBadges,
+} from '../../src/ui';
 
 type Tab = 'booking' | 'portfolio' | 'reviews';
 const HOT_PINK = '#D97798'; // favori (kalp) aktif rengi
@@ -236,113 +243,138 @@ export default function ProfessionalScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 130 + TAB_BAR_CLEARANCE }}
       >
-        {/* HERO — lime bant (Keşfet dili): çerçeveli portre + isim/puan/bağ + dalga geçişi */}
-        <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
-          <View style={styles.heroTop}>
-            <Pressable
-              style={styles.circleBtn}
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.back')}
-            >
-              <Ionicons name="chevron-back" size={22} color={colors.ink} />
-            </Pressable>
-            <Pressable
-              style={styles.circleBtn}
-              onPress={() => toggleFavorite(proId)}
-              accessibilityRole="button"
-              accessibilityLabel={t('favorites.title')}
-              accessibilityState={{ selected: isFav }}
-            >
-              <Ionicons
-                name={isFav ? 'heart' : 'heart-outline'}
-                size={20}
-                color={isFav ? HOT_PINK : colors.ink}
+        {/* ═══ ÜST — kanvas Uzman.dc.html §ÜST ═══
+            Kanvas: AÇIK porselen zemin, 48'lik kart düğmeler. Önceki sürüm mor
+            bir hero bandıydı; üstelik metinler tone="ink" (koyu) olduğu için
+            mor zeminde koyu-üstüne-koyu okunuyordu. */}
+        <View style={[styles.topRow, { paddingTop: insets.top + space(1) }]}>
+          <PressableScale
+            style={[styles.topIconBtn, shadow.soft]}
+            onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.back')}
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.ink} />
+          </PressableScale>
+          <View style={styles.grow} />
+          <PressableScale
+            style={[styles.topIconBtn, shadow.soft]}
+            onPress={() => toggleFavorite(proId)}
+            accessibilityRole="button"
+            accessibilityLabel={t('favorites.title')}
+            accessibilityState={{ selected: isFav }}
+          >
+            <Ionicons
+              name={isFav ? 'heart' : 'heart-outline'}
+              size={20}
+              color={isFav ? HOT_PINK : colors.ink}
+            />
+          </PressableScale>
+        </View>
+
+        {/* ═══ KİMLİK — kesik portre + yansıma (kanvas §KİMLİK) ═══
+            Portre SOLDA 118×158 (132 görsel + 26 yansıma), bilgi sağda. */}
+        <View style={styles.identityRow}>
+          <View style={styles.portraitCol} pointerEvents="none">
+            <View style={styles.portraitWrap}>
+              <Image source={{ uri: pro.image }} style={styles.portrait} resizeMode="cover" />
+              <LinearGradient
+                colors={['rgba(251,248,246,0)', colors.bg]}
+                locations={[0.62, 1]}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
               />
-            </Pressable>
+            </View>
+            <View style={styles.reflection}>
+              <Image source={{ uri: pro.image }} style={styles.reflectionImg} resizeMode="cover" />
+              <LinearGradient
+                colors={['rgba(251,248,246,0.55)', colors.bg]}
+                locations={[0, 0.88]}
+                style={StyleSheet.absoluteFill}
+              />
+            </View>
           </View>
 
-          <View style={styles.heroBody}>
-            <View style={styles.heroInfo}>
-              <View style={styles.badgePill}>
-                <Ionicons name="checkmark-circle" size={12} color={colors.accentFg} />
-                <Text variant="caption" tone="ink" style={styles.badgePillText}>
-                  {t(isSalon ? 'pro.kind.salon' : 'pro.kind.independent')}
-                </Text>
-              </View>
-              <View style={styles.heroNameRow}>
-                <Text variant="display" tone="ink" style={styles.heroName} numberOfLines={2}>
-                  {pro.name}
-                </Text>
-                {/* EK Z.3 — doğrulanmış uzman rozeti (KYC onaylı hesap) */}
-                {pro.kycVerified ? (
-                  <Ionicons
-                    name="shield-checkmark"
-                    size={22}
-                    color={colors.ink}
-                    style={styles.verifiedIcon}
-                  />
-                ) : null}
-              </View>
-              <Text variant="caption" tone="inkSoft" style={styles.heroMeta} numberOfLines={1}>
-                {pro.specialty} · {pro.district}
+          <View style={styles.identityText}>
+            <View style={styles.heroNameRow}>
+              <Text variant="h1" tone="ink" style={styles.heroName} numberOfLines={2}>
+                {pro.name}
               </Text>
-              {/* §3.3 — katmanlı güven rozetleri (AYNA Onaylı + kimlik/işletme/BİN/adres/sosyal) */}
-              <VerificationBadges verification={pro.verification} aynaVerified={pro.aynaVerified} />
-              {/* İSTATİSTİK ŞERİDİ — kanvas: yıl · müşteri · puan yan yana.
-                  experienceYears veride vardı ama hiçbir ekranda gösterilmiyordu. */}
-              <View style={styles.statStrip}>
-                {pro.experienceYears > 0 ? (
-                  <>
-                    <View style={styles.statCol}>
-                      <Text numeric variant="h2" tone="ink">
-                        {pro.experienceYears}
-                      </Text>
-                      <Text variant="micro" tone="muted" numberOfLines={1}>
-                        {t('pro.stat.years')}
-                      </Text>
-                    </View>
-                    <View style={styles.statSep} />
-                  </>
-                ) : null}
-                <View style={styles.statCol}>
-                  <Text numeric variant="h2" tone="ink">
-                    {pro.reviewCount}
-                  </Text>
-                  <Text variant="micro" tone="muted" numberOfLines={1}>
-                    {t('pro.stat.rating')}
-                  </Text>
-                </View>
-                <View style={styles.statSep} />
-                <View style={styles.statCol}>
-                  <View style={styles.statRating}>
-                    <Ionicons name="star" size={13} color={colors.gold} />
-                    <Text numeric variant="h2" tone="ink">
-                      {pro.rating.toFixed(1)}
-                    </Text>
-                  </View>
-                  <Text variant="micro" tone="muted" numberOfLines={1}>
-                    {t('rewards.tier')}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.heroStats}>
-                {pro.friends ? (
-                  <View style={styles.friendsPill}>
-                    <Ionicons name="people" size={12} color={colors.ink} />
-                    <Text variant="caption" tone="ink" style={styles.friendsText}>
-                      {pro.friends} {t('pro.friends_here')}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
+              {/* EK Z.3 — doğrulanmış uzman rozeti (KYC onaylı hesap) */}
+              {pro.kycVerified ? (
+                <Ionicons name="shield-checkmark" size={20} color={colors.sage} />
+              ) : null}
             </View>
-            <Image source={{ uri: pro.image }} style={styles.heroPortrait} />
-          </View>
-          <View style={styles.waveAbs}>
-            <WaveLayered sliver={colors.bg} bottom={colors.bg} height={70} />
+            <Text variant="body" tone="inkSoft" numberOfLines={2}>
+              {pro.specialty} · {t(isSalon ? 'pro.kind.salon' : 'pro.kind.independent')}
+            </Text>
+            <View style={styles.metaRow}>
+              <Ionicons name="location-outline" size={14} color={colors.muted} />
+              <Text variant="meta" tone="inkSoft" numberOfLines={1} style={styles.grow}>
+                {pro.district}
+              </Text>
+              <PressableScale onPress={() => router.push('/map')}>
+                <Text variant="meta" tone="accentFg" style={styles.mapLink}>
+                  {t('map.title')}
+                </Text>
+              </PressableScale>
+            </View>
           </View>
         </View>
+
+        {/* ═══ GÜVEN — istatistik + doğrulama (kanvas §GÜVEN) ═══
+            Kanvas: tek beyaz kartta yıl · müşteri · puan, aralarında ince ayraç. */}
+        <View style={[styles.trustCard, shadow.soft]}>
+          {pro.experienceYears > 0 ? (
+            <>
+              <View style={styles.statCol}>
+                <Text numeric variant="h2" tone="ink">
+                  {pro.experienceYears}
+                </Text>
+                <Text variant="micro" tone="muted" numberOfLines={1}>
+                  {t('pro.stat.years')}
+                </Text>
+              </View>
+              <View style={styles.statSep} />
+            </>
+          ) : null}
+          <View style={styles.statCol}>
+            <Text numeric variant="h2" tone="ink">
+              {pro.reviewCount}
+            </Text>
+            <Text variant="micro" tone="muted" numberOfLines={1}>
+              {t('pro.stat.rating')}
+            </Text>
+          </View>
+          <View style={styles.statSep} />
+          <View style={styles.statCol}>
+            <View style={styles.statRating}>
+              <Ionicons name="star" size={13} color={colors.gold} />
+              <Text numeric variant="h2" tone="ink">
+                {pro.rating.toFixed(1)}
+              </Text>
+            </View>
+            <Text variant="micro" tone="muted" numberOfLines={1}>
+              {t('rewards.tier')}
+            </Text>
+          </View>
+        </View>
+
+        {/* §3.3 — katmanlı güven rozetleri (AYNA Onaylı + kimlik/işletme/BİN/adres/sosyal) */}
+        <View style={styles.badgesRow}>
+          <VerificationBadges verification={pro.verification} aynaVerified={pro.aynaVerified} />
+        </View>
+
+        {pro.friends ? (
+          <View style={styles.friendsRow}>
+            <View style={styles.friendsPill}>
+              <Ionicons name="people" size={12} color={colors.ink} />
+              <Text variant="caption" tone="ink" style={styles.friendsText}>
+                {pro.friends} {t('pro.friends_here')}
+              </Text>
+            </View>
+          </View>
+        ) : null}
 
         {/* SHEET */}
         <View style={styles.sheet}>
@@ -913,38 +945,58 @@ export default function ProfessionalScreen() {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.bg },
-    // ── Lime hero (Keşfet dili) ──
-    hero: {
-      backgroundColor: colors.accent,
-      paddingHorizontal: space(3),
-      paddingBottom: space(5),
-      position: 'relative',
-      overflow: 'hidden',
+    grow: { flex: 1 },
+    // ── Kanvas Uzman.dc.html §ÜST — açık zeminde 48'lik kart düğmeler ──
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      paddingHorizontal: space(2.5),
     },
-    waveAbs: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 2 },
-    heroTop: { flexDirection: 'row', justifyContent: 'space-between' },
-    circleBtn: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+    topIconBtn: {
+      width: 48,
+      height: 48,
+      borderRadius: 16,
       backgroundColor: colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    heroBody: { flexDirection: 'row', alignItems: 'flex-end', marginTop: space(2), zIndex: 2 },
-    heroInfo: { flex: 1, paddingRight: space(1.5), paddingBottom: space(1) },
-    badgePill: {
+    // ── §KİMLİK — kesik portre 118×158 (132 görsel + 26 yansıma), SOLDA ──
+    identityRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      gap: space(2),
+      paddingHorizontal: space(2.5),
+      paddingTop: space(1.75),
+    },
+    identityText: { flex: 1, paddingBottom: space(3.75), gap: 6, minWidth: 0 },
+    portraitCol: { width: 118, height: 158 },
+    portraitWrap: { width: 118, height: 132, overflow: 'hidden', borderRadius: radius.md },
+    portrait: { width: 118, height: 132 },
+    reflection: { width: 118, height: 26, overflow: 'hidden' },
+    reflectionImg: {
+      width: 118,
+      height: 132,
+      marginTop: -106,
+      transform: [{ scaleY: -1 }],
+      opacity: 0.16,
+    },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    mapLink: { fontFamily: font.semibold },
+    // ── §GÜVEN — tek kartta yıl · müşteri · puan ──
+    trustCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      alignSelf: 'flex-start',
-      gap: 4,
-      backgroundColor: 'rgba(255,255,255,0.7)',
-      paddingHorizontal: space(1.25),
-      paddingVertical: 5,
-      borderRadius: radius.pill,
-      marginBottom: space(1),
+      gap: space(1),
+      marginHorizontal: space(2.5),
+      marginTop: space(1),
+      padding: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
     },
-    badgePillText: { fontFamily: font.semibold },
+    badgesRow: { paddingHorizontal: space(2.5), marginTop: space(1.5) },
+    friendsRow: { paddingHorizontal: space(2.5), marginTop: space(1) },
+    // ── Lime hero (Keşfet dili) ──
     heroNameRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     heroName: {
       flexShrink: 1,
@@ -952,23 +1004,6 @@ const makeStyles = (colors: ColorTokens) =>
       lineHeight: 34,
       fontFamily: font.semibold,
       letterSpacing: -0.6,
-    },
-    verifiedIcon: { marginTop: space(0.5) },
-    heroMeta: { marginTop: 2 },
-    heroStats: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1),
-      marginTop: space(1.5),
-      flexWrap: 'wrap',
-    },
-    statStrip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      paddingVertical: space(1.25),
-      marginTop: space(1.25),
     },
     statCol: { flex: 1, alignItems: 'center', gap: 1, paddingHorizontal: space(0.5) },
     statSep: { width: 1, alignSelf: 'stretch', backgroundColor: colors.line },
@@ -994,14 +1029,6 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     friendsText: {},
-    heroPortrait: {
-      width: 128,
-      height: 168,
-      borderRadius: radius.lg,
-      borderWidth: 3,
-      borderColor: colors.surface,
-      backgroundColor: colors.bgSunken,
-    },
     sheet: {
       marginTop: 0,
       backgroundColor: colors.bg,
@@ -1017,7 +1044,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     tab: { flex: 1, alignItems: 'center', paddingVertical: space(1.5) },
     tabText: { fontSize: 15 },
-    tabOn: { color: '#5A2A55' },
+    tabOn: { color: colors.accent },
     tabOff: { color: colors.muted },
     tabBar: {
       position: 'absolute',
@@ -1025,7 +1052,7 @@ const makeStyles = (colors: ColorTokens) =>
       height: 2.5,
       width: '60%',
       borderRadius: 2,
-      backgroundColor: '#5A2A55',
+      backgroundColor: colors.accent,
     },
     about: { marginTop: space(2.5), lineHeight: 22 },
     section: { marginTop: space(3), marginBottom: space(1.5) },
