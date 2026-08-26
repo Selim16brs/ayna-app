@@ -147,6 +147,9 @@ export const api = {
   // §12.2 — üyenin parolasını değiştir
   setUserPassword: (id: string, password: string) =>
     req(`/admin/users/${id}/password`, { method: 'POST', body: JSON.stringify({ password }) }),
+  // §12.2 — ad / e-posta / şehir düzenleme. Yalnız gönderilen alan değişir.
+  setUserProfile: (id: string, patch: { name?: string; email?: string; city?: string }) =>
+    req(`/admin/users/${id}/profile`, { method: 'POST', body: JSON.stringify(patch) }),
   // §12.3 Ceza takip
   penalties: () => req<Penalty[]>('/admin/penalties'),
   restrictUser: (id: string, reason: string) =>

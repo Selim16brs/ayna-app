@@ -5,6 +5,7 @@ import {
   toMinor,
 } from '../commissions/commissions.calc';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { hashPassword } from '../common/crypto';
 import { computeBookingStats } from '../bookings/bookings.service';
@@ -854,7 +855,85 @@ export class AdminService {
       where: { id },
       data: { passwordHash: hashPassword(password) },
     });
+    // Başkasının parolasını değiştirmek KRİTİK eylemdir; kaydı tutulmuyordu
+    // (CLAUDE.md: kritik eylemler audit log). Parolanın kendisi YAZILMAZ.
+    await this.kaydet(id, 'admin.user.password', {});
     return { id, ok: true };
+  }
+
+  /**
+   * §12.2 — admin bir üyenin KİMLİK BİLGİLERİNİ düzenler (ad, e-posta, şehir).
+   *
+   * Panelde yalnız rol/durum/parola değiştirilebiliyordu; e-postası bozulan ya
+   * da değiştirmek isteyen bir üyeye dokunmanın yolu veritabanına doğrudan
+   * bağlanmaktı. (Yönetici hesabının kendi girişi tam da böyle kilitlendi.)
+   *
+   * TELEFON BURADA DEĞİŞTİRİLMEZ: giriş kimliği olmasının yanında şifreli
+   * saklanıyor ve doğrulama akışı var; panelden sessizce değiştirmek hesap
+   * devri anlamına gelirdi.
+   */
+  async setUserProfile(
+    id: string,
+    patch: {
+      name?: string | undefined;
+      email?: string | null | undefined;
+      city?: string | undefined;
+    },
+  ) {
+    const u = await this.prisma.user.findUnique({ where: { id } });
+    if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
+
+    const data: { name?: string; email?: string | null; city?: string } = {};
+
+    if (patch.name !== undefined) {
+      const ad = patch.name.trim();
+      // Boş ad: Keşfet ve randevu kartları isimle çiziliyor.
+      if (!ad) throw new BadRequestException({ code: 'NAME_EMPTY', message: 'Ad boş olamaz' });
+      data.name = ad.slice(0, 80);
+    }
+
+    if (patch.email !== undefined) {
+      const eposta = (patch.email ?? '').trim().toLowerCase();
+      if (eposta) {
+        // E-posta GİRİŞ KİMLİĞİDİR ve tekildir. Başkasınınkine çakışırsa
+        // sessizce ezmek, o hesabı girişsiz bırakırdı.
+        const sahip = await this.prisma.user.findUnique({ where: { email: eposta } });
+        if (sahip && sahip.id !== id) {
+          throw new BadRequestException({
+            code: 'EMAIL_TAKEN',
+            message: 'Bu e-posta başka bir hesapta kayıtlı',
+          });
+        }
+        data.email = eposta.slice(0, 160);
+      } else {
+        data.email = null;
+      }
+    }
+
+    if (patch.city !== undefined) data.city = patch.city.trim().slice(0, 60);
+
+    if (Object.keys(data).length === 0) return { id, ok: true };
+
+    await this.prisma.user.update({ where: { id }, data });
+    // PII YAZILMAZ — yalnız HANGİ alanların değiştiği.
+    await this.kaydet(id, 'admin.user.profile', { fields: Object.keys(data) });
+    return { id, ok: true };
+  }
+
+  /** Yönetici eylemleri için denetim kaydı. safeDiff'e ASLA PII girmez. */
+  private async kaydet(userId: string, action: string, safeDiff: Prisma.InputJsonValue) {
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: null,
+          actorRole: 'admin',
+          action,
+          resourceType: 'user',
+          resourceId: userId,
+          safeDiff,
+        },
+      })
+      .catch(() => undefined);
   }
 
   // Randevular — platform geneli (admin görünürlüğü)

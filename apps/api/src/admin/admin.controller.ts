@@ -100,6 +100,13 @@ const userStatusSchema = z.object({ status: z.enum(['active', 'suspended', 'dele
 const premiumSchema = z.object({ isPremium: z.boolean() });
 const tierSchema = z.object({ tier: z.enum(['free', 'premium', 'platinum']) });
 const passwordSchema = z.object({ password: z.string().min(6).max(100) });
+// §12.2 — kimlik bilgisi düzenleme. Alanlar OPSİYONEL: yalnız gönderilen değişir.
+// E-posta boş string ile TEMİZLENEBİLİR (null'a çekilir).
+const userProfileSchema = z.object({
+  name: z.string().max(80).optional(),
+  email: z.string().max(160).optional(),
+  city: z.string().max(60).optional(),
+});
 const flagSchema = z.object({
   key: z.string().min(1).max(60),
   enabled: z.boolean(),
@@ -266,6 +273,17 @@ export class AdminController {
     @Body(new ZodValidationPipe(passwordSchema)) body: { password: string },
   ) {
     return this.admin.setUserPassword(id, body.password);
+  }
+
+  // §12.2 — admin bir üyenin ad/e-posta/şehir bilgisini düzenler.
+  // Telefon BURADA DEĞİŞMEZ: giriş kimliği + şifreli saklanıyor, panelden
+  // sessizce değiştirmek hesap devri anlamına gelirdi.
+  @Post('users/:id/profile')
+  setUserProfile(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(userProfileSchema)) body: z.infer<typeof userProfileSchema>,
+  ) {
+    return this.admin.setUserProfile(id, body);
   }
 
   // §12.3 Ceza takip — kısıtlı hesaplar (7 gün sayaçlı) + kısıt aç/kapa
