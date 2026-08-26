@@ -28,6 +28,7 @@ import {
   StackHeader,
   Text,
   type PickerDay,
+  TAB_BAR_CLEARANCE,
 } from '../../src/ui';
 
 /** Adım çubuğunun anlamlı olduğu canlı akış durumları (iptal/itiraz/no-show hariç). */
@@ -1040,7 +1041,7 @@ function Sayac({ bitis, metin, renk }: { bitis: number; metin: string; renk: str
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4) },
+    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE },
     empty: {
       alignItems: 'center',
       justifyContent: 'center',

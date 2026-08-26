@@ -8,7 +8,7 @@ import { useSalonStaff } from '../../src/staff';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, Segmented, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, Segmented, StackHeader, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 type Schedule = 'standard' | 'flexible';
 
@@ -175,7 +175,7 @@ function Stat({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(2), paddingBottom: space(4) },
+    content: { padding: space(2), paddingBottom: TAB_BAR_CLEARANCE },
     removeWrap: { marginTop: space(3), gap: space(1) },
     removeHint: { textAlign: 'center', paddingHorizontal: space(2) },
     head: { flexDirection: 'row', alignItems: 'center', gap: space(1.5), marginBottom: space(2.5) },

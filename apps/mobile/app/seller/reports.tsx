@@ -285,7 +285,17 @@ export default function ReportsScreen() {
               yanındaki durum çipinin karşılığı. */}
           <View style={[styles.bindingPill, shadow.soft]}>
             <Ionicons name={binding.icon} size={12} color={colors.ink} />
-            <Text variant="caption" tone="ink" style={styles.bindingPillText} numberOfLines={1}>
+            {/* "Bireysel Uzman" kırpılıp "Bireysel Uzm…" oluyordu. Salon adı
+                da buraya geliyor ve uzunluğu bilinmiyor — karakter kaybetmek
+                yerine punto küçülür. */}
+            <Text
+              variant="caption"
+              tone="ink"
+              style={styles.bindingPillText}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+            >
               {binding.text}
             </Text>
           </View>
@@ -801,7 +811,9 @@ const makeStyles = (colors: ColorTokens) =>
     // ── Kreatif hero (Keşfet dili) ──
     hero: {
       backgroundColor: colors.bg,
-      paddingHorizontal: space(2.5),
+      // Kartlarla AYNI kenar boşluğu: 20 iken kart 24'tü ve çip kartın
+      // solundan 4pt taşıyordu — "altta bir şey kalmış" görüntüsü buradan.
+      paddingHorizontal: space(3),
       paddingBottom: space(2),
       gap: space(1.25),
     },
@@ -843,7 +855,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1.25),
       paddingVertical: space(0.5),
       borderRadius: radius.pill,
-      maxWidth: '86%',
+      maxWidth: '100%',
     },
     bindingPillText: { fontFamily: font.semibold },
     // §6.1 — profil fotoğrafı GÜVENLİ ALANI (safe zone): sabit çerçeve + resizeMode="contain".

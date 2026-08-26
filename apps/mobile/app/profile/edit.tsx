@@ -16,7 +16,6 @@ import {
   TAB_BAR_CLEARANCE,
   Text,
   TextInput,
-  WorkingHours,
 } from '../../src/ui';
 
 export default function ProfileEditScreen() {
@@ -33,7 +32,6 @@ export default function ProfileEditScreen() {
   const role = useStore((s) => s.currentUser?.role);
   const isSeller = role === 'professional' || role === 'salon';
   const sellerSocial = useStore((s) => s.sellerSocial);
-  const sellerHours = useStore((s) => s.sellerHours);
   const sellerCerts = useStore((s) => s.sellerCerts);
   const updateMyProfile = useStore((s) => s.updateMyProfile);
   const setSellerProfile = useStore((s) => s.setSellerProfile);
@@ -46,7 +44,6 @@ export default function ProfileEditScreen() {
   const [phone, setPhone] = useState(me?.phone ?? '');
   const [city, setCity] = useState(me?.city ?? '');
   const [social, setSocial] = useState(sellerSocial);
-  const [hours, setHours] = useState(sellerHours);
   const [certs, setCerts] = useState(sellerCerts);
 
   const addCert = async () => {
@@ -140,7 +137,9 @@ export default function ProfileEditScreen() {
         // Sertifikalar ANINDA uygulanır (hesaba yazılır + yerel) — admin onayı beklemez
         setSellerProfile({ certs });
         // İsim/sosyal/saatler admin onayına gider (§profil-onay)
-        await submitProfileChange({ name, social, hours, certs });
+        // Saatler ARTIK BURADA DEĞİL: kendi ekranında, admin onayı olmadan
+        // doğrudan kaydediliyor (/seller/hours).
+        await submitProfileChange({ name, social, certs });
         Alert.alert(t('profile.edit.pending_t'), t('profile.edit.pending_b'), [
           { text: t('common.ok'), onPress: () => router.back() },
         ]);
@@ -253,13 +252,6 @@ export default function ProfileEditScreen() {
                 {t('expert.reg.social')}
               </Text>
               <SocialLinks value={social} onChange={setSocial} />
-            </View>
-
-            <View style={styles.sellerSection}>
-              <Text variant="bodyStrong" tone="ink" style={styles.fieldLabel}>
-                {t('expert.reg.hours')}
-              </Text>
-              <WorkingHours value={hours} onChange={setHours} />
             </View>
           </>
         ) : null}

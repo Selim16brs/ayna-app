@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 import { inAudience, selectSellerView, useStore } from '../src/store';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, Text } from '../src/ui';
+import { Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -114,7 +114,11 @@ export default function NotificationsScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: space(13) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     topRow: { alignItems: 'flex-end', marginBottom: space(2) },
     markAll: {
       flexDirection: 'row',

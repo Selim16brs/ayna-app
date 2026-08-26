@@ -6,7 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -131,7 +131,11 @@ function ChoiceCard({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: space(4) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     subtitle: { marginBottom: space(3) },
     card: {
       borderRadius: radius.xl,

@@ -6,7 +6,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 export default function SellerReviewsScreen() {
   const { t } = useLocale();
@@ -205,7 +205,7 @@ function ReviewRow({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: space(4), gap: space(1.5) },
+    content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.5) },
     hint: { marginBottom: space(0.5) },
     list: { gap: space(1.25) },
     emptyCard: { alignItems: 'center', gap: 8, paddingVertical: 24 },

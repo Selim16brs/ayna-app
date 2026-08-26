@@ -7,7 +7,7 @@ import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, Text } from '../../src/ui';
+import { Button, Screen, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 export default function ConfirmedScreen() {
   const router = useRouter();
@@ -118,7 +118,7 @@ function Field({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), alignItems: 'stretch' },
+    content: { padding: space(3), alignItems: 'stretch', paddingBottom: TAB_BAR_CLEARANCE },
     successCircle: {
       width: 84,
       height: 84,

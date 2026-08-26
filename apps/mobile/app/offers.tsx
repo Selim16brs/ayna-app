@@ -5,7 +5,7 @@ import { useOffers, useOffersLoading } from '../src/catalog';
 import { useLocale } from '../src/locale';
 import { radius, space, type ColorTokens, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, Text, ListSkeleton } from '../src/ui';
+import { Screen, StackHeader, Text, ListSkeleton, TAB_BAR_CLEARANCE } from '../src/ui';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&q=60';
 const DAY_KEYS = [
@@ -119,7 +119,7 @@ export default function OffersScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(4), gap: space(1.5) },
+    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.5) },
     empty: { alignItems: 'center', gap: space(1.5), paddingVertical: space(8) },
     emptyText: { textAlign: 'center' },
     card: {

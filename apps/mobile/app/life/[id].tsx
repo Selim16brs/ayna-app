@@ -7,7 +7,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 export default function ArticleDetailScreen() {
   const { t } = useLocale();
@@ -104,7 +104,7 @@ export default function ArticleDetailScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingBottom: space(13) },
+    content: { paddingBottom: TAB_BAR_CLEARANCE },
     empty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     hero: {
       height: 320,

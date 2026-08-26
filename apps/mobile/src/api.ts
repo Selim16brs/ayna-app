@@ -757,8 +757,13 @@ export const api = {
   myClosedDays: () => get<{ days: number[] }>('/specialists/me/closed-days'),
   setMyClosedDays: (days: number[]) => post<unknown>('/specialists/me/closed-days', { days }),
   myHours: () => get<{ hours: import('./ui/WorkingHours').DayHours[] }>('/specialists/me/hours'),
+  // Yanıt ÇAKIŞANLARI da taşır: kapatılan aralıkta onaylanmış randevu varsa
+  // uzman uyarılmalı (§9.5 — saatler admin onayına gitmez ama sessiz de olmaz).
   setMyHours: (hours: import('./ui/WorkingHours').DayHours[]) =>
-    post<unknown>('/specialists/me/hours', { hours }),
+    post<{
+      hours: import('./ui/WorkingHours').DayHours[];
+      conflicts: { id: string; dateLabel: string }[];
+    }>('/specialists/me/hours', { hours }),
   myPromotions: (token: string) =>
     get<{ promotions: import('./data').Promotion[] }>('/specialists/me/promotions', token),
   setMyPromotions: (token: string, promotions: import('./data').Promotion[]) =>
