@@ -1,4 +1,4 @@
-import { grantCompletionCashback } from '../loyalty/cashback';
+import { grantCompletionRewards } from '../loyalty/completion-rewards';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
@@ -99,10 +99,10 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
         // burada da yazılmazsa o randevular hiçbir komisyon dönemine düşmez.
         data: { status: 'completed', completedAt: now },
       });
-      // K4.1 — tamamlanan hizmetten geri kazanım. İki kez yazılmaz: müşteri
-      // teyidi yoluyla zaten yazılmışsa grantCompletionCashback atlar.
-      await grantCompletionCashback(this.prisma, finalize).catch((e: unknown) =>
-        this.log.error(`geri kazanım yazılamadı: ${e instanceof Error ? e.message : String(e)}`),
+      // K4.1 geri kazanım + D9 referans ödülü. İki kez yazılmaz: müşteri teyidi
+      // yoluyla zaten yazılmışsa her iki ödül de atlanır.
+      await grantCompletionRewards(this.prisma, finalize).catch((e: unknown) =>
+        this.log.error(`ödüller yazılamadı: ${e instanceof Error ? e.message : String(e)}`),
       );
       for (const b of finalize) {
         if (!b.userId) continue;

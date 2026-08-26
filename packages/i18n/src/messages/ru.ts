@@ -1914,17 +1914,19 @@ export const ru: Partial<Record<MessageKey, string>> = {
   // EK Z.6 — реферальная программа
   'referral.title': 'Пригласи подругу',
   'referral.subtitle':
-    'Поделись кодом — когда подруга присоединится, вы обе получите по {points} баллов.',
+    'Поделись кодом — когда подруга завершит первую запись, вы обе получите по {points} баллов.',
   'referral.your_code': 'ТВОЙ КОД',
   'referral.share': 'Поделиться кодом',
-  'referral.share_message': 'Присоединяйся к AYNA! Мой код: {code} — получим по {points} баллов ✨',
+  'referral.share_message':
+    'Присоединяйся к AYNA! Мой код: {code} — после твоей первой завершённой записи мы обе получим по {points} баллов ✨',
   'referral.invited': 'Приглашено',
   'referral.points_earned': 'Заработано баллов',
   'referral.have_code': 'Есть код приглашения?',
   'referral.enter_code': 'Введите код',
   'referral.redeem': 'Применить',
   'referral.redeemed_title': 'Поздравляем! 🎁',
-  'referral.redeemed_sub': 'Благодаря {name} вы получили {points} баллов.',
+  'referral.redeemed_sub':
+    'Код {name} принят. После первой завершённой записи вы обе получите по {points} баллов.',
   'referral.redeem_failed': 'Не удалось применить код. Возможно, вы уже использовали код.',
   'profile.menu.referral': 'Пригласи подругу',
 

@@ -866,11 +866,12 @@ export const api = {
   // EK Z.6 — müşteri referans programı
   referralMine: (token: string) => get<MyReferral>('/referral/mine', token),
   redeemReferral: (token: string, code: string) =>
-    post<{ ok: boolean; pointsAwarded: number; referrerName: string }>(
-      '/referral/redeem',
-      { code },
-      token,
-    ),
+    post<{
+      ok: boolean;
+      pointsAwarded: number;
+      pointsPending: number;
+      referrerName: string;
+    }>('/referral/redeem', { code }, token),
   // EK Z.8 — in-app Kaspi ödeme (simülasyon)
   paymentFor: (token: string, bookingId: string) =>
     get<PaymentIntent | null>(`/payment/mine?bookingId=${encodeURIComponent(bookingId)}`, token),

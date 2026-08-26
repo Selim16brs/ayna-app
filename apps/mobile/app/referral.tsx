@@ -53,7 +53,9 @@ export default function ReferralScreen() {
       Alert.alert(
         t('referral.redeemed_title'),
         fillParams(t('referral.redeemed_sub'), {
-          points: res.pointsAwarded,
+          // D9 — puan artık kod girilince değil, ilk tamamlanmış randevudan
+          // sonra veriliyor; metin bekleyen tutarı gösteriyor.
+          points: res.pointsPending || res.pointsAwarded,
           name: res.referrerName,
         }),
       );

@@ -275,19 +275,27 @@ oluşturulmuyor**; üretim `db push` ile dağıtılmış. Bu, PR #20'de koşulsu
 
 ---
 
-## D9 · Referans puanının zamanlaması
+## D9 · Referans puanının zamanlaması — **UYGULANDI**
 
-**Durum:** Referans puanı (300) **kayıt anında** veriliyor
-(`referral.service.ts:86-105`).
+**Eski durum:** referans puanı (300) davet kodu girildiği **anda** veriliyordu.
+Sahte davet ekonomisine açıktı: kayıt olup kodu girmek 300 puan kazanmaya
+yetiyordu, platformda hiçbir şey yapmaya gerek yoktu.
 
-**Şartname §8.2:** _"yalnız davet edilen kişinin ilk tamamlanmış randevusundan
-sonra"_.
+**Yeni kural (§8.2):** ödül, davet edilenin **ilk tamamlanmış randevusundan
+sonra** — iki tarafa birden.
 
-**Karar gereken:** mevcut davranış sahte davet ekonomisine açık. Değiştirmek
-kolay ama bekleyen davetler ne olacak?
+**Bekleyen davetler:** verilmiş puanlar geri alınmadı. Ama burada sessiz bir
+tuzak vardı: kural öncesinde kod kullanmış hesaplar `referredBy` dolu olduğu
+için, ilk randevularını tamamladıklarında ödül **İKİNCİ kez** yazılacaktı.
+Migration bu hesapları `referral_rewarded_at` ile damgalıyor.
 
-**Önerim:** yeni davetler için kuralı hemen uygula; verilmiş puanlar geri
-alınmaz.
+Ödeme `users.referral_rewarded_at` damgasına dayanıyor ve damga koşullu
+`updateMany` ile atılıyor — eşzamanlı iki tamamlanma çift ödeme yapamıyor.
+Davet eden hesap silinmişse damga atılmıyor, hesap geri gelirse ödül yine
+yapılabiliyor.
+
+Ekran metinleri üç dilde güncellendi: "arkadaşın ilk **katıldığında**" →
+"ilk **randevusunu tamamladığında**".
 
 ---
 

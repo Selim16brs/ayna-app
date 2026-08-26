@@ -1927,18 +1927,20 @@ export const kk: Partial<Record<MessageKey, string>> = {
 
   // EK Z.6 — рефералдық бағдарлама
   'referral.title': 'Досыңды шақыр',
-  'referral.subtitle': 'Кодыңды бөліс — досың алғаш қосылғанда екеуің де {points} ұпай аласыңдар.',
+  'referral.subtitle':
+    'Кодыңды бөліс — досың алғашқы жазылуын аяқтағанда екеуің де {points} ұпай аласыңдар.',
   'referral.your_code': 'ШАҚЫРУ КОДЫҢ',
   'referral.share': 'Кодты бөлісу',
   'referral.share_message':
-    'AYNA-ға қосыл! Шақыру кодым: {code} — екеуміз де {points} ұпай алайық ✨',
+    'AYNA-ға қосыл! Шақыру кодым: {code} — алғашқы жазылуыңды аяқтағанда екеуміз де {points} ұпай аламыз ✨',
   'referral.invited': 'Шақырылған',
   'referral.points_earned': 'Жиналған ұпай',
   'referral.have_code': 'Шақыру кодың бар ма?',
   'referral.enter_code': 'Кодты енгіз',
   'referral.redeem': 'Қолдану',
   'referral.redeemed_title': 'Құттықтаймыз! 🎁',
-  'referral.redeemed_sub': '{name} арқасында {points} ұпай алдың.',
+  'referral.redeemed_sub':
+    '{name} коды қабылданды. Алғашқы жазылуыңды аяқтағанда екеуің де {points} ұпай аласыңдар.',
   'referral.redeem_failed': 'Кодты қолдану мүмкін болмады. Бұрын код қолданған болуыңыз мүмкін.',
   'profile.menu.referral': 'Досыңды шақыр',
 

@@ -77,6 +77,11 @@ model User {
   // EK Z.6 — müşteri referans programı: kişiye özel kod + davet eden (tek sefer set)
   referralCode    String?    @unique @map("referral_code")
   referredBy      String?    @map("referred_by") @db.Uuid
+  // §8.2 (D9) — referans ödülü ÖDENDİ damgası. Ödül artık kod kullanıldığında
+  // değil, davet edilenin İLK TAMAMLANMIŞ randevusundan sonra veriliyor; bu alan
+  // ödülün iki kez yazılmasını engelliyor. Kuralın öncesinde davet kullanan
+  // hesaplar migration'da damgalandı — onlar zaten ödenmişti.
+  referralRewardedAt DateTime? @map("referral_rewarded_at") @db.Timestamptz(6)
   defaultLocale   String     @default("ru") @map("default_locale")
   timezone        String     @default("Asia/Almaty")
   createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)

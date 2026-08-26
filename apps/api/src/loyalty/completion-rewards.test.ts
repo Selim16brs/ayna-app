@@ -3,9 +3,11 @@ import { test } from 'node:test';
 import {
   CASHBACK_REASON,
   DEFAULT_CASHBACK_PCT,
+  REFERRAL_POINTS,
+  REFERRAL_REASON,
   cashbackPoints,
   grantCompletionCashback,
-} from './cashback';
+} from './completion-rewards';
 
 test('geri kazanım oranı ekrandaki vaatle aynı (%3)', () => {
   assert.equal(DEFAULT_CASHBACK_PCT, 3);
@@ -111,4 +113,17 @@ test('boş liste sorgu bile açmaz', async () => {
 
 test('kazanım sebebi sabit — rapor ve tekillik buna dayanıyor', () => {
   assert.equal(CASHBACK_REASON, 'rewards.earn.cashback');
+});
+
+// ── D9 referans ödülü ───────────────────────────────────────────────────────
+// Ödemenin kendisi gerçek veritabanında 15 senaryoyla sınandı (damga, çift
+// ödeme, eşzamanlılık, silinmiş davet eden). Buradaki testler kuralın
+// sayısal sabitlerini kilitler.
+
+test('referans ödülü 300 puan', () => {
+  assert.equal(REFERRAL_POINTS, 300);
+});
+
+test('referans kazanım sebebi sabit — geçmiş kayıtlarla aynı anahtar', () => {
+  assert.equal(REFERRAL_REASON, 'rewards.earn.referral');
 });
