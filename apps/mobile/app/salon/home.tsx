@@ -289,7 +289,7 @@ const makeStyles = (colors: ColorTokens) =>
       height: 18,
       borderRadius: 9,
       paddingHorizontal: 4,
-      backgroundColor: '#FF2E93',
+      backgroundColor: '#D97798',
       alignItems: 'center',
       justifyContent: 'center',
     },

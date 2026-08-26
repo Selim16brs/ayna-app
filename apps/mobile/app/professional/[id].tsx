@@ -16,7 +16,7 @@ import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { TAB_BAR_CLEARANCE, Text, VerificationBadges, WaveLayered } from '../../src/ui';
 
 type Tab = 'booking' | 'portfolio' | 'reviews';
-const HOT_PINK = '#FF2E93'; // favori (kalp) aktif rengi
+const HOT_PINK = '#D97798'; // favori (kalp) aktif rengi
 
 export default function ProfessionalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

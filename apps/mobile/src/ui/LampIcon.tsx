@@ -4,7 +4,7 @@ import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
  * Aladdin (cin) lambası — sihirli dilek lambası. Ionicons'ta yok, çizildi.
  * Yuvarlak karın (ellipse) + kıvrık emzik + boyun/topuz + sap + tepede sihir kıvılcımı.
  */
-export function LampIcon({ size = 30, color = '#FF2E93' }: { size?: number; color?: string }) {
+export function LampIcon({ size = 30, color = '#D97798' }: { size?: number; color?: string }) {
   const w = size;
   const h = size * 0.64;
   return (

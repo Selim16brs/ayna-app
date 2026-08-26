@@ -28,7 +28,7 @@ import {
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 // Kategori daire zeminleri (spec §0.1) — pastel + ink ikon
-const HOT_PINK = '#FF2E93'; // "Ne yapmak istersin?" kartı — çırtlak pembe
+const HOT_PINK = '#D97798'; // "Ne yapmak istersin?" kartı — çırtlak pembe
 // Canlı kategori renkleri (pembe/yeşil gibi doygun) — Saç·Cilt·Nail·Makyaj·Spa·Diğer
 const CAT_TINTS = ['#5A2A55', '#D97798', '#8E7BA8', '#9A641F', '#6E86A8', '#547565'];
 // Yatay kaydırmalı kart ölçüsü (Fırsatlar / Öne çıkanlar — profesyonel foto kartı)
@@ -224,7 +224,7 @@ export default function DiscoverScreen() {
                   <View style={[styles.catTile, { backgroundColor: bg }, shadow.soft]}>
                     <Ionicons name={cat.icon as IoniconName} size={26} color="#FFFFFF" />
                   </View>
-                  <Text variant="caption" tone="ink" style={styles.catLabel} numberOfLines={1}>
+                  <Text variant="caption" tone="ink" style={styles.catLabel} numberOfLines={2}>
                     {t(cat.labelKey)}
                   </Text>
                 </PressableScale>
@@ -537,7 +537,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       backgroundColor: colors.surface,
     },
-    cityText: { fontFamily: font.semibold, maxWidth: 74 },
+    cityText: { fontFamily: font.semibold, maxWidth: 104 },
     avatar: {
       width: 46,
       height: 46,
@@ -595,7 +595,7 @@ const makeStyles = (colors: ColorTokens) =>
       lineHeight: 30,
       fontFamily: font.medium,
       letterSpacing: -0.4,
-      color: '#261F25',
+      color: '#FBF8F6',
       zIndex: 1,
     },
     greetName: {
@@ -658,7 +658,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
       backgroundColor: '#FFFFFF',
     },
-    wishText: { gap: 2 },
+    wishText: { flex: 1, gap: 2 },
     wishTitle: { fontSize: 20, letterSpacing: -0.2, textAlign: 'left' },
     wishSub: { opacity: 0.9 },
 
@@ -742,7 +742,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
     },
-    cat: { alignItems: 'center', width: 62 },
+    cat: { alignItems: 'center', width: 78 },
     // Yuvarlak yerine yumuşak kare (squircle) + gölge — daha profesyonel
     catTile: {
       width: 60,
@@ -752,7 +752,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
       marginBottom: space(0.75),
     },
-    catLabel: { textAlign: 'center', fontFamily: font.semibold },
+    catLabel: { textAlign: 'center', fontFamily: font.semibold, fontSize: 12, lineHeight: 15 },
 
     // ── Bölüm başlığı ──
     sectionHeader: {

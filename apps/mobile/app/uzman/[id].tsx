@@ -13,7 +13,7 @@ import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { DateField, TAB_BAR_CLEARANCE, Text, WaveLayered } from '../../src/ui';
 
-const HOT_PINK = '#FF2E93'; // favori (kalp) aktif rengi
+const HOT_PINK = '#D97798'; // favori (kalp) aktif rengi
 
 export default function UzmanScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

@@ -69,6 +69,9 @@ export function AppTabBar() {
             <Ionicons name={icon} size={24} color={color} />
             <Text
               numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              allowFontScaling={false}
               style={[styles.label, { color, fontFamily: focused ? font.semibold : font.medium }]}
             >
               {t(tab.labelKey)}
