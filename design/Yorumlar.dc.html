@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+  <style>
+    body { margin: 0; font-family: "Onest", -apple-system, system-ui, sans-serif; background: #FBF8F6; }
+    a { color: #5A2A55; } a:hover { color: #431F3F; }
+    * { box-sizing: border-box; }
+    .h { font-family: "Onest", system-ui, sans-serif; font-weight: 600; letter-spacing: -0.4px; }
+    .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+    .sq { border-radius: 34px; corner-shape: superellipse(4); }
+    .sq-sm { border-radius: 22px; corner-shape: superellipse(4); }
+    .card { background: #FFFFFF; box-shadow: 0 6px 20px rgba(90,42,85,0.13), 0 1px 3px rgba(90,42,85,0.07); }
+    .rise { animation: rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+    .d1{animation-delay:40ms}.d2{animation-delay:110ms}.d3{animation-delay:180ms}.d4{animation-delay:250ms}
+    @keyframes rise { from { opacity: 0; transform: translate3d(0,16px,0); } to { opacity: 1; transform: none; } }
+    .grow { animation: grow 900ms cubic-bezier(0.22, 1, 0.36, 1) both; transform-origin: left center; }
+    @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    @media (prefers-reduced-motion: reduce) { .rise,.grow { animation: none !important; } }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 2171px; position: relative; background: #FBF8F6">
+
+  <!-- ═══ ÜST ═══ -->
+  <div class="rise d1" style="display: flex; align-items: center; gap: 12px; padding: 56px 20px 0 20px">
+    <div class="card" style="width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0">
+      <span class="h" style="font-size: 20px; line-height: 22px; font-weight: 600; color: #261F25">Отзывы</span>
+      <span class="num" style="font-size: 14px; color: #6F666C; font-weight: 500">Aisha Beauty Studio</span>
+    </div>
+  </div>
+
+  <!-- ═══ PUAN ÖZETİ + DAĞILIM ═══ -->
+  <div class="card sq rise d1" style="margin: 18px 20px 0 20px; padding: 20px">
+    <div style="display: flex; align-items: center; gap: 22px">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0">
+        <span class="h num" style="font-size: 44px; line-height: 46px; font-weight: 600; color: #261F25">4.9</span>
+        <div style="display: flex; gap: 2px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+        </div>
+        <span class="num" style="font-size: 14px; color: #6F666C; font-weight: 500">128 отзывов</span>
+      </div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0">
+        <div style="display: flex; align-items: center; gap: 9px">
+          <span class="num" style="font-size: 12px; color: #6F666C; font-weight: 600; width: 11px">5</span>
+          <div style="flex-grow: 1; height: 6px; border-radius: 3px; background: rgba(90,42,85,0.13); overflow: hidden"><div class="grow" style="width: 88%; height: 100%; border-radius: 3px; background: #5A2A55"></div></div>
+          <span class="num" style="font-size: 12px; color: #564E56; font-weight: 500; width: 28px; text-align: right">113</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 9px">
+          <span class="num" style="font-size: 12px; color: #6F666C; font-weight: 600; width: 11px">4</span>
+          <div style="flex-grow: 1; height: 6px; border-radius: 3px; background: rgba(90,42,85,0.13); overflow: hidden"><div class="grow" style="width: 9%; height: 100%; border-radius: 3px; background: #5A2A55"></div></div>
+          <span class="num" style="font-size: 12px; color: #564E56; font-weight: 500; width: 28px; text-align: right">11</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 9px">
+          <span class="num" style="font-size: 12px; color: #6F666C; font-weight: 600; width: 11px">3</span>
+          <div style="flex-grow: 1; height: 6px; border-radius: 3px; background: rgba(90,42,85,0.13); overflow: hidden"><div class="grow" style="width: 3%; height: 100%; border-radius: 3px; background: #5A2A55"></div></div>
+          <span class="num" style="font-size: 12px; color: #564E56; font-weight: 500; width: 28px; text-align: right">3</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 9px">
+          <span class="num" style="font-size: 12px; color: #6F666C; font-weight: 600; width: 11px">2</span>
+          <div style="flex-grow: 1; height: 6px; border-radius: 3px; background: rgba(90,42,85,0.13); overflow: hidden"><div class="grow" style="width: 1%; height: 100%; border-radius: 3px; background: #5A2A55"></div></div>
+          <span class="num" style="font-size: 12px; color: #564E56; font-weight: 500; width: 28px; text-align: right">1</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 9px">
+          <span class="num" style="font-size: 12px; color: #6F666C; font-weight: 600; width: 11px">1</span>
+          <div style="flex-grow: 1; height: 6px; border-radius: 3px; background: rgba(90,42,85,0.13)"></div>
+          <span class="num" style="font-size: 12px; color: #564E56; font-weight: 500; width: 28px; text-align: right">0</span>
+        </div>
+      </div>
+    </div>
+    <!-- güvenin kaynağı: yorumlar uydurma değil -->
+    <div style="display: flex; align-items: center; gap: 9px; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(90,42,85,0.14)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink: 0"><circle cx="12" cy="12" r="9.2" fill="#547565"/><path d="M8.1 12.3l2.7 2.6 5.1-5.3" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>
+      <span style="font-size: 14px; line-height: 22px; color: #453B45; font-weight: 400">Только от клиентов с <strong style="font-weight: 600">завершённой записью</strong>. Мастер не может удалять отзывы.</span>
+    </div>
+  </div>
+
+  <!-- ═══ HİZMET KIRILIMI ═══ -->
+  <div class="rise d2" style="padding: 26px 20px 0 20px">
+    <span class="h" style="font-size: 20px; font-weight: 600; color: #261F25">По услугам</span>
+  </div>
+  <div class="card sq rise d2" style="margin: 12px 20px 0 20px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="flex-grow: 1; font-size: 16px; color: #453B45; font-weight: 500">Стрижка и укладка</span>
+      <div style="width: 88px; height: 6px; border-radius: 3px; background: rgba(90,42,85,0.13); overflow: hidden"><div class="grow" style="width: 98%; height: 100%; border-radius: 3px; background: #547565"></div></div>
+      <span class="h num" style="font-size: 16px; font-weight: 600; color: #261F25; width: 24px; text-align: right">4.9</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="flex-grow: 1; font-size: 16px; color: #453B45; font-weight: 500">Окрашивание</span>
+      <div style="width: 88px; height: 6px; border-radius: 3px; background: rgba(90,42,85,0.13); overflow: hidden"><div class="grow" style="width: 94%; height: 100%; border-radius: 3px; background: #547565"></div></div>
+      <span class="h num" style="font-size: 16px; font-weight: 600; color: #261F25; width: 24px; text-align: right">4.7</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="flex-grow: 1; font-size: 16px; color: #453B45; font-weight: 500">Уход и маска</span>
+      <div style="width: 88px; height: 6px; border-radius: 3px; background: rgba(90,42,85,0.13)"></div>
+      <span class="num" style="font-size: 14px; font-weight: 500; color: #A99490; width: 72px; text-align: right">нет оценок</span>
+    </div>
+  </div>
+
+  <!-- ═══ FİLTRE ═══ -->
+  <div class="rise d3" style="display: flex; gap: 8px; padding: 24px 20px 0 20px; overflow-x: auto">
+    <div style="display: flex; align-items: center; height: 44px; padding: 0 15px; border-radius: 22px; background: #261F25; flex-shrink: 0">
+      <span style="font-size: 15px; font-weight: 600; color: #FBF8F6">Все · 128</span>
+    </div>
+    <div class="card" style="display: flex; align-items: center; height: 44px; padding: 0 15px; border-radius: 22px; flex-shrink: 0">
+      <span style="font-size: 15px; font-weight: 500; color: #453B45">С фото · 34</span>
+    </div>
+    <div class="card" style="display: flex; align-items: center; height: 44px; padding: 0 15px; border-radius: 22px; flex-shrink: 0">
+      <span style="font-size: 15px; font-weight: 500; color: #453B45">Критика · 4</span>
+    </div>
+    <div class="card" style="display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 15px; border-radius: 22px; flex-shrink: 0">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#453B45" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M7 12h10M10 17h4"/></svg>
+      <span style="font-size: 15px; font-weight: 500; color: #453B45">Новые</span>
+    </div>
+  </div>
+
+  <!-- ═══ YORUMLAR ═══ -->
+  <div class="rise d3" style="display: flex; flex-direction: column; gap: 12px; padding: 16px 20px 0 20px">
+
+    <div class="card sq" style="padding: 16px">
+      <div style="display: flex; align-items: center; gap: 11px">
+        <div style="width: 44px; height: 44px; border-radius: 15px; background: #E9EDE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#547565" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 3v5c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9v-5z"/><path d="M9.2 12.2l2 2 3.6-3.8"/></svg>
+        </div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span class="h" style="font-size: 16px; line-height: 23px; font-weight: 600; color: #261F25">Имя скрыто</span>
+          <span class="num" style="font-size: 14px; color: #6F666C; font-weight: 500">в этом месяце · Стрижка</span>
+        </div>
+        <div style="display: flex; gap: 1.5px; flex-shrink: 0">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+        </div>
+      </div>
+      <span style="display: block; font-size: 16px; line-height: 25px; color: #453B45; font-weight: 400; margin-top: 12px">Пришла с фото из интернета — Айша сразу сказала, что на моей длине так не ляжет, и предложила вариант. Результат лучше, чем на фото. Честность подкупает.</span>
+      <div style="display: flex; gap: 8px; margin-top: 12px">
+        <div class="sq-sm" style="width: 82px; height: 82px; background-image: url('./hair.jpg'); background-size: cover; background-position: center 30%"></div>
+        <div class="sq-sm" style="width: 82px; height: 82px; background-image: url('./expert-b.jpg'); background-size: cover; background-position: center 20%"></div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; padding: 13px 14px; background: #F5E6EB; border-radius: 18px">
+        <div style="width: 26px; height: 26px; border-radius: 13px; flex-shrink: 0; background-image: url('./expert-a.jpg'); background-size: cover; background-position: center 20%"></div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0">
+          <span style="font-size: 14px; font-weight: 600; color: #564E56">Ответ мастера</span>
+          <span style="font-size: 15px; line-height: 23px; color: #453B45; font-weight: 400">Спасибо! Всегда лучше обсудить до начала — жду вас снова.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card sq" style="padding: 16px">
+      <div style="display: flex; align-items: center; gap: 11px">
+        <div style="width: 44px; height: 44px; border-radius: 15px; flex-shrink: 0; background-image: url('./expert-b.jpg'); background-size: cover; background-position: center 15%"></div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span class="h" style="font-size: 16px; line-height: 23px; font-weight: 600; color: #261F25">Динара</span>
+          <span class="num" style="font-size: 14px; color: #6F666C; font-weight: 500">2 недели назад · Окрашивание</span>
+        </div>
+        <div style="display: flex; gap: 1.5px; flex-shrink: 0">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4CCC1" stroke-width="2"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+        </div>
+      </div>
+      <span style="display: block; font-size: 16px; line-height: 25px; color: #453B45; font-weight: 400; margin-top: 12px">Цвет отличный, но пришлось ждать 20 минут — предыдущая клиентка задержалась. Предупредили заранее, это честно.</span>
+    </div>
+
+    <div class="card sq" style="padding: 16px">
+      <div style="display: flex; align-items: center; gap: 11px">
+        <div style="width: 44px; height: 44px; border-radius: 15px; background: #E9EDE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#547565" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l7 3v5c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9v-5z"/><path d="M9.2 12.2l2 2 3.6-3.8"/></svg>
+        </div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+          <span class="h" style="font-size: 16px; line-height: 23px; font-weight: 600; color: #261F25">Имя скрыто</span>
+          <span class="num" style="font-size: 14px; color: #6F666C; font-weight: 500">в прошлом месяце · Уход</span>
+        </div>
+        <div style="display: flex; gap: 1.5px; flex-shrink: 0">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+        </div>
+      </div>
+      <span style="display: block; font-size: 16px; line-height: 25px; color: #453B45; font-weight: 400; margin-top: 12px">Салон легко найти, чисто, кофе предложили. Записалась снова на следующий месяц.</span>
+    </div>
+
+  </div>
+
+  <!-- ═══ ALT ═══ -->
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 120px; pointer-events: none; background: linear-gradient(180deg, rgba(246,244,241,0) 0%, rgba(246,244,241,0.86) 46%, #F5E6EB 100%)"></div>
+  <div style="position: absolute; left: 20px; right: 20px; bottom: 30px; height: 60px; border-radius: 30px; background: linear-gradient(135deg, #D97798 0%, #5A2A55 100%); box-shadow: 0 12px 26px rgba(163,190,66,0.38); display: flex; align-items: center; justify-content: center; gap: 9px">
+    <span class="h" style="font-size: 17px; font-weight: 600; color: #FBF8F6">Записаться</span>
+    <span style="width: 4px; height: 4px; border-radius: 2px; background: rgba(251,248,246,0.42)"></span>
+    <span class="h num" style="font-size: 17px; font-weight: 600; color: #FBF8F6">от 7 000 ₸</span>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

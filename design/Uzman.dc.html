@@ -1,0 +1,269 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+  <style>
+    body { margin: 0; font-family: "Onest", -apple-system, system-ui, sans-serif; background: #FBF8F6; }
+    a { color: #5A2A55; } a:hover { color: #431F3F; }
+    * { box-sizing: border-box; }
+    .h { font-family: "Onest", system-ui, sans-serif; font-weight: 600; letter-spacing: -0.4px; }
+    .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+    .sq { border-radius: 34px; corner-shape: superellipse(4); }
+    .sq-sm { border-radius: 22px; corner-shape: superellipse(4); }
+    .card { background: #FFFFFF; box-shadow: 0 6px 20px rgba(90,42,85,0.13), 0 1px 3px rgba(90,42,85,0.07); }
+    .cut { -webkit-mask-image: linear-gradient(180deg, #000 66%, rgba(0,0,0,0.5) 86%, transparent 100%); mask-image: linear-gradient(180deg, #000 66%, rgba(0,0,0,0.5) 86%, transparent 100%); }
+    .cut-r { transform: scaleY(-1); opacity: 0.14; -webkit-mask-image: linear-gradient(180deg, transparent 44%, #000 100%); mask-image: linear-gradient(180deg, transparent 44%, #000 100%); filter: blur(0.6px); }
+    .rise { animation: rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+    .d1{animation-delay:40ms}.d2{animation-delay:110ms}.d3{animation-delay:180ms}.d4{animation-delay:250ms}.d5{animation-delay:320ms}
+    @keyframes rise { from { opacity: 0; transform: translate3d(0,16px,0); } to { opacity: 1; transform: none; } }
+    .live { animation: live 2.4s ease-in-out infinite; }
+    @keyframes live { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.42; transform: scale(0.8); } }
+    @media (prefers-reduced-motion: reduce) { .rise,.live { animation: none !important; } }
+  </style>
+</helmet>
+
+<div style="width: 390px; height: 2391px; position: relative; background: #FBF8F6">
+
+  <!-- ═══ ÜST ═══ -->
+  <div class="rise d1" style="display: flex; align-items: center; gap: 10px; padding: 56px 20px 0 20px">
+    <div class="card" style="width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></svg>
+    </div>
+    <div style="flex-grow: 1"></div>
+    <div class="card" style="width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.2s-7-4.5-7-9.2A3.9 3.9 0 0112 8.6a3.9 3.9 0 017 2.4c0 4.7-7 9.2-7 9.2z"/></svg>
+    </div>
+    <div class="card" style="width: 48px; height: 48px; border-radius: 16px; display: flex; align-items: center; justify-content: center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5V4.2M8.2 7.6L12 4l3.8 3.6"/><path d="M5 14v4.6c0 .8.7 1.4 1.5 1.4h11c.8 0 1.5-.6 1.5-1.4V14"/></svg>
+    </div>
+  </div>
+
+  <!-- ═══ KİMLİK — kesik portre + yansıma ═══ -->
+  <div class="rise d1" style="display: flex; align-items: flex-end; gap: 16px; padding: 14px 20px 0 20px">
+    <div style="width: 118px; flex-shrink: 0; position: relative; height: 158px">
+      <div class="cut" style="position: absolute; left: 0; right: 0; top: 0; height: 132px; background-image: url('./expert-a.jpg'); background-size: cover; background-position: center 16%"></div>
+      <div class="cut-r" style="position: absolute; left: 0; right: 0; top: 132px; height: 26px; background-image: url('./expert-a.jpg'); background-size: cover; background-position: center 16%"></div>
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 6px; padding-bottom: 30px; min-width: 0">
+      <div style="display: flex; align-items: center; gap: 6px">
+        <span class="h" style="font-size: 25px; line-height: 29px; font-weight: 600; color: #261F25">Aisha</span>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" style="flex-shrink: 0"><circle cx="12" cy="12" r="9.4" fill="#547565"/><path d="M8.1 12.3l2.7 2.6 5.1-5.3" stroke="#FFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+      </div>
+      <span style="font-size: 16px; line-height: 23px; color: #564E56; font-weight: 400">Beauty Studio · Парикмахер</span>
+      <div style="display: flex; align-items: center; gap: 5px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6F666C" stroke-width="1.9"><path d="M12 21.2c4.2-4 6.6-7.3 6.6-10.4A6.6 6.6 0 105.4 10.8c0 3.1 2.4 6.4 6.6 10.4z"/><circle cx="12" cy="10.4" r="2.3"/></svg>
+        <span style="font-size: 15px; color: #564E56; font-weight: 400">Бостандык · 2,4 км</span>
+        <span style="font-size: 15px; color: #5A2A55; font-weight: 600">Карта</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; padding-top: 2px">
+        <span class="live" style="width: 7px; height: 7px; border-radius: 4px; background: #5E9E7E"></span>
+        <span style="font-size: 14px; color: #35624C; font-weight: 600">Свободно сегодня · 3 окна</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ GÜVEN — istatistik + doğrulama ═══ -->
+  <div class="card sq rise d2" style="margin: 8px 20px 0 20px; padding: 16px">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <span class="h num" style="font-size: 20px; font-weight: 600; color: #261F25">5 лет</span>
+        <span style="font-size: 12px; color: #6F666C; font-weight: 500">опыта</span>
+      </div>
+      <div style="width: 1px; height: 28px; background: rgba(90,42,85,0.14)"></div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <span class="h num" style="font-size: 20px; font-weight: 600; color: #261F25">340+</span>
+        <span style="font-size: 12px; color: #6F666C; font-weight: 500">клиентов</span>
+      </div>
+      <div style="width: 1px; height: 28px; background: rgba(90,42,85,0.14)"></div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <div style="display: flex; align-items: center; gap: 4px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#9A641F"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3.1-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9z"/></svg>
+          <span class="h num" style="font-size: 20px; font-weight: 600; color: #261F25">4.9</span>
+        </div>
+        <span class="num" style="font-size: 12px; color: #6F666C; font-weight: 500">128 отзывов</span>
+      </div>
+      <div style="width: 1px; height: 28px; background: rgba(90,42,85,0.14)"></div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <span class="h num" style="font-size: 20px; font-weight: 600; color: #261F25">~40 мин</span>
+        <span style="font-size: 12px; color: #6F666C; font-weight: 500">ответ</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(90,42,85,0.14)">
+      <div style="display: flex; align-items: center; gap: 5px; background: #E9F1EB; border-radius: 12px; padding: 5px 10px">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#35624C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6.5L9.4 17.2 4.4 12.2"/></svg>
+        <span style="font-size: 12px; font-weight: 600; color: #35624C">Личность</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 5px; background: #E9F1EB; border-radius: 12px; padding: 5px 10px">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#35624C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6.5L9.4 17.2 4.4 12.2"/></svg>
+        <span style="font-size: 12px; font-weight: 600; color: #35624C">Сертификат</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 5px; background: #E9F1EB; border-radius: 12px; padding: 5px 10px">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#35624C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6.5L9.4 17.2 4.4 12.2"/></svg>
+        <span style="font-size: 12px; font-weight: 600; color: #35624C">Адрес</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 5px; background: rgba(90,42,85,0.08); border-radius: 12px; padding: 5px 10px">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#A99490" stroke-width="2.2" stroke-linecap="round"><path d="M12 8v5M12 16.4v.1"/><circle cx="12" cy="12" r="8.8"/></svg>
+        <span style="font-size: 12px; font-weight: 500; color: #A99490">Соцсети не подтв.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SEKMELER ═══ -->
+  <div class="rise d2" style="display: flex; gap: 24px; padding: 22px 24px 0 24px; border-bottom: 1px solid rgba(90,42,85,0.13); margin: 0 0 0 0">
+    <div style="display: flex; flex-direction: column; gap: 9px; padding-bottom: 11px">
+      <span class="h" style="font-size: 17px; font-weight: 600; color: #261F25">Запись</span>
+      <div style="height: 3px; border-radius: 2px; background: #5A2A55"></div>
+    </div>
+    <span class="h" style="font-size: 17px; font-weight: 500; color: #A99490; padding-bottom: 14px">Работы</span>
+    <span class="h" style="font-size: 17px; font-weight: 500; color: #A99490; padding-bottom: 14px">Отзывы · 128</span>
+  </div>
+
+  <!-- ═══ HİZMETLER ═══ -->
+  <div class="rise d3" style="display: flex; align-items: baseline; gap: 10px; padding: 20px 20px 0 20px">
+    <span class="h" style="font-size: 20px; font-weight: 600; color: #261F25; flex-grow: 1">Услуги</span>
+    <span style="font-size: 14px; color: #6F666C; font-weight: 500">можно выбрать несколько</span>
+  </div>
+  <div class="rise d3" style="display: flex; flex-direction: column; gap: 10px; padding: 12px 20px 0 20px">
+    <div class="card sq-sm" style="display: flex; align-items: center; gap: 13px; padding: 14px; border: 2px solid #5A2A55">
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0">
+        <span class="h" style="font-size: 17px; line-height: 25px; font-weight: 600; color: #261F25">Стрижка и укладка</span>
+        <span class="num" style="font-size: 14px; color: #6F666C; font-weight: 500">60 мин</span>
+      </div>
+      <span class="h num" style="font-size: 20px; font-weight: 600; color: #261F25; flex-shrink: 0">9 000 ₸</span>
+      <div style="width: 24px; height: 24px; border-radius: 12px; background: #5A2A55; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FBF8F6" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6.5L9.4 17.2 4.4 12.2"/></svg>
+      </div>
+    </div>
+    <div class="card sq-sm" style="display: flex; align-items: center; gap: 13px; padding: 14px">
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0">
+        <div style="display: flex; align-items: center; gap: 7px">
+          <span class="h" style="font-size: 17px; line-height: 25px; font-weight: 600; color: #261F25">Окрашивание</span>
+          <span class="num" style="font-size: 10px; font-weight: 600; color: #FFFFFF; background: #D97798; border-radius: 7px; padding: 2px 7px">−25%</span>
+        </div>
+        <span class="num" style="font-size: 14px; color: #6F666C; font-weight: 500">90 мин</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0">
+        <span class="h num" style="font-size: 20px; font-weight: 600; color: #261F25">11 250 ₸</span>
+        <span class="num" style="font-size: 14px; color: #A99490; text-decoration: line-through">15 000</span>
+      </div>
+      <div style="width: 24px; height: 24px; border-radius: 12px; border: 2px solid rgba(90,42,85,0.24); flex-shrink: 0"></div>
+    </div>
+    <div class="card sq-sm" style="display: flex; align-items: center; gap: 13px; padding: 14px">
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0">
+        <span class="h" style="font-size: 17px; line-height: 25px; font-weight: 600; color: #261F25">Уход и маска</span>
+        <span class="num" style="font-size: 14px; color: #6F666C; font-weight: 500">45 мин</span>
+      </div>
+      <span class="h num" style="font-size: 20px; font-weight: 600; color: #261F25; flex-shrink: 0">7 000 ₸</span>
+      <div style="width: 24px; height: 24px; border-radius: 12px; border: 2px solid rgba(90,42,85,0.24); flex-shrink: 0"></div>
+    </div>
+  </div>
+
+  <!-- ═══ GÜN ═══ -->
+  <div class="rise d4" style="display: flex; align-items: baseline; gap: 10px; padding: 26px 20px 0 20px">
+    <span class="h" style="font-size: 20px; font-weight: 600; color: #261F25; flex-grow: 1">Дата</span>
+    <span class="num" style="font-size: 14px; color: #6F666C; font-weight: 500">август</span>
+  </div>
+  <div class="rise d4" style="display: flex; gap: 9px; padding: 12px 20px 0 20px; overflow: hidden">
+    <div style="width: 56px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 11px 0; border-radius: 20px; background: #FFFFFF; opacity: 0.45">
+      <span style="font-size: 12px; color: #6F666C; font-weight: 600">пн</span>
+      <span class="h num" style="font-size: 20px; font-weight: 600; color: #261F25">25</span>
+    </div>
+    <div style="width: 56px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 11px 0; border-radius: 20px; background: #261F25; box-shadow: 0 8px 18px rgba(90,42,85,0.30)">
+      <span style="font-size: 12px; color: rgba(251,248,246,0.7); font-weight: 600">вт</span>
+      <span class="h num" style="font-size: 20px; font-weight: 600; color: #FBF8F6">26</span>
+    </div>
+    <div class="card" style="width: 56px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 11px 0; border-radius: 20px">
+      <span style="font-size: 12px; color: #6F666C; font-weight: 600">ср</span>
+      <span class="h num" style="font-size: 20px; font-weight: 600; color: #261F25">27</span>
+    </div>
+    <div class="card" style="width: 56px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 11px 0; border-radius: 20px">
+      <span style="font-size: 12px; color: #6F666C; font-weight: 600">чт</span>
+      <span class="h num" style="font-size: 20px; font-weight: 600; color: #261F25">28</span>
+    </div>
+    <div class="card" style="width: 56px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 11px 0; border-radius: 20px">
+      <span style="font-size: 12px; color: #6F666C; font-weight: 600">пт</span>
+      <span class="h num" style="font-size: 20px; font-weight: 600; color: #261F25">29</span>
+    </div>
+  </div>
+
+  <!-- ═══ SAAT — dolu/boş görünür ═══ -->
+  <div class="rise d4" style="display: flex; align-items: baseline; gap: 10px; padding: 24px 20px 0 20px">
+    <span class="h" style="font-size: 20px; font-weight: 600; color: #261F25; flex-grow: 1">Время</span>
+    <div style="display: flex; align-items: center; gap: 12px">
+      <div style="display: flex; align-items: center; gap: 5px">
+        <span style="width: 8px; height: 8px; border-radius: 4px; background: #FFFFFF; border: 1.5px solid rgba(90,42,85,0.28)"></span>
+        <span style="font-size: 12px; color: #6F666C; font-weight: 500">свободно</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 5px">
+        <span style="width: 8px; height: 8px; border-radius: 4px; background: #E8D5DD"></span>
+        <span style="font-size: 12px; color: #6F666C; font-weight: 500">занято</span>
+      </div>
+    </div>
+  </div>
+  <div class="rise d4" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; padding: 12px 20px 0 20px">
+    <div class="card" style="height: 52px; border-radius: 26px; display: flex; align-items: center; justify-content: center"><span class="h num" style="font-size: 16px; font-weight: 600; color: #261F25">10:00</span></div>
+    <div style="height: 52px; border-radius: 26px; background: #E8D5DD; display: flex; align-items: center; justify-content: center"><span class="h num" style="font-size: 16px; font-weight: 500; color: #B4867B; text-decoration: line-through">11:00</span></div>
+    <div class="card" style="height: 52px; border-radius: 26px; display: flex; align-items: center; justify-content: center"><span class="h num" style="font-size: 16px; font-weight: 600; color: #261F25">12:00</span></div>
+    <div style="height: 52px; border-radius: 26px; background: #5A2A55; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 18px rgba(163,190,66,0.34)"><span class="h num" style="font-size: 16px; font-weight: 600; color: #FBF8F6">14:00</span></div>
+    <div style="height: 52px; border-radius: 26px; background: #E8D5DD; display: flex; align-items: center; justify-content: center"><span class="h num" style="font-size: 16px; font-weight: 500; color: #B4867B; text-decoration: line-through">15:00</span></div>
+    <div class="card" style="height: 52px; border-radius: 26px; display: flex; align-items: center; justify-content: center"><span class="h num" style="font-size: 16px; font-weight: 600; color: #261F25">16:00</span></div>
+    <div class="card" style="height: 52px; border-radius: 26px; display: flex; align-items: center; justify-content: center"><span class="h num" style="font-size: 16px; font-weight: 600; color: #261F25">17:00</span></div>
+    <div class="card" style="height: 52px; border-radius: 26px; display: flex; align-items: center; justify-content: center"><span class="h num" style="font-size: 16px; font-weight: 600; color: #261F25">18:00</span></div>
+  </div>
+
+  <!-- ═══ PARA KURALLARI — hiçbir şey gizli değil ═══ -->
+  <div class="card sq rise d5" style="margin: 24px 20px 0 20px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 9px">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.8"/><path d="M12 7.6v5M12 15.8v.1"/></svg>
+      <span class="h" style="font-size: 17px; font-weight: 600; color: #261F25">Что нужно знать</span>
+    </div>
+    <div style="display: flex; align-items: flex-start; gap: 10px">
+      <span style="width: 5px; height: 5px; border-radius: 3px; background: #5A2A55; margin-top: 7px; flex-shrink: 0"></span>
+      <span style="font-size: 15px; line-height: 23px; color: #453B45; font-weight: 400"><strong style="font-weight: 600">Предоплата 1 800 ₸</strong> — 20% от суммы. Остальное на месте.</span>
+    </div>
+    <div style="display: flex; align-items: flex-start; gap: 10px">
+      <span style="width: 5px; height: 5px; border-radius: 3px; background: #5A2A55; margin-top: 7px; flex-shrink: 0"></span>
+      <span style="font-size: 15px; line-height: 23px; color: #453B45; font-weight: 400">Отмена <strong style="font-weight: 600">более чем за 3 часа</strong> — предоплата возвращается.</span>
+    </div>
+    <div style="display: flex; align-items: flex-start; gap: 10px">
+      <span style="width: 5px; height: 5px; border-radius: 3px; background: #D97798; margin-top: 7px; flex-shrink: 0"></span>
+      <span style="font-size: 15px; line-height: 23px; color: #453B45; font-weight: 400">Позже 3 часов или неявка — предоплата остаётся мастеру.</span>
+    </div>
+    <div style="display: flex; align-items: flex-start; gap: 10px">
+      <span style="width: 5px; height: 5px; border-radius: 3px; background: #9A641F; margin-top: 7px; flex-shrink: 0"></span>
+      <span style="font-size: 15px; line-height: 23px; color: #453B45; font-weight: 400">За эту запись начислим <strong style="font-weight: 600">90 баллов</strong> AYNA.</span>
+    </div>
+  </div>
+
+  <!-- ═══ ALT CTA — fiyat butonun içinde ═══ -->
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 128px; pointer-events: none; background: linear-gradient(180deg, rgba(246,244,241,0) 0%, rgba(246,244,241,0.86) 46%, #F5E6EB 100%)"></div>
+  <div style="position: absolute; left: 20px; right: 20px; bottom: 30px; display: flex; align-items: center; gap: 10px">
+    <div class="card" style="width: 60px; height: 60px; border-radius: 27px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5.5v13M5.5 12h13"/></svg>
+    </div>
+    <div class="card" style="width: 60px; height: 60px; border-radius: 27px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.5a7.9 7.9 0 01-8.5 7.9L5 21l1.6-4.6A7.9 7.9 0 1120.5 11.5z"/></svg>
+    </div>
+    <div style="flex-grow: 1; height: 60px; border-radius: 30px; background: linear-gradient(135deg, #D97798 0%, #5A2A55 100%); box-shadow: 0 12px 26px rgba(163,190,66,0.38); display: flex; align-items: center; justify-content: center; gap: 9px">
+      <span class="h" style="font-size: 17px; font-weight: 600; color: #FBF8F6">Записаться</span>
+      <span style="width: 4px; height: 4px; border-radius: 2px; background: rgba(251,248,246,0.42)"></span>
+      <span class="h num" style="font-size: 17px; font-weight: 600; color: #FBF8F6">9 000 ₸</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

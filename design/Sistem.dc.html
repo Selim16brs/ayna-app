@@ -1,0 +1,290 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+  <style>
+    body { margin: 0; font-family: "Onest", -apple-system, system-ui, sans-serif; }
+    a { color: #5A2A55; } a:hover { color: #431F3F; }
+    * { box-sizing: border-box; }
+    .h { font-family: "Onest", system-ui, sans-serif; font-weight: 600; letter-spacing: -0.6px; }
+    .num { font-variant-numeric: tabular-nums; }
+    .lbl { font-size: 10px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; color: #8F868C; }
+    .sq { border-radius: 30px; corner-shape: superellipse(4); }
+    .sq-sm { border-radius: 20px; corner-shape: superellipse(4); }
+    .card { background: #FFFFFF; box-shadow: 0 6px 20px rgba(90,42,85,0.13), 0 1px 3px rgba(90,42,85,0.07); }
+    .ease-demo { animation: slide 3.2s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+    @keyframes slide { 0%, 12% { transform: translateX(0); } 55%, 88% { transform: translateX(148px); } 100% { transform: translateX(0); } }
+    .shim { position: relative; overflow: hidden; }
+    .shim::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, rgba(255,255,255,0) 36%, rgba(255,255,255,0.7) 48%, rgba(255,255,255,0) 60%); background-size: 250% 100%; animation: shim 1.9s ease-in-out infinite; }
+    @keyframes shim { from { background-position: 180% 0; } to { background-position: -60% 0; } }
+  </style>
+</helmet>
+
+<div style="width: 900px; min-height: 2589px; background: #FBF8F6; padding: 44px 40px 56px 40px; display: flex; flex-direction: column; gap: 34px">
+
+  <div style="display: flex; align-items: flex-end; gap: 16px">
+    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 6px">
+      <span class="lbl">AYNA · тасарым жүйесі / design system</span>
+      <span class="h" style="font-size: 40px; line-height: 44px; color: #261F25">Sistem — renk, tip, ikon, hareket</span>
+    </div>
+    <span style="font-size: 16px; line-height: 24px; color: #564E56; max-width: 300px; font-weight: 400">Bu sayfa tek tek ekranlardan önce gelir: 90 ekran ancak tek bir sistemden çizilirse aynı ürün gibi durur.</span>
+  </div>
+
+  <!-- ══ RENK ══ -->
+  <div class="card sq" style="padding: 26px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <span class="h" style="font-size: 24px; color: #261F25; flex-grow: 1">1 · Renk — mürdüm konuşur, zemin susar</span>
+      <span style="font-size: 15px; color: #564E56; font-weight: 400">Tek eylem rengi var. Ucuzlatan renk değildi — her yerde olmasıydı.</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="sq-sm" style="height: 76px; background: #5A2A55"></div>
+        <span style="font-size: 14px; font-weight: 600; color: #261F25">Ayna Mürdüm</span>
+        <span class="num" style="font-size: 12px; color: #8F868C">#5A2A55 · CTA · aktif sekme</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="sq-sm" style="height: 76px; background: #261F25"></div>
+        <span style="font-size: 14px; font-weight: 600; color: #261F25">Koyu Mürekkep</span>
+        <span class="num" style="font-size: 12px; color: #8F868C">#261F25 · başlık · fiyat</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="sq-sm" style="height: 76px; background: #FBF8F6; box-shadow: inset 0 0 0 1.5px #E8D5DD"></div>
+        <span style="font-size: 14px; font-weight: 600; color: #261F25">Porselen</span>
+        <span class="num" style="font-size: 12px; color: #8F868C">#FBF8F6 · uygulama zemini</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="sq-sm" style="height: 76px; background: #F5E6EB"></div>
+        <span style="font-size: 14px; font-weight: 600; color: #261F25">Yumuşak Pudra</span>
+        <span class="num" style="font-size: 12px; color: #8F868C">#F5E6EB · filtre · seçili saat</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="sq-sm" style="height: 76px; background: #D97798"></div>
+        <span style="font-size: 14px; font-weight: 600; color: #261F25">Gül</span>
+        <span class="num" style="font-size: 12px; color: #8F868C">#D97798 · küçük vurgu</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="sq-sm" style="height: 76px; background: #6F666C"></div>
+        <span style="font-size: 14px; font-weight: 600; color: #261F25">Duman</span>
+        <span class="num" style="font-size: 12px; color: #8F868C">#6F666C · ikincil metin</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="sq-sm" style="height: 76px; background: #547565"></div>
+        <span style="font-size: 14px; font-weight: 600; color: #261F25">Adaçayı</span>
+        <span class="num" style="font-size: 12px; color: #8F868C">#547565 · onay · başarı</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="sq-sm" style="height: 76px; background: #9A641F"></div>
+        <span style="font-size: 14px; font-weight: 600; color: #261F25">Kehribar</span>
+        <span class="num" style="font-size: 12px; color: #8F868C">#9A641F · beklemede · uyarı</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="sq-sm" style="height: 76px; background: #B44252"></div>
+        <span style="font-size: 14px; font-weight: 600; color: #261F25">Mercan Kırmızı</span>
+        <span class="num" style="font-size: 12px; color: #8F868C">#B44252 · iptal · hata</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div class="sq-sm" style="height: 76px; background: #FFFFFF; box-shadow: 0 6px 20px rgba(90,42,85,0.13), 0 1px 3px rgba(90,42,85,0.07)"></div>
+        <span style="font-size: 14px; font-weight: 600; color: #261F25">Kart</span>
+        <span class="num" style="font-size: 12px; color: #8F868C">#FFFFFF · mürdüm gölge</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding-top: 4px">
+      <div style="flex-grow: 1; height: 58px; border-radius: 14px; background: #FBF8F6; box-shadow: inset 0 0 0 1.5px #E8D5DD"></div>
+      <span style="font-size: 14px; color: #564E56; font-weight: 400; width: 300px">Zemin TEK renk (#FBF8F6) — gradient geçiş yok. Renk yalnız kartlarda, CTA'da ve durum sinyallerinde konuşur; zemin sessiz kalır. İkincil butonlar pudra dolgu + ince çerçeve: saydam siyah kullanılmıyor, çünkü altındaki rengi emip gri bırakır.</span>
+    </div>
+  </div>
+
+  <!-- ══ TİPOGRAFİ ══ -->
+  <div class="card sq" style="padding: 26px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <span class="h" style="font-size: 24px; color: #261F25; flex-grow: 1">2 · Tipografi — yalnız Onest</span>
+      <span style="font-size: 15px; color: #564E56; font-weight: 400">İkinci font yok. 56 Kiril dilini destekliyor; RU/KK bu pazarda şart.</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1.15fr; gap: 30px">
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <span class="h" style="font-size: 34px; line-height: 40px; color: #261F25; font-weight: 500">Ваше время.<br>Ваша красота.</span>
+        <span class="h" style="font-size: 24px; line-height: 30px; color: #261F25; font-weight: 600">Салоны рядом с вами</span>
+        <span style="font-size: 16px; line-height: 25px; color: #453B45; font-weight: 400">Выберите удобное время — мастер получит заявку и ответит в течение часа. Uzun Kiril cümleler Onest 400'de nefes alıyor; ikinci bir gövde fontuna ihtiyaç yok.</span>
+        <div style="display: flex; gap: 10px; padding-top: 2px">
+          <div style="height: 46px; padding: 0 22px; border-radius: 23px; background: #5A2A55; display: flex; align-items: center"><span style="font-size: 16px; color: #FBF8F6; font-weight: 600">Записаться</span></div>
+          <div style="height: 46px; padding: 0 22px; border-radius: 23px; background: #F5E6EB; box-shadow: inset 0 0 0 1.5px #E8D5DD; display: flex; align-items: center"><span style="font-size: 16px; color: #564E56; font-weight: 600">Подробнее</span></div>
+        </div>
+        <span class="num" style="font-size: 16px; color: #564E56; font-weight: 500; padding-top: 4px">Rakamlar tabular: 9 000 ₸ · 12 000 ₸ · 16:30 · 4.9</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <div style="display: flex; align-items: baseline; gap: 12px; padding-bottom: 4px"><span class="lbl" style="width: 160px">Kullanım</span><span class="lbl" style="width: 74px">Boyut</span><span class="lbl">Ağırlık</span></div>
+        <div style="display: flex; align-items: baseline; gap: 12px"><span style="width: 160px; font-size: 15px; color: #453B45; font-weight: 500">Büyük kampanya</span><span class="num" style="width: 74px; font-size: 15px; color: #6F666C; font-weight: 500">30–34 px</span><span class="num" style="font-size: 15px; color: #6F666C; font-weight: 500">500</span></div>
+        <div style="display: flex; align-items: baseline; gap: 12px"><span style="width: 160px; font-size: 15px; color: #453B45; font-weight: 500">Sayfa başlığı</span><span class="num" style="width: 74px; font-size: 15px; color: #6F666C; font-weight: 500">24 px</span><span class="num" style="font-size: 15px; color: #6F666C; font-weight: 500">600</span></div>
+        <div style="display: flex; align-items: baseline; gap: 12px"><span style="width: 160px; font-size: 15px; color: #453B45; font-weight: 500">Bölüm başlığı</span><span class="num" style="width: 74px; font-size: 15px; color: #6F666C; font-weight: 500">20 px</span><span class="num" style="font-size: 15px; color: #6F666C; font-weight: 500">600</span></div>
+        <div style="display: flex; align-items: baseline; gap: 12px"><span style="width: 160px; font-size: 15px; color: #453B45; font-weight: 500">Salon · uzman adı</span><span class="num" style="width: 74px; font-size: 15px; color: #6F666C; font-weight: 500">17 px</span><span class="num" style="font-size: 15px; color: #6F666C; font-weight: 500">600</span></div>
+        <div style="display: flex; align-items: baseline; gap: 12px"><span style="width: 160px; font-size: 15px; color: #453B45; font-weight: 500">Normal metin</span><span class="num" style="width: 74px; font-size: 15px; color: #6F666C; font-weight: 500">16 px</span><span class="num" style="font-size: 15px; color: #6F666C; font-weight: 500">400</span></div>
+        <div style="display: flex; align-items: baseline; gap: 12px"><span style="width: 160px; font-size: 15px; color: #453B45; font-weight: 500">CTA</span><span class="num" style="width: 74px; font-size: 15px; color: #6F666C; font-weight: 500">16 px</span><span class="num" style="font-size: 15px; color: #6F666C; font-weight: 500">600</span></div>
+        <div style="display: flex; align-items: baseline; gap: 12px"><span style="width: 160px; font-size: 15px; color: #453B45; font-weight: 500">Filtre · saat</span><span class="num" style="width: 74px; font-size: 15px; color: #6F666C; font-weight: 500">15 px</span><span class="num" style="font-size: 15px; color: #6F666C; font-weight: 500">500</span></div>
+        <div style="display: flex; align-items: baseline; gap: 12px"><span style="width: 160px; font-size: 15px; color: #453B45; font-weight: 500">Yardımcı bilgi</span><span class="num" style="width: 74px; font-size: 15px; color: #6F666C; font-weight: 500">14 px</span><span class="num" style="font-size: 15px; color: #6F666C; font-weight: 500">400–500</span></div>
+        <div style="display: flex; align-items: baseline; gap: 12px"><span style="width: 160px; font-size: 15px; color: #453B45; font-weight: 500">Minimum bilgi</span><span class="num" style="width: 74px; font-size: 15px; color: #6F666C; font-weight: 500">12 px</span><span class="num" style="font-size: 15px; color: #6F666C; font-weight: 500">500</span></div>
+        <span style="font-size: 14px; line-height: 20px; color: #564E56; font-weight: 400; padding-top: 8px">Ağırlık 700/800 kullanılmıyor. Hiyerarşi boyut ve renkle kuruluyor; kalınlık yığmak Kiril metinde okunurluğu düşürüyor.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ İKON ══ -->
+  <div class="card sq" style="padding: 26px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <span class="h" style="font-size: 24px; color: #261F25; flex-grow: 1">3 · İkon — tek elden, 24 ızgara, 1.65px kontur</span>
+      <span style="font-size: 15px; color: #564E56; font-weight: 400">Dolu ikon yok; yalnız aktif sekme ve doğrulama rozeti dolu. Emoji hiç yok.</span>
+    </div>
+    <div style="display: flex; gap: 14px; flex-wrap: wrap">
+      <div class="sq-sm" style="width: 66px; height: 66px; background: #F5F2ED; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M15.6 8.4l-2.2 5-5 2.2 2.2-5z"/></svg></div>
+      <div class="sq-sm" style="width: 66px; height: 66px; background: #F5F2ED; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.65" stroke-linecap="round"><rect x="3.6" y="5.6" width="16.8" height="14.8" rx="4"/><path d="M8 3.6v4M16 3.6v4M3.6 10.4h16.8"/></svg></div>
+      <div class="sq-sm" style="width: 66px; height: 66px; background: #F5F2ED; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.65" stroke-linejoin="round"><path d="M12 20.2s-7-4.5-7-9.2A3.9 3.9 0 0112 8.6a3.9 3.9 0 017 2.4c0 4.7-7 9.2-7 9.2z"/></svg></div>
+      <div class="sq-sm" style="width: 66px; height: 66px; background: #F5F2ED; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.65" stroke-linecap="round"><circle cx="9.2" cy="8.2" r="2.9"/><circle cx="16.8" cy="9.2" r="2.3"/><path d="M3.6 19c0-2.9 2.5-4.8 5.6-4.8s5.6 1.9 5.6 4.8"/></svg></div>
+      <div class="sq-sm" style="width: 66px; height: 66px; background: #F5F2ED; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.65" stroke-linecap="round"><path d="M12 21.2c4.2-4 6.6-7.3 6.6-10.4A6.6 6.6 0 105.4 10.8c0 3.1 2.4 6.4 6.6 10.4z"/><circle cx="12" cy="10.4" r="2.4"/></svg></div>
+      <div class="sq-sm" style="width: 66px; height: 66px; background: #F5F2ED; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.65" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.2v5l3.4 2"/></svg></div>
+      <div class="sq-sm" style="width: 66px; height: 66px; background: #F5F2ED; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.65" stroke-linecap="round"><circle cx="6.2" cy="7" r="2.4"/><circle cx="6.2" cy="17" r="2.4"/><path d="M8.3 8.4L19.6 17.8M8.3 15.6L19.6 6.2"/></svg></div>
+      <div class="sq-sm" style="width: 66px; height: 66px; background: #F5F2ED; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.8z"/></svg></div>
+      <div class="sq-sm" style="width: 66px; height: 66px; background: #F5F2ED; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M18.2 8.4a6.2 6.2 0 10-12.4 0c0 6.4-2.8 7.6-2.8 7.6h18s-2.8-1.2-2.8-7.6"/><path d="M13.7 20.4a2 2 0 01-3.4 0"/></svg></div>
+      <div class="sq-sm" style="width: 66px; height: 66px; background: #261F25; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9.2" fill="#6E8F7C"/><path d="M8.1 12.3l2.7 2.6 5.1-5.3" stroke="#FFFFFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    </div>
+  </div>
+
+  <!-- ══ BİLEŞEN DURUMLARI ══ -->
+  <div class="card sq" style="padding: 26px; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <span class="h" style="font-size: 24px; color: #261F25; flex-grow: 1">4 · Bileşen durumları — her eylemin görünür karşılığı</span>
+      <span style="font-size: 15px; color: #564E56; font-weight: 400">Fiyat butonun İÇİNDE: dokunmadan ne ödeyeceğini biliyorsun.</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <span class="lbl">Birincil</span>
+        <div class="sq-sm" style="height: 52px; border-radius: 26px; background: linear-gradient(135deg, #6B3465, #5A2A55); display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 22px rgba(163,190,66,0.34)">
+          <span style="font-size: 17px; font-weight: 600; color: #FBF8F6">Записаться</span>
+          <span style="width: 4px; height: 4px; border-radius: 2px; background: rgba(251,248,246,0.42)"></span>
+          <span class="num" style="font-size: 17px; font-weight: 600; color: #FBF8F6">9 000 ₸</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <span class="lbl">Basılı</span>
+        <div class="sq-sm" style="height: 52px; border-radius: 26px; background: #B4D134; display: flex; align-items: center; justify-content: center; transform: scale(0.975)">
+          <span style="font-size: 17px; font-weight: 600; color: #FBF8F6">Записаться</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <span class="lbl">Yükleniyor</span>
+        <div class="sq-sm" style="height: 52px; border-radius: 26px; background: linear-gradient(135deg, #6B3465, #5A2A55); display: flex; align-items: center; justify-content: center; gap: 9px; opacity: 0.86">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FBF8F6" stroke-width="2.4" stroke-linecap="round"><path d="M12 3.5a8.5 8.5 0 108.5 8.5" opacity="0.9"/></svg>
+          <span style="font-size: 17px; font-weight: 600; color: #FBF8F6">Отправляем…</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <span class="lbl">Pasif + neden</span>
+        <div style="display: flex; flex-direction: column; gap: 5px">
+          <div class="sq-sm" style="height: 52px; border-radius: 26px; background: #E7E3DC; display: flex; align-items: center; justify-content: center">
+            <span style="font-size: 17px; font-weight: 600; color: #A99490">Записаться</span>
+          </div>
+          <span style="font-size: 12px; color: #6F666C; font-weight: 500; text-align: center">Сначала выбери время</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <span class="lbl">Başarı</span>
+        <div class="sq-sm" style="height: 52px; display: flex; align-items: center; gap: 9px; padding: 0 15px; background: #E9F1EB; border: 1px solid #C9DDD1">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9.2" fill="#5E9E7E"/><path d="M8.1 12.3l2.7 2.6 5.1-5.3" stroke="#FFF" stroke-width="2.3" stroke-linecap="round" fill="none"/></svg>
+          <span style="font-size: 15px; font-weight: 600; color: #35624C">Заявка отправлена</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <span class="lbl">Hata (ham metin yok)</span>
+        <div class="sq-sm" style="height: 52px; display: flex; align-items: center; gap: 9px; padding: 0 15px; background: #F7E4E7; border: 1px solid #EDC3CA">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#B44252" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="8.8"/><path d="M12 7.6v5M12 15.8v.1"/></svg>
+          <span style="font-size: 14px; font-weight: 500; color: #93303F; line-height: 19px">Это время заняли<br>Выбери другое</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <span class="lbl">Anahtar</span>
+        <div style="height: 52px; display: flex; align-items: center; gap: 12px">
+          <div style="width: 50px; height: 30px; border-radius: 15px; background: #5A2A55; position: relative"><div style="position: absolute; top: 3px; right: 3px; width: 24px; height: 24px; border-radius: 12px; background: #FFFFFF; box-shadow: 0 2px 6px rgba(90,42,85,0.30)"></div></div>
+          <div style="width: 50px; height: 30px; border-radius: 15px; background: #E4DCE2; position: relative"><div style="position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 12px; background: #FFFFFF; box-shadow: 0 2px 6px rgba(90,42,85,0.24)"></div></div>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 9px">
+        <span class="lbl">İskelet (yükleme)</span>
+        <div style="height: 52px; display: flex; align-items: center; gap: 11px">
+          <div class="shim sq-sm" style="width: 46px; height: 46px; background: #EDE9E2"></div>
+          <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 7px">
+            <div class="shim" style="height: 11px; width: 74%; border-radius: 6px; background: #EDE9E2"></div>
+            <div class="shim" style="height: 11px; width: 44%; border-radius: 6px; background: #EDE9E2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ HAREKET ══ -->
+  <div class="card sq" style="padding: 26px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; align-items: baseline; gap: 12px">
+      <span class="h" style="font-size: 24px; color: #261F25; flex-grow: 1">5 · Hareket — tek eğri, üç süre</span>
+      <span style="font-size: 15px; color: #564E56; font-weight: 400">Dekoratif animasyon yok; her hareket bir şeyin nereden geldiğini anlatır.</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <span class="lbl">120 ms · dokunuş</span>
+        <span style="font-size: 15px; color: #453B45; font-weight: 400; line-height: 22px">Basılı ölçek 0.975, renk koyulaşması. Titreşimle eş zamanlı.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <span class="lbl">220 ms · durum</span>
+        <span style="font-size: 15px; color: #453B45; font-weight: 400; line-height: 22px">Sekme değişimi, kart açılışı, iskeletten içeriğe geçiş.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <span class="lbl">620 ms · sahne</span>
+        <span style="font-size: 15px; color: #453B45; font-weight: 400; line-height: 22px">Ekran girişi: kartlar 70 ms arayla, aşağıdan 16 px yükselerek.</span>
+      </div>
+    </div>
+    <div style="background: #F5F2ED; border-radius: 16px; padding: 16px 18px; display: flex; align-items: center; gap: 18px">
+      <div style="flex-grow: 1; height: 40px; position: relative; background: rgba(90,42,85,0.08); border-radius: 20px">
+        <div class="ease-demo sq-sm" style="position: absolute; top: 5px; left: 6px; width: 30px; height: 30px; border-radius: 15px; background: #5A2A55"></div>
+      </div>
+      <span class="num" style="font-size: 14px; color: #564E56; font-weight: 500; width: 300px">cubic-bezier(0.22, 1, 0.36, 1) — hızlı çıkış, yumuşak duruş. Tüm sistemde tek eğri.</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding-top: 2px">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#564E56" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.8"/><path d="M12 8v4.6l3 1.8"/></svg>
+      <span style="font-size: 14px; color: #564E56; font-weight: 400">Hareket azaltma tercihi açık kullanıcıda tüm animasyonlar kapanır — erişilebilirlik pazarlık konusu değil.</span>
+    </div>
+  </div>
+
+  <!-- ══ AYNA İMZASI ══ -->
+  <div class="sq" style="padding: 26px; background: #261F25; display: flex; align-items: center; gap: 30px">
+    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 10px">
+      <span class="lbl" style="color: #5A2A55">Kendi katkım · imza</span>
+      <span class="h" style="font-size: 24px; line-height: 28px; color: #FBF8F6">Uygulamanın adı AYNA — ama hiçbir ekranda ayna yok.</span>
+      <span style="font-size: 16px; line-height: 24px; color: rgba(251,248,246,0.7); font-weight: 400; max-width: 460px">Her kartın altında ince bir yansıma, cam yüzeylerde yavaşça kayan bir parlama. Kopyalanabilir bir efekt değil — markanın kendi adından gelen, tek satırlık ama her ekranda tanınan bir imza.</span>
+    </div>
+    <div style="display: flex; gap: 18px; flex-shrink: 0">
+      <div style="position: relative">
+        <div class="sq-sm" style="width: 104px; height: 74px; background: linear-gradient(135deg, #6B3465, #5A2A55)"></div>
+        <div style="position: absolute; left: 12%; right: 12%; bottom: -13px; height: 13px; border-radius: 50%; background: linear-gradient(180deg, rgba(198,226,75,0.42), rgba(198,226,75,0)); filter: blur(5px)"></div>
+      </div>
+      <div style="position: relative">
+        <div class="sq-sm" style="width: 104px; height: 74px; background: #FBF8F6"></div>
+        <div style="position: absolute; left: 12%; right: 12%; bottom: -13px; height: 13px; border-radius: 50%; background: linear-gradient(180deg, rgba(251,248,246,0.4), rgba(251,248,246,0)); filter: blur(5px)"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
