@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -18,7 +18,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text, TextInput } from '../../src/ui';
+import { Screen, Text, TextInput } from '../../src/ui';
 
 // EK Z.1 — Sohbet thread'i. Numara maskeleme + moderasyon backend'de; engellenen gönderemez.
 export default function ChatThreadScreen() {
@@ -27,6 +27,7 @@ export default function ChatThreadScreen() {
   const styles = useThemedStyles(makeStyles);
   const klavyeAcik = useKeyboardShown();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const params = useLocalSearchParams<{ id: string; name?: string; otherId?: string }>();
   const convId = params.id;
   const token = useStore((s) => s.token);
@@ -182,7 +183,27 @@ export default function ChatThreadScreen() {
 
   return (
     <Screen edges={[]}>
-      <StackHeader title={params.name || t('messages.title')} right={headerActions} />
+      {/* Kanvas (design/Mesajlar.dc.html §başlık): sohbet başlığı MOR BANT DEĞİL —
+          açık zeminde kompakt bir satır: geri çipi · avatar · isim + yanıt süresi.
+          StackHeader 78 ekranda ortak olduğu için o değiştirilmedi; sohbet
+          ekranı kendi başlığını çiziyor. */}
+      <View style={[styles.chatHead, { paddingTop: insets.top + space(1) }]}>
+        <Pressable
+          style={styles.headChip}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/messages'))}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.back')}
+        >
+          <Ionicons name="chevron-back" size={17} color={colors.ink} />
+        </Pressable>
+        <View style={styles.headText}>
+          <Text variant="title" tone="ink" numberOfLines={1}>
+            {params.name || t('messages.title')}
+          </Text>
+        </View>
+        {headerActions}
+      </View>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -437,5 +458,22 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     guardBtnDanger: { backgroundColor: colors.dangerSoft },
+    chatHead: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      paddingHorizontal: space(2.5),
+      paddingBottom: space(1.5),
+      backgroundColor: colors.bg,
+    },
+    headChip: {
+      width: 42,
+      height: 42,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+    },
+    headText: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
     headerActions: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
   });
