@@ -59,3 +59,29 @@ export const CATEGORY_DEFAULTS: Record<
   wellness: { maintenanceDays: 7, serviceMin: 60 },
   style: { maintenanceDays: 0, serviceMin: 60 },
 };
+
+/**
+ * Kategorinin görünen bilgileri — sunucudaki `service_categories` tablosunu
+ * uygulamayla aynı tutmak için.
+ *
+ * Tablo 8 satır içeriyordu, uygulamada 12 kategori vardı: `pmu` ve `bridal`
+ * AKTİF olmasına rağmen admin panelinde HİÇ görünmüyordu (panel tabloyu
+ * okuyor). Satırlar elle eklendiği için liste sessizce geride kalmıştı.
+ */
+export const CATEGORY_META: Record<
+  CategoryId,
+  { nameTr: string; icon: string; tone: string; sortOrder: number }
+> = {
+  hair: { nameTr: 'Saç', icon: 'cut-outline', tone: 'rose', sortOrder: 1 },
+  nails: { nameTr: 'Tırnak', icon: 'color-palette-outline', tone: 'lavender', sortOrder: 2 },
+  lashes: { nameTr: 'Kirpik', icon: 'sparkles-outline', tone: 'gold', sortOrder: 3 },
+  brows: { nameTr: 'Kaş', icon: 'eye-outline', tone: 'sage', sortOrder: 4 },
+  makeup: { nameTr: 'Makyaj', icon: 'brush-outline', tone: 'rose', sortOrder: 5 },
+  skincare: { nameTr: 'Cilt bakımı', icon: 'water-outline', tone: 'blue', sortOrder: 6 },
+  epilation: { nameTr: 'Epilasyon', icon: 'flash-outline', tone: 'gold', sortOrder: 7 },
+  spa: { nameTr: 'Spa & masaj', icon: 'body-outline', tone: 'sage', sortOrder: 8 },
+  pmu: { nameTr: 'Kalıcı makyaj', icon: 'color-wand-outline', tone: 'lavender', sortOrder: 9 },
+  bridal: { nameTr: 'Gelin paketi', icon: 'flower-outline', tone: 'rose', sortOrder: 10 },
+  wellness: { nameTr: 'Wellness', icon: 'barbell-outline', tone: 'sage', sortOrder: 11 },
+  style: { nameTr: 'Stil danışmanlığı', icon: 'shirt-outline', tone: 'blue', sortOrder: 12 },
+};
