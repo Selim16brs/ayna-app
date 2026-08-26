@@ -87,6 +87,10 @@ export default function ProfessionalScreen() {
   const chosen = pro.services.filter((s) => selectedIds.includes(s.id));
   const totalPrice = chosen.reduce((n, s) => n + finalPriceOf(s), 0);
   const totalDur = chosen.reduce((n, s) => n + s.durationMin, 0);
+  // Slot YETMEZ: hizmet de seçilmiş olmalı. Uzman hiç hizmet girmemişse
+  // `chosen` boş kalıyor ve randevu, adı uzmanlık olan SIFIR fiyatlı bir kayıt
+  // olarak oluşuyordu.
+  const randevuAlinabilir = slotMs != null && chosen.length > 0;
 
   // §4.2 — uzmanın DOLU aralıkları: müşteri saat seçerken dolu yerler görünür, dolu slot seçilemez
   // (çifte iş biter). Sunucu yalnız zaman aralığı döner — müşteri bilgisi asla (gizlilik).
@@ -549,6 +553,14 @@ export default function ProfessionalScreen() {
               <Text variant="bodyStrong" tone="ink" style={styles.section}>
                 {t('pro.services')}
               </Text>
+              {/* Uzman henüz hizmet girmediyse SESSİZ BOŞLUK bırakılmaz.
+                  (Sunucu artık şablon menü uydurmuyor: uydurma fiyat, uydurma
+                  vaatti — müşteri uzmanın vermediği hizmeti seçebiliyordu.) */}
+              {pro.services.length === 0 ? (
+                <Text variant="caption" tone="muted">
+                  {t('pro.services_empty')}
+                </Text>
+              ) : null}
               <View style={styles.services}>
                 {pro.services.map((s) => {
                   const active = selectedIds.includes(s.id);
@@ -924,11 +936,11 @@ export default function ProfessionalScreen() {
           </Pressable>
         ) : null}
         <Pressable
-          style={[styles.bookBtn, slotMs == null && styles.bookBtnDisabled]}
+          style={[styles.bookBtn, !randevuAlinabilir && styles.bookBtnDisabled]}
           onPress={book}
-          disabled={slotMs == null}
+          disabled={!randevuAlinabilir}
           accessibilityRole="button"
-          accessibilityState={{ disabled: slotMs == null }}
+          accessibilityState={{ disabled: !randevuAlinabilir }}
         >
           {/* Hepsi TEK SATIRDAYDI: iki hizmet seçilince "Randevu Al · 2 hizmet ·
               ₸19 200" düğmeye sığmıyor, metin iki yandan kırpılıyordu (düğme

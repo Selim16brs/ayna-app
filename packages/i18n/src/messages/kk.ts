@@ -299,6 +299,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'pro.book': 'Жазылу',
   'pro.about': 'Туралы',
   'pro.service_ratings': 'Қызмет бойынша ұпай',
+  'pro.services_empty': 'Бұл маман әлі қызметтерін қоспаған.',
   'pro.services': 'Қызметтер',
   'pro.services_short': 'қызмет',
   'pro.linked_salon': 'Байланысты жұмыс салоны',

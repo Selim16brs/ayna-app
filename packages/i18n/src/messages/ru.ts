@@ -281,6 +281,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'pro.book': 'Записаться',
   'pro.about': 'О мастере',
   'pro.service_ratings': 'Оценка по услугам',
+  'pro.services_empty': 'Этот мастер ещё не добавил услуги.',
   'pro.services': 'Услуги',
   'pro.services_short': 'услуга',
   'pro.linked_salon': 'Салон, где работает',

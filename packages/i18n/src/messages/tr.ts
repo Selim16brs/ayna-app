@@ -322,6 +322,7 @@ export const tr = {
   'pro.book': 'Randevu Al',
   'pro.about': 'Hakkında',
   'pro.service_ratings': 'Hizmet bazlı puan',
+  'pro.services_empty': 'Bu uzman henüz hizmetlerini eklememiş.',
   'pro.services': 'Hizmetler',
   'pro.services_short': 'hizmet',
   'pro.linked_salon': 'Bağlı çalıştığı salon',

@@ -152,7 +152,11 @@ model Professional {
   id              String       @id @default(uuid()) @db.Uuid
   name            String
   specialty       String
-  sector          String       @default("hair")
+  sector          String       @default("hair") // ana alan (geriye dönük uyum)
+  // §5.1.4 — uzmanın hizmet verdiği TÜM alanlar. Tek `sector` yetmiyordu:
+  // saç + tırnak yapan uzman yalnız saçta görünüyordu. Hizmet listesinden
+  // türetilir (@ayna/domain sectorsFromServiceIds).
+  sectors         String[]     @default([])
   kind            ProviderKind @default(salon)
   city            String       @default("") // §5.1.4 — harita/arama şehir filtresi
   district        String       @default("")

@@ -5,4 +5,5 @@ export * from './booking/deposit.js';
 export * from './loyalty/ledger.js';
 export * from './loyalty/lots.js';
 export * from './loyalty/earn-rate.js';
+export * from './catalog/sectors.js';
 export * from './loyalty/spend-rules.js';

@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
+import { servesSector } from '@ayna/domain';
 import { categoryLabelKey } from '../../src/data';
 import { useProfessionals } from '../../src/catalog';
 import { useStore } from '../../src/store';
@@ -36,7 +37,7 @@ export default function CategoryScreen() {
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
 
   const results = useMemo(() => {
-    const list = professionals.filter((p) => p.sector === sector && p.city === city);
+    const list = professionals.filter((p) => servesSector(p, sector) && p.city === city);
     return [...list].sort((a, b) =>
       sort === 'rating' ? b.rating - a.rating : a.priceFrom - b.priceFrom,
     );
