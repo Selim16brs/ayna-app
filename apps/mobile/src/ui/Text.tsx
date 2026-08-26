@@ -13,7 +13,9 @@ type Tone =
   | 'danger'
   | 'accentFg'
   | 'onColor'
-  | 'onAccent';
+  | 'onAccent'
+  | 'onInverse'
+  | 'onInverseMuted';
 
 interface TextProps extends RNTextProps {
   variant?: Variant;

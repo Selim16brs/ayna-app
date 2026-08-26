@@ -1289,6 +1289,14 @@ export interface CirclePost {
   /** §14 — KENDİ kaydettiğin. Kimse başkasının kaydettiğini göremez. */
   savedByMe?: boolean;
   comments: CircleComment[];
+  /**
+   * Sunucudaki GERÇEK yorum sayısı.
+   *
+   * `comments` dizisi yalnız YEREL/tohum gönderilerde dolu; sunucudan gelen
+   * gönderilerde boş geliyor (detay senkronu ayrı). Ekranlar `comments.length`
+   * gösterdiği için sunucudan gelen her gönderi "0 yorum" görünüyordu.
+   */
+  commentCount?: number;
 }
 
 export const SEED_CIRCLE_POSTS: CirclePost[] = [

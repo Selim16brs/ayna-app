@@ -4,6 +4,15 @@ import { useRouter } from 'expo-router';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { CirclePost, CirclePostType } from '../../src/data';
+
+/**
+ * Gönderinin yorum sayısı.
+ *
+ * `comments` dizisi yalnız yerel/tohum gönderilerde dolu; sunucudan gelenlerde
+ * boş. Doğrudan `comments.length` okuyan ekranlar bu yüzden sunucudan gelen her
+ * gönderide "0 yorum" gösteriyordu.
+ */
+const yorumSayisi = (p: CirclePost): number => p.commentCount ?? p.comments.length;
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
@@ -98,8 +107,7 @@ export default function CircleScreen() {
   const kayitliSayisi = useMemo(() => posts.filter((p) => p.savedByMe).length, [posts]);
 
   const cevapAlanSorularim = useMemo(
-    () =>
-      posts.filter((p) => benimMi(p) && p.type === 'asking' && p.comments.length > 0).slice(0, 2),
+    () => posts.filter((p) => benimMi(p) && p.type === 'asking' && yorumSayisi(p) > 0).slice(0, 2),
     [posts, benimMi],
   );
 
@@ -159,7 +167,7 @@ export default function CircleScreen() {
                     {p.text}
                   </Text>
                   <Text variant="caption" tone="muted">
-                    {p.comments.length} {t('circle.comments')}
+                    {yorumSayisi(p)} {t('circle.comments')}
                   </Text>
                   <ConsensusCard postId={p.id} />
                 </View>
@@ -441,7 +449,7 @@ function PostCard({ post }: { post: CirclePost }) {
         <View style={styles.footerItem}>
           <Ionicons name="chatbubble-outline" size={14} color={colors.muted} />
           <Text variant="caption" tone="muted">
-            {post.comments.length} {t('circle.comments')}
+            {yorumSayisi(post)} {t('circle.comments')}
           </Text>
         </View>
         {/* §14 — kaydet. Kayıt SUNUCUDA tutulur ve YALNIZ sana aittir:

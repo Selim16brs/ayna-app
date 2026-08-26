@@ -458,7 +458,9 @@ const makeStyles = (colors: ColorTokens) =>
     apptMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     apptRight: { alignItems: 'flex-end', gap: 4 },
     badge: { paddingHorizontal: space(1), paddingVertical: 2, borderRadius: radius.pill },
-    badgeText: { color: '#FFFFFF', fontSize: 10, fontFamily: font.semibold },
+    // Durum rengi koyu temada AÇIK tona döner; beyaz yazı okunmaz olur.
+    // onAccent tam bu iş için: açık temada açık, koyu temada koyu.
+    badgeText: { color: colors.onAccent, fontSize: 10, fontFamily: font.semibold },
     // Randevu ekle
     noteBox: {
       flexDirection: 'row',

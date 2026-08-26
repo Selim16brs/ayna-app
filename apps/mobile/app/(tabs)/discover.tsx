@@ -281,7 +281,9 @@ export default function DiscoverScreen() {
               style={styles.searchGo}
               onPress={runSearch}
             >
-              <Ionicons name="options-outline" size={17} color={colors.onAccent} />
+              {/* Ters yüzeyin ÜSTÜNDEKİ ikon: onAccent koyu temada koyuya
+                  döndüğü için koyu zeminde kayboluyordu. */}
+              <Ionicons name="options-outline" size={17} color={colors.onInverse} />
             </PressableScale>
           </View>
         </View>
@@ -630,7 +632,7 @@ const makeStyles = (colors: ColorTokens) =>
       width: 46,
       height: 46,
       borderRadius: 16,
-      backgroundColor: colors.ink,
+      backgroundColor: colors.inverse,
       alignItems: 'center',
       justifyContent: 'center',
     },

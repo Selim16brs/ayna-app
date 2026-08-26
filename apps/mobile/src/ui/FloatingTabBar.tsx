@@ -74,13 +74,13 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
       <View style={styles.fade} pointerEvents="none">
         <BlurView intensity={18} tint="light" style={StyleSheet.absoluteFill} />
         <LinearGradient
-          colors={['rgba(251,248,246,0)', 'rgba(251,248,246,0.72)', colors.bg]}
+          colors={[colors.fadeFrom, colors.fadeMid, colors.bg]}
           locations={[0, 0.62, 1]}
           style={StyleSheet.absoluteFill}
         />
       </View>
 
-      <View style={[styles.pill, { backgroundColor: colors.ink, bottom }]}>
+      <View style={[styles.pill, { backgroundColor: colors.inverse, bottom }]}>
         {tabs.map((tab) => {
           const focused = tab.name === active;
           const icon = (focused ? tab.icon : `${tab.icon}-outline`) as IoniconName;
@@ -114,12 +114,12 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
                 </View>
               ) : (
                 <>
-                  <Ionicons name={icon} size={22} color="rgba(251,248,246,0.66)" />
+                  <Ionicons name={icon} size={22} color={colors.onInverseMuted} />
                   {tab.badge ? (
                     <View
                       style={[
                         styles.dot,
-                        { backgroundColor: colors.rose, borderColor: colors.ink },
+                        { backgroundColor: colors.rose, borderColor: colors.inverse },
                       ]}
                     />
                   ) : null}

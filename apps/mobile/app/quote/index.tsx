@@ -81,7 +81,7 @@ function ChoiceCard({
   onPress: () => void;
 }) {
   const styles = useThemedStyles(makeStyles);
-  const { shadow } = useTheme();
+  const { colors, shadow } = useTheme();
   return (
     <Animated.View entering={FadeInDown.duration(380).delay(index * 110)}>
       <Pressable
@@ -116,7 +116,7 @@ function ChoiceCard({
         </Text>
 
         <View style={[styles.startPill, { backgroundColor: accent }]}>
-          <Ionicons name="sparkles" size={13} color="#FFFFFF" />
+          <Ionicons name="sparkles" size={13} color={colors.onAccent} />
           <Text variant="caption" style={styles.startText}>
             {cta}
           </Text>
@@ -126,7 +126,7 @@ function ChoiceCard({
   );
 }
 
-const makeStyles = (_colors: ColorTokens) =>
+const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: space(4) },
     subtitle: { marginBottom: space(3) },
@@ -172,5 +172,6 @@ const makeStyles = (_colors: ColorTokens) =>
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
-    startText: { color: '#FFFFFF', fontFamily: font.semibold },
+    // accent zemini koyu temada AÇIK; beyaz yazı okunmaz.
+    startText: { color: colors.onAccent, fontFamily: font.semibold },
   });

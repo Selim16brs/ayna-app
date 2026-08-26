@@ -535,8 +535,13 @@ export const useStore = create<State>()(
             // cihazda kaydedilen bir gönderi burada hep "kaydedilmemiş"
             // görünürdü.
             const savedMap = new Map(backendPosts.map((p) => [p.id, p.savedByMe === true]));
+            // Yorum SAYISI da tazelenir: başkası yorum yazınca akıştaki sayı
+            // güncellensin (eskiden hiç yazılmadığı için hep 0 görünüyordu).
+            const countMap = new Map(backendPosts.map((p) => [p.id, p.comments]));
             const guncel = s.circlePosts.map((p) =>
-              savedMap.has(p.id) ? { ...p, savedByMe: savedMap.get(p.id) } : p,
+              savedMap.has(p.id)
+                ? { ...p, savedByMe: savedMap.get(p.id), commentCount: countMap.get(p.id) }
+                : p,
             );
             const fresh: CirclePost[] = backendPosts
               .filter((p) => !have.has(p.id))
@@ -550,7 +555,10 @@ export const useStore = create<State>()(
                 text: p.text,
                 helpful: p.helpful,
                 savedByMe: p.savedByMe === true,
-                comments: [], // backend yorum SAYISI döner; detay senkronu ayrı (şimdilik boş)
+                // Dizi boş kalır (detay senkronu ayrı) ama SAYI saklanır; ekranlar
+                // artık `comments.length` yerine bunu okuyor.
+                comments: [],
+                commentCount: p.comments,
               }));
             return { circlePosts: fresh.length ? [...fresh, ...guncel] : guncel };
           });
@@ -2224,6 +2232,9 @@ export const useStore = create<State>()(
             p.id === postId
               ? {
                   ...p,
+                  // Sunucu sayacı da anında artar; yoksa kendi yorumunu yazan
+                  // kullanıcı akışta sayının değişmediğini görüyordu.
+                  commentCount: (p.commentCount ?? p.comments.length) + 1,
                   comments: [
                     ...p.comments,
                     {
