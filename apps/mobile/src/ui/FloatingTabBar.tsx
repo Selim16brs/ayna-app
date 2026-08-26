@@ -122,8 +122,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: space(1),
-    // Son emniyet: hesap ne olursa olsun içerik barın dışına çıkmasın.
-    overflow: 'hidden',
     shadowColor: '#262219',
     shadowOpacity: 0.32,
     shadowRadius: 22,
@@ -132,9 +130,11 @@ const styles = StyleSheet.create({
   },
   // Pasif sekmeler ikon genişliğine kadar sıkışabilir; aktif hap kalan yeri alır
   // ama TAŞMAZ. minWidth:0 olmadan RN flex çocukları içeriklerinden küçülmez.
+  // Pasif sekme ikonu ASLA ezilmez: 40pt dokunma hedefi altına inmez.
+  // (minWidth:0 idi — hap büyüyünce ikonlar sıfıra sıkışıp kayboluyordu.)
   item: {
     flex: 1,
-    minWidth: 0,
+    minWidth: 40,
     alignItems: 'center',
     justifyContent: 'center',
     height: PILL_H,
@@ -155,6 +155,13 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     flexShrink: 1,
     minWidth: 0,
+    // ÜST SINIR ŞART: 5 sekme + uzun Türkçe etiket ("Randevularım") 390pt
+    // ekrana sığmıyor. Sınır olmadan hap büyüyüp son iki sekmeyi dışarı
+    // itiyordu; overflow:hidden ise onları GİZLİYORDU — belirti kapanmış ama
+    // sekmeler erişilemez kalmıştı.
+    //
+    // Hesap: bar içi ≈ 342pt. 4 pasif ikon × 44 = 176 → hapa 166 kalıyor.
+    maxWidth: 164,
   },
   activeLabel: { fontSize: 15, fontFamily: font.semibold, flexShrink: 1 },
   dot: {
