@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { expiryDateFrom } from '../loyalty/loyalty.expiry';
+import { grantPoints } from '../loyalty/loyalty.grant';
 
 // EK Z.6 — Müşteri referans programı. Davet eden + edilen ödül (loyalty ledger).
 const REFERRAL_POINTS = 300; // §8.1 "ilk randevu / hoş geldin" ile uyumlu
@@ -82,27 +82,10 @@ export class ReferralService {
       });
 
     await this.prisma.user.update({ where: { id: userId }, data: { referredBy: referrer.id } });
-    const expiresAt = expiryDateFrom(new Date());
-    await this.prisma.loyaltyEntry.createMany({
-      data: [
-        {
-          userId: referrer.id,
-          kind: 'earn',
-          reason: 'rewards.earn.referral',
-          detail: me.name,
-          points: REFERRAL_POINTS,
-          expiresAt,
-        },
-        {
-          userId,
-          kind: 'earn',
-          reason: 'rewards.earn.referral',
-          detail: referrer.name,
-          points: REFERRAL_POINTS,
-          expiresAt,
-        },
-      ],
-    });
+    await grantPoints(this.prisma, [
+      { userId: referrer.id, reason: 'rewards.earn.referral', detail: me.name, points: REFERRAL_POINTS },
+      { userId, reason: 'rewards.earn.referral', detail: referrer.name, points: REFERRAL_POINTS },
+    ]);
     return { ok: true, pointsAwarded: REFERRAL_POINTS, referrerName: referrer.name };
   }
 }

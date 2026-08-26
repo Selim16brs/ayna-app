@@ -8,6 +8,7 @@ import {
 import type { Booking } from '@prisma/client';
 import { createHash } from 'node:crypto';
 import { canTransition, depositFor, hasConflict, isBookingState } from '@ayna/domain';
+import { grantCompletionCashback } from '../loyalty/cashback';
 import { loadDepositRules } from './deposit.rules';
 import { holdDeadline, loadWindows, responseDeadline } from './booking-windows';
 import { SLOT_HOLDING_STATUSES } from './slot-statuses';
@@ -445,13 +446,16 @@ export class BookingsService {
   async confirmCompletion(id: string, actorId?: string) {
     await this.assertParty(id, actorId, 'owner');
     const row = await this.transition(id, { status: 'completed' });
-    void this.prisma.booking.findUnique({ where: { id } }).then((b) => {
-      if (b?.userId)
-        void this.push.sendToUser(b.userId, {
-          title: 'Teşekkürler 💛',
-          body: 'Deneyimini değerlendir — 30 saniye sürer',
-          data: { route: `/review/new?id=${id}` },
-        });
+    void this.prisma.booking.findUnique({ where: { id } }).then(async (b) => {
+      if (!b?.userId) return;
+      // K4.1 — tamamlanan hizmetten geri kazanım (zamanlayıcı yolu da aynı
+      // fonksiyonu çağırır; çift yazım orada engelleniyor).
+      await grantCompletionCashback(this.prisma, [b]).catch(() => undefined);
+      void this.push.sendToUser(b.userId, {
+        title: 'Teşekkürler 💛',
+        body: 'Deneyimini değerlendir — 30 saniye sürer',
+        data: { route: `/review/new?id=${id}` },
+      });
     });
     return row;
   }

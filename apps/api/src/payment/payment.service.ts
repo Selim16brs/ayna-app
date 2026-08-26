@@ -2,9 +2,11 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
 import { PAYMENT_PROVIDER, type PaymentProvider } from './payment.provider';
-import { paymentSplit } from './payment.split';
+import { paymentSplit } from '@ayna/domain';
+import { loadLedgerState, loadLoyaltyRules } from '../loyalty/loyalty.rules';
 
-// EK Z.8 — In-app ödeme servisi (Kaspi sim adaptörüyle). §8.2 puan %50 tavanı.
+// EK Z.8 — In-app ödeme servisi (Kaspi sim adaptörüyle).
+// K4 — puan kullanımı: 50.000 ₸ kilidi + ödemenin en çok %25'i.
 @Injectable()
 export class PaymentService {
   constructor(
@@ -13,12 +15,20 @@ export class PaymentService {
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
   ) {}
 
+  // Bakiye ASLA SUM(points) ile hesaplanmaz: o toplam süresi DOLMUŞ puanları da
+  // sayardı — yani kullanıcı yanmış puanla ödeme yapabiliyordu. FIFO motoru
+  // (@ayna/domain replayLedger) yalnız canlı partileri toplar.
   private async pointsBalance(userId: string): Promise<number> {
-    const agg = await this.prisma.loyaltyEntry.aggregate({
-      where: { userId },
-      _sum: { points: true },
+    return (await loadLedgerState(this.prisma, userId)).available;
+  }
+
+  // K4.2 — kilit damgası. null ise puan hiç kullanılamaz.
+  private async pointsUnlockedAt(userId: string): Promise<Date | null> {
+    const u = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { pointsUnlockedAt: true },
     });
-    return agg._sum.points ?? 0;
+    return u?.pointsUnlockedAt ?? null;
   }
 
   // Ödeme niyeti oluştur — bedel = randevu fiyatı; puan tavan+bakiye ile sınırlanır.
@@ -29,8 +39,18 @@ export class PaymentService {
     const amount = Math.round(Number(booking.price));
     if (amount <= 0)
       throw new BadRequestException({ code: 'BAD_AMOUNT', message: 'Geçersiz tutar' });
-    const balance = await this.pointsBalance(userId);
-    const split = paymentSplit(amount, Math.max(0, Math.floor(pointsRequested || 0)), balance);
+    const [balance, unlockedAt, rules] = await Promise.all([
+      this.pointsBalance(userId),
+      this.pointsUnlockedAt(userId),
+      loadLoyaltyRules(this.prisma),
+    ]);
+    const split = paymentSplit(
+      amount,
+      Math.max(0, Math.floor(pointsRequested || 0)),
+      balance,
+      unlockedAt,
+      rules,
+    );
     const p = await this.prisma.payment.create({
       data: {
         bookingId,

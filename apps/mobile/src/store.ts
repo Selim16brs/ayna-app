@@ -1,4 +1,5 @@
 import { DEFAULT_DEPOSIT_RULES, depositFor } from '@ayna/domain';
+import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadMediaCache, saveMediaCache } from './media-cache';
 import { setApiToken } from './api';
@@ -24,6 +25,8 @@ import {
   type Promotion,
   DEPOSIT_KZT,
   POINTS_SPEND_CAP_PCT,
+  POINTS_UNLOCK_KZT,
+  POINTS_EXPIRY_DAYS,
   PREMIUM_PRICE_KZT,
   DEPOSIT_RECEIPT_WINDOW_MS,
   DEPOSIT_RECEIPT_SHORT_MS,
@@ -183,6 +186,8 @@ interface State {
   sellerTrialStart: number | null;
   points: number;
   raffleEntries: number;
+  // K4 — puan harcama kuralları (sunucu doğruluk kaynağı). null = henüz okunmadı.
+  pointsSpend: PointsSpendRules | null;
   // §8.1 — puan kazanım limitleri: ilk randevu 300 (tek seferlik) + W2W beğeni 1/ay maks 100
   firstBookingBonusGiven: boolean;
   w2wLikeMonth: string;
@@ -415,6 +420,7 @@ const SEEDED_PERSONAL_RESET: Partial<State> = {
   demands: [],
   points: 0,
   raffleEntries: 0,
+  pointsSpend: null,
   tier: null,
   ledger: [],
   notifications: [],
@@ -485,6 +491,8 @@ export const useStore = create<State>()(
           cancelWindowH: 3,
           lateCancelPct: 3,
           pointsCapPct: POINTS_SPEND_CAP_PCT,
+          pointsUnlockKzt: POINTS_UNLOCK_KZT,
+          pointsExpiryDays: POINTS_EXPIRY_DAYS,
           premiumUserKzt: PREMIUM_PRICE_KZT,
           premiumSalonKzt: 4990,
           raffleCost: RAFFLE_COST,
@@ -597,6 +605,7 @@ export const useStore = create<State>()(
       alwaysBonds: [],
       points: 0,
       raffleEntries: 0,
+      pointsSpend: null, // çıkışta kilit durumu da sıfırlanır
       firstBookingBonusGiven: false,
       w2wLikeMonth: '',
       w2wLikePoints: 0,
@@ -2150,7 +2159,13 @@ export const useStore = create<State>()(
         if (token)
           void api
             .earnPoints(token, labelKey, detail)
-            .then((sum) => set({ points: sum.points, raffleEntries: sum.raffleEntries }))
+            .then((sum) =>
+              set({
+                points: sum.points,
+                raffleEntries: sum.raffleEntries,
+                pointsSpend: sum.spend ?? null,
+              }),
+            )
             .catch(() => undefined);
       },
 
@@ -2164,6 +2179,7 @@ export const useStore = create<State>()(
               raffleEntries: summary.raffleEntries,
               tier: summary.tier,
               ledger: summary.ledger,
+              pointsSpend: summary.spend ?? null,
             });
             return true;
           } catch {
@@ -2317,6 +2333,7 @@ export const useStore = create<State>()(
             raffleEntries: summary.raffleEntries,
             tier: summary.tier,
             ledger: summary.ledger,
+            pointsSpend: summary.spend ?? null,
           });
         } catch {
           // sunucuya ulaşılamadı → yerel değerler korunur

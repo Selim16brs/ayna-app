@@ -1,3 +1,4 @@
+import { grantPoints } from '../loyalty/loyalty.grant';
 import {
   BadRequestException,
   ConflictException,
@@ -80,16 +81,9 @@ export class AuthService {
         ...(input.city ? { city: input.city } : {}),
       },
     });
-    // Hoş geldin bonusu (sadakat defterine ilk kayıt)
-    await this.prisma.loyaltyEntry.create({
-      data: {
-        userId: user.id,
-        kind: 'earn',
-        reason: 'rewards.earn.welcome',
-        detail: '',
-        points: 200,
-      },
-    });
+    // Hoş geldin bonusu (sadakat defterine ilk kayıt).
+    // Eskiden expiresAt YAZILMIYORDU — bu puanlar hiç yanmıyordu (K4.4 ihlali).
+    await grantPoints(this.prisma, { userId: user.id, reason: 'rewards.earn.welcome', points: 200 });
     return this.session(user);
   }
 

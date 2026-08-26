@@ -846,11 +846,14 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'rewards.expiry_warn':
     'Ұпайларың жанбасын — 12 ай ішінде пайдалан. Жанғанға 30 күн бұрын еске саламыз.',
   'rewards.rules.title': 'Ұпай ережелері',
-  'rewards.rules.earn': 'Әр аяқталған қызметтен %3 қайтарып ал.',
+  'rewards.rules.earn': 'Әр аяқталған қызметтен {pct}% қайтарып ал.',
   'rewards.rules.channels':
     'W2W ұнатумен, блогпен, алғашқы жазылумен және шақырумен де тап (айлық шектеулермен).',
-  'rewards.rules.cap': 'Ұпайлар бір төлемнің ең көбі жартысында пайдаланылады',
-  'rewards.rules.expire': 'Қозғалыссыз ұпайлар жанады',
+  'rewards.rules.cap': 'Ұпайлар төлемнің ең көбі {pct}%-ын жабады',
+  'rewards.rules.expire': 'Жинаған ұпайың {days} күн ішінде жұмсалмаса жанады',
+  'rewards.rules.unlock': 'Ұпай жұмсау {amount} ₸ балансынан кейін ашылады',
+  'rewards.locked': 'Ашылуға {remaining} ұпай қалды',
+  'rewards.unlocked': 'Ұпайларың жұмсауға ашық ✓',
   'rewards.earn.title': 'Ұпайды қалай табасың?',
   'rewards.earn.welcome': 'Қош келдің бонусы',
   'rewards.earn.booking': 'Қосымшадан жазылуды аяқта',

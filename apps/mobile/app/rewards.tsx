@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
-  POINTS_EXPIRY_MONTHS,
+  POINTS_EXPIRY_DAYS,
   POINTS_SPEND_CAP_PCT,
+  POINTS_UNLOCK_KZT,
   formatPrice,
   RAFFLE_COST,
   REWARDS,
@@ -32,6 +33,15 @@ export default function RewardsScreen() {
   const styles = useThemedStyles(makeStyles);
 
   const points = useStore((s) => s.points);
+  // K4.5 — kurallar SUNUCUDAN gelir; sunucu okunmadıysa yerel yedek kullanılır.
+  const spend = useStore((st) => st.pointsSpend);
+  const rates = useStore((st) => st.config.rates);
+  const capPct = spend?.capPct ?? rates.pointsCapPct ?? POINTS_SPEND_CAP_PCT;
+  const unlockAt = spend?.unlockAt ?? rates.pointsUnlockKzt ?? POINTS_UNLOCK_KZT;
+  const expiryDays = spend?.expiryDays ?? rates.pointsExpiryDays ?? POINTS_EXPIRY_DAYS;
+  const earnPct = 3;
+  const unlocked = spend?.unlocked ?? false;
+  const remainingToUnlock = spend?.remainingToUnlock ?? Math.max(0, unlockAt + 1 - points);
   const raffleEntries = useStore((s) => s.raffleEntries);
   const tier = useStore((s) => s.tier);
   const ledger = useStore((s) => s.ledger);
@@ -113,6 +123,30 @@ export default function RewardsScreen() {
               </Text>
             </View>
           </View>
+          {/* K4.2 — kilit durumu puanın hemen yanında. "Puanım var ama
+              harcayamıyorum" sürprizi ödeme ekranında değil BURADA çözülür. */}
+          <View style={styles.lockRow}>
+            <Ionicons
+              name={unlocked ? 'lock-open' : 'lock-closed'}
+              size={13}
+              color={colors.onColor}
+            />
+            <Text variant="micro" tone="onColor" style={styles.dim} numberOfLines={2}>
+              {unlocked
+                ? t('rewards.unlocked')
+                : fillParams(t('rewards.locked'), {
+                    remaining: remainingToUnlock.toLocaleString('tr-TR'),
+                  })}
+            </Text>
+          </View>
+          {!unlocked ? (
+            <Progress
+              value={Math.min(1, points / Math.max(1, unlockAt))}
+              height={5}
+              color={colors.onColor}
+              track={colors.onColor + '33'}
+            />
+          ) : null}
           <View style={styles.progressWrap}>
             <Progress
               value={progress}
@@ -249,20 +283,29 @@ export default function RewardsScreen() {
           ))}
         </View>
 
-        {/* §8.1/8.2 — puan kuralları (şeffaflık) */}
+        {/* K4.5 — dört kural da kullanıcıya AÇIKÇA gösterilir. Sayılar sunucudan
+            gelir; ekranda sabit yazılı bir değer yok. */}
         <SectionHeader title={t('rewards.rules.title')} />
         <View style={[styles.group, shadow.soft]}>
-          <RuleRow icon="cash-outline" text={t('rewards.rules.earn')} />
-          <RuleRow icon="people-outline" text={t('rewards.rules.channels')} />
+          <RuleRow
+            icon="cash-outline"
+            text={fillParams(t('rewards.rules.earn'), { pct: String(earnPct) })}
+          />
+          <RuleRow
+            icon="lock-open-outline"
+            text={fillParams(t('rewards.rules.unlock'), {
+              amount: unlockAt.toLocaleString('tr-TR'),
+            })}
+          />
           <RuleRow
             icon="pie-chart-outline"
-            text={`${t('rewards.rules.cap')} (%${POINTS_SPEND_CAP_PCT})`}
+            text={fillParams(t('rewards.rules.cap'), { pct: String(capPct) })}
           />
           <RuleRow
             icon="hourglass-outline"
-            text={`${t('rewards.rules.expire')} (${POINTS_EXPIRY_MONTHS} ay)`}
-            last
+            text={fillParams(t('rewards.rules.expire'), { days: String(expiryDays) })}
           />
+          <RuleRow icon="people-outline" text={t('rewards.rules.channels')} last />
         </View>
 
         <View style={styles.note}>
@@ -340,6 +383,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       marginBottom: space(0.5),
     },
+    lockRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space(1) },
     pointsRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space(1.5) },
     worth: { flex: 1, paddingBottom: space(0.75), gap: 1 },
     worthValue: { color: '#FFFFFF', fontFamily: font.semibold, fontSize: 20, lineHeight: 25 },

@@ -194,6 +194,8 @@ export class SettingsService {
         cancelWindowH: rate('rate.cancel_window_h'),
         lateCancelPct: rate('rate.late_cancel_pct'),
         pointsCapPct: rate('rate.points_cap_pct'),
+        pointsUnlockKzt: rate('rate.points_unlock_kzt'),
+        pointsExpiryDays: rate('rate.points_expiry_days'),
         premiumUserKzt: rate('rate.premium_user_kzt'),
         premiumSalonKzt: rate('rate.premium_salon_kzt'),
         raffleCost: rate('rate.raffle_cost'),

@@ -61,6 +61,11 @@ model User {
   birthDate       DateTime?  @map("birth_date") @db.Timestamptz(6) // doğum günü kutlamaları (§CRM)
   cutoutUrl       String?    @map("cutout_url") // §5.1.1 arka planı kesik portre — kredi tekrar YANMAZ
   membershipTier  String     @default("free") @map("membership_tier")
+  // K4.2 — para puan KULLANIM KİLİDİ. Bakiye ilk kez eşiği (varsayılan 50.000 ₸)
+  // geçtiğinde damgalanır ve BİR DAHA KAPANMAZ: harcayıp eşiğin altına düşmek
+  // kullanıcıyı yeniden kilitlemez. Aksi hâlde 49.000 ₸ bakiyeli bir kullanıcı
+  // hiç harcayamaz duruma düşerdi. null = henüz açılmadı.
+  pointsUnlockedAt DateTime? @map("points_unlocked_at") @db.Timestamptz(6)
   prefsJson       String     @default("{}") @map("prefs_json") // favoriler+adresler (hesap verisi)
   membershipUntil DateTime?  @map("membership_until") @db.Timestamptz(6)
   // §4.6 — telefon OTP doğrulaması (mock SMS)

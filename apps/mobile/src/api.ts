@@ -27,11 +27,26 @@ export interface LoyaltyTier {
   progress: number;
 }
 
+// K4 — para puan kuralları sunucudan gelir; istemci kendi sabitini kullanmaz.
+export interface PointsSpendRules {
+  /** Kilit açıldı mı (bakiye eşiği bir kez geçti mi). */
+  unlocked: boolean;
+  /** Kullanımın açıldığı bakiye eşiği (₸). */
+  unlockAt: number;
+  /** Kilit kapalıysa açılmaya kalan puan. */
+  remainingToUnlock: number;
+  /** Bir ödemenin puanla kapatılabilecek azami yüzdesi. */
+  capPct: number;
+  /** Kazanılan puanın ömrü (gün). */
+  expiryDays: number;
+}
+
 export interface LoyaltySummary {
   points: number;
   raffleEntries: number;
   tier: LoyaltyTier;
   ledger: LedgerEntry[];
+  spend: PointsSpendRules;
 }
 
 export interface AiQuota {
@@ -1024,6 +1039,8 @@ export interface AppConfig {
     cancelWindowH: number;
     lateCancelPct: number;
     pointsCapPct: number;
+    pointsUnlockKzt: number;
+    pointsExpiryDays: number;
     premiumUserKzt: number;
     premiumSalonKzt: number;
     raffleCost: number;

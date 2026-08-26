@@ -830,11 +830,14 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'rewards.expiry_warn':
     'Не дай баллам сгореть — используй в течение 12 месяцев. Напомним за 30 дней до сгорания.',
   'rewards.rules.title': 'Правила баллов',
-  'rewards.rules.earn': 'Возвращай %3 за каждую завершённую услугу.',
+  'rewards.rules.earn': 'Возвращай {pct}% за каждую завершённую услугу.',
   'rewards.rules.channels':
     'Зарабатывай также лайками W2W, блогом, первой записью и приглашением (с месячными лимитами).',
-  'rewards.rules.cap': 'Баллами оплачивается не более половины платежа',
-  'rewards.rules.expire': 'Неактивные баллы сгорают',
+  'rewards.rules.cap': 'Баллами оплачивается не более {pct}% платежа',
+  'rewards.rules.expire': 'Начисленные баллы сгорают, если не использовать их за {days} дней',
+  'rewards.rules.unlock': 'Оплата баллами открывается после баланса {amount} ₸',
+  'rewards.locked': 'До разблокировки осталось {remaining} баллов',
+  'rewards.unlocked': 'Баллы доступны к оплате ✓',
   'rewards.earn.title': 'Как заработать баллы?',
   'rewards.earn.welcome': 'Приветственный бонус',
   'rewards.earn.booking': 'Заверши запись из приложения',
