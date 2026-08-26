@@ -807,6 +807,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'hours.conflict_b': 'Жабылған аралықта расталған жазылулар бар:',
   'hours.conflict_penalty':
     'Бұл жазылулар БОЛДЫРЫЛМАДЫ — клиент сол уақытқа жоспар құрды. Не сағаттарды қайта аш, не жазылуды өзің болдырма. Бармасаң «маман келмеді» болып саналады: клиентке өтемақы ұпайы беріледі, саған айыппұл жазылады.',
+  'profile.menu.membership': 'Жазылымым',
   'profile.menu.passport': 'AYNA Passport',
   'profile.menu.always': 'Always — байланыстарым',
   'profile.menu.rewards': 'Ұпайларым',

@@ -269,6 +269,15 @@ export default function ReportsScreen() {
                 {t(greetingKey())}, {firstName}
               </Text>
             </View>
+            {/* Mesajlar bildirimin YANINDA — profil menüsünden çıkarıldı. */}
+            <PressableScale
+              style={[styles.bell, shadow.soft]}
+              onPress={() => router.push('/messages')}
+              accessibilityRole="button"
+              accessibilityLabel={t('messages.title')}
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.ink} />
+            </PressableScale>
             <PressableScale
               style={[styles.bell, shadow.soft]}
               onPress={() => router.push('/notifications')}
@@ -285,17 +294,10 @@ export default function ReportsScreen() {
               yanındaki durum çipinin karşılığı. */}
           <View style={[styles.bindingPill, shadow.soft]}>
             <Ionicons name={binding.icon} size={12} color={colors.ink} />
-            {/* "Bireysel Uzman" kırpılıp "Bireysel Uzm…" oluyordu. Salon adı
-                da buraya geliyor ve uzunluğu bilinmiyor — karakter kaybetmek
-                yerine punto küçülür. */}
-            <Text
-              variant="caption"
-              tone="ink"
-              style={styles.bindingPillText}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
-            >
+            {/* Çip YAZI KADAR açılır: punto küçültmek yerine kap büyür.
+                Metin daralmaz (flexShrink 0), çip de içeriğini sarar
+                (alignSelf flex-start) — "Bireysel Uzm…" olmaz. */}
+            <Text variant="caption" tone="ink" style={styles.bindingPillText} numberOfLines={1}>
               {binding.text}
             </Text>
           </View>
@@ -857,7 +859,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       maxWidth: '100%',
     },
-    bindingPillText: { fontFamily: font.semibold },
+    bindingPillText: { fontFamily: font.semibold, flexShrink: 0 },
     // §6.1 — profil fotoğrafı GÜVENLİ ALANI (safe zone): sabit çerçeve + resizeMode="contain".
     // Kayıt olan her uzmanın cut-out'u bu çerçeveye sığdırılır → zilden uzak, taşmaz, standart.
     // Daha büyük foto alanı (kullanıcı Keşfet ile tutarlı; kurucu isteği).

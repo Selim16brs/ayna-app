@@ -862,6 +862,7 @@ export const tr = {
   'hours.conflict_b': 'Kapattığın aralıkta onaylanmış randevular var:',
   'hours.conflict_penalty':
     'Bu randevular İPTAL OLMADI — müşteri o saate göre plan yaptı. Ya saatleri geri aç ya da randevuyu kendin iptal et. Gitmezsen “uzman gelmedi” sayılır: müşteriye telafi puanı verilir ve hesabına ceza işlenir.',
+  'profile.menu.membership': 'Üyeliğim',
   'profile.menu.passport': 'AYNA Passport',
   'profile.menu.always': 'Always — bağlarım',
   'profile.menu.rewards': 'Puanlarım',

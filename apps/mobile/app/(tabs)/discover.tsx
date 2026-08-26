@@ -126,6 +126,16 @@ export default function DiscoverScreen() {
           >
             <Ionicons name="map-outline" size={18} color={colors.ink} />
           </PressableScale>
+          {/* Mesajlar ÜST BARDA, bildirimin yanında. Profil menüsünün
+              içindeydi: en sık kullanılan yol en derin yerdeydi. */}
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={t('messages.title')}
+            style={[styles.iconBtn, shadow.soft]}
+            onPress={() => router.push('/messages')}
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.ink} />
+          </PressableScale>
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel={t('notifications.title')}

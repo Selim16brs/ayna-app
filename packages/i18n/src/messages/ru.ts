@@ -792,6 +792,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'hours.conflict_b': 'В закрытом промежутке есть подтверждённые записи:',
   'hours.conflict_penalty':
     'Эти записи НЕ отменены — клиентка planировала своё время. Либо верни часы, либо отмени запись сама. Если не придёшь, это засчитается как «мастер не пришёл»: клиентке начислят компенсацию, а тебе — штраф.',
+  'profile.menu.membership': 'Моя подписка',
   'profile.menu.passport': 'AYNA Passport',
   'profile.menu.always': 'Always — мои связи',
   'profile.menu.rewards': 'Мои баллы',

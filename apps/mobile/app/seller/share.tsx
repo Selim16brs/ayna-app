@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Alert, Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 import Svg, {
+  ClipPath,
   Defs,
   G,
   Image as SvgImage,
@@ -27,6 +28,18 @@ const PROFILE_URL = 'https://ayna.kz';
 // Instagram story ölçüleri (9:16)
 const W = 1080;
 const H = 1920;
+
+// ── YERLEŞİM ─────────────────────────────────────────────────────────────
+// Tek sol hiza (M) ve ölçülebilir dikey ritim. Eskiden her öğe kendi
+// koordinatındaydı (56, 64, 96, 112, 452…) ve hiçbiri hizalanmıyordu; kart
+// "düzensiz" görünmesinin sebebi buydu.
+const M = 88; // sol/sağ kenar — TÜM öğeler bu hizadan başlar
+const CW = W - M * 2; // içerik genişliği
+const PY = 268; // portre üstü
+const PH = 820; // portre yüksekliği — QR paneli alt markaya çarpmasın (40pt pay)
+const KY = PY + PH - 96; // kimlik kartı portrenin altına 96 BİNER
+const KH = 400;
+const QY = KY + KH + 56; // QR paneli
 
 // Paylaşılan görsel sabit "aydınlık" markalı temada üretilir (cihaz temasından bağımsız).
 const C = {
@@ -92,8 +105,8 @@ export default function SellerShareScreen() {
   const previewH = (previewW * H) / W;
 
   // Alt bilgi rozetleri (subtitle + puan) — SVG'de otomatik genişlik yok, JS ile hesaplanır.
-  const subW = Math.min(560, 92 + approxW(subtitle, 32));
-  const ratingX = 112 + subW + 20;
+  // Rozet genişliği JS'te hesaplanır (SVG'de otomatik genişlik yok).
+  const subW = Math.min(520, 72 + approxW(subtitle, 30));
   const qrD = qrPath(PROFILE_URL, 300, 40);
 
   // <Svg> → PNG base64 → JPG dosyası (indirilebilir).
@@ -161,75 +174,98 @@ export default function SellerShareScreen() {
         <View style={[styles.cardWrap, { width: previewW, height: previewH }]}>
           <Svg ref={svgRef} width={previewW} height={previewH} viewBox={`0 0 ${W} ${H}`}>
             <Defs>
-              <LinearGradient id="lime" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0" stopColor={C.limeLight} />
-                <Stop offset="1" stopColor={C.lime} />
+              {/* Fotoğrafın ALTINA inen perde: beyaz kimlik kartına geçiş
+                  kazara değil, tasarlanmış görünsün. */}
+              <LinearGradient id="perde" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={C.ink} stopOpacity="0" />
+                <Stop offset="1" stopColor={C.ink} stopOpacity="0.55" />
               </LinearGradient>
+              {/* Fotoğraf ÇERÇEVEYE maskelenir. Eskiden ham dikdörtgen olarak
+                  panelin üstüne yapıştırılıyordu: kendi arka planıyla birlikte
+                  duruyor ve "sonradan eklenmiş" görünüyordu. */}
+              <ClipPath id="foto">
+                <Rect x={M} y={PY} width={CW} height={PH} rx={72} />
+              </ClipPath>
             </Defs>
 
-            {/* zemin */}
             <Rect x={0} y={0} width={W} height={H} fill={C.bg} />
 
-            {/* lime hero panel */}
-            <Rect x={56} y={56} width={968} height={940} rx={64} fill="url(#lime)" />
-            <SvgText x={112} y={196} fontSize={78} fontWeight="800" fill={C.ink} letterSpacing={8}>
+            {/* ── MARKA — küçük ve kendinden emin, dev blok değil ── */}
+            <SvgText x={M} y={132} fontSize={54} fontWeight="800" fill={C.ink} letterSpacing={10}>
               AYNA
             </SvgText>
-            <SvgText
-              x={116}
-              y={250}
-              fontSize={30}
-              fontWeight="600"
-              fill={C.limeDeep}
-              letterSpacing={4}
-            >
+            <Rect x={M} y={158} width={64} height={5} rx={2.5} fill={C.limeDeep} />
+            <SvgText x={M} y={214} fontSize={26} fontWeight="600" fill={C.muted} letterSpacing={5}>
               GÜZELLİK & BAKIM
             </SvgText>
 
-            {/* uzman cut-out fotoğrafı (panel bandında) */}
+            {/* ── PORTRE ── */}
+            <Rect x={M} y={PY} width={CW} height={PH} rx={72} fill={C.soft} />
             {portrait ? (
-              <SvgImage
-                href={portrait}
-                x={470}
-                y={176}
-                width={546}
-                height={820}
-                preserveAspectRatio="xMidYMax meet"
-              />
+              <G clipPath="url(#foto)">
+                <SvgImage
+                  href={portrait}
+                  x={M}
+                  y={PY}
+                  width={CW}
+                  height={PH}
+                  preserveAspectRatio="xMidYMid slice"
+                />
+                <Rect x={M} y={PY + PH * 0.55} width={CW} height={PH * 0.45} fill="url(#perde)" />
+              </G>
             ) : null}
 
-            {/* beyaz kimlik kartı (paneli örter) */}
+            {/* ── KİMLİK — portrenin altına BİNER, aynı sol hizada ── */}
             <Rect
-              x={64}
-              y={884}
-              width={952}
-              height={556}
-              rx={56}
+              x={M}
+              y={KY}
+              width={CW}
+              height={KH}
+              rx={64}
               fill={C.white}
               stroke={C.line}
               strokeWidth={2}
             />
-            <SvgText x={112} y={1006} fontSize={62} fontWeight="800" fill={C.ink}>
+            <SvgText x={M + 56} y={KY + 108} fontSize={58} fontWeight="800" fill={C.ink}>
               {name}
             </SvgText>
 
-            {/* subtitle rozeti */}
-            <Rect x={112} y={1042} width={subW} height={66} rx={33} fill={C.soft} />
-            <SvgText x={148} y={1085} fontSize={32} fontWeight="700" fill={C.limeDeep}>
+            <Rect x={M + 56} y={KY + 148} width={subW} height={64} rx={32} fill={C.soft} />
+            <SvgText
+              x={M + 56 + subW / 2}
+              y={KY + 190}
+              fontSize={30}
+              fontWeight="700"
+              fill={C.limeDeep}
+              textAnchor="middle"
+            >
               {subtitle}
             </SvgText>
-            {/* rozet: gerçek puan birikene kadar dürüst 'Yeni ✨' (sabit 4.9 KALDIRILDI) */}
-            <Rect x={ratingX} y={1042} width={190} height={66} rx={33} fill={C.goldSoft} />
-            <SvgText x={ratingX + 36} y={1085} fontSize={30} fontWeight="700" fill={C.gold}>
+            {/* Gerçek puan birikene kadar dürüst 'Yeni' — uydurma yıldız yok. */}
+            <Rect
+              x={M + 76 + subW}
+              y={KY + 148}
+              width={176}
+              height={64}
+              rx={32}
+              fill={C.goldSoft}
+            />
+            <SvgText
+              x={M + 76 + subW + 88}
+              y={KY + 190}
+              fontSize={28}
+              fontWeight="700"
+              fill={C.gold}
+              textAnchor="middle"
+            >
               ✨ Yeni
             </SvgText>
 
-            {/* CTA pill */}
-            <Rect x={112} y={1210} width={856} height={110} rx={55} fill={C.limeDeep} />
+            <Rect x={M + 56} y={KY + 254} width={CW - 112} height={104} rx={52} fill={C.limeDeep} />
             <SvgText
-              x={540}
-              y={1280}
-              fontSize={42}
+              x={W / 2}
+              y={KY + 320}
+              fontSize={40}
               fontWeight="700"
               fill={C.white}
               textAnchor="middle"
@@ -237,54 +273,50 @@ export default function SellerShareScreen() {
               {t('share.card_cta')}
             </SvgText>
 
-            {/* QR + market rozetleri */}
-            <G transform="translate(96,1496)">
-              <Rect
-                x={0}
-                y={0}
-                width={300}
-                height={300}
-                rx={36}
-                fill={C.white}
-                stroke={C.line}
-                strokeWidth={2}
-              />
-              <Path d={qrD} fill={C.ink} />
+            {/* ── QR + MAĞAZALAR — tek panel, kart ile AYNI hizada ── */}
+            <Rect
+              x={M}
+              y={QY}
+              width={CW}
+              height={332}
+              rx={56}
+              fill={C.white}
+              stroke={C.line}
+              strokeWidth={2}
+            />
+            <G transform={`translate(${M + 40},${QY + 40})`}>
+              <Rect x={0} y={0} width={252} height={252} rx={28} fill={C.white} />
+              <Path d={qrD} fill={C.ink} transform="scale(0.84)" />
             </G>
-
-            <SvgText x={452} y={1556} fontSize={36} fontWeight="700" fill={C.ink}>
+            <SvgText x={M + 336} y={QY + 92} fontSize={32} fontWeight="700" fill={C.ink}>
               {t('share.scan')}
             </SvgText>
-
-            {/* App Store */}
-            <Rect x={452} y={1596} width={296} height={94} rx={47} fill={C.ink} />
-            <G transform="translate(492,1622) scale(1.9)">
+            <Rect x={M + 336} y={QY + 122} width={272} height={84} rx={42} fill={C.ink} />
+            <G transform={`translate(${M + 372},${QY + 146}) scale(1.7)`}>
               <Path
                 d="M12.3 3.6c.9 0 2-.6 2.6-1.4.6-.7 1-1.7.9-2.7-.9 0-2 .6-2.7 1.3-.6.7-1 1.7-.8 2.8zM15.8 9.8c0-2 1.6-2.9 1.7-3-1-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.4 2 2.4 2 .9 0 1.3-.6 2.4-.6 1.1 0 1.4.6 2.4.6 1 0 1.6-.9 2.3-1.9.7-1.1 1-2.1 1-2.2-.1 0-1.9-.7-1.9-2.6z"
                 fill={C.white}
               />
             </G>
-            <SvgText x={548} y={1656} fontSize={36} fontWeight="700" fill={C.white}>
+            <SvgText x={M + 424} y={QY + 174} fontSize={32} fontWeight="700" fill={C.white}>
               {t('share.ios')}
             </SvgText>
-
-            {/* Google Play */}
-            <Rect x={452} y={1706} width={296} height={94} rx={47} fill={C.ink} />
-            <G transform="translate(492,1732)">
-              <Polygon points="0,0 0,42 34,21" fill={C.white} />
+            <Rect x={M + 336} y={QY + 222} width={272} height={84} rx={42} fill={C.ink} />
+            <G transform={`translate(${M + 376},${QY + 244})`}>
+              <Polygon points="0,0 0,38 30,19" fill={C.white} />
             </G>
-            <SvgText x={548} y={1766} fontSize={36} fontWeight="700" fill={C.white}>
+            <SvgText x={M + 424} y={QY + 274} fontSize={32} fontWeight="700" fill={C.white}>
               {t('share.android')}
             </SvgText>
 
-            {/* alt marka */}
             <SvgText
-              x={540}
-              y={1876}
-              fontSize={36}
+              x={W / 2}
+              y={H - 72}
+              fontSize={32}
               fontWeight="700"
-              fill={C.limeDeep}
+              fill={C.muted}
               textAnchor="middle"
+              letterSpacing={3}
             >
               ayna.kz
             </SvgText>
