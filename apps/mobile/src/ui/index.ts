@@ -31,6 +31,7 @@ export { NailCursor } from './NailCursor';
 export { PressableScale } from './PressableScale';
 export { BookingSteps } from './BookingSteps';
 export { MoneyBreakdown } from './MoneyBreakdown';
+export { PriceSpread } from './PriceSpread';
 export { HomeUrgent } from './HomeUrgent';
 export { HomeUpcoming } from './HomeUpcoming';
 export { Progress } from './Progress';
