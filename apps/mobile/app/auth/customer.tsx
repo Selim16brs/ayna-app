@@ -185,7 +185,14 @@ export default function CustomerRegisterScreen() {
         <Label text={t('auth.f.birthdate')} />
         <Pressable style={styles.dateBtn} onPress={() => setShowDate(true)}>
           <Ionicons name="calendar-outline" size={20} color={colors.inkSoft} />
-          <Text variant="body" tone={birthDate ? 'ink' : 'muted'} style={styles.dateText}>
+          <Text
+            variant="body"
+            tone={birthDate ? 'ink' : 'muted'}
+            style={styles.dateText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+          >
             {birthDate ? fmtDate(birthDate) : t('auth.f.birthdate_ph')}
           </Text>
           <Ionicons name="chevron-down" size={18} color={colors.muted} />
@@ -241,7 +248,14 @@ export default function CustomerRegisterScreen() {
             size={20}
             color={gps ? colors.onAccent : colors.accentFg}
           />
-          <Text variant="bodyStrong" tone={gps ? 'onAccent' : 'accentFg'} style={styles.gpsText}>
+          <Text
+            variant="bodyStrong"
+            tone={gps ? 'onAccent' : 'accentFg'}
+            style={styles.gpsText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+          >
             {gps ? t('auth.location.detected') : t('auth.location.use_gps')}
           </Text>
           {gps ? <Ionicons name="checkmark-circle" size={20} color={colors.onAccent} /> : null}

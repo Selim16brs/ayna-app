@@ -145,7 +145,13 @@ export default function CircleScreen() {
               accessibilityRole="tab"
               accessibilityState={{ selected: sekme === k }}
             >
-              <Text variant="caption" tone={sekme === k ? 'onAccent' : 'inkSoft'}>
+              <Text
+                variant="caption"
+                tone={sekme === k ? 'onAccent' : 'inkSoft'}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              >
                 {k === 'saved'
                   ? `${t('circle.tab.saved')}${kayitliSayisi ? ` · ${kayitliSayisi}` : ''}`
                   : t(k === 'feed' ? 'circle.tab.feed' : 'circle.tab.mine')}

@@ -145,13 +145,27 @@ export default function NewQuoteScreen() {
         <View style={styles.pickRow}>
           <Pressable style={styles.pickBtn} onPress={takePhoto}>
             <Ionicons name="camera-outline" size={19} color={colors.onAccent} />
-            <Text variant="caption" tone="onAccent" style={styles.pickText}>
+            <Text
+              variant="caption"
+              tone="onAccent"
+              style={styles.pickText}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
               {t('quote.new.camera')}
             </Text>
           </Pressable>
           <Pressable style={[styles.pickBtn, styles.pickBtnSoft]} onPress={pickPhoto}>
             <Ionicons name="images-outline" size={19} color={colors.ink} />
-            <Text variant="caption" tone="ink" style={styles.pickText}>
+            <Text
+              variant="caption"
+              tone="ink"
+              style={styles.pickText}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
               {t('quote.new.gallery')}
             </Text>
           </Pressable>
@@ -294,7 +308,14 @@ export default function NewQuoteScreen() {
         ]}
       >
         <Pressable style={styles.cta} onPress={submit} disabled={submitting}>
-          <Text variant="bodyStrong" tone="onAccent" style={styles.ctaText}>
+          <Text
+            variant="bodyStrong"
+            tone="onAccent"
+            style={styles.ctaText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+          >
             {t('quote.new.view_offers')}
           </Text>
           <Ionicons name="arrow-forward" size={19} color={colors.onAccent} />
