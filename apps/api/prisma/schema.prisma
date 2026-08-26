@@ -286,6 +286,11 @@ model Booking {
   depositDeadline   DateTime?     @map("deposit_deadline") @db.Timestamptz(6) // dekont son yükleme
   depositForfeited  Boolean       @default(false) @map("deposit_forfeited") // geç iptal/no-show: kapora yandı
   providerNoShow    Boolean       @default(false) @map("provider_no_show") // uzman gelmedi
+  /// §4.6 — salon randevuyu BAŞKA uzmana devrettiğinde önceki uzmanın adı.
+  /// Devretme akışının tamamı istemcide yaşıyordu: salon devrediyor, müşteri
+  /// onaylıyor, hiçbiri sunucuya yazılmıyordu — uygulama yeniden açılınca
+  /// hydrate sunucudaki eski durumu geri getiriyor ve işlem KAYBOLUYORDU.
+  reassignedFrom    String?       @map("reassigned_from")
   // §keşif Modül 2 — kampanyadan gelen randevu (iptal/no-show'da kota iade edilir)
   offerId           String?       @map("offer_id") @db.Uuid
   // §2.2/§10 — salon offline kaydı alanları (mobil hydrate'te KAYBOLMAMALI)
@@ -727,6 +732,24 @@ model CirclePost {
 }
 
 // §5.5 — W2W takip grafiği: kullanıcı-kimliğiyle (isim değil)
+/// §14 — W2W'de bir gönderiyi KENDİNE kaydetmek (kanvas: "Kaydedilenler").
+///
+/// GİZLİLİK: kaydetme YALNIZ kaydedene aittir. Gönderi sahibine de, önerilen
+/// uzmana da kimin kaydettiği GÖSTERİLMEZ ve sayısı da yayınlanmaz — bir
+/// uzmanın "beni kim kaydetti" diye bakabilmesi, kadınların hangi hizmeti
+/// düşündüğünü ifşa ederdi (CLAUDE.md: privacy-by-design).
+model CircleSave {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// Aynı gönderi iki kez kaydedilemez — idempotent yazım (CLAUDE.md).
+  @@unique([userId, postId])
+  @@index([userId])
+  @@map("circle_saves")
+}
+
 model CircleFollow {
   id         String   @id @default(uuid()) @db.Uuid
   followerId String   @map("follower_id") @db.Uuid

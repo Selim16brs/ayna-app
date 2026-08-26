@@ -490,6 +490,13 @@ export const api = {
   proposeBooking: (id: string, proposedStartMs: number) =>
     post<Appointment>(`/bookings/${id}/propose`, { proposedStartMs }),
   acceptBooking: (id: string) => post<Appointment>(`/bookings/${id}/accept`, {}),
+  // §4.6 — devretme: akış eskiden TAMAMEN istemcideydi, her açılışta kayboluyordu.
+  reassignBooking: (token: string, id: string, uzmanName: string, proId?: string) =>
+    post<Appointment>(`/bookings/${id}/reassign`, { uzmanName, proId }, token),
+  acceptReassignApi: (token: string, id: string) =>
+    post<Appointment>(`/bookings/${id}/reassign/accept`, {}, token),
+  rejectReassignApi: (token: string, id: string) =>
+    post<Appointment>(`/bookings/${id}/reassign/reject`, {}, token),
   // §4.2/§4.4 — depozito/iade döngüsü (backend'e taşındı)
   submitDepositReceipt: (id: string, receiptUri: string) =>
     post<Appointment>(`/bookings/${id}/deposit-receipt`, { receiptUri }),
@@ -774,7 +781,8 @@ export const api = {
   fileDispute: (token: string, input: DisputeInput) =>
     post<{ id: string; status: string }>('/disputes', input, token),
   // §5.5 — W2W topluluk (moderasyon backend'de)
-  circlePosts: () => get<ApiCirclePost[]>('/circle/posts'),
+  // Token İSTEĞE BAĞLI: akış girişsiz de okunur, girişliyse savedByMe dolu gelir.
+  circlePosts: (token?: string) => get<ApiCirclePost[]>('/circle/posts', token),
   circleFollow: (targetUserId: string, on: boolean) =>
     post<{ following: boolean }>('/circle/follow', { targetUserId, on }),
   myFollows: () =>
@@ -820,6 +828,12 @@ export const api = {
     post<{ ok: boolean }>(`/passport/access/${id}/revoke`, {}, token),
 
   // §14 — W2W fikir birliği: bir sorunun cevaplarında kimi kaç KİŞİ önerdi
+  // §14 — W2W kaydetme. Liste YALNIZ kendine ait; "kaç kişi kaydetti" diye bir
+  // sayı hiçbir yanıtta yok (uzman kimin kaydettiğini göremez).
+  circleSaves: (token: string) => get<ApiCirclePost[]>('/circle/saves', token),
+  setCircleSaved: (token: string, postId: string, saved: boolean) =>
+    post<{ postId: string; saved: boolean }>(`/circle/posts/${postId}/save`, { saved }, token),
+
   circleConsensus: (postId: string) =>
     get<{ voters: number; items: { proId: string; count: number }[] }>(
       `/circle/posts/${postId}/consensus`,
@@ -946,6 +960,8 @@ export interface SafetySession {
 
 // EK Z.1 — DM mesajlaşma tipleri
 export interface CircleCommentRow {
+  /** §14 — önerilen uzmanın ADI (sunucu çözer; istemci kimliği isme çeviremiyordu). */
+  proName?: string | null;
   id: string;
   /** Kimlik DEĞİL, yalnız etiket ("Anonim" / "AYNA Üyesi"). */
   authorLabel: string;
@@ -1001,6 +1017,7 @@ export interface BlockedUser {
 
 export interface ApiCirclePost {
   authorUserId?: string | null;
+  savedByMe?: boolean; // §14 — KENDİ kaydettiğin (başkası kimin kaydettiğini göremez)
   id: string;
   category: string;
   text: string;

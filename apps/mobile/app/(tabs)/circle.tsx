@@ -68,12 +68,8 @@ export default function CircleScreen() {
   const role = useStore((s) => s.currentUser?.role);
   const canPost = role !== 'professional' && role !== 'salon';
   const [cat, setCat] = useState<string>('all');
-  // Kanvas (design/W2W.dc.html §sekmeler): Akış · Sorularım.
-  //
-  // Kanvasta üçüncü bir sekme daha var ("Kaydedilenler · 12") ama kaydetme
-  // özelliğinin SUNUCU TARAFI YOK. Sayıyla birlikte göstermek çalışmayan bir
-  // özelliği varmış gibi sunmak olurdu; o sekme, ucu yazılana kadar yok.
-  const [sekme, setSekme] = useState<'feed' | 'mine'>('feed');
+  // Kanvas (design/W2W.dc.html §sekmeler): Akış · Sorularım · Kaydedilenler.
+  const [sekme, setSekme] = useState<'feed' | 'mine' | 'saved'>('feed');
   const myId = useStore((s) => s.currentUser?.id);
 
   // §5.5 — sabit kategori şeridi (W2W_FILTERS); seçili filtrenin match'iyle süz + faydalı üstte
@@ -84,7 +80,12 @@ export default function CircleScreen() {
 
   const visible = useMemo(() => {
     const f = W2W_FILTERS.find((x) => x.id === cat) ?? W2W_FILTERS[0]!;
-    const taban = sekme === 'mine' ? posts.filter(benimMi) : posts;
+    const taban =
+      sekme === 'mine'
+        ? posts.filter(benimMi)
+        : sekme === 'saved'
+          ? posts.filter((p) => p.savedByMe)
+          : posts;
     return taban.filter(f.match).sort((a, b) => b.helpful - a.helpful);
   }, [posts, cat, sekme, benimMi]);
 
@@ -92,6 +93,10 @@ export default function CircleScreen() {
   // olanlar, altında FİKİR BİRLİĞİ ile. Sunucu kuralı zaten gerçek: bir uzmanı
   // ancak o uzmanda TAMAMLANMIŞ randevusu olan kadın sayabiliyor
   // (circle.service hasCompletedWith + proVerified).
+  // Sayı YALNIZ kendi kayıtların — sunucu "kaç kişi kaydetti" diye bir sayı
+  // hiç döndürmüyor (uzman kimin kaydettiğini göremez).
+  const kayitliSayisi = useMemo(() => posts.filter((p) => p.savedByMe).length, [posts]);
+
   const cevapAlanSorularim = useMemo(
     () =>
       posts.filter((p) => benimMi(p) && p.type === 'asking' && p.comments.length > 0).slice(0, 2),
@@ -124,7 +129,7 @@ export default function CircleScreen() {
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Kanvas §sekmeler — Akış · Sorularım */}
         <View style={styles.sekmeler}>
-          {(['feed', 'mine'] as const).map((k) => (
+          {(['feed', 'mine', 'saved'] as const).map((k) => (
             <Pressable
               key={k}
               style={[styles.sekme, sekme === k && styles.sekmeOn]}
@@ -133,7 +138,9 @@ export default function CircleScreen() {
               accessibilityState={{ selected: sekme === k }}
             >
               <Text variant="caption" tone={sekme === k ? 'onAccent' : 'inkSoft'}>
-                {t(k === 'feed' ? 'circle.tab.feed' : 'circle.tab.mine')}
+                {k === 'saved'
+                  ? `${t('circle.tab.saved')}${kayitliSayisi ? ` · ${kayitliSayisi}` : ''}`
+                  : t(k === 'feed' ? 'circle.tab.feed' : 'circle.tab.mine')}
               </Text>
             </Pressable>
           ))}
@@ -343,6 +350,7 @@ function PostCard({ post }: { post: CirclePost }) {
   const router = useRouter();
   const toggleHelpful = useStore((s) => s.toggleHelpful);
   const toggleFollow = useStore((s) => s.toggleFollow);
+  const toggleSaved = useStore((s) => s.toggleSaved);
   const myId = useStore((s) => s.currentUser?.id);
   // §5.5 — kimlik öncelikli eşleşme: görünen ad hesap adından farklı olabilir
   const isFollowing = useStore((s) =>
@@ -436,6 +444,22 @@ function PostCard({ post }: { post: CirclePost }) {
             {post.comments.length} {t('circle.comments')}
           </Text>
         </View>
+        {/* §14 — kaydet. Kayıt SUNUCUDA tutulur ve YALNIZ sana aittir:
+            gönderi sahibi de, önerilen uzman da kimin kaydettiğini göremez. */}
+        <Pressable
+          style={styles.footerItem}
+          onPress={() => toggleSaved(post.id)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t(post.savedByMe ? 'circle.unsave' : 'circle.save')}
+          accessibilityState={{ selected: post.savedByMe === true }}
+        >
+          <Ionicons
+            name={post.savedByMe ? 'bookmark' : 'bookmark-outline'}
+            size={14}
+            color={post.savedByMe ? colors.accent : colors.muted}
+          />
+        </Pressable>
       </View>
     </Pressable>
   );

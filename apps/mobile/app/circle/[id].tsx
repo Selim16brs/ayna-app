@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -65,6 +65,7 @@ export default function PostDetailScreen() {
     }
     return [...seen.entries()].map(([proId, name]) => ({ id: proId, name }));
   }, [bookings]);
+  const router = useRouter();
   const [suggestPro, setSuggestPro] = useState<string | null>(null);
   // Yorumlar SUNUCUDAN okunuyor. Daha önce yalnız yerel kopya gösteriliyordu:
   // A kullanıcısı yazıyor, B sayacın arttığını görüyor ama yorumu okuyamıyordu.
@@ -87,6 +88,7 @@ export default function PostDetailScreen() {
       authorLabel: c.anonymous ? t('circle.verified') : c.author,
       text: c.text,
       proId: null,
+      proName: null,
       proVerified: false,
       createdAt: '',
     }));
@@ -275,6 +277,24 @@ export default function PostDetailScreen() {
                     <Text variant="body" tone="inkSoft" style={styles.commentText}>
                       {c.text}
                     </Text>
+                    {/* ÖNERİLEN UZMAN. Yorumda yalnız "gitmiş" rozeti vardı;
+                        KİMİN önerildiği hiç çizilmiyordu — kullanıcı uzman
+                        seçip yorumu yolluyor, okuyana hiçbir uzman bilgisi
+                        ulaşmıyordu. Artık adıyla ve profiline gidilebilir. */}
+                    {c.proId ? (
+                      <Pressable
+                        style={styles.suggestedPro}
+                        onPress={() => router.push(`/professional/${c.proId}`)}
+                        accessibilityRole="button"
+                        accessibilityLabel={c.proName ?? t('circle.suggest.label')}
+                      >
+                        <Ionicons name="sparkles" size={12} color={colors.accentFg} />
+                        <Text variant="caption" tone="accentFg" numberOfLines={1}>
+                          {c.proName ?? t('circle.suggest.label')}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={12} color={colors.accentFg} />
+                      </Pressable>
+                    ) : null}
                   </View>
                 </View>
               ))}
@@ -428,6 +448,17 @@ const makeStyles = (colors: ColorTokens) =>
     commentHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), flexWrap: 'wrap' },
     verifiedTag: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     commentAuthor: { fontFamily: font.semibold },
+    suggestedPro: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      alignSelf: 'flex-start',
+      marginTop: space(0.75),
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.625),
+      borderRadius: radius.pill,
+      backgroundColor: colors.accentSoft,
+    },
     commentText: { marginTop: 3, lineHeight: 22 },
     suggestRow: { paddingHorizontal: space(3), paddingTop: space(1), gap: space(0.75) },
     suggestChips: { flexDirection: 'row', gap: space(0.75) },

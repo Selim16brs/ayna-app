@@ -16,7 +16,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import qrcode from 'qrcode-generator';
 import { useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
+import { selectPortrait, useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader } from '../../src/ui';
@@ -71,11 +71,10 @@ export default function SellerShareScreen() {
   const { t } = useLocale();
   const styles = useThemedStyles(makeStyles);
   const rawName = useStore((s) => s.currentUser?.name) ?? 'AYNA';
-  const cutoutUri = useStore((s) => s.cutoutUri);
-  const avatarUri = useStore((s) => s.avatarUri);
+  const portre = useStore(selectPortrait);
   // Karttaki portre GERÇEK: cut-out > yüklenen foto > nötr çizim (stok model DEĞİL)
   // Sıfır-demo: foto yoksa sahte model YOK — portre alanı boş kalır
-  const portrait = cutoutUri ? { uri: cutoutUri } : avatarUri ? { uri: avatarUri } : null;
+  const portrait = portre ? { uri: portre } : null;
   const isSalon = useStore((s) => s.currentUser?.role === 'salon');
   const businessName = useStore((s) => s.currentUser?.businessName);
   const svgRef = useRef<Svg>(null);

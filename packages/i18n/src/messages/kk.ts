@@ -676,6 +676,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.status.completed': 'Аяқталды',
   'home.upcoming_events': 'Жақындағы іс-шаралар',
   'home.upcoming_empty': 'Жақындағы жазылуың жоқ',
+  'circle.tab.saved': 'Сақталғандар',
+  'circle.save': 'Сақтау',
+  'circle.unsave': 'Сақтаудан алу',
   'circle.tab.feed': 'Лента',
   'circle.tab.mine': 'Сұрақтарым',
   'circle.my_answered': 'СҰРАҒЫҢ ЖАУАП ЖИНАДЫ',
@@ -1788,6 +1791,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'circle.consensus.of': '{n} адамның',
   'circle.consensus.rule':
     'Тек сол маманда аяқталған жазылуы барлар саналады. «Естідім, жақсы екен» саналмайды.',
+  'circle.suggest.label': 'Ұсынылған маман',
   'circle.suggest.verified': 'барған',
   'circle.suggest.title': 'Маман ұсын',
   'circle.suggest.none': 'Ұсыныс жасау үшін алдымен бір жазылуың аяқталуы керек.',

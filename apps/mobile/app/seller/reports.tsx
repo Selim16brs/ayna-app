@@ -14,7 +14,7 @@ import {
 import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
 import { useSalonStaff } from '../../src/staff';
-import { selectCommissionRate, selectUnreadCount, useStore } from '../../src/store';
+import { selectCommissionRate, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -38,8 +38,7 @@ export default function ReportsScreen() {
   const router = useRouter();
   const [period, setPeriod] = useState<Period>('week');
   const salonName = useStore((s) => s.currentUser?.name) ?? 'AYNA İşletme';
-  const cutoutUri = useStore((s) => s.cutoutUri); // §5.1.1 — uzman cut-out portresi
-  const avatarUri = useStore((s) => s.avatarUri); // cutout yoksa yüklenen ham foto (yine de home'da görünsün)
+  const portre = useStore(selectPortrait); // bayat portre otomatik elenir
   const insets = useSafeAreaInsets();
   // Karşılama için ad (Keşfet dili) — ilk isim, ilk harf büyük (el yazısı katman)
   const firstRaw = salonName.split(' ')[0] || salonName;
@@ -262,12 +261,8 @@ export default function ReportsScreen() {
           </View>
           {/* §5.1.1 — cut-out portre varsa onu; yoksa yüklenen ham foto; o da yoksa varsayılan çizim */}
           {/* Sıfır-demo: uzmanın KENDİ fotosu yoksa sahte model gösterilmez */}
-          {cutoutUri || avatarUri ? (
-            <Image
-              source={{ uri: cutoutUri ?? avatarUri ?? '' }}
-              style={styles.heroPhoto}
-              resizeMode="contain"
-            />
+          {portre ? (
+            <Image source={{ uri: portre }} style={styles.heroPhoto} resizeMode="contain" />
           ) : null}
           {/* Yeşilin dalgalı bitişi (dalgalanma) */}
           <View style={styles.waveAbs}>
