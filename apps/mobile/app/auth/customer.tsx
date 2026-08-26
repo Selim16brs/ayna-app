@@ -58,6 +58,9 @@ export default function CustomerRegisterScreen() {
   const [photo, setPhoto] = useState<{ uri: string; base64?: string } | null>(null);
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  // Polish 2.4 — canlı alan doğrulaması: hata Alert'te değil, alanın ALTINDA
+  const phoneDigits = phone.replace(/\D/g, '');
+  const phoneError = phone.length > 0 && phoneDigits.length < 10 ? 'auth.err.phone' : null;
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [city, setCity] = useState<string | null>(null);
@@ -304,6 +307,7 @@ export default function CustomerRegisterScreen() {
           keyboardType="phone-pad"
           placeholder="+7 700 123 45 67"
           autofill="tel"
+          {...(phoneError ? { error: t(phoneError) } : {})}
         />
         <Label text={t('auth.f.email')} />
         <Input
@@ -312,6 +316,9 @@ export default function CustomerRegisterScreen() {
           keyboardType="email-address"
           placeholder="ornek@mail.kz"
           autofill="email"
+          {...(email.length > 0 && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)
+            ? { error: t('auth.err.email') }
+            : {})}
         />
         {emailInvalid ? (
           <Text variant="caption" style={[styles.hint, { color: colors.danger }]}>
@@ -390,6 +397,7 @@ function Input({
   secure,
   keyboardType,
   autofill,
+  error,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -398,6 +406,8 @@ function Input({
   secure?: boolean;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
   autofill?: AutofillKind;
+  /** Polish 2.4 — alan bazlı hata metni (kenarlık kızarır) */
+  error?: string;
 }) {
   const { t } = useLocale();
   const { colors } = useTheme();
@@ -432,6 +442,7 @@ function Input({
   }
   return (
     <TextInput
+      {...(error ? { error } : {})}
       value={value}
       onChangeText={onChange}
       keyboardType={keyboardType ?? 'default'}

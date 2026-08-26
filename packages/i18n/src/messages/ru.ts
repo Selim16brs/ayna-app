@@ -854,6 +854,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'auth.error.network': 'Ошибка соединения — проверьте интернет',
   'auth.error.rate_limited': 'Слишком много попыток — подождите 1 минуту и попробуйте снова',
   'auth.error.bad': 'Электронная почта/телефон или пароль неверны',
+  'auth.err.phone': 'Телефон — минимум 10 цифр',
+  'auth.err.email': 'Введите корректный email (напр. name@mail.kz)',
   'auth.login.hint_id': 'Телефон — минимум 10 цифр (напр. +7 700 123 45 67) или введите email',
   'auth.login.hint_pw': 'Пароль — минимум 6 символов',
   'auth.login.forgot': 'Забыл(а) пароль',

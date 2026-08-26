@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useOffers } from '../src/catalog';
+import { useOffers, useOffersLoading } from '../src/catalog';
 import { useLocale } from '../src/locale';
 import { radius, space, type ColorTokens } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, Text } from '../src/ui';
+import { Screen, StackHeader, Text, ListSkeleton } from '../src/ui';
 
 const FALLBACK_IMG = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&q=60';
 const DAY_KEYS = [
@@ -26,12 +26,15 @@ export default function OffersScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const offers = useOffers();
+  const loading = useOffersLoading();
 
   return (
     <Screen edges={[]}>
       <StackHeader title={t('offers.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {offers.length === 0 ? (
+        {loading ? (
+          <ListSkeleton rows={3} />
+        ) : offers.length === 0 ? (
           <View style={styles.empty}>
             <Ionicons name="pricetags-outline" size={34} color={colors.muted} />
             <Text variant="body" tone="muted" style={styles.emptyText}>

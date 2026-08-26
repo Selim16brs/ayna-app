@@ -1,16 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useProfessionals } from '../src/catalog';
+import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
+import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text, ListSkeleton } from '../src/ui';
 import { ProRow } from './search';
 
 export default function FavoritesScreen() {
   const pros = useProfessionals();
+  const loading = useProfessionalsLoading();
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -26,7 +27,9 @@ export default function FavoritesScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('favorites.title')} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {favs.length === 0 ? (
+        {loading && favIds.length > 0 ? (
+          <ListSkeleton rows={3} />
+        ) : favs.length === 0 ? (
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
               <Ionicons name="heart-outline" size={30} color={colors.accentFg} />

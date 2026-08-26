@@ -869,6 +869,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'auth.error.network': 'Байланыс қатесі — интернетіңді тексер',
   'auth.error.rate_limited': 'Тым көп әрекет жасалды — 1 минут күтіп, қайта көріңіз',
   'auth.error.bad': 'Электрондық пошта/телефон немесе құпия сөз қате',
+  'auth.err.phone': 'Телефон кемінде 10 сан болуы керек',
+  'auth.err.email': 'Жарамды email енгізіңіз (мыс. at@mail.kz)',
   'auth.login.hint_id':
     'Телефон кемінде 10 сан болуы керек (мыс. +7 700 123 45 67) немесе email енгізіңіз',
   'auth.login.hint_pw': 'Құпиясөз кемінде 6 таңба',
