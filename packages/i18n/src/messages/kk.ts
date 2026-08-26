@@ -1594,6 +1594,16 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.calperm.view': 'Тек көрсін',
   'seller.calperm.approval': 'Қоссын, менің растауыммен',
   'seller.calperm.manage': 'Тікелей қоса алсын',
+  'seller.calperm.view_d': 'Салон күнтізбені көреді, бірақ ештеңе қоса алмайды.',
+  'seller.calperm.approval_d': 'Салон жазылу қоса алады, бірақ сен растағанша бекітілмейді.',
+  'seller.calperm.manage_d': 'Салон жазылуды тікелей қосады; растауың күтілмейді.',
+  'seller.calperm.sees_title': 'Салон әуелден нені көреді',
+  'seller.calperm.sees_1':
+    'Өз алған жазылуларыңды тек «бос емес» деп көреді — клиент аты, қызмет және сома жабық.',
+  'seller.calperm.sees_2': 'Клиент атын тек САЛОН сен үшін алған жазылуларда көреді.',
+  'seller.calperm.sees_3': 'Өз жұмысыңның ақшасын салон ешбір режимде көрмейді.',
+  'seller.calperm.sees_note':
+    'Бұл ереже тұрақты — жоғарыдағы режим таңдауы оны өзгертпейді. Режим салонның не ІСТЕЙ алатынын анықтайды, нені КӨРЕТІНІН емес.',
   'seller.calperm.saved': 'Күнтізбе рұқсаты жаңартылды',
   'logout.pending_t': 'Жіберілмеген жазба бар',
   'logout.pending_b':

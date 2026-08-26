@@ -1676,6 +1676,16 @@ export const tr = {
   'seller.calperm.view': 'Yalnız görsün',
   'seller.calperm.approval': 'Eklesin, onayımla',
   'seller.calperm.manage': 'Doğrudan ekleyebilsin',
+  'seller.calperm.view_d': 'Salon takvimini görür ama hiçbir şey ekleyemez.',
+  'seller.calperm.approval_d': 'Salon randevu ekleyebilir, ama sen onaylayana kadar kesinleşmez.',
+  'seller.calperm.manage_d': 'Salon doğrudan randevu ekler; onayın beklenmez.',
+  'seller.calperm.sees_title': 'Salon zaten ne görüyor',
+  'seller.calperm.sees_1':
+    'Senin kendi aldığın randevuları yalnız “meşgul” olarak görür — müşteri adı, hizmet ve tutar kilitli.',
+  'seller.calperm.sees_2': 'Müşteri adını yalnız SALONUN senin için aldığı randevularda görür.',
+  'seller.calperm.sees_3': 'Kendi işinin parasını salon hiçbir modda görmez.',
+  'seller.calperm.sees_note':
+    'Bu kural sabittir — yukarıdaki mod seçimi bunu değiştirmez. Mod yalnız salonun ne YAPABİLECEĞİNİ belirler, ne GÖRECEĞİNİ değil.',
   'seller.calperm.saved': 'Takvim izni güncellendi',
   'logout.pending_t': 'Gönderilmemiş kayıt var',
   'logout.pending_b': '{n} randevu henüz sunucuya eşitlenmedi. Çıkarsan bu cihazdan silinirler.',
