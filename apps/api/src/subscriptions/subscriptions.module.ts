@@ -8,5 +8,6 @@ import { SubscriptionsService } from './subscriptions.service';
   imports: [PushModule],
   controllers: [SubscriptionsController, SubscriptionsAdminController],
   providers: [SubscriptionsService],
+  exports: [SubscriptionsService], // finans zamanlayıcısı expireDue()'yu çağırır
 })
 export class SubscriptionsModule {}

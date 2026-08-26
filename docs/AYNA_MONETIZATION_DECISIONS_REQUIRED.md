@@ -108,15 +108,26 @@ canlıda 12 aylık ömür var, yani ilk kazanımlar dolduğunda ortaya çıkacak
 
 ## D2 · Gecikme penceresi — **KARAR VERİLDİ (K5)**
 
-**Karar: hemen 45 dakikaya geçilecek.** 7 günlük kısıtlı mod
-(`commissions.service.ts:186-224`) kaldırılıyor; vade + 45 dk sonra otomatik
-`SUSPENDED_FINANCIAL`.
+**Karar: hemen 45 dakikaya geçilecek — UYGULANDI.** 7 günlük sabit kaldırıldı;
+süre `rate.commission_grace_minutes` (varsayılan 45) ayarından okunuyor.
 
-**Hukuki not (kaldırılmadı, hatırlatma olarak duruyor):** şartname §22 bu
-maddenin uzman sözleşmesinde açık kabul gerektirdiğini söylüyor. Kod tarafında
-süre **config parametresi** olarak yazılacak (`rate.commission_grace_minutes`,
-varsayılan 45) — sözleşme gerekçesiyle geçici olarak uzatmak gerekirse kod
-değişikliği gerekmeyecek.
+**Hukuki not (duruyor):** şartname §22 bu maddenin uzman sözleşmesinde açık
+kabul gerektirdiğini söylüyor. Süre config olduğu için, sözleşme gerekçesiyle
+pencereyi geçici olarak uzatmak kod değişikliği gerektirmiyor — panelden
+10.080 (7 gün) yazmak eski davranışı geri getirir.
+
+### Yol üstünde çıkan asıl sorun: pencere zaten hiç işlemiyordu
+
+7 günü 45 dakikaya çekmek tek başına hiçbir şey değiştirmezdi, çünkü
+**gecikme taramasını hiçbir zamanlayıcı çağırmıyordu** (Faz 0 bulgusu).
+`runOverdue()` yalnız admin panelinde düğmeye basılınca çalışıyordu. Aynısı
+abonelik sona erdirme için de geçerliydi: süresi dolan Premium/Platinum üyelik
+`active` kalmaya devam ediyordu — yani ödemesi biten uzman ayrıcalıklarını
+süresiz kullanıyordu.
+
+`FinanceScheduler` bu boşluğu kapatıyor: 5 dakikada bir, advisory lock ile tekil
+çalıştırma, iki iş birbirinden bağımsız (biri patlarsa diğeri yine çalışır).
+Yerel Postgres'te 14 senaryoyla doğrulandı.
 
 ---
 

@@ -5,7 +5,16 @@ import { DAY_MS, commissionFor, overdueDaysBetween } from './commissions.calc';
 import type { ClosePeriodInput } from './commissions.dto';
 
 const DEFAULT_COMMISSION_RATE = 10; // komisyon %10 (uzman/salon → AYNA); parametrik (admin panel)
-const OVERDUE_RESTRICT_DAYS = 7; // vade + 7 gün gecikmede kısıtlı mod (§12.8)
+
+// K5 — GECİKME PENCERESİ. Eskiden vade + 7 GÜN sabitti; Gelir şartnamesi §0.1.3
+// eski 7 günlük kısıtlı modu yürürlükten kaldırıyor ve 45. dakikada otomatik
+// askıya alma istiyor. Kurucu kararı: hemen 45 dakikaya geçilsin.
+//
+// Süre CONFIG: şartname §22 bu maddenin uzman sözleşmesinde açık kabul
+// gerektirdiğini söylüyor. Sözleşme gerekçesiyle pencereyi geçici olarak
+// uzatmak gerekirse kod değişikliği gerekmesin diye admin ayarından okunuyor.
+const GRACE_SETTING_KEY = 'rate.commission_grace_minutes';
+const DEFAULT_GRACE_MINUTES = 45;
 
 @Injectable()
 export class CommissionsService {
@@ -19,6 +28,15 @@ export class CommissionsService {
     return s?.intValue ?? DEFAULT_COMMISSION_RATE;
   }
 
+  // K5 — vade sonrası tanınan süre (dakika). 0 ise vade dolar dolmaz kısıtlanır.
+  private async graceMinutes(): Promise<number> {
+    const s = await this.prisma.setting.findUnique({ where: { key: GRACE_SETTING_KEY } });
+    const v = s?.intValue;
+    return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : DEFAULT_GRACE_MINUTES;
+  }
+
+  // Aktör yoksa eylem ZAMANLAYICIDAN gelmiştir. Rolü 'admin' yazmak denetim
+  // izini yanıltırdı: kimsenin yapmadığı bir işlem admin'e atfedilirdi.
   private async audit(action: string, resourceId: string, actorId?: string) {
     await this.prisma.auditLog.create({
       data: {
@@ -26,7 +44,7 @@ export class CommissionsService {
         resourceType: 'commission',
         resourceId,
         actorId: actorId ?? null,
-        actorRole: 'admin',
+        actorRole: actorId ? 'admin' : 'system',
       },
     });
   }
@@ -182,16 +200,18 @@ export class CommissionsService {
     return this.map(updated);
   }
 
-  // Gecikme taraması — vade geçenleri overdue işaretle; +7 günde owner'ı kısıtla
+  // K5 — gecikme taraması: vade geçenleri overdue işaretle; tanınan süre
+  // dolunca owner'ı kısıtla. Zamanlayıcıdan da admin panelinden de çağrılır.
   async runOverdue(actorId?: string) {
     const now = new Date();
+    const grace = await this.graceMinutes();
     // 1) vade geçmiş pending → overdue
     const toOverdue = await this.prisma.commissionInvoice.updateMany({
       where: { status: 'pending', dueDate: { lt: now } },
       data: { status: 'overdue' },
     });
-    // 2) vade + 7 gün geçmiş, kısıt uygulanmamış, owner'lı faturalar → owner kısıtla
-    const cutoff = new Date(now.getTime() - OVERDUE_RESTRICT_DAYS * DAY_MS);
+    // 2) vade + tanınan süre geçmiş, kısıt uygulanmamış, owner'lı faturalar → kısıtla
+    const cutoff = new Date(now.getTime() - grace * 60_000);
     const toRestrict = await this.prisma.commissionInvoice.findMany({
       where: {
         status: 'overdue',
@@ -209,7 +229,7 @@ export class CommissionsService {
           where: { id: inv.ownerUserId },
           data: {
             restrictedAt: u.restrictedAt ?? now,
-            restrictReason: u.restrictReason ?? 'Komisyon ödemesi 7 günden fazla gecikti',
+            restrictReason: u.restrictReason ?? 'Komisyon ödemesi gecikti',
           },
         });
         restricted += 1;
@@ -219,7 +239,13 @@ export class CommissionsService {
         data: { restrictedApplied: true },
       });
     }
-    await this.audit('overdue.run', `overdue:${toOverdue.count}_restrict:${restricted}`, actorId);
+    // Zamanlayıcı bu işi 5 dakikada bir çağırıyor. Her turda audit yazmak,
+    // hiçbir şey olmasa bile günde ~288 anlamsız kayıt demekti — denetim izi
+    // gürültüye boğulur ve gerçek olaylar kaybolurdu. Yalnız BİR ŞEY OLDUĞUNDA
+    // yaz; admin elle çalıştırdığında sonuç boş olsa da kaydı kalsın.
+    if (actorId || toOverdue.count > 0 || restricted > 0) {
+      await this.audit('overdue.run', `overdue:${toOverdue.count}_restrict:${restricted}`, actorId);
+    }
     return { markedOverdue: toOverdue.count, restricted };
   }
 

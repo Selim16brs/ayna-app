@@ -14,6 +14,11 @@ gecikme takibi ve abonelik sona erdirme doğru yazılmış ama **hiçbirini bir
 zamanlayıcı çağırmıyor** — üçü de yalnız admin panelinde bir düğmeye basılınca
 çalışıyor.
 
+> **Güncelleme (26.08):** gecikme taraması ve abonelik sona erdirme için
+> `FinanceScheduler` yazıldı (5 dk, advisory lock). Komisyon tahakkuku hâlâ
+> dönem kapanışına bağlı; şartname bunu `COMPLETED` olayına taşımayı istiyor,
+> o iş komisyon fazında.
+
 ---
 
 ## 1. Abonelik ve paket
