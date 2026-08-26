@@ -1144,6 +1144,7 @@ export const tr = {
   'reports.identity.independent': 'Bireysel Uzman',
   'reports.identity.salon': 'Salon',
   'reports.performance': 'Performans',
+  'reports.review_waiting': 'Yorum yanıt bekliyor',
   'reports.action.agenda': 'Ortak takvim',
   'reports.action.agenda_own': 'Takvimim',
   'reports.action.requests': 'Talepler',

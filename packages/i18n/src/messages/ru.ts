@@ -1062,6 +1062,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reports.identity.independent': 'Частный мастер',
   'reports.identity.salon': 'Салон',
   'reports.performance': 'Производительность',
+  'reports.review_waiting': 'Отзыв ждёт ответа',
   'reports.action.agenda': 'Общий календарь',
   'reports.action.agenda_own': 'Мой календарь',
   'reports.action.requests': 'Заявки',

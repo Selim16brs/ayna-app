@@ -4,7 +4,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { api, type BookingStats } from '../../src/api';
+import { api, type BookingStats, type SellerReview } from '../../src/api';
 import {
   formatPrice,
   RESPONSE_WINDOW_MS,
@@ -63,6 +63,25 @@ export default function ReportsScreen() {
   // Talepler rozeti = şehirdeki açık talepler; reklamlar şehre göre hedeflenir (sektör admin ucunda)
   // §9.3 — Talepler rozeti: şehirdeki AÇIK talepler BULUTTAN sayılır (ekran odaklandıkça tazelenir)
   const token = useStore((s) => s.token);
+  // Yanıt bekleyen yorum — en düşük puanlı olan önce (uzmanın görünürlüğüne en
+  // çok zarar veren o). Yalnız CEVAPSIZ olanlar sayılır.
+  const [bekleyenYorum, setBekleyenYorum] = useState<SellerReview | null>(null);
+  useEffect(() => {
+    if (!token) return;
+    let alive = true;
+    void (async () => {
+      const bizler = await api.myBusinesses(token).catch(() => []);
+      const id = bizler[0]?.id;
+      if (!id) return;
+      const r = await api.businessReviews(token, id).catch(() => null);
+      if (!alive || !r) return;
+      const cevapsiz = r.reviews.filter((x) => !x.reply?.trim()).sort((a, b) => a.score - b.score);
+      setBekleyenYorum(cevapsiz[0] ?? null);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [token]);
   const [openDemands, setOpenDemands] = useState(0);
   // §CRM — bugün doğum günü olan müşterilerim (tıkla → kutlama push'u)
   const [bdays] = useState<{ id: string; name: string }[]>([]);
@@ -401,6 +420,48 @@ export default function ReportsScreen() {
                   <AdCard key={ad.id} ad={ad} />
                 ))}
               </ScrollView>
+            </>
+          ) : null}
+
+          {/* ═══ YANIT BEKLEYEN YORUM — kanvas UzmanPanel.dc.html ═══
+              Kanvasta vardı, kodda yoktu: yanıtsız yorum uzmanın panelinde hiç
+              görünmüyordu, ayrı ekrana girmesi gerekiyordu. Cevapsız kalan
+              düşük puanlı yorum, uzmanın görünürlüğüne en çok zarar veren şey. */}
+          {bekleyenYorum ? (
+            <>
+              <Text variant="bodyStrong" tone="ink" style={styles.perfTitle}>
+                {t('reports.review_waiting')}
+              </Text>
+              <PressableScale
+                style={[styles.reviewCard, shadow.soft]}
+                onPress={() => router.push('/seller/reviews')}
+              >
+                <View style={styles.reviewTop}>
+                  <View style={styles.reviewAvatar}>
+                    <Ionicons name="chatbubble-ellipses" size={17} color={colors.accent} />
+                  </View>
+                  <View style={styles.flex}>
+                    <Text variant="title" tone="ink" numberOfLines={1}>
+                      {bekleyenYorum.authorLabel}
+                    </Text>
+                    <Text variant="micro" tone="muted" numberOfLines={1}>
+                      {bekleyenYorum.serviceTag}
+                    </Text>
+                  </View>
+                  <Text numeric variant="meta" style={styles.reviewScore}>
+                    ★ {bekleyenYorum.score.toFixed(1)}
+                  </Text>
+                </View>
+                <Text variant="body" tone="inkSoft" numberOfLines={3}>
+                  {bekleyenYorum.comment}
+                </Text>
+                <View style={styles.reviewCta}>
+                  <Ionicons name="arrow-forward" size={15} color={colors.onAccent} />
+                  <Text variant="caption" tone="onAccent">
+                    {t('pro.review.reply')}
+                  </Text>
+                </View>
+              </PressableScale>
             </>
           ) : null}
 
@@ -886,6 +947,32 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     adCtaText: { color: colors.ink, fontFamily: font.semibold },
+    reviewCard: {
+      marginHorizontal: space(2.5),
+      padding: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      gap: space(1.5),
+    },
+    reviewTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.125) },
+    reviewAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 14,
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    reviewScore: { color: colors.gold, fontFamily: font.semibold },
+    reviewCta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.accent,
+    },
     perfTitle: { marginTop: space(3), marginBottom: space(1.5) },
     // §5 canlı özet
     liveHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },

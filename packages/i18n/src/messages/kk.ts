@@ -1078,6 +1078,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reports.identity.independent': 'Жеке маман',
   'reports.identity.salon': 'Салон',
   'reports.performance': 'Өнімділік',
+  'reports.review_waiting': 'Пікір жауап күтуде',
   'reports.action.agenda': 'Ортақ күнтізбе',
   'reports.action.agenda_own': 'Күнтізбем',
   'reports.action.requests': 'Сұраныстар',
