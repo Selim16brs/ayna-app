@@ -22,6 +22,7 @@ import {
   Screen,
   Text,
   TextInput,
+  TAB_BAR_CLEARANCE,
 } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -566,7 +567,7 @@ function PromoCard({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingBottom: space(13) },
+    content: { paddingBottom: TAB_BAR_CLEARANCE },
 
     // ── Lime hero ── (alt boşluk dengelendi: bant yukarı kaysın AMA alt yazı dalgada kesilmesin)
     bellBadge: {

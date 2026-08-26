@@ -8,7 +8,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 // §12.8 — pro'nun komisyon faturaları: dönem, tutar, vade, durum + dekont yükleme
 export default function CommissionsScreen() {
@@ -134,7 +134,7 @@ export default function CommissionsScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: space(10), gap: space(2) },
+    content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
     intro: { marginBottom: space(1) },
     empty: { alignItems: 'center', gap: space(1.5), marginTop: space(6) },
     emptyText: { textAlign: 'center' },

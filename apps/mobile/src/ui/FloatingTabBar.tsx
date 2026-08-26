@@ -78,6 +78,9 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
               {focused ? (
                 <View style={[styles.activePill, { backgroundColor: colors.rose }]}>
                   <Ionicons name={icon} size={19} color={colors.onAccent} />
+                  {/* Etiket KIRPILABİLİR olmalı: "Randevularım"/"Benim İçin" gibi
+                      uzun adlarda hap sabit genişlikte kalırsa satırı taşırıp
+                      son sekmeleri ekran dışına itiyordu. */}
                   <Text
                     numberOfLines={1}
                     allowFontScaling={false}
@@ -119,23 +122,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: space(1),
+    // Son emniyet: hesap ne olursa olsun içerik barın dışına çıkmasın.
+    overflow: 'hidden',
     shadowColor: '#262219',
     shadowOpacity: 0.32,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 14 },
     elevation: 12,
   },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center', height: PILL_H },
-  itemOn: { alignItems: 'center', justifyContent: 'center', height: PILL_H },
+  // Pasif sekmeler ikon genişliğine kadar sıkışabilir; aktif hap kalan yeri alır
+  // ama TAŞMAZ. minWidth:0 olmadan RN flex çocukları içeriklerinden küçülmez.
+  item: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: PILL_H,
+  },
+  itemOn: {
+    flexShrink: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: PILL_H,
+  },
   activePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space(1),
+    gap: space(0.875),
     height: 50,
-    paddingHorizontal: space(2.25),
+    paddingHorizontal: space(1.75),
     borderRadius: 25,
+    flexShrink: 1,
+    minWidth: 0,
   },
-  activeLabel: { fontSize: 16, fontFamily: font.semibold },
+  activeLabel: { fontSize: 15, fontFamily: font.semibold, flexShrink: 1 },
   dot: {
     position: 'absolute',
     top: 16,

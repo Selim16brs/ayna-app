@@ -11,7 +11,14 @@ import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useSalonStaff } from '../../src/staff';
-import { PressableScale, Screen, Segmented, StackHeader, Text } from '../../src/ui';
+import {
+  PressableScale,
+  Screen,
+  Segmented,
+  StackHeader,
+  Text,
+  TAB_BAR_CLEARANCE,
+} from '../../src/ui';
 
 type DayRow = { type: 'free'; startMs: number; endMs: number } | { type: 'busy'; b: Appointment };
 const OPEN_H = 10;
@@ -683,7 +690,7 @@ function StatusPill({ status }: { status: BookingStatus }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(2.5), paddingBottom: space(12) },
+    content: { paddingHorizontal: space(2.5), paddingBottom: TAB_BAR_CLEARANCE },
     toggleWrap: { marginTop: space(1), marginBottom: space(1.5) },
     // §4.6 kaynak etiketi (offline/AYNA)
     srcTag: {

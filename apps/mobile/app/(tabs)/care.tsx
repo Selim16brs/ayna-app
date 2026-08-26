@@ -18,7 +18,14 @@ import { useStore } from '../../src/store';
 import { fillParams, useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, ProgressRing, Screen, TabHero, Text } from '../../src/ui';
+import {
+  PressableScale,
+  ProgressRing,
+  Screen,
+  TabHero,
+  Text,
+  TAB_BAR_CLEARANCE,
+} from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -545,7 +552,7 @@ function MomentRow({ moment, border }: { moment: Moment; border: boolean }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingTop: space(3), paddingBottom: space(13) },
+    content: { paddingTop: space(3), paddingBottom: TAB_BAR_CLEARANCE },
     flex: { flex: 1 },
     dim: { opacity: 0.9 },
     header: { paddingHorizontal: space(3), paddingTop: space(1.5), marginBottom: space(2.5) },

@@ -9,7 +9,7 @@ import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, Screen, TabHero, Text } from '../../src/ui';
+import { PressableScale, Screen, TabHero, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 const makeType = (
   colors: ColorTokens,
@@ -315,7 +315,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
-    scroll: { paddingTop: space(3), paddingBottom: space(13) },
+    scroll: { paddingTop: space(3), paddingBottom: TAB_BAR_CLEARANCE },
     sectionTitle: { paddingHorizontal: space(3), marginBottom: space(1.5) },
     // §12.6 haftalık tema banner'ı
     themeBanner: {

@@ -15,7 +15,7 @@ import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, TabHero, Text } from '../../src/ui';
+import { Screen, TabHero, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 // §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş
 type Seg = 'requests' | 'upcoming' | 'past';
@@ -318,7 +318,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: 2,
       backgroundColor: '#5A2A55',
     },
-    list: { padding: space(2.5), paddingBottom: space(13), gap: space(2) },
+    list: { padding: space(2.5), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
 
     card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
     cardPad: {},
