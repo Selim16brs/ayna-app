@@ -61,10 +61,11 @@ model User {
   birthDate       DateTime?  @map("birth_date") @db.Timestamptz(6) // doğum günü kutlamaları (§CRM)
   cutoutUrl       String?    @map("cutout_url") // §5.1.1 arka planı kesik portre — kredi tekrar YANMAZ
   membershipTier  String     @default("free") @map("membership_tier")
-  // K4.2 — para puan KULLANIM KİLİDİ. Bakiye ilk kez eşiği (varsayılan 50.000 ₸)
-  // geçtiğinde damgalanır ve BİR DAHA KAPANMAZ: harcayıp eşiğin altına düşmek
-  // kullanıcıyı yeniden kilitlemez. Aksi hâlde 49.000 ₸ bakiyeli bir kullanıcı
-  // hiç harcayamaz duruma düşerdi. null = henüz açılmadı.
+  // K4.2 — para puan KULLANIM KİLİDİ. Bakiye ilk kez eşiği (admin ayarı
+  // `rate.points_unlock_kzt`, varsayılan 5.000 ₸) geçtiğinde damgalanır ve BİR
+  // DAHA KAPANMAZ: harcayıp eşiğin altına düşmek kullanıcıyı yeniden kilitlemez.
+  // Aksi hâlde eşiğin hemen altındaki bir kullanıcı hiç harcayamaz duruma
+  // düşerdi. null = henüz açılmadı.
   pointsUnlockedAt DateTime? @map("points_unlocked_at") @db.Timestamptz(6)
   prefsJson       String     @default("{}") @map("prefs_json") // favoriler+adresler (hesap verisi)
   membershipUntil DateTime?  @map("membership_until") @db.Timestamptz(6)
@@ -283,6 +284,11 @@ model Booking {
   receiptHash       String?       @unique @map("receipt_hash") // dekont içeriği sha256 — aynı dekont iki kez kullanılamaz
   refundReceiptHash String?       @unique @map("refund_receipt_hash")
   finalizeDeadline  DateTime?     @map("finalize_deadline") @db.Timestamptz(6) // tamamlandı/no-show teyit penceresi sonu
+  // §12.8 — randevunun TAMAMLANDIĞI an. Komisyon dönemi buna göre belirlenir.
+  // Eskiden dönem `createdAt` ile filtreleniyordu: haziranda oluşup ağustosta
+  // tamamlanan randevu HİÇBİR dönemde faturalanmıyordu (haziran dönemi kapandığında
+  // henüz tamamlanmamış, ağustos döneminde ise createdAt penceresi dışında).
+  completedAt       DateTime?     @map("completed_at") @db.Timestamptz(6)
   reviewed          Boolean       @default(false)
   createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
@@ -763,6 +769,10 @@ model CommissionInvoice {
   bookingsCount     Int       @default(0) @map("bookings_count")
   grossRevenue      Decimal   @default(0) @map("gross_revenue") @db.Decimal(12, 2)
   commissionAmount  Decimal   @default(0) @map("commission_amount") @db.Decimal(12, 2)
+  // §7.1 — faturanın kesildiği andaki komisyon oranı. Oran sonradan değişince
+  // geçmiş faturaların tutarı açıklanamaz hâle gelirdi: tutar eski orandan,
+  // panel yeni orandan hesaplardı. Snapshot bu ayrışmayı imkânsız kılar.
+  commissionRate    Decimal   @default(10) @map("commission_rate") @db.Decimal(5, 2)
   dueDate           DateTime  @map("due_date") @db.Timestamptz(6)
   status            String    @default("pending")
   receiptUri        String?   @map("receipt_uri") // pro'nun yüklediği ödeme dekontu
@@ -771,6 +781,10 @@ model CommissionInvoice {
   restrictedApplied Boolean   @default(false) @map("restricted_applied") // gecikme kısıtı uygulandı mı
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
+  // Aynı pro + aynı dönem için İKİ fatura kesilemez. Eskiden yalnız uygulama
+  // katmanında "önce oku sonra yaz" kontrolü vardı; eşzamanlı iki kapanış
+  // çağrısı çift fatura üretebiliyordu.
+  @@unique([proId, periodStart, periodEnd])
   @@index([proId])
   @@index([status])
   @@index([ownerUserId])

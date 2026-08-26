@@ -815,6 +815,9 @@ export class BookingsService {
         });
       }
     }
+    // §12.8 — tamamlanma ANI kaydedilir; komisyon dönemi buna göre belirlenir.
+    // Tek geçiş noktası burası olduğu için hiçbir yol bunu atlayamaz.
+    if (target === 'completed' && !existing.completedAt) data.completedAt = new Date();
     const row = await this.prisma.booking.update({ where: { id }, data });
     // §12 — kritik eylem audit log'u (kim, ne zaman, hangi geçiş)
     if (target)

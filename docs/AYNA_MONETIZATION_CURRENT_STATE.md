@@ -64,19 +64,45 @@ avantaj satılıyor ama uygulanmıyor.
 
 ### 2.2 İki ayrı komisyon motoru
 
-Aynı sayıyı iki farklı kod yolu hesaplıyor ve yuvarlamaları farklı:
+Aynı sayıyı iki farklı kod yolu hesaplıyordu:
 
 - Faturalama: `commissions.calc.ts:6` → `Math.round(gross * rate) / 100`
 - Panel: `admin.service.ts:242` → `Math.round(Math.round(price*100) * rate) / 100`
 
-Er ya da geç panel ile fatura birbirini tutmayacak.
+> **Kesinleştirme (26.08):** ilk sürüm "yuvarlamaları farklı, er ya da geç
+> tutmayacak" diyordu — doğru ama belirsizdi. Sayısal olarak ölçüldü:
+> **tam sayı oranlarda ikisi birebir aynı**, kesirli oranlarda 1 tiyn ayrışıyor
+> (1.000.000 rastgele örnekte 1.955 sapma, hepsi %8,5 gibi oranlarda).
+>
+> Yani bugün (%10) hiçbir fark yok; ayrışma **D4'ün oran matrisi (%8,5/%9/%9,5)
+> devreye girdiği gün** başlayacaktı. İki yol tek fonksiyonda birleştirildi.
 
-### 2.3 Fatura tekilliği garanti değil
+### 2.3 Fatura tekilliği garanti değil — ÇÖZÜLDÜ
 
-`closePeriod()` aynı dönem için fatura var mı diye **önce okuyup sonra yazıyor**
-(`commissions.service.ts:77-80`). `(proId, periodStart, periodEnd)` üzerinde
-**unique constraint yok** (`schema.prisma:759-761`). Eşzamanlı iki çağrı çift
-fatura üretebilir.
+`closePeriod()` aynı dönem için fatura var mı diye **önce okuyup sonra
+yazıyordu**; `(proId, periodStart, periodEnd)` üzerinde unique constraint yoktu.
+Eşzamanlı iki çağrı çift fatura — yani aynı borcu iki kez — üretebilirdi.
+
+Kısıt veritabanına eklendi; üç paralel kapanış çağrısıyla doğrulandı.
+
+### 2.4 Dönem filtresi yanlış alandaydı — GELİR SIZINTISI
+
+`closePeriod()` randevuları **`createdAt`** ile filtreliyordu. Haziranda oluşup
+ağustosta tamamlanan bir randevu:
+
+- haziran dönemi kapatıldığında henüz `completed` değil → sayılmaz,
+- ağustos döneminde `createdAt` penceresi dışında → yine sayılmaz.
+
+Yani **hiçbir dönemde faturalanmıyordu.** `bookings.completed_at` eklendi ve
+dönem artık tamamlanma tarihine göre belirleniyor. Geçmiş kayıtlar için
+`completed_at = created_at` dolduruldu: kapanmış dönemleri retroaktif olarak
+yeniden hesaplamak çift ya da eksik fatura üretirdi.
+
+### 2.5 Oran anlık görüntüsü yoktu — EKLENDİ
+
+Fatura kesildikten sonra `commission.rate` değişince geçmiş faturaların tutarı
+açıklanamaz hâle geliyordu: tutar eski orandan, panel yeni orandan hesaplardı.
+`commission_invoices.commission_rate` artık faturaya yazılıyor.
 
 ---
 

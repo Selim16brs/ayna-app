@@ -95,7 +95,9 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
     if (finalize.length) {
       await this.prisma.booking.updateMany({
         where: { id: { in: finalize.map((b) => b.id) } },
-        data: { status: 'completed' },
+        // §12.8 — bu yol transition()'ı ATLIYOR (updateMany). Tamamlanma anı
+        // burada da yazılmazsa o randevular hiçbir komisyon dönemine düşmez.
+        data: { status: 'completed', completedAt: now },
       });
       // K4.1 — tamamlanan hizmetten geri kazanım. İki kez yazılmaz: müşteri
       // teyidi yoluyla zaten yazılmışsa grantCompletionCashback atlar.

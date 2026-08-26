@@ -68,11 +68,16 @@ export class CommissionsService {
 
     // Komisyon YALNIZ online (AYNA aracılı, userId dolu) randevulardan — offline walk-in'ler hariç.
     // (admin.commissions() ile AYNI kural → panel = fatura = admin tutarlı)
+    //
+    // Dönem TAMAMLANMA tarihine göre. Eskiden `createdAt` kullanılıyordu ve bu bir
+    // GELİR SIZINTISIYDI: haziranda oluşup ağustosta tamamlanan randevu hiçbir
+    // döneme düşmüyordu — haziran kapandığında henüz tamamlanmamış, ağustosta ise
+    // createdAt penceresi dışındaydı. Yani hiç faturalanmıyordu.
     const bookings = await this.prisma.booking.findMany({
       where: {
         status: 'completed',
         userId: { not: null },
-        createdAt: { gte: start, lt: end },
+        completedAt: { gte: start, lt: end },
       },
       select: { proId: true, proName: true, price: true },
     });
@@ -91,27 +96,34 @@ export class CommissionsService {
     for (const [proId, g] of byPro) {
       const commission = commissionFor(g.gross, rate);
       if (commission <= 0) continue;
-      // İdempotent — aynı pro+dönem için fatura varsa atla
-      const existing = await this.prisma.commissionInvoice.findFirst({
-        where: { proId, periodStart: start, periodEnd: end },
-      });
-      if (existing) continue;
       const ownerUserId = await this.ownerByProId(proId);
-      const inv = await this.prisma.commissionInvoice.create({
-        data: {
-          proId,
-          proName: g.proName,
-          ownerUserId,
-          periodStart: start,
-          periodEnd: end,
-          bookingsCount: g.count,
-          grossRevenue: g.gross,
-          commissionAmount: commission,
-          dueDate: due,
-          status: 'pending',
-        },
-      });
-      created.push(inv);
+      // İdempotentlik artık VERİTABANI kısıtına dayanıyor: (proId, periodStart,
+      // periodEnd) benzersiz. Eskiden "önce oku sonra yaz" vardı ve eşzamanlı iki
+      // kapanış çağrısı çift fatura üretebiliyordu — para sisteminde iki kez
+      // borçlandırma demek.
+      try {
+        const inv = await this.prisma.commissionInvoice.create({
+          data: {
+            proId,
+            proName: g.proName,
+            ownerUserId,
+            periodStart: start,
+            periodEnd: end,
+            bookingsCount: g.count,
+            grossRevenue: g.gross,
+            commissionAmount: commission,
+            // §7.1 — oran ANLIK GÖRÜNTÜSÜ. Oran sonradan değişince geçmiş
+            // faturanın tutarı açıklanamaz hâle gelirdi.
+            commissionRate: rate,
+            dueDate: due,
+            status: 'pending',
+          },
+        });
+        created.push(inv);
+      } catch (e) {
+        // P2002 = bu dönem için fatura zaten var → sessizce atla (idempotent).
+        if ((e as { code?: string }).code !== 'P2002') throw e;
+      }
     }
     await this.audit('period.close', `${input.periodStart}_${input.periodEnd}`, actorId);
     return { created: created.length, dueDate: due, rate };

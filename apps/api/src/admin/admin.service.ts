@@ -1,3 +1,4 @@
+import { commissionFor } from '../commissions/commissions.calc';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { hashPassword } from '../common/crypto';
@@ -222,8 +223,11 @@ export class AdminService {
       'alternative_proposed',
       'waitlist',
     ];
-    // kuruş cinsinden komisyon: round(priceMinor * rate / 100)
-    const commMinor = (price: number) => Math.round(Math.round(price * 100) * rate) / 100;
+    // Komisyon hesabı TEK YERDE (`commissions.calc`). Burada eskiden ayrı bir
+    // formül vardı; tam sayı oranlarda ikisi aynı sonucu veriyordu ama KESİRLİ
+    // oranlarda 1 tiyn ayrışıyordu (1.000.000 örnekte ~1.955 sapma, hepsi %8,5
+    // gibi oranlarda). D4'ün kademeli oran matrisi (%8,5/%9/%9,5) devreye
+    // girdiği gün panel ile fatura birbirini tutmamaya başlayacaktı.
 
     const bySalon = new Map<
       string,
@@ -239,7 +243,7 @@ export class AdminService {
     const totals = { count: rows.length, gmv: 0, earned: 0, pending: 0, voided: 0 };
     const items = rows.map((r) => {
       const price = Number(r.price);
-      const commission = Math.round(commMinor(price)) / 100; // KZT (2 hane)
+      const commission = commissionFor(price, rate); // KZT (2 hane)
       const isEarned = EARNED.includes(r.status);
       const isPending = PENDING.includes(r.status);
       const key = r.proId || r.proName;
