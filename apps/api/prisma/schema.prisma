@@ -762,6 +762,39 @@ model Dispute {
   @@map("disputes")
 }
 
+// §10.3 — BİLDİRİM OUTBOX'I.
+//
+// Bildirimler eskiden fire-and-forget gidiyordu: `void push.sendToUser(...)`.
+// Ağ hatası, Expo'nun 5xx dönmesi ya da geçersiz token durumunda bildirim
+// SESSİZCE kayboluyordu — tekrar denenmiyor, kaydı da tutulmuyordu. Kapora
+// süresi dolmak üzere olan bir müşteri haber alamıyordu ve kimsenin haberi
+// olmuyordu.
+//
+// Artık her bildirim önce buraya yazılıyor, sonra teslim ediliyor. Teslim
+// başarısızsa satır `pending` kalıyor ve zamanlayıcı artan aralıklarla tekrar
+// deniyor.
+//
+// SAKLAMA: title/body kullanıcı adı taşıyabilir. Bu operasyonel veri, log ya da
+// analytics DEĞİL — ama süresiz durmamalı: teslim edilen satırlar zamanlayıcı
+// tarafından budanıyor.
+model NotificationOutbox {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  title         String
+  body          String
+  dataJson      String    @default("{}") @map("data_json")
+  // pending → teslim bekliyor · sent → teslim edildi · dead → deneme hakkı bitti
+  status        String    @default("pending")
+  attempts      Int       @default(0)
+  lastError     String?   @map("last_error")
+  nextAttemptAt DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  sentAt        DateTime? @map("sent_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([status, nextAttemptAt])
+  @@map("notification_outbox")
+}
+
 // §12.8 Komisyon dönem faturası — aylık tahakkuk→tahsilat döngüsü.
 // status: pending (bekliyor) | collected (ödendi) | overdue (gecikti)
 model CommissionInvoice {

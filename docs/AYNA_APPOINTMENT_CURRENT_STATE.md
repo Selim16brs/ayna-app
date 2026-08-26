@@ -168,9 +168,21 @@ Push + uygulama içi merkez var (`push.templates.ts`, tr/kk/ru sözlüğü).
 Şartname §0.2'nin yasakladığı ücretli servislerden **hiçbiri kullanılmıyor** —
 SMS, WhatsApp, ücretli e-posta yok. Bu tarafta uyum tam.
 
-Ancak bildirimler **fire-and-forget**: `void this.push.sendToUser(...)`
+Bildirimler **fire-and-forget** idi: `void this.push.sendToUser(...)`
 (`quotes.service.ts:208` deseni). Başarısız push sessizce kayboluyor, tekrar
-denenmiyor, kaydı tutulmuyor. Şartname §10.3 bunu outbox ile istiyor.
+denenmiyor, kaydı tutulmuyordu. Expo'nun yanıtı **hiç okunmuyordu** — 200 dönse
+bile mesaj başına hata verebiliyor, dolayısıyla geçersiz bir cihaz token'ı
+sonsuza kadar aynı hatayı üretiyordu.
+
+> **Çözüldü (26.08):** §10.3 outbox'ı kuruldu. Her bildirim önce
+> `notification_outbox`'a yazılıyor, sonra teslim ediliyor. Teslim başarısızsa
+> satır `pending` kalıyor ve zamanlayıcı artan aralıklarla (1dk / 5dk / 15dk /
+> 1sa / 6sa / 24sa) tekrar deniyor; hak bitince `dead` olup log'a ERROR düşüyor.
+> `DeviceNotRegistered` dönen token'lar siliniyor. Teslim edilen satırlar 7 gün
+> sonra budanıyor (title/body kullanıcı adı taşıyabilir).
+>
+> Çağıran akış yine bloklanmıyor ve push hatası randevu/mesaj akışını bozmuyor —
+> değişen tek şey, hatanın artık kaybolmaması.
 
 ---
 
