@@ -1935,6 +1935,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
     'Кодыңды бөліс — досың алғашқы жазылуын аяқтағанда екеуің де {points} ұпай аласыңдар.',
   'referral.your_code': 'ШАҚЫРУ КОДЫҢ',
   'referral.share': 'Кодты бөлісу',
+  'referral.privacy_note':
+    'Байланыстарыңды оқымаймыз және ешкімге өзіміз жазбаймыз — сілтемені сен жібересің.',
   'referral.share_message':
     'AYNA-ға қосыл! Шақыру кодым: {code} — алғашқы жазылуыңды аяқтағанда екеуміз де {points} ұпай аламыз ✨',
   'referral.invited': 'Шақырылған',
@@ -2039,6 +2041,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.staff.readonly': 'Тек оқуға',
   'seller.staff.no_services': 'Маман әзірге қызмет қоспаған.',
   'boni.title': 'Boni',
+  'boni.convert.label': 'БОНИ СҰРАНЫС ДАЙЫНДАДЫ',
+  'boni.convert.cta': 'Сұранысқа айналдыру',
+  'boni.convert.note': 'Мамандар баға ұсынсын — сұрағыңды сұранысқа көшіреміз, қалауыңша өңде.',
   'boni.header_sub': 'AYNA командасының мысығы',
   'boni.subtitle': 'AI сұлулық кеңесшіңіз',
   'boni.entry': 'Boni-ден сұраңыз',

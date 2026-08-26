@@ -2038,6 +2038,8 @@ export const tr = {
     'Kodunu paylaş — arkadaşın ilk randevusunu tamamladığında ikiniz de {points} puan kazanın.',
   'referral.your_code': 'DAVET KODUN',
   'referral.share': 'Kodu paylaş',
+  'referral.privacy_note':
+    'Rehberini okumuyoruz ve kimseye kendimiz yazmıyoruz — bağlantıyı sen gönderiyorsun.',
   'referral.share_message':
     'AYNA’ya katıl! Davet kodum: {code} — ilk randevunu tamamlayınca ikimiz de {points} puan kazanıyoruz ✨',
   'referral.invited': 'Davet edilen',
@@ -2153,6 +2155,10 @@ export const tr = {
 
   // Boni — AI güzellik danışmanı (§13.5)
   'boni.title': 'Boni',
+  'boni.convert.label': 'BONİ BİR TALEP HAZIRLADI',
+  'boni.convert.cta': 'Talebe dönüştür',
+  'boni.convert.note':
+    'Uzmanlar sana fiyat versin — sorunu talebe taşıyoruz, dilediğin gibi düzenle.',
   'boni.header_sub': 'AYNA ekibinin kedisi',
   'boni.subtitle': 'AI güzellik danışmanın',
   'boni.entry': 'Boni’ye sor',

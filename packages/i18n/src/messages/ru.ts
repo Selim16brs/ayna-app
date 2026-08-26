@@ -1921,6 +1921,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
     'Поделись кодом — когда подруга завершит первую запись, вы обе получите по {points} баллов.',
   'referral.your_code': 'ТВОЙ КОД',
   'referral.share': 'Поделиться кодом',
+  'referral.privacy_note':
+    'Мы не читаем твои контакты и никому не пишем сами — ссылку отправляешь ты.',
   'referral.share_message':
     'Присоединяйся к AYNA! Мой код: {code} — после твоей первой завершённой записи мы обе получим по {points} баллов ✨',
   'referral.invited': 'Приглашено',
@@ -2024,6 +2026,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.staff.readonly': 'Только чтение',
   'seller.staff.no_services': 'Мастер ещё не добавил услуги.',
   'boni.title': 'Boni',
+  'boni.convert.label': 'БОНЯ СОБРАЛА ЗАЯВКУ',
+  'boni.convert.cta': 'Превратить в заявку',
+  'boni.convert.note':
+    'Пусть мастера предложат цену — перенесём твой вопрос в заявку, отредактируй как хочешь.',
   'boni.header_sub': 'Кошка команды AYNA',
   'boni.subtitle': 'Ваш AI-консультант по красоте',
   'boni.entry': 'Спросить Boni',

@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   POINTS_EXPIRY_DAYS,
   POINTS_SPEND_CAP_PCT,
@@ -10,12 +12,13 @@ import {
   REWARDS,
   type Reward,
 } from '../src/data';
+import { api } from '../src/api';
 import { fillParams, useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import type { MessageKey } from '@ayna/i18n';
-import { Progress, Screen, SectionHeader, StackHeader, Text } from '../src/ui';
+import { PressableScale, Progress, Screen, SectionHeader, StackHeader, Text } from '../src/ui';
 
 const NEXT_DRAW = '30 Haziran';
 // Keşfet canlı aksan paleti — ödül/çekiliş görsel-zengin kartlar
@@ -31,6 +34,26 @@ export default function RewardsScreen() {
   const { t } = useLocale();
   const { colors, shadow, gradients } = useTheme();
   const styles = useThemedStyles(makeStyles);
+
+  const router = useRouter();
+  const token = useStore((st) => st.token);
+  const avatarUri = useStore((st) => st.avatarUri);
+  // Davet ödülü sunucudan — istemcide sabit tutmak, oran değişince ekranın
+  // yanlış sayı göstermesi demekti.
+  const [referralPoints, setReferralPoints] = useState<string>('');
+  useEffect(() => {
+    if (!token) return;
+    let alive = true;
+    void api
+      .referralMine(token)
+      .then((d) => {
+        if (alive) setReferralPoints(String(d.rewardPoints));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [token]);
 
   const points = useStore((s) => s.points);
   // K4.5 — kurallar SUNUCUDAN gelir; sunucu okunmadıysa yerel yedek kullanılır.
@@ -319,6 +342,50 @@ export default function RewardsScreen() {
           <RuleRow icon="people-outline" text={t('rewards.rules.channels')} last />
         </View>
 
+        {/* ═══ DAVET — kanvas Puanlar.dc.html §davet ═══
+            Kanvasta vardı ama koda hiç girmemişti: puan ekranından davet
+            akışına giden yol yoktu. D9 ile ödül artık davet edilenin İLK
+            TAMAMLANMIŞ randevusuna bağlı, dolayısıyla kullanıcının bu akışı
+            bulabilmesi daha da önemli. */}
+        <SectionHeader title={t('referral.title')} />
+        <PressableScale
+          style={[styles.inviteCard, shadow.soft]}
+          onPress={() => router.push('/referral')}
+        >
+          <View style={styles.inviteTop}>
+            <View style={styles.inviteAvatar}>
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={styles.inviteAvatarImg} />
+              ) : (
+                <Ionicons name="people" size={22} color={colors.accent} />
+              )}
+            </View>
+            <View style={styles.flex1}>
+              <Text variant="title" tone="ink">
+                {t('referral.title')}
+              </Text>
+              <Text variant="caption" tone="muted" style={styles.inviteSub}>
+                {fillParams(t('referral.subtitle'), { points: referralPoints })}
+              </Text>
+            </View>
+          </View>
+          <LinearGradient
+            colors={[colors.accent, colors.ink]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.inviteCta}
+          >
+            <Ionicons name="share-social-outline" size={17} color={colors.onAccent} />
+            <Text variant="cta" tone="onAccent">
+              {t('referral.share')}
+            </Text>
+          </LinearGradient>
+          {/* Rehber okuma endişesini ÖNCEDEN yanıtla — kanvas kuralı */}
+          <Text variant="micro" tone="muted" style={styles.inviteNote}>
+            {t('referral.privacy_note')}
+          </Text>
+        </PressableScale>
+
         <View style={styles.note}>
           <Ionicons name="lock-closed" size={13} color={colors.muted} />
           <Text variant="caption" tone="muted" style={styles.noteText}>
@@ -466,6 +533,35 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     redeemBtnOff: { backgroundColor: colors.surfaceMuted },
+    flex1: { flex: 1 },
+    inviteCard: {
+      marginHorizontal: space(2.5),
+      padding: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      gap: space(1.625),
+    },
+    inviteTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
+    inviteAvatar: {
+      width: 54,
+      height: 54,
+      borderRadius: 18,
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    inviteAvatarImg: { width: 54, height: 54 },
+    inviteSub: { marginTop: 4, lineHeight: 19 },
+    inviteCta: {
+      height: 54,
+      borderRadius: 27,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space(1),
+    },
+    inviteNote: { textAlign: 'center', lineHeight: 17 },
     note: {
       flexDirection: 'row',
       alignItems: 'center',

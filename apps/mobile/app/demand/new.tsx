@@ -46,12 +46,18 @@ export default function NewDemandScreen() {
   // §12.3 — kısıtlı hesap yeni talep açamaz
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   // §12.6 — CTA'dan gelen kategori + alt hizmet ön-seçimi
-  const { category: catParam, service: svcParam } = useLocalSearchParams<{
+  const {
+    category: catParam,
+    service: svcParam,
+    note: noteParam,
+  } = useLocalSearchParams<{
     category?: string;
     service?: string;
+    // Boni'nin "talebe dönüştür" kartı kullanıcının sorusunu buraya taşır.
+    note?: string;
   }>();
   const initialCat = CATEGORIES.some((c) => c.id === catParam) ? catParam! : CATEGORIES[0]!.id;
-  const [desc, setDesc] = useState('');
+  const [desc, setDesc] = useState(typeof noteParam === 'string' ? noteParam : '');
   const [photos, setPhotos] = useState<{ uri: string; base64?: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [category, setCategory] = useState<string>(initialCat);

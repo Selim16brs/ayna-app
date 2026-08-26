@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'expo-router';
 import {
   ActivityIndicator,
   Image,
@@ -17,7 +18,15 @@ import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../src/ui';
+import {
+  Button,
+  PressableScale,
+  Screen,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+  TextInput,
+} from '../src/ui';
 
 interface Msg {
   id: string;
@@ -31,10 +40,17 @@ export default function BoniScreen() {
   const styles = useThemedStyles(makeStyles);
   const token = useStore((s) => s.token);
 
+  const router = useRouter();
   const [quota, setQuota] = useState<AiQuota | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  // Boni EN AZ BİR kez cevap verdiyse, kullanıcının son sorusu talebe taşınabilir.
+  const lastUserText = (() => {
+    if (!messages.some((m) => m.role === 'boni')) return '';
+    const son = [...messages].reverse().find((m) => m.role === 'user');
+    return son?.text.trim() ?? '';
+  })();
   const scrollRef = useRef<ScrollView>(null);
   // §5.4 — Boni karakteri: üst bar sağında kedi portresi
   const boniAvatar = <Image source={require('../assets/boni-cat.png')} style={styles.headerCat} />;
@@ -193,6 +209,49 @@ export default function BoniScreen() {
             </Animated.View>
           ))}
 
+          {/* ═══ TALEBE DÖNÜŞTÜR — kanvas Boni.dc.html §talebe dönüştür ═══
+              Kanvasta vardı ama koda hiç girmemişti: Boni cevap veriyor ve akış
+              orada bitiyordu. Bu kart, AI'yı gerçek gelire bağlayan tek köprü.
+
+              DÜRÜSTLÜK NOTU: kanvasta Boni'nin yapılandırılmış bir talep
+              çıkardığı (hizmet adı, saç tipi, bütçe, semt) gösteriliyor. Böyle
+              bir çıkarım sunucuda YOK — uydurmak yerine, kullanıcının kendi
+              sorusunu talebe not olarak taşıyoruz. Alan çıkarımı geldiğinde
+              kart aynı yerde zenginleşir. */}
+          {lastUserText && !sending ? (
+            <Animated.View entering={FadeInDown.springify().damping(18)}>
+              <PressableScale
+                style={[styles.convertCard, shadow.soft]}
+                onPress={() =>
+                  router.push({ pathname: '/demand/new', params: { note: lastUserText } })
+                }
+              >
+                <View style={styles.convertTop}>
+                  <View style={styles.convertIcon}>
+                    <Ionicons name="sparkles" size={20} color={colors.accent} />
+                  </View>
+                  <View style={styles.flex1}>
+                    <Text variant="label" tone="muted">
+                      {t('boni.convert.label')}
+                    </Text>
+                    <Text variant="title" tone="ink" numberOfLines={2} style={styles.convertTitle}>
+                      {lastUserText}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.convertCta}>
+                  <Ionicons name="arrow-forward" size={16} color={colors.onAccent} />
+                  <Text variant="cta" tone="onAccent">
+                    {t('boni.convert.cta')}
+                  </Text>
+                </View>
+                <Text variant="micro" tone="muted" style={styles.convertNote}>
+                  {t('boni.convert.note')}
+                </Text>
+              </PressableScale>
+            </Animated.View>
+          ) : null}
+
           {/* Polish 5.2 — yanıt beklenirken CANLI gösterge: bekleme belirsiz kalmaz */}
           {sending ? (
             <View style={[styles.bubbleRow, styles.rowLeft]}>
@@ -316,6 +375,35 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1.75),
       paddingVertical: space(1.25),
     },
+    flex1: { flex: 1 },
+    // Kanvas §talebe dönüştür — beyaz kart, ikon + başlık + koyu CTA + not.
+    convertCard: {
+      marginTop: space(1.5),
+      padding: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      gap: space(1.625),
+    },
+    convertTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space(1.5) },
+    convertIcon: {
+      width: 54,
+      height: 54,
+      borderRadius: 18,
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    convertTitle: { marginTop: 4 },
+    convertCta: {
+      height: 46,
+      borderRadius: 23,
+      backgroundColor: colors.accent,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space(1),
+    },
+    convertNote: { textAlign: 'center', lineHeight: 17 },
     bubbleUser: { backgroundColor: colors.accent, borderBottomRightRadius: 6 },
     bubbleBoni: {
       backgroundColor: colors.surface,
