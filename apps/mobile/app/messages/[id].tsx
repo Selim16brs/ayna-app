@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -10,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { api, ApiError, type ChatMessage } from '../../src/api';
+import { isRiskyMessage } from '../../src/messages-guard';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -101,6 +103,22 @@ export default function ChatThreadScreen() {
     }
   };
 
+  // En SON riskli karşı-taraf mesajı — uyarı yalnız orada, bir kez görünür.
+  const [guardOff, setGuardOff] = useState(false);
+  const riskyId = useMemo(() => {
+    if (guardOff) return null;
+    const risky = (items ?? []).filter((m) => !m.mine && !m.hidden && isRiskyMessage(m.body));
+    return risky.length ? risky[risky.length - 1]!.id : null;
+  }, [items, guardOff]);
+
+  // Engelleme geri alınabilir ama sürpriz olmamalı: ne olacağını önce söyle.
+  const onBlock = () => {
+    Alert.alert(t('messages.guard.block'), t('messages.guard.block_note'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('messages.guard.block'), style: 'destructive', onPress: () => void toggleBlock() },
+    ]);
+  };
+
   const toggleBlock = async () => {
     if (!token || !params.otherId) return;
     try {
@@ -157,18 +175,65 @@ export default function ChatThreadScreen() {
             </Text>
           ) : null}
           {(items ?? []).map((m) => (
-            <View key={m.id} style={[styles.bubbleRow, m.mine ? styles.rowMine : styles.rowTheirs]}>
-              <View style={[styles.bubble, m.mine ? styles.bubbleMine : styles.bubbleTheirs]}>
-                {m.hidden ? (
-                  <Text variant="caption" tone="muted" style={styles.hiddenText}>
-                    {t('messages.hidden')}
-                  </Text>
-                ) : (
-                  <Text variant="body" tone={m.mine ? 'onAccent' : 'ink'}>
-                    {m.body}
-                  </Text>
-                )}
+            <View key={m.id}>
+              <View style={[styles.bubbleRow, m.mine ? styles.rowMine : styles.rowTheirs]}>
+                <View style={[styles.bubble, m.mine ? styles.bubbleMine : styles.bubbleTheirs]}>
+                  {m.hidden ? (
+                    <Text variant="caption" tone="muted" style={styles.hiddenText}>
+                      {t('messages.hidden')}
+                    </Text>
+                  ) : (
+                    <Text variant="body" tone={m.mine ? 'onAccent' : 'ink'}>
+                      {m.body}
+                    </Text>
+                  )}
+                </View>
               </View>
+
+              {/* KORUMA KARTI — karşı taraf uygulama dışına para çıkarmaya
+                  çalışıyorsa, mesajın HEMEN ALTINDA belirir. Suçlamaz, bilgilendirir.
+                  Tespit cihazda yapılır; mesaj içeriği bu iş için hiçbir yere gitmez. */}
+              {!m.mine && !m.hidden && m.id === riskyId ? (
+                <View style={styles.guard}>
+                  <View style={styles.guardHead}>
+                    <Ionicons name="alert-circle" size={17} color={colors.danger} />
+                    <Text variant="title" style={{ color: colors.danger }}>
+                      {t('messages.guard.title')}
+                    </Text>
+                  </View>
+                  <Text variant="caption" tone="inkSoft">
+                    {t('messages.guard.body')}
+                  </Text>
+                  <View style={styles.guardFacts}>
+                    <View style={styles.guardFact}>
+                      <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                      <Text variant="caption" tone="inkSoft" style={styles.flex}>
+                        {t('messages.guard.onsite')}
+                      </Text>
+                    </View>
+                    <View style={styles.guardFact}>
+                      <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                      <Text variant="caption" tone="inkSoft" style={styles.flex}>
+                        {t('messages.guard.kept')}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.guardActions}>
+                    <Pressable style={styles.guardBtn} onPress={() => setGuardOff(true)}>
+                      <Text variant="captionStrong" tone="inkSoft">
+                        {t('messages.guard.ok')}
+                      </Text>
+                    </Pressable>
+                    {params.otherId && !blocked ? (
+                      <Pressable style={[styles.guardBtn, styles.guardBtnDanger]} onPress={onBlock}>
+                        <Text variant="captionStrong" style={{ color: colors.danger }}>
+                          {t('messages.guard.block')}
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                </View>
+              ) : null}
             </View>
           ))}
         </ScrollView>
@@ -291,5 +356,32 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     noticeText: { flex: 1 },
+    guard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 2,
+      borderColor: colors.dangerSoft,
+      padding: space(2),
+      gap: space(1.25),
+      marginTop: space(1),
+    },
+    guardHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    guardFacts: {
+      gap: space(1),
+      backgroundColor: colors.bg,
+      borderRadius: radius.md,
+      padding: space(1.5),
+    },
+    guardFact: { flexDirection: 'row', alignItems: 'flex-start', gap: space(1) },
+    guardActions: { flexDirection: 'row', gap: space(1) },
+    guardBtn: {
+      flex: 1,
+      height: 46,
+      borderRadius: 23,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surfaceMuted,
+    },
+    guardBtnDanger: { backgroundColor: colors.dangerSoft },
     headerActions: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
   });

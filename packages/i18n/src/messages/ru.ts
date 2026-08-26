@@ -2035,6 +2035,15 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'messages.send': 'Отправить',
   'messages.start': 'Написать сообщение',
   'messages.hidden': 'Это сообщение скрыто из-за нарушения правил',
+  'messages.guard.title': 'Осторожно с этим',
+  'messages.guard.body':
+    'Номер скрыт не просто так. Если перевести деньги вне AYNA, мы не сможем ни вернуть их, ни подтвердить, что ты платила — защита работает только внутри приложения.',
+  'messages.guard.kept': 'Переписку здесь мы сохраняем; она пригодится, если откроешь спор.',
+  'messages.guard.onsite': 'Остаток платится на месте, после услуги.',
+  'messages.guard.ok': 'Понятно',
+  'messages.guard.block': 'Заблокировать',
+  'messages.guard.block_note':
+    'После блокировки он не сможет тебе писать. И не увидит, что ты его заблокировала.',
   'messages.number_hint': 'В целях безопасности номера телефонов скрываются',
   'messages.block': 'Заблокировать',
   'messages.unblock': 'Разблокировать',
