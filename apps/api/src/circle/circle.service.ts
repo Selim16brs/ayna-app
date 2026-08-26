@@ -160,6 +160,37 @@ export class CircleService {
     return { helpful: row.helpful };
   }
 
+  /**
+   * Bir gönderinin yorumları.
+   *
+   * HATA DÜZELTMESİ: bu uç yoktu. listPosts yalnız yorum SAYISINI dönüyordu,
+   * metinleri değil — yani A kullanıcısı yorum yazıyor, B aynı gönderiyi açıyor,
+   * sayacın arttığını görüyor ama yorumu okuyamıyordu. Herkes yalnız kendi
+   * yorumunu görüyordu; topluluk özelliğinin tamamı bunun üzerine kurulu.
+   *
+   * GİZLİLİK: anonim yorumda userId ASLA dışarı verilmez (gönderilerdeki
+   * authorUserId kuralıyla aynı). Etiket kimlik değildir.
+   */
+  async listComments(postId: string) {
+    const post = await this.prisma.circlePost.findUnique({ where: { id: postId } });
+    if (!post || post.status !== 'published') {
+      throw new NotFoundException({ code: 'POST_NOT_FOUND', message: 'Gönderi bulunamadı' });
+    }
+    const rows = await this.prisma.circleComment.findMany({
+      where: { postId },
+      orderBy: { createdAt: 'asc' },
+      take: 200,
+    });
+    return rows.map((c) => ({
+      id: c.id,
+      authorLabel: c.authorLabel,
+      text: c.text,
+      proId: c.proId,
+      proVerified: c.proVerified,
+      createdAt: c.createdAt,
+    }));
+  }
+
   async addComment(
     userId: string | undefined,
     role: string | undefined,
