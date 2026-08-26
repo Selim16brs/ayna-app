@@ -124,6 +124,27 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'expert.reg.preview_services': 'Кол-во услуг',
   'expert.reg.preview_note':
     'Примерно так ваш профиль увидит клиент. Подтвердите и завершите регистрацию.',
+  // §uzman onboarding Faz E4 — doğrulama & rozetler ekranı
+  'seller.menu.verify': 'Верификация и значки',
+  'seller.menu.verify_d':
+    'Подтвердите личность, сертификаты и соцсети — получите статус AYNA Проверено',
+  'expert.verify.title': 'Верификация и значки',
+  'expert.verify.not_yet': 'У вас ещё нет статуса AYNA Проверено',
+  'expert.verify.ayna_rule':
+    'Статус AYNA Проверено присваивается, когда подтверждена ваша личность (KYC) и сертификат или аккаунт в соцсети.',
+  'expert.verify.layers': 'Уровни доверия',
+  'expert.verify.done': 'Подтверждено',
+  'expert.verify.pending': 'Ожидает',
+  'expert.verify.identity_d': 'Подтвердите личность через KYC (нажмите → начать)',
+  'expert.verify.cert_d': 'Ваши сертификаты проверяет администратор',
+  'expert.verify.social_d': 'Докажите, что аккаунт в Instagram принадлежит вам',
+  'expert.verify.social_title': 'Подтверждение владения Instagram',
+  'expert.verify.social_ok': 'Подтверждено:',
+  'expert.verify.social_hint':
+    'Введите имя пользователя, получите код и добавьте его в описание профиля Instagram в течение 24 часов. Администратор проверит и поставит значок.',
+  'expert.verify.get_code': 'Получить код',
+  'expert.verify.add_to_bio': 'Добавьте этот код в описание профиля Instagram:',
+  'expert.verify.pending_admin': 'Ожидается проверка администратора.',
   'city.select.title': 'Выбери город',
   'city.select.search': 'Поиск города',
   'city.select.placeholder': 'Выбери город',
