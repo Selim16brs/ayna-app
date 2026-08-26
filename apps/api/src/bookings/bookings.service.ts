@@ -111,7 +111,8 @@ export class BookingsService {
       where: { userId },
       orderBy: { inDays: 'asc' },
     });
-    return rows.map(mapBooking);
+    // MÜŞTERİ yolu: gizli sinyal gönderilmez (opts yok → kapalı).
+    return rows.map((b) => mapBooking(b));
   }
 
   // §9.4 — SAĞLAYICI olarak gelen randevular: uzman (Specialist.proId) veya salon
@@ -142,7 +143,8 @@ export class BookingsService {
           where: { proId: salonPro, uzmanName: me.name },
           orderBy: { inDays: 'asc' },
         });
-        return rows.map(mapBooking);
+        // SAĞLAYICI yolu: kendi verdiği sinyali görür.
+        return rows.map((b) => mapBooking(b, { forProvider: true }));
       }
     }
     if (!proId) return [];
@@ -166,7 +168,7 @@ export class BookingsService {
       else done.set(h.userId, (done.get(h.userId) ?? 0) + 1);
     }
     return rows.map((b) => ({
-      ...mapBooking(b),
+      ...mapBooking(b, { forProvider: true }),
       customerTrusted: !!b.userId && (done.get(b.userId) ?? 0) >= 3 && !bad.has(b.userId),
     }));
   }
@@ -886,6 +888,49 @@ export class BookingsService {
     });
   }
 
+  /**
+   * §7.3 — uzmanın hizmet SONRASI müşteri hakkındaki gizli sinyali.
+   *
+   * Yalnız SAĞLAYICI yazabilir ve yalnız hizmet ZAMANI GEÇMİŞ randevuda:
+   * hizmetten önce verilen bir "sorunlu" işareti, yaşanmamış bir deneyimin
+   * damgası olurdu.
+   *
+   * Aynı randevuya tekrar yazmak üzerine yazar (fikir değişebilir).
+   * Denetim kaydına yalnız DEĞER girer — kimin kim hakkında ne düşündüğü
+   * log'a yazılmaz (CLAUDE.md: PII asla log'a).
+   */
+  async setCustomerSignal(id: string, signal: 'up' | 'down', actorId?: string) {
+    await this.assertParty(id, actorId, 'provider');
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (!b)
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    const gecti = (b.startAt?.getTime() ?? Number.POSITIVE_INFINITY) < Date.now();
+    if (!gecti) {
+      throw new BadRequestException({
+        code: 'SIGNAL_TOO_EARLY',
+        message: 'Sinyal ancak hizmet saatinden sonra verilebilir',
+      });
+    }
+    const row = await this.prisma.booking.update({
+      where: { id },
+      data: { providerSignal: signal },
+    });
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: actorId ?? null,
+          actorRole: 'provider',
+          action: 'booking.customer_signal',
+          resourceType: 'booking',
+          resourceId: id,
+          // Yalnız DEĞER: kimin kim hakkında ne düşündüğü kayda GİRMEZ.
+          safeDiff: { signal },
+        },
+      })
+      .catch(() => undefined);
+    return mapBooking(row, { forProvider: true });
+  }
+
   async accept(id: string, actorId?: string) {
     await this.assertParty(id, actorId, 'owner');
     const b = await this.prisma.booking.findUnique({ where: { id } });
@@ -1022,8 +1067,17 @@ export class BookingsService {
   }
 }
 
-function mapBooking(b: Booking) {
+/**
+ * Randevuyu istemci biçimine çevirir.
+ *
+ * `forProvider` — §7.3 gizli müşteri sinyali YALNIZ sağlayıcıya gönderilir.
+ * Varsayılan KAPALI: bir alanı yanlışlıkla açık bırakmak, kadına "sorunlu"
+ * etiketlendiğini göstermek demekti. Açmak bilinçli bir hareket olmalı.
+ */
+function mapBooking(b: Booking, opts?: { forProvider?: boolean }) {
   return {
+    // §7.3 — gizli sinyal; müşteri yolunda alan HİÇ bulunmaz (undefined).
+    providerSignal: opts?.forProvider ? (b.providerSignal ?? undefined) : undefined,
     id: b.id,
     source: b.source,
     service: b.service,
