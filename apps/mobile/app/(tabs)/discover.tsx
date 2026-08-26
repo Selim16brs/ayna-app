@@ -111,7 +111,7 @@ export default function DiscoverScreen() {
             onPress={() => router.push('/city')}
           >
             <Ionicons name="location" size={13} color={colors.sage} />
-            <Text variant="meta" tone="ink" style={styles.cityText} numberOfLines={1}>
+            <Text variant="meta" tone="ink" style={styles.cityText}>
               {city}
             </Text>
             <Ionicons name="chevron-down" size={12} color={colors.muted} />
@@ -310,7 +310,9 @@ export default function DiscoverScreen() {
                   onPress={() => router.push(`/category/${cat.id}` as never)}
                 >
                   <Ionicons name={cat.icon as IoniconName} size={16} color={tint} />
-                  <Text variant="cta" tone="ink" style={styles.catLabel} numberOfLines={1}>
+                  {/* numberOfLines YOK: hap yatay kaydırma içinde, genişlik
+                      sınırı yok — "Masaj & Vüc..." gibi kırpılma kabul edilemez. */}
+                  <Text variant="cta" tone="ink" style={styles.catLabel}>
                     {t(cat.labelKey)}
                   </Text>
                 </PressableScale>
@@ -590,18 +592,19 @@ const makeStyles = (colors: ColorTokens) =>
       textAlignVertical: 'center',
       includeFontPadding: false,
     },
+    // Kanvas §1 — şehir çipi 34 yüksek, İÇERİĞE göre esner.
+    // maxWidth ve flexShrink YOK: şehir adı uzunluğu öngörülemez
+    // (Almatı · Шымкент · Өскемен) ve "Alm..." diye kırpılması kabul edilemez.
     cityChip: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 3,
-      height: 44,
+      gap: 5,
+      height: 34,
       paddingHorizontal: space(1.5),
-      borderRadius: radius.pill,
+      borderRadius: 17,
       backgroundColor: colors.surface,
     },
-    // maxWidth YOK: şehir adı uzunluğu öngörülemez (Almatı · Шымкент · Өскемен).
-    // Çip esner, metin kırpılmaz; alan yetmezse yazı bir tık küçülür.
-    cityText: { fontFamily: font.semibold, flexShrink: 1 },
+    cityText: { fontFamily: font.semibold },
     grow: { flex: 1 },
     // Kanvas §1 — üst satır: şehir çipi solda, eylem düğmeleri sağda.
     topRow: {
@@ -648,22 +651,17 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(1),
     },
     identityText: { flex: 1, paddingBottom: space(3.75), gap: 3, minWidth: 0 },
-    tierRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 5,
-      marginTop: space(0.75),
-      alignSelf: 'flex-start',
-    },
-    tierText: { color: 'rgba(251,248,246,0.88)', fontFamily: font.medium, fontSize: 14 },
+    // Zemin artık AÇIK porselen — bu üç stil mor hero'dan kalma beyaz metin
+    // taşıyordu ve isim ile puan yazısı görünmez oluyordu.
+    tierRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 5 },
+    tierText: { flexShrink: 1 },
     greetName: {
       fontFamily: font.semibold,
-      fontSize: 38,
-      lineHeight: 44,
-      letterSpacing: -1,
-      color: '#FBF8F6',
+      fontSize: 34,
+      lineHeight: 40,
+      letterSpacing: -0.8,
+      color: colors.ink,
       alignSelf: 'flex-start',
-      zIndex: 2,
     },
     // Kanvas §1 — kesik portre 96×138: 104 görsel + 34 yansıma.
     // Kesim RN'de mask-image ile yapılamıyor; alta doğru zemine eriyen bir
@@ -726,7 +724,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: 26,
       backgroundColor: colors.surface,
     },
-    catLabel: { fontFamily: font.medium },
+    catLabel: { fontFamily: font.medium, flexShrink: 0 },
     marquee: { marginTop: space(0.5), marginBottom: space(1.5) },
 
     // ── Tek satır yatay kaydırma (Fırsatlar / Öne çıkanlar) — referans gradient kart ──
