@@ -75,7 +75,7 @@ export default function SalonEditScreen() {
       setIgCode(r.code);
       setIgVerified(r.verified);
     } catch {
-      Alert.alert(t('common.error'));
+      Alert.alert(t('salon.edit.title'), t('profile.edit.save_err'));
     } finally {
       setIgBusy(false);
     }
