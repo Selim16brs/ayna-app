@@ -2004,6 +2004,19 @@ export const tr = {
     'Premium üyelikte profil fotoğrafının arka planı otomatik temizlenir ve ana sayfanda öne çıkar.',
 
   // Profil — Gizlilik
+  'privacy.promise.title': 'Burada ne bilindiğine sen karar veriyorsun',
+  'privacy.promise.body':
+    'Hiçbir ayar kendiliğinden açılmaz. Aşağıdaki her satır, ne yaptığını değil, KİMİN NEYİ göreceğini yazar.',
+  'privacy.anon.title': 'Yorumunu nasıl koruyoruz',
+  'privacy.anon.1': 'Uzman kimin yazdığını göremez — yorumda kullanıcı kimliği tutulmuyor.',
+  'privacy.anon.2': 'Uzman yorumun tarihini görmüyor.',
+  'privacy.anon.3': 'Uzman yorumu silemez; yalnız bir kez yanıtlayabilir.',
+  'privacy.model.title': 'Verini satmıyoruz',
+  'privacy.model.body':
+    'Ne reklam ağlarına, ne salonlara, ne “iş ortaklarına”. Tamamlanan hizmetten %10 komisyon alıyoruz — kazancımız bu. Bu bir gün değişirse ilk sen öğrenirsin.',
+  'privacy.not_ready': 'Henüz hazır değil',
+  'privacy.delete_note':
+    'Hesap silme henüz açık değil. Açıldığında, silinemeyen kayıtların (yasal saklama gereken ödeme kayıtları) neler olduğunu bu ekranda önceden göreceksin.',
   'privacy.title': 'Gizlilik',
   'privacy.subtitle': 'Verilerin üzerindeki kontrol sende',
   'privacy.location': 'Konum paylaşımı',
