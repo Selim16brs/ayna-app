@@ -397,12 +397,25 @@ export default function BookingDetailScreen() {
 
         {/* Onay bekleniyor (§1.6) */}
         {booking.status === 'awaiting_provider' ? (
-          <View style={styles.note}>
-            <Ionicons name="hourglass-outline" size={14} color={colors.gold} />
-            <Text variant="caption" tone="muted" style={styles.noteText}>
-              {t('booking.detail.awaiting_note')}
-            </Text>
-          </View>
+          <>
+            {/* Kanvas (design/Durumlar.dc.html §kural şeridi) değişmez kuralı:
+                "SÜRE İŞLİYORSA SAYAÇ GÖRÜNÜR". Yanıt sayacı yalnız UZMANA
+                gösteriliyordu; bekleyen müşteri ne kadar bekleyeceğini
+                bilmiyordu — oysa süre onun için de işliyor. */}
+            {booking.responseDeadline != null ? (
+              <Sayac
+                bitis={booking.responseDeadline}
+                metin={t('booking.detail.awaiting_left')}
+                renk={colors.gold}
+              />
+            ) : null}
+            <View style={styles.note}>
+              <Ionicons name="hourglass-outline" size={14} color={colors.gold} />
+              <Text variant="caption" tone="muted" style={styles.noteText}>
+                {t('booking.detail.awaiting_note')}
+              </Text>
+            </View>
+          </>
         ) : null}
 
         {/* Uzmanın önerdiği alternatif (§1.6) */}
@@ -539,6 +552,16 @@ export default function BookingDetailScreen() {
             <Text variant="caption" tone="muted" style={styles.depositDesc}>
               {t('booking.deposit.desc')}
             </Text>
+            {/* Kanvas (design/Randevu.dc.html): "kalan 2:14 · sonra yer serbest
+                kalır". Bu sayaç yalnız ANA EKRANDA (HomeUrgent) vardı; randevu
+                ekranında hiç yoktu — hâlbuki dekontu yükleyeceği yer burası. */}
+            {booking.depositDeadline != null ? (
+              <Sayac
+                bitis={booking.depositDeadline}
+                metin={t('booking.deposit.left')}
+                renk={colors.danger}
+              />
+            ) : null}
             <View style={styles.depositRow}>
               <Text variant="caption" tone="muted">
                 {t('booking.deposit.amount')}
@@ -978,6 +1001,43 @@ const makeStatus = (
   waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
 });
 
+/**
+ * CANLI GERİ SAYIM — kanvasın değişmez kuralı: "süre işliyorsa sayaç görünür".
+ *
+ * Ekranda kalan süre TEK SEFER hesaplanıp yazılıyordu (uzman tarafında,
+ * `Math.ceil(... / 3_600_000)` ile saat olarak). Kullanıcı ekranda dururken
+ * sayı donuyordu; son 10 dakikada "1 saat kaldı" yazması güven kaybıdır.
+ *
+ * Dakikada bir tazelenir: saniye sayacı pil yakar, dakika hassasiyeti bu iş
+ * için yeterli. Süre bittiğinde satır kaybolmaz — "süre doldu" der, çünkü
+ * sessizce yok olmak kullanıcıya ne olduğunu anlatmaz.
+ */
+function Sayac({ bitis, metin, renk }: { bitis: number; metin: string; renk: string }) {
+  const styles = useThemedStyles(makeStyles);
+  const { t } = useLocale();
+  const [simdi, setSimdi] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setSimdi(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const kalanMs = bitis - simdi;
+  const bitti = kalanMs <= 0;
+  const toplamDk = Math.max(0, Math.ceil(kalanMs / 60_000));
+  const sa = Math.floor(toplamDk / 60);
+  const dk = toplamDk % 60;
+  const sure = sa > 0 ? `${sa} sa ${dk} dk` : `${dk} dk`;
+
+  return (
+    <View style={[styles.sayac, { borderColor: renk }]}>
+      <Ionicons name={bitti ? 'alert-circle' : 'timer-outline'} size={15} color={renk} />
+      <Text variant="caption" tone="ink" style={styles.sayacText}>
+        {bitti ? t('booking.window.expired') : `${metin}: ${sure}`}
+      </Text>
+    </View>
+  );
+}
+
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingBottom: space(4) },
@@ -1043,6 +1103,16 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1),
     },
     noteText: { flex: 1 },
+    sayac: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      borderWidth: 1,
+      borderRadius: radius.md,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1),
+    },
+    sayacText: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
     deadlineWarn: {
       flexDirection: 'row',
       alignItems: 'center',

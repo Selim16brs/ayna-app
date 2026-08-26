@@ -360,6 +360,8 @@ export const tr = {
   'pro.stat.rating': 'değerlendirme',
   'pro.svc_rating.title': 'Hizmet bazında puan',
   'pro.svc_rating.none': 'değerlendirme yok',
+  'pro.reviews.trust':
+    'Yalnız randevusu TAMAMLANMIŞ müşteriler yorum yazabilir. Uzman yorumları silemez — olumsuzları da göreceksin.',
   'pro.reviews.filter_all': 'Tümü',
   'pro.reviews.filter_critic': 'Eleştiri',
   'pro.reviews.critic_note': 'Olumsuz yorumları saklamıyoruz — tek dokunuşla önüne getiriyoruz.',
@@ -722,6 +724,15 @@ export const tr = {
   'home.upcoming_empty': 'Yaklaşan randevun yok',
 
   // Circle
+  'circle.tab.feed': 'Akış',
+  'circle.tab.mine': 'Sorularım',
+  'circle.my_answered': 'SORUN CEVAP TOPLADI',
+  'circle.privacy.title': 'Buraya hiçbir şey kendiliğinden düşmez',
+  'circle.privacy.a':
+    'Randevuların ve yazdığın yorumlar burada yayınlanmaz — yalnız senin paylaştığın görünür.',
+  'circle.privacy.b': 'İstersen “AYNA Üyesi” olarak sor ve cevapla; uzman kim olduğunu göremez.',
+  'circle.privacy.c':
+    'Bir uzman ancak onda tamamlanmış randevusu olan kadınlar tarafından sayılır — “iyi olduğunu duydum” saymaz.',
   'circle.title': 'AYNA W2W',
   'circle.follow': 'Takip Et',
   'circle.following': 'Takip Ediliyor',
@@ -1247,6 +1258,17 @@ export const tr = {
   'reports.period.week': 'Bu hafta',
   'reports.period.month': 'Bu ay',
   'reports.period.all': 'Tümü',
+  'reports.visibility.title': 'Neden görünüyorsun',
+  'reports.visibility.sub':
+    'Sıralamayı belirleyen gerçek etkenler. Gizli bir puan yok — listeler puana göre sıralanır, keşifte premium öne çıkar, şehri eşleşmeyen uzman hiç görünmez.',
+  'reports.visibility.services': 'Hizmet listen — boşsa müşteri randevu alamaz',
+  'reports.visibility.services_none': 'Henüz eklemedin',
+  'reports.visibility.city': 'Şehrin — eşleşmezse listede hiç çıkmazsın',
+  'reports.visibility.city_none': 'Seçilmedi',
+  'reports.visibility.rating': 'Puanın — listeler puana göre sıralanır',
+  'reports.visibility.rating_none': 'Henüz değerlendirme yok',
+  'reports.visibility.premium': 'Premium — keşif ekranında öne çıkarır',
+  'reports.visibility.premium_no': 'Üye değilsin',
   'reports.bookings': 'Randevu',
   'reports.visits': 'Profil ziyareti',
   'reports.conversion': 'Dönüşüm',
@@ -1766,6 +1788,9 @@ export const tr = {
   'survey.title': 'Deneyimin nasıldı? ⭐',
   'survey.body':
     '{pro} ile randevun tamamlandı — kısa bir değerlendirme bırakır mısın? Puanın uzmanın profiline işlenir.',
+  'booking.detail.awaiting_left': 'Uzmanın yanıtlaması için kalan',
+  'booking.deposit.left': 'Dekont için kalan — sonra yer serbest kalır',
+  'booking.window.expired': 'Süre doldu',
   'booking.deposit.title': 'Depozito adımı',
   'booking.deposit.desc': 'Randevunu kesinleştirmek için depozito gönder ve dekontunu yükle.',
   'booking.deposit.amount': 'Depozito tutarı',
@@ -2118,6 +2143,13 @@ export const tr = {
   'privacy.promise.title': 'Burada ne bilindiğine sen karar veriyorsun',
   'privacy.promise.body':
     'Hiçbir ayar kendiliğinden açılmaz. Aşağıdaki her satır, ne yaptığını değil, KİMİN NEYİ göreceğini yazar.',
+  'privacy.loc.title': 'Konum',
+  'privacy.loc.1':
+    'Kesin adres uzmana ancak randevun ONAYLANDIKTAN sonra açılır. Öncesinde kimse göremez.',
+  'privacy.loc.2':
+    'Aramada GPS konumun hiç kullanılmaz — mesafe telefonunda, şehir merkezine göre hesaplanır.',
+  'privacy.loc.3':
+    'Koordinatların analitiğe giremez: yasaklı alan listesi kodda zorlanır, sessizce gönderilemez.',
   'privacy.anon.title': 'Yorumunu nasıl koruyoruz',
   'privacy.anon.1': 'Uzman kimin yazdığını göremez — yorumda kullanıcı kimliği tutulmuyor.',
   'privacy.anon.2': 'Uzman yorumun tarihini görmüyor.',

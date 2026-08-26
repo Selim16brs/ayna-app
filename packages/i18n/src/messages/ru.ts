@@ -319,6 +319,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'pro.stat.rating': 'отзывов',
   'pro.svc_rating.title': 'Оценки по услугам',
   'pro.svc_rating.none': 'нет оценок',
+  'pro.reviews.trust':
+    'Отзыв может оставить только клиентка с ЗАВЕРШЁННОЙ записью. Мастер не может удалять отзывы — негативные ты тоже увидишь.',
   'pro.reviews.filter_all': 'Все',
   'pro.reviews.filter_critic': 'Критика',
   'pro.reviews.critic_note': 'Мы не прячем негативные отзывы — открываем их одним касанием.',
@@ -659,6 +661,16 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.status.completed': 'Завершено',
   'home.upcoming_events': 'Предстоящие события',
   'home.upcoming_empty': 'У тебя нет предстоящих записей',
+  'circle.tab.feed': 'Лента',
+  'circle.tab.mine': 'Мои вопросы',
+  'circle.my_answered': 'ТВОЙ ВОПРОС СОБРАЛ ОТВЕТЫ',
+  'circle.privacy.title': 'Сюда ничего не попадает само',
+  'circle.privacy.a':
+    'Твои записи и отзывы здесь не публикуются — видно только то, чем ты сама поделилась.',
+  'circle.privacy.b':
+    'Можно спрашивать и отвечать как «Участница AYNA» — мастер не увидит, кто это.',
+  'circle.privacy.c':
+    'Мастера считают только женщины с завершённой записью к нему — «слышала, что хорошая» не в счёт.',
   'circle.title': 'AYNA W2W',
   'circle.follow': 'Подписаться',
   'circle.following': 'Вы подписаны',
@@ -1163,6 +1175,17 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reports.period.week': 'На этой неделе',
   'reports.period.month': 'В этом месяце',
   'reports.period.all': 'Все',
+  'reports.visibility.title': 'Почему тебя видят',
+  'reports.visibility.sub':
+    'Реальные факторы ранжирования. Скрытого балла нет — списки сортируются по рейтингу, в разделе «Найти» premium выше, мастер без совпадения по городу не показывается.',
+  'reports.visibility.services': 'Список услуг — без него клиентка не запишется',
+  'reports.visibility.services_none': 'Пока не добавлен',
+  'reports.visibility.city': 'Город — без совпадения тебя нет в списке',
+  'reports.visibility.city_none': 'Не выбран',
+  'reports.visibility.rating': 'Рейтинг — по нему сортируются списки',
+  'reports.visibility.rating_none': 'Оценок пока нет',
+  'reports.visibility.premium': 'Premium — поднимает в разделе «Найти»',
+  'reports.visibility.premium_no': 'Не подключён',
   'reports.bookings': 'Запись',
   'reports.visits': 'Посещение профиля',
   'reports.conversion': 'Конверсия',
@@ -1666,6 +1689,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'survey.title': 'Как прошёл визит? ⭐',
   'survey.body':
     'Приём у {pro} завершён — оставишь короткий отзыв? Оценка попадёт в профиль мастера.',
+  'booking.detail.awaiting_left': 'Мастеру осталось ответить',
+  'booking.deposit.left': 'Осталось на чек — потом место освободится',
+  'booking.window.expired': 'Время вышло',
   'booking.deposit.title': 'Шаг депозита',
   'booking.deposit.desc':
     'Чтобы окончательно оформить запись, отправьте депозит и загрузите квитанцию.',
@@ -1998,6 +2024,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'privacy.promise.title': 'Здесь ты решаешь, что о тебе знают',
   'privacy.promise.body':
     'Ничего не включается само. Каждая строка ниже написана так, чтобы было понятно, КТО ЧТО увидит.',
+  'privacy.loc.title': 'Геолокация',
+  'privacy.loc.1':
+    'Точный адрес открывается мастеру только ПОСЛЕ подтверждения записи. До этого — никто.',
+  'privacy.loc.2':
+    'В поиске твоя GPS-локация не используется — расстояние считается на телефоне, от центра города.',
+  'privacy.loc.3':
+    'Координаты не попадают в аналитику: запрет зашит в код, отправить их незаметно нельзя.',
   'privacy.anon.title': 'Как мы защищаем твой отзыв',
   'privacy.anon.1': 'Мастер не видит, кто написал — в отзыве не хранится личность пользователя.',
   'privacy.anon.2': 'Мастер не видит дату отзыва.',

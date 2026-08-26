@@ -337,6 +337,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'pro.stat.rating': 'пікір',
   'pro.svc_rating.title': 'Қызмет бойынша баға',
   'pro.svc_rating.none': 'баға жоқ',
+  'pro.reviews.trust':
+    'Пікірді тек жазылуы АЯҚТАЛҒАН клиент қалдыра алады. Маман пікірлерді өшіре алмайды — теріс пікірлерді де көресің.',
   'pro.reviews.filter_all': 'Барлығы',
   'pro.reviews.filter_critic': 'Сын',
   'pro.reviews.critic_note': 'Теріс пікірлерді жасырмаймыз — бір рет түртсең алдыңа шығады.',
@@ -674,6 +676,16 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.status.completed': 'Аяқталды',
   'home.upcoming_events': 'Жақындағы іс-шаралар',
   'home.upcoming_empty': 'Жақындағы жазылуың жоқ',
+  'circle.tab.feed': 'Лента',
+  'circle.tab.mine': 'Сұрақтарым',
+  'circle.my_answered': 'СҰРАҒЫҢ ЖАУАП ЖИНАДЫ',
+  'circle.privacy.title': 'Мұнда ештеңе өздігінен түспейді',
+  'circle.privacy.a':
+    'Жазылуларың мен пікірлерің мұнда жарияланбайды — тек өзің бөліскенің көрінеді.',
+  'circle.privacy.b':
+    'Қаласаң «AYNA мүшесі» ретінде сұрап, жауап бере аласың — маман кім екеніңді көрмейді.',
+  'circle.privacy.c':
+    'Маманды тек оған аяқталған жазылуы болған әйелдер санайды — «жақсы деп естідім» саналмайды.',
   'circle.title': 'AYNA W2W',
   'circle.follow': 'Тіркелу',
   'circle.following': 'Тіркелдіңіз',
@@ -1177,6 +1189,17 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reports.period.week': 'Осы апта',
   'reports.period.month': 'Осы ай',
   'reports.period.all': 'Барлығы',
+  'reports.visibility.title': 'Сені неге көреді',
+  'reports.visibility.sub':
+    'Рейтингті анықтайтын нақты факторлар. Жасырын ұпай жоқ — тізімдер бағаға қарай сұрыпталады, «Табу» бөлімінде premium жоғары, қаласы сәйкес келмейтін маман мүлде көрінбейді.',
+  'reports.visibility.services': 'Қызмет тізімің — онсыз клиент жазыла алмайды',
+  'reports.visibility.services_none': 'Әлі қосылмаған',
+  'reports.visibility.city': 'Қалаң — сәйкес келмесе тізімде жоқсың',
+  'reports.visibility.city_none': 'Таңдалмаған',
+  'reports.visibility.rating': 'Бағаң — тізімдер соған қарай сұрыпталады',
+  'reports.visibility.rating_none': 'Әзірге баға жоқ',
+  'reports.visibility.premium': 'Premium — «Табу» бөлімінде жоғары шығарады',
+  'reports.visibility.premium_no': 'Қосылмаған',
   'reports.bookings': 'Жазылу',
   'reports.visits': 'Профиль қаралымы',
   'reports.conversion': 'Конверсия',
@@ -1682,6 +1705,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'survey.title': 'Тәжірибең қалай өтті? ⭐',
   'survey.body':
     '{pro} қабылдауың аяқталды — қысқа баға қалдырасың ба? Бағаң маман профиліне жазылады.',
+  'booking.detail.awaiting_left': 'Маманның жауап беруіне қалды',
+  'booking.deposit.left': 'Түбіртекке қалды — содан кейін орын босайды',
+  'booking.window.expired': 'Уақыт бітті',
   'booking.deposit.title': 'Депозит қадамы',
   'booking.deposit.desc': 'Жазылуыңды түпкілікті ету үшін депозит жібер және түбіртегіңді жүкте.',
   'booking.deposit.amount': 'Депозит сомасы',
@@ -2011,6 +2037,13 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'privacy.promise.title': 'Мұнда сен туралы не білетінін сен шешесің',
   'privacy.promise.body':
     'Ешбір баптау өздігінен қосылмайды. Төмендегі әр жол не істейтінін емес, КІМ НЕНІ көретінін жазады.',
+  'privacy.loc.title': 'Геолокация',
+  'privacy.loc.1':
+    'Нақты мекенжай маманға тек жазылуың РАСТАЛҒАННАН кейін ашылады. Оған дейін ешкім көрмейді.',
+  'privacy.loc.2':
+    'Іздеуде GPS орналасуың мүлде қолданылмайды — қашықтық телефоныңда, қала орталығынан есептеледі.',
+  'privacy.loc.3':
+    'Координаттарың аналитикаға түспейді: тыйым кодта бекітілген, байқаусыз жіберу мүмкін емес.',
   'privacy.anon.title': 'Пікіріңді қалай қорғаймыз',
   'privacy.anon.1': 'Маман кім жазғанын көрмейді — пікірде пайдаланушы жеке басы сақталмайды.',
   'privacy.anon.2': 'Маман пікірдің күнін көрмейді.',

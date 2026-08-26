@@ -20,6 +20,7 @@ import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   PressableScale,
   Screen,
+  SectionHeader,
   Segmented,
   TAB_BAR_CLEARANCE,
   Text,
@@ -63,6 +64,44 @@ export default function ReportsScreen() {
   // Talepler rozeti = şehirdeki açık talepler; reklamlar şehre göre hedeflenir (sektör admin ucunda)
   // §9.3 — Talepler rozeti: şehirdeki AÇIK talepler BULUTTAN sayılır (ekran odaklandıkça tazelenir)
   const token = useStore((s) => s.token);
+  const [puanOrt, setPuanOrt] = useState<number | null>(null);
+
+  // Sıralamayı GERÇEKTEN belirleyen etkenler (uydurma skor yok):
+  //  · katalog listesi rating'e göre sıralanıyor (catalog.service orderBy)
+  //  · keşifte premium önce geliyor (discover.tsx premium havuzu)
+  //  · şehir eşleşmeyen uzman listede HİÇ çıkmıyor (catalog.ts useProfessionals)
+  //  · hizmet listesi boşsa müşteri randevu ALAMIYOR (professional/[id] CTA)
+  const myCity = useStore((s) => s.currentUser?.city);
+  const myTier = useStore((s) => s.currentUser?.membershipTier ?? 'free');
+  const myServiceCount = useStore((s) => Object.keys(s.sellerServices).length);
+  const gorunurlukEtkenleri = useMemo(
+    () => [
+      {
+        key: 'reports.visibility.services' as const,
+        ok: myServiceCount > 0,
+        deger:
+          myServiceCount > 0
+            ? `${myServiceCount} ${t('pro.services_short')}`
+            : t('reports.visibility.services_none'),
+      },
+      {
+        key: 'reports.visibility.city' as const,
+        ok: !!myCity,
+        deger: myCity ?? t('reports.visibility.city_none'),
+      },
+      {
+        key: 'reports.visibility.rating' as const,
+        ok: puanOrt != null,
+        deger: puanOrt != null ? puanOrt.toFixed(1) : t('reports.visibility.rating_none'),
+      },
+      {
+        key: 'reports.visibility.premium' as const,
+        ok: myTier !== 'free',
+        deger: myTier === 'free' ? t('reports.visibility.premium_no') : t('premium.title'),
+      },
+    ],
+    [myServiceCount, myCity, puanOrt, myTier, t],
+  );
   // Yanıt bekleyen yorum — en düşük puanlı olan önce (uzmanın görünürlüğüne en
   // çok zarar veren o). Yalnız CEVAPSIZ olanlar sayılır.
   const [bekleyenYorum, setBekleyenYorum] = useState<SellerReview | null>(null);
@@ -77,6 +116,11 @@ export default function ReportsScreen() {
       if (!alive || !r) return;
       const cevapsiz = r.reviews.filter((x) => !x.reply?.trim()).sort((a, b) => a.score - b.score);
       setBekleyenYorum(cevapsiz[0] ?? null);
+      // Puan AuthUser'da taşınmıyor; görünürlük panelinde UYDURMA sayı yerine
+      // yüklenen yorumların gerçek ortalaması gösterilir (yoksa "henüz yok").
+      setPuanOrt(
+        r.reviews.length ? r.reviews.reduce((n, x) => n + x.score, 0) / r.reviews.length : null,
+      );
     })();
     return () => {
       alive = false;
@@ -548,6 +592,38 @@ export default function ReportsScreen() {
               </View>
             </>
           ) : null}
+
+          {/* NEDEN GÖRÜNÜYORSUN — kanvas (design/UzmanPanel.dc.html §görünürlük
+              sağlığı) burada "78 / 100" gibi bir görünürlük PUANI gösteriyor.
+              Sistemde böyle bir puan YOK: sıralama katalogda `rating desc`,
+              keşifte premium önceliği + günlük rotasyon, aramada kullanıcının
+              seçtiği sıralama. Uydurma bir skor, uzmanın gerçekte yapamayacağı
+              bir şeyi yapabilirmiş gibi göstermek olurdu.
+              Onun yerine sıralamayı GERÇEKTEN belirleyen etkenler, uzmanın
+              kendi değerleriyle yazılıyor. */}
+          <SectionHeader title={t('reports.visibility.title')} />
+          <View style={[styles.card, shadow.soft]}>
+            <Text variant="caption" tone="muted">
+              {t('reports.visibility.sub')}
+            </Text>
+            {gorunurlukEtkenleri.map((e) => (
+              <View key={e.key} style={styles.visRow}>
+                <Ionicons
+                  name={e.ok ? 'checkmark-circle' : 'alert-circle-outline'}
+                  size={17}
+                  color={e.ok ? colors.success : colors.gold}
+                />
+                <View style={styles.visBody}>
+                  <Text variant="caption" tone="ink">
+                    {t(e.key)}
+                  </Text>
+                  <Text variant="micro" tone="muted">
+                    {e.deger}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
       </ScrollView>
     </Screen>
@@ -1047,5 +1123,13 @@ const makeStyles = (colors: ColorTokens) =>
     staffImage: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surfaceMuted },
     staffInitial: { alignItems: 'center', justifyContent: 'center' },
     staffName: { flex: 1 },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1.25),
+    },
+    visRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space(1) },
+    visBody: { flexGrow: 1, flexShrink: 1, minWidth: 0, gap: 1 },
     staffMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   });
