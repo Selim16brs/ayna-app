@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, TextInput as RNTextInput, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api, type PassportAccessRow, type PassportData } from '../api';
 import { formatSlotTr } from '../datetime';
@@ -77,6 +77,7 @@ export function PassportCare() {
   const [acilan, setAcilan] = useState<string | null>(null);
 
   const [hata, setHata] = useState(false);
+  const [alerjiMetni, setAlerjiMetni] = useState('');
 
   const load = useCallback(() => {
     if (!token) return;
@@ -126,6 +127,47 @@ export function PassportCare() {
     else yeni[key] = value;
     setData((d) => (d ? { ...d, traits: yeni } : d));
     if (token) void api.savePassport(token, { traits: yeni }).catch(() => setData(prev));
+  };
+
+  // ── ALERJİ GİRİŞİ ──────────────────────────────────────────────────────
+  // Alerjiler YALNIZ GÖSTERİLİYORDU: sunucu yazmayı kabul ettiği hâlde hiçbir
+  // ekranda ekleme/çıkarma yoktu, yani kullanıcı alerjisini hiç giremiyordu.
+  // Sunucu sınırı: en çok 20 kayıt, her biri en çok 80 karakter (passport.dto).
+  const ALERJI_MAX = 20;
+
+  const alerjiYaz = (liste: string[]) => {
+    const prev = data;
+    setData((d) => (d ? { ...d, allergies: liste } : d));
+    if (token) void api.savePassport(token, { allergies: liste }).catch(() => setData(prev));
+  };
+
+  const alerjiEkle = () => {
+    const ham = alerjiMetni.trim().slice(0, 80);
+    if (!ham) return;
+    const mevcut = data?.allergies ?? [];
+    // Aynısını iki kez yazmak listeyi kirletir; büyük/küçük harf duyarsız karşılaştır.
+    if (mevcut.some((a) => a.toLocaleLowerCase('tr') === ham.toLocaleLowerCase('tr'))) {
+      setAlerjiMetni('');
+      return;
+    }
+    if (mevcut.length >= ALERJI_MAX) {
+      Alert.alert(t('passport.care.allergies'), t('passport.care.allergy_max'));
+      return;
+    }
+    setAlerjiMetni('');
+    alerjiYaz([...mevcut, ham]);
+  };
+
+  const alerjiSil = (a: string) => {
+    // Sağlık verisi: yanlış girilen bir alerji SİLİNEBİLMELİ, onay penceresiyle.
+    Alert.alert(t('passport.care.allergy_remove_t'), a, [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: () => alerjiYaz((data?.allergies ?? []).filter((x) => x !== a)),
+      },
+    ]);
   };
 
   // Yaklaşan randevular — pasaport yalnız BAĞLAMI olan uzmana açılır.
@@ -190,11 +232,18 @@ export function PassportCare() {
         {data.allergies.length ? (
           <View style={styles.chips}>
             {data.allergies.map((a) => (
-              <View key={a} style={styles.chip}>
+              <Pressable
+                key={a}
+                style={styles.chip}
+                onPress={() => alerjiSil(a)}
+                accessibilityRole="button"
+                accessibilityLabel={`${t('passport.care.allergy_remove_t')}: ${a}`}
+              >
                 <Text variant="caption" style={{ color: colors.gold }}>
                   {a}
                 </Text>
-              </View>
+                <Ionicons name="close" size={13} color={colors.gold} />
+              </Pressable>
             ))}
           </View>
         ) : (
@@ -202,6 +251,26 @@ export function PassportCare() {
             {t('passport.care.allergies_none')}
           </Text>
         )}
+        <View style={styles.alerjiSatir}>
+          <RNTextInput
+            style={styles.alerjiGiris}
+            value={alerjiMetni}
+            onChangeText={setAlerjiMetni}
+            onSubmitEditing={alerjiEkle}
+            returnKeyType="done"
+            maxLength={80}
+            placeholder={t('passport.care.allergy_ph')}
+            placeholderTextColor={colors.muted}
+          />
+          <Pressable
+            style={styles.alerjiEkle}
+            onPress={alerjiEkle}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.add')}
+          >
+            <Ionicons name="add" size={19} color={colors.onAccent} />
+          </Pressable>
+        </View>
         {/* İstisnayı gizlemek yerine gerekçesiyle yazıyoruz */}
         <Text variant="micro" tone="muted">
           {t('passport.care.health_note')}
@@ -366,9 +435,31 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(2),
     },
     flex: { flex: 1 },
+    alerjiSatir: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    alerjiGiris: {
+      flexGrow: 1,
+      flexShrink: 1,
+      minWidth: 0,
+      height: 44,
+      paddingHorizontal: space(2),
+      borderRadius: radius.md,
+      backgroundColor: colors.bg,
+      color: colors.ink,
+    },
+    alerjiEkle: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.accent,
+    },
     allergyHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(0.75) },
     chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
       backgroundColor: colors.goldSoft,
       borderRadius: radius.pill,
       paddingHorizontal: space(1.25),

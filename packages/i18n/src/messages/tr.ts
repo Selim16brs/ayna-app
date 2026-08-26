@@ -5,6 +5,9 @@ export const tr = {
   // Genel
   'common.retry': 'Yeniden dene',
   'passport.care.load_err': 'Bilgilerin yüklenemedi. Bağlantını kontrol et.',
+  'passport.care.allergy_ph': 'Alerji ekle — örn. amonyak, lateks',
+  'passport.care.allergy_max': 'En çok 20 alerji ekleyebilirsin.',
+  'passport.care.allergy_remove_t': 'Alerjiyi kaldır',
   'common.loading': 'Yükleniyor…',
   'common.ok': 'Tamam',
   // §11 satıcı premium ödeme ekranı
