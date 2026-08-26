@@ -185,7 +185,14 @@ export default function DiscoverScreen() {
           <View style={styles.wishLeft}>
             <Pressable style={styles.cityChip} onPress={() => router.push('/city')}>
               <Ionicons name="location" size={15} color={colors.ink} />
-              <Text variant="caption" tone="ink" style={styles.cityText} numberOfLines={1}>
+              <Text
+                variant="caption"
+                tone="ink"
+                style={styles.cityText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
                 {city}
               </Text>
               <Ionicons name="chevron-down" size={13} color={colors.ink} />
@@ -548,7 +555,9 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       backgroundColor: colors.surface,
     },
-    cityText: { fontFamily: font.semibold, maxWidth: 104 },
+    // maxWidth YOK: şehir adı uzunluğu öngörülemez (Almatı · Шымкент · Өскемен).
+    // Çip esner, metin kırpılmaz; alan yetmezse yazı bir tık küçülür.
+    cityText: { fontFamily: font.semibold, flexShrink: 1 },
     avatar: {
       width: 46,
       height: 46,
@@ -646,13 +655,18 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: -space(8), // kart yukarı taşar → üst kenarı yeşil hero'ya birleşir
       zIndex: 3,
     },
-    wishLeft: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    wishLeft: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: space(1),
+    },
     // Kayan slogan — kart ile kategoriler arasında
     marquee: { marginTop: space(2), marginBottom: space(0.5) },
     wishCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      width: '62%',
+      width: '58%',
       gap: space(1.25),
       backgroundColor: HOT_PINK,
       borderTopLeftRadius: radius.lg,
