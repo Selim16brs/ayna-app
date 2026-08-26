@@ -291,6 +291,13 @@ model Booking {
   /// onaylıyor, hiçbiri sunucuya yazılmıyordu — uygulama yeniden açılınca
   /// hydrate sunucudaki eski durumu geri getiriyor ve işlem KAYBOLUYORDU.
   reassignedFrom    String?       @map("reassigned_from")
+  /// §7.3 — uzmanın hizmet sonrası müşteri hakkındaki GİZLİ sinyali ('up'|'down').
+  ///
+  /// MÜŞTERİYE ASLA GÖNDERİLMEZ. mapBooking bunu varsayılan olarak GİZLER ve
+  /// yalnız sağlayıcı yolunda açar (kapalı-varsayılan): bir alanı yanlışlıkla
+  /// açık bırakmak, kadına "sorunlu" etiketlendiğini göstermek demekti.
+  /// Eskiden yalnız telefonda yaşıyordu; yeniden kurulumda kayboluyordu.
+  providerSignal    String?       @map("provider_signal")
   // §keşif Modül 2 — kampanyadan gelen randevu (iptal/no-show'da kota iade edilir)
   offerId           String?       @map("offer_id") @db.Uuid
   // §2.2/§10 — salon offline kaydı alanları (mobil hydrate'te KAYBOLMAMALI)

@@ -1796,10 +1796,18 @@ export const useStore = create<State>()(
         set((s) => ({
           bookings: s.bookings.map((b) => (b.id === id ? { ...b, providerSignal: signal } : b)),
         }));
-        // NOT: §7.3 uzman sinyalinin SUNUCU UCU YOK — bu yüzden yalnız bu
-        // cihazda yaşıyor ve yeniden kurulumda kayboluyor. Uydurma bir uç
-        // çağırmak yerine eksikliği burada işaretliyorum; sinyal müşteriye
-        // GÖSTERİLMEDİĞİ için (yalnız uzmanın kendi notu) veri kaybı sınırlı.
+        // SUNUCUYA YAZ. Sinyal yalnız bu cihazda yaşıyordu; uygulama yeniden
+        // kurulunca kayboluyordu. Sunucu bunu müşteriye ASLA göndermez
+        // (mapBooking gizli tutar), denetim kaydına da yalnız DEĞER girer.
+        const token = get().token;
+        if (!token) return;
+        const onceki = get().bookings.find((b) => b.id === id)?.providerSignal;
+        void api.setCustomerSignal(token, id, signal).catch(() => {
+          // Yazılamadıysa yereli geri al — "kaydedildi" yalanı kalmasın.
+          set((s) => ({
+            bookings: s.bookings.map((b) => (b.id === id ? { ...b, providerSignal: onceki } : b)),
+          }));
+        });
       },
 
       pendingBookingSync: [],

@@ -493,6 +493,10 @@ export const api = {
   // §4.6 — devretme: akış eskiden TAMAMEN istemcideydi, her açılışta kayboluyordu.
   reassignBooking: (token: string, id: string, uzmanName: string, proId?: string) =>
     post<Appointment>(`/bookings/${id}/reassign`, { uzmanName, proId }, token),
+  // §7.3 — uzmanın müşteri hakkındaki gizli sinyali; sunucuda saklanır ve
+  // MÜŞTERİYE hiç gönderilmez.
+  setCustomerSignal: (token: string, id: string, signal: 'up' | 'down') =>
+    post<Appointment>(`/bookings/${id}/customer-signal`, { signal }, token),
   acceptReassignApi: (token: string, id: string) =>
     post<Appointment>(`/bookings/${id}/reassign/accept`, {}, token),
   rejectReassignApi: (token: string, id: string) =>

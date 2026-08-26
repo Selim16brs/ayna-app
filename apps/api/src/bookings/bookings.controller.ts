@@ -153,6 +153,23 @@ export class BookingsController {
     return this.bookings.rejectReassignment(id, req.user!.id);
   }
 
+  /**
+   * §7.3 — uzmanın müşteri hakkındaki GİZLİ sinyali ('up' | 'down').
+   *
+   * Eskiden yalnız telefonda yaşıyordu; yeniden kurulumda kayboluyordu.
+   * Yanıt müşteriye ASLA gitmez: mapBooking sinyali varsayılan olarak gizler.
+   */
+  @Post(':id/customer-signal')
+  @UseGuards(JwtAuthGuard)
+  customerSignal(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body() body: { signal?: string },
+  ) {
+    const s = body?.signal === 'down' ? 'down' : 'up';
+    return this.bookings.setCustomerSignal(id, s, req.user!.id);
+  }
+
   @Post(':id/counter')
   @UseGuards(JwtAuthGuard)
   counter(
