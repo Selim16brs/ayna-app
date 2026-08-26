@@ -127,6 +127,8 @@ export default function ScheduleScreen() {
         source,
         slot: formatSlotTr(startMs),
         uzmanName: uzman?.name ?? '',
+        service: serviceName,
+        price: String(price),
       },
     });
   }

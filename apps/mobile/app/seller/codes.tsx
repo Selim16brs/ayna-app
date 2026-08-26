@@ -109,7 +109,8 @@ export default function SellerCodesScreen() {
 
         {businessId ? (
           <Button
-            label={busy ? '…' : t('seller.codes.generate')}
+            label={t('seller.codes.generate')}
+            loading={busy}
             onPress={generate}
             disabled={busy}
           />

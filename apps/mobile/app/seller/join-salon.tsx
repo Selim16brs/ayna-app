@@ -59,7 +59,8 @@ export default function JoinSalonScreen() {
           style={styles.input}
         />
         <Button
-          label={busy ? '…' : t('joinsalon.cta')}
+          label={t('joinsalon.cta')}
+          loading={busy}
           variant={code.trim().length >= 4 ? 'primary' : 'secondary'}
           disabled={code.trim().length < 4 || busy}
           onPress={submit}

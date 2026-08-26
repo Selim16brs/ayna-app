@@ -94,7 +94,7 @@ export default function VerifyScreen() {
         </View>
 
         {!sent ? (
-          <Button label={busy ? '…' : t('verify.send')} onPress={requestCode} />
+          <Button label={t('verify.send')} loading={busy} onPress={requestCode} />
         ) : (
           <>
             <Text variant="caption" tone="inkSoft" style={styles.label}>
@@ -120,7 +120,8 @@ export default function VerifyScreen() {
             ) : null}
             <View style={styles.actions}>
               <Button
-                label={busy ? '…' : t('verify.confirm')}
+                label={t('verify.confirm')}
+                loading={busy}
                 variant={code.length === 6 && !busy ? 'primary' : 'secondary'}
                 disabled={code.length !== 6 || busy}
                 onPress={confirm}

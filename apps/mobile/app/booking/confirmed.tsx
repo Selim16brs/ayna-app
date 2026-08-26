@@ -18,10 +18,17 @@ export default function ConfirmedScreen() {
     proId?: string;
     slot?: string;
     uzmanName?: string;
+    service?: string;
+    price?: string;
   }>();
   const pro = useProfessionalDetail(params.proId ?? '');
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
-  const price = pro.services[0]?.price ?? Number(pro.priceFrom);
+  // Polish 1.1 — SEÇİLEN hizmet ve GERÇEK toplam parametreyle gelir; eski derin
+  // linkler için profil verisi yalnız yedek (ilk hizmet/uzmanlık tahmini değil).
+  const serviceLabel = params.service || pro.specialty;
+  const price = params.price
+    ? Number(params.price)
+    : (pro.services[0]?.price ?? Number(pro.priceFrom));
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -37,7 +44,7 @@ export default function ConfirmedScreen() {
         </Text>
 
         <View style={[styles.card, shadow.card]}>
-          <Field icon="cut-outline" labelKey="booking.field.service" value={pro.specialty} />
+          <Field icon="cut-outline" labelKey="booking.field.service" value={serviceLabel} />
           {isSalon ? (
             <>
               <Field icon="business-outline" labelKey="booking.field.salon" value={pro.name} />

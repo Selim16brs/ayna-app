@@ -1,5 +1,12 @@
 import { useRef } from 'react';
-import { Animated, Pressable, type PressableProps, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  type PressableProps,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ColorTokens, radius, space } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
@@ -10,16 +17,20 @@ type Variant = 'primary' | 'secondary' | 'ghost';
 interface ButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
   variant?: Variant;
+  /** Polish 1.4 — görünür yükleme durumu: spinner + pasifleşme (çift dokunuş imkânsız). */
+  loading?: boolean;
 }
 
 export function Button({
   label,
   variant = 'primary',
+  loading = false,
+  disabled,
   onPressIn,
   onPressOut,
   ...rest
 }: ButtonProps) {
-  const { gradients, shadow } = useTheme();
+  const { colors, gradients, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -41,6 +52,10 @@ export function Button({
         animate(1);
         onPressOut?.(e);
       }}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !!disabled || loading, busy: loading }}
+      disabled={disabled || loading}
       {...rest}
     >
       <Animated.View style={{ transform: [{ scale }] }}>
@@ -51,15 +66,21 @@ export function Button({
             end={{ x: 1, y: 1 }}
             style={[styles.base, shadow.soft]}
           >
-            <Text variant="bodyStrong" style={[styles.label, styles.goldLabel]}>
-              {label}
-            </Text>
+            <View style={styles.inner}>
+              {loading ? <ActivityIndicator size="small" color={colors.onAccent} /> : null}
+              <Text variant="bodyStrong" style={[styles.label, styles.goldLabel]}>
+                {label}
+              </Text>
+            </View>
           </LinearGradient>
         ) : (
           <View style={[styles.base, variant === 'secondary' ? styles.secondary : styles.ghost]}>
-            <Text variant="bodyStrong" tone={variant === 'ghost' ? 'inkSoft' : 'ink'}>
-              {label}
-            </Text>
+            <View style={styles.inner}>
+              {loading ? <ActivityIndicator size="small" color={colors.inkSoft} /> : null}
+              <Text variant="bodyStrong" tone={variant === 'ghost' ? 'inkSoft' : 'ink'}>
+                {label}
+              </Text>
+            </View>
           </View>
         )}
       </Animated.View>
@@ -77,6 +98,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(3),
     },
     label: { fontSize: 16 },
+    inner: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     goldLabel: { color: colors.onAccent, fontWeight: '700' },
     secondary: {
       backgroundColor: colors.surface,

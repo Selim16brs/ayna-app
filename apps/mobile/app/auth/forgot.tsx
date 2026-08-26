@@ -165,21 +165,24 @@ export default function ForgotPasswordScreen() {
       <View style={styles.footer}>
         {step === 'phone' ? (
           <Button
-            label={busy ? '…' : t('auth.forgot.send')}
+            label={t('auth.forgot.send')}
+            loading={busy}
             variant={phone.trim().length >= 7 && !busy ? 'primary' : 'secondary'}
             disabled={phone.trim().length < 7 || busy}
             onPress={sendCode}
           />
         ) : step === 'code' ? (
           <Button
-            label={busy ? '…' : t('auth.forgot.verify')}
+            label={t('auth.forgot.verify')}
+            loading={busy}
             variant={code.length === 6 && !busy ? 'primary' : 'secondary'}
             disabled={code.length !== 6 || busy}
             onPress={verify}
           />
         ) : (
           <Button
-            label={busy ? '…' : t('auth.forgot.save')}
+            label={t('auth.forgot.save')}
+            loading={busy}
             variant={password.length >= 6 && !busy ? 'primary' : 'secondary'}
             disabled={password.length < 6 || busy}
             onPress={save}

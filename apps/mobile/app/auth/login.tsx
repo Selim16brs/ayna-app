@@ -25,7 +25,13 @@ export default function LoginScreen() {
   const [hidden, setHidden] = useState(true);
   const [busy, setBusy] = useState(false);
 
-  const valid = id.trim().length > 3 && password.length >= 6;
+  // Polish 1.2 — pasifin NEDENİ görünür: alan altı canlı ipuçları
+  const idTrim = id.trim();
+  const idOk =
+    idTrim.length > 3 && (idTrim.includes('@') || idTrim.replace(/\D/g, '').length >= 10);
+  const pwOk = password.length >= 6;
+  const valid = idOk && pwOk;
+  const firstIssueKey = !idOk ? 'auth.login.hint_id' : !pwOk ? 'auth.login.hint_pw' : null;
 
   async function submit() {
     setBusy(true);
@@ -73,6 +79,11 @@ export default function LoginScreen() {
           keyboardType="email-address"
           style={styles.input}
         />
+        {idTrim.length > 0 && !idOk ? (
+          <Text variant="caption" tone="muted" style={styles.fieldHint}>
+            {t('auth.login.hint_id')}
+          </Text>
+        ) : null}
 
         <Text variant="bodyStrong" tone="ink" style={styles.label}>
           {t('auth.f.password')}
@@ -96,6 +107,11 @@ export default function LoginScreen() {
             />
           </Pressable>
         </View>
+        {password.length > 0 && !pwOk ? (
+          <Text variant="caption" tone="muted" style={styles.fieldHint}>
+            {t('auth.login.hint_pw')}
+          </Text>
+        ) : null}
 
         <View style={styles.forgotRow}>
           <Text
@@ -113,8 +129,15 @@ export default function LoginScreen() {
         <Button
           label={t('auth.tab.login')}
           variant={valid && !busy ? 'primary' : 'secondary'}
-          disabled={!valid || busy}
-          onPress={submit}
+          loading={busy}
+          onPress={() => {
+            // Polish 1.2 — eksikken sessizce ölü buton yok: ilk eksiği söyle
+            if (!valid) {
+              if (firstIssueKey) Alert.alert(t(firstIssueKey));
+              return;
+            }
+            void submit();
+          }}
         />
       </View>
     </Screen>
@@ -152,6 +175,7 @@ const makeStyles = (colors: ColorTokens) =>
       color: colors.ink,
     },
     eyeBtn: { padding: space(0.75) },
+    fieldHint: { marginTop: space(0.75), marginLeft: space(0.5) },
     forgotRow: { alignItems: 'flex-end', marginTop: space(1.5) },
     forgot: { fontWeight: '700' },
     footer: {
