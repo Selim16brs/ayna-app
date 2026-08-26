@@ -20,6 +20,16 @@ const PORT = Number(process.env.PORT) || 3100;
 const KOK = join(import.meta.dirname, 'out');
 const KULLANICI = process.env.ADMIN_BASIC_USER ?? '';
 const SIFRE = process.env.ADMIN_BASIC_PASS ?? '';
+// Tarayıcı kapısını kapatmak için: ADMIN_GATE_OFF=1
+//
+// İki kapı (tarayıcı kutusu + panelin kendi girişi) pratikte kafa karıştırdı:
+// hangi kutuya hangi şifrenin gireceği belirsizleşti. Kapatınca tek giriş
+// panelin kendi ekranı olur — veri yine korunur (API token ister), ama panelin
+// dosyaları herkese açık hâle gelir.
+//
+// AYRI bir değişken gerekiyor: kimlik bilgisini silmek kapıyı açmaz (aşağıda
+// fail-closed davranış korunuyor). Kapatmak BİLİNÇLİ bir hareket olmalı.
+const KAPI_KAPALI = process.env.ADMIN_GATE_OFF === '1';
 
 const TIPLER = {
   '.html': 'text/html; charset=utf-8',
@@ -50,6 +60,7 @@ function esit(a, b) {
 }
 
 function yetkili(req) {
+  if (KAPI_KAPALI) return true;
   // Kimlik bilgisi TANIMLI DEĞİLSE kapıyı açık bırakmayız — kapatırız.
   // "Ayar unutulduğunda panel herkese açılsın" kabul edilemez bir varsayılan.
   if (!KULLANICI || !SIFRE) return false;
