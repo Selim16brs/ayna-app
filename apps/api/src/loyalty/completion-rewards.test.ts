@@ -38,6 +38,8 @@ test('cashbackPoints geçersiz girdide 0', () => {
 function sahtePrisma(mevcut: string[] = [], pct: number | null = null) {
   const yazilanlar: Array<{ userId: string; points: number; detail: string }> = [];
   const prisma = {
+    // Kod artık her kazanımda denetim kaydı yazıyor; sahte istemci de taşımalı.
+    auditLog: { create: async () => ({}) },
     setting: {
       findUnique: async () => (pct === null ? null : { intValue: pct }),
       findMany: async () => [],

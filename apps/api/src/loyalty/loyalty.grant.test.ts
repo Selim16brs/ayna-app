@@ -10,6 +10,8 @@ type Yazilan = { userId: string; points: number; expiresAt: Date; reason: string
 function sahtePrisma() {
   const yazilanlar: Yazilan[] = [];
   const prisma = {
+    // Kod artık her kazanımda denetim kaydı yazıyor; sahte istemci de taşımalı.
+    auditLog: { create: async () => ({}) },
     setting: { findMany: async () => [] },
     loyaltyEntry: {
       createMany: async ({ data }: { data: unknown[] }) => {

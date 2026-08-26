@@ -51,5 +51,28 @@ export async function grantPoints(
       expiresAt,
     })),
   });
+
+  // §12 — kritik eylem denetim kaydı. 1 puan = 1 ₸ olduğu için kazanım yazmak
+  // PARA BASMAKTIR ve kaydı tutulmuyordu. (PR #19'daki para basma açığı tam da
+  // burada, denetim izi olmadan istismar edilebiliyordu.)
+  //
+  // PII YAZILMAZ: `detail` referans kazanımında karşı tarafın ADINI taşıyor —
+  // safeDiff'e yalnız sebep ve tutar girer (docs/security/03).
+  await Promise.all(
+    list.map((g) =>
+      prisma.auditLog
+        .create({
+          data: {
+            actorId: g.userId,
+            actorRole: 'system',
+            action: 'loyalty.earn',
+            resourceType: 'loyalty',
+            resourceId: g.userId,
+            safeDiff: { reason: g.reason, points: Math.floor(g.points) },
+          },
+        })
+        .catch(() => undefined),
+    ),
+  );
   return list.length;
 }

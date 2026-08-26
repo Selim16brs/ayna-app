@@ -1,4 +1,5 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
 import { PAYMENT_PROVIDER, type PaymentProvider } from './payment.provider';
@@ -12,6 +13,7 @@ export class PaymentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly push: PushService,
+    private readonly audit: AuditService,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
   ) {}
 
@@ -62,6 +64,17 @@ export class PaymentService {
         status: 'pending',
       },
     });
+    // §12 — kritik eylem denetim kaydı. Ödeme yolu HİÇ audit yazmıyordu: gerçek
+    // para el değiştiriyor ve puan yakılıyor, ama kimin ne zaman ne ödediğinin
+    // kaydı yoktu. safeDiff yalnız TUTAR taşır — PII yok (docs/security/03).
+    await this.audit.record({
+      actorId: userId,
+      actorRole: 'user',
+      action: 'payment.intent',
+      resourceType: 'payment',
+      resourceId: p.id,
+      safeDiff: { amount, pointsUsed: split.pointsUsed, cash: split.cashAmount },
+    });
     return this.map(p);
   }
 
@@ -88,6 +101,14 @@ export class PaymentService {
     });
     if (!charge.ok) {
       await this.prisma.payment.update({ where: { id: p.id }, data: { status: 'failed' } });
+      await this.audit.record({
+        actorId: userId,
+        actorRole: 'user',
+        action: 'payment.failed',
+        resourceType: 'payment',
+        resourceId: p.id,
+        safeDiff: { cash: Number(p.cashAmount) },
+      });
       throw new BadRequestException({ code: 'CHARGE_FAILED', message: 'Ödeme alınamadı' });
     }
 
@@ -106,6 +127,20 @@ export class PaymentService {
     const paid = await this.prisma.payment.update({
       where: { id: p.id },
       data: { status: 'paid', providerRef: charge.providerRef, paidAt: new Date() },
+    });
+    // Paranın gerçekten geçtiği an — denetim izinin en kritik satırı.
+    await this.audit.record({
+      actorId: userId,
+      actorRole: 'user',
+      action: 'payment.paid',
+      resourceType: 'payment',
+      resourceId: p.id,
+      safeDiff: {
+        amount: Number(p.amount),
+        cash: Number(p.cashAmount),
+        pointsUsed: p.pointsUsed,
+        bookingId: p.bookingId,
+      },
     });
     // §4.3 — depozito Kaspi ile ödendiyse: randevu 'deposit_submitted' + uzmana push
     // (uzman 'Aldım, onaylıyorum' der → randevu KESİN; akış dekont yüklemeyle birebir aynı)
