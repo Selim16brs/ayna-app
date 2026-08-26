@@ -56,8 +56,23 @@ Gerçekten eksik olanlar:
 | `PREPARATION_REQUIRED` · `READY`            | Hazırlık talimatı akışı yok         |
 | `CUSTOMER_ON_THE_WAY` · `CUSTOMER_ARRIVED`  | Yola çıktım / geldim yok            |
 | `IN_PROGRESS`                               | Hizmetin başladığı an kaydedilmiyor |
-| `RESCHEDULE_REQUESTED`                      | Erteleme talebi ayrı durum değil    |
+| `RESCHEDULE_REQUESTED`                      | ✅ Çözüldü — §7.8 erteleme hakkı    |
 | `CUSTOMER_CANCELLED` / `PROVIDER_CANCELLED` | ✅ Çözüldü — aşağıya bak            |
+
+> **§7.8 erteleme hakkı (26.08):** müşterinin elinde yalnız **iptal** vardı.
+> Saatini değiştirmek isteyen müşteri iptal etmek zorunda kalıyor, geç iptal
+> penceresindeyse **kaporasını yakıyordu** — hâlbuki hizmetten vazgeçmemişti.
+>
+> `POST /bookings/:id/reschedule` eklendi: kapora aynen aktarılıyor, yeni slot
+> diğer üç yolla aynı desende yeniden tutuluyor (advisory lock + çakışma
+> kontrolü + veritabanı slot kısıtı), hak `reschedule_count` ile sınırlanıyor
+> (admin ayarı, varsayılan 1; 0 yazmak özelliği kapatır).
+>
+> Erteleme penceresi iptal penceresiyle **aynı**: geç iptalde kapora yanıyorsa,
+> aynı anda ücretsiz erteleme vermek cezayı anlamsız kılardı.
+>
+> Ayrı bir `RESCHEDULE_REQUESTED` durumu eklenmedi — erteleme tek adımda
+> tamamlanıyor, onay bekleyen bir ara durum yok.
 
 > **Çözüldü (26.08):** iptal politikası (kim iptal etti → kapora kime kalır)
 > durumdan türetilemiyordu; yalnız `depositForfeited` bayrağından dolaylı tahmin
