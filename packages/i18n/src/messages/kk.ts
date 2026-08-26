@@ -393,6 +393,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'collections.item.offer': 'Науқан',
   'rules.title': 'Жазылу ережелері — тосынсый жоқ',
   'rules.deposit': 'Кепілпұл (жазылуды растайды, қызмет ақысынан шегеріледі)',
+  'rules.deposit_rule': 'қызмет құнының {pct}%-ы (кемінде {min}, ең көбі {max})',
   'rules.cancel_a': 'Жазылуға',
   'rules.cancel_b': 'сағаттан аз қалғанда бас тартсаң, кепілпұл күйеді; ертерек бас тарту тегін.',
   'rules.noshow': 'Келмесең (no-show) кепілпұл маманда қалады және аккаунтыңа айыппұл жазылады.',
@@ -1499,7 +1500,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
     'Premium-мен алда бол; Platinum-мен адал клиент портфолиосы + төмен комиссия.',
   'upsell.toPrem.cta': 'Пакеттерді ашу',
   'upsell.toPlat.title': "Platinum'ға көтеріл 💎",
-  'upsell.toPlat.body': 'Always адал клиент портфолиосы, топтық хабарлама және комиссия 8,5%.',
+  'upsell.toPlat.body': 'Always адал клиент портфолиосы және топтық хабарлама.',
   'upsell.toPlat.cta': "Platinum'ға өту",
   // §11 — мүшелік төлем/түбіртек ағыны
   'sub.error': 'Әрекет сәтсіз — қайта көр.',

@@ -1,3 +1,4 @@
+import { DEFAULT_DEPOSIT_RULES, depositFor } from '@ayna/domain';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadMediaCache, saveMediaCache } from './media-cache';
 import { setApiToken } from './api';
@@ -48,7 +49,6 @@ import {
   SELLER_PAST_CLIENTS,
   type AlwaysBond,
   COMMISSION_PCT_STANDARD,
-  COMMISSION_PCT_PLATINUM,
   reengageMessage,
   SEED_APPOINTMENTS,
   type UpcomingEvent,
@@ -477,6 +477,11 @@ export const useStore = create<State>()(
         rates: {
           commissionPct: 10, // kurucu kararı: online randevudan %10 (fetch başarısızsa fallback)
           depositKzt: DEPOSIT_KZT,
+          // K1 — oranlı kapora yedek değerleri (sunucu fetch'i başarısızsa)
+          depositPct: 10,
+          depositMin: 1000,
+          depositMax: 5000,
+          holdMinutes: 180,
           cancelWindowH: 3,
           lateCancelPct: 3,
           pointsCapPct: POINTS_SPEND_CAP_PCT,
@@ -1019,7 +1024,8 @@ export const useStore = create<State>()(
               type: 'booking',
               titleKey: 'notif.late_cancel',
               bodyKey: 'notif.late_cancel_b',
-              params: { pro: b.proName, deposit: DEPOSIT_KZT },
+              // Yanan tutar randevunun kendi kaporası; sabit 1.000 ₸ değil (K1).
+              params: { pro: b.proName, deposit: b.depositAmount ?? localDeposit(b.price, get().config.rates) },
               dateLabel: 'Az önce',
               icon: 'alert-circle-outline',
               route: `/booking/${id}`,
@@ -1466,7 +1472,7 @@ export const useStore = create<State>()(
               ? {
                   ...b,
                   status: 'deposit_pending',
-                  depositAmount: DEPOSIT_KZT,
+                  depositAmount: localDeposit(b.price, s.config.rates),
                   depositDeadline: depositDeadlineFor(b.proposedStartMs ?? b.startMs, Date.now()),
                   startMs: b.proposedStartMs ?? b.startMs,
                   proposedStartMs: undefined,
@@ -1481,7 +1487,11 @@ export const useStore = create<State>()(
             type: 'booking',
             titleKey: 'notif.alt_approved',
             bodyKey: 'notif.alt_approved_b',
-            params: { pro: b.proName, slot: formatSlotTr(b.startMs), deposit: DEPOSIT_KZT },
+            params: {
+              pro: b.proName,
+              slot: formatSlotTr(b.startMs),
+              deposit: b.depositAmount ?? localDeposit(b.price, get().config.rates),
+            },
             dateLabel: 'Az önce',
             icon: 'card-outline',
             route: `/booking/${id}`,
@@ -1497,7 +1507,7 @@ export const useStore = create<State>()(
                   ...b,
                   status: 'deposit_pending',
                   respondedAt: Date.now(),
-                  depositAmount: DEPOSIT_KZT,
+                  depositAmount: localDeposit(b.price, s.config.rates),
                   depositDeadline: depositDeadlineFor(b.startMs, Date.now()),
                 }
               : b,
@@ -1510,7 +1520,11 @@ export const useStore = create<State>()(
             type: 'booking',
             titleKey: 'notif.pre_approved',
             bodyKey: 'notif.pre_approved_b',
-            params: { pro: b.proName, slot: formatSlotTr(b.startMs), deposit: DEPOSIT_KZT },
+            params: {
+              pro: b.proName,
+              slot: formatSlotTr(b.startMs),
+              deposit: b.depositAmount ?? localDeposit(b.price, get().config.rates),
+            },
             dateLabel: 'Az önce',
             icon: 'card-outline',
             route: `/booking/${id}`,
@@ -2418,9 +2432,24 @@ export const selectSellerView = (s: State): boolean =>
 export const inAudience = (n: { audience?: 'user' | 'seller' }, seller: boolean): boolean =>
   n.audience === undefined || n.audience === (seller ? 'seller' : 'user');
 
-// §12.8 — komisyon oranı: Platinum üyede %8,5, diğerlerinde %10.
+// K1 — yerel kapora tutarı. Sunucu ile AYNI saf fonksiyon (@ayna/domain) ve aynı
+// admin kuralları kullanılır; aksi hâlde bildirimde "1.000 ₸" yazıp ödeme ekranında
+// başka tutar istenirdi. Config gelmemişse fonksiyonun kendi varsayılanları geçerli.
+export const localDeposit = (price: number, rates: State['config']['rates']): number =>
+  depositFor(price, {
+    pct: rates.depositPct ?? DEFAULT_DEPOSIT_RULES.pct,
+    minKzt: rates.depositMin ?? DEFAULT_DEPOSIT_RULES.minKzt,
+    maxKzt: rates.depositMax ?? DEFAULT_DEPOSIT_RULES.maxKzt,
+    stepKzt: DEFAULT_DEPOSIT_RULES.stepKzt,
+  });
+
+// §12.8 — komisyon oranı SUNUCUDAN gelir. Burada eskiden "Platinum'da %8,5"
+// vardı; sunucu komisyonu hesaplarken membershipTier'ı hiç okumuyor, yani o
+// indirim hiç uygulanmıyordu. Platinum uzman gelir raporunda %8,5 ile hesaplanmış
+// YANLIŞ bir net rakam görüyordu. Karar K6: kademeli oran matrisi uygulanana kadar
+// tek oran gösterilir.
 export const selectCommissionRate = (s: State): number =>
-  s.platinum ? COMMISSION_PCT_PLATINUM : COMMISSION_PCT_STANDARD;
+  s.config.rates.commissionPct ?? COMMISSION_PCT_STANDARD;
 
 // §11 — üyelik katmanı (upsell teşviki bunu kullanır). Primitive string → hook için güvenli.
 export const selectTier = (s: State): 'free' | 'premium' | 'platinum' =>

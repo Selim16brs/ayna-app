@@ -1017,6 +1017,10 @@ export interface AppConfig {
   rates: {
     commissionPct: number;
     depositKzt: number;
+    depositPct: number;
+    depositMin: number;
+    depositMax: number;
+    holdMinutes: number;
     cancelWindowH: number;
     lateCancelPct: number;
     pointsCapPct: number;

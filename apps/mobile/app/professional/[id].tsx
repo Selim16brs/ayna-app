@@ -648,9 +648,10 @@ export default function ProfessionalScreen() {
               {/* PARA KURALLARI — 'param ne olacak?' sorusu randevu oluşmadan ÖNCE
                   cevaplanmalı. RulesCard kod tabanında vardı ama yalnız talep ve
                   randevu ekranlarına basılıyordu; uzman profilinde yoktu.
-                  NOT: kanvasta kapora '%20' yazıyordu; sunucuda kapora SABİT TUTAR
-                  (rate.deposit_kzt), yüzde diye bir ayar yok. Olmayan oranı
-                  yazmaktansa gerçek tutarı gösteriyoruz. */}
+                  K1 — kapora artık oranlı: clamp(fiyat × %10, alt sınır, üst sınır).
+                  Profilde tek bir kesin fiyat yok (hizmetler bir aralık), o yüzden
+                  burada tutar değil KURAL yazılır; kesin tutar hizmet seçilince
+                  randevu ekranında görünür. */}
               <RulesCard />
             </>
           ) : null}

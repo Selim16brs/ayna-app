@@ -421,6 +421,7 @@ export const tr = {
   'collections.item.offer': 'Kampanya',
   'rules.title': 'Randevu kuralları — sürpriz yok',
   'rules.deposit': 'Kapora (randevuyu kesinleştirir, hizmette düşülür)',
+  'rules.deposit_rule': 'hizmet bedelinin %{pct}’i (en az {min}, en çok {max})',
   'rules.cancel_a': 'Randevuya',
   'rules.cancel_b': 'saatten az kala iptal edersen kapora yanar; daha erken iptal ücretsizdir.',
   'rules.noshow': 'Gelmezsen (no-show) kapora uzmanda kalır ve hesabına ceza işlenir.',
@@ -1580,7 +1581,7 @@ export const tr = {
     'Premium ile öne çık; Platinum ile sadık müşteri portföyü + düşük komisyon.',
   'upsell.toPrem.cta': 'Paketleri keşfet',
   'upsell.toPlat.title': "Platinum'a yüksel 💎",
-  'upsell.toPlat.body': 'Always sadık müşteri portföyü, toplu bildirim ve komisyon %8,5.',
+  'upsell.toPlat.body': 'Always sadık müşteri portföyü ve toplu bildirim.',
   'upsell.toPlat.cta': "Platinum'a geç",
   // §11 — üyelik ödeme/dekont akışı
   'sub.error': 'İşlem başarısız — tekrar dene.',

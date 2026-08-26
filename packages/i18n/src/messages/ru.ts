@@ -375,6 +375,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'collections.item.offer': 'Акция',
   'rules.title': 'Правила записи — без сюрпризов',
   'rules.deposit': 'Депозит (закрепляет запись, вычитается из услуги)',
+  'rules.deposit_rule': '{pct}% от стоимости услуги (минимум {min}, максимум {max})',
   'rules.cancel_a': 'При отмене менее чем за',
   'rules.cancel_b': 'ч. до записи депозит сгорает; более ранняя отмена бесплатна.',
   'rules.noshow':
@@ -1484,7 +1485,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
     'С Premium — выше в поиске; с Platinum — список постоянных клиентов + низкая комиссия.',
   'upsell.toPrem.cta': 'Смотреть пакеты',
   'upsell.toPlat.title': 'Перейди на Platinum 💎',
-  'upsell.toPlat.body': 'Список постоянных клиентов Always, рассылка и комиссия 8,5%.',
+  'upsell.toPlat.body': 'Список постоянных клиентов Always и рассылка.',
   'upsell.toPlat.cta': 'Перейти на Platinum',
   // §11 — оплата подписки / чек
   'sub.error': 'Не удалось — попробуй ещё раз.',

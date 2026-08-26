@@ -18,11 +18,10 @@ import {
   Text,
 } from '../../src/ui';
 
-const BENEFITS: MessageKey[] = [
-  'passport.benefit.priority',
-  'passport.benefit.support',
-  'passport.benefit.raffle',
-];
+// K6 — "öncelikli randevu fırsatları" ve "öncelikli destek" KALDIRILDI:
+// ikisinin de sunucuda karşılığı yok (sıralama yalnız puana göre, ayrı bir
+// destek kuyruğu da yok). Çekiliş gerçek: loyalty.service üzerinden işliyor.
+const BENEFITS: MessageKey[] = ['passport.benefit.raffle'];
 // §5.6.2 — premium avantaj karşılaştırması (ücretsizde YOK, premiumda VAR)
 const PREMIUM_PERKS: MessageKey[] = [
   'passport.perk.boni',

@@ -1900,9 +1900,10 @@ export const POINTS_EXPIRY_MONTHS = 12; // 12 ay hareketsizse yanar
 export const PREMIUM_PRICE_KZT = 999;
 // §11 — Platinum paket (Premium üstü): tüm premium + Always (sadık müşteri bağı) + toplu bildirim.
 export const PLATINUM_PRICE_KZT = 1999;
-// §12.8 — komisyon oranı pakete göre: standart %10, Platinum %8,5.
+// §12.8 — komisyon oranı. Yalnız sunucu fetch'i başarısız olursa kullanılan yedek;
+// gerçek değer config.rates.commissionPct. Pakete göre kademeli oran (K6/D4) henüz
+// sunucuda yok — olmayan bir indirimi burada göstermiyoruz.
 export const COMMISSION_PCT_STANDARD = 10;
-export const COMMISSION_PCT_PLATINUM = 8.5;
 
 // §11 — ALWAYS: uzman/salon ↔ müşteri KARŞILIKLI (iki taraf onaylı) sadık-müşteri bağı.
 // İstek tek taraf açar, karşı taraf kabul edince 'accepted' olur (Instagram takip / FB arkadaşlık gibi).
