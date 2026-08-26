@@ -51,6 +51,10 @@ export const dateLabelSchema = z.object({ dateLabel: z.string().min(1) });
 export const proposeSchema = z.object({ proposedStartMs: z.number().int() });
 export type ProposeInput = z.infer<typeof proposeSchema>;
 
+// §7.8 — müşterinin bir kez ücretsiz erteleme hakkı
+export const rescheduleSchema = z.object({ startMs: z.number().int().positive() });
+export type RescheduleInput = z.infer<typeof rescheduleSchema>;
+
 // §6.C — iptal sebebi (opsiyonel)
 export const cancelSchema = z.object({ reason: z.string().max(300).optional() });
 

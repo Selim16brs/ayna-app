@@ -269,6 +269,10 @@ model Booking {
   // Eskiden bu bilgi HİÇBİR YERDE yoktu: kapora kime kalacak sorusu durumdan da
   // alandan da türetilemiyordu, yalnız `depositForfeited` bayrağından dolaylı
   // tahmin edilebiliyordu.
+  // §7.8 — kullanılan ücretsiz erteleme sayısı. Sınır admin ayarı
+  // (`policy.free_reschedules`, varsayılan 1); sürekli erteleme kötüye
+  // kullanımını engeller.
+  rescheduleCount   Int           @default(0) @map("reschedule_count")
   cancelledBy       String?       @map("cancelled_by")
   cancelledAt       DateTime?     @map("cancelled_at") @db.Timestamptz(6)
   // §4.1-4.4 — depozito/iade alanları

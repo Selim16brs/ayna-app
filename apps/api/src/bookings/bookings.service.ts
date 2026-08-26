@@ -18,7 +18,7 @@ import { StorageService } from '../storage/storage.service';
 import { commissionFor } from '../commissions/commissions.calc';
 import { OffersService } from '../offers/offers.service';
 import { slotAllowed } from '../offers/offers.rules';
-import { cancelOutcome } from './bookings.policy';
+import { canReschedule, cancelOutcome } from './bookings.policy';
 import type { CreateBookingInput } from './bookings.dto';
 
 // §3 — iptali yapan taraf. `system` zamanlayıcı/iç çağrı demek.
@@ -719,6 +719,109 @@ export class BookingsService {
       }
     }
     return mapBooking(updated);
+  }
+
+  /**
+   * §7.8 — BİR KEZ ADİL ERTELEME.
+   *
+   * Kodda müşterinin elinde yalnız İPTAL vardı: saatini değiştirmek isteyen
+   * müşteri iptal etmek zorunda kalıyor, geç iptal penceresindeyse kaporasını
+   * yakıyordu — hâlbuki hizmetten vazgeçmemişti.
+   *
+   * Kapora AKTARILIR (yeni tutar hesaplanmaz; fiyat değişmiyor). Yeni slot
+   * diğer üç yolla aynı desende yeniden tutulur: advisory lock + çakışma
+   * kontrolü, üstüne veritabanı slot kısıtı.
+   */
+  async reschedule(id: string, newStartMs: number, actorId?: string) {
+    const rol = await this.assertParty(id, actorId, 'owner');
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (!b)
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+
+    const [limitRow, windowRow] = await Promise.all([
+      this.prisma.setting.findUnique({ where: { key: 'policy.free_reschedules' } }),
+      this.prisma.setting.findUnique({ where: { key: 'rate.cancel_window_h' } }),
+    ]);
+    const limit = limitRow?.intValue ?? 1;
+    const windowMs = (windowRow?.intValue ?? 3) * 60 * 60 * 1000;
+
+    const karar = canReschedule({
+      status: b.status,
+      startAtMs: b.startAt?.getTime() ?? null,
+      nowMs: Date.now(),
+      used: b.rescheduleCount,
+      limit,
+      windowMs,
+    });
+    if (!karar.ok) {
+      throw new BadRequestException({
+        code: karar.code,
+        message:
+          karar.code === 'RESCHEDULE_LIMIT'
+            ? 'Bu randevu için ücretsiz erteleme hakkın doldu'
+            : karar.code === 'RESCHEDULE_TOO_LATE'
+              ? 'Randevuya çok az kaldı — erteleme penceresi kapandı'
+              : 'Bu randevu ertelenemez',
+      });
+    }
+    if (!Number.isFinite(newStartMs) || newStartMs <= Date.now()) {
+      throw new BadRequestException({ code: 'BAD_SLOT', message: 'Geçmiş bir saat seçilemez' });
+    }
+
+    const sure = b.durationMin ?? 60;
+    const row = await this.prisma.$transaction(async (tx) => {
+      if (b.proId) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${b.proId}))`;
+        const others = await tx.booking.findMany({
+          where: {
+            proId: b.proId,
+            id: { not: id }, // kendi eski saati çakışma sayılmaz
+            status: { in: ACTIVE_SLOT_STATUSES },
+            startAt: { not: null },
+          },
+          select: { startAt: true, durationMin: true },
+        });
+        const busy = others
+          .filter((o) => o.startAt)
+          .map((o) => ({
+            startMs: o.startAt!.getTime(),
+            endMs: o.startAt!.getTime() + (o.durationMin ?? 60) * 60_000,
+          }));
+        if (hasConflict({ startMs: newStartMs, endMs: newStartMs + sure * 60_000 }, busy)) {
+          throw new ConflictException({
+            code: 'SLOT_CONFLICT',
+            message: 'Bu saat başka bir randevuyla çakışıyor',
+          });
+        }
+      }
+      return tx.booking.update({
+        where: { id },
+        data: {
+          startAt: new Date(newStartMs),
+          dateLabel: deriveDateLabel(newStartMs),
+          inDays: deriveInDays(newStartMs),
+          proposedStartAt: null,
+          // Kapora AYNEN kalır — yeni randevuya aktarılmış olur (§7.8).
+          rescheduleCount: { increment: 1 },
+        },
+      });
+    });
+
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: actorId ?? null,
+          actorRole: rol,
+          action: 'booking.reschedule',
+          resourceType: 'booking',
+          resourceId: id,
+          safeDiff: { used: b.rescheduleCount + 1, limit },
+        },
+      })
+      .catch(() => undefined);
+
+    this.notifyParties(id, 'Randevu ertelendi', `Yeni saat: ${deriveDateLabel(newStartMs)}`);
+    return mapBooking(row);
   }
 
   // §1.6 — uzman alternatif saat önerir (mobil epoch ms; proposedStartAt olarak saklanır)

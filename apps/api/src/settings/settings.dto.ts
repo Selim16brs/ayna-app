@@ -14,6 +14,8 @@ export const RATE_DEFS = [
   // `rate.deposit_min` bunu ezer. Panelde kalıyor ki eski değer görünür olsun.
   { key: 'rate.deposit_kzt', label: 'Kapora (eski sabit tutar)', suffix: '₸', default: 1000 },
   { key: 'rate.cancel_window_h', label: 'Ücretsiz iptal penceresi', suffix: 'saat', default: 3 },
+  // §7.8 — aynı randevuda ücretsiz erteleme hakkı (0 = kapalı)
+  { key: 'policy.free_reschedules', label: 'Ücretsiz erteleme hakkı', suffix: 'adet', default: 1 },
   // K5 — komisyon vadesinden sonra kısıtlamaya kadar tanınan süre
   {
     key: 'rate.commission_grace_minutes',

@@ -1,0 +1,12 @@
+-- §7.8 — BİR KEZ ADİL ERTELEME HAKKI
+--
+-- Müşterinin elinde yalnız İPTAL vardı: saatini değiştirmek isteyen müşteri
+-- iptal etmek zorunda kalıyor, geç iptal penceresindeyse kaporasını yakıyordu —
+-- hâlbuki hizmetten vazgeçmemişti.
+--
+-- Sayaç, sürekli erteleme kötüye kullanımını engelliyor. Sınır admin ayarı
+-- (policy.free_reschedules, varsayılan 1); 0 yazmak özelliği kapatır.
+--
+-- Yıkıcı değil: varsayılanı 0 olan tek kolon. Mevcut randevular hakkını
+-- kullanmamış sayılır.
+ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "reschedule_count" INTEGER NOT NULL DEFAULT 0;
