@@ -665,14 +665,14 @@ const makeStyles = (colors: ColorTokens) =>
       lineHeight: 29,
       fontWeight: '500',
       letterSpacing: -0.4,
-      color: '#1A1A1A',
+      color: colors.onAccent,
       zIndex: 1,
     },
     greetName: {
       fontFamily: 'Caveat_700Bold',
       fontSize: 70,
       lineHeight: 68,
-      color: '#FFFFFF',
+      color: colors.onColor,
       alignSelf: 'flex-start',
       marginTop: -6,
       marginLeft: -2,
@@ -729,7 +729,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.surface,
     },
     bellBadgeText: {
-      color: '#FFFFFF',
+      color: colors.onColor,
       fontSize: 10,
       lineHeight: 12,
       fontWeight: '800',
@@ -831,7 +831,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    primaryBadgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+    primaryBadgeText: { color: colors.onColor, fontSize: 12, fontWeight: '800' },
     primaryTitle: { fontSize: 16 },
 
     // Tedarikçi reklamları
@@ -872,7 +872,7 @@ const makeStyles = (colors: ColorTokens) =>
     adSponsorText: { color: 'rgba(255,255,255,0.9)', fontSize: 9, letterSpacing: 0.3 },
     adInfo: { padding: space(2), gap: 2 },
     adBrand: { color: 'rgba(255,255,255,0.85)', fontWeight: '700', letterSpacing: 0.2 },
-    adTitle: { color: '#FFFFFF', fontSize: 16, lineHeight: 20 },
+    adTitle: { color: colors.onColor, fontSize: 16, lineHeight: 20 },
     adSub: { color: 'rgba(255,255,255,0.85)', lineHeight: 16 },
     adCta: {
       flexDirection: 'row',

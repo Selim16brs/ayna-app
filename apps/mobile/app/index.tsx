@@ -123,7 +123,7 @@ const makeStyles = (colors: ColorTokens) =>
     sloganWord: {
       fontFamily: 'Caveat_700Bold',
       fontSize: 40,
-      color: '#FF2D78',
+      color: colors.accentFg,
     },
     value: { textAlign: 'center', marginTop: space(1.5), maxWidth: 300, lineHeight: 19 },
     bullets: {

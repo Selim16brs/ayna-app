@@ -437,11 +437,11 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingBottom: TAB_BAR_CLEARANCE + space(2),
-      gap: space(1.25),
+      gap: space(1.5),
     },
     flex: { flex: 1 },
     card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
-    dayGroup: { gap: space(1) },
+    dayGroup: { gap: space(1.5) },
     dayHead: { marginTop: space(1.5) },
     busyRow: { opacity: 0.75 },
     appt: {
