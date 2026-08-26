@@ -8,8 +8,10 @@
 ## Tek cümlelik özet
 
 Randevu akışı büyük ölçüde çalışıyor ve kapora/iade/itiraz döngüsü sunucuya
-taşınmış durumda — ama **slot tutma (hold) hiç yok** ve veritabanında **aynı
-saate iki randevu yazılmasını engelleyen hiçbir kısıt yok.**
+taşınmış durumda. İki gerçek boşluk var: randevunun doğduğu **üç yoldan birinde
+hiç çakışma kontrolü yok** (ve o yol, ters-pazaryerinin ana müşteri yolu), ve
+veritabanında **aynı saate iki randevu yazılmasını engelleyen hiçbir kısıt yok**
+— korumanın tamamı uygulama katmanında.
 
 ---
 
@@ -77,13 +79,13 @@ Kara listenin bıraktığı boşluk: `deposit_pending → completed` serbestti. 
 
 ## 2. Slot ve eşzamanlılık — en büyük boşluk
 
-| Konu                  | Durum                                                                   | Kanıt                                  |
-| --------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
-| Müsaitlik hesabı      | `computeDaySlots` saf fonksiyon, test edilmiş                           | `packages/domain/src/booking/slots.ts` |
-| Kapalı gün            | Destekleniyor                                                           | `catalog.service.ts`                   |
-| **Slot tutma (hold)** | **YOK** — `HELD`, `holdUntil` gibi hiçbir kavram bulunamadı             | grep: 0 sonuç                          |
-| **DB benzersizliği**  | **YOK** — `(proId, startAt)` üzerinde kısıt yok                         | `schema.prisma:224-276`                |
-| Uygulama içi koruma   | **İKİ yolda VAR** — advisory lock + `hasConflict`, ama **üçüncüde yok** | aşağıda                                |
+| Konu                 | Durum                                                                   | Kanıt                                  |
+| -------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
+| Müsaitlik hesabı     | `computeDaySlots` saf fonksiyon, test edilmiş                           | `packages/domain/src/booking/slots.ts` |
+| Kapalı gün           | Destekleniyor                                                           | `catalog.service.ts`                   |
+| Slot tutma (hold)    | `HELD` adıyla yok ama **işlevsel olarak var**: `deposit_pending` + süre | `bookings.service.ts:466`              |
+| **DB benzersizliği** | **YOK** — `(proId, startAt)` üzerinde kısıt yok                         | `schema.prisma:224-276`                |
+| Uygulama içi koruma  | **İKİ yolda VAR** — advisory lock + `hasConflict`, ama **üçüncüde yok** | aşağıda                                |
 
 > **Düzeltme (26.08):** bu belgenin ilk sürümü "randevuda advisory lock yok"
 > diyordu; yanlıştı. `bookings.service.ts:292` ve `:479` `pg_advisory_xact_lock`
@@ -119,8 +121,8 @@ korunmalı.
 
 | Konu             | Durum                                              | Kanıt                        |
 | ---------------- | -------------------------------------------------- | ---------------------------- |
-| Tutar            | **Sabit**, `rate.deposit_kzt` (varsayılan 1000)    | `quotes.service.ts:445-446`  |
-| Oranlı hesap     | **YOK**                                            | —                            |
+| Tutar            | Yola göre DEĞİŞİYOR — aşağıdaki düzeltmeye bak     | `quotes.service.ts:445-446`  |
+| Oranlı hesap     | Onay yolunda var (%20), teklif yolunda yok         | `bookings.service.ts:462`    |
 | Dekont yükleme   | Var, sha256 hash ile tekrar koruması               | `schema.prisma:267-268`      |
 | Karşılıklı teyit | Var (`deposit_submitted` → uzman onayı)            | —                            |
 | İade akışı       | Var (`refund_pending` → `refund_submitted` → onay) | —                            |
