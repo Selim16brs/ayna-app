@@ -308,19 +308,20 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: space(3) },
 
+    // Kanvas Dilek.dc.html: zemin AÇIK porselen. Burada mor bir bant vardı ve
+    // üstelik içindeki metinler tone="ink" (koyu) idi — yani koyu-üstüne-koyu
+    // okunuyordu. Bant kaldırıldı; metinler zaten doğru tonda.
     hero: {
-      backgroundColor: colors.accent,
+      backgroundColor: colors.bg,
       paddingHorizontal: space(3),
       paddingBottom: space(3),
-      borderBottomLeftRadius: radius.xl,
-      borderBottomRightRadius: radius.xl,
     },
     heroTop: { flexDirection: 'row', alignItems: 'center' },
     backChip: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      backgroundColor: 'rgba(255,255,255,0.55)',
+      backgroundColor: colors.surface, // açık zeminde yarı saydam beyaz kaybolurdu
       paddingHorizontal: space(1.75),
       paddingVertical: space(1),
       borderRadius: radius.pill,
@@ -338,7 +339,9 @@ const makeStyles = (colors: ColorTokens) =>
       borderBottomRightRadius: radius.xl,
       borderTopRightRadius: radius.md,
       borderBottomLeftRadius: radius.md,
-      backgroundColor: 'rgba(255,255,255,0.25)',
+      // Mor bandın üstünde yarı saydam beyaz bir zemindi; açık zeminde
+      // görünmez kalıyordu → token'lı yumuşak zemin.
+      backgroundColor: colors.accentSoft,
     },
     magicFab: {
       position: 'absolute',

@@ -158,6 +158,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.nav.menu': 'Мәзір',
   // §10 — САЛОН панелі (маманнан бөлек)
   'salon.nav.home': 'Басты бет',
+  'salon.cover.edit': 'Мұқабаны өзгерту',
   'salon.nav.agenda': 'Күнтізбе',
   'salon.nav.staff': 'Құрам',
   'salon.nav.profile': 'Профиль',

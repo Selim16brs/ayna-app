@@ -14,6 +14,7 @@ import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   BudgetGauge,
+  PressableScale,
   RulesCard,
   Screen,
   ServiceChips,
@@ -149,26 +150,16 @@ export default function NewDemandScreen() {
     <Screen edges={[]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* ── Lime üst şerit ── */}
-        <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
-          <Image
-            source={require('../../assets/logo-mark.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <View style={styles.locChip}>
-            <Text variant="caption" tone="ink" style={styles.locText}>
-              {city}
-            </Text>
-            <Ionicons name="chevron-down" size={14} color={colors.ink} />
-          </View>
-        </View>
-
-        {/* ── Beyaz gövde ── */}
-        <View style={styles.sheet}>
+        {/* ═══ BAŞLIK — kanvas Dilek.dc.html §başlık ═══
+            Kanvas: AÇIK zemin, 44'lük beyaz geri düğmesi, 24px koyu başlık.
+            Önceki sürümde üstte mor bir logo bandı vardı; kanvasta yok ve
+            zemin porselen. Şehir çipi bandın içindeydi — işlev kaybolmasın
+            diye başlık satırının sağına alındı. */}
+        <View style={[styles.sheet, { paddingTop: insets.top + space(2) }]}>
           <View style={styles.titleRow}>
-            <Pressable style={styles.back} onPress={() => router.back()}>
+            <PressableScale style={styles.back} onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={22} color={colors.ink} />
-            </Pressable>
+            </PressableScale>
             <View style={styles.titleText}>
               <Text variant="display" tone="ink" style={styles.title}>
                 {t('demand.new.title')}
@@ -177,6 +168,12 @@ export default function NewDemandScreen() {
                 {t('demand.new.subtitle')}
               </Text>
             </View>
+            <PressableScale style={styles.locChip} onPress={() => router.push('/city')}>
+              <Ionicons name="location" size={13} color={colors.sage} />
+              <Text variant="caption" tone="ink" style={styles.locText}>
+                {city}
+              </Text>
+            </PressableScale>
           </View>
 
           {/* Kategori seç */}
@@ -476,32 +473,27 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: space(3) },
 
-    hero: {
-      backgroundColor: colors.accent,
+    locChip: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: space(3),
-      paddingBottom: space(3),
+      gap: 5,
+      height: 34,
+      paddingHorizontal: space(1.25),
+      borderRadius: 17,
+      backgroundColor: colors.surface,
     },
-    logo: { width: 68, height: 34 },
-    locChip: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     locText: { fontFamily: font.semibold },
 
     sheet: {
       backgroundColor: colors.bg,
-      borderTopLeftRadius: radius.xl,
-      borderTopRightRadius: radius.xl,
-      marginTop: -space(2),
       paddingHorizontal: space(3),
-      paddingTop: space(3),
     },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
     back: {
       width: 44,
       height: 44,
-      borderRadius: 22,
-      backgroundColor: colors.surfaceMuted,
+      borderRadius: 15,
+      backgroundColor: colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
     },

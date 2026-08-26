@@ -48,50 +48,50 @@ export default function SalonHomeScreen() {
   return (
     <Screen edges={[]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Salon kapak fotoğrafı (düzenlenebilir) + kimlik + karşılama */}
-        <View style={styles.hero}>
-          {avatarUri ? (
-            <Image source={{ uri: avatarUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.accent }]} />
-          )}
-          <LinearGradient
-            colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.05)', 'rgba(0,0,0,0.72)']}
-            locations={[0, 0.45, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={[styles.heroTop, { paddingTop: insets.top + space(1) }]}>
-            <View style={styles.bindingPill}>
-              <Ionicons name="business" size={12} color="#FFFFFF" />
-              <Text variant="caption" style={styles.bindingText} numberOfLines={1}>
-                {t('reports.identity.salon')}
-              </Text>
+        {/* ═══ BAŞLIK — kanvas SalonPanel.dc.html §başlık ═══
+            Kanvas: AÇIK porselen zemin, 54'lük avatar, koyu başlık, beyaz
+            44'lük düğmeler. Önceki sürüm 240px koyu kapak fotoğrafı üstünde
+            beyaz metindi — kanvasla ilgisi yoktu.
+            Kapak düzenleme işlevi KORUNDU: avatara dokunmak aynı akışı açıyor. */}
+        <View style={[styles.header, { paddingTop: insets.top + space(1.5) }]}>
+          <PressableScale
+            style={styles.avatarBtn}
+            onPress={editCover}
+            accessibilityRole="button"
+            accessibilityLabel={t('salon.cover.edit')}
+          >
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.avatarImg} resizeMode="cover" />
+            ) : (
+              <Ionicons name="business" size={22} color={colors.accent} />
+            )}
+            <View style={styles.avatarCam}>
+              <Ionicons name="camera" size={11} color={colors.onAccent} />
             </View>
-            <View style={styles.heroTopRight}>
-              <PressableScale style={styles.circleBtn} onPress={editCover}>
-                <Ionicons name="camera" size={18} color="#FFFFFF" />
-              </PressableScale>
-              <PressableScale
-                style={styles.circleBtn}
-                onPress={() => router.push('/notifications')}
-              >
-                <Ionicons name="notifications-outline" size={18} color="#FFFFFF" />
-                {unread > 0 ? (
-                  <View style={styles.bellBadge}>
-                    <Text style={styles.bellBadgeText}>{unread > 9 ? '9+' : String(unread)}</Text>
-                  </View>
-                ) : null}
-              </PressableScale>
-            </View>
-          </View>
-          <View style={styles.heroBottom}>
-            <Text variant="caption" style={styles.heroGreet}>
-              {t(greetingKey())}
+          </PressableScale>
+
+          <View style={styles.headerText}>
+            <Text variant="caption" tone="muted" numberOfLines={1}>
+              {t(greetingKey())} · {t('reports.identity.salon')}
             </Text>
-            <Text variant="display" style={styles.heroName} numberOfLines={1}>
+            <Text variant="h1" tone="ink" style={styles.headerName} numberOfLines={1}>
               {salonName}
             </Text>
           </View>
+
+          <PressableScale
+            style={[styles.circleBtn, shadow.soft]}
+            onPress={() => router.push('/notifications')}
+            accessibilityRole="button"
+            accessibilityLabel={t('notifications.title')}
+          >
+            <Ionicons name="notifications-outline" size={18} color={colors.ink} />
+            {unread > 0 ? (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>{unread > 9 ? '9+' : String(unread)}</Text>
+              </View>
+            ) : null}
+          </PressableScale>
         </View>
 
         <View style={styles.body}>
@@ -263,29 +263,45 @@ const makeStyles = (colors: ColorTokens) =>
     occupancy: { paddingHorizontal: space(2.5), marginTop: space(2) },
     flex: { flex: 1 },
     // Kapak foto hero
-    hero: { height: 240, position: 'relative', justifyContent: 'space-between' },
-    heroTop: {
+    // Kanvas §başlık — açık zeminde 54'lük avatar + koyu başlık + beyaz düğme.
+    header: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
+      gap: space(1.5),
       paddingHorizontal: space(2.5),
+      paddingBottom: space(1),
     },
-    heroTopRight: { flexDirection: 'row', gap: space(1) },
-    bindingPill: {
-      flexDirection: 'row',
+    avatarBtn: {
+      width: 54,
+      height: 54,
+      borderRadius: 18,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
-      gap: 5,
-      backgroundColor: 'rgba(0,0,0,0.4)',
-      paddingHorizontal: space(1.25),
-      paddingVertical: space(0.5),
-      borderRadius: radius.pill,
+      justifyContent: 'center',
+      overflow: 'visible',
     },
-    bindingText: { color: '#FFFFFF', fontFamily: font.semibold },
+    avatarImg: { width: 54, height: 54, borderRadius: 18 },
+    avatarCam: {
+      position: 'absolute',
+      right: -3,
+      bottom: -3,
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: colors.bg,
+    },
+    headerText: { flex: 1, minWidth: 0, gap: 2 },
+    headerName: { letterSpacing: -0.5 },
     circleBtn: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: 'rgba(0,0,0,0.4)',
+      width: 44,
+      height: 44,
+      borderRadius: 15,
+      // Koyu kapak fotoğrafı kalktı; yarı saydam siyah açık zeminde kaybolurdu.
+      backgroundColor: colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -308,9 +324,6 @@ const makeStyles = (colors: ColorTokens) =>
       fontFamily: font.semibold,
       includeFontPadding: false,
     },
-    heroBottom: { paddingHorizontal: space(3), paddingBottom: space(2.5) },
-    heroGreet: { color: 'rgba(255,255,255,0.9)', fontFamily: font.semibold },
-    heroName: { color: '#FFFFFF', letterSpacing: -0.3 },
     body: { paddingHorizontal: space(3), paddingTop: space(2) },
     upsell: {
       flexDirection: 'row',

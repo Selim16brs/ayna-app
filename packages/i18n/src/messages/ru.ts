@@ -140,6 +140,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.nav.menu': 'Меню',
   // §10 — панель САЛОНА (отдельно от мастера)
   'salon.nav.home': 'Главная',
+  'salon.cover.edit': 'Изменить обложку',
   'salon.nav.agenda': 'Календарь',
   'salon.nav.staff': 'Команда',
   'salon.nav.profile': 'Профиль',

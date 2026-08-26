@@ -169,6 +169,7 @@ export const tr = {
   'seller.nav.menu': 'Menü',
   // §10 — SALON paneli (uzmandan ayrı)
   'salon.nav.home': 'Ana Sayfa',
+  'salon.cover.edit': 'Kapak fotoğrafını değiştir',
   'salon.nav.agenda': 'Takvim',
   'salon.nav.staff': 'Kadro',
   'salon.nav.profile': 'Profil',
