@@ -366,7 +366,10 @@ export const tr = {
 
   // Ana akış — giriş aksiyonları
   'home.how': 'Dileğin Nedir?',
-  'home.how_sub': 'Fotoğrafla teklif al ya da talep oluştur',
+  'home.how_sub': 'Anlat — uzmanlar sana fiyat versin',
+  'home.step1': '1 Anlat',
+  'home.step2': '2 Karşılaştır',
+  'home.step3': '3 Seç',
   'home.categories': 'Kategoriler',
   'home.nearby': 'Sana yakın salonlar',
   'home.recommended': 'Senin için öneriler',

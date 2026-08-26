@@ -16,14 +16,12 @@ import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   HomeUpcoming,
   HomeUrgent,
-  LampIcon,
   Marquee,
   PressableScale,
   SalonRow,
   Screen,
   Text,
   TextInput,
-  WaveLayered,
 } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -102,192 +100,217 @@ export default function DiscoverScreen() {
   return (
     <Screen edges={[]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* ── LIME HERO (referans: dalgalı kesim + gerçek foto) ── */}
-        <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
-          {/* Üst satır: logo SOLDA — sağda bildirim (şehir seçici "Dileğin Nedir?" yanına taşındı) */}
-          <View style={styles.heroTop}>
-            <Image
-              source={require('../../assets/logo-ayna.png')}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            {/* Konum çipi kanvasa göre ÜST SATIRDA — pembe kartın yanında sıkışmıyor */}
-            <Pressable style={styles.cityChipTop} onPress={() => router.push('/city')}>
-              <Ionicons name="location" size={14} color={colors.ink} />
-              <Text
-                variant="caption"
-                tone="ink"
-                style={styles.cityText}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.85}
-              >
-                {city}
-              </Text>
-              <Ionicons name="chevron-down" size={12} color={colors.ink} />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('notifications.title')}
-              style={styles.bell}
-              onPress={() => router.push('/notifications')}
-              hitSlop={8}
-            >
-              <View style={styles.bellCircle}>
-                <Ionicons name="notifications-outline" size={20} color={colors.ink} />
-                {unread > 0 ? (
-                  <View style={styles.bellBadge}>
-                    <Text style={styles.bellBadgeText}>{unread > 9 ? '9+' : unread}</Text>
-                  </View>
-                ) : null}
+        {/* ═══ 1 · KİMLİK — kanvas Main.dc.html §1 ═══
+            Kanvas: AÇIK porselen zemin, üstte şehir çipi + eylem düğmeleri,
+            altında SOLDA kesik portre + yansıma, sağda selamlama.
+            Önceki sürüm mor bir hero bloğuydu ve kanvasla ilgisi yoktu — yalnız
+            renk token'ları değişmişti, yapı eski tasarımın kendisiydi. */}
+        <View style={[styles.topRow, { paddingTop: insets.top + space(0.5) }]}>
+          <PressableScale
+            style={[styles.cityChip, shadow.soft]}
+            onPress={() => router.push('/city')}
+          >
+            <Ionicons name="location" size={13} color={colors.sage} />
+            <Text variant="meta" tone="ink" style={styles.cityText} numberOfLines={1}>
+              {city}
+            </Text>
+            <Ionicons name="chevron-down" size={12} color={colors.muted} />
+          </PressableScale>
+          <View style={styles.grow} />
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={t('map.title')}
+            style={[styles.iconBtn, shadow.soft]}
+            onPress={() => router.push('/map')}
+          >
+            <Ionicons name="map-outline" size={18} color={colors.ink} />
+          </PressableScale>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={t('notifications.title')}
+            style={[styles.iconBtn, shadow.soft]}
+            onPress={() => router.push('/notifications')}
+          >
+            <Ionicons name="notifications-outline" size={18} color={colors.ink} />
+            {unread > 0 ? (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>{unread > 9 ? '9+' : unread}</Text>
               </View>
-            </Pressable>
-          </View>
-
-          {/* İkinci satır: uzun arama çubuğu — sağda harita (bildirimin altında hizalı blok) */}
-          <View style={styles.searchRow}>
-            <View style={styles.search}>
-              <Ionicons name="search" size={17} color={colors.muted} />
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                placeholder={t('home.search')}
-                placeholderTextColor={colors.muted}
-                returnKeyType="search"
-                onSubmitEditing={runSearch}
-                style={styles.searchInput}
-              />
-            </View>
-            <Pressable style={styles.mapIconBtn} onPress={() => router.push('/map')}>
-              <Ionicons name="map-outline" size={20} color={colors.ink} />
-            </Pressable>
-          </View>
-
-          {/* KİMLİK — kanvas: selamlama + isim Onest'le, altında puan/kademe.
-              El yazısı (Caveat) kaldırıldı: font kararı "yalnız Onest, ikinci
-              aile yok". Hiyerarşi boyut ve ağırlıkla kuruluyor. */}
-          <View style={styles.heroBody}>
-            <View style={styles.heroText}>
-              <Text style={styles.greetLabel}>{t(greetingKey())}</Text>
-              <Text
-                style={styles.greetName}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.6}
-              >
-                {displayName}
-              </Text>
-              {/* Sadakat ekranı derinlerde kalmasın — her açılışta hatırlansın */}
-              {points > 0 || tier ? (
-                <Pressable style={styles.tierRow} onPress={() => router.push('/rewards')}>
-                  <Ionicons name="star" size={13} color={colors.rose} />
-                  <Text numeric style={styles.tierText} numberOfLines={1}>
-                    {points.toLocaleString('tr-TR')} {t('rewards.points')}
-                    {tier ? ` · ${t(`rewards.tier.${tier.key}` as MessageKey)}` : ''}
-                  </Text>
-                </Pressable>
-              ) : null}
-            </View>
-            {/* KESİK PORTRE + YANSIMA — AYNA'nın marka imzası. Uygulamanın adı
-              Ayna; kullanıcı ekranı açtığında kendi yansımasını görür.
-              AKIŞ İÇİNDE duruyor: mutlak konumlandırma dalganın altında
-              kalıyordu ve portre hiç görünmüyordu.
-              Sıfır-demo: kendi fotosu yoksa sahte model YOK — baş harfi
-              madalyonu, aynı yansımayla. */}
-            <View style={styles.portraitCol} pointerEvents="none">
-              {cutoutUri || avatarUri ? (
-                <>
-                  <Image
-                    source={{ uri: cutoutUri ?? avatarUri ?? '' }}
-                    style={styles.portrait}
-                    resizeMode="contain"
-                  />
-                  <View style={styles.reflection}>
-                    <Image
-                      source={{ uri: cutoutUri ?? avatarUri ?? '' }}
-                      style={styles.reflectionImg}
-                      resizeMode="contain"
-                    />
-                    <LinearGradient
-                      colors={['rgba(90,42,85,0)', colors.accent]}
-                      locations={[0, 0.92]}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  </View>
-                </>
-              ) : displayName ? (
-                <>
-                  <View style={styles.medallion}>
-                    <Text style={styles.medallionText}>{displayName.charAt(0)}</Text>
-                  </View>
-                  <View style={styles.reflection}>
-                    <View style={[styles.medallion, styles.medallionFlip]}>
-                      <Text style={styles.medallionText}>{displayName.charAt(0)}</Text>
-                    </View>
-                    <LinearGradient
-                      colors={['rgba(90,42,85,0)', colors.accent]}
-                      locations={[0, 0.92]}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  </View>
-                </>
-              ) : null}
-            </View>
-          </View>
-
-          {/* Dalga geçişi — yeşilden beyaza (pembe DEĞİL; "Dileğin Nedir?" ayrı kart) */}
-          <View style={styles.waveAbs}>
-            <WaveLayered sliver={colors.bg} bottom={colors.bg} height={76} />
-          </View>
-        </View>
-
-        {/* ── SOL: şehir seçici (beyaz alan, ortalı) — SAĞ: "Dileğin Nedir?" pembe kart ── */}
-        <View style={styles.wishRow}>
-          <PressableScale style={styles.wishCard} onPress={() => router.push('/quote')}>
-            <View style={styles.wishIcon}>
-              <LampIcon size={30} color={HOT_PINK} />
-            </View>
-            <View style={styles.wishText}>
-              <Text variant="h2" tone="onColor" style={styles.wishTitle}>
-                {t('home.how')}
-              </Text>
-              <Text variant="caption" tone="onColor" style={styles.wishSub} numberOfLines={2}>
-                {t('home.how_sub')}
-              </Text>
-            </View>
+            ) : null}
           </PressableScale>
         </View>
 
-        {/* ═══ ACİL — süresi işleyen TEK iş. Bekleyen yoksa hiç render edilmez. ═══
-            Tasarım kanvası teşhisi: kapora süresi sessizce doluyordu ve kullanıcı
-            bunu ana ekranda göremiyordu — kaybedilen randevu ve paranın ana sebebi.
-            Kural: SÜRE İŞLİYORSA SAYAÇ GÖRÜNÜR. */}
+        <View style={styles.identityRow}>
+          {/* KESİK PORTRE + YANSIMA — AYNA'nın marka imzası: uygulamayı açan
+              kullanıcı kendi yansımasını görür. Kanvasta SOLDA, 96×138.
+              Kesim RN'de mask-image ile yapılamıyor; alta doğru zemine eriyen
+              bir gradyanla aynı etki kuruluyor. */}
+          <View style={styles.portraitCol} pointerEvents="none">
+            {cutoutUri || avatarUri ? (
+              <>
+                <View style={styles.portraitWrap}>
+                  <Image
+                    source={{ uri: cutoutUri ?? avatarUri ?? '' }}
+                    style={styles.portrait}
+                    resizeMode="cover"
+                  />
+                  <LinearGradient
+                    colors={['rgba(251,248,246,0)', colors.bg]}
+                    locations={[0.62, 1]}
+                    style={StyleSheet.absoluteFill}
+                    pointerEvents="none"
+                  />
+                </View>
+                <View style={styles.reflection}>
+                  <Image
+                    source={{ uri: cutoutUri ?? avatarUri ?? '' }}
+                    style={styles.reflectionImg}
+                    resizeMode="cover"
+                  />
+                  <LinearGradient
+                    colors={['rgba(251,248,246,0.55)', colors.bg]}
+                    locations={[0, 0.88]}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </View>
+              </>
+            ) : displayName ? (
+              /* Sıfır-demo: kendi fotosu yoksa sahte model YOK — baş harfi madalyonu */
+              <>
+                <View style={styles.medallion}>
+                  <Text style={styles.medallionText}>{displayName.charAt(0)}</Text>
+                </View>
+                <View style={styles.reflection}>
+                  <View style={[styles.medallion, styles.medallionFlip]}>
+                    <Text style={styles.medallionText}>{displayName.charAt(0)}</Text>
+                  </View>
+                  <LinearGradient
+                    colors={['rgba(251,248,246,0.55)', colors.bg]}
+                    locations={[0, 0.88]}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </View>
+              </>
+            ) : null}
+          </View>
+
+          <View style={styles.identityText}>
+            <Text variant="body" tone="inkSoft">
+              {t(greetingKey())}
+            </Text>
+            <Text
+              style={styles.greetName}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
+              {displayName}
+            </Text>
+            {points > 0 || tier ? (
+              <PressableScale style={styles.tierRow} onPress={() => router.push('/rewards')}>
+                <Ionicons name="star" size={13} color={colors.gold} />
+                <Text
+                  numeric
+                  variant="caption"
+                  tone="inkSoft"
+                  style={styles.tierText}
+                  numberOfLines={1}
+                >
+                  {points.toLocaleString('tr-TR')} {t('rewards.points')}
+                  {tier ? ` · ${t(`rewards.tier.${tier.key}` as MessageKey)}` : ''}
+                </Text>
+              </PressableScale>
+            ) : null}
+          </View>
+        </View>
+
+        {/* ═══ 2 · ACİL — süre işleyen TEK iş, kimliğin hemen altında (kanvas §2).
+            Kanvas teşhisi: kapora süresi sessizce doluyordu ve kullanıcı bunu
+            ana ekranda göremiyordu. Kural: SÜRE İŞLİYORSA SAYAÇ GÖRÜNÜR. ═══ */}
         <HomeUrgent />
 
-        {/* ═══ YAKLAŞAN RANDEVU — "randevum ne zaman?" artık iki dokunuş uzakta değil ═══ */}
+        {/* ═══ 3 · YAKLAŞAN RANDEVU (kanvas §3) ═══ */}
         <HomeUpcoming />
 
-        {/* ── Kayan slogan (Dileğin Nedir? ile kategoriler arasında) ── */}
-        <Marquee text={t('home.marquee')} style={styles.marquee} />
+        {/* ═══ 4 · ANA EYLEM — Dileğin Nedir (kanvas §4) ═══ */}
+        <PressableScale onPress={() => router.push('/quote')} style={styles.wishPress}>
+          <LinearGradient
+            colors={[colors.rose, colors.accent]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.wishCard}
+          >
+            <View style={styles.wishTop}>
+              <View style={styles.grow}>
+                <Text variant="h2" tone="onAccent" style={styles.wishTitle}>
+                  {t('home.how')}
+                </Text>
+                <Text variant="meta" style={styles.wishSub} numberOfLines={2}>
+                  {t('home.how_sub')}
+                </Text>
+              </View>
+              <View style={styles.wishArrow}>
+                <Ionicons name="arrow-forward" size={19} color={colors.rose} />
+              </View>
+            </View>
+            {/* Üç adım: kullanıcı ne olacağını ÖNCEDEN bilsin */}
+            <View style={styles.wishSteps}>
+              {(['home.step1', 'home.step2', 'home.step3'] as MessageKey[]).map((k, i) => (
+                <View key={k} style={styles.wishStep}>
+                  {i > 0 ? (
+                    <Ionicons name="chevron-forward" size={11} color="rgba(251,248,246,0.6)" />
+                  ) : null}
+                  <Text numeric variant="caption" tone="onAccent" style={styles.wishStepText}>
+                    {t(k)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </LinearGradient>
+        </PressableScale>
 
-        {/* ── KATEGORİLER (yatay kaydırmalı + animasyonlu, "Diğer" yok) ── */}
+        {/* ═══ 5 · ARAMA + KATEGORİ (kanvas §5) ═══ */}
+        <View style={styles.searchRow}>
+          <View style={[styles.search, shadow.soft]}>
+            <Ionicons name="search" size={18} color={colors.muted} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder={t('home.search')}
+              placeholderTextColor={colors.muted}
+              returnKeyType="search"
+              onSubmitEditing={runSearch}
+              style={styles.searchInput}
+            />
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={t('home.search')}
+              style={styles.searchGo}
+              onPress={runSearch}
+            >
+              <Ionicons name="options-outline" size={17} color={colors.onAccent} />
+            </PressableScale>
+          </View>
+        </View>
+
+        {/* Kanvas: kategoriler YATAY HAP biçiminde (kare kutu değil) — isim
+            kırpılmıyor, ikon renkli. Önceki kare kutularda "Saç bakımı" gibi
+            uzun adlar "S..." diye kesiliyordu. */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.catRow}
         >
           {CATEGORIES.map((cat, i) => {
-            const bg = CAT_TINTS[i % CAT_TINTS.length]!;
+            const tint = CAT_TINTS[i % CAT_TINTS.length]!;
             return (
               <Animated.View key={cat.id} entering={FadeInDown.duration(360).delay(i * 55)}>
                 <PressableScale
-                  style={styles.cat}
+                  style={[styles.catPill, shadow.soft]}
                   onPress={() => router.push(`/category/${cat.id}` as never)}
                 >
-                  <View style={[styles.catTile, { backgroundColor: bg }, shadow.soft]}>
-                    <Ionicons name={cat.icon as IoniconName} size={26} color="#FFFFFF" />
-                  </View>
-                  <Text variant="caption" tone="ink" style={styles.catLabel} numberOfLines={2}>
+                  <Ionicons name={cat.icon as IoniconName} size={16} color={tint} />
+                  <Text variant="cta" tone="ink" style={styles.catLabel} numberOfLines={1}>
                     {t(cat.labelKey)}
                   </Text>
                 </PressableScale>
@@ -295,6 +318,10 @@ export default function DiscoverScreen() {
             );
           })}
         </ScrollView>
+
+        {/* Marka sesi — kanvasta yok ama uygulamada vardı; kaldırmak yerine
+            kategorilerin altına, akışı bölmeyecek yere alındı. */}
+        <Marquee text={t('home.marquee')} style={styles.marquee} />
 
         {cityEmpty ? (
           /* §5.1.4 — hizmet veren olmayan şehir: boş durum (asla beyaz boşluk) */
@@ -540,26 +567,6 @@ const makeStyles = (colors: ColorTokens) =>
     content: { paddingBottom: space(13) },
 
     // ── Lime hero ── (alt boşluk dengelendi: bant yukarı kaysın AMA alt yazı dalgada kesilmesin)
-    hero: {
-      backgroundColor: colors.accent,
-      paddingHorizontal: space(3),
-      paddingBottom: space(6),
-      position: 'relative',
-      overflow: 'hidden',
-    },
-    waveAbs: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 2 },
-    heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    logo: { width: 132, height: 50 },
-    topRight: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
-    bell: { justifyContent: 'center' },
-    bellCircle: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     bellBadge: {
       position: 'absolute',
       top: -4,
@@ -583,14 +590,6 @@ const makeStyles = (colors: ColorTokens) =>
       textAlignVertical: 'center',
       includeFontPadding: false,
     },
-    mapIconBtn: {
-      width: 44,
-      height: 44,
-      borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     cityChip: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -603,68 +602,52 @@ const makeStyles = (colors: ColorTokens) =>
     // maxWidth YOK: şehir adı uzunluğu öngörülemez (Almatı · Шымкент · Өскемен).
     // Çip esner, metin kırpılmaz; alan yetmezse yazı bir tık küçülür.
     cityText: { fontFamily: font.semibold, flexShrink: 1 },
-    avatar: {
+    grow: { flex: 1 },
+    // Kanvas §1 — üst satır: şehir çipi solda, eylem düğmeleri sağda.
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      paddingHorizontal: space(2.5),
+    },
+    iconBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 15,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    // Kanvas §5 — arama: 64 yüksek beyaz hap + koyu 46'lık eylem düğmesi.
+    searchRow: { paddingHorizontal: space(2.5), marginTop: space(3) },
+    search: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: colors.surface,
+      paddingLeft: space(2.25),
+      paddingRight: space(1),
+    },
+    searchGo: {
       width: 46,
       height: 46,
-      borderRadius: 23,
-      borderWidth: 2,
-      borderColor: 'rgba(255,255,255,0.7)',
-      backgroundColor: colors.bgSunken,
-    },
-    badge: {
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      width: 12,
-      height: 12,
-      borderRadius: 6,
-      backgroundColor: colors.rose,
-      borderWidth: 2,
-      borderColor: colors.accent,
-    },
-    searchRow: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginTop: space(1.5) },
-    search: {
-      flex: 1,
-      flexDirection: 'row',
+      borderRadius: 16,
+      backgroundColor: colors.ink,
       alignItems: 'center',
-      gap: space(0.75),
-      height: 44,
-      borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      paddingHorizontal: space(2),
+      justifyContent: 'center',
     },
-    searchText: { flex: 1 },
     searchInput: { flex: 1, fontSize: 14, fontFamily: font.regular, color: colors.ink, padding: 0 },
-    mapChip: {
+    // Kanvas §1 — portre SOLDA, selamlama sağda.
+    identityRow: {
       flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      height: 50,
-      borderRadius: radius.pill,
-      paddingHorizontal: space(2),
-      borderWidth: 1.5,
-      borderColor: 'rgba(32,36,15,0.35)',
+      alignItems: 'flex-end',
+      gap: space(2),
+      paddingHorizontal: space(2.5),
+      marginTop: space(1),
     },
-    mapChipText: { fontFamily: font.semibold },
-    heroBody: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: space(2),
-      minHeight: 185,
-      zIndex: 2,
-    },
-    // Karşılama sola yaslı, dikey ORTALI ve BÜYÜK
-    heroText: { flex: 1, justifyContent: 'center', paddingRight: space(1), gap: 2 },
-    cityChipTop: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 5,
-      height: 40,
-      paddingHorizontal: space(1.5),
-      borderRadius: radius.pill,
-      backgroundColor: colors.surface,
-      maxWidth: 150,
-    },
+    identityText: { flex: 1, paddingBottom: space(3.75), gap: 3, minWidth: 0 },
     tierRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -673,14 +656,6 @@ const makeStyles = (colors: ColorTokens) =>
       alignSelf: 'flex-start',
     },
     tierText: { color: 'rgba(251,248,246,0.88)', fontFamily: font.medium, fontSize: 14 },
-    greetLabel: {
-      fontSize: 26,
-      lineHeight: 30,
-      fontFamily: font.medium,
-      letterSpacing: -0.4,
-      color: '#FBF8F6',
-      zIndex: 1,
-    },
     greetName: {
       fontFamily: font.semibold,
       fontSize: 38,
@@ -690,71 +665,69 @@ const makeStyles = (colors: ColorTokens) =>
       alignSelf: 'flex-start',
       zIndex: 2,
     },
-    // Zeminsiz kullanıcı fotoğrafı — sağ altta, yeşilin ÖNÜNDE; alt kısmını dalga keser.
-    // Daha büyük alan (kurucu isteği: foto küçük kalıyordu).
-    // Portre yukarı alındı ki ALTINDA yansımaya yer kalsın (dalga en altta).
-    // AKIŞ İÇİNDE: mutlak konumlandırma dalganın altında kalıyordu, portre
-    // hiç görünmüyordu. Artık heroBody'nin sağ sütunu.
-    portraitCol: { width: 156, alignItems: 'flex-end', justifyContent: 'flex-end' },
-    portrait: { width: 156, height: 178 },
-    reflection: { height: 36, width: 156, overflow: 'hidden' },
+    // Kanvas §1 — kesik portre 96×138: 104 görsel + 34 yansıma.
+    // Kesim RN'de mask-image ile yapılamıyor; alta doğru zemine eriyen bir
+    // gradyan aynı etkiyi veriyor.
+    portraitCol: { width: 96, height: 138 },
+    portraitWrap: { width: 96, height: 104, overflow: 'hidden' },
+    portrait: { width: 96, height: 104 },
+    reflection: { width: 96, height: 34, overflow: 'hidden' },
     reflectionImg: {
-      width: 156,
-      height: 178,
-      marginTop: -142,
+      width: 96,
+      height: 104,
+      marginTop: -70,
       transform: [{ scaleY: -1 }],
-      opacity: 0.34,
+      opacity: 0.16,
     },
     medallion: {
-      width: 120,
-      height: 120,
-      borderRadius: 40,
-      alignSelf: 'flex-end',
-      backgroundColor: 'rgba(251,248,246,0.16)',
+      width: 96,
+      height: 104,
+      borderRadius: 30,
+      backgroundColor: colors.accentSoft,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    medallionFlip: { transform: [{ scaleY: -1 }], marginTop: -84, opacity: 0.34 },
-    medallionText: { fontFamily: font.semibold, fontSize: 52, color: '#FBF8F6' },
+    medallionFlip: { marginTop: -70, transform: [{ scaleY: -1 }], opacity: 0.16 },
+    medallionText: { fontFamily: font.semibold, fontSize: 44, color: colors.accent },
 
-    // ── SOL: şehir (beyaz alan ortalı) + SAĞ: "Dileğin Nedir?" pembe kart (sağa sıfır) ──
-    wishRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: -space(8), // kart yukarı taşar → üst kenarı yeşil hero'ya birleşir
-      zIndex: 3,
-    },
-    wishLeft: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingHorizontal: space(1),
-    },
-    // Kayan slogan — kart ile kategoriler arasında
-    marquee: { marginTop: space(2), marginBottom: space(0.5) },
-    wishCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      width: '78%',
-      gap: space(1.25),
-      backgroundColor: HOT_PINK,
-      borderTopLeftRadius: radius.lg,
-      borderBottomLeftRadius: radius.lg, // sağ köşeler 0 → ekran kenarına sıfır
-      paddingVertical: space(1.75),
-      paddingLeft: space(1.5),
-      paddingRight: space(2),
-    },
-    wishIcon: {
-      width: 46,
-      height: 46,
-      borderRadius: 23,
+    // Kanvas §4 — Dileğin Nedir: gül→mürdüm gradyan, beyaz ok düğmesi, 3 adım.
+    wishPress: { marginHorizontal: space(2.5), marginTop: space(2.25) },
+    wishCard: { borderRadius: radius.xl, padding: space(2.5), gap: space(1.875) },
+    wishTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.75) },
+    wishTitle: { fontSize: 23, lineHeight: 27, letterSpacing: -0.3, textAlign: 'left' },
+    wishSub: { color: 'rgba(251,248,246,0.88)', marginTop: 4 },
+    wishArrow: {
+      width: 56,
+      height: 56,
+      borderRadius: 19,
+      backgroundColor: colors.bg,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#FFFFFF',
     },
-    wishText: { flex: 1, gap: 2 },
-    wishTitle: { fontSize: 20, letterSpacing: -0.2, textAlign: 'left' },
-    wishSub: { opacity: 0.9 },
+    wishSteps: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.875),
+      paddingTop: space(1.625),
+      borderTopWidth: 1,
+      borderTopColor: 'rgba(251,248,246,0.24)',
+    },
+    wishStep: { flexDirection: 'row', alignItems: 'center', gap: space(0.875) },
+    wishStepText: { fontFamily: font.semibold },
+
+    // Kanvas §5 — kategoriler YATAY HAP: 52 yüksek, ad kırpılmıyor.
+    catRow: { paddingHorizontal: space(2.5), gap: space(1.125), paddingVertical: space(1.5) },
+    catPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      height: 52,
+      paddingHorizontal: space(2.125),
+      borderRadius: 26,
+      backgroundColor: colors.surface,
+    },
+    catLabel: { fontFamily: font.medium },
+    marquee: { marginTop: space(0.5), marginBottom: space(1.5) },
 
     // ── Tek satır yatay kaydırma (Fırsatlar / Öne çıkanlar) — referans gradient kart ──
     promoScroll: { paddingHorizontal: space(3), gap: space(1.5) },
@@ -830,23 +803,7 @@ const makeStyles = (colors: ColorTokens) =>
     sponsorText: { color: 'rgba(255,255,255,0.95)', fontSize: 10, fontFamily: font.semibold },
 
     // ── Kategoriler (yatay kaydırmalı) ──
-    catRow: {
-      flexDirection: 'row',
-      gap: space(2),
-      paddingHorizontal: space(3),
-      paddingTop: space(1.5),
-    },
-    cat: { alignItems: 'center', width: 78 },
     // Yuvarlak yerine yumuşak kare (squircle) + gölge — daha profesyonel
-    catTile: {
-      width: 60,
-      height: 60,
-      borderRadius: 18,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: space(0.75),
-    },
-    catLabel: { textAlign: 'center', fontFamily: font.semibold, fontSize: 12, lineHeight: 15 },
 
     // ── Bölüm başlığı ──
     sectionHeader: {
