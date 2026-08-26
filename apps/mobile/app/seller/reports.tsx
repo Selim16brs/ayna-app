@@ -25,14 +25,13 @@ import {
   TAB_BAR_CLEARANCE,
   Text,
   TierUpsell,
-  WaveLayered,
 } from '../../src/ui';
 
 type Period = 'week' | 'month' | 'all';
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 export default function ReportsScreen() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, gradients, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
@@ -64,6 +63,20 @@ export default function ReportsScreen() {
   // §9.3 — Talepler rozeti: şehirdeki AÇIK talepler BULUTTAN sayılır (ekran odaklandıkça tazelenir)
   const token = useStore((s) => s.token);
   const [puanOrt, setPuanOrt] = useState<number | null>(null);
+  // Kanvasta selamlamanın ÜSTÜNDE günün tarihi var ("Salı, 26 Ağustos").
+  // Uzman panele bakınca hangi güne baktığını görmeli.
+  const bugunEtiketi = useMemo(
+    () =>
+      new Date().toLocaleDateString(
+        locale === 'tr' ? 'tr-TR' : locale === 'ru' ? 'ru-RU' : 'kk-KZ',
+        {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        },
+      ),
+    [locale],
+  );
 
   // Sıralamayı GERÇEKTEN belirleyen etkenler (uydurma skor yok):
   //  · katalog listesi rating'e göre sıralanıyor (catalog.service orderBy)
@@ -225,18 +238,33 @@ export default function ReportsScreen() {
   return (
     <Screen edges={[]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* ── Kreatif hero (Keşfet üst kısmı dili: lime bant + el yazısı ad + cut-out portre + dalga) ── */}
-        <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
-          <View style={styles.heroTop}>
-            {/* Bağ: Bireysel Uzman / bağlı salon / Salon (panel başlığı yerine — mükerrer değil) */}
-            <View style={styles.bindingPill}>
-              <Ionicons name={binding.icon} size={12} color={colors.ink} />
-              <Text variant="caption" tone="ink" style={styles.bindingPillText} numberOfLines={1}>
-                {binding.text}
+        {/* ── BAŞLIK — kanvas UzmanPanel.dc.html §başlık ──
+            Burada MOR BİR BANT vardı: accent zemin, dalga bitişi, 70pt el
+            yazısı ad ve 262px cut-out portre. Kanvasın uzman panelinde böyle
+            bir bant yok; açık zeminde solda 54'lük portre, sağda küçük tarih
+            ve altında koyu selamlama var. Uygulamanın geri kalanı kanvasa
+            geçmişken uzmanın ANA EKRANI eski dilde kalmıştı. */}
+        <View style={[styles.hero, { paddingTop: insets.top + space(1.5) }]}>
+          <View style={styles.heroRow}>
+            <View style={styles.heroAvatar}>
+              {portre ? (
+                <Image source={{ uri: portre }} style={styles.heroAvatarImg} />
+              ) : (
+                <Ionicons name="person" size={24} color={colors.accentFg} />
+              )}
+            </View>
+            <View style={styles.heroText}>
+              <Text variant="caption" tone="muted" numberOfLines={1}>
+                {bugunEtiketi}
+              </Text>
+              <Text tone="ink" style={styles.greetName} numberOfLines={1}>
+                {t(greetingKey())}, {firstName}
               </Text>
             </View>
-            {/* §5.7 — panelde de bildirim zili */}
-            <PressableScale style={styles.bell} onPress={() => router.push('/notifications')}>
+            <PressableScale
+              style={[styles.bell, shadow.soft]}
+              onPress={() => router.push('/notifications')}
+            >
               <Ionicons name="notifications-outline" size={20} color={colors.ink} />
               {unread > 0 ? (
                 <View style={styles.bellBadge}>
@@ -245,28 +273,13 @@ export default function ReportsScreen() {
               ) : null}
             </PressableScale>
           </View>
-
-          <View style={styles.heroBody}>
-            <View style={styles.heroText}>
-              <Text style={styles.greetLabel}>{t(greetingKey())}</Text>
-              <Text
-                style={styles.greetName}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.5}
-              >
-                {firstName}
-              </Text>
-            </View>
-          </View>
-          {/* §5.1.1 — cut-out portre varsa onu; yoksa yüklenen ham foto; o da yoksa varsayılan çizim */}
-          {/* Sıfır-demo: uzmanın KENDİ fotosu yoksa sahte model gösterilmez */}
-          {portre ? (
-            <Image source={{ uri: portre }} style={styles.heroPhoto} resizeMode="contain" />
-          ) : null}
-          {/* Yeşilin dalgalı bitişi (dalgalanma) */}
-          <View style={styles.waveAbs}>
-            <WaveLayered sliver={colors.bg} bottom={colors.bg} height={44} />
+          {/* Bağ bilgisi (Bireysel Uzman / bağlı salon) — kanvasta başlığın
+              yanındaki durum çipinin karşılığı. */}
+          <View style={[styles.bindingPill, shadow.soft]}>
+            <Ionicons name={binding.icon} size={12} color={colors.ink} />
+            <Text variant="caption" tone="ink" style={styles.bindingPillText} numberOfLines={1}>
+              {binding.text}
+            </Text>
           </View>
         </View>
 
@@ -776,13 +789,24 @@ const makeStyles = (colors: ColorTokens) =>
 
     // ── Kreatif hero (Keşfet dili) ──
     hero: {
-      backgroundColor: colors.accent,
-      paddingHorizontal: space(3),
-      paddingBottom: space(6),
-      position: 'relative',
-      overflow: 'hidden',
+      backgroundColor: colors.bg,
+      paddingHorizontal: space(2.5),
+      paddingBottom: space(2),
+      gap: space(1.25),
     },
-    waveAbs: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 1 },
+    heroRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
+    heroAvatar: {
+      width: 54,
+      height: 54,
+      borderRadius: radius.sm,
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      flexShrink: 0,
+    },
+    heroAvatarImg: { width: '100%', height: '100%', resizeMode: 'cover' },
+
     heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     heroBody: {
       flexDirection: 'row',
@@ -791,35 +815,20 @@ const makeStyles = (colors: ColorTokens) =>
       minHeight: 175,
       zIndex: 2,
     },
-    heroText: { flex: 1, justifyContent: 'center', paddingRight: space(1) },
-    greetLabel: {
-      fontSize: 25,
-      lineHeight: 29,
-      fontFamily: font.medium,
-      letterSpacing: -0.4,
-      color: colors.onAccent,
-      zIndex: 1,
-    },
+    heroText: { flexGrow: 1, flexShrink: 1, minWidth: 0, gap: 1 },
+
     greetName: {
-      fontFamily: 'Caveat_700Bold',
-      fontSize: 70,
-      lineHeight: 68,
-      color: colors.onColor,
-      alignSelf: 'flex-start',
-      marginTop: -6,
-      marginLeft: -2,
-      transform: [{ rotate: '-9deg' }],
-      zIndex: 2,
-      textShadowColor: 'rgba(0,0,0,0.15)',
-      textShadowOffset: { width: 0, height: 3 },
-      textShadowRadius: 8,
+      fontSize: 24,
+      lineHeight: 29,
+      fontFamily: font.semibold,
+      letterSpacing: -0.4,
     },
     bindingPill: {
       flexDirection: 'row',
       alignItems: 'center',
-      alignSelf: 'center',
+      alignSelf: 'flex-start',
       gap: 5,
-      backgroundColor: 'rgba(255,255,255,0.7)',
+      backgroundColor: colors.surface,
       paddingHorizontal: space(1.25),
       paddingVertical: space(0.5),
       borderRadius: radius.pill,
@@ -829,14 +838,7 @@ const makeStyles = (colors: ColorTokens) =>
     // §6.1 — profil fotoğrafı GÜVENLİ ALANI (safe zone): sabit çerçeve + resizeMode="contain".
     // Kayıt olan her uzmanın cut-out'u bu çerçeveye sığdırılır → zilden uzak, taşmaz, standart.
     // Daha büyük foto alanı (kullanıcı Keşfet ile tutarlı; kurucu isteği).
-    heroPhoto: {
-      position: 'absolute',
-      right: space(1),
-      bottom: 0,
-      width: 210,
-      height: 262,
-      zIndex: 1,
-    },
+
     // Bildirim zili (hero sağ)
     bell: {
       width: 44,

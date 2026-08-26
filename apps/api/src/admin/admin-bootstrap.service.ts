@@ -68,7 +68,6 @@ export class AdminBootstrapService implements OnModuleInit {
     } catch {
       // Kurtarma başarısızsa API yine de AÇILMALI: aksi hâlde tek bir hatalı
       // değişken tüm servisi yere indirirdi.
-      // eslint-disable-next-line no-console
       console.warn('[admin-bootstrap] yönetici kurtarma başarısız');
     }
   }

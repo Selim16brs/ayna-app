@@ -3425,6 +3425,34 @@ function UsersView() {
                 ))}
               </select>
               <TierEditor user={u} onSaved={reload} />
+              {/* §12.2 — kimlik bilgisi düzenleme. Panelde yalnız rol/durum/parola
+                  değiştirilebiliyordu; e-postası bozulan bir üyeye dokunmanın yolu
+                  veritabanına doğrudan bağlanmaktı. */}
+              <button
+                className="btn-sm"
+                onClick={async () => {
+                  const ad = prompt('Ad:', u.name ?? '');
+                  if (ad === null) return;
+                  const eposta = prompt('E-posta (boş bırakırsan silinir):', u.email ?? '');
+                  if (eposta === null) return;
+                  const sehir = prompt('Şehir:', u.city ?? '');
+                  if (sehir === null) return;
+                  try {
+                    await api.setUserProfile(u.id, {
+                      name: ad.trim(),
+                      email: eposta.trim(),
+                      city: sehir.trim(),
+                    });
+                    reload();
+                  } catch (e) {
+                    // Sunucu e-posta çakışmasını REDDEDER; sessizce ezmek o hesabı
+                    // girişsiz bırakırdı. Sebebi kullanıcıya göster.
+                    alert(e instanceof Error ? e.message : 'Kaydedilemedi');
+                  }
+                }}
+              >
+                Düzenle
+              </button>
               <button
                 className="btn-sm"
                 onClick={async () => {
