@@ -6,6 +6,8 @@ node_modules/
 dist/
 build/
 .next/
+# Next statik dışa aktarımı (apps/web-admin/out) — konteynerde üretilir
+out/
 .expo/
 .turbo/
 
