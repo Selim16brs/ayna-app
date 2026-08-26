@@ -624,9 +624,14 @@ export const api = {
 
   // Ortalama piyasa fiyatı + %40 alt sınır (Build Brief §1.3)
   marketAverage: (category: string, city: string) =>
-    get<{ category: string; average: number; floor: number; currency: string; source: string }>(
-      `/market/average?category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}`,
-    ),
+    get<{
+      category: string;
+      average: number;
+      floor: number;
+      currency: string;
+      source: 'dynamic' | 'seed';
+      samples: number;
+    }>(`/market/average?category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}`),
 
   // Puanlama (§1.8 çift-kör + §6.D yanıt/kalıcılık)
   // Gizlilik: authorLabel kimlik değildir; Rating'de kullanıcı kimliği tutulmaz

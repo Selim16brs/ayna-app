@@ -12,7 +12,15 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { RulesCard, Screen, ServiceChips, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import {
+  BudgetGauge,
+  RulesCard,
+  Screen,
+  ServiceChips,
+  TAB_BAR_CLEARANCE,
+  Text,
+  TextInput,
+} from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -53,7 +61,12 @@ export default function NewDemandScreen() {
   const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
   const [preferred, setPreferred] = useState<number[]>([]);
 
-  const [market, setMarket] = useState<{ average: number; floor: number } | null>(null);
+  const [market, setMarket] = useState<{
+    average: number;
+    floor: number;
+    samples: number;
+    dynamic: boolean;
+  } | null>(null);
   // §privacy — yakın salon sıralaması için adres seçimi (varsayılan: ilk kayıtlı adres)
   const [addressId, setAddressId] = useState<string | undefined>(() => addresses[0]?.id);
 
@@ -77,7 +90,16 @@ export default function NewDemandScreen() {
     let alive = true;
     api
       .marketAverage(category, city)
-      .then((m) => alive && setMarket({ average: m.average, floor: m.floor }))
+      .then(
+        (m) =>
+          alive &&
+          setMarket({
+            average: m.average,
+            floor: m.floor,
+            samples: m.samples,
+            dynamic: m.source === 'dynamic',
+          }),
+      )
       .catch(() => alive && setMarket(null));
     return () => {
       alive = false;
@@ -303,18 +325,18 @@ export default function NewDemandScreen() {
               />
             </View>
           </View>
+          {/* BÜTÇE GÖSTERGESİ — hayal kırıklığı teklif beklerken değil, tutarı
+              yazarken yaşansın ki kullanıcı düzeltebilsin. Taban/ortalama gerçek
+              veriden; ortalamanın neye dayandığı da yazılı. */}
           {market ? (
-            <Text variant="caption" tone="muted" style={styles.marketHint}>
-              {t('demand.market.avg')}: ~{formatPrice(market.average)}
-            </Text>
-          ) : null}
-          {tooLow ? (
-            <View style={styles.warnBox}>
-              <Ionicons name="alert-circle-outline" size={18} color={colors.danger} />
-              <Text variant="caption" style={styles.warnText}>
-                {t('demand.market.low')}
-              </Text>
-            </View>
+            <BudgetGauge
+              budget={budgetNum}
+              average={market.average}
+              floor={market.floor}
+              samples={market.samples}
+              dynamic={market.dynamic}
+              format={formatPrice}
+            />
           ) : null}
 
           {/* Not ekle */}
@@ -584,17 +606,6 @@ const makeStyles = (colors: ColorTokens) =>
       fontFamily: font.semibold,
       color: colors.ink,
     },
-    marketHint: { marginTop: space(1), marginLeft: space(1) },
-    warnBox: {
-      flexDirection: 'row',
-      gap: space(1),
-      alignItems: 'flex-start',
-      marginTop: space(1.25),
-      backgroundColor: colors.dangerSoft,
-      borderRadius: radius.md,
-      padding: space(1.5),
-    },
-    warnText: { flex: 1, color: colors.danger, lineHeight: 18 },
 
     noteBox: {
       backgroundColor: colors.surface,

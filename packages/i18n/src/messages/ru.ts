@@ -576,6 +576,16 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'demand.new.budget': 'Твой бюджет',
   'demand.new.budget_ph': 'Цена (₸)',
   'demand.new.submit': 'Опубликовать заявку',
+  'demand.budget.floor': 'минимум',
+  'demand.budget.avg': 'средняя',
+  'demand.budget.low':
+    'На эту сумму предложений не будет. Минимум {floor} — заявки ниже мастерам не показываются.',
+  'demand.budget.under':
+    'Ниже средней. Предложения возможны, но их будет мало и в основном от новых мастеров.',
+  'demand.budget.ok': 'Этот бюджет выше средней по району — предложения придут спокойно.',
+  'demand.budget.src_dynamic': 'Посчитано по {n} реальным предложениям.',
+  'demand.budget.src_seed':
+    'Это ориентировочная цена — реальных предложений в категории пока мало.',
   'demand.market.avg': 'Средняя рыночная цена',
   'demand.market.low':
     'Поскольку ваше предложение намного ниже общих цен, мастера могут не откликнуться.',

@@ -633,6 +633,16 @@ export const tr = {
   'demand.new.budget': 'Bütçen',
   'demand.new.budget_ph': 'Fiyat (₸)',
   'demand.new.submit': 'Talebi yayınla',
+  'demand.budget.floor': 'taban',
+  'demand.budget.avg': 'ortalama',
+  'demand.budget.low':
+    'Bu tutara teklif gelmez. Taban {floor} — altına düşen talepler uzmanlara gösterilmiyor.',
+  'demand.budget.under':
+    'Ortalamanın altında. Teklif gelebilir ama az sayıda ve çoğu yeni uzmandan olur.',
+  'demand.budget.ok': 'Bu bütçe bölge ortalamasının üstünde — rahat teklif alırsın.',
+  'demand.budget.src_dynamic': '{n} gerçek teklif üzerinden hesaplandı.',
+  'demand.budget.src_seed':
+    'Bu bir referans fiyat — bu kategoride henüz yeterli gerçek teklif yok.',
   'demand.market.avg': 'Ortalama piyasa fiyatı',
   'demand.market.low':
     'Verdiğiniz teklif genel fiyatların çok altında olduğundan uzmanlar tarafından teklif verilmeyebilir.',
