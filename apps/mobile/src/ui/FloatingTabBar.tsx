@@ -29,7 +29,21 @@ const HAP_MAX = 176; // aktif hapın üst sınırı
 const PASIF_MIN = 40; // pasif sekmenin dokunma hedefi
 
 /** İçeriğin yüzen barın altında kalmaması için ekranların ayırması gereken boşluk. */
-export const TAB_BAR_CLEARANCE = PILL_BOTTOM + PILL_H + 20;
+/**
+ * Sayfa sonundaki içeriğin bırakması gereken alt boşluk.
+ *
+ * Eskiden `PILL_BOTTOM + PILL_H + 20` (=114) idi ve İKİ ŞEYİ atlıyordu:
+ *  1) GÜVENLİ ALAN — `bottom` cihazın inset'ine göre büyüyor. Ana ekran
+ *     düğmesi olan telefonda hapın üstü 112pt'ye çıkıyor; 114 ile arada
+ *     yalnız 2pt kalıyordu.
+ *  2) SOLMA KATMANI — ekranın alt FADE_H (130pt) kadarını kaplıyor. 114 ile
+ *     130 arasındaki içerik hapın altında değil ama solmanın İÇİNDE kalıyor
+ *     ve okunmuyordu (yarı erimiş yazılar).
+ *
+ * Ölçü artık SOLMADAN türetiliyor: içerik solmanın tamamen üstünde başlar.
+ * FADE_H değişirse boşluk da değişir — kopya sayı tutulmaz.
+ */
+export const TAB_BAR_CLEARANCE = FADE_H + 24;
 
 /**
  * Uygulamanın TEK alt menü bileşeni — kanvas Main.dc.html §"yüzen nav".

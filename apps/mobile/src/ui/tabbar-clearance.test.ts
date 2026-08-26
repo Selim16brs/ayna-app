@@ -12,7 +12,7 @@ const sabit = (ad: string): number => {
   if (!m) throw new Error(`${ad} bulunamadı`);
   return Number(m[1]);
 };
-const TAB_BAR_CLEARANCE = sabit('PILL_BOTTOM') + sabit('PILL_H') + 20;
+const TAB_BAR_CLEARANCE = sabit('FADE_H') + 24;
 
 /**
  * KAYDIRILAN İÇERİK ALT MENÜNÜN ALTINDA KALMAMALI.
@@ -64,9 +64,16 @@ function enBuyukAltBosluk(src: string): number {
   return Math.max(0, ...a, ...b);
 }
 
-test('TAB_BAR_CLEARANCE barın gerçek yüksekliğini karşılıyor', () => {
-  // 26 (alt boşluk) + 68 (bar yüksekliği) + 20 (nefes payı)
-  assert.equal(TAB_BAR_CLEARANCE, 114);
+test('boşluk SOLMA katmanını da aşıyor', () => {
+  // Solma ekranın alt FADE_H kadarını kaplıyor; içerik onun tamamen üstünde
+  // başlamalı. Yalnız hapı (PILL_BOTTOM + PILL_H) hesaplamak yetmiyordu:
+  // ana ekran düğmeli telefonda hapın üstü 112pt'ye çıkıyor ve 114–130 arası
+  // içerik solmanın içinde eriyip okunmaz oluyordu.
+  const fade = sabit('FADE_H');
+  assert.ok(TAB_BAR_CLEARANCE > fade, `${TAB_BAR_CLEARANCE} ≤ solma ${fade}`);
+  // Güvenli alanlı cihazda hapın üstü: max(34, PILL_BOTTOM-10)+10 + PILL_H
+  const hapUstu = Math.max(34, sabit('PILL_BOTTOM') - 10) + 10 + sabit('PILL_H');
+  assert.ok(TAB_BAR_CLEARANCE >= hapUstu + 20, `${TAB_BAR_CLEARANCE} < hap üstü ${hapUstu} + pay`);
 });
 
 test('alt menü görünen her kaydırılabilir ekran ona yer bırakıyor', () => {
@@ -75,7 +82,11 @@ test('alt menü görünen her kaydırılabilir ekran ona yer bırakıyor', () =>
     if (MENUSUZ.some((r) => r.test(rel)) || TAM_EKRAN.some((r) => r.test(rel))) continue;
     const src = readFileSync(join(appKok, rel), 'utf8');
     if (!/ScrollView|FlatList/.test(src)) continue;
-    if (src.includes('TAB_BAR_CLEARANCE')) continue;
+    // Sabiti bir ALT BOŞLUK olarak kullanan dosya güvenli sayılır. Desen
+    // hesaplı ifadeleri de kabul etmeli: `insets.bottom + TAB_BAR_CLEARANCE`
+    // ve `130 + TAB_BAR_CLEARANCE` da doğru kullanım — ilk yazdığım dar desen
+    // bu dördünü yanlışlıkla ihlal saymıştı.
+    if (/paddingBottom:\s*[^,}\n]*TAB_BAR_CLEARANCE/.test(src)) continue;
     const bosluk = enBuyukAltBosluk(src);
     if (bosluk < TAB_BAR_CLEARANCE) ihlal.push(`${rel} (${bosluk}pt)`);
   }
