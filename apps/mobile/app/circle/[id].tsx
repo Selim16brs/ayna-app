@@ -161,12 +161,24 @@ export default function PostDetailScreen() {
                     </Text>
                   )}
                 </View>
-                <View>
-                  <Text variant="bodyStrong" tone="ink" style={styles.authorName}>
+                <View style={styles.authorText}>
+                  <Text variant="bodyStrong" tone="ink" style={styles.authorName} numberOfLines={1}>
                     {post.anonymous ? t('circle.verified') : post.author}
                   </Text>
-                  <Text variant="caption" tone="muted">
+                  <Text variant="caption" tone="muted" numberOfLines={1}>
                     {post.category}
+                  </Text>
+                </View>
+              </View>
+              {/* Düğmeler SAĞA YASLI İKİ SIRA.
+                  Hepsi yazar adıyla aynı satırdaydı; Rusça etiketler
+                  ("Вы подписаны", "Мой опыт") Türkçeden çok daha uzun olduğu
+                  için adın üstüne biniyorlardı. Satır genişliği dile göre
+                  değişir, o yüzden yan yana DİZMEK yerine alt alta koyuyoruz. */}
+              <View style={styles.actionsCol}>
+                <View style={[styles.typeBadge, { backgroundColor: ty.bg }]}>
+                  <Text variant="caption" style={[styles.typeText, { color: ty.fg }]}>
+                    {t(ty.key)}
                   </Text>
                 </View>
                 {/* §W2W — kişiyi takip et (anonim hariç) */}
@@ -185,16 +197,12 @@ export default function PostDetailScreen() {
                       variant="caption"
                       tone={isFollowing ? 'onAccent' : 'accentFg'}
                       style={styles.followText}
+                      numberOfLines={1}
                     >
                       {isFollowing ? t('circle.following') : t('circle.follow')}
                     </Text>
                   </Pressable>
                 ) : null}
-              </View>
-              <View style={[styles.typeBadge, { backgroundColor: ty.bg }]}>
-                <Text variant="caption" style={[styles.typeText, { color: ty.fg }]}>
-                  {t(ty.key)}
-                </Text>
               </View>
             </View>
 
@@ -372,9 +380,13 @@ const makeStyles = (colors: ColorTokens) =>
     cardTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      alignItems: 'center',
+      // İki sıralı düğme sütunu yazar satırından uzun olabilir; üstten hizala.
+      alignItems: 'flex-start',
       gap: space(1),
     },
+    // Sağa yaslı, alt alta: sıra genişliği dile göre değişse de taşmaz.
+    actionsCol: { alignItems: 'flex-end', gap: space(0.75), flexShrink: 0 },
+    authorText: { flexShrink: 1, minWidth: 0 },
     author: { flexDirection: 'row', alignItems: 'center', gap: space(1.25), flexShrink: 1 },
     followBtn: {
       flexDirection: 'row',

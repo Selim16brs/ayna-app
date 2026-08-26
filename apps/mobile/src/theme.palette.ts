@@ -48,6 +48,14 @@ export const lightColors = {
   // kullanılıyordu. ink koyu temada açık renge döndüğü için bu yüzeyler
   // bembeyaz oluyor, üstlerindeki açık yazı/ikon görünmez hâle geliyordu
   // (Toast koyu modda tamamen okunmuyordu).
+  // ── SABİT AÇIK YÜZEY üstündeki yazı ──
+  //
+  // Bazı kartların gradyanı temadan BAĞIMSIZ ve her zaman açıktır (teklif
+  // kartlarının pastel zemini gibi). Üstlerinde `ink` kullanmak koyu modda
+  // AÇIK ÜSTÜNE AÇIK yazı demekti — başlıklar görünmüyordu.
+  // Bu ikisi iki temada da AYNI kalır; yüzey değişmiyorsa yazı da değişmemeli.
+  onPastel: '#261F25',
+  onPastelSoft: '#564E56',
   inverse: '#261F25',
   onInverse: '#FBF8F6',
   onInverseMuted: 'rgba(251,248,246,0.66)',
@@ -97,6 +105,8 @@ export const darkColors: ColorTokens = {
   plum: '#AA9AC4',
 
   // Koyu temada ters yüzey zeminden AYRIŞMALI: bg #1A1419 üzerinde yükseltilmiş.
+  onPastel: '#261F25',
+  onPastelSoft: '#564E56',
   inverse: '#403442', // zeminden 1.54:1 ayrışır; yazı kontrastı 10.1:1 kalır
   onInverse: '#F3ECF0',
   onInverseMuted: 'rgba(243,236,240,0.62)',

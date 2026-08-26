@@ -108,10 +108,13 @@ function ChoiceCard({
           </View>
         </View>
 
-        <Text variant="h2" tone="ink" style={styles.cardTitle}>
+        {/* Kart gradyanı SABİT pastel (temaya göre değişmiyor); yazı da
+            sabit koyu olmalı. `ink` koyu modda açığa dönüp başlığı
+            görünmez yapıyordu. */}
+        <Text variant="h2" tone="onPastel" style={styles.cardTitle}>
           {title}
         </Text>
-        <Text variant="caption" tone="inkSoft" style={styles.cardDesc}>
+        <Text variant="caption" tone="onPastelSoft" style={styles.cardDesc}>
           {desc}
         </Text>
 

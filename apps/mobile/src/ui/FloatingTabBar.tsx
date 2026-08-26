@@ -101,12 +101,17 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
                     color={colors.onAccent}
                     style={styles.activeIcon}
                   />
-                  {/* Etiket KIRPILABİLİR olmalı: "Randevularım"/"Benim İçin" gibi
-                      uzun adlarda hap sabit genişlikte kalırsa satırı taşırıp
-                      son sekmeleri ekran dışına itiyordu. */}
+                  {/* Etiket KARAKTER KAYBETMEZ; gerekirse punto biraz küçülür.
+                      Genişlik hesabı kâğıt üzerinde "sığıyor" dediği hâlde
+                      cihazda "Keşfet" → "Keşf…" diye kırpılıyordu; sebebini
+                      cihaz açmadan doğrulayamadım. Kırpma yerine ölçekleme,
+                      sebebi ne olursa olsun anlam kaybını engeller: yer varsa
+                      hiçbir şey değişmez, yoksa punto %85'e iner. */}
                   <Text
                     numberOfLines={1}
                     allowFontScaling={false}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.85}
                     style={[styles.activeLabel, { color: colors.onAccent }]}
                   >
                     {t(tab.labelKey)}
