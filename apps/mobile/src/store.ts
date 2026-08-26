@@ -1,4 +1,4 @@
-import { DEFAULT_DEPOSIT_RULES, depositFor } from '@ayna/domain';
+import { DEFAULT_DEPOSIT_RULES, DEFAULT_EARN_PCT, depositFor } from '@ayna/domain';
 import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadMediaCache, saveMediaCache } from './media-cache';
@@ -490,6 +490,7 @@ export const useStore = create<State>()(
           holdMinutes: 180,
           cancelWindowH: 3,
           lateCancelPct: 3,
+          pointsEarnPct: DEFAULT_EARN_PCT,
           pointsCapPct: POINTS_SPEND_CAP_PCT,
           pointsUnlockKzt: POINTS_UNLOCK_KZT,
           pointsExpiryDays: POINTS_EXPIRY_DAYS,

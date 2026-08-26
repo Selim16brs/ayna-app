@@ -1047,6 +1047,7 @@ export interface AppConfig {
     holdMinutes: number;
     cancelWindowH: number;
     lateCancelPct: number;
+    pointsEarnPct: number;
     pointsCapPct: number;
     pointsUnlockKzt: number;
     pointsExpiryDays: number;

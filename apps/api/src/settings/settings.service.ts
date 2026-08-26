@@ -193,6 +193,7 @@ export class SettingsService {
         holdMinutes: rate('policy.hold_minutes'),
         cancelWindowH: rate('rate.cancel_window_h'),
         lateCancelPct: rate('rate.late_cancel_pct'),
+        pointsEarnPct: rate('rate.points_earn_pct'),
         pointsCapPct: rate('rate.points_cap_pct'),
         pointsUnlockKzt: rate('rate.points_unlock_kzt'),
         pointsExpiryDays: rate('rate.points_expiry_days'),

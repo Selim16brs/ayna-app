@@ -1,3 +1,4 @@
+import { DEFAULT_EARN_PCT, earnPoints } from '@ayna/domain';
 import { grantPoints } from './loyalty.grant';
 import type { PrismaService } from '../prisma/prisma.service';
 
@@ -8,16 +9,15 @@ import type { PrismaService } from '../prisma/prisma.service';
 // çağırmak, birinin unutulması demekti; bu dosya ikisini birleştiriyor.
 
 export const CASHBACK_SETTING_KEY = 'rate.points_earn_pct';
-export const DEFAULT_CASHBACK_PCT = 3;
+export const DEFAULT_CASHBACK_PCT = DEFAULT_EARN_PCT;
 export const CASHBACK_REASON = 'rewards.earn.cashback';
 export const REFERRAL_REASON = 'rewards.earn.referral';
 export const REFERRAL_POINTS = 300;
 
-export function cashbackPoints(price: number, pct: number): number {
-  if (!Number.isFinite(price) || price <= 0) return 0;
-  if (!Number.isFinite(pct) || pct <= 0) return 0;
-  return Math.floor((price * pct) / 100);
-}
+// Formül @ayna/domain'de: mobil de AYNI hesabı yaparak randevu ekranında
+// "kazanacağın puan"ı gösteriyor. İki kopya olsa oran değiştiğinde vaat ile
+// yatan puan birbirinden ayrılırdı.
+export const cashbackPoints = earnPoints;
 
 type CompletedBooking = { id: string; userId: string | null; price: unknown };
 

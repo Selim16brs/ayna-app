@@ -1673,6 +1673,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.money.title': 'Төлем бөлінісі',
   'booking.money.service': 'Қызмет',
   'booking.money.deposit': 'Алдын ала төлем',
+  'booking.money.will_earn': 'Қызметтен кейін есептейміз',
   'booking.money.onsite': 'Қызметтен кейін орнында',
   'booking.money.note': 'Ешбір сома жасырын емес',
   'booking.deposit.kaspi': 'Kaspi арқылы кепілпұл төле',

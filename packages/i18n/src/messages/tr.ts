@@ -1757,6 +1757,7 @@ export const tr = {
   'booking.money.title': 'Para dökümü',
   'booking.money.service': 'Hizmet',
   'booking.money.deposit': 'Kapora',
+  'booking.money.will_earn': 'Hizmetten sonra kazanacaksın',
   'booking.money.onsite': 'Hizmetten sonra yerinde',
   'booking.money.note': 'Hiçbir tutar gizli değil',
   'booking.deposit.kaspi': 'Kaspi ile depozito öde',

@@ -1657,6 +1657,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.money.title': 'Разбор оплаты',
   'booking.money.service': 'Услуга',
   'booking.money.deposit': 'Предоплата',
+  'booking.money.will_earn': 'Начислим после услуги',
   'booking.money.onsite': 'На месте после услуги',
   'booking.money.note': 'Ни одна сумма не скрыта',
   'booking.deposit.kaspi': 'Оплатить депозит через Kaspi',
