@@ -77,15 +77,32 @@ export class AdminService {
       this.prisma.campaign.count({ where: { active: true } }),
     ]);
     // §12.1 — BEKLEYEN İŞLER: tüm onay kuyruklarının sayacı (dashboard kartları + nav rozetleri)
-    const [kycPending, profilePending, subsPending, disputesOpen, reviewDisputes, circleQueue] =
-      await Promise.all([
-        this.prisma.kycVerification.count({ where: { status: 'pending' } }),
-        this.prisma.profileChangeRequest.count({ where: { status: 'pending' } }),
-        this.prisma.subscription.count({ where: { status: 'pending', receiptUri: { not: null } } }),
-        this.prisma.dispute.count({ where: { status: 'open' } }),
-        this.prisma.rating.count({ where: { disputed: true, visible: true } }),
-        this.prisma.circlePost.count({ where: { status: 'pending' } }),
-      ]);
+    const [
+      kycPending,
+      profilePending,
+      subsPending,
+      disputesOpen,
+      reviewDisputes,
+      circleQueue,
+      invoiceReceipts,
+    ] = await Promise.all([
+      this.prisma.kycVerification.count({ where: { status: 'pending' } }),
+      this.prisma.profileChangeRequest.count({ where: { status: 'pending' } }),
+      this.prisma.subscription.count({ where: { status: 'pending', receiptUri: { not: null } } }),
+      this.prisma.dispute.count({ where: { status: 'open' } }),
+      this.prisma.rating.count({ where: { disputed: true, visible: true } }),
+      this.prisma.circlePost.count({ where: { status: 'pending' } }),
+      // §12.8 — DEKONT YÜKLENMİŞ ama henüz tahsil edilmemiş komisyon faturaları.
+      //
+      // Bu sayaç YOKTU: uzman dekontu yüklüyor, fatura durumu değişmiyor ve
+      // panelde yalnız listenin içinde küçük bir 🧾 işareti çıkıyordu. Bekleyen
+      // iş kuyruklarının hiçbirinde görünmediği için admin listeyi tarayıp
+      // fark etmek zorundaydı — kısıtlı uzman ödemesini yapmış hâlde
+      // beklemeye devam ediyordu.
+      this.prisma.commissionInvoice.count({
+        where: { receiptUri: { not: null }, status: { not: 'collected' } },
+      }),
+    ]);
     const bizByStatus = { pending: 0, approved: 0, rejected: 0 } as Record<string, number>;
     for (const g of businesses) bizByStatus[g.status] = g._count;
     const stats = computeBookingStats(
@@ -105,6 +122,7 @@ export class AdminService {
         disputes: disputesOpen,
         reviewDisputes,
         circle: circleQueue,
+        invoiceReceipts,
       },
     };
   }
