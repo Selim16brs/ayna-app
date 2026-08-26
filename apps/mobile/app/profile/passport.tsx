@@ -8,7 +8,15 @@ import { api } from '../../src/api';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import {
+  Button,
+  PassportCare,
+  Screen,
+  SectionHeader,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+} from '../../src/ui';
 
 const BENEFITS: MessageKey[] = [
   'passport.benefit.priority',
@@ -49,7 +57,10 @@ export default function PassportScreen() {
   const setPremium = useStore((s) => s.setPremium);
   // §12.9 — premium fiyatı admin-parametrik (config); fetch yoksa sabit varsayılan
   const premiumPrice = useStore((s) => s.config.rates.premiumUserKzt) || PREMIUM_PRICE_KZT;
-  const trust = 92;
+  // KALDIRILDI: `const trust = 92` — sabit bir sayı, kullanıcıya hesaplanmış bir
+  // güven puanı gibi gösteriliyordu. Yerine GERÇEK veri: habersiz gelmeme sayısı.
+  // Kanvasın passport kartındaki üçlü de buydu (hizmet · gelmeme · erteleme).
+  const noShow = useStore((s) => s.bookings.filter((b) => b.status === 'no_show').length);
 
   // §11 — GERÇEK satın alma: abonelik talebi → dekont yükle → admin onayı → push → haklar açılır
   const buy = () =>
@@ -122,7 +133,7 @@ export default function PassportScreen() {
             <View style={styles.heroDivider} />
             <HeroStat value={`${reviews}`} label={t('passport.reviews')} />
             <View style={styles.heroDivider} />
-            <HeroStat value={`${trust}`} label={t('passport.trust')} />
+            <HeroStat value={`${noShow}`} label={t('passport.noshow')} />
           </View>
         </View>
 
@@ -223,6 +234,10 @@ export default function PassportScreen() {
             />
           )}
         </View>
+        {/* §19 — Passport'un ASIL içeriği: alerjiler, tercihler, erişim kaydı.
+            Ekran buraya kadar bir sadakat kartıydı; kanvasın Passport'u
+            "uzmana açtığında ne görünecek" idi. */}
+        <PassportCare />
       </ScrollView>
     </Screen>
   );

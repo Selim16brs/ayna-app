@@ -32,6 +32,7 @@ export { PressableScale } from './PressableScale';
 export { BookingSteps } from './BookingSteps';
 export { MoneyBreakdown } from './MoneyBreakdown';
 export { OccupancyStrip } from './OccupancyStrip';
+export { PassportCare } from './PassportCare';
 export { BudgetGauge } from './BudgetGauge';
 export { PriceSpread } from './PriceSpread';
 export { HomeUrgent } from './HomeUrgent';
