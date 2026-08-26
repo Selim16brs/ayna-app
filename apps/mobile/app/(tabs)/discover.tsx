@@ -10,7 +10,7 @@ import { useCampaigns, useCollections, useOffers, useProfessionals } from '../..
 import { greetingKey } from '../../src/greeting';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
-import { selectUnreadCount, useStore } from '../../src/store';
+import { selectPortrait, selectUnreadCount, useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -62,8 +62,8 @@ export default function DiscoverScreen() {
     useStore((s) => s.currentUser?.name)
       ?.trim()
       .split(' ')[0] || '';
-  const cutoutUri = useStore((s) => s.cutoutUri); // §5.1.1 — premium cut-out profil fotosu
-  const avatarUri = useStore((s) => s.avatarUri); // cut-out yoksa yüklenen ham foto
+  // Portre TEK YERDEN: bayat kesik portre otomatik elenir (selectPortrait).
+  const portre = useStore(selectPortrait);
   // Dinamik kullanıcı adı — ilk harf büyük (el yazısı katman için)
   const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
   const pros = useProfessionals();
@@ -147,14 +147,10 @@ export default function DiscoverScreen() {
               Kesim RN'de mask-image ile yapılamıyor; alta doğru zemine eriyen
               bir gradyanla aynı etki kuruluyor. */}
           <View style={styles.portraitCol} pointerEvents="none">
-            {cutoutUri || avatarUri ? (
+            {portre ? (
               <>
                 <View style={styles.portraitWrap}>
-                  <Image
-                    source={{ uri: cutoutUri ?? avatarUri ?? '' }}
-                    style={styles.portrait}
-                    resizeMode="cover"
-                  />
+                  <Image source={{ uri: portre }} style={styles.portrait} resizeMode="cover" />
                   <LinearGradient
                     colors={['rgba(251,248,246,0)', colors.bg]}
                     locations={[0.62, 1]}
@@ -163,11 +159,7 @@ export default function DiscoverScreen() {
                   />
                 </View>
                 <View style={styles.reflection}>
-                  <Image
-                    source={{ uri: cutoutUri ?? avatarUri ?? '' }}
-                    style={styles.reflectionImg}
-                    resizeMode="cover"
-                  />
+                  <Image source={{ uri: portre }} style={styles.reflectionImg} resizeMode="cover" />
                   <LinearGradient
                     colors={['rgba(251,248,246,0.55)', colors.bg]}
                     locations={[0, 0.88]}

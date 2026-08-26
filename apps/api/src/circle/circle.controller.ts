@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt.guard';
 import { JwtAuthGuard, type AuthedRequest } from '../auth/jwt-auth.guard';
 import {
   type CreateCommentInput,
@@ -18,9 +19,26 @@ import { CircleService } from './circle.service';
 export class CircleController {
   constructor(private readonly circle: CircleService) {}
 
+  // İsteğe bağlı doğrulama: akış girişsiz de okunur, ama giriş yapmışsa KENDİ
+  // kaydettikleri işaretli gelir.
   @Get('posts')
-  posts() {
-    return this.circle.listPosts();
+  @UseGuards(OptionalJwtAuthGuard)
+  posts(@Req() req: AuthedRequest) {
+    return this.circle.listPosts(req.user?.id);
+  }
+
+  /** §14 — kaydettiklerim (kanvas "Kaydedilenler"). Yalnız kendi listen. */
+  @Get('saves')
+  @UseGuards(JwtAuthGuard)
+  saves(@Req() req: AuthedRequest) {
+    return this.circle.listSaved(req.user!.id);
+  }
+
+  /** §14 — kaydet / kaydı kaldır. `saved` verilmezse tersine çevirir. */
+  @Post('posts/:id/save')
+  @UseGuards(JwtAuthGuard)
+  save(@Req() req: AuthedRequest, @Param('id') id: string, @Body() body: { saved?: boolean }) {
+    return this.circle.setSaved(req.user!.id, id, body?.saved);
   }
 
   @Post('posts')

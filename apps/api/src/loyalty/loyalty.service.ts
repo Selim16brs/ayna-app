@@ -10,10 +10,15 @@ import { grantPoints } from './loyalty.grant';
 import { loadLedgerState, loadLoyaltyRules } from './loyalty.rules';
 
 // Ödül kataloğu (mobil REWARDS ile aynı) — maliyet ve i18n etiketi sunucuda doğrulanır
-const REWARDS: Record<string, { cost: number; key: string }> = {
+//
+// ÇEKİLİŞ maliyeti burada SABİT DEĞİL: admin ayarı `rate.raffle_cost` genel
+// yapılandırmada yayınlanıyor ve mobil bileti o fiyatla gösteriyordu (500),
+// buradaki sabit ise 100'dü. Aynı eylem için iki farklı fiyat, kullanıcıya
+// gösterilenden başka bir tutarın düşmesi demekti.
+const REWARDS: Record<string, { cost: number; key: string; costSetting?: string }> = {
   rw1: { cost: 200, key: 'rewards.redeem.discount' },
   rw2: { cost: 150, key: 'rewards.redeem.addon' },
-  rw3: { cost: 100, key: 'rewards.redeem.raffle' },
+  rw3: { cost: 100, key: 'rewards.redeem.raffle', costSetting: 'rate.raffle_cost' },
   rw4: { cost: 500, key: 'rewards.redeem.premium' },
 };
 
@@ -164,6 +169,12 @@ export class LoyaltyService {
     if (!reward) {
       throw new BadRequestException({ code: 'REWARD_NOT_FOUND', message: 'Ödül bulunamadı' });
     }
+    // Ayarı olan ödülde fiyat AYARDAN gelir — kullanıcıya gösterilen fiyatla
+    // düşülen tutar aynı olmalı.
+    const cost = reward.costSetting
+      ? ((await this.prisma.setting.findUnique({ where: { key: reward.costSetting } }))?.intValue ??
+        reward.cost)
+      : reward.cost;
     const { points, spend } = await this.summary(userId);
     // K4.2 — ödül kullanımı da kilide tabidir; aksi hâlde kilit yalnız ödemede
     // geçerli olur ve kullanıcı puanı ödül kataloğundan sızdırırdı.
@@ -173,7 +184,7 @@ export class LoyaltyService {
         message: `Puan kullanımı ${spend.unlockAt.toLocaleString('tr-TR')} ₸ bakiyeden sonra açılır`,
       });
     }
-    if (points < reward.cost) {
+    if (points < cost) {
       throw new BadRequestException({ code: 'INSUFFICIENT_POINTS', message: 'Yeterli puan yok' });
     }
     await this.prisma.loyaltyEntry.create({
@@ -182,7 +193,7 @@ export class LoyaltyService {
         kind: 'spend',
         reason: reward.key,
         detail: 'Ödül kullanıldı',
-        points: -reward.cost,
+        points: -cost,
       },
     });
     // Finansal/kritik eylem → audit log (hassas veri içermez)
@@ -192,7 +203,7 @@ export class LoyaltyService {
       action: 'loyalty.redeem',
       resourceType: 'loyalty',
       resourceId: rewardId,
-      safeDiff: { cost: reward.cost },
+      safeDiff: { cost },
     });
     return this.summary(userId);
   }

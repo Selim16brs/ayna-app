@@ -1,7 +1,7 @@
 import { DEFAULT_DEPOSIT_RULES, DEFAULT_EARN_PCT, depositFor } from '@ayna/domain';
 import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loadMediaCache, saveMediaCache } from './media-cache';
+import { loadMediaCache, medyaAnahtari, saveMediaCache } from './media-cache';
 import { setApiToken } from './api';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -203,7 +203,9 @@ interface State {
   setAvatar: (uri: string | null) => void;
   // §5.1.1 — remove.bg cut-out (arka planı temizlenmiş şeffaf PNG). Keşfet/uzman ana sayfa hero'sunda.
   cutoutUri: string | null;
-  setCutout: (uri: string | null) => void;
+  /** Portrenin türetildiği fotoğrafın anahtarı; eşleşmezse portre BAYATTIR. */
+  cutoutFor: string | null;
+  setCutout: (uri: string | null, forKey?: string | null) => void;
   // Yerel foto base64 → cut-out uygula. Sonuç: 'ok' | 'not_premium' | 'unavailable' | 'error'.
   applyProfileCutout: (base64: string) => Promise<'ok' | 'not_premium' | 'unavailable' | 'error'>;
   // §6.1 — uzman/salon hizmet kataloğu (taksonomi id → fiyat/süre). Profil "Hizmetler" ekranından
@@ -377,6 +379,8 @@ interface State {
   // circle
   addPost: (input: AddPostInput) => string;
   toggleHelpful: (postId: string) => void;
+  /** §14 — gönderiyi kaydet/kaldır (sunucuya yazılır; yalnız sana ait). */
+  toggleSaved: (postId: string) => void;
   addComment: (postId: string, text: string, anonymous: boolean, proId?: string) => void;
   // §5.5 — moderasyon katman 2: şikâyet et (eşik aşınca gizlenir + admin kuyruğu)
   reportedPosts: string[];
@@ -523,9 +527,17 @@ export const useStore = create<State>()(
         }
         // §5.5 — backend'de yayınlanmış W2W gönderilerini akışa ekle (additive; yereli silmez)
         try {
-          const backendPosts = await api.circlePosts();
+          const backendPosts = await api.circlePosts(get().token ?? undefined);
           set((s) => {
             const have = new Set(s.circlePosts.map((p) => p.id));
+            // Kaydetme durumu SUNUCUDAN gelir ve BİLİNEN gönderilerde de
+            // tazelenir. Yalnız yeni gönderileri eklemek yetmiyordu: başka
+            // cihazda kaydedilen bir gönderi burada hep "kaydedilmemiş"
+            // görünürdü.
+            const savedMap = new Map(backendPosts.map((p) => [p.id, p.savedByMe === true]));
+            const guncel = s.circlePosts.map((p) =>
+              savedMap.has(p.id) ? { ...p, savedByMe: savedMap.get(p.id) } : p,
+            );
             const fresh: CirclePost[] = backendPosts
               .filter((p) => !have.has(p.id))
               .map((p) => ({
@@ -537,9 +549,10 @@ export const useStore = create<State>()(
                 anonymous: p.anonymous,
                 text: p.text,
                 helpful: p.helpful,
+                savedByMe: p.savedByMe === true,
                 comments: [], // backend yorum SAYISI döner; detay senkronu ayrı (şimdilik boş)
               }));
-            return fresh.length ? { circlePosts: [...fresh, ...s.circlePosts] } : {};
+            return { circlePosts: fresh.length ? [...fresh, ...guncel] : guncel };
           });
         } catch {
           // Backend erişilemezse seed gönderilerle devam
@@ -630,11 +643,11 @@ export const useStore = create<State>()(
         // Aynısı "fotoğrafı kaldır"da da oluyordu: foto silinip yüz kalıyordu.
         // Artık geçersiz kılınıyor; uygun kullanıcıda applyProfileCutout hemen
         // ardından yenisini üretiyor, üretemezse ham foto gösterilir (dürüst).
-        set({ avatarUri: uri, cutoutUri: null });
+        set({ avatarUri: uri, cutoutUri: null, cutoutFor: null });
         // Foto HESABIN parçası: buluta da yaz (data URL ise) — diğer cihaz/girişte aynı görünür
         const token = get().token;
         const uid = get().currentUser?.id;
-        if (uid) saveMediaCache(uid, { avatar: uri, cutout: null });
+        if (uid) saveMediaCache(uid, { avatar: uri, cutout: null, cutoutFor: null });
         if (token) {
           if (uri == null || uri.startsWith('data:'))
             void api.setAvatar(token, uri).catch(() => undefined);
@@ -643,12 +656,14 @@ export const useStore = create<State>()(
         }
       },
       cutoutUri: null,
-      setCutout: (uri) => {
-        set({ cutoutUri: uri });
+      cutoutFor: null,
+      setCutout: (uri, forKey) => {
+        set({ cutoutUri: uri, cutoutFor: forKey ?? null });
         // Kesik portre HESABIN parçası: buluta yaz → yeniden giriş/yeni cihazda kredi YAKMADAN geri gelir
         const token = get().token;
         const uid = get().currentUser?.id;
-        if (uid) saveMediaCache(uid, { avatar: get().avatarUri, cutout: uri });
+        if (uid)
+          saveMediaCache(uid, { avatar: get().avatarUri, cutout: uri, cutoutFor: forKey ?? null });
         if (token && (uri == null || uri.startsWith('data:')))
           void api.setCutoutRemote(token, uri).catch(() => undefined);
       },
@@ -674,7 +689,9 @@ export const useStore = create<State>()(
         if (!token) return 'error';
         try {
           const { dataUrl } = await api.cutout(token, { imageB64: base64 });
-          get().setCutout(dataUrl); // yerel + buluta (hesapta kalıcı)
+          // Portre HANGİ FOTOĞRAFTAN üretildiğine bağlanır; bağ olmadan
+          // bayatlığı anlamanın yolu yoktu.
+          get().setCutout(dataUrl, medyaAnahtari(base64));
           return 'ok';
         } catch {
           return 'error';
@@ -1472,6 +1489,13 @@ export const useStore = create<State>()(
               : b,
           ),
         }));
+        // SUNUCUYA YAZ: devretme yalnız yereldeydi, salon uygulamayı kapatıp
+        // açınca randevular eski uzmanda görünüyordu ve müşteriye giden onay
+        // isteği hiç var olmuyordu.
+        const token = get().token;
+        if (token)
+          for (const b of affected)
+            void api.reassignBooking(token, b.id, newUzman).catch(() => undefined);
         for (const b of affected)
           get().pushNotification({
             type: 'booking',
@@ -1487,11 +1511,19 @@ export const useStore = create<State>()(
 
       // §4.5 — kullanıcı yeni uzmanı kabul eder → randevu tekrar onaylı
       acceptReassignment: (id) => {
+        const onceki = get().bookings.find((b) => b.id === id);
         set((s) => ({
           bookings: s.bookings.map((b) =>
             b.id === id ? { ...b, status: 'confirmed', reassignedFrom: undefined } : b,
           ),
         }));
+        // SUNUCUYA YAZ: durum yalnız yereldeydi, hydrate eski hâli geri
+        // getiriyordu — müşteri onayladığını sanıyor, randevu onaysız kalıyordu.
+        const token = get().token;
+        if (!token || !onceki) return;
+        void api.acceptReassignApi(token, id).catch(() => {
+          set((s) => ({ bookings: s.bookings.map((b) => (b.id === id ? onceki : b)) }));
+        });
       },
 
       // §4.5 — kullanıcı reddeder → iptal (depozito ödediyse iade akışı ayrıca yürür)
@@ -1507,6 +1539,15 @@ export const useStore = create<State>()(
               : x,
           ),
         }));
+        // SUNUCUYA YAZ. Bu bir PARA kararı: kapora iade mi edilecek yoksa
+        // randevu düz mü iptal olacak? Kararı istemci veriyordu ve sunucuya hiç
+        // ulaşmıyordu. Sunucuda kapora ASLA yanmaz — değişiklik müşteriden
+        // değil sağlayıcıdan geldi.
+        const token = get().token;
+        if (!token || !b) return;
+        void api.rejectReassignApi(token, id).catch(() => {
+          set((s) => ({ bookings: s.bookings.map((x) => (x.id === id ? b : x)) }));
+        });
       },
 
       // §1.6/§4.1 — kullanıcı uzmanın önerdiği alternatif saati kabul eder → DEPOZİTO adımı
@@ -1755,6 +1796,10 @@ export const useStore = create<State>()(
         set((s) => ({
           bookings: s.bookings.map((b) => (b.id === id ? { ...b, providerSignal: signal } : b)),
         }));
+        // NOT: §7.3 uzman sinyalinin SUNUCU UCU YOK — bu yüzden yalnız bu
+        // cihazda yaşıyor ve yeniden kurulumda kayboluyor. Uydurma bir uç
+        // çağırmak yerine eksikliği burada işaretliyorum; sinyal müşteriye
+        // GÖSTERİLMEDİĞİ için (yalnız uzmanın kendi notu) veri kaybı sınırlı.
       },
 
       pendingBookingSync: [],
@@ -2142,6 +2187,27 @@ export const useStore = create<State>()(
         }
       },
 
+      toggleSaved: (postId) => {
+        const token = get().token;
+        const mevcut = get().circlePosts.find((p) => p.id === postId)?.savedByMe === true;
+        const hedef = !mevcut;
+        // Önce yerel: dokunuş anında tepki versin.
+        set((s) => ({
+          circlePosts: s.circlePosts.map((p) => (p.id === postId ? { ...p, savedByMe: hedef } : p)),
+        }));
+        if (!token) return;
+        // SUNUCUYA YAZ. Yazılmazsa kayıt uygulamayı kapatınca kaybolurdu —
+        // "kaydettim ama gitmiş" en can sıkıcı hata türü.
+        void api.setCircleSaved(token, postId, hedef).catch(() => {
+          // Yazım başarısızsa yereli GERİ AL: UI yalan durumda kalmasın.
+          set((s) => ({
+            circlePosts: s.circlePosts.map((p) =>
+              p.id === postId ? { ...p, savedByMe: mevcut } : p,
+            ),
+          }));
+        });
+      },
+
       addComment: (postId, text, anonymous, proId) => {
         // §5.5 — yorum SUNUCUYA yazılır (moderasyon + diğer kullanıcılar görür)
         void api.circleComment(postId, text, anonymous, proId).catch(() => undefined);
@@ -2245,9 +2311,11 @@ export const useStore = create<State>()(
 
       // §8.2 — çekilişe katıl: 500 puan öde → +1 bilet
       enterRaffle: () => {
-        if (get().points < RAFFLE_COST) return false;
+        const bilet = get().config.rates.raffleCost || RAFFLE_COST;
+        if (get().points < bilet) return false;
+        // Optimistik yerel düşüş — dokunuş anında tepki.
         set((s) => ({
-          points: s.points - RAFFLE_COST,
+          points: s.points - bilet,
           raffleEntries: s.raffleEntries + 1,
           ledger: [
             {
@@ -2255,12 +2323,36 @@ export const useStore = create<State>()(
               kind: 'spend',
               labelKey: 'rewards.raffle.entry',
               detail: 'Çekiliş bileti',
-              points: -RAFFLE_COST,
+              points: -bilet,
               dateLabel: 'Az önce',
             },
             ...s.ledger,
           ],
         }));
+        // SUNUCUYA YAZ. Çekiliş bileti YALNIZ YERELDE düşülüyordu: puan defteri
+        // sunucuda tutulduğu için uygulama yeniden açılınca puan geri geliyor,
+        // bilet ise hiç var olmuyordu — kullanıcı bilet aldığını sanıyordu.
+        // (CLAUDE.md: finans/sadakat LEDGER — yerel sayaç defter değildir.)
+        const token = get().token;
+        if (token) {
+          void api
+            .redeemReward(token, 'rw3')
+            .then((sum) =>
+              set({
+                points: sum.points,
+                raffleEntries: sum.raffleEntries,
+                pointsSpend: sum.spend ?? null,
+              }),
+            )
+            .catch(() => {
+              // Sunucu reddettiyse (kilit, yetersiz puan) yerel düşüşü GERİ AL.
+              set((s) => ({
+                points: s.points + bilet,
+                raffleEntries: Math.max(0, s.raffleEntries - 1),
+                ledger: s.ledger.slice(1),
+              }));
+            });
+        }
         return true;
       },
 
@@ -2295,10 +2387,18 @@ export const useStore = create<State>()(
             platinum: tier === 'platinum',
             avatarUri: nextAvatar,
             cutoutUri: nextCutout,
+            // Portrenin hangi fotoğraftan üretildiği bilgisi ÖNBELLEKTEN
+            // taşınır. Taşınmazsa her açılışta bağ kopar ve geçerli bir portre
+            // de bayat sayılırdı.
+            cutoutFor: get().cutoutFor ?? cached?.cutoutFor ?? null,
           }));
           // Önbelleği yalnız bir şey VARSA güncelle — geçici null cache'i EZMESİN.
           if (uid && (nextAvatar || nextCutout))
-            saveMediaCache(uid, { avatar: nextAvatar, cutout: nextCutout });
+            saveMediaCache(uid, {
+              avatar: nextAvatar,
+              cutout: nextCutout,
+              cutoutFor: get().cutoutFor ?? cached?.cutoutFor ?? null,
+            });
           // §5.6 — favoriler/adresler hesaptan (sunucuda veri varsa o esas; boşsa yerel korunur)
           const prefs = (me as { prefs?: { favorites?: string[]; addresses?: UserAddress[] } })
             .prefs;
@@ -2565,3 +2665,25 @@ export const selectUnreadCount = (s: State): number => {
 
 export const selectActiveBookings = (s: State): Appointment[] =>
   s.bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending');
+
+/**
+ * EKRANDA GÖSTERİLECEK PORTRE — kesik portre yalnız GEÇERLİYSE kullanılır.
+ *
+ * Ana ekran doğrudan `cutoutUri ?? avatarUri` okuyordu. Portreyi hangi
+ * fotoğraftan üretildiğine bağlayan hiçbir şey olmadığı için, fotoğraf
+ * değiştikten sonra eski yüz ekranda kalabiliyordu ("profildeki foto ile ana
+ * sayfadaki foto farklı"). Bağ artık `cutoutFor` ile kuruluyor: anahtar
+ * eşleşmezse portre BAYAT sayılır ve gerçek fotoğraf gösterilir.
+ *
+ * Anahtarı olmayan ESKİ kayıtlar da bayat sayılır — bilinmeyeni geçerli
+ * varsaymak, hatanın kendisiydi. Kullanıcı fotoğrafını bir daha seçtiğinde
+ * portre yeniden üretilir ve bağ kurulur.
+ *
+ * Dönen değer string|null olduğu için seçici referans olarak KARARLIDIR
+ * (useSyncExternalStore döngüsüne yol açmaz).
+ */
+export const selectPortrait = (s: State): string | null => {
+  const { cutoutUri, cutoutFor, avatarUri } = s;
+  if (cutoutUri && cutoutFor && cutoutFor === medyaAnahtari(avatarUri)) return cutoutUri;
+  return avatarUri ?? null;
+};

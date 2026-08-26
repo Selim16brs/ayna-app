@@ -835,6 +835,57 @@ export class BookingsService {
   }
 
   // §1.6 — kullanıcı önerilen alternatifi kabul eder (başlangıç güncellenir, onaylanır)
+  // ── §4.6 DEVRETME ────────────────────────────────────────────────────────
+  //
+  // Bu akışın TAMAMI istemcide yaşıyordu: salon randevuyu başka uzmana
+  // devrediyor, müşteri onaylıyor ya da reddediyor — hiçbiri sunucuya
+  // yazılmıyordu. Uygulama yeniden açılınca hydrate sunucudaki eski durumu geri
+  // getiriyor ve işlemin tamamı KAYBOLUYORDU. Reddetme üstelik iade/iptal
+  // ayrımını (yani PARA kararını) istemcide veriyordu.
+
+  /** Salon/uzman randevuyu başka uzmana devreder → müşteri onayı beklenir. */
+  async reassign(id: string, toUzmanName: string, toProId?: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'provider');
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (!b)
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    return this.transition(id, {
+      status: 'reassigned_pending',
+      // Önceki uzmanın adı SAKLANIR: müşteri kimden kime devredildiğini görmeli.
+      reassignedFrom: b.uzmanName ?? null,
+      uzmanName: toUzmanName,
+      ...(toProId ? { proId: toProId } : {}),
+    });
+  }
+
+  /** Müşteri devri KABUL eder → randevu kesinleşir. */
+  async acceptReassignment(id: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'owner');
+    return this.transition(id, { status: 'confirmed', reassignedFrom: null });
+  }
+
+  /**
+   * Müşteri devri REDDEDER.
+   *
+   * Kapora ASLA YANMAZ: değişiklik müşteriden değil sağlayıcıdan geldi. Kapora
+   * ödenmişse iade sürecine, ödenmemişse düz iptale gider. (Normal iptal yolu
+   * `cancelOutcome` ile geç iptal cezası uygulayabiliyor — burada uygulanamaz.)
+   */
+  async rejectReassignment(id: string, actorId?: string) {
+    const rol = await this.assertParty(id, actorId, 'owner');
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (!b)
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    const kaporaOdendi = b.depositReceiptUri != null || (b.depositAmount ?? 0) > 0;
+    return this.transition(id, {
+      status: kaporaOdendi ? 'refund_pending' : 'cancelled',
+      cancelReason: 'booking.reassign.rejected',
+      cancelledBy: rol,
+      reassignedFrom: null,
+      depositForfeited: false,
+    });
+  }
+
   async accept(id: string, actorId?: string) {
     await this.assertParty(id, actorId, 'owner');
     const b = await this.prisma.booking.findUnique({ where: { id } });

@@ -1286,6 +1286,8 @@ export interface CirclePost {
   text: string;
   helpful: number;
   helpfulByMe?: boolean;
+  /** §14 — KENDİ kaydettiğin. Kimse başkasının kaydettiğini göremez. */
+  savedByMe?: boolean;
   comments: CircleComment[];
 }
 

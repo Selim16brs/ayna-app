@@ -661,6 +661,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.status.completed': 'Завершено',
   'home.upcoming_events': 'Предстоящие события',
   'home.upcoming_empty': 'У тебя нет предстоящих записей',
+  'circle.tab.saved': 'Сохранённые',
+  'circle.save': 'Сохранить',
+  'circle.unsave': 'Убрать из сохранённых',
   'circle.tab.feed': 'Лента',
   'circle.tab.mine': 'Мои вопросы',
   'circle.my_answered': 'ТВОЙ ВОПРОС СОБРАЛ ОТВЕТЫ',
@@ -1772,6 +1775,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'circle.consensus.of': 'из {n}',
   'circle.consensus.rule':
     'Считаются только те, у кого была завершённая запись к этому мастеру. «Слышала, что хорошая» не считается.',
+  'circle.suggest.label': 'Рекомендованный мастер',
   'circle.suggest.verified': 'была у неё',
   'circle.suggest.title': 'Посоветовать мастера',
   'circle.suggest.none': 'Чтобы советовать, нужна хотя бы одна завершённая запись.',

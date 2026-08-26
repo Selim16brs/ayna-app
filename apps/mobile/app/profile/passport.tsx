@@ -6,7 +6,7 @@ import { PREMIUM_PRICE_KZT } from '../../src/data';
 import { formatDateTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { api } from '../../src/api';
-import { useStore } from '../../src/store';
+import { selectPortrait, useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -48,7 +48,7 @@ export default function PassportScreen() {
   // GERÇEK kullanıcı — pasaport ile profil AYNI veriyi gösterir (sabit 'Aigerim' saçmalığı kaldırıldı)
   const userName = (useStore((s) => s.currentUser?.name) ?? '').trim();
   const displayName = userName || t('passport.member');
-  const photo = useStore((s) => s.cutoutUri ?? s.avatarUri);
+  const photo = useStore(selectPortrait);
   const womenVerified = useStore((s) => s.currentUser?.womenVerified ?? false);
   const completed = useStore((s) => s.bookings.filter((b) => b.status === 'completed').length);
   const reviews = useStore((s) => Object.values(s.userReviews).reduce((n, a) => n + a.length, 0));

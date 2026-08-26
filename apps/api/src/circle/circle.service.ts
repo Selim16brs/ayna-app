@@ -61,7 +61,7 @@ export class CircleService {
     }
   }
 
-  async listPosts() {
+  async listPosts(userId?: string) {
     const posts = await this.prisma.circlePost.findMany({
       where: { status: 'published' },
       orderBy: [{ helpful: 'desc' }, { createdAt: 'desc' }],
@@ -73,6 +73,20 @@ export class CircleService {
       where: { postId: { in: posts.map((p) => p.id) } },
     });
     const byPost = new Map(counts.map((c) => [c.postId, c._count._all]));
+    // §14 — KENDİ kaydettiklerin. Yalnız okuyucunun kendi satırları çekilir;
+    // "bu gönderiyi kaç kişi kaydetti" hiçbir yanıtta YOK ve olmayacak: bir
+    // uzmanın "beni kim/kaç kişi kaydetti" diye bakabilmesi, kadınların hangi
+    // hizmeti düşündüğünü ifşa ederdi (CLAUDE.md privacy-by-design).
+    const savedIds = userId
+      ? new Set(
+          (
+            await this.prisma.circleSave.findMany({
+              where: { userId, postId: { in: posts.map((p) => p.id) } },
+              select: { postId: true },
+            })
+          ).map((r) => r.postId),
+        )
+      : new Set<string>();
     return posts.map((p) => ({
       id: p.id,
       category: p.category,
@@ -82,8 +96,80 @@ export class CircleService {
       authorUserId: p.anonymous ? null : p.userId, // §5.5 takip hedefi (anonimde ASLA açılmaz)
       helpful: p.helpful,
       comments: byPost.get(p.id) ?? 0,
+      savedByMe: savedIds.has(p.id),
       createdAt: p.createdAt,
     }));
+  }
+
+  /**
+   * §14 — gönderiyi kaydet / kaydı kaldır. İdempotent: aynı çağrı tekrar
+   * gelirse durum değişmez, hata da dönmez.
+   *
+   * `save` verilmezse mevcut durumun TERSİNE çevrilir (dokunmatik toggle).
+   * Ama istemci durumu biliyorsa açıkça göndersin: iki cihazdan aynı anda
+   * dokunulduğunda toggle iki kez dönüp başladığı yere gelirdi.
+   */
+  async setSaved(userId: string, postId: string, save?: boolean) {
+    const post = await this.prisma.circlePost.findUnique({
+      where: { id: postId },
+      select: { id: true, status: true },
+    });
+    if (!post || post.status !== 'published') {
+      throw new NotFoundException({ code: 'POST_NOT_FOUND', message: 'Gönderi bulunamadı' });
+    }
+    const mevcut = await this.prisma.circleSave.findUnique({
+      where: { userId_postId: { userId, postId } },
+      select: { id: true },
+    });
+    const hedef = save ?? mevcut == null;
+    if (hedef && !mevcut) {
+      // Tekillik DB'de: "önce oku sonra yaz" iki eşzamanlı istekte çift satır
+      // yazardı. P2002 = zaten kayıtlı, istenen sonuç zaten sağlanmış.
+      await this.prisma.circleSave.create({ data: { userId, postId } }).catch((e: unknown) => {
+        if ((e as { code?: string }).code !== 'P2002') throw e;
+      });
+    } else if (!hedef && mevcut) {
+      await this.prisma.circleSave.delete({ where: { id: mevcut.id } }).catch(() => undefined);
+    }
+    return { postId, saved: hedef };
+  }
+
+  /** §14 — kaydettiklerim. Silinmiş/gizlenmiş gönderi listede ÇIKMAZ. */
+  async listSaved(userId: string) {
+    const rows = await this.prisma.circleSave.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+      select: { postId: true },
+    });
+    if (rows.length === 0) return [];
+    const ids = rows.map((r) => r.postId);
+    const posts = await this.prisma.circlePost.findMany({
+      where: { id: { in: ids }, status: 'published' },
+    });
+    const counts = await this.prisma.circleComment.groupBy({
+      by: ['postId'],
+      _count: { _all: true },
+      where: { postId: { in: posts.map((p) => p.id) } },
+    });
+    const byPost = new Map(counts.map((c) => [c.postId, c._count._all]));
+    const byId = new Map(posts.map((p) => [p.id, p]));
+    // Kaydetme SIRASI korunur: en son kaydettiğin üstte.
+    return ids
+      .map((id) => byId.get(id))
+      .filter((p): p is NonNullable<typeof p> => p != null)
+      .map((p) => ({
+        id: p.id,
+        category: p.category,
+        text: p.text,
+        anonymous: p.anonymous,
+        authorLabel: p.authorLabel,
+        authorUserId: p.anonymous ? null : p.userId,
+        helpful: p.helpful,
+        comments: byPost.get(p.id) ?? 0,
+        savedByMe: true,
+        createdAt: p.createdAt,
+      }));
   }
 
   async createPost(userId: string | undefined, role: string | undefined, input: CreatePostInput) {
@@ -181,11 +267,25 @@ export class CircleService {
       orderBy: { createdAt: 'asc' },
       take: 200,
     });
+    // ÖNERİLEN UZMANIN ADI da gönderilir. Yalnız `proId` dönüyordu; istemci
+    // kimliği isme çeviremediği için öneri ekranda GÖRÜNMÜYORDU — kullanıcı
+    // uzman seçip yorumu yolluyor, karşı tarafa hiçbir uzman bilgisi
+    // ulaşmıyordu. Kimlikten ada çevirmeyi istemciye bırakmak, uzman o anki
+    // şehir listesinde yoksa yine boş bırakırdı.
+    const proIds = [...new Set(rows.map((c) => c.proId).filter((x): x is string => !!x))];
+    const pros = proIds.length
+      ? await this.prisma.professional.findMany({
+          where: { id: { in: proIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const adByPro = new Map(pros.map((p) => [p.id, p.name]));
     return rows.map((c) => ({
       id: c.id,
       authorLabel: c.authorLabel,
       text: c.text,
       proId: c.proId,
+      proName: c.proId ? (adByPro.get(c.proId) ?? null) : null,
       proVerified: c.proVerified,
       createdAt: c.createdAt,
     }));

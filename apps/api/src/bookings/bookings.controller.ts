@@ -123,6 +123,36 @@ export class BookingsController {
     return this.bookings.accept(id, req.user!.id);
   }
 
+  // §4.6 — devretme: salon/uzman devreder, müşteri kabul/reddeder.
+  // Akışın tamamı istemcideydi; sunucuya yazılmadığı için her açılışta
+  // kayboluyordu.
+  @Post(':id/reassign')
+  @UseGuards(JwtAuthGuard)
+  reassign(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body() body: { uzmanName?: string; proId?: string },
+  ) {
+    return this.bookings.reassign(
+      id,
+      (body?.uzmanName ?? '').slice(0, 80),
+      body?.proId,
+      req.user!.id,
+    );
+  }
+
+  @Post(':id/reassign/accept')
+  @UseGuards(JwtAuthGuard)
+  acceptReassign(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.bookings.acceptReassignment(id, req.user!.id);
+  }
+
+  @Post(':id/reassign/reject')
+  @UseGuards(JwtAuthGuard)
+  rejectReassign(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.bookings.rejectReassignment(id, req.user!.id);
+  }
+
   @Post(':id/counter')
   @UseGuards(JwtAuthGuard)
   counter(

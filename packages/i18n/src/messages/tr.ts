@@ -724,6 +724,9 @@ export const tr = {
   'home.upcoming_empty': 'Yaklaşan randevun yok',
 
   // Circle
+  'circle.tab.saved': 'Kaydedilenler',
+  'circle.save': 'Kaydet',
+  'circle.unsave': 'Kaydı kaldır',
   'circle.tab.feed': 'Akış',
   'circle.tab.mine': 'Sorularım',
   'circle.my_answered': 'SORUN CEVAP TOPLADI',
@@ -1877,6 +1880,7 @@ export const tr = {
   'circle.consensus.of': '{n} kişiden',
   'circle.consensus.rule':
     'Yalnız o uzmanda tamamlanmış randevusu olanlar sayılır. “Duydum ki iyiymiş” sayılmaz.',
+  'circle.suggest.label': 'Önerilen uzman',
   'circle.suggest.verified': 'gitmiş',
   'circle.suggest.title': 'Bir uzman öner',
   'circle.suggest.none': 'Öneri yapabilmen için önce bir randevunun tamamlanmış olması gerekiyor.',
