@@ -101,6 +101,8 @@ type PendingCounts = {
   disputes: number;
   reviewDisputes: number;
   circle: number;
+  /** Dekont yüklenmiş ama tahsil edilmemiş komisyon faturaları. */
+  invoiceReceipts: number;
 };
 
 export default function AdminApp() {
@@ -198,7 +200,7 @@ export default function AdminApp() {
     {
       title: 'FİNANS',
       items: [
-        { id: 'commissions', label: 'Komisyon Takibi', icon: '💰' },
+        { id: 'commissions', label: 'Komisyon Takibi', icon: '💰', badge: q?.invoiceReceipts },
         { id: 'loyalty', label: 'Puan Ekonomisi', icon: '🎁' },
       ],
     },
