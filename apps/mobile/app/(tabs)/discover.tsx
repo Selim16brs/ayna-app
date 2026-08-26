@@ -15,6 +15,8 @@ import { selectUnreadCount, useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
+  HomeUpcoming,
+  HomeUrgent,
   LampIcon,
   Marquee,
   PressableScale,
@@ -203,6 +205,15 @@ export default function DiscoverScreen() {
             </View>
           </PressableScale>
         </View>
+
+        {/* ═══ ACİL — süresi işleyen TEK iş. Bekleyen yoksa hiç render edilmez. ═══
+            Tasarım kanvası teşhisi: kapora süresi sessizce doluyordu ve kullanıcı
+            bunu ana ekranda göremiyordu — kaybedilen randevu ve paranın ana sebebi.
+            Kural: SÜRE İŞLİYORSA SAYAÇ GÖRÜNÜR. */}
+        <HomeUrgent />
+
+        {/* ═══ YAKLAŞAN RANDEVU — "randevum ne zaman?" artık iki dokunuş uzakta değil ═══ */}
+        <HomeUpcoming />
 
         {/* ── Kayan slogan (Dileğin Nedir? ile kategoriler arasında) ── */}
         <Marquee text={t('home.marquee')} style={styles.marquee} />

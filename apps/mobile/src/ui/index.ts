@@ -29,6 +29,8 @@ export { Segmented } from './Segmented';
 export { TierUpsell } from './TierUpsell';
 export { NailCursor } from './NailCursor';
 export { PressableScale } from './PressableScale';
+export { HomeUrgent } from './HomeUrgent';
+export { HomeUpcoming } from './HomeUpcoming';
 export { Progress } from './Progress';
 export { ProgressRing } from './ProgressRing';
 export { AddressPicker, type PickedAddress } from './AddressPicker';
