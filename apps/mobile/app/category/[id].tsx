@@ -96,6 +96,7 @@ export default function CategoryScreen() {
               <Pressable
                 key={s.key}
                 onPress={() => setSort(s.key)}
+                hitSlop={8}
                 style={[styles.sortChip, on && styles.sortChipOn]}
               >
                 <Ionicons

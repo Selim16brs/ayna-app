@@ -112,6 +112,8 @@ export default function DiscoverScreen() {
               resizeMode="contain"
             />
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('notifications.title')}
               style={styles.bell}
               onPress={() => router.push('/notifications')}
               hitSlop={8}
