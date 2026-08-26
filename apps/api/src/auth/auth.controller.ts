@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { AccountDataService } from './account-data.service';
 import { AuthService } from './auth.service';
 import {
   type LoginInput,
@@ -20,7 +21,10 @@ import { type AuthedRequest, JwtAuthGuard } from './jwt-auth.guard';
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly accountData: AccountDataService,
+  ) {}
 
   @Post('register')
   register(@Body(new ZodValidationPipe(registerSchema)) body: RegisterInput) {
@@ -87,6 +91,34 @@ export class AuthController {
       ...(Array.isArray(body?.addresses) ? { addresses: body.addresses } : {}),
       ...(typeof body?.locale === 'string' ? { locale: body.locale } : {}),
     });
+  }
+
+  /**
+   * Verilerimi indir — kullanıcının KENDİ verisinin tamamı (JSON).
+   * Gizlilik ekranında düğme vardı ama sunucu tarafı hiç yazılmamıştı.
+   */
+  @Get('me/export')
+  @UseGuards(JwtAuthGuard)
+  exportMyData(@Req() req: AuthedRequest) {
+    return this.accountData.exportAll(req.user!.id);
+  }
+
+  /**
+   * Hesabımı sil — GERİ ALINAMAZ.
+   *
+   * `confirm: 'SIL'` şart: tek dokunuşla ya da yanlış istekle tetiklenmesin.
+   * Silme politikası account-data.service.ts başında yazılı.
+   */
+  @Post('me/delete')
+  @UseGuards(JwtAuthGuard)
+  deleteMyAccount(@Req() req: AuthedRequest, @Body() body: { confirm?: string }) {
+    if (body?.confirm !== 'SIL') {
+      throw new BadRequestException({
+        code: 'DELETE_NOT_CONFIRMED',
+        message: 'Silme onaylanmadı',
+      });
+    }
+    return this.accountData.deleteAccount(req.user!.id);
   }
 
   // §4.6 — OTP iste / doğrula (mock SMS). Sıkı limit: SMS maliyet bombardımanı +

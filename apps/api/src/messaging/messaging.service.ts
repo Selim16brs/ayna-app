@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { PushService } from '../push/push.service';
 import { canSendDecision, processMessage, resolvePair } from './messaging.util';
 
@@ -16,6 +17,7 @@ export class MessagingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly push: PushService,
+    private readonly storage: StorageService,
   ) {}
 
   private async userRole(id: string): Promise<{ name: string; role: string } | null> {
@@ -141,7 +143,7 @@ export class MessagingService {
     return conv;
   }
 
-  async sendMessage(meId: string, conversationId: string, rawBody: string) {
+  async sendMessage(meId: string, conversationId: string, rawBody: string, imageDataUrl?: string) {
     const conv = await this.assertParticipant(meId, conversationId);
     const otherId = conv.customerId === meId ? conv.proUserId : conv.customerId;
     if (await this.isBlockedBetween(meId, otherId)) {
@@ -152,11 +154,23 @@ export class MessagingService {
     }
     // Kurucu izin modeli (takip/tek-mesaj/reklam engeli) — mesaj yazılmadan önce
     await this.assertCanSendBy(conv, meId);
-    const { body, verdict } = processMessage(rawBody);
-    if (!body) throw new BadRequestException({ code: 'EMPTY', message: 'Boş mesaj gönderilemez' });
+    const { body, verdict } = processMessage(rawBody ?? '');
+    // Fotoğraf varsa metin BOŞ olabilir (yalnız görsel gönderme).
+    if (!body && !imageDataUrl) {
+      throw new BadRequestException({ code: 'EMPTY', message: 'Boş mesaj gönderilemez' });
+    }
+    // Görsel R2'ye taşınır; R2 yapılandırılmamışsa data URL olduğu gibi kalır.
+    //
+    // MODERASYON SINIRI: `verdict` yalnız METNE bakar. Ekran görüntüsündeki
+    // telefon numarası ya da Kaspi QR'ı YAKALANMAZ — bu bilinçli bir kabul,
+    // sessiz bir varsayım değil. Sohbetteki koruma kartı kullanıcıyı uygulama
+    // dışı ödemeye karşı zaten uyarıyor.
+    const imageUrl = imageDataUrl
+      ? await this.storage.put(imageDataUrl, 'messages').catch(() => null)
+      : null;
     const moderation = verdict.flagged ? 'flagged' : 'ok';
     const msg = await this.prisma.message.create({
-      data: { conversationId, senderId: meId, body, moderation },
+      data: { conversationId, senderId: meId, body, moderation, imageUrl },
     });
     // Yasaklı ifade → alıcıya gösterilmez + moderasyon kuyruğu (audit)
     if (verdict.flagged) {
@@ -186,7 +200,13 @@ export class MessagingService {
         data: { route: `/messages/${conversationId}` },
       });
     }
-    return { id: msg.id, moderation, body: msg.body, createdAt: msg.createdAt };
+    return {
+      id: msg.id,
+      moderation,
+      body: msg.body,
+      imageUrl: msg.imageUrl ?? null,
+      createdAt: msg.createdAt,
+    };
   }
 
   // Mesajları getir — alıcı flagged mesajları GÖRMEZ; gönderen kendi mesajını görür.
@@ -210,6 +230,9 @@ export class MessagingService {
       senderId: m.senderId,
       mine: m.senderId === meId,
       body: m.body,
+      // Engellenen mesajın GÖRSELİ de alıcıya gitmez: metni gizleyip fotoğrafı
+      // göndermek, moderasyonun etrafından dolaşmanın en kolay yolu olurdu.
+      imageUrl: m.moderation === 'flagged' && m.senderId !== meId ? null : (m.imageUrl ?? null),
       // gönderen kendi engellenen mesajını bu bayrakla görür (UI "gizlendi" gösterir)
       hidden: m.moderation === 'flagged',
       readAt: m.readAt,

@@ -727,6 +727,11 @@ export const api = {
     post<{ dataUrl: string }>('/cutout', source, token),
   // §12.3 — güncel kullanıcı (kısıt durumu tazelemek için)
   me: (token: string) => get<AuthUser>('/auth/me', token),
+  // Kişisel veri mevzuatı: verilerini indir + hesabını sil. İkisi de gizlilik
+  // ekranında düğme olarak duruyordu ama sunucu tarafı hiç yazılmamıştı.
+  exportMyData: (token: string) => get<Record<string, unknown>>('/auth/me/export', token),
+  deleteMyAccount: (token: string) =>
+    post<{ deleted: boolean }>('/auth/me/delete', { confirm: 'SIL' }, token),
   // §4 — ad/şehir sunucuya yazılır. Eskiden yalnız yerel store güncelleniyordu
   // ve uygulama yeniden açılınca sunucudaki eski değer geri geliyordu.
   updateMyProfileRemote: (token: string, patch: { name?: string; city?: string }) =>
@@ -852,8 +857,13 @@ export const api = {
   ) => post<{ id: string }>('/messaging/conversations', { targetUserId, ...(ctx ?? {}) }, token),
   chatMessages: (token: string, id: string) =>
     get<ChatMessage[]>(`/messaging/conversations/${id}/messages`, token),
-  sendChatMessage: (token: string, id: string, body: string) =>
-    post<ChatMessage>(`/messaging/conversations/${id}/messages`, { body }, token),
+  // EK Z.1 — metin, fotoğraf ya da ikisi. Yalnız fotoğraf da gönderilebilir.
+  sendChatMessage: (token: string, id: string, body: string, imageDataUrl?: string) =>
+    post<ChatMessage>(
+      `/messaging/conversations/${id}/messages`,
+      imageDataUrl ? { body, imageDataUrl } : { body },
+      token,
+    ),
   blockedUsers: (token: string) => get<BlockedUser[]>('/messaging/blocks', token),
   blockUser: (token: string, targetUserId: string) =>
     post<{ ok: boolean }>('/messaging/blocks', { targetUserId }, token),
@@ -1009,6 +1019,8 @@ export interface ChatMessage {
   senderId: string;
   mine: boolean;
   body: string;
+  /** EK Z.1 — mesaj fotoğrafı. Engellenen mesajın görseli alıcıya null gelir. */
+  imageUrl?: string | null;
   hidden: boolean;
   readAt: string | null;
   createdAt: string;

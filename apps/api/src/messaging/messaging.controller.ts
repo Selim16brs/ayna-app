@@ -46,7 +46,7 @@ export class MessagingController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(sendMessageSchema)) body: SendMessageInput,
   ) {
-    return this.messaging.sendMessage(req.user!.id, id, body.body);
+    return this.messaging.sendMessage(req.user!.id, id, body.body ?? '', body.imageDataUrl);
   }
 
   @Get('blocks')

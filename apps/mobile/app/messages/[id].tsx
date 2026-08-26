@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -34,6 +36,7 @@ export default function ChatThreadScreen() {
   const [items, setItems] = useState<ChatMessage[] | null>(null);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
+  const [photo, setPhoto] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [notice, setNotice] = useState('');
   const [following, setFollowing] = useState(false);
@@ -81,14 +84,28 @@ export default function ChatThreadScreen() {
     }
   };
 
+  /** Galeriden fotoğraf seç — gönderilmeden önce ön izleme olarak durur. */
+  const pickPhoto = async () => {
+    if (sending) return;
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.5, // data URL olarak taşınıyor: 4 MB sunucu sınırının altında kalsın
+      base64: true,
+    });
+    const a = res.canceled ? null : res.assets[0];
+    if (a?.base64) setPhoto(`data:image/jpeg;base64,${a.base64}`);
+  };
+
   const send = async () => {
     const body = draft.trim();
-    if (!body || !token || sending) return;
+    // Yalnız fotoğraf da gönderilebilir — metin şart değil.
+    if ((!body && !photo) || !token || sending) return;
     setSending(true);
     setNotice('');
     try {
-      await api.sendChatMessage(token, convId, body);
+      await api.sendChatMessage(token, convId, body, photo ?? undefined);
       setDraft('');
+      setPhoto(null);
       await load();
       requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
     } catch (err) {
@@ -238,9 +255,16 @@ export default function ChatThreadScreen() {
                       {t('messages.hidden')}
                     </Text>
                   ) : (
-                    <Text variant="body" tone={m.mine ? 'onAccent' : 'ink'}>
-                      {m.body}
-                    </Text>
+                    <>
+                      {m.imageUrl ? (
+                        <Image source={{ uri: m.imageUrl }} style={styles.msgImage} />
+                      ) : null}
+                      {m.body ? (
+                        <Text variant="body" tone={m.mine ? 'onAccent' : 'ink'}>
+                          {m.body}
+                        </Text>
+                      ) : null}
+                    </>
                   )}
                 </View>
               </View>
@@ -324,12 +348,40 @@ export default function ChatThreadScreen() {
                 </Text>
               </View>
             ) : null}
+            {/* Seçilen fotoğrafın ÖN İZLEMESİ — gönderilmeden önce görünür ve
+                kaldırılabilir. Görmeden gönderilen bir foto, yanlış fotoyu
+                yollamanın en kolay yoludur. */}
+            {photo ? (
+              <View style={styles.photoPreview}>
+                <Image source={{ uri: photo }} style={styles.photoThumb} />
+                <Text variant="caption" tone="muted" style={styles.photoHint}>
+                  {t('messages.photo_ready')}
+                </Text>
+                <Pressable
+                  onPress={() => setPhoto(null)}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.cancel')}
+                >
+                  <Ionicons name="close-circle" size={22} color={colors.muted} />
+                </Pressable>
+              </View>
+            ) : null}
             <View
               style={[
                 styles.composer,
                 { paddingBottom: klavyeAcik ? space(1.5) : insets.bottom + space(1) },
               ]}
             >
+              <Pressable
+                onPress={pickPhoto}
+                disabled={sending}
+                style={styles.attachBtn}
+                accessibilityRole="button"
+                accessibilityLabel={t('messages.photo_add')}
+              >
+                <Ionicons name="image-outline" size={20} color={colors.inkSoft} />
+              </Pressable>
               <TextInput
                 value={draft}
                 onChangeText={(v) => {
@@ -343,8 +395,11 @@ export default function ChatThreadScreen() {
               />
               <Pressable
                 onPress={send}
-                disabled={!draft.trim() || sending}
-                style={[styles.sendBtn, (!draft.trim() || sending) && styles.sendBtnOff]}
+                disabled={(!draft.trim() && !photo) || sending}
+                style={[
+                  styles.sendBtn,
+                  ((!draft.trim() && !photo) || sending) && styles.sendBtnOff,
+                ]}
               >
                 <Ionicons name="send" size={18} color={colors.onAccent} />
               </Pressable>
@@ -386,6 +441,23 @@ const makeStyles = (colors: ColorTokens) =>
     bubbleMine: { backgroundColor: colors.accent, borderBottomRightRadius: 6 },
     bubbleTheirs: { backgroundColor: colors.surfaceMuted, borderBottomLeftRadius: 6 },
     hiddenText: { fontStyle: 'italic' },
+    photoPreview: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      paddingHorizontal: space(2.5),
+      paddingVertical: space(1),
+    },
+    photoThumb: { width: 44, height: 44, borderRadius: radius.xs },
+    photoHint: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
+    attachBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    msgImage: {
+      width: 200,
+      height: 200,
+      borderRadius: radius.md,
+      marginBottom: space(0.75),
+      resizeMode: 'cover',
+    },
     composer: {
       flexDirection: 'row',
       alignItems: 'flex-end',

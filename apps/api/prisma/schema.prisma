@@ -972,6 +972,14 @@ model Message {
   conversationId String    @map("conversation_id") @db.Uuid
   senderId       String    @map("sender_id") @db.Uuid
   body           String
+  /// EK Z.1 — mesaj fotoğrafı (R2 URL; R2 yoksa data URL).
+  ///
+  /// DİKKAT: görsel İÇERİĞİ taranmıyor. Metin moderasyonu (numara/dış ödeme
+  /// yakalama) yalnız `body` üzerinde çalışır; bir ekran görüntüsündeki Kaspi
+  /// QR'ı ya da telefon numarası YAKALANMAZ. Bunu bilerek kabul ediyoruz;
+  /// ileride OCR eklenirse burası güncellenmeli. Sohbetteki koruma kartı
+  /// kullanıcıyı zaten uygulama dışı ödemeye karşı uyarıyor.
+  imageUrl       String?   @map("image_url")
   moderation     String    @default("ok")
   readAt         DateTime? @map("read_at") @db.Timestamptz(6)
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
