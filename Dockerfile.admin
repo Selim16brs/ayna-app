@@ -1,0 +1,28 @@
+# AYNA Admin Paneli — Railway deploy.
+#
+# API'nin Dockerfile'ıyla aynı desen: pnpm monorepo'dan YALNIZ web-admin ve
+# bağımlılıkları kurulur/derlenir. Statik çıktı (`out/`) kapılı küçük bir Node
+# sunucusuyla servis edilir (apps/web-admin/server.mjs).
+FROM node:20-bookworm-slim
+
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+WORKDIR /app
+COPY . .
+
+# "@ayna/web-admin..." = panel + BAĞIMLILIKLARI (i18n/types/…).
+# API'nin ve mobilin ağır bağımlılıkları kurulmaz.
+RUN pnpm install --frozen-lockfile --filter "@ayna/web-admin..."
+
+# NEXT_PUBLIC_* değişkenleri DERLEME ANINDA gömülür; çalışma anında okunmaz.
+# Bu yüzden build argümanı olarak alınır (Railway'de servis değişkeni olarak
+# tanımlanınca buraya geçer).
+ARG NEXT_PUBLIC_API_BASE
+ENV NEXT_PUBLIC_API_BASE=$NEXT_PUBLIC_API_BASE
+
+RUN pnpm --filter "@ayna/web-admin..." run build
+
+ENV NODE_ENV=production
+WORKDIR /app/apps/web-admin
+
+# Basic Auth kimliği ÇALIŞMA ANINDA okunur (gömülmez): ADMIN_BASIC_USER/PASS.
+CMD ["node", "server.mjs"]
