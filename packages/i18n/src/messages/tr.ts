@@ -2301,6 +2301,8 @@ export const tr = {
   'messages.empty_cta': 'Uzmanları keşfet',
   'messages.empty': 'Henüz mesajın yok. Bir uzmanla sohbet başlat.',
   'messages.thread_empty': 'İlk mesajı sen yaz.',
+  'messages.photo_add': 'Fotoğraf ekle',
+  'messages.photo_ready': 'Fotoğraf gönderilmeye hazır',
   'messages.input_placeholder': 'Mesaj yaz…',
   'messages.send': 'Gönder',
   'messages.start': 'Mesaj gönder',

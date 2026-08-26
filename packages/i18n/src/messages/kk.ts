@@ -2184,6 +2184,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'messages.empty_cta': 'Мамандарды тап',
   'messages.empty': 'Әзірше хабарламаңыз жоқ. Маманмен сөйлесуді бастаңыз.',
   'messages.thread_empty': 'Алғашқы хабарламаны жазыңыз.',
+  'messages.photo_add': 'Фото қосу',
+  'messages.photo_ready': 'Фото жіберуге дайын',
   'messages.input_placeholder': 'Хабарлама жазу…',
   'messages.send': 'Жіберу',
   'messages.start': 'Хабарлама жіберу',

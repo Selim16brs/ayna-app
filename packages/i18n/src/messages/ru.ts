@@ -2171,6 +2171,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'messages.empty_cta': 'Найти мастера',
   'messages.empty': 'У вас пока нет сообщений. Начните чат со специалистом.',
   'messages.thread_empty': 'Напишите первое сообщение.',
+  'messages.photo_add': 'Добавить фото',
+  'messages.photo_ready': 'Фото готово к отправке',
   'messages.input_placeholder': 'Написать сообщение…',
   'messages.send': 'Отправить',
   'messages.start': 'Написать сообщение',

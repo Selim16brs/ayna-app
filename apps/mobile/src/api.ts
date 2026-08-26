@@ -857,8 +857,13 @@ export const api = {
   ) => post<{ id: string }>('/messaging/conversations', { targetUserId, ...(ctx ?? {}) }, token),
   chatMessages: (token: string, id: string) =>
     get<ChatMessage[]>(`/messaging/conversations/${id}/messages`, token),
-  sendChatMessage: (token: string, id: string, body: string) =>
-    post<ChatMessage>(`/messaging/conversations/${id}/messages`, { body }, token),
+  // EK Z.1 — metin, fotoğraf ya da ikisi. Yalnız fotoğraf da gönderilebilir.
+  sendChatMessage: (token: string, id: string, body: string, imageDataUrl?: string) =>
+    post<ChatMessage>(
+      `/messaging/conversations/${id}/messages`,
+      imageDataUrl ? { body, imageDataUrl } : { body },
+      token,
+    ),
   blockedUsers: (token: string) => get<BlockedUser[]>('/messaging/blocks', token),
   blockUser: (token: string, targetUserId: string) =>
     post<{ ok: boolean }>('/messaging/blocks', { targetUserId }, token),
@@ -1014,6 +1019,8 @@ export interface ChatMessage {
   senderId: string;
   mine: boolean;
   body: string;
+  /** EK Z.1 — mesaj fotoğrafı. Engellenen mesajın görseli alıcıya null gelir. */
+  imageUrl?: string | null;
   hidden: boolean;
   readAt: string | null;
   createdAt: string;
