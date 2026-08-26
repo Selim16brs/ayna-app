@@ -8,7 +8,7 @@ import { localWallClockToAlmatyMs } from '../../src/datetime';
 import { useStore } from '../../src/store';
 import { fillParams, useLocale } from '../../src/locale';
 import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, DateField, Screen, Segmented, StackHeader, Text, TextInput } from '../../src/ui';
 
@@ -376,7 +376,7 @@ const makeStyles = (colors: ColorTokens) =>
     note: { paddingHorizontal: space(0.5), marginTop: space(0.5) },
     actions: { marginTop: space(2) },
     svcHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    svcToggle: { fontWeight: '700' },
+    svcToggle: { fontFamily: font.semibold },
     svcNone: { marginTop: space(0.75), lineHeight: 17 },
     accordion: {
       borderWidth: 1,

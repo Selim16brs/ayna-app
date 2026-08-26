@@ -12,7 +12,7 @@ import { useCampaigns, useCollections, useOffers, useProfessionals } from '../..
 import { greetingKey } from '../../src/greeting';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   LampIcon,
@@ -30,7 +30,7 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
 // Kategori daire zeminleri (spec §0.1) — pastel + ink ikon
 const HOT_PINK = '#FF2E93'; // "Ne yapmak istersin?" kartı — çırtlak pembe
 // Canlı kategori renkleri (pembe/yeşil gibi doygun) — Saç·Cilt·Nail·Makyaj·Spa·Diğer
-const CAT_TINTS = ['#FF2E93', '#C6E24B', '#B06CFF', '#FF8A3D', '#3FC5F0', '#2ED9B0'];
+const CAT_TINTS = ['#5A2A55', '#D97798', '#8E7BA8', '#9A641F', '#6E86A8', '#547565'];
 // Yatay kaydırmalı kart ölçüsü (Fırsatlar / Öne çıkanlar — profesyonel foto kartı)
 const PROMO_W = Math.round(Dimensions.get('window').width * 0.72);
 const PROMO_H = 168;
@@ -515,7 +515,7 @@ const makeStyles = (colors: ColorTokens) =>
       color: '#FFFFFF',
       fontSize: 10,
       lineHeight: 12,
-      fontWeight: '800',
+      fontFamily: font.semibold,
       textAlign: 'center',
       textAlignVertical: 'center',
       includeFontPadding: false,
@@ -537,7 +537,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       backgroundColor: colors.surface,
     },
-    cityText: { fontWeight: '700', maxWidth: 74 },
+    cityText: { fontFamily: font.semibold, maxWidth: 74 },
     avatar: {
       width: 46,
       height: 46,
@@ -569,7 +569,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(2),
     },
     searchText: { flex: 1 },
-    searchInput: { flex: 1, fontSize: 14, fontWeight: '400', color: colors.ink, padding: 0 },
+    searchInput: { flex: 1, fontSize: 14, fontFamily: font.regular, color: colors.ink, padding: 0 },
     mapChip: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -580,7 +580,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderWidth: 1.5,
       borderColor: 'rgba(32,36,15,0.35)',
     },
-    mapChipText: { fontWeight: '700' },
+    mapChipText: { fontFamily: font.semibold },
     heroBody: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -593,9 +593,9 @@ const makeStyles = (colors: ColorTokens) =>
     greetLabel: {
       fontSize: 26,
       lineHeight: 30,
-      fontWeight: '500',
+      fontFamily: font.medium,
       letterSpacing: -0.4,
-      color: '#1A1A1A',
+      color: '#261F25',
       zIndex: 1,
     },
     greetName: {
@@ -702,7 +702,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     promoCardTitle: {
       fontSize: 17,
-      fontWeight: '700',
+      fontFamily: font.semibold,
       lineHeight: 21,
       letterSpacing: -0.2,
       color: '#FFFFFF',
@@ -717,7 +717,12 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       zIndex: 2,
     },
-    promoTagText: { color: colors.onAccent, fontSize: 10, fontWeight: '700', letterSpacing: 0.2 },
+    promoTagText: {
+      color: colors.onAccent,
+      fontSize: 10,
+      fontFamily: font.semibold,
+      letterSpacing: 0.2,
+    },
     sponsorTag: {
       position: 'absolute',
       top: space(1.25),
@@ -728,7 +733,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       zIndex: 2,
     },
-    sponsorText: { color: 'rgba(255,255,255,0.95)', fontSize: 10, fontWeight: '700' },
+    sponsorText: { color: 'rgba(255,255,255,0.95)', fontSize: 10, fontFamily: font.semibold },
 
     // ── Kategoriler (yatay kaydırmalı) ──
     catRow: {
@@ -747,7 +752,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
       marginBottom: space(0.75),
     },
-    catLabel: { textAlign: 'center', fontWeight: '600' },
+    catLabel: { textAlign: 'center', fontFamily: font.semibold },
 
     // ── Bölüm başlığı ──
     sectionHeader: {
@@ -758,7 +763,7 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(3.5),
       marginBottom: space(1.75),
     },
-    sectionTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.4 },
+    sectionTitle: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.4 },
     seeAll: { flexDirection: 'row', alignItems: 'center', gap: 2 },
 
     // ── Fırsatlar ──
@@ -780,8 +785,8 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       marginBottom: space(1),
     },
-    promoBadgeText: { fontWeight: '800' },
-    promoTitle: { fontSize: 17, fontWeight: '800', letterSpacing: -0.2, marginBottom: 2 },
+    promoBadgeText: { fontFamily: font.semibold },
+    promoTitle: { fontSize: 17, fontFamily: font.semibold, letterSpacing: -0.2, marginBottom: 2 },
 
     // ── Öne çıkanlar (sponsorlu) ──
     ads: { paddingHorizontal: space(3), gap: space(1.5) },
@@ -804,7 +809,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 4,
       borderRadius: radius.pill,
     },
-    adBadgeText: { fontWeight: '600' },
+    adBadgeText: { fontFamily: font.semibold },
     adText: { padding: space(2) },
     adSubtitle: { opacity: 0.9, marginTop: 2 },
 
@@ -840,5 +845,5 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       marginTop: space(1),
     },
-    cityEmptyCtaText: { fontWeight: '800' },
+    cityEmptyCtaText: { fontFamily: font.semibold },
   });

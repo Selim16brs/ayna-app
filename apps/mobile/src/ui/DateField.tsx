@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import { radius, space, type ColorTokens } from '../theme';
+import { radius, space, type ColorTokens, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -99,7 +99,7 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     field: {},
     fieldGap: { marginBottom: space(2) },
-    label: { marginBottom: space(1), fontWeight: '700' },
+    label: { marginBottom: space(1), fontFamily: font.semibold },
     iosRow: { flexDirection: 'row', alignItems: 'center', minHeight: 40 },
     input: {
       backgroundColor: colors.surfaceMuted,

@@ -4,7 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CITIES } from '../data';
 import { useLocale } from '../locale';
-import { radius, space, type ColorTokens } from '../theme';
+import { radius, space, type ColorTokens, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -127,7 +127,7 @@ const makeStyles = (colors: ColorTokens) =>
       maxHeight: '78%',
     },
     sheetHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    sheetTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
+    sheetTitle: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.3 },
     close: {
       width: 40,
       height: 40,

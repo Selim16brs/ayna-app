@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../locale';
-import { space } from '../theme';
+import { space, font } from '../theme';
 import { useTheme } from '../theme-context';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -18,7 +18,7 @@ const TABS: { route: string; name: string; icon: IoniconName; labelKey: MessageK
   { route: '/salon/profile', name: 'profile', icon: 'business', labelKey: 'salon.nav.profile' },
 ];
 
-const ACTIVE = '#6F8C1B';
+const ACTIVE = '#5A2A55';
 
 function activeName(pathname: string): string {
   if (pathname.startsWith('/salon/agenda')) return 'agenda';
@@ -63,7 +63,7 @@ export function SalonTabBar() {
             <Ionicons name={icon} size={24} color={color} />
             <Text
               numberOfLines={1}
-              style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}
+              style={[styles.label, { color, fontFamily: focused ? font.semibold : font.medium }]}
             >
               {t(tab.labelKey)}
             </Text>

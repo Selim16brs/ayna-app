@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 import { useLocale } from '../locale';
-import { type ColorTokens, radius, space } from '../theme';
+import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -76,5 +76,5 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     aynaBadge: { backgroundColor: colors.accentFg },
-    aynaText: { fontWeight: '800' },
+    aynaText: { fontFamily: font.semibold },
   });

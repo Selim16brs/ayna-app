@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { servicesOf, tri } from '../taxonomy';
 import { useLocale } from '../locale';
-import { radius, space, type ColorTokens } from '../theme';
+import { radius, space, type ColorTokens, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -79,8 +79,8 @@ const makeStyles = (colors: ColorTokens) =>
     },
     cardOn: { backgroundColor: colors.accent },
     topRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 4 },
-    name: { flex: 1, fontWeight: '700', fontSize: 13.5, lineHeight: 17 },
+    name: { flex: 1, fontFamily: font.semibold, fontSize: 13.5, lineHeight: 17 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     meta: { fontSize: 11.5 },
-    price: { fontWeight: '800', fontSize: 13 },
+    price: { fontFamily: font.semibold, fontSize: 13 },
   });

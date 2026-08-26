@@ -10,7 +10,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { RulesCard, Screen, SectionHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
 
@@ -325,10 +325,10 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
-    backText: { fontWeight: '700' },
+    backText: { fontFamily: font.semibold },
     heroBody: { flexDirection: 'row', alignItems: 'center', marginTop: space(2) },
     heroText: { flex: 1 },
-    heroTitle: { fontSize: 32, lineHeight: 36, fontWeight: '800', letterSpacing: -0.6 },
+    heroTitle: { fontSize: 32, lineHeight: 36, fontFamily: font.semibold, letterSpacing: -0.6 },
     heroSub: { marginTop: space(1.25), maxWidth: 210, lineHeight: 18 },
     heroPhotoWrap: { width: 130, height: 160 },
     heroPhoto: {
@@ -375,7 +375,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
       marginBottom: space(0.5),
     },
-    uploadTitle: { fontWeight: '800' },
+    uploadTitle: { fontFamily: font.semibold },
 
     pickRow: {
       flexDirection: 'row',
@@ -394,7 +394,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.accent,
     },
     pickBtnSoft: { backgroundColor: colors.accentSoft },
-    pickText: { fontWeight: '800' },
+    pickText: { fontFamily: font.semibold },
 
     catRow: {
       flexDirection: 'row',
@@ -434,7 +434,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     durChipActive: { backgroundColor: colors.accent },
-    durText: { fontWeight: '700' },
+    durText: { fontFamily: font.semibold },
 
     specialRow: { paddingHorizontal: space(3), gap: space(1.5) },
     special: {
@@ -445,8 +445,8 @@ const makeStyles = (colors: ColorTokens) =>
     },
     specialImg: { width: '100%', height: 96, backgroundColor: colors.bgSunken },
     specialBody: { padding: space(1.5), gap: 4 },
-    specialBadge: { fontWeight: '800' },
-    specialTitle: { fontWeight: '700', lineHeight: 17 },
+    specialBadge: { fontFamily: font.semibold },
+    specialTitle: { fontFamily: font.semibold, lineHeight: 17 },
 
     footer: {
       paddingHorizontal: space(3),
@@ -462,5 +462,5 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       backgroundColor: colors.accent,
     },
-    ctaText: { fontWeight: '800', fontSize: 16 },
+    ctaText: { fontFamily: font.semibold, fontSize: 16 },
   });

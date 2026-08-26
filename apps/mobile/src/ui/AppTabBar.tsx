@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../locale';
-import { space } from '../theme';
+import { space, font } from '../theme';
 import { useTheme } from '../theme-context';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -22,7 +22,7 @@ const TABS: { route: string; name: string; icon: IoniconName; labelKey: MessageK
 export const TAB_BAR_CLEARANCE = 88;
 
 // Aktif sekme foreground'u: marka lime'ının beyazda okunur koyu tonu (aynı hue ailesi)
-const ACTIVE = '#6F8C1B';
+const ACTIVE = '#5A2A55';
 
 // Aktif sekme: pathname'e göre (push edilen ekranlar ilgili sekmeye eşlenir)
 function activeName(pathname: string): string {
@@ -69,7 +69,7 @@ export function AppTabBar() {
             <Ionicons name={icon} size={24} color={color} />
             <Text
               numberOfLines={1}
-              style={[styles.label, { color, fontWeight: focused ? '700' : '500' }]}
+              style={[styles.label, { color, fontFamily: focused ? font.semibold : font.medium }]}
             >
               {t(tab.labelKey)}
             </Text>

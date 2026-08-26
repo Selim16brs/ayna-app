@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { radius, space, type ColorTokens } from '../theme';
+import { radius, space, type ColorTokens, font } from '../theme';
 import { useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -62,6 +62,6 @@ const makeStyles = (colors: ColorTokens) =>
       minHeight: 52,
     },
     textCol: { flex: 1 },
-    title: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.6 },
+    title: { fontSize: 30, lineHeight: 34, fontFamily: font.semibold, letterSpacing: -0.6 },
     sub: { marginTop: space(0.75), opacity: 0.65 },
   });

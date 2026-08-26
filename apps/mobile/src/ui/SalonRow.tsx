@@ -6,7 +6,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../locale';
 import { cityCenter, distanceKm, type Professional, proCoords } from '../data';
 import { useStore } from '../store';
-import { type ColorTokens, radius, space } from '../theme';
+import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -16,7 +16,7 @@ const BADGE: Record<Professional['badge'], { key: MessageKey; bg: string }> = {
   verified: { key: 'card.verified', bg: '#E1DAF3' }, // badgePopularBg
   today: { key: 'card.today', bg: '#F8DFC2' }, // badgeNewBg
 };
-const BADGE_INK = '#1A1A1A';
+const BADGE_INK = '#261F25';
 
 /**
  * Yatay salon kartı (referans "Yakındaki salonlar" dili): sol foto + isim/puan/adres +
@@ -93,9 +93,9 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.bgSunken,
     },
     body: { flex: 1, gap: 4 },
-    name: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+    name: { fontSize: 16, fontFamily: font.semibold, letterSpacing: -0.2 },
     ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    rating: { fontWeight: '800' },
+    rating: { fontFamily: font.semibold },
     meta: {},
     right: {
       alignItems: 'flex-end',
@@ -108,12 +108,12 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 5,
       borderRadius: radius.pill,
     },
-    badgeText: { fontSize: 11, fontWeight: '700' },
+    badgeText: { fontSize: 11, fontFamily: font.semibold },
     cta: {
       backgroundColor: colors.accent,
       paddingHorizontal: space(2),
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
-    ctaText: { fontWeight: '800' },
+    ctaText: { fontFamily: font.semibold },
   });

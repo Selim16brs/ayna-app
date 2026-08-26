@@ -10,7 +10,7 @@ import {
 } from '../src/data';
 import { fillParams, useLocale } from '../src/locale';
 import { useStore } from '../src/store';
-import { type ColorTokens, radius, space } from '../src/theme';
+import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import type { MessageKey } from '@ayna/i18n';
 import { Progress, Screen, SectionHeader, StackHeader, Text } from '../src/ui';
@@ -186,7 +186,7 @@ export default function RewardsScreen() {
                     variant="caption"
                     style={{
                       color: affordable ? colors.onAccent : colors.muted,
-                      fontWeight: '800',
+                      fontFamily: font.semibold,
                     }}
                   >
                     {t('rewards.redeem.use')}
@@ -285,7 +285,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
     },
     raffleJoinOff: { opacity: 0.5 },
-    raffleJoinText: { color: colors.onColor, fontWeight: '800' },
+    raffleJoinText: { color: colors.onColor, fontFamily: font.semibold },
     raffleJoinSub: { color: 'rgba(255,255,255,0.9)', fontSize: 10 },
     expiryBanner: {
       flexDirection: 'row',
@@ -326,7 +326,7 @@ const makeStyles = (colors: ColorTokens) =>
     pointsBig: {
       fontSize: 46,
       lineHeight: 50,
-      fontWeight: '800',
+      fontFamily: font.semibold,
       letterSpacing: -1,
       color: colors.onColor,
       marginTop: space(0.5),
@@ -341,7 +341,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 5,
       borderRadius: radius.pill,
     },
-    tierText: { fontWeight: '700' },
+    tierText: { fontFamily: font.semibold },
     progressWrap: { marginTop: space(2), marginBottom: space(1.25) },
     raffle: {
       flexDirection: 'row',
@@ -360,7 +360,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    raffleTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
+    raffleTitle: { fontSize: 22, fontFamily: font.semibold, letterSpacing: -0.4 },
     raffleBody: { flex: 1, gap: 3 },
     group: {
       backgroundColor: colors.surface,
@@ -383,7 +383,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     rowLabel: { flex: 1, gap: 3 },
-    rowName: { fontSize: 15, fontWeight: '800', letterSpacing: -0.2 },
+    rowName: { fontSize: 15, fontFamily: font.semibold, letterSpacing: -0.2 },
     redeemBtn: {
       backgroundColor: colors.accent,
       paddingHorizontal: space(1.75),

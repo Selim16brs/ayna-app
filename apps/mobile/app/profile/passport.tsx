@@ -6,7 +6,7 @@ import { PREMIUM_PRICE_KZT } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { api } from '../../src/api';
 import { useStore } from '../../src/store';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
@@ -273,7 +273,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       alignSelf: 'flex-start',
     },
-    verifiedText: { fontWeight: '600' },
+    verifiedText: { fontFamily: font.semibold },
     heroStats: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -326,11 +326,11 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
-    premiumBadgeText: { fontWeight: '800' },
+    premiumBadgeText: { fontFamily: font.semibold },
     perks: { gap: space(1.25) },
     perkRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     perkText: { flex: 1 },
-    perkPremiumOnly: { fontWeight: '700' },
+    perkPremiumOnly: { fontFamily: font.semibold },
     manageLink: { alignSelf: 'center' },
     manageText: { textDecorationLine: 'underline' },
   });

@@ -9,7 +9,7 @@ import { type Promotion, type PromotionStatus } from '../../src/data';
 import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   Button,
@@ -394,7 +394,7 @@ const makeStyles = (colors: ColorTokens) =>
     cardBody: { padding: space(2), gap: space(1) },
     cardTop: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     badge: { paddingHorizontal: space(1), paddingVertical: 3, borderRadius: radius.pill },
-    badgeText: { fontWeight: '700' },
+    badgeText: { fontFamily: font.semibold },
     cardDesc: { lineHeight: 18 },
     cardMeta: { flexDirection: 'row', alignItems: 'center', gap: space(1), flexWrap: 'wrap' },
     discountChip: {
@@ -406,7 +406,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 3,
       borderRadius: radius.pill,
     },
-    discountText: { fontWeight: '800' },
+    discountText: { fontFamily: font.semibold },
     metaChip: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -466,7 +466,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'space-between',
       marginBottom: space(1.5),
     },
-    sheetTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
+    sheetTitle: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.3 },
     close: {
       width: 40,
       height: 40,

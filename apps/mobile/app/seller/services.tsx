@@ -5,7 +5,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { SellerServiceRow } from '../../src/store';
 import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
@@ -165,7 +165,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
-    countText: { fontWeight: '700' },
+    countText: { fontFamily: font.semibold },
     chips: { gap: space(1), paddingRight: space(3), paddingBottom: space(2) },
     chip: {
       flexDirection: 'row',
@@ -189,8 +189,8 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     badgeOn: { backgroundColor: 'rgba(255,255,255,0.35)' },
-    badgeText: { color: colors.accentFg, fontWeight: '700', fontSize: 11 },
-    badgeTextOn: { color: colors.onAccent, fontWeight: '700', fontSize: 11 },
+    badgeText: { color: colors.accentFg, fontFamily: font.semibold, fontSize: 11 },
+    badgeTextOn: { color: colors.onAccent, fontFamily: font.semibold, fontSize: 11 },
     empty: { textAlign: 'center', paddingVertical: space(6) },
     card: {
       backgroundColor: colors.surface,

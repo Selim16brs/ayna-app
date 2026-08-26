@@ -7,7 +7,7 @@ import type { CirclePost, CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { PressableScale, Screen, TabHero, Text } from '../../src/ui';
 
@@ -342,7 +342,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 3,
       borderRadius: radius.pill,
     },
-    lifeTagText: { fontWeight: '600' },
+    lifeTagText: { fontFamily: font.semibold },
     lifeBody: { padding: space(1.75) },
     lifeRead: { opacity: 0.9, marginTop: 2 },
     // Tavsiyeler başlık + sıralama
@@ -355,7 +355,7 @@ const makeStyles = (colors: ColorTokens) =>
       marginBottom: space(1),
     },
     sortLabel: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    sortText: { fontWeight: '600' },
+    sortText: { fontFamily: font.semibold },
     // Kategori çipleri
     chipBar: { flexGrow: 0, flexShrink: 0 },
     chips: { paddingHorizontal: space(3), gap: space(1), alignItems: 'center' },
@@ -397,7 +397,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.accent,
     },
     followBtnOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-    followText: { fontWeight: '700' },
+    followText: { fontFamily: font.semibold },
     avatar: {
       width: 34,
       height: 34,
@@ -415,7 +415,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 4,
       borderRadius: radius.pill,
     },
-    scoreText: { fontWeight: '700' },
+    scoreText: { fontFamily: font.semibold },
     typeBadge: { paddingHorizontal: space(1.25), paddingVertical: 4, borderRadius: radius.pill },
     typeText: { fontSize: 11 },
     text: { marginTop: space(1.5) },

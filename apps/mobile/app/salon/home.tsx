@@ -9,7 +9,7 @@ import { useSalonStaff } from '../../src/staff';
 import { greetingKey } from '../../src/greeting';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text, TierUpsell } from '../../src/ui';
 
@@ -272,7 +272,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.5),
       borderRadius: radius.pill,
     },
-    bindingText: { color: '#FFFFFF', fontWeight: '700' },
+    bindingText: { color: '#FFFFFF', fontFamily: font.semibold },
     circleBtn: {
       width: 40,
       height: 40,
@@ -297,11 +297,11 @@ const makeStyles = (colors: ColorTokens) =>
       color: '#FFFFFF',
       fontSize: 10,
       lineHeight: 12,
-      fontWeight: '800',
+      fontFamily: font.semibold,
       includeFontPadding: false,
     },
     heroBottom: { paddingHorizontal: space(3), paddingBottom: space(2.5) },
-    heroGreet: { color: 'rgba(255,255,255,0.9)', fontWeight: '600' },
+    heroGreet: { color: 'rgba(255,255,255,0.9)', fontFamily: font.semibold },
     heroName: { color: '#FFFFFF', letterSpacing: -0.3 },
     body: { paddingHorizontal: space(3), paddingTop: space(2) },
     upsell: {
@@ -320,7 +320,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    upsellCta: { fontWeight: '800', marginTop: 3 },
+    upsellCta: { fontFamily: font.semibold, marginTop: 3 },
     sectionDivider: {
       height: StyleSheet.hairlineWidth,
       backgroundColor: colors.line,
@@ -345,7 +345,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.5),
       borderRadius: radius.pill,
     },
-    seeAll: { fontWeight: '700' },
+    seeAll: { fontFamily: font.semibold },
     sectionSub: { marginTop: 1 },
     staffList: { gap: space(1.25) },
     staffCard: {
@@ -369,7 +369,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 2,
       borderRadius: radius.pill,
     },
-    perfVal: { fontWeight: '800', fontSize: 11 },
+    perfVal: { fontFamily: font.semibold, fontSize: 11 },
     perfLbl: { fontSize: 10 },
     // reklamlar
     adsHead: {
@@ -409,7 +409,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     adSponsorText: { color: 'rgba(255,255,255,0.9)', fontSize: 9, letterSpacing: 0.3 },
     adInfo: { padding: space(2), gap: 2 },
-    adBrand: { color: 'rgba(255,255,255,0.85)', fontWeight: '700', letterSpacing: 0.2 },
+    adBrand: { color: 'rgba(255,255,255,0.85)', fontFamily: font.semibold, letterSpacing: 0.2 },
     adTitle: { color: '#FFFFFF', fontSize: 16, lineHeight: 20 },
     adCta: {
       flexDirection: 'row',
@@ -422,5 +422,5 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
-    adCtaText: { color: colors.ink, fontWeight: '800' },
+    adCtaText: { color: colors.ink, fontFamily: font.semibold },
   });

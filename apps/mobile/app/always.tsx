@@ -10,7 +10,7 @@ import {
   useStore,
 } from '../src/store';
 import { findService, tri } from '../src/taxonomy';
-import { type ColorTokens, radius, space } from '../src/theme';
+import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import {
   Button,
@@ -248,7 +248,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 1,
       borderRadius: radius.pill,
     },
-    bondTagText: { fontWeight: '800', fontSize: 10 },
+    bondTagText: { fontFamily: font.semibold, fontSize: 10 },
     reqHead: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
     reqActions: { flexDirection: 'row', gap: space(1) },
     // Platinum kilit

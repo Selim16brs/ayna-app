@@ -30,16 +30,16 @@ const H = 1920;
 
 // Paylaşılan görsel sabit "aydınlık" markalı temada üretilir (cihaz temasından bağımsız).
 const C = {
-  bg: '#F4F1EC',
-  lime: '#C6E24B',
-  limeLight: '#DDEE8A',
-  limeDeep: '#6F8C1B',
-  ink: '#1A1A1A',
-  body: '#332E29',
+  bg: '#FBF8F6',
+  lime: '#5A2A55',
+  limeLight: '#F5E6EB',
+  limeDeep: '#5A2A55',
+  ink: '#261F25',
+  body: '#564E56',
   white: '#FFFFFF',
-  line: '#ECE6DE',
-  soft: '#EEF7C8',
-  goldSoft: '#F6EEDD',
+  line: '#F0E7EC',
+  soft: '#F5E6EB',
+  goldSoft: '#FAF2E6',
   gold: '#C2A06A',
   muted: '#A69E92',
 };

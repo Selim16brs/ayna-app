@@ -15,7 +15,7 @@ import {
 import { useProfessionals } from '../src/catalog';
 import { useStore } from '../src/store';
 import { useLocale } from '../src/locale';
-import { type ColorTokens, radius, space } from '../src/theme';
+import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { useProfessionalDetail } from '../src/catalog';
 import { PressableScale, Screen, StackHeader, Text } from '../src/ui';
@@ -332,7 +332,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     chipActive: { backgroundColor: colors.accent },
-    chipText: { fontWeight: '700' },
+    chipText: { fontFamily: font.semibold },
     mapWrap: { flex: 1, overflow: 'hidden' },
     bridge: {
       position: 'absolute',
@@ -379,7 +379,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     cardRow: { flexDirection: 'row', gap: space(1.5), alignItems: 'center' },
     cardImage: { width: 72, height: 72, borderRadius: radius.md, backgroundColor: colors.bgSunken },
-    cardName: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+    cardName: { fontSize: 16, fontFamily: font.semibold, letterSpacing: -0.2 },
     cardBody: { flex: 1, gap: 3 },
     cardMeta: {
       flexDirection: 'row',

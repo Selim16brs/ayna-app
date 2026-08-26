@@ -6,7 +6,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { CITIES, nearestCity } from '../src/data';
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
-import { radius, space, type ColorTokens } from '../src/theme';
+import { radius, space, type ColorTokens, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../src/ui';
 
@@ -173,7 +173,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     pinActive: { backgroundColor: 'rgba(255,255,255,0.35)' },
-    rowLabel: { flex: 1, fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+    rowLabel: { flex: 1, fontSize: 16, fontFamily: font.semibold, letterSpacing: -0.2 },
     check: {
       width: 30,
       height: 30,

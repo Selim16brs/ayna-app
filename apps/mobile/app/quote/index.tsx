@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLocale } from '../../src/locale';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
 
@@ -154,8 +154,13 @@ const makeStyles = (_colors: ColorTokens) =>
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
-    badgeText: { fontWeight: '800' },
-    cardTitle: { fontSize: 21, fontWeight: '800', letterSpacing: -0.3, marginTop: space(2.25) },
+    badgeText: { fontFamily: font.semibold },
+    cardTitle: {
+      fontSize: 21,
+      fontFamily: font.semibold,
+      letterSpacing: -0.3,
+      marginTop: space(2.25),
+    },
     cardDesc: { marginTop: space(1), lineHeight: 19, maxWidth: '82%' },
     startPill: {
       flexDirection: 'row',
@@ -167,5 +172,5 @@ const makeStyles = (_colors: ColorTokens) =>
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
-    startText: { color: '#FFFFFF', fontWeight: '800' },
+    startText: { color: '#FFFFFF', fontFamily: font.semibold },
   });

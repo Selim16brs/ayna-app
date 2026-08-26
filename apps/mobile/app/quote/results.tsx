@@ -6,7 +6,7 @@ import { type DemandOffer, type OfferSort, formatPrice, sortOffers } from '../..
 import { slotTime, formatSlot } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text, ListSkeleton } from '../../src/ui';
 
@@ -98,14 +98,14 @@ export default function QuoteResultsScreen() {
         </Text>
         {demand.status === 'booked' ? (
           <View style={[styles.statusPill, { backgroundColor: colors.successSoft }]}>
-            <Text variant="caption" style={{ color: colors.success, fontWeight: '700' }}>
+            <Text variant="caption" style={{ color: colors.success, fontFamily: font.semibold }}>
               {t('quotes.booked')}
             </Text>
           </View>
         ) : collecting ? (
           <View style={[styles.statusPill, { backgroundColor: colors.goldSoft }]}>
             <Ionicons name="time-outline" size={12} color={colors.gold} />
-            <Text variant="caption" style={{ color: colors.gold, fontWeight: '700' }}>
+            <Text variant="caption" style={{ color: colors.gold, fontFamily: font.semibold }}>
               {remainMin} {t('quotes.remain')}
             </Text>
           </View>
@@ -356,7 +356,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 3,
       borderRadius: radius.pill,
     },
-    dealText: { fontWeight: '800' },
+    dealText: { fontFamily: font.semibold },
     note: { fontStyle: 'italic', lineHeight: 18 },
     slotLabel: { marginTop: space(0.5) },
     slotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
@@ -367,5 +367,5 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.accent,
     },
     slotChipOff: { backgroundColor: colors.surfaceMuted },
-    slotText: { fontWeight: '700' },
+    slotText: { fontFamily: font.semibold },
   });

@@ -5,7 +5,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { api } from '../../src/api';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   Button,
@@ -270,7 +270,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     layerIconOn: { backgroundColor: colors.accent },
     layerText: { flex: 1, gap: 2 },
-    layerOk: { fontWeight: '800' },
+    layerOk: { fontFamily: font.semibold },
     igHint: { marginBottom: space(1.25), lineHeight: 18 },
     igRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     igInput: {
@@ -290,7 +290,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.lg,
       backgroundColor: colors.accentSoft,
     },
-    igCode: { fontSize: 30, fontWeight: '900', letterSpacing: 2 },
+    igCode: { fontSize: 30, fontFamily: font.semibold, letterSpacing: 2 },
     igVerified: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -10,7 +10,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { RulesCard, Screen, ServiceChips, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
 
@@ -464,7 +464,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     logo: { width: 68, height: 34 },
     locChip: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    locText: { fontWeight: '700' },
+    locText: { fontFamily: font.semibold },
 
     sheet: {
       backgroundColor: colors.bg,
@@ -484,7 +484,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     titleText: { flex: 1 },
-    title: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.6 },
+    title: { fontSize: 30, lineHeight: 34, fontFamily: font.semibold, letterSpacing: -0.6 },
     subtitle: { marginTop: 2 },
 
     label: { marginTop: space(3), marginBottom: space(1.5) },
@@ -496,7 +496,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     durChipActive: { backgroundColor: colors.accent },
-    durText: { fontWeight: '700' },
+    durText: { fontFamily: font.semibold },
 
     catRow: { gap: space(1.5), paddingRight: space(2) },
     cat: { alignItems: 'center', width: 72, gap: space(0.75) },
@@ -563,7 +563,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: 5,
       paddingVertical: space(1),
     },
-    addrAddText: { fontWeight: '700' },
+    addrAddText: { fontFamily: font.semibold },
     flexText: { flex: 1 },
 
     budgetRow: {
@@ -581,7 +581,7 @@ const makeStyles = (colors: ColorTokens) =>
       minWidth: 130,
       textAlign: 'right',
       fontSize: 16,
-      fontWeight: '700',
+      fontFamily: font.semibold,
       color: colors.ink,
     },
     marketHint: { marginTop: space(1), marginLeft: space(1) },
@@ -607,7 +607,7 @@ const makeStyles = (colors: ColorTokens) =>
       minHeight: 72,
       textAlignVertical: 'top',
       fontSize: 15,
-      fontWeight: '400',
+      fontFamily: font.regular,
       color: colors.ink,
     },
 
@@ -643,5 +643,5 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.accent,
     },
     ctaOff: { backgroundColor: colors.surfaceMuted },
-    ctaText: { fontWeight: '800', fontSize: 16 },
+    ctaText: { fontFamily: font.semibold, fontSize: 16 },
   });

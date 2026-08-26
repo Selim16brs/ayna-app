@@ -8,7 +8,7 @@ import { almatyDayStart, slotTime } from '../../src/datetime';
 import { api } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useSalonStaff } from '../../src/staff';
 import {
@@ -458,7 +458,7 @@ const makeStyles = (colors: ColorTokens) =>
     apptMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     apptRight: { alignItems: 'flex-end', gap: 4 },
     badge: { paddingHorizontal: space(1), paddingVertical: 2, borderRadius: radius.pill },
-    badgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+    badgeText: { color: '#FFFFFF', fontSize: 10, fontFamily: font.semibold },
     // Randevu ekle
     noteBox: {
       flexDirection: 'row',

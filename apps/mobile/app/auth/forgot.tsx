@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
@@ -220,7 +220,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(2),
       borderRadius: radius.lg,
       backgroundColor: colors.surfaceMuted,
-      fontWeight: '500',
+      fontFamily: font.medium,
       fontSize: 16,
       color: colors.ink,
     },
@@ -237,7 +237,7 @@ const makeStyles = (colors: ColorTokens) =>
       flex: 1,
       height: '100%',
       paddingHorizontal: space(2),
-      fontWeight: '500',
+      fontFamily: font.medium,
       fontSize: 16,
       color: colors.ink,
     },

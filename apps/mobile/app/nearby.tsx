@@ -6,7 +6,7 @@ import { cityCenter, distanceKm, proCoords } from '../src/data';
 import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
 import { fillParams, useLocale } from '../src/locale';
-import { type ColorTokens, radius, space } from '../src/theme';
+import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text, ListSkeleton } from '../src/ui';
 import { ProRow } from './search';
@@ -120,7 +120,7 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(1.5),
     },
     notifyDone: { backgroundColor: colors.sage },
-    notifyText: { fontWeight: '800' },
+    notifyText: { fontFamily: font.semibold },
     premiumTag: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -131,5 +131,5 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       alignSelf: 'center',
     },
-    premiumText: { fontWeight: '800' },
+    premiumText: { fontFamily: font.semibold },
   });

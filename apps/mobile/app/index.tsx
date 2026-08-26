@@ -5,7 +5,7 @@ import type { Locale } from '@ayna/i18n';
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { Button, Screen, Text } from '../src/ui';
-import { radius, space, type ColorTokens } from '../src/theme';
+import { radius, space, type ColorTokens, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 
 const LANGS: { code: Locale; label: string }[] = [
@@ -113,7 +113,7 @@ const makeStyles = (colors: ColorTokens) =>
     slogan: {
       fontSize: 27,
       lineHeight: 46,
-      fontWeight: '700',
+      fontFamily: font.semibold,
       letterSpacing: -0.3,
       color: colors.ink,
       textAlign: 'center',
@@ -147,5 +147,5 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       backgroundColor: colors.surface,
     },
-    langText: { fontWeight: '700' },
+    langText: { fontFamily: font.semibold },
   });

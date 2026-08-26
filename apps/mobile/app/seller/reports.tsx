@@ -15,7 +15,7 @@ import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
 import { useSalonStaff } from '../../src/staff';
 import { selectCommissionRate, selectUnreadCount, useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   PressableScale,
@@ -663,7 +663,7 @@ const makeStyles = (colors: ColorTokens) =>
     greetLabel: {
       fontSize: 25,
       lineHeight: 29,
-      fontWeight: '500',
+      fontFamily: font.medium,
       letterSpacing: -0.4,
       color: colors.onAccent,
       zIndex: 1,
@@ -693,7 +693,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       maxWidth: '86%',
     },
-    bindingPillText: { fontWeight: '700' },
+    bindingPillText: { fontFamily: font.semibold },
     // §6.1 — profil fotoğrafı GÜVENLİ ALANI (safe zone): sabit çerçeve + resizeMode="contain".
     // Kayıt olan her uzmanın cut-out'u bu çerçeveye sığdırılır → zilden uzak, taşmaz, standart.
     // Daha büyük foto alanı (kullanıcı Keşfet ile tutarlı; kurucu isteği).
@@ -732,7 +732,7 @@ const makeStyles = (colors: ColorTokens) =>
       color: colors.onColor,
       fontSize: 10,
       lineHeight: 12,
-      fontWeight: '800',
+      fontFamily: font.semibold,
       textAlign: 'center',
       includeFontPadding: false,
     },
@@ -757,7 +757,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 3,
       borderRadius: radius.pill,
     },
-    restrictDaysText: { color: colors.danger, fontWeight: '800' },
+    restrictDaysText: { color: colors.danger, fontFamily: font.semibold },
     restrictBody: { lineHeight: 18 },
     restrictCta: {
       flexDirection: 'row',
@@ -831,7 +831,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    primaryBadgeText: { color: colors.onColor, fontSize: 12, fontWeight: '800' },
+    primaryBadgeText: { color: colors.onColor, fontSize: 12, fontFamily: font.semibold },
     primaryTitle: { fontSize: 16 },
 
     // Tedarikçi reklamları
@@ -871,7 +871,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     adSponsorText: { color: 'rgba(255,255,255,0.9)', fontSize: 9, letterSpacing: 0.3 },
     adInfo: { padding: space(2), gap: 2 },
-    adBrand: { color: 'rgba(255,255,255,0.85)', fontWeight: '700', letterSpacing: 0.2 },
+    adBrand: { color: 'rgba(255,255,255,0.85)', fontFamily: font.semibold, letterSpacing: 0.2 },
     adTitle: { color: colors.onColor, fontSize: 16, lineHeight: 20 },
     adSub: { color: 'rgba(255,255,255,0.85)', lineHeight: 16 },
     adCta: {
@@ -885,7 +885,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
-    adCtaText: { color: colors.ink, fontWeight: '800' },
+    adCtaText: { color: colors.ink, fontFamily: font.semibold },
     perfTitle: { marginTop: space(3), marginBottom: space(1.5) },
     // §5 canlı özet
     liveHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },

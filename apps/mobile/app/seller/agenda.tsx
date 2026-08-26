@@ -8,7 +8,7 @@ import { type Appointment, type BookingStatus, formatPrice } from '../../src/dat
 import { almatyDayStart, almatyParts, daysUntil, formatSlot, slotTime } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useSalonStaff } from '../../src/staff';
 import { PressableScale, Screen, Segmented, StackHeader, Text } from '../../src/ui';
@@ -674,7 +674,7 @@ function StatusPill({ status }: { status: BookingStatus }) {
           : { bg: colors.goldSoft, fg: colors.gold };
   return (
     <View style={[styles.pill, { backgroundColor: tone.bg }]}>
-      <Text variant="caption" style={{ color: tone.fg, fontWeight: '600' }}>
+      <Text variant="caption" style={{ color: tone.fg, fontFamily: font.semibold }}>
         {t(STATUS_LABEL[status])}
       </Text>
     </View>
@@ -696,7 +696,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     srcOffline: { backgroundColor: colors.surfaceMuted },
     srcAyna: { backgroundColor: colors.accentSoft },
-    srcText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.2 },
+    srcText: { fontSize: 9, fontFamily: font.semibold, letterSpacing: 0.2 },
     // §9.4 bekleyen talepler şeridi
     pendingWrap: {
       backgroundColor: colors.accentSoft,
@@ -715,7 +715,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    pendingBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
+    pendingBadgeText: { color: '#FFFFFF', fontSize: 11, fontFamily: font.semibold },
     pendingCard: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -769,7 +769,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     closeToggleOn: { backgroundColor: colors.accentFg },
-    closeToggleText: { fontWeight: '700' },
+    closeToggleText: { fontFamily: font.semibold },
     closedTag: { flexDirection: 'row', alignItems: 'center', gap: space(0.5) },
     closedBanner: {
       alignItems: 'center',
@@ -860,7 +860,7 @@ const makeStyles = (colors: ColorTokens) =>
     apptBody: { flex: 1, gap: 3, paddingVertical: space(1.5) },
     apptMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     apptRight: { alignItems: 'flex-end', gap: 5, paddingVertical: space(1.5) },
-    apptPrice: { fontWeight: '700' },
+    apptPrice: { fontFamily: font.semibold },
     // Boş gün — dostane durum
     dayEmpty: {
       alignItems: 'center',
@@ -917,7 +917,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 2,
       borderRadius: radius.pill,
     },
-    kindText: { color: colors.lavender, fontWeight: '700', fontSize: 10 },
+    kindText: { color: colors.lavender, fontFamily: font.semibold, fontSize: 10 },
     rowRight: { alignItems: 'flex-end', gap: 4 },
     pill: {
       paddingHorizontal: space(1),

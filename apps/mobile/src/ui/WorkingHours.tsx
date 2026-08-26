@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocale } from '../locale';
-import { radius, space, type ColorTokens } from '../theme';
+import { radius, space, type ColorTokens, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -154,7 +154,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     toggleOn: { backgroundColor: colors.accent },
     toggleOff: { backgroundColor: colors.surfaceMuted },
-    toggleText: { fontWeight: '700' },
+    toggleText: { fontFamily: font.semibold },
     times: { flexDirection: 'row', alignItems: 'center', gap: space(1), flex: 1 },
     timeChip: {
       paddingHorizontal: space(1.5),
@@ -162,7 +162,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.md,
       backgroundColor: colors.surfaceMuted,
     },
-    timeText: { fontWeight: '700' },
+    timeText: { fontFamily: font.semibold },
     copy: { marginLeft: 'auto' },
     closedFill: { flex: 1 },
     backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
@@ -175,7 +175,7 @@ const makeStyles = (colors: ColorTokens) =>
       maxHeight: '70%',
     },
     sheetHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    sheetTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
+    sheetTitle: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.3 },
     close: {
       width: 40,
       height: 40,

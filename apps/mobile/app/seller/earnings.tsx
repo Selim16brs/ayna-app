@@ -5,7 +5,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
@@ -163,7 +163,7 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(0.5),
     },
     heroLabel: { opacity: 0.85 },
-    heroValue: { fontSize: 32, fontWeight: '800', letterSpacing: -0.5 },
+    heroValue: { fontSize: 32, fontFamily: font.semibold, letterSpacing: -0.5 },
     heroSub: { opacity: 0.85 },
     row2: { flexDirection: 'row', gap: space(1.25) },
     stat: {

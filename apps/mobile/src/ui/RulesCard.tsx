@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
 import { useLocale } from '../locale';
 import { useStore } from '../store';
-import { type ColorTokens, radius, space } from '../theme';
+import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -50,7 +50,7 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(2),
     },
     head: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    title: { fontWeight: '800' },
+    title: { fontFamily: font.semibold },
     row: { flexDirection: 'row', alignItems: 'flex-start', gap: space(1) },
     dot: {
       width: 5,

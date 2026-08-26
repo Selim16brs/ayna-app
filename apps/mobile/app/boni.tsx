@@ -15,7 +15,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ApiError, api, type AiQuota } from '../src/api';
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
-import { type ColorTokens, radius, space } from '../src/theme';
+import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../src/ui';
 
@@ -296,7 +296,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 5,
       borderRadius: radius.pill,
     },
-    quotaText: { fontWeight: '600' },
+    quotaText: { fontFamily: font.semibold },
 
     typingBubble: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space(1), maxWidth: '100%' },

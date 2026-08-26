@@ -16,7 +16,7 @@ import { almatyDayStart, formatSlot } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, SlotPicker, StackHeader, Text, type PickerDay } from '../../src/ui';
 
@@ -1032,7 +1032,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       marginBottom: space(1),
     },
-    trustRowText: { color: colors.success, fontWeight: '700' },
+    trustRowText: { color: colors.success, fontFamily: font.semibold },
     proposedCard: {
       marginTop: space(2),
       backgroundColor: colors.blueSoft,
@@ -1097,7 +1097,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1.5),
     },
     modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    modalTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
+    modalTitle: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.3 },
     modalClose: {
       width: 40,
       height: 40,

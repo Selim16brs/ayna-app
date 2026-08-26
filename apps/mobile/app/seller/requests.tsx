@@ -20,7 +20,7 @@ import { CATEGORIES, type DemandRequest, formatPrice } from '../../src/data';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { sellerTrialInfo, useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
@@ -499,7 +499,7 @@ function RequestCard({
           <Ionicons name="alarm-outline" size={12} color={urgent ? colors.onColor : colors.gold} />
           <Text
             variant="caption"
-            style={{ color: urgent ? colors.onColor : colors.gold, fontWeight: '700' }}
+            style={{ color: urgent ? colors.onColor : colors.gold, fontFamily: font.semibold }}
           >
             {t('seller.requests.last')} {remainMin} {t('quotes.remain')}
           </Text>
@@ -629,7 +629,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
-    premiumCtaText: { fontWeight: '800' },
+    premiumCtaText: { fontFamily: font.semibold },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     card: {
       backgroundColor: colors.surface,
@@ -675,7 +675,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     trustChip: { backgroundColor: colors.successSoft },
-    trustText: { color: colors.success, fontWeight: '700' },
+    trustText: { color: colors.success, fontFamily: font.semibold },
     backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
     sheetScroll: { paddingBottom: space(1) },
     sheet: {
@@ -694,7 +694,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'space-between',
       marginBottom: space(1),
     },
-    sheetTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
+    sheetTitle: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.3 },
     close: {
       width: 40,
       height: 40,
@@ -742,5 +742,5 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surface,
     },
     slotChipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-    slotChipText: { fontWeight: '600' },
+    slotChipText: { fontFamily: font.semibold },
   });

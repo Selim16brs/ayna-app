@@ -16,7 +16,7 @@ import {
 import { formatSlot } from '../../src/datetime';
 import { useStore } from '../../src/store';
 import { fillParams, useLocale } from '../../src/locale';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { PressableScale, ProgressRing, Screen, TabHero, Text } from '../../src/ui';
 
@@ -554,10 +554,10 @@ const makeStyles = (colors: ColorTokens) =>
     scoreCard: { backgroundColor: colors.surface, borderRadius: radius.xl, padding: space(2.25) },
     scoreTop: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
     scoreCenter: { alignItems: 'center' },
-    scoreNum: { fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
+    scoreNum: { fontSize: 22, fontFamily: font.semibold, letterSpacing: -0.5 },
     scoreRingLabel: { fontSize: 9, marginTop: 1 },
     scoreText: { flex: 1, gap: 3 },
-    scoreStatus: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4, lineHeight: 26 },
+    scoreStatus: { fontSize: 22, fontFamily: font.semibold, letterSpacing: -0.4, lineHeight: 26 },
     scoreSub: { lineHeight: 17 },
     scoreCta: {
       flexDirection: 'row',
@@ -599,7 +599,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 5,
       borderRadius: radius.pill,
     },
-    featureBadgeText: { fontWeight: '600' },
+    featureBadgeText: { fontFamily: font.semibold },
     featureBody: { padding: space(2.25), gap: 3 },
     featureMeta: { opacity: 0.92 },
     featureCta: {
@@ -613,7 +613,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
-    featureCtaText: { fontWeight: '700' },
+    featureCtaText: { fontFamily: font.semibold },
 
     // Boş randevu durumu
     emptyFeature: {
@@ -755,7 +755,7 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(1),
       marginLeft: space(7),
     },
-    offerText: { fontWeight: '700' },
+    offerText: { fontFamily: font.semibold },
     iconChip: {
       width: 42,
       height: 42,

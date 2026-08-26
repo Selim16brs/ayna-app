@@ -13,7 +13,7 @@ import { servicesOf, tri } from '../../src/taxonomy';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   Button,
@@ -425,14 +425,14 @@ const makeStyles = (colors: ColorTokens) =>
     cardGap: { marginTop: space(2) },
     field: {},
     fieldGap: { marginBottom: space(2) },
-    fieldLabel: { marginBottom: space(1), fontWeight: '700' },
+    fieldLabel: { marginBottom: space(1), fontFamily: font.semibold },
     input: {
       backgroundColor: colors.surfaceMuted,
       borderRadius: radius.md,
       paddingHorizontal: space(1.75),
       height: 52,
       fontSize: 16,
-      fontWeight: '500',
+      fontFamily: font.medium,
       color: colors.ink,
     },
     textarea: {
@@ -442,7 +442,7 @@ const makeStyles = (colors: ColorTokens) =>
       minHeight: 110,
       textAlignVertical: 'top',
       fontSize: 15,
-      fontWeight: '400',
+      fontFamily: font.regular,
       color: colors.ink,
     },
     // iOS kompakt tarih seçici sola hizalı dursun (varsayılan sağa yaslı gelir)
@@ -467,7 +467,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     chipActive: { backgroundColor: colors.accent },
-    chipTextActive: { fontWeight: '700' },
+    chipTextActive: { fontFamily: font.semibold },
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),

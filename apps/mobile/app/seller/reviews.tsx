@@ -4,7 +4,7 @@ import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { api, type SellerReview, type SellerReviews } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
@@ -234,7 +234,7 @@ const makeStyles = (colors: ColorTokens) =>
       color: colors.ink,
       textAlignVertical: 'top',
     },
-    replyLink: { marginTop: space(1), fontWeight: '600' },
+    replyLink: { marginTop: space(1), fontFamily: font.semibold },
     actionRow: { flexDirection: 'row', alignItems: 'center', gap: space(2.5) },
     disputedTag: { marginTop: space(1), fontStyle: 'italic' },
   });

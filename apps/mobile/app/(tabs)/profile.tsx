@@ -6,7 +6,7 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fillParams, useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useStore } from '../../src/store';
 import { Screen, Segmented, Text } from '../../src/ui';
@@ -383,7 +383,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 4,
       borderRadius: radius.pill,
     },
-    badgeText: { color: colors.ink, fontWeight: '600' },
+    badgeText: { color: colors.ink, fontFamily: font.semibold },
 
     // Üste binen beyaz sheet
     sheet: {

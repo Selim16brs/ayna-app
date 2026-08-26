@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { type ColorTokens, radius, space } from '../theme';
+import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -99,7 +99,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     label: { fontSize: 16 },
     inner: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
-    goldLabel: { color: colors.onAccent, fontWeight: '700' },
+    goldLabel: { color: colors.onAccent, fontFamily: font.semibold },
     secondary: {
       backgroundColor: colors.surface,
       borderWidth: 1,

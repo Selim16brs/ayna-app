@@ -9,7 +9,7 @@ import { tri } from '../../src/taxonomy';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { DateField, TAB_BAR_CLEARANCE, Text, WaveLayered } from '../../src/ui';
 
@@ -233,8 +233,8 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       marginBottom: space(1),
     },
-    badgePillText: { fontWeight: '700' },
-    heroName: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.4 },
+    badgePillText: { fontFamily: font.semibold },
+    heroName: { fontSize: 30, lineHeight: 34, fontFamily: font.semibold, letterSpacing: -0.4 },
     heroStats: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -251,7 +251,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 5,
       borderRadius: radius.pill,
     },
-    ratingPillText: { fontWeight: '800' },
+    ratingPillText: { fontFamily: font.semibold },
     salonPill: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -262,7 +262,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       maxWidth: 190,
     },
-    salonPillText: { flexShrink: 1, fontWeight: '600' },
+    salonPillText: { flexShrink: 1, fontFamily: font.semibold },
     heroPortrait: {
       width: 128,
       height: 168,
@@ -311,7 +311,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     dayChipOn: { backgroundColor: colors.accent },
-    dayNum: { fontSize: 18, fontWeight: '800', marginTop: 2 },
+    dayNum: { fontSize: 18, fontFamily: font.semibold, marginTop: 2 },
     timeWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     timeChip: {
       paddingHorizontal: space(2),
@@ -320,7 +320,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     timeChipOn: { backgroundColor: colors.accent },
-    timeText: { fontWeight: '700' },
+    timeText: { fontFamily: font.semibold },
     cta: {
       position: 'absolute',
       left: 0,
@@ -339,5 +339,5 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       backgroundColor: colors.accent,
     },
-    ctaText: { fontWeight: '800', fontSize: 16 },
+    ctaText: { fontFamily: font.semibold, fontSize: 16 },
   });

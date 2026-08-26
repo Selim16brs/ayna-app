@@ -24,7 +24,7 @@ import { CITIES } from '../../src/data';
 import { getDeviceFingerprint } from '../../src/device';
 import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
 import { useLocale } from '../../src/locale';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   Button,
@@ -929,7 +929,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(2),
       borderRadius: radius.lg,
       backgroundColor: colors.surfaceMuted,
-      fontWeight: '500',
+      fontFamily: font.medium,
       fontSize: 16,
       color: colors.ink,
     },
@@ -945,7 +945,7 @@ const makeStyles = (colors: ColorTokens) =>
       flex: 1,
       height: '100%',
       paddingHorizontal: space(2),
-      fontWeight: '500',
+      fontFamily: font.medium,
       fontSize: 16,
       color: colors.ink,
     },
@@ -1002,7 +1002,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.md,
       marginBottom: space(1.5),
     },
-    autoText: { flex: 1, fontWeight: '600', lineHeight: 17 },
+    autoText: { flex: 1, fontFamily: font.semibold, lineHeight: 17 },
     photoBox: {
       height: 160,
       borderRadius: radius.lg,
@@ -1026,7 +1026,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 5,
       borderRadius: radius.pill,
     },
-    faceText: { fontWeight: '700' },
+    faceText: { fontFamily: font.semibold },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     chip: {
       paddingHorizontal: space(1.75),
@@ -1054,7 +1054,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     checkOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-    svcName: { flex: 1, fontWeight: '700', fontSize: 15, color: colors.ink, padding: 0 },
+    svcName: { flex: 1, fontFamily: font.semibold, fontSize: 15, color: colors.ink, padding: 0 },
     svcRow: { flexDirection: 'row', gap: space(1) },
     svcField: {
       flex: 1,
@@ -1062,7 +1062,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.md,
       paddingHorizontal: space(1.5),
     },
-    svcInput: { height: 46, fontSize: 15, fontWeight: '600', color: colors.ink },
+    svcInput: { height: 46, fontSize: 15, fontFamily: font.semibold, color: colors.ink },
     addBtn: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -1074,7 +1074,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
-    addText: { fontWeight: '800' },
+    addText: { fontFamily: font.semibold },
     warnRow: { flexDirection: 'row', gap: space(1), marginTop: space(1.25) },
     warnText: { flex: 1, lineHeight: 17 },
     certRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
@@ -1114,7 +1114,7 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(2),
     },
     selectedText: { flex: 1 },
-    change: { fontWeight: '800', textDecorationLine: 'underline' },
+    change: { fontFamily: font.semibold, textDecorationLine: 'underline' },
     salonSearch: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -1147,7 +1147,7 @@ const makeStyles = (colors: ColorTokens) =>
     stepBarWrap: { gap: space(0.75), marginBottom: space(1.5) },
     stepBar: { flexDirection: 'row', gap: space(0.5) },
     stepSeg: { flex: 1, height: 5, borderRadius: radius.pill },
-    stepLabel: { fontWeight: '600' },
+    stepLabel: { fontFamily: font.semibold },
     navRow: { flexDirection: 'row', alignItems: 'center' },
     navSpacer: { width: space(1.5) },
     entityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.25), marginTop: space(1) },

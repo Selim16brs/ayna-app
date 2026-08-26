@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { CATEGORIES, type CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   Button,
@@ -130,7 +130,7 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(3),
       marginBottom: space(1.5),
       fontSize: 20,
-      fontWeight: '800',
+      fontFamily: font.semibold,
       letterSpacing: -0.4,
     },
     categories: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
@@ -144,14 +144,14 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     categoryActive: { backgroundColor: colors.accent },
-    chipTextActive: { fontWeight: '700' },
+    chipTextActive: { fontFamily: font.semibold },
     textarea: {
       backgroundColor: colors.surfaceMuted,
       borderRadius: radius.lg,
       padding: space(2),
       minHeight: 140,
       textAlignVertical: 'top',
-      fontWeight: '400',
+      fontFamily: font.regular,
       fontSize: 15,
       color: colors.ink,
     },

@@ -6,7 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../locale';
 import { type Professional } from '../data';
-import { type ColorTokens, radius, space } from '../theme';
+import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -117,7 +117,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       backgroundColor: 'rgba(0,0,0,0.32)',
     },
-    badgeText: { fontSize: 11, fontWeight: '600' },
+    badgeText: { fontSize: 11, fontFamily: font.semibold },
     heart: {
       width: 32,
       height: 32,
@@ -127,7 +127,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     info: { padding: space(1.75) },
-    name: { fontSize: 19, fontWeight: '800', letterSpacing: -0.3 },
+    name: { fontSize: 19, fontFamily: font.semibold, letterSpacing: -0.3 },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 3 },
     meta: { color: 'rgba(255,255,255,0.85)', flex: 1 },
     bottomRow: {
@@ -145,9 +145,9 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 5,
       borderRadius: radius.pill,
     },
-    ratingText: { fontSize: 12, fontWeight: '700' },
+    ratingText: { fontSize: 12, fontFamily: font.semibold },
     reviewCount: { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
     priceTag: { alignItems: 'flex-end' },
     priceFrom: { fontSize: 10, color: 'rgba(255,255,255,0.7)' },
-    price: { fontSize: 15, fontWeight: '800' },
+    price: { fontSize: 15, fontFamily: font.semibold },
   });

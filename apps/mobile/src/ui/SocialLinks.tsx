@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { useLocale } from '../locale';
-import { radius, space, type ColorTokens } from '../theme';
+import { radius, space, type ColorTokens, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 
 export type SocialValue = {
@@ -76,7 +76,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(2),
       borderRadius: radius.lg,
       backgroundColor: colors.surfaceMuted,
-      fontWeight: '500',
+      fontFamily: font.medium,
       fontSize: 16,
       color: colors.ink,
     },

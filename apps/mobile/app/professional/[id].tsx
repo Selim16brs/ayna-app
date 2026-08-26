@@ -11,7 +11,7 @@ import { ApiError, api } from '../../src/api';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { TAB_BAR_CLEARANCE, Text, VerificationBadges, WaveLayered } from '../../src/ui';
 
@@ -841,13 +841,13 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       marginBottom: space(1),
     },
-    badgePillText: { fontWeight: '700' },
+    badgePillText: { fontFamily: font.semibold },
     heroNameRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     heroName: {
       flexShrink: 1,
       fontSize: 30,
       lineHeight: 34,
-      fontWeight: '800',
+      fontFamily: font.semibold,
       letterSpacing: -0.6,
     },
     verifiedIcon: { marginTop: space(0.5) },
@@ -903,7 +903,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     tab: { flex: 1, alignItems: 'center', paddingVertical: space(1.5) },
     tabText: { fontSize: 15 },
-    tabOn: { color: '#6F8C1B' },
+    tabOn: { color: '#5A2A55' },
     tabOff: { color: colors.muted },
     tabBar: {
       position: 'absolute',
@@ -911,7 +911,7 @@ const makeStyles = (colors: ColorTokens) =>
       height: 2.5,
       width: '60%',
       borderRadius: 2,
-      backgroundColor: '#6F8C1B',
+      backgroundColor: '#5A2A55',
     },
     about: { marginTop: space(2.5), lineHeight: 22 },
     section: { marginTop: space(3), marginBottom: space(1.5) },
@@ -926,7 +926,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1),
       paddingVertical: 2,
     },
-    promoPctText: { fontWeight: '800' },
+    promoPctText: { fontFamily: font.semibold },
     staffRow: { gap: space(2), paddingRight: space(3) },
     staffCard: { alignItems: 'center', width: 68 },
     staffAvatarWrap: {
@@ -993,7 +993,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 2,
       borderRadius: radius.pill,
     },
-    topText: { color: colors.gold, fontWeight: '700', fontSize: 10 },
+    topText: { color: colors.gold, fontFamily: font.semibold, fontSize: 10 },
     priceCol: { alignItems: 'flex-end' },
     strike: { textDecorationLine: 'line-through' },
     check: {
@@ -1085,7 +1085,7 @@ const makeStyles = (colors: ColorTokens) =>
       overflow: 'hidden',
     },
     bdFill: { height: 8, borderRadius: 4, backgroundColor: colors.accent },
-    bdScore: { width: 26, textAlign: 'right', fontWeight: '700' },
+    bdScore: { width: 26, textAlign: 'right', fontFamily: font.semibold },
     reviews: { gap: space(1.5), marginTop: space(1) },
     review: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
     reviewTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -1111,7 +1111,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(0.75),
     },
     replyHead: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-    replyLabel: { fontWeight: '600' },
+    replyLabel: { fontFamily: font.semibold },
     cta: {
       position: 'absolute',
       left: 0,

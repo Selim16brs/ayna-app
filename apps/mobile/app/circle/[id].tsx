@@ -14,7 +14,7 @@ import { type CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, SectionHeader, StackHeader, Text, TextInput } from '../../src/ui';
 
@@ -258,7 +258,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.accent,
     },
     followBtnOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-    followText: { fontWeight: '700' },
+    followText: { fontFamily: font.semibold },
     avatar: {
       width: 44,
       height: 44,
@@ -267,9 +267,9 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    authorName: { fontWeight: '800', letterSpacing: -0.2 },
+    authorName: { fontFamily: font.semibold, letterSpacing: -0.2 },
     typeBadge: { paddingHorizontal: space(1.5), paddingVertical: 6, borderRadius: radius.pill },
-    typeText: { fontSize: 12, fontWeight: '700' },
+    typeText: { fontSize: 12, fontFamily: font.semibold },
     postText: { marginTop: space(2), lineHeight: 23, fontSize: 16 },
     helpfulRow: { flexDirection: 'row', alignItems: 'center', marginTop: space(2.25) },
     reportBtn: { flexDirection: 'row', alignItems: 'center', gap: space(0.5), marginLeft: 'auto' },
@@ -283,7 +283,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     helpfulBtnOn: { backgroundColor: colors.accent },
-    helpfulText: { fontWeight: '700' },
+    helpfulText: { fontFamily: font.semibold },
     noComments: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
@@ -316,7 +316,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     commentBody: { flex: 1 },
-    commentAuthor: { fontWeight: '700' },
+    commentAuthor: { fontFamily: font.semibold },
     commentText: { marginTop: 3, lineHeight: 22 },
     composer: {
       flexDirection: 'row',
