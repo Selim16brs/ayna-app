@@ -108,6 +108,28 @@ export default function PrivacyScreen() {
           ))}
         </View>
 
+        {/* KONUM — kanvas (design/Gizlilik.dc.html §konum) bölümü ekranda yoktu.
+            Üç madde de kodda doğrulandı, doğrulayamadığımı yazmıyorum:
+            1) booking/[id].tsx: showContact = status === 'confirmed' — adres
+               ancak randevu ONAYLANDIKTAN sonra açılıyor.
+            2) Aramada müşterinin GPS'i hiç kullanılmıyor: mesafe cihazda,
+               ŞEHİR MERKEZİNDEN hesaplanıyor (search.tsx cityCenter).
+               Kanvas "semt gösteriyoruz" diyor; gerçek durum daha korumalı,
+               o yüzden gerçeği yazıyorum.
+            3) packages/analytics: lat/lng/coordinates/location YASAKLI alan —
+               varsa capture FIRLATIR, sessizce göndermez. */}
+        <SectionHeader title={t('privacy.loc.title')} />
+        <View style={[styles.group, styles.list, shadow.soft]}>
+          {(['privacy.loc.1', 'privacy.loc.2', 'privacy.loc.3'] as const).map((k) => (
+            <View key={k} style={styles.listRow}>
+              <Ionicons name="checkmark-circle" size={17} color={colors.success} />
+              <Text variant="caption" tone="inkSoft" style={styles.listText}>
+                {t(k)}
+              </Text>
+            </View>
+          ))}
+        </View>
+
         {/* ANONİM YORUM — vaat değil MEKANİZMA. Buradaki üç madde kodda doğrulandı:
             yorumda kullanıcı kimliği tutulmuyor, uzman tarihi görmüyor, silme uç
             noktası yok (yalnız tek yanıt hakkı). Doğrulayamadığımı yazmıyorum. */}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -9,7 +9,14 @@ import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, Screen, TabHero, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
+import {
+  ConsensusCard,
+  PressableScale,
+  Screen,
+  TabHero,
+  Text,
+  TAB_BAR_CLEARANCE,
+} from '../../src/ui';
 
 const makeType = (
   colors: ColorTokens,
@@ -61,12 +68,35 @@ export default function CircleScreen() {
   const role = useStore((s) => s.currentUser?.role);
   const canPost = role !== 'professional' && role !== 'salon';
   const [cat, setCat] = useState<string>('all');
+  // Kanvas (design/W2W.dc.html §sekmeler): Akış · Sorularım.
+  //
+  // Kanvasta üçüncü bir sekme daha var ("Kaydedilenler · 12") ama kaydetme
+  // özelliğinin SUNUCU TARAFI YOK. Sayıyla birlikte göstermek çalışmayan bir
+  // özelliği varmış gibi sunmak olurdu; o sekme, ucu yazılana kadar yok.
+  const [sekme, setSekme] = useState<'feed' | 'mine'>('feed');
+  const myId = useStore((s) => s.currentUser?.id);
 
   // §5.5 — sabit kategori şeridi (W2W_FILTERS); seçili filtrenin match'iyle süz + faydalı üstte
+  const benimMi = useCallback(
+    (p: CirclePost) => (myId ? p.authorUserId === myId : p.author === 'Sen'),
+    [myId],
+  );
+
   const visible = useMemo(() => {
     const f = W2W_FILTERS.find((x) => x.id === cat) ?? W2W_FILTERS[0]!;
-    return posts.filter(f.match).sort((a, b) => b.helpful - a.helpful);
-  }, [posts, cat]);
+    const taban = sekme === 'mine' ? posts.filter(benimMi) : posts;
+    return taban.filter(f.match).sort((a, b) => b.helpful - a.helpful);
+  }, [posts, cat, sekme, benimMi]);
+
+  // Kanvas §açık soru: "Sorun cevap topladı" — kendi sorularından cevap almış
+  // olanlar, altında FİKİR BİRLİĞİ ile. Sunucu kuralı zaten gerçek: bir uzmanı
+  // ancak o uzmanda TAMAMLANMIŞ randevusu olan kadın sayabiliyor
+  // (circle.service hasCompletedWith + proVerified).
+  const cevapAlanSorularim = useMemo(
+    () =>
+      posts.filter((p) => benimMi(p) && p.type === 'asking' && p.comments.length > 0).slice(0, 2),
+    [posts, benimMi],
+  );
 
   return (
     <Screen edges={[]}>
@@ -92,6 +122,45 @@ export default function CircleScreen() {
       />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Kanvas §sekmeler — Akış · Sorularım */}
+        <View style={styles.sekmeler}>
+          {(['feed', 'mine'] as const).map((k) => (
+            <Pressable
+              key={k}
+              style={[styles.sekme, sekme === k && styles.sekmeOn]}
+              onPress={() => setSekme(k)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: sekme === k }}
+            >
+              <Text variant="caption" tone={sekme === k ? 'onAccent' : 'inkSoft'}>
+                {t(k === 'feed' ? 'circle.tab.feed' : 'circle.tab.mine')}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* Kanvas §açık soru + fikir birliği — kendi sorun cevap topladıysa */}
+        {cevapAlanSorularim.length ? (
+          <>
+            <Text variant="label" tone="muted" style={styles.sectionTitle}>
+              {t('circle.my_answered')}
+            </Text>
+            {cevapAlanSorularim.map((p) => (
+              <PressableScale key={p.id} onPress={() => router.push(`/circle/${p.id}`)}>
+                <View style={styles.answered}>
+                  <Text variant="bodyStrong" tone="ink" numberOfLines={2}>
+                    {p.text}
+                  </Text>
+                  <Text variant="caption" tone="muted">
+                    {p.comments.length} {t('circle.comments')}
+                  </Text>
+                  <ConsensusCard postId={p.id} />
+                </View>
+              </PressableScale>
+            ))}
+          </>
+        ) : null}
+
         {/* §12.6 — admin'in belirlediği haftalık W2W teması */}
         {weeklyTheme ? (
           <View style={styles.themeBanner}>
@@ -141,6 +210,32 @@ export default function CircleScreen() {
               </ImageBackground>
             </PressableScale>
           ))}
+          {/* Kanvas §gizlilik şeridi — "buraya hiçbir şey kendiliğinden düşmez".
+            Buradaki üç madde de KOD DOĞRULANDI, süs değil:
+            1) circlePost.create tüm sunucuda TEK yerde ve yalnız kullanıcının
+               kendi eylemiyle çağrılıyor — randevu/yorum akışa düşmüyor.
+            2) Anonimde authorLabel 'AYNA Üyesi' ve authorUserId null; uzman
+               kimliği çözemiyor (circle.service §5.5).
+            3) Fikir birliğinde yalnız o uzmanda TAMAMLANMIŞ randevusu olan
+               sayılıyor (hasCompletedWith + proVerified).
+            Doğrulayamadığım maddeyi yazmıyorum: kanvasta "uzmanlar kimin
+            kendilerini KAYDETTİĞİNİ göremez" var ama kaydetme özelliği yok. */}
+          <View style={styles.gizlilik}>
+            <View style={styles.gizlilikHead}>
+              <Ionicons name="lock-closed" size={15} color={colors.inkSoft} />
+              <Text variant="bodyStrong" tone="ink" style={styles.flex}>
+                {t('circle.privacy.title')}
+              </Text>
+            </View>
+            {(['circle.privacy.a', 'circle.privacy.b', 'circle.privacy.c'] as const).map((k) => (
+              <View key={k} style={styles.gizlilikRow}>
+                <Ionicons name="checkmark" size={14} color={colors.success} />
+                <Text variant="caption" tone="muted" style={styles.flex}>
+                  {t(k)}
+                </Text>
+              </View>
+            ))}
+          </View>
         </ScrollView>
 
         {/* Tavsiyeler başlığı + değerlendirme sıralaması */}
@@ -177,11 +272,63 @@ export default function CircleScreen() {
               </Pressable>
             );
           })}
+          {/* Kanvas §gizlilik şeridi — "buraya hiçbir şey kendiliğinden düşmez".
+            Buradaki üç madde de KOD DOĞRULANDI, süs değil:
+            1) circlePost.create tüm sunucuda TEK yerde ve yalnız kullanıcının
+               kendi eylemiyle çağrılıyor — randevu/yorum akışa düşmüyor.
+            2) Anonimde authorLabel 'AYNA Üyesi' ve authorUserId null; uzman
+               kimliği çözemiyor (circle.service §5.5).
+            3) Fikir birliğinde yalnız o uzmanda TAMAMLANMIŞ randevusu olan
+               sayılıyor (hasCompletedWith + proVerified).
+            Doğrulayamadığım maddeyi yazmıyorum: kanvasta "uzmanlar kimin
+            kendilerini KAYDETTİĞİNİ göremez" var ama kaydetme özelliği yok. */}
+          <View style={styles.gizlilik}>
+            <View style={styles.gizlilikHead}>
+              <Ionicons name="lock-closed" size={15} color={colors.inkSoft} />
+              <Text variant="bodyStrong" tone="ink" style={styles.flex}>
+                {t('circle.privacy.title')}
+              </Text>
+            </View>
+            {(['circle.privacy.a', 'circle.privacy.b', 'circle.privacy.c'] as const).map((k) => (
+              <View key={k} style={styles.gizlilikRow}>
+                <Ionicons name="checkmark" size={14} color={colors.success} />
+                <Text variant="caption" tone="muted" style={styles.flex}>
+                  {t(k)}
+                </Text>
+              </View>
+            ))}
+          </View>
         </ScrollView>
 
         <View style={styles.list}>
           {visible.map((p) => (
             <PostCard key={p.id} post={p} />
+          ))}
+        </View>
+        {/* Kanvas §gizlilik şeridi — "buraya hiçbir şey kendiliğinden düşmez".
+            Buradaki üç madde de KOD DOĞRULANDI, süs değil:
+            1) circlePost.create tüm sunucuda TEK yerde ve yalnız kullanıcının
+               kendi eylemiyle çağrılıyor — randevu/yorum akışa düşmüyor.
+            2) Anonimde authorLabel 'AYNA Üyesi' ve authorUserId null; uzman
+               kimliği çözemiyor (circle.service §5.5).
+            3) Fikir birliğinde yalnız o uzmanda TAMAMLANMIŞ randevusu olan
+               sayılıyor (hasCompletedWith + proVerified).
+            Doğrulayamadığım maddeyi yazmıyorum: kanvasta "uzmanlar kimin
+            kendilerini KAYDETTİĞİNİ göremez" var ama kaydetme özelliği yok. */}
+        <View style={styles.gizlilik}>
+          <View style={styles.gizlilikHead}>
+            <Ionicons name="lock-closed" size={15} color={colors.inkSoft} />
+            <Text variant="bodyStrong" tone="ink" style={styles.flex}>
+              {t('circle.privacy.title')}
+            </Text>
+          </View>
+          {(['circle.privacy.a', 'circle.privacy.b', 'circle.privacy.c'] as const).map((k) => (
+            <View key={k} style={styles.gizlilikRow}>
+              <Ionicons name="checkmark" size={14} color={colors.success} />
+              <Text variant="caption" tone="muted" style={styles.flex}>
+                {t(k)}
+              </Text>
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -316,6 +463,32 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     scroll: { paddingTop: space(3), paddingBottom: TAB_BAR_CLEARANCE },
+    sekmeler: { flexDirection: 'row', gap: space(1), marginBottom: space(1) },
+    sekme: {
+      paddingHorizontal: space(1.75),
+      height: 38,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surfaceMuted,
+    },
+    sekmeOn: { backgroundColor: colors.accent },
+    answered: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1),
+      marginBottom: space(1.5),
+    },
+    gizlilik: {
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1),
+      marginTop: space(2),
+    },
+    gizlilikHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    gizlilikRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space(1) },
     sectionTitle: { paddingHorizontal: space(3), marginBottom: space(1.5) },
     // §12.6 haftalık tema banner'ı
     themeBanner: {

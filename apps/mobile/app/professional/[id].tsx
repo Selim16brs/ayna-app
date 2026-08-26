@@ -813,6 +813,18 @@ export default function ProfessionalScreen() {
                 </View>
               ) : null}
 
+              {/* Kanvas (design/Yorumlar.dc.html §güvenin kaynağı) — yorumların
+                  neden uydurma OLAMAYACAĞINI söyleyen satır; ekranda yoktu.
+                  İki iddia da kodda doğrulandı:
+                  · ratings.service: booking.status !== 'completed' → reddediliyor
+                  · ratings controller'ında SİLME UCU YOK — uzman kaldıramıyor. */}
+              <View style={styles.trustRow}>
+                <Ionicons name="shield-checkmark" size={15} color={colors.success} />
+                <Text variant="caption" tone="muted" style={styles.trustText}>
+                  {t('pro.reviews.trust')}
+                </Text>
+              </View>
+
               {/* ELEŞTİRİ FİLTRESİ — olumsuz yorumu saklamak, en pahalı güven kaybıdır.
                   Saklamak yerine tek dokunuşla önüne getiriyoruz. */}
               {criticCount > 0 ? (
@@ -1238,6 +1250,16 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     filterChipOn: { backgroundColor: colors.accent },
+    trustRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space(1),
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.md,
+      padding: space(1.5),
+      marginBottom: space(1.5),
+    },
+    trustText: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
     criticNote: { marginBottom: space(1.25) },
     distStar: { width: 10, textAlign: 'center' },
     distTrack: {
