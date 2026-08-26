@@ -257,7 +257,15 @@ export default function ReportsScreen() {
               <Text variant="caption" tone="muted" numberOfLines={1}>
                 {bugunEtiketi}
               </Text>
-              <Text tone="ink" style={styles.greetName} numberOfLines={1}>
+              {/* Rusça selamlama uzun ("Доброй ночи, Дарина") ve isim
+                  kırpılıyordu. Karakter kaybetmek yerine punto küçülür. */}
+              <Text
+                tone="ink"
+                style={styles.greetName}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              >
                 {t(greetingKey())}, {firstName}
               </Text>
             </View>
@@ -778,7 +786,10 @@ const makeStyles = (colors: ColorTokens) =>
     // Canlı Özet — iki yanda beyaz kalan DAR bant; üstü yeşilin dibine tuck (bağlı), yazılar yukarı+sıkı
     liveBand: {
       marginHorizontal: space(3),
-      marginTop: -space(5),
+      // Eskiden -space(5) idi: kart, mor bandın DALGA bitişinin altına
+      // girsin diye. Bant kaldırılınca kart yukarı kayıp başlığın altındaki
+      // bağ çipinin ÜSTÜNE bindi — çipin yazısı kartın arkasından görünüyordu.
+      marginTop: space(0.5),
       paddingHorizontal: space(2.25),
       paddingTop: space(1.25),
       paddingBottom: space(1.5),
