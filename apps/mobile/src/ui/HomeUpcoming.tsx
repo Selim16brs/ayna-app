@@ -2,13 +2,13 @@ import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import type { MessageKey } from '@ayna/i18n';
 import type { Appointment, BookingStatus } from '../data';
 import { daysUntil, formatSlot, slotTime } from '../datetime';
 import { useLocale } from '../locale';
 import { useStore } from '../store';
 import { control, font, radius, space, type ColorTokens } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
+import { BookingSteps } from './BookingSteps';
 import { PressableScale } from './PressableScale';
 import { Text } from './Text';
 
@@ -19,19 +19,6 @@ import { Text } from './Text';
  * iki dokunuş uzaktaydı. Kart, durum adım çubuğuyla birlikte "nerede kaldık"
  * sorusunu da aynı yerde cevaplar.
  */
-
-const STEPS: { key: MessageKey; done: (s: BookingStatus, hasReceipt: boolean) => boolean }[] = [
-  { key: 'home.next.step_request', done: () => true },
-  {
-    key: 'home.next.step_accepted',
-    done: (s) => s !== 'awaiting_provider' && s !== 'alternative_proposed',
-  },
-  {
-    key: 'home.next.step_deposit',
-    done: (s, hasReceipt) => hasReceipt || s === 'confirmed' || s === 'completed',
-  },
-  { key: 'home.next.step_service', done: (s) => s === 'completed' },
-];
 
 /** Bir sonraki gerçekleşecek randevu: iptal/bitmiş olanlar hariç, en yakın gelecek. */
 function pickNext(bookings: Appointment[], now: number): Appointment | null {
@@ -100,50 +87,7 @@ export function HomeUpcoming() {
           </View>
         </View>
 
-        {/* Durum adım çubuğu — şu anki adım dolu, geçmişler tik, gelecek boş halka */}
-        <View style={styles.steps}>
-          {STEPS.map((step, i) => {
-            const done = step.done(next.status, hasReceipt);
-            const prevDone = i === 0 || STEPS[i - 1]!.done(next.status, hasReceipt);
-            const current = !done && prevDone;
-            return (
-              <View key={step.key} style={styles.step}>
-                <View style={styles.stepTop}>
-                  {i > 0 ? (
-                    <View style={[styles.rail, prevDone && styles.railDone]} />
-                  ) : (
-                    <View style={styles.railSpacer} />
-                  )}
-                  <View
-                    style={[
-                      styles.dot,
-                      done && styles.dotDone,
-                      current && styles.dotCurrent,
-                      !done && !current && styles.dotIdle,
-                    ]}
-                  >
-                    {done ? <Ionicons name="checkmark" size={12} color="#FFFFFF" /> : null}
-                  </View>
-                  {i < STEPS.length - 1 ? (
-                    <View style={[styles.rail, done && styles.railDone]} />
-                  ) : (
-                    <View style={styles.railSpacer} />
-                  )}
-                </View>
-                <Text
-                  variant="micro"
-                  tone={current ? 'ink' : 'muted'}
-                  style={styles.stepLabel}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.75}
-                >
-                  {t(step.key)}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
+        <BookingSteps status={next.status} hasReceipt={hasReceipt} />
 
         <View style={styles.actions}>
           <Action
@@ -225,24 +169,6 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 2,
       overflow: 'hidden',
     },
-
-    steps: { flexDirection: 'row' },
-    step: { flex: 1, alignItems: 'center', gap: 5 },
-    stepTop: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch' },
-    rail: { flex: 1, height: 2, backgroundColor: colors.line },
-    railDone: { backgroundColor: colors.success },
-    railSpacer: { flex: 1 },
-    dot: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    dotDone: { backgroundColor: colors.success },
-    dotCurrent: { backgroundColor: colors.accent },
-    dotIdle: { borderWidth: 2, borderColor: colors.line, backgroundColor: colors.surface },
-    stepLabel: { textAlign: 'center' },
 
     actions: {
       flexDirection: 'row',
