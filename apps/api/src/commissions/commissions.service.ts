@@ -1,7 +1,13 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { StorageService } from '../storage/storage.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { DAY_MS, commissionFor, overdueDaysBetween } from './commissions.calc';
+import {
+  DAY_MS,
+  commissionFromMinor,
+  fromMinor,
+  overdueDaysBetween,
+  toMinor,
+} from './commissions.calc';
 import type { ClosePeriodInput } from './commissions.dto';
 
 const DEFAULT_COMMISSION_RATE = 10; // komisyon %10 (uzman/salon → AYNA); parametrik (admin panel)
@@ -107,19 +113,22 @@ export class CommissionsService {
       select: { proId: true, proName: true, price: true },
     });
 
-    // pro başına topla
-    const byPro = new Map<string, { proName: string; count: number; gross: number }>();
+    // pro başına topla — TİYN (tam sayı kuruş) cinsinden.
+    // `Number(price)` toplamak faturayı yeniden hesaplanamaz kılıyordu: float
+    // artığı yuvarlama sınırının altına düşüp komisyonu 1 tiyn aşağı çekiyordu
+    // (ölçüm: 4000 dönemin 150'sinde farklı tutar). Bkz. commissions.calc.
+    const byPro = new Map<string, { proName: string; count: number; grossMinor: number }>();
     for (const b of bookings) {
       const key = b.proId ?? b.proName;
-      const g = byPro.get(key) ?? { proName: b.proName, count: 0, gross: 0 };
+      const g = byPro.get(key) ?? { proName: b.proName, count: 0, grossMinor: 0 };
       g.count += 1;
-      g.gross += Number(b.price);
+      g.grossMinor += toMinor(Number(b.price));
       byPro.set(key, g);
     }
 
     const created: unknown[] = [];
     for (const [proId, g] of byPro) {
-      const commission = commissionFor(g.gross, rate);
+      const commission = commissionFromMinor(g.grossMinor, rate);
       if (commission <= 0) continue;
       const ownerUserId = await this.ownerByProId(proId);
       // İdempotentlik artık VERİTABANI kısıtına dayanıyor: (proId, periodStart,
@@ -135,7 +144,7 @@ export class CommissionsService {
             periodStart: start,
             periodEnd: end,
             bookingsCount: g.count,
-            grossRevenue: g.gross,
+            grossRevenue: fromMinor(g.grossMinor),
             commissionAmount: commission,
             // §7.1 — oran ANLIK GÖRÜNTÜSÜ. Oran sonradan değişince geçmiş
             // faturanın tutarı açıklanamaz hâle gelirdi.

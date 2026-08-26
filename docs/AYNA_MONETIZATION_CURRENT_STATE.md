@@ -98,6 +98,27 @@ dönem artık tamamlanma tarihine göre belirleniyor. Geçmiş kayıtlar için
 `completed_at = created_at` dolduruldu: kapanmış dönemleri retroaktif olarak
 yeniden hesaplamak çift ya da eksik fatura üretirdi.
 
+### 2.6 Para float'ta toplanıyordu — ÇÖZÜLDÜ
+
+CLAUDE.md bağlayıcı kuralı: _"Para: NUMERIC(12,2), KZT, asla float."_ Dönem
+kapanışı ve admin paneli fiyatları `Number(price)` olarak **topluyordu**.
+
+Ölçüldü: 4000 dönemin **150'sinde (%3,75)** komisyon tutarı farklı çıkıyor.
+Float toplamı yuvarlama sınırının hemen altına düşüyor
+(`1360443.4499999993` ≠ `1360443.45`) ve `Math.round` aşağı yuvarlıyor.
+
+Sapma 1 tiyn — ama asıl sorun tutar değil: **fatura yeniden hesaplanamıyordu.**
+Aynı randevulardan aynı sayı çıkmıyordu.
+
+Ayrıca panel ile fatura **farklı sırayla** topluyordu: panel randevu başına
+yuvarlayıp topluyordu (`sum(round(x))`), fatura toplamdan hesaplıyordu
+(`round(sum(x))`). Bu iki yol yapısal olarak ayrışır — örnek:
+`[20244.86, 47936.39, 22172.25]` %8,5'te fatura **7.680,05**, eski panel
+**7.680,04**.
+
+Toplama artık tam sayı kuruş (tiyn) üzerinden; komisyon her iki yolda da
+kova cirosundan **tek kez** hesaplanıyor.
+
 ### 2.5 Oran anlık görüntüsü yoktu — EKLENDİ
 
 Fatura kesildikten sonra `commission.rate` değişince geçmiş faturaların tutarı

@@ -1,4 +1,9 @@
-import { commissionFor } from '../commissions/commissions.calc';
+import {
+  commissionFor,
+  commissionFromMinor,
+  fromMinor,
+  toMinor,
+} from '../commissions/commissions.calc';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { hashPassword } from '../common/crypto';
@@ -235,12 +240,24 @@ export class AdminService {
         proId: string;
         proName: string;
         count: number;
-        gmv: number;
-        earned: number;
-        pending: number;
+        // Tutarlar TİYN (tam sayı kuruş). Float toplamak hem sapma üretiyor hem
+        // de panelin faturayla tutmamasına yol açıyordu.
+        gmvMinor: number;
+        earnedGrossMinor: number;
+        pendingGrossMinor: number;
       }
     >();
-    const totals = { count: rows.length, gmv: 0, earned: 0, pending: 0, voided: 0 };
+    // Komisyon, tek tek randevulardan DEĞİL, kova cironun toplamından hesaplanır
+    // — fatura da (closePeriod) tam olarak böyle hesaplıyor. Randevu başına
+    // yuvarlayıp toplamak sum(round(x)) ≠ round(sum(x)) farkı üretir ve panel
+    // ile fatura birbirini tutmaz.
+    const totals = {
+      count: rows.length,
+      gmvMinor: 0,
+      earnedGrossMinor: 0,
+      pendingGrossMinor: 0,
+      voidedGrossMinor: 0,
+    };
     const items = rows.map((r) => {
       const price = Number(r.price);
       const commission = commissionFor(price, rate); // KZT (2 hane)
@@ -251,23 +268,24 @@ export class AdminService {
         proId: r.proId ?? '',
         proName: r.proName,
         count: 0,
-        gmv: 0,
-        earned: 0,
-        pending: 0,
+        gmvMinor: 0,
+        earnedGrossMinor: 0,
+        pendingGrossMinor: 0,
       };
+      const priceMinor = toMinor(price);
       s.count += 1;
       if (isEarned || isPending) {
-        s.gmv += price;
-        totals.gmv += price;
+        s.gmvMinor += priceMinor;
+        totals.gmvMinor += priceMinor;
       }
       if (isEarned) {
-        s.earned += commission;
-        totals.earned += commission;
+        s.earnedGrossMinor += priceMinor;
+        totals.earnedGrossMinor += priceMinor;
       } else if (isPending) {
-        s.pending += commission;
-        totals.pending += commission;
+        s.pendingGrossMinor += priceMinor;
+        totals.pendingGrossMinor += priceMinor;
       } else {
-        totals.voided += commission;
+        totals.voidedGrossMinor += priceMinor;
       }
       bySalon.set(key, s);
       return {
@@ -289,23 +307,30 @@ export class AdminService {
       currency: 'KZT',
       totals: {
         count: totals.count,
-        gmv: round2(totals.gmv),
-        earned: round2(totals.earned),
-        pending: round2(totals.pending),
+        gmv: fromMinor(totals.gmvMinor),
+        earned: commissionFromMinor(totals.earnedGrossMinor, rate),
+        pending: commissionFromMinor(totals.pendingGrossMinor, rate),
         collected: round2(totalCollected),
         // Alacak = kazanılan − tahsil edilen (negatife düşmez: fazla tahsilat 0 sayılır)
-        outstanding: round2(Math.max(0, totals.earned - totalCollected)),
+        outstanding: round2(
+          Math.max(0, commissionFromMinor(totals.earnedGrossMinor, rate) - totalCollected),
+        ),
       },
       salons: [...bySalon.values()]
         .map((s) => {
           const collected = (collectedMinorBy.get(s.proId || s.proName) ?? 0) / 100;
+          // Komisyon burada da kova cirosundan TEK KEZ hesaplanır — faturanın
+          // (closePeriod) yaptığıyla birebir aynı işlem.
+          const earned = commissionFromMinor(s.earnedGrossMinor, rate);
           return {
-            ...s,
-            gmv: round2(s.gmv),
-            earned: round2(s.earned),
-            pending: round2(s.pending),
+            proId: s.proId,
+            proName: s.proName,
+            count: s.count,
+            gmv: fromMinor(s.gmvMinor),
+            earned,
+            pending: commissionFromMinor(s.pendingGrossMinor, rate),
             collected: round2(collected),
-            outstanding: round2(Math.max(0, s.earned - collected)),
+            outstanding: round2(Math.max(0, earned - collected)),
           };
         })
         .sort((a, b) => b.outstanding - a.outstanding || b.earned - a.earned),
