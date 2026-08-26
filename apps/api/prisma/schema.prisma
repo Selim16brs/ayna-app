@@ -740,9 +740,16 @@ model CircleComment {
   userId      String?  @map("user_id") @db.Uuid
   authorLabel String   @default("AYNA Üyesi") @map("author_label")
   text        String
+  /// §14 — cevapta bir uzman ÖNERİLİYORSA kime işaret ettiği. Bu alan olmadan
+  /// "kimi kaç kişi önerdi" toplaması yapılamaz; yorumlar düz metin yığını kalır.
+  proId       String?  @map("pro_id")
+  /// §15 — öneren kişinin o uzmanda TAMAMLANMIŞ randevusu var mıydı?
+  /// Yazma anında sunucu doğrular ve DONDURUR: "duydum ki iyiymiş" sayılmaz.
+  proVerified Boolean  @default(false) @map("pro_verified")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([postId])
+  @@index([proId])
   @@map("circle_comments")
 }
 
@@ -827,6 +834,11 @@ model CommissionInvoice {
   // geçmiş faturaların tutarı açıklanamaz hâle gelirdi: tutar eski orandan,
   // panel yeni orandan hesaplardı. Snapshot bu ayrışmayı imkânsız kılar.
   commissionRate    Decimal   @default(10) @map("commission_rate") @db.Decimal(5, 2)
+  /// §8.5 — AYNA'nın finanse ettiği puan indirimlerinin komisyondan mahsubu.
+  /// Uzman, AYNA'nın verdiği puanı kendi cebinden karşılamasın diye komisyon
+  /// faturasından düşülür. commissionAmount bu mahsup UYGULANMIŞ tutardır;
+  /// brüt komisyon = commissionAmount + rewardSubsidyAmount.
+  rewardSubsidyAmount Decimal @default(0) @map("reward_subsidy_amount") @db.Decimal(12, 2)
   dueDate           DateTime  @map("due_date") @db.Timestamptz(6)
   status            String    @default("pending")
   receiptUri        String?   @map("receipt_uri") // pro'nun yüklediği ödeme dekontu
@@ -946,6 +958,12 @@ model Payment {
   amount      Decimal   @db.Decimal(12, 2)
   pointsUsed  Int       @default(0) @map("points_used")
   cashAmount  Decimal   @map("cash_amount") @db.Decimal(12, 2)
+  /// §8.5 — İNDİRİMİ KİM KARŞILIYOR. Bu alan olmadan puanla ödenen kısmı
+  /// sessizce uzman karşılıyordu: müşteri daha az nakit veriyor ama komisyon
+  /// tam fiyat üzerinden kesiliyordu. Funding source belirtilmeyen indirim
+  /// uygulanamaz.
+  /// AYNA_COMMISSION | EXPERT_FUNDED | CAMPAIGN_BUDGET | PARTNER_FUNDED
+  fundingSource String  @default("AYNA_COMMISSION") @map("funding_source")
   method      String    @default("kaspi")
   status      String    @default("pending")
   providerRef String?   @map("provider_ref")
@@ -1093,4 +1111,73 @@ model Collection {
 
   @@index([startsAt, endsAt])
   @@map("collections")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GÜVEN VE MAHREMİYET — mobil tasarım kanvasının sunucu gerektiren maddeleri
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// §21 — Kullanıcı/mesaj şikâyeti. Sohbette dolandırıcılık girişimi bildirildiğinde
+/// buraya düşer. KRİTİK: şikâyet edilen kişi bunu ASLA görmez; misilleme korkusu
+/// şikâyetin önündeki en büyük engeldir. Yalnız admin kuyruğu okur.
+model UserReport {
+  id         String   @id @default(uuid()) @db.Uuid
+  reporterId String   @map("reporter_id") @db.Uuid
+  /// Şikâyet edilen kullanıcı
+  targetId   String   @map("target_id") @db.Uuid
+  /// off_platform_payment | harassment | no_show | fake_profile | other
+  reason     String   @default("other")
+  /// Kullanıcının kendi cümlesi (opsiyonel)
+  note       String   @default("")
+  /// Bağlam: konuşma kimliği (varsa) — inceleme için yazışmaya bakılabilsin
+  threadId   String?  @map("thread_id")
+  /// open | reviewing | actioned | dismissed
+  status     String   @default("open")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([targetId, createdAt])
+  @@index([status, createdAt])
+  @@map("user_reports")
+}
+
+/// §19 — AYNA Passport: kullanıcının uzmana AÇTIĞINDA görünecek bilgiler.
+/// Kalıcı bir profil değil; randevu başına açılan geçici erişimle okunur.
+/// SAĞLIK İSTİSNASI: alerjiler randevu onaylanınca otomatik gider — sağlık
+/// gizlilikten önce gelir ve bu karar bilerek verilmiştir (kullanıcıya da yazılı).
+model UserPassport {
+  userId      String   @id @map("user_id") @db.Uuid
+  /// Alerji/hassasiyet maddeleri (serbest metin listesi)
+  allergies   String[] @default([])
+  /// Tercihler — salonda söylemesi zor olanı söylemeden halletmek için
+  quietVisit  Boolean  @default(false) @map("quiet_visit")
+  noPhotos    Boolean  @default(false) @map("no_photos")
+  notifyLate  Boolean  @default(true) @map("notify_late")
+  womenOnly   Boolean  @default(false) @map("women_only")
+  /// Saç/cilt profili (serbest anahtar-değer; şema kilitlemeden büyüsün)
+  traitsJson  String   @default("{}") @map("traits_json")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("user_passports")
+}
+
+/// §19 — Passport erişim kaydı. Spec kritik eylemler için audit log zorunlu kılıyor;
+/// burada kaydı YALNIZ BİZ DEĞİL, KULLANICI DA görüyor. Erişim hizmetten 24 saat
+/// sonra kendiliğinden kapanır (expiresAt), kullanıcı istediği an kapatabilir.
+model PassportAccess {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  /// Erişimi verilen uzman/salon (Professional.id)
+  proId      String    @map("pro_id")
+  /// Hangi randevu için açıldı
+  bookingId  String?   @map("booking_id")
+  grantedAt  DateTime  @default(now()) @map("granted_at") @db.Timestamptz(6)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  /// Kullanıcı erken kapattıysa
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  /// Uzman gerçekten ne zaman baktı (hiç bakmadıysa null)
+  lastViewAt DateTime? @map("last_view_at") @db.Timestamptz(6)
+
+  @@index([userId, grantedAt])
+  @@index([proId, expiresAt])
+  @@map("passport_access")
 }

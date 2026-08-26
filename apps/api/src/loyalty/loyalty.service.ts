@@ -4,6 +4,7 @@ import { expiringWithin, shouldUnlock, spendGate } from '@ayna/domain';
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { EarnInput } from './loyalty.dto';
+import { ONCE_PER_LIFETIME, ruleFor } from './earn-rules';
 import { EXPIRY_WARN_DAYS } from './loyalty.expiry';
 import { grantPoints } from './loyalty.grant';
 import { loadLedgerState, loadLoyaltyRules } from './loyalty.rules';
@@ -106,14 +107,55 @@ export class LoyaltyService {
     };
   }
 
+  /**
+   * GÜVENLİK: tutarı SUNUCU belirler. İstemcinin gönderdiği `points` yok sayılır.
+   *
+   * Öncesinde bu metot istemciden gelen 1..10000 arası herhangi bir değeri
+   * doğrulamasız ledger'a yazıyordu; 1 puan = 1 ₸ olduğu ve puan bir ödemenin
+   * %50'sini karşıladığı için bu, kayıtlı her kullanıcıya sınırsız para basma
+   * imkânı veriyordu.
+   */
   async earn(userId: string, input: EarnInput) {
-    // K4.4 — son kullanma tarihini grantPoints koyar; tek kapı.
+    // PR #19 — PARA BASMA AÇIĞI KAPALI KALSIN: tutar İSTEMCİDEN değil kural
+    // tablosundan gelir; bilinmeyen sebep reddedilir.
+    const rule = ruleFor(input.reason);
+    if (!rule) {
+      // Bilinmeyen sebep sessizce yutulmaz: istemcide kalmış eski bir çağrı varsa
+      // görünür olsun, yeni bir kazanım yolu da buradan açılamasın.
+      throw new BadRequestException({ code: 'EARN_REASON_NOT_ALLOWED' });
+    }
+
+    const now = new Date();
+    const since = new Date(now.getTime() - 24 * 3_600_000);
+    const [dayCount, lifetimeCount] = await Promise.all([
+      this.prisma.loyaltyEntry.count({
+        where: { userId, kind: 'earn', reason: input.reason, createdAt: { gte: since } },
+      }),
+      ONCE_PER_LIFETIME.has(input.reason)
+        ? this.prisma.loyaltyEntry.count({ where: { userId, kind: 'earn', reason: input.reason } })
+        : Promise.resolve(0),
+    ]);
+
+    // Sınır aşıldıysa HATA DEĞİL, sessiz atlama: kullanıcı bir şeyi yanlış
+    // yapmadı ve istemci akışı kırılmamalı. Kazanım yalnız yazılmaz.
+    if (dayCount >= rule.dailyLimit || lifetimeCount > 0) {
+      await this.audit.record({
+        actorId: userId,
+        action: 'loyalty.earn.throttled',
+        resourceType: 'loyalty',
+        safeDiff: { reason: input.reason, dayCount, lifetimeCount },
+      });
+      return this.summary(userId);
+    }
+
+    // K4.4 — son kullanma tarihini ve denetim kaydını grantPoints koyar; tek kapı.
     await grantPoints(this.prisma, {
       userId,
       reason: input.reason,
       detail: input.detail ?? '',
-      points: input.points,
+      points: rule.points,
     });
+    // Denetim kaydını grantPoints yazıyor — burada tekrar yazmak çift kayıt olurdu.
     return this.summary(userId);
   }
 

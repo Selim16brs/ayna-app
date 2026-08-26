@@ -9,6 +9,7 @@ import {
   toMinor,
 } from './commissions.calc';
 import type { ClosePeriodInput } from './commissions.dto';
+import { aynaFundedDiscount, rewardSubsidyCredit } from './reward-subsidy';
 
 const DEFAULT_COMMISSION_RATE = 10; // komisyon %10 (uzman/salon → AYNA); parametrik (admin panel)
 
@@ -22,6 +23,10 @@ const DEFAULT_COMMISSION_RATE = 10; // komisyon %10 (uzman/salon → AYNA); para
 const GRACE_SETTING_KEY = 'rate.commission_grace_minutes';
 const ENFORCE_FROM_KEY = 'policy.overdue_enforce_from';
 const DEFAULT_GRACE_MINUTES = 45;
+// §8.4 — AYNA'nın karşıladığı indirim net komisyonun en fazla bu oranı kadar olur.
+const DEFAULT_SUBSIDY_CAP_PCT = 50;
+// NOT: OVERDUE_RESTRICT_DAYS (vade + 7 gün) K5 ile kaldırıldı — süre artık
+// GRACE_SETTING_KEY'den okunuyor (varsayılan 45 dakika).
 
 @Injectable()
 export class CommissionsService {
@@ -64,6 +69,17 @@ export class CommissionsService {
     const s = await this.prisma.setting.findUnique({ where: { key: GRACE_SETTING_KEY } });
     const v = s?.intValue;
     return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : DEFAULT_GRACE_MINUTES;
+  }
+
+  /**
+   * §8.4 — sübvansiyon tavanı: AYNA'nın karşıladığı indirim, net komisyonun bu
+   * oranını aşamaz. Sabit yazılmaz; admin config'den yönetilir.
+   */
+  private async subsidyCapRate(): Promise<number> {
+    const s = await this.prisma.setting.findUnique({
+      where: { key: 'rate.commission_subsidy_cap_pct' },
+    });
+    return (s?.intValue ?? DEFAULT_SUBSIDY_CAP_PCT) / 100;
   }
 
   // Aktör yoksa eylem ZAMANLAYICIDAN gelmiştir. Rolü 'admin' yazmak denetim
@@ -110,26 +126,61 @@ export class CommissionsService {
         userId: { not: null },
         completedAt: { gte: start, lt: end },
       },
-      select: { proId: true, proName: true, price: true },
+      select: { id: true, proId: true, proName: true, price: true },
     });
+
+    // §8.5 — Bu dönemde puanla ödenen tutarlar ve KİMİN finanse ettiği.
+    // Uzman, AYNA'nın dağıttığı puanı kendi cebinden karşılamamalı.
+    const payments = await this.prisma.payment.findMany({
+      where: {
+        bookingId: { in: bookings.map((b) => b.id) },
+        status: 'paid',
+        pointsUsed: { gt: 0 },
+      },
+      select: { bookingId: true, pointsUsed: true, fundingSource: true },
+    });
+    const discountByBooking = new Map<string, { pointsUsed: number; fundingSource: string }[]>();
+    for (const p of payments) {
+      const arr = discountByBooking.get(p.bookingId) ?? [];
+      arr.push({ pointsUsed: p.pointsUsed, fundingSource: p.fundingSource });
+      discountByBooking.set(p.bookingId, arr);
+    }
 
     // pro başına topla — TİYN (tam sayı kuruş) cinsinden.
     // `Number(price)` toplamak faturayı yeniden hesaplanamaz kılıyordu: float
     // artığı yuvarlama sınırının altına düşüp komisyonu 1 tiyn aşağı çekiyordu
     // (ölçüm: 4000 dönemin 150'sinde farklı tutar). Bkz. commissions.calc.
-    const byPro = new Map<string, { proName: string; count: number; grossMinor: number }>();
+    const byPro = new Map<
+      string,
+      { proName: string; count: number; grossMinor: number; aynaFundedMinor: number }
+    >();
     for (const b of bookings) {
       const key = b.proId ?? b.proName;
-      const g = byPro.get(key) ?? { proName: b.proName, count: 0, grossMinor: 0 };
+      const g = byPro.get(key) ?? {
+        proName: b.proName,
+        count: 0,
+        grossMinor: 0,
+        aynaFundedMinor: 0,
+      };
       g.count += 1;
+      // Matrah TAM fiyat kalır (§7): indirim matrahı değil, faturayı düşürür.
       g.grossMinor += toMinor(Number(b.price));
+      g.aynaFundedMinor += toMinor(aynaFundedDiscount(discountByBooking.get(b.id) ?? []));
       byPro.set(key, g);
     }
 
+    const subsidyCap = await this.subsidyCapRate();
     const created: unknown[] = [];
     for (const [proId, g] of byPro) {
-      const commission = commissionFromMinor(g.grossMinor, rate);
-      if (commission <= 0) continue;
+      const commissionGross = commissionFromMinor(g.grossMinor, rate);
+      if (commissionGross <= 0) continue;
+      // §8.5 — AYNA kaynaklı indirim komisyondan mahsup edilir (tavanla sınırlı).
+      const subsidy = rewardSubsidyCredit(
+        commissionGross,
+        fromMinor(g.aynaFundedMinor),
+        subsidyCap,
+      );
+      const commission = fromMinor(toMinor(commissionGross) - toMinor(subsidy));
       const ownerUserId = await this.ownerByProId(proId);
       // İdempotentlik artık VERİTABANI kısıtına dayanıyor: (proId, periodStart,
       // periodEnd) benzersiz. Eskiden "önce oku sonra yaz" vardı ve eşzamanlı iki
@@ -146,6 +197,7 @@ export class CommissionsService {
             bookingsCount: g.count,
             grossRevenue: fromMinor(g.grossMinor),
             commissionAmount: commission,
+            rewardSubsidyAmount: subsidy,
             // §7.1 — oran ANLIK GÖRÜNTÜSÜ. Oran sonradan değişince geçmiş
             // faturanın tutarı açıklanamaz hâle gelirdi.
             commissionRate: rate,

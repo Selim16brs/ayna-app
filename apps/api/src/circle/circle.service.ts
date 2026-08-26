@@ -2,6 +2,7 @@ import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nest
 import type { Env } from '@ayna/config/env';
 import { ENV } from '../config/config.module';
 import { PrismaService } from '../prisma/prisma.service';
+import { tallyConsensus } from './consensus';
 import type { CreateCommentInput, CreatePostInput } from './circle.dto';
 import { type ModerationVerdict, keywordModeration } from './circle.moderation';
 
@@ -159,6 +160,37 @@ export class CircleService {
     return { helpful: row.helpful };
   }
 
+  /**
+   * Bir gönderinin yorumları.
+   *
+   * HATA DÜZELTMESİ: bu uç yoktu. listPosts yalnız yorum SAYISINI dönüyordu,
+   * metinleri değil — yani A kullanıcısı yorum yazıyor, B aynı gönderiyi açıyor,
+   * sayacın arttığını görüyor ama yorumu okuyamıyordu. Herkes yalnız kendi
+   * yorumunu görüyordu; topluluk özelliğinin tamamı bunun üzerine kurulu.
+   *
+   * GİZLİLİK: anonim yorumda userId ASLA dışarı verilmez (gönderilerdeki
+   * authorUserId kuralıyla aynı). Etiket kimlik değildir.
+   */
+  async listComments(postId: string) {
+    const post = await this.prisma.circlePost.findUnique({ where: { id: postId } });
+    if (!post || post.status !== 'published') {
+      throw new NotFoundException({ code: 'POST_NOT_FOUND', message: 'Gönderi bulunamadı' });
+    }
+    const rows = await this.prisma.circleComment.findMany({
+      where: { postId },
+      orderBy: { createdAt: 'asc' },
+      take: 200,
+    });
+    return rows.map((c) => ({
+      id: c.id,
+      authorLabel: c.authorLabel,
+      text: c.text,
+      proId: c.proId,
+      proVerified: c.proVerified,
+      createdAt: c.createdAt,
+    }));
+  }
+
   async addComment(
     userId: string | undefined,
     role: string | undefined,
@@ -174,15 +206,46 @@ export class CircleService {
       throw new ForbiddenException({ code: 'COMMENT_BLOCKED', message: verdict.reason });
     }
     const anonymous = input.anonymous ?? false;
+    // §15 — "duydum ki iyiymiş" sayılmaz: öneren kişinin o uzmanda TAMAMLANMIŞ
+    // randevusu var mı, yazma anında doğrulanır ve sonuç DONDURULUR. Sonradan
+    // randevu iptal olsa bile o an gerçekti; geriye dönük değiştirmiyoruz.
+    const proVerified =
+      input.proId && userId ? await this.hasCompletedWith(userId, input.proId) : false;
     const c = await this.prisma.circleComment.create({
       data: {
         postId,
         userId: userId ?? null,
         authorLabel: await this.authorLabel(userId, anonymous),
         text: input.text,
+        ...(input.proId ? { proId: input.proId } : {}),
+        proVerified,
       },
     });
-    return { id: c.id };
+    return { id: c.id, proVerified };
+  }
+
+  /** Kullanıcının bu uzmanda tamamlanmış randevusu var mı? */
+  private async hasCompletedWith(userId: string, proId: string): Promise<boolean> {
+    const row = await this.prisma.booking.findFirst({
+      where: { userId, proId, status: 'completed' },
+      select: { id: true },
+    });
+    return row != null;
+  }
+
+  /**
+   * §14 — FİKİR BİRLİĞİ: bir sorunun cevaplarında kimin kaç kez önerildiği.
+   *
+   * Yalnız DOĞRULANMIŞ öneriler sayılır (proVerified). Yedi yorumu tek tek
+   * okumak yerine "Zarina — 7 kişiden 4'ü" tek kartta görünsün diye.
+   * Aynı kullanıcının aynı uzmanı iki kez önermesi BİR sayılır.
+   */
+  async consensus(postId: string) {
+    const rows = await this.prisma.circleComment.findMany({
+      where: { postId, proId: { not: null }, proVerified: true },
+      select: { proId: true, userId: true, proVerified: true },
+    });
+    return tallyConsensus(rows);
   }
 
   // §5.5 — şikâyet; eşik aşınca otomatik gizle + admin kuyruğu

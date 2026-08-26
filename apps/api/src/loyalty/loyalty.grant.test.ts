@@ -98,7 +98,12 @@ test("kazanım (kind: 'earn') yalnız grantPoints üzerinden yazılır", () => {
   const ihlaller = dosyalar
     .filter((f) => {
       const src = readFileSync(f, 'utf8');
-      return /loyaltyEntry\.(create|createMany)\s*\(/.test(src) && /kind:\s*'earn'/.test(src);
+      // İki koşulu AYRI AYRI aramak yanlış alarm veriyordu: aynı dosyada
+      // `loyaltyEntry.count({ kind: 'earn' })` (okuma) ile `create({ kind:
+      // 'spend' })` (yazma) bir arada bulunabiliyor. Yazımın KENDİ gövdesine
+      // bakılmalı.
+      const yazimlar = [...src.matchAll(/loyaltyEntry\s*\.\s*(?:create|createMany)\s*\(/g)];
+      return yazimlar.some((m) => /kind:\s*'earn'/.test(src.slice(m.index, m.index + 400)));
     })
     .map((f) => f.slice(kok.length + 1))
     .filter((f) => !izinli.has(f));
