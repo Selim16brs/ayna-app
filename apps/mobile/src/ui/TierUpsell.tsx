@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useLocale } from '../locale';
 import { selectTier, useStore } from '../store';
-import { type ColorTokens, radius, space } from '../theme';
+import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { PressableScale } from './PressableScale';
 import { Text } from './Text';
@@ -65,5 +65,5 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    cta: { fontWeight: '800', marginTop: 3 },
+    cta: { fontFamily: font.semibold, marginTop: 3 },
   });

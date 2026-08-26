@@ -270,8 +270,9 @@ export default function ScheduleScreen() {
           </Text>
         )}
 
-        {/* §B5 — kurallar kartı: kapora/iptal/no-show her zaman görünür */}
-        <RulesCard />
+        {/* §B5 — kurallar kartı: kapora/iptal/no-show her zaman görünür.
+            K1 — kapora oranlı: fiyat belliyse o randevunun GERÇEK tutarı yazılır. */}
+        <RulesCard price={offer ? offer.finalPrice : chosenService?.price} />
       </ScrollView>
 
       <View style={styles.footer}>

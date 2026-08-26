@@ -1,13 +1,20 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { radius, space, type ColorTokens } from '../theme';
+import { type ColorTokens, font, space } from '../theme';
 import { useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
 /**
- * Sekme ekranları için ortak lime hero başlık (Keşfet tasarım dili):
- * lime zemin, dev başlık, alt köşeler yuvarlak. `right` sağ üst aksiyon, `children` alt içerik.
+ * Sekme ekranlarının ortak başlığı — kanvas dili: AÇIK porselen zemin,
+ * küçük selamlama üstte, büyük koyu isim altta.
+ *
+ * Önceki sürüm mor, alt köşeleri yuvarlak, kenardan kenara bir banttı ve tek
+ * başına ÜÇ ekranı (Benim İçin · Randevularım · W2W) eski gösteriyordu.
+ * Kanvasın hiçbir levhasında böyle bir bant yok; hepsi #FBF8F6 zemin.
+ *
+ * Sıralama da ana ekranla hizalandı: orada "İyi günler" küçük, "Selim" büyük.
+ * Burada tersiydi — aynı kullanıcı iki sekmede iki farklı hiyerarşi görüyordu.
  */
 export function TabHero({
   title,
@@ -26,15 +33,14 @@ export function TabHero({
     <View style={[styles.hero, { paddingTop: insets.top + space(1.5) }]}>
       <View style={styles.row}>
         <View style={styles.textCol}>
-          {/* Lime zemin AÇIK renk → yazı iki temada da KOYU (onAccent); ink dark'ta beyazlaşıp okunmuyordu */}
-          <Text variant="display" tone="onAccent" style={styles.title}>
-            {title}
-          </Text>
           {subtitle ? (
-            <Text variant="caption" tone="onAccent" style={styles.sub}>
+            <Text variant="body" tone="inkSoft">
               {subtitle}
             </Text>
           ) : null}
+          <Text tone="ink" style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
         </View>
         {right ?? null}
       </View>
@@ -46,22 +52,25 @@ export function TabHero({
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     hero: {
-      backgroundColor: colors.accent,
-      paddingHorizontal: space(3),
-      paddingBottom: space(2.5),
-      borderBottomLeftRadius: radius.xl,
-      borderBottomRightRadius: radius.xl,
+      backgroundColor: colors.bg,
+      paddingHorizontal: space(2.5),
+      paddingBottom: space(2),
     },
     row: {
       flexDirection: 'row',
       alignItems: 'flex-end',
       justifyContent: 'space-between',
       gap: space(1.5),
-      // Sabit içerik yüksekliği: alt yazısı olan (Benim İçin/W2W) ve olmayan (Randevularım)
-      // sekmelerin yeşil bantları AYNI boyda görünsün — içerik alta hizalı.
+      // Alt yazısı olan (Benim İçin/W2W) ve olmayan (Randevularım) sekmelerin
+      // başlıkları aynı hizada başlasın.
       minHeight: 52,
     },
-    textCol: { flex: 1 },
-    title: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.6 },
-    sub: { marginTop: space(0.75), opacity: 0.65 },
+    textCol: { flex: 1, minWidth: 0 },
+    title: {
+      fontSize: 34,
+      lineHeight: 40,
+      fontFamily: font.semibold,
+      letterSpacing: -0.8,
+      marginTop: 3,
+    },
   });

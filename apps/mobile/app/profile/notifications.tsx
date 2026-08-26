@@ -5,7 +5,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { activeCategories } from '../../src/taxonomy';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
 
@@ -217,7 +217,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1),
     },
     demandHint: { lineHeight: 17 },
-    demandLabel: { marginTop: space(1), fontWeight: '700' },
+    demandLabel: { marginTop: space(1), fontFamily: font.semibold },
     catRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     catChip: {
       flexDirection: 'row',

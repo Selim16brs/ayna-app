@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   Button,
@@ -337,7 +337,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderWidth: 1,
       borderColor: colors.line,
     },
-    photoBtnText: { fontWeight: '700' },
+    photoBtnText: { fontFamily: font.semibold },
     field: { gap: space(1) },
     fieldLabel: { marginLeft: space(0.5) },
     input: {

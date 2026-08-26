@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { expiryDateFrom } from '../loyalty/loyalty.expiry';
 
 // EK Z.6 — Müşteri referans programı. Davet eden + edilen ödül (loyalty ledger).
 const REFERRAL_POINTS = 300; // §8.1 "ilk randevu / hoş geldin" ile uyumlu
@@ -82,27 +81,16 @@ export class ReferralService {
       });
 
     await this.prisma.user.update({ where: { id: userId }, data: { referredBy: referrer.id } });
-    const expiresAt = expiryDateFrom(new Date());
-    await this.prisma.loyaltyEntry.createMany({
-      data: [
-        {
-          userId: referrer.id,
-          kind: 'earn',
-          reason: 'rewards.earn.referral',
-          detail: me.name,
-          points: REFERRAL_POINTS,
-          expiresAt,
-        },
-        {
-          userId,
-          kind: 'earn',
-          reason: 'rewards.earn.referral',
-          detail: referrer.name,
-          points: REFERRAL_POINTS,
-          expiresAt,
-        },
-      ],
-    });
-    return { ok: true, pointsAwarded: REFERRAL_POINTS, referrerName: referrer.name };
+    // D9 / §8.2 — puan BURADA verilmez. Eskiden kod girilir girilmez iki tarafa
+    // 300'er puan yazılıyordu; bu sahte davet ekonomisine açıktı — kayıt olup
+    // kodu girmek yetiyor, platformda hiçbir şey yapmaya gerek kalmıyordu.
+    // Ödül artık davet edilenin İLK TAMAMLANMIŞ randevusundan sonra
+    // (`completion-rewards.settleReferrals`).
+    return {
+      ok: true,
+      pointsAwarded: 0,
+      pointsPending: REFERRAL_POINTS,
+      referrerName: referrer.name,
+    };
   }
 }

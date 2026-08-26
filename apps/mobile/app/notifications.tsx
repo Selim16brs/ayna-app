@@ -5,7 +5,7 @@ import { type AppNotification, NOTIFICATION_ROUTE, type NotificationType } from 
 import { fillParams, useLocale } from '../src/locale';
 import { useMemo } from 'react';
 import { inAudience, selectSellerView, useStore } from '../src/store';
-import { type ColorTokens, radius, space } from '../src/theme';
+import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Screen, StackHeader, Text } from '../src/ui';
 
@@ -125,7 +125,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.9),
       borderRadius: radius.pill,
     },
-    markAllText: { fontWeight: '800' },
+    markAllText: { fontFamily: font.semibold },
     list: { gap: space(1.5) },
     row: {
       flexDirection: 'row',
@@ -153,7 +153,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     rowBody: { flex: 1 },
-    rowTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+    rowTitle: { fontSize: 16, fontFamily: font.semibold, letterSpacing: -0.2 },
     body: { marginTop: 3, lineHeight: 19 },
     date: { marginTop: space(1) },
     trailing: {

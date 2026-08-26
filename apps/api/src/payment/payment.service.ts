@@ -1,24 +1,36 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
 import { PAYMENT_PROVIDER, type PaymentProvider } from './payment.provider';
-import { paymentSplit } from './payment.split';
+import { paymentSplit } from '@ayna/domain';
+import { loadLedgerState, loadLoyaltyRules } from '../loyalty/loyalty.rules';
 
-// EK Z.8 — In-app ödeme servisi (Kaspi sim adaptörüyle). §8.2 puan %50 tavanı.
+// EK Z.8 — In-app ödeme servisi (Kaspi sim adaptörüyle).
+// K4 — puan kullanımı: 50.000 ₸ kilidi + ödemenin en çok %25'i.
 @Injectable()
 export class PaymentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly push: PushService,
+    private readonly audit: AuditService,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
   ) {}
 
+  // Bakiye ASLA SUM(points) ile hesaplanmaz: o toplam süresi DOLMUŞ puanları da
+  // sayardı — yani kullanıcı yanmış puanla ödeme yapabiliyordu. FIFO motoru
+  // (@ayna/domain replayLedger) yalnız canlı partileri toplar.
   private async pointsBalance(userId: string): Promise<number> {
-    const agg = await this.prisma.loyaltyEntry.aggregate({
-      where: { userId },
-      _sum: { points: true },
+    return (await loadLedgerState(this.prisma, userId)).available;
+  }
+
+  // K4.2 — kilit damgası. null ise puan hiç kullanılamaz.
+  private async pointsUnlockedAt(userId: string): Promise<Date | null> {
+    const u = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { pointsUnlockedAt: true },
     });
-    return agg._sum.points ?? 0;
+    return u?.pointsUnlockedAt ?? null;
   }
 
   // Ödeme niyeti oluştur — bedel = randevu fiyatı; puan tavan+bakiye ile sınırlanır.
@@ -29,8 +41,18 @@ export class PaymentService {
     const amount = Math.round(Number(booking.price));
     if (amount <= 0)
       throw new BadRequestException({ code: 'BAD_AMOUNT', message: 'Geçersiz tutar' });
-    const balance = await this.pointsBalance(userId);
-    const split = paymentSplit(amount, Math.max(0, Math.floor(pointsRequested || 0)), balance);
+    const [balance, unlockedAt, rules] = await Promise.all([
+      this.pointsBalance(userId),
+      this.pointsUnlockedAt(userId),
+      loadLoyaltyRules(this.prisma),
+    ]);
+    const split = paymentSplit(
+      amount,
+      Math.max(0, Math.floor(pointsRequested || 0)),
+      balance,
+      unlockedAt,
+      rules,
+    );
     const p = await this.prisma.payment.create({
       data: {
         bookingId,
@@ -41,6 +63,17 @@ export class PaymentService {
         method: 'kaspi',
         status: 'pending',
       },
+    });
+    // §12 — kritik eylem denetim kaydı. Ödeme yolu HİÇ audit yazmıyordu: gerçek
+    // para el değiştiriyor ve puan yakılıyor, ama kimin ne zaman ne ödediğinin
+    // kaydı yoktu. safeDiff yalnız TUTAR taşır — PII yok (docs/security/03).
+    await this.audit.record({
+      actorId: userId,
+      actorRole: 'user',
+      action: 'payment.intent',
+      resourceType: 'payment',
+      resourceId: p.id,
+      safeDiff: { amount, pointsUsed: split.pointsUsed, cash: split.cashAmount },
     });
     return this.map(p);
   }
@@ -68,6 +101,14 @@ export class PaymentService {
     });
     if (!charge.ok) {
       await this.prisma.payment.update({ where: { id: p.id }, data: { status: 'failed' } });
+      await this.audit.record({
+        actorId: userId,
+        actorRole: 'user',
+        action: 'payment.failed',
+        resourceType: 'payment',
+        resourceId: p.id,
+        safeDiff: { cash: Number(p.cashAmount) },
+      });
       throw new BadRequestException({ code: 'CHARGE_FAILED', message: 'Ödeme alınamadı' });
     }
 
@@ -86,6 +127,20 @@ export class PaymentService {
     const paid = await this.prisma.payment.update({
       where: { id: p.id },
       data: { status: 'paid', providerRef: charge.providerRef, paidAt: new Date() },
+    });
+    // Paranın gerçekten geçtiği an — denetim izinin en kritik satırı.
+    await this.audit.record({
+      actorId: userId,
+      actorRole: 'user',
+      action: 'payment.paid',
+      resourceType: 'payment',
+      resourceId: p.id,
+      safeDiff: {
+        amount: Number(p.amount),
+        cash: Number(p.cashAmount),
+        pointsUsed: p.pointsUsed,
+        bookingId: p.bookingId,
+      },
     });
     // §4.3 — depozito Kaspi ile ödendiyse: randevu 'deposit_submitted' + uzmana push
     // (uzman 'Aldım, onaylıyorum' der → randevu KESİN; akış dekont yüklemeyle birebir aynı)

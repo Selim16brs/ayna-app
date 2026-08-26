@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { servicesOf, tri } from '../taxonomy';
 import { useLocale } from '../locale';
-import { radius, space, type ColorTokens } from '../theme';
+import { radius, space, type ColorTokens, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -70,5 +70,5 @@ const makeStyles = (colors: ColorTokens) =>
     },
     chipOff: { backgroundColor: colors.surface, borderWidth: 1.25, borderColor: colors.line },
     chipOn: { backgroundColor: colors.accent, borderWidth: 1.25, borderColor: colors.accent },
-    text: { fontWeight: '600', fontSize: 13.5 },
+    text: { fontFamily: font.semibold, fontSize: 13.5 },
   });

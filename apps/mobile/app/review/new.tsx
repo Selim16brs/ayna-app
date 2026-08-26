@@ -7,7 +7,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
 
@@ -300,7 +300,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     tagOn: { backgroundColor: colors.accent },
-    tagOnText: { fontWeight: '700' },
+    tagOnText: { fontFamily: font.semibold },
     input: {
       minHeight: 120,
       backgroundColor: colors.surfaceMuted,

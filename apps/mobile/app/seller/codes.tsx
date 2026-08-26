@@ -4,7 +4,7 @@ import { Alert, Pressable, ScrollView, Share, StyleSheet, View } from 'react-nat
 import { api, type SellerInviteCode } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text } from '../../src/ui';
 
@@ -215,7 +215,7 @@ const makeStyles = (colors: ColorTokens) =>
     statusPill: { paddingHorizontal: space(1.25), paddingVertical: 3, borderRadius: radius.pill },
     pillActive: { backgroundColor: colors.accent },
     pillMuted: { backgroundColor: colors.bgSunken },
-    pillText: { fontWeight: '700' },
+    pillText: { fontFamily: font.semibold },
     actions: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
     iconBtn: { alignItems: 'center', justifyContent: 'center' },
   });

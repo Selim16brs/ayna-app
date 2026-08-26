@@ -6,7 +6,7 @@ import { buildUpcomingEvents, type UpcomingEvent, whenShort } from '../src/data'
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import type { MessageKey } from '@ayna/i18n';
-import { type ColorTokens, radius, space } from '../src/theme';
+import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
 
@@ -136,7 +136,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(1.75),
     },
     rowPressed: { opacity: 0.96, transform: [{ scale: 0.99 }] },
-    rowTitle: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+    rowTitle: { fontSize: 16, fontFamily: font.semibold, letterSpacing: -0.2 },
     icon: {
       width: 48,
       height: 48,
@@ -159,5 +159,5 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
-    whenText: { fontWeight: '700' },
+    whenText: { fontFamily: font.semibold },
   });

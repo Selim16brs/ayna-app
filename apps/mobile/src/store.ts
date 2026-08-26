@@ -1,3 +1,5 @@
+import { DEFAULT_DEPOSIT_RULES, depositFor } from '@ayna/domain';
+import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadMediaCache, saveMediaCache } from './media-cache';
 import { setApiToken } from './api';
@@ -23,6 +25,8 @@ import {
   type Promotion,
   DEPOSIT_KZT,
   POINTS_SPEND_CAP_PCT,
+  POINTS_UNLOCK_KZT,
+  POINTS_EXPIRY_DAYS,
   PREMIUM_PRICE_KZT,
   DEPOSIT_RECEIPT_WINDOW_MS,
   DEPOSIT_RECEIPT_SHORT_MS,
@@ -48,7 +52,6 @@ import {
   SELLER_PAST_CLIENTS,
   type AlwaysBond,
   COMMISSION_PCT_STANDARD,
-  COMMISSION_PCT_PLATINUM,
   reengageMessage,
   SEED_APPOINTMENTS,
   type UpcomingEvent,
@@ -183,6 +186,8 @@ interface State {
   sellerTrialStart: number | null;
   points: number;
   raffleEntries: number;
+  // K4 — puan harcama kuralları (sunucu doğruluk kaynağı). null = henüz okunmadı.
+  pointsSpend: PointsSpendRules | null;
   // §8.1 — puan kazanım limitleri: ilk randevu 300 (tek seferlik) + W2W beğeni 1/ay maks 100
   firstBookingBonusGiven: boolean;
   w2wLikeMonth: string;
@@ -372,7 +377,7 @@ interface State {
   // circle
   addPost: (input: AddPostInput) => string;
   toggleHelpful: (postId: string) => void;
-  addComment: (postId: string, text: string, anonymous: boolean) => void;
+  addComment: (postId: string, text: string, anonymous: boolean, proId?: string) => void;
   // §5.5 — moderasyon katman 2: şikâyet et (eşik aşınca gizlenir + admin kuyruğu)
   reportedPosts: string[];
   reportPost: (postId: string) => void;
@@ -415,6 +420,7 @@ const SEEDED_PERSONAL_RESET: Partial<State> = {
   demands: [],
   points: 0,
   raffleEntries: 0,
+  pointsSpend: null,
   tier: null,
   ledger: [],
   notifications: [],
@@ -477,9 +483,17 @@ export const useStore = create<State>()(
         rates: {
           commissionPct: 10, // kurucu kararı: online randevudan %10 (fetch başarısızsa fallback)
           depositKzt: DEPOSIT_KZT,
+          // K1 — oranlı kapora yedek değerleri (sunucu fetch'i başarısızsa)
+          depositPct: 10,
+          depositMin: 1000,
+          depositMax: 5000,
+          holdMinutes: 180,
           cancelWindowH: 3,
           lateCancelPct: 3,
           pointsCapPct: POINTS_SPEND_CAP_PCT,
+          pointsUnlockKzt: POINTS_UNLOCK_KZT,
+          pointsExpiryDays: POINTS_EXPIRY_DAYS,
+          pointsSubsidyCapPct: 50,
           premiumUserKzt: PREMIUM_PRICE_KZT,
           premiumSalonKzt: 4990,
           raffleCost: RAFFLE_COST,
@@ -592,6 +606,7 @@ export const useStore = create<State>()(
       alwaysBonds: [],
       points: 0,
       raffleEntries: 0,
+      pointsSpend: null, // çıkışta kilit durumu da sıfırlanır
       firstBookingBonusGiven: false,
       w2wLikeMonth: '',
       w2wLikePoints: 0,
@@ -1019,7 +1034,11 @@ export const useStore = create<State>()(
               type: 'booking',
               titleKey: 'notif.late_cancel',
               bodyKey: 'notif.late_cancel_b',
-              params: { pro: b.proName, deposit: DEPOSIT_KZT },
+              // Yanan tutar randevunun kendi kaporası; sabit 1.000 ₸ değil (K1).
+              params: {
+                pro: b.proName,
+                deposit: b.depositAmount ?? localDeposit(b.price, get().config.rates),
+              },
               dateLabel: 'Az önce',
               icon: 'alert-circle-outline',
               route: `/booking/${id}`,
@@ -1466,7 +1485,7 @@ export const useStore = create<State>()(
               ? {
                   ...b,
                   status: 'deposit_pending',
-                  depositAmount: DEPOSIT_KZT,
+                  depositAmount: localDeposit(b.price, s.config.rates),
                   depositDeadline: depositDeadlineFor(b.proposedStartMs ?? b.startMs, Date.now()),
                   startMs: b.proposedStartMs ?? b.startMs,
                   proposedStartMs: undefined,
@@ -1481,7 +1500,11 @@ export const useStore = create<State>()(
             type: 'booking',
             titleKey: 'notif.alt_approved',
             bodyKey: 'notif.alt_approved_b',
-            params: { pro: b.proName, slot: formatSlotTr(b.startMs), deposit: DEPOSIT_KZT },
+            params: {
+              pro: b.proName,
+              slot: formatSlotTr(b.startMs),
+              deposit: b.depositAmount ?? localDeposit(b.price, get().config.rates),
+            },
             dateLabel: 'Az önce',
             icon: 'card-outline',
             route: `/booking/${id}`,
@@ -1497,7 +1520,7 @@ export const useStore = create<State>()(
                   ...b,
                   status: 'deposit_pending',
                   respondedAt: Date.now(),
-                  depositAmount: DEPOSIT_KZT,
+                  depositAmount: localDeposit(b.price, s.config.rates),
                   depositDeadline: depositDeadlineFor(b.startMs, Date.now()),
                 }
               : b,
@@ -1510,7 +1533,11 @@ export const useStore = create<State>()(
             type: 'booking',
             titleKey: 'notif.pre_approved',
             bodyKey: 'notif.pre_approved_b',
-            params: { pro: b.proName, slot: formatSlotTr(b.startMs), deposit: DEPOSIT_KZT },
+            params: {
+              pro: b.proName,
+              slot: formatSlotTr(b.startMs),
+              deposit: b.depositAmount ?? localDeposit(b.price, get().config.rates),
+            },
             dateLabel: 'Az önce',
             icon: 'card-outline',
             route: `/booking/${id}`,
@@ -2082,9 +2109,9 @@ export const useStore = create<State>()(
         }
       },
 
-      addComment: (postId, text, anonymous) => {
+      addComment: (postId, text, anonymous, proId) => {
         // §5.5 — yorum SUNUCUYA yazılır (moderasyon + diğer kullanıcılar görür)
-        void api.circleComment(postId, text, anonymous).catch(() => undefined);
+        void api.circleComment(postId, text, anonymous, proId).catch(() => undefined);
         set((s) => ({
           circlePosts: s.circlePosts.map((p) =>
             p.id === postId
@@ -2130,7 +2157,20 @@ export const useStore = create<State>()(
           ],
         }));
         const token = get().token;
-        if (token) void api.earnPoints(token, points, labelKey, detail).catch(() => undefined);
+        // SUNUCU OTORİTEDİR: kazanım kuralı ve günlük sınır sunucuda. Yerel artış
+        // yalnız anlık geri bildirim; sunucu yanıtı gelince bakiye onunla ezilir.
+        // (Sunucu sınırı aşan kazanımı sessizce atlar — bakiye şişmiş kalmasın.)
+        if (token)
+          void api
+            .earnPoints(token, labelKey, detail)
+            .then((sum) =>
+              set({
+                points: sum.points,
+                raffleEntries: sum.raffleEntries,
+                pointsSpend: sum.spend ?? null,
+              }),
+            )
+            .catch(() => undefined);
       },
 
       redeem: async (reward) => {
@@ -2143,6 +2183,7 @@ export const useStore = create<State>()(
               raffleEntries: summary.raffleEntries,
               tier: summary.tier,
               ledger: summary.ledger,
+              pointsSpend: summary.spend ?? null,
             });
             return true;
           } catch {
@@ -2296,6 +2337,7 @@ export const useStore = create<State>()(
             raffleEntries: summary.raffleEntries,
             tier: summary.tier,
             ledger: summary.ledger,
+            pointsSpend: summary.spend ?? null,
           });
         } catch {
           // sunucuya ulaşılamadı → yerel değerler korunur
@@ -2411,9 +2453,24 @@ export const selectSellerView = (s: State): boolean =>
 export const inAudience = (n: { audience?: 'user' | 'seller' }, seller: boolean): boolean =>
   n.audience === undefined || n.audience === (seller ? 'seller' : 'user');
 
-// §12.8 — komisyon oranı: Platinum üyede %8,5, diğerlerinde %10.
+// K1 — yerel kapora tutarı. Sunucu ile AYNI saf fonksiyon (@ayna/domain) ve aynı
+// admin kuralları kullanılır; aksi hâlde bildirimde "1.000 ₸" yazıp ödeme ekranında
+// başka tutar istenirdi. Config gelmemişse fonksiyonun kendi varsayılanları geçerli.
+export const localDeposit = (price: number, rates: State['config']['rates']): number =>
+  depositFor(price, {
+    pct: rates.depositPct ?? DEFAULT_DEPOSIT_RULES.pct,
+    minKzt: rates.depositMin ?? DEFAULT_DEPOSIT_RULES.minKzt,
+    maxKzt: rates.depositMax ?? DEFAULT_DEPOSIT_RULES.maxKzt,
+    stepKzt: DEFAULT_DEPOSIT_RULES.stepKzt,
+  });
+
+// §12.8 — komisyon oranı SUNUCUDAN gelir. Burada eskiden "Platinum'da %8,5"
+// vardı; sunucu komisyonu hesaplarken membershipTier'ı hiç okumuyor, yani o
+// indirim hiç uygulanmıyordu. Platinum uzman gelir raporunda %8,5 ile hesaplanmış
+// YANLIŞ bir net rakam görüyordu. Karar K6: kademeli oran matrisi uygulanana kadar
+// tek oran gösterilir.
 export const selectCommissionRate = (s: State): number =>
-  s.platinum ? COMMISSION_PCT_PLATINUM : COMMISSION_PCT_STANDARD;
+  s.config.rates.commissionPct ?? COMMISSION_PCT_STANDARD;
 
 // §11 — üyelik katmanı (upsell teşviki bunu kullanır). Primitive string → hook için güvenli.
 export const selectTier = (s: State): 'free' | 'premium' | 'platinum' =>

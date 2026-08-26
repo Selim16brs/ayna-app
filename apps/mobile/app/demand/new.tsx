@@ -10,9 +10,18 @@ import type { MessageKey } from '@ayna/i18n';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { RulesCard, Screen, ServiceChips, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import {
+  BudgetGauge,
+  PressableScale,
+  RulesCard,
+  Screen,
+  ServiceChips,
+  TAB_BAR_CLEARANCE,
+  Text,
+  TextInput,
+} from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -37,12 +46,18 @@ export default function NewDemandScreen() {
   // §12.3 — kısıtlı hesap yeni talep açamaz
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   // §12.6 — CTA'dan gelen kategori + alt hizmet ön-seçimi
-  const { category: catParam, service: svcParam } = useLocalSearchParams<{
+  const {
+    category: catParam,
+    service: svcParam,
+    note: noteParam,
+  } = useLocalSearchParams<{
     category?: string;
     service?: string;
+    // Boni'nin "talebe dönüştür" kartı kullanıcının sorusunu buraya taşır.
+    note?: string;
   }>();
   const initialCat = CATEGORIES.some((c) => c.id === catParam) ? catParam! : CATEGORIES[0]!.id;
-  const [desc, setDesc] = useState('');
+  const [desc, setDesc] = useState(typeof noteParam === 'string' ? noteParam : '');
   const [photos, setPhotos] = useState<{ uri: string; base64?: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [category, setCategory] = useState<string>(initialCat);
@@ -53,7 +68,12 @@ export default function NewDemandScreen() {
   const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
   const [preferred, setPreferred] = useState<number[]>([]);
 
-  const [market, setMarket] = useState<{ average: number; floor: number } | null>(null);
+  const [market, setMarket] = useState<{
+    average: number;
+    floor: number;
+    samples: number;
+    dynamic: boolean;
+  } | null>(null);
   // §privacy — yakın salon sıralaması için adres seçimi (varsayılan: ilk kayıtlı adres)
   const [addressId, setAddressId] = useState<string | undefined>(() => addresses[0]?.id);
 
@@ -77,7 +97,16 @@ export default function NewDemandScreen() {
     let alive = true;
     api
       .marketAverage(category, city)
-      .then((m) => alive && setMarket({ average: m.average, floor: m.floor }))
+      .then(
+        (m) =>
+          alive &&
+          setMarket({
+            average: m.average,
+            floor: m.floor,
+            samples: m.samples,
+            dynamic: m.source === 'dynamic',
+          }),
+      )
       .catch(() => alive && setMarket(null));
     return () => {
       alive = false;
@@ -127,26 +156,16 @@ export default function NewDemandScreen() {
     <Screen edges={[]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* ── Lime üst şerit ── */}
-        <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
-          <Image
-            source={require('../../assets/logo-mark.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <View style={styles.locChip}>
-            <Text variant="caption" tone="ink" style={styles.locText}>
-              {city}
-            </Text>
-            <Ionicons name="chevron-down" size={14} color={colors.ink} />
-          </View>
-        </View>
-
-        {/* ── Beyaz gövde ── */}
-        <View style={styles.sheet}>
+        {/* ═══ BAŞLIK — kanvas Dilek.dc.html §başlık ═══
+            Kanvas: AÇIK zemin, 44'lük beyaz geri düğmesi, 24px koyu başlık.
+            Önceki sürümde üstte mor bir logo bandı vardı; kanvasta yok ve
+            zemin porselen. Şehir çipi bandın içindeydi — işlev kaybolmasın
+            diye başlık satırının sağına alındı. */}
+        <View style={[styles.sheet, { paddingTop: insets.top + space(2) }]}>
           <View style={styles.titleRow}>
-            <Pressable style={styles.back} onPress={() => router.back()}>
+            <PressableScale style={styles.back} onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={22} color={colors.ink} />
-            </Pressable>
+            </PressableScale>
             <View style={styles.titleText}>
               <Text variant="display" tone="ink" style={styles.title}>
                 {t('demand.new.title')}
@@ -155,6 +174,12 @@ export default function NewDemandScreen() {
                 {t('demand.new.subtitle')}
               </Text>
             </View>
+            <PressableScale style={styles.locChip} onPress={() => router.push('/city')}>
+              <Ionicons name="location" size={13} color={colors.sage} />
+              <Text variant="caption" tone="ink" style={styles.locText}>
+                {city}
+              </Text>
+            </PressableScale>
           </View>
 
           {/* Kategori seç */}
@@ -303,18 +328,18 @@ export default function NewDemandScreen() {
               />
             </View>
           </View>
+          {/* BÜTÇE GÖSTERGESİ — hayal kırıklığı teklif beklerken değil, tutarı
+              yazarken yaşansın ki kullanıcı düzeltebilsin. Taban/ortalama gerçek
+              veriden; ortalamanın neye dayandığı da yazılı. */}
           {market ? (
-            <Text variant="caption" tone="muted" style={styles.marketHint}>
-              {t('demand.market.avg')}: ~{formatPrice(market.average)}
-            </Text>
-          ) : null}
-          {tooLow ? (
-            <View style={styles.warnBox}>
-              <Ionicons name="alert-circle-outline" size={18} color={colors.danger} />
-              <Text variant="caption" style={styles.warnText}>
-                {t('demand.market.low')}
-              </Text>
-            </View>
+            <BudgetGauge
+              budget={budgetNum}
+              average={market.average}
+              floor={market.floor}
+              samples={market.samples}
+              dynamic={market.dynamic}
+              format={formatPrice}
+            />
           ) : null}
 
           {/* Not ekle */}
@@ -454,37 +479,32 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: space(3) },
 
-    hero: {
-      backgroundColor: colors.accent,
+    locChip: {
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: space(3),
-      paddingBottom: space(3),
+      gap: 5,
+      height: 34,
+      paddingHorizontal: space(1.25),
+      borderRadius: 17,
+      backgroundColor: colors.surface,
     },
-    logo: { width: 68, height: 34 },
-    locChip: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    locText: { fontWeight: '700' },
+    locText: { fontFamily: font.semibold },
 
     sheet: {
       backgroundColor: colors.bg,
-      borderTopLeftRadius: radius.xl,
-      borderTopRightRadius: radius.xl,
-      marginTop: -space(2),
       paddingHorizontal: space(3),
-      paddingTop: space(3),
     },
     titleRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
     back: {
       width: 44,
       height: 44,
-      borderRadius: 22,
-      backgroundColor: colors.surfaceMuted,
+      borderRadius: 15,
+      backgroundColor: colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
     },
     titleText: { flex: 1 },
-    title: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.6 },
+    title: { fontSize: 30, lineHeight: 34, fontFamily: font.semibold, letterSpacing: -0.6 },
     subtitle: { marginTop: 2 },
 
     label: { marginTop: space(3), marginBottom: space(1.5) },
@@ -496,7 +516,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     durChipActive: { backgroundColor: colors.accent },
-    durText: { fontWeight: '700' },
+    durText: { fontFamily: font.semibold },
 
     catRow: { gap: space(1.5), paddingRight: space(2) },
     cat: { alignItems: 'center', width: 72, gap: space(0.75) },
@@ -563,7 +583,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: 5,
       paddingVertical: space(1),
     },
-    addrAddText: { fontWeight: '700' },
+    addrAddText: { fontFamily: font.semibold },
     flexText: { flex: 1 },
 
     budgetRow: {
@@ -581,20 +601,9 @@ const makeStyles = (colors: ColorTokens) =>
       minWidth: 130,
       textAlign: 'right',
       fontSize: 16,
-      fontWeight: '700',
+      fontFamily: font.semibold,
       color: colors.ink,
     },
-    marketHint: { marginTop: space(1), marginLeft: space(1) },
-    warnBox: {
-      flexDirection: 'row',
-      gap: space(1),
-      alignItems: 'flex-start',
-      marginTop: space(1.25),
-      backgroundColor: colors.dangerSoft,
-      borderRadius: radius.md,
-      padding: space(1.5),
-    },
-    warnText: { flex: 1, color: colors.danger, lineHeight: 18 },
 
     noteBox: {
       backgroundColor: colors.surface,
@@ -607,7 +616,7 @@ const makeStyles = (colors: ColorTokens) =>
       minHeight: 72,
       textAlignVertical: 'top',
       fontSize: 15,
-      fontWeight: '400',
+      fontFamily: font.regular,
       color: colors.ink,
     },
 
@@ -643,5 +652,5 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.accent,
     },
     ctaOff: { backgroundColor: colors.surfaceMuted },
-    ctaText: { fontWeight: '800', fontSize: 16 },
+    ctaText: { fontFamily: font.semibold, fontSize: 16 },
   });

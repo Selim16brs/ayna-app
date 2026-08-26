@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useOffers, useOffersLoading } from '../src/catalog';
 import { useLocale } from '../src/locale';
-import { radius, space, type ColorTokens } from '../src/theme';
+import { radius, space, type ColorTokens, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Screen, StackHeader, Text, ListSkeleton } from '../src/ui';
 
@@ -66,7 +66,10 @@ export default function OffersScreen() {
                   {o.lastChance ? (
                     <View style={styles.lastChance}>
                       <Ionicons name="time-outline" size={12} color={colors.danger} />
-                      <Text variant="caption" style={{ color: colors.danger, fontWeight: '800' }}>
+                      <Text
+                        variant="caption"
+                        style={{ color: colors.danger, fontFamily: font.semibold }}
+                      >
                         {t('offers.last_chance')}
                       </Text>
                     </View>
@@ -135,7 +138,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 3,
       borderRadius: radius.pill,
     },
-    badgeText: { fontWeight: '800' },
+    badgeText: { fontFamily: font.semibold },
     lastChance: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     priceRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     oldPrice: { textDecorationLine: 'line-through' },
@@ -147,5 +150,5 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 5,
       borderRadius: radius.pill,
     },
-    ctaText: { fontWeight: '800' },
+    ctaText: { fontFamily: font.semibold },
   });

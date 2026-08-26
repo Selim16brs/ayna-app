@@ -7,7 +7,7 @@ import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { activeCategories } from '../../src/taxonomy';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   Button,
@@ -404,7 +404,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       gap: space(0.5),
     },
-    igCode: { fontSize: 26, fontWeight: '900', letterSpacing: 2 },
+    igCode: { fontSize: 26, fontFamily: font.semibold, letterSpacing: 2 },
     igVerified: {
       flexDirection: 'row',
       alignItems: 'center',

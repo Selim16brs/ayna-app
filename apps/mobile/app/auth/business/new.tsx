@@ -30,7 +30,7 @@ import {
 } from '../../../src/formValidation';
 import { activeCategories } from '../../../src/taxonomy';
 import { useLocale } from '../../../src/locale';
-import { radius, space, type ColorTokens } from '../../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme-context';
 import {
   AddressPicker,
@@ -867,7 +867,7 @@ const makeStyles = (colors: ColorTokens) =>
       flex: 1,
       height: '100%',
       paddingHorizontal: space(2),
-      fontWeight: '500',
+      fontFamily: font.medium,
       fontSize: 16,
       color: colors.ink,
     },
@@ -900,7 +900,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(2),
       borderRadius: radius.lg,
       backgroundColor: colors.surfaceMuted,
-      fontWeight: '500',
+      fontFamily: font.medium,
       fontSize: 16,
       color: colors.ink,
     },
@@ -955,7 +955,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     mapBoxOn: { backgroundColor: colors.accent },
     mapText: { flex: 1 },
-    mapChange: { fontWeight: '800', textDecorationLine: 'underline' },
+    mapChange: { fontFamily: font.semibold, textDecorationLine: 'underline' },
     docRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -982,7 +982,7 @@ const makeStyles = (colors: ColorTokens) =>
     stepBarWrap: { gap: space(0.75), marginBottom: space(1.5) },
     stepBar: { flexDirection: 'row', gap: space(0.5) },
     stepSeg: { flex: 1, height: 5, borderRadius: radius.pill },
-    stepLabel: { fontWeight: '600' },
+    stepLabel: { fontFamily: font.semibold },
     navRow: { flexDirection: 'row', alignItems: 'center' },
     navSpacer: { width: space(1.5) },
     preview: {

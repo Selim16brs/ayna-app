@@ -20,7 +20,7 @@ import { CATEGORIES, type DemandRequest, formatPrice } from '../../src/data';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { sellerTrialInfo, useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
@@ -87,6 +87,12 @@ export default function SellerRequestsScreen() {
   const [note, setNote] = useState('');
   // §A2 akıllı fiyatlama — opsiyonel indirim (0/10/20/30); sebep slot yakınlığından türetilir
   const [discount, setDiscount] = useState(0);
+  // §9 — uzman teklifi verirken KOMİSYON SONRASI net kazancını görmeli. Görmezse
+  // kafasında hesaplar, yanlış fiyat verir ve sonra komisyonu sürpriz sanır.
+  const commissionPct = useStore((st) => st.config.rates.commissionPct) ?? 10;
+  const priceNum = Number(price) || 0;
+  const finalPrice = Math.round(priceNum * (1 - discount / 100));
+  const netEarn = Math.round(finalPrice * (1 - commissionPct / 100));
   // §4.1.2 — uzman KENDİ boş saatlerinden 2-3 slot seçer (elle saat yazmaz)
   const [picked, setPicked] = useState<number[]>([]);
   // Talep fotoğrafını tam ekran görüntüle (karttan ve teklif formundan)
@@ -281,6 +287,23 @@ export default function SellerRequestsScreen() {
                   keyboardType="number-pad"
                   style={styles.input}
                 />
+                {/* SANA KALAN — indirim ve komisyon düşülmüş net tutar, canlı */}
+                {priceNum > 0 ? (
+                  <View style={styles.netBox}>
+                    <View style={styles.netRow}>
+                      <Text variant="caption" tone="inkSoft" style={styles.flexOne}>
+                        {t('offer.form.net')}
+                      </Text>
+                      <Text numeric variant="title" tone="ink">
+                        {formatPrice(netEarn)}
+                      </Text>
+                    </View>
+                    <Text variant="micro" tone="muted">
+                      {fillParams(t('offer.form.net_note'), { pct: String(commissionPct) })}
+                    </Text>
+                  </View>
+                ) : null}
+
                 {/* §A2 — akıllı fiyatlama: sakin saat/son dakika indirimi (⚡Fırsat rozeti) */}
                 <Text variant="caption" tone="inkSoft" style={styles.label}>
                   {t('offer.form.discount')}
@@ -499,7 +522,7 @@ function RequestCard({
           <Ionicons name="alarm-outline" size={12} color={urgent ? colors.onColor : colors.gold} />
           <Text
             variant="caption"
-            style={{ color: urgent ? colors.onColor : colors.gold, fontWeight: '700' }}
+            style={{ color: urgent ? colors.onColor : colors.gold, fontFamily: font.semibold }}
           >
             {t('seller.requests.last')} {remainMin} {t('quotes.remain')}
           </Text>
@@ -629,7 +652,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
-    premiumCtaText: { fontWeight: '800' },
+    premiumCtaText: { fontFamily: font.semibold },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     card: {
       backgroundColor: colors.surface,
@@ -675,7 +698,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     trustChip: { backgroundColor: colors.successSoft },
-    trustText: { color: colors.success, fontWeight: '700' },
+    trustText: { color: colors.success, fontFamily: font.semibold },
     backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
     sheetScroll: { paddingBottom: space(1) },
     sheet: {
@@ -694,7 +717,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'space-between',
       marginBottom: space(1),
     },
-    sheetTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
+    sheetTitle: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.3 },
     close: {
       width: 40,
       height: 40,
@@ -704,6 +727,15 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     label: { marginTop: space(1.5), marginBottom: space(0.75) },
+    netBox: {
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.md,
+      padding: space(1.5),
+      gap: 3,
+      marginTop: space(1),
+    },
+    netRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    flexOne: { flex: 1 },
     discountRow: { flexDirection: 'row', gap: space(0.75), flexWrap: 'wrap' },
     discountChip: {
       paddingHorizontal: space(1.5),
@@ -742,5 +774,5 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surface,
     },
     slotChipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-    slotChipText: { fontWeight: '600' },
+    slotChipText: { fontFamily: font.semibold },
   });

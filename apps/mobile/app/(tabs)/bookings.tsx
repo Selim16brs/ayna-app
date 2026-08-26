@@ -13,9 +13,9 @@ import { formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, TabHero, Text } from '../../src/ui';
+import { Screen, TabHero, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 // §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş
 type Seg = 'requests' | 'upcoming' | 'past';
@@ -308,7 +308,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     tab: { flex: 1, alignItems: 'center', paddingVertical: space(1.5), gap: space(1) },
     tabText: { fontSize: 15 },
-    tabOn: { color: '#6F8C1B' },
+    tabOn: { color: '#5A2A55' },
     tabOff: { color: colors.muted },
     tabBar: {
       position: 'absolute',
@@ -316,9 +316,9 @@ const makeStyles = (colors: ColorTokens) =>
       height: 2.5,
       width: '60%',
       borderRadius: 2,
-      backgroundColor: '#6F8C1B',
+      backgroundColor: '#5A2A55',
     },
-    list: { padding: space(2.5), paddingBottom: space(13), gap: space(2) },
+    list: { padding: space(2.5), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
 
     card: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
     cardPad: {},
@@ -339,7 +339,7 @@ const makeStyles = (colors: ColorTokens) =>
     cardSub: { marginTop: 2 },
     cardPrice: { marginTop: space(0.75) },
     status: { paddingHorizontal: space(1.25), paddingVertical: 4, borderRadius: radius.pill },
-    statusText: { fontSize: 11, fontWeight: '600' },
+    statusText: { fontSize: 11, fontFamily: font.semibold },
 
     actions: { flexDirection: 'row', gap: space(1.25), marginTop: space(1.75) },
     btn: {
@@ -351,7 +351,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     btnOutline: { borderWidth: 1.25, borderColor: colors.line },
     btnFilled: { backgroundColor: colors.accent },
-    btnText: { fontSize: 13.5, fontWeight: '700' },
+    btnText: { fontSize: 13.5, fontFamily: font.semibold },
 
     demandRow: { flexDirection: 'row', gap: space(1.5), alignItems: 'center' },
     demandIcon: {
@@ -368,7 +368,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'space-between',
       marginTop: space(0.75),
     },
-    demandCta: { fontWeight: '700', color: '#6F8C1B' },
+    demandCta: { fontFamily: font.semibold, color: '#5A2A55' },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
 
     empty: {
@@ -414,5 +414,5 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.9),
       borderRadius: radius.pill,
     },
-    reviewCtaText: { fontSize: 12, fontWeight: '700' },
+    reviewCtaText: { fontSize: 12, fontFamily: font.semibold },
   });

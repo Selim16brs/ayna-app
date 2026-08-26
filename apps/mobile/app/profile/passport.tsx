@@ -6,15 +6,22 @@ import { PREMIUM_PRICE_KZT } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { api } from '../../src/api';
 import { useStore } from '../../src/store';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import {
+  Button,
+  PassportCare,
+  Screen,
+  SectionHeader,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+} from '../../src/ui';
 
-const BENEFITS: MessageKey[] = [
-  'passport.benefit.priority',
-  'passport.benefit.support',
-  'passport.benefit.raffle',
-];
+// K6 — "öncelikli randevu fırsatları" ve "öncelikli destek" KALDIRILDI:
+// ikisinin de sunucuda karşılığı yok (sıralama yalnız puana göre, ayrı bir
+// destek kuyruğu da yok). Çekiliş gerçek: loyalty.service üzerinden işliyor.
+const BENEFITS: MessageKey[] = ['passport.benefit.raffle'];
 // §5.6.2 — premium avantaj karşılaştırması (ücretsizde YOK, premiumda VAR)
 const PREMIUM_PERKS: MessageKey[] = [
   'passport.perk.boni',
@@ -49,7 +56,10 @@ export default function PassportScreen() {
   const setPremium = useStore((s) => s.setPremium);
   // §12.9 — premium fiyatı admin-parametrik (config); fetch yoksa sabit varsayılan
   const premiumPrice = useStore((s) => s.config.rates.premiumUserKzt) || PREMIUM_PRICE_KZT;
-  const trust = 92;
+  // KALDIRILDI: `const trust = 92` — sabit bir sayı, kullanıcıya hesaplanmış bir
+  // güven puanı gibi gösteriliyordu. Yerine GERÇEK veri: habersiz gelmeme sayısı.
+  // Kanvasın passport kartındaki üçlü de buydu (hizmet · gelmeme · erteleme).
+  const noShow = useStore((s) => s.bookings.filter((b) => b.status === 'no_show').length);
 
   // §11 — GERÇEK satın alma: abonelik talebi → dekont yükle → admin onayı → push → haklar açılır
   const buy = () =>
@@ -122,7 +132,7 @@ export default function PassportScreen() {
             <View style={styles.heroDivider} />
             <HeroStat value={`${reviews}`} label={t('passport.reviews')} />
             <View style={styles.heroDivider} />
-            <HeroStat value={`${trust}`} label={t('passport.trust')} />
+            <HeroStat value={`${noShow}`} label={t('passport.noshow')} />
           </View>
         </View>
 
@@ -223,6 +233,10 @@ export default function PassportScreen() {
             />
           )}
         </View>
+        {/* §19 — Passport'un ASIL içeriği: alerjiler, tercihler, erişim kaydı.
+            Ekran buraya kadar bir sadakat kartıydı; kanvasın Passport'u
+            "uzmana açtığında ne görünecek" idi. */}
+        <PassportCare />
       </ScrollView>
     </Screen>
   );
@@ -273,7 +287,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       alignSelf: 'flex-start',
     },
-    verifiedText: { fontWeight: '600' },
+    verifiedText: { fontFamily: font.semibold },
     heroStats: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -326,11 +340,11 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
-    premiumBadgeText: { fontWeight: '800' },
+    premiumBadgeText: { fontFamily: font.semibold },
     perks: { gap: space(1.25) },
     perkRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     perkText: { flex: 1 },
-    perkPremiumOnly: { fontWeight: '700' },
+    perkPremiumOnly: { fontFamily: font.semibold },
     manageLink: { alignSelf: 'center' },
     manageText: { textDecorationLine: 'underline' },
   });

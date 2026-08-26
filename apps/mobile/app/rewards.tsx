@@ -1,19 +1,24 @@
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
-  POINTS_EXPIRY_MONTHS,
+  POINTS_EXPIRY_DAYS,
   POINTS_SPEND_CAP_PCT,
+  POINTS_UNLOCK_KZT,
+  formatPrice,
   RAFFLE_COST,
   REWARDS,
   type Reward,
 } from '../src/data';
+import { api } from '../src/api';
 import { fillParams, useLocale } from '../src/locale';
 import { useStore } from '../src/store';
-import { type ColorTokens, radius, space } from '../src/theme';
+import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import type { MessageKey } from '@ayna/i18n';
-import { Progress, Screen, SectionHeader, StackHeader, Text } from '../src/ui';
+import { PressableScale, Progress, Screen, SectionHeader, StackHeader, Text } from '../src/ui';
 
 const NEXT_DRAW = '30 Haziran';
 // Keşfet canlı aksan paleti — ödül/çekiliş görsel-zengin kartlar
@@ -30,7 +35,45 @@ export default function RewardsScreen() {
   const { colors, shadow, gradients } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
+  const router = useRouter();
+  const token = useStore((st) => st.token);
+  const avatarUri = useStore((st) => st.avatarUri);
+  // Davet ödülü sunucudan — istemcide sabit tutmak, oran değişince ekranın
+  // yanlış sayı göstermesi demekti.
+  const [referralPoints, setReferralPoints] = useState<string>('');
+  useEffect(() => {
+    if (!token) return;
+    let alive = true;
+    void api
+      .referralMine(token)
+      .then((d) => {
+        if (alive) setReferralPoints(String(d.rewardPoints));
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [token]);
+
   const points = useStore((s) => s.points);
+  // K4.5 — kurallar SUNUCUDAN gelir; sunucu okunmadıysa yerel yedek kullanılır.
+  const spend = useStore((st) => st.pointsSpend);
+  const rates = useStore((st) => st.config.rates);
+  // K4.3 fiyat tavanı ile §8.4 sübvansiyon tavanının KÜÇÜĞÜ geçerli. Ekranda
+  // %25 yazıp ödeme anında %5 uygulamak, K6'da kaldırdığımız türden bir
+  // karşılıksız vaat olurdu — gerçekte uygulanan oran gösteriliyor.
+  const priceCapPct = spend?.capPct ?? rates.pointsCapPct ?? POINTS_SPEND_CAP_PCT;
+  const commissionPct = spend?.commissionPct ?? rates.commissionPct ?? 10;
+  const subsidyCapPct = spend?.subsidyCapPct ?? rates.pointsSubsidyCapPct ?? 50;
+  const capPct = Math.min(priceCapPct, (commissionPct * subsidyCapPct) / 100);
+  const unlockAt = spend?.unlockAt ?? rates.pointsUnlockKzt ?? POINTS_UNLOCK_KZT;
+  const expiryDays = spend?.expiryDays ?? rates.pointsExpiryDays ?? POINTS_EXPIRY_DAYS;
+  const earnPct = 3;
+  // Sunucu `spend` göndermiyorsa (henüz güncellenmemiş API) kilit kavramı da
+  // YOKTUR — o durumda "kilitli" göstermek yanlış olur. Ödeme kararını zaten
+  // sunucu veriyor; istemci yalnız gösteriyor.
+  const unlocked = spend ? spend.unlocked : true;
+  const remainingToUnlock = spend?.remainingToUnlock ?? Math.max(0, unlockAt + 1 - points);
   const raffleEntries = useStore((s) => s.raffleEntries);
   const tier = useStore((s) => s.tier);
   const ledger = useStore((s) => s.ledger);
@@ -98,7 +141,44 @@ export default function RewardsScreen() {
               </Text>
             </View>
           </View>
-          <Text style={styles.pointsBig}>{points}</Text>
+          {/* PUAN ÇIPLAK DURMAZ — kanvas kuralı. Kodda doğrulandı:
+              app/payment/[bookingId].tsx cashDue = amount - pointsApplied,
+              yani 1 puan = 1 ₸. Kur/çeviri yok. */}
+          <View style={styles.pointsRow}>
+            <Text style={styles.pointsBig}>{points.toLocaleString('tr-TR')}</Text>
+            <View style={styles.worth}>
+              <Text style={styles.worthValue} numeric>
+                = {formatPrice(points)}
+              </Text>
+              <Text variant="micro" tone="onColor" style={styles.dim} numberOfLines={2}>
+                {t('rewards.worth')}
+              </Text>
+            </View>
+          </View>
+          {/* K4.2 — kilit durumu puanın hemen yanında. "Puanım var ama
+              harcayamıyorum" sürprizi ödeme ekranında değil BURADA çözülür. */}
+          <View style={styles.lockRow}>
+            <Ionicons
+              name={unlocked ? 'lock-open' : 'lock-closed'}
+              size={13}
+              color={colors.onColor}
+            />
+            <Text variant="micro" tone="onColor" style={styles.dim} numberOfLines={2}>
+              {unlocked
+                ? t('rewards.unlocked')
+                : fillParams(t('rewards.locked'), {
+                    remaining: remainingToUnlock.toLocaleString('tr-TR'),
+                  })}
+            </Text>
+          </View>
+          {!unlocked ? (
+            <Progress
+              value={Math.min(1, points / Math.max(1, unlockAt))}
+              height={5}
+              color={colors.onColor}
+              track={colors.onColor + '33'}
+            />
+          ) : null}
           <View style={styles.progressWrap}>
             <Progress
               value={progress}
@@ -107,6 +187,9 @@ export default function RewardsScreen() {
               track="rgba(255,255,255,0.28)"
             />
           </View>
+          <Text variant="caption" tone="onColor" style={styles.dim}>
+            {fillParams(t('rewards.rate_note'), { cap: String(POINTS_SPEND_CAP_PCT) })}
+          </Text>
           <Text variant="caption" tone="onColor" style={styles.dim}>
             {isMaxTier
               ? t('rewards.tier.max')
@@ -186,7 +269,7 @@ export default function RewardsScreen() {
                     variant="caption"
                     style={{
                       color: affordable ? colors.onAccent : colors.muted,
-                      fontWeight: '800',
+                      fontFamily: font.semibold,
                     }}
                   >
                     {t('rewards.redeem.use')}
@@ -232,21 +315,76 @@ export default function RewardsScreen() {
           ))}
         </View>
 
-        {/* §8.1/8.2 — puan kuralları (şeffaflık) */}
+        {/* K4.5 — dört kural da kullanıcıya AÇIKÇA gösterilir. Sayılar sunucudan
+            gelir; ekranda sabit yazılı bir değer yok. */}
         <SectionHeader title={t('rewards.rules.title')} />
         <View style={[styles.group, shadow.soft]}>
-          <RuleRow icon="cash-outline" text={t('rewards.rules.earn')} />
-          <RuleRow icon="people-outline" text={t('rewards.rules.channels')} />
+          <RuleRow
+            icon="cash-outline"
+            text={fillParams(t('rewards.rules.earn'), { pct: String(earnPct) })}
+          />
+          <RuleRow
+            icon="lock-open-outline"
+            text={fillParams(t('rewards.rules.unlock'), {
+              amount: unlockAt.toLocaleString('tr-TR'),
+            })}
+          />
           <RuleRow
             icon="pie-chart-outline"
-            text={`${t('rewards.rules.cap')} (%${POINTS_SPEND_CAP_PCT})`}
+            text={fillParams(t('rewards.rules.cap'), {
+              pct: capPct.toLocaleString('tr-TR', { maximumFractionDigits: 1 }),
+            })}
           />
           <RuleRow
             icon="hourglass-outline"
-            text={`${t('rewards.rules.expire')} (${POINTS_EXPIRY_MONTHS} ay)`}
-            last
+            text={fillParams(t('rewards.rules.expire'), { days: String(expiryDays) })}
           />
+          <RuleRow icon="people-outline" text={t('rewards.rules.channels')} last />
         </View>
+
+        {/* ═══ DAVET — kanvas Puanlar.dc.html §davet ═══
+            Kanvasta vardı ama koda hiç girmemişti: puan ekranından davet
+            akışına giden yol yoktu. D9 ile ödül artık davet edilenin İLK
+            TAMAMLANMIŞ randevusuna bağlı, dolayısıyla kullanıcının bu akışı
+            bulabilmesi daha da önemli. */}
+        <SectionHeader title={t('referral.title')} />
+        <PressableScale
+          style={[styles.inviteCard, shadow.soft]}
+          onPress={() => router.push('/referral')}
+        >
+          <View style={styles.inviteTop}>
+            <View style={styles.inviteAvatar}>
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={styles.inviteAvatarImg} />
+              ) : (
+                <Ionicons name="people" size={22} color={colors.accent} />
+              )}
+            </View>
+            <View style={styles.flex1}>
+              <Text variant="title" tone="ink">
+                {t('referral.title')}
+              </Text>
+              <Text variant="caption" tone="muted" style={styles.inviteSub}>
+                {fillParams(t('referral.subtitle'), { points: referralPoints })}
+              </Text>
+            </View>
+          </View>
+          <LinearGradient
+            colors={[colors.accent, colors.ink]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.inviteCta}
+          >
+            <Ionicons name="share-social-outline" size={17} color={colors.onAccent} />
+            <Text variant="cta" tone="onAccent">
+              {t('referral.share')}
+            </Text>
+          </LinearGradient>
+          {/* Rehber okuma endişesini ÖNCEDEN yanıtla — kanvas kuralı */}
+          <Text variant="micro" tone="muted" style={styles.inviteNote}>
+            {t('referral.privacy_note')}
+          </Text>
+        </PressableScale>
 
         <View style={styles.note}>
           <Ionicons name="lock-closed" size={13} color={colors.muted} />
@@ -285,7 +423,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
     },
     raffleJoinOff: { opacity: 0.5 },
-    raffleJoinText: { color: colors.onColor, fontWeight: '800' },
+    raffleJoinText: { color: colors.onColor, fontFamily: font.semibold },
     raffleJoinSub: { color: 'rgba(255,255,255,0.9)', fontSize: 10 },
     expiryBanner: {
       flexDirection: 'row',
@@ -323,10 +461,14 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       marginBottom: space(0.5),
     },
+    lockRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space(1) },
+    pointsRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space(1.5) },
+    worth: { flex: 1, paddingBottom: space(0.75), gap: 1 },
+    worthValue: { color: '#FFFFFF', fontFamily: font.semibold, fontSize: 20, lineHeight: 25 },
     pointsBig: {
       fontSize: 46,
       lineHeight: 50,
-      fontWeight: '800',
+      fontFamily: font.semibold,
       letterSpacing: -1,
       color: colors.onColor,
       marginTop: space(0.5),
@@ -341,7 +483,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 5,
       borderRadius: radius.pill,
     },
-    tierText: { fontWeight: '700' },
+    tierText: { fontFamily: font.semibold },
     progressWrap: { marginTop: space(2), marginBottom: space(1.25) },
     raffle: {
       flexDirection: 'row',
@@ -360,7 +502,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    raffleTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
+    raffleTitle: { fontSize: 22, fontFamily: font.semibold, letterSpacing: -0.4 },
     raffleBody: { flex: 1, gap: 3 },
     group: {
       backgroundColor: colors.surface,
@@ -383,7 +525,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     rowLabel: { flex: 1, gap: 3 },
-    rowName: { fontSize: 15, fontWeight: '800', letterSpacing: -0.2 },
+    rowName: { fontSize: 15, fontFamily: font.semibold, letterSpacing: -0.2 },
     redeemBtn: {
       backgroundColor: colors.accent,
       paddingHorizontal: space(1.75),
@@ -391,6 +533,35 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     redeemBtnOff: { backgroundColor: colors.surfaceMuted },
+    flex1: { flex: 1 },
+    inviteCard: {
+      marginHorizontal: space(2.5),
+      padding: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      gap: space(1.625),
+    },
+    inviteTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
+    inviteAvatar: {
+      width: 54,
+      height: 54,
+      borderRadius: 18,
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    inviteAvatarImg: { width: 54, height: 54 },
+    inviteSub: { marginTop: 4, lineHeight: 19 },
+    inviteCta: {
+      height: 54,
+      borderRadius: 27,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space(1),
+    },
+    inviteNote: { textAlign: 'center', lineHeight: 17 },
     note: {
       flexDirection: 'row',
       alignItems: 'center',

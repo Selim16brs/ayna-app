@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text, TierUpsell } from '../../src/ui';
 
@@ -206,7 +206,12 @@ const makeStyles = (colors: ColorTokens) =>
       borderBottomLeftRadius: radius.xl,
       borderBottomRightRadius: radius.xl,
     },
-    headerTitle: { fontSize: 30, fontWeight: '800', letterSpacing: -0.5, marginTop: space(1) },
+    headerTitle: {
+      fontSize: 30,
+      fontFamily: font.semibold,
+      letterSpacing: -0.5,
+      marginTop: space(1),
+    },
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2.5),

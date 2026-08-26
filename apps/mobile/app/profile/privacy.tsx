@@ -60,16 +60,25 @@ export default function PrivacyScreen() {
   };
 
   const onDownload = () => Alert.alert(t('common.soon'));
-  const onDelete = () =>
-    Alert.alert(t('privacy.delete'), undefined, [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.delete'), style: 'destructive' },
-    ]);
+  // Hesap silme için sunucu tarafı henüz YOK. "Sil" deyip hiçbir şey yapmamak,
+  // kullanıcıya hesabını sildiğini sandırır — en kötü yalan. Durumu açıkça söylüyoruz.
+  const onDelete = () => Alert.alert(t('privacy.delete'), t('privacy.delete_note'));
 
   return (
     <Screen edges={['bottom']}>
       <StackHeader title={t('privacy.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* VAAT KARTI — gizlilik ekranı hukuk metni gibi değil, gündelik dille açılır */}
+        <View style={styles.promise}>
+          <Ionicons name="shield-checkmark-outline" size={26} color={colors.rose} />
+          <Text variant="h2" style={styles.promiseTitle}>
+            {t('privacy.promise.title')}
+          </Text>
+          <Text variant="caption" style={styles.promiseBody}>
+            {t('privacy.promise.body')}
+          </Text>
+        </View>
+
         <Text variant="body" tone="inkSoft" style={styles.subtitle}>
           {t('privacy.subtitle')}
         </Text>
@@ -99,6 +108,21 @@ export default function PrivacyScreen() {
           ))}
         </View>
 
+        {/* ANONİM YORUM — vaat değil MEKANİZMA. Buradaki üç madde kodda doğrulandı:
+            yorumda kullanıcı kimliği tutulmuyor, uzman tarihi görmüyor, silme uç
+            noktası yok (yalnız tek yanıt hakkı). Doğrulayamadığımı yazmıyorum. */}
+        <SectionHeader title={t('privacy.anon.title')} />
+        <View style={[styles.group, styles.list, shadow.soft]}>
+          {(['privacy.anon.1', 'privacy.anon.2', 'privacy.anon.3'] as const).map((k) => (
+            <View key={k} style={styles.listRow}>
+              <Ionicons name="checkmark-circle" size={17} color={colors.success} />
+              <Text variant="caption" tone="inkSoft" style={styles.listText}>
+                {t(k)}
+              </Text>
+            </View>
+          ))}
+        </View>
+
         {/* Verilerim */}
         <SectionHeader title={t('privacy.section.data')} />
         <View style={[styles.group, shadow.soft]}>
@@ -109,7 +133,12 @@ export default function PrivacyScreen() {
             <Text variant="bodyStrong" tone="ink" style={styles.actionLabel}>
               {t('privacy.download')}
             </Text>
-            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            {/* Dokunmadan önce görünsün: sunucu tarafı henüz yok. */}
+            <View style={styles.soon}>
+              <Text variant="micro" tone="muted">
+                {t('privacy.not_ready')}
+              </Text>
+            </View>
           </Pressable>
           <Pressable onPress={onDelete} style={styles.row}>
             <View style={[styles.icon, { backgroundColor: colors.dangerSoft }]}>
@@ -118,7 +147,26 @@ export default function PrivacyScreen() {
             <Text variant="bodyStrong" tone="accentFg" style={styles.actionLabel}>
               {t('privacy.delete')}
             </Text>
+            <View style={styles.soon}>
+              <Text variant="micro" tone="muted">
+                {t('privacy.not_ready')}
+              </Text>
+            </View>
           </Pressable>
+        </View>
+
+        {/* İŞ MODELİ — gizlilik ekranında gelir modelini yazmak alışılmadık;
+            güveni kuran da tam olarak bu. */}
+        <View style={styles.model}>
+          <View style={styles.modelHead}>
+            <Ionicons name="shield-checkmark-outline" size={17} color={colors.success} />
+            <Text variant="title" tone="ink">
+              {t('privacy.model.title')}
+            </Text>
+          </View>
+          <Text variant="caption" tone="inkSoft">
+            {t('privacy.model.body')}
+          </Text>
         </View>
       </ScrollView>
     </Screen>
@@ -133,6 +181,39 @@ const makeStyles = (colors: ColorTokens) =>
       paddingBottom: TAB_BAR_CLEARANCE,
     },
     subtitle: { marginBottom: space(2.5) },
+    promise: {
+      backgroundColor: colors.ink,
+      borderRadius: radius.xl,
+      padding: space(2.5),
+      gap: space(1.25),
+      marginBottom: space(2.5),
+    },
+    promiseTitle: { color: colors.bg },
+    promiseBody: { color: colors.muted },
+    list: { paddingVertical: space(1.5), gap: space(1.5) },
+    listRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space(1.25),
+      paddingHorizontal: space(2),
+    },
+    listText: { flex: 1 },
+    model: {
+      marginTop: space(3),
+      borderRadius: radius.lg,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: colors.lineStrong,
+      padding: space(2),
+      gap: space(1),
+    },
+    modelHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    soon: {
+      paddingHorizontal: space(1),
+      paddingVertical: 2,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,

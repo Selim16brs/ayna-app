@@ -1,8 +1,9 @@
+import { DEFAULT_SPEND_RULES, paymentSplit } from '@ayna/domain';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Switch, View } from 'react-native';
-import { api, type PaymentIntent } from '../../src/api';
+import { api, type PaymentIntent, type PointsSpendRules } from '../../src/api';
 import { formatPrice } from '../../src/data';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -23,11 +24,27 @@ export default function PaymentScreen() {
 
   const amount = booking?.price ?? 0;
   const [balance, setBalance] = useState(0);
+  const [spendRules, setSpendRules] = useState<PointsSpendRules | null>(null);
   const [usePoints, setUsePoints] = useState(false);
   const [paid, setPaid] = useState<PaymentIntent | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const maxPoints = useMemo(() => Math.min(Math.floor(amount * 0.5), balance), [amount, balance]);
+  // K4 — tavan ve kilit SUNUCUDAN. Burada eskiden `amount * 0.5` sabiti vardı;
+  // sunucu %25 uygularken ekran %50 gösteriyordu, yani kullanıcıya söz verilen
+  // indirim ödeme anında yarıya düşecekti. Hesap sunucuyla aynı saf fonksiyon.
+  // Sunucu kural göndermiyorsa (eski API) kilit kavramı yoktur — kilitli
+  // göstermek kullanıcının kullanabileceği puanı gizlerdi.
+  const unlocked = spendRules ? spendRules.unlocked : true;
+  const maxPoints = useMemo(
+    () =>
+      paymentSplit(amount, balance, balance, unlocked ? new Date() : null, {
+        unlockAt: spendRules?.unlockAt ?? DEFAULT_SPEND_RULES.unlockAt,
+        capPct: spendRules?.capPct ?? DEFAULT_SPEND_RULES.capPct,
+        commissionPct: spendRules?.commissionPct ?? DEFAULT_SPEND_RULES.commissionPct,
+        subsidyCapPct: spendRules?.subsidyCapPct ?? DEFAULT_SPEND_RULES.subsidyCapPct,
+      }).pointsUsed,
+    [amount, balance, unlocked, spendRules],
+  );
   const pointsApplied = usePoints ? maxPoints : 0;
   const cashDue = amount - pointsApplied;
 
@@ -39,6 +56,7 @@ export default function PaymentScreen() {
         api.paymentFor(token, bookingId),
       ]);
       setBalance(sum.points);
+      setSpendRules(sum.spend ?? null);
       if (existing?.status === 'paid') setPaid(existing);
     } catch {
       /* yut */
@@ -106,6 +124,17 @@ export default function PaymentScreen() {
                   />
                 </View>
               ) : null}
+              {/* K4.2 — puanı olup da kullanamayan kullanıcı SEBEBİNİ görmeli.
+                  Sürgünün sessizce kaybolması "puanım nerede?" sorusu üretir. */}
+              {maxPoints === 0 && balance > 0 && !unlocked ? (
+                <Text variant="caption" tone="muted" style={styles.lockNote}>
+                  {fillParams(t('rewards.rules.unlock'), {
+                    amount: (spendRules?.unlockAt ?? DEFAULT_SPEND_RULES.unlockAt).toLocaleString(
+                      'tr-TR',
+                    ),
+                  })}
+                </Text>
+              ) : null}
               {pointsApplied > 0 ? (
                 <Row
                   label={t('payment.points_applied')}
@@ -163,6 +192,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1.5),
     },
     row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    lockNote: { marginTop: 6 },
     pointsRow: {
       flexDirection: 'row',
       alignItems: 'center',

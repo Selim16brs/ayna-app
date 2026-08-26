@@ -22,7 +22,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
 import { useLocale } from '../src/locale';
-import { type ColorTokens, radius, space } from '../src/theme';
+import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import {
   PressableScale,
@@ -369,7 +369,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     chipOn: { backgroundColor: colors.accent },
-    chipOnText: { fontWeight: '700' },
+    chipOnText: { fontFamily: font.semibold },
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1),
@@ -408,9 +408,9 @@ const makeStyles = (colors: ColorTokens) =>
     },
     thumb: { width: 84, height: 84, borderRadius: radius.md, backgroundColor: colors.bgSunken },
     rowBody: { flex: 1, gap: 4 },
-    rowName: { fontSize: 16, fontWeight: '800', letterSpacing: -0.2 },
+    rowName: { fontSize: 16, fontFamily: font.semibold, letterSpacing: -0.2 },
     rowRating: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    rowRatingText: { fontWeight: '800' },
+    rowRatingText: { fontFamily: font.semibold },
     rowMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     rowMeta: { flex: 1 },
     rowRight: { alignItems: 'flex-end', justifyContent: 'center', paddingRight: space(0.5) },
@@ -420,7 +420,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
-    priceText: { fontWeight: '800' },
+    priceText: { fontFamily: font.semibold },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },
     emptyIcon: {
       width: 72,

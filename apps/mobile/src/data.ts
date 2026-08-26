@@ -927,6 +927,9 @@ export interface Appointment {
   price: number; // kaç paraya
   status: BookingStatus;
   cancelReason?: string; // §6.C — "neden gelemiyorum"
+  // §3 — iptali kim yaptı. Sunucudan gelir; istemci bunu türetmez.
+  cancelledBy?: 'customer' | 'provider' | 'admin' | 'system';
+  cancelledAt?: number;
   reviewed?: boolean;
 }
 
@@ -1894,15 +1897,19 @@ export const SEED_SUPPLIER_ADS: SupplierAd[] = [
 // ── Sadakat: kazanım/harcama defteri + çekiliş + ödüller ─────────────────
 // §8.2 — çekiliş bilet maliyeti + puan harcama tavanı. PARAMETRİK (admin panel).
 export const RAFFLE_COST = 500;
-export const POINTS_SPEND_CAP_PCT = 50; // bir ödemenin en fazla %50'si puanla
-export const POINTS_EXPIRY_MONTHS = 12; // 12 ay hareketsizse yanar
+// K4 — para puan modeli. Bunlar YALNIZ sunucu config'i gelmezse kullanılan yedek
+// değerlerdir; gerçek kaynak config.rates.
+export const POINTS_SPEND_CAP_PCT = 25; // K4.3 — bir ödemenin en fazla %25'i puanla
+export const POINTS_UNLOCK_KZT = 5_000; // K4.2 — kullanım bu bakiyeden sonra açılır
+export const POINTS_EXPIRY_DAYS = 90; // K4.4 — kazanılan puan 90 günde yanar
 // §2/§5.6.2 — kullanıcı premium aylık bedeli. PARAMETRİK (admin panel).
 export const PREMIUM_PRICE_KZT = 999;
 // §11 — Platinum paket (Premium üstü): tüm premium + Always (sadık müşteri bağı) + toplu bildirim.
 export const PLATINUM_PRICE_KZT = 1999;
-// §12.8 — komisyon oranı pakete göre: standart %10, Platinum %8,5.
+// §12.8 — komisyon oranı. Yalnız sunucu fetch'i başarısız olursa kullanılan yedek;
+// gerçek değer config.rates.commissionPct. Pakete göre kademeli oran (K6/D4) henüz
+// sunucuda yok — olmayan bir indirimi burada göstermiyoruz.
 export const COMMISSION_PCT_STANDARD = 10;
-export const COMMISSION_PCT_PLATINUM = 8.5;
 
 // §11 — ALWAYS: uzman/salon ↔ müşteri KARŞILIKLI (iki taraf onaylı) sadık-müşteri bağı.
 // İstek tek taraf açar, karşı taraf kabul edince 'accepted' olur (Instagram takip / FB arkadaşlık gibi).

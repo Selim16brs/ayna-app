@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
@@ -116,7 +116,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderWidth: 1.25,
       borderColor: colors.line,
     },
-    removeText: { fontWeight: '700' },
+    removeText: { fontFamily: font.semibold },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1.5) },
     emptyIcon: {
       width: 72,

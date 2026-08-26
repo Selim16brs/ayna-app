@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap">
+  <style>
+    body { margin: 0; font-family: "Onest", -apple-system, system-ui, sans-serif; background: #FBF8F6; }
+    a { color: #5A2A55; } a:hover { color: #431F3F; }
+    * { box-sizing: border-box; }
+    .h { font-family: "Onest", system-ui, sans-serif; font-weight: 600; letter-spacing: -0.4px; }
+    .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+    .sq { border-radius: 30px; corner-shape: superellipse(4); }
+    .sq-sm { border-radius: 20px; corner-shape: superellipse(4); }
+    .sq-xs { border-radius: 14px; corner-shape: superellipse(4); }
+    .card { background: #FFFFFF; box-shadow: 0 6px 20px rgba(90,42,85,0.13), 0 1px 3px rgba(90,42,85,0.07); }
+    .lbl { font-size: 11px; font-weight: 600; letter-spacing: 1.1px; text-transform: uppercase; color: #8F868C; }
+    .them { max-width: 278px; background: #FFFFFF; border-radius: 22px 22px 22px 6px; corner-shape: superellipse(4); padding: 13px 16px; box-shadow: 0 4px 14px rgba(90,42,85,0.10), 0 1px 3px rgba(90,42,85,0.06); }
+    .me { max-width: 278px; background: #261F25; border-radius: 22px 22px 6px 22px; corner-shape: superellipse(4); padding: 13px 16px; }
+    .sys { font-size: 12px; font-weight: 600; color: #8F868C; text-align: center; }
+    .pill { height: 40px; padding: 0 14px; border-radius: 20px; display: flex; align-items: center; font-size: 14px; font-weight: 600; background: #F5E6EB; box-shadow: inset 0 0 0 1.5px #E8D5DD; color: #564E56; flex-shrink: 0; }
+    .rise { animation: rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+    @keyframes rise { from { opacity: 0; transform: translate3d(0,16px,0); } to { opacity: 1; transform: none; } }
+    .live { animation: live 2.4s ease-in-out infinite; }
+    @keyframes live { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(0.82); } }
+    @media (prefers-reduced-motion: reduce) { .rise,.live { animation: none !important; } }
+  </style>
+</helmet>
+
+<div style="width: 390px; min-height: 2400px; background: #FBF8F6; padding: 0 0 30px 0; display: flex; flex-direction: column">
+
+  <!-- başlık -->
+  <div style="padding: 18px 20px 14px 20px; display: flex; align-items: center; gap: 11px">
+    <div class="sq-xs" style="width: 42px; height: 42px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(90,42,85,0.13); flex-shrink: 0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#261F25" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5L8 12l6.5 6.5"/></svg>
+    </div>
+    <div style="width: 48px; height: 48px; border-radius: 16px; corner-shape: superellipse(4); overflow: hidden; background: #EFE4E9; flex-shrink: 0">
+      <img src="./expert-a.jpg" style="width: 100%; height: 100%; object-fit: cover; display: block">
+    </div>
+    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+      <div style="display: flex; align-items: center; gap: 6px">
+        <span class="h" style="font-size: 20px; color: #261F25">Зарина К.</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.6" fill="#547565"/><path d="M8.3 12.3l2.6 2.5 4.9-5.1" stroke="#FFF" stroke-width="2.3" stroke-linecap="round" fill="none"/></svg>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px">
+        <span class="live" style="width: 6px; height: 6px; border-radius: 3px; background: #547565"></span>
+        <span style="font-size: 12px; color: #6F666C; font-weight: 500">обычно отвечает за 40 минут</span>
+      </div>
+    </div>
+    <div class="sq-xs" style="width: 42px; height: 42px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(90,42,85,0.13); flex-shrink: 0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#453B45" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="5.6" r="1.1"/><circle cx="12" cy="12" r="1.1"/><circle cx="12" cy="18.4" r="1.1"/></svg>
+    </div>
+  </div>
+
+  <!-- randevu bağlamı -->
+  <div style="padding: 0 20px">
+    <div class="card sq-sm rise" style="padding: 13px 15px; display: flex; align-items: center; gap: 11px">
+      <div class="sq-xs" style="width: 46px; height: 46px; background: #F5E6EB; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#6F666C" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="15" rx="3"/><path d="M8.5 3.2v4M15.5 3.2v4M4 10.5h16"/></svg>
+      </div>
+      <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0">
+        <span class="h" style="font-size: 16px; color: #261F25">Каскад · сегодня 16:30</span>
+        <span class="num" style="font-size: 12px; color: #5A2A55; font-weight: 600">предоплата 1 800 ₸ получена</span>
+      </div>
+      <span style="font-size: 14px; font-weight: 600; color: #5A2A55; flex-shrink: 0">Запись</span>
+    </div>
+  </div>
+
+  <!-- sohbet -->
+  <div style="padding: 18px 20px 0 20px; display: flex; flex-direction: column; gap: 12px">
+
+    <span class="sys">Вчера</span>
+
+    <div style="display: flex; justify-content: flex-end">
+      <div class="me rise">
+        <span style="font-size: 16px; line-height: 24px; color: #FBF8F6; font-weight: 400">Здравствуйте! Записалась на завтра. Можно уточнить — приходить с чистой головой?</span>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-start">
+      <div class="them rise" style="animation-delay: 60ms">
+        <span style="font-size: 16px; line-height: 24px; color: #261F25; font-weight: 400">Здравствуйте, Асель! Помою сама, приходите как удобно. Если волосы в укладке — тоже не страшно.</span>
+      </div>
+    </div>
+
+    <!-- fotoğraf -->
+    <div style="display: flex; justify-content: flex-end">
+      <div class="rise" style="max-width: 210px; animation-delay: 100ms; display: flex; flex-direction: column; gap: 6px">
+        <div style="width: 210px; height: 150px; border-radius: 22px 22px 6px 22px; corner-shape: superellipse(4); overflow: hidden; background: #EFE4E9">
+          <img src="./hair.jpg" style="width: 100%; height: 100%; object-fit: cover; display: block">
+        </div>
+        <span style="font-size: 12px; color: #8F868C; font-weight: 500; text-align: right">видно только вам двоим</span>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end">
+      <div class="me rise" style="animation-delay: 130ms">
+        <span style="font-size: 16px; line-height: 24px; color: #FBF8F6; font-weight: 400">Вот примерно так хочу 🙏</span>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-start">
+      <div class="them rise" style="animation-delay: 160ms">
+        <span style="font-size: 16px; line-height: 24px; color: #261F25; font-weight: 400">Отличная форма, вам пойдёт. На ваших волосах сделаю чуть мягче переход у лица.</span>
+      </div>
+    </div>
+
+    <span class="sys">Сегодня</span>
+
+    <!-- sistem: passport -->
+    <div class="rise" style="display: flex; align-items: center; gap: 9px; padding: 11px 14px; background: #FBF8F6; border-radius: 16px; animation-delay: 190ms">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5A2A55" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><path d="M12 3.2l7 3v5.4c0 4.2-2.9 7.5-7 9.2-4.1-1.7-7-5-7-9.2V6.2z"/><path d="M9.2 12.2l2 2 3.6-3.9"/></svg>
+      <span style="font-size: 14px; line-height: 21px; color: #564E56; font-weight: 500; flex-grow: 1">Ты открыла паспорт для Зарины · закроется завтра в 17:30</span>
+    </div>
+
+    <div style="display: flex; justify-content: flex-start">
+      <div class="them rise" style="animation-delay: 220ms">
+        <span style="font-size: 16px; line-height: 24px; color: #261F25; font-weight: 400">Увидела про аммиак — учту, у меня есть безаммиачная линия. Спасибо, что предупредили.</span>
+      </div>
+    </div>
+
+    <!-- riskli mesaj + koruma -->
+    <div style="display: flex; justify-content: flex-start">
+      <div class="them rise" style="animation-delay: 250ms">
+        <span style="font-size: 16px; line-height: 24px; color: #261F25; font-weight: 400">Кстати, давайте дальше в WhatsApp — там удобнее. И остаток можете скинуть мне на Kaspi заранее, номер ····</span>
+      </div>
+    </div>
+
+    <div class="card sq rise" style="padding: 16px; display: flex; flex-direction: column; gap: 13px; animation-delay: 280ms; border: 2px solid #EDC3CA">
+      <div style="display: flex; align-items: center; gap: 9px">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#B44252" stroke-width="2.1" stroke-linecap="round"><path d="M12 3.4l8.4 15.2H3.6z"/><path d="M12 9.6v4M12 16.4v.1"/></svg>
+        <span class="h" style="font-size: 17px; color: #93303F; flex-grow: 1">Осторожно с этим</span>
+      </div>
+      <span style="font-size: 15px; line-height: 23px; color: #453B45; font-weight: 400">Номер скрыт не просто так. Если перевести деньги вне AYNA, мы не сможем ни вернуть их, ни подтвердить, что ты платила — защита работает только внутри.</span>
+      <div style="display: flex; flex-direction: column; gap: 9px; padding: 13px 14px; background: #FBF8F6; border-radius: 18px; corner-shape: superellipse(4)">
+        <div style="display: flex; align-items: flex-start; gap: 9px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink: 0; margin-top: 2px"><circle cx="12" cy="12" r="8.6" fill="#547565"/><path d="M8.3 12.3l2.6 2.5 4.9-5.1" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>
+          <span style="font-size: 14px; line-height: 21px; color: #453B45; font-weight: 500">Остаток 7 200 ₸ платится на месте, после услуги</span>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 9px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink: 0; margin-top: 2px"><circle cx="12" cy="12" r="8.6" fill="#547565"/><path d="M8.3 12.3l2.6 2.5 4.9-5.1" stroke="#FFF" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg>
+          <span style="font-size: 14px; line-height: 21px; color: #453B45; font-weight: 500">Переписку здесь мы сохраняем — она пригодится в споре</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 9px">
+        <div style="flex-grow: 1; height: 52px; border-radius: 26px; background: #F5E6EB; box-shadow: inset 0 0 0 1.5px #E8D5DD; display: flex; align-items: center; justify-content: center">
+          <span class="h" style="font-size: 15px; color: #564E56; font-weight: 600">Понятно</span>
+        </div>
+        <div style="flex-grow: 1; height: 52px; border-radius: 26px; background: #F7E4E7; display: flex; align-items: center; justify-content: center">
+          <span class="h" style="font-size: 15px; color: #93303F; font-weight: 600">Пожаловаться</span>
+        </div>
+      </div>
+      <span style="font-size: 12px; line-height: 19px; color: #8F868C; font-weight: 400">Жалоба уходит нам, а не мастеру. Она не узнает, что ты пожаловалась.</span>
+    </div>
+
+    <!-- hızlı yanıt -->
+    <div style="display: flex; justify-content: flex-end">
+      <div class="me rise" style="animation-delay: 320ms">
+        <span style="font-size: 16px; line-height: 24px; color: #FBF8F6; font-weight: 400">Давайте останемся здесь, мне так спокойнее 🤍 Остаток заплачу на месте.</span>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-start">
+      <div class="them rise" style="animation-delay: 350ms">
+        <span style="font-size: 16px; line-height: 24px; color: #261F25; font-weight: 400">Конечно, как вам удобно! Жду в 16:30 🤍</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- giriş alanı -->
+  <div style="padding: 20px 20px 0 20px; display: flex; flex-direction: column; gap: 11px">
+    <div style="display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px">
+      <span class="pill">Опаздываю на 10 минут</span>
+      <span class="pill">Как добраться?</span>
+      <span class="pill">Спасибо!</span>
+    </div>
+    <div class="card" style="height: 60px; border-radius: 30px; padding: 0 8px 0 18px; display: flex; align-items: center; gap: 10px">
+      <span style="font-size: 16px; color: #8F868C; font-weight: 400; flex-grow: 1">Сообщение…</span>
+      <div style="width: 46px; height: 46px; border-radius: 16px; background: #F5E6EB; box-shadow: inset 0 0 0 1.5px #E8D5DD; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#564E56" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="6" width="15" height="12" rx="2.6"/><circle cx="12" cy="12" r="3.1"/></svg>
+      </div>
+      <div style="width: 46px; height: 46px; border-radius: 16px; background: linear-gradient(135deg, #6B3465, #5A2A55); display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#FBF8F6" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5.5M6 11.5L12 5.5l6 6"/></svg>
+      </div>
+    </div>
+    <span style="font-size: 12px; line-height: 19px; color: #8F868C; font-weight: 400; text-align: center">Твой номер телефона мастер не видит и не увидит. Переписка хранится год, потом стирается.</span>
+  </div>
+
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

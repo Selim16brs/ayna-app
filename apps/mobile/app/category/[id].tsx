@@ -8,7 +8,7 @@ import { categoryLabelKey } from '../../src/data';
 import { useProfessionals } from '../../src/catalog';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, ServiceCards, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 import { ProRow } from '../search';
@@ -204,7 +204,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
     },
     sortChipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-    sortOnText: { fontWeight: '700' },
+    sortOnText: { fontFamily: font.semibold },
 
     list: { gap: space(1.5) },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },

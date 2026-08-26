@@ -1,3 +1,4 @@
+import { grantCompletionRewards } from '../loyalty/completion-rewards';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
@@ -88,14 +89,21 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
     // 3) Faz 2 — teyit penceresi dolan 'tamamlandı' beyanları otomatik kesinleşir
     const finalize = await this.prisma.booking.findMany({
       where: { status: 'completed_pending', finalizeDeadline: { lt: now } },
-      select: { id: true, userId: true },
+      select: { id: true, userId: true, price: true },
       take: 200,
     });
     if (finalize.length) {
       await this.prisma.booking.updateMany({
         where: { id: { in: finalize.map((b) => b.id) } },
-        data: { status: 'completed' },
+        // §12.8 — bu yol transition()'ı ATLIYOR (updateMany). Tamamlanma anı
+        // burada da yazılmazsa o randevular hiçbir komisyon dönemine düşmez.
+        data: { status: 'completed', completedAt: now },
       });
+      // K4.1 geri kazanım + D9 referans ödülü. İki kez yazılmaz: müşteri teyidi
+      // yoluyla zaten yazılmışsa her iki ödül de atlanır.
+      await grantCompletionRewards(this.prisma, finalize).catch((e: unknown) =>
+        this.log.error(`ödüller yazılamadı: ${e instanceof Error ? e.message : String(e)}`),
+      );
       for (const b of finalize) {
         if (!b.userId) continue;
         void this.push

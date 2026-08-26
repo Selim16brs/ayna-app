@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocale } from '../locale';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { type ColorTokens, radius, space } from '../theme';
+import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -87,7 +87,7 @@ const makeStyles = (colors: ColorTokens) =>
     title: {
       fontSize: 28,
       lineHeight: 32,
-      fontWeight: '800',
+      fontFamily: font.semibold,
       letterSpacing: -0.5,
       marginTop: space(1.5),
     },

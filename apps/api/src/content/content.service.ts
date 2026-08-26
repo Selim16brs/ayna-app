@@ -1,3 +1,4 @@
+import { grantPoints } from '../loyalty/loyalty.grant';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Prisma } from '@prisma/client';
@@ -218,14 +219,12 @@ export class ContentService {
       },
     });
     if (app.userId) {
-      await this.prisma.loyaltyEntry.create({
-        data: {
-          userId: app.userId,
-          kind: 'earn',
-          reason: 'rewards.earn.blog',
-          detail: app.title,
-          points,
-        },
+      // Son kullanma tarihi grantPoints tarafından konur (eskiden hiç konmuyordu).
+      await grantPoints(this.prisma, {
+        userId: app.userId,
+        reason: 'rewards.earn.blog',
+        detail: app.title,
+        points,
       });
     }
     const updated = await this.prisma.blogApplication.update({

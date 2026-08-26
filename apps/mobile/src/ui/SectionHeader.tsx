@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { space, type ColorTokens } from '../theme';
+import { space, type ColorTokens, font } from '../theme';
 import { useLocale } from '../locale';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
@@ -40,6 +40,6 @@ const makeStyles = (_colors: ColorTokens) =>
       marginTop: space(3.5),
       marginBottom: space(1.75),
     },
-    title: { fontSize: 20, fontWeight: '800', letterSpacing: -0.4 },
+    title: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.4 },
     seeAll: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   });

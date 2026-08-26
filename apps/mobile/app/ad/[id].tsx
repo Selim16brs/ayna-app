@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Image, Linking, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useLocale } from '../../src/locale';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
@@ -149,7 +149,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     sponsorText: { color: 'rgba(255,255,255,0.9)', fontSize: 9, letterSpacing: 0.3 },
     heroInfo: { padding: space(3), gap: 4 },
-    heroBrand: { color: 'rgba(255,255,255,0.85)', fontWeight: '700', letterSpacing: 0.3 },
+    heroBrand: { color: 'rgba(255,255,255,0.85)', fontFamily: font.semibold, letterSpacing: 0.3 },
     heroTitle: { color: '#FFFFFF', letterSpacing: -0.4 },
     body: { paddingHorizontal: space(3), paddingTop: space(2.5) },
     offer: {

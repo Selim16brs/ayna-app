@@ -1,21 +1,34 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
-import { useLocale } from '../locale';
-import { useStore } from '../store';
-import { type ColorTokens, radius, space } from '../theme';
+import { fillParams, useLocale } from '../locale';
+import { localDeposit, useStore } from '../store';
+import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
 // §B5 (ayna2) — iptal politikası şeffaflığı: kapora/iptal/no-show kuralları talep ve
 // randevu ekranlarında STANDART kartla her zaman görünür (sürpriz yok → itiraz yok).
-export function RulesCard() {
+// `price` verilirse O randevunun gerçek kaporası yazılır; verilmezse kural
+// (yüzde + alt/üst sınır) yazılır. Eskiden her iki durumda da sabit "1.000 ₸"
+// gösteriliyordu — kapora oranlı hâle gelince bu doğrudan yanlış bilgi olurdu.
+export function RulesCard({ price }: { price?: number }) {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const rates = useStore((s) => s.config.rates);
 
+  const kzt = (n: number) => `${n.toLocaleString('tr-TR')} ₸`;
+  const depositLine =
+    price && price > 0
+      ? kzt(localDeposit(price, rates))
+      : fillParams(t('rules.deposit_rule'), {
+          pct: String(rates.depositPct ?? 10),
+          min: kzt(rates.depositMin ?? 1000),
+          max: kzt(rates.depositMax ?? 5000),
+        });
+
   const rows = [
-    `${t('rules.deposit')}: ${rates.depositKzt.toLocaleString('tr-TR')} ₸`,
+    `${t('rules.deposit')}: ${depositLine}`,
     `${t('rules.cancel_a')} ${rates.cancelWindowH} ${t('rules.cancel_b')}`,
     t('rules.noshow'),
   ];
@@ -50,7 +63,7 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(2),
     },
     head: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    title: { fontWeight: '800' },
+    title: { fontFamily: font.semibold },
     row: { flexDirection: 'row', alignItems: 'flex-start', gap: space(1) },
     dot: {
       width: 5,

@@ -27,11 +27,30 @@ export interface LoyaltyTier {
   progress: number;
 }
 
+// K4 — para puan kuralları sunucudan gelir; istemci kendi sabitini kullanmaz.
+export interface PointsSpendRules {
+  /** Kilit açıldı mı (bakiye eşiği bir kez geçti mi). */
+  unlocked: boolean;
+  /** Kullanımın açıldığı bakiye eşiği (₸). */
+  unlockAt: number;
+  /** Kilit kapalıysa açılmaya kalan puan. */
+  remainingToUnlock: number;
+  /** Bir ödemenin puanla kapatılabilecek azami yüzdesi. */
+  capPct: number;
+  /** Kazanılan puanın ömrü (gün). */
+  expiryDays: number;
+  /** Komisyon oranı (%) — sübvansiyon tavanını hesaplamak için. */
+  commissionPct: number;
+  /** §8.4 — indirim, net komisyonun en çok yüzde kaçı olabilir. */
+  subsidyCapPct: number;
+}
+
 export interface LoyaltySummary {
   points: number;
   raffleEntries: number;
   tier: LoyaltyTier;
   ledger: LedgerEntry[];
+  spend: PointsSpendRules;
 }
 
 export interface AiQuota {
@@ -624,9 +643,14 @@ export const api = {
 
   // Ortalama piyasa fiyatı + %40 alt sınır (Build Brief §1.3)
   marketAverage: (category: string, city: string) =>
-    get<{ category: string; average: number; floor: number; currency: string; source: string }>(
-      `/market/average?category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}`,
-    ),
+    get<{
+      category: string;
+      average: number;
+      floor: number;
+      currency: string;
+      source: 'dynamic' | 'seed';
+      samples: number;
+    }>(`/market/average?category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}`),
 
   // Puanlama (§1.8 çift-kör + §6.D yanıt/kalıcılık)
   // Gizlilik: authorLabel kimlik değildir; Rating'de kullanıcı kimliği tutulmaz
@@ -663,8 +687,14 @@ export const api = {
 
   // Sadakat (kullanıcıya bağlı; bakiye sunucuda defterden türetilir)
   loyalty: (token: string) => get<LoyaltySummary>('/loyalty', token),
-  earnPoints: (token: string, points: number, reason: string, detail?: string) =>
-    post<LoyaltySummary>('/loyalty/earn', { points, reason, detail }, token),
+  /**
+   * Puan kazanımı bildirir. TUTARI SUNUCU BELİRLER — istemci `points` GÖNDERMEZ.
+   * (Eskiden gönderiyordu ve sunucu doğrulamasız yazıyordu: her kullanıcı
+   * sınırsız puan basabiliyordu. Kural tablosu artık sunucuda.)
+   * Yerel iyimser artış, bir sonraki hydrate'te sunucu bakiyesiyle düzeltilir.
+   */
+  earnPoints: (token: string, reason: string, detail?: string) =>
+    post<LoyaltySummary>('/loyalty/earn', { reason, detail }, token),
   redeemReward: (token: string, rewardId: string) =>
     post<LoyaltySummary>('/loyalty/redeem', { rewardId }, token),
 
@@ -748,8 +778,17 @@ export const api = {
     }>('/circle/follows'),
   circleHelpful: (postId: string, on: boolean) =>
     post<{ helpful: number }>(`/circle/posts/${postId}/helpful`, { on }),
-  circleComment: (postId: string, text: string, anonymous: boolean) =>
-    post<unknown>(`/circle/posts/${postId}/comments`, { text, anonymous }),
+  // Bir gönderinin yorumları. Anonim yorumda userId dışarı verilmez.
+  circleComments: (postId: string) => get<CircleCommentRow[]>(`/circle/posts/${postId}/comments`),
+
+  // proId: cevapta bir uzman öneriliyorsa kime işaret ettiği. Doğrulamayı
+  // SUNUCU yapar (öneren o uzmanda tamamlanmış randevusu var mı) ve dondurur.
+  circleComment: (postId: string, text: string, anonymous: boolean, proId?: string) =>
+    post<{ id: string; proVerified: boolean }>(`/circle/posts/${postId}/comments`, {
+      text,
+      anonymous,
+      proId,
+    }),
   createCirclePost: (
     token: string,
     input: { category: string; text: string; anonymous?: boolean },
@@ -757,6 +796,29 @@ export const api = {
     post<{ id: string; status: string; moderationReason: string }>('/circle/posts', input, token),
   reportCirclePost: (token: string, id: string, reason?: string) =>
     post<{ reports: number; hidden: boolean }>(`/circle/posts/${id}/report`, { reason }, token),
+  // §21 — Kullanıcı şikâyeti. ŞİKÂYET EDİLEN BUNU GÖREMEZ: sunucuda hedefe dönen
+  // ne bildirim ne okuma ucu var. Misilleme korkusu, şikâyetin önündeki asıl engel.
+  reportUser: (
+    token: string,
+    input: { targetId: string; reason: string; note?: string; threadId?: string },
+  ) => post<{ id: string; deduped: boolean }>('/reports', input, token),
+
+  // §19 — AYNA Passport: alerjiler + tercihler + erişim kaydı
+  passport: (token: string) => get<PassportData>('/passport', token),
+  savePassport: (token: string, input: Partial<PassportData>) =>
+    post<PassportData>('/passport', input, token),
+  passportAccess: (token: string) => get<PassportAccessRow[]>('/passport/access', token),
+  grantPassport: (token: string, proId: string, bookingId?: string) =>
+    post<{ id: string; expiresAt: string }>('/passport/grant', { proId, bookingId }, token),
+  revokePassportAccess: (token: string, id: string) =>
+    post<{ ok: boolean }>(`/passport/access/${id}/revoke`, {}, token),
+
+  // §14 — W2W fikir birliği: bir sorunun cevaplarında kimi kaç KİŞİ önerdi
+  circleConsensus: (postId: string) =>
+    get<{ voters: number; items: { proId: string; count: number }[] }>(
+      `/circle/posts/${postId}/consensus`,
+    ),
+
   // EK Z.1 — DM mesajlaşma (müşteri ↔ uzman/salon; moderasyon + numara maskeleme backend'de)
   conversations: (token: string) => get<ConversationSummary[]>('/messaging/conversations', token),
   startConversation: (
@@ -804,11 +866,12 @@ export const api = {
   // EK Z.6 — müşteri referans programı
   referralMine: (token: string) => get<MyReferral>('/referral/mine', token),
   redeemReferral: (token: string, code: string) =>
-    post<{ ok: boolean; pointsAwarded: number; referrerName: string }>(
-      '/referral/redeem',
-      { code },
-      token,
-    ),
+    post<{
+      ok: boolean;
+      pointsAwarded: number;
+      pointsPending: number;
+      referrerName: string;
+    }>('/referral/redeem', { code }, token),
   // EK Z.8 — in-app Kaspi ödeme (simülasyon)
   paymentFor: (token: string, bookingId: string) =>
     get<PaymentIntent | null>(`/payment/mine?bookingId=${encodeURIComponent(bookingId)}`, token),
@@ -876,6 +939,37 @@ export interface SafetySession {
 }
 
 // EK Z.1 — DM mesajlaşma tipleri
+export interface CircleCommentRow {
+  id: string;
+  /** Kimlik DEĞİL, yalnız etiket ("Anonim" / "AYNA Üyesi"). */
+  authorLabel: string;
+  text: string;
+  proId: string | null;
+  /** Öneren kişinin o uzmanda tamamlanmış randevusu var mıydı (yazma anında donduruldu). */
+  proVerified: boolean;
+  createdAt: string;
+}
+
+export interface PassportData {
+  allergies: string[];
+  quietVisit: boolean;
+  noPhotos: boolean;
+  notifyLate: boolean;
+  womenOnly: boolean;
+  traits: Record<string, string>;
+}
+
+export interface PassportAccessRow {
+  id: string;
+  proId: string;
+  bookingId: string | null;
+  grantedAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  /** Uzman gerçekten baktıysa dolu — "açıldı" ile "bakıldı" aynı şey değil. */
+  lastViewAt: string | null;
+}
+
 export interface ConversationSummary {
   id: string;
   otherId: string;
@@ -943,9 +1037,16 @@ export interface AppConfig {
   rates: {
     commissionPct: number;
     depositKzt: number;
+    depositPct: number;
+    depositMin: number;
+    depositMax: number;
+    holdMinutes: number;
     cancelWindowH: number;
     lateCancelPct: number;
     pointsCapPct: number;
+    pointsUnlockKzt: number;
+    pointsExpiryDays: number;
+    pointsSubsidyCapPct: number;
     premiumUserKzt: number;
     premiumSalonKzt: number;
     raffleCost: number;

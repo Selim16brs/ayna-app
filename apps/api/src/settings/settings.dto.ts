@@ -3,10 +3,42 @@ import { z } from 'zod';
 // §12.9 — parametrik oranlar (hepsi tam sayı; ₸/%/saat/puan)
 export const RATE_DEFS = [
   { key: 'commission.rate', label: 'Komisyon oranı', suffix: '%', default: 10 },
-  { key: 'rate.deposit_kzt', label: 'Depozito tutarı', suffix: '₸', default: 1000 },
+  // K1 — kapora oranlı: clamp(round100(fiyat × pct), min, max). Üç anahtar da
+  // koda gömülü DEĞİL; hesap `@ayna/domain` → `depositFor` içinde tek yerde.
+  // Bu anahtarlar kodda zaten okunuyordu ama panelde YOKTU — yani yönetilebilir
+  // görünen bir değer aslında hiç değiştirilemiyordu. Artık panelde de var.
+  { key: 'rate.deposit_pct', label: 'Kapora oranı', suffix: '%', default: 10 },
+  { key: 'rate.deposit_min', label: 'Kapora alt sınırı', suffix: '₸', default: 1000 },
+  { key: 'rate.deposit_max', label: 'Kapora üst sınırı', suffix: '₸', default: 5000 },
+  // Eski düz tutar. Hesapta artık yalnız alt sınır yedeği; yeni kurulumda
+  // `rate.deposit_min` bunu ezer. Panelde kalıyor ki eski değer görünür olsun.
+  { key: 'rate.deposit_kzt', label: 'Kapora (eski sabit tutar)', suffix: '₸', default: 1000 },
   { key: 'rate.cancel_window_h', label: 'Ücretsiz iptal penceresi', suffix: 'saat', default: 3 },
+  // §7.8 — aynı randevuda ücretsiz erteleme hakkı (0 = kapalı)
+  { key: 'policy.free_reschedules', label: 'Ücretsiz erteleme hakkı', suffix: 'adet', default: 1 },
+  // K5 — komisyon vadesinden sonra kısıtlamaya kadar tanınan süre
+  {
+    key: 'rate.commission_grace_minutes',
+    label: 'Komisyon gecikme payı',
+    suffix: 'dk',
+    default: 45,
+  },
+  // §5.3 — hold ve yanıt pencereleri (slotu doğrudan etkiler)
+  { key: 'policy.hold_minutes', label: 'Kapora (slot tutma) süresi', suffix: 'dk', default: 180 },
+  { key: 'policy.response_hours', label: 'Uzman yanıt süresi', suffix: 'saat', default: 6 },
   { key: 'rate.late_cancel_pct', label: 'Geç iptal / no-show cezası', suffix: '%', default: 3 },
-  { key: 'rate.points_cap_pct', label: 'Puan harcama tavanı', suffix: '%', default: 50 },
+  // K4 — para puan modeli
+  { key: 'rate.points_cap_pct', label: 'Puan harcama tavanı', suffix: '%', default: 25 },
+  { key: 'rate.points_unlock_kzt', label: 'Puan kullanım eşiği', suffix: '₸', default: 5000 },
+  { key: 'rate.points_expiry_days', label: 'Puan ömrü', suffix: 'gün', default: 90 },
+  { key: 'rate.points_earn_pct', label: 'Hizmetten geri kazanım', suffix: '%', default: 3 },
+  // §8.4 — indirim, o randevunun net komisyonunun en çok yüzde kaçı olabilir
+  {
+    key: 'rate.points_subsidy_cap_pct',
+    label: 'Puan sübvansiyon tavanı',
+    suffix: '%',
+    default: 50,
+  },
   { key: 'rate.premium_user_kzt', label: 'Premium üyelik (aylık)', suffix: '₸', default: 999 },
   { key: 'rate.premium_salon_kzt', label: 'Salon premium (aylık)', suffix: '₸', default: 4990 },
   { key: 'rate.raffle_cost', label: 'Çekiliş bileti', suffix: 'puan', default: 500 },

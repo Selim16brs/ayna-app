@@ -13,6 +13,8 @@ import {
   createBookingSchema,
   type ProposeInput,
   proposeSchema,
+  rescheduleSchema,
+  type RescheduleInput,
 } from './bookings.dto';
 import { BookingsService } from './bookings.service';
 
@@ -102,6 +104,17 @@ export class BookingsController {
     @Body(new ZodValidationPipe(proposeSchema)) body: ProposeInput,
   ) {
     return this.bookings.propose(id, body.proposedStartMs, req.user!.id);
+  }
+
+  // §7.8 — müşteri randevusunu bir kez ücretsiz erteler; kapora aktarılır.
+  @Post(':id/reschedule')
+  @UseGuards(JwtAuthGuard)
+  reschedule(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(rescheduleSchema)) body: RescheduleInput,
+  ) {
+    return this.bookings.reschedule(id, body.startMs, req.user!.id);
   }
 
   @Post(':id/accept')

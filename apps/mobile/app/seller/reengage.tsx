@@ -6,7 +6,7 @@ import { SELLER_PAST_CLIENTS, reengageMessage } from '../../src/data';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { findServiceWithCategory, tri } from '../../src/taxonomy';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
@@ -293,7 +293,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 3,
       borderRadius: radius.pill,
     },
-    chipText: { fontWeight: '800', fontSize: 11 },
+    chipText: { fontFamily: font.semibold, fontSize: 11 },
     meta: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
     preview: {
       flexDirection: 'row',

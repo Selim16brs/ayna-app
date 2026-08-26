@@ -1,11 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import type { LoyaltyEntry } from '@prisma/client';
-import { computeAvailableBalance } from '@ayna/domain';
+import { expiringWithin, shouldUnlock, spendGate } from '@ayna/domain';
 import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { EarnInput } from './loyalty.dto';
 import { ONCE_PER_LIFETIME, ruleFor } from './earn-rules';
-import { expiringSoon, expiryDateFrom } from './loyalty.expiry';
+import { EXPIRY_WARN_DAYS } from './loyalty.expiry';
+import { grantPoints } from './loyalty.grant';
+import { loadLedgerState, loadLoyaltyRules } from './loyalty.rules';
 
 // Ödül kataloğu (mobil REWARDS ile aynı) — maliyet ve i18n etiketi sunucuda doğrulanır
 const REWARDS: Record<string, { cost: number; key: string }> = {
@@ -45,44 +47,63 @@ export function computeTier(lifetimeEarned: number) {
 
 @Injectable()
 export class LoyaltyService {
+  private readonly log = new Logger(LoyaltyService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
   ) {}
 
   async summary(userId: string) {
-    const entries = await this.prisma.loyaltyEntry.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
     const now = new Date();
-    // §8 — kullanılabilir bakiye süresi dolan puanları HARİÇ tutar (domain saf mantığı)
-    const points = computeAvailableBalance(
-      entries.map((e) => ({
-        transactionType: e.kind === 'earn' ? ('earn' as const) : ('spend' as const),
-        amount: e.points,
-        expiresAt: e.expiresAt ?? null,
-      })),
-      now,
-    );
-    const lifetimeEarned = entries
-      .filter((e) => e.kind === 'earn')
-      .reduce((sum, e) => sum + e.points, 0);
+    const [entries, rules, state, user] = await Promise.all([
+      this.prisma.loyaltyEntry.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } }),
+      loadLoyaltyRules(this.prisma),
+      loadLedgerState(this.prisma, userId, now),
+      this.prisma.user.findUnique({ where: { id: userId }, select: { pointsUnlockedAt: true } }),
+    ]);
+    // K4.2 — bakiye eşiği geçtiyse kilit KALICI olarak açılır (bir defalık damga).
+    let unlockedAt = user?.pointsUnlockedAt ?? null;
+    if (shouldUnlock(state.available, unlockedAt, rules)) {
+      unlockedAt = now;
+      await this.prisma.user.update({ where: { id: userId }, data: { pointsUnlockedAt: now } });
+      await this.audit.record({
+        actorId: userId,
+        actorRole: 'user',
+        action: 'loyalty.unlock',
+        resourceType: 'loyalty',
+        resourceId: userId,
+        safeDiff: { threshold: rules.unlockAt },
+      });
+    }
+    const gate = spendGate(state.available, unlockedAt, rules);
+    // Karşılıksız harcama = veri tutarsızlığı. Sessiz kalmaz; PII taşımaz.
+    if (state.overspent > 0) {
+      this.log.error(`loyalty: defterde ${state.overspent} puanlık karşılıksız harcama var`);
+    }
     const raffleEntries = entries.filter(
       (e) => e.kind === 'spend' && e.reason === 'rewards.redeem.raffle',
     ).length;
-    // §8 — 30 gün içinde sona erecek puan uyarısı ("puanların yanmasın 🎁")
-    const expiring = expiringSoon(
-      entries.map((e) => ({ kind: e.kind, points: e.points, expiresAt: e.expiresAt ?? null })),
-      now,
-    );
     return {
-      points,
+      points: state.available,
       raffleEntries,
-      tier: computeTier(lifetimeEarned),
+      tier: computeTier(state.lifetimeEarned),
       ledger: entries.map(mapEntry),
-      expiringPoints: expiring.points,
-      nextExpiry: expiring.nextExpiry,
+      // §8 — yaklaşan yanma uyarısı ("puanların yanmasın 🎁")
+      expiringPoints: expiringWithin(state, now, EXPIRY_WARN_DAYS),
+      nextExpiry: state.nextExpiry,
+      // K4.5 — kurallar kullanıcıya GÖSTERİLİR; istemci metni buradan kurar.
+      spend: {
+        unlocked: gate.allowed,
+        unlockAt: rules.unlockAt,
+        remainingToUnlock: gate.allowed ? 0 : gate.remaining,
+        capPct: rules.capPct,
+        expiryDays: rules.expiryDays,
+        // §8.4 — istemci tavanı sunucuyla AYNI fonksiyonla hesaplasın diye
+        // gereken iki değer de burada.
+        commissionPct: rules.commissionPct,
+        subsidyCapPct: rules.subsidyCapPct,
+      },
     };
   }
 
@@ -95,6 +116,8 @@ export class LoyaltyService {
    * imkânı veriyordu.
    */
   async earn(userId: string, input: EarnInput) {
+    // PR #19 — PARA BASMA AÇIĞI KAPALI KALSIN: tutar İSTEMCİDEN değil kural
+    // tablosundan gelir; bilinmeyen sebep reddedilir.
     const rule = ruleFor(input.reason);
     if (!rule) {
       // Bilinmeyen sebep sessizce yutulmaz: istemcide kalmış eski bir çağrı varsa
@@ -125,24 +148,14 @@ export class LoyaltyService {
       return this.summary(userId);
     }
 
-    await this.prisma.loyaltyEntry.create({
-      data: {
-        userId,
-        kind: 'earn',
-        reason: input.reason,
-        detail: input.detail ?? '',
-        // İSTEMCİNİN DEĞİLİ: kural tablosundan gelen sabit tutar
-        points: rule.points,
-        // §8 — kazanılan puan 12 ay sonra sona erer
-        expiresAt: expiryDateFrom(new Date()),
-      },
+    // K4.4 — son kullanma tarihini ve denetim kaydını grantPoints koyar; tek kapı.
+    await grantPoints(this.prisma, {
+      userId,
+      reason: input.reason,
+      detail: input.detail ?? '',
+      points: rule.points,
     });
-    await this.audit.record({
-      actorId: userId,
-      action: 'loyalty.earn',
-      resourceType: 'loyalty',
-      safeDiff: { reason: input.reason, points: rule.points },
-    });
+    // Denetim kaydını grantPoints yazıyor — burada tekrar yazmak çift kayıt olurdu.
     return this.summary(userId);
   }
 
@@ -151,7 +164,15 @@ export class LoyaltyService {
     if (!reward) {
       throw new BadRequestException({ code: 'REWARD_NOT_FOUND', message: 'Ödül bulunamadı' });
     }
-    const { points } = await this.summary(userId);
+    const { points, spend } = await this.summary(userId);
+    // K4.2 — ödül kullanımı da kilide tabidir; aksi hâlde kilit yalnız ödemede
+    // geçerli olur ve kullanıcı puanı ödül kataloğundan sızdırırdı.
+    if (!spend.unlocked) {
+      throw new BadRequestException({
+        code: 'POINTS_LOCKED',
+        message: `Puan kullanımı ${spend.unlockAt.toLocaleString('tr-TR')} ₸ bakiyeden sonra açılır`,
+      });
+    }
     if (points < reward.cost) {
       throw new BadRequestException({ code: 'INSUFFICIENT_POINTS', message: 'Yeterli puan yok' });
     }

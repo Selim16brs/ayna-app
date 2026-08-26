@@ -15,7 +15,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { space, type ColorTokens } from '../theme';
+import { space, type ColorTokens, font } from '../theme';
 import { useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -99,6 +99,6 @@ const makeStyles = (_colors: ColorTokens) =>
   StyleSheet.create({
     wrap: { overflow: 'hidden' },
     track: { flexDirection: 'row' },
-    text: { paddingRight: space(6), fontWeight: '600' },
+    text: { paddingRight: space(6), fontFamily: font.semibold },
     measure: { position: 'absolute', top: 0, left: 0, right: 0, opacity: 0 },
   });

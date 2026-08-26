@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getArticle } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text } from '../../src/ui';
 
@@ -123,16 +123,16 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 6,
       borderRadius: radius.pill,
     },
-    heroTagText: { fontWeight: '800' },
+    heroTagText: { fontFamily: font.semibold },
     heroBottom: {
       position: 'absolute',
       left: space(2.25),
       right: space(2.25),
       bottom: space(2.25),
     },
-    heroTitle: { fontSize: 26, lineHeight: 31, fontWeight: '800', letterSpacing: -0.5 },
+    heroTitle: { fontSize: 26, lineHeight: 31, fontFamily: font.semibold, letterSpacing: -0.5 },
     heroMeta: { flexDirection: 'row', alignItems: 'center', marginTop: space(1) },
-    heroMetaText: { opacity: 0.9, fontWeight: '600' },
+    heroMetaText: { opacity: 0.9, fontFamily: font.semibold },
     body: { paddingHorizontal: space(3), paddingTop: space(3) },
     lead: { fontSize: 17, lineHeight: 25 },
     para: { marginTop: space(2.25), lineHeight: 25 },

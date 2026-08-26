@@ -18,13 +18,16 @@ const BENEFITS: { icon: IoniconName; title: MessageKey; desc: MessageKey }[] = [
   { icon: 'star', title: 'premium.b.featured', desc: 'premium.b.featured_d' },
   { icon: 'location', title: 'premium.b.nearby', desc: 'premium.b.nearby_d' },
   { icon: 'pricetags', title: 'premium.b.showcase', desc: 'premium.b.showcase_d' },
-  { icon: 'chatbubbles', title: 'premium.b.demands', desc: 'premium.b.demands_d' },
   { icon: 'megaphone', title: 'premium.b.promo', desc: 'premium.b.promo_d' },
 ];
-// §11 — Platinum'a özel ek avantajlar (Premium'un ÜSTÜNE)
+// §11 — Platinum'a özel ek avantajlar (Premium'un ÜSTÜNE).
+// K6 — "düşük komisyon %8,5" buradan KALDIRILDI: sunucu komisyonu hesaplarken
+// paketi hiç okumuyor, yani ödenen şey verilmiyordu. Kademeli oran matrisi (D4)
+// canlıya çıktığı gün geri konur — daha önce değil.
+// Aynı gerekçeyle "yakın açık taleplere yanıt" da Premium listesinden çıktı:
+// talep dalgası şehirdeki TÜM aktif uzmanlara gidiyor, pakete bakmıyor.
 const PLATINUM_BENEFITS: { icon: IoniconName; title: MessageKey; desc: MessageKey }[] = [
   { icon: 'infinite', title: 'premium.b.always', desc: 'premium.b.always_d' },
-  { icon: 'trending-down', title: 'premium.b.commission', desc: 'premium.b.commission_d' },
 ];
 
 export default function SellerPremiumScreen() {
@@ -110,15 +113,9 @@ export default function SellerPremiumScreen() {
           </Text>
         </LinearGradient>
 
-        {/* §11 — Platinum komisyon avantajı vurgusu */}
-        {isPlat ? (
-          <View style={styles.commissionNote}>
-            <Ionicons name="trending-down" size={15} color={colors.accentFg} />
-            <Text variant="caption" tone="accentFg" style={styles.flex}>
-              {t('premium.commission_note')}
-            </Text>
-          </View>
-        ) : null}
+        {/* K6 — "Platinum ile komisyon %8,5" şeridi kaldırıldı: sunucu komisyon
+            hesabında paketi hiç okumuyor. Kademeli oran matrisi (D4) canlıya
+            çıkınca geri gelir. */}
 
         {/* Avantajlar — görünürlük paketi (ikon + başlık + açıklama) */}
         <Text variant="bodyStrong" tone="ink" style={styles.sectionTitle}>
@@ -182,15 +179,6 @@ const makeStyles = (colors: ColorTokens) =>
     content: { paddingHorizontal: space(3), paddingTop: space(2.5), paddingBottom: space(4) },
     flex: { flex: 1 },
     tierWrap: { marginBottom: space(2) },
-    commissionNote: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1),
-      backgroundColor: colors.accentSoft,
-      borderRadius: radius.md,
-      padding: space(1.5),
-      marginTop: space(1.5),
-    },
     plan: { borderRadius: radius.xl, padding: space(3), alignItems: 'center', gap: space(0.5) },
     crown: {
       width: 56,

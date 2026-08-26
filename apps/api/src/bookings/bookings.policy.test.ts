@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { cancelOutcome, FREE_CANCEL_WINDOW_MS } from './bookings.policy';
+import {
+  canReschedule,
+  cancelOutcome,
+  FREE_CANCEL_WINDOW_MS,
+  RESCHEDULABLE_STATUSES,
+} from './bookings.policy';
 
 const NOW = 1_000_000_000_000;
 const start = (hoursAhead: number) => NOW + hoursAhead * 60 * 60 * 1000;
@@ -54,4 +59,64 @@ test('startAt yok → serbest (pencere belirlenemez)', () => {
     status: 'refund_pending',
     forfeit: false,
   });
+});
+
+// ── §7.8 erteleme hakkı ─────────────────────────────────────────────────────
+
+const RES = {
+  status: 'confirmed',
+  startAtMs: start(24),
+  nowMs: NOW,
+  used: 0,
+  limit: 1,
+  windowMs: FREE_CANCEL_WINDOW_MS,
+};
+
+test('erteleme: hakkı olan müşteri, pencerenin dışında erteleyebilir', () => {
+  assert.deepEqual(canReschedule(RES), { ok: true });
+});
+
+test('erteleme: hak bir kez — ikinci deneme reddedilir', () => {
+  assert.deepEqual(canReschedule({ ...RES, used: 1 }), {
+    ok: false,
+    code: 'RESCHEDULE_LIMIT',
+  });
+});
+
+test('erteleme: geç pencerede reddedilir — geç iptal cezası anlamsızlaşmasın', () => {
+  assert.deepEqual(canReschedule({ ...RES, startAtMs: start(1) }), {
+    ok: false,
+    code: 'RESCHEDULE_TOO_LATE',
+  });
+  // Tam sınırda da reddedilir (<=)
+  assert.equal(canReschedule({ ...RES, startAtMs: NOW + FREE_CANCEL_WINDOW_MS }).ok, false);
+});
+
+test('erteleme: yaşanmış/kapanmış randevu ertelenemez', () => {
+  for (const st of ['completed', 'cancelled', 'no_show', 'expired', 'awaiting_provider']) {
+    assert.deepEqual(canReschedule({ ...RES, status: st }), {
+      ok: false,
+      code: 'RESCHEDULE_NOT_ALLOWED',
+    });
+  }
+});
+
+test('erteleme: başlangıcı bilinmeyen randevuda hak verilmez', () => {
+  assert.deepEqual(canReschedule({ ...RES, startAtMs: null }), {
+    ok: false,
+    code: 'RESCHEDULE_NOT_ALLOWED',
+  });
+});
+
+test('erteleme: limit 0 ise özellik tamamen kapalı', () => {
+  assert.deepEqual(canReschedule({ ...RES, limit: 0 }), {
+    ok: false,
+    code: 'RESCHEDULE_LIMIT',
+  });
+});
+
+test('erteleme: slot tutan üç durumun hepsinde açık', () => {
+  for (const st of RESCHEDULABLE_STATUSES) {
+    assert.equal(canReschedule({ ...RES, status: st }).ok, true, st);
+  }
 });

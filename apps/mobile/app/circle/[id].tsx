@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -12,11 +12,12 @@ import {
 } from 'react-native';
 import { type CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { api, type CircleCommentRow } from '../../src/api';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, SectionHeader, StackHeader, Text, TextInput } from '../../src/ui';
+import { ConsensusCard, Screen, SectionHeader, StackHeader, Text, TextInput } from '../../src/ui';
 
 // Gönderi türü çipleri — Keşfet pill dili: pastel zemin + ink metin (nötr, canlı değil).
 const makeType = (
@@ -40,6 +41,41 @@ export default function PostDetailScreen() {
   const following = useStore((s) => s.following);
   const toggleFollow = useStore((s) => s.toggleFollow);
   const [draft, setDraft] = useState('');
+  // §15 — Öneri seçicide YALNIZ gerçekten gidilmiş uzmanlar var. Böylece
+  // sunucudaki doğrulama yapısı gereği tutuyor ve kural kullanıcıya
+  // seçenekleri üzerinden öğretilmiş oluyor: gitmediğini öneremezsin.
+  const visitedPros = useStore((st) => {
+    const seen = new Map<string, string>();
+    for (const b of st.bookings) {
+      if (b.status === 'completed' && b.proId) seen.set(b.proId, b.uzmanName ?? b.proName);
+    }
+    return [...seen.entries()].map(([id, name]) => ({ id, name }));
+  });
+  const [suggestPro, setSuggestPro] = useState<string | null>(null);
+  // Yorumlar SUNUCUDAN okunuyor. Daha önce yalnız yerel kopya gösteriliyordu:
+  // A kullanıcısı yazıyor, B sayacın arttığını görüyor ama yorumu okuyamıyordu.
+  // (Okuma ucu PR #18 ile eklendi.)
+  const [remote, setRemote] = useState<CircleCommentRow[] | null>(null);
+  const loadComments = useCallback(() => {
+    if (!id) return;
+    void api
+      .circleComments(id)
+      .then(setRemote)
+      .catch(() => undefined);
+  }, [id]);
+  useFocusEffect(loadComments);
+  // Sunucu listesi geldiyse ONU göster (herkesin yorumu). Gelmediyse yerel
+  // kopyaya düş — çevrimdışıyken ekran boş kalmasın.
+  const shownComments: CircleCommentRow[] =
+    remote ??
+    (post?.comments ?? []).map((c) => ({
+      id: c.id,
+      authorLabel: c.anonymous ? t('circle.verified') : c.author,
+      text: c.text,
+      proId: null,
+      proVerified: false,
+      createdAt: '',
+    }));
 
   // §5.5 — şikâyet: içerik görünür kalır, admin kuyruğuna düşer
   const onReport = () => {
@@ -68,8 +104,12 @@ export default function PostDetailScreen() {
 
   const send = () => {
     if (draft.trim().length === 0) return;
-    addComment(post.id, draft.trim(), false);
+    addComment(post.id, draft.trim(), false, suggestPro ?? undefined);
     setDraft('');
+    setSuggestPro(null);
+    // Sunucu doğrulamayı (proVerified) yazma anında yapıyor; listeyi tazeleyip
+    // gerçek sonucu gösteriyoruz — yerel tahmin uydurmuyoruz.
+    setTimeout(loadComments, 600);
   };
 
   return (
@@ -171,7 +211,10 @@ export default function PostDetailScreen() {
           {/* Yorumlar */}
           <SectionHeader title={t('circle.detail.comments')} />
 
-          {post.comments.length === 0 ? (
+          {/* §14 — yedi yorumu okumak yerine "kimi kaç kişi önerdi" tek kartta */}
+          {id ? <ConsensusCard postId={id} /> : null}
+
+          {shownComments.length === 0 ? (
             <View style={[styles.noComments, shadow.soft]}>
               <View style={styles.noCommentsIcon}>
                 <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.inkSoft} />
@@ -182,21 +225,28 @@ export default function PostDetailScreen() {
             </View>
           ) : (
             <View style={styles.comments}>
-              {post.comments.map((c) => (
+              {shownComments.map((c) => (
                 <View key={c.id} style={[styles.comment, shadow.soft]}>
                   <View style={styles.commentAvatar}>
-                    {c.anonymous ? (
-                      <Ionicons name="shield-checkmark" size={14} color={colors.accentFg} />
-                    ) : (
-                      <Text variant="caption" tone="accentFg">
-                        {c.author.charAt(0)}
-                      </Text>
-                    )}
+                    <Ionicons name="shield-checkmark" size={14} color={colors.accentFg} />
                   </View>
                   <View style={styles.commentBody}>
-                    <Text variant="caption" tone="ink" style={styles.commentAuthor}>
-                      {c.anonymous ? t('circle.verified') : c.author}
-                    </Text>
+                    <View style={styles.commentHead}>
+                      <Text variant="caption" tone="ink" style={styles.commentAuthor}>
+                        {c.authorLabel}
+                      </Text>
+                      {/* §15 — öneri DOĞRULANMIŞSA rozet: öneren o uzmanda gerçekten
+                          hizmet almış. Doğrulanmamış öneri rozetsiz kalır ve fikir
+                          birliği sayımına da girmez. */}
+                      {c.proVerified ? (
+                        <View style={styles.verifiedTag}>
+                          <Ionicons name="checkmark-circle" size={11} color={colors.success} />
+                          <Text variant="micro" style={{ color: colors.success }}>
+                            {t('circle.suggest.verified')}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
                     <Text variant="body" tone="inkSoft" style={styles.commentText}>
                       {c.text}
                     </Text>
@@ -206,6 +256,35 @@ export default function PostDetailScreen() {
             </View>
           )}
         </ScrollView>
+
+        {/* §15 — ÖNERİ SEÇİCİ: yalnız gidilmiş uzmanlar. Hiç randevusu
+            tamamlanmamış kullanıcıya sebebi yazılıyor, boş şerit gösterilmiyor. */}
+        {visitedPros.length > 0 ? (
+          <View style={styles.suggestRow}>
+            <Text variant="micro" tone="muted">
+              {t('circle.suggest.title')}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={styles.suggestChips}>
+                {visitedPros.map((p) => {
+                  const on = suggestPro === p.id;
+                  return (
+                    <Pressable
+                      key={p.id}
+                      onPress={() => setSuggestPro(on ? null : p.id)}
+                      style={[styles.suggestChip, on && styles.suggestChipOn]}
+                    >
+                      {on ? <Ionicons name="checkmark" size={13} color={colors.onAccent} /> : null}
+                      <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} numberOfLines={1}>
+                        {p.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
+        ) : null}
 
         {/* Yorum yaz */}
         <View style={styles.composer}>
@@ -258,7 +337,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.accent,
     },
     followBtnOn: { backgroundColor: colors.accent, borderColor: colors.accent },
-    followText: { fontWeight: '700' },
+    followText: { fontFamily: font.semibold },
     avatar: {
       width: 44,
       height: 44,
@@ -267,9 +346,9 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    authorName: { fontWeight: '800', letterSpacing: -0.2 },
+    authorName: { fontFamily: font.semibold, letterSpacing: -0.2 },
     typeBadge: { paddingHorizontal: space(1.5), paddingVertical: 6, borderRadius: radius.pill },
-    typeText: { fontSize: 12, fontWeight: '700' },
+    typeText: { fontSize: 12, fontFamily: font.semibold },
     postText: { marginTop: space(2), lineHeight: 23, fontSize: 16 },
     helpfulRow: { flexDirection: 'row', alignItems: 'center', marginTop: space(2.25) },
     reportBtn: { flexDirection: 'row', alignItems: 'center', gap: space(0.5), marginLeft: 'auto' },
@@ -283,7 +362,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     helpfulBtnOn: { backgroundColor: colors.accent },
-    helpfulText: { fontWeight: '700' },
+    helpfulText: { fontFamily: font.semibold },
     noComments: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
@@ -316,8 +395,23 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     commentBody: { flex: 1 },
-    commentAuthor: { fontWeight: '700' },
+    commentHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), flexWrap: 'wrap' },
+    verifiedTag: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    commentAuthor: { fontFamily: font.semibold },
     commentText: { marginTop: 3, lineHeight: 22 },
+    suggestRow: { paddingHorizontal: space(3), paddingTop: space(1), gap: space(0.75) },
+    suggestChips: { flexDirection: 'row', gap: space(0.75) },
+    suggestChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      maxWidth: 180,
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    suggestChipOn: { backgroundColor: colors.accent },
     composer: {
       flexDirection: 'row',
       alignItems: 'flex-end',

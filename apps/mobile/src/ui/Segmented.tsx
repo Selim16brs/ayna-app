@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { type ColorTokens, radius, space } from '../theme';
+import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
@@ -62,5 +62,5 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.md - 3,
     },
     segmentOn: { backgroundColor: colors.surface },
-    onText: { fontWeight: '600' },
+    onText: { fontFamily: font.semibold },
   });

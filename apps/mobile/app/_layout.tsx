@@ -111,11 +111,16 @@ function ThemedStack() {
   const role = currentUser?.role;
   const isSalon = role === 'salon';
   const isExpert = role === 'professional';
+  // Alt bar GLOBAL. Ekranın en altına sabit bir yazma alanı koyan sayfalarda
+  // (sohbet, W2W yorum) barın altında kalıyor ve kullanıcı mesaj yazamıyordu.
+  // Bu ekranlar zaten yığın (stack) sayfası; kendi geri butonları var.
+  const composerScreen = /^\/messages\/[^/]+$/.test(pathname) || /^\/circle\/[^/]+$/.test(pathname);
   const baseHidden =
     !currentUser ||
     pathname === '/' ||
     pathname.startsWith('/auth') ||
-    pathname.startsWith('/language');
+    pathname.startsWith('/language') ||
+    composerScreen;
 
   return (
     <>
@@ -141,11 +146,16 @@ function ThemedStack() {
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
-  // Gövde/UI fontu = SF (sistem, RN varsayılanı). Caveat yalnız dekoratif el yazısı.
+  // Gövde/UI fontu = Onest (tek aile, 56 Kiril dili + TR + ₸). Caveat yalnız dekoratif el yazısı.
   // NOT: font yüklemesini BLOKE ETMİYORUZ — EAS Update/Expo Go'da font asset'i asılı
-  // kalırsa uygulama sonsuza kadar beyaz kalıyordu. Uygulama hemen açılır; Caveat
+  // kalırsa uygulama sonsuza kadar beyaz kalıyordu. Uygulama hemen açılır; fontlar
   // yüklenince kendiliğinden yerine oturur (o ana kadar sistem fontuna düşer).
-  useFonts({ Caveat_700Bold });
+  useFonts({
+    'Onest-Regular': require('../assets/fonts/Onest-Regular.ttf'),
+    'Onest-Medium': require('../assets/fonts/Onest-Medium.ttf'),
+    'Onest-SemiBold': require('../assets/fonts/Onest-SemiBold.ttf'),
+    Caveat_700Bold,
+  });
 
   return (
     <QueryClientProvider client={queryClient}>

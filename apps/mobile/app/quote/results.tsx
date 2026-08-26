@@ -4,17 +4,26 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { type DemandOffer, type OfferSort, formatPrice, sortOffers } from '../../src/data';
 import { slotTime, formatSlot } from '../../src/datetime';
+import type { MessageKey } from '@ayna/i18n';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text, ListSkeleton } from '../../src/ui';
+import {
+  ListSkeleton,
+  PriceSpread,
+  Screen,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+} from '../../src/ui';
 
-const SORTS: { key: OfferSort; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: 'recommended', label: 'Önerilen', icon: 'sparkles' },
-  { key: 'price', label: 'Fiyat', icon: 'pricetag' },
-  { key: 'distance', label: 'Mesafe', icon: 'location' },
-  { key: 'rating', label: 'Puan', icon: 'star' },
+// Etiketler i18n anahtarı üzerinden — sabit Türkçe metin RU/KK'da kırılırdı.
+const SORTS: { key: OfferSort; labelKey: MessageKey; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: 'recommended', labelKey: 'quotes.filter.recommended', icon: 'sparkles' },
+  { key: 'price', labelKey: 'quotes.filter.price', icon: 'pricetag' },
+  { key: 'distance', labelKey: 'quotes.filter.distance', icon: 'location' },
+  { key: 'rating', labelKey: 'quotes.filter.rating', icon: 'star' },
 ];
 
 export default function QuoteResultsScreen() {
@@ -40,6 +49,21 @@ export default function QuoteResultsScreen() {
   );
 
   const offers = useMemo(() => (demand ? sortOffers(demand.offers, sort) : []), [demand, sort]);
+
+  // Rozetler SIRALAMADAN BAĞIMSIZ hesaplanır — kullanıcı sıralamayı değiştirince
+  // "en iyi denge" başka bir teklife atlarsa güven kaybolur.
+  const { balanceId, cheapestId } = useMemo(() => {
+    const all = demand?.offers ?? [];
+    // İki teklifte "en iyisi" demek anlamsız; rozet yalnız 3+ teklifte.
+    if (all.length < 3) return { balanceId: null, cheapestId: null };
+    const balance = sortOffers(all, 'recommended')[0] ?? null;
+    const cheapest = [...all].sort((a, b) => a.price - b.price)[0] ?? null;
+    return {
+      balanceId: balance?.id ?? null,
+      // En ucuz zaten "denge" rozetini aldıysa ikinci rozet gürültü olur.
+      cheapestId: cheapest && cheapest.id !== balance?.id ? cheapest.id : null,
+    };
+  }, [demand?.offers]);
 
   const remainMin = demand ? Math.max(0, Math.round((demand.expiresAt - Date.now()) / 60_000)) : 0;
   const collecting = demand?.status === 'collecting';
@@ -98,14 +122,14 @@ export default function QuoteResultsScreen() {
         </Text>
         {demand.status === 'booked' ? (
           <View style={[styles.statusPill, { backgroundColor: colors.successSoft }]}>
-            <Text variant="caption" style={{ color: colors.success, fontWeight: '700' }}>
+            <Text variant="caption" style={{ color: colors.success, fontFamily: font.semibold }}>
               {t('quotes.booked')}
             </Text>
           </View>
         ) : collecting ? (
           <View style={[styles.statusPill, { backgroundColor: colors.goldSoft }]}>
             <Ionicons name="time-outline" size={12} color={colors.gold} />
-            <Text variant="caption" style={{ color: colors.gold, fontWeight: '700' }}>
+            <Text variant="caption" style={{ color: colors.gold, fontFamily: font.semibold }}>
               {remainMin} {t('quotes.remain')}
             </Text>
           </View>
@@ -134,7 +158,7 @@ export default function QuoteResultsScreen() {
             >
               <Ionicons name={s.icon} size={13} color={on ? colors.onAccent : colors.inkSoft} />
               <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
-                {s.label}
+                {t(s.labelKey)}
               </Text>
             </Pressable>
           );
@@ -142,6 +166,9 @@ export default function QuoteResultsScreen() {
       </ScrollView>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
+        {/* FİYAT ARALIĞI — "bu fiyat ucuz mu?" tahmine kalmasın. 3+ teklifte görünür. */}
+        <PriceSpread prices={demand.offers.map((o) => o.price)} format={formatPrice} />
+
         {offers.length === 0 && collecting ? (
           // Polish 2.3 — teklifler TOPLANIYOR: ölü ekran yerine canlı iskelet + açıklama
           <>
@@ -175,30 +202,70 @@ export default function QuoteResultsScreen() {
               key={o.id}
               offer={o}
               disabled={demand.status !== 'collecting'}
+              badge={o.id === balanceId ? 'balance' : o.id === cheapestId ? 'cheapest' : null}
               onPick={(slot) => pick(o, slot)}
             />
           ))
         )}
+
+        {/* PARA KURALI — seçim ekranının en altında, karar anından hemen önce.
+            İkinci cümle gerçek bir yükü kaldırıyor: reddetme zorunluluğu bizde. */}
+        {offers.length > 0 ? (
+          <View style={styles.moneyNote}>
+            <Ionicons name="shield-checkmark-outline" size={15} color={colors.success} />
+            <Text variant="caption" tone="inkSoft" style={styles.moneyNoteText}>
+              {t('quotes.money_note')}
+            </Text>
+          </View>
+        ) : null}
       </ScrollView>
     </Screen>
   );
 }
 
+/** Yorum sayısı bu eşiğin altındaki uzman "yeni" sayılır ve bu AÇIKÇA yazılır. */
+const NEW_PRO_REVIEWS = 30;
+
 function OfferCard({
   offer,
   disabled,
+  badge,
   onPick,
 }: {
   offer: DemandOffer;
   disabled: boolean;
+  /** Sıralamadan bağımsız rozet; sebebi kartın üstünde yazılı. */
+  badge?: 'balance' | 'cheapest' | null;
   onPick: (slotMs: number) => void;
 }) {
   const router = useRouter();
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const isNewPro = offer.reviewCount < NEW_PRO_REVIEWS;
+
   return (
-    <View style={[styles.card, shadow.card]}>
+    <View style={[styles.card, shadow.card, badge === 'balance' && styles.cardBest]}>
+      {/* ROZET — neden öne çıktığı YAZILI; gizli algoritma yok */}
+      {badge ? (
+        <View style={[styles.badgeRow, badge === 'balance' && styles.badgeRowBest]}>
+          <Ionicons
+            name={badge === 'balance' ? 'ribbon' : 'pricetag'}
+            size={13}
+            color={badge === 'balance' ? colors.onAccent : colors.success}
+          />
+          <Text
+            variant="micro"
+            tone={badge === 'balance' ? 'onAccent' : 'sage'}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
+            {t(badge === 'balance' ? 'quotes.badge.balance' : 'quotes.badge.cheapest')}
+          </Text>
+        </View>
+      ) : null}
+
       {/* Uzman başlığı = profil butonu (yalnız keşif kartı olan uzmanda) — ticari
           veri İÇERMEYEN public profile gider */}
       <Pressable
@@ -249,6 +316,22 @@ function OfferCard({
           </Text>
         </View>
       </Pressable>
+
+      {/* YENİ UZMAN — saklamıyoruz, açıklıyoruz. Ne gizle ne cezalandır:
+          kullanıcı bilerek seçsin. */}
+      {isNewPro ? (
+        <View style={styles.newPro}>
+          <Ionicons name="information-circle-outline" size={15} color={colors.gold} />
+          <View style={styles.newProText}>
+            <Text variant="captionStrong" style={{ color: colors.gold }}>
+              {t('quotes.new_pro')}
+            </Text>
+            <Text variant="caption" tone="inkSoft">
+              {fillParams(t('quotes.new_pro_note'), { n: String(offer.reviewCount) })}
+            </Text>
+          </View>
+        </View>
+      ) : null}
 
       {offer.note ? (
         <Text variant="caption" tone="inkSoft" style={styles.note}>
@@ -330,6 +413,35 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(2),
       gap: space(1.25),
     },
+    cardBest: { borderWidth: 2, borderColor: colors.accent },
+    badgeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      alignSelf: 'flex-start',
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.625),
+      borderRadius: radius.pill,
+      backgroundColor: colors.successSoft,
+    },
+    badgeRowBest: { backgroundColor: colors.accent },
+    newPro: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space(1),
+      backgroundColor: colors.goldSoft,
+      borderRadius: radius.md,
+      padding: space(1.25),
+    },
+    newProText: { flex: 1, gap: 2 },
+    moneyNote: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space(1),
+      paddingHorizontal: space(0.5),
+      paddingTop: space(1),
+    },
+    moneyNoteText: { flex: 1 },
     cardTop: { flexDirection: 'row', gap: space(1.5), alignItems: 'center' },
     thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.bgSunken },
     info: { flex: 1 },
@@ -356,7 +468,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 3,
       borderRadius: radius.pill,
     },
-    dealText: { fontWeight: '800' },
+    dealText: { fontFamily: font.semibold },
     note: { fontStyle: 'italic', lineHeight: 18 },
     slotLabel: { marginTop: space(0.5) },
     slotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
@@ -367,5 +479,5 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.accent,
     },
     slotChipOff: { backgroundColor: colors.surfaceMuted },
-    slotText: { fontWeight: '700' },
+    slotText: { fontFamily: font.semibold },
   });

@@ -184,10 +184,19 @@ export class SettingsService {
       categories, // §12.9 — bakım periyodu + hizmet süresi (app bakım takvimi + slot süresi)
       rates: {
         commissionPct: rate('commission.rate'),
+        // K1 — kapora artık sabit değil. `depositKzt` geriye dönük uyum için
+        // duruyor (eski istemciler okuyor); gerçek kural aşağıdaki üçlü.
         depositKzt: rate('rate.deposit_kzt'),
+        depositPct: rate('rate.deposit_pct'),
+        depositMin: rate('rate.deposit_min'),
+        depositMax: rate('rate.deposit_max'),
+        holdMinutes: rate('policy.hold_minutes'),
         cancelWindowH: rate('rate.cancel_window_h'),
         lateCancelPct: rate('rate.late_cancel_pct'),
         pointsCapPct: rate('rate.points_cap_pct'),
+        pointsUnlockKzt: rate('rate.points_unlock_kzt'),
+        pointsExpiryDays: rate('rate.points_expiry_days'),
+        pointsSubsidyCapPct: rate('rate.points_subsidy_cap_pct'),
         premiumUserKzt: rate('rate.premium_user_kzt'),
         premiumSalonKzt: rate('rate.premium_salon_kzt'),
         raffleCost: rate('rate.raffle_cost'),

@@ -9,6 +9,7 @@ import {
   DEPOSIT_KZT,
   FREE_CANCEL_WINDOW_MS,
   type BookingSource,
+  type BookingStatus,
   formatPrice,
 } from '../../src/data';
 import { api } from '../../src/api';
@@ -16,9 +17,30 @@ import { almatyDayStart, formatSlot } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, SlotPicker, StackHeader, Text, type PickerDay } from '../../src/ui';
+import {
+  BookingSteps,
+  Button,
+  MoneyBreakdown,
+  Screen,
+  SlotPicker,
+  StackHeader,
+  Text,
+  type PickerDay,
+} from '../../src/ui';
+
+/** Adım çubuğunun anlamlı olduğu canlı akış durumları (iptal/itiraz/no-show hariç). */
+const LIVE_FLOW: BookingStatus[] = [
+  'awaiting_provider',
+  'alternative_proposed',
+  'pending',
+  'deposit_pending',
+  'deposit_submitted',
+  'confirmed',
+  'completed_pending',
+  'completed',
+];
 
 const SOURCE_KEY: Record<BookingSource, MessageKey> = {
   direct: 'bookings.tab.direct',
@@ -278,6 +300,14 @@ export default function BookingDetailScreen() {
           </View>
         </Pressable>
 
+        {/* DURUM ADIM ÇUBUĞU — "nerede kaldık, sıra kimde". Ana ekran kartıyla AYNI bileşen.
+            İptal/bitmiş/itirazlı akışlarda çubuk anlamsız olur; yalnız canlı akışta gösterilir. */}
+        {LIVE_FLOW.includes(booking.status) ? (
+          <View style={[styles.card, shadow.card, styles.stepsCard]}>
+            <BookingSteps status={booking.status} hasReceipt={Boolean(booking.receiptUri)} />
+          </View>
+        ) : null}
+
         {/* §7.3 — uzmana yalnız POZİTİF rozet gösterilir (kullanıcı puanı/negatif sinyal ASLA) */}
         {isProvider && booking.customerTrusted ? (
           <View style={styles.trustRow}>
@@ -305,16 +335,18 @@ export default function BookingDetailScreen() {
             value={t(SOURCE_KEY[booking.source])}
             last={salonHidesMoney}
           />
-          {/* §10 gizlilik — salon uzmanın kendi işinin fiyatını görmez */}
-          {salonHidesMoney ? null : (
-            <Field
-              icon="pricetag-outline"
-              labelKey="booking.field.price"
-              value={formatPrice(booking.price)}
-              last
-            />
-          )}
         </View>
+
+        {/* PARA DÖKÜMÜ — "para hareket edecekse tutar önce yazılır".
+            Kapora oranı ve tutarı yan yana; yerinde ödenecek kalan aynı kartta.
+            §10 gizlilik — salon, uzmanın kendi işinin parasını görmez. */}
+        {salonHidesMoney ? null : (
+          <MoneyBreakdown
+            price={booking.price}
+            deposit={booking.depositAmount}
+            format={formatPrice}
+          />
+        )}
 
         {/* İletişim: offline/salon randevusunda ADRES YOK (zaten salonda) → müşteri adı + telefon.
             salonHidesMoney = salon, uzmanın KENDİ işine bakıyor → müşteri kimliği de gizli (yalnız bySalon'da görünür) */}
@@ -986,6 +1018,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(2),
       marginTop: space(2),
     },
+    stepsCard: { paddingVertical: space(2) },
     field: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -1032,7 +1065,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       marginBottom: space(1),
     },
-    trustRowText: { color: colors.success, fontWeight: '700' },
+    trustRowText: { color: colors.success, fontFamily: font.semibold },
     proposedCard: {
       marginTop: space(2),
       backgroundColor: colors.blueSoft,
@@ -1097,7 +1130,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1.5),
     },
     modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    modalTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
+    modalTitle: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.3 },
     modalClose: {
       width: 40,
       height: 40,

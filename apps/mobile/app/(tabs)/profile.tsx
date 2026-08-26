@@ -6,10 +6,10 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fillParams, useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
-import { radius, space, type ColorTokens } from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useStore } from '../../src/store';
-import { Screen, Segmented, Text } from '../../src/ui';
+import { Screen, Segmented, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 import type { ThemeMode } from '../../src/theme';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -383,7 +383,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 4,
       borderRadius: radius.pill,
     },
-    badgeText: { color: colors.ink, fontWeight: '600' },
+    badgeText: { color: colors.ink, fontFamily: font.semibold },
 
     // Üste binen beyaz sheet
     sheet: {
@@ -393,7 +393,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderTopRightRadius: 28,
       marginTop: -space(3),
     },
-    content: { padding: space(3), paddingTop: space(3), paddingBottom: space(13) },
+    content: { padding: space(3), paddingTop: space(3), paddingBottom: TAB_BAR_CLEARANCE },
 
     stats: {
       flexDirection: 'row',
