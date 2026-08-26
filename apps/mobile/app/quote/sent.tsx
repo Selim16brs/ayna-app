@@ -75,7 +75,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       paddingHorizontal: space(3),
       paddingTop: space(5),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(2),
     },
     circle: {
       width: 76,
@@ -109,5 +109,11 @@ const makeStyles = (colors: ColorTokens) =>
     },
     pointText: { flex: 1, gap: 2 },
     pointBody: { lineHeight: 18 },
-    footer: { paddingHorizontal: space(3), paddingTop: space(1.5), gap: space(1) },
+    footer: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      gap: space(1),
+      // Şeridin ALT boşluğu hiç yoktu: düğme barın altında kalıyordu.
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
   });

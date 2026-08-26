@@ -348,7 +348,9 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       paddingHorizontal: space(3),
       paddingVertical: space(2.5),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Boşluk BURADA DEĞİL: altta sabit eylem şeridi var, alt menüyü o aşmalı.
+      // Buraya konunca kaydırma içeriği gereksiz yer bırakıyor, DÜĞME ise
+      // yine barın altında kalıyordu.
     },
     cardWrap: {
       borderRadius: radius.xl,
@@ -362,7 +364,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     actions: {
       paddingHorizontal: space(3),
-      paddingBottom: space(3),
+      paddingBottom: TAB_BAR_CLEARANCE,
       paddingTop: space(1.5),
       gap: space(1.25),
     },

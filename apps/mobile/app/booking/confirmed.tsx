@@ -118,7 +118,7 @@ function Field({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), alignItems: 'stretch', paddingBottom: TAB_BAR_CLEARANCE },
+    content: { padding: space(3), alignItems: 'stretch', paddingBottom: space(2) },
     successCircle: {
       width: 84,
       height: 84,
@@ -160,5 +160,10 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1),
     },
     noteText: { flex: 1 },
-    footer: { paddingHorizontal: space(3), paddingTop: space(1.5) },
+    footer: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      // Şeridin ALT boşluğu hiç yoktu: düğme barın altında kalıyordu.
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
   });

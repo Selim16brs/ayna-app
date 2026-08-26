@@ -116,7 +116,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      // Alt menü boşluğunu SABİT ŞERİT veriyor (aşağıda); burada tekrarlamak
+      // kaydırmaya gereksiz boşluk ekliyordu.
+      paddingBottom: space(2),
       gap: space(0.5),
     },
     flex: { flex: 1 },
@@ -158,7 +160,7 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: space(3),
+      paddingBottom: TAB_BAR_CLEARANCE,
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.line,
       backgroundColor: colors.bg,
