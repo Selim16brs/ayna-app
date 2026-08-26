@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { StorageService } from '../storage/storage.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { DAY_MS, commissionFor, overdueDaysBetween } from './commissions.calc';
@@ -14,10 +14,13 @@ const DEFAULT_COMMISSION_RATE = 10; // komisyon %10 (uzman/salon → AYNA); para
 // gerektirdiğini söylüyor. Sözleşme gerekçesiyle pencereyi geçici olarak
 // uzatmak gerekirse kod değişikliği gerekmesin diye admin ayarından okunuyor.
 const GRACE_SETTING_KEY = 'rate.commission_grace_minutes';
+const ENFORCE_FROM_KEY = 'policy.overdue_enforce_from';
 const DEFAULT_GRACE_MINUTES = 45;
 
 @Injectable()
 export class CommissionsService {
+  private readonly log = new Logger(CommissionsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
@@ -26,6 +29,28 @@ export class CommissionsService {
   private async rate(): Promise<number> {
     const s = await this.prisma.setting.findUnique({ where: { key: 'commission.rate' } });
     return s?.intValue ?? DEFAULT_COMMISSION_RATE;
+  }
+
+  // Gecikme kısıtlamasının YÜRÜRLÜK ANI. İlk çağrıda bir kez yazılır ve bir daha
+  // değişmez; bundan önce vadesi dolmuş faturalar kısıtlama üretmez.
+  //
+  // Admin panelden bu değeri geriye çekerek eski borçları da kapsama alabilir —
+  // ama bu bilinçli bir karar olmalı, dağıtımın yan etkisi değil.
+  private async enforceFrom(now: Date): Promise<Date> {
+    const row = await this.prisma.setting.findUnique({ where: { key: ENFORCE_FROM_KEY } });
+    if (row?.strValue) {
+      const d = new Date(row.strValue);
+      if (!Number.isNaN(d.getTime())) return d;
+    }
+    await this.prisma.setting.upsert({
+      where: { key: ENFORCE_FROM_KEY },
+      create: { key: ENFORCE_FROM_KEY, strValue: now.toISOString() },
+      update: {},
+    });
+    this.log.warn(
+      `gecikme kısıtlaması yürürlüğe girdi: ${now.toISOString()} — bundan önce vadesi dolmuş faturalar kapsam dışı`,
+    );
+    return now;
   }
 
   // K5 — vade sonrası tanınan süre (dakika). 0 ise vade dolar dolmaz kısıtlanır.
@@ -223,13 +248,23 @@ export class CommissionsService {
       data: { status: 'overdue' },
     });
     // 2) vade + tanınan süre geçmiş, kısıt uygulanmamış, owner'lı faturalar → kısıtla
+    //
+    // GERİYE DÖNÜK KISITLAMA YOK. Gecikme taraması bugüne kadar hiçbir
+    // zamanlayıcı tarafından çağrılmıyordu; üretimde aylardır ödenmemiş fatura
+    // varsa, zamanlayıcı ilk kez çalıştığında o uzmanların HEPSİ tek seferde
+    // kısıtlanırdı. "45 dakika" kuralı yeni faturalar için konuldu, geçmişi
+    // toplu cezalandırmak için değil.
+    //
+    // Bu yüzden kural, YÜRÜRLÜĞE GİRDİĞİ andan sonra vadesi dolan faturalara
+    // uygulanıyor. Yürürlük anı ilk çalıştırmada bir kez yazılıyor.
+    const enforceFrom = await this.enforceFrom(now);
     const cutoff = new Date(now.getTime() - grace * 60_000);
     const toRestrict = await this.prisma.commissionInvoice.findMany({
       where: {
         status: 'overdue',
         restrictedApplied: false,
         ownerUserId: { not: null },
-        dueDate: { lt: cutoff },
+        dueDate: { lt: cutoff, gte: enforceFrom },
       },
     });
     let restricted = 0;
