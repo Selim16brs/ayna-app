@@ -3,12 +3,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { cityCenter, distanceKm, proCoords } from '../src/data';
-import { useProfessionals } from '../src/catalog';
+import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
 import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
+import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text, ListSkeleton } from '../src/ui';
 import { ProRow } from './search';
 
 // §5.1.8 — Sana Yakın "Tümü": şehirdeki tüm salonlar; premium önce, kendi içinde mesafeye göre.
@@ -18,6 +18,7 @@ export default function NearbyScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const all = useProfessionals();
+  const loading = useProfessionalsLoading();
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const [notified, setNotified] = useState(false);
 
@@ -32,7 +33,9 @@ export default function NearbyScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('home.nearby')} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {salons.length === 0 ? (
+        {loading ? (
+          <ListSkeleton rows={4} />
+        ) : salons.length === 0 ? (
           // §5.1.4 — boş şehir durumu: hizmet veren yoksa "yakında + haber ver"
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>

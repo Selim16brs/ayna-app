@@ -7,6 +7,20 @@ import { type AdBanner, type Campaign, type Professional, type ProfessionalDetai
  * İşletme kataloğu backend'den; API erişilemezse yerel veriye düşer (offline-first).
  * Böylece hem gerçek API hem de sunucu kapalıyken demo çalışır.
  */
+/**
+ * Polish 2.2 — İLK yükleme sürüyor mu? (aynı queryKey → ek istek yok)
+ * Ekranlar boş-durumu YALNIZ bu false olduğunda gösterir; yoksa iskelet.
+ */
+export function useProfessionalsLoading(): boolean {
+  const { isLoading } = useQuery({
+    queryKey: ['professionals'],
+    queryFn: api.professionals,
+    retry: 1,
+    staleTime: 60_000,
+  });
+  return isLoading;
+}
+
 export function useProfessionals(): Professional[] {
   const { data } = useQuery({
     queryKey: ['professionals'],
@@ -35,6 +49,11 @@ export function useCollections() {
 }
 
 // §keşif Modül 2 — aktif salon/uzman kampanyaları (Offers)
+export function useOffersLoading(): boolean {
+  const { isLoading } = useQuery({ queryKey: ['offers'], queryFn: api.offers, retry: 1 });
+  return isLoading;
+}
+
 export function useOffers() {
   const { data } = useQuery({
     queryKey: ['offers'],

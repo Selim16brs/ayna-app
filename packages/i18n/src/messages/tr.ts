@@ -927,6 +927,8 @@ export const tr = {
   'auth.error.network': 'Bağlantı hatası — internetini kontrol et',
   'auth.error.rate_limited': 'Çok fazla deneme yapıldı — 1 dakika bekleyip tekrar dene',
   'auth.error.bad': 'E-posta/telefon veya şifre hatalı',
+  'auth.err.phone': 'Telefon en az 10 hane olmalı',
+  'auth.err.email': 'Geçerli bir e-posta gir (ör. ad@mail.kz)',
   'auth.login.hint_id': 'Telefon en az 10 hane olmalı (ör. +7 700 123 45 67) ya da e-posta gir',
   'auth.login.hint_pw': 'Şifre en az 6 karakter',
   'auth.login.forgot': 'Şifremi unuttum',

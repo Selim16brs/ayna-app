@@ -7,7 +7,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, StackHeader, Text, ListSkeleton } from '../../src/ui';
 
 // EK Z.1 — Konuşma listesi (müşteri ↔ uzman/salon DM)
 export default function MessagesScreen() {
@@ -42,7 +42,9 @@ export default function MessagesScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('messages.title')} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {items === null ? null : items.length === 0 ? (
+        {items === null ? (
+          <ListSkeleton rows={4} />
+        ) : items.length === 0 ? (
           <View style={styles.empty}>
             <View style={styles.emptyIcon}>
               <Ionicons name="chatbubbles-outline" size={30} color={colors.muted} />

@@ -19,12 +19,19 @@ import {
   proCoords,
 } from '../src/data';
 import type { MessageKey } from '@ayna/i18n';
-import { useProfessionals } from '../src/catalog';
+import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
 import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { PressableScale, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
+import {
+  PressableScale,
+  Screen,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+  ListSkeleton,
+} from '../src/ui';
 
 // Türkçe-duyarlı küçük harfe çevirme (İ/ı dahil)
 const lower = (s: string) => s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
@@ -55,6 +62,7 @@ export default function SearchScreen() {
   const [sort, setSort] = useState<SortKey>('recommended');
   const [showSort, setShowSort] = useState(false);
   const professionals = useProfessionals();
+  const catalogLoading = useProfessionalsLoading();
   // §5.1.4 — arama da şehre göre filtreli
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const recentSearches = useStore((s) => s.recentSearches);
@@ -231,7 +239,9 @@ export default function SearchScreen() {
             <Text variant="caption" tone="muted" style={styles.count}>
               {results.length} {t('search.results')}
             </Text>
-            {results.length === 0 ? (
+            {catalogLoading ? (
+              <ListSkeleton rows={4} />
+            ) : results.length === 0 ? (
               <View style={styles.empty}>
                 <View style={styles.emptyIcon}>
                   <Ionicons name="search-outline" size={30} color={colors.muted} />

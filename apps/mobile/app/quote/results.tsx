@@ -8,7 +8,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text, ListSkeleton } from '../../src/ui';
 
 const SORTS: { key: OfferSort; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'recommended', label: 'Önerilen', icon: 'sparkles' },
@@ -142,8 +142,16 @@ export default function QuoteResultsScreen() {
       </ScrollView>
 
       <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-        {offers.length === 0 ? (
-          // §5.2 — hiç teklif yok: toplanıyorsa bekleme, süre dolduysa "uzat/bütçeyi gözden geçir"
+        {offers.length === 0 && collecting ? (
+          // Polish 2.3 — teklifler TOPLANIYOR: ölü ekran yerine canlı iskelet + açıklama
+          <>
+            <Text variant="caption" tone="muted" style={styles.collectingNote}>
+              {t('quotes.empty_collecting')}
+            </Text>
+            <ListSkeleton rows={3} />
+          </>
+        ) : offers.length === 0 ? (
+          // §5.2 — süre doldu: "uzat/bütçeyi gözden geçir"
           <View style={styles.listEmpty}>
             <Ionicons
               name={collecting ? 'time-outline' : 'sad-outline'}
@@ -301,6 +309,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     sortChipOn: { backgroundColor: colors.accent },
     list: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
+    collectingNote: { textAlign: 'center', paddingHorizontal: space(3), paddingTop: space(2) },
     listEmpty: {
       alignItems: 'center',
       gap: space(1.5),
