@@ -13,48 +13,67 @@
 | K1  | Kapora tutarı           | `clamp(fiyat × %10, 1.000 ₸, 5.000 ₸)` — admin config. Gelir belgesi §10.1'deki "1.000 ₸" örneği **düzeltilmiş sayılır** (20.000 ₸'lik hizmette kapora 2.000 ₸ olur) | 26.08  |
 | K2  | Faz sırası              | **Randevu çekirdeği önce.** Komisyon faturası `COMPLETED` olayıyla doğduğu için gelir tarafı randevu durum makinesine dayanıyor                                      | 26.08  |
 | K3  | Komisyon oranı (mevcut) | %10 — kod ve panel bu değerde                                                                                                                                        | önceki |
+| K4  | **Para puan modeli**    | Şartname §8.4 yerine kurucunun modeli geçerli — aşağıda D1                                                                                                            | 26.08  |
+| K5  | Gecikme penceresi       | **Hemen 45 dakika.** 7 günlük kısıtlı mod kaldırılıyor — aşağıda D2                                                                                                  | 26.08  |
+| K6  | Karşılıksız vaatler     | **Ekrandan kaldırılacak** — aşağıda D10                                                                                                                              | 26.08  |
+| K7  | Migration yaklaşımı     | Şartname §"Mevcut migration dosyalarını değiştirme veya silme" bağlayıcı — aşağıda D8                                                                                | 26.08  |
 
 ---
 
-## D1 · Puan harcama tavanı — **acil, her gün gelir sızdırıyor**
+## D1 · Para puan modeli — **KARAR VERİLDİ (K4)**
 
-**Durum:** Kodda bir müşteri randevunun **%50'sini** puanla ödeyebiliyor
-(`payment.split.ts:4`). Şartname §8.4 bunu **%5** ile sınırlıyor.
+Kurucu kararı şartname §8.4'ün yerine geçer. §8.4'teki "%5 harcama tavanı"
+**yürürlükten kalkmıştır.**
 
-**Örnek:** 10.000 ₸'lik randevu → bugün 5.000 ₸ puanla ödenebiliyor, şartnameye
-göre 500 ₸.
+### Kural
 
-**Neden karar gerekiyor:** mevcut kullanıcıların biriken bakiyesi ve bu bakiyeyi
-nasıl harcayacaklarına dair beklentisi var. Tavanı bir gecede %50'den %5'e
-indirmek, "puanımı kullanamıyorum" şikâyeti üretir.
+| #    | Kural                                                                                          |
+| ---- | ---------------------------------------------------------------------------------------------- |
+| K4.1 | Kullanıcı tamamlanmış işlemden sonra **para puan** kazanır; bir sonraki alışverişinde kullanır |
+| K4.2 | **Kullanım kilidi:** bakiye **50.000 ₸** üzerine çıkana kadar puan harcanamaz                  |
+| K4.3 | **Harcama tavanı:** her ödemede, ödenecek tutarın en çok **%25'i** puanla kapatılır            |
+| K4.4 | **Son kullanma:** kazanılan puan **3 ay** içinde kullanılmazsa yanar                           |
+| K4.5 | Bu dört kural da kullanıcıya ekranda açıkça gösterilir                                         |
 
-**Seçenekler:**
+### Mevcut sistemden farkı
 
-|     | Yaklaşım                                                    | Sonuç                                                      |
-| --- | ----------------------------------------------------------- | ---------------------------------------------------------- |
-| a   | Hemen %5'e indir                                            | Gelir sızıntısı bugün durur; mevcut kullanıcı tepkisi olur |
-| b   | Duyuruyla kademeli indir (%50 → %25 → %10 → %5)             | Yumuşak geçiş, sızıntı birkaç ay sürer                     |
-| c   | Mevcut bakiyeler eski tavanla, yeni kazanımlar yeni tavanla | En adil, en karmaşık — bakiyeyi iki havuza ayırmak gerekir |
+| Konu           | Bugün kodda                        | Yeni model                        |
+| -------------- | ---------------------------------- | --------------------------------- |
+| Harcama tavanı | %50 (`payment.split.ts:4`)         | **%25**                           |
+| Kullanım kilidi | Yok — 1 puan bile harcanabiliyor   | **50.000 ₸ eşiği**                |
+| Son kullanma   | Yok — puan sonsuza kadar duruyor   | **90 gün**                        |
+| Görünürlük     | Bakiye var, kural metni yok        | Dört kural da ekranda             |
 
-**Önerim:** (b) — 30 günlük duyuru + tek adımda %5. Kademeli üç adım, sistemi
-gereksiz karmaşıklaştırır.
+### Uygulama varsayımları
+
+Kurucu kararı iki noktada yoruma açık; şöyle uygulanacak, aksi söylenirse
+değiştirilir:
+
+| Varsayım | Seçim                                                                                                                                                   |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **V1**   | Kilit **bir defalık açılır**: bakiye ilk kez 50.000 ₸'yi geçtiğinde `pointsUnlockedAt` yazılır ve bir daha kapanmaz (harcayınca altına düşmek kilitlemez) |
+| **V2**   | Son kullanma **kayıt bazlı (FIFO)**: her kazanım kendi 90 gününü taşır, en eski puan önce harcanır, süresi dolan için ledger'a `EXPIRE` satırı yazılır   |
+
+V1'in gerekçesi: "50.000'in üzerine çıktıktan sonra kullanım açılır" cümlesi
+kilidin açılmasını anlatıyor, sürekli bir eşik kontrolünü değil. Aksi hâlde
+49.000 ₸ bakiyeli kullanıcı hiç harcayamaz duruma düşer.
+
+V2'nin gerekçesi: bakiye bütününe tek son kullanma tarihi verilirse, her yeni
+kazanım eski puanların ömrünü uzatır ve "3 ay" kuralı işlevsizleşir.
 
 ---
 
-## D2 · 7 günlük kısıtlı mod
+## D2 · Gecikme penceresi — **KARAR VERİLDİ (K5)**
 
-**Durum:** Vade + 7 gün gecikmede uzman "kısıtlı mod"a giriyor
-(`commissions.service.ts:186-224`). Gelir şartnamesi §0.1.3: _"eski dönemsel
-faturalama, 7 günlük kısıtlı mod ve Premium/Platinum paket adları bu belgedeki
-yeni kurallarla değiştirilmiştir."_
+**Karar: hemen 45 dakikaya geçilecek.** 7 günlük kısıtlı mod
+(`commissions.service.ts:186-224`) kaldırılıyor; vade + 45 dk sonra otomatik
+`SUSPENDED_FINANCIAL`.
 
-Yeni kural: **45. dakikada** otomatik `SUSPENDED_FINANCIAL`.
-
-**Karar gereken:** 7 günden 45 dakikaya geçiş, uzmanlar için çok sert bir
-değişiklik. Sözleşmede açık hüküm gerekiyor (§22).
-
-**Seçenekler:** hemen geç · sözleşme güncellemesinden sonra geç · geçiş
-döneminde daha uzun pencere (örn. 24 saat) uygula.
+**Hukuki not (kaldırılmadı, hatırlatma olarak duruyor):** şartname §22 bu
+maddenin uzman sözleşmesinde açık kabul gerektirdiğini söylüyor. Kod tarafında
+süre **config parametresi** olarak yazılacak (`rate.commission_grace_minutes`,
+varsayılan 45) — sözleşme gerekçesiyle geçici olarak uzatmak gerekirse kod
+değişikliği gerekmeyecek.
 
 ---
 
@@ -142,25 +161,33 @@ gelince aç.
 
 ---
 
-## D8 · Migration klasörü sapması — teknik borç kararı
+## D8 · Migration klasörü sapması — **KARAR VERİLDİ (K7)**
 
-**Durum:** `migrations/` klasörü ile `schema.prisma` birbirini tutmuyor.
-Kanıt: `commission_invoices` migration'larda oluşturuluyor ama **`payments`
-oluşturulmuyor**; üretim `db push` ile dağıtılmış.
+**Karar: şartnameye göre yapılacak.** Randevu şartnamesi §"Yasaklar" bu soruyu
+zaten cevaplıyor:
 
-**Bu, PR #20'de koşulsuz bir `ALTER TABLE "payments"` yazdığımda boş bir
-veritabanında `relation does not exist` hatasıyla patlayarak kendini gösterdi.**
+> - Destructive migration yapma.
+> - **Mevcut migration dosyalarını değiştirme veya silme.**
+> - Yeni migration oluştur.
 
-**Seçenekler:**
+Yani "yeniden temellendirme" (a) **yasak** — geçmiş migration dosyalarına
+dokunmayı gerektiriyor. `db push` tek yol (b) de yasak — şartname her fazın
+migration + rollback planıyla kapanmasını istiyor (§"Her faz ayrı migration,
+test, QA raporu ve rollback planıyla tamamlanmalıdır").
 
-|     | Yaklaşım                                     | Sonuç                                                   |
-| --- | -------------------------------------------- | ------------------------------------------------------- |
-| a   | Migrations'ı şemaya göre yeniden temellendir | Temiz kurulum mümkün olur; bir defalık iş               |
-| b   | Migrations'ı bırak, `db push` tek yol olsun  | En az iş; ama şema geçmişi ve geri dönüş kaydı kaybolur |
-| c   | Şimdilik koşullu migration yazmaya devam et  | Bugünkü çözüm; borç birikir                             |
+**Uygulanacak yol:** geçmişe dokunmadan, sapmayı kapatan **yeni bir uzlaştırma
+migration'ı** yazılacak — eksik tabloları `CREATE TABLE IF NOT EXISTS` ile
+kurar. Böylece:
 
-**Önerim:** (a) — finans tablolarına dokunmaya başlamadan önce. Para sisteminde
-geri dönebilmek şart ve bu ancak güvenilir bir migration geçmişiyle olur.
+- Hiçbir mevcut dosya değişmez veya silinmez (§ yasak korunur)
+- Temiz veritabanında `prisma migrate deploy` şemayı eksiksiz kurar
+- Üretimde hiçbir şey değişmez (tablolar zaten var, `IF NOT EXISTS` geçer)
+- Bundan sonraki finans migration'ları koşulsuz yazılabilir
+
+**Durum:** `commission_invoices` migration'larda oluşturuluyor ama **`payments`
+oluşturulmuyor**; üretim `db push` ile dağıtılmış. Bu, PR #20'de koşulsuz bir
+`ALTER TABLE "payments"` yazdığımda boş bir veritabanında
+`relation does not exist` hatasıyla patlayarak kendini gösterdi.
 
 ---
 
@@ -180,13 +207,16 @@ alınmaz.
 
 ---
 
-## D10 · "%8,5 komisyon" ve "öncelikli talepler" vaatleri
+## D10 · Karşılıksız vaatler — **KARAR VERİLDİ (K6)**
 
-**Durum:** İkisi de ekranda satılıyor, ikisinin de sunucuda karşılığı yok
-(`data.ts:1905`, `seller/premium.tsx:21`).
+**Karar: vaatler ekrandan kaldırılacak.** İkisi de bugün ekranda satılıyor,
+ikisinin de sunucuda karşılığı yok (`data.ts:1905`,
+`seller/premium.tsx:21`).
 
-**Karar gereken:** matris ve premium head-start uygulanana kadar bu vaatleri
-ekrandan kaldıralım mı?
+| Vaat                        | Sunucuda karşılığı                        | Ne zaman geri gelir             |
+| --------------------------- | ------------------------------------------ | ------------------------------- |
+| "Platinum'da komisyon %8,5" | Yok — `membershipTier` hiç okunmuyor       | Komisyon matrisi uygulanınca    |
+| "Öncelikli talepler"        | Yok — dalga sırası KYC + kayıt tarihi      | Premium head-start uygulanınca  |
 
-**Önerim:** evet. Ödediği şeyi alamayan uzman, hiç vaat edilmemiş olmasından çok
-daha fazla güven kaybeder.
+Yerlerine yalnız **bugün gerçekten verilen** avantajlar yazılacak. Vaat, karşılığı
+kodda çalıştığı gün geri konur — daha önce değil.

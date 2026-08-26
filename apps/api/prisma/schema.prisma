@@ -263,6 +263,17 @@ model Booking {
   // §4.1.3 — uzman yanıt penceresi SUNUCUDA üretilir (6 saat); yanıt anı metriği
   responseDeadline  DateTime?     @map("response_deadline") @db.Timestamptz(6)
   respondedAt       DateTime?     @map("responded_at") @db.Timestamptz(6)
+  // A3 — SLOT BENZERSİZLİĞİ (veritabanı seviyesinde).
+  //
+  // Değeri `<proId>@<startAt UTC>`, YALNIZ randevu slot işgal eden bir durumdayken
+  // (confirmed | deposit_pending | deposit_submitted); diğer her durumda NULL.
+  // Postgres NULL'ları birbirinden farklı saydığı için iptal/tamamlanmış randevular
+  // aynı saatte istediği kadar birikebilir — ama AYNI ANDA yalnız biri slotu tutar.
+  //
+  // Kolonu uygulama kodu DEĞİL, `bookings_slot_key` trigger'ı doldurur
+  // (`slot-key.sql`). Böylece updateMany, ham SQL ve ileride yazılacak her yeni
+  // kod yolu kısıtın içinde kalır — kimse doldurmayı unutamaz.
+  slotKey           String?       @unique @map("slot_key")
   // Faz 2 — finans güvenliği
   receiptHash       String?       @unique @map("receipt_hash") // dekont içeriği sha256 — aynı dekont iki kez kullanılamaz
   refundReceiptHash String?       @unique @map("refund_receipt_hash")

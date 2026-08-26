@@ -49,20 +49,41 @@ türetilemiyor, ayrı alanlardan çıkarılmak zorunda.
 
 ## 2. Slot ve eşzamanlılık — en büyük boşluk
 
-| Konu                   | Durum                                                       | Kanıt                                  |
-| ---------------------- | ----------------------------------------------------------- | -------------------------------------- |
-| Müsaitlik hesabı       | `computeDaySlots` saf fonksiyon, test edilmiş               | `packages/domain/src/booking/slots.ts` |
-| Kapalı gün             | Destekleniyor                                               | `catalog.service.ts`                   |
-| **Slot tutma (hold)**  | **YOK** — `HELD`, `holdUntil` gibi hiçbir kavram bulunamadı | grep: 0 sonuç                          |
-| **Slot benzersizliği** | **YOK** — `(proId, startAt)` üzerinde kısıt yok             | `schema.prisma:224-276`                |
-| Advisory lock          | Yalnız medya taşımada var, randevuda **yok**                | `media-migration.scheduler.ts:35`      |
+| Konu                    | Durum                                                                    | Kanıt                                  |
+| ----------------------- | ------------------------------------------------------------------------ | -------------------------------------- |
+| Müsaitlik hesabı        | `computeDaySlots` saf fonksiyon, test edilmiş                            | `packages/domain/src/booking/slots.ts` |
+| Kapalı gün              | Destekleniyor                                                            | `catalog.service.ts`                   |
+| **Slot tutma (hold)**   | **YOK** — `HELD`, `holdUntil` gibi hiçbir kavram bulunamadı              | grep: 0 sonuç                          |
+| **DB benzersizliği**    | **YOK** — `(proId, startAt)` üzerinde kısıt yok                          | `schema.prisma:224-276`                |
+| Uygulama içi koruma     | **İKİ yolda VAR** — advisory lock + `hasConflict`, ama **üçüncüde yok**  | aşağıda                                |
 
-`Booking` modelindeki tek benzersizlik kısıtı `receiptHash`
+> **Düzeltme (26.08):** bu belgenin ilk sürümü "randevuda advisory lock yok"
+> diyordu; yanlıştı. `bookings.service.ts:292` ve `:479` `pg_advisory_xact_lock`
+> kullanıyor. Doğru tespit, korumanın **eksik** olması — yok olması değil.
+
+### Korunan ve korunmayan yollar
+
+| Randevu doğuş yolu             | Koruma                                              | Kanıt                          |
+| ------------------------------ | --------------------------------------------------- | ------------------------------ |
+| Offline/salon kaydı            | ✅ advisory lock + `hasConflict`                    | `bookings.service.ts:284-317`  |
+| Uzmanın talebi onaylaması      | ✅ advisory lock + `hasConflict`                    | `bookings.service.ts:479-527`  |
+| **Müşterinin teklif seçmesi**  | ❌ **hiçbir kontrol yok** — doğrudan `booking.create` | `quotes.service.ts:448-471`    |
+
+Korumasız olan, ters-pazaryerinin **ana müşteri yolu**. İki müşteri aynı uzmanın
+aynı saatine teklif seçerse ikisi de başarılı olur ve ikisi de kapora göndermeye
+yönlendirilir.
+
+Ayrıca korunan iki yolda da savunma yalnız **uygulama katmanında**: `startAt`
+alanına doğrudan yazan herhangi bir yeni kod yolu (veya elle SQL) sessizce
+çakışma üretir. `Booking` modelindeki tek benzersizlik kısıtı `receiptHash`
 (`schema.prisma:267`) — dekont tekrarını engelliyor, slot çakışmasını değil.
 
-**Pratik sonuç:** iki müşteri aynı anda aynı saate randevu oluşturursa ikisi de
-başarılı olur, ikisi de kapora göndermeye yönlendirilir. Şartname §5.3-5.4 bunu
-atomik tutma ve eşzamanlılık testi ile zorunlu kılıyor.
+`ACTIVE_SLOT_STATUSES` bilinçli olarak `awaiting_provider`'ı **dışarıda
+bırakıyor** (`bookings.service.ts:22-26`) — ters-pazaryerinde aynı slota birden
+çok bekleyen talep olabilir, uzman birini seçer. Bu doğru; kısıt yazılırken de
+korunmalı.
+
+Şartname §5.3-5.4 atomik tutma ve eşzamanlılık testi zorunlu kılıyor.
 
 ---
 

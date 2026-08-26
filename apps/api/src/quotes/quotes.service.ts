@@ -1,12 +1,16 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { depositFor, hasConflict } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
+import { loadDepositRules } from '../bookings/deposit.rules';
+import { SLOT_HOLDING_STATUSES } from '../bookings/slot-statuses';
 import type { CreateQuoteRequestInput, SelectQuoteInput, SubmitQuoteInput } from './quotes.dto';
 
 // §5.2 Faz A — reverse marketplace ÇEKİRDEK akışı buluttan:
@@ -442,31 +446,67 @@ export class QuotesService {
     const offer = this.mapOffer(quote as unknown as QuoteRow, names);
 
     // §4.3 — teklif zaten uzmanın kabulü → randevu doğrudan DEPOZİTO adımına doğar.
-    const depositRow = await this.prisma.setting.findUnique({ where: { key: 'rate.deposit_kzt' } });
-    const deposit = depositRow?.intValue || 1000;
+    // K1 — kapora oranlı; uzmanın onay yoluyla aynı hesap (`@ayna/domain`).
+    const deposit = depositFor(Number(quote.price), await loadDepositRules(this.prisma));
     const bookingId = `bk_q_${randomUUID().slice(0, 8)}`;
     const inDays = Math.max(0, Math.round((input.slotMs - Date.now()) / 86_400_000));
-    await this.prisma.booking.create({
-      data: {
-        id: bookingId,
-        userId: ownerId,
-        source: req.mode === 'photo' ? 'photo_quote' : 'demand',
-        service: `${req.category.code} (teklif)`,
-        proId: offer.proId,
-        proName: offer.proName,
-        proImage: offer.proImage,
-        dateLabel: almatyLabel(input.slotMs),
-        inDays,
-        startAt: new Date(input.slotMs),
-        durationMin: quote.etaMin,
-        price: Number(quote.price),
-        status: 'deposit_pending',
-        depositAmount: deposit,
-      },
-    });
-    await this.prisma.quoteRequest.update({
-      where: { id: requestId },
-      data: { status: 'closed', bookingId, selectedQuoteId: quote.id },
+    const durationMin = quote.etaMin ?? 60;
+
+    // A3 — ÇAKIŞMA KORUMASI. Bu yol (müşterinin teklif seçmesi) ters-pazaryerinin
+    // ana müşteri yoluydu ve tek bir kontrolü yoktu: iki müşteri aynı uzmanın aynı
+    // saatine teklif seçtiğinde ikisi de başarılı oluyor, ikisi de kapora göndermeye
+    // yönlendiriliyordu. Diğer iki yolla aynı desen: advisory lock ile serileştir,
+    // kilit altında oku, çakışmada 409.
+    //
+    // Talebin kapanışı da AYNI transaction'da: eskiden randevu ile talep iki ayrı
+    // yazımdı; araya düşen bir hata talebi açık bırakıp randevuyu doğurabiliyordu.
+    await this.prisma.$transaction(async (tx) => {
+      if (offer.proId) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${offer.proId}))`;
+        const others = await tx.booking.findMany({
+          where: {
+            proId: offer.proId,
+            status: { in: SLOT_HOLDING_STATUSES },
+            startAt: { not: null },
+          },
+          select: { startAt: true, durationMin: true },
+        });
+        const busy = others
+          .filter((o) => o.startAt)
+          .map((o) => ({
+            startMs: o.startAt!.getTime(),
+            endMs: o.startAt!.getTime() + (o.durationMin ?? 60) * 60_000,
+          }));
+        const candidate = { startMs: input.slotMs, endMs: input.slotMs + durationMin * 60_000 };
+        if (hasConflict(candidate, busy)) {
+          throw new ConflictException({
+            code: 'SLOT_CONFLICT',
+            message: 'Bu saat az önce doldu — başka bir saat seç',
+          });
+        }
+      }
+      await tx.booking.create({
+        data: {
+          id: bookingId,
+          userId: ownerId,
+          source: req.mode === 'photo' ? 'photo_quote' : 'demand',
+          service: `${req.category.code} (teklif)`,
+          proId: offer.proId,
+          proName: offer.proName,
+          proImage: offer.proImage,
+          dateLabel: almatyLabel(input.slotMs),
+          inDays,
+          startAt: new Date(input.slotMs),
+          durationMin,
+          price: Number(quote.price),
+          status: 'deposit_pending',
+          depositAmount: deposit,
+        },
+      });
+      await tx.quoteRequest.update({
+        where: { id: requestId },
+        data: { status: 'closed', bookingId, selectedQuoteId: quote.id },
+      });
     });
 
     // Kazanan uzmana push — takvimine düştü

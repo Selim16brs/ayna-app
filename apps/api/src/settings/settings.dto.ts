@@ -3,10 +3,20 @@ import { z } from 'zod';
 // §12.9 — parametrik oranlar (hepsi tam sayı; ₸/%/saat/puan)
 export const RATE_DEFS = [
   { key: 'commission.rate', label: 'Komisyon oranı', suffix: '%', default: 10 },
-  { key: 'rate.deposit_kzt', label: 'Depozito tutarı', suffix: '₸', default: 1000 },
+  // K1 — kapora oranlı: clamp(round100(fiyat × pct), min, max). Üç anahtar da
+  // koda gömülü DEĞİL; hesap `@ayna/domain` → `depositFor` içinde tek yerde.
+  // Bu anahtarlar kodda zaten okunuyordu ama panelde YOKTU — yani yönetilebilir
+  // görünen bir değer aslında hiç değiştirilemiyordu. Artık panelde de var.
+  { key: 'rate.deposit_pct', label: 'Kapora oranı', suffix: '%', default: 10 },
+  { key: 'rate.deposit_min', label: 'Kapora alt sınırı', suffix: '₸', default: 1000 },
+  { key: 'rate.deposit_max', label: 'Kapora üst sınırı', suffix: '₸', default: 5000 },
+  // Eski düz tutar. Hesapta artık yalnız alt sınır yedeği; yeni kurulumda
+  // `rate.deposit_min` bunu ezer. Panelde kalıyor ki eski değer görünür olsun.
+  { key: 'rate.deposit_kzt', label: 'Kapora (eski sabit tutar)', suffix: '₸', default: 1000 },
   { key: 'rate.cancel_window_h', label: 'Ücretsiz iptal penceresi', suffix: 'saat', default: 3 },
   { key: 'rate.late_cancel_pct', label: 'Geç iptal / no-show cezası', suffix: '%', default: 3 },
-  { key: 'rate.points_cap_pct', label: 'Puan harcama tavanı', suffix: '%', default: 50 },
+  // K4 — para puan modeli
+  { key: 'rate.points_cap_pct', label: 'Puan harcama tavanı', suffix: '%', default: 25 },
   { key: 'rate.premium_user_kzt', label: 'Premium üyelik (aylık)', suffix: '₸', default: 999 },
   { key: 'rate.premium_salon_kzt', label: 'Salon premium (aylık)', suffix: '₸', default: 4990 },
   { key: 'rate.raffle_cost', label: 'Çekiliş bileti', suffix: 'puan', default: 500 },
