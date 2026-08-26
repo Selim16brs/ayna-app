@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ApiError, api, type AiQuota } from '../src/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useKeyboardShown } from '../src/keyboard';
 import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space, font } from '../src/theme';
@@ -38,6 +40,8 @@ export default function BoniScreen() {
   const { t } = useLocale();
   const { colors, gradients, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const klavyeAcik = useKeyboardShown();
+  const insets = useSafeAreaInsets();
   const token = useStore((s) => s.token);
 
   const router = useRouter();
@@ -149,7 +153,10 @@ export default function BoniScreen() {
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={90}
+        // Sabit 90 yanlıştı: bu değer klavyenin ÜSTÜNE fazladan 90pt boşluk
+        // ekliyor, yazma alanını havada bırakıyordu. KeyboardAvoidingView
+        // başlığın altından ekran altına kadar uzandığı için doğru değer 0.
+        keyboardVerticalOffset={0}
       >
         <ScrollView
           ref={scrollRef}
@@ -290,7 +297,12 @@ export default function BoniScreen() {
         </ScrollView>
 
         {/* Girdi */}
-        <View style={styles.inputBar}>
+        <View
+          style={[
+            styles.inputBar,
+            { paddingBottom: klavyeAcik ? space(1.5) : insets.bottom + space(1) },
+          ]}
+        >
           {empty ? (
             <View style={styles.emptyNote}>
               <Ionicons name="time-outline" size={15} color={colors.muted} />

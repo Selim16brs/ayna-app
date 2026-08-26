@@ -149,8 +149,12 @@ export default function ProfileEditScreen() {
       }
     } else {
       // müşteri: anında uygula (boş isim kaydetme — Keşfet ismi boşalmasın)
+      // Şehir de kaydedilir: alan ekranda vardı ama HİÇBİR YERE yazılmıyordu,
+      // kullanıcı geri döndüğünde eski değeri görüyordu.
       const trimmed = name.trim();
-      if (trimmed) updateMyProfile({ name: trimmed });
+      const patch: { name?: string; city?: string } = { city: city.trim() };
+      if (trimmed) patch.name = trimmed;
+      updateMyProfile(patch);
       Alert.alert(t('profile.edit.saved'), undefined, [
         { text: t('common.save'), onPress: () => router.back() },
       ]);
@@ -209,12 +213,19 @@ export default function ProfileEditScreen() {
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
+          readOnly
         />
+        {/* Telefon ve e-posta GİRİŞ KİMLİĞİDİR (auth: ikisiyle de giriş yapılır).
+            Profilden doğrulamasız değiştirilmeleri hesap devri anlamına gelirdi;
+            düzenlenebilir görünüp kaydedilmemeleri ise kullanıcıya "bilgilerim
+            geri döndü" olarak yansıyordu. Salt okunur + gerekçe. */}
         <Field
           label={t('profile.edit.phone')}
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
+          readOnly
+          note={t('profile.edit.identity_note')}
         />
         <Field label={t('profile.edit.city')} value={city} onChangeText={setCity} />
 
@@ -268,11 +279,15 @@ function Field({
   value,
   onChangeText,
   keyboardType,
+  readOnly,
+  note,
 }: {
   label: string;
   value: string;
   onChangeText: (v: string) => void;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  readOnly?: boolean;
+  note?: string;
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -282,12 +297,18 @@ function Field({
         {label}
       </Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, readOnly ? styles.inputReadOnly : null]}
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
+        editable={!readOnly}
         placeholderTextColor={colors.muted}
       />
+      {note ? (
+        <Text variant="caption" tone="muted">
+          {note}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -338,6 +359,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
     },
     photoBtnText: { fontFamily: font.semibold },
+    inputReadOnly: { opacity: 0.6 },
     field: { gap: space(1) },
     fieldLabel: { marginLeft: space(0.5) },
     input: {

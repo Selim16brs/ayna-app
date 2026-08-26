@@ -3,6 +3,8 @@
 // Not: Pazar dilleri Kazakça (kk) ve Rusça (ru); önce Türkçe tamamlanır, sonra çevrilir.
 export const tr = {
   // Genel
+  'common.retry': 'Yeniden dene',
+  'passport.care.load_err': 'Bilgilerin yüklenemedi. Bağlantını kontrol et.',
   'common.loading': 'Yükleniyor…',
   'common.ok': 'Tamam',
   // §11 satıcı premium ödeme ekranı
@@ -1898,6 +1900,8 @@ export const tr = {
   'profile.edit.save_err':
     'Kaydedilemedi — tekrar dene. (Oturumun yenilenmiş olabilir; çıkış-giriş dene.)',
   'profile.edit.name': 'Ad Soyad',
+  'profile.edit.identity_note':
+    'Telefon ve e-posta giriş bilgilerindir; değiştirmek için destek ile iletişime geç.',
   'profile.edit.email': 'E-posta',
   'profile.edit.phone': 'Telefon',
   'profile.edit.city': 'Şehir',

@@ -76,12 +76,17 @@ export function PassportCare() {
   const bookings = useStore((st) => st.bookings);
   const [acilan, setAcilan] = useState<string | null>(null);
 
+  const [hata, setHata] = useState(false);
+
   const load = useCallback(() => {
     if (!token) return;
+    setHata(false);
     void api
       .passport(token)
       .then(setData)
-      .catch(() => undefined);
+      // Hata SESSİZ KALMAZ: veri gelmediğinde bölüm tamamen kayboluyordu ve
+      // kullanıcıya "alerji girecek ekran yok" gibi görünüyordu.
+      .catch(() => setHata(true));
     void api
       .passportAccess(token)
       .then(setAccess)
@@ -90,7 +95,27 @@ export function PassportCare() {
 
   useFocusEffect(load);
 
-  if (!token || !data) return null;
+  if (!token) return null;
+  if (!data) {
+    return (
+      <View style={[styles.group, shadow.soft]}>
+        <Text variant="label" tone="muted">
+          {t('passport.care.title')}
+        </Text>
+        <Text variant="caption" tone="muted">
+          {hata ? t('passport.care.load_err') : t('common.loading')}
+        </Text>
+        {hata ? (
+          <Pressable onPress={load} style={styles.retry}>
+            <Ionicons name="refresh" size={14} color={colors.accent} />
+            <Text variant="caption" tone="accentFg">
+              {t('common.retry')}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  }
 
   // Aynı seçeneğe tekrar dokunmak seçimi KALDIRIR — yanlış işaretlenen bir
   // özellik kalıcı olmasın (sağlık/alerji bağlamında önemli).
@@ -349,6 +374,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1.25),
       paddingVertical: space(0.625),
     },
+    retry: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' },
     shareRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     shareBtn: {
       flexDirection: 'row',

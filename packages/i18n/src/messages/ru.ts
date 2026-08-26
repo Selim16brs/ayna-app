@@ -2,6 +2,8 @@ import type { MessageKey } from './tr.js';
 
 // Rusça metinler. Pazar dili. tr.ts kaynak; eksik anahtarlar tr'ye düşer.
 export const ru: Partial<Record<MessageKey, string>> = {
+  'common.retry': 'Повторить',
+  'passport.care.load_err': 'Не удалось загрузить данные. Проверьте соединение.',
   'common.loading': 'Загрузка…',
   'common.ok': 'Хорошо',
   'premium.title': 'Premium',
@@ -1787,6 +1789,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'profile.edit.save_err':
     'Не удалось сохранить — попробуйте снова. (Сессия могла обновиться; выйдите и войдите.)',
   'profile.edit.name': 'Имя и фамилия',
+  'profile.edit.identity_note':
+    'Телефон и e-mail — данные для входа; для изменения обратитесь в поддержку.',
   'profile.edit.email': 'Эл. почта',
   'profile.edit.phone': 'Телефон',
   'profile.edit.city': 'Город',

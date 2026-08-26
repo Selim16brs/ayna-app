@@ -2,6 +2,8 @@ import type { MessageKey } from './tr.js';
 
 // Kazakça metinler (Kiril). Pazar dili. tr.ts kaynak; eksik anahtarlar tr'ye düşer.
 export const kk: Partial<Record<MessageKey, string>> = {
+  'common.retry': 'Қайталау',
+  'passport.care.load_err': 'Деректер жүктелмеді. Байланысты тексеріңіз.',
   'common.loading': 'Жүктелуде…',
   'common.ok': 'Жарайды',
   'premium.title': 'Premium',
@@ -1802,6 +1804,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'profile.edit.save_err':
     'Сақталмады — қайталап көр. (Сессия жаңарған болуы мүмкін; шығып-кіріп көр.)',
   'profile.edit.name': 'Аты-жөні',
+  'profile.edit.identity_note':
+    'Телефон мен e-mail — кіру деректері; өзгерту үшін қолдау қызметіне хабарласыңыз.',
   'profile.edit.email': 'Электрондық пошта',
   'profile.edit.phone': 'Телефон',
   'profile.edit.city': 'Қала',

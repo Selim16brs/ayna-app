@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { api, ApiError, type ChatMessage } from '../../src/api';
 import { isRiskyMessage } from '../../src/messages-guard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useKeyboardShown } from '../../src/keyboard';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -23,6 +25,8 @@ export default function ChatThreadScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const klavyeAcik = useKeyboardShown();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string; name?: string; otherId?: string }>();
   const convId = params.id;
   const token = useStore((s) => s.token);
@@ -182,7 +186,10 @@ export default function ChatThreadScreen() {
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={90}
+        // Sabit 90 yanlıştı: bu değer klavyenin ÜSTÜNE fazladan 90pt boşluk
+        // ekliyor, yazma alanını havada bırakıyordu. KeyboardAvoidingView
+        // başlığın altından ekran altına kadar uzandığı için doğru değer 0.
+        keyboardVerticalOffset={0}
       >
         <ScrollView
           ref={scrollRef}
@@ -296,7 +303,12 @@ export default function ChatThreadScreen() {
                 </Text>
               </View>
             ) : null}
-            <View style={styles.composer}>
+            <View
+              style={[
+                styles.composer,
+                { paddingBottom: klavyeAcik ? space(1.5) : insets.bottom + space(1) },
+              ]}
+            >
               <TextInput
                 value={draft}
                 onChangeText={(v) => {
