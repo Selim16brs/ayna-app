@@ -169,6 +169,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'salon.staff.empty_t': 'Құрамда әзірге маман жоқ',
   'salon.staff.empty_b': 'Шақыру кодымен мамандарыңды қос — кодты осы жерден жаса.',
   'salon.staff.new': 'Жаңа қосылды — алғашқы жазылым күтілуде',
+  'salon.occupancy.title': 'Бүгінгі орындық жүктемесі',
+  'salon.occupancy.free': 'Осы сағаттарда бос орындық бар',
+  'salon.occupancy.empty': 'Бүгінге жазылу жоқ — жүктемені есептеу мүмкін емес.',
   'salon.metric.occupancy': 'Толымдылық',
   'salon.metric.response': 'Жауап',
   'salon.quick.profile': 'Салон профилі',
@@ -639,6 +642,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'requests.locked_hint':
     'Сұраныс мәліметтері Premium/Platinum мүшелерге ашық. Көру және ұсыныс беру үшін мүшелігіңді жоғарылат.',
   'offer.form.title': 'Ұсыныс беру',
+  'offer.form.net': 'Саған қалады',
+  'offer.form.net_note': 'AYNA комиссиясы {pct}% — бағаны соны біле отырып қой.',
   'offer.form.price': 'Баға (₸)',
   'offer.form.eta': 'Болжамды уақыт (мин)',
   'offer.form.note': 'Ескертпе (қалауыңша)',
@@ -817,6 +822,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'screen.placeholder': 'Бұл бөлім жақында осында болады',
   'rewards.title': 'Ұпайларым',
   'rewards.points': 'AYNA Ұпайы',
+  'rewards.worth': 'Осынша жеңілдік деген сөз',
+  'rewards.rate_note':
+    '1 балл — дәл 1 ₸ жеңілдік. Курс жоқ, қайта есептеу жоқ — төлемнің ең көбі {cap}% баллмен жабылады.',
   'rewards.tier': 'Деңгей',
   'rewards.next_tier': 'Келесі деңгейге',
   'rewards.bookings_left': 'жазылу қалды',

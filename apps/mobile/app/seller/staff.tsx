@@ -76,12 +76,10 @@ export default function StaffDetailScreen() {
           />
           <View style={styles.divider} />
           <Stat icon="star-outline" value={rating.toFixed(1)} label={t('seller.staff.rating')} />
-          <View style={styles.divider} />
-          <Stat
-            icon="pie-chart-outline"
-            value={`%${60 + (bookings % 38)}`}
-            label={t('salon.metric.occupancy')}
-          />
+          {/* KALDIRILDI: doluluk yüzdesi `60 + (bookings % 38)` ile UYDURULUYORDU —
+              gerçek veriye dayanmayan bir sayıyı yüzde diye göstermek, hiç
+              göstermemekten kötüdür. Gerçek doluluk, uzmanın çalışma saatleri ile
+              randevularının oranından hesaplanmalı; o veri bu ekranda yok. */}
         </View>
 
         {/* §5.1 — çalışma grafiği tipi */}

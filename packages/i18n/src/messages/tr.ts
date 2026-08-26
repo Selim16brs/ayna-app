@@ -180,6 +180,9 @@ export const tr = {
   'salon.staff.empty_t': 'Henüz kadronda uzman yok',
   'salon.staff.empty_b': 'Davet koduyla uzmanlarını ekle — buradan kod oluştur.',
   'salon.staff.new': 'Yeni katıldı — ilk randevusu bekleniyor',
+  'salon.occupancy.title': 'Bugün koltuk doluluğu',
+  'salon.occupancy.free': 'Şu saatlerde boş koltuk var',
+  'salon.occupancy.empty': 'Bugün için randevu yok — doluluk hesaplanamıyor.',
   'salon.metric.occupancy': 'Doluluk',
   'salon.metric.response': 'Yanıt',
   'salon.quick.profile': 'Salon profili',
@@ -682,6 +685,8 @@ export const tr = {
   'requests.locked_hint':
     'Talep detayları Premium/Platinum üyelere açık. Görmek ve teklif vermek için üyeliğini yükselt.',
   'offer.form.title': 'Teklif ver',
+  'offer.form.net': 'Sana kalan',
+  'offer.form.net_note': 'AYNA komisyonu %{pct} — teklifini verirken bunu bilerek ver.',
   'offer.form.price': 'Fiyat (₸)',
   'offer.form.eta': 'Tahmini süre (dk)',
   'offer.form.note': 'Not (isteğe bağlı)',
@@ -874,6 +879,9 @@ export const tr = {
   // Puanlarım / Ödüller
   'rewards.title': 'Puanlarım',
   'rewards.points': 'AYNA Puanı',
+  'rewards.worth': 'Bu kadar indirim demek',
+  'rewards.rate_note':
+    '1 puan tam olarak 1 ₸ indirim. Kur yok, çeviri yok — bir ödemenin en fazla %{cap}’si puanla kapatılabilir.',
   'rewards.tier': 'Seviye',
   'rewards.next_tier': 'Sonraki seviyeye',
   'rewards.bookings_left': 'randevu kaldı',

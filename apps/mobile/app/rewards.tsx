@@ -4,6 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   POINTS_EXPIRY_MONTHS,
   POINTS_SPEND_CAP_PCT,
+  formatPrice,
   RAFFLE_COST,
   REWARDS,
   type Reward,
@@ -98,7 +99,20 @@ export default function RewardsScreen() {
               </Text>
             </View>
           </View>
-          <Text style={styles.pointsBig}>{points}</Text>
+          {/* PUAN ÇIPLAK DURMAZ — kanvas kuralı. Kodda doğrulandı:
+              app/payment/[bookingId].tsx cashDue = amount - pointsApplied,
+              yani 1 puan = 1 ₸. Kur/çeviri yok. */}
+          <View style={styles.pointsRow}>
+            <Text style={styles.pointsBig}>{points.toLocaleString('tr-TR')}</Text>
+            <View style={styles.worth}>
+              <Text style={styles.worthValue} numeric>
+                = {formatPrice(points)}
+              </Text>
+              <Text variant="micro" tone="onColor" style={styles.dim} numberOfLines={2}>
+                {t('rewards.worth')}
+              </Text>
+            </View>
+          </View>
           <View style={styles.progressWrap}>
             <Progress
               value={progress}
@@ -107,6 +121,9 @@ export default function RewardsScreen() {
               track="rgba(255,255,255,0.28)"
             />
           </View>
+          <Text variant="caption" tone="onColor" style={styles.dim}>
+            {fillParams(t('rewards.rate_note'), { cap: String(POINTS_SPEND_CAP_PCT) })}
+          </Text>
           <Text variant="caption" tone="onColor" style={styles.dim}>
             {isMaxTier
               ? t('rewards.tier.max')
@@ -323,6 +340,9 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       marginBottom: space(0.5),
     },
+    pointsRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space(1.5) },
+    worth: { flex: 1, paddingBottom: space(0.75), gap: 1 },
+    worthValue: { color: '#FFFFFF', fontFamily: font.semibold, fontSize: 20, lineHeight: 25 },
     pointsBig: {
       fontSize: 46,
       lineHeight: 50,

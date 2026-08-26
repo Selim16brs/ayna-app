@@ -87,6 +87,12 @@ export default function SellerRequestsScreen() {
   const [note, setNote] = useState('');
   // §A2 akıllı fiyatlama — opsiyonel indirim (0/10/20/30); sebep slot yakınlığından türetilir
   const [discount, setDiscount] = useState(0);
+  // §9 — uzman teklifi verirken KOMİSYON SONRASI net kazancını görmeli. Görmezse
+  // kafasında hesaplar, yanlış fiyat verir ve sonra komisyonu sürpriz sanır.
+  const commissionPct = useStore((st) => st.config.rates.commissionPct) ?? 10;
+  const priceNum = Number(price) || 0;
+  const finalPrice = Math.round(priceNum * (1 - discount / 100));
+  const netEarn = Math.round(finalPrice * (1 - commissionPct / 100));
   // §4.1.2 — uzman KENDİ boş saatlerinden 2-3 slot seçer (elle saat yazmaz)
   const [picked, setPicked] = useState<number[]>([]);
   // Talep fotoğrafını tam ekran görüntüle (karttan ve teklif formundan)
@@ -281,6 +287,23 @@ export default function SellerRequestsScreen() {
                   keyboardType="number-pad"
                   style={styles.input}
                 />
+                {/* SANA KALAN — indirim ve komisyon düşülmüş net tutar, canlı */}
+                {priceNum > 0 ? (
+                  <View style={styles.netBox}>
+                    <View style={styles.netRow}>
+                      <Text variant="caption" tone="inkSoft" style={styles.flexOne}>
+                        {t('offer.form.net')}
+                      </Text>
+                      <Text numeric variant="title" tone="ink">
+                        {formatPrice(netEarn)}
+                      </Text>
+                    </View>
+                    <Text variant="micro" tone="muted">
+                      {fillParams(t('offer.form.net_note'), { pct: String(commissionPct) })}
+                    </Text>
+                  </View>
+                ) : null}
+
                 {/* §A2 — akıllı fiyatlama: sakin saat/son dakika indirimi (⚡Fırsat rozeti) */}
                 <Text variant="caption" tone="inkSoft" style={styles.label}>
                   {t('offer.form.discount')}
@@ -704,6 +727,15 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     label: { marginTop: space(1.5), marginBottom: space(0.75) },
+    netBox: {
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.md,
+      padding: space(1.5),
+      gap: 3,
+      marginTop: space(1),
+    },
+    netRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    flexOne: { flex: 1 },
     discountRow: { flexDirection: 'row', gap: space(0.75), flexWrap: 'wrap' },
     discountChip: {
       paddingHorizontal: space(1.5),

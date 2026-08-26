@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type SupplierAd } from '../../src/data';
 import { useSalonStaff } from '../../src/staff';
+import { OccupancyStrip } from '../../src/ui';
 import { greetingKey } from '../../src/greeting';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
@@ -124,6 +125,12 @@ export default function SalonHomeScreen() {
               </ScrollView>
             </>
           ) : null}
+
+          {/* KOLTUK DOLULUK — salon sahibinin gerçek işi boş koltuğu doldurmak.
+              Bugünün randevularından SAAT SAAT hesaplanır; boş saatler işaretlenir. */}
+          <View style={styles.occupancy}>
+            <OccupancyStrip salonName={salonName} />
+          </View>
 
           {/* §10.1 — uzman performansları (çekirdek). Reklam bloğundan NET ayrım için ayırıcı + accent başlık */}
           <View style={styles.sectionDivider} />
@@ -253,6 +260,7 @@ function AdCard({ ad }: { ad: SupplierAd }) {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: TAB_BAR_CLEARANCE + space(2) },
+    occupancy: { paddingHorizontal: space(2.5), marginTop: space(2) },
     flex: { flex: 1 },
     // Kapak foto hero
     hero: { height: 240, position: 'relative', justifyContent: 'space-between' },

@@ -151,6 +151,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'salon.staff.empty_t': 'В команде пока нет мастеров',
   'salon.staff.empty_b': 'Добавь мастеров по коду приглашения — создай код здесь.',
   'salon.staff.new': 'Новый участник — ждём первую запись',
+  'salon.occupancy.title': 'Загрузка кресел сегодня',
+  'salon.occupancy.free': 'В эти часы есть свободные кресла',
+  'salon.occupancy.empty': 'На сегодня записей нет — загрузку не посчитать.',
   'salon.metric.occupancy': 'Загрузка',
   'salon.metric.response': 'Ответ',
   'salon.quick.profile': 'Профиль салона',
@@ -623,6 +626,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'requests.locked_hint':
     'Детали заявки доступны участникам Premium/Platinum. Чтобы видеть и предлагать, повысь членство.',
   'offer.form.title': 'Дать предложение',
+  'offer.form.net': 'Тебе останется',
+  'offer.form.net_note': 'Комиссия AYNA {pct}% — учитывай это, когда назначаешь цену.',
   'offer.form.price': 'Цена (₸)',
   'offer.form.eta': 'Примерное время (мин)',
   'offer.form.note': 'Заметка (по желанию)',
@@ -801,6 +806,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'screen.placeholder': 'Этот раздел скоро появится здесь',
   'rewards.title': 'Мои баллы',
   'rewards.points': 'Балл AYNA',
+  'rewards.worth': 'Столько скидки это даёт',
+  'rewards.rate_note':
+    '1 балл — ровно 1 ₸ скидки. Никаких курсов и пересчётов — баллами можно закрыть не более {cap}% платежа.',
   'rewards.tier': 'Уровень',
   'rewards.next_tier': 'До следующего уровня',
   'rewards.bookings_left': 'записей осталось',
