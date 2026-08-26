@@ -19,7 +19,7 @@ import { useLocale } from '../../src/locale';
 import { selectPortrait, useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader } from '../../src/ui';
+import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 // §growth — uzman/salon profilini sosyal medyada paylaşır; kart AYNA reklamı olarak da çalışır.
 const PROFILE_URL = 'https://ayna.kz';
@@ -312,7 +312,12 @@ export default function SellerShareScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { alignItems: 'center', paddingHorizontal: space(3), paddingVertical: space(2.5) },
+    content: {
+      alignItems: 'center',
+      paddingHorizontal: space(3),
+      paddingVertical: space(2.5),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     cardWrap: {
       borderRadius: radius.xl,
       overflow: 'hidden',

@@ -6,7 +6,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 // UTC ISO → yerel "GG.AA HH:MM"; geçmiş ise null
 function formatExpiry(iso?: string): string | null {
@@ -181,7 +181,7 @@ export default function SellerCodesScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: space(4), gap: space(1.5) },
+    content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.5) },
     ruleCard: {
       flexDirection: 'row',
       alignItems: 'center',

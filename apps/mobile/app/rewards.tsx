@@ -18,7 +18,15 @@ import { useStore } from '../src/store';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import type { MessageKey } from '@ayna/i18n';
-import { PressableScale, Progress, Screen, SectionHeader, StackHeader, Text } from '../src/ui';
+import {
+  PressableScale,
+  Progress,
+  Screen,
+  SectionHeader,
+  StackHeader,
+  Text,
+  TAB_BAR_CLEARANCE,
+} from '../src/ui';
 
 const NEXT_DRAW = '30 Haziran';
 // Keşfet canlı aksan paleti — ödül/çekiliş görsel-zengin kartlar
@@ -414,7 +422,11 @@ function RuleRow({ icon, text, last }: { icon: IoniconName; text: string; last?:
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: space(13) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     raffleJoin: {
       backgroundColor: 'rgba(255,255,255,0.22)',
       paddingHorizontal: space(1.75),

@@ -10,7 +10,16 @@ import { fillParams, useLocale } from '../../src/locale';
 import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, DateField, Screen, Segmented, StackHeader, Text, TextInput } from '../../src/ui';
+import {
+  Button,
+  DateField,
+  Screen,
+  Segmented,
+  StackHeader,
+  Text,
+  TextInput,
+  TAB_BAR_CLEARANCE,
+} from '../../src/ui';
 
 type Kind = 'normal' | 'group' | 'express';
 let seq = 0;
@@ -356,7 +365,7 @@ const makeStyles = (colors: ColorTokens) =>
       paddingTop: space(2.5),
       // Tab bar yüksekliği kadar pay — yoksa "Randevuyu ekle" butonu bar arkasında
       // kalıyor ve kaydırma limiti butona erişimi engelliyor.
-      paddingBottom: space(14),
+      paddingBottom: TAB_BAR_CLEARANCE,
       gap: space(1.5),
     },
     field: { gap: space(0.75) },

@@ -7,7 +7,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text, ListSkeleton } from '../../src/ui';
+import { Screen, StackHeader, Text, ListSkeleton, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 // EK Z.1 — Konuşma listesi (müşteri ↔ uzman/salon DM)
 export default function MessagesScreen() {
@@ -99,7 +99,11 @@ export default function MessagesScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(2), paddingBottom: space(13) },
+    content: {
+      paddingHorizontal: space(3),
+      paddingTop: space(2),
+      paddingBottom: TAB_BAR_CLEARANCE,
+    },
     empty: { alignItems: 'center', gap: space(2), paddingTop: space(10) },
     emptyText: { textAlign: 'center', paddingHorizontal: space(4) },
     emptyCta: {

@@ -7,7 +7,7 @@ import { useStore } from '../../src/store';
 import { activeCategories } from '../../src/taxonomy';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text } from '../../src/ui';
+import { Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 type Key = 'care' | 'moment' | 'personal' | 'booking';
 const GROUPS: {
@@ -180,7 +180,7 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2),
-      paddingBottom: space(6),
+      paddingBottom: TAB_BAR_CLEARANCE,
       gap: space(2),
     },
     hint: { marginLeft: space(0.5) },

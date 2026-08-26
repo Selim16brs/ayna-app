@@ -8,7 +8,15 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, DateField, Screen, StackHeader, Text, TextInput } from '../../src/ui';
+import {
+  Button,
+  DateField,
+  Screen,
+  StackHeader,
+  Text,
+  TextInput,
+  TAB_BAR_CLEARANCE,
+} from '../../src/ui';
 import type { MessageKey } from '@ayna/i18n';
 
 const CATS = activeCategories();
@@ -356,7 +364,7 @@ export default function SellerOffersScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: space(6), gap: space(1.25) },
+    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.25) },
     lead: { lineHeight: 18 },
     card: {
       backgroundColor: colors.surface,
