@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
+import { api } from '../../src/api';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -42,6 +46,9 @@ export default function PrivacyScreen() {
   const styles = useThemedStyles(makeStyles);
 
   // "anon" (yorum gizliliği) gerçek store değeridir; diğerleri yerel
+  const router = useRouter();
+  const token = useStore((s) => s.token);
+  const logout = useStore((s) => s.logout);
   const reviewAnonymous = useStore((s) => s.reviewAnonymous);
   const setReviewAnonymous = useStore((s) => s.setReviewAnonymous);
 
@@ -59,10 +66,65 @@ export default function PrivacyScreen() {
     else setState((s) => ({ ...s, [k]: v }));
   };
 
-  const onDownload = () => Alert.alert(t('common.soon'));
-  // Hesap silme için sunucu tarafı henüz YOK. "Sil" deyip hiçbir şey yapmamak,
-  // kullanıcıya hesabını sildiğini sandırır — en kötü yalan. Durumu açıkça söylüyoruz.
-  const onDelete = () => Alert.alert(t('privacy.delete'), t('privacy.delete_note'));
+  const [busy, setBusy] = useState(false);
+
+  /** Verilerimi indir — sunucudan JSON alınır, dosyaya yazılır, paylaşıma açılır. */
+  const onDownload = async () => {
+    if (!token || busy) return;
+    setBusy(true);
+    try {
+      const veri = await api.exportMyData(token);
+      // Önbellek dizini: kullanıcı paylaşınca kendi seçtiği yere kaydeder;
+      // cihazda kalıcı bir PII kopyası bırakmayız.
+      const dosya = new File(Paths.cache, `ayna-verilerim-${Date.now()}.json`);
+      dosya.create({ overwrite: true });
+      dosya.write(JSON.stringify(veri, null, 2));
+      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(dosya.uri);
+      else Alert.alert(t('privacy.download'), t('privacy.download_saved'));
+    } catch {
+      Alert.alert(t('privacy.download'), t('common.error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /**
+   * Hesabımı sil — GERİ ALINAMAZ.
+   *
+   * İki kademeli onay: ilk uyarı ne SİLİNECEĞİNİ ve ne KALACAĞINI yazar
+   * (mali kayıtlar yasal saklama gereği kalır, sağlık verisi tamamen silinir),
+   * ikinci adım yıkıcı düğmeyi ayrı bir dokunuşa koyar.
+   */
+  const onDelete = () => {
+    if (!token || busy) return;
+    Alert.alert(t('privacy.delete'), t('privacy.delete_note'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('privacy.delete'),
+        style: 'destructive',
+        onPress: () =>
+          Alert.alert(t('privacy.delete_confirm_t'), t('privacy.delete_confirm_b'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('privacy.delete_final'),
+              style: 'destructive',
+              onPress: async () => {
+                setBusy(true);
+                try {
+                  await api.deleteMyAccount(token);
+                  logout();
+                  router.replace('/auth');
+                } catch {
+                  Alert.alert(t('privacy.delete'), t('common.error'));
+                } finally {
+                  setBusy(false);
+                }
+              },
+            },
+          ]),
+      },
+    ]);
+  };
 
   return (
     <Screen edges={['bottom']}>
@@ -155,12 +217,6 @@ export default function PrivacyScreen() {
             <Text variant="bodyStrong" tone="ink" style={styles.actionLabel}>
               {t('privacy.download')}
             </Text>
-            {/* Dokunmadan önce görünsün: sunucu tarafı henüz yok. */}
-            <View style={styles.soon}>
-              <Text variant="micro" tone="muted">
-                {t('privacy.not_ready')}
-              </Text>
-            </View>
           </Pressable>
           <Pressable onPress={onDelete} style={styles.row}>
             <View style={[styles.icon, { backgroundColor: colors.dangerSoft }]}>
@@ -169,11 +225,6 @@ export default function PrivacyScreen() {
             <Text variant="bodyStrong" tone="accentFg" style={styles.actionLabel}>
               {t('privacy.delete')}
             </Text>
-            <View style={styles.soon}>
-              <Text variant="micro" tone="muted">
-                {t('privacy.not_ready')}
-              </Text>
-            </View>
           </Pressable>
         </View>
 

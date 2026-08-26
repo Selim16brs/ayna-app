@@ -2163,7 +2163,7 @@ export const tr = {
     'Ne reklam ağlarına, ne salonlara, ne “iş ortaklarına”. Tamamlanan hizmetten %10 komisyon alıyoruz — kazancımız bu. Bu bir gün değişirse ilk sen öğrenirsin.',
   'privacy.not_ready': 'Henüz hazır değil',
   'privacy.delete_note':
-    'Hesap silme henüz açık değil. Açıldığında, silinemeyen kayıtların (yasal saklama gereken ödeme kayıtları) neler olduğunu bu ekranda önceden göreceksin.',
+    'Silinince geri alınamaz. TAMAMEN SİLİNİR: pasaportun (alerji ve tercihlerin), güvendiğin kişiler, güvenlik oturumların, W2W gönderilerin, kaydettiklerin ve takiplerin. KİMLİĞİN AYRILIR: randevu kayıtlarında adın ve telefonun kaldırılır, W2W yorumların “AYNA Üyesi” olur. YASAL OLARAK KALIR: ödeme, komisyon ve puan defteri kayıtları — ama artık sana bağlı değil.',
   'privacy.title': 'Gizlilik',
   'privacy.subtitle': 'Verilerin üzerindeki kontrol sende',
   'privacy.location': 'Konum paylaşımı',
@@ -2174,6 +2174,11 @@ export const tr = {
   'privacy.analytics': 'Anonim kullanım istatistikleri',
   'privacy.marketing': 'Kampanya bildirimleri',
   'privacy.section.data': 'Verilerim',
+  'privacy.delete_confirm_t': 'Emin misin?',
+  'privacy.delete_confirm_b':
+    'Bu işlem geri alınamaz. Hesabın kapanır ve uygulamadan çıkış yapılır.',
+  'privacy.delete_final': 'Evet, sil',
+  'privacy.download_saved': 'Dosya cihazına kaydedildi.',
   'privacy.download': 'Verilerimi indir',
   'privacy.delete': 'Hesabımı sil',
 

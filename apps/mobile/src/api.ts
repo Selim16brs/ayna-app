@@ -727,6 +727,11 @@ export const api = {
     post<{ dataUrl: string }>('/cutout', source, token),
   // §12.3 — güncel kullanıcı (kısıt durumu tazelemek için)
   me: (token: string) => get<AuthUser>('/auth/me', token),
+  // Kişisel veri mevzuatı: verilerini indir + hesabını sil. İkisi de gizlilik
+  // ekranında düğme olarak duruyordu ama sunucu tarafı hiç yazılmamıştı.
+  exportMyData: (token: string) => get<Record<string, unknown>>('/auth/me/export', token),
+  deleteMyAccount: (token: string) =>
+    post<{ deleted: boolean }>('/auth/me/delete', { confirm: 'SIL' }, token),
   // §4 — ad/şehir sunucuya yazılır. Eskiden yalnız yerel store güncelleniyordu
   // ve uygulama yeniden açılınca sunucudaki eski değer geri geliyordu.
   updateMyProfileRemote: (token: string, patch: { name?: string; city?: string }) =>
