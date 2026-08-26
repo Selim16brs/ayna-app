@@ -11,6 +11,8 @@ export type CreatePostInput = z.infer<typeof createPostSchema>;
 export const createCommentSchema = z.object({
   text: z.string().min(1).max(1000),
   anonymous: z.boolean().optional(),
+  /// §14 — cevapta bir uzman öneriliyorsa kimi. Doğrulamayı SUNUCU yapar.
+  proId: z.string().max(64).optional(),
 });
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;
 
