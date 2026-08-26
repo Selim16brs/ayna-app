@@ -404,7 +404,14 @@ export default function NewBusinessScreen() {
             <Label text={t('biz.field.birthdate')} />
             <Pressable style={styles.dateBtn} onPress={() => setShowDate(true)}>
               <Ionicons name="calendar-outline" size={20} color={colors.inkSoft} />
-              <Text variant="body" tone={birthDate ? 'ink' : 'muted'} style={styles.dateText}>
+              <Text
+                variant="body"
+                tone={birthDate ? 'ink' : 'muted'}
+                style={styles.dateText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              >
                 {birthDate ? fmtDate(birthDate) : t('biz.field.birthdate_ph')}
               </Text>
               <Ionicons name="chevron-down" size={18} color={colors.muted} />
@@ -542,11 +549,21 @@ export default function NewBusinessScreen() {
                 variant="bodyStrong"
                 tone={pinned ? 'onAccent' : 'accentFg'}
                 style={styles.mapText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
               >
                 {pinned ? t('biz.field.map_pinned') : t('biz.field.map_pin')}
               </Text>
               {pinned ? (
-                <Text variant="caption" tone="onAccent" style={styles.mapChange}>
+                <Text
+                  variant="caption"
+                  tone="onAccent"
+                  style={styles.mapChange}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
+                >
                   {t('biz.field.map_change')}
                 </Text>
               ) : null}
@@ -649,7 +666,13 @@ export default function NewBusinessScreen() {
                 size={20}
                 color={docUrl ? colors.onAccent : colors.accentFg}
               />
-              <Text variant="bodyStrong" tone={docUrl ? 'onAccent' : 'accentFg'}>
+              <Text
+                variant="bodyStrong"
+                tone={docUrl ? 'onAccent' : 'accentFg'}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              >
                 {docUrl ? t('biz.field.docs_added') : t('biz.field.docs_add')}
               </Text>
             </Pressable>

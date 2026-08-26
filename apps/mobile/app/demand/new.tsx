@@ -288,7 +288,13 @@ export default function NewDemandScreen() {
               <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
                 {city}
               </Text>
-              <Text variant="caption" tone="accentFg">
+              <Text
+                variant="caption"
+                tone="accentFg"
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+              >
                 {t('addresses.add')}
               </Text>
               <Ionicons
@@ -466,7 +472,14 @@ export default function NewDemandScreen() {
           disabled={!canSubmit}
           onPress={submit}
         >
-          <Text variant="bodyStrong" tone={canSubmit ? 'onAccent' : 'muted'} style={styles.ctaText}>
+          <Text
+            variant="bodyStrong"
+            tone={canSubmit ? 'onAccent' : 'muted'}
+            style={styles.ctaText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}
+          >
             {t('demand.new.send')}
           </Text>
         </Pressable>

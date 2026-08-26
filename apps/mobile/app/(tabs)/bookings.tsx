@@ -222,12 +222,25 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
       {upcoming ? (
         <View style={styles.actions}>
           <Pressable style={[styles.btn, styles.btnOutline]} onPress={toDetail}>
-            <Text variant="caption" style={[styles.btnText, { color: colors.danger }]}>
+            <Text
+              variant="caption"
+              style={[styles.btnText, { color: colors.danger }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
               {t('common.cancel')}
             </Text>
           </Pressable>
           <Pressable style={[styles.btn, styles.btnFilled]} onPress={toDetail}>
-            <Text variant="caption" tone="onAccent" style={styles.btnText}>
+            <Text
+              variant="caption"
+              tone="onAccent"
+              style={styles.btnText}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
               {t('bookings.action.detail')}
             </Text>
           </Pressable>
