@@ -1034,7 +1034,10 @@ export const useStore = create<State>()(
               titleKey: 'notif.late_cancel',
               bodyKey: 'notif.late_cancel_b',
               // Yanan tutar randevunun kendi kaporası; sabit 1.000 ₸ değil (K1).
-              params: { pro: b.proName, deposit: b.depositAmount ?? localDeposit(b.price, get().config.rates) },
+              params: {
+                pro: b.proName,
+                deposit: b.depositAmount ?? localDeposit(b.price, get().config.rates),
+              },
               dateLabel: 'Az önce',
               icon: 'alert-circle-outline',
               route: `/booking/${id}`,

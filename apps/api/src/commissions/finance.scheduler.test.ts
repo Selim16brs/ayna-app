@@ -9,7 +9,9 @@ import { FinanceScheduler } from './finance.scheduler';
 
 type Cagrilar = { overdue: number; expire: number; unlock: number };
 
-function kur(opts: { kilitAlinabilir?: boolean; overdueHata?: boolean; expireHata?: boolean } = {}) {
+function kur(
+  opts: { kilitAlinabilir?: boolean; overdueHata?: boolean; expireHata?: boolean } = {},
+) {
   const c: Cagrilar = { overdue: 0, expire: 0, unlock: 0 };
   const prisma = {
     $queryRaw: async (parts: TemplateStringsArray) => {

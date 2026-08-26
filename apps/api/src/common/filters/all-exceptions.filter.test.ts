@@ -3,7 +3,9 @@ import { test } from 'node:test';
 import { type ArgumentsHost, BadRequestException, ConflictException } from '@nestjs/common';
 import { AllExceptionsFilter } from './all-exceptions.filter';
 
-type HataZarfi = { error: { code: string; message: string; requestId: string; details?: unknown[] } };
+type HataZarfi = {
+  error: { code: string; message: string; requestId: string; details?: unknown[] };
+};
 type Yakalanan = { status: number; body: HataZarfi };
 
 function calistir(exception: unknown): Yakalanan {

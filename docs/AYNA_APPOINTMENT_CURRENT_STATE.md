@@ -32,13 +32,13 @@ reassigned_pending · expired · completed_pending
 "kavramsal modelleri mevcut mimariye uyarlayarak" diyor, ve durumların bir kısmı
 zaten **başka adla** var:
 
-| Şartname durumu                  | Kodda karşılığı                                    |
-| -------------------------------- | -------------------------------------------------- |
-| `HELD`                           | ✅ `deposit_pending` — slotu tutar, süresi işler   |
-| `DEPOSIT_REVIEW`                 | ✅ `deposit_submitted`                             |
-| `COMPLETED_PENDING_CONFIRMATION` | ✅ `completed_pending`                             |
-| `NO_SHOW_REPORTED` / `_CONFIRMED`| ✅ `no_show` + `finalizeDeadline` teyit penceresi   |
-| `PAYMENT_REJECTED`               | ⚠️ ayrı durum yok; `deposit_pending`'e geri dönüş  |
+| Şartname durumu                   | Kodda karşılığı                                   |
+| --------------------------------- | ------------------------------------------------- |
+| `HELD`                            | ✅ `deposit_pending` — slotu tutar, süresi işler  |
+| `DEPOSIT_REVIEW`                  | ✅ `deposit_submitted`                            |
+| `COMPLETED_PENDING_CONFIRMATION`  | ✅ `completed_pending`                            |
+| `NO_SHOW_REPORTED` / `_CONFIRMED` | ✅ `no_show` + `finalizeDeadline` teyit penceresi |
+| `PAYMENT_REJECTED`                | ⚠️ ayrı durum yok; `deposit_pending`'e geri dönüş |
 
 > **Düzeltme (26.08):** bu belgenin ilk sürümü "`HELD` yok, slot tutma kavramı
 > yok" ve "uzman gelmedi dediğinde itiraz penceresi yok" diyordu. **İkisi de
@@ -77,13 +77,13 @@ Kara listenin bıraktığı boşluk: `deposit_pending → completed` serbestti. 
 
 ## 2. Slot ve eşzamanlılık — en büyük boşluk
 
-| Konu                    | Durum                                                                    | Kanıt                                  |
-| ----------------------- | ------------------------------------------------------------------------ | -------------------------------------- |
-| Müsaitlik hesabı        | `computeDaySlots` saf fonksiyon, test edilmiş                            | `packages/domain/src/booking/slots.ts` |
-| Kapalı gün              | Destekleniyor                                                            | `catalog.service.ts`                   |
-| **Slot tutma (hold)**   | **YOK** — `HELD`, `holdUntil` gibi hiçbir kavram bulunamadı              | grep: 0 sonuç                          |
-| **DB benzersizliği**    | **YOK** — `(proId, startAt)` üzerinde kısıt yok                          | `schema.prisma:224-276`                |
-| Uygulama içi koruma     | **İKİ yolda VAR** — advisory lock + `hasConflict`, ama **üçüncüde yok**  | aşağıda                                |
+| Konu                  | Durum                                                                   | Kanıt                                  |
+| --------------------- | ----------------------------------------------------------------------- | -------------------------------------- |
+| Müsaitlik hesabı      | `computeDaySlots` saf fonksiyon, test edilmiş                           | `packages/domain/src/booking/slots.ts` |
+| Kapalı gün            | Destekleniyor                                                           | `catalog.service.ts`                   |
+| **Slot tutma (hold)** | **YOK** — `HELD`, `holdUntil` gibi hiçbir kavram bulunamadı             | grep: 0 sonuç                          |
+| **DB benzersizliği**  | **YOK** — `(proId, startAt)` üzerinde kısıt yok                         | `schema.prisma:224-276`                |
+| Uygulama içi koruma   | **İKİ yolda VAR** — advisory lock + `hasConflict`, ama **üçüncüde yok** | aşağıda                                |
 
 > **Düzeltme (26.08):** bu belgenin ilk sürümü "randevuda advisory lock yok"
 > diyordu; yanlıştı. `bookings.service.ts:292` ve `:479` `pg_advisory_xact_lock`
@@ -91,11 +91,11 @@ Kara listenin bıraktığı boşluk: `deposit_pending → completed` serbestti. 
 
 ### Korunan ve korunmayan yollar
 
-| Randevu doğuş yolu             | Koruma                                              | Kanıt                          |
-| ------------------------------ | --------------------------------------------------- | ------------------------------ |
-| Offline/salon kaydı            | ✅ advisory lock + `hasConflict`                    | `bookings.service.ts:284-317`  |
-| Uzmanın talebi onaylaması      | ✅ advisory lock + `hasConflict`                    | `bookings.service.ts:479-527`  |
-| **Müşterinin teklif seçmesi**  | ❌ **hiçbir kontrol yok** — doğrudan `booking.create` | `quotes.service.ts:448-471`    |
+| Randevu doğuş yolu            | Koruma                                                | Kanıt                         |
+| ----------------------------- | ----------------------------------------------------- | ----------------------------- |
+| Offline/salon kaydı           | ✅ advisory lock + `hasConflict`                      | `bookings.service.ts:284-317` |
+| Uzmanın talebi onaylaması     | ✅ advisory lock + `hasConflict`                      | `bookings.service.ts:479-527` |
+| **Müşterinin teklif seçmesi** | ❌ **hiçbir kontrol yok** — doğrudan `booking.create` | `quotes.service.ts:448-471`   |
 
 Korumasız olan, ters-pazaryerinin **ana müşteri yolu**. İki müşteri aynı uzmanın
 aynı saatine teklif seçerse ikisi de başarılı olur ve ikisi de kapora göndermeye

@@ -83,7 +83,11 @@ export class AuthService {
     });
     // Hoş geldin bonusu (sadakat defterine ilk kayıt).
     // Eskiden expiresAt YAZILMIYORDU — bu puanlar hiç yanmıyordu (K4.4 ihlali).
-    await grantPoints(this.prisma, { userId: user.id, reason: 'rewards.earn.welcome', points: 200 });
+    await grantPoints(this.prisma, {
+      userId: user.id,
+      reason: 'rewards.earn.welcome',
+      points: 200,
+    });
     return this.session(user);
   }
 

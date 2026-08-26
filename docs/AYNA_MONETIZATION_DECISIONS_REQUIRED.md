@@ -13,7 +13,7 @@
 | K1  | Kapora tutarı           | `clamp(fiyat × %10, 1.000 ₸, 5.000 ₸)` — admin config. Gelir belgesi §10.1'deki "1.000 ₸" örneği **düzeltilmiş sayılır** (20.000 ₸'lik hizmette kapora 2.000 ₸ olur) | 26.08  |
 | K2  | Faz sırası              | **Randevu çekirdeği önce.** Komisyon faturası `COMPLETED` olayıyla doğduğu için gelir tarafı randevu durum makinesine dayanıyor                                      | 26.08  |
 | K3  | Komisyon oranı (mevcut) | %10 — kod ve panel bu değerde                                                                                                                                        | önceki |
-| K4  | **Para puan modeli**    | Şartname §8.4 yerine kurucunun modeli geçerli — aşağıda D1                                                                                                            | 26.08  |
+| K4  | **Para puan modeli**    | Şartname §8.4 yerine kurucunun modeli geçerli — aşağıda D1                                                                                                           | 26.08  |
 | K5  | Gecikme penceresi       | **Hemen 45 dakika.** 7 günlük kısıtlı mod kaldırılıyor — aşağıda D2                                                                                                  | 26.08  |
 | K6  | Karşılıksız vaatler     | **Ekrandan kaldırılacak** — aşağıda D10                                                                                                                              | 26.08  |
 | K7  | Migration yaklaşımı     | Şartname §"Mevcut migration dosyalarını değiştirme veya silme" bağlayıcı — aşağıda D8                                                                                | 26.08  |
@@ -68,24 +68,24 @@ Maliyet: komisyon %10 iken her 100 ₸ komisyonun ~30 ₸'si puana gidiyor.
 
 ### Mevcut sistemden farkı
 
-| Konu           | Bugün kodda                        | Yeni model                        |
-| -------------- | ---------------------------------- | --------------------------------- |
-| Harcama tavanı | %50 (`payment.split.ts:4`)          | **%25**                                     |
-| Kullanım kilidi | Yok — 1 puan bile harcanabiliyor   | **5.000 ₸ eşiği**                           |
-| Son kullanma   | 12 ay; ikisi hiç yanmıyordu         | **90 gün**, her kazanımda garanti           |
-| Hizmetten kazanım | Vaat ediliyor, **verilmiyor**    | **%3**, tamamlanan her randevuda            |
-| Bakiye hesabı  | Yanan puan bakiyeyi **eksiye** düşürüyordu | FIFO parti motoru; negatif imkânsız |
-| Görünürlük     | Bakiye var, kural metni yok         | Dört kural da ekranda, sunucu sayılarıyla   |
+| Konu              | Bugün kodda                                | Yeni model                                |
+| ----------------- | ------------------------------------------ | ----------------------------------------- |
+| Harcama tavanı    | %50 (`payment.split.ts:4`)                 | **%25**                                   |
+| Kullanım kilidi   | Yok — 1 puan bile harcanabiliyor           | **5.000 ₸ eşiği**                         |
+| Son kullanma      | 12 ay; ikisi hiç yanmıyordu                | **90 gün**, her kazanımda garanti         |
+| Hizmetten kazanım | Vaat ediliyor, **verilmiyor**              | **%3**, tamamlanan her randevuda          |
+| Bakiye hesabı     | Yanan puan bakiyeyi **eksiye** düşürüyordu | FIFO parti motoru; negatif imkânsız       |
+| Görünürlük        | Bakiye var, kural metni yok                | Dört kural da ekranda, sunucu sayılarıyla |
 
 ### Uygulama varsayımları
 
 Kurucu kararı iki noktada yoruma açık; şöyle uygulanacak, aksi söylenirse
 değiştirilir:
 
-| Varsayım | Seçim                                                                                                                                                   |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Varsayım | Seçim                                                                                                                                               |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **V1**   | Kilit **bir defalık açılır**: bakiye ilk kez eşiği geçtiğinde `pointsUnlockedAt` yazılır ve bir daha kapanmaz (harcayınca altına düşmek kilitlemez) |
-| **V2**   | Son kullanma **kayıt bazlı (FIFO)**: her kazanım kendi 90 gününü taşır ve harcama partilerden düşülür. Süresi **en yakın** parti önce harcanır          |
+| **V2**   | Son kullanma **kayıt bazlı (FIFO)**: her kazanım kendi 90 gününü taşır ve harcama partilerden düşülür. Süresi **en yakın** parti önce harcanır      |
 
 V1'in gerekçesi: "eşiğin üzerine çıktıktan sonra kullanım açılır" cümlesi
 kilidin açılmasını anlatıyor, sürekli bir eşik kontrolünü değil. Aksi hâlde
@@ -267,10 +267,10 @@ alınmaz.
 ikisinin de sunucuda karşılığı yok (`data.ts:1905`,
 `seller/premium.tsx:21`).
 
-| Vaat                        | Sunucuda karşılığı                        | Ne zaman geri gelir             |
-| --------------------------- | ------------------------------------------ | ------------------------------- |
-| "Platinum'da komisyon %8,5" | Yok — `membershipTier` hiç okunmuyor       | Komisyon matrisi uygulanınca    |
-| "Öncelikli talepler"        | Yok — dalga sırası KYC + kayıt tarihi      | Premium head-start uygulanınca  |
+| Vaat                        | Sunucuda karşılığı                    | Ne zaman geri gelir            |
+| --------------------------- | ------------------------------------- | ------------------------------ |
+| "Platinum'da komisyon %8,5" | Yok — `membershipTier` hiç okunmuyor  | Komisyon matrisi uygulanınca   |
+| "Öncelikli talepler"        | Yok — dalga sırası KYC + kayıt tarihi | Premium head-start uygulanınca |
 
 Yerlerine yalnız **bugün gerçekten verilen** avantajlar yazılacak. Vaat, karşılığı
 kodda çalıştığı gün geri konur — daha önce değil.

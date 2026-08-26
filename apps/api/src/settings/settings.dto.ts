@@ -15,7 +15,12 @@ export const RATE_DEFS = [
   { key: 'rate.deposit_kzt', label: 'Kapora (eski sabit tutar)', suffix: '₸', default: 1000 },
   { key: 'rate.cancel_window_h', label: 'Ücretsiz iptal penceresi', suffix: 'saat', default: 3 },
   // K5 — komisyon vadesinden sonra kısıtlamaya kadar tanınan süre
-  { key: 'rate.commission_grace_minutes', label: 'Komisyon gecikme payı', suffix: 'dk', default: 45 },
+  {
+    key: 'rate.commission_grace_minutes',
+    label: 'Komisyon gecikme payı',
+    suffix: 'dk',
+    default: 45,
+  },
   // §5.3 — hold ve yanıt pencereleri (slotu doğrudan etkiler)
   { key: 'policy.hold_minutes', label: 'Kapora (slot tutma) süresi', suffix: 'dk', default: 180 },
   { key: 'policy.response_hours', label: 'Uzman yanıt süresi', suffix: 'saat', default: 6 },

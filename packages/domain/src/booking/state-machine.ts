@@ -87,13 +87,7 @@ export const ALLOWED_TRANSITIONS: Record<BookingState, readonly BookingState[]> 
     'expired',
   ],
   waitlist: ['awaiting_provider', 'deposit_pending', 'confirmed', 'cancelled', 'expired'],
-  reassigned_pending: [
-    'confirmed',
-    'awaiting_provider',
-    'deposit_pending',
-    'cancelled',
-    'expired',
-  ],
+  reassigned_pending: ['confirmed', 'awaiting_provider', 'deposit_pending', 'cancelled', 'expired'],
   // ≡ HELD: slot tutuluyor, kapora dekontu bekleniyor, süre işliyor.
   deposit_pending: [
     'deposit_submitted',

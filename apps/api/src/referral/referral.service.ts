@@ -83,7 +83,12 @@ export class ReferralService {
 
     await this.prisma.user.update({ where: { id: userId }, data: { referredBy: referrer.id } });
     await grantPoints(this.prisma, [
-      { userId: referrer.id, reason: 'rewards.earn.referral', detail: me.name, points: REFERRAL_POINTS },
+      {
+        userId: referrer.id,
+        reason: 'rewards.earn.referral',
+        detail: me.name,
+        points: REFERRAL_POINTS,
+      },
       { userId, reason: 'rewards.earn.referral', detail: referrer.name, points: REFERRAL_POINTS },
     ]);
     return { ok: true, pointsAwarded: REFERRAL_POINTS, referrerName: referrer.name };
