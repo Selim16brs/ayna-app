@@ -2,43 +2,78 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { kk, ru, tr } from '@ayna/i18n';
 
-// Yüzen alt menünün SIĞMA hesabı.
-//
-// Yaşanan hata: 5 sekme + uzun Türkçe etiket ("Randevularım") 390pt ekrana
-// sığmıyordu. Aktif hap büyüyüp son iki sekmeyi dışarı itiyor, `overflow:hidden`
-// ise onları GİZLİYORDU — belirti kapanmış ama W2W ve Profil erişilemez hâle
-// gelmişti. Bu test aynı hesabı kilitler.
+/**
+ * Yüzen alt menünün genişlik hesabı.
+ *
+ * Bu bar üç kez flex ile kuruldu ve üçünde de sekme kayboldu:
+ *   1) aktif hap taştı, son iki sekme ekran dışına itildi,
+ *   2) overflow:hidden konunca sekmeler GİZLENDİ (erişilemez oldular),
+ *   3) hap küçültülünce ikon ve etiket ezilip boş bir ovale döndü.
+ *
+ * Ortak sebep: grow/shrink'in hangi çocuğa ne vereceğini gözle kestirmek.
+ * Genişlikler artık elle hesaplanıyor; bu test o hesabı birebir tekrarlar.
+ */
 
-const EKRAN = 390; // en dar hedef cihaz (iPhone SE/13 mini sınıfı)
-const KENAR = 16; // barın ekran kenarından boşluğu
-const IC_BOSLUK = 8; // barın kendi yatay iç boşluğu
-const PASIF_MIN = 40; // pasif sekmenin dokunma hedefi
-const HAP_MAX = 164; // aktif hapın üst sınırı (FloatingTabBar ile AYNI)
-const SEKME = 5;
+const PILL_SIDE = 16;
+const IC_BOSLUK = 8;
+const HAP_MAX = 164;
+const PASIF_MIN = 40;
 
-const barIci = EKRAN - 2 * KENAR - 2 * IC_BOSLUK;
+/** FloatingTabBar içindeki hesabın AYNISI. */
+function hesapla(ekran: number, sekme: number) {
+  const barIci = ekran - 2 * PILL_SIDE - 2 * IC_BOSLUK;
+  const pasifSayisi = Math.max(1, sekme - 1);
+  const aktif = Math.min(HAP_MAX, Math.max(0, barIci - pasifSayisi * PASIF_MIN));
+  const pasif = (barIci - aktif) / pasifSayisi;
+  return { barIci, aktif, pasif, toplam: aktif + pasif * pasifSayisi };
+}
 
-test('bar içi genişlik beklenen değerde', () => {
-  assert.equal(barIci, 342);
+// Desteklenen en dar cihazdan en genişe
+const EKRANLAR = [320, 360, 375, 390, 393, 402, 414, 428, 430, 440];
+const SEKMELER = [4, 5]; // müşteri 5, uzman/salon 4
+
+test('toplam genişlik bar içine TAM oturur — hiçbir sekme dışarı taşmaz', () => {
+  for (const e of EKRANLAR) {
+    for (const n of SEKMELER) {
+      const r = hesapla(e, n);
+      assert.ok(
+        Math.abs(r.toplam - r.barIci) < 0.01,
+        `${e}pt / ${n} sekme: toplam ${r.toplam.toFixed(1)} ≠ bar içi ${r.barIci}`,
+      );
+    }
+  }
 });
 
-test('4 pasif sekme + aktif hap bar içine sığar', () => {
-  const gerekli = (SEKME - 1) * PASIF_MIN + HAP_MAX;
-  assert.ok(gerekli <= barIci, `${gerekli}pt gerekiyor, ${barIci}pt var`);
+test('her sekme çizilir — genişliği sıfır ya da negatif olamaz', () => {
+  for (const e of EKRANLAR) {
+    for (const n of SEKMELER) {
+      const r = hesapla(e, n);
+      assert.ok(r.aktif > 0, `${e}pt / ${n}: aktif hap ${r.aktif}`);
+      assert.ok(r.pasif > 0, `${e}pt / ${n}: pasif sekme ${r.pasif}`);
+    }
+  }
 });
 
-test('aktif hapın üst sınırı pasif sekmeleri ezmiyor', () => {
-  // Hap üst sınıra dayansa bile her pasif sekmeye en az dokunma hedefi kalmalı.
-  const kalan = barIci - HAP_MAX;
-  assert.ok(
-    kalan / (SEKME - 1) >= PASIF_MIN,
-    `sekme başına ${(kalan / (SEKME - 1)).toFixed(1)}pt, en az ${PASIF_MIN} gerekiyor`,
-  );
+test('pasif sekme dokunma hedefinin altına inmez', () => {
+  for (const e of EKRANLAR) {
+    for (const n of SEKMELER) {
+      const r = hesapla(e, n);
+      assert.ok(
+        r.pasif >= PASIF_MIN - 0.01,
+        `${e}pt / ${n} sekme: pasif ${r.pasif.toFixed(1)}pt < ${PASIF_MIN}pt`,
+      );
+    }
+  }
 });
 
-// Etiketin hap sınırına sığıp sığmadığı — kaba ama tutarlı ölçüm.
-// 15px Onest semibold için karakter başına ~8.3pt.
-const hapGenisligi = (etiket: string) => 19 + 7 + etiket.length * 8.3 + 28;
+test('en dar cihazda bile aktif hap ikon + etikete yer bırakır', () => {
+  // İkon 19 + boşluk 7 + iç boşluk 28 = 54pt; geriye metin için yer kalmalı.
+  const r = hesapla(320, 5);
+  assert.ok(r.aktif >= 54 + 20, `320pt'de aktif hap ${r.aktif.toFixed(1)}pt`);
+});
+
+// Etiketin ayrılan hapa sığıp sığmadığı — 15px Onest semibold ≈ 8.3pt/karakter.
+const metinGenisligi = (etiket: string) => 19 + 7 + etiket.length * 8.3 + 28;
 
 const NAV_KEYS = ['nav.discover', 'nav.bookings', 'nav.care', 'nav.circle', 'nav.profile'] as const;
 
@@ -47,26 +82,16 @@ for (const [ad, sozluk] of [
   ['ru', ru],
   ['kk', kk],
 ] as const) {
-  test(`${ad}: sekme etiketleri hap sınırına sığıyor`, () => {
+  test(`${ad}: sekme etiketleri 390pt ekranda kırpılmadan sığıyor`, () => {
+    const { aktif } = hesapla(390, 5);
     for (const k of NAV_KEYS) {
       const etiket = (sozluk as Record<string, string>)[k];
       assert.ok(etiket, `${ad}/${k} eksik`);
-      const g = hapGenisligi(etiket);
+      const g = metinGenisligi(etiket);
       assert.ok(
-        g <= HAP_MAX,
-        `${ad}/${k} "${etiket}" ≈ ${g.toFixed(0)}pt > ${HAP_MAX}pt — hapta kırpılır`,
+        g <= aktif,
+        `${ad}/${k} "${etiket}" ≈ ${g.toFixed(0)}pt > ${aktif.toFixed(0)}pt — kırpılır`,
       );
     }
   });
 }
-
-test('aktif hap küçülmediğinde bile beş sekme sığar', () => {
-  // Hap flexShrink:0 — doğal genişliğini korur. En uzun etiketle bile
-  // 4 pasif sekme dokunma hedefinin altına inmemeli.
-  const enUzunHap = Math.min(hapGenisligi('Randevularım'), HAP_MAX);
-  const kalan = barIci - enUzunHap;
-  assert.ok(
-    kalan / (SEKME - 1) >= PASIF_MIN,
-    `en uzun etikette sekme başına ${(kalan / (SEKME - 1)).toFixed(1)}pt kalıyor`,
-  );
-});

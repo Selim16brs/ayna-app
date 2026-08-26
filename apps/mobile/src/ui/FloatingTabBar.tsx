@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../locale';
@@ -25,6 +25,8 @@ const PILL_H = 68;
 const PILL_SIDE = 16;
 const PILL_BOTTOM = 26;
 const FADE_H = 130;
+const HAP_MAX = 164; // aktif hapın üst sınırı
+const PASIF_MIN = 40; // pasif sekmenin dokunma hedefi
 
 /** İçeriğin yüzen barın altında kalmaması için ekranların ayırması gereken boşluk. */
 export const TAB_BAR_CLEARANCE = PILL_BOTTOM + PILL_H + 20;
@@ -44,8 +46,24 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
   const { t } = useLocale();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width: ekran } = useWindowDimensions();
 
   const bottom = Math.max(insets.bottom, PILL_BOTTOM - 10) + 10;
+
+  // GENİŞLİKLER ELLE HESAPLANIR — flex dağıtımına bırakılmaz.
+  //
+  // Bu bar üç kez flex ile kuruldu ve üçünde de sekme kayboldu: bir seferinde
+  // aktif hap taştı, bir seferinde overflow:hidden son iki sekmeyi gizledi, bir
+  // seferinde hap ezilip boş ovale döndü. Sebep hep aynıydı: grow/shrink'in
+  // hangi çocuğa ne kadar vereceğini gözle kestirmek.
+  //
+  // Artık kestirme yok. Her çocuğun genişliği burada belirlenir; toplamı
+  // matematiksel olarak bar içine EŞİTTİR. Sekme sayısı ya da etiket uzunluğu
+  // ne olursa olsun hiçbiri dışarı taşamaz.
+  const barIci = ekran - 2 * PILL_SIDE - 2 * space(1);
+  const pasifSayisi = Math.max(1, tabs.length - 1);
+  const aktifGenislik = Math.min(HAP_MAX, Math.max(0, barIci - pasifSayisi * PASIF_MIN));
+  const pasifGenislik = (barIci - aktifGenislik) / pasifSayisi;
 
   return (
     <View
@@ -70,7 +88,7 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
             <Pressable
               key={tab.name}
               onPress={() => router.navigate(tab.route as never)}
-              style={focused ? styles.itemOn : styles.item}
+              style={[styles.item, { width: focused ? aktifGenislik : pasifGenislik }]}
               accessibilityRole="button"
               accessibilityState={{ selected: focused }}
               accessibilityLabel={t(tab.labelKey)}
@@ -133,27 +151,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 14 },
     elevation: 12,
   },
-  // Pasif sekmeler ikon genişliğine kadar sıkışabilir; aktif hap kalan yeri alır
-  // ama TAŞMAZ. minWidth:0 olmadan RN flex çocukları içeriklerinden küçülmez.
-  // Pasif sekme ikonu ASLA ezilmez: 40pt dokunma hedefi altına inmez.
-  // (minWidth:0 idi — hap büyüyünce ikonlar sıfıra sıkışıp kayboluyordu.)
-  item: {
-    flex: 1,
-    minWidth: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: PILL_H,
-  },
-  // Aktif sekme KÜÇÜLMEZ. flexShrink:1 iken pasif sekmeler (flex:1) büyüyüp
-  // hapı sıkıştırıyor, içindeki ikon ve etiket eziliyordu — ekranda boş bir
-  // pembe oval kalıyordu. Hap doğal genişliğini alır, üst sınırı maxWidth verir.
-  itemOn: {
-    flexGrow: 0,
-    flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: PILL_H,
-  },
+  // Genişlik satır içinde veriliyor (hesap yukarıda). Burada flex YOK —
+  // grow/shrink olmadığı için hiçbir çocuk beklenmedik boyuta gidemez.
+  item: { alignItems: 'center', justifyContent: 'center', height: PILL_H },
   activePill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -161,14 +161,9 @@ const styles = StyleSheet.create({
     height: 50,
     paddingHorizontal: space(1.75),
     borderRadius: 25,
-    flexShrink: 0,
-    // ÜST SINIR ŞART: 5 sekme + uzun Türkçe etiket ("Randevularım") 390pt
-    // ekrana sığmıyor. Sınır olmadan hap büyüyüp son iki sekmeyi dışarı
-    // itiyordu; overflow:hidden ise onları GİZLİYORDU — belirti kapanmış ama
-    // sekmeler erişilemez kalmıştı.
-    //
-    // Hesap: bar içi ≈ 342pt. 4 pasif ikon × 44 = 176 → hapa 166 kalıyor.
-    maxWidth: 164,
+    // Hap, ayrılan kutunun tamamını kaplar; kutu genişliği yukarıda hesaplandı.
+    alignSelf: 'stretch',
+    justifyContent: 'center',
   },
   activeIcon: { flexShrink: 0 },
   activeLabel: { fontSize: 15, fontFamily: font.semibold, flexShrink: 1 },
