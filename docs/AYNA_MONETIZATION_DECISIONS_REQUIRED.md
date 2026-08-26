@@ -30,19 +30,52 @@ Kurucu kararı şartname §8.4'ün yerine geçer. §8.4'teki "%5 harcama tavanı
 | #    | Kural                                                                                          |
 | ---- | ---------------------------------------------------------------------------------------------- |
 | K4.1 | Kullanıcı tamamlanmış işlemden sonra **para puan** kazanır; bir sonraki alışverişinde kullanır |
-| K4.2 | **Kullanım kilidi:** bakiye **50.000 ₸** üzerine çıkana kadar puan harcanamaz                  |
+| K4.2 | **Kullanım kilidi:** bakiye **5.000 ₸** üzerine çıkana kadar puan harcanamaz (aşağıya bak)     |
 | K4.3 | **Harcama tavanı:** her ödemede, ödenecek tutarın en çok **%25'i** puanla kapatılır            |
 | K4.4 | **Son kullanma:** kazanılan puan **3 ay** içinde kullanılmazsa yanar                           |
 | K4.5 | Bu dört kural da kullanıcıya ekranda açıkça gösterilir                                         |
+
+### Eşik neden 50.000 değil 5.000
+
+Karar önce **50.000 ₸** olarak verilmişti. Uygulama sırasında K4.2 ile K4.4'ün
+birbirini kilitlediği ortaya çıktı:
+
+Puanlar 90 günde yandığı için bakiye **birikmiyor** — eşiğe ulaşmak, 50.000
+puanı **3 ay içinde** kazanmak demek. %3 geri kazanımla:
+
+| Ortalama sepet | Gereken harcama (90 günde) | Gereken randevu |
+| -------------- | -------------------------: | --------------: |
+| 10.000 ₸       |                1.666.667 ₸ |             167 |
+| 15.000 ₸       |                1.666.667 ₸ |             111 |
+| 25.000 ₸       |                1.666.667 ₸ |              67 |
+
+Yani kilit **matematiksel olarak hiç açılmıyordu**; puan sistemi kurulur kurulmaz
+ölü doğardı.
+
+**Kurucu kararı (26.08): eşik 5.000 ₸.** %3 kazanım ve 15.000 ₸ sepetle ≈11
+randevu — düzenli müşteri için 3 ayda ulaşılabilir. Diğer üç kural (%25 tavan,
+90 gün, %3 geri kazanım) aynen kaldı. Eşik admin ayarı: `rate.points_unlock_kzt`.
+
+### Geri kazanım oranı
+
+**%3 (kurucu onayı).** Bu oran uygulamada zaten yazılıydı
+(`rewards.rules.earn`: "Her tamamlanan hizmette %3 geri kazan") ama karşılığını
+veren hiçbir kod yoktu — kazanım kaynakları hoş geldin, referans, blog, yorum,
+ilk randevu ve W2W beğenisiydi; hizmet bedelinden geri kazanım hiç yoktu.
+Vaat artık karşılanıyor. Oran admin ayarı: `rate.points_earn_pct`.
+
+Maliyet: komisyon %10 iken her 100 ₸ komisyonun ~30 ₸'si puana gidiyor.
 
 ### Mevcut sistemden farkı
 
 | Konu           | Bugün kodda                        | Yeni model                        |
 | -------------- | ---------------------------------- | --------------------------------- |
-| Harcama tavanı | %50 (`payment.split.ts:4`)         | **%25**                           |
-| Kullanım kilidi | Yok — 1 puan bile harcanabiliyor   | **50.000 ₸ eşiği**                |
-| Son kullanma   | Yok — puan sonsuza kadar duruyor   | **90 gün**                        |
-| Görünürlük     | Bakiye var, kural metni yok        | Dört kural da ekranda             |
+| Harcama tavanı | %50 (`payment.split.ts:4`)          | **%25**                                     |
+| Kullanım kilidi | Yok — 1 puan bile harcanabiliyor   | **5.000 ₸ eşiği**                           |
+| Son kullanma   | 12 ay; ikisi hiç yanmıyordu         | **90 gün**, her kazanımda garanti           |
+| Hizmetten kazanım | Vaat ediliyor, **verilmiyor**    | **%3**, tamamlanan her randevuda            |
+| Bakiye hesabı  | Yanan puan bakiyeyi **eksiye** düşürüyordu | FIFO parti motoru; negatif imkânsız |
+| Görünürlük     | Bakiye var, kural metni yok         | Dört kural da ekranda, sunucu sayılarıyla   |
 
 ### Uygulama varsayımları
 
@@ -51,15 +84,25 @@ değiştirilir:
 
 | Varsayım | Seçim                                                                                                                                                   |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **V1**   | Kilit **bir defalık açılır**: bakiye ilk kez 50.000 ₸'yi geçtiğinde `pointsUnlockedAt` yazılır ve bir daha kapanmaz (harcayınca altına düşmek kilitlemez) |
-| **V2**   | Son kullanma **kayıt bazlı (FIFO)**: her kazanım kendi 90 gününü taşır, en eski puan önce harcanır, süresi dolan için ledger'a `EXPIRE` satırı yazılır   |
+| **V1**   | Kilit **bir defalık açılır**: bakiye ilk kez eşiği geçtiğinde `pointsUnlockedAt` yazılır ve bir daha kapanmaz (harcayınca altına düşmek kilitlemez) |
+| **V2**   | Son kullanma **kayıt bazlı (FIFO)**: her kazanım kendi 90 gününü taşır ve harcama partilerden düşülür. Süresi **en yakın** parti önce harcanır          |
 
-V1'in gerekçesi: "50.000'in üzerine çıktıktan sonra kullanım açılır" cümlesi
+V1'in gerekçesi: "eşiğin üzerine çıktıktan sonra kullanım açılır" cümlesi
 kilidin açılmasını anlatıyor, sürekli bir eşik kontrolünü değil. Aksi hâlde
-49.000 ₸ bakiyeli kullanıcı hiç harcayamaz duruma düşer.
+eşiğin hemen altında bakiyesi olan kullanıcı hiç harcayamaz duruma düşer.
 
 V2'nin gerekçesi: bakiye bütününe tek son kullanma tarihi verilirse, her yeni
 kazanım eski puanların ömrünü uzatır ve "3 ay" kuralı işlevsizleşir.
+
+Yanan puan için deftere ayrı bir kayıt **yazılmaz**; bakiye partilerden türetilir.
+Hem yazsak hem türetsek çift sayım olurdu. En yakın süreli partinin önce
+harcanması kullanıcının lehinedir — ters sıra, yeni puanı harcayıp eskisini
+yakardı.
+
+Bu motor yol üstünde **gerçek bir hatayı** da kapattı: harcama kaydı hangi
+kazanımdan düşüldüğünü taşımadığı için, kazanımın süresi dolduğunda bakiye
+**eksiye** düşüyordu (`earn +100` yanınca `spend -100` kalıyor → −100). Bugün
+canlıda 12 aylık ömür var, yani ilk kazanımlar dolduğunda ortaya çıkacaktı.
 
 ---
 

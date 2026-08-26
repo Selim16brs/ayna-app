@@ -12,8 +12,8 @@ import { EXPIRY_WARN_DAYS } from './loyalty.expiry';
 const sahtePrisma = (rows: Array<{ key: string; intValue: number | null }>) =>
   ({ setting: { findMany: async () => rows } }) as never;
 
-test('K4 varsayılanları: %25 tavan, 50.000 eşik, 90 gün ömür', () => {
-  assert.deepEqual(DEFAULT_LOYALTY_RULES, { capPct: 25, unlockAt: 50_000, expiryDays: 90 });
+test('K4 varsayılanları: %25 tavan, 5.000 eşik, 90 gün ömür', () => {
+  assert.deepEqual(DEFAULT_LOYALTY_RULES, { capPct: 25, unlockAt: 5_000, expiryDays: 90 });
   assert.equal(DEFAULT_EXPIRY_DAYS, 90);
 });
 

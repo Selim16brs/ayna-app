@@ -5,21 +5,23 @@ import { DEFAULT_SPEND_RULES, paymentSplit, spendGate, shouldUnlock } from './sp
 const KILITLI = null;
 const ACIK = new Date('2026-01-01T00:00:00Z');
 
-test('K4 varsayılanları kararla aynı: 50.000 eşik, %25 tavan', () => {
-  assert.deepEqual(DEFAULT_SPEND_RULES, { unlockAt: 50_000, capPct: 25 });
+test('K4 varsayılanları kararla aynı: 5.000 eşik, %25 tavan', () => {
+  // Eşik 50.000'den 5.000'e indirildi: 90 günlük yanma kuralıyla birlikte
+  // 50.000 matematiksel olarak ulaşılamıyordu (3 ayda ~111 randevu).
+  assert.deepEqual(DEFAULT_SPEND_RULES, { unlockAt: 5_000, capPct: 25 });
 });
 
 // ── K4.2 kilit ──────────────────────────────────────────────────────────────
 
 test('eşiğin altında puan harcanamaz', () => {
-  const g = spendGate(49_000, KILITLI);
+  const g = spendGate(4_000, KILITLI);
   assert.equal(g.allowed, false);
   assert.equal(g.allowed === false && g.remaining, 1001);
 });
 
 test('tam eşikte HENÜZ açılmaz — kural "üzerine çıkınca"', () => {
-  assert.equal(spendGate(50_000, KILITLI).allowed, false);
-  assert.equal(spendGate(50_001, KILITLI).allowed, true);
+  assert.equal(spendGate(5_000, KILITLI).allowed, false);
+  assert.equal(spendGate(5_001, KILITLI).allowed, true);
 });
 
 test('kilit bir kez açıldıysa bakiye düşse de kapanmaz (V1)', () => {
@@ -28,13 +30,13 @@ test('kilit bir kez açıldıysa bakiye düşse de kapanmaz (V1)', () => {
 });
 
 test('shouldUnlock yalnız eşik AŞILDIĞINDA ve damga yokken true', () => {
-  assert.equal(shouldUnlock(50_001, KILITLI), true);
-  assert.equal(shouldUnlock(50_000, KILITLI), false);
+  assert.equal(shouldUnlock(5_001, KILITLI), true);
+  assert.equal(shouldUnlock(5_000, KILITLI), false);
   assert.equal(shouldUnlock(90_000, ACIK), false, 'zaten açık — tekrar damgalama');
 });
 
 test('kilitliyken ödeme tamamen nakit ve sebebi bildirilir', () => {
-  const r = paymentSplit(20_000, 5_000, 49_000, KILITLI);
+  const r = paymentSplit(20_000, 5_000, 4_000, KILITLI);
   assert.deepEqual(r, { pointsUsed: 0, cashAmount: 20_000, blocked: 'LOCKED' });
 });
 

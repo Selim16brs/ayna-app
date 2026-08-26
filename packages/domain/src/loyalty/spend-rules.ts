@@ -3,12 +3,18 @@
  *
  * Bu karar Gelir şartnamesi §8.4'ün ("harcama tavanı %5") YERİNE geçer.
  *
- *   K4.2  Bakiye 50.000 ₸ üzerine çıkana kadar puan harcanamaz (kilit).
+ *   K4.2  Bakiye eşiği aşana kadar puan harcanamaz (kilit).
  *   K4.3  Her ödemede, ödenecek tutarın en çok %25'i puanla kapatılır.
  *
+ * EŞİK NEDEN 50.000 DEĞİL: karar önce 50.000 ₸ olarak verilmişti, ama uygulama
+ * sırasında K4.4 (90 günde yanma) ile çeliştiği görüldü. Puanlar yandığı için
+ * bakiye birikmiyor; eşiğe ulaşmak %3 geri kazanımla 3 AY İÇİNDE ~111 randevu
+ * demekti — yani kilit matematiksel olarak hiç açılmıyordu. Kurucu kararıyla
+ * eşik 5.000 ₸ (≈11 randevu). Değer admin ayarı; buradaki yalnız varsayılan.
+ *
  * Kilit BİR DEFALIK açılır (varsayım V1): bakiye ilk kez eşiği geçtiğinde açılır
- * ve harcayıp altına düşmek onu geri kapatmaz. Aksi hâlde 49.000 ₸ bakiyesi olan
- * bir kullanıcı hiç harcayamaz duruma düşerdi.
+ * ve harcayıp altına düşmek onu geri kapatmaz. Aksi hâlde eşiğin hemen altında
+ * bakiyesi olan bir kullanıcı hiç harcayamaz duruma düşerdi.
  *
  * 1 puan = 1 ₸.
  */
@@ -21,7 +27,7 @@ export type SpendRules = {
 };
 
 export const DEFAULT_SPEND_RULES: SpendRules = {
-  unlockAt: 50_000,
+  unlockAt: 5_000,
   capPct: 25,
 };
 

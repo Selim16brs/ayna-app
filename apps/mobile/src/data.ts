@@ -1897,7 +1897,7 @@ export const RAFFLE_COST = 500;
 // K4 — para puan modeli. Bunlar YALNIZ sunucu config'i gelmezse kullanılan yedek
 // değerlerdir; gerçek kaynak config.rates.
 export const POINTS_SPEND_CAP_PCT = 25; // K4.3 — bir ödemenin en fazla %25'i puanla
-export const POINTS_UNLOCK_KZT = 50_000; // K4.2 — kullanım bu bakiyeden sonra açılır
+export const POINTS_UNLOCK_KZT = 5_000; // K4.2 — kullanım bu bakiyeden sonra açılır
 export const POINTS_EXPIRY_DAYS = 90; // K4.4 — kazanılan puan 90 günde yanar
 // §2/§5.6.2 — kullanıcı premium aylık bedeli. PARAMETRİK (admin panel).
 export const PREMIUM_PRICE_KZT = 999;
