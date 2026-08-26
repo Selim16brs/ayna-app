@@ -77,7 +77,12 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
             >
               {focused ? (
                 <View style={[styles.activePill, { backgroundColor: colors.rose }]}>
-                  <Ionicons name={icon} size={19} color={colors.onAccent} />
+                  <Ionicons
+                    name={icon}
+                    size={19}
+                    color={colors.onAccent}
+                    style={styles.activeIcon}
+                  />
                   {/* Etiket KIRPILABİLİR olmalı: "Randevularım"/"Benim İçin" gibi
                       uzun adlarda hap sabit genişlikte kalırsa satırı taşırıp
                       son sekmeleri ekran dışına itiyordu. */}
@@ -139,9 +144,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     height: PILL_H,
   },
+  // Aktif sekme KÜÇÜLMEZ. flexShrink:1 iken pasif sekmeler (flex:1) büyüyüp
+  // hapı sıkıştırıyor, içindeki ikon ve etiket eziliyordu — ekranda boş bir
+  // pembe oval kalıyordu. Hap doğal genişliğini alır, üst sınırı maxWidth verir.
   itemOn: {
-    flexShrink: 1,
-    minWidth: 0,
+    flexGrow: 0,
+    flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
     height: PILL_H,
@@ -153,8 +161,7 @@ const styles = StyleSheet.create({
     height: 50,
     paddingHorizontal: space(1.75),
     borderRadius: 25,
-    flexShrink: 1,
-    minWidth: 0,
+    flexShrink: 0,
     // ÜST SINIR ŞART: 5 sekme + uzun Türkçe etiket ("Randevularım") 390pt
     // ekrana sığmıyor. Sınır olmadan hap büyüyüp son iki sekmeyi dışarı
     // itiyordu; overflow:hidden ise onları GİZLİYORDU — belirti kapanmış ama
@@ -163,6 +170,7 @@ const styles = StyleSheet.create({
     // Hesap: bar içi ≈ 342pt. 4 pasif ikon × 44 = 176 → hapa 166 kalıyor.
     maxWidth: 164,
   },
+  activeIcon: { flexShrink: 0 },
   activeLabel: { fontSize: 15, fontFamily: font.semibold, flexShrink: 1 },
   dot: {
     position: 'absolute',

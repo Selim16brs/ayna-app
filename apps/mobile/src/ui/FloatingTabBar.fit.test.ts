@@ -59,3 +59,14 @@ for (const [ad, sozluk] of [
     }
   });
 }
+
+test('aktif hap küçülmediğinde bile beş sekme sığar', () => {
+  // Hap flexShrink:0 — doğal genişliğini korur. En uzun etiketle bile
+  // 4 pasif sekme dokunma hedefinin altına inmemeli.
+  const enUzunHap = Math.min(hapGenisligi('Randevularım'), HAP_MAX);
+  const kalan = barIci - enUzunHap;
+  assert.ok(
+    kalan / (SEKME - 1) >= PASIF_MIN,
+    `en uzun etikette sekme başına ${(kalan / (SEKME - 1)).toFixed(1)}pt kalıyor`,
+  );
+});
