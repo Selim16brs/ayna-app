@@ -38,6 +38,8 @@ export default function PaymentScreen() {
       paymentSplit(amount, balance, balance, unlocked ? new Date() : null, {
         unlockAt: spendRules?.unlockAt ?? DEFAULT_SPEND_RULES.unlockAt,
         capPct: spendRules?.capPct ?? DEFAULT_SPEND_RULES.capPct,
+        commissionPct: spendRules?.commissionPct ?? DEFAULT_SPEND_RULES.commissionPct,
+        subsidyCapPct: spendRules?.subsidyCapPct ?? DEFAULT_SPEND_RULES.subsidyCapPct,
       }).pointsUsed,
     [amount, balance, unlocked, spendRules],
   );

@@ -6,6 +6,14 @@
  *   K4.2  Bakiye eşiği aşana kadar puan harcanamaz (kilit).
  *   K4.3  Her ödemede, ödenecek tutarın en çok %25'i puanla kapatılır.
  *
+ * Buna ek olarak şartname §8.4'ün SÜBVANSİYON TAVANI da uygulanır: indirim,
+ * o randevudan beklenen net komisyonun en çok %50'si olabilir. K4.3 bu sınıra
+ * değinmiyordu ve ikisi çelişiyordu — %10 komisyonla 20.000 ₸'lik bir randevuda
+ * komisyon 2.000 ₸ iken K4.3 tek başına 5.000 ₸ indirim izni veriyordu. Farkı
+ * ya AYNA (randevu başına 3.000 ₸ zarar) ya da uzman (nakit eksik alıp komisyonu
+ * tam fiyattan ödeyerek, haberi olmadan) karşılardı. Kurucu kararı (26.08):
+ * §8.4 sınırı eklensin. Pratikte %10 komisyonda tavan fiyatın %5'ine iner.
+ *
  * EŞİK NEDEN 50.000 DEĞİL: karar önce 50.000 ₸ olarak verilmişti, ama uygulama
  * sırasında K4.4 (90 günde yanma) ile çeliştiği görüldü. Puanlar yandığı için
  * bakiye birikmiyor; eşiğe ulaşmak %3 geri kazanımla 3 AY İÇİNDE ~111 randevu
@@ -22,13 +30,19 @@
 export type SpendRules = {
   /** Kullanımın açılması için bakiyenin geçmesi gereken eşik (₸). */
   unlockAt: number;
-  /** Bir ödemenin puanla kapatılabilecek azami yüzdesi (25 => %25). */
+  /** K4.3 — bir ödemenin puanla kapatılabilecek azami yüzdesi (25 => %25). */
   capPct: number;
+  /** Komisyon oranı (%). Beklenen net komisyonu hesaplamak için. */
+  commissionPct: number;
+  /** §8.4 — indirim, beklenen net komisyonun en çok yüzde kaçı olabilir. */
+  subsidyCapPct: number;
 };
 
 export const DEFAULT_SPEND_RULES: SpendRules = {
   unlockAt: 5_000,
   capPct: 25,
+  commissionPct: 10,
+  subsidyCapPct: 50,
 };
 
 export type SpendGate =
@@ -65,20 +79,49 @@ export function shouldUnlock(
 }
 
 export type PaymentSplit = {
-  /** Gerçekten kullanılan puan (kilit + tavan + bakiye ile sınırlı). */
+  /** Gerçekten kullanılan puan (kilit + tavanlar + bakiye ile sınırlı). */
   readonly pointsUsed: number;
   /** Kalan nakit. */
   readonly cashAmount: number;
+  /** Bu randevuda bakiyeden bağımsız olarak izin verilen en yüksek puan. */
+  readonly maxAllowed: number;
   /** Puan kullanılamadıysa sebebi. */
   readonly blocked: 'LOCKED' | null;
+  /** `maxAllowed`'ı hangi kural belirledi — ekranda açıklamak için. */
+  readonly limitedBy: 'PRICE_CAP' | 'SUBSIDY_CAP' | null;
 };
+
+/** İzin verilen üst sınırı ve onu belirleyen kuralı hesaplar (bakiyeden bağımsız). */
+function tavanlar(tutar: number, rules: SpendRules) {
+  const yuzde = (v: number) => (Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0);
+
+  // K4.3 — hizmet bedelinin yüzdesi.
+  const fiyatTavani = Math.floor((tutar * yuzde(rules.capPct)) / 100);
+
+  // §8.4 — beklenen NET KOMİSYONUN yüzdesi. Bu sınır olmadan indirim, o
+  // randevudan elde edilen komisyonu aşabiliyordu: %10 komisyonla 20.000 ₸'lik
+  // bir randevuda komisyon 2.000 ₸ iken puan 5.000 ₸ indirim yapabiliyordu.
+  // Farkı ya AYNA (randevu başına zarar) ya da uzman (haberi olmadan) öderdi.
+  const netKomisyon = (tutar * yuzde(rules.commissionPct)) / 100;
+  const subvansiyonTavani = Math.floor((netKomisyon * yuzde(rules.subsidyCapPct)) / 100);
+
+  const maxAllowed = Math.min(fiyatTavani, subvansiyonTavani);
+  const limitedBy =
+    maxAllowed <= 0
+      ? null
+      : subvansiyonTavani < fiyatTavani
+        ? ('SUBSIDY_CAP' as const)
+        : ('PRICE_CAP' as const);
+  return { maxAllowed, limitedBy };
+}
 
 /**
  * Ödemeyi puan/nakit olarak böler.
  *
- * Sıra önemli: önce kilit, sonra tavan, sonra bakiye. Üçünün de en küçüğü kazanır
- * ve sonuç asla negatif olmaz. İstemciden gelen `pointsRequested` yalnızca bir
- * ÜST sınır olarak kullanılır — hiçbir koşulda tavanı ya da bakiyeyi aşamaz.
+ * Sıra: önce kilit (K4.2), sonra İKİ tavanın küçüğü (K4.3 ve §8.4), sonra
+ * bakiye. Hepsinin en küçüğü kazanır ve sonuç asla negatif olmaz. İstemciden
+ * gelen `pointsRequested` yalnızca bir ÜST sınır — hiçbir koşulda tavanı ya da
+ * bakiyeyi aşamaz.
  */
 export function paymentSplit(
   amount: number,
@@ -88,14 +131,16 @@ export function paymentSplit(
   rules: SpendRules = DEFAULT_SPEND_RULES,
 ): PaymentSplit {
   const tutar = Number.isFinite(amount) && amount > 0 ? Math.floor(amount) : 0;
-  const gate = spendGate(balance, unlockedAt, rules);
-  if (!gate.allowed) return { pointsUsed: 0, cashAmount: tutar, blocked: 'LOCKED' };
+  const { maxAllowed, limitedBy } = tavanlar(tutar, rules);
 
-  const oran = Number.isFinite(rules.capPct) ? Math.max(0, Math.min(100, rules.capPct)) : 0;
-  const tavan = Math.floor((tutar * oran) / 100);
+  const gate = spendGate(balance, unlockedAt, rules);
+  if (!gate.allowed) {
+    return { pointsUsed: 0, cashAmount: tutar, maxAllowed, blocked: 'LOCKED', limitedBy };
+  }
+
   const istenen = Number.isFinite(pointsRequested) ? Math.floor(pointsRequested) : 0;
   const bakiye = Number.isFinite(balance) ? Math.floor(balance) : 0;
 
-  const pointsUsed = Math.max(0, Math.min(istenen, tavan, bakiye));
-  return { pointsUsed, cashAmount: tutar - pointsUsed, blocked: null };
+  const pointsUsed = Math.max(0, Math.min(istenen, maxAllowed, bakiye));
+  return { pointsUsed, cashAmount: tutar - pointsUsed, maxAllowed, blocked: null, limitedBy };
 }

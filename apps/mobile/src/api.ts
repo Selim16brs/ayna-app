@@ -39,6 +39,10 @@ export interface PointsSpendRules {
   capPct: number;
   /** Kazanılan puanın ömrü (gün). */
   expiryDays: number;
+  /** Komisyon oranı (%) — sübvansiyon tavanını hesaplamak için. */
+  commissionPct: number;
+  /** §8.4 — indirim, net komisyonun en çok yüzde kaçı olabilir. */
+  subsidyCapPct: number;
 }
 
 export interface LoyaltySummary {
@@ -1041,6 +1045,7 @@ export interface AppConfig {
     pointsCapPct: number;
     pointsUnlockKzt: number;
     pointsExpiryDays: number;
+    pointsSubsidyCapPct: number;
     premiumUserKzt: number;
     premiumSalonKzt: number;
     raffleCost: number;

@@ -493,6 +493,7 @@ export const useStore = create<State>()(
           pointsCapPct: POINTS_SPEND_CAP_PCT,
           pointsUnlockKzt: POINTS_UNLOCK_KZT,
           pointsExpiryDays: POINTS_EXPIRY_DAYS,
+          pointsSubsidyCapPct: 50,
           premiumUserKzt: PREMIUM_PRICE_KZT,
           premiumSalonKzt: 4990,
           raffleCost: RAFFLE_COST,

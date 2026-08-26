@@ -36,7 +36,13 @@ export default function RewardsScreen() {
   // K4.5 — kurallar SUNUCUDAN gelir; sunucu okunmadıysa yerel yedek kullanılır.
   const spend = useStore((st) => st.pointsSpend);
   const rates = useStore((st) => st.config.rates);
-  const capPct = spend?.capPct ?? rates.pointsCapPct ?? POINTS_SPEND_CAP_PCT;
+  // K4.3 fiyat tavanı ile §8.4 sübvansiyon tavanının KÜÇÜĞÜ geçerli. Ekranda
+  // %25 yazıp ödeme anında %5 uygulamak, K6'da kaldırdığımız türden bir
+  // karşılıksız vaat olurdu — gerçekte uygulanan oran gösteriliyor.
+  const priceCapPct = spend?.capPct ?? rates.pointsCapPct ?? POINTS_SPEND_CAP_PCT;
+  const commissionPct = spend?.commissionPct ?? rates.commissionPct ?? 10;
+  const subsidyCapPct = spend?.subsidyCapPct ?? rates.pointsSubsidyCapPct ?? 50;
+  const capPct = Math.min(priceCapPct, (commissionPct * subsidyCapPct) / 100);
   const unlockAt = spend?.unlockAt ?? rates.pointsUnlockKzt ?? POINTS_UNLOCK_KZT;
   const expiryDays = spend?.expiryDays ?? rates.pointsExpiryDays ?? POINTS_EXPIRY_DAYS;
   const earnPct = 3;
@@ -299,7 +305,9 @@ export default function RewardsScreen() {
           />
           <RuleRow
             icon="pie-chart-outline"
-            text={fillParams(t('rewards.rules.cap'), { pct: String(capPct) })}
+            text={fillParams(t('rewards.rules.cap'), {
+              pct: capPct.toLocaleString('tr-TR', { maximumFractionDigits: 1 }),
+            })}
           />
           <RuleRow
             icon="hourglass-outline"

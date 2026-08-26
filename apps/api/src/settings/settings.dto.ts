@@ -30,6 +30,13 @@ export const RATE_DEFS = [
   { key: 'rate.points_unlock_kzt', label: 'Puan kullanım eşiği', suffix: '₸', default: 5000 },
   { key: 'rate.points_expiry_days', label: 'Puan ömrü', suffix: 'gün', default: 90 },
   { key: 'rate.points_earn_pct', label: 'Hizmetten geri kazanım', suffix: '%', default: 3 },
+  // §8.4 — indirim, o randevunun net komisyonunun en çok yüzde kaçı olabilir
+  {
+    key: 'rate.points_subsidy_cap_pct',
+    label: 'Puan sübvansiyon tavanı',
+    suffix: '%',
+    default: 50,
+  },
   { key: 'rate.premium_user_kzt', label: 'Premium üyelik (aylık)', suffix: '₸', default: 999 },
   { key: 'rate.premium_salon_kzt', label: 'Salon premium (aylık)', suffix: '₸', default: 4990 },
   { key: 'rate.raffle_cost', label: 'Çekiliş bileti', suffix: 'puan', default: 500 },

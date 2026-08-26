@@ -7,6 +7,11 @@ export const LOYALTY_SETTING_KEYS = [
   'rate.points_cap_pct',
   'rate.points_unlock_kzt',
   'rate.points_expiry_days',
+  // §8.4 — indirim, beklenen net komisyonun en çok yüzde kaçı olabilir.
+  'rate.points_subsidy_cap_pct',
+  // Komisyon oranı: net komisyonu hesaplamak için gerekiyor (ayrı bir anahtar
+  // tanımlamak, iki değerin sessizce ayrışmasına yol açardı).
+  'commission.rate',
 ] as const;
 
 /** K4.4 — kazanılan puanın ömrü. */
@@ -33,6 +38,8 @@ export async function loadLoyaltyRules(prisma: PrismaService): Promise<LoyaltyRu
     unlockAt: val('rate.points_unlock_kzt') ?? DEFAULT_LOYALTY_RULES.unlockAt,
     // 0 gün "anında yansın" demek olurdu; sıfır değeri sona ermeyi KAPATIR sayılır.
     expiryDays: val('rate.points_expiry_days') || DEFAULT_LOYALTY_RULES.expiryDays,
+    commissionPct: val('commission.rate') ?? DEFAULT_LOYALTY_RULES.commissionPct,
+    subsidyCapPct: val('rate.points_subsidy_cap_pct') ?? DEFAULT_LOYALTY_RULES.subsidyCapPct,
   };
 }
 

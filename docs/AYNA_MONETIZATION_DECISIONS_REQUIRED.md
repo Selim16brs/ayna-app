@@ -31,7 +31,7 @@ Kurucu kararı şartname §8.4'ün yerine geçer. §8.4'teki "%5 harcama tavanı
 | ---- | ---------------------------------------------------------------------------------------------- |
 | K4.1 | Kullanıcı tamamlanmış işlemden sonra **para puan** kazanır; bir sonraki alışverişinde kullanır |
 | K4.2 | **Kullanım kilidi:** bakiye **5.000 ₸** üzerine çıkana kadar puan harcanamaz (aşağıya bak)     |
-| K4.3 | **Harcama tavanı:** her ödemede, ödenecek tutarın en çok **%25'i** puanla kapatılır            |
+| K4.3 | **Harcama tavanı:** ödenecek tutarın en çok **%25'i** — ve §8.4 sınırı (aşağıda)               |
 | K4.4 | **Son kullanma:** kazanılan puan **3 ay** içinde kullanılmazsa yanar                           |
 | K4.5 | Bu dört kural da kullanıcıya ekranda açıkça gösterilir                                         |
 
@@ -55,6 +55,36 @@ Yani kilit **matematiksel olarak hiç açılmıyordu**; puan sistemi kurulur kur
 **Kurucu kararı (26.08): eşik 5.000 ₸.** %3 kazanım ve 15.000 ₸ sepetle ≈11
 randevu — düzenli müşteri için 3 ayda ulaşılabilir. Diğer üç kural (%25 tavan,
 90 gün, %3 geri kazanım) aynen kaldı. Eşik admin ayarı: `rate.points_unlock_kzt`.
+
+### §8.4 sübvansiyon tavanı — K4.3 ile çelişiyordu
+
+K4.3 tek başına sürdürülemezdi. Şartname §8.4 indirimi ayrıca **beklenen net
+komisyonun %50'si** ile sınırlıyor; K4 bu sınıra değinmiyordu.
+
+%10 komisyonla:
+
+| Hizmet   | Komisyon | K4.3 (%25) | §8.4 (%50) | Fark (kim öder?) |
+| -------- | -------: | ---------: | ---------: | ---------------: |
+| 10.000 ₸ |  1.000 ₸ |    2.500 ₸ |      500 ₸ |          2.000 ₸ |
+| 20.000 ₸ |  2.000 ₸ |    5.000 ₸ |    1.000 ₸ |          4.000 ₸ |
+| 50.000 ₸ |  5.000 ₸ |   12.500 ₸ |    2.500 ₸ |         10.000 ₸ |
+
+Farkı AYNA karşılasa 20.000 ₸'lik randevuda 2.000 ₸ kazanıp 5.000 ₸ indirim
+verirdi — **randevu başına 3.000 ₸ zarar**. Bugünkü kodda ise farkı **uzman**
+karşılıyordu: nakit olarak eksik alıyor ama komisyon tam fiyattan kesiliyordu.
+Haberi olmadan sübvanse ediyordu.
+
+**Kurucu kararı (26.08): §8.4 sınırı eklensin.** Uygulanan tavan artık ikisinin
+küçüğü:
+
+```
+indirim = min(fiyat × %25, net komisyon × %50, bakiye)
+```
+
+%10 komisyonda pratikte fiyatın **%5'i** olur. Ekranda da bu gerçek oran
+gösteriliyor — "%25" yazıp ödeme anında %5 uygulamak, K6'da kaldırdığımız
+türden bir karşılıksız vaat olurdu. Sübvansiyon oranı admin ayarı:
+`rate.points_subsidy_cap_pct`.
 
 ### Geri kazanım oranı
 
