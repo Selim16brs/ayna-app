@@ -73,7 +73,7 @@ export default function SellerRequestsScreen() {
   const upsell = () =>
     Alert.alert(t('requests.premium_title'), t('requests.premium_body'), [
       { text: t('promo.later'), style: 'cancel' },
-      { text: t('promo.upsell_cta'), onPress: () => router.push('/seller/premium') },
+      { text: t('promo.upsell_cta'), onPress: () => router.push('/membership') },
     ]);
 
   const open = useMemo(

@@ -25,7 +25,7 @@ export function TierUpsell() {
   const body = t(toPlat ? 'upsell.toPlat.body' : 'upsell.toPrem.body');
   const cta = t(toPlat ? 'upsell.toPlat.cta' : 'upsell.toPrem.cta');
   // free → Premium sekmesiyle aç (giriş fiyatı); premium → Platinum sekmesiyle
-  const target = toPlat ? '/seller/premium?tier=platinum' : '/seller/premium?tier=premium';
+  const target = toPlat ? '/membership?tier=platinum' : '/membership?tier=premium';
 
   return (
     <PressableScale style={[styles.card, shadow.soft]} onPress={() => router.push(target as never)}>

@@ -1348,6 +1348,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'biz.preview.note': 'Профиль клиентке шамамен осылай көрінеді. Растап тіркеуді аяқта.',
   'common.on': 'Қосулы',
   'common.off': 'Өшірулі',
+  'pro.new': 'Жаңа',
+  'map.from': 'бастап',
   'map.title': 'Карта',
   'map.list': 'Тізім',
   'map.all': 'Барлығы',

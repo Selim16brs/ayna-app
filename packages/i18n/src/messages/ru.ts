@@ -1355,6 +1355,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'biz.preview.note': 'Примерно так профиль увидят клиенты. Подтвердите и завершите регистрацию.',
   'common.on': 'Вкл',
   'common.off': 'Выкл',
+  'pro.new': 'Новый',
+  'map.from': 'от',
   'map.title': 'Карта',
   'map.list': 'Список',
   'map.all': 'Все',

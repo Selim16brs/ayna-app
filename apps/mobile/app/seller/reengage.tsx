@@ -50,7 +50,7 @@ export default function ReengageScreen() {
             <Button
               label={t('reengage.premium_cta')}
               variant="primary"
-              onPress={() => router.push('/seller/premium')}
+              onPress={() => router.push('/membership')}
             />
           </View>
         </View>
