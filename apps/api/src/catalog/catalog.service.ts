@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Professional, Quote, ServiceCategory } from '@prisma/client';
-import { computeDaySlots } from '@ayna/domain';
+import { computeDaySlots, aynaOnayli, guvenKatmanlari, uzmanKayitli } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { CutoutService } from '../cutout/cutout.service';
 import { StorageService } from '../storage/storage.service';
@@ -99,21 +99,47 @@ export class CatalogService {
     const [sps, bizs] = await Promise.all([
       this.prisma.specialist.findMany({
         where: { proId: { in: ids } },
-        select: { proId: true, userId: true },
+        select: {
+          proId: true,
+          userId: true,
+          // §3.3 — rozet listede de görünsün diye. Bunlar YENİ SORGU DEĞİL:
+          // zaten atılan toplu sorgunun select'i genişledi.
+          certVerified: true,
+          socialVerified: true,
+          entityType: true,
+          iin: true,
+        },
       }),
       this.prisma.business.findMany({
         where: { professionalId: { in: ids } },
-        select: { professionalId: true, ownerUserId: true },
+        select: {
+          professionalId: true,
+          ownerUserId: true,
+          identityVerified: true,
+          businessVerified: true,
+          binVerified: true,
+          socialVerified: true,
+        },
       }),
     ]);
     const ownerByPro = new Map<string, string>();
     for (const x of sps) if (x.proId) ownerByPro.set(x.proId, x.userId);
     for (const x of bizs) if (x.professionalId) ownerByPro.set(x.professionalId, x.ownerUserId);
+    const spByPro = new Map(sps.filter((x) => x.proId).map((x) => [x.proId!, x]));
+    const bizByPro = new Map(
+      bizs.filter((x) => x.professionalId).map((x) => [x.professionalId!, x]),
+    );
     const owners = [...new Set(ownerByPro.values())];
     const users = owners.length
       ? await this.prisma.user.findMany({
           where: { id: { in: owners } },
-          select: { id: true, status: true, membershipTier: true, membershipUntil: true },
+          select: {
+            id: true,
+            status: true,
+            kycStatus: true,
+            membershipTier: true,
+            membershipUntil: true,
+          },
         })
       : [];
     // Sahibi silinmiş/askıdaki hesaplar keşifte görünmez (hesap kapansa da katalog kaydı kalabiliyor).
@@ -121,6 +147,17 @@ export class CatalogService {
       users.filter((u) => u.status === 'deleted' || u.status === 'suspended').map((u) => u.id),
     );
     const now = Date.now();
+    const kycById = new Map(users.map((u) => [u.id, u.kycStatus === 'approved']));
+    // Kademe listede de lazım: kart Premium ile Platinum'u ayırt edemiyordu.
+    const tierById = new Map<string, string>(
+      users.map((u) => [
+        u.id,
+        (!u.membershipUntil || u.membershipUntil.getTime() > now) &&
+        (u.membershipTier === 'premium' || u.membershipTier === 'platinum')
+          ? u.membershipTier
+          : 'free',
+      ]),
+    );
     const premiumUsers = new Set(
       users
         .filter(
@@ -145,6 +182,28 @@ export class CatalogService {
           lng: r.lng ?? undefined,
           priceTo: prices.length ? Math.max(...prices) : Number(r.priceFrom),
           isPremium: owner ? premiumUsers.has(owner) : false,
+          membershipTier: owner ? (tierById.get(owner) ?? 'free') : 'free',
+          // §3.3 — GÜVEN ROZETİ listede de. Eskiden yalnız detay ucundaydı:
+          // müşteri aramada/keşifte kimin doğrulandığını göremiyor, her
+          // profili tek tek açmak zorunda kalıyordu. Kural detayla AYNI
+          // fonksiyondan geliyor, ayrışamaz.
+          aynaVerified: (() => {
+            const sp = spByPro.get(r.id);
+            const biz = bizByPro.get(r.id);
+            const kayitli = uzmanKayitli(sp?.entityType, sp?.iin);
+            const kyc = owner ? (kycById.get(owner) ?? false) : false;
+            return aynaOnayli(
+              r.kind,
+              guvenKatmanlari({
+                kind: r.kind,
+                kycOnayli: kyc,
+                kayitli,
+                salon: biz,
+                uzman: sp,
+              }),
+              kayitli,
+            );
+          })(),
         };
       });
   }
@@ -406,16 +465,14 @@ export class CatalogService {
       tiktok: salonBiz?.socialTiktok || '',
     };
     // §uzman onboarding — uzman resmî kaydı: kayıtlı ИП + geçerli IIN (public'te açık IIN yok)
-    const expertRegistered = sp?.entityType === 'ip' && /^\d{12}$/.test(sp?.iin ?? '');
-    const verification = {
-      identity: salonBiz?.identityVerified ?? kyc,
-      business: salonBiz?.businessVerified ?? expertRegistered,
-      bin: salonBiz?.binVerified ?? expertRegistered,
-      address: salonBiz?.addressVerified ?? false,
-      social: salonBiz?.socialVerified ?? sp?.socialVerified ?? false,
-      // uzmana özel katman: doğrulanmış sertifika (salonda yok)
-      cert: p.kind === 'salon' ? false : (sp?.certVerified ?? false),
-    };
+    const expertRegistered = uzmanKayitli(sp?.entityType, sp?.iin);
+    const verification = guvenKatmanlari({
+      kind: p.kind,
+      kycOnayli: kyc,
+      kayitli: expertRegistered,
+      salon: salonBiz,
+      uzman: sp,
+    });
     // §11 — UZMANIN/SALONUN ÜYELİK PAKETİ, müşteriye açık.
     //
     // Müşteri kime randevu aldığını bilmeli: rozet güveni, paket ise uzmanın
@@ -441,11 +498,10 @@ export class CatalogService {
         ? uyelik.membershipTier
         : 'free';
 
-    // AYNA Verified (üst rozet): salon → kimlik + (işletme|BİN); uzman → kimlik + (sertifika|sosyal|kayıt).
-    const aynaVerified =
-      p.kind === 'salon'
-        ? verification.identity && (verification.business || verification.bin)
-        : verification.identity && (verification.cert || verification.social || expertRegistered);
+    // §3.3 — üst rozet. Kural artık `packages/domain`de: üç yerde ayrı
+    // yazılıydı ve ikisi ayrışmıştı (uzman kendi ekranında "değilsin"
+    // görürken müşteri profilinde rozeti görüyordu).
+    const aynaVerified = aynaOnayli(p.kind, verification, expertRegistered);
     return {
       ...mapPro(p),
       image: ownerImage || p.imageUrl, // uzmanın gerçek fotosu esas (hesap verisi)

@@ -1,3 +1,4 @@
+import { aynaOnayli, uzmanKayitli } from '@ayna/domain';
 import {
   commissionFor,
   commissionFromMinor,
@@ -575,7 +576,20 @@ export class AdminService {
           cert: s.certVerified,
           social: s.socialVerified,
         },
-        aynaVerified: identity && (s.certVerified || s.socialVerified),
+        // Kural katalogla AYNI kaynaktan: panel "doğrulanmamış" derken müşteri
+        // profilde rozeti görüyordu (kayıtlı ИП durumu).
+        aynaVerified: aynaOnayli(
+          'expert',
+          {
+            identity,
+            cert: s.certVerified,
+            social: s.socialVerified,
+            business: false,
+            bin: false,
+            address: false,
+          },
+          uzmanKayitli(s.entityType, s.iin),
+        ),
         createdAt: s.createdAt,
       };
     });
@@ -606,7 +620,20 @@ export class AdminService {
         cert: s.certVerified,
         social: s.socialVerified,
       },
-      aynaVerified: identity && (s.certVerified || s.socialVerified),
+      // Kural katalogla AYNI kaynaktan: panel "doğrulanmamış" derken müşteri
+      // profilde rozeti görüyordu (kayıtlı ИП durumu).
+      aynaVerified: aynaOnayli(
+        'expert',
+        {
+          identity,
+          cert: s.certVerified,
+          social: s.socialVerified,
+          business: false,
+          bin: false,
+          address: false,
+        },
+        uzmanKayitli(s.entityType, s.iin),
+      ),
     };
   }
 
