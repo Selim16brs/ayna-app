@@ -17,6 +17,14 @@ export const ru: Partial<Record<MessageKey, string>> = {
     'Оплата производится вне приложения (банк/Kaspi); после подтверждения Premium активируется.',
   'premium.cancel': 'Можно отменить в любой момент.',
   'premium.cta': 'Перейти на Premium',
+  // §11 — MÜŞTERİ paketi: yalnız sunucuda/mağazada GERÇEKTEN uygulanan iki
+  // avantaj. 'öncelikli destek' ve 'öne çıkan görünürlük' kasten yok —
+  // ikisi de hiçbir yerde paketi okumuyor (K6 kuralı).
+  'premium.c.tagline': 'Личная поддержка на пути ухода за собой.',
+  'premium.c.boni': 'Boni — ИИ-консультант по красоте',
+  'premium.c.boni_d': 'Личные советы по коже, волосам и уходу — спрашивай в любое время.',
+  'premium.c.cutout': 'Фото профиля без фона',
+  'premium.c.cutout_d': 'Фон снимка убирается, и профиль получает фирменный вид AYNA.',
   'premium.section': 'Что даёт Premium',
   'premium.b.featured': 'Показ в «Рекомендуемых»',
   'premium.b.featured_d': 'Кандидатура на продвижение на главной «Найти»',

@@ -19,6 +19,15 @@ export const tr = {
     'Ödeme banka/Kaspi ile app dışında yapılır; onaydan sonra Premium aktifleşir.',
   'premium.cancel': 'İstediğin zaman iptal edebilirsin.',
   'premium.cta': 'Premium’a geç',
+  // §11 — MÜŞTERİ paketi: yalnız sunucuda/mağazada GERÇEKTEN uygulanan iki
+  // avantaj. 'öncelikli destek' ve 'öne çıkan görünürlük' kasten yok —
+  // ikisi de hiçbir yerde paketi okumuyor (K6 kuralı).
+  'premium.c.tagline': 'Bakım yolculuğun için kişisel destek.',
+  'premium.c.boni': 'Boni — AI güzellik danışmanı',
+  'premium.c.boni_d': 'Cildine, saçına ve rutinine göre kişisel öneriler; istediğin zaman sor.',
+  'premium.c.cutout': 'Cut-out profil fotoğrafı',
+  'premium.c.cutout_d':
+    'Fotoğrafının arka planı temizlenir; profilin AYNA’nın imza görünümünü alır.',
   'premium.section': 'Premium ile neler kazanırsın',
   'premium.b.featured': 'Öne Çıkanlar’da görün',
   'premium.b.featured_d': 'Keşfet ana sayfasında öne çıkarma adaylığı',
