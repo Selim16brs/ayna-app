@@ -9,7 +9,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useStore } from '../../src/store';
-import { Screen, Segmented, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { PlanBadge, asPlanTier, Screen, Segmented, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 import type { ThemeMode } from '../../src/theme';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -71,7 +71,8 @@ export default function ProfileScreen() {
   const phoneVerified = useStore((s) => s.currentUser?.phoneVerified ?? false);
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   const restrictedDaysLeft = useStore((s) => s.currentUser?.restrictedDaysLeft ?? 0);
-  const premium = useStore((s) => s.premium);
+  // Gerçek kademe: `premium` boolean'ı Platinum'u Premium'dan ayıramıyordu.
+  const planTier = asPlanTier(useStore((s) => s.currentUser?.membershipTier));
   const refreshMembership = useStore((s) => s.refreshMembership);
   // §11 — Profil'e her gelişte üyelik durumu sunucudan tazelenir (onay anında yansır)
   useFocusEffect(
@@ -183,17 +184,18 @@ export default function ProfileScreen() {
               </Text>
             </View>
           ) : null}
-          {/* Üyelik durumu — Standart / Premium */}
-          <View style={styles.badge}>
-            <Ionicons
-              name={premium ? 'star' : 'person-circle-outline'}
-              size={12}
-              color={premium ? colors.gold : colors.accentFg}
-            />
-            <Text variant="caption" style={styles.badgeText}>
-              {t(premium ? 'profile.premium_member' : 'profile.standard_member')}
-            </Text>
-          </View>
+          {/* §11 — ÜYELİK PAKETİ.
+              Eskiden `premium` boolean'ıydı: Platinum ödeyen kullanıcı,
+              Premium'la AYNI çipi görüyordu — en pahalı paketin ekranda
+              hiçbir karşılığı yoktu. Artık gerçek kademe, kendi görünümüyle.
+              Dokunmak paket ekranına götürüyor. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('plan.mine')}
+            onPress={() => router.push('/seller/premium')}
+          >
+            <PlanBadge tier={planTier} size="md" />
+          </Pressable>
         </View>
       </LinearGradient>
 

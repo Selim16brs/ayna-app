@@ -20,6 +20,8 @@ import {
   TAB_BAR_CLEARANCE,
   Text,
   VerificationBadges,
+  PlanBadge,
+  asPlanTier,
 } from '../../src/ui';
 
 type Tab = 'booking' | 'portfolio' | 'reviews';
@@ -364,8 +366,17 @@ export default function ProfessionalScreen() {
           </View>
         </View>
 
-        {/* §3.3 — katmanlı güven rozetleri (AYNA Onaylı + kimlik/işletme/BİN/adres/sosyal) */}
+        {/* §3.3 + §11 — güven rozetleri ve ÜYELİK PAKETİ.
+            Paket buraya geldi çünkü müşteri kime randevu aldığını bilmeli:
+            rozet güveni, paket uzmanın AYNA'ya bağlılığını gösteriyor.
+            Ücretsiz uzmanda çizilmiyor — "Standart" etiketi bilgi vermiyor,
+            yalnız yer kaplıyor ve ödeyenin rozetini sulandırıyor. */}
         <View style={styles.badgesRow}>
+          {pro.membershipTier && pro.membershipTier !== 'free' ? (
+            <View style={styles.planRow}>
+              <PlanBadge tier={asPlanTier(pro.membershipTier)} size="md" role="pro" />
+            </View>
+          ) : null}
           <VerificationBadges verification={pro.verification} aynaVerified={pro.aynaVerified} />
         </View>
 
@@ -1033,6 +1044,7 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surface,
     },
     badgesRow: { paddingHorizontal: space(2.5), marginTop: space(1.5) },
+    planRow: { flexDirection: 'row', marginBottom: space(1) },
     friendsRow: { paddingHorizontal: space(2.5), marginTop: space(1) },
     // ── Lime hero (Keşfet dili) ──
     heroNameRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },

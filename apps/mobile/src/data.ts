@@ -703,6 +703,8 @@ export interface ProfessionalDetail extends Professional {
     social: boolean;
   };
   aynaVerified?: boolean;
+  /** §11 — uzmanın/salonun üyelik paketi (süresi dolmuşsa sunucu `free` döndürür). */
+  membershipTier?: 'free' | 'premium' | 'platinum';
 }
 
 // Sektör hizmet menüsü = MERKEZİ taksonomiden türetilir (tek kaynak). Ad = TR (varsayılan dil);

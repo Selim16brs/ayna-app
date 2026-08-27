@@ -48,3 +48,5 @@ export { RulesCard } from './RulesCard';
 export { ListSkeleton } from './ListSkeleton';
 export { useToast } from './Toast';
 export { VerificationBadges } from './VerificationBadges';
+export { PlanBadge } from './PlanBadge';
+export { asPlanTier, type PlanTier } from '../plan';
