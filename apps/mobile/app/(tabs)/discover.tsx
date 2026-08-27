@@ -11,6 +11,7 @@ import { greetingKey } from '../../src/greeting';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
 import { selectPortrait, selectUnreadCount, useStore } from '../../src/store';
+import { useUnreadMessages } from '../../src/use-unread-messages';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -55,6 +56,7 @@ export default function DiscoverScreen() {
   const collections = useCollections().slice(0, 2);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const unread = useStore(selectUnreadCount);
+  const unreadMsg = useUnreadMessages();
   const points = useStore((s) => s.points);
   const tier = useStore((s) => s.tier);
   // §fix — boş isimde de fallback (|| ; '' ?? x boş string'e düşmez → Keşfet ismi boş görünüyordu)
@@ -135,6 +137,11 @@ export default function DiscoverScreen() {
             onPress={() => router.push('/messages')}
           >
             <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.ink} />
+            {unreadMsg > 0 ? (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>{unreadMsg > 9 ? '9+' : unreadMsg}</Text>
+              </View>
+            ) : null}
           </PressableScale>
           <PressableScale
             accessibilityRole="button"

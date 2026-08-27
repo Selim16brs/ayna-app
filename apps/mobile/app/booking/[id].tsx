@@ -49,6 +49,41 @@ const SOURCE_KEY: Record<BookingSource, MessageKey> = {
   demand: 'bookings.tab.demand',
 };
 
+/**
+ * DEKONT GÖRÜNTÜSÜ — kırpma yok, dokununca tam ekran.
+ *
+ * Eskiden düz bir `Image` idi: 160pt sabit yükseklik ve React Native'in
+ * varsayılan `cover` davranışı. Yani dekontun ORTASINDAN bir şerit
+ * gösteriliyordu; tutar, tarih ve gönderen çoğu zaman kırpılan kısımda
+ * kalıyordu ve büyütmenin bir yolu yoktu.
+ *
+ * Bu üç yerde de PARA KARARI veriliyor: müşteri "iadeyi aldım" diyor,
+ * uzman müşterinin kaporasını onaylıyor. Okunamayan bir kanıta bakarak
+ * onay istemek, onayı anlamsız kılar.
+ *
+ * `contain` tamamını gösteriyor, dokunma tam ekran görüntüleyiciye
+ * (`/gallery`, yakınlaştırmalı) götürüyor.
+ */
+function Dekont({ uri }: { uri: string }) {
+  const router = useRouter();
+  const { t } = useLocale();
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable
+      accessibilityRole="imagebutton"
+      accessibilityLabel={t('booking.receipt.tap')}
+      onPress={() =>
+        router.push({ pathname: '/gallery', params: { images: JSON.stringify([uri]) } })
+      }
+    >
+      <Image source={{ uri }} style={styles.receiptThumb} resizeMode="contain" />
+      <Text variant="caption" tone="muted" style={styles.receiptHint}>
+        {t('booking.receipt.tap')}
+      </Text>
+    </Pressable>
+  );
+}
+
 export default function BookingDetailScreen() {
   const router = useRouter();
   const { t } = useLocale();
@@ -616,9 +651,7 @@ export default function BookingDetailScreen() {
             <Text variant="caption" tone="muted" style={styles.depositDesc}>
               {t('booking.deposit.submitted_note')}
             </Text>
-            {booking.receiptUri ? (
-              <Image source={{ uri: booking.receiptUri }} style={styles.receiptThumb} />
-            ) : null}
+            {booking.receiptUri ? <Dekont uri={booking.receiptUri} /> : null}
           </View>
         ) : null}
 
@@ -631,7 +664,7 @@ export default function BookingDetailScreen() {
                 {t('booking.provider.receipt')}
               </Text>
             </View>
-            <Image source={{ uri: booking.receiptUri }} style={styles.receiptThumb} />
+            <Dekont uri={booking.receiptUri} />
           </View>
         ) : null}
 
@@ -657,9 +690,7 @@ export default function BookingDetailScreen() {
             <Text variant="caption" tone="muted" style={styles.depositDesc}>
               {t('booking.refund.desc')}
             </Text>
-            {booking.refundReceiptUri ? (
-              <Image source={{ uri: booking.refundReceiptUri }} style={styles.receiptThumb} />
-            ) : null}
+            {booking.refundReceiptUri ? <Dekont uri={booking.refundReceiptUri} /> : null}
             <Button
               label={t('booking.refund.confirm')}
               variant="primary"
@@ -1182,6 +1213,7 @@ const makeStyles = (colors: ColorTokens) =>
     depositDesc: { lineHeight: 17 },
     depositRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     depositNote: { lineHeight: 16, marginTop: space(0.5) },
+    receiptHint: { textAlign: 'center', marginTop: space(0.5) },
     receiptThumb: {
       width: '100%',
       height: 160,

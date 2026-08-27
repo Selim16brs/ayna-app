@@ -1698,6 +1698,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.refund.desc':
     'Мастер загрузил квитанцию возврата. Если вы увидели возврат на счёте, подтвердите.',
   'booking.refund.confirm': 'Возврат получен, подтвердить',
+  'booking.receipt.tap': 'Нажмите, чтобы увеличить квитанцию',
   'booking.refund.provider_upload': 'Загрузить квитанцию возврата',
   'booking.refund.provider_pending':
     'Свободная отмена — верните депозит и загрузите квитанцию (§4.4).',

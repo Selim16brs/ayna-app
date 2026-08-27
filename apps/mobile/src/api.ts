@@ -861,6 +861,8 @@ export const api = {
 
   // EK Z.1 — DM mesajlaşma (müşteri ↔ uzman/salon; moderasyon + numara maskeleme backend'de)
   conversations: (token: string) => get<ConversationSummary[]>('/messaging/conversations', token),
+  /** Ana ekran rozeti — yalnız sayı; konuşma listesini çekmeye gerek yok. */
+  unreadMessages: (token: string) => get<{ count: number }>('/messaging/unread-count', token),
   startConversation: (
     token: string,
     targetUserId: string,
