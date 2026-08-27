@@ -240,6 +240,30 @@ export class MessagingService {
     }));
   }
 
+  /**
+   * OKUNMAMIŞ MESAJ SAYISI — tek sorgu, tek sayı.
+   *
+   * Ana ekrandaki mesaj ikonu bu sayıyı rozet olarak gösteriyor. Bunu
+   * `conversations()` ile çözmek olurdu ama o uç her konuşma için AYRI iki
+   * sorgu atıyor (son mesaj + okunmamış); yalnız bir rozet için ana ekran her
+   * açıldığında o maliyeti ödemek anlamsız.
+   *
+   * Sayım `conversations()` ile BİREBİR aynı koşulu kullanıyor: karşı tarafın
+   * gönderdiği, moderasyondan geçmiş, okunmamış mesajlar. İkisi ayrışırsa
+   * rozet listedeki sayıların toplamını tutmaz.
+   */
+  async unreadCount(meId: string): Promise<{ count: number }> {
+    const count = await this.prisma.message.count({
+      where: {
+        senderId: { not: meId },
+        moderation: 'ok',
+        readAt: null,
+        conversation: { OR: [{ customerId: meId }, { proUserId: meId }] },
+      },
+    });
+    return { count };
+  }
+
   // Konuşma listesi — karşı taraf adı + son görünür mesaj + okunmamış sayısı
   async conversations(meId: string) {
     const rows = await this.prisma.conversation.findMany({

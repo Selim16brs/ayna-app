@@ -196,6 +196,15 @@ interface State {
   ledger: LedgerEntry[];
   userReviews: Record<string, Review[]>;
   notifications: AppNotification[];
+  /**
+   * Okunmamış MESAJ sayısı — ana ekrandaki mesaj ikonunun rozeti.
+   *
+   * Bildirim sayacından (`selectUnreadCount`) ayrı tutuluyor: mesaj gelince
+   * hiçbir bildirim üretilmiyor, yani zil sessiz kalıyordu ve kullanıcı ancak
+   * Mesajlar'ı açınca yeni mesajı görüyordu. Sunucudan geliyor; yerel
+   * hesaplanamaz çünkü konuşmalar mağazada tutulmuyor.
+   */
+  unreadMessages: number;
   token: string | null;
   currentUser: AuthUser | null;
   // Profil fotoğrafı (galeri/kamera; kaldırılabilir). Kalıcı saklanır.
@@ -407,6 +416,7 @@ interface State {
   pushNotification: (n: Omit<AppNotification, 'id' | 'read'>) => void;
   pruneNotifications: () => void; // §5.7 — 30 günden eski bildirimleri temizle
   markNotificationRead: (id: string) => void;
+  setUnreadMessages: (n: number) => void;
   markAllNotificationsRead: () => void;
 }
 
@@ -430,6 +440,7 @@ const SEEDED_PERSONAL_RESET: Partial<State> = {
   tier: null,
   ledger: [],
   notifications: [],
+  unreadMessages: 0,
   userReviews: {},
   favorites: [],
   addresses: [],
@@ -641,6 +652,7 @@ export const useStore = create<State>()(
       surveyAskedIds: [],
       offersSeen: {},
       notifications: [],
+      unreadMessages: 0,
       token: null,
       currentUser: null,
       sellerTrialStart: null,
@@ -2525,6 +2537,8 @@ export const useStore = create<State>()(
 
       markAllNotificationsRead: () =>
         set((s) => ({ notifications: s.notifications.map((x) => ({ ...x, read: true })) })),
+
+      setUnreadMessages: (n) => set({ unreadMessages: Math.max(0, Math.trunc(n) || 0) }),
     }),
     {
       name: 'ayna-session',

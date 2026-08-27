@@ -1692,6 +1692,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.refund.desc':
     'Маман қайтарым түбіртегін жүктеді. Қайтарымды шотыңнан көрсең, растап қой.',
   'booking.refund.confirm': 'Қайтарымды алдым, растау',
+  'booking.receipt.tap': 'Түбіртекті үлкейту үшін басыңыз',
   'booking.refund.provider_upload': 'Қайтарым түбіртегін жүктеу',
   'booking.refund.provider_pending':
     'Еркін бас тарту — депозитті қайтар және түбіртекті жүкте (§4.4).',

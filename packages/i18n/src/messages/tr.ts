@@ -1775,6 +1775,7 @@ export const tr = {
   'booking.refund.title': 'İade onayı',
   'booking.refund.desc': 'Uzman iade dekontunu yükledi. İadeyi hesabında gördüysen onayla.',
   'booking.refund.confirm': 'İadeyi aldım, onayla',
+  'booking.receipt.tap': 'Dekontu büyütmek için dokun',
   'booking.refund.provider_upload': 'İade dekontu yükle',
   'booking.refund.provider_pending': 'Serbest iptal — depozitoyu iade et ve dekontu yükle (§4.4).',
   'booking.penalty.forfeited': 'Geç iptal edildiği için depozito uzmanda kaldı.',

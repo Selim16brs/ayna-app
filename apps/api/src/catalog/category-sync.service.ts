@@ -1,4 +1,4 @@
-import { Injectable, type OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { CATEGORY_IDS, CATEGORY_META } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -19,6 +19,8 @@ import { PrismaService } from '../prisma/prisma.service';
  */
 @Injectable()
 export class CategorySyncService implements OnModuleInit {
+  private readonly log = new Logger(CategorySyncService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit(): Promise<void> {
@@ -33,13 +35,11 @@ export class CategorySyncService implements OnModuleInit {
         // Yarış durumunda (iki konteyner aynı anda açılırsa) çakışanı atla.
         skipDuplicates: true,
       });
-      // eslint-disable-next-line no-console
-      console.log(`[category-sync] eklenen kategori: ${eksik.join(', ')}`);
+      this.log.log(`eklenen kategori: ${eksik.join(', ')}`);
     } catch {
       // Uyumlama başarısızsa API yine de AÇILMALI — kategori listesi eksik
       // kalır ama servis ayakta kalır.
-      // eslint-disable-next-line no-console
-      console.warn('[category-sync] kategori uyumlaması başarısız');
+      this.log.warn('kategori uyumlaması başarısız');
     }
   }
 }

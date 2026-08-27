@@ -15,6 +15,7 @@ import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
 import { useSalonStaff } from '../../src/staff';
 import { selectCommissionRate, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
+import { useUnreadMessages } from '../../src/use-unread-messages';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -43,6 +44,7 @@ export default function ReportsScreen() {
   const firstRaw = salonName.split(' ')[0] || salonName;
   const firstName = firstRaw.charAt(0).toLocaleUpperCase('tr-TR') + firstRaw.slice(1);
   const unread = useStore(selectUnreadCount);
+  const unreadMsg = useUnreadMessages();
   const commissionRate = useStore(selectCommissionRate); // §11 — Platinum'da %8,5
   // §3/§6.1 — hesabın bağı: salon rolü = salon; uzman = bağlı salon adı veya "Bireysel Uzman"
   const role = useStore((s) => s.currentUser?.role);
@@ -277,6 +279,13 @@ export default function ReportsScreen() {
               accessibilityLabel={t('messages.title')}
             >
               <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.ink} />
+              {unreadMsg > 0 ? (
+                <View style={styles.bellBadge}>
+                  <Text style={styles.bellBadgeText}>
+                    {unreadMsg > 9 ? '9+' : String(unreadMsg)}
+                  </Text>
+                </View>
+              ) : null}
             </PressableScale>
             <PressableScale
               style={[styles.bell, shadow.soft]}

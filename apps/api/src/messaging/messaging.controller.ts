@@ -24,6 +24,13 @@ export class MessagingController {
     return this.messaging.conversations(req.user!.id);
   }
 
+  // Ana ekrandaki mesaj ikonunun rozeti. Yalnız sayı döner — konuşma listesini
+  // çekmek bir rozet için fazla ağır.
+  @Get('unread-count')
+  unreadCount(@Req() req: AuthedRequest) {
+    return this.messaging.unreadCount(req.user!.id);
+  }
+
   @Post('conversations')
   start(
     @Req() req: AuthedRequest,
