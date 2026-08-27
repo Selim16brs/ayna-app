@@ -11,7 +11,11 @@ import { join } from 'node:path';
  * kişi, kendisiyle hiç ilgisi olmayan bir satış sayfası görüyordu.
  */
 
-const ekran = readFileSync(join(import.meta.dirname, '..', 'app', 'seller', 'premium.tsx'), 'utf8');
+const ekran = readFileSync(join(import.meta.dirname, '..', 'app', 'membership.tsx'), 'utf8');
+const eskiYol = readFileSync(
+  join(import.meta.dirname, '..', 'app', 'seller', 'premium.tsx'),
+  'utf8',
+);
 
 test('avantaj listesi role göre değişiyor', () => {
   assert.match(ekran, /const CUSTOMER_BENEFITS/, 'müşteri avantaj listesi yok');
@@ -93,4 +97,15 @@ test('abonelik ucu rol kapısı koymuyor', () => {
     'utf8',
   );
   assert.doesNotMatch(ctrl, /@Roles\(/, 'abonelik ucu role kapalı — müşteri satın alamaz');
+});
+
+test('eski yol yönlendiriyor, boş ekran açmıyor', () => {
+  // Yol `/seller/premium` → `/membership` taşındı. Eski dosya SİLİNMEDİ:
+  // gönderilmiş bildirimlerin derin bağlantıları ve kullanıcının cihazındaki
+  // eski OTA sürümü hâlâ oraya gelebilir.
+  assert.match(eskiYol, /router\.replace\(/, 'eski yol yönlendirmiyor');
+  assert.match(eskiYol, /'\/membership'/, 'yönlendirme hedefi yanlış');
+  // Platinum yükseltme bağlantıları `?tier=platinum` taşıyor; düşerse
+  // kullanıcı Premium sekmesinde açılır ve yanlış paketi satın alır.
+  assert.match(eskiYol, /params: \{ tier \}/, 'tier parametresi kaybediliyor');
 });

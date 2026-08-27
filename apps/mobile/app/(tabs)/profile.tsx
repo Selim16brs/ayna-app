@@ -28,7 +28,7 @@ const MENU: {
   { key: 'profile.menu.hours', icon: 'time-outline', sellerOnly: true },
   // AYNA Passport MÜŞTERİ ürünü (alerji/tercih/erişim kaydı). Uzman panelinde
   // işi yoktu; oradaki tek anlamlı parça üyelik işlemleriydi, o da kendi
-  // ekranına alındı (/seller/premium).
+  // ekranına alındı (/membership).
   { key: 'profile.menu.passport', icon: 'card-outline', customerOnly: true },
   { key: 'profile.menu.membership', icon: 'diamond-outline', sellerOnly: true },
   // Profilini paylaş Menü sekmesinde de var; en çok aranan yer profil olduğu
@@ -119,7 +119,7 @@ export default function ProfileScreen() {
     if (key === 'profile.menu.passport') router.push('/profile/passport');
     // Bu satır bir önceki düzenlememde kayboldu: menüde görünüyor ama
     // dokununca hiçbir şey olmuyordu.
-    else if (key === 'profile.menu.membership') router.push('/seller/premium');
+    else if (key === 'profile.menu.membership') router.push('/membership');
     else if (key === 'profile.menu.share') router.push('/seller/share');
     else if (key === 'profile.menu.always') router.push('/always');
     else if (key === 'profile.menu.rewards') router.push('/rewards');
@@ -192,7 +192,7 @@ export default function ProfileScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('plan.mine')}
-            onPress={() => router.push('/seller/premium')}
+            onPress={() => router.push('/membership')}
           >
             <PlanBadge tier={planTier} size="md" />
           </Pressable>

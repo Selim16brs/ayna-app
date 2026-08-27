@@ -149,7 +149,7 @@ export default function SellerPromotionsScreen() {
             <Button
               label={t('promo.upsell_cta')}
               variant="primary"
-              onPress={() => router.push('/seller/premium')}
+              onPress={() => router.push('/membership')}
             />
           </View>
           <Pressable onPress={() => router.back()} style={styles.laterBtn}>

@@ -1422,6 +1422,8 @@ export const tr = {
   'common.off': 'Kapalı',
 
   // Harita (§8)
+  'pro.new': 'Yeni',
+  'map.from': 'başlangıç',
   'map.title': 'Harita',
   'map.list': 'Liste',
   'map.all': 'Tümü',

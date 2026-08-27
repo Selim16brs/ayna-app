@@ -67,7 +67,7 @@ export default function AlwaysScreen() {
             <Button
               label={t('always.platinum_cta')}
               variant="primary"
-              onPress={() => router.push('/seller/premium')}
+              onPress={() => router.push('/membership')}
             />
           </View>
         </View>

@@ -18,7 +18,7 @@ import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { useProfessionalDetail } from '../src/catalog';
-import { PressableScale, Screen, StackHeader, Text } from '../src/ui';
+import { asPlanTier, PlanBadge, PressableScale, Screen, StackHeader, Text } from '../src/ui';
 
 export default function MapScreen() {
   const router = useRouter();
@@ -189,6 +189,29 @@ export default function MapScreen() {
               <Text variant="bodyStrong" tone="ink">
                 {detail.specialty || selected?.specialty}
               </Text>
+
+              {/* GÜVEN ŞERİDİ — sayfanın en üstünde, adın hemen altında.
+                  Haritadan bakan kişi "buna güvenir miyim, ne kadar tutar,
+                  ne kadar deneyimli" sorularına cevap arıyor; eskiden sayfa
+                  bunların HİÇBİRİNİ vermiyordu: fotoğraf, mesafe, puan ve
+                  hizmet listesiyle bitiyordu. Doğrulama ve paket ancak tam
+                  profile geçince görünüyordu. */}
+              {detail.aynaVerified ||
+              (detail.membershipTier && detail.membershipTier !== 'free') ? (
+                <View style={styles.sheetBadges}>
+                  {detail.aynaVerified ? (
+                    <View style={styles.sheetVerified}>
+                      <Ionicons name="shield-checkmark" size={13} color={colors.onAccent} />
+                      <Text variant="caption" tone="onAccent" style={styles.sheetVerifiedText}>
+                        {t('verify.ayna')}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {detail.membershipTier && detail.membershipTier !== 'free' ? (
+                    <PlanBadge tier={asPlanTier(detail.membershipTier)} size="sm" role="pro" />
+                  ) : null}
+                </View>
+              ) : null}
               <View style={styles.sheetMeta}>
                 <Ionicons name="location-outline" size={14} color={colors.inkSoft} />
                 <Text variant="caption" tone="inkSoft">
@@ -205,10 +228,43 @@ export default function MapScreen() {
                   </>
                 ) : (
                   <Text variant="caption" tone="muted">
-                    ✨ Yeni
+                    ✨ {t('pro.new')}
                   </Text>
                 )}
               </View>
+              {/* KÜNYE — deneyim ve başlangıç fiyatı. Fiyat özellikle önemli:
+                  hizmet listesi aşağıda ama kullanıcı oraya inmeden önce
+                  "bu benim bütçemde mi" sorusunun cevabını görmeli. */}
+              <View style={styles.sheetFacts}>
+                {detail.experienceYears > 0 ? (
+                  <View style={styles.sheetFact}>
+                    <Ionicons name="ribbon-outline" size={14} color={colors.accentFg} />
+                    <Text variant="caption" tone="inkSoft">
+                      {detail.experienceYears} {t('pro.experience')}
+                    </Text>
+                  </View>
+                ) : null}
+                {Number(detail.priceFrom) > 0 ? (
+                  <View style={styles.sheetFact}>
+                    <Ionicons name="pricetag-outline" size={14} color={colors.accentFg} />
+                    <Text variant="caption" tone="inkSoft">
+                      {formatPrice(Number(detail.priceFrom))} {t('map.from')}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+
+              {/* W2W sinyali — AYNA'nın çekirdeği. Tanıdığının gittiği yer,
+                  yıldız ortalamasından daha çok karar verdiriyor. */}
+              {detail.friends ? (
+                <View style={styles.sheetFriends}>
+                  <Ionicons name="people" size={13} color={colors.ink} />
+                  <Text variant="caption" tone="ink" style={styles.sheetFriendsText}>
+                    {detail.friends} {t('pro.friends_here')}
+                  </Text>
+                </View>
+              ) : null}
+
               {detail.about ? (
                 <>
                   <Text variant="label" tone="accentFg" style={styles.sheetSection}>
@@ -301,6 +357,37 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     sheetMeta: { flexDirection: 'row', alignItems: 'center', gap: space(0.75), flexWrap: 'wrap' },
+    sheetBadges: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: space(0.75),
+      marginTop: space(0.75),
+    },
+    sheetVerified: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.5),
+      paddingHorizontal: space(1),
+      paddingVertical: space(0.375),
+      borderRadius: radius.pill,
+      backgroundColor: colors.accentFg,
+    },
+    sheetVerifiedText: { fontFamily: font.semibold },
+    sheetFacts: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5), marginTop: space(1) },
+    sheetFact: { flexDirection: 'row', alignItems: 'center', gap: space(0.5) },
+    sheetFriends: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.5),
+      alignSelf: 'flex-start',
+      marginTop: space(1),
+      paddingHorizontal: space(1),
+      paddingVertical: space(0.5),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    sheetFriendsText: { fontFamily: font.semibold },
     sheetSection: { marginTop: space(1.5) },
     sheetAbout: { lineHeight: 19 },
     sheetSvcRow: {

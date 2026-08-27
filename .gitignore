@@ -38,3 +38,8 @@ design/_check.html
 # app/ altındakiler expo-router'da SAHTE ROTA üretip OTA paketini şişiriyordu.
 # iCloud artık 5-6 numaralı kopyalar da üretiyor; tek kural hepsini kapsar.
 * [0-9].*
+# KLASÖR ikizleri de var ve ilk kural onları KAÇIRIYORDU: "professional 2"
+# uzantısız olduğu için `* [0-9].*` deseniyle eşleşmiyor. Diskte 61 tane
+# birikmişti — hepsi boştu ama app/ altındakiler expo-router'ın taradığı
+# dizinde duruyor ve aramaları yanıltıyordu.
+* [0-9]
