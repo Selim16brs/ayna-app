@@ -31,8 +31,12 @@ export class SubscriptionsService {
     });
   }
 
-  // ── Mobil (uzman/salon) ──────────────────────────────────────────────
+  // ── Mobil (HER ROL) ─────────────────────────────────────────────────
   // §11 — üyelik talebi oluştur: pending. App-dışı ödeme sonrası dekont yüklenir, admin onaylar.
+  //
+  // Başlık eskiden "uzman/salon" diyordu ama rol kapısı hiç olmadı ve MÜŞTERİ de
+  // buradan geçiyor: müşteri Premium'u Boni + cut-out foto için alıyor. Onay
+  // yolu da role bakmıyor (admin.service → membershipTier).
   async create(userId: string, tier: 'premium' | 'platinum') {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) this.notFound();

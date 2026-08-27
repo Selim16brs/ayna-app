@@ -17,6 +17,14 @@ export const kk: Partial<Record<MessageKey, string>> = {
     'Төлем банк/Kaspi арқылы қолданбадан тыс жасалады; расталғаннан кейін Premium іске қосылады.',
   'premium.cancel': 'Қалаған уақытта бас тарта аласың.',
   'premium.cta': 'Premium-ға өту',
+  // §11 — MÜŞTERİ paketi: yalnız sunucuda/mağazada GERÇEKTEN uygulanan iki
+  // avantaj. 'öncelikli destek' ve 'öne çıkan görünürlük' kasten yok —
+  // ikisi de hiçbir yerde paketi okumuyor (K6 kuralı).
+  'premium.c.tagline': 'Күтім жолыңа жеке қолдау.',
+  'premium.c.boni': 'Boni — AI сұлулық кеңесшісі',
+  'premium.c.boni_d': 'Теріңе, шашыңа және күтіміңе қарай жеке ұсыныстар — қалаған кезде сұра.',
+  'premium.c.cutout': 'Фоны алынған профиль суреті',
+  'premium.c.cutout_d': 'Суреттің фоны тазаланады; профиль AYNA-ның қолтаңбалы көрінісін алады.',
   'premium.section': 'Premium-мен не аласың',
   'premium.b.featured': 'Таңдаулыларда көрін',
   'premium.b.featured_d': 'Басты бетте таңдаулыға шығу мүмкіндігі',

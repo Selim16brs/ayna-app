@@ -7,7 +7,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { ApiError, api } from '../../src/api';
 import { formatPrice, PLATINUM_PRICE_KZT, PREMIUM_PRICE_KZT } from '../../src/data';
 import { useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
+import { selectSellerView, useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, Segmented, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
@@ -30,6 +30,28 @@ const PLATINUM_BENEFITS: { icon: IoniconName; title: MessageKey; desc: MessageKe
   { icon: 'infinite', title: 'premium.b.always', desc: 'premium.b.always_d' },
 ];
 
+/**
+ * MÜŞTERİ paketi — satıcınınkinden bambaşka.
+ *
+ * Bu ekran baştan sona satıcı diliyle yazılmıştı: öne çıkarma, yakında
+ * görünme, vitrin, kampanya. Müşteri profilindeki paket rozetine dokunan
+ * kişi, kendisiyle hiç ilgisi olmayan bir satış sayfası görüyordu.
+ *
+ * Liste KISA çünkü yalnız GERÇEKTEN uygulanan iki avantaj var:
+ *   - Boni: sunucu AI ucu paketi okuyor, ödemeyene `PREMIUM_REQUIRED` atıyor.
+ *   - Cut-out foto: mağaza `free` kullanıcıda `not_premium` döndürüyor.
+ *
+ * Pasaport ekranındaki listede iki tane daha yazıyor — "öncelikli destek" ve
+ * "öne çıkan görünürlük". İkisini de BİLEREK almadım: destek modülü paketi
+ * hiç okumuyor, "görünürlük" ise yalnız duyuru segmenti (müşteriyi öne
+ * çıkarmıyor, ona duyuru gönderiyor). Bu, bu dosyanın zaten kayıt altına
+ * aldığı K6 kuralının aynısı: para alınan ekranda verilmeyen şey listelenmez.
+ */
+const CUSTOMER_BENEFITS: { icon: IoniconName; title: MessageKey; desc: MessageKey }[] = [
+  { icon: 'sparkles', title: 'premium.c.boni', desc: 'premium.c.boni_d' },
+  { icon: 'person-circle', title: 'premium.c.cutout', desc: 'premium.c.cutout_d' },
+];
+
 export default function SellerPremiumScreen() {
   const { t } = useLocale();
   const { colors, gradients, shadow } = useTheme();
@@ -37,6 +59,7 @@ export default function SellerPremiumScreen() {
   const router = useRouter();
   const premium = useStore((s) => s.premium);
   const platinum = useStore((s) => s.platinum);
+  const isSeller = useStore(selectSellerView);
   const refreshMembership = useStore((s) => s.refreshMembership);
   // §11 — onay push'undan gelindiğinde: tier'ı sunucudan tazele → haklar anında açılır
   useFocusEffect(
@@ -48,12 +71,26 @@ export default function SellerPremiumScreen() {
   const [busy, setBusy] = useState(false);
 
   const { tier: tierParam } = useLocalSearchParams<{ tier?: string }>();
+  /**
+   * Müşteride Platinum YOK — ve bu bir eksiklik değil, dürüstlük.
+   *
+   * Platinum'un tüm ek hakları satıcıya ait: Always (sadık müşteri bağı) ve
+   * toplu kampanya, ikisi de `isProvider` kapısının arkasında. Müşteri için
+   * Premium'un üstünde hiçbir şey açılmıyor. Ayda 1999₸'lik bir kademeyi
+   * karşılığı olmadan satmak, hava satmaktır.
+   *
+   * Platinum'a müşteri hakkı eklendiği gün burası tek satırla geri açılır.
+   */
   const [tier, setTier] = useState<'premium' | 'platinum'>(
-    tierParam === 'premium' ? 'premium' : 'platinum',
+    !isSeller || tierParam === 'premium' ? 'premium' : 'platinum',
   );
   const isPlat = tier === 'platinum';
   const tierPrice = isPlat ? PLATINUM_PRICE_KZT : PREMIUM_PRICE_KZT;
-  const benefits = isPlat ? [...BENEFITS, ...PLATINUM_BENEFITS] : BENEFITS;
+  const benefits = !isSeller
+    ? CUSTOMER_BENEFITS
+    : isPlat
+      ? [...BENEFITS, ...PLATINUM_BENEFITS]
+      : BENEFITS;
   // 'platinum' sekmesi → platinum sahip mi; 'premium' sekmesi → premium (ya da platinum) sahip mi
   const owned = isPlat ? platinum : premium || platinum;
 
@@ -80,22 +117,30 @@ export default function SellerPremiumScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('premium.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* §11 — paket seçimi: Premium ↔ Platinum */}
-        <View style={styles.tierWrap}>
-          <Segmented
-            options={[
-              { value: 'premium', label: t('premium.tier_premium') },
-              { value: 'platinum', label: t('premium.tier_platinum') },
-            ]}
-            value={tier}
-            onChange={setTier}
-          />
-        </View>
+        {/* §11 — paket seçimi: Premium ↔ Platinum. Müşteride tek kademe var
+            (gerekçe `tier` state'inde), o yüzden seçici çizilmiyor: tek
+            seçenekli bir seçici, olmayan bir tercih varmış gibi gösterir. */}
+        {isSeller ? (
+          <View style={styles.tierWrap}>
+            <Segmented
+              options={[
+                { value: 'premium', label: t('premium.tier_premium') },
+                { value: 'platinum', label: t('premium.tier_platinum') },
+              ]}
+              value={tier}
+              onChange={setTier}
+            />
+          </View>
+        ) : null}
 
         {/* Plan kartı */}
         <LinearGradient colors={gradients.gold} style={styles.plan}>
           <View style={styles.crown}>
-            <Ionicons name={isPlat ? 'infinite' : 'star'} size={26} color={colors.onAccent} />
+            <Ionicons
+              name={isSeller && isPlat ? 'infinite' : 'star'}
+              size={26}
+              color={colors.onAccent}
+            />
           </View>
           <Text variant="bodyStrong" tone="onAccent" style={styles.planName}>
             {isPlat ? t('premium.platinum_name') : t('premium.plan_name')}
@@ -109,7 +154,13 @@ export default function SellerPremiumScreen() {
             </Text>
           </View>
           <Text variant="caption" tone="onAccent" style={styles.tagline}>
-            {isPlat ? t('premium.platinum_tagline') : t('premium.tagline')}
+            {/* "İşini büyüt, daha çok müşteriye ulaş" müşteriye anlamsız —
+                onun işi yok. */}
+            {!isSeller
+              ? t('premium.c.tagline')
+              : isPlat
+                ? t('premium.platinum_tagline')
+                : t('premium.tagline')}
           </Text>
         </LinearGradient>
 
