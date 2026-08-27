@@ -86,6 +86,10 @@ export interface Professional {
   lng?: number;
   experienceYears: number;
   isPremium: boolean; // §5.1.6-8 — Premium Görünürlük Paketi (Fırsatlar/Öne Çıkanlar/Sana Yakın)
+  /** §3.3 — üst güven rozeti. LİSTE ucunda da var: eskiden yalnız detayda vardı. */
+  aynaVerified?: boolean;
+  /** §11 — üyelik paketi. Liste `isPremium` boolean'ıyla Premium/Platinum ayrımını yapamıyordu. */
+  membershipTier?: 'free' | 'premium' | 'platinum';
 }
 
 /** Salon içindeki bir uzman (kadro). Bağımsız uzmanlarda kadro yoktur. */

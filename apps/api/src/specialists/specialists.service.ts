@@ -1,4 +1,10 @@
-import { cakisanRandevular, type BookingWindow, type DayHours } from '@ayna/domain';
+import {
+  cakisanRandevular,
+  type BookingWindow,
+  type DayHours,
+  aynaOnayli,
+  uzmanKayitli,
+} from '@ayna/domain';
 
 // Asia/Almaty = UTC+5, yaz saati YOK. Sunucu UTC saklıyor; uzman yerel saate
 // göre çalışıyor, ham UTC ile karşılaştırmak günü kaydırırdı.
@@ -566,10 +572,24 @@ export class SpecialistsService {
     const identity = user?.kycStatus === 'approved';
     const cert = sp?.certVerified ?? false;
     const social = sp?.socialVerified ?? false;
-    const business = sp?.entityType === 'ip' && /^\d{12}$/.test(sp?.iin ?? '');
+    // `business` HESAPLANIYOR ama rozete katılmıyordu — kayıtlı ИП uzman
+    // müşteri profilinde rozetini görürken bu ekranda "Henüz AYNA Onaylı
+    // değilsin" okuyordu. Kural artık katalogla aynı kaynaktan.
+    const business = uzmanKayitli(sp?.entityType, sp?.iin);
     return {
       verification: { identity, cert, social, business },
-      aynaVerified: identity && (cert || social),
+      aynaVerified: aynaOnayli(
+        'expert',
+        {
+          identity,
+          cert,
+          social,
+          business,
+          bin: false,
+          address: false,
+        },
+        business,
+      ),
       entityType: sp?.entityType ?? 'freelance',
       hasIin: /^\d{12}$/.test(sp?.iin ?? ''),
       socialInstagram: sp?.socialInstagram ?? '',

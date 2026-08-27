@@ -26,6 +26,8 @@ import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import {
+  asPlanTier,
+  PlanBadge,
   PressableScale,
   Screen,
   StackHeader,
@@ -301,9 +303,26 @@ export function ProRow({
       <PressableScale style={[styles.row, shadow.soft]} onPress={onPress}>
         <Image source={{ uri: pro.image }} style={styles.thumb} />
         <View style={styles.rowBody}>
-          <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.rowName}>
-            {pro.name}
-          </Text>
+          {/* §3.3 — GÜVEN İŞARETİ adın yanında.
+              Rozet yalnız detay ucunda vardı: müşteri aramada, favorilerde,
+              kategoride ve yakındakilerde kimin doğrulandığını göremiyor,
+              öğrenmek için her profili tek tek açmak zorunda kalıyordu.
+              Bu satır o dört ekranın da ortak satırı — tek yerde çözülüyor.
+
+              Yalnız ONAYLIYA işaret konuyor. Doğrulanmamışa "değil" damgası
+              basmak listeyi suçlayıcı bir tabloya çevirirdi; eksiği görmek
+              isteyen profildeki katman şeridine bakar. */}
+          <View style={styles.rowNameRow}>
+            <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.rowName}>
+              {pro.name}
+            </Text>
+            {pro.aynaVerified ? (
+              <Ionicons name="shield-checkmark" size={14} color={colors.accentFg} />
+            ) : null}
+            {pro.membershipTier && pro.membershipTier !== 'free' ? (
+              <PlanBadge tier={asPlanTier(pro.membershipTier)} size="sm" role="pro" />
+            ) : null}
+          </View>
           <View style={styles.rowRating}>
             <Ionicons name="star" size={13} color={colors.gold} />
             <Text variant="caption" tone="ink" style={styles.rowRatingText}>
@@ -413,6 +432,7 @@ const makeStyles = (colors: ColorTokens) =>
     thumb: { width: 84, height: 84, borderRadius: radius.md, backgroundColor: colors.bgSunken },
     rowBody: { flex: 1, gap: 4 },
     rowName: { fontSize: 16, fontFamily: font.semibold, letterSpacing: -0.2 },
+    rowNameRow: { flexDirection: 'row', alignItems: 'center', gap: space(0.5) },
     rowRating: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     rowRatingText: { fontFamily: font.semibold },
     rowMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
