@@ -345,7 +345,13 @@ export class CatalogService {
     const owner = sp
       ? await this.prisma.user.findUnique({
           where: { id: sp.userId },
-          select: { kycStatus: true, avatarUrl: true, cutoutUrl: true },
+          select: {
+            kycStatus: true,
+            avatarUrl: true,
+            cutoutUrl: true,
+            membershipTier: true,
+            membershipUntil: true,
+          },
         })
       : null;
     // §medya taşıma — base64 ise R2'ye tembel taşı (2.9MB yanıt donması düzeltmesi)
@@ -380,6 +386,7 @@ export class CatalogService {
         ? await this.prisma.business.findFirst({
             where: { professionalId: p.id },
             select: {
+              ownerUserId: true,
               identityVerified: true,
               businessVerified: true,
               binVerified: true,
@@ -409,6 +416,31 @@ export class CatalogService {
       // uzmana özel katman: doğrulanmış sertifika (salonda yok)
       cert: p.kind === 'salon' ? false : (sp?.certVerified ?? false),
     };
+    // §11 — UZMANIN/SALONUN ÜYELİK PAKETİ, müşteriye açık.
+    //
+    // Müşteri kime randevu aldığını bilmeli: rozet güveni, paket ise uzmanın
+    // AYNA'ya bağlılığını gösteriyor. Liste ucu bunu zaten `isPremium` diye
+    // veriyordu ama yalnız evet/hayır olarak — Premium ile Platinum ayrımı
+    // kayboluyordu. Detayda gerçek kademe dönüyor.
+    //
+    // SÜRE KONTROLÜ liste ucuyla aynı: süresi dolmuş üyelik `free` sayılır.
+    // Bunu atlarsak iptal etmiş uzman profilinde sonsuza kadar Platinum
+    // görünür.
+    const salonOwner =
+      p.kind === 'salon' && salonBiz?.ownerUserId
+        ? await this.prisma.user.findUnique({
+            where: { id: salonBiz.ownerUserId },
+            select: { membershipTier: true, membershipUntil: true },
+          })
+        : null;
+    const uyelik = p.kind === 'salon' ? salonOwner : owner;
+    const uyelikGecerli =
+      !!uyelik && (!uyelik.membershipUntil || uyelik.membershipUntil.getTime() > Date.now());
+    const membershipTier: 'free' | 'premium' | 'platinum' =
+      uyelikGecerli && (uyelik.membershipTier === 'premium' || uyelik.membershipTier === 'platinum')
+        ? uyelik.membershipTier
+        : 'free';
+
     // AYNA Verified (üst rozet): salon → kimlik + (işletme|BİN); uzman → kimlik + (sertifika|sosyal|kayıt).
     const aynaVerified =
       p.kind === 'salon'
@@ -422,6 +454,7 @@ export class CatalogService {
       kycVerified: kyc, // EK Z.3 — doğrulanmış uzman rozeti
       verification, // §3.3 — katmanlı rozetler
       aynaVerified,
+      membershipTier, // §11 — müşteri uzmanın paketini görüyor
       staff,
       social,
       serviceRatings,

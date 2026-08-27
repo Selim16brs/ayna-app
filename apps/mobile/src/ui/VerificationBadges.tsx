@@ -4,7 +4,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { StyleSheet, View } from 'react-native';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
-import { useLocale } from '../locale';
+import { fillParams, useLocale } from '../locale';
 import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
@@ -51,10 +51,20 @@ export function VerificationBadges({
     <View style={styles.wrap}>
       {aynaVerified ? (
         <View style={[styles.badge, styles.aynaBadge]}>
-          <Ionicons name="shield-checkmark" size={14} color={colors.onAccent} />
-          <Text variant="caption" tone="onAccent" style={styles.aynaText}>
-            {t('verify.ayna')}
-          </Text>
+          <Ionicons name="shield-checkmark" size={17} color={colors.onAccent} />
+          <View>
+            <Text variant="caption" tone="onAccent" style={styles.aynaText}>
+              {t('verify.ayna')}
+            </Text>
+            {/* Sayı rozeti SÜSLEMEKTEN çıkarıp bilgiye çeviriyor: "AYNA Onaylı"
+                tek başına neyin doğrulandığını söylemiyordu. */}
+            <Text variant="micro" tone="onAccent" style={styles.aynaSub}>
+              {fillParams(t('verify.layers_done'), {
+                done: String(all.filter((i) => i.on).length),
+                total: String(all.length),
+              })}
+            </Text>
+          </View>
         </View>
       ) : null}
       {items.map((i) => (
@@ -87,6 +97,22 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     badgeOff: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.line },
-    aynaBadge: { backgroundColor: colors.accentFg },
+    /**
+     * AYNA Onaylı AMBLEMİ — katman çiplerinden bilerek ayrı.
+     *
+     * Eskiden aynı `badge` kalıbındaydı: en önemli güven işareti, "BİN
+     * doğrulanmadı" çipiyle aynı boyda ve aynı sıradaydı. Göz onu
+     * seçemiyordu. Artık daha yüksek, iki satırlı ve tam genişlikte —
+     * katman çipleri onun ALTINDA, destekleyici bilgi olarak duruyor.
+     */
+    aynaBadge: {
+      backgroundColor: colors.accentFg,
+      width: '100%',
+      gap: space(1),
+      paddingVertical: space(1),
+      paddingHorizontal: space(1.5),
+      borderRadius: radius.lg,
+    },
     aynaText: { fontFamily: font.semibold },
+    aynaSub: { opacity: 0.85, marginTop: 1 },
   });
