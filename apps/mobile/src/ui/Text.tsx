@@ -31,10 +31,27 @@ interface TextProps extends RNTextProps {
 // güvenilir değil ve sahte kalınlık Kiril metinde okunurluğu düşürüyor.
 // İSTİSNA: bileşen kendi style'ında fontFamily verirse (ör. Caveat el yazısı) o korunur
 // — style dizide en sonda olduğundan üzerine yazar.
+/**
+ * §15 (bonus) — SİSTEM YAZI ÖLÇEĞİ SINIRI.
+ *
+ * `maxFontSizeMultiplier` tanımlı DEĞİLDİ: erişilebilirlik ayarından yazı
+ * boyutu %200'e alındığında metinler sınırsız büyüyor, sabit yükseklikli
+ * kaplar (44pt dokunma hedefleri, 56pt `Button`) taşıyor ve yazı kırpılıyor.
+ *
+ * 1.4 seçildi çünkü ölçeklenmeyi TAMAMEN kapatmak da yanlış olurdu —
+ * büyük yazıya ihtiyacı olan kullanıcı onu kaybeder. 1.4, düzeni bozmadan
+ * anlamlı bir büyüme veriyor.
+ *
+ * Çağıran ekran gerekirse kendi değerini geçebilir (`{...rest}` sonda
+ * değil, ÖNCE uygulanıyor ki geçersiz kılınabilsin).
+ */
+const OLCEK_SINIRI = 1.4;
+
 export function Text({ variant = 'body', tone = 'ink', numeric, style, ...rest }: TextProps) {
   const { colors } = useTheme();
   return (
     <RNText
+      maxFontSizeMultiplier={OLCEK_SINIRI}
       {...rest}
       style={[styles[variant], { color: colors[tone] }, numeric && tabularNums, style]}
     />

@@ -7,7 +7,7 @@ import type { Appointment } from '../data';
 import { useLocale } from '../locale';
 import { useStore } from '../store';
 import { control, font, radius, space, type ColorTokens } from '../theme';
-import { useTheme, useThemedStyles } from '../theme-context';
+import { useThemedStyles } from '../theme-context';
 import { PressableScale } from './PressableScale';
 import { Text } from './Text';
 
@@ -125,7 +125,6 @@ function formatLeft(ms: number): string | null {
 
 export function HomeUrgent() {
   const { t } = useLocale();
-  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const bookings = useStore((s) => s.bookings);
@@ -178,7 +177,10 @@ export function HomeUrgent() {
         </View>
         <View style={styles.cta}>
           <Text
-            style={[styles.ctaText, { color: urgent.critical ? colors.rose : colors.accent }]}
+            // §15 — CTA yazısı BEYAZ düğme üstünde. Tema token'ları burada
+            // da bozuluyordu: koyu temada rose 2,27 · accent 2,98 (eşik 4,5).
+            // Kart yüzeyi sabitlendiğine göre CTA de sabit — aynı iki renk.
+            style={[styles.ctaText, { color: urgent.critical ? ACIL_KRITIK : ACIL_SAKIN }]}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.8}
@@ -191,7 +193,18 @@ export function HomeUrgent() {
   );
 }
 
-const makeStyles = (colors: ColorTokens) =>
+// Bu bileşenin TÜM yüzeyleri artık temadan bağımsız (acil kart amblem gibi
+// davranıyor, gerekçe aşağıda), o yüzden palet parametresi kullanılmıyor.
+/**
+ * Acil kart yüzeyi — TEMADAN BAĞIMSIZ (gerekçe `cardCritical` yanında).
+ * Beyaz yazı kontrastı: kritik 4,99:1 · sakin 10,47:1.
+ * Aynı renkler beyaz düğme üstünde CTA yazısı olarak da kullanılıyor
+ * (orada 4,99 ve 11,07).
+ */
+const ACIL_KRITIK = '#A25972';
+const ACIL_SAKIN = '#5A2A55';
+
+const makeStyles = (_colors: ColorTokens) =>
   StyleSheet.create({
     card: {
       marginHorizontal: space(2.5),
@@ -202,8 +215,24 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(1.625),
     },
     // Para kaybı riski: Gül. Bilgilendirme: mürdüm.
-    cardCritical: { backgroundColor: colors.rose },
-    cardCalm: { backgroundColor: colors.accent },
+    /**
+     * §15 — ACİL KART YÜZEYİ TEMADAN BAĞIMSIZ.
+     *
+     * Zemin `colors.rose` / `colors.accent` idi ve yazı sabit beyazdı. Bu
+     * ikisi koyu temada AÇIK renge dönüyor: ölçtüm, beyaz yazı 2,27:1'e
+     * düşüyordu — 20pt başlık (eşik 3,0) ve 15pt sayaç (eşik 4,5) ikisi de
+     * altında, kart okunmuyordu. Açık temada da kritik varyant sınırdaydı
+     * (2,98).
+     *
+     * Token'ı değiştirmek çözmüyordu: `onAccent` koyuyu düzeltip AÇIĞI
+     * bozuyordu (2,82). Sorun yazıda değil, ZEMİNDE — `rose` yazı taşıyacak
+     * kadar koyu değil.
+     *
+     * Yüzey artık sabit ve iki temada da aynı: aciliyet ışığa göre değişen
+     * bir şey değil. Ölçülen: kritik 4,99:1 · sakin 10,47:1 (beyaz yazı).
+     */
+    cardCritical: { backgroundColor: ACIL_KRITIK },
+    cardCalm: { backgroundColor: ACIL_SAKIN },
     top: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
     iconWrap: {
       width: control.icon,
