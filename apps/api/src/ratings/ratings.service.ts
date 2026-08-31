@@ -8,6 +8,16 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import type { SubmitRatingInput } from './ratings.dto';
 
+// §4.11 — DEĞERLENDİRME PENCERESİ ve PROFİLE YANSIMA GECİKMESİ.
+//
+// Pencere 7 gün: aylar sonra gelen yorum ne hatırlanabilir ne savunulabilir.
+// Yansıma 1 gün gecikmeli: yorum anında yayımlanırsa uzman, puanını düşüren
+// müşteriyi aynı gün tespit edebilir. Brief bu ikisinin İSİMSİZLİKLE BİRLİKTE
+// çalıştığını söylüyor — tek başına gecikme, az randevulu uzmanda kimliği yine
+// ele verir.
+const DEGERLENDIRME_PENCERESI_MS = 7 * 24 * 60 * 60 * 1000;
+const YANSIMA_GECIKMESI_MS = 24 * 60 * 60 * 1000;
+
 const THRESHOLD_KEY = 'rating.threshold';
 // Lansman: tek yorum bile profilde görünür (admin 'ratings.reveal.threshold' ile yükseltebilir).
 const DEFAULT_THRESHOLD = 1;
@@ -42,10 +52,22 @@ export class RatingsService {
     if (!booking) {
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     }
-    if (booking.status !== 'tamamlandi') {
+    // §4.11 — "Yalnızca tamamlanmış randevusu olan müşteri değerlendirebilir
+    // (sahte yorum engeli)." `degerlendirme` de tamamlanmış sayılır: randevu
+    // kapanış yolunda ilerlerken pencere açık kalmalı.
+    if (booking.status !== 'tamamlandi' && booking.status !== 'degerlendirme') {
       throw new BadRequestException({
         code: 'BOOKING_NOT_COMPLETED',
         message: 'Yalnızca tamamlanan randevu değerlendirilebilir',
+      });
+    }
+    // §4.11 — PENCERE 7 GÜN, sonra kapanır. Aylar sonra gelen yorum ne
+    // hatırlanabilir ne de savunulabilir; uzmanın itiraz hakkı fiilen yok olur.
+    const bitis = booking.completedAt;
+    if (bitis && Date.now() - bitis.getTime() > DEGERLENDIRME_PENCERESI_MS) {
+      throw new BadRequestException({
+        code: 'REVIEW_WINDOW_CLOSED',
+        message: 'Değerlendirme süresi doldu (7 gün)',
       });
     }
 
@@ -116,6 +138,10 @@ export class RatingsService {
         authorLabel: input.authorLabel?.trim() || 'Doğrulanmış üye',
         ...(input.photos && input.photos.length ? { photos: input.photos } : {}), // EK Z.10
         visible: publicReview,
+        // §4.11 — "Değerlendirme uzmanın profiline 1 GÜN GECİKMEYLE yansır
+        // (anlık çatışmayı önleme)." Yorum hemen yayımlanırsa uzman puanı
+        // düşüren müşteriyi aynı gün içinde tespit edebilir.
+        publishAt: new Date(Date.now() + YANSIMA_GECIKMESI_MS),
       },
     });
 
@@ -148,7 +174,13 @@ export class RatingsService {
       specialistAvgs = await Promise.all(
         specs.map(async (s) => {
           const rows = await this.prisma.rating.findMany({
-            where: { subjectId: s.userId, visible: true },
+            where: {
+              subjectId: s.userId,
+              visible: true,
+              // §4.11 — 1 gün gecikme OKUMADA uygulanıyor; yalnız yazarken
+              // damgalamak yorumu yine anında görünür kılardı.
+              OR: [{ publishAt: null }, { publishAt: { lte: new Date() } }],
+            },
             select: { score: true },
           });
           return rows.length ? rows.reduce((a, r) => a + r.score, 0) / rows.length : null;
@@ -166,7 +198,11 @@ export class RatingsService {
   async summary(subjectId: string) {
     const threshold = await this.threshold();
     const visible = await this.prisma.rating.findMany({
-      where: { subjectId, visible: true },
+      where: {
+        subjectId,
+        visible: true,
+        OR: [{ publishAt: null }, { publishAt: { lte: new Date() } }],
+      },
       orderBy: { createdAt: 'desc' },
     });
     const count = visible.length;

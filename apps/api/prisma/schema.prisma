@@ -616,6 +616,9 @@ model Rating {
   @@index([bookingId])
   @@index([disputed])
   @@map("ratings")
+  /// §4.11 — profile YANSIMA anı (oluşturma + 1 gün). Bu andan önce yorum
+  /// listelerde ve ortalamada GÖRÜNMEZ. Anlık çatışmayı önlemek için.
+  publishAt DateTime? @map("publish_at") @db.Timestamptz(6)
 }
 
 // §4.6 — Telefon OTP doğrulama kodu. Kod düz metin saklanmaz (HMAC).
