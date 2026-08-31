@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { BookingSource } from '../../src/data';
 import { almatyDayStart, formatSlotTr, slotTime } from '../../src/datetime';
 import { api, type ApiOffer } from '../../src/api';
@@ -142,31 +142,9 @@ export default function ScheduleScreen() {
     });
   }
 
-  // §A1 — uzman dolu görünüyorsa bekleme listesine yazıl; slot boşalınca push gelir,
-  // ilk randevuyu alan kazanır (kapora akışı o randevuda normal işler).
-  function joinWaitlist() {
-    const startMs = when.getTime();
-    addBooking({
-      source: (params.source as BookingSource) ?? 'direct',
-      service:
-        offer?.title ??
-        chosenService?.name ??
-        params.service ??
-        pro.services[0]?.name ??
-        pro.specialty,
-      proId: pro.id,
-      proName: pro.name,
-      proImage: pro.image,
-      ...(uzman?.name ? { uzmanName: uzman.name } : {}),
-      startMs,
-      durationMin,
-      price: offer ? offer.finalPrice : (chosenService?.price ?? 0),
-      status: 'waitlist',
-    });
-    Alert.alert(t('waitlist.joined_t'), t('waitlist.joined_b'), [
-      { text: t('common.ok'), onPress: () => router.back() },
-    ]);
-  }
+  // BEKLEME LİSTESİ KALDIRILDI (brief §4.2): slot talep gönderildiği an
+  // kilitleniyor, dolayısıyla aynı saate ikinci bir talep hiç oluşamıyor.
+  // Bekleyecek kimse olmadığı için buton da kaldırıldı.
 
   return (
     <Screen edges={['bottom']}>
@@ -301,12 +279,6 @@ export default function ScheduleScreen() {
           disabled={!offerWindowOk || slotBusy}
           onPress={confirm}
         />
-        {/* §A1 — dolu uzman için bekleme listesi */}
-        <Pressable onPress={joinWaitlist} style={styles.waitlistBtn} hitSlop={6}>
-          <Text variant="caption" tone="inkSoft" style={styles.waitlistText}>
-            {t('waitlist.join')}
-          </Text>
-        </Pressable>
       </View>
     </Screen>
   );

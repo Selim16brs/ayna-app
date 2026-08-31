@@ -1,4 +1,10 @@
-import { DEFAULT_DEPOSIT_RULES, DEFAULT_EARN_PCT, depositFor } from '@ayna/domain';
+import {
+  DEFAULT_DEPOSIT_RULES,
+  DEFAULT_EARN_PCT,
+  SLOT_HOLDING_STATES,
+  depositFor,
+  esikGecti,
+} from '@ayna/domain';
 import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadMediaCache, medyaAnahtari, saveMediaCache } from './media-cache';
@@ -31,7 +37,6 @@ import {
   DEPOSIT_RECEIPT_WINDOW_MS,
   DEPOSIT_RECEIPT_SHORT_MS,
   DEPOSIT_SHORT_THRESHOLD_MS,
-  FREE_CANCEL_WINDOW_MS,
   REMIND_24H_MS,
   REMIND_2H_MS,
   RESPONSE_WINDOW_MS,
@@ -909,9 +914,9 @@ export const useStore = create<State>()(
           durationMin: input.durationMin,
           price: input.price,
           // §1.6 — yeni randevu uzman onayı bekler
-          status: input.status ?? 'awaiting_provider',
+          status: input.status ?? 'onay_bekliyor',
           // §4.1.3 — uzman yanıt son anı (yalnız onay bekleyen taleplerde)
-          ...((input.status ?? 'awaiting_provider') === 'awaiting_provider'
+          ...((input.status ?? 'onay_bekliyor') === 'onay_bekliyor'
             ? { responseDeadline: Date.now() + RESPONSE_WINDOW_MS }
             : {}),
         };
@@ -949,7 +954,7 @@ export const useStore = create<State>()(
           // §10 — salon KENDİ aldığı offline randevuda ücreti belirler (uzman fee'yi bilir). Uzmanın
           // KENDİ (app/offline) işlerinin fiyatı salona kapalıdır; bu istisna yalnız salon-oluşturma içindir.
           price: input.price,
-          status: 'awaiting_provider', // uzman onayı bekliyor (§4.6)
+          status: 'onay_bekliyor', // uzman onayı bekliyor (§4.6)
           responseDeadline: Date.now() + RESPONSE_WINDOW_MS,
           bySalon: true, // §10 — salon panelinde yalnız salonun aldığı randevular görünür
         };
@@ -998,7 +1003,7 @@ export const useStore = create<State>()(
       // §11 — PLATINUM paket aç/kapat (satın alma). Komisyon oranını da etkiler (%10 → %8,5).
       setPlatinum: (v) => set({ platinum: v, ...(v ? { premium: true } : {}) }), // platinum → premium da açık
 
-      // §11 — ALWAYS bağ isteği aç (karşı taraf kabul edene kadar 'pending')
+      // §11 — ALWAYS bağ isteği aç (karşı taraf kabul edene kadar 'onay_bekliyor')
       requestAlways: (input) => {
         // Sunucuya YALNIZ `proId` gidiyor: karşı tarafın kullanıcı kimliğini
         // sunucu buluyor. İstemcinin gönderdiği kimliğe güvenmek, başkası
@@ -1065,10 +1070,13 @@ export const useStore = create<State>()(
       // depozito ödendi + geç iptal (≤3 saat) → kapora yanar; depozito yoksa düz iptal.
       cancelBooking: (id, reason) => {
         const b = get().bookings.find((x) => x.id === id);
-        const hasDeposit = b?.status === 'confirmed' || b?.status === 'deposit_submitted';
-        const free = b ? b.startMs - Date.now() > FREE_CANCEL_WINDOW_MS : true;
-        const next: Appointment['status'] = hasDeposit && free ? 'refund_pending' : 'cancelled';
-        const forfeited = hasDeposit && !free;
+        // Brief §4.7 — iptalin SONUCU (depozito iade mi, yanar mı) 3 saat
+        // eşiğine bakar; durum her hâlükârda IPTAL_MUSTERI. İade kararı
+        // sunucuda verilir ve §4.10 kuyruğuna düşer.
+        const free = b ? !esikGecti(b.startMs) : true;
+        const next: Appointment['status'] = 'iptal_musteri';
+        // §4.7 — 3 saatten az kala iptalde depozito YANAR (iade edilmez).
+        const forfeited = !!b?.depositAmount && !free;
         set((s) => ({
           bookings: s.bookings.map((x) =>
             x.id === id
@@ -1084,10 +1092,10 @@ export const useStore = create<State>()(
         // §4.4 — backend'de doğru geçiş: iade akışı → free-cancel; aksi → düz iptal
         // Sunucu reddederse yereli SUNUCU GERÇEĞİNE geri çek (UI asla yalan durumda kalmaz)
         const restore = () => void get().hydrateBookings();
-        if (next === 'refund_pending') void api.freeCancelBooking(id, reason).catch(restore);
+        if (next === 'iptal_musteri') void api.freeCancelBooking(id, reason).catch(restore);
         else void api.cancelBooking(id, reason).catch(restore);
         if (b) {
-          if (next === 'refund_pending')
+          if (next === 'iptal_musteri')
             get().pushNotification({
               type: 'booking',
               titleKey: 'notif.cancel_refund',
@@ -1118,7 +1126,7 @@ export const useStore = create<State>()(
       uploadRefundReceipt: (id, receiptUri) => {
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'refund_submitted', refundReceiptUri: receiptUri } : b,
+            b.id === id ? { ...b, status: 'iptal_musteri', refundReceiptUri: receiptUri } : b,
           ),
         }));
         void api.uploadRefundReceiptApi(id, receiptUri).catch(() => undefined); // §4.4 backend
@@ -1151,7 +1159,7 @@ export const useStore = create<State>()(
       // §4.4 — kullanıcı iadeyi aldı → kayıt kapanır
       confirmRefund: (id) => {
         set((s) => ({
-          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b)),
+          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'iptal_musteri' } : b)),
         }));
         void api.confirmRefundApi(id).catch(() => undefined); // §4.4 backend
       },
@@ -1159,7 +1167,7 @@ export const useStore = create<State>()(
       // §4.4 — taraflar itiraz açar (destek/admin kuyruğuna düşer)
       disputeBooking: (id) => {
         set((s) => ({
-          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'disputed' } : b)),
+          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'uyusmazlik' } : b)),
         }));
         void api.disputeBookingApi(id).catch(() => undefined); // §4.4 backend durum geçişi
         const b = get().bookings.find((x) => x.id === id);
@@ -1197,7 +1205,7 @@ export const useStore = create<State>()(
           const asked = get().surveyAskedIds;
           const due = get().bookings.filter(
             (b) =>
-              b.status === 'completed' &&
+              b.status === 'tamamlandi' &&
               !asked.includes(b.id) &&
               now >= b.startMs + b.durationMin * 60_000 + 3 * 60 * 60_000,
           );
@@ -1221,7 +1229,7 @@ export const useStore = create<State>()(
           const now = Date.now();
           const news: AppNotification[] = [];
           const bookings = s.bookings.map((b) => {
-            if (b.status !== 'confirmed') return b;
+            if (b.status !== 'kesinlesti') return b;
             const left = b.startMs - now;
             if (left <= 0) return b;
             let nb = b;
@@ -1435,12 +1443,14 @@ export const useStore = create<State>()(
         const now = Date.now();
         const expired = get().bookings.filter(
           (b) =>
-            b.status === 'deposit_pending' && b.depositDeadline != null && b.depositDeadline <= now,
+            b.status === 'depozito_bekliyor' &&
+            b.depositDeadline != null &&
+            b.depositDeadline <= now,
         );
         if (expired.length === 0) return;
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            expired.some((e) => e.id === b.id) ? { ...b, status: 'cancelled' } : b,
+            expired.some((e) => e.id === b.id) ? { ...b, status: 'iptal_musteri' } : b,
           ),
         }));
         for (const b of expired)
@@ -1460,15 +1470,13 @@ export const useStore = create<State>()(
         const now = Date.now();
         const expired = get().bookings.filter(
           (b) =>
-            b.status === 'awaiting_provider' &&
-            b.responseDeadline != null &&
-            b.responseDeadline <= now,
+            b.status === 'onay_bekliyor' && b.responseDeadline != null && b.responseDeadline <= now,
         );
         if (expired.length === 0) return;
         set((s) => ({
           bookings: s.bookings.map((b) =>
             expired.some((e) => e.id === b.id)
-              ? { ...b, status: 'cancelled', cancelReason: 'response_timeout' }
+              ? { ...b, status: 'iptal_musteri', cancelReason: 'response_timeout' }
               : b,
           ),
         }));
@@ -1507,10 +1515,9 @@ export const useStore = create<State>()(
           (b) =>
             b.uzmanName === oldUzman &&
             b.startMs > now &&
-            (b.status === 'confirmed' ||
-              b.status === 'deposit_pending' ||
-              b.status === 'deposit_submitted' ||
-              b.status === 'awaiting_provider'),
+            // Slot tutan durumlar — brief §4.2. Tek tek saymak yerine
+            // domain listesi kullanılıyor; ayrışırsa çakışma kontrolü bozulur.
+            SLOT_HOLDING_STATES.includes(b.status as never),
         );
         if (affected.length === 0) return 0;
         set((s) => ({
@@ -1518,7 +1525,7 @@ export const useStore = create<State>()(
             affected.some((a) => a.id === b.id)
               ? {
                   ...b,
-                  status: 'reassigned_pending',
+                  status: 'iptal_musteri',
                   reassignedFrom: oldUzman,
                   uzmanName: newUzman,
                 }
@@ -1550,7 +1557,7 @@ export const useStore = create<State>()(
         const onceki = get().bookings.find((b) => b.id === id);
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'confirmed', reassignedFrom: undefined } : b,
+            b.id === id ? { ...b, status: 'kesinlesti', reassignedFrom: undefined } : b,
           ),
         }));
         // SUNUCUYA YAZ: durum yalnız yereldeydi, hydrate eski hâli geri
@@ -1567,11 +1574,15 @@ export const useStore = create<State>()(
       // → iade akışı; ödemediyse düz iptal. (Önceki hata: her koşulda kapora yakılıyordu.)
       rejectReassignment: (id) => {
         const b = get().bookings.find((x) => x.id === id);
-        const paid = b?.status === 'reassigned_pending' && b.depositAmount != null;
+        const paid = b?.status === 'iptal_musteri' && b.depositAmount != null;
         set((s) => ({
           bookings: s.bookings.map((x) =>
             x.id === id
-              ? { ...x, status: paid ? 'refund_pending' : 'cancelled', reassignedFrom: undefined }
+              ? {
+                  ...x,
+                  status: paid ? 'iptal_musteri' : 'iptal_musteri',
+                  reassignedFrom: undefined,
+                }
               : x,
           ),
         }));
@@ -1587,14 +1598,14 @@ export const useStore = create<State>()(
       },
 
       // §1.6/§4.1 — kullanıcı uzmanın önerdiği alternatif saati kabul eder → DEPOZİTO adımı
-      // (Önceki hata: doğrudan 'confirmed' yapıp depozitoyu atlıyordu.)
+      // (Önceki hata: doğrudan 'kesinlesti' yapıp depozitoyu atlıyordu.)
       acceptAlternative: (id) => {
         set((s) => ({
           bookings: s.bookings.map((b) =>
             b.id === id
               ? {
                   ...b,
-                  status: 'deposit_pending',
+                  status: 'depozito_bekliyor',
                   depositAmount: localDeposit(b.price, s.config.rates),
                   depositDeadline: depositDeadlineFor(b.proposedStartMs ?? b.startMs, Date.now()),
                   startMs: b.proposedStartMs ?? b.startMs,
@@ -1628,7 +1639,7 @@ export const useStore = create<State>()(
             b.id === id
               ? {
                   ...b,
-                  status: 'deposit_pending',
+                  status: 'depozito_bekliyor',
                   respondedAt: Date.now(),
                   depositAmount: localDeposit(b.price, s.config.rates),
                   depositDeadline: depositDeadlineFor(b.startMs, Date.now()),
@@ -1658,7 +1669,7 @@ export const useStore = create<State>()(
       rejectBooking: (id) => {
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'cancelled', respondedAt: Date.now() } : b,
+            b.id === id ? { ...b, status: 'iptal_musteri', respondedAt: Date.now() } : b,
           ),
         }));
         void api.cancelBooking(id, 'provider_rejected').catch(() => undefined);
@@ -1684,7 +1695,7 @@ export const useStore = create<State>()(
               ? {
                   ...b,
                   startMs,
-                  status: 'awaiting_provider',
+                  status: 'onay_bekliyor',
                   responseDeadline: Date.now() + RESPONSE_WINDOW_MS,
                 }
               : b,
@@ -1707,7 +1718,7 @@ export const useStore = create<State>()(
             b.id === id
               ? {
                   ...b,
-                  status: 'alternative_proposed',
+                  status: 'degisiklik_onerildi',
                   proposedStartMs: startMs,
                   respondedAt: Date.now(),
                 }
@@ -1732,7 +1743,7 @@ export const useStore = create<State>()(
       submitReceipt: (id, receiptUri) => {
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'deposit_submitted', receiptUri } : b,
+            b.id === id ? { ...b, status: 'kesinlesti', receiptUri } : b,
           ),
         }));
         void api.submitDepositReceipt(id, receiptUri).catch(() => undefined); // §4.2 backend
@@ -1752,7 +1763,7 @@ export const useStore = create<State>()(
       // §4.3 adım 3 — uzman dekontu görür → "Aldım, onaylıyorum" → randevu KESİN
       confirmReceipt: (id) => {
         set((s) => ({
-          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'confirmed' } : b)),
+          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'kesinlesti' } : b)),
         }));
         void api.confirmDepositReceipt(id).catch(() => undefined); // §4.2 backend
         const b = get().bookings.find((x) => x.id === id);
@@ -1775,18 +1786,18 @@ export const useStore = create<State>()(
         if (bk?.startMs && Date.now() < bk.startMs + 60 * 60 * 1000) return;
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'no_show', depositForfeited: true } : b,
+            b.id === id ? { ...b, status: 'no_show_musteri', depositForfeited: true } : b,
           ),
         }));
         void api.noShowApi(id).catch(() => undefined); // buluta taşı (best-effort)
       },
 
-      // §4.1.7 — uzman hizmeti tamamladı: randevu 'completed' + kullanıcıya değerlendirme daveti
+      // §4.1.7 — uzman hizmeti tamamladı: randevu 'tamamlandi' + kullanıcıya değerlendirme daveti
       completeBooking: (id) => {
         const b = get().bookings.find((x) => x.id === id);
-        if (!b || b.status === 'completed') return;
+        if (!b || b.status === 'tamamlandi') return;
         set((s) => ({
-          bookings: s.bookings.map((x) => (x.id === id ? { ...x, status: 'completed' } : x)),
+          bookings: s.bookings.map((x) => (x.id === id ? { ...x, status: 'tamamlandi' } : x)),
         }));
         void api.completeBookingApi(id).catch(() => undefined); // backend'e taşı (best-effort)
         // §7.1 — yalnız AYNA (online) randevularında kullanıcıya değerlendirme daveti (offline'da müşteri hesabı yok)
@@ -1809,7 +1820,7 @@ export const useStore = create<State>()(
         set((s) => ({
           // Uzman iade etmekle yükümlü → refund_pending; kapora yanmaz
           bookings: s.bookings.map((x) =>
-            x.id === id ? { ...x, status: 'refund_pending', providerNoShow: true } : x,
+            x.id === id ? { ...x, status: 'iptal_musteri', providerNoShow: true } : x,
           ),
         }));
         // §4.4-b backend: iade akışı + 1000₸ uzmanın komisyon borcuna (best-effort)
@@ -2946,7 +2957,9 @@ export const selectUnreadCount = (s: State): number => {
 };
 
 export const selectActiveBookings = (s: State): Appointment[] =>
-  s.bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending');
+  // Kullanıcının "canlı" randevuları: slot tutan her durum. Elle sayınca yeni
+  // bir durum eklendiğinde listeden düşüyordu.
+  s.bookings.filter((b) => SLOT_HOLDING_STATES.includes(b.status as never));
 
 /**
  * EKRANDA GÖSTERİLECEK PORTRE — kesik portre yalnız GEÇERLİYSE kullanılır.

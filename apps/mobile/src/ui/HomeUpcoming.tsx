@@ -23,7 +23,12 @@ import { Text } from './Text';
 
 /** Bir sonraki gerçekleşecek randevu: iptal/bitmiş olanlar hariç, en yakın gelecek. */
 function pickNext(bookings: Appointment[], now: number): Appointment | null {
-  const dead: BookingStatus[] = ['cancelled', 'completed', 'expired', 'no_show'];
+  const dead: BookingStatus[] = [
+    'iptal_musteri',
+    'tamamlandi',
+    'otomatik_dustu',
+    'no_show_musteri',
+  ];
   const future = bookings
     .filter((b) => !dead.includes(b.status) && b.startMs > now)
     .sort((a, b) => a.startMs - b.startMs);

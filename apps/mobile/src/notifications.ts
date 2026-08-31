@@ -120,7 +120,7 @@ async function senkronEt(bookings: Appointment[], t: Tr): Promise<void> {
     const wanted = new Set<string>();
 
     for (const b of bookings) {
-      if (b.status !== 'confirmed') continue;
+      if (b.status !== 'kesinlesti') continue;
       const plan: [tag: string, offset: number, titleKey: MessageKey, bodyKey: MessageKey][] = [
         ['24', REMIND_24H_MS, 'notif.remind_24', 'notif.remind_24_b'],
         ['2', REMIND_2H_MS, 'notif.remind_2', 'notif.remind_2_b'],

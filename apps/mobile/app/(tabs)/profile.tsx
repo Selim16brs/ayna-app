@@ -65,7 +65,9 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const completedCount = useStore((s) => s.bookings.filter((b) => b.status === 'completed').length);
+  const completedCount = useStore(
+    (s) => s.bookings.filter((b) => b.status === 'tamamlandi').length,
+  );
   const points = useStore((s) => s.points);
   const reviewCount = useStore((s) =>
     Object.values(s.userReviews).reduce((n, a) => n + a.length, 0),

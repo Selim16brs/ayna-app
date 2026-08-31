@@ -73,7 +73,8 @@ export default function PrivacyScreen() {
   // yanacak puan. Genel uyarı bunlara bakmıyordu.
 
   const aktifRandevu = useStore(
-    (st) => st.bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending').length,
+    (st) =>
+      st.bookings.filter((b) => b.status === 'kesinlesti' || b.status === 'onay_bekliyor').length,
   );
 
   // Kapora ÖDENMİŞ sayılır: dekont gönderilmiş ya da kapora sonrası bir
@@ -82,7 +83,9 @@ export default function PrivacyScreen() {
     st.bookings.some(
       (b) =>
         !b.depositForfeited &&
-        (b.status === 'deposit_submitted' || (!!b.depositAmount && b.status === 'confirmed')),
+        // Dekont yüklenince randevu HEMEN kesinleşiyor (§4.4), yani eski
+        // "yüklendi ama onaylanmadı" ara durumu yok; tek kontrol yetiyor.
+        b.status === 'kesinlesti',
     ),
   );
 
@@ -219,7 +222,7 @@ export default function PrivacyScreen() {
 
         {/* KONUM — kanvas (design/Gizlilik.dc.html §konum) bölümü ekranda yoktu.
             Üç madde de kodda doğrulandı, doğrulayamadığımı yazmıyorum:
-            1) booking/[id].tsx: showContact = status === 'confirmed' — adres
+            1) booking/[id].tsx: showContact = status === 'kesinlesti' — adres
                ancak randevu ONAYLANDIKTAN sonra açılıyor.
             2) Aramada müşterinin GPS'i hiç kullanılmıyor: mesafe cihazda,
                ŞEHİR MERKEZİNDEN hesaplanıyor (search.tsx cityCenter).

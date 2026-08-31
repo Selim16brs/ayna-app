@@ -34,7 +34,7 @@ export default function SafeScreen() {
   const yaklasan = useMemo(() => {
     const now = Date.now();
     return [...bookings]
-      .filter((b) => b.status === 'confirmed' && b.startMs > now)
+      .filter((b) => b.status === 'kesinlesti' && b.startMs > now)
       .sort((a, b) => a.startMs - b.startMs)[0];
   }, [bookings]);
   const token = useStore((s) => s.token);

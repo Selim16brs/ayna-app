@@ -7,7 +7,13 @@ import {
 } from '@nestjs/common';
 import type { Booking } from '@prisma/client';
 import { createHash } from 'node:crypto';
-import { canTransition, commissionFor, depositFor, hasConflict, isBookingState } from '@ayna/domain';
+import {
+  canTransition,
+  commissionFor,
+  depositFor,
+  hasConflict,
+  isBookingState,
+} from '@ayna/domain';
 import { grantCompletionRewards } from '../loyalty/completion-rewards';
 import { loadDepositRules } from './deposit.rules';
 import { holdDeadline, loadWindows, responseDeadline } from './booking-windows';
@@ -321,7 +327,6 @@ export class BookingsService {
     return mapBooking(row);
   }
 
-
   // Talebin muhatapları: bağımsız uzman (Specialist.proId) VE/VEYA salon sahibi
   // (Business.professionalId) + salonda belirli uzman seçildiyse o üye.
   private async notifyNewRequest(b: Booking) {
@@ -438,9 +443,15 @@ export class BookingsService {
   }
 
   /** ADIM 2 — müşteri "ödemeyi yaptım" der; uzmanda "ödemeyi aldım" açılır. */
+  /** Brief §4.9 adım 2 — müşteri "ÖDEME YAPTIM" der; uzmanda buton belirir. */
   async balancePaid(id: string, actorId?: string) {
     await this.assertParty(id, actorId, 'owner');
-    const row = await this.transition(id, { status: 'balance_submitted' });
+    // Durum DEĞİŞMEZ — brief §3'te ODEME_BEKLIYOR tek durum. Yalnız beyan
+    // damgalanır; uzmanın butonu buna bakar.
+    const row = await this.prisma.booking.update({
+      where: { id },
+      data: { balanceDeclaredAt: new Date() },
+    });
     void this.expertUserIdFor(id).then((uid) => {
       if (!uid) return;
       void this.push
@@ -464,7 +475,7 @@ export class BookingsService {
    */
   async balanceReceived(id: string, actorId?: string) {
     await this.assertParty(id, actorId, 'provider');
-    const row = await this.transition(id, { status: 'completed' });
+    const row = await this.transition(id, { status: 'tamamlandi' });
     void this.prisma.booking.findUnique({ where: { id } }).then(async (b) => {
       if (!b?.userId) return;
       await grantCompletionRewards(this.prisma, [b]).catch(() => undefined);
@@ -1150,6 +1161,10 @@ function mapBooking(b: Booking, opts?: { forProvider?: boolean }) {
     refundReceiptUri: b.refundReceiptUri ?? undefined,
     // mobil Appointment.depositDeadline = UTC ms bekler (ISO string geri sayımı bozar)
     depositDeadline: b.depositDeadline?.getTime() ?? undefined,
+    // §4.9 — müşterinin "ödeme yaptım" beyanı. Uzmanın butonu buna bakar.
+    balanceDeclaredAt: b.balanceDeclaredAt?.getTime() ?? undefined,
+    // §4.8 — itiraz penceresi / §4.9 otomatik onay anı. Ekran sayacı buna bakar.
+    finalizeDeadline: b.finalizeDeadline?.getTime() ?? undefined,
     depositForfeited: b.depositForfeited,
     providerNoShow: b.providerNoShow,
     // §10 — salon offline alanları (hydrate'te kaybolmaz) + kampanya bağı + yanıt metrikleri

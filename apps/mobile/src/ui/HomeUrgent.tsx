@@ -35,10 +35,10 @@ type Urgency = {
 
 /** Öncelik sırası: para riski → karar bekleyen → bilgilendirme. */
 function pickUrgent(bookings: Appointment[], now: number): Urgency | null {
-  const alive = (b: Appointment) => !b.receiptUri || b.status !== 'deposit_pending';
+  const alive = (b: Appointment) => !b.receiptUri || b.status !== 'depozito_bekliyor';
 
   const deposit = bookings.find(
-    (b) => b.status === 'deposit_pending' && alive(b) && (b.depositDeadline ?? 0) > now,
+    (b) => b.status === 'depozito_bekliyor' && alive(b) && (b.depositDeadline ?? 0) > now,
   );
   if (deposit)
     return {
@@ -62,7 +62,7 @@ function pickUrgent(bookings: Appointment[], now: number): Urgency | null {
       critical: true,
     };
 
-  const alt = bookings.find((b) => b.status === 'alternative_proposed');
+  const alt = bookings.find((b) => b.status === 'degisiklik_onerildi');
   if (alt)
     return {
       booking: alt,
@@ -73,7 +73,7 @@ function pickUrgent(bookings: Appointment[], now: number): Urgency | null {
       critical: false,
     };
 
-  const confirm = bookings.find((b) => b.status === 'completed_pending');
+  const confirm = bookings.find((b) => b.status === 'odeme_bekliyor');
   if (confirm)
     return {
       booking: confirm,
@@ -84,7 +84,7 @@ function pickUrgent(bookings: Appointment[], now: number): Urgency | null {
       critical: false,
     };
 
-  const refund = bookings.find((b) => b.status === 'refund_submitted');
+  const refund = bookings.find((b) => b.status === 'iptal_musteri');
   if (refund)
     return {
       booking: refund,
@@ -96,7 +96,7 @@ function pickUrgent(bookings: Appointment[], now: number): Urgency | null {
     };
 
   const waiting = bookings.find(
-    (b) => b.status === 'awaiting_provider' && (b.responseDeadline ?? 0) > now,
+    (b) => b.status === 'onay_bekliyor' && (b.responseDeadline ?? 0) > now,
   );
   if (waiting)
     return {

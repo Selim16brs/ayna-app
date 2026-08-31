@@ -53,7 +53,7 @@ export default function BenimIcinScreen() {
   const firstName = userName?.trim().split(/\s+/)[0] ?? 'AYNA';
 
   const completedCount = useMemo(
-    () => bookings.filter((b) => b.status === 'completed').length,
+    () => bookings.filter((b) => b.status === 'tamamlandi').length,
     [bookings],
   );
   // Bakım skoru — gerçek veri: zamanında rutinler / toplam (tutarlılık)
@@ -65,7 +65,7 @@ export default function BenimIcinScreen() {
   const scoreState = score >= 80 ? 'great' : score >= 50 ? 'good' : 'low';
   const nextBooking = useMemo(() => {
     const active = bookings.filter((b) =>
-      ['confirmed', 'pending', 'awaiting_provider', 'alternative_proposed'].includes(b.status),
+      ['kesinlesti', 'onay_bekliyor', 'onay_bekliyor', 'degisiklik_onerildi'].includes(b.status),
     );
     return [...active].sort((a, b) => a.startMs - b.startMs)[0];
   }, [bookings]);

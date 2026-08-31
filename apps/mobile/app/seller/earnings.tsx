@@ -36,7 +36,7 @@ export default function EarningsScreen() {
           ? now - 90 * 24 * 3600 * 1000
           : 0;
     const done = bookings
-      .filter((b) => b.status === 'completed' && b.startMs >= from)
+      .filter((b) => b.status === 'tamamlandi' && b.startMs >= from)
       .sort((a, b) => b.startMs - a.startMs);
     const sum = done.reduce((n, b) => n + b.price, 0);
     // Komisyon yalnız AYNA (online) randevularında; offline (bySalon/müşterisiz) hariç

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { DURUM_ETIKETI } from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -27,18 +28,14 @@ import {
 // §10.2 — SALON rezervasyon takvimi: üç sekme (Genel · Randevular · Ekle).
 // Randevular kendi içinde onay bekleyen ↔ onaylanan olarak ayrılır.
 const isPending = (s: BookingStatus) =>
-  s === 'awaiting_provider' || s === 'deposit_pending' || s === 'deposit_submitted';
+  s === 'onay_bekliyor' || s === 'depozito_bekliyor' || s === 'kesinlesti';
 
 // §10.2 — onaylanan randevu, başlangıç saatinden 3 saat sonra (iptal yoksa) Genel takvimden otomatik düşer.
 const AUTO_HIDE_AFTER_MS = 3 * 60 * 60_000;
 
-const STATUS_KEY: Partial<Record<BookingStatus, MessageKey>> = {
-  confirmed: 'booking.status.confirmed',
-  completed: 'booking.status.completed',
-  awaiting_provider: 'booking.status.awaiting',
-  deposit_pending: 'booking.status.awaiting',
-  deposit_submitted: 'booking.status.awaiting',
-};
+// Durum etiketleri TEK KAYNAKTAN (brief §7: "uzman aynı kartın aynasını
+// görür"). Burada elle yazılıydı ve müşteri ekranındakiyle ayrışabiliyordu.
+const STATUS_KEY: Partial<Record<BookingStatus, MessageKey>> = DURUM_ETIKETI;
 
 export default function SalonAgendaScreen() {
   const { t, locale } = useLocale();
@@ -51,7 +48,7 @@ export default function SalonAgendaScreen() {
   const salonName = useStore((s) => s.currentUser?.name) ?? 'Salon';
   const { staff } = useSalonStaff(); // Faz C — GERÇEK kadro (mock değil)
 
-  const [tab, setTab] = useState<'all' | 'add' | 'pending'>('all');
+  const [tab, setTab] = useState<'all' | 'add' | 'onay_bekliyor'>('all');
 
   // Faz 4 (§14) — kadronun KİŞİSEL doluluk blokları: salon çakışmayı görür, detayı asla.
   const token = useStore((s) => s.token);
@@ -95,7 +92,7 @@ export default function SalonAgendaScreen() {
 
   const groupByDay = (list: Appointment[]) => {
     const active = list
-      .filter((b) => b.status !== 'cancelled')
+      .filter((b) => b.status !== 'iptal_musteri')
       .sort((a, b) => a.startMs - b.startMs);
     const map = new Map<number, Appointment[]>();
     for (const b of active) {
@@ -125,11 +122,11 @@ export default function SalonAgendaScreen() {
   const pendingGroups = useMemo(() => groupByDay(pendingList), [pendingList]);
 
   const statusTone = (s: BookingStatus) =>
-    s === 'confirmed'
+    s === 'kesinlesti'
       ? colors.accent
-      : s === 'completed'
+      : s === 'tamamlandi'
         ? colors.muted
-        : s === 'no_show' || s === 'cancelled'
+        : s === 'no_show_musteri' || s === 'iptal_musteri'
           ? colors.danger
           : colors.gold; // awaiting/deposit → onay bekliyor
 
@@ -242,7 +239,7 @@ export default function SalonAgendaScreen() {
             { value: 'all', label: t('salon.cal.all') },
             { value: 'add', label: t('salon.cal.add_short') },
             {
-              value: 'pending',
+              value: 'onay_bekliyor',
               label: `${t('salon.cal.sub_pending')}${pendingList.length ? ` (${pendingList.length})` : ''}`,
             },
           ]}
@@ -261,7 +258,7 @@ export default function SalonAgendaScreen() {
               t('salon.add.sent_title'),
               fillParams(t('salon.add.sent_body'), { uzman: v.uzmanName }),
             );
-            setTab('pending');
+            setTab('onay_bekliyor');
           }}
           locale={locale}
         />

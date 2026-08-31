@@ -296,6 +296,10 @@ model Booking {
   /// doğrulama" kuyruğunda bekliyor (§8.1). Sahte çıkarsa randevu iptal edilir
   /// ve kullanıcı yasaklanır.
   depositVerifiedAt DateTime?     @map("deposit_verified_at") @db.Timestamptz(6)
+  /// Brief §4.9 — müşterinin "ÖDEME YAPTIM" beyanı. Durum ODEME_BEKLIYOR olarak
+  /// KALIR (§3 diyagramında tek durum); uzmanın "ödeme aldım" butonu bu alan
+  /// dolunca açılır. Ayrı bir durum açmak diyagramla çelişirdi.
+  balanceDeclaredAt DateTime?     @map("balance_declared_at") @db.Timestamptz(6)
   refundReceiptUri  String?       @map("refund_receipt_uri") // uzmanın iade dekontu
   depositDeadline   DateTime?     @map("deposit_deadline") @db.Timestamptz(6) // dekont son yükleme
   depositForfeited  Boolean       @default(false) @map("deposit_forfeited") // geç iptal/no-show: kapora yandı
