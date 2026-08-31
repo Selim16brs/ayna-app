@@ -20,7 +20,11 @@ import {
   YAKLASAN_DURUMLAR,
   type BookingState,
 } from '@ayna/domain';
-import { grantCompletionRewards } from '../loyalty/completion-rewards';
+import {
+  cashbackPoints,
+  DEFAULT_CASHBACK_PCT,
+  grantCompletionRewards,
+} from '../loyalty/completion-rewards';
 import { loadLedgerState, loadLoyaltyRules } from '../loyalty/loyalty.rules';
 import { loadDepositRules } from './deposit.rules';
 import { holdDeadline, loadWindows, responseDeadline } from './booking-windows';
@@ -718,13 +722,34 @@ export class BookingsService {
           `puan/ödül yazılamadı: booking=${id} — ${e instanceof Error ? e.message : String(e)}`,
         ),
       );
+      // §6 — "Uzman 'Ödeme aldım' | Müşteri | X puan kazandınız — Değerlendir".
+      // Kazanılan puanı YAZMAK şart: "teşekkürler" tek başına ödülün gerçekten
+      // yüklendiğini göstermiyor ve puan sessizce birikmiş oluyordu.
+      const kazanilan = cashbackPoints(Number(b.price), DEFAULT_CASHBACK_PCT);
       void this.push.sendToUser(b.userId, {
-        title: 'Teşekkürler 💛',
+        title: `${kazanilan.toLocaleString('tr-TR')} puan kazandın 💛`,
         body: 'Deneyimini değerlendir — 30 saniye sürer',
         data: { route: `/review/new?id=${id}` },
       });
     });
     return row;
+  }
+
+  /**
+   * Aynı bildirimi randevunun İKİ TARAFINA da gönderir.
+   *
+   * §6'da "İkisi" yazan satırlar için: tek tarafa göndermek, karşı tarafın
+   * durumu ancak uygulamayı açınca öğrenmesi demekti.
+   */
+  private async taraflaraBildir(
+    bookingId: string,
+    musteriId: string | null,
+    mesaj: { title: string; body: string; data: Record<string, string> },
+  ): Promise<void> {
+    const uzmanId = await this.expertUserIdFor(bookingId).catch(() => null);
+    for (const uid of [musteriId, uzmanId]) {
+      if (uid) void this.push.sendToUser(uid, mesaj).catch(() => undefined);
+    }
   }
 
   // K1 — DİNAMİK kapora: clamp(round100(fiyat × yüzde), min, max). Hesabın kendisi
@@ -834,6 +859,10 @@ export class BookingsService {
     }
     const receiptUri = (await this.storage.put(receiptUriRaw, 'receipts')) ?? receiptUriRaw;
     const kullanilan = await this.puanDus(id, Math.max(0, Math.floor(puanIstenen)));
+    const kayit = await this.prisma.booking.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
     // §4.4 — "Dekont yüklendiği an randevu KESINLESTI sayılır." Admin
     // doğrulaması SONRA gelir (§8 dekont kuyruğu) ve yalnız sahte dekontu
     // geri alır. Eskiden araya `deposit_submitted` + uzman onayı giriyordu:
@@ -844,12 +873,15 @@ export class BookingsService {
       receiptHash: hash,
       ...(kullanilan > 0 ? { pointsUsed: kullanilan } : {}),
     });
-    // §4.4 — uzmana bilgi: randevu kesinleşti (onay istenmiyor, haber veriliyor)
-    void this.expertUserIdFor(id).then((uid) => {
-      if (uid)
-        void this.push.sendTemplate(uid, 'booking.receipt_arrived', undefined, {
-          route: `/booking/${id}`,
-        });
+    // §6 — "Depozito yüklendi | İKİSİ | Randevu kesinleşti ✓".
+    //
+    // Eskiden yalnız uzmana, üstelik "kontrol edip onayla" diyen bir şablonla
+    // gidiyordu: onay adımı §4.4 ile kaldırıldığı hâlde metin kalmıştı ve
+    // parayı gönderen MÜŞTERİ hiçbir bildirim almıyordu.
+    void this.taraflaraBildir(id, kayit?.userId ?? null, {
+      title: 'Randevu kesinleşti ✓',
+      body: 'Depozito alındı — randevun garanti altında.',
+      data: { route: `/booking/${id}` },
     });
     return res;
   }
