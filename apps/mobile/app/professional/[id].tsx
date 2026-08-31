@@ -11,6 +11,7 @@ import { tri } from '../../src/taxonomy';
 import { ApiError, api } from '../../src/api';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
+import { girisGerekli } from '../../src/auth-wall';
 import { selectSellerView, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -175,10 +176,11 @@ export default function ProfessionalScreen() {
 
   // EK Z.1 — uzmana DM başlat (yalnız hesap bağı olan gerçek uzmanda; Specialist→userId)
   const messagePro = async () => {
-    if (!token) {
-      Alert.alert(t('messages.need_login'));
-      return;
-    }
+    // Eskiden yalnız "giriş lazım" diyip bırakıyordu: kullanıcı ne yapacağını
+    // bilmiyordu. Kapı giriş/kayıt sunuyor ve buraya geri döndürüyor.
+    if (girisGerekli(`/professional/${proId}`)) return;
+    // Kapı boolean döndürüyor; TypeScript token'ın dolduğunu buradan bilemez.
+    if (!token) return;
     if (!pro.ownerUserId) {
       // Demo/seed uzmanda hesap bağı yok → mesajlaşma yalnız KAYITLI uzmanlarda
       Alert.alert(t('messages.unavailable_t'), t('messages.unavailable_b'));
@@ -206,6 +208,10 @@ export default function ProfessionalScreen() {
   // Tarih/saat detay sayfasında seçildi → doğrudan randevu oluştur (ayrı adım yok).
   // Sıra/tek-randevu kısıtı KALDIRILDI — kullanıcı dilediği kadar uzmandan randevu/teklif alabilir.
   const book = () => {
+    // MİSAFİR buraya gelebiliyor artık (gezinti serbest). Giriş kapısı BURADA:
+    // kullanıcı uzmanı beğenip saati seçtikten sonra soruluyor ve giriş
+    // sonrası AYNI profile dönüyor — niyeti kaybolmuyor.
+    if (girisGerekli(`/professional/${proId}`)) return;
     // §4.2 — saat seçilmeden randevu OLUŞTURULMAZ (buton pasif — buraya düşmez, güvenlik ağı)
     if (slotMs == null) return;
     if (slotBusy) {
@@ -270,7 +276,10 @@ export default function ProfessionalScreen() {
           <View style={styles.grow} />
           <PressableScale
             style={[styles.topIconBtn, shadow.soft]}
-            onPress={() => toggleFavorite(proId)}
+            onPress={() => {
+              if (girisGerekli(`/professional/${proId}`)) return;
+              toggleFavorite(proId);
+            }}
             accessibilityRole="button"
             accessibilityLabel={t('favorites.title')}
             accessibilityState={{ selected: isFav }}

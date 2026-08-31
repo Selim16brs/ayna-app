@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api, ApiError } from '../../src/api';
@@ -15,6 +15,7 @@ import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
  */
 export default function LoginScreen() {
   const router = useRouter();
+  const { next } = useLocalSearchParams<{ next?: string }>();
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -38,14 +39,19 @@ export default function LoginScreen() {
     try {
       const session = await api.login({ identifier: id.trim(), password });
       setAuth(session);
-      // §3.3/§9/§10 rol bazlı yönlendirme: SALON → salon paneli, UZMAN → uzman paneli, kullanıcı → keşfet
+      // MİSAFİRKEN GİRİŞ İSTENDİYSE KALDIĞI YERE DÖN.
+      // Kullanıcı bir uzmanı beğenip "Randevu al" dediğinde giriş isteniyor;
+      // giriş sonrası onu Keşfet'e atmak, niyetini kaybetmek demek — aradığı
+      // uzmanı baştan bulması gerekir. `next` o yolu taşıyor.
+      // Yalnız MÜŞTERİ için: satıcı/salon kendi paneline gitmeli.
       const role = session.user.role;
+      const geriDon = typeof next === 'string' && next.startsWith('/') ? next : null;
       router.replace(
         role === 'salon'
           ? '/salon/home'
           : role === 'professional'
             ? '/seller/reports'
-            : '/discover',
+            : ((geriDon ?? '/discover') as never),
       );
     } catch (e) {
       // 429 = hız limiti: "şifre hatalı" DEĞİL — kullanıcıya beklemesini söyle

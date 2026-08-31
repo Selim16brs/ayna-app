@@ -73,6 +73,12 @@ export const tr = {
   'slogan.l2b': ' olmalı...',
   'welcome.value': 'İstediğin hizmeti anlat, uzmanlar sana teklif versin.',
   // §3.1 — karşılama değer önerisi maddeleri (reverse marketplace)
+  'welcome.browse': 'Önce bir bakayım',
+  'auth.wall_t': 'Bunun için giriş gerekiyor',
+  'auth.wall_b':
+    'Hesabın varsa giriş yap; yoksa 1 dakikada oluştur. Kaldığın yerden devam edersin.',
+  'auth.wall_login': 'Giriş yap',
+  'auth.wall_register': 'Kayıt ol',
   'welcome.bullet1': 'İstediğin hizmeti anlat, teklifler sana gelsin',
   'welcome.bullet2': 'Doğrulanmış uzmanlar, gerçek yorumlar',
   'welcome.bullet3': 'Güvenli, kadın odaklı topluluk',
