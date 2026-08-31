@@ -27,6 +27,7 @@ function ThemedStack() {
   const hydrateBookings = useStore((s) => s.hydrateBookings);
   const hydrateDemands = useStore((s) => s.hydrateDemands);
   const hydrateLoyalty = useStore((s) => s.hydrateLoyalty);
+  const hydrateCare = useStore((s) => s.hydrateCare);
   const refreshMembership = useStore((s) => s.refreshMembership);
   const loadContent = useStore((s) => s.loadContent);
   const checkReminders = useStore((s) => s.checkReminders);
@@ -59,7 +60,11 @@ function ThemedStack() {
     });
     void hydrateLoyalty(); // Faz B — puan/çekiliş/ledger yeniden açılışta da buluttan
     void refreshMembership(); // medya (foto/cutout) + tier açılışta HESAPTAN (bayat yerel kopya ezilir)
-  }, [hydrateBookings, hydrateDemands, hydrateLoyalty, refreshMembership]);
+    // §bakım — rutin/an/günlük. Bunlar eskiden hiç sunucuya gitmiyordu;
+    // yazma tarafını bağlayıp okumayı unutmak, veriyi tek yönlü bırakırdı:
+    // yeni cihazda ekran boş açılırdı.
+    void hydrateCare();
+  }, [hydrateBookings, hydrateDemands, hydrateLoyalty, refreshMembership, hydrateCare]);
   // EK Z.5 — giriş yapıldığında (token gelince) Expo push token'ı backend'e kaydet
   useEffect(() => {
     if (token) void registerForRemotePush(token);

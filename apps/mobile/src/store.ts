@@ -3,6 +3,7 @@ import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadMediaCache, medyaAnahtari, saveMediaCache } from './media-cache';
 import { setApiToken } from './api';
+import { formatTrDate } from './date-label';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { MessageKey } from '@ayna/i18n';
@@ -402,6 +403,8 @@ interface State {
   redeem: (reward: Reward) => Promise<boolean>;
   enterRaffle: () => boolean; // §8.2 — 500 puan = 1 çekiliş bileti
   hydrateLoyalty: () => Promise<void>;
+  /** §bakım — rutin/an/günlüğü sunucudan çek. Yazma tarafı olup okuma olmazsa veri geri gelmez. */
+  hydrateCare: () => Promise<void>;
   refreshMembership: () => Promise<void>; // §11 — tier'ı sunucudan tazele (onay sonrası haklar açılır)
 
   // şehir (global filtre)
@@ -2086,11 +2089,12 @@ export const useStore = create<State>()(
       // §5.6.2 — premium aç/kapa (gerçekte app-dışı ödeme; burada mock)
       setPremium: (v) => set({ premium: v }),
 
-      addPersonalLog: (input) =>
+      addPersonalLog: (input) => {
+        const gecici = nextId('pl');
         set((s) => ({
           personalLogs: [
             {
-              id: nextId('pl'),
+              id: gecici,
               title: input.title,
               dateLabel: input.dateLabel,
               icon: input.icon ?? TONE_ICON[input.tone],
@@ -2101,10 +2105,31 @@ export const useStore = create<State>()(
             },
             ...s.personalLogs,
           ],
-        })),
+        }));
+        const token = get().token;
+        if (!token) return;
+        void api
+          .addCareLog(token, {
+            title: input.title,
+            tone: input.tone,
+            loggedAtMs: input.dateMs ?? Date.now(),
+            ...(input.icon ? { icon: input.icon } : {}),
+            ...(input.note ? { note: input.note } : {}),
+            ...(input.kind ? { kind: input.kind } : {}),
+          })
+          .then((r) =>
+            set((s) => ({
+              personalLogs: s.personalLogs.map((x) => (x.id === gecici ? { ...x, id: r.id } : x)),
+            })),
+          )
+          .catch(() =>
+            set((s) => ({ personalLogs: s.personalLogs.filter((x) => x.id !== gecici) })),
+          );
+      },
 
       // §5.4 — kişisel kaydı düzenle (detay ekranından); note boşsa alanı temizle
-      updatePersonalLog: (id, patch) =>
+      updatePersonalLog: (id, patch) => {
+        const onceki = get().personalLogs.find((x) => x.id === id);
         set((s) => ({
           personalLogs: s.personalLogs.map((x) =>
             x.id === id
@@ -2120,16 +2145,44 @@ export const useStore = create<State>()(
                 }
               : x,
           ),
-        })),
+        }));
+        const token = get().token;
+        if (!token) return;
+        void api
+          .updateCareLog(token, id, {
+            title: patch.title,
+            tone: patch.tone,
+            // Notu BOŞALTMAK geçerli bir düzenleme: '' gönderiliyor ki sunucu
+            // null'a çeksin. `undefined` gönderirsek eski not olduğu gibi kalır.
+            note: patch.note?.trim() ? patch.note : '',
+            ...(patch.icon ? { icon: patch.icon } : {}),
+            ...(patch.kind ? { kind: patch.kind } : {}),
+            ...(patch.dateMs ? { loggedAtMs: patch.dateMs } : {}),
+          })
+          .catch(() => {
+            // Sunucu yazmadıysa YEREL DÜZENLEMEYİ GERİ AL — yoksa kullanıcı
+            // değişikliği görür, uygulamayı kapatıp açınca eskisi geri gelir.
+            if (!onceki) return;
+            set((s) => ({ personalLogs: s.personalLogs.map((x) => (x.id === id ? onceki : x)) }));
+          });
+      },
 
-      deletePersonalLog: (id) =>
-        set((s) => ({ personalLogs: s.personalLogs.filter((x) => x.id !== id) })),
+      deletePersonalLog: (id) => {
+        const onceki = get().personalLogs;
+        set((s) => ({ personalLogs: s.personalLogs.filter((x) => x.id !== id) }));
+        const token = get().token;
+        if (!token) return;
+        // Silme başarısızsa listeyi geri getir: kullanıcı sildiğini sanıp
+        // sonraki açılışta kaydı geri görmemeli.
+        void api.removeCareLog(token, id).catch(() => set({ personalLogs: onceki }));
+      },
 
-      addMoment: (input) =>
+      addMoment: (input) => {
+        const gecici = nextId('mo');
         set((s) => ({
           moments: [
             {
-              id: nextId('mo'),
+              id: gecici,
               title: input.title,
               dateLabel: input.dateLabel,
               daysLeft: input.daysLeft,
@@ -2137,13 +2190,34 @@ export const useStore = create<State>()(
             },
             ...s.moments,
           ],
-        })),
+        }));
+        const token = get().token;
+        if (!token) return;
+        // Sunucu TARİHİ saklıyor, "kaç gün kaldı"yı değil — o her istekte
+        // yeniden hesaplanıyor. Kalan günü saklasaydık zaman donardı.
+        void api
+          .addCareMoment(token, {
+            title: input.title,
+            happensAtMs: Date.now() + input.daysLeft * 86_400_000,
+            ...(input.icon ? { icon: input.icon } : {}),
+          })
+          .then((r) =>
+            set((s) => ({
+              moments: s.moments.map((x) => (x.id === gecici ? { ...x, id: r.id } : x)),
+            })),
+          )
+          .catch(() => set((s) => ({ moments: s.moments.filter((x) => x.id !== gecici) })));
+      },
 
-      addRoutine: (input) =>
+      addRoutine: (input) => {
+        // Geçici kimlikle ANINDA göster; sunucu kimliği gelince TAKAS et.
+        // Takas şart: "tamamladım" ve silme kimliği sunucuya gönderiyor,
+        // yerel `cr_3` gönderilirse sunucu tanımaz ve işlem sessizce düşer.
+        const gecici = nextId('cr');
         set((s) => ({
           careRoutines: [
             {
-              id: nextId('cr'),
+              id: gecici,
               name: input.name,
               dueDays: input.dueDays,
               periodDays: input.dueDays, // ilk süre = döngü; "tamamladım" buna göre sıfırlar
@@ -2152,15 +2226,47 @@ export const useStore = create<State>()(
             },
             ...s.careRoutines,
           ],
-        })),
+        }));
+        const token = get().token;
+        if (!token) return;
+        void api
+          .addCareRoutine(token, {
+            name: input.name,
+            periodDays: input.dueDays,
+            ...(input.icon ? { icon: input.icon } : {}),
+            ...(input.categoryCode ? { categoryCode: input.categoryCode } : {}),
+          })
+          .then((r) =>
+            set((s) => ({
+              careRoutines: s.careRoutines.map((x) => (x.id === gecici ? { ...x, id: r.id } : x)),
+            })),
+          )
+          .catch(() =>
+            // Yazma başarısızsa HAYALET SATIR bırakma: kullanıcı kaydettiğini
+            // sanıp uygulamayı kapatırsa veri zaten yok.
+            set((s) => ({ careRoutines: s.careRoutines.filter((x) => x.id !== gecici) })),
+          );
+      },
 
       // "Tamamladım" → sayaç bakımın KENDİ periyoduna göre yeniden başlar (rastgele 30 değil)
-      completeRoutine: (id) =>
+      completeRoutine: (id) => {
+        const onceki = get().careRoutines.find((x) => x.id === id)?.dueDays;
         set((s) => ({
           careRoutines: s.careRoutines.map((x) =>
             x.id === id ? { ...x, dueDays: x.periodDays > 0 ? x.periodDays : 30 } : x,
           ),
-        })),
+        }));
+        const token = get().token;
+        if (!token) return;
+        void api.completeCareRoutine(token, id).catch(() => {
+          // Sunucu kaydetmediyse sayacı GERİ AL — kullanıcı yaptığını sanıp
+          // bir sonraki açılışta gecikmiş görürse güveni sarsılır.
+          if (onceki === undefined) return;
+          set((s) => ({
+            careRoutines: s.careRoutines.map((x) => (x.id === id ? { ...x, dueDays: onceki } : x)),
+          }));
+        });
+      },
 
       addPost: (input) => {
         const id = nextId('c');
@@ -2534,6 +2640,47 @@ export const useStore = create<State>()(
         set((s) => ({
           notifications: s.notifications.map((x) => (x.id === id ? { ...x, read: true } : x)),
         })),
+
+      hydrateCare: async () => {
+        const token = get().token;
+        if (!token) return;
+        try {
+          const d = await api.care(token);
+          set({
+            careRoutines: d.routines.map((r) => ({
+              id: r.id,
+              name: r.name,
+              icon: r.icon,
+              dueDays: r.dueDays,
+              periodDays: r.periodDays,
+              ...(r.categoryCode ? { categoryCode: r.categoryCode } : {}),
+            })),
+            // Etiketler SUNUCUDAN gelmiyor, tarihten yeniden üretiliyor —
+            // sunucu tarihi saklıyor, gösterim biçimini değil. Tek
+            // biçimlendirici (`date-label`) kullanılıyor ki aynı tarih iki
+            // farklı yerde iki farklı görünmesin.
+            moments: d.moments.map((m) => ({
+              id: m.id,
+              title: m.title,
+              icon: m.icon,
+              daysLeft: m.daysLeft,
+              dateLabel: formatTrDate(new Date(m.happensAtMs), false),
+            })),
+            personalLogs: d.logs.map((l) => ({
+              id: l.id,
+              title: l.title,
+              icon: l.icon,
+              tone: l.tone as PersonalTone,
+              dateLabel: formatTrDate(new Date(l.dateMs), true),
+              dateMs: l.dateMs,
+              ...(l.note ? { note: l.note } : {}),
+              ...(l.kind ? { kind: l.kind as QuickAddKind } : {}),
+            })),
+          });
+        } catch {
+          // Ağ yoksa yereldeki (kalıcılaştırılmış) veri görünmeye devam eder.
+        }
+      },
 
       markAllNotificationsRead: () =>
         set((s) => ({ notifications: s.notifications.map((x) => ({ ...x, read: true })) })),

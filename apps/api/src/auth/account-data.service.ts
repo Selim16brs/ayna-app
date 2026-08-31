@@ -56,6 +56,9 @@ export class AccountDataService {
       passport,
       trusted,
       kyc,
+      careRoutines,
+      careMoments,
+      careLogs,
     ] = await Promise.all([
       this.prisma.user.findUnique({ where: { id: userId } }),
       this.prisma.booking.findMany({ where: { userId } }),
@@ -76,6 +79,11 @@ export class AccountDataService {
       this.prisma.userPassport.findUnique({ where: { userId } }),
       this.prisma.trustedContact.findMany({ where: { userId } }),
       this.prisma.kycVerification.findMany({ where: { userId } }),
+      // §bakım — kullanıcının kendi girdiği veri; dışa aktarımda YER ALMALI.
+      // Silinirken sert siliyoruz, o hâlde vermeden silmek olmaz.
+      this.prisma.careRoutine.findMany({ where: { userId } }),
+      this.prisma.careMoment.findMany({ where: { userId } }),
+      this.prisma.careLog.findMany({ where: { userId } }),
     ]);
 
     return {
@@ -111,6 +119,9 @@ export class AccountDataService {
       pasaport: passport,
       guvendigimKisiler: trusted,
       kimlikDogrulama: kyc,
+      bakimRutinlerim: careRoutines,
+      bakimAnlarim: careMoments,
+      bakimGunlugum: careLogs,
     };
   }
 
@@ -126,6 +137,12 @@ export class AccountDataService {
     await this.prisma.passportAccess.deleteMany({ where: { userId } }).catch(() => undefined);
     // ALERJİ/HASSASİYET = sağlık verisi. Takma adlaştırma YETMEZ, silinir.
     await this.prisma.userPassport.deleteMany({ where: { userId } }).catch(() => undefined);
+    // §gizlilik — BAKIM VERİSİ de sağlık-yakını: rutinler cilt/saç durumunu,
+    // günlük kişisel notları taşıyor. Pasaport gibi SERT silinir; finansal
+    // kayıtlar gibi saklanmaz.
+    await this.prisma.careRoutine.deleteMany({ where: { userId } }).catch(() => undefined);
+    await this.prisma.careMoment.deleteMany({ where: { userId } }).catch(() => undefined);
+    await this.prisma.careLog.deleteMany({ where: { userId } }).catch(() => undefined);
     await this.prisma.trustedContact.deleteMany({ where: { userId } }).catch(() => undefined);
     await this.prisma.safetySession.deleteMany({ where: { userId } }).catch(() => undefined);
     await this.prisma.pushToken.deleteMany({ where: { userId } }).catch(() => undefined);

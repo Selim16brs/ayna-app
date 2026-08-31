@@ -183,6 +183,47 @@ async function get<T>(path: string, token?: string): Promise<T> {
 
 // Backend hata kodunu (ör. PREMIUM_REQUIRED, QUOTA_EXCEEDED, AI_FAILED) taşıyan hata —
 // çağıran ekran kullanıcıya SEBEBE ÖZEL mesaj gösterebilsin diye.
+/** §bakım — sunucudaki bakım verisi. `dueDays`/`daysLeft` SUNUCUDA hesaplanır. */
+export interface CareData {
+  routines: {
+    id: string;
+    name: string;
+    icon: string;
+    periodDays: number;
+    categoryCode?: string;
+    dueDays: number;
+  }[];
+  moments: { id: string; title: string; icon: string; happensAtMs: number; daysLeft: number }[];
+  logs: {
+    id: string;
+    title: string;
+    icon: string;
+    tone: string;
+    note?: string;
+    kind?: string;
+    dateMs: number;
+  }[];
+}
+export interface CareRoutineInput {
+  name: string;
+  icon?: string;
+  periodDays: number;
+  categoryCode?: string;
+}
+export interface CareMomentInput {
+  title: string;
+  icon?: string;
+  happensAtMs: number;
+}
+export interface CareLogInput {
+  title: string;
+  icon?: string;
+  tone?: string;
+  note?: string;
+  kind?: string;
+  loggedAtMs: number;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -192,6 +233,41 @@ export class ApiError extends Error {
     super(message);
   }
 }
+
+/**
+ * Gövdesiz/gövdeli diğer yöntemler — `post` ile aynı hata çevirisi.
+ *
+ * Ayrı yazılmalarının sebebi: DELETE ve PATCH için `post`u kullanmak
+ * yöntemi yanlış gönderirdi; sunucu 404 döner ve hata "uç yok" gibi
+ * görünürdü. Hata gövdesinden `code` çıkarma davranışı aynı kalıyor ki
+ * çağıran ekran sebebe özel mesaj gösterebilsin.
+ */
+async function istek<T>(yontem: string, path: string, token?: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: yontem,
+    headers: {
+      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      ...authHeader(token ?? sessionToken),
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  if (!res.ok) {
+    let code = '';
+    try {
+      const j = (await res.json()) as { error?: { code?: string } };
+      code = j?.error?.code ?? '';
+    } catch {
+      /* gövde yoksa boş kod */
+    }
+    throw new ApiError(res.status, code, `${yontem} ${path} → ${res.status}`);
+  }
+  const text = await res.text();
+  return (text ? JSON.parse(text) : null) as T;
+}
+
+const del = <T>(path: string, token?: string) => istek<T>('DELETE', path, token);
+const patchReq = <T>(path: string, body: unknown, token?: string) =>
+  istek<T>('PATCH', path, token, body);
 
 async function post<T>(path: string, body: unknown, token?: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -838,6 +914,24 @@ export const api = {
   ) => post<{ id: string; deduped: boolean }>('/reports', input, token),
 
   // §19 — AYNA Passport: alerjiler + tercihler + erişim kaydı
+  // §bakım — rutin/an/günlük. Bunlar eskiden YALNIZ cihazda duruyordu:
+  // telefon değişince kullanıcının tüm bakım geçmişi gidiyordu.
+  care: (token: string) => get<CareData>('/care', token),
+  addCareRoutine: (token: string, input: CareRoutineInput) =>
+    post<{ id: string }>('/care/routines', input, token),
+  completeCareRoutine: (token: string, id: string) =>
+    post<{ ok: boolean }>(`/care/routines/${id}/complete`, {}, token),
+  removeCareRoutine: (token: string, id: string) =>
+    del<{ ok: boolean }>(`/care/routines/${id}`, token),
+  addCareMoment: (token: string, input: CareMomentInput) =>
+    post<{ id: string }>('/care/moments', input, token),
+  removeCareMoment: (token: string, id: string) =>
+    del<{ ok: boolean }>(`/care/moments/${id}`, token),
+  addCareLog: (token: string, input: CareLogInput) =>
+    post<{ id: string }>('/care/logs', input, token),
+  updateCareLog: (token: string, id: string, patch: Partial<CareLogInput>) =>
+    patchReq<{ ok: boolean }>(`/care/logs/${id}`, patch, token),
+  removeCareLog: (token: string, id: string) => del<{ ok: boolean }>(`/care/logs/${id}`, token),
   passport: (token: string) => get<PassportData>('/passport', token),
   savePassport: (token: string, input: Partial<PassportData>) =>
     post<PassportData>('/passport', input, token),
