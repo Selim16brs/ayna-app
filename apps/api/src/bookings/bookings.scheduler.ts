@@ -1,6 +1,7 @@
 import { grantCompletionRewards } from '../loyalty/completion-rewards';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CommissionsService } from '../commissions/commissions.service';
 import { PushService } from '../push/push.service';
 import { BookingsService } from './bookings.service';
 
@@ -20,6 +21,7 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly push: PushService,
     private readonly bookings: BookingsService,
+    private readonly commissions: CommissionsService,
   ) {}
 
   onModuleInit() {
@@ -99,6 +101,14 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
         // burada da yazılmazsa o randevular hiçbir komisyon dönemine düşmez.
         data: { status: 'completed', completedAt: now },
       });
+      // K3 — bu yolla kesinleşenlerin komisyonu da ŞİMDİ faturalanır. Müşteri
+      // teyidi yoluyla zaten faturalanmışsa benzersiz `bookingId` ikinciyi
+      // düşürür (çifte tahsilat imkânsız).
+      await this.commissions
+        .invoiceForBookings(finalize.map((b) => b.id))
+        .catch((e: unknown) =>
+          this.log.error(`komisyon faturası: ${e instanceof Error ? e.message : String(e)}`),
+        );
       // K4.1 geri kazanım + D9 referans ödülü. İki kez yazılmaz: müşteri teyidi
       // yoluyla zaten yazılmışsa her iki ödül de atlanır.
       await grantCompletionRewards(this.prisma, finalize).catch((e: unknown) =>
