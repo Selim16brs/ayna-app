@@ -138,6 +138,26 @@ export interface AddPostInput {
 
 interface State {
   bookings: Appointment[];
+  /**
+   * Randevular HENÜZ oturmadı mı? (persist geri yüklemesi + sunucudan tazeleme)
+   *
+   * Bu bayrak olmadan Randevular sekmesi `bookings.length === 0` görüp BOŞ
+   * DURUMU çiziyordu — yani randevusu olan kullanıcıya "hiç randevun yok"
+   * diyordu. İki ayrı pencerede oluyordu: (a) soğuk açılışta AsyncStorage
+   * geri yüklemesi ASENKRON olduğu için store `bookings: []` ile başlıyor,
+   * (b) girişten sonra sunucudan ilk çekim sürerken.
+   *
+   * Bu yüzden başlangıç değeri `true`: "daha bilmiyoruz". `hydrateBookings`
+   * her yoldan (token yok / başarı / hata) `false`'a çeker.
+   */
+  bookingsLoading: boolean;
+  /**
+   * Talepler HENÜZ oturmadı mı? Bookings'ten DAHA kritik: `demands` persist
+   * listesinde YOK, yani her soğuk açılışta boş başlıyor ve yalnız sunucudan
+   * geliyor. Bayraksız hâlde Talepler sekmesi her açılışta, çekim boyunca
+   * "talebin yok" diyordu.
+   */
+  demandsLoading: boolean;
   // §5.2 — açılan teklif/talep istekleri (reverse marketplace)
   demands: DemandRequest[];
   // §10.1/§5.1.6 — salon/uzman promosyonları (Fırsatlar vitrini içeriği)
@@ -494,6 +514,8 @@ export const useStore = create<State>()(
   persist(
     (set, get) => ({
       bookings: [],
+      bookingsLoading: true,
+      demandsLoading: true,
       demands: [],
       promotions: [],
       recentSearches: [],
@@ -1306,13 +1328,20 @@ export const useStore = create<State>()(
       // §5.2 Faz A — taleplerim + gelen teklifler buluttan (girişli hesapta tek gerçek kaynak)
       hydrateDemands: async () => {
         const token = get().token;
-        if (!token) return;
+        if (!token) {
+          set({ demandsLoading: false });
+          return;
+        }
+        set({ demandsLoading: true });
         try {
           const remote = await api.myQuoteRequests(token);
           // Sunucudakiler esas — yerel artıklar kullanıcının Taleplerim'ine karışmaz.
           set(() => ({ demands: remote }));
         } catch {
           // çevrimdışı: eldeki liste korunur
+        } finally {
+          // Hata da olsa inmeli; yoksa sunucu kapalıyken sonsuz iskelet.
+          set({ demandsLoading: false });
         }
       },
 
@@ -1892,8 +1921,13 @@ export const useStore = create<State>()(
 
       hydrateBookings: async () => {
         const token = get().token;
-        // Giriş YOK → demo tohum (SEED_APPOINTMENTS) korunur.
-        if (!token) return;
+        // Giriş YOK → demo tohum (SEED_APPOINTMENTS) korunur. Beklenecek bir şey
+        // yok; bayrak burada da inmeli, yoksa misafirde iskelet sonsuza kalır.
+        if (!token) {
+          set({ bookingsLoading: false });
+          return;
+        }
+        set({ bookingsLoading: true });
         // Önce bekleyen yazımlar sunucuya gitsin ki tazeleme onları "sunucudan" geri getirsin
         await get().flushBookingSync();
         try {
@@ -1916,6 +1950,10 @@ export const useStore = create<State>()(
           }));
         } catch {
           // API erişilemez → mevcut veriler korunur (offline-first)
+        } finally {
+          // HATA DA OLSA inmeli: aksi halde sunucu kapalıyken kullanıcı
+          // sonsuz iskelet görür — yanlış boş durumdan beter.
+          set({ bookingsLoading: false });
         }
       },
 

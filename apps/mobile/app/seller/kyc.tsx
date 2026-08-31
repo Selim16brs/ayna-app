@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, type KycDocType, type MyKyc } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -55,6 +55,13 @@ export default function KycScreen() {
       await api.submitKyc(token, { docType, documents: docs });
       setDocs([]);
       await load();
+      // GERİ BİLDİRİM: eskiden belge sunucuya gidiyor, liste sessizce boşalıyordu.
+      // Kullanıcı gönderdi mi sildi mi anlamıyordu — üstelik KİMLİK belgesi gibi
+      // en tedirgin olunan yerde. Hata da sessizdi: `catch` yoktu, istek düşerse
+      // ekran yine boşalıyor ve hiçbir şey söylemiyordu.
+      Alert.alert(t('kyc.sent_t'), t('kyc.sent_b'));
+    } catch {
+      Alert.alert(t('common.error'));
     } finally {
       setBusy(false);
     }

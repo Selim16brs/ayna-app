@@ -2,7 +2,7 @@
 
 **Tarih:** 31.08.2026
 **Faz:** 1 — tespit. Rapor yazılırken hiçbir kod değiştirilmedi.
-**Durum:** Kurucu onayıyla **B5 uygulandı** (bkz. aynı PR). B1–B4 ve B6 onay bekliyor.
+**Durum:** Kurucu onayıyla **B1–B5 uygulandı.** B6 onay bekliyor. Uygularken raporun iki yerinin yanlış/eksik olduğu çıktı — bkz. §9.
 
 ---
 
@@ -204,3 +204,56 @@ Faz 2'de **yalnız onayladıklarını** yapacağım:
 2. **B5** için hangi kelime kalsın — **"kapora"** mı **"depozito"** mu? Bu senin kararın, ben seçmiyorum.
 3. **B6** kalıntıları baskın terime çevrilsin mi?
 4. Geri bildirim taramasında kalan **23 aday** tek tek doğrulansın mı? (Ayrı iş; yarısı yanlış alarm çıkabilir.)
+
+---
+
+## 9. Uygulama sırasında çıkan düzeltmeler
+
+Faz 2'de B1–B4'ü yazarken raporun kendisinde iki hata buldum. İkisini de burada
+kayda geçiriyorum, çünkü raporun güvenilirliğini etkiliyorlar.
+
+### 9.1 · B1'i eksik teşhis etmişim — sorun daha geniş
+
+Raporda yalnız "sunucudan çekim sürerken" penceresini yazmıştım. Uygularken iki
+şey daha çıktı:
+
+1. **`bookings` kalıcı saklanıyor ama geri yükleme ASENKRON.** Store her soğuk
+   açılışta `bookings: []` ile başlıyor ve AsyncStorage'dan sonra doluyor. Yani
+   yanlış boş durum yalnız ilk girişte değil, **her soğuk açılışta** mümkün.
+2. **`demands` hiç kalıcı saklanmıyor** (persist listesinde yok). Yani Talepler
+   sekmesi **her açılışta**, çekim boyunca "talebin yok" diyordu. Bu, raporladığım
+   randevu vakasından **daha kötü** ve raporda hiç geçmiyor.
+
+Düzeltme ikisini de kapsıyor: `bookingsLoading` + `demandsLoading`, ikisi de
+`true` başlıyor ve her çıkış yolunda (misafir / başarı / hata) iniyor.
+
+### 9.2 · B2'de "sunucu zaten oturum döndürüyor" iddiam yalnız YARISI için doğruydu
+
+Raporda şöyle yazmıştım: _"Sunucu tarafında değişiklik gerekmiyor — veri zaten
+geliyor."_ Bunu `/auth/register` üzerinde doğrulamıştım ve müşteri için doğru.
+
+**Uzman kaydı farklı uçtan geçiyor:** `/specialists` yalnız `{ token, specialist }`
+döndürüyor — `user` yok. Yani uzman tarafı için iddiam yanlıştı; oturumu
+kuramıyordum.
+
+Çözüm olarak sunucudaki ortak kimlik eşleyicisini (`safe()`) dışarı çıkarmak
+yerine istemcide `/auth/me` çağırdım. Gerekçe: o eşleyici **her girişte**
+kullanılıyor ve şifreleme anahtarına bağlı; bir UX düzeltmesi için fazla geniş
+bir yarıçap olurdu. Bedeli kayıt akışında **bir ek tur**. `/me` düşerse kayıt
+yine başarılı sayılıyor ve kullanıcı eski yola (giriş ekranı) düşüyor —
+kaybolmuyor.
+
+### 9.3 · B3 ve B4 raporladığımdan biraz daha kötüydü
+
+İkisini de "başarı onayı yok" diye yazmıştım. Kodu açınca **`catch` bloğu da
+olmadığı** görüldü: istek düşerse kullanıcı yine hiçbir şey görmüyordu. Yani
+sessizlik tek yönlü değil, **iki yönlüydü**. Düzeltme ikisini de kapsıyor.
+
+### 9.4 · Kapsamı bir yerde genişlettim
+
+B2'yi uygularken misafir duvarındaki "Kayıt ol" düğmesinin `next` niyetini
+taşımadığını gördüm: kullanıcı "Randevu al" deyip kayıt olduğunda, otomatik
+giriş sonrası aradığı uzmanı baştan bulmak zorunda kalacaktı. Otomatik girişi
+ekleyip kullanıcıyı rastgele bir yere bırakmak yarım iş olacağı için niyeti
+zincir boyunca (duvar → rol seçici → müşteri kaydı) taşıdım. Bu, onayladığın
+dört maddenin dışında kalan **tek** ekleme.

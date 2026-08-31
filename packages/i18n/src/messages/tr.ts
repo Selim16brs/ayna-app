@@ -1052,7 +1052,9 @@ export const tr = {
   'auth.f.password2': 'Şifre (tekrar)',
   'auth.f.password_mismatch': 'Şifreler eşleşmiyor',
   'auth.register.done_t': 'Kayıt tamamlandı 🎉',
-  'auth.register.done_b': 'Kayıt işleminiz tamamlandı. Lütfen giriş bilgilerinizle giriş yapın.',
+  'auth.register.done_login':
+    'Kayıt işleminiz tamamlandı. Lütfen giriş bilgilerinizle giriş yapın.',
+  'auth.register.done_b': 'Hoş geldin! Hesabın hazır, seni uygulamaya alıyoruz.',
   'auth.f.identifier': 'E-posta veya telefon',
   'auth.f.city': 'Şehir',
   'auth.f.district': 'İlçe / semt',
@@ -1271,6 +1273,8 @@ export const tr = {
   'commission.days_overdue': 'gün gecikme',
   'commission.receipt_upload': 'Ödeme dekontu yükle',
   'commission.receipt_change': 'Dekontu değiştir',
+  'commission.receipt_sent_t': 'Dekont alındı',
+  'commission.receipt_sent_b': 'Ödemen kontrol ediliyor. Onaylanınca komisyon kapanacak.',
   'commission.paid_note': 'Bu dönem tahsil edildi. Teşekkürler!',
   // Salon — davet kodları (uzman ekibe davet)
   'seller.codes.title': 'Davet kodları',
@@ -2154,6 +2158,8 @@ export const tr = {
   'kyc.doctype.passport': 'Pasaport',
   'kyc.doctype.certificate': 'Sertifika',
   'kyc.submit': 'Doğrulamaya gönder',
+  'kyc.sent_t': 'Belgelerin alındı',
+  'kyc.sent_b': 'Doğrulama incelemesine alındı. Sonucu bildirimle haber vereceğiz.',
   'kyc.resubmit': 'Yeniden gönder',
   'seller.menu.kyc': 'Kimlik doğrulama',
   'seller.menu.join_salon': 'Salona Katıl',

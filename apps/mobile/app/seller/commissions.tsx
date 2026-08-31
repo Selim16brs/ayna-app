@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, type CommissionInvoice } from '../../src/api';
 import { formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
@@ -46,6 +46,12 @@ export default function CommissionsScreen() {
       const uri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
       await api.uploadCommissionReceipt(token, inv.id, uri);
       await load();
+      // GERİ BİLDİRİM: burada yüklenen şey ÖDEME KANITI. Sessizlik en pahalı
+      // olanı — uzman ödediğini kanıtlayamadığını sanıp desteğe yazar ya da
+      // ikinci kez yükler. Hata yolu da sessizdi (`catch` yoktu).
+      Alert.alert(t('commission.receipt_sent_t'), t('commission.receipt_sent_b'));
+    } catch {
+      Alert.alert(t('common.error'));
     } finally {
       setBusy(null);
     }

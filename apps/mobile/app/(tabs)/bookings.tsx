@@ -15,7 +15,7 @@ import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, TabHero, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { ListSkeleton, Screen, TabHero, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 // §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş
 type Seg = 'requests' | 'upcoming' | 'past';
@@ -74,6 +74,8 @@ export default function BookingsScreen() {
   const [active, setActive] = useState<Seg>('upcoming');
   const bookings = useStore((s) => s.bookings);
   const allDemands = useStore((s) => s.demands);
+  const bookingsLoading = useStore((s) => s.bookingsLoading);
+  const demandsLoading = useStore((s) => s.demandsLoading);
   // §5.2 — randevuya DÖNÜŞEN (booked) talep artık talep değildir: Randevular'da yaşar
   const demands = allDemands.filter((d) => !d.seeded && d.status !== 'booked');
   const now = Date.now();
@@ -92,10 +94,16 @@ export default function BookingsScreen() {
   const past = bookings.filter((a) => !isUpcoming(a)).sort((a, b) => b.startMs - a.startMs);
   const pendingReview = bookings.filter((a) => a.status === 'completed' && !a.reviewed);
 
-  const showEmpty =
+  // Aktif sekmenin listesi boş mu — ve bu boşluk GERÇEK mi, yoksa veri henüz
+  // gelmedi mi? İkisini ayırmadan boş durumu çizmek, randevusu olan kullanıcıya
+  // "hiç randevun yok" demek oluyordu (Keşfet'te aynı hata daha önce düzeltildi).
+  const bosListe =
     (active === 'requests' && demands.length === 0) ||
     (active === 'upcoming' && upcoming.length === 0) ||
     (active === 'past' && past.length === 0);
+  const yukleniyor = active === 'requests' ? demandsLoading : bookingsLoading;
+  const showEmpty = bosListe && !yukleniyor;
+  const showSkeleton = bosListe && yukleniyor;
 
   return (
     <Screen edges={[]}>
@@ -145,6 +153,8 @@ export default function BookingsScreen() {
             </View>
           </Pressable>
         ) : null}
+
+        {showSkeleton ? <ListSkeleton rows={3} /> : null}
 
         {showEmpty ? (
           <View style={styles.empty}>

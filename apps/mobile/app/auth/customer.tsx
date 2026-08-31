@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Alert,
   Image,
@@ -21,6 +21,7 @@ function fmtDate(d: Date): string {
 }
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
+import { useStore } from '../../src/store';
 import { registerErrorMessage } from '../../src/authError';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
@@ -47,6 +48,8 @@ type Address = { label: AddrLabel; detail: string };
 
 export default function CustomerRegisterScreen() {
   const router = useRouter();
+  const { next } = useLocalSearchParams<{ next?: string }>();
+  const setAuth = useStore((st) => st.setAuth);
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -115,7 +118,7 @@ export default function CustomerRegisterScreen() {
   async function submit() {
     setBusy(true);
     try {
-      await api.register({
+      const session = await api.register({
         name: `${firstName.trim()} ${lastName.trim()}`.trim(),
         phone: phone.trim(),
         password,
@@ -126,10 +129,20 @@ export default function CustomerRegisterScreen() {
         ...(city ? { city } : {}),
       });
       // NOT: profil fotoğrafı + adres listesi backend'e Faz 9 (profil) ile yazılacak.
-      // Otomatik giriş YOK — kayıt tamamlandı; kullanıcı giriş ekranından bilgileriyle girer.
-      // (İleride e-posta/telefon onayı bu adıma eklenecek.)
+      //
+      // OTOMATİK GİRİŞ: sunucu `register` yanıtında ZATEN tam oturum döndürüyor
+      // (auth.service `return this.session(user)`). Eskiden bu oturum atılıp
+      // kullanıcı giriş ekranına gönderiliyordu — yani az önce yazdığı telefon
+      // ve şifreyi tekrar yazması isteniyordu. Huninin en kırılgan yerinde
+      // tamamen gereksiz bir adımdı.
+      setAuth(session);
+      // Misafirken "Randevu al" deyip kayda geldiyse kaldığı yere dönsün.
+      const geriDon = typeof next === 'string' && next.startsWith('/') ? next : null;
       Alert.alert(t('auth.register.done_t'), t('auth.register.done_b'), [
-        { text: t('common.ok'), onPress: () => router.replace('/auth/login') },
+        {
+          text: t('common.ok'),
+          onPress: () => router.replace((geriDon ?? '/discover') as never),
+        },
       ]);
     } catch (e) {
       Alert.alert(registerErrorMessage(e, t));

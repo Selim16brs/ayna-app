@@ -26,7 +26,7 @@ export function girisGerekli(nereye: string): boolean {
     { text: t(dil, 'common.cancel'), style: 'cancel' },
     {
       text: t(dil, 'auth.wall_register'),
-      onPress: () => router.push('/auth'),
+      onPress: () => router.push({ pathname: '/auth', params: { next: nereye } } as never),
     },
     {
       text: t(dil, 'auth.wall_login'),
