@@ -670,6 +670,8 @@ export const api = {
   // §5 — CRM özet istatistiği (doluluk/gelir/no-show)
   bookingStats: () => get<BookingStats>('/bookings/stats'),
   // token verilirse randevu sahibine bağlanır (offline seller girişinde verilmez)
+  // §4.1.1 — `serviceNames` randevunun üstünde taşınıyor: sunucu fiyat ve
+  // süreyi bu adlardan KENDİ hizmet listesiyle yeniden hesaplıyor.
   createBooking: (b: Appointment, token?: string) => post<Appointment>('/bookings', b, token),
   // §keşif Modül 2 — kampanyalar
   offers: () => get<ApiOffer[]>(`/offers${localeQuery()}`),
@@ -685,40 +687,25 @@ export const api = {
     post<Appointment>(`/bookings/${id}/cancel`, reason ? { reason } : {}),
   // Onay/alternatif pazarlık döngüsü (§1.6)
   approveBooking: (id: string) => post<Appointment>(`/bookings/${id}/approve`, {}),
-  // Faz 2 — müşteri 'hizmet tamamlandı' teyidi
-  confirmCompletionApi: (id: string) => post<Appointment>(`/bookings/${id}/confirm-completion`, {}),
   // Para el değiştirme — müşteri "ödedim", uzman "aldım".
   balancePaid: (id: string) => post<Appointment>(`/bookings/${id}/balance-paid`, {}),
   balanceReceived: (id: string) => post<Appointment>(`/bookings/${id}/balance-received`, {}),
   proposeBooking: (id: string, proposedStartMs: number) =>
     post<Appointment>(`/bookings/${id}/propose`, { proposedStartMs }),
   acceptBooking: (id: string) => post<Appointment>(`/bookings/${id}/accept`, {}),
-  // §4.6 — devretme: akış eskiden TAMAMEN istemcideydi, her açılışta kayboluyordu.
-  reassignBooking: (token: string, id: string, uzmanName: string, proId?: string) =>
-    post<Appointment>(`/bookings/${id}/reassign`, { uzmanName, proId }, token),
   // §7.3 — uzmanın müşteri hakkındaki gizli sinyali; sunucuda saklanır ve
   // MÜŞTERİYE hiç gönderilmez.
   setCustomerSignal: (token: string, id: string, signal: 'up' | 'down') =>
     post<Appointment>(`/bookings/${id}/customer-signal`, { signal }, token),
-  acceptReassignApi: (token: string, id: string) =>
-    post<Appointment>(`/bookings/${id}/reassign/accept`, {}, token),
-  rejectReassignApi: (token: string, id: string) =>
-    post<Appointment>(`/bookings/${id}/reassign/reject`, {}, token),
   // §4.2/§4.4 — depozito/iade döngüsü (backend'e taşındı)
   submitDepositReceipt: (id: string, receiptUri: string) =>
     post<Appointment>(`/bookings/${id}/deposit-receipt`, { receiptUri }),
-  confirmDepositReceipt: (id: string) => post<Appointment>(`/bookings/${id}/confirm-receipt`, {}),
   // §4.10 — iade talebi: hesap bilgisiyle admin kuyruğuna düşer.
   iadeTalep: (id: string, payoutInfo: string) =>
     post<{ ok: boolean; amount: number }>(`/bookings/${id}/refund-request`, { payoutInfo }),
   // §4.6 — erteleme: yeni slot uzmana Kabul/Red talebi olarak gider.
   rescheduleBooking: (id: string, startMs: number) =>
     post<Appointment>(`/bookings/${id}/reschedule`, { startMs }),
-  freeCancelBooking: (id: string, reason?: string) =>
-    post<Appointment>(`/bookings/${id}/free-cancel`, reason ? { reason } : {}),
-  uploadRefundReceiptApi: (id: string, receiptUri: string) =>
-    post<Appointment>(`/bookings/${id}/refund-receipt`, { receiptUri }),
-  confirmRefundApi: (id: string) => post<Appointment>(`/bookings/${id}/confirm-refund`, {}),
   disputeBookingApi: (id: string) => post<Appointment>(`/bookings/${id}/dispute`, {}),
   // §4.4-b — uzman gelmedi: iade + uzman komisyon borcu (backend)
   counterBooking: (id: string, proposedStartMs: number) =>

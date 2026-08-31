@@ -1019,6 +1019,11 @@ export const tr = {
   // Randevu tamamlama akışı
   'booking.schedule.title': 'Saat seç',
   'booking.schedule.day': 'Gün',
+  'booking.schedule.services': 'Hizmetler',
+  'booking.schedule.summary': 'Özet',
+  'booking.schedule.total_time': 'Toplam süre',
+  'booking.schedule.total': 'Toplam tutar',
+  'common.min': 'dk',
   'booking.schedule.time': 'Saat',
   'booking.schedule.datetime': 'Tarih ve saat',
   'booking.schedule.confirm': 'Randevuyu onayla',

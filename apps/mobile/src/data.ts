@@ -943,7 +943,14 @@ export interface Appointment {
   reminded24?: boolean; // §4.1 — 24 saat hatırlatması gönderildi
   reminded2?: boolean; // §4.5 — 1 saat hatırlatması gönderildi
   reminded30?: boolean; // §4.5 — 30 dakika hatırlatması gönderildi
-  reassignedFrom?: string; // §4.5 — ayrılan uzmanın adı (yeni uzman uzmanName'de)
+  /**
+   * §4.1.1 — randevuda seçilen hizmetlerin ADLARI.
+   *
+   * Fiyat ve süre burada TAŞINMIYOR: sunucu bu adları uzmanın kayıtlı hizmet
+   * listesiyle eşleyip toplamı kendisi hesaplıyor. İstemcinin gönderdiği
+   * tutara güvenmek, müşterinin kendi depozitosunu belirlemesi olurdu.
+   */
+  serviceNames?: string[];
   providerSignal?: 'up' | 'down'; // §7.3 — uzmanın kullanıcıya GİZLİ sinyali (kamuya kapalı)
   customerTrusted?: boolean; // §7.3 — POZİTİF rozet: yüksek tamamlanma oranlı "Güvenilir müşteri" (negatif asla)
   // §10 gizlilik — SALONUN uzman için aldığı offline randevu. Yalnız bunlar salon panelinde görünür;

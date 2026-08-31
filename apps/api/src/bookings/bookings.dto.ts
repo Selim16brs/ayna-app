@@ -25,6 +25,15 @@ export const createBookingSchema = z.object({
   startMs: z.number().int().optional(),
   durationMin: z.number().int().positive().max(1440).optional(),
   price: z.number().nonnegative(),
+  /**
+   * §4.1.1 — "Uzmanın hizmet listesinden 1 VEYA BİRDEN FAZLA hizmet. Toplam
+   * süre = seçilen hizmetlerin süre toplamı."
+   *
+   * Yalnızca AD listesi taşınıyor: fiyat ve süre uzmanın kayıtlı hizmet
+   * listesinden SUNUCUDA okunuyor. İstemcinin gönderdiği tutara güvenmek,
+   * müşterinin kendi depozitosunu belirlemesi demekti.
+   */
+  serviceNames: z.array(z.string().min(1).max(120)).min(1).max(10).optional(),
   status: z
     // Liste `@ayna/domain`den TÜRETİLİYOR (brief §3). Elle yazılsaydı şema ile
     // durum makinesi ayrışır ve API, makinenin tanımadığı bir durumu kabul

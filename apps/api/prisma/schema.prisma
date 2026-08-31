@@ -249,6 +249,11 @@ model Booking {
   userId            String?       @map("user_id") @db.Uuid
   source            BookingSource
   service           String
+  /// §4.1.1 — çoklu hizmet seçimi: [{ name, price, durationMin }].
+  /// `service` insan okuması için birleşik etiket, `price`/`durationMin` ise
+  /// TOPLAM; burada dökümü duruyor ki özet ekranı ve panel kalem kalem
+  /// gösterebilsin. Tutarlar SUNUCUDA hesaplanır.
+  servicesJson      Json?         @map("services_json")
   proId             String?       @map("pro_id")
   proName           String        @map("pro_name")
   proImage          String        @map("pro_image")
@@ -304,6 +309,14 @@ model Booking {
   /// birer hatırlatma; sayaç olmadan zamanlayıcı her turda (5 dk) tekrar
   /// gönderir ve uzmanı spam'lardı.
   responseReminders Int           @default(0) @map("response_reminders")
+  /// Brief §4.5 — gönderilmiş bekleme-dönemi hatırlatmalarının BİT MASKESİ:
+  /// 1 = ücretsiz iptal eşiği son şans · 2 = 1 saat kala · 4 = 30 dakika kala
+  /// 8 = depozito süresi bitmeden son uyarı (§6).
+  ///
+  /// Tek sayı, çünkü zamanlayıcı 5 dakikada bir dönüyor: hangi hatırlatmanın
+  /// gittiğini saklamayan her tasarım aynı push'u turda bir tekrarlar. Her
+  /// hatırlatmaya ayrı kolon açmak da beş kolon ve beş migration demekti.
+  gunHatirlatmalari Int           @default(0) @map("gun_hatirlatmalari")
   refundReceiptUri  String?       @map("refund_receipt_uri") // uzmanın iade dekontu
   depositDeadline   DateTime?     @map("deposit_deadline") @db.Timestamptz(6) // dekont son yükleme
   depositForfeited  Boolean       @default(false) @map("deposit_forfeited") // geç iptal/no-show: kapora yandı

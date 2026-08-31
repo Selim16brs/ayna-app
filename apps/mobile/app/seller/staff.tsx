@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
 import { STAFF_SERVICES } from '../../src/data';
 import { useLocale } from '../../src/locale';
-import { useSalonStaff } from '../../src/staff';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -17,8 +16,7 @@ export default function StaffDetailScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const reassignStaffBookings = useStore((s) => s.reassignStaffBookings);
-  const { staff: staffPool } = useSalonStaff(); // gerçek kadro (devir hedefi buradan)
+  const cikanUzmanRandevulari = useStore((s) => s.cikanUzmanRandevulari);
   const p = useLocalSearchParams<{
     name?: string;
     image?: string;
@@ -26,18 +24,18 @@ export default function StaffDetailScreen() {
     rating?: string;
   }>();
 
-  // §4.5 — uzmanı kadrodan çıkar → gelecek randevuları başka uzmana devret (sessiz silme YASAK)
+  // Uzmanı kadrodan çıkar → açık randevuları UZMAN İPTALİ olarak kapanır.
+  // Devretme kaldırıldı: müşteriyi seçtiği kişiden başkasına habersiz
+  // yönlendirmek brief'in akışında yok. Sessiz silme yine yasak.
   function removeFromTeam() {
     const name = p.name ?? '';
-    // Devir hedefi: gerçek kadrodan bir başka uzman (yoksa boş — randevular devredilmeden uyarı)
-    const fallback = staffPool.find((s) => s.name !== name)?.name ?? '';
     Alert.alert(t('seller.staff.remove_confirm'), t('seller.staff.remove_desc'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('seller.staff.remove'),
         style: 'destructive',
         onPress: () => {
-          const count = reassignStaffBookings(name, fallback);
+          const count = cikanUzmanRandevulari(name);
           Alert.alert(count > 0 ? t('seller.staff.reassigned') : t('seller.staff.removed'));
           router.back();
         },

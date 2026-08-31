@@ -239,9 +239,17 @@ export class BookingsService {
     // §5.3 — zaman pencereleri admin ayarından; kod içine gömülü değil.
     const windows = await loadWindows(this.prisma);
     // id istemciden gelir → upsert ile idempotent (tekrar gönderim güvenli)
+    // §4.1.1 — ÇOKLU HİZMET. Toplam süre ve tutar, uzmanın KAYITLI hizmet
+    // listesinden sunucuda hesaplanıyor: istemciden gelen fiyata güvenmek,
+    // müşterinin kendi depozitosunu belirlemesi demekti.
+    const secilen = await this.secilenHizmetler(input.proId ?? null, input.serviceNames);
+    const toplamFiyat = secilen.reduce((t, h) => t + h.price, 0);
+    const toplamSure = secilen.reduce((t, h) => t + h.durationMin, 0);
+
     const data = {
       source: input.source,
-      service: input.service,
+      service: secilen.length ? secilen.map((h) => h.name).join(' + ') : input.service,
+      ...(secilen.length ? { servicesJson: secilen } : {}),
       proId: input.proId ?? null,
       proName: input.proName,
       proImage: input.proImage,
@@ -254,8 +262,9 @@ export class BookingsService {
       dateLabel: input.dateLabel ?? deriveDateLabel(input.startMs),
       inDays: input.inDays ?? deriveInDays(input.startMs),
       startAt: input.startMs ? new Date(input.startMs) : null,
-      durationMin: input.durationMin ?? null,
-      price: offerPrice ?? input.price,
+      durationMin: toplamSure || (input.durationMin ?? null),
+      // Kampanya fiyatı > çoklu hizmet toplamı > istemcinin gönderdiği tutar.
+      price: offerPrice ?? (toplamFiyat || input.price),
       // Brief §4.1–4.2: talep gönderilince ONAY_BEKLIYOR doğar ve slot kilitlenir.
       status: input.status ?? 'onay_bekliyor',
       ...(input.offerId ? { offerId: input.offerId } : {}),
@@ -355,6 +364,49 @@ export class BookingsService {
 
   // Talebin muhatapları: bağımsız uzman (Specialist.proId) VE/VEYA salon sahibi
   // (Business.professionalId) + salonda belirli uzman seçildiyse o üye.
+  /**
+   * §4.1.1 — seçilen hizmet adlarını uzmanın KAYITLI listesiyle eşler.
+   *
+   * Eşleşmeyen ad sessizce atılır: uzmanın sunmadığı bir hizmet üzerinden
+   * randevu doğması, hem fiyatı hem süreyi uydurmak olurdu. Hiçbiri
+   * eşleşmezse boş döner ve çağıran eski tek-hizmet yoluna düşer.
+   */
+  private async secilenHizmetler(
+    proId: string | null,
+    adlar?: string[],
+  ): Promise<{ name: string; price: number; durationMin: number }[]> {
+    if (!proId || !adlar?.length) return [];
+    const pro = await this.prisma.professional.findUnique({
+      where: { id: proId },
+      select: { servicesJson: true },
+    });
+    if (!pro?.servicesJson) return [];
+    let kayitli: unknown;
+    try {
+      kayitli = JSON.parse(pro.servicesJson);
+    } catch {
+      return [];
+    }
+    if (!Array.isArray(kayitli)) return [];
+    const bul = (ad: string) =>
+      (kayitli as Record<string, unknown>[]).find(
+        (x) => !!x && typeof x === 'object' && String(x.name ?? '') === ad,
+      );
+    const sonuc: { name: string; price: number; durationMin: number }[] = [];
+    // Aynı hizmet iki kez seçilemez (liste tek seçimli kutucuklardan geliyor);
+    // yine de yinelenen ad gelirse bir kez sayılır.
+    for (const ad of [...new Set(adlar)]) {
+      const h = bul(ad);
+      if (!h) continue;
+      sonuc.push({
+        name: String(h.name ?? ad),
+        price: Number(h.price ?? 0),
+        durationMin: Number(h.durationMin ?? 60),
+      });
+    }
+    return sonuc;
+  }
+
   private async notifyNewRequest(b: Booking) {
     const targets = new Set<string>();
     const sp = await this.prisma.specialist.findFirst({ where: { proId: b.proId! } });

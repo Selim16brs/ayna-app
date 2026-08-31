@@ -107,6 +107,7 @@ export interface AddBookingInput {
   durationMin: number;
   price: number;
   offerId?: string; // §keşif Modül 2 — kampanya bağlantısı
+  serviceNames?: string[]; // §4.1.1 — çoklu hizmet seçimi
   status?: Appointment['status'];
 }
 
@@ -320,14 +321,11 @@ interface State {
   proposeAlternative: (id: string, startMs: number) => void; // uzman alternatif saat önerir
   rescheduleBooking: (id: string, startMs: number) => void; // §4.4 — KULLANICI yeni saat önerir (iptal yerine)
   submitReceipt: (id: string, receiptUri: string) => void; // kullanıcı dekont yükler
-  confirmReceipt: (id: string) => void; // uzman "Aldım, onaylıyorum" → randevu KESİN
   markNoShow: (id: string) => void; // §4.4 — uzman müşteriyi "gelmedi" işaretler (kapora yanar)
   completeBooking: (id: string) => void; // §4.1.7 — uzman hizmeti tamamladı → değerlendirme daveti
   reportProviderNoShow: (id: string) => void; // §4.4-b — uzman gelmedi → müşteriye 1000 puan telafi
   giveCustomerSignal: (id: string, signal: 'up' | 'down') => void; // §7.3 — gizli operasyonel sinyal
   // §4.4 — iade + itiraz
-  uploadRefundReceipt: (id: string, receiptUri: string) => void; // uzman iade dekontu yükler
-  confirmRefund: (id: string) => void; // kullanıcı "iadeyi aldım" → kayıt kapanır
   disputeBooking: (id: string) => void; // taraflar itiraz açar (destek/admin kuyruğu)
   checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
   expireDeposits: () => void; // §4.4 — depozito süresi dolan randevuları düşürür
@@ -365,9 +363,8 @@ interface State {
     },
   ) => Promise<boolean>;
   // §4.5 — uzman ayrılığında randevu devri (sessiz silme YASAK)
-  reassignStaffBookings: (oldUzman: string, newUzman: string) => number; // devredilen randevu sayısı
-  acceptReassignment: (id: string) => void; // kullanıcı yeni uzmanı onaylar
-  rejectReassignment: (id: string) => void; // kullanıcı reddeder → iptal
+  /** Kadrodan çıkan uzmanın açık randevularını iptal eder; iptal edilen sayıyı döner. */
+  cikanUzmanRandevulari: (uzmanAdi: string) => number;
   // §7.1 — çift puanlama (uzman + ops. salon) + alt kırılım etiketleri
   reviewBooking: (
     id: string,
@@ -911,10 +908,11 @@ export const useStore = create<State>()(
           proImage: input.proImage,
           ...(input.uzmanName ? { uzmanName: input.uzmanName } : {}),
           ...(input.offerId ? { offerId: input.offerId } : {}),
+          ...(input.serviceNames?.length ? { serviceNames: input.serviceNames } : {}),
           startMs: input.startMs,
           durationMin: input.durationMin,
           price: input.price,
-          // §1.6 — yeni randevu uzman onayı bekler
+          // §4.1/§4.2 — yeni randevu uzman onayı bekler; slot o an kilitlenir.
           status: input.status ?? 'onay_bekliyor',
           // §4.1.3 — uzman yanıt son anı (yalnız onay bekleyen taleplerde)
           ...((input.status ?? 'onay_bekliyor') === 'onay_bekliyor'
@@ -1090,11 +1088,11 @@ export const useStore = create<State>()(
               : x,
           ),
         }));
-        // §4.4 — backend'de doğru geçiş: iade akışı → free-cancel; aksi → düz iptal
-        // Sunucu reddederse yereli SUNUCU GERÇEĞİNE geri çek (UI asla yalan durumda kalmaz)
-        const restore = () => void get().hydrateBookings();
-        if (next === 'iptal_musteri') void api.freeCancelBooking(id, reason).catch(restore);
-        else void api.cancelBooking(id, reason).catch(restore);
+        // §4.7 — İPTAL TEK UÇTAN. Eskiden "serbest iptal" ayrı bir uca gidiyordu
+        // ve iki kural iki yerde yaşıyordu; depozitonun iade mi yanma mı olduğu
+        // artık yalnız SUNUCUDA, 3 saat eşiğine bakılarak belirleniyor.
+        // Sunucu reddederse yereli SUNUCU GERÇEĞİNE geri çek (UI asla yalan durumda kalmaz).
+        void api.cancelBooking(id, reason).catch(() => void get().hydrateBookings());
         if (b) {
           if (next === 'iptal_musteri')
             get().pushNotification({
@@ -1121,48 +1119,6 @@ export const useStore = create<State>()(
               route: `/booking/${id}`,
             });
         }
-      },
-
-      // §4.4 — uzman iade dekontunu yükler → kullanıcı "aldım" onayı beklenir
-      uploadRefundReceipt: (id, receiptUri) => {
-        set((s) => ({
-          bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'iptal_musteri', refundReceiptUri: receiptUri } : b,
-          ),
-        }));
-        void api.uploadRefundReceiptApi(id, receiptUri).catch(() => undefined); // §4.4 backend
-        const b = get().bookings.find((x) => x.id === id);
-        // §12.4 — iade dekontu admin anlaşmazlık kuyruğuna düşer (dekont görseliyle)
-        const token = get().token;
-        if (b && token)
-          void api
-            .fileDispute(token, {
-              bookingRef: id,
-              proName: b.proName,
-              service: b.service,
-              kind: 'refund',
-              amount: b.depositAmount ?? 0,
-              receiptUri,
-            })
-            .catch(() => undefined);
-        if (b)
-          get().pushNotification({
-            type: 'booking',
-            titleKey: 'notif.refund_uploaded',
-            bodyKey: 'notif.refund_uploaded_b',
-            params: { pro: b.proName },
-            dateLabel: 'Az önce',
-            icon: 'receipt-outline',
-            route: `/booking/${id}`,
-          });
-      },
-
-      // §4.4 — kullanıcı iadeyi aldı → kayıt kapanır
-      confirmRefund: (id) => {
-        set((s) => ({
-          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'iptal_musteri' } : b)),
-        }));
-        void api.confirmRefundApi(id).catch(() => undefined); // §4.4 backend
       },
 
       // §4.4 — taraflar itiraz açar (destek/admin kuyruğuna düşer)
@@ -1503,94 +1459,47 @@ export const useStore = create<State>()(
           return changed ? { demands } : {};
         }),
 
-      // §4.5 — uzman kadrodan çıkınca gelecek randevuları yeni uzmana devret (SESSİZ SİLME YASAK):
-      // her randevu reassigned_pending olur, kullanıcı yeniden onaylar. Devredilen sayıyı döndürür.
-      reassignStaffBookings: (oldUzman, newUzman) => {
+      /**
+       * Uzman kadrodan çıkınca AÇIK randevularına ne olur?
+       *
+       * DEVRETME KALDIRILDI: brief'te böyle bir akış yok ve §0 "salon rolü bu
+       * akışta yoktur" diyor. Müşterinin randevusunu haberi olmadan başka bir
+       * uzmana taşımak, seçtiği kişiden başkasına yönlendirmek olurdu.
+       *
+       * Yerine: randevular UZMAN İPTALİ olarak kapanır. Sessiz silme yine
+       * yasak — her randevu sunucuda da iptal edilir, depozito ödendiyse §4.10
+       * iade hakkı doğar ve müşteriye bildirim gider. İptal edilen sayı döner.
+       */
+      cikanUzmanRandevulari: (uzmanAdi) => {
         const now = Date.now();
-        const affected = get().bookings.filter(
+        const etkilenen = get().bookings.filter(
           (b) =>
-            b.uzmanName === oldUzman &&
+            b.uzmanName === uzmanAdi &&
             b.startMs > now &&
-            // Slot tutan durumlar — brief §4.2. Tek tek saymak yerine
-            // domain listesi kullanılıyor; ayrışırsa çakışma kontrolü bozulur.
             SLOT_HOLDING_STATES.includes(b.status as never),
         );
-        if (affected.length === 0) return 0;
+        if (etkilenen.length === 0) return 0;
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            affected.some((a) => a.id === b.id)
-              ? {
-                  ...b,
-                  status: 'iptal_musteri',
-                  reassignedFrom: oldUzman,
-                  uzmanName: newUzman,
-                }
+            etkilenen.some((a) => a.id === b.id)
+              ? { ...b, status: 'iptal_uzman' as const, cancelReason: 'Uzman kadrodan ayrıldı' }
               : b,
           ),
         }));
-        // SUNUCUYA YAZ: devretme yalnız yereldeydi, salon uygulamayı kapatıp
-        // açınca randevular eski uzmanda görünüyordu ve müşteriye giden onay
-        // isteği hiç var olmuyordu.
-        const token = get().token;
-        if (token)
-          for (const b of affected)
-            void api.reassignBooking(token, b.id, newUzman).catch(() => undefined);
-        for (const b of affected)
+        for (const b of etkilenen) {
+          // Sunucu kararı verir: iptali kim yaptı, depozito iade mi edilecek.
+          void api.cancelBooking(b.id, 'Uzman kadrodan ayrıldı').catch(() => undefined);
           get().pushNotification({
             type: 'booking',
-            titleKey: 'notif.reassigned',
-            bodyKey: 'notif.reassigned_b',
-            params: { pro: b.proName, old: oldUzman, new: newUzman },
+            titleKey: 'notif.cancel_refund',
+            bodyKey: 'notif.cancel_refund_b',
+            params: { pro: b.proName },
             dateLabel: 'Az önce',
-            icon: 'swap-horizontal-outline',
+            icon: 'alert-circle-outline',
             route: `/booking/${b.id}`,
           });
-        return affected.length;
-      },
-
-      // §4.5 — kullanıcı yeni uzmanı kabul eder → randevu tekrar onaylı
-      acceptReassignment: (id) => {
-        const onceki = get().bookings.find((b) => b.id === id);
-        set((s) => ({
-          bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'kesinlesti', reassignedFrom: undefined } : b,
-          ),
-        }));
-        // SUNUCUYA YAZ: durum yalnız yereldeydi, hydrate eski hâli geri
-        // getiriyordu — müşteri onayladığını sanıyor, randevu onaysız kalıyordu.
-        const token = get().token;
-        if (!token || !onceki) return;
-        void api.acceptReassignApi(token, id).catch(() => {
-          set((s) => ({ bookings: s.bookings.map((b) => (b.id === id ? onceki : b)) }));
-        });
-      },
-
-      // §4.5 — kullanıcı reddeder → iptal (depozito ödediyse iade akışı ayrıca yürür)
-      // §4.5 — kullanıcı yeni uzmanı reddeder. Depozito ödediyse KUSURSUZ iptal (uzman ayrıldı)
-      // → iade akışı; ödemediyse düz iptal. (Önceki hata: her koşulda kapora yakılıyordu.)
-      rejectReassignment: (id) => {
-        const b = get().bookings.find((x) => x.id === id);
-        const paid = b?.status === 'iptal_musteri' && b.depositAmount != null;
-        set((s) => ({
-          bookings: s.bookings.map((x) =>
-            x.id === id
-              ? {
-                  ...x,
-                  status: paid ? 'iptal_musteri' : 'iptal_musteri',
-                  reassignedFrom: undefined,
-                }
-              : x,
-          ),
-        }));
-        // SUNUCUYA YAZ. Bu bir PARA kararı: kapora iade mi edilecek yoksa
-        // randevu düz mü iptal olacak? Kararı istemci veriyordu ve sunucuya hiç
-        // ulaşmıyordu. Sunucuda kapora ASLA yanmaz — değişiklik müşteriden
-        // değil sağlayıcıdan geldi.
-        const token = get().token;
-        if (!token || !b) return;
-        void api.rejectReassignApi(token, id).catch(() => {
-          set((s) => ({ bookings: s.bookings.map((x) => (x.id === id ? b : x)) }));
-        });
+        }
+        return etkilenen.length;
       },
 
       // §1.6/§4.1 — kullanıcı uzmanın önerdiği alternatif saati kabul eder → DEPOZİTO adımı
@@ -1752,25 +1661,6 @@ export const useStore = create<State>()(
             params: { pro: b.proName },
             dateLabel: 'Az önce',
             icon: 'receipt-outline',
-            route: `/booking/${id}`,
-          });
-      },
-
-      // §4.3 adım 3 — uzman dekontu görür → "Aldım, onaylıyorum" → randevu KESİN
-      confirmReceipt: (id) => {
-        set((s) => ({
-          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'kesinlesti' } : b)),
-        }));
-        void api.confirmDepositReceipt(id).catch(() => undefined); // §4.2 backend
-        const b = get().bookings.find((x) => x.id === id);
-        if (b)
-          get().pushNotification({
-            type: 'booking',
-            titleKey: 'notif.confirmed',
-            bodyKey: 'notif.confirmed_b',
-            params: { pro: b.proName, slot: formatSlotTr(b.startMs) },
-            dateLabel: 'Az önce',
-            icon: 'checkmark-circle-outline',
             route: `/booking/${id}`,
           });
       },
