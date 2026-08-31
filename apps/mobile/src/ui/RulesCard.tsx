@@ -21,11 +21,10 @@ export function RulesCard({ price }: { price?: number }) {
   const depositLine =
     price && price > 0
       ? kzt(localDeposit(price, rates))
-      : fillParams(t('rules.deposit_rule'), {
-          pct: String(rates.depositPct ?? 10),
-          min: kzt(rates.depositMin ?? 1000),
-          max: kzt(rates.depositMax ?? 5000),
-        });
+      : // Alt/üst sınır KALDIRILDI — kural yalnız yüzde. Fiyat bilinmiyorsa
+        // oranı söylemek yeterli; "en az X en çok Y" demek olmayan bir kuralı
+        // anlatmak olurdu.
+        fillParams(t('rules.deposit_rule'), { pct: String(rates.depositPct ?? 10) });
 
   const rows = [
     `${t('rules.deposit')}: ${depositLine}`,

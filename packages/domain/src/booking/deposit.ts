@@ -14,80 +14,37 @@
 // 20.000 ₸'lik bir hizmette kapora 2.000 ₸ olur.
 
 export type DepositRules = {
-  /** Yüzde — 10 => %10. */
+  /** Yüzde — 10 => %10. TEK parametre budur. */
   pct: number;
-  /** Alt sınır (₸). Fiyat ne kadar düşük olursa olsun kapora bunun altına inmez. */
-  minKzt: number;
-  /** Üst sınır (₸). Fiyat ne kadar yüksek olursa olsun kapora bunu aşmaz. */
-  maxKzt: number;
-  /** Yuvarlama adımı (₸). Kullanıcıya "1.556 ₸" değil "1.600 ₸" gösterilir. */
-  stepKzt: number;
-  /**
-   * Depozito fiyatın EN FAZLA yüzde kaçı olabilir.
-   *
-   * Karar K2 (31.08.2026): depozito bir ÖN ödemedir; kalanı hizmetten sonra
-   * ödenir. Yani her zaman bir kalan olmalıdır.
-   *
-   * Bu tavan olmadan alt sınır (`minKzt`) fiyatın kendisini aşabiliyordu:
-   *   1.000 ₸ hizmet → depozito 1.000 ₸  (tamamı, kalan 0)
-   *     800 ₸ hizmet → depozito 1.000 ₸  (fiyattan FAZLA, kalan −200)
-   * Ekran kalanı `Math.max(0, ...)` ile gösterdiği için eksi değer görünmüyor,
-   * kullanıcı da "depozito diye ücretin tamamı alınıyor" diyordu.
-   */
-  maxSharePct: number;
 };
 
-export const DEFAULT_DEPOSIT_RULES: DepositRules = {
-  pct: 10,
-  minKzt: 1000,
-  maxKzt: 5000,
-  stepKzt: 100,
-  maxSharePct: 50,
-};
+export const DEFAULT_DEPOSIT_RULES: DepositRules = { pct: 10 };
 
 /** Admin ayarlarının anahtarları — servisler bu listeyi tek sorguda okur. */
-export const DEPOSIT_SETTING_KEYS = [
-  'rate.deposit_pct',
-  'rate.deposit_min',
-  'rate.deposit_max',
-  'rate.deposit_max_share_pct',
-] as const;
+export const DEPOSIT_SETTING_KEYS = ['rate.deposit_pct'] as const;
 
 /**
  * Hizmet bedelinden kapora tutarını hesaplar.
  *
- * Sonuç her zaman tam sayı ₸'dir ve `stepKzt`'nin katıdır. Sınırlar adımdan
- * bağımsız uygulanır: alt/üst sınır adımın katı olmasa bile tam olarak
- * korunur — admin 1.250 ₸ alt sınır girdiyse kapora 1.250 ₸'nin altına inmez.
- *
- * Geçersiz girdi (NaN, sonsuz, sıfır/negatif fiyat veya oran) alt sınıra
- * düşer: kapora akışını sessizce sıfırlayıp randevunun kaporasız doğmasındansa
- * taban tutar istenir.
+ * Sonuç tam sayı ₸'dir. Kalan bakiye (%90) hizmetten sonra ödenir.
  */
 export function depositFor(price: number, rules: DepositRules = DEFAULT_DEPOSIT_RULES): number {
-  const min = Math.max(0, Math.round(rules.minKzt));
-  // Üst sınır alt sınırın altına ayarlanmışsa (yanlış admin girdisi) alt sınır
-  // kazanır — aksi hâlde clamp ters çalışır ve min'i de ezerdi.
-  const max = Math.max(min, Math.round(rules.maxKzt));
-  const step = Number.isFinite(rules.stepKzt) && rules.stepKzt >= 1 ? Math.round(rules.stepKzt) : 1;
-
-  if (!Number.isFinite(price) || price <= 0) return min;
-  if (!Number.isFinite(rules.pct) || rules.pct <= 0) return min;
-
-  const raw = (price * rules.pct) / 100;
-  const stepped = Math.round(raw / step) * step;
-  const clamped = Math.min(max, Math.max(min, stepped));
-
-  // K2 — TAVAN: depozito fiyatın belirli bir payını aşamaz, çünkü kalan mutlaka
-  // hizmetten sonra ödenecek. Alt sınır fiyatın üstüne çıkabildiği için bu
-  // tavan clamp'ten SONRA uygulanır; aksi hâlde min onu yine ezerdi.
-  const pay = Number.isFinite(rules.maxSharePct) ? rules.maxSharePct : 100;
-  if (pay <= 0 || pay >= 100) return clamped; // tavan kapalı → eski davranış
-  const tavan = Math.floor((price * pay) / 100);
-  if (clamped <= tavan) return clamped;
-  // Tavan adımdan küçükse adıma yuvarlamak 0 üretirdi (ucuz hizmette depozito
-  // tamamen kaybolur); o durumda tavanın kendisi kullanılır.
-  return tavan >= step ? Math.floor(tavan / step) * step : tavan;
+  // TEK KURAL (kurucu, 31.08.2026): "kullanıcı randevu esnasında toplam işlem
+  // ücretinin %10'unu öder. geri kalan bakiye ise uzman işlemi bitirdikten
+  // sonra ödenir."
+  //
+  // ALT/ÜST SINIR VE TAVAN KALDIRILDI. Onlar yüzdenin üstüne binen İKİNCİ bir
+  // kuraldı ve sonucu yüzde olmaktan çıkarıyordu:
+  //   ·  1.000 ₸ hizmet → alt sınır 1.000 ₸ devreye girip TAMAMINI istiyordu
+  //   · 100.000 ₸ hizmet → üst sınır 5.000 ₸ ile %5'e düşüyordu
+  // Kullanıcıya "%10" denip başka tutar almak, para akışında birden fazla
+  // kural demekti.
+  if (!Number.isFinite(price) || price <= 0) return 0;
+  const pct = Number.isFinite(rules.pct) && rules.pct > 0 ? rules.pct : DEFAULT_DEPOSIT_RULES.pct;
+  // 100 ₸'ye YUVARLAMA DA KALDIRILDI: 500 ₸'lik hizmette %10 = 50 ₸ iken
+  // yuvarlama 100 ₸ (yani %20) üretiyordu. Gösterimi güzelleştirmek için
+  // yüzdeyi bozmak, "%10" demeyi yalan yapar. Tam ₸'ye yuvarlanır, o kadar.
+  return Math.min(price, Math.max(0, Math.round((price * pct) / 100)));
 }
 
 /**
@@ -99,15 +56,6 @@ export function depositRulesFrom(
   settings: ReadonlyArray<{ key: string; intValue: number | null }>,
   fallback: DepositRules = DEFAULT_DEPOSIT_RULES,
 ): DepositRules {
-  const val = (k: string) => {
-    const v = settings.find((s) => s.key === k)?.intValue;
-    return typeof v === 'number' && Number.isFinite(v) ? v : null;
-  };
-  return {
-    pct: val('rate.deposit_pct') ?? fallback.pct,
-    minKzt: val('rate.deposit_min') ?? val('rate.deposit_kzt') ?? fallback.minKzt,
-    maxKzt: val('rate.deposit_max') ?? fallback.maxKzt,
-    stepKzt: fallback.stepKzt,
-    maxSharePct: val('rate.deposit_max_share_pct') ?? fallback.maxSharePct,
-  };
+  const v = settings.find((s) => s.key === 'rate.deposit_pct')?.intValue;
+  return { pct: typeof v === 'number' && Number.isFinite(v) ? v : fallback.pct };
 }

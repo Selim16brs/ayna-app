@@ -435,12 +435,22 @@ export class BookingsService {
   // Faz 2 — uzman beyanı TEK TARAFLI kesinleşmez: completed_pending + müşteri teyit
   // penceresi (policy.confirm_hours, varsayılan 24). Pencere sonunda itiraz yoksa
   // scheduler otomatik kesinleştirir; itiraz varsa finansal durum donar (disputed).
+  /**
+   * ADIM 1 — uzman "işlemi bitirdim" der.
+   *
+   * Randevu anında hizmet bedelinin YALNIZ %10'u alındı; kalan bakiye
+   * hizmetten sonra ödenir. Bu düğme müşteride "ödemeyi yap" adımını açar.
+   *
+   * Eskiden burada doğrudan `completed_pending`e geçiliyordu, yani para
+   * el değiştirmeden randevu "tamamlandı" sayılıyordu ve komisyon saati
+   * uzman parayı almadan işlemeye başlıyordu.
+   */
   async complete(id: string, actorId?: string) {
     await this.assertParty(id, actorId, 'provider');
     const cfg = await this.prisma.setting.findUnique({ where: { key: 'policy.confirm_hours' } });
     const hours = cfg?.intValue ?? 24;
     const row = await this.transition(id, {
-      status: 'completed_pending',
+      status: 'balance_pending',
       finalizeDeadline: new Date(Date.now() + hours * 60 * 60 * 1000),
     });
     void this.prisma.booking.findUnique({ where: { id } }).then((b) => {
@@ -448,6 +458,47 @@ export class BookingsService {
         void this.push.sendTemplate(b.userId, 'booking.completed_confirm', undefined, {
           route: `/booking/${id}`,
         });
+    });
+    return row;
+  }
+
+  /** ADIM 2 — müşteri "ödemeyi yaptım" der; uzmanda "ödemeyi aldım" açılır. */
+  async balancePaid(id: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'owner');
+    const row = await this.transition(id, { status: 'balance_submitted' });
+    void this.expertUserIdFor(id).then((uid) => {
+      if (!uid) return;
+      void this.push
+        .sendToUser(uid, {
+          title: 'Müşteri ödemeyi yaptığını bildirdi',
+          body: 'Parayı aldıysan onayla — komisyon süren o an başlar.',
+          data: { route: `/booking/${id}` },
+        })
+        .catch(() => undefined);
+    });
+    return row;
+  }
+
+  /**
+   * ADIM 3 — uzman "ödemeyi aldım" der. Randevu KAPANIR ve bu anda:
+   *   · komisyon faturası doğar, 45 dakikalık ödeme süresi BAŞLAR,
+   *   · müşterinin AYNA puanı aktifleşir.
+   *
+   * İkisi de bu ana bağlı: para gerçekten el değiştirmeden ne komisyon
+   * istenebilir ne de puan verilebilir.
+   */
+  async balanceReceived(id: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'provider');
+    const row = await this.transition(id, { status: 'completed' });
+    void this.commissions.invoiceForBookings([id]).catch(() => undefined);
+    void this.prisma.booking.findUnique({ where: { id } }).then(async (b) => {
+      if (!b?.userId) return;
+      await grantCompletionRewards(this.prisma, [b]).catch(() => undefined);
+      void this.push.sendToUser(b.userId, {
+        title: 'Teşekkürler 💛',
+        body: 'Deneyimini değerlendir — 30 saniye sürer',
+        data: { route: `/review/new?id=${id}` },
+      });
     });
     return row;
   }

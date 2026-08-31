@@ -88,6 +88,8 @@ const STATUS_LABEL: Record<BookingStatus, MessageKey> = {
   waitlist: 'booking.status.waitlist',
   expired: 'booking.status.expired',
   completed_pending: 'booking.status.completed_pending',
+  balance_pending: 'booking.status.balance_pending',
+  balance_submitted: 'booking.status.balance_submitted',
   sync_conflict: 'booking.status.sync_conflict',
 };
 

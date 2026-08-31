@@ -438,7 +438,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'collections.item.offer': 'Акция',
   'rules.title': 'Правила записи — без сюрпризов',
   'rules.deposit': 'Депозит (закрепляет запись, вычитается из услуги)',
-  'rules.deposit_rule': '{pct}% от стоимости услуги (минимум {min}, максимум {max})',
+  'rules.deposit_rule': '{pct}% от стоимости услуги — депозит; остальное после услуги.',
   'rules.cancel_a': 'При отмене менее чем за',
   'rules.cancel_b': 'ч. до записи депозит сгорает; более ранняя отмена бесплатна.',
   'rules.noshow':
@@ -1736,6 +1736,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.sync_conflict_pick': 'Выбрать новое время',
   'booking.sync_conflict_drop': 'Удалить запись',
   'booking.status.completed_pending': 'Ожидает подтверждения',
+  'booking.status.balance_pending': 'Ожидается оплата',
+  'booking.status.balance_submitted': 'Ожидается подтверждение оплаты',
   'booking.confirm_completion': 'Подтвердить услугу',
   'booking.confirm_completion_hint':
     'Мастер отметил услугу выполненной. Подтвердите — запись зафиксируется; при проблеме откройте спор.',
@@ -1778,6 +1780,19 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.money.title': 'Разбор оплаты',
   'booking.money.service': 'Услуга',
   'booking.money.deposit': 'Депозит',
+  'booking.balance.pending_t': 'Ожидается остаток оплаты',
+  'booking.balance.pending_b': 'Мастер завершил услугу. Оплати оставшиеся {amount} и сообщи ниже.',
+  'booking.balance.pay': 'Я оплатил(а)',
+  'booking.balance.wait_t': 'Ожидается подтверждение мастера',
+  'booking.balance.wait_b':
+    'Мастер получил уведомление об оплате. После подтверждения запись закроется, а баллы активируются.',
+  'booking.balance.provider_wait_t': 'Ожидается оплата клиента',
+  'booking.balance.provider_wait_b': 'Клиенту отправлено уведомление об остатке {amount}.',
+  'booking.balance.provider_confirm_t': 'Клиент сообщил об оплате',
+  'booking.balance.provider_confirm_b':
+    'Если получил(а) деньги — подтверди. С этого момента начнётся 45-минутный срок оплаты комиссии AYNA.',
+  'booking.balance.received': 'Я получил(а) оплату',
+  'booking.balance.remaining': 'Остаток',
   'booking.money.will_earn': 'Начислим после услуги',
   'booking.money.onsite': 'На месте после услуги',
   'booking.money.note': 'Ни одна сумма не скрыта',

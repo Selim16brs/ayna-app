@@ -433,7 +433,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'collections.item.offer': 'Науқан',
   'rules.title': 'Жазылу ережелері — тосынсый жоқ',
   'rules.deposit': 'Депозит (жазылуды растайды, қызмет ақысынан шегеріледі)',
-  'rules.deposit_rule': 'қызмет құнының {pct}%-ы (кемінде {min}, ең көбі {max})',
+  'rules.deposit_rule': 'Қызмет құнының {pct}%-ы алдын ала; қалғаны қызметтен кейін.',
   'rules.cancel_a': 'Жазылуға',
   'rules.cancel_b': 'сағаттан аз қалғанда бас тартсаң, депозит күйеді; ертерек бас тарту тегін.',
   'rules.noshow': 'Келмесең (no-show) депозит маманда қалады және аккаунтыңа айыппұл жазылады.',
@@ -1727,6 +1727,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.sync_conflict_pick': 'Жаңа уақыт таңдау',
   'booking.sync_conflict_drop': 'Жазбаны өшіру',
   'booking.status.completed_pending': 'Растау күтілуде',
+  'booking.status.balance_pending': 'Төлем күтілуде',
+  'booking.status.balance_submitted': 'Төлем растауы күтілуде',
   'booking.confirm_completion': 'Қызметті растау',
   'booking.confirm_completion_hint':
     'Маман аяқталды деп белгіледі. Растасаңыз жазба бекітіледі; мәселе болса шағым жасаңыз.',
@@ -1770,6 +1772,20 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.money.title': 'Төлем бөлінісі',
   'booking.money.service': 'Қызмет',
   'booking.money.deposit': 'Депозит',
+  'booking.balance.pending_t': 'Қалған төлем күтілуде',
+  'booking.balance.pending_b':
+    'Маман қызметті аяқтады. Қалған {amount} сомасын төлеп, төменнен хабарла.',
+  'booking.balance.pay': 'Төлемді жасадым',
+  'booking.balance.wait_t': 'Маманның растауы күтілуде',
+  'booking.balance.wait_b':
+    'Төлем туралы хабарың маманға жіберілді. Растағанда жазылу жабылып, ұпайларың белсендіріледі.',
+  'booking.balance.provider_wait_t': 'Клиенттің төлемі күтілуде',
+  'booking.balance.provider_wait_b': 'Клиентке қалған {amount} сомасы туралы хабарлама жіберілді.',
+  'booking.balance.provider_confirm_t': 'Клиент төлегенін хабарлады',
+  'booking.balance.provider_confirm_b':
+    'Ақшаны алған болсаң растa. Растаған сәтте AYNA комиссиясы үшін 45 минуттық мерзімің басталады.',
+  'booking.balance.received': 'Төлемді алдым',
+  'booking.balance.remaining': 'Қалған сома',
   'booking.money.will_earn': 'Қызметтен кейін есептейміз',
   'booking.money.onsite': 'Қызметтен кейін орнында',
   'booking.money.note': 'Ешбір сома жасырын емес',

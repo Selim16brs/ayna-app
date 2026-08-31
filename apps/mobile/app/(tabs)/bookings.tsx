@@ -63,6 +63,14 @@ const makeStatus = (
     bg: colors.goldSoft,
     fg: colors.gold,
   },
+  // Para el değiştirme adımları — ikisi de EYLEM BEKLİYOR, o yüzden altın
+  // (bekleme) tonunda; tamamlanmış gibi gri göstermek yanıltıcı olurdu.
+  balance_pending: { key: 'booking.status.balance_pending', bg: colors.goldSoft, fg: colors.gold },
+  balance_submitted: {
+    key: 'booking.status.balance_submitted',
+    bg: colors.goldSoft,
+    fg: colors.gold,
+  },
   sync_conflict: { key: 'booking.status.sync_conflict', bg: colors.dangerSoft, fg: colors.danger },
 });
 

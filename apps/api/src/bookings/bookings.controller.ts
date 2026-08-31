@@ -90,6 +90,20 @@ export class BookingsController {
   }
 
   // §1.6 — onay/alternatif pazarlık döngüsü
+  // Müşteri: kalan bakiyeyi ödediğini bildirir
+  @Post(':id/balance-paid')
+  @UseGuards(JwtAuthGuard)
+  balancePaid(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.bookings.balancePaid(id, req.user!.id);
+  }
+
+  // Uzman: parayı aldığını teyit eder → randevu kapanır, komisyon saati başlar
+  @Post(':id/balance-received')
+  @UseGuards(JwtAuthGuard)
+  balanceReceived(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.bookings.balanceReceived(id, req.user!.id);
+  }
+
   @Post(':id/approve')
   @UseGuards(JwtAuthGuard)
   approve(@Req() req: AuthedRequest, @Param('id') id: string) {

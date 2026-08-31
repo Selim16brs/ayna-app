@@ -24,7 +24,6 @@ import {
   type DemandMode,
   type DemandRequest,
   type Promotion,
-  DEPOSIT_KZT,
   POINTS_SPEND_CAP_PCT,
   POINTS_UNLOCK_KZT,
   POINTS_EXPIRY_DAYS,
@@ -533,12 +532,8 @@ export const useStore = create<State>()(
       config: {
         rates: {
           commissionPct: 10, // kurucu kararı: online randevudan %10 (fetch başarısızsa fallback)
-          depositKzt: DEPOSIT_KZT,
           // K1 — oranlı kapora yedek değerleri (sunucu fetch'i başarısızsa)
           depositPct: 10,
-          depositMin: 1000,
-          depositMax: 5000,
-          depositMaxSharePct: 50,
           holdMinutes: 180,
           cancelWindowH: 3,
           lateCancelPct: 3,
@@ -2882,16 +2877,7 @@ export const inAudience = (n: { audience?: 'user' | 'seller' }, seller: boolean)
 // admin kuralları kullanılır; aksi hâlde bildirimde "1.000 ₸" yazıp ödeme ekranında
 // başka tutar istenirdi. Config gelmemişse fonksiyonun kendi varsayılanları geçerli.
 export const localDeposit = (price: number, rates: State['config']['rates']): number =>
-  depositFor(price, {
-    pct: rates.depositPct ?? DEFAULT_DEPOSIT_RULES.pct,
-    minKzt: rates.depositMin ?? DEFAULT_DEPOSIT_RULES.minKzt,
-    maxKzt: rates.depositMax ?? DEFAULT_DEPOSIT_RULES.maxKzt,
-    stepKzt: DEFAULT_DEPOSIT_RULES.stepKzt,
-    // K2 tavanı da SUNUCUDAN gelmeli: admin oranı değiştirdiğinde istemci
-    // varsayılanda kalırsa bildirimde bir tutar, ödeme ekranında başka bir
-    // tutar çıkar — bu dosyanın yukarıdaki yorumu tam bunu yasaklıyor.
-    maxSharePct: rates.depositMaxSharePct ?? DEFAULT_DEPOSIT_RULES.maxSharePct,
-  });
+  depositFor(price, { pct: rates.depositPct ?? DEFAULT_DEPOSIT_RULES.pct });
 
 // §12.8 — komisyon oranı SUNUCUDAN gelir. Burada eskiden "Platinum'da %8,5"
 // vardı; sunucu komisyonu hesaplarken membershipTier'ı hiç okumuyor, yani o

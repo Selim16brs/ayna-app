@@ -687,6 +687,9 @@ export const api = {
   approveBooking: (id: string) => post<Appointment>(`/bookings/${id}/approve`, {}),
   // Faz 2 — müşteri 'hizmet tamamlandı' teyidi
   confirmCompletionApi: (id: string) => post<Appointment>(`/bookings/${id}/confirm-completion`, {}),
+  // Para el değiştirme — müşteri "ödedim", uzman "aldım".
+  balancePaid: (id: string) => post<Appointment>(`/bookings/${id}/balance-paid`, {}),
+  balanceReceived: (id: string) => post<Appointment>(`/bookings/${id}/balance-received`, {}),
   proposeBooking: (id: string, proposedStartMs: number) =>
     post<Appointment>(`/bookings/${id}/propose`, { proposedStartMs }),
   acceptBooking: (id: string) => post<Appointment>(`/bookings/${id}/accept`, {}),
@@ -1336,11 +1339,7 @@ export interface CommissionInvoice {
 export interface AppConfig {
   rates: {
     commissionPct: number;
-    depositKzt: number;
     depositPct: number;
-    depositMin: number;
-    depositMax: number;
-    depositMaxSharePct: number;
     holdMinutes: number;
     cancelWindowH: number;
     lateCancelPct: number;

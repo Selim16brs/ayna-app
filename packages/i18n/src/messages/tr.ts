@@ -462,7 +462,7 @@ export const tr = {
   'collections.item.offer': 'Kampanya',
   'rules.title': 'Randevu kuralları — sürpriz yok',
   'rules.deposit': 'Depozito (randevuyu kesinleştirir, hizmette düşülür)',
-  'rules.deposit_rule': 'hizmet bedelinin %{pct}’i (en az {min}, en çok {max})',
+  'rules.deposit_rule': 'Hizmet bedelinin %{pct}’u peşin; kalanı hizmetten sonra.',
   'rules.cancel_a': 'Randevuya',
   'rules.cancel_b': 'saatten az kala iptal edersen depozito yanar; daha erken iptal ücretsizdir.',
   'rules.noshow': 'Gelmezsen (no-show) depozito uzmanda kalır ve hesabına ceza işlenir.',
@@ -1813,6 +1813,8 @@ export const tr = {
   'booking.sync_conflict_pick': 'Yeni saat seç',
   'booking.sync_conflict_drop': 'Kaydı sil',
   'booking.status.completed_pending': 'Teyit bekliyor',
+  'booking.status.balance_pending': 'Ödeme bekleniyor',
+  'booking.status.balance_submitted': 'Ödeme onayı bekleniyor',
   'booking.confirm_completion': 'Hizmeti Onayla',
   'booking.confirm_completion_hint':
     'Uzman tamamlandı olarak işaretledi. Onaylarsan kayıt kesinleşir; sorun varsa itiraz et.',
@@ -1857,6 +1859,20 @@ export const tr = {
   'booking.money.title': 'Para dökümü',
   'booking.money.service': 'Hizmet',
   'booking.money.deposit': 'Depozito',
+  'booking.balance.pending_t': 'Kalan ödeme bekleniyor',
+  'booking.balance.pending_b':
+    'Uzman işlemi tamamladı. Kalan {amount} tutarı öde ve aşağıdan bildir.',
+  'booking.balance.pay': 'Ödemeyi yaptım',
+  'booking.balance.wait_t': 'Uzmanın onayı bekleniyor',
+  'booking.balance.wait_b':
+    'Ödeme bildirimin uzmana iletildi. Onayladığında randevu kapanır ve puanların aktifleşir.',
+  'booking.balance.provider_wait_t': 'Müşterinin ödemesi bekleniyor',
+  'booking.balance.provider_wait_b': 'Müşteriye kalan {amount} tutarı için bildirim gitti.',
+  'booking.balance.provider_confirm_t': 'Müşteri ödediğini bildirdi',
+  'booking.balance.provider_confirm_b':
+    'Parayı aldıysan onayla. Onayladığın anda AYNA komisyonu için 45 dakikalık süren başlar.',
+  'booking.balance.received': 'Ödemeyi aldım',
+  'booking.balance.remaining': 'Kalan bakiye',
   'booking.money.will_earn': 'Hizmetten sonra kazanacaksın',
   'booking.money.onsite': 'Hizmetten sonra yerinde',
   'booking.money.note': 'Hiçbir tutar gizli değil',

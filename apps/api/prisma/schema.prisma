@@ -231,7 +231,10 @@ enum BookingStatus {
   disputed // taraflar itiraz açtı (admin kuyruğu)
   reassigned_pending // uzman ayrıldı → yeni uzman atandı, kullanıcı onayı bekleniyor
   expired // Faz 1 — yanıt/dekont penceresi sunucu işiyle doldu (scheduler)
-  completed_pending // Faz 2 — uzman 'tamamlandı' dedi; müşteri teyidi/itiraz penceresi açık
+  completed_pending // ESKİ akış — geriye dönük; yeni randevular buraya girmiyor
+  // Para el değiştirme (31.08.2026): randevuda yalnız %10 alınır, kalanı sonra.
+  balance_pending // uzman 'işlemi bitirdim' dedi → müşteri kalan bakiyeyi ödeyecek
+  balance_submitted // müşteri 'ödedim' dedi → uzmanın 'aldım' teyidi bekleniyor
 }
 
 // Randevu kaydı. id istemci tarafından üretilir (mobil store ile tutarlı).

@@ -6,7 +6,6 @@ import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 're
 import { computeDaySlots } from '@ayna/domain';
 import {
   type Appointment,
-  DEPOSIT_KZT,
   FREE_CANCEL_WINDOW_MS,
   type BookingSource,
   type BookingStatus,
@@ -15,7 +14,7 @@ import {
 import { api } from '../../src/api';
 import { almatyDayStart, formatSlot } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
+import { localDeposit, useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -133,6 +132,15 @@ export default function BookingDetailScreen() {
   const confirmRefund = useStore((s) => s.confirmRefund);
   const disputeBooking = useStore((s) => s.disputeBooking);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
+
+  // Kalan bakiye = fiyat − ödenen peşinat (%10). Sunucu peşinatı randevuya
+  // yazıyor; yazmamışsa oran üzerinden hesaplanır ki ekran boş kalmasın.
+  // Peşinat SUNUCUDAN gelir; gelmemişse yüzdeden hesaplanır. Eskiden sabit
+  // 1.000 ₸'ye düşülüyordu — fiyattan bağımsız bir tutar, yani gizli bir ikinci
+  // kural: 300 ₸'lik hizmette 1.000 ₸ peşinat göstermek anlamsızdı.
+  const rates = useStore((st) => st.config.rates);
+  const pesinat = booking ? (booking.depositAmount ?? localDeposit(booking.price, rates)) : 0;
+  const kalanBakiye = Math.max(0, (booking?.price ?? 0) - pesinat);
   const dropLocalBooking = useStore((s) => s.dropLocalBooking);
   const acceptReassignment = useStore((s) => s.acceptReassignment);
   const rejectReassignment = useStore((s) => s.rejectReassignment);
@@ -550,6 +558,46 @@ export default function BookingDetailScreen() {
         ) : null}
 
         {/* Faz 2 — uzman 'tamamlandı' dedi: müşteri onaylar (kesinleşir) ya da itiraz eder */}
+        {/* PARA EL DEĞİŞTİRME — müşteri tarafı.
+            Randevuda yalnız %10 alındı; kalan bakiye burada ödenir. Uzman
+            "işlemi bitirdim" dediğinde bu kart açılır. */}
+        {!isProvider && booking.status === 'balance_pending' ? (
+          <View style={[styles.depositCard, shadow.card]}>
+            <View style={styles.depositHead}>
+              <Ionicons name="cash-outline" size={18} color={colors.ink} />
+              <Text variant="bodyStrong" tone="ink">
+                {t('booking.balance.pending_t')}
+              </Text>
+            </View>
+            <Text variant="caption" tone="muted" style={styles.depositDesc}>
+              {fillParams(t('booking.balance.pending_b'), { amount: formatPrice(kalanBakiye) })}
+            </Text>
+            <Button
+              label={t('booking.balance.pay')}
+              onPress={() => {
+                void api
+                  .balancePaid(booking.id)
+                  .then(() => hydrateBookings())
+                  .catch(() => undefined);
+              }}
+            />
+          </View>
+        ) : null}
+
+        {!isProvider && booking.status === 'balance_submitted' ? (
+          <View style={[styles.depositCard, shadow.card]}>
+            <View style={styles.depositHead}>
+              <Ionicons name="hourglass-outline" size={18} color={colors.ink} />
+              <Text variant="bodyStrong" tone="ink">
+                {t('booking.balance.wait_t')}
+              </Text>
+            </View>
+            <Text variant="caption" tone="muted" style={styles.depositDesc}>
+              {t('booking.balance.wait_b')}
+            </Text>
+          </View>
+        ) : null}
+
         {!isProvider && booking.status === 'completed_pending' ? (
           <View style={[styles.depositCard, shadow.card]}>
             <View style={styles.depositHead}>
@@ -604,7 +652,7 @@ export default function BookingDetailScreen() {
                 {t('booking.deposit.amount')}
               </Text>
               <Text variant="bodyStrong" tone="ink">
-                {formatPrice(booking.depositAmount ?? DEPOSIT_KZT)}
+                {formatPrice(pesinat)}
               </Text>
             </View>
             <View style={styles.depositRow}>
@@ -624,7 +672,7 @@ export default function BookingDetailScreen() {
                 {t('booking.deposit.remaining')}
               </Text>
               <Text variant="bodyStrong" tone="ink">
-                {formatPrice(Math.max(0, booking.price - (booking.depositAmount ?? DEPOSIT_KZT)))}
+                {formatPrice(kalanBakiye)}
               </Text>
             </View>
             <Button
@@ -801,6 +849,31 @@ export default function BookingDetailScreen() {
                     {t('booking.provider.pending_receipt')}
                   </Text>
                 </View>
+              ) : null}
+              {/* PARA EL DEĞİŞTİRME — uzman tarafı. "Ödemeyi aldım" ANI kritik:
+                  o an randevu kapanır, komisyon süresi başlar ve müşterinin
+                  puanı aktifleşir. Para el değiştirmeden hiçbiri olmamalı. */}
+              {booking.status === 'balance_pending' ? (
+                <View style={styles.note}>
+                  <Ionicons name="hourglass-outline" size={14} color={colors.muted} />
+                  <Text variant="caption" tone="muted" style={styles.noteText}>
+                    {fillParams(t('booking.balance.provider_wait_b'), {
+                      amount: formatPrice(kalanBakiye),
+                    })}
+                  </Text>
+                </View>
+              ) : null}
+              {booking.status === 'balance_submitted' ? (
+                <Button
+                  label={t('booking.balance.received')}
+                  variant="primary"
+                  onPress={() => {
+                    void api
+                      .balanceReceived(booking.id)
+                      .then(() => hydrateBookings())
+                      .catch(() => undefined);
+                  }}
+                />
               ) : null}
               {booking.status === 'deposit_submitted' ? (
                 <Button

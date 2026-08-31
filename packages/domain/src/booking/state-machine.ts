@@ -34,6 +34,8 @@ export const BOOKING_STATUSES = [
   'deposit_pending',
   'deposit_submitted',
   'confirmed',
+  'balance_pending',
+  'balance_submitted',
   'completed_pending',
   'completed',
   'no_show',
@@ -107,6 +109,8 @@ export const ALLOWED_TRANSITIONS: Record<BookingState, readonly BookingState[]> 
     'expired',
   ],
   confirmed: [
+    'balance_pending',
+    'balance_submitted',
     'completed_pending',
     'no_show',
     'reassigned_pending',
@@ -114,7 +118,20 @@ export const ALLOWED_TRANSITIONS: Record<BookingState, readonly BookingState[]> 
     'refund_pending',
     'disputed',
   ],
-  // Uzman "tamamlandı" dedi; müşterinin teyit/itiraz penceresi açık.
+  // PARA EL DEĞİŞTİRME — iki adımlı el sıkışma (kurucu kuralı 31.08.2026):
+  //   uzman "bitirdim"  → balance_pending   (müşteride "ödemeyi yap" açılır)
+  //   müşteri "ödedim"  → balance_submitted (uzmanda "ödemeyi aldım" açılır)
+  //   uzman "aldım"     → completed         (komisyon saati başlar, puan aktifleşir)
+  //
+  // Tek onaya indirmek mümkündü ama iki tarafın da beyanı gerekiyor: parayı
+  // elden alan uzman, ödediğini söyleyen müşteri. Tek beyan, diğer tarafı
+  // itiraz etmekten başka seçeneksiz bırakırdı.
+  balance_pending: ['balance_submitted', 'no_show', 'cancelled', 'disputed'],
+  // Müşteri ödediğini söyledi; uzmanın teyidi bekleniyor. Uzman teyit etmezse
+  // itiraz yolu açık — para almadığını iddia edebilir.
+  balance_submitted: ['completed', 'disputed'],
+  // ESKİ AKIŞ — geriye dönük. Mevcut kayıtlar bu durumda kalmış olabilir;
+  // yolu kapatmak onları kilitlerdi. Yeni randevular buraya girmiyor.
   completed_pending: ['completed', 'disputed'],
   // Kapalı. İtiraz yolu `disputed` üzerinden değil, admin süreciyle işler.
   completed: [],
@@ -127,7 +144,7 @@ export const ALLOWED_TRANSITIONS: Record<BookingState, readonly BookingState[]> 
     'disputed',
   ],
   // Admin çözer.
-  disputed: ['cancelled', 'completed', 'refund_pending', 'no_show'],
+  disputed: ['cancelled', 'completed', 'refund_pending', 'no_show', 'balance_pending'],
   cancelled: [],
   expired: [],
 };

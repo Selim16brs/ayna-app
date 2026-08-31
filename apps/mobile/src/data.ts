@@ -885,13 +885,13 @@ export type BookingStatus =
   | 'disputed' // §4.4 — itiraz açıldı (destek/admin kuyruğu)
   | 'reassigned_pending' // §4.5 — uzman ayrıldı, yeni uzman atandı
   | 'expired' // Faz 1 — yanıt/dekont penceresi sunucu işiyle doldu
+  | 'balance_pending' // uzman bitirdi → müşteri kalan bakiyeyi ödeyecek
+  | 'balance_submitted' // müşteri ödedim dedi → uzman teyidi bekleniyor
   | 'completed_pending' // Faz 2 — uzman beyanı; müşteri teyit/itiraz penceresi
   | 'sync_conflict' // Faz 3 — YALNIZ YEREL: offline kayıt sunucuda dolu slota çakıştı; kullanıcı yeni saat seçer; kullanıcı yeniden onaylayacak
   | 'no_show'
   | 'waitlist';
 
-// §4.3 — depozito/kapora tutarı. PARAMETRİK (admin panel §3.4); şimdilik sabit.
-export const DEPOSIT_KZT = 1000;
 // §4.4 — serbest iptal penceresi (bundan fazla süre varsa depozito iade edilir). Parametrik.
 export const FREE_CANCEL_WINDOW_MS = 3 * 60 * 60_000;
 // §4.3 — dekont yükleme süresi: normalde 3 saat; randevuya 6 saatten az varsa 1 saat. Parametrik.
