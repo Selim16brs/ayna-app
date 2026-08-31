@@ -1,6 +1,5 @@
 {
   "cli": {
-    "// appVersionSource": "TestFlight geçmişi arkadaşın Apple hesabında (1.0.0/114) ve bizim EAS projemizde HİÇ iOS yapısı yok. 'remote' seçilirse EAS numaralamayı 1'den başlatır ve Apple 114'ün altındaki bir yapıyı reddeder. Numara app.json'dan okunur.",
     "appVersionSource": "local"
   },
   "build": {

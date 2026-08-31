@@ -11,6 +11,13 @@
 #   · JS/varlık değişikliği  → OTA (`eas update`). Mevcut TestFlight yapısına
 #     havadan düşer, yeni derleme GEREKMEZ. Bu iş akışı bunu OTOMATİK yapar.
 #
+# SÜRÜM NUMARASI: `eas.json` → `appVersionSource: local`. TestFlight geçmişi
+# arkadaşın Apple hesabında (1.0.0/114) ve BİZİM EAS projemizde hiç iOS yapısı
+# yok; 'remote' seçilseydi EAS numaralamayı 1'den başlatır, Apple da 114'ün
+# altındaki yapıyı reddederdi. Numara app.json'dan okunuyor.
+# (Bu not burada: `eas.json` şeması katı, yorum anahtarı kabul etmiyor —
+# eklendiğinde `eas update` "cli.// appVersionSource is not allowed" ile düştü.)
+#
 #   · NATIVE değişiklik      → yeni yapı ZORUNLU. app.json'daki izinler
 #     (infoPlist), eklenti listesi (plugins), bağımlılık ekleme/çıkarma, ikon,
 #     bundle kimliği... Bunların HİÇBİRİ OTA ile gitmez. Aşağıdaki `native-yapi`
