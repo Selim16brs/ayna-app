@@ -1,5 +1,5 @@
 import * as Updates from 'expo-updates';
-import Constants from 'expo-constants';
+import * as Application from 'expo-application';
 import { StyleSheet, View } from 'react-native';
 import { space, type ColorTokens } from '../theme';
 import { useThemedStyles } from '../theme-context';
@@ -26,10 +26,13 @@ export function SurumBilgisi() {
 
   let satir = '—';
   try {
-    const native = Constants.expoConfig?.version ?? '?';
-    const build =
-      Constants.expoConfig?.ios?.buildNumber ??
-      String(Constants.expoConfig?.android?.versionCode ?? '?');
+    // NATIVE yapı — GERÇEK binary'den. Önce `Constants.expoConfig` okunuyordu
+    // ama o, OTA ile GELEN JS yapılandırmasını gösteriyor: TestFlight "114"
+    // derken ekranda "115" yazıyordu (app.json'da bir sonraki yapı için
+    // hazırladığım numara). İki farklı şeyi tek numara gibi göstermek, tam da
+    // bu satırın çözmesi gereken karışıklığı büyütüyordu.
+    const native = Application.nativeApplicationVersion ?? '?';
+    const build = Application.nativeBuildVersion ?? '?';
     // Geliştirme/Expo Go ya da hiç güncelleme uygulanmamış gömülü yapı → null.
     const guncelleme = Updates.isEmbeddedLaunch
       ? 'gömülü'
@@ -42,7 +45,8 @@ export function SurumBilgisi() {
           minute: '2-digit',
         })
       : '—';
-    satir = `v${native} (${build}) · güncelleme ${guncelleme} · ${tarih}`;
+    // "yapı" = TestFlight'taki native sürüm · "güncelleme" = üstüne düşen JS.
+    satir = `yapı ${native} (${build}) · güncelleme ${guncelleme} · ${tarih}`;
   } catch {
     // Teşhis satırı asla ekranı düşürmez.
     satir = 'sürüm okunamadı';
