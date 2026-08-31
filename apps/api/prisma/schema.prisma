@@ -254,6 +254,9 @@ model Booking {
   /// TOPLAM; burada dökümü duruyor ki özet ekranı ve panel kalem kalem
   /// gösterebilsin. Tutarlar SUNUCUDA hesaplanır.
   servicesJson      Json?         @map("services_json")
+  /// §4.6 — erteleme önerisini KİM yaptı ('customer' | 'provider').
+  /// Öneren kendi önerisini kabul edemez; onay karşı tarafındır.
+  proposedBy        String?       @map("proposed_by")
   proId             String?       @map("pro_id")
   proName           String        @map("pro_name")
   proImage          String        @map("pro_image")

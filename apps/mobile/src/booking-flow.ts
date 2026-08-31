@@ -31,6 +31,8 @@ export type Aksiyon = {
     | 'karsi_oner'
     | 'depozito_ode'
     | 'ertele'
+    | 'erteleme_kabul'
+    | 'erteleme_red'
     | 'iptal'
     | 'islemi_bitirdim'
     | 'odeme_yaptim'
@@ -157,6 +159,13 @@ export type AkisBaglam = {
   gelmediAcik?: boolean;
   /** 3 saat eşiği geçmedi mi? (§4.6 erteleme, §4.7 ücretsiz iptal) */
   esikOncesi?: boolean;
+  /**
+   * §4.6 — bekleyen erteleme önerisini KİM yaptı?
+   *
+   * Kabul/Red karşı tarafındır: öneren kendi önerisini onaylayamaz, yoksa
+   * "öner ve kabul et" tek taraflı saat değiştirmenin uzun yolu olurdu.
+   */
+  ertelemeyiOneren?: Rol;
 };
 
 /**
@@ -187,8 +196,11 @@ export function birincilAksiyon(
     // §4.6 — bekleme dönemi. Erteleme YALNIZ 3 saat eşiğinden önce.
     case 'kesinlesti':
       return ctx.esikOncesi ? { etiket: 'flow.act.ertele', eylem: 'ertele' } : null;
+    // §4.6 — öneriyi karşı taraf yanıtlar; öneren yalnız bekler.
     case 'erteleme_onerildi':
-      return { etiket: 'flow.act.kabul', eylem: 'kabul' };
+      return ctx.ertelemeyiOneren && ctx.ertelemeyiOneren !== rol
+        ? { etiket: 'flow.act.kabul', eylem: 'erteleme_kabul' }
+        : null;
     // §4.8/§4.9 — hizmet günü: uzman bitirir; 15 dk sonra "gelmedi" açılır.
     case 'hizmet_gunu':
       if (!musteri) return { etiket: 'flow.act.islemi_bitirdim', eylem: 'islemi_bitirdim' };

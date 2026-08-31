@@ -943,8 +943,21 @@ export class BookingsService {
    * diğer üç yolla aynı desende yeniden tutulur: advisory lock + çakışma
    * kontrolü, üstüne veritabanı slot kısıtı.
    */
+  /**
+   * §4.6 — ERTELEME ÖNERİSİ.
+   *
+   *   "Ertele → aynı takvim seçici → yeni slot → karşı tarafa Kabul/Red talebi.
+   *    Kabul: depozito aynen yeni tarihe taşınır, yeni ödeme yok.
+   *    Red: eski randevu geçerli kalır."
+   *
+   * Bu metot eskiden randevunun saatini DOĞRUDAN değiştiriyordu: karşı tarafa
+   * sorulmuyor, `erteleme_onerildi` durumu hiç yazılmıyordu. Yani uzman
+   * takvimini müşteri tek başına kaydırabiliyordu — ve tersi.
+   *
+   * Öneriyi iki taraf da yapabilir (§4.6: "Uzman da erteleme önerebilir").
+   */
   async reschedule(id: string, newStartMs: number, actorId?: string) {
-    const rol = await this.assertParty(id, actorId, 'owner');
+    const rol = await this.assertParty(id, actorId, 'either');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (!b)
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
@@ -953,86 +966,131 @@ export class BookingsService {
       this.prisma.setting.findUnique({ where: { key: 'policy.free_reschedules' } }),
       this.prisma.setting.findUnique({ where: { key: 'rate.cancel_window_h' } }),
     ]);
-    const limit = limitRow?.intValue ?? 1;
-    const windowMs = (windowRow?.intValue ?? 3) * 60 * 60 * 1000;
-
     const karar = canReschedule({
       status: b.status,
       startAtMs: b.startAt?.getTime() ?? null,
       nowMs: Date.now(),
       used: b.rescheduleCount,
-      limit,
-      windowMs,
+      limit: limitRow?.intValue ?? 1,
+      windowMs: (windowRow?.intValue ?? 3) * 60 * 60 * 1000,
     });
     if (!karar.ok) {
       throw new BadRequestException({
         code: karar.code,
         message:
           karar.code === 'RESCHEDULE_LIMIT'
-            ? 'Bu randevu için ücretsiz erteleme hakkın doldu'
+            ? 'Bu randevu için erteleme hakkın doldu'
             : karar.code === 'RESCHEDULE_TOO_LATE'
-              ? 'Randevuya çok az kaldı — erteleme penceresi kapandı'
+              ? 'Randevuya 3 saatten az kaldı — erteleme penceresi kapandı'
               : 'Bu randevu ertelenemez',
       });
     }
     if (!Number.isFinite(newStartMs) || newStartMs <= Date.now()) {
       throw new BadRequestException({ code: 'BAD_SLOT', message: 'Geçmiş bir saat seçilemez' });
     }
+    // Dolu bir saati ÖNERMEK, karşı tarafı reddetmek zorunda bırakmak olurdu.
+    await this.slotBosMu(b, newStartMs);
 
-    const sure = b.durationMin ?? 60;
-    const row = await this.prisma.$transaction(async (tx) => {
-      if (b.proId) {
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${b.proId}))`;
-        const others = await tx.booking.findMany({
-          where: {
-            proId: b.proId,
-            id: { not: id }, // kendi eski saati çakışma sayılmaz
-            status: { in: ACTIVE_SLOT_STATUSES },
-            startAt: { not: null },
-          },
-          select: { startAt: true, durationMin: true },
-        });
-        const busy = others
-          .filter((o) => o.startAt)
-          .map((o) => ({
-            startMs: o.startAt!.getTime(),
-            endMs: o.startAt!.getTime() + (o.durationMin ?? 60) * 60_000,
-          }));
-        if (hasConflict({ startMs: newStartMs, endMs: newStartMs + sure * 60_000 }, busy)) {
-          throw new ConflictException({
-            code: 'SLOT_CONFLICT',
-            message: 'Bu saat başka bir randevuyla çakışıyor',
-          });
-        }
-      }
-      return tx.booking.update({
-        where: { id },
-        data: {
-          startAt: new Date(newStartMs),
-          dateLabel: deriveDateLabel(newStartMs),
-          inDays: deriveInDays(newStartMs),
-          proposedStartAt: null,
-          // Kapora AYNEN kalır — yeni randevuya aktarılmış olur (§7.8).
-          rescheduleCount: { increment: 1 },
-        },
-      });
+    const row = await this.transition(id, {
+      status: 'erteleme_onerildi',
+      proposedStartAt: new Date(newStartMs),
+      proposedBy: rol,
     });
+    // §6 — "Erteleme önerisi — Kabul / Red" karşı tarafa.
+    const hedef = rol === 'customer' ? await this.expertUserIdFor(id) : (b.userId ?? null);
+    if (hedef)
+      void this.push
+        .sendToUser(hedef, {
+          title: 'Erteleme önerisi',
+          body: `Yeni saat: ${deriveDateLabel(newStartMs)} — Kabul / Red`,
+          data: { route: `/booking/${id}` },
+        })
+        .catch(() => undefined);
+    return row;
+  }
 
-    await this.prisma.auditLog
-      .create({
-        data: {
-          actorId: actorId ?? null,
-          actorRole: rol,
-          action: 'booking.reschedule',
-          resourceType: 'booking',
-          resourceId: id,
-          safeDiff: { used: b.rescheduleCount + 1, limit },
-        },
-      })
-      .catch(() => undefined);
+  /**
+   * §4.6 — erteleme önerisini KABUL: depozito AYNEN taşınır, yeni ödeme yok.
+   *
+   * Kabul karşı tarafın: öneren kendi önerisini onaylayamaz, yoksa "öner ve
+   * kabul et" tek taraflı saat değiştirmenin uzun yoluna dönerdi.
+   */
+  async ertelemeKabul(id: string, actorId?: string) {
+    const rol = await this.assertParty(id, actorId, 'either');
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (!b || !b.proposedStartAt)
+      throw new BadRequestException({ code: 'NO_PROPOSAL', message: 'Bekleyen erteleme yok' });
+    if (b.proposedBy === rol) {
+      throw new ForbiddenException({
+        code: 'OWN_PROPOSAL',
+        message: 'Kendi erteleme önerini onaylayamazsın',
+      });
+    }
+    const yeniMs = b.proposedStartAt.getTime();
+    // Öneri ile kabul arasında slot kapanmış olabilir; kabul anında YENİDEN
+    // bakılmazsa çift rezervasyon doğar.
+    await this.slotBosMu(b, yeniMs);
+    return this.transition(id, {
+      status: 'kesinlesti',
+      startAt: new Date(yeniMs),
+      dateLabel: deriveDateLabel(yeniMs),
+      inDays: deriveInDays(yeniMs),
+      proposedStartAt: null,
+      proposedBy: null,
+      // Depozito AYNEN kalır — yeni randevuya taşınmış olur (§4.6).
+      rescheduleCount: { increment: 1 },
+    });
+  }
 
-    this.notifyParties(id, 'Randevu ertelendi', `Yeni saat: ${deriveDateLabel(newStartMs)}`);
-    return mapBooking(row);
+  /** §4.6 — erteleme reddedildi: ESKİ randevu geçerli kalır. */
+  async ertelemeRed(id: string, actorId?: string) {
+    const rol = await this.assertParty(id, actorId, 'either');
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (!b || !b.proposedStartAt)
+      throw new BadRequestException({ code: 'NO_PROPOSAL', message: 'Bekleyen erteleme yok' });
+    if (b.proposedBy === rol) {
+      throw new ForbiddenException({
+        code: 'OWN_PROPOSAL',
+        message: 'Kendi erteleme önerini reddedemezsin',
+      });
+    }
+    return this.transition(id, {
+      status: 'kesinlesti',
+      proposedStartAt: null,
+      proposedBy: null,
+    });
+  }
+
+  /**
+   * Uzmanın takviminde bu saat boş mu? Doluysa ÇAKIŞMA fırlatır.
+   *
+   * Randevunun kendi eski saati çakışma sayılmaz — ertelerken kendisiyle
+   * çarpışırdı.
+   */
+  private async slotBosMu(b: Booking, startMs: number): Promise<void> {
+    if (!b.proId) return;
+    const sure = b.durationMin ?? 60;
+    const digerleri = await this.prisma.booking.findMany({
+      where: {
+        proId: b.proId,
+        id: { not: b.id },
+        status: { in: SLOT_HOLDING_STATUSES },
+        startAt: { not: null },
+      },
+      select: { startAt: true, durationMin: true },
+    });
+    const dolu = digerleri
+      .filter((o) => o.startAt)
+      .map((o) => ({
+        startMs: o.startAt!.getTime(),
+        endMs: o.startAt!.getTime() + (o.durationMin ?? 60) * 60_000,
+      }));
+    if (hasConflict({ startMs, endMs: startMs + sure * 60_000 }, dolu)) {
+      throw new ConflictException({
+        code: 'SLOT_CONFLICT',
+        message: 'Bu saat başka bir randevuyla çakışıyor',
+      });
+    }
   }
 
   /**
@@ -1288,6 +1346,9 @@ function mapBooking(b: Booking, opts?: { forProvider?: boolean }) {
     inDays: b.inDays,
     startMs: b.startAt?.getTime() ?? undefined,
     proposedStartMs: b.proposedStartAt?.getTime() ?? undefined,
+    // §4.6 — kart Kabul/Red düğmesini buna bakarak gösteriyor: öneren taraf
+    // kendi önerisini yanıtlayamaz.
+    proposedBy: (b.proposedBy as 'customer' | 'provider' | null) ?? undefined,
     durationMin: b.durationMin ?? undefined,
     price: Number(b.price),
     status: b.status,

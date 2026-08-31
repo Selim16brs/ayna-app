@@ -121,7 +121,8 @@ export class BookingsController {
     return this.bookings.propose(id, body.proposedStartMs, req.user!.id);
   }
 
-  // §7.8 — müşteri randevusunu bir kez ücretsiz erteler; kapora aktarılır.
+  // §4.6 — erteleme ÖNERİSİ: karşı tarafa Kabul/Red talebi gider; kabulde
+  // depozito aynen yeni tarihe taşınır.
   @Post(':id/reschedule')
   @UseGuards(JwtAuthGuard)
   reschedule(
@@ -130,6 +131,20 @@ export class BookingsController {
     @Body(new ZodValidationPipe(rescheduleSchema)) body: RescheduleInput,
   ) {
     return this.bookings.reschedule(id, body.startMs, req.user!.id);
+  }
+
+  // §4.6 — erteleme önerisine KARŞI TARAFIN cevabı. Öneren kendi önerisini
+  // yanıtlayamaz; sunucu reddeder.
+  @Post(':id/reschedule/accept')
+  @UseGuards(JwtAuthGuard)
+  ertelemeKabul(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.bookings.ertelemeKabul(id, req.user!.id);
+  }
+
+  @Post(':id/reschedule/reject')
+  @UseGuards(JwtAuthGuard)
+  ertelemeRed(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.bookings.ertelemeRed(id, req.user!.id);
   }
 
   @Post(':id/accept')

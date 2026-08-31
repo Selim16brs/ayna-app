@@ -118,7 +118,9 @@ export type BookingEylem =
   | 'musteri_gelmedi'
   | 'uzman_gelmedi'
   | 'itiraz'
-  | 'ertele';
+  | 'ertele'
+  | 'erteleme_kabul'
+  | 'erteleme_red';
 
 /**
  * Sunucu bu eylemi BİR DAHA kabul etmez mi?
@@ -172,6 +174,10 @@ export function bookingEylemGonder(
       return api.disputeBookingApi(id);
     case 'ertele':
       return api.rescheduleBooking(id, Number(arg));
+    case 'erteleme_kabul':
+      return api.ertelemeKabul(id);
+    case 'erteleme_red':
+      return api.ertelemeRed(id);
   }
 }
 

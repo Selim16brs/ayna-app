@@ -951,6 +951,11 @@ export interface Appointment {
    * tutara güvenmek, müşterinin kendi depozitosunu belirlemesi olurdu.
    */
   serviceNames?: string[];
+  /**
+   * §4.6 — bekleyen erteleme önerisini kim yaptı ('customer' | 'provider').
+   * Kabul/Red karşı tarafındır; kart düğmeyi buna bakarak gösteriyor.
+   */
+  proposedBy?: 'customer' | 'provider';
   providerSignal?: 'up' | 'down'; // §7.3 — uzmanın kullanıcıya GİZLİ sinyali (kamuya kapalı)
   customerTrusted?: boolean; // §7.3 — POZİTİF rozet: yüksek tamamlanma oranlı "Güvenilir müşteri" (negatif asla)
   // §10 gizlilik — SALONUN uzman için aldığı offline randevu. Yalnız bunlar salon panelinde görünür;

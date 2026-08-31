@@ -706,6 +706,9 @@ export const api = {
   // §4.6 — erteleme: yeni slot uzmana Kabul/Red talebi olarak gider.
   rescheduleBooking: (id: string, startMs: number) =>
     post<Appointment>(`/bookings/${id}/reschedule`, { startMs }),
+  // §4.6 — öneriye KARŞI TARAFIN cevabı (öneren yanıtlayamaz; sunucu reddeder).
+  ertelemeKabul: (id: string) => post<Appointment>(`/bookings/${id}/reschedule/accept`, {}),
+  ertelemeRed: (id: string) => post<Appointment>(`/bookings/${id}/reschedule/reject`, {}),
   disputeBookingApi: (id: string) => post<Appointment>(`/bookings/${id}/dispute`, {}),
   // §4.4-b — uzman gelmedi: iade + uzman komisyon borcu (backend)
   counterBooking: (id: string, proposedStartMs: number) =>

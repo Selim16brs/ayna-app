@@ -85,6 +85,10 @@ export default function BookingDetail() {
     odemeBildirildi: booking.balanceDeclaredAt != null,
     gelmediAcik,
     esikOncesi,
+    // §4.6 — öneren kendi önerisini yanıtlayamaz; düğme yalnız karşı tarafta.
+    ...(booking.proposedBy
+      ? { ertelemeyiOneren: (booking.proposedBy === 'customer' ? 'musteri' : 'uzman') as Rol }
+      : {}),
   };
   const aksiyon = birincilAksiyon(booking.status, rol, baglam);
   // Bu rolün yapacağı bir şey yoksa ama randevu akıştaysa top KARŞI TARAFTA.
@@ -118,6 +122,8 @@ export default function BookingDetail() {
         return router.push(`/booking/deposit?id=${bid}` as never);
       case 'ertele':
         return router.push(`/booking/reschedule?id=${bid}` as never);
+      case 'erteleme_kabul':
+        return cagir('erteleme_kabul');
       case 'islemi_bitirdim':
         return cagir('islemi_bitirdim');
       case 'odeme_yaptim':
@@ -268,6 +274,17 @@ export default function BookingDetail() {
             label={t(aksiyon.etiket)}
             variant={aksiyon.tehlike ? 'secondary' : 'primary'}
             onPress={() => calistir(aksiyon)}
+          />
+        ) : null}
+
+        {/* §4.6 — erteleme önerisinde RED de gerekli: "Kabul / Red". Kabul
+            birincil buton; red ikincil, çünkü red randevuyu bitirmiyor —
+            eski saat geçerli kalıyor. */}
+        {aksiyon?.eylem === 'erteleme_kabul' ? (
+          <Button
+            label={t('flow.act.reddet')}
+            variant="secondary"
+            onPress={() => cagir('erteleme_red')}
           />
         ) : null}
 
