@@ -96,10 +96,10 @@ ama hiçbiri bir skora dönüşmüyor. **Skor altyapısı sıfırdan kurulacak.*
 | E1  | Matrah = nihai hizmet bedeli           | ✅    | `booking.price` üzerinden                                             |
 | E2  | Seviyeye göre oran matrisi (%8,5–10)   | 🔴    | Tek global oran. **%8,5 satılıyor ama uygulanmıyor**                  |
 | E3  | `commission_rate_snapshot`             | ❌    | Oran randevuya yazılmıyor; geçmiş oran değişince bozulur              |
-| E4  | Randevu başına fatura                  | 🔴    | **Aylık dönem kapama** — tamamen farklı model                         |
-| E5  | 30 dk + 15 dk tahsilat penceresi       | ❌    | Vade = dönem sonu + 7 gün                                             |
+| E4  | Randevu başına fatura                  | ✅    | 31.08 (K3): tamamlanma anında fatura + uzmana bildirim                |
+| E5  | Tahsilat penceresi                     | ✅    | 31.08 kurucu kuralı: 45 dk ödeme + 15 dk son uyarı → askı; ikisi ayar |
 | E6  | Tek seferlik %20 gecikme bedeli        | ❌    | Parasal ceza yok                                                      |
-| E7  | Otomatik `SUSPENDED_FINANCIAL`         | ⚠️    | 7 gün sonra "kısıtlı mod" var — **şartname §0.1.3 bunu değiştiriyor** |
+| E7  | Otomatik askıya alma                   | ✅    | 60. dk'da askı + bildirim; yeniden açılış borcun 2 katı               |
 | E8  | KDV (`vat_rate_snapshot`)              | ❌    | Hiç yok                                                               |
 | E9  | `DISPUTED_HOLD`                        | ❌    |                                                                       |
 | E10 | Fatura tekilliği (unique)              | 🔴    | Read-then-write; **çift fatura mümkün**                               |

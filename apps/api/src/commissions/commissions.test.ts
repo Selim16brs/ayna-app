@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { DAY_MS, commissionFor, overdueDaysBetween } from './commissions.calc';
-import { closePeriodSchema, receiptSchema } from './commissions.dto';
+import { receiptSchema } from './commissions.dto';
 
 // §12.8 — komisyon para matematiği (2 hane, kuruş yuvarlaması)
 test('commissionFor: %10 → ciro/10', () => {
@@ -38,23 +38,6 @@ test('overdueDaysBetween: aynı gün → 0 (negatife düşmez)', () => {
 });
 
 // §12.8 — DTO doğrulama
-test('closePeriodSchema: geçerli dönem kabul', () => {
-  const r = closePeriodSchema.safeParse({ periodStart: '2026-07-01', periodEnd: '2026-08-01' });
-  assert.equal(r.success, true);
-});
-
-test('closePeriodSchema: opsiyonel dueDate kabul', () => {
-  const r = closePeriodSchema.safeParse({
-    periodStart: '2026-07-01',
-    periodEnd: '2026-08-01',
-    dueDate: '2026-08-08',
-  });
-  assert.equal(r.success, true);
-});
-
-test('closePeriodSchema: periodEnd eksik reddedilir', () => {
-  assert.equal(closePeriodSchema.safeParse({ periodStart: '2026-07-01' }).success, false);
-});
 
 test('receiptSchema: boş dekont reddedilir', () => {
   assert.equal(receiptSchema.safeParse({ receiptUri: '' }).success, false);
