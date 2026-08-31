@@ -5,15 +5,16 @@ import { ENV } from '../config/config.module';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { type AuthedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
-  type BookingReceiptInput,
   bookingReceiptSchema,
-  type CancelInput,
   cancelSchema,
-  type CreateBookingInput,
   createBookingSchema,
-  type ProposeInput,
+  iadeTalepSchema,
   proposeSchema,
   rescheduleSchema,
+  type BookingReceiptInput,
+  type CancelInput,
+  type CreateBookingInput,
+  type ProposeInput,
   type RescheduleInput,
 } from './bookings.dto';
 import { BookingsService } from './bookings.service';
@@ -247,6 +248,17 @@ export class BookingsController {
   @UseGuards(JwtAuthGuard)
   confirmCompletion(@Req() req: AuthedRequest, @Param('id') id: string) {
     return this.bookings.confirmCompletion(id, req.user!.id);
+  }
+
+  // §4.10 — müşteri iade talebi: hesap bilgisiyle admin kuyruğuna düşer.
+  @Post(':id/refund-request')
+  @UseGuards(JwtAuthGuard)
+  refundRequest(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(iadeTalepSchema)) body: { payoutInfo: string },
+  ) {
+    return this.bookings.iadeTalep(id, body.payoutInfo, req.user!.id);
   }
 
   @Post(':id/dispute')

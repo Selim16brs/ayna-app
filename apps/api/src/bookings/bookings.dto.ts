@@ -54,3 +54,7 @@ export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type DateLabelInput = z.infer<typeof dateLabelSchema>;
 export type CancelInput = z.infer<typeof cancelSchema>;
 export type BookingReceiptInput = z.infer<typeof bookingReceiptSchema>;
+
+// §4.10 — iade yapılacak Kaspi/banka bilgisi. PII: log'a ve analitiğe ASLA
+// yazılmaz; yalnız iadeyi ödeyen admin görür.
+export const iadeTalepSchema = z.object({ payoutInfo: z.string().min(3).max(200) });

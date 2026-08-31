@@ -708,6 +708,9 @@ export const api = {
   submitDepositReceipt: (id: string, receiptUri: string) =>
     post<Appointment>(`/bookings/${id}/deposit-receipt`, { receiptUri }),
   confirmDepositReceipt: (id: string) => post<Appointment>(`/bookings/${id}/confirm-receipt`, {}),
+  // §4.10 — iade talebi: hesap bilgisiyle admin kuyruğuna düşer.
+  iadeTalep: (id: string, payoutInfo: string) =>
+    post<{ ok: boolean; amount: number }>(`/bookings/${id}/refund-request`, { payoutInfo }),
   freeCancelBooking: (id: string, reason?: string) =>
     post<Appointment>(`/bookings/${id}/free-cancel`, reason ? { reason } : {}),
   uploadRefundReceiptApi: (id: string, receiptUri: string) =>

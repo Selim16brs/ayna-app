@@ -30,8 +30,8 @@ export const RATE_DEFS = [
     default: 45,
   },
   // §5.3 — hold ve yanıt pencereleri (slotu doğrudan etkiler)
-  { key: 'policy.hold_minutes', label: 'Kapora (slot tutma) süresi', suffix: 'dk', default: 180 },
-  { key: 'policy.response_hours', label: 'Uzman yanıt süresi', suffix: 'saat', default: 6 },
+  { key: 'policy.hold_minutes', label: 'Depozito ödeme süresi', suffix: 'dk', default: 10 },
+  { key: 'policy.response_hours', label: 'Uzman yanıt süresi', suffix: 'saat', default: 3 },
   { key: 'rate.late_cancel_pct', label: 'Geç iptal / no-show cezası', suffix: '%', default: 3 },
   // K4 — para puan modeli
   { key: 'rate.points_cap_pct', label: 'Puan harcama tavanı', suffix: '%', default: 25 },

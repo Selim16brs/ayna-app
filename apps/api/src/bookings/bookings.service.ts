@@ -733,6 +733,64 @@ export class BookingsService {
    * kaldırdı; ceza para değil GÖRÜNÜRLÜK. Hesabı kısıtlamak yerine yalnız yeni
    * iş almasını engellemek de bilinçli: mevcut randevuları mağdur olmamalı.
    */
+  /**
+   * Brief §4.10 — DEPOZİTO İADE TALEBİ.
+   *
+   *   "İade hakkı doğduğunda müşteri kartında 'Depozito iade et' butonu açılır.
+   *    Butona basınca müşteriden iade yapılacak Kaspi/hesap bilgisi istenir.
+   *    Talep, admin panelinde 'İadeler' kuyruğuna düşer."
+   *
+   * İade hakkı YALNIZ şu durumlarda doğar (§4.7/§4.8):
+   *   · uzman iptal etti,
+   *   · uzman gelmedi,
+   *   · müşteri 3 saat eşiğinden ÖNCE iptal etti.
+   * Eşikten sonraki müşteri iptalinde depozito yanar; buton hiç açılmaz.
+   */
+  async iadeTalep(id: string, payoutInfo: string, actorId?: string) {
+    await this.assertParty(id, actorId, 'owner');
+    const b = await this.prisma.booking.findUnique({ where: { id } });
+    if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu yok' });
+    if (!b.userId)
+      throw new BadRequestException({
+        code: 'NO_CUSTOMER',
+        message: 'Bu randevunun müşterisi yok',
+      });
+
+    const hakVar =
+      b.status === 'iptal_uzman' ||
+      b.status === 'no_show_uzman' ||
+      (b.status === 'iptal_musteri' && !b.depositForfeited);
+    if (!hakVar)
+      throw new BadRequestException({
+        code: 'NO_REFUND_RIGHT',
+        message: 'Bu randevuda iade hakkı doğmadı',
+      });
+
+    const tutar = Number(b.depositAmount ?? 0);
+    if (tutar <= 0)
+      throw new BadRequestException({ code: 'NO_DEPOSIT', message: 'İade edilecek depozito yok' });
+
+    // Benzersiz (bookingId, kind) kısıtı ikinci talebi engelliyor: çift iade
+    // ödemek, para akışındaki en pahalı hata olurdu.
+    try {
+      await this.prisma.refundRequest.create({
+        data: {
+          bookingId: id,
+          payeeUserId: b.userId,
+          kind: 'musteri_iade',
+          amount: tutar,
+          payoutInfo,
+        },
+      });
+    } catch {
+      throw new BadRequestException({
+        code: 'ALREADY_REQUESTED',
+        message: 'Bu randevu için iade talebi zaten açık',
+      });
+    }
+    return { ok: true, amount: tutar };
+  }
+
   async providerNoShow(id: string, actorId?: string) {
     await this.assertParty(id, actorId, 'owner');
     const b = await this.prisma.booking.findUnique({ where: { id } });

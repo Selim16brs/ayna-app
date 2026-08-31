@@ -16,8 +16,14 @@ export type BookingWindows = {
 };
 
 export const DEFAULT_WINDOWS: BookingWindows = {
-  holdMin: 180, // 3 saat — mevcut davranış korunuyor
-  responseHours: 6,
+  // Brief §4.4 — DEPOZİTO PENCERESİ 10 DAKİKA. Eskiden 180 dakikaydı; brief
+  // bunu bilinçli olarak sertleştiriyor ("Randevunuzu korumak için 09:32
+  // içinde ödeyin") çünkü slot bu süre boyunca KİLİTLİ kalıyor ve kimse
+  // alamıyor. Uzun pencere, takvimi boş yere işgal ederdi.
+  holdMin: 10,
+  // Brief §4.2 — UZMAN CEVAP SÜRESİ 3 SAAT (eskiden 6). 1. ve 2. saatte
+  // hatırlatma; süre dolarsa ya da randevuya 3 saatten az kalırsa talep düşer.
+  responseHours: 3,
 };
 
 export const WINDOW_SETTING_KEYS = ['policy.hold_minutes', 'policy.response_hours'] as const;
