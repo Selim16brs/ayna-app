@@ -17,8 +17,23 @@ export function TierUpsell() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const tier = useStore(selectTier);
+  /**
+   * §7 — İLK OTURUMDA PAYWALL GÖSTERİLMEZ.
+   *
+   * Bu kart uzman ve salonun ANA EKRANINDA duruyordu: kayıt olan kişi ilk
+   * karede satın alma teklifiyle karşılaşıyordu. Denetim bunu yasaklıyor —
+   * teklif ya kullanıcı bir Premium özelliğe dokununca ya da EN AZ BİR
+   * ANLAMLI AKSİYON tamamlandıktan sonra çıkmalı.
+   *
+   * Ölçüt EN AZ BİR RANDEVU. Hizmet listesini ölçüt yapmayı denedim ama
+   * `sellerServices` demo verisiyle TOHUMLANIYOR — hiç boş olmuyor, yani
+   * kullanıcının bir şey yaptığını göstermiyor. Randevu ise ancak gerçek
+   * bir etkileşimle oluşuyor.
+   */
+  const anlamliAksiyon = useStore((st) => st.bookings.length > 0);
 
   if (tier === 'platinum') return null; // en üst katman → teşvik yok
+  if (!anlamliAksiyon) return null; // ilk oturum — henüz hiçbir şey yapmadı
 
   const toPlat = tier === 'premium'; // premium kullanıcı → Platinum'a yükselt
   const title = t(toPlat ? 'upsell.toPlat.title' : 'upsell.toPrem.title');
