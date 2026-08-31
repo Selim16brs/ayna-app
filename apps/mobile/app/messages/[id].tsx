@@ -230,6 +230,7 @@ export default function ChatThreadScreen() {
         keyboardVerticalOffset={0}
       >
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           ref={scrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.content}

@@ -104,6 +104,7 @@ export default function ExpertVerificationScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('expert.verify.title')} />
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_CLEARANCE }]}
         showsVerticalScrollIndicator={false}
       >

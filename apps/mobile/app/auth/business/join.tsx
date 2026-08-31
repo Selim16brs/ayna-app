@@ -19,7 +19,11 @@ export default function JoinBusinessScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('biz.join.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text variant="h2" tone="ink" style={styles.label}>
           {t('biz.join.firm')}
         </Text>

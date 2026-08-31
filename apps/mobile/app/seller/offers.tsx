@@ -144,7 +144,11 @@ export default function SellerOffersScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('offers.mine_title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text variant="caption" tone="muted" style={styles.lead}>
           {t('offers.mine_lead')}
         </Text>

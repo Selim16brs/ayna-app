@@ -123,7 +123,11 @@ export default function SellerPromotionsScreen() {
     return (
       <Screen edges={[]}>
         <StackHeader title={t('promo.title')} />
-        <ScrollView contentContainerStyle={styles.upsellWrap} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.upsellWrap}
+          showsVerticalScrollIndicator={false}
+        >
           <LinearGradient colors={gradients.gold} style={styles.upsellCard}>
             <View style={styles.upsellIcon}>
               <Ionicons name="megaphone" size={28} color={colors.onAccent} />

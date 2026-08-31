@@ -71,7 +71,11 @@ export default function HelpScreen() {
   return (
     <Screen edges={['bottom']}>
       <StackHeader title={t('help.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text variant="body" tone="inkSoft" style={styles.subtitle}>
           {t('help.subtitle')}
         </Text>

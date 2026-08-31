@@ -23,17 +23,43 @@ Notifications.setNotificationHandler({
 });
 
 let permAsked = false;
-async function ensurePermission(): Promise<boolean> {
+
+/**
+ * §16 — İZİN YALNIZ DEĞER BELLİ OLUNCA İSTENİR.
+ *
+ * `sor=false` (varsayılan): izin VARSA true, YOKSA sistem diyaloğunu AÇMADAN
+ * false. `sor=true`: gerçekten sorar.
+ *
+ * Neden ayrıldı: `registerForRemotePush` girişten hemen sonra çalışıyordu ve
+ * izni ORADA istiyordu — yani kullanıcı kayıt olur olmaz, henüz hiçbir
+ * bildirimin ne işe yarayacağını görmeden sistem diyaloğuyla karşılaşıyordu.
+ * Denetim bunu açıkça yasaklıyor: izin, ilk talep oluşturulduktan ya da ilk
+ * randevu onaylandıktan sonra istenmeli.
+ *
+ * Reddedilirse tekrar tekrar sorulmuyor (`permAsked`).
+ */
+async function ensurePermission(sor = false): Promise<boolean> {
   try {
     const cur = await Notifications.getPermissionsAsync();
     if (cur.granted) return true;
-    if (permAsked) return false;
+    if (!sor || permAsked) return false;
     permAsked = true;
     const req = await Notifications.requestPermissionsAsync();
     return req.granted;
   } catch {
     return false;
   }
+}
+
+/**
+ * Bildirim iznini ŞİMDİ iste — değeri gösteren bir aksiyon tamamlandığında.
+ *
+ * Çağrıldığı yerler: ilk talep yayınlandığında, ilk randevu onaylandığında.
+ * İzin zaten varsa ya da daha önce reddedildiyse sessizce geçer.
+ */
+export async function bildirimIzniIste(authToken: string | null): Promise<void> {
+  if (!(await ensurePermission(true))) return;
+  if (authToken) await registerForRemotePush(authToken);
 }
 
 type Tr = (k: MessageKey) => string;

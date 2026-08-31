@@ -68,7 +68,11 @@ export default function LoginScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('auth.tab.login')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text variant="body" tone="inkSoft" style={styles.subtitle}>
           {t('auth.login.subtitle')}
         </Text>

@@ -81,7 +81,11 @@ export default function ForgotPasswordScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('auth.forgot.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.hero}>
           <View style={styles.heroIcon}>
             <Ionicons name="lock-closed" size={24} color={colors.onAccent} />

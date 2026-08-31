@@ -10,6 +10,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
+import { bildirimIzniIste } from '../../src/notifications';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -146,6 +147,11 @@ export default function NewDemandScreen() {
         return;
       }
       // §5.2 — doğrudan sonuçlara DÜŞME; önce "talep uzmanlara gitti" onay ekranı.
+      // §16 — BİLDİRİM İZNİ TAM BURADA. Kullanıcı ilk talebini yayınladı;
+      // "teklif gelince haber verelim mi?" sorusunun değeri artık belli.
+      // Eskiden izin kayıt olur olmaz isteniyordu — hiçbir bildirimin ne
+      // işe yarayacağı görülmeden.
+      void bildirimIzniIste(useStore.getState().token);
       router.replace(`/quote/sent?id=${id}`);
     } finally {
       setSubmitting(false);
@@ -154,7 +160,11 @@ export default function NewDemandScreen() {
 
   return (
     <Screen edges={[]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* ── Lime üst şerit ── */}
         {/* ═══ BAŞLIK — kanvas Dilek.dc.html §başlık ═══
             Kanvas: AÇIK zemin, 44'lük beyaz geri düğmesi, 24px koyu başlık.

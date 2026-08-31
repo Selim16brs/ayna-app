@@ -42,7 +42,11 @@ export default function AlwaysBroadcastScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('always.broadcast_title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text variant="caption" tone="muted">
           {count > 0
             ? fillParams(t('always.broadcast_sub'), { n: count })

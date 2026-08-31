@@ -179,7 +179,11 @@ export default function SafeScreen() {
   return (
     <Screen edges={['bottom']}>
       <StackHeader title={t('safe.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Metin ROLE göre: müşteri BİR YERE GİDİYOR, uzman ise çoğu zaman
             müşterinin adresine gidiyor ya da geç saatte tek başına çalışıyor.
             Aynı mekanizma, farklı gerçeklik — tek metin ikisine de uymuyordu. */}
