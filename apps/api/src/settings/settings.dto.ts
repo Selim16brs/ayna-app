@@ -27,6 +27,12 @@ export const RATE_DEFS = [
   { key: 'policy.free_reschedules', label: 'Ücretsiz erteleme hakkı', suffix: 'adet', default: 1 },
   // K5 — komisyon vadesinden sonra kısıtlamaya kadar tanınan süre
   {
+    key: 'rate.commission_due_minutes',
+    label: 'Komisyon ödeme süresi (para alındıktan sonra)',
+    suffix: 'dk',
+    default: 45,
+  },
+  {
     key: 'rate.commission_grace_minutes',
     label: 'Komisyon gecikme payı',
     suffix: 'dk',

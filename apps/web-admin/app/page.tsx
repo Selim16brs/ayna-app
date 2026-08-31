@@ -1165,25 +1165,10 @@ function CategoryBars({ items }: { items: { sector: string; count: number }[] })
   );
 }
 
-// §12.8 Komisyon tahsilat döngüsü — dönem faturaları (Ödendi/Bekliyor/Gecikti)
+// Komisyon tahsilatı — İŞLEM BAŞINA fatura (Ödendi/Bekliyor/Gecikti)
 function InvoicesSection() {
   const { data, reload } = useAsync<CommissionInvoice[]>(() => api.commissionInvoices(), []);
-  const [start, setStart] = useState('');
-  const [end, setEnd] = useState('');
-  const [due, setDue] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
-
-  const close = async () => {
-    if (!start || !end) return;
-    const res = await api.closePeriod(start, end, due || undefined);
-    setMsg(
-      `Dönem kapandı — ${res.created} fatura üretildi (son ödeme: ${res.dueDate.slice(0, 10)})`,
-    );
-    setStart('');
-    setEnd('');
-    setDue('');
-    reload();
-  };
 
   const runOverdue = async () => {
     const res = await api.runOverdue();
@@ -1198,41 +1183,18 @@ function InvoicesSection() {
 
   return (
     <>
-      <div className="section-title">Dönem faturaları — tahsilat döngüsü (§12.8)</div>
+      <div className="section-title">Komisyon faturaları — işlem başına (E5)</div>
       <div className="card" style={{ marginBottom: 16 }}>
+        {/* TEK KURAL: fatura hizmet tamamlandığı ANDA otomatik doğuyor. Elle
+            "dönem kapat" düğmesi KALDIRILDI — aynı para için ikinci bir kural
+            (dönem sonu + 7 gün) demekti ve aynı randevu iki kez faturalanabiliyordu. */}
         <div className="form-inline">
-          <label className="meta">
-            Dönem başı
-            <input
-              className="input"
-              type="date"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-            />
-          </label>
-          <label className="meta">
-            Dönem sonu
-            <input
-              className="input"
-              type="date"
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-            />
-          </label>
-          <label className="meta">
-            Son ödeme (ops.)
-            <input
-              className="input"
-              type="date"
-              value={due}
-              onChange={(e) => setDue(e.target.value)}
-            />
-          </label>
-          <button className="btn-sm btn-ok" onClick={close}>
-            Dönemi kapat → fatura üret
-          </button>
+          <div className="meta full">
+            Fatura hizmet tamamlandığında otomatik kesilir. Vade: tamamlanmadan 30 dk sonra;
+            ardından 15 dk tanınır, sonra hesap kısıtlanır. Süreler Ayarlar’dan yönetilir.
+          </div>
           <button className="btn-sm" onClick={runOverdue}>
-            Gecikmeleri işle (7g → kısıt)
+            Gecikmeleri işle
           </button>
           {msg && (
             <div className="meta full" style={{ color: 'var(--success)' }}>

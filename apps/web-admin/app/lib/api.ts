@@ -58,11 +58,6 @@ export const api = {
     }),
   // §12.8 Komisyon tahsilat döngüsü
   commissionInvoices: () => req<CommissionInvoice[]>('/admin/commissions/invoices'),
-  closePeriod: (periodStart: string, periodEnd: string, dueDate?: string) =>
-    req<{ created: number; dueDate: string; rate: number }>('/admin/commissions/close-period', {
-      method: 'POST',
-      body: JSON.stringify({ periodStart, periodEnd, ...(dueDate ? { dueDate } : {}) }),
-    }),
   collectInvoice: (id: string) =>
     req<CommissionInvoice>(`/admin/commissions/invoices/${id}/collect`, { method: 'POST' }),
   runOverdue: () =>
