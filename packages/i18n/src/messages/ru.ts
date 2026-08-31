@@ -151,6 +151,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'expert.reg.preview_note':
     'Примерно так ваш профиль увидит клиент. Подтвердите и завершите регистрацию.',
   // §uzman onboarding Faz E4 — doğrulama & rozetler ekranı
+  'seller.start.title': 'Начнём',
+  'seller.start.sub': 'До первой записи два шага: укажи услуги и подтверди личность.',
+  'seller.start.services': 'Указать услуги',
+  'seller.start.verify': 'Подтвердить личность',
   'seller.menu.verify': 'Верификация и значки',
   'seller.menu.verify_d':
     'Подтвердите личность, сертификаты и соцсети — получите статус AYNA Проверено',
@@ -712,6 +716,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.status.completed': 'Завершено',
   'home.upcoming_events': 'Предстоящие события',
   'home.upcoming_empty': 'У тебя нет предстоящих записей',
+  'circle.empty.feed': 'В этом фильтре пока нет постов',
+  'circle.empty.mine': 'Ты пока ничего не спросила',
+  'circle.empty.saved': 'Нет сохранённых постов',
+  'circle.empty.sub': 'Задай первый вопрос — можно анонимно.',
   'circle.tab.saved': 'Сохранённые',
   'circle.save': 'Сохранить',
   'circle.unsave': 'Убрать из сохранённых',

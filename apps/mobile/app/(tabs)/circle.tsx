@@ -322,9 +322,37 @@ export default function CircleScreen() {
         </ScrollView>
 
         <View style={styles.list}>
-          {visible.map((p) => (
-            <PostCard key={p.id} post={p} />
-          ))}
+          {/* §4 — BOŞ DURUM. Bu sekmede hiç yoktu: filtre bir şey eşlemezse
+              ya da kullanıcı henüz gönderi yazmamışsa ekranda BOMBOŞ bir
+              alan kalıyordu. Denetim boş alanı yasaklıyor: içerik + tek net
+              aksiyon olmalı. Mesaj sekmeye göre değişiyor — "kaydettiğin
+              yok" ile "kimse paylaşmamış" aynı şey değil. */}
+          {visible.length === 0 ? (
+            <View style={styles.bosDurum}>
+              <View style={styles.bosIkon}>
+                <Ionicons name="chatbubbles-outline" size={28} color={colors.muted} />
+              </View>
+              <Text variant="bodyStrong" tone="ink" style={styles.bosBaslik}>
+                {t(
+                  sekme === 'mine'
+                    ? 'circle.empty.mine'
+                    : sekme === 'saved'
+                      ? 'circle.empty.saved'
+                      : 'circle.empty.feed',
+                )}
+              </Text>
+              <Text variant="caption" tone="muted" style={styles.bosAlt}>
+                {t('circle.empty.sub')}
+              </Text>
+              <PressableScale style={styles.bosCta} onPress={() => router.push('/circle/new')}>
+                <Text variant="caption" tone="onAccent" style={styles.bosCtaText}>
+                  {t('circle.ask')}
+                </Text>
+              </PressableScale>
+            </View>
+          ) : (
+            visible.map((p) => <PostCard key={p.id} post={p} />)
+          )}
         </View>
         {/* Kanvas §gizlilik şeridi — "buraya hiçbir şey kendiliğinden düşmez".
             Buradaki üç madde de KOD DOĞRULANDI, süs değil:
@@ -587,6 +615,26 @@ const makeStyles = (colors: ColorTokens) =>
     },
     chipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
     list: { paddingHorizontal: space(3), paddingTop: space(1.5), gap: space(1.5) },
+    bosDurum: { alignItems: 'center', paddingVertical: space(5), gap: space(1) },
+    bosIkon: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bosBaslik: { textAlign: 'center' },
+    bosAlt: { textAlign: 'center', maxWidth: 260 },
+    bosCta: {
+      marginTop: space(1),
+      backgroundColor: colors.accent,
+      borderRadius: radius.pill,
+      paddingHorizontal: space(2.5),
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    bosCtaText: { fontFamily: font.semibold },
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
