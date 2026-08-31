@@ -94,6 +94,24 @@ jobs:
       # Bozuk JS'i telefona göndermek, hiç göndermemekten kötüdür.
       - run: pnpm test
 
+      # Ekranda "01a0587f" görmek "ulaştı mı" sorusunu cevaplıyor ama "NE
+      # ulaştı" sorusunu cevaplamıyor. Commit özeti buraya yazılıyor ki kurucu
+      # telefondaki satırla benim "şunu yaptım" cümlemi karşılaştırabilsin.
+      - name: Sürüm özetini yaz
+        run: |
+          node -e '
+            const { execSync } = require("child_process");
+            const ozet = execSync("git log -1 --pretty=%s").toString().trim();
+            const sha = execSync("git rev-parse --short HEAD").toString().trim();
+            const tarih = execSync("git log -1 --date=format:%d.%m %H:%M --pretty=%ad")
+              .toString().trim();
+            require("fs").writeFileSync(
+              "apps/mobile/src/surum-bilgi.json",
+              JSON.stringify({ sha, ozet, tarih }, null, 2) + "\n",
+            );
+            console.log(sha, "·", ozet);
+          '
+
       - name: OTA yayınla
         working-directory: apps/mobile
         env:

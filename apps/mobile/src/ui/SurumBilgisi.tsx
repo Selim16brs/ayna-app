@@ -1,5 +1,6 @@
 import * as Updates from 'expo-updates';
 import * as Application from 'expo-application';
+import surumBilgi from '../surum-bilgi.json';
 import { StyleSheet, View } from 'react-native';
 import { space, type ColorTokens } from '../theme';
 import { useThemedStyles } from '../theme-context';
@@ -25,6 +26,7 @@ export function SurumBilgisi() {
   const styles = useThemedStyles(makeStyles);
 
   let satir = '—';
+  let ozet = '';
   try {
     // NATIVE yapı — GERÇEK binary'den. Önce `Constants.expoConfig` okunuyordu
     // ama o, OTA ile GELEN JS yapılandırmasını gösteriyor: TestFlight "114"
@@ -47,6 +49,11 @@ export function SurumBilgisi() {
       : '—';
     // "yapı" = TestFlight'taki native sürüm · "güncelleme" = üstüne düşen JS.
     satir = `yapı ${native} (${build}) · güncelleme ${guncelleme} · ${tarih}`;
+    // OKUNUR ÖZET: kimlik ve tarih "bu ulaştı mı" sorusunu cevaplıyor ama "NE
+    // ulaştı" sorusunu cevaplamıyordu. `01a0587f` kimsenin bir şey anlamadığı
+    // bir dize. Yayın anında yazılan commit özeti, kurucunun "şunu yaptım"
+    // cümlemle ekrandakini KARŞILAŞTIRABİLMESİNİ sağlıyor.
+    ozet = surumBilgi.ozet || '';
   } catch {
     // Teşhis satırı asla ekranı düşürmez.
     satir = 'sürüm okunamadı';
@@ -57,6 +64,11 @@ export function SurumBilgisi() {
       <Text variant="caption" tone="muted" style={styles.metin} selectable>
         {satir}
       </Text>
+      {ozet ? (
+        <Text variant="caption" tone="muted" style={styles.metin} selectable>
+          {ozet}
+        </Text>
+      ) : null}
     </View>
   );
 }
