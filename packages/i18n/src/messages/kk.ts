@@ -1957,6 +1957,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.detail.accept': 'Осы уақытты қабылдау',
   'booking.confirmed.awaiting':
     'Маман растауы күтілуде — расталғанда мекенжай мен телефон бөлісіледі',
+  'review.w2w_share': 'Бұл тәжірибені W2W-де бөліс',
+  'review.w2w_hint':
+    'Пікірің Шеңберде аты аталмай көрінеді. Шешім сенікі — өшірулі болса ештеңе бөлісілмейді.',
   'review.title': 'Бағалау',
   'review.subtitle': 'Тәжірибеңмен бөліс, басқаларға жол көрсет',
   'review.rating': 'Ұпайың',

@@ -1963,6 +1963,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.detail.accept': 'Принять это время',
   'booking.confirmed.awaiting':
     'Ожидается подтверждение мастера — после подтверждения будут переданы адрес и телефон',
+  'review.w2w_share': 'Поделиться этим опытом в W2W',
+  'review.w2w_hint':
+    'Отзыв появится в Круге анонимно. Решение за вами — если выключено, ничего не публикуется.',
   'review.title': 'Оценить',
   'review.subtitle': 'Поделитесь опытом, подскажите другим',
   'review.rating': 'Ваш балл',

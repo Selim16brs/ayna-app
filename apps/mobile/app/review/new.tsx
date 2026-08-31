@@ -32,6 +32,10 @@ export default function ReviewNewScreen() {
   const id = params.id ?? params.bookingId; // push rotası bookingId, ekran içi rotalar id gönderir
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
   const reviewBooking = useStore((s) => s.reviewBooking);
+  const addPost = useStore((s) => s.addPost);
+  // §4.12/§10 — W2W ücretli pakette. Paketi olmayan kullanıcıya seçenek
+  // gösterip sonra çalışmaması, karşılıksız bir vaat olurdu.
+  const w2wVar = useStore((s) => s.premium || s.platinum);
 
   // §7.1 — salon randevusu ise iki adım (önce uzman, sonra salon); bireyselse tek adım.
   // Uzman adımı ancak uzman adı biliniyorsa açılır; yoksa salon adı "Uzman" gibi görünmesin.
@@ -43,6 +47,12 @@ export default function ReviewNewScreen() {
   const [uzman, setUzman] = useState<Rate>(emptyRate);
   const [salon, setSalon] = useState<Rate>(emptyRate);
   const [photos, setPhotos] = useState<string[]>([]); // EK Z.10 — öncesi/sonrası galeri
+  /**
+   * §4.12 — W2W memnuniyet paylaşımı. VARSAYILAN KAPALI: "Paylaşım kartı
+   * otomatik hazırlanır, önizleme gösterilir; yayın kararı her zaman
+   * müşterinindir. Onaysız otomatik yayın KESİNLİKLE yok."
+   */
+  const [w2wPaylas, setW2wPaylas] = useState(false);
 
   async function pickPhoto() {
     if (photos.length >= 4) return;
@@ -96,6 +106,16 @@ export default function ReviewNewScreen() {
         ? { salon: { rating: salon.rating, text: salon.text.trim(), tags: salon.tags } }
         : {}),
     });
+    // §4.12 — W2W paylaşımı YALNIZ kullanıcı açıkça istediyse. Onaysız
+    // otomatik yayın kesinlikle yok (mahremiyet).
+    if (w2wPaylas && uzman.text.trim()) {
+      addPost({
+        type: 'recommend',
+        category: booking?.service ?? '',
+        text: uzman.text.trim(),
+        anonymous: true,
+      });
+    }
     router.replace('/bookings');
   }
 
@@ -218,6 +238,41 @@ export default function ReviewNewScreen() {
             </View>
           </>
         ) : null}
+        {/* §4.12 — YALNIZ 4-5 yıldızda ve W2W erişimi olan pakette. Düşük puanlı
+            bir deneyimi "paylaş" diye önermek, kullanıcıyı memnun olmadığı bir
+            şeyi yaymaya çağırmak olurdu. Varsayılan KAPALI. */}
+        {!onUzman || !isSalon ? (
+          uzman.rating >= 4 && w2wVar && uzman.text.trim() ? (
+            <Pressable
+              style={[styles.card, styles.w2wSatir]}
+              onPress={() => setW2wPaylas((v) => !v)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: w2wPaylas }}
+            >
+              <Ionicons
+                name={w2wPaylas ? 'checkbox' : 'square-outline'}
+                size={22}
+                color={w2wPaylas ? colors.accent : colors.muted}
+              />
+              <View style={styles.w2wGovde}>
+                <Text variant="bodyStrong" tone="ink">
+                  {t('review.w2w_share')}
+                </Text>
+                <Text variant="caption" tone="muted" style={styles.w2wNot}>
+                  {t('review.w2w_hint')}
+                </Text>
+                {/* Önizleme: ne yayınlanacağını KARAR VERMEDEN önce görsün. */}
+                {w2wPaylas ? (
+                  <View style={styles.w2wOnizleme}>
+                    <Text variant="caption" tone="inkSoft">
+                      {uzman.text.trim()}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </Pressable>
+          ) : null
+        ) : null}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -254,6 +309,21 @@ function StepDot({ label, active, done }: { label: string; active: boolean; done
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingHorizontal: space(3), paddingBottom: space(4), paddingTop: space(1) },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      marginTop: space(2),
+    },
+    w2wSatir: { flexDirection: 'row', alignItems: 'flex-start', gap: space(1.5) },
+    w2wGovde: { flex: 1, gap: space(0.5) },
+    w2wNot: { lineHeight: 18 },
+    w2wOnizleme: {
+      backgroundColor: colors.bg,
+      borderRadius: radius.md,
+      padding: space(1.5),
+      marginTop: space(0.5),
+    },
     steps: {
       flexDirection: 'row',
       alignItems: 'center',

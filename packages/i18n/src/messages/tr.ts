@@ -2044,6 +2044,9 @@ export const tr = {
   'booking.confirmed.awaiting': 'Uzman onayı bekleniyor — onaylanınca adres ve telefon paylaşılır',
 
   // Değerlendirme akışı
+  'review.w2w_share': "Bu deneyimi W2W'da paylaş",
+  'review.w2w_hint':
+    'Yorumun isimsiz olarak Çemberde görünür. Karar senin — kapalıyken hiçbir şey paylaşılmaz.',
   'review.title': 'Değerlendir',
   'review.subtitle': 'Deneyimini paylaş, başkalarına yol göster',
   'review.rating': 'Puanın',
