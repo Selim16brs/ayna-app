@@ -1142,10 +1142,6 @@ export const SEED_APPOINTMENTS: Appointment[] = [
   },
 ];
 
-// §10/§4 — UZMANIN GEÇMİŞ MÜŞTERİLERİ (geri-çağırma listesi kaynağı).
-// Her hizmet periyodiktir (taksonomi periodDays); son gelişten periyot kadar geçince
-// uzman memnun müşteriyi sıcak bir bildirimle geri çağırabilir → retention + gelir köprüsü.
-const DAY_MS = 24 * 60 * 60_000;
 // §11 — bildirim yalnız periyot bitişine 1 gün kala ve bitiş günü gider.
 // Seed: son geliş = SEED_NOW - (periyot - kalan gün) → bitiş bugün/yarın/ileride ayarlanır.
 
@@ -1251,54 +1247,6 @@ export interface CirclePost {
   commentCount?: number;
 }
 
-export const SEED_CIRCLE_POSTS: CirclePost[] = [
-  {
-    id: 'c1',
-    type: 'recommend',
-    category: 'Saç',
-    author: 'Dana',
-    anonymous: false,
-    text: 'Madina Studio’da balayage yaptırdım, sonuç referansın birebir aynısı oldu. Gönül rahatlığıyla öneririm.',
-    helpful: 24,
-    comments: [
-      { id: 'c1-1', author: 'Aizhan', anonymous: false, text: 'Fiyat aralığı nasıldı?' },
-      {
-        id: 'c1-2',
-        author: 'Dana',
-        anonymous: false,
-        text: 'Balayage 28.000 ₸ civarıydı, çok memnunum.',
-      },
-    ],
-  },
-  {
-    id: 'c2',
-    type: 'asking',
-    category: 'Makyaj',
-    author: 'Doğrulanmış üye',
-    anonymous: true,
-    text: 'Almatı’da gelin makyajı için güvenilir bir uzman arıyorum. Evime gelebilen biri ideal olur.',
-    helpful: 8,
-    comments: [
-      {
-        id: 'c2-1',
-        author: 'Gulnara',
-        anonymous: false,
-        text: 'Ailin Makeup eve geliyor, çok başarılı.',
-      },
-    ],
-  },
-  {
-    id: 'c3',
-    type: 'experience',
-    category: 'Tırnak',
-    author: 'Aigerim',
-    anonymous: false,
-    text: 'Kalıcı ojede hijyene çok dikkat eden bir yer buldum. Sterilizasyonu gözümün önünde yaptılar.',
-    helpful: 17,
-    comments: [],
-  },
-];
-
 // ── Bakım rutinleri (store tohumu) ───────────────────────────────────────
 export interface CareRoutine {
   id: string;
@@ -1308,41 +1256,6 @@ export interface CareRoutine {
   periodDays: number; // bakım döngüsü — "tamamladım" sayacı buna göre yeniden başlar
   categoryCode?: string; // §5.4.5 — "Teklif Al" kategoriyi otomatik seçsin (nails, hair…)
 }
-
-export const SEED_CARE_ROUTINES: CareRoutine[] = [
-  {
-    id: 'cr1',
-    name: 'Kalıcı oje yenileme',
-    icon: 'color-palette-outline',
-    dueDays: 2,
-    periodDays: 15,
-    categoryCode: 'nails',
-  },
-  {
-    id: 'cr2',
-    name: 'Saç dip boyası',
-    icon: 'cut-outline',
-    dueDays: -3,
-    periodDays: 42,
-    categoryCode: 'hair',
-  },
-  {
-    id: 'cr3',
-    name: 'Cilt bakımı',
-    icon: 'sparkles-outline',
-    dueDays: 9,
-    periodDays: 30,
-    categoryCode: 'skincare',
-  },
-  {
-    id: 'cr4',
-    name: 'Lazer epilasyon seansı',
-    icon: 'flash-outline',
-    dueDays: 0,
-    periodDays: 30,
-    categoryCode: 'epilation',
-  },
-];
 
 // ── Kişisel kayıtlar (kullanıcının kendi girdiği — pazaryeri değil) ──────
 export type PersonalTone = 'rose' | 'sage' | 'lavender' | 'blue';
@@ -1356,30 +1269,6 @@ export interface PersonalLog {
   kind?: QuickAddKind; // düzenleme ekranında tür çipini geri yükleyebilmek için
   dateMs?: number; // düzenlemede tarih seçiciyi doğru tarihe açmak için (epoch)
 }
-
-export const SEED_PERSONAL_LOGS: PersonalLog[] = [
-  {
-    id: 'pl1',
-    title: 'Pilates dersi',
-    dateLabel: 'Bugün · 18:30',
-    icon: 'barbell-outline',
-    tone: 'sage',
-  },
-  {
-    id: 'pl2',
-    title: 'Jinekolog kontrolü',
-    dateLabel: '12 Tem · 10:00',
-    icon: 'medkit-outline',
-    tone: 'rose',
-  },
-  {
-    id: 'pl3',
-    title: 'Diş hekimi',
-    dateLabel: '20 Tem · 14:00',
-    icon: 'happy-outline',
-    tone: 'lavender',
-  },
-];
 
 // Hızlı ekle türleri (Benim İçin → ekleme akışı)
 export type QuickAddKind = 'doctor' | 'gym' | 'personal' | 'reminder';
@@ -1500,18 +1389,6 @@ export interface Moment {
   dateLabel: string;
   daysLeft: number;
 }
-
-export const SEED_MOMENTS: Moment[] = [
-  { id: 'm1', title: 'Dana’nın doğum günü', icon: 'gift-outline', dateLabel: '7 Tem', daysLeft: 8 },
-  {
-    id: 'm2',
-    title: 'Evlilik yıl dönümü',
-    icon: 'heart-outline',
-    dateLabel: '22 Tem',
-    daysLeft: 23,
-  },
-  { id: 'm3', title: 'Arkadaş düğünü', icon: 'flower-outline', dateLabel: '3 Ağu', daysLeft: 35 },
-];
 
 // ── Birleşik takvim (randevu + özel gün + bakım) ─────────────────────────
 export type EventKind = 'appointment' | 'moment' | 'care';
@@ -1700,52 +1577,6 @@ export function sortOffers(offers: DemandOffer[], by: OfferSort): DemandOffer[] 
   return arr.sort((a, b) => score(b) - score(a));
 }
 
-// Uzman "Talepler" havuzu — şehirdeki açık talepler (mock; gerçekte diğer kullanıcılardan)
-const DM_NOW = Date.now();
-export const SEED_DEMANDS: DemandRequest[] = [
-  {
-    id: 'dm-seed-1',
-    mode: 'describe',
-    category: 'hair',
-    city: 'Almatı',
-    note: 'Düğün için topuz ve saç tasarımı istiyorum, öğleden sonra müsaitim.',
-    budget: 20000,
-    collectMin: 180,
-    createdAt: DM_NOW,
-    expiresAt: DM_NOW + 150 * 60_000,
-    status: 'collecting',
-    offers: buildOffers('hair', 'Almatı', 20000, DM_NOW).slice(0, 2),
-    trusted: true, // §7.3 — yüksek tamamlanma oranlı kullanıcı (pozitif rozet demo)
-    seeded: true,
-  },
-  {
-    id: 'dm-seed-2',
-    mode: 'photo',
-    category: 'nails',
-    city: 'Almatı',
-    collectMin: 720,
-    createdAt: DM_NOW,
-    expiresAt: DM_NOW + 400 * 60_000,
-    status: 'collecting',
-    offers: buildOffers('nails', 'Almatı', undefined, DM_NOW).slice(0, 1),
-    seeded: true,
-  },
-  {
-    id: 'dm-seed-3',
-    mode: 'describe',
-    category: 'lashes',
-    city: 'Almatı',
-    note: 'Klasik ipek kirpik, ilk kez yaptıracağım.',
-    budget: 12000,
-    collectMin: 180,
-    createdAt: DM_NOW,
-    expiresAt: DM_NOW + 60 * 60_000,
-    status: 'collecting',
-    offers: [],
-    seeded: true,
-  },
-];
-
 // ── §10.1/§5.1.6 Promosyon (Fırsatlar vitrini içeriği) — premium salon/uzman üretir ────
 // §12.7 — her promosyon admin onayına düşer; onaylanınca kullanıcı tarafı Fırsatlar'da yayınlanır.
 export type PromotionStatus = 'pending' | 'live' | 'rejected' | 'expired';
@@ -1760,30 +1591,6 @@ export interface Promotion {
   status: PromotionStatus;
   createdAt: number;
 }
-
-const PROMO_NOW = Date.now();
-export const SEED_PROMOTIONS: Promotion[] = [
-  {
-    id: 'promo-seed-1',
-    title: 'Kışa özel saç bakımı',
-    desc: 'Keratin bakım + fön ilk 20 randevuda indirimli.',
-    discountPct: 25,
-    startLabel: '5 Tem',
-    endLabel: '31 Tem',
-    status: 'live',
-    createdAt: PROMO_NOW - 12 * 86_400_000,
-  },
-  {
-    id: 'promo-seed-2',
-    title: 'Yeni müşteriye ilk manikür',
-    desc: 'İlk kez gelen misafirlere jel manikürde özel fiyat.',
-    discountPct: 15,
-    startLabel: '10 Tem',
-    endLabel: '20 Tem',
-    status: 'pending',
-    createdAt: PROMO_NOW - 9 * 86_400_000,
-  },
-];
 
 // ── Tedarikçi reklamları (YENİ) — uzman/salon paneli orta alanı ──────────
 // Uzmanın sektörüne göre malzeme/ürün satan firmaların reklamları. Admin panelinden
@@ -1805,62 +1612,6 @@ export interface SupplierAd {
   contact?: string; // iletişim (telefon/WhatsApp)
   perks?: string[]; // kampanya avantaj maddeleri
 }
-
-export const SEED_SUPPLIER_ADS: SupplierAd[] = [
-  {
-    id: 'ad-1',
-    brand: 'Almaty Beauty Supply',
-    title: 'Profesyonel saç bakım ürünleri',
-    subtitle: 'Salonlara özel toptan fiyatlar',
-    ctaLabel: 'İncele',
-    tone: 'plum',
-    icon: 'cut',
-    sector: 'hair',
-    city: 'Almatı',
-    imageUri: adImg('photo-1560066984-138dadb4c035'),
-    offer: 'Salonlara %25 toptan indirim',
-    description:
-      'Kazakistan’ın önde gelen profesyonel saç bakım tedarikçisi. Keratin, boya, bakım ve şekillendirme ürünlerinde salon hesaplarına özel toptan fiyat. Almatı içi aynı gün teslimat.',
-    perks: [
-      'İlk siparişte %25 indirim',
-      'Almatı içi ücretsiz teslimat',
-      'Kurumsal fatura + kredili ödeme',
-    ],
-    contact: '+7 727 350 10 20',
-  },
-  {
-    id: 'ad-2',
-    brand: 'NailPro KZ',
-    title: 'Jel & kalıcı oje setleri',
-    subtitle: 'Yeni koleksiyon %20 indirimli',
-    ctaLabel: 'Kataloğa bak',
-    tone: 'rose',
-    icon: 'color-palette',
-    sector: 'nails',
-    imageUri: adImg('photo-1604654894610-df63bc536371'),
-    offer: 'Yeni koleksiyon %20 indirim',
-    description:
-      'Manikür & tırnak stüdyoları için jel, kalıcı oje, aparat ve tek kullanımlık malzeme. 300+ renk yeni sezon koleksiyonu profesyonel hesaplara özel fiyatla.',
-    perks: ['Yeni sezon %20 indirim', '300+ renk stokta', 'Uzmanlara ücretsiz numune paketi'],
-    contact: '+7 727 350 20 30',
-  },
-  {
-    id: 'ad-3',
-    brand: 'Derma Studio Pro',
-    title: 'Cilt bakımı cihaz ve serumları',
-    subtitle: 'Uzman fiyatlarıyla, hızlı teslimat',
-    ctaLabel: 'İncele',
-    tone: 'teal',
-    icon: 'sparkles',
-    sector: 'skincare',
-    imageUri: adImg('photo-1487412947147-5cebf100ffc2'),
-    offer: '2 alana 1 serum hediye',
-    description:
-      'Cilt bakımı uzmanları için profesyonel cihaz, peeling ve serum. CE sertifikalı cihazlarda 24 ay garanti; uzman eğitimi dahil.',
-    perks: ['2 cihaza 1 serum hediye', '24 ay cihaz garantisi', 'Ücretsiz uygulama eğitimi'],
-    contact: '+7 727 350 30 40',
-  },
-];
 
 // ── Sadakat: kazanım/harcama defteri + çekiliş + ödüller ─────────────────
 // §8.2 — çekiliş bilet maliyeti + puan harcama tavanı. PARAMETRİK (admin panel).
@@ -1896,88 +1647,6 @@ export interface AlwaysBond {
   proId?: string;
 }
 
-// Demo tohumları — uzman 'Aigerim' ve müşteri 'Aruzhan' oturumlarının ikisini de anlamlı gösterir.
-export const SEED_ALWAYS_BONDS: AlwaysBond[] = [
-  // Aigerim (uzman) — kabul edilmiş sadık müşteriler
-  {
-    id: 'ab-1',
-    providerName: 'Aigerim',
-    providerImage: avatar(FACES[1]!),
-    customerName: 'Zhanel S.',
-    customerImage: avatar(FACES[3]!),
-    initiator: 'customer',
-    status: 'accepted',
-    lastServiceId: 'nails-gel',
-    createdMs: SEED_NOW - 40 * DAY_MS,
-  },
-  {
-    id: 'ab-2',
-    providerName: 'Aigerim',
-    providerImage: avatar(FACES[1]!),
-    customerName: 'Dana K.',
-    customerImage: avatar(FACES[4]!),
-    initiator: 'provider',
-    status: 'accepted',
-    lastServiceId: 'lashes-classic',
-    createdMs: SEED_NOW - 33 * DAY_MS,
-  },
-  {
-    id: 'ab-3',
-    providerName: 'Aigerim',
-    providerImage: avatar(FACES[1]!),
-    customerName: 'Saule N.',
-    customerImage: avatar(FACES[5]!),
-    initiator: 'customer',
-    status: 'accepted',
-    lastServiceId: 'skin-facial',
-    createdMs: SEED_NOW - 20 * DAY_MS,
-  },
-  // Aigerim — kabul bekleyen GELEN istekler (müşteri başlattı → uzman kabul eder)
-  {
-    id: 'ab-4',
-    providerName: 'Aigerim',
-    providerImage: avatar(FACES[1]!),
-    customerName: 'Madina B.',
-    customerImage: avatar(FACES[7]!),
-    initiator: 'customer',
-    status: 'pending',
-    lastServiceId: 'nails-classic',
-    createdMs: SEED_NOW - 2 * DAY_MS,
-  },
-  {
-    id: 'ab-5',
-    providerName: 'Aigerim',
-    providerImage: avatar(FACES[1]!),
-    customerName: 'Kamila T.',
-    customerImage: avatar(FACES[6]!),
-    initiator: 'customer',
-    status: 'pending',
-    lastServiceId: 'brows-shape',
-    createdMs: SEED_NOW - 1 * DAY_MS,
-  },
-  // Müşteri (Aruzhan) tarafı — Glamour Salon'dan GELEN istek (müşteri kabul eder) + kurulmuş bağ
-  {
-    id: 'ab-6',
-    providerName: 'Glamour Salon',
-    providerImage: SALON_IMG,
-    customerName: 'Aruzhan',
-    customerImage: avatar(FACES[0]!),
-    initiator: 'provider',
-    status: 'pending',
-    createdMs: SEED_NOW - 1 * DAY_MS,
-  },
-  {
-    id: 'ab-7',
-    providerName: 'Madina Studio',
-    providerImage: avatar(FACES[2]!),
-    customerName: 'Aruzhan',
-    customerImage: avatar(FACES[0]!),
-    initiator: 'customer',
-    status: 'accepted',
-    lastServiceId: 'hair-color',
-    createdMs: SEED_NOW - 15 * DAY_MS,
-  },
-];
 export type LedgerKind = 'earn' | 'spend';
 export interface LedgerEntry {
   id: string;
@@ -1987,33 +1656,6 @@ export interface LedgerEntry {
   points: number; // earn pozitif, spend negatif
   dateLabel: string;
 }
-
-export const SEED_LEDGER: LedgerEntry[] = [
-  {
-    id: 'le1',
-    kind: 'earn',
-    labelKey: 'rewards.earn.booking',
-    detail: 'Lotus Spa · Cilt bakımı',
-    points: 180,
-    dateLabel: 'Geçen hafta',
-  },
-  {
-    id: 'le2',
-    kind: 'earn',
-    labelKey: 'rewards.earn.review',
-    detail: 'Bella Nails',
-    points: 40,
-    dateLabel: 'Geçen ay',
-  },
-  {
-    id: 'le3',
-    kind: 'earn',
-    labelKey: 'rewards.earn.referral',
-    detail: 'Dana katıldı',
-    points: 120,
-    dateLabel: 'Geçen ay',
-  },
-];
 
 export interface Reward {
   id: string;
@@ -2065,71 +1707,6 @@ export const NOTIFICATION_ROUTE: Record<NotificationType, string | null> = {
   circle: '/circle',
   system: null,
 };
-
-export const SEED_NOTIFICATIONS: AppNotification[] = [
-  {
-    // §11 — Always toplu bildirimi (Platinum uzman/salondan; müşteri panelinde görünür)
-    id: 'n-always-bc',
-    type: 'system',
-    title: 'Madina Studio · Bu haftaya özel %20',
-    body: 'Sevgili müşterim, bu hafta tüm bakımlarda %20 indirim seni bekliyor 💌',
-    dateLabel: 'Bugün',
-    icon: 'megaphone-outline',
-    read: false,
-    audience: 'user',
-  },
-  {
-    // §10/§4 — uzmandan gelen sıcak "geri çağırma" bildirimi (müşteri panelinde görünür)
-    id: 'n-reengage',
-    type: 'quote',
-    titleKey: 'notif.reengage.nails_t',
-    bodyKey: 'notif.reengage.nails_b',
-    params: { expert: 'Aigerim', service: 'Jel / Kalıcı oje' },
-    dateLabel: 'Dün',
-    icon: 'color-palette-outline',
-    read: false,
-    audience: 'user',
-  },
-  {
-    id: 'n1',
-    type: 'booking',
-    title: 'Randevun onaylandı',
-    body: 'Madina Studio · Cuma 14:00 · Saç kesimi & fön',
-    dateLabel: '2 saat önce',
-    icon: 'calendar-outline',
-    read: false,
-    route: '/booking/a1',
-  },
-  {
-    id: 'n2',
-    type: 'quote',
-    title: 'Yeni teklif geldi',
-    body: 'Talebine işletmeler teklif verdi.',
-    dateLabel: 'Dün',
-    icon: 'pricetags-outline',
-    read: false,
-    route: '/quote/results?id=dm-seed-1',
-  },
-  {
-    id: 'n3',
-    type: 'loyalty',
-    title: '180 puan kazandın',
-    body: 'Lotus Spa randevun tamamlandı.',
-    dateLabel: '3 gün önce',
-    icon: 'gift-outline',
-    read: true,
-  },
-  {
-    id: 'n4',
-    type: 'circle',
-    title: 'Gönderine yorum',
-    body: 'Aizhan: "Fiyat aralığı nasıldı?"',
-    dateLabel: '4 gün önce',
-    icon: 'chatbubble-outline',
-    read: true,
-    route: '/circle/c1',
-  },
-];
 
 // ── Yardım & SSS ─────────────────────────────────────────────────────────
 export interface Faq {

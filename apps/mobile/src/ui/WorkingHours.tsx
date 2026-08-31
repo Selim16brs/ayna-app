@@ -80,7 +80,18 @@ export function WorkingHours({
                   {d.to}
                 </Text>
               </Pressable>
-              <Pressable onPress={() => applyAll(idx)} hitSlop={8} style={styles.copy}>
+              {/* "Bu saatleri tüm günlere uygula" — ikon TEK BAŞINAYDI: ne
+                  etiketi ne erişilebilir adı vardı. Kullanıcı kopyala ikonunun
+                  ne yaptığını tahmin etmek zorundaydı; ekran okuyucu ise
+                  hiçbir şey söylemiyordu. Metin (`hours.apply_all`) yazılmış
+                  ama hiçbir yere bağlanmamıştı. */}
+              <Pressable
+                onPress={() => applyAll(idx)}
+                hitSlop={8}
+                style={styles.copy}
+                accessibilityRole="button"
+                accessibilityLabel={t('hours.apply_all')}
+              >
                 <Ionicons name="copy-outline" size={16} color={colors.muted} />
               </Pressable>
             </View>
