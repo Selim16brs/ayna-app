@@ -9,7 +9,15 @@ import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useStore } from '../../src/store';
-import { PlanBadge, asPlanTier, Screen, Segmented, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
+import {
+  PlanBadge,
+  asPlanTier,
+  Screen,
+  Segmented,
+  SurumBilgisi,
+  Text,
+  TAB_BAR_CLEARANCE,
+} from '../../src/ui';
 import type { ThemeMode } from '../../src/theme';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -342,6 +350,11 @@ export default function ProfileScreen() {
               </Pressable>
             ))}
         </View>
+
+        {/* Hangi JS paketi çalışıyor? OTA'nın gerçekten ulaşıp ulaşmadığını
+            gözle doğrulamanın tek yolu — çökme kayıtları yalnız native sürümü
+            gösteriyor. */}
+        <SurumBilgisi />
       </ScrollView>
     </Screen>
   );
