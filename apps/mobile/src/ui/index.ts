@@ -51,4 +51,5 @@ export { VerificationBadges } from './VerificationBadges';
 export { PlanBadge } from './PlanBadge';
 export { asPlanTier, type PlanTier } from '../plan';
 export { ErrorBoundary, kurGlobalHataYakalayici } from './ErrorBoundary';
+export { SurumBilgisi } from './SurumBilgisi';
 export { OfflineBanner } from './OfflineBanner';
