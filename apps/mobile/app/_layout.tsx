@@ -13,13 +13,34 @@ import {
   syncBookingReminders,
 } from '../src/notifications';
 import { useStore } from '../src/store';
+import { useBackExit } from '../src/use-back-exit';
 import { ThemeProvider, useTheme } from '../src/theme-context';
-import { AppTabBar, NailCursor, SalonTabBar, SellerTabBar } from '../src/ui';
+import {
+  AppTabBar,
+  ErrorBoundary,
+  kurGlobalHataYakalayici,
+  NailCursor,
+  OfflineBanner,
+  SalonTabBar,
+  SellerTabBar,
+} from '../src/ui';
 
 function ThemedStack() {
   const { colors, isDark } = useTheme();
   const { t, locale } = useLocale();
   const pathname = usePathname();
+  // §14 — SEKME KÖKÜ: burada geri tuşu geçmişi boşaltıp uygulamayı UYARISIZ
+  // kapatıyordu. Kök yollarda çift dokunuş isteniyor; alt ekranlarda normal
+  // geri davranışı bozulmasın diye yalnız bu yollarda aktif.
+  const kokYol =
+    pathname === '/discover' ||
+    pathname === '/bookings' ||
+    pathname === '/care' ||
+    pathname === '/circle' ||
+    pathname === '/profile' ||
+    pathname === '/seller/reports' ||
+    pathname === '/salon/home';
+  useBackExit(kokYol);
   const router = useRouter();
   const currentUser = useStore((s) => s.currentUser);
   const token = useStore((s) => s.token);
@@ -153,6 +174,8 @@ function ThemedStack() {
           }}
         />
       </NailCursor>
+      {/* §10 — ÇEVRİMDIŞI BANDI en üstte, her ekranda. */}
+      <OfflineBanner />
       {baseHidden ? null : isSalon ? (
         <SalonTabBar />
       ) : isExpert ? (
@@ -163,6 +186,16 @@ function ThemedStack() {
     </>
   );
 }
+
+// §9 — ASYNC ve OLAY İŞLEYİCİSİ hataları hata sınırına DÜŞMEZ. Üretimde
+// yakalanmamış bir JS hatası uygulamayı sessizce kapatıyordu; artık
+// yakalanıyor ve uygulama ayakta kalıyor. Sentry bağlanınca kayıt buraya
+// eklenecek (şimdilik yalnız geliştirmede görünür).
+kurGlobalHataYakalayici((e, olumcul) => {
+  if (__DEV__) {
+    console.error(`[yakalanmamış${olumcul ? ' · ölümcül' : ''}]`, e);
+  }
+});
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
@@ -178,12 +211,18 @@ export default function RootLayout() {
   });
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <LocaleProvider>
-          <ThemedStack />
-        </LocaleProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    // §9 — HATA SINIRI EN DIŞTA. Uygulamada hiçbir sınır YOKTU: tek bir render
+    // hatası (ör. sunucudan beklenmedik biçimde veri gelmesi) uygulamayı
+    // kapatıyordu. Sağlayıcıların DIŞINDA duruyor ki tema/dil sağlayıcısının
+    // kendisi patlasa bile kurtarma ekranı çizilebilsin.
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <LocaleProvider>
+            <ThemedStack />
+          </LocaleProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

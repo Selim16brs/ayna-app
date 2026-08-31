@@ -3,6 +3,12 @@
 // Not: Pazar dilleri Kazakça (kk) ve Rusça (ru); önce Türkçe tamamlanır, sonra çevrilir.
 export const tr = {
   // Genel
+  'crash.title': 'Bir şeyler ters gitti',
+  'crash.body': 'Uygulamada beklenmedik bir hata oldu. Verilerin güvende — tekrar deneyebilirsin.',
+  'crash.retry': 'Tekrar dene',
+  'crash.home': 'Ana sayfaya dön',
+  'common.exit_confirm': 'Çıkmak için tekrar geri tuşuna bas',
+  'common.offline': 'Çevrimdışısın — bağlantı bekleniyor',
   'common.retry': 'Yeniden dene',
   'passport.care.load_err': 'Bilgilerin yüklenemedi. Bağlantını kontrol et.',
   'passport.care.allergy_ph': 'Alerji ekle — örn. amonyak, lateks',

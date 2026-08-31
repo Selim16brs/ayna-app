@@ -171,8 +171,91 @@ export function setApiToken(token: string | null | undefined): void {
   sessionToken = token ?? undefined;
 }
 
+/**
+ * ZAMAN AŞIMLI FETCH.
+ *
+ * `fetch` React Native'de VARSAYILAN ZAMAN AŞIMI TAŞIMAZ. Ölü ya da çok yavaş
+ * bir ağda istek sonsuza kadar bekliyordu; ekran da sonsuza kadar dönüyordu.
+ * Denetim #10 bunu açıkça yasaklıyor: _"uygulama donmaz, sonsuz spinner
+ * göstermez... her istek için timeout var."_
+ *
+ * 15 sn: Almatı → Amsterdam turu ölçümde ~1 sn; yavaş 3G'de birkaç katı.
+ * 15 saniye gerçek bir isteği kesmez ama ölü bağlantıyı da beklemez.
+ */
+const ISTEK_ZAMAN_ASIMI_MS = 15_000;
+
+export class TimeoutError extends Error {
+  constructor(path: string) {
+    super(`Zaman aşımı: ${path}`);
+  }
+}
+
+/**
+ * ÇEVRİMDIŞI DURUMU — bağımlılıksız.
+ *
+ * Denetim #10 kalıcı bir "Çevrimdışısın" bandı istiyor. Doğru araç `NetInfo`
+ * ama o bir YERLİ MODÜL: eklemek yeni bir uygulama yapısı gerektirir ve OTA
+ * ile kullanıcıya ULAŞMAZ. Kurucunun elindeki sürüm OTA ile güncelleniyor.
+ *
+ * Bu yüzden durum İSTEKLERDEN türetiliyor: arka arkaya ağ hatası alan
+ * istekler çevrimdışı sayılıyor, ilk başarılı istek durumu temizliyor.
+ * NetInfo kadar kesin değil (ağ var ama sunucu düşükse de tetiklenir) ama
+ * kullanıcıya doğru mesajı verir: "şu an veri gelmiyor".
+ *
+ * İKİ hata eşiği: tek bir başarısız istek (ör. 401) bandı yakmamalı.
+ */
+let _cevrimdisi = false;
+let _ardArdaHata = 0;
+const _dinleyiciler = new Set<(d: boolean) => void>();
+
+function durumBildir(hataMi: boolean) {
+  if (hataMi) {
+    _ardArdaHata += 1;
+    if (_ardArdaHata < 2 || _cevrimdisi) return;
+    _cevrimdisi = true;
+  } else {
+    _ardArdaHata = 0;
+    if (!_cevrimdisi) return;
+    _cevrimdisi = false;
+  }
+  for (const f of _dinleyiciler) f(_cevrimdisi);
+}
+
+export const cevrimdisiDurumu = {
+  get: () => _cevrimdisi,
+  dinle(f: (d: boolean) => void) {
+    _dinleyiciler.add(f);
+    return () => _dinleyiciler.delete(f);
+  },
+};
+
+async function zamanAsimliFetch(url: string, init: RequestInit, path: string): Promise<Response> {
+  const kontrol = new AbortController();
+  const sayac = setTimeout(() => kontrol.abort(), ISTEK_ZAMAN_ASIMI_MS);
+  try {
+    const r = await fetch(url, { ...init, signal: kontrol.signal });
+    // Sunucudan YANIT geldi — durum kodu ne olursa olsun bağlantı var.
+    durumBildir(false);
+    return r;
+  } catch (e) {
+    // Ağ hatası ve zaman aşımı çevrimdışı sayılır; HTTP hataları yukarıda
+    // zaten `durumBildir(false)` geçti.
+    durumBildir(true);
+    // Kesilen istek `AbortError` atıyor; çağıranın bunu "sunucu hatası"
+    // sanmaması için ayrı tip veriliyor.
+    if (e instanceof Error && e.name === 'AbortError') throw new TimeoutError(path);
+    throw e;
+  } finally {
+    clearTimeout(sayac);
+  }
+}
+
 async function get<T>(path: string, token?: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, { headers: authHeader(token ?? sessionToken) });
+  const res = await zamanAsimliFetch(
+    `${API_BASE}${path}`,
+    { headers: authHeader(token ?? sessionToken) },
+    path,
+  );
   if (!res.ok) throw new Error(`GET ${path} → ${res.status}`);
   // Bazı uçlar 200 + BOŞ gövde döner (ör. aktif tema yokken /content/theme, ilk ödeme
   // öncesi /payment/mine). res.json() boş gövdede patlar ve Promise.all zincirindeki
@@ -276,14 +359,18 @@ export class ApiError extends Error {
  * çağıran ekran sebebe özel mesaj gösterebilsin.
  */
 async function istek<T>(yontem: string, path: string, token?: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: yontem,
-    headers: {
-      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      ...authHeader(token ?? sessionToken),
+  const res = await zamanAsimliFetch(
+    `${API_BASE}${path}`,
+    {
+      method: yontem,
+      headers: {
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...authHeader(token ?? sessionToken),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-  });
+    path,
+  );
   if (!res.ok) {
     let code = '';
     try {
@@ -303,11 +390,15 @@ const patchReq = <T>(path: string, body: unknown, token?: string) =>
   istek<T>('PATCH', path, token, body);
 
 async function post<T>(path: string, body: unknown, token?: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeader(token ?? sessionToken) },
-    body: JSON.stringify(body),
-  });
+  const res = await zamanAsimliFetch(
+    `${API_BASE}${path}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader(token ?? sessionToken) },
+      body: JSON.stringify(body),
+    },
+    path,
+  );
   if (!res.ok) {
     let code = '';
     try {
