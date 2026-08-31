@@ -348,6 +348,41 @@ export default function ReportsScreen() {
         ) : null}
 
         <View style={styles.body}>
+          {/* §6 — İLK EYLEM. Yeni uzman SIFIRLARLA dolu bir gösterge paneline
+              düşüyordu: tamamlanan 0, gelir 0, no-show %0 — ve ne yapacağına
+              dair hiçbir yönlendirme yoktu. Denetim ilk ekranda tek, baskın
+              bir birincil aksiyon istiyor.
+
+              Yalnız HENÜZ RANDEVUSU OLMAYANA gösteriliyor; işi başlayınca
+              kart kendiliğinden kayboluyor. */}
+          {bookings.length === 0 ? (
+            <View style={[styles.startCard, shadow.soft]}>
+              <Text variant="bodyStrong" tone="ink">
+                {t('seller.start.title')}
+              </Text>
+              <Text variant="caption" tone="muted" style={styles.startSub}>
+                {t('seller.start.sub')}
+              </Text>
+              <View style={styles.startRow}>
+                <PressableScale
+                  style={styles.startPrimary}
+                  onPress={() => router.push('/seller/services')}
+                >
+                  <Text variant="caption" tone="onAccent" style={styles.startPrimaryText}>
+                    {t('seller.start.services')}
+                  </Text>
+                </PressableScale>
+                <PressableScale
+                  style={styles.startSecondary}
+                  onPress={() => router.push('/seller/verification')}
+                >
+                  <Text variant="caption" tone="accentFg" style={styles.startSecondaryText}>
+                    {t('seller.start.verify')}
+                  </Text>
+                </PressableScale>
+              </View>
+            </View>
+          ) : null}
           {/* §11 — üyelik teşviki (free → Premium/Platinum, premium → Platinum, platinum → gizli) */}
           <View style={styles.upsellSlot}>
             <TierUpsell />
@@ -804,6 +839,34 @@ const makeStyles = (colors: ColorTokens) =>
     flex: { flex: 1 },
     body: { paddingHorizontal: space(3), paddingTop: space(2.5) },
     upsellSlot: { marginBottom: space(2) },
+    startCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(0.75),
+      marginBottom: space(1.5),
+    },
+    startSub: { lineHeight: 18 },
+    startRow: { flexDirection: 'row', gap: space(1), marginTop: space(0.5) },
+    startPrimary: {
+      flex: 1,
+      backgroundColor: colors.accent,
+      borderRadius: radius.pill,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    startPrimaryText: { fontFamily: font.semibold },
+    startSecondary: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: colors.accentFg,
+      borderRadius: radius.pill,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    startSecondaryText: { fontFamily: font.semibold },
     // Canlı Özet — iki yanda beyaz kalan DAR bant; üstü yeşilin dibine tuck (bağlı), yazılar yukarı+sıkı
     liveBand: {
       marginHorizontal: space(3),

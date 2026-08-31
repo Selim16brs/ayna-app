@@ -157,6 +157,10 @@ export const tr = {
   'expert.reg.preview_services': 'Hizmet sayısı',
   'expert.reg.preview_note': 'Profilin müşteriye yaklaşık böyle görünür. Onaylayıp kaydı tamamla.',
   // §uzman onboarding Faz E4 — doğrulama & rozetler ekranı
+  'seller.start.title': 'Başlayalım',
+  'seller.start.sub': 'İlk randevun gelmeden önce iki şey: hizmetlerini gir ve kimliğini doğrula.',
+  'seller.start.services': 'Hizmetlerimi gir',
+  'seller.start.verify': 'Kimliğimi doğrula',
   'seller.menu.verify': 'Doğrulama & Rozetler',
   'seller.menu.verify_d': 'Kimlik, sertifika ve sosyal medyanı doğrula — AYNA Onaylı ol',
   'expert.verify.title': 'Doğrulama & Rozetler',
@@ -753,6 +757,10 @@ export const tr = {
   'home.upcoming_empty': 'Yaklaşan randevun yok',
 
   // Circle
+  'circle.empty.feed': 'Bu filtrede henüz gönderi yok',
+  'circle.empty.mine': 'Henüz bir şey sormadın',
+  'circle.empty.saved': 'Kaydettiğin gönderi yok',
+  'circle.empty.sub': 'İlk soruyu sen sor — kimliğin gizli kalabilir.',
   'circle.tab.saved': 'Kaydedilenler',
   'circle.save': 'Kaydet',
   'circle.unsave': 'Kaydı kaldır',

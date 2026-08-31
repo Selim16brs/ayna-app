@@ -6,7 +6,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORIES } from '../../src/data';
-import { useCampaigns, useCollections, useOffers, useProfessionals } from '../../src/catalog';
+import {
+  useCampaigns,
+  useCollections,
+  useOffers,
+  useProfessionals,
+  useProfessionalsLoading,
+} from '../../src/catalog';
 import { greetingKey } from '../../src/greeting';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
@@ -17,6 +23,7 @@ import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   HomeUpcoming,
   HomeUrgent,
+  ListSkeleton,
   Marquee,
   PressableScale,
   SalonRow,
@@ -92,7 +99,16 @@ export default function DiscoverScreen() {
       (_, i) => pool[(offset + i) % pool.length]!,
     );
   }, [cityPros]);
-  const cityEmpty = cityPros.length === 0;
+  /**
+   * §4 — YÜKLENİYOR ile GERÇEKTEN BOŞ farklı şeyler.
+   *
+   * `useProfessionalsLoading` yazılmıştı ama BU EKRAN onu hiç kullanmıyordu.
+   * Veri gelene kadar liste boş dönüyor ve ekran "Bu şehirde hizmet veren
+   * yok" diyordu. Almatı'dan istek ~1,5 sn sürüyor, yani her yeni kullanıcı
+   * önce YANLIŞ bir mesaj görüyordu — boş ekrandan da kötü.
+   */
+  const prosLoading = useProfessionalsLoading();
+  const cityEmpty = !prosLoading && cityPros.length === 0;
   const [query, setQuery] = useState('');
 
   function runSearch() {
@@ -341,7 +357,12 @@ export default function DiscoverScreen() {
             kategorilerin altına, akışı bölmeyecek yere alındı. */}
         <Marquee text={t('home.marquee')} style={styles.marquee} />
 
-        {cityEmpty ? (
+        {prosLoading && cityPros.length === 0 ? (
+          /* §4 — spinner DEĞİL iskelet: ekranın nihai biçimi belli olsun. */
+          <View style={styles.skeletonWrap}>
+            <ListSkeleton rows={4} />
+          </View>
+        ) : cityEmpty ? (
           /* §5.1.4 — hizmet veren olmayan şehir: boş durum (asla beyaz boşluk) */
           <View style={styles.cityEmpty}>
             <View style={styles.cityEmptyIcon}>
@@ -889,6 +910,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       gap: space(1),
     },
+    skeletonWrap: { paddingHorizontal: space(2.5), paddingTop: space(1) },
     cityEmptyIcon: {
       width: 72,
       height: 72,
