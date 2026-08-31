@@ -30,6 +30,7 @@ import { ProfileChangesModule } from './profile-changes/profile-changes.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { AlwaysModule } from './always/always.module';
 import { CareModule } from './care/care.module';
+import { PrefsModule } from './prefs/prefs.module';
 import { PassportModule } from './passport/passport.module';
 import { ReportsModule } from './reports/reports.module';
 import { SafetyModule } from './safety/safety.module';
@@ -75,6 +76,7 @@ import { PaymentModule } from './payment/payment.module';
     MessagingModule,
     AlwaysModule,
     CareModule,
+    PrefsModule,
     PassportModule,
     ReportsModule,
     SafetyModule,

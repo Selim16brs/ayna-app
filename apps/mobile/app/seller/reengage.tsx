@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, Switch, View } from 'react-native';
-import { SELLER_PAST_CLIENTS, reengageMessage } from '../../src/data';
+import { api, type ReengageAday } from '../../src/api';
+import { reengageMessage } from '../../src/data';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { findServiceWithCategory, tri } from '../../src/taxonomy';
@@ -11,7 +12,6 @@ import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 // §10/§4/§11 — GERİ ÇAĞIRMA yönetimi: PREMIUM özellik, sistem OTOMATİK gönderir; uzman aç/kapat eder.
-const DAY = 24 * 60 * 60_000;
 
 export default function ReengageScreen() {
   const { t, locale } = useLocale();
@@ -21,9 +21,17 @@ export default function ReengageScreen() {
 
   const premium = useStore((s) => s.premium);
   const expertName = useStore((s) => s.currentUser?.name) ?? 'Uzman';
-  const reengagedIds = useStore((s) => s.reengagedIds);
   const autoEnabled = useStore((s) => s.autoReengageEnabled);
   const setAutoReengage = useStore((s) => s.setAutoReengage);
+  const token = useStore((st) => st.token);
+  const [upcoming, setUpcoming] = useState<ReengageAday[] | null>(null);
+  useEffect(() => {
+    if (!token) return;
+    void api
+      .reengageUpcoming(token)
+      .then(setUpcoming)
+      .catch(() => setUpcoming([]));
+  }, [token]);
   const runAutoReengage = useStore((s) => s.runAutoReengage);
 
   // §11 — ekran açılınca sistem otomatik gönderimi tetikler (premium + açık ise)
@@ -60,34 +68,34 @@ export default function ReengageScreen() {
 
   // ── PREMIUM → toggle + otomatik durum listesi ──
   // §11 — bildirim yalnız periyot bitişine 1 gün kala ('pre') ve bitiş günü ('due') gider.
-  const now = Date.now();
-  const rows = SELLER_PAST_CLIENTS.map((c) => {
-    const found = findServiceWithCategory(c.serviceId);
-    const period = found?.service.periodDays ?? 30;
-    const label = found ? tri(found.service.label, locale) : c.serviceId;
-    const dueMs = c.lastVisitMs + period * DAY;
-    const daysUntil = Math.round((dueMs - now) / DAY); // 1 = yarın biter, 0 = bugün biter
-    const daysSince = Math.round((now - c.lastVisitMs) / DAY);
-    const preSent = reengagedIds.includes(`${c.id}#pre`);
-    const dueSent = reengagedIds.includes(`${c.id}#due`);
-    // Önizleme: 'due' zaten gittiyse onu, değilse 'pre' (sıradaki) mesajı göster
-    const stage: 'pre' | 'due' = dueSent ? 'due' : 'pre';
-    const preview = fillParams(t(reengageMessage(c.serviceId, stage).bodyKey), {
-      expert: expertName,
-      service: label,
-    });
+  // GERÇEK müşteriler — sunucudan. Bu liste eskiden `SELLER_PAST_CLIENTS`
+  // yani SEED verisiyle çiziliyordu: uzman kendi müşterileri sanarak uydurma
+  // isimlere bakıyordu ve "gönderildi" işaretleri de yerel bir diziden
+  // geliyordu. Gönderim artık sunucu zamanlayıcısında; ekran onunla AYNI
+  // hesabı kullanan uçtan besleniyor ki gösterilen ile gönderilen ayrışmasın.
+  const rows = (upcoming ?? []).map((c) => {
+    const found = findServiceWithCategory(c.service);
+    const label = found ? tri(found.service.label, locale) : c.service;
+    const preview = fillParams(
+      t(reengageMessage(c.service, c.kalanGun <= 0 ? 'due' : 'pre').bodyKey),
+      {
+        expert: expertName,
+        service: label,
+      },
+    );
     return {
-      c,
+      c: { id: c.bookingId, name: c.customerName, image: '' },
       label,
-      period,
-      daysUntil,
-      daysSince,
-      preSent,
-      dueSent,
-      sent: preSent || dueSent,
+      period: c.periodDays,
+      daysUntil: c.kalanGun,
+      daysSince: c.periodDays - c.kalanGun,
+      // Gönderim durumu SUNUCUDA tutuluyor; pencere geçmişse gitmiştir.
+      preSent: c.kalanGun < 1,
+      dueSent: c.kalanGun < 0,
+      sent: c.kalanGun < 0,
       preview,
     };
-  }).sort((a, b) => a.daysUntil - b.daysUntil);
+  });
 
   const done = rows.filter((r) => r.sent);
   const queue = rows.filter((r) => !r.sent);

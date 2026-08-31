@@ -50,15 +50,13 @@ import {
   type Reward,
   RAFFLE_COST,
   NOTIFICATION_TTL_MS,
-  SELLER_PAST_CLIENTS,
   type AlwaysBond,
   COMMISSION_PCT_STANDARD,
-  reengageMessage,
   SEED_APPOINTMENTS,
   type UpcomingEvent,
   type UserAddress,
 } from './data';
-import { findServiceWithCategory, servicesOf, tri } from './taxonomy';
+import { findServiceWithCategory, servicesOf } from './taxonomy';
 import { defaultHours, type DayHours } from './ui/WorkingHours';
 import { emptySocial, type SocialValue } from './ui/SocialLinks';
 
@@ -408,6 +406,8 @@ interface State {
   hydrateCare: () => Promise<void>;
   /** §11 — Always bağlarını sunucudan çek. Okuma olmazsa karşı tarafın isteği hiç görünmez. */
   hydrateAlways: () => Promise<void>;
+  /** §tercihler — sunucudaki tercihleri yükle. Okuma olmazsa yeni cihaz varsayılanlarla açılır. */
+  hydratePrefs: () => Promise<void>;
   refreshMembership: () => Promise<void>; // §11 — tier'ı sunucudan tazele (onay sonrası haklar açılır)
 
   // şehir (global filtre)
@@ -951,59 +951,31 @@ export const useStore = create<State>()(
       },
 
       // §11 — premium uzman otomatik geri-çağırmayı aç/kapat eder
-      setAutoReengage: (v) => set({ autoReengageEnabled: v }),
+      setAutoReengage: (v) => {
+        set({ autoReengageEnabled: v });
+        const token = get().token;
+        if (token) void api.savePrefs(token, { autoReengage: v }).catch(() => undefined);
+      },
 
       // §10/§4/§11 — SİSTEM OTOMATİK geri çağırma: premium + toggle açık uzmanda.
       // KURAL (spam önleme): yalnız TAM İKİ bildirim — periyot bitişine 1 gün kala ('pre')
       // ve bitiş günü ('due'). Ne öncesi ne sonrası; alakasız zamanlarda GÖNDERİLMEZ.
-      runAutoReengage: (locale) => {
-        const s = get();
-        if (s.currentUser?.role !== 'professional') return; // yalnız uzman
-        if (!s.premium) return; // §11 — PREMIUM özelliği
-        if (!s.autoReengageEnabled) return; // uzman kapatmışsa gönderme
-        const now = Date.now();
-        const expertName = s.currentUser?.name ?? 'Uzman';
-        for (const c of SELLER_PAST_CLIENTS) {
-          const found = findServiceWithCategory(c.serviceId);
-          const period = found?.service.periodDays ?? 30;
-          const dueMs = c.lastVisitMs + period * 24 * 60 * 60_000; // periyot bitiş anı
-          const daysUntil = Math.round((dueMs - now) / (24 * 60 * 60_000)); // +1 = yarın, 0 = bugün
-          let stage: 'pre' | 'due' | null = null;
-          if (daysUntil === 1)
-            stage = 'pre'; // 1 gün kala
-          else if (daysUntil === 0) stage = 'due'; // bitiş günü
-          if (!stage) continue; // pencere dışı → gönderme
-          if (s.reengagedIds.includes(`${c.id}#${stage}`)) continue; // bu aşama zaten gitti (idempotent)
-          const label = found ? tri(found.service.label, locale) : c.serviceId;
-          get().sendReengage({
-            clientId: c.id,
-            stage,
-            serviceId: c.serviceId,
-            customerName: c.name,
-            serviceLabel: label,
-            expertName,
-          });
-        }
-      },
+      /**
+       * ARTIK SUNUCUDA — bu eylem yalnız GERİYE UYUM için duruyor.
+       *
+       * Eski hâli tamamen kurguydu: `SELLER_PAST_CLIENTS` yani SEED verisi
+       * üzerinde dönüyor, gerçek müşterilere hiç bakmıyordu; ürettiği
+       * bildirim YERELDİ, yani uzmanın kendi cihazında görünüyor müşteriye
+       * ulaşmıyordu; üstelik yalnız uzman uygulamayı AÇTIĞINDA çalışıyordu —
+       * periyot o gün dolarsa hatırlatma hiç gitmiyordu.
+       *
+       * Gönderimi sunucu zamanlayıcısı yapıyor (saatte bir, gerçek
+       * randevulardan, gerçek push ile). Çağıranları kırmamak için imza
+       * korundu; gövde bilerek boş.
+       */
+      runAutoReengage: () => undefined,
 
-      // §10/§4 — memnun müşteriye sıcak bildirim gönderir (runAutoReengage çağırır).
-      // 'pre' (1 gün kala) → genel "yaklaşıyor" şablonu; 'due' (bitiş günü) → kategoriye özel samimi şablon.
-      // Bildirim müşteri modunda görünür (audience 'user').
-      sendReengage: (input) => {
-        const key = `${input.clientId}#${input.stage}`;
-        if (get().reengagedIds.includes(key)) return; // aynı aşama tekrar gönderilmez (spam önleme)
-        const tpl = reengageMessage(input.serviceId, input.stage); // §11 — hizmete özel 2 mesajdan biri
-        get().pushNotification({
-          type: 'quote', // dokununca talep/randevu köprüsüne gider (retention → gelir)
-          audience: 'user',
-          titleKey: tpl.titleKey,
-          bodyKey: tpl.bodyKey,
-          params: { expert: input.expertName, service: input.serviceLabel },
-          dateLabel: 'Az önce',
-          icon: tpl.icon,
-        });
-        set((s) => ({ reengagedIds: [...s.reengagedIds, key] }));
-      },
+      sendReengage: () => undefined,
 
       // §11 — PLATINUM paket aç/kapat (satın alma). Komisyon oranını da etkiler (%10 → %8,5).
       setPlatinum: (v) => set({ platinum: v, ...(v ? { premium: true } : {}) }), // platinum → premium da açık
@@ -1408,10 +1380,21 @@ export const useStore = create<State>()(
       },
 
       // §5.4 — bildirim grubunu aç/kapa
-      toggleNotifPref: (key) =>
-        set((s) => ({ notifPrefs: { ...s.notifPrefs, [key]: !s.notifPrefs[key] } })),
+      toggleNotifPref: (key) => {
+        const sonraki = !get().notifPrefs[key];
+        set((s) => ({ notifPrefs: { ...s.notifPrefs, [key]: sonraki } }));
+        const token = get().token;
+        if (token) void api.savePrefs(token, { notif: { [key]: sonraki } }).catch(() => undefined);
+      },
 
-      setDemandNotif: (p) => set((s) => ({ demandNotif: { ...s.demandNotif, ...p } })),
+      setDemandNotif: (p) => {
+        set((s) => ({ demandNotif: { ...s.demandNotif, ...p } }));
+        const token = get().token;
+        if (token)
+          void api
+            .savePrefs(token, { demand: p as unknown as Record<string, unknown> })
+            .catch(() => undefined);
+      },
 
       // §5.1.2 — son aramaya ekle (en yeni başta, dedup, maks 8)
       addRecentSearch: (q) => {
@@ -1940,7 +1923,11 @@ export const useStore = create<State>()(
         }
       },
 
-      setReviewAnonymous: (v) => set({ reviewAnonymous: v }),
+      setReviewAnonymous: (v) => {
+        set({ reviewAnonymous: v });
+        const token = get().token;
+        if (token) void api.savePrefs(token, { reviewAnonymous: v }).catch(() => undefined);
+      },
 
       reviewBooking: (id, input) => {
         const b = get().bookings.find((x) => x.id === id);
@@ -2642,6 +2629,25 @@ export const useStore = create<State>()(
         set((s) => ({
           notifications: s.notifications.map((x) => (x.id === id ? { ...x, read: true } : x)),
         })),
+
+      hydratePrefs: async () => {
+        const token = get().token;
+        if (!token) return;
+        try {
+          const p = await api.prefs(token);
+          set((s) => ({
+            // Sunucudan gelen anahtarlar YERELİN ÜSTÜNE biniyor, onu
+            // silmiyor: sunucuda henüz olmayan yeni bir tercih türü
+            // varsayılanını kaybetmemeli.
+            notifPrefs: { ...s.notifPrefs, ...(p.notif as typeof s.notifPrefs) },
+            demandNotif: { ...s.demandNotif, ...(p.demand as unknown as typeof s.demandNotif) },
+            reviewAnonymous: p.reviewAnonymous,
+            autoReengageEnabled: p.autoReengage,
+          }));
+        } catch {
+          // Ağ yoksa yereldeki tercihlerle devam.
+        }
+      },
 
       hydrateAlways: async () => {
         const token = get().token;
