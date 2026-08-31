@@ -5,7 +5,7 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
-import { useLocale } from '../../src/locale';
+import { fillParams, useLocale } from '../../src/locale';
 import { api } from '../../src/api';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -68,6 +68,26 @@ export default function PrivacyScreen() {
 
   const [busy, setBusy] = useState(false);
 
+  // §17 — silmeden önce KAYBEDİLECEKLER: aktif randevu, ödenmiş kapora,
+
+  // yanacak puan. Genel uyarı bunlara bakmıyordu.
+
+  const aktifRandevu = useStore(
+    (st) => st.bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending').length,
+  );
+
+  // Kapora ÖDENMİŞ sayılır: dekont gönderilmiş ya da kapora sonrası bir
+  // aşamada. `depositForfeited` zaten yanmış olanı ifade ediyor, o sayılmaz.
+  const odenmisKapora = useStore((st) =>
+    st.bookings.some(
+      (b) =>
+        !b.depositForfeited &&
+        (b.status === 'deposit_submitted' || (!!b.depositAmount && b.status === 'confirmed')),
+    ),
+  );
+
+  const puan = useStore((st) => st.points);
+
   /** Verilerimi indir — sunucudan JSON alınır, dosyaya yazılır, paylaşıma açılır. */
   const onDownload = async () => {
     if (!token || busy) return;
@@ -97,33 +117,60 @@ export default function PrivacyScreen() {
    */
   const onDelete = () => {
     if (!token || busy) return;
-    Alert.alert(t('privacy.delete'), t('privacy.delete_note'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('privacy.delete'),
-        style: 'destructive',
-        onPress: () =>
-          Alert.alert(t('privacy.delete_confirm_t'), t('privacy.delete_confirm_b'), [
-            { text: t('common.cancel'), style: 'cancel' },
-            {
-              text: t('privacy.delete_final'),
-              style: 'destructive',
-              onPress: async () => {
-                setBusy(true);
-                try {
-                  await api.deleteMyAccount(token);
-                  logout();
-                  router.replace('/auth');
-                } catch {
-                  Alert.alert(t('privacy.delete'), t('common.error'));
-                } finally {
-                  setBusy(false);
-                }
+    // §17 — DURUMA ÖZEL UYARI. Genel metin "geri alınamaz" diyordu ama
+    // kullanıcının aktif randevusu, ödenmiş kaporası ya da yanacak puanı
+    // olup olmadığına BAKMIYORDU. Parası ya da randevusu olan biri bunu
+    // bilmeden silebiliyordu.
+    const maddeler: string[] = [];
+    if (aktifRandevu > 0)
+      maddeler.push(fillParams(t('privacy.delete_open_booking'), { n: aktifRandevu }));
+    if (odenmisKapora) maddeler.push(t('privacy.delete_open_deposit'));
+    if (puan > 0) maddeler.push(fillParams(t('privacy.delete_open_points'), { n: puan }));
+
+    const asilAkis = () =>
+      Alert.alert(t('privacy.delete'), t('privacy.delete_note'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('privacy.delete'),
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert(t('privacy.delete_confirm_t'), t('privacy.delete_confirm_b'), [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('privacy.delete_final'),
+                style: 'destructive',
+                onPress: async () => {
+                  setBusy(true);
+                  try {
+                    await api.deleteMyAccount(token);
+                    logout();
+                    router.replace('/auth');
+                  } catch {
+                    Alert.alert(t('privacy.delete'), t('common.error'));
+                  } finally {
+                    setBusy(false);
+                  }
+                },
               },
-            },
-          ]),
-      },
-    ]);
+            ]),
+        },
+      ]);
+
+    // Kaybedecek bir şeyi VARSA önce onu göster. Yoksa doğrudan asıl akış:
+    // gereksiz bir ekran daha koymak, silmek isteyeni yormaktan başka işe
+    // yaramaz (denetim "en fazla 2 dokunuşta bulunur" diyor).
+    if (maddeler.length === 0) {
+      asilAkis();
+      return;
+    }
+    Alert.alert(
+      t('privacy.delete_open_t'),
+      fillParams(t('privacy.delete_open_b'), { items: maddeler.join('\n') }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.continue'), style: 'destructive', onPress: asilAkis },
+      ],
+    );
   };
 
   return (

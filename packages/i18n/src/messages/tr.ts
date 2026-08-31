@@ -2225,6 +2225,12 @@ export const tr = {
   'privacy.model.body':
     'Ne reklam ağlarına, ne salonlara, ne “iş ortaklarına”. Tamamlanan hizmetten %10 komisyon alıyoruz — kazancımız bu. Bu bir gün değişirse ilk sen öğrenirsin.',
   'privacy.not_ready': 'Henüz hazır değil',
+  'privacy.delete_open_t': 'Önce şunlara bak',
+  'privacy.delete_open_b':
+    'Silmeden önce bilmen gerekenler:\n\n{items}\n\nDevam edersen bunlar üzerindeki hakkını kaybedersin.',
+  'privacy.delete_open_booking': '• {n} aktif randevun var',
+  'privacy.delete_open_deposit': '• Ödediğin kapora iade edilmez',
+  'privacy.delete_open_points': '• {n} kullanılmamış puanın yanar',
   'privacy.delete_note':
     'Silinince geri alınamaz. TAMAMEN SİLİNİR: pasaportun (alerji ve tercihlerin), güvendiğin kişiler, güvenlik oturumların, W2W gönderilerin, kaydettiklerin ve takiplerin. KİMLİĞİN AYRILIR: randevu kayıtlarında adın ve telefonun kaldırılır, W2W yorumların “AYNA Üyesi” olur. YASAL OLARAK KALIR: ödeme, komisyon ve puan defteri kayıtları — ama artık sana bağlı değil.',
   'privacy.title': 'Gizlilik',
