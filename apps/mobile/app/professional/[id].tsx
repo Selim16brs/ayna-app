@@ -11,7 +11,7 @@ import { tri } from '../../src/taxonomy';
 import { ApiError, api } from '../../src/api';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
+import { selectSellerView, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -34,6 +34,11 @@ export default function ProfessionalScreen() {
   const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  // Bu uzmanla mevcut bağ: yoksa "Always ol", beklemedeyse "Onay bekliyor",
+  // kabul edilmişse hiçbir şey (bağ zaten Always ekranında).
+  const alwaysDurum = useStore((s) => s.alwaysBonds.find((b) => b.proId === id)?.status);
+  const requestAlways = useStore((s) => s.requestAlways);
+  const isSeller = useStore(selectSellerView);
   const proId = id ?? '1';
   const pro = useProfessionalDetail(proId);
 
@@ -379,6 +384,38 @@ export default function ProfessionalScreen() {
           ) : null}
           <VerificationBadges verification={pro.verification} aynaVerified={pro.aynaVerified} />
         </View>
+
+        {/* §11 — ALWAYS GİRİŞ NOKTASI.
+            "Always ol" metni (`always.request_cta`) yazılmıştı ama HİÇBİR
+            ekranda çizilmiyordu. Bağ kuran eylem de hiçbir yerden
+            çağrılmıyordu — yani Always ekranı her kullanıcıda kalıcı olarak
+            boştu ve Platinum'un satılan ana özelliğinin başlangıcı yoktu.
+
+            Yalnız MÜŞTERİ tarafında ve bağ yokken görünür: uzman kendi
+            profilinden kendine bağ kuramaz (sunucu da reddediyor). */}
+        {!isSeller && !alwaysDurum ? (
+          <View style={styles.friendsRow}>
+            <PressableScale
+              style={styles.alwaysCta}
+              onPress={() => id && requestAlways({ proId: String(id) })}
+              accessibilityRole="button"
+            >
+              <Ionicons name="infinite" size={15} color={colors.accentFg} />
+              <Text variant="caption" tone="accentFg" style={styles.alwaysCtaText}>
+                {t('always.request_cta')}
+              </Text>
+            </PressableScale>
+          </View>
+        ) : alwaysDurum === 'pending' ? (
+          <View style={styles.friendsRow}>
+            <View style={styles.friendsPill}>
+              <Ionicons name="time-outline" size={12} color={colors.muted} />
+              <Text variant="caption" tone="muted" style={styles.friendsText}>
+                {t('always.pending_out')}
+              </Text>
+            </View>
+          </View>
+        ) : null}
 
         {pro.friends ? (
           <View style={styles.friendsRow}>
@@ -1078,6 +1115,17 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 6,
       borderRadius: radius.pill,
     },
+    alwaysCta: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.875),
+      borderRadius: radius.pill,
+      borderWidth: 1,
+      borderColor: colors.accentFg,
+    },
+    alwaysCtaText: { fontFamily: font.semibold },
     friendsText: {},
     sheet: {
       marginTop: 0,

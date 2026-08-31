@@ -26,8 +26,14 @@ export default function AlwaysBroadcastScreen() {
   const [body, setBody] = useState('');
   const canSend = title.trim().length > 1 && body.trim().length > 2 && count > 0;
 
-  const onSend = () => {
-    const n = sendAlwaysBroadcast({ title: title.trim(), body: body.trim() });
+  const onSend = async () => {
+    const n = await sendAlwaysBroadcast({ title: title.trim(), body: body.trim() });
+    // Sunucu 0 döndürdüyse GÖNDERİLDİ deme: eskiden ekran her hâlükârda
+    // "ulaştı" diyordu, oysa hiçbir müşteriye gitmiyordu.
+    if (n === 0) {
+      Alert.alert(t('always.broadcast_title'), t('common.error'));
+      return;
+    }
     Alert.alert(t('always.broadcast_sent_t'), fillParams(t('always.broadcast_sent_b'), { n }), [
       { text: t('common.ok'), onPress: () => router.back() },
     ]);
@@ -82,7 +88,7 @@ export default function AlwaysBroadcastScreen() {
           label={t('always.broadcast_send')}
           variant="primary"
           disabled={!canSend}
-          onPress={onSend}
+          onPress={() => void onSend()}
         />
       </View>
     </Screen>

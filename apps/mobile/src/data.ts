@@ -1946,6 +1946,8 @@ export interface AlwaysBond {
   status: AlwaysStatus;
   lastServiceId?: string; // müşterinin en son aldığı hizmet (bağlam)
   createdMs: number;
+  /** §11 — uzmanın katalog kaydı; profile gidebilmek ve tekrar istek için. */
+  proId?: string;
 }
 
 // Demo tohumları — uzman 'Aigerim' ve müşteri 'Aruzhan' oturumlarının ikisini de anlamlı gösterir.
