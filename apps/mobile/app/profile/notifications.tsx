@@ -242,9 +242,12 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(0.5),
     },
     stepBtn: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
+      // §13 — 30×30'du. hitSlop ile 44'e çıkarmak KOMŞU düğmeyle alanları
+      // çakıştırırdı (aradaki boşluk 12pt); denetim hem ≥44 hem aralarında
+      // ≥8pt istiyor. Tek çözüm düğmeyi gerçekten büyütmek.
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.surface,

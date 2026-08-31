@@ -117,6 +117,7 @@ export default function KycScreen() {
                   <Pressable
                     onPress={() => setDocs((p) => p.filter((_, x) => x !== i))}
                     style={styles.docRemove}
+                    hitSlop={11}
                   >
                     <Ionicons name="close" size={14} color={colors.onColor} />
                   </Pressable>
@@ -162,6 +163,8 @@ const makeStyles = (_colors: ColorTokens) =>
     docGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5) },
     docThumb: { width: 84, height: 84, borderRadius: radius.md, overflow: 'hidden' },
     docImg: { width: '100%', height: '100%' },
+    // §13 — görsel 22pt KALMALI (küçük resmin köşesi), dokunma alanı
+    // değil: JSX'te hitSlop={11} veriliyor → 22 + 2×11 = 44 pt.
     docRemove: {
       position: 'absolute',
       top: 4,

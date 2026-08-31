@@ -103,7 +103,11 @@ export default function GalleryScreen() {
           {photos.map((uri) => (
             <Pressable key={uri} style={styles.cell} onLongPress={() => remove(uri)}>
               <Image source={{ uri }} style={styles.photo} />
-              <Pressable style={styles.removeBtn} onPress={() => remove(uri)} hitSlop={8}>
+              {/* §13 — görsel 22pt KALMALI (küçük resmin köşesi), ama dokunma
+                  alanı 44 olmalı: 22 + 2×11 = 44. hitSlop 8'di, 38'de
+                  kalıyordu. Komşusu başka bir küçük resmin düğmesi ve arası
+                  geniş — çakışma yok. */}
+              <Pressable style={styles.removeBtn} onPress={() => remove(uri)} hitSlop={11}>
                 <Ionicons name="close" size={13} color={colors.onColor} />
               </Pressable>
             </Pressable>

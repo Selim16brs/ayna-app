@@ -734,9 +734,10 @@ const makeStyles = (colors: ColorTokens) =>
     pendingInfo: { flex: 1, gap: 2 },
     pendingActions: { flexDirection: 'row', gap: space(0.75) },
     pendingBtn: {
-      width: 38,
-      height: 38,
-      borderRadius: 19,
+      // §13 — 38×38'di; komşu boşluk 10pt olduğu için hitSlop yerine boyut.
+      width: 44,
+      height: 44,
+      borderRadius: 22,
       borderWidth: 1,
       borderColor: colors.line,
       alignItems: 'center',

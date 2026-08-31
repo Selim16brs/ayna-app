@@ -476,7 +476,8 @@ export default function NewBusinessScreen() {
                   <Image source={{ uri }} style={styles.photoThumb} />
                   <Pressable
                     style={styles.thumbRemove}
-                    hitSlop={6}
+                    // §13 — ikon 20pt; 20+2×12=44.
+                    hitSlop={12}
                     onPress={() => setPhotos((p) => p.filter((_, idx) => idx !== i))}
                   >
                     <Ionicons name="close-circle" size={20} color={colors.onColor} />

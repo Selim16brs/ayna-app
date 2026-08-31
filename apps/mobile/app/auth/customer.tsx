@@ -303,7 +303,9 @@ export default function CustomerRegisterScreen() {
                 </Text>
                 <Pressable
                   onPress={() => setAddresses((l) => l.filter((_, idx) => idx !== i))}
-                  hitSlop={6}
+                  // §13 — ikon 18pt; dokunma alanı 44pt olmalı (18+2×13=44).
+                  // Görsel küçük kalıyor, hedef büyüyor.
+                  hitSlop={13}
                 >
                   <Ionicons name="close-circle" size={18} color={colors.muted} />
                 </Pressable>
