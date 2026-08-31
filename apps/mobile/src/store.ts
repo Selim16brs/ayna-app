@@ -538,6 +538,7 @@ export const useStore = create<State>()(
           depositPct: 10,
           depositMin: 1000,
           depositMax: 5000,
+          depositMaxSharePct: 50,
           holdMinutes: 180,
           cancelWindowH: 3,
           lateCancelPct: 3,
@@ -2886,6 +2887,10 @@ export const localDeposit = (price: number, rates: State['config']['rates']): nu
     minKzt: rates.depositMin ?? DEFAULT_DEPOSIT_RULES.minKzt,
     maxKzt: rates.depositMax ?? DEFAULT_DEPOSIT_RULES.maxKzt,
     stepKzt: DEFAULT_DEPOSIT_RULES.stepKzt,
+    // K2 tavanı da SUNUCUDAN gelmeli: admin oranı değiştirdiğinde istemci
+    // varsayılanda kalırsa bildirimde bir tutar, ödeme ekranında başka bir
+    // tutar çıkar — bu dosyanın yukarıdaki yorumu tam bunu yasaklıyor.
+    maxSharePct: rates.depositMaxSharePct ?? DEFAULT_DEPOSIT_RULES.maxSharePct,
   });
 
 // §12.8 — komisyon oranı SUNUCUDAN gelir. Burada eskiden "Platinum'da %8,5"

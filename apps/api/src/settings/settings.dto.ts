@@ -7,12 +7,21 @@ export const RATE_DEFS = [
   // koda gömülü DEĞİL; hesap `@ayna/domain` → `depositFor` içinde tek yerde.
   // Bu anahtarlar kodda zaten okunuyordu ama panelde YOKTU — yani yönetilebilir
   // görünen bir değer aslında hiç değiştirilemiyordu. Artık panelde de var.
-  { key: 'rate.deposit_pct', label: 'Kapora oranı', suffix: '%', default: 10 },
-  { key: 'rate.deposit_min', label: 'Kapora alt sınırı', suffix: '₸', default: 1000 },
-  { key: 'rate.deposit_max', label: 'Kapora üst sınırı', suffix: '₸', default: 5000 },
+  { key: 'rate.deposit_pct', label: 'Depozito oranı', suffix: '%', default: 10 },
+  { key: 'rate.deposit_min', label: 'Depozito alt sınırı', suffix: '₸', default: 1000 },
+  // K2 — alt sınır fiyatın kendisini aşabiliyordu: 1.000 ₸ hizmette depozito
+  // ücretin TAMAMI oluyordu. Depozito bir ön ödemedir; kalanı hizmetten sonra
+  // ödenir, yani her zaman bir kalan olmalı. Bu tavan onu garanti eder.
+  {
+    key: 'rate.deposit_max_share_pct',
+    label: 'Depozito üst payı (fiyatın en fazla yüzde kaçı)',
+    suffix: '%',
+    default: 50,
+  },
+  { key: 'rate.deposit_max', label: 'Depozito üst sınırı', suffix: '₸', default: 5000 },
   // Eski düz tutar. Hesapta artık yalnız alt sınır yedeği; yeni kurulumda
   // `rate.deposit_min` bunu ezer. Panelde kalıyor ki eski değer görünür olsun.
-  { key: 'rate.deposit_kzt', label: 'Kapora (eski sabit tutar)', suffix: '₸', default: 1000 },
+  { key: 'rate.deposit_kzt', label: 'Depozito (eski sabit tutar)', suffix: '₸', default: 1000 },
   { key: 'rate.cancel_window_h', label: 'Ücretsiz iptal penceresi', suffix: 'saat', default: 3 },
   // §7.8 — aynı randevuda ücretsiz erteleme hakkı (0 = kapalı)
   { key: 'policy.free_reschedules', label: 'Ücretsiz erteleme hakkı', suffix: 'adet', default: 1 },

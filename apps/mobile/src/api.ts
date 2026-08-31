@@ -1340,6 +1340,7 @@ export interface AppConfig {
     depositPct: number;
     depositMin: number;
     depositMax: number;
+    depositMaxSharePct: number;
     holdMinutes: number;
     cancelWindowH: number;
     lateCancelPct: number;
