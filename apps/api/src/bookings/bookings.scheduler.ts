@@ -1,7 +1,6 @@
 import { grantCompletionRewards } from '../loyalty/completion-rewards';
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CommissionsService } from '../commissions/commissions.service';
 import { PushService } from '../push/push.service';
 import { BookingsService } from './bookings.service';
 
@@ -21,7 +20,6 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly push: PushService,
     private readonly bookings: BookingsService,
-    private readonly commissions: CommissionsService,
   ) {}
 
   onModuleInit() {
@@ -41,14 +39,15 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
 
     // 1) Yanıt penceresi dolan talepler → expired (+ müşteriye bilgi push'u)
     const expiredRequests = await this.prisma.booking.findMany({
-      where: { status: 'awaiting_provider', responseDeadline: { lt: now } },
+      where: { status: 'onay_bekliyor', responseDeadline: { lt: now } },
       select: { id: true, userId: true, proName: true },
       take: 200,
     });
     if (expiredRequests.length) {
       await this.prisma.booking.updateMany({
         where: { id: { in: expiredRequests.map((b) => b.id) } },
-        data: { status: 'expired', cancelReason: 'Yanıt süresi doldu' },
+        // Brief §4.2: süre dolarsa OTOMATIK_DUSTU; slot açılır.
+        data: { status: 'otomatik_dustu', cancelReason: 'Uzman yanıt vermedi' },
       });
       for (const b of expiredRequests) {
         if (!b.userId) continue;
@@ -67,17 +66,16 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
 
     // 2) Dekont penceresi dolan kaporalar → expired + slot boşaldı → bekleme listesi
     const expiredDeposits = await this.prisma.booking.findMany({
-      where: { status: 'deposit_pending', depositDeadline: { lt: now } },
+      where: { status: 'depozito_bekliyor', depositDeadline: { lt: now } },
       take: 200,
     });
     if (expiredDeposits.length) {
       await this.prisma.booking.updateMany({
         where: { id: { in: expiredDeposits.map((b) => b.id) } },
-        data: { status: 'expired', cancelReason: 'Kapora süresi doldu' },
+        // Brief §4.4: 10 dakika dolarsa OTOMATIK_DUSTU; slot açılır.
+        data: { status: 'otomatik_dustu', cancelReason: 'Depozito süresi doldu' },
       });
       for (const b of expiredDeposits) {
-        // Slot boşaldı — bekleme listesindekilere sırayla haber ver (mevcut akış)
-        void this.bookings.notifyWaitlistFor(b).catch(() => undefined);
         if (b.userId) {
           void this.push
             .sendTemplate(b.userId, 'booking.deposit_expired', undefined, {
@@ -88,27 +86,24 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    // 3) Faz 2 — teyit penceresi dolan 'tamamlandı' beyanları otomatik kesinleşir
+    // 3) Brief §4.9.4 — "Uzman 24 saat içinde ne onay ne itiraz ederse otomatik
+    //    onaylanmış sayılır." Müşteri parasını ödedi; uzmanın sessizliği
+    //    randevuyu süresiz askıda bırakmamalı.
     const finalize = await this.prisma.booking.findMany({
-      where: { status: 'completed_pending', finalizeDeadline: { lt: now } },
+      where: { status: 'odeme_bekliyor', finalizeDeadline: { lt: now } },
       select: { id: true, userId: true, price: true },
       take: 200,
     });
     if (finalize.length) {
       await this.prisma.booking.updateMany({
         where: { id: { in: finalize.map((b) => b.id) } },
-        // §12.8 — bu yol transition()'ı ATLIYOR (updateMany). Tamamlanma anı
-        // burada da yazılmazsa o randevular hiçbir komisyon dönemine düşmez.
-        data: { status: 'completed', completedAt: now },
+        // Bu yol transition()'ı ATLIYOR (updateMany); tamamlanma anı burada
+        // da yazılmalı, yoksa değerlendirme penceresi hiç başlamaz.
+        data: { status: 'tamamlandi', completedAt: now },
       });
       // K3 — bu yolla kesinleşenlerin komisyonu da ŞİMDİ faturalanır. Müşteri
       // teyidi yoluyla zaten faturalanmışsa benzersiz `bookingId` ikinciyi
       // düşürür (çifte tahsilat imkânsız).
-      await this.commissions
-        .invoiceForBookings(finalize.map((b) => b.id))
-        .catch((e: unknown) =>
-          this.log.error(`komisyon faturası: ${e instanceof Error ? e.message : String(e)}`),
-        );
       // K4.1 geri kazanım + D9 referans ödülü. İki kez yazılmaz: müşteri teyidi
       // yoluyla zaten yazılmışsa her iki ödül de atlanır.
       await grantCompletionRewards(this.prisma, finalize).catch((e: unknown) =>
@@ -126,9 +121,15 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    // 4) Faz 2 — no-show teyit penceresi doldu (itiraz yok) → kapora yanar (kesinleşme)
+    // 4) Brief §4.8 — "24 saat içinde itiraz yoksa beyan kabul edilir ve
+    //    depozito buna göre dağıtılır." İtiraz gelmişse durum zaten
+    //    `uyusmazlik`e geçmiştir ve buraya düşmez.
     const forfeit = await this.prisma.booking.updateMany({
-      where: { status: 'no_show', finalizeDeadline: { lt: now }, depositForfeited: false },
+      where: {
+        status: { in: ['no_show_musteri', 'no_show_uzman'] },
+        finalizeDeadline: { lt: now },
+        depositForfeited: false,
+      },
       data: { depositForfeited: true, finalizeDeadline: null },
     });
 

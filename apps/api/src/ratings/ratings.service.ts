@@ -42,7 +42,7 @@ export class RatingsService {
     if (!booking) {
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     }
-    if (booking.status !== 'completed') {
+    if (booking.status !== 'tamamlandi') {
       throw new BadRequestException({
         code: 'BOOKING_NOT_COMPLETED',
         message: 'Yalnızca tamamlanan randevu değerlendirilebilir',

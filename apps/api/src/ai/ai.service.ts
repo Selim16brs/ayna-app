@@ -1,4 +1,5 @@
 import { ForbiddenException, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { SLOT_HOLDING_STATUSES } from '../bookings/slot-statuses';
 import type { Env } from '@ayna/config/env';
 import { ENV } from '../config/config.module';
 import { PrismaService } from '../prisma/prisma.service';
@@ -81,7 +82,7 @@ export class AiService {
           userId,
           startAt: { gte: now },
           status: {
-            in: ['confirmed', 'deposit_pending', 'deposit_submitted', 'awaiting_provider'],
+            in: SLOT_HOLDING_STATUSES,
           },
         },
         orderBy: { startAt: 'asc' },

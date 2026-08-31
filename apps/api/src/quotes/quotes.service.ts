@@ -68,14 +68,14 @@ export class QuotesService {
   private async trustedUserSet(userIds: string[]): Promise<Set<string>> {
     if (userIds.length === 0) return new Set();
     const rows = await this.prisma.booking.findMany({
-      where: { userId: { in: userIds }, status: { in: ['completed', 'no_show'] } },
+      where: { userId: { in: userIds }, status: { in: ['tamamlandi', 'no_show_musteri'] } },
       select: { userId: true, status: true },
     });
     const done = new Map<string, number>();
     const bad = new Set<string>();
     for (const b of rows) {
       if (!b.userId) continue;
-      if (b.status === 'no_show') bad.add(b.userId);
+      if (b.status === 'no_show_musteri') bad.add(b.userId);
       else done.set(b.userId, (done.get(b.userId) ?? 0) + 1);
     }
     return new Set(userIds.filter((u) => (done.get(u) ?? 0) >= 3 && !bad.has(u)));
@@ -569,7 +569,7 @@ export class QuotesService {
           startAt: new Date(input.slotMs),
           durationMin,
           price: Number(quote.price),
-          status: 'deposit_pending',
+          status: 'depozito_bekliyor',
           depositAmount: deposit,
           depositDeadline: holdUntil,
         },

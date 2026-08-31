@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { SLOT_HOLDING_STATUSES } from '../bookings/slot-statuses';
 import type { Professional, Quote, ServiceCategory } from '@prisma/client';
 import { computeDaySlots, aynaOnayli, guvenKatmanlari, uzmanKayitli } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
@@ -257,7 +258,7 @@ export class CatalogService {
     const rows = await this.prisma.booking.findMany({
       where: {
         proId: id,
-        status: { in: ['confirmed', 'deposit_pending', 'deposit_submitted'] },
+        status: { in: SLOT_HOLDING_STATUSES },
         startAt: { gte: from, lte: to },
       },
       select: { startAt: true, durationMin: true },

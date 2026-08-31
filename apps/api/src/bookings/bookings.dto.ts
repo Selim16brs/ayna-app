@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BOOKING_STATUSES } from '@ayna/domain';
 
 export const createBookingSchema = z.object({
   id: z.string().min(1),
@@ -25,23 +26,10 @@ export const createBookingSchema = z.object({
   durationMin: z.number().int().positive().max(1440).optional(),
   price: z.number().nonnegative(),
   status: z
-    .enum([
-      'confirmed',
-      'pending',
-      'completed',
-      'cancelled',
-      'awaiting_provider',
-      'alternative_proposed',
-      'no_show',
-      'waitlist',
-      'deposit_pending',
-      'deposit_submitted',
-      'refund_pending',
-      'refund_submitted',
-      'disputed',
-      'reassigned_pending',
-      'expired',
-    ])
+    // Liste `@ayna/domain`den TÜRETİLİYOR (brief §3). Elle yazılsaydı şema ile
+    // durum makinesi ayrışır ve API, makinenin tanımadığı bir durumu kabul
+    // ederdi — tam da bugün "iki kural" diye ayıkladığımız sorunun aynısı.
+    .enum(BOOKING_STATUSES)
     .optional(),
 });
 

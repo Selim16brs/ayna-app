@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { SLOT_HOLDING_STATUSES } from '../bookings/slot-statuses';
 import {
   ConflictException,
   ForbiddenException,
@@ -198,7 +199,7 @@ export class BusinessesService {
         where: {
           proId: m.proId,
           bySalon: false, // yalnız uzmanın KENDİ işleri (salonunkiler zaten salonda tam görünür)
-          status: { in: ['confirmed', 'deposit_pending', 'deposit_submitted'] },
+          status: { in: SLOT_HOLDING_STATUSES },
           startAt: { gte: from, lte: to },
         },
         select: { startAt: true, durationMin: true },

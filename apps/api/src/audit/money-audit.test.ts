@@ -25,7 +25,9 @@ const PARA_YOLLARI: { dosya: string; eylemler: string[] }[] = [
   },
   { dosya: 'loyalty/loyalty.grant.ts', eylemler: ['loyalty.earn'] },
   { dosya: 'loyalty/loyalty.service.ts', eylemler: ['loyalty.redeem', 'loyalty.unlock'] },
-  { dosya: 'commissions/commissions.service.ts', eylemler: ['overdue.run', 'invoice.collect'] },
+  // Komisyon modülü SİLİNDİ: brief §4.4/§10 ikinci tahsilatı kaldırdı —
+  // depozito zaten AYNA'nın komisyonu. Para yolu artık depozito ödemesi ve
+  // iade kuyruğu; ikisi de aşağıdaki dosyalarda denetleniyor.
   { dosya: 'bookings/bookings.service.ts', eylemler: ['booking.'] },
 ];
 

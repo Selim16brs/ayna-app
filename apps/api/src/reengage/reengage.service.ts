@@ -48,7 +48,7 @@ export class ReengageService {
     const bookings = await this.prisma.booking.findMany({
       where: {
         proId: { in: proIds },
-        status: 'completed',
+        status: 'tamamlandi',
         startAt: { gte: new Date(simdi - 400 * GUN_MS), not: null },
         userId: { not: null },
       },

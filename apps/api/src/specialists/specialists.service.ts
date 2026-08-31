@@ -1,3 +1,4 @@
+import { SLOT_HOLDING_STATUSES } from '../bookings/slot-statuses';
 import {
   cakisanRandevular,
   type BookingWindow,
@@ -470,7 +471,7 @@ export class SpecialistsService {
       where: {
         proId,
         startAt: { gt: simdi },
-        status: { in: ['confirmed', 'deposit_pending', 'deposit_submitted'] },
+        status: { in: SLOT_HOLDING_STATUSES },
       },
       select: { id: true, startAt: true, durationMin: true, customerName: true, dateLabel: true },
       take: 200,

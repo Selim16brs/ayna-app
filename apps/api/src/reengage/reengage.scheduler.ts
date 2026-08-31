@@ -51,7 +51,7 @@ export class ReengageScheduler implements OnModuleInit, OnModuleDestroy {
     // (kalıcı makyaj). Daha eskisini taramak boşuna.
     const bookings = await this.prisma.booking.findMany({
       where: {
-        status: 'completed',
+        status: 'tamamlandi',
         startAt: { gte: new Date(simdi - 400 * GUN_MS), not: null },
         userId: { not: null },
         proId: { not: null },

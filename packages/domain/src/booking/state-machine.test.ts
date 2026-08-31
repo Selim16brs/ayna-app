@@ -3,156 +3,144 @@ import { test } from 'node:test';
 import {
   ALLOWED_TRANSITIONS,
   BOOKING_STATUSES,
-  type BookingState,
+  IPTAL_ESIGI_SAAT,
   InvalidTransitionError,
   assertTransition,
   canTransition,
+  esikGecti,
   holdsSlot,
   isBookingState,
   isTerminal,
 } from './state-machine.js';
 
-test('geçerli geçişe izin verir', () => {
-  assert.equal(canTransition('deposit_pending', 'deposit_submitted'), true);
-  assert.equal(canTransition('deposit_submitted', 'confirmed'), true);
-  assert.equal(canTransition('confirmed', 'completed_pending'), true);
-  assert.equal(canTransition('completed_pending', 'completed'), true);
-});
+/**
+ * Kaynak: AYNA_RANDEVU_AKISI_BRIEF.md §3–§4.
+ * Bu testler brief'in KURALLARINI kilitler; isimleri değil.
+ */
 
-test('geçersiz geçişi reddeder', () => {
-  assert.throws(() => assertTransition('cancelled', 'completed'), InvalidTransitionError);
-  assert.throws(() => assertTransition('completed', 'cancelled'), InvalidTransitionError);
-});
-
-test('KARA LİSTENİN kaçırdığı geçiş artık kapalı: kapora atlanamaz', () => {
-  // Eski koruma yalnız kapalı durumlardan çıkışı engelliyordu; deposit_pending
-  // kapalı olmadığı için doğrudan 'completed' serbestti — yani kapora hiç
-  // ödenmeden randevu tamamlanmış sayılabiliyordu.
-  assert.equal(canTransition('deposit_pending', 'completed'), false);
-  assert.equal(canTransition('deposit_pending', 'completed_pending'), false);
-  assert.equal(canTransition('awaiting_provider', 'completed'), false);
-  assert.equal(canTransition('waitlist', 'completed'), false);
-});
-
-test('iade akışı sırası atlanamaz', () => {
-  assert.equal(canTransition('refund_pending', 'refund_submitted'), true);
-  assert.equal(canTransition('refund_submitted', 'cancelled'), true);
-  // Uzman dekont yüklemeden kayıt kapanamaz
-  assert.equal(canTransition('refund_pending', 'completed'), false);
-});
-
-test('no_show yalnız itiraza açık — kapora yakma buna bağlı', () => {
-  assert.deepEqual([...ALLOWED_TRANSITIONS.no_show], ['disputed']);
-  assert.equal(canTransition('no_show', 'completed'), false);
-  assert.equal(canTransition('no_show', 'cancelled'), false);
-});
-
-test('terminal durumlar', () => {
-  assert.equal(isTerminal('completed'), true);
-  assert.equal(isTerminal('cancelled'), true);
-  assert.equal(isTerminal('expired'), true);
-  assert.equal(isTerminal('confirmed'), false);
-});
-
-test('tüm durumlar haritada tanımlı', () => {
-  for (const s of BOOKING_STATUSES) {
-    assert.ok(ALLOWED_TRANSITIONS[s], `${s} haritada yok`);
-  }
-  assert.equal(Object.keys(ALLOWED_TRANSITIONS).length, BOOKING_STATUSES.length);
-});
-
-test('hedef durumların hepsi geçerli durum — yazım hatası yakalanır', () => {
-  for (const [from, hedefler] of Object.entries(ALLOWED_TRANSITIONS)) {
-    for (const to of hedefler) {
-      assert.ok(isBookingState(to), `${from} → ${to}: '${to}' tanımlı bir durum değil`);
-    }
+test('brief §3 — diyagramdaki ana hat baştan sona yürüyor', () => {
+  const hat = [
+    'taslak',
+    'onay_bekliyor',
+    'depozito_bekliyor',
+    'kesinlesti',
+    'hizmet_gunu',
+    'odeme_bekliyor',
+    'tamamlandi',
+    'degerlendirme',
+    'kapandi',
+  ] as const;
+  for (let i = 0; i < hat.length - 1; i++) {
+    assert.ok(canTransition(hat[i]!, hat[i + 1]!), `${hat[i]} → ${hat[i + 1]} kapalı`);
   }
 });
 
-test('hiçbir durum kendine geçmiyor — idempotentlik geçiş değil', () => {
+test('brief §4.4 — depozito ATLANAMAZ', () => {
+  // Onaydan doğrudan kesinleşmeye geçilebilseydi randevu para alınmadan
+  // garanti olurdu; depozito AYNA'nın tek tahsilatı (§4.4, §10).
+  assert.equal(canTransition('onay_bekliyor', 'kesinlesti'), false);
+  assert.equal(canTransition('onay_bekliyor', 'hizmet_gunu'), false);
+  assert.equal(canTransition('onay_bekliyor', 'tamamlandi'), false);
+});
+
+test('brief §4.3 — karşı öneri turu YALNIZ BİR KEZ', () => {
+  // Uzman karşı öneriye yalnız Kabul/Red verebilir. `karsi_oneri` durumundan
+  // tekrar `degisiklik_onerildi`ye dönüş, sonsuz ping-pong demekti.
+  assert.equal(canTransition('karsi_oneri', 'degisiklik_onerildi'), false, 'ping-pong açık');
+  assert.ok(canTransition('karsi_oneri', 'depozito_bekliyor'), 'uzman kabul edemiyor');
+  assert.ok(canTransition('karsi_oneri', 'iptal_uzman'), 'uzman reddedemiyor');
+});
+
+test('brief §4.9 — ödeme el sıkışması atlanamaz', () => {
+  // Müşteri "ödedim" demeden uzman "aldım" diyemez; hizmet günü doğrudan
+  // tamamlanamaz.
+  assert.equal(canTransition('hizmet_gunu', 'tamamlandi'), false);
+  assert.ok(canTransition('hizmet_gunu', 'odeme_bekliyor'));
+  assert.ok(canTransition('odeme_bekliyor', 'tamamlandi'));
+});
+
+test('brief §4.9 — uyuşmazlıkta değerlendirme YİNE açılır', () => {
+  // "puan yüklenmez, değerlendirme yine açılır" — kapatmak kuralı çiğnerdi.
+  assert.ok(canTransition('odeme_bekliyor', 'uyusmazlik'));
+  assert.ok(canTransition('uyusmazlik', 'degerlendirme'));
+});
+
+test('brief §4.8 — "gelmedi" beyanına itiraz yolu açık', () => {
+  assert.ok(canTransition('no_show_musteri', 'uyusmazlik'));
+  assert.ok(canTransition('no_show_uzman', 'uyusmazlik'));
+});
+
+test('brief §4.6 — erteleme reddedilirse ESKİ randevu geçerli kalır', () => {
+  assert.ok(canTransition('kesinlesti', 'erteleme_onerildi'));
+  assert.ok(canTransition('erteleme_onerildi', 'kesinlesti'), 'red sonrası geri dönüş yok');
+});
+
+test('brief §4.2 — slot talep gönderildiği AN kilitlenir, taslakta değil', () => {
+  assert.equal(holdsSlot('taslak'), false, 'gönderilmemiş talep slot tutuyor');
+  assert.ok(holdsSlot('onay_bekliyor'), 'talep slotu kilitlemiyor');
+  assert.ok(holdsSlot('depozito_bekliyor'));
+  assert.ok(holdsSlot('kesinlesti'));
+});
+
+test('kapanan hiçbir durum slot tutmaz', () => {
+  // Aksi hâlde düşen/iptal olan randevu uzmanın takvimini süresiz işgal ederdi.
   for (const s of BOOKING_STATUSES) {
-    assert.equal(canTransition(s, s), false, `${s} kendine geçebiliyor`);
+    if (isTerminal(s)) assert.equal(holdsSlot(s), false, `${s} kapalı ama slot tutuyor`);
   }
 });
 
-test('her terminal olmayan durumdan bir kapanış yolu var', () => {
-  const kapanis: BookingState[] = ['cancelled', 'completed', 'expired'];
-  for (const s of BOOKING_STATUSES) {
-    if (isTerminal(s)) continue;
-    // Genişlik öncelikli arama: kapanışa ulaşılabiliyor mu?
-    const gorulen = new Set<BookingState>([s]);
-    const kuyruk: BookingState[] = [s];
-    let ulasti = false;
+test('gerçekten kapalı olan durumlar', () => {
+  // Brief §3 `no_show_*` ve `uyusmazlik`i terminal sayıyor, ama §4.8 no-show
+  // beyanına 24 saat İTİRAZ hakkı veriyor ve §4.9 uyuşmazlıkta değerlendirmenin
+  // yine açılmasını istiyor. Yani ikisi de bir yere GİDEBİLİYOR; diyagramdaki
+  // "terminal" nitelemesi "kullanıcı için son" anlamında, "çıkışı yok"
+  // anlamında değil. Kapalı olanlar yalnız şunlar:
+  const terminal = BOOKING_STATUSES.filter(isTerminal).sort();
+  assert.deepEqual(terminal, ['iptal_musteri', 'iptal_uzman', 'kapandi', 'otomatik_dustu']);
+  // İtiraz ve değerlendirme yolları AÇIK kalmalı.
+  assert.equal(isTerminal('no_show_musteri'), false, 'itiraz hakkı kapatılmış');
+  assert.equal(isTerminal('uyusmazlik'), false, 'uyuşmazlıkta değerlendirme kapatılmış');
+});
+
+test('her durumdan bir kapanışa ulaşılabiliyor — kilitlenen kayıt yok', () => {
+  for (const bas of BOOKING_STATUSES) {
+    const gorulen = new Set<string>([bas]);
+    const kuyruk = [bas as string];
+    let kapanis = false;
     while (kuyruk.length) {
-      const cur = kuyruk.shift()!;
-      if (kapanis.includes(cur)) {
-        ulasti = true;
+      const s = kuyruk.shift()!;
+      if (isTerminal(s as never)) {
+        kapanis = true;
         break;
       }
-      for (const n of ALLOWED_TRANSITIONS[cur]) {
-        if (!gorulen.has(n)) {
-          gorulen.add(n);
-          kuyruk.push(n);
+      for (const h of ALLOWED_TRANSITIONS[s as never]) {
+        if (!gorulen.has(h)) {
+          gorulen.add(h);
+          kuyruk.push(h);
         }
       }
     }
-    assert.ok(ulasti, `${s} durumundan kapanışa ulaşılamıyor — randevu sonsuza kilitlenir`);
+    assert.ok(kapanis, `${bas} durumundan kapanışa yol yok — kayıt kilitlenir`);
   }
 });
 
-test('slot tutan durumlar', () => {
-  assert.equal(holdsSlot('confirmed'), true);
-  assert.equal(holdsSlot('deposit_pending'), true);
-  assert.equal(holdsSlot('deposit_submitted'), true);
-  assert.equal(holdsSlot('cancelled'), false);
-  assert.equal(holdsSlot('awaiting_provider'), false, 'aynı slota birden çok talep olabilir');
-  assert.equal(holdsSlot('completed'), false);
+test('geçersiz geçiş hata fırlatır', () => {
+  assert.throws(() => assertTransition('kapandi', 'taslak'), InvalidTransitionError);
 });
 
-test('isBookingState bilinmeyeni eler', () => {
-  assert.equal(isBookingState('confirmed'), true);
-  assert.equal(isBookingState('SCHEDULED'), false, 'eski planlama sözlüğü');
-  assert.equal(isBookingState('refunded'), false, "Prisma enum'unda yok");
-  assert.equal(isBookingState(null), false);
-  assert.equal(isBookingState('__proto__'), false);
+test('isBookingState yalnız bilinen durumları kabul eder', () => {
+  assert.ok(isBookingState('depozito_bekliyor'));
+  // Eski makinenin adları artık geçersiz — çakışma bırakılmadı.
+  assert.equal(isBookingState('confirmed'), false);
+  assert.equal(isBookingState('deposit_pending'), false);
+  assert.equal(isBookingState('completed_pending'), false);
 });
 
-test('canTransition bilinmeyen kaynakta patlamaz, false döner', () => {
-  assert.equal(canTransition('__proto__' as BookingState, 'completed'), false);
-  assert.equal(canTransition('yok' as BookingState, 'completed'), false);
-});
-
-// ── Sunucunun BUGÜN yaptığı geçişlerin hepsi izinli mi? ────────────────────
-// Bu liste kod okunarak çıkarıldı (bookings.service / scheduler / payment.service).
-// Makine devreye girdiğinde çalışan bir akışın kırılmadığının kanıtı.
-test('üretimdeki her geçiş beyaz listede', () => {
-  const uretim: Array<[BookingState, BookingState, string]> = [
-    ['awaiting_provider', 'deposit_pending', 'approve (KYC onaylı)'],
-    ['awaiting_provider', 'confirmed', 'approve (kaporasız)'],
-    ['awaiting_provider', 'alternative_proposed', 'propose'],
-    ['awaiting_provider', 'expired', 'scheduler: yanıt süresi'],
-    ['alternative_proposed', 'confirmed', 'accept'],
-    ['alternative_proposed', 'awaiting_provider', 'counter'],
-    ['deposit_pending', 'deposit_submitted', 'uploadReceipt / payment'],
-    ['deposit_pending', 'expired', 'scheduler: kapora süresi'],
-    ['deposit_submitted', 'confirmed', 'confirmDepositReceipt'],
-    ['confirmed', 'completed_pending', 'complete'],
-    ['completed_pending', 'completed', 'confirmCompletion / scheduler'],
-    ['completed_pending', 'disputed', 'dispute'],
-    ['confirmed', 'no_show', 'noShow'],
-    ['no_show', 'disputed', 'dispute'],
-    ['confirmed', 'cancelled', 'cancel (geç iptal)'],
-    ['confirmed', 'refund_pending', 'cancel (serbest) / providerNoShow'],
-    ['deposit_submitted', 'cancelled', 'cancel (geç iptal)'],
-    ['deposit_submitted', 'refund_pending', 'cancel (serbest)'],
-    ['deposit_pending', 'cancelled', 'cancel (kapora ödenmemiş)'],
-    ['awaiting_provider', 'cancelled', 'cancel'],
-    ['pending', 'cancelled', 'cancel'],
-    ['waitlist', 'cancelled', 'cancel'],
-    ['refund_pending', 'refund_submitted', 'uploadRefundReceipt'],
-    ['refund_submitted', 'cancelled', 'confirmRefund'],
-  ];
-  for (const [from, to, nerede] of uretim) {
-    assert.ok(canTransition(from, to), `${nerede}: ${from} → ${to} reddedilir — akış kırılır`);
-  }
+test('brief §4.7 — 3 saat eşiği tek yerden okunuyor', () => {
+  assert.equal(IPTAL_ESIGI_SAAT, 3);
+  const simdi = Date.parse('2026-08-31T12:00:00Z');
+  assert.equal(esikGecti(simdi + 4 * 3600_000, simdi), false, '4 saat varken eşik geçmiş sayıldı');
+  assert.equal(esikGecti(simdi + 2 * 3600_000, simdi), true, '2 saat kala eşik geçmedi sayıldı');
+  // Tam sınır: 3 saat "az kala" değildir.
+  assert.equal(esikGecti(simdi + 3 * 3600_000, simdi), false);
 });

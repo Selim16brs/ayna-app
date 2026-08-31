@@ -1,4 +1,9 @@
-// §12.8 — komisyon saf matematiği.
+// PARA MATEMATİĞİ — saf, politikasız.
+//
+// Randevu brief'i (§4.4, §10) komisyonu tek kaleme indirdi: depozito = %10 ve
+// başka tahsilat yok. Dolayısıyla eski komisyon modülü tümden silindi. Ama
+// buradaki tiyn aritmetiği POLİTİKA DEĞİL: gelir raporu hâlâ para topluyor ve
+// float'ta toplamak yanlış sonuç veriyor. O yüzden domain'e taşındı.
 //
 // PARA FLOAT'TA TOPLANMAZ (CLAUDE.md: "Para: NUMERIC(12,2), KZT, asla float").
 // Ölçüldü: fiyatları `Number(price)` olarak toplayıp komisyon hesaplamak, 4000

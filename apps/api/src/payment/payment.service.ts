@@ -142,22 +142,38 @@ export class PaymentService {
         bookingId: p.bookingId,
       },
     });
-    // §4.3 — depozito Kaspi ile ödendiyse: randevu 'deposit_submitted' + uzmana push
-    // (uzman 'Aldım, onaylıyorum' der → randevu KESİN; akış dekont yüklemeyle birebir aynı)
+    // Brief §4.4 — "Dekont yüklendiği an randevu KESINLESTI sayılır. Admin
+    // doğrulaması sonradan yapılır; dekont sahteyse randevu iptal edilir ve
+    // kullanıcı platformdan yasaklanır."
+    //
+    // UZMAN ONAYI ADIMI KALDIRILDI: eskiden `deposit_submitted` olup uzmanın
+    // "aldım" demesi bekleniyordu. Müşteri parayı ödedikten sonra randevusunun
+    // uzmanın eline bakması, 10 dakikalık pencerenin anlamını yok ediyordu.
     const b = await this.prisma.booking.findUnique({ where: { id: p.bookingId } });
-    if (b?.status === 'deposit_pending') {
+    if (b?.status === 'depozito_bekliyor') {
       await this.prisma.booking.update({
         where: { id: b.id },
-        data: { status: 'deposit_submitted', depositReceiptUri: `kaspi:${paid.id}` },
+        data: {
+          status: 'kesinlesti',
+          depositReceiptUri: `kaspi:${paid.id}`,
+          depositDeadline: null,
+        },
       });
+      // §6 — "Depozito yüklendi → İKİSİNE: Randevu kesinleşti ✓"
+      const alicilar = [b.userId];
       if (b.proId) {
         const sp = await this.prisma.specialist.findFirst({ where: { proId: b.proId } });
-        if (sp)
-          void this.push.sendToUser(sp.userId, {
-            title: 'Depozito Kaspi ile ödendi 💳',
-            body: 'Müşteri depozitoyu uygulama içinden ödedi — onayla, randevu kesinleşsin.',
+        if (sp) alicilar.push(sp.userId);
+      }
+      for (const uid of alicilar) {
+        if (!uid) continue;
+        void this.push
+          .sendToUser(uid, {
+            title: 'Randevu kesinleşti ✓',
+            body: 'Depozito alındı. Randevunuz garanti altında.',
             data: { route: `/booking/${b.id}` },
-          });
+          })
+          .catch(() => undefined);
       }
     }
     return this.map(paid);
