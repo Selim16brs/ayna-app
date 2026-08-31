@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { DURUM_ETIKETI, DURUM_TONU } from '../../src/booking-flow';
+import {
+  DURUM_ETIKETI,
+  DURUM_TONU,
+  karsiTarafBekleniyor,
+  yaklasanMi,
+} from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -16,7 +21,7 @@ import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { ListSkeleton, Screen, TabHero, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { BeklemeNabzi, ListSkeleton, Screen, TAB_BAR_CLEARANCE, TabHero, Text } from '../../src/ui';
 
 // §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş
 type Seg = 'requests' | 'upcoming' | 'past';
@@ -67,16 +72,7 @@ export default function BookingsScreen() {
   const demands = allDemands.filter((d) => !d.seeded && d.status !== 'booked');
   const now = Date.now();
 
-  const isUpcoming = (a: Appointment) =>
-    a.startMs >= now &&
-    ![
-      'completed',
-      'cancelled',
-      'no_show',
-      'expired',
-      'completed_pending',
-      'sync_conflict',
-    ].includes(a.status);
+  const isUpcoming = (a: Appointment) => a.startMs >= now && yaklasanMi(a.status);
   const upcoming = bookings.filter(isUpcoming).sort((a, b) => a.startMs - b.startMs);
   const past = bookings.filter((a) => !isUpcoming(a)).sort((a, b) => b.startMs - a.startMs);
   const pendingReview = bookings.filter((a) => a.status === 'tamamlandi' && !a.reviewed);
@@ -182,6 +178,8 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
+  // Bu ekran MÜŞTERİ sekmesi; uzman kendi ajandasını kullanıyor.
+  const rol = 'musteri' as const;
   const st = makeStatus(colors)[appt.status];
   const toDetail = () => router.push('/booking/' + appt.id);
   return (
@@ -191,9 +189,17 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
           {formatSlot(appt.startMs, t)}
         </Text>
         <View style={[styles.status, { backgroundColor: st.bg }]}>
-          <Text variant="caption" style={[styles.statusText, { color: st.fg }]}>
-            {t(st.key)}
-          </Text>
+          {/* Listede de "top karşı tarafta" görünsün: kullanıcı kartı açmadan
+              hangi randevuda beklediğini anlamalı. Rozetin İÇİNDE, ayrı bir
+              satır açmadan — liste sıkışık ve her karta satır eklemek
+              kaydırmayı uzatırdı. */}
+          {karsiTarafBekleniyor(appt.status, rol) ? (
+            <BeklemeNabzi metin={t(st.key)} renk={st.fg} />
+          ) : (
+            <Text variant="caption" style={[styles.statusText, { color: st.fg }]}>
+              {t(st.key)}
+            </Text>
+          )}
         </View>
       </View>
       <View style={styles.divider} />

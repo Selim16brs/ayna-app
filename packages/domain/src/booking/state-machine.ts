@@ -63,6 +63,25 @@ export const SLOT_HOLDING_STATES: readonly BookingState[] = [
   'odeme_bekliyor',
 ];
 
+/**
+ * PARA KAZANILMIŞ sayılan durumlar — ciro ve komisyon tabanı buradan çıkar.
+ *
+ * `uyusmazlik` bilinçli olarak DIŞARIDA: §4.9'da uzman "ödeme gelmedi" derse
+ * randevu uyuşmazlıkta kapanır ve AYNA o parayı kazanılmış saymaz.
+ */
+export const KAZANILMIS_DURUMLAR: readonly BookingState[] = [
+  'tamamlandi',
+  'degerlendirme',
+  'kapandi',
+];
+
+/**
+ * HENÜZ YAŞANMAMIŞ, akışı süren randevular — panelde "bekleyen", kullanıcıda
+ * "yaklaşan" sayılır. Slotu tutan durumlarla aynı küme: bir randevu slot
+ * tutuyorsa gelecekte yapılacak demektir.
+ */
+export const YAKLASAN_DURUMLAR: readonly BookingState[] = SLOT_HOLDING_STATES;
+
 /** Her durumun İZİN VERİLEN hedefleri. Listede olmayan geçiş reddedilir. */
 export const ALLOWED_TRANSITIONS: Record<BookingState, readonly BookingState[]> = {
   // Gönderilince slot kilitlenir; gönderilmeden vazgeçilebilir.

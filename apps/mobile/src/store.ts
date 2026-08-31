@@ -330,7 +330,7 @@ interface State {
   confirmRefund: (id: string) => void; // kullanıcı "iadeyi aldım" → kayıt kapanır
   disputeBooking: (id: string) => void; // taraflar itiraz açar (destek/admin kuyruğu)
   checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
-  expireDeposits: () => void; // §4.3 — dekont süresi dolan deposit_pending randevuları düşürür
+  expireDeposits: () => void; // §4.4 — depozito süresi dolan randevuları düşürür
   expireResponses: () => void; // §4.1.3 — uzman yanıt süresi dolan talepleri düşürür
   toggleClosedDay: (dayStartMs: number) => void; // §4.6 — günü kapalı/açık işaretle
   // §5.2 Faz A — teklif/talep akışı BULUTTAN (iki cihaz arasında gerçek çalışır)
@@ -936,7 +936,7 @@ export const useStore = create<State>()(
         return id;
       },
 
-      // §4.6/§10.2 — SALON offline randevu ekler → ilgili UZMANIN ONAYINA gider (awaiting_provider) + bildirim.
+      // §4.6/§10.2 — SALON offline randevu ekler → ilgili UZMANIN ONAYINA gider (onay_bekliyor) + bildirim.
       // Salon silemez; her ekleme uzmana bildirimle düşer, uzman panelinde Kabul/Reddet ile teyit eder.
       salonAddOffline: (input) => {
         const id = nextId('sof');
@@ -1067,7 +1067,7 @@ export const useStore = create<State>()(
         }
       },
 
-      // §4.4 — kullanıcı iptali: depozito ödendiyse ve >3 saat varsa iade akışı (refund_pending);
+      // §4.7 — kullanıcı iptali: depozito ödendiyse ve >3 saat varsa iade hakkı doğar;
       // depozito ödendi + geç iptal (≤3 saat) → kapora yanar; depozito yoksa düz iptal.
       cancelBooking: (id, reason) => {
         const b = get().bookings.find((x) => x.id === id);
@@ -1367,7 +1367,7 @@ export const useStore = create<State>()(
         return { count, demandId };
       },
 
-      // §5.2 Faz A — seçim BULUTTA: randevu sunucuda doğar (deposit_pending), kazanan uzmana
+      // §5.2 Faz A — seçim BULUTTA: randevu sunucuda doğar (depozito_bekliyor), kazanan uzmana
       // ve seçilmeyenlere GERÇEK push sunucudan gider.
       selectOffer: async (demandId, offerId, slotMs) => {
         const token = get().token;
@@ -1434,7 +1434,7 @@ export const useStore = create<State>()(
         }));
       },
 
-      // §4.3 — dekont yükleme süresi dolan deposit_pending randevular otomatik düşer (slot açılır)
+      // §4.4 — depozito süresi dolan randevular otomatik düşer (slot açılır)
       expireDeposits: () => {
         const now = Date.now();
         const expired = get().bookings.filter(

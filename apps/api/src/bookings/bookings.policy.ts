@@ -19,7 +19,7 @@ export interface CancelOutcome {
 // §4.4 — kullanıcı iptalinin sonucunu SUNUCU belirler (client'a güvenilmez):
 // - Kapora ödenmemişse → düz iptal (yakma/iade yok).
 // - Kapora ödenmiş + geç iptal (<3sa) → kapora yanar (ceza).
-// - Kapora ödenmiş + serbest iptal (>3sa) → uzman iade eder (refund_pending).
+// - Depozito ödenmiş + serbest iptal (>3sa) → iade hakkı doğar (§4.10 kuyruğu).
 export function cancelOutcome(
   status: string,
   startAtMs: number | null,

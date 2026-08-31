@@ -6,8 +6,10 @@ import { api } from '../../src/api';
 import {
   DURUM_ETIKETI,
   DURUM_TONU,
+  beklemeMetni,
   birincilAksiyon,
   iptalEdilebilir,
+  karsiTarafBekleniyor,
   type Aksiyon,
   type Rol,
 } from '../../src/booking-flow';
@@ -18,6 +20,7 @@ import { radius, shadow, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   AkisCizelgesi,
+  BeklemeNabzi,
   Button,
   Sayac,
   Screen,
@@ -78,11 +81,14 @@ export default function BookingDetail() {
   // §4.6/§4.7 — erteleme ve ücretsiz iptal yalnız 3 saat eşiğinden ÖNCE.
   const esikOncesi = !esikGecti(booking.startMs);
 
-  const aksiyon = birincilAksiyon(booking.status, rol, {
+  const baglam = {
     odemeBildirildi: booking.balanceDeclaredAt != null,
     gelmediAcik,
     esikOncesi,
-  });
+  };
+  const aksiyon = birincilAksiyon(booking.status, rol, baglam);
+  // Bu rolün yapacağı bir şey yoksa ama randevu akıştaysa top KARŞI TARAFTA.
+  const bekliyor = karsiTarafBekleniyor(booking.status, rol, baglam);
 
   const yenile = () => void hydrateBookings();
   const cagir = (p: Promise<unknown>) => {
@@ -179,6 +185,14 @@ export default function BookingDetail() {
         {/* ── §7 — kargo takibi tarzı zaman çizelgesi ── */}
         <View style={[styles.kart, shadow.card]}>
           <AkisCizelgesi status={booking.status} />
+          {/* KARŞILIKLI ONAY BEKLENİYORSA nabız. Durum rozeti durağan bir
+              etiket; kullanıcı bir şeyin işlediğinden emin olamıyor. Nabız
+              "sistem çalışıyor, sıra sende değil" diyor. */}
+          {bekliyor ? (
+            <View style={styles.nabizKap}>
+              <BeklemeNabzi metin={t(beklemeMetni(booking.status, rol))} renk={tonRengi} />
+            </View>
+          ) : null}
         </View>
 
         {/* ── Para: %10 peşin + %90 sonra (§4.4, §4.9) ── */}
@@ -311,6 +325,7 @@ const makeStyles = (colors: ColorTokens) =>
     rozet: { paddingHorizontal: space(1), paddingVertical: 3, borderRadius: radius.pill },
     paraSatir: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     paraNot: { lineHeight: 18 },
+    nabizKap: { marginTop: space(1) },
     iptal: {
       flexDirection: 'row',
       alignItems: 'center',

@@ -5,6 +5,8 @@ import {
   fromMinor,
   toMinor,
   uzmanKayitli,
+  KAZANILMIS_DURUMLAR,
+  YAKLASAN_DURUMLAR,
 } from '@ayna/domain';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
@@ -251,14 +253,10 @@ export class AdminService {
       totalCollectedMinor += minor;
     }
 
-    const EARNED = ['completed'];
-    const PENDING = [
-      'confirmed',
-      'pending',
-      'awaiting_provider',
-      'alternative_proposed',
-      'waitlist',
-    ];
+    // Durum listeleri `@ayna/domain`den geliyor: burada elle yazılmış kopyalar
+    // vardı ve brief §3 sözlüğü değiştiğinde panel sessizce sıfır gösteriyordu.
+    const EARNED: readonly string[] = KAZANILMIS_DURUMLAR;
+    const PENDING: readonly string[] = YAKLASAN_DURUMLAR;
     // Komisyon hesabı TEK YERDE (`commissions.calc`). Burada eskiden ayrı bir
     // formül vardı; tam sayı oranlarda ikisi aynı sonucu veriyordu ama KESİRLİ
     // oranlarda 1 tiyn ayrışıyordu (1.000.000 örnekte ~1.955 sapma, hepsi %8,5

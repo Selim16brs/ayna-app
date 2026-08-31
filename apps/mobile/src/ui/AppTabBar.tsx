@@ -1,4 +1,6 @@
 import { usePathname } from 'expo-router';
+import { birincilAksiyon } from '../booking-flow';
+import type { BookingStatus } from '../data';
 import { useStore } from '../store';
 import { FloatingTabBar, type TabDef } from './FloatingTabBar';
 
@@ -11,8 +13,21 @@ const TABS: TabDef[] = [
   { route: '/profile', name: 'profile', icon: 'person', labelKey: 'nav.profile' },
 ];
 
-// Kullanıcının EYLEM BEKLEYEN randevusu — nokta yalnız gerçek sinyalle yanar.
-const NEEDS_ACTION = ['deposit_pending', 'alternative_proposed', 'completed_pending', 'disputed'];
+/**
+ * Kullanıcının EYLEM BEKLEYEN randevusu var mı? — nokta yalnız gerçek sinyalle yanar.
+ *
+ * Cevap `birincilAksiyon`dan türetiliyor: kartta bir düğme varsa sekmede de
+ * nokta olmalı, yoksa olmamalı. Burada eskiden elle yazılmış bir durum listesi
+ * vardı ve brief §3 sözlüğü değiştiğinde listedeki adların HİÇBİRİ artık var
+ * olmadığı için nokta sessizce hiç yanmıyordu.
+ *
+ * Değerlendirme dışarıda: 7 gün açık kalan isteğe bağlı bir davet, bekleyen
+ * iş değil — noktayı bir hafta yanık bırakmak sinyali değersizleştirirdi.
+ */
+function eylemBekliyorMu(status: BookingStatus): boolean {
+  if (status === 'tamamlandi' || status === 'degerlendirme') return false;
+  return birincilAksiyon(status, 'musteri') !== null;
+}
 
 // Aktif sekme: pathname'e göre (push edilen ekranlar ilgili sekmeye eşlenir)
 function activeName(pathname: string): string {
@@ -27,7 +42,7 @@ function activeName(pathname: string): string {
 export function AppTabBar() {
   const pathname = usePathname();
   const bookings = useStore((s) => s.bookings);
-  const eylemBekleyen = bookings.some((b) => NEEDS_ACTION.includes(b.status));
+  const eylemBekleyen = bookings.some((b) => eylemBekliyorMu(b.status));
   const tabs = TABS.map((t) => (t.name === 'bookings' ? { ...t, badge: eylemBekleyen } : t));
   return <FloatingTabBar tabs={tabs} active={activeName(pathname)} />;
 }

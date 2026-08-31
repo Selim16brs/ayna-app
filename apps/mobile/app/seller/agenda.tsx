@@ -37,8 +37,8 @@ function buildDayRows(dayStart: number, dayBookings: Appointment[]): DayRow[] {
   const openStart = dayStart + OPEN_H * 3_600_000;
   const openEnd = dayStart + CLOSE_H * 3_600_000;
   // §4.1/§4.6 — takvimde SLOT'U TUTAN randevular: onaylı + tamamlanan + uzman ONAYLADIKTAN sonra
-  // depozito bekleyenler (deposit_pending/submitted). Uzman kabul edince slot HEMEN takvimde görünür
-  // (gold=bekliyor). Yalnız onay-ÖNCESİ (awaiting_provider) ayrı "Bekleyen Talepler" şeridindedir.
+  // depozito bekleyenler (depozito_bekliyor). Uzman kabul edince slot HEMEN takvimde görünür
+  // (gold=bekliyor). Yalnız onay-ÖNCESİ (onay_bekliyor) ayrı "Bekleyen Talepler" şeridindedir.
   const bs = dayBookings
     .filter((b) => CALENDAR_STATUSES.includes(b.status))
     .sort((a, b) => a.startMs - b.startMs);

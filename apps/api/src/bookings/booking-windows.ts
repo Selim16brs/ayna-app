@@ -3,9 +3,9 @@ import type { PrismaService } from '../prisma/prisma.service';
 // Randevu zaman pencereleri — şartname §5.3: "Değer config/admin ayarı olmalı;
 // kod içine dağınık yazılmamalı." Pencereler önce üç ayrı yerde sabit yazılıydı.
 //
-// PENCERELER SLOTU DOĞRUDAN ETKİLER: `deposit_pending` slotu işgal ediyor
+// PENCERELER SLOTU DOĞRUDAN ETKİLER: `depozito_bekliyor` slotu işgal ediyor
 // (≡ şartnamedeki HELD). Penceresi olmayan bir kayıt scheduler'ın süre dolum
-// sorgusuna hiç düşmez, yani o saat kimseye açılmaz. Bu yüzden `deposit_pending`
+// sorgusuna hiç düşmez, yani o saat kimseye açılmaz. Bu yüzden `depozito_bekliyor`
 // doğuran her yol MUTLAKA `depositDeadline` yazmalı.
 
 export type BookingWindows = {

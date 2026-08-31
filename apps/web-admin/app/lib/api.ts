@@ -171,8 +171,6 @@ export const api = {
   unrestrictUser: (id: string) => req(`/admin/users/${id}/unrestrict`, { method: 'POST' }),
   cancelBooking: (id: string) =>
     req<unknown>(`/bookings/${id}/cancel`, { method: 'POST', body: JSON.stringify({}) }),
-  completeBooking: (id: string) =>
-    req<unknown>(`/bookings/${id}/complete`, { method: 'POST', body: JSON.stringify({}) }),
   bookings: (status?: string) =>
     req<AdminBooking[]>(`/admin/bookings${status && status !== 'all' ? `?status=${status}` : ''}`),
   quoteRequests: () => req<QuoteReq[]>('/admin/quote-requests'),

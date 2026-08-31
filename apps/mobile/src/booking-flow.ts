@@ -87,6 +87,20 @@ export function akisAdimi(status: BookingStatus): number {
   }
 }
 
+/**
+ * Randevu HÂLÂ YAŞANACAK mı? — "Yaklaşan / Geçmiş" ayrımı buradan çıkar.
+ *
+ * `akisAdimi`den türetiliyor: kapanmış (iptal/no-show/düşmüş) bir randevu
+ * saati gelecekte olsa bile yaklaşan değildir, tamamlanmış bir randevu da
+ * geçmiştir. Bu ayrım eskiden ekranda elle yazılmış bir durum listesiyle
+ * yapılıyordu; adlar değişince liste hiçbir şeyi eleyemez oldu ve İPTAL EDİLMİŞ
+ * randevular "Yaklaşan" sekmesinde görünmeye başladı.
+ */
+export function yaklasanMi(status: BookingStatus): boolean {
+  const adim = akisAdimi(status);
+  return adim >= 0 && adim < 6;
+}
+
 /** Durum rozetinin metni. Tek yerde; her ekran aynı kelimeyi gösterir. */
 export const DURUM_ETIKETI: Record<BookingStatus, MessageKey> = {
   taslak: 'bs.taslak',
@@ -211,4 +225,51 @@ export function iptalEdilebilir(status: BookingStatus): boolean {
     status === 'kesinlesti' ||
     status === 'erteleme_onerildi'
   );
+}
+
+/**
+ * KARŞI TARAF BEKLENİYOR MU? — bekleme animasyonu bu cevaba göre çiziliyor.
+ *
+ * "Top kimde" sorusunun cevabı `birincilAksiyon`da zaten var: bu roldeki
+ * kullanıcının yapacağı bir şey YOKSA ama randevu hâlâ akış içindeyse, top
+ * karşı taraftadır. Ayrı bir liste tutmak, iki listenin ayrışmasına açık
+ * olurdu — buton çıkmayan bir durumda animasyon da çıkmaz, tersi de.
+ *
+ * İstisna `odeme_bekliyor`: müşteri ödediğini bildirdikten SONRA onun yapacağı
+ * bir şey kalmıyor ama uzmanın teyidi bekleniyor — tam da animasyonun anlamlı
+ * olduğu an.
+ */
+export function karsiTarafBekleniyor(
+  status: BookingStatus,
+  rol: Rol,
+  ctx: AkisBaglam = {},
+): boolean {
+  // Kapanmış randevuda beklenecek bir şey yok.
+  if (akisAdimi(status) < 0) return false;
+  if (status === 'tamamlandi' || status === 'degerlendirme' || status === 'kapandi') return false;
+  // Bu rolün yapacağı bir şey varsa top ONDA; animasyon yanıltıcı olurdu.
+  return birincilAksiyon(status, rol, ctx) === null;
+}
+
+/** Beklenen tarafı anlatan metin — kart bunu animasyonun yanında gösterir. */
+export function beklemeMetni(status: BookingStatus, rol: Rol): MessageKey {
+  const musteri = rol === 'musteri';
+  switch (status) {
+    case 'onay_bekliyor':
+      return 'wait.expert_approval';
+    case 'degisiklik_onerildi':
+      return 'wait.customer_decision';
+    case 'karsi_oneri':
+      return 'wait.expert_decision';
+    case 'depozito_bekliyor':
+      return 'wait.customer_deposit';
+    case 'erteleme_onerildi':
+      return 'wait.reschedule';
+    case 'odeme_bekliyor':
+      return musteri ? 'wait.expert_payment_confirm' : 'wait.customer_payment';
+    case 'hizmet_gunu':
+      return musteri ? 'wait.service_day' : 'wait.customer_arrival';
+    default:
+      return 'wait.generic';
+  }
 }

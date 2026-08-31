@@ -873,7 +873,7 @@ export default function ProfessionalScreen() {
               {/* Kanvas (design/Yorumlar.dc.html §güvenin kaynağı) — yorumların
                   neden uydurma OLAMAYACAĞINI söyleyen satır; ekranda yoktu.
                   İki iddia da kodda doğrulandı:
-                  · ratings.service: booking.status !== 'completed' → reddediliyor
+                  · ratings.service: tamamlanmamış randevu → reddediliyor
                   · ratings controller'ında SİLME UCU YOK — uzman kaldıramıyor. */}
               <View style={styles.trustRow}>
                 <Ionicons name="shield-checkmark" size={15} color={colors.success} />

@@ -259,7 +259,7 @@ export class CatalogService {
   }
 
   // §4.2 — uzmanın dolu aralıkları: yalnız SLOT İŞGAL EDEN durumlar (onaylı/kapora aşaması).
-  // awaiting_provider dahil DEĞİL (ters pazaryeri: aynı slota birden çok bekleyen talep olabilir).
+  // Brief §4.2 — `onay_bekliyor` DAHİL: talep gönderildiği an slot kilitlenir.
   // GİZLİLİK: müşteri adı/telefonu/hizmeti dönmez — sadece zaman aralıkları.
   async professionalBusy(id: string, fromMs?: number, toMs?: number) {
     const from = new Date(fromMs ?? Date.now());

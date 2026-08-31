@@ -15,7 +15,7 @@ test('kapora ödenmemiş → düz iptal, yakma yok', () => {
     status: 'iptal_musteri',
     forfeit: false,
   });
-  assert.deepEqual(cancelOutcome('awaiting_provider', start(10), NOW), {
+  assert.deepEqual(cancelOutcome('onay_bekliyor', start(10), NOW), {
     status: 'iptal_musteri',
     forfeit: false,
   });
@@ -96,7 +96,13 @@ test('erteleme: geç pencerede reddedilir — geç iptal cezası anlamsızlaşma
 });
 
 test('erteleme: yaşanmış/kapanmış randevu ertelenemez', () => {
-  for (const st of ['completed', 'cancelled', 'no_show', 'expired', 'awaiting_provider']) {
+  for (const st of [
+    'tamamlandi',
+    'iptal_musteri',
+    'no_show_musteri',
+    'otomatik_dustu',
+    'onay_bekliyor',
+  ]) {
     assert.deepEqual(canReschedule({ ...RES, status: st }), {
       ok: false,
       code: 'RESCHEDULE_NOT_ALLOWED',

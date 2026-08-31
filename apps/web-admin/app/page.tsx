@@ -3559,16 +3559,43 @@ function UsersView() {
   );
 }
 
+// Brief §3 durum sözlüğü. Adlar kod, veritabanı ve belgede AYNI; panel de
+// aynı kelimeleri kullanıyor ki bir randevu üç yerde üç farklı isimle
+// görünmesin. Eski sözlük (confirmed/pending/waitlist...) tamamen kaldırıldı:
+// filtreler var olmayan adları sorguladığı için panel her sekmede boş dönüyordu.
 const BOOKING_STATUS_TR: Record<string, string> = {
-  confirmed: 'Onaylı',
-  pending: 'Bekliyor',
-  completed: 'Tamamlandı',
-  cancelled: 'İptal',
-  no_show: 'Gelmedi',
-  awaiting_provider: 'Salon onayı bekliyor',
-  alternative_proposed: 'Alternatif önerildi',
-  waitlist: 'Bekleme listesi',
+  taslak: 'Taslak',
+  onay_bekliyor: 'Uzman onayı bekliyor',
+  degisiklik_onerildi: 'Değişiklik önerildi',
+  karsi_oneri: 'Karşı öneri',
+  depozito_bekliyor: 'Depozito bekliyor',
+  kesinlesti: 'Kesinleşti',
+  erteleme_onerildi: 'Erteleme önerildi',
+  hizmet_gunu: 'Hizmet günü',
+  odeme_bekliyor: 'Ödeme bekliyor',
+  tamamlandi: 'Tamamlandı',
+  degerlendirme: 'Değerlendirme',
+  kapandi: 'Kapandı',
+  iptal_musteri: 'Müşteri iptal etti',
+  iptal_uzman: 'Uzman iptal etti',
+  otomatik_dustu: 'Süre doldu — düştü',
+  no_show_musteri: 'Müşteri gelmedi',
+  no_show_uzman: 'Uzman gelmedi',
+  uyusmazlik: 'Uyuşmazlık',
 };
+
+/** Kapanmış (bir daha akmayacak) durumlar — eylem düğmeleri gösterilmez. */
+const KAPALI_DURUMLAR = [
+  'tamamlandi',
+  'degerlendirme',
+  'kapandi',
+  'iptal_musteri',
+  'iptal_uzman',
+  'otomatik_dustu',
+  'no_show_musteri',
+  'no_show_uzman',
+  'uyusmazlik',
+];
 
 function BookingsAdminView() {
   const [status, setStatus] = useState('all');
@@ -3587,11 +3614,25 @@ function BookingsAdminView() {
     const hay = `${b.proName} ${b.service} ${b.customerName ?? ''}`.toLowerCase();
     return hay.includes(q.trim().toLowerCase());
   });
-  const STATES = ['all', 'confirmed', 'completed', 'cancelled', 'no_show', 'waitlist'];
+  // 18 durumun hepsine çip koymak araç çubuğunu okunmaz yapardı; adminin
+  // gerçekten süzdüğü aşamalar seçildi (para bekleyen, biten, sorunlu).
+  const STATES = [
+    'all',
+    'onay_bekliyor',
+    'depozito_bekliyor',
+    'kesinlesti',
+    'odeme_bekliyor',
+    'tamamlandi',
+    'iptal_musteri',
+    'uyusmazlik',
+  ];
   const pill = (s: string) =>
-    s === 'completed' || s === 'confirmed'
+    s === 'tamamlandi' || s === 'degerlendirme' || s === 'kapandi' || s === 'kesinlesti'
       ? 'approved'
-      : s === 'cancelled' || s === 'no_show'
+      : s.startsWith('iptal_') ||
+          s.startsWith('no_show_') ||
+          s === 'uyusmazlik' ||
+          s === 'otomatik_dustu'
         ? 'rejected'
         : 'pending';
   return (
@@ -3638,25 +3679,21 @@ function BookingsAdminView() {
               <span className={`pill ${pill(b.status)}`}>
                 {BOOKING_STATUS_TR[b.status] ?? b.status}
               </span>
-              {!['cancelled', 'completed', 'no_show', 'refunded'].includes(b.status) ? (
-                <>
-                  <button
-                    className="btn small"
-                    onClick={() =>
-                      act(() => api.completeBooking(b.id), `Tamamlandı işaretle? (${b.service})`)
-                    }
-                  >
-                    Tamamlandı
-                  </button>
-                  <button
-                    className="btn small danger"
-                    onClick={() =>
-                      act(() => api.cancelBooking(b.id), `Randevu iptal edilsin mi? (${b.service})`)
-                    }
-                  >
-                    İptal
-                  </button>
-                </>
+              {/* "Tamamlandı işaretle" düğmesi KALDIRILDI (§4.9): tamamlanma,
+                  müşterinin "ödemeyi yaptım" ve uzmanın "ödeme aldım" el
+                  sıkışmasıyla olur. Admin'in tek tuşla tamamlaması, hiç
+                  ödenmemiş bir randevuya puan yükleyip komisyon tabanına
+                  yazardı. §8 admin'e üç kuyruk veriyor; tamamlama vermiyor.
+                  İptal destek kaçış kapısı olarak kalıyor. */}
+              {!KAPALI_DURUMLAR.includes(b.status) ? (
+                <button
+                  className="btn small danger"
+                  onClick={() =>
+                    act(() => api.cancelBooking(b.id), `Randevu iptal edilsin mi? (${b.service})`)
+                  }
+                >
+                  İptal
+                </button>
               ) : null}
             </div>
           ))

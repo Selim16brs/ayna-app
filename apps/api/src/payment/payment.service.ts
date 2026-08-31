@@ -146,7 +146,7 @@ export class PaymentService {
     // doğrulaması sonradan yapılır; dekont sahteyse randevu iptal edilir ve
     // kullanıcı platformdan yasaklanır."
     //
-    // UZMAN ONAYI ADIMI KALDIRILDI: eskiden `deposit_submitted` olup uzmanın
+    // UZMAN ONAYI ADIMI KALDIRILDI: eskiden ara bir "dekont yüklendi" durumu olup uzmanın
     // "aldım" demesi bekleniyordu. Müşteri parayı ödedikten sonra randevusunun
     // uzmanın eline bakması, 10 dakikalık pencerenin anlamını yok ediyordu.
     const b = await this.prisma.booking.findUnique({ where: { id: p.bookingId } });

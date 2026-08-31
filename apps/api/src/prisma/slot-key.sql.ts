@@ -1,3 +1,5 @@
+import { SLOT_HOLDING_STATUSES } from '../bookings/slot-statuses';
+
 // A3 — slot benzersizliğinin veritabanı tarafı.
 //
 // NEDEN TRIGGER: üretim her açılışta `prisma db push` çalıştırıyor (Dockerfile:32).
@@ -10,8 +12,20 @@
 // değişiyor, dördü `updateMany`. Kolonu elle doldurmak, bir gün birinin unutması
 // demekti — ve unutulan yer sessizce çift rezervasyona açılırdı.
 
-/** Slot işgal eden durumlar — `slot-statuses.ts` ile AYNI liste olmalı. */
-export const SLOT_HOLDING_SQL_LIST = "('confirmed','deposit_pending','deposit_submitted')";
+/**
+ * Slot işgal eden durumlar, SQL listesi olarak.
+ *
+ * Liste `slot-statuses.ts`ten TÜRETİLİYOR. Burada eskiden elle yazılmış bir
+ * kopya vardı ("aynı liste olmalı" diye bir yorumla) ve brief §3 sözlüğü
+ * değiştiğinde kopya güncellenmedi: trigger hiçbir randevuyu eşleştiremediği
+ * için her kayda `slot_key = NULL` yazıyordu, yani veritabanı seviyesindeki
+ * çift-rezervasyon koruması sessizce KAPALIYDI. Yorumla korunan değil,
+ * türetilen liste.
+ *
+ * Değerler enum adları — tırnak içinde string olarak SQL'e gidiyor; Prisma
+ * enum'u kaynak olduğu için kullanıcı girdisi karışamaz.
+ */
+export const SLOT_HOLDING_SQL_LIST = `(${SLOT_HOLDING_STATUSES.map((s) => `'${s}'`).join(',')})`;
 
 // Anahtar biçimi: `<pro_id>@<başlangıç UTC, saniye hassasiyetinde>`.
 // `AT TIME ZONE 'UTC'` şart: sunucunun yerel saati değişse bile anahtar kaymaz.

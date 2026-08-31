@@ -16,7 +16,7 @@ import type { CreateQuoteRequestInput, SelectQuoteInput, SubmitQuoteInput } from
 
 // §5.2 Faz A — reverse marketplace ÇEKİRDEK akışı buluttan:
 // talep aç → aynı şehirdeki uzmanlara push → uzman teklif verir → sahibine push →
-// kullanıcı seçer → randevu (deposit_pending) + kapanış pushları.
+// kullanıcı seçer → randevu (depozito_bekliyor) + kapanış pushları.
 // Yanıt şekilleri mobil DemandRequest/DemandOffer ile birebir hizalı (ms sayıları).
 
 type QuoteRow = {
@@ -514,7 +514,7 @@ export class QuotesService {
     // §4.3 — teklif zaten uzmanın kabulü → randevu doğrudan DEPOZİTO adımına doğar.
     // K1 — kapora oranlı; uzmanın onay yoluyla aynı hesap (`@ayna/domain`).
     const deposit = depositFor(Number(quote.price), await loadDepositRules(this.prisma));
-    // Bu yol `depositDeadline` YAZMIYORDU. `deposit_pending` slotu işgal ettiği için
+    // Bu yol `depositDeadline` YAZMIYORDU. `depozito_bekliyor` slotu işgal ettiği için
     // ödemeyen müşterinin randevusu o saati süresiz kilitliyordu: scheduler'ın süre
     // dolum sorgusu `depositDeadline: { lt: now }` arıyor, NULL olan kayda hiç değmiyor.
     const holdUntil = holdDeadline(await loadWindows(this.prisma));
