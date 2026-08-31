@@ -1262,7 +1262,17 @@ export const tr = {
   'reports.action.commissions': 'Komisyon',
   // §12.8 komisyon faturaları (pro tarafı)
   'commission.title': 'Komisyon ödemeleri',
-  'commission.intro': 'Aylık platform komisyonların. Öde, dekontunu yükle; admin onayınca kapanır.',
+  'commission.intro': 'Hizmeti tamamlayıp parayı aldıktan sonra AYNA komisyonunu buradan ödersin.',
+  'commission.rule_t': 'Ödeme süresi',
+  'commission.rule_b':
+    'Parayı aldıktan sonra {due} dakika içinde öde. Süre dolarsa {grace} dakika ek süre verilir; o da geçerse hesabın askıya alınır.',
+  'commission.rule_x2':
+    'Hesabın askıya alınırsa yeniden açmak için komisyonun 2 KATINI ödemen gerekir.',
+  'commission.left': 'Kalan süre',
+  'commission.expired': 'Süre doldu',
+  'commission.suspended_t': 'Hesabın askıya alındı',
+  'commission.suspended_b':
+    'Komisyon zamanında ödenmedi. Yeniden açmak için {amount} ödemen gerekiyor (borcun 2 katı).',
   'commission.empty': 'Henüz komisyon faturan yok.',
   'commission.status.pending': 'Bekliyor',
   'commission.status.overdue': 'Gecikti',

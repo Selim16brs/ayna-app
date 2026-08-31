@@ -1201,8 +1201,17 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reports.action.commissions': 'Комиссия',
   // §12.8 счета комиссии (сторона про)
   'commission.title': 'Платежи комиссии',
-  'commission.intro':
-    'Ежемесячная комиссия платформы. Оплати, загрузи чек; после подтверждения админом закрывается.',
+  'commission.intro': 'После завершения услуги и получения денег комиссию AYNA оплачиваешь здесь.',
+  'commission.rule_t': 'Срок оплаты',
+  'commission.rule_b':
+    'Оплати в течение {due} минут после получения денег. Если срок истечёт, даётся ещё {grace} минут; после этого аккаунт приостанавливается.',
+  'commission.rule_x2':
+    'Если аккаунт приостановят, для восстановления нужно оплатить ДВОЙНУЮ комиссию.',
+  'commission.left': 'Осталось',
+  'commission.expired': 'Срок истёк',
+  'commission.suspended_t': 'Аккаунт приостановлен',
+  'commission.suspended_b':
+    'Комиссия не оплачена вовремя. Для восстановления нужно оплатить {amount} (двойной долг).',
   'commission.empty': 'У тебя пока нет счетов комиссии.',
   'commission.status.pending': 'Ожидает',
   'commission.status.overdue': 'Просрочено',

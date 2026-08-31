@@ -1193,8 +1193,16 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reports.action.commissions': 'Комиссия',
   // §12.8 комиссия шоттары (про жағы)
   'commission.title': 'Комиссия төлемдері',
-  'commission.intro':
-    'Айлық платформа комиссияларың. Төле, түбіртекті жүкте; админ растағанда жабылады.',
+  'commission.intro': 'Қызметті аяқтап ақшаны алғаннан кейін AYNA комиссиясын осы жерден төлейсің.',
+  'commission.rule_t': 'Төлем мерзімі',
+  'commission.rule_b':
+    'Ақшаны алғаннан кейін {due} минут ішінде төле. Мерзім өтсе {grace} минут қосымша беріледі; ол да өтсе аккаунтың тоқтатылады.',
+  'commission.rule_x2': 'Аккаунтың тоқтатылса, қайта ашу үшін комиссияның 2 ЕСЕСІН төлеуің керек.',
+  'commission.left': 'Қалған уақыт',
+  'commission.expired': 'Мерзім бітті',
+  'commission.suspended_t': 'Аккаунтың тоқтатылды',
+  'commission.suspended_b':
+    'Комиссия уақытында төленбеді. Қайта ашу үшін {amount} төлеуің керек (қарыздың 2 есесі).',
   'commission.empty': 'Әзірге комиссия шотың жоқ.',
   'commission.status.pending': 'Күтілуде',
   'commission.status.overdue': 'Кешікті',

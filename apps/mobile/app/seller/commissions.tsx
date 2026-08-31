@@ -4,19 +4,39 @@ import * as ImagePicker from 'expo-image-picker';
 import { Alert, ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, type CommissionInvoice } from '../../src/api';
 import { formatPrice } from '../../src/data';
-import { useLocale } from '../../src/locale';
+import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 // §12.8 — pro'nun komisyon faturaları: dönem, tutar, vade, durum + dekont yükleme
+// Süreler SUNUCUDAN gelen ayarlarla aynı olmalı; burada yalnız METİN için
+// kullanılıyor. Sunucu kuralı uygular, ekran onu anlatır.
+const ODEME_DK = 45;
+const EK_SURE_DK = 15;
+
+/** Vadeye kalan dakika; süre dolmuşsa null. */
+function kalanDk(dueDate: string): number | null {
+  const fark = new Date(dueDate).getTime() - Date.now();
+  return fark > 0 ? Math.ceil(fark / 60_000) : null;
+}
+
 export default function CommissionsScreen() {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const token = useStore((s) => s.token);
+  // Askıdayken 2 KATI bedel gösterilir. Borç, ödenmemiş faturaların toplamı;
+  // kullanıcı kısıtlı değilse kart hiç çizilmez.
+  const kisitli = useStore((st) => st.currentUser?.restricted === true);
   const [invoices, setInvoices] = useState<CommissionInvoice[] | null>(null);
+  const askidaBorc =
+    kisitli && invoices
+      ? invoices
+          .filter((i) => i.status !== 'collected')
+          .reduce((acc, i) => acc + Number(i.commissionAmount), 0) || null
+      : null;
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -74,6 +94,41 @@ export default function CommissionsScreen() {
           {t('commission.intro')}
         </Text>
 
+        {/* KURAL ÖNCEDEN BİLDİRİLİR. Kurucu kuralının açık şartı: askıya alma ve
+            2 katı bedel, uzman daha CEZAYI YEMEDEN bilinmeli. Bunu yalnız
+            gecikince gönderilen bildirime bırakmak, "daha öncesinde
+            belirtilmeli" maddesini çiğnerdi. */}
+        <View style={styles.ruleCard}>
+          <View style={styles.ruleHead}>
+            <Ionicons name="time-outline" size={16} color={colors.ink} />
+            <Text variant="bodyStrong" tone="ink">
+              {t('commission.rule_t')}
+            </Text>
+          </View>
+          <Text variant="caption" tone="muted" style={styles.ruleText}>
+            {fillParams(t('commission.rule_b'), { due: ODEME_DK, grace: EK_SURE_DK })}
+          </Text>
+          <Text variant="caption" style={[styles.ruleText, { color: colors.danger }]}>
+            {t('commission.rule_x2')}
+          </Text>
+        </View>
+
+        {askidaBorc !== null ? (
+          <View style={styles.suspendedCard}>
+            <View style={styles.ruleHead}>
+              <Ionicons name="lock-closed-outline" size={16} color={colors.danger} />
+              <Text variant="bodyStrong" style={{ color: colors.danger }}>
+                {t('commission.suspended_t')}
+              </Text>
+            </View>
+            <Text variant="caption" tone="muted" style={styles.ruleText}>
+              {fillParams(t('commission.suspended_b'), {
+                amount: formatPrice(askidaBorc * 2),
+              })}
+            </Text>
+          </View>
+        ) : null}
+
         {invoices === null ? (
           <ActivityIndicator color={colors.accent} style={{ marginTop: space(4) }} />
         ) : invoices.length === 0 ? (
@@ -98,6 +153,17 @@ export default function CommissionsScreen() {
                 {inv.periodStart.slice(0, 10)} – {inv.periodEnd.slice(0, 10)} · {inv.bookingsCount}{' '}
                 {t('commission.bookings')} · {t('commission.gross')} {formatPrice(inv.grossRevenue)}
               </Text>
+              {/* Süre DAKİKALARLA işliyor; "vade 31.08" yazmak kuralı gizlerdi. */}
+              {inv.status !== 'collected' ? (
+                <Text
+                  variant="caption"
+                  style={{ color: kalanDk(inv.dueDate) === null ? colors.danger : colors.gold }}
+                >
+                  {kalanDk(inv.dueDate) === null
+                    ? t('commission.expired')
+                    : `${t('commission.left')}: ${kalanDk(inv.dueDate)} dk`}
+                </Text>
+              ) : null}
               <Text
                 variant="caption"
                 style={{ color: inv.status === 'overdue' ? colors.accentFg : colors.inkSoft }}
@@ -142,6 +208,22 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
     intro: { marginBottom: space(1) },
+    ruleCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(0.75),
+      marginBottom: space(1),
+    },
+    suspendedCard: {
+      backgroundColor: colors.dangerSoft,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(0.75),
+      marginBottom: space(1),
+    },
+    ruleHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    ruleText: { lineHeight: 18 },
     empty: { alignItems: 'center', gap: space(1.5), marginTop: space(6) },
     emptyText: { textAlign: 'center' },
     card: {
