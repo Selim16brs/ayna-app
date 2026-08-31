@@ -1,0 +1,130 @@
+# DAĞITIM — main'e giren her değişiklik telefona ULAŞSIN.
+#
+# 31 Ağustos 2026'ya kadar Actions'ta yalnız `ci.yml` vardı ve o SADECE test
+# çalıştırıyordu: derleme yok, OTA yayını yok, TestFlight gönderimi yok. Yani
+# yeşil bir CI koşusu "kod bozulmadı" demekti; "değişiklik telefonda" demek
+# değildi. OTA'lar elle gönderiliyordu, dolayısıyla merge edilen bir düzeltmenin
+# cihaza ulaşıp ulaşmadığı belirsiz kalıyordu.
+#
+# İKİ AYRI YOL VAR ve karıştırılırsa saatler kaybedilir:
+#
+#   · JS/varlık değişikliği  → OTA (`eas update`). Mevcut TestFlight yapısına
+#     havadan düşer, yeni derleme GEREKMEZ. Bu iş akışı bunu OTOMATİK yapar.
+#
+#   · NATIVE değişiklik      → yeni yapı ZORUNLU. app.json'daki izinler
+#     (infoPlist), eklenti listesi (plugins), bağımlılık ekleme/çıkarma, ikon,
+#     bundle kimliği... Bunların HİÇBİRİ OTA ile gitmez. Aşağıdaki `native-yapi`
+#     işi bunun içindir ve ELLE tetiklenir (Apple kimlik bilgisi gerektirir).
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  # Native yapı ve TestFlight gönderimi elle tetiklenir.
+  workflow_dispatch:
+    inputs:
+      native_yapi:
+        description: 'iOS yapısı üret ve TestFlight’a gönder (native değişiklik gerektiğinde)'
+        type: boolean
+        default: false
+
+concurrency:
+  # Arka arkaya merge'lerde eski yayını iptal et; kanala en son main düşsün.
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ota:
+    name: OTA yayını (JS)
+    runs-on: ubuntu-latest
+    # Testler CI ile AYNI ortamda koşmalı; farklı ortam "CI'da geçti burada
+    # düştü" gibi açıklanamaz farklar üretir.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ayna
+          POSTGRES_PASSWORD: ayna
+          POSTGRES_DB: ayna
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ayna"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ayna:ayna@localhost:5432/ayna?schema=public
+      REDIS_URL: redis://localhost:6379
+      JWT_ACCESS_SECRET: ci-access-secret
+      JWT_REFRESH_SECRET: ci-refresh-secret
+      FIELD_ENCRYPTION_KEY: ci-field-encryption-key-0000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: EXPO_TOKEN var mı
+        # Token yoksa iş SESSİZCE geçmemeli: yayın yapılmadığı hâlde yeşil bir
+        # koşu görmek, tam da bu iş akışının çözmeye çalıştığı yanılgıdır.
+        # Sır doğrudan betiğe GÖMÜLMEZ, ortam değişkeni olarak geçirilir.
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::EXPO_TOKEN sırrı tanımlı değil — OTA yayınlanamaz."
+            echo "Ayarlar → Secrets and variables → Actions → New repository secret"
+            exit 1
+          fi
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ayna/api db:generate
+      # `packages/domain` ve `packages/i18n` DERLENMİŞ çıktıdan içe aktarılıyor;
+      # derlemeden paketlemek eski dist'i gönderir (sessiz yanlış sürüm).
+      - run: pnpm build
+      - run: pnpm typecheck
+      # Bozuk JS'i telefona göndermek, hiç göndermemekten kötüdür.
+      - run: pnpm test
+
+      - name: OTA yayınla
+        working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        # Commit BAŞLIĞI mesaja girsin ki `eas update:list` çıktısı okunabilir
+        # olsun. Yalnız ilk satır alınır: çok satırlı mesaj komutu bozar.
+        run: |
+          BASLIK="$(git log -1 --pretty=%s | tr -d '"' | cut -c1-80)"
+          npx eas-cli@latest update \
+            --channel production \
+            --message "${GITHUB_SHA::7} ${BASLIK}" \
+            --non-interactive
+
+  native-yapi:
+    name: iOS yapısı + TestFlight
+    # YALNIZ elle ve kutu işaretliyken. Otomatik çalışmaz: her merge'de yapı
+    # üretmek hem yavaş hem de TestFlight'ı gereksiz sürümle doldurur.
+    if: github.event_name == 'workflow_dispatch' && inputs.native_yapi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Yapı üret ve TestFlight'a gönder
+        working-directory: apps/mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        # `--auto-submit` yapı bitince App Store Connect'e yükler; TestFlight
+        # test kullanıcılarına oradan düşer. Apple kimlik bilgileri EAS'te
+        # kayıtlı olmalı (`eas credentials`).
+        run: |
+          npx eas-cli@latest build \
+            --platform ios \
+            --profile production \
+            --auto-submit \
+            --non-interactive

@@ -3,7 +3,7 @@
     "name": "AYNA",
     "slug": "ayna",
     "scheme": "ayna",
-    "version": "0.0.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "kz.ayna.app",
-      "buildNumber": "3",
+      "buildNumber": "115",
       "entitlements": {
         "com.apple.developer.default-data-protection": "NSFileProtectionCompleteUntilFirstUserAuthentication"
       },
@@ -35,7 +35,8 @@
       "permissions": [
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VISUAL_USER_SELECTED"
-      ]
+      ],
+      "versionCode": 115
     },
     "web": {
       "bundler": "metro"
