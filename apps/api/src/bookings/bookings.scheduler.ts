@@ -37,6 +37,54 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
   async tick() {
     const now = new Date();
 
+    // 0) Brief §4.2 — "1. ve 2. saatte uzmana hatırlatma push'u."
+    //
+    // Hatırlatma SAYACI şart: zamanlayıcı 5 dakikada bir dönüyor, sayaç olmadan
+    // her turda tekrar gönderir ve uzmanı spam'lardı. Kaç hatırlatma gittiği
+    // randevuda tutuluyor.
+    //
+    // Geçen süre, kalan süreden hesaplanıyor: `responseDeadline` sunucuda
+    // damgalandığı için pencere uzunluğu (3 saat) oradan türetilebiliyor ve
+    // ayarı değiştirmek hatırlatmaları da kendiliğinden kaydırıyor.
+    const bekleyen = await this.prisma.booking.findMany({
+      where: {
+        status: 'onay_bekliyor',
+        responseDeadline: { gt: now },
+        responseReminders: { lt: 2 },
+      },
+      select: {
+        id: true,
+        proId: true,
+        proName: true,
+        responseDeadline: true,
+        responseReminders: true,
+      },
+      take: 200,
+    });
+    let hatirlatildi = 0;
+    for (const b of bekleyen) {
+      if (!b.responseDeadline) continue;
+      const kalanDk = (b.responseDeadline.getTime() - now.getTime()) / 60_000;
+      // 3 saatlik pencerede: 1 saat geçince kalan 120 dk, 2 saat geçince 60 dk.
+      const gerekenTur = kalanDk <= 60 ? 2 : kalanDk <= 120 ? 1 : 0;
+      if (gerekenTur <= b.responseReminders) continue;
+      const uid = await this.bookings.expertUserIdForBooking(b.id);
+      if (uid) {
+        void this.push
+          .sendToUser(uid, {
+            title: 'Bekleyen randevu talebin var',
+            body: 'Yanıtlamazsan talep düşer ve slot açılır.',
+            data: { route: `/booking/${b.id}` },
+          })
+          .catch(() => undefined);
+      }
+      await this.prisma.booking.update({
+        where: { id: b.id },
+        data: { responseReminders: gerekenTur },
+      });
+      hatirlatildi += 1;
+    }
+
     // 1) Yanıt penceresi dolan talepler → expired (+ müşteriye bilgi push'u)
     const expiredRequests = await this.prisma.booking.findMany({
       where: { status: 'onay_bekliyor', responseDeadline: { lt: now } },
@@ -133,7 +181,13 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       data: { depositForfeited: true, finalizeDeadline: null },
     });
 
-    if (expiredRequests.length || expiredDeposits.length || finalize.length || forfeit.count) {
+    if (
+      hatirlatildi ||
+      expiredRequests.length ||
+      expiredDeposits.length ||
+      finalize.length ||
+      forfeit.count
+    ) {
       this.log.log(
         `süre aşımı: talep=${expiredRequests.length} kapora=${expiredDeposits.length} kesinleşen=${finalize.length} no-show-forfeit=${forfeit.count}`,
       );

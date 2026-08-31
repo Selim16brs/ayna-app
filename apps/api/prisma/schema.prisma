@@ -300,6 +300,10 @@ model Booking {
   /// KALIR (§3 diyagramında tek durum); uzmanın "ödeme aldım" butonu bu alan
   /// dolunca açılır. Ayrı bir durum açmak diyagramla çelişirdi.
   balanceDeclaredAt DateTime?     @map("balance_declared_at") @db.Timestamptz(6)
+  /// Brief §4.2 — uzmana kaçıncı hatırlatma gönderildi (0/1/2). 1. ve 2. saatte
+  /// birer hatırlatma; sayaç olmadan zamanlayıcı her turda (5 dk) tekrar
+  /// gönderir ve uzmanı spam'lardı.
+  responseReminders Int           @default(0) @map("response_reminders")
   refundReceiptUri  String?       @map("refund_receipt_uri") // uzmanın iade dekontu
   depositDeadline   DateTime?     @map("deposit_deadline") @db.Timestamptz(6) // dekont son yükleme
   depositForfeited  Boolean       @default(false) @map("deposit_forfeited") // geç iptal/no-show: kapora yandı

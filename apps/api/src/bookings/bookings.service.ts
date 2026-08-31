@@ -70,6 +70,11 @@ export class BookingsService {
   ) {}
 
   // Dekont akışı pushları: uzmanın hesabı Specialist.proId ↔ Booking.proId üzerinden bulunur
+  /** Zamanlayıcı erişimi — §4.2 hatırlatmaları uzmana gidecek. */
+  expertUserIdForBooking(bookingId: string): Promise<string | null> {
+    return this.expertUserIdFor(bookingId);
+  }
+
   private async expertUserIdFor(bookingId: string): Promise<string | null> {
     const b = await this.prisma.booking.findUnique({ where: { id: bookingId } });
     if (!b?.proId) return null;

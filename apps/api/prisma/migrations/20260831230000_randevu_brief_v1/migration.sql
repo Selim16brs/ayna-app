@@ -89,3 +89,15 @@ CREATE INDEX "reconciliations_status_idx" ON "reconciliations"("status");
 -- 6) Komisyon faturaları — brief §4.4/§10: ikinci tahsilat YOK.
 --    Tablo geçmiş kayıt olarak DURUYOR; yeni fatura üreten kod kaldırıldı.
 --    Silmek, geçmiş muhasebeyi de silmek olurdu.
+
+-- 7) §4.9 — müşterinin "ödeme yaptım" beyanı. Durum ODEME_BEKLIYOR olarak KALIR
+--    (brief §3'te tek durum); uzmanın butonu bu alana bakıyor.
+ALTER TABLE "bookings" ADD COLUMN "balance_declared_at" TIMESTAMPTZ(6);
+
+-- 8) §4.2 — uzmana kaç hatırlatma gönderildi (1. ve 2. saat). Sayaç olmadan
+--    zamanlayıcı her 5 dakikada tekrar gönderir ve uzmanı spam'lardı.
+ALTER TABLE "bookings" ADD COLUMN "response_reminders" INTEGER NOT NULL DEFAULT 0;
+
+-- 9) §4.11 — yorumun profile YANSIMA anı (oluşturma + 1 gün). Bu andan önce
+--    listelerde ve ortalamada görünmez; anlık çatışmayı önlemek için.
+ALTER TABLE "ratings" ADD COLUMN "publish_at" TIMESTAMPTZ(6);
