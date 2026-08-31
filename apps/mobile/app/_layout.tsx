@@ -28,6 +28,7 @@ function ThemedStack() {
   const hydrateDemands = useStore((s) => s.hydrateDemands);
   const hydrateLoyalty = useStore((s) => s.hydrateLoyalty);
   const hydrateCare = useStore((s) => s.hydrateCare);
+  const hydrateAlways = useStore((s) => s.hydrateAlways);
   const refreshMembership = useStore((s) => s.refreshMembership);
   const loadContent = useStore((s) => s.loadContent);
   const checkReminders = useStore((s) => s.checkReminders);
@@ -64,7 +65,17 @@ function ThemedStack() {
     // yazma tarafını bağlayıp okumayı unutmak, veriyi tek yönlü bırakırdı:
     // yeni cihazda ekran boş açılırdı.
     void hydrateCare();
-  }, [hydrateBookings, hydrateDemands, hydrateLoyalty, refreshMembership, hydrateCare]);
+    // §11 — Always. Okuma bağlanmazsa karşı tarafın gönderdiği istek HİÇ
+    // görünmez: kullanıcı "İstekler" sekmesini boş görür ve bağ kurulmaz.
+    void hydrateAlways();
+  }, [
+    hydrateBookings,
+    hydrateDemands,
+    hydrateLoyalty,
+    refreshMembership,
+    hydrateCare,
+    hydrateAlways,
+  ]);
   // EK Z.5 — giriş yapıldığında (token gelince) Expo push token'ı backend'e kaydet
   useEffect(() => {
     if (token) void registerForRemotePush(token);

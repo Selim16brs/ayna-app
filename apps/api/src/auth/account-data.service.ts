@@ -143,6 +143,12 @@ export class AccountDataService {
     await this.prisma.careRoutine.deleteMany({ where: { userId } }).catch(() => undefined);
     await this.prisma.careMoment.deleteMany({ where: { userId } }).catch(() => undefined);
     await this.prisma.careLog.deleteMany({ where: { userId } }).catch(() => undefined);
+    // §11 — Always bağları İKİ taraflı: hesap silinince karşı tarafın
+    // listesinde de kalmamalı, yoksa uzman silinmiş bir hesaba toplu
+    // bildirim göndermeye devam eder.
+    await this.prisma.alwaysBond
+      .deleteMany({ where: { OR: [{ customerUserId: userId }, { proUserId: userId }] } })
+      .catch(() => undefined);
     await this.prisma.trustedContact.deleteMany({ where: { userId } }).catch(() => undefined);
     await this.prisma.safetySession.deleteMany({ where: { userId } }).catch(() => undefined);
     await this.prisma.pushToken.deleteMany({ where: { userId } }).catch(() => undefined);

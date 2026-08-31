@@ -28,6 +28,7 @@ import { SettingsModule } from './settings/settings.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ProfileChangesModule } from './profile-changes/profile-changes.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { AlwaysModule } from './always/always.module';
 import { CareModule } from './care/care.module';
 import { PassportModule } from './passport/passport.module';
 import { ReportsModule } from './reports/reports.module';
@@ -72,6 +73,7 @@ import { PaymentModule } from './payment/payment.module';
     CircleModule,
     CutoutModule,
     MessagingModule,
+    AlwaysModule,
     CareModule,
     PassportModule,
     ReportsModule,

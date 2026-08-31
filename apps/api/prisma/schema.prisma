@@ -1305,3 +1305,41 @@ model CareLog {
   @@index([userId, loggedAt])
   @@map("care_logs")
 }
+
+// ── ALWAYS — sadık müşteri bağı (Platinum) ────────────────────────────────
+//
+// Bu tablo YENİ ve özellik ondan da yeni: Always TAMAMEN kurguydu.
+// `requestAlways` mağazada tanımlıydı ama HİÇBİR YERDEN çağrılmıyordu;
+// `alwaysBonds` boş başlıyordu; `SEED_ALWAYS_BONDS` hiçbir yere aktarılmıyordu;
+// giriş düğmesinin metni (`always.request_cta` — "Always ol") yazılmış ama
+// hiçbir ekranda çizilmiyordu.
+//
+// Sonuç: Always ekranı HER kullanıcıda kalıcı olarak boştu ve Platinum'un
+// satılan ana özelliğinin başlangıç noktası hiç yoktu.
+//
+// KİMLİK: yerel model yalnız İSİM taşıyordu (providerName/customerName).
+// Cihazlar arası bir bağ isimle kurulamaz — iki taraf da kullanıcı kimliğiyle
+// saklanıyor. `proId` uzmanın katalog kaydı (profil bağlantısı için).
+model AlwaysBond {
+  id             String    @id @default(uuid()) @db.Uuid
+  customerUserId String    @map("customer_user_id") @db.Uuid
+  proUserId      String    @map("pro_user_id") @db.Uuid
+  /// Uzmanın/salonun katalog kaydı — profile gitmek ve adı/fotoyu okumak için.
+  proId          String    @map("pro_id")
+  /// İsteği kim başlattı; karşı taraf kabul eder.
+  initiator      String
+  /// pending | accepted  (reddedilen SATIR SİLİNİR — "reddedildi" durumu
+  /// saklamak, karşı tarafa sessiz bir kara liste tutmak olurdu.)
+  status         String    @default("pending")
+  /// Müşterinin son aldığı hizmet (bağlam gösterimi)
+  lastServiceId  String?   @map("last_service_id")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  acceptedAt     DateTime? @map("accepted_at") @db.Timestamptz(6)
+
+  /// Aynı çift için İKİNCİ bağ olmaz: tekrar "Always ol" denince yeni satır
+  /// açılmamalı, mevcut istek geçerli kalmalı.
+  @@unique([customerUserId, proId])
+  @@index([proUserId, status])
+  @@index([customerUserId, status])
+  @@map("always_bonds")
+}

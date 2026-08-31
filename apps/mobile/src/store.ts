@@ -275,19 +275,20 @@ interface State {
   platinum: boolean;
   setPlatinum: (v: boolean) => void;
   alwaysBonds: AlwaysBond[];
-  requestAlways: (input: {
-    providerName: string;
-    providerImage?: string;
-    customerName: string;
-    customerImage?: string;
-    initiator: 'provider' | 'customer';
-    lastServiceId?: string;
-  }) => void;
+  /**
+   * Always bağı iste.
+   *
+   * Eski imza İSİM alıyordu (providerName/customerName) — cihazlar arası bir
+   * bağ isimle kurulamaz ve istemcinin gönderdiği kimliğe güvenmek başkası
+   * adına bağ kurdurmak olurdu. Artık yalnız `proId` gidiyor; karşı tarafın
+   * kullanıcı kimliğini SUNUCU buluyor.
+   */
+  requestAlways: (input: { proId: string; lastServiceId?: string }) => void;
   acceptAlways: (id: string) => void;
   declineAlways: (id: string) => void;
   removeAlways: (id: string) => void;
   // Platinum toplu bildirim — Always listesindeki müşterilere; kaç alıcıya gittiğini döndürür
-  sendAlwaysBroadcast: (input: { title: string; body: string }) => number;
+  sendAlwaysBroadcast: (input: { title: string; body: string }) => Promise<number>;
   cancelBooking: (id: string, reason?: string) => void;
   acceptAlternative: (id: string) => void;
   // §4.1/§4.3 — uzman yanıtı + depozito/dekont akışı
@@ -405,6 +406,8 @@ interface State {
   hydrateLoyalty: () => Promise<void>;
   /** §bakım — rutin/an/günlüğü sunucudan çek. Yazma tarafı olup okuma olmazsa veri geri gelmez. */
   hydrateCare: () => Promise<void>;
+  /** §11 — Always bağlarını sunucudan çek. Okuma olmazsa karşı tarafın isteği hiç görünmez. */
+  hydrateAlways: () => Promise<void>;
   refreshMembership: () => Promise<void>; // §11 — tier'ı sunucudan tazele (onay sonrası haklar açılır)
 
   // şehir (global filtre)
@@ -1007,66 +1010,65 @@ export const useStore = create<State>()(
 
       // §11 — ALWAYS bağ isteği aç (karşı taraf kabul edene kadar 'pending')
       requestAlways: (input) => {
-        const bond: AlwaysBond = {
-          id: nextId('ab'),
-          providerName: input.providerName,
-          ...(input.providerImage ? { providerImage: input.providerImage } : {}),
-          customerName: input.customerName,
-          ...(input.customerImage ? { customerImage: input.customerImage } : {}),
-          initiator: input.initiator,
-          status: 'pending',
-          ...(input.lastServiceId ? { lastServiceId: input.lastServiceId } : {}),
-          createdMs: Date.now(),
-        };
-        set((s) => ({ alwaysBonds: [bond, ...s.alwaysBonds] }));
-        // karşı tarafa bildirim (demo: audience karşı role göre)
-        get().pushNotification({
-          type: 'system',
-          audience: input.initiator === 'provider' ? 'user' : 'seller',
-          titleKey: 'notif.always_request',
-          bodyKey: 'notif.always_request_b',
-          params: {
-            name: input.initiator === 'provider' ? input.providerName : input.customerName,
-          },
-          dateLabel: 'Az önce',
-          icon: 'heart-circle-outline',
-          route: '/always',
-        });
+        // Sunucuya YALNIZ `proId` gidiyor: karşı tarafın kullanıcı kimliğini
+        // sunucu buluyor. İstemcinin gönderdiği kimliğe güvenmek, başkası
+        // adına bağ kurdurmak olurdu.
+        const token = get().token;
+        if (!token || !input.proId) return;
+        void api
+          .requestAlways(token, input.proId, input.lastServiceId)
+          .then((b) =>
+            set((s) => ({
+              // Sunucu mevcut bağı da döndürebilir (tekrar istek yeni satır
+              // açmaz) — kimliğe göre birleştiriyoruz, kopya oluşmasın.
+              alwaysBonds: [b, ...s.alwaysBonds.filter((x) => x.id !== b.id)],
+            })),
+          )
+          .catch(() => undefined);
       },
 
       // §11 — gelen ALWAYS isteğini kabul et → bağ kurulur
-      acceptAlways: (id) =>
+      acceptAlways: (id) => {
+        const onceki = get().alwaysBonds;
         set((s) => ({
           alwaysBonds: s.alwaysBonds.map((b) => (b.id === id ? { ...b, status: 'accepted' } : b)),
-        })),
+        }));
+        const token = get().token;
+        if (!token) return;
+        // Sunucu reddederse geri al: kullanıcı kabul ettiğini sanıp toplu
+        // bildirim beklerse, hiç kurulmamış bir bağa güvenmiş olur.
+        void api.acceptAlways(token, id).catch(() => set({ alwaysBonds: onceki }));
+      },
 
-      // §11 — gelen isteği reddet / bağı kaldır (sessiz)
-      declineAlways: (id) =>
-        set((s) => ({ alwaysBonds: s.alwaysBonds.filter((b) => b.id !== id) })),
-      removeAlways: (id) => set((s) => ({ alwaysBonds: s.alwaysBonds.filter((b) => b.id !== id) })),
+      // §11 — gelen isteği reddet / bağı kaldır. İKİSİ DE aynı işlem:
+      // sunucuda satır siliniyor. "Reddedildi" durumu saklamak, karşı tarafın
+      // göremediği sessiz bir kara liste tutmak olurdu.
+      declineAlways: (id) => get().removeAlways(id),
+      removeAlways: (id) => {
+        const onceki = get().alwaysBonds;
+        set((s) => ({ alwaysBonds: s.alwaysBonds.filter((b) => b.id !== id) }));
+        const token = get().token;
+        if (!token) return;
+        void api.removeAlways(token, id).catch(() => set({ alwaysBonds: onceki }));
+      },
 
       // §11 — PLATINUM toplu bildirim: Always listesindeki (kabul edilmiş) müşterilere.
       // SORUMLULUK: içerik uzman/salona aittir (sözleşme §sorumluluk). Kaç alıcıya gittiğini döndürür.
-      sendAlwaysBroadcast: (input) => {
-        const s = get();
-        const me = s.currentUser?.name ?? '';
-        const isProvider =
-          s.currentUser?.role === 'professional' || s.currentUser?.role === 'salon';
-        const recipients = s.alwaysBonds.filter(
-          (b) =>
-            b.status === 'accepted' && (isProvider ? b.providerName === me : b.customerName === me),
-        );
-        if (recipients.length === 0) return 0;
-        // Demo: tek özet bildirim (gerçekte her alıcıya sunucu-taraflı push). audience müşteri.
-        get().pushNotification({
-          type: 'system',
-          audience: 'user',
-          title: input.title,
-          body: input.body,
-          dateLabel: 'Az önce',
-          icon: 'megaphone-outline',
-        });
-        return recipients.length;
+      sendAlwaysBroadcast: async (input) => {
+        // Gönderim SUNUCUDA. Eskiden yerel tek bir "özet bildirim"
+        // üretiliyordu — hiçbir müşteriye ulaşmıyordu, yalnız gönderenin
+        // kendi cihazında görünüyordu. Uzman "gönderdim" sanıyordu.
+        //
+        // Platinum kapısı da sunucuda: istemcideki `if (!platinum)` kapı
+        // değildir, uç doğrudan çağrılabilir.
+        const token = get().token;
+        if (!token) return 0;
+        try {
+          const r = await api.broadcastAlways(token, input.title, input.body);
+          return r.sent;
+        } catch {
+          return 0;
+        }
       },
 
       // §4.4 — kullanıcı iptali: depozito ödendiyse ve >3 saat varsa iade akışı (refund_pending);
@@ -2640,6 +2642,16 @@ export const useStore = create<State>()(
         set((s) => ({
           notifications: s.notifications.map((x) => (x.id === id ? { ...x, read: true } : x)),
         })),
+
+      hydrateAlways: async () => {
+        const token = get().token;
+        if (!token) return;
+        try {
+          set({ alwaysBonds: await api.alwaysBonds(token) });
+        } catch {
+          // Ağ yoksa yereldeki kopya görünmeye devam eder.
+        }
+      },
 
       hydrateCare: async () => {
         const token = get().token;

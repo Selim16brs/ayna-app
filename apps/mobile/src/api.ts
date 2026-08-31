@@ -224,6 +224,20 @@ export interface CareLogInput {
   loggedAtMs: number;
 }
 
+/** §11 — sunucudaki Always bağı. Yerel modelden farkı: `proId` taşıyor (profile gidilebilsin). */
+export interface ApiAlwaysBond {
+  id: string;
+  providerName: string;
+  providerImage?: string;
+  customerName: string;
+  customerImage?: string;
+  initiator: 'provider' | 'customer';
+  status: 'pending' | 'accepted';
+  lastServiceId?: string;
+  createdMs: number;
+  proId: string;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -916,6 +930,20 @@ export const api = {
   // §19 — AYNA Passport: alerjiler + tercihler + erişim kaydı
   // §bakım — rutin/an/günlük. Bunlar eskiden YALNIZ cihazda duruyordu:
   // telefon değişince kullanıcının tüm bakım geçmişi gidiyordu.
+  // §11 — Always. Eskiden hiç sunucuya gitmiyordu: bağ yerel yaratılıyor,
+  // karşı taraf hiçbir şey almıyordu.
+  alwaysBonds: (token: string) => get<ApiAlwaysBond[]>('/always', token),
+  requestAlways: (token: string, proId: string, lastServiceId?: string) =>
+    post<ApiAlwaysBond>(
+      '/always/request',
+      { proId, ...(lastServiceId ? { lastServiceId } : {}) },
+      token,
+    ),
+  acceptAlways: (token: string, id: string) =>
+    post<ApiAlwaysBond>(`/always/${id}/accept`, {}, token),
+  removeAlways: (token: string, id: string) => del<{ ok: boolean }>(`/always/${id}`, token),
+  broadcastAlways: (token: string, title: string, body: string) =>
+    post<{ sent: number }>('/always/broadcast', { title, body }, token),
   care: (token: string) => get<CareData>('/care', token),
   addCareRoutine: (token: string, input: CareRoutineInput) =>
     post<{ id: string }>('/care/routines', input, token),
