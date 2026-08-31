@@ -1,0 +1,125 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Randevu akışı" },
+    { "id": "page-2", "name": "Durum sistemi" }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1420,
+      "title": "1 · Talep",
+      "page": "page-1"
+    },
+    {
+      "file": "OnayBekliyor.dc.html",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1000,
+      "title": "2 · Onay bekleniyor",
+      "page": "page-1"
+    },
+    {
+      "file": "UzmanOnay.dc.html",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1060,
+      "title": "3 · Uzman aynası",
+      "page": "page-1"
+    },
+    {
+      "file": "Depozito.dc.html",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1420,
+      "title": "4 · Depozito · Kaspi",
+      "page": "page-1"
+    },
+    {
+      "file": "KaspiDonus.dc.html",
+      "x": 1960,
+      "y": 0,
+      "w": 390,
+      "h": 900,
+      "title": "5 · Kaspi’den dönüş",
+      "page": "page-1"
+    },
+    {
+      "file": "Kesinlesti.dc.html",
+      "x": 0,
+      "y": 1560,
+      "w": 390,
+      "h": 1010,
+      "title": "6 · Kesinleşti",
+      "page": "page-1"
+    },
+    {
+      "file": "Odeme.dc.html",
+      "x": 490,
+      "y": 1560,
+      "w": 390,
+      "h": 980,
+      "title": "7 · Ödeme",
+      "page": "page-1"
+    },
+    {
+      "file": "OdemeOnay.dc.html",
+      "x": 980,
+      "y": 1560,
+      "w": 390,
+      "h": 1080,
+      "title": "8 · Onay bekleniyor",
+      "page": "page-1"
+    },
+    {
+      "file": "Tamamlandi.dc.html",
+      "x": 1470,
+      "y": 1560,
+      "w": 390,
+      "h": 1060,
+      "title": "9 · Tamamlandı",
+      "page": "page-1"
+    },
+    {
+      "file": "DurumSistemi.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 840,
+      "h": 1080,
+      "title": "Durum sistemi",
+      "page": "page-2"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "akis",
+      "x": 0,
+      "y": -170,
+      "w": 880,
+      "page": "page-1",
+      "text": "AYNA · Randevu akışı\nMD §4.1–4.12. Dokuz ekran, iki rol, tek kart.\nUzman aynı kartın aynasını görür — yalnız düğmeler değişir (3 numaralı ekran)."
+    },
+    {
+      "id": "kaspi",
+      "x": 1470,
+      "y": -170,
+      "w": 880,
+      "page": "page-1",
+      "text": "Depozito: tek dokunuş\nKaspi açılır, alıcı ve tutar dolu gelir; kullanıcı hiçbir şey yazmaz.\nAçıklamadaki referans kodu ödemeyi randevuyla eşleştirir."
+    },
+    {
+      "id": "bekleme",
+      "x": 980,
+      "y": 2700,
+      "w": 390,
+      "page": "page-1",
+      "text": "Karşılıklı onay beklenen her yerde aynı bekleme dili: yayılan halkalar + süpüren şerit, 1,6 sn nefes ritminde. Hareket azaltma açıksa durur."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

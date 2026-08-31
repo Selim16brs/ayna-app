@@ -3,7 +3,7 @@ import { DEFAULT_SPEND_RULES, paymentSplit } from '@ayna/domain';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { fillParams, useLocale } from '../../src/locale';
 import { localDeposit, useStore } from '../../src/store';
 import { radius, shadow, space, type ColorTokens } from '../../src/theme';
@@ -27,6 +27,30 @@ import { Button, Sayac, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../
 /** Ödemenin yapılacağı hesap (§4.4). */
 const HESAP_ADI = 'SES INVEST TOO';
 
+/**
+ * §4.4 — KASPİ İLE TEK DOKUNUŞ.
+ *
+ * Bağlantı SES INVEST'in Kaspi QR'ının içeriğidir ve admin ayarından gelir;
+ * koda gömülü değil (QR yenilenince sürüm çıkmak gerekmesin).
+ *
+ * `{tutar}` ve `{ref}` yer tutucuları VARSA doldurulur. Yoksa bağlantı olduğu
+ * gibi açılır — sabit QR alıcıyı hazır getirir, tutarı müşteri girer ve ekran
+ * onu kopyalanabilir biçimde gösterir. Yer tutucusu olmayan bir bağlantıya
+ * kendiliğinden parametre EKLEMİYORUZ: uydurulmuş bir parametre Kaspi'de
+ * sessizce yok sayılır ya da bağlantıyı tümden bozar.
+ */
+function kaspiBaglantisi(sablon: string, tutar: number, ref: string): string {
+  return sablon.replace(/\{tutar\}/g, String(tutar)).replace(/\{ref\}/g, encodeURIComponent(ref));
+}
+
+/** Randevu referansı — ödemeyi bu randevuyla eşleştiren kod. */
+function odemeReferansi(bookingId: string): string {
+  return `AYNA-${bookingId
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(-5)
+    .toUpperCase()}`;
+}
+
 export default function DepositScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useLocale();
@@ -46,6 +70,9 @@ export default function DepositScreen() {
   const [dekont, setDekont] = useState<string | null>(null);
   const [puanKullan, setPuanKullan] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const kaspiUrl = useStore((st) => st.config.kaspiPaymentUrl ?? null);
+  const referans = odemeReferansi(booking?.id ?? '');
 
   if (!booking) {
     return (
@@ -78,6 +105,21 @@ export default function DepositScreen() {
   );
   const puanHakki = split.pointsUsed;
   const odenecek = puanKullan ? Math.max(0, tutar - puanHakki) : tutar;
+
+  /**
+   * Kaspi'yi aç. Açılamıyorsa (uygulama kurulu değil) SESSİZ KALMIYORUZ:
+   * kullanıcı düğmeye bastı, bir şey olmadıysa sebebini bilmeli — ve elle
+   * transfer yolu hemen altında duruyor.
+   */
+  const kaspiAc = async () => {
+    if (!kaspiUrl) return;
+    const hedef = kaspiBaglantisi(kaspiUrl, odenecek, referans);
+    try {
+      await Linking.openURL(hedef);
+    } catch {
+      Alert.alert(t('deposit.kaspi_fail_t'), t('deposit.kaspi_fail_b'));
+    }
+  };
 
   const secDekont = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -177,15 +219,63 @@ export default function DepositScreen() {
           </Pressable>
         ) : null}
 
+        {/* §4.4 — KASPİ İLE TEK DOKUNUŞ. Bağlantı tanımlıysa birincil yol budur:
+            Kaspi açılır, alıcı hazır gelir, müşteri hesap numarası yazmaz.
+            Basmadan ÖNCE ne gideceğini gösteriyoruz — uygulamadan çıkmadan
+            önce ne olacağını bilmek, ödemeye güvenmenin ön şartı. */}
+        {kaspiUrl ? (
+          <View style={[styles.kart, shadow.card, styles.kaspiKart]}>
+            <View style={styles.satir}>
+              <Ionicons name="open-outline" size={16} color={colors.accent} />
+              <Text variant="caption" tone="accentFg" style={styles.kaspiBaslik}>
+                {t('deposit.kaspi_preview')}
+              </Text>
+            </View>
+            <View style={styles.satir}>
+              <Text variant="caption" tone="muted">
+                {t('deposit.account')}
+              </Text>
+              <Text variant="bodyStrong" tone="ink">
+                {HESAP_ADI}
+              </Text>
+            </View>
+            <View style={styles.satir}>
+              <Text variant="caption" tone="muted">
+                {t('deposit.amount')}
+              </Text>
+              <Text variant="bodyStrong" tone="ink">
+                {odenecek.toLocaleString('tr-TR')} ₸
+              </Text>
+            </View>
+            <View style={styles.satir}>
+              <Text variant="caption" tone="muted">
+                {t('deposit.reference')}
+              </Text>
+              <Text variant="bodyStrong" tone="ink" selectable>
+                {referans}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
+        {kaspiUrl ? (
+          <Button
+            label={fillParams(t('deposit.pay_kaspi'), {
+              amount: odenecek.toLocaleString('tr-TR'),
+            })}
+            onPress={() => void kaspiAc()}
+          />
+        ) : null}
+
         <View style={[styles.kart, shadow.card]}>
           <Text variant="bodyStrong" tone="ink">
-            {t('deposit.account')}
+            {kaspiUrl ? t('deposit.manual_title') : t('deposit.account')}
           </Text>
           <Text variant="body" tone="ink" selectable>
             {HESAP_ADI}
           </Text>
           <Text variant="caption" tone="muted" style={styles.not}>
-            {t('deposit.transfer_note')}
+            {fillParams(t('deposit.transfer_note_ref'), { ref: referans })}
           </Text>
         </View>
 
@@ -227,6 +317,8 @@ const makeStyles = (colors: ColorTokens) =>
       gap: space(0.75),
     },
     acil: { borderWidth: 1, borderColor: colors.danger },
+    kaspiKart: { backgroundColor: colors.accentSoft },
+    kaspiBaslik: { letterSpacing: 0.6, textTransform: 'uppercase' },
     satir: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     puanSatir: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
     flex: { flex: 1 },

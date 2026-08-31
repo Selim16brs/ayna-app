@@ -1,0 +1,270 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap">
+  <style>
+    :root{
+      --bg:#FBF8F6; --sunken:#F5E6EB; --surface:#FFFFFF;
+      --ink:#261F25; --inkSoft:#564E56; --muted:#6F666C;
+      --accent:#5A2A55; --accentSoft:#F5E6EB; --onAccent:#FBF8F6;
+      --rose:#D97798; --sage:#547565;
+      --gold:#905E1D; --goldSoft:#FAF2E6;
+      --success:#4E6D5E; --successSoft:#E1EDE6;
+      --danger:#A93E4D; --dangerSoft:#F7E4E7;
+      --line:#F0E7EC; --lineStrong:#E8D5DD;
+      --sh-card:0 6px 20px rgba(90,42,85,.13);
+      --sh-soft:0 2px 10px rgba(90,42,85,.07);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);
+      font-family:'Onest','Segoe UI',system-ui,-apple-system,sans-serif;
+      -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+    a{color:var(--accent);text-decoration:none} a:hover{color:#6B3465}
+
+    /* Tip ölçeği — theme.ts `type` */
+    .t-h1{font-size:24px;line-height:30px;letter-spacing:-.4px;font-weight:600;margin:0}
+    .t-h2{font-size:20px;line-height:26px;letter-spacing:-.3px;font-weight:600;margin:0}
+    .t-title{font-size:17px;line-height:22px;letter-spacing:-.2px;font-weight:600;margin:0}
+    .t-body{font-size:16px;line-height:24px;font-weight:400;margin:0}
+    .t-bodys{font-size:16px;line-height:24px;font-weight:500;margin:0}
+    .t-meta{font-size:15px;line-height:20px;font-weight:500;margin:0}
+    .t-cap{font-size:14px;line-height:20px;font-weight:400;margin:0}
+    .t-caps{font-size:14px;line-height:20px;font-weight:500;margin:0}
+    .t-micro{font-size:12px;line-height:16px;font-weight:500;margin:0}
+    .t-label{font-size:11px;line-height:14px;letter-spacing:1.1px;font-weight:600;
+      text-transform:uppercase;margin:0;color:var(--muted)}
+    .num{font-variant-numeric:tabular-nums}
+    .soft{color:var(--muted)} .ink2{color:var(--inkSoft)}
+
+    /* Ekran kabuğu — SAHTE DURUM ÇUBUĞU YOK: üst güvenli alan boş bırakılır. */
+    .screen{width:390px;min-height:100%;background:var(--bg);display:flex;flex-direction:column}
+    .safe{height:44px;flex:none}
+    .hdr{height:56px;flex:none;display:flex;align-items:center;gap:12px;padding:0 16px}
+    .hdr-btn{width:44px;height:44px;margin-left:-10px;border-radius:999px;display:flex;
+      align-items:center;justify-content:center;color:var(--ink)}
+    .main{padding:16px;display:flex;flex-direction:column;gap:12px;flex:1}
+
+    /* Kart — radius.lg 26, padding space(2) 16, gölge card */
+    .card{background:var(--surface);border-radius:26px;padding:16px;
+      box-shadow:var(--sh-card);display:flex;flex-direction:column;gap:6px}
+    .card-tight{gap:0}
+    .row{display:flex;align-items:center;gap:12px}
+    .between{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .col{display:flex;flex-direction:column;gap:6px}
+    .grow{flex:1;min-width:0}
+    .hr{height:1px;background:var(--line);margin:10px 0}
+
+    /* Düğmeler — control.button 56, radius.pill */
+    .cta{height:56px;border-radius:999px;border:0;width:100%;
+      background:linear-gradient(135deg,#6B3465 0%,#5A2A55 100%);
+      color:var(--onAccent);font-family:inherit;font-size:16px;font-weight:600;
+      letter-spacing:-.1px;display:flex;align-items:center;justify-content:center;gap:8px;
+      box-shadow:var(--sh-soft)}
+    .btn2{height:56px;border-radius:999px;width:100%;background:var(--surface);
+      border:1px solid var(--line);color:var(--accent);font-family:inherit;font-size:16px;
+      font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
+    .btn-quiet{display:flex;align-items:center;justify-content:center;gap:6px;
+      padding:12px 0;color:var(--muted);font-size:14px;font-weight:400}
+
+    /* Durum rozeti — DURUM_TONU dört tonu */
+    .badge{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;
+      border-radius:999px;font-size:12px;font-weight:500;white-space:nowrap}
+    .b-bekleme{background:var(--goldSoft);color:var(--gold)}
+    .b-olumlu{background:var(--successSoft);color:var(--success)}
+    .b-tehlike{background:var(--dangerSoft);color:var(--danger)}
+    .b-notr{background:var(--sunken);color:var(--muted)}
+
+    /* Zaman çizelgesi — AkisCizelgesi.tsx birebir */
+    .tl{display:flex;flex-direction:column}
+    .tl-row{display:flex;align-items:flex-start;gap:12px}
+    .tl-col{width:20px;display:flex;flex-direction:column;align-items:center;flex:none}
+    .tl-dot{width:14px;height:14px;border-radius:999px;border:2px solid var(--line);
+      background:var(--surface);display:flex;align-items:center;justify-content:center;flex:none}
+    .tl-dot.done{background:var(--success);border-color:var(--success)}
+    .tl-dot.now{background:var(--accent);border-color:var(--accent);width:16px;height:16px}
+    .tl-tick{color:var(--onAccent);font-size:9px;line-height:11px}
+    .tl-line{width:2px;flex:1;min-height:18px;background:var(--line)}
+    .tl-line.done{background:var(--success)}
+    .tl-lbl{flex:1;padding-bottom:12px;font-size:14px;line-height:20px;color:var(--ink)}
+    .tl-lbl.now{font-size:16px;line-height:24px;font-weight:500}
+    .tl-lbl.next{color:var(--muted)}
+
+    /* Bekleme nabzı — BeklemeNabzi.tsx: 16px halka + 8px nokta, 1.6sn nefes */
+    .pulse{display:flex;align-items:center;gap:10px}
+    .pulse-wrap{width:16px;height:16px;position:relative;display:flex;
+      align-items:center;justify-content:center;flex:none}
+    .pulse-ring{position:absolute;inset:0;border-radius:999px;background:currentColor;
+      opacity:.35;animation:nefes 1.6s ease-in-out infinite alternate}
+    .pulse-dot{width:8px;height:8px;border-radius:999px;background:currentColor}
+    @keyframes nefes{from{transform:scale(1);opacity:.35}to{transform:scale(1.35);opacity:.9}}
+    @media (prefers-reduced-motion:reduce){.pulse-ring{animation:none;opacity:.35}}
+
+    /* Sayaç kartı */
+    .urgent{border:1px solid var(--danger)}
+    .clock{font-size:32px;line-height:40px;letter-spacing:-.6px;font-weight:500;
+      font-variant-numeric:tabular-nums}
+
+    /* Gün takvimi */
+    .slotlar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+    .slot{height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+      font-size:15px;font-weight:500}
+    .key{width:14px;height:14px;border-radius:5px;display:block;flex:none}
+
+    /* BEKLEME — yayılan halka + süpüren şerit, ikisi de 1,6 sn nefeste */
+    .bekle{background:var(--surface);border-radius:26px;padding:16px;box-shadow:var(--sh-card);
+      display:flex;flex-direction:column;gap:14px;overflow:hidden}
+    .bekle-ust{display:flex;align-items:center;gap:14px}
+    .dalga{width:44px;height:44px;position:relative;flex:none;display:flex;
+      align-items:center;justify-content:center}
+    .halka{position:absolute;inset:0;border-radius:999px;border:1.5px solid currentColor;
+      opacity:0;animation:yayil 3.2s cubic-bezier(.25,.6,.35,1) infinite}
+    .h2{animation-delay:1.06s} .h3{animation-delay:2.13s}
+    .cekirdek{width:10px;height:10px;border-radius:999px;background:currentColor;
+      animation:nefes 1.6s ease-in-out infinite alternate}
+    @keyframes yayil{
+      0%{transform:scale(.34);opacity:0}
+      18%{opacity:.55}
+      100%{transform:scale(1);opacity:0}}
+    .nokta3{display:inline-flex;gap:3px;padding-left:5px;vertical-align:baseline}
+    .nokta3 i{width:3px;height:3px;border-radius:999px;background:currentColor;opacity:.3;
+      animation:sekme 1.6s ease-in-out infinite}
+    .nokta3 i:nth-child(2){animation-delay:.2s} .nokta3 i:nth-child(3){animation-delay:.4s}
+    @keyframes sekme{0%,60%,100%{opacity:.25;transform:translateY(0)}
+      30%{opacity:1;transform:translateY(-2px)}}
+    .serit{height:3px;border-radius:999px;background:rgba(0,0,0,.05);overflow:hidden;position:relative}
+    .serit span{position:absolute;top:0;bottom:0;width:38%;border-radius:999px;
+      background:linear-gradient(90deg,transparent,currentColor,transparent);opacity:.6;
+      animation:supur 3.2s cubic-bezier(.45,0,.55,1) infinite}
+    @keyframes supur{0%{left:-40%}100%{left:102%}}
+    @media (prefers-reduced-motion:reduce){
+      .halka,.cekirdek,.nokta3 i,.serit span{animation:none}
+      .halka{opacity:.28} .serit span{left:0;width:100%;opacity:.25}}
+
+    .ico{flex:none;display:block}
+    .divider{height:1px;background:var(--line)}
+  </style>
+</helmet>
+<div class="screen">
+<div class="safe"></div>
+<div class="hdr">
+  <div class="hdr-btn"><svg class="ico" width="24" height="24" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 5l-7 7 7 7"/></svg></div>
+  <div class="t-title">Depozito öde</div>
+</div>
+<div class="main">
+
+  <div class="card urgent" style="gap:10px">
+    <div class="row" style="gap:10px">
+      <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A93E4D"
+        stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.4"/>
+        <path d="M12 7.6V12l3 1.8"/></svg>
+      <div class="t-caps grow" style="color:var(--danger)">Randevunu korumak için öde</div>
+    </div>
+    <div class="row" style="align-items:baseline;gap:10px">
+      <div class="clock" style="color:var(--danger)">09:32</div>
+      <div class="t-cap soft">içinde ödemezsen randevu düşer</div>
+    </div>
+    <div style="height:4px;border-radius:999px;background:var(--dangerSoft);overflow:hidden">
+      <div style="width:95%;height:100%;background:var(--danger);border-radius:999px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="between" style="align-items:flex-start">
+      <div class="col" style="gap:2px">
+        <div class="t-cap soft">Ödenecek tutar</div>
+        <div class="t-h1 num">1.150 ₸</div>
+      </div>
+      <div class="col" style="gap:2px;align-items:flex-end">
+        <div class="t-cap soft num" style="text-decoration:line-through">2.300 ₸</div>
+        <div class="badge b-olumlu num">1.150 puan indirildi</div>
+      </div>
+    </div>
+    <div class="t-cap soft" style="padding-top:2px">Toplam 23.000 ₸ hizmet bedelinin %10’u</div>
+  </div>
+
+  <div class="card" style="flex-direction:row;align-items:flex-start;gap:12px">
+    <svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" style="margin-top:1px">
+      <rect x="3" y="3" width="18" height="18" rx="6" fill="#5A2A55"/>
+      <path d="M8 12.3l2.6 2.6L16 9.5" stroke="#FBF8F6" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div class="grow">
+      <div class="t-bodys">1.150 puan kullan</div>
+      <div class="t-cap soft">Biriken puanının en fazla %25’i kullanılabilir (1 puan = 1 ₸).</div>
+    </div>
+  </div>
+
+  <div class="card" style="gap:0;padding:0;overflow:hidden">
+    <div style="padding:14px 16px 12px;background:var(--accentSoft)">
+      <div class="row" style="gap:8px">
+        <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5A2A55"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 4h4a2 2 0 012 2v4"/><path d="M20 4l-8.5 8.5"/>
+          <path d="M20 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h4"/></svg>
+        <div class="t-label grow" style="color:var(--accent)">Kaspi’de hazır gelecek</div>
+      </div>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+      <div class="between"><div class="t-cap soft">Alıcı</div>
+        <div class="t-bodys">SES INVEST TOO</div></div>
+      <div class="divider"></div>
+      <div class="between"><div class="t-cap soft">Tutar</div>
+        <div class="t-bodys num">1.150 ₸</div></div>
+      <div class="divider"></div>
+      <div class="between"><div class="t-cap soft">Açıklama</div>
+        <div class="t-bodys num" style="letter-spacing:.4px">AYNA-4F7K2</div></div>
+    </div>
+    <div style="padding:0 16px 14px">
+      <div class="t-cap soft">Hiçbir bilgiyi elle yazmıyorsun. Açıklamadaki kod ödemeni bu
+        randevuyla eşleştirir.</div>
+    </div>
+  </div>
+
+  <div style="height:2px"></div>
+  <button class="cta" style="gap:10px">
+    <svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 4h6v6"/><path d="M20 4l-9 9"/>
+      <path d="M19 14.5V18a2.5 2.5 0 01-2.5 2.5h-11A2.5 2.5 0 013 18V7a2.5 2.5 0 012.5-2.5H9"/></svg>
+    Kaspi ile öde · 1.150 ₸
+  </button>
+  <div class="t-cap soft" style="text-align:center;padding:2px 12px 0">
+    Kaspi uygulaması açılır, tutar ve alıcı dolu gelir. Ödedikten sonra buraya dönersin.</div>
+
+  <div class="row" style="gap:12px;padding:6px 4px 0">
+    <div class="divider grow"></div>
+    <div class="t-micro soft">veya elle transfer</div>
+    <div class="divider grow"></div>
+  </div>
+
+  <div class="card" style="gap:10px">
+    <div class="between">
+      <div class="col" style="gap:2px">
+        <div class="t-cap soft">Alıcı hesap</div>
+        <div class="t-body">SES INVEST TOO</div>
+      </div>
+      <div class="row" style="gap:6px;color:var(--accent)">
+        <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="1.7"><rect x="9" y="9" width="11" height="11" rx="3"/>
+          <path d="M15 6H6.5A2.5 2.5 0 004 8.5V17" stroke-linecap="round"/></svg>
+        <div class="t-caps">Kopyala</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="t-cap soft">Banka ile gönderirsen açıklamaya
+      <b class="num" style="font-weight:600;color:var(--inkSoft)">AYNA-4F7K2</b> yaz ve dönüşte
+      dekontu yükle.</div>
+  </div>
+
+</div>
+</div>
+</x-dc>
+</body>
+</html>

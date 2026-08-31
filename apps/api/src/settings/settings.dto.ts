@@ -37,14 +37,7 @@ export const RATE_DEFS = [
   { key: 'rate.points_cap_pct', label: 'Puan harcama tavanı', suffix: '%', default: 25 },
   { key: 'rate.points_unlock_kzt', label: 'Puan kullanım eşiği', suffix: '₸', default: 5000 },
   { key: 'rate.points_expiry_days', label: 'Puan ömrü', suffix: 'gün', default: 365 },
-  { key: 'rate.points_earn_pct', label: 'Hizmetten geri kazanım', suffix: '%', default: 3 },
-  // §8.4 — indirim, o randevunun net komisyonunun en çok yüzde kaçı olabilir
-  {
-    key: 'rate.points_subsidy_cap_pct',
-    label: 'Puan sübvansiyon tavanı',
-    suffix: '%',
-    default: 50,
-  },
+  { key: 'rate.points_earn_pct', label: 'Hizmetten geri kazanım', suffix: '%', default: 1 },
   { key: 'rate.premium_user_kzt', label: 'Premium üyelik (aylık)', suffix: '₸', default: 999 },
   { key: 'rate.premium_salon_kzt', label: 'Salon premium (aylık)', suffix: '₸', default: 4990 },
   { key: 'rate.raffle_cost', label: 'Çekiliş bileti', suffix: 'puan', default: 500 },
@@ -65,6 +58,36 @@ export const API_KEY_DEFS = [
 ] as const;
 
 export const API_PROVIDERS = API_KEY_DEFS.map((k) => k.provider);
+
+/**
+ * §4.4 — KASPİ ÖDEME BAĞLANTISI.
+ *
+ * SES INVEST TOO'nun Kaspi QR kodunun İÇERİĞİ (QR bir URL taşır). Uygulama bu
+ * adresi açar; Kaspi uygulaması alıcıyı hazır getirir, müşteri hiçbir şey
+ * yazmaz.
+ *
+ * Değer koda gömülmüyor, admin ayarı: QR yenilendiğinde ya da hesap
+ * değiştiğinde uygulama sürümü çıkmak gerekmesin.
+ *
+ * `{tutar}` ve `{ref}` yer tutucuları — bağlantı bunları destekliyorsa tutar ve
+ * randevu referansı da hazır gelir. Desteklemiyorsa yer tutucu KOYULMAZ; sabit
+ * QR açılır ve tutarı ekranda gösterip kopyalatırız. Hangi biçimin çalıştığı
+ * TELEFONDA denenerek doğrulanır — tahminle yazılan bir şema gerçek cihazda
+ * sessizce açılmaz ve müşteri parayı gönderemez.
+ */
+export const KASPI_PAYMENT_KEY = 'kaspi.payment_url';
+
+export const kaspiLinkSchema = z.object({
+  // Boş değer = özelliği KAPAT (düğme hiç görünmez). Yarım yapılandırma yok.
+  url: z
+    .string()
+    .trim()
+    .max(500)
+    .refine((v) => v === '' || /^https?:\/\/|^kaspi:\/\//i.test(v), {
+      message: 'Bağlantı http(s):// ya da kaspi:// ile başlamalı',
+    }),
+});
+export type KaspiLinkInput = z.infer<typeof kaspiLinkSchema>;
 
 export const rateSchema = z.object({
   key: z.enum(RATE_KEYS as [string, ...string[]]),

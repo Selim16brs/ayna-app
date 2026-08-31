@@ -1334,12 +1334,16 @@ export interface AppConfig {
     pointsCapPct: number;
     pointsUnlockKzt: number;
     pointsExpiryDays: number;
-    pointsSubsidyCapPct: number;
     premiumUserKzt: number;
     premiumSalonKzt: number;
     raffleCost: number;
   };
   cities: { active: string[]; soon: string[] };
+  /**
+   * §4.4 — SES INVEST Kaspi QR'ının içeriği. null ise "Kaspi ile öde" düğmesi
+   * HİÇ gösterilmez: çalışmayan bir düğme, çalışmayan bir vaattir.
+   */
+  kaspiPaymentUrl?: string | null;
   features: { removebg: boolean; openai: boolean; sms: boolean };
   // §12.9 — kategori bakım periyodu (gün) + hizmet süresi (dk)
   categories?: Record<string, { maintenanceDays: number; serviceMin: number }>;

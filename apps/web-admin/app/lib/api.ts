@@ -270,6 +270,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ provider, value }),
     }),
+  setKaspiLink: (url: string) =>
+    req<{ configured: boolean }>('/admin/system/kaspi-link', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    }),
   testApiKey: (provider: string) =>
     req<{ ok: boolean; message: string }>(`/admin/system/api-key/${provider}/test`, {
       method: 'POST',
@@ -310,6 +315,8 @@ export interface SystemSettings {
   rates: RateSetting[];
   apiKeys: ApiKeyStatus[];
   cities: Cities;
+  /** §4.4 — SES INVEST Kaspi QR'ının içeriği (bir URL). Boşsa özellik kapalı. */
+  kaspi: { configured: boolean; url: string };
 }
 
 export type AnnouncementSegment =

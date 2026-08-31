@@ -4015,6 +4015,7 @@ function SystemView() {
   const [tests, setTests] = useState<Record<string, { ok: boolean; message: string }>>({});
   const [cityActive, setCityActive] = useState('');
   const [citySoon, setCitySoon] = useState('');
+  const [kaspiEdit, setKaspiEdit] = useState('');
 
   const saveRate = async (key: string) => {
     const raw = rateEdits[key];
@@ -4030,6 +4031,14 @@ function SystemView() {
     const value = keyEdits[provider] ?? '';
     await api.setApiKey(provider, value);
     setKeyEdits((s) => ({ ...s, [provider]: '' }));
+    reload();
+  };
+
+  const saveKaspi = async () => {
+    // Boş kaydetmek özelliği KAPATIR — bilinçli bir seçenek: bağlantı bozulursa
+    // düğmeyi gizlemek, müşteriyi çalışmayan bir yola göndermekten iyidir.
+    await api.setKaspiLink(kaspiEdit.trim());
+    setKaspiEdit('');
     reload();
   };
 
@@ -4088,6 +4097,40 @@ function SystemView() {
             </div>
           ))
         )}
+      </div>
+
+      {/* §4.4 — Kaspi ödeme bağlantısı */}
+      <h2 className="section-head">Kaspi ile ödeme</h2>
+      <p className="page-sub">
+        SES INVEST QR kodunun içeriği (bir bağlantı). Doluysa müşteri depozito ekranında “Kaspi ile
+        öde” düğmesini görür; boşsa düğme hiç görünmez.
+      </p>
+      <div className="card" style={{ marginBottom: 28 }}>
+        <div className="list-row">
+          <div className="grow">
+            <div className="name">Ödeme bağlantısı</div>
+            <div className="meta">
+              {data?.kaspi.configured
+                ? `Tanımlı · ${data.kaspi.url}`
+                : 'Tanımlı değil — düğme gizli'}
+            </div>
+            <div className="meta" style={{ marginTop: 4 }}>
+              Bağlantı tutarı destekliyorsa <code>{'{tutar}'}</code>, randevu referansını
+              destekliyorsa <code>{'{ref}'}</code> yazın; uygulama bunları doldurur. Hangi biçimin
+              çalıştığını telefonda deneyerek doğrulayın.
+            </div>
+          </div>
+          <input
+            className="input"
+            style={{ width: 360 }}
+            placeholder="https://kaspi.kz/pay/..."
+            value={kaspiEdit}
+            onChange={(e) => setKaspiEdit(e.target.value)}
+          />
+          <button className="btn-sm btn-ok" onClick={saveKaspi}>
+            Kaydet
+          </button>
+        </div>
       </div>
 
       {/* API anahtarları */}
