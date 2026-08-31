@@ -47,6 +47,9 @@ import {
   type WeeklyTheme,
   setToken,
   SupportRow,
+  type DekontSatiri,
+  type IadeSatiri,
+  type UzlasmaSatiri,
 } from './lib/api';
 
 type Tab =
@@ -1166,92 +1169,166 @@ function CategoryBars({ items }: { items: { sector: string; count: number }[] })
 }
 
 // Komisyon tahsilatı — İŞLEM BAŞINA fatura (Ödendi/Bekliyor/Gecikti)
-function InvoicesSection() {
-  const { data, reload } = useAsync<CommissionInvoice[]>(() => api.commissionInvoices(), []);
+/**
+ * Brief §8 — RANDEVU KUYRUKLARI.
+ *
+ * Eski "Dönem faturaları" bölümü kaldırıldı: brief §4.4/§10 ikinci tahsilatı
+ * tümden sildi (depozito zaten AYNA'nın komisyonu), dolayısıyla kesilecek
+ * fatura da kalmadı. Yerine brief'in istediği üç kuyruk geldi.
+ */
+function RandevuKuyruklari() {
+  const dekont = useAsync<DekontSatiri[]>(() => api.dekontKuyrugu(), []);
+  const iade = useAsync<IadeSatiri[]>(() => api.iadeKuyrugu(), []);
+  const uzlasma = useAsync<UzlasmaSatiri[]>(() => api.uzlasmaKuyrugu(), []);
   const [msg, setMsg] = useState<string | null>(null);
 
-  const runOverdue = async () => {
-    const res = await api.runOverdue();
-    setMsg(`Gecikme taraması — ${res.markedOverdue} gecikti, ${res.restricted} hesap kısıtlandı`);
-    reload();
-  };
-
-  const statusPill = (s: string) =>
-    s === 'collected' ? 'approved' : s === 'overdue' ? 'rejected' : 'pending';
-  const statusLabel = (s: string) =>
-    s === 'collected' ? 'Ödendi' : s === 'overdue' ? 'Gecikti' : 'Bekliyor';
+  const kzt = (n: number) => `${n.toLocaleString('tr-TR')} ₸`;
 
   return (
     <>
-      <div className="section-title">Komisyon faturaları — işlem başına (E5)</div>
+      {/* ── §8.1 Dekont doğrulama ── */}
+      <div className="section-title">Dekont doğrulama ({dekont.data?.length ?? 0})</div>
       <div className="card" style={{ marginBottom: 16 }}>
-        {/* TEK KURAL: fatura hizmet tamamlandığı ANDA otomatik doğuyor. Elle
-            "dönem kapat" düğmesi KALDIRILDI — aynı para için ikinci bir kural
-            (dönem sonu + 7 gün) demekti ve aynı randevu iki kez faturalanabiliyordu. */}
-        <div className="form-inline">
-          <div className="meta full">
-            Fatura hizmet tamamlandığında otomatik kesilir. Vade: tamamlanmadan 30 dk sonra;
-            ardından 15 dk tanınır, sonra hesap kısıtlanır. Süreler Ayarlar’dan yönetilir.
-          </div>
-          <button className="btn-sm" onClick={runOverdue}>
-            Gecikmeleri işle
-          </button>
-          {msg && (
-            <div className="meta full" style={{ color: 'var(--success)' }}>
-              {msg}
-            </div>
-          )}
+        <div className="meta full" style={{ marginBottom: 8 }}>
+          Randevu dekont yüklenince ZATEN kesinleşti. Bu kuyruk sahte dekontu sonradan yakalamak
+          için. Reddedersen randevu iptal olur ve kullanıcı yasaklanır.
         </div>
-      </div>
-      <div className="card">
-        {!data || data.length === 0 ? (
-          <div className="empty">Fatura yok — bir dönem kapatın</div>
+        {!dekont.data?.length ? (
+          <div className="empty">Bekleyen dekont yok</div>
         ) : (
-          data.map((inv) => (
-            <div key={inv.id} className="list-row">
+          dekont.data.map((b) => (
+            <div key={b.id} className="row">
               <div className="grow">
-                <div className="name">
-                  {inv.proName} · {TL(inv.commissionAmount)}
+                <div>
+                  <b>{b.proName}</b> · {b.service}
                 </div>
                 <div className="meta">
-                  {inv.periodStart.slice(0, 10)} – {inv.periodEnd.slice(0, 10)} ·{' '}
-                  {inv.bookingsCount} randevu · ciro {TL(inv.grossRevenue)} · son ödeme{' '}
-                  {inv.dueDate.slice(0, 10)}
-                  {inv.status !== 'collected' && inv.overdueDays > 0
-                    ? ` · ${inv.overdueDays}g gecikme`
-                    : ''}
-                  {inv.receiptUri ? ' · 🧾 dekont var' : ''}
+                  {new Date(b.startAt).toLocaleString('tr-TR')} · depozito {kzt(b.deposit)} /{' '}
+                  {kzt(b.price)}
                 </div>
               </div>
-              <span className={`pill ${statusPill(inv.status)}`}>{statusLabel(inv.status)}</span>
-              {inv.receiptUri ? (
-                <a
-                  className="btn-sm"
-                  href={inv.receiptUri}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ textDecoration: 'none' }}
-                >
-                  Dekont
+              {b.depositReceiptUri ? (
+                <a className="btn-sm" href={b.depositReceiptUri} target="_blank" rel="noreferrer">
+                  Dekontu aç
                 </a>
               ) : null}
-              {inv.status !== 'collected' ? (
-                <button
-                  className="btn-sm btn-ok"
-                  onClick={async () => {
-                    if (confirm(`${inv.proName} faturası tahsil edildi olarak işaretlensin mi?`)) {
-                      await api.collectInvoice(inv.id);
-                      reload();
-                    }
-                  }}
-                >
-                  Tahsil edildi
-                </button>
-              ) : null}
+              <button
+                className="btn-sm btn-ok"
+                onClick={async () => {
+                  await api.dekontOnayla(b.id);
+                  setMsg('Dekont doğrulandı');
+                  dekont.reload();
+                }}
+              >
+                Doğrula
+              </button>
+              <button
+                className="btn-sm btn-danger"
+                onClick={async () => {
+                  // Yıkıcı: randevu iptal + hesap yasaklı. Onay istemek şart.
+                  if (!confirm('Sahte dekont: randevu iptal edilecek ve kullanıcı yasaklanacak.'))
+                    return;
+                  await api.dekontReddet(b.id);
+                  setMsg('Dekont reddedildi, kullanıcı yasaklandı');
+                  dekont.reload();
+                }}
+              >
+                Sahte
+              </button>
             </div>
           ))
         )}
       </div>
+
+      {/* ── §8.2 İadeler ── */}
+      <div className="section-title">İadeler ({iade.data?.length ?? 0})</div>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="meta full" style={{ marginBottom: 8 }}>
+          Müşteri iadeleri ve müşteri no-show'unda uzmana ödenecek %9 payı AYNI kuyruktan işlenir.
+          İç hedef: 24 saat.
+        </div>
+        {!iade.data?.length ? (
+          <div className="empty">Bekleyen iade yok</div>
+        ) : (
+          iade.data.map((r) => (
+            <div key={r.id} className="row">
+              <div className="grow">
+                <div>
+                  <b>{kzt(Number(r.amount))}</b> ·{' '}
+                  {r.kind === 'musteri_iade' ? 'Müşteri iadesi' : 'Uzman payı (%9)'}
+                </div>
+                {/* PII: ödeme bilgisi yalnız burada görünür, log'a yazılmaz. */}
+                <div className="meta">
+                  {r.payoutInfo || 'hesap bilgisi girilmemiş'} ·{' '}
+                  {new Date(r.createdAt).toLocaleString('tr-TR')}
+                </div>
+              </div>
+              <button
+                className="btn-sm btn-ok"
+                onClick={async () => {
+                  await api.iadeOdendi(r.id);
+                  setMsg('İade ödendi olarak işaretlendi');
+                  iade.reload();
+                }}
+              >
+                Ödendi
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ── §8.3 Uzlaşma ── */}
+      <div className="section-title">Uzlaşma kayıtları ({uzlasma.data?.length ?? 0})</div>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="meta full" style={{ marginBottom: 8 }}>
+          "Gelmedi" ve ödeme itirazları. %90'lık doğrudan ödemede AYNA hakem DEĞİLDİR — o yüzden
+          "karar yok" seçeneği var.
+        </div>
+        {!uzlasma.data?.length ? (
+          <div className="empty">Bekleyen uzlaşma yok</div>
+        ) : (
+          uzlasma.data.map((u) => (
+            <div key={u.id} className="row">
+              <div className="grow">
+                <div>
+                  <b>{u.kind === 'no_show' ? 'Gelmedi itirazı' : 'Ödeme itirazı'}</b>
+                </div>
+                <div className="meta">{u.reason || 'gerekçe yazılmamış'}</div>
+                {u.evidence.length ? (
+                  <div className="meta">{u.evidence.length} kanıt eklendi</div>
+                ) : null}
+              </div>
+              {(
+                [
+                  ['musteri_lehine', 'Müşteri lehine'],
+                  ['uzman_lehine', 'Uzman lehine'],
+                  ['karar_yok', 'Karar yok'],
+                ] as const
+              ).map(([k, etiket]) => (
+                <button
+                  key={k}
+                  className="btn-sm"
+                  onClick={async () => {
+                    const not = prompt('Telefon teyidi / not (opsiyonel)') ?? '';
+                    await api.uzlasmaCoz(u.id, k, not);
+                    setMsg('Uzlaşma çözüldü');
+                    uzlasma.reload();
+                  }}
+                >
+                  {etiket}
+                </button>
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+
+      {msg ? (
+        <div className="meta full" style={{ color: 'var(--success)' }}>
+          {msg}
+        </div>
+      ) : null}
     </>
   );
 }
@@ -1422,7 +1499,7 @@ function CommissionsView() {
             </>
           ) : null}
 
-          <InvoicesSection />
+          <RandevuKuyruklari />
 
           <div className="section-title">Randevu kayıtları ({data.items.length})</div>
           <div className="card">

@@ -38,6 +38,25 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // ── Brief §8 — randevu akışı kuyrukları ────────────────────────────────
+  dekontKuyrugu: () => req<DekontSatiri[]>('/admin/randevu/dekontlar'),
+  dekontOnayla: (id: string) =>
+    req<{ ok: boolean }>(`/admin/randevu/dekontlar/${id}/onayla`, { method: 'POST' }),
+  dekontReddet: (id: string) =>
+    req<{ ok: boolean }>(`/admin/randevu/dekontlar/${id}/reddet`, { method: 'POST' }),
+  iadeKuyrugu: () => req<IadeSatiri[]>('/admin/randevu/iadeler'),
+  iadeOdendi: (id: string, note?: string) =>
+    req<{ ok: boolean }>(`/admin/randevu/iadeler/${id}/odendi`, {
+      method: 'POST',
+      body: JSON.stringify({ note }),
+    }),
+  uzlasmaKuyrugu: () => req<UzlasmaSatiri[]>('/admin/randevu/uzlasmalar'),
+  uzlasmaCoz: (id: string, karar: UzlasmaKarar, adminNote?: string) =>
+    req<{ ok: boolean }>(`/admin/randevu/uzlasmalar/${id}/coz`, {
+      method: 'POST',
+      body: JSON.stringify({ karar, adminNote }),
+    }),
+
   login: (identifier: string, password: string) =>
     req<{ token: string; user: { role: string; name: string } }>('/auth/login', {
       method: 'POST',
@@ -803,3 +822,36 @@ export interface SupportRow {
   /** §11 — Premium/Platinum üyenin talebi. Sunucu bunları listenin başına koyuyor. */
   priority: boolean;
 }
+
+// ── Brief §8 kuyruk satırları ───────────────────────────────────────────────
+export type DekontSatiri = {
+  id: string;
+  proName: string;
+  service: string;
+  price: number;
+  deposit: number;
+  depositReceiptUri: string | null;
+  startAt: string;
+  status: string;
+};
+export type IadeSatiri = {
+  id: string;
+  bookingId: string;
+  payeeUserId: string;
+  /** musteri_iade | uzman_payi — ikisi de AYNI kuyruktan işlenir (§4.10). */
+  kind: string;
+  amount: string;
+  payoutInfo: string;
+  createdAt: string;
+};
+export type UzlasmaSatiri = {
+  id: string;
+  bookingId: string;
+  /** no_show | odeme */
+  kind: string;
+  openedBy: string;
+  reason: string;
+  evidence: string[];
+  createdAt: string;
+};
+export type UzlasmaKarar = 'musteri_lehine' | 'uzman_lehine' | 'karar_yok';

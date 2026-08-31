@@ -37,7 +37,11 @@ const KUYRUKLAR = [
   ['Depozito/iade itirazı', 'resolveDispute'],
   ['Yorum itirazı', 'hideReview'],
   ['W2W moderasyon', 'moderateCircle'],
-  ['Komisyon faturası dekontu', 'collectInvoice'],
+  // Brief §8 — randevu akışı kuyrukları. Komisyon faturası kuyruğu KALDIRILDI:
+  // §4.4/§10 ikinci tahsilatı sildi, kesilecek fatura kalmadı.
+  ['Dekont doğrulama', 'dekontOnayla'],
+  ['İadeler', 'iadeOdendi'],
+  ['Uzlaşma', 'uzlasmaCoz'],
 ];
 
 for (const [ad, fn] of KUYRUKLAR) {
