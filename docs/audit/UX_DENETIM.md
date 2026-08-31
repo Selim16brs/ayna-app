@@ -2,7 +2,7 @@
 
 **Tarih:** 31.08.2026
 **Faz:** 1 — tespit. Rapor yazılırken hiçbir kod değiştirilmedi.
-**Durum:** Kurucu onayıyla **B1–B5 uygulandı.** B6 onay bekliyor. Uygularken raporun iki yerinin yanlış/eksik olduğu çıktı — bkz. §9.
+**Durum:** Kurucu onayıyla **B1–B6 uygulandı.** Uygularken raporun üç yerinin yanlış/eksik olduğu çıktı — bkz. §9.
 
 ---
 
@@ -257,3 +257,30 @@ giriş sonrası aradığı uzmanı baştan bulmak zorunda kalacaktı. Otomatik g
 ekleyip kullanıcıyı rastgele bir yere bırakmak yarım iş olacağı için niyeti
 zincir boyunca (duvar → rol seçici → müşteri kaydı) taşıdım. Bu, onayladığın
 dört maddenin dışında kalan **tek** ekleme.
+
+### 9.5 · B6'yı raporda BÜYÜK ÖLÇÜDE yanlış yazmışım
+
+Raporda dört "kalıntı" saymıştım. Uygularken gerçek cümlelere bakınca üçünün
+kalıntı olmadığı çıktı:
+
+| raporda dediğim  | gerçekte                                                                    |
+| ---------------- | --------------------------------------------------------------------------- |
+| "profesyonel" ×2 | **Eşanlamlı değil** — sıfat ("En profesyonel uzmanlar"), rolün adı değil    |
+| "istek" ×2       | Aslında **18** metin; 10'u "isteğe bağlı" = _optional_, bambaşka bir kelime |
+| Always "istek"i  | Ayrı bir kavram; "talep"e çevirmek pazaryeri talebiyle çakışırdı            |
+| "teklif isteği"  | Kendi içinde **3/3 tutarlı**, CTA'sı "Teklif iste" fiili — dokunulmadı      |
+
+İlk sayımım hem eksikti (çift tırnaklı metinler taramaya girmiyordu) hem de
+kelimenin ANLAMINA bakmadan sayıyordu.
+
+Gerçekten aykırı olan üç şey kaldı — ve biri raporda hiç yoktu:
+
+1. `salon.quick.agenda` "Rezervasyon takvimi" → **Randevu** (randevu 148'e karşı 1)
+2. `rewards.earn.welcome` "Hoş geldin bonusu" → **puanı** (üst başlığı zaten
+   "Nasıl **puan** kazanırsın?" diyordu)
+3. `notif.booking_sent` "Randevu **isteğin** gönderildi" → **talebin** — kardeş
+   bildirim `notif.rejected` aynı nesneye "Randevu **talebin**" diyordu. **Bu
+   raporda yoktu**; tek bildirim ailesinde iki ad.
+
+kk'de ayrıca `брондау` (жазылу 135'e karşı 1) ve `бонус` (ұпай 50'ye karşı 1),
+ru'da `бонус` (балл 49'a karşı 1) aykırıydı. ru'nun takvim metni zaten doğruydu.

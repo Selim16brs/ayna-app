@@ -24,15 +24,39 @@ import { ru } from './messages/ru';
  * cümle zaten "Депозит ..." diye başlıyor.
  */
 
+/**
+ * B6 — küçük terim kalıntıları. Baskın terim parantezde.
+ *
+ * DIŞARIDA BIRAKILANLAR (kasıtlı — eşanlamlı değiller):
+ *   · "profesyonel" → SIFAT ("En profesyonel uzmanlar"), rolün adı değil.
+ *   · "isteğe bağlı" → *optional*; "talep" ile hiçbir ilgisi yok (10 metin).
+ *   · Always "istek"leri → ayrı bir kavram; "talep"e çevirmek pazaryeri
+ *     talebiyle çakışırdı.
+ *   · "teklif isteği" → kendi içinde 3/3 TUTARLI ve CTA'sı "Teklif iste"
+ *     fiili. Değiştirmek tutarlılık değil, değişiklik için değişiklik olurdu.
+ *
+ * "randevu isteğin" ise gerçekten aykırıydı: kardeş bildirim `notif.rejected`
+ * aynı nesneye "randevu talebin" diyordu — tek ailede iki ad.
+ */
+
 /** Bir dilde yasak olan eşanlamlılar; hepsi küçük harfe indirilip aranır. */
 const YASAK: Record<string, { sozluk: Record<string, string>; kelimeler: string[] }> = {
-  tr: { sozluk: tr, kelimeler: ['kapora'] },
-  kk: { sozluk: kk, kelimeler: ['кепілпұл', 'кепілақ', 'алдын ала төлем'] },
-  ru: { sozluk: ru, kelimeler: ['предоплат', 'залог'] },
+  tr: {
+    sozluk: tr,
+    // depozito(19) · randevu(148) · puan(54) · talep(39)
+    kelimeler: ['kapora', 'rezervasyon', 'bonus', 'randevu isteğ'],
+  },
+  kk: {
+    sozluk: kk,
+    // депозит · жазылу(135) · ұпай(50)
+    kelimeler: ['кепілпұл', 'кепілақ', 'алдын ала төлем', 'брондау', 'бонус'],
+  },
+  // ru'da "Календарь записей" zaten doğruydu; yalnız бонус aykırıydı.
+  ru: { sozluk: ru, kelimeler: ['предоплат', 'залог', 'бонус'] },
 };
 
 for (const [dil, { sozluk, kelimeler }] of Object.entries(YASAK)) {
-  test(`${dil}: depozito için tek terim kullanılıyor`, () => {
+  test(`${dil}: her kavram için tek kelime kullanılıyor`, () => {
     const ihlal: string[] = [];
     for (const [anahtar, metin] of Object.entries(sozluk)) {
       const kucuk = metin.toLowerCase();

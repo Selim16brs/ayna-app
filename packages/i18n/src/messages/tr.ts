@@ -225,7 +225,7 @@ export const tr = {
   'salon.quick.commissions': 'Komisyon & dekont',
   'salon.quick.reviews': 'Değerlendirmeler',
   'salon.quick.promotions': 'Promosyonlar',
-  'salon.quick.agenda': 'Rezervasyon takvimi',
+  'salon.quick.agenda': 'Randevu takvimi',
   'salon.profile.title': 'Salon profili',
   'salon.profile.intro': 'Salon bilgilerini düzenle — müşterilere böyle görünür.',
   'salon.profile.photos': 'Salon fotoğrafları',
@@ -986,7 +986,7 @@ export const tr = {
   'rewards.locked': 'Kullanıma {remaining} puan kaldı',
   'rewards.unlocked': 'Puanların kullanıma açık ✓',
   'rewards.earn.title': 'Nasıl puan kazanırsın?',
-  'rewards.earn.welcome': 'Hoş geldin bonusu',
+  'rewards.earn.welcome': 'Hoş geldin puanı',
   'rewards.earn.booking': 'Uygulamadan randevu tamamla',
   'rewards.earn.review': 'Doğrulanmış değerlendirme yap',
   'rewards.earn.provider_noshow': 'Uzman gelmedi telafisi',
@@ -1501,7 +1501,7 @@ export const tr = {
   // Bildirimler
   'notifications.title': 'Bildirimler',
   // §14.5 — uygulama-üretimi bildirim şablonları (3 dil; {pro}/{slot}/{deposit}… params)
-  'notif.booking_sent': 'Randevu isteğin gönderildi',
+  'notif.booking_sent': 'Randevu talebin gönderildi',
   'notif.booking_sent_b': '{pro} · {slot} · uzman onayı bekleniyor',
   'notif.waitlist': 'Bekleme listesine eklendin',
   'notif.reschedule': 'Yeni saat önerdin',

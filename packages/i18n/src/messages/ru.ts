@@ -934,7 +934,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'rewards.locked': 'До разблокировки осталось {remaining} баллов',
   'rewards.unlocked': 'Баллы доступны к оплате ✓',
   'rewards.earn.title': 'Как заработать баллы?',
-  'rewards.earn.welcome': 'Приветственный бонус',
+  'rewards.earn.welcome': 'Приветственные баллы',
   'rewards.earn.booking': 'Заверши запись из приложения',
   'rewards.earn.review': 'Оставь подтверждённую оценку',
   'rewards.earn.provider_noshow': 'Компенсация за неявку мастера',
