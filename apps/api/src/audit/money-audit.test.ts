@@ -19,15 +19,17 @@ const oku = (yol: string) => readFileSync(join(kok, yol), 'utf8');
 
 // Her para yolu → yazması gereken eylem adları
 const PARA_YOLLARI: { dosya: string; eylemler: string[] }[] = [
-  {
-    dosya: 'payment/payment.service.ts',
-    eylemler: ['payment.intent', 'payment.paid', 'payment.failed'],
-  },
   { dosya: 'loyalty/loyalty.grant.ts', eylemler: ['loyalty.earn'] },
   { dosya: 'loyalty/loyalty.service.ts', eylemler: ['loyalty.redeem', 'loyalty.unlock'] },
   // Komisyon modülü SİLİNDİ: brief §4.4/§10 ikinci tahsilatı kaldırdı —
-  // depozito zaten AYNA'nın komisyonu. Para yolu artık depozito ödemesi ve
-  // iade kuyruğu; ikisi de aşağıdaki dosyalarda denetleniyor.
+  // depozito zaten AYNA'nın komisyonu.
+  //
+  // Uygulama İÇİ ödeme modülü de SİLİNDİ: brief §4.4 depozitoyu banka/Kaspi
+  // transferi + dekont olarak, §4.9 kalan %90'ı uzmana DOĞRUDAN ödeme olarak
+  // tanımlıyor. Uygulama içi tahsilat ikinci bir para yoluydu ve hiçbir ekran
+  // ona gitmiyordu.
+  //
+  // Para yolu artık depozito ödemesi ve iade kuyruğu; ikisi de aşağıda.
   { dosya: 'bookings/bookings.service.ts', eylemler: ['booking.'] },
 ];
 

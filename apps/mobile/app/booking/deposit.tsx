@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DEFAULT_SPEND_RULES, paymentSplit } from '@ayna/domain';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -23,9 +24,6 @@ import { Button, Sayac, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../
  * ve buradaki sınır randevuyu düşürecek kadar sert.
  */
 
-/** §5 — puan kullanımı için minimum bakiye ve işlem başına üst sınır. */
-const PUAN_ESIGI = 5000;
-const PUAN_ORANI = 0.25;
 /** Ödemenin yapılacağı hesap (§4.4). */
 const HESAP_ADI = 'SES INVEST TOO';
 
@@ -39,6 +37,9 @@ export default function DepositScreen() {
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
   const rates = useStore((s) => s.config.rates);
   const points = useStore((s) => s.points);
+  // §5 — kilit: bir kez açıldıysa bakiye düşse de kapanmaz. Kararı SUNUCU
+  // veriyor; ekran yalnız sonucunu okuyor.
+  const puanKurallari = useStore((s) => s.pointsSpend);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
   const randevuEylemi = useStore((s) => s.randevuEylemi);
 
@@ -60,9 +61,22 @@ export default function DepositScreen() {
   }
 
   const tutar = booking.depositAmount ?? localDeposit(booking.price, rates);
-  // §5 — eşiğin altındaysa puan hiç kullanılamaz; üstündeyse biriken puanın
-  // %25'i kadarı, ama depozitodan fazlası anlamsız olurdu.
-  const puanHakki = points >= PUAN_ESIGI ? Math.min(Math.floor(points * PUAN_ORANI), tutar) : 0;
+  /**
+   * §5 — kullanılabilecek puan. Hesap `@ayna/domain`den: sunucu dekontu
+   * alırken AYNI fonksiyonu çalıştırıyor, dolayısıyla ekranda yazan tutarla
+   * sunucunun düştüğü puan ayrışamaz. Ekran eskiden kendi formülünü
+   * yazıyordu ve sunucu tarafında düşen bir puan hiç yoktu.
+   */
+  const split = paymentSplit(
+    tutar,
+    points,
+    points,
+    puanKurallari?.unlocked ? new Date(0) : null,
+    puanKurallari
+      ? { unlockAt: puanKurallari.unlockAt, capPct: puanKurallari.capPct }
+      : DEFAULT_SPEND_RULES,
+  );
+  const puanHakki = split.pointsUsed;
   const odenecek = puanKullan ? Math.max(0, tutar - puanHakki) : tutar;
 
   const secDekont = async () => {
@@ -83,7 +97,11 @@ export default function DepositScreen() {
       // Kalıcı kuyruktan geçiyor: 10 dakikalık pencerede ağ giderse dekont
       // KAYBOLMAZ, bağlantı gelince gönderilir. Doğrudan çağrıda kullanıcı
       // parayı göndermiş olmasına rağmen randevusu düşerdi.
-      const sonuc = await randevuEylemi(booking.id, 'dekont', dekont);
+      const sonuc = await randevuEylemi(booking.id, 'dekont', {
+        receiptUri: dekont,
+        // Ne kadar düşüleceğine SUNUCU karar veriyor; bu yalnız üst sınır.
+        pointsRequested: puanKullan ? puanHakki : 0,
+      });
       if (sonuc === 'kuyrukta') {
         Alert.alert(t('flow.queued_t'), t('flow.queued_b'), [
           { text: t('common.ok'), onPress: () => router.back() },

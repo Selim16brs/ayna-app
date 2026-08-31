@@ -29,20 +29,16 @@ export interface LoyaltyTier {
 
 // K4 — para puan kuralları sunucudan gelir; istemci kendi sabitini kullanmaz.
 export interface PointsSpendRules {
-  /** Kilit açıldı mı (bakiye eşiği bir kez geçti mi). */
+  /** §5 — kilit açıldı mı (bakiye eşiği bir kez geçildi mi). */
   unlocked: boolean;
-  /** Kullanımın açıldığı bakiye eşiği (₸). */
+  /** §5 — kullanımın açıldığı bakiye eşiği (₸). */
   unlockAt: number;
   /** Kilit kapalıysa açılmaya kalan puan. */
   remainingToUnlock: number;
-  /** Bir ödemenin puanla kapatılabilecek azami yüzdesi. */
+  /** §5 — işlem başına biriken puanın en çok yüzde kaçı kullanılabilir. */
   capPct: number;
-  /** Kazanılan puanın ömrü (gün). */
+  /** §5 — kazanılan puanın ömrü (gün). */
   expiryDays: number;
-  /** Komisyon oranı (%) — sübvansiyon tavanını hesaplamak için. */
-  commissionPct: number;
-  /** §8.4 — indirim, net komisyonun en çok yüzde kaçı olabilir. */
-  subsidyCapPct: number;
 }
 
 export interface LoyaltySummary {
@@ -698,8 +694,10 @@ export const api = {
   setCustomerSignal: (token: string, id: string, signal: 'up' | 'down') =>
     post<Appointment>(`/bookings/${id}/customer-signal`, { signal }, token),
   // §4.2/§4.4 — depozito/iade döngüsü (backend'e taşındı)
-  submitDepositReceipt: (id: string, receiptUri: string) =>
-    post<Appointment>(`/bookings/${id}/deposit-receipt`, { receiptUri }),
+  // §4.4/§5 — dekont + kullanılmak istenen puan. Ne kadar düşüleceğine SUNUCU
+  // karar veriyor; buradaki sayı yalnız bir üst sınır.
+  submitDepositReceipt: (id: string, receiptUri: string, pointsRequested = 0) =>
+    post<Appointment>(`/bookings/${id}/deposit-receipt`, { receiptUri, pointsRequested }),
   // §4.10 — iade talebi: hesap bilgisiyle admin kuyruğuna düşer.
   iadeTalep: (id: string, payoutInfo: string) =>
     post<{ ok: boolean; amount: number }>(`/bookings/${id}/refund-request`, { payoutInfo }),
@@ -1166,13 +1164,6 @@ export const api = {
       pointsPending: number;
       referrerName: string;
     }>('/referral/redeem', { code }, token),
-  // EK Z.8 — in-app Kaspi ödeme (simülasyon)
-  paymentFor: (token: string, bookingId: string) =>
-    get<PaymentIntent | null>(`/payment/mine?bookingId=${encodeURIComponent(bookingId)}`, token),
-  createPayment: (token: string, bookingId: string, pointsRequested: number) =>
-    post<PaymentIntent>('/payment', { bookingId, pointsRequested }, token),
-  confirmPayment: (token: string, id: string) =>
-    post<PaymentIntent>(`/payment/${id}/confirm`, {}, token),
 };
 
 // EK Z.8 — ödeme tipi

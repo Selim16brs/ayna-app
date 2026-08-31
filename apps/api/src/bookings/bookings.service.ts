@@ -15,11 +15,13 @@ import {
   esikGecti,
   hasConflict,
   isBookingState,
+  paymentSplit,
   KAZANILMIS_DURUMLAR,
   YAKLASAN_DURUMLAR,
   type BookingState,
 } from '@ayna/domain';
 import { grantCompletionRewards } from '../loyalty/completion-rewards';
+import { loadLedgerState, loadLoyaltyRules } from '../loyalty/loyalty.rules';
 import { loadDepositRules } from './deposit.rules';
 import { holdDeadline, loadWindows, responseDeadline } from './booking-windows';
 import { SLOT_HOLDING_STATUSES } from './slot-statuses';
@@ -80,6 +82,49 @@ const KAPANIS_DURUMLARI: readonly string[] = [
 @Injectable()
 export class BookingsService {
   private readonly log = new Logger(BookingsService.name);
+
+  /**
+   * §5 — depozitoda puan kullanımı. Gerçekten düşülen puanı döner.
+   *
+   * Sınırları SUNUCU koyuyor: kilit (bakiye ≥ 5.000), biriken puanın %25'i ve
+   * depozito tutarı. İstemcinin gönderdiği sayı hiçbir koşulda bu üçünü
+   * aşamaz — aşabilseydi müşteri kendi indirimini yazardı.
+   */
+  private async puanDus(bookingId: string, istenen: number): Promise<number> {
+    if (istenen <= 0) return 0;
+    const b = await this.prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!b?.userId) return 0;
+    const tutar = Number(b.depositAmount ?? 0);
+    if (tutar <= 0) return 0;
+    const [durum, kullanici, kurallar] = await Promise.all([
+      loadLedgerState(this.prisma, b.userId),
+      this.prisma.user.findUnique({
+        where: { id: b.userId },
+        select: { pointsUnlockedAt: true },
+      }),
+      loadLoyaltyRules(this.prisma),
+    ]);
+    const split = paymentSplit(
+      tutar,
+      istenen,
+      durum.available,
+      kullanici?.pointsUnlockedAt ?? null,
+      kurallar,
+    );
+    if (split.pointsUsed <= 0) return 0;
+    // Harcama defterE yazılıyor: bakiye defterden türetiliyor, alan
+    // güncellemesiyle değil (CLAUDE.md — finans ledger).
+    await this.prisma.loyaltyEntry.create({
+      data: {
+        userId: b.userId,
+        kind: 'spend',
+        reason: 'rewards.spend.deposit',
+        detail: bookingId,
+        points: -split.pointsUsed,
+      },
+    });
+    return split.pointsUsed;
+  }
 
   /**
    * §4.10 — iade/ödeme hakkını kuyruğa yazar.
@@ -762,7 +807,18 @@ export class BookingsService {
   }
 
   // §4.2 — kullanıcı kapora dekontunu yükler → uzman onayı bekler
-  async submitDepositReceipt(id: string, receiptUriRaw: string, actorId?: string) {
+  /**
+   * §4.4 — DEPOZİTO DEKONTU + §5 PUAN KULLANIMI.
+   *
+   * Puan kullanımı buraya taşındı. Ekran bir süredir "puanlarımı kullan"
+   * seçeneği sunuyordu ama hiçbir yer puanı DÜŞMÜYOR ve sunucuya haber
+   * VERMİYORDU: müşteri daha az para gönderiyor, bakiyesi olduğu gibi
+   * kalıyor, admin de eksik ödenmiş dekontu sahte sanıyordu.
+   *
+   * Ne kadar puan kullanıldığını SUNUCU belirliyor (§5: bakiye ≥ 5.000 ve
+   * biriken puanın en çok %25'i). İstemciden gelen sayı yalnız bir ÜST sınır.
+   */
+  async submitDepositReceipt(id: string, receiptUriRaw: string, puanIstenen = 0, actorId?: string) {
     await this.assertParty(id, actorId, 'owner');
     // Faz 2 — AYNI DEKONT İKİ KEZ KULLANILAMAZ: içerik sha256'sı benzersiz saklanır
     const hash = createHash('sha256').update(receiptUriRaw).digest('hex');
@@ -777,6 +833,7 @@ export class BookingsService {
       });
     }
     const receiptUri = (await this.storage.put(receiptUriRaw, 'receipts')) ?? receiptUriRaw;
+    const kullanilan = await this.puanDus(id, Math.max(0, Math.floor(puanIstenen)));
     // §4.4 — "Dekont yüklendiği an randevu KESINLESTI sayılır." Admin
     // doğrulaması SONRA gelir (§8 dekont kuyruğu) ve yalnız sahte dekontu
     // geri alır. Eskiden araya `deposit_submitted` + uzman onayı giriyordu:
@@ -785,6 +842,7 @@ export class BookingsService {
       status: 'kesinlesti',
       depositReceiptUri: receiptUri,
       receiptHash: hash,
+      ...(kullanilan > 0 ? { pointsUsed: kullanilan } : {}),
     });
     // §4.4 — uzmana bilgi: randevu kesinleşti (onay istenmiyor, haber veriliyor)
     void this.expertUserIdFor(id).then((uid) => {

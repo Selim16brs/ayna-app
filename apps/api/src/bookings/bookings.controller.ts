@@ -188,7 +188,12 @@ export class BookingsController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(bookingReceiptSchema)) body: BookingReceiptInput,
   ) {
-    return this.bookings.submitDepositReceipt(id, body.receiptUri, req.user!.id);
+    return this.bookings.submitDepositReceipt(
+      id,
+      body.receiptUri,
+      body.pointsRequested ?? 0,
+      req.user!.id,
+    );
   }
 
   // §4.4 — taraflar itiraz açar → admin anlaşmazlık kuyruğu

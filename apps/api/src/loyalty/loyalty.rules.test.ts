@@ -12,15 +12,14 @@ import { EXPIRY_WARN_DAYS } from './loyalty.expiry';
 const sahtePrisma = (rows: Array<{ key: string; intValue: number | null }>) =>
   ({ setting: { findMany: async () => rows } }) as never;
 
-test('K4 varsayılanları: %25 fiyat tavanı, 5.000 eşik, 90 gün, %50 sübvansiyon', () => {
+test('§5 varsayılanları: %25 tavan, 5.000 eşik, 12 ay ömür', () => {
+  // Brief §5 tablosu tek kaynak. Ömür 90 gündü; MD "Geçerlilik: 12 ay" diyor.
   assert.deepEqual(DEFAULT_LOYALTY_RULES, {
     capPct: 25,
     unlockAt: 5_000,
-    expiryDays: 90,
-    commissionPct: 10,
-    subsidyCapPct: 50,
+    expiryDays: 365,
   });
-  assert.equal(DEFAULT_EXPIRY_DAYS, 90);
+  assert.equal(DEFAULT_EXPIRY_DAYS, 365);
 });
 
 test('boş ayar tablosunda varsayılanlar geçerli', async () => {
@@ -33,17 +32,9 @@ test('admin değerleri varsayılanın yerine geçer', async () => {
       { key: 'rate.points_cap_pct', intValue: 10 },
       { key: 'rate.points_unlock_kzt', intValue: 20_000 },
       { key: 'rate.points_expiry_days', intValue: 180 },
-      { key: 'commission.rate', intValue: 12 },
-      { key: 'rate.points_subsidy_cap_pct', intValue: 40 },
     ]),
   );
-  assert.deepEqual(r, {
-    capPct: 10,
-    unlockAt: 20_000,
-    expiryDays: 180,
-    commissionPct: 12,
-    subsidyCapPct: 40,
-  });
+  assert.deepEqual(r, { capPct: 10, unlockAt: 20_000, expiryDays: 180 });
 });
 
 test('eşik 0 kabul edilir — kilidi kaldırmanın yolu', async () => {
@@ -71,7 +62,8 @@ test('expiryFrom kazanım anına gün ekler', () => {
   const t = new Date('2026-01-01T10:00:00.000Z');
   assert.equal(
     expiryFrom(t, DEFAULT_LOYALTY_RULES).toISOString(),
-    new Date('2026-04-01T10:00:00.000Z').toISOString(),
+    new Date('2027-01-01T10:00:00.000Z').toISOString(),
+    '§5 — puan 12 ay geçerli',
   );
   assert.equal(
     expiryFrom(t, { ...DEFAULT_LOYALTY_RULES, expiryDays: 1 }).toISOString(),
@@ -86,16 +78,9 @@ test('uyarı penceresi ömürden kısa olmalı — aksi hâlde her puan hep uyar
   );
 });
 
-test('komisyon oranı puan kurallarıyla AYNI anahtardan okunur', async () => {
-  // Ayrı bir anahtar tanımlansaydı, komisyon panelden değiştirilince sübvansiyon
-  // tavanı eski orandan hesaplanmaya devam ederdi — sessiz bir ayrışma.
-  const r = await loadLoyaltyRules(sahtePrisma([{ key: 'commission.rate', intValue: 8 }]));
-  assert.equal(r.commissionPct, 8);
-});
-
-test('sübvansiyon tavanı 0 olabilir — puan kullanımını tamamen kapatır', async () => {
-  const r = await loadLoyaltyRules(
-    sahtePrisma([{ key: 'rate.points_subsidy_cap_pct', intValue: 0 }]),
-  );
-  assert.equal(r.subsidyCapPct, 0);
+test('§5 — puan kullanımını sınırlayan YALNIZ İKİ kural var', () => {
+  // Kurucu: "para akışıyla ilgili birden fazla kural olamaz." Eskiden üçüncü
+  // bir sınır vardı (indirim, net komisyonun en çok %50'si) ve MD'de yoktu:
+  // ekran bir tavan, sunucu başka bir tavan hesaplıyordu.
+  assert.deepEqual(Object.keys(DEFAULT_LOYALTY_RULES).sort(), ['capPct', 'expiryDays', 'unlockAt']);
 });

@@ -67,21 +67,19 @@ export default function RewardsScreen() {
   // K4.5 — kurallar SUNUCUDAN gelir; sunucu okunmadıysa yerel yedek kullanılır.
   const spend = useStore((st) => st.pointsSpend);
   const rates = useStore((st) => st.config.rates);
-  // K4.3 fiyat tavanı ile §8.4 sübvansiyon tavanının KÜÇÜĞÜ geçerli. Ekranda
-  // %25 yazıp ödeme anında %5 uygulamak, K6'da kaldırdığımız türden bir
-  // karşılıksız vaat olurdu — gerçekte uygulanan oran gösteriliyor.
-  const priceCapPct = spend?.capPct ?? rates.pointsCapPct ?? POINTS_SPEND_CAP_PCT;
-  const commissionPct = spend?.commissionPct ?? rates.commissionPct ?? 10;
-  const subsidyCapPct = spend?.subsidyCapPct ?? rates.pointsSubsidyCapPct ?? 50;
-  const capPct = Math.min(priceCapPct, (commissionPct * subsidyCapPct) / 100);
+  // §5 — TEK tavan: "işlem başına biriken puanın en çok %25'i". Burada ikinci
+  // bir sınır (sübvansiyon tavanı) daha hesaplanıyordu; brief'te öyle bir kural
+  // yok ve iki tavanın küçüğünü göstermek ekranla sunucuyu ayrıştırıyordu.
+  const capPct = spend?.capPct ?? rates.pointsCapPct ?? POINTS_SPEND_CAP_PCT;
   const unlockAt = spend?.unlockAt ?? rates.pointsUnlockKzt ?? POINTS_UNLOCK_KZT;
   const expiryDays = spend?.expiryDays ?? rates.pointsExpiryDays ?? POINTS_EXPIRY_DAYS;
-  const earnPct = 3;
+  // §5 — kazanım hizmet bedelinin %1'i (eski %3 modeli geçersiz, brief §10).
+  const earnPct = 1;
   // Sunucu `spend` göndermiyorsa (henüz güncellenmemiş API) kilit kavramı da
   // YOKTUR — o durumda "kilitli" göstermek yanlış olur. Ödeme kararını zaten
   // sunucu veriyor; istemci yalnız gösteriyor.
   const unlocked = spend ? spend.unlocked : true;
-  const remainingToUnlock = spend?.remainingToUnlock ?? Math.max(0, unlockAt + 1 - points);
+  const remainingToUnlock = spend?.remainingToUnlock ?? Math.max(0, unlockAt - points);
   const raffleEntries = useStore((s) => s.raffleEntries);
   const tier = useStore((s) => s.tier);
   const ledger = useStore((s) => s.ledger);

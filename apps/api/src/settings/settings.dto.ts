@@ -36,7 +36,7 @@ export const RATE_DEFS = [
   // K4 — para puan modeli
   { key: 'rate.points_cap_pct', label: 'Puan harcama tavanı', suffix: '%', default: 25 },
   { key: 'rate.points_unlock_kzt', label: 'Puan kullanım eşiği', suffix: '₸', default: 5000 },
-  { key: 'rate.points_expiry_days', label: 'Puan ömrü', suffix: 'gün', default: 90 },
+  { key: 'rate.points_expiry_days', label: 'Puan ömrü', suffix: 'gün', default: 365 },
   { key: 'rate.points_earn_pct', label: 'Hizmetten geri kazanım', suffix: '%', default: 3 },
   // §8.4 — indirim, o randevunun net komisyonunun en çok yüzde kaçı olabilir
   {

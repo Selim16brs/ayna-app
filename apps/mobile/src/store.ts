@@ -140,11 +140,17 @@ function kaliciRed(err: ApiError): boolean {
   );
 }
 
+/**
+ * Eylem argümanı. Çoğu eylem tek bir değer taşıyor; dekont İKİ değer taşıyor
+ * (dekont görseli + kullanılmak istenen puan), o yüzden tip bir birleşim.
+ */
+export type BookingEylemArg = string | number | { receiptUri: string; pointsRequested: number };
+
 /** Eylemi sunucuya gönderir. Hata FIRLATIR — çağıran kuyrukta tutar. */
 export function bookingEylemGonder(
   id: string,
   eylem: BookingEylem,
-  arg?: string | number,
+  arg?: BookingEylemArg,
 ): Promise<unknown> {
   switch (eylem) {
     case 'onayla':
@@ -158,8 +164,12 @@ export function bookingEylemGonder(
       return api.proposeBooking(id, Number(arg));
     case 'karsi_oner':
       return api.counterBooking(id, Number(arg));
-    case 'dekont':
-      return api.submitDepositReceipt(id, String(arg));
+    case 'dekont': {
+      // Puan kullanımı dekontla BİRLİKTE gidiyor: ayrı bir çağrı olsaydı biri
+      // gidip diğeri gitmediğinde depozito ile düşen puan uyuşmazdı.
+      const d = typeof arg === 'object' ? arg : { receiptUri: String(arg), pointsRequested: 0 };
+      return api.submitDepositReceipt(id, d.receiptUri, d.pointsRequested);
+    }
     case 'islemi_bitirdim':
       return api.completeBookingApi(id);
     case 'odeme_yaptim':
@@ -479,7 +489,7 @@ interface State {
    * Kuyruk cihazda kalıcı: uygulama kapansa, ağ gitse bile eylem duruyor ve
    * açılışta/tazelemede yeniden gönderiliyor.
    */
-  pendingBookingActions: { id: string; eylem: BookingEylem; arg?: string | number }[];
+  pendingBookingActions: { id: string; eylem: BookingEylem; arg?: BookingEylemArg }[];
   /** Kuyruğu sunucuya boşalt (açılışta ve her tazelemede çağrılır). */
   flushBookingActions: () => Promise<void>;
   /**
@@ -491,7 +501,7 @@ interface State {
   randevuEylemi: (
     id: string,
     eylem: BookingEylem,
-    arg?: string | number,
+    arg?: BookingEylemArg,
   ) => Promise<'yazildi' | 'kuyrukta' | 'reddedildi'>;
   syncBooking: (booking: Appointment) => void;
   flushBookingSync: () => Promise<void>;
@@ -1882,7 +1892,7 @@ export const useStore = create<State>()(
        * Yereli çağıran zaten iyimser güncelledi. Buradaki iş, o güncellemenin
        * sunucuda da gerçek olmasını garanti etmek.
        */
-      randevuEylemi: async (id: string, eylem: BookingEylem, arg?: string | number) => {
+      randevuEylemi: async (id: string, eylem: BookingEylem, arg?: BookingEylemArg) => {
         try {
           await bookingEylemGonder(id, eylem, arg);
           return 'yazildi';

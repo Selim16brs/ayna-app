@@ -3,19 +3,17 @@ import type { PrismaService } from '../prisma/prisma.service';
 
 // Para puan kuralları — Karar K4. Tüm sayılar admin ayarı; kodda sabit yok.
 
+// §5 puan tablosunun ayarlanabilir üç değeri. Sübvansiyon tavanı ve komisyon
+// oranı buradan ÇIKARILDI: brief'te puan kullanımını sınırlayan iki kural var
+// (eşik ve %25), üçüncüsü yok.
 export const LOYALTY_SETTING_KEYS = [
   'rate.points_cap_pct',
   'rate.points_unlock_kzt',
   'rate.points_expiry_days',
-  // §8.4 — indirim, beklenen net komisyonun en çok yüzde kaçı olabilir.
-  'rate.points_subsidy_cap_pct',
-  // Komisyon oranı: net komisyonu hesaplamak için gerekiyor (ayrı bir anahtar
-  // tanımlamak, iki değerin sessizce ayrışmasına yol açardı).
-  'commission.rate',
 ] as const;
 
-/** K4.4 — kazanılan puanın ömrü. */
-export const DEFAULT_EXPIRY_DAYS = 90;
+/** §5 — "Geçerlilik: 12 ay". Kod bir süre 90 gün kullanıyordu. */
+export const DEFAULT_EXPIRY_DAYS = 365;
 
 export type LoyaltyRules = SpendRules & { expiryDays: number };
 
@@ -38,8 +36,6 @@ export async function loadLoyaltyRules(prisma: PrismaService): Promise<LoyaltyRu
     unlockAt: val('rate.points_unlock_kzt') ?? DEFAULT_LOYALTY_RULES.unlockAt,
     // 0 gün "anında yansın" demek olurdu; sıfır değeri sona ermeyi KAPATIR sayılır.
     expiryDays: val('rate.points_expiry_days') || DEFAULT_LOYALTY_RULES.expiryDays,
-    commissionPct: val('commission.rate') ?? DEFAULT_LOYALTY_RULES.commissionPct,
-    subsidyCapPct: val('rate.points_subsidy_cap_pct') ?? DEFAULT_LOYALTY_RULES.subsidyCapPct,
   };
 }
 

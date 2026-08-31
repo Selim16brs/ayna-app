@@ -39,7 +39,6 @@ import { CollectionsModule } from './collections/collections.module';
 import { OffersModule } from './offers/offers.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { ReferralModule } from './referral/referral.module';
-import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -84,7 +83,6 @@ import { PaymentModule } from './payment/payment.module';
     OffersModule,
     QuotesModule,
     ReferralModule,
-    PaymentModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],
 })

@@ -57,7 +57,14 @@ export const cancelSchema = z.object({ reason: z.string().max(300).optional() })
 
 // §4.2/§4.4 — dekont yükleme (kapora veya iade)
 // Dekont data URL olarak taşınır (cihazlar arası görünürlük) — 15MB gövde limiti main.ts'te
-export const bookingReceiptSchema = z.object({ receiptUri: z.string().min(1).max(12_000_000) });
+export const bookingReceiptSchema = z.object({
+  receiptUri: z.string().min(1).max(12_000_000),
+  /**
+   * §5 — depozitoda kullanılmak İSTENEN puan. Yalnız bir üst sınır: gerçekte
+   * ne kadar düşüleceğine sunucu karar veriyor (kilit, %25 tavanı, bakiye).
+   */
+  pointsRequested: z.number().int().nonnegative().max(10_000_000).optional(),
+});
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type DateLabelInput = z.infer<typeof dateLabelSchema>;
