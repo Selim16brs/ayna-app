@@ -37,8 +37,9 @@ import {
   DEPOSIT_RECEIPT_WINDOW_MS,
   DEPOSIT_RECEIPT_SHORT_MS,
   DEPOSIT_SHORT_THRESHOLD_MS,
-  REMIND_24H_MS,
-  REMIND_2H_MS,
+  REMIND_1H_MS,
+  REMIND_30M_MS,
+  REMIND_FREE_CANCEL_MS,
   RESPONSE_WINDOW_MS,
   buildUpcomingEvents,
   type CareRoutine,
@@ -1233,33 +1234,28 @@ export const useStore = create<State>()(
             const left = b.startMs - now;
             if (left <= 0) return b;
             let nb = b;
-            if (left <= REMIND_24H_MS && !b.reminded24) {
+            // §4.5 — üç aşamalı hatırlatma. Her biri BİR KEZ: bayraklar
+            // randevuda tutuluyor ve sunucu tazelemesinde korunuyor.
+            const plan = [
+              [REMIND_FREE_CANCEL_MS, 'reminded24', 'notif.free_cancel', 'notif.free_cancel_b'],
+              [REMIND_1H_MS, 'reminded2', 'notif.remind_1h', 'notif.remind_1h_b'],
+              [REMIND_30M_MS, 'reminded30', 'notif.remind_30m', 'notif.remind_30m_b'],
+            ] as const;
+            for (const [esik, bayrak, baslik, govde] of plan) {
+              if (left > esik) continue;
+              if (nb[bayrak]) continue;
               news.push({
                 id: nextId('n'),
                 type: 'booking',
-                titleKey: 'notif.remind_24',
-                bodyKey: 'notif.remind_24_b',
+                titleKey: baslik,
+                bodyKey: govde,
                 params: { pro: b.proName, slot: formatSlotTr(b.startMs) },
                 dateLabel: 'Az önce',
                 icon: 'alarm-outline',
                 read: false,
                 route: `/booking/${b.id}`,
               });
-              nb = { ...nb, reminded24: true };
-            }
-            if (left <= REMIND_2H_MS && !nb.reminded2) {
-              news.push({
-                id: nextId('n'),
-                type: 'booking',
-                titleKey: 'notif.remind_2',
-                bodyKey: 'notif.remind_2_b',
-                params: { pro: b.proName, slot: formatSlotTr(b.startMs) },
-                dateLabel: 'Az önce',
-                icon: 'alarm-outline',
-                read: false,
-                route: `/booking/${b.id}`,
-              });
-              nb = { ...nb, reminded2: true };
+              nb = { ...nb, [bayrak]: true };
             }
             return nb;
           });

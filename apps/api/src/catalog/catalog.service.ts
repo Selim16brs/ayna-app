@@ -93,7 +93,16 @@ export class CatalogService {
   }
 
   async professionals() {
-    const rows = await this.prisma.professional.findMany({ orderBy: { rating: 'desc' } });
+    // §4.7/§4.8 — GÖRÜNMEZLİK CEZASI BURADA UYGULANIYOR. Ceza `hiddenUntil`e
+    // yazılıyordu ama hiçbir yerde okunmuyordu: bayrak vardı, KAPI yoktu.
+    // Cezalı uzmanın proId'leri önce toplanıp listeden çıkarılıyor.
+    const cezali = await this.prisma.specialist.findMany({
+      where: { hiddenUntil: { gt: new Date() }, proId: { not: null } },
+      select: { proId: true },
+    });
+    const gizli = new Set(cezali.flatMap((x) => (x.proId ? [x.proId] : [])));
+    const tumRows = await this.prisma.professional.findMany({ orderBy: { rating: 'desc' } });
+    const rows = tumRows.filter((r) => !gizli.has(r.id));
     // §5.1.4-8 — liste eksik alanları: konum (harita), fiyat aralığı üstü, premium rozeti.
     // Sahip eşleşmesi iki toplu sorguyla (N+1 yok): Specialist.proId + Business.professionalId.
     const ids = rows.map((r) => r.id);

@@ -711,6 +711,9 @@ export const api = {
   // §4.10 — iade talebi: hesap bilgisiyle admin kuyruğuna düşer.
   iadeTalep: (id: string, payoutInfo: string) =>
     post<{ ok: boolean; amount: number }>(`/bookings/${id}/refund-request`, { payoutInfo }),
+  // §4.6 — erteleme: yeni slot uzmana Kabul/Red talebi olarak gider.
+  rescheduleBooking: (id: string, startMs: number) =>
+    post<Appointment>(`/bookings/${id}/reschedule`, { startMs }),
   freeCancelBooking: (id: string, reason?: string) =>
     post<Appointment>(`/bookings/${id}/free-cancel`, reason ? { reason } : {}),
   uploadRefundReceiptApi: (id: string, receiptUri: string) =>

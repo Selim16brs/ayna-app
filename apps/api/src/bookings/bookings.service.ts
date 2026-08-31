@@ -11,6 +11,7 @@ import {
   canTransition,
   commissionFor,
   depositFor,
+  esikGecti,
   hasConflict,
   isBookingState,
 } from '@ayna/domain';
@@ -54,6 +55,10 @@ function deriveInDays(startMs?: number | null): number {
   if (!startMs) return 0;
   return Math.max(0, Math.round((startMs - Date.now()) / 86_400_000));
 }
+
+// §4.7 — uzmanın aylık ücretsiz iptal hakkı ve görünmezlik cezası süresi.
+const AYLIK_UCRETSIZ_IPTAL = 3;
+const GORUNMEZLIK_MS = 7 * 24 * 60 * 60 * 1000;
 
 @Injectable()
 export class BookingsService {
@@ -369,14 +374,26 @@ export class BookingsService {
     if (!b)
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     const outcome = cancelOutcome(b.status, b.startAt?.getTime() ?? null, Date.now());
+    // §4.7 — UZMAN İPTALİ ayrı bir durum: müşteri iptali değil.
+    const uzmanIptali = rol === 'provider';
     const row = await this.transition(id, {
-      status: outcome.status,
+      status: uzmanIptali ? 'iptal_uzman' : outcome.status,
       cancelReason: reason ?? null,
       cancelledBy: rol,
       ...(outcome.forfeit ? { depositForfeited: true } : {}),
     });
     // §keşif Modül 2 — kampanya randevusu iptal → kota iadesi
     if (b.offerId) void this.offers.refundQuota(b.offerId);
+
+    if (uzmanIptali) {
+      // §4.7 — uzman iptalinde depozito HER ZAMAN müşteriye iade edilir;
+      // "3 saatten az kala" durumunda ayrıca no-show muamelesi görür.
+      await this.uzmanIptalCezasi(b, Date.now());
+    } else if (!outcome.forfeit && b.depositAmount) {
+      // Müşteri eşikten ÖNCE iptal etti → iade hakkı doğdu. Talep §4.10
+      // kuyruğundan yürüyecek; burada kayıt AÇILMIYOR çünkü müşteriden hesap
+      // bilgisi alınması gerekiyor (ekran o bilgiyi topluyor).
+    }
     // §A1 — slot boşaldı: aynı uzmanın bekleme listesindekilere haber ver
     this.notifyParties(
       id,
@@ -384,6 +401,62 @@ export class BookingsService {
       reason ? `Sebep: ${reason}` : 'Detay için randevuya dokun',
     );
     return row;
+  }
+
+  /**
+   * Brief §4.7 — UZMAN İPTALİ CEZALARI.
+   *
+   * | ne zaman            | sonuç                                           |
+   * |---------------------|-------------------------------------------------|
+   * | 3 saatten fazla var | depozito iade; AYDA 3 KEZ ücretsiz.             |
+   * |                     | Aynı ay 4. iptal → 1 hafta görünmezlik          |
+   * | 3 saatten az kala   | NO-SHOW ile aynı: iade + 1 hafta görünmezlik    |
+   * |                     | (aylık 3 hakka SAYILMAZ)                        |
+   *
+   * Sayaç AY BAZLI ve hangi aya ait olduğu saklanıyor: ay değişince sıfırlanması
+   * gerekiyor ama "her ay 1'inde toplu sıfırla" diye bir iş kurmak, o iş
+   * çalışmadığında cezaları sessizce dondururdu. Ay etiketi karşılaştırılıyor.
+   */
+  private async uzmanIptalCezasi(
+    b: {
+      id: string;
+      proId: string | null;
+      userId: string | null;
+      startAt: Date | null;
+      depositAmount: unknown;
+    },
+    nowMs: number,
+  ) {
+    // Depozito HER İKİ durumda da müşteriye iade edilir.
+    const tutar = Number(b.depositAmount ?? 0);
+    if (b.userId && tutar > 0) {
+      await this.prisma.refundRequest
+        .create({
+          data: { bookingId: b.id, payeeUserId: b.userId, kind: 'musteri_iade', amount: tutar },
+        })
+        .catch(() => undefined);
+    }
+    if (!b.proId) return;
+    const sp = await this.prisma.specialist.findFirst({ where: { proId: b.proId } });
+    if (!sp) return;
+
+    const gecIptal = b.startAt != null && esikGecti(b.startAt.getTime(), nowMs);
+    const ay = new Date(nowMs).toISOString().slice(0, 7); // "2026-08"
+    // Ay değiştiyse sayaç sıfırdan başlar.
+    const sayac = sp.cancelCountMonth === ay ? sp.cancelCount : 0;
+
+    // Geç iptal aylık hakka SAYILMAZ (§4.7) — doğrudan cezalı.
+    const yeniSayac = gecIptal ? sayac : sayac + 1;
+    const cezaGerek = gecIptal || yeniSayac > AYLIK_UCRETSIZ_IPTAL;
+
+    const veri: Record<string, unknown> = { cancelCount: yeniSayac, cancelCountMonth: ay };
+    if (cezaGerek) {
+      // Zaten cezalıysa süre UZATILIR, sıfırlanmaz.
+      const bas =
+        sp.hiddenUntil && sp.hiddenUntil.getTime() > nowMs ? sp.hiddenUntil : new Date(nowMs);
+      veri.hiddenUntil = new Date(bas.getTime() + GORUNMEZLIK_MS);
+    }
+    await this.prisma.specialist.update({ where: { id: sp.id }, data: veri });
   }
 
   // §6.C — uzman/işletme randevuyu "gelmedi" işaretler (CRM tarafı).
@@ -828,7 +901,7 @@ export class BookingsService {
         const bas = sp.hiddenUntil && sp.hiddenUntil > now ? sp.hiddenUntil : now;
         await this.prisma.specialist.update({
           where: { id: sp.id },
-          data: { hiddenUntil: new Date(bas.getTime() + 7 * 24 * 60 * 60 * 1000) },
+          data: { hiddenUntil: new Date(bas.getTime() + GORUNMEZLIK_MS) },
         });
       }
     }

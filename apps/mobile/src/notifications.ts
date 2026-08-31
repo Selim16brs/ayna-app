@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from './api';
 import type { Appointment } from './data';
-import { REMIND_24H_MS, REMIND_2H_MS } from './data';
+import { REMIND_1H_MS, REMIND_30M_MS, REMIND_FREE_CANCEL_MS } from './data';
 import { formatSlotTr } from './datetime';
 import { fillParams } from './locale';
 
@@ -122,8 +122,10 @@ async function senkronEt(bookings: Appointment[], t: Tr): Promise<void> {
     for (const b of bookings) {
       if (b.status !== 'kesinlesti') continue;
       const plan: [tag: string, offset: number, titleKey: MessageKey, bodyKey: MessageKey][] = [
-        ['24', REMIND_24H_MS, 'notif.remind_24', 'notif.remind_24_b'],
-        ['2', REMIND_2H_MS, 'notif.remind_2', 'notif.remind_2_b'],
+        // §4.5 sırası: ücretsiz iptal uyarısı → 1 saat → 30 dakika.
+        ['iptal', REMIND_FREE_CANCEL_MS, 'notif.free_cancel', 'notif.free_cancel_b'],
+        ['1s', REMIND_1H_MS, 'notif.remind_1h', 'notif.remind_1h_b'],
+        ['30d', REMIND_30M_MS, 'notif.remind_30m', 'notif.remind_30m_b'],
       ];
       for (const [tag, offset, titleKey, bodyKey] of plan) {
         const fireAt = b.startMs - offset;

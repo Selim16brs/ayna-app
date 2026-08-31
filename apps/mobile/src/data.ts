@@ -897,8 +897,19 @@ export const DEPOSIT_RECEIPT_WINDOW_MS = 3 * 60 * 60_000;
 export const DEPOSIT_RECEIPT_SHORT_MS = 1 * 60 * 60_000;
 export const DEPOSIT_SHORT_THRESHOLD_MS = 6 * 60 * 60_000;
 // §4.1 adım 6 — randevu hatırlatma pencereleri (24 saat + 2 saat önce). Parametrik.
-export const REMIND_24H_MS = 24 * 60 * 60_000;
-export const REMIND_2H_MS = 2 * 60 * 60_000;
+// Brief §4.5 — BEKLEME DÖNEMİ BİLDİRİMLERİ. Kesinleşen randevudan hizmet
+// saatine kadar etkileşim yalnız bunlarla:
+//   1. Ücretsiz iptal uyarısı — 3 saat eşiğinden ÖNCE (4 saat kala).
+//   2. 1 saat kala hatırlatma (iki tarafa).
+//   3. 30 dakika kala hatırlatma (iki tarafa).
+//
+// Eskiden 24 saat ve 2 saat kala hatırlatılıyordu. 24 saat, aynı gün alınan
+// randevularda hiç tetiklenmiyordu; 2 saat ise 3 saatlik iptal eşiğinin
+// ARDINDA kalıyordu, yani "ücretsiz iptal hakkın bitiyor" uyarısı iş işten
+// geçtikten sonra gidiyordu.
+export const REMIND_FREE_CANCEL_MS = 4 * 60 * 60_000;
+export const REMIND_1H_MS = 60 * 60_000;
+export const REMIND_30M_MS = 30 * 60_000;
 // §4.1.3 — uzman yanıt penceresi: bu süre içinde yanıtlanmayan talep otomatik düşer. Parametrik.
 export const RESPONSE_WINDOW_MS = 6 * 60 * 60_000;
 
@@ -930,7 +941,8 @@ export interface Appointment {
   responseDeadline?: number; // §4.1.3 — uzman yanıt son anı (UTC ms); geçilirse talep düşer
   respondedAt?: number; // §9.2 — uzmanın yanıt verdiği an (UTC ms); ortalama yanıt süresi metriği
   reminded24?: boolean; // §4.1 — 24 saat hatırlatması gönderildi
-  reminded2?: boolean; // §4.1 — 2 saat hatırlatması gönderildi
+  reminded2?: boolean; // §4.5 — 1 saat hatırlatması gönderildi
+  reminded30?: boolean; // §4.5 — 30 dakika hatırlatması gönderildi
   reassignedFrom?: string; // §4.5 — ayrılan uzmanın adı (yeni uzman uzmanName'de)
   providerSignal?: 'up' | 'down'; // §7.3 — uzmanın kullanıcıya GİZLİ sinyali (kamuya kapalı)
   customerTrusted?: boolean; // §7.3 — POZİTİF rozet: yüksek tamamlanma oranlı "Güvenilir müşteri" (negatif asla)
