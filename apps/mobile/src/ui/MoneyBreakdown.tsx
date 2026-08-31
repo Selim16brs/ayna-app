@@ -20,11 +20,21 @@ export function MoneyBreakdown({
   price,
   deposit,
   format,
+  forProvider = false,
 }: {
   price: number;
   /** Beklenen kapora (₸). Yoksa kart yalnız hizmet fiyatını gösterir. */
   deposit?: number;
   format: (n: number) => string;
+  /**
+   * Karta UZMAN/SALON bakıyor.
+   *
+   * Puan satırı MÜŞTERİNİN kazanımı. Uzmana "Hizmetten sonra kazanacaksın
+   * +930" yazmak iki kez yanlıştı: uzman o puanı kazanmıyor (sadakat puanı
+   * müşteriye yatıyor) ve satır müşterinin hesabına dair bir bilgi —
+   * uzmanın görmesi gereken bir şey değil.
+   */
+  forProvider?: boolean;
 }) {
   const { t } = useLocale();
   const { colors } = useTheme();
@@ -85,7 +95,7 @@ export function MoneyBreakdown({
         </>
       ) : null}
 
-      {kazanilacak > 0 ? (
+      {kazanilacak > 0 && !forProvider ? (
         <>
           <View style={styles.sep} />
           <View style={styles.row}>

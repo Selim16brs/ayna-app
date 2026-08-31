@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Delete, Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { type AuthedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -58,5 +58,12 @@ export class QuotesController {
     @Body(new ZodValidationPipe(selectQuoteSchema)) body: SelectQuoteInput,
   ) {
     return this.quotes.select(id, req.user!.id, body);
+  }
+
+  // Talebi kaldır — sahibi kendi talebini siler. Böyle bir uç yoktu: ölü
+  // talepler listede sonsuza kadar asılı kalıyordu.
+  @Delete(':id')
+  remove(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.quotes.remove(id, req.user!.id);
   }
 }

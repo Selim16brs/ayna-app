@@ -1497,6 +1497,8 @@ export interface DemandRequest {
   status: DemandStatus;
   offers: DemandOffer[];
   bookedOfferId?: string;
+  /** Randevuya dönüşmüşse randevu kimliği. Sunucu kaldırma kapısı da bunu kullanıyor. */
+  bookingId?: string;
   // §7.3 — POZİTİF rozet: yüksek tamamlanma oranındaki kullanıcı "Güvenilir müşteri" (var/yok).
   // Negatif sinyal ASLA gösterilmez; kullanıcı puanı uzmana açılmaz.
   trusted?: boolean;

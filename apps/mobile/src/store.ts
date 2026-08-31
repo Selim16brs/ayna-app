@@ -321,6 +321,8 @@ interface State {
     preferredSlots?: number[];
   }) => Promise<string | null>; // → talep id (backend) | null = hata
   hydrateDemands: () => Promise<void>; // taleplerim + gelen teklifleri buluttan çek
+  /** Talebi kaldır. Ölü talepler listede asılı kalıyordu; kaldırma yolu yoktu. */
+  removeDemand: (id: string) => Promise<boolean>;
   selectOffer: (demandId: string, offerId: string, slotMs: number) => Promise<string | null>; // → booking id
   expireDemands: () => void; // süresi dolan talepleri işaretle
   addRecentSearch: (q: string) => void; // §5.1.2 — son aramaya ekle (dedup, en fazla 8)
@@ -526,13 +528,24 @@ export const useStore = create<State>()(
         features: { removebg: false, openai: false, sms: false },
       },
       loadContent: async () => {
+        // AÇILIŞ SÜRESİ: bu fonksiyon eskiden DÖRT TUR ağ yapıyordu — önce
+        // makale/tema/config grubu, sonra sırayla W2W gönderileri, /me ve
+        // duyurular. Her tur ayrı bir gidiş-dönüş; sunucu Amsterdam'da,
+        // kullanıcılar Kazakistan'da, yani tur başına ~1,5 sn. Dördü üst üste
+        // binince açılış saniyeler sürüyordu.
+        //
+        // Hepsi TEK TURDA gidiyor artık. `allSettled` şart: biri düşerse
+        // (ör. tema yok) diğerleri düşmemeli — sıralı hâlde zaten her blok
+        // kendi try/catch'indeydi, o izolasyon korunuyor.
+        const tokenNow = get().token;
+        const [rowsR, themeR, cfgR, postsR, annsR] = await Promise.allSettled([
+          api.contentArticles(),
+          api.contentTheme(),
+          api.appConfig(),
+          api.circlePosts(tokenNow ?? undefined),
+          tokenNow ? api.announcements(tokenNow, getCurrentLocale()) : Promise.resolve(null),
+        ]);
         try {
-          // allSettled: tek ucun hatası (ör. tema yok) makale+config'i DÜŞÜRMEZ
-          const [rowsR, themeR, cfgR] = await Promise.allSettled([
-            api.contentArticles(),
-            api.contentTheme(),
-            api.appConfig(),
-          ]);
           const rows = rowsR.status === 'fulfilled' ? rowsR.value : null;
           const theme = themeR.status === 'fulfilled' ? themeR.value : null;
           const cfg = cfgR.status === 'fulfilled' ? cfgR.value : null;
@@ -546,7 +559,8 @@ export const useStore = create<State>()(
         }
         // §5.5 — backend'de yayınlanmış W2W gönderilerini akışa ekle (additive; yereli silmez)
         try {
-          const backendPosts = await api.circlePosts(get().token ?? undefined);
+          if (postsR.status === 'rejected') throw postsR.reason;
+          const backendPosts = postsR.value;
           set((s) => {
             const have = new Set(s.circlePosts.map((p) => p.id));
             // Kaydetme durumu SUNUCUDAN gelir ve BİLİNEN gönderilerde de
@@ -587,31 +601,13 @@ export const useStore = create<State>()(
         // §12.10 — segmentine uyan toplu duyuruları bildirim listesine ekle (girişliyse)
         const token = get().token;
         if (!token) return;
-        // §12.3 — kısıt durumunu tazele (admin ceza uygularsa re-login gerekmesin)
+        // §12.3 — kısıt durumu ve üyelik katmanı ARTIK BURADA ÇEKİLMİYOR:
+        // `refreshMembership` zaten aynı `/me` ucunu çağırıyordu ve açılışta
+        // İKİ ÖZDEŞ istek gidiyordu. Alanlar oraya taşındı.
         try {
-          const me = await api.me(token);
-          // §11 — üyelik katmanını backend'den senkronla (admin onayı sonrası premium/platinum açılır)
-          const tier = me.membershipTier ?? 'free';
-          set((s) =>
-            s.currentUser
-              ? {
-                  currentUser: {
-                    ...s.currentUser,
-                    restricted: me.restricted,
-                    restrictedDaysLeft: me.restrictedDaysLeft,
-                    membershipTier: tier,
-                    membershipUntil: me.membershipUntil ?? null,
-                  },
-                  premium: tier === 'premium' || tier === 'platinum',
-                  platinum: tier === 'platinum',
-                }
-              : {},
-          );
-        } catch {
-          // /me erişilemezse mevcut currentUser korunur
-        }
-        try {
-          const anns = await api.announcements(token, getCurrentLocale()); // §14.5 — kullanıcı dilinde
+          // §14.5 — kullanıcı dilinde. Yukarıdaki tek turda çekildi.
+          if (annsR.status === 'rejected') throw annsR.reason;
+          const anns = annsR.value ?? [];
           set((s) => {
             const have = new Set(s.notifications.map((n) => n.id));
             const fresh: AppNotification[] = anns
@@ -2511,7 +2507,19 @@ export const useStore = create<State>()(
           if (!serverCutout && nextCutout)
             void api.setCutoutRemote(token, nextCutout).catch(() => undefined);
           set((s) => ({
-            currentUser: s.currentUser ? { ...s.currentUser, membershipTier: tier } : s.currentUser,
+            currentUser: s.currentUser
+              ? {
+                  ...s.currentUser,
+                  membershipTier: tier,
+                  // §12.3 — KISIT DURUMU buraya taşındı. Eskiden `loadContent`
+                  // AYNI `/me` çağrısını ikinci kez yapıp bunları yazıyordu:
+                  // açılışta iki özdeş istek gidiyordu. Alanlar buraya alındı
+                  // ki tek çağrı yetsin — davranış aynı, istek yarıya indi.
+                  restricted: me.restricted,
+                  restrictedDaysLeft: me.restrictedDaysLeft,
+                  membershipUntil: me.membershipUntil ?? null,
+                }
+              : s.currentUser,
             premium: tier === 'premium' || tier === 'platinum',
             platinum: tier === 'platinum',
             avatarUri: nextAvatar,
@@ -2629,6 +2637,23 @@ export const useStore = create<State>()(
         set((s) => ({
           notifications: s.notifications.map((x) => (x.id === id ? { ...x, read: true } : x)),
         })),
+
+      removeDemand: async (id) => {
+        const onceki = get().demands;
+        // Optimistik: liste anında temizlensin.
+        set((s) => ({ demands: s.demands.filter((d) => d.id !== id) }));
+        const token = get().token;
+        if (!token) return true;
+        try {
+          await api.removeDemand(token, id);
+          return true;
+        } catch {
+          // Sunucu reddettiyse (ör. randevuya dönüşmüş) GERİ AL — kullanıcı
+          // sildiğini sanıp sonraki açılışta geri gelmesini görmemeli.
+          set({ demands: onceki });
+          return false;
+        }
+      },
 
       hydratePrefs: async () => {
         const token = get().token;

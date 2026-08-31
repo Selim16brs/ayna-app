@@ -381,6 +381,7 @@ export default function BookingDetailScreen() {
             price={booking.price}
             deposit={booking.depositAmount}
             format={formatPrice}
+            forProvider={isProvider}
           />
         )}
 
