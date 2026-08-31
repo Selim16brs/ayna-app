@@ -34,13 +34,66 @@ test('müşteriye YALNIZ gerçekten uygulanan avantajlar sunuluyor', () => {
   assert.ok(m[0].includes('premium.c.boni'), 'Boni listede yok');
   assert.ok(m[0].includes('premium.c.cutout'), 'cut-out foto listede yok');
 
-  // Bu ikisinin YOK. Pasaport ekranı ikisini de sayıyor ama destek modülü
-  // paketi hiç okumuyor ve "görünürlük" yalnız duyuru segmenti — müşteriyi
-  // öne çıkarmıyor, ona duyuru gönderiyor. Para alınan ekranda verilmeyen
-  // şey listelenmez (dosyanın kendi K6 kuralı).
-  for (const yasak of ['support', 'visibility']) {
-    assert.ok(!m[0].includes(yasak), `uygulanmayan avantaj listelenmiş: ${yasak}`);
-  }
+  // Bu ikisi bir SÜRE listeden ÇIKARILMIŞTI: destek modülü paketi hiç
+  // okumuyordu ve "görünürlük" yalnız duyuru segmentiydi — müşteriyi öne
+  // çıkarmıyor, ona duyuru gönderiyordu. Para alınan ekranda verilmeyen şey
+  // listelenmez (K6). Artık GERÇEKTEN uygulanıyorlar, o yüzden geri kondular.
+  //
+  // Kural değişmedi, gerçek değişti: aşağıdaki iki test uygulamanın hâlâ
+  // yerinde olduğunu denetliyor. Biri kalkarsa liste yine yalan söyler.
+  assert.ok(m[0].includes('premium.c.priority'), 'talep önceliği listede yok');
+  assert.ok(m[0].includes('premium.c.support'), 'öncelikli destek listede yok');
+});
+
+test('talep önceliği GERÇEKTEN uygulanıyor', () => {
+  const q = readFileSync(
+    join(import.meta.dirname, '..', '..', 'api', 'src', 'quotes', 'quotes.service.ts'),
+    'utf8',
+  );
+  const m = /async openForExpert\([\s\S]*?\n {2}\}/.exec(q);
+  assert.ok(m, 'openForExpert yok');
+  assert.match(m[0], /membershipTier: \{ in: \['premium', 'platinum'\] \}/, 'kademe okunmuyor');
+  // Süresi dolmuş üyelik öne çıkmamalı.
+  assert.match(m[0], /membershipUntil: \{ gt: new Date\(\) \}/, 'üyelik süresi kontrol edilmiyor');
+  // Bayrağın varlığı yetmez, SIRALAMA yapılmalı.
+  assert.match(
+    m[0],
+    /\.sort\(\(a, b\) => Number\(b\.priority\) - Number\(a\.priority\)\)/,
+    'sıralama yok',
+  );
+  // Gizlilik: havuz görünümünde talep sahibinin kimliği ZATEN yok; öncelik
+  // bayrağı da kim olduğunu ele vermemeli.
+  assert.doesNotMatch(m[0], /customerName|userName/, 'havuzda müşteri kimliği sızıyor');
+});
+
+test('öncelikli destek GERÇEKTEN uygulanıyor', () => {
+  const sup = readFileSync(
+    join(import.meta.dirname, '..', '..', 'api', 'src', 'support', 'support.service.ts'),
+    'utf8',
+  );
+  const m = /async list\([\s\S]*?\n {2}\}/.exec(sup);
+  assert.ok(m, 'list yok');
+  assert.match(
+    m[0],
+    /membershipTier === 'premium' \|\| .*membershipTier === 'platinum'/,
+    'kademe okunmuyor',
+  );
+  assert.match(m[0], /membershipUntil/, 'üyelik süresi kontrol edilmiyor');
+  assert.match(
+    m[0],
+    /\.sort\(\(a, b\) => Number\(b\.priority\) - Number\(a\.priority\)\)/,
+    'sıralama yok',
+  );
+  // Yönetici NEDEN başta olduğunu görebilmeli, yoksa sırayı bozar.
+  const panel = readFileSync(
+    join(import.meta.dirname, '..', '..', 'web-admin', 'app', 'page.tsx'),
+    'utf8',
+  );
+  assert.match(
+    panel,
+    /t\.priority \? <span className="pill accent">Öncelikli/,
+    'panelde işaret yok',
+  );
 });
 
 test('Boni gerçekten sunucuda paket istiyor', () => {

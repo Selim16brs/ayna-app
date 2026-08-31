@@ -28,6 +28,10 @@ export const tr = {
   'premium.c.cutout': 'Cut-out profil fotoğrafı',
   'premium.c.cutout_d':
     'Fotoğrafının arka planı temizlenir; profilin AYNA’nın imza görünümünü alır.',
+  'premium.c.priority': 'Taleplerin önce görünür',
+  'premium.c.priority_d': 'Teklif isteğin uzmanların listesinde en üstte çıkar — daha hızlı yanıt.',
+  'premium.c.support': 'Öncelikli destek',
+  'premium.c.support_d': 'Destek talebin kuyruğun başına geçer.',
   'premium.section': 'Premium ile neler kazanırsın',
   'premium.b.featured': 'Öne Çıkanlar’da görün',
   'premium.b.featured_d': 'Keşfet ana sayfasında öne çıkarma adaylığı',
@@ -2061,8 +2065,8 @@ export const tr = {
   'passport.premium.cancel_confirm': 'Premium üyeliğin iptal edilsin mi?',
   'passport.perk.boni': 'Boni — AI güzellik danışmanı',
   'passport.perk.cutout': 'Cut-out profil fotoğrafı (ayda 1 değişim)',
-  'passport.perk.visibility': 'Öne çıkan görünürlük ve avantajlar',
-  'passport.perk.support': 'Öncelikli destek',
+  'passport.perk.visibility': 'Taleplerin uzmanlara önce görünür',
+  'passport.perk.support': 'Öncelikli destek — talebin sıranın başında',
 
   // Profil — Bütçe
   'budget.title': 'Bütçe',

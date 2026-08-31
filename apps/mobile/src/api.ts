@@ -722,7 +722,12 @@ export const api = {
     },
   ) => post<DemandRequest>('/quote-requests', input, token),
   openQuoteRequests: (token: string) =>
-    get<(DemandRequest & { myQuoteId: string | null })[]>('/quote-requests/open', token),
+    get<(DemandRequest & { myQuoteId: string | null; priority: boolean })[]>(
+      // §11 — `priority`: talep sahibi Premium/Platinum. Sunucu bunları listenin
+      // başına koyuyor; uzman NEDEN başta olduğunu görebilsin diye bayrak da geliyor.
+      '/quote-requests/open',
+      token,
+    ),
   myQuoteRequests: (token: string) => get<DemandRequest[]>('/quote-requests/mine', token),
   submitQuote: (
     token: string,

@@ -648,6 +648,10 @@ function SupportView() {
               <div className="grow">
                 <div className="name">
                   {t.userName}{' '}
+                  {/* §11 — ÖNCELİKLİ DESTEK. Sıralama sunucuda yapılıyor ama
+                      görünür bir işaret olmazsa yönetici neden bu talebin
+                      başta olduğunu anlamaz ve sırayı bozabilir. */}
+                  {t.priority ? <span className="pill accent">Öncelikli</span> : null}{' '}
                   <span className={`pill ${t.topic === 'safety' ? 'danger' : 'info'}`}>
                     {KONU[t.topic] ?? t.topic}
                   </span>

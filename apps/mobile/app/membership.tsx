@@ -50,6 +50,12 @@ const PLATINUM_BENEFITS: { icon: IoniconName; title: MessageKey; desc: MessageKe
 const CUSTOMER_BENEFITS: { icon: IoniconName; title: MessageKey; desc: MessageKey }[] = [
   { icon: 'sparkles', title: 'premium.c.boni', desc: 'premium.c.boni_d' },
   { icon: 'person-circle', title: 'premium.c.cutout', desc: 'premium.c.cutout_d' },
+  // Bu ikisi listeden ÇIKARILMIŞTI çünkü karşılıkları yoktu: destek modülü
+  // paketi hiç okumuyordu ve "görünürlük" yalnız duyuru segmentiydi. Artık
+  // gerçekten uygulanıyorlar (talep havuzunda öne çıkma + destek kuyruğunda
+  // öncelik), o yüzden geri kondular.
+  { icon: 'flash', title: 'premium.c.priority', desc: 'premium.c.priority_d' },
+  { icon: 'headset', title: 'premium.c.support', desc: 'premium.c.support_d' },
 ];
 
 export default function SellerPremiumScreen() {
