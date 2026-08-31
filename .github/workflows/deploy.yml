@@ -103,11 +103,12 @@ jobs:
             const { execSync } = require("child_process");
             const ozet = execSync("git log -1 --pretty=%s").toString().trim();
             const sha = execSync("git rev-parse --short HEAD").toString().trim();
-            const tarih = execSync("git log -1 --date=format:%d.%m %H:%M --pretty=%ad")
-              .toString().trim();
+            // TARİH BURADA ÜRETİLMİYOR: ekran zaten `Updates.createdAt`i
+            // kullanıcının SAAT DİLİMİNDE gösteriyor. Buradan yazılsa koşucunun
+            // UTC saati gömülür ve kurucu yanlış saat görür.
             require("fs").writeFileSync(
               "apps/mobile/src/surum-bilgi.json",
-              JSON.stringify({ sha, ozet, tarih }, null, 2) + "\n",
+              JSON.stringify({ sha, ozet }, null, 2) + "\n",
             );
             console.log(sha, "·", ozet);
           '
