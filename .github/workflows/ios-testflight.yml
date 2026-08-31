@@ -1,0 +1,199 @@
+# iOS YAPISI → TESTFLIGHT (Expo bulutu KULLANILMAZ)
+#
+# Kurucunun kararı (31.08.2026): "ikisi de olsun" —
+#   · Günlük JS düzeltmeleri  → `deploy.yml` (OTA, main'e merge ile otomatik)
+#   · Native değişiklikler    → BU hat (Xcode, elle tetiklenir)
+#
+# Neden ayrı bir hat: native değişiklikler (app.json izinleri/infoPlist,
+# eklenti listesi, bağımlılık ekleme, ikon, bundle kimliği) OTA ile GİTMEZ.
+# Yeni binary şart. Bu iş akışı onu GitHub'ın macOS makinesinde üretir ve
+# App Store Connect'e yükler; TestFlight'a oradan düşer.
+#
+# EXPO'NUN BULUTU DEVREDE DEĞİL: `expo prebuild` yalnız yerel olarak Xcode
+# projesini üretir; derleme ve yükleme tamamen bu makinede olur.
+#
+# ELLE TETİKLENİR. Otomatik değil, çünkü macOS dakikaları normalin 10 katı
+# ücretlendirilir ve her merge'de TestFlight'ı sürümle doldurmak anlamsız.
+
+name: iOS TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: 'Yapı numarası (boş bırakılırsa app.json’daki kullanılır). App Store Connect’e yüklenmiş SON numaradan büyük olmalı.'
+        required: false
+        default: ''
+
+jobs:
+  yapi:
+    name: Derle ve TestFlight'a yükle
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Sırlar eksikse ERKEN ve AÇIK düş ────────────────────────────────
+      # 40 dakikalık bir derlemenin sonunda "kimlik bilgisi yok" demek,
+      # hem zaman hem macOS dakikası yakar.
+      - name: Gerekli sırlar tanımlı mı
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          IOS_DIST_CERT_P12: ${{ secrets.IOS_DIST_CERT_P12 }}
+          IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          eksik=""
+          for d in IOS_TEAM_ID IOS_BUNDLE_ID IOS_DIST_CERT_P12 IOS_DIST_CERT_PASSWORD \
+                   IOS_PROVISIONING_PROFILE ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8; do
+            [ -z "${!d:-}" ] && eksik="$eksik $d"
+          done
+          if [ -n "$eksik" ]; then
+            echo "::error::Şu sırlar tanımlı değil:$eksik"
+            echo "Ayarlar → Secrets and variables → Actions. Ayrıntı: docs/ios-testflight-kurulum.md"
+            exit 1
+          fi
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # `packages/domain` ve `packages/i18n` DERLENMİŞ çıktıdan okunuyor.
+      # Derlemeden paketlemek eski dist'i binary'ye gömer (sessiz yanlış sürüm).
+      - run: pnpm build
+
+      # ── Kimlik: bundle + ekip + yapı numarası ───────────────────────────
+      # Bunlar repoda TUTULMUYOR: TestFlight uygulaması başkasının Apple
+      # hesabında kayıtlı ve bundle kimliği onun ad alanı. Sır olarak gelir,
+      # burada geçici olarak app.json'a yazılır, commit EDİLMEZ.
+      - name: app.json kimliğini ayarla
+        env:
+          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          GIRILEN_BUILD: ${{ inputs.build_number }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const yol = "apps/mobile/app.json";
+            const j = JSON.parse(fs.readFileSync(yol, "utf8"));
+            j.expo.ios = j.expo.ios || {};
+            j.expo.ios.bundleIdentifier = process.env.IOS_BUNDLE_ID;
+            j.expo.ios.appleTeamId = process.env.IOS_TEAM_ID;
+            if (process.env.GIRILEN_BUILD) j.expo.ios.buildNumber = process.env.GIRILEN_BUILD;
+            fs.writeFileSync(yol, JSON.stringify(j, null, 2) + "\n");
+            console.log("bundle:", j.expo.ios.bundleIdentifier, "· yapı:", j.expo.ios.buildNumber);
+          '
+
+      - name: Xcode projesini üret
+        working-directory: apps/mobile
+        # --clean ŞART: eski ios/ klasörü dururken app.json'daki yeni izinler
+        # (infoPlist) ve eklentiler işlenmez — sessizce eski yapılandırmayla
+        # derlenir. Bugünkü konum izni açıklamalarının kaybolma sebebi tam buydu.
+        run: npx expo prebuild --platform ios --clean
+
+      # ── İmzalama ────────────────────────────────────────────────────────
+      - name: Sertifika ve profili kur
+        env:
+          CERT_P12: ${{ secrets.IOS_DIST_CERT_P12 }}
+          CERT_PWD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+          PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+        run: |
+          set -euo pipefail
+          ANAHTARLIK_PAROLA="$(uuidgen)"
+          ANAHTARLIK="$RUNNER_TEMP/build.keychain-db"
+
+          security create-keychain -p "$ANAHTARLIK_PAROLA" "$ANAHTARLIK"
+          security set-keychain-settings -lut 3600 "$ANAHTARLIK"
+          security unlock-keychain -p "$ANAHTARLIK_PAROLA" "$ANAHTARLIK"
+          # Varsayılan listeye EKLE (mevcutları ezme, sistem anahtarlığı lazım).
+          security list-keychains -d user -s "$ANAHTARLIK" $(security list-keychains -d user | tr -d '"')
+
+          echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$ANAHTARLIK" -P "$CERT_PWD" \
+            -T /usr/bin/codesign -T /usr/bin/security
+          # Bu satır olmadan codesign her imzada parola sorar ve iş asılı kalır.
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$ANAHTARLIK_PAROLA" "$ANAHTARLIK" >/dev/null
+
+          PROFIL_DIZIN="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFIL_DIZIN"
+          echo "$PROFILE" | base64 --decode > "$RUNNER_TEMP/dagitim.mobileprovision"
+          # Profil UUID adıyla kopyalanmalı; Xcode dosyayı UUID'den bulur.
+          security cms -D -i "$RUNNER_TEMP/dagitim.mobileprovision" > "$RUNNER_TEMP/profil.plist"
+          UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" "$RUNNER_TEMP/profil.plist")
+          AD=$(/usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/profil.plist")
+          cp "$RUNNER_TEMP/dagitim.mobileprovision" "$PROFIL_DIZIN/$UUID.mobileprovision"
+          echo "PROFIL_ADI=$AD" >> "$GITHUB_ENV"
+          echo "ANAHTARLIK=$ANAHTARLIK" >> "$GITHUB_ENV"
+          echo "Profil kuruldu: $AD ($UUID)"
+
+      - name: Arşivle
+        working-directory: apps/mobile
+        env:
+          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          xcodebuild -workspace ios/AYNA.xcworkspace \
+            -scheme AYNA \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath "$RUNNER_TEMP/AYNA.xcarchive" \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFIL_ADI" \
+            archive
+
+      - name: IPA üret
+        env:
+          TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>uploadSymbols</key><true/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/AYNA.xcarchive" \
+            -exportPath "$RUNNER_TEMP/ipa" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: App Store Connect'e yükle
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          # altool anahtarı SABİT bir yolda arar; başka yere koymak işe yaramaz.
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          echo "$ASC_KEY_P8" | base64 --decode \
+            > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+          IPA=$(find "$RUNNER_TEMP/ipa" -name '*.ipa' | head -1)
+          echo "Yükleniyor: $IPA"
+          xcrun altool --upload-app -f "$IPA" -t ios \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+
+      # ── Temizlik ────────────────────────────────────────────────────────
+      # `always()`: derleme düşse DE anahtarlık ve özel anahtar silinmeli.
+      # Makine paylaşımlı olmasa bile imza malzemesi ortalıkta bırakılmaz.
+      - name: Kimlik malzemesini sil
+        if: always()
+        run: |
+          security delete-keychain "${ANAHTARLIK:-}" 2>/dev/null || true
+          rm -rf "$HOME/.appstoreconnect/private_keys" \
+                 "$HOME/Library/MobileDevice/Provisioning Profiles" \
+                 "$RUNNER_TEMP/cert.p12" "$RUNNER_TEMP/profil.plist" 2>/dev/null || true
