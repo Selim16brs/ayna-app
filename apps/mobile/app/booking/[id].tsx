@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { esikGecti } from '@ayna/domain';
-import { api } from '../../src/api';
 import {
   DURUM_ETIKETI,
   DURUM_TONU,
@@ -15,7 +14,7 @@ import {
 } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
-import { localDeposit, useStore } from '../../src/store';
+import { localDeposit, useStore, type BookingEylem } from '../../src/store';
 import { radius, shadow, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -55,6 +54,7 @@ export default function BookingDetail() {
   const currentUser = useStore((s) => s.currentUser);
   const rates = useStore((s) => s.config.rates);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
+  const randevuEylemi = useStore((s) => s.randevuEylemi);
 
   if (!booking) {
     return (
@@ -90,9 +90,20 @@ export default function BookingDetail() {
   // Bu rolün yapacağı bir şey yoksa ama randevu akıştaysa top KARŞI TARAFTA.
   const bekliyor = karsiTarafBekleniyor(booking.status, rol, baglam);
 
-  const yenile = () => void hydrateBookings();
-  const cagir = (p: Promise<unknown>) => {
-    void p.then(yenile).catch(() => Alert.alert(t('common.error')));
+  /**
+   * Eylemi SUNUCUYA yazar ve sonucu kullanıcıya dürüstçe söyler.
+   *
+   * Eskiden burada `api.x(...).catch(alert)` vardı: ağ yoksa uyarı çıkıyor,
+   * eylem KAYBOLUYORDU. Artık store'un kalıcı kuyruğundan geçiyor — ağ yoksa
+   * eylem cihazda duruyor, uygulama kapansa bile açılışta gönderiliyor ve
+   * kullanıcı bunu görüyor.
+   */
+  const cagir = (eylem: BookingEylem, arg?: string | number) => {
+    if (!booking) return;
+    void randevuEylemi(booking.id, eylem, arg).then((sonuc) => {
+      if (sonuc === 'kuyrukta') Alert.alert(t('flow.queued_t'), t('flow.queued_b'));
+      else void hydrateBookings();
+    });
   };
 
   function calistir(a: Aksiyon) {
@@ -100,19 +111,19 @@ export default function BookingDetail() {
     const bid = booking.id;
     switch (a.eylem) {
       case 'onayla':
-        return cagir(api.approveBooking(bid));
+        return cagir('onayla');
       case 'kabul':
-        return cagir(api.acceptBooking(bid));
+        return cagir('kabul');
       case 'depozito_ode':
         return router.push(`/booking/deposit?id=${bid}` as never);
       case 'ertele':
         return router.push(`/booking/reschedule?id=${bid}` as never);
       case 'islemi_bitirdim':
-        return cagir(api.completeBookingApi(bid));
+        return cagir('islemi_bitirdim');
       case 'odeme_yaptim':
-        return cagir(api.balancePaid(bid));
+        return cagir('odeme_yaptim');
       case 'odeme_aldim':
-        return cagir(api.balanceReceived(bid));
+        return cagir('odeme_aldim');
       case 'degerlendir':
         return router.push(`/review/new?id=${bid}` as never);
       case 'iade_iste':
@@ -125,7 +136,7 @@ export default function BookingDetail() {
           {
             text: t('flow.act.gelmedi'),
             style: 'destructive',
-            onPress: () => cagir(rol === 'uzman' ? api.noShowApi(bid) : api.providerNoShowApi(bid)),
+            onPress: () => cagir(rol === 'uzman' ? 'musteri_gelmedi' : 'uzman_gelmedi'),
           },
         ]);
       default:
@@ -135,7 +146,6 @@ export default function BookingDetail() {
 
   function iptalEt() {
     if (!booking) return;
-    const bid = booking.id;
     // §4.7 — 3 saat eşiğinden sonra depozito YANAR; kullanıcı bunu ÖNCEDEN bilmeli.
     const uyari = esikOncesi ? t('flow.cancel.free_b') : t('flow.cancel.forfeit_b');
     Alert.alert(t('flow.cancel.title'), uyari, [
@@ -143,7 +153,7 @@ export default function BookingDetail() {
       {
         text: t('flow.act.iptal'),
         style: 'destructive',
-        onPress: () => cagir(api.cancelBooking(bid)),
+        onPress: () => cagir('iptal'),
       },
     ]);
   }
@@ -297,7 +307,7 @@ export default function BookingDetail() {
             <Button
               label={t('flow.act.itiraz')}
               variant="secondary"
-              onPress={() => cagir(api.disputeBookingApi(booking.id))}
+              onPress={() => cagir('itiraz')}
             />
           </View>
         ) : null}

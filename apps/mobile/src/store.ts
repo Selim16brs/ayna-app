@@ -96,6 +96,85 @@ const TONE_ICON: Record<PersonalTone, string> = {
   blue: 'notifications-outline',
 };
 
+/**
+ * Sunucuya yazılabilen randevu eylemleri.
+ *
+ * Tek sözlük: her eylemin hangi API'ye gittiği BİR yerde yazıyor. Eskiden
+ * her store eylemi kendi `api.x(...).catch(() => undefined)` satırını
+ * yazıyordu; hangi çağrının hatayı yuttuğunu görmek için 13 yere bakmak
+ * gerekiyordu — ve 11'i gerçekten yutuyordu.
+ */
+export type BookingEylem =
+  | 'onayla'
+  | 'reddet'
+  | 'iptal'
+  | 'kabul'
+  | 'degistir'
+  | 'karsi_oner'
+  | 'dekont'
+  | 'islemi_bitirdim'
+  | 'odeme_yaptim'
+  | 'odeme_aldim'
+  | 'musteri_gelmedi'
+  | 'uzman_gelmedi'
+  | 'itiraz'
+  | 'ertele';
+
+/**
+ * Sunucu bu eylemi BİR DAHA kabul etmez mi?
+ *
+ * Ayrım kritik: geçici hatada (ağ yok) tekrar denemek zorundayız, yoksa
+ * kullanıcının işlemi kaybolur. Kalıcı redde tekrar denemek ise kuyruğu
+ * sonsuza kadar tıkar ve her açılışta aynı hatayı üretirdi.
+ */
+function kaliciRed(err: ApiError): boolean {
+  if (err.status != null && err.status >= 400 && err.status < 500 && err.status !== 408)
+    return true;
+  return (
+    err.code === 'INVALID_TRANSITION' ||
+    err.code === 'NOT_BOOKING_PARTY' ||
+    err.code === 'BOOKING_NOT_FOUND' ||
+    err.code === 'SLOT_CONFLICT'
+  );
+}
+
+/** Eylemi sunucuya gönderir. Hata FIRLATIR — çağıran kuyrukta tutar. */
+export function bookingEylemGonder(
+  id: string,
+  eylem: BookingEylem,
+  arg?: string | number,
+): Promise<unknown> {
+  switch (eylem) {
+    case 'onayla':
+      return api.approveBooking(id);
+    case 'reddet':
+    case 'iptal':
+      return api.cancelBooking(id, typeof arg === 'string' ? arg : undefined);
+    case 'kabul':
+      return api.acceptBooking(id);
+    case 'degistir':
+      return api.proposeBooking(id, Number(arg));
+    case 'karsi_oner':
+      return api.counterBooking(id, Number(arg));
+    case 'dekont':
+      return api.submitDepositReceipt(id, String(arg));
+    case 'islemi_bitirdim':
+      return api.completeBookingApi(id);
+    case 'odeme_yaptim':
+      return api.balancePaid(id);
+    case 'odeme_aldim':
+      return api.balanceReceived(id);
+    case 'musteri_gelmedi':
+      return api.noShowApi(id);
+    case 'uzman_gelmedi':
+      return api.providerNoShowApi(id);
+    case 'itiraz':
+      return api.disputeBookingApi(id);
+    case 'ertele':
+      return api.rescheduleBooking(id, Number(arg));
+  }
+}
+
 export interface AddBookingInput {
   source: BookingSource;
   service: string;
@@ -382,6 +461,32 @@ interface State {
   hydrateBookings: () => Promise<void>;
   // VERİ KAYBI YASAĞI — sunucuya yazılamayan randevular kuyrukta bekler, bağlantı gelince eşitlenir
   pendingBookingSync: string[];
+  /**
+   * BEKLEYEN RANDEVU EYLEMLERİ — "işlem sunucuya yazılmadı" hatasının panzehiri.
+   *
+   * Onayla / dekont yükle / ödeme aldım gibi eylemler yerelde anında
+   * uygulanıyor (ekran donmasın). Sunucu yazımı BAŞARISIZ olursa eskiden
+   * `catch(() => undefined)` ile sessizce yutuluyordu: telefonda "onaylandı"
+   * yazıyor, sunucu hiç duymuyor, sonraki tazelemede eski durum geri geliyor
+   * ve kullanıcının işlemi KAYBOLUYORDU.
+   *
+   * Kuyruk cihazda kalıcı: uygulama kapansa, ağ gitse bile eylem duruyor ve
+   * açılışta/tazelemede yeniden gönderiliyor.
+   */
+  pendingBookingActions: { id: string; eylem: BookingEylem; arg?: string | number }[];
+  /** Kuyruğu sunucuya boşalt (açılışta ve her tazelemede çağrılır). */
+  flushBookingActions: () => Promise<void>;
+  /**
+   * Eylemi sunucuya yaz. Dönüş:
+   *  · 'yazildi'    — sunucu kabul etti
+   *  · 'kuyrukta'   — ağ yok; eylem KAYBOLMADI, kuyrukta bekliyor
+   *  · 'reddedildi' — sunucu kalıcı reddetti; yerel durum tazelendi
+   */
+  randevuEylemi: (
+    id: string,
+    eylem: BookingEylem,
+    arg?: string | number,
+  ) => Promise<'yazildi' | 'kuyrukta' | 'reddedildi'>;
   syncBooking: (booking: Appointment) => void;
   flushBookingSync: () => Promise<void>;
   queueOfflineBooking: (booking: Appointment) => void;
@@ -492,6 +597,7 @@ const SEEDED_PERSONAL_RESET: Partial<State> = {
 export const userScopedReset = (): Partial<State> => ({
   ...SEEDED_PERSONAL_RESET,
   pendingBookingSync: [], // önceki üyenin eşitleme kuyruğu yeni üyeye taşınmaz
+  pendingBookingActions: [], // aynı gerekçe: başkasının adına işlem gönderilmez
   moments: [],
   closedDays: [],
   promotions: [],
@@ -1092,7 +1198,7 @@ export const useStore = create<State>()(
         // ve iki kural iki yerde yaşıyordu; depozitonun iade mi yanma mı olduğu
         // artık yalnız SUNUCUDA, 3 saat eşiğine bakılarak belirleniyor.
         // Sunucu reddederse yereli SUNUCU GERÇEĞİNE geri çek (UI asla yalan durumda kalmaz).
-        void api.cancelBooking(id, reason).catch(() => void get().hydrateBookings());
+        void get().randevuEylemi(id, 'iptal', reason ?? '');
         if (b) {
           if (next === 'iptal_musteri')
             get().pushNotification({
@@ -1126,7 +1232,7 @@ export const useStore = create<State>()(
         set((s) => ({
           bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'uyusmazlik' } : b)),
         }));
-        void api.disputeBookingApi(id).catch(() => undefined); // §4.4 backend durum geçişi
+        void get().randevuEylemi(id, 'itiraz');
         const b = get().bookings.find((x) => x.id === id);
         // §12.4 — itiraz backend anlaşmazlık kuyruğuna düşer (varsa depozito dekontuyla)
         const token = get().token;
@@ -1488,7 +1594,7 @@ export const useStore = create<State>()(
         }));
         for (const b of etkilenen) {
           // Sunucu kararı verir: iptali kim yaptı, depozito iade mi edilecek.
-          void api.cancelBooking(b.id, 'Uzman kadrodan ayrıldı').catch(() => undefined);
+          void get().randevuEylemi(b.id, 'iptal', 'Uzman kadrodan ayrıldı');
           get().pushNotification({
             type: 'booking',
             titleKey: 'notif.cancel_refund',
@@ -1519,7 +1625,7 @@ export const useStore = create<State>()(
               : b,
           ),
         }));
-        void api.acceptBooking(id).catch(() => undefined);
+        void get().randevuEylemi(id, 'kabul');
         const b = get().bookings.find((x) => x.id === id);
         if (b)
           get().pushNotification({
@@ -1552,7 +1658,7 @@ export const useStore = create<State>()(
               : b,
           ),
         }));
-        void api.approveBooking(id).catch(() => undefined);
+        void get().randevuEylemi(id, 'onayla');
         const b = get().bookings.find((x) => x.id === id);
         if (b)
           get().pushNotification({
@@ -1577,7 +1683,7 @@ export const useStore = create<State>()(
             b.id === id ? { ...b, status: 'iptal_musteri', respondedAt: Date.now() } : b,
           ),
         }));
-        void api.cancelBooking(id, 'provider_rejected').catch(() => undefined);
+        void get().randevuEylemi(id, 'reddet', 'provider_rejected');
         const b = get().bookings.find((x) => x.id === id);
         if (b)
           get().pushNotification({
@@ -1606,7 +1712,7 @@ export const useStore = create<State>()(
               : b,
           ),
         }));
-        void api.counterBooking(id, startMs).catch(() => undefined);
+        void get().randevuEylemi(id, 'karsi_oner', startMs);
         get().pushNotification({
           type: 'booking',
           titleKey: 'notif.reschedule',
@@ -1630,7 +1736,7 @@ export const useStore = create<State>()(
               : b,
           ),
         }));
-        void api.proposeBooking(id, startMs).catch(() => undefined);
+        void get().randevuEylemi(id, 'degistir', startMs);
         const b = get().bookings.find((x) => x.id === id);
         if (b)
           get().pushNotification({
@@ -1651,7 +1757,7 @@ export const useStore = create<State>()(
             b.id === id ? { ...b, status: 'kesinlesti', receiptUri } : b,
           ),
         }));
-        void api.submitDepositReceipt(id, receiptUri).catch(() => undefined); // §4.2 backend
+        void get().randevuEylemi(id, 'dekont', receiptUri);
         const b = get().bookings.find((x) => x.id === id);
         if (b)
           get().pushNotification({
@@ -1675,7 +1781,7 @@ export const useStore = create<State>()(
             b.id === id ? { ...b, status: 'no_show_musteri', depositForfeited: true } : b,
           ),
         }));
-        void api.noShowApi(id).catch(() => undefined); // buluta taşı (best-effort)
+        void get().randevuEylemi(id, 'musteri_gelmedi');
       },
 
       // §4.1.7 — uzman hizmeti tamamladı: randevu 'tamamlandi' + kullanıcıya değerlendirme daveti
@@ -1685,7 +1791,7 @@ export const useStore = create<State>()(
         set((s) => ({
           bookings: s.bookings.map((x) => (x.id === id ? { ...x, status: 'tamamlandi' } : x)),
         }));
-        void api.completeBookingApi(id).catch(() => undefined); // backend'e taşı (best-effort)
+        void get().randevuEylemi(id, 'islemi_bitirdim');
         // §7.1 — yalnız AYNA (online) randevularında kullanıcıya değerlendirme daveti (offline'da müşteri hesabı yok)
         if (b.source !== 'direct')
           get().pushNotification({
@@ -1710,7 +1816,7 @@ export const useStore = create<State>()(
           ),
         }));
         // §4.4-b backend: iade akışı + 1000₸ uzmanın komisyon borcuna (best-effort)
-        void api.providerNoShowApi(id).catch(() => undefined);
+        void get().randevuEylemi(id, 'uzman_gelmedi');
         // Telafi puanı — yerel + backend loyalty ledger (earn zaten api.earnPoints çağırır)
         get().earn(1000, 'rewards.earn.provider_noshow', b.proName);
         get().pushNotification({
@@ -1744,6 +1850,7 @@ export const useStore = create<State>()(
       },
 
       pendingBookingSync: [],
+      pendingBookingActions: [],
 
       // Sunucuya yazımı garantile: başarısızsa id kuyrukta kalır, flushBookingSync yeniden dener.
       // createBooking sunucuda id ile upsert (idempotent) — tekrar gönderim çift kayıt yaratmaz.
@@ -1761,6 +1868,60 @@ export const useStore = create<State>()(
             })),
           )
           .catch(() => undefined); // kuyrukta kalır — açılışta/hydrate'te yeniden denenir
+      },
+
+      /**
+       * Bir randevu eylemini sunucuya yazar; başarısızsa KUYRUĞA ALIR.
+       *
+       * Yereli çağıran zaten iyimser güncelledi. Buradaki iş, o güncellemenin
+       * sunucuda da gerçek olmasını garanti etmek.
+       */
+      randevuEylemi: async (id: string, eylem: BookingEylem, arg?: string | number) => {
+        try {
+          await bookingEylemGonder(id, eylem, arg);
+          return 'yazildi';
+        } catch (err) {
+          // KALICI RED (geçersiz geçiş, yetki yok) tekrar denenmez: sunucu bu
+          // eylemi hiçbir zaman kabul etmeyecek. Yereli sunucu gerçeğine çek.
+          if (err instanceof ApiError && kaliciRed(err)) {
+            void get().hydrateBookings();
+            return 'reddedildi';
+          }
+          // GEÇİCİ hata (ağ yok, sunucu uykuda): eylem KAYBOLMAZ, kuyruğa girer
+          // ve açılışta/tazelemede yeniden gönderilir.
+          set((st) => ({
+            pendingBookingActions: [
+              ...st.pendingBookingActions,
+              { id, eylem, ...(arg !== undefined ? { arg } : {}) },
+            ],
+          }));
+          return 'kuyrukta';
+        }
+      },
+
+      flushBookingActions: async () => {
+        const { pendingBookingActions, token } = get();
+        if (!token || pendingBookingActions.length === 0) return;
+        // Kopya üzerinde yürü: gönderim sırasında yeni eylem eklenebilir.
+        for (const is of [...pendingBookingActions]) {
+          try {
+            await bookingEylemGonder(is.id, is.eylem, is.arg);
+            set((st) => ({
+              pendingBookingActions: st.pendingBookingActions.filter((x) => x !== is),
+            }));
+          } catch (err) {
+            if (err instanceof ApiError && kaliciRed(err)) {
+              // Sunucu kalıcı olarak reddetti — sonsuza kadar denemenin anlamı
+              // yok. Kuyruktan düşür; tazeleme yereli gerçeğe çekecek.
+              set((st) => ({
+                pendingBookingActions: st.pendingBookingActions.filter((x) => x !== is),
+              }));
+              continue;
+            }
+            // Geçici hata: kuyrukta KALSIN, sıradaki denemeye bırak.
+            break;
+          }
+        }
       },
 
       flushBookingSync: async () => {
@@ -1825,8 +1986,11 @@ export const useStore = create<State>()(
           return;
         }
         set({ bookingsLoading: true });
-        // Önce bekleyen yazımlar sunucuya gitsin ki tazeleme onları "sunucudan" geri getirsin
+        // Önce bekleyen yazımlar sunucuya gitsin ki tazeleme onları "sunucudan"
+        // geri getirsin. SIRA ÖNEMLİ: eylemler tazelemeden ÖNCE gitmezse
+        // sunucunun eski hâli yereli ezer ve kullanıcının işlemi kaybolur.
         await get().flushBookingSync();
+        await get().flushBookingActions();
         try {
           const role = get().currentUser?.role;
           const isProvider = role === 'professional' || role === 'salon';
@@ -2700,6 +2864,8 @@ export const useStore = create<State>()(
         // kapat-aç sonrası sunucuya ulaşmamış talep kaybolmaz, kuyruktan eşitlenir.
         bookings: s.bookings,
         pendingBookingSync: s.pendingBookingSync,
+        // Sunucuya ulaşmamış EYLEMLER de kalıcı: kapat-aç sonrası kaybolmaz.
+        pendingBookingActions: s.pendingBookingActions,
         // Bunlar persist edilmiyordu: her açılışta liste boşalıyor, dedup'lar
         // (duyuru id'si, anket sorulmuşluğu) sıfırlanıyor ve TÜM bildirimler
         // yeniden OKUNMAMIŞ olarak üretiliyordu.
@@ -2741,6 +2907,7 @@ useStore.persist.onFinishHydration((state) => {
     });
     // Açılışta bekleyen sunucu yazımlarını eşitle (önceki oturumda ağ yoksa burada tamamlanır)
     void useStore.getState().flushBookingSync();
+    void useStore.getState().flushBookingActions();
   }
   // Medya önbelleği: persist DIŞI tutulan foto/portre açılışta cihaz önbelleğinden anında gelir;
   // refreshMembership ardından hesapla eşitler (hesap boşsa self-heal yükler).

@@ -3,7 +3,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { api } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
 import { localDeposit, useStore } from '../../src/store';
 import { radius, shadow, space, type ColorTokens } from '../../src/theme';
@@ -41,6 +40,7 @@ export default function DepositScreen() {
   const rates = useStore((s) => s.config.rates);
   const points = useStore((s) => s.points);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
+  const randevuEylemi = useStore((s) => s.randevuEylemi);
 
   const [dekont, setDekont] = useState<string | null>(null);
   const [puanKullan, setPuanKullan] = useState(false);
@@ -80,15 +80,22 @@ export default function DepositScreen() {
     if (!dekont || busy) return;
     setBusy(true);
     try {
-      await api.submitDepositReceipt(booking.id, dekont);
+      // Kalıcı kuyruktan geçiyor: 10 dakikalık pencerede ağ giderse dekont
+      // KAYBOLMAZ, bağlantı gelince gönderilir. Doğrudan çağrıda kullanıcı
+      // parayı göndermiş olmasına rağmen randevusu düşerdi.
+      const sonuc = await randevuEylemi(booking.id, 'dekont', dekont);
+      if (sonuc === 'kuyrukta') {
+        Alert.alert(t('flow.queued_t'), t('flow.queued_b'), [
+          { text: t('common.ok'), onPress: () => router.back() },
+        ]);
+        return;
+      }
       await hydrateBookings();
       // §4.4 — dekont yüklendiği AN kesinleşti. Kullanıcı "onay bekliyorum"
       // sanmamalı; net söylenmeli.
       Alert.alert(t('deposit.done_t'), t('deposit.done_b'), [
         { text: t('common.ok'), onPress: () => router.back() },
       ]);
-    } catch {
-      Alert.alert(t('common.error'));
     } finally {
       setBusy(false);
     }

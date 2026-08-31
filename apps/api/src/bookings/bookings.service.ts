@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import type { Booking } from '@prisma/client';
@@ -78,6 +79,39 @@ const KAPANIS_DURUMLARI: readonly string[] = [
 
 @Injectable()
 export class BookingsService {
+  private readonly log = new Logger(BookingsService.name);
+
+  /**
+   * §4.10 — iade/ödeme hakkını kuyruğa yazar.
+   *
+   * `skipDuplicates`: aynı randevu+tür için ikinci kayıt açılamaz (benzersiz
+   * kısıt) — çift ödeme yasak. Ama YALNIZ yineleme yutulmalı: burada eskiden
+   * `.catch(() => undefined)` vardı ve gerçek bir veritabanı hatası da sessizce
+   * yutuluyordu, yani müşterinin iade hakkı hiç doğmadan kaybolabiliyordu.
+   * Artık gerçek hata log'a düşer ve YUKARI FIRLAR (PII yok — yalnız tutar/tür).
+   */
+  private async iadeHakkiYaz(
+    bookingId: string,
+    payeeUserId: string,
+    kind: string,
+    amount: number,
+  ): Promise<void> {
+    if (amount <= 0) return;
+    try {
+      await this.prisma.refundRequest.createMany({
+        data: [{ bookingId, payeeUserId, kind, amount }],
+        skipDuplicates: true,
+      });
+    } catch (e) {
+      this.log.error(
+        `iade hakkı YAZILAMADI: booking=${bookingId} tür=${kind} tutar=${amount} — ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+      throw e;
+    }
+  }
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly push: PushService,
@@ -503,11 +537,7 @@ export class BookingsService {
     // Depozito HER İKİ durumda da müşteriye iade edilir.
     const tutar = Number(b.depositAmount ?? 0);
     if (b.userId && tutar > 0) {
-      await this.prisma.refundRequest
-        .create({
-          data: { bookingId: b.id, payeeUserId: b.userId, kind: 'musteri_iade', amount: tutar },
-        })
-        .catch(() => undefined);
+      await this.iadeHakkiYaz(b.id, b.userId, 'musteri_iade', tutar);
     }
     if (!b.proId) return;
     const sp = await this.prisma.specialist.findFirst({ where: { proId: b.proId } });
@@ -635,7 +665,14 @@ export class BookingsService {
     const row = await this.transition(id, { status: 'tamamlandi' });
     void this.prisma.booking.findUnique({ where: { id } }).then(async (b) => {
       if (!b?.userId) return;
-      await grantCompletionRewards(this.prisma, [b]).catch(() => undefined);
+      // §4.9.3 — puan yüklemesi. Sessizce yutulmuyor: yutulursa müşteri
+      // hak ettiği puanı hiç almaz ve kimse fark etmez. Zamanlayıcı yolu da
+      // aynı fonksiyonu çağırıyor; çift yazım orada da engelli.
+      await grantCompletionRewards(this.prisma, [b]).catch((e: unknown) =>
+        this.log.error(
+          `puan/ödül yazılamadı: booking=${id} — ${e instanceof Error ? e.message : String(e)}`,
+        ),
+      );
       void this.push.sendToUser(b.userId, {
         title: 'Teşekkürler 💛',
         body: 'Deneyimini değerlendir — 30 saniye sürer',
@@ -877,12 +914,7 @@ export class BookingsService {
     if (b.userId) {
       const tutar = b.depositAmount != null ? Number(b.depositAmount) : 0;
       if (tutar > 0) {
-        await this.prisma.refundRequest
-          .create({
-            data: { bookingId: id, payeeUserId: b.userId, kind: 'musteri_iade', amount: tutar },
-          })
-          // Aynı randevu için ikinci kayıt açılamaz (benzersiz kısıt) — çift ödeme yasak.
-          .catch(() => undefined);
+        await this.iadeHakkiYaz(id, b.userId, 'musteri_iade', tutar);
       }
     }
 

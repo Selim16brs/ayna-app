@@ -36,6 +36,10 @@ test('setAuth farklı kullanıcıda tam sıfırlama uygular', () => {
 const PERSISTED_USER_KEYS = [
   'bookings', // veri kaybı yasağı — cihazda kalıcı; çıkışta SEEDED_PERSONAL_RESET sıfırlar
   'pendingBookingSync', // sunucuya yazılamayan randevu kuyruğu — hesap değişiminde taşınmaz
+  // Sunucuya ulaşmamış EYLEMLER (onayla/dekont/ödeme aldım). Kalıcı, çünkü
+  // ağ yokken yapılan işlem kaybolmamalı; ama önceki üyenin kuyruğu yeni
+  // üyeye TAŞINMAMALI — onun adına işlem yapılmış olurdu.
+  'pendingBookingActions',
   'sellerTrialStart',
   'sellerServices',
   'sellerSocial',

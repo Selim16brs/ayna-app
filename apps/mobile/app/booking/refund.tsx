@@ -54,6 +54,10 @@ export default function RefundScreen() {
         { text: t('common.ok'), onPress: () => router.back() },
       ]);
     } catch {
+      // KUYRUĞA ALINMIYOR — bilinçli. Talep, kullanıcının Kaspi/banka bilgisini
+      // taşıyor; başarısız bir isteği cihaz diskinde saklamak bu PII'yi
+      // gereksiz yere kalıcı hâle getirirdi. Kullanıcı ekranda ve tek dokunuşla
+      // tekrar deneyebilir; iade hakkı da randevuda duruyor, kaybolmuyor.
       Alert.alert(t('common.error'));
     } finally {
       setBusy(false);

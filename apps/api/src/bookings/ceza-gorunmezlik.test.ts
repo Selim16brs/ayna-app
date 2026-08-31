@@ -69,5 +69,19 @@ test('GÖRÜNMEZLİK GERÇEKTEN UYGULANIYOR — bayrak değil kapı', () => {
 
 test('uzman iptalinde depozito müşteriye İADE kaydı açılıyor', () => {
   const m = /private async uzmanIptalCezasi\([\s\S]*?\n {2}\}/.exec(svc)![0];
-  assert.match(m, /kind: 'musteri_iade'/, 'iade kaydı açılmıyor');
+  assert.match(m, /iadeHakkiYaz\([^)]*'musteri_iade'/, 'iade kaydı açılmıyor');
+});
+
+test('iade kaydı YAZILAMAZSA sessizce kaybolmuyor', () => {
+  // Gerçek hata: `.catch(() => undefined)` yalnız "aynı kayıt zaten var"
+  // durumunu yutmak için konmuştu ama gerçek bir veritabanı hatasını da
+  // yutuyordu — müşterinin iade hakkı hiç doğmadan, kimse fark etmeden
+  // kaybolabiliyordu.
+  const m = /private async iadeHakkiYaz\([\s\S]*?\n {2}\}/.exec(svc);
+  assert.ok(m, 'iadeHakkiYaz yok');
+  // Yineleme VERİTABANI seviyesinde eleniyor (çift ödeme yasak)...
+  assert.match(m[0], /skipDuplicates: true/, 'yineleme koruması yok — çift ödeme riski');
+  // ...gerçek hata ise log'a düşüp YUKARI FIRLIYOR.
+  assert.match(m[0], /this\.log\.error\(/, 'hata log’a düşmüyor');
+  assert.match(m[0], /\bthrow e;/, 'hata yutuluyor — iade hakkı sessizce kaybolur');
 });

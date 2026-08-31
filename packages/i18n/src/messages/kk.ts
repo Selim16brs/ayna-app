@@ -273,6 +273,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'flow.act.incele': 'Қарау',
   'flow.act.depozito_ode': 'Депозит төлеу',
   'flow.act.ertele': 'Кейінге қалдыру',
+  'flow.queued_t': 'Байланыс жоқ',
+  'flow.queued_b': 'Әрекетіңіз сақталды; байланыс қалпына келгенде автоматты жіберіледі.',
   'flow.act.iptal': 'Бас тарту',
   'flow.act.islemi_bitirdim': 'Қызметті аяқтадым',
   'flow.act.odeme_yaptim': 'Төлемді жасадым',

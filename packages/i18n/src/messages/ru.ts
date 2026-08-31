@@ -277,6 +277,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'flow.act.incele': 'Посмотреть',
   'flow.act.depozito_ode': 'Оплатить депозит',
   'flow.act.ertele': 'Перенести',
+  'flow.queued_t': 'Нет соединения',
+  'flow.queued_b': 'Действие сохранено и будет отправлено, когда появится связь.',
   'flow.act.iptal': 'Отменить',
   'flow.act.islemi_bitirdim': 'Услуга завершена',
   'flow.act.odeme_yaptim': 'Я оплатил(а)',

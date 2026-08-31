@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { esikGecti } from '@ayna/domain';
-import { api } from '../../src/api';
 import { formatSlotTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -30,6 +29,7 @@ export default function RescheduleScreen() {
 
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
   const hydrateBookings = useStore((s) => s.hydrateBookings);
+  const randevuEylemi = useStore((s) => s.randevuEylemi);
   const [ne, setNe] = useState<Date>(() => new Date(Date.now() + 24 * 60 * 60_000));
   const [busy, setBusy] = useState(false);
 
@@ -53,15 +53,19 @@ export default function RescheduleScreen() {
     if (busy || esikGectiMi) return;
     setBusy(true);
     try {
-      await api.rescheduleBooking(booking.id, ne.getTime());
+      // Kural SUNUCUDA: hak bitmişse ya da pencere kapanmışsa sunucu reddeder
+      // ve yerel durum tazelenir. Ağ yoksa talep kuyrukta bekler, kaybolmaz.
+      const sonuc = await randevuEylemi(booking.id, 'ertele', ne.getTime());
+      if (sonuc === 'reddedildi') {
+        Alert.alert(t('reschedule.err'));
+        return;
+      }
       await hydrateBookings();
-      Alert.alert(t('reschedule.sent_t'), t('reschedule.sent_b'), [
-        { text: t('common.ok'), onPress: () => router.back() },
-      ]);
-    } catch {
-      // Sunucu hakkın bittiğini ya da pencerenin kapandığını söyleyebilir;
-      // kural SUNUCUDA, ekran yalnız anlatıyor.
-      Alert.alert(t('reschedule.err'));
+      Alert.alert(
+        sonuc === 'kuyrukta' ? t('flow.queued_t') : t('reschedule.sent_t'),
+        sonuc === 'kuyrukta' ? t('flow.queued_b') : t('reschedule.sent_b'),
+        [{ text: t('common.ok'), onPress: () => router.back() }],
+      );
     } finally {
       setBusy(false);
     }

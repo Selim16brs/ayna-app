@@ -283,6 +283,8 @@ export const tr = {
   'flow.act.incele': 'İncele',
   'flow.act.depozito_ode': 'Depozito öde',
   'flow.act.ertele': 'Ertele',
+  'flow.queued_t': 'Bağlantı yok',
+  'flow.queued_b': 'İşlemin kaydedildi; bağlantı gelince otomatik gönderilecek.',
   'flow.act.iptal': 'İptal et',
   'flow.act.islemi_bitirdim': 'İşlemi bitirdim',
   'flow.act.odeme_yaptim': 'Ödemeyi yaptım',
