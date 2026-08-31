@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Appearance } from 'react-native';
 import {
   type ColorTokens,
@@ -31,12 +32,41 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+const TEMA_ANAHTARI = 'ayna.theme';
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [systemMode, setSystemMode] = useState<ThemeMode>(
     Appearance.getColorScheme() === 'dark' ? 'dark' : 'light',
   );
-  // null = sistemi izle. Şimdilik bellekte; ileride kalıcı saklanabilir.
-  const [preference, setPreference] = useState<ThemeMode | null>(null);
+  /**
+   * §15 — TEMA TERCİHİ KALICI.
+   *
+   * Eskiden yalnız bellekteydi (kodun kendi yorumu "şimdilik bellekte"
+   * diyordu): kullanıcı profilden "koyu" seçiyor, uygulamayı kapatıp
+   * açınca SİSTEM temasına geri dönüyordu. Dil seçiminde bulunan hatanın
+   * aynısıydı.
+   *
+   * `null` = sistemi izle (varsayılan). Kullanıcı açıkça seçerse o kalıcı.
+   */
+  const [preference, setPreferenceState] = useState<ThemeMode | null>(null);
+
+  const setPreference = useCallback((mode: ThemeMode | null) => {
+    setPreferenceState(mode);
+    // `null` seçimi de KALICI: "sisteme dön" bir tercih, tercihsizlik değil.
+    void (
+      mode === null
+        ? AsyncStorage.removeItem(TEMA_ANAHTARI)
+        : AsyncStorage.setItem(TEMA_ANAHTARI, mode)
+    ).catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    void AsyncStorage.getItem(TEMA_ANAHTARI)
+      .then((v) => {
+        if (v === 'dark' || v === 'light') setPreferenceState(v);
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     const sub = Appearance.addChangeListener(({ colorScheme }) => {
@@ -48,8 +78,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const mode = preference ?? systemMode;
 
   const toggle = useCallback(() => {
-    setPreference((prev) => ((prev ?? systemMode) === 'dark' ? 'light' : 'dark'));
-  }, [systemMode]);
+    // `setPreference` artık kalıcılığı da yaptığı için güncelleyici fonksiyon
+    // kabul etmiyor; geçerli değer zaten elimizde.
+    setPreference(mode === 'dark' ? 'light' : 'dark');
+  }, [mode, setPreference]);
 
   const value = useMemo<ThemeContextValue>(
     () => ({

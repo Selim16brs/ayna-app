@@ -33,7 +33,10 @@ export const lightColors = {
   lavenderSoft: '#EDE8F2',
   blue: '#6E86A8', // bilgi
   blueSoft: '#E6EAF0',
-  gold: '#9A641F', // Kehribar — beklemede, uyarı, yıldız
+  // §15 — açık temada yumuşak zeminlerde 4,48:1 idi (eşik 4,5). Üç durum
+  // rengi de %6 koyulaştırıldı: gold 4,48→4,97 · success 4,25→4,75 ·
+  // danger 4,48→4,94. Koyu temadakiler zaten eşiğin üstündeydi, dokunulmadı.
+  gold: '#905E1D', // Kehribar — beklemede, uyarı, yıldız
   goldSoft: '#FAF2E6',
   // geriye dönük uyumluluk (eski isimler yeni paletle eşlendi)
   orange: '#9A641F',
@@ -64,9 +67,9 @@ export const lightColors = {
   fadeMid: 'rgba(251,248,246,0.72)',
   line: '#F0E7EC',
   lineStrong: '#E8D5DD', // ikincil buton çerçevesi, kesikli sınır
-  success: '#547565',
+  success: '#4E6D5E',
   successSoft: '#E1EDE6',
-  danger: '#B44252', // Mercan Kırmızı — iptal, hata
+  danger: '#A93E4D', // Mercan Kırmızı — iptal, hata
   dangerSoft: '#F7E4E7',
 } as const;
 
