@@ -71,20 +71,45 @@ export class SupportService {
     });
     const users = await this.prisma.user.findMany({
       where: { id: { in: [...new Set(rows.map((r) => r.userId))] } },
-      select: { id: true, name: true },
+      // §11 — ÖNCELİKLİ DESTEK için üyelik de okunuyor. Aynı sorgu, ek alan.
+      select: { id: true, name: true, membershipTier: true, membershipUntil: true },
     });
     const adByUser = new Map(users.map((u) => [u.id, u.name]));
-    return rows.map((t) => ({
-      id: t.id,
-      userId: t.userId,
-      userName: adByUser.get(t.userId) ?? '—',
-      topic: t.topic,
-      body: t.body,
-      status: t.status,
-      reply: t.reply,
-      repliedAt: t.repliedAt,
-      createdAt: t.createdAt,
-    }));
+    // §11 — PREMIUM = ÖNCELİKLİ DESTEK.
+    //
+    // Pasaport ekranı bunu avantaj olarak sayıyordu ama destek modülünde
+    // paketi okuyan TEK SATIR yoktu: ödeyen de ödemeyen de aynı sıradaydı.
+    // Para alınan bir vaadin uygulaması olmalı.
+    const simdi = Date.now();
+    const oncelikli = new Set(
+      users
+        .filter(
+          (u) =>
+            (u.membershipTier === 'premium' || u.membershipTier === 'platinum') &&
+            (!u.membershipUntil || u.membershipUntil.getTime() > simdi),
+        )
+        .map((u) => u.id),
+    );
+    return (
+      rows
+        .map((t) => ({
+          id: t.id,
+          userId: t.userId,
+          userName: adByUser.get(t.userId) ?? '—',
+          topic: t.topic,
+          body: t.body,
+          status: t.status,
+          reply: t.reply,
+          repliedAt: t.repliedAt,
+          createdAt: t.createdAt,
+          priority: oncelikli.has(t.userId),
+        }))
+        // Öncelikli olan ÖNCE. Eşitlikte sorgunun kendi sırası korunuyor
+        // (durum, sonra en eski) — bekleyen en eski talep Premium içinde de
+        // önde kalır; öncelik sıraya girmeyi değil, sıranın başına geçmeyi
+        // sağlıyor.
+        .sort((a, b) => Number(b.priority) - Number(a.priority))
+    );
   }
 
   async reply(id: string, reply: string, adminId?: string) {

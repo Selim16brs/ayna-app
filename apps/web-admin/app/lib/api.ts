@@ -805,4 +805,6 @@ export interface SupportRow {
   reply: string | null;
   repliedAt: string | null;
   createdAt: string;
+  /** §11 — Premium/Platinum üyenin talebi. Sunucu bunları listenin başına koyuyor. */
+  priority: boolean;
 }

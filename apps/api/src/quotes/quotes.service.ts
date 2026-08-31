@@ -328,11 +328,44 @@ export class QuotesService {
     });
     const allQuotes = rows.flatMap((r) => r.quotes as unknown as QuoteRow[]);
     const names = await this.expertNamesFor(allQuotes);
+
+    // §11 — PREMIUM MÜŞTERİNİN TALEBİ ÖNCE GÖRÜNÜR.
+    //
+    // Pasaport ekranı Premium avantajı olarak "öne çıkan görünürlük" vaat
+    // ediyordu ama hiçbir yerde karşılığı yoktu — para alınan bir vaadin
+    // uygulaması yoktu. Müşterinin uzmanlara göründüğü TEK yer talep havuzu;
+    // öne çıkma burada anlamlı.
+    //
+    // Kimlik SIZDIRILMIYOR: yalnız `priority` bayrağı dönüyor, talep sahibinin
+    // kimliği havuz görünümünde zaten yok (§gizlilik).
+    const sahipler = [...new Set(rows.map((r) => r.userId).filter((x): x is string => !!x))];
+    const premiumSahipler = new Set(
+      sahipler.length
+        ? (
+            await this.prisma.user.findMany({
+              where: {
+                id: { in: sahipler },
+                membershipTier: { in: ['premium', 'platinum'] },
+                OR: [{ membershipUntil: null }, { membershipUntil: { gt: new Date() } }],
+              },
+              select: { id: true },
+            })
+          ).map((u) => u.id)
+        : [],
+    );
+
     // Uzman havuz görünümü: talep sahibi kimliği YOK (privacy); kendi teklifi işaretli.
-    return rows.map((r) => ({
-      ...this.mapRequest(r, r.quotes as unknown as QuoteRow[], names),
-      myQuoteId: r.quotes.find((q) => q.userId === expertUserId)?.id ?? null,
-    }));
+    return (
+      rows
+        .map((r) => ({
+          ...this.mapRequest(r, r.quotes as unknown as QuoteRow[], names),
+          myQuoteId: r.quotes.find((q) => q.userId === expertUserId)?.id ?? null,
+          priority: !!r.userId && premiumSahipler.has(r.userId),
+        }))
+        // Premium önce; eşitlikte SÜRESİ DOLMAYA EN YAKIN önce (sorgunun kendi
+        // sıralaması korunuyor — aciliyet sırası Premium içinde de geçerli).
+        .sort((a, b) => Number(b.priority) - Number(a.priority))
+    );
   }
 
   // ── Taleplerim (müşteri) ──────────────────────────────────────────────
