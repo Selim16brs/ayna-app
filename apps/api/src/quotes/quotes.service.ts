@@ -454,6 +454,38 @@ export class QuotesService {
   }
 
   // ── Teklifi seç → randevu (müşteri) ───────────────────────────────────
+  /**
+   * TALEBİ KALDIR — sahibi kendi talebini siler.
+   *
+   * Böyle bir uç YOKTU: kullanıcı talep oluşturabiliyor, teklif alabiliyor ve
+   * seçebiliyordu ama ölü bir talebi ASLA kaldıramıyordu. Süresi dolmuş,
+   * 0 teklif almış talepler "Taleplerim" listesinde sonsuza kadar asılı
+   * kalıyor ve hiçbir müdahale edilemiyordu.
+   *
+   * `booked` talep silinmez: o bir randevuya bağlı ve geçmiş kaydı — silmek
+   * randevuyu sahipsiz bırakırdı. Kullanıcıya ne olduğu söyleniyor.
+   */
+  async remove(requestId: string, ownerId: string) {
+    const req = await this.prisma.quoteRequest.findUnique({ where: { id: requestId } });
+    if (!req || req.userId !== ownerId) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Talep yok' });
+    }
+    // Randevuya DÖNÜŞMÜŞ talep silinmez: o bir geçmiş kaydı ve randevuya
+    // bağlı — silmek randevuyu sahipsiz bırakırdı. Ölçüt `bookingId`;
+    // `status` yalnız open/closed olduğu için tek başına yetmez (iptal
+    // edilmiş talep de closed olabilir).
+    if (req.bookingId) {
+      throw new BadRequestException({
+        code: 'BOOKED',
+        message: 'Randevuya dönüşmüş talep silinemez',
+      });
+    }
+    // Teklifler önce: yabancı anahtar kısıtı satırı bırakmasın.
+    await this.prisma.quote.deleteMany({ where: { requestId } });
+    await this.prisma.quoteRequest.delete({ where: { id: requestId } });
+    return { ok: true };
+  }
+
   async select(requestId: string, ownerId: string, input: SelectQuoteInput) {
     const req = await this.prisma.quoteRequest.findUnique({
       where: { id: requestId },

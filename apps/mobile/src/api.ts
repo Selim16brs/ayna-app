@@ -972,6 +972,9 @@ export const api = {
   // Eskiden hepsi yalnız cihazdaydı: uygulama silinince varsayılana dönüyordu.
   // §11 — uzmanın yaklaşan bakım listesi. Ekran eskiden SEED verisiyle
   // çiziliyordu: uzman kendi müşterileri sanarak uydurma isimlere bakıyordu.
+  // Talebi kaldır — böyle bir uç YOKTU: ölü talepler "Taleplerim" listesinde
+  // sonsuza kadar asılı kalıyor ve hiçbir müdahale edilemiyordu.
+  removeDemand: (token: string, id: string) => del<{ ok: boolean }>(`/quote-requests/${id}`, token),
   reengageUpcoming: (token: string) => get<ReengageAday[]>('/reengage/upcoming', token),
   prefs: (token: string) => get<UserPrefsData>('/prefs', token),
   savePrefs: (token: string, patch: Partial<UserPrefsData>) =>

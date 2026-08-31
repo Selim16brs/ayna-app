@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   type Appointment,
   type BookingStatus,
@@ -256,6 +256,7 @@ function DemandCard({ demand }: { demand: DemandRequest }) {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
+  const removeDemand = useStore((st) => st.removeDemand);
   const remainMin = Math.max(0, Math.round((demand.expiresAt - Date.now()) / 60_000));
   const collecting = demand.status === 'collecting';
 
@@ -301,6 +302,37 @@ function DemandCard({ demand }: { demand: DemandRequest }) {
               <Text variant="caption" style={styles.demandCta}>
                 {t('demand.card.view')}
               </Text>
+            ) : // ÖLÜ TALEP KALDIRILABİLİR OLMALI.
+            // Süresi dolmuş, 0 teklif almış talepler listede sonsuza kadar
+            // asılı kalıyor ve hiçbir müdahale edilemiyordu: kartın tek
+            // işlevi boş bir sonuç ekranına gitmekti.
+            // Randevuya dönüşmüş talepte GÖSTERİLMEZ — o bir geçmiş kaydı.
+            !demand.bookingId ? (
+              <Pressable
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={t('demand.remove_t')}
+                onPress={(e) => {
+                  // Kartın kendisi tıklanabilir; kaldırma onu tetiklemesin.
+                  e.stopPropagation();
+                  Alert.alert(t('demand.remove_t'), t('demand.remove_b'), [
+                    { text: t('common.cancel'), style: 'cancel' },
+                    {
+                      text: t('demand.card.remove'),
+                      style: 'destructive',
+                      onPress: () => {
+                        void removeDemand(demand.id).then((ok) => {
+                          if (!ok) Alert.alert(t('demand.remove_t'), t('demand.remove_booked'));
+                        });
+                      },
+                    },
+                  ]);
+                }}
+              >
+                <Text variant="caption" tone="muted" style={styles.demandRemove}>
+                  {t('demand.card.remove')}
+                </Text>
+              </Pressable>
             ) : null}
           </View>
         </View>
@@ -382,6 +414,7 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: space(0.75),
     },
     demandCta: { fontFamily: font.semibold, color: '#5A2A55' },
+    demandRemove: { textDecorationLine: 'underline' },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
 
     empty: {
