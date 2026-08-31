@@ -102,8 +102,57 @@ test('4 · bildirim izni randevu kurulduğunda isteniyor', () => {
 test('4 · yerel hatırlatmalar işletim sistemine planlanıyor', () => {
   // Uygulama KAPALIYKEN düşmelerinin tek yolu bu; in-app liste değil.
   const n = kodu(oku('src', 'notifications.ts'));
-  const m = /export async function syncBookingReminders[\s\S]*?\n\}/.exec(n);
-  assert.ok(m, 'syncBookingReminders yok');
+  // Asıl planlama çökme düzeltmesiyle `senkronEt`e taşındı; sıraya alma
+  // sarmalayıcısı `syncBookingReminders` içinde kaldı.
+  const m = /async function senkronEt[\s\S]*?\n\}/.exec(n);
+  assert.ok(m, 'senkronEt yok');
   assert.match(m[0], /Notifications\.scheduleNotificationAsync\(/, 'OS planlaması yok');
   assert.match(m[0], /trigger: \{ type: 'date'/, 'tarih tetikleyicisi yok');
+});
+
+test('ÇÖKME · hatırlatma senkronu üst üste çalışamaz', () => {
+  // TestFlight 0.0.0/build 3 çökmesi: EXC_BAD_ACCESS. JS iş parçacığı bir
+  // promise devamındayken `com.meta.react.turbomodulemanager.queue` AYNI ANDA
+  // Hermes'in içindeydi (convertNSExceptionToJSError). Bir native metot ObjC
+  // istisnası fırlatmış ve RN onu JS hatasına çevirirken runtime'ı bozmuş.
+  //
+  // Tetikleyici: `_layout` bunu `bookings` her değiştiğinde çağırıyor ve onay
+  // akışında liste arka arkaya iki kez değişiyor → iki tur üst üste biniyor,
+  // ikisi de aynı `rem-*` kimliğini iptal etmeye çalışıyor.
+  const n = kodu(oku('src', 'notifications.ts'));
+  assert.match(n, /let senkronCalisiyor = false;/, 'eşzamanlılık bayrağı yok');
+  assert.match(n, /let bekleyenSenkron/, 'bekleyen çağrı kuyruğu yok');
+
+  const dis = /export async function syncBookingReminders[\s\S]*?\n\}/.exec(n);
+  assert.ok(dis, 'syncBookingReminders yok');
+  assert.match(dis[0], /if \(senkronCalisiyor\) \{/, 'çalışıyorken ikinci tur engellenmiyor');
+  // Bayrak HER yoldan inmeli; yoksa ilk hatadan sonra hatırlatmalar hiç kurulmaz.
+  assert.match(dis[0], /\} finally \{\s*\n\s*senkronCalisiyor = false;/, 'finally yok');
+  // En SON liste kazanmalı: eski bookings ile tekrar çalışmak yanlış planlar kurar.
+  assert.match(dis[0], /arg = bekleyenSenkron;/, 'son çağrının listesi kullanılmıyor');
+
+  // Asıl iş ayrı fonksiyonda ve native çağrıların HER BİRİ kendi try/catch'inde.
+  const ic = /async function senkronEt[\s\S]*?\n\}/.exec(n);
+  assert.ok(ic, 'senkronEt yok');
+  assert.match(
+    ic[0],
+    /try \{\s*\n\s*await Notifications\.scheduleNotificationAsync/,
+    'planlama izole değil',
+  );
+  assert.match(
+    ic[0],
+    /try \{\s*\n\s*await Notifications\.cancelScheduledNotificationAsync/,
+    'iptal izole değil',
+  );
+});
+
+test('ÇÖKME · bookings değişimine bağlı TEK native tetikleyici var', () => {
+  // Başka bir efekt de bookings'e bağlanırsa aynı yarış yeniden doğar.
+  const layout = kodu(oku('app', '_layout.tsx'));
+  const bagimli = [...layout.matchAll(/\}, \[[^\]]*\bbookings\b[^\]]*\]\);/g)];
+  assert.equal(
+    bagimli.length,
+    1,
+    `bookings'e bağlı ${bagimli.length} efekt var — her biri native çağrı yapıyorsa yarış geri gelir`,
+  );
 });
