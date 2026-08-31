@@ -38,7 +38,11 @@ export default function SellerReviewsScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('seller.reviews.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text variant="caption" tone="muted" style={styles.hint}>
           {t('seller.reviews.hint')}
           {data && data.average != null ? `  ·  ★ ${data.average} (${data.count})` : ''}

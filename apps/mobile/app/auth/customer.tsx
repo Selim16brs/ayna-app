@@ -141,7 +141,11 @@ export default function CustomerRegisterScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('auth.customer.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Kişisel bilgiler */}
         <Section text={t('auth.section.personal')} />
         <Pressable style={styles.photoRow} onPress={pickPhoto}>

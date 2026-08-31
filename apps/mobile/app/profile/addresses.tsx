@@ -27,7 +27,11 @@ export default function AddressesScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('addresses.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text variant="caption" tone="muted" style={styles.hint}>
           {t('addresses.hint')}
         </Text>

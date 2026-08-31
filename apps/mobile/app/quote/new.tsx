@@ -93,7 +93,11 @@ export default function NewQuoteScreen() {
 
   return (
     <Screen edges={[]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* ── Lime hero ── */}
         <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
           <View style={styles.heroTop}>

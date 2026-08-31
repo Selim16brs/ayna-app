@@ -286,7 +286,11 @@ export default function ExpertRegisterScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('expert.reg.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <StepBar step={step} titles={STEP_TITLES} />
 
         {step === 1 && (

@@ -163,7 +163,11 @@ export default function ProfileEditScreen() {
   return (
     <Screen edges={['bottom']}>
       <StackHeader title={t('profile.edit.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* ── Profil fotoğrafı: galeri / kamera / kaldır ── */}
         <View style={styles.photoSection}>
           <Pressable style={styles.avatarWrap} onPress={pickFromGallery}>

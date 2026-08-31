@@ -138,7 +138,11 @@ export default function SalonAgendaScreen() {
     showPrice: boolean,
     emptyKey: MessageKey,
   ) => (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       {groups.length === 0 ? (
         <View style={[styles.card, shadow.soft]}>
           <Text variant="caption" tone="muted">

@@ -102,7 +102,11 @@ export default function DiscoverScreen() {
 
   return (
     <Screen edges={[]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
         {/* ═══ 1 · KİMLİK — kanvas Main.dc.html §1 ═══
             Kanvas: AÇIK porselen zemin, üstte şehir çipi + eylem düğmeleri,
             altında SOLDA kesik portre + yansıma, sağda selamlama.

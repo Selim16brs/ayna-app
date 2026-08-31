@@ -47,7 +47,11 @@ export default function SellerServicesScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('seller.services.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.intro}>
           <Text variant="caption" tone="muted" style={styles.subtitle}>
             {t('seller.services.subtitle')}

@@ -102,7 +102,11 @@ export default function ReviewNewScreen() {
   return (
     <Screen edges={['bottom']}>
       <StackHeader title={t('review.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* İki adımlı ilerleme göstergesi (yalnız salon randevusunda) */}
         {isSalon ? (
           <View style={styles.steps}>

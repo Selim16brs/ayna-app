@@ -159,6 +159,7 @@ export default function BoniScreen() {
         keyboardVerticalOffset={0}
       >
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           ref={scrollRef}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}

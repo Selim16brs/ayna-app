@@ -147,7 +147,11 @@ export default function PostDetailScreen() {
         // başlığın altından ekran altına kadar uzandığı için doğru değer 0.
         keyboardVerticalOffset={0}
       >
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Gönderi kartı — kenarlıksız, yumuşak gölge */}
           <View style={[styles.card, shadow.card]}>
             <View style={styles.cardTop}>

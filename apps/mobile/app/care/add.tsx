@@ -140,7 +140,11 @@ function LogForm({
 
   return (
     <>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={[styles.panel, shadow.soft]}>
           <Field label={t('care.add.what')}>
             <TextInput

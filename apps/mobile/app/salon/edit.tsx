@@ -142,7 +142,11 @@ export default function SalonEditScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('salon.edit.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text variant="caption" tone="muted" style={styles.intro}>
           {t('salon.profile.intro')}
         </Text>
