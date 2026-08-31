@@ -187,6 +187,7 @@ export class SettingsService {
         depositPct: rate('rate.deposit_pct'),
         depositMin: rate('rate.deposit_min'),
         depositMax: rate('rate.deposit_max'),
+        depositMaxSharePct: rate('rate.deposit_max_share_pct'),
         holdMinutes: rate('policy.hold_minutes'),
         cancelWindowH: rate('rate.cancel_window_h'),
         lateCancelPct: rate('rate.late_cancel_pct'),

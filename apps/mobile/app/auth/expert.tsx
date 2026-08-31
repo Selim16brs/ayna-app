@@ -20,6 +20,7 @@ function fmtDate(d: Date): string {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 import { api } from '../../src/api';
+import { useStore } from '../../src/store';
 import { CITIES } from '../../src/data';
 import { getDeviceFingerprint } from '../../src/device';
 import {
@@ -76,6 +77,7 @@ type SvcRow = { price: string; dur: string };
 
 export default function ExpertRegisterScreen() {
   const router = useRouter();
+  const setAuth = useStore((st) => st.setAuth);
   const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -269,12 +271,36 @@ export default function ExpertRegisterScreen() {
         ...(birthDate ? { birthDateMs: birthDate.getTime() } : {}),
         ...(deviceFp ? { deviceFp } : {}),
       });
-      void res;
-      // NOT: hizmet+fiyat+süre listesi backend'e Faz 9'da (uzman profili API'si) yazılacak.
-      // Otomatik giriş YOK — kayıt tamamlandı; uzman giriş ekranından bilgileriyle girer.
-      Alert.alert(t('auth.register.done_t'), t('auth.register.done_b'), [
-        { text: t('common.ok'), onPress: () => router.replace('/auth/login') },
-      ]);
+      // OTOMATİK GİRİŞ. Eskiden `void res;` ile oturum ATILIYOR ve uzman giriş
+      // ekranına yollanıp az önce yazdığı bilgileri tekrar yazıyordu.
+      //
+      // Müşteri kaydından FARKLI: `/specialists` yalnız { token, specialist }
+      // döndürüyor, `user` yok. Bu yüzden kullanıcıyı /auth/me ile çekiyoruz —
+      // bir ek tur. Alternatifi sunucudaki ortak kimlik eşleyicisini dışarı
+      // çıkarmaktı; o eşleyici HER girişte kullanılıyor ve bir UX düzeltmesi
+      // için fazla geniş bir yarıçap olurdu.
+      //
+      // (Hizmet+fiyat+süre listesi ARTIK sunucuya yazılıyor: kayıt gövdesindeki
+      // `services` alanı `servicesJson` olarak saklanıyor — eski "Faz 9'da
+      // yazılacak" notu geçersizdi.)
+      let girildi = false;
+      try {
+        const user = await api.me(res.token);
+        setAuth({ token: res.token, user });
+        girildi = true;
+      } catch {
+        // /me düşerse KAYIT YİNE DE BAŞARILI — kullanıcıyı kaybetme, eski yola düş.
+      }
+      Alert.alert(
+        t('auth.register.done_t'),
+        t(girildi ? 'auth.register.done_b' : 'auth.register.done_login'),
+        [
+          {
+            text: t('common.ok'),
+            onPress: () => router.replace(girildi ? '/seller/reports' : '/auth/login'),
+          },
+        ],
+      );
     } catch (e) {
       const msg = String((e as Error).message ?? '');
       Alert.alert(msg.includes('409') ? t('auth.error.taken') : t('common.error'));

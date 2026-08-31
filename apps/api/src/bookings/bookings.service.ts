@@ -13,6 +13,7 @@ import { loadDepositRules } from './deposit.rules';
 import { holdDeadline, loadWindows, responseDeadline } from './booking-windows';
 import { SLOT_HOLDING_STATUSES } from './slot-statuses';
 import { PrismaService } from '../prisma/prisma.service';
+import { CommissionsService } from '../commissions/commissions.service';
 import { PushService } from '../push/push.service';
 import { StorageService } from '../storage/storage.service';
 import { commissionFor } from '../commissions/commissions.calc';
@@ -57,6 +58,7 @@ export class BookingsService {
     private readonly push: PushService,
     private readonly storage: StorageService,
     private readonly offers: OffersService,
+    private readonly commissions: CommissionsService,
   ) {}
 
   // Dekont akışı pushları: uzmanın hesabı Specialist.proId ↔ Booking.proId üzerinden bulunur
@@ -454,6 +456,10 @@ export class BookingsService {
   async confirmCompletion(id: string, actorId?: string) {
     await this.assertParty(id, actorId, 'owner');
     const row = await this.transition(id, { status: 'completed' });
+    // K3 — hizmet tamamlandı: uzmanın AYNA komisyonu ŞİMDİ faturalanır ve uzman
+    // ödemeye yönlendirilir. Eskiden fatura yalnız admin dönem kapanışını elle
+    // çalıştırınca doğuyordu; uzmana hiçbir bildirim gitmiyordu.
+    void this.commissions.invoiceForBookings([id]).catch(() => undefined);
     void this.prisma.booking.findUnique({ where: { id } }).then(async (b) => {
       if (!b?.userId) return;
       // K4.1 geri kazanım + D9 referans ödülü. Zamanlayıcı yolu da AYNI

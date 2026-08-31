@@ -138,6 +138,26 @@ export interface AddPostInput {
 
 interface State {
   bookings: Appointment[];
+  /**
+   * Randevular HENÜZ oturmadı mı? (persist geri yüklemesi + sunucudan tazeleme)
+   *
+   * Bu bayrak olmadan Randevular sekmesi `bookings.length === 0` görüp BOŞ
+   * DURUMU çiziyordu — yani randevusu olan kullanıcıya "hiç randevun yok"
+   * diyordu. İki ayrı pencerede oluyordu: (a) soğuk açılışta AsyncStorage
+   * geri yüklemesi ASENKRON olduğu için store `bookings: []` ile başlıyor,
+   * (b) girişten sonra sunucudan ilk çekim sürerken.
+   *
+   * Bu yüzden başlangıç değeri `true`: "daha bilmiyoruz". `hydrateBookings`
+   * her yoldan (token yok / başarı / hata) `false`'a çeker.
+   */
+  bookingsLoading: boolean;
+  /**
+   * Talepler HENÜZ oturmadı mı? Bookings'ten DAHA kritik: `demands` persist
+   * listesinde YOK, yani her soğuk açılışta boş başlıyor ve yalnız sunucudan
+   * geliyor. Bayraksız hâlde Talepler sekmesi her açılışta, çekim boyunca
+   * "talebin yok" diyordu.
+   */
+  demandsLoading: boolean;
   // §5.2 — açılan teklif/talep istekleri (reverse marketplace)
   demands: DemandRequest[];
   // §10.1/§5.1.6 — salon/uzman promosyonları (Fırsatlar vitrini içeriği)
@@ -448,6 +468,10 @@ const SEEDED_PERSONAL_RESET: Partial<State> = {
   tier: null,
   ledger: [],
   notifications: [],
+  // Artık PERSIST ediliyor → hesap değişiminde MUTLAKA sıfırlanmalı, yoksa
+  // önceki üyenin "anket soruldu" kaydı yeni üyeye taşınır ve o kullanıcı
+  // kendi randevusu için anket daveti hiç almaz.
+  surveyAskedIds: [],
   unreadMessages: 0,
   userReviews: {},
   favorites: [],
@@ -494,6 +518,8 @@ export const useStore = create<State>()(
   persist(
     (set, get) => ({
       bookings: [],
+      bookingsLoading: true,
+      demandsLoading: true,
       demands: [],
       promotions: [],
       recentSearches: [],
@@ -512,6 +538,7 @@ export const useStore = create<State>()(
           depositPct: 10,
           depositMin: 1000,
           depositMax: 5000,
+          depositMaxSharePct: 50,
           holdMinutes: 180,
           cancelWindowH: 3,
           lateCancelPct: 3,
@@ -1306,13 +1333,20 @@ export const useStore = create<State>()(
       // §5.2 Faz A — taleplerim + gelen teklifler buluttan (girişli hesapta tek gerçek kaynak)
       hydrateDemands: async () => {
         const token = get().token;
-        if (!token) return;
+        if (!token) {
+          set({ demandsLoading: false });
+          return;
+        }
+        set({ demandsLoading: true });
         try {
           const remote = await api.myQuoteRequests(token);
           // Sunucudakiler esas — yerel artıklar kullanıcının Taleplerim'ine karışmaz.
           set(() => ({ demands: remote }));
         } catch {
           // çevrimdışı: eldeki liste korunur
+        } finally {
+          // Hata da olsa inmeli; yoksa sunucu kapalıyken sonsuz iskelet.
+          set({ demandsLoading: false });
         }
       },
 
@@ -1892,8 +1926,13 @@ export const useStore = create<State>()(
 
       hydrateBookings: async () => {
         const token = get().token;
-        // Giriş YOK → demo tohum (SEED_APPOINTMENTS) korunur.
-        if (!token) return;
+        // Giriş YOK → demo tohum (SEED_APPOINTMENTS) korunur. Beklenecek bir şey
+        // yok; bayrak burada da inmeli, yoksa misafirde iskelet sonsuza kalır.
+        if (!token) {
+          set({ bookingsLoading: false });
+          return;
+        }
+        set({ bookingsLoading: true });
         // Önce bekleyen yazımlar sunucuya gitsin ki tazeleme onları "sunucudan" geri getirsin
         await get().flushBookingSync();
         try {
@@ -1911,11 +1950,29 @@ export const useStore = create<State>()(
           for (const b of [...mine, ...provider]) byId.set(b.id, b);
           const remote = [...byId.values()];
           const remoteIds = new Set(remote.map((b) => b.id));
-          set((s) => ({
-            bookings: [...remote, ...s.bookings.filter((b) => !remoteIds.has(b.id))],
-          }));
+          set((s) => {
+            // İSTEMCİYE ÖZEL alanlar sunucuda YOK. Sunucu nesnesi olduğu gibi
+            // yazılırsa `reminded24`/`reminded2` her tazelemede siliniyor ve
+            // `checkReminders` AYNI hatırlatmayı yeniden üretiyordu — uygulama
+            // her açıldığında. "Aynı bildirim tekrar tekrar geliyor"un kaynağı.
+            const yerel = new Map(s.bookings.map((b) => [b.id, b]));
+            const birlesik = remote.map((r) => {
+              const y = yerel.get(r.id);
+              if (!y) return r;
+              return {
+                ...r,
+                ...(y.reminded24 !== undefined ? { reminded24: y.reminded24 } : {}),
+                ...(y.reminded2 !== undefined ? { reminded2: y.reminded2 } : {}),
+              };
+            });
+            return { bookings: [...birlesik, ...s.bookings.filter((b) => !remoteIds.has(b.id))] };
+          });
         } catch {
           // API erişilemez → mevcut veriler korunur (offline-first)
+        } finally {
+          // HATA DA OLSA inmeli: aksi halde sunucu kapalıyken kullanıcı
+          // sonsuz iskelet görür — yanlış boş durumdan beter.
+          set({ bookingsLoading: false });
         }
       },
 
@@ -2751,6 +2808,11 @@ export const useStore = create<State>()(
         // kapat-aç sonrası sunucuya ulaşmamış talep kaybolmaz, kuyruktan eşitlenir.
         bookings: s.bookings,
         pendingBookingSync: s.pendingBookingSync,
+        // Bunlar persist edilmiyordu: her açılışta liste boşalıyor, dedup'lar
+        // (duyuru id'si, anket sorulmuşluğu) sıfırlanıyor ve TÜM bildirimler
+        // yeniden OKUNMAMIŞ olarak üretiliyordu.
+        notifications: s.notifications,
+        surveyAskedIds: s.surveyAskedIds,
         sellerTrialStart: s.sellerTrialStart, // §11 — 3 günlük ücretsiz deneme sayacı korunur
         // PERF: avatar/cutout PERSIST EDİLMEZ — MB'lık data-URL'ler her state değişiminde
         // diske yazılıp uygulamayı yavaşlatıyordu. Açılışta HESAPTAN geri yüklenir (tek kaynak).
@@ -2780,6 +2842,10 @@ useStore.persist.onFinishHydration((state) => {
     useStore.setState({
       ...SEEDED_PERSONAL_RESET,
       bookings: state.bookings.filter((b) => !seedIds.has(b.id)),
+      // Bildirimler artık KALICI; sıfırlama onları silmemeli, yoksa persist
+      // etmenin anlamı kalmaz ve her açılışta hepsi yeniden üretilir.
+      notifications: state.notifications,
+      surveyAskedIds: state.surveyAskedIds,
     });
     // Açılışta bekleyen sunucu yazımlarını eşitle (önceki oturumda ağ yoksa burada tamamlanır)
     void useStore.getState().flushBookingSync();
@@ -2821,6 +2887,10 @@ export const localDeposit = (price: number, rates: State['config']['rates']): nu
     minKzt: rates.depositMin ?? DEFAULT_DEPOSIT_RULES.minKzt,
     maxKzt: rates.depositMax ?? DEFAULT_DEPOSIT_RULES.maxKzt,
     stepKzt: DEFAULT_DEPOSIT_RULES.stepKzt,
+    // K2 tavanı da SUNUCUDAN gelmeli: admin oranı değiştirdiğinde istemci
+    // varsayılanda kalırsa bildirimde bir tutar, ödeme ekranında başka bir
+    // tutar çıkar — bu dosyanın yukarıdaki yorumu tam bunu yasaklıyor.
+    maxSharePct: rates.depositMaxSharePct ?? DEFAULT_DEPOSIT_RULES.maxSharePct,
   });
 
 // §12.8 — komisyon oranı SUNUCUDAN gelir. Burada eskiden "Platinum'da %8,5"

@@ -22,6 +22,19 @@ export type DepositRules = {
   maxKzt: number;
   /** Yuvarlama adımı (₸). Kullanıcıya "1.556 ₸" değil "1.600 ₸" gösterilir. */
   stepKzt: number;
+  /**
+   * Depozito fiyatın EN FAZLA yüzde kaçı olabilir.
+   *
+   * Karar K2 (31.08.2026): depozito bir ÖN ödemedir; kalanı hizmetten sonra
+   * ödenir. Yani her zaman bir kalan olmalıdır.
+   *
+   * Bu tavan olmadan alt sınır (`minKzt`) fiyatın kendisini aşabiliyordu:
+   *   1.000 ₸ hizmet → depozito 1.000 ₸  (tamamı, kalan 0)
+   *     800 ₸ hizmet → depozito 1.000 ₸  (fiyattan FAZLA, kalan −200)
+   * Ekran kalanı `Math.max(0, ...)` ile gösterdiği için eksi değer görünmüyor,
+   * kullanıcı da "depozito diye ücretin tamamı alınıyor" diyordu.
+   */
+  maxSharePct: number;
 };
 
 export const DEFAULT_DEPOSIT_RULES: DepositRules = {
@@ -29,6 +42,7 @@ export const DEFAULT_DEPOSIT_RULES: DepositRules = {
   minKzt: 1000,
   maxKzt: 5000,
   stepKzt: 100,
+  maxSharePct: 50,
 };
 
 /** Admin ayarlarının anahtarları — servisler bu listeyi tek sorguda okur. */
@@ -36,6 +50,7 @@ export const DEPOSIT_SETTING_KEYS = [
   'rate.deposit_pct',
   'rate.deposit_min',
   'rate.deposit_max',
+  'rate.deposit_max_share_pct',
 ] as const;
 
 /**
@@ -61,7 +76,18 @@ export function depositFor(price: number, rules: DepositRules = DEFAULT_DEPOSIT_
 
   const raw = (price * rules.pct) / 100;
   const stepped = Math.round(raw / step) * step;
-  return Math.min(max, Math.max(min, stepped));
+  const clamped = Math.min(max, Math.max(min, stepped));
+
+  // K2 — TAVAN: depozito fiyatın belirli bir payını aşamaz, çünkü kalan mutlaka
+  // hizmetten sonra ödenecek. Alt sınır fiyatın üstüne çıkabildiği için bu
+  // tavan clamp'ten SONRA uygulanır; aksi hâlde min onu yine ezerdi.
+  const pay = Number.isFinite(rules.maxSharePct) ? rules.maxSharePct : 100;
+  if (pay <= 0 || pay >= 100) return clamped; // tavan kapalı → eski davranış
+  const tavan = Math.floor((price * pay) / 100);
+  if (clamped <= tavan) return clamped;
+  // Tavan adımdan küçükse adıma yuvarlamak 0 üretirdi (ucuz hizmette depozito
+  // tamamen kaybolur); o durumda tavanın kendisi kullanılır.
+  return tavan >= step ? Math.floor(tavan / step) * step : tavan;
 }
 
 /**
@@ -82,5 +108,6 @@ export function depositRulesFrom(
     minKzt: val('rate.deposit_min') ?? val('rate.deposit_kzt') ?? fallback.minKzt,
     maxKzt: val('rate.deposit_max') ?? fallback.maxKzt,
     stepKzt: fallback.stepKzt,
+    maxSharePct: val('rate.deposit_max_share_pct') ?? fallback.maxSharePct,
   };
 }

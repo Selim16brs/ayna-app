@@ -6,6 +6,7 @@ import { almatyDayStart, formatSlotTr, slotTime } from '../../src/datetime';
 import { api, type ApiOffer } from '../../src/api';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
+import { bildirimIzniIste } from '../../src/notifications';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -118,6 +119,14 @@ export default function ScheduleScreen() {
       durationMin,
       price,
     });
+
+    // BİLDİRİM İZNİ — kullanıcı randevuya yeni bağlandı; 24s/2s hatırlatmasının
+    // değeri burada apaçık. İzin YALNIZ talep yayınlama ekranında isteniyordu:
+    // hiç talep açmayan kullanıcıdan izin hiç istenmiyor, dolayısıyla ne yerel
+    // hatırlatma ne uzak push düşüyordu — "uygulama kapalıyken bildirim
+    // gelmiyor"un sebebi buydu. `bildirimIzniIste` zaten idempotent: izin varsa
+    // ya da daha önce reddedildiyse sessizce geçer.
+    void bildirimIzniIste(useStore.getState().token);
 
     router.replace({
       pathname: '/booking/confirmed',

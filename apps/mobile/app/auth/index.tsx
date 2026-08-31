@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -9,6 +9,7 @@ import { Screen, StackHeader, Text } from '../../src/ui';
 
 export default function AuthRoleScreen() {
   const router = useRouter();
+  const { next } = useLocalSearchParams<{ next?: string }>();
   const { t } = useLocale();
   const { gradients } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -30,7 +31,11 @@ export default function AuthRoleScreen() {
             icon="person"
             title={t('auth.role.customer')}
             sub={t('auth.role.customer_sub')}
-            onPress={() => router.push('/auth/customer')}
+            onPress={() =>
+              // Misafir "Randevu al" deyip kayda geldiyse niyeti kaybolmasın:
+              // kayıt + otomatik giriş sonrası o ekrana geri döner.
+              router.push({ pathname: '/auth/customer', params: next ? { next } : {} } as never)
+            }
           />
           <RoleCard
             grad={gradients.plum}

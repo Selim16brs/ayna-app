@@ -902,6 +902,13 @@ model CommissionInvoice {
   collectedAt       DateTime? @map("collected_at") @db.Timestamptz(6)
   restrictedApplied Boolean   @default(false) @map("restricted_applied") // gecikme kısıtı uygulandı mı
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// K3 (31.08.2026) — İŞLEM BAŞINA fatura: bu satır TEK bir randevuya aittir.
+  /// Dönem (aylık) faturalarında null kalır.
+  ///
+  /// Tekillik kritik: aynı randevu iki kez faturalanırsa uzmandan İKİ KEZ
+  /// tahsil edilir. Uygulama katmanı kontrolü yetmez — iki eşzamanlı tamamlanma
+  /// çağrısı ikisini de geçirebilir.
+  bookingId         String?   @unique @map("booking_id") @db.Uuid
 
   // Aynı pro + aynı dönem için İKİ fatura kesilemez. Eskiden yalnız uygulama
   // katmanında "önce oku sonra yaz" kontrolü vardı; eşzamanlı iki kapanış
