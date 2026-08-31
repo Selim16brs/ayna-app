@@ -238,6 +238,25 @@ export interface ApiAlwaysBond {
   proId: string;
 }
 
+/** §tercihler — sunucudaki kullanıcı tercihleri. */
+export interface UserPrefsData {
+  notif: Record<string, boolean>;
+  demand: Record<string, unknown>;
+  reviewAnonymous: boolean;
+  autoReengage: boolean;
+}
+
+/** §11 — bakım periyodu dolan gerçek müşteri. `kalanGun`: 1=yarın, 0=bugün. */
+export interface ReengageAday {
+  bookingId: string;
+  customerUserId: string;
+  customerName: string;
+  proId: string;
+  service: string;
+  periodDays: number;
+  kalanGun: number;
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -944,6 +963,14 @@ export const api = {
   removeAlways: (token: string, id: string) => del<{ ok: boolean }>(`/always/${id}`, token),
   broadcastAlways: (token: string, title: string, body: string) =>
     post<{ sent: number }>('/always/broadcast', { title, body }, token),
+  // §tercihler — bildirim/talep/anonim yorum/otomatik geri çağırma.
+  // Eskiden hepsi yalnız cihazdaydı: uygulama silinince varsayılana dönüyordu.
+  // §11 — uzmanın yaklaşan bakım listesi. Ekran eskiden SEED verisiyle
+  // çiziliyordu: uzman kendi müşterileri sanarak uydurma isimlere bakıyordu.
+  reengageUpcoming: (token: string) => get<ReengageAday[]>('/reengage/upcoming', token),
+  prefs: (token: string) => get<UserPrefsData>('/prefs', token),
+  savePrefs: (token: string, patch: Partial<UserPrefsData>) =>
+    istek<UserPrefsData>('PUT', '/prefs', token, patch),
   care: (token: string) => get<CareData>('/care', token),
   addCareRoutine: (token: string, input: CareRoutineInput) =>
     post<{ id: string }>('/care/routines', input, token),

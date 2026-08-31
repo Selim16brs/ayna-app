@@ -1343,3 +1343,48 @@ model AlwaysBond {
   @@index([customerUserId, status])
   @@map("always_bonds")
 }
+
+// ── KULLANICI TERCİHLERİ ──────────────────────────────────────────────────
+//
+// Bunlar da YALNIZ CİHAZDA duruyordu: bildirim tercihleri, talep bildirimi
+// ayarı, anonim yorum tercihi ve uzmanın otomatik geri çağırma anahtarı.
+// Uygulama silinip kurulunca hepsi varsayılana dönüyordu — kullanıcı
+// kapattığı bildirimi geri açılmış buluyordu.
+//
+// TEK SATIR/kullanıcı: tercihler az sayıda ve birlikte okunuyor; ayrı tablo
+// başına bir sorgu açmak anlamsız olurdu.
+model UserPrefs {
+  userId String @id @map("user_id") @db.Uuid
+  /// Bildirim türü → açık/kapalı. Anahtar kümesi istemcide tanımlı; burada
+  /// serbest JSON çünkü yeni tür eklemek migration gerektirmemeli.
+  notifJson String @default("{}") @map("notif_json")
+  /// §5.3 — yeni talep bildirimi ayarları (kategori/şehir filtresi)
+  demandJson String @default("{}") @map("demand_json")
+  /// §7.1 — yorumların varsayılan olarak anonim gönderilmesi
+  reviewAnonymous Boolean @default(false) @map("review_anonymous")
+  /// §11 — uzmanın otomatik geri çağırma anahtarı (varsayılan AÇIK)
+  autoReengage Boolean @default(true) @map("auto_reengage")
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("user_prefs")
+}
+
+// ── GERİ ÇAĞIRMA — gönderildi kaydı ───────────────────────────────────────
+//
+// Geri çağırma da kurguydu: `runAutoReengage` SEED verisi (`SELLER_PAST_CLIENTS`)
+// üzerinde dönüyor ve YEREL bildirim üretiyordu. Gerçek müşteriye hiçbir şey
+// gitmiyordu; üstelik yalnız uzman uygulamayı açtığında çalışıyordu.
+//
+// Artık sunucu zamanlayıcısı yapıyor. Bu tablo İKİ KEZ GÖNDERMEYİ engelliyor:
+// zamanlayıcı saatte bir dönüyor, kayıt olmasa aynı müşteriye aynı gün
+// defalarca bildirim giderdi.
+model ReengageSent {
+  id        String   @id @default(uuid()) @db.Uuid
+  bookingId String   @map("booking_id")
+  /// pre (1 gün kala) | due (bitiş günü)
+  stage     String
+  sentAt    DateTime @default(now()) @map("sent_at") @db.Timestamptz(6)
+
+  @@unique([bookingId, stage])
+  @@map("reengage_sent")
+}

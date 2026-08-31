@@ -29,6 +29,7 @@ function ThemedStack() {
   const hydrateLoyalty = useStore((s) => s.hydrateLoyalty);
   const hydrateCare = useStore((s) => s.hydrateCare);
   const hydrateAlways = useStore((s) => s.hydrateAlways);
+  const hydratePrefs = useStore((s) => s.hydratePrefs);
   const refreshMembership = useStore((s) => s.refreshMembership);
   const loadContent = useStore((s) => s.loadContent);
   const checkReminders = useStore((s) => s.checkReminders);
@@ -68,6 +69,9 @@ function ThemedStack() {
     // §11 — Always. Okuma bağlanmazsa karşı tarafın gönderdiği istek HİÇ
     // görünmez: kullanıcı "İstekler" sekmesini boş görür ve bağ kurulmaz.
     void hydrateAlways();
+    // §tercihler — bildirim/anonim/geri çağırma ayarları. Okuma bağlanmazsa
+    // kullanıcı yeni cihazda kapattığı bildirimi geri açılmış bulur.
+    void hydratePrefs();
   }, [
     hydrateBookings,
     hydrateDemands,

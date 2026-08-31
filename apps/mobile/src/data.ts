@@ -1145,63 +1145,9 @@ export const SEED_APPOINTMENTS: Appointment[] = [
 // §10/§4 — UZMANIN GEÇMİŞ MÜŞTERİLERİ (geri-çağırma listesi kaynağı).
 // Her hizmet periyodiktir (taksonomi periodDays); son gelişten periyot kadar geçince
 // uzman memnun müşteriyi sıcak bir bildirimle geri çağırabilir → retention + gelir köprüsü.
-export interface PastClient {
-  id: string;
-  name: string;
-  image?: string;
-  serviceId: string; // taksonomi hizmeti — periyot + etiket buradan gelir
-  lastVisitMs: number; // son geliş zamanı
-}
 const DAY_MS = 24 * 60 * 60_000;
 // §11 — bildirim yalnız periyot bitişine 1 gün kala ve bitiş günü gider.
 // Seed: son geliş = SEED_NOW - (periyot - kalan gün) → bitiş bugün/yarın/ileride ayarlanır.
-export const SELLER_PAST_CLIENTS: PastClient[] = [
-  // BUGÜN biten (bitiş günü — 'due' bildirimi gider)
-  {
-    id: 'pc-1',
-    name: 'Zhanel S.',
-    image: avatar(FACES[3]!),
-    serviceId: 'nails-gel',
-    lastVisitMs: SEED_NOW - 21 * DAY_MS,
-  }, // periyot 21 → bugün
-  {
-    id: 'pc-3',
-    name: 'Saule N.',
-    image: avatar(FACES[5]!),
-    serviceId: 'skin-facial',
-    lastVisitMs: SEED_NOW - 30 * DAY_MS,
-  }, // periyot 30 → bugün
-  // YARIN biten (1 gün kala — 'pre' bildirimi gider)
-  {
-    id: 'pc-2',
-    name: 'Dana K.',
-    image: avatar(FACES[4]!),
-    serviceId: 'lashes-classic',
-    lastVisitMs: SEED_NOW - 20 * DAY_MS,
-  }, // periyot 21 → yarın
-  {
-    id: 'pc-6',
-    name: 'Aruzhan M.',
-    image: avatar(FACES[0]!),
-    serviceId: 'brows-shape',
-    lastVisitMs: SEED_NOW - 20 * DAY_MS,
-  }, // periyot 21 → yarın
-  // İLERİDE (henüz bildirim yok — sırada)
-  {
-    id: 'pc-5',
-    name: 'Madina B.',
-    image: avatar(FACES[7]!),
-    serviceId: 'nails-classic',
-    lastVisitMs: SEED_NOW - 13 * DAY_MS,
-  }, // periyot 15 → 2 gün sonra
-  {
-    id: 'pc-4',
-    name: 'Aigerim T.',
-    image: avatar(FACES[6]!),
-    serviceId: 'hair-color',
-    lastVisitMs: SEED_NOW - 39 * DAY_MS,
-  }, // periyot 42 → 3 gün sonra
-];
 
 // §10/§4/§14.5 — kategoriye göre SICAK "geri çağırma" bildirim şablonu (params: {expert}, {service}).
 // Metinler i18n'de 3 dilde; emoji ile samimi ton. Uzman + ekran ortak kullanır.
