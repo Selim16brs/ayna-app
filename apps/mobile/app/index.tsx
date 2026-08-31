@@ -89,16 +89,33 @@ export default function WelcomeScreen() {
             })}
           </View>
 
+          {/* MİSAFİR GEZİNTİ — bu ekranda hiç yoktu.
+              Karşılama ekranında yalnız "Giriş yap" ve "Kayıt ol" vardı;
+              Keşfet'e, bir uzman profiline ya da bir fiyata giden hiçbir yol
+              bulunmuyordu. Oysa katalog uçları zaten korumasız: kullanıcı
+              kayıt olmadan gezebilirdi, sadece kapı açılmamıştı.
+
+              Birincil eylem artık GEZİNTİ. Giriş, para/kimlik gerektiren
+              aksiyonda isteniyor ve kaldığı yere geri döndürüyor. */}
+          <Button
+            label={t('welcome.browse')}
+            variant="primary"
+            onPress={() => router.push('/discover')}
+          />
           <Button
             label={t('auth.tab.login')}
-            variant="primary"
+            variant="secondary"
             onPress={() => router.push('/auth/login')}
           />
-          <Button
-            label={t('auth.tab.register')}
-            variant="secondary"
+          <Pressable
+            style={styles.registerLink}
+            accessibilityRole="button"
             onPress={() => router.push('/auth')}
-          />
+          >
+            <Text variant="caption" tone="accentFg" style={styles.registerText}>
+              {t('auth.tab.register')}
+            </Text>
+          </Pressable>
         </View>
       </View>
     </Screen>
@@ -135,6 +152,8 @@ const makeStyles = (colors: ColorTokens) =>
     bulletRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     bulletText: { flex: 1, lineHeight: 18 },
     bottom: { paddingBottom: space(4), gap: space(1.5) },
+    registerLink: { alignSelf: 'center', paddingVertical: space(1), paddingHorizontal: space(2) },
+    registerText: { textDecorationLine: 'underline' },
     langRow: {
       flexDirection: 'row',
       gap: space(1),
