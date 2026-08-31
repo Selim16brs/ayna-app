@@ -1,7 +1,8 @@
 # AYNA — İlk Kullanıcı Gözüyle UX Denetimi
 
 **Tarih:** 31.08.2026
-**Faz:** 1 — yalnız tespit. **Bu denetimde hiçbir kod değiştirilmedi.**
+**Faz:** 1 — tespit. Rapor yazılırken hiçbir kod değiştirilmedi.
+**Durum:** Kurucu onayıyla **B5 uygulandı** (bkz. aynı PR). B1–B4 ve B6 onay bekliyor.
 
 ---
 
@@ -11,11 +12,11 @@
 
 **Uygulamayı gözle açamadım.** Üç yol da kapalı:
 
-| yol                | durum                                                     |
-| ------------------ | --------------------------------------------------------- |
-| iOS simülatörü     | Expo Go kurulu değil (`openurl` 60 numaralı hatayla düştü) |
-| Yerel native yapı  | `ios/` klasörü yok                                        |
-| Tarayıcıda çalıştır| `react-native-web` kurulu değil                           |
+| yol                 | durum                                                      |
+| ------------------- | ---------------------------------------------------------- |
+| iOS simülatörü      | Expo Go kurulu değil (`openurl` 60 numaralı hatayla düştü) |
+| Yerel native yapı   | `ios/` klasörü yok                                         |
+| Tarayıcıda çalıştır | `react-native-web` kurulu değil                            |
 
 Ayrıca bunu zorlamak, senin sorduğun token kotasını gerçekten bitirirdi.
 
@@ -32,18 +33,18 @@ Ayrıca bunu zorlamak, senin sorduğun token kotasını gerçekten bitirirdi.
 
 ## 1. Kapsam tablosu
 
-| alan                              | durum            | nasıl / neden                                          |
-| --------------------------------- | ---------------- | ------------------------------------------------------ |
-| Kayıt akışı (müşteri + uzman)     | **test edildi**  | sunucu yanıtı + ekran kodu birlikte                    |
-| Misafir → randevu akışı           | **test edildi**  | yol grafiği uçtan uca çıkarıldı                        |
-| Misafir → talep akışı             | **test edildi**  | yol grafiği uçtan uca çıkarıldı                        |
-| Yükleniyor / boş / hata durumları | **test edildi**  | 8 ana ekran, düzeltilmiş tarama                        |
-| İşlem geri bildirimi              | **kısmen**       | 56 yazma eylemi tarandı, **örneklem** doğrulandı (§4)  |
-| Metin ve terim tutarlılığı        | **test edildi**  | 2062 metin tarandı                                     |
-| Görsel tasarım / hizalama / boşluk| **BAKILMADI**    | uygulama görsel olarak açılamadı (§0)                  |
-| Gerçek açılış hızı                | **BAKILMADI**    | cihazda ölçüm gerekiyor; ölçüm SDK'sı hâlâ yok         |
-| Dokunma hedefi boyutları          | **BAKILMADI**    | aynı sebep                                             |
-| Uzman / salon panelleri derinlemesine | **BAKILMADI** | denetimin odağı ilk kullanıcı; kapsam dışı bıraktım    |
+| alan                                  | durum           | nasıl / neden                                         |
+| ------------------------------------- | --------------- | ----------------------------------------------------- |
+| Kayıt akışı (müşteri + uzman)         | **test edildi** | sunucu yanıtı + ekran kodu birlikte                   |
+| Misafir → randevu akışı               | **test edildi** | yol grafiği uçtan uca çıkarıldı                       |
+| Misafir → talep akışı                 | **test edildi** | yol grafiği uçtan uca çıkarıldı                       |
+| Yükleniyor / boş / hata durumları     | **test edildi** | 8 ana ekran, düzeltilmiş tarama                       |
+| İşlem geri bildirimi                  | **kısmen**      | 56 yazma eylemi tarandı, **örneklem** doğrulandı (§4) |
+| Metin ve terim tutarlılığı            | **test edildi** | 2062 metin tarandı                                    |
+| Görsel tasarım / hizalama / boşluk    | **BAKILMADI**   | uygulama görsel olarak açılamadı (§0)                 |
+| Gerçek açılış hızı                    | **BAKILMADI**   | cihazda ölçüm gerekiyor; ölçüm SDK'sı hâlâ yok        |
+| Dokunma hedefi boyutları              | **BAKILMADI**   | aynı sebep                                            |
+| Uzman / salon panelleri derinlemesine | **BAKILMADI**   | denetimin odağı ilk kullanıcı; kapsam dışı bıraktım   |
 
 ---
 
@@ -121,11 +122,11 @@ Aynı sessizlik, ama bu sefer **ödeme kanıtı** yükleniyor.
 **Ekran:** Randevu akışı, bildirimler, kurallar
 **Sorun:** 2062 metnin taramasında aynı kavram iki ayrı kelimeyle geçiyor: **kapora 9 kez, depozito 19 kez** — ve ikisi **aynı `booking` ve `notif` önekleri altında** karışık kullanılıyor.
 
-| kapora diyen                                    | depozito diyen                                     |
-| ----------------------------------------------- | -------------------------------------------------- |
-| `rules.deposit` "Kapora (randevuyu kesinleştirir)" | `notif.deposit_expired` "Depozito süresi doldu"   |
-| `home.urgent.deposit` "Kapora dekontunu bekliyoruz" | `notif.late_cancel_b` "…depozito uzmanda kaldı"  |
-| `notif.late_cancel` "Geç iptal — kapora yandı"  | `quotes.confirm_b` "…depozito adımı"               |
+| kapora diyen                                        | depozito diyen                                  |
+| --------------------------------------------------- | ----------------------------------------------- |
+| `rules.deposit` "Kapora (randevuyu kesinleştirir)"  | `notif.deposit_expired` "Depozito süresi doldu" |
+| `home.urgent.deposit` "Kapora dekontunu bekliyoruz" | `notif.late_cancel_b` "…depozito uzmanda kaldı" |
+| `notif.late_cancel` "Geç iptal — kapora yandı"      | `quotes.confirm_b` "…depozito adımı"            |
 
 Son iki satır dikkat çekici: **aynı olayın başlığı "kapora", gövdesi "depozito" diyor.**
 
@@ -147,12 +148,12 @@ Bunları raporda tutuyorum çünkü rapordaki güveni ayarlıyorlar.
 
 **İşlem geri bildirimi taraması eksik doğrulandı.** 56 yazma eylemi taradım, 27'si "ne onay ne yönlendirme" diye işaretlendi. **27'sinin hepsini tek tek doğrulamadım** — örneklem aldım ve sonuç şu oldu:
 
-| doğruladığım           | sonuç                                                        |
-| ---------------------- | ------------------------------------------------------------ |
-| `submitKyc`            | **gerçek bulgu** → B3                                        |
-| `uploadCommissionReceipt` | **gerçek bulgu** → B4                                     |
-| `registerSpecialist`   | **YANLIŞ ALARM** — onay veriyor, tarama penceresi kısaymış   |
-| `startSafetySession`   | **bulgu değil** — arayüz durumu zaten geri bildirim          |
+| doğruladığım              | sonuç                                                      |
+| ------------------------- | ---------------------------------------------------------- |
+| `submitKyc`               | **gerçek bulgu** → B3                                      |
+| `uploadCommissionReceipt` | **gerçek bulgu** → B4                                      |
+| `registerSpecialist`      | **YANLIŞ ALARM** — onay veriyor, tarama penceresi kısaymış |
+| `startSafetySession`      | **bulgu değil** — arayüz durumu zaten geri bildirim        |
 
 Yani işaretlenen 27'nin **kabaca yarısı yanlış alarm olabilir.** "27 ekranda geri bildirim yok" diye yazmadım, çünkü bilmiyorum. Kalan 23'ün tek tek doğrulanması ayrı bir iş.
 
@@ -166,14 +167,14 @@ Yani işaretlenen 27'nin **kabaca yarısı yanlış alarm olabilir.** "27 ekrand
 
 ## 5. Bulgu özeti
 
-| #   | bulgu                                        | etki       | düzeltme maliyeti      |
-| --- | -------------------------------------------- | ---------- | ---------------------- |
-| B1  | Randevular yüklenirken "randevun yok"        | **yüksek** | küçük (istemci)        |
-| B2  | Kayıttan sonra tekrar giriş zorunlu          | **yüksek** | küçük (istemci)        |
-| B3  | Kimlik belgesi gönderiminde onay yok         | **yüksek** | küçük (istemci)        |
-| B4  | Para dekontu yüklemede onay yok              | **yüksek** | küçük (istemci)        |
-| B5  | "kapora" / "depozito" karışıklığı            | orta       | küçük ama **karar** ister |
-| B6  | Tek tük terim kalıntıları                    | düşük      | çok küçük              |
+| #   | bulgu                                 | etki       | düzeltme maliyeti         |
+| --- | ------------------------------------- | ---------- | ------------------------- |
+| B1  | Randevular yüklenirken "randevun yok" | **yüksek** | küçük (istemci)           |
+| B2  | Kayıttan sonra tekrar giriş zorunlu   | **yüksek** | küçük (istemci)           |
+| B3  | Kimlik belgesi gönderiminde onay yok  | **yüksek** | küçük (istemci)           |
+| B4  | Para dekontu yüklemede onay yok       | **yüksek** | küçük (istemci)           |
+| B5  | "kapora" / "depozito" karışıklığı     | orta       | küçük ama **karar** ister |
+| B6  | Tek tük terim kalıntıları             | düşük      | çok küçük                 |
 
 Dördü de yüksek etkili olanların hepsi **istemci tarafında ve küçük.** Sunucu değişikliği gerektiren tek bulgu yok.
 
