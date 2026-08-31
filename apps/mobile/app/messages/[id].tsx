@@ -456,7 +456,9 @@ const makeStyles = (colors: ColorTokens) =>
     },
     photoThumb: { width: 44, height: 44, borderRadius: radius.xs },
     photoHint: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
-    attachBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    // §13 — 40×40'tı, dokunma alanı eşiği 44 pt. Sohbet yazma şeridinde yer
+    // var; hitSlop yerine gerçek boyut verildi (görsel de dengeli kalıyor).
+    attachBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
     msgImage: {
       width: 200,
       height: 200,
