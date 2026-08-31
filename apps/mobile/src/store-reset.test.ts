@@ -47,6 +47,11 @@ const PERSISTED_USER_KEYS = [
   'premium',
   'platinum',
   'autoReengageEnabled',
+  // Bildirim hataları düzeltmesi: ikisi de persist edilmeye başlandı. Kalıcı
+  // olmadıkları için her açılışta bildirimler sıfırdan üretiliyor ve eski
+  // duyurular yeniden okunmamış görünüyordu.
+  'notifications',
+  'surveyAskedIds',
 ];
 
 test('persist edilen tüm kullanıcı alanları sıfırlama setinde', () => {

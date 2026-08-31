@@ -468,6 +468,10 @@ const SEEDED_PERSONAL_RESET: Partial<State> = {
   tier: null,
   ledger: [],
   notifications: [],
+  // Artık PERSIST ediliyor → hesap değişiminde MUTLAKA sıfırlanmalı, yoksa
+  // önceki üyenin "anket soruldu" kaydı yeni üyeye taşınır ve o kullanıcı
+  // kendi randevusu için anket daveti hiç almaz.
+  surveyAskedIds: [],
   unreadMessages: 0,
   userReviews: {},
   favorites: [],
@@ -1945,9 +1949,23 @@ export const useStore = create<State>()(
           for (const b of [...mine, ...provider]) byId.set(b.id, b);
           const remote = [...byId.values()];
           const remoteIds = new Set(remote.map((b) => b.id));
-          set((s) => ({
-            bookings: [...remote, ...s.bookings.filter((b) => !remoteIds.has(b.id))],
-          }));
+          set((s) => {
+            // İSTEMCİYE ÖZEL alanlar sunucuda YOK. Sunucu nesnesi olduğu gibi
+            // yazılırsa `reminded24`/`reminded2` her tazelemede siliniyor ve
+            // `checkReminders` AYNI hatırlatmayı yeniden üretiyordu — uygulama
+            // her açıldığında. "Aynı bildirim tekrar tekrar geliyor"un kaynağı.
+            const yerel = new Map(s.bookings.map((b) => [b.id, b]));
+            const birlesik = remote.map((r) => {
+              const y = yerel.get(r.id);
+              if (!y) return r;
+              return {
+                ...r,
+                ...(y.reminded24 !== undefined ? { reminded24: y.reminded24 } : {}),
+                ...(y.reminded2 !== undefined ? { reminded2: y.reminded2 } : {}),
+              };
+            });
+            return { bookings: [...birlesik, ...s.bookings.filter((b) => !remoteIds.has(b.id))] };
+          });
         } catch {
           // API erişilemez → mevcut veriler korunur (offline-first)
         } finally {
@@ -2789,6 +2807,11 @@ export const useStore = create<State>()(
         // kapat-aç sonrası sunucuya ulaşmamış talep kaybolmaz, kuyruktan eşitlenir.
         bookings: s.bookings,
         pendingBookingSync: s.pendingBookingSync,
+        // Bunlar persist edilmiyordu: her açılışta liste boşalıyor, dedup'lar
+        // (duyuru id'si, anket sorulmuşluğu) sıfırlanıyor ve TÜM bildirimler
+        // yeniden OKUNMAMIŞ olarak üretiliyordu.
+        notifications: s.notifications,
+        surveyAskedIds: s.surveyAskedIds,
         sellerTrialStart: s.sellerTrialStart, // §11 — 3 günlük ücretsiz deneme sayacı korunur
         // PERF: avatar/cutout PERSIST EDİLMEZ — MB'lık data-URL'ler her state değişiminde
         // diske yazılıp uygulamayı yavaşlatıyordu. Açılışta HESAPTAN geri yüklenir (tek kaynak).
@@ -2818,6 +2841,10 @@ useStore.persist.onFinishHydration((state) => {
     useStore.setState({
       ...SEEDED_PERSONAL_RESET,
       bookings: state.bookings.filter((b) => !seedIds.has(b.id)),
+      // Bildirimler artık KALICI; sıfırlama onları silmemeli, yoksa persist
+      // etmenin anlamı kalmaz ve her açılışta hepsi yeniden üretilir.
+      notifications: state.notifications,
+      surveyAskedIds: state.surveyAskedIds,
     });
     // Açılışta bekleyen sunucu yazımlarını eşitle (önceki oturumda ağ yoksa burada tamamlanır)
     void useStore.getState().flushBookingSync();
