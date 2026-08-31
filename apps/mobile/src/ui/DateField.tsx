@@ -6,26 +6,11 @@ import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
 // TR kısa ay adları — tarih etiketini serbest metin yerine seçilen tarihten üretiriz.
-const TR_MONTHS = [
-  'Oca',
-  'Şub',
-  'Mar',
-  'Nis',
-  'May',
-  'Haz',
-  'Tem',
-  'Ağu',
-  'Eyl',
-  'Eki',
-  'Kas',
-  'Ara',
-];
-const two = (n: number) => (n < 10 ? `0${n}` : `${n}`);
-
-export function formatTrDate(d: Date, withTime: boolean): string {
-  const base = `${d.getDate()} ${TR_MONTHS[d.getMonth()]}`;
-  return withTime ? `${base} · ${two(d.getHours())}:${two(d.getMinutes())}` : base;
-}
+// Biçimlendirici `src/date-label.ts`e taşındı (mağaza da kullanıyor, o dosya
+// react-native içe aktaramaz). Buradan yeniden dışa aktarılıyor ki mevcut
+// çağıranlar değişmesin.
+import { formatTrDate } from '../date-label';
+export { formatTrDate };
 
 /**
  * Ortak tarih/saat alanı (Benim İçin kayıt eklemeleri + Randevu al aynı model).

@@ -1245,3 +1245,63 @@ model PassportAccess {
   @@index([proId, expiresAt])
   @@map("passport_access")
 }
+
+// ── BAKIM (CARE) — kullanıcının kendi girdiği bakım verisi ────────────────
+//
+// Bu üç tablo YENİ. Bakım sekmesinin tamamı cihazda yaşıyordu: kullanıcı
+// rutinini, anlarını ve günlüğünü giriyor, telefonu değişince HEPSİ gidiyordu.
+// Sunucuda hiçbir karşılığı yoktu — uç, model, hiçbir şey.
+//
+// SAĞLIK-YAKINI VERİ: cilt/saç durumu ve kişisel notlar §gizlilik kapsamında.
+// Log'a ve analytics'e ASLA yazılmaz; hesap silinince SERT SİLİNİR (finansal
+// kayıt gibi saklanmaz) — account-data.service bunu uygular.
+//
+// TÜRETİLMİŞ DEĞER SAKLANMAZ: mobil model `dueDays`/`daysLeft` taşıyor ama
+// onlar ANLIK hesap. Sunucuda saklansalardı zaman donar, kullanıcı yarın
+// açtığında hâlâ "3 gün kaldı" görürdü. Kaynak tarih saklanıyor.
+model CareRoutine {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  name         String
+  icon         String   @default("sparkles-outline")
+  /// Bakım döngüsü (gün). "Tamamladım" sayacı buna göre yeniden başlar.
+  periodDays   Int      @map("period_days")
+  /// §5.4.5 — "Teklif Al" kategoriyi otomatik seçsin (nails, hair…)
+  categoryCode String?  @map("category_code")
+  /// Son tamamlama. `dueDays` bundan + periodDays'ten HESAPLANIR.
+  lastDoneAt   DateTime @default(now()) @map("last_done_at") @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId, createdAt])
+  @@map("care_routines")
+}
+
+model CareMoment {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String
+  icon      String   @default("calendar-outline")
+  /// Anın tarihi. `daysLeft` bundan HESAPLANIR.
+  happensAt DateTime @map("happens_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId, happensAt])
+  @@map("care_moments")
+}
+
+model CareLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String
+  icon      String   @default("ellipse-outline")
+  tone      String   @default("neutral")
+  /// Serbest not — kişisel ve hassas. Log'a/analytics'e asla çıkmaz.
+  note      String?
+  /// Hızlı ekleme türü (düzenlemede çipi geri yüklemek için)
+  kind      String?
+  loggedAt  DateTime @map("logged_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId, loggedAt])
+  @@map("care_logs")
+}
