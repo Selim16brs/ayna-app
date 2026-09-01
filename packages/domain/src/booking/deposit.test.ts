@@ -5,6 +5,7 @@ import {
   DEPOSIT_SETTING_KEYS,
   depositFor,
   depositRulesFrom,
+  odemeReferansi,
 } from './deposit.js';
 
 test('20.000 ₸ hizmette peşinat 2.000 ₸ (%10)', () => {
@@ -72,4 +73,15 @@ test('TEK PARAMETRE — kural yalnız yüzdeden ibaret', () => {
   // yaratıyordu; panelde değiştirilebilir görünüp hiçbir şeyi değiştirmiyorlardı.
   assert.deepEqual(DEFAULT_DEPOSIT_RULES, { pct: 10 });
   assert.deepEqual(DEPOSIT_SETTING_KEYS, ['rate.deposit_pct']);
+});
+
+test('ödeme referansı kararlı ve tek biçimli', () => {
+  // Müşteriye gösterilen kodla adminin aradığı kod AYNI türetmeden gelmeli.
+  assert.equal(odemeReferansi('bk-abc12'), 'AYNA-ABC12');
+  // Ayırıcılar atılır: kimlik biçimi değişse de kod aynı kalır.
+  assert.equal(odemeReferansi('bk_ab-c12'), 'AYNA-ABC12');
+  // Kısa kimlikte de kod üretilir (kırpma değil, olanı al).
+  assert.equal(odemeReferansi('x9'), 'AYNA-X9');
+  // Aynı girdi her zaman aynı çıktı — saklanmadığı için bu şart.
+  assert.equal(odemeReferansi('bk-77aa'), odemeReferansi('bk-77aa'));
 });

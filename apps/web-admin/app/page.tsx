@@ -1206,6 +1206,13 @@ function RandevuKuyruklari() {
                   {new Date(b.startAt).toLocaleString('tr-TR')} · depozito {kzt(b.deposit)} /{' '}
                   {kzt(b.price)}
                 </div>
+                {/* ÖDEME KODU + RANDEVU NO. Dekont bir görselden ibaretti;
+                    admin, banka ekstresindeki transferi hangi randevuya
+                    yazacağını bulamıyordu. Müşterinin Kaspi açıklamasına
+                    yazdığı kodun aynısı burada. */}
+                <div className="meta">
+                  kod <code>{b.odemeKodu}</code> · randevu <code>{b.id}</code>
+                </div>
               </div>
               {b.depositReceiptUri ? (
                 <a className="btn-sm" href={b.depositReceiptUri} target="_blank" rel="noreferrer">

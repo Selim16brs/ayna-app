@@ -170,11 +170,31 @@ function kaliciRed(err: ApiError): boolean {
 export type BookingEylemArg = string | number | { receiptUri: string; pointsRequested: number };
 
 /** Eylemi sunucuya gönderir. Hata FIRLATIR — çağıran kuyrukta tutar. */
+/**
+ * Eylemi sunucuya yazar ve SUNUCUNUN GÜNCEL RANDEVUSUNU döndürür.
+ *
+ * Dönüş tipi `unknown` idi ve çağıran onu atıyordu; oysa her uç nokta zaten
+ * güncel kaydı gönderiyor. Atınca ardından tam liste çekmek gerekiyordu:
+ * bir tur yerine üç tur ağ, üstüne bekleyen yazım kuyruğunun beklenmesi.
+ * Kurucu "onayla"dan sonra ~15 sn bekliyordu — bu, istek zaman aşımının ta
+ * kendisi (`ISTEK_ZAMAN_ASIMI_MS`): kuyrukta takılı bir yazım, ekranın
+ * güncellenmesini kendi zaman aşımı kadar geciktiriyordu.
+ */
+/**
+ * Bir eylemin akıbeti. Yalnız üç harfli bir durum dönüyordu; RED GEREKÇESİ
+ * çağırana ulaşmıyordu, o da reddi başarıdan ayırt edemiyordu.
+ */
+export type EylemSonucu = {
+  sonuc: 'yazildi' | 'kuyrukta' | 'reddedildi';
+  /** Sunucunun insan okur gerekçesi (yalnız kalıcı redde). */
+  mesaj?: string;
+};
+
 export function bookingEylemGonder(
   id: string,
   eylem: BookingEylem,
   arg?: BookingEylemArg,
-): Promise<unknown> {
+): Promise<Appointment> {
   switch (eylem) {
     case 'onayla':
       return api.approveBooking(id);
@@ -525,11 +545,9 @@ interface State {
    *  · 'kuyrukta'   — ağ yok; eylem KAYBOLMADI, kuyrukta bekliyor
    *  · 'reddedildi' — sunucu kalıcı reddetti; yerel durum tazelendi
    */
-  randevuEylemi: (
-    id: string,
-    eylem: BookingEylem,
-    arg?: BookingEylemArg,
-  ) => Promise<'yazildi' | 'kuyrukta' | 'reddedildi'>;
+  randevuEylemi: (id: string, eylem: BookingEylem, arg?: BookingEylemArg) => Promise<EylemSonucu>;
+  /** Sunucudan dönen güncel randevuyu yerele yazar (istemciye özel alanlar korunur). */
+  sunucuRandevusunuYaz: (booking: Appointment) => void;
   syncBooking: (booking: Appointment) => void;
   flushBookingSync: () => Promise<void>;
   queueOfflineBooking: (booking: Appointment) => void;
@@ -1925,14 +1943,21 @@ export const useStore = create<State>()(
        */
       randevuEylemi: async (id: string, eylem: BookingEylem, arg?: BookingEylemArg) => {
         try {
-          await bookingEylemGonder(id, eylem, arg);
-          return 'yazildi';
+          const guncel = await bookingEylemGonder(id, eylem, arg);
+          // Sunucunun DÖNDÜRDÜĞÜ kaydı yaz. Eskiden bu atılıyor, ardından tam
+          // liste çekiliyordu; ekran üç tur ağ boyunca eski durumu gösteriyordu.
+          get().sunucuRandevusunuYaz(guncel);
+          return { sonuc: 'yazildi' };
         } catch (err) {
           // KALICI RED (geçersiz geçiş, yetki yok) tekrar denenmez: sunucu bu
           // eylemi hiçbir zaman kabul etmeyecek. Yereli sunucu gerçeğine çek.
           if (err instanceof ApiError && kaliciRed(err)) {
             void get().hydrateBookings();
-            return 'reddedildi';
+            // GEREKÇE ÇAĞIRANA GİDİYOR. Yalnız 'reddedildi' dönüyordu; dekont
+            // ekranı bunu başarı sayıp "randevu kesinleşti" diyordu, oysa
+            // sunucuda hiçbir şey yazılmamıştı — admin panelinde de bu yüzden
+            // hiç görünmüyordu.
+            return { sonuc: 'reddedildi', ...(err.message ? { mesaj: err.message } : {}) };
           }
           // GEÇİCİ hata (ağ yok, sunucu uykuda): eylem KAYBOLMAZ, kuyruğa girer
           // ve açılışta/tazelemede yeniden gönderilir.
@@ -1942,8 +1967,31 @@ export const useStore = create<State>()(
               { id, eylem, ...(arg !== undefined ? { arg } : {}) },
             ],
           }));
-          return 'kuyrukta';
+          return { sonuc: 'kuyrukta' };
         }
+      },
+
+      /**
+       * Sunucudan gelen tek bir randevuyu yerele yazar.
+       *
+       * `benimRolum` ve hatırlatma bayrakları İSTEMCİYE ÖZEL: sunucu nesnesi
+       * olduğu gibi yazılırsa rol kaybolur (randevu yanlış listeye düşer) ve
+       * hatırlatmalar yeniden üretilir. Bilinmeyen id eklenmez — eylem her
+       * zaman var olan bir randevu üzerinde yapılır.
+       */
+      sunucuRandevusunuYaz: (uzak) => {
+        set((s) => ({
+          bookings: s.bookings.map((y) =>
+            y.id === uzak.id
+              ? {
+                  ...uzak,
+                  ...(y.benimRolum !== undefined ? { benimRolum: y.benimRolum } : {}),
+                  ...(y.reminded24 !== undefined ? { reminded24: y.reminded24 } : {}),
+                  ...(y.reminded2 !== undefined ? { reminded2: y.reminded2 } : {}),
+                }
+              : y,
+          ),
+        }));
       },
 
       iadeTalebiDamgala: (id) => {
@@ -1960,7 +2008,8 @@ export const useStore = create<State>()(
         // Kopya üzerinde yürü: gönderim sırasında yeni eylem eklenebilir.
         for (const is of [...pendingBookingActions]) {
           try {
-            await bookingEylemGonder(is.id, is.eylem, is.arg);
+            const guncel = await bookingEylemGonder(is.id, is.eylem, is.arg);
+            get().sunucuRandevusunuYaz(guncel);
             set((st) => ({
               pendingBookingActions: st.pendingBookingActions.filter((x) => x !== is),
             }));
@@ -2041,11 +2090,22 @@ export const useStore = create<State>()(
           return;
         }
         set({ bookingsLoading: true });
-        // Önce bekleyen yazımlar sunucuya gitsin ki tazeleme onları "sunucudan"
-        // geri getirsin. SIRA ÖNEMLİ: eylemler tazelemeden ÖNCE gitmezse
-        // sunucunun eski hâli yereli ezer ve kullanıcının işlemi kaybolur.
-        await get().flushBookingSync();
-        await get().flushBookingActions();
+        // Bekleyen yazımlar gönderilir ama OKUMA ONLARI BEKLEMEZ. Eskiden
+        // `await` ediliyordu: kuyrukta takılı tek bir kayıt, kendi zaman aşımı
+        // (15 sn) boyunca bütün listeyi rehin alıyordu.
+        // Sıranın amacı "sunucunun eski hâli yereli ezmesin"di; bunu artık
+        // aşağıdaki birleştirme sağlıyor — yazımı bekleyen randevunun YEREL
+        // hâli korunuyor, sunucunun henüz duymadığı durum ezilmiyor.
+        void get().flushBookingSync();
+        void get().flushBookingActions();
+        // Korunacak kimlikler İSTEK GÖNDERİLMEDEN ÖNCE dondurulur.
+        // Birleştirme anında okunsaydı yarış olurdu: boşaltma tam bu iki iş
+        // arasında biterse kimlik kuyruktan düşer, korumasız kalır ve bu
+        // okumanın (boşaltmadan ÖNCE alınmış) eski kaydı yereli ezerdi.
+        const yazimBekleyen = new Set([
+          ...get().pendingBookingActions.map((a) => a.id),
+          ...get().pendingBookingSync,
+        ]);
         try {
           const role = get().currentUser?.role;
           const isProvider = role === 'professional' || role === 'salon';
@@ -2074,6 +2134,10 @@ export const useStore = create<State>()(
             const birlesik = remote.map((r) => {
               const y = yerel.get(r.id);
               if (!y) return r;
+              // Bu okuma başlarken yazımı bekleyen randevu: sunucu yeni hâlini
+              // bilmiyordu, gelen kayıt ESKİ. Yereli koru — kullanıcının
+              // işlemi tazeleme yüzünden geri sarmasın.
+              if (yazimBekleyen.has(r.id)) return y;
               return {
                 ...r,
                 ...(y.reminded24 !== undefined ? { reminded24: y.reminded24 } : {}),

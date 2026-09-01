@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DEFAULT_SPEND_RULES, paymentSplit } from '@ayna/domain';
+import { DEFAULT_SPEND_RULES, odemeReferansi, paymentSplit } from '@ayna/domain';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -41,14 +41,6 @@ const HESAP_ADI = 'SES INVEST TOO';
  */
 function kaspiBaglantisi(sablon: string, tutar: number, ref: string): string {
   return sablon.replace(/\{tutar\}/g, String(tutar)).replace(/\{ref\}/g, encodeURIComponent(ref));
-}
-
-/** Randevu referansı — ödemeyi bu randevuyla eşleştiren kod. */
-function odemeReferansi(bookingId: string): string {
-  return `AYNA-${bookingId
-    .replace(/[^a-zA-Z0-9]/g, '')
-    .slice(-5)
-    .toUpperCase()}`;
 }
 
 export default function DepositScreen() {
@@ -153,10 +145,19 @@ export default function DepositScreen() {
         // Ne kadar düşüleceğine SUNUCU karar veriyor; bu yalnız üst sınır.
         pointsRequested: puanKullan ? puanHakki : 0,
       });
-      if (sonuc === 'kuyrukta') {
+      if (sonuc.sonuc === 'kuyrukta') {
         Alert.alert(t('flow.queued_t'), t('flow.queued_b'), [
           { text: t('common.ok'), onPress: () => router.back() },
         ]);
+        return;
+      }
+      // SUNUCU REDDETTİYSE BAŞARI DEME. Eskiden yalnız 'kuyrukta' kontrol
+      // ediliyor, red aşağıdaki "randevu kesinleşti" ekranına düşüyordu:
+      // müşteri dekontu gönderdiğini sanıyor, sunucuda hiçbir kayıt yok,
+      // admin panelindeki dekont kuyruğu boş kalıyordu. Ekranda kal ki
+      // müşteri yeniden denesin — süre işliyor.
+      if (sonuc.sonuc === 'reddedildi') {
+        Alert.alert(t('deposit.fail_t'), sonuc.mesaj ?? t('deposit.fail_b'));
         return;
       }
       await hydrateBookings();
@@ -332,6 +333,37 @@ export default function DepositScreen() {
           )}
         </Pressable>
 
+        {/* ÖDEME KODU + RANDEVU NO — gönder düğmesinin hemen üstünde.
+            Kod eskiden yalnız hesap kartındaki düz cümlenin içinde geçiyordu;
+            müşteri onu Kaspi'ye yazması gerektiğini kaçırıyordu. Kod olmadan
+            gelen transfer, admin kuyruğunda hangi randevuya ait olduğu
+            bilinmeyen bir para demek. Burada iki değer de KOPYALANABİLİR ve
+            dekontla aynı ekranda duruyor. */}
+        <View style={[styles.kart, shadow.card, styles.refKart]}>
+          <Text variant="caption" tone="accentFg" style={styles.kaspiBaslik}>
+            {t('deposit.ref.title')}
+          </Text>
+          <View style={styles.satir}>
+            <Text variant="caption" tone="muted">
+              {t('deposit.ref.code')}
+            </Text>
+            <Text variant="bodyStrong" tone="ink" selectable style={styles.kod}>
+              {referans}
+            </Text>
+          </View>
+          <View style={styles.satir}>
+            <Text variant="caption" tone="muted">
+              {t('deposit.ref.booking')}
+            </Text>
+            <Text variant="captionStrong" tone="ink" selectable style={styles.kod}>
+              {booking.id}
+            </Text>
+          </View>
+          <Text variant="caption" tone="muted" style={styles.not}>
+            {t('deposit.ref.note')}
+          </Text>
+        </View>
+
         <Button
           label={t('deposit.submit')}
           disabled={!dekont || busy}
@@ -358,6 +390,11 @@ const makeStyles = (colors: ColorTokens) =>
     },
     acil: { borderWidth: 1, borderColor: colors.danger },
     kaspiKart: { backgroundColor: colors.accentSoft },
+    // Dekontun hemen üstündeki kod kartı: gönderilecek şeyin bir parçası
+    // olduğu görünsün diye yükleme alanıyla aynı vurguda değil, kenarlıklı.
+    refKart: { borderWidth: 1, borderColor: colors.line },
+    // Kod okunacak ve kopyalanacak: harf aralığı açık, rakam genişliği sabit.
+    kod: { letterSpacing: 1, fontVariant: ['tabular-nums'] },
     kaspiBaslik: { letterSpacing: 0.6, textTransform: 'uppercase' },
     adim: {
       flexDirection: 'row',

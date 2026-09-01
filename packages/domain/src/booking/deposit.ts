@@ -59,3 +59,21 @@ export function depositRulesFrom(
   const v = settings.find((s) => s.key === 'rate.deposit_pct')?.intValue;
   return { pct: typeof v === 'number' && Number.isFinite(v) ? v : fallback.pct };
 }
+
+/**
+ * ÖDEME REFERANSI — bir Kaspi transferini randevusuyla eşleştiren kod.
+ *
+ * Müşteri bunu Kaspi'nin açıklama alanına yazar; admin, dekont kuyruğunda
+ * aynı kodu görüp eşleştirir. Bu yüzden türetme TEK YERDE olmak zorunda:
+ * mobilde ve panelde ayrı ayrı hesaplansaydı, biri değiştiğinde müşterinin
+ * yazdığı kod adminin aradığı kodla tutmaz ve ödeme kayıp görünürdü.
+ *
+ * Randevu kimliğinden türetiliyor — ayrıca saklanacak bir alan yok, dolayısıyla
+ * eskimesi de mümkün değil.
+ */
+export function odemeReferansi(bookingId: string): string {
+  return `AYNA-${bookingId
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(-5)
+    .toUpperCase()}`;
+}

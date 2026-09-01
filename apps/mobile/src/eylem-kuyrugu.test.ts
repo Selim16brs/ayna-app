@@ -71,11 +71,33 @@ test('kuyruk açılışta VE her tazelemede boşaltılıyor', () => {
     /void useStore\.getState\(\)\.flushBookingActions\(\);/,
     'açılışta boşalmıyor',
   );
-  // Sıra kritik: tazeleme önce kuyruğu göndermezse sunucunun ESKİ hâli
-  // yereli ezer ve kullanıcının işlemi kaybolur.
-  const i = store.indexOf('await get().flushBookingActions();');
-  const j = store.indexOf('api.myBookings(token)');
-  assert.ok(i > 0 && i < j, 'kuyruk, randevular çekilmeden ÖNCE gönderilmeli');
+  const hidrat = store.slice(store.indexOf('hydrateBookings: async ()'));
+  assert.match(hidrat.slice(0, 1200), /flushBookingActions\(\)/, 'tazelemede boşalmıyor');
+});
+
+test('bekleyen yazım OKUMAYI rehin almıyor', () => {
+  // Kuyruk `await` ediliyordu: takılı tek bir kayıt, kendi zaman aşımı (15 sn)
+  // boyunca bütün listeyi bekletiyordu. Kurucunun "onayla"dan sonra saydığı
+  // 15 saniye buydu. Boşaltma ateşlenir, okuma beklemez.
+  const hidrat = store.slice(store.indexOf('hydrateBookings: async ()'));
+  const bas = hidrat.slice(0, hidrat.indexOf('api.myBookings(token)'));
+  assert.ok(
+    !/await get\(\)\.flush/.test(bas),
+    'okuma hâlâ kuyruğu bekliyor — takılı bir yazım listeyi kilitler',
+  );
+});
+
+test('tazeleme, yazımı bekleyen randevuyu GERİ SARMIYOR', () => {
+  // Kuyruğun okumadan önce gönderilmesinin tek amacı buydu. Sıra kalkınca
+  // korumanın kendisi kalkmamalı: sunucu yeni hâli bilmiyorsa gelen kayıt
+  // ESKİdir ve kullanıcının işlemini ezer.
+  const hidrat = store.slice(store.indexOf('hydrateBookings: async ()'));
+  assert.match(hidrat, /yazimBekleyen\.has\(r\.id\)/, 'bekleyen randevu korunmuyor');
+  // Küme, İSTEK GÖNDERİLMEDEN ÖNCE dondurulmalı. Birleştirme anında okunursa
+  // boşaltma arada biter, kimlik kuyruktan düşer ve koruma buharlaşır.
+  const kume = hidrat.indexOf('const yazimBekleyen');
+  const istek = hidrat.indexOf('api.myBookings(token)');
+  assert.ok(kume > 0 && kume < istek, 'korunacak kimlikler istekten SONRA hesaplanıyor — yarış');
 });
 
 test('kalıcı red sonsuza kadar denenmiyor, geçici hata kuyrukta kalıyor', () => {

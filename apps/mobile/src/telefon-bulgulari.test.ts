@@ -67,3 +67,113 @@ test('durum rozeti içinde nabız yok — yazı sıkışmıyor', () => {
   assert.ok(!/<BeklemeNabzi/.test(liste), 'rozetin içinde hâlâ nabız çiziliyor');
   assert.match(liste, /bekleyenNokta/, 'bekleme işareti hiç yok');
 });
+
+test('eylem TEK TUR: sunucunun döndürdüğü kayıt yazılıyor, liste yeniden çekilmiyor', () => {
+  // Kurucu: "onayla'ya bastıktan ~15 saniye sonra onaylandığı belli oldu."
+  // 15 sn tesadüf değil — `ISTEK_ZAMAN_ASIMI_MS` ile aynı. Eylem yolu POST +
+  // (kuyruk boşaltma) + iki GET idi ve her uç nokta güncel randevuyu ZATEN
+  // döndürdüğü hâlde yanıt atılıyordu.
+  const store = oku('store.ts');
+  assert.match(
+    store,
+    /const guncel = await bookingEylemGonder\(id, eylem, arg\);\s*\n\s*\/\/[\s\S]{0,200}?get\(\)\.sunucuRandevusunuYaz\(guncel\)/,
+    'eylem yanıtı yazılmıyor — ekran boşuna tazeleme bekliyor',
+  );
+  const detay = oku('..', 'app', 'booking', '[id].tsx');
+  const govde = detay.slice(detay.indexOf('const cagir ='), detay.indexOf('function calistir'));
+  // Tazeleme YALNIZ redde kalmalı; başarı yolunda hiç olmamalı.
+  // Yorum satırlarını sayma; yalnız GERÇEK çağrılar.
+  const cagrilar = govde
+    .split('\n')
+    .filter((l) => !l.trim().startsWith('//') && /void hydrateBookings\(\)/.test(l));
+  assert.equal(cagrilar.length, 1, 'başarıdan sonra hâlâ tam liste çekiliyor');
+  assert.match(govde, /sonuc\.sonuc === 'reddedildi'/, 'kalıcı red ele alınmıyor');
+});
+
+test('sunucu kaydı yazılırken İSTEMCİYE ÖZEL alanlar korunuyor', () => {
+  // `benimRolum` sunucuda yok. Gelen nesne olduğu gibi yazılsaydı rol silinir,
+  // randevu yanlış tarafın listesine düşerdi — yeni kapattığımız hata.
+  const store = oku('store.ts');
+  const y = store.slice(store.indexOf('sunucuRandevusunuYaz: (uzak)'));
+  const govde = y.slice(0, y.indexOf('iadeTalebiDamgala'));
+  assert.match(govde, /benimRolum: y\.benimRolum/, 'rol korunmuyor');
+  assert.match(govde, /reminded24: y\.reminded24/, 'hatırlatma bayrağı korunmuyor');
+});
+
+test('detay ekranı: uzman MÜŞTERİNİN ödeme kartını görmüyor', () => {
+  // Ekran görüntüsü: uzmanın kendi randevusunda kırmızı "Randevunu korumak
+  // için öde — 09:19 içinde ödemezsen randevu düşer" kartı. Ödemeyecek olan
+  // taraf. Aciliyet, sırası gelen tarafındır.
+  const detay = oku('..', 'app', 'booking', '[id].tsx');
+  const blok = detay.slice(
+    detay.indexOf("booking.status === 'depozito_bekliyor'"),
+    detay.indexOf("booking.status === 'onay_bekliyor'"),
+  );
+  assert.match(blok, /rol === 'musteri' \?/, 'depozito kartı rol ayırmıyor');
+  assert.match(blok, /flow\.deposit\.countdown_pro_t/, 'uzman için ayrı metin yok');
+  // Kırmızı acil kenarlık YALNIZ müşteri kolunda.
+  const uzmanKolu = blok.slice(blok.indexOf(') : ('));
+  assert.ok(!/acilKart/.test(uzmanKolu), 'uzmana hâlâ acil kırmızı kart çiziliyor');
+});
+
+test('detay ekranı: uzman kendisi hakkında ÜÇÜNCÜ ŞAHIS okumuyor', () => {
+  const detay = oku('..', 'app', 'booking', '[id].tsx');
+  // "uzmanın yanıt süresi" / "Hizmetten sonra uzmana" — uzmanın kendi ekranında.
+  assert.match(detay, /rol === 'uzman' \? 'flow\.approve\.countdown_pro'/, 'yanıt süresi rol körü');
+  assert.match(
+    detay,
+    /rol === 'uzman' \? 'booking\.balance\.remaining_pro'/,
+    'kalan tutar etiketi rol körü',
+  );
+});
+
+test('SUNUCU REDDİ başarı sayılmıyor — sessizce yutulan dekont yok', () => {
+  // Kurucu: "depozito talebi admin paneline ulaşmıyor."
+  // Sunucu tarafı doğruydu (dekont kaydediliyor, kuyruk sorgusu ve panel
+  // sayfası yerinde). Kopan halka istemcideydi: `gonder` yalnız 'kuyrukta'
+  // durumuna bakıyor, KALICI REDDİ (409 dekont tekrar kullanıldı, 404 randevu
+  // yok, 403 taraf değil) aşağıdaki "Randevu kesinleşti" ekranına düşürüyordu.
+  // Müşteri gönderdiğini sanıyor, sunucuda kayıt yok, admin kuyruğu boş.
+  const dep = oku('..', 'app', 'booking', 'deposit.tsx');
+  const bas = dep.indexOf('const gonder =');
+  const gonder = dep.slice(bas, dep.indexOf('\n  return (', bas));
+  const redIdx = gonder.indexOf("sonuc.sonuc === 'reddedildi'");
+  const basariIdx = gonder.indexOf('deposit.done_t');
+  assert.ok(redIdx > 0, 'kalıcı red hiç ele alınmıyor');
+  assert.ok(redIdx < basariIdx, 'red kontrolü BAŞARI ekranından sonra — yine yutulur');
+  assert.match(gonder, /sonuc\.mesaj \?\?/, 'sunucunun gerekçesi gösterilmiyor');
+});
+
+test('red gerekçesi çağırana ULAŞIYOR', () => {
+  // Yalnız 'reddedildi' dizesi dönüyordu; ekran "neden" diyemiyordu.
+  const store = oku('store.ts');
+  assert.match(store, /export type EylemSonucu = \{/, 'sonuç tipi yok');
+  assert.match(store, /sonuc: 'reddedildi', \.\.\.\(err\.message/, 'gerekçe taşınmıyor');
+});
+
+test('ödeme kodu ve randevu no GÖNDER düğmesinin üstünde', () => {
+  // Kod yalnız hesap kartındaki düz cümlenin içinde geçiyordu; müşteri onu
+  // Kaspi açıklamasına yazması gerektiğini kaçırıyordu. Kodsuz gelen transfer,
+  // admin kuyruğunda sahibi belirsiz bir para demek.
+  const dep = oku('..', 'app', 'booking', 'deposit.tsx');
+  const kart = dep.indexOf("t('deposit.ref.title')");
+  const dugme = dep.indexOf("label={t('deposit.submit')}");
+  assert.ok(kart > 0, 'referans kartı yok');
+  assert.ok(kart < dugme, 'kart gönder düğmesinin ALTINDA — istenen üstü');
+  assert.match(dep, /t\('deposit\.ref\.booking'\)/, 'randevu no gösterilmiyor');
+  // İkisi de kopyalanabilir olmalı: elle kopyalanacak değerler.
+  const blok = dep.slice(kart, dugme);
+  assert.equal((blok.match(/selectable/g) ?? []).length, 2, 'kod/no kopyalanamıyor');
+});
+
+test('ödeme kodu TEK YERDEN türetiliyor', () => {
+  // Mobil ve panel ayrı ayrı hesaplasaydı, biri değiştiğinde müşterinin
+  // yazdığı kod adminin aradığı kodla tutmaz, ödeme kayıp görünürdü.
+  const dep = oku('..', 'app', 'booking', 'deposit.tsx');
+  assert.match(
+    dep,
+    /odemeReferansi[\s\S]{0,80}from '@ayna\/domain'/,
+    'mobil kendi kopyasını kullanıyor',
+  );
+  assert.ok(!/function odemeReferansi/.test(dep), 'ekranda hâlâ yerel türetme var');
+});

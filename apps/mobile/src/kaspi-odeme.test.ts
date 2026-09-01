@@ -59,7 +59,14 @@ test('elle transfer yolu HER ZAMAN duruyor', () => {
 });
 
 test('referans kodu ödemeyi randevuyla eşleştiriyor', () => {
-  const f = /function odemeReferansi\([\s\S]*?\n\}/.exec(src);
-  assert.ok(f, 'odemeReferansi yok');
-  assert.match(f[0], /AYNA-/, 'referans önekli değil — dekontta tanınmaz');
+  // Türetme `@ayna/domain`e taşındı: aynı kodu admin paneli de gösteriyor
+  // (sunucu orada üretiyor). Ekranın kendi kopyası olsaydı ikisi ayrışabilir,
+  // müşterinin yazdığı kod adminin aradığıyla tutmazdı. Davranışın kendisi
+  // `packages/domain/src/booking/deposit.test.ts` içinde sınanıyor.
+  assert.match(
+    src,
+    /odemeReferansi[\s\S]{0,80}from '@ayna\/domain'/,
+    'ortak türetme kullanılmıyor',
+  );
+  assert.ok(!/function odemeReferansi/.test(src), 'ekranda ikinci bir türetme var');
 });
