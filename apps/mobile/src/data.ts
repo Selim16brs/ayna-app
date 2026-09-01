@@ -910,8 +910,17 @@ export const DEPOSIT_SHORT_THRESHOLD_MS = 6 * 60 * 60_000;
 export const REMIND_FREE_CANCEL_MS = 4 * 60 * 60_000;
 export const REMIND_1H_MS = 60 * 60_000;
 export const REMIND_30M_MS = 30 * 60_000;
-// §4.1.3 — uzman yanıt penceresi: bu süre içinde yanıtlanmayan talep otomatik düşer. Parametrik.
-export const RESPONSE_WINDOW_MS = 6 * 60 * 60_000;
+/**
+ * §4.2 — UZMAN YANIT PENCERESİ: "Uzman cevap süresi: 3 saat."
+ *
+ * Burada 6 saat yazıyordu ve sunucu 3 saat damgalıyordu (`policy.response_hours`).
+ * İki değer ayrıştığı için ekranda "5 sa 55 dk kaldı" görünüyor, sunucu ise
+ * 3 saatte talebi düşürüyordu: kullanıcıya söylenen süre ile gerçekte işleyen
+ * süre birbirini tutmuyordu. (Kurucu 01.09'da ekran görüntüsüyle bildirdi.)
+ *
+ * Bu yalnızca YEDEK: sunucudan `policy.response_hours` okunduğunda o geçerli.
+ */
+export const RESPONSE_WINDOW_MS = 3 * 60 * 60_000;
 
 export interface Appointment {
   id: string;

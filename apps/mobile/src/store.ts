@@ -65,8 +65,31 @@ import { findServiceWithCategory, servicesOf } from './taxonomy';
 import { defaultHours, type DayHours } from './ui/WorkingHours';
 import { emptySocial, type SocialValue } from './ui/SocialLinks';
 
-let seq = 5000;
-const nextId = (prefix: string) => `${prefix}${++seq}`;
+let seq = 0;
+
+/**
+ * KAYIT KİMLİĞİ — çakışmaya kapalı.
+ *
+ * Eskiden `let seq = 5000; \`${prefix}${++seq}\`` idi. Sayaç MODÜL SEVİYESİNDE
+ * yaşıyordu, yani uygulama her açıldığında 5000'e dönüyordu — randevular ise
+ * cihazda KALICI. İkinci oturumda üretilen `bk5001`, ilk oturumdaki `bk5001`
+ * ile çakışıyordu.
+ *
+ * Görünen sonuç: yeni randevu oluşturuluyor, onay ekranı DOĞRU hizmeti ve
+ * tutarı gösteriyor, ama detaya girildiğinde ESKİ randevu çıkıyordu —
+ * `hydrateBookings` sunucudaki aynı id'li eski kaydı üstüne yazdığı için.
+ * (Kurucu 01.09'da tam bunu bildirdi: onayda "Röfle / Balayage ₸37.000",
+ * detayda "Keratin / Botoks ₸31.000".)
+ *
+ * Zaman + rastgelelik: iki farklı oturumda, iki farklı cihazda ve aynı
+ * milisaniyede bile aynı id üretilmez. Sunucu bu id'yi birincil anahtar olarak
+ * kullandığı için çakışma yalnız ekranı değil VERİYİ bozuyordu.
+ */
+const nextId = (prefix: string): string => {
+  const zaman = Date.now().toString(36);
+  const rastgele = Math.random().toString(36).slice(2, 7);
+  return `${prefix}${zaman}${rastgele}${++seq}`;
+};
 
 // §6.1 — uzman/salon hizmet kataloğu satırı: taksonomi hizmet id'sine bağlı fiyat/süre (₸ / dk, string form).
 export type SellerServiceRow = { price: string; dur: string };
