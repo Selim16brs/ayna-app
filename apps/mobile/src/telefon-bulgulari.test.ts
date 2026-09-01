@@ -234,12 +234,12 @@ test('Reklam ver kartı menü satırı DEĞİL — reklam gibi duruyor', () => {
   // "bir reklam çalışması gibi olsun": teklif, yer ve fiyat tek bakışta.
   const r = oku('..', 'app', 'seller', 'reports.tsx');
   // Sabit pencere yerine kartın TAMAMI: kart büyüdükçe test kör kalmasın.
-  const bas = r.indexOf("router.push('/seller/ads')");
-  const blok = r.slice(bas, r.indexOf('</LinearGradient>', bas));
-  assert.match(blok, /LinearGradient/, 'düz kart — vurgusu yok');
-  assert.match(blok, /ads\.promo\.title/, 'teklif başlığı yok');
-  assert.match(blok, /ads\.promo\.price/, 'fiyat görünmüyor');
-  assert.match(blok, /ads\.promo\.cta/, 'çağrı düğmesi yok');
+  // Kart Figma `reklam-banner` biçimine geçti: altın kenarlıklı, canlı
+  // noktalı, teklif + fiyat + çağrı taşıyan bir ilan. Güvence aynı.
+  assert.match(r, /reklamKart:[\s\S]{0,200}borderColor: colors\.gold/, 'ilan vurgusu yok');
+  assert.match(r, /ads\.promo\.title/, 'teklif başlığı yok');
+  assert.match(r, /ads\.promo\.price/, 'fiyat görünmüyor');
+  assert.match(r, /ads\.promo\.cta/, 'çağrı düğmesi yok');
 });
 
 test('reklam fiyatı SUNUCUDAN okunuyor', () => {
@@ -252,12 +252,10 @@ test('reklam kartı: yayında olduğunda GÜN SAYACI gösteriyor', () => {
   // Kurucu: "reklam yayına alındığında ana ekranında reklamınız yayında
   // 1/30 şeklinde kaç gün kaldığını görmeli."
   const r = oku('..', 'app', 'seller', 'reports.tsx');
-  const bas = r.indexOf("router.push('/seller/ads')");
-  const kart = r.slice(bas, r.indexOf('</LinearGradient>', bas));
-  assert.match(kart, /ads\.live\.title/, 'yayında hâli yok');
-  assert.match(kart, /ads\.live\.progress/, 'gün sayacı (1/30) yok');
-  assert.match(kart, /ads\.live\.left|ads\.live\.last_day/, 'kalan gün yazmıyor');
-  assert.match(kart, /reklamCubukDolu/, 'ilerleme çubuğu yok');
+  assert.match(r, /ads\.live\.title/, 'yayında hâli yok');
+  assert.match(r, /ads\.live\.progress/, 'gün sayacı (1/30) yok');
+  assert.match(r, /ads\.live\.left|ads\.live\.last_day/, 'kalan gün yazmıyor');
+  assert.match(r, /reklamDolu/, 'ilerleme çubuğu yok');
 });
 
 test('reklam kartı: ödeme doğrulanırken SATIŞ KARTI gösterilmiyor', () => {
