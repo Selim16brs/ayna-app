@@ -4,7 +4,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { api, type BookingStats, type SellerReview } from '../../src/api';
+import { api, type AdOrder, type BookingStats, type SellerReview } from '../../src/api';
 import {
   formatPrice,
   RESPONSE_WINDOW_MS,
@@ -13,6 +13,7 @@ import {
 } from '../../src/data';
 import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
+import { reklamGunu } from '@ayna/domain';
 import { useSalonStaff } from '../../src/staff';
 import { formatSlotTr } from '../../src/datetime';
 import {
@@ -74,6 +75,34 @@ export default function ReportsScreen() {
   // Vitrin ücreti SUNUCUDAN: panelden değiştirilen fiyat eski sürümlerde
   // yanlış görünmesin. Değer gelmemişse kart yine çiziliyor, fiyat varsayılan.
   const reklamAylik = useStore((s) => s.config.rates.adMonthlyKzt);
+  const [reklamlarim, setReklamlarim] = useState<AdOrder[]>([]);
+  /**
+   * Kartın üç hâli var ve sırası önemli:
+   *   YAYINDA  → ne aldığını ve ne kadar kaldığını göster
+   *   BEKLİYOR → "ödemen doğrulanıyor". Bu hâl olmadan uzman satış kartını
+   *              görmeye devam eder ve İKİNCİ KEZ ödeyebilir.
+   *   yoksa    → satış kartı
+   * Birden çok yayında reklam varsa ÖNCE BİTECEK olan gösteriliyor: acil
+   * olan o, yenilenmesi gereken de o.
+   */
+  const simdi = Date.now();
+  const yayindaki = reklamlarim
+    .filter(
+      (o) =>
+        o.status === 'yayinda' &&
+        o.periodStart != null &&
+        o.periodEnd != null &&
+        new Date(o.periodEnd).getTime() > simdi,
+    )
+    .sort((a, b) => new Date(a.periodEnd!).getTime() - new Date(b.periodEnd!).getTime())[0];
+  const bekleyenReklam = reklamlarim.find((o) => o.status === 'bekliyor' && o.receiptUri);
+  const gunler = yayindaki
+    ? reklamGunu(
+        new Date(yayindaki.periodStart!).getTime(),
+        new Date(yayindaki.periodEnd!).getTime(),
+        simdi,
+      )
+    : null;
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   const restrictedDays = useStore((s) => s.currentUser?.restrictedDaysLeft ?? 7);
   const binding =
@@ -164,6 +193,18 @@ export default function ReportsScreen() {
   const [openDemands, setOpenDemands] = useState(0);
   // §CRM — bugün doğum günü olan müşterilerim (tıkla → kutlama push'u)
   const [bdays] = useState<{ id: string; name: string }[]>([]);
+  // Reklam durumu ekrana HER DÖNÜŞTE tazeleniyor: onay admin panelinden
+  // geliyor, uygulama onu kendiliğinden öğrenemez.
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      void api
+        .myAdOrders()
+        .then(setReklamlarim)
+        .catch(() => undefined);
+    }, [token]),
+  );
+
   useFocusEffect(
     useCallback(() => {
       if (!token) return;
@@ -503,7 +544,13 @@ export default function ReportsScreen() {
           <Pressable
             onPress={() => router.push('/seller/ads')}
             accessibilityRole="button"
-            accessibilityLabel={t('ads.promo.cta')}
+            accessibilityLabel={
+              yayindaki
+                ? t('ads.live.title')
+                : bekleyenReklam
+                  ? t('ads.wait.title')
+                  : t('ads.promo.cta')
+            }
           >
             <LinearGradient
               colors={gradients.plum}
@@ -519,30 +566,96 @@ export default function ReportsScreen() {
                 color="rgba(255,255,255,0.07)"
                 style={styles.reklamFiligran}
               />
-              <Text variant="label" style={styles.reklamUst}>
-                {t('ads.promo.eyebrow')}
-              </Text>
-              <Text variant="h2" style={styles.reklamBaslik}>
-                {t('ads.promo.title')}
-              </Text>
-              <Text variant="caption" style={styles.reklamGovde}>
-                {t('ads.promo.body')}
-              </Text>
-              <View style={styles.reklamAlt}>
-                <View style={styles.reklamFiyat}>
-                  <Text variant="captionStrong" style={styles.reklamFiyatYazi}>
-                    {fillParams(t('ads.promo.price'), {
-                      amount: (reklamAylik ?? 200000).toLocaleString('tr-TR'),
+              {yayindaki && gunler ? (
+                /* ── YAYINDA ── Uzman 200.000 ₸ ödedi; ne aldığını ve ne
+                   kadar kaldığını görmek hakkı. Sayı tek başına soyut, çubuk
+                   tek başına belirsiz — ikisi birlikte. */
+                <>
+                  <View style={styles.reklamRozetSatir}>
+                    <View style={styles.reklamCanli} />
+                    <Text variant="label" style={styles.reklamUst}>
+                      {t('ads.live.title')}
+                    </Text>
+                  </View>
+                  <Text variant="h2" style={styles.reklamBaslik} numberOfLines={2}>
+                    {yayindaki.title}
+                  </Text>
+                  <Text variant="caption" style={styles.reklamGovde}>
+                    {fillParams(t('ads.live.where'), {
+                      yer: t(
+                        yayindaki.placement === 'firsatlar'
+                          ? 'ads.place.firsatlar'
+                          : 'ads.place.one_cikanlar',
+                      ),
                     })}
                   </Text>
-                </View>
-                <View style={styles.reklamDugme}>
-                  <Text variant="captionStrong" style={styles.reklamDugmeYazi}>
-                    {t('ads.promo.cta')}
+                  <View style={styles.reklamCubukKap}>
+                    <View
+                      style={[
+                        styles.reklamCubukDolu,
+                        { width: `${Math.round((gunler.gun / gunler.toplam) * 100)}%` },
+                      ]}
+                    />
+                  </View>
+                  <View style={styles.reklamAlt}>
+                    <View style={styles.reklamFiyat}>
+                      <Text variant="captionStrong" style={styles.reklamFiyatYazi}>
+                        {fillParams(t('ads.live.progress'), {
+                          gun: String(gunler.gun),
+                          toplam: String(gunler.toplam),
+                        })}
+                      </Text>
+                    </View>
+                    <Text variant="captionStrong" style={styles.reklamKalan}>
+                      {gunler.kalan <= 1
+                        ? t('ads.live.last_day')
+                        : fillParams(t('ads.live.left'), { kalan: String(gunler.kalan) })}
+                    </Text>
+                  </View>
+                </>
+              ) : bekleyenReklam ? (
+                /* ── ÖDEME DOĞRULANIYOR ── Bu hâl olmasa uzman satış kartını
+                   görmeye devam eder ve İKİNCİ KEZ ödeyebilirdi. */
+                <>
+                  <Text variant="label" style={styles.reklamUst}>
+                    {t('ads.promo.eyebrow')}
                   </Text>
-                  <Ionicons name="arrow-forward" size={15} color={colors.accent} />
-                </View>
-              </View>
+                  <Text variant="h2" style={styles.reklamBaslik}>
+                    {t('ads.wait.title')}
+                  </Text>
+                  <Text variant="caption" style={styles.reklamGovde}>
+                    {t('ads.wait.body')}
+                  </Text>
+                </>
+              ) : (
+                /* ── SATIŞ ── */
+                <>
+                  <Text variant="label" style={styles.reklamUst}>
+                    {t('ads.promo.eyebrow')}
+                  </Text>
+                  <Text variant="h2" style={styles.reklamBaslik}>
+                    {t('ads.promo.title')}
+                  </Text>
+                  <Text variant="caption" style={styles.reklamGovde}>
+                    {t('ads.promo.body')}
+                  </Text>
+                  <View style={styles.reklamAlt}>
+                    <View style={styles.reklamFiyat}>
+                      <Text variant="captionStrong" style={styles.reklamFiyatYazi}>
+                        {fillParams(t('ads.promo.price'), {
+                          amount: (reklamAylik ?? 200000).toLocaleString('tr-TR'),
+                        })}
+                      </Text>
+                    </View>
+                    <View style={styles.reklamDugme}>
+                      <Text variant="captionStrong" style={styles.reklamDugmeYazi}>
+                        {t('ads.promo.cta')}
+                      </Text>
+                      <Ionicons name="arrow-forward" size={15} color={colors.accent} />
+                    </View>
+                  </View>
+                </>
+              )}
             </LinearGradient>
           </Pressable>
 
@@ -1178,6 +1291,18 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.onColor,
     },
     reklamDugmeYazi: { color: colors.accent },
+    reklamRozetSatir: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    // Yayında olduğunu söyleyen küçük nokta — "canlı" işareti.
+    reklamCanli: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#7BD389' },
+    reklamCubukKap: {
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: 'rgba(255,255,255,0.20)',
+      overflow: 'hidden',
+      marginTop: space(1),
+    },
+    reklamCubukDolu: { height: 6, borderRadius: 3, backgroundColor: colors.onColor },
+    reklamKalan: { color: 'rgba(255,255,255,0.86)' },
     qualityCard: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,

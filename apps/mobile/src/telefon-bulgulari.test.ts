@@ -233,8 +233,9 @@ test('Reklam ver kartı YANIT & KALİTE bölümünün ÜSTÜNDE', () => {
 test('Reklam ver kartı menü satırı DEĞİL — reklam gibi duruyor', () => {
   // "bir reklam çalışması gibi olsun": teklif, yer ve fiyat tek bakışta.
   const r = oku('..', 'app', 'seller', 'reports.tsx');
+  // Sabit pencere yerine kartın TAMAMI: kart büyüdükçe test kör kalmasın.
   const bas = r.indexOf("router.push('/seller/ads')");
-  const blok = r.slice(bas, bas + 1800);
+  const blok = r.slice(bas, r.indexOf('</LinearGradient>', bas));
   assert.match(blok, /LinearGradient/, 'düz kart — vurgusu yok');
   assert.match(blok, /ads\.promo\.title/, 'teklif başlığı yok');
   assert.match(blok, /ads\.promo\.price/, 'fiyat görünmüyor');
@@ -245,4 +246,38 @@ test('reklam fiyatı SUNUCUDAN okunuyor', () => {
   // Panelden değiştirilen ücret eski uygulama sürümlerinde yanlış görünmesin.
   const r = oku('..', 'app', 'seller', 'reports.tsx');
   assert.match(r, /s\.config\.rates\.adMonthlyKzt/, 'fiyat istemciye gömülü');
+});
+
+test('reklam kartı: yayında olduğunda GÜN SAYACI gösteriyor', () => {
+  // Kurucu: "reklam yayına alındığında ana ekranında reklamınız yayında
+  // 1/30 şeklinde kaç gün kaldığını görmeli."
+  const r = oku('..', 'app', 'seller', 'reports.tsx');
+  const bas = r.indexOf("router.push('/seller/ads')");
+  const kart = r.slice(bas, r.indexOf('</LinearGradient>', bas));
+  assert.match(kart, /ads\.live\.title/, 'yayında hâli yok');
+  assert.match(kart, /ads\.live\.progress/, 'gün sayacı (1/30) yok');
+  assert.match(kart, /ads\.live\.left|ads\.live\.last_day/, 'kalan gün yazmıyor');
+  assert.match(kart, /reklamCubukDolu/, 'ilerleme çubuğu yok');
+});
+
+test('reklam kartı: ödeme doğrulanırken SATIŞ KARTI gösterilmiyor', () => {
+  // Aksi hâlde uzman dekontunu göndermiş olmasına rağmen aynı satış kartını
+  // görür ve İKİNCİ KEZ ödeyebilir. 200.000 ₸'lik bir hata.
+  const r = oku('..', 'app', 'seller', 'reports.tsx');
+  const bas = r.indexOf("router.push('/seller/ads')");
+  const kart = r.slice(bas, r.indexOf('</LinearGradient>', bas));
+  assert.match(kart, /bekleyenReklam \?/, 'bekleyen ödeme hâli yok');
+  assert.match(kart, /ads\.wait\.title/, 'doğrulanıyor mesajı yok');
+  // Sıra kritik: yayında ve bekleyen hâlleri satış kolundan ÖNCE gelmeli.
+  assert.ok(
+    kart.indexOf('bekleyenReklam ?') < kart.indexOf('ads.promo.price'),
+    'satış kartı bekleyen ödemeden önce çiziliyor',
+  );
+});
+
+test('gün hesabı ekranda DEĞİL, ortak mantıkta', () => {
+  // Sınır günleri (ilk gün, son gün, süresi geçmiş kayıt) ekran içinde
+  // hesaplansaydı sessizce yanlış çıkardı; `@ayna/domain` içinde sınanıyor.
+  const r = oku('..', 'app', 'seller', 'reports.tsx');
+  assert.match(r, /reklamGunu[\s\S]{0,60}from '@ayna\/domain'/, 'gün hesabı ekranda yapılıyor');
 });
