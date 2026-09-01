@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { lightColors } from '../theme.palette';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
@@ -223,9 +224,10 @@ export function HomeUrgent() {
  * (orada 4,99 ve 11,07).
  */
 const ACIL_KRITIK = '#A25972';
-const ACIL_SAKIN = '#5A2A55';
+// Sakin uyarı zemini. Marka mürdümü — elle yazılmış hex değil, palet.
+const ACIL_SAKIN = lightColors.accent;
 
-const makeStyles = (_colors: ColorTokens) =>
+const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     card: {
       marginHorizontal: space(2.5),
@@ -263,10 +265,16 @@ const makeStyles = (_colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    title: { flex: 1, fontFamily: font.semibold, fontSize: 20, lineHeight: 25, color: '#FFFFFF' },
+    title: {
+      flex: 1,
+      fontFamily: font.semibold,
+      fontSize: 20,
+      lineHeight: 25,
+      color: colors.onColor,
+    },
     bottom: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
     meta: { flex: 1, gap: 2 },
-    count: { fontFamily: font.semibold, fontSize: 15, lineHeight: 20, color: '#FFFFFF' },
+    count: { fontFamily: font.semibold, fontSize: 15, lineHeight: 20, color: colors.onColor },
     sub: {
       fontFamily: font.regular,
       fontSize: 14,
@@ -277,7 +285,7 @@ const makeStyles = (_colors: ColorTokens) =>
       height: control.chip + 6,
       paddingHorizontal: space(2.5),
       borderRadius: (control.chip + 6) / 2,
-      backgroundColor: '#FFFFFF',
+      backgroundColor: colors.onColor,
       alignItems: 'center',
       justifyContent: 'center',
     },

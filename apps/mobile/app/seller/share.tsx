@@ -17,6 +17,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
 import qrcode from 'qrcode-generator';
 import { useLocale } from '../../src/locale';
+import { lightColors } from '../../src/theme.palette';
 import { selectPortrait, useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useThemedStyles } from '../../src/theme-context';
@@ -41,20 +42,28 @@ const KY = PY + PH - 96; // kimlik kartı portrenin altına 96 BİNER
 const KH = 400;
 const QY = KY + KH + 56; // QR paneli
 
-// Paylaşılan görsel sabit "aydınlık" markalı temada üretilir (cihaz temasından bağımsız).
+/**
+ * Paylaşılan görselin paleti.
+ *
+ * CİHAZ TEMASINDAN BAĞIMSIZ ve öyle kalmalı: koyu temadaki uzman, karanlık
+ * bir kimlik kartı paylaşmamalı. Ama değerler ELLE YAZILIYORDU — marka
+ * renkleri değiştiğinde bu ekran tek başına eski palette kalırdı.
+ * Artık AYDINLIK paletten okunuyor: hem sabit kalıyor hem markayı takip
+ * ediyor. `lightColors`, kullanıcının seçtiği temadan etkilenmez.
+ */
 const C = {
-  bg: '#FBF8F6',
-  lime: '#5A2A55',
-  limeLight: '#F5E6EB',
-  limeDeep: '#5A2A55',
-  ink: '#261F25',
-  body: '#564E56',
-  white: '#FFFFFF',
-  line: '#F0E7EC',
-  soft: '#F5E6EB',
-  goldSoft: '#FAF2E6',
-  gold: '#C2A06A',
-  muted: '#A69E92',
+  bg: lightColors.bg,
+  lime: lightColors.accent,
+  limeLight: lightColors.accentSoft,
+  limeDeep: lightColors.accent,
+  ink: lightColors.ink,
+  body: lightColors.muted,
+  white: lightColors.onColor,
+  line: lightColors.line,
+  soft: lightColors.accentSoft,
+  goldSoft: lightColors.goldSoft,
+  gold: lightColors.gold,
+  muted: lightColors.muted,
 };
 
 // QR modüllerini tek bir <Path> d string'ine çevirir (kutu içi, pad kadar sessiz alan bırakır).

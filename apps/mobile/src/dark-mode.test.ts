@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { lightColors } from './theme.palette';
 
 /**
  * #15 KARANLIK MOD — rapordaki dört bulgunun düzeltmesi.
@@ -33,9 +34,21 @@ test('P1 — acil kart yüzeyi TEMADAN BAĞIMSIZ ve yazı okunuyor', () => {
   assert.doesNotMatch(h, /cardCritical: \{ backgroundColor: colors\./, 'zemin hâlâ temaya bağlı');
   assert.doesNotMatch(h, /cardCalm: \{ backgroundColor: colors\./, 'zemin hâlâ temaya bağlı');
 
-  const kritik = /const ACIL_KRITIK = '(#[0-9A-Fa-f]{6})'/.exec(h);
-  const sakin = /const ACIL_SAKIN = '(#[0-9A-Fa-f]{6})'/.exec(h);
-  assert.ok(kritik && sakin, 'acil renkleri tanımlı değil');
+  // Değer literal ya da SABİT PALET başvurusu olabilir. `lightColors` aktif
+  // temaya bağlı değildir (dönmez) ama marka değişince onunla değişir —
+  // aranan bağımsızlığı bozmadan sızıntıyı kapatır. Desen ikisini de tanımalı,
+  // yoksa test sessizce hiçbir şey ölçmez.
+  const coz = (v: string): string => {
+    const m = /^lightColors\.(\w+)$/.exec(v.trim());
+    return m ? (lightColors as Record<string, string>)[m[1]!]! : v.replace(/'/g, '').trim();
+  };
+  const oku = (ad: string): string => {
+    const m = new RegExp(`const ${ad} = ([^;]+);`).exec(h);
+    assert.ok(m, `${ad} tanımlı değil`);
+    return coz(m![1]!);
+  };
+  const kritik = [null, oku('ACIL_KRITIK')];
+  const sakin = [null, oku('ACIL_SAKIN')];
 
   // Beyaz yazı: 20pt başlık (eşik 3,0) VE 15pt sayaç (eşik 4,5) → 4,5 alınır.
   for (const [ad, renk] of [

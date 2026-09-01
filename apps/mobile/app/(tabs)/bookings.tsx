@@ -359,7 +359,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     tab: { flex: 1, alignItems: 'center', paddingVertical: space(1.5), gap: space(1) },
     tabText: { fontSize: 15 },
-    tabOn: { color: '#5A2A55' },
+    tabOn: { color: colors.accent },
     tabOff: { color: colors.muted },
     tabBar: {
       position: 'absolute',
@@ -367,7 +367,7 @@ const makeStyles = (colors: ColorTokens) =>
       height: 2.5,
       width: '60%',
       borderRadius: 2,
-      backgroundColor: '#5A2A55',
+      backgroundColor: colors.accent,
     },
     list: { padding: space(2.5), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
 
@@ -422,7 +422,7 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'space-between',
       marginTop: space(0.75),
     },
-    demandCta: { fontFamily: font.semibold, color: '#5A2A55' },
+    demandCta: { fontFamily: font.semibold, color: colors.accent },
     demandRemove: { textDecorationLine: 'underline' },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
 
