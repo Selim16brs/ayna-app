@@ -24,7 +24,11 @@ import { useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE } from '../../src/ui';
 
 // §growth — uzman/salon profilini sosyal medyada paylaşır; kart AYNA reklamı olarak da çalışır.
-const PROFILE_URL = 'https://ayna.kz';
+//
+// Alan adı TEK YERDE: kart hem QR'ı hem alt yazıyı bundan üretiyor. İki ayrı
+// yerde yazılsaydı biri değişip diğeri kalabilir, QR ile yazı ayrışırdı.
+const DOMAIN = 'ayna.salon';
+const PROFILE_URL = `https://${DOMAIN}`;
 
 // Instagram story ölçüleri (9:16)
 const W = 1080;
@@ -327,7 +331,7 @@ export default function SellerShareScreen() {
               textAnchor="middle"
               letterSpacing={3}
             >
-              ayna.kz
+              {DOMAIN}
             </SvgText>
           </Svg>
         </View>
