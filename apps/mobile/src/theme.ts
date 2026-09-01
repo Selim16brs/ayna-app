@@ -24,23 +24,23 @@ export type ThemeMode = 'light' | 'dark';
 
 // ── Gradyanlar ───────────────────────────────────────────────────────────
 export const lightGradients = {
-  hero: ['#FBF8F6', '#F5E6EB'] as const, // porselen → pudra
-  gold: ['#6B3465', '#5A2A55'] as const, // ana CTA: mürdüm ombre (isim geriye dönük)
-  rose: ['#D9A0B2', '#D97798'] as const, // acil / sayaç kartı
-  teal: ['#7C9A88', '#547565'] as const, // onay
-  plum: ['#6B3465', '#5A2A55'] as const,
+  hero: ['#FAF7F5', '#E8D9EB'] as const, // zemin → lila
+  gold: ['#642855', '#4A1942'] as const, // ana CTA: mürdüm ombre (isim geriye dönük)
+  rose: ['#C8848C', '#B0616B'] as const, // acil / sayaç kartı
+  teal: ['#3E9560', '#2F7A4A'] as const, // onay
+  plum: ['#642855', '#4A1942'] as const,
 } as const;
 
 export const darkGradients: GradientTokens = {
-  hero: ['#1A1419', '#241C23'] as const,
-  gold: ['#E794AF', '#D97798'] as const, // koyuda CTA gül
-  rose: ['#E794AF', '#C4657F'] as const,
-  teal: ['#7FA38E', '#5E8471'] as const,
+  hero: ['#18061C', '#26102A'] as const,
+  gold: ['#D4A0A0', '#B0616B'] as const, // koyuda CTA gül
+  rose: ['#D4A0A0', '#B0616B'] as const,
+  teal: ['#3E9560', '#2F7A4A'] as const,
   // Plum DOLU BİR YÜZEY ve üstüne HER ZAMAN beyaz yazı geliyor (7 ekran).
   // Koyuda accent'i açmak metin/ikon için doğru, dolu yüzey için değil:
   // '#AA9AC4' üstünde beyaz 2.58:1 ölçülüyor — okunmuyor. Bu çift 7.72:1
   // veriyor ve koyu zeminden (#1A1419) yine ayrışıyor.
-  plum: ['#7A3C73', '#63305E'] as const,
+  plum: ['#642855', '#4A1942'] as const,
 };
 
 export type GradientTokens = { [K in keyof typeof lightGradients]: readonly [string, string] };
@@ -63,10 +63,25 @@ export const gradientSets: Record<ThemeMode, GradientTokens> = {
  * Tek aile: Onest. Üç ağırlık yüklenir; RN'de `fontWeight` yerine AİLE ADI
  * kullanılır (iOS'ta ağırlık sentezi güvenilir değil). `font.semibold` = 600.
  */
+/**
+ * Yazı tipleri — UYGULAMANIN MEVCUT AİLESİ (kurucu kararı).
+ *
+ * Figma Inter + DM Sans kullanıyor; tasarımın geri kalanı birebir uygulanıyor
+ * ama yazı tipi Onest kalıyor. Onest'in elimizde ÜÇ ağırlığı var
+ * (400/500/600); Figma'nın Bold(700) ve ExtraBold(800) katmanları en yakın
+ * ağırlığa — SemiBold'a — düşüyor. Uygulamanın kendi kuralı da bunu
+ * söylüyordu: hiyerarşi boyut ve renkle kurulur, ağırlıkla değil.
+ */
 export const font = {
   regular: 'Onest-Regular',
   medium: 'Onest-Medium',
   semibold: 'Onest-SemiBold',
+  /** Figma'daki Bold/ExtraBold → elimizdeki en ağır kesim. */
+  bold: 'Onest-SemiBold',
+  extrabold: 'Onest-SemiBold',
+  /** Figma başlıkları DM Sans; bizde başlık da Onest. */
+  displayMedium: 'Onest-Medium',
+  displayBold: 'Onest-SemiBold',
 } as const;
 
 // Eski `weight` API'si — hâlâ import edenler için (yeni kodda `font` kullanın).
@@ -140,20 +155,27 @@ export const control = {
  * girmiyor, gradyanlar gibi ayrı duruyor.
  */
 export const categoryTints = [
-  '#5A2A55',
-  '#D97798',
-  '#8E7BA8',
-  '#9A641F',
-  '#6E86A8',
-  '#547565',
+  '#4A1942',
+  '#B0616B',
+  '#7B5A7E',
+  '#9A5A05',
+  '#5B7392',
+  '#2F7A4A',
 ] as const;
 
-export const radius = { xs: 14, sm: 18, md: 22, lg: 26, xl: 30, pill: 999 } as const;
+/**
+ * Köşe yarıçapı ölçeği — Figma'dan ölçüldü.
+ *
+ * Baskın değer 18px (41 katman); 8/12/16/20 yardımcı, 100+ hap. Önceki ölçek
+ * (14/18/22/26/30) belirgin biçimde daha yuvarlaktı; yeni dil daha keskin.
+ */
+export const radius = { xs: 8, sm: 12, md: 16, lg: 18, xl: 20, pill: 999 } as const;
 
 export const space = (n: number): number => n * 8;
 
 // ── Gölge (mürdüm tonlu — nötr gri gölge porselen üstünde kirli durur) ────
-const shadowColorFor = (mode: ThemeMode) => (mode === 'dark' ? '#000000' : '#5A2A55');
+// Figma gölgeleri mor tonlu: rgba(74,25,66,…) — yeni accent'in kendisi.
+const shadowColorFor = (mode: ThemeMode) => (mode === 'dark' ? '#000000' : '#4A1942');
 
 export const makeShadow = (mode: ThemeMode) =>
   ({
