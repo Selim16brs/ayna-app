@@ -14,6 +14,7 @@ import {
 } from '../../src/catalog';
 import { AKIS_ADIMLARI, akisAdimi, durumEtiketi } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
+import { HIZMET_IKON } from '../../src/hizmet-ikon';
 import type { MessageKey } from '@ayna/i18n';
 import { fillParams, useLocale } from '../../src/locale';
 import { musteriRandevulari, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
@@ -93,23 +94,6 @@ const HIZLI_EYLEMLER = [
     gorsel: require('../../assets/hizli-eylem/haritada-kesfet.png'),
   },
 ];
-
-/**
- * Hizmet ikonları — Figma `ayna-service-icons-light`ten indirilen görseller.
- * Bağlantılar 7 günde ölüyor, bu yüzden depoya alındı.
- */
-const HIZMET_IKON: Record<string, number> = {
-  hair: require('../../assets/hizmet-ikon/sac.png'),
-  nails: require('../../assets/hizmet-ikon/tirnak.png'),
-  lashes: require('../../assets/hizmet-ikon/kirpik.png'),
-  brows: require('../../assets/hizmet-ikon/kas.png'),
-  makeup: require('../../assets/hizmet-ikon/makyaj.png'),
-  skincare: require('../../assets/hizmet-ikon/cilt.png'),
-  epilation: require('../../assets/hizmet-ikon/epilasyon.png'),
-  spa: require('../../assets/hizmet-ikon/masaj.png'),
-  pmu: require('../../assets/hizmet-ikon/kalici-makyaj.png'),
-  bridal: require('../../assets/hizmet-ikon/gelin.png'),
-};
 
 export default function DiscoverScreen() {
   const { t } = useLocale();
