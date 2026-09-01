@@ -151,7 +151,7 @@ const makeStyles = (colors: ColorTokens) =>
       width: 56,
       height: 56,
       borderRadius: radius.md,
-      backgroundColor: '#FFFFFF',
+      backgroundColor: colors.onColor,
       alignItems: 'center',
       justifyContent: 'center',
     },

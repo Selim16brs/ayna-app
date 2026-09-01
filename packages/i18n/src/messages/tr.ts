@@ -108,8 +108,6 @@ export const tr = {
   'hours.closed': 'Kapalı',
   'hours.apply_all': 'Bu saatleri tüm günlere uygula',
   'social.ph': 'Kullanıcı adı veya profil bağlantısı',
-  'slots.empty': 'Bu gün için müsait saat yok',
-  'slots.tz': 'Almatı saati',
   'expert.reg.portfolio': 'Portfolyo — yaptığın işler',
   'expert.reg.portfolio_hint': 'Önceki işlerinden fotoğraflar ekle (normal: 7, Premium: 20).',
   'expert.reg.portfolio_limit':
@@ -951,8 +949,6 @@ export const tr = {
     'Salonun adresi onay sonrası sana gösterilir; senin adresin uzmanla asla paylaşılmaz',
   'booking.confirmed.done': 'Randevularıma git',
 
-  'screen.placeholder': 'Bu bölüm yakında burada olacak',
-
   // Puanlarım / Ödüller
   'rewards.title': 'Puanlarım',
   'rewards.points': 'AYNA Puanı',
@@ -1705,17 +1701,13 @@ export const tr = {
     'Doğum günü kutlaması gönderilsin mi? Müşterine senin adına tatlı bir bildirim gider.',
   'bday.send': 'Kutlama gönder 🎉',
   'bday.sent': 'Kutlaman gönderildi 🎂✨',
-  'booking.money.title': 'Para dökümü',
-  'booking.money.service': 'Hizmet',
   'booking.money.deposit': 'Depozito',
   'booking.balance.wait_b': 'Uzman onaylayınca randevun kapanır ve puanın yüklenir.',
   'booking.balance.provider_confirm_b':
     'Parayı aldıysan onayla. Randevu kapanır, müşterinin puanı yüklenir.',
   'booking.balance.remaining': 'Hizmetten sonra uzmana',
   'booking.balance.remaining_pro': 'Hizmetten sonra sana',
-  'booking.money.will_earn': 'Hizmetten sonra kazanacaksın',
   'booking.money.onsite': 'Hizmetten sonra uzmana',
-  'booking.money.note': 'Hiçbir tutar gizli değil',
   'booking.deposit.remaining': 'Hizmetten sonra uzmana',
   'survey.title': 'Deneyimin nasıldı? ⭐',
   'survey.body':

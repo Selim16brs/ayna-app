@@ -19,7 +19,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
 import { selectPortrait, selectUnreadCount, useStore } from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
-import { radius, space, type ColorTokens, font } from '../../src/theme';
+import { categoryTints, radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   HomeUpcoming,
@@ -38,9 +38,7 @@ import {
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 // Kategori daire zeminleri (spec §0.1) — pastel + ink ikon
-const HOT_PINK = '#D97798'; // "Ne yapmak istersin?" kartı — çırtlak pembe
 // Canlı kategori renkleri (pembe/yeşil gibi doygun) — Saç·Cilt·Nail·Makyaj·Spa·Diğer
-const CAT_TINTS = ['#5A2A55', '#D97798', '#8E7BA8', '#9A641F', '#6E86A8', '#547565'];
 // Yatay kaydırmalı kart ölçüsü (Fırsatlar / Öne çıkanlar — profesyonel foto kartı)
 const PROMO_W = Math.round(Dimensions.get('window').width * 0.72);
 const PROMO_H = 168;
@@ -363,7 +361,7 @@ export default function DiscoverScreen() {
           contentContainerStyle={styles.catRow}
         >
           {CATEGORIES.map((cat, i) => {
-            const tint = CAT_TINTS[i % CAT_TINTS.length]!;
+            const tint = categoryTints[i % categoryTints.length]!;
             return (
               <Animated.View key={cat.id} entering={FadeInDown.duration(360).delay(i * 55)}>
                 <PressableScale
@@ -656,14 +654,14 @@ const makeStyles = (colors: ColorTokens) =>
       height: 19,
       borderRadius: 9.5,
       paddingHorizontal: 4,
-      backgroundColor: HOT_PINK,
+      backgroundColor: colors.rose,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 2,
       borderColor: colors.surface,
     },
     bellBadgeText: {
-      color: '#FFFFFF',
+      color: colors.onColor,
       fontSize: 10,
       lineHeight: 12,
       fontFamily: font.semibold,
@@ -849,7 +847,7 @@ const makeStyles = (colors: ColorTokens) =>
       fontFamily: font.semibold,
       lineHeight: 21,
       letterSpacing: -0.2,
-      color: '#FFFFFF',
+      color: colors.onColor,
     },
     promoTag: {
       position: 'absolute',

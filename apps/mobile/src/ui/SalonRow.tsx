@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { lightColors } from '../theme.palette';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -16,7 +17,9 @@ const BADGE: Record<Professional['badge'], { key: MessageKey; bg: string }> = {
   verified: { key: 'card.verified', bg: '#E1DAF3' }, // badgePopularBg
   today: { key: 'card.today', bg: '#F8DFC2' }, // badgeNewBg
 };
-const BADGE_INK = '#261F25';
+// Rozet yazısı: rozet zemini sabit olduğu için mürekkep de sabit — ama
+// değeri palet veriyor, marka değişince birlikte değişsin.
+const BADGE_INK = lightColors.ink;
 
 /**
  * Yatay salon kartı (referans "Yakındaki salonlar" dili): sol foto + isim/puan/adres +

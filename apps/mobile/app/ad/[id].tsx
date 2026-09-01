@@ -150,7 +150,7 @@ const makeStyles = (colors: ColorTokens) =>
     sponsorText: { color: 'rgba(255,255,255,0.9)', fontSize: 9, letterSpacing: 0.3 },
     heroInfo: { padding: space(3), gap: 4 },
     heroBrand: { color: 'rgba(255,255,255,0.85)', fontFamily: font.semibold, letterSpacing: 0.3 },
-    heroTitle: { color: '#FFFFFF', letterSpacing: -0.4 },
+    heroTitle: { color: colors.onColor, letterSpacing: -0.4 },
     body: { paddingHorizontal: space(3), paddingTop: space(2.5) },
     offer: {
       flexDirection: 'row',

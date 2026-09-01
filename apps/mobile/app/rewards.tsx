@@ -474,7 +474,7 @@ const makeStyles = (colors: ColorTokens) =>
     lockRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space(1) },
     pointsRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space(1.5) },
     worth: { flex: 1, paddingBottom: space(0.75), gap: 1 },
-    worthValue: { color: '#FFFFFF', fontFamily: font.semibold, fontSize: 20, lineHeight: 25 },
+    worthValue: { color: colors.onColor, fontFamily: font.semibold, fontSize: 20, lineHeight: 25 },
     pointsBig: {
       fontSize: 46,
       lineHeight: 50,

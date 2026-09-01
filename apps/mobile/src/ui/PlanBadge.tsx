@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react';
+import { lightColors } from '../theme.palette';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
@@ -66,11 +67,11 @@ const META: Record<PlanTier, { icon: IoniconName; label: MessageKey; proLabel: M
  */
 const EMBLEM = {
   // Kehribar: uygulamanın "yıldız/dikkat" rengi → kazanılmış statü.
-  premium: ['#9A641F', '#6E4411'] as const,
+  premium: [lightColors.orange, '#6E4411'] as const,
   // Ayna Mürdüm → mürekkep. Sıcak değil derin: Premium'un bir üstü.
-  platinum: ['#5A2A55', '#261F25'] as const,
+  platinum: [lightColors.accent, lightColors.ink] as const,
 };
-const ON_EMBLEM = '#FBF8F6';
+const ON_EMBLEM = lightColors.bg;
 /**
  * Amblem kenarı.
  *
@@ -158,7 +159,9 @@ const makeStyles = (colors: ColorTokens) =>
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: '#D97798', // Gül — amblemin parçası, temayla değişmez
+      // Gül — amblemin parçası, KULLANICI TEMASIYLA değişmez; ama marka
+      // paleti değişirse değişmeli, o yüzden değer paletten geliyor.
+      backgroundColor: lightColors.rose,
       opacity: 0.35,
     },
   });

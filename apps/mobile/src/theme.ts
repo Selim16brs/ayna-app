@@ -131,6 +131,23 @@ export const control = {
 } as const;
 
 /** Geniş köşe yarıçapı — kartlarda 20–30. */
+/**
+ * Kategori rozetlerinin dönüşümlü tonları.
+ *
+ * Bir ekranın içinde duruyordu; oysa bu bir TASARIM KARARI. Yeni bir palet
+ * geldiğinde temada aranıp bulunması gerekir, `discover.tsx` içinde değil.
+ * Dekoratif dizi olduğu için `ColorTokens` (her anahtarı string) içine
+ * girmiyor, gradyanlar gibi ayrı duruyor.
+ */
+export const categoryTints = [
+  '#5A2A55',
+  '#D97798',
+  '#8E7BA8',
+  '#9A641F',
+  '#6E86A8',
+  '#547565',
+] as const;
+
 export const radius = { xs: 14, sm: 18, md: 22, lg: 26, xl: 30, pill: 999 } as const;
 
 export const space = (n: number): number => n * 8;

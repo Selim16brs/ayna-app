@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { asPlanTier, PLAN_TIERS } from './plan';
+import { lightColors } from './theme.palette';
 
 /**
  * PAKET ROZETİ.
@@ -47,10 +48,14 @@ test('her kademenin kendi ikonu ve etiketi var', () => {
 test('kademeler görsel olarak ayrışıyor', () => {
   // Aynı gradyanı paylaşan iki kademe "daha koyu" olur, daha DEĞERLİ değil.
   assert.match(rozet, /tier === 'free'/, 'free ayrı çizilmiyor');
-  const prem = /premium: \['(#[0-9A-Fa-f]{6})', '(#[0-9A-Fa-f]{6})'\]/.exec(rozet);
-  const plat = /platinum: \['(#[0-9A-Fa-f]{6})', '(#[0-9A-Fa-f]{6})'\]/.exec(rozet);
-  assert.ok(prem && plat, 'amblem renkleri tanımlı değil');
-  assert.notDeepEqual([prem[1], prem[2]], [plat[1], plat[2]], 'iki kademe aynı ombreyi paylaşıyor');
+  // Uçlar literal ya da palet başvurusu olabilir; desen İKİSİNİ de tanımalı,
+  // yoksa değer paletten gelince test sessizce hiçbir şey ölçmez.
+  const uc = (ad: string): string[] => {
+    const m = new RegExp(`${ad}: \\[([^,\\]]+), ([^\\]]+)\\]`).exec(rozet);
+    assert.ok(m, `${ad} amblem renkleri tanımlı değil`);
+    return [m![1]!.trim(), m![2]!.trim()];
+  };
+  assert.notDeepEqual(uc('premium'), uc('platinum'), 'iki kademe aynı ombreyi paylaşıyor');
   assert.match(
     rozet,
     /tier === 'platinum' \? <View style=\{styles\.parilti\}/,
@@ -66,9 +71,20 @@ test('amblem renkleri temaya bağlı DEĞİL', () => {
   // bembeyaz oluyordu. Palet bu hatayı zaten yazılı olarak uyarıyor.
   const govde = /const EMBLEM = \{[\s\S]*?\n\};/.exec(rozet);
   assert.ok(govde, 'EMBLEM sabiti yok');
-  assert.doesNotMatch(govde[0], /colors\./, "amblem tema token'ı kullanıyor — koyu modda döner");
-  // Yazı da sabit olmalı: tema `onAccent`i koyu temada KOYU renge dönüyor.
-  assert.match(rozet, /const ON_EMBLEM = '#[0-9A-Fa-f]{6}';/, 'amblem yazı rengi sabit değil');
+  // Yasak olan AKTİF tema (`useTheme` → `colors`): koyu modda döner.
+  // `lightColors` sabit bir paket sabiti, DÖNMEZ — ve marka değişince
+  // amblemin de değişmesi gerektiği için doğru kaynak odur.
+  assert.doesNotMatch(
+    govde[0].replace(/lightColors\./g, ''),
+    /\bcolors\./,
+    "amblem aktif tema token'ı kullanıyor — koyu modda döner",
+  );
+  // Yazı da dönmemeli: tema `onAccent`i koyu temada KOYU renge dönüyor.
+  assert.match(
+    rozet,
+    /const ON_EMBLEM = (?:'#[0-9A-Fa-f]{6}'|lightColors\.\w+);/,
+    'amblem yazı rengi aktif temaya bağlı',
+  );
   assert.doesNotMatch(rozet, /tone="onAccent"/, 'amblemde tema yazı tonu kullanılmış');
 });
 
@@ -83,11 +99,17 @@ test('amblem yazısı her iki uçta da okunuyor', () => {
     const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
     return (x + 0.05) / (y + 0.05);
   };
-  const yazi = /const ON_EMBLEM = '(#[0-9A-Fa-f]{6})';/.exec(rozet)![1];
-  for (const m of rozet.matchAll(
-    /(premium|platinum): \['(#[0-9A-Fa-f]{6})', '(#[0-9A-Fa-f]{6})'\]/g,
-  )) {
-    for (const uc of [m[2], m[3]]) {
+  // Değerler artık paletten geliyor; test de oradan ÇÖZMELİ. Aksi hâlde
+  // literal arayan desen boş döner ve test sessizce hiçbir şey ölçmez.
+  const coz = (v: string): string => {
+    const m = /^lightColors\.(\w+)$/.exec(v.trim());
+    return m ? (lightColors as Record<string, string>)[m[1]!]! : v.replace(/'/g, '').trim();
+  };
+  const yazi = coz(/const ON_EMBLEM = ([^;]+);/.exec(rozet)![1]!);
+  const uclar = [...rozet.matchAll(/(premium|platinum): \[([^,\]]+), ([^\]]+)\]/g)];
+  assert.ok(uclar.length >= 2, 'amblem uçları okunamadı — test boşuna geçiyor');
+  for (const m of uclar) {
+    for (const uc of [coz(m[2]!), coz(m[3]!)]) {
       const r = kon(yazi, uc);
       assert.ok(r >= 4.5, `${m[1]} ${uc} üzerinde yazı ${r.toFixed(2)}:1 — 4.5 altı`);
     }

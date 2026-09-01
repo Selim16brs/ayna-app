@@ -617,7 +617,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: 5,
       alignSelf: 'flex-start',
       marginTop: space(1.25),
-      backgroundColor: '#FFFFFF',
+      backgroundColor: colors.onColor,
       paddingHorizontal: space(1.5),
       paddingVertical: space(0.75),
       borderRadius: radius.pill,

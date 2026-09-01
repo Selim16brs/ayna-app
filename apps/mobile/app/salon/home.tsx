@@ -313,14 +313,14 @@ const makeStyles = (colors: ColorTokens) =>
       height: 18,
       borderRadius: 9,
       paddingHorizontal: 4,
-      backgroundColor: '#D97798',
+      backgroundColor: colors.rose,
       alignItems: 'center',
       justifyContent: 'center',
     },
     bellBadgeText: {
       // Rozet zemini sabit gül (#D97798) — üstünde KOYU yazı her iki temada
       // da okunur; beyaz yazı 1.9:1 ile okunmuyordu.
-      color: '#261F25',
+      color: colors.ink,
       fontSize: 10,
       lineHeight: 12,
       fontFamily: font.semibold,
@@ -433,14 +433,14 @@ const makeStyles = (colors: ColorTokens) =>
     adSponsorText: { color: 'rgba(255,255,255,0.9)', fontSize: 9, letterSpacing: 0.3 },
     adInfo: { padding: space(2), gap: 2 },
     adBrand: { color: 'rgba(255,255,255,0.85)', fontFamily: font.semibold, letterSpacing: 0.2 },
-    adTitle: { color: '#FFFFFF', fontSize: 16, lineHeight: 20 },
+    adTitle: { color: colors.onColor, fontSize: 16, lineHeight: 20 },
     adCta: {
       flexDirection: 'row',
       alignItems: 'center',
       alignSelf: 'flex-start',
       gap: 4,
       marginTop: space(1),
-      backgroundColor: '#FFFFFF',
+      backgroundColor: colors.onColor,
       paddingHorizontal: space(1.5),
       paddingVertical: space(0.75),
       borderRadius: radius.pill,

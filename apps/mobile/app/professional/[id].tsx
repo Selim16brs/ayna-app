@@ -27,7 +27,6 @@ import {
 } from '../../src/ui';
 
 type Tab = 'booking' | 'portfolio' | 'reviews';
-const HOT_PINK = '#D97798'; // favori (kalp) aktif rengi
 
 export default function ProfessionalScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -297,7 +296,7 @@ export default function ProfessionalScreen() {
             <Ionicons
               name={isFav ? 'heart' : 'heart-outline'}
               size={20}
-              color={isFav ? HOT_PINK : colors.ink}
+              color={isFav ? colors.rose : colors.ink}
             />
           </PressableScale>
         </View>
