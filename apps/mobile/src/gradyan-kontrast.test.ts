@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { darkGradients, lightGradients } from './theme.gradients';
 import { darkColors, lightColors } from './theme.palette';
@@ -84,4 +86,14 @@ test('ACİL gradyanı gül KALIYOR', () => {
     number,
   ];
   assert.ok(r > b, 'acil gradyanı gül olmaktan çıkmış');
+});
+
+test('KART YARIÇAPI Figma ile aynı', () => {
+  // Yeni tasarıma geçen ekranlar kartı 20/24 yazıyor; geçmeyenler
+  // `radius.lg` kullanıyordu ve o 18'di. İki piksel her ekranda görünüyor.
+  // Token dosyası react-native çekiyor, kaynak metin olarak okunuyor.
+  const kaynak = readFileSync(join(__dirname, 'theme.ts'), 'utf8');
+  const m = /export const radius = \{[^}]*lg: (\d+)/.exec(kaynak);
+  assert.ok(m, 'yarıçap ölçeği okunamadı');
+  assert.equal(Number(m![1]), 20, 'kart yarıçapı Figma kartıyla (20) aynı değil');
 });
