@@ -972,6 +972,18 @@ export interface Appointment {
    */
   proposedBy?: 'customer' | 'provider';
   providerSignal?: 'up' | 'down'; // §7.3 — uzmanın kullanıcıya GİZLİ sinyali (kamuya kapalı)
+  /**
+   * BU RANDEVUDA BEN KİMİM — hesap tipi değil, İLİŞKİ.
+   *
+   * Kart rolü `currentUser.role`den türetiyordu: uzman hesabı olan biri
+   * BAŞKA bir uzmandan randevu aldığında kendi müşteri randevusunda uzman
+   * ekranını görüyordu — kendi aldığı randevuda "Onayla" düğmesi. Rol
+   * hesabın türü değil, o randevudaki taraf.
+   *
+   * Sunucu bunu zaten biliyor (`/bookings/mine` ve `/bookings/provider` ayrı
+   * uçlar); tazeleme sırasında hangi uçtan geldiği işaretleniyor.
+   */
+  benimRolum?: 'musteri' | 'uzman';
   customerTrusted?: boolean; // §7.3 — POZİTİF rozet: yüksek tamamlanma oranlı "Güvenilir müşteri" (negatif asla)
   // §10 gizlilik — SALONUN uzman için aldığı offline randevu. Yalnız bunlar salon panelinde görünür;
   // uzmanın kendi (app/offline) randevuları ve TÜM para bilgisi salonla PAYLAŞILMAZ (uzmanın şahsi alanı).

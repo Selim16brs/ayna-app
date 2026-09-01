@@ -111,7 +111,11 @@ export default function AgendaScreen() {
   const [staffFilter, setStaffFilter] = useState<string | null>(null);
   const shownStaff = staffFilter ? staff.filter((u) => u.name === staffFilter) : staff;
   // §9.4 — bekleyen talepler (uzman onayı bekleyen randevular): takvim üstünde şerit
-  const pending = storeBookings.filter((b) => b.status === 'onay_bekliyor');
+  // §9.4 — YALNIZ uzman olarak gelen talepler. Uzmanın kendi müşteri
+  // randevuları burada görünmemeli: onlar onun kararını beklemiyor.
+  const pending = storeBookings
+    .filter((b) => b.benimRolum === 'uzman')
+    .filter((b) => b.status === 'onay_bekliyor');
   const dayStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
   const selectedDay = dayStrip[dayIdx] ?? dayStrip[0]!;
   const dayClosed = closedDays.includes(selectedDay);

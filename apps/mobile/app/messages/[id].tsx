@@ -37,12 +37,17 @@ export default function ChatThreadScreen() {
   // §9 — şablonlar DURUMA bağlı olduğu için bu konuşmanın hangi randevuya ait
   // olduğunu bilmemiz gerekiyor. Karşı tarafla olan AKTİF randevu aranıyor;
   // kapanmış randevuda şablon gösterilmiyor (akışa ait değil).
-  const benUzman = useStore(
-    (s) => s.currentUser?.role === 'professional' || s.currentUser?.role === 'salon',
-  );
   const ilgiliRandevu = useStore((s) =>
     s.bookings.find((b) => b.proId === params.otherId && akisAdimi(b.status) >= 0),
   );
+  /**
+   * Şablonlar için rolüm — hesabımın türü değil, BU RANDEVUDAKİ taraf.
+   *
+   * Hesap tipinden okunuyordu: uzman hesabı olan biri başka bir uzmandan
+   * randevu alıp ona yazdığında UZMAN şablonlarını görüyordu ("Sorun değil,
+   * bekliyorum") — müşteri olduğu bir konuşmada.
+   */
+  const benUzman = ilgiliRandevu?.benimRolum === 'uzman';
   const [items, setItems] = useState<ChatMessage[] | null>(null);
   const [sending, setSending] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
