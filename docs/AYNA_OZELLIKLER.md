@@ -155,20 +155,76 @@ kimlik doğrulama (KYC) · salona katılma · takvim izni · çevrimdışı mod.
 Salon ana ekranı, kadro yönetimi, salon ajandası, profil ve düzenleme.
 Salon uzmanın hizmetlerini **yalnız görüntüler**, değiştiremez.
 
-### Üyelik
+### Üyelik paketleri
 
-Free · **Premium** (999 ₸/ay) · **Platinum** (4.990 ₸/ay salon).
-Premium keşifte öne çıkarır; Platinum sadık müşteri portföyü ve düşük
-komisyon verir. Ödeme Kaspi + dekont, admin onaylar.
+Üç katman var ve **her rol** satın alabiliyor — paketin içeriği role göre
+değişiyor. Ödeme uygulama dışında (Kaspi), dekont yüklenir, admin onaylar;
+onaylanınca ayrıcalıklar açılır. Otomatik yenileme yok, istenildiği zaman
+bırakılır.
 
-### Reklam (ücretli vitrin)
+| Paket        | Ücret      |
+| ------------ | ---------- |
+| Free         | ücretsiz   |
+| **Premium**  | 999 ₸/ay   |
+| **Platinum** | 1.999 ₸/ay |
 
-- Uzman/salon **Fırsatlar** ya da **Öne çıkanlar** vitrinini satın alır.
-- **200.000 ₸/ay** (panelden değiştirilebilir), 1/3/6 ay.
-- Ödeme Kaspi + dekont; admin onaylayınca yayına girer.
-- Yayın penceresi sunucuda: süre bitince reklam kendiliğinden düşer.
-- Uzman ana ekranında **"Reklamın yayında · 1/30. gün · 29 gün kaldı"**.
-- Vitrinde **Sponsorlu** etiketi zorunlu.
+> **Not — düzeltilmesi gereken bir tutarsızlık.** Panelde `rate.premium_user_kzt`
+> (999 ₸) ve `rate.premium_salon_kzt` (4.990 ₸) ayarları duruyor, ama abonelik
+> servisi fiyatı koda gömülü tutuyor (`premium: 999`, `platinum: 1999`).
+> Bugün panelden fiyatı değiştirmek tahsil edilen tutarı değiştirmiyor.
+> Yukarıdaki tablo **gerçekten tahsil edilen** tutarı gösteriyor.
+
+**Premium — uzman ve salon için.** _"İşini büyüt, daha çok müşteriye ulaş."_
+
+- **Öne Çıkanlar'da görün** — keşfet ana sayfasında öne çıkarma adaylığı.
+- **Sana Yakın ilk 3'te yer al** — konum bazlı ilk üç rotasyonunda görünürlük.
+- **Fırsatlar vitrininde promosyon** — promosyonların Fırsatlar alanında yayınlanır.
+- **Haftalık promosyon hakkı** — haftada 1 promosyon oluşturma.
+
+**Premium — müşteri için.** _"Bakım yolculuğun için kişisel destek."_
+
+- **Boni** — AI güzellik danışmanı; cilde, saça ve rutine göre kişisel öneriler.
+- **Cut-out profil fotoğrafı.**
+- **Taleplerin önce görünür** — teklif isteğin uzmanların listesinde en üstte.
+- **Öncelikli destek** — destek talebin kuyruğun başına geçer.
+
+**Platinum.** _"Premium + sadık müşteri portföyü."_
+
+- Premium'un tamamı, üstüne:
+- **Always** — müşterilerle karşılıklı bağ ve toplu bildirim hakkı.
+
+### Reklam paketleri (ücretli vitrin)
+
+Üyelikten ayrı bir ürün: uzman ya da salon keşfet ekranında bir **vitrin**
+satın alıyor. İki yerleşim var, ikisi de aynı fiyata:
+
+| Yerleşim         | Nerede görünür                       |
+| ---------------- | ------------------------------------ |
+| **Fırsatlar**    | Keşfet'teki Fırsatlar şeridi         |
+| **Öne Çıkanlar** | Keşfet'teki Senin İçin Seçtiklerimiz |
+
+**Süre ve ücret**
+
+- Aylık **200.000 ₸** — yönetim panelinden değiştirilebilir (`rate.ad_monthly_kzt`).
+- **1 – 12 ay** arası satın alınabilir; tutar `aylık ücret × ay`.
+- **1 ay = 30 gün.** Takvim ayı kullanılsaydı şubatta alan 28 gün alırdı.
+- Fiyat **sipariş anında dondurulur** — sonradan zam gelse bile sipariş eski
+  fiyattan kapanır.
+
+**Reklamın yolu**
+
+1. Uzman görseli, başlığı ve alt başlığını girer; yerleşimi ve süreyi seçer.
+2. Kaspi ile öder, dekontu yükler.
+3. Admin **Reklamlar** kuyruğunda dekontu doğrular.
+4. Onaylanınca reklam yayına girer — **dekontsuz onay sunucuda reddedilir**,
+   ödenmemiş reklam vitrine düşemez.
+5. Yayın penceresi sunucuda tutulur; satın alınan süre bitince reklam
+   kendiliğinden düşer.
+
+**Yayındayken**
+
+- Uzman ana ekranında sayaç: **"Reklamın yayında · 1/30. gün"**.
+- Vitrinde **Sponsorlu** etiketi zorunlu — ücretli yerleşim gizlenmez.
 
 ---
 
