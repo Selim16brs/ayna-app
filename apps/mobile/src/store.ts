@@ -3027,11 +3027,33 @@ export function randevuDepozitosu(
  *
  * İkisi de aynı hatanın iki yüzü: rol hesabın türü değil, o randevudaki taraf.
  */
-export const musteriRandevulari = (s: State): Appointment[] =>
-  s.bookings.filter((b) => b.benimRolum !== 'uzman');
+/**
+ * DİKKAT — bunlar Zustand SEÇİCİSİ DEĞİL, saf süzgeç.
+ *
+ * `useStore(musteriRandevulari)` diye kullanılamaz: filter her çağrıda YENİ
+ * DİZİ döndürür, React 18'in `useSyncExternalStore`'u bunu "anlık görüntü
+ * değişti" sayar ve sonsuz döngüye girer — uygulama açılışta çöker.
+ * (01.09.2026'da tam bu oldu.)
+ *
+ * Doğru kullanım: ham diziyi seç, süzgeci `useMemo` içinde uygula.
+ *
+ *   const tumu = useStore((s) => s.bookings);
+ *   const benim = useMemo(() => musteriRandevulari(tumu), [tumu]);
+ */
+export const musteriRandevulari = (bookings: Appointment[]): Appointment[] =>
+  bookings.filter((b) => b.benimRolum !== 'uzman');
 
-export const uzmanRandevulari = (s: State): Appointment[] =>
-  s.bookings.filter((b) => b.benimRolum === 'uzman');
+/**
+ * Uzman tarafı GÜVENLİ YÖNE açık: yalnız açıkça "müşteri" işaretlenenler
+ * elenir, işareti olmayanlar KALIR.
+ *
+ * `benimRolum` tazelemede yazılıyor; yoklama (polling) ile gelen ya da henüz
+ * eşitlenmemiş randevuda boş olabilir. `=== 'uzman'` yazsaydık bunlar uzmanın
+ * gözünden KAYBOLURDU — gelen bir talebi gizlemek, fazladan bir satır
+ * göstermekten çok daha pahalı: uzman 3 saatlik süreyi kaçırır.
+ */
+export const uzmanRandevulari = (bookings: Appointment[]): Appointment[] =>
+  bookings.filter((b) => b.benimRolum !== 'musteri');
 
 export const localDeposit = (price: number, rates: State['config']['rates']): number =>
   depositFor(price, { pct: rates.depositPct ?? DEFAULT_DEPOSIT_RULES.pct });

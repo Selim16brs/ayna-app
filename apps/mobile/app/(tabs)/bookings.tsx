@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   DURUM_ETIKETI,
   DURUM_TONU,
@@ -64,8 +64,9 @@ export default function BookingsScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const [active, setActive] = useState<Seg>('upcoming');
+  const tumRandevular = useStore((s) => s.bookings);
   // Yalnız MÜŞTERİ olarak aldığın randevular; uzman talepleri Ajanda'da.
-  const bookings = useStore(musteriRandevulari);
+  const bookings = useMemo(() => musteriRandevulari(tumRandevular), [tumRandevular]);
   const allDemands = useStore((s) => s.demands);
   const bookingsLoading = useStore((s) => s.bookingsLoading);
   const demandsLoading = useStore((s) => s.demandsLoading);

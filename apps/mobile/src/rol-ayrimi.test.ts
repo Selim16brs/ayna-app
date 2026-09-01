@@ -43,15 +43,22 @@ test('müşteri listeleri uzman taleplerini GÖSTERMİYOR', () => {
     ['(tabs)', 'care.tsx'],
   ] as const) {
     const src = oku('app', klasor, dosya);
-    assert.match(src, /useStore\(musteriRandevulari\)/, `${dosya}: filtresiz liste okuyor`);
+    // Ham dizi seçilip useMemo ile süzülüyor: seçici yeni dizi döndürürse
+    // Zustand 5 sonsuz döngüye girer ve uygulama açılışta çöker.
+    assert.match(src, /musteriRandevulari\(tumRandevular\)/, `${dosya}: rol süzgeci yok`);
+    assert.match(src, /useMemo\(/, `${dosya}: süzgeç useMemo dışında — çökme riski`);
   }
 });
 
 test('uzman listeleri kendi MÜŞTERİ randevularını göstermiyor', () => {
   const rapor = oku('app', 'seller', 'reports.tsx');
-  assert.match(rapor, /uzmanRandevulari\(st\)/, 'uzman ana ekranı filtresiz');
+  assert.match(rapor, /uzmanRandevulari\(tumRandevular\)/, 'uzman ana ekranı filtresiz');
+  assert.match(rapor, /useMemo\(/, 'uzman ana ekranı süzgeci useMemo dışında');
   const ajanda = oku('app', 'seller', 'agenda.tsx');
-  assert.match(ajanda, /benimRolum === 'uzman'/, 'ajanda şeridi filtresiz');
+  // GÜVENLİ YÖN: yalnız açıkça "müşteri" olanlar elenir. `=== 'uzman'`
+  // yazılsaydı, tazelemeyle işaretlenmemiş (yoklamayla gelen) talepler
+  // uzmandan gizlenirdi — 3 saatlik yanıt süresi kaçardı.
+  assert.match(ajanda, /benimRolum !== 'musteri'/, 'ajanda şeridi filtresiz');
 });
 
 test('uzman ekranları müşteri ekranlarına, müşteri ekranları uzmana sızmıyor', () => {
