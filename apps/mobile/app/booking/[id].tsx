@@ -244,6 +244,9 @@ export default function BookingDetail() {
 
         {/* ── Para: %10 peşin + %90 sonra (§4.4, §4.9) ── */}
         <View style={[styles.kart, shadow.card]}>
+          {/* "Hiçbir tutar gizli değil" satırı KALDIRILDI: iki sayının altına
+              yazılan bir güven cümlesi bilgi taşımıyor, kartı uzatıyordu.
+              Şeffaflık zaten tutarları göstermekle kuruluyor. */}
           <View style={styles.paraSatir}>
             <Text variant="caption" tone="muted">
               {t('booking.money.deposit')}
@@ -260,9 +263,6 @@ export default function BookingDetail() {
               {kalan.toLocaleString('tr-TR')} ₸
             </Text>
           </View>
-          <Text variant="caption" tone="muted" style={styles.paraNot}>
-            {t('booking.money.note')}
-          </Text>
         </View>
 
         {/* ── Görünür geri sayımlar. Brief §7: "görünmez zaman sınırı yasak." ── */}
