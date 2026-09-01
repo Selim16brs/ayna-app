@@ -190,7 +190,11 @@ export default function DepositScreen() {
             <Text variant="caption" tone="muted">
               {t('deposit.amount')}
             </Text>
-            <Text variant="h2" tone="ink">
+            {/* `selectable`: Kaspi tutarı hazır getirmediği için müşteri onu
+                elle yazacak. Basılı tutup kopyalayabilmesi, yanlış tutar
+                göndermeyi engelliyor — eksik ödenmiş depozito admin
+                kuyruğunda elle çözülecek bir iş demek. */}
+            <Text variant="h2" tone="ink" selectable>
               {odenecek.toLocaleString('tr-TR')} ₸
             </Text>
           </View>
@@ -199,6 +203,16 @@ export default function DepositScreen() {
               total: booking.price.toLocaleString('tr-TR'),
             })}
           </Text>
+          {/* Tutar KOPYALANABİLİR: Kaspi onu hazır getirmiyor, müşteri elle
+              yazacak. Ekrandan okuyup akılda tutmak yerine kopyalamak, yanlış
+              tutar göndermeyi engelliyor — eksik ödenmiş depozito, admin
+              kuyruğunda elle çözülecek bir iş demek. */}
+          {/* KOPYALAMA DÜĞMESİ KOYULMADI — bilinçli. `expo-clipboard` kurulu
+              değil ve eklemek YENİ DERLEME gerektirir; OTA ile inmez, yani
+              kurucu bunu telefonunda göremez. Bunun yerine tutar `selectable`:
+              basılı tutup kopyalanabiliyor, üstelik ek bağımlılık yok.
+              Pano paketi bir sonraki native sürümde eklenirse düğmeye
+              çevrilebilir. */}
         </View>
 
         {/* §5 — puan kullanımı. Hak yoksa seçenek HİÇ gösterilmiyor: kullanılamayan
@@ -251,46 +265,46 @@ export default function DepositScreen() {
 
         {kaspiUrl && !kaspiyeGidildi ? (
           <View style={[styles.kart, shadow.card, styles.kaspiKart]}>
-            <View style={styles.satir}>
-              <Ionicons name="open-outline" size={16} color={colors.accent} />
-              <Text variant="caption" tone="accentFg" style={styles.kaspiBaslik}>
-                {t('deposit.kaspi_preview')}
+            <Text variant="caption" tone="accentFg" style={styles.kaspiBaslik}>
+              {t('deposit.kaspi_preview')}
+            </Text>
+            {/* ÜÇ ADIM. Burada "Kaspi'de hazır gelecek: alıcı, TUTAR, açıklama"
+                yazıyordu — tutar için bu YANLIŞTI. Kaspi'nin işyeri QR'ı
+                tutarı taşımıyor (AIVio'daki aynı SES INVEST akışının kendi
+                metni de "kod tutarı içermiyor, elle girin" diyor). Müşteri
+                tutarın hazır geleceğini sanıp Kaspi'de boş bir alanla
+                karşılaşıyordu. */}
+            <View style={styles.adim}>
+              <Text variant="caption" tone="muted">
+                1
+              </Text>
+              <Text variant="caption" tone="ink" style={styles.flex}>
+                {t('deposit.kaspi_step1')}
               </Text>
             </View>
-            <View style={styles.satir}>
+            <View style={styles.adim}>
               <Text variant="caption" tone="muted">
-                {t('deposit.account')}
+                2
               </Text>
-              <Text variant="bodyStrong" tone="ink">
-                {HESAP_ADI}
+              <Text variant="captionStrong" tone="ink" style={styles.flex}>
+                {fillParams(t('deposit.kaspi_step2'), {
+                  amount: odenecek.toLocaleString('tr-TR'),
+                })}
               </Text>
             </View>
-            <View style={styles.satir}>
+            <View style={styles.adim}>
               <Text variant="caption" tone="muted">
-                {t('deposit.amount')}
+                3
               </Text>
-              <Text variant="bodyStrong" tone="ink">
-                {odenecek.toLocaleString('tr-TR')} ₸
-              </Text>
-            </View>
-            <View style={styles.satir}>
-              <Text variant="caption" tone="muted">
-                {t('deposit.reference')}
-              </Text>
-              <Text variant="bodyStrong" tone="ink" selectable>
-                {referans}
+              <Text variant="caption" tone="ink" style={styles.flex}>
+                {t('deposit.kaspi_step3')}
               </Text>
             </View>
           </View>
         ) : null}
 
         {kaspiUrl && !kaspiyeGidildi ? (
-          <Button
-            label={fillParams(t('deposit.pay_kaspi'), {
-              amount: odenecek.toLocaleString('tr-TR'),
-            })}
-            onPress={() => void kaspiAc()}
-          />
+          <Button label={t('deposit.pay_kaspi')} onPress={() => void kaspiAc()} />
         ) : null}
 
         <View style={[styles.kart, shadow.card]}>
@@ -345,6 +359,12 @@ const makeStyles = (colors: ColorTokens) =>
     acil: { borderWidth: 1, borderColor: colors.danger },
     kaspiKart: { backgroundColor: colors.accentSoft },
     kaspiBaslik: { letterSpacing: 0.6, textTransform: 'uppercase' },
+    adim: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space(1.25),
+      paddingTop: space(0.5),
+    },
     satir: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     puanSatir: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
     flex: { flex: 1 },
