@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { api } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
-import { localDeposit, useStore } from '../../src/store';
+import { randevuDepozitosu, useStore } from '../../src/store';
 import { font, radius, shadow, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
@@ -27,6 +27,7 @@ export default function RefundScreen() {
 
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
   const rates = useStore((s) => s.config.rates);
+  const iadeTalebiDamgala = useStore((s) => s.iadeTalebiDamgala);
   const [hesap, setHesap] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -43,13 +44,15 @@ export default function RefundScreen() {
     );
   }
 
-  const tutar = booking.depositAmount ?? localDeposit(booking.price, rates);
+  const tutar = randevuDepozitosu(booking, rates);
 
   const gonder = async () => {
     if (hesap.trim().length < 3 || busy) return;
     setBusy(true);
     try {
       await api.iadeTalep(booking.id, hesap.trim());
+      // Talep gönderildi: ana sayfadaki "iadeni iste" kartı artık çıkmasın.
+      iadeTalebiDamgala(booking.id);
       Alert.alert(t('refund.sent_t'), t('refund.sent_b'), [
         { text: t('common.ok'), onPress: () => router.back() },
       ]);

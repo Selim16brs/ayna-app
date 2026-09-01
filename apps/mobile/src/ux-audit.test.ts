@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
@@ -105,16 +105,16 @@ test('B3 · kimlik belgesi gönderimi sessiz değil', () => {
   );
 });
 
-test('B4 · ödeme dekontu yüklemesi sessiz değil', () => {
-  const kom = kodu(oku('app', 'seller', 'commissions.tsx'));
-  assert.match(
-    kom,
-    /Alert\.alert\(t\('commission\.receipt_sent_t'\), t\('commission\.receipt_sent_b'\)\)/,
-    'başarı onayı yok',
+test('MD §4.4 — İKİNCİ BİR TAHSİLAT EKRANI YOK', () => {
+  // Eski komisyon ödeme ekranı (`seller/commissions.tsx`) buradaydı ve test
+  // onun düzgün çalıştığını doğruluyordu. MD §4.4/§10 o akışı tümden
+  // kaldırdı: "Depozito = AYNA'nın komisyonu. İkinci bir tahsilat işlemi
+  // YOKTUR." Ekran silindi; test artık GERİ GELMEMESİNİ bekçiliyor.
+  const kok = join(import.meta.dirname, '..');
+  assert.ok(
+    !existsSync(join(kok, 'app', 'seller', 'commissions.tsx')),
+    'komisyon ödeme ekranı geri gelmiş — MD ikinci tahsilatı yasaklıyor',
   );
-  assert.match(
-    kom,
-    /\} catch \{\s*\n\s*Alert\.alert\(t\('common\.error'\)\);/,
-    'hata bildirimi yok',
-  );
+  const menu = kodu(oku('app', 'seller', 'menu.tsx'));
+  assert.ok(!menu.includes('/seller/commissions'), 'uzman menüsünde komisyon bağlantısı var');
 });

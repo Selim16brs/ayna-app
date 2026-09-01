@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { fillParams, useLocale } from '../../src/locale';
-import { localDeposit, useStore } from '../../src/store';
+import { randevuDepozitosu, useStore } from '../../src/store';
 import { radius, shadow, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Sayac, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
@@ -95,7 +95,7 @@ export default function DepositScreen() {
     );
   }
 
-  const tutar = booking.depositAmount ?? localDeposit(booking.price, rates);
+  const tutar = randevuDepozitosu(booking, rates);
   /**
    * §5 — kullanılabilecek puan. Hesap `@ayna/domain`den: sunucu dekontu
    * alırken AYNI fonksiyonu çalıştırıyor, dolayısıyla ekranda yazan tutarla

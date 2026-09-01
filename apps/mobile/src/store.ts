@@ -513,6 +513,8 @@ interface State {
    * açılışta/tazelemede yeniden gönderiliyor.
    */
   pendingBookingActions: { id: string; eylem: BookingEylem; arg?: BookingEylemArg }[];
+  /** §4.10 — iade talebi gönderildi; ana sayfadaki kart bir daha çıkmasın. */
+  iadeTalebiDamgala: (id: string) => void;
   /** Kuyruğu sunucuya boşalt (açılışta ve her tazelemede çağrılır). */
   flushBookingActions: () => Promise<void>;
   /**
@@ -1259,7 +1261,7 @@ export const useStore = create<State>()(
               // Yanan tutar randevunun kendi kaporası; sabit 1.000 ₸ değil (K1).
               params: {
                 pro: b.proName,
-                deposit: b.depositAmount ?? localDeposit(b.price, get().config.rates),
+                deposit: randevuDepozitosu(b, get().config.rates),
               },
               dateLabel: 'Az önce',
               icon: 'alert-circle-outline',
@@ -1676,7 +1678,7 @@ export const useStore = create<State>()(
             params: {
               pro: b.proName,
               slot: formatSlotTr(b.startMs),
-              deposit: b.depositAmount ?? localDeposit(b.price, get().config.rates),
+              deposit: randevuDepozitosu(b, get().config.rates),
             },
             dateLabel: 'Az önce',
             icon: 'card-outline',
@@ -1709,7 +1711,7 @@ export const useStore = create<State>()(
             params: {
               pro: b.proName,
               slot: formatSlotTr(b.startMs),
-              deposit: b.depositAmount ?? localDeposit(b.price, get().config.rates),
+              deposit: randevuDepozitosu(b, get().config.rates),
             },
             dateLabel: 'Az önce',
             icon: 'card-outline',
@@ -1938,6 +1940,14 @@ export const useStore = create<State>()(
           }));
           return 'kuyrukta';
         }
+      },
+
+      iadeTalebiDamgala: (id) => {
+        set((st) => ({
+          bookings: st.bookings.map((b) =>
+            b.id === id ? { ...b, refundRequestedAt: Date.now() } : b,
+          ),
+        }));
       },
 
       flushBookingActions: async () => {
@@ -2981,6 +2991,24 @@ export const inAudience = (n: { audience?: 'user' | 'seller' }, seller: boolean)
 // K1 — yerel kapora tutarı. Sunucu ile AYNI saf fonksiyon (@ayna/domain) ve aynı
 // admin kuralları kullanılır; aksi hâlde bildirimde "1.000 ₸" yazıp ödeme ekranında
 // başka tutar istenirdi. Config gelmemişse fonksiyonun kendi varsayılanları geçerli.
+/**
+ * §4.4 — bu randevunun depozitosu: sunucu belirlediyse o, yoksa fiyattan hesap.
+ *
+ * SIFIR DA "BELİRLENMEMİŞ" SAYILIR. Ekranlar `depositAmount ?? localDeposit(...)`
+ * yazıyordu; `??` yalnız null/undefined'ı yakalar, SIFIRI geçirir. Sunucu
+ * onaydan önce alanı 0 bıraktığı için depozito ekranında "Ödenecek tutar 0 ₸"
+ * görünüyordu — hemen altında "toplam 37.000 ₸ hizmet bedelinin %10'u" yazarken.
+ * Kullanıcı sıfır ödeyip randevusunu kesinleştiremezdi.
+ */
+export function randevuDepozitosu(
+  booking: { depositAmount?: number; price: number },
+  rates: State['config']['rates'],
+): number {
+  const belirlenmis = booking.depositAmount;
+  if (typeof belirlenmis === 'number' && belirlenmis > 0) return belirlenmis;
+  return localDeposit(booking.price, rates);
+}
+
 export const localDeposit = (price: number, rates: State['config']['rates']): number =>
   depositFor(price, { pct: rates.depositPct ?? DEFAULT_DEPOSIT_RULES.pct });
 

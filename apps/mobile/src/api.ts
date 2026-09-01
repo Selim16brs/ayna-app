@@ -996,9 +996,6 @@ export const api = {
     post<ProfileChangeReq>('/profile-changes', { changes }, token),
   myProfileChange: (token: string) => get<ProfileChangeReq | null>('/profile-changes/mine', token),
   // §12.8 — pro'nun komisyon faturaları + dekont yükleme
-  myCommissions: (token: string) => get<CommissionInvoice[]>('/commissions/mine', token),
-  uploadCommissionReceipt: (token: string, id: string, receiptUri: string) =>
-    post<CommissionInvoice>(`/commissions/${id}/receipt`, { receiptUri }, token),
   // §12.4 — depozito itirazı / iade dekontunu admin kuyruğuna bildir
   fileDispute: (token: string, input: DisputeInput) =>
     post<{ id: string; status: string }>('/disputes', input, token),

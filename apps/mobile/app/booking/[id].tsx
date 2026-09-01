@@ -5,6 +5,7 @@ import { esikGecti } from '@ayna/domain';
 import {
   DURUM_ETIKETI,
   DURUM_TONU,
+  akisAdimi,
   beklemeMetni,
   birincilAksiyon,
   iptalEdilebilir,
@@ -14,7 +15,7 @@ import {
 } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
-import { localDeposit, useStore, type BookingEylem } from '../../src/store';
+import { randevuDepozitosu, useStore, type BookingEylem } from '../../src/store';
 import { radius, shadow, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -73,7 +74,7 @@ export default function BookingDetail() {
     currentUser?.role === 'professional' || currentUser?.role === 'salon' ? 'uzman' : 'musteri';
 
   // §4.4 — peşin %10; kalan bakiye hizmetten sonra doğrudan uzmana ödenir.
-  const pesinat = booking.depositAmount ?? localDeposit(booking.price, rates);
+  const pesinat = randevuDepozitosu(booking, rates);
   const kalan = Math.max(0, booking.price - pesinat);
 
   // §4.8 — "gelmedi" butonları randevu saatinden 15 DAKİKA sonra aktifleşir.
@@ -198,18 +199,25 @@ export default function BookingDetail() {
           </Text>
         </View>
 
-        {/* ── §7 — kargo takibi tarzı zaman çizelgesi ── */}
-        <View style={[styles.kart, shadow.card]}>
-          <AkisCizelgesi status={booking.status} />
-          {/* KARŞILIKLI ONAY BEKLENİYORSA nabız. Durum rozeti durağan bir
+        {/* ── §7 — kargo takibi tarzı zaman çizelgesi ──
+            Kart YALNIZ içi doluysa çiziliyor. Kapanmış randevuda (iptal/düşme/
+            no-show) `AkisCizelgesi` bilerek null dönüyor — yarıda kalmış bir
+            süreci "3/7 adım" diye göstermek devam ediyormuş izlenimi verirdi —
+            ama kart kabuğu yine çiziliyordu: ekranda BOŞ BEYAZ bir dikdörtgen
+            kalıyordu. */}
+        {akisAdimi(booking.status) >= 0 ? (
+          <View style={[styles.kart, shadow.card]}>
+            <AkisCizelgesi status={booking.status} />
+            {/* KARŞILIKLI ONAY BEKLENİYORSA nabız. Durum rozeti durağan bir
               etiket; kullanıcı bir şeyin işlediğinden emin olamıyor. Nabız
               "sistem çalışıyor, sıra sende değil" diyor. */}
-          {bekliyor ? (
-            <View style={styles.nabizKap}>
-              <BeklemeNabzi metin={t(beklemeMetni(booking.status, rol))} renk={tonRengi} />
-            </View>
-          ) : null}
-        </View>
+            {bekliyor ? (
+              <View style={styles.nabizKap}>
+                <BeklemeNabzi metin={t(beklemeMetni(booking.status, rol))} renk={tonRengi} />
+              </View>
+            ) : null}
+          </View>
+        ) : null}
 
         {/* ── Para: %10 peşin + %90 sonra (§4.4, §4.9) ── */}
         <View style={[styles.kart, shadow.card]}>
