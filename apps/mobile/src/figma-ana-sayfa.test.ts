@@ -164,25 +164,15 @@ test('"Dileğini Anlat" İKİ YOLLU teklif ekranına gidiyor', () => {
 
 test('hizmet ikonları FIGMA görselleri', () => {
   // Ionicons ile çizilmiş ikonlar kurucunun tasarladıkları değildi.
-  assert.match(d, /HIZMET_IKON: Record<string, number>/, 'ikon eşlemesi yok');
-  for (const kat of [
-    'hair',
-    'nails',
-    'lashes',
-    'brows',
-    'makeup',
-    'skincare',
-    'epilation',
-    'spa',
-    'pmu',
-    'bridal',
-  ]) {
-    assert.match(
-      d,
-      new RegExp(`${kat}: require\\('\\.\\./\\.\\./assets/hizmet-ikon/`),
-      `${kat} ikonu yok`,
-    );
-  }
+  // Eşleme artık `src/hizmet-ikon.ts`te — üç ekran onu paylaşıyor. Burada
+  // ÖNEMLİ olan keşfetin Ionicons'a geri dönmemesi.
+  assert.match(
+    d,
+    /import \{ HIZMET_IKON \} from '\.\.\/\.\.\/src\/hizmet-ikon'/,
+    'ortak ikon kaynağı kullanılmıyor',
+  );
+  // Kategori-ikon eşleşmesinin TAMLIĞI `teklif-ekranlari-tasarim.test.ts`te
+  // eşlemenin kendi kaynağına karşı kontrol ediliyor — burada kopyalamıyoruz.
 });
 
 test('hizmet etiketi KIRPILMIYOR', () => {

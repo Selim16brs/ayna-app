@@ -8,6 +8,7 @@ import { api } from '../../src/api';
 import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS, formatPrice } from '../../src/data';
 import type { MessageKey } from '@ayna/i18n';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
+import { HIZMET_IKON } from '../../src/hizmet-ikon';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { bildirimIzniIste } from '../../src/notifications';
@@ -26,21 +27,12 @@ import {
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-const makeCatColors = (colors: ColorTokens) => [
-  { bg: colors.accentSoft, fg: colors.accentFg },
-  { bg: colors.sageSoft, fg: colors.sage },
-  { bg: colors.lavenderSoft, fg: colors.lavender },
-  { bg: colors.goldSoft, fg: colors.gold },
-  { bg: colors.blueSoft, fg: colors.blue },
-];
-
 export default function NewDemandScreen() {
   const router = useRouter();
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
-  const CAT_COLORS = makeCatColors(colors);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const addresses = useStore((s) => s.addresses);
   const createDemand = useStore((s) => s.createDemand);
@@ -201,8 +193,7 @@ export default function NewDemandScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.catRow}
           >
-            {CATEGORIES.map((cat, i) => {
-              const c = CAT_COLORS[i % CAT_COLORS.length]!;
+            {CATEGORIES.map((cat) => {
               const active = cat.id === category;
               return (
                 <Pressable
@@ -216,15 +207,19 @@ export default function NewDemandScreen() {
                   <View
                     style={[
                       styles.catTile,
-                      { backgroundColor: active ? colors.accent : c.bg },
+                      active ? styles.catTileActive : styles.catTilePasif,
                       active && shadow.soft,
                     ]}
                   >
-                    <Ionicons
-                      name={cat.icon as IoniconName}
-                      size={24}
-                      color={active ? colors.onAccent : c.fg}
-                    />
+                    {HIZMET_IKON[cat.id] ? (
+                      <Image source={HIZMET_IKON[cat.id]} style={styles.catIkon} />
+                    ) : (
+                      <Ionicons
+                        name={cat.icon as IoniconName}
+                        size={24}
+                        color={active ? colors.onAccent : colors.accent}
+                      />
+                    )}
                   </View>
                   <Text variant="caption" tone={active ? 'ink' : 'inkSoft'} numberOfLines={1}>
                     {t(cat.labelKey)}
@@ -550,6 +545,17 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+    /**
+     * Seçili erik dolu, seçilmemiş yüzey + ince çizgi.
+     *
+     * Eskiden 5 renkli bir ROTASYON vardı (adaçayı/lavanta/altın/mavi) ve
+     * kategoriye anlam katmıyordu — sırf sıradaki renk geliyordu. Yeni dil
+     * tek vurgu rengi kullanıyor; renk artık "seçili misin" demek.
+     */
+    catTileActive: { backgroundColor: colors.accent },
+    catTilePasif: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
+    /** Kurucunun Figma ikonu. */
+    catIkon: { width: 30, height: 30, resizeMode: 'contain' },
 
     selectRow: {
       flexDirection: 'row',

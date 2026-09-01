@@ -8,13 +8,12 @@ import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS } from '../../src/data';
 import { useCampaigns } from '../../src/catalog';
 import type { MessageKey } from '@ayna/i18n';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
+import { HIZMET_IKON } from '../../src/hizmet-ikon';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { RulesCard, Screen, SectionHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
-
-type IoniconName = keyof typeof Ionicons.glyphMap;
 
 // Sıfır-demo: stok model fotoğrafı yerine kendi çizim asset'imiz
 const HERO_WOMAN = require('../../assets/hero-user.png');
@@ -185,11 +184,9 @@ export default function NewQuoteScreen() {
                 onPress={() => setCategory(cat.id)}
                 style={[styles.catChip, active && styles.catChipActive]}
               >
-                <Ionicons
-                  name={cat.icon as IoniconName}
-                  size={15}
-                  color={active ? colors.onAccent : colors.inkSoft}
-                />
+                {HIZMET_IKON[cat.id] ? (
+                  <Image source={HIZMET_IKON[cat.id]} style={styles.catIkon} />
+                ) : null}
                 <Text variant="caption" tone={active ? 'onAccent' : 'inkSoft'}>
                   {t(cat.labelKey)}
                 </Text>
@@ -438,8 +435,13 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1.5),
       paddingVertical: space(1),
       borderRadius: radius.pill,
-      backgroundColor: colors.surfaceMuted,
+      // Yeni dil: yüzey + ince çizgi. `surfaceMuted` dolu gri bir lekeydi.
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
+    /** Kurucunun Figma ikonu — Ionicons vektörünün yerine. */
+    catIkon: { width: 18, height: 18, resizeMode: 'contain' },
     catChipActive: { backgroundColor: colors.accent },
 
     noteInput: {
