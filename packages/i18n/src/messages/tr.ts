@@ -217,6 +217,7 @@ export const tr = {
   'reschedule.sent_t': 'Erteleme talebin gönderildi',
   'reschedule.sent_b': 'Uzman kabul ya da reddedecek. Reddederse mevcut randevun geçerli kalır.',
   'reschedule.err': 'Erteleme yapılamadı. Hakkın bitmiş ya da süre kapanmış olabilir.',
+  'refund.err_t': 'İade talebi gönderilemedi',
   'refund.title': 'Depozito iadesi',
   'refund.amount': 'İade edilecek tutar',
   'refund.account_label': 'İade yapılacak hesap',
@@ -250,6 +251,7 @@ export const tr = {
   'deposit.verify_note': 'Dekontu yüklediğin an randevun kesinleşir. Doğrulama sonradan yapılır.',
   'deposit.done_t': 'Randevun kesinleşti ✓',
   'deposit.done_b': 'Depozito alındı. Uzmanın onayını beklemene gerek yok.',
+  'booking.detail.customer': 'Müşteri',
   'booking.detail.missing': 'Randevu bulunamadı.',
   'flow.noshow.confirm_t': 'Gelmedi olarak işaretle',
   'flow.noshow.confirm_b':
@@ -262,6 +264,13 @@ export const tr = {
   'flow.deposit.countdown_t': 'Randevunu korumak için öde',
   'flow.deposit.countdown_b': 'içinde ödemezsen randevu düşer',
   'flow.approve.countdown': 'uzmanın yanıt süresi',
+  'bs.pro.onay_bekliyor': 'Yanıtın bekleniyor',
+  'bs.pro.degisiklik_onerildi': 'Müşterinin kararı bekleniyor',
+  'bs.pro.karsi_oneri': 'Müşteri farklı saat önerdi',
+  'bs.pro.depozito_bekliyor': 'Müşterinin depozitosu bekleniyor',
+  'bs.pro.odeme_bekliyor': 'Müşterinin ödemesi bekleniyor',
+  'bs.pro.no_show_musteri': 'Müşteri gelmedi',
+  'bs.pro.no_show_uzman': 'Gelmedin',
   'bs.onay_bekliyor': 'Uzman onayı bekleniyor',
   'bs.degisiklik_onerildi': 'Değişiklik önerildi',
   'bs.karsi_oneri': 'Karşı öneri gönderildi',
@@ -308,6 +317,7 @@ export const tr = {
   'nav.care': 'Benim İçin',
   'nav.profile': 'Profil',
   // §9.1 — satıcı (uzman/salon) alt barı
+  'seller.pending.title': 'Yanıtını bekleyen talepler',
   'seller.nav.home': 'Ana Sayfa',
   'seller.nav.menu': 'Menü',
   // §10 — SALON paneli (uzmandan ayrı)

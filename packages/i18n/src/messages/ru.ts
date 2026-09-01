@@ -210,6 +210,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reschedule.sent_t': 'Запрос отправлен',
   'reschedule.sent_b': 'Мастер примет или отклонит. При отказе текущая запись останется в силе.',
   'reschedule.err': 'Перенос не выполнен. Возможно, лимит исчерпан или срок закрыт.',
+  'refund.err_t': 'Заявка на возврат не отправлена',
   'refund.title': 'Возврат депозита',
   'refund.amount': 'Сумма к возврату',
   'refund.account_label': 'Счёт для возврата',
@@ -244,6 +245,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'deposit.verify_note': 'Запись подтверждается сразу после загрузки квитанции. Проверка — позже.',
   'deposit.done_t': 'Запись подтверждена ✓',
   'deposit.done_b': 'Депозит получен. Ждать подтверждения мастера не нужно.',
+  'booking.detail.customer': 'Клиент',
   'booking.detail.missing': 'Запись не найдена.',
   'flow.noshow.confirm_t': 'Отметить «не пришёл(ла)»',
   'flow.noshow.confirm_b':
@@ -256,6 +258,13 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'flow.deposit.countdown_t': 'Оплати, чтобы сохранить запись',
   'flow.deposit.countdown_b': 'если не оплатишь, запись отменится',
   'flow.approve.countdown': 'срок ответа мастера',
+  'bs.pro.onay_bekliyor': 'Ждём вашего ответа',
+  'bs.pro.degisiklik_onerildi': 'Ждём решения клиента',
+  'bs.pro.karsi_oneri': 'Клиент предложил другое время',
+  'bs.pro.depozito_bekliyor': 'Ждём депозит клиента',
+  'bs.pro.odeme_bekliyor': 'Ждём оплату клиента',
+  'bs.pro.no_show_musteri': 'Клиент не пришёл',
+  'bs.pro.no_show_uzman': 'Вы не пришли',
   'bs.onay_bekliyor': 'Ожидается подтверждение мастера',
   'bs.degisiklik_onerildi': 'Предложено изменение',
   'bs.karsi_oneri': 'Отправлено встречное предложение',
@@ -302,6 +311,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'nav.care': 'Для меня',
   'nav.profile': 'Профиль',
   // §9.1 — нижняя панель продавца (мастер/салон)
+  'seller.pending.title': 'Заявки, ждущие вашего ответа',
   'seller.nav.home': 'Главная',
   'seller.nav.menu': 'Меню',
   // §10 — панель САЛОНА (отдельно от мастера)

@@ -3,11 +3,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { esikGecti } from '@ayna/domain';
 import {
-  DURUM_ETIKETI,
   DURUM_TONU,
   akisAdimi,
   beklemeMetni,
   birincilAksiyon,
+  durumEtiketi,
+  ikincilAksiyonlar,
   iptalEdilebilir,
   karsiTarafBekleniyor,
   type Aksiyon,
@@ -86,6 +87,8 @@ export default function BookingDetail() {
     odemeBildirildi: booking.balanceDeclaredAt != null,
     gelmediAcik,
     esikOncesi,
+    // §4.10 — iade edilecek bir tutar yoksa düğme hiç çıkmasın.
+    iadeEdilecekVar: pesinat > 0,
     // §4.6 — öneren kendi önerisini yanıtlayamaz; düğme yalnız karşı tarafta.
     ...(booking.proposedBy
       ? { ertelemeyiOneren: (booking.proposedBy === 'customer' ? 'musteri' : 'uzman') as Rol }
@@ -94,6 +97,13 @@ export default function BookingDetail() {
   const aksiyon = birincilAksiyon(booking.status, rol, baglam);
   // Bu rolün yapacağı bir şey yoksa ama randevu akıştaysa top KARŞI TARAFTA.
   const bekliyor = karsiTarafBekleniyor(booking.status, rol, baglam);
+  /**
+   * Kartın başlığındaki isim: uzmanda MÜŞTERİ, müşteride UZMAN.
+   * Offline randevuda müşteri adı yoksa genel bir etiket — boş başlık, kartın
+   * kime ait olduğunu belirsiz bırakırdı.
+   */
+  const karsiTaraf =
+    rol === 'uzman' ? (booking.customerName ?? t('booking.detail.customer')) : booking.proName;
 
   /**
    * Eylemi SUNUCUYA yazar ve sonucu kullanıcıya dürüstçe söyler.
@@ -121,8 +131,14 @@ export default function BookingDetail() {
         return cagir('kabul');
       case 'depozito_ode':
         return router.push(`/booking/deposit?id=${bid}` as never);
+      // §4.3 — "Değiştir" ve "Karşı öner" AYNI takvim seçiciyi açar; ayrı ekran
+      // yazmak iki farklı saat seçme deneyimi doğururdu.
       case 'ertele':
+      case 'degistir':
+      case 'karsi_oner':
         return router.push(`/booking/reschedule?id=${bid}` as never);
+      case 'reddet':
+        return iptalEt();
       case 'erteleme_kabul':
         return cagir('erteleme_kabul');
       case 'islemi_bitirdim':
@@ -179,15 +195,18 @@ export default function BookingDetail() {
     <Screen edges={[]}>
       <StackHeader title={t('booking.detail.title')} />
       <ScrollView contentContainerStyle={styles.icerik} showsVerticalScrollIndicator={false}>
-        {/* ── Başlık: kim, ne, ne zaman ── */}
+        {/* ── Başlık: KARŞI TARAF, ne, ne zaman ──
+            Kart her iki rolde de "kiminle" sorusunu cevaplamalı. Uzman kendi
+            adını okuyordu; kendi randevusunda kendi adını görmek bilgi değil,
+            gürültü. Uzmanda müşteri adı, müşteride uzman adı. */}
         <View style={[styles.kart, shadow.card]}>
           <View style={styles.basSatir}>
             <Text variant="h2" tone="ink" style={styles.flex}>
-              {booking.proName}
+              {karsiTaraf}
             </Text>
             <View style={[styles.rozet, { backgroundColor: tonRengi + '22' }]}>
               <Text variant="caption" style={{ color: tonRengi }}>
-                {t(DURUM_ETIKETI[booking.status])}
+                {t(durumEtiketi(booking.status, rol))}
               </Text>
             </View>
           </View>
@@ -295,6 +314,19 @@ export default function BookingDetail() {
             onPress={() => cagir('erteleme_red')}
           />
         ) : null}
+
+        {/* §4.3 — İKİNCİL AKSİYONLAR. Tek birincil buton ilkesi (§7) "tek
+            seçenek" demek değil: uzman onaylayabilir, FARKLI SAAT ÖNEREBİLİR ya
+            da reddedebilir. Yalnız "Onayla" göstermek MD'nin verdiği hakkı
+            ekrandan silmekti. */}
+        {ikincilAksiyonlar(booking.status, rol).map((a) => (
+          <Button
+            key={a.eylem}
+            label={t(a.etiket)}
+            variant="secondary"
+            onPress={() => calistir(a)}
+          />
+        ))}
 
         {/* İkincil: iptal. Birincil butonla aynı ağırlıkta çizilmez. */}
         {iptalEdilebilir(booking.status) ? (

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { api } from '../../src/api';
+import { api, ApiError } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
 import { randevuDepozitosu, useStore } from '../../src/store';
 import { font, radius, shadow, space, type ColorTokens } from '../../src/theme';
@@ -56,12 +56,20 @@ export default function RefundScreen() {
       Alert.alert(t('refund.sent_t'), t('refund.sent_b'), [
         { text: t('common.ok'), onPress: () => router.back() },
       ]);
-    } catch {
+    } catch (err) {
       // KUYRUĞA ALINMIYOR — bilinçli. Talep, kullanıcının Kaspi/banka bilgisini
       // taşıyor; başarısız bir isteği cihaz diskinde saklamak bu PII'yi
       // gereksiz yere kalıcı hâle getirirdi. Kullanıcı ekranda ve tek dokunuşla
       // tekrar deneyebilir; iade hakkı da randevuda duruyor, kaybolmuyor.
-      Alert.alert(t('common.error'));
+      //
+      // SUNUCUNUN SEBEBİ GÖSTERİLİYOR. Burada düz "bir hata oluştu" yazıyordu:
+      // sunucu "İade edilecek depozito yok" dediğinde bile kullanıcı girdiği
+      // telefon numarasının reddedildiğini sanıyor, aynı şeyi tekrar tekrar
+      // deniyordu. Sebebi bilmeden düzeltebileceği bir şey yok.
+      Alert.alert(
+        t('refund.err_t'),
+        err instanceof ApiError && err.message ? err.message : t('common.error'),
+      );
     } finally {
       setBusy(false);
     }
