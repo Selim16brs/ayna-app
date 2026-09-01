@@ -113,8 +113,11 @@ export default function AgendaScreen() {
   // §9.4 — bekleyen talepler (uzman onayı bekleyen randevular): takvim üstünde şerit
   // §9.4 — YALNIZ uzman olarak gelen talepler. Uzmanın kendi müşteri
   // randevuları burada görünmemeli: onlar onun kararını beklemiyor.
+  // Yalnız açıkça MÜŞTERİ olarak alınan randevular elenir; işaretsizler kalır
+  // (bkz. uzmanRandevulari). Gelen talebi gizlemek, fazladan satır
+  // göstermekten çok daha pahalı.
   const pending = storeBookings
-    .filter((b) => b.benimRolum === 'uzman')
+    .filter((b) => b.benimRolum !== 'musteri')
     .filter((b) => b.status === 'onay_bekliyor');
   const dayStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
   const selectedDay = dayStrip[dayIdx] ?? dayStrip[0]!;

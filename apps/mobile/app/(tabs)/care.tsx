@@ -46,8 +46,9 @@ export default function BenimIcinScreen() {
   const personalLogs = useStore((s) => s.personalLogs);
   const careRoutines = useStore((s) => s.careRoutines);
   const moments = useStore((s) => s.moments);
+  const tumRandevular = useStore((s) => s.bookings);
   // Bakım takvimi müşteri geçmişinden türetiliyor.
-  const bookings = useStore(musteriRandevulari);
+  const bookings = useMemo(() => musteriRandevulari(tumRandevular), [tumRandevular]);
   const points = useStore((s) => s.points);
   const favCount = useStore((s) => s.favorites.length);
   const userName = useStore((s) => s.currentUser?.name);

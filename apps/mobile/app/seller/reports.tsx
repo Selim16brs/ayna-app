@@ -49,10 +49,13 @@ export default function ReportsScreen() {
   /** §4.2 — uzmanın yanıtını bekleyen talepler; en yakın saat önce. */
   // §9.4 — YALNIZ uzman olarak gelen talepler. Uzmanın kendi müşteri
   // randevuları burada görünmemeli: onlar onun kararını beklemiyor.
-  const bekleyenTalepler = useStore((st) =>
-    uzmanRandevulari(st)
-      .filter((b) => b.status === 'onay_bekliyor')
-      .sort((a, b) => a.startMs - b.startMs),
+  const tumRandevular = useStore((st) => st.bookings);
+  const bekleyenTalepler = useMemo(
+    () =>
+      uzmanRandevulari(tumRandevular)
+        .filter((b) => b.status === 'onay_bekliyor')
+        .sort((a, b) => a.startMs - b.startMs),
+    [tumRandevular],
   );
   const insets = useSafeAreaInsets();
   // Karşılama için ad (Keşfet dili) — ilk isim, ilk harf büyük (el yazısı katman)
