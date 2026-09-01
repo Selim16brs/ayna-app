@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { darkColors, lightColors } from './theme.palette';
+import { darkColors } from './theme.palette';
 
 /**
  * #15 KARANLIK MOD — rapordaki dört bulgunun düzeltmesi.
@@ -37,20 +37,20 @@ function kon(a: string, b: string): number {
  * zemine bağlamak. Ölçüm bunu doğruluyor.
  */
 test('P1 — iade bandı yazısı iki temada da okunuyor', () => {
+  // Bant Figma'da SABİT koyu (#64285A) — cihaz temasıyla dönmüyor. O yüzden
+  // yazısı da sabit açık olmak zorunda: `onAccent` koyu temada koyuya döner
+  // ve sabit koyu zeminde okunmaz yazı bırakırdı.
   const d = kodu('app/(tabs)/discover.tsx');
+  const zemin = /const IADE_ZEMIN = '(#[0-9A-Fa-f]{6})';/.exec(d);
+  assert.ok(zemin, 'bant zemini sabiti yok');
+  assert.match(d, /const IADE_YAZI = darkColors\.ink;/, 'bant yazısı sabit değil');
   assert.match(
     d,
-    /iadeKart:[\s\S]{0,200}backgroundColor: colors\.accent/,
-    'bant zemini accent değil',
+    /iadeKart:[\s\S]{0,320}backgroundColor: IADE_ZEMIN/,
+    'bant zemini sabite bağlı değil',
   );
-  assert.match(d, /iadeBaslik:[\s\S]{0,120}color: colors\.onAccent/, 'başlık onAccent değil');
-  for (const [ad, palet] of [
-    ['açık', lightColors],
-    ['koyu', darkColors],
-  ] as const) {
-    const r = kon(palet.onAccent, palet.accent);
-    assert.ok(r >= 4.5, `${ad} tema: onAccent/accent ${r.toFixed(2)}:1 — 4,5 altı`);
-  }
+  const r = kon(darkColors.ink, zemin![1]!);
+  assert.ok(r >= 4.5, `iade bandı: yazı/zemin ${r.toFixed(2)}:1 — 4,5 altı`);
 });
 
 test('P2 — durum renkleri AÇIK temada eşiği geçiyor', () => {

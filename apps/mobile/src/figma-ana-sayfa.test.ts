@@ -44,11 +44,11 @@ test('Figma ölçüleri YUVARLANMAMIŞ', () => {
   for (const [ad, degerler] of [
     ['hizliKart', ['height: 140', 'borderRadius: 16']],
     ['vitrinKart', ['width: 260', 'height: 200', 'borderRadius: 20']],
-    ['ikonKart', ['width: 64', 'height: 64', 'borderRadius: 18']],
+    ['ikonKart', ['width: 64', 'height: 64', 'borderRadius: 16']],
     ['salonFoto', ['width: 64', 'height: 64', 'borderRadius: 12']],
     ['randevuKart', ['borderRadius: 24']],
     ['arama', ['borderRadius: 12', 'paddingHorizontal: 14']],
-    ['iadeKart', ['borderRadius: 20', 'padding: 16']],
+    ['iadeKart', ['borderRadius: 22', 'padding: 16']],
   ] as const) {
     const govde = stil(ad);
     for (const d2 of degerler) {
@@ -134,4 +134,97 @@ test('uzman ekranı ROL SÜZGECİNDEN geçiyor', () => {
   // Uzman kendi MÜŞTERİ randevularını kalite ölçütlerinde görmemeli.
   assert.match(u, /uzmanRandevulari\(tumRandevular\)/, 'rol süzgeci yok');
   assert.match(u, /const bookings = uzmanRandevulariListe/, 'ölçütler süzgeçsiz');
+});
+
+/**
+ * KURUCUNUN SAYDIĞI SAPMALAR.
+ *
+ * "Figma ile yaptığım tasarım birebir aynısı olsun demiştim ama sen işine
+ * gelen yerleri almışsın." Haklıydı — dokuz yerde sapmıştım. Her biri burada
+ * ayrı ayrı kilitleniyor.
+ */
+test('marka İŞARETİ kullanılıyor, metin değil', () => {
+  assert.ok(!/>\s*AYNA\s*</.test(d), 'logo yerine "AYNA" yazısı duruyor');
+  assert.match(d, /LOGO_SIYAH = require/, 'açık tema logosu yok');
+  assert.match(d, /LOGO_BEYAZ = require/, 'koyu tema logosu yok');
+  assert.match(d, /koyuTema \? LOGO_BEYAZ : LOGO_SIYAH/, 'logo temaya göre seçilmiyor');
+});
+
+test('"Dileğini Anlat" FOTOĞRAFLI TEKLİF akışına gidiyor', () => {
+  // `/demand/new` kategori seçtiren farklı bir akış; kurucunun kastettiği
+  // "foto ve fiyat ile teklif alma" ekranı `/quote/new`.
+  const i = d.indexOf("'home.qa.wish'");
+  assert.ok(i > 0, 'dilek kartı yok');
+  const blok = d.slice(i - 200, i + 300);
+  assert.match(blok, /yol: '\/quote\/new'/, 'yanlış akışa yönlendiriyor');
+});
+
+test('hizmet ikonları FIGMA görselleri', () => {
+  // Ionicons ile çizilmiş ikonlar kurucunun tasarladıkları değildi.
+  assert.match(d, /HIZMET_IKON: Record<string, number>/, 'ikon eşlemesi yok');
+  for (const kat of [
+    'hair',
+    'nails',
+    'lashes',
+    'brows',
+    'makeup',
+    'skincare',
+    'epilation',
+    'spa',
+    'pmu',
+    'bridal',
+  ]) {
+    assert.match(
+      d,
+      new RegExp(`${kat}: require\\('\\.\\./\\.\\./assets/hizmet-ikon/`),
+      `${kat} ikonu yok`,
+    );
+  }
+});
+
+test('hizmet etiketi KIRPILMIYOR', () => {
+  // "Kalıcı Makyaj" ve "Gelin & Özel Gün" tek satıra sığmıyor; Figma da
+  // iki satıra sarıyor.
+  const i = d.indexOf('ikonYazi');
+  assert.ok(i > 0, 'etiket stili yok');
+  assert.match(
+    d,
+    /numberOfLines=\{2\}[\s\S]{0,80}styles\.ikonYazi/,
+    'etiket tek satıra kırpılıyor',
+  );
+});
+
+test('hızlı eylem kartları FIGMA fotoğrafları', () => {
+  assert.ok(!/unsplash/.test(d), 'yabancı görsel duruyor');
+  for (const ad of ['randevu-al', 'dilegini-anlat', 'haritada-kesfet']) {
+    assert.match(d, new RegExp(`hizli-eylem/${ad}\\.png`), `${ad} görseli yok`);
+  }
+});
+
+test('randevu kartı: saat ROZET, ilerleme DÖRT PARÇA', () => {
+  assert.match(d, /zamanRozet\b/, 'saat düz yazı');
+  assert.match(d, /ilerlemeParca\b/, 'ilerleme tek çubuk');
+  assert.ok(!/ilerlemeDolu\b/.test(d), 'eski tek çubuk duruyor');
+});
+
+test('vitrin kartında ★ PUAN var', () => {
+  assert.match(d, /vitrinPuanYazi/, 'puan rozeti yok');
+  assert.match(d, /rating=\{pros\.find/, 'puan gerçek veriden gelmiyor');
+});
+
+test('trendler 2×2 IZGARA', () => {
+  assert.match(d, /trendIzgara/, 'ızgara yok');
+  assert.ok(!/trendSerit/.test(d), 'yatay kaydırma duruyor');
+  assert.match(d, /flexWrap: 'wrap'/, 'satır kırılmıyor');
+});
+
+test('salon satırında MESAFE km olarak', () => {
+  assert.match(d, /mesafe\(pro\)/, 'mesafe hesaplanmıyor');
+  assert.match(d, /km · /, 'km yazmıyor');
+});
+
+test('"Tümünü Gör" chevron’lu', () => {
+  const i = d.indexOf("t('common.see_all')");
+  assert.ok(i > 0, 'tümünü gör yok');
+  assert.match(d.slice(i, i + 200), /chevron-forward/, 'chevron yok');
 });
