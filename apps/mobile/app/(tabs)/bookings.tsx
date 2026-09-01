@@ -21,7 +21,7 @@ import { musteriRandevulari, useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { BeklemeNabzi, ListSkeleton, Screen, TAB_BAR_CLEARANCE, TabHero, Text } from '../../src/ui';
+import { ListSkeleton, Screen, TAB_BAR_CLEARANCE, TabHero, Text } from '../../src/ui';
 
 // §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş
 type Seg = 'requests' | 'upcoming' | 'past';
@@ -190,18 +190,19 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
         <Text variant="caption" tone="inkSoft" style={styles.cardDate}>
           {formatSlot(appt.startMs, t)}
         </Text>
-        <View style={[styles.status, { backgroundColor: st.bg }]}>
+        <View style={[styles.status, styles.statusRow, { backgroundColor: st.bg }]}>
           {/* Listede de "top karşı tarafta" görünsün: kullanıcı kartı açmadan
               hangi randevuda beklediğini anlamalı. Rozetin İÇİNDE, ayrı bir
               satır açmadan — liste sıkışık ve her karta satır eklemek
               kaydırmayı uzatırdı. */}
-          {karsiTarafBekleniyor(appt.status, rol) ? (
-            <BeklemeNabzi metin={t(st.key)} renk={st.fg} />
-          ) : (
-            <Text variant="caption" style={[styles.statusText, { color: st.fg }]}>
-              {t(st.key)}
-            </Text>
-          )}
+          {/* Nabız rozetin İÇİNE konmuştu: `BeklemeNabzi` metnini `flex: 1`
+              ile çiziyor, dar rozette metin sıfır genişliğe düşüyor ve geriye
+              yalnız bir nokta kalıyordu — hap içinde anlamsız bir daire.
+              Rozet yine yazı; bekleme, yazının SOLUNDA küçük bir nokta. */}
+          {karsiTarafBekleniyor(appt.status, rol) ? <View style={styles.bekleyenNokta} /> : null}
+          <Text variant="caption" style={[styles.statusText, { color: st.fg }]}>
+            {t(st.key)}
+          </Text>
         </View>
       </View>
       <View style={styles.divider} />
@@ -389,6 +390,9 @@ const makeStyles = (colors: ColorTokens) =>
     cardSub: { marginTop: 2 },
     cardPrice: { marginTop: space(0.75) },
     status: { paddingHorizontal: space(1.25), paddingVertical: 4, borderRadius: radius.pill },
+    statusRow: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    // Bekleme işareti: rozetin rengiyle aynı, yazıyı sıkıştırmayan sabit nokta.
+    bekleyenNokta: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.gold },
     statusText: { fontSize: 11, fontFamily: font.semibold },
 
     actions: { flexDirection: 'row', gap: space(1.25), marginTop: space(1.75) },

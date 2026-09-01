@@ -155,6 +155,8 @@ export default function BookingDetail() {
         return router.replace(`/professional/${booking.proId}` as never);
       case 'erteleme_kabul':
         return cagir('erteleme_kabul');
+      case 'erteleme_red':
+        return cagir('erteleme_red');
       case 'islemi_bitirdim':
         return cagir('islemi_bitirdim');
       case 'odeme_yaptim':
@@ -315,17 +317,6 @@ export default function BookingDetail() {
             label={t(aksiyon.etiket)}
             variant={aksiyon.tehlike ? 'secondary' : 'primary'}
             onPress={() => calistir(aksiyon)}
-          />
-        ) : null}
-
-        {/* §4.6 — erteleme önerisinde RED de gerekli: "Kabul / Red". Kabul
-            birincil buton; red ikincil, çünkü red randevuyu bitirmiyor —
-            eski saat geçerli kalıyor. */}
-        {aksiyon?.eylem === 'erteleme_kabul' ? (
-          <Button
-            label={t('flow.act.reddet')}
-            variant="secondary"
-            onPress={() => cagir('erteleme_red')}
           />
         ) : null}
 

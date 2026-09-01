@@ -217,6 +217,12 @@ export function durumEtiketi(status: BookingStatus, rol: Rol): MessageKey {
 export function ikincilAksiyonlar(status: BookingStatus, rol: Rol, ctx?: AkisBaglam): Aksiyon[] {
   const uzman = rol === 'uzman';
   switch (status) {
+    // §4.6 — öneriyi yanıtlayan taraf REDDEDEBİLMELİ: yalnız "Kabul et"
+    // göstermek, kabul etmekten başka yol bırakmamak demekti.
+    case 'erteleme_onerildi':
+      return ctx?.ertelemeyiOneren === rol
+        ? []
+        : [{ etiket: 'flow.act.reddet', eylem: 'erteleme_red', tehlike: true }];
     // §4.6 — erteleme artık İKİNCİL: iki taraf da önerebilir ama kesinleşmiş
     // randevunun ana çağrısı "ertele" değil.
     case 'kesinlesti':
@@ -331,11 +337,22 @@ export function birincilAksiyon(
      */
     case 'kesinlesti':
       return null;
-    // §4.6 — öneriyi karşı taraf yanıtlar; öneren yalnız bekler.
+    /**
+     * §4.6 — öneriyi KARŞI TARAF yanıtlar; öneren yalnız bekler.
+     *
+     * Öneren BİLİNMİYORSA düğme iki tarafta da gösteriliyor. Eskiden
+     * `ctx.ertelemeyiOneren &&` koşulu vardı: alan gelmediğinde HİÇBİR TARAFTA
+     * düğme çıkmıyor, randevu "Erteleme önerildi" durumunda KİLİTLENİYORDU —
+     * kurucu tam bunu bildirdi (müşteri öneriyi görüyor ama kabul/red yok).
+     *
+     * Bilinmezlikte açmak güvenli: sunucu önerenin kendi önerisini
+     * yanıtlamasını `OWN_PROPOSAL` ile zaten reddediyor. Kilitli bir randevu,
+     * sunucunun eleyeceği fazladan bir düğmeden çok daha kötü.
+     */
     case 'erteleme_onerildi':
-      return ctx.ertelemeyiOneren && ctx.ertelemeyiOneren !== rol
-        ? { etiket: 'flow.act.kabul', eylem: 'erteleme_kabul' }
-        : null;
+      return ctx.ertelemeyiOneren === rol
+        ? null
+        : { etiket: 'flow.act.kabul', eylem: 'erteleme_kabul' };
     /**
      * §4.8/§4.9 — hizmet günü.
      *
@@ -437,6 +454,8 @@ export function beklemeMetni(status: BookingStatus, rol: Rol): MessageKey {
       return 'wait.expert_decision';
     case 'depozito_bekliyor':
       return 'wait.customer_deposit';
+    // Yalnız ÖNEREN bekler; karşı taraf zaten karar veriyor. "Önerin
+    // yanıtlanıyor" cümlesi öneriyi ALAN tarafta da çıkıyordu.
     case 'erteleme_onerildi':
       return 'wait.reschedule';
     case 'odeme_bekliyor':

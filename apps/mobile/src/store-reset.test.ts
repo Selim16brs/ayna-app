@@ -40,6 +40,9 @@ const PERSISTED_USER_KEYS = [
   // ağ yokken yapılan işlem kaybolmamalı; ama önceki üyenin kuyruğu yeni
   // üyeye TAŞINMAMALI — onun adına işlem yapılmış olurdu.
   'pendingBookingActions',
+  // Üyeliği bir kez öğrendik mi — kalıcı, ama HESABA ÖZEL: yeni üyede
+  // sıfırlanmalı, yoksa onun ilk tazelemesi "geçiş" sanılabilir.
+  'uyelikOgrenildi',
   'sellerTrialStart',
   'sellerServices',
   'sellerSocial',
