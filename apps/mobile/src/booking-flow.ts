@@ -40,7 +40,8 @@ export type Aksiyon = {
     | 'odeme_aldim'
     | 'gelmedi'
     | 'degerlendir'
-    | 'iade_iste';
+    | 'iade_iste'
+    | 'yeni_saat';
   /** Yıkıcı/uyarı tonu (iptal, gelmedi). */
   tehlike?: boolean;
 };
@@ -213,9 +214,13 @@ export function durumEtiketi(status: BookingStatus, rol: Rol): MessageKey {
  * önerebilir ya da reddedebilir. Yalnız "Onayla" göstermek, MD'nin verdiği
  * hakkı ekrandan silmek olurdu.
  */
-export function ikincilAksiyonlar(status: BookingStatus, rol: Rol): Aksiyon[] {
+export function ikincilAksiyonlar(status: BookingStatus, rol: Rol, ctx?: AkisBaglam): Aksiyon[] {
   const uzman = rol === 'uzman';
   switch (status) {
+    // §4.6 — erteleme artık İKİNCİL: iki taraf da önerebilir ama kesinleşmiş
+    // randevunun ana çağrısı "ertele" değil.
+    case 'kesinlesti':
+      return ctx?.esikOncesi === false ? [] : [{ etiket: 'flow.act.ertele', eylem: 'ertele' }];
     // §4.3 — "Uzman: Onayla → 4.4 · Değiştir (tarih/saat/hizmet)"
     case 'onay_bekliyor':
       return uzman
@@ -315,20 +320,34 @@ export function birincilAksiyon(
     // §4.4 — 10 dakikalık pencere müşteride.
     case 'depozito_bekliyor':
       return musteri ? { etiket: 'flow.act.depozito_ode', eylem: 'depozito_ode' } : null;
-    // §4.6 — bekleme dönemi. Erteleme YALNIZ 3 saat eşiğinden önce.
+    /**
+     * §4.5 — bekleme dönemi. BİRİNCİL EYLEM YOK: randevu kesinleşti, iki
+     * tarafın da yapması gereken bir şey yok, gün bekleniyor.
+     *
+     * Burada birincil düğme "Ertele" idi: kesinleşmiş bir randevuda kartın
+     * ana çağrısı "bunu ertele" oluyordu — yanlış vurgu, üstelik ekranda
+     * bekleme hâli hiç görünmüyordu. Erteleme ikincil aksiyona indi (§4.6
+     * hakkı duruyor, sadece ana eylem değil).
+     */
     case 'kesinlesti':
-      return ctx.esikOncesi ? { etiket: 'flow.act.ertele', eylem: 'ertele' } : null;
+      return null;
     // §4.6 — öneriyi karşı taraf yanıtlar; öneren yalnız bekler.
     case 'erteleme_onerildi':
       return ctx.ertelemeyiOneren && ctx.ertelemeyiOneren !== rol
         ? { etiket: 'flow.act.kabul', eylem: 'erteleme_kabul' }
         : null;
-    // §4.8/§4.9 — hizmet günü: uzman bitirir; 15 dk sonra "gelmedi" açılır.
+    /**
+     * §4.8/§4.9 — hizmet günü.
+     *
+     * Uzmanın birincil eylemi işi bitirmek. MÜŞTERİNİN birincil eylemi YOK:
+     * hizmet sürüyor, yapması gereken bir şey yok. Burada 15 dakika sonra
+     * "Gelmedi" birincil düğme oluyordu — kartın en büyük, tek, mor düğmesi
+     * "uzman gelmedi" idi. Yıkıcı ve geri alınamaz bir beyanı ana eylem diye
+     * sunmak, kullanıcıyı ona doğru itmektir. Artık ikincil ve sessiz
+     * (kartta ayrıca çiziliyor), tıpkı uzman tarafındaki gibi.
+     */
     case 'hizmet_gunu':
-      if (!musteri) return { etiket: 'flow.act.islemi_bitirdim', eylem: 'islemi_bitirdim' };
-      return ctx.gelmediAcik
-        ? { etiket: 'flow.act.gelmedi', eylem: 'gelmedi', tehlike: true }
-        : null;
+      return musteri ? null : { etiket: 'flow.act.islemi_bitirdim', eylem: 'islemi_bitirdim' };
     // §4.9 — iki aşamalı el sıkışma. Müşteri bildirmeden uzmanda buton çıkmaz.
     case 'odeme_bekliyor':
       if (musteri)
@@ -340,12 +359,28 @@ export function birincilAksiyon(
     case 'tamamlandi':
     case 'degerlendirme':
       return musteri ? { etiket: 'flow.act.degerlendir', eylem: 'degerlendir' } : null;
-    // §4.10 — iade hakkı doğduğunda VE iade edilecek bir tutar varken.
+    /**
+     * §4.7/§4.10 — iade hakkı doğduğunda VE iade edilecek tutar varken.
+     *
+     * `iptal_musteri` EKLENDİ: MD §4.7 "Müşteri, 3 saatten fazla varken →
+     * depozito iade". Kartta iade yolu yoktu; kullanıcı kendi iptal ettiği
+     * randevuyu açıp parasını isteyemiyordu. İade edilip edilmeyeceğini
+     * `iadeEdilecekVar` söylüyor (geç iptalde depozito yanar).
+     */
+    case 'iptal_musteri':
     case 'iptal_uzman':
     case 'no_show_uzman':
       return musteri && ctx.iadeEdilecekVar !== false
         ? { etiket: 'flow.act.iade_iste', eylem: 'iade_iste' }
         : null;
+    /**
+     * §4.2 — "Uzman yanıt vermedi, lütfen başka saat/uzman seçin."
+     *
+     * Bildirimde böyle yazıyor ama KARTTA hiçbir yol yoktu: kullanıcı düşen
+     * talebini açıyor, ne olduğunu görüyor ve orada kalıyordu. Çıkmaz sokak.
+     */
+    case 'otomatik_dustu':
+      return musteri ? { etiket: 'flow.act.yeni_saat', eylem: 'yeni_saat' } : null;
     default:
       return null;
   }
@@ -382,6 +417,9 @@ export function karsiTarafBekleniyor(
 ): boolean {
   // Kapanmış randevuda beklenecek bir şey yok.
   if (akisAdimi(status) < 0) return false;
+  // TASLAK gönderilmedi: slot tutulmuyor, karşı tarafın haberi bile yok.
+  // "Karşı taraf bekleniyor" demek, olmayan bir süreci varmış gibi göstermekti.
+  if (status === 'taslak') return false;
   if (status === 'tamamlandi' || status === 'degerlendirme' || status === 'kapandi') return false;
   // Bu rolün yapacağı bir şey varsa top ONDA; animasyon yanıltıcı olurdu.
   return birincilAksiyon(status, rol, ctx) === null;
@@ -403,8 +441,14 @@ export function beklemeMetni(status: BookingStatus, rol: Rol): MessageKey {
       return 'wait.reschedule';
     case 'odeme_bekliyor':
       return musteri ? 'wait.expert_payment_confirm' : 'wait.customer_payment';
+    // §4.5 — kesinleşmiş randevuda KİMSE karşı tarafı beklemiyor; iki taraf da
+    // GÜNÜ bekliyor. "Karşı taraf bekleniyor" demek, birinin bir şey yapması
+    // gerektiğini ima ediyordu.
+    case 'kesinlesti':
+      return musteri ? 'wait.day_customer' : 'wait.day_pro';
+    // Hizmet sürüyor: müşterinin yapacağı bir şey yok, uzman bitirecek.
     case 'hizmet_gunu':
-      return musteri ? 'wait.service_day' : 'wait.customer_arrival';
+      return musteri ? 'wait.service_running' : 'wait.customer_arrival';
     default:
       return 'wait.generic';
   }

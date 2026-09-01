@@ -39,7 +39,10 @@ test('her durumda ya BİR aksiyon ya bekleme var — kart asla sessiz kalmıyor'
       const bekliyor = karsiTarafBekleniyor(d, rol, { esikOncesi: true, gelmediAcik: true });
       const kapali = akisAdimi(d) < 0;
       const bitis = d === 'tamamlandi' || d === 'degerlendirme' || d === 'kapandi';
-      if (kapali || bitis) continue; // kapanmış randevuda beklenecek bir şey yok
+      // TASLAK henüz gönderilmedi: slot tutulmuyor, karşı tarafın haberi yok.
+      // Bir süre burada "Karşı taraf bekleniyor" yazıyordu — olmayan bir
+      // süreci varmış gibi göstermek.
+      if (kapali || bitis || d === 'taslak') continue;
       assert.ok(
         aksiyon || bekliyor,
         `${d}/${rol}: ne buton ne bekleme — kullanıcı ne olduğunu anlayamaz`,

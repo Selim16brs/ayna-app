@@ -139,6 +139,10 @@ export default function BookingDetail() {
         return router.push(`/booking/reschedule?id=${bid}` as never);
       case 'reddet':
         return iptalEt();
+      // §4.2 — düşen talepte kullanıcıyı uzmanın sayfasına geri götür: yeni
+      // saat seçebileceği tek yer orası.
+      case 'yeni_saat':
+        return router.replace(`/professional/${booking.proId}` as never);
       case 'erteleme_kabul':
         return cagir('erteleme_kabul');
       case 'islemi_bitirdim':
@@ -319,7 +323,7 @@ export default function BookingDetail() {
             seçenek" demek değil: uzman onaylayabilir, FARKLI SAAT ÖNEREBİLİR ya
             da reddedebilir. Yalnız "Onayla" göstermek MD'nin verdiği hakkı
             ekrandan silmekti. */}
-        {ikincilAksiyonlar(booking.status, rol).map((a) => (
+        {ikincilAksiyonlar(booking.status, rol, baglam).map((a) => (
           <Button
             key={a.eylem}
             label={t(a.etiket)}
@@ -338,8 +342,10 @@ export default function BookingDetail() {
           </Pressable>
         ) : null}
 
-        {/* Uzmanın "gelmedi" beyanı — birincil buton başka bir şeyse ikincil kalır. */}
-        {rol === 'uzman' && booking.status === 'hizmet_gunu' && gelmediAcik ? (
+        {/* §4.8 — "gelmedi" beyanı İKİ TARAFTA da sessiz ikincil.
+            Geri alınamaz ve karşı tarafa 24 saatlik itiraz penceresi açan bir
+            beyan, kartın ana çağrısı olamaz. */}
+        {booking.status === 'hizmet_gunu' && gelmediAcik ? (
           <Pressable
             onPress={() =>
               calistir({ etiket: 'flow.act.gelmedi', eylem: 'gelmedi', tehlike: true })
