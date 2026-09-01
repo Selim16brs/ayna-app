@@ -24,7 +24,7 @@ export default function BudgetScreen() {
   const styles = useThemedStyles(makeStyles);
 
   const bookings = useStore((s) => s.bookings);
-  const completed = useMemo(() => bookings.filter((b) => b.status === 'completed'), [bookings]);
+  const completed = useMemo(() => bookings.filter((b) => b.status === 'tamamlandi'), [bookings]);
   const spent = completed.reduce((n, b) => n + b.price, 0);
   const remaining = Math.max(LIMIT - spent, 0);
   const progress = Math.min(spent / LIMIT, 1);

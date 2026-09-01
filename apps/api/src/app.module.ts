@@ -13,7 +13,6 @@ import { BusinessesModule } from './businesses/businesses.module';
 import { SpecialistsModule } from './specialists/specialists.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { CircleModule } from './circle/circle.module';
-import { CommissionsModule } from './commissions/commissions.module';
 import { ConfigModule } from './config/config.module';
 import { CutoutModule } from './cutout/cutout.module';
 import { ContentModule } from './content/content.module';
@@ -40,7 +39,6 @@ import { CollectionsModule } from './collections/collections.module';
 import { OffersModule } from './offers/offers.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { ReferralModule } from './referral/referral.module';
-import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -67,7 +65,6 @@ import { PaymentModule } from './payment/payment.module';
     AdminModule,
     ContentModule,
     SettingsModule,
-    CommissionsModule,
     SubscriptionsModule,
     ProfileChangesModule,
     DisputesModule,
@@ -86,7 +83,6 @@ import { PaymentModule } from './payment/payment.module';
     OffersModule,
     QuotesModule,
     ReferralModule,
-    PaymentModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],
 })

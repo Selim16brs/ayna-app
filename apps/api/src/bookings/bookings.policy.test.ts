@@ -11,52 +11,55 @@ const NOW = 1_000_000_000_000;
 const start = (hoursAhead: number) => NOW + hoursAhead * 60 * 60 * 1000;
 
 test('kapora ödenmemiş → düz iptal, yakma yok', () => {
-  assert.deepEqual(cancelOutcome('deposit_pending', start(1), NOW), {
-    status: 'cancelled',
+  assert.deepEqual(cancelOutcome('depozito_bekliyor', start(1), NOW), {
+    status: 'iptal_musteri',
     forfeit: false,
   });
-  assert.deepEqual(cancelOutcome('awaiting_provider', start(10), NOW), {
-    status: 'cancelled',
+  assert.deepEqual(cancelOutcome('onay_bekliyor', start(10), NOW), {
+    status: 'iptal_musteri',
     forfeit: false,
   });
 });
 
-test('kapora ödenmiş + serbest iptal (>3sa) → refund_pending', () => {
-  assert.deepEqual(cancelOutcome('confirmed', start(5), NOW), {
-    status: 'refund_pending',
+test('kapora ödenmiş + serbest iptal (>3sa) → iade hakkı doğar (yanmaz)', () => {
+  assert.deepEqual(cancelOutcome('kesinlesti', start(5), NOW), {
+    status: 'iptal_musteri',
     forfeit: false,
   });
-  assert.deepEqual(cancelOutcome('deposit_submitted', start(4), NOW), {
-    status: 'refund_pending',
+  assert.deepEqual(cancelOutcome('kesinlesti', start(4), NOW), {
+    status: 'iptal_musteri',
     forfeit: false,
   });
 });
 
 test('kapora ödenmiş + geç iptal (<3sa) → kapora yanar', () => {
-  assert.deepEqual(cancelOutcome('confirmed', start(2), NOW), {
-    status: 'cancelled',
+  assert.deepEqual(cancelOutcome('kesinlesti', start(2), NOW), {
+    status: 'iptal_musteri',
     forfeit: true,
   });
-  assert.deepEqual(cancelOutcome('confirmed', start(0), NOW), {
-    status: 'cancelled',
+  assert.deepEqual(cancelOutcome('kesinlesti', start(0), NOW), {
+    status: 'iptal_musteri',
     forfeit: true,
   });
 });
 
-test('sınır: tam 3 saat → geç sayılır (yanar)', () => {
-  assert.deepEqual(cancelOutcome('confirmed', NOW + FREE_CANCEL_WINDOW_MS, NOW), {
-    status: 'cancelled',
-    forfeit: true,
-  });
-  assert.deepEqual(cancelOutcome('confirmed', NOW + FREE_CANCEL_WINDOW_MS + 1, NOW), {
-    status: 'refund_pending',
+test('sınır: TAM 3 saat geç SAYILMAZ (brief §4.7 "3 saatten az kala")', () => {
+  // Eski davranış tam 3 saati "geç" sayıyordu. Brief "3 saatten AZ kala" diyor;
+  // tam 3 saat azdan değildir, dolayısıyla depozito yanmaz. Sınırı bir tarafa
+  // yıkmak gerekiyordu — kullanıcı lehine olan taraf seçildi.
+  const start = Date.parse('2026-08-31T15:00:00Z');
+  const now = start - 3 * 60 * 60 * 1000;
+  assert.deepEqual(cancelOutcome('kesinlesti', start, now), {
+    status: 'iptal_musteri',
     forfeit: false,
   });
+  // Bir saniye sonrası artık "az kala" → yanar.
+  assert.equal(cancelOutcome('kesinlesti', start, now + 1000).forfeit, true);
 });
 
 test('startAt yok → serbest (pencere belirlenemez)', () => {
-  assert.deepEqual(cancelOutcome('confirmed', null, NOW), {
-    status: 'refund_pending',
+  assert.deepEqual(cancelOutcome('kesinlesti', null, NOW), {
+    status: 'iptal_musteri',
     forfeit: false,
   });
 });
@@ -64,7 +67,7 @@ test('startAt yok → serbest (pencere belirlenemez)', () => {
 // ── §7.8 erteleme hakkı ─────────────────────────────────────────────────────
 
 const RES = {
-  status: 'confirmed',
+  status: 'kesinlesti',
   startAtMs: start(24),
   nowMs: NOW,
   used: 0,
@@ -93,7 +96,13 @@ test('erteleme: geç pencerede reddedilir — geç iptal cezası anlamsızlaşma
 });
 
 test('erteleme: yaşanmış/kapanmış randevu ertelenemez', () => {
-  for (const st of ['completed', 'cancelled', 'no_show', 'expired', 'awaiting_provider']) {
+  for (const st of [
+    'tamamlandi',
+    'iptal_musteri',
+    'no_show_musteri',
+    'otomatik_dustu',
+    'onay_bekliyor',
+  ]) {
     assert.deepEqual(canReschedule({ ...RES, status: st }), {
       ok: false,
       code: 'RESCHEDULE_NOT_ALLOWED',

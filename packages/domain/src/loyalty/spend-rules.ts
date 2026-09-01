@@ -28,21 +28,20 @@
  */
 
 export type SpendRules = {
-  /** Kullanımın açılması için bakiyenin geçmesi gereken eşik (₸). */
+  /** §5 — kullanımın açılması için gereken en az bakiye (₸). */
   unlockAt: number;
-  /** K4.3 — bir ödemenin puanla kapatılabilecek azami yüzdesi (25 => %25). */
+  /**
+   * §5 — "Kullanım sınırı: işlem başına BİRİKEN PUANIN maksimum %25'i."
+   *
+   * Yüzde BAKİYENİN yüzdesidir, ödenecek tutarın değil. Kod bir süre tutarın
+   * yüzdesini uyguladı; ikisi aynı şey değil ve MD bakiyeyi söylüyor.
+   */
   capPct: number;
-  /** Komisyon oranı (%). Beklenen net komisyonu hesaplamak için. */
-  commissionPct: number;
-  /** §8.4 — indirim, beklenen net komisyonun en çok yüzde kaçı olabilir. */
-  subsidyCapPct: number;
 };
 
 export const DEFAULT_SPEND_RULES: SpendRules = {
   unlockAt: 5_000,
   capPct: 25,
-  commissionPct: 10,
-  subsidyCapPct: 50,
 };
 
 export type SpendGate =
@@ -65,8 +64,10 @@ export function spendGate(
 ): SpendGate {
   if (unlockedAt) return { allowed: true };
   const esik = Math.max(0, rules.unlockAt);
-  if (balance > esik) return { allowed: true };
-  return { allowed: false, reason: 'LOCKED', remaining: Math.max(0, esik + 1 - balance) };
+  // §5 — "bakiyesi ≥ 5.000 ise". Eşiğin KENDİSİ yeterli; kod bir süre `>`
+  // kullanıyordu, yani tam 5.000 puanı olan kullanıcı harcayamıyordu.
+  if (balance >= esik) return { allowed: true };
+  return { allowed: false, reason: 'LOCKED', remaining: Math.max(0, esik - balance) };
 }
 
 /** Bakiye eşiği geçtiyse kilit açılmalı mı? (damga henüz yazılmamışsa) */
@@ -75,7 +76,7 @@ export function shouldUnlock(
   unlockedAt: Date | null,
   rules: SpendRules = DEFAULT_SPEND_RULES,
 ): boolean {
-  return !unlockedAt && balance > Math.max(0, rules.unlockAt);
+  return !unlockedAt && balance >= Math.max(0, rules.unlockAt);
 }
 
 export type PaymentSplit = {
@@ -88,29 +89,27 @@ export type PaymentSplit = {
   /** Puan kullanılamadıysa sebebi. */
   readonly blocked: 'LOCKED' | null;
   /** `maxAllowed`'ı hangi kural belirledi — ekranda açıklamak için. */
-  readonly limitedBy: 'PRICE_CAP' | 'SUBSIDY_CAP' | null;
+  readonly limitedBy: 'PRICE_CAP' | 'BALANCE_CAP' | null;
 };
 
-/** İzin verilen üst sınırı ve onu belirleyen kuralı hesaplar (bakiyeden bağımsız). */
-function tavanlar(tutar: number, rules: SpendRules) {
-  const yuzde = (v: number) => (Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0);
-
-  // K4.3 — hizmet bedelinin yüzdesi.
-  const fiyatTavani = Math.floor((tutar * yuzde(rules.capPct)) / 100);
-
-  // §8.4 — beklenen NET KOMİSYONUN yüzdesi. Bu sınır olmadan indirim, o
-  // randevudan elde edilen komisyonu aşabiliyordu: %10 komisyonla 20.000 ₸'lik
-  // bir randevuda komisyon 2.000 ₸ iken puan 5.000 ₸ indirim yapabiliyordu.
-  // Farkı ya AYNA (randevu başına zarar) ya da uzman (haberi olmadan) öderdi.
-  const netKomisyon = (tutar * yuzde(rules.commissionPct)) / 100;
-  const subvansiyonTavani = Math.floor((netKomisyon * yuzde(rules.subsidyCapPct)) / 100);
-
-  const maxAllowed = Math.min(fiyatTavani, subvansiyonTavani);
+/**
+ * §5 — bu işlemde kullanılabilecek en yüksek puan.
+ *
+ * İki sınır var ve ikisi de MD'de: biriken puanın %25'i, ve tutarın kendisi
+ * (depozitodan fazlasını ödemek anlamsız). Eskiden burada üçüncü bir kural
+ * daha vardı — "beklenen net komisyonun en çok %50'si" — ama MD'de yok ve
+ * kurucu "para akışıyla ilgili birden fazla kural olamaz" dedi.
+ */
+function tavanlar(tutar: number, balance: number, rules: SpendRules) {
+  const yuzde = Number.isFinite(rules.capPct) ? Math.max(0, Math.min(100, rules.capPct)) : 0;
+  const bakiye = Number.isFinite(balance) ? Math.max(0, Math.floor(balance)) : 0;
+  const bakiyeTavani = Math.floor((bakiye * yuzde) / 100);
+  const maxAllowed = Math.min(bakiyeTavani, Math.max(0, tutar));
   const limitedBy =
     maxAllowed <= 0
       ? null
-      : subvansiyonTavani < fiyatTavani
-        ? ('SUBSIDY_CAP' as const)
+      : bakiyeTavani < tutar
+        ? ('BALANCE_CAP' as const)
         : ('PRICE_CAP' as const);
   return { maxAllowed, limitedBy };
 }
@@ -118,10 +117,10 @@ function tavanlar(tutar: number, rules: SpendRules) {
 /**
  * Ödemeyi puan/nakit olarak böler.
  *
- * Sıra: önce kilit (K4.2), sonra İKİ tavanın küçüğü (K4.3 ve §8.4), sonra
- * bakiye. Hepsinin en küçüğü kazanır ve sonuç asla negatif olmaz. İstemciden
- * gelen `pointsRequested` yalnızca bir ÜST sınır — hiçbir koşulda tavanı ya da
- * bakiyeyi aşamaz.
+ * Sıra: önce kilit (§5 eşiği), sonra tavan (biriken puanın %25'i, tutarı
+ * aşmamak kaydıyla), sonra bakiye. En küçüğü kazanır ve sonuç asla negatif
+ * olmaz. İstemciden gelen `pointsRequested` yalnızca bir ÜST sınır — hiçbir
+ * koşulda tavanı ya da bakiyeyi aşamaz.
  */
 export function paymentSplit(
   amount: number,
@@ -131,7 +130,7 @@ export function paymentSplit(
   rules: SpendRules = DEFAULT_SPEND_RULES,
 ): PaymentSplit {
   const tutar = Number.isFinite(amount) && amount > 0 ? Math.floor(amount) : 0;
-  const { maxAllowed, limitedBy } = tavanlar(tutar, rules);
+  const { maxAllowed, limitedBy } = tavanlar(tutar, balance, rules);
 
   const gate = spendGate(balance, unlockedAt, rules);
   if (!gate.allowed) {

@@ -16,7 +16,7 @@ import type { CreateQuoteRequestInput, SelectQuoteInput, SubmitQuoteInput } from
 
 // §5.2 Faz A — reverse marketplace ÇEKİRDEK akışı buluttan:
 // talep aç → aynı şehirdeki uzmanlara push → uzman teklif verir → sahibine push →
-// kullanıcı seçer → randevu (deposit_pending) + kapanış pushları.
+// kullanıcı seçer → randevu (depozito_bekliyor) + kapanış pushları.
 // Yanıt şekilleri mobil DemandRequest/DemandOffer ile birebir hizalı (ms sayıları).
 
 type QuoteRow = {
@@ -68,14 +68,14 @@ export class QuotesService {
   private async trustedUserSet(userIds: string[]): Promise<Set<string>> {
     if (userIds.length === 0) return new Set();
     const rows = await this.prisma.booking.findMany({
-      where: { userId: { in: userIds }, status: { in: ['completed', 'no_show'] } },
+      where: { userId: { in: userIds }, status: { in: ['tamamlandi', 'no_show_musteri'] } },
       select: { userId: true, status: true },
     });
     const done = new Map<string, number>();
     const bad = new Set<string>();
     for (const b of rows) {
       if (!b.userId) continue;
-      if (b.status === 'no_show') bad.add(b.userId);
+      if (b.status === 'no_show_musteri') bad.add(b.userId);
       else done.set(b.userId, (done.get(b.userId) ?? 0) + 1);
     }
     return new Set(userIds.filter((u) => (done.get(u) ?? 0) >= 3 && !bad.has(u)));
@@ -514,7 +514,7 @@ export class QuotesService {
     // §4.3 — teklif zaten uzmanın kabulü → randevu doğrudan DEPOZİTO adımına doğar.
     // K1 — kapora oranlı; uzmanın onay yoluyla aynı hesap (`@ayna/domain`).
     const deposit = depositFor(Number(quote.price), await loadDepositRules(this.prisma));
-    // Bu yol `depositDeadline` YAZMIYORDU. `deposit_pending` slotu işgal ettiği için
+    // Bu yol `depositDeadline` YAZMIYORDU. `depozito_bekliyor` slotu işgal ettiği için
     // ödemeyen müşterinin randevusu o saati süresiz kilitliyordu: scheduler'ın süre
     // dolum sorgusu `depositDeadline: { lt: now }` arıyor, NULL olan kayda hiç değmiyor.
     const holdUntil = holdDeadline(await loadWindows(this.prisma));
@@ -569,7 +569,7 @@ export class QuotesService {
           startAt: new Date(input.slotMs),
           durationMin,
           price: Number(quote.price),
-          status: 'deposit_pending',
+          status: 'depozito_bekliyor',
           depositAmount: deposit,
           depositDeadline: holdUntil,
         },

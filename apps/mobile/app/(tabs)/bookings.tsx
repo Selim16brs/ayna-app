@@ -1,4 +1,10 @@
 import { useState } from 'react';
+import {
+  DURUM_ETIKETI,
+  DURUM_TONU,
+  karsiTarafBekleniyor,
+  yaklasanMi,
+} from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -15,7 +21,7 @@ import { useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { ListSkeleton, Screen, TabHero, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { BeklemeNabzi, ListSkeleton, Screen, TAB_BAR_CLEARANCE, TabHero, Text } from '../../src/ui';
 
 // §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş
 type Seg = 'requests' | 'upcoming' | 'past';
@@ -28,43 +34,29 @@ const SEGS: { value: Seg; labelKey: MessageKey }[] = [
 const catLabel = (id: string): MessageKey =>
   (CATEGORIES.find((c) => c.id === id)?.labelKey ?? 'nav.bookings') as MessageKey;
 
+/**
+ * Durum rozeti — TEK KAYNAK `booking-flow`.
+ *
+ * Burada 18 durumun etiketi ve rengi ELLE yazılıydı; randevu kartındaki
+ * listeyle ayrışabiliyordu, yani aynı randevu listede bir şey, kartta başka
+ * bir şey diyebiliyordu. Artık ikisi de aynı haritadan okuyor (brief §7:
+ * "uzman aynı kartın aynasını görür").
+ */
 const makeStatus = (
   colors: ColorTokens,
-): Record<BookingStatus, { key: MessageKey; bg: string; fg: string }> => ({
-  confirmed: { key: 'booking.status.confirmed', bg: colors.successSoft, fg: colors.success },
-  pending: { key: 'booking.status.pending', bg: colors.goldSoft, fg: colors.gold },
-  completed: { key: 'booking.status.completed', bg: colors.surfaceMuted, fg: colors.inkSoft },
-  cancelled: { key: 'booking.status.cancelled', bg: colors.dangerSoft, fg: colors.danger },
-  awaiting_provider: { key: 'booking.status.awaiting', bg: colors.goldSoft, fg: colors.gold },
-  alternative_proposed: { key: 'booking.status.alternative', bg: colors.blueSoft, fg: colors.blue },
-  deposit_pending: { key: 'booking.status.deposit_pending', bg: colors.goldSoft, fg: colors.gold },
-  deposit_submitted: {
-    key: 'booking.status.deposit_submitted',
-    bg: colors.blueSoft,
-    fg: colors.blue,
-  },
-  refund_pending: { key: 'booking.status.refund_pending', bg: colors.goldSoft, fg: colors.gold },
-  refund_submitted: {
-    key: 'booking.status.refund_submitted',
-    bg: colors.blueSoft,
-    fg: colors.blue,
-  },
-  disputed: { key: 'booking.status.disputed', bg: colors.dangerSoft, fg: colors.danger },
-  reassigned_pending: {
-    key: 'booking.status.reassigned_pending',
-    bg: colors.blueSoft,
-    fg: colors.blue,
-  },
-  no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
-  waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
-  expired: { key: 'booking.status.expired', bg: colors.surfaceMuted, fg: colors.inkSoft },
-  completed_pending: {
-    key: 'booking.status.completed_pending',
-    bg: colors.goldSoft,
-    fg: colors.gold,
-  },
-  sync_conflict: { key: 'booking.status.sync_conflict', bg: colors.dangerSoft, fg: colors.danger },
-});
+): Record<BookingStatus, { key: MessageKey; bg: string; fg: string }> => {
+  const tonlar = {
+    olumlu: { bg: colors.successSoft, fg: colors.success },
+    bekleme: { bg: colors.goldSoft, fg: colors.gold },
+    tehlike: { bg: colors.dangerSoft, fg: colors.danger },
+    notr: { bg: colors.surfaceMuted, fg: colors.inkSoft },
+  } as const;
+  const cikti = {} as Record<BookingStatus, { key: MessageKey; bg: string; fg: string }>;
+  for (const [durum, etiket] of Object.entries(DURUM_ETIKETI) as [BookingStatus, MessageKey][]) {
+    cikti[durum] = { key: etiket, ...tonlar[DURUM_TONU[durum]] };
+  }
+  return cikti;
+};
 
 export default function BookingsScreen() {
   const { t } = useLocale();
@@ -80,19 +72,10 @@ export default function BookingsScreen() {
   const demands = allDemands.filter((d) => !d.seeded && d.status !== 'booked');
   const now = Date.now();
 
-  const isUpcoming = (a: Appointment) =>
-    a.startMs >= now &&
-    ![
-      'completed',
-      'cancelled',
-      'no_show',
-      'expired',
-      'completed_pending',
-      'sync_conflict',
-    ].includes(a.status);
+  const isUpcoming = (a: Appointment) => a.startMs >= now && yaklasanMi(a.status);
   const upcoming = bookings.filter(isUpcoming).sort((a, b) => a.startMs - b.startMs);
   const past = bookings.filter((a) => !isUpcoming(a)).sort((a, b) => b.startMs - a.startMs);
-  const pendingReview = bookings.filter((a) => a.status === 'completed' && !a.reviewed);
+  const pendingReview = bookings.filter((a) => a.status === 'tamamlandi' && !a.reviewed);
 
   // Aktif sekmenin listesi boş mu — ve bu boşluk GERÇEK mi, yoksa veri henüz
   // gelmedi mi? İkisini ayırmadan boş durumu çizmek, randevusu olan kullanıcıya
@@ -195,6 +178,8 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
+  // Bu ekran MÜŞTERİ sekmesi; uzman kendi ajandasını kullanıyor.
+  const rol = 'musteri' as const;
   const st = makeStatus(colors)[appt.status];
   const toDetail = () => router.push('/booking/' + appt.id);
   return (
@@ -204,9 +189,17 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
           {formatSlot(appt.startMs, t)}
         </Text>
         <View style={[styles.status, { backgroundColor: st.bg }]}>
-          <Text variant="caption" style={[styles.statusText, { color: st.fg }]}>
-            {t(st.key)}
-          </Text>
+          {/* Listede de "top karşı tarafta" görünsün: kullanıcı kartı açmadan
+              hangi randevuda beklediğini anlamalı. Rozetin İÇİNDE, ayrı bir
+              satır açmadan — liste sıkışık ve her karta satır eklemek
+              kaydırmayı uzatırdı. */}
+          {karsiTarafBekleniyor(appt.status, rol) ? (
+            <BeklemeNabzi metin={t(st.key)} renk={st.fg} />
+          ) : (
+            <Text variant="caption" style={[styles.statusText, { color: st.fg }]}>
+              {t(st.key)}
+            </Text>
+          )}
         </View>
       </View>
       <View style={styles.divider} />

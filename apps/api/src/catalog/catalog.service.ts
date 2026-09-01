@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { SLOT_HOLDING_STATUSES } from '../bookings/slot-statuses';
 import type { Professional, Quote, ServiceCategory } from '@prisma/client';
 import { computeDaySlots, aynaOnayli, guvenKatmanlari, uzmanKayitli } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
@@ -92,7 +93,16 @@ export class CatalogService {
   }
 
   async professionals() {
-    const rows = await this.prisma.professional.findMany({ orderBy: { rating: 'desc' } });
+    // §4.7/§4.8 — GÖRÜNMEZLİK CEZASI BURADA UYGULANIYOR. Ceza `hiddenUntil`e
+    // yazılıyordu ama hiçbir yerde okunmuyordu: bayrak vardı, KAPI yoktu.
+    // Cezalı uzmanın proId'leri önce toplanıp listeden çıkarılıyor.
+    const cezali = await this.prisma.specialist.findMany({
+      where: { hiddenUntil: { gt: new Date() }, proId: { not: null } },
+      select: { proId: true },
+    });
+    const gizli = new Set(cezali.flatMap((x) => (x.proId ? [x.proId] : [])));
+    const tumRows = await this.prisma.professional.findMany({ orderBy: { rating: 'desc' } });
+    const rows = tumRows.filter((r) => !gizli.has(r.id));
     // §5.1.4-8 — liste eksik alanları: konum (harita), fiyat aralığı üstü, premium rozeti.
     // Sahip eşleşmesi iki toplu sorguyla (N+1 yok): Specialist.proId + Business.professionalId.
     const ids = rows.map((r) => r.id);
@@ -249,7 +259,7 @@ export class CatalogService {
   }
 
   // §4.2 — uzmanın dolu aralıkları: yalnız SLOT İŞGAL EDEN durumlar (onaylı/kapora aşaması).
-  // awaiting_provider dahil DEĞİL (ters pazaryeri: aynı slota birden çok bekleyen talep olabilir).
+  // Brief §4.2 — `onay_bekliyor` DAHİL: talep gönderildiği an slot kilitlenir.
   // GİZLİLİK: müşteri adı/telefonu/hizmeti dönmez — sadece zaman aralıkları.
   async professionalBusy(id: string, fromMs?: number, toMs?: number) {
     const from = new Date(fromMs ?? Date.now());
@@ -257,7 +267,7 @@ export class CatalogService {
     const rows = await this.prisma.booking.findMany({
       where: {
         proId: id,
-        status: { in: ['confirmed', 'deposit_pending', 'deposit_submitted'] },
+        status: { in: SLOT_HOLDING_STATUSES },
         startAt: { gte: from, lte: to },
       },
       select: { startAt: true, durationMin: true },

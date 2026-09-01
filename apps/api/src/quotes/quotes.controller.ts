@@ -50,7 +50,7 @@ export class QuotesController {
     return this.quotes.submit(id, req.user!.id, body);
   }
 
-  // Müşteri: teklifi seç → randevu (deposit_pending) doğar
+  // Müşteri: teklifi seç → randevu (depozito_bekliyor) doğar
   @Post(':id/select')
   select(
     @Req() req: AuthedRequest,

@@ -1,10 +1,13 @@
-import { aynaOnayli, uzmanKayitli } from '@ayna/domain';
 import {
+  aynaOnayli,
   commissionFor,
   commissionFromMinor,
   fromMinor,
   toMinor,
-} from '../commissions/commissions.calc';
+  uzmanKayitli,
+  KAZANILMIS_DURUMLAR,
+  YAKLASAN_DURUMLAR,
+} from '@ayna/domain';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -85,7 +88,12 @@ export class AdminService {
       disputesOpen,
       reviewDisputes,
       circleQueue,
-      invoiceReceipts,
+      // Brief §8 — bekleyen iş kuyrukları. Eski komisyon dekontu sayacı
+      // kaldırıldı (ikinci tahsilat yok, §4.4/§10); yerine brief'in istediği
+      // üç kuyruk geldi.
+      depositReceipts,
+      refundsPending,
+      reconciliationsOpen,
     ] = await Promise.all([
       this.prisma.kycVerification.count({ where: { status: 'pending' } }),
       this.prisma.profileChangeRequest.count({ where: { status: 'pending' } }),
@@ -93,16 +101,15 @@ export class AdminService {
       this.prisma.dispute.count({ where: { status: 'open' } }),
       this.prisma.rating.count({ where: { disputed: true, visible: true } }),
       this.prisma.circlePost.count({ where: { status: 'pending' } }),
-      // §12.8 — DEKONT YÜKLENMİŞ ama henüz tahsil edilmemiş komisyon faturaları.
-      //
-      // Bu sayaç YOKTU: uzman dekontu yüklüyor, fatura durumu değişmiyor ve
-      // panelde yalnız listenin içinde küçük bir 🧾 işareti çıkıyordu. Bekleyen
-      // iş kuyruklarının hiçbirinde görünmediği için admin listeyi tarayıp
-      // fark etmek zorundaydı — kısıtlı uzman ödemesini yapmış hâlde
-      // beklemeye devam ediyordu.
-      this.prisma.commissionInvoice.count({
-        where: { receiptUri: { not: null }, status: { not: 'collected' } },
+      // §8.1 — dekont yüklenmiş ama admin henüz doğrulamamış randevular.
+      // Randevu ZATEN kesinleşti (§4.4); bu kuyruk sahte dekont yakalamak için.
+      this.prisma.booking.count({
+        where: { depositReceiptUri: { not: null }, depositVerifiedAt: null },
       }),
+      // §8.2 — iade kuyruğu (müşteri iadesi + uzmanın %9 payı, tek yol).
+      this.prisma.refundRequest.count({ where: { status: 'bekliyor' } }),
+      // §8.3 — uzlaşma kayıtları (no-show ve ödeme itirazları).
+      this.prisma.reconciliation.count({ where: { status: 'bekliyor' } }),
     ]);
     const bizByStatus = { pending: 0, approved: 0, rejected: 0 } as Record<string, number>;
     for (const g of businesses) bizByStatus[g.status] = g._count;
@@ -123,7 +130,9 @@ export class AdminService {
         disputes: disputesOpen,
         reviewDisputes,
         circle: circleQueue,
-        invoiceReceipts,
+        depositReceipts,
+        refundsPending,
+        reconciliationsOpen,
       },
     };
   }
@@ -143,7 +152,8 @@ export class AdminService {
       }),
       this.prisma.booking.findMany({
         where: { createdAt: { gte: since } },
-        select: { createdAt: true, status: true, price: true },
+        // depositAmount: AYNA'nın gelir kalemi (§10) — komisyon = depozito.
+        select: { createdAt: true, status: true, price: true, depositAmount: true },
       }),
       this.prisma.professional.findMany({ select: { sector: true } }),
     ]);
@@ -173,7 +183,10 @@ export class AdminService {
     for (const bk of bookings) {
       bump(bk.createdAt, (b) => {
         b.bookings += 1;
-        if (bk.status === 'completed') b.revenue += Number(bk.price);
+        // Brief §10: AYNA'nın geliri komisyondur ve komisyon = depozito (%10).
+        // Eskiden hizmet bedelinin TAMAMI gelir sayılıyordu — o para uzmana
+        // gidiyor, AYNA'ya değil.
+        if (bk.status === 'tamamlandi') b.revenue += Number(bk.depositAmount ?? 0);
       });
     }
 
@@ -240,14 +253,10 @@ export class AdminService {
       totalCollectedMinor += minor;
     }
 
-    const EARNED = ['completed'];
-    const PENDING = [
-      'confirmed',
-      'pending',
-      'awaiting_provider',
-      'alternative_proposed',
-      'waitlist',
-    ];
+    // Durum listeleri `@ayna/domain`den geliyor: burada elle yazılmış kopyalar
+    // vardı ve brief §3 sözlüğü değiştiğinde panel sessizce sıfır gösteriyordu.
+    const EARNED: readonly string[] = KAZANILMIS_DURUMLAR;
+    const PENDING: readonly string[] = YAKLASAN_DURUMLAR;
     // Komisyon hesabı TEK YERDE (`commissions.calc`). Burada eskiden ayrı bir
     // formül vardı; tam sayı oranlarda ikisi aynı sonucu veriyordu ama KESİRLİ
     // oranlarda 1 tiyn ayrışıyordu (1.000.000 örnekte ~1.955 sapma, hepsi %8,5

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BOOKING_STATUSES } from '@ayna/domain';
 
 export const createBookingSchema = z.object({
   id: z.string().min(1),
@@ -24,24 +25,20 @@ export const createBookingSchema = z.object({
   startMs: z.number().int().optional(),
   durationMin: z.number().int().positive().max(1440).optional(),
   price: z.number().nonnegative(),
+  /**
+   * §4.1.1 — "Uzmanın hizmet listesinden 1 VEYA BİRDEN FAZLA hizmet. Toplam
+   * süre = seçilen hizmetlerin süre toplamı."
+   *
+   * Yalnızca AD listesi taşınıyor: fiyat ve süre uzmanın kayıtlı hizmet
+   * listesinden SUNUCUDA okunuyor. İstemcinin gönderdiği tutara güvenmek,
+   * müşterinin kendi depozitosunu belirlemesi demekti.
+   */
+  serviceNames: z.array(z.string().min(1).max(120)).min(1).max(10).optional(),
   status: z
-    .enum([
-      'confirmed',
-      'pending',
-      'completed',
-      'cancelled',
-      'awaiting_provider',
-      'alternative_proposed',
-      'no_show',
-      'waitlist',
-      'deposit_pending',
-      'deposit_submitted',
-      'refund_pending',
-      'refund_submitted',
-      'disputed',
-      'reassigned_pending',
-      'expired',
-    ])
+    // Liste `@ayna/domain`den TÜRETİLİYOR (brief §3). Elle yazılsaydı şema ile
+    // durum makinesi ayrışır ve API, makinenin tanımadığı bir durumu kabul
+    // ederdi — tam da bugün "iki kural" diye ayıkladığımız sorunun aynısı.
+    .enum(BOOKING_STATUSES)
     .optional(),
 });
 
@@ -60,9 +57,20 @@ export const cancelSchema = z.object({ reason: z.string().max(300).optional() })
 
 // §4.2/§4.4 — dekont yükleme (kapora veya iade)
 // Dekont data URL olarak taşınır (cihazlar arası görünürlük) — 15MB gövde limiti main.ts'te
-export const bookingReceiptSchema = z.object({ receiptUri: z.string().min(1).max(12_000_000) });
+export const bookingReceiptSchema = z.object({
+  receiptUri: z.string().min(1).max(12_000_000),
+  /**
+   * §5 — depozitoda kullanılmak İSTENEN puan. Yalnız bir üst sınır: gerçekte
+   * ne kadar düşüleceğine sunucu karar veriyor (kilit, %25 tavanı, bakiye).
+   */
+  pointsRequested: z.number().int().nonnegative().max(10_000_000).optional(),
+});
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export type DateLabelInput = z.infer<typeof dateLabelSchema>;
 export type CancelInput = z.infer<typeof cancelSchema>;
 export type BookingReceiptInput = z.infer<typeof bookingReceiptSchema>;
+
+// §4.10 — iade yapılacak Kaspi/banka bilgisi. PII: log'a ve analitiğe ASLA
+// yazılmaz; yalnız iadeyi ödeyen admin görür.
+export const iadeTalepSchema = z.object({ payoutInfo: z.string().min(3).max(200) });

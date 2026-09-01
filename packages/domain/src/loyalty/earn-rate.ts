@@ -8,8 +8,15 @@
 // mobilde ikinci bir kopya yazmak, ileride oran değişince iki tarafın farklı
 // sayı göstermesi demekti. Vaat edilen puan ile yatan puan AYNI olmalı.
 
-/** Kazanım oranı ayarı okunamazsa kullanılan varsayılan (%). */
-export const DEFAULT_EARN_PCT = 3;
+/**
+ * Kazanım oranı ayarı okunamazsa kullanılan varsayılan (%).
+ *
+ * Brief §5: "Kazanım = hizmet bedelinin %1'i (tamamlanma onayında yüklenir)."
+ * Eskiden %3'tü; brief §10 eski "%15 + %3 cashback" modelini açıkça geçersiz
+ * ilan ediyor. Oran tek yerde durmalı: mobil "kazanacağın puan" satırını da
+ * buradan okuyor, ayrışırsa vaat edilen puanla yatan puan farklı olur.
+ */
+export const DEFAULT_EARN_PCT = 1;
 
 /**
  * Fiyat ve orandan kazanılacak puanı hesaplar. 1 puan = 1 ₸.

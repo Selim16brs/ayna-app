@@ -1,4 +1,5 @@
 import type { Ionicons } from '@expo/vector-icons';
+import type { BookingState as DomainBookingState } from '@ayna/domain';
 import type { MessageKey } from '@ayna/i18n';
 import { almatySlotMs, daysUntil, formatSlotTr } from './datetime';
 import { TAXONOMY, type Tri, activeCategories, tri } from './taxonomy';
@@ -871,38 +872,55 @@ export function getProfessionalDetail(id: string): ProfessionalDetail {
 
 // ── Randevular (store tohumu) ────────────────────────────────────────────
 export type BookingSource = 'direct' | 'photo_quote' | 'demand';
-export type BookingStatus =
-  | 'confirmed'
-  | 'pending'
-  | 'completed'
-  | 'cancelled'
-  | 'awaiting_provider'
-  | 'alternative_proposed'
-  | 'deposit_pending' // §4.3 — uzman kabul etti, kullanıcı depozito+dekont yükleyecek
-  | 'deposit_submitted' // dekont yüklendi, uzman onayı bekleniyor
-  | 'refund_pending' // §4.4 — serbest iptal: uzman iade dekontu yükleyecek
-  | 'refund_submitted' // iade dekontu yüklendi, kullanıcı "aldım" onayı bekleniyor
-  | 'disputed' // §4.4 — itiraz açıldı (destek/admin kuyruğu)
-  | 'reassigned_pending' // §4.5 — uzman ayrıldı, yeni uzman atandı
-  | 'expired' // Faz 1 — yanıt/dekont penceresi sunucu işiyle doldu
-  | 'completed_pending' // Faz 2 — uzman beyanı; müşteri teyit/itiraz penceresi
-  | 'sync_conflict' // Faz 3 — YALNIZ YEREL: offline kayıt sunucuda dolu slota çakıştı; kullanıcı yeni saat seçer; kullanıcı yeniden onaylayacak
-  | 'no_show'
-  | 'waitlist';
+/**
+ * Randevu durumları — `@ayna/domain`den TÜRETİLİYOR.
+ *
+ * Brief §0: "Backend ve UI aynı durum diyagramından türetilir."
+ *
+ * Buradaki liste eskiden ELLE yazılıydı ve sunucununkinden bağımsızdı; iki
+ * listenin ayrışması, ekranın sunucunun bilmediği bir durumu göstermesi ya da
+ * tam tersi demekti. Artık tek kaynak var.
+ */
+export type BookingStatus = DomainBookingState | 'sync_conflict';
 
-// §4.3 — depozito/kapora tutarı. PARAMETRİK (admin panel §3.4); şimdilik sabit.
-export const DEPOSIT_KZT = 1000;
-// §4.4 — serbest iptal penceresi (bundan fazla süre varsa depozito iade edilir). Parametrik.
-export const FREE_CANCEL_WINDOW_MS = 3 * 60 * 60_000;
+/**
+ * YALNIZ YEREL — sunucuda karşılığı YOK, o yüzden domain listesinde de yok.
+ * Çevrimdışıyken oluşturulan kayıt sunucuda dolu bir slota çakışınca bu duruma
+ * düşer ve kullanıcıdan yeni saat seçmesi istenir.
+ */
+export const YEREL_DURUMLAR = ['sync_conflict'] as const;
+
+// 3 SAAT EŞİĞİ artık `@ayna/domain`de (IPTAL_ESIGI_SAAT / esikGecti). Aynı
+// eşiği iki yerde tutmak, birinin değişip diğerinin kalmasına açıktı.
 // §4.3 — dekont yükleme süresi: normalde 3 saat; randevuya 6 saatten az varsa 1 saat. Parametrik.
 export const DEPOSIT_RECEIPT_WINDOW_MS = 3 * 60 * 60_000;
 export const DEPOSIT_RECEIPT_SHORT_MS = 1 * 60 * 60_000;
 export const DEPOSIT_SHORT_THRESHOLD_MS = 6 * 60 * 60_000;
 // §4.1 adım 6 — randevu hatırlatma pencereleri (24 saat + 2 saat önce). Parametrik.
-export const REMIND_24H_MS = 24 * 60 * 60_000;
-export const REMIND_2H_MS = 2 * 60 * 60_000;
-// §4.1.3 — uzman yanıt penceresi: bu süre içinde yanıtlanmayan talep otomatik düşer. Parametrik.
-export const RESPONSE_WINDOW_MS = 6 * 60 * 60_000;
+// Brief §4.5 — BEKLEME DÖNEMİ BİLDİRİMLERİ. Kesinleşen randevudan hizmet
+// saatine kadar etkileşim yalnız bunlarla:
+//   1. Ücretsiz iptal uyarısı — 3 saat eşiğinden ÖNCE (4 saat kala).
+//   2. 1 saat kala hatırlatma (iki tarafa).
+//   3. 30 dakika kala hatırlatma (iki tarafa).
+//
+// Eskiden 24 saat ve 2 saat kala hatırlatılıyordu. 24 saat, aynı gün alınan
+// randevularda hiç tetiklenmiyordu; 2 saat ise 3 saatlik iptal eşiğinin
+// ARDINDA kalıyordu, yani "ücretsiz iptal hakkın bitiyor" uyarısı iş işten
+// geçtikten sonra gidiyordu.
+export const REMIND_FREE_CANCEL_MS = 4 * 60 * 60_000;
+export const REMIND_1H_MS = 60 * 60_000;
+export const REMIND_30M_MS = 30 * 60_000;
+/**
+ * §4.2 — UZMAN YANIT PENCERESİ: "Uzman cevap süresi: 3 saat."
+ *
+ * Burada 6 saat yazıyordu ve sunucu 3 saat damgalıyordu (`policy.response_hours`).
+ * İki değer ayrıştığı için ekranda "5 sa 55 dk kaldı" görünüyor, sunucu ise
+ * 3 saatte talebi düşürüyordu: kullanıcıya söylenen süre ile gerçekte işleyen
+ * süre birbirini tutmuyordu. (Kurucu 01.09'da ekran görüntüsüyle bildirdi.)
+ *
+ * Bu yalnızca YEDEK: sunucudan `policy.response_hours` okunduğunda o geçerli.
+ */
+export const RESPONSE_WINDOW_MS = 3 * 60 * 60_000;
 
 export interface Appointment {
   id: string;
@@ -920,7 +938,11 @@ export interface Appointment {
   durationMin: number; // hizmet süresi (dk) — slot motoru buna dayanır (§4.2)
   proposedStartMs?: number; // uzmanın önerdiği alternatif başlangıç (§1.6)
   depositAmount?: number; // §4.3 — beklenen depozito (₸)
-  depositDeadline?: number; // §4.3 — dekont son yükleme anı (UTC ms); geçilirse randevu düşer
+  depositDeadline?: number; // §4.4 — depozito son ödeme anı (UTC ms, 10 dk); geçilirse randevu düşer
+  /** §4.9 — müşterinin "ödeme yaptım" beyanı (UTC ms). Uzmanın butonu buna bakar. */
+  balanceDeclaredAt?: number;
+  /** §4.8/§4.9 — itiraz/otomatik onay penceresinin bitişi (UTC ms). */
+  finalizeDeadline?: number;
   receiptUri?: string; // §4.3 — yüklenen dekont görseli
   refundReceiptUri?: string; // §4.4 — uzmanın yüklediği iade dekontu
   depositForfeited?: boolean; // §4.4 — geç iptal/no-show: kapora uzmanda kaldı
@@ -928,8 +950,21 @@ export interface Appointment {
   responseDeadline?: number; // §4.1.3 — uzman yanıt son anı (UTC ms); geçilirse talep düşer
   respondedAt?: number; // §9.2 — uzmanın yanıt verdiği an (UTC ms); ortalama yanıt süresi metriği
   reminded24?: boolean; // §4.1 — 24 saat hatırlatması gönderildi
-  reminded2?: boolean; // §4.1 — 2 saat hatırlatması gönderildi
-  reassignedFrom?: string; // §4.5 — ayrılan uzmanın adı (yeni uzman uzmanName'de)
+  reminded2?: boolean; // §4.5 — 1 saat hatırlatması gönderildi
+  reminded30?: boolean; // §4.5 — 30 dakika hatırlatması gönderildi
+  /**
+   * §4.1.1 — randevuda seçilen hizmetlerin ADLARI.
+   *
+   * Fiyat ve süre burada TAŞINMIYOR: sunucu bu adları uzmanın kayıtlı hizmet
+   * listesiyle eşleyip toplamı kendisi hesaplıyor. İstemcinin gönderdiği
+   * tutara güvenmek, müşterinin kendi depozitosunu belirlemesi olurdu.
+   */
+  serviceNames?: string[];
+  /**
+   * §4.6 — bekleyen erteleme önerisini kim yaptı ('customer' | 'provider').
+   * Kabul/Red karşı tarafındır; kart düğmeyi buna bakarak gösteriyor.
+   */
+  proposedBy?: 'customer' | 'provider';
   providerSignal?: 'up' | 'down'; // §7.3 — uzmanın kullanıcıya GİZLİ sinyali (kamuya kapalı)
   customerTrusted?: boolean; // §7.3 — POZİTİF rozet: yüksek tamamlanma oranlı "Güvenilir müşteri" (negatif asla)
   // §10 gizlilik — SALONUN uzman için aldığı offline randevu. Yalnız bunlar salon panelinde görünür;
@@ -962,7 +997,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, 3, 14, 0),
     durationMin: 60,
     price: 9000,
-    status: 'confirmed',
+    status: 'kesinlesti',
     // §9.2 — yanıt süresi metriği demo verisi: 18 dk'da yanıtlandı
     responseDeadline: SEED_NOW - 3 * 24 * 60 * 60_000 + RESPONSE_WINDOW_MS,
     respondedAt: SEED_NOW - 3 * 24 * 60 * 60_000 + 18 * 60_000,
@@ -978,7 +1013,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, -7, 16, 0),
     durationMin: 90,
     price: 18000,
-    status: 'completed',
+    status: 'tamamlandi',
     reviewed: false,
     // §9.2 — yanıt süresi metriği demo verisi: 42 dk'da yanıtlandı
     responseDeadline: SEED_NOW - 8 * 24 * 60 * 60_000 + RESPONSE_WINDOW_MS,
@@ -994,7 +1029,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, 6, 11, 0),
     durationMin: 150,
     price: 21000,
-    status: 'pending',
+    status: 'onay_bekliyor',
   },
   {
     id: 'a4',
@@ -1006,7 +1041,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, 4, 9, 0),
     durationMin: 120,
     price: 18000,
-    status: 'confirmed',
+    status: 'kesinlesti',
     customerTrusted: true, // §7.3 — pozitif rozet demo
   },
   {
@@ -1020,7 +1055,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, -24, 13, 0),
     durationMin: 60,
     price: 6000,
-    status: 'completed',
+    status: 'tamamlandi',
     reviewed: true,
   },
   {
@@ -1035,7 +1070,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, 1, 12, 0),
     durationMin: 90,
     price: 15000,
-    status: 'deposit_submitted',
+    status: 'kesinlesti',
     depositAmount: 1000,
     receiptUri: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&q=80',
   },
@@ -1053,7 +1088,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, 2, 15, 0),
     durationMin: 60,
     price: 9000,
-    status: 'awaiting_provider',
+    status: 'onay_bekliyor',
     bySalon: true,
   },
   {
@@ -1070,7 +1105,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, 3, 11, 0),
     durationMin: 90,
     price: 15000,
-    status: 'confirmed',
+    status: 'kesinlesti',
     bySalon: true,
   },
   // ── Glamour Salon uzmanlarının KENDİ (app/offline) işleri — bySalon DEĞİL; Genel takvimde görünür (fiyatsız) ──
@@ -1085,7 +1120,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, 1, 13, 0),
     durationMin: 60,
     price: 9000,
-    status: 'confirmed',
+    status: 'kesinlesti',
   },
   {
     id: 'gs-2',
@@ -1098,7 +1133,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, 1, 16, 0),
     durationMin: 90,
     price: 15000,
-    status: 'awaiting_provider',
+    status: 'onay_bekliyor',
     responseDeadline: SEED_NOW + 5 * 60 * 60_000,
   },
   {
@@ -1112,7 +1147,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, 2, 12, 30),
     durationMin: 120,
     price: 22000,
-    status: 'confirmed',
+    status: 'kesinlesti',
   },
   {
     id: 'gs-4',
@@ -1125,7 +1160,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, -4, 10, 0),
     durationMin: 90,
     price: 20000,
-    status: 'completed',
+    status: 'tamamlandi',
   },
   {
     id: 'gs-5',
@@ -1138,7 +1173,7 @@ export const SEED_APPOINTMENTS: Appointment[] = [
     startMs: almatySlotMs(SEED_NOW, -9, 15, 0),
     durationMin: 150,
     price: 28000,
-    status: 'completed',
+    status: 'tamamlandi',
   },
 ];
 
@@ -1418,7 +1453,7 @@ export function buildUpcomingEvents(
 ): UpcomingEvent[] {
   const now = Date.now();
   const a: UpcomingEvent[] = appts
-    .filter((x) => x.status === 'confirmed' || x.status === 'pending')
+    .filter((x) => x.status === 'kesinlesti' || x.status === 'onay_bekliyor')
     .map((x) => ({
       id: `ap-${x.id}`,
       refId: x.id,

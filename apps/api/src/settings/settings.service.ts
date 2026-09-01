@@ -5,6 +5,7 @@ import {
   API_KEY_DEFS,
   type ApiKeyInput,
   type CitiesInput,
+  KASPI_PAYMENT_KEY,
   RATE_DEFS,
   type RateInput,
 } from './settings.dto';
@@ -168,6 +169,27 @@ export class SettingsService {
     return this.categoryConfig();
   }
 
+  /** §4.4 — Kaspi ödeme bağlantısını yaz/temizle. Boş değer özelliği kapatır. */
+  async setKaspiLink(url: string, actorId?: string) {
+    const deger = url.trim();
+    await this.prisma.setting.upsert({
+      where: { key: KASPI_PAYMENT_KEY },
+      create: { key: KASPI_PAYMENT_KEY, intValue: 0, strValue: deger || null },
+      update: { strValue: deger || null },
+    });
+    // Bağlantının KENDİSİ audit'e yazılmıyor — ödeme hedefi, sızdırılacak bir
+    // sır değilse de gereksiz. Yalnız "değişti" bilgisi tutuluyor.
+    await this.audit('kaspi.link.set', 'settings', actorId);
+    return { configured: !!deger };
+  }
+
+  /** Panelde göstermek için: tanımlı mı ve neye benziyor (kısaltılmış). */
+  async kaspiLink() {
+    const row = await this.prisma.setting.findUnique({ where: { key: KASPI_PAYMENT_KEY } });
+    const url = row?.strValue?.trim() ?? '';
+    return { configured: !!url, url };
+  }
+
   // ── Public config (app tüketir; gizli anahtar sızmaz) ──────────────────
   async publicConfig() {
     const rateRows = await this.rates();
@@ -177,17 +199,14 @@ export class SettingsService {
       keys.find((k) => k.provider === provider)?.configured ?? false;
     const cities = await this.cities();
     const categories = await this.categoryConfig();
+    const kaspi = await this.prisma.setting.findUnique({ where: { key: KASPI_PAYMENT_KEY } });
     return {
       categories, // §12.9 — bakım periyodu + hizmet süresi (app bakım takvimi + slot süresi)
       rates: {
         commissionPct: rate('commission.rate'),
         // K1 — kapora artık sabit değil. `depositKzt` geriye dönük uyum için
         // duruyor (eski istemciler okuyor); gerçek kural aşağıdaki üçlü.
-        depositKzt: rate('rate.deposit_kzt'),
         depositPct: rate('rate.deposit_pct'),
-        depositMin: rate('rate.deposit_min'),
-        depositMax: rate('rate.deposit_max'),
-        depositMaxSharePct: rate('rate.deposit_max_share_pct'),
         holdMinutes: rate('policy.hold_minutes'),
         cancelWindowH: rate('rate.cancel_window_h'),
         lateCancelPct: rate('rate.late_cancel_pct'),
@@ -195,12 +214,14 @@ export class SettingsService {
         pointsCapPct: rate('rate.points_cap_pct'),
         pointsUnlockKzt: rate('rate.points_unlock_kzt'),
         pointsExpiryDays: rate('rate.points_expiry_days'),
-        pointsSubsidyCapPct: rate('rate.points_subsidy_cap_pct'),
         premiumUserKzt: rate('rate.premium_user_kzt'),
         premiumSalonKzt: rate('rate.premium_salon_kzt'),
         raffleCost: rate('rate.raffle_cost'),
       },
       cities,
+      // §4.4 — Kaspi ödeme bağlantısı. Tanımlı değilse istemci "Kaspi ile öde"
+      // düğmesini HİÇ göstermez: çalışmayan bir düğme, çalışmayan bir vaattir.
+      kaspiPaymentUrl: kaspi?.strValue?.trim() || null,
       // Özellik erişilebilirliği — anahtar tanımlı mı (değeri asla dönmez)
       features: { removebg: feature('removebg'), openai: feature('openai'), sms: feature('sms') },
     };

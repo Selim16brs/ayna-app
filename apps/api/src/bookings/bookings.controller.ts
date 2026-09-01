@@ -5,15 +5,16 @@ import { ENV } from '../config/config.module';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { type AuthedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
-  type BookingReceiptInput,
   bookingReceiptSchema,
-  type CancelInput,
   cancelSchema,
-  type CreateBookingInput,
   createBookingSchema,
-  type ProposeInput,
+  iadeTalepSchema,
   proposeSchema,
   rescheduleSchema,
+  type BookingReceiptInput,
+  type CancelInput,
+  type CreateBookingInput,
+  type ProposeInput,
   type RescheduleInput,
 } from './bookings.dto';
 import { BookingsService } from './bookings.service';
@@ -90,6 +91,20 @@ export class BookingsController {
   }
 
   // §1.6 — onay/alternatif pazarlık döngüsü
+  // Müşteri: kalan bakiyeyi ödediğini bildirir
+  @Post(':id/balance-paid')
+  @UseGuards(JwtAuthGuard)
+  balancePaid(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.bookings.balancePaid(id, req.user!.id);
+  }
+
+  // Uzman: parayı aldığını teyit eder → randevu kapanır, komisyon saati başlar
+  @Post(':id/balance-received')
+  @UseGuards(JwtAuthGuard)
+  balanceReceived(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.bookings.balanceReceived(id, req.user!.id);
+  }
+
   @Post(':id/approve')
   @UseGuards(JwtAuthGuard)
   approve(@Req() req: AuthedRequest, @Param('id') id: string) {
@@ -106,7 +121,8 @@ export class BookingsController {
     return this.bookings.propose(id, body.proposedStartMs, req.user!.id);
   }
 
-  // §7.8 — müşteri randevusunu bir kez ücretsiz erteler; kapora aktarılır.
+  // §4.6 — erteleme ÖNERİSİ: karşı tarafa Kabul/Red talebi gider; kabulde
+  // depozito aynen yeni tarihe taşınır.
   @Post(':id/reschedule')
   @UseGuards(JwtAuthGuard)
   reschedule(
@@ -117,40 +133,24 @@ export class BookingsController {
     return this.bookings.reschedule(id, body.startMs, req.user!.id);
   }
 
+  // §4.6 — erteleme önerisine KARŞI TARAFIN cevabı. Öneren kendi önerisini
+  // yanıtlayamaz; sunucu reddeder.
+  @Post(':id/reschedule/accept')
+  @UseGuards(JwtAuthGuard)
+  ertelemeKabul(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.bookings.ertelemeKabul(id, req.user!.id);
+  }
+
+  @Post(':id/reschedule/reject')
+  @UseGuards(JwtAuthGuard)
+  ertelemeRed(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.bookings.ertelemeRed(id, req.user!.id);
+  }
+
   @Post(':id/accept')
   @UseGuards(JwtAuthGuard)
   accept(@Req() req: AuthedRequest, @Param('id') id: string) {
     return this.bookings.accept(id, req.user!.id);
-  }
-
-  // §4.6 — devretme: salon/uzman devreder, müşteri kabul/reddeder.
-  // Akışın tamamı istemcideydi; sunucuya yazılmadığı için her açılışta
-  // kayboluyordu.
-  @Post(':id/reassign')
-  @UseGuards(JwtAuthGuard)
-  reassign(
-    @Req() req: AuthedRequest,
-    @Param('id') id: string,
-    @Body() body: { uzmanName?: string; proId?: string },
-  ) {
-    return this.bookings.reassign(
-      id,
-      (body?.uzmanName ?? '').slice(0, 80),
-      body?.proId,
-      req.user!.id,
-    );
-  }
-
-  @Post(':id/reassign/accept')
-  @UseGuards(JwtAuthGuard)
-  acceptReassign(@Req() req: AuthedRequest, @Param('id') id: string) {
-    return this.bookings.acceptReassignment(id, req.user!.id);
-  }
-
-  @Post(':id/reassign/reject')
-  @UseGuards(JwtAuthGuard)
-  rejectReassign(@Req() req: AuthedRequest, @Param('id') id: string) {
-    return this.bookings.rejectReassignment(id, req.user!.id);
   }
 
   /**
@@ -188,51 +188,24 @@ export class BookingsController {
     @Param('id') id: string,
     @Body(new ZodValidationPipe(bookingReceiptSchema)) body: BookingReceiptInput,
   ) {
-    return this.bookings.submitDepositReceipt(id, body.receiptUri, req.user!.id);
-  }
-
-  // §4.2 — uzman kaporayı onaylar → randevu kesinleşir
-  @Post(':id/confirm-receipt')
-  @UseGuards(JwtAuthGuard)
-  confirmDepositReceipt(@Req() req: AuthedRequest, @Param('id') id: string) {
-    return this.bookings.confirmDepositReceipt(id, req.user!.id);
-  }
-
-  // §4.4 — kullanıcı serbest iptal başlatır (uzman iade edecek)
-  @Post(':id/free-cancel')
-  @UseGuards(JwtAuthGuard)
-  freeCancel(
-    @Req() req: AuthedRequest,
-    @Param('id') id: string,
-    @Body(new ZodValidationPipe(cancelSchema)) body: CancelInput,
-  ) {
-    return this.bookings.freeCancel(id, body.reason, req.user!.id);
-  }
-
-  // §4.4 — uzman iade dekontunu yükler
-  @Post(':id/refund-receipt')
-  @UseGuards(JwtAuthGuard)
-  uploadRefundReceipt(
-    @Req() req: AuthedRequest,
-    @Param('id') id: string,
-    @Body(new ZodValidationPipe(bookingReceiptSchema)) body: BookingReceiptInput,
-  ) {
-    return this.bookings.uploadRefundReceipt(id, body.receiptUri, req.user!.id);
-  }
-
-  // §4.4 — kullanıcı iadeyi aldı → kayıt kapanır
-  @Post(':id/confirm-refund')
-  @UseGuards(JwtAuthGuard)
-  confirmRefund(@Req() req: AuthedRequest, @Param('id') id: string) {
-    return this.bookings.confirmRefund(id, req.user!.id);
+    return this.bookings.submitDepositReceipt(
+      id,
+      body.receiptUri,
+      body.pointsRequested ?? 0,
+      req.user!.id,
+    );
   }
 
   // §4.4 — taraflar itiraz açar → admin anlaşmazlık kuyruğu
-  // Faz 2 — müşteri 'hizmet tamamlandı' teyidi (pencere beklemeden kesinleştirir)
-  @Post(':id/confirm-completion')
+  // §4.10 — müşteri iade talebi: hesap bilgisiyle admin kuyruğuna düşer.
+  @Post(':id/refund-request')
   @UseGuards(JwtAuthGuard)
-  confirmCompletion(@Req() req: AuthedRequest, @Param('id') id: string) {
-    return this.bookings.confirmCompletion(id, req.user!.id);
+  refundRequest(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(iadeTalepSchema)) body: { payoutInfo: string },
+  ) {
+    return this.bookings.iadeTalep(id, body.payoutInfo, req.user!.id);
   }
 
   @Post(':id/dispute')

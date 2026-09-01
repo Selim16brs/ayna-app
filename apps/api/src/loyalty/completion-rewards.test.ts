@@ -9,8 +9,10 @@ import {
   grantCompletionCashback,
 } from './completion-rewards';
 
-test('geri kazanım oranı ekrandaki vaatle aynı (%3)', () => {
-  assert.equal(DEFAULT_CASHBACK_PCT, 3);
+test('geri kazanım oranı brief §5 ile aynı (%1)', () => {
+  // Brief §5: "Kazanım = hizmet bedelinin %1'i". §10 eski "%15 + %3 cashback"
+  // modelini açıkça geçersiz ilan ediyor.
+  assert.equal(DEFAULT_CASHBACK_PCT, 1);
 });
 
 test('cashbackPoints: %3', () => {
@@ -60,7 +62,8 @@ test('tamamlanan randevu geri kazanım üretir', async () => {
   const { prisma, yazilanlar } = sahtePrisma();
   await grantCompletionCashback(prisma, [{ id: 'b1', userId: 'u1', price: 20_000 }]);
   assert.equal(yazilanlar.length, 1);
-  assert.equal(yazilanlar[0]!.points, 600);
+  // Brief §5 — %1: 20.000 ₸ hizmette 200 puan (eskiden %3 → 600).
+  assert.equal(yazilanlar[0]!.points, 200);
   assert.equal(yazilanlar[0]!.detail, 'b1', 'randevu kimliği ayırt edici anahtar');
 });
 

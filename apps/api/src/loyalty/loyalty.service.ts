@@ -104,10 +104,6 @@ export class LoyaltyService {
         remainingToUnlock: gate.allowed ? 0 : gate.remaining,
         capPct: rules.capPct,
         expiryDays: rules.expiryDays,
-        // §8.4 — istemci tavanı sunucuyla AYNI fonksiyonla hesaplasın diye
-        // gereken iki değer de burada.
-        commissionPct: rules.commissionPct,
-        subsidyCapPct: rules.subsidyCapPct,
       },
     };
   }

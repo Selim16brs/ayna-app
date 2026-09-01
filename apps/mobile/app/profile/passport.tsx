@@ -50,7 +50,7 @@ export default function PassportScreen() {
   const displayName = userName || t('passport.member');
   const photo = useStore(selectPortrait);
   const womenVerified = useStore((s) => s.currentUser?.womenVerified ?? false);
-  const completed = useStore((s) => s.bookings.filter((b) => b.status === 'completed').length);
+  const completed = useStore((s) => s.bookings.filter((b) => b.status === 'tamamlandi').length);
   const reviews = useStore((s) => Object.values(s.userReviews).reduce((n, a) => n + a.length, 0));
   const points = useStore((s) => s.points);
   const premium = useStore((s) => s.premium);
@@ -60,7 +60,7 @@ export default function PassportScreen() {
   // KALDIRILDI: `const trust = 92` — sabit bir sayı, kullanıcıya hesaplanmış bir
   // güven puanı gibi gösteriliyordu. Yerine GERÇEK veri: habersiz gelmeme sayısı.
   // Kanvasın passport kartındaki üçlü de buydu (hizmet · gelmeme · erteleme).
-  const noShow = useStore((s) => s.bookings.filter((b) => b.status === 'no_show').length);
+  const noShow = useStore((s) => s.bookings.filter((b) => b.status === 'no_show_musteri').length);
 
   // §11 — GERÇEK satın alma: abonelik talebi → dekont yükle → admin onayı → push → haklar açılır
   const buy = () =>

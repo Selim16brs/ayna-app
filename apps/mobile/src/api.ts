@@ -29,20 +29,16 @@ export interface LoyaltyTier {
 
 // K4 — para puan kuralları sunucudan gelir; istemci kendi sabitini kullanmaz.
 export interface PointsSpendRules {
-  /** Kilit açıldı mı (bakiye eşiği bir kez geçti mi). */
+  /** §5 — kilit açıldı mı (bakiye eşiği bir kez geçildi mi). */
   unlocked: boolean;
-  /** Kullanımın açıldığı bakiye eşiği (₸). */
+  /** §5 — kullanımın açıldığı bakiye eşiği (₸). */
   unlockAt: number;
   /** Kilit kapalıysa açılmaya kalan puan. */
   remainingToUnlock: number;
-  /** Bir ödemenin puanla kapatılabilecek azami yüzdesi. */
+  /** §5 — işlem başına biriken puanın en çok yüzde kaçı kullanılabilir. */
   capPct: number;
-  /** Kazanılan puanın ömrü (gün). */
+  /** §5 — kazanılan puanın ömrü (gün). */
   expiryDays: number;
-  /** Komisyon oranı (%) — sübvansiyon tavanını hesaplamak için. */
-  commissionPct: number;
-  /** §8.4 — indirim, net komisyonun en çok yüzde kaçı olabilir. */
-  subsidyCapPct: number;
 }
 
 export interface LoyaltySummary {
@@ -670,6 +666,8 @@ export const api = {
   // §5 — CRM özet istatistiği (doluluk/gelir/no-show)
   bookingStats: () => get<BookingStats>('/bookings/stats'),
   // token verilirse randevu sahibine bağlanır (offline seller girişinde verilmez)
+  // §4.1.1 — `serviceNames` randevunun üstünde taşınıyor: sunucu fiyat ve
+  // süreyi bu adlardan KENDİ hizmet listesiyle yeniden hesaplıyor.
   createBooking: (b: Appointment, token?: string) => post<Appointment>('/bookings', b, token),
   // §keşif Modül 2 — kampanyalar
   offers: () => get<ApiOffer[]>(`/offers${localeQuery()}`),
@@ -685,31 +683,30 @@ export const api = {
     post<Appointment>(`/bookings/${id}/cancel`, reason ? { reason } : {}),
   // Onay/alternatif pazarlık döngüsü (§1.6)
   approveBooking: (id: string) => post<Appointment>(`/bookings/${id}/approve`, {}),
-  // Faz 2 — müşteri 'hizmet tamamlandı' teyidi
-  confirmCompletionApi: (id: string) => post<Appointment>(`/bookings/${id}/confirm-completion`, {}),
+  // Para el değiştirme — müşteri "ödedim", uzman "aldım".
+  balancePaid: (id: string) => post<Appointment>(`/bookings/${id}/balance-paid`, {}),
+  balanceReceived: (id: string) => post<Appointment>(`/bookings/${id}/balance-received`, {}),
   proposeBooking: (id: string, proposedStartMs: number) =>
     post<Appointment>(`/bookings/${id}/propose`, { proposedStartMs }),
   acceptBooking: (id: string) => post<Appointment>(`/bookings/${id}/accept`, {}),
-  // §4.6 — devretme: akış eskiden TAMAMEN istemcideydi, her açılışta kayboluyordu.
-  reassignBooking: (token: string, id: string, uzmanName: string, proId?: string) =>
-    post<Appointment>(`/bookings/${id}/reassign`, { uzmanName, proId }, token),
   // §7.3 — uzmanın müşteri hakkındaki gizli sinyali; sunucuda saklanır ve
   // MÜŞTERİYE hiç gönderilmez.
   setCustomerSignal: (token: string, id: string, signal: 'up' | 'down') =>
     post<Appointment>(`/bookings/${id}/customer-signal`, { signal }, token),
-  acceptReassignApi: (token: string, id: string) =>
-    post<Appointment>(`/bookings/${id}/reassign/accept`, {}, token),
-  rejectReassignApi: (token: string, id: string) =>
-    post<Appointment>(`/bookings/${id}/reassign/reject`, {}, token),
   // §4.2/§4.4 — depozito/iade döngüsü (backend'e taşındı)
-  submitDepositReceipt: (id: string, receiptUri: string) =>
-    post<Appointment>(`/bookings/${id}/deposit-receipt`, { receiptUri }),
-  confirmDepositReceipt: (id: string) => post<Appointment>(`/bookings/${id}/confirm-receipt`, {}),
-  freeCancelBooking: (id: string, reason?: string) =>
-    post<Appointment>(`/bookings/${id}/free-cancel`, reason ? { reason } : {}),
-  uploadRefundReceiptApi: (id: string, receiptUri: string) =>
-    post<Appointment>(`/bookings/${id}/refund-receipt`, { receiptUri }),
-  confirmRefundApi: (id: string) => post<Appointment>(`/bookings/${id}/confirm-refund`, {}),
+  // §4.4/§5 — dekont + kullanılmak istenen puan. Ne kadar düşüleceğine SUNUCU
+  // karar veriyor; buradaki sayı yalnız bir üst sınır.
+  submitDepositReceipt: (id: string, receiptUri: string, pointsRequested = 0) =>
+    post<Appointment>(`/bookings/${id}/deposit-receipt`, { receiptUri, pointsRequested }),
+  // §4.10 — iade talebi: hesap bilgisiyle admin kuyruğuna düşer.
+  iadeTalep: (id: string, payoutInfo: string) =>
+    post<{ ok: boolean; amount: number }>(`/bookings/${id}/refund-request`, { payoutInfo }),
+  // §4.6 — erteleme: yeni slot uzmana Kabul/Red talebi olarak gider.
+  rescheduleBooking: (id: string, startMs: number) =>
+    post<Appointment>(`/bookings/${id}/reschedule`, { startMs }),
+  // §4.6 — öneriye KARŞI TARAFIN cevabı (öneren yanıtlayamaz; sunucu reddeder).
+  ertelemeKabul: (id: string) => post<Appointment>(`/bookings/${id}/reschedule/accept`, {}),
+  ertelemeRed: (id: string) => post<Appointment>(`/bookings/${id}/reschedule/reject`, {}),
   disputeBookingApi: (id: string) => post<Appointment>(`/bookings/${id}/dispute`, {}),
   // §4.4-b — uzman gelmedi: iade + uzman komisyon borcu (backend)
   counterBooking: (id: string, proposedStartMs: number) =>
@@ -1167,13 +1164,6 @@ export const api = {
       pointsPending: number;
       referrerName: string;
     }>('/referral/redeem', { code }, token),
-  // EK Z.8 — in-app Kaspi ödeme (simülasyon)
-  paymentFor: (token: string, bookingId: string) =>
-    get<PaymentIntent | null>(`/payment/mine?bookingId=${encodeURIComponent(bookingId)}`, token),
-  createPayment: (token: string, bookingId: string, pointsRequested: number) =>
-    post<PaymentIntent>('/payment', { bookingId, pointsRequested }, token),
-  confirmPayment: (token: string, id: string) =>
-    post<PaymentIntent>(`/payment/${id}/confirm`, {}, token),
 };
 
 // EK Z.8 — ödeme tipi
@@ -1336,11 +1326,7 @@ export interface CommissionInvoice {
 export interface AppConfig {
   rates: {
     commissionPct: number;
-    depositKzt: number;
     depositPct: number;
-    depositMin: number;
-    depositMax: number;
-    depositMaxSharePct: number;
     holdMinutes: number;
     cancelWindowH: number;
     lateCancelPct: number;
@@ -1348,12 +1334,16 @@ export interface AppConfig {
     pointsCapPct: number;
     pointsUnlockKzt: number;
     pointsExpiryDays: number;
-    pointsSubsidyCapPct: number;
     premiumUserKzt: number;
     premiumSalonKzt: number;
     raffleCost: number;
   };
   cities: { active: string[]; soon: string[] };
+  /**
+   * §4.4 — SES INVEST Kaspi QR'ının içeriği. null ise "Kaspi ile öde" düğmesi
+   * HİÇ gösterilmez: çalışmayan bir düğme, çalışmayan bir vaattir.
+   */
+  kaspiPaymentUrl?: string | null;
   features: { removebg: boolean; openai: boolean; sms: boolean };
   // §12.9 — kategori bakım periyodu (gün) + hizmet süresi (dk)
   categories?: Record<string, { maintenanceDays: number; serviceMin: number }>;

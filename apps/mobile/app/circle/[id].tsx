@@ -61,7 +61,7 @@ export default function PostDetailScreen() {
   const visitedPros = useMemo(() => {
     const seen = new Map<string, string>();
     for (const b of bookings) {
-      if (b.status === 'completed' && b.proId) seen.set(b.proId, b.uzmanName ?? b.proName);
+      if (b.status === 'tamamlandi' && b.proId) seen.set(b.proId, b.uzmanName ?? b.proName);
     }
     return [...seen.entries()].map(([proId, name]) => ({ id: proId, name }));
   }, [bookings]);

@@ -327,7 +327,7 @@ export class CircleService {
   /** Kullanıcının bu uzmanda tamamlanmış randevusu var mı? */
   private async hasCompletedWith(userId: string, proId: string): Promise<boolean> {
     const row = await this.prisma.booking.findFirst({
-      where: { userId, proId, status: 'completed' },
+      where: { userId, proId, status: 'tamamlandi' },
       select: { id: true },
     });
     return row != null;

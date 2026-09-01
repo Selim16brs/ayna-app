@@ -67,11 +67,14 @@ test('liste rozeti için YENİ sorgu açılmadı', () => {
   const src = oku('catalog', 'catalog.service.ts');
   const govde = /async professionals\(\)[\s\S]*?\n {2}\}/.exec(src);
   assert.ok(govde, 'professionals() bulunamadı');
-  // Değişiklikten ÖNCE de 4'tü (professional + specialist + business + user);
-  // rozet için tek sorgu eklenmedi, yalnız select'ler genişledi. Sayı artarsa
-  // biri rozet uğruna N+1 açmış demektir.
+  // 4'tü (professional + specialist + business + user); randevu brief'iyle
+  // 5. eklendi: §4.7/§4.8 GÖRÜNMEZLİK CEZASI olan uzmanları listeden çıkaran
+  // sorgu. O da TOPLU — satır başına değil, tek seferde tüm cezalıları çekiyor,
+  // yani N+1 değil. Sayı 5'i geçerse biri gerçekten N+1 açmış demektir.
   const sorgu = [...govde[0].matchAll(/this\.prisma\.\w+\.findMany/g)].length;
-  assert.equal(sorgu, 4, `${sorgu} toplu sorgu — rozet için fazladan sorgu açılmış`);
+  assert.ok(sorgu <= 5, `${sorgu} toplu sorgu — rozet/ceza uğruna N+1 açılmış`);
+  // Ceza sorgusu GERÇEKTEN orada mı: silinirse cezalı uzman listede görünür.
+  assert.match(govde[0], /hiddenUntil: \{ gt: new Date\(\) \}/, 'görünmezlik filtresi yok');
 });
 
 test('güven işareti ortak satırda çiziliyor', () => {

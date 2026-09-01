@@ -1,4 +1,10 @@
-import { DEFAULT_DEPOSIT_RULES, DEFAULT_EARN_PCT, depositFor } from '@ayna/domain';
+import {
+  DEFAULT_DEPOSIT_RULES,
+  DEFAULT_EARN_PCT,
+  SLOT_HOLDING_STATES,
+  depositFor,
+  esikGecti,
+} from '@ayna/domain';
 import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadMediaCache, medyaAnahtari, saveMediaCache } from './media-cache';
@@ -24,7 +30,6 @@ import {
   type DemandMode,
   type DemandRequest,
   type Promotion,
-  DEPOSIT_KZT,
   POINTS_SPEND_CAP_PCT,
   POINTS_UNLOCK_KZT,
   POINTS_EXPIRY_DAYS,
@@ -32,9 +37,9 @@ import {
   DEPOSIT_RECEIPT_WINDOW_MS,
   DEPOSIT_RECEIPT_SHORT_MS,
   DEPOSIT_SHORT_THRESHOLD_MS,
-  FREE_CANCEL_WINDOW_MS,
-  REMIND_24H_MS,
-  REMIND_2H_MS,
+  REMIND_1H_MS,
+  REMIND_30M_MS,
+  REMIND_FREE_CANCEL_MS,
   RESPONSE_WINDOW_MS,
   buildUpcomingEvents,
   type CareRoutine,
@@ -60,8 +65,31 @@ import { findServiceWithCategory, servicesOf } from './taxonomy';
 import { defaultHours, type DayHours } from './ui/WorkingHours';
 import { emptySocial, type SocialValue } from './ui/SocialLinks';
 
-let seq = 5000;
-const nextId = (prefix: string) => `${prefix}${++seq}`;
+let seq = 0;
+
+/**
+ * KAYIT KİMLİĞİ — çakışmaya kapalı.
+ *
+ * Eskiden `let seq = 5000; \`${prefix}${++seq}\`` idi. Sayaç MODÜL SEVİYESİNDE
+ * yaşıyordu, yani uygulama her açıldığında 5000'e dönüyordu — randevular ise
+ * cihazda KALICI. İkinci oturumda üretilen `bk5001`, ilk oturumdaki `bk5001`
+ * ile çakışıyordu.
+ *
+ * Görünen sonuç: yeni randevu oluşturuluyor, onay ekranı DOĞRU hizmeti ve
+ * tutarı gösteriyor, ama detaya girildiğinde ESKİ randevu çıkıyordu —
+ * `hydrateBookings` sunucudaki aynı id'li eski kaydı üstüne yazdığı için.
+ * (Kurucu 01.09'da tam bunu bildirdi: onayda "Röfle / Balayage ₸37.000",
+ * detayda "Keratin / Botoks ₸31.000".)
+ *
+ * Zaman + rastgelelik: iki farklı oturumda, iki farklı cihazda ve aynı
+ * milisaniyede bile aynı id üretilmez. Sunucu bu id'yi birincil anahtar olarak
+ * kullandığı için çakışma yalnız ekranı değil VERİYİ bozuyordu.
+ */
+const nextId = (prefix: string): string => {
+  const zaman = Date.now().toString(36);
+  const rastgele = Math.random().toString(36).slice(2, 7);
+  return `${prefix}${zaman}${rastgele}${++seq}`;
+};
 
 // §6.1 — uzman/salon hizmet kataloğu satırı: taksonomi hizmet id'sine bağlı fiyat/süre (₸ / dk, string form).
 export type SellerServiceRow = { price: string; dur: string };
@@ -91,6 +119,101 @@ const TONE_ICON: Record<PersonalTone, string> = {
   blue: 'notifications-outline',
 };
 
+/**
+ * Sunucuya yazılabilen randevu eylemleri.
+ *
+ * Tek sözlük: her eylemin hangi API'ye gittiği BİR yerde yazıyor. Eskiden
+ * her store eylemi kendi `api.x(...).catch(() => undefined)` satırını
+ * yazıyordu; hangi çağrının hatayı yuttuğunu görmek için 13 yere bakmak
+ * gerekiyordu — ve 11'i gerçekten yutuyordu.
+ */
+export type BookingEylem =
+  | 'onayla'
+  | 'reddet'
+  | 'iptal'
+  | 'kabul'
+  | 'degistir'
+  | 'karsi_oner'
+  | 'dekont'
+  | 'islemi_bitirdim'
+  | 'odeme_yaptim'
+  | 'odeme_aldim'
+  | 'musteri_gelmedi'
+  | 'uzman_gelmedi'
+  | 'itiraz'
+  | 'ertele'
+  | 'erteleme_kabul'
+  | 'erteleme_red';
+
+/**
+ * Sunucu bu eylemi BİR DAHA kabul etmez mi?
+ *
+ * Ayrım kritik: geçici hatada (ağ yok) tekrar denemek zorundayız, yoksa
+ * kullanıcının işlemi kaybolur. Kalıcı redde tekrar denemek ise kuyruğu
+ * sonsuza kadar tıkar ve her açılışta aynı hatayı üretirdi.
+ */
+function kaliciRed(err: ApiError): boolean {
+  if (err.status != null && err.status >= 400 && err.status < 500 && err.status !== 408)
+    return true;
+  return (
+    err.code === 'INVALID_TRANSITION' ||
+    err.code === 'NOT_BOOKING_PARTY' ||
+    err.code === 'BOOKING_NOT_FOUND' ||
+    err.code === 'SLOT_CONFLICT'
+  );
+}
+
+/**
+ * Eylem argümanı. Çoğu eylem tek bir değer taşıyor; dekont İKİ değer taşıyor
+ * (dekont görseli + kullanılmak istenen puan), o yüzden tip bir birleşim.
+ */
+export type BookingEylemArg = string | number | { receiptUri: string; pointsRequested: number };
+
+/** Eylemi sunucuya gönderir. Hata FIRLATIR — çağıran kuyrukta tutar. */
+export function bookingEylemGonder(
+  id: string,
+  eylem: BookingEylem,
+  arg?: BookingEylemArg,
+): Promise<unknown> {
+  switch (eylem) {
+    case 'onayla':
+      return api.approveBooking(id);
+    case 'reddet':
+    case 'iptal':
+      return api.cancelBooking(id, typeof arg === 'string' ? arg : undefined);
+    case 'kabul':
+      return api.acceptBooking(id);
+    case 'degistir':
+      return api.proposeBooking(id, Number(arg));
+    case 'karsi_oner':
+      return api.counterBooking(id, Number(arg));
+    case 'dekont': {
+      // Puan kullanımı dekontla BİRLİKTE gidiyor: ayrı bir çağrı olsaydı biri
+      // gidip diğeri gitmediğinde depozito ile düşen puan uyuşmazdı.
+      const d = typeof arg === 'object' ? arg : { receiptUri: String(arg), pointsRequested: 0 };
+      return api.submitDepositReceipt(id, d.receiptUri, d.pointsRequested);
+    }
+    case 'islemi_bitirdim':
+      return api.completeBookingApi(id);
+    case 'odeme_yaptim':
+      return api.balancePaid(id);
+    case 'odeme_aldim':
+      return api.balanceReceived(id);
+    case 'musteri_gelmedi':
+      return api.noShowApi(id);
+    case 'uzman_gelmedi':
+      return api.providerNoShowApi(id);
+    case 'itiraz':
+      return api.disputeBookingApi(id);
+    case 'ertele':
+      return api.rescheduleBooking(id, Number(arg));
+    case 'erteleme_kabul':
+      return api.ertelemeKabul(id);
+    case 'erteleme_red':
+      return api.ertelemeRed(id);
+  }
+}
+
 export interface AddBookingInput {
   source: BookingSource;
   service: string;
@@ -102,6 +225,7 @@ export interface AddBookingInput {
   durationMin: number;
   price: number;
   offerId?: string; // §keşif Modül 2 — kampanya bağlantısı
+  serviceNames?: string[]; // §4.1.1 — çoklu hizmet seçimi
   status?: Appointment['status'];
 }
 
@@ -315,17 +439,14 @@ interface State {
   proposeAlternative: (id: string, startMs: number) => void; // uzman alternatif saat önerir
   rescheduleBooking: (id: string, startMs: number) => void; // §4.4 — KULLANICI yeni saat önerir (iptal yerine)
   submitReceipt: (id: string, receiptUri: string) => void; // kullanıcı dekont yükler
-  confirmReceipt: (id: string) => void; // uzman "Aldım, onaylıyorum" → randevu KESİN
   markNoShow: (id: string) => void; // §4.4 — uzman müşteriyi "gelmedi" işaretler (kapora yanar)
   completeBooking: (id: string) => void; // §4.1.7 — uzman hizmeti tamamladı → değerlendirme daveti
   reportProviderNoShow: (id: string) => void; // §4.4-b — uzman gelmedi → müşteriye 1000 puan telafi
   giveCustomerSignal: (id: string, signal: 'up' | 'down') => void; // §7.3 — gizli operasyonel sinyal
   // §4.4 — iade + itiraz
-  uploadRefundReceipt: (id: string, receiptUri: string) => void; // uzman iade dekontu yükler
-  confirmRefund: (id: string) => void; // kullanıcı "iadeyi aldım" → kayıt kapanır
   disputeBooking: (id: string) => void; // taraflar itiraz açar (destek/admin kuyruğu)
   checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
-  expireDeposits: () => void; // §4.3 — dekont süresi dolan deposit_pending randevuları düşürür
+  expireDeposits: () => void; // §4.4 — depozito süresi dolan randevuları düşürür
   expireResponses: () => void; // §4.1.3 — uzman yanıt süresi dolan talepleri düşürür
   toggleClosedDay: (dayStartMs: number) => void; // §4.6 — günü kapalı/açık işaretle
   // §5.2 Faz A — teklif/talep akışı BULUTTAN (iki cihaz arasında gerçek çalışır)
@@ -360,9 +481,8 @@ interface State {
     },
   ) => Promise<boolean>;
   // §4.5 — uzman ayrılığında randevu devri (sessiz silme YASAK)
-  reassignStaffBookings: (oldUzman: string, newUzman: string) => number; // devredilen randevu sayısı
-  acceptReassignment: (id: string) => void; // kullanıcı yeni uzmanı onaylar
-  rejectReassignment: (id: string) => void; // kullanıcı reddeder → iptal
+  /** Kadrodan çıkan uzmanın açık randevularını iptal eder; iptal edilen sayıyı döner. */
+  cikanUzmanRandevulari: (uzmanAdi: string) => number;
   // §7.1 — çift puanlama (uzman + ops. salon) + alt kırılım etiketleri
   reviewBooking: (
     id: string,
@@ -380,6 +500,32 @@ interface State {
   hydrateBookings: () => Promise<void>;
   // VERİ KAYBI YASAĞI — sunucuya yazılamayan randevular kuyrukta bekler, bağlantı gelince eşitlenir
   pendingBookingSync: string[];
+  /**
+   * BEKLEYEN RANDEVU EYLEMLERİ — "işlem sunucuya yazılmadı" hatasının panzehiri.
+   *
+   * Onayla / dekont yükle / ödeme aldım gibi eylemler yerelde anında
+   * uygulanıyor (ekran donmasın). Sunucu yazımı BAŞARISIZ olursa eskiden
+   * `catch(() => undefined)` ile sessizce yutuluyordu: telefonda "onaylandı"
+   * yazıyor, sunucu hiç duymuyor, sonraki tazelemede eski durum geri geliyor
+   * ve kullanıcının işlemi KAYBOLUYORDU.
+   *
+   * Kuyruk cihazda kalıcı: uygulama kapansa, ağ gitse bile eylem duruyor ve
+   * açılışta/tazelemede yeniden gönderiliyor.
+   */
+  pendingBookingActions: { id: string; eylem: BookingEylem; arg?: BookingEylemArg }[];
+  /** Kuyruğu sunucuya boşalt (açılışta ve her tazelemede çağrılır). */
+  flushBookingActions: () => Promise<void>;
+  /**
+   * Eylemi sunucuya yaz. Dönüş:
+   *  · 'yazildi'    — sunucu kabul etti
+   *  · 'kuyrukta'   — ağ yok; eylem KAYBOLMADI, kuyrukta bekliyor
+   *  · 'reddedildi' — sunucu kalıcı reddetti; yerel durum tazelendi
+   */
+  randevuEylemi: (
+    id: string,
+    eylem: BookingEylem,
+    arg?: BookingEylemArg,
+  ) => Promise<'yazildi' | 'kuyrukta' | 'reddedildi'>;
   syncBooking: (booking: Appointment) => void;
   flushBookingSync: () => Promise<void>;
   queueOfflineBooking: (booking: Appointment) => void;
@@ -490,6 +636,7 @@ const SEEDED_PERSONAL_RESET: Partial<State> = {
 export const userScopedReset = (): Partial<State> => ({
   ...SEEDED_PERSONAL_RESET,
   pendingBookingSync: [], // önceki üyenin eşitleme kuyruğu yeni üyeye taşınmaz
+  pendingBookingActions: [], // aynı gerekçe: başkasının adına işlem gönderilmez
   moments: [],
   closedDays: [],
   promotions: [],
@@ -533,12 +680,8 @@ export const useStore = create<State>()(
       config: {
         rates: {
           commissionPct: 10, // kurucu kararı: online randevudan %10 (fetch başarısızsa fallback)
-          depositKzt: DEPOSIT_KZT,
           // K1 — oranlı kapora yedek değerleri (sunucu fetch'i başarısızsa)
           depositPct: 10,
-          depositMin: 1000,
-          depositMax: 5000,
-          depositMaxSharePct: 50,
           holdMinutes: 180,
           cancelWindowH: 3,
           lateCancelPct: 3,
@@ -546,12 +689,14 @@ export const useStore = create<State>()(
           pointsCapPct: POINTS_SPEND_CAP_PCT,
           pointsUnlockKzt: POINTS_UNLOCK_KZT,
           pointsExpiryDays: POINTS_EXPIRY_DAYS,
-          pointsSubsidyCapPct: 50,
           premiumUserKzt: PREMIUM_PRICE_KZT,
           premiumSalonKzt: 4990,
           raffleCost: RAFFLE_COST,
         },
         cities: { active: ['Almatı'], soon: ['Astana', 'Şımkent'] },
+        // Sunucu okunana kadar KAPALI: yapılandırılmamış bir ödeme yolunu
+        // varsayılan açık göstermek, düğmeye basanı boşluğa göndermek olurdu.
+        kaspiPaymentUrl: null,
         features: { removebg: false, openai: false, sms: false },
       },
       loadContent: async () => {
@@ -910,13 +1055,14 @@ export const useStore = create<State>()(
           proImage: input.proImage,
           ...(input.uzmanName ? { uzmanName: input.uzmanName } : {}),
           ...(input.offerId ? { offerId: input.offerId } : {}),
+          ...(input.serviceNames?.length ? { serviceNames: input.serviceNames } : {}),
           startMs: input.startMs,
           durationMin: input.durationMin,
           price: input.price,
-          // §1.6 — yeni randevu uzman onayı bekler
-          status: input.status ?? 'awaiting_provider',
+          // §4.1/§4.2 — yeni randevu uzman onayı bekler; slot o an kilitlenir.
+          status: input.status ?? 'onay_bekliyor',
           // §4.1.3 — uzman yanıt son anı (yalnız onay bekleyen taleplerde)
-          ...((input.status ?? 'awaiting_provider') === 'awaiting_provider'
+          ...((input.status ?? 'onay_bekliyor') === 'onay_bekliyor'
             ? { responseDeadline: Date.now() + RESPONSE_WINDOW_MS }
             : {}),
         };
@@ -935,7 +1081,7 @@ export const useStore = create<State>()(
         return id;
       },
 
-      // §4.6/§10.2 — SALON offline randevu ekler → ilgili UZMANIN ONAYINA gider (awaiting_provider) + bildirim.
+      // §4.6/§10.2 — SALON offline randevu ekler → ilgili UZMANIN ONAYINA gider (onay_bekliyor) + bildirim.
       // Salon silemez; her ekleme uzmana bildirimle düşer, uzman panelinde Kabul/Reddet ile teyit eder.
       salonAddOffline: (input) => {
         const id = nextId('sof');
@@ -954,7 +1100,7 @@ export const useStore = create<State>()(
           // §10 — salon KENDİ aldığı offline randevuda ücreti belirler (uzman fee'yi bilir). Uzmanın
           // KENDİ (app/offline) işlerinin fiyatı salona kapalıdır; bu istisna yalnız salon-oluşturma içindir.
           price: input.price,
-          status: 'awaiting_provider', // uzman onayı bekliyor (§4.6)
+          status: 'onay_bekliyor', // uzman onayı bekliyor (§4.6)
           responseDeadline: Date.now() + RESPONSE_WINDOW_MS,
           bySalon: true, // §10 — salon panelinde yalnız salonun aldığı randevular görünür
         };
@@ -1003,7 +1149,7 @@ export const useStore = create<State>()(
       // §11 — PLATINUM paket aç/kapat (satın alma). Komisyon oranını da etkiler (%10 → %8,5).
       setPlatinum: (v) => set({ platinum: v, ...(v ? { premium: true } : {}) }), // platinum → premium da açık
 
-      // §11 — ALWAYS bağ isteği aç (karşı taraf kabul edene kadar 'pending')
+      // §11 — ALWAYS bağ isteği aç (karşı taraf kabul edene kadar 'onay_bekliyor')
       requestAlways: (input) => {
         // Sunucuya YALNIZ `proId` gidiyor: karşı tarafın kullanıcı kimliğini
         // sunucu buluyor. İstemcinin gönderdiği kimliğe güvenmek, başkası
@@ -1066,14 +1212,17 @@ export const useStore = create<State>()(
         }
       },
 
-      // §4.4 — kullanıcı iptali: depozito ödendiyse ve >3 saat varsa iade akışı (refund_pending);
+      // §4.7 — kullanıcı iptali: depozito ödendiyse ve >3 saat varsa iade hakkı doğar;
       // depozito ödendi + geç iptal (≤3 saat) → kapora yanar; depozito yoksa düz iptal.
       cancelBooking: (id, reason) => {
         const b = get().bookings.find((x) => x.id === id);
-        const hasDeposit = b?.status === 'confirmed' || b?.status === 'deposit_submitted';
-        const free = b ? b.startMs - Date.now() > FREE_CANCEL_WINDOW_MS : true;
-        const next: Appointment['status'] = hasDeposit && free ? 'refund_pending' : 'cancelled';
-        const forfeited = hasDeposit && !free;
+        // Brief §4.7 — iptalin SONUCU (depozito iade mi, yanar mı) 3 saat
+        // eşiğine bakar; durum her hâlükârda IPTAL_MUSTERI. İade kararı
+        // sunucuda verilir ve §4.10 kuyruğuna düşer.
+        const free = b ? !esikGecti(b.startMs) : true;
+        const next: Appointment['status'] = 'iptal_musteri';
+        // §4.7 — 3 saatten az kala iptalde depozito YANAR (iade edilmez).
+        const forfeited = !!b?.depositAmount && !free;
         set((s) => ({
           bookings: s.bookings.map((x) =>
             x.id === id
@@ -1086,13 +1235,13 @@ export const useStore = create<State>()(
               : x,
           ),
         }));
-        // §4.4 — backend'de doğru geçiş: iade akışı → free-cancel; aksi → düz iptal
-        // Sunucu reddederse yereli SUNUCU GERÇEĞİNE geri çek (UI asla yalan durumda kalmaz)
-        const restore = () => void get().hydrateBookings();
-        if (next === 'refund_pending') void api.freeCancelBooking(id, reason).catch(restore);
-        else void api.cancelBooking(id, reason).catch(restore);
+        // §4.7 — İPTAL TEK UÇTAN. Eskiden "serbest iptal" ayrı bir uca gidiyordu
+        // ve iki kural iki yerde yaşıyordu; depozitonun iade mi yanma mı olduğu
+        // artık yalnız SUNUCUDA, 3 saat eşiğine bakılarak belirleniyor.
+        // Sunucu reddederse yereli SUNUCU GERÇEĞİNE geri çek (UI asla yalan durumda kalmaz).
+        void get().randevuEylemi(id, 'iptal', reason ?? '');
         if (b) {
-          if (next === 'refund_pending')
+          if (next === 'iptal_musteri')
             get().pushNotification({
               type: 'booking',
               titleKey: 'notif.cancel_refund',
@@ -1119,54 +1268,12 @@ export const useStore = create<State>()(
         }
       },
 
-      // §4.4 — uzman iade dekontunu yükler → kullanıcı "aldım" onayı beklenir
-      uploadRefundReceipt: (id, receiptUri) => {
-        set((s) => ({
-          bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'refund_submitted', refundReceiptUri: receiptUri } : b,
-          ),
-        }));
-        void api.uploadRefundReceiptApi(id, receiptUri).catch(() => undefined); // §4.4 backend
-        const b = get().bookings.find((x) => x.id === id);
-        // §12.4 — iade dekontu admin anlaşmazlık kuyruğuna düşer (dekont görseliyle)
-        const token = get().token;
-        if (b && token)
-          void api
-            .fileDispute(token, {
-              bookingRef: id,
-              proName: b.proName,
-              service: b.service,
-              kind: 'refund',
-              amount: b.depositAmount ?? 0,
-              receiptUri,
-            })
-            .catch(() => undefined);
-        if (b)
-          get().pushNotification({
-            type: 'booking',
-            titleKey: 'notif.refund_uploaded',
-            bodyKey: 'notif.refund_uploaded_b',
-            params: { pro: b.proName },
-            dateLabel: 'Az önce',
-            icon: 'receipt-outline',
-            route: `/booking/${id}`,
-          });
-      },
-
-      // §4.4 — kullanıcı iadeyi aldı → kayıt kapanır
-      confirmRefund: (id) => {
-        set((s) => ({
-          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b)),
-        }));
-        void api.confirmRefundApi(id).catch(() => undefined); // §4.4 backend
-      },
-
       // §4.4 — taraflar itiraz açar (destek/admin kuyruğuna düşer)
       disputeBooking: (id) => {
         set((s) => ({
-          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'disputed' } : b)),
+          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'uyusmazlik' } : b)),
         }));
-        void api.disputeBookingApi(id).catch(() => undefined); // §4.4 backend durum geçişi
+        void get().randevuEylemi(id, 'itiraz');
         const b = get().bookings.find((x) => x.id === id);
         // §12.4 — itiraz backend anlaşmazlık kuyruğuna düşer (varsa depozito dekontuyla)
         const token = get().token;
@@ -1202,7 +1309,7 @@ export const useStore = create<State>()(
           const asked = get().surveyAskedIds;
           const due = get().bookings.filter(
             (b) =>
-              b.status === 'completed' &&
+              b.status === 'tamamlandi' &&
               !asked.includes(b.id) &&
               now >= b.startMs + b.durationMin * 60_000 + 3 * 60 * 60_000,
           );
@@ -1226,37 +1333,32 @@ export const useStore = create<State>()(
           const now = Date.now();
           const news: AppNotification[] = [];
           const bookings = s.bookings.map((b) => {
-            if (b.status !== 'confirmed') return b;
+            if (b.status !== 'kesinlesti') return b;
             const left = b.startMs - now;
             if (left <= 0) return b;
             let nb = b;
-            if (left <= REMIND_24H_MS && !b.reminded24) {
+            // §4.5 — üç aşamalı hatırlatma. Her biri BİR KEZ: bayraklar
+            // randevuda tutuluyor ve sunucu tazelemesinde korunuyor.
+            const plan = [
+              [REMIND_FREE_CANCEL_MS, 'reminded24', 'notif.free_cancel', 'notif.free_cancel_b'],
+              [REMIND_1H_MS, 'reminded2', 'notif.remind_1h', 'notif.remind_1h_b'],
+              [REMIND_30M_MS, 'reminded30', 'notif.remind_30m', 'notif.remind_30m_b'],
+            ] as const;
+            for (const [esik, bayrak, baslik, govde] of plan) {
+              if (left > esik) continue;
+              if (nb[bayrak]) continue;
               news.push({
                 id: nextId('n'),
                 type: 'booking',
-                titleKey: 'notif.remind_24',
-                bodyKey: 'notif.remind_24_b',
+                titleKey: baslik,
+                bodyKey: govde,
                 params: { pro: b.proName, slot: formatSlotTr(b.startMs) },
                 dateLabel: 'Az önce',
                 icon: 'alarm-outline',
                 read: false,
                 route: `/booking/${b.id}`,
               });
-              nb = { ...nb, reminded24: true };
-            }
-            if (left <= REMIND_2H_MS && !nb.reminded2) {
-              news.push({
-                id: nextId('n'),
-                type: 'booking',
-                titleKey: 'notif.remind_2',
-                bodyKey: 'notif.remind_2_b',
-                params: { pro: b.proName, slot: formatSlotTr(b.startMs) },
-                dateLabel: 'Az önce',
-                icon: 'alarm-outline',
-                read: false,
-                route: `/booking/${b.id}`,
-              });
-              nb = { ...nb, reminded2: true };
+              nb = { ...nb, [bayrak]: true };
             }
             return nb;
           });
@@ -1368,7 +1470,7 @@ export const useStore = create<State>()(
         return { count, demandId };
       },
 
-      // §5.2 Faz A — seçim BULUTTA: randevu sunucuda doğar (deposit_pending), kazanan uzmana
+      // §5.2 Faz A — seçim BULUTTA: randevu sunucuda doğar (depozito_bekliyor), kazanan uzmana
       // ve seçilmeyenlere GERÇEK push sunucudan gider.
       selectOffer: async (demandId, offerId, slotMs) => {
         const token = get().token;
@@ -1435,17 +1537,19 @@ export const useStore = create<State>()(
         }));
       },
 
-      // §4.3 — dekont yükleme süresi dolan deposit_pending randevular otomatik düşer (slot açılır)
+      // §4.4 — depozito süresi dolan randevular otomatik düşer (slot açılır)
       expireDeposits: () => {
         const now = Date.now();
         const expired = get().bookings.filter(
           (b) =>
-            b.status === 'deposit_pending' && b.depositDeadline != null && b.depositDeadline <= now,
+            b.status === 'depozito_bekliyor' &&
+            b.depositDeadline != null &&
+            b.depositDeadline <= now,
         );
         if (expired.length === 0) return;
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            expired.some((e) => e.id === b.id) ? { ...b, status: 'cancelled' } : b,
+            expired.some((e) => e.id === b.id) ? { ...b, status: 'iptal_musteri' } : b,
           ),
         }));
         for (const b of expired)
@@ -1465,15 +1569,13 @@ export const useStore = create<State>()(
         const now = Date.now();
         const expired = get().bookings.filter(
           (b) =>
-            b.status === 'awaiting_provider' &&
-            b.responseDeadline != null &&
-            b.responseDeadline <= now,
+            b.status === 'onay_bekliyor' && b.responseDeadline != null && b.responseDeadline <= now,
         );
         if (expired.length === 0) return;
         set((s) => ({
           bookings: s.bookings.map((b) =>
             expired.some((e) => e.id === b.id)
-              ? { ...b, status: 'cancelled', cancelReason: 'response_timeout' }
+              ? { ...b, status: 'iptal_musteri', cancelReason: 'response_timeout' }
               : b,
           ),
         }));
@@ -1504,102 +1606,58 @@ export const useStore = create<State>()(
           return changed ? { demands } : {};
         }),
 
-      // §4.5 — uzman kadrodan çıkınca gelecek randevuları yeni uzmana devret (SESSİZ SİLME YASAK):
-      // her randevu reassigned_pending olur, kullanıcı yeniden onaylar. Devredilen sayıyı döndürür.
-      reassignStaffBookings: (oldUzman, newUzman) => {
+      /**
+       * Uzman kadrodan çıkınca AÇIK randevularına ne olur?
+       *
+       * DEVRETME KALDIRILDI: brief'te böyle bir akış yok ve §0 "salon rolü bu
+       * akışta yoktur" diyor. Müşterinin randevusunu haberi olmadan başka bir
+       * uzmana taşımak, seçtiği kişiden başkasına yönlendirmek olurdu.
+       *
+       * Yerine: randevular UZMAN İPTALİ olarak kapanır. Sessiz silme yine
+       * yasak — her randevu sunucuda da iptal edilir, depozito ödendiyse §4.10
+       * iade hakkı doğar ve müşteriye bildirim gider. İptal edilen sayı döner.
+       */
+      cikanUzmanRandevulari: (uzmanAdi) => {
         const now = Date.now();
-        const affected = get().bookings.filter(
+        const etkilenen = get().bookings.filter(
           (b) =>
-            b.uzmanName === oldUzman &&
+            b.uzmanName === uzmanAdi &&
             b.startMs > now &&
-            (b.status === 'confirmed' ||
-              b.status === 'deposit_pending' ||
-              b.status === 'deposit_submitted' ||
-              b.status === 'awaiting_provider'),
+            SLOT_HOLDING_STATES.includes(b.status as never),
         );
-        if (affected.length === 0) return 0;
+        if (etkilenen.length === 0) return 0;
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            affected.some((a) => a.id === b.id)
-              ? {
-                  ...b,
-                  status: 'reassigned_pending',
-                  reassignedFrom: oldUzman,
-                  uzmanName: newUzman,
-                }
+            etkilenen.some((a) => a.id === b.id)
+              ? { ...b, status: 'iptal_uzman' as const, cancelReason: 'Uzman kadrodan ayrıldı' }
               : b,
           ),
         }));
-        // SUNUCUYA YAZ: devretme yalnız yereldeydi, salon uygulamayı kapatıp
-        // açınca randevular eski uzmanda görünüyordu ve müşteriye giden onay
-        // isteği hiç var olmuyordu.
-        const token = get().token;
-        if (token)
-          for (const b of affected)
-            void api.reassignBooking(token, b.id, newUzman).catch(() => undefined);
-        for (const b of affected)
+        for (const b of etkilenen) {
+          // Sunucu kararı verir: iptali kim yaptı, depozito iade mi edilecek.
+          void get().randevuEylemi(b.id, 'iptal', 'Uzman kadrodan ayrıldı');
           get().pushNotification({
             type: 'booking',
-            titleKey: 'notif.reassigned',
-            bodyKey: 'notif.reassigned_b',
-            params: { pro: b.proName, old: oldUzman, new: newUzman },
+            titleKey: 'notif.cancel_refund',
+            bodyKey: 'notif.cancel_refund_b',
+            params: { pro: b.proName },
             dateLabel: 'Az önce',
-            icon: 'swap-horizontal-outline',
+            icon: 'alert-circle-outline',
             route: `/booking/${b.id}`,
           });
-        return affected.length;
-      },
-
-      // §4.5 — kullanıcı yeni uzmanı kabul eder → randevu tekrar onaylı
-      acceptReassignment: (id) => {
-        const onceki = get().bookings.find((b) => b.id === id);
-        set((s) => ({
-          bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'confirmed', reassignedFrom: undefined } : b,
-          ),
-        }));
-        // SUNUCUYA YAZ: durum yalnız yereldeydi, hydrate eski hâli geri
-        // getiriyordu — müşteri onayladığını sanıyor, randevu onaysız kalıyordu.
-        const token = get().token;
-        if (!token || !onceki) return;
-        void api.acceptReassignApi(token, id).catch(() => {
-          set((s) => ({ bookings: s.bookings.map((b) => (b.id === id ? onceki : b)) }));
-        });
-      },
-
-      // §4.5 — kullanıcı reddeder → iptal (depozito ödediyse iade akışı ayrıca yürür)
-      // §4.5 — kullanıcı yeni uzmanı reddeder. Depozito ödediyse KUSURSUZ iptal (uzman ayrıldı)
-      // → iade akışı; ödemediyse düz iptal. (Önceki hata: her koşulda kapora yakılıyordu.)
-      rejectReassignment: (id) => {
-        const b = get().bookings.find((x) => x.id === id);
-        const paid = b?.status === 'reassigned_pending' && b.depositAmount != null;
-        set((s) => ({
-          bookings: s.bookings.map((x) =>
-            x.id === id
-              ? { ...x, status: paid ? 'refund_pending' : 'cancelled', reassignedFrom: undefined }
-              : x,
-          ),
-        }));
-        // SUNUCUYA YAZ. Bu bir PARA kararı: kapora iade mi edilecek yoksa
-        // randevu düz mü iptal olacak? Kararı istemci veriyordu ve sunucuya hiç
-        // ulaşmıyordu. Sunucuda kapora ASLA yanmaz — değişiklik müşteriden
-        // değil sağlayıcıdan geldi.
-        const token = get().token;
-        if (!token || !b) return;
-        void api.rejectReassignApi(token, id).catch(() => {
-          set((s) => ({ bookings: s.bookings.map((x) => (x.id === id ? b : x)) }));
-        });
+        }
+        return etkilenen.length;
       },
 
       // §1.6/§4.1 — kullanıcı uzmanın önerdiği alternatif saati kabul eder → DEPOZİTO adımı
-      // (Önceki hata: doğrudan 'confirmed' yapıp depozitoyu atlıyordu.)
+      // (Önceki hata: doğrudan 'kesinlesti' yapıp depozitoyu atlıyordu.)
       acceptAlternative: (id) => {
         set((s) => ({
           bookings: s.bookings.map((b) =>
             b.id === id
               ? {
                   ...b,
-                  status: 'deposit_pending',
+                  status: 'depozito_bekliyor',
                   depositAmount: localDeposit(b.price, s.config.rates),
                   depositDeadline: depositDeadlineFor(b.proposedStartMs ?? b.startMs, Date.now()),
                   startMs: b.proposedStartMs ?? b.startMs,
@@ -1608,7 +1666,7 @@ export const useStore = create<State>()(
               : b,
           ),
         }));
-        void api.acceptBooking(id).catch(() => undefined);
+        void get().randevuEylemi(id, 'kabul');
         const b = get().bookings.find((x) => x.id === id);
         if (b)
           get().pushNotification({
@@ -1633,7 +1691,7 @@ export const useStore = create<State>()(
             b.id === id
               ? {
                   ...b,
-                  status: 'deposit_pending',
+                  status: 'depozito_bekliyor',
                   respondedAt: Date.now(),
                   depositAmount: localDeposit(b.price, s.config.rates),
                   depositDeadline: depositDeadlineFor(b.startMs, Date.now()),
@@ -1641,7 +1699,7 @@ export const useStore = create<State>()(
               : b,
           ),
         }));
-        void api.approveBooking(id).catch(() => undefined);
+        void get().randevuEylemi(id, 'onayla');
         const b = get().bookings.find((x) => x.id === id);
         if (b)
           get().pushNotification({
@@ -1663,10 +1721,10 @@ export const useStore = create<State>()(
       rejectBooking: (id) => {
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'cancelled', respondedAt: Date.now() } : b,
+            b.id === id ? { ...b, status: 'iptal_musteri', respondedAt: Date.now() } : b,
           ),
         }));
-        void api.cancelBooking(id, 'provider_rejected').catch(() => undefined);
+        void get().randevuEylemi(id, 'reddet', 'provider_rejected');
         const b = get().bookings.find((x) => x.id === id);
         if (b)
           get().pushNotification({
@@ -1689,13 +1747,13 @@ export const useStore = create<State>()(
               ? {
                   ...b,
                   startMs,
-                  status: 'awaiting_provider',
+                  status: 'onay_bekliyor',
                   responseDeadline: Date.now() + RESPONSE_WINDOW_MS,
                 }
               : b,
           ),
         }));
-        void api.counterBooking(id, startMs).catch(() => undefined);
+        void get().randevuEylemi(id, 'karsi_oner', startMs);
         get().pushNotification({
           type: 'booking',
           titleKey: 'notif.reschedule',
@@ -1712,14 +1770,14 @@ export const useStore = create<State>()(
             b.id === id
               ? {
                   ...b,
-                  status: 'alternative_proposed',
+                  status: 'degisiklik_onerildi',
                   proposedStartMs: startMs,
                   respondedAt: Date.now(),
                 }
               : b,
           ),
         }));
-        void api.proposeBooking(id, startMs).catch(() => undefined);
+        void get().randevuEylemi(id, 'degistir', startMs);
         const b = get().bookings.find((x) => x.id === id);
         if (b)
           get().pushNotification({
@@ -1737,10 +1795,10 @@ export const useStore = create<State>()(
       submitReceipt: (id, receiptUri) => {
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'deposit_submitted', receiptUri } : b,
+            b.id === id ? { ...b, status: 'kesinlesti', receiptUri } : b,
           ),
         }));
-        void api.submitDepositReceipt(id, receiptUri).catch(() => undefined); // §4.2 backend
+        void get().randevuEylemi(id, 'dekont', receiptUri);
         const b = get().bookings.find((x) => x.id === id);
         if (b)
           get().pushNotification({
@@ -1754,25 +1812,6 @@ export const useStore = create<State>()(
           });
       },
 
-      // §4.3 adım 3 — uzman dekontu görür → "Aldım, onaylıyorum" → randevu KESİN
-      confirmReceipt: (id) => {
-        set((s) => ({
-          bookings: s.bookings.map((b) => (b.id === id ? { ...b, status: 'confirmed' } : b)),
-        }));
-        void api.confirmDepositReceipt(id).catch(() => undefined); // §4.2 backend
-        const b = get().bookings.find((x) => x.id === id);
-        if (b)
-          get().pushNotification({
-            type: 'booking',
-            titleKey: 'notif.confirmed',
-            bodyKey: 'notif.confirmed_b',
-            params: { pro: b.proName, slot: formatSlotTr(b.startMs) },
-            dateLabel: 'Az önce',
-            icon: 'checkmark-circle-outline',
-            route: `/booking/${id}`,
-          });
-      },
-
       // §4.4 — uzman kullanıcıyı "gelmedi" işaretler → kapora uzmanda kalır (depositForfeited).
       // Kural: randevu saatinin üzerinden 1 saat geçmeden işaretlenemez (UI da gizler; bu son savunma).
       markNoShow: (id) => {
@@ -1780,20 +1819,20 @@ export const useStore = create<State>()(
         if (bk?.startMs && Date.now() < bk.startMs + 60 * 60 * 1000) return;
         set((s) => ({
           bookings: s.bookings.map((b) =>
-            b.id === id ? { ...b, status: 'no_show', depositForfeited: true } : b,
+            b.id === id ? { ...b, status: 'no_show_musteri', depositForfeited: true } : b,
           ),
         }));
-        void api.noShowApi(id).catch(() => undefined); // buluta taşı (best-effort)
+        void get().randevuEylemi(id, 'musteri_gelmedi');
       },
 
-      // §4.1.7 — uzman hizmeti tamamladı: randevu 'completed' + kullanıcıya değerlendirme daveti
+      // §4.1.7 — uzman hizmeti tamamladı: randevu 'tamamlandi' + kullanıcıya değerlendirme daveti
       completeBooking: (id) => {
         const b = get().bookings.find((x) => x.id === id);
-        if (!b || b.status === 'completed') return;
+        if (!b || b.status === 'tamamlandi') return;
         set((s) => ({
-          bookings: s.bookings.map((x) => (x.id === id ? { ...x, status: 'completed' } : x)),
+          bookings: s.bookings.map((x) => (x.id === id ? { ...x, status: 'tamamlandi' } : x)),
         }));
-        void api.completeBookingApi(id).catch(() => undefined); // backend'e taşı (best-effort)
+        void get().randevuEylemi(id, 'islemi_bitirdim');
         // §7.1 — yalnız AYNA (online) randevularında kullanıcıya değerlendirme daveti (offline'da müşteri hesabı yok)
         if (b.source !== 'direct')
           get().pushNotification({
@@ -1814,11 +1853,11 @@ export const useStore = create<State>()(
         set((s) => ({
           // Uzman iade etmekle yükümlü → refund_pending; kapora yanmaz
           bookings: s.bookings.map((x) =>
-            x.id === id ? { ...x, status: 'refund_pending', providerNoShow: true } : x,
+            x.id === id ? { ...x, status: 'iptal_musteri', providerNoShow: true } : x,
           ),
         }));
         // §4.4-b backend: iade akışı + 1000₸ uzmanın komisyon borcuna (best-effort)
-        void api.providerNoShowApi(id).catch(() => undefined);
+        void get().randevuEylemi(id, 'uzman_gelmedi');
         // Telafi puanı — yerel + backend loyalty ledger (earn zaten api.earnPoints çağırır)
         get().earn(1000, 'rewards.earn.provider_noshow', b.proName);
         get().pushNotification({
@@ -1852,6 +1891,7 @@ export const useStore = create<State>()(
       },
 
       pendingBookingSync: [],
+      pendingBookingActions: [],
 
       // Sunucuya yazımı garantile: başarısızsa id kuyrukta kalır, flushBookingSync yeniden dener.
       // createBooking sunucuda id ile upsert (idempotent) — tekrar gönderim çift kayıt yaratmaz.
@@ -1869,6 +1909,60 @@ export const useStore = create<State>()(
             })),
           )
           .catch(() => undefined); // kuyrukta kalır — açılışta/hydrate'te yeniden denenir
+      },
+
+      /**
+       * Bir randevu eylemini sunucuya yazar; başarısızsa KUYRUĞA ALIR.
+       *
+       * Yereli çağıran zaten iyimser güncelledi. Buradaki iş, o güncellemenin
+       * sunucuda da gerçek olmasını garanti etmek.
+       */
+      randevuEylemi: async (id: string, eylem: BookingEylem, arg?: BookingEylemArg) => {
+        try {
+          await bookingEylemGonder(id, eylem, arg);
+          return 'yazildi';
+        } catch (err) {
+          // KALICI RED (geçersiz geçiş, yetki yok) tekrar denenmez: sunucu bu
+          // eylemi hiçbir zaman kabul etmeyecek. Yereli sunucu gerçeğine çek.
+          if (err instanceof ApiError && kaliciRed(err)) {
+            void get().hydrateBookings();
+            return 'reddedildi';
+          }
+          // GEÇİCİ hata (ağ yok, sunucu uykuda): eylem KAYBOLMAZ, kuyruğa girer
+          // ve açılışta/tazelemede yeniden gönderilir.
+          set((st) => ({
+            pendingBookingActions: [
+              ...st.pendingBookingActions,
+              { id, eylem, ...(arg !== undefined ? { arg } : {}) },
+            ],
+          }));
+          return 'kuyrukta';
+        }
+      },
+
+      flushBookingActions: async () => {
+        const { pendingBookingActions, token } = get();
+        if (!token || pendingBookingActions.length === 0) return;
+        // Kopya üzerinde yürü: gönderim sırasında yeni eylem eklenebilir.
+        for (const is of [...pendingBookingActions]) {
+          try {
+            await bookingEylemGonder(is.id, is.eylem, is.arg);
+            set((st) => ({
+              pendingBookingActions: st.pendingBookingActions.filter((x) => x !== is),
+            }));
+          } catch (err) {
+            if (err instanceof ApiError && kaliciRed(err)) {
+              // Sunucu kalıcı olarak reddetti — sonsuza kadar denemenin anlamı
+              // yok. Kuyruktan düşür; tazeleme yereli gerçeğe çekecek.
+              set((st) => ({
+                pendingBookingActions: st.pendingBookingActions.filter((x) => x !== is),
+              }));
+              continue;
+            }
+            // Geçici hata: kuyrukta KALSIN, sıradaki denemeye bırak.
+            break;
+          }
+        }
       },
 
       flushBookingSync: async () => {
@@ -1933,8 +2027,11 @@ export const useStore = create<State>()(
           return;
         }
         set({ bookingsLoading: true });
-        // Önce bekleyen yazımlar sunucuya gitsin ki tazeleme onları "sunucudan" geri getirsin
+        // Önce bekleyen yazımlar sunucuya gitsin ki tazeleme onları "sunucudan"
+        // geri getirsin. SIRA ÖNEMLİ: eylemler tazelemeden ÖNCE gitmezse
+        // sunucunun eski hâli yereli ezer ve kullanıcının işlemi kaybolur.
         await get().flushBookingSync();
+        await get().flushBookingActions();
         try {
           const role = get().currentUser?.role;
           const isProvider = role === 'professional' || role === 'salon';
@@ -2808,6 +2905,8 @@ export const useStore = create<State>()(
         // kapat-aç sonrası sunucuya ulaşmamış talep kaybolmaz, kuyruktan eşitlenir.
         bookings: s.bookings,
         pendingBookingSync: s.pendingBookingSync,
+        // Sunucuya ulaşmamış EYLEMLER de kalıcı: kapat-aç sonrası kaybolmaz.
+        pendingBookingActions: s.pendingBookingActions,
         // Bunlar persist edilmiyordu: her açılışta liste boşalıyor, dedup'lar
         // (duyuru id'si, anket sorulmuşluğu) sıfırlanıyor ve TÜM bildirimler
         // yeniden OKUNMAMIŞ olarak üretiliyordu.
@@ -2849,6 +2948,7 @@ useStore.persist.onFinishHydration((state) => {
     });
     // Açılışta bekleyen sunucu yazımlarını eşitle (önceki oturumda ağ yoksa burada tamamlanır)
     void useStore.getState().flushBookingSync();
+    void useStore.getState().flushBookingActions();
   }
   // Medya önbelleği: persist DIŞI tutulan foto/portre açılışta cihaz önbelleğinden anında gelir;
   // refreshMembership ardından hesapla eşitler (hesap boşsa self-heal yükler).
@@ -2882,16 +2982,7 @@ export const inAudience = (n: { audience?: 'user' | 'seller' }, seller: boolean)
 // admin kuralları kullanılır; aksi hâlde bildirimde "1.000 ₸" yazıp ödeme ekranında
 // başka tutar istenirdi. Config gelmemişse fonksiyonun kendi varsayılanları geçerli.
 export const localDeposit = (price: number, rates: State['config']['rates']): number =>
-  depositFor(price, {
-    pct: rates.depositPct ?? DEFAULT_DEPOSIT_RULES.pct,
-    minKzt: rates.depositMin ?? DEFAULT_DEPOSIT_RULES.minKzt,
-    maxKzt: rates.depositMax ?? DEFAULT_DEPOSIT_RULES.maxKzt,
-    stepKzt: DEFAULT_DEPOSIT_RULES.stepKzt,
-    // K2 tavanı da SUNUCUDAN gelmeli: admin oranı değiştirdiğinde istemci
-    // varsayılanda kalırsa bildirimde bir tutar, ödeme ekranında başka bir
-    // tutar çıkar — bu dosyanın yukarıdaki yorumu tam bunu yasaklıyor.
-    maxSharePct: rates.depositMaxSharePct ?? DEFAULT_DEPOSIT_RULES.maxSharePct,
-  });
+  depositFor(price, { pct: rates.depositPct ?? DEFAULT_DEPOSIT_RULES.pct });
 
 // §12.8 — komisyon oranı SUNUCUDAN gelir. Burada eskiden "Platinum'da %8,5"
 // vardı; sunucu komisyonu hesaplarken membershipTier'ı hiç okumuyor, yani o
@@ -2960,7 +3051,9 @@ export const selectUnreadCount = (s: State): number => {
 };
 
 export const selectActiveBookings = (s: State): Appointment[] =>
-  s.bookings.filter((b) => b.status === 'confirmed' || b.status === 'pending');
+  // Kullanıcının "canlı" randevuları: slot tutan her durum. Elle sayınca yeni
+  // bir durum eklendiğinde listeden düşüyordu.
+  s.bookings.filter((b) => SLOT_HOLDING_STATES.includes(b.status as never));
 
 /**
  * EKRANDA GÖSTERİLECEK PORTRE — kesik portre yalnız GEÇERLİYSE kullanılır.

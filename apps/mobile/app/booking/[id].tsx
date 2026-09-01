@@ -1,1247 +1,363 @@
-import { useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { computeDaySlots } from '@ayna/domain';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { esikGecti } from '@ayna/domain';
 import {
-  type Appointment,
-  DEPOSIT_KZT,
-  FREE_CANCEL_WINDOW_MS,
-  type BookingSource,
-  type BookingStatus,
-  formatPrice,
-} from '../../src/data';
-import { api } from '../../src/api';
-import { almatyDayStart, formatSlot } from '../../src/datetime';
+  DURUM_ETIKETI,
+  DURUM_TONU,
+  beklemeMetni,
+  birincilAksiyon,
+  iptalEdilebilir,
+  karsiTarafBekleniyor,
+  type Aksiyon,
+  type Rol,
+} from '../../src/booking-flow';
+import { formatSlotTr } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
-import type { MessageKey } from '@ayna/i18n';
-import { type ColorTokens, radius, space, font } from '../../src/theme';
+import { localDeposit, useStore, type BookingEylem } from '../../src/store';
+import { radius, shadow, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
-  BookingSteps,
+  AkisCizelgesi,
+  BeklemeNabzi,
   Button,
-  MoneyBreakdown,
+  Sayac,
   Screen,
-  SlotPicker,
   StackHeader,
-  Text,
-  type PickerDay,
   TAB_BAR_CLEARANCE,
+  Text,
 } from '../../src/ui';
 
-/** Adım çubuğunun anlamlı olduğu canlı akış durumları (iptal/itiraz/no-show hariç). */
-const LIVE_FLOW: BookingStatus[] = [
-  'awaiting_provider',
-  'alternative_proposed',
-  'pending',
-  'deposit_pending',
-  'deposit_submitted',
-  'confirmed',
-  'completed_pending',
-  'completed',
-];
-
-const SOURCE_KEY: Record<BookingSource, MessageKey> = {
-  direct: 'bookings.tab.direct',
-  photo_quote: 'bookings.tab.photo',
-  demand: 'bookings.tab.demand',
-};
-
 /**
- * DEKONT GÖRÜNTÜSÜ — kırpma yok, dokununca tam ekran.
+ * RANDEVU KARTI — brief §7 Faz B.
  *
- * Eskiden düz bir `Image` idi: 160pt sabit yükseklik ve React Native'in
- * varsayılan `cover` davranışı. Yani dekontun ORTASINDAN bir şerit
- * gösteriliyordu; tutar, tarih ve gönderen çoğu zaman kırpılan kısımda
- * kalıyordu ve büyütmenin bir yolu yoktu.
+ * Kart baştan yazıldı. Eski dosya 1320 satırdı ve her durum için ayrı bir
+ * `status === '...'` bloğu taşıyordu; aynı ekranda birden fazla birincil buton
+ * çıkabiliyor, yeni bir durum eklendiğinde bazı bloklar sessizce ölüyordu.
  *
- * Bu üç yerde de PARA KARARI veriliyor: müşteri "iadeyi aldım" diyor,
- * uzman müşterinin kaporasını onaylıyor. Okunamayan bir kanıta bakarak
- * onay istemek, onayı anlamsız kılar.
- *
- * `contain` tamamını gösteriyor, dokunma tam ekran görüntüleyiciye
- * (`/gallery`, yakınlaştırmalı) götürüyor.
+ * Brief'in üç ilkesi burada uygulanıyor:
+ *   · "Tek birincil buton" — hangi butonun çıkacağına `booking-flow` karar
+ *     verir; ekran yalnız çizer. Karar tek yerde olduğu için müşteri ve uzman
+ *     ekranı çelişemez.
+ *   · "Kargo takibi tarzı zaman çizelgesi" — `AkisCizelgesi`.
+ *   · "Tüm süre sınırları ekranda görünür geri sayımla; görünmez zaman sınırı
+ *     yasak" — depozito 10 dk ve uzman yanıtı 3 saat sayaçla gösteriliyor.
  */
-function Dekont({ uri }: { uri: string }) {
-  const router = useRouter();
-  const { t } = useLocale();
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <Pressable
-      accessibilityRole="imagebutton"
-      accessibilityLabel={t('booking.receipt.tap')}
-      onPress={() =>
-        router.push({ pathname: '/gallery', params: { images: JSON.stringify([uri]) } })
-      }
-    >
-      <Image source={{ uri }} style={styles.receiptThumb} resizeMode="contain" />
-      <Text variant="caption" tone="muted" style={styles.receiptHint}>
-        {t('booking.receipt.tap')}
-      </Text>
-    </Pressable>
-  );
-}
-
-export default function BookingDetailScreen() {
-  const router = useRouter();
-  const { t } = useLocale();
-  const { colors, shadow } = useTheme();
-  const styles = useThemedStyles(makeStyles);
+export default function BookingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const localBooking = useStore((s) => s.bookings.find((b) => b.id === id));
-  const allBookings = useStore((s) => s.bookings);
-  // §4.2 — uzman tarafı: randevu yerel store'da yoksa (push'tan gelindi) sunucudan çek
-  const [remoteBooking, setRemoteBooking] = useState<Appointment | null>(null);
-  const token = useStore((s) => s.token);
-  const isProviderRole = useStore(
-    (s) => s.currentUser?.role === 'professional' || s.currentUser?.role === 'salon',
-  );
-  useEffect(() => {
-    if (localBooking || !id || !token) return;
-    let alive = true;
-    // GİZLİLİK: yalnız kendi randevularımda ara (müşteri: mine; uzman/salon: provider da)
-    void Promise.all([
-      api.myBookings(token).catch(() => []),
-      isProviderRole ? api.providerBookings(token).catch(() => []) : Promise.resolve([]),
-    ])
-      .then(([mine, prov]) => {
-        if (!alive) return;
-        const rows = [...mine, ...prov];
-        setRemoteBooking(rows.find((b) => b.id === id) ?? null);
-      })
-      .catch(() => undefined);
-    return () => {
-      alive = false;
-    };
-  }, [localBooking, id, token, isProviderRole]);
-  const booking = localBooking ?? remoteBooking ?? undefined;
-  const closedDays = useStore((s) => s.closedDays);
-  const cancelBooking = useStore((s) => s.cancelBooking);
-  const acceptAlternative = useStore((s) => s.acceptAlternative);
-  const approveBooking = useStore((s) => s.approveBooking);
-  const rejectBooking = useStore((s) => s.rejectBooking);
-  const proposeAlternative = useStore((s) => s.proposeAlternative);
-  const submitReceipt = useStore((s) => s.submitReceipt);
-  const confirmReceipt = useStore((s) => s.confirmReceipt);
-  const markNoShow = useStore((s) => s.markNoShow);
-  const completeBooking = useStore((s) => s.completeBooking);
-  const reportProviderNoShow = useStore((s) => s.reportProviderNoShow);
-  const giveCustomerSignal = useStore((s) => s.giveCustomerSignal);
-  const uploadRefundReceipt = useStore((s) => s.uploadRefundReceipt);
-  const confirmRefund = useStore((s) => s.confirmRefund);
-  const disputeBooking = useStore((s) => s.disputeBooking);
+  const { t } = useLocale();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
+
+  const booking = useStore((s) => s.bookings.find((b) => b.id === id));
+  const currentUser = useStore((s) => s.currentUser);
+  const rates = useStore((s) => s.config.rates);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
-  const dropLocalBooking = useStore((s) => s.dropLocalBooking);
-  const acceptReassignment = useStore((s) => s.acceptReassignment);
-  const rejectReassignment = useStore((s) => s.rejectReassignment);
-  const role = useStore((s) => s.currentUser?.role);
-  // DİKKAT: müşteri rolü 'user' (eski 'customer' karşılaştırması HER müşteriyi provider sayıyordu)
-  const isProvider = role === 'professional' || role === 'salon';
-  // §10 gizlilik — SALON, uzmanın KENDİ işinin (bySalon değil) parasını/adresini görmez.
-  const salonHidesMoney = role === 'salon' && !booking?.bySalon;
-
-  const [proposeOpen, setProposeOpen] = useState(false);
-  const [proposeSel, setProposeSel] = useState<number | null>(null);
-  // §4.4 retention — modal amacı: uzman 'alternatif önerir' | müşteri 'yeni saat ister (reschedule)'
-  const [proposeMode, setProposeMode] = useState<'provider' | 'reschedule'>('provider');
-  const rescheduleBooking = useStore((s) => s.rescheduleBooking);
-
-  // Alternatif-öner modalı için uzmanın boş slotları (§4.1 adım 2)
-  const proposeDays: PickerDay[] = useMemo(() => {
-    if (!booking) return [];
-    const now = Date.now();
-    const busy = allBookings
-      .filter((b) => b.id !== booking.id && b.proId === booking.proId && b.status !== 'cancelled')
-      .map((b) => ({ startMs: b.startMs, endMs: b.startMs + b.durationMin * 60_000 }));
-    const out: PickerDay[] = [];
-    for (let d = 0; d < 14; d++) {
-      const dayStart = almatyDayStart(now, d);
-      if (closedDays.includes(dayStart)) continue; // §4.6 kapalı gün kullanıcıda görünmez
-      const openWindows = [
-        { startMs: dayStart + 10 * 3_600_000, endMs: dayStart + 19 * 3_600_000 },
-      ];
-      const slots = computeDaySlots({
-        openWindows,
-        busy,
-        serviceDurationMs: booking.durationMin * 60_000,
-        stepMs: 30 * 60_000,
-        nowMs: now,
-        minLeadMs: 2 * 3_600_000,
-      });
-      out.push({ dateMs: dayStart + 10 * 3_600_000, slots });
-    }
-    return out;
-  }, [booking, allBookings, closedDays]);
-
-  // Dekontlar DATA URL olarak yüklenir (yerel dosya yolu karşı cihazda açılmaz — §4.3)
-  async function uploadReceipt() {
-    if (!id) return;
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.35,
-      base64: true,
-    });
-    if (!res.canceled && res.assets[0]) {
-      const a = res.assets[0];
-      submitReceipt(id, a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
-    }
-  }
-
-  async function uploadRefund() {
-    if (!id) return;
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.35,
-      base64: true,
-    });
-    if (!res.canceled && res.assets[0]) {
-      const a = res.assets[0];
-      uploadRefundReceipt(id, a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
-    }
-  }
-
-  function sendProposal() {
-    if (id && proposeSel != null) {
-      // §4.4 — müşteri modunda 'yeni saat iste' (iptal yerine), uzman modunda 'alternatif öner'
-      if (proposeMode === 'reschedule') rescheduleBooking(id, proposeSel);
-      else proposeAlternative(id, proposeSel);
-    }
-    setProposeOpen(false);
-    setProposeSel(null);
-    setProposeMode('provider');
-  }
+  const randevuEylemi = useStore((s) => s.randevuEylemi);
 
   if (!booking) {
     return (
       <Screen edges={[]}>
         <StackHeader title={t('booking.detail.title')} />
-        <View style={styles.empty}>
-          <Ionicons name="calendar-outline" size={32} color={colors.muted} />
-          <Text variant="caption" tone="muted" style={styles.emptyText}>
-            {t('bookings.empty')}
+        <View style={styles.bos}>
+          <Text variant="body" tone="muted">
+            {t('booking.detail.missing')}
           </Text>
         </View>
       </Screen>
     );
   }
 
-  const st = makeStatus(colors)[booking.status];
+  const rol: Rol =
+    currentUser?.role === 'professional' || currentUser?.role === 'salon' ? 'uzman' : 'musteri';
 
-  // §6.C — iptal: "neden gelemiyorum" sebebi seçilebilir (opsiyonel)
-  function doCancel(reason?: string) {
-    if (id) cancelBooking(id, reason);
-    router.back();
+  // §4.4 — peşin %10; kalan bakiye hizmetten sonra doğrudan uzmana ödenir.
+  const pesinat = booking.depositAmount ?? localDeposit(booking.price, rates);
+  const kalan = Math.max(0, booking.price - pesinat);
+
+  // §4.8 — "gelmedi" butonları randevu saatinden 15 DAKİKA sonra aktifleşir.
+  const gelmediAcik = Date.now() >= booking.startMs + 15 * 60_000;
+  // §4.6/§4.7 — erteleme ve ücretsiz iptal yalnız 3 saat eşiğinden ÖNCE.
+  const esikOncesi = !esikGecti(booking.startMs);
+
+  const baglam = {
+    odemeBildirildi: booking.balanceDeclaredAt != null,
+    gelmediAcik,
+    esikOncesi,
+    // §4.6 — öneren kendi önerisini yanıtlayamaz; düğme yalnız karşı tarafta.
+    ...(booking.proposedBy
+      ? { ertelemeyiOneren: (booking.proposedBy === 'customer' ? 'musteri' : 'uzman') as Rol }
+      : {}),
+  };
+  const aksiyon = birincilAksiyon(booking.status, rol, baglam);
+  // Bu rolün yapacağı bir şey yoksa ama randevu akıştaysa top KARŞI TARAFTA.
+  const bekliyor = karsiTarafBekleniyor(booking.status, rol, baglam);
+
+  /**
+   * Eylemi SUNUCUYA yazar ve sonucu kullanıcıya dürüstçe söyler.
+   *
+   * Eskiden burada `api.x(...).catch(alert)` vardı: ağ yoksa uyarı çıkıyor,
+   * eylem KAYBOLUYORDU. Artık store'un kalıcı kuyruğundan geçiyor — ağ yoksa
+   * eylem cihazda duruyor, uygulama kapansa bile açılışta gönderiliyor ve
+   * kullanıcı bunu görüyor.
+   */
+  const cagir = (eylem: BookingEylem, arg?: string | number) => {
+    if (!booking) return;
+    void randevuEylemi(booking.id, eylem, arg).then((sonuc) => {
+      if (sonuc === 'kuyrukta') Alert.alert(t('flow.queued_t'), t('flow.queued_b'));
+      else void hydrateBookings();
+    });
+  };
+
+  function calistir(a: Aksiyon) {
+    if (!booking) return;
+    const bid = booking.id;
+    switch (a.eylem) {
+      case 'onayla':
+        return cagir('onayla');
+      case 'kabul':
+        return cagir('kabul');
+      case 'depozito_ode':
+        return router.push(`/booking/deposit?id=${bid}` as never);
+      case 'ertele':
+        return router.push(`/booking/reschedule?id=${bid}` as never);
+      case 'erteleme_kabul':
+        return cagir('erteleme_kabul');
+      case 'islemi_bitirdim':
+        return cagir('islemi_bitirdim');
+      case 'odeme_yaptim':
+        return cagir('odeme_yaptim');
+      case 'odeme_aldim':
+        return cagir('odeme_aldim');
+      case 'degerlendir':
+        return router.push(`/review/new?id=${bid}` as never);
+      case 'iade_iste':
+        return router.push(`/booking/refund?id=${bid}` as never);
+      case 'gelmedi':
+        // §4.8 — beyan geri alınamaz ve karşı tarafa 24 saatlik itiraz penceresi
+        // açar; onay istemek şart.
+        return Alert.alert(t('flow.noshow.confirm_t'), t('flow.noshow.confirm_b'), [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('flow.act.gelmedi'),
+            style: 'destructive',
+            onPress: () => cagir(rol === 'uzman' ? 'musteri_gelmedi' : 'uzman_gelmedi'),
+          },
+        ]);
+      default:
+        return undefined;
+    }
   }
 
-  // §4.4 retention — "başka zaman istiyorum": iptal etme, YENİ SAAT öner (randevu korunur)
-  function offerReschedule() {
-    Alert.alert(t('booking.cancel.reschedule_t'), t('booking.cancel.reschedule_b'), [
-      {
-        text: t('booking.cancel.reschedule_cta'),
-        onPress: () => {
-          setProposeMode('reschedule');
-          setProposeSel(null);
-          setProposeOpen(true); // yeni saat seçimi modalı açılır
-        },
-      },
-      {
-        text: t('booking.cancel.anyway'),
-        style: 'destructive',
-        onPress: () => doCancel(t('booking.cancel.reason.time')),
-      },
+  function iptalEt() {
+    if (!booking) return;
+    // §4.7 — 3 saat eşiğinden sonra depozito YANAR; kullanıcı bunu ÖNCEDEN bilmeli.
+    const uyari = esikOncesi ? t('flow.cancel.free_b') : t('flow.cancel.forfeit_b');
+    Alert.alert(t('flow.cancel.title'), uyari, [
       { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('flow.act.iptal'),
+        style: 'destructive',
+        onPress: () => cagir('iptal'),
+      },
     ]);
   }
 
-  // §4.4 retention — "fiyat uygun değil": kaçırma, DAHA UYGUN TEKLİF AL (reverse marketplace)
-  function offerRequote() {
-    Alert.alert(t('booking.cancel.requote_t'), t('booking.cancel.requote_b'), [
-      {
-        text: t('booking.cancel.requote_cta'),
-        onPress: () => {
-          doCancel(t('booking.cancel.reason.price'));
-          router.replace('/demand/new');
-        },
-      },
-      {
-        text: t('booking.cancel.anyway'),
-        style: 'destructive',
-        onPress: () => doCancel(t('booking.cancel.reason.price')),
-      },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
-  }
-
-  function onCancel() {
-    // §4.4 — 3 saatten az kaldıysa geç iptal: depozito yanar
-    const late = booking ? booking.startMs - Date.now() <= FREE_CANCEL_WINDOW_MS : false;
-    const msg = late ? t('booking.cancel.late_warn') : t('booking.cancel.prompt');
-    Alert.alert(t('booking.detail.cancel'), msg, [
-      {
-        text: t('booking.cancel.reason.plan'),
-        onPress: () => doCancel(t('booking.cancel.reason.plan')),
-      },
-      // Akıllı öneriler — müşteri kaçmasın (§4.4): saat → yeniden planla, fiyat → yeni teklif
-      { text: t('booking.cancel.reason.time'), onPress: offerReschedule },
-      { text: t('booking.cancel.reason.price'), onPress: offerRequote },
-      {
-        text: t('booking.cancel.no_reason'),
-        style: 'destructive',
-        onPress: () => doCancel(undefined),
-      },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
-  }
-
-  const canCancel =
-    booking.status === 'confirmed' ||
-    booking.status === 'pending' ||
-    booking.status === 'awaiting_provider' ||
-    booking.status === 'alternative_proposed' ||
-    booking.status === 'deposit_pending' ||
-    booking.status === 'deposit_submitted';
-  const showContact = booking.status === 'confirmed';
+  const ton = DURUM_TONU[booking.status];
+  const tonRengi =
+    ton === 'olumlu'
+      ? colors.success
+      : ton === 'tehlike'
+        ? colors.danger
+        : ton === 'bekleme'
+          ? colors.gold
+          : colors.muted;
 
   return (
-    <Screen edges={['bottom']}>
+    <Screen edges={[]}>
       <StackHeader title={t('booking.detail.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Uzman / salon — dokun → public profil (ticari veri içermez); offline
-            kayıtlarda proId boş olabilir, o zaman düz kart kalır */}
-        <Pressable
-          style={[styles.proCard, shadow.card]}
-          disabled={!booking.proId}
-          onPress={() => booking.proId && router.push(`/professional/${booking.proId}`)}
-        >
-          <Image source={{ uri: booking.proImage }} style={styles.proImage} />
-          <View style={styles.proBody}>
-            <View style={styles.proNameRow}>
-              <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.proNameText}>
-                {booking.proName}
-              </Text>
-              {booking.proId ? (
-                <Ionicons name="chevron-forward" size={16} color={colors.muted} />
-              ) : null}
-            </View>
-            <Text variant="caption" tone="muted" numberOfLines={1}>
-              {booking.service}
+      <ScrollView contentContainerStyle={styles.icerik} showsVerticalScrollIndicator={false}>
+        {/* ── Başlık: kim, ne, ne zaman ── */}
+        <View style={[styles.kart, shadow.card]}>
+          <View style={styles.basSatir}>
+            <Text variant="h2" tone="ink" style={styles.flex}>
+              {booking.proName}
             </Text>
-            <View style={[styles.status, { backgroundColor: st.bg }]}>
-              <Text variant="caption" style={[styles.statusText, { color: st.fg }]}>
-                {t(st.key)}
+            <View style={[styles.rozet, { backgroundColor: tonRengi + '22' }]}>
+              <Text variant="caption" style={{ color: tonRengi }}>
+                {t(DURUM_ETIKETI[booking.status])}
               </Text>
             </View>
           </View>
-        </Pressable>
+          <Text variant="body" tone="muted">
+            {booking.service}
+          </Text>
+          <Text variant="bodyStrong" tone="ink">
+            {formatSlotTr(booking.startMs)}
+          </Text>
+        </View>
 
-        {/* DURUM ADIM ÇUBUĞU — "nerede kaldık, sıra kimde". Ana ekran kartıyla AYNI bileşen.
-            İptal/bitmiş/itirazlı akışlarda çubuk anlamsız olur; yalnız canlı akışta gösterilir. */}
-        {LIVE_FLOW.includes(booking.status) ? (
-          <View style={[styles.card, shadow.card, styles.stepsCard]}>
-            <BookingSteps status={booking.status} hasReceipt={Boolean(booking.receiptUri)} />
-          </View>
-        ) : null}
-
-        {/* §7.3 — uzmana yalnız POZİTİF rozet gösterilir (kullanıcı puanı/negatif sinyal ASLA) */}
-        {isProvider && booking.customerTrusted ? (
-          <View style={styles.trustRow}>
-            <Ionicons name="shield-checkmark" size={15} color={colors.success} />
-            <Text variant="caption" style={styles.trustRowText}>
-              {t('trust.reliable')}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* Detaylar */}
-        <View style={[styles.card, shadow.card]}>
-          <Field icon="cut-outline" labelKey="booking.field.service" value={booking.service} />
-          <Field
-            icon="time-outline"
-            labelKey="booking.field.datetime"
-            value={formatSlot(booking.startMs, t)}
-          />
-          {booking.uzmanName ? (
-            <Field icon="person-outline" labelKey="booking.field.pro" value={booking.uzmanName} />
+        {/* ── §7 — kargo takibi tarzı zaman çizelgesi ── */}
+        <View style={[styles.kart, shadow.card]}>
+          <AkisCizelgesi status={booking.status} />
+          {/* KARŞILIKLI ONAY BEKLENİYORSA nabız. Durum rozeti durağan bir
+              etiket; kullanıcı bir şeyin işlediğinden emin olamıyor. Nabız
+              "sistem çalışıyor, sıra sende değil" diyor. */}
+          {bekliyor ? (
+            <View style={styles.nabizKap}>
+              <BeklemeNabzi metin={t(beklemeMetni(booking.status, rol))} renk={tonRengi} />
+            </View>
           ) : null}
-          <Field
-            icon="git-branch-outline"
-            labelKey="booking.detail.source"
-            value={t(SOURCE_KEY[booking.source])}
-            last={salonHidesMoney}
-          />
         </View>
 
-        {/* PARA DÖKÜMÜ — "para hareket edecekse tutar önce yazılır".
-            Kapora oranı ve tutarı yan yana; yerinde ödenecek kalan aynı kartta.
-            §10 gizlilik — salon, uzmanın kendi işinin parasını görmez. */}
-        {salonHidesMoney ? null : (
-          <MoneyBreakdown
-            price={booking.price}
-            deposit={booking.depositAmount}
-            format={formatPrice}
-            forProvider={isProvider}
-          />
-        )}
-
-        {/* İletişim: offline/salon randevusunda ADRES YOK (zaten salonda) → müşteri adı + telefon.
-            salonHidesMoney = salon, uzmanın KENDİ işine bakıyor → müşteri kimliği de gizli (yalnız bySalon'da görünür) */}
-        {booking.customerName && !salonHidesMoney ? (
-          <View style={[styles.card, shadow.card]}>
-            <Field
-              icon="person-outline"
-              labelKey="booking.field.customer"
-              value={booking.customerName}
-            />
-            <Field
-              icon="call-outline"
-              labelKey="booking.field.phone"
-              value={booking.customerPhone ?? '—'}
-              last
-            />
-          </View>
-        ) : !isProvider && showContact ? (
-          // Online AYNA randevusu → salon adresi + telefon YALNIZ müşteriye (uzman/salon için kendi adresi, gereksiz)
-          <>
-            <View style={[styles.card, shadow.card]}>
-              <Field
-                icon="location-outline"
-                labelKey="booking.field.address"
-                value="Almatı, Dostyk 12"
-              />
-              <Field
-                icon="call-outline"
-                labelKey="booking.field.phone"
-                value="+7 700 123 45 67"
-                last
-              />
-            </View>
-            <View style={styles.note}>
-              <Ionicons name="lock-closed" size={13} color={colors.muted} />
-              <Text variant="caption" tone="muted" style={styles.noteText}>
-                {t('booking.address_note')}
-              </Text>
-            </View>
-            {/* EK Z.8 — uygulamadan Kaspi ile öde (simülasyon) */}
-            <Button
-              label={t('payment.pay_cta')}
-              variant="secondary"
-              onPress={() => id && router.push(`/payment/${id}`)}
-            />
-          </>
-        ) : null}
-
-        {/* Onay bekleniyor (§1.6) */}
-        {booking.status === 'awaiting_provider' ? (
-          <>
-            {/* Kanvas (design/Durumlar.dc.html §kural şeridi) değişmez kuralı:
-                "SÜRE İŞLİYORSA SAYAÇ GÖRÜNÜR". Yanıt sayacı yalnız UZMANA
-                gösteriliyordu; bekleyen müşteri ne kadar bekleyeceğini
-                bilmiyordu — oysa süre onun için de işliyor. */}
-            {booking.responseDeadline != null ? (
-              <Sayac
-                bitis={booking.responseDeadline}
-                metin={t('booking.detail.awaiting_left')}
-                renk={colors.gold}
-              />
-            ) : null}
-            <View style={styles.note}>
-              <Ionicons name="hourglass-outline" size={14} color={colors.gold} />
-              <Text variant="caption" tone="muted" style={styles.noteText}>
-                {t('booking.detail.awaiting_note')}
-              </Text>
-            </View>
-          </>
-        ) : null}
-
-        {/* Uzmanın önerdiği alternatif (§1.6) */}
-        {booking.status === 'alternative_proposed' && booking.proposedStartMs != null ? (
-          <View style={[styles.proposedCard, shadow.soft]}>
+        {/* ── Para: %10 peşin + %90 sonra (§4.4, §4.9) ── */}
+        <View style={[styles.kart, shadow.card]}>
+          <View style={styles.paraSatir}>
             <Text variant="caption" tone="muted">
-              {t('booking.detail.proposed')}
+              {t('booking.money.deposit')}
             </Text>
-            <Text variant="h2" tone="ink" style={styles.proposedTime}>
-              {formatSlot(booking.proposedStartMs, t)}
+            <Text variant="bodyStrong" tone="ink">
+              {pesinat.toLocaleString('tr-TR')} ₸
             </Text>
-            <Button
-              label={t('booking.detail.accept')}
-              variant="primary"
-              onPress={() => id && acceptAlternative(id)}
+          </View>
+          <View style={styles.paraSatir}>
+            <Text variant="caption" tone="muted">
+              {t('booking.balance.remaining')}
+            </Text>
+            <Text variant="bodyStrong" tone="ink">
+              {kalan.toLocaleString('tr-TR')} ₸
+            </Text>
+          </View>
+          <Text variant="caption" tone="muted" style={styles.paraNot}>
+            {t('booking.money.note')}
+          </Text>
+        </View>
+
+        {/* ── Görünür geri sayımlar. Brief §7: "görünmez zaman sınırı yasak." ── */}
+        {booking.status === 'depozito_bekliyor' && booking.depositDeadline ? (
+          <View style={[styles.kart, styles.acilKart, shadow.card]}>
+            <Text variant="bodyStrong" style={{ color: colors.danger }}>
+              {t('flow.deposit.countdown_t')}
+            </Text>
+            <Sayac
+              bitis={booking.depositDeadline}
+              metin={t('flow.deposit.countdown_b')}
+              renk={colors.danger}
+            />
+          </View>
+        ) : null}
+        {booking.status === 'onay_bekliyor' && booking.responseDeadline ? (
+          <View style={[styles.kart, shadow.card]}>
+            <Sayac
+              bitis={booking.responseDeadline}
+              metin={t('flow.approve.countdown')}
+              renk={colors.gold}
             />
           </View>
         ) : null}
 
-        {/* §4.5 — Uzman ayrıldı, yeni uzman atandı: kullanıcı yeniden onaylar */}
-        {!isProvider && booking.status === 'reassigned_pending' ? (
-          <View style={[styles.depositCard, shadow.card]}>
-            <View style={styles.depositHead}>
-              <Ionicons name="swap-horizontal-outline" size={18} color={colors.ink} />
-              <Text variant="bodyStrong" tone="ink">
-                {t('booking.reassign.title')}
-              </Text>
-            </View>
-            <Text variant="caption" tone="muted" style={styles.depositDesc}>
-              {t('booking.reassign.desc')}
+        {/* ── §4.9 — müşteri ödediğini bildirdi, uzman teyidi bekleniyor ── */}
+        {booking.status === 'odeme_bekliyor' && booking.balanceDeclaredAt != null ? (
+          <View style={[styles.kart, shadow.card]}>
+            <Text variant="caption" tone="muted">
+              {rol === 'musteri'
+                ? t('booking.balance.wait_b')
+                : t('booking.balance.provider_confirm_b')}
             </Text>
-            {booking.reassignedFrom ? (
-              <View style={styles.depositRow}>
-                <Text variant="caption" tone="muted">
-                  {t('booking.reassign.from')}
-                </Text>
-                <Text variant="bodyStrong" tone="ink">
-                  {booking.reassignedFrom}
-                </Text>
-              </View>
-            ) : null}
-            {booking.uzmanName ? (
-              <View style={styles.depositRow}>
-                <Text variant="caption" tone="muted">
-                  {t('booking.reassign.to')}
-                </Text>
-                <Text variant="bodyStrong" tone="ink">
-                  {booking.uzmanName}
-                </Text>
-              </View>
-            ) : null}
-            <Button
-              label={t('booking.reassign.accept')}
-              variant="primary"
-              onPress={() => id && acceptReassignment(id)}
-            />
-            <Button
-              label={t('booking.reassign.reject')}
-              variant="ghost"
-              onPress={() => id && rejectReassignment(id)}
-            />
           </View>
         ) : null}
 
-        {/* §4.3 — Depozito adımı (kullanıcı: ön onaydan sonra dekont yükler) */}
-        {/* Faz 3 — offline kayıt eşitlenirken çakıştı: yeni saat seç ya da kaydı sil */}
-        {booking.status === 'sync_conflict' ? (
-          <View style={[styles.depositCard, shadow.card]}>
-            <View style={styles.depositHead}>
-              <Ionicons name="alert-circle-outline" size={18} color={colors.danger} />
-              <Text variant="bodyStrong" tone="ink">
-                {t('booking.status.sync_conflict')}
-              </Text>
-            </View>
-            <Text variant="caption" tone="muted" style={styles.depositDesc}>
-              {t('booking.sync_conflict_hint')}
-            </Text>
-            <Button
-              label={t('booking.sync_conflict_pick')}
-              onPress={() => {
-                dropLocalBooking(booking.id);
-                if (booking.proId) router.replace(`/professional/${booking.proId}`);
-                else router.back();
-              }}
-            />
-            <Button
-              label={t('booking.sync_conflict_drop')}
-              variant="ghost"
-              onPress={() => {
-                dropLocalBooking(booking.id);
-                router.back();
-              }}
-            />
-          </View>
+        {/* ── TEK BİRİNCİL BUTON (§7) ── */}
+        {aksiyon ? (
+          <Button
+            label={t(aksiyon.etiket)}
+            variant={aksiyon.tehlike ? 'secondary' : 'primary'}
+            onPress={() => calistir(aksiyon)}
+          />
         ) : null}
 
-        {/* Faz 2 — uzman 'tamamlandı' dedi: müşteri onaylar (kesinleşir) ya da itiraz eder */}
-        {!isProvider && booking.status === 'completed_pending' ? (
-          <View style={[styles.depositCard, shadow.card]}>
-            <View style={styles.depositHead}>
-              <Ionicons name="checkmark-done-outline" size={18} color={colors.ink} />
-              <Text variant="bodyStrong" tone="ink">
-                {t('booking.status.completed_pending')}
-              </Text>
-            </View>
-            <Text variant="caption" tone="muted" style={styles.depositDesc}>
-              {t('booking.confirm_completion_hint')}
-            </Text>
-            <Button
-              label={t('booking.confirm_completion')}
-              onPress={() => {
-                void api
-                  .confirmCompletionApi(booking.id)
-                  .then(() => hydrateBookings())
-                  .catch(() => undefined);
-              }}
-            />
-            <Button
-              label={t('seller.reviews.dispute')}
-              variant="ghost"
-              onPress={() => disputeBooking(booking.id)}
-            />
-          </View>
+        {/* §4.6 — erteleme önerisinde RED de gerekli: "Kabul / Red". Kabul
+            birincil buton; red ikincil, çünkü red randevuyu bitirmiyor —
+            eski saat geçerli kalıyor. */}
+        {aksiyon?.eylem === 'erteleme_kabul' ? (
+          <Button
+            label={t('flow.act.reddet')}
+            variant="secondary"
+            onPress={() => cagir('erteleme_red')}
+          />
         ) : null}
 
-        {!isProvider && booking.status === 'deposit_pending' ? (
-          <View style={[styles.depositCard, shadow.card]}>
-            <View style={styles.depositHead}>
-              <Ionicons name="card-outline" size={18} color={colors.ink} />
-              <Text variant="bodyStrong" tone="ink">
-                {t('booking.deposit.title')}
-              </Text>
-            </View>
-            <Text variant="caption" tone="muted" style={styles.depositDesc}>
-              {t('booking.deposit.desc')}
+        {/* İkincil: iptal. Birincil butonla aynı ağırlıkta çizilmez. */}
+        {iptalEdilebilir(booking.status) ? (
+          <Pressable onPress={iptalEt} accessibilityRole="button" style={styles.iptal}>
+            <Ionicons name="close-circle-outline" size={16} color={colors.muted} />
+            <Text variant="caption" tone="muted">
+              {t('flow.act.iptal')}
             </Text>
-            {/* Kanvas (design/Randevu.dc.html): "kalan 2:14 · sonra yer serbest
-                kalır". Bu sayaç yalnız ANA EKRANDA (HomeUrgent) vardı; randevu
-                ekranında hiç yoktu — hâlbuki dekontu yükleyeceği yer burası. */}
-            {booking.depositDeadline != null ? (
-              <Sayac
-                bitis={booking.depositDeadline}
-                metin={t('booking.deposit.left')}
-                renk={colors.danger}
-              />
-            ) : null}
-            <View style={styles.depositRow}>
-              <Text variant="caption" tone="muted">
-                {t('booking.deposit.amount')}
-              </Text>
-              <Text variant="bodyStrong" tone="ink">
-                {formatPrice(booking.depositAmount ?? DEPOSIT_KZT)}
-              </Text>
-            </View>
-            <View style={styles.depositRow}>
-              <Text variant="caption" tone="muted">
-                {t('booking.deposit.payto')}
-              </Text>
-              <Text variant="bodyStrong" tone="ink">
-                Kaspi · +7 700 123 45 67
-              </Text>
-            </View>
-            <Text variant="caption" tone="muted" style={styles.depositNote}>
-              {t('booking.deposit.note')}
+          </Pressable>
+        ) : null}
+
+        {/* Uzmanın "gelmedi" beyanı — birincil buton başka bir şeyse ikincil kalır. */}
+        {rol === 'uzman' && booking.status === 'hizmet_gunu' && gelmediAcik ? (
+          <Pressable
+            onPress={() =>
+              calistir({ etiket: 'flow.act.gelmedi', eylem: 'gelmedi', tehlike: true })
+            }
+            accessibilityRole="button"
+            style={styles.iptal}
+          >
+            <Ionicons name="person-remove-outline" size={16} color={colors.danger} />
+            <Text variant="caption" style={{ color: colors.danger }}>
+              {t('flow.act.gelmedi')}
             </Text>
-            {/* Kalan tutar: toplam − depozito, hizmet sonrası YERİNDE ödenir (§4.3) */}
-            <View style={styles.depositRow}>
-              <Text variant="caption" tone="muted">
-                {t('booking.deposit.remaining')}
-              </Text>
-              <Text variant="bodyStrong" tone="ink">
-                {formatPrice(Math.max(0, booking.price - (booking.depositAmount ?? DEPOSIT_KZT)))}
-              </Text>
-            </View>
+          </Pressable>
+        ) : null}
+
+        {/* §4.8 — itiraz penceresi. Beyan edilen tarafa 24 saat. */}
+        {(booking.status === 'no_show_musteri' || booking.status === 'no_show_uzman') &&
+        booking.finalizeDeadline ? (
+          <View style={[styles.kart, shadow.card]}>
+            <Text variant="caption" tone="muted" style={styles.paraNot}>
+              {fillParams(t('flow.noshow.objection'), { saat: '24' })}
+            </Text>
             <Button
-              label={t('booking.deposit.kaspi')}
-              variant="primary"
-              onPress={() => id && router.push(`/payment/${id}`)}
-            />
-            <Button
-              label={t('booking.deposit.upload')}
+              label={t('flow.act.itiraz')}
               variant="secondary"
-              onPress={uploadReceipt}
+              onPress={() => cagir('itiraz')}
             />
           </View>
         ) : null}
-
-        {/* §4.3 — Dekont gönderildi (kullanıcı: uzman onayı bekleniyor) */}
-        {!isProvider && booking.status === 'deposit_submitted' ? (
-          <View style={[styles.depositCard, shadow.soft]}>
-            <View style={styles.depositHead}>
-              <Ionicons name="receipt-outline" size={18} color={colors.blue} />
-              <Text variant="bodyStrong" tone="ink">
-                {t('booking.status.deposit_submitted')}
-              </Text>
-            </View>
-            <Text variant="caption" tone="muted" style={styles.depositDesc}>
-              {t('booking.deposit.submitted_note')}
-            </Text>
-            {booking.receiptUri ? <Dekont uri={booking.receiptUri} /> : null}
-          </View>
-        ) : null}
-
-        {/* §4.3 — Uzman: yüklenen dekont */}
-        {isProvider && booking.status === 'deposit_submitted' && booking.receiptUri ? (
-          <View style={[styles.depositCard, shadow.soft]}>
-            <View style={styles.depositHead}>
-              <Ionicons name="receipt-outline" size={18} color={colors.ink} />
-              <Text variant="bodyStrong" tone="ink">
-                {t('booking.provider.receipt')}
-              </Text>
-            </View>
-            <Dekont uri={booking.receiptUri} />
-          </View>
-        ) : null}
-
-        {/* §4.4 — İade akışı: kullanıcı bekliyor */}
-        {!isProvider && booking.status === 'refund_pending' ? (
-          <View style={styles.note}>
-            <Ionicons name="return-up-back-outline" size={14} color={colors.gold} />
-            <Text variant="caption" tone="muted" style={styles.noteText}>
-              {t('booking.refund.pending_user')}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* §4.4 — İade dekontu yüklendi: kullanıcı "aldım" onaylar */}
-        {!isProvider && booking.status === 'refund_submitted' ? (
-          <View style={[styles.depositCard, shadow.card]}>
-            <View style={styles.depositHead}>
-              <Ionicons name="return-up-back-outline" size={18} color={colors.ink} />
-              <Text variant="bodyStrong" tone="ink">
-                {t('booking.refund.title')}
-              </Text>
-            </View>
-            <Text variant="caption" tone="muted" style={styles.depositDesc}>
-              {t('booking.refund.desc')}
-            </Text>
-            {booking.refundReceiptUri ? <Dekont uri={booking.refundReceiptUri} /> : null}
-            <Button
-              label={t('booking.refund.confirm')}
-              variant="primary"
-              onPress={() => id && confirmRefund(id)}
-            />
-          </View>
-        ) : null}
-
-        {/* §4.4 — Ceza notu (geç iptal veya no-show → kapora yandı) + itiraz */}
-        {!isProvider && (booking.depositForfeited || booking.status === 'no_show') ? (
-          <View style={[styles.reasonCard, shadow.soft]}>
-            <View style={styles.reasonHead}>
-              <Ionicons name="alert-circle-outline" size={14} color={colors.danger} />
-              <Text variant="caption" tone="muted">
-                {t(
-                  booking.status === 'no_show'
-                    ? 'booking.penalty.noshow'
-                    : 'booking.penalty.forfeited',
-                )}
-              </Text>
-            </View>
-            <Button
-              label={t('booking.dispute.cta')}
-              variant="ghost"
-              onPress={() => id && disputeBooking(id)}
-            />
-          </View>
-        ) : null}
-
-        {/* §4.4 — İtiraz açıldı */}
-        {booking.status === 'disputed' ? (
-          <View style={styles.note}>
-            <Ionicons name="flag-outline" size={14} color={colors.gold} />
-            <Text variant="caption" tone="muted" style={styles.noteText}>
-              {t('booking.dispute.done')}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* §6.C — iptal sebebi (kullanıcı ilettiyse) */}
-        {booking.status === 'cancelled' && booking.cancelReason ? (
-          <View style={[styles.reasonCard, shadow.soft]}>
-            <View style={styles.reasonHead}>
-              <Ionicons name="chatbox-ellipses-outline" size={14} color={colors.muted} />
-              <Text variant="caption" tone="muted">
-                {t('booking.cancel.reason_label')}
-              </Text>
-            </View>
-            <Text variant="body" tone="ink">
-              {booking.cancelReason}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* §6.C — gelmedi (no-show) bilgisi */}
-        {booking.status === 'no_show' ? (
-          <View style={styles.note}>
-            <Ionicons name="alert-circle-outline" size={14} color={colors.danger} />
-            <Text variant="caption" tone="muted" style={styles.noteText}>
-              {t('booking.noshow_note')}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* Aksiyonlar — §4.6: SALON randevuyu değiştiremez (yalnız Randevu ekle ile ekler), aksiyon görmez */}
-        <View style={styles.actions}>
-          {role === 'salon' ? null : isProvider ? (
-            <>
-              {/* §4.1 — uzman yanıtı: kabul / alternatif / reddet */}
-              {booking.status === 'awaiting_provider' ? (
-                <>
-                  {/* §4.1.3 — yanıt süresi uyarısı: süre dolunca talep başka uzmana yönlenir */}
-                  {booking.responseDeadline != null ? (
-                    <View style={styles.deadlineWarn}>
-                      <Ionicons name="timer-outline" size={16} color={colors.danger} />
-                      <Text variant="caption" tone="ink" style={styles.deadlineText}>
-                        {fillParams(t('booking.provider.deadline'), {
-                          h: Math.max(
-                            0,
-                            Math.ceil((booking.responseDeadline - Date.now()) / 3_600_000),
-                          ),
-                        })}
-                      </Text>
-                    </View>
-                  ) : null}
-                  <Button
-                    label={t('booking.provider.approve')}
-                    variant="primary"
-                    onPress={() => id && approveBooking(id)}
-                  />
-                  <Button
-                    label={t('booking.provider.propose')}
-                    variant="secondary"
-                    onPress={() => setProposeOpen(true)}
-                  />
-                  <Button
-                    label={t('booking.provider.reject')}
-                    variant="ghost"
-                    onPress={() => id && rejectBooking(id)}
-                  />
-                </>
-              ) : null}
-              {booking.status === 'deposit_pending' ? (
-                <View style={styles.note}>
-                  <Ionicons name="hourglass-outline" size={14} color={colors.gold} />
-                  <Text variant="caption" tone="muted" style={styles.noteText}>
-                    {t('booking.provider.pending_receipt')}
-                  </Text>
-                </View>
-              ) : null}
-              {booking.status === 'deposit_submitted' ? (
-                <Button
-                  label={t('booking.provider.confirm_receipt')}
-                  variant="primary"
-                  onPress={() => id && confirmReceipt(id)}
-                />
-              ) : null}
-              {/* §4.1.7 — randevu saati geçtiyse uzman hizmeti tamamlar (birincil) veya gelmedi işaretler */}
-              {booking.status === 'confirmed' && booking.startMs <= Date.now() ? (
-                <Button
-                  label={t('booking.provider.complete')}
-                  variant="primary"
-                  onPress={() => id && completeBooking(id)}
-                />
-              ) : null}
-              {/* §4.4 — "gelmedi" ancak randevu saatinden 1 SAAT sonra işaretlenebilir */}
-              {booking.status === 'confirmed' && Date.now() >= booking.startMs + 60 * 60 * 1000 ? (
-                <Button
-                  label={t('booking.provider.mark_noshow')}
-                  variant="secondary"
-                  onPress={() => id && markNoShow(id)}
-                />
-              ) : booking.status === 'confirmed' && booking.startMs <= Date.now() ? (
-                <View style={styles.note}>
-                  <Ionicons name="time-outline" size={14} color={colors.muted} />
-                  <Text variant="caption" tone="muted" style={styles.noteText}>
-                    {t('booking.provider.noshow_wait')}
-                  </Text>
-                </View>
-              ) : null}
-              {/* §7.3 — hizmet sonrası GİZLİ müşteri sinyali (👍/👎; kamuya açık değil) */}
-              {booking.status === 'confirmed' && booking.startMs < Date.now() ? (
-                <View style={styles.signalCard}>
-                  <View style={styles.depositHead}>
-                    <Ionicons name="eye-off-outline" size={16} color={colors.muted} />
-                    <Text variant="bodyStrong" tone="ink">
-                      {t('booking.signal.title')}
-                    </Text>
-                  </View>
-                  <Text variant="caption" tone="muted" style={styles.depositDesc}>
-                    {t('booking.signal.desc')}
-                  </Text>
-                  {booking.providerSignal ? (
-                    <Text variant="caption" tone="accentFg">
-                      {t('booking.signal.saved')}
-                    </Text>
-                  ) : (
-                    <View style={styles.signalRow}>
-                      <Pressable
-                        style={styles.signalBtn}
-                        onPress={() => id && giveCustomerSignal(id, 'up')}
-                      >
-                        <Ionicons name="thumbs-up-outline" size={20} color={colors.success} />
-                        <Text variant="caption" tone="ink">
-                          {t('booking.signal.up')}
-                        </Text>
-                      </Pressable>
-                      <Pressable
-                        style={styles.signalBtn}
-                        onPress={() => id && giveCustomerSignal(id, 'down')}
-                      >
-                        <Ionicons name="thumbs-down-outline" size={20} color={colors.danger} />
-                        <Text variant="caption" tone="ink">
-                          {t('booking.signal.down')}
-                        </Text>
-                      </Pressable>
-                    </View>
-                  )}
-                </View>
-              ) : null}
-
-              {/* §4.4 — serbest iptal: uzman iade dekontunu yükler */}
-              {booking.status === 'refund_pending' ? (
-                <>
-                  <View style={styles.note}>
-                    <Ionicons name="return-up-back-outline" size={14} color={colors.gold} />
-                    <Text variant="caption" tone="muted" style={styles.noteText}>
-                      {t('booking.refund.provider_pending')}
-                    </Text>
-                  </View>
-                  <Button
-                    label={t('booking.refund.provider_upload')}
-                    variant="primary"
-                    onPress={uploadRefund}
-                  />
-                </>
-              ) : null}
-            </>
-          ) : (
-            <>
-              {booking.status === 'completed' && !booking.reviewed ? (
-                <Button
-                  label={t('booking.detail.review')}
-                  variant="primary"
-                  onPress={() => router.push('/review/new?id=' + booking.id)}
-                />
-              ) : null}
-              {booking.status === 'completed' && booking.reviewed ? (
-                <Button label={t('booking.detail.reviewed')} variant="ghost" disabled />
-              ) : null}
-              {/* §4.4-b — geçmiş onaylı randevuda uzman gelmediyse müşteri bildirir → 1000 puan telafi */}
-              {booking.status === 'confirmed' && booking.startMs < Date.now() ? (
-                <Button
-                  label={t('booking.provider_noshow.cta')}
-                  variant="secondary"
-                  onPress={() =>
-                    Alert.alert(
-                      t('booking.provider_noshow.confirm'),
-                      t('booking.provider_noshow.note'),
-                      [
-                        { text: t('common.cancel'), style: 'cancel' },
-                        {
-                          text: t('booking.provider_noshow.cta'),
-                          onPress: () => id && reportProviderNoShow(id),
-                        },
-                      ],
-                    )
-                  }
-                />
-              ) : null}
-              <Button
-                label={t('booking.detail.rebook')}
-                variant="ghost"
-                onPress={() => router.push('/professional/' + booking.proId)}
-              />
-              {canCancel ? (
-                <Button label={t('booking.detail.cancel')} variant="secondary" onPress={onCancel} />
-              ) : null}
-            </>
-          )}
-        </View>
       </ScrollView>
-
-      {/* §4.1 adım 2 — uzman alternatif saat önerir (boş slotlardan seçer) */}
-      <Modal
-        visible={proposeOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setProposeOpen(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHead}>
-              <Text variant="h2" tone="ink" style={styles.modalTitle}>
-                {t('booking.provider.propose')}
-              </Text>
-              <Pressable
-                onPress={() => setProposeOpen(false)}
-                hitSlop={8}
-                style={styles.modalClose}
-              >
-                <Ionicons name="close" size={22} color={colors.ink} />
-              </Pressable>
-            </View>
-            <ScrollView contentContainerStyle={styles.modalBody}>
-              <SlotPicker days={proposeDays} selected={proposeSel} onSelect={setProposeSel} />
-            </ScrollView>
-            <Button
-              label={t('booking.detail.proposed')}
-              variant={proposeSel != null ? 'primary' : 'secondary'}
-              disabled={proposeSel == null}
-              onPress={sendProposal}
-            />
-          </View>
-        </View>
-      </Modal>
     </Screen>
-  );
-}
-
-function Field({
-  icon,
-  labelKey,
-  value,
-  last,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  labelKey: MessageKey;
-  value: string;
-  last?: boolean;
-}) {
-  const { t } = useLocale();
-  const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={[styles.field, !last && styles.fieldBorder]}>
-      <View style={styles.fieldIcon}>
-        <Ionicons name={icon} size={17} color={colors.ink} />
-      </View>
-      <View style={styles.fieldText}>
-        <Text variant="caption" tone="muted">
-          {t(labelKey)}
-        </Text>
-        <Text variant="bodyStrong" tone="ink">
-          {value}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-const makeStatus = (
-  colors: ColorTokens,
-): Record<string, { key: MessageKey; bg: string; fg: string }> => ({
-  confirmed: { key: 'booking.status.confirmed', bg: colors.successSoft, fg: colors.success },
-  pending: { key: 'booking.status.pending', bg: colors.goldSoft, fg: colors.gold },
-  completed: { key: 'booking.status.completed', bg: colors.surfaceMuted, fg: colors.inkSoft },
-  cancelled: { key: 'booking.status.cancelled', bg: colors.dangerSoft, fg: colors.danger },
-  awaiting_provider: { key: 'booking.status.awaiting', bg: colors.goldSoft, fg: colors.gold },
-  alternative_proposed: { key: 'booking.status.alternative', bg: colors.blueSoft, fg: colors.blue },
-  deposit_pending: { key: 'booking.status.deposit_pending', bg: colors.goldSoft, fg: colors.gold },
-  deposit_submitted: {
-    key: 'booking.status.deposit_submitted',
-    bg: colors.blueSoft,
-    fg: colors.blue,
-  },
-  refund_pending: { key: 'booking.status.refund_pending', bg: colors.goldSoft, fg: colors.gold },
-  refund_submitted: {
-    key: 'booking.status.refund_submitted',
-    bg: colors.blueSoft,
-    fg: colors.blue,
-  },
-  disputed: { key: 'booking.status.disputed', bg: colors.dangerSoft, fg: colors.danger },
-  reassigned_pending: {
-    key: 'booking.status.reassigned_pending',
-    bg: colors.blueSoft,
-    fg: colors.blue,
-  },
-  no_show: { key: 'booking.status.no_show', bg: colors.dangerSoft, fg: colors.danger },
-  waitlist: { key: 'booking.status.waitlist', bg: colors.blueSoft, fg: colors.blue },
-});
-
-/**
- * CANLI GERİ SAYIM — kanvasın değişmez kuralı: "süre işliyorsa sayaç görünür".
- *
- * Ekranda kalan süre TEK SEFER hesaplanıp yazılıyordu (uzman tarafında,
- * `Math.ceil(... / 3_600_000)` ile saat olarak). Kullanıcı ekranda dururken
- * sayı donuyordu; son 10 dakikada "1 saat kaldı" yazması güven kaybıdır.
- *
- * Dakikada bir tazelenir: saniye sayacı pil yakar, dakika hassasiyeti bu iş
- * için yeterli. Süre bittiğinde satır kaybolmaz — "süre doldu" der, çünkü
- * sessizce yok olmak kullanıcıya ne olduğunu anlatmaz.
- */
-function Sayac({ bitis, metin, renk }: { bitis: number; metin: string; renk: string }) {
-  const styles = useThemedStyles(makeStyles);
-  const { t } = useLocale();
-  const [simdi, setSimdi] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setSimdi(Date.now()), 60_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const kalanMs = bitis - simdi;
-  const bitti = kalanMs <= 0;
-  const toplamDk = Math.max(0, Math.ceil(kalanMs / 60_000));
-  const sa = Math.floor(toplamDk / 60);
-  const dk = toplamDk % 60;
-  const sure = sa > 0 ? `${sa} sa ${dk} dk` : `${dk} dk`;
-
-  return (
-    <View style={[styles.sayac, { borderColor: renk }]}>
-      <Ionicons name={bitti ? 'alert-circle' : 'timer-outline'} size={15} color={renk} />
-      <Text variant="caption" tone="ink" style={styles.sayacText}>
-        {bitti ? t('booking.window.expired') : `${metin}: ${sure}`}
-      </Text>
-    </View>
   );
 }
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE },
-    empty: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingTop: space(8),
-      gap: space(1.5),
-    },
-    emptyText: {},
-    proCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1.5),
+    // Alt menü içeriği örtmesin — testin zorladığı kural.
+    icerik: { padding: space(2), gap: space(1.5), paddingBottom: TAB_BAR_CLEARANCE },
+    bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(3) },
+    kart: {
       backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(1.75),
-    },
-    proImage: {
-      width: 64,
-      height: 64,
-      borderRadius: radius.md,
-      backgroundColor: colors.bgSunken,
-    },
-    proBody: { flex: 1, gap: 3, alignItems: 'flex-start' },
-    proNameRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-    proNameText: { flexShrink: 1 },
-    status: {
-      paddingHorizontal: space(1),
-      paddingVertical: 3,
-      borderRadius: radius.pill,
-      marginTop: 2,
-    },
-    statusText: { fontSize: 11 },
-    card: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      paddingHorizontal: space(2),
-      marginTop: space(2),
-    },
-    stepsCard: { paddingVertical: space(2) },
-    field: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1.5),
-      paddingVertical: space(1.75),
-    },
-    fieldBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
-    fieldIcon: {
-      width: 38,
-      height: 38,
-      borderRadius: radius.md,
-      backgroundColor: colors.accentSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    fieldText: { flex: 1, gap: 2 },
-    note: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1),
-      marginTop: space(1.5),
-      paddingHorizontal: space(1),
-    },
-    noteText: { flex: 1 },
-    sayac: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1),
-      borderWidth: 1,
-      borderRadius: radius.md,
-      paddingHorizontal: space(1.5),
-      paddingVertical: space(1),
-    },
-    sayacText: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
-    deadlineWarn: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1),
-      backgroundColor: colors.dangerSoft,
-      borderRadius: radius.md,
-      paddingHorizontal: space(1.5),
-      paddingVertical: space(1.25),
-      marginBottom: space(1),
-    },
-    deadlineText: { flex: 1, lineHeight: 17 },
-    trustRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      alignSelf: 'flex-start',
-      backgroundColor: colors.successSoft,
-      paddingHorizontal: space(1.25),
-      paddingVertical: space(0.75),
-      borderRadius: radius.pill,
-      marginBottom: space(1),
-    },
-    trustRowText: { color: colors.success, fontFamily: font.semibold },
-    proposedCard: {
-      marginTop: space(2),
-      backgroundColor: colors.blueSoft,
-      borderRadius: radius.lg,
-      padding: space(2),
-      gap: space(1),
-    },
-    proposedTime: { marginBottom: space(0.5) },
-    reasonCard: {
-      marginTop: space(2),
-      backgroundColor: colors.surfaceMuted,
       borderRadius: radius.lg,
       padding: space(2),
       gap: space(0.75),
     },
-    reasonHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
-    actions: { marginTop: space(3), gap: space(1.25) },
-    depositCard: {
-      marginTop: space(2),
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(2),
-      gap: space(1.25),
-    },
-    depositHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
-    signalCard: {
-      backgroundColor: colors.surfaceMuted,
-      borderRadius: radius.lg,
-      padding: space(2),
-      gap: space(1),
-    },
-    signalRow: { flexDirection: 'row', gap: space(1), marginTop: space(0.5) },
-    signalBtn: {
-      flex: 1,
+    // Süre biten kart tehlike kenarlığıyla ayrışır; sayaç tek başına yeterince
+    // dikkat çekmiyordu.
+    acilKart: { borderWidth: 1, borderColor: colors.danger },
+    basSatir: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    flex: { flex: 1 },
+    rozet: { paddingHorizontal: space(1), paddingVertical: 3, borderRadius: radius.pill },
+    paraSatir: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    paraNot: { lineHeight: 18 },
+    nabizKap: { marginTop: space(1) },
+    iptal: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: space(0.75),
-      paddingVertical: space(1.25),
-      borderRadius: radius.md,
-      backgroundColor: colors.surface,
+      paddingVertical: space(1.5),
     },
-    depositDesc: { lineHeight: 17 },
-    depositRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    depositNote: { lineHeight: 16, marginTop: space(0.5) },
-    receiptHint: { textAlign: 'center', marginTop: space(0.5) },
-    receiptThumb: {
-      width: '100%',
-      height: 160,
-      borderRadius: radius.md,
-      backgroundColor: colors.bgSunken,
-      marginTop: space(0.5),
-    },
-    modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-    modalSheet: {
-      backgroundColor: colors.bg,
-      borderTopLeftRadius: radius.xl,
-      borderTopRightRadius: radius.xl,
-      paddingHorizontal: space(3),
-      paddingTop: space(2.5),
-      paddingBottom: space(3),
-      maxHeight: '80%',
-      gap: space(1.5),
-    },
-    modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    modalTitle: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.3 },
-    modalClose: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: colors.surfaceMuted,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    modalBody: { paddingVertical: space(1) },
   });

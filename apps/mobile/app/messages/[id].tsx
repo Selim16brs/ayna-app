@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
+import { akisAdimi } from '../../src/booking-flow';
+import { sablonlar, type Sablon } from '../../src/mesaj-sablonlari';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -12,7 +13,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { api, ApiError, type ChatMessage } from '../../src/api';
+import { api, type ChatMessage } from '../../src/api';
 import { isRiskyMessage } from '../../src/messages-guard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardShown } from '../../src/keyboard';
@@ -20,7 +21,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, Text, TextInput } from '../../src/ui';
+import { Screen, Text } from '../../src/ui';
 
 // EK Z.1 — Sohbet thread'i. Numara maskeleme + moderasyon backend'de; engellenen gönderemez.
 export default function ChatThreadScreen() {
@@ -33,8 +34,16 @@ export default function ChatThreadScreen() {
   const params = useLocalSearchParams<{ id: string; name?: string; otherId?: string }>();
   const convId = params.id;
   const token = useStore((s) => s.token);
+  // §9 — şablonlar DURUMA bağlı olduğu için bu konuşmanın hangi randevuya ait
+  // olduğunu bilmemiz gerekiyor. Karşı tarafla olan AKTİF randevu aranıyor;
+  // kapanmış randevuda şablon gösterilmiyor (akışa ait değil).
+  const benUzman = useStore(
+    (s) => s.currentUser?.role === 'professional' || s.currentUser?.role === 'salon',
+  );
+  const ilgiliRandevu = useStore((s) =>
+    s.bookings.find((b) => b.proId === params.otherId && akisAdimi(b.status) >= 0),
+  );
   const [items, setItems] = useState<ChatMessage[] | null>(null);
-  const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
@@ -85,45 +94,33 @@ export default function ChatThreadScreen() {
   };
 
   /** Galeriden fotoğraf seç — gönderilmeden önce ön izleme olarak durur. */
-  const pickPhoto = async () => {
-    if (sending) return;
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.5, // data URL olarak taşınıyor: 4 MB sunucu sınırının altında kalsın
-      base64: true,
-    });
-    const a = res.canceled ? null : res.assets[0];
-    if (a?.base64) setPhoto(`data:image/jpeg;base64,${a.base64}`);
-  };
 
-  const send = async () => {
-    const body = draft.trim();
-    // Yalnız fotoğraf da gönderilebilir — metin şart değil.
-    if ((!body && !photo) || !token || sending) return;
+  /**
+   * §9 — şablon gönderimi. Metin ŞABLONDAN üretiliyor; kullanıcının yazdığı
+   * hiçbir serbest metin yok.
+   *
+   * Gecikme şablonu seçilirse karşı tarafa push gider (§9) ve 15+ dakikalık
+   * gecikmede uzmanın "müşteri gelmedi" butonu açılır (§4.8) — o kural sunucuda
+   * randevu saatine bakarak işliyor, burada yalnız bildirim tetikleniyor.
+   */
+  const sablonGonder = async (sb: Sablon) => {
+    if (!token || sending) return;
     setSending(true);
     setNotice('');
     try {
-      await api.sendChatMessage(token, convId, body, photo ?? undefined);
-      setDraft('');
-      setPhoto(null);
+      await api.sendChatMessage(token, convId, t(sb.anahtar));
       await load();
       requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
-    } catch (err) {
-      // Kurucu izin modeli: tek-mesaj / takip / engel kurallarını kullanıcıya açıkla
-      const code = err instanceof ApiError ? err.code : '';
-      setNotice(
-        code === 'AWAIT_REPLY'
-          ? t('messages.await_reply')
-          : code === 'FOLLOW_REQUIRED'
-            ? t('messages.follow_required')
-            : code === 'BLOCKED'
-              ? t('messages.blocked_notice')
-              : t('messages.start_err'),
-      );
+    } catch {
+      setNotice(t('messages.start_err'));
     } finally {
       setSending(false);
     }
   };
+
+  // SERBEST METİN GÖNDERİMİ KALDIRILDI (brief §9). Eski `send`, kullanıcının
+  // yazdığı metni ve fotoğrafı gönderiyordu; ikisi de uygulama dışına çıkarma
+  // ve pazarlık için açık kapıydı. Gönderim artık yalnız `sablonGonder`.
 
   // En SON riskli karşı-taraf mesajı — uyarı yalnız orada, bir kez görünür.
   const [guardOff, setGuardOff] = useState(false);
@@ -380,36 +377,30 @@ export default function ChatThreadScreen() {
                 { paddingBottom: klavyeAcik ? space(1.5) : insets.bottom + space(1) },
               ]}
             >
-              <Pressable
-                onPress={pickPhoto}
-                disabled={sending}
-                style={styles.attachBtn}
-                accessibilityRole="button"
-                accessibilityLabel={t('messages.photo_add')}
+              {/* ŞABLON SEÇİCİ — brief §9: "Serbest sohbet yok."
+                  Serbest metin, uygulama dışına çıkarma (telefon/Instagram),
+                  pazarlık ve taciz için açık kapıydı. Şablon listesi bunların
+                  hiçbirini ifade edemiyor; moderasyon ihtiyacı kökünden kalkıyor. */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.sablonSerit}
+                keyboardShouldPersistTaps="handled"
               >
-                <Ionicons name="image-outline" size={20} color={colors.inkSoft} />
-              </Pressable>
-              <TextInput
-                value={draft}
-                onChangeText={(v) => {
-                  setDraft(v);
-                  if (notice) setNotice('');
-                }}
-                placeholder={t('messages.input_placeholder')}
-                placeholderTextColor={colors.muted}
-                style={styles.input}
-                multiline
-              />
-              <Pressable
-                onPress={send}
-                disabled={(!draft.trim() && !photo) || sending}
-                style={[
-                  styles.sendBtn,
-                  ((!draft.trim() && !photo) || sending) && styles.sendBtnOff,
-                ]}
-              >
-                <Ionicons name="send" size={18} color={colors.onAccent} />
-              </Pressable>
+                {sablonlar(benUzman ? 'uzman' : 'musteri', ilgiliRandevu?.status).map((sb) => (
+                  <Pressable
+                    key={sb.anahtar}
+                    style={styles.sablonChip}
+                    disabled={sending}
+                    onPress={() => void sablonGonder(sb)}
+                    accessibilityRole="button"
+                  >
+                    <Text variant="caption" tone="ink">
+                      {t(sb.anahtar)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
             </View>
           </View>
         )}
@@ -421,6 +412,16 @@ export default function ChatThreadScreen() {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     flex: { flex: 1 },
+    // §9 — şablon şeridi: yatay kaydırılabilir çipler. Metin girişi yok.
+    sablonSerit: { gap: space(1), paddingHorizontal: space(1), alignItems: 'center' },
+    sablonChip: {
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: colors.line,
+    },
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1),

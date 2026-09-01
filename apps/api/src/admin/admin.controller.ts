@@ -7,16 +7,27 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { AdminGuard } from '../common/admin.guard';
+import type { AuthedRequest } from '../auth/jwt-auth.guard';
 import { i18nSchema } from '../content/content.dto';
 import { AdminService } from './admin.service';
+import { RandevuKuyrukService } from './randevu-kuyruk.service';
 
 const rejectSchema = z.object({ reason: z.string().max(300).optional() });
+const kuyrukNotSchema = z.object({ note: z.string().max(500).optional() });
+const uzlasmaKararSchema = z.object({
+  // "karar_yok" bilinçli: AYNA %90'lık ödemede HAKEM DEĞİL (§4.9). Admin her
+  // uyuşmazlıkta taraf tutmak zorunda kalmamalı.
+  karar: z.enum(['musteri_lehine', 'uzman_lehine', 'karar_yok']),
+  adminNote: z.string().max(1000).optional(),
+});
+type UzlasmaKararInput = z.infer<typeof uzlasmaKararSchema>;
 const bizDecisionSchema = z.object({
   status: z.enum(['approved', 'rejected', 'needs_docs', 'under_review']),
   reason: z.string().max(300).optional(),
@@ -118,7 +129,59 @@ const flagSchema = z.object({
 @Controller('admin')
 @UseGuards(AdminGuard)
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(
+    private readonly admin: AdminService,
+    private readonly kuyruk: RandevuKuyrukService,
+  ) {}
+
+  // ── Brief §8 — randevu akışı kuyrukları ──────────────────────────────────
+  // §8.1 Dekont doğrulama: randevu zaten kesinleşti, bu kuyruk SAHTE dekontu
+  // sonradan yakalamak için (§4.4).
+  @Get('randevu/dekontlar')
+  dekontKuyrugu() {
+    return this.kuyruk.dekontKuyrugu();
+  }
+
+  @Post('randevu/dekontlar/:id/onayla')
+  dekontOnayla(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.kuyruk.dekontOnayla(id, req.user?.id);
+  }
+
+  // Sahte dekont → randevu iptal + kullanıcı yasaklı (§4.4). İkisi birlikte.
+  @Post('randevu/dekontlar/:id/reddet')
+  dekontReddet(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.kuyruk.dekontReddet(id, req.user?.id);
+  }
+
+  // §8.2 İadeler: müşteri iadesi VE uzmanın %9 payı aynı kuyruktan (§4.10).
+  @Get('randevu/iadeler')
+  iadeKuyrugu() {
+    return this.kuyruk.iadeKuyrugu();
+  }
+
+  @Post('randevu/iadeler/:id/odendi')
+  iadeOdendi(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(kuyrukNotSchema)) body: { note?: string },
+  ) {
+    return this.kuyruk.iadeOdendi(id, body.note ?? '', req.user?.id);
+  }
+
+  // §8.3 Uzlaşma: no-show ve ödeme itirazları; gerekçe + kanıt + telefon notu.
+  @Get('randevu/uzlasmalar')
+  uzlasmaKuyrugu() {
+    return this.kuyruk.uzlasmaKuyrugu();
+  }
+
+  @Post('randevu/uzlasmalar/:id/coz')
+  uzlasmaCoz(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(uzlasmaKararSchema)) body: UzlasmaKararInput,
+  ) {
+    return this.kuyruk.uzlasmaCoz(id, body.karar, body.adminNote ?? '', req.user?.id);
+  }
 
   @Get('overview')
   overview() {

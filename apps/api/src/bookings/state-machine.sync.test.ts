@@ -24,7 +24,10 @@ test('her enum değeri en az bir geçiş kaynağı ya da terminal', () => {
     const hedefVar = Object.values(BookingStatus).some((t) =>
       canTransition(s as never, t as never),
     );
-    const terminal = ['completed', 'cancelled', 'expired'].includes(s);
+    // Brief §3'ün kapalı durumları. Elle liste yerine `isTerminal` kullanmak
+    // daha temiz görünürdü ama o, makinenin kendi cevabını makineye sormak
+    // olurdu — bu test tam olarak "enum ile makine ayrıştı mı" diye bakıyor.
+    const terminal = ['kapandi', 'iptal_musteri', 'iptal_uzman', 'otomatik_dustu'].includes(s);
     assert.ok(hedefVar || terminal, `${s} ne geçiş yapabiliyor ne de terminal — ölü durum`);
   }
 });

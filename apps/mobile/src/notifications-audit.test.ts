@@ -65,7 +65,9 @@ test('2–3 · girişli açılış sıfırlaması bildirimleri EZMİYOR', () => 
   // SEEDED_PERSONAL_RESET içinde `notifications: []` var ve girişli HER açılışta
   // uygulanıyor. Yalnız partialize'a eklemek yetmez; burada geri konmazsa
   // kalıcılık hiçbir işe yaramaz.
-  const m = /onFinishHydration\(\(state\) => \{[\s\S]*?\n {2}\}\);/.exec(store);
+  // Blok SÜTUN 0'da açılıp kapanıyor; 2 boşlukla kapanış aramak, içerideki
+  // rastgele bir bloğa denk gelip yanlış parça yakalıyordu.
+  const m = /onFinishHydration\(\(state\) => \{[\s\S]*?\n\}\);/.exec(store);
   assert.ok(m, 'onFinishHydration yok');
   const govde = m[0];
   assert.match(

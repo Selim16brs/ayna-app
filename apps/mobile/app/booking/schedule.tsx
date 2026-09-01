@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { cakisiyor, doluAraliklar } from '../../src/booking-flow';
 import type { BookingSource } from '../../src/data';
 import { almatyDayStart, formatSlotTr, slotTime } from '../../src/datetime';
 import { api, type ApiOffer } from '../../src/api';
@@ -25,7 +27,7 @@ const LEAD_H = 2; // en erken 2 saat sonrası
 export default function ScheduleScreen() {
   const router = useRouter();
   const { t } = useLocale();
-  const { shadow } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const params = useLocalSearchParams<{
     proId?: string;
@@ -58,19 +60,49 @@ export default function ScheduleScreen() {
 
   const uzman = pro.staff.find((u) => u.id === uzmanId);
 
-  // Seçili hizmet → süre
-  const chosenService = pro.services.find((sv) => sv.name === params.service);
-  const durationMin = chosenService?.durationMin ?? pro.services[0]?.durationMin ?? 60;
+  /**
+   * §4.1.1 — "Uzmanın hizmet listesinden 1 VEYA BİRDEN FAZLA hizmet. Toplam
+   * süre = seçilen hizmetlerin süre toplamı."
+   *
+   * Ekran tek hizmetle açılıyor (kullanıcı bir hizmete dokunup geldi); listeden
+   * ekleyip çıkarabiliyor. Kampanya randevusunda seçim KAPALI: kampanya
+   * fiyatı tek bir hizmete bağlı, üstüne hizmet eklemek fiyatı belirsizleştirirdi.
+   */
+  const gelenHizmet = pro.services.find((sv) => sv.name === params.service);
+  const [secili, setSecili] = useState<string[]>(() =>
+    gelenHizmet ? [gelenHizmet.name] : pro.services[0] ? [pro.services[0].name] : [],
+  );
+  // Uzman değiştiğinde ya da profil geç yüklendiğinde ilk hizmeti tohumla.
+  useEffect(() => {
+    if (secili.length === 0 && pro.services[0]) setSecili([pro.services[0].name]);
+  }, [pro.services, secili.length]);
+  const seciliHizmetler = pro.services.filter((sv) => secili.includes(sv.name));
+  const cokluAcik = !offer && pro.services.length > 1;
+  const toplamSure = seciliHizmetler.reduce((t, sv) => t + (sv.durationMin ?? 60), 0);
+  const toplamTutar = seciliHizmetler.reduce((t, sv) => t + (sv.price ?? 0), 0);
+  const durationMin = toplamSure || (gelenHizmet?.durationMin ?? 60);
+  const hizmetSec = (ad: string) =>
+    setSecili((onceki) => {
+      // Son hizmet çıkarılamaz: hizmetsiz randevu diye bir şey yok.
+      if (onceki.includes(ad)) return onceki.length > 1 ? onceki.filter((x) => x !== ad) : onceki;
+      return [...onceki, ad];
+    });
 
   // §4.2 — uzmanın DOLU aralıkları (önümüzdeki 14 gün): müşteri dolu saati seçemesin,
   // karşılıklı öneri turu (çifte iş) olmasın. Sunucu yalnız zaman aralığı döner (gizlilik).
-  const [busyRanges, setBusyRanges] = useState<{ startMs: number; endMs: number }[]>([]);
+  const [uzakDolu, setUzakDolu] = useState<{ startMs: number; endMs: number }[]>([]);
+  const yerelRandevular = useStore((st) => st.bookings);
+  // §4.2 — sunucudakiler + bu cihazdaki bekleyenler (bkz. doluAraliklar).
+  const busyRanges = useMemo(
+    () => doluAraliklar(pro.id, uzakDolu, yerelRandevular),
+    [pro.id, uzakDolu, yerelRandevular],
+  );
   useEffect(() => {
     if (!pro.id) return;
     let alive = true;
     void api
       .proBusy(pro.id, Date.now(), Date.now() + 14 * 86_400_000)
-      .then((rows) => alive && setBusyRanges(Array.isArray(rows) ? rows : []))
+      .then((rows) => alive && setUzakDolu(Array.isArray(rows) ? rows : []))
       .catch(() => undefined); // erişilemezse gösterge yok — akış engellenmez
     return () => {
       alive = false;
@@ -78,7 +110,9 @@ export default function ScheduleScreen() {
   }, [pro.id]);
   const chosenStartMs = when.getTime();
   const chosenEndMs = chosenStartMs + durationMin * 60_000;
-  const slotBusy = busyRanges.some((b) => chosenStartMs < b.endMs && chosenEndMs > b.startMs);
+  const slotBusy = busyRanges.some((b) =>
+    cakisiyor({ startMs: chosenStartMs, endMs: chosenEndMs }, b),
+  );
   const dayBusy = busyRanges.filter(
     (b) => almatyDayStart(b.startMs, 0) === almatyDayStart(chosenStartMs, 0),
   );
@@ -102,10 +136,10 @@ export default function ScheduleScreen() {
     const source = (params.source as BookingSource) ?? 'direct';
     const serviceName = offer
       ? offer.title
-      : (chosenService?.name ?? params.service ?? pro.services[0]?.name ?? pro.specialty);
-    const price = offer
-      ? offer.finalPrice
-      : (chosenService?.price ?? pro.services[0]?.price ?? Number(pro.priceFrom));
+      : seciliHizmetler.length
+        ? seciliHizmetler.map((sv) => sv.name).join(' + ')
+        : (params.service ?? pro.specialty);
+    const price = offer ? offer.finalPrice : toplamTutar || Number(pro.priceFrom);
 
     const id = addBooking({
       source,
@@ -118,6 +152,9 @@ export default function ScheduleScreen() {
       startMs,
       durationMin,
       price,
+      // Sunucu bu adlardan fiyat ve süreyi KENDİ hizmet listesinden okuyup
+      // toplamı yeniden hesaplıyor; buradaki tutar yalnız iyimser gösterim.
+      ...(offer ? {} : { serviceNames: seciliHizmetler.map((sv) => sv.name) }),
     });
 
     // BİLDİRİM İZNİ — kullanıcı randevuya yeni bağlandı; 24s/2s hatırlatmasının
@@ -142,31 +179,9 @@ export default function ScheduleScreen() {
     });
   }
 
-  // §A1 — uzman dolu görünüyorsa bekleme listesine yazıl; slot boşalınca push gelir,
-  // ilk randevuyu alan kazanır (kapora akışı o randevuda normal işler).
-  function joinWaitlist() {
-    const startMs = when.getTime();
-    addBooking({
-      source: (params.source as BookingSource) ?? 'direct',
-      service:
-        offer?.title ??
-        chosenService?.name ??
-        params.service ??
-        pro.services[0]?.name ??
-        pro.specialty,
-      proId: pro.id,
-      proName: pro.name,
-      proImage: pro.image,
-      ...(uzman?.name ? { uzmanName: uzman.name } : {}),
-      startMs,
-      durationMin,
-      price: offer ? offer.finalPrice : (chosenService?.price ?? 0),
-      status: 'waitlist',
-    });
-    Alert.alert(t('waitlist.joined_t'), t('waitlist.joined_b'), [
-      { text: t('common.ok'), onPress: () => router.back() },
-    ]);
-  }
+  // BEKLEME LİSTESİ KALDIRILDI (brief §4.2): slot talep gönderildiği an
+  // kilitleniyor, dolayısıyla aynı saate ikinci bir talep hiç oluşamıyor.
+  // Bekleyecek kimse olmadığı için buton da kaldırıldı.
 
   return (
     <Screen edges={['bottom']}>
@@ -242,6 +257,48 @@ export default function ScheduleScreen() {
           </View>
         ) : null}
 
+        {/* §4.1.1 — hizmet seçimi. Tek hizmeti olan uzmanda liste gösterilmiyor:
+            seçenek sunmayan bir seçim ekranı gürültüdür. */}
+        {cokluAcik ? (
+          <>
+            <Text variant="h2" tone="ink" style={styles.label}>
+              {t('booking.schedule.services')}
+            </Text>
+            <View style={[styles.hizmetKart, shadow.soft]}>
+              {pro.services.map((sv, i) => {
+                const on = secili.includes(sv.name);
+                return (
+                  <Pressable
+                    key={sv.id ?? sv.name}
+                    onPress={() => hizmetSec(sv.name)}
+                    style={[styles.hizmetSatir, i > 0 && styles.hizmetAyrac]}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: on }}
+                    accessibilityLabel={sv.name}
+                  >
+                    <Ionicons
+                      name={on ? 'checkbox' : 'square-outline'}
+                      size={22}
+                      color={on ? colors.accent : colors.muted}
+                    />
+                    <View style={styles.hizmetGovde}>
+                      <Text variant="body" tone="ink" numberOfLines={1}>
+                        {sv.name}
+                      </Text>
+                      <Text variant="caption" tone="muted">
+                        {sv.durationMin ?? 60} {t('common.min')}
+                      </Text>
+                    </View>
+                    <Text variant="bodyStrong" tone="ink">
+                      {(sv.price ?? 0).toLocaleString('tr-TR')} ₸
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        ) : null}
+
         <Text variant="h2" tone="ink" style={styles.label}>
           {t('booking.schedule.time')}
         </Text>
@@ -279,9 +336,47 @@ export default function ScheduleScreen() {
           </Text>
         )}
 
-        {/* §B5 — kurallar kartı: kapora/iptal/no-show her zaman görünür.
-            K1 — kapora oranlı: fiyat belliyse o randevunun GERÇEK tutarı yazılır. */}
-        <RulesCard price={offer ? offer.finalPrice : chosenService?.price} />
+        {/* §4.1.3 — ÖZET: "Göndermeden önce açıkça gösterilir: hizmetler,
+            toplam süre, toplam tutar, depozito tutarı (%10), iptal kuralı."
+            Kullanıcı neyi kabul ettiğini göndermeden ÖNCE görmeli. */}
+        <View style={[styles.ozetKart, shadow.soft]}>
+          <Text variant="caption" tone="muted">
+            {t('booking.schedule.summary')}
+          </Text>
+          {(offer ? [{ name: offer.title, price: offer.finalPrice }] : seciliHizmetler).map(
+            (sv) => (
+              <View key={sv.name} style={styles.ozetSatir}>
+                <Text variant="body" tone="ink" numberOfLines={1} style={styles.ozetAd}>
+                  {sv.name}
+                </Text>
+                <Text variant="body" tone="ink">
+                  {(sv.price ?? 0).toLocaleString('tr-TR')} ₸
+                </Text>
+              </View>
+            ),
+          )}
+          <View style={styles.ozetAyrac} />
+          <View style={styles.ozetSatir}>
+            <Text variant="caption" tone="muted">
+              {t('booking.schedule.total_time')}
+            </Text>
+            <Text variant="body" tone="ink">
+              {durationMin} {t('common.min')}
+            </Text>
+          </View>
+          <View style={styles.ozetSatir}>
+            <Text variant="bodyStrong" tone="ink">
+              {t('booking.schedule.total')}
+            </Text>
+            <Text variant="h2" tone="ink">
+              {(offer ? offer.finalPrice : toplamTutar).toLocaleString('tr-TR')} ₸
+            </Text>
+          </View>
+        </View>
+
+        {/* §B5 — kurallar kartı: depozito/iptal/no-show her zaman görünür.
+            §4.4 — depozito TOPLAM tutarın %10'u; kart gerçek tutarı yazıyor. */}
+        <RulesCard price={offer ? offer.finalPrice : toplamTutar} />
       </ScrollView>
 
       <View style={styles.footer}>
@@ -301,12 +396,6 @@ export default function ScheduleScreen() {
           disabled={!offerWindowOk || slotBusy}
           onPress={confirm}
         />
-        {/* §A1 — dolu uzman için bekleme listesi */}
-        <Pressable onPress={joinWaitlist} style={styles.waitlistBtn} hitSlop={6}>
-          <Text variant="caption" tone="inkSoft" style={styles.waitlistText}>
-            {t('waitlist.join')}
-          </Text>
-        </Pressable>
       </View>
     </Screen>
   );
@@ -314,6 +403,33 @@ export default function ScheduleScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    hizmetKart: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      paddingHorizontal: space(2),
+    },
+    hizmetSatir: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      paddingVertical: space(1.5),
+      minHeight: 44,
+    },
+    hizmetAyrac: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
+    hizmetGovde: { flex: 1 },
+    ozetKart: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(0.75),
+    },
+    ozetSatir: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    ozetAd: { flex: 1, marginRight: space(1) },
+    ozetAyrac: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.line,
+      marginVertical: space(0.5),
+    },
     content: { paddingHorizontal: space(3), paddingBottom: space(4) },
     pickerCard: {
       backgroundColor: colors.surface,

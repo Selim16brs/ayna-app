@@ -7,7 +7,6 @@
  */
 export type PushTemplateKey =
   | 'quote.new_request'
-  | 'booking.receipt_arrived'
   | 'booking.request_expired'
   | 'booking.deposit_expired'
   | 'booking.completed_confirm';
@@ -18,10 +17,6 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
     'quote.new_request': {
       title: 'Yeni talep var ✨',
       body: 'Şehrinde yeni bir {cat} talebi açıldı — teklifini gönder.',
-    },
-    'booking.receipt_arrived': {
-      title: 'Depozito dekontu geldi 🧾',
-      body: 'Müşteri dekont yükledi — kontrol edip onayla, randevu kesinleşsin.',
     },
     'booking.request_expired': {
       title: 'Talebin yanıtsız kaldı ⌛',
@@ -41,10 +36,6 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
       title: 'Жаңа сұраныс бар ✨',
       body: 'Қалаңызда жаңа {cat} сұранысы ашылды — ұсынысыңызды жіберіңіз.',
     },
-    'booking.receipt_arrived': {
-      title: 'Кепілпұл түбіртегі келді 🧾',
-      body: 'Клиент түбіртек жүктеді — тексеріп растаңыз, жазылу бекітілсін.',
-    },
     'booking.request_expired': {
       title: 'Сұранысыңыз жауапсыз қалды ⌛',
       body: '{pro} жауап бере алмады — қаласаңыз басқа маман таңдаңыз.',
@@ -62,10 +53,6 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
     'quote.new_request': {
       title: 'Новая заявка ✨',
       body: 'В вашем городе открыта новая заявка {cat} — отправьте предложение.',
-    },
-    'booking.receipt_arrived': {
-      title: 'Пришёл чек депозита 🧾',
-      body: 'Клиент загрузил чек — проверьте и подтвердите, запись зафиксируется.',
     },
     'booking.request_expired': {
       title: 'Заявка осталась без ответа ⌛',

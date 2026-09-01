@@ -103,7 +103,7 @@ export default function OfflineBookingScreen() {
     const candidate = { startMs, endMs: startMs + durationMin * 60_000 };
     const uzmanName = uzman.trim();
     const conflictBusy = bookings
-      .filter((b) => b.status !== 'cancelled' && (uzmanName ? b.uzmanName === uzmanName : true))
+      .filter((b) => b.status !== 'iptal_musteri' && (uzmanName ? b.uzmanName === uzmanName : true))
       .map((b) => ({ startMs: b.startMs, endMs: b.startMs + b.durationMin * 60_000 }));
     if (hasConflict(candidate, conflictBusy)) {
       Alert.alert(t('offline.conflict_title'), t('offline.conflict'));
@@ -122,7 +122,7 @@ export default function OfflineBookingScreen() {
       startMs,
       durationMin,
       price: Number(price.replace(/[^0-9]/g, '')) || 0,
-      status: 'confirmed',
+      status: 'kesinlesti',
       bookingKind: kind,
       ...(kind === 'group' ? { groupSize: Number(groupSize) || 2 } : {}),
     };

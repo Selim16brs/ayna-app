@@ -104,7 +104,7 @@ export default function SellerRequestsScreen() {
     const now = Date.now();
     const dur = (Number(eta) || 60) * 60_000;
     const busy = bookings
-      .filter((b) => b.status !== 'cancelled' && b.status !== 'no_show')
+      .filter((b) => b.status !== 'iptal_musteri' && b.status !== 'no_show_musteri')
       .map((b) => ({ startMs: b.startMs, endMs: b.startMs + b.durationMin * 60_000 }));
     // §9.5 — slot ızgarası uzmanın ÇALIŞMA SAATLERİNDEN (kapalı gün atlanır; saat yoksa 10-19 varsayılan)
     const grid: number[] = [];
@@ -357,7 +357,7 @@ export default function SellerRequestsScreen() {
                   if (prefs.length === 0) return null;
                   const dur = (Number(eta) || 60) * 60_000;
                   const busySet = bookings
-                    .filter((b) => b.status !== 'cancelled' && b.status !== 'no_show')
+                    .filter((b) => b.status !== 'iptal_musteri' && b.status !== 'no_show_musteri')
                     .map((b) => ({
                       startMs: b.startMs,
                       endMs: b.startMs + b.durationMin * 60_000,

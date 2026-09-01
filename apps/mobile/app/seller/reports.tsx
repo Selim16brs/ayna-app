@@ -167,9 +167,9 @@ export default function ReportsScreen() {
   // §9.2 — yanıt & kalite metrikleri (yerel randevulardan türer)
   const bookings = useStore((s) => s.bookings);
   const quality = useMemo(() => {
-    const depositPending = bookings.filter((b) => b.status === 'deposit_submitted').length;
-    const done = bookings.filter((b) => b.status === 'completed').length;
-    const noShow = bookings.filter((b) => b.status === 'no_show').length;
+    const depositPending = bookings.filter((b) => b.status === 'kesinlesti').length;
+    const done = bookings.filter((b) => b.status === 'tamamlandi').length;
+    const noShow = bookings.filter((b) => b.status === 'no_show_musteri').length;
     const finished = done + noShow;
     const completion = finished > 0 ? Math.round((done / finished) * 100) : null;
     const responded = bookings.filter((b) => b.respondedAt != null && b.responseDeadline != null);

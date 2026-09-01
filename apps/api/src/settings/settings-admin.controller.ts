@@ -11,6 +11,8 @@ import {
   apiKeySchema,
   categoryConfigSchema,
   citiesSchema,
+  kaspiLinkSchema,
+  type KaspiLinkInput,
   rateSchema,
 } from './settings.dto';
 import { SettingsService } from './settings.service';
@@ -25,12 +27,27 @@ export class SettingsAdminController {
   // Tüm ayarlar tek çağrıda (oranlar + maskeli anahtarlar + şehirler)
   @Get()
   async all() {
-    const [rates, apiKeys, cities] = await Promise.all([
+    const [rates, apiKeys, cities, kaspi] = await Promise.all([
       this.settings.rates(),
       this.settings.apiKeys(),
       this.settings.cities(),
+      this.settings.kaspiLink(),
     ]);
-    return { rates, apiKeys, cities };
+    return { rates, apiKeys, cities, kaspi };
+  }
+
+  /**
+   * §4.4 — SES INVEST Kaspi QR'ının içeriği (bir URL).
+   *
+   * Kodda değil ayarda: QR yenilendiğinde ya da hesap değiştiğinde yeni
+   * uygulama sürümü çıkmak gerekmesin. Boş göndermek özelliği kapatır.
+   */
+  @Post('kaspi-link')
+  setKaspiLink(
+    @Req() req: AuthedRequest,
+    @Body(new ZodValidationPipe(kaspiLinkSchema)) body: KaspiLinkInput,
+  ) {
+    return this.settings.setKaspiLink(body.url, req.user?.id);
   }
 
   @Post('rate')

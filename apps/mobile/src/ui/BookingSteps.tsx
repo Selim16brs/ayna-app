@@ -21,13 +21,13 @@ const STEPS: { key: MessageKey; done: (s: BookingStatus, hasReceipt: boolean) =>
   { key: 'home.next.step_request', done: () => true },
   {
     key: 'home.next.step_accepted',
-    done: (s) => s !== 'awaiting_provider' && s !== 'alternative_proposed',
+    done: (s) => s !== 'onay_bekliyor' && s !== 'degisiklik_onerildi',
   },
   {
     key: 'home.next.step_deposit',
-    done: (s, hasReceipt) => hasReceipt || s === 'confirmed' || s === 'completed',
+    done: (s, hasReceipt) => hasReceipt || s === 'kesinlesti' || s === 'tamamlandi',
   },
-  { key: 'home.next.step_service', done: (s) => s === 'completed' },
+  { key: 'home.next.step_service', done: (s) => s === 'tamamlandi' },
 ];
 
 export function BookingSteps({

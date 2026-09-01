@@ -1,30 +1,37 @@
+import { IPTAL_ESIGI_SAAT, esikGecti } from '@ayna/domain';
 // EK Z.7 (§4.4) — İptal/no-show politikası: saf kurallar (test edilebilir, DB'siz).
 
-// Serbest iptal penceresi: randevuya 3 saatten fazla süre varken iptal serbesttir.
-export const FREE_CANCEL_WINDOW_MS = 3 * 60 * 60 * 1000;
+// Serbest iptal eşiği — brief §4.7. Tek kaynak `@ayna/domain`; burada yeniden
+// yazmak, eşiğin bir yerde değişip diğerinde kalmasına açıktı.
+export const FREE_CANCEL_WINDOW_MS = IPTAL_ESIGI_SAAT * 60 * 60 * 1000;
 
-// Kaporanın ödendiği (yakılabilir/iade edilebilir) durumlar.
-const DEPOSIT_PAID_STATUSES = ['confirmed', 'deposit_submitted'];
+// Depozitonun ÖDENDİĞİ durum. Brief §4.4'te dekont yüklenince randevu doğrudan
+// KESINLESTI oluyor; eski "yüklendi ama onaylanmadı" ara durumu yok, o yüzden
+// liste tek değere indi.
+const DEPOSIT_PAID_STATUSES = ['kesinlesti'];
 
 export interface CancelOutcome {
-  status: 'cancelled' | 'refund_pending';
-  forfeit: boolean; // true → kapora uzmanda kalır (geç iptal cezası)
+  /** Durum her hâlükârda müşteri iptali; fark İADE HAKKINDA. */
+  status: 'iptal_musteri';
+  forfeit: boolean; // true → depozito yanar (geç iptal, §4.7)
 }
 
 // §4.4 — kullanıcı iptalinin sonucunu SUNUCU belirler (client'a güvenilmez):
 // - Kapora ödenmemişse → düz iptal (yakma/iade yok).
 // - Kapora ödenmiş + geç iptal (<3sa) → kapora yanar (ceza).
-// - Kapora ödenmiş + serbest iptal (>3sa) → uzman iade eder (refund_pending).
+// - Depozito ödenmiş + serbest iptal (>3sa) → iade hakkı doğar (§4.10 kuyruğu).
 export function cancelOutcome(
   status: string,
   startAtMs: number | null,
   nowMs: number,
 ): CancelOutcome {
-  if (!DEPOSIT_PAID_STATUSES.includes(status)) return { status: 'cancelled', forfeit: false };
-  const late = startAtMs != null && startAtMs - nowMs <= FREE_CANCEL_WINDOW_MS;
-  return late
-    ? { status: 'cancelled', forfeit: true }
-    : { status: 'refund_pending', forfeit: false };
+  // Depozito ödenmemişse yakılacak bir şey yok.
+  if (!DEPOSIT_PAID_STATUSES.includes(status)) return { status: 'iptal_musteri', forfeit: false };
+  const late = startAtMs != null && esikGecti(startAtMs, nowMs);
+  // §4.7 — eşikten sonra depozito YANAR; önce iade hakkı doğar ve talep §4.10
+  // kuyruğundan yürür. Eskiden `refund_pending` diye AYRI bir randevu durumu
+  // vardı; iade artık randevunun durumu değil, ayrı bir kayıt.
+  return { status: 'iptal_musteri', forfeit: late };
 }
 
 // ── §7.8 BİR KEZ ADİL ERTELEME HAKKI ────────────────────────────────────────
@@ -39,7 +46,8 @@ export function cancelOutcome(
 // penceresindeyse kaporasını yakıyordu — hâlbuki hizmetten vazgeçmemişti.
 
 /** Ertelenebilen durumlar: slotu tutan, henüz yaşanmamış randevular. */
-export const RESCHEDULABLE_STATUSES = ['confirmed', 'deposit_pending', 'deposit_submitted'];
+// §4.6 — ertelenebilen durumlar: slotu tutan, henüz yaşanmamış randevular.
+export const RESCHEDULABLE_STATUSES = ['kesinlesti', 'depozito_bekliyor'];
 
 export type RescheduleCheck =
   | { ok: true }

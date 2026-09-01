@@ -47,6 +47,9 @@ import {
   type WeeklyTheme,
   setToken,
   SupportRow,
+  type DekontSatiri,
+  type IadeSatiri,
+  type UzlasmaSatiri,
 } from './lib/api';
 
 type Tab =
@@ -1166,92 +1169,166 @@ function CategoryBars({ items }: { items: { sector: string; count: number }[] })
 }
 
 // Komisyon tahsilatı — İŞLEM BAŞINA fatura (Ödendi/Bekliyor/Gecikti)
-function InvoicesSection() {
-  const { data, reload } = useAsync<CommissionInvoice[]>(() => api.commissionInvoices(), []);
+/**
+ * Brief §8 — RANDEVU KUYRUKLARI.
+ *
+ * Eski "Dönem faturaları" bölümü kaldırıldı: brief §4.4/§10 ikinci tahsilatı
+ * tümden sildi (depozito zaten AYNA'nın komisyonu), dolayısıyla kesilecek
+ * fatura da kalmadı. Yerine brief'in istediği üç kuyruk geldi.
+ */
+function RandevuKuyruklari() {
+  const dekont = useAsync<DekontSatiri[]>(() => api.dekontKuyrugu(), []);
+  const iade = useAsync<IadeSatiri[]>(() => api.iadeKuyrugu(), []);
+  const uzlasma = useAsync<UzlasmaSatiri[]>(() => api.uzlasmaKuyrugu(), []);
   const [msg, setMsg] = useState<string | null>(null);
 
-  const runOverdue = async () => {
-    const res = await api.runOverdue();
-    setMsg(`Gecikme taraması — ${res.markedOverdue} gecikti, ${res.restricted} hesap kısıtlandı`);
-    reload();
-  };
-
-  const statusPill = (s: string) =>
-    s === 'collected' ? 'approved' : s === 'overdue' ? 'rejected' : 'pending';
-  const statusLabel = (s: string) =>
-    s === 'collected' ? 'Ödendi' : s === 'overdue' ? 'Gecikti' : 'Bekliyor';
+  const kzt = (n: number) => `${n.toLocaleString('tr-TR')} ₸`;
 
   return (
     <>
-      <div className="section-title">Komisyon faturaları — işlem başına (E5)</div>
+      {/* ── §8.1 Dekont doğrulama ── */}
+      <div className="section-title">Dekont doğrulama ({dekont.data?.length ?? 0})</div>
       <div className="card" style={{ marginBottom: 16 }}>
-        {/* TEK KURAL: fatura hizmet tamamlandığı ANDA otomatik doğuyor. Elle
-            "dönem kapat" düğmesi KALDIRILDI — aynı para için ikinci bir kural
-            (dönem sonu + 7 gün) demekti ve aynı randevu iki kez faturalanabiliyordu. */}
-        <div className="form-inline">
-          <div className="meta full">
-            Fatura hizmet tamamlandığında otomatik kesilir. Vade: tamamlanmadan 30 dk sonra;
-            ardından 15 dk tanınır, sonra hesap kısıtlanır. Süreler Ayarlar’dan yönetilir.
-          </div>
-          <button className="btn-sm" onClick={runOverdue}>
-            Gecikmeleri işle
-          </button>
-          {msg && (
-            <div className="meta full" style={{ color: 'var(--success)' }}>
-              {msg}
-            </div>
-          )}
+        <div className="meta full" style={{ marginBottom: 8 }}>
+          Randevu dekont yüklenince ZATEN kesinleşti. Bu kuyruk sahte dekontu sonradan yakalamak
+          için. Reddedersen randevu iptal olur ve kullanıcı yasaklanır.
         </div>
-      </div>
-      <div className="card">
-        {!data || data.length === 0 ? (
-          <div className="empty">Fatura yok — bir dönem kapatın</div>
+        {!dekont.data?.length ? (
+          <div className="empty">Bekleyen dekont yok</div>
         ) : (
-          data.map((inv) => (
-            <div key={inv.id} className="list-row">
+          dekont.data.map((b) => (
+            <div key={b.id} className="row">
               <div className="grow">
-                <div className="name">
-                  {inv.proName} · {TL(inv.commissionAmount)}
+                <div>
+                  <b>{b.proName}</b> · {b.service}
                 </div>
                 <div className="meta">
-                  {inv.periodStart.slice(0, 10)} – {inv.periodEnd.slice(0, 10)} ·{' '}
-                  {inv.bookingsCount} randevu · ciro {TL(inv.grossRevenue)} · son ödeme{' '}
-                  {inv.dueDate.slice(0, 10)}
-                  {inv.status !== 'collected' && inv.overdueDays > 0
-                    ? ` · ${inv.overdueDays}g gecikme`
-                    : ''}
-                  {inv.receiptUri ? ' · 🧾 dekont var' : ''}
+                  {new Date(b.startAt).toLocaleString('tr-TR')} · depozito {kzt(b.deposit)} /{' '}
+                  {kzt(b.price)}
                 </div>
               </div>
-              <span className={`pill ${statusPill(inv.status)}`}>{statusLabel(inv.status)}</span>
-              {inv.receiptUri ? (
-                <a
-                  className="btn-sm"
-                  href={inv.receiptUri}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ textDecoration: 'none' }}
-                >
-                  Dekont
+              {b.depositReceiptUri ? (
+                <a className="btn-sm" href={b.depositReceiptUri} target="_blank" rel="noreferrer">
+                  Dekontu aç
                 </a>
               ) : null}
-              {inv.status !== 'collected' ? (
-                <button
-                  className="btn-sm btn-ok"
-                  onClick={async () => {
-                    if (confirm(`${inv.proName} faturası tahsil edildi olarak işaretlensin mi?`)) {
-                      await api.collectInvoice(inv.id);
-                      reload();
-                    }
-                  }}
-                >
-                  Tahsil edildi
-                </button>
-              ) : null}
+              <button
+                className="btn-sm btn-ok"
+                onClick={async () => {
+                  await api.dekontOnayla(b.id);
+                  setMsg('Dekont doğrulandı');
+                  dekont.reload();
+                }}
+              >
+                Doğrula
+              </button>
+              <button
+                className="btn-sm btn-danger"
+                onClick={async () => {
+                  // Yıkıcı: randevu iptal + hesap yasaklı. Onay istemek şart.
+                  if (!confirm('Sahte dekont: randevu iptal edilecek ve kullanıcı yasaklanacak.'))
+                    return;
+                  await api.dekontReddet(b.id);
+                  setMsg('Dekont reddedildi, kullanıcı yasaklandı');
+                  dekont.reload();
+                }}
+              >
+                Sahte
+              </button>
             </div>
           ))
         )}
       </div>
+
+      {/* ── §8.2 İadeler ── */}
+      <div className="section-title">İadeler ({iade.data?.length ?? 0})</div>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="meta full" style={{ marginBottom: 8 }}>
+          Müşteri iadeleri ve müşteri no-show'unda uzmana ödenecek %9 payı AYNI kuyruktan işlenir.
+          İç hedef: 24 saat.
+        </div>
+        {!iade.data?.length ? (
+          <div className="empty">Bekleyen iade yok</div>
+        ) : (
+          iade.data.map((r) => (
+            <div key={r.id} className="row">
+              <div className="grow">
+                <div>
+                  <b>{kzt(Number(r.amount))}</b> ·{' '}
+                  {r.kind === 'musteri_iade' ? 'Müşteri iadesi' : 'Uzman payı (%9)'}
+                </div>
+                {/* PII: ödeme bilgisi yalnız burada görünür, log'a yazılmaz. */}
+                <div className="meta">
+                  {r.payoutInfo || 'hesap bilgisi girilmemiş'} ·{' '}
+                  {new Date(r.createdAt).toLocaleString('tr-TR')}
+                </div>
+              </div>
+              <button
+                className="btn-sm btn-ok"
+                onClick={async () => {
+                  await api.iadeOdendi(r.id);
+                  setMsg('İade ödendi olarak işaretlendi');
+                  iade.reload();
+                }}
+              >
+                Ödendi
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ── §8.3 Uzlaşma ── */}
+      <div className="section-title">Uzlaşma kayıtları ({uzlasma.data?.length ?? 0})</div>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="meta full" style={{ marginBottom: 8 }}>
+          "Gelmedi" ve ödeme itirazları. %90'lık doğrudan ödemede AYNA hakem DEĞİLDİR — o yüzden
+          "karar yok" seçeneği var.
+        </div>
+        {!uzlasma.data?.length ? (
+          <div className="empty">Bekleyen uzlaşma yok</div>
+        ) : (
+          uzlasma.data.map((u) => (
+            <div key={u.id} className="row">
+              <div className="grow">
+                <div>
+                  <b>{u.kind === 'no_show' ? 'Gelmedi itirazı' : 'Ödeme itirazı'}</b>
+                </div>
+                <div className="meta">{u.reason || 'gerekçe yazılmamış'}</div>
+                {u.evidence.length ? (
+                  <div className="meta">{u.evidence.length} kanıt eklendi</div>
+                ) : null}
+              </div>
+              {(
+                [
+                  ['musteri_lehine', 'Müşteri lehine'],
+                  ['uzman_lehine', 'Uzman lehine'],
+                  ['karar_yok', 'Karar yok'],
+                ] as const
+              ).map(([k, etiket]) => (
+                <button
+                  key={k}
+                  className="btn-sm"
+                  onClick={async () => {
+                    const not = prompt('Telefon teyidi / not (opsiyonel)') ?? '';
+                    await api.uzlasmaCoz(u.id, k, not);
+                    setMsg('Uzlaşma çözüldü');
+                    uzlasma.reload();
+                  }}
+                >
+                  {etiket}
+                </button>
+              ))}
+            </div>
+          ))
+        )}
+      </div>
+
+      {msg ? (
+        <div className="meta full" style={{ color: 'var(--success)' }}>
+          {msg}
+        </div>
+      ) : null}
     </>
   );
 }
@@ -1422,7 +1499,7 @@ function CommissionsView() {
             </>
           ) : null}
 
-          <InvoicesSection />
+          <RandevuKuyruklari />
 
           <div className="section-title">Randevu kayıtları ({data.items.length})</div>
           <div className="card">
@@ -3482,16 +3559,43 @@ function UsersView() {
   );
 }
 
+// Brief §3 durum sözlüğü. Adlar kod, veritabanı ve belgede AYNI; panel de
+// aynı kelimeleri kullanıyor ki bir randevu üç yerde üç farklı isimle
+// görünmesin. Eski sözlük (confirmed/pending/waitlist...) tamamen kaldırıldı:
+// filtreler var olmayan adları sorguladığı için panel her sekmede boş dönüyordu.
 const BOOKING_STATUS_TR: Record<string, string> = {
-  confirmed: 'Onaylı',
-  pending: 'Bekliyor',
-  completed: 'Tamamlandı',
-  cancelled: 'İptal',
-  no_show: 'Gelmedi',
-  awaiting_provider: 'Salon onayı bekliyor',
-  alternative_proposed: 'Alternatif önerildi',
-  waitlist: 'Bekleme listesi',
+  taslak: 'Taslak',
+  onay_bekliyor: 'Uzman onayı bekliyor',
+  degisiklik_onerildi: 'Değişiklik önerildi',
+  karsi_oneri: 'Karşı öneri',
+  depozito_bekliyor: 'Depozito bekliyor',
+  kesinlesti: 'Kesinleşti',
+  erteleme_onerildi: 'Erteleme önerildi',
+  hizmet_gunu: 'Hizmet günü',
+  odeme_bekliyor: 'Ödeme bekliyor',
+  tamamlandi: 'Tamamlandı',
+  degerlendirme: 'Değerlendirme',
+  kapandi: 'Kapandı',
+  iptal_musteri: 'Müşteri iptal etti',
+  iptal_uzman: 'Uzman iptal etti',
+  otomatik_dustu: 'Süre doldu — düştü',
+  no_show_musteri: 'Müşteri gelmedi',
+  no_show_uzman: 'Uzman gelmedi',
+  uyusmazlik: 'Uyuşmazlık',
 };
+
+/** Kapanmış (bir daha akmayacak) durumlar — eylem düğmeleri gösterilmez. */
+const KAPALI_DURUMLAR = [
+  'tamamlandi',
+  'degerlendirme',
+  'kapandi',
+  'iptal_musteri',
+  'iptal_uzman',
+  'otomatik_dustu',
+  'no_show_musteri',
+  'no_show_uzman',
+  'uyusmazlik',
+];
 
 function BookingsAdminView() {
   const [status, setStatus] = useState('all');
@@ -3510,11 +3614,25 @@ function BookingsAdminView() {
     const hay = `${b.proName} ${b.service} ${b.customerName ?? ''}`.toLowerCase();
     return hay.includes(q.trim().toLowerCase());
   });
-  const STATES = ['all', 'confirmed', 'completed', 'cancelled', 'no_show', 'waitlist'];
+  // 18 durumun hepsine çip koymak araç çubuğunu okunmaz yapardı; adminin
+  // gerçekten süzdüğü aşamalar seçildi (para bekleyen, biten, sorunlu).
+  const STATES = [
+    'all',
+    'onay_bekliyor',
+    'depozito_bekliyor',
+    'kesinlesti',
+    'odeme_bekliyor',
+    'tamamlandi',
+    'iptal_musteri',
+    'uyusmazlik',
+  ];
   const pill = (s: string) =>
-    s === 'completed' || s === 'confirmed'
+    s === 'tamamlandi' || s === 'degerlendirme' || s === 'kapandi' || s === 'kesinlesti'
       ? 'approved'
-      : s === 'cancelled' || s === 'no_show'
+      : s.startsWith('iptal_') ||
+          s.startsWith('no_show_') ||
+          s === 'uyusmazlik' ||
+          s === 'otomatik_dustu'
         ? 'rejected'
         : 'pending';
   return (
@@ -3561,25 +3679,21 @@ function BookingsAdminView() {
               <span className={`pill ${pill(b.status)}`}>
                 {BOOKING_STATUS_TR[b.status] ?? b.status}
               </span>
-              {!['cancelled', 'completed', 'no_show', 'refunded'].includes(b.status) ? (
-                <>
-                  <button
-                    className="btn small"
-                    onClick={() =>
-                      act(() => api.completeBooking(b.id), `Tamamlandı işaretle? (${b.service})`)
-                    }
-                  >
-                    Tamamlandı
-                  </button>
-                  <button
-                    className="btn small danger"
-                    onClick={() =>
-                      act(() => api.cancelBooking(b.id), `Randevu iptal edilsin mi? (${b.service})`)
-                    }
-                  >
-                    İptal
-                  </button>
-                </>
+              {/* "Tamamlandı işaretle" düğmesi KALDIRILDI (§4.9): tamamlanma,
+                  müşterinin "ödemeyi yaptım" ve uzmanın "ödeme aldım" el
+                  sıkışmasıyla olur. Admin'in tek tuşla tamamlaması, hiç
+                  ödenmemiş bir randevuya puan yükleyip komisyon tabanına
+                  yazardı. §8 admin'e üç kuyruk veriyor; tamamlama vermiyor.
+                  İptal destek kaçış kapısı olarak kalıyor. */}
+              {!KAPALI_DURUMLAR.includes(b.status) ? (
+                <button
+                  className="btn small danger"
+                  onClick={() =>
+                    act(() => api.cancelBooking(b.id), `Randevu iptal edilsin mi? (${b.service})`)
+                  }
+                >
+                  İptal
+                </button>
               ) : null}
             </div>
           ))
@@ -3901,6 +4015,7 @@ function SystemView() {
   const [tests, setTests] = useState<Record<string, { ok: boolean; message: string }>>({});
   const [cityActive, setCityActive] = useState('');
   const [citySoon, setCitySoon] = useState('');
+  const [kaspiEdit, setKaspiEdit] = useState('');
 
   const saveRate = async (key: string) => {
     const raw = rateEdits[key];
@@ -3916,6 +4031,14 @@ function SystemView() {
     const value = keyEdits[provider] ?? '';
     await api.setApiKey(provider, value);
     setKeyEdits((s) => ({ ...s, [provider]: '' }));
+    reload();
+  };
+
+  const saveKaspi = async () => {
+    // Boş kaydetmek özelliği KAPATIR — bilinçli bir seçenek: bağlantı bozulursa
+    // düğmeyi gizlemek, müşteriyi çalışmayan bir yola göndermekten iyidir.
+    await api.setKaspiLink(kaspiEdit.trim());
+    setKaspiEdit('');
     reload();
   };
 
@@ -3974,6 +4097,40 @@ function SystemView() {
             </div>
           ))
         )}
+      </div>
+
+      {/* §4.4 — Kaspi ödeme bağlantısı */}
+      <h2 className="section-head">Kaspi ile ödeme</h2>
+      <p className="page-sub">
+        SES INVEST QR kodunun içeriği (bir bağlantı). Doluysa müşteri depozito ekranında “Kaspi ile
+        öde” düğmesini görür; boşsa düğme hiç görünmez.
+      </p>
+      <div className="card" style={{ marginBottom: 28 }}>
+        <div className="list-row">
+          <div className="grow">
+            <div className="name">Ödeme bağlantısı</div>
+            <div className="meta">
+              {data?.kaspi.configured
+                ? `Tanımlı · ${data.kaspi.url}`
+                : 'Tanımlı değil — düğme gizli'}
+            </div>
+            <div className="meta" style={{ marginTop: 4 }}>
+              Bağlantı tutarı destekliyorsa <code>{'{tutar}'}</code>, randevu referansını
+              destekliyorsa <code>{'{ref}'}</code> yazın; uygulama bunları doldurur. Hangi biçimin
+              çalıştığını telefonda deneyerek doğrulayın.
+            </div>
+          </div>
+          <input
+            className="input"
+            style={{ width: 360 }}
+            placeholder="https://kaspi.kz/pay/..."
+            value={kaspiEdit}
+            onChange={(e) => setKaspiEdit(e.target.value)}
+          />
+          <button className="btn-sm btn-ok" onClick={saveKaspi}>
+            Kaydet
+          </button>
+        </div>
       </div>
 
       {/* API anahtarları */}

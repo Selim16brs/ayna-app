@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { DURUM_ETIKETI } from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -25,10 +26,10 @@ const OPEN_H = 10;
 const CLOSE_H = 19;
 // Takvimde SLOT'U TUTAN durumlar: onaylı + tamamlanan + uzman onayı sonrası depozito bekleyenler.
 const CALENDAR_STATUSES: BookingStatus[] = [
-  'confirmed',
-  'completed',
-  'deposit_pending',
-  'deposit_submitted',
+  'kesinlesti',
+  'tamamlandi',
+  'depozito_bekliyor',
+  'kesinlesti',
 ];
 
 // §4.6 uzman gün-ızgarası: açık pencere içinde boş aralıklar + randevu blokları
@@ -36,8 +37,8 @@ function buildDayRows(dayStart: number, dayBookings: Appointment[]): DayRow[] {
   const openStart = dayStart + OPEN_H * 3_600_000;
   const openEnd = dayStart + CLOSE_H * 3_600_000;
   // §4.1/§4.6 — takvimde SLOT'U TUTAN randevular: onaylı + tamamlanan + uzman ONAYLADIKTAN sonra
-  // depozito bekleyenler (deposit_pending/submitted). Uzman kabul edince slot HEMEN takvimde görünür
-  // (gold=bekliyor). Yalnız onay-ÖNCESİ (awaiting_provider) ayrı "Bekleyen Talepler" şeridindedir.
+  // depozito bekleyenler (depozito_bekliyor). Uzman kabul edince slot HEMEN takvimde görünür
+  // (gold=bekliyor). Yalnız onay-ÖNCESİ (onay_bekliyor) ayrı "Bekleyen Talepler" şeridindedir.
   const bs = dayBookings
     .filter((b) => CALENDAR_STATUSES.includes(b.status))
     .sort((a, b) => a.startMs - b.startMs);
@@ -71,25 +72,9 @@ function bucket(inDays: number): GroupKey {
   return 'later';
 }
 
-const STATUS_LABEL: Record<BookingStatus, MessageKey> = {
-  confirmed: 'booking.status.confirmed',
-  pending: 'booking.status.pending',
-  completed: 'booking.status.completed',
-  cancelled: 'booking.status.cancelled',
-  awaiting_provider: 'booking.status.awaiting',
-  alternative_proposed: 'booking.status.alternative',
-  deposit_pending: 'booking.status.deposit_pending',
-  deposit_submitted: 'booking.status.deposit_submitted',
-  refund_pending: 'booking.status.refund_pending',
-  refund_submitted: 'booking.status.refund_submitted',
-  disputed: 'booking.status.disputed',
-  reassigned_pending: 'booking.status.reassigned_pending',
-  no_show: 'booking.status.no_show',
-  waitlist: 'booking.status.waitlist',
-  expired: 'booking.status.expired',
-  completed_pending: 'booking.status.completed_pending',
-  sync_conflict: 'booking.status.sync_conflict',
-};
+// Durum etiketleri TEK KAYNAKTAN (brief §7: "uzman aynı kartın aynasını
+// görür"). Burada elle yazılıydı ve müşteri ekranındakiyle ayrışabiliyordu.
+const STATUS_LABEL: Record<BookingStatus, MessageKey> = DURUM_ETIKETI;
 
 export default function AgendaScreen() {
   const { t } = useLocale();
@@ -126,7 +111,7 @@ export default function AgendaScreen() {
   const [staffFilter, setStaffFilter] = useState<string | null>(null);
   const shownStaff = staffFilter ? staff.filter((u) => u.name === staffFilter) : staff;
   // §9.4 — bekleyen talepler (uzman onayı bekleyen randevular): takvim üstünde şerit
-  const pending = storeBookings.filter((b) => b.status === 'awaiting_provider');
+  const pending = storeBookings.filter((b) => b.status === 'onay_bekliyor');
   const dayStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
   const selectedDay = dayStrip[dayIdx] ?? dayStrip[0]!;
   const dayClosed = closedDays.includes(selectedDay);
@@ -145,9 +130,9 @@ export default function AgendaScreen() {
   const dayTotal = dayBusy.reduce((s, r) => s + r.b.price, 0);
   // §4.6 renk kodu (sol şerit): tamamlanan → nötr, onaylı → lime, diğer → altın
   const barColor = (b: Appointment) =>
-    b.status === 'completed'
+    b.status === 'tamamlandi'
       ? colors.muted
-      : b.status === 'confirmed'
+      : b.status === 'kesinlesti'
         ? colors.accent
         : colors.gold;
   const endTime = (b: Appointment) => slotTime(b.startMs + b.durationMin * 60_000);
@@ -256,7 +241,7 @@ export default function AgendaScreen() {
                 const on = i === dayIdx;
                 const closed = closedDays.includes(dayMs);
                 const has = items.some(
-                  (b) => almatyDayStart(b.startMs, 0) === dayMs && b.status !== 'cancelled',
+                  (b) => almatyDayStart(b.startMs, 0) === dayMs && b.status !== 'iptal_musteri',
                 );
                 return (
                   <Pressable
@@ -672,11 +657,11 @@ function StatusPill({ status }: { status: BookingStatus }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const tone =
-    status === 'cancelled' || status === 'no_show'
+    status === 'iptal_musteri' || status === 'no_show_musteri'
       ? { bg: colors.dangerSoft, fg: colors.danger }
-      : status === 'completed'
+      : status === 'tamamlandi'
         ? { bg: colors.surfaceMuted, fg: colors.inkSoft }
-        : status === 'confirmed'
+        : status === 'kesinlesti'
           ? { bg: colors.successSoft, fg: colors.success }
           : { bg: colors.goldSoft, fg: colors.gold };
   return (
