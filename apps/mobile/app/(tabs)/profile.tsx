@@ -154,7 +154,9 @@ export default function ProfileScreen() {
 
   return (
     <Screen edges={[]}>
-      {/* ── Yeşil gradient başlık + ortalı kimlik (VELOURA "Account") ── */}
+      {/* ── Erik gradyan başlık + ortalı kimlik ──
+          Yorum "yeşil" diyordu ve eski VELOURA tasarımına atıfta bulunuyordu;
+          gradyan uzun zamandır erik. Yanlış yorum kodu yanlış okutuyor. */}
       <LinearGradient
         colors={gradients.gold}
         start={{ x: 0, y: 0 }}

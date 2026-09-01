@@ -22,28 +22,10 @@ export { darkColors, lightColors, type ColorTokens };
 
 export type ThemeMode = 'light' | 'dark';
 
-// ── Gradyanlar ───────────────────────────────────────────────────────────
-export const lightGradients = {
-  hero: ['#FAF7F5', '#E8D9EB'] as const, // zemin → lila
-  gold: ['#642855', '#4A1942'] as const, // ana CTA: mürdüm ombre (isim geriye dönük)
-  rose: ['#C8848C', '#B0616B'] as const, // acil / sayaç kartı
-  teal: ['#3E9560', '#2F7A4A'] as const, // onay
-  plum: ['#642855', '#4A1942'] as const,
-} as const;
+import { darkGradients, lightGradients, type GradientTokens } from './theme.gradients';
 
-export const darkGradients: GradientTokens = {
-  hero: ['#18061C', '#26102A'] as const,
-  gold: ['#D4A0A0', '#B0616B'] as const, // koyuda CTA gül
-  rose: ['#D4A0A0', '#B0616B'] as const,
-  teal: ['#3E9560', '#2F7A4A'] as const,
-  // Plum DOLU BİR YÜZEY ve üstüne HER ZAMAN beyaz yazı geliyor (7 ekran).
-  // Koyuda accent'i açmak metin/ikon için doğru, dolu yüzey için değil:
-  // '#AA9AC4' üstünde beyaz 2.58:1 ölçülüyor — okunmuyor. Bu çift 7.72:1
-  // veriyor ve koyu zeminden (#1A1419) yine ayrışıyor.
-  plum: ['#642855', '#4A1942'] as const,
-};
-
-export type GradientTokens = { [K in keyof typeof lightGradients]: readonly [string, string] };
+export { darkGradients, lightGradients };
+export type { GradientTokens };
 
 // Geriye dönük uyumluluk: doğrudan `colors`/`gradients` import edenler için (light).
 export const colors = lightColors;
