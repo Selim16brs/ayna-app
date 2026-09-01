@@ -204,6 +204,11 @@ export default function AdminApp() {
     {
       title: 'FİNANS',
       items: [
+        // Bu sekme MENÜDE HİÇ YOKTU: `tab === 'bookings'` hiçbir yerden
+        // seçilemiyordu, dolayısıyla dekont doğrulama, iadeler, uzlaşma ve
+        // reklam ödemeleri kuyrukları panelde AÇILAMIYORDU. Veri sunucuda
+        // duruyor, ekran yazılmış ama kapısı yoktu.
+        { id: 'bookings', label: 'Randevu & Ödeme Kuyrukları', icon: '🧾' },
         { id: 'commissions', label: 'Komisyon Takibi', icon: '💰', badge: q?.invoiceReceipts },
         { id: 'loyalty', label: 'Puan Ekonomisi', icon: '🎁' },
       ],
@@ -937,6 +942,15 @@ function OverviewView({ onGo }: { onGo: (t: Tab) => void }) {
     { key: 'disputes', label: 'Depozito İtirazı', tab: 'disputes' },
     { key: 'reviewDisputes', label: 'Yorum İtirazı', tab: 'reviewDisputes' },
     { key: 'circle', label: 'W2W Moderasyon', tab: 'moderation' },
+    // §reklam — AYNA'nın kazanç kuyruğu. Bekleyen ödeme kartını ana sayfada
+    // görmek, onayı geciktirmemek demek: reklamı ödeyen uzman yayına
+    // girmeyi bekliyor.
+    { key: 'adOrders', label: 'Reklam Ödemesi', tab: 'ads' },
+    // Bu üçü sunucuda ZATEN sayılıyordu ama panoda hiç görünmüyordu; üstelik
+    // götürdükleri sekmenin menüde girişi de yoktu.
+    { key: 'depositReceipts', label: 'Dekont Doğrulama', tab: 'bookings' },
+    { key: 'refundsPending', label: 'İade', tab: 'bookings' },
+    { key: 'reconciliationsOpen', label: 'Uzlaşma', tab: 'bookings' },
   ];
   return (
     <>
@@ -1179,7 +1193,6 @@ function CategoryBars({ items }: { items: { sector: string; count: number }[] })
  */
 function RandevuKuyruklari() {
   const dekont = useAsync<DekontSatiri[]>(() => api.dekontKuyrugu(), []);
-  const reklam = useAsync<ReklamSiparisi[]>(() => api.reklamSiparisleri(), []);
   const iade = useAsync<IadeSatiri[]>(() => api.iadeKuyrugu(), []);
   const uzlasma = useAsync<UzlasmaSatiri[]>(() => api.uzlasmaKuyrugu(), []);
   const [msg, setMsg] = useState<string | null>(null);
@@ -1189,72 +1202,6 @@ function RandevuKuyruklari() {
   return (
     <>
       {/* ── §8.1 Dekont doğrulama ── */}
-      {/* ── §reklam — ÜCRETLİ VİTRİN ÖDEMELERİ ──
-          Reklam sipariş anında yayına GİRMEZ; ödeme burada doğrulanınca
-          yayınlanır. Onaylanmadan yayınlansaydı ödenmemiş reklam vitrine
-          düşerdi. */}
-      <div className="section-title">Reklam ödemeleri ({reklam.data?.length ?? 0})</div>
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div className="meta full" style={{ marginBottom: 8 }}>
-          Onaylayınca reklam satın alınan süre boyunca yayına girer ve süre bitince kendiliğinden
-          düşer. Reddedersen reklam üretilmez; uzman dekontu yeniden gönderebilir.
-        </div>
-        {!reklam.data?.length ? (
-          <div className="empty">Bekleyen reklam ödemesi yok</div>
-        ) : (
-          reklam.data.map((o) => (
-            <div key={o.id} className="row">
-              {o.image ? <img className="thumb" src={o.image} alt="" /> : <div className="thumb" />}
-              <div className="grow">
-                <div>
-                  <b>{o.proName}</b> · {o.title}
-                </div>
-                <div className="meta">
-                  {o.placement === 'firsatlar' ? 'Fırsatlar' : 'Öne çıkanlar'} · {o.months} ay ·{' '}
-                  {Number(o.amount).toLocaleString('tr-TR')} ₸
-                </div>
-                <div className="meta">
-                  kod{' '}
-                  <code>{`AYNA-${o.id
-                    .replace(/[^a-zA-Z0-9]/g, '')
-                    .slice(-5)
-                    .toUpperCase()}`}</code>
-                </div>
-              </div>
-              {o.receiptUri ? (
-                <a className="btn-sm" href={o.receiptUri} target="_blank" rel="noreferrer">
-                  Dekontu aç
-                </a>
-              ) : (
-                <span className="meta">dekont yok</span>
-              )}
-              <button
-                className="btn-sm btn-ok"
-                disabled={!o.receiptUri}
-                onClick={async () => {
-                  await api.reklamOnayla(o.id);
-                  setMsg('Reklam yayına alındı');
-                  reklam.reload();
-                }}
-              >
-                Yayına al
-              </button>
-              <button
-                className="btn-sm btn-danger"
-                onClick={async () => {
-                  if (!confirm('Ödeme doğrulanamadı olarak işaretlensin mi?')) return;
-                  await api.reklamReddet(o.id);
-                  setMsg('Reklam ödemesi reddedildi');
-                  reklam.reload();
-                }}
-              >
-                Reddet
-              </button>
-            </div>
-          ))
-        )}
-      </div>
-
       <div className="section-title">Dekont doğrulama ({dekont.data?.length ?? 0})</div>
       <div className="card" style={{ marginBottom: 16 }}>
         <div className="meta full" style={{ marginBottom: 8 }}>
@@ -2743,6 +2690,10 @@ function AnnouncementsView() {
 
 function AdsView() {
   const { data: ads, reload } = useAsync<AdBanner[]>(() => api.ads(), []);
+  // Ödeme kuyruğu BURADA: reklamı onaylayacak kişi "Reklamlar"a bakar,
+  // randevu kuyruklarına değil.
+  const reklam = useAsync<ReklamSiparisi[]>(() => api.reklamSiparisleri(), []);
+  const [msg, setMsg] = useState<string | null>(null);
   const { data: pros } = useAsync<Pro[]>(() => api.professionals(), []);
   const empty = {
     proId: '',
@@ -2793,7 +2744,76 @@ function AdsView() {
   return (
     <>
       <h1 className="page-title">Reklamlar</h1>
-      <p className="page-sub">Keşif ekranındaki sponsorlu reklam şeridi</p>
+      <p className="page-sub">
+        Ücretli vitrin: uzman/salon Kaspi ile öder, dekontu buradan doğrularsın. Onaylanan reklam
+        satın alınan süre boyunca Keşfet ekranında yayınlanır.
+      </p>
+
+      {/* ── §reklam — ÜCRETLİ VİTRİN ÖDEMELERİ ──
+          Reklam sipariş anında yayına GİRMEZ; ödeme burada doğrulanınca
+          yayınlanır. Onaylanmadan yayınlansaydı ödenmemiş reklam vitrine
+          düşerdi. */}
+      <div className="section-title">Reklam ödemeleri ({reklam.data?.length ?? 0})</div>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="meta full" style={{ marginBottom: 8 }}>
+          Onaylayınca reklam satın alınan süre boyunca yayına girer ve süre bitince kendiliğinden
+          düşer. Reddedersen reklam üretilmez; uzman dekontu yeniden gönderebilir.
+        </div>
+        {!reklam.data?.length ? (
+          <div className="empty">Bekleyen reklam ödemesi yok</div>
+        ) : (
+          reklam.data.map((o) => (
+            <div key={o.id} className="row">
+              {o.image ? <img className="thumb" src={o.image} alt="" /> : <div className="thumb" />}
+              <div className="grow">
+                <div>
+                  <b>{o.proName}</b> · {o.title}
+                </div>
+                <div className="meta">
+                  {o.placement === 'firsatlar' ? 'Fırsatlar' : 'Öne çıkanlar'} · {o.months} ay ·{' '}
+                  {Number(o.amount).toLocaleString('tr-TR')} ₸
+                </div>
+                <div className="meta">
+                  kod{' '}
+                  <code>{`AYNA-${o.id
+                    .replace(/[^a-zA-Z0-9]/g, '')
+                    .slice(-5)
+                    .toUpperCase()}`}</code>
+                </div>
+              </div>
+              {o.receiptUri ? (
+                <a className="btn-sm" href={o.receiptUri} target="_blank" rel="noreferrer">
+                  Dekontu aç
+                </a>
+              ) : (
+                <span className="meta">dekont yok</span>
+              )}
+              <button
+                className="btn-sm btn-ok"
+                disabled={!o.receiptUri}
+                onClick={async () => {
+                  await api.reklamOnayla(o.id);
+                  setMsg('Reklam yayına alındı');
+                  reklam.reload();
+                }}
+              >
+                Yayına al
+              </button>
+              <button
+                className="btn-sm btn-danger"
+                onClick={async () => {
+                  if (!confirm('Ödeme doğrulanamadı olarak işaretlensin mi?')) return;
+                  await api.reklamReddet(o.id);
+                  setMsg('Reklam ödemesi reddedildi');
+                  reklam.reload();
+                }}
+              >
+                Reddet
+              </button>
+            </div>
+          ))
+        )}
+      </div>
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
@@ -2922,6 +2942,14 @@ function AdsView() {
           ))
         )}
       </div>
+      {/* Onay/red sonrası GERİ BİLDİRİM. Durum yazılıyor ama hiç
+          gösterilmiyordu: admin düğmeye basıp bir şey olup olmadığını
+          anlayamıyordu. */}
+      {msg ? (
+        <div className="meta full" style={{ color: 'var(--success)' }}>
+          {msg}
+        </div>
+      ) : null}
     </>
   );
 }
