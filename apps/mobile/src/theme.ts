@@ -151,7 +151,16 @@ export const categoryTints = [
  * Baskın değer 18px (41 katman); 8/12/16/20 yardımcı, 100+ hap. Önceki ölçek
  * (14/18/22/26/30) belirgin biçimde daha yuvarlaktı; yeni dil daha keskin.
  */
-export const radius = { xs: 8, sm: 12, md: 16, lg: 18, xl: 20, pill: 999 } as const;
+/**
+ * Yuvarlaklık ölçeği.
+ *
+ * `lg` 18'di; uygulamadaki 190 kullanımın neredeyse tamamı KART yüzeyi
+ * (`colors.surface` + bu yarıçap) ve Figma'da kart 20. İki piksellik fark
+ * her ekranda görünüyordu: yeni tasarıma geçirdiğim ekranlar 20/24 yazarken
+ * geçmemişler 18'de kalıyordu. Token'ı düzeltmek 84 dosyayı tek yerden
+ * hizalıyor — dosya dosya elle değiştirmek yerine.
+ */
+export const radius = { xs: 8, sm: 12, md: 16, lg: 20, xl: 20, pill: 999 } as const;
 
 export const space = (n: number): number => n * 8;
 
