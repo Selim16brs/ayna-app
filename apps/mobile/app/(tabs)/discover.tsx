@@ -28,9 +28,10 @@ import {
   PressableScale,
   SalonRow,
   Screen,
+  TAB_BAR_CLEARANCE,
   Text,
   TextInput,
-  TAB_BAR_CLEARANCE,
+  useOfflineInset,
 } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -50,6 +51,7 @@ export default function DiscoverScreen() {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
+  const cevrimdisiBosluk = useOfflineInset();
   const router = useRouter();
   const campaigns = useCampaigns();
   const offers = useOffers();
@@ -128,7 +130,11 @@ export default function DiscoverScreen() {
             altında SOLDA kesik portre + yansıma, sağda selamlama.
             Önceki sürüm mor bir hero bloğuydu ve kanvasla ilgisi yoktu — yalnız
             renk token'ları değişmişti, yapı eski tasarımın kendisiydi. */}
-        <View style={[styles.topRow, { paddingTop: insets.top + space(0.5) }]}>
+        {/* Çevrimdışı bandı `absolute` çiziliyor ve bu satırı KAPATIYORDU:
+            bağlantı yokken kullanıcı şehri değiştiremiyor, bildirim ve mesaj
+            ikonlarına dokunamıyordu. Bant varken içerik onun altından
+            başlıyor. */}
+        <View style={[styles.topRow, { paddingTop: insets.top + space(0.5) + cevrimdisiBosluk }]}>
           <PressableScale
             style={[styles.cityChip, shadow.soft]}
             onPress={() => router.push('/city')}
@@ -228,14 +234,24 @@ export default function DiscoverScreen() {
             <Text variant="body" tone="inkSoft">
               {t(greetingKey())}
             </Text>
-            <Text
-              style={styles.greetName}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.6}
-            >
-              {displayName}
-            </Text>
+            {/* İsim YOKSA satır hiç çizilmiyor. Misafirde `displayName` boş
+                geliyordu ve 34 puntoluk boş bir satır bırakıyordu: selamlamanın
+                altında sebepsiz bir boşluk. Boş bir metni çizmek, orada bir şey
+                olması gerektiğini ama gelmediğini gösterir. */}
+            {displayName ? (
+              <Text
+                style={styles.greetName}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.6}
+              >
+                {displayName}
+              </Text>
+            ) : (
+              <Text variant="h2" tone="ink">
+                {t('home.guest_title')}
+              </Text>
+            )}
             {points > 0 || tier ? (
               <PressableScale style={styles.tierRow} onPress={() => router.push('/rewards')}>
                 <Ionicons name="star" size={13} color={colors.gold} />

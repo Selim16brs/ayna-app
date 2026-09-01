@@ -529,6 +529,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'home.urgent.confirm': 'Қызмет көрсетілді ме?',
   'home.urgent.confirm_sub': 'жауап бермесең, өзі расталады',
   'home.urgent.confirm_cta': 'Растау',
+  'home.guest_title': 'Қош келдің',
   'home.urgent.refund': 'Депозитіңді қайтар',
   'home.urgent.refund_sub': 'шот деректеріңді енгіз, 1 жұмыс күнінде төленеді',
   'home.urgent.refund_cta': 'Қайтаруды сұра',

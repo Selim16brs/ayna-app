@@ -534,6 +534,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'home.urgent.confirm': 'Услуга состоялась?',
   'home.urgent.confirm_sub': 'без ответа подтвердится само',
   'home.urgent.confirm_cta': 'Подтвердить',
+  'home.guest_title': 'Добро пожаловать',
   'home.urgent.refund': 'Вернуть депозит',
   'home.urgent.refund_sub': 'укажите реквизиты — вернём за 1 рабочий день',
   'home.urgent.refund_cta': 'Запросить',

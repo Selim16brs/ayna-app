@@ -55,4 +55,4 @@ export { AkisCizelgesi } from './AkisCizelgesi';
 export { BeklemeNabzi } from './BeklemeNabzi';
 export { Sayac } from './Sayac';
 export { SurumBilgisi } from './SurumBilgisi';
-export { OfflineBanner } from './OfflineBanner';
+export { OfflineBanner, OFFLINE_BANNER_H, useOfflineInset } from './OfflineBanner';
