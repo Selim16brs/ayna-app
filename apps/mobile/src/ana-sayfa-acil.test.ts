@@ -14,25 +14,30 @@ import { tr } from '@ayna/i18n';
  * 3 saatten az kala iptalde depozito yanıyor (§4.7).
  */
 
-const src = readFileSync(join(import.meta.dirname, 'ui', 'HomeUrgent.tsx'), 'utf8');
+/**
+ * Koşul `HomeUrgent`ten Keşfet ekranına TAŞINDI (Figma tasarımı ayrı bir acil
+ * kart içermiyor, iade bandı içeriyor). Test de oraya bakıyor — koruduğu üç
+ * güvence aynen duruyor.
+ */
+const src = readFileSync(join(import.meta.dirname, '..', 'app', '(tabs)', 'discover.tsx'), 'utf8');
 const TR: Record<string, string> = tr;
 
 test('iade kartı YANMIŞ depozitoda çıkmıyor', () => {
-  const m = /const iadeHakki = bookings\.find\([\s\S]*?\n {2}\);/.exec(src);
+  const m = /const iadeBekleyen = benimRandevularim\.find\([\s\S]*?\n {2}\);/.exec(src);
   assert.ok(m, 'iade seçimi bulunamadı');
   assert.match(m[0], /!b\.depositForfeited/, 'yanmış depozitoda da iade vaat ediliyor');
   assert.match(m[0], /\(b\.depositAmount \?\? 0\) > 0/, 'depozito ödenmemişken iade vaat ediliyor');
 });
 
 test('talep gönderildiyse kart tekrar çıkmıyor', () => {
-  const m = /const iadeHakki = bookings\.find\([\s\S]*?\n {2}\);/.exec(src)![0];
+  const m = /const iadeBekleyen = benimRandevularim\.find\([\s\S]*?\n {2}\);/.exec(src)![0];
   assert.match(m, /!b\.refundRequestedAt/, 'talep verildikten sonra kart hâlâ çıkıyor');
 });
 
 test('kart iade EKRANINA götürüyor — kapanmış randevuya değil', () => {
   // "Gör"e basınca boş bir randevu detayı açılıyordu; kullanıcı orada
   // olmayan bir dekontu arıyordu.
-  assert.match(src, /route: `\/booking\/refund\?id=\$\{iadeHakki\.id\}`/);
+  assert.match(src, /router\.push\(`\/booking\/refund\?id=\$\{iadeBekleyen\.id\}`\)/);
 });
 
 test('metin artık uzmanın dekont yüklediğini SÖYLEMİYOR', () => {
@@ -48,7 +53,7 @@ test('metin artık uzmanın dekont yüklediğini SÖYLEMİYOR', () => {
 });
 
 test('uzman iptali ve no-show da iade hakkı doğuruyor (§4.7)', () => {
-  const m = /const iadeHakki = bookings\.find\([\s\S]*?\n {2}\);/.exec(src)![0];
+  const m = /const iadeBekleyen = benimRandevularim\.find\([\s\S]*?\n {2}\);/.exec(src)![0];
   for (const st of ['iptal_uzman', 'no_show_uzman']) {
     assert.ok(m.includes(st), `${st} iade hakkı doğurmuyor`);
   }

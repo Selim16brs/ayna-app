@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { lightColors } from './theme.palette';
+import { darkColors, lightColors } from './theme.palette';
 
 /**
  * #15 KARANLIK MOD — rapordaki dört bulgunun düzeltmesi.
@@ -27,47 +27,29 @@ function kon(a: string, b: string): number {
   return (x! + 0.05) / (y! + 0.05);
 }
 
-test('P1 — acil kart yüzeyi TEMADAN BAĞIMSIZ ve yazı okunuyor', () => {
-  const h = kodu('src/ui/HomeUrgent.tsx');
-  // Zemin tema token'ı OLMAMALI: `rose`/`accent` koyu temada açık renge
-  // dönüyor ve beyaz yazı 2,27:1'e düşüyordu.
-  assert.doesNotMatch(h, /cardCritical: \{ backgroundColor: colors\./, 'zemin hâlâ temaya bağlı');
-  assert.doesNotMatch(h, /cardCalm: \{ backgroundColor: colors\./, 'zemin hâlâ temaya bağlı');
-
-  // Değer literal ya da SABİT PALET başvurusu olabilir. `lightColors` aktif
-  // temaya bağlı değildir (dönmez) ama marka değişince onunla değişir —
-  // aranan bağımsızlığı bozmadan sızıntıyı kapatır. Desen ikisini de tanımalı,
-  // yoksa test sessizce hiçbir şey ölçmez.
-  const coz = (v: string): string => {
-    const m = /^lightColors\.(\w+)$/.exec(v.trim());
-    return m ? (lightColors as Record<string, string>)[m[1]!]! : v.replace(/'/g, '').trim();
-  };
-  const oku = (ad: string): string => {
-    const m = new RegExp(`const ${ad} = ([^;]+);`).exec(h);
-    assert.ok(m, `${ad} tanımlı değil`);
-    return coz(m![1]!);
-  };
-  const kritik = [null, oku('ACIL_KRITIK')];
-  const sakin = [null, oku('ACIL_SAKIN')];
-
-  // Beyaz yazı: 20pt başlık (eşik 3,0) VE 15pt sayaç (eşik 4,5) → 4,5 alınır.
-  for (const [ad, renk] of [
-    ['kritik', kritik[1]!],
-    ['sakin', sakin[1]!],
+/**
+ * İADE BANDI — iki temada da okunuyor.
+ *
+ * Eski `HomeUrgent` kartı zeminini SABİT tutarak çözüyordu: `rose`/`accent`
+ * koyu temada açık renge dönüyor, beyaz yazı 2,27:1'e düşüyordu. Figma
+ * tasarımındaki bant zemini `accent`, yazısı `onAccent` — yani ikisi BİRLİKTE
+ * dönüyor. Aranan güvence aynı, mekanizma daha iyi: sabitlemek yerine yazıyı
+ * zemine bağlamak. Ölçüm bunu doğruluyor.
+ */
+test('P1 — iade bandı yazısı iki temada da okunuyor', () => {
+  const d = kodu('app/(tabs)/discover.tsx');
+  assert.match(
+    d,
+    /iadeKart:[\s\S]{0,200}backgroundColor: colors\.accent/,
+    'bant zemini accent değil',
+  );
+  assert.match(d, /iadeBaslik:[\s\S]{0,120}color: colors\.onAccent/, 'başlık onAccent değil');
+  for (const [ad, palet] of [
+    ['açık', lightColors],
+    ['koyu', darkColors],
   ] as const) {
-    const r = kon('#FFFFFF', renk);
-    assert.ok(r >= 4.5, `${ad} zeminde beyaz yazı ${r.toFixed(2)}:1 — 4,5 altı`);
-  }
-});
-
-test('P1b — CTA yazısı beyaz düğme üstünde okunuyor', () => {
-  // Raporumda KAÇIRDIĞIM bulgu: yalnız kart zeminini ölçmüş, CTA yazısını
-  // ölçmemiştim. Dört kombinasyondan ÜÇÜ eşiğin altındaydı.
-  const h = kodu('src/ui/HomeUrgent.tsx');
-  assert.doesNotMatch(h, /color: urgent\.critical \? colors\./, "CTA hâlâ tema token'ı kullanıyor");
-  for (const m of h.matchAll(/const ACIL_\w+ = '(#[0-9A-Fa-f]{6})'/g)) {
-    const r = kon(m[1]!, '#FFFFFF');
-    assert.ok(r >= 4.5, `CTA rengi ${m[1]} beyaz üstünde ${r.toFixed(2)}:1`);
+    const r = kon(palet.onAccent, palet.accent);
+    assert.ok(r >= 4.5, `${ad} tema: onAccent/accent ${r.toFixed(2)}:1 — 4,5 altı`);
   }
 });
 

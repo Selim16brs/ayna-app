@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap">
+  <style>
+    /* AYNA tasarım dili — apps/mobile/src/theme.ts ve theme.palette.ts'ten
+       BİREBİR alınmıştır. Değerler yuvarlanmadı. */
+    :root{
+      --bg:#FAF7F5; --surface:#FFFFFF; --ink:#1E0E1B; --inkSoft:#4A3A47; --muted:#68536A;
+      --accent:#4A1942; --accentSoft:#E8D9EB; --onAccent:#FFF0F5;
+      --line:#EFEBE9; --lineStrong:#E5E0DE;
+      --gold:#9A5A05; --goldSoft:#FDF3E7; --success:#2F7A4A; --successSoft:#E3F2E8;
+      --rose:#B0616B; --roseSoft:#F9EAEB; --danger:#A93E4D; --dangerSoft:#F9E9EB;
+      --r-xs:8px; --r-sm:12px; --r-md:16px; --r-lg:18px; --r-xl:20px; --r-pill:999px;
+      --shadow:0 6px 20px rgba(74,25,66,.13);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:Onest,system-ui,-apple-system,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+    a{color:var(--accent)} a:hover{color:#642855}
+    /* Tip ölçeği — theme.ts `type` */
+    .display{font-weight:500;font-size:32px;line-height:40px;letter-spacing:-.6px}
+    .h1{font-weight:600;font-size:24px;line-height:30px;letter-spacing:-.4px}
+    .h2{font-weight:600;font-size:20px;line-height:26px;letter-spacing:-.3px}
+    .title{font-weight:600;font-size:17px;line-height:22px;letter-spacing:-.2px}
+    .body{font-weight:400;font-size:16px;line-height:24px}
+    .bodyStrong{font-weight:500;font-size:16px;line-height:24px}
+    .cta{font-weight:600;font-size:16px;line-height:20px}
+    .meta{font-weight:500;font-size:15px;line-height:20px}
+    .caption{font-weight:400;font-size:14px;line-height:20px}
+    .captionStrong{font-weight:500;font-size:14px;line-height:20px}
+    .micro{font-weight:500;font-size:12px;line-height:16px}
+    .label{font-weight:600;font-size:11px;line-height:14px;letter-spacing:.8px;text-transform:uppercase}
+    .muted{color:var(--muted)} .inkSoft{color:var(--inkSoft)} .accentFg{color:var(--accent)}
+    /* Kart — space(2)=16 padding, radius.lg=18 */
+    .card{background:var(--surface);border-radius:var(--r-lg);padding:16px;box-shadow:var(--shadow)}
+    .col{display:flex;flex-direction:column}
+    .row{display:flex;flex-direction:row;align-items:center}
+    .screen{width:390px;min-height:100%;display:flex;flex-direction:column;background:var(--bg)}
+    .pad{padding:16px}
+    /* Button — height 56, radius pill */
+    .btn{height:56px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--onAccent);font-weight:600;font-size:16px}
+    .btn.sec{background:transparent;color:var(--accent);border:1px solid var(--lineStrong)}
+    .chip{padding:5px 12px;border-radius:var(--r-pill);background:var(--accentSoft);color:var(--accent);font-weight:600;font-size:11px;letter-spacing:.6px;text-transform:uppercase}
+    /* Yüzen alt menü — FloatingTabBar: PILL_H 68, radius 36 */
+    .tabbar{position:sticky;bottom:0;padding:0 16px 20px;background:linear-gradient(to bottom,rgba(250,247,245,0),rgba(250,247,245,.72) 40%,var(--bg))}
+    .pill{height:68px;border-radius:36px;background:var(--ink);display:flex;align-items:center;justify-content:space-around;padding:0 8px;box-shadow:0 14px 28px rgba(74,25,66,.22)}
+    .tab{display:flex;flex-direction:column;align-items:center;gap:3px;color:rgba(255,240,245,.62);font-size:10px;font-weight:500}
+    .tab.on{color:var(--onAccent)}
+    .tabdot{width:36px;height:36px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center}
+    .tab.on .tabdot{background:var(--rose)}
+    .sechead{display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin:24px 0 12px}
+  </style>
+</helmet>
+
+<div class="screen">
+  <div style="padding:14px 16px 4px"><div class="h1">Bakımın</div></div>
+
+  <div class="pad" style="padding-top:8px">
+    <div class="row card" style="gap:14px;background:var(--accent);box-shadow:var(--shadow)">
+      <div style="width:64px;height:64px;border-radius:var(--r-pill);border:3px solid rgba(255,240,245,.28);display:flex;align-items:center;justify-content:center;flex-direction:column">
+        <span class="h2" style="color:var(--onAccent)">72</span>
+      </div>
+      <div class="col" style="gap:3px;flex:1">
+        <div class="label" style="color:rgba(255,240,245,.62)">Bakım skorun</div>
+        <div class="captionStrong" style="color:var(--onAccent)">%72 tutarlılık</div>
+        <div class="micro" style="color:rgba(255,240,245,.72)">Rutinlerini gör →</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="gap:10px;padding:12px 16px 0">
+    <div class="card col" style="flex:1;gap:2px;align-items:center;padding:14px 8px"><div class="h2">1.505</div><div class="micro muted">AYNA Puanı</div></div><div class="card col" style="flex:1;gap:2px;align-items:center;padding:14px 8px"><div class="h2">8</div><div class="micro muted">Kaydedilenler</div></div><div class="card col" style="flex:1;gap:2px;align-items:center;padding:14px 8px"><div class="h2">12</div><div class="micro muted">Tamamlanan</div></div>
+  </div>
+
+  <div class="sechead"><div class="h2">Yaklaşan randevu</div></div>
+  <div class="pad" style="padding-top:0">
+    <div class="card col" style="gap:8px">
+      <span class="chip" style="align-self:flex-start">Yaklaşan randevu</span>
+      <div class="title">Gold Hair Lab</div>
+      <div class="caption muted">Cum 04.09.2026 · 15:00</div>
+      <div style="align-self:flex-start;padding:9px 18px;border-radius:var(--r-pill);border:1px solid var(--lineStrong);color:var(--accent);font-weight:500;font-size:14px">Detayı gör</div>
+    </div>
+  </div>
+
+  <div class="sechead"><div class="h2">Hızlı ekle</div></div>
+  <div class="row" style="gap:10px;padding:0 16px">
+    <div class="card col" style="flex:1;gap:6px;align-items:center;padding:14px 6px"><div style="width:34px;height:34px;border-radius:var(--r-pill);background:#E8D9EB"></div><span class="micro">Rutin</span></div><div class="card col" style="flex:1;gap:6px;align-items:center;padding:14px 6px"><div style="width:34px;height:34px;border-radius:var(--r-pill);background:#F9EAEB"></div><span class="micro">An</span></div><div class="card col" style="flex:1;gap:6px;align-items:center;padding:14px 6px"><div style="width:34px;height:34px;border-radius:var(--r-pill);background:#E3F2E8"></div><span class="micro">Günlük</span></div><div class="card col" style="flex:1;gap:6px;align-items:center;padding:14px 6px"><div style="width:34px;height:34px;border-radius:var(--r-pill);background:#FDF3E7"></div><span class="micro">Özel gün</span></div>
+  </div>
+
+  <div class="sechead"><div class="h2">Kişisel kayıtların</div><span class="captionStrong accentFg">Ekle</span></div>
+  <div class="pad" style="padding-top:0">
+    <div class="card col" style="gap:6px;align-items:center;padding:26px 16px;box-shadow:none;border:1px dashed var(--lineStrong);background:transparent">
+      <div class="captionStrong muted">Henüz kişisel kayıt yok</div>
+    </div>
+  </div>
+
+  <div class="pad" style="padding-top:4px">
+    <div class="row card" style="gap:12px;background:var(--goldSoft);box-shadow:none">
+      <div style="width:40px;height:40px;border-radius:var(--r-pill);background:var(--gold)"></div>
+      <div class="col" style="gap:2px;flex:1">
+        <div class="captionStrong">Boni’ye sor</div>
+        <div class="micro muted">AI güzellik danışmanın</div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1"></div>
+  <div class="tabbar"><div class="pill"><div class="tab"><div class="tabdot"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm10 2-4.35-4.35"/></svg></div>Keşfet</div><div class="tab"><div class="tabdot"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 11h18"/></svg></div>Randevu</div><div class="tab"><div class="tabdot"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 1 1-3.2-6.4"/><path d="M8 12h8M8 16h5"/></svg></div>W2W</div><div class="tab on"><div class="tabdot"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10Z"/></svg></div>Bakım</div><div class="tab"><div class="tabdot"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></div>Profil</div></div></div>
+</div>
+</x-dc>
+</body>
+</html>
