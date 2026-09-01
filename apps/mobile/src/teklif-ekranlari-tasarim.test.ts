@@ -145,3 +145,33 @@ test('ANLAMLI renkler yerinde duruyor', () => {
   assert.match(pasaport, /colors\.goldSoft/, 'puan rozetinin altını gitmiş');
   assert.match(pasaport, /colors\.successSoft/, 'doğrulama rozetinin yeşili gitmiş');
 });
+
+/**
+ * ÇİP DİLİ — seçilmemiş çip yüzey + ince çizgi.
+ *
+ * Eski dilde seçilmemiş çip dolu gri (`surfaceMuted`) idi. Seçili erik
+ * çipin yanında ikinci bir "dolu" gibi okunuyor, hangisinin seçili olduğu
+ * bir bakışta anlaşılmıyordu.
+ */
+test('seçilmemiş çipler DOLU GRİ değil', () => {
+  const yerler = [
+    ['search.tsx', ['chip', 'recentChip']],
+    ['(tabs)/circle.tsx', ['sekme']],
+    ['quote/new.tsx', ['catChip']],
+  ] as const;
+  for (const [dosya, stiller] of yerler) {
+    const k = yorumsuz(oku(dosya));
+    for (const stil of stiller) {
+      const i = k.indexOf(`${stil}: {`);
+      assert.ok(i > 0, `${dosya}: ${stil} stili yok`);
+      const blok = k.slice(i, i + 400);
+      assert.doesNotMatch(blok, /colors\.surfaceMuted/, `${dosya}: ${stil} hâlâ dolu gri`);
+      assert.match(blok, /borderColor: colors\.line/, `${dosya}: ${stil} ince çizgisiz`);
+    }
+  }
+});
+
+test('aramadaki popüler kategoriler de FIGMA ikonu', () => {
+  const k = yorumsuz(oku('search.tsx'));
+  assert.match(k, /HIZMET_IKON\[cat\.id\]/, 'popüler kategori çipi Figma ikonu kullanmıyor');
+});

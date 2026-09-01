@@ -536,7 +536,11 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surfaceMuted,
+      // Seçilmemiş sekme yüzey + ince çizgi; dolu gri seçili erik sekmenin
+      // yanında ikinci bir "dolu" gibi okunuyordu.
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
     sekmeOn: { backgroundColor: colors.accent },
     answered: {

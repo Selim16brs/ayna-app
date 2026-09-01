@@ -22,6 +22,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
 import { servesSector } from '@ayna/domain';
+import { HIZMET_IKON } from '../src/hizmet-ikon';
 import { useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -228,11 +229,9 @@ export default function SearchScreen() {
             <View style={styles.wrapChips}>
               {CATEGORIES.map((cat) => (
                 <Pressable key={cat.id} style={styles.popChip} onPress={() => setActiveCat(cat.id)}>
-                  <Ionicons
-                    name={cat.icon as keyof typeof Ionicons.glyphMap}
-                    size={14}
-                    color={colors.accentFg}
-                  />
+                  {HIZMET_IKON[cat.id] ? (
+                    <Image source={HIZMET_IKON[cat.id]} style={styles.popIkon} />
+                  ) : null}
                   <Text variant="caption" tone="ink">
                     {t(cat.labelKey)}
                   </Text>
@@ -389,7 +388,11 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(2),
       paddingVertical: space(1.1),
       borderRadius: radius.pill,
-      backgroundColor: colors.surfaceMuted,
+      // Yeni dil: seçilmemiş çip yüzey + ince çizgi. Dolu gri (`surfaceMuted`)
+      // seçili erik çipin yanında ikinci bir "dolu" gibi okunuyordu.
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
     chipOn: { backgroundColor: colors.accent },
     chipOnText: { fontFamily: font.semibold },
@@ -409,7 +412,9 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1.5),
       paddingVertical: space(1),
       borderRadius: radius.pill,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
     popChip: {
       flexDirection: 'row',
@@ -420,6 +425,8 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
       backgroundColor: colors.accentSoft,
     },
+    /** Kurucunun Figma ikonu — Ionicons vektörünün yerine. */
+    popIkon: { width: 16, height: 16, resizeMode: 'contain' },
     list: { gap: space(1.5) },
     row: {
       flexDirection: 'row',
