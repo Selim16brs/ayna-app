@@ -76,3 +76,62 @@ test('YAZI TİPİ uygulamanın kendi ailesi', () => {
   assert.ok(!/Inter|DM_?Sans/.test(d), 'Figma yazı tipi ekrana sızmış');
   assert.match(d, /font\.(semibold|regular|medium)/, 'tipografi token kullanmıyor');
 });
+
+/** UZMAN ANA EKRANI — Figma `ayna-expert-light` bölüm sırası ve ölçüleri. */
+const u = readFileSync(join(import.meta.dirname, '..', 'app', 'seller', 'reports.tsx'), 'utf8');
+
+test('uzman ekranı: bölümler Figma SIRASIYLA', () => {
+  const sira = [
+    "t('reports.live.title')", // canli-ozet-card
+    "t('seller.promo.title')", // promo-card
+    "t('reports.action.requests')", // grid-row
+    'ads.live.title', // reklam-banner
+    "t('reports.quality.title')", // yanit-kalite-card
+    "t('reports.perf.title')", // performans-section
+    "t('reports.visibility.title')", // neden-gorunuyorsun
+  ];
+  let onceki = -1;
+  for (const p of sira) {
+    const i = u.indexOf(p);
+    assert.ok(i > 0, `bölüm yok: ${p}`);
+    assert.ok(i > onceki, `bölüm sırası bozuk: ${p}`);
+    onceki = i;
+  }
+});
+
+test('uzman ekranı: Figma ölçüleri yuvarlanmamış', () => {
+  const stil = (ad: string): string => {
+    const i = u.indexOf(`    ${ad}: {`);
+    assert.ok(i > 0, `${ad} stili yok`);
+    return u.slice(i, u.indexOf('\n    },', i));
+  };
+  for (const [ad, degerler] of [
+    ['ozetKart', ['borderRadius: 24', 'padding: 20', 'gap: 18']],
+    ['ozetKutu', ['borderRadius: 16', 'padding: 12']],
+    ['paketKart', ['borderRadius: 24', 'padding: 20', 'gap: 16']],
+    ['ikiliKart', ['borderRadius: 20', 'padding: 16', 'gap: 10']],
+    ['reklamKart', ['borderRadius: 24', 'padding: 16', 'gap: 12']],
+    ['kaliteKart', ['borderRadius: 24', 'padding: 20', 'gap: 16']],
+    ['gorunurKart', ['borderRadius: 20', 'padding: 16', 'gap: 16']],
+  ] as const) {
+    const govde = stil(ad);
+    for (const d2 of degerler) {
+      assert.ok(govde.includes(d2), `${ad}: "${d2}" — ölçü tasarımdan sapmış`);
+    }
+  }
+});
+
+test('uzman ekranı: Figma’da OLMAYAN ama gerekli üç blok duruyor', () => {
+  // Tasarımı yapan hesap kısıtlı değildi, yeni değildi ve bekleyen talebi
+  // yoktu. Üçü de gerçek durumlar; tasarımda görünmemeleri işlevin
+  // silinebileceği anlamına gelmez.
+  assert.match(u, /restricted \?/, 'hesap kısıtı uyarısı düştü');
+  assert.match(u, /bookings\.length === 0 \?/, 'yeni uzman yönlendirmesi düştü');
+  assert.match(u, /bekleyenTalepler\.length > 0 \?/, 'yanıt bekleyen talepler düştü');
+});
+
+test('uzman ekranı ROL SÜZGECİNDEN geçiyor', () => {
+  // Uzman kendi MÜŞTERİ randevularını kalite ölçütlerinde görmemeli.
+  assert.match(u, /uzmanRandevulari\(tumRandevular\)/, 'rol süzgeci yok');
+  assert.match(u, /const bookings = uzmanRandevulariListe/, 'ölçütler süzgeçsiz');
+});

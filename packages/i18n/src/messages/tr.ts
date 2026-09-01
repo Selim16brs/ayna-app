@@ -1131,7 +1131,6 @@ export const tr = {
   // Satıcı raporları
   'reports.identity.independent': 'Bireysel Uzman',
   'reports.identity.salon': 'Salon',
-  'reports.performance': 'Performans',
   'reports.review_waiting': 'Yorum yanıt bekliyor',
   'reports.action.agenda_own': 'Takvimim',
   'reports.action.requests': 'Talepler',
@@ -1211,9 +1210,15 @@ export const tr = {
   'reports.period.week': 'Bu hafta',
   'reports.period.month': 'Bu ay',
   'reports.period.all': 'Tümü',
+  'seller.badge.expert': 'Bireysel Uzman',
+  'seller.badge.salon': 'Salon',
+  'seller.promo.title': 'Daha çok müşteriye ulaş',
+  'seller.promo.sub': 'Premium ile öne çık; Platinum ile sadık müşteri portföyü ve düşük komisyon.',
+  'seller.promo.cta': 'Paketleri keşfet →',
+  'reports.perf.title': 'Performans',
+  'reports.visibility.desc':
+    'Sıralamayı belirleyen gerçek etkenler. Gizli bir puan yok: listeler puana göre sıralanır, keşifte premium öne çıkar, şehri eşleşmeyen uzman hiç görünmez.',
   'reports.visibility.title': 'Neden görünüyorsun',
-  'reports.visibility.sub':
-    'Sıralamayı belirleyen gerçek etkenler. Gizli bir puan yok — listeler puana göre sıralanır, keşifte premium öne çıkar, şehri eşleşmeyen uzman hiç görünmez.',
   'reports.visibility.services': 'Hizmet listen — boşsa müşteri randevu alamaz',
   'reports.visibility.services_none': 'Henüz eklemedin',
   'reports.visibility.city': 'Şehrin — eşleşmezse listede hiç çıkmazsın',
@@ -1223,7 +1228,6 @@ export const tr = {
   'reports.visibility.premium': 'Premium — keşif ekranında öne çıkarır',
   'reports.visibility.premium_no': 'Üye değilsin',
   'reports.bookings': 'Randevu',
-  'reports.section.staff': 'Uzman performansı',
   // §5 — canlı özet (gerçek randevulardan)
   'reports.live.title': 'Canlı özet',
   'reports.live.upcoming': 'Yaklaşan',
@@ -1651,8 +1655,6 @@ export const tr = {
   'seller.calperm.save_err': 'İzin kaydedilemedi — bağlantını kontrol edip tekrar dene',
   'seller.offers.title': 'Kampanyalarım',
   'seller.offers.save_err': 'Kampanya kaydedilemedi — alanları kontrol edip tekrar dene',
-  'seller.reports.title': 'Raporlar',
-  'seller.reports.action_err': 'İşlem tamamlanamadı — bağlantını kontrol edip tekrar dene',
   'seller.calperm.title': 'Salon takvim izni',
   'seller.calperm.view': 'Yalnız görsün',
   'seller.calperm.approval': 'Eklesin, onayımla',
@@ -1676,11 +1678,6 @@ export const tr = {
   // §4.5 — uzman ayrılığında devir
   // §4.4 — iptal/ceza/iade
   // §4.3 — depozito/dekont akışı (kullanıcı)
-  'bday.section': 'Bugün doğum günü 🎂',
-  'bday.send_q':
-    'Doğum günü kutlaması gönderilsin mi? Müşterine senin adına tatlı bir bildirim gider.',
-  'bday.send': 'Kutlama gönder 🎉',
-  'bday.sent': 'Kutlaman gönderildi 🎂✨',
   'booking.money.deposit': 'Depozito',
   'booking.balance.wait_b': 'Uzman onaylayınca randevun kapanır ve puanın yüklenir.',
   'booking.balance.provider_confirm_b':

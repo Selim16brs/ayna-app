@@ -1,21 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, type AdOrder, type BookingStats, type SellerReview } from '../../src/api';
-import {
-  formatPrice,
-  RESPONSE_WINDOW_MS,
-  type SellerMetric,
-  type SupplierAd,
-} from '../../src/data';
+import { formatPrice, RESPONSE_WINDOW_MS, type SellerMetric } from '../../src/data';
+import { formatSlotTr } from '../../src/datetime';
 import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
 import { reklamGunu } from '@ayna/domain';
-import { useSalonStaff } from '../../src/staff';
-import { formatSlotTr } from '../../src/datetime';
 import {
   selectCommissionRate,
   selectPortrait,
@@ -24,24 +18,32 @@ import {
   uzmanRandevulari,
 } from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
-import { type ColorTokens, radius, space, font } from '../../src/theme';
+import { type ColorTokens, font } from '../../src/theme';
+import { darkColors, lightColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  PressableScale,
-  Screen,
-  SectionHeader,
-  Segmented,
-  TAB_BAR_CLEARANCE,
-  Text,
-  TierUpsell,
-} from '../../src/ui';
+import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 type Period = 'week' | 'month' | 'all';
-type IoniconName = keyof typeof Ionicons.glyphMap;
+
+/** Performans sekmeleri — Figma `tab-bar`. */
+/**
+ * Canlı Özet kartının zemini ve yazısı — CİHAZ TEMASINDAN BAĞIMSIZ.
+ * Kart iki temada da koyu kalıyor (Figma böyle), o yüzden yazısı da sabit
+ * açık. Değerler elle yazılmıyor: marka paleti değişirse bunlar da değişsin.
+ */
+const OZET_DEGRADE = [lightColors.accent, '#2D0A2E'] as const;
+const OZET_YAZI = darkColors.ink;
+const OZET_ETIKET = darkColors.accent;
+
+const PERIYOT_ETIKET = {
+  week: 'reports.period.week',
+  month: 'reports.period.month',
+  all: 'reports.period.all',
+} as const;
 
 export default function ReportsScreen() {
   const { t, locale } = useLocale();
-  const { colors, gradients, shadow } = useTheme();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const [period, setPeriod] = useState<Period>('week');
@@ -51,12 +53,24 @@ export default function ReportsScreen() {
   // §9.4 — YALNIZ uzman olarak gelen talepler. Uzmanın kendi müşteri
   // randevuları burada görünmemeli: onlar onun kararını beklemiyor.
   const tumRandevular = useStore((st) => st.bookings);
+  /**
+   * ROL SÜZGECİ — uzman ekranı yalnız UZMAN OLDUĞU randevuları görür.
+   * Süzgeçsizken kendi müşteri randevuları da kalite ölçütlerine ve bekleyen
+   * talep listesine karışıyordu.
+   */
+  const uzmanRandevulariListe = useMemo(() => uzmanRandevulari(tumRandevular), [tumRandevular]);
+  /**
+   * §4.2 — YANIT BEKLEYEN TALEPLER. Figma'da bu blok yok ("Talepler" kartı
+   * şehirdeki AÇIK talepleri gösteriyor, onay bekleyeni değil). Ama burada
+   * 3 SAATLİK yanıt penceresi işliyor: uzman ana ekranı açıp "yeni bir şey
+   * yok" sanırsa randevu düşer. En üstte, kısıt uyarısının hemen altında.
+   */
   const bekleyenTalepler = useMemo(
     () =>
-      uzmanRandevulari(tumRandevular)
+      uzmanRandevulariListe
         .filter((b) => b.status === 'onay_bekliyor')
         .sort((a, b) => a.startMs - b.startMs),
-    [tumRandevular],
+    [uzmanRandevulariListe],
   );
   const insets = useSafeAreaInsets();
   // Karşılama için ad (Keşfet dili) — ilk isim, ilk harf büyük (el yazısı katman)
@@ -69,8 +83,6 @@ export default function ReportsScreen() {
   const role = useStore((s) => s.currentUser?.role);
   const isSalon = role === 'salon'; // §9 uzman ↔ §10 salon ayrımı
   // Faz C — GERÇEK kadro (mock Madina/Aigerim değil); yalnız salon rolünde sorgulanır
-  const { staff: salonStaff } = useSalonStaff();
-  const businessName = useStore((s) => s.currentUser?.businessName);
   // §4.4/§9.2 — ceza/kısıt durumu: hesap kısıtlıysa dashboard'da 7 gün sayaçlı uyarı
   // Vitrin ücreti SUNUCUDAN: panelden değiştirilen fiyat eski sürümlerde
   // yanlış görünmesin. Değer gelmemişse kart yine çiziliyor, fiyat varsayılan.
@@ -105,12 +117,6 @@ export default function ReportsScreen() {
     : null;
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   const restrictedDays = useStore((s) => s.currentUser?.restrictedDaysLeft ?? 7);
-  const binding =
-    role === 'salon'
-      ? { icon: 'business' as const, text: t('reports.identity.salon') }
-      : businessName
-        ? { icon: 'link' as const, text: businessName }
-        : { icon: 'person' as const, text: t('reports.identity.independent') };
   // Talepler rozeti = şehirdeki açık talepler; reklamlar şehre göre hedeflenir (sektör admin ucunda)
   // §9.3 — Talepler rozeti: şehirdeki AÇIK talepler BULUTTAN sayılır (ekran odaklandıkça tazelenir)
   const token = useStore((s) => s.token);
@@ -192,7 +198,6 @@ export default function ReportsScreen() {
   }, [token]);
   const [openDemands, setOpenDemands] = useState(0);
   // §CRM — bugün doğum günü olan müşterilerim (tıkla → kutlama push'u)
-  const [bdays] = useState<{ id: string; name: string }[]>([]);
   // Reklam durumu ekrana HER DÖNÜŞTE tazeleniyor: onay admin panelinden
   // geliyor, uygulama onu kendiliğinden öğrenemez.
   useFocusEffect(
@@ -224,10 +229,9 @@ export default function ReportsScreen() {
       };
     }, [token]),
   );
-  const ads: SupplierAd[] = []; // demo tedarikçi reklamı YOK (admin ucu bağlanınca gerçek veri)
 
   // §9.2 — yanıt & kalite metrikleri (yerel randevulardan türer)
-  const bookings = useStore((s) => s.bookings);
+  const bookings = uzmanRandevulariListe;
   const quality = useMemo(() => {
     const depositPending = bookings.filter((b) => b.status === 'kesinlesti').length;
     const done = bookings.filter((b) => b.status === 'tamamlandi').length;
@@ -247,7 +251,7 @@ export default function ReportsScreen() {
           )
         : null;
     return { depositPending, completion, avgMin };
-  }, [bookings]);
+  }, [uzmanRandevulariListe]);
 
   // §5 — gerçek randevulardan canlı özet (çevrimdışıysa gizlenir)
   const [stats, setStats] = useState<BookingStats | null>(null);
@@ -301,624 +305,378 @@ export default function ReportsScreen() {
 
   return (
     <Screen edges={[]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* ── BAŞLIK — kanvas UzmanPanel.dc.html §başlık ──
-            Burada MOR BİR BANT vardı: accent zemin, dalga bitişi, 70pt el
-            yazısı ad ve 262px cut-out portre. Kanvasın uzman panelinde böyle
-            bir bant yok; açık zeminde solda 54'lük portre, sağda küçük tarih
-            ve altında koyu selamlama var. Uygulamanın geri kalanı kanvasa
-            geçmişken uzmanın ANA EKRANI eski dilde kalmıştı. */}
-        <View style={[styles.hero, { paddingTop: insets.top + space(1.5) }]}>
-          <View style={styles.heroRow}>
-            <View style={styles.heroAvatar}>
-              {portre ? (
-                <Image source={{ uri: portre }} style={styles.heroAvatarImg} />
-              ) : (
-                <Ionicons name="person" size={24} color={colors.accentFg} />
-              )}
-            </View>
-            <View style={styles.heroText}>
-              <Text variant="caption" tone="muted" numberOfLines={1}>
-                {bugunEtiketi}
-              </Text>
-              {/* Rusça selamlama uzun ("Доброй ночи, Дарина") ve isim
-                  kırpılıyordu. Karakter kaybetmek yerine punto küçülür. */}
-              <Text
-                tone="ink"
-                style={styles.greetName}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
-                {t(greetingKey())}, {firstName}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.icerik}>
+        {/* ═══ BAŞLIK — Figma `header-section` (px24, pt12 pb16) ═══ */}
+        <View style={[styles.bas, { paddingTop: insets.top + 12 }]}>
+          <View style={styles.basSol}>
+            <Text style={styles.tarih}>{bugunEtiketi}</Text>
+            <Text style={styles.selam} numberOfLines={1}>
+              {fillParams(t(greetingKey()), { name: firstName })}
+            </Text>
+            <View style={styles.rolRozet}>
+              <Text style={styles.rolYazi}>
+                {t(isSalon ? 'seller.badge.salon' : 'seller.badge.expert')}
               </Text>
             </View>
-            {/* Mesajlar bildirimin YANINDA — profil menüsünden çıkarıldı. */}
+          </View>
+          <View style={styles.basSag}>
             <PressableScale
-              style={[styles.bell, shadow.soft]}
-              onPress={() => router.push('/messages')}
               accessibilityRole="button"
               accessibilityLabel={t('messages.title')}
+              style={styles.basIkon}
+              onPress={() => router.push('/messages')}
             >
               <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.ink} />
-              {unreadMsg > 0 ? (
-                <View style={styles.bellBadge}>
-                  <Text style={styles.bellBadgeText}>
-                    {unreadMsg > 9 ? '9+' : String(unreadMsg)}
-                  </Text>
-                </View>
-              ) : null}
+              {unreadMsg > 0 ? <View style={styles.basNokta} /> : null}
             </PressableScale>
             <PressableScale
-              style={[styles.bell, shadow.soft]}
+              accessibilityRole="button"
+              accessibilityLabel={t('notifications.title')}
+              style={styles.basIkon}
               onPress={() => router.push('/notifications')}
             >
               <Ionicons name="notifications-outline" size={20} color={colors.ink} />
-              {unread > 0 ? (
-                <View style={styles.bellBadge}>
-                  <Text style={styles.bellBadgeText}>{unread > 9 ? '9+' : String(unread)}</Text>
-                </View>
-              ) : null}
+              {unread > 0 ? <View style={styles.basNokta} /> : null}
             </PressableScale>
-          </View>
-          {/* Bağ bilgisi (Bireysel Uzman / bağlı salon) — kanvasta başlığın
-              yanındaki durum çipinin karşılığı. */}
-          <View style={[styles.bindingPill, shadow.soft]}>
-            <Ionicons name={binding.icon} size={12} color={colors.ink} />
-            {/* Çip YAZI KADAR açılır: punto küçültmek yerine kap büyür.
-                Metin daralmaz (flexShrink 0), çip de içeriğini sarar
-                (alignSelf flex-start) — "Bireysel Uzm…" olmaz. */}
-            <Text variant="caption" tone="ink" style={styles.bindingPillText} numberOfLines={1}>
-              {binding.text}
-            </Text>
+            <PressableScale style={styles.avatarHalka} onPress={() => router.push('/seller/menu')}>
+              {portre ? (
+                <Image source={{ uri: portre }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, styles.avatarBos]} />
+              )}
+            </PressableScale>
           </View>
         </View>
 
-        {/* ── §4.2 GELEN TALEPLER — ana ekranda, en üstte ──
-            Bekleyen talep yalnız Ajanda ekranındaki bir şeritte duruyordu:
-            uzman ana sayfayı açıp "yeni bir şey yok" sanıyor, 3 saatlik yanıt
-            süresi işlerken talebi hiç görmüyordu. Cevapsız kalan talep hem
-            müşteriyi kaybettiriyor hem uzmanın kalite skoruna işliyor —
-            görünmemesi en pahalı sessizlik. */}
+        {/* ═══ HESAP KISITI ═══
+            Figma'da yok — tasarımı yapan hesap kısıtlı değildi. Ama kısıtlı
+            uzman neden randevu alamadığını bilmek zorunda; uyarıyı silmek
+            onu karanlıkta bırakmak olurdu. En üstte, çünkü en acil olan bu. */}
+        {restricted ? (
+          <View style={styles.kisitKart}>
+            <View style={styles.kisitBas}>
+              <Ionicons name="alert-circle" size={20} color={colors.danger} />
+              <Text style={styles.kisitBaslik}>{t('restricted.title')}</Text>
+              <Text style={styles.kisitGun}>
+                {fillParams(t('restricted.days_left'), { n: String(restrictedDays) })}
+              </Text>
+            </View>
+            <Text style={styles.kisitGovde}>{t('restricted.pay')}</Text>
+            <PressableScale style={styles.kisitDugme} onPress={() => router.push('/membership')}>
+              <Text style={styles.kisitDugmeYazi}>{t('restricted.cta')}</Text>
+            </PressableScale>
+          </View>
+        ) : null}
+
+        {/* ═══ YANIT BEKLEYEN TALEPLER (§4.2) ═══
+            3 saatlik pencere işliyor; ana ekranda görünmezse randevu düşer. */}
         {bekleyenTalepler.length > 0 ? (
-          <View style={[styles.talepKart, shadow.card]}>
+          <View style={styles.talepKart}>
             <View style={styles.talepBas}>
               <View style={styles.talepNokta} />
-              <Text variant="label" tone="accentFg" style={styles.talepBaslik}>
-                {t('seller.pending.title')}
-              </Text>
-              <Text variant="captionStrong" tone="accentFg">
-                {bekleyenTalepler.length}
-              </Text>
+              <Text style={styles.talepUst}>{t('seller.pending.title')}</Text>
+              <Text style={styles.talepSayi}>{bekleyenTalepler.length}</Text>
             </View>
             {bekleyenTalepler.slice(0, 3).map((b) => (
               <PressableScale
                 key={b.id}
                 style={styles.talepSatir}
-                onPress={() => router.push(`/booking/${b.id}` as never)}
-                accessibilityRole="button"
+                onPress={() => router.push(`/booking/${b.id}`)}
               >
-                <View style={styles.flex}>
-                  <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                    {b.customerName ?? t('booking.detail.customer')}
-                  </Text>
-                  <Text variant="caption" tone="muted" numberOfLines={1}>
-                    {b.service} · {formatSlotTr(b.startMs)}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+                <Text style={styles.talepAd} numberOfLines={1}>
+                  {b.customerName ?? t('booking.detail.customer')}
+                </Text>
+                <Text style={styles.talepZaman}>{formatSlotTr(b.startMs)}</Text>
               </PressableScale>
             ))}
           </View>
         ) : null}
 
-        {/* Canlı Özet — yeşile bağlı, iki yanda eşit beyaz kalan dar mor kart */}
-        {stats ? (
-          <LinearGradient colors={gradients.plum} style={styles.liveBand}>
-            <View style={styles.liveHead}>
-              <Ionicons name="pulse" size={15} color={colors.onColor} />
-              <Text variant="label" tone="onColor">
-                {t('reports.live.title')}
-              </Text>
-            </View>
-            <View style={styles.liveRow}>
-              <LiveTile value={String(stats.upcoming)} label={t('reports.live.upcoming')} />
-              <LiveTile value={String(stats.completed)} label={t('reports.live.completed')} />
-              <LiveTile value={`%${stats.noShowRate}`} label={t('reports.live.noshow')} />
-            </View>
-            <View style={styles.liveDivider} />
-            <View style={styles.liveRevenue}>
-              <Text variant="caption" tone="onColor" style={styles.dim}>
-                {t('reports.live.revenue')}
-              </Text>
-              <Text variant="h2" tone="onColor">
-                {formatPrice(stats.revenue)}
-              </Text>
-            </View>
-            {/* §12.8 — ödenecek komisyon (online ciro × oran); yalnız online randevulardan */}
-            <View style={styles.liveRevenue}>
-              <Text variant="caption" tone="onColor" style={styles.dim}>
-                {t('reports.live.commission')} (%{commissionRate})
-              </Text>
-              <Text variant="bodyStrong" tone="onColor">
-                {formatPrice(stats.commission)}
-              </Text>
-            </View>
-          </LinearGradient>
-        ) : null}
-
-        <View style={styles.body}>
-          {/* §6 — İLK EYLEM. Yeni uzman SIFIRLARLA dolu bir gösterge paneline
-              düşüyordu: tamamlanan 0, gelir 0, no-show %0 — ve ne yapacağına
-              dair hiçbir yönlendirme yoktu. Denetim ilk ekranda tek, baskın
-              bir birincil aksiyon istiyor.
-
-              Yalnız HENÜZ RANDEVUSU OLMAYANA gösteriliyor; işi başlayınca
-              kart kendiliğinden kayboluyor. */}
-          {bookings.length === 0 ? (
-            <View style={[styles.startCard, shadow.soft]}>
-              <Text variant="bodyStrong" tone="ink">
-                {t('seller.start.title')}
-              </Text>
-              <Text variant="caption" tone="muted" style={styles.startSub}>
-                {t('seller.start.sub')}
-              </Text>
-              <View style={styles.startRow}>
-                <PressableScale
-                  style={styles.startPrimary}
-                  onPress={() => router.push('/seller/services')}
-                >
-                  <Text variant="caption" tone="onAccent" style={styles.startPrimaryText}>
-                    {t('seller.start.services')}
-                  </Text>
-                </PressableScale>
-                <PressableScale
-                  style={styles.startSecondary}
-                  onPress={() => router.push('/seller/verification')}
-                >
-                  <Text variant="caption" tone="accentFg" style={styles.startSecondaryText}>
-                    {t('seller.start.verify')}
-                  </Text>
-                </PressableScale>
-              </View>
-            </View>
-          ) : null}
-          {/* §11 — üyelik teşviki (free → Premium/Platinum, premium → Platinum, platinum → gizli) */}
-          <View style={styles.upsellSlot}>
-            <TierUpsell />
-          </View>
-          {/* §4.4/§9.2 — ceza/kısıt uyarısı: 7 gün sayacı + ödeme talimatı */}
-          {restricted ? (
-            <View style={[styles.restrictBox, shadow.soft]}>
-              <View style={styles.restrictHead}>
-                <Ionicons name="alert-circle" size={20} color={colors.danger} />
-                <Text variant="bodyStrong" tone="ink" style={styles.restrictTitle}>
-                  {t('restricted.title')}
-                </Text>
-                <View style={styles.restrictDays}>
-                  <Ionicons name="time-outline" size={12} color={colors.danger} />
-                  <Text variant="caption" style={styles.restrictDaysText}>
-                    {fillParams(t('restricted.days_left'), { n: restrictedDays })}
-                  </Text>
-                </View>
-              </View>
-              <Text variant="caption" tone="inkSoft" style={styles.restrictBody}>
-                {t('restricted.pay')}
-              </Text>
+        {/* ═══ YENİ UZMAN — İLK EYLEM ═══
+            Figma'da yok: tasarım dolu bir hesabı gösteriyor. Hiç randevusu
+            olmayan uzman boş bir ekranla karşılaşırsa ne yapacağını bilemez.
+            İş başlayınca kendiliğinden kayboluyor — kalıcı bir uyarı değil. */}
+        {bookings.length === 0 ? (
+          <View style={styles.baslaKart}>
+            <Text style={styles.baslaBaslik}>{t('seller.start.title')}</Text>
+            <Text style={styles.baslaAlt}>{t('seller.start.sub')}</Text>
+            <View style={styles.baslaSatir}>
               <PressableScale
-                style={styles.restrictCta}
-                onPress={() => router.push('/seller/commissions')}
+                style={styles.baslaDugme}
+                onPress={() => router.push('/seller/services')}
               >
-                <Ionicons name="receipt-outline" size={15} color={colors.onAccent} />
-                <Text variant="bodyStrong" tone="onAccent" style={styles.restrictCtaText}>
-                  {t('restricted.cta')}
-                </Text>
+                <Text style={styles.baslaYazi}>{t('seller.start.services')}</Text>
+              </PressableScale>
+              <PressableScale
+                style={[styles.baslaDugme, styles.baslaDugmeIkincil]}
+                onPress={() => router.push('/seller/kyc')}
+              >
+                <Text style={styles.baslaYaziIkincil}>{t('seller.start.verify')}</Text>
               </PressableScale>
             </View>
-          ) : null}
-
-          {/* İki ana operasyonel kart: Talepler + Takvim */}
-          <View style={styles.primaryRow}>
-            <PrimaryCard
-              icon="pricetags"
-              title={t('reports.action.requests')}
-              sub={t('seller.card.requests_sub')}
-              badge={openDemands}
-              onPress={() => router.push('/seller/requests')}
-            />
-            <PrimaryCard
-              icon="calendar"
-              title={t('reports.action.agenda_own')}
-              sub={t('seller.card.agenda_sub')}
-              badge={stats?.upcoming ?? 0}
-              onPress={() => router.push('/seller/agenda')}
-            />
           </View>
+        ) : null}
 
-          {/* ── §reklam — VİTRİN SATIŞI ──
-              AYNA'nın kazanç alanı. Menü satırı olarak durduğu sürece
-              görülmüyordu: uzman ana sayfada gezinirken bir liste maddesi
-              dikkat çekmiyor. Burası bir REKLAM ÇALIŞMASI gibi duruyor —
-              teklifi, yerini ve fiyatı tek bakışta söylüyor. Yanıt & kalite
-              kartının ÜSTÜNDE, çünkü orası ekranın hâlâ okunan bölgesi. */}
-          <Pressable
-            onPress={() => router.push('/seller/ads')}
-            accessibilityRole="button"
-            accessibilityLabel={
-              yayindaki
-                ? t('ads.live.title')
-                : bekleyenReklam
-                  ? t('ads.wait.title')
-                  : t('ads.promo.cta')
-            }
-          >
-            <LinearGradient
-              colors={gradients.plum}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.reklamKart, shadow.card]}
-            >
-              {/* Filigran: kartın reklam olduğunu söyleyen sessiz işaret.
-                  Metnin arkasında kalıyor, okumayı engellemiyor. */}
-              <Ionicons
-                name="megaphone"
-                size={132}
-                color="rgba(255,255,255,0.07)"
-                style={styles.reklamFiligran}
-              />
-              {yayindaki && gunler ? (
-                /* ── YAYINDA ── Uzman 200.000 ₸ ödedi; ne aldığını ve ne
-                   kadar kaldığını görmek hakkı. Sayı tek başına soyut, çubuk
-                   tek başına belirsiz — ikisi birlikte. */
-                <>
-                  <View style={styles.reklamRozetSatir}>
-                    <View style={styles.reklamCanli} />
-                    <Text variant="label" style={styles.reklamUst}>
-                      {t('ads.live.title')}
-                    </Text>
-                  </View>
-                  <Text variant="h2" style={styles.reklamBaslik} numberOfLines={2}>
-                    {yayindaki.title}
-                  </Text>
-                  <Text variant="caption" style={styles.reklamGovde}>
-                    {fillParams(t('ads.live.where'), {
-                      yer: t(
-                        yayindaki.placement === 'firsatlar'
-                          ? 'ads.place.firsatlar'
-                          : 'ads.place.one_cikanlar',
-                      ),
-                    })}
-                  </Text>
-                  <View style={styles.reklamCubukKap}>
-                    <View
-                      style={[
-                        styles.reklamCubukDolu,
-                        { width: `${Math.round((gunler.gun / gunler.toplam) * 100)}%` },
-                      ]}
-                    />
-                  </View>
-                  <View style={styles.reklamAlt}>
-                    <View style={styles.reklamFiyat}>
-                      <Text variant="captionStrong" style={styles.reklamFiyatYazi}>
-                        {fillParams(t('ads.live.progress'), {
-                          gun: String(gunler.gun),
-                          toplam: String(gunler.toplam),
-                        })}
-                      </Text>
-                    </View>
-                    <Text variant="captionStrong" style={styles.reklamKalan}>
-                      {gunler.kalan <= 1
-                        ? t('ads.live.last_day')
-                        : fillParams(t('ads.live.left'), { kalan: String(gunler.kalan) })}
-                    </Text>
-                  </View>
-                </>
-              ) : bekleyenReklam ? (
-                /* ── ÖDEME DOĞRULANIYOR ── Bu hâl olmasa uzman satış kartını
-                   görmeye devam eder ve İKİNCİ KEZ ödeyebilirdi. */
-                <>
-                  <Text variant="label" style={styles.reklamUst}>
-                    {t('ads.promo.eyebrow')}
-                  </Text>
-                  <Text variant="h2" style={styles.reklamBaslik}>
-                    {t('ads.wait.title')}
-                  </Text>
-                  <Text variant="caption" style={styles.reklamGovde}>
-                    {t('ads.wait.body')}
-                  </Text>
-                </>
-              ) : (
-                /* ── SATIŞ ── */
-                <>
-                  <Text variant="label" style={styles.reklamUst}>
-                    {t('ads.promo.eyebrow')}
-                  </Text>
-                  <Text variant="h2" style={styles.reklamBaslik}>
-                    {t('ads.promo.title')}
-                  </Text>
-                  <Text variant="caption" style={styles.reklamGovde}>
-                    {t('ads.promo.body')}
-                  </Text>
-                  <View style={styles.reklamAlt}>
-                    <View style={styles.reklamFiyat}>
-                      <Text variant="captionStrong" style={styles.reklamFiyatYazi}>
-                        {fillParams(t('ads.promo.price'), {
-                          amount: (reklamAylik ?? 200000).toLocaleString('tr-TR'),
-                        })}
-                      </Text>
-                    </View>
-                    <View style={styles.reklamDugme}>
-                      <Text variant="captionStrong" style={styles.reklamDugmeYazi}>
-                        {t('ads.promo.cta')}
-                      </Text>
-                      <Ionicons name="arrow-forward" size={15} color={colors.accent} />
-                    </View>
-                  </View>
-                </>
-              )}
-            </LinearGradient>
-          </Pressable>
-
-          {/* §9.2 — yanıt & kalite: ort. yanıt süresi + bekleyen dekont + tamamlanma oranı */}
-          <View style={[styles.qualityCard, shadow.soft]}>
-            <View style={styles.qualityHead}>
-              <Ionicons name="speedometer-outline" size={15} color={colors.accentFg} />
-              <Text variant="label" tone="accentFg">
-                {t('reports.quality.title')}
+        {/* ═══ CANLI ÖZET — Figma `canli-ozet-card` (radius 24, p20, gap 18) ═══
+            Koyu mürdüm degrade; üstünde açık yazı. Zemin TEMADAN BAĞIMSIZ:
+            bu kart iki temada da koyu kalıyor, yazısı da sabit açık. */}
+        <LinearGradient
+          colors={OZET_DEGRADE}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.ozetKart}
+        >
+          <View style={styles.ozetBas}>
+            <Text style={styles.ozetBaslik}>{t('reports.live.title')}</Text>
+            <View style={styles.canliNokta} />
+          </View>
+          <View style={styles.ozetKutular}>
+            <OzetKutu value={String(stats?.upcoming ?? 0)} label={t('reports.live.upcoming')} />
+            <View style={styles.ozetAyrac} />
+            <OzetKutu value={String(stats?.completed ?? 0)} label={t('reports.live.completed')} />
+            <View style={styles.ozetAyrac} />
+            <OzetKutu value={`%${stats?.noShowRate ?? 0}`} label={t('reports.live.noshow')} />
+          </View>
+          <View style={styles.ozetCizgi} />
+          <View style={styles.ozetPara}>
+            <View style={styles.ozetParaSatir}>
+              <Text style={styles.ozetParaEtiket}>{t('reports.live.revenue')}</Text>
+              <Text style={styles.ozetParaDeger}>{formatPrice(stats?.revenue ?? 0)}</Text>
+            </View>
+            <View style={styles.ozetParaSatir}>
+              <Text style={styles.ozetParaEtiket}>
+                {fillParams(t('reports.live.commission'), { pct: String(commissionRate) })}
               </Text>
-            </View>
-            <View style={styles.qualityRow}>
-              <QualityTile
-                value={
-                  quality.avgMin != null
-                    ? `${quality.avgMin} ${t('pro.min')}`
-                    : t('reports.quality.none')
-                }
-                label={t('reports.quality.avg_response')}
-              />
-              <View style={styles.qualitySep} />
-              <QualityTile
-                value={String(quality.depositPending)}
-                label={t('reports.quality.deposit_pending')}
-                alert={quality.depositPending > 0}
-              />
-              <View style={styles.qualitySep} />
-              <QualityTile
-                value={
-                  quality.completion != null ? `%${quality.completion}` : t('reports.quality.none')
-                }
-                label={t('reports.quality.completion')}
-              />
-            </View>
-            <View style={styles.qualityTip}>
-              <Ionicons name="flash-outline" size={12} color={colors.accentFg} />
-              <Text variant="caption" tone="muted" style={styles.qualityTipText}>
-                {t('reports.quality.tip')}
+              <Text style={styles.ozetParaDeger}>
+                {formatPrice(Math.round(((stats?.revenue ?? 0) * commissionRate) / 100))}
               </Text>
             </View>
           </View>
+        </LinearGradient>
 
-          {/* §CRM — Bugün doğum günü 🎂: müşterine tek dokunuşla kutlama gönder */}
-          {bdays.length > 0 ? (
-            <View style={[styles.group, { padding: space(2), gap: space(1) }]}>
-              <Text variant="label" tone="accentFg">
-                {t('bday.section')}
+        {/* ═══ PAKET TANITIMI — Figma `promo-card` (radius 24, p20, gap 16) ═══ */}
+        <PressableScale style={styles.paketKart} onPress={() => router.push('/membership')}>
+          <View style={styles.paketIkon}>
+            <Ionicons name="star" size={22} color={colors.accent} />
+          </View>
+          <View style={styles.buyu}>
+            <Text style={styles.paketBaslik}>{t('seller.promo.title')}</Text>
+            <Text style={styles.paketAlt}>{t('seller.promo.sub')}</Text>
+            <Text style={styles.paketBag}>{t('seller.promo.cta')}</Text>
+          </View>
+        </PressableScale>
+
+        {/* ═══ TALEPLER + TAKVİM — Figma `grid-row` (iki kart, radius 20, p16) ═══ */}
+        <View style={styles.ikiliSatir}>
+          <IkiliKart
+            ikon="file-tray-outline"
+            title={t('reports.action.requests')}
+            sub={t('seller.card.requests_sub')}
+            badge={openDemands}
+            onPress={() => router.push('/seller/requests')}
+          />
+          <IkiliKart
+            ikon="calendar-outline"
+            title={t('reports.action.agenda_own')}
+            sub={t('seller.card.agenda_sub')}
+            badge={stats?.upcoming ?? 0}
+            onPress={() => router.push('/seller/agenda')}
+          />
+        </View>
+
+        {/* ═══ REKLAM — Figma `reklam-banner` (radius 24, p16, kenarlık altın) ═══
+            Üç hâl: yayında (sayaç) · ödeme doğrulanıyor · satış. Sıra önemli:
+            bekleyen hâli olmadan uzman satış kartını görüp İKİNCİ KEZ öder. */}
+        {yayindaki && gunler ? (
+          <PressableScale style={styles.reklamKart} onPress={() => router.push('/seller/ads')}>
+            <View style={styles.reklamBas}>
+              <View style={styles.reklamCanli} />
+              <Text style={styles.reklamUst}>{t('ads.live.title')}</Text>
+            </View>
+            <View style={styles.reklamBaslikKap}>
+              <Text style={styles.reklamBaslik} numberOfLines={1}>
+                {yayindaki.title}
               </Text>
-              {bdays.map((u) => (
-                <PressableScale
-                  key={u.id}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: space(1) }}
-                  onPress={() =>
-                    Alert.alert('🎂 ' + u.name, t('bday.send_q'), [
-                      { text: t('common.cancel'), style: 'cancel' },
-                      {
-                        text: t('bday.send'),
-                        onPress: async () => {
-                          const token = useStore.getState().token;
-                          if (!token) return;
-                          try {
-                            await api.celebrateBirthday(token, u.id);
-                            Alert.alert(t('bday.sent'));
-                          } catch {
-                            Alert.alert(t('seller.reports.title'), t('seller.reports.action_err'));
-                          }
-                        },
-                      },
-                    ])
-                  }
-                >
-                  <Text style={{ fontSize: 22 }}>🎂</Text>
-                  <Text variant="bodyStrong" tone="ink" style={{ flex: 1 }}>
-                    {u.name}
-                  </Text>
-                  <Ionicons name="paper-plane-outline" size={18} color={colors.accentFg} />
-                </PressableScale>
+              <Text style={styles.reklamAlt}>
+                {fillParams(t('ads.live.where'), {
+                  yer: t(
+                    yayindaki.placement === 'firsatlar'
+                      ? 'ads.place.firsatlar'
+                      : 'ads.place.one_cikanlar',
+                  ),
+                })}
+              </Text>
+            </View>
+            <View style={styles.reklamIlerlemeKap}>
+              <View style={styles.reklamYol}>
+                <View
+                  style={[
+                    styles.reklamDolu,
+                    { width: `${Math.round((gunler.gun / gunler.toplam) * 100)}%` },
+                  ]}
+                />
+              </View>
+              <View style={styles.reklamEtiketler}>
+                <Text style={styles.reklamGun}>
+                  {fillParams(t('ads.live.progress'), {
+                    gun: String(gunler.gun),
+                    toplam: String(gunler.toplam),
+                  })}
+                </Text>
+                <Text style={styles.reklamKalan}>
+                  {gunler.kalan <= 1
+                    ? t('ads.live.last_day')
+                    : fillParams(t('ads.live.left'), { kalan: String(gunler.kalan) })}
+                </Text>
+              </View>
+            </View>
+          </PressableScale>
+        ) : bekleyenReklam ? (
+          <PressableScale style={styles.reklamKart} onPress={() => router.push('/seller/ads')}>
+            <View style={styles.reklamBas}>
+              <View style={[styles.reklamCanli, styles.reklamBekleyenNokta]} />
+              <Text style={styles.reklamUst}>{t('ads.promo.eyebrow')}</Text>
+            </View>
+            <View style={styles.reklamBaslikKap}>
+              <Text style={styles.reklamBaslik}>{t('ads.wait.title')}</Text>
+              <Text style={styles.reklamAlt}>{t('ads.wait.body')}</Text>
+            </View>
+          </PressableScale>
+        ) : (
+          <PressableScale style={styles.reklamKart} onPress={() => router.push('/seller/ads')}>
+            <View style={styles.reklamBas}>
+              <View style={styles.reklamCanli} />
+              <Text style={styles.reklamUst}>{t('ads.promo.eyebrow')}</Text>
+            </View>
+            <View style={styles.reklamBaslikKap}>
+              <Text style={styles.reklamBaslik}>{t('ads.promo.title')}</Text>
+              <Text style={styles.reklamAlt}>{t('ads.promo.body')}</Text>
+            </View>
+            <View style={styles.reklamAltSatir}>
+              <Text style={styles.reklamFiyat}>
+                {fillParams(t('ads.promo.price'), {
+                  amount: (reklamAylik ?? 200000).toLocaleString('tr-TR'),
+                })}
+              </Text>
+              <Text style={styles.reklamKalan}>{t('ads.promo.cta')} →</Text>
+            </View>
+          </PressableScale>
+        )}
+
+        {/* ═══ YANIT & KALİTE — Figma `yanit-kalite-card` (radius 24, p20) ═══ */}
+        <View style={styles.kaliteKart}>
+          <Text style={styles.kaliteBaslik}>{t('reports.quality.title')}</Text>
+          <View style={styles.kaliteSatir}>
+            <KaliteKutu
+              value={
+                quality.avgMin != null
+                  ? `${quality.avgMin} ${t('pro.min')}`
+                  : t('reports.quality.none')
+              }
+              label={t('reports.quality.avg_response')}
+              vurgu
+            />
+            <View style={styles.kaliteAyrac} />
+            <KaliteKutu
+              value={String(quality.depositPending)}
+              label={t('reports.quality.deposit_pending')}
+            />
+            <View style={styles.kaliteAyrac} />
+            <KaliteKutu
+              value={
+                quality.completion != null ? `%${quality.completion}` : t('reports.quality.none')
+              }
+              label={t('reports.quality.completion')}
+            />
+          </View>
+          <View style={styles.ipucu}>
+            <Text style={styles.ipucuYazi}>{t('reports.quality.tip')}</Text>
+          </View>
+        </View>
+
+        {/* ═══ YANIT BEKLEYEN YORUM ═══
+            Figma'da ayrı bir kart yok; cevapsız kalan düşük puanlı yorum
+            uzmanın görünürlüğüne en çok zarar veren şey, panelden düşmemeli. */}
+        {bekleyenYorum ? (
+          <View style={styles.bolum}>
+            <Text style={styles.bolumBaslik}>{t('reports.review_waiting')}</Text>
+          </View>
+        ) : null}
+        {bekleyenYorum ? (
+          <PressableScale style={styles.yorumKart} onPress={() => router.push('/seller/reviews')}>
+            <View style={styles.yorumBas}>
+              <View style={styles.yorumIkon}>
+                <Ionicons name="chatbubble-ellipses" size={17} color={colors.accent} />
+              </View>
+              <View style={styles.buyu}>
+                <Text style={styles.yorumAd} numberOfLines={1}>
+                  {bekleyenYorum.authorLabel}
+                </Text>
+                <Text style={styles.yorumHizmet} numberOfLines={1}>
+                  {bekleyenYorum.serviceTag}
+                </Text>
+              </View>
+              <Text style={styles.yorumPuan}>★ {bekleyenYorum.score.toFixed(1)}</Text>
+            </View>
+            <Text style={styles.yorumMetin} numberOfLines={3}>
+              {bekleyenYorum.comment}
+            </Text>
+          </PressableScale>
+        ) : null}
+
+        {/* ═══ PERFORMANS — Figma `performans-section` (sekmeler + 2×2) ═══ */}
+        <View style={styles.bolum}>
+          <Text style={styles.bolumBaslik}>{t('reports.perf.title')}</Text>
+          <View style={styles.sekmeCubugu}>
+            {(['week', 'month', 'all'] as const).map((p) => (
+              <PressableScale
+                key={p}
+                style={[styles.sekme, period === p && styles.sekmeAktif]}
+                onPress={() => setPeriod(p)}
+              >
+                <Text style={period === p ? styles.sekmeYaziAktif : styles.sekmeYazi}>
+                  {t(PERIYOT_ETIKET[p])}
+                </Text>
+              </PressableScale>
+            ))}
+          </View>
+          <View style={styles.perfIzgara}>
+            {metrics.map((m) => (
+              <View key={m.labelKey} style={styles.perfKutu}>
+                <Text style={styles.perfEtiket}>{t(m.labelKey)}</Text>
+                <Text style={styles.perfDeger}>{m.value}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* ═══ NEDEN GÖRÜNÜYORSUN — Figma `neden-gorunuyorsun-section` ═══
+            Sıralamanın nasıl işlediğini AÇIK ediyor: gizli puan yok. */}
+        <View style={styles.bolum}>
+          <Text style={styles.bolumBaslik}>{t('reports.visibility.title')}</Text>
+          <View style={styles.gorunurKart}>
+            <Text style={styles.gorunurAciklama}>{t('reports.visibility.desc')}</Text>
+            <View style={styles.gorunurCizgi} />
+            <View style={styles.gorunurListe}>
+              {gorunurlukEtkenleri.map((e) => (
+                <View key={e.key} style={styles.gorunurSatir}>
+                  <Ionicons
+                    name={e.ok ? 'checkmark-circle' : 'alert-circle'}
+                    size={16}
+                    color={e.ok ? colors.success : colors.gold}
+                  />
+                  <View style={styles.buyu}>
+                    {/* Figma: kalın satır "etken — değer", altında ne işe
+                        yaradığını söyleyen ince not. Metinler zaten i18n'de
+                        tek cümle hâlinde; tire öncesi başlık, sonrası not. */}
+                    <Text style={[styles.gorunurAd, !e.ok && { color: colors.gold }]}>
+                      {t(e.key).split(' — ')[0]} — {e.deger}
+                    </Text>
+                    <Text style={styles.gorunurNot}>{t(e.key).split(' — ')[1] ?? ''}</Text>
+                  </View>
+                </View>
               ))}
             </View>
-          ) : null}
-
-          {/* Tedarikçi reklamları — sektör malzemeleri (admin panelinden hedeflenir) */}
-          {ads.length > 0 ? (
-            <>
-              <View style={styles.adsHead}>
-                <Text variant="label" tone="accentFg">
-                  {t('seller.ads.title')}
-                </Text>
-                <View style={styles.sponsoredTag}>
-                  <Ionicons name="pricetag" size={9} color={colors.muted} />
-                  <Text variant="caption" tone="muted" style={styles.sponsoredText}>
-                    {t('seller.ads.sponsored')}
-                  </Text>
-                </View>
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.adsRow}
-              >
-                {ads.map((ad) => (
-                  <AdCard key={ad.id} ad={ad} />
-                ))}
-              </ScrollView>
-            </>
-          ) : null}
-
-          {/* ═══ YANIT BEKLEYEN YORUM — kanvas UzmanPanel.dc.html ═══
-              Kanvasta vardı, kodda yoktu: yanıtsız yorum uzmanın panelinde hiç
-              görünmüyordu, ayrı ekrana girmesi gerekiyordu. Cevapsız kalan
-              düşük puanlı yorum, uzmanın görünürlüğüne en çok zarar veren şey. */}
-          {bekleyenYorum ? (
-            <>
-              <Text variant="bodyStrong" tone="ink" style={styles.perfTitle}>
-                {t('reports.review_waiting')}
-              </Text>
-              <PressableScale
-                style={[styles.reviewCard, shadow.soft]}
-                onPress={() => router.push('/seller/reviews')}
-              >
-                <View style={styles.reviewTop}>
-                  <View style={styles.reviewAvatar}>
-                    <Ionicons name="chatbubble-ellipses" size={17} color={colors.accent} />
-                  </View>
-                  <View style={styles.flex}>
-                    <Text variant="title" tone="ink" numberOfLines={1}>
-                      {bekleyenYorum.authorLabel}
-                    </Text>
-                    <Text variant="micro" tone="muted" numberOfLines={1}>
-                      {bekleyenYorum.serviceTag}
-                    </Text>
-                  </View>
-                  <Text numeric variant="meta" style={styles.reviewScore}>
-                    ★ {bekleyenYorum.score.toFixed(1)}
-                  </Text>
-                </View>
-                <Text variant="body" tone="inkSoft" numberOfLines={3}>
-                  {bekleyenYorum.comment}
-                </Text>
-                <View style={styles.reviewCta}>
-                  <Ionicons name="arrow-forward" size={15} color={colors.onAccent} />
-                  <Text variant="caption" tone="onAccent">
-                    {t('pro.review.reply')}
-                  </Text>
-                </View>
-              </PressableScale>
-            </>
-          ) : null}
-
-          <Text variant="bodyStrong" tone="ink" style={styles.perfTitle}>
-            {t('reports.performance')}
-          </Text>
-          <Segmented
-            options={[
-              { value: 'week', label: t('reports.period.week') },
-              { value: 'month', label: t('reports.period.month') },
-              { value: 'all', label: t('reports.period.all') },
-            ]}
-            value={period}
-            onChange={setPeriod}
-          />
-
-          <View style={styles.grid}>
-            {metrics.map((m) => (
-              <Metric key={m.id} metric={m} />
-            ))}
-          </View>
-
-          {/* Uzman performansı — §10.1 SALON'a özel; Faz C: GERÇEK kadro (mock yok) */}
-          {isSalon ? (
-            <>
-              <Text variant="label" tone="accentFg" style={styles.section}>
-                {t('reports.section.staff')}
-              </Text>
-              <View style={styles.group}>
-                {salonStaff.length === 0 ? (
-                  <PressableScale
-                    style={styles.staffRow}
-                    onPress={() => router.push('/seller/codes')}
-                  >
-                    <View style={[styles.staffImage, styles.staffInitial]}>
-                      <Ionicons name="person-add-outline" size={16} color={colors.inkSoft} />
-                    </View>
-                    <Text variant="caption" tone="muted" style={styles.staffName}>
-                      {t('salon.staff.empty_b')}
-                    </Text>
-                    <Ionicons name="chevron-forward" size={14} color={colors.muted} />
-                  </PressableScale>
-                ) : (
-                  salonStaff.map((u, i) => (
-                    <PressableScale
-                      key={u.name}
-                      style={[styles.staffRow, i < salonStaff.length - 1 && styles.border]}
-                      onPress={() =>
-                        router.push({
-                          pathname: '/seller/staff',
-                          params: {
-                            name: u.name,
-                            image: u.image,
-                            bookings: String(u.bookings),
-                            rating: String(u.rating),
-                          },
-                        })
-                      }
-                    >
-                      <View style={[styles.staffImage, styles.staffInitial]}>
-                        <Text variant="caption" tone="inkSoft">
-                          {u.name.charAt(0).toLocaleUpperCase('tr-TR')}
-                        </Text>
-                      </View>
-                      <Text
-                        variant="bodyStrong"
-                        tone="ink"
-                        style={styles.staffName}
-                        numberOfLines={1}
-                      >
-                        {u.name}
-                      </Text>
-                      <Text variant="caption" tone="muted">
-                        {u.bookings > 0
-                          ? `${u.bookings} ${t('reports.bookings')}`
-                          : t('salon.staff.new')}
-                      </Text>
-                      <View style={styles.staffMeta}>
-                        <Ionicons name="chevron-forward" size={14} color={colors.muted} />
-                      </View>
-                    </PressableScale>
-                  ))
-                )}
-              </View>
-            </>
-          ) : null}
-
-          {/* NEDEN GÖRÜNÜYORSUN — kanvas (design/UzmanPanel.dc.html §görünürlük
-              sağlığı) burada "78 / 100" gibi bir görünürlük PUANI gösteriyor.
-              Sistemde böyle bir puan YOK: sıralama katalogda `rating desc`,
-              keşifte premium önceliği + günlük rotasyon, aramada kullanıcının
-              seçtiği sıralama. Uydurma bir skor, uzmanın gerçekte yapamayacağı
-              bir şeyi yapabilirmiş gibi göstermek olurdu.
-              Onun yerine sıralamayı GERÇEKTEN belirleyen etkenler, uzmanın
-              kendi değerleriyle yazılıyor. */}
-          <SectionHeader title={t('reports.visibility.title')} />
-          <View style={[styles.card, shadow.soft]}>
-            <Text variant="caption" tone="muted">
-              {t('reports.visibility.sub')}
-            </Text>
-            {gorunurlukEtkenleri.map((e) => (
-              <View key={e.key} style={styles.visRow}>
-                <Ionicons
-                  name={e.ok ? 'checkmark-circle' : 'alert-circle-outline'}
-                  size={17}
-                  color={e.ok ? colors.success : colors.gold}
-                />
-                <View style={styles.visBody}>
-                  <Text variant="caption" tone="ink">
-                    {t(e.key)}
-                  </Text>
-                  <Text variant="micro" tone="muted">
-                    {e.deger}
-                  </Text>
-                </View>
-              </View>
-            ))}
           </View>
         </View>
       </ScrollView>
@@ -926,604 +684,444 @@ export default function ReportsScreen() {
   );
 }
 
-// Ana operasyonel kart (Talepler / Takvim)
-function PrimaryCard({
-  icon,
+/** Canlı Özet sayısı — koyu kart üstünde, Figma `metric-box`. */
+function OzetKutu({ value, label }: { value: string; label: string }) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.ozetKutu}>
+      <Text style={styles.ozetSayi}>{value}</Text>
+      <Text style={styles.ozetEtiket}>{label}</Text>
+    </View>
+  );
+}
+
+/** Yanıt & Kalite ölçütü — Figma `metric-item`; ilki altın vurgulu. */
+function KaliteKutu({ value, label, vurgu }: { value: string; label: string; vurgu?: boolean }) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={[styles.kaliteKutu, vurgu && styles.kaliteKutuVurgu]}>
+      <Text style={[styles.kaliteDeger, vurgu && styles.kaliteDegerVurgu]}>{value}</Text>
+      <Text style={styles.kaliteEtiket} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+/** Talepler / Takvim — Figma `grid-row` kartı (radius 20, üstte altın çizgi). */
+function IkiliKart({
+  ikon,
   title,
   sub,
   badge,
   onPress,
 }: {
-  icon: IoniconName;
+  ikon: keyof typeof Ionicons.glyphMap;
   title: string;
   sub: string;
   badge: number;
   onPress: () => void;
 }) {
-  const { colors, shadow } = useTheme();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <PressableScale style={[styles.primaryCard, shadow.soft]} onPress={onPress}>
-      <View style={styles.primaryTop}>
-        <View style={styles.primaryIcon}>
-          <Ionicons name={icon} size={22} color={colors.accentFg} />
+    <PressableScale style={styles.ikiliKart} onPress={onPress}>
+      <View style={styles.ikiliCizgi} />
+      <View style={styles.ikiliBas}>
+        <View style={styles.ikiliIkon}>
+          <Ionicons name={ikon} size={20} color={colors.accent} />
         </View>
         {badge > 0 ? (
-          <View style={styles.primaryBadge}>
-            <Text style={styles.primaryBadgeText}>{badge > 99 ? '99+' : String(badge)}</Text>
+          <View style={styles.ikiliRozet}>
+            <Text style={styles.ikiliRozetYazi}>{badge > 99 ? '99+' : badge}</Text>
           </View>
         ) : null}
       </View>
-      <Text variant="bodyStrong" tone="ink" style={styles.primaryTitle} numberOfLines={1}>
-        {title}
-      </Text>
-      <Text variant="caption" tone="muted" numberOfLines={2}>
-        {sub}
-      </Text>
+      <Text style={styles.ikiliBaslik}>{title}</Text>
+      <Text style={styles.ikiliAlt}>{sub}</Text>
     </PressableScale>
   );
 }
 
-// Tedarikçi reklam banner'ı (gerçek fotoğraflı; alt karartma scrim + "Sponsorlu")
-function AdCard({ ad }: { ad: SupplierAd }) {
-  const { t } = useLocale();
-  const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-  const router = useRouter();
-  return (
-    <PressableScale style={styles.adCard} onPress={() => router.push(`/ad/${ad.id}`)}>
-      <Image source={{ uri: ad.imageUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-      <LinearGradient
-        colors={['rgba(20,18,22,0)', 'rgba(20,18,22,0.35)', 'rgba(20,18,22,0.88)']}
-        locations={[0, 0.45, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.adSponsor}>
-        <Text variant="caption" style={styles.adSponsorText}>
-          {t('seller.ads.sponsored')}
-        </Text>
-      </View>
-      <View style={styles.adInfo}>
-        <Text variant="caption" style={styles.adBrand} numberOfLines={1}>
-          {ad.brand}
-        </Text>
-        <Text variant="bodyStrong" style={styles.adTitle} numberOfLines={2}>
-          {ad.title}
-        </Text>
-        <Text variant="caption" style={styles.adSub} numberOfLines={1}>
-          {ad.subtitle}
-        </Text>
-        <View style={styles.adCta}>
-          <Text variant="caption" style={styles.adCtaText}>
-            {ad.ctaLabel}
-          </Text>
-          <Ionicons name="arrow-forward" size={12} color={colors.ink} />
-        </View>
-      </View>
-    </PressableScale>
-  );
-}
-
-function QualityTile({ value, label, alert }: { value: string; label: string; alert?: boolean }) {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={styles.qualityTile}>
-      <Text variant="title" style={[styles.qualityValue, alert ? { color: colors.danger } : null]}>
-        {value}
-      </Text>
-      <Text variant="caption" tone="muted" numberOfLines={1}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
-function LiveTile({ value, label }: { value: string; label: string }) {
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={styles.liveTile}>
-      <Text variant="h2" tone="onColor">
-        {value}
-      </Text>
-      <Text variant="caption" tone="onColor" style={styles.dim} numberOfLines={1}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
-function Metric({ metric }: { metric: SellerMetric }) {
-  const { t } = useLocale();
-  const { colors, shadow } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={[styles.metric, shadow.soft]}>
-      <View style={styles.metricIcon}>
-        <Ionicons name={metric.icon as IoniconName} size={16} color={colors.accentFg} />
-      </View>
-      <Text variant="title" tone="ink" style={styles.metricValue}>
-        {metric.value}
-      </Text>
-      <View style={styles.metricFoot}>
-        <Text variant="caption" tone="muted" style={styles.metricLabel}>
-          {t(metric.labelKey)}
-        </Text>
-        <Text variant="caption" style={{ color: metric.positive ? colors.success : colors.danger }}>
-          {metric.delta}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
+/** Ölçüler Figma `ayna-expert-light`ten BİREBİR — yuvarlanmadı. */
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    talepKart: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      marginHorizontal: space(2),
-      marginBottom: space(1.5),
-      padding: space(2),
-      gap: space(0.5),
-      borderWidth: 1,
-      borderColor: colors.accentSoft,
+    icerik: { paddingBottom: TAB_BAR_CLEARANCE, gap: 20 },
+    buyu: { flex: 1 },
+
+    // header-section (px24, pt12 pb16)
+    bas: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 24,
+      paddingBottom: 16,
+      gap: 12,
     },
-    talepBas: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
-    talepNokta: {
+    basSol: { flex: 1, gap: 4 },
+    tarih: {
+      fontFamily: font.medium,
+      fontSize: 11,
+      color: colors.muted,
+      textTransform: 'uppercase',
+      letterSpacing: 0.4,
+    },
+    selam: { fontFamily: font.semibold, fontSize: 20, color: colors.ink },
+    rolRozet: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 6,
+      backgroundColor: colors.accentSoft,
+      borderWidth: 1,
+      borderColor: colors.accent,
+    },
+    rolYazi: { fontFamily: font.semibold, fontSize: 9, color: colors.accent },
+    basSag: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    basIkon: {
+      width: 44,
+      height: 44,
+      borderRadius: 100,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    basNokta: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
       width: 8,
       height: 8,
       borderRadius: 4,
-      backgroundColor: colors.gold,
+      backgroundColor: colors.danger,
     },
-    talepBaslik: { flex: 1 },
-    talepSatir: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1),
-      paddingVertical: space(1.25),
-      minHeight: 44,
-      borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: colors.line,
+    avatarHalka: { padding: 2, borderRadius: 100, borderWidth: 1.5, borderColor: colors.accent },
+    avatar: { width: 40, height: 40, borderRadius: 100 },
+    avatarBos: { backgroundColor: colors.accentSoft },
+
+    // canli-ozet-card (radius 24, p20, gap 18) — koyu, iki temada da sabit
+    ozetKart: { marginHorizontal: 24, borderRadius: 24, padding: 20, gap: 18, overflow: 'hidden' },
+    ozetBas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    ozetBaslik: {
+      fontFamily: font.semibold,
+      fontSize: 14,
+      color: OZET_YAZI,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
     },
-    content: { paddingBottom: TAB_BAR_CLEARANCE + space(2) },
-    flex: { flex: 1 },
-    body: { paddingHorizontal: space(3), paddingTop: space(2.5) },
-    upsellSlot: { marginBottom: space(2) },
-    startCard: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(2),
-      gap: space(0.75),
-      marginBottom: space(1.5),
-    },
-    startSub: { lineHeight: 18 },
-    startRow: { flexDirection: 'row', gap: space(1), marginTop: space(0.5) },
-    startPrimary: {
+    canliNokta: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#4DA66B' },
+    ozetKutular: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    ozetKutu: {
       flex: 1,
-      backgroundColor: colors.accent,
-      borderRadius: radius.pill,
-      minHeight: 44,
       alignItems: 'center',
-      justifyContent: 'center',
-    },
-    startPrimaryText: { fontFamily: font.semibold },
-    startSecondary: {
-      flex: 1,
+      gap: 6,
+      padding: 12,
+      borderRadius: 16,
+      backgroundColor: 'rgba(255,255,255,0.05)',
       borderWidth: 1,
-      borderColor: colors.accentFg,
-      borderRadius: radius.pill,
-      minHeight: 44,
-      alignItems: 'center',
-      justifyContent: 'center',
+      borderColor: 'rgba(212,160,160,0.2)',
     },
-    startSecondaryText: { fontFamily: font.semibold },
-    // Canlı Özet — iki yanda beyaz kalan DAR bant; üstü yeşilin dibine tuck (bağlı), yazılar yukarı+sıkı
-    liveBand: {
-      marginHorizontal: space(3),
-      // Eskiden -space(5) idi: kart, mor bandın DALGA bitişinin altına
-      // girsin diye. Bant kaldırılınca kart yukarı kayıp başlığın altındaki
-      // bağ çipinin ÜSTÜNE bindi — çipin yazısı kartın arkasından görünüyordu.
-      marginTop: space(0.5),
-      paddingHorizontal: space(2.25),
-      paddingTop: space(1.25),
-      paddingBottom: space(1.5),
-      gap: space(0.75),
-      borderRadius: radius.xl,
-      zIndex: 3,
-    },
+    ozetSayi: { fontFamily: font.semibold, fontSize: 22, color: OZET_YAZI },
+    ozetEtiket: { fontFamily: font.regular, fontSize: 11, color: OZET_ETIKET },
+    ozetAyrac: { width: 1, height: 40, backgroundColor: 'rgba(212,160,160,0.2)' },
+    ozetCizgi: { height: 1, backgroundColor: 'rgba(212,160,160,0.2)' },
+    ozetPara: { gap: 10 },
+    ozetParaSatir: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    ozetParaEtiket: { fontFamily: font.regular, fontSize: 13, color: OZET_ETIKET },
+    ozetParaDeger: { fontFamily: font.semibold, fontSize: 14, color: OZET_YAZI },
 
-    // ── Kreatif hero (Keşfet dili) ──
-    hero: {
-      backgroundColor: colors.bg,
-      // Kartlarla AYNI kenar boşluğu: 20 iken kart 24'tü ve çip kartın
-      // solundan 4pt taşıyordu — "altta bir şey kalmış" görüntüsü buradan.
-      paddingHorizontal: space(3),
-      paddingBottom: space(2),
-      gap: space(1.25),
-    },
-    heroRow: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
-    heroAvatar: {
-      width: 54,
-      height: 54,
-      borderRadius: radius.sm,
+    // promo-card (radius 24, p20, gap 16)
+    paketKart: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 16,
+      marginHorizontal: 24,
+      padding: 20,
+      borderRadius: 24,
       backgroundColor: colors.accentSoft,
+      borderWidth: 1,
+      borderColor: colors.lineStrong,
+    },
+    paketIkon: {
+      width: 48,
+      height: 48,
+      borderRadius: 100,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: colors.surface,
+    },
+    paketBaslik: { fontFamily: font.semibold, fontSize: 16, color: colors.ink },
+    paketAlt: {
+      fontFamily: font.regular,
+      fontSize: 13,
+      lineHeight: 16,
+      color: colors.muted,
+      marginTop: 6,
+    },
+    paketBag: { fontFamily: font.semibold, fontSize: 12, color: colors.accent, marginTop: 6 },
+
+    // grid-row (iki kart, radius 20, p16, gap 12)
+    ikiliSatir: { flexDirection: 'row', gap: 12, marginHorizontal: 24 },
+    ikiliKart: {
+      flex: 1,
+      padding: 16,
+      gap: 10,
+      borderRadius: 20,
       overflow: 'hidden',
-      flexShrink: 0,
-    },
-    heroAvatarImg: { width: '100%', height: '100%', resizeMode: 'cover' },
-
-    heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    heroBody: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: space(2.5),
-      minHeight: 175,
-      zIndex: 2,
-    },
-    heroText: { flexGrow: 1, flexShrink: 1, minWidth: 0, gap: 1 },
-
-    greetName: {
-      fontSize: 24,
-      lineHeight: 29,
-      fontFamily: font.semibold,
-      letterSpacing: -0.4,
-    },
-    bindingPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      alignSelf: 'flex-start',
-      gap: 5,
       backgroundColor: colors.surface,
-      paddingHorizontal: space(1.25),
-      paddingVertical: space(0.5),
-      borderRadius: radius.pill,
-      maxWidth: '100%',
+      borderWidth: 1,
+      borderColor: colors.line,
     },
-    bindingPillText: { fontFamily: font.semibold, flexShrink: 0 },
-    // §6.1 — profil fotoğrafı GÜVENLİ ALANI (safe zone): sabit çerçeve + resizeMode="contain".
-    // Kayıt olan her uzmanın cut-out'u bu çerçeveye sığdırılır → zilden uzak, taşmaz, standart.
-    // Daha büyük foto alanı (kullanıcı Keşfet ile tutarlı; kurucu isteği).
-
-    // Bildirim zili (hero sağ)
-    bell: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
-      backgroundColor: colors.surface,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    bellBadge: {
+    // Figma: üstte 1px altın çizgi (%60 opaklık) — kartın "canlı" işareti.
+    ikiliCizgi: {
       position: 'absolute',
-      top: -4,
-      right: -4,
-      minWidth: 19,
-      height: 19,
-      borderRadius: 9.5,
-      paddingHorizontal: 4,
-      backgroundColor: colors.rose,
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 1,
+      backgroundColor: colors.gold,
+      opacity: 0.6,
+    },
+    ikiliBas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    ikiliIkon: {
+      width: 40,
+      height: 40,
+      borderRadius: 100,
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: 2,
-      borderColor: colors.surface,
+      backgroundColor: colors.accentSoft,
     },
-    bellBadgeText: {
-      color: colors.onColor,
-      fontSize: 10,
-      lineHeight: 12,
-      fontFamily: font.semibold,
-      textAlign: 'center',
-      includeFontPadding: false,
+    ikiliRozet: {
+      minWidth: 32,
+      height: 32,
+      borderRadius: 16,
+      paddingHorizontal: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.accent,
     },
-    // §4.4/§9.2 — kısıtlı mod uyarı kutusu
-    restrictBox: {
+    ikiliRozetYazi: { fontFamily: font.semibold, fontSize: 16, color: colors.onAccent },
+    ikiliBaslik: { fontFamily: font.semibold, fontSize: 15, color: colors.ink },
+    ikiliAlt: { fontFamily: font.regular, fontSize: 11, color: colors.muted },
+
+    // reklam-banner (radius 24, p16, gap 12, altın kenarlık)
+    reklamKart: {
+      marginHorizontal: 24,
+      padding: 16,
+      gap: 12,
+      borderRadius: 24,
       backgroundColor: colors.surface,
-      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.gold,
+    },
+    reklamBas: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    reklamCanli: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#4DA66B' },
+    reklamBekleyenNokta: { backgroundColor: colors.gold },
+    reklamUst: {
+      fontFamily: font.semibold,
+      fontSize: 11,
+      color: colors.ink,
+      textTransform: 'uppercase',
+      letterSpacing: 0.6,
+    },
+    reklamBaslikKap: { gap: 4 },
+    reklamBaslik: { fontFamily: font.semibold, fontSize: 16, color: colors.ink },
+    reklamAlt: { fontFamily: font.regular, fontSize: 13, color: colors.muted },
+    reklamIlerlemeKap: { gap: 6 },
+    reklamYol: {
+      height: 4,
+      borderRadius: 100,
+      backgroundColor: colors.accentSoft,
+      overflow: 'hidden',
+    },
+    reklamDolu: { height: 4, borderRadius: 100, backgroundColor: colors.accent },
+    reklamEtiketler: { flexDirection: 'row', justifyContent: 'space-between' },
+    reklamGun: { fontFamily: font.regular, fontSize: 11, color: colors.muted },
+    reklamKalan: { fontFamily: font.semibold, fontSize: 11, color: colors.accent },
+    reklamAltSatir: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    reklamFiyat: { fontFamily: font.semibold, fontSize: 12, color: colors.gold },
+
+    // yanit-kalite-card (radius 24, p20, gap 16)
+    kaliteKart: {
+      marginHorizontal: 24,
+      padding: 20,
+      gap: 16,
+      borderRadius: 24,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    kaliteBaslik: {
+      fontFamily: font.semibold,
+      fontSize: 13,
+      color: colors.ink,
+      textTransform: 'uppercase',
+      letterSpacing: 0.6,
+    },
+    kaliteSatir: { flexDirection: 'row', alignItems: 'center' },
+    kaliteKutu: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 4,
+      padding: 12,
+      borderRadius: 16,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    kaliteKutuVurgu: { backgroundColor: colors.goldSoft, borderColor: colors.gold },
+    kaliteDeger: { fontFamily: font.semibold, fontSize: 22, color: colors.ink },
+    kaliteDegerVurgu: { color: colors.gold },
+    kaliteEtiket: { fontFamily: font.regular, fontSize: 11, color: colors.muted },
+    kaliteAyrac: { width: 1, height: 32, backgroundColor: colors.line },
+    ipucu: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 12,
+      backgroundColor: colors.accentSoft,
+    },
+    ipucuYazi: { fontFamily: font.regular, fontSize: 11, lineHeight: 16, color: colors.accent },
+
+    // yeni uzman ilk eylem (Figma'da yok — boş ekran yön göstermez)
+    baslaKart: {
+      marginHorizontal: 24,
+      padding: 16,
+      gap: 12,
+      borderRadius: 20,
+      backgroundColor: colors.accentSoft,
+    },
+    baslaBaslik: { fontFamily: font.semibold, fontSize: 15, color: colors.ink },
+    baslaAlt: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: colors.muted },
+    baslaSatir: { flexDirection: 'row', gap: 8 },
+    baslaDugme: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: 12,
+      borderRadius: 100,
+      backgroundColor: colors.accent,
+    },
+    baslaDugmeIkincil: { backgroundColor: colors.surface },
+    baslaYazi: { fontFamily: font.semibold, fontSize: 13, color: colors.onAccent },
+    baslaYaziIkincil: { fontFamily: font.semibold, fontSize: 13, color: colors.accent },
+
+    // yanıt bekleyen talepler (§4.2 — Figma'da yok, süre işliyor)
+    talepKart: {
+      marginHorizontal: 24,
+      padding: 16,
+      gap: 10,
+      borderRadius: 20,
+      backgroundColor: colors.goldSoft,
+      borderWidth: 1,
+      borderColor: colors.gold,
+    },
+    talepBas: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    talepNokta: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.gold },
+    talepUst: { flex: 1, fontFamily: font.semibold, fontSize: 13, color: colors.ink },
+    talepSayi: { fontFamily: font.semibold, fontSize: 15, color: colors.gold },
+    talepSatir: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
+    talepAd: { flex: 1, fontFamily: font.regular, fontSize: 13, color: colors.inkSoft },
+    talepZaman: { fontFamily: font.medium, fontSize: 13, color: colors.ink },
+
+    // hesap kısıtı (Figma'da yok — işlevsel gereklilik)
+    kisitKart: {
+      marginHorizontal: 24,
+      padding: 16,
+      gap: 10,
+      borderRadius: 20,
+      backgroundColor: colors.dangerSoft,
       borderWidth: 1,
       borderColor: colors.danger,
-      padding: space(1.75),
-      gap: space(1),
-      marginBottom: space(2.5),
     },
-    restrictHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
-    restrictTitle: { flex: 1 },
-    restrictDays: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 3,
-      backgroundColor: colors.dangerSoft,
-      paddingHorizontal: space(1),
-      paddingVertical: 3,
-      borderRadius: radius.pill,
-    },
-    restrictDaysText: { color: colors.danger, fontFamily: font.semibold },
-    restrictBody: { lineHeight: 18 },
-    restrictCta: {
-      flexDirection: 'row',
-      alignItems: 'center',
+    kisitBas: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    kisitBaslik: { flex: 1, fontFamily: font.semibold, fontSize: 15, color: colors.ink },
+    kisitGun: { fontFamily: font.semibold, fontSize: 11, color: colors.danger },
+    kisitGovde: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: colors.inkSoft },
+    kisitDugme: {
       alignSelf: 'flex-start',
-      gap: 6,
-      backgroundColor: colors.accentFg,
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1),
-      borderRadius: radius.pill,
-    },
-    restrictCtaText: { fontSize: 14 },
-
-    // §9.2 — yanıt & kalite kartı
-    // Vitrin satış kartı: çevresindeki yardımcı kartlardan bilerek AYRIŞIYOR
-    // (koyu zemin, büyük başlık, tek çağrı). Kazanç alanı sessiz durmamalı.
-    reklamKart: {
-      borderRadius: radius.lg,
-      padding: space(2.25),
-      gap: space(0.75),
-      marginBottom: space(2),
-      overflow: 'hidden',
-    },
-    reklamFiligran: { position: 'absolute', right: -18, bottom: -26 },
-    reklamUst: { color: 'rgba(255,255,255,0.70)', letterSpacing: 1.4 },
-    reklamBaslik: { color: colors.onColor },
-    reklamGovde: { color: 'rgba(255,255,255,0.78)', lineHeight: 18 },
-    reklamAlt: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: space(1),
-      marginTop: space(1),
-    },
-    reklamFiyat: {
-      paddingHorizontal: space(1.25),
-      paddingVertical: space(0.75),
-      borderRadius: radius.pill,
-      backgroundColor: 'rgba(255,255,255,0.14)',
-    },
-    reklamFiyatYazi: { color: colors.onColor },
-    reklamDugme: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(0.75),
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1),
-      borderRadius: radius.pill,
-      backgroundColor: colors.onColor,
-    },
-    reklamDugmeYazi: { color: colors.accent },
-    reklamRozetSatir: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
-    // Yayında olduğunu söyleyen küçük nokta — "canlı" işareti.
-    reklamCanli: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#7BD389' },
-    reklamCubukKap: {
-      height: 6,
-      borderRadius: 3,
-      backgroundColor: 'rgba(255,255,255,0.20)',
-      overflow: 'hidden',
-      marginTop: space(1),
-    },
-    reklamCubukDolu: { height: 6, borderRadius: 3, backgroundColor: colors.onColor },
-    reklamKalan: { color: 'rgba(255,255,255,0.86)' },
-    qualityCard: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
-      padding: space(1.75),
-      gap: space(1.25),
-      marginBottom: space(3),
-    },
-    qualityHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
-    qualityRow: { flexDirection: 'row', alignItems: 'center' },
-    qualityTile: { flex: 1, alignItems: 'center', gap: 2 },
-    qualityValue: { fontSize: 22, lineHeight: 26, color: colors.ink },
-    qualitySep: { width: 1, alignSelf: 'stretch', backgroundColor: colors.line },
-    qualityTip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 5,
-      backgroundColor: colors.accentSoft,
-      borderRadius: radius.md,
-      paddingHorizontal: space(1.25),
-      paddingVertical: space(1),
-    },
-    qualityTipText: { flex: 1, lineHeight: 16 },
-
-    // Aksiyon ızgarası
-    // İki ana operasyonel kart (Talepler + Takvim)
-    primaryRow: { flexDirection: 'row', gap: space(1.5), marginBottom: space(3) },
-    primaryCard: {
-      flex: 1,
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(1.75),
-      gap: space(0.5),
-      minHeight: 108,
-    },
-    primaryTop: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: space(0.75),
-    },
-    primaryIcon: {
-      width: 44,
-      height: 44,
-      borderRadius: radius.md,
-      backgroundColor: colors.accentSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    primaryBadge: {
-      minWidth: 24,
-      height: 24,
-      borderRadius: 12,
-      paddingHorizontal: 7,
-      backgroundColor: colors.rose,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    primaryBadgeText: { color: colors.onColor, fontSize: 12, fontFamily: font.semibold },
-    primaryTitle: { fontSize: 16 },
-
-    // Tedarikçi reklamları
-    adsHead: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1),
-      marginBottom: space(1.25),
-    },
-    sponsoredTag: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 3,
-      backgroundColor: colors.surfaceMuted,
-      paddingHorizontal: space(0.75),
-      paddingVertical: 2,
-      borderRadius: radius.pill,
-    },
-    sponsoredText: { fontSize: 10, letterSpacing: 0.2 },
-    adsRow: { gap: space(1.5), paddingRight: space(3), paddingBottom: space(1) },
-    adCard: {
-      width: 290,
-      height: 168,
-      borderRadius: radius.lg,
-      overflow: 'hidden',
-      backgroundColor: colors.surfaceMuted,
-      justifyContent: 'flex-end',
-    },
-    adSponsor: {
-      position: 'absolute',
-      top: space(1),
-      right: space(1),
-      backgroundColor: 'rgba(0,0,0,0.45)',
-      paddingHorizontal: space(1),
-      paddingVertical: 3,
-      borderRadius: radius.pill,
-    },
-    adSponsorText: { color: 'rgba(255,255,255,0.9)', fontSize: 9, letterSpacing: 0.3 },
-    adInfo: { padding: space(2), gap: 2 },
-    adBrand: { color: 'rgba(255,255,255,0.85)', fontFamily: font.semibold, letterSpacing: 0.2 },
-    adTitle: { color: colors.onColor, fontSize: 16, lineHeight: 20 },
-    adSub: { color: 'rgba(255,255,255,0.85)', lineHeight: 16 },
-    adCta: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      alignSelf: 'flex-start',
-      gap: 4,
-      marginTop: space(1),
-      backgroundColor: colors.onColor,
-      paddingHorizontal: space(1.5),
-      paddingVertical: space(0.75),
-      borderRadius: radius.pill,
-    },
-    adCtaText: { color: colors.ink, fontFamily: font.semibold },
-    reviewCard: {
-      marginHorizontal: space(2.5),
-      padding: space(2),
-      borderRadius: radius.lg,
-      backgroundColor: colors.surface,
-      gap: space(1.5),
-    },
-    reviewTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.125) },
-    reviewAvatar: {
-      width: 40,
-      height: 40,
-      borderRadius: 14,
-      backgroundColor: colors.accentSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    reviewScore: { color: colors.gold, fontFamily: font.semibold },
-    reviewCta: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 6,
-      height: 40,
-      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 100,
       backgroundColor: colors.accent,
     },
-    perfTitle: { marginTop: space(3), marginBottom: space(1.5) },
-    // §5 canlı özet
-    liveHead: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
-    liveRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    liveTile: { flex: 1, alignItems: 'center', gap: 2 },
-    liveDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.25)' },
-    liveRevenue: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    dim: { opacity: 0.9 },
-    agendaLink: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1.5),
+    kisitDugmeYazi: { fontFamily: font.semibold, fontSize: 13, color: colors.onAccent },
+
+    // yanıt bekleyen yorum
+    yorumKart: {
+      marginHorizontal: 24,
+      padding: 16,
+      gap: 10,
+      borderRadius: 20,
       backgroundColor: colors.surface,
-      borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.line,
-      padding: space(1.75),
-      marginBottom: space(2),
     },
-    agendaIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: radius.md,
-      backgroundColor: colors.accentFg,
+    yorumBas: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    yorumIkon: {
+      width: 36,
+      height: 36,
+      borderRadius: 100,
       alignItems: 'center',
       justifyContent: 'center',
-    },
-    agendaText: { flex: 1, gap: 2 },
-    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5), marginTop: space(2.5) },
-    metric: {
-      width: '47%',
-      flexGrow: 1,
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.line,
-      padding: space(2),
-    },
-    metricIcon: {
-      width: 34,
-      height: 34,
-      borderRadius: radius.sm,
       backgroundColor: colors.accentSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: space(1),
     },
-    metricValue: { fontSize: 24, lineHeight: 30 },
-    metricFoot: {
+    yorumAd: { fontFamily: font.semibold, fontSize: 15, color: colors.ink },
+    yorumHizmet: { fontFamily: font.regular, fontSize: 11, color: colors.muted },
+    yorumPuan: { fontFamily: font.semibold, fontSize: 13, color: colors.gold },
+    yorumMetin: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: colors.inkSoft },
+
+    // performans + neden görünüyorsun
+    bolum: { marginHorizontal: 24, gap: 12 },
+    bolumBaslik: { fontFamily: font.semibold, fontSize: 18, color: colors.ink },
+    sekmeCubugu: {
       flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: 2,
+      gap: 4,
+      padding: 4,
+      borderRadius: 100,
+      backgroundColor: colors.accentSoft,
     },
-    metricLabel: { flex: 1 },
-    section: { marginTop: space(3.5), marginBottom: space(1.5) },
-    group: {
+    sekme: {
+      flex: 1,
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 100,
+    },
+    sekmeAktif: { backgroundColor: colors.surface },
+    sekmeYazi: { fontFamily: font.medium, fontSize: 13, color: colors.muted },
+    sekmeYaziAktif: { fontFamily: font.semibold, fontSize: 13, color: colors.accent },
+    perfIzgara: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    perfKutu: {
+      width: '48%',
+      flexGrow: 1,
+      padding: 16,
+      gap: 6,
+      borderRadius: 16,
       backgroundColor: colors.surface,
-      borderRadius: radius.lg,
       borderWidth: 1,
       borderColor: colors.line,
-      overflow: 'hidden',
     },
-    border: { borderBottomWidth: 1, borderBottomColor: colors.line },
-    staffRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1.25),
-      paddingHorizontal: space(2),
-      paddingVertical: space(1.5),
-    },
-    staffImage: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surfaceMuted },
-    staffInitial: { alignItems: 'center', justifyContent: 'center' },
-    staffName: { flex: 1 },
-    card: {
+    perfEtiket: { fontFamily: font.regular, fontSize: 11, color: colors.muted },
+    perfDeger: { fontFamily: font.semibold, fontSize: 16, color: colors.ink },
+
+    gorunurKart: {
+      padding: 16,
+      gap: 16,
+      borderRadius: 20,
       backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(2),
-      gap: space(1.25),
+      borderWidth: 1,
+      borderColor: colors.line,
     },
-    visRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space(1) },
-    visBody: { flexGrow: 1, flexShrink: 1, minWidth: 0, gap: 1 },
-    staffMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    gorunurAciklama: {
+      fontFamily: font.regular,
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors.muted,
+    },
+    gorunurCizgi: { height: 1, backgroundColor: colors.line },
+    gorunurListe: { gap: 12 },
+    gorunurSatir: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+    gorunurAd: { fontFamily: font.semibold, fontSize: 13, color: colors.ink },
+    gorunurNot: { fontFamily: font.regular, fontSize: 11, color: colors.muted, marginTop: 2 },
   });
