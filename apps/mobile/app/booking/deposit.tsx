@@ -70,6 +70,14 @@ export default function DepositScreen() {
   const [dekont, setDekont] = useState<string | null>(null);
   const [puanKullan, setPuanKullan] = useState(false);
   const [busy, setBusy] = useState(false);
+  /**
+   * Kaspi'ye gidildi mi? Dönüşte ekran "ne yaptın?" diye sormalı.
+   *
+   * Uygulama dışına çıkan kullanıcı geri geldiğinde ekranı bıraktığı gibi
+   * bulursa ne yapacağını bilemez: ödedi mi, ödemedi mi, şimdi ne olacak?
+   * Sayaç işlemeye devam ediyor ve randevusu düşebilir.
+   */
+  const [kaspiyeGidildi, setKaspiyeGidildi] = useState(false);
 
   const kaspiUrl = useStore((st) => st.config.kaspiPaymentUrl ?? null);
   const referans = odemeReferansi(booking?.id ?? '');
@@ -116,6 +124,7 @@ export default function DepositScreen() {
     const hedef = kaspiBaglantisi(kaspiUrl, odenecek, referans);
     try {
       await Linking.openURL(hedef);
+      setKaspiyeGidildi(true);
     } catch {
       Alert.alert(t('deposit.kaspi_fail_t'), t('deposit.kaspi_fail_b'));
     }
@@ -223,7 +232,24 @@ export default function DepositScreen() {
             Kaspi açılır, alıcı hazır gelir, müşteri hesap numarası yazmaz.
             Basmadan ÖNCE ne gideceğini gösteriyoruz — uygulamadan çıkmadan
             önce ne olacağını bilmek, ödemeye güvenmenin ön şartı. */}
-        {kaspiUrl ? (
+        {/* KASPİ'DEN DÖNÜŞ. Sayacın DURDUĞUNU söylemiyoruz: sunucu 10 dakikayı
+            durdurmuyor, randevu yine düşebilir. Kullanıcıya doğru olanı
+            söylüyoruz — dekontu yükle, randevu o an kesinleşsin. */}
+        {kaspiyeGidildi ? (
+          <View style={[styles.kart, shadow.card, styles.kaspiKart]}>
+            <View style={styles.satir}>
+              <Ionicons name="checkmark-circle" size={18} color={colors.accent} />
+              <Text variant="bodyStrong" tone="ink" style={styles.flex}>
+                {t('deposit.kaspi_back_t')}
+              </Text>
+            </View>
+            <Text variant="caption" tone="muted" style={styles.not}>
+              {fillParams(t('deposit.kaspi_back_b'), { ref: referans })}
+            </Text>
+          </View>
+        ) : null}
+
+        {kaspiUrl && !kaspiyeGidildi ? (
           <View style={[styles.kart, shadow.card, styles.kaspiKart]}>
             <View style={styles.satir}>
               <Ionicons name="open-outline" size={16} color={colors.accent} />
@@ -258,7 +284,7 @@ export default function DepositScreen() {
           </View>
         ) : null}
 
-        {kaspiUrl ? (
+        {kaspiUrl && !kaspiyeGidildi ? (
           <Button
             label={fillParams(t('deposit.pay_kaspi'), {
               amount: odenecek.toLocaleString('tr-TR'),

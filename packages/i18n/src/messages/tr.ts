@@ -231,6 +231,9 @@ export const tr = {
   'deposit.of_total': 'Toplam {total} ₸ hizmet bedelinin %10’u',
   'deposit.use_points': '{points} puan kullan',
   'deposit.points_rule': 'Biriken puanının en fazla %25’i kullanılabilir (1 puan = 1 ₸).',
+  'deposit.kaspi_back_t': 'Kaspi’ye yönlendirildin',
+  'deposit.kaspi_back_b':
+    'Ödediysen dekontu yükle — randevun o an kesinleşir. Açıklamada {ref} yazıyor olmalı. Süre işlemeye devam ediyor.',
   'deposit.kaspi_preview': 'Kaspi’de hazır gelecek',
   'deposit.pay_kaspi': 'Kaspi ile öde · {amount} ₸',
   'deposit.reference': 'Açıklama',

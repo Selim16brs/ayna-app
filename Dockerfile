@@ -26,7 +26,15 @@ RUN pnpm --filter @ayna/api exec prisma generate \
 ENV NODE_ENV=production
 WORKDIR /app/apps/api
 
-# Başlangıçta: şemayı buluttaki DB'ye uygula (idempotent) → API'yi başlat.
+# Başlangıçta: ÖNCE elle yazılmış veri taşımaları → sonra şema → API.
+#
+# SIRA ZORUNLU. `db push` migration dosyalarını HİÇ okumaz; enum'u kendi
+# başına değiştirmeye kalkar ve eski değerli satırlarda ya çuvallar (API
+# açılmaz) ya da --accept-data-loss ile durum kolonunu düşürür (her randevunun
+# durumu gider). `pre-push/` altındaki dosyalar eşlemeyi önce yapıyor, sonra
+# `db push` şemayı zaten uyumlu buluyor. Hepsi iki kez çalışmaya dayanıklı:
+# her açılışta koşuyorlar.
+#
 # --accept-data-loss: unique-constraint gibi uyarılar non-interactive ortamda deploy'u
 # bloklamasın (test ortamı; migration'lı üretim akışı EPIC ilerleyince gelecek).
-CMD ["sh", "-c", "pnpm exec prisma db push --skip-generate --accept-data-loss && node dist/main.js"]
+CMD ["sh", "-c", "for f in prisma/pre-push/*.sql; do [ -e \"$f\" ] || continue; echo \"pre-push: $f\"; pnpm exec prisma db execute --file \"$f\" --schema prisma/schema.prisma || exit 1; done && pnpm exec prisma db push --skip-generate --accept-data-loss && node dist/main.js"]

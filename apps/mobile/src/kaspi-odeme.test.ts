@@ -22,7 +22,13 @@ test('bağlantı KODA GÖMÜLÜ değil — admin ayarından geliyor', () => {
 
 test('bağlantı tanımlı DEĞİLSE düğme hiç gösterilmiyor', () => {
   // Çalışmayan bir ödeme düğmesi, çalışmayan bir vaattir.
-  assert.match(src, /\{kaspiUrl \? \(\s*<Button/, 'düğme koşulsuz çiziliyor olabilir');
+  // Kaspi'ye gidildikten SONRA da gizleniyor: dönen kullanıcıya ikinci kez
+  // "öde" demek, ikinci kez ödemeye davet etmektir.
+  assert.match(
+    src,
+    /\{kaspiUrl && !kaspiyeGidildi \? \(\s*<Button/,
+    'düğme koşulsuz çiziliyor olabilir',
+  );
 });
 
 test('uydurulmuş parametre EKLENMİYOR — yalnız yer tutucu doldurulur', () => {

@@ -225,6 +225,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'deposit.of_total': '10% от общей стоимости услуги {total} ₸',
   'deposit.use_points': 'Использовать {points} баллов',
   'deposit.points_rule': 'Можно использовать не более 25% накопленных баллов (1 балл = 1 ₸).',
+  'deposit.kaspi_back_t': 'Вы перешли в Kaspi',
+  'deposit.kaspi_back_b':
+    'Если оплатили — загрузите чек, запись подтвердится сразу. В комментарии должно быть {ref}. Отсчёт продолжается.',
   'deposit.kaspi_preview': 'В Kaspi будет заполнено',
   'deposit.pay_kaspi': 'Оплатить через Kaspi · {amount} ₸',
   'deposit.reference': 'Комментарий',

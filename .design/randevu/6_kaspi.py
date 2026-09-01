@@ -142,25 +142,26 @@ yaz('KaspiDonus.dc.html', f"""
       SES INVEST TOO · <span class="num">1.150 ₸</span> · <span class="num">AYNA-4F7K2</span></div>
   </div>
 
-{bekleme_karti('Ödemen doğrulanıyor',
-               'Kaspi’den onay geldiği an randevun kesinleşir. Bu ekranda beklemene gerek yok — '
-               'bildirim göndereceğiz.', 'var(--accent)')}
+{bekleme_karti('Dekontun bekleniyor',
+               'Kaspi’de ödemeyi tamamladıysan dekontu yükle; randevun yüklediğin an kesinleşir. '
+               'Doğrulamayı biz sonradan yapıyoruz.', 'var(--accent)')}
 
-  <div class="card" style="background:var(--sunken);box-shadow:none;gap:8px">
+  <div class="card urgent" style="gap:8px">
     <div class="row" style="gap:10px">
-      <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#905E1D"
+      <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A93E4D"
         stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.4"/>
         <path d="M12 7.6V12l3 1.8"/></svg>
-      <div class="t-caps grow" style="color:var(--gold)">Sayaç durdu</div>
+      <div class="t-caps grow" style="color:var(--danger)">Süre işlemeye devam ediyor</div>
+      <div class="t-h2 num" style="color:var(--danger)">07:41</div>
     </div>
-    <div class="t-cap" style="color:var(--inkSoft)">Ödemeye başladığın an 10 dakikalık süre
-      donduruldu. Doğrulama beklerken randevun düşmez.</div>
+    <div class="t-cap" style="color:var(--inkSoft)">Ödediysen dekontu hemen yükle — randevun o an
+      kesinleşir. Sayaç dolarsa randevu düşer.</div>
   </div>
 
   <div style="flex:1;min-height:8px"></div>
-  <button class="btn2">Dekontu elle yükle</button>
+  <button class="cta">Dekontu yükle</button>
   <div class="t-cap soft" style="text-align:center;padding:2px 12px 0">
-    Kaspi’de ödeme yapmadıysan geri dönüp tekrar deneyebilirsin.</div>
+    Ödeme yapmadıysan Kaspi’ye geri dönebilirsin.</div>
 </div>
 </div>
 """)
