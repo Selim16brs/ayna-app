@@ -150,13 +150,16 @@ test('marka İŞARETİ kullanılıyor, metin değil', () => {
   assert.match(d, /koyuTema \? LOGO_BEYAZ : LOGO_SIYAH/, 'logo temaya göre seçilmiyor');
 });
 
-test('"Dileğini Anlat" FOTOĞRAFLI TEKLİF akışına gidiyor', () => {
-  // `/demand/new` kategori seçtiren farklı bir akış; kurucunun kastettiği
-  // "foto ve fiyat ile teklif alma" ekranı `/quote/new`.
+test('"Dileğini Anlat" İKİ YOLLU teklif ekranına gidiyor', () => {
+  // Kurucunun "foto ve fiyat ile teklif alma" dediği şey İKİ ayrı akış:
+  // `/quote/new` (fotoğrafla) ve `/demand/new` (fiyat/talep ile). Seçimi
+  // kullanıcı yapar; hub `/quote`. Doğrudan `/quote/new`'e yönlendirmek
+  // fiyat yolunu erişilemez kılıyordu — bu test onu geri getirmesin diye.
   const i = d.indexOf("'home.qa.wish'");
   assert.ok(i > 0, 'dilek kartı yok');
-  const blok = d.slice(i - 200, i + 300);
-  assert.match(blok, /yol: '\/quote\/new'/, 'yanlış akışa yönlendiriyor');
+  const blok = d.slice(i - 400, i + 300);
+  assert.match(blok, /yol: '\/quote'/, 'iki yollu ekrana yönlendirmiyor');
+  assert.doesNotMatch(blok, /yol: '\/quote\/new'/, 'tek akışa kısa devre yapıyor');
 });
 
 test('hizmet ikonları FIGMA görselleri', () => {

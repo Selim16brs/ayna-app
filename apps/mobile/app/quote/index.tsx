@@ -4,44 +4,41 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLocale } from '../../src/locale';
-import { radius, space, type ColorTokens, font } from '../../src/theme';
+import { font, radius, space, type ColorTokens } from '../../src/theme';
+import { darkColors, lightColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 /**
- * Teklif Al — ayrı alan. Önce SOR: kullanıcı foto ile mi yoksa fiyat/talep ile mi
- * teklif almak istiyor? Premium seçim kartları.
+ * TEKLİF AL — iki yollu giriş.
+ *
+ * Keşfet'teki "Dileğini Anlat" BURAYA gelir, `/quote/new`'e değil: iki ayrı
+ * akış var ve seçim kullanıcınındır.
+ *
+ *   · `/quote/new`   — fotoğrafla teklif (istediğini göster)
+ *   · `/demand/new`  — fiyat/talep ile teklif (bütçeni söyle)
+ *
+ * Doğrudan fotoğraf akışına yönlendirmek fiyat yolunu ERİŞİLEMEZ yapıyordu;
+ * ekranın tek işi bu seçimi görünür kılmak.
+ *
+ * Tasarım: Figma paleti. Kartlar eskiden sabit pastel gradyanlardı
+ * (#EFE7FA/#FBE3EE ve lime #EEF7C8/#D6EE94) — o renkler bu tasarım dilinde
+ * yok ve temaya da bağlı değillerdi. Şimdi: birinci yol dolu erik gradyanı,
+ * ikincisi yüzey + erik kenarlık. İkisi de iki temada ölçülüyor
+ * (`teklif-yollari.test.ts`).
  */
+
+/** Dolu kartın gradyanı — uzman özet kartıyla aynı (ölçülmüş kontrast). */
+export const YOL_DEGRADE = [lightColors.accent, '#2D0A2E'] as const;
+/** Erik gradyanın üstündeki yazı — iki temada da sabit açık. */
+export const YOL_YAZI = darkColors.ink;
+
 export default function QuoteHubScreen() {
   const { t } = useLocale();
   const router = useRouter();
-  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-
-  const cards = [
-    {
-      icon: 'camera' as IoniconName,
-      badge: t('quote.hub.badge.photo'),
-      title: t('quote.hub.photo.title'),
-      desc: t('quote.hub.photo.desc'),
-      cta: t('quote.hub.start'),
-      grad: ['#EFE7FA', '#FBE3EE'] as const,
-      accent: colors.lavender,
-      onPress: () => router.push('/quote/new'),
-    },
-    {
-      icon: 'wallet' as IoniconName,
-      badge: t('quote.hub.badge.demand'),
-      title: t('quote.hub.demand.title'),
-      desc: t('quote.hub.demand.desc'),
-      cta: t('quote.hub.start'),
-      grad: ['#EEF7C8', '#D6EE94'] as const,
-      accent: colors.accentFg,
-      onPress: () => router.push('/demand/new'),
-    },
-  ];
 
   return (
     <Screen edges={[]}>
@@ -51,78 +48,109 @@ export default function QuoteHubScreen() {
           {t('quote.hub.subtitle')}
         </Text>
 
-        {cards.map((c, i) => (
-          <ChoiceCard key={c.title} index={i} {...c} />
-        ))}
+        <YolKarti
+          index={0}
+          dolu
+          icon="camera"
+          badge={t('quote.hub.badge.photo')}
+          title={t('quote.hub.photo.title')}
+          desc={t('quote.hub.photo.desc')}
+          cta={t('quote.hub.start')}
+          onPress={() => router.push('/quote/new')}
+        />
+        <YolKarti
+          index={1}
+          icon="wallet"
+          badge={t('quote.hub.badge.demand')}
+          title={t('quote.hub.demand.title')}
+          desc={t('quote.hub.demand.desc')}
+          cta={t('quote.hub.start')}
+          onPress={() => router.push('/demand/new')}
+        />
       </ScrollView>
     </Screen>
   );
 }
 
-function ChoiceCard({
+function YolKarti({
   index,
+  dolu = false,
   icon,
   badge,
   title,
   desc,
   cta,
-  grad,
-  accent,
   onPress,
 }: {
   index: number;
+  dolu?: boolean;
   icon: IoniconName;
   badge: string;
   title: string;
   desc: string;
   cta: string;
-  grad: readonly [string, string];
-  accent: string;
   onPress: () => void;
 }) {
   const styles = useThemedStyles(makeStyles);
   const { colors, shadow } = useTheme();
+
+  // Dolu kartın üstündeki her şey sabit açık; boş kart temanın token'larını
+  // kullanır. İkisini karıştırmak koyu temada okunmaz yazı demek.
+  const yazi = dolu ? YOL_YAZI : colors.ink;
+  const soluk = dolu ? 'rgba(255,240,245,0.78)' : colors.muted;
+
   return (
     <Animated.View entering={FadeInDown.duration(380).delay(index * 110)}>
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.card, shadow.card, pressed && styles.pressed]}
+        accessibilityRole="button"
+        accessibilityLabel={`${title} — ${desc}`}
+        style={({ pressed }) => [
+          styles.kart,
+          dolu ? styles.kartDolu : styles.kartBos,
+          shadow.card,
+          pressed && styles.basili,
+        ]}
       >
-        <LinearGradient
-          colors={grad}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        {/* Derinlik için köşede soluk dev ikon */}
-        <Ionicons name={icon} size={140} color="rgba(255,255,255,0.5)" style={styles.ghost} />
+        {dolu ? (
+          <LinearGradient
+            colors={YOL_DEGRADE}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
 
-        <View style={styles.cardTop}>
-          <View style={styles.iconTile}>
-            <Ionicons name={icon} size={26} color={accent} />
+        <View style={styles.ust}>
+          <View style={[styles.ikonKutu, dolu ? styles.ikonKutuDolu : styles.ikonKutuBos]}>
+            <Ionicons name={icon} size={24} color={dolu ? YOL_YAZI : colors.accent} />
           </View>
-          <View style={styles.badge}>
-            <Text variant="caption" style={[styles.badgeText, { color: accent }]}>
+          <View style={[styles.rozet, dolu ? styles.rozetDolu : styles.rozetBos]}>
+            <Text variant="caption" style={[styles.rozetYazi, { color: yazi }]}>
               {badge}
             </Text>
           </View>
         </View>
 
-        {/* Kart gradyanı SABİT pastel (temaya göre değişmiyor); yazı da
-            sabit koyu olmalı. `ink` koyu modda açığa dönüp başlığı
-            görünmez yapıyordu. */}
-        <Text variant="h2" tone="onPastel" style={styles.cardTitle}>
+        <Text variant="h2" style={[styles.baslik, { color: yazi }]}>
           {title}
         </Text>
-        <Text variant="caption" tone="onPastelSoft" style={styles.cardDesc}>
+        <Text variant="caption" style={[styles.aciklama, { color: soluk }]}>
           {desc}
         </Text>
 
-        <View style={[styles.startPill, { backgroundColor: accent }]}>
-          <Ionicons name="sparkles" size={13} color={colors.onAccent} />
-          <Text variant="caption" style={styles.startText}>
+        <View style={[styles.dugme, dolu ? styles.dugmeDolu : styles.dugmeBos]}>
+          <Text
+            variant="caption"
+            style={[styles.dugmeYazi, { color: dolu ? lightColors.accent : colors.onAccent }]}
+          >
             {cta}
           </Text>
+          <Ionicons
+            name="arrow-forward"
+            size={13}
+            color={dolu ? lightColors.accent : colors.onAccent}
+          />
         </View>
       </Pressable>
     </Animated.View>
@@ -137,48 +165,58 @@ const makeStyles = (colors: ColorTokens) =>
       paddingBottom: TAB_BAR_CLEARANCE,
     },
     subtitle: { marginBottom: space(3) },
-    card: {
-      borderRadius: radius.xl,
+
+    kart: {
+      borderRadius: 24,
       padding: space(2.75),
       marginBottom: space(2),
       overflow: 'hidden',
       minHeight: 168,
     },
-    pressed: { opacity: 0.97, transform: [{ scale: 0.985 }] },
-    ghost: { position: 'absolute', right: -18, bottom: -26 },
-    cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    iconTile: {
-      width: 56,
-      height: 56,
+    kartDolu: { backgroundColor: lightColors.accent },
+    kartBos: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.accentSoft },
+    basili: { opacity: 0.97, transform: [{ scale: 0.985 }] },
+
+    ust: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    ikonKutu: {
+      width: 52,
+      height: 52,
       borderRadius: radius.md,
-      backgroundColor: colors.onColor,
       alignItems: 'center',
       justifyContent: 'center',
     },
-    badge: {
-      backgroundColor: 'rgba(255,255,255,0.75)',
+    ikonKutuDolu: { backgroundColor: 'rgba(255,240,245,0.16)' },
+    ikonKutuBos: { backgroundColor: colors.accentSoft },
+
+    rozet: {
       paddingHorizontal: space(1.5),
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
     },
-    badgeText: { fontFamily: font.semibold },
-    cardTitle: {
+    rozetDolu: { backgroundColor: 'rgba(255,240,245,0.16)' },
+    rozetBos: { backgroundColor: colors.accentSoft },
+    rozetYazi: { fontFamily: font.semibold },
+
+    baslik: {
       fontSize: 21,
       fontFamily: font.semibold,
       letterSpacing: -0.3,
       marginTop: space(2.25),
     },
-    cardDesc: { marginTop: space(1), lineHeight: 19, maxWidth: '82%' },
-    startPill: {
+    aciklama: { marginTop: space(1), lineHeight: 19, maxWidth: '86%' },
+
+    dugme: {
       flexDirection: 'row',
       alignItems: 'center',
       alignSelf: 'flex-start',
-      gap: 5,
+      gap: 6,
       marginTop: space(2),
       paddingHorizontal: space(1.75),
+      // Dokunma hedefi değil (kartın kendisi basılıyor) ama görsel denge için.
       paddingVertical: space(1),
       borderRadius: radius.pill,
     },
-    // accent zemini koyu temada AÇIK; beyaz yazı okunmaz.
-    startText: { color: colors.onAccent, fontFamily: font.semibold },
+    dugmeDolu: { backgroundColor: darkColors.ink },
+    dugmeBos: { backgroundColor: colors.accent },
+    dugmeYazi: { fontFamily: font.semibold },
   });
