@@ -70,3 +70,15 @@ test('referans kodu ödemeyi randevuyla eşleştiriyor', () => {
   );
   assert.ok(!/function odemeReferansi/.test(src), 'ekranda ikinci bir türetme var');
 });
+
+test('paylaşım kartı alan adını TEK YERDEN alıyor', () => {
+  // Kart hem QR'ı hem alt yazıyı aynı sabitten üretmeli. İki ayrı yerde
+  // yazılsaydı biri değişip diğeri kalır, QR ile yazı ayrışırdı — uzman
+  // yanlış adrese götüren bir kart paylaşırdı.
+  const p = readFileSync(join(import.meta.dirname, '..', 'app', 'seller', 'share.tsx'), 'utf8');
+  assert.match(p, /const DOMAIN = 'ayna\.salon';/, 'alan adı sabiti yok');
+  assert.match(p, /const PROFILE_URL = `https:\/\/\$\{DOMAIN\}`/, 'QR adresi sabitten türemiyor');
+  // Kartın üstünde yazan adres de aynı sabitten.
+  assert.match(p, /\{DOMAIN\}\s*\n\s*<\/SvgText>/, 'kart yazısı elle yazılmış');
+  assert.ok(!/ayna\.kz/.test(p), 'eski alan adı duruyor');
+});
