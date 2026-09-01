@@ -772,20 +772,23 @@ export class BookingsService {
       // Faz 1 — AYNI UZMANIN eşzamanlı onayları DB seviyesinde serileşir (advisory lock):
       // 20 paralel onaydan yalnız biri kazanır; kilit transaction bitince kendiliğinden düşer.
       if (b.proId) await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${b.proId}))`;
-      // Faz 5 (§18) — KİMLİĞİ DOĞRULANMAMIŞ uzman KAPORA ALAMAZ: onay kaporasız
-      // doğrudan kesinleşir (ödeme sonrası yerinde). policy.require_kyc_for_deposit=0 kapatır.
-      let depositAllowed = true;
-      const kycPolicy = await tx.setting.findUnique({
-        where: { key: 'policy.require_kyc_for_deposit' },
-      });
-      if ((kycPolicy?.intValue ?? 1) === 1 && b.proId) {
-        const ownerId = await this.proOwnerUserId(b.proId);
-        const owner = ownerId
-          ? await tx.user.findUnique({ where: { id: ownerId }, select: { kycStatus: true } })
-          : null;
-        depositAllowed = owner?.kycStatus === 'approved';
-      }
-      const amount = depositAllowed ? await this.depositAmountFor(Number(b.price)) : 0;
+      /**
+       * §4.4 — DEPOZİTO HER ZAMAN ALINIR.
+       *
+       * Burada "kimliği doğrulanmamış uzman kapora alamaz" diye bir kapı
+       * vardı (`policy.require_kyc_for_deposit`). Brief bu istisnayı kaldırdı
+       * ve DURUM tarafında kaldırılmıştı da — ama TUTAR tarafında kalıntısı
+       * duruyordu: KYC onaylı değilse randevu `depozito_bekliyor` durumuna
+       * geçiyor, tutarı 0 ve süresi null yazılıyordu. Sonuç, müşterinin
+       * "Ödenecek tutar 0 ₸" yazan, hiç ilerlemeyen bir depozito ekranıydı.
+       * (Kurucu 01.09.2026'da tam bunu bildirdi.)
+       *
+       * Kapı zaten yanlış yerdeydi: depozito UZMANA değil AYNA'ya gidiyor
+       * (§10 — depozito AYNA'nın komisyonu). Uzmanın kimlik durumu, AYNA'nın
+       * kendi komisyonunu tahsil etmesini engellememeli. Kimliği
+       * doğrulanmamış uzman gerekiyorsa RANDEVU ALAMAMALI — bu ayrı bir kapı.
+       */
+      const amount = await this.depositAmountFor(Number(b.price));
       // Kesin zaman varsa aynı uzmanda çakışan aktif randevu var mı?
       if (b.startAt && b.durationMin && b.proId) {
         const candidate = {
@@ -823,7 +826,7 @@ export class BookingsService {
           status: 'depozito_bekliyor',
           proposedDateLabel: null,
           depositAmount: amount,
-          depositDeadline: depositAllowed ? deadline : null,
+          depositDeadline: deadline,
           respondedAt: new Date(), // §9.2 — ortalama yanıt süresi metriği
         },
       });
