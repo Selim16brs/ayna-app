@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap">
+  <style>
+    /* AYNA tasarım dili — Figma ayna-home / ayna-expert'ten ölçülen değerler.
+       Uygulamadaki theme.ts ile birebir aynı. */
+    :root{
+      --bg:#FAF7F5; --surface:#FFFFFF; --ink:#1E0E1B; --inkSoft:#4A3A47; --muted:#68536A;
+      --accent:#4A1942; --accentDeep:#2D0A2E; --accentSoft:#E8D9EB; --onAccent:#FFF0F5;
+      --line:#EFEBE9; --lineStrong:#E5E0DE;
+      --gold:#9A5A05; --goldFill:#D97706; --goldSoft:#FDF3E7;
+      --success:#2F7A4A; --successSoft:#E3F2E8; --danger:#A93E4D; --dangerSoft:#F9E9EB;
+      --accent07:rgba(74,25,66,0.07); --accent15:rgba(74,25,66,0.15);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:Onest,system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+    a{color:var(--accent)} a:hover{color:#642855}
+    /* Tipografi — Figma ölçeği */
+    .h1{font-weight:600;font-size:20px;line-height:26px;letter-spacing:-.3px}
+    .h2{font-weight:600;font-size:18px;line-height:24px;letter-spacing:-.2px}
+    .cardTitle{font-weight:600;font-size:16px;line-height:21px}
+    .rowTitle{font-weight:600;font-size:15px;line-height:20px}
+    .body{font-weight:400;font-size:13px;line-height:18px}
+    .bodyStrong{font-weight:600;font-size:13px;line-height:18px}
+    .micro{font-weight:400;font-size:11px;line-height:15px}
+    .microStrong{font-weight:600;font-size:11px;line-height:15px}
+    .label{font-weight:600;font-size:11px;line-height:14px;letter-spacing:.6px;text-transform:uppercase}
+    .big{font-weight:600;font-size:22px;line-height:28px}
+    .muted{color:var(--muted)} .soft{color:var(--inkSoft)}
+    /* Kart — Figma: radius 24 (büyük) / 20 (orta) / 16 (iç) */
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:20px;
+          box-shadow:0 12px 32px -8px rgba(0,0,0,.08)}
+    .card20{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;
+            box-shadow:0 8px 10px rgba(0,0,0,.05)}
+    .col{display:flex;flex-direction:column}
+    .row{display:flex;flex-direction:row;align-items:center}
+    .grow{flex:1}
+    .screen{width:390px;background:var(--bg);display:flex;flex-direction:column;padding-bottom:32px}
+    /* Başlık şeridi */
+    .head{display:flex;align-items:center;gap:12px;padding:14px 24px 4px}
+    .back{width:40px;height:40px;border-radius:100px;background:var(--surface);border:1px solid var(--line);
+          display:flex;align-items:center;justify-content:center}
+    /* Düğme — pill, 13px semibold */
+    .btn{height:52px;border-radius:100px;display:flex;align-items:center;justify-content:center;
+         background:var(--accent);color:var(--onAccent);font-weight:600;font-size:15px}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--lineStrong)}
+    .btn.dim{background:var(--accentSoft);color:var(--accent)}
+    /* Rozet — Figma badge-expert */
+    .chip{display:inline-flex;align-items:center;padding:2px 6px;border-radius:6px;
+          background:var(--accent07);border:1px solid var(--accent);color:var(--accent);
+          font-weight:600;font-size:9px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:100px;
+          font-weight:500;font-size:12px}
+    /* Ölçüt kutusu — Figma metric-box */
+    .metric{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px;
+            border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+    .metric.gold{background:var(--goldSoft);border-color:var(--gold)}
+    /* İlerleme — Figma progress-bar-track */
+    .track{height:4px;border-radius:100px;background:var(--accent07);overflow:hidden}
+    .fill{height:4px;border-radius:100px;background:var(--accent)}
+    /* Segment — Figma tab-bar */
+    .seg{display:flex;gap:4px;padding:4px;border-radius:100px;background:var(--accent07)}
+    .seg > div{flex:1;text-align:center;padding:10px 16px;border-radius:100px;font-weight:500;font-size:13px;color:var(--muted)}
+    .seg > div.on{background:var(--surface);color:var(--accent);font-weight:600}
+    .sec{padding:0 24px;margin-top:20px;display:flex;flex-direction:column;gap:12px}
+  </style>
+</helmet>
+
+<div class="screen">
+  <div class="head"><div class="back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E0E1B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div><div class="h1">Randevuyu ertele</div></div>
+
+  <div class="sec">
+    <div class="card20" style="display:flex;flex-direction:column;gap:10px">
+      <div class="label muted">Mevcut randevu</div>
+      <div class="row" style="gap:12px">
+        <div style="width:44px;height:44px;border-radius:100px;background:var(--accentSoft)"></div>
+        <div class="grow">
+          <div class="rowTitle">Gold Hair Lab</div>
+          <div class="micro muted">Cum 05.09.2026 · 15:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="h2">Yeni tarih ve saat</div>
+    <div class="card20" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;border-radius:16px;background:var(--surface);border:1px solid var(--line)"><span class="micro" style="color:var(--muted)">Cmt</span><span class="cardTitle" style="color:var(--ink)">06</span></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;border-radius:16px;background:var(--surface);border:1px solid var(--line)"><span class="micro" style="color:var(--muted)">Paz</span><span class="cardTitle" style="color:var(--ink)">07</span></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;border-radius:16px;background:var(--accent);border:1px solid var(--accent)"><span class="micro" style="color:rgba(255,240,245,.7)">Pzt</span><span class="cardTitle" style="color:var(--onAccent)">08</span></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;border-radius:16px;background:var(--surface);border:1px solid var(--line)"><span class="micro" style="color:var(--muted)">Sal</span><span class="cardTitle" style="color:var(--ink)">09</span></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;border-radius:16px;background:var(--surface);border:1px solid var(--line)"><span class="micro" style="color:var(--muted)">Çar</span><span class="cardTitle" style="color:var(--ink)">10</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+        <div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">09:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">09:30</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">10:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--line);color:var(--muted);font-weight:500;font-size:13px;text-decoration:line-through">10:30</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--line);color:var(--muted);font-weight:500;font-size:13px;text-decoration:line-through">11:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">11:30</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">12:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">12:30</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div style="border-radius:20px;padding:16px;background:var(--goldSoft);border:1px solid var(--gold);display:flex;gap:10px;align-items:flex-start">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9A5A05" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>
+      <div class="grow">
+        <div class="bodyStrong" style="color:var(--gold)">Randevu başına 1 erteleme</div>
+        <div class="micro muted" style="margin-top:2px">Uzman kabul ederse yeni saatin geçerli olur; reddederse mevcut saat kalır.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec"><div class="btn">Erteleme talebi gönder</div></div>
+</div>
+</x-dc>
+</body>
+</html>

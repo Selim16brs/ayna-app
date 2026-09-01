@@ -186,6 +186,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reschedule.title': 'Перенести запись',
   'reschedule.current': 'Текущая запись',
   'reschedule.new_time': 'Новые дата и время',
+  'reschedule.rule_title': 'Один перенос на запись',
   'reschedule.rule':
     'Перенос доступен 1 раз на запись. Если мастер согласится, депозит перейдёт на новую дату — платить заново не нужно.',
   'reschedule.submit': 'Отправить запрос на перенос',

@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { DEFAULT_SPEND_RULES, odemeReferansi, paymentSplit } from '@ayna/domain';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { fillParams, useLocale } from '../../src/locale';
 import { randevuDepozitosu, useStore } from '../../src/store';
-import { radius, shadow, space, type ColorTokens } from '../../src/theme';
+import { font, type ColorTokens } from '../../src/theme';
+import { darkColors, lightColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Sayac, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
@@ -174,10 +176,15 @@ export default function DepositScreen() {
   return (
     <Screen edges={[]}>
       <StackHeader title={t('deposit.title')} />
-      <ScrollView contentContainerStyle={styles.icerik} showsVerticalScrollIndicator={false}>
-        {/* Geri sayım EN ÜSTTE: bu sınır randevuyu düşürüyor. */}
+      <ScrollView
+        contentContainerStyle={styles.icerik}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* GERİ SAYIM EN ÜSTTE — bu sınır randevuyu düşürüyor. */}
         {booking.depositDeadline ? (
-          <View style={[styles.kart, styles.acil, shadow.card]}>
+          <View style={styles.acilSerit}>
+            <Ionicons name="time-outline" size={18} color={colors.danger} />
             <Sayac
               bitis={booking.depositDeadline}
               metin={t('flow.deposit.countdown_b')}
@@ -186,183 +193,132 @@ export default function DepositScreen() {
           </View>
         ) : null}
 
-        <View style={[styles.kart, shadow.card]}>
-          <View style={styles.satir}>
-            <Text variant="caption" tone="muted">
-              {t('deposit.amount')}
-            </Text>
-            {/* `selectable`: Kaspi tutarı hazır getirmediği için müşteri onu
-                elle yazacak. Basılı tutup kopyalayabilmesi, yanlış tutar
-                göndermeyi engelliyor — eksik ödenmiş depozito admin
-                kuyruğunda elle çözülecek bir iş demek. */}
-            <Text variant="h2" tone="ink" selectable>
-              {odenecek.toLocaleString('tr-TR')} ₸
-            </Text>
-          </View>
-          <Text variant="caption" tone="muted">
-            {fillParams(t('deposit.of_total'), {
-              total: booking.price.toLocaleString('tr-TR'),
-            })}
+        {/* TUTAR — koyu mürdüm kart. Kararın merkezindeki sayı büyük. */}
+        <LinearGradient
+          colors={OZET_DEGRADE}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.tutarKart}
+        >
+          <Text style={styles.tutarEtiket}>{t('deposit.amount')}</Text>
+          <Text style={styles.tutarBuyuk} selectable>
+            {odenecek.toLocaleString('tr-TR')} ₸
           </Text>
-          {/* Tutar KOPYALANABİLİR: Kaspi onu hazır getirmiyor, müşteri elle
-              yazacak. Ekrandan okuyup akılda tutmak yerine kopyalamak, yanlış
-              tutar göndermeyi engelliyor — eksik ödenmiş depozito, admin
-              kuyruğunda elle çözülecek bir iş demek. */}
-          {/* KOPYALAMA DÜĞMESİ KOYULMADI — bilinçli. `expo-clipboard` kurulu
-              değil ve eklemek YENİ DERLEME gerektirir; OTA ile inmez, yani
-              kurucu bunu telefonunda göremez. Bunun yerine tutar `selectable`:
-              basılı tutup kopyalanabiliyor, üstelik ek bağımlılık yok.
-              Pano paketi bir sonraki native sürümde eklenirse düğmeye
-              çevrilebilir. */}
-        </View>
+          <Text style={styles.tutarNot}>
+            {fillParams(t('deposit.of_total'), { total: booking.price.toLocaleString('tr-TR') })}
+          </Text>
+        </LinearGradient>
 
-        {/* §5 — puan kullanımı. Hak yoksa seçenek HİÇ gösterilmiyor: kullanılamayan
-            bir seçeneği göstermek, eşiği açıklamak zorunda bırakır ve ekranı şişirir. */}
+        {/* §5 — puan kullanımı. Hak yoksa seçenek HİÇ gösterilmiyor. */}
         {puanHakki > 0 ? (
           <Pressable
-            style={[styles.kart, shadow.card, styles.puanSatir]}
+            style={styles.puanKart}
             onPress={() => setPuanKullan((v) => !v)}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: puanKullan }}
           >
-            <Ionicons
-              name={puanKullan ? 'checkbox' : 'square-outline'}
-              size={22}
-              color={puanKullan ? colors.accent : colors.muted}
-            />
-            <View style={styles.flex}>
-              <Text variant="bodyStrong" tone="ink">
+            <View style={[styles.kutucuk, puanKullan && styles.kutucukAcik]}>
+              {puanKullan ? <Ionicons name="checkmark" size={14} color={colors.onAccent} /> : null}
+            </View>
+            <View style={styles.buyu}>
+              <Text style={styles.puanBaslik}>
                 {fillParams(t('deposit.use_points'), {
                   points: puanHakki.toLocaleString('tr-TR'),
                 })}
               </Text>
-              <Text variant="caption" tone="muted">
-                {t('deposit.points_rule')}
-              </Text>
+              <Text style={styles.puanNot}>{t('deposit.points_rule')}</Text>
             </View>
+            {puanKullan ? (
+              <Text style={styles.puanDusum}>−{puanHakki.toLocaleString('tr-TR')} ₸</Text>
+            ) : null}
           </Pressable>
         ) : null}
 
-        {/* §4.4 — KASPİ İLE TEK DOKUNUŞ. Bağlantı tanımlıysa birincil yol budur:
-            Kaspi açılır, alıcı hazır gelir, müşteri hesap numarası yazmaz.
-            Basmadan ÖNCE ne gideceğini gösteriyoruz — uygulamadan çıkmadan
-            önce ne olacağını bilmek, ödemeye güvenmenin ön şartı. */}
-        {/* KASPİ'DEN DÖNÜŞ. Sayacın DURDUĞUNU söylemiyoruz: sunucu 10 dakikayı
-            durdurmuyor, randevu yine düşebilir. Kullanıcıya doğru olanı
-            söylüyoruz — dekontu yükle, randevu o an kesinleşsin. */}
-        {kaspiyeGidildi ? (
-          <View style={[styles.kart, shadow.card, styles.kaspiKart]}>
-            <View style={styles.satir}>
-              <Ionicons name="checkmark-circle" size={18} color={colors.accent} />
-              <Text variant="bodyStrong" tone="ink" style={styles.flex}>
-                {t('deposit.kaspi_back_t')}
-              </Text>
-            </View>
-            <Text variant="caption" tone="muted" style={styles.not}>
-              {fillParams(t('deposit.kaspi_back_b'), { ref: referans })}
-            </Text>
-          </View>
-        ) : null}
-
+        {/* ── KASPİ — üç adım, sonra düğme ── */}
         {kaspiUrl && !kaspiyeGidildi ? (
-          <View style={[styles.kart, shadow.card, styles.kaspiKart]}>
-            <Text variant="caption" tone="accentFg" style={styles.kaspiBaslik}>
-              {t('deposit.kaspi_preview')}
-            </Text>
-            {/* ÜÇ ADIM. Burada "Kaspi'de hazır gelecek: alıcı, TUTAR, açıklama"
-                yazıyordu — tutar için bu YANLIŞTI. Kaspi'nin işyeri QR'ı
-                tutarı taşımıyor (AIVio'daki aynı SES INVEST akışının kendi
-                metni de "kod tutarı içermiyor, elle girin" diyor). Müşteri
-                tutarın hazır geleceğini sanıp Kaspi'de boş bir alanla
-                karşılaşıyordu. */}
-            <View style={styles.adim}>
-              <Text variant="caption" tone="muted">
-                1
-              </Text>
-              <Text variant="caption" tone="ink" style={styles.flex}>
-                {t('deposit.kaspi_step1')}
-              </Text>
+          <>
+            <Text style={styles.bolumBaslik}>{t('deposit.kaspi_preview')}</Text>
+            <View style={styles.kart}>
+              {(
+                [
+                  ['1', t('deposit.kaspi_step1')],
+                  [
+                    '2',
+                    fillParams(t('deposit.kaspi_step2'), {
+                      amount: odenecek.toLocaleString('tr-TR'),
+                    }),
+                  ],
+                  ['3', t('deposit.kaspi_step3')],
+                ] as const
+              ).map(([n, metin]) => (
+                <View key={n} style={styles.adim}>
+                  <View style={styles.adimNo}>
+                    <Text style={styles.adimNoYazi}>{n}</Text>
+                  </View>
+                  <Text style={styles.adimYazi}>{metin}</Text>
+                </View>
+              ))}
             </View>
-            <View style={styles.adim}>
-              <Text variant="caption" tone="muted">
-                2
-              </Text>
-              <Text variant="captionStrong" tone="ink" style={styles.flex}>
-                {fillParams(t('deposit.kaspi_step2'), {
-                  amount: odenecek.toLocaleString('tr-TR'),
-                })}
-              </Text>
-            </View>
-            <View style={styles.adim}>
-              <Text variant="caption" tone="muted">
-                3
-              </Text>
-              <Text variant="caption" tone="ink" style={styles.flex}>
-                {t('deposit.kaspi_step3')}
-              </Text>
-            </View>
-          </View>
+          </>
         ) : null}
-
         {kaspiUrl && !kaspiyeGidildi ? (
           <Button label={t('deposit.pay_kaspi')} onPress={() => void kaspiAc()} />
         ) : null}
 
-        <View style={[styles.kart, shadow.card]}>
-          <Text variant="bodyStrong" tone="ink">
+        {/* KASPİ'DEN DÖNÜŞ — sayacın DURMADIĞINI söylüyoruz. */}
+        {kaspiyeGidildi ? (
+          <View style={styles.donusKart}>
+            <Ionicons name="checkmark-circle" size={18} color={colors.accent} />
+            <View style={styles.buyu}>
+              <Text style={styles.donusBaslik}>{t('deposit.kaspi_back_t')}</Text>
+              <Text style={styles.donusNot}>
+                {fillParams(t('deposit.kaspi_back_b'), { ref: referans })}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
+        {/* HESAP — Kaspi yoksa tek yol, varsa yedek. */}
+        <View style={styles.kart}>
+          <Text style={styles.etiket}>
             {kaspiUrl ? t('deposit.manual_title') : t('deposit.account')}
           </Text>
-          <Text variant="body" tone="ink" selectable>
+          <Text style={styles.hesapAd} selectable>
             {HESAP_ADI}
           </Text>
-          <Text variant="caption" tone="muted" style={styles.not}>
+          <Text style={styles.hesapNot}>
             {fillParams(t('deposit.transfer_note_ref'), { ref: referans })}
           </Text>
         </View>
 
-        <Pressable style={[styles.kart, shadow.card, styles.yukle]} onPress={secDekont}>
+        {/* ÖDEME KODU — dekontun hemen üstünde, ikisi de kopyalanabilir. */}
+        <View style={styles.kodKart}>
+          <Text style={[styles.etiket, styles.etiketAccent]}>{t('deposit.ref.title')}</Text>
+          <View style={styles.kodSatir}>
+            <Text style={styles.kodEtiket}>{t('deposit.ref.code')}</Text>
+            <Text style={styles.kodDeger} selectable>
+              {referans}
+            </Text>
+          </View>
+          <View style={styles.kodSatir}>
+            <Text style={styles.kodEtiket}>{t('deposit.ref.booking')}</Text>
+            <Text style={styles.kodDegerKucuk} selectable>
+              {booking.id}
+            </Text>
+          </View>
+          <Text style={styles.kodNot}>{t('deposit.ref.note')}</Text>
+        </View>
+
+        <Pressable style={styles.yukleKart} onPress={secDekont}>
           {dekont ? (
             <Image source={{ uri: dekont }} style={styles.onizleme} resizeMode="cover" />
           ) : (
             <>
-              <Ionicons name="cloud-upload-outline" size={28} color={colors.muted} />
-              <Text variant="body" tone="muted">
-                {t('deposit.upload')}
-              </Text>
+              <Ionicons name="cloud-upload-outline" size={26} color={colors.muted} />
+              <Text style={styles.yukleYazi}>{t('deposit.upload')}</Text>
             </>
           )}
         </Pressable>
-
-        {/* ÖDEME KODU + RANDEVU NO — gönder düğmesinin hemen üstünde.
-            Kod eskiden yalnız hesap kartındaki düz cümlenin içinde geçiyordu;
-            müşteri onu Kaspi'ye yazması gerektiğini kaçırıyordu. Kod olmadan
-            gelen transfer, admin kuyruğunda hangi randevuya ait olduğu
-            bilinmeyen bir para demek. Burada iki değer de KOPYALANABİLİR ve
-            dekontla aynı ekranda duruyor. */}
-        <View style={[styles.kart, shadow.card, styles.refKart]}>
-          <Text variant="caption" tone="accentFg" style={styles.kaspiBaslik}>
-            {t('deposit.ref.title')}
-          </Text>
-          <View style={styles.satir}>
-            <Text variant="caption" tone="muted">
-              {t('deposit.ref.code')}
-            </Text>
-            <Text variant="bodyStrong" tone="ink" selectable style={styles.kod}>
-              {referans}
-            </Text>
-          </View>
-          <View style={styles.satir}>
-            <Text variant="caption" tone="muted">
-              {t('deposit.ref.booking')}
-            </Text>
-            <Text variant="captionStrong" tone="ink" selectable style={styles.kod}>
-              {booking.id}
-            </Text>
-          </View>
-          <Text variant="caption" tone="muted" style={styles.not}>
-            {t('deposit.ref.note')}
-          </Text>
-        </View>
 
         <Button
           label={t('deposit.submit')}
@@ -370,42 +326,150 @@ export default function DepositScreen() {
           variant={dekont ? 'primary' : 'secondary'}
           onPress={() => void gonder()}
         />
-        <Text variant="caption" tone="muted" style={styles.not}>
-          {t('deposit.verify_note')}
-        </Text>
+        <Text style={styles.altNot}>{t('deposit.verify_note')}</Text>
       </ScrollView>
     </Screen>
   );
 }
 
+/** Koyu mürdüm kart — Figma `canli-ozet-card` degradesi, iki temada da sabit. */
+const OZET_DEGRADE = [lightColors.accent, '#2D0A2E'] as const;
+
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    icerik: { padding: space(2), gap: space(1.5), paddingBottom: TAB_BAR_CLEARANCE },
-    bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(3) },
+    icerik: { padding: 24, gap: 20, paddingBottom: TAB_BAR_CLEARANCE },
+    bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+    buyu: { flex: 1 },
+    acilSerit: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      borderRadius: 20,
+      padding: 14,
+      backgroundColor: colors.dangerSoft,
+      borderWidth: 1,
+      borderColor: colors.danger,
+    },
+    tutarKart: { borderRadius: 24, padding: 20, gap: 6 },
+    tutarEtiket: {
+      fontFamily: font.semibold,
+      fontSize: 11,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+      color: 'rgba(255,240,245,0.62)',
+    },
+    tutarBuyuk: { fontFamily: font.semibold, fontSize: 34, lineHeight: 40, color: darkColors.ink },
+    tutarNot: { fontFamily: font.regular, fontSize: 11, color: darkColors.accent },
+    puanKart: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    kutucuk: {
+      width: 22,
+      height: 22,
+      borderRadius: 7,
+      borderWidth: 1.5,
+      borderColor: colors.lineStrong,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    kutucukAcik: { backgroundColor: colors.accent, borderColor: colors.accent },
+    puanBaslik: { fontFamily: font.semibold, fontSize: 13, color: colors.ink },
+    puanNot: { fontFamily: font.regular, fontSize: 11, color: colors.muted, marginTop: 2 },
+    puanDusum: { fontFamily: font.semibold, fontSize: 15, color: colors.success },
+    bolumBaslik: { fontFamily: font.semibold, fontSize: 18, color: colors.ink, marginBottom: -8 },
     kart: {
       backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(2),
-      gap: space(0.75),
+      borderRadius: 20,
+      padding: 16,
+      gap: 12,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
-    acil: { borderWidth: 1, borderColor: colors.danger },
-    kaspiKart: { backgroundColor: colors.accentSoft },
-    // Dekontun hemen üstündeki kod kartı: gönderilecek şeyin bir parçası
-    // olduğu görünsün diye yükleme alanıyla aynı vurguda değil, kenarlıklı.
-    refKart: { borderWidth: 1, borderColor: colors.line },
-    // Kod okunacak ve kopyalanacak: harf aralığı açık, rakam genişliği sabit.
-    kod: { letterSpacing: 1, fontVariant: ['tabular-nums'] },
-    kaspiBaslik: { letterSpacing: 0.6, textTransform: 'uppercase' },
-    adim: {
+    adim: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+    adimNo: {
+      width: 20,
+      height: 20,
+      borderRadius: 100,
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    adimNoYazi: { fontFamily: font.semibold, fontSize: 11, color: colors.accent },
+    adimYazi: {
+      flex: 1,
+      fontFamily: font.regular,
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors.ink,
+    },
+    donusKart: {
       flexDirection: 'row',
       alignItems: 'flex-start',
-      gap: space(1.25),
-      paddingTop: space(0.5),
+      gap: 10,
+      backgroundColor: colors.accentSoft,
+      borderRadius: 20,
+      padding: 16,
     },
-    satir: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    puanSatir: { flexDirection: 'row', alignItems: 'center', gap: space(1.5) },
-    flex: { flex: 1 },
-    not: { lineHeight: 18 },
-    yukle: { alignItems: 'center', justifyContent: 'center', minHeight: 140, gap: space(1) },
-    onizleme: { width: '100%', height: 180, borderRadius: radius.md },
+    donusBaslik: { fontFamily: font.semibold, fontSize: 13, color: colors.accent },
+    donusNot: {
+      fontFamily: font.regular,
+      fontSize: 11,
+      lineHeight: 15,
+      color: colors.muted,
+      marginTop: 2,
+    },
+    etiket: {
+      fontFamily: font.semibold,
+      fontSize: 11,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+      color: colors.muted,
+    },
+    etiketAccent: { color: colors.accent },
+    hesapAd: { fontFamily: font.semibold, fontSize: 15, color: colors.ink },
+    hesapNot: { fontFamily: font.regular, fontSize: 11, lineHeight: 15, color: colors.muted },
+    kodKart: {
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: 16,
+      gap: 10,
+      borderWidth: 1,
+      borderColor: colors.accentSoft,
+    },
+    kodSatir: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 12,
+    },
+    kodEtiket: { fontFamily: font.regular, fontSize: 13, color: colors.muted },
+    kodDeger: { fontFamily: font.semibold, fontSize: 16, letterSpacing: 1.5, color: colors.ink },
+    kodDegerKucuk: { fontFamily: font.semibold, fontSize: 13, letterSpacing: 1, color: colors.ink },
+    kodNot: { fontFamily: font.regular, fontSize: 11, lineHeight: 15, color: colors.muted },
+    yukleKart: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 10,
+      minHeight: 132,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderStyle: 'dashed',
+      borderColor: colors.lineStrong,
+    },
+    yukleYazi: { fontFamily: font.regular, fontSize: 13, color: colors.muted },
+    onizleme: { width: '100%', height: 180, borderRadius: 20 },
+    altNot: {
+      fontFamily: font.regular,
+      fontSize: 11,
+      lineHeight: 15,
+      color: colors.muted,
+      textAlign: 'center',
+    },
   });

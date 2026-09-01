@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api, ApiError } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
 import { randevuDepozitosu, useStore } from '../../src/store';
-import { font, radius, shadow, space, type ColorTokens } from '../../src/theme';
+import { font, type ColorTokens } from '../../src/theme';
+import { darkColors, lightColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
@@ -85,19 +88,21 @@ export default function RefundScreen() {
         // dokunuş yalnız klavyeyi kapatıyor.
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.kart, shadow.card]}>
-          <Text variant="caption" tone="muted">
-            {t('refund.amount')}
-          </Text>
-          <Text variant="h2" tone="ink">
-            {tutar.toLocaleString('tr-TR')} ₸
-          </Text>
-        </View>
+        {/* İADE TUTARI — koyu mürdüm kart. Tasarım dilinde para,
+            kararın merkezindeyse koyu kartta ve büyük gösteriliyor. */}
+        <LinearGradient
+          colors={OZET_DEGRADE}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.tutarKart}
+        >
+          <Text style={styles.tutarEtiket}>{t('refund.amount')}</Text>
+          <Text style={styles.tutarBuyuk}>{tutar.toLocaleString('tr-TR')} ₸</Text>
+          <Text style={styles.tutarNot}>{fillParams(t('refund.eta'), { gun: '1' })}</Text>
+        </LinearGradient>
 
-        <View style={[styles.kart, shadow.card]}>
-          <Text variant="bodyStrong" tone="ink">
-            {t('refund.account_label')}
-          </Text>
+        <Text style={styles.bolumBaslik}>{t('refund.account_label')}</Text>
+        <View style={styles.kart}>
           <TextInput
             value={hesap}
             onChangeText={setHesap}
@@ -106,10 +111,12 @@ export default function RefundScreen() {
             style={styles.girdi}
             autoCapitalize="none"
           />
-          {/* PII uyarısı: bilgi yalnız iadeyi ödeyen admine gider. */}
-          <Text variant="caption" tone="muted" style={styles.not}>
-            {t('refund.privacy')}
-          </Text>
+          {/* PII uyarısı forma BİTİŞİK: kullanıcı hesap bilgisini girerken
+              nereye gittiğini o anda bilmeli, ekranın altında değil. */}
+          <View style={styles.gizlilik}>
+            <Ionicons name="lock-closed-outline" size={15} color={colors.muted} />
+            <Text style={styles.gizlilikYazi}>{t('refund.privacy')}</Text>
+          </View>
         </View>
 
         <Button
@@ -118,32 +125,54 @@ export default function RefundScreen() {
           variant={hesap.trim().length >= 3 ? 'primary' : 'secondary'}
           onPress={() => void gonder()}
         />
-        <Text variant="caption" tone="muted" style={styles.not}>
-          {fillParams(t('refund.eta'), { gun: '1' })}
-        </Text>
       </ScrollView>
     </Screen>
   );
 }
 
+/** Koyu mürdüm kart — Figma `canli-ozet-card` degradesi, iki temada da sabit. */
+const OZET_DEGRADE = [lightColors.accent, '#2D0A2E'] as const;
+
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    icerik: { padding: space(2), gap: space(1.5), paddingBottom: TAB_BAR_CLEARANCE },
-    bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(3) },
+    // Figma: kenar boşluğu 24, bölüm arası 20.
+    icerik: { padding: 24, gap: 20, paddingBottom: TAB_BAR_CLEARANCE },
+    bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+    tutarKart: { borderRadius: 24, padding: 20, gap: 6 },
+    tutarEtiket: {
+      fontFamily: font.semibold,
+      fontSize: 11,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+      color: 'rgba(255,240,245,0.62)',
+    },
+    tutarBuyuk: { fontFamily: font.semibold, fontSize: 34, lineHeight: 40, color: darkColors.ink },
+    tutarNot: { fontFamily: font.regular, fontSize: 11, color: darkColors.accent },
+    bolumBaslik: { fontFamily: font.semibold, fontSize: 18, color: colors.ink, marginBottom: -8 },
     kart: {
       backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(2),
-      gap: space(0.75),
+      borderRadius: 20,
+      padding: 16,
+      gap: 12,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
     girdi: {
       borderWidth: 1,
-      borderColor: colors.line,
-      borderRadius: radius.md,
-      paddingHorizontal: space(1.5),
-      minHeight: 44,
+      borderColor: colors.lineStrong,
+      borderRadius: 16,
+      paddingHorizontal: 14,
+      minHeight: 52,
       color: colors.ink,
       fontFamily: font.regular,
+      fontSize: 15,
     },
-    not: { lineHeight: 18 },
+    gizlilik: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+    gizlilikYazi: {
+      flex: 1,
+      fontFamily: font.regular,
+      fontSize: 11,
+      lineHeight: 15,
+      color: colors.muted,
+    },
   });

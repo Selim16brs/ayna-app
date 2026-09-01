@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap">
+  <style>
+    /* AYNA tasarım dili — Figma ayna-home / ayna-expert'ten ölçülen değerler.
+       Uygulamadaki theme.ts ile birebir aynı. */
+    :root{
+      --bg:#FAF7F5; --surface:#FFFFFF; --ink:#1E0E1B; --inkSoft:#4A3A47; --muted:#68536A;
+      --accent:#4A1942; --accentDeep:#2D0A2E; --accentSoft:#E8D9EB; --onAccent:#FFF0F5;
+      --line:#EFEBE9; --lineStrong:#E5E0DE;
+      --gold:#9A5A05; --goldFill:#D97706; --goldSoft:#FDF3E7;
+      --success:#2F7A4A; --successSoft:#E3F2E8; --danger:#A93E4D; --dangerSoft:#F9E9EB;
+      --accent07:rgba(74,25,66,0.07); --accent15:rgba(74,25,66,0.15);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:Onest,system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+    a{color:var(--accent)} a:hover{color:#642855}
+    /* Tipografi — Figma ölçeği */
+    .h1{font-weight:600;font-size:20px;line-height:26px;letter-spacing:-.3px}
+    .h2{font-weight:600;font-size:18px;line-height:24px;letter-spacing:-.2px}
+    .cardTitle{font-weight:600;font-size:16px;line-height:21px}
+    .rowTitle{font-weight:600;font-size:15px;line-height:20px}
+    .body{font-weight:400;font-size:13px;line-height:18px}
+    .bodyStrong{font-weight:600;font-size:13px;line-height:18px}
+    .micro{font-weight:400;font-size:11px;line-height:15px}
+    .microStrong{font-weight:600;font-size:11px;line-height:15px}
+    .label{font-weight:600;font-size:11px;line-height:14px;letter-spacing:.6px;text-transform:uppercase}
+    .big{font-weight:600;font-size:22px;line-height:28px}
+    .muted{color:var(--muted)} .soft{color:var(--inkSoft)}
+    /* Kart — Figma: radius 24 (büyük) / 20 (orta) / 16 (iç) */
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:20px;
+          box-shadow:0 12px 32px -8px rgba(0,0,0,.08)}
+    .card20{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;
+            box-shadow:0 8px 10px rgba(0,0,0,.05)}
+    .col{display:flex;flex-direction:column}
+    .row{display:flex;flex-direction:row;align-items:center}
+    .grow{flex:1}
+    .screen{width:390px;background:var(--bg);display:flex;flex-direction:column;padding-bottom:32px}
+    /* Başlık şeridi */
+    .head{display:flex;align-items:center;gap:12px;padding:14px 24px 4px}
+    .back{width:40px;height:40px;border-radius:100px;background:var(--surface);border:1px solid var(--line);
+          display:flex;align-items:center;justify-content:center}
+    /* Düğme — pill, 13px semibold */
+    .btn{height:52px;border-radius:100px;display:flex;align-items:center;justify-content:center;
+         background:var(--accent);color:var(--onAccent);font-weight:600;font-size:15px}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--lineStrong)}
+    .btn.dim{background:var(--accentSoft);color:var(--accent)}
+    /* Rozet — Figma badge-expert */
+    .chip{display:inline-flex;align-items:center;padding:2px 6px;border-radius:6px;
+          background:var(--accent07);border:1px solid var(--accent);color:var(--accent);
+          font-weight:600;font-size:9px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:100px;
+          font-weight:500;font-size:12px}
+    /* Ölçüt kutusu — Figma metric-box */
+    .metric{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px;
+            border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+    .metric.gold{background:var(--goldSoft);border-color:var(--gold)}
+    /* İlerleme — Figma progress-bar-track */
+    .track{height:4px;border-radius:100px;background:var(--accent07);overflow:hidden}
+    .fill{height:4px;border-radius:100px;background:var(--accent)}
+    /* Segment — Figma tab-bar */
+    .seg{display:flex;gap:4px;padding:4px;border-radius:100px;background:var(--accent07)}
+    .seg > div{flex:1;text-align:center;padding:10px 16px;border-radius:100px;font-weight:500;font-size:13px;color:var(--muted)}
+    .seg > div.on{background:var(--surface);color:var(--accent);font-weight:600}
+    .sec{padding:0 24px;margin-top:20px;display:flex;flex-direction:column;gap:12px}
+  </style>
+</helmet>
+
+<div class="screen">
+  <div class="head"><div class="back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E0E1B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div><div class="h1">Saat seç</div></div>
+
+  <div class="sec">
+    <div class="card20" style="display:flex;flex-direction:column;gap:14px">
+      <div class="row" style="gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A1942" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 11h18"/></svg><span class="label" style="color:var(--accent)">Tarih</span></div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;border-radius:16px;background:var(--surface);border:1px solid var(--line)"><span class="micro" style="color:var(--muted)">Çar</span><span class="cardTitle" style="color:var(--ink)">03</span></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;border-radius:16px;background:var(--surface);border:1px solid var(--line)"><span class="micro" style="color:var(--muted)">Per</span><span class="cardTitle" style="color:var(--ink)">04</span></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;border-radius:16px;background:var(--accent);border:1px solid var(--accent)"><span class="micro" style="color:rgba(255,240,245,.7)">Cum</span><span class="cardTitle" style="color:var(--onAccent)">05</span></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;border-radius:16px;background:var(--surface);border:1px solid var(--line)"><span class="micro" style="color:var(--muted)">Cmt</span><span class="cardTitle" style="color:var(--ink)">06</span></div><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;border-radius:16px;background:var(--surface);border:1px solid var(--line)"><span class="micro" style="color:var(--muted)">Paz</span><span class="cardTitle" style="color:var(--ink)">07</span></div>
+      </div>
+      <div class="row" style="gap:8px;margin-top:4px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A1942" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="label" style="color:var(--accent)">Saat</span></div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+        <div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">09:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">09:30</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">10:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--line);color:var(--muted);font-weight:500;font-size:13px;text-decoration:line-through">10:30</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--line);color:var(--muted);font-weight:500;font-size:13px;text-decoration:line-through">11:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">11:30</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">12:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">12:30</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">13:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">13:30</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--line);color:var(--muted);font-weight:500;font-size:13px;text-decoration:line-through">14:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">14:30</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--accent);color:var(--onAccent);font-weight:600;font-size:13px">15:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--line);color:var(--muted);font-weight:500;font-size:13px;text-decoration:line-through">15:30</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">16:00</div><div style="padding:12px 0;text-align:center;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-weight:500;font-size:13px">16:30</div>
+      </div>
+      <div class="row" style="gap:16px">
+        <span class="micro muted"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--line);margin-right:5px;vertical-align:-1px"></span>Dolu</span>
+        <span class="micro muted"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--accent);margin-right:5px;vertical-align:-1px"></span>Seçtiğin</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="h2">Hizmetler</div>
+    <div class="card20" style="display:flex;flex-direction:column;gap:14px">
+      <div class="row" style="gap:12px">
+        <div style="width:22px;height:22px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFF0F5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <div class="grow"><div class="bodyStrong">Saç boyama (kök)</div><div class="micro muted">90 dk</div></div>
+        <div class="rowTitle">15.000 ₸</div></div><div class="row" style="gap:12px">
+        <div style="width:22px;height:22px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFF0F5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <div class="grow"><div class="bodyStrong">Keratin bakımı</div><div class="micro muted">60 dk</div></div>
+        <div class="rowTitle">6.000 ₸</div></div>
+      <div style="height:1px;background:var(--line)"></div>
+      <div class="row" style="gap:12px;opacity:.55">
+        <div style="width:22px;height:22px;border-radius:7px;border:1.5px solid var(--lineStrong)"></div>
+        <div class="grow"><div class="bodyStrong">Saç kesimi</div><div class="micro muted">30 dk</div></div>
+        <div class="rowTitle">4.000 ₸</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div style="border-radius:24px;padding:20px;background:linear-gradient(146deg,var(--accent) 25%,var(--accentDeep) 75%);display:flex;flex-direction:column;gap:14px">
+      <div class="label" style="color:rgba(255,240,245,.62)">Özet</div>
+      <div class="row" style="justify-content:space-between">
+        <span class="body" style="color:#C5A3C7">Cum 05.09 · 15:00</span>
+        <span class="bodyStrong" style="color:var(--onAccent)">150 dk</span>
+      </div>
+      <div style="height:1px;background:rgba(212,160,160,.2)"></div>
+      <div class="row" style="justify-content:space-between">
+        <span class="body" style="color:#C5A3C7">Toplam tutar</span>
+        <span class="big" style="color:var(--onAccent)">21.000 ₸</span>
+      </div>
+      <div class="row" style="justify-content:space-between">
+        <span class="micro" style="color:#C5A3C7">Şimdi ödenecek depozito</span>
+        <span class="bodyStrong" style="color:var(--onAccent)">2.100 ₸</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec"><div class="btn">Randevuyu onayla</div>
+    <div class="micro muted" style="text-align:center">Onaydan sonra depozito için 10 dakikan olur.</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

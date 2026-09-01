@@ -129,7 +129,11 @@ test('kaydırmadan sonra gelen sabit şeritler barı aşıyor', () => {
     const ad = m[1];
     // Satır içi hesaplı boşluk da geçerli (ör. insets.bottom + CLEARANCE).
     if (new RegExp(`styles\\.${ad}[^\\n]*TAB_BAR_CLEARANCE`).test(src)) continue;
-    const sm = new RegExp(`    ${ad}: \\{[\\s\\S]*?\\n    \\},`).exec(src);
+    // Stil bloğu tek satır da olabilir (Prettier kısa blokları sıkıştırıyor);
+    // desen İKİSİNİ de tanımalı, yoksa doğru yazılmış ekran ihlal sayılır.
+    const sm =
+      new RegExp(`    ${ad}: \\{[\\s\\S]*?\\n    \\},`).exec(src) ??
+      new RegExp(`    ${ad}: \\{[^\\n]*\\},`).exec(src);
     if (sm && /paddingBottom:[^,}\n]*TAB_BAR_CLEARANCE/.test(sm[0])) continue;
     ihlal.push(`${rel} (styles.${ad})`);
   }

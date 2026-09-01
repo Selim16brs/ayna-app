@@ -17,7 +17,7 @@ import {
 import { formatSlotTr } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { randevuDepozitosu, useStore, type BookingEylem } from '../../src/store';
-import { radius, shadow, space, type ColorTokens } from '../../src/theme';
+import { font, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   AkisCizelgesi,
@@ -220,41 +220,38 @@ export default function BookingDetail() {
     <Screen edges={[]}>
       <StackHeader title={t('booking.detail.title')} />
       <ScrollView contentContainerStyle={styles.icerik} showsVerticalScrollIndicator={false}>
-        {/* ── Başlık: KARŞI TARAF, ne, ne zaman ──
-            Kart her iki rolde de "kiminle" sorusunu cevaplamalı. Uzman kendi
-            adını okuyordu; kendi randevusunda kendi adını görmek bilgi değil,
-            gürültü. Uzmanda müşteri adı, müşteride uzman adı. */}
-        <View style={[styles.kart, shadow.card]}>
+        {/* ── KİMLİK: karşı taraf, hizmet, durum, zaman ──
+            Uzmanda MÜŞTERİ adı, müşteride uzman adı. Durum rozeti kendi
+            satırında: ad ile aynı satıra sıkışınca ad kırpılıyordu. */}
+        <View style={styles.kart}>
           <View style={styles.basSatir}>
-            <Text variant="h2" tone="ink" style={styles.flex}>
-              {karsiTaraf}
-            </Text>
-            <View style={[styles.rozet, { backgroundColor: tonRengi + '22' }]}>
-              <Text variant="caption" style={{ color: tonRengi }}>
-                {t(durumEtiketi(booking.status, rol))}
+            <View style={styles.foto} />
+            <View style={styles.buyu}>
+              <Text style={styles.ad} numberOfLines={1}>
+                {karsiTaraf}
+              </Text>
+              <Text style={styles.hizmet} numberOfLines={1}>
+                {booking.service}
               </Text>
             </View>
           </View>
-          <Text variant="body" tone="muted">
-            {booking.service}
-          </Text>
-          <Text variant="bodyStrong" tone="ink">
-            {formatSlotTr(booking.startMs)}
-          </Text>
+          <View style={[styles.rozet, { backgroundColor: tonRengi + '1F' }]}>
+            <View style={[styles.rozetNokta, { backgroundColor: tonRengi }]} />
+            <Text style={[styles.rozetYazi, { color: tonRengi }]}>
+              {t(durumEtiketi(booking.status, rol))}
+            </Text>
+          </View>
+          <View style={styles.ayrac} />
+          <View style={styles.zamanSatir}>
+            <Ionicons name="calendar-outline" size={16} color={colors.muted} />
+            <Text style={styles.zaman}>{formatSlotTr(booking.startMs)}</Text>
+          </View>
         </View>
 
-        {/* ── §7 — kargo takibi tarzı zaman çizelgesi ──
-            Kart YALNIZ içi doluysa çiziliyor. Kapanmış randevuda (iptal/düşme/
-            no-show) `AkisCizelgesi` bilerek null dönüyor — yarıda kalmış bir
-            süreci "3/7 adım" diye göstermek devam ediyormuş izlenimi verirdi —
-            ama kart kabuğu yine çiziliyordu: ekranda BOŞ BEYAZ bir dikdörtgen
-            kalıyordu. */}
+        {/* ── AKIŞ ÇİZELGESİ — kapanmış randevuda hiç çizilmiyor ── */}
         {akisAdimi(booking.status) >= 0 ? (
-          <View style={[styles.kart, shadow.card]}>
+          <View style={styles.kart}>
             <AkisCizelgesi status={booking.status} />
-            {/* KARŞILIKLI ONAY BEKLENİYORSA nabız. Durum rozeti durağan bir
-              etiket; kullanıcı bir şeyin işlediğinden emin olamıyor. Nabız
-              "sistem çalışıyor, sıra sende değil" diyor. */}
             {bekliyor ? (
               <View style={styles.nabizKap}>
                 <BeklemeNabzi metin={t(beklemeMetni(booking.status, rol))} renk={tonRengi} />
@@ -263,43 +260,28 @@ export default function BookingDetail() {
           </View>
         ) : null}
 
-        {/* ── Para: %10 peşin + %90 sonra (§4.4, §4.9) ── */}
-        <View style={[styles.kart, shadow.card]}>
-          {/* "Hiçbir tutar gizli değil" satırı KALDIRILDI: iki sayının altına
-              yazılan bir güven cümlesi bilgi taşımıyor, kartı uzatıyordu.
-              Şeffaflık zaten tutarları göstermekle kuruluyor. */}
+        {/* ── PARA ── */}
+        <View style={styles.kart}>
           <View style={styles.paraSatir}>
-            <Text variant="caption" tone="muted">
-              {t('booking.money.deposit')}
-            </Text>
-            <Text variant="bodyStrong" tone="ink">
-              {pesinat.toLocaleString('tr-TR')} ₸
-            </Text>
+            <Text style={styles.paraEtiket}>{t('booking.money.deposit')}</Text>
+            <Text style={styles.paraDeger}>{pesinat.toLocaleString('tr-TR')} ₸</Text>
           </View>
           <View style={styles.paraSatir}>
-            {/* Uzman kendi ekranında "Hizmetten sonra UZMANA" okuyordu —
-                kendisi hakkında üçüncü şahıs. Uzmanda "sana". */}
-            <Text variant="caption" tone="muted">
+            <Text style={styles.paraEtiket}>
               {t(rol === 'uzman' ? 'booking.balance.remaining_pro' : 'booking.balance.remaining')}
             </Text>
-            <Text variant="bodyStrong" tone="ink">
-              {kalan.toLocaleString('tr-TR')} ₸
-            </Text>
+            <Text style={styles.paraDeger}>{kalan.toLocaleString('tr-TR')} ₸</Text>
           </View>
         </View>
 
-        {/* ── Görünür geri sayımlar. Brief §7: "görünmez zaman sınırı yasak." ──
-            ACİLİYET SIRASI GELEN TARAFINDIR. Bu kartlar iki rolde de aynı
-            çiziliyordu: uzman kendi ekranında "Randevunu korumak için öde /
-            ödemezsen randevu düşer" okuyordu — ödemeyecek olan taraf.
-            Aynı süre iki tarafa da gösterilir ama ÖDEVİ olanda kırmızı bir
-            çağrı, diğerinde sade bir bilgi. */}
+        {/* ── GERİ SAYIMLAR — aciliyet SIRASI GELEN tarafındır ── */}
         {booking.status === 'depozito_bekliyor' && booking.depositDeadline ? (
           rol === 'musteri' ? (
-            <View style={[styles.kart, styles.acilKart, shadow.card]}>
-              <Text variant="bodyStrong" style={{ color: colors.danger }}>
-                {t('flow.deposit.countdown_t')}
-              </Text>
+            <View style={styles.acilKart}>
+              <View style={styles.acilBas}>
+                <Ionicons name="alert-circle" size={18} color={colors.danger} />
+                <Text style={styles.acilBaslik}>{t('flow.deposit.countdown_t')}</Text>
+              </View>
               <Sayac
                 bitis={booking.depositDeadline}
                 metin={t('flow.deposit.countdown_b')}
@@ -307,10 +289,8 @@ export default function BookingDetail() {
               />
             </View>
           ) : (
-            <View style={[styles.kart, shadow.card]}>
-              <Text variant="bodyStrong" tone="ink">
-                {t('flow.deposit.countdown_pro_t')}
-              </Text>
+            <View style={styles.bilgiKart}>
+              <Text style={styles.bilgiBaslik}>{t('flow.deposit.countdown_pro_t')}</Text>
               <Sayac
                 bitis={booking.depositDeadline}
                 metin={t('flow.deposit.countdown_pro_b')}
@@ -320,7 +300,7 @@ export default function BookingDetail() {
           )
         ) : null}
         {booking.status === 'onay_bekliyor' && booking.responseDeadline ? (
-          <View style={[styles.kart, shadow.card]}>
+          <View style={styles.bilgiKart}>
             <Sayac
               bitis={booking.responseDeadline}
               metin={t(rol === 'uzman' ? 'flow.approve.countdown_pro' : 'flow.approve.countdown')}
@@ -329,10 +309,10 @@ export default function BookingDetail() {
           </View>
         ) : null}
 
-        {/* ── §4.9 — müşteri ödediğini bildirdi, uzman teyidi bekleniyor ── */}
+        {/* §4.9 — müşteri ödediğini bildirdi, uzman teyidi bekleniyor */}
         {booking.status === 'odeme_bekliyor' && booking.balanceDeclaredAt != null ? (
-          <View style={[styles.kart, shadow.card]}>
-            <Text variant="caption" tone="muted">
+          <View style={styles.bilgiKart}>
+            <Text style={styles.bilgiNot}>
               {rol === 'musteri'
                 ? t('booking.balance.wait_b')
                 : t('booking.balance.provider_confirm_b')}
@@ -349,10 +329,7 @@ export default function BookingDetail() {
           />
         ) : null}
 
-        {/* §4.3 — İKİNCİL AKSİYONLAR. Tek birincil buton ilkesi (§7) "tek
-            seçenek" demek değil: uzman onaylayabilir, FARKLI SAAT ÖNEREBİLİR ya
-            da reddedebilir. Yalnız "Onayla" göstermek MD'nin verdiği hakkı
-            ekrandan silmekti. */}
+        {/* §4.3 — ikincil aksiyonlar: kabul dışındaki yollar ekrandan silinmez */}
         {ikincilAksiyonlar(booking.status, rol, baglam).map((a) => (
           <Button
             key={a.eylem}
@@ -362,19 +339,14 @@ export default function BookingDetail() {
           />
         ))}
 
-        {/* İkincil: iptal. Birincil butonla aynı ağırlıkta çizilmez. */}
         {iptalEdilebilir(booking.status) ? (
           <Pressable onPress={iptalEt} accessibilityRole="button" style={styles.iptal}>
             <Ionicons name="close-circle-outline" size={16} color={colors.muted} />
-            <Text variant="caption" tone="muted">
-              {t('flow.act.iptal')}
-            </Text>
+            <Text style={styles.iptalYazi}>{t('flow.act.iptal')}</Text>
           </Pressable>
         ) : null}
 
-        {/* §4.8 — "gelmedi" beyanı İKİ TARAFTA da sessiz ikincil.
-            Geri alınamaz ve karşı tarafa 24 saatlik itiraz penceresi açan bir
-            beyan, kartın ana çağrısı olamaz. */}
+        {/* §4.8 — "gelmedi" beyanı İKİ TARAFTA da sessiz ikincil. */}
         {booking.status === 'hizmet_gunu' && gelmediAcik ? (
           <Pressable
             onPress={() =>
@@ -384,7 +356,7 @@ export default function BookingDetail() {
             style={styles.iptal}
           >
             <Ionicons name="person-remove-outline" size={16} color={colors.danger} />
-            <Text variant="caption" style={{ color: colors.danger }}>
+            <Text style={[styles.iptalYazi, { color: colors.danger }]}>
               {t('flow.act.gelmedi')}
             </Text>
           </Pressable>
@@ -393,8 +365,8 @@ export default function BookingDetail() {
         {/* §4.8 — itiraz penceresi. Beyan edilen tarafa 24 saat. */}
         {(booking.status === 'no_show_musteri' || booking.status === 'no_show_uzman') &&
         booking.finalizeDeadline ? (
-          <View style={[styles.kart, shadow.card]}>
-            <Text variant="caption" tone="muted" style={styles.paraNot}>
+          <View style={styles.kart}>
+            <Text style={styles.bilgiNot}>
               {fillParams(t('flow.noshow.objection'), { saat: '24' })}
             </Text>
             <Button
@@ -411,29 +383,70 @@ export default function BookingDetail() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    // Alt menü içeriği örtmesin — testin zorladığı kural.
-    icerik: { padding: space(2), gap: space(1.5), paddingBottom: TAB_BAR_CLEARANCE },
-    bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(3) },
+    icerik: { padding: 24, gap: 20, paddingBottom: TAB_BAR_CLEARANCE },
+    bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+    buyu: { flex: 1 },
     kart: {
       backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(2),
-      gap: space(0.75),
+      borderRadius: 24,
+      padding: 20,
+      gap: 12,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
-    // Süre biten kart tehlike kenarlığıyla ayrışır; sayaç tek başına yeterince
-    // dikkat çekmiyordu.
-    acilKart: { borderWidth: 1, borderColor: colors.danger },
-    basSatir: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
-    flex: { flex: 1 },
-    rozet: { paddingHorizontal: space(1), paddingVertical: 3, borderRadius: radius.pill },
-    paraSatir: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    paraNot: { lineHeight: 18 },
-    nabizKap: { marginTop: space(1) },
+    basSatir: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    foto: { width: 52, height: 52, borderRadius: 100, backgroundColor: colors.accentSoft },
+    ad: { fontFamily: font.semibold, fontSize: 16, color: colors.ink },
+    hizmet: { fontFamily: font.regular, fontSize: 11, color: colors.muted, marginTop: 2 },
+    rozet: {
+      alignSelf: 'flex-start',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 100,
+    },
+    rozetNokta: { width: 6, height: 6, borderRadius: 3 },
+    rozetYazi: { fontFamily: font.medium, fontSize: 12 },
+    ayrac: { height: 1, backgroundColor: colors.line },
+    zamanSatir: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    zaman: { fontFamily: font.semibold, fontSize: 15, color: colors.ink },
+    nabizKap: { marginTop: 4 },
+    paraSatir: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 12,
+    },
+    paraEtiket: { fontFamily: font.regular, fontSize: 13, color: colors.muted },
+    paraDeger: { fontFamily: font.semibold, fontSize: 15, color: colors.ink },
+    acilKart: {
+      borderRadius: 20,
+      padding: 16,
+      gap: 6,
+      backgroundColor: colors.dangerSoft,
+      borderWidth: 1,
+      borderColor: colors.danger,
+    },
+    acilBas: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    acilBaslik: { fontFamily: font.semibold, fontSize: 15, color: colors.danger },
+    bilgiKart: {
+      borderRadius: 20,
+      padding: 16,
+      gap: 6,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    bilgiBaslik: { fontFamily: font.semibold, fontSize: 15, color: colors.ink },
+    bilgiNot: { fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: colors.muted },
     iptal: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: space(0.75),
-      paddingVertical: space(1.5),
+      gap: 8,
+      paddingVertical: 12,
     },
+    iptalYazi: { fontFamily: font.regular, fontSize: 13, color: colors.muted },
   });
