@@ -217,6 +217,7 @@ export class SettingsService {
         premiumUserKzt: rate('rate.premium_user_kzt'),
         premiumSalonKzt: rate('rate.premium_salon_kzt'),
         raffleCost: rate('rate.raffle_cost'),
+        adMonthlyKzt: rate('rate.ad_monthly_kzt'),
       },
       cities,
       // §4.4 — Kaspi ödeme bağlantısı. Tanımlı değilse istemci "Kaspi ile öde"

@@ -39,6 +39,12 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   // ── Brief §8 — randevu akışı kuyrukları ────────────────────────────────
+  // §reklam — ücretli vitrin ödeme kuyruğu
+  reklamSiparisleri: () => req<ReklamSiparisi[]>('/admin/ad-orders'),
+  reklamOnayla: (id: string) =>
+    req<{ id: string }>(`/admin/ad-orders/${id}/approve`, { method: 'POST' }),
+  reklamReddet: (id: string) =>
+    req<{ id: string }>(`/admin/ad-orders/${id}/reject`, { method: 'POST' }),
   dekontKuyrugu: () => req<DekontSatiri[]>('/admin/randevu/dekontlar'),
   dekontOnayla: (id: string) =>
     req<{ ok: boolean }>(`/admin/randevu/dekontlar/${id}/onayla`, { method: 'POST' }),
@@ -747,6 +753,20 @@ export type NewCampaign = {
   tone?: string;
   sortOrder?: number;
 };
+export interface ReklamSiparisi {
+  id: string;
+  proId: string;
+  proName: string;
+  placement: 'firsatlar' | 'one_cikanlar';
+  months: number;
+  amount: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  status: string;
+  receiptUri: string | null;
+  createdAt: string;
+}
 export interface AdBanner {
   id: string;
   proId: string;

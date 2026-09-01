@@ -558,6 +558,23 @@ export interface AdBanner {
   placement: 'firsatlar' | 'one_cikanlar';
 }
 
+/** Ücretli vitrin siparişi — ödeme onaylanınca `AdBanner`e dönüşür. */
+export interface AdOrder {
+  id: string;
+  proId: string;
+  proName: string;
+  placement: 'firsatlar' | 'one_cikanlar';
+  months: number;
+  amount: string | number;
+  title: string;
+  subtitle: string;
+  image: string;
+  status: 'bekliyor' | 'yayinda' | 'reddedildi';
+  receiptUri: string | null;
+  periodEnd: string | null;
+  createdAt: string;
+}
+
 export interface ApiCollection {
   id: string;
   slug: string;
@@ -698,6 +715,21 @@ export const api = {
     post<ApiOffer>(`/offers/${id}/${action}`, {}, token),
   // §keşif Modül 3 — koleksiyonlar
   ads: () => get<AdBanner[]>(`/ads${localeQuery()}`),
+  // §reklam — ücretli vitrin siparişi. Fiyat SUNUCUDAN: panelden değiştirilen
+  // ücret eski uygulama sürümlerinde yanlış görünmesin.
+  adPricing: () => get<{ monthly: number; currency: string }>('/ad-orders/pricing'),
+  myAdOrders: () => get<AdOrder[]>('/ad-orders/mine'),
+  createAdOrder: (input: {
+    proId: string;
+    proName: string;
+    placement: 'firsatlar' | 'one_cikanlar';
+    title: string;
+    subtitle?: string;
+    image: string;
+    months?: number;
+  }) => post<AdOrder>('/ad-orders', input),
+  uploadAdReceipt: (id: string, receiptUri: string) =>
+    post<AdOrder>(`/ad-orders/${id}/receipt`, { receiptUri }),
   collections: () => get<ApiCollection[]>(`/collections${localeQuery()}`),
   collectionDetail: (idOrSlug: string) =>
     get<ApiCollectionDetail>(`/collections/${idOrSlug}${localeQuery()}`),
