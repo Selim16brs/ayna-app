@@ -95,6 +95,14 @@ const ITEMS: {
     tone: 'lavender',
   },
   {
+    id: 'ads',
+    icon: 'sparkles',
+    labelKey: 'ads.menu',
+    descKey: 'ads.menu_d',
+    route: '/seller/ads',
+    tone: 'gold',
+  },
+  {
     id: 'promotions',
     icon: 'megaphone',
     labelKey: 'reports.action.promotions',

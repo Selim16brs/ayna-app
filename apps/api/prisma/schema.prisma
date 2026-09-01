@@ -721,6 +721,42 @@ model AdBanner {
 
 // Admin ayarlanabilir parametreler (örn. puan görünürlük eşiği).
 // §12.9 — sayısal oranlar intValue'da; API anahtarı / şehir listesi gibi metinler strValue'da.
+/**
+ * REKLAM SİPARİŞİ — uzman/salonun satın aldığı vitrin.
+ *
+ * Reklamın kendisi `AdBanner`; bu tablo ONUN SATIN ALMA KAYDI. İkisi ayrı
+ * duruyor çünkü ödeme onaylanana kadar ortada yayınlanacak bir reklam yok:
+ * sipariş beklerken banner yaratılsaydı, ödenmemiş reklam yayına düşerdi.
+ * Admin dekontu onaylayınca banner bu kayıttan üretilir.
+ */
+model AdOrder {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid // siparişi veren hesap
+  proId       String    @map("pro_id") // reklamı yayınlanacak uzman/salon
+  proName     String    @map("pro_name")
+  placement   String // firsatlar | one_cikanlar
+  months      Int       @default(1)
+  amount      Decimal   @db.Decimal(12, 2) // sipariş anındaki fiyat DONDURULUR
+  // Reklamın içeriği. Onaydan sonra banner bunlardan üretilir.
+  title       String
+  subtitle    String    @default("")
+  image       String
+  status      String    @default("bekliyor") // bekliyor | yayinda | reddedildi
+  receiptUri  String?   @map("receipt_uri")
+  receiptAt   DateTime? @map("receipt_at") @db.Timestamptz(6)
+  receiptHash String?   @map("receipt_hash") // aynı dekont iki siparişte kullanılamaz
+  bannerId    String?   @map("banner_id") @db.Uuid // onayda üretilen reklam
+  periodStart DateTime? @map("period_start") @db.Timestamptz(6)
+  periodEnd   DateTime? @map("period_end") @db.Timestamptz(6)
+  reviewedAt  DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([receiptHash])
+  @@index([status, createdAt])
+  @@index([userId])
+  @@map("ad_orders")
+}
+
 model Setting {
   key      String  @id
   intValue Int     @default(0) @map("int_value")

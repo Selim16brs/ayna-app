@@ -40,6 +40,9 @@ export const RATE_DEFS = [
   { key: 'rate.points_earn_pct', label: 'Hizmetten geri kazanım', suffix: '%', default: 1 },
   { key: 'rate.premium_user_kzt', label: 'Premium üyelik (aylık)', suffix: '₸', default: 999 },
   { key: 'rate.premium_salon_kzt', label: 'Salon premium (aylık)', suffix: '₸', default: 4990 },
+  // §reklam — vitrin aylık ücreti. KODA GÖMÜLMÜYOR: fiyat değişince
+  // yeni sürüm çıkarmak gerekmesin diye panelden yönetiliyor.
+  { key: 'rate.ad_monthly_kzt', label: 'Reklam aylık ücreti', suffix: '₸', default: 200000 },
   { key: 'rate.raffle_cost', label: 'Çekiliş bileti', suffix: 'puan', default: 500 },
 ] as const;
 
