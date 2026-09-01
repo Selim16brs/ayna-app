@@ -702,9 +702,20 @@ model AdBanner {
   i18n      Json? // §14.5 — 3 dil: kk/ru title/subtitle override'ları
   sortOrder Int      @default(0) @map("sort_order")
   active    Boolean  @default(true)
+  // HANGİ BÖLÜMDE yayınlanacak. Reklamı ödeyen uzman/salon "Fırsatlar" ya da
+  // "Öne çıkanlar" vitrinini satın alıyor; aynı kartı iki bölümde birden
+  // göstermek ekranı tekrarlı gösterir. Varsayılan 'one_cikanlar': mevcut
+  // kayıtlar zaten sponsorlu vitrin için girilmişti.
+  placement String   @default("one_cikanlar")
+  // YAYIN PENCERESİ. Reklam ÜCRETLİ: süresi dolduğunda kendiliğinden
+  // düşmeli. Yalnız `active` olsaydı, kapatmayı unutan admin ödenmemiş
+  // reklamı yayında bırakır, erken kapatan da ödenmiş günü yakardı.
+  // Boş bırakılırsa sınırsız (eski kayıtların davranışı korunur).
+  startsAt  DateTime? @map("starts_at") @db.Timestamptz(6)
+  endsAt    DateTime? @map("ends_at") @db.Timestamptz(6)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([active, sortOrder])
+  @@index([active, placement, sortOrder])
   @@map("ad_banners")
 }
 

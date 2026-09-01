@@ -7,6 +7,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORIES } from '../../src/data';
 import {
+  useAds,
   useCampaigns,
   useCollections,
   useOffers,
@@ -54,6 +55,10 @@ export default function DiscoverScreen() {
   const cevrimdisiBosluk = useOfflineInset();
   const router = useRouter();
   const campaigns = useCampaigns();
+  // ÜCRETLİ REKLAMLAR — uzman/salon hangi vitrini ödediyse orada çıkar.
+  const ads = useAds();
+  const firsatReklamlari = ads.filter((a) => a.placement === 'firsatlar');
+  const oneCikanReklamlari = ads.filter((a) => a.placement === 'one_cikanlar');
   const offers = useOffers();
   // §A4 — trend içerikleri (admin 'trend' tipli yayınlar); boşsa bant gizli
   // DİKKAT: seçici içinde .filter() YENİ dizi üretir → useSyncExternalStore
@@ -82,7 +87,15 @@ export default function DiscoverScreen() {
   const cityPros = pros.filter((p) => p.city === city);
   // §5.1.7 REVİZE — Öne Çıkanlar SPONSORLU alan: yalnız admin panelinden ⭐ işaretlenenler
   // (badge 'campaign'); otomatik doldurma YOK — admin seçmediyse bölüm görünmez.
-  const featured = cityPros.filter((p) => p.badge === 'campaign').slice(0, 6);
+  /**
+   * ÖNE ÇIKANLAR — ödenmiş vitrin.
+   *
+   * Burası `badge === 'campaign'` ile süzülüyordu: bölümün kendi yorumu
+   * "yalnız admin'in seçtikleri" dediği hâlde kod adminin yönettiği reklam
+   * tablosuna hiç bakmıyordu. Yani vitrin satılıyor ama yayınlanmıyordu.
+   * Artık kaynak reklam tablosu; ödemesi bitmiş reklamı sunucu zaten süzüyor.
+   */
+  const featured = oneCikanReklamlari.slice(0, 6);
   // §5.1.8 Sana Yakın: premium salon önce; YETMEZSE diğer salonlar + bağımsız uzmanlar
   // (yeni pazarda salon az olabilir — kayıtlı uzmanlar da keşfette görünsün). Günlük rotasyon.
   const nearby = useMemo(() => {
@@ -481,7 +494,7 @@ export default function DiscoverScreen() {
             ) : null}
 
             {/* ── SALON/UZMAN KAMPANYALARI (Modül 2 — süreli indirimler) ── */}
-            {offers.length > 0 ? (
+            {offers.length > 0 || firsatReklamlari.length > 0 ? (
               <>
                 <SectionHeader title={t('offers.title')} onSeeAll={() => router.push('/offers')} />
                 <ScrollView
@@ -489,6 +502,19 @@ export default function DiscoverScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.promoScroll}
                 >
+                  {/* Ücretli reklamlar başta ve SPONSORLU etiketli. Etiket
+                      şart: ödenmiş yerleşimi organik kampanyadan ayırt
+                      edilemez göstermek kullanıcıyı yanıltır. */}
+                  {firsatReklamlari.map((reklam) => (
+                    <PromoCard
+                      key={reklam.id}
+                      title={reklam.title}
+                      image={reklam.image}
+                      sponsored
+                      {...(reklam.subtitle ? { tag: reklam.subtitle } : {})}
+                      onPress={() => router.push('/professional/' + reklam.proId)}
+                    />
+                  ))}
                   {offers.slice(0, 8).map((o) => (
                     <PromoCard
                       key={o.id}
@@ -523,14 +549,14 @@ export default function DiscoverScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.promoScroll}
                 >
-                  {featured.map((pro) => (
+                  {featured.map((reklam) => (
                     <PromoCard
-                      key={pro.id}
-                      title={pro.name}
-                      image={pro.image}
+                      key={reklam.id}
+                      title={reklam.title}
+                      image={reklam.image}
                       sponsored
-                      tag={`★ ${pro.rating.toFixed(1)}`}
-                      onPress={() => router.push('/professional/' + pro.id)}
+                      {...(reklam.subtitle ? { tag: reklam.subtitle } : {})}
+                      onPress={() => router.push('/professional/' + reklam.proId)}
                     />
                   ))}
                 </ScrollView>

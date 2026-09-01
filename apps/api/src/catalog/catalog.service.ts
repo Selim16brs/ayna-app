@@ -78,9 +78,24 @@ export class CatalogService {
   }
 
   // Reklam banner'ları (keşif ekranı sponsorlu şerit)
+  /**
+   * Yayındaki reklamlar — ücretini ödeyen uzman/salonların vitrini.
+   *
+   * Yayın penceresi SUNUCUDA süzülüyor. İstemciye süzmeyi bırakmak, süresi
+   * biten ücretli bir reklamı eski uygulama sürümlerinde yayında bırakırdı;
+   * üstelik ödenmemiş reklamı cihazın saatine emanet etmek olurdu.
+   * Tarih boşsa sınırsız sayılır (eski kayıtların davranışı).
+   */
   async ads(locale?: string) {
+    const simdi = new Date();
     const rows = await this.prisma.adBanner.findMany({
-      where: { active: true },
+      where: {
+        active: true,
+        AND: [
+          { OR: [{ startsAt: null }, { startsAt: { lte: simdi } }] },
+          { OR: [{ endsAt: null }, { endsAt: { gt: simdi } }] },
+        ],
+      },
       orderBy: { sortOrder: 'asc' },
     });
     return localizeRows(rows, locale, ['title', 'subtitle']).map((a) => ({
@@ -89,6 +104,7 @@ export class CatalogService {
       title: a.title,
       subtitle: a.subtitle,
       image: a.image,
+      placement: a.placement,
     }));
   }
 

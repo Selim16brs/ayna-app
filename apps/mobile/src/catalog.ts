@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from './api';
+import { api, type AdBanner } from './api';
 import { useStore } from './store';
 import { type Campaign, type Professional, type ProfessionalDetail } from './data';
 
@@ -72,6 +72,20 @@ export function useCampaigns(): Campaign[] {
     staleTime: 60_000,
   });
   return data ?? []; // demo kampanya YOK — yalnız admin içeriği
+}
+
+/**
+ * Yayındaki ücretli reklamlar. Yayın penceresini SUNUCU süzüyor.
+ * Erişilemezse boş döner — reklam yokluğu ekranı bozmaz, bölüm gizlenir.
+ */
+export function useAds(): AdBanner[] {
+  const { data } = useQuery({
+    queryKey: ['ads'],
+    queryFn: api.ads,
+    retry: 1,
+    staleTime: 60_000,
+  });
+  return data ?? [];
 }
 
 // Yükleme/bulunamama durumunda SAHTE kişilik yerine boş iskelet döner (ekranlar kırılmaz)
