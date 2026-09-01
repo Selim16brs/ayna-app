@@ -175,6 +175,71 @@ export const DURUM_ETIKETI: Record<BookingStatus, MessageKey> = {
   sync_conflict: 'bs.sync_conflict',
 };
 
+/**
+ * Durum rozetinin ROLE GÖRE metni.
+ *
+ * `DURUM_ETIKETI` müşterinin gözünden yazılmış. Uzman aynı kartı açtığında
+ * kendisi hakkında "Uzman onayı bekleniyor" okuyordu — kendi yanıtını
+ * bekleyen bir cümle. Kurucu haklı olarak "saçma" dedi.
+ *
+ * Yalnız TARAF BELİRTEN durumlar değişiyor; geri kalanı iki tarafta da aynı
+ * şeyi anlatıyor (Kesinleşti, Tamamlandı, İptal edildi...).
+ */
+export function durumEtiketi(status: BookingStatus, rol: Rol): MessageKey {
+  if (rol === 'musteri') return DURUM_ETIKETI[status];
+  switch (status) {
+    case 'onay_bekliyor':
+      return 'bs.pro.onay_bekliyor'; // "Yanıtın bekleniyor"
+    case 'degisiklik_onerildi':
+      return 'bs.pro.degisiklik_onerildi'; // "Müşterinin kararı bekleniyor"
+    case 'karsi_oneri':
+      return 'bs.pro.karsi_oneri'; // "Müşteri farklı saat önerdi"
+    case 'depozito_bekliyor':
+      return 'bs.pro.depozito_bekliyor'; // "Müşterinin depozitosu bekleniyor"
+    case 'odeme_bekliyor':
+      return 'bs.pro.odeme_bekliyor'; // "Müşterinin ödemesi bekleniyor"
+    case 'no_show_musteri':
+      return 'bs.pro.no_show_musteri'; // "Müşteri gelmedi"
+    case 'no_show_uzman':
+      return 'bs.pro.no_show_uzman'; // "Gelmedin"
+    default:
+      return DURUM_ETIKETI[status];
+  }
+}
+
+/**
+ * §4.3 — İKİNCİL aksiyonlar. Birincil buton tektir (§7) ama bazı adımlarda
+ * kullanıcının GERÇEK seçeneği birden fazla: uzman onaylayabilir, farklı saat
+ * önerebilir ya da reddedebilir. Yalnız "Onayla" göstermek, MD'nin verdiği
+ * hakkı ekrandan silmek olurdu.
+ */
+export function ikincilAksiyonlar(status: BookingStatus, rol: Rol): Aksiyon[] {
+  const uzman = rol === 'uzman';
+  switch (status) {
+    // §4.3 — "Uzman: Onayla → 4.4 · Değiştir (tarih/saat/hizmet)"
+    case 'onay_bekliyor':
+      return uzman
+        ? [
+            { etiket: 'flow.act.degistir', eylem: 'degistir' },
+            { etiket: 'flow.act.reddet', eylem: 'reddet', tehlike: true },
+          ]
+        : [];
+    // §4.3 — müşteri: Kabul / Red / Karşı öner
+    case 'degisiklik_onerildi':
+      return uzman
+        ? []
+        : [
+            { etiket: 'flow.act.karsi_oner', eylem: 'karsi_oner' },
+            { etiket: 'flow.act.reddet', eylem: 'reddet', tehlike: true },
+          ];
+    // §4.3 — uzman karşı öneriye YALNIZ Kabul/Red verir (tek tur).
+    case 'karsi_oneri':
+      return uzman ? [{ etiket: 'flow.act.reddet', eylem: 'reddet', tehlike: true }] : [];
+    default:
+      return [];
+  }
+}
+
 /** Rozet tonu — hangi renk ailesinden çizileceği. */
 export type Ton = 'bekleme' | 'olumlu' | 'tehlike' | 'notr';
 
@@ -208,6 +273,14 @@ export type AkisBaglam = {
   gelmediAcik?: boolean;
   /** 3 saat eşiği geçmedi mi? (§4.6 erteleme, §4.7 ücretsiz iptal) */
   esikOncesi?: boolean;
+  /**
+   * §4.10 — iade edilecek bir depozito VAR mı?
+   *
+   * Yoksa "Depozito iade et" düğmesi gösterilmemeli: kullanıcı hesap bilgisini
+   * giriyor, sunucu "iade edilecek depozito yok" diyor ve o hatayı girdiği
+   * bilgiye bağlıyordu.
+   */
+  iadeEdilecekVar?: boolean;
   /**
    * §4.6 — bekleyen erteleme önerisini KİM yaptı?
    *
@@ -267,10 +340,12 @@ export function birincilAksiyon(
     case 'tamamlandi':
     case 'degerlendirme':
       return musteri ? { etiket: 'flow.act.degerlendir', eylem: 'degerlendir' } : null;
-    // §4.10 — iade hakkı doğduğunda müşteri kartında iade butonu.
+    // §4.10 — iade hakkı doğduğunda VE iade edilecek bir tutar varken.
     case 'iptal_uzman':
     case 'no_show_uzman':
-      return musteri ? { etiket: 'flow.act.iade_iste', eylem: 'iade_iste' } : null;
+      return musteri && ctx.iadeEdilecekVar !== false
+        ? { etiket: 'flow.act.iade_iste', eylem: 'iade_iste' }
+        : null;
     default:
       return null;
   }

@@ -14,6 +14,7 @@ import {
 import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
 import { useSalonStaff } from '../../src/staff';
+import { formatSlotTr } from '../../src/datetime';
 import { selectCommissionRate, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
@@ -39,6 +40,10 @@ export default function ReportsScreen() {
   const [period, setPeriod] = useState<Period>('week');
   const salonName = useStore((s) => s.currentUser?.name) ?? 'AYNA İşletme';
   const portre = useStore(selectPortrait); // bayat portre otomatik elenir
+  /** §4.2 — uzmanın yanıtını bekleyen talepler; en yakın saat önce. */
+  const bekleyenTalepler = useStore((st) =>
+    st.bookings.filter((b) => b.status === 'onay_bekliyor').sort((a, b) => a.startMs - b.startMs),
+  );
   const insets = useSafeAreaInsets();
   // Karşılama için ad (Keşfet dili) — ilk isim, ilk harf büyük (el yazısı katman)
   const firstRaw = salonName.split(' ')[0] || salonName;
@@ -311,6 +316,44 @@ export default function ReportsScreen() {
             </Text>
           </View>
         </View>
+
+        {/* ── §4.2 GELEN TALEPLER — ana ekranda, en üstte ──
+            Bekleyen talep yalnız Ajanda ekranındaki bir şeritte duruyordu:
+            uzman ana sayfayı açıp "yeni bir şey yok" sanıyor, 3 saatlik yanıt
+            süresi işlerken talebi hiç görmüyordu. Cevapsız kalan talep hem
+            müşteriyi kaybettiriyor hem uzmanın kalite skoruna işliyor —
+            görünmemesi en pahalı sessizlik. */}
+        {bekleyenTalepler.length > 0 ? (
+          <View style={[styles.talepKart, shadow.card]}>
+            <View style={styles.talepBas}>
+              <View style={styles.talepNokta} />
+              <Text variant="label" tone="accentFg" style={styles.talepBaslik}>
+                {t('seller.pending.title')}
+              </Text>
+              <Text variant="captionStrong" tone="accentFg">
+                {bekleyenTalepler.length}
+              </Text>
+            </View>
+            {bekleyenTalepler.slice(0, 3).map((b) => (
+              <PressableScale
+                key={b.id}
+                style={styles.talepSatir}
+                onPress={() => router.push(`/booking/${b.id}` as never)}
+                accessibilityRole="button"
+              >
+                <View style={styles.flex}>
+                  <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                    {b.customerName ?? t('booking.detail.customer')}
+                  </Text>
+                  <Text variant="caption" tone="muted" numberOfLines={1}>
+                    {b.service} · {formatSlotTr(b.startMs)}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+              </PressableScale>
+            ))}
+          </View>
+        ) : null}
 
         {/* Canlı Özet — yeşile bağlı, iki yanda eşit beyaz kalan dar mor kart */}
         {stats ? (
@@ -835,6 +878,33 @@ function Metric({ metric }: { metric: SellerMetric }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    talepKart: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      marginHorizontal: space(2),
+      marginBottom: space(1.5),
+      padding: space(2),
+      gap: space(0.5),
+      borderWidth: 1,
+      borderColor: colors.accentSoft,
+    },
+    talepBas: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    talepNokta: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.gold,
+    },
+    talepBaslik: { flex: 1 },
+    talepSatir: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      paddingVertical: space(1.25),
+      minHeight: 44,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.line,
+    },
     content: { paddingBottom: TAB_BAR_CLEARANCE + space(2) },
     flex: { flex: 1 },
     body: { paddingHorizontal: space(3), paddingTop: space(2.5) },

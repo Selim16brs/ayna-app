@@ -206,6 +206,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reschedule.sent_b':
     'Маман қабылдайды не бас тартады. Бас тартса ағымдағы жазылуың күшінде қалады.',
   'reschedule.err': 'Кейінге қалдыру жасалмады. Хақың біткен не мерзім жабылған болуы мүмкін.',
+  'refund.err_t': 'Қайтару өтінімі жіберілмеді',
   'refund.title': 'Депозитті қайтару',
   'refund.amount': 'Қайтарылатын сома',
   'refund.account_label': 'Қайтарылатын шот',
@@ -240,6 +241,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'deposit.verify_note': 'Түбіртекті жүктеген сәтте жазылуың расталады. Тексеру кейін жасалады.',
   'deposit.done_t': 'Жазылуың расталды ✓',
   'deposit.done_b': 'Депозит алынды. Маманның растауын күтудің қажеті жоқ.',
+  'booking.detail.customer': 'Клиент',
   'booking.detail.missing': 'Жазылу табылмады.',
   'flow.noshow.confirm_t': '«Келмеді» деп белгілеу',
   'flow.noshow.confirm_b':
@@ -252,6 +254,13 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'flow.deposit.countdown_t': 'Жазылуыңды сақтау үшін төле',
   'flow.deposit.countdown_b': 'ішінде төлемесең жазылу жойылады',
   'flow.approve.countdown': 'маманның жауап беру мерзімі',
+  'bs.pro.onay_bekliyor': 'Жауабың күтілуде',
+  'bs.pro.degisiklik_onerildi': 'Клиенттің шешімі күтілуде',
+  'bs.pro.karsi_oneri': 'Клиент басқа уақыт ұсынды',
+  'bs.pro.depozito_bekliyor': 'Клиенттің депозиті күтілуде',
+  'bs.pro.odeme_bekliyor': 'Клиенттің төлемі күтілуде',
+  'bs.pro.no_show_musteri': 'Клиент келмеді',
+  'bs.pro.no_show_uzman': 'Келмедің',
   'bs.onay_bekliyor': 'Маман растауы күтілуде',
   'bs.degisiklik_onerildi': 'Өзгеріс ұсынылды',
   'bs.karsi_oneri': 'Қарсы ұсыныс жіберілді',
@@ -298,6 +307,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'nav.care': 'Мен үшін',
   'nav.profile': 'Профиль',
   // §9.1 — сатушы (маман/салон) төменгі жолағы
+  'seller.pending.title': 'Жауабыңды күтетін өтінімдер',
   'seller.nav.home': 'Басты бет',
   'seller.nav.menu': 'Мәзір',
   // §10 — САЛОН панелі (маманнан бөлек)
