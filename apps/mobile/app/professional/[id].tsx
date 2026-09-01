@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { cakisiyor, doluAraliklar } from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -102,13 +103,22 @@ export default function ProfessionalScreen() {
 
   // §4.2 — uzmanın DOLU aralıkları: müşteri saat seçerken dolu yerler görünür, dolu slot seçilemez
   // (çifte iş biter). Sunucu yalnız zaman aralığı döner — müşteri bilgisi asla (gizlilik).
-  const [busyRanges, setBusyRanges] = useState<{ startMs: number; endMs: number }[]>([]);
+  const [uzakDolu, setUzakDolu] = useState<{ startMs: number; endMs: number }[]>([]);
+  const yerelRandevular = useStore((st) => st.bookings);
+  /**
+   * §4.2 — DOLU = sunucudakiler + BU CİHAZDAKİ bekleyen randevular.
+   * Sunucunun cevabını beklemek, aynı saatin ikinci kez seçilebilmesi demekti.
+   */
+  const busyRanges = useMemo(
+    () => doluAraliklar(pro.id, uzakDolu, yerelRandevular),
+    [pro.id, uzakDolu, yerelRandevular],
+  );
   useEffect(() => {
     if (!pro.id) return;
     let alive = true;
     void api
       .proBusy(pro.id, Date.now(), Date.now() + 14 * 86_400_000)
-      .then((rows) => alive && setBusyRanges(Array.isArray(rows) ? rows : []))
+      .then((rows) => alive && setUzakDolu(Array.isArray(rows) ? rows : []))
       .catch(() => undefined); // uç erişilemezse gösterge yok — randevu akışı engellenmez
     return () => {
       alive = false;
@@ -139,7 +149,7 @@ export default function ProfessionalScreen() {
     };
   }, [pro.id, selectedDay, totalDur]);
   const overlapsBusy = (startMs: number, endMs: number) =>
-    busyRanges.some((b) => startMs < b.endMs && endMs > b.startMs);
+    busyRanges.some((b) => cakisiyor({ startMs, endMs }, b));
   const daySlots = serverSlots
     ? serverSlots.map((sl) => ({
         startMs: sl.startMs,

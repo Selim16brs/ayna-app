@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { cakisiyor, doluAraliklar } from '../../src/booking-flow';
 import type { BookingSource } from '../../src/data';
 import { almatyDayStart, formatSlotTr, slotTime } from '../../src/datetime';
 import { api, type ApiOffer } from '../../src/api';
@@ -89,13 +90,19 @@ export default function ScheduleScreen() {
 
   // §4.2 — uzmanın DOLU aralıkları (önümüzdeki 14 gün): müşteri dolu saati seçemesin,
   // karşılıklı öneri turu (çifte iş) olmasın. Sunucu yalnız zaman aralığı döner (gizlilik).
-  const [busyRanges, setBusyRanges] = useState<{ startMs: number; endMs: number }[]>([]);
+  const [uzakDolu, setUzakDolu] = useState<{ startMs: number; endMs: number }[]>([]);
+  const yerelRandevular = useStore((st) => st.bookings);
+  // §4.2 — sunucudakiler + bu cihazdaki bekleyenler (bkz. doluAraliklar).
+  const busyRanges = useMemo(
+    () => doluAraliklar(pro.id, uzakDolu, yerelRandevular),
+    [pro.id, uzakDolu, yerelRandevular],
+  );
   useEffect(() => {
     if (!pro.id) return;
     let alive = true;
     void api
       .proBusy(pro.id, Date.now(), Date.now() + 14 * 86_400_000)
-      .then((rows) => alive && setBusyRanges(Array.isArray(rows) ? rows : []))
+      .then((rows) => alive && setUzakDolu(Array.isArray(rows) ? rows : []))
       .catch(() => undefined); // erişilemezse gösterge yok — akış engellenmez
     return () => {
       alive = false;
@@ -103,7 +110,9 @@ export default function ScheduleScreen() {
   }, [pro.id]);
   const chosenStartMs = when.getTime();
   const chosenEndMs = chosenStartMs + durationMin * 60_000;
-  const slotBusy = busyRanges.some((b) => chosenStartMs < b.endMs && chosenEndMs > b.startMs);
+  const slotBusy = busyRanges.some((b) =>
+    cakisiyor({ startMs: chosenStartMs, endMs: chosenEndMs }, b),
+  );
   const dayBusy = busyRanges.filter(
     (b) => almatyDayStart(b.startMs, 0) === almatyDayStart(chosenStartMs, 0),
   );

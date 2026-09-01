@@ -1,3 +1,4 @@
+import { SLOT_HOLDING_STATES } from '@ayna/domain';
 import type { MessageKey } from '@ayna/i18n';
 import type { BookingStatus } from './data';
 
@@ -101,6 +102,54 @@ export function akisAdimi(status: BookingStatus): number {
 export function yaklasanMi(status: BookingStatus): boolean {
   const adim = akisAdimi(status);
   return adim >= 0 && adim < 6;
+}
+
+export type Aralik = { startMs: number; endMs: number };
+
+/**
+ * Uzmanın DOLU aralıkları = SUNUCUDAN gelenler + BU CİHAZDAKİ bekleyen randevular.
+ *
+ * Sunucu listesi tek başına yetmiyordu. Randevu gönderildikten sonra kayıt
+ * sunucuya ulaşana kadar (ağ yavaşsa saniyeler, ağ yoksa hiç) aynı saat boş
+ * görünüyor; kullanıcı ekrandan çıkıp geri gelince AYNI SAATİ ikinci kez
+ * seçebiliyordu. Kurucu tam bunu bildirdi: "aynı saatten randevu
+ * gönderebiliyor, ekran açılıp kapanınca seçim olabiliyor."
+ *
+ * MD §4.2 slotu TALEP GÖNDERİLDİĞİ AN kilitliyor — kilit sunucunun cevabına
+ * değil, kullanıcının kararına bağlı. Bu yüzden yerel bekleyen randevular da
+ * dolu sayılıyor: ağ ne yaparsa yapsın kullanıcı kendi aldığı saati bir daha
+ * seçemez.
+ *
+ * Sunucu yine SON SÖZ: başka bir müşteri o saati almışsa uzaktan listede
+ * görünür ve çakışma sunucuda ayrıca reddedilir.
+ */
+export function doluAraliklar(
+  proId: string,
+  uzaktan: readonly Aralik[],
+  yerelRandevular: readonly {
+    proId?: string;
+    startMs: number;
+    durationMin?: number;
+    status: BookingStatus;
+  }[],
+): Aralik[] {
+  const yerel = yerelRandevular
+    .filter((b) => b.proId === proId && slotTutuyor(b.status))
+    .map((b) => ({
+      startMs: b.startMs,
+      endMs: b.startMs + (b.durationMin ?? 60) * 60_000,
+    }));
+  return [...uzaktan, ...yerel];
+}
+
+/** Bu durum uzmanın takvimini işgal ediyor mu? (brief §4.2) */
+export function slotTutuyor(status: BookingStatus): boolean {
+  return (SLOT_HOLDING_STATES as readonly string[]).includes(status);
+}
+
+/** İki aralık çakışıyor mu? Bitiş anı çakışma DEĞİL (14:00 biten iş, 14:00 başlayanı engellemez). */
+export function cakisiyor(a: Aralik, b: Aralik): boolean {
+  return a.startMs < b.endMs && a.endMs > b.startMs;
 }
 
 /** Durum rozetinin metni. Tek yerde; her ekran aynı kelimeyi gösterir. */
