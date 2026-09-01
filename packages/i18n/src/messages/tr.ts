@@ -555,6 +555,7 @@ export const tr = {
   'home.urgent.confirm': 'Hizmet gerçekleşti mi?',
   'home.urgent.confirm_sub': 'onaylamazsan kendiliğinden onaylanır',
   'home.urgent.confirm_cta': 'Onayla',
+  'home.guest_title': 'Hoş geldin',
   'home.urgent.refund': 'Depozitonu geri al',
   'home.urgent.refund_sub': 'hesap bilgini gir, 1 iş günü içinde ödenir',
   'home.urgent.refund_cta': 'İade iste',
