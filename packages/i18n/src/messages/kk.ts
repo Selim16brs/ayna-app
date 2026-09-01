@@ -1436,6 +1436,12 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'notif.always_request_b': '{name} сенімен Always байланысын құрғысы келеді',
   'ads.menu': 'Жарнама беру',
   'ads.menu_d': 'Мүмкіндіктер және Таңдаулылар витринінде жариялан',
+  'ads.promo.eyebrow': 'AYNA ВИТРИНА',
+  'ads.promo.title': 'Іздеу экранының ең көрінетін жерінде бол',
+  'ads.promo.body':
+    'Мүмкіндіктер мен Таңдаулылар — клиент маман іздегенде алдымен қарайтын екі орын.',
+  'ads.promo.price': 'Айына {amount} ₸',
+  'ads.promo.cta': 'Жарнама беру',
   'ads.title': 'Жарнама беру',
   'ads.price_month': 'Айына {amount} ₸',
   'ads.placement': 'Қайда жариялансын?',

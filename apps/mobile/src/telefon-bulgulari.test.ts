@@ -218,3 +218,31 @@ test('reklam iki bölümde birden ÇIKMIYOR', () => {
   assert.match(d, /placement === 'firsatlar'/, 'fırsat reklamları ayrılmıyor');
   assert.match(d, /placement === 'one_cikanlar'/, 'öne çıkan reklamları ayrılmıyor');
 });
+
+test('Reklam ver kartı YANIT & KALİTE bölümünün ÜSTÜNDE', () => {
+  // Kurucu konumu açıkça verdi: kazanç alanı, ekranın hâlâ okunan bölgesinde
+  // olmalı. Aşağı kayarsa bir daha kimse görmez.
+  const r = oku('..', 'app', 'seller', 'reports.tsx');
+  const reklam = r.indexOf("router.push('/seller/ads')");
+  const kalite = r.indexOf("t('reports.quality.title')");
+  assert.ok(reklam > 0, 'ana sayfada reklam kartı yok');
+  assert.ok(kalite > 0, 'yanıt & kalite bölümü bulunamadı');
+  assert.ok(reklam < kalite, 'reklam kartı yanıt & kalite bölümünün ALTINDA');
+});
+
+test('Reklam ver kartı menü satırı DEĞİL — reklam gibi duruyor', () => {
+  // "bir reklam çalışması gibi olsun": teklif, yer ve fiyat tek bakışta.
+  const r = oku('..', 'app', 'seller', 'reports.tsx');
+  const bas = r.indexOf("router.push('/seller/ads')");
+  const blok = r.slice(bas, bas + 1800);
+  assert.match(blok, /LinearGradient/, 'düz kart — vurgusu yok');
+  assert.match(blok, /ads\.promo\.title/, 'teklif başlığı yok');
+  assert.match(blok, /ads\.promo\.price/, 'fiyat görünmüyor');
+  assert.match(blok, /ads\.promo\.cta/, 'çağrı düğmesi yok');
+});
+
+test('reklam fiyatı SUNUCUDAN okunuyor', () => {
+  // Panelden değiştirilen ücret eski uygulama sürümlerinde yanlış görünmesin.
+  const r = oku('..', 'app', 'seller', 'reports.tsx');
+  assert.match(r, /s\.config\.rates\.adMonthlyKzt/, 'fiyat istemciye gömülü');
+});
