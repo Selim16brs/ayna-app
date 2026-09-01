@@ -80,10 +80,10 @@ const HIZLI_EYLEMLER = [
   {
     id: 'dilek',
     etiket: 'home.qa.wish' as MessageKey,
-    // FOTOĞRAF + FİYAT TEKLİFİ akışı `/quote/new` ("Fotoğraf ile teklifler").
-    // `/demand/new` kategori seçtiren farklı bir akış — yanlış yere
-    // yönlendiriyordum.
-    yol: '/quote/new' as const,
+    // İKİ YOL var: fotoğrafla teklif (`/quote/new`) ve fiyat/talep ile
+    // teklif (`/demand/new`). Seçimi kullanıcı yapar — hub `/quote`.
+    // Doğrudan `/quote/new`'e gitmek fiyat yolunu görünmez yapıyordu.
+    yol: '/quote' as const,
     gorsel: require('../../assets/hizli-eylem/dilegini-anlat.png'),
   },
   {
