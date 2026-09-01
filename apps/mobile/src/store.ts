@@ -513,6 +513,8 @@ interface State {
    * açılışta/tazelemede yeniden gönderiliyor.
    */
   pendingBookingActions: { id: string; eylem: BookingEylem; arg?: BookingEylemArg }[];
+  /** §4.10 — iade talebi gönderildi; ana sayfadaki kart bir daha çıkmasın. */
+  iadeTalebiDamgala: (id: string) => void;
   /** Kuyruğu sunucuya boşalt (açılışta ve her tazelemede çağrılır). */
   flushBookingActions: () => Promise<void>;
   /**
@@ -1938,6 +1940,14 @@ export const useStore = create<State>()(
           }));
           return 'kuyrukta';
         }
+      },
+
+      iadeTalebiDamgala: (id) => {
+        set((st) => ({
+          bookings: st.bookings.map((b) =>
+            b.id === id ? { ...b, refundRequestedAt: Date.now() } : b,
+          ),
+        }));
       },
 
       flushBookingActions: async () => {

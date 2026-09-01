@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
@@ -28,22 +27,22 @@ const FADE_H = 130;
 const HAP_MAX = 176; // aktif hapın üst sınırı
 const PASIF_MIN = 40; // pasif sekmenin dokunma hedefi
 
-/** İçeriğin yüzen barın altında kalmaması için ekranların ayırması gereken boşluk. */
+/** Çentikli cihazda hapın üst kenarı — en yüksek hâli. */
+const PILL_TOP_MAX = 34 + 10 + PILL_H; // insets.bottom(34) + 10 + hap
+
 /**
  * Sayfa sonundaki içeriğin bırakması gereken alt boşluk.
  *
- * Eskiden `PILL_BOTTOM + PILL_H + 20` (=114) idi ve İKİ ŞEYİ atlıyordu:
- *  1) GÜVENLİ ALAN — `bottom` cihazın inset'ine göre büyüyor. Ana ekran
- *     düğmesi olan telefonda hapın üstü 112pt'ye çıkıyor; 114 ile arada
- *     yalnız 2pt kalıyordu.
- *  2) SOLMA KATMANI — ekranın alt FADE_H (130pt) kadarını kaplıyor. 114 ile
- *     130 arasındaki içerik hapın altında değil ama solmanın İÇİNDE kalıyor
- *     ve okunmuyordu (yarı erimiş yazılar).
+ * Ölçü HAPTAN türetiliyor, solmadan değil. Bir ara `FADE_H + 24` (=154) idi:
+ * gerekçe "içerik solmanın tamamen üstünde başlasın" idi ama bu solmanın
+ * amacını yok ediyordu — solma zaten içeriğin altına doğru ERİMESİ için var.
+ * Sonuç, hapın üstünde (112pt) 42pt'lik ölü bir bant oldu: sabit alt
+ * çubuklar — "Randevu Al" gibi — havada asılı kalıyordu.
  *
- * Ölçü artık SOLMADAN türetiliyor: içerik solmanın tamamen üstünde başlar.
- * FADE_H değişirse boşluk da değişir — kopya sayı tutulmaz.
+ * Artık içerik hapın hemen üstünde bitiyor, son birkaç puntoluk kısım
+ * solmanın SAYDAM ucuna denk geliyor: ne kesik duruyor ne de boşluk açıyor.
  */
-export const TAB_BAR_CLEARANCE = FADE_H + 24;
+export const TAB_BAR_CLEARANCE = PILL_TOP_MAX + 12;
 
 /**
  * Uygulamanın TEK alt menü bileşeni — kanvas Main.dc.html §"yüzen nav".
@@ -84,12 +83,21 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
       style={[styles.wrap, { height: bottom + PILL_H + FADE_H * 0.4 }]}
       pointerEvents="box-none"
     >
-      {/* Kademeli geçiş: içerik bara doğru eriyor, altında kesilmiş gibi durmuyor */}
+      {/*
+        Kademeli geçiş: içerik bara doğru eriyor.
+
+        BULANIKLIK KALDIRILDI. `BlurView` tüm bandı — hapın ALTINI da —
+        kaplıyordu; arkadaki kartlar sütlü bir lekeye dönüşüyor, porselen zemin
+        kirli görünüyordu. Solma yalnız içeriğin eridiği ÜST kısımda anlamlı;
+        hapın altında eriyecek bir şey yok, orası düz zemin olmalı.
+
+        Gradyan %78'de tam zemin rengine ulaşıyor: son rengi sona kadar
+        uzadığı için hapın altı da düz kalıyor.
+      */}
       <View style={styles.fade} pointerEvents="none">
-        <BlurView intensity={18} tint="light" style={StyleSheet.absoluteFill} />
         <LinearGradient
           colors={[colors.fadeFrom, colors.fadeMid, colors.bg]}
-          locations={[0, 0.62, 1]}
+          locations={[0, 0.5, 0.78]}
           style={StyleSheet.absoluteFill}
         />
       </View>

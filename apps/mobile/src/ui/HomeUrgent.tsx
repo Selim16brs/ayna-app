@@ -84,14 +84,35 @@ function pickUrgent(bookings: Appointment[], now: number): Urgency | null {
       critical: false,
     };
 
-  const refund = bookings.find((b) => b.status === 'iptal_musteri');
-  if (refund)
+  /**
+   * §4.10 — DEPOZİTO İADESİ. Kart, iade HAKKI doğduğunda çıkar ve kullanıcıyı
+   * hesap bilgisini gireceği ekrana götürür.
+   *
+   * Eskiden her `iptal_musteri` randevusunda çıkıyor ve "uzman iade dekontunu
+   * yükledi" diyordu. İkisi de yanlıştı: uzmanın iade dekontu yüklediği bir
+   * akış artık YOK (§4.10 iadeyi AYNA yapıyor), ve iptal edilen her randevuda
+   * iade hakkı doğmuyor — 3 saatten az kala iptalde depozito yanıyor. "Gör"e
+   * basan kullanıcı, ortada olmayan bir dekontu aramak üzere boş bir kapanmış
+   * randevuya düşüyordu.
+   */
+  const iadeHakki = bookings.find(
+    (b) =>
+      (b.status === 'iptal_uzman' ||
+        b.status === 'no_show_uzman' ||
+        b.status === 'iptal_musteri') &&
+      (b.depositAmount ?? 0) > 0 &&
+      // Geç iptalde depozito YANDI — iade hakkı yok (§4.7).
+      !b.depositForfeited &&
+      // Talep zaten gönderildiyse kartı tekrar göstermenin anlamı yok.
+      !b.refundRequestedAt,
+  );
+  if (iadeHakki)
     return {
-      booking: refund,
+      booking: iadeHakki,
       titleKey: 'home.urgent.refund',
       subKey: 'home.urgent.refund_sub',
       ctaKey: 'home.urgent.refund_cta',
-      route: `/booking/${refund.id}`,
+      route: `/booking/refund?id=${iadeHakki.id}`,
       critical: false,
     };
 

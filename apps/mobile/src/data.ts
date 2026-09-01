@@ -945,7 +945,13 @@ export interface Appointment {
   finalizeDeadline?: number;
   receiptUri?: string; // §4.3 — yüklenen dekont görseli
   refundReceiptUri?: string; // §4.4 — uzmanın yüklediği iade dekontu
-  depositForfeited?: boolean; // §4.4 — geç iptal/no-show: kapora uzmanda kaldı
+  depositForfeited?: boolean; // §4.7 — geç iptal/no-show: depozito iade edilmez
+  /**
+   * §4.10 — iade TALEBİ gönderildiği an. Dolduysa ana sayfadaki "iadeni iste"
+   * kartı bir daha çıkmaz: talebi vermiş kullanıcıya aynı şeyi tekrar
+   * söylemek, işlemin kaybolduğu izlenimi verirdi.
+   */
+  refundRequestedAt?: number;
   providerNoShow?: boolean; // §4.4-b — uzman gelmedi: müşteriye 1000 puan telafi verildi
   responseDeadline?: number; // §4.1.3 — uzman yanıt son anı (UTC ms); geçilirse talep düşer
   respondedAt?: number; // §9.2 — uzmanın yanıt verdiği an (UTC ms); ortalama yanıt süresi metriği

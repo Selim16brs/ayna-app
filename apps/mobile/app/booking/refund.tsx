@@ -27,6 +27,7 @@ export default function RefundScreen() {
 
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
   const rates = useStore((s) => s.config.rates);
+  const iadeTalebiDamgala = useStore((s) => s.iadeTalebiDamgala);
   const [hesap, setHesap] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -50,6 +51,8 @@ export default function RefundScreen() {
     setBusy(true);
     try {
       await api.iadeTalep(booking.id, hesap.trim());
+      // Talep gönderildi: ana sayfadaki "iadeni iste" kartı artık çıkmasın.
+      iadeTalebiDamgala(booking.id);
       Alert.alert(t('refund.sent_t'), t('refund.sent_b'), [
         { text: t('common.ok'), onPress: () => router.back() },
       ]);
