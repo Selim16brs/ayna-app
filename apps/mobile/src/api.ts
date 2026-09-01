@@ -571,6 +571,7 @@ export interface AdOrder {
   image: string;
   status: 'bekliyor' | 'yayinda' | 'reddedildi';
   receiptUri: string | null;
+  periodStart: string | null;
   periodEnd: string | null;
   createdAt: string;
 }

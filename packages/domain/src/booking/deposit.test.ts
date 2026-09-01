@@ -6,6 +6,7 @@ import {
   depositFor,
   depositRulesFrom,
   odemeReferansi,
+  reklamGunu,
 } from './deposit.js';
 
 test('20.000 ₸ hizmette peşinat 2.000 ₸ (%10)', () => {
@@ -84,4 +85,27 @@ test('ödeme referansı kararlı ve tek biçimli', () => {
   assert.equal(odemeReferansi('x9'), 'AYNA-X9');
   // Aynı girdi her zaman aynı çıktı — saklanmadığı için bu şart.
   assert.equal(odemeReferansi('bk-77aa'), odemeReferansi('bk-77aa'));
+});
+
+test('reklam gün sayacı: ilk gün 1/30, son gün 30/30', () => {
+  const GUN = 86_400_000;
+  const bas = Date.UTC(2026, 0, 1);
+  const bit = bas + 30 * GUN;
+  // İlk gün 1'dir; 0/30 göstermek insanın saymadığı gibi saymaktır.
+  assert.deepEqual(reklamGunu(bas, bit, bas), { gun: 1, toplam: 30, kalan: 30 });
+  assert.equal(reklamGunu(bas, bit, bas + 4 * 3600_000).gun, 1, 'ilk gün içinde hâlâ 1');
+  assert.equal(reklamGunu(bas, bit, bas + GUN).gun, 2);
+  assert.equal(reklamGunu(bas, bit, bas + 29 * GUN).gun, 30, 'son gün 30/30');
+  // Gün toplamı AŞAMAZ: süresi geçmiş kayıt "31/30" göstermemeli.
+  assert.equal(reklamGunu(bas, bit, bas + 45 * GUN).gun, 30);
+  assert.equal(reklamGunu(bas, bit, bas + 45 * GUN).kalan, 0, 'biten reklamda kalan 0');
+});
+
+test('reklam gün sayacı: kalan YUKARI yuvarlanır', () => {
+  const GUN = 86_400_000;
+  const bas = Date.UTC(2026, 0, 1);
+  const bit = bas + 30 * GUN;
+  // Son günün içindeki 4 saat de "1 gün kaldı"dır; 0 demek bitmiş demektir.
+  assert.equal(reklamGunu(bas, bit, bit - 4 * 3600_000).kalan, 1);
+  assert.equal(reklamGunu(bas, bit, bit).kalan, 0);
 });

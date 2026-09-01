@@ -77,3 +77,26 @@ export function odemeReferansi(bookingId: string): string {
     .slice(-5)
     .toUpperCase()}`;
 }
+
+/** Yayındaki reklamın gün durumu. */
+export type ReklamGunu = { gun: number; toplam: number; kalan: number };
+
+/**
+ * "1/30 · 29 gün kaldı" — yayındaki reklamın nerede olduğunu söyler.
+ *
+ * Uzman 200.000 ₸ ödedi; ne aldığını ve ne kadar kaldığını görmek hakkı.
+ * Hesap SAF ve tek yerde: ekranın içinde yapılsaydı sınır günleri (ilk gün,
+ * son gün, süresi geçmiş kayıt) sessizce yanlış çıkardı.
+ *
+ * · İlk gün 1/30'dur, 0/30 değil — insan günleri 1'den sayar.
+ * · `gun` toplamı AŞAMAZ: süresi geçmiş kayıt "31/30" göstermez.
+ * · `kalan` yukarı yuvarlanır: gün içindeki 4 saat de "1 gün kaldı"dır.
+ */
+export function reklamGunu(startMs: number, endMs: number, now = Date.now()): ReklamGunu {
+  const GUN = 24 * 60 * 60 * 1000;
+  const toplam = Math.max(1, Math.round((endMs - startMs) / GUN));
+  const gecen = Math.floor((now - startMs) / GUN);
+  const gun = Math.min(Math.max(gecen + 1, 1), toplam);
+  const kalan = Math.max(0, Math.ceil((endMs - now) / GUN));
+  return { gun, toplam, kalan };
+}
