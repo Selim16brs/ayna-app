@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
 import { useStore } from './store';
-import { type AdBanner, type Campaign, type Professional, type ProfessionalDetail } from './data';
+import { type Campaign, type Professional, type ProfessionalDetail } from './data';
 
 /**
  * İşletme kataloğu backend'den; API erişilemezse yerel veriye düşer (offline-first).
@@ -72,17 +72,6 @@ export function useCampaigns(): Campaign[] {
     staleTime: 60_000,
   });
   return data ?? []; // demo kampanya YOK — yalnız admin içeriği
-}
-
-// Reklam banner'ları (admin yönetimli); API erişilemezse yerel yedeğe düşer
-export function useAds(): AdBanner[] {
-  const { data } = useQuery({
-    queryKey: ['ads'],
-    queryFn: api.ads,
-    retry: 1,
-    staleTime: 60_000,
-  });
-  return data ?? []; // demo reklam YOK — yalnız admin içeriği
 }
 
 // Yükleme/bulunamama durumunda SAHTE kişilik yerine boş iskelet döner (ekranlar kırılmaz)

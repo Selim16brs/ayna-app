@@ -1,6 +1,5 @@
 import Constants from 'expo-constants';
 import type {
-  AdBanner,
   Appointment,
   Campaign,
   DemandMode,
@@ -649,7 +648,6 @@ export const api = {
   // §12 — kampanyalar (keşif vitrini)
   campaigns: () => get<Campaign[]>(`/campaigns${localeQuery()}`),
   // Reklam banner'ları (keşif ekranı sponsorlu şerit)
-  ads: () => get<AdBanner[]>(`/ads${localeQuery()}`),
   // Backend artık sector/kind/district/experienceYears döndürür → mobil Professional ile uyumlu
   professionals: () => get<Professional[]>('/professionals'),
   // §4.2 — uzmanın dolu aralıkları (yalnız zaman; müşteri bilgisi dönmez)
@@ -1170,19 +1168,6 @@ export const api = {
     }>('/referral/redeem', { code }, token),
 };
 
-// EK Z.8 — ödeme tipi
-export interface PaymentIntent {
-  id: string;
-  bookingId: string;
-  amount: number;
-  pointsUsed: number;
-  cashAmount: number;
-  method: string;
-  status: 'pending' | 'paid' | 'failed' | 'refunded';
-  providerRef: string | null;
-  paidAt: string | null;
-}
-
 // EK Z.6 — referans tipi
 export interface MyReferral {
   code: string;
@@ -1307,24 +1292,6 @@ export interface DisputeInput {
   amount?: number;
   receiptUri?: string;
   note?: string;
-}
-
-export interface CommissionInvoice {
-  id: string;
-  proId: string;
-  proName: string;
-  periodStart: string;
-  periodEnd: string;
-  bookingsCount: number;
-  grossRevenue: number;
-  commissionAmount: number;
-  dueDate: string;
-  status: 'pending' | 'collected' | 'overdue';
-  receiptUri: string | null;
-  receiptAt: string | null;
-  collectedAt: string | null;
-  overdueDays: number;
-  currency: string;
 }
 
 export interface AppConfig {
