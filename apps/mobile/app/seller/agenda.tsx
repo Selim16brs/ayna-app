@@ -912,12 +912,14 @@ const makeStyles = (colors: ColorTokens) =>
     serviceRow: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
     flexShrink: { flexShrink: 1 },
     kindTag: {
-      backgroundColor: colors.lavenderSoft,
+      // Lavanta rozet bir ŞEY anlatmıyordu — randevunun türü zaten yazıyla
+      // yazılı. Yeni dilde marka rozeti erik.
+      backgroundColor: colors.accentSoft,
       paddingHorizontal: space(0.75),
       paddingVertical: 2,
       borderRadius: radius.pill,
     },
-    kindText: { color: colors.lavender, fontFamily: font.semibold, fontSize: 10 },
+    kindText: { color: colors.accent, fontFamily: font.semibold, fontSize: 10 },
     rowRight: { alignItems: 'flex-end', gap: 4 },
     pill: {
       paddingHorizontal: space(1),

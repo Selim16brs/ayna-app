@@ -160,8 +160,10 @@ export default function PassportScreen() {
             </Text>
           </View>
           <View style={styles.row}>
-            <View style={[styles.icon, { backgroundColor: colors.lavenderSoft }]}>
-              <Ionicons name="calendar-outline" size={18} color={colors.lavender} />
+            {/* Altın PUANI, yeşil DOĞRULANMIŞLIĞI anlatıyor; lavanta hiçbir
+                şeyi anlatmıyordu — nötr marka rozeti erik. */}
+            <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+              <Ionicons name="calendar-outline" size={18} color={colors.accent} />
             </View>
             <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
               {t('passport.member_since')}
