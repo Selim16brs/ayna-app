@@ -23,7 +23,8 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Randevu dekontunu ve profil fotoğrafını yükleyebilmen için galerine erişiyoruz.",
         "NSCameraUsageDescription": "Dekont ve profil fotoğrafını çekebilmen için kamerayı kullanıyoruz.",
-        "NSLocationWhenInUseUsageDescription": "Yakınındaki uzmanları gösterebilmek için konumunu kullanıyoruz. Konumun kimseyle paylaşılmaz."
+        "NSLocationWhenInUseUsageDescription": "Yakınındaki uzmanları gösterebilmek için konumunu kullanıyoruz. Konumun kimseyle paylaşılmaz.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
