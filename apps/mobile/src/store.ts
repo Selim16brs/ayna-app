@@ -41,7 +41,6 @@ import {
   REMIND_30M_MS,
   REMIND_FREE_CANCEL_MS,
   RESPONSE_WINDOW_MS,
-  buildUpcomingEvents,
   type CareRoutine,
   type CirclePost,
   type CirclePostType,
@@ -58,7 +57,6 @@ import {
   type AlwaysBond,
   COMMISSION_PCT_STANDARD,
   SEED_APPOINTMENTS,
-  type UpcomingEvent,
   type UserAddress,
 } from './data';
 import { findServiceWithCategory, servicesOf } from './taxonomy';
@@ -3067,10 +3065,6 @@ useStore.persist.onFinishHydration((state) => {
     });
 });
 
-// ── Türetilmiş seçiciler (hook'larda kullanılabilir) ─────────────────────
-export const selectUpcomingEvents = (s: State): UpcomingEvent[] =>
-  buildUpcomingEvents(s.bookings, s.moments, s.careRoutines);
-
 // §9.1/§10 — aktif moda göre bildirim kitlesi: uzman/salon paneli 'seller', aksi 'user'.
 // Kitlesi tanımsız bildirimler (ortak/sistem) her iki modda görünür.
 // Satıcı hesabı (uzman/salon) her zaman panel bağlamındadır (müşteri modu kaldırıldı).
@@ -3196,27 +3190,11 @@ export const filterAlwaysIncoming = (
       bondIsMine(b, me, isProvider) &&
       bondInitiatedByOther(b, isProvider),
   );
-export const filterAlwaysOutgoing = (
-  bonds: AlwaysBond[],
-  me: string,
-  isProvider: boolean,
-): AlwaysBond[] =>
-  bonds.filter(
-    (b) =>
-      b.status === 'pending' &&
-      bondIsMine(b, me, isProvider) &&
-      !bondInitiatedByOther(b, isProvider),
-  );
 
 export const selectUnreadCount = (s: State): number => {
   const seller = selectSellerView(s);
   return s.notifications.filter((n) => !n.read && inAudience(n, seller)).length;
 };
-
-export const selectActiveBookings = (s: State): Appointment[] =>
-  // Kullanıcının "canlı" randevuları: slot tutan her durum. Elle sayınca yeni
-  // bir durum eklendiğinde listeden düşüyordu.
-  s.bookings.filter((b) => SLOT_HOLDING_STATES.includes(b.status as never));
 
 /**
  * EKRANDA GÖSTERİLECEK PORTRE — kesik portre yalnız GEÇERLİYSE kullanılır.

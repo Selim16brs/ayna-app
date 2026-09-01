@@ -57,8 +57,6 @@ export const AKIS_ADIMLARI = [
   { anahtar: 'tamamlandi', etiket: 'flow.step.tamamlandi' },
 ] as const satisfies readonly { anahtar: string; etiket: MessageKey }[];
 
-export type AdimAnahtari = (typeof AKIS_ADIMLARI)[number]['anahtar'];
-
 /**
  * Durum → zaman çizelgesinde KAÇINCI adımdayız.
  *

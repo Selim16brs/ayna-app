@@ -540,10 +540,3 @@ export const findServiceWithCategory = (
   }
   return undefined;
 };
-/** Bakım döngüsü olan hizmetler (bakım takvimi seçimi için). */
-export const careableServices = (): { categoryId: string; service: TaxService }[] =>
-  TAXONOMY.flatMap((c) =>
-    c.services
-      .filter((s) => s.periodDays != null)
-      .map((service) => ({ categoryId: c.id, service })),
-  );

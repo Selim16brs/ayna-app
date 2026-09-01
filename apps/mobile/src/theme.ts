@@ -172,4 +172,3 @@ export const theme = {
   space,
   shadow,
 } as const;
-export type Theme = typeof theme;
