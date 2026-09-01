@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, type BookingStats, type SellerReview } from '../../src/api';
@@ -71,6 +71,9 @@ export default function ReportsScreen() {
   const { staff: salonStaff } = useSalonStaff();
   const businessName = useStore((s) => s.currentUser?.businessName);
   // §4.4/§9.2 — ceza/kısıt durumu: hesap kısıtlıysa dashboard'da 7 gün sayaçlı uyarı
+  // Vitrin ücreti SUNUCUDAN: panelden değiştirilen fiyat eski sürümlerde
+  // yanlış görünmesin. Değer gelmemişse kart yine çiziliyor, fiyat varsayılan.
+  const reklamAylik = useStore((s) => s.config.rates.adMonthlyKzt);
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   const restrictedDays = useStore((s) => s.currentUser?.restrictedDaysLeft ?? 7);
   const binding =
@@ -490,6 +493,58 @@ export default function ReportsScreen() {
               onPress={() => router.push('/seller/agenda')}
             />
           </View>
+
+          {/* ── §reklam — VİTRİN SATIŞI ──
+              AYNA'nın kazanç alanı. Menü satırı olarak durduğu sürece
+              görülmüyordu: uzman ana sayfada gezinirken bir liste maddesi
+              dikkat çekmiyor. Burası bir REKLAM ÇALIŞMASI gibi duruyor —
+              teklifi, yerini ve fiyatı tek bakışta söylüyor. Yanıt & kalite
+              kartının ÜSTÜNDE, çünkü orası ekranın hâlâ okunan bölgesi. */}
+          <Pressable
+            onPress={() => router.push('/seller/ads')}
+            accessibilityRole="button"
+            accessibilityLabel={t('ads.promo.cta')}
+          >
+            <LinearGradient
+              colors={gradients.plum}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.reklamKart, shadow.card]}
+            >
+              {/* Filigran: kartın reklam olduğunu söyleyen sessiz işaret.
+                  Metnin arkasında kalıyor, okumayı engellemiyor. */}
+              <Ionicons
+                name="megaphone"
+                size={132}
+                color="rgba(255,255,255,0.07)"
+                style={styles.reklamFiligran}
+              />
+              <Text variant="label" style={styles.reklamUst}>
+                {t('ads.promo.eyebrow')}
+              </Text>
+              <Text variant="h2" style={styles.reklamBaslik}>
+                {t('ads.promo.title')}
+              </Text>
+              <Text variant="caption" style={styles.reklamGovde}>
+                {t('ads.promo.body')}
+              </Text>
+              <View style={styles.reklamAlt}>
+                <View style={styles.reklamFiyat}>
+                  <Text variant="captionStrong" style={styles.reklamFiyatYazi}>
+                    {fillParams(t('ads.promo.price'), {
+                      amount: (reklamAylik ?? 200000).toLocaleString('tr-TR'),
+                    })}
+                  </Text>
+                </View>
+                <View style={styles.reklamDugme}>
+                  <Text variant="captionStrong" style={styles.reklamDugmeYazi}>
+                    {t('ads.promo.cta')}
+                  </Text>
+                  <Ionicons name="arrow-forward" size={15} color={colors.accent} />
+                </View>
+              </View>
+            </LinearGradient>
+          </Pressable>
 
           {/* §9.2 — yanıt & kalite: ort. yanıt süresi + bekleyen dekont + tamamlanma oranı */}
           <View style={[styles.qualityCard, shadow.soft]}>
@@ -1086,6 +1141,43 @@ const makeStyles = (colors: ColorTokens) =>
     restrictCtaText: { fontSize: 14 },
 
     // §9.2 — yanıt & kalite kartı
+    // Vitrin satış kartı: çevresindeki yardımcı kartlardan bilerek AYRIŞIYOR
+    // (koyu zemin, büyük başlık, tek çağrı). Kazanç alanı sessiz durmamalı.
+    reklamKart: {
+      borderRadius: radius.lg,
+      padding: space(2.25),
+      gap: space(0.75),
+      marginBottom: space(2),
+      overflow: 'hidden',
+    },
+    reklamFiligran: { position: 'absolute', right: -18, bottom: -26 },
+    reklamUst: { color: 'rgba(255,255,255,0.70)', letterSpacing: 1.4 },
+    reklamBaslik: { color: colors.onColor },
+    reklamGovde: { color: 'rgba(255,255,255,0.78)', lineHeight: 18 },
+    reklamAlt: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: space(1),
+      marginTop: space(1),
+    },
+    reklamFiyat: {
+      paddingHorizontal: space(1.25),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      backgroundColor: 'rgba(255,255,255,0.14)',
+    },
+    reklamFiyatYazi: { color: colors.onColor },
+    reklamDugme: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(0.75),
+      paddingHorizontal: space(1.75),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.onColor,
+    },
+    reklamDugmeYazi: { color: colors.accent },
     qualityCard: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,

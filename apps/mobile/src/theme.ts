@@ -36,7 +36,11 @@ export const darkGradients: GradientTokens = {
   gold: ['#E794AF', '#D97798'] as const, // koyuda CTA gül
   rose: ['#E794AF', '#C4657F'] as const,
   teal: ['#7FA38E', '#5E8471'] as const,
-  plum: ['#AA9AC4', '#8E7BA8'] as const,
+  // Plum DOLU BİR YÜZEY ve üstüne HER ZAMAN beyaz yazı geliyor (7 ekran).
+  // Koyuda accent'i açmak metin/ikon için doğru, dolu yüzey için değil:
+  // '#AA9AC4' üstünde beyaz 2.58:1 ölçülüyor — okunmuyor. Bu çift 7.72:1
+  // veriyor ve koyu zeminden (#1A1419) yine ayrışıyor.
+  plum: ['#7A3C73', '#63305E'] as const,
 };
 
 export type GradientTokens = { [K in keyof typeof lightGradients]: readonly [string, string] };

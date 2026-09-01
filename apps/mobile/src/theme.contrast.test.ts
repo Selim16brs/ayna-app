@@ -120,3 +120,49 @@ test('METİN token’ı ZEMİN olarak kullanılmıyor', () => {
       'Ters yüzey için colors.inverse + colors.onInverse kullan.',
   );
 });
+
+/** Yarı saydam beyazı bir zemine bindirir (rgba metinlerin GERÇEK rengi). */
+function uzerine(alpha: number, zemin: string): string {
+  const h = zemin.replace('#', '');
+  const kanallar = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+  return (
+    '#' +
+    kanallar
+      .map((z) => Math.round(alpha * 255 + (1 - alpha) * z))
+      .map((x) => x.toString(16).padStart(2, '0'))
+      .join('')
+  );
+}
+
+test('plum DOLU YÜZEY: beyaz yazı iki temada da okunuyor', () => {
+  // Plum 7 ekranda dolu yüzey olarak kullanılıyor ve üstüne HER ZAMAN beyaz
+  // yazı geliyor. Koyu temada accent'i açmak metin/ikon için doğru ama dolu
+  // yüzey için değildi: eski '#AA9AC4' üstünde beyaz 2.58:1 ölçülüyordu —
+  // yani yedi ekranda okunmayan başlık.
+  // `theme.ts` doğrudan import EDİLEMİYOR: react-native'i çekiyor ve test
+  // koşucusu onu çeviremiyor. Değerler kaynaktan okunuyor — mevcut testlerin
+  // kullandığı yöntemin aynısı.
+  const kaynak = readFileSync(join(import.meta.dirname, 'theme.ts'), 'utf8');
+  const cift = (blok: string): [string, string] => {
+    const b = kaynak.slice(kaynak.indexOf(blok));
+    const m = /plum: \['(#[0-9A-Fa-f]{6})', '(#[0-9A-Fa-f]{6})'\]/.exec(b);
+    assert.ok(m, `${blok} içinde plum bulunamadı`);
+    return [m![1]!, m![2]!];
+  };
+  for (const [tema, g] of [
+    ['açık', cift('export const lightGradients')],
+    ['koyu', cift('export const darkGradients')],
+  ] as const) {
+    for (const zemin of g) {
+      assert.ok(
+        kontrast('#FFFFFF', zemin) >= 4.5,
+        `${tema} tema plum ${zemin}: beyaz başlık ${kontrast('#FFFFFF', zemin).toFixed(2)}:1`,
+      );
+      // Kartın gövde (.78) ve üst (.70) yazıları da okunmalı.
+      for (const a of [0.78, 0.7]) {
+        const o = kontrast(uzerine(a, zemin), zemin);
+        assert.ok(o >= 4.5, `${tema} tema plum ${zemin}: %${a * 100} beyaz ${o.toFixed(2)}:1`);
+      }
+    }
+  }
+});

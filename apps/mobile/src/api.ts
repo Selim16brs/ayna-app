@@ -1357,6 +1357,8 @@ export interface AppConfig {
     premiumUserKzt: number;
     premiumSalonKzt: number;
     raffleCost: number;
+    /** §reklam — vitrin aylık ücreti (panelden yönetilir). */
+    adMonthlyKzt?: number;
   };
   cities: { active: string[]; soon: string[] };
   /**
