@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { esikGecti } from '@ayna/domain';
 import { formatSlotTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { radius, shadow, space, type ColorTokens } from '../../src/theme';
-import { useThemedStyles } from '../../src/theme-context';
+import { font, type ColorTokens } from '../../src/theme';
+import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, DateField, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 /**
@@ -24,6 +25,7 @@ import { Button, DateField, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from 
 export default function RescheduleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useLocale();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
 
@@ -77,26 +79,30 @@ export default function RescheduleScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('reschedule.title')} />
       <ScrollView contentContainerStyle={styles.icerik} showsVerticalScrollIndicator={false}>
-        <View style={[styles.kart, shadow.card]}>
-          <Text variant="caption" tone="muted">
-            {t('reschedule.current')}
-          </Text>
-          <Text variant="bodyStrong" tone="ink">
-            {formatSlotTr(booking.startMs)}
-          </Text>
+        <View style={styles.kart}>
+          <Text style={styles.etiket}>{t('reschedule.current')}</Text>
+          <View style={styles.mevcutSatir}>
+            <View style={styles.mevcutFoto} />
+            <View style={styles.buyu}>
+              <Text style={styles.mevcutAd} numberOfLines={1}>
+                {booking.proName}
+              </Text>
+              <Text style={styles.mevcutZaman}>{formatSlotTr(booking.startMs)}</Text>
+            </View>
+          </View>
         </View>
 
         {esikGectiMi ? (
           // Kapalıyken seçici HİÇ gösterilmiyor: seçtirip sonra reddetmek,
           // kullanıcıyı boşa uğraştırmak olurdu.
-          <View style={[styles.kart, shadow.card]}>
-            <Text variant="body" tone="muted" style={styles.not}>
-              {t('reschedule.closed')}
-            </Text>
+          <View style={styles.kapaliKart}>
+            <Ionicons name="time-outline" size={18} color={colors.muted} />
+            <Text style={styles.kapaliYazi}>{t('reschedule.closed')}</Text>
           </View>
         ) : (
           <>
-            <View style={[styles.kart, shadow.card]}>
+            <Text style={styles.bolumBaslik}>{t('reschedule.new_time')}</Text>
+            <View style={styles.kart}>
               <DateField
                 label={t('reschedule.new_time')}
                 value={ne}
@@ -106,11 +112,17 @@ export default function RescheduleScreen() {
                 last
               />
             </View>
-            <View style={[styles.kart, shadow.card]}>
-              <Text variant="caption" tone="muted" style={styles.not}>
-                {t('reschedule.rule')}
-              </Text>
+
+            {/* ERTELEME HAKKI — altın uyarı. Kullanıcı tek hakkını
+                harcamadan ÖNCE görmeli; kuralı sonradan söylemek geç. */}
+            <View style={styles.kuralKart}>
+              <Ionicons name="swap-horizontal" size={18} color={colors.gold} />
+              <View style={styles.buyu}>
+                <Text style={styles.kuralBaslik}>{t('reschedule.rule_title')}</Text>
+                <Text style={styles.kuralNot}>{t('reschedule.rule')}</Text>
+              </View>
             </View>
+
             <Button label={t('reschedule.submit')} disabled={busy} onPress={() => void gonder()} />
           </>
         )}
@@ -121,13 +133,62 @@ export default function RescheduleScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    icerik: { padding: space(2), gap: space(1.5), paddingBottom: TAB_BAR_CLEARANCE },
-    bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(3) },
+    icerik: { padding: 24, gap: 20, paddingBottom: TAB_BAR_CLEARANCE },
+    bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+    buyu: { flex: 1 },
     kart: {
       backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(2),
-      gap: space(0.75),
+      borderRadius: 20,
+      padding: 16,
+      gap: 10,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
-    not: { lineHeight: 18 },
+    etiket: {
+      fontFamily: font.semibold,
+      fontSize: 11,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+      color: colors.muted,
+    },
+    mevcutSatir: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    mevcutFoto: { width: 44, height: 44, borderRadius: 100, backgroundColor: colors.accentSoft },
+    mevcutAd: { fontFamily: font.semibold, fontSize: 15, color: colors.ink },
+    mevcutZaman: { fontFamily: font.regular, fontSize: 11, color: colors.muted, marginTop: 2 },
+    bolumBaslik: { fontFamily: font.semibold, fontSize: 18, color: colors.ink, marginBottom: -8 },
+    kapaliKart: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    kapaliYazi: {
+      flex: 1,
+      fontFamily: font.regular,
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors.muted,
+    },
+    kuralKart: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10,
+      backgroundColor: colors.goldSoft,
+      borderRadius: 20,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.gold,
+    },
+    kuralBaslik: { fontFamily: font.semibold, fontSize: 13, color: colors.gold },
+    kuralNot: {
+      fontFamily: font.regular,
+      fontSize: 11,
+      lineHeight: 15,
+      color: colors.muted,
+      marginTop: 2,
+    },
   });

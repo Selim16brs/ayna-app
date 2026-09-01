@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap">
+  <style>
+    /* AYNA tasarım dili — Figma ayna-home / ayna-expert'ten ölçülen değerler.
+       Uygulamadaki theme.ts ile birebir aynı. */
+    :root{
+      --bg:#FAF7F5; --surface:#FFFFFF; --ink:#1E0E1B; --inkSoft:#4A3A47; --muted:#68536A;
+      --accent:#4A1942; --accentDeep:#2D0A2E; --accentSoft:#E8D9EB; --onAccent:#FFF0F5;
+      --line:#EFEBE9; --lineStrong:#E5E0DE;
+      --gold:#9A5A05; --goldFill:#D97706; --goldSoft:#FDF3E7;
+      --success:#2F7A4A; --successSoft:#E3F2E8; --danger:#A93E4D; --dangerSoft:#F9E9EB;
+      --accent07:rgba(74,25,66,0.07); --accent15:rgba(74,25,66,0.15);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:Onest,system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+    a{color:var(--accent)} a:hover{color:#642855}
+    /* Tipografi — Figma ölçeği */
+    .h1{font-weight:600;font-size:20px;line-height:26px;letter-spacing:-.3px}
+    .h2{font-weight:600;font-size:18px;line-height:24px;letter-spacing:-.2px}
+    .cardTitle{font-weight:600;font-size:16px;line-height:21px}
+    .rowTitle{font-weight:600;font-size:15px;line-height:20px}
+    .body{font-weight:400;font-size:13px;line-height:18px}
+    .bodyStrong{font-weight:600;font-size:13px;line-height:18px}
+    .micro{font-weight:400;font-size:11px;line-height:15px}
+    .microStrong{font-weight:600;font-size:11px;line-height:15px}
+    .label{font-weight:600;font-size:11px;line-height:14px;letter-spacing:.6px;text-transform:uppercase}
+    .big{font-weight:600;font-size:22px;line-height:28px}
+    .muted{color:var(--muted)} .soft{color:var(--inkSoft)}
+    /* Kart — Figma: radius 24 (büyük) / 20 (orta) / 16 (iç) */
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:20px;
+          box-shadow:0 12px 32px -8px rgba(0,0,0,.08)}
+    .card20{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;
+            box-shadow:0 8px 10px rgba(0,0,0,.05)}
+    .col{display:flex;flex-direction:column}
+    .row{display:flex;flex-direction:row;align-items:center}
+    .grow{flex:1}
+    .screen{width:390px;background:var(--bg);display:flex;flex-direction:column;padding-bottom:32px}
+    /* Başlık şeridi */
+    .head{display:flex;align-items:center;gap:12px;padding:14px 24px 4px}
+    .back{width:40px;height:40px;border-radius:100px;background:var(--surface);border:1px solid var(--line);
+          display:flex;align-items:center;justify-content:center}
+    /* Düğme — pill, 13px semibold */
+    .btn{height:52px;border-radius:100px;display:flex;align-items:center;justify-content:center;
+         background:var(--accent);color:var(--onAccent);font-weight:600;font-size:15px}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--lineStrong)}
+    .btn.dim{background:var(--accentSoft);color:var(--accent)}
+    /* Rozet — Figma badge-expert */
+    .chip{display:inline-flex;align-items:center;padding:2px 6px;border-radius:6px;
+          background:var(--accent07);border:1px solid var(--accent);color:var(--accent);
+          font-weight:600;font-size:9px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:100px;
+          font-weight:500;font-size:12px}
+    /* Ölçüt kutusu — Figma metric-box */
+    .metric{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px;
+            border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+    .metric.gold{background:var(--goldSoft);border-color:var(--gold)}
+    /* İlerleme — Figma progress-bar-track */
+    .track{height:4px;border-radius:100px;background:var(--accent07);overflow:hidden}
+    .fill{height:4px;border-radius:100px;background:var(--accent)}
+    /* Segment — Figma tab-bar */
+    .seg{display:flex;gap:4px;padding:4px;border-radius:100px;background:var(--accent07)}
+    .seg > div{flex:1;text-align:center;padding:10px 16px;border-radius:100px;font-weight:500;font-size:13px;color:var(--muted)}
+    .seg > div.on{background:var(--surface);color:var(--accent);font-weight:600}
+    .sec{padding:0 24px;margin-top:20px;display:flex;flex-direction:column;gap:12px}
+  </style>
+</helmet>
+
+<div class="screen">
+  <div class="head"><div class="back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E0E1B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></div><div class="h1">Depozito öde</div></div>
+
+  <div class="sec">
+    <div style="border-radius:20px;padding:14px 16px;background:var(--dangerSoft);border:1px solid var(--danger);display:flex;align-items:center;gap:10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A93E4D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <div class="body"><span style="color:var(--danger);font-weight:600">09:19</span> <span class="muted">içinde ödemezsen randevu düşer</span></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div style="border-radius:24px;padding:20px;background:linear-gradient(146deg,var(--accent) 25%,var(--accentDeep) 75%);display:flex;flex-direction:column;gap:6px">
+      <div class="label" style="color:rgba(255,240,245,.62)">Ödenecek tutar</div>
+      <div style="font-weight:600;font-size:34px;line-height:40px;color:var(--onAccent)">2.100 ₸</div>
+      <div class="micro" style="color:#C5A3C7">Toplam 21.000 ₸ hizmet bedelinin %10'u</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="card20" style="display:flex;align-items:center;gap:14px">
+      <div style="width:22px;height:22px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFF0F5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <div class="grow" style="min-width:0">
+        <div class="bodyStrong">376 puan kullan</div>
+        <div class="micro muted">Biriken puanının en fazla %25'i</div>
+      </div>
+      <div class="rowTitle" style="color:var(--success);flex-shrink:0">−376 ₸</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="h2">Kaspi ile öde</div>
+    <div class="card20" style="display:flex;flex-direction:column;gap:12px">
+      <div class="row" style="gap:12px;align-items:flex-start">
+        <div style="width:20px;height:20px;border-radius:100px;background:var(--accent07);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="microStrong" style="color:var(--accent)">1</span></div>
+        <div class="body grow">Alıcı hazır gelir — hesap numarası yazmana gerek yok</div></div><div class="row" style="gap:12px;align-items:flex-start">
+        <div style="width:20px;height:20px;border-radius:100px;background:var(--accent07);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="microStrong" style="color:var(--accent)">2</span></div>
+        <div class="body grow">Tutarı elle gir: <b>2.100 ₸</b></div></div><div class="row" style="gap:12px;align-items:flex-start">
+        <div style="width:20px;height:20px;border-radius:100px;background:var(--accent07);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="microStrong" style="color:var(--accent)">3</span></div>
+        <div class="body grow">Açıklamaya ödeme kodunu yaz</div></div>
+    </div>
+    <div class="btn">Kaspi ile öde</div>
+  </div>
+
+  <div class="sec">
+    <div class="card20" style="display:flex;flex-direction:column;gap:10px;border-color:var(--accent15)">
+      <div class="label" style="color:var(--accent)">Dekontla birlikte gönderilecek</div>
+      <div class="row" style="justify-content:space-between">
+        <span class="body muted">Ödeme kodu</span>
+        <span class="cardTitle" style="letter-spacing:1.5px">AYNA-2T4K9</span>
+      </div>
+      <div class="row" style="justify-content:space-between">
+        <span class="body muted">Randevu no</span>
+        <span class="bodyStrong" style="letter-spacing:1px">bk-f2t4k9a</span>
+      </div>
+      <div class="micro muted">Kodu Kaspi'de açıklama alanına yaz. Ödemeni bu randevuyla bu kod eşleştiriyor.</div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="card20" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:132px;border-style:dashed;border-color:var(--lineStrong);box-shadow:none">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#68536A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+      <div class="body muted">Dekontu yükle</div>
+    </div>
+    <div class="btn dim">Dekontu gönder</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

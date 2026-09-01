@@ -193,6 +193,7 @@ export const tr = {
   'reschedule.title': 'Randevuyu ertele',
   'reschedule.current': 'Mevcut randevu',
   'reschedule.new_time': 'Yeni tarih & saat',
+  'reschedule.rule_title': 'Randevu başına 1 erteleme',
   'reschedule.rule':
     'Erteleme randevu başına 1 kez. Uzman kabul ederse depozito aynen yeni tarihe taşınır, yeni ödeme yapmazsın.',
   'reschedule.submit': 'Erteleme talebi gönder',

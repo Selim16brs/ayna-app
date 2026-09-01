@@ -181,6 +181,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reschedule.title': 'Жазылуды кейінге қалдыру',
   'reschedule.current': 'Ағымдағы жазылу',
   'reschedule.new_time': 'Жаңа күн және уақыт',
+  'reschedule.rule_title': 'Жазылуға 1 рет ауыстыру',
   'reschedule.rule':
     'Кейінге қалдыру жазылуға 1 рет. Маман қабылдаса депозит жаңа күнге көшеді, қайта төлемейсің.',
   'reschedule.submit': 'Кейінге қалдыру өтінішін жіберу',

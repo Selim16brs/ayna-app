@@ -4,15 +4,14 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { formatPrice } from '../../src/data';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
-import type { MessageKey } from '@ayna/i18n';
-import { type ColorTokens, radius, space } from '../../src/theme';
+import { font, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { Button, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 export default function ConfirmedScreen() {
   const router = useRouter();
   const { t } = useLocale();
-  const { colors, shadow } = useTheme();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const params = useLocalSearchParams<{
     proId?: string;
@@ -34,43 +33,44 @@ export default function ConfirmedScreen() {
     <Screen edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.successCircle}>
-          <Ionicons name="checkmark" size={42} color={colors.onAccent} />
+          <Ionicons name="checkmark" size={42} color={colors.success} />
         </View>
-        <Text variant="title" tone="ink" style={styles.title}>
-          {t('quote.sent.title')}
-        </Text>
-        <Text variant="caption" tone="muted" style={styles.subtitle}>
-          {t('booking.confirmed.awaiting')}
-        </Text>
+        <Text style={styles.title}>{t('quote.sent.title')}</Text>
+        <Text style={styles.subtitle}>{t('booking.confirmed.awaiting')}</Text>
 
-        <View style={[styles.card, shadow.card]}>
-          <Field icon="cut-outline" labelKey="booking.field.service" value={serviceLabel} />
+        <View style={styles.card}>
+          <View style={styles.proSatir}>
+            <View style={styles.proFoto} />
+            <View style={styles.buyu}>
+              <Text style={styles.proAd} numberOfLines={1}>
+                {isSalon ? pro.name : pro.name}
+              </Text>
+              <Text style={styles.proHizmet} numberOfLines={1}>
+                {isSalon ? t('booking.field.salon') : t('booking.field.pro')}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.ayrac} />
+          <Ozet label={t('booking.field.service')} value={serviceLabel} />
+          <Ozet label={t('booking.field.datetime')} value={params.slot ?? ''} />
+          <Ozet label={t('booking.field.price')} value={formatPrice(price)} />
           {isSalon ? (
             <>
-              <Field icon="business-outline" labelKey="booking.field.salon" value={pro.name} />
-              <Field
-                icon="person-outline"
-                labelKey="booking.field.pro"
+              <Ozet label={t('booking.field.salon')} value={pro.name} />
+              <Ozet
+                label={t('booking.field.pro')}
                 value={params.uzmanName || pro.staff[0]?.name || pro.name}
               />
             </>
-          ) : (
-            <Field icon="person-outline" labelKey="booking.field.pro" value={pro.name} />
-          )}
-          <Field icon="time-outline" labelKey="booking.field.datetime" value={params.slot ?? ''} />
-          <Field
-            icon="pricetag-outline"
-            labelKey="booking.field.price"
-            value={formatPrice(price)}
-            last
-          />
+          ) : null}
         </View>
 
+        {/* GİZLİLİK — Figma dilinde accent %7 zeminli bilgi kutusu.
+            Adresin ne zaman açıldığını ve numaranın paylaşılmadığını
+            kullanıcı burada, beklemeye başlarken bilmeli. */}
         <View style={styles.note}>
-          <Ionicons name="lock-closed" size={13} color={colors.muted} />
-          <Text variant="caption" tone="muted" style={styles.noteText}>
-            {t('booking.address_note')}
-          </Text>
+          <Ionicons name="lock-closed" size={16} color={colors.accent} />
+          <Text style={styles.noteText}>{t('booking.address_note')}</Text>
         </View>
       </ScrollView>
 
@@ -85,85 +85,88 @@ export default function ConfirmedScreen() {
   );
 }
 
-function Field({
-  icon,
-  labelKey,
-  value,
-  last,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  labelKey: MessageKey;
-  value: string;
-  last?: boolean;
-}) {
-  const { t } = useLocale();
-  const { colors } = useTheme();
+/** Özet satırı — solda etiket, sağda değer (Figma `fin-row`). */
+function Ozet({ label, value }: { label: string; value: string }) {
   const styles = useThemedStyles(makeStyles);
   return (
-    <View style={[styles.field, !last && styles.fieldBorder]}>
-      <View style={styles.fieldIcon}>
-        <Ionicons name={icon} size={17} color={colors.ink} />
-      </View>
-      <View style={styles.fieldText}>
-        <Text variant="caption" tone="muted">
-          {t(labelKey)}
-        </Text>
-        <Text variant="bodyStrong" tone="ink">
-          {value}
-        </Text>
-      </View>
+    <View style={styles.ozetSatir}>
+      <Text style={styles.ozetEtiket}>{label}</Text>
+      <Text style={styles.ozetDeger}>{value}</Text>
     </View>
   );
 }
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), alignItems: 'stretch', paddingBottom: space(2) },
-    successCircle: {
-      width: 84,
-      height: 84,
-      borderRadius: 42,
-      backgroundColor: colors.accent,
+    content: {
+      padding: 24,
+      gap: 16,
       alignItems: 'center',
+      flexGrow: 1,
       justifyContent: 'center',
-      alignSelf: 'center',
-      marginTop: space(2),
-    },
-    title: { textAlign: 'center', marginTop: space(2) },
-    subtitle: { textAlign: 'center', marginTop: space(1), marginBottom: space(3) },
-    card: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      paddingHorizontal: space(2),
-    },
-    field: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1.5),
-      paddingVertical: space(1.75),
-    },
-    fieldBorder: { borderBottomWidth: 1, borderBottomColor: colors.line },
-    fieldIcon: {
-      width: 38,
-      height: 38,
-      borderRadius: radius.md,
-      backgroundColor: colors.accentSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    fieldText: { flex: 1, gap: 2 },
-    note: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1),
-      marginTop: space(2),
-      paddingHorizontal: space(1),
-    },
-    noteText: { flex: 1 },
-    footer: {
-      paddingHorizontal: space(3),
-      paddingTop: space(1.5),
-      // Şeridin ALT boşluğu hiç yoktu: düğme barın altında kalıyordu.
       paddingBottom: TAB_BAR_CLEARANCE,
     },
+    buyu: { flex: 1 },
+    successCircle: {
+      width: 96,
+      height: 96,
+      borderRadius: 100,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.successSoft,
+    },
+    title: {
+      fontFamily: font.semibold,
+      fontSize: 20,
+      lineHeight: 26,
+      color: colors.ink,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontFamily: font.regular,
+      fontSize: 13,
+      lineHeight: 18,
+      color: colors.muted,
+      textAlign: 'center',
+      marginTop: -8,
+    },
+    card: {
+      width: '100%',
+      backgroundColor: colors.surface,
+      borderRadius: 24,
+      padding: 20,
+      gap: 12,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    proSatir: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    proFoto: { width: 48, height: 48, borderRadius: 100, backgroundColor: colors.accentSoft },
+    proAd: { fontFamily: font.semibold, fontSize: 15, color: colors.ink },
+    proHizmet: { fontFamily: font.regular, fontSize: 11, color: colors.muted, marginTop: 2 },
+    ayrac: { height: 1, backgroundColor: colors.line },
+    ozetSatir: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 12,
+    },
+    ozetEtiket: { fontFamily: font.regular, fontSize: 13, color: colors.muted },
+    ozetDeger: { fontFamily: font.semibold, fontSize: 13, color: colors.ink },
+    note: {
+      width: '100%',
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 10,
+      backgroundColor: colors.accentSoft,
+      borderRadius: 20,
+      padding: 16,
+    },
+    noteText: {
+      flex: 1,
+      fontFamily: font.regular,
+      fontSize: 11,
+      lineHeight: 15,
+      color: colors.accent,
+    },
+    footer: { padding: 24, paddingTop: 0, paddingBottom: TAB_BAR_CLEARANCE },
   });
