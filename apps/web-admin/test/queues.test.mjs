@@ -96,3 +96,41 @@ test('her onay sekmesi gerçekten çiziliyor', () => {
   const eksik = navIds.filter((id) => !render.has(id));
   assert.deepEqual(eksik, [], `Nav'da olup çizilmeyen sekme(ler): ${eksik.join(', ')}`);
 });
+
+/**
+ * ULAŞILABİLİRLİK — bu testin kaçırdığı halka.
+ *
+ * Yukarıdaki testler "ekran var mı, fonksiyon çağrılıyor mu" diye bakıyordu ve
+ * hepsi GEÇİYORDU. Oysa `tab === 'bookings'` görünümü menüde HİÇ YOKTU:
+ * dekont doğrulama, iadeler, uzlaşma ve reklam ödemeleri kuyruklarının
+ * tamamı yazılmış, çağrılmış ama panelde AÇILAMIYORDU. Kod var, kapı yok.
+ * Kurucunun "depozito talebi admin paneline ulaşmıyor" şikâyetinin ikinci
+ * yarısı buydu.
+ */
+test('render edilen HER sekmenin menüde girişi var', () => {
+  const render = [...ui.matchAll(/\{tab === '(\w+)' &&/g)].map((m) => m[1]);
+  // Menü girdileri tek satırda da, çok satırlı da yazılabiliyor; desen
+  // BİÇİME değil `id:` + `label:` ikilisine bakmalı.
+  const menu = new Set([...ui.matchAll(/id: '(\w+)',\s*\n?\s*label: '/g)].map((m) => m[1]));
+  const ulasilmaz = render.filter((t) => !menu.has(t));
+  assert.deepEqual(
+    ulasilmaz,
+    [],
+    `Menüde girişi olmayan sekme(ler): ${ulasilmaz.join(', ')} — ekran var ama açılamıyor`,
+  );
+});
+
+test('reklam ödeme kuyruğu: uç, istemci, ekran ve panoda sayaç', () => {
+  // Reklam AYNA'nın kazanç kalemi; zincirin her halkası duracak.
+  assert.match(api, /^\s{2}reklamSiparisleri\s*:/m, 'kuyruk istemcide yok');
+  assert.match(api, /^\s{2}reklamOnayla\s*:/m, 'onay istemcide yok');
+  assert.ok(ui.includes('api.reklamOnayla('), 'onay hiçbir ekranda çağrılmıyor');
+  // Onay, reklamı yönettiğin sekmede olmalı — kimse randevu kuyruklarında
+  // reklam onayı aramaz.
+  const ads = ui.slice(ui.indexOf('function AdsView()'));
+  assert.ok(
+    ads.slice(0, ads.indexOf('\nfunction ')).includes('api.reklamOnayla('),
+    'reklam onayı Reklamlar sekmesinde değil',
+  );
+  assert.match(ui, /key: 'adOrders'/, 'panoda bekleyen reklam ödemesi sayacı yok');
+});
