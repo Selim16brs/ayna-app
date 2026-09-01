@@ -290,9 +290,11 @@ function OfferCard({
                 {offer.rating.toFixed(1)} · {offer.reviewCount}
               </Text>
             </View>
-            <View style={[styles.metaChip, { backgroundColor: colors.blueSoft }]}>
-              <Ionicons name="location" size={11} color={colors.blue} />
-              <Text variant="caption" style={{ color: colors.blue }}>
+            {/* Mesafe bir UYARI ya da BİLGİ durumu değil; mavi bilgi rengi
+                buraya ait değildi. Keşfetteki zaman rozetiyle aynı dil. */}
+            <View style={[styles.metaChip, { backgroundColor: colors.accentSoft }]}>
+              <Ionicons name="location" size={11} color={colors.accent} />
+              <Text variant="caption" style={{ color: colors.accent }}>
                 {offer.distanceKm} km
               </Text>
             </View>

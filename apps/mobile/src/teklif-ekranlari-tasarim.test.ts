@@ -109,3 +109,39 @@ test('fotoğraflı teklifin çipi DOLU GRİ LEKE değil', () => {
   assert.match(blok, /backgroundColor: colors\.surface/, 'çip yüzey zemininde değil');
   assert.match(blok, /borderColor: colors\.line/, 'çipin ince çizgisi yok');
 });
+
+/**
+ * SÜS AMAÇLI RENK — kaldırıldı.
+ *
+ * Yeni dil tek vurgu rengi kullanıyor; renk ancak BİR ŞEY anlatıyorsa
+ * kalabilir (altın = puan, yeşil = onay/başarı, kırmızı = tehlike).
+ * Aşağıdaki üç yerde renk hiçbir şey anlatmıyordu.
+ */
+test('süs amaçlı lavanta/mavi rozetler ERİK oldu', () => {
+  // Biçime değil, RENGE bakıyoruz: Prettier satırı nasıl sararsa sarsın
+  // lavanta/mavi bu üç dosyada hiç kalmamalı.
+  const yerler = [
+    ['seller/agenda.tsx', ['lavenderSoft', 'colors.lavender']],
+    ['profile/passport.tsx', ['lavenderSoft', 'colors.lavender']],
+    ['quote/results.tsx', ['blueSoft', 'colors.blue']],
+  ] as const;
+  for (const [dosya, oluler] of yerler) {
+    const k = yorumsuz(oku(dosya));
+    for (const olu of oluler) {
+      assert.doesNotMatch(
+        k,
+        new RegExp(olu.replace('.', '\\.') + '\\b'),
+        `${dosya}: ${olu} hâlâ duruyor`,
+      );
+    }
+    assert.match(k, /colors\.accentSoft/, `${dosya}: erik rozet yok`);
+  }
+});
+
+test('ANLAMLI renkler yerinde duruyor', () => {
+  // Bu temizlik semantik rengi süpürmemeli: altın puanı, yeşil onayı,
+  // mavi bilgiyi anlatmaya devam ediyor.
+  const pasaport = yorumsuz(oku('profile/passport.tsx'));
+  assert.match(pasaport, /colors\.goldSoft/, 'puan rozetinin altını gitmiş');
+  assert.match(pasaport, /colors\.successSoft/, 'doğrulama rozetinin yeşili gitmiş');
+});
