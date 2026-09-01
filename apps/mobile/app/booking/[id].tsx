@@ -53,7 +53,6 @@ export default function BookingDetail() {
   const router = useRouter();
 
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
-  const currentUser = useStore((s) => s.currentUser);
   const rates = useStore((s) => s.config.rates);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
   const randevuEylemi = useStore((s) => s.randevuEylemi);
@@ -71,8 +70,19 @@ export default function BookingDetail() {
     );
   }
 
-  const rol: Rol =
-    currentUser?.role === 'professional' || currentUser?.role === 'salon' ? 'uzman' : 'musteri';
+  /**
+   * BU RANDEVUDAKİ rolüm — hesabımın türü değil.
+   *
+   * Burada `currentUser.role` okunuyordu: uzman hesabı olan biri BAŞKA bir
+   * uzmandan randevu aldığında kendi müşteri randevusunda uzman ekranını
+   * görüyordu — kendi aldığı randevuda "Onayla" düğmesi, başlıkta kendi
+   * adı yerine "Müşteri". İki tarafın ekranları birbirine karışıyordu.
+   *
+   * `benimRolum` sunucudan geliyor (ayrı uçlar). Yerelde henüz eşitlenmemiş
+   * yeni randevuda alan boş olabilir: o randevuyu KULLANICI oluşturmuştur,
+   * yani müşteridir.
+   */
+  const rol: Rol = booking.benimRolum ?? 'musteri';
 
   // §4.4 — peşin %10; kalan bakiye hizmetten sonra doğrudan uzmana ödenir.
   const pesinat = randevuDepozitosu(booking, rates);

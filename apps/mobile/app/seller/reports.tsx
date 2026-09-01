@@ -15,7 +15,13 @@ import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
 import { useSalonStaff } from '../../src/staff';
 import { formatSlotTr } from '../../src/datetime';
-import { selectCommissionRate, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
+import {
+  selectCommissionRate,
+  selectPortrait,
+  selectUnreadCount,
+  useStore,
+  uzmanRandevulari,
+} from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -41,8 +47,12 @@ export default function ReportsScreen() {
   const salonName = useStore((s) => s.currentUser?.name) ?? 'AYNA İşletme';
   const portre = useStore(selectPortrait); // bayat portre otomatik elenir
   /** §4.2 — uzmanın yanıtını bekleyen talepler; en yakın saat önce. */
+  // §9.4 — YALNIZ uzman olarak gelen talepler. Uzmanın kendi müşteri
+  // randevuları burada görünmemeli: onlar onun kararını beklemiyor.
   const bekleyenTalepler = useStore((st) =>
-    st.bookings.filter((b) => b.status === 'onay_bekliyor').sort((a, b) => a.startMs - b.startMs),
+    uzmanRandevulari(st)
+      .filter((b) => b.status === 'onay_bekliyor')
+      .sort((a, b) => a.startMs - b.startMs),
   );
   const insets = useSafeAreaInsets();
   // Karşılama için ad (Keşfet dili) — ilk isim, ilk harf büyük (el yazısı katman)

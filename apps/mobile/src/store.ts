@@ -2053,8 +2053,12 @@ export const useStore = create<State>()(
               ? api.providerBookings(token).catch(() => [] as Appointment[])
               : Promise.resolve([] as Appointment[]),
           ]);
+          // Hangi UÇTAN geldiği rolü belirliyor. Sağlayıcı listesi sonra
+          // yazılıyor: aynı randevu iki listede birden çıkarsa (kendi
+          // salonundan randevu alan uzman) sağlayıcı görünümü kazanır.
           const byId = new Map<string, (typeof mine)[number]>();
-          for (const b of [...mine, ...provider]) byId.set(b.id, b);
+          for (const b of mine) byId.set(b.id, { ...b, benimRolum: 'musteri' as const });
+          for (const b of provider) byId.set(b.id, { ...b, benimRolum: 'uzman' as const });
           const remote = [...byId.values()];
           const remoteIds = new Set(remote.map((b) => b.id));
           set((s) => {
@@ -3008,6 +3012,26 @@ export function randevuDepozitosu(
   if (typeof belirlenmis === 'number' && belirlenmis > 0) return belirlenmis;
   return localDeposit(booking.price, rates);
 }
+
+/**
+ * ROL AYRIMI — iki taraf birbirinin listesini görmesin.
+ *
+ * `bookings` iki sunucu ucunun BİRLEŞİMİ: kullanıcının müşteri olarak aldığı
+ * randevular (`/bookings/mine`) ve uzman olarak aldığı talepler
+ * (`/bookings/provider`). Ekranlar bu listeyi filtresiz okuyordu:
+ *
+ *   · Uzmanın "bekleyen talepler" şeridinde, KENDİSİNİN başka bir uzmandan
+ *     aldığı ve onay bekleyen randevusu çıkıyordu.
+ *   · Müşteri sekmesindeki "Randevularım" listesinde, uzman hesabına gelen
+ *     müşteri talepleri görünüyordu.
+ *
+ * İkisi de aynı hatanın iki yüzü: rol hesabın türü değil, o randevudaki taraf.
+ */
+export const musteriRandevulari = (s: State): Appointment[] =>
+  s.bookings.filter((b) => b.benimRolum !== 'uzman');
+
+export const uzmanRandevulari = (s: State): Appointment[] =>
+  s.bookings.filter((b) => b.benimRolum === 'uzman');
 
 export const localDeposit = (price: number, rates: State['config']['rates']): number =>
   depositFor(price, { pct: rates.depositPct ?? DEFAULT_DEPOSIT_RULES.pct });

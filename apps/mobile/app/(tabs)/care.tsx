@@ -14,7 +14,7 @@ import {
   QUICK_ADD,
 } from '../../src/data';
 import { formatSlot } from '../../src/datetime';
-import { useStore } from '../../src/store';
+import { musteriRandevulari, useStore } from '../../src/store';
 import { fillParams, useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -46,7 +46,8 @@ export default function BenimIcinScreen() {
   const personalLogs = useStore((s) => s.personalLogs);
   const careRoutines = useStore((s) => s.careRoutines);
   const moments = useStore((s) => s.moments);
-  const bookings = useStore((s) => s.bookings);
+  // Bakım takvimi müşteri geçmişinden türetiliyor.
+  const bookings = useStore(musteriRandevulari);
   const points = useStore((s) => s.points);
   const favCount = useStore((s) => s.favorites.length);
   const userName = useStore((s) => s.currentUser?.name);

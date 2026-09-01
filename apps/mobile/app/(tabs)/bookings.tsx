@@ -17,7 +17,7 @@ import {
 } from '../../src/data';
 import { formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
+import { musteriRandevulari, useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -64,7 +64,8 @@ export default function BookingsScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const [active, setActive] = useState<Seg>('upcoming');
-  const bookings = useStore((s) => s.bookings);
+  // Yalnız MÜŞTERİ olarak aldığın randevular; uzman talepleri Ajanda'da.
+  const bookings = useStore(musteriRandevulari);
   const allDemands = useStore((s) => s.demands);
   const bookingsLoading = useStore((s) => s.bookingsLoading);
   const demandsLoading = useStore((s) => s.demandsLoading);
