@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { darkGradients, lightGradients } from './theme.gradients';
@@ -96,4 +96,39 @@ test('KART YARIÇAPI Figma ile aynı', () => {
   const m = /export const radius = \{[^}]*lg: (\d+)/.exec(kaynak);
   assert.ok(m, 'yarıçap ölçeği okunamadı');
   assert.equal(Number(m![1]), 20, 'kart yarıçapı Figma kartıyla (20) aynı değil');
+});
+
+test('tema değişen gradyanın üstünde SABİT BEYAZ yazı yok', () => {
+  /*
+   * Tuzak: `gradients.gold` iki temada farklı açıklıkta. Üstüne `onColor`
+   * (sabit #FFFFFF) yazan bir ekran açık temada geçer, koyu temada düşer —
+   * giriş kapısındaki rol kartı tam olarak böyle 2.23:1'e inmişti.
+   *
+   * Yazı gradyanla AYNI token setinden gelmeli (`onAccent`), çünkü o da
+   * temaya göre dönüyor.
+   */
+  const kok = join(__dirname, '..', 'app');
+  const dosyalar: string[] = [];
+  const gez = (d: string) => {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      const t = join(d, e.name);
+      if (e.isDirectory()) gez(t);
+      else if (e.name.endsWith('.tsx')) dosyalar.push(t);
+    }
+  };
+  gez(kok);
+
+  for (const yol of dosyalar) {
+    const k = readFileSync(yol, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    if (!k.includes('gradients.gold')) continue;
+    // DOSYA GENELİNE bakılıyor, gradyanın etrafına değil: yazı rengi çoğu
+    // zaman gradyandan ÖNCE bir değişkende hesaplanıyor. İlk yazdığım
+    // kontrol gradyandan sonrasına bakıyordu ve tam bu yüzden mutasyonu
+    // kaçırdı — hatayı yakalamayan koruma, koruma değildir.
+    assert.doesNotMatch(
+      k,
+      /tone="onColor"|colors\.onColor/,
+      `${yol.split('/app/')[1]}: tema değişen gradyanın olduğu ekranda sabit beyaz yazı`,
+    );
+  }
 });
