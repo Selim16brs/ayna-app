@@ -369,13 +369,18 @@ async function istek<T>(yontem: string, path: string, token?: string, body?: unk
   );
   if (!res.ok) {
     let code = '';
+    let mesaj = '';
     try {
-      const j = (await res.json()) as { error?: { code?: string } };
+      const j = (await res.json()) as { error?: { code?: string; message?: string } };
       code = j?.error?.code ?? '';
+      // Sunucunun İNSAN OKUR mesajı: "Bu randevuda iade hakkı doğmadı" gibi.
+      // Atılıyordu ve yerine HTTP satırı gösteriliyordu; kullanıcı ekranda
+      // "POST /bookings/... → 400" görüyor, ne yapacağını bilmiyordu.
+      mesaj = typeof j?.error?.message === 'string' ? j.error.message : '';
     } catch {
       /* gövde yoksa boş kod */
     }
-    throw new ApiError(res.status, code, `${yontem} ${path} → ${res.status}`);
+    throw new ApiError(res.status, code, mesaj || `${yontem} ${path} → ${res.status}`);
   }
   const text = await res.text();
   return (text ? JSON.parse(text) : null) as T;
@@ -397,13 +402,15 @@ async function post<T>(path: string, body: unknown, token?: string): Promise<T> 
   );
   if (!res.ok) {
     let code = '';
+    let mesaj = '';
     try {
-      const j = (await res.json()) as { error?: { code?: string } };
+      const j = (await res.json()) as { error?: { code?: string; message?: string } };
       code = j?.error?.code ?? '';
+      mesaj = typeof j?.error?.message === 'string' ? j.error.message : '';
     } catch {
       /* gövde yoksa boş kod */
     }
-    throw new ApiError(res.status, code, `POST ${path} → ${res.status}`);
+    throw new ApiError(res.status, code, mesaj || `POST ${path} → ${res.status}`);
   }
   const text = await res.text();
   return (text ? JSON.parse(text) : null) as T;

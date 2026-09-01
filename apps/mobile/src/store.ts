@@ -513,6 +513,8 @@ interface State {
    * açılışta/tazelemede yeniden gönderiliyor.
    */
   pendingBookingActions: { id: string; eylem: BookingEylem; arg?: BookingEylemArg }[];
+  /** Üyelik katmanı sunucudan EN AZ BİR KEZ okundu mu? (yalan "yükseltildi" bildirimini önler) */
+  uyelikOgrenildi: boolean;
   /** §4.10 — iade talebi gönderildi; ana sayfadaki kart bir daha çıkmasın. */
   iadeTalebiDamgala: (id: string) => void;
   /** Kuyruğu sunucuya boşalt (açılışta ve her tazelemede çağrılır). */
@@ -639,6 +641,7 @@ export const userScopedReset = (): Partial<State> => ({
   ...SEEDED_PERSONAL_RESET,
   pendingBookingSync: [], // önceki üyenin eşitleme kuyruğu yeni üyeye taşınmaz
   pendingBookingActions: [], // aynı gerekçe: başkasının adına işlem gönderilmez
+  uyelikOgrenildi: false, // yeni üyenin üyeliği henüz öğrenilmedi
   moments: [],
   closedDays: [],
   promotions: [],
@@ -1894,6 +1897,7 @@ export const useStore = create<State>()(
 
       pendingBookingSync: [],
       pendingBookingActions: [],
+      uyelikOgrenildi: false,
 
       // Sunucuya yazımı garantile: başarısızsa id kuyrukta kalır, flushBookingSync yeniden dener.
       // createBooking sunucuda id ile upsert (idempotent) — tekrar gönderim çift kayıt yaratmaz.
@@ -2657,6 +2661,21 @@ export const useStore = create<State>()(
           const me = await api.me(token);
           const tier = me.membershipTier ?? 'free';
           const wasPremium = get().premium;
+          /**
+           * Üyeliği DAHA ÖNCE ÖĞRENMİŞ MİYDİK?
+           *
+           * "Yükseltildi" bildirimi `!wasPremium && tier premium` koşuluyla
+           * atılıyordu: yerelin BİLMEMESİNİ "az önce yükseltildi" sanıyordu.
+           * Taze kurulumda, çıkış-girişte ve depo sıfırlandığında yerel
+           * `premium` false başlıyor; sunucu "premium" deyince eski bir üyeye
+           * "Üyeliğin yükseltildi 🎉" bildirimi gidiyordu. Kurucu tam bunu
+           * bildirdi: "üyeliğin yenilendi diyor, halbuki bu kullanıcı eski üye".
+           *
+           * Artık YALNIZ gerçek geçişte bildiriliyor: önceki katmanı BİLİYORDUK
+           * ve 'free' idi. Bilmiyorsak (ilk tazeleme) sessiz kalıyoruz —
+           * kaçırılan bir kutlama, yalan bir kutlamadan iyidir.
+           */
+          const oncekiBiliniyor = get().uyelikOgrenildi;
           // Medya = HESAP verisi; ama hesap BOŞ ve yerelde/cache'te data URL varsa KORU ve
           // hesaba GERİ YÜKLE (self-heal). avatarUri persist EDİLMEZ → soğuk açılışta yerel
           // null olabilir; bu yüzden CİHAZ ÖNBELLEĞİNİ de danış (yoksa foto siliniyordu).
@@ -2751,7 +2770,7 @@ export const useStore = create<State>()(
               .catch(() => undefined);
           }
           // Push gelmese bile: yükselme ALGILANDIĞINDA uygulama-içi bildirim (§11)
-          if (!wasPremium && (tier === 'premium' || tier === 'platinum'))
+          if (oncekiBiliniyor && !wasPremium && (tier === 'premium' || tier === 'platinum'))
             get().pushNotification({
               type: 'system',
               titleKey: 'sub.upgraded_t',
@@ -2760,6 +2779,9 @@ export const useStore = create<State>()(
               icon: 'diamond-outline',
               route: '/profile/passport',
             });
+          // Bu noktadan sonra üyeliği BİLİYORUZ: sonraki tazelemede gerçek
+          // geçiş algılanabilir.
+          set({ uyelikOgrenildi: true });
         } catch {
           /* çevrimdışı: mevcut durum korunur */
         }
@@ -2921,6 +2943,9 @@ export const useStore = create<State>()(
         pendingBookingSync: s.pendingBookingSync,
         // Sunucuya ulaşmamış EYLEMLER de kalıcı: kapat-aç sonrası kaybolmaz.
         pendingBookingActions: s.pendingBookingActions,
+        // Kalıcı olmalı: her açılışta sıfırlansaydı, ilk tazelemede yine
+        // "önceki bilinmiyor" olur ve yalan kutlama geri gelirdi.
+        uyelikOgrenildi: s.uyelikOgrenildi,
         // Bunlar persist edilmiyordu: her açılışta liste boşalıyor, dedup'lar
         // (duyuru id'si, anket sorulmuşluğu) sıfırlanıyor ve TÜM bildirimler
         // yeniden OKUNMAMIŞ olarak üretiliyordu.
