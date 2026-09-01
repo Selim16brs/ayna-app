@@ -139,10 +139,11 @@ test('plum DOLU YÜZEY: beyaz yazı iki temada da okunuyor', () => {
   // yazı geliyor. Koyu temada accent'i açmak metin/ikon için doğru ama dolu
   // yüzey için değildi: eski '#AA9AC4' üstünde beyaz 2.58:1 ölçülüyordu —
   // yani yedi ekranda okunmayan başlık.
-  // `theme.ts` doğrudan import EDİLEMİYOR: react-native'i çekiyor ve test
-  // koşucusu onu çeviremiyor. Değerler kaynaktan okunuyor — mevcut testlerin
-  // kullandığı yöntemin aynısı.
-  const kaynak = readFileSync(join(import.meta.dirname, 'theme.ts'), 'utf8');
+  // Gradyanlar artık `theme.gradients.ts`te (saf modül) — `theme.ts`
+  // react-native'i çekiyor ve test koşucusu onu çeviremiyor. Bu test
+  // kaynağı metin olarak okumaya devam ediyor; import eden yeni ölçüm
+  // `gradyan-kontrast.test.ts`te.
+  const kaynak = readFileSync(join(import.meta.dirname, 'theme.gradients.ts'), 'utf8');
   const cift = (blok: string): [string, string] => {
     const b = kaynak.slice(kaynak.indexOf(blok));
     const m = /plum: \['(#[0-9A-Fa-f]{6})', '(#[0-9A-Fa-f]{6})'\]/.exec(b);
