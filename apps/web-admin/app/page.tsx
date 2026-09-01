@@ -2685,6 +2685,9 @@ function AdsView() {
     titleRu: '',
     subtitleRu: '',
     image: '',
+    placement: 'one_cikanlar' as 'firsatlar' | 'one_cikanlar',
+    startsAt: '',
+    endsAt: '',
   };
   const [form, setForm] = useState(empty);
   const [lang, setLang] = useState<Lang>('tr');
@@ -2707,6 +2710,12 @@ function AdsView() {
         subtitle: { kk: form.subtitleKk, ru: form.subtitleRu },
       }),
       image: form.image,
+      placement: form.placement,
+      // Boş bırakılırsa sınırsız yayın. Tarih girilirse süresi bitince
+      // reklam KENDİLİĞİNDEN düşer — kapatmayı unutmak ödenmemiş reklamı
+      // yayında bırakıyordu.
+      startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : null,
+      endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : null,
     });
     setForm(empty);
     setLang('tr');
@@ -2760,6 +2769,34 @@ function AdsView() {
             value={form.image}
             onChange={(e) => setForm({ ...form, image: e.target.value })}
           />
+          {/* HANGİ VİTRİN satın alındı. Aynı kartı iki bölümde birden
+              göstermek ekranı tekrarlı gösterirdi; yerleşimi reklamı ödeyen
+              seçiyor. */}
+          <select
+            className="input"
+            value={form.placement}
+            onChange={(e) =>
+              setForm({ ...form, placement: e.target.value as 'firsatlar' | 'one_cikanlar' })
+            }
+          >
+            <option value="one_cikanlar">Öne çıkanlar</option>
+            <option value="firsatlar">Fırsatlar</option>
+          </select>
+          {/* YAYIN PENCERESİ — boş = sınırsız. */}
+          <input
+            className="input"
+            type="date"
+            title="Yayın başlangıcı (boş = hemen)"
+            value={form.startsAt}
+            onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
+          />
+          <input
+            className="input"
+            type="date"
+            title="Yayın bitişi (boş = sınırsız)"
+            value={form.endsAt}
+            onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
+          />
           <button className="btn-sm btn-ok full" onClick={create}>
             + Reklam ekle
           </button>
@@ -2779,6 +2816,18 @@ function AdsView() {
                   {a.subtitle}
                   {' · '}
                   {proName(a.proId)}
+                </div>
+                {/* Hangi vitrin + yayın penceresi. "Aktif" rozeti tek başına
+                    yanıltıcıydı: süresi geçmiş bir reklam da aktif görünüyor
+                    ama ekranda çıkmıyordu — sunucu onu zaten süzüyor. */}
+                <div className="meta">
+                  {a.placement === 'firsatlar' ? 'Fırsatlar' : 'Öne çıkanlar'}
+                  {' · '}
+                  {a.startsAt || a.endsAt
+                    ? `${a.startsAt ? new Date(a.startsAt).toLocaleDateString('tr-TR') : '—'} → ${
+                        a.endsAt ? new Date(a.endsAt).toLocaleDateString('tr-TR') : '—'
+                      }${a.endsAt && new Date(a.endsAt) <= new Date() ? ' · SÜRESİ DOLDU' : ''}`
+                    : 'süresiz'}
                 </div>
               </div>
               <button

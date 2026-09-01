@@ -1152,6 +1152,9 @@ export class AdminService {
     i18n?: unknown;
     image: string;
     sortOrder?: number | undefined;
+    placement?: 'firsatlar' | 'one_cikanlar' | undefined;
+    startsAt?: string | null | undefined;
+    endsAt?: string | null | undefined;
   }) {
     return this.prisma.adBanner.create({
       data: {
@@ -1161,6 +1164,11 @@ export class AdminService {
         ...(input.i18n ? { i18n: input.i18n as object } : {}), // §14.5 — kk/ru
         image: input.image,
         sortOrder: input.sortOrder ?? 0,
+        placement: input.placement ?? 'one_cikanlar',
+        // Boş = sınırsız yayın. Tarih verilmişse yayın penceresini SUNUCU
+        // uygular; süresi biten ücretli reklam kendiliğinden düşer.
+        startsAt: input.startsAt ? new Date(input.startsAt) : null,
+        endsAt: input.endsAt ? new Date(input.endsAt) : null,
       },
     });
   }

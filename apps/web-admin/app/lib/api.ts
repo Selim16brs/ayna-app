@@ -755,6 +755,11 @@ export interface AdBanner {
   image: string;
   sortOrder: number;
   active: boolean;
+  /** Hangi vitrin satın alındı. */
+  placement: 'firsatlar' | 'one_cikanlar';
+  /** Yayın penceresi (ISO). Boş = sınırsız. */
+  startsAt: string | null;
+  endsAt: string | null;
 }
 export type NewAd = {
   proId: string;
@@ -763,6 +768,9 @@ export type NewAd = {
   i18n?: I18nOverride;
   image: string;
   sortOrder?: number;
+  placement?: 'firsatlar' | 'one_cikanlar';
+  startsAt?: string | null;
+  endsAt?: string | null;
 };
 export interface Pro {
   id: string;

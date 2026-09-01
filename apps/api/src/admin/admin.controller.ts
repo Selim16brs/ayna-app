@@ -77,6 +77,11 @@ const adSchema = z.object({
   i18n: i18nSchema, // §14.5 — kk/ru title/subtitle
   image: z.string().url(),
   sortOrder: z.number().int().optional(),
+  // Hangi vitrin satın alındı: Fırsatlar mı, Öne çıkanlar mı.
+  placement: z.enum(['firsatlar', 'one_cikanlar']).optional(),
+  // Yayın penceresi (ISO). Boş = sınırsız.
+  startsAt: z.string().datetime().nullish(),
+  endsAt: z.string().datetime().nullish(),
 });
 const proSchema = z.object({
   name: z.string().min(2).max(80),

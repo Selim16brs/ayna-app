@@ -177,3 +177,44 @@ test('ödeme kodu TEK YERDEN türetiliyor', () => {
   );
   assert.ok(!/function odemeReferansi/.test(dep), 'ekranda hâlâ yerel türetme var');
 });
+
+test('ÖNE ÇIKANLAR ödenmiş vitrinden besleniyor', () => {
+  // Bölümün kendi yorumu "yalnız admin'in seçtikleri" diyordu ama kod
+  // `badge === 'campaign'` ile süzüyordu: vitrin satılıyor, admin reklamı
+  // giriyor, ekranda hiç çıkmıyordu.
+  const d = oku('..', 'app', '(tabs)', 'discover.tsx');
+  // Yorumda geçmesi serbest; KODDA olmamalı.
+  const kodSatirlari = d
+    .split('\n')
+    .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+    .join('\n');
+  assert.ok(
+    !/badge === 'campaign'/.test(kodSatirlari),
+    'öne çıkanlar hâlâ rozete göre süzülüyor — ödenmiş reklam yayınlanmıyor',
+  );
+  assert.match(
+    d,
+    /const featured = oneCikanReklamlari/,
+    'öne çıkanlar reklam tablosundan gelmiyor',
+  );
+});
+
+test('ücretli yerleşim SPONSORLU etiketli', () => {
+  // Ödenmiş yerleşimi organik içerikten ayırt edilemez göstermek kullanıcıyı
+  // yanıltır. İki bölümde de reklam kartı `sponsored` ile çiziliyor.
+  const d = oku('..', 'app', '(tabs)', 'discover.tsx');
+  for (const kaynak of ['firsatReklamlari.map', 'featured.map']) {
+    const i = d.indexOf(kaynak);
+    assert.ok(i > 0, `${kaynak} yok`);
+    const kart = d.slice(i, i + 420);
+    assert.match(kart, /sponsored/, `${kaynak}: reklam sponsorlu etiketsiz çiziliyor`);
+  }
+});
+
+test('reklam iki bölümde birden ÇIKMIYOR', () => {
+  // Aynı kart hem Fırsatlar hem Öne çıkanlar'da çıksaydı ekran tekrarlı
+  // görünürdü; yerleşimi reklamı ödeyen seçiyor.
+  const d = oku('..', 'app', '(tabs)', 'discover.tsx');
+  assert.match(d, /placement === 'firsatlar'/, 'fırsat reklamları ayrılmıyor');
+  assert.match(d, /placement === 'one_cikanlar'/, 'öne çıkan reklamları ayrılmıyor');
+});

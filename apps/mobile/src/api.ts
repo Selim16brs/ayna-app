@@ -542,6 +542,22 @@ export interface SearchableBusiness {
 }
 
 // §keşif Modül 3 — dönemsel koleksiyonlar
+/**
+ * Ücretli reklam vitrini — admin panelinden yönetilir (§14.5).
+ *
+ * `placement` hangi bölümde yayınlanacağını söyler: reklamı ödeyen uzman/salon
+ * "Fırsatlar" ya da "Öne çıkanlar" vitrinini satın alıyor. Yayın penceresi
+ * SUNUCUDA süzülüyor; buraya yalnız o an yayında olanlar gelir.
+ */
+export interface AdBanner {
+  id: string;
+  proId: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  placement: 'firsatlar' | 'one_cikanlar';
+}
+
 export interface ApiCollection {
   id: string;
   slug: string;
@@ -681,6 +697,7 @@ export const api = {
   offerAction: (token: string, id: string, action: 'pause' | 'resume' | 'remove') =>
     post<ApiOffer>(`/offers/${id}/${action}`, {}, token),
   // §keşif Modül 3 — koleksiyonlar
+  ads: () => get<AdBanner[]>(`/ads${localeQuery()}`),
   collections: () => get<ApiCollection[]>(`/collections${localeQuery()}`),
   collectionDetail: (idOrSlug: string) =>
     get<ApiCollectionDetail>(`/collections/${idOrSlug}${localeQuery()}`),
