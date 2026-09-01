@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CATEGORIES } from '../../src/data';
+import { CATEGORIES, cityCenter, distanceKm } from '../../src/data';
 import {
   useAds,
   useCampaigns,
@@ -18,7 +18,8 @@ import type { MessageKey } from '@ayna/i18n';
 import { fillParams, useLocale } from '../../src/locale';
 import { musteriRandevulari, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
-import { categoryTints, space, type ColorTokens, font } from '../../src/theme';
+import { space, type ColorTokens, font } from '../../src/theme';
+import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   ListSkeleton,
@@ -47,33 +48,73 @@ const SEVIYE_ETIKET: Record<'bronze' | 'silver' | 'gold', MessageKey> = {
   gold: 'rewards.tier.gold',
 };
 
+/**
+ * Salonun şehir merkezine uzaklığı (km).
+ *
+ * Kullanıcının KENDİ konumu kullanılmıyor: Keşfet ekranı konum izni
+ * istemiyor (§izin kuralı — izin girişte istenmez). Salonun kaydında
+ * koordinat yoksa mesafe hiç gösterilmiyor; uydurma sayı yazmaktansa
+ * satırı boş bırakmak doğru.
+ */
+function mesafe(pro: { lat?: number; lng?: number; city: string }): number | null {
+  if (pro.lat == null || pro.lng == null) return null;
+  const merkez = cityCenter(pro.city);
+  return distanceKm({ latitude: pro.lat, longitude: pro.lng }, merkez);
+}
+
+/** Figma `deposit-refund-card` zemini — accent'ten bir ton açık mürdüm. */
+const IADE_ZEMIN = '#64285A';
+/** Sabit koyu kartın yazısı da sabit açık — `onAccent` koyu temada döner. */
+const IADE_YAZI = darkColors.ink;
+
+const LOGO_SIYAH = require('../../assets/logo-ayna.png');
+const LOGO_BEYAZ = require('../../assets/logo-ayna-white.png');
+
 const HIZLI_EYLEMLER = [
   {
     id: 'randevu',
     etiket: 'home.qa.book' as MessageKey,
-    ikon: 'calendar' as const,
     yol: '/search' as const,
-    gorsel: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&q=60',
+    gorsel: require('../../assets/hizli-eylem/randevu-al.png'),
   },
   {
     id: 'dilek',
     etiket: 'home.qa.wish' as MessageKey,
-    ikon: 'sparkles' as const,
-    yol: '/demand/new' as const,
-    gorsel: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=60',
+    // FOTOĞRAF + FİYAT TEKLİFİ akışı `/quote/new` ("Fotoğraf ile teklifler").
+    // `/demand/new` kategori seçtiren farklı bir akış — yanlış yere
+    // yönlendiriyordum.
+    yol: '/quote/new' as const,
+    gorsel: require('../../assets/hizli-eylem/dilegini-anlat.png'),
   },
   {
     id: 'harita',
     etiket: 'home.qa.map' as MessageKey,
-    ikon: 'map' as const,
     yol: '/map' as const,
-    gorsel: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=400&q=60',
+    gorsel: require('../../assets/hizli-eylem/haritada-kesfet.png'),
   },
 ];
 
+/**
+ * Hizmet ikonları — Figma `ayna-service-icons-light`ten indirilen görseller.
+ * Bağlantılar 7 günde ölüyor, bu yüzden depoya alındı.
+ */
+const HIZMET_IKON: Record<string, number> = {
+  hair: require('../../assets/hizmet-ikon/sac.png'),
+  nails: require('../../assets/hizmet-ikon/tirnak.png'),
+  lashes: require('../../assets/hizmet-ikon/kirpik.png'),
+  brows: require('../../assets/hizmet-ikon/kas.png'),
+  makeup: require('../../assets/hizmet-ikon/makyaj.png'),
+  skincare: require('../../assets/hizmet-ikon/cilt.png'),
+  epilation: require('../../assets/hizmet-ikon/epilasyon.png'),
+  spa: require('../../assets/hizmet-ikon/masaj.png'),
+  pmu: require('../../assets/hizmet-ikon/kalici-makyaj.png'),
+  bridal: require('../../assets/hizmet-ikon/gelin.png'),
+};
+
 export default function DiscoverScreen() {
   const { t } = useLocale();
-  const { colors } = useTheme();
+  const { colors, mode } = useTheme();
+  const koyuTema = mode === 'dark';
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const cevrimdisiBosluk = useOfflineInset();
@@ -188,9 +229,12 @@ export default function DiscoverScreen() {
             Solda marka, sağda şehir · mesaj · bildirim. Ölçüler Figma'dan;
             işlevsel ikonlar (mesaj/bildirim rozetleri) korundu. */}
         <View style={[styles.header, { paddingTop: insets.top + space(0.5) + cevrimdisiBosluk }]}>
-          <Text variant="h2" tone="ink" style={styles.marka}>
-            AYNA
-          </Text>
+          {/* Marka İŞARETİ — metin değil. Koyu temada beyaz varyant. */}
+          <Image
+            source={koyuTema ? LOGO_BEYAZ : LOGO_SIYAH}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <View style={styles.grow} />
           <PressableScale style={styles.sehirCip} onPress={() => router.push('/city')}>
             <Ionicons name="location" size={12} color={colors.accent} />
@@ -286,7 +330,6 @@ export default function DiscoverScreen() {
                 locations={[0, 0.35, 0.7, 1]}
                 style={StyleSheet.absoluteFill}
               />
-              <Ionicons name={e.ikon} size={22} color={colors.onColor} />
               <Text style={styles.hizliYazi}>{t(e.etiket)}</Text>
             </PressableScale>
           ))}
@@ -299,25 +342,22 @@ export default function DiscoverScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.ikonSerit}
         >
-          {CATEGORIES.map((cat, i) => (
+          {CATEGORIES.map((cat) => (
             <PressableScale
               key={cat.id}
               style={styles.ikonKap}
               onPress={() => router.push(`/category/${cat.id}` as never)}
             >
-              <View
-                style={[
-                  styles.ikonKart,
-                  { backgroundColor: categoryTints[i % categoryTints.length] + '1F' },
-                ]}
-              >
-                <Ionicons
-                  name={cat.icon}
-                  size={24}
-                  color={categoryTints[i % categoryTints.length]}
-                />
+              <View style={styles.ikonKart}>
+                {HIZMET_IKON[cat.id] ? (
+                  <Image source={HIZMET_IKON[cat.id]} style={styles.ikonGorsel} />
+                ) : (
+                  <Ionicons name={cat.icon} size={26} color={colors.accent} />
+                )}
               </View>
-              <Text variant="micro" tone="ink" numberOfLines={1} style={styles.ikonYazi}>
+              {/* İKİ SATIR: "Kalıcı Makyaj" ve "Gelin & Özel Gün" tek satıra
+                  sığmıyor, kırpılıyordu. Figma da iki satıra sarıyor. */}
+              <Text numberOfLines={2} style={styles.ikonYazi}>
                 {t(cat.labelKey)}
               </Text>
             </PressableScale>
@@ -365,9 +405,12 @@ export default function DiscoverScreen() {
                     <Text variant="micro" tone="muted" numberOfLines={1}>
                       {bekleyenRandevu.service}
                     </Text>
-                    <Text variant="caption" tone="ink" style={styles.randevuZaman}>
-                      {formatSlotTr(bekleyenRandevu.startMs)}
-                    </Text>
+                    {/* Figma `time-badge`: saat düz yazı değil, rozet. */}
+                    <View style={styles.zamanRozet}>
+                      <Text style={styles.zamanRozetYazi}>
+                        {formatSlotTr(bekleyenRandevu.startMs)}
+                      </Text>
+                    </View>
                   </View>
                 </View>
                 <View style={styles.asamaSatir}>
@@ -380,15 +423,19 @@ export default function DiscoverScreen() {
                     {akisAdimi(bekleyenRandevu.status) + 1} / {AKIS_ADIMLARI.length}
                   </Text>
                 </View>
-                <View style={styles.ilerlemeYol}>
-                  <View
-                    style={[
-                      styles.ilerlemeDolu,
-                      {
-                        width: `${Math.round(((akisAdimi(bekleyenRandevu.status) + 1) / AKIS_ADIMLARI.length) * 100)}%`,
-                      },
-                    ]}
-                  />
+                {/* Figma `stage-progress-bar`: TEK çubuk değil, dört ayrı
+                    parça (stage-1…4). Adımın kaçıncısında olduğunu tek
+                    bakışta gösteriyor. */}
+                <View style={styles.ilerlemeSatir}>
+                  {AKIS_ADIMLARI.map((adim, i) => (
+                    <View
+                      key={adim.anahtar}
+                      style={[
+                        styles.ilerlemeParca,
+                        i <= akisAdimi(bekleyenRandevu.status) && styles.ilerlemeParcaDolu,
+                      ]}
+                    />
+                  ))}
                 </View>
                 {/* Figma `ticket-actions` — üç eşit düğme: Ertele · Yaz · Yol. */}
                 <View style={styles.biletEylem}>
@@ -434,6 +481,7 @@ export default function DiscoverScreen() {
                   image={reklam.image}
                   subtitle={reklam.subtitle}
                   sponsored
+                  rating={pros.find((x) => x.id === reklam.proId)?.rating}
                   onPress={() => router.push('/professional/' + reklam.proId)}
                 />
               ))}
@@ -460,6 +508,7 @@ export default function DiscoverScreen() {
                   image={reklam.image}
                   subtitle={reklam.subtitle}
                   sponsored
+                  rating={pros.find((x) => x.id === reklam.proId)?.rating}
                   onPress={() => router.push('/professional/' + reklam.proId)}
                 />
               ))}
@@ -501,35 +550,26 @@ export default function DiscoverScreen() {
         {trends.length > 0 ? (
           <>
             <BolumBasligi title={t('home.trend')} />
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.trendSerit}
-            >
-              {trends.slice(0, 6).map((a, i) => (
+            {/* Figma `trends-grid`: iki satır, satır başına iki öğe.
+                Yatay kaydırmada dördüncü öğe ekran dışında kalıyordu. */}
+            <View style={styles.trendIzgara}>
+              {trends.slice(0, 4).map((a) => (
                 <PressableScale
                   key={a.id}
                   style={styles.trendKart}
                   onPress={() => router.push(`/life/${a.id}` as never)}
                 >
-                  <View
-                    style={[
-                      styles.trendIkon,
-                      { backgroundColor: categoryTints[i % categoryTints.length] + '1F' },
-                    ]}
-                  >
-                    <Ionicons
-                      name="sparkles"
-                      size={17}
-                      color={categoryTints[i % categoryTints.length]}
-                    />
-                  </View>
-                  <Text variant="micro" tone="ink" numberOfLines={2} style={styles.trendYazi}>
+                  {a.image ? (
+                    <Image source={{ uri: a.image }} style={styles.trendGorsel} />
+                  ) : (
+                    <View style={[styles.trendGorsel, styles.trendGorselBos]} />
+                  )}
+                  <Text numberOfLines={2} style={styles.trendYazi}>
                     {a.title}
                   </Text>
                 </PressableScale>
               ))}
-            </ScrollView>
+            </View>
           </>
         ) : null}
 
@@ -560,7 +600,7 @@ export default function DiscoverScreen() {
                     ) : null}
                   </View>
                   <Text variant="micro" tone="muted" numberOfLines={1}>
-                    {pro.district ? `${pro.district} · ` : ''}
+                    {mesafe(pro) != null ? `${mesafe(pro)!.toFixed(1)} km · ` : ''}
                     {pro.city}
                   </Text>
                   <View style={styles.puanCip}>
@@ -601,6 +641,7 @@ export default function DiscoverScreen() {
 /** Bölüm başlığı — Figma: 20px başlık, sağda 13px "Tümünü Gör", px24. */
 function BolumBasligi({ title, onSeeAll }: { title: string; onSeeAll?: () => void }) {
   const { t } = useLocale();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.bolumBas}>
@@ -608,10 +649,11 @@ function BolumBasligi({ title, onSeeAll }: { title: string; onSeeAll?: () => voi
         {title}
       </Text>
       {onSeeAll ? (
-        <Pressable onPress={onSeeAll} accessibilityRole="button">
+        <Pressable onPress={onSeeAll} accessibilityRole="button" style={styles.tumuKap}>
           <Text variant="caption" tone="accentFg">
             {t('common.see_all')}
           </Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.accent} />
         </Pressable>
       ) : null}
     </View>
@@ -627,12 +669,14 @@ function VitrinKarti({
   image,
   subtitle,
   sponsored,
+  rating,
   onPress,
 }: {
   title: string;
   image?: string | undefined;
   subtitle?: string | undefined;
   sponsored?: boolean;
+  rating?: number | undefined;
   onPress: () => void;
 }) {
   const { t } = useLocale();
@@ -655,9 +699,17 @@ function VitrinKarti({
         </View>
       ) : null}
       <View style={styles.vitrinAlt}>
-        <Text style={styles.vitrinBaslik} numberOfLines={2}>
-          {title}
-        </Text>
+        <View style={styles.vitrinBaslikSatir}>
+          <Text style={styles.vitrinBaslik} numberOfLines={1}>
+            {title}
+          </Text>
+          {rating != null ? (
+            <View style={styles.vitrinPuan}>
+              <Ionicons name="star" size={12} color="#FFFFFF" />
+              <Text style={styles.vitrinPuanYazi}>{rating.toFixed(1)}</Text>
+            </View>
+          ) : null}
+        </View>
         {subtitle ? (
           <Text style={styles.vitrinAltYazi} numberOfLines={1}>
             {subtitle}
@@ -685,7 +737,8 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: 20,
       paddingBottom: 8,
     },
-    marka: { letterSpacing: 2 },
+    // Figma `ayna-logo-mark` 80×36; oran korunuyor.
+    logo: { width: 80, height: 30 },
     sehirCip: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -698,6 +751,8 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
     },
     basIkon: {
+      // Figma 36×36. Dokunma alanı hitSlop ile 44pt'ye çıkarılıyor:
+      // görsel küçülüyor ama parmak hedefi eşiğin altına inmiyor.
       width: 36,
       height: 36,
       borderRadius: 100,
@@ -791,24 +846,41 @@ const makeStyles = (colors: ColorTokens) =>
     // service-icons-strip (tile 68, ikon 64, radius 18, gap 14)
     ikonSerit: { gap: 14, paddingLeft: 24, paddingRight: 12, paddingBottom: 4 },
     ikonKap: { width: 68, alignItems: 'center', gap: 8 },
+    // Figma `icon-card`: 64×64, radius 16, 1px kenarlık.
     ikonKart: {
       width: 64,
       height: 64,
-      borderRadius: 18,
+      borderRadius: 16,
+      overflow: 'hidden',
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.accentSoft,
     },
-    ikonYazi: { textAlign: 'center' },
+    ikonGorsel: { width: 64, height: 64 },
+    // Figma: 11px, satır aralığı 1.3, ortalı, İKİ SATIRA sarabilir.
+    ikonYazi: {
+      fontFamily: font.medium,
+      fontSize: 11,
+      lineHeight: 14,
+      textAlign: 'center',
+      color: colors.ink,
+    },
 
     // deposit-refund-banner
     iadeKap: { paddingHorizontal: 20, paddingTop: 28 },
+    // Figma `deposit-refund-card`: zemin #64285A — accent'ten bir ton AÇIK,
+    // bilerek. Kart cihaz temasından bağımsız (iki temada da koyu), yazısı da
+    // sabit açık; değerler paletten geliyor ki marka değişince birlikte
+    // değişsin.
     iadeKart: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 14,
       padding: 16,
-      borderRadius: 20,
-      backgroundColor: colors.accent,
+      borderRadius: 22,
+      backgroundColor: IADE_ZEMIN,
     },
     iadeIkon: {
       width: 44,
@@ -818,8 +890,8 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
       backgroundColor: 'rgba(255,240,245,0.16)',
     },
-    iadeTenge: { fontFamily: font.semibold, fontSize: 22, color: colors.onAccent },
-    iadeBaslik: { fontFamily: font.semibold, fontSize: 15, color: colors.onAccent },
+    iadeTenge: { fontFamily: font.semibold, fontSize: 22, color: IADE_YAZI },
+    iadeBaslik: { fontFamily: font.semibold, fontSize: 15, color: IADE_YAZI },
     iadeAlt: {
       fontFamily: font.regular,
       fontSize: 12,
@@ -830,9 +902,9 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: 16,
       paddingVertical: 10,
       borderRadius: 100,
-      backgroundColor: colors.onAccent,
+      backgroundColor: IADE_YAZI,
     },
-    iadeDugmeYazi: { fontFamily: font.semibold, fontSize: 13, color: colors.accent },
+    iadeDugmeYazi: { fontFamily: font.semibold, fontSize: 13, color: IADE_ZEMIN },
 
     // appointment-card-container (radius 24, p16)
     randevuKart: { borderRadius: 24, backgroundColor: colors.surface, padding: 16, gap: 12 },
@@ -847,8 +919,25 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.successSoft,
     },
     asamaYazi: { fontFamily: font.semibold, fontSize: 10, color: colors.success },
-    ilerlemeYol: { height: 4, borderRadius: 2, backgroundColor: colors.line, overflow: 'hidden' },
-    ilerlemeDolu: { height: 4, borderRadius: 2, backgroundColor: colors.accent },
+    // Figma `time-badge` — saat rozeti.
+    zamanRozet: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 100,
+      backgroundColor: colors.accentSoft,
+      marginTop: 4,
+    },
+    zamanRozetYazi: { fontFamily: font.semibold, fontSize: 12, color: colors.accent },
+    // Figma `stage-progress-bar` — dört ayrı parça.
+    ilerlemeSatir: { flexDirection: 'row', gap: 4 },
+    ilerlemeParca: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.line },
+    ilerlemeParcaDolu: { backgroundColor: colors.accent },
+    // Vitrin kartı puan rozeti.
+    vitrinBaslikSatir: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    vitrinPuan: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+    vitrinPuanYazi: { fontFamily: font.semibold, fontSize: 12, color: colors.onColor },
+    tumuKap: { flexDirection: 'row', alignItems: 'center', gap: 2 },
     // Figma `ticket-actions`: eşit üç düğme, radius 12, px16 py10,
     // zemin accent %7, kenarlık accent %15.
     biletEylem: { flexDirection: 'row', gap: 8 },
@@ -897,24 +986,30 @@ const makeStyles = (colors: ColorTokens) =>
     vitrinAltYazi: { fontFamily: font.regular, fontSize: 12, color: 'rgba(255,255,255,0.82)' },
 
     // trends-section (radius 12, ikon 36, gap 10)
-    trendSerit: { gap: 10, paddingLeft: 24, paddingRight: 12 },
+    // Figma `trends-grid` — 2×2 ızgara; yatay kaydırmada dördüncü öğe
+    // ekran dışında kalıyordu.
+    trendIzgara: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 24 },
     trendKart: {
-      width: 132,
+      width: '48%',
+      flexGrow: 1,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
       padding: 8,
       borderRadius: 12,
       backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
-    trendIkon: {
-      width: 36,
-      height: 36,
-      borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
+    trendGorsel: { width: 36, height: 36, borderRadius: 12 },
+    trendGorselBos: { backgroundColor: colors.accentSoft },
+    trendYazi: {
+      flex: 1,
+      fontFamily: font.medium,
+      fontSize: 12,
+      lineHeight: 15,
+      color: colors.ink,
     },
-    trendYazi: { flex: 1 },
 
     // salons-section (satır p14, radius 16, foto 64/radius 12)
     salonListe: { paddingHorizontal: 20, gap: 10 },
