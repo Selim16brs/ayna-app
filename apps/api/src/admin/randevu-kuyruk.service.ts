@@ -1,3 +1,4 @@
+import { odemeReferansi } from '@ayna/domain';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
@@ -51,6 +52,11 @@ export class RandevuKuyrukService {
       ...b,
       price: Number(b.price),
       deposit: Number(b.depositAmount ?? 0),
+      // ÖDEME KODU — müşterinin Kaspi açıklamasına yazdığı kodun aynısı.
+      // Admin, banka ekstresindeki transferi bu kodla randevuya bağlıyor.
+      // Sunucuda türetiliyor ki müşterinin gördüğü kodla panelin gösterdiği
+      // kod AYNI kaynaktan gelsin — iki yerde hesaplansaydı ayrışabilirdi.
+      odemeKodu: odemeReferansi(b.id),
     }));
   }
 

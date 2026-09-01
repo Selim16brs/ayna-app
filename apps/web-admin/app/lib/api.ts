@@ -838,6 +838,8 @@ export type DekontSatiri = {
   depositReceiptUri: string | null;
   startAt: string;
   status: string;
+  /** Müşterinin Kaspi açıklamasına yazdığı kod — ekstredeki transferi bu satıra bağlar. */
+  odemeKodu: string;
 };
 export type IadeSatiri = {
   id: string;

@@ -56,14 +56,16 @@ export default function RescheduleScreen() {
       // Kural SUNUCUDA: hak bitmişse ya da pencere kapanmışsa sunucu reddeder
       // ve yerel durum tazelenir. Ağ yoksa talep kuyrukta bekler, kaybolmaz.
       const sonuc = await randevuEylemi(booking.id, 'ertele', ne.getTime());
-      if (sonuc === 'reddedildi') {
-        Alert.alert(t('reschedule.err'));
+      if (sonuc.sonuc === 'reddedildi') {
+        // Sunucunun kendi gerekçesi varsa onu göster — "bir hata oluştu"
+        // kullanıcıya neyi düzelteceğini söylemiyor.
+        Alert.alert(sonuc.mesaj ?? t('reschedule.err'));
         return;
       }
       await hydrateBookings();
       Alert.alert(
-        sonuc === 'kuyrukta' ? t('flow.queued_t') : t('reschedule.sent_t'),
-        sonuc === 'kuyrukta' ? t('flow.queued_b') : t('reschedule.sent_b'),
+        sonuc.sonuc === 'kuyrukta' ? t('flow.queued_t') : t('reschedule.sent_t'),
+        sonuc.sonuc === 'kuyrukta' ? t('flow.queued_b') : t('reschedule.sent_b'),
         [{ text: t('common.ok'), onPress: () => router.back() }],
       );
     } finally {

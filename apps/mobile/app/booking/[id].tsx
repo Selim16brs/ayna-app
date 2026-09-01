@@ -126,8 +126,17 @@ export default function BookingDetail() {
   const cagir = (eylem: BookingEylem, arg?: string | number) => {
     if (!booking) return;
     void randevuEylemi(booking.id, eylem, arg).then((sonuc) => {
-      if (sonuc === 'kuyrukta') Alert.alert(t('flow.queued_t'), t('flow.queued_b'));
-      else void hydrateBookings();
+      if (sonuc.sonuc === 'kuyrukta') Alert.alert(t('flow.queued_t'), t('flow.queued_b'));
+      // Sunucu reddettiyse SESSİZ KALMA: düğme bir şey yapmamış gibi
+      // görünüyordu, kullanıcı tekrar tekrar basıyordu.
+      else if (sonuc.sonuc === 'reddedildi') {
+        if (sonuc.mesaj) Alert.alert(sonuc.mesaj);
+        void hydrateBookings();
+      }
+      // BAŞARIDA TAZELEME YOK: sunucu güncel randevuyu yanıtında döndürüyor ve
+      // store onu zaten yazdı. Buradaki `hydrateBookings()` üstüne iki istek
+      // daha bindiriyor, üstelik bekleyen yazım kuyruğunun arkasında sıraya
+      // giriyordu — "onayla"dan sonraki 15 saniyelik ölü bekleme buydu.
     });
   };
 
@@ -268,8 +277,10 @@ export default function BookingDetail() {
             </Text>
           </View>
           <View style={styles.paraSatir}>
+            {/* Uzman kendi ekranında "Hizmetten sonra UZMANA" okuyordu —
+                kendisi hakkında üçüncü şahıs. Uzmanda "sana". */}
             <Text variant="caption" tone="muted">
-              {t('booking.balance.remaining')}
+              {t(rol === 'uzman' ? 'booking.balance.remaining_pro' : 'booking.balance.remaining')}
             </Text>
             <Text variant="bodyStrong" tone="ink">
               {kalan.toLocaleString('tr-TR')} ₸
@@ -277,24 +288,42 @@ export default function BookingDetail() {
           </View>
         </View>
 
-        {/* ── Görünür geri sayımlar. Brief §7: "görünmez zaman sınırı yasak." ── */}
+        {/* ── Görünür geri sayımlar. Brief §7: "görünmez zaman sınırı yasak." ──
+            ACİLİYET SIRASI GELEN TARAFINDIR. Bu kartlar iki rolde de aynı
+            çiziliyordu: uzman kendi ekranında "Randevunu korumak için öde /
+            ödemezsen randevu düşer" okuyordu — ödemeyecek olan taraf.
+            Aynı süre iki tarafa da gösterilir ama ÖDEVİ olanda kırmızı bir
+            çağrı, diğerinde sade bir bilgi. */}
         {booking.status === 'depozito_bekliyor' && booking.depositDeadline ? (
-          <View style={[styles.kart, styles.acilKart, shadow.card]}>
-            <Text variant="bodyStrong" style={{ color: colors.danger }}>
-              {t('flow.deposit.countdown_t')}
-            </Text>
-            <Sayac
-              bitis={booking.depositDeadline}
-              metin={t('flow.deposit.countdown_b')}
-              renk={colors.danger}
-            />
-          </View>
+          rol === 'musteri' ? (
+            <View style={[styles.kart, styles.acilKart, shadow.card]}>
+              <Text variant="bodyStrong" style={{ color: colors.danger }}>
+                {t('flow.deposit.countdown_t')}
+              </Text>
+              <Sayac
+                bitis={booking.depositDeadline}
+                metin={t('flow.deposit.countdown_b')}
+                renk={colors.danger}
+              />
+            </View>
+          ) : (
+            <View style={[styles.kart, shadow.card]}>
+              <Text variant="bodyStrong" tone="ink">
+                {t('flow.deposit.countdown_pro_t')}
+              </Text>
+              <Sayac
+                bitis={booking.depositDeadline}
+                metin={t('flow.deposit.countdown_pro_b')}
+                renk={colors.gold}
+              />
+            </View>
+          )
         ) : null}
         {booking.status === 'onay_bekliyor' && booking.responseDeadline ? (
           <View style={[styles.kart, shadow.card]}>
             <Sayac
               bitis={booking.responseDeadline}
-              metin={t('flow.approve.countdown')}
+              metin={t(rol === 'uzman' ? 'flow.approve.countdown_pro' : 'flow.approve.countdown')}
               renk={colors.gold}
             />
           </View>
