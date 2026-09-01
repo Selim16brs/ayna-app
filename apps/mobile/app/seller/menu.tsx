@@ -79,14 +79,6 @@ const ITEMS: {
     tone: 'gold',
   },
   {
-    id: 'commissions',
-    icon: 'card',
-    labelKey: 'reports.action.commissions',
-    descKey: 'seller.menu.commissions_d',
-    route: '/seller/commissions',
-    tone: 'sage',
-  },
-  {
     id: 'reviews',
     icon: 'star',
     labelKey: 'reports.action.reviews',

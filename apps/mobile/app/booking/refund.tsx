@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { api } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
-import { localDeposit, useStore } from '../../src/store';
+import { randevuDepozitosu, useStore } from '../../src/store';
 import { font, radius, shadow, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
@@ -44,7 +44,7 @@ export default function RefundScreen() {
     );
   }
 
-  const tutar = booking.depositAmount ?? localDeposit(booking.price, rates);
+  const tutar = randevuDepozitosu(booking, rates);
 
   const gonder = async () => {
     if (hesap.trim().length < 3 || busy) return;

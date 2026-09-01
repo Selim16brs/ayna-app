@@ -15,7 +15,7 @@ import {
 } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
-import { localDeposit, useStore, type BookingEylem } from '../../src/store';
+import { randevuDepozitosu, useStore, type BookingEylem } from '../../src/store';
 import { radius, shadow, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -74,7 +74,7 @@ export default function BookingDetail() {
     currentUser?.role === 'professional' || currentUser?.role === 'salon' ? 'uzman' : 'musteri';
 
   // §4.4 — peşin %10; kalan bakiye hizmetten sonra doğrudan uzmana ödenir.
-  const pesinat = booking.depositAmount ?? localDeposit(booking.price, rates);
+  const pesinat = randevuDepozitosu(booking, rates);
   const kalan = Math.max(0, booking.price - pesinat);
 
   // §4.8 — "gelmedi" butonları randevu saatinden 15 DAKİKA sonra aktifleşir.
