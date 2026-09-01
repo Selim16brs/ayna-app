@@ -1,53 +1,79 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Dimensions, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORIES } from '../../src/data';
 import {
   useAds,
   useCampaigns,
-  useCollections,
   useOffers,
   useProfessionals,
   useProfessionalsLoading,
 } from '../../src/catalog';
-import { greetingKey } from '../../src/greeting';
+import { AKIS_ADIMLARI, akisAdimi, durumEtiketi } from '../../src/booking-flow';
+import { formatSlotTr } from '../../src/datetime';
 import type { MessageKey } from '@ayna/i18n';
-import { useLocale } from '../../src/locale';
-import { selectPortrait, selectUnreadCount, useStore } from '../../src/store';
+import { fillParams, useLocale } from '../../src/locale';
+import { musteriRandevulari, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
-import { categoryTints, radius, space, type ColorTokens, font } from '../../src/theme';
+import { categoryTints, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
-  HomeUpcoming,
-  HomeUrgent,
   ListSkeleton,
-  Marquee,
   PressableScale,
-  SalonRow,
   Screen,
   TAB_BAR_CLEARANCE,
   Text,
-  TextInput,
   useOfflineInset,
 } from '../../src/ui';
-
-type IoniconName = keyof typeof Ionicons.glyphMap;
 
 // Kategori daire zeminleri (spec §0.1) — pastel + ink ikon
 // Canlı kategori renkleri (pembe/yeşil gibi doygun) — Saç·Cilt·Nail·Makyaj·Spa·Diğer
 // Yatay kaydırmalı kart ölçüsü (Fırsatlar / Öne çıkanlar — profesyonel foto kartı)
-const PROMO_W = Math.round(Dimensions.get('window').width * 0.72);
-const PROMO_H = 168;
 
 // Ana sayfa kategori seti = MERKEZİ taksonomideki AKTİF kategoriler (CATEGORIES). "Diğer" yok.
 
+/**
+ * Figma `quick-action-strip` — üç kart. Görseller Unsplash'ten; tasarımın
+ * fotoğrafları yerine aynı konuyu taşıyan serbest görseller kullanıldı
+ * (Figma varlıkları 7 günde sona eriyor, kalıcı olmaz).
+ */
+/** Sadakat seviyesinin etiketi — sunucudan gelen anahtara göre. */
+const SEVIYE_ETIKET: Record<'bronze' | 'silver' | 'gold', MessageKey> = {
+  bronze: 'rewards.tier.bronze',
+  silver: 'rewards.tier.silver',
+  gold: 'rewards.tier.gold',
+};
+
+const HIZLI_EYLEMLER = [
+  {
+    id: 'randevu',
+    etiket: 'home.qa.book' as MessageKey,
+    ikon: 'calendar' as const,
+    yol: '/search' as const,
+    gorsel: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&q=60',
+  },
+  {
+    id: 'dilek',
+    etiket: 'home.qa.wish' as MessageKey,
+    ikon: 'sparkles' as const,
+    yol: '/demand/new' as const,
+    gorsel: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=60',
+  },
+  {
+    id: 'harita',
+    etiket: 'home.qa.map' as MessageKey,
+    ikon: 'map' as const,
+    yol: '/map' as const,
+    gorsel: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=400&q=60',
+  },
+];
+
 export default function DiscoverScreen() {
   const { t } = useLocale();
-  const { colors, shadow } = useTheme();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const cevrimdisiBosluk = useOfflineInset();
@@ -65,7 +91,6 @@ export default function DiscoverScreen() {
   const articles = useStore((s) => s.articles);
   const trends = useMemo(() => articles.filter((a) => a.contentType === 'trend'), [articles]);
   // §keşif Modül 3 — aktif koleksiyon hero'ları (maks 2; priority sunucudan sıralı)
-  const collections = useCollections().slice(0, 2);
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const unread = useStore(selectUnreadCount);
   const unreadMsg = useUnreadMessages();
@@ -120,15 +145,38 @@ export default function DiscoverScreen() {
    * yok" diyordu. Almatı'dan istek ~1,5 sn sürüyor, yani her yeni kullanıcı
    * önce YANLIŞ bir mesaj görüyordu — boş ekrandan da kötü.
    */
+  /**
+   * Figma'daki iki bölüm GERÇEK VERİYE bağlı:
+   *  · depozito iadesi bandı — iade hakkı doğmuş randevu varsa,
+   *  · bekleyen randevular — akışı sürmekte olan ilk randevu.
+   * Yoksa bölüm hiç çizilmiyor: olmayan bir vaadi göstermek, kullanıcıya
+   * var olmayan parayı ya da randevuyu göstermektir.
+   */
+  const bookings = useStore((s) => s.bookings);
+  const benimRandevularim = useMemo(() => musteriRandevulari(bookings), [bookings]);
+  /**
+   * İADE BANDI — vaat ettiği şey DOĞRU olmalı.
+   *
+   * Kurucu daha önce şunu bildirmişti: kart iade vaat ediyor, basınca ortada
+   * iade olmayan bir randevu açılıyordu. Üç koşul o yüzden burada:
+   *   · depozito GERÇEKTEN ödenmiş olmalı (tutar > 0),
+   *   · geç iptalde depozito YANDI — iade hakkı yok (§4.7),
+   *   · talep zaten gönderildiyse bandı tekrar göstermek yanlış.
+   * Koşulu `HomeUrgent`ten devraldım; oradaki kart bu ekranla birlikte
+   * kaldırıldı ama koruduğu güvence kaldırılmadı.
+   */
+  const iadeBekleyen = benimRandevularim.find(
+    (b) =>
+      (b.status === 'iptal_uzman' ||
+        b.status === 'no_show_uzman' ||
+        b.status === 'iptal_musteri') &&
+      (b.depositAmount ?? 0) > 0 &&
+      !b.depositForfeited &&
+      !b.refundRequestedAt,
+  );
+  const bekleyenRandevu = benimRandevularim.find((b) => akisAdimi(b.status) >= 0);
   const prosLoading = useProfessionalsLoading();
   const cityEmpty = !prosLoading && cityPros.length === 0;
-  const [query, setQuery] = useState('');
-
-  function runSearch() {
-    const q = query.trim();
-    router.push(q ? { pathname: '/search', params: { q } } : '/search');
-  }
-
   return (
     <Screen edges={[]}>
       <ScrollView
@@ -136,841 +184,774 @@ export default function DiscoverScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        {/* ═══ 1 · KİMLİK — kanvas Main.dc.html §1 ═══
-            Kanvas: AÇIK porselen zemin, üstte şehir çipi + eylem düğmeleri,
-            altında SOLDA kesik portre + yansıma, sağda selamlama.
-            Önceki sürüm mor bir hero bloğuydu ve kanvasla ilgisi yoktu — yalnız
-            renk token'ları değişmişti, yapı eski tasarımın kendisiydi. */}
-        {/* Çevrimdışı bandı `absolute` çiziliyor ve bu satırı KAPATIYORDU:
-            bağlantı yokken kullanıcı şehri değiştiremiyor, bildirim ve mesaj
-            ikonlarına dokunamıyordu. Bant varken içerik onun altından
-            başlıyor. */}
-        <View style={[styles.topRow, { paddingTop: insets.top + space(0.5) + cevrimdisiBosluk }]}>
-          <PressableScale
-            style={[styles.cityChip, shadow.soft]}
-            onPress={() => router.push('/city')}
-          >
-            <Ionicons name="location" size={13} color={colors.sage} />
-            <Text variant="meta" tone="ink" style={styles.cityText}>
+        {/* ═══ BAŞLIK — Figma `header-section` (68h) ═══
+            Solda marka, sağda şehir · mesaj · bildirim. Ölçüler Figma'dan;
+            işlevsel ikonlar (mesaj/bildirim rozetleri) korundu. */}
+        <View style={[styles.header, { paddingTop: insets.top + space(0.5) + cevrimdisiBosluk }]}>
+          <Text variant="h2" tone="ink" style={styles.marka}>
+            AYNA
+          </Text>
+          <View style={styles.grow} />
+          <PressableScale style={styles.sehirCip} onPress={() => router.push('/city')}>
+            <Ionicons name="location" size={12} color={colors.accent} />
+            <Text variant="micro" tone="ink">
               {city}
             </Text>
-            <Ionicons name="chevron-down" size={12} color={colors.muted} />
+            <Ionicons name="chevron-down" size={11} color={colors.muted} />
           </PressableScale>
-          <View style={styles.grow} />
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={t('map.title')}
-            style={[styles.iconBtn, shadow.soft]}
-            onPress={() => router.push('/map')}
-          >
-            <Ionicons name="map-outline" size={18} color={colors.ink} />
-          </PressableScale>
-          {/* Mesajlar ÜST BARDA, bildirimin yanında. Profil menüsünün
-              içindeydi: en sık kullanılan yol en derin yerdeydi. */}
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel={t('messages.title')}
-            style={[styles.iconBtn, shadow.soft]}
+            hitSlop={4}
+            style={styles.basIkon}
             onPress={() => router.push('/messages')}
           >
             <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.ink} />
             {unreadMsg > 0 ? (
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText}>{unreadMsg > 9 ? '9+' : unreadMsg}</Text>
+              <View style={styles.rozet}>
+                <Text style={styles.rozetYazi}>{unreadMsg > 9 ? '9+' : unreadMsg}</Text>
               </View>
             ) : null}
           </PressableScale>
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel={t('notifications.title')}
-            style={[styles.iconBtn, shadow.soft]}
+            hitSlop={4}
+            style={styles.basIkon}
             onPress={() => router.push('/notifications')}
           >
             <Ionicons name="notifications-outline" size={18} color={colors.ink} />
             {unread > 0 ? (
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText}>{unread > 9 ? '9+' : unread}</Text>
+              <View style={styles.rozet}>
+                <Text style={styles.rozetYazi}>{unread > 9 ? '9+' : unread}</Text>
               </View>
             ) : null}
           </PressableScale>
         </View>
 
-        <View style={styles.identityRow}>
-          {/* KESİK PORTRE + YANSIMA — AYNA'nın marka imzası: uygulamayı açan
-              kullanıcı kendi yansımasını görür. Kanvasta SOLDA, 96×138.
-              Kesim RN'de mask-image ile yapılamıyor; alta doğru zemine eriyen
-              bir gradyanla aynı etki kuruluyor. */}
-          <View style={styles.portraitCol} pointerEvents="none">
-            {portre ? (
-              <>
-                <View style={styles.portraitWrap}>
-                  <Image source={{ uri: portre }} style={styles.portrait} resizeMode="cover" />
-                  <LinearGradient
-                    colors={['rgba(251,248,246,0)', colors.bg]}
-                    locations={[0.62, 1]}
-                    style={StyleSheet.absoluteFill}
-                    pointerEvents="none"
-                  />
-                </View>
-                <View style={styles.reflection}>
-                  <Image source={{ uri: portre }} style={styles.reflectionImg} resizeMode="cover" />
-                  <LinearGradient
-                    colors={['rgba(251,248,246,0.55)', colors.bg]}
-                    locations={[0, 0.88]}
-                    style={StyleSheet.absoluteFill}
-                  />
-                </View>
-              </>
-            ) : displayName ? (
-              /* Sıfır-demo: kendi fotosu yoksa sahte model YOK — baş harfi madalyonu */
-              <>
-                <View style={styles.medallion}>
-                  <Text style={styles.medallionText}>{displayName.charAt(0)}</Text>
-                </View>
-                <View style={styles.reflection}>
-                  <View style={[styles.medallion, styles.medallionFlip]}>
-                    <Text style={styles.medallionText}>{displayName.charAt(0)}</Text>
-                  </View>
-                  <LinearGradient
-                    colors={['rgba(251,248,246,0.55)', colors.bg]}
-                    locations={[0, 0.88]}
-                    style={StyleSheet.absoluteFill}
-                  />
-                </View>
-              </>
-            ) : null}
-          </View>
-
-          <View style={styles.identityText}>
-            <Text variant="body" tone="inkSoft">
-              {t(greetingKey())}
+        {/* ═══ KARŞILAMA — Figma `welcome-vip-area` (px24 py20) ═══ */}
+        <View style={styles.karsilama}>
+          <View style={styles.grow}>
+            <Text style={styles.selam}>
+              {displayName
+                ? fillParams(t('home.greeting'), { ad: displayName })
+                : t('home.guest_title')}
             </Text>
-            {/* İsim YOKSA satır hiç çizilmiyor. Misafirde `displayName` boş
-                geliyordu ve 34 puntoluk boş bir satır bırakıyordu: selamlamanın
-                altında sebepsiz bir boşluk. Boş bir metni çizmek, orada bir şey
-                olması gerektiğini ama gelmediğini gösterir. */}
-            {displayName ? (
-              <Text
-                style={styles.greetName}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.6}
-              >
-                {displayName}
+            <View style={styles.puanSatir}>
+              <Ionicons name="ribbon" size={12} color={colors.gold} />
+              <Text style={styles.puanSayi}>
+                {points.toLocaleString('tr-TR')} {t('rewards.points')}
               </Text>
+              {tier ? (
+                <Text variant="micro" tone="muted">
+                  · {t(SEVIYE_ETIKET[tier.key])}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+          <PressableScale style={styles.avatarHalka} onPress={() => router.push('/(tabs)/profile')}>
+            {portre ? (
+              <Image source={{ uri: portre }} style={styles.avatar} />
             ) : (
-              <Text variant="h2" tone="ink">
-                {t('home.guest_title')}
-              </Text>
+              <View style={[styles.avatar, styles.avatarBos]} />
             )}
-            {points > 0 || tier ? (
-              <PressableScale style={styles.tierRow} onPress={() => router.push('/rewards')}>
-                <Ionicons name="star" size={13} color={colors.gold} />
-                <Text
-                  numeric
-                  variant="caption"
-                  tone="inkSoft"
-                  style={styles.tierText}
-                  numberOfLines={1}
-                >
-                  {points.toLocaleString('tr-TR')} {t('rewards.points')}
-                  {tier ? ` · ${t(`rewards.tier.${tier.key}` as MessageKey)}` : ''}
-                </Text>
-              </PressableScale>
-            ) : null}
-          </View>
+          </PressableScale>
         </View>
 
-        {/* ═══ 2 · ACİL — süre işleyen TEK iş, kimliğin hemen altında (kanvas §2).
-            Kanvas teşhisi: kapora süresi sessizce doluyordu ve kullanıcı bunu
-            ana ekranda göremiyordu. Kural: SÜRE İŞLİYORSA SAYAÇ GÖRÜNÜR. ═══ */}
-        <HomeUrgent />
+        {/* ═══ ARAMA — Figma `search-container` (radius 12, border #E5E0DE) ═══ */}
+        <View style={styles.aramaKap}>
+          <Pressable style={styles.arama} onPress={() => router.push('/search')}>
+            <Ionicons name="search" size={16} color={colors.muted} />
+            <Text style={styles.aramaYazi}>{t('home.search')}</Text>
+          </Pressable>
+        </View>
 
-        {/* ═══ 3 · YAKLAŞAN RANDEVU (kanvas §3) ═══ */}
-        <HomeUpcoming />
-
-        {/* ═══ 4 · ANA EYLEM — Dileğin Nedir (kanvas §4) ═══ */}
-        <PressableScale onPress={() => router.push('/quote')} style={styles.wishPress}>
-          <LinearGradient
-            colors={[colors.rose, colors.accent]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.wishCard}
-          >
-            <View style={styles.wishTop}>
-              <View style={styles.grow}>
-                <Text variant="h2" tone="onAccent" style={styles.wishTitle}>
-                  {t('home.how')}
-                </Text>
-                <Text variant="meta" style={styles.wishSub} numberOfLines={2}>
-                  {t('home.how_sub')}
-                </Text>
-              </View>
-              <View style={styles.wishArrow}>
-                <Ionicons name="arrow-forward" size={19} color={colors.rose} />
-              </View>
-            </View>
-            {/* Üç adım: kullanıcı ne olacağını ÖNCEDEN bilsin */}
-            <View style={styles.wishSteps}>
-              {(['home.step1', 'home.step2', 'home.step3'] as MessageKey[]).map((k, i) => (
-                <View key={k} style={styles.wishStep}>
-                  {i > 0 ? (
-                    <Ionicons name="chevron-forward" size={11} color="rgba(251,248,246,0.6)" />
-                  ) : null}
-                  <Text numeric variant="caption" tone="onAccent" style={styles.wishStepText}>
-                    {t(k)}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </LinearGradient>
-        </PressableScale>
-
-        {/* ═══ 5 · ARAMA + KATEGORİ (kanvas §5) ═══ */}
-        <View style={styles.searchRow}>
-          <View style={[styles.search, shadow.soft]}>
-            <Ionicons name="search" size={18} color={colors.muted} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder={t('home.search')}
-              placeholderTextColor={colors.muted}
-              returnKeyType="search"
-              onSubmitEditing={runSearch}
-              style={styles.searchInput}
-            />
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={t('home.search')}
-              style={styles.searchGo}
-              onPress={runSearch}
-            >
-              {/* Ters yüzeyin ÜSTÜNDEKİ ikon: onAccent koyu temada koyuya
-                  döndüğü için koyu zeminde kayboluyordu. */}
-              <Ionicons name="options-outline" size={17} color={colors.onInverse} />
+        {/* ═══ HIZLI EYLEMLER — Figma `quick-action-strip` (3 × h140, radius 16) ═══
+            Fotoğraf + alttan koyulaşan degrade; yazı degradenin üstünde. */}
+        <View style={styles.hizliSerit}>
+          {HIZLI_EYLEMLER.map((e) => (
+            <PressableScale key={e.id} style={styles.hizliKart} onPress={() => router.push(e.yol)}>
+              <Image
+                source={{ uri: e.gorsel }}
+                style={StyleSheet.absoluteFill}
+                resizeMode="cover"
+              />
+              <LinearGradient
+                colors={[
+                  'rgba(0,0,0,0)',
+                  'rgba(0,0,0,0.15)',
+                  'rgba(0,0,0,0.55)',
+                  'rgba(0,0,0,0.8)',
+                ]}
+                locations={[0, 0.35, 0.7, 1]}
+                style={StyleSheet.absoluteFill}
+              />
+              <Ionicons name={e.ikon} size={22} color={colors.onColor} />
+              <Text style={styles.hizliYazi}>{t(e.etiket)}</Text>
             </PressableScale>
-          </View>
+          ))}
         </View>
 
-        {/* Kanvas: kategoriler YATAY HAP biçiminde (kare kutu değil) — isim
-            kırpılmıyor, ikon renkli. Önceki kare kutularda "Saç bakımı" gibi
-            uzun adlar "S..." diye kesiliyordu. */}
+        {/* ═══ HİZMETLER — Figma `service-icons-strip` (tile 68, ikon 64, radius 18) ═══ */}
+        <BolumBasligi title={t('home.services')} onSeeAll={() => router.push('/search')} />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.catRow}
+          contentContainerStyle={styles.ikonSerit}
         >
-          {CATEGORIES.map((cat, i) => {
-            const tint = categoryTints[i % categoryTints.length]!;
-            return (
-              <Animated.View key={cat.id} entering={FadeInDown.duration(360).delay(i * 55)}>
-                <PressableScale
-                  style={[styles.catPill, shadow.soft]}
-                  onPress={() => router.push(`/category/${cat.id}` as never)}
-                >
-                  <Ionicons name={cat.icon as IoniconName} size={16} color={tint} />
-                  {/* numberOfLines YOK: hap yatay kaydırma içinde, genişlik
-                      sınırı yok — "Masaj & Vüc..." gibi kırpılma kabul edilemez. */}
-                  <Text variant="cta" tone="ink" style={styles.catLabel}>
-                    {t(cat.labelKey)}
-                  </Text>
-                </PressableScale>
-              </Animated.View>
-            );
-          })}
+          {CATEGORIES.map((cat, i) => (
+            <PressableScale
+              key={cat.id}
+              style={styles.ikonKap}
+              onPress={() => router.push(`/category/${cat.id}` as never)}
+            >
+              <View
+                style={[
+                  styles.ikonKart,
+                  { backgroundColor: categoryTints[i % categoryTints.length] + '1F' },
+                ]}
+              >
+                <Ionicons
+                  name={cat.icon}
+                  size={24}
+                  color={categoryTints[i % categoryTints.length]}
+                />
+              </View>
+              <Text variant="micro" tone="ink" numberOfLines={1} style={styles.ikonYazi}>
+                {t(cat.labelKey)}
+              </Text>
+            </PressableScale>
+          ))}
         </ScrollView>
 
-        {/* Marka sesi — kanvasta yok ama uygulamada vardı; kaldırmak yerine
-            kategorilerin altına, akışı bölmeyecek yere alındı. */}
-        <Marquee text={t('home.marquee')} style={styles.marquee} />
-
-        {prosLoading && cityPros.length === 0 ? (
-          /* §4 — spinner DEĞİL iskelet: ekranın nihai biçimi belli olsun. */
-          <View style={styles.skeletonWrap}>
-            <ListSkeleton rows={4} />
-          </View>
-        ) : cityEmpty ? (
-          /* §5.1.4 — hizmet veren olmayan şehir: boş durum (asla beyaz boşluk) */
-          <View style={styles.cityEmpty}>
-            <View style={styles.cityEmptyIcon}>
-              <Ionicons name="rocket-outline" size={30} color={colors.rose} />
-            </View>
-            <Text variant="bodyStrong" tone="ink" style={styles.cityEmptyTitle}>
-              {t('home.city_empty.title')}
-            </Text>
-            <Text variant="caption" tone="muted" style={styles.cityEmptySub}>
-              {t('home.city_empty.sub')}
-            </Text>
-            <Pressable style={styles.cityEmptyCta} onPress={() => router.push('/city')}>
-              <Ionicons name="notifications-outline" size={16} color={colors.onAccent} />
-              <Text variant="caption" tone="onAccent" style={styles.cityEmptyCtaText}>
-                {t('home.city_empty.cta')}
-              </Text>
-            </Pressable>
-          </View>
-        ) : (
-          <>
-            {/* ── DÖNEMSEL KOLEKSİYON HERO (Modül 3 — maks 2, tarih penceresi otomatik) ── */}
-            {collections.map((c) => (
-              <Pressable
-                key={c.id}
-                style={styles.collectionHero}
-                onPress={() => router.push(`/collection/${c.id}`)}
+        {/* ═══ DEPOZİTO İADESİ — Figma `deposit-refund-banner` ═══
+            YALNIZ iade hakkı varsa. Yoksa bant hiç çizilmez: boş bir vaat
+            göstermek, olmayan parayı varmış gibi sunmaktır. */}
+        {iadeBekleyen ? (
+          <View style={styles.iadeKap}>
+            <View style={styles.iadeKart}>
+              <View style={styles.iadeIkon}>
+                <Text style={styles.iadeTenge}>₸</Text>
+              </View>
+              <View style={styles.grow}>
+                <Text style={styles.iadeBaslik}>{t('home.refund.title')}</Text>
+                <Text style={styles.iadeAlt}>{t('home.refund.sub')}</Text>
+              </View>
+              <PressableScale
+                style={styles.iadeDugme}
+                onPress={() => router.push(`/booking/refund?id=${iadeBekleyen.id}`)}
               >
-                <Image
-                  source={{
-                    uri:
-                      c.heroImage ||
-                      'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=60',
-                  }}
-                  style={styles.collectionImg}
-                />
-                <View style={styles.collectionOverlay}>
-                  <Text
-                    variant="bodyStrong"
-                    tone="onColor"
-                    numberOfLines={1}
-                    style={styles.collectionTitle}
-                  >
-                    {c.title}
-                  </Text>
-                  {c.subtitle ? (
-                    <Text variant="caption" tone="onColor" numberOfLines={1}>
-                      {c.subtitle}
-                    </Text>
-                  ) : null}
-                </View>
-              </Pressable>
-            ))}
+                <Text style={styles.iadeDugmeYazi}>{t('home.refund.cta')}</Text>
+              </PressableScale>
+            </View>
+          </View>
+        ) : null}
 
-            {/* ── FIRSATLAR (tek satır, yatay kaydırmalı) ── */}
-            <SectionHeader title={t('home.campaigns')} onSeeAll={() => router.push('/search')} />
+        {/* ═══ BEKLEYEN RANDEVULAR — Figma `appointment-card-container` ═══ */}
+        {bekleyenRandevu ? (
+          <>
+            <BolumBasligi title={t('home.pending')} />
+            <View style={styles.iadeKap}>
+              <PressableScale
+                style={styles.randevuKart}
+                onPress={() => router.push(`/booking/${bekleyenRandevu.id}`)}
+              >
+                <View style={styles.randevuBas}>
+                  <Image source={{ uri: bekleyenRandevu.proImage }} style={styles.randevuFoto} />
+                  <View style={styles.grow}>
+                    <Text variant="captionStrong" tone="ink" numberOfLines={1}>
+                      {bekleyenRandevu.proName}
+                    </Text>
+                    <Text variant="micro" tone="muted" numberOfLines={1}>
+                      {bekleyenRandevu.service}
+                    </Text>
+                    <Text variant="caption" tone="ink" style={styles.randevuZaman}>
+                      {formatSlotTr(bekleyenRandevu.startMs)}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.asamaSatir}>
+                  <View style={styles.asamaCip}>
+                    <Text style={styles.asamaYazi}>
+                      {t(durumEtiketi(bekleyenRandevu.status, 'musteri'))}
+                    </Text>
+                  </View>
+                  <Text variant="micro" tone="muted">
+                    {akisAdimi(bekleyenRandevu.status) + 1} / {AKIS_ADIMLARI.length}
+                  </Text>
+                </View>
+                <View style={styles.ilerlemeYol}>
+                  <View
+                    style={[
+                      styles.ilerlemeDolu,
+                      {
+                        width: `${Math.round(((akisAdimi(bekleyenRandevu.status) + 1) / AKIS_ADIMLARI.length) * 100)}%`,
+                      },
+                    ]}
+                  />
+                </View>
+                {/* Figma `ticket-actions` — üç eşit düğme: Ertele · Yaz · Yol. */}
+                <View style={styles.biletEylem}>
+                  <PressableScale
+                    style={styles.biletDugme}
+                    onPress={() => router.push(`/booking/reschedule?id=${bekleyenRandevu.id}`)}
+                  >
+                    <Ionicons name="swap-horizontal" size={15} color={colors.accent} />
+                    <Text style={styles.biletYazi}>{t('home.next.reschedule')}</Text>
+                  </PressableScale>
+                  <PressableScale
+                    style={styles.biletDugme}
+                    onPress={() => router.push(`/messages/${bekleyenRandevu.proId}`)}
+                  >
+                    <Ionicons name="chatbubble-outline" size={15} color={colors.accent} />
+                    <Text style={styles.biletYazi}>{t('home.next.message')}</Text>
+                  </PressableScale>
+                  <PressableScale style={styles.biletDugme} onPress={() => router.push('/map')}>
+                    <Ionicons name="navigate-outline" size={15} color={colors.accent} />
+                    <Text style={styles.biletYazi}>{t('home.next.route')}</Text>
+                  </PressableScale>
+                </View>
+              </PressableScale>
+            </View>
+          </>
+        ) : null}
+
+        {/* ═══ SENİN İÇİN SEÇTİKLERİMİZ — Figma `curated-section` (kart 260×200) ═══
+            Kaynak ÜCRETLİ VİTRİN (`one_cikanlar`): kurucu bu bölümün bizim
+            "Öne çıkanlar" ücretli alanımız olduğunu söyledi. */}
+        {featured.length > 0 ? (
+          <>
+            <BolumBasligi title={t('home.featured')} onSeeAll={() => router.push('/search')} />
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.promoScroll}
+              contentContainerStyle={styles.vitrinSerit}
             >
-              {campaigns.map((c) => (
-                <PromoCard
-                  key={c.id}
-                  title={c.title}
-                  image={c.image}
+              {featured.map((reklam) => (
+                <VitrinKarti
+                  key={reklam.id}
+                  title={reklam.title}
+                  image={reklam.image}
+                  subtitle={reklam.subtitle}
                   sponsored
-                  onPress={() => router.push(c.category ? '/category/' + c.category : '/search')}
+                  onPress={() => router.push('/professional/' + reklam.proId)}
                 />
               ))}
             </ScrollView>
-
-            {/* ── BU HAFTA TREND (A4 — ilhamdan talebe 3 dokunuş) ── */}
-            {trends.length > 0 ? (
-              <>
-                <SectionHeader title={t('home.trend')} />
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.promoScroll}
-                >
-                  {trends.slice(0, 8).map((a) => (
-                    <PromoCard
-                      key={a.id}
-                      title={a.title}
-                      image={
-                        a.image ||
-                        'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=400&q=60'
-                      }
-                      tag={a.tag}
-                      onPress={() =>
-                        router.push({
-                          pathname: '/quote/new',
-                          params: { category: a.categoryCode ?? 'hair', note: a.title },
-                        })
-                      }
-                    />
-                  ))}
-                </ScrollView>
-              </>
-            ) : null}
-
-            {/* ── SALON/UZMAN KAMPANYALARI (Modül 2 — süreli indirimler) ── */}
-            {offers.length > 0 || firsatReklamlari.length > 0 ? (
-              <>
-                <SectionHeader title={t('offers.title')} onSeeAll={() => router.push('/offers')} />
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.promoScroll}
-                >
-                  {/* Ücretli reklamlar başta ve SPONSORLU etiketli. Etiket
-                      şart: ödenmiş yerleşimi organik kampanyadan ayırt
-                      edilemez göstermek kullanıcıyı yanıltır. */}
-                  {firsatReklamlari.map((reklam) => (
-                    <PromoCard
-                      key={reklam.id}
-                      title={reklam.title}
-                      image={reklam.image}
-                      sponsored
-                      {...(reklam.subtitle ? { tag: reklam.subtitle } : {})}
-                      onPress={() => router.push('/professional/' + reklam.proId)}
-                    />
-                  ))}
-                  {offers.slice(0, 8).map((o) => (
-                    <PromoCard
-                      key={o.id}
-                      title={o.title}
-                      image={
-                        o.imageUrl ||
-                        'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&q=60'
-                      }
-                      tag={
-                        o.discountType === 'percent'
-                          ? `-%${o.discountValue}`
-                          : `${o.finalPrice.toLocaleString('tr-TR')} ₸`
-                      }
-                      onPress={() =>
-                        router.push({
-                          pathname: '/booking/schedule',
-                          params: { proId: o.proId, offerId: o.id, source: 'direct' },
-                        })
-                      }
-                    />
-                  ))}
-                </ScrollView>
-              </>
-            ) : null}
-
-            {/* ── ÖNE ÇIKANLAR — SPONSORLU: yalnız admin'in seçtikleri; boşsa bölüm gizli ── */}
-            {featured.length > 0 ? (
-              <>
-                <SectionHeader title={t('home.featured')} onSeeAll={() => router.push('/search')} />
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.promoScroll}
-                >
-                  {featured.map((reklam) => (
-                    <PromoCard
-                      key={reklam.id}
-                      title={reklam.title}
-                      image={reklam.image}
-                      sponsored
-                      {...(reklam.subtitle ? { tag: reklam.subtitle } : {})}
-                      onPress={() => router.push('/professional/' + reklam.proId)}
-                    />
-                  ))}
-                </ScrollView>
-              </>
-            ) : null}
-
-            {/* ── SANA YAKIN SALONLAR (premium önce + rotasyon) ── */}
-            <SectionHeader title={t('home.nearby')} onSeeAll={() => router.push('/nearby')} />
-            <View style={styles.nearby}>
-              {nearby.map((pro, i) => (
-                <SalonRow key={pro.id} pro={pro} index={i} />
-              ))}
-            </View>
           </>
+        ) : null}
+
+        {/* ═══ FIRSATLAR — Figma `firsatlar-section` ═══
+            Ücretli reklamlar başta ve SPONSORLU etiketli; ardından organik
+            kampanyalar. Etiket şart: ödenmiş yerleşimi organik içerikten
+            ayırt edilemez göstermek kullanıcıyı yanıltır. */}
+        {firsatReklamlari.length > 0 || offers.length > 0 || campaigns.length > 0 ? (
+          <>
+            <BolumBasligi title={t('home.campaigns')} onSeeAll={() => router.push('/offers')} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.vitrinSerit}
+            >
+              {firsatReklamlari.map((reklam) => (
+                <VitrinKarti
+                  key={reklam.id}
+                  title={reklam.title}
+                  image={reklam.image}
+                  subtitle={reklam.subtitle}
+                  sponsored
+                  onPress={() => router.push('/professional/' + reklam.proId)}
+                />
+              ))}
+              {/* Admin kampanyaları — Figma'da ayrı bölüm yok, ama içerik
+                  gerçek. Aynı kavram olduğu için Fırsatlar şeridine katılıyor;
+                  bölümü silmek onları ekrandan tümden kaldırmak olurdu. */}
+              {campaigns.slice(0, 6).map((c) => (
+                <VitrinKarti
+                  key={c.id}
+                  title={c.title}
+                  image={c.image}
+                  subtitle={c.subtitle}
+                  onPress={() => router.push(`/category/${c.category}` as never)}
+                />
+              ))}
+              {offers.slice(0, 8).map((o) => (
+                <VitrinKarti
+                  key={o.id}
+                  title={o.title}
+                  image={o.imageUrl}
+                  subtitle={
+                    o.discountType === 'percent'
+                      ? `-%${o.discountValue}`
+                      : `${o.finalPrice.toLocaleString('tr-TR')} ₸`
+                  }
+                  onPress={() =>
+                    router.push({
+                      pathname: '/booking/schedule',
+                      params: { proId: o.proId, offerId: o.id, source: 'direct' },
+                    })
+                  }
+                />
+              ))}
+            </ScrollView>
+          </>
+        ) : null}
+
+        {/* ═══ BU HAFTA TREND — Figma `trends-section` (radius 12, ikon 36) ═══ */}
+        {trends.length > 0 ? (
+          <>
+            <BolumBasligi title={t('home.trend')} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.trendSerit}
+            >
+              {trends.slice(0, 6).map((a, i) => (
+                <PressableScale
+                  key={a.id}
+                  style={styles.trendKart}
+                  onPress={() => router.push(`/life/${a.id}` as never)}
+                >
+                  <View
+                    style={[
+                      styles.trendIkon,
+                      { backgroundColor: categoryTints[i % categoryTints.length] + '1F' },
+                    ]}
+                  >
+                    <Ionicons
+                      name="sparkles"
+                      size={17}
+                      color={categoryTints[i % categoryTints.length]}
+                    />
+                  </View>
+                  <Text variant="micro" tone="ink" numberOfLines={2} style={styles.trendYazi}>
+                    {a.title}
+                  </Text>
+                </PressableScale>
+              ))}
+            </ScrollView>
+          </>
+        ) : null}
+
+        {/* ═══ YAKININDAKİ SALONLAR — Figma `salons-section` (satır p14, radius 16) ═══ */}
+        <BolumBasligi title={t('home.nearby')} onSeeAll={() => router.push('/nearby')} />
+        {prosLoading ? (
+          <View style={styles.iadeKap}>
+            <ListSkeleton rows={4} />
+          </View>
+        ) : (
+          <View style={styles.salonListe}>
+            {nearby.map((pro) => (
+              <PressableScale
+                key={pro.id}
+                style={styles.salonSatir}
+                onPress={() => router.push('/professional/' + pro.id)}
+              >
+                <Image source={{ uri: pro.image }} style={styles.salonFoto} />
+                <View style={styles.grow}>
+                  <View style={styles.salonAdSatir}>
+                    <Text variant="captionStrong" tone="ink" numberOfLines={1}>
+                      {pro.name}
+                    </Text>
+                    {pro.aynaVerified ? (
+                      <View style={styles.dogruCip}>
+                        <Text style={styles.dogruYazi}>{t('home.verified')}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text variant="micro" tone="muted" numberOfLines={1}>
+                    {pro.district ? `${pro.district} · ` : ''}
+                    {pro.city}
+                  </Text>
+                  <View style={styles.puanCip}>
+                    <Ionicons name="star" size={11} color={colors.gold} />
+                    <Text variant="micro" tone="ink">
+                      {pro.rating.toFixed(1)}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.detayDugme}>
+                  <Text style={styles.detayYazi}>{t('home.details')}</Text>
+                </View>
+              </PressableScale>
+            ))}
+          </View>
         )}
+
+        {cityEmpty ? (
+          <View style={styles.iadeKap}>
+            <View style={styles.bosSehir}>
+              <Text variant="bodyStrong" tone="ink">
+                {t('home.city_empty.title')}
+              </Text>
+              <Text variant="caption" tone="muted">
+                {t('home.city_empty.sub')}
+              </Text>
+              <PressableScale style={styles.haberDugme} onPress={() => router.push('/city')}>
+                <Text style={styles.haberYazi}>{t('home.city_empty.cta')}</Text>
+              </PressableScale>
+            </View>
+          </View>
+        ) : null}
       </ScrollView>
     </Screen>
   );
 }
 
-function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: () => void }) {
+/** Bölüm başlığı — Figma: 20px başlık, sağda 13px "Tümünü Gör", px24. */
+function BolumBasligi({ title, onSeeAll }: { title: string; onSeeAll?: () => void }) {
   const { t } = useLocale();
-  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <View style={styles.sectionHeader}>
-      <Text variant="h2" tone="ink" style={styles.sectionTitle}>
+    <View style={styles.bolumBas}>
+      <Text variant="h2" tone="ink">
         {title}
       </Text>
       {onSeeAll ? (
-        <Pressable onPress={onSeeAll} style={styles.seeAll}>
-          <Text variant="caption" tone="muted">
+        <Pressable onPress={onSeeAll} accessibilityRole="button">
+          <Text variant="caption" tone="accentFg">
             {t('common.see_all')}
           </Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.muted} />
         </Pressable>
       ) : null}
     </View>
   );
 }
 
-function PromoCard({
+/**
+ * Vitrin kartı — Figma `curated-section` kartı: 260×200, radius 20,
+ * fotoğraf + alttan koyulaşan degrade, sol üstte SPONSORLU rozeti.
+ */
+function VitrinKarti({
   title,
   image,
-  onPress,
+  subtitle,
   sponsored,
-  tag,
+  onPress,
 }: {
   title: string;
-  image: string;
-  onPress: () => void;
+  image?: string | undefined;
+  subtitle?: string | undefined;
   sponsored?: boolean;
-  tag?: string;
+  onPress: () => void;
 }) {
   const { t } = useLocale();
   const styles = useThemedStyles(makeStyles);
   return (
-    <Pressable style={styles.promoCard} onPress={onPress}>
-      {/* Gerçek foto tam kadraj + altta okunabilirlik için koyu degrade (VELOURA offer kartı) */}
-      <Image source={{ uri: image }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+    <PressableScale style={styles.vitrinKart} onPress={onPress}>
+      {image ? (
+        <Image source={{ uri: image }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, styles.vitrinBos]} />
+      )}
       <LinearGradient
-        colors={['rgba(24,18,26,0)', 'rgba(24,18,26,0.10)', 'rgba(24,18,26,0.84)']}
-        locations={[0, 0.42, 1]}
+        colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.12)', 'rgba(0,0,0,0.62)', 'rgba(0,0,0,0.86)']}
+        locations={[0, 0.38, 0.74, 1]}
         style={StyleSheet.absoluteFill}
       />
-      {/* Üst şerit: sol içerik etiketi + sağ sponsorlu */}
-      {tag ? (
-        <View style={styles.promoTag}>
-          <Text style={styles.promoTagText}>{tag}</Text>
-        </View>
-      ) : null}
       {sponsored ? (
-        <View style={styles.sponsorTag}>
-          <Text style={styles.sponsorText}>{t('home.sponsored')}</Text>
+        <View style={styles.sponsorCip}>
+          <Text style={styles.sponsorYazi}>{t('home.sponsored')}</Text>
         </View>
       ) : null}
-      {/* Alt: başlık */}
-      <View style={styles.promoContent}>
-        <Text style={styles.promoCardTitle} numberOfLines={2}>
+      <View style={styles.vitrinAlt}>
+        <Text style={styles.vitrinBaslik} numberOfLines={2}>
           {title}
         </Text>
+        {subtitle ? (
+          <Text style={styles.vitrinAltYazi} numberOfLines={1}>
+            {subtitle}
+          </Text>
+        ) : null}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
+/**
+ * Ölçüler Figma'dan BİREBİR — yuvarlanmadı.
+ * Bölüm arası boşluk her yerde 28px; yatay kenar 24px (şeritlerde 24 sol).
+ */
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: TAB_BAR_CLEARANCE },
+    grow: { flex: 1 },
 
-    // ── Lime hero ── (alt boşluk dengelendi: bant yukarı kaysın AMA alt yazı dalgada kesilmesin)
-    bellBadge: {
-      position: 'absolute',
-      top: -4,
-      right: -4,
-      minWidth: 19,
-      height: 19,
-      borderRadius: 9.5,
-      paddingHorizontal: 4,
-      backgroundColor: colors.rose,
+    // header-section (68h)
+    header: {
+      flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
-      borderWidth: 2,
-      borderColor: colors.surface,
+      gap: 8,
+      paddingHorizontal: 20,
+      paddingBottom: 8,
     },
-    bellBadgeText: {
-      color: colors.onColor,
-      fontSize: 10,
-      lineHeight: 12,
-      fontFamily: font.semibold,
-      textAlign: 'center',
-      textAlignVertical: 'center',
-      includeFontPadding: false,
-    },
-    // Kanvas §1 — şehir çipi 34 yüksek, İÇERİĞE göre esner.
-    // maxWidth ve flexShrink YOK: şehir adı uzunluğu öngörülemez
-    // (Almatı · Шымкент · Өскемен) ve "Alm..." diye kırpılması kabul edilemez.
-    cityChip: {
+    marka: { letterSpacing: 2 },
+    sehirCip: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 5,
-      height: 34,
-      paddingHorizontal: space(1.5),
-      borderRadius: 17,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 100,
       backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
-    cityText: { fontFamily: font.semibold },
-    grow: { flex: 1 },
-    // Kanvas §1 — üst satır: şehir çipi solda, eylem düğmeleri sağda.
-    topRow: {
+    basIkon: {
+      width: 36,
+      height: 36,
+      borderRadius: 100,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    rozet: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      minWidth: 15,
+      height: 15,
+      borderRadius: 100,
+      backgroundColor: colors.danger,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 3,
+    },
+    rozetYazi: { color: colors.onColor, fontSize: 9, fontFamily: font.semibold },
+
+    // welcome-vip-area (px24 py20)
+    karsilama: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: space(1),
-      paddingHorizontal: space(2.5),
+      paddingHorizontal: 24,
+      paddingVertical: 20,
+      gap: 12,
     },
-    iconBtn: {
+    // Figma: 28px Bold Italic. Onest'te italik yok; eğim sentezleniyor.
+    selam: {
+      fontFamily: font.semibold,
+      fontSize: 28,
+      lineHeight: 34,
+      color: colors.ink,
+      fontStyle: 'italic',
+    },
+    puanSatir: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
+    puanSayi: { fontFamily: font.semibold, fontSize: 12, color: colors.gold },
+    avatarHalka: { padding: 2, borderRadius: 100, borderWidth: 1.5, borderColor: colors.accent },
+    avatar: { width: 52, height: 52, borderRadius: 100 },
+    avatarBos: { backgroundColor: colors.accentSoft },
+
+    // search-container (radius 12, border #E5E0DE, px14 py8)
+    aramaKap: { paddingHorizontal: 20 },
+    arama: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: 12,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.lineStrong,
+    },
+    aramaYazi: { fontFamily: font.regular, fontSize: 13, color: colors.muted, opacity: 0.7 },
+
+    // quick-action-strip (3 × h140, radius 16, gap 10)
+    hizliSerit: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingTop: 28 },
+    hizliKart: {
+      flex: 1,
+      height: 140,
+      borderRadius: 16,
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      paddingBottom: 14,
+      paddingHorizontal: 10,
+      gap: 6,
+    },
+    hizliYazi: {
+      fontFamily: font.semibold,
+      fontSize: 11,
+      color: colors.onColor,
+      textAlign: 'center',
+    },
+
+    // bölüm başlığı (px24, 28 üst boşluk)
+    bolumBas: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 24,
+      paddingTop: 28,
+      paddingBottom: 12,
+    },
+
+    // service-icons-strip (tile 68, ikon 64, radius 18, gap 14)
+    ikonSerit: { gap: 14, paddingLeft: 24, paddingRight: 12, paddingBottom: 4 },
+    ikonKap: { width: 68, alignItems: 'center', gap: 8 },
+    ikonKart: {
+      width: 64,
+      height: 64,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    ikonYazi: { textAlign: 'center' },
+
+    // deposit-refund-banner
+    iadeKap: { paddingHorizontal: 20, paddingTop: 28 },
+    iadeKart: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 14,
+      padding: 16,
+      borderRadius: 20,
+      backgroundColor: colors.accent,
+    },
+    iadeIkon: {
       width: 44,
       height: 44,
-      borderRadius: 15,
-      backgroundColor: colors.surface,
+      borderRadius: 18,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: 'rgba(255,240,245,0.16)',
     },
-    // Kanvas §5 — arama: 64 yüksek beyaz hap + koyu 46'lık eylem düğmesi.
-    searchRow: { paddingHorizontal: space(2.5), marginTop: space(3) },
-    search: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1.25),
-      height: 64,
-      borderRadius: 32,
-      backgroundColor: colors.surface,
-      paddingLeft: space(2.25),
-      paddingRight: space(1),
+    iadeTenge: { fontFamily: font.semibold, fontSize: 22, color: colors.onAccent },
+    iadeBaslik: { fontFamily: font.semibold, fontSize: 15, color: colors.onAccent },
+    iadeAlt: {
+      fontFamily: font.regular,
+      fontSize: 12,
+      color: 'rgba(255,240,245,0.72)',
+      marginTop: 2,
     },
-    searchGo: {
-      width: 46,
-      height: 46,
-      borderRadius: 16,
-      backgroundColor: colors.inverse,
-      alignItems: 'center',
-      justifyContent: 'center',
+    iadeDugme: {
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 100,
+      backgroundColor: colors.onAccent,
     },
-    searchInput: { flex: 1, fontSize: 14, fontFamily: font.regular, color: colors.ink, padding: 0 },
-    // Kanvas §1 — portre SOLDA, selamlama sağda.
-    identityRow: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      gap: space(2),
-      paddingHorizontal: space(2.5),
-      marginTop: space(1),
-    },
-    identityText: { flex: 1, paddingBottom: space(3.75), gap: 3, minWidth: 0 },
-    // Zemin artık AÇIK porselen — bu üç stil mor hero'dan kalma beyaz metin
-    // taşıyordu ve isim ile puan yazısı görünmez oluyordu.
-    tierRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 5 },
-    tierText: { flexShrink: 1 },
-    greetName: {
-      fontFamily: font.semibold,
-      fontSize: 34,
-      lineHeight: 40,
-      letterSpacing: -0.8,
-      color: colors.ink,
-      alignSelf: 'flex-start',
-    },
-    // Kanvas §1 — kesik portre 96×138: 104 görsel + 34 yansıma.
-    // Kesim RN'de mask-image ile yapılamıyor; alta doğru zemine eriyen bir
-    // gradyan aynı etkiyi veriyor.
-    portraitCol: { width: 96, height: 138 },
-    portraitWrap: { width: 96, height: 104, overflow: 'hidden' },
-    portrait: { width: 96, height: 104 },
-    reflection: { width: 96, height: 34, overflow: 'hidden' },
-    reflectionImg: {
-      width: 96,
-      height: 104,
-      marginTop: -70,
-      transform: [{ scaleY: -1 }],
-      opacity: 0.16,
-    },
-    medallion: {
-      width: 96,
-      height: 104,
-      borderRadius: 30,
-      backgroundColor: colors.accentSoft,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    medallionFlip: { marginTop: -70, transform: [{ scaleY: -1 }], opacity: 0.16 },
-    medallionText: { fontFamily: font.semibold, fontSize: 44, color: colors.accent },
+    iadeDugmeYazi: { fontFamily: font.semibold, fontSize: 13, color: colors.accent },
 
-    // Kanvas §4 — Dileğin Nedir: gül→mürdüm gradyan, beyaz ok düğmesi, 3 adım.
-    wishPress: { marginHorizontal: space(2.5), marginTop: space(2.25) },
-    wishCard: { borderRadius: radius.xl, padding: space(2.5), gap: space(1.875) },
-    wishTop: { flexDirection: 'row', alignItems: 'center', gap: space(1.75) },
-    wishTitle: { fontSize: 23, lineHeight: 27, letterSpacing: -0.3, textAlign: 'left' },
-    wishSub: { color: 'rgba(251,248,246,0.88)', marginTop: 4 },
-    wishArrow: {
-      width: 56,
-      height: 56,
-      borderRadius: 19,
-      backgroundColor: colors.bg,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    wishSteps: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(0.875),
-      paddingTop: space(1.625),
-      borderTopWidth: 1,
-      borderTopColor: 'rgba(251,248,246,0.24)',
-    },
-    wishStep: { flexDirection: 'row', alignItems: 'center', gap: space(0.875) },
-    wishStepText: { fontFamily: font.semibold },
-
-    // Kanvas §5 — kategoriler YATAY HAP: 52 yüksek, ad kırpılmıyor.
-    catRow: { paddingHorizontal: space(2.5), gap: space(1.125), paddingVertical: space(1.5) },
-    catPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space(1),
-      height: 52,
-      paddingHorizontal: space(2.125),
-      borderRadius: 26,
-      backgroundColor: colors.surface,
-    },
-    catLabel: { fontFamily: font.medium, flexShrink: 0 },
-    marquee: { marginTop: space(0.5), marginBottom: space(1.5) },
-
-    // ── Tek satır yatay kaydırma (Fırsatlar / Öne çıkanlar) — referans gradient kart ──
-    promoScroll: { paddingHorizontal: space(3), gap: space(1.5) },
-    collectionHero: {
-      height: 148,
-      borderRadius: radius.xl,
-      overflow: 'hidden',
-      marginHorizontal: space(3), // bölümlerle aynı hiza (tam-genişlik taşma düzeltmesi)
-      marginTop: space(1),
-      marginBottom: space(2),
-    },
-    collectionImg: { width: '100%', height: '100%' },
-    collectionOverlay: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: 0,
-      paddingHorizontal: space(2),
-      paddingVertical: space(1.5),
-      backgroundColor: 'rgba(0,0,0,0.45)',
-      gap: 2,
-    },
-    collectionTitle: { fontSize: 18, letterSpacing: -0.3 },
-    promoCard: {
-      width: PROMO_W,
-      height: PROMO_H,
-      borderRadius: radius.lg,
-      overflow: 'hidden',
-      position: 'relative',
-      backgroundColor: colors.bgSunken,
-    },
-    promoContent: {
-      position: 'absolute',
-      left: 0,
-      right: 0,
-      bottom: 0,
-      padding: space(2),
-      zIndex: 2,
-    },
-    promoCardTitle: {
-      fontSize: 17,
-      fontFamily: font.semibold,
-      lineHeight: 21,
-      letterSpacing: -0.2,
-      color: colors.onColor,
-    },
-    promoTag: {
-      position: 'absolute',
-      top: space(1.25),
-      left: space(1.25),
-      backgroundColor: colors.accent,
-      paddingHorizontal: space(1),
-      paddingVertical: 3,
-      borderRadius: radius.pill,
-      zIndex: 2,
-    },
-    promoTagText: {
-      color: colors.onAccent,
-      fontSize: 10,
-      fontFamily: font.semibold,
-      letterSpacing: 0.2,
-    },
-    sponsorTag: {
-      position: 'absolute',
-      top: space(1.25),
-      right: space(1.25),
-      backgroundColor: 'rgba(0,0,0,0.4)',
-      paddingHorizontal: space(1),
-      paddingVertical: 3,
-      borderRadius: radius.pill,
-      zIndex: 2,
-    },
-    sponsorText: { color: 'rgba(255,255,255,0.95)', fontSize: 10, fontFamily: font.semibold },
-
-    // ── Kategoriler (yatay kaydırmalı) ──
-    // Yuvarlak yerine yumuşak kare (squircle) + gölge — daha profesyonel
-
-    // ── Bölüm başlığı ──
-    sectionHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: space(3),
-      marginTop: space(3.5),
-      marginBottom: space(1.75),
-    },
-    sectionTitle: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.4 },
-    seeAll: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-
-    // ── Fırsatlar ──
-    promoRow: { paddingHorizontal: space(3), gap: space(1.5) },
-    promo: {
-      height: 148,
-      flexDirection: 'row',
-      borderRadius: radius.xl,
-      backgroundColor: colors.lavenderSoft,
-      overflow: 'hidden',
-    },
-    promoLeft: { flex: 1, padding: space(2.25), justifyContent: 'center' },
-    promoImg: { width: 128, height: '100%', backgroundColor: colors.bgSunken },
-    promoBadge: {
-      alignSelf: 'flex-start',
-      backgroundColor: colors.accent,
-      paddingHorizontal: space(1.25),
+    // appointment-card-container (radius 24, p16)
+    randevuKart: { borderRadius: 24, backgroundColor: colors.surface, padding: 16, gap: 12 },
+    randevuBas: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    randevuFoto: { width: 48, height: 48, borderRadius: 100, backgroundColor: colors.accentSoft },
+    randevuZaman: { marginTop: 2 },
+    asamaSatir: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    asamaCip: {
+      paddingHorizontal: 8,
       paddingVertical: 4,
-      borderRadius: radius.pill,
-      marginBottom: space(1),
+      borderRadius: 100,
+      backgroundColor: colors.successSoft,
     },
-    promoBadgeText: { fontFamily: font.semibold },
-    promoTitle: { fontSize: 17, fontFamily: font.semibold, letterSpacing: -0.2, marginBottom: 2 },
+    asamaYazi: { fontFamily: font.semibold, fontSize: 10, color: colors.success },
+    ilerlemeYol: { height: 4, borderRadius: 2, backgroundColor: colors.line, overflow: 'hidden' },
+    ilerlemeDolu: { height: 4, borderRadius: 2, backgroundColor: colors.accent },
+    // Figma `ticket-actions`: eşit üç düğme, radius 12, px16 py10,
+    // zemin accent %7, kenarlık accent %15.
+    biletEylem: { flexDirection: 'row', gap: 8 },
+    biletDugme: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderRadius: 12,
+      backgroundColor: colors.accentSoft,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    biletYazi: { fontFamily: font.semibold, fontSize: 12, color: colors.accent },
 
-    // ── Öne çıkanlar (sponsorlu) ──
-    ads: { paddingHorizontal: space(3), gap: space(1.5) },
-    adCard: {
-      height: 160,
-      borderRadius: radius.xl,
+    // curated / firsatlar kartı (260×200, radius 20)
+    vitrinSerit: { gap: 14, paddingLeft: 24, paddingRight: 12 },
+    vitrinKart: {
+      width: 260,
+      height: 200,
+      borderRadius: 20,
       overflow: 'hidden',
       justifyContent: 'flex-end',
     },
-    adImage: { borderRadius: radius.xl },
-    adBadge: {
+    vitrinBos: { backgroundColor: colors.accentSoft },
+    sponsorCip: {
       position: 'absolute',
-      top: space(1.5),
-      left: space(1.5),
+      top: 12,
+      left: 12,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+      backgroundColor: 'rgba(0,0,0,0.42)',
+    },
+    sponsorYazi: {
+      fontFamily: font.semibold,
+      fontSize: 9,
+      color: colors.onColor,
+      letterSpacing: 0.6,
+    },
+    vitrinAlt: { padding: 12, gap: 2 },
+    vitrinBaslik: { fontFamily: font.semibold, fontSize: 16, color: colors.onColor },
+    vitrinAltYazi: { fontFamily: font.regular, fontSize: 12, color: 'rgba(255,255,255,0.82)' },
+
+    // trends-section (radius 12, ikon 36, gap 10)
+    trendSerit: { gap: 10, paddingLeft: 24, paddingRight: 12 },
+    trendKart: {
+      width: 132,
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 4,
-      backgroundColor: colors.rose,
-      paddingHorizontal: space(1),
-      paddingVertical: 4,
-      borderRadius: radius.pill,
-    },
-    adBadgeText: { fontFamily: font.semibold },
-    adText: { padding: space(2) },
-    adSubtitle: { opacity: 0.9, marginTop: 2 },
-
-    // ── Yakındaki salonlar ──
-    nearby: { paddingHorizontal: space(3), gap: space(1.5) },
-    cityEmpty: {
-      marginHorizontal: space(3),
-      marginTop: space(3),
+      gap: 8,
+      padding: 8,
+      borderRadius: 12,
       backgroundColor: colors.surface,
-      borderRadius: radius.xl,
-      padding: space(3),
-      alignItems: 'center',
-      gap: space(1),
     },
-    skeletonWrap: { paddingHorizontal: space(2.5), paddingTop: space(1) },
-    cityEmptyIcon: {
-      width: 72,
-      height: 72,
-      borderRadius: 36,
-      backgroundColor: colors.roseSoft,
+    trendIkon: {
+      width: 36,
+      height: 36,
+      borderRadius: 12,
       alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: space(0.5),
     },
-    cityEmptyTitle: { textAlign: 'center' },
-    cityEmptySub: { textAlign: 'center', lineHeight: 18, maxWidth: 280 },
-    cityEmptyCta: {
+    trendYazi: { flex: 1 },
+
+    // salons-section (satır p14, radius 16, foto 64/radius 12)
+    salonListe: { paddingHorizontal: 20, gap: 10 },
+    salonSatir: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: space(0.75),
-      backgroundColor: colors.accent,
-      paddingHorizontal: space(2),
-      paddingVertical: space(1.25),
-      borderRadius: radius.pill,
-      marginTop: space(1),
+      gap: 12,
+      padding: 14,
+      borderRadius: 16,
+      backgroundColor: colors.surface,
     },
-    cityEmptyCtaText: { fontFamily: font.semibold },
+    salonFoto: { width: 64, height: 64, borderRadius: 12, backgroundColor: colors.accentSoft },
+    salonAdSatir: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    dogruCip: {
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+      backgroundColor: colors.successSoft,
+    },
+    dogruYazi: { fontFamily: font.semibold, fontSize: 9, color: colors.success },
+    puanCip: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+    detayDugme: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 100,
+      backgroundColor: colors.accentSoft,
+    },
+    detayYazi: { fontFamily: font.semibold, fontSize: 12, color: colors.accent },
+
+    bosSehir: { borderRadius: 20, backgroundColor: colors.surface, padding: 16, gap: 8 },
+    haberDugme: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 100,
+      backgroundColor: colors.accent,
+      marginTop: 4,
+    },
+    haberYazi: { fontFamily: font.semibold, fontSize: 13, color: colors.onAccent },
   });

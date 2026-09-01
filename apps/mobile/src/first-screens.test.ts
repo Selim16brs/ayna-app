@@ -64,7 +64,10 @@ test('#6 — müşteri ilk ekranında birincil eylem var', () => {
   // Denetim: "Ne arıyorsun?" arama/talep girişi veya popüler hizmetler.
   const d = kodu('app/(tabs)/discover.tsx');
   assert.ok(d.includes("t('home.search')"), 'arama alanı yok');
-  assert.match(d, /router\.push\(q \?/, 'arama bir yere götürmüyor');
+  // Arama çubuğu artık yazı girdisi değil, arama ekranına GÖTÜREN bir düğme
+  // (Figma tasarımı böyle). Güvence aynı kalıyor: dokunulunca bir yere gider.
+  const arama = d.slice(d.indexOf("t('home.search')") - 400, d.indexOf("t('home.search')"));
+  assert.match(arama, /router\.push\('\/search'\)/, 'arama bir yere götürmüyor');
 });
 
 test('#5 — onboarding kısa: veri girişi istemiyor', () => {

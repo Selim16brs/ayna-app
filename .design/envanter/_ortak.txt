@@ -1,0 +1,51 @@
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap">
+  <style>
+    /* AYNA tasarım dili — apps/mobile/src/theme.ts ve theme.palette.ts'ten
+       BİREBİR alınmıştır. Değerler yuvarlanmadı. */
+    :root{
+      --bg:#FAF7F5; --surface:#FFFFFF; --ink:#1E0E1B; --inkSoft:#4A3A47; --muted:#68536A;
+      --accent:#4A1942; --accentSoft:#E8D9EB; --onAccent:#FFF0F5;
+      --line:#EFEBE9; --lineStrong:#E5E0DE;
+      --gold:#9A5A05; --goldSoft:#FDF3E7; --success:#2F7A4A; --successSoft:#E3F2E8;
+      --rose:#B0616B; --roseSoft:#F9EAEB; --danger:#A93E4D; --dangerSoft:#F9E9EB;
+      --r-xs:8px; --r-sm:12px; --r-md:16px; --r-lg:18px; --r-xl:20px; --r-pill:999px;
+      --shadow:0 6px 20px rgba(74,25,66,.13);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:Onest,system-ui,-apple-system,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+    a{color:var(--accent)} a:hover{color:#642855}
+    /* Tip ölçeği — theme.ts `type` */
+    .display{font-weight:500;font-size:32px;line-height:40px;letter-spacing:-.6px}
+    .h1{font-weight:600;font-size:24px;line-height:30px;letter-spacing:-.4px}
+    .h2{font-weight:600;font-size:20px;line-height:26px;letter-spacing:-.3px}
+    .title{font-weight:600;font-size:17px;line-height:22px;letter-spacing:-.2px}
+    .body{font-weight:400;font-size:16px;line-height:24px}
+    .bodyStrong{font-weight:500;font-size:16px;line-height:24px}
+    .cta{font-weight:600;font-size:16px;line-height:20px}
+    .meta{font-weight:500;font-size:15px;line-height:20px}
+    .caption{font-weight:400;font-size:14px;line-height:20px}
+    .captionStrong{font-weight:500;font-size:14px;line-height:20px}
+    .micro{font-weight:500;font-size:12px;line-height:16px}
+    .label{font-weight:600;font-size:11px;line-height:14px;letter-spacing:.8px;text-transform:uppercase}
+    .muted{color:var(--muted)} .inkSoft{color:var(--inkSoft)} .accentFg{color:var(--accent)}
+    /* Kart — space(2)=16 padding, radius.lg=18 */
+    .card{background:var(--surface);border-radius:var(--r-lg);padding:16px;box-shadow:var(--shadow)}
+    .col{display:flex;flex-direction:column}
+    .row{display:flex;flex-direction:row;align-items:center}
+    .screen{width:390px;min-height:100%;display:flex;flex-direction:column;background:var(--bg)}
+    .pad{padding:16px}
+    /* Button — height 56, radius pill */
+    .btn{height:56px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--onAccent);font-weight:600;font-size:16px}
+    .btn.sec{background:transparent;color:var(--accent);border:1px solid var(--lineStrong)}
+    .chip{padding:5px 12px;border-radius:var(--r-pill);background:var(--accentSoft);color:var(--accent);font-weight:600;font-size:11px;letter-spacing:.6px;text-transform:uppercase}
+    /* Yüzen alt menü — FloatingTabBar: PILL_H 68, radius 36 */
+    .tabbar{position:sticky;bottom:0;padding:0 16px 20px;background:linear-gradient(to bottom,rgba(250,247,245,0),rgba(250,247,245,.72) 40%,var(--bg))}
+    .pill{height:68px;border-radius:36px;background:var(--ink);display:flex;align-items:center;justify-content:space-around;padding:0 8px;box-shadow:0 14px 28px rgba(74,25,66,.22)}
+    .tab{display:flex;flex-direction:column;align-items:center;gap:3px;color:rgba(255,240,245,.62);font-size:10px;font-weight:500}
+    .tab.on{color:var(--onAccent)}
+    .tabdot{width:36px;height:36px;border-radius:var(--r-pill);display:flex;align-items:center;justify-content:center}
+    .tab.on .tabdot{background:var(--rose)}
+    .sechead{display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin:24px 0 12px}
+  </style>
+</helmet>

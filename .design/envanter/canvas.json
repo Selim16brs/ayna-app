@@ -1,0 +1,123 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1720,
+      "page": "page-1"
+    },
+    {
+      "file": "Randevularim.dc.html",
+      "x": 480,
+      "y": 0,
+      "w": 390,
+      "h": 1000,
+      "page": "page-1"
+    },
+    {
+      "file": "Topluluk.dc.html",
+      "x": 960,
+      "y": 0,
+      "w": 390,
+      "h": 1100,
+      "page": "page-1"
+    },
+    {
+      "file": "Bakim.dc.html",
+      "x": 1440,
+      "y": 0,
+      "w": 390,
+      "h": 1180,
+      "page": "page-1"
+    },
+    {
+      "file": "Profil.dc.html",
+      "x": 1920,
+      "y": 0,
+      "w": 390,
+      "h": 1080,
+      "page": "page-1"
+    },
+    {
+      "file": "Takvim.dc.html",
+      "x": 0,
+      "y": 1880,
+      "w": 390,
+      "h": 1180,
+      "page": "page-2"
+    },
+    {
+      "file": "RandevuDetayi.dc.html",
+      "x": 480,
+      "y": 1880,
+      "w": 390,
+      "h": 1020,
+      "page": "page-2"
+    },
+    {
+      "file": "Depozito.dc.html",
+      "x": 960,
+      "y": 1880,
+      "w": 390,
+      "h": 1560,
+      "page": "page-2"
+    },
+    {
+      "file": "TalepGonderildi.dc.html",
+      "x": 1440,
+      "y": 1880,
+      "w": 390,
+      "h": 844,
+      "page": "page-2"
+    },
+    {
+      "file": "Erteleme.dc.html",
+      "x": 1920,
+      "y": 1880,
+      "w": 390,
+      "h": 940,
+      "page": "page-2"
+    },
+    {
+      "file": "DepozitoIadesi.dc.html",
+      "x": 2400,
+      "y": 1880,
+      "w": 390,
+      "h": 720,
+      "page": "page-2"
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Müşteri sekmeleri"
+    },
+    {
+      "id": "page-2",
+      "name": "Randevu akışı"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "not-kaynak",
+      "x": 0,
+      "y": -130,
+      "w": 860,
+      "text": "AYNA — mevcut ekranlar (koddan birebir).\nRenkler, tipografi, boşluk ve yarıçaplar apps/mobile/src/theme.ts + theme.palette.ts değerleridir; yuvarlanmadı.\nBu sayfa: müşterinin beş sekmesi. İkinci sayfa: randevu akışı."
+    },
+    {
+      "id": "not-akis",
+      "x": 0,
+      "y": 1750,
+      "w": 860,
+      "page": "page-2",
+      "text": "Randevu akışı — talep → onay → depozito → kesinleşti.\nDepozito ekranındaki ödeme kodu ve randevu numarası gerçek akışın parçası: Kaspi açıklamasına yazılıp admin panelinde eşleştiriliyor."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
