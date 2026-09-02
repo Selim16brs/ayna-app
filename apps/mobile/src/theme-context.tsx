@@ -10,12 +10,15 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Appearance } from 'react-native';
 import {
+  type AksanAnahtari,
+  aksanCoz,
   type ColorTokens,
-  gradientSets,
   type GradientTokens,
+  gradyanUret,
   makeShadow,
-  palettes,
+  paletUret,
   type ThemeMode,
+  VARSAYILAN_AKSAN,
 } from './theme';
 
 interface ThemeContextValue {
@@ -28,11 +31,20 @@ interface ThemeContextValue {
   preference: ThemeMode | null;
   setPreference: (mode: ThemeMode | null) => void;
   toggle: () => void;
+  /** Kullanıcının seçtiği uygulama rengi; seçim yoksa varsayılan ('gul'). */
+  aksan: AksanAnahtari;
+  setAksan: (aksan: AksanAnahtari) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 const TEMA_ANAHTARI = 'ayna.theme';
+/**
+ * UYGULAMA RENGİ — tema tercihiyle AYNI mantık: seçim kalıcı, seçim yoksa
+ * varsayılan. Ayrı bir anahtar çünkü ikisi bağımsız: kullanıcı koyu temada
+ * Zümrüt, açık temada da Zümrüt kullanır.
+ */
+const AKSAN_ANAHTARI = 'ayna.accent';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [systemMode, setSystemMode] = useState<ThemeMode>(
@@ -49,6 +61,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
    * `null` = sistemi izle (varsayılan). Kullanıcı açıkça seçerse o kalıcı.
    */
   const [preference, setPreferenceState] = useState<ThemeMode | null>(null);
+  const [aksan, setAksanState] = useState<AksanAnahtari>(VARSAYILAN_AKSAN);
+
+  const setAksan = useCallback((secim: AksanAnahtari) => {
+    setAksanState(secim);
+    void AsyncStorage.setItem(AKSAN_ANAHTARI, secim).catch(() => undefined);
+  }, []);
 
   const setPreference = useCallback((mode: ThemeMode | null) => {
     setPreferenceState(mode);
@@ -61,9 +79,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void AsyncStorage.getItem(TEMA_ANAHTARI)
-      .then((v) => {
-        if (v === 'dark' || v === 'light') setPreferenceState(v);
+    // İKİ ANAHTAR TEK OKUMADA: açılışta ayrı ayrı beklemek gereksiz gecikme.
+    void AsyncStorage.multiGet([TEMA_ANAHTARI, AKSAN_ANAHTARI])
+      .then((ciftler) => {
+        const kayit = Object.fromEntries(ciftler);
+        const tema = kayit[TEMA_ANAHTARI];
+        if (tema === 'dark' || tema === 'light') setPreferenceState(tema);
+        // Bilinmeyen/bozuk kayıt varsayılana düşer — çökmek yerine gül kalır.
+        setAksanState(aksanCoz(kayit[AKSAN_ANAHTARI]));
       })
       .catch(() => undefined);
   }, []);
@@ -87,14 +110,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     () => ({
       mode,
       isDark: mode === 'dark',
-      colors: palettes[mode],
-      gradients: gradientSets[mode],
+      colors: paletUret(mode, aksan),
+      gradients: gradyanUret(mode, aksan),
       shadow: makeShadow(mode),
       preference,
       setPreference,
       toggle,
+      aksan,
+      setAksan,
     }),
-    [mode, preference, toggle],
+    [mode, preference, toggle, aksan, setAksan],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

@@ -130,3 +130,36 @@ export const darkColors: ColorTokens = {
   danger: '#E88A96',
   dangerSoft: '#3A1F26',
 };
+
+// ── AKSAN SETİ UYGULAMA ─────────────────────────────────────────────────
+//
+// Kullanıcı profilden bir renk seçtiğinde palet YENİDEN KURULMUYOR; taban
+// palet (yukarıdaki lightColors/darkColors) olduğu gibi kalıyor, yalnızca
+// aksan ailesindeki beş token üzerine yazılıyor. Zemin, kart, metin, çizgi
+// ve anlam renkleri (success/danger/gold) hiç dokunulmadan geçiyor.
+//
+// Varsayılan set 'gul' TABAN PALETİN AYNISI: seçim yapılmadığında bu
+// fonksiyon lightColors/darkColors ile birebir aynı değerleri üretir.
+
+import { AKSANLAR, type AksanAnahtari, VARSAYILAN_AKSAN } from './theme.aksan';
+
+export function paletUret(
+  mode: 'light' | 'dark',
+  aksan: AksanAnahtari = VARSAYILAN_AKSAN,
+): ColorTokens {
+  const taban = mode === 'dark' ? darkColors : lightColors;
+  const set = AKSANLAR[aksan][mode];
+  return {
+    ...taban,
+    accent: set.accent,
+    accentSoft: set.accentSoft,
+    accentFg: set.accentFg,
+    heroSoft: set.heroSoft,
+    plum: set.plum,
+    // `rose`/`roseSoft` aksanla birlikte kayıyor: acil/çekiliş vurgusu marka
+    // ailesinin parçası, durum rengi değil. Kehribar (gold) ve yeşil (success)
+    // KASITLI olarak dışarıda — onlar anlam taşıyor.
+    rose: set.accent,
+    roseSoft: set.accentSoft,
+  };
+}

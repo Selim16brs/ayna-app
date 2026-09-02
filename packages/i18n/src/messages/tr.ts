@@ -880,6 +880,18 @@ export const tr = {
   'profile.appearance.system': 'Sistem',
   'profile.appearance.light': 'Açık',
   'profile.appearance.dark': 'Koyu',
+  // §profil — uygulama rengi. Yerleşim değil YALNIZCA renk seçimi; sekiz set
+  // de iki temada ölçülü (apps/mobile/src/aksan-kontrast.test.ts).
+  'profile.accent': 'Uygulama rengi',
+  'profile.accent.hint': 'Düğmeler ve seçili alanlar bu rengi kullanır.',
+  'profile.accent.gul': 'Gül',
+  'profile.accent.erik': 'Erik',
+  'profile.accent.leylak': 'Leylak',
+  'profile.accent.bakir': 'Bakır',
+  'profile.accent.gokyuzu': 'Gökyüzü',
+  'profile.accent.lacivert': 'Lacivert',
+  'profile.accent.petrol': 'Petrol',
+  'profile.accent.zumrut': 'Zümrüt',
   'profile.menu.hours': 'Çalışma saatlerim',
   'hours.title': 'Çalışma saatlerim',
   'hours.subtitle': 'Hangi gün ve saatlerde randevu alıyorsun',
