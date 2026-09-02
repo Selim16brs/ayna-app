@@ -807,6 +807,12 @@ export const tr = {
   'benim.hello.day': 'İyi günler',
   'benim.hello.evening': 'İyi akşamlar',
   'benim.hello.night': 'İyi geceler',
+  /**
+   * İSİMLİ SELAMLAMA — '{selam}' saate göre gelir, '{ad}' kullanıcının adı.
+   * Noktalama ve sıra DİLE ait: birleştirmeyi ekranda yapsaydık virgülü
+   * üç dile birden dayatmış olurduk.
+   */
+  'benim.hello.named': '{selam}, {ad}',
   'benim.summary.completed': 'Tamamlanan',
   'benim.feature.badge': 'Yaklaşan randevu',
   'benim.feature.cta': 'Detayı gör',

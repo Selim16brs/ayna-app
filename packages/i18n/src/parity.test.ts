@@ -67,6 +67,9 @@ const ALLOWED_IDENTICAL = new Set([
   'Spa & Wellness',
   'TOP',
   '{pro} · {slot}',
+  // İsimli selamlama: '{selam}' saate göre karşılama, '{ad}' kullanıcının adı.
+  // Kelimesi yok, üç dilde de aynı — çeviri eksikliği değil.
+  '{selam}, {ad}',
 ]);
 const hasCyrillic = (s: string) => /[а-яА-ЯёЁ]/.test(s);
 const hasLatinWord = (s: string) => /[a-zA-ZçğıöşüÇĞİÖŞÜ]{3,}/.test(s);

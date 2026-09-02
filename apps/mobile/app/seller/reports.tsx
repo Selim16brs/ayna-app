@@ -311,7 +311,22 @@ export default function ReportsScreen() {
           <View style={styles.basSol}>
             <Text style={styles.tarih}>{bugunEtiketi}</Text>
             <Text style={styles.selam} numberOfLines={1}>
-              {fillParams(t(greetingKey()), { name: firstName })}
+              {/*
+                İSİM YAZMIYORDU. İki hata üst üsteydi:
+                  · Selamlama metinleri ('Günaydın', 'İyi günler'…) isim için
+                    YER TUTUCU taşımıyordu, yani doldurulacak bir şey yoktu.
+                  · Doldurma da yanlış anahtarla çağrılıyordu (`name`), oysa
+                    uygulamanın kuralı `{ad}` (Keşfet böyle kullanıyor).
+                Artık isimli bir anahtar var; noktalama ve sıra dile ait.
+                Adı olmayan hesapta yalnız selamlama görünür — sonunda
+                boşta kalan virgül olmasın.
+              */}
+              {firstName
+                ? fillParams(t('benim.hello.named'), {
+                    selam: t(greetingKey()),
+                    ad: firstName,
+                  })
+                : t(greetingKey())}
             </Text>
             <View style={styles.rolRozet}>
               <Text style={styles.rolYazi}>
@@ -445,7 +460,11 @@ export default function ReportsScreen() {
             </View>
             <View style={styles.ozetParaSatir}>
               <Text style={styles.ozetParaEtiket}>
-                {fillParams(t('reports.live.commission'), { pct: String(commissionRate) })}
+                {/* '{pct}' yer tutucusu metinde YOK, yani oran hiç
+                    basılmıyordu. Oranı göstermek ayrı bir karar (üç dilde
+                    metin değişikliği) — şimdilik doldurma kaldırıldı,
+                    kurucuya soruldu. */}
+                {t('reports.live.commission')}
               </Text>
               <Text style={styles.ozetParaDeger}>
                 {formatPrice(Math.round(((stats?.revenue ?? 0) * commissionRate) / 100))}
