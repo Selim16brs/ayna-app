@@ -717,7 +717,9 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(0.75),
       paddingVertical: 1,
       borderRadius: radius.pill,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
       alignItems: 'center',
     },
     // Belirgin hap — düz metin kolayca kaçırılıyordu (keşfedilebilirlik)
@@ -775,7 +777,9 @@ const makeStyles = (colors: ColorTokens) =>
     rowText: { flex: 1 },
     trash: { padding: space(0.5) },
     duePill: {
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
       paddingHorizontal: space(1.25),
       paddingVertical: space(0.75),
       borderRadius: radius.pill,

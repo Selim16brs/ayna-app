@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { CATEGORIES } from './data';
@@ -153,22 +153,42 @@ test('ANLAMLI renkler yerinde duruyor', () => {
  * çipin yanında ikinci bir "dolu" gibi okunuyor, hangisinin seçili olduğu
  * bir bakışta anlaşılmıyordu.
  */
-test('seçilmemiş çipler DOLU GRİ değil', () => {
-  const yerler = [
-    ['search.tsx', ['chip', 'recentChip']],
-    ['(tabs)/circle.tsx', ['sekme']],
-    ['quote/new.tsx', ['catChip']],
-  ] as const;
-  for (const [dosya, stiller] of yerler) {
-    const k = yorumsuz(oku(dosya));
-    for (const stil of stiller) {
-      const i = k.indexOf(`${stil}: {`);
-      assert.ok(i > 0, `${dosya}: ${stil} stili yok`);
-      const blok = k.slice(i, i + 400);
-      assert.doesNotMatch(blok, /colors\.surfaceMuted/, `${dosya}: ${stil} hâlâ dolu gri`);
-      assert.match(blok, /borderColor: colors\.line/, `${dosya}: ${stil} ince çizgisiz`);
+test('seçilmemiş çipler DOLU GRİ değil — UYGULAMA GENELİ', () => {
+  /*
+   * Tek tek dosya saymak yerine bütün ekranlar taranıyor: çip/sekme/hap
+   * adlı her stil, dolu gri (`surfaceMuted`) zeminle seçilmemiş hâli
+   * anlatamaz. Seçili erik çipin yanında ikinci bir "dolu" gibi okunuyor.
+   *
+   * İki istisna KASITLI ve adları burada:
+   *   · `slotChipOff` — devre dışı saat; gri tam da "basılamaz" demek.
+   *   · `sablonChip`  — zaten çizgili (hairline), dolu leke değil.
+   */
+  const IZINLI = new Set(['slotChipOff', 'sablonChip']);
+  const CIP = /chip|Chip|tab|Tab|sekme|Sekme|pill|Pill|toggle|Toggle/;
+  const kok = join(__dirname, '..', 'app');
+  const dosyalar: string[] = [];
+  const gez = (d: string) => {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      const t = join(d, e.name);
+      if (e.isDirectory()) gez(t);
+      else if (e.name.endsWith('.tsx')) dosyalar.push(t);
+    }
+  };
+  gez(kok);
+
+  const suclular: string[] = [];
+  for (const yol of dosyalar) {
+    const k = readFileSync(yol, 'utf8');
+    for (const m of k.matchAll(/^ {4}(\w+): \{\n([\s\S]*?)^ {4}\},$/gm)) {
+      const ad = m[1]!;
+      if (!CIP.test(ad) || IZINLI.has(ad)) continue;
+      const govde = m[2]!.replace(/\/\/.*$/gm, '');
+      if (govde.includes('colors.surfaceMuted')) {
+        suclular.push(`${yol.split('/app/')[1]} → ${ad}`);
+      }
     }
   }
+  assert.deepEqual(suclular, [], `dolu gri çipler:\n  ${suclular.join('\n  ')}`);
 });
 
 test('aramadaki popüler kategoriler de FIGMA ikonu', () => {

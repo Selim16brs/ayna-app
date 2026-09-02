@@ -969,7 +969,9 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1.75),
       paddingVertical: space(1),
       borderRadius: radius.pill,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
     chipActive: { backgroundColor: colors.accent },
     mapBox: {
