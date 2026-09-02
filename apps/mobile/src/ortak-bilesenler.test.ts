@@ -72,3 +72,28 @@ test('SALON ROZETLERİ palette ve iki temada okunuyor', () => {
     }
   }
 });
+
+test('BÖLÜM BAŞLIKLARI harf kaybetmiyor', () => {
+  /*
+   * Kurucu ekran görüntüsünde "Hizmetler" → "Hizmetle" diye kesilmişti.
+   * Kalıp: `space-between` satırda başlık ve sağdaki eylem; ikisi de
+   * esnemiyorsa uzun başlık SESSİZCE kırpılıyor.
+   *
+   * Risk türkçede değil, çeviride: "Tümünü Gör" kazakçada 3 karakter daha
+   * uzun, yani sağdaki blok büyüyüp başlığı daha çok sıkıştırıyor.
+   *
+   * `TabHero` ve `StackHeader` bu işi baştan doğru yapıyordu; kırılan
+   * ikisi `SectionHeader` ve Keşfet'in kendi başlığıydı.
+   */
+  const s = oku('SectionHeader.tsx');
+  assert.match(s, /title: \{[^}]*flexShrink: 1/, 'başlık daralamıyor');
+  assert.match(s, /adjustsFontSizeToFit/, 'başlık sığmayınca küçülmüyor');
+  assert.match(s, /seeAll: \{[^}]*flexShrink: 0/, '"Tümü" daralıyor — başlığı eziyor');
+});
+
+test('BAŞLIK bileşenlerinin HEPSİ tek satıra bağlı', () => {
+  // Tek satırlık başlıkta `numberOfLines` yoksa yazı kutudan taşar.
+  for (const ad of ['SectionHeader.tsx', 'TabHero.tsx', 'StackHeader.tsx']) {
+    assert.match(yorumsuz(oku(ad)), /numberOfLines=\{1\}/, `${ad}: başlık tek satıra bağlı değil`);
+  }
+});

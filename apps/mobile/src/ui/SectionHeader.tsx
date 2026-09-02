@@ -15,7 +15,20 @@ export function SectionHeader({ title, onSeeAll }: { title: string; onSeeAll?: (
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
-      <Text variant="h2" tone="ink" style={styles.title}>
+      {/*
+        Başlık HARF KAYBETMEZ. Satır `space-between` ve iki çocuk da
+        esnemiyorsa, uzun bir başlık sessizce kırpılıyor — Keşfet'te
+        "Hizmetler" → "Hizmetle" diye görülmüştü. Başlık daralabilir ve
+        sığmazsa puntosu iner; "Tümü >" daralmaz.
+      */}
+      <Text
+        variant="h2"
+        tone="ink"
+        style={styles.title}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.85}
+      >
         {title}
       </Text>
       {onSeeAll ? (
@@ -40,6 +53,6 @@ const makeStyles = (_colors: ColorTokens) =>
       marginTop: space(3.5),
       marginBottom: space(1.75),
     },
-    title: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.4 },
-    seeAll: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    title: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.4, flexShrink: 1 },
+    seeAll: { flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 0 },
   });
