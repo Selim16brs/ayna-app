@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { lightColors } from './theme.palette';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -43,7 +44,10 @@ test('Figma ölçüleri YUVARLANMAMIŞ', () => {
   };
   for (const [ad, degerler] of [
     ['hizliKart', ['height: 140', 'borderRadius: 16']],
-    ['vitrinKart', ['width: 260', 'height: 200', 'borderRadius: 20']],
+    // Kurucu SONRADAN kendi referans kartını verdi ("tam boyle olmalı"):
+    // dikey, oran ~0.79. Eski Figma ölçüsü (260×200) yatıktı ve fotoğrafın
+    // çoğunu kırpıyordu. Yeni referans eskisinin yerine geçiyor.
+    ['vitrinKart', ['width: 260', 'height: 328', 'borderRadius: 20']],
     ['ikonKart', ['width: 64', 'height: 64', 'borderRadius: 16']],
     ['salonFoto', ['width: 64', 'height: 64', 'borderRadius: 12']],
     ['randevuKart', ['borderRadius: 24']],
@@ -268,4 +272,48 @@ test('hızlı eylem kartlarının perdesi AÇIK, yazısı SABİT koyu', () => {
   assert.doesNotMatch(blok, /rgba\(0,0,0,0\.[5-9]/, 'kartların üstünde ağır siyah perde var');
   assert.match(blok, /rgba\(255,255,255,0\.9/, 'açık perde yok — yazı okunmaz');
   assert.match(kod, /color: lightColors\.ink/, 'kart yazısı sabit koyu değil');
+});
+
+test('FIRSAT kartı referanstaki DÖRT ögeyi de taşıyor', () => {
+  /*
+   * Kurucu referans kartı gönderip "sekıl olcu ve uzerındekı yazılar
+   * olarak tam boyle olmalı" dedi. Referansta dört öge var:
+   *   · SPONSORLU rozeti (beyaz hap, üst solda)
+   *   · indirim rozeti ("%30 İndirim", kehribar hap)
+   *   · başlık
+   *   · alt yazı
+   *
+   * İndirim AYRI bir rozet; bizde `subtitle` yerine "-%30" yazılıyordu,
+   * yani fırsatın kendi açıklaması ekrana HİÇ çıkmıyordu.
+   */
+  const kod = d.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.match(kod, /styles\.sponsorCip/, 'SPONSORLU rozeti yok');
+  assert.match(kod, /styles\.indirimRozet/, 'indirim rozeti yok');
+  assert.match(kod, /styles\.vitrinBaslik/, 'başlık yok');
+  assert.match(kod, /styles\.vitrinAltYazi/, 'alt yazı yok');
+  // İndirim alt yazının YERİNİ almamalı.
+  assert.match(kod, /subtitle=\{o\.description\}/, 'fırsatın açıklaması alt yazıya basılmıyor');
+  assert.doesNotMatch(kod, /subtitle=\{\s*o\.discountType/, 'indirim hâlâ alt yazının yerinde');
+});
+
+test('FIRSAT kartındaki yazılar okunuyor', () => {
+  // Beyaz hapta erik, kehribar hapta beyaz, perdenin dibinde beyaz başlık.
+  const oran = (a: string, b: string) => {
+    const l = (h: string) => {
+      const x = h.replace('#', '');
+      const k = [0, 2, 4].map((i) => {
+        const c = parseInt(x.slice(i, i + 2), 16) / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      }) as [number, number, number];
+      return 0.2126 * k[0] + 0.7152 * k[1] + 0.0722 * k[2];
+    };
+    const [p, q] = [l(a), l(b)].sort((m, n) => n - m) as [number, number];
+    return (p + 0.05) / (q + 0.05);
+  };
+  assert.ok(oran(lightColors.accent, '#FFFFFF') >= 4.5, 'SPONSORLU yazısı okunmuyor');
+  assert.ok(oran('#FFFFFF', lightColors.gold) >= 4.5, 'indirim yazısı okunmuyor');
+  // Rozet SABİT kehribar: kart bir fotoğraf, fotoğraf temayla değişmiyor.
+  // Temanın kehribarını kullansaydık koyuda 1.70:1 olurdu.
+  const kod2 = d.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.match(kod2, /backgroundColor: lightColors\.gold/, 'indirim rozeti temaya bağlı');
 });

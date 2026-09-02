@@ -526,9 +526,15 @@ export default function DiscoverScreen() {
                   key={o.id}
                   title={o.title}
                   image={o.imageUrl}
-                  subtitle={
+                  /*
+                   * İndirim ROZETE gidiyor, alt yazıya değil. Eskiden
+                   * `subtitle` olarak "-%30" yazılıyordu; fırsatın kendi
+                   * açıklaması böylece ekrana HİÇ çıkmıyordu.
+                   */
+                  subtitle={o.description}
+                  discount={
                     o.discountType === 'percent'
-                      ? `-%${o.discountValue}`
+                      ? fillParams(t('offers.discount_badge'), { pct: String(o.discountValue) })
                       : `${o.finalPrice.toLocaleString('tr-TR')} ₸`
                   }
                   onPress={() =>
@@ -667,6 +673,7 @@ function VitrinKarti({
   subtitle,
   sponsored,
   rating,
+  discount,
   onPress,
 }: {
   title: string;
@@ -674,6 +681,8 @@ function VitrinKarti({
   subtitle?: string | undefined;
   sponsored?: boolean;
   rating?: number | undefined;
+  /** "%30 İndirim" gibi — referans kartta AYRI bir rozet, alt yazı değil. */
+  discount?: string | undefined;
   onPress: () => void;
 }) {
   const { t } = useLocale();
@@ -696,6 +705,11 @@ function VitrinKarti({
         </View>
       ) : null}
       <View style={styles.vitrinAlt}>
+        {discount ? (
+          <View style={styles.indirimRozet}>
+            <Text style={styles.indirimYazi}>{discount}</Text>
+          </View>
+        ) : null}
         <View style={styles.vitrinBaslikSatir}>
           <Text style={styles.vitrinBaslik} numberOfLines={1}>
             {title}
@@ -961,8 +975,13 @@ const makeStyles = (colors: ColorTokens) =>
     // curated / firsatlar kartı (260×200, radius 20)
     vitrinSerit: { gap: 14, paddingLeft: 24, paddingRight: 12 },
     vitrinKart: {
+      /*
+       * Kurucunun referans kartı DİKEY (oran ~0.79); bizimki 260×200 ile
+       * yatıktı. Fotoğrafın çoğu kırpılıyor ve kart referanstaki ağırlığı
+       * taşımıyordu.
+       */
       width: 260,
-      height: 200,
+      height: 328,
       borderRadius: 20,
       overflow: 'hidden',
       justifyContent: 'flex-end',
@@ -974,18 +993,39 @@ const makeStyles = (colors: ColorTokens) =>
       left: 12,
       paddingHorizontal: 8,
       paddingVertical: 4,
-      borderRadius: 6,
-      backgroundColor: 'rgba(0,0,0,0.42)',
+      borderRadius: 8,
+      // Referansta BEYAZ hap + koyu yazı; bizimki yarı saydam siyahtı ve
+      // fotoğrafa gömülüyordu.
+      backgroundColor: colors.onColor,
     },
     sponsorYazi: {
       fontFamily: font.semibold,
-      fontSize: 9,
-      color: colors.onColor,
-      letterSpacing: 0.6,
+      fontSize: 10,
+      color: lightColors.accent,
+      letterSpacing: 0.8,
     },
-    vitrinAlt: { padding: 12, gap: 2 },
-    vitrinBaslik: { fontFamily: font.semibold, fontSize: 16, color: colors.onColor },
-    vitrinAltYazi: { fontFamily: font.regular, fontSize: 12, color: 'rgba(255,255,255,0.82)' },
+    vitrinAlt: { padding: 16, gap: 6 },
+    /**
+     * İNDİRİM ROZETİ — referansta kehribar hap, beyaz yazı.
+     * Eskiden indirim `subtitle`ın yerine yazılıyordu ("-%30"), yani
+     * fırsatın gerçek açıklaması ekrana hiç çıkmıyordu.
+     */
+    indirimRozet: {
+      alignSelf: 'flex-start',
+      /*
+       * SABİT kehribar — temadan gelmiyor. Kart bir FOTOĞRAF ve fotoğraf
+       * iki temada da aynı. `colors.gold` koyu temada açılıyor (#F5BE50)
+       * ve üstündeki beyaz yazı 1.70:1'e düşüyordu.
+       */
+      backgroundColor: lightColors.gold,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 999,
+      marginBottom: 2,
+    },
+    indirimYazi: { fontFamily: font.semibold, fontSize: 13, color: colors.onColor },
+    vitrinBaslik: { fontFamily: font.semibold, fontSize: 19, color: colors.onColor },
+    vitrinAltYazi: { fontFamily: font.regular, fontSize: 14, color: 'rgba(255,255,255,0.86)' },
 
     // trends-section (radius 12, ikon 36, gap 10)
     // Figma `trends-grid` — 2×2 ızgara; yatay kaydırmada dördüncü öğe
