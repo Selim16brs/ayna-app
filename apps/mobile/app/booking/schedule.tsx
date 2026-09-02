@@ -510,7 +510,9 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderRadius: 100,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
     times: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.25) },
     timeChip: {
@@ -518,7 +520,9 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       paddingVertical: space(1.75),
       borderRadius: 16,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
     active: { backgroundColor: colors.accent },
     offerBox: {

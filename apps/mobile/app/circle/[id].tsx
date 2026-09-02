@@ -486,7 +486,9 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1.25),
       paddingVertical: space(0.75),
       borderRadius: radius.pill,
-      backgroundColor: colors.surfaceMuted,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
     suggestChipOn: { backgroundColor: colors.accent },
     composer: {
