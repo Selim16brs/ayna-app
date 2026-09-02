@@ -203,7 +203,10 @@ export default function RewardsScreen() {
           </Text>
         </LinearGradient>
 
-        {/* Çekiliş — görsel-zengin pembe kart */}
+        {/* Çekiliş kartı.
+            Yazı `onColor` (sabit beyaz) idi ve gül gradyanın açık ucunda
+            2.94:1 ölçülüyordu — İKİ TEMADA da okunmuyordu. Artık gradyanla
+            aynı token setinden (`onAccent`): açıkta beyazımsı, koyuda koyu. */}
         <LinearGradient
           colors={gradients.rose}
           start={{ x: 0, y: 0 }}
@@ -211,16 +214,16 @@ export default function RewardsScreen() {
           style={[styles.raffle, shadow.card]}
         >
           <View style={styles.raffleIcon}>
-            <Ionicons name="gift" size={28} color="#FFFFFF" />
+            <Ionicons name="gift" size={28} color={colors.onAccent} />
           </View>
           <View style={styles.raffleBody}>
-            <Text variant="h2" tone="onColor" style={styles.raffleTitle}>
+            <Text variant="h2" tone="onAccent" style={styles.raffleTitle}>
               {raffleEntries} {t('rewards.raffle.entries')}
             </Text>
-            <Text variant="caption" tone="onColor" style={styles.dim}>
+            <Text variant="caption" tone="onAccent" style={styles.dim}>
               {t('rewards.raffle.next')}: {NEXT_DRAW}
             </Text>
-            <Text variant="caption" tone="onColor" style={styles.dim}>
+            <Text variant="caption" tone="onAccent" style={styles.dim}>
               {t('rewards.raffle.prize')}
             </Text>
           </View>
@@ -426,14 +429,21 @@ const makeStyles = (colors: ColorTokens) =>
       paddingBottom: TAB_BAR_CLEARANCE,
     },
     raffleJoin: {
-      backgroundColor: 'rgba(255,255,255,0.22)',
+      /*
+       * Gül kartın üstündeki yarı saydam hap. Sabit BEYAZ %22 idi; koyu
+       * temada gül artık AÇIK olduğu için beyaz perde kartı büsbütün
+       * açıyor ve üstündeki beyaz yazıyı yok ediyordu. `onAccent`
+       * temayla dönüyor: açıkta beyazımsı perde, koyuda koyu perde —
+       * ikisi de kendi yazısıyla zıt.
+       */
+      backgroundColor: colors.onAccent + '38',
       paddingHorizontal: space(1.75),
       paddingVertical: space(1),
       borderRadius: radius.pill,
       alignItems: 'center',
     },
     raffleJoinOff: { opacity: 0.5 },
-    raffleJoinText: { color: colors.onColor, fontFamily: font.semibold },
+    raffleJoinText: { color: colors.onAccent, fontFamily: font.semibold },
     raffleJoinSub: { color: 'rgba(255,255,255,0.9)', fontSize: 10 },
     expiryBanner: {
       flexDirection: 'row',

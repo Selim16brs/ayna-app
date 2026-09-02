@@ -11,8 +11,11 @@
 export const lightGradients = {
   hero: ['#FAF7F5', '#E8D9EB'] as const, // zemin → lila
   gold: ['#642855', '#4A1942'] as const, // ana CTA: mürdüm ombre (isim geriye dönük)
-  rose: ['#C8848C', '#B0616B'] as const, // acil / sayaç kartı
-  teal: ['#3E9560', '#2F7A4A'] as const, // onay
+  /**
+   * ACİL / ÇEKİLİŞ kartı. Üstüne beyaz yazı geliyordu ve en açık ucunda
+   * 2.94:1 ölçülüyordu — okunmuyordu. Bu çift 5.72:1 veriyor.
+   */
+  rose: ['#A34A57', '#83323F'] as const,
   plum: ['#642855', '#4A1942'] as const,
 } as const;
 
@@ -29,8 +32,12 @@ export const darkGradients: GradientTokens = {
    * `rose` gradyanı DURUYOR — orası acil/sayaç, gül orada anlam taşıyor.
    */
   gold: ['#C5A3C7', '#A87FAB'] as const,
-  rose: ['#D4A0A0', '#B0616B'] as const,
-  teal: ['#3E9560', '#2F7A4A'] as const,
+  /**
+   * Koyuda AÇIK gül + koyu yazı — birincil düğmeyle aynı mantık.
+   * Koyu gül koyu zeminden ayrışmıyordu (2.30:1); açık gül hem yazıyı
+   * taşıyor (6.78:1) hem zeminden ayrışıyor (6.78:1).
+   */
+  rose: ['#E8A0AA', '#D4818E'] as const,
   // Plum DOLU BİR YÜZEY ve üstüne HER ZAMAN beyaz yazı geliyor (7 ekran).
   // Koyuda accent'i açmak metin/ikon için doğru, dolu yüzey için değil:
   // '#AA9AC4' üstünde beyaz 2.58:1 ölçülüyor — okunmuyor. Bu çift 7.72:1
