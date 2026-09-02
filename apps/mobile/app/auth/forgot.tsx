@@ -88,7 +88,7 @@ export default function ForgotPasswordScreen() {
       >
         <View style={styles.hero}>
           <View style={styles.heroIcon}>
-            <Ionicons name="lock-closed" size={24} color={colors.onAccent} />
+            <Ionicons name="lock-closed" size={24} color={colors.accent} />
           </View>
           <Text variant="body" tone="onAccent" style={styles.heroText}>
             {subtitle}
@@ -204,7 +204,9 @@ const makeStyles = (colors: ColorTokens) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.5),
-      backgroundColor: colors.accent,
+      // Ekranın ASIL eylemi düğme; bu bilgi kartıydı ve dolu koyu
+      // durmasının bir sebebi yoktu (Denge).
+      backgroundColor: colors.heroSoft,
       borderRadius: radius.xl,
       padding: space(2.5),
       marginBottom: space(2),
