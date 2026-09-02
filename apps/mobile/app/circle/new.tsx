@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { CATEGORIES, type CirclePostType } from '../../src/data';
+import { HIZMET_IKON } from '../../src/hizmet-ikon';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
@@ -68,11 +69,9 @@ export default function NewPostScreen() {
                 onPress={() => setCategory(label)}
                 style={[styles.categoryChip, active && styles.categoryActive]}
               >
-                <Ionicons
-                  name={cat.icon}
-                  size={16}
-                  color={active ? colors.onAccent : colors.inkSoft}
-                />
+                {HIZMET_IKON[cat.id] ? (
+                  <Image source={HIZMET_IKON[cat.id]} style={styles.katIkon} />
+                ) : null}
                 <Text
                   variant="caption"
                   tone={active ? 'onAccent' : 'inkSoft'}
@@ -138,6 +137,8 @@ const makeStyles = (colors: ColorTokens) =>
       letterSpacing: -0.4,
     },
     categories: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    /** Kurucunun Figma ikonu — ana sayfayla aynı kaynak. */
+    katIkon: { width: 16, height: 16, resizeMode: 'contain' },
     categoryChip: {
       flexDirection: 'row',
       alignItems: 'center',
