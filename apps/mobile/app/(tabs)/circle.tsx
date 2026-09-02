@@ -231,33 +231,31 @@ export default function CircleScreen() {
               </ImageBackground>
             </PressableScale>
           ))}
-          {/* Kanvas §gizlilik şeridi — "buraya hiçbir şey kendiliğinden düşmez".
-            Buradaki üç madde de KOD DOĞRULANDI, süs değil:
-            1) circlePost.create tüm sunucuda TEK yerde ve yalnız kullanıcının
-               kendi eylemiyle çağrılıyor — randevu/yorum akışa düşmüyor.
-            2) Anonimde authorLabel 'AYNA Üyesi' ve authorUserId null; uzman
-               kimliği çözemiyor (circle.service §5.5).
-            3) Fikir birliğinde yalnız o uzmanda TAMAMLANMIŞ randevusu olan
-               sayılıyor (hasCompletedWith + proVerified).
-            Doğrulayamadığım maddeyi yazmıyorum: kanvasta "uzmanlar kimin
-            kendilerini KAYDETTİĞİNİ göremez" var ama kaydetme özelliği yok. */}
-          <View style={styles.gizlilik}>
-            <View style={styles.gizlilikHead}>
-              <Ionicons name="lock-closed" size={15} color={colors.inkSoft} />
-              <Text variant="bodyStrong" tone="ink" style={styles.flex}>
-                {t('circle.privacy.title')}
+        </ScrollView>
+        {/*
+          GİZLİLİK KARTI — yatay şeridin DIŞINDA.
+
+          Bu kart yatay `ScrollView`ın içindeydi: tam genişlik bir blok,
+          AYNA Life kartlarının YANINA diziliyordu. Şerit alabildiğine
+          uzuyor, kart ekrana sığmıyor ve iki kenardan da taşıyordu —
+          kurucunun "kayma var" dediği şey buydu.
+        */}
+        <View style={styles.gizlilik}>
+          <View style={styles.gizlilikHead}>
+            <Ionicons name="lock-closed" size={15} color={colors.inkSoft} />
+            <Text variant="bodyStrong" tone="ink" style={styles.flex}>
+              {t('circle.privacy.title')}
+            </Text>
+          </View>
+          {(['circle.privacy.a', 'circle.privacy.b', 'circle.privacy.c'] as const).map((k) => (
+            <View key={k} style={styles.gizlilikRow}>
+              <Ionicons name="checkmark" size={14} color={colors.success} />
+              <Text variant="caption" tone="muted" style={styles.flex}>
+                {t(k)}
               </Text>
             </View>
-            {(['circle.privacy.a', 'circle.privacy.b', 'circle.privacy.c'] as const).map((k) => (
-              <View key={k} style={styles.gizlilikRow}>
-                <Ionicons name="checkmark" size={14} color={colors.success} />
-                <Text variant="caption" tone="muted" style={styles.flex}>
-                  {t(k)}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
+          ))}
+        </View>
 
         {/* Tavsiyeler başlığı + değerlendirme sıralaması */}
         <View style={styles.recHeader}>
@@ -551,6 +549,10 @@ const makeStyles = (colors: ColorTokens) =>
       marginBottom: space(1.5),
     },
     gizlilik: {
+      // Yatay şeritten çıkınca kendi boşluğunu kendi vermeli: sayfanın
+      // dış kabı yatay dolgu taşımıyor, her blok kendi ayarlıyor
+      // (`sectionTitle`, `recHeader` de öyle).
+      marginHorizontal: space(3),
       backgroundColor: colors.surfaceMuted,
       borderRadius: radius.lg,
       padding: space(2),
