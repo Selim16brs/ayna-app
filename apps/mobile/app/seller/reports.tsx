@@ -460,11 +460,10 @@ export default function ReportsScreen() {
             </View>
             <View style={styles.ozetParaSatir}>
               <Text style={styles.ozetParaEtiket}>
-                {/* '{pct}' yer tutucusu metinde YOK, yani oran hiç
-                    basılmıyordu. Oranı göstermek ayrı bir karar (üç dilde
-                    metin değişikliği) — şimdilik doldurma kaldırıldı,
-                    kurucuya soruldu. */}
-                {t('reports.live.commission')}
+                {/* Oran metnin İÇİNDE, çünkü yüzde işaretinin yeri dile
+                    göre değişiyor: türkçede önde (%10), kazakça ve rusçada
+                    arkada (10%). Ekranda birleştirseydik biri yanlış olurdu. */}
+                {fillParams(t('reports.live.commission'), { pct: String(commissionRate) })}
               </Text>
               <Text style={styles.ozetParaDeger}>
                 {formatPrice(Math.round(((stats?.revenue ?? 0) * commissionRate) / 100))}

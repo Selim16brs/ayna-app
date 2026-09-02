@@ -1166,7 +1166,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reports.live.completed': 'Аяқталған',
   'reports.live.noshow': 'Келмеген',
   'reports.live.revenue': 'Аяқталған кіріс',
-  'reports.live.commission': 'Төленетін комиссия',
+  'reports.live.commission': 'Төленетін комиссия ({pct}%)',
   'reports.quality.title': 'Жауап & сапа',
   'reports.quality.avg_response': 'Орт. жауап',
   'reports.quality.deposit_pending': 'Күтудегі түбіртек',

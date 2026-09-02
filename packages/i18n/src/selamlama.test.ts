@@ -59,3 +59,23 @@ test('çıplak selamlamalar üç dilde de yer tutucusuz KALIYOR', () => {
     }
   }
 });
+
+test('komisyon etiketi ORANI taşıyor — üç dilde', () => {
+  /*
+   * "Ödenecek komisyon" yazıyor ama oran hiç basılmıyordu: ekran `{pct}`
+   * gönderiyordu, metinde karşılığı yoktu. Kurucu oranın da yazılmasını
+   * istedi.
+   *
+   * Yüzde işaretinin YERİ dile göre değişiyor — türkçede önde (%10),
+   * kazakça ve rusçada arkada (10%) — ve uygulamanın başka metinleri
+   * zaten bu kurala uyuyor. Birleştirmeyi ekranda yapsaydık biri yanlış
+   * olurdu.
+   */
+  for (const [dil, m] of DILLER) {
+    const s = (m as Record<string, string>)['reports.live.commission']!;
+    assert.ok(s, `${dil}: komisyon etiketi yok`);
+    assert.match(s, /\{pct\}/, `${dil}: oran yer tutucusu yok — oran basılmaz`);
+    const beklenen = dil === 'tr' ? /%\{pct\}/ : /\{pct\}%/;
+    assert.match(s, beklenen, `${dil}: yüzde işareti dilin kuralına göre değil`);
+  }
+});

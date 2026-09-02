@@ -1241,7 +1241,7 @@ export const tr = {
   'reports.live.completed': 'Tamamlanan',
   'reports.live.noshow': 'Gelmeyen',
   'reports.live.revenue': 'Tamamlanan gelir',
-  'reports.live.commission': 'Ödenecek komisyon',
+  'reports.live.commission': 'Ödenecek komisyon (%{pct})',
   'reports.quality.title': 'Yanıt & kalite',
   'reports.quality.avg_response': 'Ort. yanıt',
   'reports.quality.deposit_pending': 'Bekleyen dekont',
