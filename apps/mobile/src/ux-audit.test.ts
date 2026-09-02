@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
@@ -115,6 +115,24 @@ test('MD §4.4 — İKİNCİ BİR TAHSİLAT EKRANI YOK', () => {
     !existsSync(join(kok, 'app', 'seller', 'commissions.tsx')),
     'komisyon ödeme ekranı geri gelmiş — MD ikinci tahsilatı yasaklıyor',
   );
-  const menu = kodu(oku('app', 'seller', 'menu.tsx'));
-  assert.ok(!menu.includes('/seller/commissions'), 'uzman menüsünde komisyon bağlantısı var');
+  /*
+   * Bağlantı taraması TÜM ekranlarda: eskiden yalnız `menu.tsx`e bakıyordu ve
+   * `seller/requests.tsx`teki kısıtlı-hesap düğmesini KAÇIRDI — kısıtlı uzman
+   * "Komisyon & dekont"a basıyor, silinmiş bir ekrana gidiyordu. Tek dosyaya
+   * bakan koruma, koruma değil.
+   */
+  const suclular: string[] = [];
+  const gez = (d: string) => {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      const t = join(d, e.name);
+      if (e.isDirectory()) gez(t);
+      else if (
+        e.name.endsWith('.tsx') &&
+        kodu(readFileSync(t, 'utf8')).includes('/seller/commissions')
+      )
+        suclular.push(t.split('/app/')[1]!);
+    }
+  };
+  gez(join(kok, 'app'));
+  assert.deepEqual(suclular, [], `silinmiş komisyon ekranına bağlantı: ${suclular.join(', ')}`);
 });

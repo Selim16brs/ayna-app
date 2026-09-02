@@ -56,9 +56,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'restricted.body':
     'Шектеулі режимде жаңа сұраныс жасай алмайсыз. Күтіп тұрған міндеттемеңіз шешілгеннен кейін есептік жазбаңыз автоматты түрде ашылады.',
   'restricted.days_left': 'Қалған уақыт: {n} күн',
-  'restricted.pay':
-    'Күтіп тұрған қайтарым түбіртегін жүкте немесе комиссия қарызын өте — есептік жазбаң автоматты ашылады.',
-  'restricted.cta': 'Комиссия & түбіртек',
+  'restricted.pay': 'Себебін және не істеу керегін қолдаудан біле аласың.',
+  'restricted.cta': 'Қолдау',
   'restricted.locked_offer': 'Шектеулі режимде ұсыныс бере алмайсың. Алдымен міндеттемеңді жап.',
   'slogan.l1a': 'Барлық ',
   'slogan.w1': 'әйелдердің',
@@ -1167,7 +1166,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reports.live.completed': 'Аяқталған',
   'reports.live.noshow': 'Келмеген',
   'reports.live.revenue': 'Аяқталған кіріс',
-  'reports.live.commission': 'Төленетін комиссия ({pct}%)',
+  'reports.live.commission': 'AYNA комиссиясы ({pct}%)',
   'reports.quality.title': 'Жауап & сапа',
   'reports.quality.avg_response': 'Орт. жауап',
   'reports.quality.deposit_pending': 'Күтудегі түбіртек',
