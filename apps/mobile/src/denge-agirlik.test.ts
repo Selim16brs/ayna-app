@@ -96,9 +96,12 @@ test('EKRAN BAŞINA en fazla BİR büyük koyu yüzey', () => {
    *
    * İki koyu kart üst üste binince ekran ağırlaşıyor; `rewards` tam
    * olarak öyleydi (erik puan kartı + dolu gül çekiliş kartı).
+   *
+   * OZET_DEGRADE/YOL_DEGRADE/IADE_ZEMIN sabitleri kaldırıldı: dördü de
+   * artık `gradients.deep`, iade kartı da `colors.plum` — hepsi seçilen
+   * rengi izliyor. Kalıp buna göre güncellendi.
    */
-  const BUYUK =
-    /colors=\{(?:gradients\.(?:gold|plum|rose)|OZET_DEGRADE|YOL_DEGRADE)\}|backgroundColor: IADE_ZEMIN/g;
+  const BUYUK = /colors=\{gradients\.(?:gold|plum|rose|deep)\}|backgroundColor: colors\.plum/g;
   // `boni` hero'nun yanında küçük bir kilit ikonu için aynı gradyanı
   // kullanıyor; ikisi birden sayılıyor ama ikincisi 56pt'lik bir kutu.
   const IZINLI = new Set(['boni.tsx']);

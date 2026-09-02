@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { darkColors } from './theme.palette';
+import { AKSAN_ANAHTARLARI } from './theme.aksan';
+import { paletUret } from './theme.palette';
 
 /**
  * #15 KARANLIK MOD — rapordaki dört bulgunun düzeltmesi.
@@ -36,21 +37,36 @@ function kon(a: string, b: string): number {
  * dönüyor. Aranan güvence aynı, mekanizma daha iyi: sabitlemek yerine yazıyı
  * zemine bağlamak. Ölçüm bunu doğruluyor.
  */
-test('P1 — iade bandı yazısı iki temada da okunuyor', () => {
-  // Bant Figma'da SABİT koyu (#64285A) — cihaz temasıyla dönmüyor. O yüzden
-  // yazısı da sabit açık olmak zorunda: `onAccent` koyu temada koyuya döner
-  // ve sabit koyu zeminde okunmaz yazı bırakırdı.
+test('P1 — iade bandı yazısı HER sette ve iki temada okunuyor', () => {
+  /*
+   * Bant iki temada da KOYU (cihaz temasıyla dönmüyor), yazısı da sabit
+   * beyaz. `onAccent` kullanılsaydı koyu temada koyuya döner ve sabit koyu
+   * zeminde okunmaz yazı bırakırdı — `uzman/[id]` hero'sunda tam olarak bu
+   * hata yaşanmıştı.
+   *
+   * Eskiden zemin `'#64285A'` sabitiydi ve bu test o tek değeri
+   * ölçüyordu. Zemin artık `colors.plum` — yani SEKİZ ayrı değer, iki
+   * temada. Hepsi denetleniyor.
+   */
   const d = kodu('app/(tabs)/discover.tsx');
-  const zemin = /const IADE_ZEMIN = '(#[0-9A-Fa-f]{6})';/.exec(d);
-  assert.ok(zemin, 'bant zemini sabiti yok');
-  assert.match(d, /const IADE_YAZI = darkColors\.ink;/, 'bant yazısı sabit değil');
   assert.match(
     d,
-    /iadeKart:[\s\S]{0,320}backgroundColor: IADE_ZEMIN/,
-    'bant zemini sabite bağlı değil',
+    /iadeKart:[\s\S]{0,320}backgroundColor: colors\.plum/,
+    'bant zemini derin yüzey token’ına bağlı değil',
   );
-  const r = kon(darkColors.ink, zemin![1]!);
-  assert.ok(r >= 4.5, `iade bandı: yazı/zemin ${r.toFixed(2)}:1 — 4,5 altı`);
+  assert.match(
+    d,
+    /iadeBaslik:[\s\S]{0,120}color: colors\.onColor/,
+    'bant başlığı sabit açık değil',
+  );
+
+  for (const anahtar of AKSAN_ANAHTARLARI) {
+    for (const tema of ['light', 'dark'] as const) {
+      const c = paletUret(tema, anahtar);
+      const r = kon(c.onColor, c.plum);
+      assert.ok(r >= 4.5, `iade bandı ${anahtar}/${tema}: yazı/zemin ${r.toFixed(2)}:1 — 4,5 altı`);
+    }
+  }
 });
 
 test('P2 — durum renkleri AÇIK temada eşiği geçiyor', () => {

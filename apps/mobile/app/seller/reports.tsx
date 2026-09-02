@@ -19,7 +19,7 @@ import {
 } from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
 import { type ColorTokens, font } from '../../src/theme';
-import { darkColors, lightColors } from '../../src/theme.palette';
+import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
@@ -31,7 +31,6 @@ type Period = 'week' | 'month' | 'all';
  * Kart iki temada da koyu kalıyor (Figma böyle), o yüzden yazısı da sabit
  * açık. Değerler elle yazılmıyor: marka paleti değişirse bunlar da değişsin.
  */
-const OZET_DEGRADE = [lightColors.accent, '#2D0A2E'] as const;
 const OZET_YAZI = darkColors.ink;
 const OZET_ETIKET = darkColors.accent;
 
@@ -43,7 +42,10 @@ const PERIYOT_ETIKET = {
 
 export default function ReportsScreen() {
   const { t, locale } = useLocale();
-  const { colors } = useTheme();
+  // Derin kart gradyanı artık SEÇİLEN RENKTEN geliyor (`gradients.deep`).
+  // Eskiden `[lightColors.accent, '#2D0A2E']` sabitiydi: kullanıcı Zümrüt
+  // seçse bile bu kart pembe kalıyordu.
+  const { colors, gradients } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const [period, setPeriod] = useState<Period>('week');
@@ -436,7 +438,7 @@ export default function ReportsScreen() {
             Koyu mürdüm degrade; üstünde açık yazı. Zemin TEMADAN BAĞIMSIZ:
             bu kart iki temada da koyu kalıyor, yazısı da sabit açık. */}
         <LinearGradient
-          colors={OZET_DEGRADE}
+          colors={gradients.deep}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.ozetKart}

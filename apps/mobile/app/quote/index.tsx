@@ -31,7 +31,6 @@ type IoniconName = keyof typeof Ionicons.glyphMap;
  */
 
 /** Dolu kartın gradyanı — uzman özet kartıyla aynı (ölçülmüş kontrast). */
-export const YOL_DEGRADE = [lightColors.accent, '#2D0A2E'] as const;
 /** Erik gradyanın üstündeki yazı — iki temada da sabit açık. */
 export const YOL_YAZI = darkColors.ink;
 
@@ -92,7 +91,7 @@ function YolKarti({
   onPress: () => void;
 }) {
   const styles = useThemedStyles(makeStyles);
-  const { colors, shadow } = useTheme();
+  const { colors, gradients, shadow } = useTheme();
 
   // Dolu kartın üstündeki her şey sabit açık; boş kart temanın token'larını
   // kullanır. İkisini karıştırmak koyu temada okunmaz yazı demek.
@@ -114,7 +113,7 @@ function YolKarti({
       >
         {dolu ? (
           <LinearGradient
-            colors={YOL_DEGRADE}
+            colors={gradients.deep}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFill}

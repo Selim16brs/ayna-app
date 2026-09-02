@@ -8,7 +8,7 @@ import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, View } from '
 import { fillParams, useLocale } from '../../src/locale';
 import { randevuDepozitosu, useStore } from '../../src/store';
 import { font, type ColorTokens } from '../../src/theme';
-import { darkColors, lightColors } from '../../src/theme.palette';
+import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Sayac, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
@@ -48,7 +48,10 @@ function kaspiBaglantisi(sablon: string, tutar: number, ref: string): string {
 export default function DepositScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useLocale();
-  const { colors } = useTheme();
+  // Derin kart gradyanı artık SEÇİLEN RENKTEN geliyor (`gradients.deep`).
+  // Eskiden `[lightColors.accent, '#2D0A2E']` sabitiydi: kullanıcı Zümrüt
+  // seçse bile bu kart pembe kalıyordu.
+  const { colors, gradients } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
 
@@ -195,7 +198,7 @@ export default function DepositScreen() {
 
         {/* TUTAR — koyu mürdüm kart. Kararın merkezindeki sayı büyük. */}
         <LinearGradient
-          colors={OZET_DEGRADE}
+          colors={gradients.deep}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.tutarKart}
@@ -336,7 +339,6 @@ export default function DepositScreen() {
 }
 
 /** Koyu mürdüm kart — Figma `canli-ozet-card` degradesi, iki temada da sabit. */
-const OZET_DEGRADE = [lightColors.accent, '#2D0A2E'] as const;
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
