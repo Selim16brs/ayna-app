@@ -56,15 +56,53 @@ görselleri siliyor, Outlook SVG çizmiyor. Logo API'den servis ediliyor
 (`apps/api/public/brand/`), `EMAIL_ASSET_URL` ile adresleniyor ve
 `setGlobalPrefix`ten ÖNCE tanımlanıyor — adres API sürümüne bağlanmasın.
 
+## Kullanıcıyı bunaltmama
+
+E-posta yorgunluğunun bedeli tek bir postanın okunmaması değil: insanlar spam
+işaretliyor, gönderim itibarı düşüyor ve sonra **önemli** posta da ("iaden
+hazır") kutuya düşmüyor. Yani bunaltmak en çok işe yarayan postayı öldürüyor.
+
+Politika `MailerService` içinde, gönderim yolunun **tek geçidinde** — çağıran
+modüle bırakılsaydı biri unutur, sınır sessizce delinirdi.
+
+| Sınır             | Değer            | Kimi kapsar                |
+| ----------------- | ---------------- | -------------------------- |
+| Günlük tavan      | 3                | kritikler hariç herkes     |
+| Pazarlama aralığı | 7 gün            | yalnız pazarlama postaları |
+| Tekilleştirme     | anahtar başına 1 | hepsi                      |
+
+**Kritikler tavana takılmaz:** `depozito_bekliyor`, `depozito_iadesi`,
+`randevu_onaylandi`. Üçü de kullanıcının parasına ya da o an bekleyen işine
+dair; susturmak zarar verir. Tavan "bilgi" postalarını kısmak için.
+
+Bir şablon hem pazarlama hem kritik olamaz — test bunu kontrol ediyor.
+
 ## Tekrar neden olmuyor
 
-`email_log` tablosunda `(user_id, template)` **benzersiz**. Zamanlayıcı günde
-on iki kez koşsa da her şablon kullanıcı başına bir kez gider. Kısıt
-veritabanında, uygulamada değil: iki eşzamanlı koşu "önce oku sonra yaz"
-kontrolünü birlikte geçebilirdi.
+Tekilleştirme `(user_id, dedupe_key)` **benzersiz** kısıtıyla. Anahtar iki
+biçimde olabilir:
+
+| Anahtar         | Anlamı                                 | Örnek                        |
+| --------------- | -------------------------------------- | ---------------------------- |
+| `sablon`        | Kullanıcı başına **ömür boyu bir kez** | `hosgeldin`                  |
+| `sablon:olayId` | **Olay başına** bir kez                | `randevu_hatirlatma:abc-123` |
+
+Bu ayrım şart: önce yalnız şablon adına bakılıyordu ve ikinci randevunun
+onayı ile hatırlatması **hiç gitmiyordu** — şablon "zaten gönderilmiş"
+sayılıyordu.
+
+Kısıt veritabanında, uygulamada değil: iki eşzamanlı koşu "önce oku sonra
+yaz" kontrolünü birlikte geçebilirdi.
 
 > **Şablon anahtarını değiştirmeyin.** `email_log` o anahtarı saklıyor;
 > yeniden adlandırmak, postayı almış herkese ikinci kez göndermek demektir.
+
+### Teklifler neden tek posta
+
+Her teklif geldiğinde posta atmak kullanıcıyı bunaltırdı. `teklif_geldi`
+talep başına **bir kez** gidiyor ve metin bunu kullanıcıya açıkça söylüyor:
+sonrakiler için ayrıca posta yok, hepsi uygulamada birikiyor. Söylemeseydik
+kullanıcı ikinci teklifi kutusunda beklerdi.
 
 ## Zamanlayıcıyı bağlama
 

@@ -1498,6 +1498,8 @@ model EmailLog {
   userId            String?   @map("user_id") @db.Uuid
   email             String
   template          String
+  /// Bkz. aşağıdaki @@unique — tekilleştirmenin gerçek anahtarı bu.
+  dedupeKey         String    @map("dedupe_key")
   locale            String    @default("tr")
   status            String    @default("QUEUED")
   providerMessageId String?   @map("provider_message_id")
@@ -1505,10 +1507,17 @@ model EmailLog {
   sentAt            DateTime? @map("sent_at") @db.Timestamptz(6)
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  /// Aynı kullanıcıya aynı şablon BİR KEZ. Uygulama katmanında "önce oku
-  /// sonra yaz" yetmez: zamanlayıcının iki eşzamanlı koşusu ikisini de
-  /// geçirebilir. Kısıt veritabanında.
-  @@unique([userId, template])
+  /// Tekilleştirme anahtarı: `şablon` ya da `şablon:olay_kimliği`.
+  ///
+  /// Önce yalnız `template` idi ve bu İKİ YÖNLÜ yanlıştı:
+  ///   · Tekrarlaması GEREKENLER susuyordu — ikinci randevunun onayı ve
+  ///     hatırlatması hiç gitmiyordu, çünkü şablon "zaten gönderilmiş"
+  ///     sayılıyordu.
+  ///   · TekrarlamaMAsı gerekenler için de yanlış araçtı: kısıtı gevşetsek
+  ///     her teklifte posta giderdi.
+  /// Artık ayrım anahtarda: bir kez gidecekler düz şablon adı, olay başına
+  /// gidecekler `randevu_hatirlatma:<randevuId>` kullanıyor.
+  @@unique([userId, dedupeKey])
   @@index([email])
   @@index([status])
   @@index([template])

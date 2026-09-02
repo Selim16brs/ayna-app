@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS "email_log" (
   "user_id"             UUID,
   "email"               TEXT NOT NULL,
   "template"            TEXT NOT NULL,
+  "dedupe_key"          TEXT NOT NULL,
   "locale"              TEXT NOT NULL DEFAULT 'tr',
   "status"              TEXT NOT NULL DEFAULT 'QUEUED',
   "provider_message_id" TEXT,
@@ -15,11 +16,13 @@ CREATE TABLE IF NOT EXISTS "email_log" (
   "created_at"          TIMESTAMPTZ(6) NOT NULL DEFAULT now()
 );
 
--- AYNI kullanıcıya AYNI şablon bir kez. Uygulama katmanında "önce oku sonra
--- yaz" yetmez: zamanlayıcının iki eşzamanlı koşusu ikisini de geçirebilir ve
--- kullanıcı aynı postayı iki kez alır. Kısıt veritabanında.
-CREATE UNIQUE INDEX IF NOT EXISTS "email_log_user_template_key"
-  ON "email_log" ("user_id", "template");
+-- Tekilleştirme ANAHTAR üzerinden: bir kez gidecekler düz şablon adı, olay
+-- başına gidecekler "sablon:olayId". Yalnız şablona bakmak iki yönlü yanlıştı:
+-- ikinci randevunun onayı susuyordu, teklif postası ise gevşetilse taşardı.
+-- Kısıt veritabanında: uygulama katmanında "önce oku sonra yaz" iki eşzamanlı
+-- koşuda ikisini de geçirir.
+CREATE UNIQUE INDEX IF NOT EXISTS "email_log_user_dedupe_key"
+  ON "email_log" ("user_id", "dedupe_key");
 
 CREATE INDEX IF NOT EXISTS "email_log_email_idx"    ON "email_log" ("email");
 CREATE INDEX IF NOT EXISTS "email_log_status_idx"   ON "email_log" ("status");
