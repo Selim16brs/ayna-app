@@ -356,3 +356,36 @@ test('BÖLÜM BAŞLIĞI harf kaybetmiyor', () => {
   assert.match(kod, /adjustsFontSizeToFit/, 'başlık sığmayınca küçülmüyor');
   assert.match(kod, /tumuKap: \{[^}]*flexShrink: 0/, '"Tümünü Gör" daralıyor — başlığı eziyor');
 });
+
+test('kart fotoğrafı TAM oturuyor — kartta iç boşluk yok', () => {
+  /*
+   * Kurucu: "kartlarda fotolar tam oturmamıs."
+   *
+   * Sebep benim önceki düzeltmemdi: fotoğrafa `width/height: '100%'`
+   * verdim ama mutlak konumlu bir çocukta yüzde İÇ BOŞLUĞA göre
+   * hesaplanıyor. Kartın 10px yan / 14px alt dolgusu kadar fotoğraf içeri
+   * kaçtı, kenarlarda beyaz şerit kaldı.
+   *
+   * Yüzdeleri kaldırmak da olmaz — o zaman görsel kendi doğal boyutunda
+   * çizilip hiç ölçeklenmiyor (ondan önceki hata). Doğrusu: dolgu KARTTAN
+   * alınıp yazıya verilir.
+   */
+  const kod = d.replace(/\/\*[\s\S]*?\*\//g, '');
+  const i = kod.indexOf('hizliKart: {');
+  assert.ok(i > 0, 'kart stili yok');
+  const kart = kod.slice(i, kod.indexOf('},', i));
+  assert.doesNotMatch(kart, /padding/, 'kartta iç boşluk var — fotoğraf kenarlardan kaçar');
+  assert.match(kod, /hizliYazi: \{[\s\S]{0,200}?padding/, 'boşluk yazıya taşınmamış');
+});
+
+test('BİLDİRİM ROZETİNDEKİ rakam ortalı', () => {
+  // `alignItems/justifyContent: center` tek başına yetmiyor: satır kutusu
+  // yazı tipinin ölçülerinden geliyor ve rakam yukarı kaçıyordu.
+  const kod = d.replace(/\/\*[\s\S]*?\*\//g, '');
+  const i = kod.indexOf('rozetYazi: {');
+  assert.ok(i > 0, 'rozet yazı stili yok');
+  const stil = kod.slice(i, kod.indexOf('},', i));
+  assert.match(stil, /lineHeight: 16/, 'satır yüksekliği rozete eşitlenmemiş');
+  assert.match(stil, /textAlign: 'center'/, 'yatay ortalama yok');
+  assert.match(stil, /includeFontPadding: false/, 'Android ekstra boşluğu kapatılmamış');
+});
