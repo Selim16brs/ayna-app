@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { lightColors } from '../theme.palette';
 import { useRouter } from 'expo-router';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -11,15 +10,27 @@ import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
-// Rozet renk eşlemesi — spec §0.1 (İndirim / Popüler / Yeni), metin ink
-const BADGE: Record<Professional['badge'], { key: MessageKey; bg: string }> = {
-  campaign: { key: 'card.campaign', bg: '#DDF08A' }, // badgeDiscountBg
-  verified: { key: 'card.verified', bg: '#E1DAF3' }, // badgePopularBg
-  today: { key: 'card.today', bg: '#F8DFC2' }, // badgeNewBg
+/**
+ * Rozet renkleri.
+ *
+ * Üçü de SABİT pastel yazılıydı (lime #DDF08A, lavanta #E1DAF3, şeftali
+ * #F8DFC2): bu palette olmayan renkler ve temaya hiç bakmıyorlardı.
+ * Anlam korundu, renkler palete taşındı — üçü de zaten bir şey anlatıyor:
+ *   · kampanya    → altın (değer/indirim)
+ *   · doğrulanmış → yeşil (onay)
+ *   · bugün       → erik (marka)
+ * Yazı da artık zeminle aynı token çiftinden; ölçüldü, iki temada ≥4.5:1.
+ */
+const BADGE: Record<
+  Professional['badge'],
+  { key: MessageKey; bg: keyof ColorTokens; fg: keyof ColorTokens }
+> = {
+  campaign: { key: 'card.campaign', bg: 'goldSoft', fg: 'gold' },
+  verified: { key: 'card.verified', bg: 'successSoft', fg: 'success' },
+  today: { key: 'card.today', bg: 'accentSoft', fg: 'accent' },
 };
 // Rozet yazısı: rozet zemini sabit olduğu için mürekkep de sabit — ama
 // değeri palet veriyor, marka değişince birlikte değişsin.
-const BADGE_INK = lightColors.ink;
 
 /**
  * Yatay salon kartı (referans "Yakındaki salonlar" dili): sol foto + isim/puan/adres +
@@ -62,8 +73,8 @@ export function SalonRow({ pro, index = 0 }: { pro: Professional; index?: number
         </View>
 
         <View style={styles.right}>
-          <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-            <Text variant="caption" style={[styles.badgeText, { color: BADGE_INK }]}>
+          <View style={[styles.badge, { backgroundColor: colors[badge.bg] }]}>
+            <Text variant="caption" style={[styles.badgeText, { color: colors[badge.fg] }]}>
               {t(badge.key)}
             </Text>
           </View>

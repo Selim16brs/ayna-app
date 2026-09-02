@@ -34,7 +34,8 @@ export function DateField({
   maximumDate?: Date;
   last?: boolean;
 }) {
-  const { colors } = useTheme();
+  // `mode` zaten bileşenin prop'u (date/datetime) — tema kipi ayrı adla.
+  const { mode: tema } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [show, setShow] = useState(false);
   return (
@@ -48,7 +49,14 @@ export function DateField({
             value={value}
             mode={mode}
             display="compact"
-            themeVariant={colors.bg === '#191E1B' ? 'dark' : 'light'}
+            /*
+             * Koyu tema kontrolü ESKİ palet değerine bakıyordu (#191E1B).
+             * O renk Figma geçişinde gitti (artık #18061C), yani koşul
+             * HİÇ doğru olmuyordu: yerli tarih seçici koyu temada da açık
+             * görünümde açılıyordu. Karşılaştırma yerine temanın kendi
+             * kipi okunuyor.
+             */
+            themeVariant={tema === 'dark' ? 'dark' : 'light'}
             locale="tr-TR"
             minimumDate={minimumDate}
             maximumDate={maximumDate}
