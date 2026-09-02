@@ -27,18 +27,34 @@ bir hata değil.
 
 Zamanlayıcı `/cron/mail` ucundan tetikleniyor (saatte bir yeterli).
 
-| Şablon               | Kime                                          | Ne zaman  |
-| -------------------- | --------------------------------------------- | --------- |
-| `ilk_randevu`        | Kayıttan 2 gün geçmiş, hiç randevu almamış    | pazarlama |
-| `randevu_hatirlatma` | Yarın randevusu olan                          | işlemsel  |
-| `degerlendirme`      | Hizmeti biteli 1 gün geçmiş, değerlendirmemiş | pazarlama |
-| `depozito_iadesi`    | İade hakkı doğmuş, hesap bilgisi girmemiş     | işlemsel  |
-| `geri_kazanim`       | 60 gündür randevu almamış                     | pazarlama |
+| Şablon               | Kime                           | Tür       |
+| -------------------- | ------------------------------ | --------- |
+| `hosgeldin`          | Kayıttan hemen sonra           | pazarlama |
+| `ilk_randevu`        | 2 gün geçmiş, hiç randevu yok  | pazarlama |
+| `randevu_onaylandi`  | Randevu kesinleşti             | işlemsel  |
+| `depozito_bekliyor`  | Depozito ödenmeyi bekliyor     | işlemsel  |
+| `randevu_hatirlatma` | Yarın randevusu olan           | işlemsel  |
+| `degerlendirme`      | Hizmet biteli 1 gün, yorum yok | pazarlama |
+| `depozito_iadesi`    | İade hazır, hesap bilgisi yok  | işlemsel  |
+| `teklif_geldi`       | Talebine teklif geldi          | işlemsel  |
+| `puan_hatirlatma`    | Puanı dolmak üzere             | pazarlama |
+| `geri_kazanim`       | 60 gündür randevu yok          | pazarlama |
+| `uzman_talep`        | Uzmana yeni talep düştü        | işlemsel  |
+| `reklam_yayinda`     | Uzmanın reklamı yayına girdi   | işlemsel  |
 
-`hosgeldin` seride değil: kayıt anında ilgili modülden tetiklenmeli.
+Beşi zamanlayıcıdan gidiyor (`ilk_randevu`, `randevu_hatirlatma`,
+`degerlendirme`, `depozito_iadesi`, `geri_kazanim`); kalanlar ilgili modülden
+tetiklenecek.
 
 **Pazarlama** postalarında abonelikten çıkma bağlantısı var, **işlemsel**
 olanlarda yok — randevu hatırlatmasından "çık" denmez.
+
+## Logo
+
+E-postada logo göstermenin tek güvenilir yolu HTTP adresi: Gmail `data:` URI'li
+görselleri siliyor, Outlook SVG çizmiyor. Logo API'den servis ediliyor
+(`apps/api/public/brand/`), `EMAIL_ASSET_URL` ile adresleniyor ve
+`setGlobalPrefix`ten ÖNCE tanımlanıyor — adres API sürümüne bağlanmasın.
 
 ## Tekrar neden olmuyor
 

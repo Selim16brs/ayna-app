@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import 'dotenv/config';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { join } from 'node:path';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { loadEnv } from '@ayna/config/env';
@@ -20,6 +21,24 @@ async function bootstrap(): Promise<void> {
   });
   app.useBodyParser('json', { limit: '15mb' });
   app.useBodyParser('urlencoded', { limit: '15mb', extended: true });
+
+  /*
+   * MARKA VARLIKLARI — e-posta için.
+   *
+   * E-postada logo göstermenin tek güvenilir yolu HTTP adresi: Gmail
+   * `data:` URI'li görselleri siliyor, Outlook SVG çizmiyor. Bu yüzden
+   * logo API'den servis ediliyor ve şablonlar mutlak adresle çağırıyor.
+   *
+   * `setGlobalPrefix`ten ÖNCE tanımlanıyor: varlıklar `/api/...` altında
+   * değil kökte durmalı, e-postadaki adres API sürümüne bağlanmasın.
+   *
+   * Bir yıllık önbellek: dosya adı değişmedikçe içerik de değişmiyor.
+   */
+  app.useStaticAssets(join(process.cwd(), 'public'), {
+    prefix: '/',
+    maxAge: '365d',
+    immutable: true,
+  });
 
   app.setGlobalPrefix(env.API_GLOBAL_PREFIX);
   // Railway proxy arkasında gerçek istemci IP'si X-Forwarded-For'da gelir. Bu olmadan
