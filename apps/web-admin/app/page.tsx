@@ -198,7 +198,7 @@ export default function AdminApp() {
         { id: 'content', label: 'Blog & Tema', icon: '📰' },
         { id: 'announcements', label: 'Duyurular', icon: '📣' },
         { id: 'campaigns', label: 'Kampanyalar', icon: '🎯' },
-        { id: 'ads', label: 'Tedarikçi Reklamları', icon: '📢' },
+        { id: 'ads', label: 'Reklamlar', icon: '📢' },
       ],
     },
     {
