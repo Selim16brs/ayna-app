@@ -21,6 +21,21 @@ export const lightColors = {
   // Birincil eylem
   accent: '#4A1942', // Ayna Mürdüm — CTA, aktif sekme
   accentSoft: '#E8D9EB',
+  /**
+   * ERİK SİSİ — büyük kartların zemini.
+   *
+   * Kurucu: "tum sayfalar cok dark oldu... ınsanları rahatsız etmeyecek
+   * sekılde duzenle."
+   *
+   * Erik (#4A1942) marka rengi olarak DOĞRU ama dolu yüzey olarak çok
+   * ağır: 74 dosyada büyük koyu kart vardı ve alt menü de neredeyse
+   * siyahtı (parlaklık 0.007, sayfa zemini 0.934). Marka rengi
+   * değişmiyor; kapladığı ALAN değişiyor. Büyük kartlar bu sise oturuyor,
+   * erik yazıda/ikonda/tek düğmede kalıyor.
+   *
+   * Ölçüm: erik yazı 12.07:1 · başlık 16.06:1 · ikincil 6.00:1.
+   */
+  heroSoft: '#F5ECF6',
   onAccent: '#FFF0F5', // mürdüm üstünde AÇIK yazı
   accentFg: '#4A1942', // beyaz zeminde eylem metni/ikonu
 
@@ -90,6 +105,8 @@ export const darkColors: ColorTokens = {
   // Koyu zeminde mürdüm okunmaz → eylem rengi Gül
   accent: '#C5A3C7',
   accentSoft: '#37193C',
+  /** Erik sisinin koyu karşılığı — ölçüm: erik yazı 7.19:1, başlık 14.51:1. */
+  heroSoft: '#2E1A33',
   onAccent: '#18061C', // gül üstünde KOYU yazı
   accentFg: '#C5A3C7',
 

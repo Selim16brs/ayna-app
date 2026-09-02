@@ -102,7 +102,28 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
         />
       </View>
 
-      <View style={[styles.pill, { backgroundColor: colors.inverse, bottom }]}>
+      {/*
+        ALT MENÜ — açık temada AÇIK çubuk.
+        Zemini `colors.inverse` (#1E0E1B) idi: parlaklığı 0.007, yani
+        neredeyse siyah bir bar HER ekranın altında duruyordu. Sayfa
+        zemini 0.934 olduğu için ekranın en ağır lekesi buydu.
+        Artık yüzey rengi; zeminden renkle ayrışmadığı için kenarlık ve
+        gölge şart — ikisi de burada.
+      */}
+      <View
+        style={[
+          styles.pill,
+          {
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.lineStrong,
+            // Çubuk zeminden RENKLE ayrışmıyor (1.07:1); ayrımı kenarlık
+            // ve bu gölge yapıyor. Figma'nın gölgeleri mürdüm tonlu.
+            shadowColor: colors.accent,
+            bottom,
+          },
+        ]}
+      >
         {tabs.map((tab) => {
           const focused = tab.name === active;
           const icon = (focused ? tab.icon : `${tab.icon}-outline`) as IoniconName;
@@ -116,7 +137,7 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
               accessibilityLabel={t(tab.labelKey)}
             >
               {focused ? (
-                <View style={[styles.activePill, { backgroundColor: colors.rose }]}>
+                <View style={[styles.activePill, { backgroundColor: colors.accent }]}>
                   <Ionicons
                     name={icon}
                     size={19}
@@ -141,12 +162,12 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
                 </View>
               ) : (
                 <>
-                  <Ionicons name={icon} size={22} color={colors.onInverseMuted} />
+                  <Ionicons name={icon} size={22} color={colors.muted} />
                   {tab.badge ? (
                     <View
                       style={[
                         styles.dot,
-                        { backgroundColor: colors.rose, borderColor: colors.inverse },
+                        { backgroundColor: colors.rose, borderColor: colors.surface },
                       ]}
                     />
                   ) : null}
@@ -172,10 +193,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: space(1),
-    shadowColor: '#262219',
-    shadowOpacity: 0.32,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 14 },
+    // Gölge rengi TEMADAN geliyor (satır içinde): stil tablosu statik,
+    // buraya sabit hex yazmak koyu temada yanlış gölge demekti.
+    shadowOpacity: 0.16,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
     elevation: 12,
   },
   // Genişlik satır içinde veriliyor (hesap yukarıda). Burada flex YOK —
