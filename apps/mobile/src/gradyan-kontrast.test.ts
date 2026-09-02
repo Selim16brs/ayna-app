@@ -77,21 +77,49 @@ test('MARKA RENGİ temaya göre değişmiyor', () => {
 });
 
 test('ACİL gradyanı gül KALIYOR', () => {
-  // Bu temizlik semantik rengi süpürmemeli: `rose` acil/sayaç kartının rengi
-  // ve orada gül olması ANLAMLI.
-  const h = darkGradients.rose[1].replace('#', '');
-  const [r, , b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as [
-    number,
-    number,
-    number,
-  ];
-  assert.ok(r > b, 'acil gradyanı gül olmaktan çıkmış');
+  // Bu temizlik semantik rengi süpürmemeli: `rose` acil/çekiliş kartının
+  // rengi ve orada gül olması ANLAMLI.
+  for (const g of [lightGradients.rose, darkGradients.rose]) {
+    for (const uc of g) {
+      const h = uc.replace('#', '');
+      const [r, , b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as [
+        number,
+        number,
+        number,
+      ];
+      assert.ok(r > b, `acil gradyanı ${uc} gül olmaktan çıkmış`);
+    }
+  }
+});
+
+test('ACİL kartının yazısı iki temada da OKUNUYOR', () => {
+  /*
+   * Çekiliş kartı `rose` üstüne SABİT BEYAZ yazıyordu: açık temada 2.94:1,
+   * koyu temada 2.25:1 — iki temada da okunmuyordu. Yazı artık gradyanla
+   * aynı token setinden geliyor.
+   */
+  for (const [ad, g, c] of [
+    ['açık', lightGradients.rose, lightColors],
+    ['koyu', darkGradients.rose, darkColors],
+  ] as const) {
+    const o = enKotu(g, c.onAccent);
+    assert.ok(o >= 4.5, `${ad} tema: acil kartı yazısı ${o.toFixed(2)}:1`);
+    const z = Math.min(oran(g[0], c.bg), oran(g[1], c.bg));
+    assert.ok(z >= 3, `${ad} tema: acil kartı zeminden ${z.toFixed(2)}:1 ayrışıyor`);
+  }
+});
+
+test('ÖLÜ gradyan yok', () => {
+  // `teal` (yeşil) tek kullanıcısı giriş kapısındaki rol kartıydı; o kart
+  // yeniden kurulunca gradyan sahipsiz kaldı. Kullanılmayan token bir
+  // sonraki kişiyi "bu da bir seçenek" diye yanıltır.
+  const kaynak = readFileSync(join(__dirname, 'theme.gradients.ts'), 'utf8');
+  assert.doesNotMatch(kaynak, /\bteal:/, 'kullanılmayan teal gradyanı hâlâ duruyor');
 });
 
 test('KART YARIÇAPI Figma ile aynı', () => {
   // Yeni tasarıma geçen ekranlar kartı 20/24 yazıyor; geçmeyenler
   // `radius.lg` kullanıyordu ve o 18'di. İki piksel her ekranda görünüyor.
-  // Token dosyası react-native çekiyor, kaynak metin olarak okunuyor.
   const kaynak = readFileSync(join(__dirname, 'theme.ts'), 'utf8');
   const m = /export const radius = \{[^}]*lg: (\d+)/.exec(kaynak);
   assert.ok(m, 'yarıçap ölçeği okunamadı');
@@ -100,12 +128,15 @@ test('KART YARIÇAPI Figma ile aynı', () => {
 
 test('tema değişen gradyanın üstünde SABİT BEYAZ yazı yok', () => {
   /*
-   * Tuzak: `gradients.gold` iki temada farklı açıklıkta. Üstüne `onColor`
-   * (sabit #FFFFFF) yazan bir ekran açık temada geçer, koyu temada düşer —
-   * giriş kapısındaki rol kartı tam olarak böyle 2.23:1'e inmişti.
+   * Tuzak: `gold` ve `rose` iki temada farklı açıklıkta. Üstüne `onColor`
+   * (sabit #FFFFFF) yazan bir ekran bir temada geçer, ötekinde düşer —
+   * giriş kapısındaki rol kartı 2.23:1'e, çekiliş kartı 2.25:1'e inmişti.
    *
-   * Yazı gradyanla AYNI token setinden gelmeli (`onAccent`), çünkü o da
-   * temaya göre dönüyor.
+   * Yazı gradyanla AYNI token setinden gelmeli (`onAccent`).
+   *
+   * DOSYA GENELİNE bakılıyor, gradyanın etrafına değil: yazı rengi çoğu
+   * zaman gradyandan ÖNCE bir değişkende hesaplanıyor. İlk yazdığım
+   * kontrol sonrasına bakıyordu ve mutasyonu kaçırdı.
    */
   const kok = join(__dirname, '..', 'app');
   const dosyalar: string[] = [];
@@ -120,15 +151,27 @@ test('tema değişen gradyanın üstünde SABİT BEYAZ yazı yok', () => {
 
   for (const yol of dosyalar) {
     const k = readFileSync(yol, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-    if (!k.includes('gradients.gold')) continue;
-    // DOSYA GENELİNE bakılıyor, gradyanın etrafına değil: yazı rengi çoğu
-    // zaman gradyandan ÖNCE bir değişkende hesaplanıyor. İlk yazdığım
-    // kontrol gradyandan sonrasına bakıyordu ve tam bu yüzden mutasyonu
-    // kaçırdı — hatayı yakalamayan koruma, koruma değildir.
-    assert.doesNotMatch(
-      k,
-      /tone="onColor"|colors\.onColor/,
-      `${yol.split('/app/')[1]}: tema değişen gradyanın olduğu ekranda sabit beyaz yazı`,
-    );
+    // Yalnız TEMA DEĞİŞEN gradyanın kendi bloğuna bakılıyor. `plum` iki
+    // temada da koyu, üstünde beyaz yazı DOĞRU — dosya geneline bakan bir
+    // kontrol onu da hata sanıyordu.
+    for (const m of k.matchAll(/colors=\{gradients\.(gold|rose)\}/g)) {
+      const blok = k.slice(m.index!, k.indexOf('</LinearGradient>', m.index!));
+      assert.doesNotMatch(
+        blok,
+        /tone="onColor"|colors\.onColor/,
+        `${yol.split('/app/')[1]}: ${m[1]} gradyanının üstünde sabit beyaz yazı`,
+      );
+    }
+    // Yazı rengi gradyandan ÖNCE değişkende hesaplanıyorsa blok kaçırır;
+    // bu ayrı kalıp o yüzden dosya genelinde aranıyor. TEK SATIRA bağlı:
+    // satır sonu serbest bırakılınca `const makeStyles = ...` bloğunun
+    // tamamını yutup içindeki masum kullanımları da hata sanıyordu.
+    if (/gradients\.(gold|rose)/.test(k)) {
+      assert.doesNotMatch(
+        k,
+        /const \w+ = [^;\n]*colors\.onColor/,
+        `${yol.split('/app/')[1]}: yazı rengi sabit beyazdan hesaplanıyor`,
+      );
+    }
   }
 });
