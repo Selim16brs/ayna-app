@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,7 +59,7 @@ const MENU: {
 
 export default function ProfileScreen() {
   const { t } = useLocale();
-  const { colors, gradients, shadow, preference, setPreference } = useTheme();
+  const { colors, shadow, preference, setPreference } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const router = useRouter();
