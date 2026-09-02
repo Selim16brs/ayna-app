@@ -299,11 +299,15 @@ export default function DiscoverScreen() {
         <View style={styles.hizliSerit}>
           {HIZLI_EYLEMLER.map((e) => (
             <PressableScale key={e.id} style={styles.hizliKart} onPress={() => router.push(e.yol)}>
-              <Image
-                source={{ uri: e.gorsel }}
-                style={StyleSheet.absoluteFill}
-                resizeMode="cover"
-              />
+              {/*
+                YEREL görsel doğrudan verilir: `require(...)` bir modül
+                referansı döndürüyor, adres değil. `{ uri: ... }` içine
+                koyunca geçersiz adres oluyor, resim hiç çizilmiyor ve
+                geriye yalnız üstteki koyu perde kalıyordu — kartlar
+                gri degrade görünüyordu. Aynı dosyadaki logo ve hizmet
+                ikonları baştan doğru kullanımdaydı, bu üç kart değildi.
+              */}
+              <Image source={e.gorsel} style={StyleSheet.absoluteFill} resizeMode="cover" />
               <LinearGradient
                 colors={[
                   'rgba(0,0,0,0)',

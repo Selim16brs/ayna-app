@@ -221,3 +221,31 @@ test('"Tümünü Gör" chevron’lu', () => {
   assert.ok(i > 0, 'tümünü gör yok');
   assert.match(d.slice(i, i + 200), /chevron-forward/, 'chevron yok');
 });
+
+test('YEREL görseller doğrudan veriliyor — uri sarmalı yok', () => {
+  /*
+   * Kurucu ekran görüntüsü gönderdi: üç hızlı eylem kartı gri degrade
+   * görünüyordu, fotoğraflar yoktu.
+   *
+   * Sebep: `require(...)` bir MODÜL REFERANSI döndürüyor (RN'de sayı),
+   * adres değil. `source={{ uri: e.gorsel }}` yazınca geçersiz bir adres
+   * oluşuyor, resim hiç çizilmiyor ve geriye yalnız üstündeki koyu perde
+   * kalıyor. Hata sessiz: kod derleniyor, test yeşil kalıyordu.
+   *
+   * Kural: yerel görsel `source={x}`, ağdan gelen `source={{ uri: x }}`.
+   */
+  const kaynak = d.replace(/\/\*[\s\S]*?\*\//g, '');
+  const yerel = new Set([
+    ...[...kaynak.matchAll(/(\w+):\s*require\(/g)].map((m) => m[1]!),
+    ...[...kaynak.matchAll(/const (\w+) = require\(/g)].map((m) => m[1]!),
+  ]);
+  for (const ad of yerel) {
+    assert.doesNotMatch(
+      kaynak,
+      new RegExp(`uri:\\s*[\\w.]*\\b${ad}\\b`),
+      `yerel görsel '${ad}' uri sarmalına konmuş — resim çizilmez`,
+    );
+  }
+  // Üç kart gerçekten görsel basıyor mu?
+  assert.match(kaynak, /<Image source=\{e\.gorsel\}/, 'hızlı eylem kartları görseli basmıyor');
+});
