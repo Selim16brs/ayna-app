@@ -317,3 +317,42 @@ test('FIRSAT kartındaki yazılar okunuyor', () => {
   const kod2 = d.replace(/\/\*[\s\S]*?\*\//g, '');
   assert.match(kod2, /backgroundColor: lightColors\.gold/, 'indirim rozeti temaya bağlı');
 });
+
+test('YEREL fotoğrafın ölçüsü AÇIK yazılmış', () => {
+  /*
+   * Kurucu ekran görüntüsü gönderdi: üç kart fotoğrafın yalnız sol üst
+   * çeyreğini gösteriyordu.
+   *
+   * Sebep `require`a özgü: statik görsel kendi DOĞAL ölçüsünü biliyor
+   * (440×660) ve `StyleSheet.absoluteFill` tek başına verilince o ölçüde,
+   * sol üstten çiziliyor; kart da onu kırpıyor. `{ uri: ... }` ile gelen
+   * ağ görsellerinde bu olmuyor — onların doğal ölçüsü yok, kutuya
+   * oturuyorlar. Bu yüzden aynı satır başka ekranlarda sorun çıkarmadı.
+   *
+   * Teşhis tahmin değil: görselin sol üst 112×138 puanını kırpıp kurucunun
+   * ekran görüntüsüyle karşılaştırdım, birebir aynıydı.
+   *
+   * Kural: `require` ile gelen görsele genişlik/yükseklik AÇIK verilmeli.
+   */
+  const kod = d.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(
+    kod,
+    /<Image source=\{e\.gorsel\} style=\{StyleSheet\.absoluteFill\}/,
+    'yerel fotoğraf ölçüsüz — doğal boyutunda çizilir, kart kırpar',
+  );
+  assert.match(
+    kod,
+    /hizliFoto: \{[^}]*width: '100%'[^}]*height: '100%'/,
+    'fotoğrafın ölçüsü açık değil',
+  );
+});
+
+test('BÖLÜM BAŞLIĞI harf kaybetmiyor', () => {
+  // "Hizmetler" → "Hizmetle" diye kırpılıyordu: satır `space-between`,
+  // iki çocuk da esnemiyordu. Başlık daralır ve puntosu iner; sağdaki
+  // "Tümünü Gör" daralmaz.
+  const kod = d.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.match(kod, /bolumBaslik: \{ flexShrink: 1 \}/, 'başlık daralamıyor');
+  assert.match(kod, /adjustsFontSizeToFit/, 'başlık sığmayınca küçülmüyor');
+  assert.match(kod, /tumuKap: \{[^}]*flexShrink: 0/, '"Tümünü Gör" daralıyor — başlığı eziyor');
+});

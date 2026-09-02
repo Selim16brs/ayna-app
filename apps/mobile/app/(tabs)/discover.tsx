@@ -307,7 +307,7 @@ export default function DiscoverScreen() {
                 gri degrade görünüyordu. Aynı dosyadaki logo ve hizmet
                 ikonları baştan doğru kullanımdaydı, bu üç kart değildi.
               */}
-              <Image source={e.gorsel} style={StyleSheet.absoluteFill} resizeMode="cover" />
+              <Image source={e.gorsel} style={styles.hizliFoto} resizeMode="cover" />
               {/*
                 Perde SİYAH değil BEYAZ.
 
@@ -648,7 +648,20 @@ function BolumBasligi({ title, onSeeAll }: { title: string; onSeeAll?: () => voi
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.bolumBas}>
-      <Text variant="h2" tone="ink">
+      {/*
+        Başlık KESİLİYORDU: "Hizmetler" → "Hizmetle". Satır
+        `space-between` ve iki çocuk da esnemiyordu; yer daralınca yazı
+        kırpılıyordu. Başlık daralabilir (`flexShrink`) ve gerekirse
+        puntosu iner — harf kaybetmez. "Tümünü Gör" ise daralmaz.
+      */}
+      <Text
+        variant="h2"
+        tone="ink"
+        style={styles.bolumBaslik}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.85}
+      >
         {title}
       </Text>
       {onSeeAll ? (
@@ -826,6 +839,17 @@ const makeStyles = (colors: ColorTokens) =>
 
     // quick-action-strip (3 × h140, radius 16, gap 10)
     hizliSerit: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingTop: 28 },
+    /*
+     * Fotoğrafın ölçüsü AÇIK yazılmalı.
+     *
+     * `StyleSheet.absoluteFill` tek başına yetmedi: görsel `require` ile
+     * geldiği için kendi doğal ölçüsünü (440×660) biliyor ve o ölçüde,
+     * sol üstten çiziliyordu. Kart onu kırpınca ekranda fotoğrafın
+     * yalnızca sol üst çeyreği görünüyordu — kurucunun gördüğü
+     * "aşırı yakınlaşmış" kartlar buydu. Genişlik/yükseklik %100
+     * verilince `cover` gerçekten devreye giriyor.
+     */
+    hizliFoto: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
     hizliKart: {
       flex: 1,
       height: 140,
@@ -850,6 +874,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
 
     // bölüm başlığı (px24, 28 üst boşluk)
+    bolumBaslik: { flexShrink: 1 },
     bolumBas: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -953,7 +978,8 @@ const makeStyles = (colors: ColorTokens) =>
     vitrinBaslikSatir: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     vitrinPuan: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     vitrinPuanYazi: { fontFamily: font.semibold, fontSize: 12, color: colors.onColor },
-    tumuKap: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    // Daralmaz: yer daralırsa BAŞLIK küçülsün, bu değil.
+    tumuKap: { flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 0 },
     // Figma `ticket-actions`: eşit üç düğme, radius 12, px16 py10,
     // zemin accent %7, kenarlık accent %15.
     biletEylem: { flexDirection: 'row', gap: 8 },
