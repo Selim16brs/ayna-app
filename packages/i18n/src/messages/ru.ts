@@ -1174,7 +1174,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reports.live.completed': 'Завершённые',
   'reports.live.noshow': 'Не пришли',
   'reports.live.revenue': 'Завершённый доход',
-  'reports.live.commission': 'Комиссия к оплате',
+  'reports.live.commission': 'Комиссия к оплате ({pct}%)',
   'reports.quality.title': 'Ответ и качество',
   'reports.quality.avg_response': 'Ср. ответ',
   'reports.quality.deposit_pending': 'Ждут подтв.',
