@@ -790,15 +790,31 @@ const makeStyles = (colors: ColorTokens) =>
       position: 'absolute',
       top: 4,
       right: 4,
-      minWidth: 15,
-      height: 15,
+      minWidth: 16,
+      height: 16,
       borderRadius: 100,
       backgroundColor: colors.danger,
       alignItems: 'center',
       justifyContent: 'center',
       paddingHorizontal: 3,
     },
-    rozetYazi: { color: colors.onColor, fontSize: 9, fontFamily: font.semibold },
+    /*
+     * Rakam ROZETE ORTALI.
+     *
+     * `alignItems/justifyContent: center` tek başına yetmiyordu: yazının
+     * satır kutusu yazı tipinin kendi ölçülerinden geliyor (Onest üst
+     * boşluğu alt boşluğundan büyük), rakam yukarı kaçıyordu. Satır
+     * yüksekliğini rozetin yüksekliğine eşitlemek kutuyu simetrik yapıyor.
+     * `includeFontPadding` Android'in eklediği ekstra boşluğu kapatıyor.
+     */
+    rozetYazi: {
+      color: colors.onColor,
+      fontSize: 10,
+      lineHeight: 16,
+      textAlign: 'center',
+      includeFontPadding: false,
+      fontFamily: font.semibold,
+    },
 
     // welcome-vip-area (px24 py20)
     karsilama: {
@@ -849,6 +865,18 @@ const makeStyles = (colors: ColorTokens) =>
      * "aşırı yakınlaşmış" kartlar buydu. Genişlik/yükseklik %100
      * verilince `cover` gerçekten devreye giriyor.
      */
+    /*
+     * Fotoğraf kartı TAM dolduruyor.
+     *
+     * `width/height: '100%'` mutlak konumlu bir çocukta İÇ BOŞLUĞA göre
+     * hesaplanıyor: kartın 10px yan ve 14px alt dolgusu kadar fotoğraf
+     * içeri kaçıyordu — kenarlarda beyaz şerit kalıyordu. Yüzdeleri
+     * kaldırmak da olmazdı, o zaman görsel kendi doğal boyutunda çizilip
+     * ölçeklenmiyordu (bir önceki hata).
+     *
+     * Çözüm: DOLGU KARTTAN ALINDI, yazıya verildi. Kartın iç boşluğu yok,
+     * yüzde artık kartın tamamı demek.
+     */
     hizliFoto: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
     hizliKart: {
       flex: 1,
@@ -857,11 +885,11 @@ const makeStyles = (colors: ColorTokens) =>
       overflow: 'hidden',
       alignItems: 'center',
       justifyContent: 'flex-end',
-      paddingBottom: 14,
-      paddingHorizontal: 10,
-      gap: 6,
     },
     hizliYazi: {
+      // Boşluk artık burada: kart dolgusuz olmalı ki fotoğraf tam otursun.
+      paddingBottom: 14,
+      paddingHorizontal: 10,
       fontFamily: font.semibold,
       fontSize: 11,
       /*
