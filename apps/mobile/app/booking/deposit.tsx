@@ -272,7 +272,10 @@ export default function DepositScreen() {
             <View style={styles.buyu}>
               <Text style={styles.donusBaslik}>{t('deposit.kaspi_back_t')}</Text>
               <Text style={styles.donusNot}>
-                {fillParams(t('deposit.kaspi_back_b'), { ref: referans })}
+                {/* Metinde '{ref}' yer tutucusu yok; ödeme kodu bu ekranda
+                    zaten ayrı ve kopyalanabilir biçimde duruyor. Doldurma
+                    çağrısı hiçbir şey yapmıyordu. */}
+                {t('deposit.kaspi_back_b')}
               </Text>
             </View>
           </View>

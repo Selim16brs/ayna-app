@@ -763,6 +763,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'benim.hello.day': 'Добрый день',
   'benim.hello.evening': 'Добрый вечер',
   'benim.hello.night': 'Доброй ночи',
+  'benim.hello.named': '{selam}, {ad}',
   'benim.summary.completed': 'Завершено',
   'benim.feature.badge': 'Предстоящая запись',
   'benim.feature.cta': 'Смотреть детали',

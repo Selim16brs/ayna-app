@@ -756,6 +756,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'benim.hello.day': 'Қайырлы күн',
   'benim.hello.evening': 'Қайырлы кеш',
   'benim.hello.night': 'Қайырлы түн',
+  'benim.hello.named': '{selam}, {ad}',
   'benim.summary.completed': 'Аяқталған',
   'benim.feature.badge': 'Жақындағы жазылу',
   'benim.feature.cta': 'Толығырақ көру',
