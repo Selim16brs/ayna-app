@@ -73,7 +73,15 @@ export default function UzmanScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 130 + TAB_BAR_CLEARANCE }}
       >
-        {/* HERO — lime bant (Keşfet dili): çerçeveli portre + isim/puan/salon bağı + dalga */}
+        {/*
+          HERO — erik sisi bant.
+
+          Burası ESKİ tasarımda lime yeşili bir banttı ve üstündeki yazı
+          `ink` (koyu) idi. Palet Figma'ya geçince zemin koyu eriğe döndü
+          ama YAZI DEĞİŞMEDİ: uzmanın adı açık temada 1.33:1, koyuda
+          2.02:1 — yani hiç okunmuyordu. Zemin erik sisine indi; `ink`
+          orada 16.06:1 veriyor ve Denge'ye de uyuyor.
+        */}
         <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
           <View style={styles.heroTop}>
             <Pressable style={styles.circleBtn} onPress={() => router.back()}>
@@ -209,7 +217,7 @@ const makeStyles = (colors: ColorTokens) =>
     root: { flex: 1, backgroundColor: colors.bg },
     // ── Lime hero (Keşfet dili) ──
     hero: {
-      backgroundColor: colors.accent,
+      backgroundColor: colors.heroSoft,
       paddingHorizontal: space(3),
       paddingBottom: space(5),
       position: 'relative',

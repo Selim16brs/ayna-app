@@ -119,3 +119,45 @@ test('TAM GENİŞLİK koyu bant yok', () => {
   assert.doesNotMatch(k, /<LinearGradient/, 'profil başlığı hâlâ dolu gradyan bant');
   assert.match(k, /backgroundColor: colors\.heroSoft/, 'profil başlığı erik sisinde değil');
 });
+
+test('HERO/BANT dolu koyu DEĞİL', () => {
+  /*
+   * `uzman/[id]` hero'su ESKİ tasarımda lime yeşili bir banttı ve yazısı
+   * `ink` (koyu) idi. Palet Figma'ya geçince zemin koyu eriğe döndü ama
+   * YAZI DEĞİŞMEDİ: uzmanın adı açık temada 1.33:1, koyuda 2.02:1 — hiç
+   * okunmuyordu ve kimse fark etmedi.
+   *
+   * Kuralı metin rengini tahmin ederek değil DOĞRUDAN yazıyorum: Denge'de
+   * bant (hero/band/banner) zaten dolu koyu olmayacak. İki denemem de
+   * tahmin üzerineydi ve ikisi de yanlış çıktı — biri masum ekranları
+   * suçladı (900 karakterlik pencere `referral` ve `map`i vurdu),
+   * öteki gerçek vakayı kaçırdı (400 karakter `heroName`e yetişmiyor).
+   * Kuralın kendisi zaten bu; dolambaçlı yoldan çıkarmaya gerek yok.
+   */
+  const ADAY = /^ {4}(hero|band|banner)\w*: \{([\s\S]*?)^ {4}\},/gim;
+  const suclular: string[] = [];
+  for (const yol of ekranlar()) {
+    for (const m of yorumsuz(readFileSync(yol, 'utf8')).matchAll(ADAY)) {
+      const govde = m[2]!;
+      if (!/backgroundColor: colors\.accent\b/.test(govde)) continue;
+      // BANT ile KART'ı ayıran şey yuvarlak köşe: kartın var, bandın yok.
+      // Denge dolu koyu KARTA izin veriyor (ekranın tek koyu ögesi, önemli
+      // olan); yasakladığı şey tam genişlik koyu BANT.
+      if (/borderRadius/.test(govde)) continue;
+      suclular.push(`${yol.split('/app/')[1]} → ${m[1]}`);
+    }
+  }
+  assert.deepEqual(suclular, [], `dolu koyu bant: ${suclular.join(', ')}`);
+});
+
+test('ERİK SİSİ zemininde ink OKUNUYOR — kaçış yolu değil', () => {
+  // Yukarıdaki kalıptan kaçmanın yolu zemini erik sisine indirmek; o
+  // zaman da `ink`in orada gerçekten okunması gerekiyor.
+  for (const [ad, c] of [
+    ['açık', lightColors],
+    ['koyu', darkColors],
+  ] as const) {
+    const o = oran(c.ink, c.heroSoft);
+    assert.ok(o >= 7, `${ad}: erik sisinde başlık ${o.toFixed(2)}:1 — hero için 7 bekleniyor`);
+  }
+});

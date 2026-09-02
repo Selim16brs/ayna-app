@@ -99,7 +99,7 @@ export default function VerifyScreen() {
       <View style={styles.content}>
         <View style={styles.hero}>
           <View style={styles.heroIcon}>
-            <Ionicons name="shield-checkmark" size={26} color={colors.onAccent} />
+            <Ionicons name="shield-checkmark" size={26} color={colors.accent} />
           </View>
           <Text variant="h2" tone="onAccent">
             {t('verify.subtitle')}
@@ -170,7 +170,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: { paddingHorizontal: space(3), gap: space(2) },
     empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space(4) },
     hero: {
-      backgroundColor: colors.accent,
+      // Ekranın ASIL eylemi düğme; bu bilgi kartıydı ve dolu koyu
+      // durmasının bir sebebi yoktu (Denge).
+      backgroundColor: colors.heroSoft,
       borderRadius: radius.xl,
       padding: space(2.5),
       gap: space(1),

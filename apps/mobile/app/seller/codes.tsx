@@ -96,12 +96,12 @@ export default function SellerCodesScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* §3.4 kuralı: tek kullanımlık, 24 saat */}
         <View style={styles.ruleCard}>
-          <Ionicons name="key" size={20} color={colors.onAccent} />
+          <Ionicons name="key" size={20} color={colors.accent} />
           <View style={styles.ruleText}>
-            <Text variant="bodyStrong" tone="onAccent">
+            <Text variant="bodyStrong" tone="ink">
               {t('seller.codes.rule')}
             </Text>
-            <Text variant="caption" tone="onAccent" style={styles.ruleHint}>
+            <Text variant="caption" tone="ink" style={styles.ruleHint}>
               {t('seller.codes.hint')}
             </Text>
           </View>
@@ -186,7 +186,9 @@ const makeStyles = (colors: ColorTokens) =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(1.25),
-      backgroundColor: colors.accent,
+      // Ekranın ASIL eylemi düğme; bu bilgi kartıydı ve dolu koyu
+      // durmasının bir sebebi yoktu (Denge).
+      backgroundColor: colors.heroSoft,
       borderRadius: radius.lg,
       padding: space(2),
     },
