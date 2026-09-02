@@ -20,7 +20,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { musteriRandevulari, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
 import { space, type ColorTokens, font } from '../../src/theme';
-import { darkColors } from '../../src/theme.palette';
+import { darkColors, lightColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   ListSkeleton,
@@ -308,14 +308,23 @@ export default function DiscoverScreen() {
                 ikonları baştan doğru kullanımdaydı, bu üç kart değildi.
               */}
               <Image source={e.gorsel} style={StyleSheet.absoluteFill} resizeMode="cover" />
+              {/*
+                Perde SİYAH değil BEYAZ.
+
+                Kurucunun verdiği üç fotoğraf da açık tonlu (krem salon,
+                pudra tırnak masası, açık harita). Siyah perde onları hem
+                çamurlaştırıyor hem de "ekranlar çok koyu" derdine geri
+                dönüyordu. Beyaz perde + koyu yazı: fotoğraf görünür
+                kalıyor, yazı okunuyor — en koyu bölgede bile 15:1 üstü.
+              */}
               <LinearGradient
                 colors={[
-                  'rgba(0,0,0,0)',
-                  'rgba(0,0,0,0.15)',
-                  'rgba(0,0,0,0.55)',
-                  'rgba(0,0,0,0.8)',
+                  'rgba(255,255,255,0)',
+                  'rgba(255,255,255,0.30)',
+                  'rgba(255,255,255,0.78)',
+                  'rgba(255,255,255,0.93)',
                 ]}
-                locations={[0, 0.35, 0.7, 1]}
+                locations={[0, 0.38, 0.74, 1]}
                 style={StyleSheet.absoluteFill}
               />
               <Text style={styles.hizliYazi}>{t(e.etiket)}</Text>
@@ -817,7 +826,12 @@ const makeStyles = (colors: ColorTokens) =>
     hizliYazi: {
       fontFamily: font.semibold,
       fontSize: 11,
-      color: colors.onColor,
+      /*
+       * SABİT koyu — fotoğraflar iki temada da aynı ve açık tonlu.
+       * `ink` yazsaydık koyu temada açık renge dönüp beyaz perdenin
+       * üstünde kaybolurdu; `uzman/[id]` hero'sundaki hata tam buydu.
+       */
+      color: lightColors.ink,
       textAlign: 'center',
     },
 

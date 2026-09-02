@@ -249,3 +249,23 @@ test('YEREL görseller doğrudan veriliyor — uri sarmalı yok', () => {
   // Üç kart gerçekten görsel basıyor mu?
   assert.match(kaynak, /<Image source=\{e\.gorsel\}/, 'hızlı eylem kartları görseli basmıyor');
 });
+
+test('hızlı eylem kartlarının perdesi AÇIK, yazısı SABİT koyu', () => {
+  /*
+   * Kurucu üç fotoğrafı kendisi verdi ve üçü de açık tonlu (krem salon,
+   * pudra tırnak masası, açık harita). Üstlerindeki perde siyahtı:
+   * fotoğrafı çamurlaştırıyor ve "ekranlar çok koyu" derdine geri
+   * dönüyordu.
+   *
+   * Yazı SABİT koyu olmalı, temadan gelmemeli: fotoğraflar iki temada da
+   * aynı: `ink` yazsaydık koyu temada açık renge dönüp beyaz perdenin
+   * üstünde kaybolurdu — `uzman/[id]` hero'sunda tam bu olmuştu.
+   */
+  const kod = d.replace(/\/\*[\s\S]*?\*\//g, '');
+  const i = kod.indexOf('HIZLI_EYLEMLER.map');
+  assert.ok(i > 0, 'hızlı eylem şeridi yok');
+  const blok = kod.slice(i, kod.indexOf('</View>', i) + 200);
+  assert.doesNotMatch(blok, /rgba\(0,0,0,0\.[5-9]/, 'kartların üstünde ağır siyah perde var');
+  assert.match(blok, /rgba\(255,255,255,0\.9/, 'açık perde yok — yazı okunmaz');
+  assert.match(kod, /color: lightColors\.ink/, 'kart yazısı sabit koyu değil');
+});
