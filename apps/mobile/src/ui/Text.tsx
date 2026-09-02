@@ -15,9 +15,7 @@ type Tone =
   | 'onColor'
   | 'onAccent'
   | 'onInverse'
-  | 'onInverseMuted'
-  | 'onPastel'
-  | 'onPastelSoft';
+  | 'onInverseMuted';
 
 interface TextProps extends RNTextProps {
   variant?: Variant;

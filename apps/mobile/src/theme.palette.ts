@@ -55,7 +55,6 @@ export const lightColors = {
   goldSoft: '#FDF3E7',
   // geriye dönük uyumluluk (eski isimler yeni paletle eşlendi)
   orange: '#9A5A05',
-  teal: '#2F7A4A',
   plum: '#4A1942',
 
   // Çizgi / durum
@@ -66,14 +65,6 @@ export const lightColors = {
   // kullanılıyordu. ink koyu temada açık renge döndüğü için bu yüzeyler
   // bembeyaz oluyor, üstlerindeki açık yazı/ikon görünmez hâle geliyordu
   // (Toast koyu modda tamamen okunmuyordu).
-  // ── SABİT AÇIK YÜZEY üstündeki yazı ──
-  //
-  // Bazı kartların gradyanı temadan BAĞIMSIZ ve her zaman açıktır (teklif
-  // kartlarının pastel zemini gibi). Üstlerinde `ink` kullanmak koyu modda
-  // AÇIK ÜSTÜNE AÇIK yazı demekti — başlıklar görünmüyordu.
-  // Bu ikisi iki temada da AYNI kalır; yüzey değişmiyorsa yazı da değişmemeli.
-  onPastel: '#1E0E1B',
-  onPastelSoft: '#4A3A47',
   inverse: '#1E0E1B',
   onInverse: '#FAF7F5',
   onInverseMuted: 'rgba(250,247,245,0.66)',
@@ -121,12 +112,9 @@ export const darkColors: ColorTokens = {
   gold: '#F5BE50',
   goldSoft: '#33240B',
   orange: '#F5BE50',
-  teal: '#6FC98C',
   plum: '#C5A3C7',
 
   // Koyu temada ters yüzey zeminden AYRIŞMALI: bg #1A1419 üzerinde yükseltilmiş.
-  onPastel: '#1E0E1B',
-  onPastelSoft: '#4A3A47',
   // Yüzen alt menü/toast zemini. Figma'nın yüzey moru (#37193C) sayfa
   // zemininden yalnız 1.26:1 ayrışıyor — bar zeminde kayboluyordu.
   // Bu ton 1.58:1 veriyor; üstündeki yazı hâlâ 11.1:1.
