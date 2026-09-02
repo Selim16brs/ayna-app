@@ -20,7 +20,14 @@ import { darkColors, lightColors } from './theme.palette';
  */
 
 const oku = (p: string) => readFileSync(join(__dirname, '..', 'app', p), 'utf8');
-const yorumsuz = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+/**
+ * Yorumları atar. `//`'den öncesine bakmak ŞART: `https://` de iki eğik
+ * çizgi içeriyor ve naif bir kesici URL'yi yorum sanıp yutuyor. Tam bu
+ * yüzden "yabancı görsel" koruması geri konan bir Unsplash bağlantısını
+ * sessizce kaçırdı — mutasyonla yakalandı.
+ */
+const yorumsuz = (s: string) =>
+  s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
 const foto = yorumsuz(oku('quote/new.tsx'));
 const fiyat = yorumsuz(oku('demand/new.tsx'));
 const kesfet = yorumsuz(oku('(tabs)/discover.tsx'));
@@ -194,4 +201,30 @@ test('seçilmemiş çipler DOLU GRİ değil — UYGULAMA GENELİ', () => {
 test('aramadaki popüler kategoriler de FIGMA ikonu', () => {
   const k = yorumsuz(oku('search.tsx'));
   assert.match(k, /HIZMET_IKON\[cat\.id\]/, 'popüler kategori çipi Figma ikonu kullanmıyor');
+});
+
+test('YABANCI görsel yok — ekranlarda unsplash bağlantısı kalmadı', () => {
+  /*
+   * İki ekranda görseli olmayan öğe için Unsplash'ten fotoğraf çekiliyordu.
+   * İki ayrı sorun:
+   *   · Tasarıma ait olmayan yabancı görsel.
+   *   · YEDEĞİN KENDİSİ ağa bağlıydı — çevrimdışıyken yer tutucu da
+   *     gelmiyor, kullanıcı kırık kutu görüyordu.
+   * Yerini token'lı yerel yer tutucu aldı.
+   */
+  const kok = join(__dirname, '..', 'app');
+  const suclular: string[] = [];
+  const gez = (d: string) => {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      const t = join(d, e.name);
+      if (e.isDirectory()) gez(t);
+      else if (e.name.endsWith('.tsx') && /unsplash/i.test(yorumsuz(readFileSync(t, 'utf8')))) {
+        // Yorumsuz okunuyor: kaldırılan şeyin adı, onu KALDIRAN yorumda
+        // geçiyor. Yorumu okuyan bir kontrol düzeltilmiş dosyayı suçlar.
+        suclular.push(t.split('/app/')[1]!);
+      }
+    }
+  };
+  gez(kok);
+  assert.deepEqual(suclular, [], `yabancı görsel kullanan ekranlar: ${suclular.join(', ')}`);
 });

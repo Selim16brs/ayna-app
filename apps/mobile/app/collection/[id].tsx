@@ -75,15 +75,15 @@ export default function CollectionScreen() {
                   <View style={styles.iconBox}>
                     <Ionicons name="sparkles-outline" size={20} color={colors.accentFg} />
                   </View>
+                ) : /* Görseli olmayan öğe: YEREL yer tutucu. Buradaki
+                     Unsplash bağlantısı hem tasarıma ait değildi hem de
+                     ağa bağlıydı — çevrimdışıyken yedek de gelmiyordu. */
+                'image' in item && item.image ? (
+                  <Image source={{ uri: item.image }} style={styles.thumb} />
                 ) : (
-                  <Image
-                    source={{
-                      uri:
-                        ('image' in item && item.image) ||
-                        'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=200&q=60',
-                    }}
-                    style={styles.thumb}
-                  />
+                  <View style={[styles.thumb, styles.thumbBos]}>
+                    <Ionicons name="image-outline" size={20} color={colors.accent} />
+                  </View>
                 )}
                 <View style={styles.rowBody}>
                   <Text variant="bodyStrong" tone="ink" numberOfLines={2}>
@@ -132,5 +132,10 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
     },
     thumb: { width: 52, height: 52, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    thumbBos: {
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     rowBody: { flex: 1, gap: 2 },
   });
