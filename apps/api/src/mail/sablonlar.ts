@@ -459,6 +459,7 @@ const teklifGeldi: Uretici = ({ ad, site, veri }, dil) => {
       kb: 'Gelen teklif',
       p: 'Fiyatları, süreleri ve değerlendirmeleri yan yana karşılaştırabilirsin. Seçtiğinde randevu doğrudan açılıyor.',
       d: 'Teklifleri karşılaştır',
+      not: 'Sonraki teklifler için ayrıca posta göndermiyoruz — hepsi aynı yerde birikiyor.',
     },
     kk: {
       konu: 'Ұсыныстар келді',
@@ -468,6 +469,7 @@ const teklifGeldi: Uretici = ({ ad, site, veri }, dil) => {
       kb: 'Келген ұсыныс',
       p: 'Бағаларды, ұзақтығын және пікірлерді қатар салыстыра аласың. Таңдағанда жазылу бірден ашылады.',
       d: 'Ұсыныстарды салыстыру',
+      not: 'Келесі ұсыныстар үшін бөлек хат жібермейміз — бәрі сол жерде жинақталады.',
     },
     ru: {
       konu: 'Пришли предложения',
@@ -477,6 +479,7 @@ const teklifGeldi: Uretici = ({ ad, site, veri }, dil) => {
       kb: 'Получено предложений',
       p: 'Можно сравнить цены, длительность и отзывы рядом. После выбора запись открывается сразу.',
       d: 'Сравнить предложения',
+      not: 'О следующих предложениях отдельно не пишем — они собираются там же.',
     },
   }[dil];
   return {
@@ -484,9 +487,9 @@ const teklifGeldi: Uretici = ({ ad, site, veri }, dil) => {
     html: duzen({
       dil,
       onizleme: M.on,
-      govde: `${ustEtiket(M.et)}${baslik(M.h)}${paragraf(selam(ad, dil))}${rakamBant(M.kb, s)}${paragraf(M.p)}${dugme(`${site}/quote/results`, M.d)}`,
+      govde: `${ustEtiket(M.et)}${baslik(M.h)}${paragraf(selam(ad, dil))}${rakamBant(M.kb, s)}${paragraf(M.p)}${dugme(`${site}/quote/results`, M.d)}${paragraf(M.not)}`,
     }),
-    metin: `${selam(ad, dil)}\n\n${M.kb}: ${s}\n${M.p}\n\n${site}/quote/results`,
+    metin: `${selam(ad, dil)}\n\n${M.kb}: ${s}\n${M.p}\n${M.not}\n\n${site}/quote/results`,
   };
 };
 

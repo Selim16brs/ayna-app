@@ -90,16 +90,20 @@ export class MailScheduler {
     const son = new Date(Date.now() + 48 * 60 * 60 * 1000);
     const randevular = await this.prisma.booking.findMany({
       where: { status: 'kesinlesti', startAt: { gte: bas, lt: son }, userId: { not: null } },
-      select: { userId: true, proName: true, startAt: true },
+      select: { id: true, userId: true, proName: true, startAt: true },
       take: 200,
     });
     let n = 0;
     for (const r of randevular) {
       if (!r.userId) continue;
-      const ok = await this.mailer.gonder(r.userId, 'randevu_hatirlatma', {
-        uzman: r.proName ?? '',
-        zaman: r.startAt?.toISOString() ?? '',
-      });
+      const ok = await this.mailer.gonder(
+        r.userId,
+        'randevu_hatirlatma',
+        { uzman: r.proName ?? '', zaman: r.startAt?.toISOString() ?? '' },
+        // RANDEVU BAŞINA: olay kimliği verilmezse ikinci randevunun
+        // hatırlatması hiç gitmez — şablon "zaten gönderilmiş" sayılır.
+        r.id,
+      );
       if (ok) n += 1;
     }
     return n;
@@ -115,13 +119,20 @@ export class MailScheduler {
         reviewed: false,
         userId: { not: null },
       },
-      select: { userId: true, proName: true },
+      select: { id: true, userId: true, proName: true },
       take: 200,
     });
     let n = 0;
     for (const r of randevular) {
       if (!r.userId) continue;
-      if (await this.mailer.gonder(r.userId, 'degerlendirme', { uzman: r.proName ?? '' })) n += 1;
+      // Randevu başına: her tamamlanan hizmet kendi değerlendirmesini ister.
+      const ok = await this.mailer.gonder(
+        r.userId,
+        'degerlendirme',
+        { uzman: r.proName ?? '' },
+        r.id,
+      );
+      if (ok) n += 1;
     }
     return n;
   }
@@ -162,7 +173,8 @@ export class MailScheduler {
     for (const r of randevular) {
       if (!r.userId || talepAcilmis.has(r.id)) continue;
       const tutar = `${Number(r.depositAmount).toLocaleString('tr-TR')} ₸`;
-      if (await this.mailer.gonder(r.userId, 'depozito_iadesi', { tutar })) n += 1;
+      // Randevu başına: iki ayrı iade iki ayrı posta demek.
+      if (await this.mailer.gonder(r.userId, 'depozito_iadesi', { tutar }, r.id)) n += 1;
     }
     return n;
   }
