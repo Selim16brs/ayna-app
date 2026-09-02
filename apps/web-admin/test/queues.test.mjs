@@ -71,19 +71,22 @@ test('bekleyen iş sayaçlarının hepsi bir sekmeye bağlı', () => {
   assert.ok(alanlar.length >= 7, `beklenenden az sayaç: ${alanlar.join(', ')}`);
   for (const a of alanlar) {
     assert.ok(
-      new RegExp(`badge:\\s*q\\?\\.${a}\\b`).test(ui),
-      `'${a}' sayacı hiçbir sekmeye rozet olarak bağlanmamış`,
+      // Sayacın rozette GEÇMESİ yeterli, tek başına olması değil: dekont,
+      // iade ve uzlaşma kuyruklarının üçü de AYNI sekmede ve tek rozet
+      // toplamlarını gösteriyor. Eski kalıp tam eşleşme istiyordu.
+      new RegExp(`badge:[\\s\\S]{0,220}?q\\?\\.${a}\\b`).test(ui),
+      `'${a}' sayacı hiçbir sekmenin rozetinde geçmiyor`,
     );
   }
 });
 
-test('dekont yüklenmiş komisyon faturaları sayaçta', () => {
-  // Bu sayaç YOKTU: uzman dekontu yüklüyor, fatura durumu değişmiyor ve
-  // panelde yalnız listenin içinde küçük bir işaret çıkıyordu. Kısıtlı uzman
-  // ödemesini yapmış hâlde beklemeye devam ediyordu.
-  assert.ok(/invoiceReceipts/.test(ui), 'komisyon dekontu sayacı panelde yok');
-});
-
+/*
+ * "dekont yüklenmiş komisyon faturaları sayaçta" testi BURADAYDI ve
+ * `invoiceReceipts` sayacını şart koşuyordu. O sayaç kaldırılan komisyon
+ * FATURASI modelinden kalmaydı: spec §4.4 ikinci tahsilatı sildi, depozito
+ * zaten AYNA'nın komisyonu. Sunucu o alanı hiç göndermiyordu, yani rozet
+ * hiçbir zaman dolmuyordu. Test de onunla birlikte kalktı.
+ */
 test('her onay sekmesi gerçekten çiziliyor', () => {
   // Nav'da görünen ama render edilmeyen sekme, tıklanınca boş ekran verir.
   // YALNIZ gerçek nav öğeleri: hepsinde `icon` var. Duyuru segmentleri
@@ -133,4 +136,42 @@ test('reklam ödeme kuyruğu: uç, istemci, ekran ve panoda sayaç', () => {
     'reklam onayı Reklamlar sekmesinde değil',
   );
   assert.match(ui, /key: 'adOrders'/, 'panoda bekleyen reklam ödemesi sayacı yok');
+});
+
+test('sunucunun saydığı her kuyruk panelde ROZETLİ', () => {
+  /*
+   * Sunucu 11 kuyruk sayıyordu, panel 8'ini kullanıyordu ve biri
+   * (`invoiceReceipts`) sunucuda HİÇ yoktu.
+   *
+   * Görünmeyen dördü para kuyruklarıydı: dekont doğrulama, iade, uzlaşma ve
+   * REKLAM ÖDEMESİ. Yani uzman parayı yatırıp dekontu yüklüyor, admin menüde
+   * hiçbir işaret görmüyordu. Kuyruğun kendisi çalışıyor ama kimse bakmıyor.
+   */
+  const sunucu = readFileSync(join(kok, '..', 'api', 'src', 'admin', 'admin.service.ts'), 'utf8');
+  const blok = /pending: \{([\s\S]*?)\},/.exec(sunucu);
+  assert.ok(blok, 'sunucudaki pending bloğu bulunamadı');
+  const alanlar = [...blok[1].matchAll(/^\s+(\w+)[,:]/gm)].map((m) => m[1]);
+
+  const panel = readFileSync(join(kok, 'app', 'page.tsx'), 'utf8');
+  const rozetler = new Set([...panel.matchAll(/q\?\.(\w+)/g)].map((m) => m[1]));
+
+  const gorunmeyen = alanlar.filter((a) => !rozetler.has(a));
+  assert.deepEqual(
+    gorunmeyen,
+    [],
+    `sunucu sayıyor ama panelde rozeti yok: ${gorunmeyen.join(', ')}`,
+  );
+});
+
+test('panel OLMAYAN bir sayaca bakmıyor', () => {
+  // Ters yön: panel sunucunun göndermediği bir alana bakarsa rozet hiç
+  // dolmaz — sessizce boş kalır, bekleyen iş yokmuş gibi görünür.
+  const sunucu = readFileSync(join(kok, '..', 'api', 'src', 'admin', 'admin.service.ts'), 'utf8');
+  const blok = /pending: \{([\s\S]*?)\},/.exec(sunucu);
+  const alanlar = new Set([...blok[1].matchAll(/^\s+(\w+)[,:]/gm)].map((m) => m[1]));
+  const panel = readFileSync(join(kok, 'app', 'page.tsx'), 'utf8');
+  const hayali = [...new Set([...panel.matchAll(/q\?\.(\w+)/g)].map((m) => m[1]))].filter(
+    (a) => !alanlar.has(a),
+  );
+  assert.deepEqual(hayali, [], `panel olmayan sayaca bakıyor: ${hayali.join(', ')}`);
 });
