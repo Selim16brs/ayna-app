@@ -535,6 +535,7 @@ export const tr = {
   'earnings.offline_tag': 'salon kaydı',
   'offers.title': 'Salon & uzman kampanyaları',
   'offers.empty': 'Şu an aktif kampanya yok — yakında burada fırsatlar olacak.',
+  'offers.discount_badge': '%{pct} İndirim',
   'offers.fixed_badge': 'Kampanya fiyatı',
   'offers.last_chance': 'Son fırsat',
   'offers.book': 'Randevu al',

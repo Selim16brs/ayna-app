@@ -507,6 +507,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'earnings.offline_tag': 'салон жазбасы',
   'offers.title': 'Салон және маман науқандары',
   'offers.empty': 'Қазір белсенді науқан жоқ — жақында мұнда ұсыныстар болады.',
+  'offers.discount_badge': '{pct}% Жеңілдік',
   'offers.fixed_badge': 'Науқан бағасы',
   'offers.last_chance': 'Соңғы мүмкіндік',
   'offers.book': 'Жазылу',

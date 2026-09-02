@@ -513,6 +513,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'earnings.offline_tag': 'запись салона',
   'offers.title': 'Акции салонов и мастеров',
   'offers.empty': 'Сейчас активных акций нет — скоро здесь появятся предложения.',
+  'offers.discount_badge': 'Скидка {pct}%',
   'offers.fixed_badge': 'Цена по акции',
   'offers.last_chance': 'Последний шанс',
   'offers.book': 'Записаться',
