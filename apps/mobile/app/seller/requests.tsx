@@ -183,7 +183,13 @@ export default function SellerRequestsScreen() {
             <Button
               label={t('restricted.cta')}
               variant="primary"
-              onPress={() => router.push('/seller/commissions')}
+              /*
+                SİLİNMİŞ ekrana gidiyordu (`/seller/commissions`): o akış spec
+                §4.4 gereği kaldırıldı — depozito zaten AYNA'nın komisyonu,
+                uzmandan ikinci bir tahsilat yok. Kısıtı admin koyup admin
+                kaldırdığı için doğru adres destek.
+              */
+              onPress={() => router.push('/profile/help')}
             />
           </View>
         ) : (

@@ -58,9 +58,8 @@ export const tr = {
   'restricted.body':
     'Kısıtlı modda yeni talep oluşturamazsın. Bekleyen yükümlülüğün çözülünce hesabın otomatik açılır.',
   'restricted.days_left': 'Kalan süre: {n} gün',
-  'restricted.pay':
-    'Bekleyen iade dekontunu yükle ya da komisyon borcunu kapat — hesabın otomatik açılır.',
-  'restricted.cta': 'Komisyon & dekont',
+  'restricted.pay': 'Gerekçeyi ve ne yapman gerektiğini destekten öğrenebilirsin.',
+  'restricted.cta': 'Destek',
   'restricted.locked_offer': 'Kısıtlı modda teklif veremezsin. Önce yükümlülüğünü kapat.',
 
   // Marka / dil
@@ -1242,7 +1241,7 @@ export const tr = {
   'reports.live.completed': 'Tamamlanan',
   'reports.live.noshow': 'Gelmeyen',
   'reports.live.revenue': 'Tamamlanan gelir',
-  'reports.live.commission': 'Ödenecek komisyon (%{pct})',
+  'reports.live.commission': 'AYNA komisyonu (%{pct})',
   'reports.quality.title': 'Yanıt & kalite',
   'reports.quality.avg_response': 'Ort. yanıt',
   'reports.quality.deposit_pending': 'Bekleyen dekont',

@@ -57,9 +57,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'restricted.body':
     'В ограниченном режиме нельзя создавать новые заявки. После погашения обязательства аккаунт откроется автоматически.',
   'restricted.days_left': 'Осталось: {n} дн.',
-  'restricted.pay':
-    'Загрузи квитанцию о возврате или погаси комиссионный долг — аккаунт откроется автоматически.',
-  'restricted.cta': 'Комиссия и квитанции',
+  'restricted.pay': 'Причину и что делать дальше можно узнать в поддержке.',
+  'restricted.cta': 'Поддержка',
   'restricted.locked_offer':
     'В ограниченном режиме нельзя оставлять предложения. Сначала погаси обязательство.',
   'slogan.l1a': 'У всех ',
@@ -1175,7 +1174,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reports.live.completed': 'Завершённые',
   'reports.live.noshow': 'Не пришли',
   'reports.live.revenue': 'Завершённый доход',
-  'reports.live.commission': 'Комиссия к оплате ({pct}%)',
+  'reports.live.commission': 'Комиссия AYNA ({pct}%)',
   'reports.quality.title': 'Ответ и качество',
   'reports.quality.avg_response': 'Ср. ответ',
   'reports.quality.deposit_pending': 'Ждут подтв.',
