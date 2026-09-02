@@ -175,3 +175,58 @@ test('tema değişen gradyanın üstünde SABİT BEYAZ yazı yok', () => {
     }
   }
 });
+
+test('PALET ayna.salon ile aynı dili konuşuyor', () => {
+  /*
+   * Kurucu siteyi gösterip "burdaki renkler ve renk kullanımı çok hoşuma
+   * gitti" dedi. Beğendiği şey renk listesi değil, KULLANIM MODELİ:
+   *
+   *   · pembe  = EYLEM  (bağlantı, birincil düğme, aktif sekme)
+   *   · erik   = DERİN YÜZEY (öne çıkan kart, bölüm zemini)
+   *
+   * Uygulamada ikisi de erikti; her düğme, çip ve kart aynı koyu tonda
+   * olunca ekran ağırlaşıyordu. Bu test iki rolün AYRI kalmasını
+   * bekçiliyor — accent yeniden eriğe dönerse model çöker.
+   */
+  /*
+   * PEMBE ile ERİĞİ ayıran şey KIRMIZI–MAVİ FARKI, ton değil:
+   *   pembe #BC245B → r=188 b=91  → fark 97
+   *   erik  #50094D → r=80  b=77  → fark 3
+   * İlk yazdığım ayrım "kırmızı yeşilden büyük, mavi yeşilden büyük" idi
+   * ve ERİK DE geçiyordu; mutasyon bunu gösterdi (accent'i eriğe döndürdüm,
+   * test uyumadı). Sayıya bakınca ayrım kendini söylüyor.
+   */
+  const kanal = (hex: string) => {
+    const h = hex.replace('#', '');
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as [
+      number,
+      number,
+      number,
+    ];
+    return { r, g, b };
+  };
+  const pembeMi = (hex: string) => {
+    const { r, g, b } = kanal(hex);
+    return r - b >= 50 && r > g;
+  };
+  const erikMi = (hex: string) => {
+    const { r, g, b } = kanal(hex);
+    return r - b <= 25 && b > g;
+  };
+
+  for (const [ad, c] of [
+    ['açık', lightColors],
+    ['koyu', darkColors],
+  ] as const) {
+    assert.ok(pembeMi(c.accent), `${ad}: eylem rengi pembe değil (${c.accent})`);
+    assert.ok(erikMi(c.plum), `${ad}: derin yüzey erik değil (${c.plum})`);
+  }
+  // Birincil düğme de eylem rengiyle aynı ailede olmalı.
+  for (const g of [lightGradients.gold, darkGradients.gold]) {
+    for (const uc of g) assert.ok(pembeMi(uc), `birincil düğme ucu pembe değil (${uc})`);
+  }
+  // Derin yüzey gradyanı erik kalmalı — düğmeyle aynı renge kaymasın.
+  for (const g of [lightGradients.plum, darkGradients.plum]) {
+    for (const uc of g) assert.ok(erikMi(uc), `derin yüzey ucu erik değil (${uc})`);
+  }
+});

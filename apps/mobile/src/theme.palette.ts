@@ -7,20 +7,20 @@
 
 export const lightColors = {
   // Zemin
-  bg: '#FAF7F5', // Porselen — uygulama zemini
-  bgSunken: '#EFEBE9', // Yumuşak Pudra — çökertilmiş bölüm
+  bg: '#F8F4F5', // Porselen — uygulama zemini
+  bgSunken: '#F0EAEC', // Yumuşak Pudra — çökertilmiş bölüm
   surface: '#FFFFFF', // Kart
-  surfaceMuted: '#EFEBE9', // Kart içi panel, çip, ikincil buton dolgusu
+  surfaceMuted: '#F4F1EC', // Kart içi panel, çip, ikincil buton dolgusu
 
   // Metin
-  ink: '#1E0E1B', // Koyu Mürekkep — başlık, fiyat, ikon
-  inkSoft: '#4A3A47',
-  muted: '#68536A', // Duman — ikincil metin
+  ink: '#171418', // Koyu Mürekkep — başlık, fiyat, ikon
+  inkSoft: '#3D353E',
+  muted: '#6B636C', // Duman — ikincil metin
   onColor: '#FFFFFF',
 
   // Birincil eylem
-  accent: '#4A1942', // Ayna Mürdüm — CTA, aktif sekme
-  accentSoft: '#E8D9EB',
+  accent: '#BC245B', // Ayna Mürdüm — CTA, aktif sekme
+  accentSoft: '#FCE7EE',
   /**
    * ERİK SİSİ — büyük kartların zemini.
    *
@@ -35,13 +35,13 @@ export const lightColors = {
    *
    * Ölçüm: erik yazı 12.07:1 · başlık 16.06:1 · ikincil 6.00:1.
    */
-  heroSoft: '#F5ECF6',
-  onAccent: '#FFF0F5', // mürdüm üstünde AÇIK yazı
-  accentFg: '#4A1942', // beyaz zeminde eylem metni/ikonu
+  heroSoft: '#F6ECF4',
+  onAccent: '#FFFFFF', // mürdüm üstünde AÇIK yazı
+  accentFg: '#BC245B', // beyaz zeminde eylem metni/ikonu
 
   // Marka aksanları
-  rose: '#B0616B', // Gül — küçük vurgu, favori, koyu yüzeyde eylem
-  roseSoft: '#F9EAEB',
+  rose: '#DE3370', // Gül — küçük vurgu, favori, koyu yüzeyde eylem
+  roseSoft: '#FCE7EE',
   sage: '#2F7A4A', // Adaçayı — onay
   sageSoft: '#E3F2E8',
   lavender: '#7B5A7E',
@@ -55,7 +55,7 @@ export const lightColors = {
   goldSoft: '#FDF3E7',
   // geriye dönük uyumluluk (eski isimler yeni paletle eşlendi)
   orange: '#9A5A05',
-  plum: '#4A1942',
+  plum: '#50094D',
 
   // Çizgi / durum
   // ── TERS YÜZEY (yüzen alt menü, toast, vaat kartı, arama düğmesi) ──
@@ -71,8 +71,8 @@ export const lightColors = {
   // Bar üstündeki kademeli geçiş — sayfa zemininden türetilir.
   fadeFrom: 'rgba(250,247,245,0)',
   fadeMid: 'rgba(250,247,245,0.72)',
-  line: '#EFEBE9',
-  lineStrong: '#E5E0DE', // ikincil buton çerçevesi, kesikli sınır
+  line: '#EADFE4',
+  lineStrong: '#DCCFD5', // ikincil buton çerçevesi, kesikli sınır
   success: '#2F7A4A',
   successSoft: '#E3F2E8',
   danger: '#A93E4D', // Mercan Kırmızı — iptal, hata
@@ -83,25 +83,25 @@ export const lightColors = {
 export type ColorTokens = { [K in keyof typeof lightColors]: string };
 
 export const darkColors: ColorTokens = {
-  bg: '#18061C',
-  bgSunken: '#120414',
-  surface: '#26102A',
-  surfaceMuted: '#37193C',
+  bg: '#0F0B10',
+  bgSunken: '#171218',
+  surface: '#1A141C',
+  surfaceMuted: '#241C26',
 
-  ink: '#FFF0F5',
-  inkSoft: '#EBE3DB',
-  muted: '#B197B3',
+  ink: '#F6F0F3',
+  inkSoft: '#DDD3DA',
+  muted: '#A79DA8',
   onColor: '#FFFFFF',
 
   // Koyu zeminde mürdüm okunmaz → eylem rengi Gül
-  accent: '#C5A3C7',
-  accentSoft: '#37193C',
+  accent: '#FF7FA8',
+  accentSoft: '#33162A',
   /** Erik sisinin koyu karşılığı — ölçüm: erik yazı 7.19:1, başlık 14.51:1. */
-  heroSoft: '#2E1A33',
-  onAccent: '#18061C', // gül üstünde KOYU yazı
-  accentFg: '#C5A3C7',
+  heroSoft: '#2A1329',
+  onAccent: '#1A0810', // gül üstünde KOYU yazı
+  accentFg: '#FF7FA8',
 
-  rose: '#D4A0A0',
+  rose: '#FF8CB4',
   roseSoft: '#3A1F26',
   sage: '#6FC98C',
   sageSoft: '#17301F',
@@ -112,7 +112,7 @@ export const darkColors: ColorTokens = {
   gold: '#F5BE50',
   goldSoft: '#33240B',
   orange: '#F5BE50',
-  plum: '#C5A3C7',
+  plum: '#3A0838',
 
   // Koyu temada ters yüzey zeminden AYRIŞMALI: bg #1A1419 üzerinde yükseltilmiş.
   // Yüzen alt menü/toast zemini. Figma'nın yüzey moru (#37193C) sayfa
@@ -123,8 +123,8 @@ export const darkColors: ColorTokens = {
   onInverseMuted: 'rgba(255,240,245,0.62)',
   fadeFrom: 'rgba(24,6,28,0)',
   fadeMid: 'rgba(24,6,28,0.72)',
-  line: '#3A2340',
-  lineStrong: '#4E3054',
+  line: '#332A33',
+  lineStrong: '#463A46',
   success: '#6FC98C',
   successSoft: '#17301F',
   danger: '#E88A96',
