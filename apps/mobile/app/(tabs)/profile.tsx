@@ -157,13 +157,8 @@ export default function ProfileScreen() {
       {/* ── Erik gradyan başlık + ortalı kimlik ──
           Yorum "yeşil" diyordu ve eski VELOURA tasarımına atıfta bulunuyordu;
           gradyan uzun zamandır erik. Yanlış yorum kodu yanlış okutuyor. */}
-      <LinearGradient
-        colors={gradients.gold}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + space(1) }]}
-      >
-        <Text variant="bodyStrong" tone="onAccent" style={styles.headerTitle}>
+      <View style={[styles.header, { paddingTop: insets.top + space(1) }]}>
+        <Text variant="bodyStrong" tone="ink" style={styles.headerTitle}>
           {t('nav.profile')}
         </Text>
         <View style={[styles.avatar, shadow.soft]}>
@@ -176,14 +171,14 @@ export default function ProfileScreen() {
           )}
         </View>
         <Pressable style={styles.nameRow} onPress={() => router.push('/profile/edit')}>
-          <Text variant="title" tone="onAccent">
+          <Text variant="title" tone="ink">
             {userName}
           </Text>
-          <Ionicons name="create-outline" size={18} color={colors.onAccent} />
+          <Ionicons name="create-outline" size={18} color={colors.accent} />
         </Pressable>
         <View style={styles.contactRow}>
-          <Ionicons name="call-outline" size={13} color={colors.onAccent} />
-          <Text variant="caption" tone="onAccent" style={styles.contactText}>
+          <Ionicons name="call-outline" size={13} color={colors.accent} />
+          <Text variant="caption" tone="ink" style={styles.contactText}>
             {phone || t('nav.profile')}
           </Text>
         </View>
@@ -209,7 +204,7 @@ export default function ProfileScreen() {
             <PlanBadge tier={planTier} size="md" />
           </Pressable>
         </View>
-      </LinearGradient>
+      </View>
 
       {/* ── Üste binen beyaz sheet ── */}
       <ScrollView
@@ -384,6 +379,17 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       paddingHorizontal: space(3),
       paddingBottom: space(5),
+      /*
+       * TAM GENİŞLİK KOYU BANT değil artık.
+       *
+       * Burası erik gradyanıydı ve ekranın en ağır lekesiydi: tam
+       * genişlik, uzun, dolu koyu. Kurucu "tum sayfalar cok dark oldu"
+       * dedi ve en çok bu tür bantlar yapıyordu. Marka rengi duruyor —
+       * yazıda, ikonda, aktif sekmede — ama kapladığı alan küçüldü.
+       */
+      backgroundColor: colors.heroSoft,
+      borderBottomLeftRadius: 28,
+      borderBottomRightRadius: 28,
     },
     headerTitle: { marginBottom: space(2) },
     avatar: {

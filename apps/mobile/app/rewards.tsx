@@ -207,23 +207,18 @@ export default function RewardsScreen() {
             Yazı `onColor` (sabit beyaz) idi ve gül gradyanın açık ucunda
             2.94:1 ölçülüyordu — İKİ TEMADA da okunmuyordu. Artık gradyanla
             aynı token setinden (`onAccent`): açıkta beyazımsı, koyuda koyu. */}
-        <LinearGradient
-          colors={gradients.rose}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.raffle, shadow.card]}
-        >
+        <View style={[styles.raffle, shadow.card]}>
           <View style={styles.raffleIcon}>
-            <Ionicons name="gift" size={28} color={colors.onAccent} />
+            <Ionicons name="gift" size={28} color={colors.rose} />
           </View>
           <View style={styles.raffleBody}>
-            <Text variant="h2" tone="onAccent" style={styles.raffleTitle}>
+            <Text variant="h2" tone="ink" style={styles.raffleTitle}>
               {raffleEntries} {t('rewards.raffle.entries')}
             </Text>
-            <Text variant="caption" tone="onAccent" style={styles.dim}>
+            <Text variant="caption" tone="ink" style={styles.dim}>
               {t('rewards.raffle.next')}: {NEXT_DRAW}
             </Text>
-            <Text variant="caption" tone="onAccent" style={styles.dim}>
+            <Text variant="caption" tone="ink" style={styles.dim}>
               {t('rewards.raffle.prize')}
             </Text>
           </View>
@@ -239,7 +234,7 @@ export default function RewardsScreen() {
               {RAFFLE_COST}
             </Text>
           </Pressable>
-        </LinearGradient>
+        </View>
 
         {/* §8.2 — son kullanma uyarısı (12 ay hareketsizse yanar) */}
         {points > 0 ? (
@@ -430,13 +425,11 @@ const makeStyles = (colors: ColorTokens) =>
     },
     raffleJoin: {
       /*
-       * Gül kartın üstündeki yarı saydam hap. Sabit BEYAZ %22 idi; koyu
-       * temada gül artık AÇIK olduğu için beyaz perde kartı büsbütün
-       * açıyor ve üstündeki beyaz yazıyı yok ediyordu. `onAccent`
-       * temayla dönüyor: açıkta beyazımsı perde, koyuda koyu perde —
-       * ikisi de kendi yazısıyla zıt.
+       * Kart yumuşak gül zemine indi; üstündeki yarı saydam beyaz perde
+       * orada kaybolurdu. Hap artık uygulamanın birincil eylemiyle aynı:
+       * dolu erik + `onAccent`. Ölçüm: 12.61:1 (koyu 8.73:1).
        */
-      backgroundColor: colors.onAccent + '38',
+      backgroundColor: colors.accent,
       paddingHorizontal: space(1.75),
       paddingVertical: space(1),
       borderRadius: radius.pill,
@@ -444,7 +437,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     raffleJoinOff: { opacity: 0.5 },
     raffleJoinText: { color: colors.onAccent, fontFamily: font.semibold },
-    raffleJoinSub: { color: 'rgba(255,255,255,0.9)', fontSize: 10 },
+    raffleJoinSub: { color: colors.onAccent, opacity: 0.86, fontSize: 10 },
     expiryBanner: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -506,6 +499,14 @@ const makeStyles = (colors: ColorTokens) =>
     tierText: { fontFamily: font.semibold },
     progressWrap: { marginTop: space(2), marginBottom: space(1.25) },
     raffle: {
+      /*
+       * İKİ KOYU KART ÜST ÜSTE oluyordu: üstte erik puan kartı, hemen
+       * altında dolu gül çekiliş kartı. Kurucu "tum sayfalar cok dark
+       * oldu" dedi; ekran başına TEK koyu kart kuralı gereği bu ikincisi
+       * yumuşak gül zemine indi. Gül kimliği duruyor, ağırlığı gitti.
+       * Ölçüm: başlık 15.87:1 (koyu 13.56), ikincil 5.93 (5.66).
+       */
+      backgroundColor: colors.roseSoft,
       flexDirection: 'row',
       alignItems: 'center',
       gap: space(2),
@@ -518,7 +519,8 @@ const makeStyles = (colors: ColorTokens) =>
       width: 58,
       height: 58,
       borderRadius: 29,
-      backgroundColor: 'rgba(255,255,255,0.22)',
+      // Yarı saydam beyaz perde açık zeminde görünmez; dolu yüzey.
+      backgroundColor: colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
     },

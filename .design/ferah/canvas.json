@@ -1,0 +1,32 @@
+{
+  "artboards": [
+    { "file": "Simdi.dc.html", "title": "Şimdi", "x": 0, "y": 0, "w": 390, "h": 844 },
+    { "file": "Main.dc.html", "title": "Ferah", "x": 490, "y": 0, "w": 390, "h": 844 },
+    { "file": "Denge.dc.html", "title": "Denge", "x": 980, "y": 0, "w": 390, "h": 844 },
+    { "file": "Palet.dc.html", "title": "Ne degisiyor", "x": 1470, "y": 0, "w": 560, "h": 844 }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -150,
+      "w": 380,
+      "text": "Sikayet: tum ekranlar cok karardi.\nOlcum: acik temada alt menu parlakligi 0.007, sayfa zemini 0.934 — neredeyse siyah bir bar her ekranin altinda. 74 dosyada dolu koyu yuzey var."
+    },
+    {
+      "id": "ferah-not",
+      "x": 490,
+      "y": -150,
+      "w": 380,
+      "text": "FERAH — erik yazida, ikonda ve tek dugmede kaliyor; dolu koyu yuzey yok. En hafif secenek. Riski: marka rengi ekranda daha az goze carpiyor."
+    },
+    {
+      "id": "denge-not",
+      "x": 980,
+      "y": -150,
+      "w": 380,
+      "text": "DENGE — ekran basina TEK koyu erik kart kaliyor (para/depozito gibi onemli olan). Marka varligi surer, agirlik dagilmaz. Ferah ile tek farki bu kart."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}
