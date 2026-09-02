@@ -33,6 +33,8 @@ export const lightGradients = {
   rose: ['#A34A57', '#83323F'] as const,
   // DERİN YÜZEY — sitedeki `--plum`. Ekran başına tek koyu kart burada.
   plum: ['#6A0D66', '#50094D'] as const,
+  /** Derin kart — bkz. `theme.aksan.ts` gradDeep. */
+  deep: ['#BC245B', '#2D0A2E'] as const,
 } as const;
 
 export const darkGradients: GradientTokens = {
@@ -60,6 +62,8 @@ export const darkGradients: GradientTokens = {
   // '#AA9AC4' üstünde beyaz 2.58:1 ölçülüyor — okunmuyor. Bu çift 7.72:1
   // veriyor ve koyu zeminden (#1A1419) yine ayrışıyor.
   plum: ['#4E0C4B', '#3A0838'] as const,
+  // Derin kart iki temada da AYNI: yüzey koyu, yazı beyaz.
+  deep: ['#BC245B', '#2D0A2E'] as const,
 };
 
 export type GradientTokens = { [K in keyof typeof lightGradients]: readonly [string, string] };
@@ -83,5 +87,6 @@ export function gradyanUret(
     plum: s.gradPlum,
     hero: s.gradHero,
     rose: s.gradRose,
+    deep: s.gradDeep,
   };
 }

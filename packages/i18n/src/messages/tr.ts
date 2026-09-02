@@ -1377,6 +1377,26 @@ export const tr = {
   'search.sort.rating': 'Puan',
   'search.sort.distance': 'Yakınlık',
   'search.sort.popular': 'Popülerlik',
+  // §arama — detaylı kırılımlar (kurucu isteği). "randevu sayısı" liste
+  // modelinde yok; en yakın gerçek veri değerlendirme sayısı, etiket de onu
+  // söylüyor — uydurma sayı göstermektense doğru adıyla göstermek doğru.
+  'search.filters': 'Filtreler',
+  'search.sort': 'Sırala',
+  'search.filter.clear': 'Temizle',
+  'search.filter.any': 'Farketmez',
+  'search.filter.city': 'Şehir',
+  'search.filter.all_cities': 'Tüm şehirler',
+  'search.filter.rating': 'Değerlendirme notu',
+  'search.filter.reviews': 'Değerlendirme sayısı',
+  'search.filter.experience': 'Deneyim',
+  'search.filter.years': '{n}+ yıl',
+  'search.filter.price': 'Başlangıç fiyatı',
+  'search.filter.upto': '{n} ₸ ve altı',
+  'search.filter.kind': 'Tür',
+  'search.filter.verified_only': 'AYNA Onaylı',
+  'search.kind.independent': 'Uzman',
+  'search.kind.salon': 'Salon',
+  'search.results_count': '{n} sonuç',
 
   // Kategori listeleme
   'category.browse.count': 'uzman bulundu',

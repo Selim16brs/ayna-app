@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -17,13 +17,15 @@ import {
   distanceKm,
   type Professional,
   proCoords,
+  type ProviderKind,
+  CITIES,
 } from '../src/data';
 import type { MessageKey } from '@ayna/i18n';
 import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
 import { servesSector } from '@ayna/domain';
 import { HIZMET_IKON } from '../src/hizmet-ikon';
-import { useLocale } from '../src/locale';
+import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import {
@@ -49,6 +51,104 @@ const SORTS: { key: SortKey; label: MessageKey }[] = [
   { key: 'popular', label: 'search.sort.popular' },
 ];
 
+/**
+ * DETAYLI ARAMA — kurucunun isteği.
+ *
+ * "arama kısmında detaylı bir arama fonksiyonu olmalı. değerlendirme notu,
+ *  randevu sayısı ve benzeri şekilde kullanıcının arama kriteri olabilecek
+ *  kırımlara göre olabilir. şehir de ayrıca burda kırımlardan birisi olsun"
+ *
+ * RANDEVU SAYISI HAKKINDA: liste modelinde (`Professional`) tamamlanan
+ * randevu sayısı YOK; sunucu bu alanı listede döndürmüyor. En yakın gerçek
+ * veri `reviewCount` — her randevu değerlendirmeye dönüşmediği için aynı şey
+ * değil, o yüzden etiketi de "değerlendirme sayısı" diyor. Uydurma bir
+ * "randevu sayısı" göstermektense sahip olduğumuz sayıyı doğru adıyla
+ * göstermek doğru; gerçek randevu sayısı istenirse sunucu ucu genişlemeli.
+ */
+interface Filtre {
+  /** null = tüm şehirler. Varsayılan kullanıcının şehri (mevcut davranış). */
+  sehir: string | null;
+  minPuan: number | null;
+  minYorum: number | null;
+  minDeneyim: number | null;
+  /** Üst sınır: uzmanın başlangıç fiyatı bunun altında olmalı. */
+  maxFiyat: number | null;
+  tur: ProviderKind | null;
+  onayliMi: boolean;
+}
+
+const bosFiltre = (sehir: string | null): Filtre => ({
+  sehir,
+  minPuan: null,
+  minYorum: null,
+  minDeneyim: null,
+  maxFiyat: null,
+  tur: null,
+  onayliMi: false,
+});
+
+/** Kaç kırılım etkin — düğmedeki sayı ve "temizle" görünürlüğü için. */
+function etkinSayisi(f: Filtre, varsayilanSehir: string): number {
+  let n = 0;
+  if (f.sehir !== varsayilanSehir) n += 1;
+  if (f.minPuan !== null) n += 1;
+  if (f.minYorum !== null) n += 1;
+  if (f.minDeneyim !== null) n += 1;
+  if (f.maxFiyat !== null) n += 1;
+  if (f.tur !== null) n += 1;
+  if (f.onayliMi) n += 1;
+  return n;
+}
+
+const PUANLAR = [4, 4.5, 4.8] as const;
+const YORUMLAR = [50, 100, 300] as const;
+const DENEYIMLER = [3, 5, 10] as const;
+const FIYATLAR = [10000, 25000, 50000] as const;
+
+/** Bir kırılım: başlık + yatay çip şeridi. */
+function FiltreGrubu({ baslik, children }: { baslik: string; children: ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.grup}>
+      <Text variant="micro" tone="muted" style={styles.grupBaslik}>
+        {baslik}
+      </Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.grupCipler}
+      >
+        {children}
+      </ScrollView>
+    </View>
+  );
+}
+
+/**
+ * Filtre çipi — kategori çipleriyle AYNI dil (hap, seçilince dolu aksan).
+ * Yeni bir görsel dil uydurulmadı; ekranda zaten olan kalıp kullanıldı.
+ */
+function FiltreCipi({ etiket, secili, bas }: { etiket: string; secili: boolean; bas: () => void }) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable
+      onPress={bas}
+      style={[styles.chip, secili && styles.chipOn]}
+      accessibilityRole="button"
+      accessibilityState={{ selected: secili }}
+      accessibilityLabel={etiket}
+    >
+      <Text
+        variant="caption"
+        tone={secili ? 'onAccent' : 'inkSoft'}
+        style={secili ? styles.chipOnText : undefined}
+      >
+        {etiket}
+      </Text>
+    </Pressable>
+  );
+}
+
 export default function SearchScreen() {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
@@ -69,6 +169,10 @@ export default function SearchScreen() {
   const catalogLoading = useProfessionalsLoading();
   // §5.1.4 — arama da şehre göre filtreli
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
+  // Filtre şehri kullanıcının şehriyle başlar — mevcut davranış korunuyor.
+  const [filtre, setFiltre] = useState<Filtre>(() => bosFiltre(city));
+  const etkin = etkinSayisi(filtre, city);
+  const yama = (y: Partial<Filtre>) => setFiltre((f) => ({ ...f, ...y }));
   const recentSearches = useStore((s) => s.recentSearches);
   const addRecentSearch = useStore((s) => s.addRecentSearch);
   const isEmpty = query.trim().length === 0 && activeCat === null;
@@ -76,8 +180,15 @@ export default function SearchScreen() {
   const results = useMemo(() => {
     const q = lower(query.trim());
     const filtered = professionals.filter((p) => {
-      if (p.city !== city) return false;
+      // null şehir = tüm şehirler
+      if (filtre.sehir !== null && p.city !== filtre.sehir) return false;
       if (activeCat && !servesSector(p, activeCat)) return false;
+      if (filtre.minPuan !== null && p.rating < filtre.minPuan) return false;
+      if (filtre.minYorum !== null && p.reviewCount < filtre.minYorum) return false;
+      if (filtre.minDeneyim !== null && p.experienceYears < filtre.minDeneyim) return false;
+      if (filtre.maxFiyat !== null && p.priceFrom > filtre.maxFiyat) return false;
+      if (filtre.tur !== null && p.kind !== filtre.tur) return false;
+      if (filtre.onayliMi && !p.aynaVerified) return false;
       if (!q) return true;
       // Metin araması da TÜM alanlara bakar: "tırnak" yazan biri, ana alanı
       // saç olan ama tırnak da yapan uzmanı bulabilmeli.
@@ -90,11 +201,11 @@ export default function SearchScreen() {
     if (sort === 'rating') sorted.sort((a, b) => b.rating - a.rating);
     else if (sort === 'popular') sorted.sort((a, b) => b.reviewCount - a.reviewCount);
     else if (sort === 'distance') {
-      const c = cityCenter(city);
+      const c = cityCenter(filtre.sehir ?? city);
       sorted.sort((a, b) => distanceKm(c, proCoords(a.id)) - distanceKm(c, proCoords(b.id)));
     }
     return sorted;
-  }, [professionals, query, activeCat, sort, city, t]);
+  }, [professionals, query, activeCat, sort, city, filtre, t]);
 
   const submit = () => addRecentSearch(query);
 
@@ -124,43 +235,178 @@ export default function SearchScreen() {
         {/* §7 — sıralama paneli aç/kapat */}
         <Pressable
           onPress={() => setShowSort((v) => !v)}
-          style={[styles.tune, (showSort || sort !== 'recommended') && styles.tuneOn, shadow.soft]}
+          style={[
+            styles.tune,
+            (showSort || sort !== 'recommended' || etkin > 0) && styles.tuneOn,
+            shadow.soft,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={t('search.filters')}
+          accessibilityState={{ expanded: showSort }}
         >
           <Ionicons
             name="options-outline"
             size={20}
-            color={showSort || sort !== 'recommended' ? colors.onAccent : colors.inkSoft}
+            color={
+              showSort || sort !== 'recommended' || etkin > 0 ? colors.onAccent : colors.inkSoft
+            }
           />
+          {/* Panel kapalıyken kaç kırılımın açık olduğu görünmeli. */}
+          {etkin > 0 ? (
+            <View style={styles.tuneRozet}>
+              <Text style={styles.tuneRozetYazi}>{etkin}</Text>
+            </View>
+          ) : null}
         </Pressable>
       </View>
 
-      {/* §7 — sıralama çipleri */}
+      {/*
+       * DETAYLI ARAMA PANELİ.
+       *
+       * Her kırılım kendi başlığı altında yatay çip şeridi. Dikey liste
+       * yerine şerit: yedi kırılım alt alta açılsa panel ekranı yutardı,
+       * sonuçlar görünmez olurdu.
+       *
+       * "Tümü" çipi her grupta ilk sırada — kullanıcının seçimi geri alma
+       * yolu her zaman aynı yerde.
+       */}
       {showSort ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipBar}
-          contentContainerStyle={styles.chips}
-        >
-          {SORTS.map((s) => {
-            const on = s.key === sort;
-            return (
-              <Pressable
-                key={s.key}
-                onPress={() => setSort(s.key)}
-                style={[styles.chip, on && styles.chipOn]}
-              >
-                <Text
-                  variant="caption"
-                  tone={on ? 'onAccent' : 'inkSoft'}
-                  style={on ? styles.chipOnText : undefined}
-                >
-                  {t(s.label)}
+        <View style={styles.panel}>
+          <View style={styles.panelBas}>
+            <Text variant="captionStrong" tone="ink">
+              {t('search.filters')}
+            </Text>
+            {etkin > 0 ? (
+              <Pressable onPress={() => setFiltre(bosFiltre(city))} hitSlop={8}>
+                <Text variant="caption" style={styles.temizle}>
+                  {t('search.filter.clear')}
                 </Text>
               </Pressable>
-            );
-          })}
-        </ScrollView>
+            ) : null}
+          </View>
+
+          <FiltreGrubu baslik={t('search.sort')}>
+            {SORTS.map((o) => (
+              <FiltreCipi
+                key={o.key}
+                etiket={t(o.label)}
+                secili={o.key === sort}
+                bas={() => setSort(o.key)}
+              />
+            ))}
+          </FiltreGrubu>
+
+          <FiltreGrubu baslik={t('search.filter.city')}>
+            <FiltreCipi
+              etiket={t('search.filter.all_cities')}
+              secili={filtre.sehir === null}
+              bas={() => yama({ sehir: null })}
+            />
+            {CITIES.map((c) => (
+              <FiltreCipi
+                key={c}
+                etiket={c}
+                secili={filtre.sehir === c}
+                bas={() => yama({ sehir: c })}
+              />
+            ))}
+          </FiltreGrubu>
+
+          <FiltreGrubu baslik={t('search.filter.rating')}>
+            <FiltreCipi
+              etiket={t('search.filter.any')}
+              secili={filtre.minPuan === null}
+              bas={() => yama({ minPuan: null })}
+            />
+            {PUANLAR.map((v) => (
+              <FiltreCipi
+                key={v}
+                etiket={`${v.toLocaleString('tr-TR')}+`}
+                secili={filtre.minPuan === v}
+                bas={() => yama({ minPuan: filtre.minPuan === v ? null : v })}
+              />
+            ))}
+          </FiltreGrubu>
+
+          <FiltreGrubu baslik={t('search.filter.reviews')}>
+            <FiltreCipi
+              etiket={t('search.filter.any')}
+              secili={filtre.minYorum === null}
+              bas={() => yama({ minYorum: null })}
+            />
+            {YORUMLAR.map((v) => (
+              <FiltreCipi
+                key={v}
+                etiket={`${v}+`}
+                secili={filtre.minYorum === v}
+                bas={() => yama({ minYorum: filtre.minYorum === v ? null : v })}
+              />
+            ))}
+          </FiltreGrubu>
+
+          <FiltreGrubu baslik={t('search.filter.experience')}>
+            <FiltreCipi
+              etiket={t('search.filter.any')}
+              secili={filtre.minDeneyim === null}
+              bas={() => yama({ minDeneyim: null })}
+            />
+            {DENEYIMLER.map((v) => (
+              <FiltreCipi
+                key={v}
+                etiket={fillParams(t('search.filter.years'), { n: String(v) })}
+                secili={filtre.minDeneyim === v}
+                bas={() => yama({ minDeneyim: filtre.minDeneyim === v ? null : v })}
+              />
+            ))}
+          </FiltreGrubu>
+
+          <FiltreGrubu baslik={t('search.filter.price')}>
+            <FiltreCipi
+              etiket={t('search.filter.any')}
+              secili={filtre.maxFiyat === null}
+              bas={() => yama({ maxFiyat: null })}
+            />
+            {FIYATLAR.map((v) => (
+              <FiltreCipi
+                key={v}
+                etiket={fillParams(t('search.filter.upto'), {
+                  n: v.toLocaleString('tr-TR'),
+                })}
+                secili={filtre.maxFiyat === v}
+                bas={() => yama({ maxFiyat: filtre.maxFiyat === v ? null : v })}
+              />
+            ))}
+          </FiltreGrubu>
+
+          <FiltreGrubu baslik={t('search.filter.kind')}>
+            <FiltreCipi
+              etiket={t('search.filter.any')}
+              secili={filtre.tur === null}
+              bas={() => yama({ tur: null })}
+            />
+            <FiltreCipi
+              etiket={t('search.kind.independent')}
+              secili={filtre.tur === 'independent'}
+              bas={() => yama({ tur: filtre.tur === 'independent' ? null : 'independent' })}
+            />
+            <FiltreCipi
+              etiket={t('search.kind.salon')}
+              secili={filtre.tur === 'salon'}
+              bas={() => yama({ tur: filtre.tur === 'salon' ? null : 'salon' })}
+            />
+            <FiltreCipi
+              etiket={t('search.filter.verified_only')}
+              secili={filtre.onayliMi}
+              bas={() => yama({ onayliMi: !filtre.onayliMi })}
+            />
+          </FiltreGrubu>
+
+          {/* Kaç sonuç kaldığı panel içinde: kullanıcı çipe basar basmaz
+              sonucu görsün, kapatıp saymak zorunda kalmasın. */}
+          <Text variant="caption" tone="muted" style={styles.sayac}>
+            {fillParams(t('search.results_count'), { n: String(results.length) })}
+          </Text>
+        </View>
       ) : null}
 
       {/* Kategori daraltma */}
@@ -395,6 +641,47 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
     },
     chipOn: { backgroundColor: colors.accent },
+    // ── detaylı arama paneli ──
+    panel: {
+      backgroundColor: colors.surface,
+      marginHorizontal: space(3),
+      marginTop: space(1.5),
+      borderRadius: radius.lg,
+      paddingVertical: space(1.5),
+    },
+    panelBas: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space(2),
+      paddingBottom: space(0.5),
+    },
+    temizle: { color: colors.accentFg, fontFamily: font.semibold },
+    grup: { paddingTop: space(1.25) },
+    grupBaslik: { paddingHorizontal: space(2), paddingBottom: space(0.75) },
+    grupCipler: { paddingHorizontal: space(2), gap: space(1) },
+    sayac: { paddingHorizontal: space(2), paddingTop: space(1.5) },
+    // Sayı rozeti: panel kapalıyken kaç kırılımın açık olduğunu gösterir.
+    tuneRozet: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      minWidth: 18,
+      height: 18,
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+    tuneRozetYazi: {
+      color: colors.accent,
+      fontSize: 11,
+      lineHeight: 18,
+      textAlign: 'center',
+      includeFontPadding: false,
+      fontFamily: font.semibold,
+    },
     chipOnText: { fontFamily: font.semibold },
     content: {
       paddingHorizontal: space(3),

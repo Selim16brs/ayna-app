@@ -7,7 +7,7 @@ import { api, ApiError } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
 import { randevuDepozitosu, useStore } from '../../src/store';
 import { font, type ColorTokens } from '../../src/theme';
-import { darkColors, lightColors } from '../../src/theme.palette';
+import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
@@ -24,7 +24,10 @@ import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/
 export default function RefundScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useLocale();
-  const { colors } = useTheme();
+  // Derin kart gradyanı artık SEÇİLEN RENKTEN geliyor (`gradients.deep`).
+  // Eskiden `[lightColors.accent, '#2D0A2E']` sabitiydi: kullanıcı Zümrüt
+  // seçse bile bu kart pembe kalıyordu.
+  const { colors, gradients } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
 
@@ -91,7 +94,7 @@ export default function RefundScreen() {
         {/* İADE TUTARI — koyu mürdüm kart. Tasarım dilinde para,
             kararın merkezindeyse koyu kartta ve büyük gösteriliyor. */}
         <LinearGradient
-          colors={OZET_DEGRADE}
+          colors={gradients.deep}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.tutarKart}
@@ -131,7 +134,6 @@ export default function RefundScreen() {
 }
 
 /** Koyu mürdüm kart — Figma `canli-ozet-card` degradesi, iki temada da sabit. */
-const OZET_DEGRADE = [lightColors.accent, '#2D0A2E'] as const;
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({

@@ -72,6 +72,23 @@ export interface AksanTemasi {
   gradPlum: readonly [string, string];
   gradHero: readonly [string, string];
   gradRose: readonly [string, string];
+  /**
+   * DERİN KART — depozito iadesi, "fotoğrafla teklif" yolu, kazanç özeti,
+   * dekont özeti. Dört ekranda aynı kart dili var: aksandan çok koyu bir
+   * uca inen gradyan, üstünde beyaz yazı.
+   *
+   * Eskiden dördü de `[lightColors.accent, '#2D0A2E']` yazıyordu — yani
+   * kullanıcı hangi rengi seçerse seçsin bu kartlar pembe kalıyordu.
+   * Kurucu: "yine ortak renk kullanılan kartlar kalmış."
+   *
+   * Koyu uç `hsl(ton, 64%, 11%)` — bu, eski `#2D0A2E`'nin ta kendisi
+   * (ölçüldü: hsl(298°, 64%, 11%)). Yani formül uydurulmadı, mevcut
+   * tasarımın kendi değeri her tona taşındı.
+   *
+   * TEMADAN BAĞIMSIZ: kart iki temada da koyu, yazısı iki temada da beyaz.
+   * Koyu temanın açık aksanını kullansaydık beyaz yazı okunmazdı.
+   */
+  gradDeep: readonly [string, string];
 }
 
 export interface AksanSeti {
@@ -121,6 +138,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#DD2A6A', '#BC245B'],
       gradPlum: ['#9C1140', '#820D34'],
       gradHero: ['#F6EAEE', '#F5E0E7'],
+      gradDeep: ['#BC245B', '#2D0A2E'],
       gradRose: ['#9C1140', '#820D34'],
     },
     dark: {
@@ -149,6 +167,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#FF7FA8', '#F26191'],
       gradPlum: ['#6F1533', '#570F27'],
       gradHero: ['#160C0F', '#24161B'],
+      gradDeep: ['#BC245B', '#2D0A2E'],
       gradRose: ['#6F1533', '#570F27'],
     },
   },
@@ -182,6 +201,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#C516BD', '#6A1461'],
       gradPlum: ['#9C1195', '#820D7C'],
       gradHero: ['#F6EAF6', '#F5E0F4'],
+      gradDeep: ['#6A1461', '#2E0A2C'],
       gradRose: ['#9C1195', '#820D7C'],
     },
     dark: {
@@ -210,6 +230,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#D98BD2', '#E363DD'],
       gradPlum: ['#6F156B', '#570F53'],
       gradHero: ['#160C15', '#241624'],
+      gradDeep: ['#6A1461', '#2E0A2C'],
       gradRose: ['#6F156B', '#570F53'],
     },
   },
@@ -243,6 +264,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#8823E7', '#633A8E'],
       gradPlum: ['#59119C', '#490D82'],
       gradHero: ['#F0EAF6', '#EBE0F5'],
+      gradDeep: ['#633A8E', '#1D0A2E'],
       gradRose: ['#59119C', '#490D82'],
     },
     dark: {
@@ -271,6 +293,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#BC9BDB', '#A563E3'],
       gradPlum: ['#44156F', '#340F57'],
       gradHero: ['#110C16', '#1E1624'],
+      gradDeep: ['#633A8E', '#1D0A2E'],
       gradRose: ['#44156F', '#340F57'],
     },
   },
@@ -304,6 +327,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#C14915', '#944A26'],
       gradPlum: ['#9C3B11', '#82300D'],
       gradHero: ['#F6EEEA', '#F5E7E0'],
+      gradDeep: ['#944A26', '#2E150A'],
       gradRose: ['#9C3B11', '#82300D'],
     },
     dark: {
@@ -332,6 +356,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#E0A183', '#E38963'],
       gradPlum: ['#6F3015', '#57250F'],
       gradHero: ['#160F0C', '#241B16'],
+      gradDeep: ['#944A26', '#2E150A'],
       gradRose: ['#6F3015', '#57250F'],
     },
   },
@@ -365,6 +390,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#1670CA', '#1466B8'],
       gradPlum: ['#11579C', '#0D4782'],
       gradHero: ['#EAF0F6', '#E0EBF5'],
+      gradDeep: ['#1466B8', '#0A1C2E'],
       gradRose: ['#11579C', '#0D4782'],
     },
     dark: {
@@ -393,6 +419,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#7FBCEE', '#63A3E3'],
       gradPlum: ['#15426F', '#0F3357'],
       gradHero: ['#0C1116', '#161D24'],
+      gradDeep: ['#1466B8', '#0A1C2E'],
       gradRose: ['#15426F', '#0F3357'],
     },
   },
@@ -426,6 +453,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#2354E7', '#22356E'],
       gradPlum: ['#11349C', '#0D2A82'],
       gradHero: ['#EAEDF6', '#E0E6F5'],
+      gradDeep: ['#22356E', '#0A132E'],
       gradRose: ['#11349C', '#0D2A82'],
     },
     dark: {
@@ -454,6 +482,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#94A5DC', '#6383E3'],
       gradPlum: ['#152C6F', '#0F2157'],
       gradHero: ['#0C0E16', '#161A24'],
+      gradDeep: ['#22356E', '#0A132E'],
       gradRose: ['#152C6F', '#0F2157'],
     },
   },
@@ -487,6 +516,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#10798E', '#0A748A'],
       gradPlum: ['#0E6A7C', '#0B5F6F'],
       gradHero: ['#EAF4F6', '#DDF0F4'],
+      gradDeep: ['#0A748A', '#0A282E'],
       gradRose: ['#0E6A7C', '#0B5F6F'],
     },
     dark: {
@@ -515,6 +545,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#5AC3D8', '#63CEE3'],
       gradPlum: ['#15606F', '#0F4B57'],
       gradHero: ['#0C1416', '#162224'],
+      gradDeep: ['#0A748A', '#0A282E'],
       gradRose: ['#15606F', '#0F4B57'],
     },
   },
@@ -548,6 +579,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#0E8157', '#1F6B4F'],
       gradPlum: ['#0C6E4A', '#0A6644'],
       gradHero: ['#EAF6F2', '#D9F2E9'],
+      gradDeep: ['#1F6B4F', '#0A2E21'],
       gradRose: ['#0C6E4A', '#0A6644'],
     },
     dark: {
@@ -576,6 +608,7 @@ export const AKSANLAR: Record<AksanAnahtari, AksanSeti> = {
       gradGold: ['#7FD3AE', '#63E3B4'],
       gradPlum: ['#156F4E', '#0F573D'],
       gradHero: ['#0C1612', '#16241F'],
+      gradDeep: ['#1F6B4F', '#0A2E21'],
       gradRose: ['#156F4E', '#0F573D'],
     },
   },

@@ -20,7 +20,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { musteriRandevulari, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
 import { space, type ColorTokens, font } from '../../src/theme';
-import { darkColors, lightColors } from '../../src/theme.palette';
+import { lightColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   ListSkeleton,
@@ -63,10 +63,17 @@ function mesafe(pro: { lat?: number; lng?: number; city: string }): number | nul
   return distanceKm({ latitude: pro.lat, longitude: pro.lng }, merkez);
 }
 
-/** Figma `deposit-refund-card` zemini — accent'ten bir ton açık mürdüm. */
-const IADE_ZEMIN = '#64285A';
-/** Sabit koyu kartın yazısı da sabit açık — `onAccent` koyu temada döner. */
-const IADE_YAZI = darkColors.ink;
+/*
+ * DEPOZİTO İADE KARTI — zemin artık SEÇİLEN RENKTEN.
+ *
+ * Eskiden `'#64285A'` sabitiydi: kullanıcı Zümrüt seçse bile bu kart
+ * mürdüm kalıyordu. Kurucu: "yine ortak renk kullanılan kartlar kalmış."
+ * `colors.plum` her sette o setin derin yüzeyi — iki temada da koyu, yani
+ * kartın karakteri değişmiyor, yalnız ailesi.
+ *
+ * Yazı sabit beyaz: kart iki temada da koyu, `ink` koyu temada açığa
+ * dönüp kaybolurdu (uzman hero'sunda tam olarak bu hata yaşanmıştı).
+ */
 
 const LOGO_SIYAH = require('../../assets/logo-ayna.png');
 const LOGO_BEYAZ = require('../../assets/logo-ayna-white.png');
@@ -949,7 +956,7 @@ const makeStyles = (colors: ColorTokens) =>
       gap: 14,
       padding: 16,
       borderRadius: 22,
-      backgroundColor: IADE_ZEMIN,
+      backgroundColor: colors.plum,
     },
     iadeIkon: {
       width: 44,
@@ -959,8 +966,8 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
       backgroundColor: 'rgba(255,240,245,0.16)',
     },
-    iadeTenge: { fontFamily: font.semibold, fontSize: 22, color: IADE_YAZI },
-    iadeBaslik: { fontFamily: font.semibold, fontSize: 15, color: IADE_YAZI },
+    iadeTenge: { fontFamily: font.semibold, fontSize: 22, color: colors.onColor },
+    iadeBaslik: { fontFamily: font.semibold, fontSize: 15, color: colors.onColor },
     iadeAlt: {
       fontFamily: font.regular,
       fontSize: 12,
@@ -971,9 +978,9 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: 16,
       paddingVertical: 10,
       borderRadius: 100,
-      backgroundColor: IADE_YAZI,
+      backgroundColor: colors.onColor,
     },
-    iadeDugmeYazi: { fontFamily: font.semibold, fontSize: 13, color: IADE_ZEMIN },
+    iadeDugmeYazi: { fontFamily: font.semibold, fontSize: 13, color: colors.plum },
 
     // appointment-card-container (radius 24, p16)
     randevuKart: { borderRadius: 24, backgroundColor: colors.surface, padding: 16, gap: 12 },
