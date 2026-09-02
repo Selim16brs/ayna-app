@@ -73,9 +73,36 @@ test('P2 — durum renkleri AÇIK temada eşiği geçiyor', () => {
 test('P2b — tema tercihi KALICI', () => {
   const tc = kodu('src/theme-context.tsx');
   assert.match(tc, /AsyncStorage\.setItem\(TEMA_ANAHTARI/, 'seçim kaydedilmiyor');
-  assert.match(tc, /AsyncStorage\.getItem\(TEMA_ANAHTARI/, 'seçim okunmuyor');
+  /*
+   * Okuma tek anahtarla (`getItem`) ya da aksan kaydıyla birlikte
+   * (`multiGet`) yapılabilir — ikisi de kalıcılığı sağlıyor. Bekçinin
+   * derdi HANGİ çağrı olduğu değil, tercihin diskten geri okunması.
+   */
+  assert.match(
+    tc,
+    /AsyncStorage\.(getItem\(TEMA_ANAHTARI|multiGet\(\[TEMA_ANAHTARI)/,
+    'seçim okunmuyor',
+  );
   // "Sisteme dön" de bir tercih: kaydı silmeli, sessizce yok saymamalı.
   assert.match(tc, /AsyncStorage\.removeItem\(TEMA_ANAHTARI\)/, 'sisteme dönüş kalıcı değil');
+});
+
+/**
+ * P2c — UYGULAMA RENGİ de kalıcı.
+ *
+ * Tema tercihinde bir kez yaşanan hatanın aynısı: seçim yalnız bellekte
+ * kalırsa kullanıcı Zümrüt seçiyor, uygulamayı kapatıp açınca gül dönüyor.
+ */
+test('P2c — uygulama rengi KALICI', () => {
+  const tc = kodu('src/theme-context.tsx');
+  assert.match(tc, /AsyncStorage\.setItem\(AKSAN_ANAHTARI/, 'renk seçimi kaydedilmiyor');
+  assert.match(
+    tc,
+    /AsyncStorage\.(getItem\(AKSAN_ANAHTARI|multiGet\(\[TEMA_ANAHTARI, AKSAN_ANAHTARI)/,
+    'renk seçimi okunmuyor',
+  );
+  // Bozuk/eski kayıt çökertmemeli; varsayılana düşmeli.
+  assert.match(tc, /aksanCoz\(/, 'bilinmeyen kayıt varsayılana düşmüyor');
 });
 
 test('P3 — sistem yazı ölçeği sınırlı', () => {

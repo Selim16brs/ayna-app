@@ -16,13 +16,13 @@ import { Platform, type TextStyle } from 'react-native';
  */
 
 // ── Açık tema ────────────────────────────────────────────────────────────
-import { darkColors, lightColors, type ColorTokens } from './theme.palette';
+import { darkColors, lightColors, paletUret, type ColorTokens } from './theme.palette';
 
 export { darkColors, lightColors, type ColorTokens };
 
 export type ThemeMode = 'light' | 'dark';
 
-import { darkGradients, lightGradients, type GradientTokens } from './theme.gradients';
+import { darkGradients, gradyanUret, lightGradients, type GradientTokens } from './theme.gradients';
 
 export { darkGradients, lightGradients };
 export type { GradientTokens };
@@ -206,3 +206,16 @@ export const theme = {
   space,
   shadow,
 } as const;
+
+// ── Aksan (uygulama rengi) ───────────────────────────────────────────────
+// Ekranlar bunları doğrudan kullanmıyor; `useTheme()` üzerinden geliyor.
+// Profil ekranı yuvarlakları çizmek için AKSANLAR/AKSAN_ANAHTARLARI okuyor.
+export {
+  AKSANLAR,
+  AKSAN_ANAHTARLARI,
+  VARSAYILAN_AKSAN,
+  aksanCoz,
+  type AksanAnahtari,
+  type AksanSeti,
+} from './theme.aksan';
+export { paletUret, gradyanUret };
