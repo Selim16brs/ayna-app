@@ -1483,6 +1483,38 @@ model RefundRequest {
   @@index([status])
   @@map("refund_requests")
 }
+/// Gönderilen her e-postanın kaydı.
+///
+/// Gönderimden ÖNCE yazılır: sağlayıcı çağrısı düşerse posta sessizce
+/// kaybolmuyor, kayıtta `FAILED` olarak duruyor. Bu olmadan "kullanıcıya
+/// gitti mi" sorusunun cevabı yok.
+///
+/// Ayrıca TEKRARI ENGELLER: yaşam döngüsü serisi saatte bir koşuyor ve
+/// `(userId, template)` çifti benzersiz olduğu için aynı posta ikinci kez
+/// gönderilemiyor. Zamanlayıcıyı günde on iki kez çalıştırmak on iki
+/// e-posta demek değil.
+model EmailLog {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String?   @map("user_id") @db.Uuid
+  email             String
+  template          String
+  locale            String    @default("tr")
+  status            String    @default("QUEUED")
+  providerMessageId String?   @map("provider_message_id")
+  error             String?
+  sentAt            DateTime? @map("sent_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// Aynı kullanıcıya aynı şablon BİR KEZ. Uygulama katmanında "önce oku
+  /// sonra yaz" yetmez: zamanlayıcının iki eşzamanlı koşusu ikisini de
+  /// geçirebilir. Kısıt veritabanında.
+  @@unique([userId, template])
+  @@index([email])
+  @@index([status])
+  @@index([template])
+  @@map("email_log")
+}
+
 
 /// Brief §4.8 — UZLAŞMA KAYDI. "Gelmedi" beyanına ya da ödeme itirazına karşı
 /// taraf 24 saat içinde itiraz ederse açılır; admin panelinde çözülür.

@@ -20,6 +20,7 @@ import { DisputesModule } from './disputes/disputes.module';
 import { FeatureFlagModule } from './feature-flags/feature-flag.module';
 import { HealthModule } from './health/health.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
+import { MailModule } from './mail/mail.module';
 import { MarketModule } from './market/market.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RatingsModule } from './ratings/ratings.module';
@@ -58,6 +59,7 @@ import { ReferralModule } from './referral/referral.module';
     BookingsModule,
     AuthModule,
     LoyaltyModule,
+    MailModule,
     BusinessesModule,
     SpecialistsModule,
     MarketModule,

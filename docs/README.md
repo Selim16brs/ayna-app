@@ -4,6 +4,7 @@ Kaynak spec: `../../AYNA_Claude_Code_Master_Spec.md` (v2.0). Bu klasör EK M ilk
 
 ## Planning
 
+- [E-posta sistemi](eposta-sistemi.md) — AYNA maling: şablonlar, seri ve çalışması için gereken üç ayar.
 - [iOS TestFlight kurulumu](ios-testflight-kurulum.md) — native değişiklikleri Apple'a yükleyen elle tetiklenen hat; gerekli 8 sır burada.
 - [AYNA — Özellikler](AYNA_OZELLIKLER.md) — uygulamanın tüm özellikleri, koddan çıkarılmış envanter.
 - [00 — Epic/Feature/Ticket Backlog](planning/00-backlog-epics-features-tickets.md)
