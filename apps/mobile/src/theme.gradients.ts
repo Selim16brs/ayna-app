@@ -65,10 +65,9 @@ export const darkGradients: GradientTokens = {
 export type GradientTokens = { [K in keyof typeof lightGradients]: readonly [string, string] };
 
 // ── AKSAN SETİ UYGULAMA ─────────────────────────────────────────────────
-// `paletUret` ile aynı mantık: taban gradyanlar duruyor, yalnızca aksan
-// ailesindeki üçü (birincil düğme, derin yüzey, sayfa sisi) değişiyor.
-// `rose` gradyanı acil/sayaç kartı — o da aksanla birlikte kayıyor ki
-// düğmeyle aynı ailede kalsın.
+// `paletUret` ile aynı mantık: dört gradyanın dördü de setten geliyor.
+// `hero` sayfa sisi, `gold` birincil düğme, `plum` derin yüzey, `rose`
+// acil/sayaç kartı.
 
 import { AKSANLAR, type AksanAnahtari, VARSAYILAN_AKSAN } from './theme.aksan';
 
@@ -77,12 +76,12 @@ export function gradyanUret(
   aksan: AksanAnahtari = VARSAYILAN_AKSAN,
 ): GradientTokens {
   const taban = mode === 'dark' ? darkGradients : lightGradients;
-  const set = AKSANLAR[aksan][mode];
+  const s = AKSANLAR[aksan][mode];
   return {
     ...taban,
-    gold: set.gradGold,
-    plum: set.gradPlum,
-    hero: set.gradHero,
-    rose: aksan === 'gul' ? taban.rose : set.gradPlum,
+    gold: s.gradGold,
+    plum: s.gradPlum,
+    hero: s.gradHero,
+    rose: s.gradRose,
   };
 }
