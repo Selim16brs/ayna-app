@@ -106,7 +106,18 @@ type PendingCounts = {
   reviewDisputes: number;
   circle: number;
   /** Dekont yüklenmiş ama tahsil edilmemiş komisyon faturaları. */
-  invoiceReceipts: number;
+  /*
+   * Sunucunun gönderdiği para kuyrukları. Bunlar hesaplanıyordu ama panelde
+   * HİÇBİR rozete bağlı değildi: dekont doğrulaması, iade, uzlaşma ve reklam
+   * ödemesi bekleyen iş varken menüde hiçbir işaret çıkmıyordu.
+   *
+   * `invoiceReceipts` buradaydı ve sunucu onu HİÇ göndermiyordu — kaldırılan
+   * komisyon faturası modelinden kalmış ölü bir alandı.
+   */
+  depositReceipts: number;
+  refundsPending: number;
+  reconciliationsOpen: number;
+  adOrders: number;
 };
 
 export default function AdminApp() {
@@ -198,7 +209,7 @@ export default function AdminApp() {
         { id: 'content', label: 'Blog & Tema', icon: '📰' },
         { id: 'announcements', label: 'Duyurular', icon: '📣' },
         { id: 'campaigns', label: 'Kampanyalar', icon: '🎯' },
-        { id: 'ads', label: 'Reklamlar', icon: '📢' },
+        { id: 'ads', label: 'Reklamlar', icon: '📢', badge: q?.adOrders },
       ],
     },
     {
@@ -208,8 +219,15 @@ export default function AdminApp() {
         // seçilemiyordu, dolayısıyla dekont doğrulama, iadeler, uzlaşma ve
         // reklam ödemeleri kuyrukları panelde AÇILAMIYORDU. Veri sunucuda
         // duruyor, ekran yazılmış ama kapısı yoktu.
-        { id: 'bookings', label: 'Randevu & Ödeme Kuyrukları', icon: '🧾' },
-        { id: 'commissions', label: 'Komisyon Takibi', icon: '💰', badge: q?.invoiceReceipts },
+        {
+          id: 'bookings',
+          label: 'Randevu & Ödeme Kuyrukları',
+          icon: '🧾',
+          // Üç kuyruk da bu sekmede: dekont, iade, uzlaşma.
+          badge:
+            (q?.depositReceipts ?? 0) + (q?.refundsPending ?? 0) + (q?.reconciliationsOpen ?? 0),
+        },
+        { id: 'commissions', label: 'Komisyon Takibi', icon: '💰' },
         { id: 'loyalty', label: 'Puan Ekonomisi', icon: '🎁' },
       ],
     },
@@ -1183,7 +1201,7 @@ function CategoryBars({ items }: { items: { sector: string; count: number }[] })
   );
 }
 
-// Komisyon tahsilatı — İŞLEM BAŞINA fatura (Ödendi/Bekliyor/Gecikti)
+// Randevu & ödeme kuyrukları: dekont doğrulama, iadeler, uzlaşma kayıtları.
 /**
  * Brief §8 — RANDEVU KUYRUKLARI.
  *
