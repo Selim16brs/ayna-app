@@ -134,12 +134,17 @@ export const darkColors: ColorTokens = {
 // ── AKSAN SETİ UYGULAMA ─────────────────────────────────────────────────
 //
 // Kullanıcı profilden bir renk seçtiğinde palet YENİDEN KURULMUYOR; taban
-// palet (yukarıdaki lightColors/darkColors) olduğu gibi kalıyor, yalnızca
-// aksan ailesindeki beş token üzerine yazılıyor. Zemin, kart, metin, çizgi
-// ve anlam renkleri (success/danger/gold) hiç dokunulmadan geçiyor.
+// palet (yukarıdaki lightColors/darkColors) olduğu gibi kalıyor, setin
+// katmanı üzerine yazılıyor.
 //
-// Varsayılan set 'gul' TABAN PALETİN AYNISI: seçim yapılmadığında bu
-// fonksiyon lightColors/darkColors ile birebir aynı değerleri üretir.
+// İLK SÜRÜMDE yalnız beş aksan token'ı yazılıyordu ve sonuç "çok sığ"
+// kalıyordu: düğme mavi oluyor ama zemin ve kartlar pembe kalıyordu.
+// Artık ZEMİN KATMANI da setten geliyor — sayfa zemini, çökertilmiş bölüm,
+// kart, panel, çizgiler, metin tonları ve yüzen alt menü.
+//
+// DIŞARIDA KALANLAR bilinçli: `success`, `danger`, `gold` ve bunların
+// yumuşak zeminleri ANLAM renkleri. Aksanla kayarlarsa "onaylandı" ile
+// "iptal edildi" ayırt edilemez hâle gelir.
 
 import { AKSANLAR, type AksanAnahtari, VARSAYILAN_AKSAN } from './theme.aksan';
 
@@ -148,18 +153,35 @@ export function paletUret(
   aksan: AksanAnahtari = VARSAYILAN_AKSAN,
 ): ColorTokens {
   const taban = mode === 'dark' ? darkColors : lightColors;
-  const set = AKSANLAR[aksan][mode];
+  const s = AKSANLAR[aksan][mode];
   return {
     ...taban,
-    accent: set.accent,
-    accentSoft: set.accentSoft,
-    accentFg: set.accentFg,
-    heroSoft: set.heroSoft,
-    plum: set.plum,
-    // `rose`/`roseSoft` aksanla birlikte kayıyor: acil/çekiliş vurgusu marka
-    // ailesinin parçası, durum rengi değil. Kehribar (gold) ve yeşil (success)
-    // KASITLI olarak dışarıda — onlar anlam taşıyor.
-    rose: set.accent,
-    roseSoft: set.accentSoft,
+    // zemin katmanı
+    bg: s.bg,
+    bgSunken: s.bgSunken,
+    surface: s.surface,
+    surfaceMuted: s.surfaceMuted,
+    // metin katmanı — tonu setten, parlaklığı taban merdivenden
+    ink: s.ink,
+    inkSoft: s.inkSoft,
+    muted: s.muted,
+    // çizgi ve ters yüzey
+    line: s.line,
+    lineStrong: s.lineStrong,
+    inverse: s.inverse,
+    onInverse: s.onInverse,
+    onInverseMuted: s.onInverseMuted,
+    fadeFrom: s.fadeFrom,
+    fadeMid: s.fadeMid,
+    // aksan ailesi
+    accent: s.accent,
+    accentSoft: s.accentSoft,
+    accentFg: s.accentFg,
+    onAccent: s.onAccent,
+    heroSoft: s.heroSoft,
+    plum: s.plum,
+    // Acil/çekiliş vurgusu marka ailesinin parçası, durum rengi değil.
+    rose: s.rose,
+    roseSoft: s.roseSoft,
   };
 }
