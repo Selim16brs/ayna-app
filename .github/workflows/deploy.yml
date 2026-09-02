@@ -9,7 +9,10 @@
 # İKİ AYRI YOL VAR ve karıştırılırsa saatler kaybedilir:
 #
 #   · JS/varlık değişikliği  → OTA (`eas update`). Mevcut TestFlight yapısına
-#     havadan düşer, yeni derleme GEREKMEZ. Bu iş akışı bunu OTOMATİK yapar.
+#     havadan düşer, yeni derleme GEREKMEZ. 2 Eyl 2026'dan beri OTOMATİK
+#     DEĞİL: kurucu her şeyi TestFlight'ta kontrol ediyor ve OTA aynı kanala
+#     düştüğü için build'in JS'ini havadan değiştiriyordu. Gerekirse
+#     Actions → Deploy → Run workflow → "OTA yayınla" ile elle tetiklenir.
 #
 # SÜRÜM NUMARASI: `eas.json` → `appVersionSource: local`. TestFlight geçmişi
 # arkadaşın Apple hesabında (1.0.0/114) ve BİZİM EAS projemizde hiç iOS yapısı
@@ -31,6 +34,10 @@ on:
   # Native yapı ve TestFlight gönderimi elle tetiklenir.
   workflow_dispatch:
     inputs:
+      ota:
+        description: 'OTA yayınla (JS’i havadan gönder — normalde KAPALI)'
+        type: boolean
+        default: false
       native_yapi:
         description: 'iOS yapısı üret ve TestFlight’a gönder (native değişiklik gerektiğinde)'
         type: boolean
@@ -45,6 +52,17 @@ jobs:
   ota:
     name: OTA yayını (JS)
     runs-on: ubuntu-latest
+    # ── OTA KAPALI (2 Eyl 2026, kurucu kararı) ──────────────────────────
+    # Kurucu artık her şeyi TestFlight'ta kontrol ediyor. OTA aynı kanala
+    # (`production`) düştüğü için TestFlight build'inin JS'ini havadan
+    # değiştiriyordu: "hangi sürümü test ediyorum" belirsizleşiyordu.
+    #
+    # İş SİLİNMEDİ, otomatiği kaldırıldı: gerekirse Actions → Deploy →
+    # Run workflow → "OTA yayınla" ile elle çalıştırılır.
+    #
+    # Testler burada kaybolmuyor: `ci.yml` main'e her push'ta ve her PR'da
+    # build + typecheck + lint + test koşuyor.
+    if: github.event_name == 'workflow_dispatch' && inputs.ota
     # Testler CI ile AYNI ortamda koşmalı; farklı ortam "CI'da geçti burada
     # düştü" gibi açıklanamaz farklar üretir.
     services:
