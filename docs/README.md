@@ -4,6 +4,7 @@ Kaynak spec: `../../AYNA_Claude_Code_Master_Spec.md` (v2.0). Bu klasör EK M ilk
 
 ## Planning
 
+- [iOS TestFlight kurulumu](ios-testflight-kurulum.md) — native değişiklikleri Apple'a yükleyen elle tetiklenen hat; gerekli 8 sır burada.
 - [AYNA — Özellikler](AYNA_OZELLIKLER.md) — uygulamanın tüm özellikleri, koddan çıkarılmış envanter.
 - [00 — Epic/Feature/Ticket Backlog](planning/00-backlog-epics-features-tickets.md)
 - [01 — Çelişkiler, Riskler, Açık Kararlar](planning/01-contradictions-risks-open-decisions.md) ⛔ açık kararlar burada
