@@ -9,10 +9,14 @@
 # İKİ AYRI YOL VAR ve karıştırılırsa saatler kaybedilir:
 #
 #   · JS/varlık değişikliği  → OTA (`eas update`). Mevcut TestFlight yapısına
-#     havadan düşer, yeni derleme GEREKMEZ. 2 Eyl 2026'dan beri OTOMATİK
-#     DEĞİL: kurucu her şeyi TestFlight'ta kontrol ediyor ve OTA aynı kanala
-#     düştüğü için build'in JS'ini havadan değiştiriyordu. Gerekirse
-#     Actions → Deploy → Run workflow → "OTA yayınla" ile elle tetiklenir.
+#     havadan düşer, yeni derleme GEREKMEZ. Bu iş akışı bunu OTOMATİK yapar:
+#     main'e her merge telefona düşer.
+#
+#     2 Eyl 2026'da bir gün boyunca elle tetiklemeye alınmıştı; geri alındı.
+#     Sebep: kapatınca "GitHub'a push et, telefonda gör" akışı bozuldu ve
+#     kurucunun tek pratik yolu TestFlight derlemesi kaldı — o hat ise Apple
+#     sırları tanımlı olmadığı için çalışmıyor. Yani OTA kapalıyken
+#     değişiklikleri telefona ulaştıran HİÇBİR yol kalmıyordu.
 #
 # SÜRÜM NUMARASI: `eas.json` → `appVersionSource: local`. TestFlight geçmişi
 # arkadaşın Apple hesabında (1.0.0/114) ve BİZİM EAS projemizde hiç iOS yapısı
@@ -35,7 +39,7 @@ on:
   workflow_dispatch:
     inputs:
       ota:
-        description: 'OTA yayınla (JS’i havadan gönder — normalde KAPALI)'
+        description: 'OTA yayınla (merge dışında elle göndermek için)'
         type: boolean
         default: false
       native_yapi:
@@ -52,17 +56,17 @@ jobs:
   ota:
     name: OTA yayını (JS)
     runs-on: ubuntu-latest
-    # ── OTA KAPALI (2 Eyl 2026, kurucu kararı) ──────────────────────────
-    # Kurucu artık her şeyi TestFlight'ta kontrol ediyor. OTA aynı kanala
-    # (`production`) düştüğü için TestFlight build'inin JS'ini havadan
-    # değiştiriyordu: "hangi sürümü test ediyorum" belirsizleşiyordu.
+    # ── OTA OTOMATİK ────────────────────────────────────────────────────
+    # main'e her merge → telefona. Kurucunun beklediği akış bu:
+    # "githuba pushladığım her şey uygulamamdan çok rahat otomatik
+    # güncellenip test ediliyordu."
     #
-    # İş SİLİNMEDİ, otomatiği kaldırıldı: gerekirse Actions → Deploy →
-    # Run workflow → "OTA yayınla" ile elle çalıştırılır.
+    # Elle tetikleme de duruyor (Actions → Deploy → "OTA yayınla"): bir
+    # şeyi yeniden göndermek gerektiğinde merge beklemeye gerek yok.
     #
-    # Testler burada kaybolmuyor: `ci.yml` main'e her push'ta ve her PR'da
-    # build + typecheck + lint + test koşuyor.
-    if: github.event_name == 'workflow_dispatch' && inputs.ota
+    # "Hangi sürümü test ediyorum" sorusu profildeki alt yazıyla cevaplanıyor:
+    # OTA'dan önce `surum-bilgi.json`'a commit sha'sı ve başlığı yazılıyor.
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.ota)
     # Testler CI ile AYNI ortamda koşmalı; farklı ortam "CI'da geçti burada
     # düştü" gibi açıklanamaz farklar üretir.
     services:
