@@ -9,18 +9,34 @@
 
 // ── Gradyanlar ───────────────────────────────────────────────────────────
 export const lightGradients = {
-  hero: ['#FAF7F5', '#E8D9EB'] as const, // zemin → lila
-  gold: ['#642855', '#4A1942'] as const, // ana CTA: mürdüm ombre (isim geriye dönük)
+  hero: ['#F8F4F5', '#F6ECF4'] as const, // zemin → pembe sis
+  /**
+   * BİRİNCİL DÜĞME — ayna.salon'daki gibi PEMBE.
+   *
+   * Sitede `--pink` eylem rengi (bağlantı, birincil düğme, aktif sekme),
+   * `--plum` ise derin yüzey (öne çıkan kart, bölüm zemini). Uygulamada
+   * ikisi de erikti; her düğme, her çip ve her kart aynı koyu tonda olunca
+   * ekran ağırlaşıyordu — kurucunun "çok dark" dediği şey buydu.
+   *
+   * Sitenin canlı pembesi (#DE3370) beyaz yazıyla 4.36:1 veriyor — eşiğin
+   * altında. Gradyanın AÇIK ucu #DD2A6A: aynı ton (339°), yalnız iki puan
+   * koyu, 4.55:1. Gözle ayırt edilmiyor ama okunuyor. Koyu uç sitenin
+   * kendi `--pink-dark` değeri.
+   *
+   * Renk uydurulmadı: sitenin tonu korunup parlaklığı eşiğe kadar indirildi.
+   */
+  gold: ['#DD2A6A', '#BC245B'] as const,
   /**
    * ACİL / ÇEKİLİŞ kartı. Üstüne beyaz yazı geliyordu ve en açık ucunda
    * 2.94:1 ölçülüyordu — okunmuyordu. Bu çift 5.72:1 veriyor.
    */
   rose: ['#A34A57', '#83323F'] as const,
-  plum: ['#642855', '#4A1942'] as const,
+  // DERİN YÜZEY — sitedeki `--plum`. Ekran başına tek koyu kart burada.
+  plum: ['#6A0D66', '#50094D'] as const,
 } as const;
 
 export const darkGradients: GradientTokens = {
-  hero: ['#18061C', '#26102A'] as const,
+  hero: ['#0F0B10', '#1A141C'] as const,
   /**
    * BİRİNCİL DÜĞME — koyuda da ERİK.
    *
@@ -31,7 +47,8 @@ export const darkGradients: GradientTokens = {
    * Bu çift 5.81:1 veriyor ve koyu zeminden de 5.81:1 ayrışıyor.
    * `rose` gradyanı DURUYOR — orası acil/sayaç, gül orada anlam taşıyor.
    */
-  gold: ['#C5A3C7', '#A87FAB'] as const,
+  // Koyuda pembe AÇILIR + koyu yazı: 8.15:1.
+  gold: ['#FF7FA8', '#F26191'] as const,
   /**
    * Koyuda AÇIK gül + koyu yazı — birincil düğmeyle aynı mantık.
    * Koyu gül koyu zeminden ayrışmıyordu (2.30:1); açık gül hem yazıyı
@@ -42,7 +59,7 @@ export const darkGradients: GradientTokens = {
   // Koyuda accent'i açmak metin/ikon için doğru, dolu yüzey için değil:
   // '#AA9AC4' üstünde beyaz 2.58:1 ölçülüyor — okunmuyor. Bu çift 7.72:1
   // veriyor ve koyu zeminden (#1A1419) yine ayrışıyor.
-  plum: ['#642855', '#4A1942'] as const,
+  plum: ['#4E0C4B', '#3A0838'] as const,
 };
 
 export type GradientTokens = { [K in keyof typeof lightGradients]: readonly [string, string] };
