@@ -7,7 +7,6 @@ import { radius, space, type ColorTokens, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Screen, StackHeader, Text, ListSkeleton, TAB_BAR_CLEARANCE } from '../src/ui';
 
-const FALLBACK_IMG = 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&q=60';
 const DAY_KEYS = [
   'day.sun',
   'day.mon',
@@ -53,7 +52,17 @@ export default function OffersScreen() {
                 })
               }
             >
-              <Image source={{ uri: o.imageUrl || FALLBACK_IMG }} style={styles.img} />
+              {/* Görseli olmayan fırsat: YEREL yer tutucu.
+                  Burada Unsplash'ten bir kadın fotoğrafı çekiliyordu —
+                  hem tasarıma ait değildi hem de YEDEĞİN KENDİSİ ağa
+                  bağlıydı: çevrimdışıyken yer tutucu da gelmiyordu. */}
+              {o.imageUrl ? (
+                <Image source={{ uri: o.imageUrl }} style={styles.img} />
+              ) : (
+                <View style={[styles.img, styles.imgBos]}>
+                  <Ionicons name="pricetag" size={26} color={colors.accent} />
+                </View>
+              )}
               <View style={styles.body}>
                 <View style={styles.topRow}>
                   <View style={styles.badge}>
@@ -130,6 +139,11 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(1.5),
     },
     img: { width: 92, height: 116, borderRadius: radius.md, backgroundColor: colors.bgSunken },
+    imgBos: {
+      backgroundColor: colors.accentSoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     body: { flex: 1, gap: 4 },
     topRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     badge: {
