@@ -76,7 +76,7 @@ export default function AddEntryScreen() {
       ) : formMode === 'routine' ? (
         <RoutineForm onDone={() => router.back()} />
       ) : (
-        <MomentForm onDone={() => router.back()} />
+        <MomentForm onDone={() => router.back()} {...(id ? { editId: id } : {})} />
       )}
     </Screen>
   );
@@ -410,23 +410,52 @@ function FormKabi({ children }: { children: React.ReactNode }) {
 }
 
 // ── Özel gün ──────────────────────────────────────────────────────────────
-function MomentForm({ onDone }: { onDone: () => void }) {
+function MomentForm({ onDone, editId }: { onDone: () => void; editId?: string }) {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const addMoment = useStore((s) => s.addMoment);
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState(() => new Date());
+  const updateMoment = useStore((s) => s.updateMoment);
+  const deleteMoment = useStore((s) => s.deleteMoment);
+  /*
+   * Kurucu: "doğum günü girildiğinde düzenleme ya da silme yok."
+   *
+   * Aynı form artık hem ekliyor hem düzenliyor: ayrı bir ekran yazmak,
+   * iki yerin zamanla ayrışması demekti (biri düzelip diğeri bozuk kalır).
+   */
+  const mevcut = useStore((s) => s.moments.find((x) => x.id === editId));
+  const [title, setTitle] = useState(mevcut?.title ?? '');
+  const [date, setDate] = useState(() =>
+    // Kayıtta TARİH yok, "kaç gün kaldı" var — ekranda tarihe çevriliyor.
+    mevcut ? new Date(Date.now() + mevcut.daysLeft * 86_400_000) : new Date(),
+  );
 
   const canSave = title.trim().length > 0;
 
+  const sil = () => {
+    if (!editId) return;
+    Alert.alert(t('care.add.moment_title'), t('care.add.delete_confirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: () => {
+          deleteMoment(editId);
+          onDone();
+        },
+      },
+    ]);
+  };
+
   const save = () => {
     // Özel gün yıllık tekrarlar → kalan gün seçilen tarihten otomatik hesaplanır.
-    addMoment({
+    const payload = {
       title: title.trim(),
       dateLabel: formatTrDate(date, false),
       daysLeft: daysUntilNextOccurrence(date),
-    });
+    };
+    if (editId) updateMoment(editId, payload);
+    else addMoment(payload);
     onDone();
   };
 
@@ -454,6 +483,15 @@ function MomentForm({ onDone }: { onDone: () => void }) {
           disabled={!canSave}
           onPress={save}
         />
+        {/* Silme YALNIZ düzenlemede: yeni kayıtta silinecek bir şey yok. */}
+        {editId ? (
+          <Pressable onPress={sil} hitSlop={8} style={styles.silSatir}>
+            <Ionicons name="trash-outline" size={16} color={colors.danger} />
+            <Text variant="caption" style={{ color: colors.danger }}>
+              {t('common.delete')}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     </FormKabi>
   );
@@ -535,6 +573,13 @@ const makeStyles = (colors: ColorTokens) =>
     },
     chipActive: { backgroundColor: colors.accent },
     chipTextActive: { fontFamily: font.semibold },
+    silSatir: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space(1),
+      paddingTop: space(1.5),
+    },
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),

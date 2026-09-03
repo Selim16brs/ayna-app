@@ -53,6 +53,15 @@ export class CareController {
     return this.care.addMoment(req.user!.id, body);
   }
 
+  @Patch('moments/:id')
+  updateMoment(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(momentSchema)) body: MomentInput,
+  ) {
+    return this.care.updateMoment(req.user!.id, id, body);
+  }
+
   @Delete('moments/:id')
   removeMoment(@Req() req: AuthedRequest, @Param('id') id: string) {
     return this.care.removeMoment(req.user!.id, id);
