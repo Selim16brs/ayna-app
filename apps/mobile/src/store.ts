@@ -316,6 +316,8 @@ interface State {
   recentSearches: string[];
   // §5.4 — bildirim grupları aç/kapa (bakım / özel gün / kişisel kayıt / randevu)
   notifPrefs: { care: boolean; moment: boolean; personal: boolean; booking: boolean };
+  /** Gönderilmiş özel gün hatırlatmaları — aynı bildirim tekrar basılmasın. */
+  momentNudged: string[];
   // §9.3 — uzman talep bildirim tercihleri: kategori (boş = tümü) + saat aralığı (Almatı saati)
   demandNotif: { cats: string[]; from: number; to: number };
   setDemandNotif: (p: Partial<{ cats: string[]; from: number; to: number }>) => void;
@@ -578,6 +580,10 @@ interface State {
   updatePersonalLog: (id: string, patch: AddPersonalLogInput) => void;
   deletePersonalLog: (id: string) => void;
   addMoment: (input: AddMomentInput) => void;
+  /** Özel günü düzenle — yanlış tarih giren kullanıcı düzeltebilsin. */
+  updateMoment: (id: string, input: AddMomentInput) => void;
+  /** Özel günü sil. Sunucu ucu vardı ama uygulama HİÇ çağırmıyordu. */
+  deleteMoment: (id: string) => void;
   addRoutine: (input: AddRoutineInput) => void;
   completeRoutine: (id: string) => void;
 
@@ -674,6 +680,7 @@ export const userScopedReset = (): Partial<State> => ({
   offersSeen: {},
   demandNotif: { cats: [], from: 8, to: 22 },
   notifPrefs: { care: true, moment: true, personal: true, booking: true },
+  momentNudged: [],
   sellerServices: seedSellerServices(),
   sellerHours: defaultHours(),
   sellerSocial: emptySocial,
@@ -698,6 +705,7 @@ export const useStore = create<State>()(
       promotions: [],
       recentSearches: [],
       notifPrefs: { care: true, moment: true, personal: true, booking: true },
+      momentNudged: [],
       demandNotif: { cats: [], from: 8, to: 22 },
       closedDays: [],
       circlePosts: [],
@@ -1334,6 +1342,52 @@ export const useStore = create<State>()(
 
       // §4.1 adım 6 — onaylı randevular için 24s ve 2s hatırlatmaları (idempotent, bayrakla)
       checkReminders: () => {
+        /*
+         * ── ÖZEL GÜN HATIRLATMASI ────────────────────────────────────────
+         *
+         * Kurucu: "bu girdilerde bildirim olacak mı?"
+         *
+         * Cevap "hayır"dı ve durum daha kötüydü: ayarlarda `notifPrefs.moment`
+         * diye AÇILIP KAPANABİLEN bir anahtar vardı ama hiçbir şey bildirim
+         * ÜRETMİYORDU. Yani kullanıcıya hiç gelmeyecek bir bildirimin
+         * düğmesi gösteriliyordu.
+         *
+         * İKİ EŞİK: 7 gün kala (hazırlanmak için) ve o gün. Daha sık
+         * hatırlatmak özel günü bildirime boğar.
+         *
+         * TEKRARLAMIYOR: her (an, eşik) çifti için bir kez. `momentNudged`
+         * damgası olmasaydı uygulama her açılışta aynı bildirimi basardı.
+         */
+        if (get().notifPrefs.moment) {
+          const bugun = new Date();
+          const gunAnahtari = `${bugun.getFullYear()}-${bugun.getMonth()}-${bugun.getDate()}`;
+          const damgali = get().momentNudged;
+          const yeniDamga: string[] = [];
+          for (const m of get().moments) {
+            const esik = m.daysLeft === 0 ? 'gun' : m.daysLeft === 7 ? 'hafta' : null;
+            if (!esik) continue;
+            // Damga GÜNÜ de içeriyor: yıl sonra tekrar edecek bir doğum günü
+            // gelecek sene yeniden hatırlatılabilsin.
+            const anahtar = `${m.id}:${esik}:${gunAnahtari}`;
+            if (damgali.includes(anahtar)) continue;
+            yeniDamga.push(anahtar);
+            get().pushNotification({
+              // `NotificationType` birleşiminde 'care' yok; özel gün
+              // hatırlatması kullanıcının kendi kaydından doğuyor ve
+              // randevu/teklif akışına ait değil.
+              type: 'system',
+              titleKey: 'notif.moment.title',
+              bodyKey: m.daysLeft === 0 ? 'notif.moment.today' : 'notif.moment.body',
+              params: { ad: m.title, gun: String(m.daysLeft) },
+              dateLabel: 'Az önce',
+              icon: m.icon ?? 'gift-outline',
+              route: '/care',
+            });
+          }
+          if (yeniDamga.length)
+            set((s) => ({ momentNudged: [...s.momentNudged, ...yeniDamga].slice(-200) }));
+        }
+
         // §7 — hizmet bitiminden 3 SAAT sonra değerlendirme anketi (tek sefer; puan uzmana işler)
         {
           const now = Date.now();
@@ -2474,6 +2528,46 @@ export const useStore = create<State>()(
             })),
           )
           .catch(() => set((s) => ({ moments: s.moments.filter((x) => x.id !== gecici) })));
+      },
+
+      updateMoment: (id, input) => {
+        /*
+         * Kurucu: "doğum günü girildiğinde düzenleme ya da silme yok."
+         *
+         * YEREL ÖNCE: kullanıcı değişikliği anında görsün. Sunucu yazımı
+         * arkada; düşerse liste yerelde doğru kalır ve bir sonraki
+         * `hydrateCare` gerçeği geri getirir.
+         */
+        set((s) => ({
+          moments: s.moments.map((x) =>
+            x.id === id
+              ? {
+                  ...x,
+                  title: input.title,
+                  dateLabel: input.dateLabel,
+                  daysLeft: input.daysLeft,
+                  ...(input.icon ? { icon: input.icon } : {}),
+                }
+              : x,
+          ),
+        }));
+        const token = get().token;
+        if (!token) return;
+        void api
+          .updateCareMoment(token, id, {
+            title: input.title,
+            // Sunucu TARİHİ saklıyor, "kaç gün kaldı"yı değil.
+            happensAtMs: Date.now() + input.daysLeft * 86_400_000,
+            ...(input.icon ? { icon: input.icon } : {}),
+          })
+          .catch(() => undefined);
+      },
+
+      deleteMoment: (id) => {
+        set((s) => ({ moments: s.moments.filter((x) => x.id !== id) }));
+        const token = get().token;
+        if (!token) return;
+        void api.deleteCareMoment(token, id).catch(() => undefined);
       },
 
       addRoutine: (input) => {

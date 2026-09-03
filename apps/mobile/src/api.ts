@@ -1162,6 +1162,14 @@ export const api = {
     del<{ ok: boolean }>(`/care/routines/${id}`, token),
   addCareMoment: (token: string, input: CareMomentInput) =>
     post<{ id: string }>('/care/moments', input, token),
+  /** Özel günü güncelle — yanlış tarih giren kullanıcı düzeltebilsin. */
+  updateCareMoment: (
+    token: string,
+    id: string,
+    body: { title: string; happensAtMs: number; icon?: string },
+  ) => patchReq<{ ok: boolean }>(`/care/moments/${id}`, body, token),
+  deleteCareMoment: (token: string, id: string) =>
+    del<{ ok: boolean }>(`/care/moments/${id}`, token),
   removeCareMoment: (token: string, id: string) =>
     del<{ ok: boolean }>(`/care/moments/${id}`, token),
   addCareLog: (token: string, input: CareLogInput) =>

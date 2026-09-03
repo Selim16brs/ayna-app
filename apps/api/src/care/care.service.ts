@@ -111,6 +111,32 @@ export class CareService {
     });
   }
 
+  /**
+   * Özel günü GÜNCELLE.
+   *
+   * Kurucu: "doğum günü girildiğinde düzenleme ya da silme yok."
+   *
+   * Silme ucu vardı (aşağıda) ama uygulama onu HİÇ ÇAĞIRMIYORDU;
+   * güncelleme ise hiç yoktu. Yanlış tarih giren biri kaydı ne
+   * düzeltebiliyor ne kaldırabiliyordu — listede yanlış bir doğum günü
+   * sonsuza kadar kalıyordu.
+   *
+   * `updateMany` + `userId`: başkasının kaydını düzenlemek imkânsız
+   * (kimlik istemciden gelmiyor, oturumdan).
+   */
+  async updateMoment(userId: string, id: string, input: MomentInput) {
+    const r = await this.prisma.careMoment.updateMany({
+      where: { id, userId },
+      data: {
+        title: input.title,
+        ...(input.icon ? { icon: input.icon } : {}),
+        happensAt: new Date(input.happensAtMs),
+      },
+    });
+    if (r.count === 0) throw new NotFoundException({ code: 'NOT_FOUND', message: 'An yok' });
+    return { ok: true };
+  }
+
   async removeMoment(userId: string, id: string) {
     const r = await this.prisma.careMoment.deleteMany({ where: { id, userId } });
     if (r.count === 0) throw new NotFoundException({ code: 'NOT_FOUND', message: 'An yok' });

@@ -531,8 +531,17 @@ function MomentRow({ moment, border }: { moment: Moment; border: boolean }) {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const router = useRouter();
+  /*
+   * Kurucu: "doğum günü girildiğinde düzenleme ya da silme yok."
+   *
+   * Günlük kayıtlar zaten karta dokununca düzenleme ekranını açıyordu
+   * (`PersonalLogRow`); özel günlerde bu yol HİÇ YOKTU. Yanlış tarih giren
+   * biri kaydı ne düzeltebiliyor ne kaldırabiliyordu.
+   */
+  const ac = () => router.push(`/care/add?mode=moment&id=${moment.id}`);
   return (
-    <View style={[styles.row, border && styles.rowBorder]}>
+    <Pressable onPress={ac} style={[styles.row, border && styles.rowBorder]}>
       <View style={[styles.iconChip, { backgroundColor: colors.lavenderSoft }]}>
         <Ionicons name={moment.icon as IoniconName} size={18} color={colors.lavender} />
       </View>
@@ -549,7 +558,10 @@ function MomentRow({ moment, border }: { moment: Moment; border: boolean }) {
           {moment.daysLeft} {t('care.due_in')}
         </Text>
       </View>
-    </View>
+      <Pressable hitSlop={10} onPress={ac} style={styles.trash}>
+        <Ionicons name="ellipsis-horizontal" size={18} color={colors.muted} />
+      </Pressable>
+    </Pressable>
   );
 }
 
