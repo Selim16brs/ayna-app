@@ -11,3 +11,4 @@ export * from './catalog/category-ids.js';
 export * from './loyalty/spend-rules.js';
 export * from './trust/ayna-verified.js';
 export * from './money/kzt.js';
+export * from './catalog/katalog.js';
