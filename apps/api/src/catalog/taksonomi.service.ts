@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { KATALOG, type KatalogKategorisi } from '@ayna/domain';
+import { KATALOG, katalogHizmetKimlikleri, type KatalogKategorisi } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 
 /**
@@ -61,8 +61,13 @@ export class TaksonomiService {
        * manuel hizmet mutlaka bir alt hizmete bağlı — bağ `serviceId`.
        */
       try {
-        const liste = JSON.parse(p.servicesJson ?? '[]') as { serviceId?: string }[];
-        for (const h of liste) if (h.serviceId) bulunan.add(h.serviceId);
+        /*
+         * Kimliğin hangi alandan okunacağı `@ayna/domain`de — yazan taraf
+         * da oradan geçiyor. Burada `serviceId` aranıyordu ama uygulama
+         * `id` yazıyor: hata vermeden BÜTÜN katalog "Yakında" görünürdü.
+         */
+        for (const id of katalogHizmetKimlikleri(JSON.parse(p.servicesJson ?? '[]')))
+          bulunan.add(id);
       } catch {
         // Bozuk JSON tek bir uzmanın kaydı; katalogu düşürmemeli.
       }

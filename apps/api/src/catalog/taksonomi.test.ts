@@ -15,6 +15,16 @@ import { TaksonomiService } from './taksonomi.service';
  * §7.3: kategori sırası admin panelden değiştirilebilir.
  */
 
+/**
+ * Uygulamanın `servicesJson`a YAZDIĞI satır biçimi.
+ *
+ * `apps/mobile/src/store.ts` → `api.setMyServices` bu şekli gönderiyor:
+ * kimlik `id` alanında. Testlerin bu şekli kullanması şart — okuyan
+ * tarafın beklediği şekli kullansaydı, iki taraf ayrıştığında test yine
+ * yeşil kalırdı. (Tam olarak bu oldu.)
+ */
+const YAZILAN = (id: string) => ({ id, name: 'Uzmanın kendi adı', price: 9000, durationMin: 60 });
+
 function servis(over: { pro?: unknown[]; gizli?: unknown[]; sira?: unknown[] } = {}) {
   const prisma = {
     specialist: { findMany: () => Promise.resolve(over.gizli ?? []) },
@@ -35,8 +45,14 @@ test('arz yokken TÜM alt hizmetler "Yakında"', async () => {
 });
 
 test('uzmanı olan alt hizmette rozet YOK', async () => {
+  /*
+   * Satır UYGULAMANIN GERÇEKTEN YAZDIĞI biçimde: `{ id, name, price,
+   * durationMin }`. Bu test önce `{ serviceId }` ile yazılmıştı — yani
+   * okuyan tarafın varsayımını doğruluyordu, yazan tarafın gerçeğini
+   * değil. Yeşil geçiyordu ve hata canlıya kadar gidecekti.
+   */
   const svc = servis({
-    pro: [{ id: 'p1', servicesJson: JSON.stringify([{ serviceId: 'hair.haircut' }]) }],
+    pro: [{ id: 'p1', servicesJson: JSON.stringify([YAZILAN('hair.haircut')]) }],
   });
   const { kategoriler } = await svc.taksonomi();
   const sac = kategoriler.find((k) => k.id === 'hair')!;
@@ -51,7 +67,7 @@ test('YAYINDAN KALDIRILMIŞ uzman arz saymıyor', async () => {
    * görüp randevu alamayacağı bir hizmete tıklardı.
    */
   const svc = servis({
-    pro: [{ id: 'p1', servicesJson: JSON.stringify([{ serviceId: 'nails.pedicure' }]) }],
+    pro: [{ id: 'p1', servicesJson: JSON.stringify([YAZILAN('nails.pedicure')]) }],
     gizli: [{ proId: 'p1' }],
   });
   const { kategoriler } = await svc.taksonomi();
@@ -93,4 +109,73 @@ test('üç dilin HEPSİ gönderiliyor', async () => {
   const k = kategoriler[0]!;
   assert.deepEqual(Object.keys(k.ad).sort(), ['kk', 'ru', 'tr']);
   assert.deepEqual(Object.keys(k.altHizmetler[0]!.ad).sort(), ['kk', 'ru', 'tr']);
+});
+
+test('UYGULAMANIN YAZDIĞI biçim arz olarak SAYILIYOR — sözleşme testi', async () => {
+  /*
+   * Bu testin varlık sebebi gerçek bir hata: yazan taraf `id`, okuyan
+   * taraf `serviceId` kullanıyordu. Hiçbir şey hata vermiyordu; yalnız
+   * gerçek uzmanlar varken BÜTÜN katalog "Yakında" görünecekti.
+   *
+   * Kimlik okuma artık `@ayna/domain`de tek yerde. Bu test o sözleşmeyi
+   * uçtan uca doğruluyor.
+   */
+  const svc = servis({
+    pro: [
+      {
+        id: 'p1',
+        servicesJson: JSON.stringify([YAZILAN('hair.haircut'), YAZILAN('nails.manicure')]),
+      },
+    ],
+  });
+  const { kategoriler } = await svc.taksonomi();
+  const bul = (id: string) => kategoriler.flatMap((k) => k.altHizmetler).find((a) => a.id === id)!;
+  assert.equal(bul('hair.haircut').yakinda, false, 'uygulamanın yazdığı kimlik arz sayılmıyor');
+  assert.equal(bul('nails.manicure').yakinda, false);
+  assert.equal(bul('hair.blowdry').yakinda, true, 'kardeş hizmet etkilenmiş');
+});
+
+test('İKİ alan adı da okunuyor — geçiş sırasında karışık kayıt olabilir', async () => {
+  // `serviceId` brief §4.1 hedefi (uzman kendi adını yazar, `serviceId`
+  // bağlı olduğu alt hizmeti gösterir). Geçişte ikisi bir arada bulunur.
+  const svc = servis({
+    pro: [
+      {
+        id: 'p1',
+        servicesJson: JSON.stringify([
+          { id: 'hair.haircut', name: 'x', price: 1, durationMin: 30 },
+          { serviceId: 'skin.facial', name: 'Roza özel bakım', price: 1, durationMin: 30 },
+        ]),
+      },
+    ],
+  });
+  const { kategoriler } = await svc.taksonomi();
+  const bul = (id: string) => kategoriler.flatMap((k) => k.altHizmetler).find((a) => a.id === id)!;
+  assert.equal(bul('hair.haircut').yakinda, false);
+  assert.equal(bul('skin.facial').yakinda, false);
+});
+
+test('SERBEST ad ya da eski kimlik arz SAYILMIYOR', async () => {
+  /*
+   * Uzmanın kendi yazdığı ad ("Roza paketi") ya da eski taksonomi kimliği
+   * ("hair-cut") katalogda yok. Arz sayılsaydı, karşılığı olmayan bir alt
+   * hizmetten rozet kalkar, müşteri var olmayan uzmana yönlendirilirdi.
+   */
+  const svc = servis({
+    pro: [
+      {
+        id: 'p1',
+        servicesJson: JSON.stringify([
+          { id: 'Roza paketi', name: 'Roza paketi', price: 1, durationMin: 30 },
+          { id: 'hair-cut', name: 'eski', price: 1, durationMin: 30 },
+        ]),
+      },
+    ],
+  });
+  const { kategoriler } = await svc.taksonomi();
+  const hepsi = kategoriler.flatMap((k) => k.altHizmetler);
+  assert.ok(
+    hepsi.every((a) => a.yakinda),
+    'katalogda olmayan kimlik arz sayıldı',
+  );
 });

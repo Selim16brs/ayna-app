@@ -163,6 +163,23 @@ test('ARAMA seçili dile bakmıyor — üç dilde de bulur', () => {
   );
 });
 
+test('TÜRKÇE "İ" arama sonucunu düşürmüyor', () => {
+  /*
+   * `'İ'.toLowerCase()` JavaScript'te TEK harf değil İKİ kod noktası
+   * üretiyor: 'i' + U+0307 (birleşen nokta). Küçültmeden SONRA harf
+   * değiştiren kod o noktayı bırakıyor ve "manİkür" ile "manikür"
+   * eşleşmiyordu. Klavyeden büyük harf yazan kullanıcı HİÇBİR SONUÇ
+   * alamıyordu — sessiz ve tam bir arama arızası.
+   */
+  assert.equal(aramaAnahtari('MANİKÜR'), aramaAnahtari('manikür'));
+  assert.equal(aramaAnahtari('KİRPİK'), aramaAnahtari('kirpik'));
+  assert.ok(
+    hizmetAra('MANİKÜR').some((s) => s.id === 'nails.manicure'),
+    'noktalı büyük İ ile arama bulamıyor',
+  );
+  assert.ok(kategoriAra('lashes_brows', 'KİRPİK'), 'noktalı büyük İ kategori aramasını düşürüyor');
+});
+
 test('TÜRKÇE "I" arama sonucunu düşürmüyor', () => {
   /*
    * `toLocaleLowerCase('tr-TR')` "MANIKÜR"ü "manıkür" yapar ve katalogdaki

@@ -18,6 +18,7 @@ import type { AuthedRequest } from '../auth/jwt-auth.guard';
 import { i18nSchema } from '../content/content.dto';
 import { AdminService } from './admin.service';
 import { RandevuKuyrukService } from './randevu-kuyruk.service';
+import { ReguleUyariService } from '../catalog/regule-uyari.service';
 
 const rejectSchema = z.object({ reason: z.string().max(300).optional() });
 const kuyrukNotSchema = z.object({ note: z.string().max(500).optional() });
@@ -48,6 +49,15 @@ const spVerifySchema = z.object({
 });
 type SpVerifyInput = z.infer<typeof spVerifySchema>;
 const restrictSchema = z.object({ reason: z.string().min(1).max(300) });
+/**
+ * Regüle hizmet kararı — brief §5.
+ *
+ * `cleared` sorun görülmedi (aynı ad bir daha kuyruğa düşmez),
+ * `removed` hizmet kaldırıldı/uzman uyarıldı. Karar SİLMİYOR: kimin ne
+ * yazdığı ve yöneticinin ne dediği denetim izi olarak kalıyor.
+ */
+const reguleKararSchema = z.object({ karar: z.enum(['cleared', 'removed']) });
+type ReguleKararInput = z.infer<typeof reguleKararSchema>;
 // §7.2 — itiraz kararı: yorumu tut (keep) veya kural ihlalinde gizle (remove)
 const resolveDisputeSchema = z.object({ action: z.enum(['keep', 'remove']) });
 const featuredSchema = z.object({ featured: z.boolean() });
@@ -144,6 +154,7 @@ export class AdminController {
   constructor(
     private readonly admin: AdminService,
     private readonly kuyruk: RandevuKuyrukService,
+    private readonly regule: ReguleUyariService,
   ) {}
 
   // ── Brief §8 — randevu akışı kuyrukları ──────────────────────────────────
@@ -198,6 +209,26 @@ export class AdminController {
   @Get('overview')
   overview() {
     return this.admin.overview();
+  }
+
+  /**
+   * REGÜLE HİZMET UYARILARI — brief §5.
+   *
+   * Uzmanın serbest yazdığı hizmet adı botoks / dolgu / mezoterapi / diş
+   * estetiği / beslenme danışmanlığı içeriyorsa buraya düşüyor. Kayıt
+   * engellenmedi; karar yöneticide.
+   */
+  @Get('regulated-services')
+  reguleKuyrugu() {
+    return this.regule.kuyruk();
+  }
+
+  @Patch('regulated-services/:id')
+  reguleKarar(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(reguleKararSchema)) body: ReguleKararInput,
+  ) {
+    return this.regule.karar(id, body.karar);
   }
 
   // Detaylı istatistik — zaman serisi + kategori dağılımı
