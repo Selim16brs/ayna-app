@@ -1368,6 +1368,12 @@ export const tr = {
 
   // Harita (§8)
   'pro.new': 'Yeni',
+  // Profilini doldurmamış uzman — boş ekran yerine durum + işe yarar yol.
+  'pro.incomplete.title': 'Bu uzman profilini henüz tamamlamamış',
+  'pro.incomplete.body':
+    'Hizmet listesi ve tanıtımı yok. Yine de ne istediğini anlatıp bu uzmandan teklif isteyebilirsin.',
+  'pro.incomplete.cta': 'Teklif iste',
+  'pro.incomplete.open': 'Profili aç',
   'map.from': 'başlangıç',
   'map.title': 'Harita',
   'map.list': 'Liste',
