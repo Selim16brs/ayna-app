@@ -134,15 +134,23 @@ export default function ProfileEditScreen() {
   const onSave = async () => {
     if (isSeller) {
       try {
-        // Sertifikalar ANINDA uygulanır (hesaba yazılır + yerel) — admin onayı beklemez
-        setSellerProfile({ certs });
-        // İsim/sosyal/saatler admin onayına gider (§profil-onay)
-        // Saatler ARTIK BURADA DEĞİL: kendi ekranında, admin onayı olmadan
-        // doğrudan kaydediliyor (/seller/hours).
-        await submitProfileChange({ name, social, certs });
-        Alert.alert(t('profile.edit.pending_t'), t('profile.edit.pending_b'), [
-          { text: t('common.ok'), onPress: () => router.back() },
-        ]);
+        /*
+         * ARTIK ANINDA. Eskiden isim ve sosyal medya admin onayına
+         * düşüyordu; uzman tanıtımındaki bir harfi düzeltmek için bile
+         * bekliyordu. Kurucu: "telefon ve mailleri dışındaki şeyleri
+         * değiştirdiklerinde admin paneline onay almasına gerek yok."
+         *
+         * Yerelde de hemen uygulanıyor ki kullanıcı sonucu görsün.
+         */
+        setSellerProfile({ certs, social });
+        if (name.trim()) updateMyProfile({ name: name.trim() });
+        const r = await submitProfileChange({ name, social, certs });
+        // "Onaya gitti" mesajı YALNIZ gerçekten bekleyen varsa.
+        const [bas, alt] =
+          r.pending.length > 0
+            ? [t('profile.edit.pending_t'), t('profile.edit.pending_b')]
+            : [t('profile.edit.saved'), undefined];
+        Alert.alert(bas, alt, [{ text: t('common.ok'), onPress: () => router.back() }]);
       } catch {
         Alert.alert(t('profile.edit.title'), t('profile.edit.save_err'));
       }

@@ -8,7 +8,12 @@ export const registerBusinessSchema = z
     password: z.string().min(6),
     email: z.string().email().optional(),
     sector: z.string().min(1),
-    categories: z.array(z.string()).default([]),
+    /*
+     * En az bir hizmet alanı ZORUNLU (kurucu kararı: "kayıtta hizmetleri
+     * zorunlu yap"). Ekran zaten istiyordu; sunucu kabul ediyordu.
+     * Alansız salon hiçbir kategori süzgecinde görünmez.
+     */
+    categories: z.array(z.string()).min(1, 'En az bir hizmet alanı seçilmeli'),
     city: z.string().min(1),
     district: z.string().min(1),
     address: z.string().min(3),

@@ -119,21 +119,29 @@ export default function SalonEditScreen() {
   const toggleArea = (id: string) =>
     setAreas((a) => (a.includes(id) ? a.filter((x) => x !== id) : [...a, id]));
 
-  // §profil-onay — salon profil değişikliği ADMIN ONAYINA gider (yerelde uygulanmaz)
+  // §profil-anında — salon profil değişikliği ANINDA uygulanıyor; yalnız
+  // iletişim telefonu admin onayı bekliyor.
   const onSave = async () => {
     // Değişiklik ANINDA yerelde uygulanır (salon kendi düzenlemesini hemen görür) +
     // admin onayına gönderilir (§profil-onay). Sertifika/foto data URL olarak kalıcıdır.
     setSalonProfile({ photos, about, address, contact, areas });
     setSellerProfile({ social, hours });
     try {
-      await submitProfileChange({
+      const r = await submitProfileChange({
         salonProfile: { photos, about, address, contact, areas },
         social,
         hours,
       });
-      Alert.alert(t('profile.edit.pending_t'), t('profile.edit.pending_b'), [
-        { text: t('common.ok'), onPress: () => router.back() },
-      ]);
+      /*
+       * Tanıtım, adres, fotoğraflar ve saatler ANINDA kaydediliyor. Yalnız
+       * İLETİŞİM TELEFONU onay bekliyor: sessizce değişirse müşteriyi
+       * platform dışına çekme yolu açılır.
+       */
+      const [bas, alt] =
+        r.pending.length > 0
+          ? [t('salon.edit.contact_pending_t'), t('salon.edit.contact_pending_b')]
+          : [t('profile.edit.saved'), undefined];
+      Alert.alert(bas, alt, [{ text: t('common.ok'), onPress: () => router.back() }]);
     } catch {
       Alert.alert(t('profile.edit.title'), t('profile.edit.save_err'));
     }

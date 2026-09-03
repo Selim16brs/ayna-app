@@ -603,7 +603,7 @@ interface State {
   // §9.5 — müşteri profilini anında günceller (salon/uzman admin onayı ister)
   updateMyProfile: (patch: Partial<Pick<AuthUser, 'name' | 'email' | 'city'>>) => void;
   // §profil-onay — salon/uzman değişikliğini admin onay kuyruğuna gönderir
-  submitProfileChange: (changes: Record<string, unknown>) => Promise<void>;
+  submitProfileChange: (changes: Record<string, unknown>) => Promise<{ pending: string[] }>;
   applyApprovedProfileChanges: () => Promise<void>;
 
   // notifications
@@ -1037,8 +1037,12 @@ export const useStore = create<State>()(
       // §profil-onay — SALON/UZMAN değişikliğini admin onay kuyruğuna gönderir (yerelde UYGULANMAZ)
       submitProfileChange: async (changes) => {
         const token = get().token;
-        if (!token) return;
-        await api.submitProfileChange(changes, token);
+        if (!token) return { pending: [] };
+        const r = (await api.submitProfileChange(changes, token)) as
+          { pending?: string[] } | undefined;
+        // Eski sunucu sürümü düz talep döndürüyordu; alan yoksa "bekleyen
+        // yok" sayılıyor — kullanıcıya yanlışlıkla "onaya gitti" denmesin.
+        return { pending: r?.pending ?? [] };
       },
       // Admin onayladıysa onaylı değişiklikleri yerelde uygula (app açılışında çağrılır)
       applyApprovedProfileChanges: async () => {

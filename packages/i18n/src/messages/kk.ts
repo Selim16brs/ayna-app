@@ -1740,6 +1740,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'profile.edit.pending_t': 'Өзгеріс растауға жіберілді',
   'profile.edit.pending_b':
     'Салон/маман профиль өзгерістері AYNA админ растауынан кейін жарияланады. Расталған соң профиль жаңарады.',
+  'salon.edit.contact_pending_t': 'Сақталды — телефон тексерілуде',
+  'salon.edit.contact_pending_b':
+    'Басқа мәліметтерің бірден жаңарды. Байланыс телефонының өзгеруі қауіпсіздік үшін тексеріледі.',
   'profile.photo.gallery': 'Галереядан',
   'profile.photo.camera': 'Камера',
   'profile.photo.remove': 'Фотоны жою',

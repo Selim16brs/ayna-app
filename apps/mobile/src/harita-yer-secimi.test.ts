@@ -99,6 +99,29 @@ test('bölgesi olmayan şehirde boş şerit değil AÇIKLAMA çıkıyor', () => 
   assert.ok(sozluk.includes("'map.where.no_area':"), 'boş bölge açıklaması yok');
 });
 
+test('düğmeler başlığın SAĞ YUVASINDA — ekran dışına taşmıyor', () => {
+  /*
+   * Kurucu: "orda hiçbir değişiklik yok... bir şehir seçimi ya da alan
+   * seçimi yok."
+   *
+   * Değişiklik yayındaydı ama GÖRÜNMÜYORDU: düğmeler `StackHeader`ın
+   * YANINA kardeş olarak konmuştu. StackHeader zaten tam genişlik bir satır
+   * (`texts` flexGrow:1); onu bir satıra daha sarıp yanına bir şey koymak
+   * ekranın dışına taşıyor. Mevcut liste düğmesi de aynı sebeple
+   * görünmüyordu — hata benden önce vardı, ben üstüne bir tane daha
+   * eklemiştim.
+   */
+  assert.match(
+    ekran,
+    /<StackHeader\n\s+title=\{t\('map\.title'\)\}\n\s+right=\{/,
+    'düğmeler sağ yuvada değil',
+  );
+  assert.ok(
+    !ekran.includes('styles.headerRow'),
+    'başlık hâlâ bir satıra sarılmış — kardeş düğmeler ekran dışında kalır',
+  );
+});
+
 test('yer seçici haritayı yemiyor — alt sayfa', () => {
   assert.match(ekran, /<Modal\n\s+visible=\{yerAcik\}/, 'yer seçici alt sayfada değil');
   assert.match(ekran, /maxHeight: '80%'/, 'alt sayfa ekranın tamamını kaplıyor');

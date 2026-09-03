@@ -1746,6 +1746,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'profile.edit.pending_t': 'Изменение отправлено на одобрение',
   'profile.edit.pending_b':
     'Изменения профиля салона/мастера публикуются после одобрения администратора AYNA. После одобрения профиль обновится.',
+  'salon.edit.contact_pending_t': 'Сохранено — телефон на проверке',
+  'salon.edit.contact_pending_b':
+    'Остальные данные обновлены сразу. Смена контактного телефона проходит проверку в целях безопасности.',
   'profile.photo.gallery': 'Из галереи',
   'profile.photo.camera': 'Камера',
   'profile.photo.remove': 'Удалить фото',
