@@ -1,11 +1,29 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { TaksonomiService } from './taksonomi.service';
 import { CatalogService } from './catalog.service';
 
 @ApiTags('catalog')
 @Controller()
 export class CatalogController {
-  constructor(private readonly catalog: CatalogService) {}
+  constructor(
+    private readonly catalog: CatalogService,
+    private readonly taksonomi: TaksonomiService,
+  ) {}
+
+  /**
+   * TAM HİZMET TAKSONOMİSİ — brief §4'teki tüm ekranların kaynağı.
+   *
+   * Üç dilin hepsi birden dönüyor: istemci dili değiştirdiğinde yeniden
+   * istek atmak zorunda kalmasın (katalog küçük, üç dil taşımak ucuz).
+   *
+   * Kimlik doğrulaması YOK: katalog herkese açık bir vitrindir; müşteri
+   * giriş yapmadan da kategorilere bakabilmeli.
+   */
+  @Get('taxonomy')
+  taxonomy() {
+    return this.taksonomi.taksonomi();
+  }
 
   @Get('categories')
   categories() {
