@@ -167,27 +167,31 @@ test('tarih girilen her ekran ORTAK takvimi kullanıyor', async () => {
 
 /* ── SAAT SEÇİMİ ───────────────────────────────────────────────────────── */
 
-test('dakika ÇEYREK saat — kalabalık değil', async () => {
+test('dakika BEŞER — klasik çarkta kısıtlamaya gerek yok', async () => {
   /*
-   * Kurucu: "saat seçimleri çok saçma olmuş."
+   * Bir ara çeyrek saate (00/15/30/45) indirilmişti; o zaman saat yatay
+   * çiplerle seçiliyordu ve 12 çip kalabalık kalıyordu.
    *
-   * İlk hâli iki DAR DİKEY ŞERİTTİ ve dakika beşer beşer 12 seçenekti.
-   * 24 saat 132 piksellik bir kutuda kayıyordu: seçilen değer görünmüyor,
-   * kaydırma takvim hareketiyle karışıyordu.
-   *
-   * Randevu ve hatırlatmada çeyrek saatten ince ayar gerekmiyor; dördü tek
-   * satıra sığıyor ve tek dokunuşla seçiliyor.
+   * Kurucu klasik çevirmeli seçici isteyince kısıtlama gereksiz bir engele
+   * dönüştü: çarkta kaydırmak zaten ucuz ama 13:10'a randevu YAZILAMIYORDU.
    */
   const { DAKIKALAR } = await import('./takvim');
-  assert.deepEqual([...DAKIKALAR], [0, 15, 30, 45]);
+  assert.equal(DAKIKALAR.length, 12);
+  assert.equal(DAKIKALAR[2], 10, 'beşer artmıyor');
 });
 
-test('saat şeridi YATAY ve seçili değer AYRICA yazılı', async () => {
+test('çark satırlara OTURUYOR — serbest kaymıyor', async () => {
   const { readFileSync } = await import('node:fs');
   const { join } = await import('node:path');
   const kod = readFileSync(join(import.meta.dirname, 'ui', 'TakvimSecici.tsx'), 'utf8');
-  // Dikey dar şerit, seçileni gizliyordu.
-  assert.match(kod, /horizontal\s*\n\s*showsHorizontalScrollIndicator/, 'saat şeridi yatay değil');
+  /*
+   * Kurucu: "saat için klasik sistem bir şey yapsan."
+   *
+   * Klasik çarkın "tık tık" oturma hissi bu ikisinden geliyor. Onlarsız
+   * liste serbest kayıyor ve hangi değerin seçili olduğu belirsizleşiyor.
+   */
+  assert.match(kod, /snapToInterval=\{OGE_Y\}/, 'çark satırlara oturmuyor');
+  assert.match(kod, /decelerationRate="fast"/, 'çark serbest kayıyor');
   /*
    * Seçilen saat şeritte kaybolmasın diye SABİT BİR YERDE de yazıyor.
    * İlk yazımda test yalnız stil ADINI arıyordu ve kullanım yerinden
@@ -221,4 +225,42 @@ test('kişisel kayıt ekranında klavye içeriği örtmüyor', async () => {
   );
   // Üç form da (günlük, rutin, özel gün) aynı kaptan geçmeli.
   assert.equal((kod.match(/<FormKabi>/g) ?? []).length, 3, 'formların hepsi sarılmamış');
+});
+
+test('çark açılışta SEÇİLİ değerin üstünde duruyor', async () => {
+  // Kullanıcı kendi saatini aramak zorunda kalmamalı.
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const kod = readFileSync(join(import.meta.dirname, 'ui', 'TakvimSecici.tsx'), 'utf8');
+  assert.match(kod, /contentOffset=\{\{ x: 0, y: sira \* OGE_Y \}\}/, 'çark başa dönüyor');
+});
+
+test('TEK DOKUNUŞLA sürükleme de seçimi kaydediyor', async () => {
+  /*
+   * Parmak kalkınca sürüklenme (momentum) olmazsa `onMomentumScrollEnd`
+   * HİÇ tetiklenmiyor; kullanıcı çarkı azıcık çevirip bıraktığında seçim
+   * kaydedilmiyordu.
+   */
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const kod = readFileSync(join(import.meta.dirname, 'ui', 'TakvimSecici.tsx'), 'utf8');
+  assert.match(kod, /onScrollEndDrag=/, 'yavaş sürüklemede seçim kaydedilmiyor');
+});
+
+test('çark seçimi liste DIŞINA taşmıyor', async () => {
+  /*
+   * Hızlı savurmada kaydırma konumu listenin dışına çıkıyor ve
+   * `liste[index]` `undefined` dönüyordu — saat "NaN" oluyordu.
+   */
+  const { carkSecimi, SAATLER } = await import('./takvim');
+  assert.equal(carkSecimi(-500, 44, SAATLER.length), 0, 'yukarı taşma kırpılmıyor');
+  assert.equal(carkSecimi(99999, 44, SAATLER.length), 23, 'aşağı taşma kırpılmıyor');
+  assert.equal(carkSecimi(44 * 7 + 3, 44, SAATLER.length), 7, 'en yakın satıra oturmuyor');
+});
+
+test('bilinmeyen değer çarkı BOŞ açmıyor', async () => {
+  const { carkSirasi, DAKIKALAR } = await import('./takvim');
+  assert.equal(carkSirasi(DAKIKALAR, 30), 6);
+  // Listede olmayan bir dakika (ör. eski kayıttan 07) ilk satıra düşer.
+  assert.equal(carkSirasi(DAKIKALAR, 7), 0);
 });
