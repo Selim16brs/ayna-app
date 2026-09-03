@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type ColorTokens, font, space } from '../theme';
 import { useThemedStyles } from '../theme-context';
 import { Text } from './Text';
+import { TepeIsigi } from './TepeIsigi';
 
 /**
  * Sekme ekranlarının ortak başlığı — kanvas dili: AÇIK porselen zemin,
@@ -31,6 +32,12 @@ export function TabHero({
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.hero, { paddingTop: insets.top + space(1.5) }]}>
+      {/*
+       * Tepe ışığı — kurucunun istediği yumuşak renk yıkaması. İÇERİĞİN
+       * ARKASINDA: mutlak konumlu ve dokunuş yutmuyor, başlık düzeni
+       * hiç değişmiyor.
+       */}
+      <TepeIsigi />
       {/* Alt yazı KENDİ SATIRINDA, tam genişlikte.
           Eskiden sağdaki eylem düğmesiyle aynı satırı paylaşıyordu; Rusça
           metinler ("Настоящие советы от женщины к женщине") Türkçeden çok daha

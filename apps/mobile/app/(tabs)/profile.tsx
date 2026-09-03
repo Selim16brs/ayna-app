@@ -17,12 +17,13 @@ import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useStore } from '../../src/store';
 import {
   PlanBadge,
-  asPlanTier,
   Screen,
   Segmented,
   SurumBilgisi,
-  Text,
   TAB_BAR_CLEARANCE,
+  TepeIsigi,
+  Text,
+  asPlanTier,
 } from '../../src/ui';
 import type { ThemeMode } from '../../src/theme';
 
@@ -164,6 +165,11 @@ export default function ProfileScreen() {
           Yorum "yeşil" diyordu ve eski VELOURA tasarımına atıfta bulunuyordu;
           gradyan uzun zamandır erik. Yanlış yorum kodu yanlış okutuyor. */}
       <View style={[styles.header, { paddingTop: insets.top + space(1) }]}>
+        {/*
+         * Yıkama başlığın İÇİNDE. Dışında bıraksak başlığın kendi
+         * `heroSoft` zemini üstünü tamamen kapatırdı — hiç görünmezdi.
+         */}
+        <TepeIsigi />
         <Text variant="bodyStrong" tone="ink" style={styles.headerTitle}>
           {t('nav.profile')}
         </Text>
@@ -458,6 +464,8 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.heroSoft,
       borderBottomLeftRadius: 28,
       borderBottomRightRadius: 28,
+      // Yıkama yuvarlatılmış köşelerin dışına taşmasın.
+      overflow: 'hidden',
     },
     headerTitle: { marginBottom: space(2) },
     avatar: {

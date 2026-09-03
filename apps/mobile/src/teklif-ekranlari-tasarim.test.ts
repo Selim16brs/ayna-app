@@ -76,22 +76,14 @@ test('ikon eşlemesi TEK kaynakta — üç ekran da onu okuyor', () => {
   }
 });
 
-test('HİÇBİR kategori ikonsuz kalmıyor', () => {
+test('HER kategorinin ÇİZİMİ var — set eksiksiz', () => {
   /*
-   * Katalog 13 kategori; elde 7 çizim var. Kalan altısı (Spa & Hamam,
-   * Vücut Şekillendirme, Saç Sağlığı, İmaj & Stil, Wellness, Diğer)
-   * BİLEREK çizimsiz — mevcut ikonları taklit eden üretilmiş bir görsel
-   * yanlarında yamalı durur.
-   *
-   * Bu testin derdi çizim SAYISI değil: hiçbir kategorinin ekranda BOŞ
-   * kalmaması. Her kategori ya çizime ya da geçerli bir Ionicons adına
-   * bağlanmalı; ikisi de yoksa kullanıcı boş bir kutu görür.
+   * Uzun süre altı kategori çizimsizdi ve vektör yedeğine düşüyordu; set
+   * iki tarzın karışımı gibi duruyordu. Kurucu eksik altıyı Figma'da
+   * çizdirdi. Yeni bir kategori eklenip çizimi unutulursa bu test söyler.
    */
-  assert.ok(IKON_ANAHTARLARI.size >= 7, 'ikon eşlemesi okunamadı');
-  const ikonsuz = CATEGORIES.filter(
-    (c) => !IKON_ANAHTARLARI.has(c.id) && !(c.icon && c.icon.length > 0),
-  ).map((c) => c.id);
-  assert.deepEqual(ikonsuz, [], `ekranda boş kalacak kategori: ${ikonsuz.join(', ')}`);
+  const eksik = CATEGORIES.filter((c) => !IKON_ANAHTARLARI.has(c.id)).map((c) => c.id);
+  assert.deepEqual(eksik, [], `çizimi olmayan kategori: ${eksik.join(', ')}`);
 });
 
 test('çizim eşlemesindeki her anahtar GERÇEK bir kategori', () => {

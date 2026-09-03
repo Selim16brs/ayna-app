@@ -12,7 +12,14 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { DateField, HizmetIkonu, TAB_BAR_CLEARANCE, Text, WaveLayered } from '../../src/ui';
+import {
+  DateField,
+  HizmetIkonu,
+  TAB_BAR_CLEARANCE,
+  TepeIsigi,
+  Text,
+  WaveLayered,
+} from '../../src/ui';
 
 export default function UzmanScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -85,6 +92,9 @@ export default function UzmanScreen() {
           orada 16.06:1 veriyor ve Denge'ye de uyuyor.
         */}
         <View style={[styles.hero, { paddingTop: insets.top + space(1) }]}>
+          {/* Tepe ışığı hero'nun İÇİNDE: kutunun kendi zemini ve
+              `overflow: hidden` kırpması var, dışına koysak taşardı. */}
+          <TepeIsigi />
           <View style={styles.heroTop}>
             <Pressable style={styles.circleBtn} onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={22} color={colors.ink} />

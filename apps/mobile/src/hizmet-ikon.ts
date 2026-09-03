@@ -19,30 +19,31 @@ export const HIZMET_IKON: Record<string, number> = {
   skin: require('../assets/hizmet-ikon/cilt.png'),
   makeup: require('../assets/hizmet-ikon/makyaj.png'),
   massage: require('../assets/hizmet-ikon/masaj.png'),
-  // spa · body_contouring · hair_health · style · wellness · other
-  //   → ÇİZİM YOK, aşağıdaki nota bakınız.
+  // Figma `ayna-new-categories-dark` — kurucunun çizdirdiği altı yeni ikon.
+  spa: require('../assets/hizmet-ikon/spa.png'),
+  body_contouring: require('../assets/hizmet-ikon/vucut-sekillendirme.png'),
+  hair_health: require('../assets/hizmet-ikon/sac-sagligi.png'),
+  style: require('../assets/hizmet-ikon/imaj-stil.png'),
+  wellness: require('../assets/hizmet-ikon/wellness.png'),
+  other: require('../assets/hizmet-ikon/diger.png'),
 };
 
 /**
- * ── ÇİZİMİ OLMAYAN KATEGORİLER ──────────────────────────────────────────
+ * ── SET TAMAMLANDI ──────────────────────────────────────────────────────
  *
- * Katalog 13 kategori, elde 10 çizim var ve ikisi (kalıcı makyaj, gelin)
- * artık kategori değil Makyaj'ın alt hizmeti. Karşılıksız kalan altı
- * kategori: Spa & Hamam, Vücut Şekillendirme, Saç Sağlığı, İmaj & Stil,
- * Wellness, Diğer.
+ * On üç kategorinin on üçünün de çizimi var. Eksik altısı kurucunun
+ * Figma'daki `ayna-new-categories-dark` bölümünden geldi ve mevcut yedinin
+ * biçimine getirildi: 192×192, şeffaf zemin, aynı erguvan çizgi rengi.
  *
- * BURAYA UYDURMA ÇİZİM KONMADI. Mevcut ikonlar elle çizilmiş; onları
- * taklit eden üretilmiş bir görsel yanlarında yamalı durur. Eşlemede
- * olmayan kimlik `HizmetIkonu` içinde kategorinin Ionicons yedeğine
- * düşüyor — kategori ekranda EKSİKSİZ çıkıyor, yalnız çizgi tarzı farklı.
+ * Kaynak görseller AÇIK ÇİZGİ / KOYU ZEMİN idi (karanlık tema tasarımı).
+ * Uygulama ikonu açık bir kutunun üstüne çiziyor; zemin şeffaflaştırılıp
+ * çizgi rengi mevcut setle aynı değere getirildi. Ham hâlleriyle konsaydı
+ * açık kutunun üstünde görünmezlerdi.
  *
- * Tasarımcıdan dosyalar geldiğinde yapılacak tek iş bu nesneye satır
- * eklemek; hiçbir ekran değişmiyor.
- *
- * `kalici-makyaj.png` ve `gelin.png` dosyaları DURUYOR: karşılıkları
- * (`makeup.pmu`, `makeup.bridal`) alt hizmet olarak katalogda yaşıyor ve
- * alt hizmet ikonları açıldığında kullanılacaklar. `kas.png` de duruyor —
- * Kirpik & Kaş birleşti, şimdilik kirpik çizimi temsil ediyor.
+ * `kalici-makyaj.png` ve `gelin.png` duruyor: karşılıkları (`makeup.pmu`,
+ * `makeup.bridal`) alt hizmet olarak katalogda yaşıyor ve alt hizmet
+ * ikonları açıldığında kullanılacaklar. `kas.png` de duruyor — Kirpik & Kaş
+ * birleşti, şimdilik kirpik çizimi temsil ediyor.
  */
 
 /** Eşlemede olmayan kategori için ikon yok — çağıran taraf gizlemeli. */

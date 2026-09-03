@@ -45,6 +45,7 @@ export { Sayac } from './Sayac';
 export { SurumBilgisi } from './SurumBilgisi';
 export { OfflineBanner, useOfflineInset } from './OfflineBanner';
 export { HizmetIkonu, type HizmetIkonTarzi } from './HizmetIkonu';
+export { TepeIsigi } from './TepeIsigi';
 export { YakindaRozeti } from './YakindaRozeti';
 export { TarihSecici } from './TarihSecici';
 // Yalnız EKRANLARIN kullandıkları dışa açılıyor. `parcala` /

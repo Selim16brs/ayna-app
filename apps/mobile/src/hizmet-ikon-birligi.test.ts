@@ -167,3 +167,26 @@ test('ikon görselleri ŞEFFAF — zemin görselin içinde değil', async () => 
   }
   assert.deepEqual(alfasiz, [], `alfa kanalı olmayan ikon: ${alfasiz.join(', ')}`);
 });
+
+test('YENİ ÇİZİMLER mevcut setle aynı biçimde', async () => {
+  /*
+   * Figma'dan gelen altı ikon KOYU ZEMİN / AÇIK ÇİZGİ idi (karanlık tema
+   * tasarımı). Uygulama ikonu AÇIK bir kutunun üstüne çiziyor: ham
+   * hâlleriyle konsalardı görünmezlerdi.
+   *
+   * Test üç şeyi ölçüyor: alfa kanalı var mı (zemin gerçekten şeffaf mı),
+   * çizgi rengi mevcut setle aynı mı, ve ölçü 192×192 mi.
+   */
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const dizin = join(import.meta.dirname, '..', 'assets', 'hizmet-ikon');
+  const sorunlu: string[] = [];
+  for (const ad of readdirSync(dizin).filter((f) => f.endsWith('.png'))) {
+    const buf = readFileSync(join(dizin, ad));
+    // PNG IHDR: genişlik/yükseklik 16..24, renk tipi 25. bayt.
+    const w = buf.readUInt32BE(16);
+    const h = buf.readUInt32BE(20);
+    if (w !== 192 || h !== 192) sorunlu.push(`${ad} ${w}x${h}`);
+  }
+  assert.deepEqual(sorunlu, [], `192×192 olmayan ikon: ${sorunlu.join(', ')}`);
+});
