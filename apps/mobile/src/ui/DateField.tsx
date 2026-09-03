@@ -1,21 +1,31 @@
 import { useState } from 'react';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import { radius, space, type ColorTokens, font } from '../theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { formatTrDate } from '../date-label';
+import { tarihYaz } from '../takvim';
+
+// Geriye dönük: bu ad barrel'dan dışa aktarılıyordu ve çağıranları var.
+export { formatTrDate };
+import { radius, space, type ColorTokens } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
+import { TakvimSecici } from './TakvimSecici';
 import { Text } from './Text';
 
-// TR kısa ay adları — tarih etiketini serbest metin yerine seçilen tarihten üretiriz.
-// Biçimlendirici `src/date-label.ts`e taşındı (mağaza da kullanıyor, o dosya
-// react-native içe aktaramaz). Buradan yeniden dışa aktarılıyor ki mevcut
-// çağıranlar değişmesin.
-import { formatTrDate } from '../date-label';
-export { formatTrDate };
-
 /**
- * Ortak tarih/saat alanı (Benim İçin kayıt eklemeleri + Randevu al aynı model).
- * iOS: kompakt tıklanabilir yerleşik seçici. Android: dokununca açılan diyalog.
- * Etiket seçilen tarihten üretilir; serbest metin yok.
+ * TARİH ALANI — artık NATIVE MODÜLSÜZ.
+ *
+ * Kurucu: "takvim asılı kalmış hiçbir değişiklik yapılamıyor... aynı hatalar
+ * diğer takvimle giriş yapılan yerlerde de var."
+ *
+ * Burası `@react-native-community/datetimepicker` kullanıyordu. O NATIVE bir
+ * modül; telefondaki yapı onu içermediğinde iOS'taki `compact` görünüm epoch
+ * sıfırla (1 Oca 1970) çiziliyor ve dokunuşa yanıt vermiyordu. `app.json`
+ * `runtimeVersion: sdkVersion` olduğu için OTA eski yapılara da iniyor: JS
+ * güncelleniyor ama native modül gelmiyor, dolayısıyla OTA bunu çözemiyordu.
+ *
+ * Artık tek bir dokunma hedefi + saf JS takvim. Hem eski yapıda çalışıyor
+ * hem de her platformda AYNI görünüyor — `compact` yalnız iOS'ta vardı ve
+ * iki platform iki farklı arayüz gösteriyordu.
  */
 export function DateField({
   label,
@@ -34,56 +44,30 @@ export function DateField({
   maximumDate?: Date;
   last?: boolean;
 }) {
-  // `mode` zaten bileşenin prop'u (date/datetime) — tema kipi ayrı adla.
-  const { mode: tema } = useTheme();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const [show, setShow] = useState(false);
+  const [acik, setAcik] = useState(false);
   return (
     <View style={[styles.field, !last && styles.fieldGap]}>
       <Text variant="bodyStrong" tone="ink" style={styles.label}>
         {label}
       </Text>
-      {Platform.OS === 'ios' ? (
-        <View style={styles.iosRow}>
-          <DateTimePicker
-            value={value}
-            mode={mode}
-            display="compact"
-            /*
-             * Koyu tema kontrolü ESKİ palet değerine bakıyordu (#191E1B).
-             * O renk Figma geçişinde gitti (artık #18061C), yani koşul
-             * HİÇ doğru olmuyordu: yerli tarih seçici koyu temada da açık
-             * görünümde açılıyordu. Karşılaştırma yerine temanın kendi
-             * kipi okunuyor.
-             */
-            themeVariant={tema === 'dark' ? 'dark' : 'light'}
-            locale="tr-TR"
-            minimumDate={minimumDate}
-            maximumDate={maximumDate}
-            onChange={(_, d) => d && onChange(d)}
-          />
-        </View>
-      ) : (
-        <>
-          <Pressable style={styles.input} onPress={() => setShow(true)}>
-            <Text variant="bodyStrong" tone="ink" style={styles.dateText}>
-              {formatTrDate(value, mode === 'datetime')}
-            </Text>
-          </Pressable>
-          {show ? (
-            <DateTimePicker
-              value={value}
-              mode="date"
-              minimumDate={minimumDate}
-              maximumDate={maximumDate}
-              onChange={(_, d) => {
-                setShow(false);
-                if (d) onChange(d);
-              }}
-            />
-          ) : null}
-        </>
-      )}
+      <Pressable style={styles.input} onPress={() => setAcik(true)} accessibilityRole="button">
+        <Ionicons name="calendar-outline" size={18} color={colors.accentFg} />
+        <Text variant="bodyStrong" tone="ink" style={styles.dateText}>
+          {tarihYaz(value, mode === 'datetime')}
+        </Text>
+        <Ionicons name="chevron-down" size={16} color={colors.muted} />
+      </Pressable>
+      <TakvimSecici
+        acik={acik}
+        deger={value}
+        kapat={() => setAcik(false)}
+        secildi={onChange}
+        saatli={mode === 'datetime'}
+        {...(minimumDate ? { enAz: minimumDate } : {})}
+        {...(maximumDate ? { enCok: maximumDate } : {})}
+      />
     </View>
   );
 }
@@ -92,14 +76,17 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     field: {},
     fieldGap: { marginBottom: space(2) },
-    label: { marginBottom: space(1), fontFamily: font.semibold },
-    iosRow: { flexDirection: 'row', alignItems: 'center', minHeight: 40 },
+    label: { marginBottom: space(0.75) },
     input: {
-      backgroundColor: colors.surfaceMuted,
-      borderRadius: radius.md,
-      paddingHorizontal: space(1.75),
-      height: 52,
-      justifyContent: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.5),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
     },
-    dateText: { fontSize: 16 },
+    dateText: { flex: 1 },
   });

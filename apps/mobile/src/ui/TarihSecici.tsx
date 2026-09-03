@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatSlotTr } from '../datetime';
 import { fillParams, useLocale } from '../locale';
 import { radius, space, type ColorTokens, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
+import { TakvimSecici } from './TakvimSecici';
 import { Text } from './Text';
 
 /**
@@ -41,7 +41,7 @@ export function TarihSecici({
   degisti: (yeni: number[]) => void;
 }) {
   const { t } = useLocale();
-  const { colors, mode } = useTheme();
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [acik, setAcik] = useState(false);
   // Takvim, YARIN'ın aynı saatinde açılıyor: bugünün geçmiş saatlerinde
@@ -94,47 +94,22 @@ export function TarihSecici({
         ) : null}
       </View>
 
-      {acik ? (
-        <View style={styles.secici}>
-          <DateTimePicker
-            value={taslak}
-            mode="datetime"
-            display={Platform.OS === 'ios' ? 'inline' : 'default'}
-            themeVariant={mode === 'dark' ? 'dark' : 'light'}
-            locale="tr-TR"
-            // İleriye sınır YOK — kurucu "tarih seçenekleri kısıtlanmamalı"
-            // dedi. Geçmiş, geçerlilik gereği dışarıda.
-            minimumDate={new Date()}
-            onChange={(olay, d) => {
-              // Android'de diyalog kendi kapanır; iOS'ta satır içi kalır.
-              if (Platform.OS !== 'ios') setAcik(false);
-              if (olay.type === 'dismissed' || !d) return;
-              setTaslak(d);
-              if (Platform.OS !== 'ios') ekle(d);
-            }}
-          />
-          {Platform.OS === 'ios' ? (
-            <View style={styles.iosEylem}>
-              <Pressable onPress={() => setAcik(false)} hitSlop={8}>
-                <Text variant="caption" tone="muted">
-                  {t('common.cancel')}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  ekle(taslak);
-                  setAcik(false);
-                }}
-                hitSlop={8}
-              >
-                <Text variant="captionStrong" tone="accentFg">
-                  {t('common.add')}
-                </Text>
-              </Pressable>
-            </View>
-          ) : null}
-        </View>
-      ) : null}
+      {/*
+       * TAKVİM ARTIK SAF JS. Burada `@react-native-community/datetimepicker`
+       * vardı ve telefondaki yapı o native modülü içermediğinde 1 Oca
+       * 1970'te donup dokunuşa yanıt vermiyordu — OTA bunu çözemiyordu.
+       */}
+      <TakvimSecici
+        acik={acik}
+        deger={taslak}
+        kapat={() => setAcik(false)}
+        secildi={(d) => {
+          setTaslak(d);
+          ekle(d);
+        }}
+        saatli
+        enAz={new Date()}
+      />
     </View>
   );
 }

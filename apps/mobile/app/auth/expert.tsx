@@ -1,18 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import {
-  Alert,
-  Image,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 // Doğum tarihi gösterimi: GG.AA.YYYY
 function fmtDate(d: Date): string {
@@ -52,6 +42,7 @@ import {
   TelefonGirdisi,
   VARSAYILAN_ULKE,
   tamNumara,
+  TakvimSecici,
 } from '../../src/ui';
 import { type AutofillKind, autofillProps, missingLabels } from '../../src/formValidation';
 import type { MessageKey } from '@ayna/i18n';
@@ -516,41 +507,26 @@ export default function ExpertRegisterScreen() {
               </Text>
               <Ionicons name="chevron-down" size={18} color={colors.muted} />
             </Pressable>
-            {showDate && Platform.OS === 'android' ? (
-              <DateTimePicker
-                value={birthDate ?? new Date(2000, 0, 1)}
-                mode="date"
-                display="default"
-                maximumDate={new Date()}
-                onChange={(_e, d) => {
-                  setShowDate(false);
-                  if (d) setBirthDate(d);
-                }}
-              />
-            ) : null}
-            {Platform.OS === 'ios' ? (
-              <Modal
-                visible={showDate}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setShowDate(false)}
-              >
-                <Pressable style={styles.dateBackdrop} onPress={() => setShowDate(false)}>
-                  <Pressable style={styles.dateSheet} onPress={(e) => e.stopPropagation()}>
-                    <DateTimePicker
-                      value={birthDate ?? new Date(2000, 0, 1)}
-                      mode="date"
-                      display="spinner"
-                      maximumDate={new Date()}
-                      onChange={(_e, d) => {
-                        if (d) setBirthDate(d);
-                      }}
-                    />
-                    <Button label={t('common.ok')} onPress={() => setShowDate(false)} />
-                  </Pressable>
-                </Pressable>
-              </Modal>
-            ) : null}
+            {/*
+          TAKVİM ARTIK SAF JS.
+
+          Burada `@react-native-community/datetimepicker` vardı: Android'de
+          sistem diyaloğu, iOS'ta alt sayfa spinner. O NATIVE bir modül ve
+          telefondaki yapı onu içermediğinde 1 Oca 1970'te donup dokunuşa
+          yanıt vermiyordu. `runtimeVersion: sdkVersion` olduğu için OTA
+          eski yapılara da iniyor; JS güncelleniyor ama native gelmiyor,
+          yani OTA bunu çözemiyordu.
+
+          Ortak `TakvimSecici` her platformda AYNI görünüyor — eskiden iki
+          platform iki farklı arayüz gösteriyordu.
+        */}
+            <TakvimSecici
+              acik={showDate}
+              deger={birthDate ?? new Date(2000, 0, 1)}
+              kapat={() => setShowDate(false)}
+              secildi={(d: Date) => setBirthDate(d)}
+              enCok={new Date()}
+            />
           </>
         )}
 

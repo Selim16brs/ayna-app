@@ -18,6 +18,7 @@ export default function SubReceiptScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const token = useStore((s) => s.token);
+  const rol = useStore((s) => s.currentUser?.role);
   const { id, tier, amount } = useLocalSearchParams<{ id: string; tier: string; amount: string }>();
 
   const [uri, setUri] = useState<string | null>(null);
@@ -41,8 +42,30 @@ export default function SubReceiptScreen() {
     setBusy(true);
     try {
       await api.uploadSubReceipt(id, uri, token);
+      /*
+       * ── ROLE GÖRE DÖNÜŞ ─────────────────────────────────────────────
+       *
+       * Kurucu: "müşteri hesabı diye açtığım hesapta premium üyelik
+       * aldığımda beni bireysel uzman gibi gösterdi."
+       *
+       * Burada KOŞULSUZ `/seller/reports`a gidiliyordu. Müşteri de aynı
+       * ekranı kullanarak premium alıyor; dekontu yükleyince kendini
+       * "Bireysel Uzman" rozetli, "Hizmetlerimi gir" ve "AYNA komisyonu"
+       * yazan UZMAN PANELİNDE buluyordu.
+       *
+       * Rolü hiçbir şey değiştirmiyordu — sunucuda hesap hâlâ `user`.
+       * Sorun tamamen yönlendirmedeydi ve bu daha kötüsü: kullanıcı
+       * hesabının türünün değiştiğini sanıyor.
+       *
+       * Sunucu da zaten aynı ayrımı yapıyor (`subscriptions.service`
+       * push bildiriminde `role === 'user' ? '/profile/passport' : ...`).
+       */
+      const musteri = rol !== 'professional' && rol !== 'salon';
       Alert.alert(t('sub.sent_t'), t('sub.sent_b'), [
-        { text: t('common.ok'), onPress: () => router.replace('/seller/reports') },
+        {
+          text: t('common.ok'),
+          onPress: () => router.replace(musteri ? '/profile/passport' : '/seller/reports'),
+        },
       ]);
     } catch (err) {
       const code = err instanceof ApiError ? `${err.code || err.status}` : '';

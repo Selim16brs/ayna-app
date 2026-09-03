@@ -16,7 +16,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ApiError, api, type AiQuota } from '../src/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardShown } from '../src/keyboard';
-import { useLocale } from '../src/locale';
+import { fillParams, useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -186,7 +186,14 @@ export default function BoniScreen() {
               <View style={styles.quotaPill}>
                 <Ionicons name="flash" size={12} color={colors.onColor} />
                 <Text variant="caption" tone="onColor" style={styles.quotaText}>
-                  {t('boni.quota.remaining')}: {quota.remaining}/{quota.limit}
+                  {/*
+                    "Bu ay kalan: 5/5" yazıyordu ve kurucu bunu "5 hakkımı
+                    KULLANMIŞIM" diye okudu — rakam doğruydu ama cümle
+                    tersini anlatıyordu. Pay/payda biçimi burada bilgi
+                    taşımıyor, yalnız belirsizlik üretiyor: kalan sayı tek
+                    başına ve cümle içinde veriliyor.
+                  */}
+                  {fillParams(t('boni.quota.remaining'), { n: String(quota.remaining) })}
                 </Text>
               </View>
             )}

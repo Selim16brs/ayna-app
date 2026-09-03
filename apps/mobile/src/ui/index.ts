@@ -50,3 +50,4 @@ export { TarihSecici } from './TarihSecici';
 // `yerelKismiTemizle` saf yardımcılar; testler onları `telefon-bicim`den
 // doğrudan alıyor, barrel'da durmaları ölü ihracat olurdu.
 export { TelefonGirdisi, VARSAYILAN_ULKE, tamNumara, type Ulke } from './TelefonGirdisi';
+export { TakvimSecici } from './TakvimSecici';

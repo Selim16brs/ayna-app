@@ -7,13 +7,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS } from '../../src/data';
 import { useCampaigns } from '../../src/catalog';
 import type { MessageKey } from '@ayna/i18n';
-import { almatySlotMs, formatSlotTr } from '../../src/datetime';
+
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   HizmetIkonu,
+  TarihSecici,
   RulesCard,
   Screen,
   SectionHeader,
@@ -182,23 +183,32 @@ export default function NewQuoteScreen() {
         </View>
 
         {/* ── Kategori (kompakt) ── */}
-        <View style={styles.catRow}>
+        {/*
+         * ANA SAYFADAKİ KUTU. Burada hap içinde 20'lik ikon çiziliyordu ve
+         * Figma çiziminin ayrıntısı o boyutta dağılıp başka bir ikon gibi
+         * görünüyordu — kurucu "hizmet ikonları ana sayfadaki gibi olacak"
+         * dedi ve bu ekran atlanmıştı. `demand/new` zaten böyle çiziyor.
+         *
+         * Yatay kaydırma: altı kategori sarmalayınca ekranın yarısını
+         * yiyordu; kutular 64px ve tek satırda kalmalı.
+         */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.catRow}
+        >
           {CATEGORIES.slice(0, 6).map((cat) => {
             const active = cat.id === category;
             return (
-              <Pressable
-                key={cat.id}
-                onPress={() => setCategory(cat.id)}
-                style={[styles.catChip, active && styles.catChipActive]}
-              >
-                <HizmetIkonu id={cat.id} tarz="satir" />
-                <Text variant="caption" tone={active ? 'onAccent' : 'inkSoft'}>
+              <Pressable key={cat.id} onPress={() => setCategory(cat.id)} style={styles.cat}>
+                <HizmetIkonu id={cat.id} tarz="kutu" secili={active} />
+                <Text variant="caption" tone={active ? 'ink' : 'inkSoft'} numberOfLines={1}>
                   {t(cat.labelKey)}
                 </Text>
               </Pressable>
             );
           })}
-        </View>
+        </ScrollView>
         {/* Açıklama (ops.) — kurucu isteği: fotoğrafla talepte not uzmanlara İLETİLİR */}
         <TextInput
           style={styles.noteInput}
@@ -217,37 +227,16 @@ export default function NewQuoteScreen() {
         <Text variant="caption" tone="muted" style={{ marginBottom: 8 }}>
           {t('demand.pref.hint')}
         </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-          {Array.from({ length: 3 }, (_, d) =>
-            [11, 15, 18].map((h) => almatySlotMs(Date.now(), d + 1, h, 0)),
-          )
-            .flat()
-            .map((ms) => {
-              const on = preferred.includes(ms);
-              return (
-                <Pressable
-                  key={ms}
-                  onPress={() =>
-                    setPreferred((p) =>
-                      p.includes(ms) ? p.filter((x) => x !== ms) : p.length >= 2 ? p : [...p, ms],
-                    )
-                  }
-                  style={{
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: 999,
-                    borderWidth: 1.25,
-                    borderColor: on ? colors.accent : colors.line,
-                    backgroundColor: on ? colors.accent : colors.surface,
-                  }}
-                >
-                  <Text variant="caption" tone={on ? 'onAccent' : 'ink'}>
-                    {formatSlotTr(ms)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-        </View>
+        {/*
+         * GERÇEK TAKVİM. Burada SABİT DOKUZ ÇİP vardı (yarın/öbür gün/üç gün
+         * sonra × 11:00/15:00/18:00). Kullanıcının aklındaki gün ya da saat
+         * listede yoksa hiçbir tercih belirtemiyordu.
+         *
+         * Kurucu: "bu sayfada takvim çıkması lazımdı istediğin tarih kısmında
+         * ve saat seçim alanı olmalıydı." `demand/new` zaten `TarihSecici`
+         * kullanıyordu; bu ekran atlanmıştı.
+         */}
+        <TarihSecici secilenler={preferred} degisti={setPreferred} />
 
         {/* ── Teklif toplama süresi (§5.2) ── */}
         <Text variant="bodyStrong" tone="ink" style={styles.durLabel}>
@@ -428,25 +417,14 @@ const makeStyles = (colors: ColorTokens) =>
 
     catRow: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: space(1),
+      // Sarma YOK: 64'lük kutular sarınca ekranın yarısını yiyordu.
+      gap: space(1.5),
       paddingHorizontal: space(3),
       marginTop: space(2.5),
     },
-    catChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      paddingHorizontal: space(1.5),
-      paddingVertical: space(1),
-      borderRadius: radius.pill,
-      // Yeni dil: yüzey + ince çizgi. `surfaceMuted` dolu gri bir lekeydi.
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
-    },
+    // Ana sayfadaki ızgara ile aynı: kutu + altında etiket.
+    cat: { alignItems: 'center', gap: space(0.75), width: 76 },
     /** Kurucunun Figma ikonu — Ionicons vektörünün yerine. */
-    catChipActive: { backgroundColor: colors.accent },
 
     noteInput: {
       minHeight: 76,

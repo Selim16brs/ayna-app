@@ -29,8 +29,24 @@ test('sabit gün/saat çipleri KALDIRILDI', () => {
 });
 
 test('takvim GERÇEK tarih seçici — elle çizilmiş liste değil', () => {
-  assert.match(bilesen, /from '@react-native-community\/datetimepicker'/, 'yerli seçici yok');
-  assert.match(bilesen, /mode="datetime"/, 'saat seçilemiyor');
+  /*
+   * ── BU TEST DEĞİŞTİ ──────────────────────────────────────────────────
+   *
+   * Eskiden YERLİ (native) seçicinin kullanılmasını şart koşuyordu. Ama o
+   * modül tam da sorunun kaynağı çıktı: telefondaki yapı onu içermediğinde
+   * tarih 1 Oca 1970'te donuyor ve dokunuşa yanıt vermiyordu — ve
+   * `runtimeVersion: sdkVersion` yüzünden OTA bunu çözemiyordu.
+   *
+   * Şart artık "yerli olsun" değil: GERÇEK BİR TAKVİM olsun ve saat
+   * seçilebilsin. Ortak `TakvimSecici` ikisini de saf JS ile veriyor.
+   */
+  assert.match(bilesen, /<TakvimSecici/, 'gerçek takvim yok');
+  assert.match(bilesen, /saatli/, 'saat seçilemiyor');
+  assert.equal(
+    /@react-native-community\/datetimepicker/.test(bilesen.replace(/\/\*[\s\S]*?\*\//g, '')),
+    false,
+    'native seçici geri gelmiş',
+  );
 });
 
 test('İLERİYE doğru sınır YOK', () => {
@@ -38,12 +54,14 @@ test('İLERİYE doğru sınır YOK', () => {
    * Kurucunun şartı: "tarih seçenekleri kısıtlanmamalı." Üst sınır koymak
    * (ör. maximumDate) o şartı bozar.
    */
-  assert.ok(!/maximumDate/.test(bilesen), 'ileriye tarih sınırı konmuş');
+  // Yeni takvimde üst sınırın adı `enCok`; ikisini de arıyoruz ki
+  // yeniden adlandırma kuralı sessizce delmesin.
+  assert.ok(!/maximumDate|enCok=/.test(bilesen), 'ileriye tarih sınırı konmuş');
 });
 
 test('GEÇMİŞ dışarıda — kısıtlama değil geçerlilik', () => {
   // Dün için randevu tercihi göndermek anlamsız; uzman yanıtlayamaz.
-  assert.match(bilesen, /minimumDate=\{new Date\(\)\}/, 'geçmiş tarih seçilebiliyor');
+  assert.match(bilesen, /enAz=\{new Date\(\)\}/, 'geçmiş tarih seçilebiliyor');
   assert.match(bilesen, /if \(ms <= Date\.now\(\)\) return;/, 'geçmiş an listeye girebiliyor');
 });
 

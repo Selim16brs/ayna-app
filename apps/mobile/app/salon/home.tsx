@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,14 @@ import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text, TierUpsell } from '../
 
 // §10.1 — SALON dashboard: kadro-merkezli. Üstte salon kapak fotoğrafı; yönetim öğeleri Profil'de.
 export default function SalonHomeScreen() {
+  /*
+   * SALON PANELİ de aynı kapıya sahip: müşteri hesabı buraya düşerse
+   * hesabının türü değişmiş gibi görünür (bkz. `seller/reports`).
+   */
+  const rol = useStore((s) => s.currentUser?.role);
+  const satici = rol === 'professional' || rol === 'salon';
+  if (rol && !satici) return <Redirect href="/discover" />;
+
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
