@@ -117,3 +117,78 @@ test('klavye odağı görünür', () => {
 test('hareket azaltma tercihi dinleniyor', () => {
   assert.match(css, /prefers-reduced-motion/, 'animasyon kapatılamıyor');
 });
+
+/* ── PREMIUM GÖRSEL DİL ────────────────────────────────────────────────── */
+
+test('kenar menü KOYU — panelin baştan aşağı beyaz olduğu hâl geride kaldı', () => {
+  /*
+   * Kurucu: "modern premium bir admin sayfası."
+   *
+   * Eski panelde kenar menü, kartlar ve zemin neredeyse aynı tondaydı;
+   * hiyerarşi yalnız ince çizgilerle kuruluyor ve sonuç yıkanmış, şablon
+   * gibi görünüyordu. Koyu menü hiyerarşiyi tek başına kuruyor.
+   */
+  assert.match(css, /--nav-bg:\s*#1b2016/, 'koyu menü tokenı yok');
+  assert.match(css, /\.sidebar\s*\{[^}]*background:\s*var\(--nav-bg\)/, 'menü koyu değil');
+});
+
+test('seçili menü kaleminde yazı OKUNUYOR', () => {
+  /*
+   * Aksan lime — açık bir renk. Üstüne beyaz yazı okunmuyordu; seçili
+   * kalem koyu mürekkep yazı kullanıyor.
+   */
+  assert.match(
+    css,
+    /\.nav-item\.active\s*\{[^}]*background:\s*var\(--accent\)[^}]*color:\s*var\(--on-accent\)/,
+    'seçili kalemde lime üstüne okunmayan yazı',
+  );
+});
+
+test('markanın yazı tipi var — sistem yazı tipine düşmüyor', () => {
+  const layout = readFileSync(join(kok, 'app/layout.tsx'), 'utf8');
+  assert.match(layout, /Plus_Jakarta_Sans/, 'panel sistem yazı tipinde');
+  // `next/font` kendi sunucumuzdan verir: dışarıya istek yok, bekletme yok.
+  assert.match(layout, /next\/font\/google/, 'yazı tipi kendi sunucumuzdan gelmiyor');
+  assert.match(css, /var\(--font-ui\)/, 'gövde yazı tipini kullanmıyor');
+});
+
+test('bekleyen iş kartları diğer sayaçlarla AYNI ölçüde', () => {
+  /*
+   * Panonun ilk satırı ve en çok bakılan yeri. Kendi küçük sınıflarını
+   * (`stat-v`/`stat-l`) kullanıyordu; rakamlar minicik kalıyor ve bekleyen
+   * iş gözden kaçıyordu.
+   */
+  assert.equal(/className="stat-v"/.test(sayfa), false, 'kart kendi küçük ölçüsünde');
+  assert.match(sayfa, /className=\{`stat stat-tik/, 'ortak kart sınıfı kullanılmıyor');
+});
+
+test('işi olan kart ÖNE ÇIKIYOR', () => {
+  // On bir kart aynı görünürse bekleyen işi taramak gözle sayma işine döner.
+  assert.match(sayfa, /n > 0 \? 'dikkat' : ''/, 'dolu kuyruk ayırt edilmiyor');
+  assert.match(css, /\.stat-tik\.dikkat/, 'dikkat durumunun stili yok');
+  // Renk sabit kod değil anlam tokenından: `#e5484d` elle yazılmıştı.
+  assert.equal(/#e5484d/.test(sayfa), false, 'sabit kodlanmış uyarı rengi kalmış');
+});
+
+test('satırda tek ana eylem var', () => {
+  /*
+   * Üye satırında beş düğme yan yana: Kaydet · Düzenle · Şifre · Kısıtla ·
+   * Askıya al. Hepsi aksan renginde olunca hangisinin ana eylem olduğu
+   * okunmuyordu.
+   */
+  /*
+   * KURALIN GÖVDESİ ölçülüyor, yalnız seçicisi değil: ilk yazımda test
+   * seçiciyi arıyordu ve `:hover` bloğundaki aynı seçiciye takılıp
+   * asıl kural silindiğinde bile geçiyordu.
+   */
+  const kural = css.match(
+    /\.list-row \.btn-sm:not\(\.btn-danger\):not\(\.btn-ok\),[\s\S]*?\{([^}]*)\}/,
+  );
+  assert.ok(kural, 'satır düğmeleri için kural yok');
+  assert.match(kural[1], /background:\s*var\(--bg-alt\)/, 'satır düğmeleri hâlâ aksan renginde');
+});
+
+test('yıkıcı eylem RENKTEN BAŞKA bir şeyle de ayrılıyor', () => {
+  // Renk körlüğünde tek başına renk yetmez.
+  assert.match(css, /\.btn-danger \{ border: 1px solid/, 'yıkıcı düğmenin kenarlığı yok');
+});

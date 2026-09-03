@@ -1007,17 +1007,16 @@ function OverviewView({ onGo }: { onGo: (t: Tab) => void }) {
                 <button
                   key={qd.key}
                   onClick={() => onGo(qd.tab)}
-                  className="stat"
-                  style={{
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    border: n > 0 ? '1.5px solid #e5484d' : undefined,
-                  }}
+                  /*
+                   * Bekleyen iş kartı. Sayı SIFIRDAN BÜYÜKSE kart öne çıkıyor
+                   * (`dikkat`): on bir kart yan yana duruyor ve hepsi aynı
+                   * görünürse bekleyen işi taramak gözle sayma işine dönüyor.
+                   * Renk sabit kod değil, anlam tokenından geliyor.
+                   */
+                  className={`stat stat-tik ${n > 0 ? 'dikkat' : ''}`}
                 >
-                  <div className="stat-v" style={{ color: n > 0 ? '#e5484d' : undefined }}>
-                    {n}
-                  </div>
-                  <div className="stat-l">{qd.label}</div>
+                  <div className="v">{n}</div>
+                  <div className="l">{qd.label}</div>
                 </button>
               );
             })}
