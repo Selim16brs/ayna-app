@@ -45,3 +45,37 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
+      # ── DUMAN TESTİ — gerçek sunucu, gerçek veritabanı, gerçek HTTP ──
+      #
+      # Birim testleri iki tarafı AYRI AYRI doğruluyor; aradaki sözleşmeye
+      # bakan bir şey yoktu ve tam oradan kırıldı: uygulama hizmet
+      # satırlarını `serviceId` ile göndermeye başlayınca kayıt şeması hâlâ
+      # `id` istiyordu. Hizmet seçen HER uzman kayıt olamıyordu, canlıya
+      # çıktı ve hiçbir test kızarmadı.
+      #
+      # İş zaten Postgres ile çalışıyor; sunucuyu ayağa kaldırıp gerçek
+      # gövdeleri gerçek uçlara göndermenin maliyeti yaklaşık yarım dakika.
+      - name: Şema veritabanına
+        run: pnpm --filter @ayna/api exec prisma db push --skip-generate --accept-data-loss
+      - name: Sunucuyu başlat
+        working-directory: apps/api
+        run: |
+          node dist/main.js > /tmp/api.log 2>&1 &
+          echo $! > /tmp/api.pid
+          # Hazır olana kadar bekle; 60 sn sonra pes et ve LOG'U BAS —
+          # sessiz bir zaman aşımı hata ayıklanamaz.
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:3000/api/v1/taxonomy; then
+              echo "sunucu hazır ($i sn)"; exit 0
+            fi
+            sleep 1
+          done
+          echo "SUNUCU AÇILMADI — log:"; cat /tmp/api.log; exit 1
+      - name: Duman testi
+        run: pnpm --filter @ayna/api smoke
+      - name: Sunucu logu (yalnız hata durumunda)
+        if: failure()
+        run: cat /tmp/api.log || true
+      - name: Sunucuyu durdur
+        if: always()
+        run: kill "$(cat /tmp/api.pid)" 2>/dev/null || true
