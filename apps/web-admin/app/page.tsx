@@ -513,6 +513,16 @@ function ProfileChangesView() {
   const summarize = (c: Record<string, unknown>): string => {
     const parts: string[] = [];
     if (typeof c.name === 'string') parts.push(`İsim → "${c.name}"`);
+    /*
+     * TELEFON — en kritik değişiklik, bu yüzden en başa ve tam numarayla.
+     * Yeni numara SMS koduyla doğrulanmış olarak geliyor (sunucu kodsuz
+     * talep kabul etmiyor); rozet bunu söylüyor ki admin "numara gerçekten
+     * bu kişinin mi" sorusunu tekrar sormasın, kendi sorusuna odaklansın:
+     * bu değişiklik uygun mu?
+     */
+    if (typeof c.phone === 'string') {
+      parts.unshift(`Telefon → ${c.phone}${c.phoneVerified ? ' (SMS ile doğrulandı)' : ''}`);
+    }
     const sp = c.salonProfile as Record<string, unknown> | undefined;
     if (sp) {
       if (sp.about) parts.push('Hakkında');

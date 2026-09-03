@@ -1748,10 +1748,20 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'profile.edit.save_err':
     'Сақталмады — қайталап көр. (Сессия жаңарған болуы мүмкін; шығып-кіріп көр.)',
   'profile.edit.name': 'Аты-жөні',
-  'profile.edit.identity_note':
-    'Телефон мен e-mail — кіру деректері; өзгерту үшін қолдау қызметіне хабарласыңыз.',
   'profile.edit.email': 'Электрондық пошта',
   'profile.edit.phone': 'Телефон',
+  'profile.phone.title': 'Телефон нөмірін өзгерту',
+  'profile.phone.change': 'Телефон нөмірімді өзгерту',
+  'profile.phone.why':
+    'Жаңа нөміріңді SMS кодымен растаймыз, содан кейін командамыз мақұлдайды. Мақұлданғанша ескі нөміріңмен кіре бересің.',
+  'profile.phone.current': 'Қазіргі нөмірің',
+  'profile.phone.new': 'Жаңа нөмірің',
+  'profile.phone.send_code': 'Растау кодын жіберу',
+  'profile.phone.code_sent': 'Код мына нөмірге жіберілді:',
+  'profile.phone.submit': 'Мақұлдауға жіберу',
+  'profile.phone.submitted': 'Өтінішің қабылданды. Мақұлданғанда хабарлаймыз.',
+  'profile.phone.taken': 'Бұл нөмір басқа аккаунтта тіркелген.',
+  'profile.phone.same': 'Бұл сенің қазіргі нөмірің.',
   'profile.edit.city': 'Қала',
   'profile.edit.saved': 'Профиль жаңартылды',
   'profile.edit.pending_t': 'Өзгеріс растауға жіберілді',

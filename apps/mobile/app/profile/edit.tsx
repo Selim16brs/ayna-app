@@ -227,16 +227,24 @@ export default function ProfileEditScreen() {
           readOnly
         />
         {/* Telefon ve e-posta GİRİŞ KİMLİĞİDİR (auth: ikisiyle de giriş yapılır).
-            Profilden doğrulamasız değiştirilmeleri hesap devri anlamına gelirdi;
-            düzenlenebilir görünüp kaydedilmemeleri ise kullanıcıya "bilgilerim
-            geri döndü" olarak yansıyordu. Salt okunur + gerekçe. */}
+            Bu alanda doğrudan düzenlenemezler: doğrulamasız değişmeleri hesap
+            devri anlamına gelirdi.
+
+            AMA ARTIK ÇIKMAZ DEĞİL. Eskiden not "destek ile iletişime geç"
+            diyordu ve pratikte kimse numarasını değiştiremiyordu — oysa hat
+            kaybolur, operatör değişir. Telefon için ayrı bir akış var:
+            yeni numara SMS ile doğrulanıyor, sonra admin onaylıyor. */}
         <Field
           label={t('profile.edit.phone')}
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
           readOnly
-          note={t('profile.edit.identity_note')}
+        />
+        <Button
+          label={t('profile.phone.change')}
+          variant="secondary"
+          onPress={() => router.push('/profile/phone')}
         />
         <Field label={t('profile.edit.city')} value={city} onChangeText={setCity} />
 

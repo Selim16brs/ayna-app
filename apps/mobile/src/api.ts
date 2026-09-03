@@ -1076,6 +1076,15 @@ export const api = {
   submitProfileChange: (changes: Record<string, unknown>, token: string) =>
     post<ProfileChangeReq>('/profile-changes', { changes }, token),
   myProfileChange: (token: string) => get<ProfileChangeReq | null>('/profile-changes/mine', token),
+  /**
+   * Telefon değişikliği talebi — YENİ numara + o numaraya gelen SMS kodu.
+   *
+   * Genel profil değişikliğinden ayrı bir uç: sunucu burada kodu doğruluyor.
+   * Kodsuz gönderilebilseydi başkasının numarasını yazıp admin onayıyla
+   * hesap devralmak mümkün olurdu.
+   */
+  requestPhoneChange: (phone: string, code: string, token: string) =>
+    post<ProfileChangeReq>('/profile-changes/phone', { phone, code }, token),
   // §12.8 — pro'nun komisyon faturaları + dekont yükleme
   // §12.4 — depozito itirazı / iade dekontunu admin kuyruğuna bildir
   fileDispute: (token: string, input: DisputeInput) =>
