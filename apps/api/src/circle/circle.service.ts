@@ -16,6 +16,28 @@ export class CircleService {
   ) {}
 
   // §5.5 — OpenAI /moderations (ücretsiz) birincil; anahtar yoksa keyword yedeği
+  /** Ayar anahtarı — panelden açılıp kapanıyor. */
+  private static readonly HEPSI_ONAYA = 'policy.circle_premoderate';
+
+  /**
+   * Her gönderi onaya düşsün mü?
+   *
+   * Ayar yoksa ya da okunamıyorsa FALSE: topluluk akmaya devam etsin.
+   * Ters varsayım, tek bir veritabanı hıçkırığında tüm gönderileri
+   * sessizce kuyruğa yığardı.
+   */
+  private async hepsiOnaya(): Promise<boolean> {
+    try {
+      const s = await this.prisma.setting.findUnique({
+        where: { key: CircleService.HEPSI_ONAYA },
+      });
+      // `Setting` yalnız int/str taşıyor; 1 = açık.
+      return (s?.intValue ?? 0) === 1;
+    } catch {
+      return false;
+    }
+  }
+
   private async moderate(text: string): Promise<ModerationVerdict> {
     const key = this.env.OPENAI_API_KEY;
     if (!key) return keywordModeration(text);
@@ -183,8 +205,25 @@ export class CircleService {
         text: input.text,
         anonymous,
         authorLabel: await this.authorLabel(userId, anonymous),
-        // Şüpheli → yayınlanmaz, admin kuyruğuna düşer (pending)
-        status: verdict.flagged ? 'pending' : 'published',
+        /*
+         * ── ÖN MODERASYON ANAHTARI ────────────────────────────────────
+         *
+         * Kurucu: "w2w'de yorum yaptım ama yorum onayı admine düşmedi."
+         *
+         * Sistem hatalı değildi, BİLEREK böyleydi: yalnız şüpheli görülen
+         * gönderi kuyruğa düşüyor, temiz olan doğrudan yayınlanıyordu.
+         * Kurucunun gönderisi temiz bulunmuştu.
+         *
+         * Ama bu bir ÜRÜN KARARI ve tek doğrusu yok:
+         *   · Hepsini onaya almak → hiçbir şey gözden kaçmaz, ama her
+         *     gönderi admini bekler; topluluk ölür.
+         *   · Yalnız şüphelileri → topluluk akar, denetim örneklem.
+         *
+         * Karar artık panelden verilebiliyor. VARSAYILAN DEĞİŞMEDİ:
+         * anahtar kapalıyken davranış bugünküyle birebir aynı — sessiz bir
+         * davranış değişikliği kimseye sürpriz olmasın.
+         */
+        status: verdict.flagged || (await this.hepsiOnaya()) ? 'pending' : 'published',
         moderationReason: verdict.reason,
       },
     });
