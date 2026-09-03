@@ -152,7 +152,12 @@ export class SpecialistsService {
 
     // §7 — bağımsız uzman keşif kataloğunda da yer alır; yorumları bu Professional'a bağlanır.
     // (salon_bound uzman tek başına listelenmez — salonun kaydı üzerinden görünür)
-    const hizmetler = (input.services ?? []).slice(0, 60);
+    /*
+     * Kayıt satırları da normalleşiyor: kataloğa bağlanmayan, adsız ya da
+     * fiyatsız satır SAKLANMIYOR. Bağsız hizmet aramada ve arz hesabında
+     * görünmez; uzman yazdığını sanır, müşteri hiç bulamaz.
+     */
+    const hizmetler = hizmetSatirlariniNormalle(input.services ?? []).slice(0, 60);
     if (input.kind === 'independent') {
       try {
         const pro = await this.prisma.professional.create({
@@ -450,7 +455,7 @@ export class SpecialistsService {
   async setMyServices(userId: string, services: unknown[]) {
     const proId = await this.proIdFor(userId);
     if (!proId) return { services: [] };
-    const kesilmis = services.slice(0, 60);
+    const kesilmis = hizmetSatirlariniNormalle(services).slice(0, 60);
     // Alan seti hizmet listesiyle BİRLİKTE güncellenir. Ayrı tutulsaydı,
     // uzman tırnak hizmetlerini silince tırnak aramasında görünmeye devam
     // ederdi (ya da tersi: yeni alan eklese aramada hiç çıkmazdı).
@@ -701,6 +706,47 @@ function mapSpecialist(s: Specialist) {
     // IIN public'te ASLA açık dönmez — yalnız varlık bilgisi
     hasIin: /^\d{12}$/.test(s.iin),
   };
+}
+
+/**
+ * HİZMET SATIRLARINI NORMALLEŞTİRİR — brief §4.1.
+ *
+ * Brief: "Seçilen her alt hizmet altında uzman kendi hizmetlerini manuel
+ * ekler: serbest ad + fiyat + süre." Bağ (`serviceId`) ZORUNLU.
+ *
+ * KATALOĞA BAĞLANMAYAN SATIR SAKLANMIYOR. Bağsız hizmet aramada, talep
+ * eşleşmesinde ve "Yakında" hesabında görünmez: uzman yazdığını sanar,
+ * müşteri hiç bulamaz. Sessizce kaydetmek, çalışmayan bir şeyi
+ * çalışıyormuş gibi göstermek olurdu.
+ *
+ * Adsız ya da fiyatsız satır da atılıyor: müşteriye adsız bir hizmet ya
+ * da 0 ₸ göstermek yarım bir kaydı gerçek bir teklif gibi sunmaktır.
+ *
+ * Kimlik `serviceId` alanında yazılıyor — eski kayıtlar `id`de taşıyordu
+ * ve `hizmetSatirininKimligi` ikisini de okuyor.
+ */
+export function hizmetSatirlariniNormalle(
+  ham: readonly unknown[],
+): { serviceId: string; name: string; price: number; durationMin: number }[] {
+  const out: { serviceId: string; name: string; price: number; durationMin: number }[] = [];
+  for (const satir of ham) {
+    const serviceId = hizmetSatirininKimligi(satir);
+    if (!serviceId) continue;
+    const r = satir as { name?: unknown; price?: unknown; durationMin?: unknown };
+    const name = typeof r.name === 'string' ? r.name.trim().slice(0, 120) : '';
+    const price = Number(r.price);
+    const durationMin = Number(r.durationMin);
+    if (!name || !Number.isFinite(price) || price <= 0) continue;
+    out.push({
+      serviceId,
+      name,
+      price: Math.round(price),
+      // Süre eksikse hizmet düşürülmüyor: fiyat ve ad varsa teklif
+      // gerçek. Randevu ekranının bir sayıya ihtiyacı var, 60 dk makul.
+      durationMin: Number.isFinite(durationMin) && durationMin > 0 ? Math.round(durationMin) : 60,
+    });
+  }
+  return out;
 }
 
 function safeParse(raw?: string): unknown[] {

@@ -59,7 +59,7 @@ import {
   SEED_APPOINTMENTS,
   type UserAddress,
 } from './data';
-import { findServiceWithCategory, servicesOf } from './taxonomy';
+import { findServiceWithCategory } from './taxonomy';
 import { defaultHours, type DayHours } from './ui/WorkingHours';
 import { emptySocial, type SocialValue } from './ui/SocialLinks';
 
@@ -89,19 +89,45 @@ const nextId = (prefix: string): string => {
   return `${prefix}${zaman}${rastgele}${++seq}`;
 };
 
-// §6.1 — uzman/salon hizmet kataloğu satırı: taksonomi hizmet id'sine bağlı fiyat/süre (₸ / dk, string form).
-export type SellerServiceRow = { price: string; dur: string };
-
-// Uzmanın MÜŞTERİLERİNE SUNDUĞU hazır hizmet menüsü (Hizmetler ekranından yönetilir).
-// Demo hesabı bir saç uzmanı → başlangıçta kendi uzmanlığındaki hizmetlerle gelir (generic
-// çok-kategorili katalog DEĞİL). Gerçek uygulamada bu liste uzmanın kaydından türer.
-const seedSellerServices = (): Record<string, SellerServiceRow> => {
-  const init: Record<string, SellerServiceRow> = {};
-  for (const s of servicesOf('hair')) {
-    init[s.id] = { price: String(s.price), dur: String(s.durationMin) };
-  }
-  return init;
+/**
+ * UZMANIN KENDİ HİZMETİ — brief §4.1.
+ *
+ * "Seçilen her alt hizmet altında uzman kendi hizmetlerini manuel ekler:
+ * serbest ad + fiyat + süre (şablon yok)."
+ *
+ * Eskiden satır ŞABLONDU: alt hizmet başına tek satır, adı katalogdan.
+ * "Boya" diyen bir uzman kök boyası ile tam boyayı ayrı fiyatlayamıyordu;
+ * ikisini tek fiyata sıkıştırmak ya da müşteriye mesajla anlatmak
+ * zorundaydı.
+ *
+ * `serviceId` KATALOG BAĞI: hangi alt hizmetin altında olduğu. Bağ olmadan
+ * hizmet aramada, "Yakında" hesabında ve talep eşleşmesinde görünmezdi.
+ */
+export type SellerServiceRow = {
+  /** Satırın kendi kimliği — aynı alt hizmet altında birden çok satır olabilir. */
+  key: string;
+  /** Bağlı olduğu katalog alt hizmeti (`hair.coloring`). */
+  serviceId: string;
+  /** Uzmanın KENDİ yazdığı ad ("Kök boyası"). */
+  name: string;
+  /** ₸ (string form — girdi alanı). */
+  price: string;
+  /** dk (string form). */
+  dur: string;
 };
+
+/**
+ * Yeni hesap BOŞ başlıyor.
+ *
+ * Burada `seedSellerServices()` vardı ve HER uzman/salon hesabına sekiz saç
+ * hizmeti dolduruyordu. Tırnak uzmanı kendi randevu ekranında hiç
+ * girmediği saç hizmetlerini görüyordu; "Hizmetlerim"i bir kez kaydettiği
+ * anda o sekiz satır SUNUCUYA da gidiyor ve hiç vermediği hizmetlerin
+ * arzı olarak sayılıyordu.
+ *
+ * Kurucu: "sistem hiçbir şeyi kendiliğinden uydurmamalı."
+ */
+const bosHizmetListesi = (): SellerServiceRow[] => [];
 
 // §4.3 — dekont son yükleme anı: randevuya 6 saatten az varsa 1 saat, değilse 3 saat.
 const depositDeadlineFor = (startMs: number, now: number): number =>
@@ -382,8 +408,8 @@ interface State {
   applyProfileCutout: (base64: string) => Promise<'ok' | 'not_premium' | 'unavailable' | 'error'>;
   // §6.1 — uzman/salon hizmet kataloğu (taksonomi id → fiyat/süre). Profil "Hizmetler" ekranından
   // yönetilir; offline randevu akışında hazır (accordion) seçim olarak kullanılır. Kalıcı saklanır.
-  sellerServices: Record<string, SellerServiceRow>;
-  setSellerServices: (map: Record<string, SellerServiceRow>) => void;
+  sellerServices: SellerServiceRow[];
+  setSellerServices: (rows: SellerServiceRow[]) => void;
   // §9.5 — uzman/salon profil verileri (kayıt sonrası düzenlenebilir). Kalıcı saklanır.
   sellerSocial: SocialValue;
   sellerHours: DayHours[];
@@ -681,7 +707,7 @@ export const userScopedReset = (): Partial<State> => ({
   demandNotif: { cats: [], from: 8, to: 22 },
   notifPrefs: { care: true, moment: true, personal: true, booking: true },
   momentNudged: [],
-  sellerServices: seedSellerServices(),
+  sellerServices: bosHizmetListesi(),
   sellerHours: defaultHours(),
   sellerSocial: emptySocial,
   sellerCerts: [],
@@ -929,22 +955,21 @@ export const useStore = create<State>()(
         }
       },
       setSellerHours: (hours) => set({ sellerHours: hours }),
-      sellerServices: seedSellerServices(),
-      setSellerServices: (map) => {
-        set({ sellerServices: map });
+      sellerServices: bosHizmetListesi(),
+      setSellerServices: (rows) => {
+        set({ sellerServices: rows });
         // §9.5 — hizmet listesi HESABIN parçası: public profil de bundan beslenir
-        const rows = Object.entries(map)
-          .map(([id, r]) => {
-            const svc = findServiceWithCategory(id);
-            return {
-              id,
-              name: svc?.service.label.tr ?? id,
-              price: Number(r.price) || 0,
-              durationMin: Number(r.dur) || 60,
-            };
-          })
-          .filter((x) => x.price > 0);
-        void api.setMyServices(rows).catch(() => undefined);
+        const gonderilecek = rows
+          .map((r) => ({
+            // Katalog bağı `serviceId`de; sunucu arama ve "Yakında" hesabını
+            // bundan yapıyor. Ad uzmanın kendi sözcüğü, çeviri aranmıyor.
+            serviceId: r.serviceId,
+            name: r.name.trim() || (findServiceWithCategory(r.serviceId)?.service.label.tr ?? ''),
+            price: Number(r.price) || 0,
+            durationMin: Number(r.dur) || 60,
+          }))
+          .filter((x) => x.price > 0 && x.name);
+        void api.setMyServices(gonderilecek).catch(() => undefined);
       },
       sellerSocial: emptySocial,
       sellerHours: defaultHours(),
@@ -2963,10 +2988,26 @@ export const useStore = create<State>()(
               .myServices()
               .then((r) => {
                 if (!r.services.length) return;
-                const map: Record<string, SellerServiceRow> = {};
-                for (const svc of r.services)
-                  map[svc.id] = { price: String(svc.price), dur: String(svc.durationMin) };
-                set({ sellerServices: map });
+                /*
+                 * `serviceId` yoksa `id`ye düşülüyor: eski kayıtlar katalog
+                 * kimliğini `id` alanında taşıyordu. Bağı hiç kuramayan
+                 * satır ATILIYOR — kataloğa bağlanmamış hizmet aramada,
+                 * talep eşleşmesinde ve arz hesabında görünmez; menüde
+                 * tutmak uzmana çalıştığı izlenimi verirdi.
+                 */
+                const rows: SellerServiceRow[] = [];
+                for (const [i, svc] of r.services.entries()) {
+                  const bag = svc.serviceId ?? svc.id;
+                  if (!bag || !findServiceWithCategory(bag)) continue;
+                  rows.push({
+                    key: `${bag}#${i}`,
+                    serviceId: bag,
+                    name: svc.name,
+                    price: String(svc.price),
+                    dur: String(svc.durationMin),
+                  });
+                }
+                if (rows.length) set({ sellerServices: rows });
               })
               .catch(() => undefined);
             void api
@@ -3151,12 +3192,22 @@ export const useStore = create<State>()(
     {
       name: 'ayna-session',
       storage: createJSONStorage(() => AsyncStorage),
-      // v1: hizmet menüsü artık uzmanlık-odaklı seed (eski generic çok-kategorili liste kalıcıysa atılır).
-      version: 1,
+      /*
+       * v2 — hizmet menüsü ŞEKİL DEĞİŞTİRDİ (brief §4.1).
+       *
+       * v1'de `Record<altHizmetId, {price,dur}>` idi; artık uzmanın kendi
+       * adını taşıyan düz bir liste. Eski biçim kalıcı kalsaydı ekranlar
+       * dizi bekleyip nesne bulur ve uzmanın hizmet ekranı çökerdi.
+       *
+       * Eski liste DÜŞÜRÜLÜYOR, uydurulmuyor: adları katalogdan
+       * doldurmak, uzmanın yazmadığı adları yazmış gibi göstermek olurdu.
+       * Sunucudaki kayıt zaten açılışta geri yükleniyor.
+       */
+      version: 2,
       migrate: (persisted, version) => {
-        if (version < 1 && persisted && typeof persisted === 'object') {
+        if (version < 2 && persisted && typeof persisted === 'object') {
           const rest = { ...(persisted as Record<string, unknown>) };
-          delete rest.sellerServices; // düş → varsayılan (yeni) seed uygulanır; oturum korunur
+          delete rest.sellerServices;
           return rest as typeof persisted;
         }
         return persisted;

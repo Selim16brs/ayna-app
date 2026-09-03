@@ -274,10 +274,16 @@ export default function ExpertRegisterScreen() {
         // sektörün varsayılan menüsünü uyduruyordu — uzmanın hiç seçmediği
         // hizmetler fiyatlarıyla listeleniyor ve her uzman her alanda
         // görünüyordu. Sunucu alan setini de bu listeden türetir.
+        /*
+         * `serviceId` KATALOG BAĞI (brief §4.1). Eskiden `id` alanıyla
+         * gidiyordu ve okuyan taraflar bunu farklı adlarla arıyordu.
+         * Ad kayıtta katalog etiketiyle başlıyor; uzman "Hizmetlerim"de
+         * kendi adını yazıp aynı alt hizmet altında satır çoğaltabiliyor.
+         */
         services: Object.entries(svc)
           .filter(([, r]) => Number(r.price) > 0 && Number(r.dur) > 0)
           .map(([id, r]) => ({
-            id,
+            serviceId: id,
             name: tri(findService(id)?.label ?? { tr: id, kk: id, ru: id }, locale),
             price: Number(r.price),
             durationMin: Number(r.dur),

@@ -646,7 +646,8 @@ export interface CreateOfferInput {
 
 export interface RegisterSpecialistInput {
   /** §9.5 — kayıtta seçilen gerçek hizmet/fiyat/süre listesi (sunucu alan setini bundan türetir). */
-  services?: { id: string; name: string; price: number; durationMin: number }[];
+  /** Katalog bağı `serviceId` (brief §4.1) — sunucu arz ve alan setini bundan türetir. */
+  services?: { serviceId: string; name: string; price: number; durationMin: number }[];
   photoDataUrl?: string;
   birthDateMs?: number;
   sector?: string;
@@ -1041,12 +1042,29 @@ export const api = {
     post<AuthUser>('/auth/me/profile', patch, token),
   setAvatar: (token: string, photoDataUrl: string | null) =>
     post<AuthUser>('/auth/me/avatar', { photoDataUrl }, token),
+  /**
+   * Uzmanın kendi hizmet menüsü — brief §4.1.
+   *
+   * `serviceId` KATALOG BAĞI (`hair.coloring`), `name` uzmanın kendi
+   * yazdığı ad ("Kök boyası"). Aynı `serviceId` altında birden çok satır
+   * olabilir; brief "şablon yok" diyor.
+   *
+   * `id` eski kayıtlarda katalog kimliğini taşıyordu. Okurken hâlâ
+   * kabul ediliyor (`serviceId ?? id`), yazarken kullanılmıyor.
+   */
   myServices: () =>
-    get<{ services: { id: string; name: string; price: number; durationMin: number }[] }>(
-      '/specialists/me/services',
-    ),
-  setMyServices: (services: { id: string; name: string; price: number; durationMin: number }[]) =>
-    post<unknown>('/specialists/me/services', { services }),
+    get<{
+      services: {
+        id?: string;
+        serviceId?: string;
+        name: string;
+        price: number;
+        durationMin: number;
+      }[];
+    }>('/specialists/me/services'),
+  setMyServices: (
+    services: { serviceId: string; name: string; price: number; durationMin: number }[],
+  ) => post<unknown>('/specialists/me/services', { services }),
   joinBusiness: (code: string) =>
     post<{ ok: boolean; businessName: string }>('/specialists/me/join-business', { code }),
   setMyCertificates: (certificates: string[]) =>
