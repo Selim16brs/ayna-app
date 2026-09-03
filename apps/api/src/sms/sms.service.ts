@@ -11,6 +11,13 @@ import {
   tekrarDenenir,
   yanitiCoz,
 } from './smsc';
+import {
+  istekGovdesi as mobizonGovdesi,
+  istekUcu as mobizonUcu,
+  numarayiSadelestir,
+  tekrarDenenir as mobizonTekrarDenenir,
+  yanitiCoz as mobizonCoz,
+} from './mobizon';
 
 /**
  * SMS GÖNDERİM KATMANI — SMSC.kz.
@@ -70,30 +77,13 @@ export class SmsService {
       return { gonderildi: true };
     }
 
-    const kimlik = {
-      login: this.env.SMSC_LOGIN!,
-      sifre: this.env.SMSC_PASSWORD!,
-      ...(this.env.SMSC_SENDER ? { gonderen: this.env.SMSC_SENDER } : {}),
-    };
-    const numara = telefonuBicimle(telefon);
-    const govde = istekGovdesi(kimlik, numara, mesaj);
+    const saglayici = this.env.SMS_PROVIDER;
+    const sonuc =
+      saglayici === 'mobizon'
+        ? await this.mobizonGonder(telefon, mesaj)
+        : await this.smscGonder(telefon, mesaj);
 
-    let sonuc = await this.istek(SMSC_UC, govde);
-
-    // Yalnız "çok sık istek" (kod 9) tekrar deneniyor. Bakiye yetersizken
-    // tekrar denemek aynı hatayı üretir; döngüye girmek durumu kötüleştirir.
-    if (!sonuc.ok && tekrarDenenir(sonuc.kod)) {
-      await bekle(1200);
-      sonuc = await this.istek(SMSC_UC, govde);
-    }
-
-    // Ağ seviyesinde düştüyse (sağlayıcı ucu erişilemiyor) yedek sunucu
-    // deneniyor — SMSC kendi dokümanında bu adresi bunun için veriyor.
-    if (!sonuc.ok && sonuc.kod === null && sonuc.hata.startsWith('ağ')) {
-      sonuc = await this.istek(SMSC_YEDEK_UC, govde);
-    }
-
-    await this.kaydet(telefon, sonuc);
+    await this.kaydet(telefon, saglayici, sonuc);
 
     if (!sonuc.ok) {
       // Sebep SUNUCU kaydında; kullanıcıya sağlayıcı hatası gösterilmiyor.
@@ -103,7 +93,55 @@ export class SmsService {
     return { gonderildi: true };
   }
 
-  /** Tek HTTP denemesi. Ağ hataları da `SmscSonuc`a çevriliyor. */
+  /** SMSC.kz gönderimi. */
+  private async smscGonder(telefon: string, mesaj: string) {
+    const kimlik = {
+      login: this.env.SMSC_LOGIN!,
+      sifre: this.env.SMSC_PASSWORD!,
+      ...(this.env.SMSC_SENDER ? { gonderen: this.env.SMSC_SENDER } : {}),
+    };
+    const govde = istekGovdesi(kimlik, telefonuBicimle(telefon), mesaj);
+
+    let sonuc = yanitiCoz(await this.istek(SMSC_UC, govde));
+
+    // Yalnız "çok sık istek" (kod 9) tekrar deneniyor. Bakiye yetersizken
+    // tekrar denemek aynı hatayı üretir; döngüye girmek durumu kötüleştirir.
+    if (!sonuc.ok && tekrarDenenir(sonuc.kod)) {
+      await bekle(1200);
+      sonuc = yanitiCoz(await this.istek(SMSC_UC, govde));
+    }
+
+    // Ağ seviyesinde düştüyse (sağlayıcı ucu erişilemiyor) yedek sunucu
+    // deneniyor — SMSC kendi dokümanında bu adresi bunun için veriyor.
+    if (!sonuc.ok && sonuc.kod === null && sonuc.hata.startsWith('ağ')) {
+      sonuc = yanitiCoz(await this.istek(SMSC_YEDEK_UC, govde));
+    }
+    return sonuc;
+  }
+
+  /** Mobizon.kz gönderimi. */
+  private async mobizonGonder(telefon: string, mesaj: string) {
+    const kimlik = {
+      anahtar: this.env.MOBIZON_API_KEY!,
+      ...(this.env.MOBIZON_SENDER ? { gonderen: this.env.MOBIZON_SENDER } : {}),
+    };
+    // Mobizon "+" kabul etmiyor: yalnız rakam.
+    const numara = numarayiSadelestir(telefonuBicimle(telefon));
+    const uc = mobizonUcu(kimlik);
+    const govde = mobizonGovdesi(kimlik, numara, mesaj);
+
+    let sonuc = mobizonCoz(await this.istek(uc, govde));
+    if (!sonuc.ok && mobizonTekrarDenenir(sonuc.kod)) {
+      await bekle(1200);
+      sonuc = mobizonCoz(await this.istek(uc, govde));
+    }
+    return sonuc;
+  }
+
+  /**
+   * Tek HTTP denemesi. HAM JSON döner; çözümü sağlayıcının kendi çözücüsü
+   * yapıyor. Ağ hatası, iki çözücünün de hata sayacağı bir zarfa çevriliyor.
+   */
   private async istek(uc: string, govde: URLSearchParams) {
     try {
       const yanit = await fetch(uc, {
@@ -112,24 +150,25 @@ export class SmsService {
         body: govde.toString(),
         signal: AbortSignal.timeout(SmsService.ZAMAN_ASIMI_MS),
       });
-      if (!yanit.ok) {
-        return { ok: false as const, kod: null, hata: `ağ: HTTP ${yanit.status}` };
-      }
-      return yanitiCoz(await yanit.json());
+      if (!yanit.ok) return agHatasi(`HTTP ${yanit.status}`);
+      return await yanit.json();
     } catch (e) {
-      return { ok: false as const, kod: null, hata: `ağ: ${(e as Error).message}` };
+      return agHatasi((e as Error).message);
     }
   }
 
   private async kaydet(
     telefon: string,
-    sonuc: Awaited<ReturnType<SmsService['istek']>>,
+    saglayici: string,
+    sonuc:
+      | { ok: true; mesajId: string; parca: number }
+      | { ok: false; kod: number | null; hata: string },
   ): Promise<void> {
     try {
       await this.prisma.smsLog.create({
         data: {
           phoneMasked: son4(telefon),
-          provider: 'smsc',
+          provider: saglayici,
           status: sonuc.ok ? 'SENT' : 'FAILED',
           providerMessageId: sonuc.ok ? sonuc.mesajId : null,
           segments: sonuc.ok ? sonuc.parca : 0,
@@ -149,6 +188,20 @@ export class SmsService {
 function son4(telefon: string): string {
   const r = (telefon ?? '').replace(/[^0-9]/g, '');
   return r.length >= 4 ? `…${r.slice(-4)}` : '…';
+}
+
+/**
+ * Ağ hatasını, İKİ sağlayıcının da hata sayacağı bir zarfa çevirir.
+ *
+ * SMSC `error_code`a, Mobizon `code`a bakıyor. İkisini de koyuyoruz ki
+ * hangi çözücüye giderse gitsin "başarı" diye okunmasın — sessizce
+ * gönderilmiş sayılan bir SMS en kötü sonuç olurdu.
+ */
+function agHatasi(sebep: string) {
+  // `error`/`error_code` SMSC'nin, `code`/`message` Mobizon'un baktığı
+  // alanlar. Sebep İKİSİNDE de yazıyor ki hangi çözücü okursa okusun
+  // kayıtta "bilinmeyen hata" değil gerçek sebep görünsün.
+  return { error: `ağ: ${sebep}`, error_code: null, code: -1, message: `ağ: ${sebep}` };
 }
 
 function bekle(ms: number): Promise<void> {

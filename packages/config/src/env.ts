@@ -38,11 +38,16 @@ export const envSchema = z
     /**
      * SMS sağlayıcısı.
      *
-     * `mock` — hiçbir yere gitmez, kod konsola yazılır (yalnız yerel).
-     * `smsc` — SMSC.kz üzerinden GERÇEK SMS. Kazakistan'da dört operatöre de
-     *          (Kcell, Beeline, Tele2, Altel) yerel tarifeden ulaşıyor.
+     * `mock`    — hiçbir yere gitmez, kod konsola yazılır (yalnız yerel).
+     * `smsc`    — SMSC.kz üzerinden gerçek SMS.
+     * `mobizon` — Mobizon.kz üzerinden gerçek SMS. Her operatörde daha ucuz
+     *             ve kimlik doğrulaması hesap şifresiyle değil İPTAL
+     *             EDİLEBİLİR API ANAHTARIYLA yapılıyor.
+     *
+     * İkisi de aynı `SmsService` arkasında: tek sağlayıcıya bağlı kalıp o
+     * çalışmadığında kayıt akışının tamamen durmasını istemiyoruz.
      */
-    SMS_PROVIDER: z.enum(['mock', 'smsc']).default('mock'),
+    SMS_PROVIDER: z.enum(['mock', 'smsc', 'mobizon']).default('mock'),
     SMSC_LOGIN: z.string().optional(),
     SMSC_PASSWORD: z.string().optional(),
     /**
@@ -54,6 +59,12 @@ export const envSchema = z
      * ancak kayıt onaylandıktan sonra doldurulmalı.
      */
     SMSC_SENDER: z.string().optional(),
+    MOBIZON_API_KEY: z.string().optional(),
+    /**
+     * Mobizon'da kayıtlı gönderen adı. SMSC_SENDER ile aynı mantıkla isteğe
+     * bağlı: yoksa hesabın varsayılanı ya da servisin ortak adı kullanılıyor.
+     */
+    MOBIZON_SENDER: z.string().optional(),
     // GÜVENLİK (P0): OTP kodunun API yanıtında dönmesi YALNIZ bu bayrak açıkken olur.
     // Varsayılan KAPALI — üretimde kod asla sızmaz (hesap ele geçirme açığı kapatıldı).
     // Yerel geliştirmede apps/api/.env içine OTP_DEBUG_CODES=true yazılır.
@@ -82,13 +93,18 @@ export const envSchema = z
    * durmak, üretimde saatlerce kod göndermemekten iyidir.
    */
   .superRefine((env, ctx) => {
-    if (env.SMS_PROVIDER !== 'smsc') return;
-    for (const alan of ['SMSC_LOGIN', 'SMSC_PASSWORD'] as const) {
+    const gerekli =
+      env.SMS_PROVIDER === 'smsc'
+        ? (['SMSC_LOGIN', 'SMSC_PASSWORD'] as const)
+        : env.SMS_PROVIDER === 'mobizon'
+          ? (['MOBIZON_API_KEY'] as const)
+          : ([] as const);
+    for (const alan of gerekli) {
       if (!env[alan]) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: [alan],
-          message: `SMS_PROVIDER=smsc iken ${alan} zorunlu`,
+          message: `SMS_PROVIDER=${env.SMS_PROVIDER} iken ${alan} zorunlu`,
         });
       }
     }
