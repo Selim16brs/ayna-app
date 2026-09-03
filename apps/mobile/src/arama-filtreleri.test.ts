@@ -351,9 +351,49 @@ test('FİLTRE DE BİR ARAMADIR — sonuç listesi çiziliyor', () => {
    */
   assert.match(
     ekran,
-    /const isEmpty =\s*query\.trim\(\)\.length === 0 && activeCat === null && etkin === 0;/,
+    /const isEmpty =\s*query\.trim\(\)\.length === 0 && activeCat === null && etkin === 0 && !gozat;/,
     'etkin filtre varken boş ekran gösteriliyor',
   );
+});
+
+/*
+ * GEZİNME MODU — "Randevu Al" kartından geliş.
+ *
+ * Kurucu: "ilk açılan ekran Randevu Al kısmında başka bir search alanı...
+ * bunu direkt Randevu Al butonuna basınca çıkacak şekilde yapalım."
+ *
+ * Keşfet'te zaten arama kutusu var; bu kart ikincisini açmamalı. Ama filtre
+ * penceresini BOŞ ekranın üstüne açmak da yanlış olurdu — düğmede "N sonucu
+ * göster" yazarken arkada hiçbir şey olmaması kafa karıştırır. Üç şey birden
+ * olmalı: klavye yok, sonuçlar var, pencere açık.
+ */
+
+test('Randevu Al kartı GEZİNME moduyla açıyor', () => {
+  const kesfet = readFileSync(join(kok, 'app/(tabs)/discover.tsx'), 'utf8');
+  assert.match(
+    kesfet,
+    /etiket: 'home\.qa\.book' as MessageKey,[\s\S]{0,400}yol: '\/search\?mod=gozat' as const/,
+    'Randevu Al kartı gezinme moduyla gitmiyor',
+  );
+});
+
+test('gezinme modunda klavye AÇILMIYOR', () => {
+  // Kullanıcı yazmaya değil seçmeye geldi; klavye ekranın yarısını yiyordu.
+  assert.match(ekran, /if \(gozat\) return;/, 'gezinme modunda odak engellenmiyor');
+  assert.match(ekran, /autoFocus=\{!gozat\}/, 'gezinme modunda autoFocus kapalı değil');
+});
+
+test('gezinme modunda filtre penceresi AÇIK başlıyor', () => {
+  assert.match(
+    ekran,
+    /const \[showSort, setShowSort\] = useState\(gozat\);/,
+    'gezinme modunda pencere açık gelmiyor',
+  );
+});
+
+test('gezinme modunda arkada SONUÇ var, boş kutu değil', () => {
+  // Aksi hâlde "N sonucu göster" düğmesi hiçbir şeyin üstünde durur.
+  assert.ok(/const isEmpty =[^;]*&& !gozat;/.test(ekran), 'gezinme modunda boş kutu gösteriliyor');
 });
 
 test('şehir listesi merkezi taksonomiden geliyor', () => {

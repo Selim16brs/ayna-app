@@ -207,17 +207,39 @@ export default function SearchScreen() {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
-  const { q } = useLocalSearchParams<{ q?: string }>();
+  /**
+   * `mod=gozat` — "Randevu Al" kartından gelen GEZİNME niyeti.
+   *
+   * Kurucu: "ilk açılan ekran Randevu Al kısmında başka bir search alanı,
+   * ancak search barın yanındaki 3 çizgiye basınca bu çıkıyor. bunu direkt
+   * Randevu Al butonuna basınca çıkacak şekilde yapalım."
+   *
+   * Haklıydı: Keşfet'te zaten bir arama kutusu var, "Randevu Al" ikincisini
+   * açıyordu. Ama filtre penceresini BOŞ ekranın üstüne açmak da yanlış
+   * olurdu — düğmesinde "7 sonucu göster" yazarken arkada hiçbir şey
+   * olmaması kafa karıştırır.
+   *
+   * Bu yüzden gezinme modunda üç şey birden değişiyor: klavye AÇILMIYOR
+   * (yazma niyeti yok), sonuçlar HEMEN görünüyor (boş kutu değil) ve filtre
+   * penceresi ÜSTÜNDE açık geliyor.
+   */
+  const { q, mod } = useLocalSearchParams<{ q?: string; mod?: string }>();
+  const gozat = mod === 'gozat';
   const [query, setQuery] = useState(typeof q === 'string' ? q : '');
   const inputRef = useRef<RNTextInput>(null);
-  // Navigasyon animasyonu bitince klavyeyi güvenilir şekilde aç (autoFocus tek başına yetmiyor)
+  // Navigasyon animasyonu bitince klavyeyi güvenilir şekilde aç (autoFocus tek
+  // başına yetmiyor). GEZİNME modunda açılmıyor: kullanıcı yazmaya değil
+  // seçmeye geldi, klavyenin ekranın yarısını kaplaması rahatsız ediyordu.
   useEffect(() => {
+    if (gozat) return;
     const id = setTimeout(() => inputRef.current?.focus(), 350);
     return () => clearTimeout(id);
-  }, []);
+  }, [gozat]);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [sort, setSort] = useState<SortKey>('recommended');
-  const [showSort, setShowSort] = useState(false);
+  // Gezinme modunda filtre penceresi açık başlıyor — kullanıcının aradığı
+  // ekran doğrudan bu.
+  const [showSort, setShowSort] = useState(gozat);
   const professionals = useProfessionals();
   const catalogLoading = useProfessionalsLoading();
   // §5.1.4 — arama da şehre göre filtreli
@@ -241,7 +263,7 @@ export default function SearchScreen() {
    *
    * Filtre de bir aramadır: etkin kırılım varsa sonuç listesi çizilmeli.
    */
-  const isEmpty = query.trim().length === 0 && activeCat === null && etkin === 0;
+  const isEmpty = query.trim().length === 0 && activeCat === null && etkin === 0 && !gozat;
 
   const results = useMemo(() => {
     const q = lower(query.trim());
@@ -300,7 +322,7 @@ export default function SearchScreen() {
             value={query}
             onChangeText={setQuery}
             onSubmitEditing={submit}
-            autoFocus
+            autoFocus={!gozat}
             returnKeyType="search"
           />
           {query.length > 0 ? (

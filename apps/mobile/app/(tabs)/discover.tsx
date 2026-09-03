@@ -82,7 +82,9 @@ const HIZLI_EYLEMLER = [
   {
     id: 'randevu',
     etiket: 'home.qa.book' as MessageKey,
-    yol: '/search' as const,
+    // GEZİNME modu: klavye açılmadan sonuçlar + filtre penceresi. Keşfet'te
+    // zaten bir arama kutusu var; bu kart ikincisini açmamalı.
+    yol: '/search?mod=gozat' as const,
     gorsel: require('../../assets/hizli-eylem/randevu-al.png'),
   },
   {
