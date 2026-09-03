@@ -7,7 +7,16 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import {
+  Button,
+  Screen,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  TelefonGirdisi,
+  Text,
+  VARSAYILAN_ULKE,
+  tamNumara,
+} from '../../src/ui';
 
 /**
  * TELEFON DEĞİŞİKLİĞİ.
@@ -41,7 +50,9 @@ export default function PhoneChangeScreen() {
   const token = useStore((s) => s.token);
   const mevcut = useStore((s) => s.currentUser?.phone);
 
-  const [telefon, setTelefon] = useState('');
+  const [ulke, setUlke] = useState(VARSAYILAN_ULKE);
+  const [yerel, setYerel] = useState('');
+  const telefon = tamNumara(ulke.kod, yerel);
   const [mesgul, setMesgul] = useState(false);
 
   const gonder = async () => {
@@ -92,12 +103,12 @@ export default function PhoneChangeScreen() {
           </Text>
         ) : null}
 
-        <Alan
+        <TelefonGirdisi
           etiket={t('profile.phone.new')}
-          deger={telefon}
-          degisti={setTelefon}
-          klavye="phone-pad"
-          ipucu="+7 777 123 45 67"
+          ulke={ulke}
+          ulkeDegisti={setUlke}
+          yerel={yerel}
+          yerelDegisti={setYerel}
         />
         <Button
           label={t('profile.phone.submit')}
@@ -107,39 +118,6 @@ export default function PhoneChangeScreen() {
         />
       </ScrollView>
     </Screen>
-  );
-}
-
-/** Etiketli metin alanı — `profile/edit` ekranındaki `Field` ile aynı görünüm. */
-function Alan({
-  etiket,
-  deger,
-  degisti,
-  klavye,
-  ipucu,
-}: {
-  etiket: string;
-  deger: string;
-  degisti: (v: string) => void;
-  klavye?: 'phone-pad' | 'number-pad';
-  ipucu?: string;
-}) {
-  const { colors } = useTheme();
-  const styles = useThemedStyles(makeStyles);
-  return (
-    <View style={styles.alan}>
-      <Text variant="bodyStrong" tone="ink">
-        {etiket}
-      </Text>
-      <TextInput
-        style={styles.girdi}
-        value={deger}
-        onChangeText={degisti}
-        keyboardType={klavye}
-        placeholder={ipucu}
-        placeholderTextColor={colors.muted}
-      />
-    </View>
   );
 }
 
@@ -155,14 +133,4 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     nedenYazi: { flex: 1, lineHeight: 20 },
-    alan: { gap: space(0.75) },
-    girdi: {
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
-      borderRadius: radius.lg,
-      paddingHorizontal: space(2),
-      paddingVertical: space(1.5),
-      color: colors.ink,
-    },
   });

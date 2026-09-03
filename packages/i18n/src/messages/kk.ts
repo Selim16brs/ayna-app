@@ -1750,6 +1750,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'profile.edit.name': 'Аты-жөні',
   'profile.edit.email': 'Электрондық пошта',
   'profile.edit.phone': 'Телефон',
+  'phone.country': 'Ел коды',
   'profile.phone.title': 'Телефон нөмірін өзгерту',
   'profile.phone.change': 'Телефон нөмірімді өзгерту',
   'profile.phone.why':

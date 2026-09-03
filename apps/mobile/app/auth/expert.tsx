@@ -49,6 +49,9 @@ import {
   type DayHours,
   type SocialValue,
   WorkingHours,
+  TelefonGirdisi,
+  VARSAYILAN_ULKE,
+  tamNumara,
 } from '../../src/ui';
 import { type AutofillKind, autofillProps, missingLabels } from '../../src/formValidation';
 import type { MessageKey } from '@ayna/i18n';
@@ -88,7 +91,11 @@ export default function ExpertRegisterScreen() {
   const [iin, setIin] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
+  // Ülke kodu ayrı — tek kutuda ülke kodu unutuluyor ve numara sağlayıcı
+  // tarafından reddediliyordu.
+  const [ulke, setUlke] = useState(VARSAYILAN_ULKE);
+  const [yerel, setYerel] = useState('');
+  const phone = tamNumara(ulke.kod, yerel);
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [birthDate, setBirthDate] = useState<Date | null>(null);
@@ -462,13 +469,12 @@ export default function ExpertRegisterScreen() {
                 />
               </View>
             </View>
-            <Label text={t('auth.f.phone')} />
-            <Input
-              value={phone}
-              onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
-              placeholder="+7 700 123 45 67"
-              keyboardType="phone-pad"
-              autofill="tel"
+            <TelefonGirdisi
+              etiket={t('auth.f.phone')}
+              ulke={ulke}
+              ulkeDegisti={setUlke}
+              yerel={yerel}
+              yerelDegisti={setYerel}
             />
             <Label text={t('auth.f.password')} />
             <Input

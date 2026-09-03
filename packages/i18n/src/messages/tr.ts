@@ -1878,6 +1878,7 @@ export const tr = {
   'profile.edit.name': 'Ad Soyad',
   'profile.edit.email': 'E-posta',
   'profile.edit.phone': 'Telefon',
+  'phone.country': 'Ülke kodu',
   'profile.phone.title': 'Telefon numarasını değiştir',
   'profile.phone.change': 'Telefon numaramı değiştir',
   'profile.phone.why':

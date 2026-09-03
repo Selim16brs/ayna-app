@@ -33,8 +33,11 @@ import {
   PasswordStrength,
   Screen,
   StackHeader,
+  TelefonGirdisi,
   Text,
   TextInput,
+  VARSAYILAN_ULKE,
+  tamNumara,
 } from '../../src/ui';
 import {
   type AutofillKind,
@@ -60,7 +63,14 @@ export default function CustomerRegisterScreen() {
   const [showDate, setShowDate] = useState(false);
   const [photo, setPhoto] = useState<{ uri: string; base64?: string } | null>(null);
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  /*
+   * ÜLKE KODU AYRI. Tek kutu sessizce bozuluyordu: kurucu numarayı ülke
+   * kodsuz yazdı, sağlayıcı reddetti ve ekranda yalnız "kod gönderilemedi"
+   * göründü. Ayrı seçim UNUTULAMIYOR — her zaman bir değeri var.
+   */
+  const [ulke, setUlke] = useState(VARSAYILAN_ULKE);
+  const [yerel, setYerel] = useState('');
+  const phone = tamNumara(ulke.kod, yerel);
   // Polish 2.4 — canlı alan doğrulaması: hata Alert'te değil, alanın ALTINDA
   const phoneDigits = phone.replace(/\D/g, '');
   const phoneError = phone.length > 0 && phoneDigits.length < 10 ? 'auth.err.phone' : null;
@@ -333,15 +343,18 @@ export default function CustomerRegisterScreen() {
 
         {/* Hesap güvenliği */}
         <Section text={t('auth.section.account')} />
-        <Label text={t('auth.f.phone')} />
-        <Input
-          value={phone}
-          onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
-          keyboardType="phone-pad"
-          placeholder="+7 700 123 45 67"
-          autofill="tel"
-          {...(phoneError ? { error: t(phoneError) } : {})}
+        <TelefonGirdisi
+          etiket={t('auth.f.phone')}
+          ulke={ulke}
+          ulkeDegisti={setUlke}
+          yerel={yerel}
+          yerelDegisti={setYerel}
         />
+        {phoneError ? (
+          <Text variant="caption" style={{ color: colors.danger }}>
+            {t(phoneError)}
+          </Text>
+        ) : null}
         <Label text={t('auth.f.email')} />
         <Input
           value={email}
