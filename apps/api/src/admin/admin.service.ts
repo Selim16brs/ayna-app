@@ -18,6 +18,7 @@ import {
   normalizePhone,
   phoneHash,
 } from '../common/crypto';
+import { KATALOG, katalogHizmetKimlikleri } from '@ayna/domain';
 import type { Env } from '@ayna/config/env';
 import { ENV } from '../config/config.module';
 import { computeBookingStats } from '../bookings/bookings.service';
@@ -1347,35 +1348,133 @@ export class AdminService {
   }
 
   // Hizmetler (servis kategorileri) — keşif taksonomisi
+  /**
+   * KATALOG YÖNETİMİ — brief §4.12 + §7.3.
+   *
+   * Panel eskiden `service_categories` satırlarını olduğu gibi
+   * gösteriyordu ve yönetici bunları serbestçe düzenleyebiliyordu. Katalog
+   * `@ayna/domain`e taşındıktan sonra bunun ÜÇ SESSİZ YALANI oldu:
+   *
+   *   1. Ad değiştirmek HİÇBİR ŞEY yapmıyordu. Uygulama adları katalogdan
+   *      okuyor; yönetici "Saç"ı "Saç Bakımı" yapıp kaydediyor, telefonda
+   *      hâlâ "Saç" yazıyordu.
+   *   2. Silmek KENDİNİ GERİ ALIYORDU. `CategorySyncService` her açılışta
+   *      eksik kategorileri geri ekliyor.
+   *   3. Eklemek ÖLÜ SATIR üretiyordu. Uygulama listeyi katalogdan kuruyor;
+   *      panelden eklenen kategori hiçbir ekranda görünmüyordu.
+   *
+   * Artık panel GERÇEĞİ gösteriyor: katalog kategorileri üç dilli adlarıyla
+   * ve alt hizmet sayılarıyla listeleniyor, DEĞİŞTİRİLEBİLEN tek şey sıra
+   * (§7.3: "admin panelden değiştirilebilir olmalı").
+   */
   async categories() {
-    const rows = await this.prisma.serviceCategory.findMany({ orderBy: { sortOrder: 'asc' } });
-    return rows.map((c) => ({
-      id: c.id,
-      code: c.code,
-      nameTr: c.nameTr,
-      icon: c.icon,
-      tone: c.tone,
-      sortOrder: c.sortOrder,
-    }));
+    const rows = await this.prisma.serviceCategory.findMany();
+    const siraById = new Map(rows.map((r) => [r.code, r]));
+    const arz = await this.arziOlanKategoriler();
+    return (
+      KATALOG.map((k, i) => {
+        const row = siraById.get(k.id);
+        return {
+          // Kimlik olarak KOD dönüyor: satır henüz yaratılmamış olabilir
+          // (sync uygulama açılışında ekliyor) ama kategori katalogda var.
+          id: row?.id ?? k.id,
+          code: k.id,
+          nameTr: k.ad.tr,
+          nameRu: k.ad.ru,
+          nameKk: k.ad.kk,
+          icon: row?.icon ?? '',
+          tone: row?.tone ?? '',
+          sortOrder: row?.sortOrder ?? i + 1,
+          /** Alt hizmet sayısı — katalogdan. */
+          serviceCount: k.altHizmetler.length,
+          /** Brief §7.4 — yayında uzmanı olan alt hizmet sayısı. */
+          suppliedCount: k.altHizmetler.filter((a) => arz.has(a.id)).length,
+          /** Katalogda tanımlı: adı ve alt hizmetleri panelden değişmez. */
+          fromCatalog: true,
+        };
+      })
+        /*
+         * SIRA, KULLANICININ GÖRDÜĞÜ SIRA.
+         *
+         * Katalog sırasında döndürüyordu: yönetici sırayı değiştirip
+         * kaydediyor, panel yine eski dizilimi gösteriyordu. Kaydın
+         * işe yaramadığını sanıp tekrar tekrar denerdi.
+         */
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+    );
   }
 
-  async createCategory(input: {
+  /** Yayında en az bir uzmanı olan alt hizmet kimlikleri. */
+  private async arziOlanKategoriler(): Promise<Set<string>> {
+    const simdi = new Date();
+    const gizli = await this.prisma.specialist.findMany({
+      where: { hiddenUntil: { gt: simdi } },
+      select: { proId: true },
+    });
+    const gizliPro = new Set(gizli.map((g) => g.proId).filter((x): x is string => !!x));
+    const pros = await this.prisma.professional.findMany({
+      select: { id: true, servicesJson: true },
+    });
+    const out = new Set<string>();
+    for (const p of pros) {
+      if (gizliPro.has(p.id)) continue;
+      try {
+        for (const id of katalogHizmetKimlikleri(JSON.parse(p.servicesJson ?? '[]'))) out.add(id);
+      } catch {
+        // Tek uzmanın bozuk kaydı listeyi düşürmemeli.
+      }
+    }
+    return out;
+  }
+
+  /**
+   * SIRALAMAYI DEĞİŞTİR — brief §7.3.
+   *
+   * Panelden değiştirilebilen TEK şey. Gelen liste katalog kodlarından
+   * oluşuyor; katalogda olmayan kod SESSİZCE ATLANMIYOR, hata veriyor —
+   * yanlış bir kod gönderildiğinde sıranın yarısının uygulanıp yarısının
+   * uygulanmaması en kötü sonuç olurdu.
+   */
+  async reorderCategories(codes: string[]) {
+    const gecerli = new Set(KATALOG.map((k) => k.id));
+    const bilinmeyen = codes.filter((c) => !gecerli.has(c));
+    if (bilinmeyen.length) {
+      throw new BadRequestException({
+        code: 'BAD_CATEGORY',
+        message: `Katalogda olmayan kategori: ${bilinmeyen.join(', ')}`,
+      });
+    }
+    await Promise.all(
+      codes.map((code, i) =>
+        this.prisma.serviceCategory.updateMany({ where: { code }, data: { sortOrder: i + 1 } }),
+      ),
+    );
+    return { ok: true as const };
+  }
+
+  /**
+   * KATEGORİ EKLEME KAPALI.
+   *
+   * Uygulama kategori listesini `@ayna/domain` → `KATALOG`tan kuruyor;
+   * panelden eklenen bir satır hiçbir ekranda görünmez, yalnız panelde
+   * ölü bir satır olur. Sessizce kaydetmektense açıkça reddetmek doğru:
+   * yönetici kategoriyi eklediğini sanıp uzmanların onu seçmesini
+   * beklerdi.
+   *
+   * Girdi imzası KORUNUYOR: eski panel sürümü hâlâ bu ucu çağırıyor
+   * olabilir ve anlamlı bir hata mesajı almalı.
+   */
+  async createCategory(_input: {
     code: string;
     nameTr: string;
     icon: string;
     tone: string;
     sortOrder?: number | undefined;
-  }) {
-    const exists = await this.prisma.serviceCategory.findUnique({ where: { code: input.code } });
-    if (exists) throw new BadRequestException({ code: 'CODE_TAKEN', message: 'Bu kod kullanımda' });
-    return this.prisma.serviceCategory.create({
-      data: {
-        code: input.code,
-        nameTr: input.nameTr,
-        icon: input.icon,
-        tone: input.tone,
-        sortOrder: input.sortOrder ?? 0,
-      },
+  }): Promise<never> {
+    throw new BadRequestException({
+      code: 'CATALOG_MANAGED',
+      message:
+        'Kategoriler hizmet kataloğunda tanımlı; panelden eklenemez. Yeni kategori için katalog güncellenmeli.',
     });
   }
 
@@ -1390,6 +1489,22 @@ export class AdminService {
   ) {
     const c = await this.prisma.serviceCategory.findUnique({ where: { id } });
     if (!c) throw new NotFoundException({ code: 'CAT_NOT_FOUND', message: 'Kategori yok' });
+    /*
+     * KATALOG KATEGORİSİNİN ADI PANELDEN DEĞİŞMEZ.
+     *
+     * Uygulama adları katalogdan (üç dilde) okuyor. Buradaki `name_tr`
+     * yalnız panelin kendi listesi. Yönetici "Saç"ı "Saç Bakımı" yapıp
+     * kaydediyor, telefonda hâlâ "Saç" yazıyordu — kaydetmiş gibi
+     * görünen ama hiçbir şey yapmayan bir düğme.
+     *
+     * Sıralama (§7.3) değişebilir; ikon ve ton panelin kendi görünümü.
+     */
+    if (KATALOG.some((k) => k.id === c.code) && input.nameTr !== undefined) {
+      throw new BadRequestException({
+        code: 'CATALOG_MANAGED',
+        message: 'Kategori adı hizmet kataloğunda tanımlı; panelden değiştirilemez.',
+      });
+    }
     return this.prisma.serviceCategory.update({
       where: { id },
       data: {
@@ -1402,6 +1517,21 @@ export class AdminService {
   }
 
   async deleteCategory(id: string) {
+    const c = await this.prisma.serviceCategory.findUnique({ where: { id } });
+    /*
+     * KATALOG KATEGORİSİ SİLİNEMEZ — silme KENDİNİ GERİ ALIYORDU.
+     *
+     * `CategorySyncService` her açılışta eksik kategorileri geri ekliyor.
+     * Yönetici siliyor, satır gidiyor, sunucu bir sonraki açılışta geri
+     * koyuyor. Silinmiş gibi görünüp geri gelen bir kategori, hiç
+     * silinmemesinden daha kafa karıştırıcı.
+     */
+    if (c && KATALOG.some((k) => k.id === c.code)) {
+      throw new BadRequestException({
+        code: 'CATALOG_MANAGED',
+        message: 'Kategori hizmet kataloğunda tanımlı; panelden silinemez.',
+      });
+    }
     await this.prisma.serviceCategory.delete({ where: { id } }).catch(() => {
       throw new NotFoundException({ code: 'CAT_NOT_FOUND', message: 'Kategori yok' });
     });

@@ -57,6 +57,8 @@ const restrictSchema = z.object({ reason: z.string().min(1).max(300) });
  * yazdığı ve yöneticinin ne dediği denetim izi olarak kalıyor.
  */
 const reguleKararSchema = z.object({ karar: z.enum(['cleared', 'removed']) });
+/** Kategori sırası — katalog kodları, istenen sırada. */
+const categoryOrderSchema = z.object({ codes: z.array(z.string().min(2).max(40)).min(1).max(40) });
 type ReguleKararInput = z.infer<typeof reguleKararSchema>;
 // §7.2 — itiraz kararı: yorumu tut (keep) veya kural ihlalinde gizle (remove)
 const resolveDisputeSchema = z.object({ action: z.enum(['keep', 'remove']) });
@@ -559,6 +561,17 @@ export class AdminController {
     @Body(new ZodValidationPipe(categorySchema)) body: z.infer<typeof categorySchema>,
   ) {
     return this.admin.createCategory(body);
+  }
+
+  /**
+   * SIRALAMA — brief §7.3: "kategori sırası admin panelden
+   * değiştirilebilir olmalı." Panelden değiştirilebilen tek şey.
+   */
+  @Patch('categories/order')
+  reorderCategories(
+    @Body(new ZodValidationPipe(categoryOrderSchema)) body: z.infer<typeof categoryOrderSchema>,
+  ) {
+    return this.admin.reorderCategories(body.codes);
   }
 
   @Patch('categories/:id')

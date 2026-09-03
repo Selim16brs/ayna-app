@@ -3449,138 +3449,131 @@ function F({
 }
 function ServicesView() {
   const { data, reload } = useAsync<Category[]>(() => api.categories(), []);
-  const [form, setForm] = useState({
-    code: '',
-    nameTr: '',
-    icon: '✨',
-    tone: 'rose',
-    sortOrder: '',
-  });
-  const create = async () => {
-    if (!form.code || !form.nameTr) return;
-    await api.createCategory({
-      code: form.code,
-      nameTr: form.nameTr,
-      icon: form.icon,
-      tone: form.tone,
-      sortOrder: form.sortOrder ? Number(form.sortOrder) : undefined,
-    });
-    setForm({ code: '', nameTr: '', icon: '✨', tone: 'rose', sortOrder: '' });
-    reload();
+  const [sira, setSira] = useState<string[] | null>(null);
+  const [kaydediliyor, setKaydediliyor] = useState(false);
+
+  // Sunucudan gelen sıra taslağın temeli; yönetici oynatana kadar aynısı.
+  const liste = (() => {
+    if (!data) return [];
+    if (!sira) return data;
+    const kod = new Map(data.map((c) => [c.code, c]));
+    return sira.map((c) => kod.get(c)).filter((c): c is Category => !!c);
+  })();
+  const degisti = !!sira && data ? sira.join() !== data.map((c) => c.code).join() : false;
+
+  const oynat = (i: number, yon: -1 | 1) => {
+    const kodlar = liste.map((c) => c.code);
+    const j = i + yon;
+    if (j < 0 || j >= kodlar.length) return;
+    [kodlar[i], kodlar[j]] = [kodlar[j]!, kodlar[i]!];
+    setSira(kodlar);
   };
+
+  const kaydet = async () => {
+    if (!sira) return;
+    setKaydediliyor(true);
+    try {
+      await api.reorderCategories(sira);
+      setSira(null);
+      reload();
+    } finally {
+      setKaydediliyor(false);
+    }
+  };
+
   return (
     <>
       <h1 className="page-title">Hizmetler</h1>
+      {/*
+       * PANEL ARTIK GERÇEĞİ SÖYLÜYOR.
+       *
+       * Burada kategori ekleme formu ve ad düzenleme kutuları vardı;
+       * üçü de sessizce hiçbir şey yapmıyordu:
+       *   · ad değiştirmek → uygulama adları katalogdan okuyor, telefonda
+       *     eski ad kalıyordu;
+       *   · silmek → sunucu bir sonraki açılışta geri ekliyordu;
+       *   · eklemek → uygulama listeyi katalogdan kuruyor, yeni kategori
+       *     hiçbir ekranda görünmüyordu.
+       *
+       * Değiştirilebilen tek şey SIRA (brief §7.3) ve o gerçekten
+       * uygulamaya yansıyor.
+       */}
       <p className="page-sub">
-        Keşif kategorileri (saç, tırnak, makyaj…) — ekle, düzenle, sırala, sil
+        Kategoriler ve alt hizmetler <strong>hizmet kataloğunda</strong> tanımlı — adları buradan
+        değişmez. Buradan <strong>sırayı</strong> değiştirebilirsin; uygulamada kategoriler bu
+        sırayla görünür.
       </p>
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div className="form-inline">
-          <input
-            className="input"
-            placeholder="Kod (örn. hair)"
-            value={form.code}
-            onChange={(e) => setForm({ ...form, code: e.target.value })}
-          />
-          <input
-            className="input"
-            placeholder="Ad (TR)"
-            value={form.nameTr}
-            onChange={(e) => setForm({ ...form, nameTr: e.target.value })}
-          />
-          <input
-            className="input"
-            placeholder="İkon (emoji)"
-            value={form.icon}
-            onChange={(e) => setForm({ ...form, icon: e.target.value })}
-          />
-          <input
-            className="input"
-            placeholder="Sıra"
-            type="number"
-            value={form.sortOrder}
-            onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
-          />
-          <button className="btn-sm btn-ok full" onClick={create}>
-            + Hizmet ekle
-          </button>
-        </div>
-      </div>
+
       <div className="card">
         {!data ? (
           <div className="empty">Yükleniyor…</div>
-        ) : data.length === 0 ? (
-          <div className="empty">Hizmet yok</div>
+        ) : liste.length === 0 ? (
+          <div className="empty">Katalog boş</div>
         ) : (
-          data.map((c) => <CategoryRow key={c.id} cat={c} onChanged={reload} />)
+          liste.map((c, i) => (
+            <div key={c.code} className="list-row">
+              <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>
+                {i + 1}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="name">{c.nameTr}</div>
+                {/* Üç dil birden: kurucunun kk/ru karşılıklarını görmesi
+                    için tek yer burası. */}
+                <div className="meta">
+                  {c.nameRu} · {c.nameKk} · <span style={{ opacity: 0.7 }}>{c.code}</span>
+                </div>
+              </div>
+              {/*
+               * ARZ DURUMU — brief §7.4. Hangi alt hizmette yayında uzman
+               * var? Sıfırsa o kategori müşteriye "Yakında" rozetiyle
+               * çıkıyor; yöneticinin nereye uzman bulması gerektiğini
+               * görebileceği tek yer burası.
+               */}
+              <span
+                className={`pill ${c.suppliedCount === 0 ? 'pending' : 'approved'}`}
+                title="Yayında uzmanı olan alt hizmet / toplam"
+              >
+                {c.suppliedCount}/{c.serviceCount} hizmette uzman var
+              </span>
+              <button
+                className="btn-sm"
+                disabled={i === 0}
+                onClick={() => oynat(i, -1)}
+                aria-label="Yukarı taşı"
+              >
+                ↑
+              </button>
+              <button
+                className="btn-sm"
+                disabled={i === liste.length - 1}
+                onClick={() => oynat(i, 1)}
+                aria-label="Aşağı taşı"
+              >
+                ↓
+              </button>
+            </div>
+          ))
         )}
       </div>
+
+      {degisti ? (
+        <div className="row-actions" style={{ marginTop: 16 }}>
+          <button className="btn-sm" onClick={() => setSira(null)} disabled={kaydediliyor}>
+            Vazgeç
+          </button>
+          <button
+            className="btn-sm btn-primary"
+            onClick={() => void kaydet()}
+            disabled={kaydediliyor}
+          >
+            {kaydediliyor ? 'Kaydediliyor…' : 'Sırayı kaydet'}
+          </button>
+        </div>
+      ) : null}
     </>
   );
 }
-function CategoryRow({ cat, onChanged }: { cat: Category; onChanged: () => void }) {
-  const { onayla } = useDiyalog();
-  const [name, setName] = useState(cat.nameTr);
-  const [icon, setIcon] = useState(cat.icon);
-  const [order, setOrder] = useState(String(cat.sortOrder));
-  const dirty = name !== cat.nameTr || icon !== cat.icon || order !== String(cat.sortOrder);
-  return (
-    <div className="list-row">
-      <input
-        className="input"
-        style={{ height: 34, maxWidth: 150 }}
-        value={icon}
-        placeholder="ikon"
-        onChange={(e) => setIcon(e.target.value)}
-      />
-      <input
-        className="input"
-        style={{ height: 34, flex: 1 }}
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>
-        {cat.code}
-      </span>
-      <input
-        className="input"
-        style={{ height: 34, maxWidth: 70 }}
-        type="number"
-        value={order}
-        onChange={(e) => setOrder(e.target.value)}
-      />
-      {dirty ? (
-        <button
-          className="btn-sm btn-ok"
-          onClick={async () => {
-            await api.updateCategory(cat.id, { nameTr: name, icon, sortOrder: Number(order) });
-            onChanged();
-          }}
-        >
-          Kaydet
-        </button>
-      ) : null}
-      <button
-        className="btn-sm btn-danger"
-        onClick={async () => {
-          if (
-            await onayla({
-              baslik: 'Hizmeti sil',
-              mesaj: `"${cat.nameTr}" hizmet kategorisi kalıcı olarak silinecek.`,
-              onayEtiket: 'Sil',
-              tehlikeli: true,
-            })
-          ) {
-            await api.deleteCategory(cat.id);
-            onChanged();
-          }
-        }}
-      >
-        Sil
-      </button>
-    </div>
-  );
-}
+
 function PricesView() {
   const { data, reload } = useAsync<MarketPrice[]>(() => api.marketPrices(), []);
   const { data: cats } = useAsync<Category[]>(() => api.categories(), []);
