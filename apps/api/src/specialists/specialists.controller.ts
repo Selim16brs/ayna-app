@@ -13,7 +13,12 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { type AuthedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { type RegisterSpecialistInput, registerSpecialistSchema } from './specialists.dto';
+import {
+  type RegisterSpecialistInput,
+  registerSpecialistSchema,
+  konumSchema,
+  type KonumInput,
+} from './specialists.dto';
 import { disputeSchema, replySchema } from '../ratings/ratings.dto';
 import { SpecialistsService } from './specialists.service';
 import {
@@ -100,6 +105,16 @@ export class SpecialistsController {
       req.user!.id,
       Array.isArray(body?.services) ? body.services : [],
     );
+  }
+
+  /** Haritadan iğneyle konum — mevcut kayıtlar da düzeltebilsin. */
+  @Post('me/location')
+  @UseGuards(JwtAuthGuard)
+  setLocation(
+    @Req() req: AuthedRequest,
+    @Body(new ZodValidationPipe(konumSchema)) body: KonumInput,
+  ) {
+    return this.specialists.setMyLocation(req.user!.id, body);
   }
 
   @Get('me/hours')

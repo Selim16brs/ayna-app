@@ -93,3 +93,39 @@ test('"yakınımdakiler" UYDURMA konumla sıralamıyor', () => {
     'şehir merkezi + uydurma konum sıralaması geri gelmiş',
   );
 });
+
+test('haritada UYDURMA pin yok', () => {
+  /*
+   * Kurucu: "sistem hiçbir şekilde... hiçbir şeyi kendiliğinden
+   * uydurmamalı."
+   *
+   * `proCoords` koordinat yoksa şehir merkezi etrafına dağıtıyor. O pinler
+   * gerçek adres değil; kullanıcı haritaya bakıp "şurada bir salon var"
+   * diye yola çıkabilirdi.
+   */
+  const ekran = oku('app/map.tsx');
+  assert.match(ekran, /pros\.filter\(\(p\) => konumuVar\(p\)\)/, 'konumsuzlar süzülmüyor');
+  assert.match(
+    ekran,
+    /coordinate=\{\{ latitude: p\.lat!, longitude: p\.lng! \}\}/,
+    'pin hâlâ üretilmiş koordinattan çiziliyor',
+  );
+  assert.ok(!/<Marker[\s\S]{0,160}proCoords\(/.test(ekran), 'proCoords ile pin çizimi geri gelmiş');
+  // Kaybolmuyorlar: sayıları yazılıyor.
+  assert.match(ekran, /'map\.no_pin'/, 'gizlenen sağlayıcı sayısı söylenmiyor');
+});
+
+test('mevcut uzman konumunu SONRADAN düzeltebiliyor', () => {
+  /*
+   * Konum kayıtta zorunlu oldu ama mevcut kayıtlarda yok (canlıda 25/25).
+   * Düzeltme yolu olmasaydı eski uzmanlar mesafe sıralamasında sonsuza
+   * kadar dışarıda kalırdı.
+   */
+  const ekran = oku('app/seller/location.tsx');
+  assert.match(ekran, /<AddressPicker/, 'düzeltme ekranında harita yok');
+  assert.match(ekran, /api\.setMyLocation/, 'konum sunucuya yazılmıyor');
+  // Kurucu "kontrol etmelidir" dedi: koordinat açıkça gösteriliyor.
+  assert.match(ekran, /koord\.lat\.toFixed\(5\)/, 'seçilen nokta doğrulanamıyor');
+  const menu = oku('app/seller/menu.tsx');
+  assert.match(menu, /route: '\/seller\/location'/, 'menüde konum girişi yok');
+});

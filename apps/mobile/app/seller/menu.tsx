@@ -71,6 +71,16 @@ const ITEMS: {
     tone: 'lavender',
   },
   {
+    // Konum: mevcut kayıtlarda boş olduğu için hizmetlerin hemen üstünde —
+    // uzmanın en çok ihtiyaç duyduğu düzeltme bu.
+    id: 'location',
+    icon: 'location',
+    labelKey: 'seller.location.title',
+    descKey: 'seller.location.desc',
+    route: '/seller/location',
+    tone: 'accent',
+  },
+  {
     id: 'services',
     icon: 'pricetags',
     labelKey: 'reports.action.services',

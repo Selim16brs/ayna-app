@@ -1058,6 +1058,11 @@ export const api = {
    * uyguluyor ve ne uygulandığını / ne beklediğini döndürüyor — çağıran
    * taraf "onaya gitti" mesajını yalnız gerçekten bekleyen varsa versin.
    */
+  /** Haritadan iğneyle konum — mevcut uzman/salon kaydını düzeltir. */
+  setMyLocation: (
+    konum: { lat: number; lng: number; address?: string; district?: string; city?: string },
+    token: string,
+  ) => post<{ ok: boolean }>('/specialists/me/location', konum, token),
   submitProfileChange: (changes: Record<string, unknown>, token: string) =>
     post<ProfileChangeReq>('/profile-changes', { changes }, token),
   myProfileChange: (token: string) => get<ProfileChangeReq | null>('/profile-changes/mine', token),

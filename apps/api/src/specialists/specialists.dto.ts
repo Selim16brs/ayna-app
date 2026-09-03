@@ -65,3 +65,13 @@ export const registerSpecialistSchema = z
   });
 
 export type RegisterSpecialistInput = z.infer<typeof registerSpecialistSchema>;
+
+/** Haritadan iğneyle gelen konum (mevcut uzman/salonun düzeltmesi). */
+export const konumSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  address: z.string().max(200).optional(),
+  district: z.string().max(80).optional(),
+  city: z.string().max(80).optional(),
+});
+export type KonumInput = z.infer<typeof konumSchema>;

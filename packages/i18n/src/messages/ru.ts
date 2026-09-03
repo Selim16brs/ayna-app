@@ -149,6 +149,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.start.services': 'Указать услуги',
   'seller.start.verify': 'Подтвердить личность',
   'seller.menu.verify': 'Верификация и значки',
+  'seller.location.title': 'Моё место',
+  'seller.location.desc': 'Отметь на карте — попадай в выдачу «рядом со мной»',
+  'seller.location.why':
+    'Когда клиенты ищут мастеров рядом, сортировка идёт по этому месту. Без отметки ты вообще не участвуешь в сортировке по расстоянию.',
+  'seller.location.change': 'Изменить место',
+  'seller.location.saved': 'Место сохранено',
   'seller.menu.verify_d':
     'Подтвердите личность, сертификаты и соцсети — получите статус AYNA Проверено',
   'expert.verify.title': 'Верификация и значки',
@@ -1318,6 +1324,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'map.open': 'Открыть профиль',
   'map.book': 'Записаться',
   'map.distance': 'км от центра',
+  'map.no_pin': '{n} мастеров не отметили место — их нет на карте, но они есть в списке.',
   'map.bridge': 'Не нашли то, что искали? Отправьте фото, получите предложение',
   'search.title': 'Поиск',
   'search.placeholder': 'Поиск мастера, салона или услуги',

@@ -389,6 +389,54 @@ export class SpecialistsService {
     return { services: safeParse(pro?.servicesJson) };
   }
 
+  /**
+   * KENDİ KONUMUNU HARİTADAN GÜNCELLER.
+   *
+   * Konum kayıtta zorunlu oldu ama MEVCUT kayıtlarda yok (canlıda 25/25
+   * boş). Onların da düzeltebilmesi gerekiyor; aksi hâlde eski uzmanlar
+   * "yakınımdakiler" sıralamasında sonsuza kadar dışarıda kalırdı.
+   *
+   * Admin onayı YOK: konum iletişim bilgisi değil (§profil-anında).
+   */
+  async setMyLocation(
+    userId: string,
+    konum: {
+      lat: number;
+      lng: number;
+      address?: string | undefined;
+      district?: string | undefined;
+      city?: string | undefined;
+    },
+  ) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { ok: false as const };
+    const pro = await this.prisma.professional.update({
+      where: { id: proId },
+      data: {
+        lat: konum.lat,
+        lng: konum.lng,
+        // Adres alanları yalnız DOLU gelirse yazılıyor: haritadan ters
+        // geocode boş dönerse mevcut kaydı silmemeli.
+        ...(konum.district?.trim() ? { district: konum.district.trim() } : {}),
+        ...(konum.city?.trim() ? { city: konum.city.trim() } : {}),
+      },
+      select: { lat: true, lng: true, city: true, district: true },
+    });
+    await this.prisma.auditLog
+      .create({
+        data: {
+          action: 'specialist.location',
+          resourceType: 'professional',
+          resourceId: proId,
+          actorId: userId,
+          actorRole: 'professional',
+          safeDiff: { lat: konum.lat, lng: konum.lng },
+        },
+      })
+      .catch(() => undefined);
+    return { ok: true as const, ...pro };
+  }
+
   async setMyServices(userId: string, services: unknown[]) {
     const proId = await this.proIdFor(userId);
     if (!proId) return { services: [] };
