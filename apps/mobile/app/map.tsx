@@ -114,35 +114,37 @@ export default function MapScreen() {
 
   return (
     <Screen edges={[]}>
-      <View style={styles.headerRow}>
-        <StackHeader title={t('map.title')} />
-        <View style={styles.headerSag}>
-          {/*
-           * YER SEÇİCİ. Harita alanını yemesin diye alt sayfada açılıyor —
-           * arama ekranındaki kalıbın aynısı. Düğmenin üstünde seçili yer
-           * yazıyor: kullanıcı nereye baktığını görmek için açmak zorunda
-           * kalmıyor.
-           */}
-          <PressableScale style={styles.yerBtn} onPress={() => setYerAcik(true)}>
-            <Ionicons name="location-outline" size={15} color={colors.accentFg} />
-            <Text variant="caption" tone="ink" numberOfLines={1} style={styles.yerYazi}>
-              {bolge ? `${city} · ${bolge}` : city}
-            </Text>
-            <Ionicons name="chevron-down" size={14} color={colors.muted} />
-          </PressableScale>
-          {/* Yer düğmesi genişleyince liste düğmesi ikona indi; etiketi
-              erişilebilirlik adı olarak duruyor — ikon tek başına ekran
-              okuyucuya hiçbir şey söylemez. */}
-          <PressableScale
-            style={styles.listBtn}
-            onPress={() => router.replace('/search')}
-            accessibilityRole="button"
-            accessibilityLabel={t('map.list')}
-          >
-            <Ionicons name="list" size={16} color={colors.ink} />
-          </PressableScale>
-        </View>
-      </View>
+      {/*
+       * DÜĞMELER `StackHeader`IN KENDİ SAĞ YUVASINDA.
+       *
+       * Önce başlığın YANINA kardeş olarak konmuştu ve GÖRÜNMÜYORLARDI:
+       * `StackHeader` zaten tam genişlik bir satır (`texts` flexGrow:1), onu
+       * bir satıra daha sarıp yanına bir şey koymak ekran dışına taşıyor.
+       * Eski liste düğmesi de aynı sebeple görünmüyordu — hata benden
+       * öncesine ait, ben üstüne bir tane daha eklemişim.
+       */}
+      <StackHeader
+        title={t('map.title')}
+        right={
+          <View style={styles.headerSag}>
+            <PressableScale style={styles.yerBtn} onPress={() => setYerAcik(true)}>
+              <Ionicons name="location-outline" size={15} color={colors.accentFg} />
+              <Text variant="caption" tone="ink" numberOfLines={1} style={styles.yerYazi}>
+                {bolge ? `${city} · ${bolge}` : city}
+              </Text>
+              <Ionicons name="chevron-down" size={14} color={colors.muted} />
+            </PressableScale>
+            <PressableScale
+              style={styles.listBtn}
+              onPress={() => router.replace('/search')}
+              accessibilityRole="button"
+              accessibilityLabel={t('map.list')}
+            >
+              <Ionicons name="list" size={16} color={colors.ink} />
+            </PressableScale>
+          </View>
+        }
+      />
 
       {/* Kategori filtresi */}
       <ScrollView
@@ -576,7 +578,8 @@ const makeStyles = (colors: ColorTokens) =>
     footBirincil: { flex: 1.4 },
 
     // ── yer seçici (şehir + bölge) ──
-    headerSag: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginRight: space(3) },
+    // `StackHeader`ın sağ yuvası — kendi kenar boşluğu var, ek marj yok.
+    headerSag: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     yerBtn: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -696,7 +699,6 @@ const makeStyles = (colors: ColorTokens) =>
     },
     sheetSvcName: { flex: 1, marginRight: space(1) },
     sheetFoot: { padding: space(3), paddingTop: space(1) },
-    headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     listBtn: {
       flexDirection: 'row',
       alignItems: 'center',

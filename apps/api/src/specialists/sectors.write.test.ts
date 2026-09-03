@@ -45,14 +45,45 @@ test('bozuk hizmet satırı reddedilir — sıfır süre randevu takvimini kıra
   assert.equal(r.success, false);
 });
 
-test('hizmet listesi olmadan da kayıt geçerli (alan zorunlu değil)', () => {
+/*
+ * HİZMET LİSTESİ ARTIK ZORUNLU (kurucu kararı).
+ *
+ * Alan opsiyoneldi ve 25 kayıttan 24'ü boş geçmişti: haritadan ya da
+ * aramadan gelen kullanıcı seçecek hiçbir şey bulamıyor, uzmanın kartı
+ * bomboş açılıyordu. Bu test eskiden boş kaydın GEÇERLİ olduğunu şart
+ * koşuyordu; premisi değişti.
+ */
+test('hizmet listesi OLMADAN kayıt reddediliyor', () => {
   const r = registerSpecialistSchema.safeParse({
     name: 'Test Uzman',
     phone: '+77001234567',
     password: 'gizli123',
     kind: 'independent',
   });
-  assert.ok(r.success);
+  assert.equal(r.success, false, 'hizmetsiz kayıt hâlâ geçiyor');
+});
+
+test('BOŞ hizmet dizisi de reddediliyor', () => {
+  // `services: []` göndermek alanı atlamanın kılık değiştirmiş hâli.
+  const r = registerSpecialistSchema.safeParse({
+    name: 'Test Uzman',
+    phone: '+77001234567',
+    password: 'gizli123',
+    kind: 'independent',
+    services: [],
+  });
+  assert.equal(r.success, false, 'boş liste kabul ediliyor');
+});
+
+test('tek hizmetle kayıt GEÇERLİ — zorunluluk kaydı kilitlemiyor', () => {
+  const r = registerSpecialistSchema.safeParse({
+    name: 'Test Uzman',
+    phone: '+77001234567',
+    password: 'gizli123',
+    kind: 'independent',
+    services: [{ id: 'hair-cut', name: 'Kesim & fön', price: 9000, durationMin: 60 }],
+  });
+  assert.ok(r.success, 'tek hizmetli kayıt reddediliyor');
 });
 
 test('kayıt servisi servicesJson ve sectors yazıyor', () => {

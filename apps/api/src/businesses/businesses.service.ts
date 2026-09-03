@@ -231,6 +231,17 @@ export class BusinessesService {
             name: b.name,
             specialty: b.about?.slice(0, 60) || b.name,
             sector: b.sector || b.categories[0] || 'hair',
+            /*
+             * ALAN SETİ DE YAZILIYOR.
+             *
+             * Kayıtta salon birden çok hizmet alanı seçiyor (ekran en az
+             * birini zorunlu tutuyor) ve bunlar `categories` olarak
+             * geliyordu — ama keşif kaydına HİÇ yazılmıyordu. `sectors`
+             * boş kalınca `servesSector` tek `sector`e düşüyor: saç + tırnak
+             * yapan salon yalnız saçta görünüyor, tırnak süzgecinde
+             * kayboluyordu. Canlıda her salonun alan seti boştu.
+             */
+            ...(b.categories.length ? { sectors: b.categories } : {}),
             kind: 'salon',
             city: b.city ?? '',
             district: b.district ?? '',

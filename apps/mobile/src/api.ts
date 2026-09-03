@@ -1053,6 +1053,11 @@ export const api = {
     post<Subscription>(`/subscriptions/${id}/receipt`, { receiptUri }, token),
   mySubscription: (token: string) => get<MySubscription>('/subscriptions/mine', token),
   // §profil-onay — salon/uzman profil değişiklik talebi + son talep durumu
+  /**
+   * Profil değişikliği. Sunucu iletişim bilgisi DIŞINDAKİLERİ anında
+   * uyguluyor ve ne uygulandığını / ne beklediğini döndürüyor — çağıran
+   * taraf "onaya gitti" mesajını yalnız gerçekten bekleyen varsa versin.
+   */
   submitProfileChange: (changes: Record<string, unknown>, token: string) =>
     post<ProfileChangeReq>('/profile-changes', { changes }, token),
   myProfileChange: (token: string) => get<ProfileChangeReq | null>('/profile-changes/mine', token),

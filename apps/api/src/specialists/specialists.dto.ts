@@ -9,9 +9,17 @@ export const registerSpecialistSchema = z
     city: z.string().optional(),
     kind: z.enum(['salon_bound', 'independent']),
     sector: z.string().max(40).optional(), // uzmanın ana kategorisi (harita/kategori filtresi)
-    // §9.5 — kayıtta seçilen GERÇEK hizmet listesi. Eskiden gönderilmiyordu:
-    // servicesJson boş kalıyor, profil de sektörün VARSAYILAN menüsünü uyduruyordu
-    // (uzmanın hiç seçmediği hizmetler fiyatlarıyla listeleniyordu).
+    /*
+     * §9.5 — kayıtta seçilen GERÇEK hizmet listesi.
+     *
+     * ARTIK ZORUNLU (kurucu kararı). Opsiyoneldi ve 25 kayıttan 24'ü boş
+     * geçmişti: haritadan ya da aramadan gelen kullanıcı seçecek hiçbir şey
+     * bulamıyor, uzmanın kartı bomboş açılıyordu.
+     *
+     * SONRADAN DEĞİŞTİRİLEBİLİR: `setMyServices` uçları admin onayı
+     * beklemeden anında yazıyor (§profil-anında). Zorunluluk kaydı
+     * kilitlemiyor, yalnız boş başlamayı engelliyor.
+     */
     services: z
       .array(
         z.object({
@@ -21,8 +29,8 @@ export const registerSpecialistSchema = z
           durationMin: z.number().int().positive().max(1440),
         }),
       )
-      .max(60)
-      .optional(),
+      .min(1, 'En az bir hizmet seçilmeli')
+      .max(60),
     bio: z.string().optional(),
     photoDataUrl: z.string().max(12_000_000).optional(),
     birthDateMs: z.number().int().positive().optional(),

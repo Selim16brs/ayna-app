@@ -1857,6 +1857,10 @@ export const tr = {
   'profile.edit.pending_t': 'Değişiklik onaya gönderildi',
   'profile.edit.pending_b':
     'Salon/uzman profil değişiklikleri AYNA admin onayından sonra yayınlanır. Onaylanınca profilin güncellenecek.',
+  // Yalnız İLETİŞİM TELEFONU onay bekliyor; gerisi anında kaydediliyor.
+  'salon.edit.contact_pending_t': 'Kaydedildi — telefon onayda',
+  'salon.edit.contact_pending_b':
+    'Diğer bilgilerin hemen güncellendi. İletişim telefonu değişikliği güvenlik için onaydan geçiyor.',
   'profile.photo.gallery': 'Galeriden',
   'profile.photo.camera': 'Kamera',
   'profile.photo.remove': 'Fotoğrafı kaldır',
