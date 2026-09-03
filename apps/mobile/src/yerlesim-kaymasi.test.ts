@@ -73,6 +73,7 @@ test('hizmet ikonları HER YERDE aynı kaynaktan', () => {
     'seller/offline.tsx',
   ]) {
     const s = readFileSync(join(__dirname, '..', 'app', ad), 'utf8');
-    assert.match(s, /HIZMET_IKON/, `${ad}: ortak ikon kaynağını kullanmıyor`);
+    // Çizim `ui/HizmetIkonu`'na taşındı; ortak kaynak şartı aynen duruyor.
+    assert.match(s, /<HizmetIkonu\b/, `${ad}: ortak ikon bileşenini kullanmıyor`);
   }
 });

@@ -62,7 +62,12 @@ test('ikon eşlemesi TEK kaynakta — üç ekran da onu okuyor', () => {
     ['fotoğraflı teklif', foto],
     ['fiyat/talep', fiyat],
   ] as const) {
-    assert.match(k, /HIZMET_IKON/, `${ad} ikon eşlemesini kullanmıyor`);
+    /*
+     * Ekranlar artık eşlemeyi DOĞRUDAN okumuyor: çizim `ui/HizmetIkonu`'na
+     * taşındı (bkz. hizmet-ikon-birligi.test.ts). Testin derdi aynı — üç
+     * ekran da ortak kaynağı kullanmalı — yalnız kaynağın adı değişti.
+     */
+    assert.match(k, /<HizmetIkonu\b/, `${ad} ortak ikon bileşenini kullanmıyor`);
     assert.doesNotMatch(
       k,
       /const HIZMET_IKON: Record<string, number> = \{/,
@@ -89,9 +94,20 @@ test('GÖKKUŞAĞI kategori paleti gitti', () => {
   }
 });
 
-test('kategori döşemesi SEÇİLİ/SEÇİLMEMİŞ ayrımını renkle yapıyor', () => {
-  assert.match(fiyat, /catTileActive: \{ backgroundColor: colors\.accent \}/, 'seçili erik değil');
-  assert.match(fiyat, /catTilePasif: \{[^}]*colors\.surface/, 'seçilmemiş yüzey değil');
+test('kategori döşemesi SEÇİLİ/SEÇİLMEMİŞ ayrımını ÇERÇEVEYLE yapıyor', () => {
+  /*
+   * Eskiden seçili döşemenin ZEMİNİ aksanla doluyordu ve Figma ikonu pembe
+   * zeminin üstünde kalıyordu — ana sayfadaki hâlinden bambaşka görünüyordu.
+   * Kurucu "bütün hepsi ana sayfadaki tarzda olmalı" deyince ayrım
+   * çerçeveye taşındı: zemin her durumda yüzey, ikon her yerde aynı.
+   */
+  const b = readFileSync(join(__dirname, 'ui', 'HizmetIkonu.tsx'), 'utf8');
+  assert.match(
+    b,
+    /kutuSecili: \{ borderWidth: 2, borderColor: colors\.accent \}/,
+    'seçim çerçeveyle belirtilmiyor',
+  );
+  assert.match(b, /backgroundColor: colors\.surface/, 'kutu zemini yüzey değil');
 });
 
 test('kategori yazısı İKİ TEMADA da okunuyor', () => {
@@ -200,7 +216,8 @@ test('seçilmemiş çipler DOLU GRİ değil — UYGULAMA GENELİ', () => {
 
 test('aramadaki popüler kategoriler de FIGMA ikonu', () => {
   const k = yorumsuz(oku('search.tsx'));
-  assert.match(k, /HIZMET_IKON\[cat\.id\]/, 'popüler kategori çipi Figma ikonu kullanmıyor');
+  // Çizim ortak bileşene taşındı; Figma görselini o okuyor.
+  assert.match(k, /<HizmetIkonu id=\{cat\.id\}/, 'popüler kategori çipi ortak ikonu kullanmıyor');
 });
 
 test('YABANCI görsel yok — ekranlarda unsplash bağlantısı kalmadı', () => {

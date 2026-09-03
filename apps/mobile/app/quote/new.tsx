@@ -8,12 +8,19 @@ import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS } from '../../src/data';
 import { useCampaigns } from '../../src/catalog';
 import type { MessageKey } from '@ayna/i18n';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
-import { HIZMET_IKON } from '../../src/hizmet-ikon';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { RulesCard, Screen, SectionHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import {
+  HizmetIkonu,
+  RulesCard,
+  Screen,
+  SectionHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+  TextInput,
+} from '../../src/ui';
 
 // Sıfır-demo: stok model fotoğrafı yerine kendi çizim asset'imiz
 const HERO_WOMAN = require('../../assets/hero-user.png');
@@ -184,9 +191,7 @@ export default function NewQuoteScreen() {
                 onPress={() => setCategory(cat.id)}
                 style={[styles.catChip, active && styles.catChipActive]}
               >
-                {HIZMET_IKON[cat.id] ? (
-                  <Image source={HIZMET_IKON[cat.id]} style={styles.catIkon} />
-                ) : null}
+                <HizmetIkonu id={cat.id} tarz="satir" />
                 <Text variant="caption" tone={active ? 'onAccent' : 'inkSoft'}>
                   {t(cat.labelKey)}
                 </Text>
@@ -441,7 +446,6 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
     },
     /** Kurucunun Figma ikonu — Ionicons vektörünün yerine. */
-    catIkon: { width: 18, height: 18, resizeMode: 'contain' },
     catChipActive: { backgroundColor: colors.accent },
 
     noteInput: {

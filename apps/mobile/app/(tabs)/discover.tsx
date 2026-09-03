@@ -14,7 +14,6 @@ import {
 } from '../../src/catalog';
 import { AKIS_ADIMLARI, akisAdimi, durumEtiketi } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
-import { HIZMET_IKON } from '../../src/hizmet-ikon';
 import type { MessageKey } from '@ayna/i18n';
 import { fillParams, useLocale } from '../../src/locale';
 import { musteriRandevulari, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
@@ -23,6 +22,7 @@ import { space, type ColorTokens, font } from '../../src/theme';
 import { lightColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
+  HizmetIkonu,
   ListSkeleton,
   PressableScale,
   Screen,
@@ -354,13 +354,9 @@ export default function DiscoverScreen() {
               style={styles.ikonKap}
               onPress={() => router.push(`/category/${cat.id}` as never)}
             >
-              <View style={styles.ikonKart}>
-                {HIZMET_IKON[cat.id] ? (
-                  <Image source={HIZMET_IKON[cat.id]} style={styles.ikonGorsel} />
-                ) : (
-                  <Ionicons name={cat.icon} size={26} color={colors.accent} />
-                )}
-              </View>
+              {/* Referans kutu artık ortak bileşende — altı ekran aynı yerden
+                  okuyor, ölçüler bir daha ayrışamıyor. */}
+              <HizmetIkonu id={cat.id} tarz="kutu" />
               {/* İKİ SATIR: "Kalıcı Makyaj" ve "Gelin & Özel Gün" tek satıra
                   sığmıyor, kırpılıyordu. Figma da iki satıra sarıyor. */}
               <Text numberOfLines={2} style={styles.ikonYazi}>
@@ -925,18 +921,6 @@ const makeStyles = (colors: ColorTokens) =>
     ikonSerit: { gap: 14, paddingLeft: 24, paddingRight: 12, paddingBottom: 4 },
     ikonKap: { width: 68, alignItems: 'center', gap: 8 },
     // Figma `icon-card`: 64×64, radius 16, 1px kenarlık.
-    ikonKart: {
-      width: 64,
-      height: 64,
-      borderRadius: 16,
-      overflow: 'hidden',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.accentSoft,
-    },
-    ikonGorsel: { width: 64, height: 64 },
     // Figma: 11px, satır aralığı 1.3, ortalı, İKİ SATIRA sarabilir.
     ikonYazi: {
       fontFamily: font.medium,

@@ -25,11 +25,11 @@ import type { MessageKey } from '@ayna/i18n';
 import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
 import { servesSector } from '@ayna/domain';
-import { HIZMET_IKON } from '../src/hizmet-ikon';
 import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import {
+  HizmetIkonu,
   Button,
   asPlanTier,
   PlanBadge,
@@ -435,9 +435,7 @@ export default function SearchScreen() {
             <View style={styles.wrapChips}>
               {CATEGORIES.map((cat) => (
                 <Pressable key={cat.id} style={styles.popChip} onPress={() => setActiveCat(cat.id)}>
-                  {HIZMET_IKON[cat.id] ? (
-                    <Image source={HIZMET_IKON[cat.id]} style={styles.popIkon} />
-                  ) : null}
+                  <HizmetIkonu id={cat.id} tarz="satir" />
                   <Text variant="caption" tone="ink">
                     {t(cat.labelKey)}
                   </Text>
@@ -944,7 +942,6 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.accentSoft,
     },
     /** Kurucunun Figma ikonu — Ionicons vektörünün yerine. */
-    popIkon: { width: 16, height: 16, resizeMode: 'contain' },
     list: { gap: space(1.5) },
     row: {
       flexDirection: 'row',
