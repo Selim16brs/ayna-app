@@ -118,6 +118,32 @@ const EMPTY_DETAIL: ProfessionalDetail = {
   social: { instagram: '', tiktok: '' },
 };
 
+/**
+ * Profil YÜKLEME DURUMU.
+ *
+ * `useProfessionalDetail` bulunamayan kayıtta da BOŞ bir profil döndürüyor
+ * ve ekran onu "henüz gelmedi" sanıp sonsuza kadar dönüyordu. Kurucu
+ * "senin için seçtiklerimize tıklayınca hiçbir şey açılmıyor" derken
+ * gördüğü şey buydu: reklam silinmiş/olmayan bir uzmana işaret ediyordu ve
+ * ekran hiç vazgeçmiyordu.
+ *
+ * Uygulamanın kendi kuralı da bunu yasaklıyor: "uygulama donmaz, sonsuz
+ * spinner göstermez."
+ *
+ * AYNI sorgu anahtarı — TanStack tekilleştiriyor, ikinci istek gitmiyor.
+ */
+export function useProfessionalDurumu(id: string): 'yukleniyor' | 'yok' | 'hazir' {
+  const { isPending, isError, data } = useQuery({
+    queryKey: ['professional', id],
+    queryFn: () => api.professional(id),
+    retry: 1,
+    staleTime: 60_000,
+  });
+  if (isPending) return 'yukleniyor';
+  if (isError || !data) return 'yok';
+  return 'hazir';
+}
+
 export function useProfessionalDetail(id: string): ProfessionalDetail {
   const { data } = useQuery({
     queryKey: ['professional', id],

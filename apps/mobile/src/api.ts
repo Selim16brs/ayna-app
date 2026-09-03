@@ -720,12 +720,18 @@ export const api = {
   // ücret eski uygulama sürümlerinde yanlış görünmesin.
   adPricing: () => get<{ monthly: number; currency: string }>('/ad-orders/pricing'),
   myAdOrders: () => get<AdOrder[]>('/ad-orders/mine'),
+  /*
+   * `proId` YOK: istemci kullanıcı kimliğini gönderiyordu ve reklam kartı
+   * olmayan bir uzmana gidiyordu. Kimlik sunucuda oturumdan türetiliyor —
+   * değerlendirmelerdeki "istemciden GÜVENİLMEZ" kuralının aynısı.
+   */
   createAdOrder: (input: {
-    proId: string;
     proName: string;
     placement: 'firsatlar' | 'one_cikanlar';
     title: string;
     subtitle?: string;
+    /** Reklamın neyi anlattığı — kendi sayfasında gösterilir. */
+    description?: string;
     image: string;
     months?: number;
   }) => post<AdOrder>('/ad-orders', input),

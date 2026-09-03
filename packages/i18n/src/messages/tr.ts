@@ -418,6 +418,10 @@ export const tr = {
   'home.pending': 'Bekleyen Randevuların',
   'home.verified': 'Doğrulanmış',
   'home.details': 'Detaylar',
+  // Silinmiş/erişilemez uzman — reklam eski bir kayda işaret edebiliyor.
+  'pro.not_found.title': 'Bu profil bulunamadı',
+  'pro.not_found.body': 'Uzman kaydı kaldırılmış ya da geçici olarak erişilemiyor olabilir.',
+  'pro.not_found.cta': 'Başka uzman ara',
   'home.search': 'Salon, hizmet veya stilist ara...',
   'home.featured': 'Senin İçin Seçtiklerimiz',
 
@@ -1561,6 +1565,8 @@ export const tr = {
   'ads.f.title_ph': 'Örn. Yaz saç bakımı',
   'ads.f.subtitle': 'Rozet yazısı (opsiyonel)',
   'ads.f.subtitle_ph': 'Örn. -%20',
+  'ads.f.description': 'Bu reklam neyi anlatıyor?',
+  'ads.f.description_ph': 'Kampanyanı, hizmetini ya da neden öne çıktığını anlat…',
   'ads.f.image': 'Görsel',
   'ads.f.image_pick': 'Görsel seç',
   'ads.total': 'Toplam',

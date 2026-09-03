@@ -53,6 +53,8 @@ export default function SellerAdsScreen() {
   const [ay, setAy] = useState(1);
   const [baslik, setBaslik] = useState('');
   const [altBaslik, setAltBaslik] = useState('');
+  // Kurucu: "reklamın neyi anlattığını anlatan bir alan olmalı."
+  const [aciklama, setAciklama] = useState('');
   const [gorsel, setGorsel] = useState<string | null>(null);
   const [dekont, setDekont] = useState<string | null>(null);
   const [siparis, setSiparis] = useState<AdOrder | null>(null);
@@ -96,11 +98,17 @@ export default function SellerAdsScreen() {
       const o =
         siparis ??
         (await api.createAdOrder({
-          proId: currentUser?.id ?? '',
+          /*
+           * `proId` GÖNDERİLMİYOR: burada `currentUser.id` yollanıyordu,
+           * yani KULLANICI kimliği. Reklam kartı olmayan bir uzmana
+           * gidiyor, ekran sonsuza kadar "Yükleniyor"da kalıyordu.
+           * Sunucu kimliği oturumdan kendi türetiyor.
+           */
           proName: currentUser?.name ?? '',
           placement: yerlesim,
           title: baslik.trim(),
           ...(altBaslik.trim() ? { subtitle: altBaslik.trim() } : {}),
+          ...(aciklama.trim() ? { description: aciklama.trim() } : {}),
           image: gorsel!,
           months: ay,
         }));
@@ -231,6 +239,22 @@ export default function SellerAdsScreen() {
             placeholder={t('ads.f.subtitle_ph')}
             placeholderTextColor={colors.muted}
             maxLength={120}
+          />
+          <Text variant="caption" tone="muted">
+            {t('ads.f.description')}
+          </Text>
+          {/* Çok satırlı: kartta değil reklamın kendi sayfasında görünüyor,
+              o yüzden başlık gibi tek satıra sıkışması gerekmiyor. */}
+          <TextInput
+            style={[styles.girdi, styles.girdiCokSatir]}
+            value={aciklama}
+            onChangeText={setAciklama}
+            placeholder={t('ads.f.description_ph')}
+            placeholderTextColor={colors.muted}
+            multiline
+            numberOfLines={4}
+            maxLength={600}
+            textAlignVertical="top"
           />
           <Text variant="caption" tone="muted">
             {t('ads.f.image')}
@@ -374,6 +398,7 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
     },
     ayKutuAktif: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
+    girdiCokSatir: { minHeight: 96, paddingTop: space(1.5) },
     girdi: {
       borderWidth: 1,
       borderColor: colors.line,
