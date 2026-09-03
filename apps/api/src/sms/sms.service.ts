@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import type { Env } from '@ayna/config/env';
 import { ENV } from '../config/config.module';
 import { PrismaService } from '../prisma/prisma.service';
@@ -46,7 +46,7 @@ import {
  *     çıkarmaya yetmiyor.
  */
 @Injectable()
-export class SmsService {
+export class SmsService implements OnModuleInit {
   private readonly logger = new Logger(SmsService.name);
 
   constructor(
@@ -56,6 +56,50 @@ export class SmsService {
 
   /** Ağa çıkmadan önce beklenecek en uzun süre. */
   private static readonly ZAMAN_ASIMI_MS = 10_000;
+
+  /**
+   * Seçili sağlayıcı için EKSİK olan ortam değişkenleri.
+   *
+   * Boş dizi = yapılandırma tamam.
+   */
+  private eksikAyarlar(): string[] {
+    const yok = (v: string | undefined) => !v || !v.trim();
+    if (this.env.SMS_PROVIDER === 'smsc') {
+      return (['SMSC_LOGIN', 'SMSC_PASSWORD'] as const).filter((a) => yok(this.env[a]));
+    }
+    if (this.env.SMS_PROVIDER === 'mobizon') {
+      return (['MOBIZON_API_KEY'] as const).filter((a) => yok(this.env[a]));
+    }
+    return [];
+  }
+
+  /**
+   * Açılışta yapılandırmayı DENETLER ama uygulamayı DÜŞÜRMEZ.
+   *
+   * ── BU DAVRANIŞ BİR HATANIN ÜRÜNÜ ───────────────────────────────────
+   *
+   * Önce denetim `env.ts` içindeydi ve eksik ayarda API HİÇ AÇILMIYORDU.
+   * Gerekçesi doğruydu: yanlış yapılandırmayla sessizce çalışıp her OTP'yi
+   * çöpe atmak en kötü sonuç. Ama çözüm ORANTISIZDI ve üretimde bunu
+   * yaşadık: kurucu değişkeni `MOBIZON_API_KEY` yerine `api.mobizon.kz`
+   * adıyla kaydetti ve TÜM PAZAR YERİ kapandı — randevular, harita,
+   * mesajlar, ödemeler. SMS ayarındaki bir yazım hatası uygulamanın
+   * tamamını durdurmamalı.
+   *
+   * Doğru ayrım şu: SMS'i sessizce düşürmemek ile uygulamayı düşürmek
+   * aynı şey değil. Artık eksik ayar YALNIZ OTP akışını durduruyor;
+   * geri kalan her şey çalışmaya devam ediyor ve sebep açılış kaydında
+   * bağıra bağıra yazıyor.
+   */
+  onModuleInit(): void {
+    const eksik = this.eksikAyarlar();
+    if (eksik.length === 0) return;
+    this.logger.error(
+      `SMS YAPILANDIRMASI EKSİK — SMS_PROVIDER=${this.env.SMS_PROVIDER} ` +
+        `ama şu değişken(ler) boş: ${eksik.join(', ')}. ` +
+        'Doğrulama kodları GÖNDERİLEMEYECEK; uygulamanın geri kalanı çalışıyor.',
+    );
+  }
 
   /**
    * Doğrulama kodunu gönderir.
@@ -75,6 +119,16 @@ export class SmsService {
       // çalışmaz çünkü Railway'de SMS_PROVIDER=smsc.
       this.logger.log(`[mock-sms] ${son4(telefon)} → ${mesaj}`);
       return { gonderildi: true };
+    }
+
+    const eksik = this.eksikAyarlar();
+    if (eksik.length > 0) {
+      // "Gönderildi" DEMİYORUZ: yapılandırma eksikken kod hiçbir yere
+      // gitmiyor ve kullanıcı bunu öğrenmeli.
+      const sebep = `yapılandırma eksik: ${eksik.join(', ')}`;
+      this.logger.error(`SMS gönderilemedi (${son4(telefon)}): ${sebep}`);
+      await this.kaydet(telefon, this.env.SMS_PROVIDER, { ok: false, kod: null, hata: sebep });
+      return { gonderildi: false, sebep };
     }
 
     const saglayici = this.env.SMS_PROVIDER;
