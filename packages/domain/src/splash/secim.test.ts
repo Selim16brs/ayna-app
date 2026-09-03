@@ -295,3 +295,33 @@ test('TUR SINIRINDA da tekrar yok — sıfırlama son gösterileni dışlıyor',
   // Sıfırlama sonrası tur yeniden başlamış olmalı: yalnız yeni mesaj işaretli.
   assert.deepEqual(r.durum.gorulenler, [r.id], 'tur sıfırlanmadı');
 });
+
+test('ÇAKIŞAN PENCERELER: öncelik sırası TEK belirleyici — brief §7.5', () => {
+  /*
+   * Brief §7.5'in kendi örneği: 21 Mart'ta Nauryz (sp_04, öncelikli) ile
+   * düğün sezonu (sp_07, 1 Mayıs–30 Eylül) yakın; ayrıca kış bakımı
+   * (sp_05, 1 Aralık–29 Şubat) da tarih sınırında. Aynı anda birden çok
+   * pencere açıksa karar RASTGELE ya da "listede önce gelen" DEĞİL;
+   * §3'teki öncelik sırası belirliyor.
+   */
+  const nevruz = new Date(2026, 2, 21, 14, 0, 0);
+  const t = (d: SplashDurumu, simdi = nevruz) => acilisMesajiSec({ dil: 'tr', simdi, durum: d });
+
+  // Öncelikli özel gün, genel havuzdaki sezon mesajlarını YENİYOR.
+  const ilk = t(BOS_DURUM);
+  assert.equal(ilk.id, 'sp_04', 'Nauryz penceresinde öncelikli mesaj kazanmadı');
+
+  // Doğum günü öncelikli özel günü DE yeniyor (§3 sırası).
+  const dogumGunlu = acilisMesajiSec({
+    dil: 'tr',
+    simdi: nevruz,
+    dogumGunu: { ay: 3, gun: 21 },
+    durum: BOS_DURUM,
+  });
+  assert.equal(dogumGunlu.id, 'pn_02', 'doğum günü öncelikli özel güne yenildi');
+
+  // Aynı gün ikinci açılışta öncelikli mesaj tekrarlanmıyor; sıra havuza
+  // geçiyor ve o gün geçerli olan sezon mesajı da havuzda.
+  const ikinci = t(ilk.durum);
+  assert.notEqual(ikinci.id, 'sp_04', 'öncelikli özel gün aynı gün tekrar çıktı');
+});
