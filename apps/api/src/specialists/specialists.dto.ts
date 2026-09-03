@@ -7,6 +7,13 @@ export const registerSpecialistSchema = z
     password: z.string().min(6),
     email: z.string().email().optional(),
     city: z.string().optional(),
+    /*
+     * GERÇEK KONUM — haritadan iğneyle. Kayıtta hiç toplanmıyordu; canlıda
+     * 25 uzmanın hiçbirinde koordinat yoktu ve haritadaki pinler şehir
+     * merkezi etrafına uydurularak dağıtılıyordu.
+     */
+    lat: z.number().min(-90).max(90).optional(),
+    lng: z.number().min(-180).max(180).optional(),
     kind: z.enum(['salon_bound', 'independent']),
     sector: z.string().max(40).optional(), // uzmanın ana kategorisi (harita/kategori filtresi)
     /*

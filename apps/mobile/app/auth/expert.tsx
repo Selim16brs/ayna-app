@@ -34,6 +34,7 @@ import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
+  AddressPicker,
   Button,
   CitySelect,
   defaultHours,
@@ -93,6 +94,18 @@ export default function ExpertRegisterScreen() {
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [showDate, setShowDate] = useState(false);
   const [city, setCity] = useState<string>(CITIES[0]!);
+  /*
+   * KONUM HARİTADAN — kurucu kararı.
+   *
+   * Uzman kaydında koordinat HİÇ toplanmıyordu; canlıda 25 uzmanın
+   * hiçbirinde konum yoktu ve haritadaki pinler şehir merkezi etrafına
+   * uydurularak dağıtılıyordu. "Yakınımdakiler" bu yüzden alakasız
+   * sonuçlar veriyordu.
+   *
+   * Salon kaydında zaten çalışan `AddressPicker` buraya da geldi.
+   */
+  const [coord, setCoord] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapOpen, setMapOpen] = useState(false);
   const [district, setDistrict] = useState('');
   const [address, setAddress] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
@@ -211,7 +224,9 @@ export default function ExpertRegisterScreen() {
   // §uzman onboarding — adım geçit koşulları (salon sihirbazı paralel)
   const stepOk = [
     identityOk, // 0 · kimlik & hesap
-    true, // 1 · konum & foto (şehir varsayılan; foto opsiyonel)
+    // 1 · konum & foto — İĞNE ZORUNLU. Şehir varsayılan geliyor ama şehir
+    // merkezine göre mesafe hesaplamak "yakınımdakiler"i anlamsız kılıyordu.
+    coord !== null,
     validServices.length > 0, // 2 · uzmanlık & hizmet
     true, // 3 · portföy & iletişim (opsiyonel)
     bindingOk, // 4 · önizleme & tamamla
@@ -247,6 +262,8 @@ export default function ExpertRegisterScreen() {
         ...(entityType === 'ip' ? { iin: iin.trim() } : {}),
         ...(bound && salonId ? { businessId: salonId, code: code.trim() } : {}),
         certificates: certs,
+        // Gerçek konum — haritadan iğneyle.
+        ...(coord ? { lat: coord.lat, lng: coord.lng } : {}),
         // Uzmanın ana kategorisi: fiyat girilen İLK hizmetin kategorisi (harita/kategori filtresi)
         sector:
           SERVICE_CATS.find((c) =>
@@ -539,6 +556,35 @@ export default function ExpertRegisterScreen() {
             <Input value={district} onChange={setDistrict} placeholder={t('auth.f.district_ph')} />
             <Label text={t('auth.f.address')} />
             <Input value={address} onChange={setAddress} placeholder={t('auth.f.address_ph')} />
+
+            {/* Nihai konum haritadan; metin alanı yalnız ayrıntı için. */}
+            <Pressable style={styles.haritaBtn} onPress={() => setMapOpen(true)}>
+              <Ionicons
+                name={coord ? 'location' : 'location-outline'}
+                size={18}
+                color={coord ? colors.accentFg : colors.muted}
+              />
+              <Text variant="bodyStrong" tone={coord ? 'ink' : 'muted'} style={styles.haritaYazi}>
+                {coord ? t('addresses.pinned') : t('addresses.pick_on_map')}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+            </Pressable>
+            <Text variant="caption" tone="muted" style={styles.haritaNot}>
+              {t('expert.reg.why_pin')}
+            </Text>
+
+            <AddressPicker
+              visible={mapOpen}
+              initialCity={city}
+              initialCoord={coord ? { latitude: coord.lat, longitude: coord.lng } : undefined}
+              onClose={() => setMapOpen(false)}
+              onPick={(r) => {
+                setCoord({ lat: r.lat, lng: r.lng });
+                if (r.address && !address.trim()) setAddress(r.address);
+                if (r.district && !district.trim()) setDistrict(r.district);
+                if (r.city) setCity(r.city);
+              }}
+            />
           </>
         )}
 
@@ -975,6 +1021,21 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    haritaBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      paddingHorizontal: space(2),
+      minHeight: 56,
+      borderRadius: radius.md,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      marginTop: space(1.5),
+    },
+    haritaYazi: { flex: 1 },
+    haritaNot: { marginTop: space(1) },
+
     content: { paddingHorizontal: space(3), paddingBottom: space(4), paddingTop: space(1) },
     section: { marginTop: space(3), marginBottom: space(1), fontSize: 17 },
     label: { marginTop: space(2), marginBottom: space(1) },

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { cityCenter, distanceKm, proCoords } from '../src/data';
+import { kullaniciKonumu, konumuVar, gercekMesafeKm } from '../src/data';
 import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
 import { fillParams, useLocale } from '../src/locale';
@@ -22,17 +22,60 @@ export default function NearbyScreen() {
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   const [notified, setNotified] = useState(false);
 
-  const salons = useMemo(() => {
-    const dist = (id: string) => distanceKm(cityCenter(city), proCoords(id));
-    return all
-      .filter((p) => p.city === city && p.kind === 'salon')
-      .sort((a, b) => Number(b.isPremium) - Number(a.isPremium) || dist(a.id) - dist(b.id));
-  }, [all, city]);
+  const addresses = useStore((s) => s.addresses);
+  /*
+   * "YAKINIMDAKİLER" GERÇEK KONUMA DAYANIYOR.
+   *
+   * Kurucu: "bir müşteri yakınındakileri seçtiğinde ona alakasız
+   * uzaklıktaki yerler çıkarsa bu sorun olur."
+   *
+   * Eskiden mesafe KULLANICININ ŞEHİR MERKEZİ ile UYDURULMUŞ salon konumu
+   * arasında hesaplanıyordu: iki ucu da gerçek değildi, sıralama rastgeleydi.
+   *
+   * Artık iki uç da gerçekse sıralanıyor. Değilse sıralama YAPILMIYOR —
+   * yanlış sırayı doğru sanmaktansa sıralamamak doğru; kullanıcıya da
+   * neden olduğu söyleniyor.
+   */
+  const benimKonum = kullaniciKonumu(addresses);
+
+  const { salons, siralanabilir } = useMemo(() => {
+    const liste = all.filter((p) => p.city === city && p.kind === 'salon');
+    const konumlu = liste.filter((p) => konumuVar(p));
+    // Sıralama ancak KULLANICININ ve en az bir salonun konumu varsa anlamlı.
+    const ok = benimKonum !== null && konumlu.length > 0;
+    if (!ok) {
+      return {
+        salons: [...liste].sort((a, b) => Number(b.isPremium) - Number(a.isPremium)),
+        siralanabilir: false,
+      };
+    }
+    const uzaklik = (p: (typeof liste)[number]) =>
+      gercekMesafeKm(benimKonum, { latitude: p.lat!, longitude: p.lng! }) ??
+      Number.MAX_SAFE_INTEGER;
+    return {
+      salons: [...liste].sort(
+        (a, b) => Number(b.isPremium) - Number(a.isPremium) || uzaklik(a) - uzaklik(b),
+      ),
+      siralanabilir: true,
+    };
+  }, [all, city, benimKonum]);
 
   return (
     <Screen edges={[]}>
       <StackHeader title={t('home.nearby')} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {/*
+         * Sıralanamıyorsa SÖYLENİYOR. Sessizce rastgele sıralamak,
+         * kullanıcının "en yakın" sandığı şeyin öyle olmaması demek.
+         */}
+        {!loading && salons.length > 0 && !siralanabilir ? (
+          <View style={styles.uyari}>
+            <Ionicons name="information-circle-outline" size={16} color={colors.inkSoft} />
+            <Text variant="caption" tone="inkSoft" style={styles.uyariYazi}>
+              {t('nearby.no_location')}
+            </Text>
+          </View>
+        ) : null}
         {loading ? (
           <ListSkeleton rows={4} />
         ) : salons.length === 0 ? (
@@ -91,6 +134,17 @@ export default function NearbyScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    uyari: {
+      flexDirection: 'row',
+      gap: space(1),
+      alignItems: 'flex-start',
+      padding: space(1.75),
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+      marginBottom: space(2),
+    },
+    uyariYazi: { flex: 1, lineHeight: 19 },
+
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2),
