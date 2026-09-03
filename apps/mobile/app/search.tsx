@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
+  Modal,
   Image,
   Pressable,
   ScrollView,
@@ -29,6 +30,7 @@ import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import {
+  Button,
   asPlanTier,
   PlanBadge,
   PressableScale,
@@ -69,6 +71,8 @@ interface Filtre {
   /** null = tüm şehirler. Varsayılan kullanıcının şehri (mevcut davranış). */
   sehir: string | null;
   minPuan: number | null;
+  /** TAMAMLANAN randevu sayısı — sunucudan gelen gerçek sayı. */
+  minRandevu: number | null;
   minYorum: number | null;
   minDeneyim: number | null;
   /** Üst sınır: uzmanın başlangıç fiyatı bunun altında olmalı. */
@@ -80,6 +84,7 @@ interface Filtre {
 const bosFiltre = (sehir: string | null): Filtre => ({
   sehir,
   minPuan: null,
+  minRandevu: null,
   minYorum: null,
   minDeneyim: null,
   maxFiyat: null,
@@ -92,6 +97,7 @@ function etkinSayisi(f: Filtre, varsayilanSehir: string): number {
   let n = 0;
   if (f.sehir !== varsayilanSehir) n += 1;
   if (f.minPuan !== null) n += 1;
+  if (f.minRandevu !== null) n += 1;
   if (f.minYorum !== null) n += 1;
   if (f.minDeneyim !== null) n += 1;
   if (f.maxFiyat !== null) n += 1;
@@ -101,11 +107,19 @@ function etkinSayisi(f: Filtre, varsayilanSehir: string): number {
 }
 
 const PUANLAR = [4, 4.5, 4.8] as const;
+const RANDEVULAR = [50, 200, 500] as const;
 const YORUMLAR = [50, 100, 300] as const;
 const DENEYIMLER = [3, 5, 10] as const;
 const FIYATLAR = [10000, 25000, 50000] as const;
 
-/** Bir kırılım: başlık + yatay çip şeridi. */
+/**
+ * Bir kırılım: başlık + çipler.
+ *
+ * ÇİPLER SATIR ATLIYOR, yatay kaymıyor. İlk sürümde yatay şeritti ve
+ * ekranın sağından taşan seçenekler KESİLİYORDU — "Almatı" yarım, "AYNA
+ * Onaylı" yarım görünüyordu. Kullanıcı orada bir şey olduğunu anlamıyordu.
+ * Sarmalı düzende her seçenek tam görünür.
+ */
 function FiltreGrubu({ baslik, children }: { baslik: string; children: ReactNode }) {
   const styles = useThemedStyles(makeStyles);
   return (
@@ -113,13 +127,7 @@ function FiltreGrubu({ baslik, children }: { baslik: string; children: ReactNode
       <Text variant="micro" tone="muted" style={styles.grupBaslik}>
         {baslik}
       </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.grupCipler}
-      >
-        {children}
-      </ScrollView>
+      <View style={styles.grupCipler}>{children}</View>
     </View>
   );
 }
@@ -184,6 +192,17 @@ export default function SearchScreen() {
       if (filtre.sehir !== null && p.city !== filtre.sehir) return false;
       if (activeCat && !servesSector(p, activeCat)) return false;
       if (filtre.minPuan !== null && p.rating < filtre.minPuan) return false;
+      /*
+       * Alan YOKSA elenmiyor. Eski sunucu sürümü `completedBookings`
+       * döndürmezse o uzman listeden düşmemeli — filtre yüzünden görünmez
+       * olmaktansa görünmesi doğru.
+       */
+      if (
+        filtre.minRandevu !== null &&
+        p.completedBookings !== undefined &&
+        p.completedBookings < filtre.minRandevu
+      )
+        return false;
       if (filtre.minYorum !== null && p.reviewCount < filtre.minYorum) return false;
       if (filtre.minDeneyim !== null && p.experienceYears < filtre.minDeneyim) return false;
       if (filtre.maxFiyat !== null && p.priceFrom > filtre.maxFiyat) return false;
@@ -259,155 +278,6 @@ export default function SearchScreen() {
           ) : null}
         </Pressable>
       </View>
-
-      {/*
-       * DETAYLI ARAMA PANELİ.
-       *
-       * Her kırılım kendi başlığı altında yatay çip şeridi. Dikey liste
-       * yerine şerit: yedi kırılım alt alta açılsa panel ekranı yutardı,
-       * sonuçlar görünmez olurdu.
-       *
-       * "Tümü" çipi her grupta ilk sırada — kullanıcının seçimi geri alma
-       * yolu her zaman aynı yerde.
-       */}
-      {showSort ? (
-        <View style={styles.panel}>
-          <View style={styles.panelBas}>
-            <Text variant="captionStrong" tone="ink">
-              {t('search.filters')}
-            </Text>
-            {etkin > 0 ? (
-              <Pressable onPress={() => setFiltre(bosFiltre(city))} hitSlop={8}>
-                <Text variant="caption" style={styles.temizle}>
-                  {t('search.filter.clear')}
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
-
-          <FiltreGrubu baslik={t('search.sort')}>
-            {SORTS.map((o) => (
-              <FiltreCipi
-                key={o.key}
-                etiket={t(o.label)}
-                secili={o.key === sort}
-                bas={() => setSort(o.key)}
-              />
-            ))}
-          </FiltreGrubu>
-
-          <FiltreGrubu baslik={t('search.filter.city')}>
-            <FiltreCipi
-              etiket={t('search.filter.all_cities')}
-              secili={filtre.sehir === null}
-              bas={() => yama({ sehir: null })}
-            />
-            {CITIES.map((c) => (
-              <FiltreCipi
-                key={c}
-                etiket={c}
-                secili={filtre.sehir === c}
-                bas={() => yama({ sehir: c })}
-              />
-            ))}
-          </FiltreGrubu>
-
-          <FiltreGrubu baslik={t('search.filter.rating')}>
-            <FiltreCipi
-              etiket={t('search.filter.any')}
-              secili={filtre.minPuan === null}
-              bas={() => yama({ minPuan: null })}
-            />
-            {PUANLAR.map((v) => (
-              <FiltreCipi
-                key={v}
-                etiket={`${v.toLocaleString('tr-TR')}+`}
-                secili={filtre.minPuan === v}
-                bas={() => yama({ minPuan: filtre.minPuan === v ? null : v })}
-              />
-            ))}
-          </FiltreGrubu>
-
-          <FiltreGrubu baslik={t('search.filter.reviews')}>
-            <FiltreCipi
-              etiket={t('search.filter.any')}
-              secili={filtre.minYorum === null}
-              bas={() => yama({ minYorum: null })}
-            />
-            {YORUMLAR.map((v) => (
-              <FiltreCipi
-                key={v}
-                etiket={`${v}+`}
-                secili={filtre.minYorum === v}
-                bas={() => yama({ minYorum: filtre.minYorum === v ? null : v })}
-              />
-            ))}
-          </FiltreGrubu>
-
-          <FiltreGrubu baslik={t('search.filter.experience')}>
-            <FiltreCipi
-              etiket={t('search.filter.any')}
-              secili={filtre.minDeneyim === null}
-              bas={() => yama({ minDeneyim: null })}
-            />
-            {DENEYIMLER.map((v) => (
-              <FiltreCipi
-                key={v}
-                etiket={fillParams(t('search.filter.years'), { n: String(v) })}
-                secili={filtre.minDeneyim === v}
-                bas={() => yama({ minDeneyim: filtre.minDeneyim === v ? null : v })}
-              />
-            ))}
-          </FiltreGrubu>
-
-          <FiltreGrubu baslik={t('search.filter.price')}>
-            <FiltreCipi
-              etiket={t('search.filter.any')}
-              secili={filtre.maxFiyat === null}
-              bas={() => yama({ maxFiyat: null })}
-            />
-            {FIYATLAR.map((v) => (
-              <FiltreCipi
-                key={v}
-                etiket={fillParams(t('search.filter.upto'), {
-                  n: v.toLocaleString('tr-TR'),
-                })}
-                secili={filtre.maxFiyat === v}
-                bas={() => yama({ maxFiyat: filtre.maxFiyat === v ? null : v })}
-              />
-            ))}
-          </FiltreGrubu>
-
-          <FiltreGrubu baslik={t('search.filter.kind')}>
-            <FiltreCipi
-              etiket={t('search.filter.any')}
-              secili={filtre.tur === null}
-              bas={() => yama({ tur: null })}
-            />
-            <FiltreCipi
-              etiket={t('search.kind.independent')}
-              secili={filtre.tur === 'independent'}
-              bas={() => yama({ tur: filtre.tur === 'independent' ? null : 'independent' })}
-            />
-            <FiltreCipi
-              etiket={t('search.kind.salon')}
-              secili={filtre.tur === 'salon'}
-              bas={() => yama({ tur: filtre.tur === 'salon' ? null : 'salon' })}
-            />
-            <FiltreCipi
-              etiket={t('search.filter.verified_only')}
-              secili={filtre.onayliMi}
-              bas={() => yama({ onayliMi: !filtre.onayliMi })}
-            />
-          </FiltreGrubu>
-
-          {/* Kaç sonuç kaldığı panel içinde: kullanıcı çipe basar basmaz
-              sonucu görsün, kapatıp saymak zorunda kalmasın. */}
-          <Text variant="caption" tone="muted" style={styles.sayac}>
-            {fillParams(t('search.results_count'), { n: String(results.length) })}
-          </Text>
-        </View>
-      ) : null}
 
       {/* Kategori daraltma */}
       <ScrollView
@@ -522,6 +392,207 @@ export default function SearchScreen() {
           </>
         )}
       </ScrollView>
+
+      {/*
+       * DETAYLI ARAMA — ALT SAYFA.
+       *
+       * İlk sürüm sayfa içine gömülü bir paneldi ve yedi kırılım ekranın
+       * TAMAMINI yiyordu: sonuçlar hiç görünmüyordu, sonuç sayısı katlanan
+       * yerin altında kalıyordu ve paneli kapatıp sonuca dönmenin bir
+       * düğmesi yoktu. Kurucu haklı olarak "arama yapacağın bir buton bile
+       * görünmüyor" dedi.
+       *
+       * Alt sayfa bunu çözüyor: sonuçlar arkada duruyor, perde neyin
+       * geçici olduğunu söylüyor, ve en altta SABİT bir düğme kaç sonuç
+       * bulunduğunu yazıp listeye döndürüyor. Uygulamanın kendi alt sayfa
+       * kalıbı kullanıldı (seller/promotions ile aynı) — yeni bir dil
+       * uydurulmadı.
+       */}
+      <Modal
+        visible={showSort}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSort(false)}
+      >
+        <Pressable style={styles.perde} onPress={() => setShowSort(false)}>
+          {/* Perdeye dokunmak kapatır; sayfanın kendisine dokunmak kapatmamalı. */}
+          <Pressable style={styles.sayfa} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.tutamak} />
+
+            <View style={styles.sayfaBas}>
+              <Text variant="h2" tone="ink">
+                {t('search.filters')}
+              </Text>
+              <View style={styles.sayfaBasSag}>
+                {etkin > 0 ? (
+                  <Pressable onPress={() => setFiltre(bosFiltre(city))} hitSlop={8}>
+                    <Text variant="captionStrong" style={styles.temizle}>
+                      {t('search.filter.clear')}
+                    </Text>
+                  </Pressable>
+                ) : null}
+                <Pressable onPress={() => setShowSort(false)} hitSlop={10} style={styles.kapat}>
+                  <Ionicons name="close" size={22} color={colors.ink} />
+                </Pressable>
+              </View>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.sayfaGovde}
+            >
+              <FiltreGrubu baslik={t('search.sort')}>
+                {SORTS.map((o) => (
+                  <FiltreCipi
+                    key={o.key}
+                    etiket={t(o.label)}
+                    secili={o.key === sort}
+                    bas={() => setSort(o.key)}
+                  />
+                ))}
+              </FiltreGrubu>
+
+              <FiltreGrubu baslik={t('search.filter.city')}>
+                <FiltreCipi
+                  etiket={t('search.filter.all_cities')}
+                  secili={filtre.sehir === null}
+                  bas={() => yama({ sehir: null })}
+                />
+                {CITIES.map((c) => (
+                  <FiltreCipi
+                    key={c}
+                    etiket={c}
+                    secili={filtre.sehir === c}
+                    bas={() => yama({ sehir: c })}
+                  />
+                ))}
+              </FiltreGrubu>
+
+              <FiltreGrubu baslik={t('search.filter.rating')}>
+                <FiltreCipi
+                  etiket={t('search.filter.any')}
+                  secili={filtre.minPuan === null}
+                  bas={() => yama({ minPuan: null })}
+                />
+                {PUANLAR.map((v) => (
+                  <FiltreCipi
+                    key={v}
+                    etiket={`${v.toLocaleString('tr-TR')}+`}
+                    secili={filtre.minPuan === v}
+                    bas={() => yama({ minPuan: filtre.minPuan === v ? null : v })}
+                  />
+                ))}
+              </FiltreGrubu>
+
+              <FiltreGrubu baslik={t('search.filter.bookings')}>
+                <FiltreCipi
+                  etiket={t('search.filter.any')}
+                  secili={filtre.minRandevu === null}
+                  bas={() => yama({ minRandevu: null })}
+                />
+                {RANDEVULAR.map((v) => (
+                  <FiltreCipi
+                    key={v}
+                    etiket={`${v}+`}
+                    secili={filtre.minRandevu === v}
+                    bas={() => yama({ minRandevu: filtre.minRandevu === v ? null : v })}
+                  />
+                ))}
+              </FiltreGrubu>
+
+              <FiltreGrubu baslik={t('search.filter.reviews')}>
+                <FiltreCipi
+                  etiket={t('search.filter.any')}
+                  secili={filtre.minYorum === null}
+                  bas={() => yama({ minYorum: null })}
+                />
+                {YORUMLAR.map((v) => (
+                  <FiltreCipi
+                    key={v}
+                    etiket={`${v}+`}
+                    secili={filtre.minYorum === v}
+                    bas={() => yama({ minYorum: filtre.minYorum === v ? null : v })}
+                  />
+                ))}
+              </FiltreGrubu>
+
+              <FiltreGrubu baslik={t('search.filter.experience')}>
+                <FiltreCipi
+                  etiket={t('search.filter.any')}
+                  secili={filtre.minDeneyim === null}
+                  bas={() => yama({ minDeneyim: null })}
+                />
+                {DENEYIMLER.map((v) => (
+                  <FiltreCipi
+                    key={v}
+                    etiket={fillParams(t('search.filter.years'), { n: String(v) })}
+                    secili={filtre.minDeneyim === v}
+                    bas={() => yama({ minDeneyim: filtre.minDeneyim === v ? null : v })}
+                  />
+                ))}
+              </FiltreGrubu>
+
+              <FiltreGrubu baslik={t('search.filter.price')}>
+                <FiltreCipi
+                  etiket={t('search.filter.any')}
+                  secili={filtre.maxFiyat === null}
+                  bas={() => yama({ maxFiyat: null })}
+                />
+                {FIYATLAR.map((v) => (
+                  <FiltreCipi
+                    key={v}
+                    etiket={fillParams(t('search.filter.upto'), {
+                      n: v.toLocaleString('tr-TR'),
+                    })}
+                    secili={filtre.maxFiyat === v}
+                    bas={() => yama({ maxFiyat: filtre.maxFiyat === v ? null : v })}
+                  />
+                ))}
+              </FiltreGrubu>
+
+              <FiltreGrubu baslik={t('search.filter.kind')}>
+                <FiltreCipi
+                  etiket={t('search.filter.any')}
+                  secili={filtre.tur === null}
+                  bas={() => yama({ tur: null })}
+                />
+                <FiltreCipi
+                  etiket={t('search.kind.independent')}
+                  secili={filtre.tur === 'independent'}
+                  bas={() => yama({ tur: filtre.tur === 'independent' ? null : 'independent' })}
+                />
+                <FiltreCipi
+                  etiket={t('search.kind.salon')}
+                  secili={filtre.tur === 'salon'}
+                  bas={() => yama({ tur: filtre.tur === 'salon' ? null : 'salon' })}
+                />
+                <FiltreCipi
+                  etiket={t('search.filter.verified_only')}
+                  secili={filtre.onayliMi}
+                  bas={() => yama({ onayliMi: !filtre.onayliMi })}
+                />
+              </FiltreGrubu>
+            </ScrollView>
+
+            {/*
+             * SABİT EYLEM. Kurucunun eksik dediği düğme bu: kaç sonuç
+             * bulunduğunu yazıyor ve listeye döndürüyor. Kaydırmayla
+             * kaybolmaması için ScrollView'in DIŞINDA.
+             */}
+            <View style={styles.sayfaEylem}>
+              <Button
+                label={
+                  results.length === 0
+                    ? t('search.filter.no_result')
+                    : fillParams(t('search.filter.apply'), { n: String(results.length) })
+                }
+                onPress={() => setShowSort(false)}
+                disabled={results.length === 0}
+              />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
@@ -641,26 +712,48 @@ const makeStyles = (colors: ColorTokens) =>
       borderColor: colors.line,
     },
     chipOn: { backgroundColor: colors.accent },
-    // ── detaylı arama paneli ──
-    panel: {
-      backgroundColor: colors.surface,
-      marginHorizontal: space(3),
-      marginTop: space(1.5),
-      borderRadius: radius.lg,
-      paddingVertical: space(1.5),
+    // ── detaylı arama alt sayfası ──
+    perde: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+    sayfa: {
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
+      paddingTop: space(1),
+      // %85: arkadaki sonuçların bir kısmı hep görünür kalsın — kullanıcı
+      // neyin üstünde çalıştığını unutmasın.
+      maxHeight: '85%',
     },
-    panelBas: {
+    tutamak: {
+      alignSelf: 'center',
+      width: 40,
+      height: 4,
+      borderRadius: radius.pill,
+      backgroundColor: colors.lineStrong,
+      marginBottom: space(1.5),
+    },
+    sayfaBas: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: space(2),
-      paddingBottom: space(0.5),
+      paddingHorizontal: space(3),
+      paddingBottom: space(1),
     },
-    temizle: { color: colors.accentFg, fontFamily: font.semibold },
-    grup: { paddingTop: space(1.25) },
-    grupBaslik: { paddingHorizontal: space(2), paddingBottom: space(0.75) },
-    grupCipler: { paddingHorizontal: space(2), gap: space(1) },
-    sayac: { paddingHorizontal: space(2), paddingTop: space(1.5) },
+    sayfaBasSag: { flexDirection: 'row', alignItems: 'center', gap: space(2) },
+    kapat: { padding: 2 },
+    temizle: { color: colors.accentFg },
+    sayfaGovde: { paddingHorizontal: space(3), paddingBottom: space(2) },
+    sayfaEylem: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      paddingBottom: space(4),
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.line,
+      backgroundColor: colors.bg,
+    },
+    grup: { paddingTop: space(2) },
+    grupBaslik: { paddingBottom: space(1) },
+    // Sarmalı: hiçbir seçenek ekran dışında kalmıyor.
+    grupCipler: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
     // Sayı rozeti: panel kapalıyken kaç kırılımın açık olduğunu gösterir.
     tuneRozet: {
       position: 'absolute',

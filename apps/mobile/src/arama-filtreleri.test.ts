@@ -34,6 +34,8 @@ interface Kayit {
   city: string;
   rating: number;
   reviewCount: number;
+  /** Sunucudan gelen TAMAMLANAN randevu sayısı. */
+  completedBookings?: number;
   experienceYears: number;
   priceFrom: number;
   kind: 'salon' | 'independent';
@@ -46,6 +48,7 @@ const KAYITLAR: Kayit[] = [
     city: 'Almatı',
     rating: 4.9,
     reviewCount: 320,
+    completedBookings: 540,
     experienceYears: 12,
     priceFrom: 42000,
     kind: 'independent',
@@ -56,6 +59,7 @@ const KAYITLAR: Kayit[] = [
     city: 'Almatı',
     rating: 4.2,
     reviewCount: 60,
+    completedBookings: 210,
     experienceYears: 4,
     priceFrom: 9000,
     kind: 'salon',
@@ -65,6 +69,7 @@ const KAYITLAR: Kayit[] = [
     city: 'Astana',
     rating: 4.6,
     reviewCount: 110,
+    completedBookings: 180,
     experienceYears: 6,
     priceFrom: 22000,
     kind: 'independent',
@@ -84,6 +89,7 @@ const KAYITLAR: Kayit[] = [
 interface Filtre {
   sehir: string | null;
   minPuan: number | null;
+  minRandevu: number | null;
   minYorum: number | null;
   minDeneyim: number | null;
   maxFiyat: number | null;
@@ -94,6 +100,7 @@ interface Filtre {
 const bos = (sehir: string | null = null): Filtre => ({
   sehir,
   minPuan: null,
+  minRandevu: null,
   minYorum: null,
   minDeneyim: null,
   maxFiyat: null,
@@ -107,6 +114,12 @@ function ele(kayitlar: Kayit[], f: Filtre): string[] {
     .filter((p) => {
       if (f.sehir !== null && p.city !== f.sehir) return false;
       if (f.minPuan !== null && p.rating < f.minPuan) return false;
+      if (
+        f.minRandevu !== null &&
+        p.completedBookings !== undefined &&
+        p.completedBookings < f.minRandevu
+      )
+        return false;
       if (f.minYorum !== null && p.reviewCount < f.minYorum) return false;
       if (f.minDeneyim !== null && p.experienceYears < f.minDeneyim) return false;
       if (f.maxFiyat !== null && p.priceFrom > f.maxFiyat) return false;
@@ -136,6 +149,27 @@ test('değerlendirme notu kırılımı', () => {
   assert.deepEqual(ele(KAYITLAR, { ...bos(), minPuan: 4.8 }), ['a']);
   // Sınır DAHİL: 4,9 puanlı uzman "4,5+" aramasında çıkmalı; tam 4,5 olan da.
   assert.ok(ele([{ ...KAYITLAR[0]!, rating: 4.5 }], { ...bos(), minPuan: 4.5 }).length === 1);
+});
+
+test('TAMAMLANAN RANDEVU kırılımı — sunucudan gelen gerçek sayı', () => {
+  assert.deepEqual(ele(KAYITLAR, { ...bos(), minRandevu: 200 }), ['a', 'b', 'd']);
+  assert.deepEqual(ele(KAYITLAR, { ...bos(), minRandevu: 500 }), ['a', 'd']);
+  /*
+   * "d" kaydında `completedBookings` YOK (eski sunucu sürümü senaryosu) ve
+   * bu yüzden elenMİYOR. Filtre yüzünden görünmez olmaktansa görünmesi
+   * doğru — aksi hâlde sunucu güncellenene kadar liste boşalırdı.
+   */
+  assert.ok(
+    ele(KAYITLAR, { ...bos(), minRandevu: 500 }).includes('d'),
+    'alanı olmayan kayıt elenmemeli',
+  );
+});
+
+test('randevu sayısı ile değerlendirme sayısı AYRI kırılımlar', () => {
+  // İkisi aynı şey değil: her randevu değerlendirmeye dönüşmüyor.
+  // "b" 210 randevu yapmış ama yalnız 60 değerlendirme almış.
+  assert.ok(ele(KAYITLAR, { ...bos(), minRandevu: 200 }).includes('b'));
+  assert.ok(!ele(KAYITLAR, { ...bos(), minYorum: 200 }).includes('b'));
 });
 
 test('değerlendirme sayısı kırılımı', () => {
@@ -193,6 +227,7 @@ test('panel yedi kırılımı da çiziyor', () => {
     'search.filter.price',
     'search.filter.kind',
     'search.filter.verified_only',
+    'search.filter.bookings',
   ]) {
     assert.ok(ekran.includes(`'${anahtar}'`), `panelde "${anahtar}" kırılımı yok`);
     assert.ok(sozluk.includes(`'${anahtar}':`), `"${anahtar}" TR sözlükte yok`);
@@ -205,6 +240,7 @@ test('eleme koşulları ekranda duruyor', () => {
   for (const kosul of [
     'filtre.sehir !== null && p.city !== filtre.sehir',
     'filtre.minPuan !== null && p.rating < filtre.minPuan',
+    'p.completedBookings < filtre.minRandevu',
     'filtre.minYorum !== null && p.reviewCount < filtre.minYorum',
     'filtre.minDeneyim !== null && p.experienceYears < filtre.minDeneyim',
     'filtre.maxFiyat !== null && p.priceFrom > filtre.maxFiyat',
@@ -239,6 +275,48 @@ test('çipler kategori çipleriyle AYNI dili kullanıyor', () => {
     ekran,
     /function FiltreCipi\([\s\S]{0,600}styles\.chip, secili && styles\.chipOn/,
     'filtre çipi mevcut çip dilini kullanmıyor',
+  );
+});
+
+/*
+ * İLK SÜRÜMÜN HATASI: kırılımlar sayfaya gömülü bir panelde açılıyordu,
+ * yedi grup ekranın tamamını yiyordu ve paneli kapatıp sonuca dönmenin
+ * DÜĞMESİ YOKTU. Kurucu: "arama yapacağın bir buton bile görünmüyor."
+ * Aşağıdakiler o hatanın geri gelmesini engelliyor.
+ */
+
+test('kırılımlar ALT SAYFADA açılıyor, sayfayı yemiyor', () => {
+  assert.match(ekran, /<Modal\n\s+visible=\{showSort\}/, 'filtreler alt sayfada değil');
+  assert.match(ekran, /styles\.perde/, 'perde yok — neyin geçici olduğu belirsiz');
+  assert.match(ekran, /maxHeight: '85%'/, 'alt sayfa ekranın tamamını kaplıyor');
+});
+
+test('SONUÇLARA DÖNDÜREN düğme var ve sayıyı yazıyor', () => {
+  assert.match(ekran, /styles\.sayfaEylem/, 'sabit eylem alanı yok');
+  assert.match(ekran, /'search\.filter\.apply'/, 'sonuç gösterme düğmesi yok');
+  assert.match(ekran, /onPress=\{\(\) => setShowSort\(false\)\}/, 'düğme paneli kapatmıyor');
+  // Sıfır sonuçta düğme kapalı olmalı: boş listeye döndürmek yanıltıcı.
+  assert.match(ekran, /disabled=\{results\.length === 0\}/, 'boş sonuçta düğme kapanmıyor');
+  assert.ok(sozluk.includes("'search.filter.apply':"), 'düğme metni sözlükte yok');
+  assert.ok(sozluk.includes("'search.filter.no_result':"), 'boş sonuç metni yok');
+});
+
+test('düğme ScrollView DIŞINDA — kaydırınca kaybolmuyor', () => {
+  const i = ekran.indexOf('styles.sayfaGovde');
+  const kapanis = ekran.indexOf('</ScrollView>', i);
+  const eylem = ekran.indexOf('styles.sayfaEylem', i);
+  assert.ok(eylem > kapanis, 'eylem düğmesi kaydırma alanının içinde');
+});
+
+test('çipler SATIR ATLIYOR — ekran dışında seçenek kalmıyor', () => {
+  /*
+   * İlk sürümde her grup yatay şeritti ve seçenekler sağdan kesiliyordu:
+   * "Almatı" ve "AYNA Onaylı" yarım görünüyordu.
+   */
+  assert.match(ekran, /grupCipler: \{ flexDirection: 'row', flexWrap: 'wrap'/, 'çipler sarmıyor');
+  assert.ok(
+    !/function FiltreGrubu\([\s\S]{0,400}horizontal/.test(ekran),
+    'kırılım grubu hâlâ yatay kayıyor',
   );
 });
 

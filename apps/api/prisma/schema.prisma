@@ -372,6 +372,10 @@ model Booking {
   createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([status])
+  // Uzmanın TAMAMLANAN randevu sayısı arama kırılımı oldu; katalog listesi
+  // her uzman için bu sayıyı istiyor. (proId, status) olmadan sorgu tüm
+  // randevu tablosunu tarıyordu.
+  @@index([proId, status])
   @@map("bookings")
 }
 
