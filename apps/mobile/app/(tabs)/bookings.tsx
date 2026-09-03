@@ -17,6 +17,7 @@ import {
 } from '../../src/data';
 import { formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
+import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { musteriRandevulari, useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
@@ -176,7 +177,7 @@ export default function BookingsScreen() {
 
 // VELOURA "My Booking" kartı: üst satır tarih·saat + durum pili → thumbnail + ad/hizmet/fiyat → aksiyonlar
 function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
@@ -213,7 +214,7 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
             {appt.proName}
           </Text>
           <Text variant="caption" tone="muted" numberOfLines={1} style={styles.cardSub}>
-            {appt.service}
+            {hizmetEtiketiCevir(appt.service, locale)}
           </Text>
           {appt.uzmanName ? (
             <Text variant="caption" tone="inkSoft" numberOfLines={1} style={styles.cardSub}>

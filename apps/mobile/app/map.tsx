@@ -184,7 +184,7 @@ export default function MapScreen() {
               style={StyleSheet.absoluteFill}
               onPress={() => setSelected(null)}
               accessibilityRole="button"
-              accessibilityLabel="Kartı kapat"
+              accessibilityLabel={t('common.close_card')}
             />
             <View style={[styles.card, styles.cardShadow]}>
               <Pressable

@@ -8,6 +8,7 @@ import { api } from '../../src/api';
 import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
 import { almatyDayStart, almatyParts, daysUntil, formatSlot, slotTime } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
+import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -77,7 +78,7 @@ function bucket(inDays: number): GroupKey {
 const STATUS_LABEL: Record<BookingStatus, MessageKey> = DURUM_ETIKETI;
 
 export default function AgendaScreen() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -207,7 +208,7 @@ export default function AgendaScreen() {
                   onPress={() => router.push(`/booking/${b.id}`)}
                 >
                   <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                    {b.service}
+                    {hizmetEtiketiCevir(b.service, locale)}
                   </Text>
                   <Text variant="caption" tone="muted" numberOfLines={1}>
                     {formatSlot(b.startMs, t)} · {formatPrice(b.price)}
@@ -390,7 +391,7 @@ export default function AgendaScreen() {
                             numberOfLines={1}
                             style={styles.flexShrink}
                           >
-                            {r.b.service}
+                            {hizmetEtiketiCevir(r.b.service, locale)}
                           </Text>
                           {/* §4.6 — kaynak ayrımı: offline (elle) vs AYNA (online) */}
                           <View
@@ -560,7 +561,7 @@ export default function AgendaScreen() {
                               {slotTime(r.b.startMs)}
                             </Text>
                             <Text variant="caption" tone="muted" numberOfLines={1}>
-                              {r.b.service}
+                              {hizmetEtiketiCevir(r.b.service, locale)}
                             </Text>
                           </Pressable>
                         ),
@@ -610,7 +611,7 @@ export default function AgendaScreen() {
                           numberOfLines={1}
                           style={styles.flexShrink}
                         >
-                          {b.service}
+                          {hizmetEtiketiCevir(b.service, locale)}
                         </Text>
                         {b.bookingKind === 'group' ? (
                           <View style={styles.kindTag}>

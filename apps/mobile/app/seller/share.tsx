@@ -209,7 +209,7 @@ export default function SellerShareScreen() {
             </SvgText>
             <Rect x={M} y={158} width={64} height={5} rx={2.5} fill={C.limeDeep} />
             <SvgText x={M} y={214} fontSize={26} fontWeight="600" fill={C.muted} letterSpacing={5}>
-              GÜZELLİK & BAKIM
+              {t('share.tagline')}
             </SvgText>
 
             {/* ── PORTRE ── */}

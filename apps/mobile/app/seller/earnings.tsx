@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { formatPrice } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -20,7 +21,7 @@ const PERIODS: { key: Period; labelKey: MessageKey }[] = [
 // Veri sağlayıcı randevularından (buluttan hydrate) türetilir; komisyon oranı
 // admin parametresidir. Salonun göremeyeceği uzman-özel para BURADA sahibine gösterilir.
 export default function EarningsScreen() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const bookings = useStore((s) => s.bookings);
@@ -125,7 +126,7 @@ export default function EarningsScreen() {
             <View key={b.id} style={styles.item}>
               <View style={styles.itemBody}>
                 <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                  {b.service}
+                  {hizmetEtiketiCevir(b.service, locale)}
                 </Text>
                 <Text variant="caption" tone="muted" numberOfLines={1}>
                   {new Date(b.startMs).toLocaleDateString('tr-TR')}

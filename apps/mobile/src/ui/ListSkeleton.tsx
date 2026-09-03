@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import { type ColorTokens, radius, space } from '../theme';
+import { useLocale } from '../locale';
 import { useThemedStyles } from '../theme-context';
 
 /**
@@ -10,6 +11,7 @@ import { useThemedStyles } from '../theme-context';
  * aralığı dar tutuldu (0.35→0.7) — sakin, göz yormayan.
  */
 export function ListSkeleton({ rows = 3, avatar = true }: { rows?: number; avatar?: boolean }) {
+  const { t } = useLocale();
   const styles = useThemedStyles(makeStyles);
   const pulse = useRef(new Animated.Value(0.35)).current;
 
@@ -25,7 +27,11 @@ export function ListSkeleton({ rows = 3, avatar = true }: { rows?: number; avata
   }, [pulse]);
 
   return (
-    <View style={styles.wrap} accessibilityRole="progressbar" accessibilityLabel="Yükleniyor">
+    <View
+      style={styles.wrap}
+      accessibilityRole="progressbar"
+      accessibilityLabel={t('common.loading_a11y')}
+    >
       {Array.from({ length: rows }, (_, i) => (
         <Animated.View key={i} style={[styles.row, { opacity: pulse }]}>
           {avatar ? <View style={styles.avatar} /> : null}

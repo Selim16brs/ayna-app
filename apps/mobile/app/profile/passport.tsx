@@ -153,7 +153,7 @@ export default function PassportScreen() {
               <Ionicons name="medal-outline" size={18} color={colors.gold} />
             </View>
             <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
-              Gümüş
+              {t('rewards.tier.silver')}
             </Text>
             <Text variant="bodyStrong" tone="gold">
               {points} {t('rewards.redeem.cost')}

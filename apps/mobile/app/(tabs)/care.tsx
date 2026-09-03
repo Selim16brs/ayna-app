@@ -16,6 +16,7 @@ import {
 import { formatSlot } from '../../src/datetime';
 import { musteriRandevulari, useStore } from '../../src/store';
 import { fillParams, useLocale } from '../../src/locale';
+import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -272,7 +273,7 @@ export default function BenimIcinScreen() {
 
 // ── Öne çıkan randevu kartı (görsel zeminli, premium) ──────────────────────
 function FeatureCard({ booking, onPress }: { booking: Appointment; onPress: () => void }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
@@ -298,7 +299,7 @@ function FeatureCard({ booking, onPress }: { booking: Appointment; onPress: () =
           {booking.proName}
         </Text>
         <Text variant="caption" tone="onColor" style={styles.featureMeta} numberOfLines={1}>
-          {booking.service} · {formatSlot(booking.startMs, t)}
+          {hizmetEtiketiCevir(booking.service, locale)} · {formatSlot(booking.startMs, t)}
         </Text>
         <View style={styles.featureCta}>
           <Text variant="caption" tone="ink" style={styles.featureCtaText}>

@@ -16,6 +16,7 @@ import { AKIS_ADIMLARI, akisAdimi, durumEtiketi } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
 import type { MessageKey } from '@ayna/i18n';
 import { fillParams, useLocale } from '../../src/locale';
+import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { musteriRandevulari, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
 import { space, type ColorTokens, font } from '../../src/theme';
@@ -105,7 +106,7 @@ const HIZLI_EYLEMLER = [
 ];
 
 export default function DiscoverScreen() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, mode } = useTheme();
   const koyuTema = mode === 'dark';
   const styles = useThemedStyles(makeStyles);
@@ -405,7 +406,7 @@ export default function DiscoverScreen() {
                       {bekleyenRandevu.proName}
                     </Text>
                     <Text variant="micro" tone="muted" numberOfLines={1}>
-                      {bekleyenRandevu.service}
+                      {hizmetEtiketiCevir(bekleyenRandevu.service, locale)}
                     </Text>
                     {/* Figma `time-badge`: saat düz yazı değil, rozet. */}
                     <View style={styles.zamanRozet}>
