@@ -128,7 +128,13 @@ test('kenar menü KOYU — panelin baştan aşağı beyaz olduğu hâl geride ka
    * hiyerarşi yalnız ince çizgilerle kuruluyor ve sonuç yıkanmış, şablon
    * gibi görünüyordu. Koyu menü hiyerarşiyi tek başına kuruyor.
    */
-  assert.match(css, /--nav-bg:\s*#1b2016/, 'koyu menü tokenı yok');
+  const m = css.match(/--nav-bg:\s*#([0-9a-f]{6})/i);
+  assert.ok(m, 'koyu menü tokenı yok');
+  // Belirli bir hex'e değil KOYULUĞA bağlanıyor: ton ayarlanınca test
+  // kırılmamalı, ama menü beyaza dönerse kırılmalı.
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1].slice(i, i + 2), 16));
+  const parlaklik = (r * 299 + g * 587 + b * 114) / 1000;
+  assert.ok(parlaklik < 60, `kenar menü yeterince koyu değil (parlaklık ${parlaklik})`);
   assert.match(css, /\.sidebar\s*\{[^}]*background:\s*var\(--nav-bg\)/, 'menü koyu değil');
 });
 
@@ -181,14 +187,107 @@ test('satırda tek ana eylem var', () => {
    * seçiciyi arıyordu ve `:hover` bloğundaki aynı seçiciye takılıp
    * asıl kural silindiğinde bile geçiyordu.
    */
-  const kural = css.match(
-    /\.list-row \.btn-sm:not\(\.btn-danger\):not\(\.btn-ok\),[\s\S]*?\{([^}]*)\}/,
-  );
-  assert.ok(kural, 'satır düğmeleri için kural yok');
-  assert.match(kural[1], /background:\s*var\(--bg-alt\)/, 'satır düğmeleri hâlâ aksan renginde');
+  /*
+   * Kural artık VARSAYILANDA: `.btn-sm` sessiz doğuyor, vurgu `.btn-primary`
+   * ile bilinçli veriliyor. Önceki hâlinde her düğme aksan rengindeydi ve
+   * istisna listesiyle sessizleştiriliyordu.
+   */
+  const varsayilan = css.match(/\n\.btn-sm \{([^}]*)\}/);
+  assert.ok(varsayilan, '.btn-sm kuralı yok');
+  assert.match(varsayilan[1], /background:\s*var\(--bg-alt\)/, 'varsayılan düğme hâlâ vurgulu');
+  assert.match(css, /\.btn-primary \{[^}]*background:\s*var\(--accent\)/, 'birincil düğme yok');
 });
 
 test('yıkıcı eylem RENKTEN BAŞKA bir şeyle de ayrılıyor', () => {
   // Renk körlüğünde tek başına renk yetmez.
-  assert.match(css, /\.btn-danger \{ border: 1px solid/, 'yıkıcı düğmenin kenarlığı yok');
+  const d = css.match(/\.btn-danger \{([^}]*)\}/);
+  assert.ok(d, '.btn-danger kuralı yok');
+  assert.match(d[1], /border:\s*1px solid/, 'yıkıcı düğmenin kenarlığı yok');
+});
+
+/* ── BİLGİ MİMARİSİ ────────────────────────────────────────────────────── */
+
+test('her ekranın TEK adı var — menü, üst bar ve başlık aynı', () => {
+  /*
+   * Kurucu: "admin paneli çorba gibi, ne nerede ne iş yapıyor ne ile
+   * alakalı hiçbir şey belli değil."
+   *
+   * Sebeplerinden biri: aynı ekran üç farklı adla anılıyordu. Menüde
+   * "Sadakat", başlıkta "Puan ekonomisi"; "Salon Onay" / "Salon
+   * başvuruları"; hatta "Feature Flag" gibi İngilizce kalanlar.
+   * Yöneticinin aradığı ekranı bulamamasının yarısı buydu.
+   */
+  const etiketler = [...sayfa.matchAll(/label: '([^']+)',\s*\n?\s*icon:/g)].map((m) => m[1]);
+  const basliklar = [...sayfa.matchAll(/<h1 className="page-title">\s*([^<{]+?)[\s{]*(?:<|\{)/g)]
+    .map((m) => m[1].trim())
+    .filter(Boolean);
+  assert.ok(etiketler.length >= 20, `menü etiketi az: ${etiketler.length}`);
+
+  const eksik = basliklar.filter((b) => !etiketler.includes(b));
+  assert.deepEqual(eksik, [], `menüde karşılığı olmayan sayfa başlığı: ${eksik.join(' · ')}`);
+});
+
+test('menü grupları YAPILAN İŞE göre', () => {
+  /*
+   * Eski gruplar iç modüllere göreydi ("Pazar", "Finans") ve yöneticinin
+   * yaptığı işe karşılık gelmiyordu.
+   */
+  for (const grup of [
+    'PANO',
+    'ONAY BEKLEYENLER',
+    'KİŞİLER',
+    'RANDEVU & PARA',
+    'KATALOG',
+    'İÇERİK',
+    'SİSTEM',
+  ]) {
+    assert.ok(sayfa.includes(`title: '${grup}'`), `grup yok: ${grup}`);
+  }
+});
+
+test('bekleyen işlerin HEPSİ tek grupta', () => {
+  // Dağıtıldıklarında "beni bekleyen iş var mı" sorusunun cevabı menüye
+  // yayılıyordu.
+  const i = sayfa.indexOf("title: 'ONAY BEKLEYENLER'");
+  const j = sayfa.indexOf("title: 'KİŞİLER'", i);
+  const blok = sayfa.slice(i, j);
+  for (const id of [
+    'businesses',
+    'kyc',
+    'profileChanges',
+    'subscriptions',
+    'disputes',
+    'reviewDisputes',
+    'moderation',
+    'support',
+    'specialists',
+  ]) {
+    assert.ok(blok.includes(`id: '${id}'`), `onay kuyruğu grubunda eksik: ${id}`);
+  }
+});
+
+test('üst bar NEREDE OLDUĞUNU söylüyor', () => {
+  /*
+   * Panelde hiç üst bar yoktu: ekran doğrudan içerikle başlıyor, hangi
+   * bölümde olunduğu yalnız menüdeki vurgudan anlaşılıyordu — kaydırınca
+   * o da gözden çıkıyor.
+   */
+  assert.match(sayfa, /className="ustbar"/, 'üst bar yok');
+  assert.match(sayfa, /aktifGrup/, 'bölüm adı gösterilmiyor');
+  assert.match(sayfa, /aktifEtiket/, 'sayfa adı gösterilmiyor');
+  assert.match(sayfa, /bekleyenToplam/, 'bekleyen iş sayısı üst barda yok');
+});
+
+test('tasarım ÖLÇEKTEN geliyor — rastgele piksel yok', () => {
+  /*
+   * CSS üç kez üst üste yamalanmıştı ve kurallar birbirini eziyordu.
+   * Ölçek olmadığında her ekran kendi boşluğunu seçiyor; "sıra sıra
+   * dizilmiş" hissi tam olarak buradan doğuyor.
+   */
+  for (const token of ['--s1:', '--s4:', '--t-md:', '--t-2xl:', '--r-md:', '--sh-2:']) {
+    assert.ok(css.includes(token), `ölçek tokenı yok: ${token}`);
+  }
+  // Ölçek varken hâlâ elle piksel yazmak sistemi delerdi.
+  const elle = (css.match(/padding: \d+px \d+px/g) ?? []).length;
+  assert.ok(elle <= 3, `ölçek dışı boşluk çok: ${elle}`);
 });
