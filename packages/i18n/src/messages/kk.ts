@@ -1321,6 +1321,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'search.results': 'нәтиже',
   'search.all_categories': 'Барлық санаттар',
   'search.recent': 'Соңғы іздеулер',
+  'catalog.soon': 'Жақында',
+  'catalog.soon_hint': 'Бұл қызмет бойынша әзірге маман жоқ — сұраныс қалдыра аласыз.',
   'search.popular': 'Танымал санаттар',
   'search.sort.recommended': 'Ұсынылған',
   'search.sort.rating': 'Ұпай',

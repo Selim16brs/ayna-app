@@ -677,8 +677,32 @@ export interface ApiQuote {
   etaMin: number;
 }
 
+/** `GET /taxonomy` yanıtı — üç dil birden gelir, istemci dil değişince istek atmaz. */
+export interface ApiTaksonomi {
+  kategoriler: {
+    id: string;
+    ad: { tr: string; kk: string; ru: string };
+    sira: number;
+    altHizmetler: {
+      id: string;
+      kod: string;
+      ad: { tr: string; kk: string; ru: string };
+      yakinda: boolean;
+    }[];
+  }[];
+}
+
 export const api = {
   categories: () => get<ApiCategory[]>('/categories'),
+  /**
+   * Hizmet taksonomisi + "Yakında" durumu (brief §7.4).
+   *
+   * Katalogun KENDİSİ için değil: kategoriler ve adlar uygulamada
+   * `@ayna/domain`den geliyor ve ağ olmadan da çalışıyor. Buradan gelen
+   * TEK değişken bilgi arzın kim tarafından karşılandığı — onu yalnız
+   * sunucu bilir.
+   */
+  taxonomy: () => get<ApiTaksonomi>('/taxonomy'),
   // §12 — kampanyalar (keşif vitrini)
   campaigns: () => get<Campaign[]>(`/campaigns${localeQuery()}`),
   // Reklam banner'ları (keşif ekranı sponsorlu şerit)

@@ -12,6 +12,16 @@ import { KATALOG } from '@ayna/domain';
  * beşinin hiçbir ekranda karşılığı olmazdı.
  */
 
+/**
+ * YALNIZ silme ifadesi. Dosyanın kalanını dilime katmak, sonradan eklenen
+ * her blok yüzünden testi sessizce yanlış yapar — sıralama bloğu eklenince
+ * tam bu oldu: 'hair' silme dilimi içinde görünüyordu.
+ */
+const silmeIfadesi = (kaynak: string): string => {
+  const bas = kaynak.indexOf('DELETE FROM "service_categories"');
+  return kaynak.slice(bas, kaynak.indexOf(';', bas) + 1);
+};
+
 const sql = readFileSync(
   join(import.meta.dirname, '..', '..', 'prisma', 'pre-push', '10-hizmet-katalogu.sql'),
   'utf8',
@@ -49,7 +59,7 @@ test('artık var olmayan HER kategori kodu geçişte ele alınmış', () => {
    * UPDATE'te de geçiyor. Kod SİLME listesinde olmalı — yoksa satır
    * taşındıktan sonra bile panelde durur.
    */
-  const silme = sql.slice(sql.indexOf('DELETE FROM "service_categories"'));
+  const silme = silmeIfadesi(sql);
   for (const kod of kalkanlar) {
     assert.ok(silme.includes(`'${kod}'`), `${kod} silinmiyor — panelde ölü kategori kalır`);
   }
@@ -61,7 +71,7 @@ test('bağlı TALEBİ olan satır silinmiyor — veri kopmuyor', () => {
    * yabancı anahtara takılıp dağıtımı yarıda bırakırdı; daha kötüsü
    * CASCADE olsaydı kullanıcının talebi sessizce silinirdi.
    */
-  const silme = sql.slice(sql.indexOf('DELETE FROM "service_categories"'));
+  const silme = silmeIfadesi(sql);
   assert.match(
     silme,
     /NOT EXISTS \(SELECT 1 FROM "quote_requests" q WHERE q\."category_id" = s\."id"\)/,
@@ -99,7 +109,7 @@ test('yeniden adlandırma ÇAKIŞMAYA karşı korumalı', () => {
 test('geçiş, ADI DEĞİŞMEYEN kategorileri silmiyor', () => {
   // `hair`, `nails`, `makeup`, `spa`, `epilation`, `wellness`, `style`
   // duruyor; silme listesine biri karışırsa panelde kategori kaybolur.
-  const silme = sql.slice(sql.indexOf('DELETE FROM "service_categories"'));
+  const silme = silmeIfadesi(sql);
   for (const kalan of ['hair', 'nails', 'epilation', 'spa', 'wellness', 'style']) {
     assert.doesNotMatch(
       silme,
@@ -107,4 +117,33 @@ test('geçiş, ADI DEĞİŞMEYEN kategorileri silmiyor', () => {
       `${kalan} silme listesinde — hâlâ geçerli bir kategori`,
     );
   }
+});
+
+test('SIRALAMA katalogla birebir — panel rastgele dizmiyor', () => {
+  /*
+   * Kalan satırların `sort_order` değerleri ESKİ taksonomiye göre
+   * verilmişti ve çakışıyorlardı: yeni eklenen `skin` 5 aldı, eski
+   * `makeup` de 5\'te kaldı. Kategoriler ne eski ne yeni sırada
+   * diziliyordu.
+   *
+   * Bu test SQL\'deki sayıların KATALOG SIRASI olduğunu doğruluyor.
+   * Katalogda bir kategori taşınır da SQL güncellenmezse yakalanır.
+   */
+  const blok = sql.slice(sql.indexOf('FROM (VALUES'));
+  const ciftler = [...blok.matchAll(/\('([a-z_]+)', (\d+)\)/g)].map((m) => [m[1], Number(m[2])]);
+  assert.deepEqual(
+    ciftler,
+    KATALOG.map((k, i) => [k.id, i + 1]),
+    "sıralama SQL'i katalog sırasından sapmış",
+  );
+});
+
+test('SIRALAMA yalnız KALAN satırlara yazılıyor', () => {
+  // Silinmiş kategoriye sıra yazmak hatasız geçer ama anlamsızdır; asıl
+  // risk tersi: sıralama, silme ADIMINDAN SONRA çalışmalı ki ölü satırlar
+  // yeni bir sıra alıp panelde geri belirmesin.
+  assert.ok(
+    sql.indexOf('SET "sort_order"') > sql.indexOf('DELETE FROM "service_categories"'),
+    'sıralama, silmeden ÖNCE çalışıyor',
+  );
 });

@@ -23,8 +23,10 @@ import { space, type ColorTokens, font } from '../../src/theme';
 import { lightColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { tri } from '../../src/taxonomy';
+import { useKategoriYakinda } from '../../src/yakinda';
 import {
   HizmetIkonu,
+  YakindaRozeti,
   ListSkeleton,
   PressableScale,
   Screen,
@@ -108,6 +110,7 @@ const HIZLI_EYLEMLER = [
 
 export default function DiscoverScreen() {
   const { t, locale } = useLocale();
+  const kategoriYakinda = useKategoriYakinda();
   const { colors, mode } = useTheme();
   const koyuTema = mode === 'dark';
   const styles = useThemedStyles(makeStyles);
@@ -364,6 +367,12 @@ export default function DiscoverScreen() {
               <Text numberOfLines={2} style={styles.ikonYazi}>
                 {tri(cat.ad, locale)}
               </Text>
+              {/*
+               * Brief §7.4 — kategorinin HİÇBİR alt hizmetinde yayında
+               * uzman yok. Kategori yine açılıyor: içeride talep bırakma
+               * kartı var ve asıl istenen o.
+               */}
+              {kategoriYakinda(cat.id) ? <YakindaRozeti tarz="kutu" /> : null}
             </PressableScale>
           ))}
         </ScrollView>

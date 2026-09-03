@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { servicesOf, tri } from '../taxonomy';
+import { useHizmetYakinda } from '../yakinda';
 import { useLocale } from '../locale';
 import { radius, space, type ColorTokens, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
+import { YakindaRozeti } from './YakindaRozeti';
 
 /**
  * Alt hizmetler — YATAY kaydırmalı bilgi kartları (ad + süre + başlangıç fiyatı).
@@ -24,6 +26,7 @@ export function ServiceCards({
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const services = servicesOf(categoryId);
+  const yakindaMi = useHizmetYakinda();
   if (services.length === 0) return null;
   return (
     <ScrollView
@@ -59,6 +62,13 @@ export function ServiceCards({
             <Text variant="caption" tone={on ? 'onAccent' : 'accentFg'} style={styles.price}>
               ₸{s.price.toLocaleString('ru-RU')}+
             </Text>
+            {/*
+             * Brief §7.4 — bu alt hizmette yayında uzman yok. Kart yine de
+             * SEÇİLEBİLİR: rozet bir kapı değil, beklenti ayarı. Müşteri
+             * seçip talep bırakabilmeli; ters pazar yerinin mantığı arz
+             * yokken bile talep toplamak.
+             */}
+            {yakindaMi(s.id) ? <YakindaRozeti /> : null}
           </Pressable>
         );
       })}

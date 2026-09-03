@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { servicesOf, tri } from '../taxonomy';
+import { useHizmetYakinda } from '../yakinda';
 import { useLocale } from '../locale';
 import { radius, space, type ColorTokens, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
+import { YakindaRozeti } from './YakindaRozeti';
 
 /**
  * Bir ana kategorinin ALT HİZMETLERİ (taksonomi) — ferah, sarmalayan (wrap) çip bulutu.
@@ -24,6 +26,7 @@ export function ServiceChips({
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const services = servicesOf(categoryId);
+  const yakindaMi = useHizmetYakinda();
   if (services.length === 0) return null;
   return (
     <View style={styles.wrap}>
@@ -49,6 +52,11 @@ export function ServiceChips({
             >
               {tri(s.label, locale)}
             </Text>
+            {/*
+             * Brief §7.4 — arz yok. Çip yine SEÇİLEBİLİR: talep akışının
+             * amacı zaten arz olmayan yerde talebi toplamak.
+             */}
+            {yakindaMi(s.id) ? <YakindaRozeti /> : null}
           </Pressable>
         );
       })}

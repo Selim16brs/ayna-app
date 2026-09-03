@@ -11,7 +11,15 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, ServiceCards, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import {
+  Screen,
+  ServiceCards,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+  YakindaRozeti,
+} from '../../src/ui';
+import { useKategoriYakinda } from '../../src/yakinda';
 import { ProRow } from '../search';
 
 type SortKey = 'rating' | 'price';
@@ -33,6 +41,7 @@ export default function CategoryScreen() {
     ? `/demand/new?category=${sector}&service=${svc}`
     : `/demand/new?category=${sector}`;
   const professionals = useProfessionals();
+  const kategoriYakinda = useKategoriYakinda();
   // §5.1.4 — şehir tüm listeyi filtreler (salona bağlı uzmanlar tek başına listelenmez: zaten staff)
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
 
@@ -52,6 +61,23 @@ export default function CategoryScreen() {
           {t('category.services_title')}
         </Text>
         <ServiceCards categoryId={sector} value={svc} onChange={setSvc} />
+
+        {/*
+         * Brief §7.4 — kategorinin hiçbir alt hizmetinde yayında uzman yok.
+         *
+         * Rozet TEK BAŞINA yeterli değil: kullanıcı "uzman yok" görüp geri
+         * dönerdi, oysa asıl istenen talebini bırakması. Bu yüzden rozetin
+         * yanında ne yapabileceği de yazıyor ve hemen altında talep kartı
+         * duruyor. Ekran KAPANMIYOR — arz yokken bile talep toplanıyor.
+         */}
+        {kategoriYakinda(sector) ? (
+          <View style={styles.yakindaKap}>
+            <YakindaRozeti />
+            <Text variant="caption" tone="inkSoft" style={styles.yakindaYazi}>
+              {t('catalog.soon_hint')}
+            </Text>
+          </View>
+        ) : null}
 
         {/* ── Talep akışı (BİRİNCİL yol) — premium lime gradient kart ── */}
         <Pressable
@@ -150,6 +176,15 @@ const makeStyles = (colors: ColorTokens) =>
       paddingTop: space(2.5),
       paddingBottom: TAB_BAR_CLEARANCE,
     },
+    yakindaKap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      padding: space(1.5),
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+    },
+    yakindaYazi: { flex: 1, lineHeight: 18 },
     eyebrow: { marginBottom: space(1.25) },
 
     // Premium talep kartı (lime gradient)

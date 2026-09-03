@@ -56,3 +56,33 @@ WHERE q."category_id" IN (SELECT s."id" FROM "service_categories" s WHERE s."cod
 DELETE FROM "service_categories" s
 WHERE s."code" IN ('brows', 'pmu', 'bridal', 'skincare', 'lashes')
   AND NOT EXISTS (SELECT 1 FROM "quote_requests" q WHERE q."category_id" = s."id");
+
+-- ── 4) SIRALAMAYI KATALOG VARSAYILANINA GETİR ───────────────────────────
+--
+-- Kalan satırların `sort_order` değerleri ESKİ taksonomiye göre verilmişti
+-- ve yeni sırayla ilgisiz: `epilation` eskiden 7. sıradaydı, katalogda 4.
+-- Dahası çakışıyorlar — yeni eklenen `skin` 5 aldı, eski `makeup` de 5'te
+-- kaldı. Panel ve uygulama kategorileri ne eski ne yeni sırada, RASTGELE
+-- diziyordu.
+--
+-- Brief §7.3: katalog sırası VARSAYILAN, admin panelden değiştirebilir.
+-- Buradaki değerler o varsayılan. Kurucu panelden yeniden sıralarsa
+-- override kalıcıdır; bu dosya bir daha çalışmıyor.
+UPDATE "service_categories" s
+SET "sort_order" = v."n"
+FROM (VALUES
+  ('hair', 1),
+  ('nails', 2),
+  ('lashes_brows', 3),
+  ('epilation', 4),
+  ('skin', 5),
+  ('makeup', 6),
+  ('massage', 7),
+  ('spa', 8),
+  ('body_contouring', 9),
+  ('hair_health', 10),
+  ('style', 11),
+  ('wellness', 12),
+  ('other', 13)
+) AS v("code", "n")
+WHERE s."code" = v."code";
