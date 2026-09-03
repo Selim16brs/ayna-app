@@ -63,6 +63,22 @@ test('kimlik tamsa açılıyor; gönderen adı ZORUNLU DEĞİL', () => {
   assert.equal(env.SMSC_SENDER, undefined);
 });
 
+test('mobizon seçili ama anahtar yoksa API AÇILMIYOR', () => {
+  assert.throws(
+    () => loadEnv({ ...taban(), SMS_PROVIDER: 'mobizon' }),
+    /MOBIZON_API_KEY/,
+    'anahtarsız açılıyor — her OTP sessizce düşerdi',
+  );
+});
+
+test('mobizon anahtarı varsa açılıyor; SMSC kimliği İSTENMİYOR', () => {
+  // İki sağlayıcının kimliği birbirine karışmamalı: mobizon seçiliyken
+  // SMSC alanlarını zorunlu tutmak kurucuyu olmayan bir hesap açmaya iterdi.
+  const env = loadEnv({ ...taban(), SMS_PROVIDER: 'mobizon', MOBIZON_API_KEY: 'k' });
+  assert.equal(env.SMS_PROVIDER, 'mobizon');
+  assert.equal(env.SMSC_LOGIN, undefined);
+});
+
 test('tanınmayan sağlayıcı adı reddediliyor', () => {
   // Yazım hatası ("smcs") sessizce mock'a düşseydi üretim SMS göndermezdi.
   assert.throws(() => loadEnv({ ...taban(), SMS_PROVIDER: 'smcs' }));
