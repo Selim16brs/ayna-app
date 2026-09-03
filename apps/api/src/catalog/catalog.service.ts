@@ -122,7 +122,25 @@ export class CatalogService {
     // §5.1.4-8 — liste eksik alanları: konum (harita), fiyat aralığı üstü, premium rozeti.
     // Sahip eşleşmesi iki toplu sorguyla (N+1 yok): Specialist.proId + Business.professionalId.
     const ids = rows.map((r) => r.id);
-    const [sps, bizs] = await Promise.all([
+    /**
+     * TAMAMLANAN RANDEVU SAYISI.
+     *
+     * Kurucu arama kırılımı olarak istedi ("gerçek randevu sayısını ekle").
+     * Liste modelinde böyle bir alan yoktu; mobil taraf en yakın veri olan
+     * `reviewCount`u kullanmak zorunda kalıyordu — ama her randevu
+     * değerlendirmeye dönüşmüyor, ikisi aynı sayı değil.
+     *
+     * TAMAMLANMIŞ SAYILAN DURUMLAR: `tamamlandi` (uzman ödemeyi aldı),
+     * `degerlendirme` (7 günlük pencere) ve `kapandi`. Üçünde de hizmet
+     * gerçekten verilmiş durumda. Öncesindeki akış durumları (hizmet_gunu,
+     * odeme_bekliyor) SAYILMIYOR: randevu henüz bitmemiş olabilir.
+     * İptaller ve no-show'lar da doğal olarak dışarıda.
+     *
+     * TEK SORGU: `groupBy` ile hepsi bir turda geliyor, uzman başına sorgu
+     * (N+1) yok. (proId, status) indeksi bunun için eklendi.
+     */
+    const TAMAMLANMIS = ['tamamlandi', 'degerlendirme', 'kapandi'] as const;
+    const [sps, bizs, randevuSayilari] = await Promise.all([
       this.prisma.specialist.findMany({
         where: { proId: { in: ids } },
         select: {
@@ -147,7 +165,15 @@ export class CatalogService {
           socialVerified: true,
         },
       }),
+      this.prisma.booking.groupBy({
+        by: ['proId'],
+        where: { proId: { in: ids }, status: { in: [...TAMAMLANMIS] } },
+        _count: { _all: true },
+      }),
     ]);
+    const randevuByPro = new Map(
+      randevuSayilari.flatMap((x) => (x.proId ? [[x.proId, x._count._all] as const] : [])),
+    );
     const ownerByPro = new Map<string, string>();
     for (const x of sps) if (x.proId) ownerByPro.set(x.proId, x.userId);
     for (const x of bizs) if (x.professionalId) ownerByPro.set(x.professionalId, x.ownerUserId);
@@ -207,6 +233,8 @@ export class CatalogService {
           lat: r.lat ?? undefined,
           lng: r.lng ?? undefined,
           priceTo: prices.length ? Math.max(...prices) : Number(r.priceFrom),
+          // Hiç randevusu olmayan uzman için groupBy satır döndürmez → 0.
+          completedBookings: randevuByPro.get(r.id) ?? 0,
           isPremium: owner ? premiumUsers.has(owner) : false,
           membershipTier: owner ? (tierById.get(owner) ?? 'free') : 'free',
           // §3.3 — GÜVEN ROZETİ listede de. Eskiden yalnız detay ucundaydı:

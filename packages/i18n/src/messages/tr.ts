@@ -1388,6 +1388,12 @@ export const tr = {
   'search.filter.all_cities': 'Tüm şehirler',
   'search.filter.rating': 'Değerlendirme notu',
   'search.filter.reviews': 'Değerlendirme sayısı',
+  // Tamamlanan randevu sayısı SUNUCUDAN geliyor (tamamlandi+degerlendirme+
+  // kapandi). Değerlendirme sayısıyla aynı şey değil: her randevu
+  // değerlendirmeye dönüşmüyor, o yüzden ikisi ayrı kırılım.
+  'search.filter.bookings': 'Tamamlanan randevu',
+  'search.filter.apply': '{n} sonucu göster',
+  'search.filter.no_result': 'Bu kriterlere uyan sonuç yok',
   'search.filter.experience': 'Deneyim',
   'search.filter.years': '{n}+ yıl',
   'search.filter.price': 'Başlangıç fiyatı',
@@ -1396,7 +1402,6 @@ export const tr = {
   'search.filter.verified_only': 'AYNA Onaylı',
   'search.kind.independent': 'Uzman',
   'search.kind.salon': 'Salon',
-  'search.results_count': '{n} sonuç',
 
   // Kategori listeleme
   'category.browse.count': 'uzman bulundu',

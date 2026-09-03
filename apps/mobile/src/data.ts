@@ -91,6 +91,18 @@ export interface Professional {
   aynaVerified?: boolean;
   /** §11 — üyelik paketi. Liste `isPremium` boolean'ıyla Premium/Platinum ayrımını yapamıyordu. */
   membershipTier?: 'free' | 'premium' | 'platinum';
+  /**
+   * TAMAMLANAN RANDEVU SAYISI — arama kırılımı (kurucu isteği).
+   *
+   * Sunucu `tamamlandi + degerlendirme + kapandi` durumlarını sayıyor.
+   * `reviewCount` ile AYNI ŞEY DEĞİL: her randevu değerlendirmeye
+   * dönüşmüyor, o yüzden bu sayı genelde daha büyük.
+   *
+   * Opsiyonel: eski sunucu sürümü alanı döndürmezse `undefined` gelir ve
+   * o uzman "randevu sayısı" kırılımında elenmez — filtre yüzünden
+   * kaybolmaktansa görünmesi doğru.
+   */
+  completedBookings?: number;
 }
 
 /** Salon içindeki bir uzman (kadro). Bağımsız uzmanlarda kadro yoktur. */
@@ -449,6 +461,16 @@ export const PROFESSIONALS: Professional[] = PRO_SEEDS.map((s, i) => {
     kind: s.kind,
     rating: s.rating,
     reviewCount: s.reviewCount,
+    /*
+     * Tohum verisinde tamamlanan randevu sayısı — DETERMİNİSTİK türetme.
+     *
+     * Gerçek sayı sunucudan geliyor (`tamamlandi + degerlendirme + kapandi`).
+     * Burası yalnız çevrimdışı/demo listesi; her randevu değerlendirmeye
+     * dönüşmediği için sayı yorum sayısından BÜYÜK olmalı. Rastgele değer
+     * kullanılmıyor: her açılışta değişen sayı testleri de ekranı da
+     * kararsız yapardı.
+     */
+    completedBookings: Math.round(s.reviewCount * 1.6) + (i % 7),
     ...(s.friends !== undefined ? { friends: s.friends } : {}),
     priceFrom: s.priceFrom,
     // Salon: uzman fiyat aralığı üst sınırı (deterministik ~2.2x); bağımsız uzmanda kart tek fiyat gösterir.
