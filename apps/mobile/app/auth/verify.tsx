@@ -50,9 +50,19 @@ export default function VerifyScreen() {
       setTtl(res.expiresInSec ?? 300);
       setCooldown(30);
     } catch {
-      // Ağ/servis hatası → demo akışı engellenmesin, kodu göster
-      setSent(true);
-      setDevCode('000000');
+      /*
+       * GÖNDERİM DÜŞTÜ → KULLANICIYA SÖYLENİR.
+       *
+       * Burası eskiden `setSent(true); setDevCode('000000')` yapıyordu:
+       * hiçbir SMS gitmemişken "kod gönderildi" diyor ve 000000 diye bir
+       * kod UYDURUYORDU. Mock döneminde demo kolaylığıydı; SMSC gerçek
+       * SMS göndermeye başlayınca canlı hataya döndü — kod hiç gelmezken
+       * kullanıcı ekranda kodu beklerdi.
+       *
+       * Kurucu: "sistem hiçbir şeyi kendiliğinden uydurmamalı."
+       */
+      setSent(false);
+      Alert.alert(t('verify.title'), t('auth.otp.send_failed'));
     } finally {
       setBusy(false);
     }

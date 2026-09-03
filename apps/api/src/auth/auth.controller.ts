@@ -126,7 +126,7 @@ export class AuthController {
   @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('otp/request')
   otpRequest(@Body(new ZodValidationPipe(otpRequestSchema)) body: OtpRequestInput) {
-    return this.auth.requestOtp(body.phone);
+    return this.auth.requestOtp(body.phone, body.locale);
   }
 
   @Throttle({ default: { ttl: 60_000, limit: 10 } })

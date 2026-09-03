@@ -2093,6 +2093,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'profile.follow.remove': 'Убрать',
   'profile.follow.unfollow': 'Отписаться',
   'auth.otp.invalid': 'Код недействителен или истёк',
+  'auth.otp.send_failed': 'Код сейчас не отправлен. Попробуй чуть позже.',
+  'auth.forgot.save_failed': 'Пароль не изменён. Проверь код и соединение.',
   'review.not_eligible': 'Эту запись нельзя оценить',
 
   // EK Z.1 — личные сообщения

@@ -898,9 +898,19 @@ export const api = {
   login: (input: { identifier: string; password: string }) =>
     post<AuthSession>('/auth/login', input),
 
-  // §4.6 — OTP telefon doğrulama (mock SMS; devCode yalnızca mock'ta döner)
+  /*
+   * §4.6 — OTP telefon doğrulama. Üretimde SMSC.kz üzerinden GERÇEK SMS;
+   * `devCode` yalnız yerel mock'ta döner.
+   *
+   * DİL GÖNDERİLİYOR: SMS kullanıcının HESABI OLMADAN gidiyor, sunucunun
+   * tercihi bilebileceği bir kayıt yok. Arayüzün o anki dili buradan
+   * geçmezse Rusça konuşan bir kadına Türkçe kod mesajı giderdi.
+   */
   otpRequest: (phone: string) =>
-    post<{ sent: boolean; expiresInSec: number; devCode?: string }>('/auth/otp/request', { phone }),
+    post<{ sent: boolean; expiresInSec: number; devCode?: string }>('/auth/otp/request', {
+      phone,
+      locale: getCurrentLocale(),
+    }),
   otpVerify: (phone: string, code: string) =>
     post<{ verified: boolean; phoneVerified: boolean }>('/auth/otp/verify', { phone, code }),
   // §3.3 — Şifre sıfırlama: kayıtlı telefona OTP → yeni şifre

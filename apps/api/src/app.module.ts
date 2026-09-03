@@ -25,6 +25,7 @@ import { MarketModule } from './market/market.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RatingsModule } from './ratings/ratings.module';
 import { SettingsModule } from './settings/settings.module';
+import { SmsModule } from './sms/sms.module';
 import { AdOrdersModule } from './ad-orders/ad-orders.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ProfileChangesModule } from './profile-changes/profile-changes.module';
@@ -68,6 +69,7 @@ import { ReferralModule } from './referral/referral.module';
     AdminModule,
     ContentModule,
     SettingsModule,
+    SmsModule,
     AdOrdersModule,
     SubscriptionsModule,
     ProfileChangesModule,
