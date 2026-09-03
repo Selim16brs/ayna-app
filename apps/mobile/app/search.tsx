@@ -22,6 +22,7 @@ import {
   CITIES,
 } from '../src/data';
 import type { MessageKey } from '@ayna/i18n';
+import { bolgeAdi } from '../src/bolge-adi';
 import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
 import { servesSector } from '@ayna/domain';
@@ -70,6 +71,8 @@ const SORTS: { key: SortKey; label: MessageKey }[] = [
 interface Filtre {
   /** null = tüm şehirler. Varsayılan kullanıcının şehri (mevcut davranış). */
   sehir: string | null;
+  /** Şehir içi bölge — haritadakiyle aynı `district` alanına dayanır. */
+  bolge: string | null;
   minPuan: number | null;
   /** TAMAMLANAN randevu sayısı — sunucudan gelen gerçek sayı. */
   minRandevu: number | null;
@@ -82,6 +85,7 @@ interface Filtre {
 
 const bosFiltre = (sehir: string | null): Filtre => ({
   sehir,
+  bolge: null,
   minPuan: null,
   minRandevu: null,
   minYorum: null,
@@ -94,6 +98,7 @@ const bosFiltre = (sehir: string | null): Filtre => ({
 function etkinSayisi(f: Filtre, varsayilanSehir: string): number {
   let n = 0;
   if (f.sehir !== varsayilanSehir) n += 1;
+  if (f.bolge !== null) n += 1;
   if (f.minPuan !== null) n += 1;
   if (f.minRandevu !== null) n += 1;
   if (f.minYorum !== null) n += 1;
@@ -234,7 +239,13 @@ export default function SearchScreen() {
    * (yazma niyeti yok), sonuçlar HEMEN görünüyor (boş kutu değil) ve filtre
    * penceresi ÜSTÜNDE açık geliyor.
    */
-  const { q, mod } = useLocalSearchParams<{ q?: string; mod?: string }>();
+  const { q, mod, sehir, bolge } = useLocalSearchParams<{
+    q?: string;
+    mod?: string;
+    /** Haritadan taşınan yer — bkz. `map.tsx` liste düğmesi. */
+    sehir?: string;
+    bolge?: string;
+  }>();
   const gozat = mod === 'gozat';
   const [query, setQuery] = useState(typeof q === 'string' ? q : '');
   const inputRef = useRef<RNTextInput>(null);
@@ -256,7 +267,19 @@ export default function SearchScreen() {
   // §5.1.4 — arama da şehre göre filtreli
   const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
   // Filtre şehri kullanıcının şehriyle başlar — mevcut davranış korunuyor.
-  const [filtre, setFiltre] = useState<Filtre>(() => bosFiltre(city));
+  /*
+   * Haritadan gelindiyse ORADAKİ yer devam ediyor. Aksi hâlde kullanıcı
+   * Astana'yı haritada seçip listeye geçtiğinde kendi şehrine dönüyordu.
+   */
+  const [filtre, setFiltre] = useState<Filtre>(() =>
+    typeof sehir === 'string' && sehir
+      ? {
+          ...bosFiltre(sehir),
+          sehir,
+          ...(typeof bolge === 'string' && bolge ? { bolge } : {}),
+        }
+      : bosFiltre(city),
+  );
   const etkin = etkinSayisi(filtre, city);
   // Tek seferde tek kırılım açık: yedi grup birden açılırsa yine kalabalık olur.
   const [acikGrup, setAcikGrup] = useState<string | null>(null);
@@ -276,11 +299,25 @@ export default function SearchScreen() {
    */
   const isEmpty = query.trim().length === 0 && activeCat === null && etkin === 0 && !gozat;
 
+  /** Seçili şehirdeki bölgeler — yalnız gerçekten dolu olanlar. */
+  const bolgeler = useMemo(() => {
+    const sayac = new Map<string, number>();
+    for (const p of professionals) {
+      if (filtre.sehir !== null && p.city !== filtre.sehir) continue;
+      const ad = bolgeAdi(p.district, p.city);
+      if (ad) sayac.set(ad, (sayac.get(ad) ?? 0) + 1);
+    }
+    return [...sayac.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'tr'));
+  }, [professionals, filtre.sehir]);
+
   const results = useMemo(() => {
     const q = lower(query.trim());
     const filtered = professionals.filter((p) => {
       // null şehir = tüm şehirler
       if (filtre.sehir !== null && p.city !== filtre.sehir) return false;
+      // Bölge haritadakiyle AYNI normalizasyondan geçiyor: iki ekran aynı
+      // adı göstermeli, yoksa haritadan gelen seçim listede boş sonuç verir.
+      if (filtre.bolge !== null && bolgeAdi(p.district, p.city) !== filtre.bolge) return false;
       if (activeCat && !servesSector(p, activeCat)) return false;
       if (filtre.minPuan !== null && p.rating < filtre.minPuan) return false;
       /*
@@ -558,17 +595,42 @@ export default function SearchScreen() {
                 <FiltreCipi
                   etiket={t('search.filter.all_cities')}
                   secili={filtre.sehir === null}
-                  bas={() => yama({ sehir: null })}
+                  bas={() => yama({ sehir: null, bolge: null })}
                 />
                 {CITIES.map((c) => (
                   <FiltreCipi
                     key={c}
                     etiket={c}
                     secili={filtre.sehir === c}
-                    bas={() => yama({ sehir: c })}
+                    // Şehir değişince bölge düşer: Almatı'nın Medeu'su
+                    // Astana'da yok, eski seçim listeyi boşaltırdı.
+                    bas={() => yama({ sehir: c, bolge: null })}
                   />
                 ))}
               </FiltreSatiri>
+
+              {bolgeler.length > 0 ? (
+                <FiltreSatiri
+                  baslik={t('map.where.area')}
+                  deger={filtre.bolge ?? t('search.filter.any')}
+                  acik={acikGrup === 'bolge'}
+                  ac={() => cevir('bolge')}
+                >
+                  <FiltreCipi
+                    etiket={t('search.filter.any')}
+                    secili={filtre.bolge === null}
+                    bas={() => yama({ bolge: null })}
+                  />
+                  {bolgeler.map(([ad, adet]) => (
+                    <FiltreCipi
+                      key={ad}
+                      etiket={`${ad} (${adet})`}
+                      secili={filtre.bolge === ad}
+                      bas={() => yama({ bolge: filtre.bolge === ad ? null : ad })}
+                    />
+                  ))}
+                </FiltreSatiri>
+              ) : null}
 
               <FiltreSatiri
                 baslik={t('search.filter.rating')}

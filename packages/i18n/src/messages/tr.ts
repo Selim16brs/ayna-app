@@ -1388,7 +1388,17 @@ export const tr = {
   'map.all': 'Tümü',
   'map.open': 'Profili aç',
   'map.book': 'Randevu al',
-  'map.distance': 'km uzakta',
+  /*
+   * MESAFE ŞEHİR MERKEZİNDEN ÖLÇÜLÜYOR, kullanıcıdan değil.
+   *
+   * Uygulama konum izni İSTEMİYOR (§izin kuralı: izin girişte istenmez),
+   * yani kullanıcının nerede olduğunu bilmiyor. Etiket "senden X km"
+   * diyordu — hiçbir zaman doğru değildi.
+   *
+   * Kurucunun senaryosunda apaçık yanlışa dönüyor: Almatı'daki biri
+   * Astana'ya bakarken "2,5 km от вас" görüyor, oysa bin kilometre uzakta.
+   */
+  'map.distance': 'km merkeze',
   'map.bridge': 'Aradığını bulamadın mı? Fotoğraf gönder, teklif al',
 
   // Arama
