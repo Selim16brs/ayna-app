@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { hasConflict } from '@ayna/domain';
 import type { Appointment } from '../../src/data';
 import { localWallClockToAlmatyMs } from '../../src/datetime';
 import { useStore } from '../../src/store';
-import { HIZMET_IKON } from '../../src/hizmet-ikon';
 import { fillParams, useLocale } from '../../src/locale';
 import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
+  HizmetIkonu,
   Button,
   DateField,
   Screen,
@@ -196,9 +196,7 @@ export default function OfflineBookingScreen() {
                       style={styles.accHead}
                       onPress={() => setOpenCat(open ? null : cat.id)}
                     >
-                      {HIZMET_IKON[cat.id] ? (
-                        <Image source={HIZMET_IKON[cat.id]} style={styles.katIkon} />
-                      ) : null}
+                      <HizmetIkonu id={cat.id} tarz="satir" />
                       <Text
                         variant="bodyStrong"
                         tone="ink"
@@ -402,7 +400,6 @@ const makeStyles = (colors: ColorTokens) =>
       overflow: 'hidden',
     },
     /** Kurucunun Figma ikonu — ana sayfayla aynı kaynak. */
-    katIkon: { width: 18, height: 18, resizeMode: 'contain' },
     accCat: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
     accHead: {
       flexDirection: 'row',

@@ -44,3 +44,4 @@ export { BeklemeNabzi } from './BeklemeNabzi';
 export { Sayac } from './Sayac';
 export { SurumBilgisi } from './SurumBilgisi';
 export { OfflineBanner, useOfflineInset } from './OfflineBanner';
+export { HizmetIkonu, type HizmetIkonTarzi } from './HizmetIkonu';

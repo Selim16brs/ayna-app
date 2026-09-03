@@ -8,13 +8,13 @@ import { api } from '../../src/api';
 import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS, formatPrice } from '../../src/data';
 import type { MessageKey } from '@ayna/i18n';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
-import { HIZMET_IKON } from '../../src/hizmet-ikon';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { bildirimIzniIste } from '../../src/notifications';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
+  HizmetIkonu,
   BudgetGauge,
   PressableScale,
   RulesCard,
@@ -24,8 +24,6 @@ import {
   Text,
   TextInput,
 } from '../../src/ui';
-
-type IoniconName = keyof typeof Ionicons.glyphMap;
 
 export default function NewDemandScreen() {
   const router = useRouter();
@@ -204,23 +202,13 @@ export default function NewDemandScreen() {
                     setServiceId(null);
                   }}
                 >
-                  <View
-                    style={[
-                      styles.catTile,
-                      active ? styles.catTileActive : styles.catTilePasif,
-                      active && shadow.soft,
-                    ]}
-                  >
-                    {HIZMET_IKON[cat.id] ? (
-                      <Image source={HIZMET_IKON[cat.id]} style={styles.catIkon} />
-                    ) : (
-                      <Ionicons
-                        name={cat.icon as IoniconName}
-                        size={24}
-                        color={active ? colors.onAccent : colors.accent}
-                      />
-                    )}
-                  </View>
+                  {/*
+                   * Eskiden 64'lük kutunun ortasında 30'luk ikon yüzüyordu ve
+                   * seçilince zemin aksanla doluyordu — ana sayfadaki hâlinden
+                   * bambaşka görünüyordu. Artık aynı bileşen; seçim yalnız
+                   * çerçeveden belli oluyor.
+                   */}
+                  <HizmetIkonu id={cat.id} tarz="kutu" secili={active} />
                   <Text variant="caption" tone={active ? 'ink' : 'inkSoft'} numberOfLines={1}>
                     {t(cat.labelKey)}
                   </Text>
@@ -540,13 +528,6 @@ const makeStyles = (colors: ColorTokens) =>
 
     catRow: { gap: space(1.5), paddingRight: space(2) },
     cat: { alignItems: 'center', width: 72, gap: space(0.75) },
-    catTile: {
-      width: 64,
-      height: 64,
-      borderRadius: radius.md,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     /**
      * Seçili erik dolu, seçilmemiş yüzey + ince çizgi.
      *
@@ -554,10 +535,7 @@ const makeStyles = (colors: ColorTokens) =>
      * kategoriye anlam katmıyordu — sırf sıradaki renk geliyordu. Yeni dil
      * tek vurgu rengi kullanıyor; renk artık "seçili misin" demek.
      */
-    catTileActive: { backgroundColor: colors.accent },
-    catTilePasif: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
     /** Kurucunun Figma ikonu. */
-    catIkon: { width: 30, height: 30, resizeMode: 'contain' },
 
     selectRow: {
       flexDirection: 'row',

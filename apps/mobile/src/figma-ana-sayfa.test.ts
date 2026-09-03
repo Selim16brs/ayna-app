@@ -48,7 +48,6 @@ test('Figma ölçüleri YUVARLANMAMIŞ', () => {
     // dikey, oran ~0.79. Eski Figma ölçüsü (260×200) yatıktı ve fotoğrafın
     // çoğunu kırpıyordu. Yeni referans eskisinin yerine geçiyor.
     ['vitrinKart', ['width: 260', 'height: 328', 'borderRadius: 20']],
-    ['ikonKart', ['width: 64', 'height: 64', 'borderRadius: 16']],
     ['salonFoto', ['width: 64', 'height: 64', 'borderRadius: 12']],
     ['randevuKart', ['borderRadius: 24']],
     ['arama', ['borderRadius: 12', 'paddingHorizontal: 14']],
@@ -167,16 +166,36 @@ test('"Dileğini Anlat" İKİ YOLLU teklif ekranına gidiyor', () => {
 });
 
 test('hizmet ikonları FIGMA görselleri', () => {
-  // Ionicons ile çizilmiş ikonlar kurucunun tasarladıkları değildi.
-  // Eşleme artık `src/hizmet-ikon.ts`te — üç ekran onu paylaşıyor. Burada
-  // ÖNEMLİ olan keşfetin Ionicons'a geri dönmemesi.
+  /*
+   * Ionicons ile çizilmiş ikonlar kurucunun tasarladıkları değildi.
+   * Eşleme `src/hizmet-ikon.ts`te, ÇİZİM ise artık `ui/HizmetIkonu`'nda —
+   * altı ekran onu paylaşıyor. Burada ÖNEMLİ olan keşfetin kendi Image'ını
+   * ya da Ionicons'ı geri getirmemesi.
+   */
   assert.match(
     d,
-    /import \{ HIZMET_IKON \} from '\.\.\/\.\.\/src\/hizmet-ikon'/,
-    'ortak ikon kaynağı kullanılmıyor',
+    /<HizmetIkonu id=\{cat\.id\} tarz="kutu" \/>/,
+    'ortak ikon bileşeni kullanılmıyor',
   );
   // Kategori-ikon eşleşmesinin TAMLIĞI `teklif-ekranlari-tasarim.test.ts`te
   // eşlemenin kendi kaynağına karşı kontrol ediliyor — burada kopyalamıyoruz.
+});
+
+test('hizmet ikon kutusu Figma ölçüsünü koruyor', () => {
+  /*
+   * `ikonKart` keşfetten `ui/HizmetIkonu`'na taşındı — altı ekran aynı
+   * kutuyu paylaşsın diye. Ölçü denetimi de oraya taşındı; 64/16 hâlâ
+   * tasarımdan gelen değer.
+   */
+  const b = readFileSync(join(__dirname, 'ui', 'HizmetIkonu.tsx'), 'utf8');
+  for (const deger of [
+    'kutu: 64',
+    'width: OLCU.kutu',
+    'height: OLCU.kutu',
+    'borderRadius: radius.md',
+  ]) {
+    assert.ok(b.includes(deger), `ikon kutusu: "${deger}" — ölçü tasarımdan sapmış`);
+  }
 });
 
 test('hizmet etiketi KIRPILMIYOR', () => {
