@@ -1889,8 +1889,12 @@ export const useStore = create<State>()(
         }));
         // §4.4-b backend: iade akışı + 1000₸ uzmanın komisyon borcuna (best-effort)
         void get().randevuEylemi(id, 'uzman_gelmedi');
-        // Telafi puanı — yerel + backend loyalty ledger (earn zaten api.earnPoints çağırır)
-        get().earn(1000, 'rewards.earn.provider_noshow', b.proName);
+        /*
+         * TELAFİ PUANI ARTIK SUNUCUDA. İstemci "uzman gelmedi" deyip puan
+         * isteyemiyor: canlıda 1000 puan (= 1000 ₸) verilmişti ama o
+         * kullanıcının `no_show_uzman` durumunda sıfır randevusu vardı.
+         * Sunucu randevuyu gerçekten o duruma geçirdiğinde yazıyor.
+         */
         get().pushNotification({
           type: 'loyalty',
           titleKey: 'notif.provider_noshow',
@@ -2222,12 +2226,11 @@ export const useStore = create<State>()(
             [b.proId]: [...reviews, ...(s.userReviews[b.proId] ?? [])],
           },
         }));
-        get().earn(40, 'rewards.earn.review', b.proName);
-        // §8.1 — ilk randevu tamamlama (değerlendirme = tamamlanmış hizmet) → 300 puan, tek seferlik
-        if (!get().firstBookingBonusGiven) {
-          set({ firstBookingBonusGiven: true });
-          get().earn(300, 'rewards.earn.first_booking', b.proName);
-        }
+        /*
+         * YORUM ve İLK RANDEVU PUANI ARTIK SUNUCUDA — yorum kaydı gerçekten
+         * oluştuktan sonra yazılıyor. Buradan istenirken sunucu yorumun var
+         * olup olmadığına bakmıyordu; canlıda 1 yoruma 6 ödül çıkmıştı.
+         */
       },
 
       // §7.2 — uzman/salon yoruma tek yanıt yazar (yanıt kalıcı; bir kez)
@@ -2581,7 +2584,12 @@ export const useStore = create<State>()(
           const monthPts = s.w2wLikeMonth === month ? s.w2wLikePoints : 0;
           if (monthPts < 100) {
             set({ w2wLikeMonth: month, w2wLikePoints: monthPts + 1 });
-            get().earn(1, 'rewards.earn.w2w_like', '');
+            /*
+             * W2W beğenisi için puan KALDIRILDI. Sunucuda beğeninin kaydı
+             * yok; doğrulanamayan bir olaya puan yazmak, tam olarak
+             * kurucunun kapattırdığı şey. Beğeni sunucuda saklanmaya
+             * başlarsa ödül `olay-odulleri.ts` içine eklenir.
+             */
           } else {
             set({ w2wLikeMonth: month, w2wLikePoints: monthPts });
           }

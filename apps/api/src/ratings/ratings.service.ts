@@ -1,3 +1,4 @@
+import { ilkRandevuOdulu, yorumOdulu } from '../loyalty/olay-odulleri';
 import {
   BadRequestException,
   ConflictException,
@@ -144,6 +145,28 @@ export class RatingsService {
         publishAt: new Date(Date.now() + YANSIMA_GECIKMESI_MS),
       },
     });
+
+    /*
+     * PUAN BURADA — yorum GERÇEKTEN yazıldıktan sonra.
+     *
+     * Eskiden istemci "değerlendirdim" deyip `/loyalty/earn` çağırıyordu ve
+     * sunucu yorumun var olup olmadığına bakmıyordu; canlıda 1 yoruma 6 ödül
+     * çıkmıştı. Artık kanıt zaten elimizde: kayıt az önce oluştu.
+     *
+     * YALNIZ MÜŞTERİ YORUMU: uzmanın müşteriye verdiği gizli puan (§7.3) bir
+     * kazanım olayı değil.
+     *
+     * Ödül yazılamazsa yorum GERİ ALINMIYOR: kullanıcının yazdığı yorumu bir
+     * muhasebe hatası yüzünden kaybetmek daha kötü olurdu.
+     */
+    if (input.raterRole === 'user' && raterUserId) {
+      try {
+        await yorumOdulu(this.prisma, raterUserId, input.bookingId);
+        await ilkRandevuOdulu(this.prisma, raterUserId);
+      } catch {
+        // sessiz — kazanım kaybı yorumu düşürmemeli
+      }
+    }
 
     if (input.raterRole === 'user') {
       await this.prisma.booking.update({

@@ -1,3 +1,4 @@
+import { uzmanGelmediOdulu } from '../loyalty/olay-odulleri';
 import {
   ForbiddenException,
   BadRequestException,
@@ -1010,6 +1011,15 @@ export class BookingsService {
         await this.iadeHakkiYaz(id, b.userId, 'musteri_iade', tutar);
       }
     }
+
+    /*
+     * TELAFİ PUANI BURADA — randevu GERÇEKTEN `no_show_uzman` olduktan sonra.
+     *
+     * Eskiden istemci bu puanı kendisi istiyordu ve sunucu olaya hiç
+     * bakmıyordu: canlıda 1000 puan verilmişti ama o kullanıcının
+     * `no_show_uzman` durumunda SIFIR randevusu vardı. 1000 puan = 1000 ₸.
+     */
+    await uzmanGelmediOdulu(this.prisma, id);
 
     // 1 HAFTA GÖRÜNMEZLİK. Zaten cezalıysa süre UZATILIR, sıfırlanmaz.
     if (b.proId) {
