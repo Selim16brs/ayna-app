@@ -59,6 +59,15 @@ const PERSISTED_USER_KEYS = [
   // duyurular yeniden okunmamış görünüyordu.
   'notifications',
   'surveyAskedIds',
+  /*
+   * Açılış mesajı rotasyonu — kalıcı ama HESABA ÖZEL.
+   *
+   * Taşınsaydı yeni üye önceki üyenin "görüldü" listesini devralır ve
+   * `bh_01` ömür-boyu-bir-kez limiti yüzünden HOŞ GELDİN mesajını hiç
+   * görmezdi.
+   */
+  'acilisDurumu',
+  'sonAcilisMs',
 ];
 
 test('persist edilen tüm kullanıcı alanları sıfırlama setinde', () => {
