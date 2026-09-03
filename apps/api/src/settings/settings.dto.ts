@@ -44,6 +44,25 @@ export const RATE_DEFS = [
   // yeni sürüm çıkarmak gerekmesin diye panelden yönetiliyor.
   { key: 'rate.ad_monthly_kzt', label: 'Reklam aylık ücreti', suffix: '₸', default: 200000 },
   { key: 'rate.raffle_cost', label: 'Çekiliş bileti', suffix: 'puan', default: 500 },
+  /*
+   * W2W ÖN MODERASYON — 0 kapalı, 1 açık.
+   *
+   * Kurucu: "w2w'de yorum yaptım ama yorum onayı admine düşmedi."
+   * Sistem hatalı değildi, bilerek böyleydi: yalnız ŞÜPHELİ gönderi
+   * kuyruğa düşüyor, temiz olan doğrudan yayınlanıyor.
+   *
+   * Ama bu bir ürün kararı ve tek doğrusu yok — hepsini onaya almak
+   * hiçbir şeyi kaçırmaz ama her gönderi admini bekler. Karar artık
+   * panelden veriliyor; VARSAYILAN 0, yani davranış değişmiyor.
+   *
+   * Sayı alanında duruyor çünkü `Setting` yalnız int/str taşıyor.
+   */
+  {
+    key: 'policy.circle_premoderate',
+    label: 'W2W: her gönderi onaya düşsün (0 kapalı / 1 açık)',
+    suffix: '0-1',
+    default: 0,
+  },
 ] as const;
 
 export const RATE_KEYS = RATE_DEFS.map((r) => r.key);
