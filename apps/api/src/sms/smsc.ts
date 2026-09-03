@@ -163,3 +163,33 @@ export function telefonuBicimle(ham: string): string {
   // Tanımadığımız biçim: dokunmuyoruz, SMSC düzeltsin.
   return rakam;
 }
+
+/**
+ * Biçimlenmiş numara ULUSLARARASI olarak gönderilebilir mi?
+ *
+ * ── BU KONTROL BİR SESSİZ HATADAN DOĞDU ────────────────────────────────
+ *
+ * `telefonuBicimle` yalnız Kazakistan numaralarını tanıyor; tanımadığını
+ * OLDUĞU GİBİ geçiriyor (bilerek — yabancı bir numarayı yanlış biçime
+ * zorlamaktansa sağlayıcının düzeltmesine bırakmak daha az hatalı).
+ *
+ * Ama "olduğu gibi geçir" ile "gönderilebilir" aynı şey değildi. Kurucu
+ * telefon değişikliğinde numarayı ÜLKE KODSUZ yazdı ("0555…"); numara
+ * sağlayıcıya öylece gitti, Mobizon "uluslararası biçime uymuyor" diye
+ * reddetti ve kullanıcıya yalnızca "kod gönderilemedi" göründü. Ne yanlış
+ * yaptığını anlamasının yolu yoktu.
+ *
+ * Artık ağa çıkmadan önce burada duruyor ve çağıran taraf kullanıcıya
+ * "numarayı ülke koduyla yaz" diyebiliyor.
+ *
+ * KURAL — E.164:
+ *   · Ülke kodu dahil 10–15 hane.
+ *   · BAŞTA SIFIR OLAMAZ. Sıfır ulusal önek ("0555…", "08…"); uluslararası
+ *     biçimde asla bulunmaz ve tam olarak bu hatayı üretiyordu.
+ */
+export function numaraGecerliMi(bicimli: string): boolean {
+  const d = (bicimli ?? '').replace(/[^0-9]/g, '');
+  if (d.length < 10 || d.length > 15) return false;
+  if (d.startsWith('0')) return false;
+  return true;
+}

@@ -92,8 +92,24 @@ export function yanitiCoz(ham: unknown): MobizonSonuc {
 
   if (y.code !== 0) {
     const kod = typeof y.code === 'number' ? y.code : null;
-    const hata = typeof y.message === 'string' && y.message ? y.message : 'bilinmeyen hata';
-    return { ok: false, kod, hata };
+    /*
+     * AYRINTI `data` İÇİNDE. Doküman: "В поле data представлена информация
+     * о том, какие поля заполнены неверно."
+     *
+     * İlk sürümde yalnız `message` okunuyordu ve `message` genel bir cümle
+     * ("bir veya birden fazla alan hatalı"). Sonuç: kurucunun telefon
+     * değişikliği sessizce düştü, kayıtta HANGİ alanın hatalı olduğu
+     * yazmıyordu ve sebebi bulmak için elle API'ye istek atmak gerekti.
+     * Artık alan adı ve açıklaması kayda giriyor.
+     */
+    const ayrinti =
+      typeof y.data === 'object' && y.data !== null
+        ? Object.entries(y.data as Record<string, unknown>)
+            .map(([alan, aciklama]) => `${alan}: ${String(aciklama)}`)
+            .join(' | ')
+        : '';
+    const genel = typeof y.message === 'string' && y.message ? y.message : 'bilinmeyen hata';
+    return { ok: false, kod, hata: ayrinti || genel };
   }
 
   const d = (typeof y.data === 'object' && y.data !== null ? y.data : {}) as Record<

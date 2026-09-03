@@ -3662,11 +3662,36 @@ function UsersView() {
                   if (eposta === null) return;
                   const sehir = prompt('Şehir:', u.city ?? '');
                   if (sehir === null) return;
+                  /*
+                   * TELEFON — destek yolu. Kullanıcı kendi talebini SMS ile
+                   * doğrulayarak açıyor; hattını kaybetmiş biri bunu
+                   * yapamaz ve tek çare veritabanına elle dokunmaktı.
+                   *
+                   * Boş bırakmak = DOKUNMA. Silmek yok: telefon giriş
+                   * kimliği, boşaltmak hesabı girişsiz bırakırdı.
+                   */
+                  // Mevcut numara AYRI bir uçtan okunuyor: liste bilerek
+                  // telefonsuz. Körlemesine düzenlemek yanlış hesabı
+                  // düzeltmeye kapı bırakırdı.
+                  let mevcutTel = '';
+                  try {
+                    mevcutTel = (await api.userPhone(u.id)).phone;
+                  } catch {
+                    // Okunamazsa akış durmasın; boş bırakılırsa dokunulmuyor.
+                  }
+                  const telefon = prompt(
+                    'Telefon (boş bırakırsan değişmez).\nDeğiştirirsen numara "doğrulanmamış" olarak işaretlenir:',
+                    mevcutTel,
+                  );
+                  if (telefon === null) return;
                   try {
                     await api.setUserProfile(u.id, {
                       name: ad.trim(),
                       email: eposta.trim(),
                       city: sehir.trim(),
+                      ...(telefon.trim() && telefon.trim() !== mevcutTel
+                        ? { phone: telefon.trim() }
+                        : {}),
                     });
                     reload();
                   } catch (e) {

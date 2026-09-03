@@ -18,6 +18,7 @@ export default function VerifyScreen() {
 
   const storePhone = useStore((s) => s.currentUser?.phone);
   const markVerified = useStore((s) => s.markPhoneVerified);
+  const token = useStore((s) => s.token);
   const phone = params.phone ?? storePhone ?? null;
   const next = typeof params.next === 'string' ? params.next : null;
 
@@ -79,12 +80,35 @@ export default function VerifyScreen() {
     setBusy(true);
     try {
       const res = await api.otpVerify(phone, code);
-      if (res.verified) proceed();
-      else Alert.alert(t('verify.title'), t('auth.otp.invalid'));
+      /*
+       * ── `verified` DEĞİL `phoneVerified` ─────────────────────────────
+       *
+       * İkisi FARKLI şey söylüyor:
+       *   verified      → girilen kod doğruydu.
+       *   phoneVerified → sunucu bunu HESABA YAZDI.
+       *
+       * Eskiden `verified` yetiyordu ve ekran kendini "doğrulandı"
+       * işaretliyordu. Sunucuda hiçbir şey değişmiyordu: canlıda 97
+       * kullanıcının 96'sı "doğrulanmamış" görünüyordu. Kullanıcı
+       * doğruluyor, uygulama bir sonraki açılışta sunucuya sorup yine
+       * "doğrulanmamış" öğreniyor ve şerit geri geliyordu.
+       *
+       * Giriş yapmamış kullanıcıda (kayıt öncesi) hesap HENÜZ YOK, o
+       * yüzden sunucu yazamıyor; orada `verified` doğru ölçü ve kayıt
+       * anında sunucu bu doğrulamayı devralıyor.
+       */
+      const yazildi = token ? res.phoneVerified : res.verified;
+      if (yazildi) proceed();
+      else if (res.verified) {
+        // Kod doğruydu ama hesaba yazılamadı — "doğrulandı" demek yalan
+        // olurdu; kullanıcı sonra şeridin geri geldiğini görürdü.
+        Alert.alert(t('verify.title'), t('profile.edit.save_err'));
+      } else Alert.alert(t('verify.title'), t('auth.otp.invalid'));
     } catch {
-      // Servis erişilemiyor → dev kod ile devam
-      if (code === devCode) proceed();
-      else Alert.alert(t('verify.title'), t('auth.otp.invalid'));
+      // UYDURMA YOK: servise ulaşılamadıysa doğrulanmış sayılmıyor.
+      // Eskiden `code === devCode` ile devam ediliyordu; sunucu bunu hiç
+      // öğrenmediği için doğrulama bir sonraki açılışta kayboluyordu.
+      Alert.alert(t('verify.title'), t('common.offline'));
     } finally {
       setBusy(false);
     }

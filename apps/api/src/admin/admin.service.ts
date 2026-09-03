@@ -8,10 +8,18 @@ import {
   KAZANILMIS_DURUMLAR,
   YAKLASAN_DURUMLAR,
 } from '@ayna/domain';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { hashPassword } from '../common/crypto';
+import {
+  decryptField,
+  encryptField,
+  hashPassword,
+  normalizePhone,
+  phoneHash,
+} from '../common/crypto';
+import type { Env } from '@ayna/config/env';
+import { ENV } from '../config/config.module';
 import { computeBookingStats } from '../bookings/bookings.service';
 
 // Onayda otomatik keşif listesi için varsayılan görsel (işletme foto yüklemediyse)
@@ -69,7 +77,10 @@ function mapAdminPro(p: {
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(ENV) private readonly env: Env,
+  ) {}
 
   // Dashboard genel bakış — platform geneli metrikler
   async overview() {
@@ -709,6 +720,32 @@ export class AdminService {
     return rows;
   }
 
+  /**
+   * TEK kullanıcının telefonu — yalnız düzenleme ekranı açılırken.
+   *
+   * Liste ucu bilerek telefonsuz ("PII/telefon gösterilmez"); 300 kişilik
+   * dökümü numaralarla doldurmak o kararı toptan bozardı. Admin numarayı
+   * ancak o kişiyi düzenlemek için AÇIKÇA istediğinde görüyor ve bu istek
+   * denetim kaydına düşüyor.
+   *
+   * Körlemesine düzenlemenin alternatifi yok: mevcut numarayı görmeden
+   * "değiştir" demek, yanlış hesabı düzeltmeye açık kapı bırakırdı.
+   */
+  async userPhone(id: string, actorId?: string) {
+    const u = await this.prisma.user.findUnique({ where: { id } });
+    if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
+    let phone = '';
+    try {
+      phone = decryptField(Buffer.from(u.phoneEnc), this.env.FIELD_ENCRYPTION_KEY);
+    } catch {
+      // Anahtar döndüyse çözülemez. Uydurulmuş bir numara göstermektense
+      // boş dönüyoruz; panel "değiştirmezsen dokunulmaz" diyor.
+      phone = '';
+    }
+    await this.kaydet(id, 'admin.user.phone_viewed', { actorId: actorId ?? null });
+    return { phone, phoneVerified: u.phoneVerified };
+  }
+
   async setUserRole(id: string, role: 'user' | 'professional' | 'salon' | 'moderator' | 'admin') {
     const u = await this.prisma.user.findUnique({ where: { id } });
     if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
@@ -936,12 +973,20 @@ export class AdminService {
       name?: string | undefined;
       email?: string | null | undefined;
       city?: string | undefined;
+      phone?: string | undefined;
     },
   ) {
     const u = await this.prisma.user.findUnique({ where: { id } });
     if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Kullanıcı yok' });
 
-    const data: { name?: string; email?: string | null; city?: string } = {};
+    const data: {
+      name?: string;
+      email?: string | null;
+      city?: string;
+      phoneHash?: string;
+      phoneEnc?: Uint8Array<ArrayBuffer>;
+      phoneVerified?: boolean;
+    } = {};
 
     if (patch.name !== undefined) {
       const ad = patch.name.trim();
@@ -969,6 +1014,49 @@ export class AdminService {
     }
 
     if (patch.city !== undefined) data.city = patch.city.trim().slice(0, 60);
+
+    /*
+     * ── TELEFON ─────────────────────────────────────────────────────────
+     *
+     * Kurucu: "admin panelinde de kullanıcı özelliklerinde telefon
+     * değiştirme seçeneği yok."
+     *
+     * Bu, kullanıcının kendi talep ettiği akıştan (§profil-onay) FARKLI ve
+     * ona alternatif değil: burası DESTEK YOLU. Hattını kaybetmiş, yeni
+     * numarasına SMS alamayan biri kendi talebini açamaz — o kişiyi
+     * veritabanına elle dokunmadan kurtarmanın başka yolu yoktu.
+     *
+     * SMS DOĞRULAMASI YOK, çünkü olamaz: doğrulayabilecek olsaydı kullanıcı
+     * zaten kendi talebini açardı. Bunun bedeli var ve açıkça kabul
+     * ediliyor — bu yüzden:
+     *   · `phoneVerified` FALSE'a çekiliyor. Numaranın sahibi olduğu
+     *     KANITLANMADI; doğrulanmış göstermek sistemin bilmediği bir şeyi
+     *     bilir gibi davranması olurdu.
+     *   · İşlem denetim kaydına düşüyor (aşağıda), çünkü bir hesabın giriş
+     *     kimliğini değiştirmek geri alınması zor bir yetki kullanımıdır.
+     */
+    if (patch.phone !== undefined) {
+      const key = this.env.FIELD_ENCRYPTION_KEY;
+      const duz = normalizePhone(patch.phone);
+      if (duz.length < 7) {
+        throw new BadRequestException({ code: 'PHONE_INVALID', message: 'Telefon geçersiz' });
+      }
+      const ph = phoneHash(duz, key);
+      // E-postadaki kuralın aynısı: telefon da tekil bir giriş kimliği.
+      // Sessizce ezmek, numarayı kaybeden hesabı girişsiz bırakırdı.
+      const sahip = await this.prisma.user.findUnique({ where: { phoneHash: ph } });
+      if (sahip && sahip.id !== id && sahip.status !== 'deleted') {
+        throw new BadRequestException({
+          code: 'PHONE_TAKEN',
+          message: 'Bu telefon başka bir hesapta kayıtlı',
+        });
+      }
+      if (ph !== u.phoneHash) {
+        data.phoneHash = ph;
+        data.phoneEnc = Uint8Array.from(encryptField(duz, key));
+        data.phoneVerified = false;
+      }
+    }
 
     if (Object.keys(data).length === 0) return { id, ok: true };
 

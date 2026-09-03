@@ -2812,6 +2812,25 @@ export const useStore = create<State>()(
                   restricted: me.restricted,
                   restrictedDaysLeft: me.restrictedDaysLeft,
                   membershipUntil: me.membershipUntil ?? null,
+                  /*
+                   * ── TELEFON SUNUCUDAN TAZELENİYOR ─────────────────────
+                   *
+                   * Kurucu: "admin onayladıktan sonra telefon doğrulama
+                   * ekranı yeniden çıkacak ve kullanıcı admine onaylattığı
+                   * telefon için doğrulama yapacak."
+                   *
+                   * Bu satırlar olmadan zincir KOPUYORDU: admin onaylıyor,
+                   * sunucuda numara değişip `phoneVerified` false oluyor,
+                   * ama uygulama hâlâ ESKİ numarayı ve "doğrulanmış"ı
+                   * gösteriyordu. Profildeki doğrulama şeridi hiç çıkmıyor,
+                   * çıksa bile eski numaraya kod gidiyordu.
+                   *
+                   * BOŞ TELEFON YAZILMIYOR: sunucu, şifreleme anahtarı
+                   * döndüyse `phone: ''` dönebiliyor (`safePhone`). Onu
+                   * kopyalamak kullanıcının numarasını ekrandan silerdi.
+                   */
+                  ...(me.phone ? { phone: me.phone } : {}),
+                  phoneVerified: me.phoneVerified,
                 }
               : s.currentUser,
             premium: tier === 'premium' || tier === 'platinum',

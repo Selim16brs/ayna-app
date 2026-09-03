@@ -7,7 +7,14 @@
 
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { istekGovdesi, otpMesaji, telefonuBicimle, tekrarDenenir, yanitiCoz } from './smsc';
+import {
+  istekGovdesi,
+  numaraGecerliMi,
+  otpMesaji,
+  telefonuBicimle,
+  tekrarDenenir,
+  yanitiCoz,
+} from './smsc';
 
 const KIMLIK = { login: 'ayna', sifre: 'gizli' };
 
@@ -100,4 +107,34 @@ test('OTP mesajı üç dilde de TEK PARÇA', () => {
 test('bilinmeyen dil sessizce boş mesaj üretmiyor', () => {
   const m = otpMesaji('123456', 'de');
   assert.ok(m.includes('123456'), 'kod düştü');
+});
+
+test('ülke kodsuz numara SAĞLAYICIYA HİÇ GİTMİYOR', () => {
+  /*
+   * ── BU KONTROL BİR SESSİZ HATADAN DOĞDU ──────────────────────────────
+   *
+   * Kurucu telefon değişikliğinde numarayı "0555…" diye yazdı.
+   * `telefonuBicimle` Kazakistan dışını tanımıyor ve olduğu gibi geçirdi;
+   * Mobizon "uluslararası biçime uymuyor" dedi, kullanıcıya yalnızca
+   * "kod gönderilemedi" göründü. Artık ağa çıkmadan burada duruyor.
+   */
+  for (const ham of ['05551235678', '0555 123 56 78', '08123456789']) {
+    assert.equal(numaraGecerliMi(telefonuBicimle(ham)), false, `başta sıfır geçti: ${ham}`);
+  }
+  // Çok kısa / çok uzun da geçmiyor (E.164).
+  assert.equal(numaraGecerliMi('123456789'), false, '9 hane geçti');
+  assert.equal(numaraGecerliMi('1234567890123456'), false, '16 hane geçti');
+});
+
+test('geçerli numaralar ENGELLENMİYOR', () => {
+  // Aşırı sıkı bir kural, gerçek kullanıcıyı kayıt dışı bırakırdı.
+  for (const ham of ['+7 777 123 45 67', '8 777 123 45 67', '777 123 45 67']) {
+    assert.equal(numaraGecerliMi(telefonuBicimle(ham)), true, `KZ numarası engellendi: ${ham}`);
+  }
+  // Yabancı numara da ülke koduyla yazıldıysa geçiyor.
+  assert.equal(
+    numaraGecerliMi(telefonuBicimle('+90 555 123 45 67')),
+    true,
+    'TR numarası engellendi',
+  );
 });

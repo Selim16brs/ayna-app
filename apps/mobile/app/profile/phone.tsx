@@ -21,16 +21,17 @@ import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from 
  * değiştiremiyordu. Numara değiştirmek sıradan bir olay: hat kaybolur,
  * operatör değişir, evlilikle numara devredilir.
  *
- * ── İKİ KAPI, İKİ FARKLI SORU ───────────────────────────────────────────
+ * ── SMS DOĞRULAMASI YOK ─────────────────────────────────────────────────
  *
- *   1. SMS kodu → numara GERÇEKTEN başvuranın mı?
- *   2. Admin    → bu değişiklik UYGUN mu?
+ * Kurucu: "biz neden telefon değişikliği yaparken Mobizon'u araya
+ * sokuyoruz ki? o tamamen admin işi."
  *
- * İkincisi tek başına yetmez: admin formda yazan numaranın kime ait
- * olduğunu göremez, başkasının numarasını yazan biri onayı geçerse o hesabı
- * ele geçirirdi (telefon giriş kimliği). Birincisi de tek başına yetmez:
- * numara değiştirerek değerlendirmelerden ya da yasaktan kaçmayı ancak
- * admin durdurur.
+ * İlk sürüm yeni numaraya kod gönderiyordu ve akışı TIKADI: numara ülke
+ * kodsuz yazılınca sağlayıcı reddediyor, kullanıcı yalnız "kod
+ * gönderilemedi" görüyordu. Ayrıca her deneme para harcıyordu.
+ *
+ * Numara doğrulaması kayıt/doğrulama ekranında yapılıyor; burada
+ * tekrarlanmıyor. Bu akışın hakemi admin.
  */
 export default function PhoneChangeScreen() {
   const { t } = useLocale();
@@ -40,37 +41,20 @@ export default function PhoneChangeScreen() {
   const token = useStore((s) => s.token);
   const mevcut = useStore((s) => s.currentUser?.phone);
 
-  const [adim, setAdim] = useState<'numara' | 'kod'>('numara');
   const [telefon, setTelefon] = useState('');
-  const [kod, setKod] = useState('');
   const [mesgul, setMesgul] = useState(false);
 
-  const kodIste = async () => {
-    if (telefon.trim().length < 7 || mesgul) return;
-    setMesgul(true);
-    try {
-      await api.otpRequest(telefon.trim());
-      // Kod adımına YALNIZ gerçekten gönderildiyse geçiliyor — gitmemiş
-      // bir kodu bekletmek kullanıcıyı çıkmaza sokardı.
-      setAdim('kod');
-    } catch {
-      Alert.alert(t('profile.phone.title'), t('auth.otp.send_failed'));
-    } finally {
-      setMesgul(false);
-    }
-  };
-
   const gonder = async () => {
-    if (kod.trim().length < 4 || !token || mesgul) return;
+    if (telefon.trim().length < 7 || !token || mesgul) return;
     setMesgul(true);
     try {
-      await api.requestPhoneChange(telefon.trim(), kod.trim(), token);
+      await api.requestPhoneChange(telefon.trim(), token);
       Alert.alert(t('profile.phone.title'), t('profile.phone.submitted'), [
         { text: t('common.ok'), onPress: () => router.back() },
       ]);
     } catch (e) {
-      // Sunucunun gerçek sebebi anlatılıyor: "zaten kayıtlı" ile "kod
-      // yanlış" farklı sorunlar, ikisine de aynı mesajı vermek kullanıcıyı
+      // Sunucunun GERÇEK sebebi anlatılıyor: "zaten kayıtlı" ile "bu senin
+      // numaran" farklı sorunlar; ikisine aynı mesajı vermek kullanıcıyı
       // döngüde bırakırdı.
       const kodAdi = (e as { code?: string })?.code;
       const mesaj =
@@ -78,7 +62,7 @@ export default function PhoneChangeScreen() {
           ? t('profile.phone.taken')
           : kodAdi === 'PHONE_SAME'
             ? t('profile.phone.same')
-            : t('auth.otp.invalid');
+            : t('profile.edit.save_err');
       Alert.alert(t('profile.phone.title'), mesaj);
     } finally {
       setMesgul(false);
@@ -108,50 +92,19 @@ export default function PhoneChangeScreen() {
           </Text>
         ) : null}
 
-        {adim === 'numara' ? (
-          <>
-            <Alan
-              etiket={t('profile.phone.new')}
-              deger={telefon}
-              degisti={setTelefon}
-              klavye="phone-pad"
-              ipucu="+7 777 123 45 67"
-            />
-            <Button
-              label={t('profile.phone.send_code')}
-              onPress={() => void kodIste()}
-              loading={mesgul}
-              disabled={mesgul || telefon.trim().length < 7}
-            />
-          </>
-        ) : (
-          <>
-            <Text variant="caption" tone="muted">
-              {t('profile.phone.code_sent')} {telefon.trim()}
-            </Text>
-            <Alan
-              etiket={t('verify.code_label')}
-              deger={kod}
-              degisti={setKod}
-              klavye="number-pad"
-              ipucu="000000"
-            />
-            <Button
-              label={t('profile.phone.submit')}
-              onPress={() => void gonder()}
-              loading={mesgul}
-              disabled={mesgul || kod.trim().length < 4}
-            />
-            <Button
-              label={t('common.cancel')}
-              variant="secondary"
-              onPress={() => {
-                setAdim('numara');
-                setKod('');
-              }}
-            />
-          </>
-        )}
+        <Alan
+          etiket={t('profile.phone.new')}
+          deger={telefon}
+          degisti={setTelefon}
+          klavye="phone-pad"
+          ipucu="+7 777 123 45 67"
+        />
+        <Button
+          label={t('profile.phone.submit')}
+          onPress={() => void gonder()}
+          loading={mesgul}
+          disabled={mesgul || telefon.trim().length < 7}
+        />
       </ScrollView>
     </Screen>
   );

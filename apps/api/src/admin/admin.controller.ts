@@ -122,6 +122,13 @@ const userProfileSchema = z.object({
   name: z.string().max(80).optional(),
   email: z.string().max(160).optional(),
   city: z.string().max(60).optional(),
+  /**
+   * Telefon — DESTEK YOLU. Kullanıcının kendi açtığı talep (§profil-onay)
+   * SMS ile doğrulanıyor; hattını kaybetmiş biri o talebi açamaz, bu yüzden
+   * adminin elle değiştirebilmesi gerekiyor. Doğrulanmadığı için sunucu
+   * `phoneVerified`ı FALSE'a çekiyor.
+   */
+  phone: z.string().min(7).max(20).optional(),
 });
 const flagSchema = z.object({
   key: z.string().min(1).max(60),
@@ -346,6 +353,12 @@ export class AdminController {
   // §12.2 — admin bir üyenin ad/e-posta/şehir bilgisini düzenler.
   // Telefon BURADA DEĞİŞMEZ: giriş kimliği + şifreli saklanıyor, panelden
   // sessizce değiştirmek hesap devri anlamına gelirdi.
+  /** Tek kullanıcının telefonu — düzenleme ekranı açılırken okunur. */
+  @Get('users/:id/phone')
+  userPhone(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.admin.userPhone(id, req.user?.id);
+  }
+
   @Post('users/:id/profile')
   setUserProfile(
     @Param('id') id: string,

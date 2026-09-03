@@ -6,6 +6,7 @@ import {
   SMSC_UC,
   SMSC_YEDEK_UC,
   istekGovdesi,
+  numaraGecerliMi,
   otpMesaji,
   telefonuBicimle,
   tekrarDenenir,
@@ -129,6 +130,22 @@ export class SmsService implements OnModuleInit {
       this.logger.error(`SMS gönderilemedi (${son4(telefon)}): ${sebep}`);
       await this.kaydet(telefon, this.env.SMS_PROVIDER, { ok: false, kod: null, hata: sebep });
       return { gonderildi: false, sebep };
+    }
+
+    /*
+     * NUMARA AĞA ÇIKMADAN ÖNCE DENETLENİYOR.
+     *
+     * `telefonuBicimle` tanımadığı numarayı olduğu gibi geçiriyor. Kurucu
+     * telefon değişikliğinde numarayı ÜLKE KODSUZ yazdı; numara öylece
+     * sağlayıcıya gitti, "uluslararası biçime uymuyor" diye reddedildi ve
+     * kullanıcıya yalnızca "kod gönderilemedi" göründü — ne yanlış
+     * yaptığını anlamasının yolu yoktu. Artık sebep açıkça dönüyor.
+     */
+    if (!numaraGecerliMi(telefonuBicimle(telefon))) {
+      const sebep = 'numara uluslararası biçimde değil (ülke kodu eksik olabilir)';
+      this.logger.warn(`SMS gönderilmedi (${son4(telefon)}): ${sebep}`);
+      await this.kaydet(telefon, this.env.SMS_PROVIDER, { ok: false, kod: null, hata: sebep });
+      return { gonderildi: false, sebep: 'PHONE_FORMAT' };
     }
 
     const saglayici = this.env.SMS_PROVIDER;
