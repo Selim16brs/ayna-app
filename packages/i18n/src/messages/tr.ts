@@ -27,6 +27,9 @@ export const tr = {
   'passport.care.allergy_remove_t': 'Alerjiyi kaldır',
   'common.loading': 'Yükleniyor…',
   'common.ok': 'Tamam',
+  'takvim.saat': 'Saat',
+  'takvim.onceki_ay': 'Önceki ay',
+  'takvim.sonraki_ay': 'Sonraki ay',
   // §11 satıcı premium ödeme ekranı
   'premium.title': 'Premium',
   'premium.plan_name': 'AYNA Premium',
@@ -2203,7 +2206,7 @@ export const tr = {
   'boni.intro': 'Cilt, saç ya da bakım hakkında merak ettiğini sor; sana özel öneri vereyim.',
   'boni.placeholder': 'Örn. kuru cildim için ne önerirsin?',
   'boni.thinking': 'Boni düşünüyor…',
-  'boni.quota.remaining': 'Bu ay kalan',
+  'boni.quota.remaining': 'Bu ay {n} soru hakkın kaldı',
   'boni.typing': 'Boni yazıyor…',
   'boni.quota.empty': 'Bu ayki AI hakkın doldu. Gelecek ay yenilenir.',
   'boni.error': 'Boni şu an yanıt veremedi, tekrar dene.',

@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  View,
+} from 'react-native';
 import { CATEGORIES, type CirclePostType } from '../../src/data';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
@@ -46,80 +54,103 @@ export default function NewPostScreen() {
   return (
     <Screen edges={['bottom']}>
       <StackHeader title={t('circle.new.title')} />
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+      {/*
+       * KLAVYE İÇERİĞİ ÖRTMESİN.
+       *
+       * Kurucu: "hem ikonlar hatalı hem de klavye üste çıkıyor."
+       * Metin alanına dokununca klavye açılıyor, "Paylaş" düğmesi yazının
+       * ÜSTÜNE biniyor ve yazdığı satır görünmez oluyordu — ne yazdığını
+       * göremeden gönderi oluşturuyordu.
+       *
+       * iOS'ta `padding`, Android'de `height`: iki platformun klavye
+       * ölçüm davranışı farklı ve tek değer ikisinde birden doğru çalışmıyor.
+       */}
+      <KeyboardAvoidingView
+        style={styles.kacis}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
-        <Text variant="h2" tone="ink" style={styles.label}>
-          {t('circle.new.type')}
-        </Text>
-        <Segmented options={typeOptions} value={type} onChange={setType} />
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text variant="h2" tone="ink" style={styles.label}>
+            {t('circle.new.type')}
+          </Text>
+          <Segmented options={typeOptions} value={type} onChange={setType} />
 
-        <Text variant="h2" tone="ink" style={styles.label}>
-          {t('circle.new.category')}
-        </Text>
-        <View style={styles.categories}>
-          {CATEGORIES.map((cat) => {
-            const label = t(cat.labelKey);
-            const active = label === category;
-            return (
-              <Pressable
-                key={cat.id}
-                onPress={() => setCategory(label)}
-                style={[styles.categoryChip, active && styles.categoryActive]}
-              >
-                <HizmetIkonu id={cat.id} tarz="satir" />
-                <Text
-                  variant="caption"
-                  tone={active ? 'onAccent' : 'inkSoft'}
-                  style={active ? styles.chipTextActive : undefined}
-                >
-                  {label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+          <Text variant="h2" tone="ink" style={styles.label}>
+            {t('circle.new.category')}
+          </Text>
+          {/*
+           * ANA SAYFADAKİ KUTU. Burada hap içinde 20'lik ikon çiziliyordu;
+           * Figma çiziminin ayrıntısı o boyutta dağılıp başka bir ikon gibi
+           * görünüyordu. Kurucu: "hizmet ikonları ana sayfadaki gibi olacak."
+           *
+           * Yatay kaydırma: on kategori sarmalayınca ekranın yarısını yiyor,
+           * altındaki metin alanı görünmez oluyordu.
+           */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categories}
+          >
+            {CATEGORIES.map((cat) => {
+              const label = t(cat.labelKey);
+              const active = label === category;
+              return (
+                <Pressable key={cat.id} onPress={() => setCategory(label)} style={styles.kategori}>
+                  <HizmetIkonu id={cat.id} tarz="kutu" secili={active} />
+                  <Text variant="caption" tone={active ? 'ink' : 'inkSoft'} numberOfLines={1}>
+                    {label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
 
-        <Text variant="h2" tone="ink" style={styles.label}>
-          {t('circle.new.text')}
-        </Text>
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder={t('circle.new.text_ph')}
-          placeholderTextColor={colors.muted}
-          multiline
-          style={styles.textarea}
-        />
+          <Text variant="h2" tone="ink" style={styles.label}>
+            {t('circle.new.text')}
+          </Text>
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder={t('circle.new.text_ph')}
+            placeholderTextColor={colors.muted}
+            multiline
+            style={styles.textarea}
+          />
 
-        <View style={styles.anonRow}>
-          <View style={styles.anonIcon}>
-            <Ionicons name="shield-checkmark" size={20} color={colors.accentFg} />
+          <View style={styles.anonRow}>
+            <View style={styles.anonIcon}>
+              <Ionicons name="shield-checkmark" size={20} color={colors.accentFg} />
+            </View>
+            <View style={styles.anonText}>
+              <Text variant="bodyStrong" tone="ink">
+                {t('circle.new.anonymous')}
+              </Text>
+            </View>
+            <Switch
+              value={anonymous}
+              onValueChange={setAnonymous}
+              trackColor={{ false: colors.surfaceMuted, true: colors.accent }}
+              thumbColor={colors.surface}
+            />
           </View>
-          <View style={styles.anonText}>
-            <Text variant="bodyStrong" tone="ink">
-              {t('circle.new.anonymous')}
-            </Text>
-          </View>
-          <Switch
-            value={anonymous}
-            onValueChange={setAnonymous}
-            trackColor={{ false: colors.surfaceMuted, true: colors.accent }}
-            thumbColor={colors.surface}
+        </ScrollView>
+
+        {/* Düğme de kaçış alanının İÇİNDE: dışarıda kalsaydı klavye onu
+            yazının üstüne bindirirdi — sorunun görünen hâli buydu. */}
+        <View style={styles.footer}>
+          <Button
+            label={t('circle.new.submit')}
+            variant={canSubmit ? 'primary' : 'secondary'}
+            disabled={!canSubmit}
+            onPress={submit}
           />
         </View>
-      </ScrollView>
-
-      <View style={styles.footer}>
-        <Button
-          label={t('circle.new.submit')}
-          variant={canSubmit ? 'primary' : 'secondary'}
-          disabled={!canSubmit}
-          onPress={submit}
-        />
-      </View>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
@@ -134,30 +165,25 @@ const makeStyles = (colors: ColorTokens) =>
       fontFamily: font.semibold,
       letterSpacing: -0.4,
     },
-    categories: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
-    /** Kurucunun Figma ikonu — ana sayfayla aynı kaynak. */
-    categoryChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      paddingHorizontal: space(1.75),
-      paddingVertical: space(1.1),
-      borderRadius: radius.pill,
+    kacis: { flex: 1 },
+    // Ana sayfadaki ızgara ile aynı: kutu + altında etiket.
+    kategori: { alignItems: 'center', gap: space(0.75), width: 76 },
+    textarea: {
+      minHeight: 120,
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.5),
+      borderRadius: radius.lg,
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.line,
-    },
-    categoryActive: { backgroundColor: colors.accent },
-    chipTextActive: { fontFamily: font.semibold },
-    textarea: {
-      backgroundColor: colors.surfaceMuted,
-      borderRadius: radius.lg,
-      padding: space(2),
-      minHeight: 140,
-      textAlignVertical: 'top',
-      fontFamily: font.regular,
-      fontSize: 15,
       color: colors.ink,
+      textAlignVertical: 'top',
+    },
+    categories: {
+      flexDirection: 'row',
+      // Sarma YOK: 64'lük kutular sarınca metin alanı ekrandan çıkıyordu.
+      gap: space(1.5),
+      paddingVertical: space(0.5),
     },
     anonRow: {
       flexDirection: 'row',

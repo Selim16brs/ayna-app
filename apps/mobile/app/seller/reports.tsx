@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, type AdOrder, type BookingStats, type SellerReview } from '../../src/api';
 import { formatPrice, RESPONSE_WINDOW_MS, type SellerMetric } from '../../src/data';
 import { formatSlotTr } from '../../src/datetime';
+import { Redirect } from 'expo-router';
 import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
 import { reklamGunu } from '@ayna/domain';
@@ -41,6 +42,26 @@ const PERIYOT_ETIKET = {
 } as const;
 
 export default function ReportsScreen() {
+  /*
+   * ── BU EKRAN YALNIZ UZMAN/SALON İÇİN ──────────────────────────────────
+   *
+   * Kurucu: "müşteri hesabı diye açtığım hesapta premium üyelik aldığımda
+   * beni bireysel uzman gibi gösterdi."
+   *
+   * Sebep abonelik dekontu ekranının KOŞULSUZ buraya yönlendirmesiydi ve o
+   * düzeltildi. Ama tek bir yönlendirmeyi onarmak yetmez: bu ekran
+   * "Bireysel Uzman" rozeti, "Hizmetlerimi gir" ve "AYNA komisyonu"
+   * gösteriyor — bir müşteriye açıldığında hesabının türü değişmiş gibi
+   * görünüyor.
+   *
+   * Kapı ARTIK EKRANIN KENDİSİNDE: nereden gelinirse gelinsin müşteri
+   * buraya düşemiyor. Rolü sunucu belirliyor; yerel rol yanlışsa da
+   * kullanıcı kendi ana sayfasına gider.
+   */
+  const rol = useStore((s) => s.currentUser?.role);
+  const satici = rol === 'professional' || rol === 'salon';
+  if (rol && !satici) return <Redirect href="/discover" />;
+
   const { t, locale } = useLocale();
   // Derin kart gradyanı artık SEÇİLEN RENKTEN geliyor (`gradients.deep`).
   // Eskiden `[lightColors.accent, '#2D0A2E']` sabitiydi: kullanıcı Zümrüt

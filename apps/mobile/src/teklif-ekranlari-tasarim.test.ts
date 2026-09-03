@@ -124,13 +124,19 @@ test('kategori yazısı İKİ TEMADA da okunuyor', () => {
   }
 });
 
-test('fotoğraflı teklifin çipi DOLU GRİ LEKE değil', () => {
-  // `surfaceMuted` dolu bir gri lekeydi; yeni dil yüzey + ince çizgi.
-  const i = foto.indexOf('catChip: {');
-  assert.ok(i > 0, 'çip stili yok');
-  const blok = foto.slice(i, i + 400);
-  assert.match(blok, /backgroundColor: colors\.surface/, 'çip yüzey zemininde değil');
-  assert.match(blok, /borderColor: colors\.line/, 'çipin ince çizgisi yok');
+test('fotoğraflı teklifin kategorisi ANA SAYFA kutusunda', () => {
+  /*
+   * ── BU TEST DEĞİŞTİ ──────────────────────────────────────────────────
+   *
+   * Eskiden "çip dolu gri leke olmasın" diye ölçüyordu. Ama kurucu çipin
+   * kendisini reddetti: "hizmet ikonları ana sayfadaki gibi olacak
+   * demiştim." Hap içinde 20'lik ikon çiziliyordu ve Figma çiziminin
+   * ayrıntısı o boyutta dağılıp başka bir ikon gibi görünüyordu.
+   *
+   * Artık ölçülen şey çipin rengi değil, ORTAK KUTUNUN kullanılması.
+   */
+  assert.match(foto, /<HizmetIkonu id=\{cat\.id\} tarz="kutu"/, 'ana sayfa kutusu kullanılmıyor');
+  assert.equal(/tarz="satir"/.test(foto), false, 'hâlâ küçük satır ikonu çiziliyor');
 });
 
 /**
