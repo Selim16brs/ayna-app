@@ -32,17 +32,6 @@ const foto = yorumsuz(oku('quote/new.tsx'));
 const fiyat = yorumsuz(oku('demand/new.tsx'));
 const kesfet = yorumsuz(oku('(tabs)/discover.tsx'));
 
-/**
- * İkon eşlemesi KAYNAK OLARAK okunuyor, içe aktarılmıyor.
- *
- * Modül `require('...png')` içeriyor; Metro bunu çözer, Node çözemez —
- * içe aktarmak testi söz dizimi hatasıyla düşürüyordu.
- */
-const ikonKaynak = readFileSync(join(__dirname, 'hizmet-ikon.ts'), 'utf8');
-const IKON_ANAHTARLARI = new Set(
-  [...ikonKaynak.matchAll(/^\s{2}(\w+): require\(/gm)].map((m) => m[1]!),
-);
-
 function parlaklik(hex: string): number {
   const h = hex.replace('#', '');
   const k = [0, 2, 4].map((i) => {
@@ -68,70 +57,43 @@ test('ikon eşlemesi TEK kaynakta — üç ekran da onu okuyor', () => {
      * ekran da ortak kaynağı kullanmalı — yalnız kaynağın adı değişti.
      */
     assert.match(k, /<HizmetIkonu\b/, `${ad} ortak ikon bileşenini kullanmıyor`);
+    /*
+     * KENDİ EŞLEMESİNİ TUTMASIN. Eskiden PNG eşlemesinin kopyası
+     * çıkarılmıştı; artık risk bir kategori→ikon nesnesi yazmak
+     * (`hair: 'cut-outline'`). O ekran katalog değişse bile eski ikonu
+     * göstermeye devam eder.
+     */
     assert.doesNotMatch(
       k,
-      /const HIZMET_IKON: Record<string, number> = \{/,
-      `${ad} kendi kopyasını tutuyor — biri güncellenip ötekiler geride kalır`,
+      /\b(hair|nails|makeup|skin|spa|epilation)\s*:\s*['"][a-z-]+-outline['"]/,
+      `${ad} kendi kategori→ikon eşlemesini tutuyor`,
     );
   }
 });
 
 test('HİÇBİR kategori ikonsuz kalmıyor', () => {
   /*
-   * Katalog 13 kategori; elde 7 çizim var. Kalan altısı (Spa & Hamam,
-   * Vücut Şekillendirme, Saç Sağlığı, İmaj & Stil, Wellness, Diğer)
-   * BİLEREK çizimsiz — mevcut ikonları taklit eden üretilmiş bir görsel
-   * yanlarında yamalı durur.
+   * Kurucu: "senin yaptığın 6 icon tarzı güzeldi. daha öncekileri de ona
+   * benzer yap."
    *
-   * Bu testin derdi çizim SAYISI değil: hiçbir kategorinin ekranda BOŞ
-   * kalmaması. Her kategori ya çizime ya da geçerli bir Ionicons adına
-   * bağlanmalı; ikisi de yoksa kullanıcı boş bir kutu görür.
+   * 13 kategorinin 7'si elle çizilmiş PNG'ydi, 6'sı vektör. Artık hepsi
+   * tek vektör ailesinden. Bu test her kategorinin bir ikon adı taşıdığını
+   * görüyor; adın GERÇEKTEN fontta olduğunu `hizmet-ikon-birligi` sınıyor.
    */
-  assert.ok(IKON_ANAHTARLARI.size >= 7, 'ikon eşlemesi okunamadı');
-  const ikonsuz = CATEGORIES.filter(
-    (c) => !IKON_ANAHTARLARI.has(c.id) && !(c.icon && c.icon.length > 0),
-  ).map((c) => c.id);
-  assert.deepEqual(ikonsuz, [], `ekranda boş kalacak kategori: ${ikonsuz.join(', ')}`);
+  const ikonsuz = CATEGORIES.filter((c) => !c.icon || c.icon.length === 0).map((c) => c.id);
+  assert.deepEqual(ikonsuz, [], `ikonsuz kategori: ${ikonsuz.join(', ')}`);
 });
 
-test('çizim eşlemesindeki her anahtar GERÇEK bir kategori', () => {
+test('ikon KATEGORİDEN geliyor — ekran kendi adını uyduramıyor', () => {
   /*
-   * Kategori kimliği değiştiğinde (`skincare` → `skin`) eşlemedeki eski
-   * anahtar öylece kalır: tip hatası YOK, ekranda sessizce ikon kaybolur.
-   */
-  const kimlikler = new Set(CATEGORIES.map((c) => c.id));
-  const oksuz = [...IKON_ANAHTARLARI].filter((k) => !kimlikler.has(k));
-  assert.deepEqual(oksuz, [], `karşılığı olmayan ikon anahtarı: ${oksuz.join(', ')}`);
-});
-
-test('çizimi olmayan kategori VEKTÖR YEDEĞİNE düşüyor', () => {
-  /*
-   * Yukarıdaki test kategorinin bir `icon` alanı olduğunu görüyor; bu
-   * test o alanın GERÇEKTEN çizildiğini görüyor. Yedek kaldırılırsa
-   * altı kategori sessizce boş kutuya döner ve tip denetimi bunu
-   * yakalamaz — eşleme `Record<string, number>`, eksik anahtar hata değil.
+   * Ekranlardan biri `name="cut-outline"` yazsaydı o ekran kategori
+   * değişse bile hep makas gösterirdi. Ad tek yerden okunuyor.
    */
   const b = readFileSync(join(__dirname, 'ui', 'HizmetIkonu.tsx'), 'utf8');
-  assert.match(b, /HIZMET_IKON\[id\]/, 'çizim eşlemesi okunmuyor');
-  /*
-   * Arama BAŞKA BİR KATEGORİNİN çizimine düşmemeli. `HIZMET_IKON[id] ??
-   * HIZMET_IKON.hair` gibi bir kısayol testi geçerdi ama Spa'ya saç
-   * ikonunu koyardı — boş kutudan daha kötü, çünkü yanlış bilgi verir.
-   */
-  assert.doesNotMatch(
-    b,
-    /HIZMET_IKON\[id\]\s*(\?\?|\|\|)/,
-    'eksik çizim başka bir kategorinin çizimiyle dolduruluyor',
-  );
-  assert.match(
-    b,
-    /kaynak \?[\s\S]{0,400}?<Ionicons/,
-    'çizim yoksa vektör yedeği çizilmiyor — kategori boş kutu olur',
-  );
   assert.match(
     b,
     /CATEGORIES\.find\(\(c\) => c\.id === id\)\?\.icon/,
-    'yedek ikon kategoriden gelmiyor',
+    'ikon adı kategoriden gelmiyor',
   );
 });
 
@@ -287,9 +249,8 @@ test('seçilmemiş çipler DOLU GRİ değil — UYGULAMA GENELİ', () => {
   assert.deepEqual(suclular, [], `dolu gri çipler:\n  ${suclular.join('\n  ')}`);
 });
 
-test('aramadaki popüler kategoriler de FIGMA ikonu', () => {
+test('aramadaki popüler kategoriler de ORTAK ikonu kullanıyor', () => {
   const k = yorumsuz(oku('search.tsx'));
-  // Çizim ortak bileşene taşındı; Figma görselini o okuyor.
   assert.match(k, /<HizmetIkonu id=\{cat\.id\}/, 'popüler kategori çipi ortak ikonu kullanmıyor');
 });
 

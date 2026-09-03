@@ -84,10 +84,12 @@ test('kategori ikonu çizen her ekran ortak bileşeni kullanıyor', () => {
 test('ölçüler TEK yerde — ekranlar kendi sayısını koyamıyor', () => {
   // İzin verilen iki bağlam ve tek tanım.
   assert.match(bilesen, /const OLCU = \{/, 'ölçü tablosu yok');
-  assert.match(bilesen, /kutu: 64,/, 'kutu ölçüsü ana sayfadakinden farklı');
-  assert.match(bilesen, /satir: 20,/, 'satır ölçüsü tanımlı değil');
-  // Bileşenin dışında serbest ölçü verilmemeli.
-  assert.match(bilesen, /width: olcu, height: olcu/, 'görsel ölçüyü tablodan almıyor');
+  assert.match(bilesen, /kutu: \{ kap: 64, ikon: \d+ \}/, 'kutu ölçüsü ana sayfadakinden farklı');
+  assert.match(bilesen, /satir: \{ kap: 0, ikon: \d+ \}/, 'satır ölçüsü tanımlı değil');
+  // Ölçü SERBEST yazılamaz: vektörün boyu da tablodan gelmeli, yoksa
+  // ekranlar yine kendi sayılarını koyar ve set ayrışır.
+  assert.match(bilesen, /size=\{OLCU\[tarz\]\.ikon\}/, 'vektör ölçüyü tablodan almıyor');
+  assert.doesNotMatch(bilesen, /size=\{tarz === /, 'ölçü bileşen içinde elle seçiliyor');
 });
 
 test('kutu, ana sayfadaki kap ile birebir aynı', () => {
@@ -132,9 +134,31 @@ test('seçili durum ikonun GÖRÜNÜŞÜNÜ değiştirmiyor', () => {
   assert.ok(kural.includes('borderColor'), 'seçim çerçeveden belli olmuyor');
 });
 
-test('eşlemede olmayan kategori sessizce kaybolmuyor', () => {
-  // Ana sayfa da böyle yapıyordu: PNG yoksa vektör yedeği çiziliyor.
-  assert.match(bilesen, /<Ionicons/, 'yedek ikon yok — kategori boş görünür');
+test('HER kategori vektör çiziliyor — karışık set yok', () => {
+  /*
+   * Kurucu: "senin yaptığın 6 icon tarzı güzeldi. daha öncekileri de ona
+   * benzer yap."
+   *
+   * 13 kategorinin 7'si elle çizilmiş PNG, 6'sı vektördü — iki ayrı tarz
+   * yan yana duruyordu. Artık hepsi tek vektör ailesinden.
+   */
+  assert.match(bilesen, /<Ionicons/, 'vektör çizilmiyor');
+  assert.doesNotMatch(bilesen, /HIZMET_IKON/, 'PNG eşlemesi geri gelmiş — set yine karışır');
+  assert.doesNotMatch(bilesen, /<Image\b/, 'PNG çizimi geri gelmiş');
+});
+
+test('ikon RENGİ ve ZEMİNİ aksanı takip ediyor', () => {
+  /*
+   * Kurucu: "renk değiştiğinde hizmetler ikonlarının altındaki renk sabit
+   * kalıyor."
+   *
+   * Zemin düzelmişti ama ÇİZGİ RENGİ hâlâ sabitti: PNG'nin içine pişmiş
+   * koyu erguvandı. Vektöre geçince ikisi de aksandan besleniyor —
+   * sabit bir renk kodu geri konursa bu test düşer.
+   */
+  assert.match(bilesen, /color=\{colors\.accent\}/, 'ikon rengi aksandan gelmiyor');
+  assert.match(bilesen, /backgroundColor: colors\.accentSoft/, 'zemin aksandan gelmiyor');
+  assert.doesNotMatch(bilesen, /color(?:=\{)?['"]#/, 'sabit renk kodu var');
 });
 
 test('satır bağlamı ikinci bir kutu eklemiyor', () => {
@@ -142,28 +166,50 @@ test('satır bağlamı ikinci bir kutu eklemiyor', () => {
   assert.match(bilesen, /if \(tarz === 'satir'\) return gorsel;/, 'satır bağlamı kutuya sarılıyor');
 });
 
-test('ikon görselleri ŞEFFAF — zemin görselin içinde değil', async () => {
+test('KATEGORİ İKON ADLARI gerçek — boş kutu çıkmıyor', async () => {
   /*
-   * Kurucu: "renk değiştiğinde hizmetler ikonlarının altındaki renk sabit
-   * kalıyor."
+   * Ionicons adı YANLIŞ yazılırsa hiçbir şey hata vermez: ekranda BOŞ bir
+   * kutu çıkar. Tip denetimi de yakalamaz — ad `@ayna/domain`de `string`.
    *
-   * Sebep kodda değil ASSET'teydi: PNG'ler RGB (alfa kanalı YOK) ve lila
-   * zemin görselin içine pişmişti. Kutuya hangi rengi verirsek verelim
-   * üstüne opak bir kare biniyordu.
-   *
-   * Yeniden dışa aktarılan bir ikon alfasız gelirse aynı hata sessizce
-   * geri döner — bu test onu yakalar.
+   * Bu test glif haritasını OKUYOR: ad fontta yoksa düşer.
    */
-  const { readdirSync, readFileSync } = await import('node:fs');
-  const { join } = await import('node:path');
-  const dizin = join(import.meta.dirname, '..', 'assets', 'hizmet-ikon');
-  const alfasiz: string[] = [];
-  for (const ad of readdirSync(dizin).filter((f) => f.endsWith('.png'))) {
-    const buf = readFileSync(join(dizin, ad));
-    // PNG IHDR: 8 bayt imza + 4 uzunluk + 4 tip, sonra genişlik/yükseklik/derinlik.
-    // 25. bayt renk tipi: 6 = RGBA, 4 = gri+alfa. Alfasız tipler: 0, 2, 3.
-    const renkTipi = buf[25];
-    if (renkTipi !== 6 && renkTipi !== 4) alfasiz.push(`${ad} (tip ${renkTipi})`);
+  const { CATEGORY_IDS, CATEGORY_META } = await import('@ayna/domain');
+  const harita = JSON.parse(
+    readFileSync(
+      join(
+        kok,
+        '..',
+        '..',
+        'node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/glyphmaps/Ionicons.json',
+      ),
+      'utf8',
+    ),
+  ) as Record<string, number>;
+  const bulunmayan = CATEGORY_IDS.filter((id) => !(CATEGORY_META[id]!.icon in harita)).map(
+    (id) => `${id} → ${CATEGORY_META[id]!.icon}`,
+  );
+  assert.deepEqual(bulunmayan, [], `Ionicons'ta olmayan ikon: ${bulunmayan.join(', ')}`);
+});
+
+test('İKON ADI TEK YERDE — panel ve uygulama ayrışamıyor', async () => {
+  /*
+   * Uygulamanın kendi eşlemesi vardı. İki liste, aynı kategoriye panelde
+   * bir ikon telefonda başka bir ikon verebilirdi.
+   */
+  const taksonomi = readFileSync(join(kok, 'src/taxonomy.ts'), 'utf8');
+  assert.match(taksonomi, /CATEGORY_META\[id\]\?\.icon/, 'uygulama ikonu katalogdan okumuyor');
+  assert.doesNotMatch(
+    taksonomi,
+    /const IKON: Record<string, IoniconName>/,
+    'uygulamada ikinci ikon eşlemesi geri gelmiş',
+  );
+  const { CATEGORY_IDS, CATEGORY_META } = await import('@ayna/domain');
+  const { TAXONOMY } = await import('./taxonomy');
+  for (const id of CATEGORY_IDS) {
+    assert.equal(
+      TAXONOMY.find((c) => c.id === id)?.icon,
+      CATEGORY_META[id]!.icon,
+      `${id} ikonu panelle aynı değil`,
+    );
   }
-  assert.deepEqual(alfasiz, [], `alfa kanalı olmayan ikon: ${alfasiz.join(', ')}`);
 });

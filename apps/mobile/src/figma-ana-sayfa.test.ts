@@ -189,9 +189,9 @@ test('hizmet ikon kutusu Figma ölçüsünü koruyor', () => {
    */
   const b = readFileSync(join(__dirname, 'ui', 'HizmetIkonu.tsx'), 'utf8');
   for (const deger of [
-    'kutu: 64',
-    'width: OLCU.kutu',
-    'height: OLCU.kutu',
+    'kutu: { kap: 64',
+    'width: OLCU.kutu.kap',
+    'height: OLCU.kutu.kap',
     'borderRadius: radius.md',
   ]) {
     assert.ok(b.includes(deger), `ikon kutusu: "${deger}" — ölçü tasarımdan sapmış`);

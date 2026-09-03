@@ -1,5 +1,5 @@
 import type { Ionicons } from '@expo/vector-icons';
-import { KATALOG, aramaAnahtari, ucDil, type UcDil } from '@ayna/domain';
+import { CATEGORY_META, KATALOG, aramaAnahtari, ucDil, type UcDil } from '@ayna/domain';
 import { varsayilan } from './hizmet-varsayilan';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -52,32 +52,18 @@ export interface TaxCategory {
 }
 
 /**
- * Kategori ikonu (Ionicons).
+ * Kategori ikonu — `@ayna/domain` → `CATEGORY_META`.
  *
- * Ana sayfadaki ÇİZİLMİŞ ikonlar burada değil — onlar `hizmet-ikon.ts`te.
- * Bu eşleme haritada, bildirim tercihlerinde ve çizimin olmadığı yerlerde
- * kullanılıyor; brief §6.2'deki ikon konseptini takip ediyor.
+ * Burada ikinci bir eşleme vardı; panel ve uygulama sessizce ayrışabilir,
+ * aynı kategori iki yerde iki farklı ikonla görünebilirdi. Tek kaynak.
  */
-const IKON: Record<string, IoniconName> = {
-  hair: 'cut-outline',
-  nails: 'color-palette-outline',
-  lashes_brows: 'eye-outline',
-  epilation: 'flash-outline',
-  skin: 'water-outline',
-  makeup: 'brush-outline',
-  massage: 'hand-left-outline',
-  spa: 'flower-outline',
-  body_contouring: 'body-outline',
-  hair_health: 'medkit-outline',
-  style: 'shirt-outline',
-  wellness: 'leaf-outline',
-  other: 'ellipsis-horizontal-circle-outline',
-};
+const ikonAdi = (id: string): IoniconName =>
+  (CATEGORY_META[id]?.icon as IoniconName | undefined) ?? 'sparkles-outline';
 
 export const TAXONOMY: TaxCategory[] = KATALOG.map((k) => ({
   id: k.id,
   ad: k.ad,
-  icon: IKON[k.id] ?? 'sparkles-outline',
+  icon: ikonAdi(k.id),
   services: k.altHizmetler.map((a) => {
     const v = varsayilan(a.id);
     return {

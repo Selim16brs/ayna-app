@@ -1,7 +1,6 @@
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CATEGORIES } from '../data';
-import { HIZMET_IKON } from '../hizmet-ikon';
 import { type ColorTokens, radius } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 
@@ -11,8 +10,8 @@ import { useTheme, useThemedStyles } from '../theme-context';
  * Kurucu: "services ikonlarda farklılıklar var uygulama içerisinde. bütün
  * hepsi ana sayfadaki tarzda olmalı."
  *
- * Haklıydı. `HIZMET_IKON` eşlemesi tekti ama ÇİZİMİ altı ekran ayrı ayrı
- * yapıyordu ve her biri kendi ölçüsünü koymuştu:
+ * Haklıydı. Eşleme tekti ama ÇİZİMİ altı ekran ayrı ayrı yapıyordu ve her
+ * biri kendi ölçüsünü koymuştu:
  *
  *   discover      64 kutu · ikon 64 (kutuyu doldurur)   ← ana sayfa, referans
  *   demand/new    64 kutu · ikon 30 (kutunun ortasında yüzüyor)
@@ -34,12 +33,18 @@ import { useTheme, useThemedStyles } from '../theme-context';
  *              kalır ve tek bir değerden gelir.
  */
 
-/** İzin verilen tek iki ölçü. Ekranlar kendi sayısını koyamaz. */
+/**
+ * İzin verilen tek iki ölçü. Ekranlar kendi sayısını koyamaz.
+ *
+ * `kap` kabın kenarı, `ikon` içindeki vektörün ölçüsü. PNG döneminde tek
+ * sayı yetiyordu (görsel kabı dolduruyordu); vektör kabın İÇİNDE nefes
+ * almalı, yoksa kenarlara yapışıp kaba görünür.
+ */
 const OLCU = {
-  /** Ana sayfadaki kare — ikon kutuyu tam doldurur. */
-  kutu: 64,
-  /** Hap/satır içi — yazının yanında. */
-  satir: 20,
+  /** Ana sayfadaki kare. */
+  kutu: { kap: 64, ikon: 28 },
+  /** Hap/satır içi — yazının yanında, kap yok. */
+  satir: { kap: 0, ikon: 16 },
 } as const;
 
 export type HizmetIkonTarzi = keyof typeof OLCU;
@@ -63,16 +68,31 @@ export function HizmetIkonu({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const kaynak = HIZMET_IKON[id];
-  const olcu = OLCU[tarz];
 
-  // Eşlemede olmayan kategori — vektör yedeği. Ana sayfa da böyle yapıyor.
-  const gorsel = kaynak ? (
-    <Image source={kaynak} style={{ width: olcu, height: olcu }} resizeMode="contain" />
-  ) : (
+  /*
+   * ── HEPSİ VEKTÖR ────────────────────────────────────────────────────
+   *
+   * Kurucu: "senin yaptığın 6 icon tarzı güzeldi. daha öncekileri de ona
+   * benzer yap."
+   *
+   * 13 kategorinin 7'si Figma'dan gelen elle çizilmiş PNG'ydi, 6'sı ise
+   * çizimi olmadığı için vektöre düşüyordu. Kurucu vektör tarzını seçti;
+   * artık HEPSİ oradan geliyor ve set tek elden çıkmış gibi duruyor.
+   *
+   * Üç şey daha kendiliğinden düzeldi:
+   *   · İkon ARTIK AKSANI TAKİP EDİYOR. PNG'lerin çizgi rengi (koyu
+   *     erguvan) dosyanın içindeydi; kullanıcı rengi değiştirdiğinde ikon
+   *     olduğu gibi kalıyordu.
+   *   · Ölçek gerçek: 192px PNG küçültülüyordu, vektör her boyutta net.
+   *   · Alfa kanalı tuzağı bitti — dışa aktarım hatası zemini görselin
+   *     içine pişiremez.
+   *
+   * PNG dosyaları silinmedi: kurucu fikir değiştirirse elde duruyorlar.
+   */
+  const gorsel = (
     <Ionicons
       name={CATEGORIES.find((c) => c.id === id)?.icon ?? 'sparkles-outline'}
-      size={tarz === 'kutu' ? 26 : 16}
+      size={OLCU[tarz].ikon}
       color={colors.accent}
     />
   );
@@ -88,25 +108,22 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     // Ana sayfadaki `ikonKart` ile BİREBİR aynı — referans burasıydı.
     kutu: {
-      width: OLCU.kutu,
-      height: OLCU.kutu,
+      width: OLCU.kutu.kap,
+      height: OLCU.kutu.kap,
       borderRadius: radius.md,
       overflow: 'hidden',
       alignItems: 'center',
       justifyContent: 'center',
       /*
-       * ── ZEMİN ARTIK AKSANI TAKİP EDİYOR ────────────────────────────
+       * ── ZEMİN VE ÇİZGİ, İKİSİ DE AKSANI TAKİP EDİYOR ───────────────
        *
        * Kurucu: "renk değiştiğinde hizmetler ikonlarının altındaki renk
        * sabit kalıyor."
        *
-       * Sebep burada DEĞİLDİ: PNG'ler alfa kanalsız (RGB) geliyordu ve
-       * lila zemin GÖRSELİN İÇİNE pişmişti — kutuya hangi rengi verirsek
-       * verelim üstüne opak bir kare biniyordu. Görseller şeffaflaştırıldı;
-       * artık kutunun rengi gerçekten görünüyor.
-       *
-       * `accentSoft` seçildi: aksanın açık tonu, seçilen her renk setinde
-       * ikon çizgisinin altında okunur bir zemin bırakıyor.
+       * Zemin `accentSoft`, çizgi `accent`: aksanın açık tonu üzerinde
+       * koyu tonu. Hangi renk seti seçilirse seçilsin okunur kalıyor ve
+       * artık İKİSİ DE değişiyor — PNG döneminde çizgi rengi dosyanın
+       * içinde sabitti.
        */
       backgroundColor: colors.accentSoft,
       borderWidth: 1,

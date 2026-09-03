@@ -60,17 +60,38 @@ export const CATEGORY_DEFAULTS: Record<string, { maintenanceDays: number; servic
  * `nameTr` ve sıra KATALOGDAN geliyor; burada yalnız panelin ihtiyaç
  * duyduğu ikon ve renk tonu ekleniyor.
  */
+/**
+ * KATEGORİ İKONLARI — TEK KAYNAK (Ionicons adları).
+ *
+ * Kurucu: "senin yaptığın 6 icon tarzı güzeldi. daha öncekileri de ona
+ * benzer yap." 13'ünün hepsi artık aynı vektör ailesinden; elle çizilmiş
+ * PNG'lerle karışık bir set yerine tek elden çıkmış bir set.
+ *
+ * Uygulama ve admin paneli BURADAN okuyor. Uygulamada ayrı bir eşleme
+ * vardı ve ikisi sessizce ayrışabilirdi: panelde bir ikon, telefonda
+ * başka bir ikon.
+ *
+ * ── SEÇİMLER ────────────────────────────────────────────────────────
+ *
+ * Ionicons'ta tırnak, masaj ya da saç sağlığı için birebir glif yok;
+ * en okunur karşılıklar seçildi ve her ikonun altında zaten kategori
+ * adı yazıyor:
+ *   nails       → el (tırnaklar elde). Palet "resim" diye okunuyordu.
+ *   massage     → masaj masası. Açık el "dur" işareti gibi duruyordu.
+ *   hair_health → nabız (sağlık). İlk yardım çantası "acil" diyordu,
+ *                 saçla ilgisi yoktu.
+ */
 const IKON: Record<string, string> = {
   hair: 'cut-outline',
-  nails: 'color-palette-outline',
+  nails: 'hand-left-outline',
   lashes_brows: 'eye-outline',
   epilation: 'flash-outline',
   skin: 'water-outline',
   makeup: 'brush-outline',
-  massage: 'hand-left-outline',
+  massage: 'bed-outline',
   spa: 'flower-outline',
   body_contouring: 'body-outline',
-  hair_health: 'medkit-outline',
+  hair_health: 'pulse-outline',
   style: 'shirt-outline',
   wellness: 'leaf-outline',
   other: 'ellipsis-horizontal-circle-outline',
