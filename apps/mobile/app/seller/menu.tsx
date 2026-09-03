@@ -81,6 +81,20 @@ const ITEMS: {
     tone: 'accent',
   },
   {
+    /*
+     * MÜŞTERİLERİMLE PAYLAŞ — öncesi/sonrası.
+     *
+     * Hizmetlerin hemen üstünde: uzmanın günlük işine en yakın eylem,
+     * ayarların arasına gömülmemeli.
+     */
+    id: 'paylas',
+    icon: 'images',
+    labelKey: 'propost.title',
+    descKey: 'propost.expiry_hint',
+    route: '/seller/paylas',
+    tone: 'accent',
+  },
+  {
     id: 'services',
     icon: 'pricetags',
     labelKey: 'reports.action.services',
