@@ -157,6 +157,12 @@ export const tr = {
   'seller.start.services': 'Hizmetlerimi gir',
   'seller.start.verify': 'Kimliğimi doğrula',
   'seller.menu.verify': 'Doğrulama & Rozetler',
+  'seller.location.title': 'Konumum',
+  'seller.location.desc': 'Haritada işaretle — "yakınımdakiler" sıralamasına doğru gir',
+  'seller.location.why':
+    'Müşteriler yakınlarındaki uzmanları ararken bu konuma göre sıralanıyorsun. Konum işaretlenmemişse mesafeye göre sıralamaya hiç girmiyorsun.',
+  'seller.location.change': 'Konumu değiştir',
+  'seller.location.saved': 'Konumun kaydedildi',
   'seller.menu.verify_d': 'Kimlik, sertifika ve sosyal medyanı doğrula — AYNA Onaylı ol',
   'expert.verify.title': 'Doğrulama & Rozetler',
   'expert.verify.not_yet': 'Henüz AYNA Onaylı değilsin',
@@ -1408,6 +1414,7 @@ export const tr = {
    * Astana'ya bakarken "2,5 km от вас" görüyor, oysa bin kilometre uzakta.
    */
   'map.distance': 'km merkeze',
+  'map.no_pin': '{n} uzman konumunu işaretlememiş — haritada görünmüyorlar, listede duruyorlar.',
   'map.bridge': 'Aradığını bulamadın mı? Fotoğraf gönder, teklif al',
 
   // Arama

@@ -11,6 +11,7 @@ import {
   priceLabel,
   type Professional,
   proCoords,
+  konumuVar,
 } from '../src/data';
 import { bolgeAdi } from '../src/bolge-adi';
 import { useProfessionals } from '../src/catalog';
@@ -112,6 +113,22 @@ export default function MapScreen() {
     [all, city, cat, bolge],
   );
 
+  /**
+   * HARİTADA YALNIZ GERÇEK KONUMLAR.
+   *
+   * Kurucu: "sistem hiçbir şekilde... hiçbir şeyi kendiliğinden
+   * uydurmamalı."
+   *
+   * `proCoords` koordinat yoksa şehir merkezi etrafına DAĞITIYOR. O pinler
+   * gerçek adres değil; kullanıcı haritaya bakıp "şurada bir salon var"
+   * diye yola çıkabilir. Uydurma nokta göstermektense göstermemek doğru.
+   *
+   * Kaybolmuyorlar: kaç tanesi olduğu yazılıyor ve liste görünümünde
+   * duruyorlar.
+   */
+  const konumlu = useMemo(() => pros.filter((p) => konumuVar(p)), [pros]);
+  const konumsuzSayisi = pros.length - konumlu.length;
+
   return (
     <Screen edges={[]}>
       {/*
@@ -188,16 +205,27 @@ export default function MapScreen() {
           showsUserLocation
           showsMyLocationButton
         >
-          {pros.map((p) => (
+          {konumlu.map((p) => (
             <Marker
               key={p.id}
-              coordinate={proCoords(p.id, p.lat, p.lng)}
+              // `p.lat`/`p.lng` burada KESİN dolu (`konumuVar` süzdü).
+              coordinate={{ latitude: p.lat!, longitude: p.lng! }}
               // §5.1.3 — salon vs bağımsız uzman pinleri görsel ayrı
               pinColor={p.kind === 'salon' ? colors.accentFg : colors.blue}
               onPress={() => setSelected(p)}
             />
           ))}
         </MapView>
+
+        {/* Konumu olmayanlar SESSİZCE kaybolmuyor: sayısı yazılıyor. */}
+        {konumsuzSayisi > 0 && !selected ? (
+          <View style={styles.konumsuzBant}>
+            <Ionicons name="information-circle-outline" size={15} color={colors.inkSoft} />
+            <Text variant="caption" tone="inkSoft" style={styles.konumsuzYazi} numberOfLines={2}>
+              {fillParams(t('map.no_pin'), { n: String(konumsuzSayisi) })}
+            </Text>
+          </View>
+        ) : null}
 
         {/* Teklif motoru köprüsü (denge kuralı §7.4) */}
         {!selected ? (
@@ -569,6 +597,23 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    konumsuzBant: {
+      position: 'absolute',
+      left: space(2),
+      right: space(2),
+      bottom: space(2),
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      paddingHorizontal: space(2),
+      paddingVertical: space(1.5),
+      borderRadius: radius.md,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    konumsuzYazi: { flex: 1 },
+
     // ── profili boş uzman ──
     eksikKutu: {
       alignItems: 'center',
