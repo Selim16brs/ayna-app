@@ -27,17 +27,45 @@ export const registerSpecialistSchema = z
      * beklemeden anında yazıyor (§profil-anında). Zorunluluk kaydı
      * kilitlemiyor, yalnız boş başlamayı engelliyor.
      */
+    /*
+     * KATALOG BAĞI İKİ ADDAN BİRİYLE GELEBİLİR.
+     *
+     * Brief §4.1 ile uygulama `serviceId` göndermeye başladı; bu şema hâlâ
+     * `id` ZORUNLU tutuyordu ve KAYIT TÜMDEN REDDEDİLİYORDU — hizmet seçen
+     * her uzman "Geçersiz veri" alıyor, kaydını tamamlayamıyordu.
+     *
+     * İkisi de kabul ediliyor: `serviceId` bugünkü biçim, `id` eski
+     * istemcilerin biçimi. En az biri ZORUNLU — kataloğa bağlanmayan satır
+     * zaten hiçbir ekranda çalışmıyor (`hizmetSatirlariniNormalle` onu
+     * ayrıca eliyor), ama burada erken reddetmek uzmana ne olduğunu
+     * söylüyor.
+     */
     services: z
       .array(
         z.object({
-          id: z.string().min(1).max(60),
+          id: z.string().min(1).max(60).optional(),
+          serviceId: z.string().min(1).max(60).optional(),
           name: z.string().min(1).max(120),
           price: z.number().int().nonnegative().max(100_000_000),
           durationMin: z.number().int().positive().max(1440),
         }),
       )
       .min(1, 'En az bir hizmet seçilmeli')
-      .max(60),
+      .max(60)
+      /*
+       * BAĞ SATIR BAZINDA ZORUNLU DEĞİL, LİSTEDE ZORUNLU.
+       *
+       * Tek bir bağsız satır yüzünden kaydın tümünü reddetmek sert olurdu:
+       * o satır sunucuda zaten eleniyor (`hizmetSatirlariniNormalle`) ve
+       * uzman geri kalan hizmetleriyle çalışmaya devam edebilir.
+       *
+       * Ama HİÇBİRİ bağlı değilse eleme sonrası liste BOŞ kalır: brief
+       * §4.1 "en az 1 alt hizmet seçilmeden kayıt tamamlanamaz" diyor ve
+       * uzman hizmetsiz yayına girerdi. Kural burada.
+       */
+      .refine((liste) => liste.some((r) => !!(r.serviceId ?? r.id)), {
+        message: 'En az bir hizmet katalogdaki bir alt hizmete bağlı olmalı',
+      }),
     bio: z.string().optional(),
     photoDataUrl: z.string().max(12_000_000).optional(),
     birthDateMs: z.number().int().positive().optional(),
