@@ -1,26 +1,69 @@
 :root {
-  --bg: #f5f6f0;
+  /*
+   * ── AYNA ADMIN — GÖRSEL DİL ───────────────────────────────────────────
+   *
+   * Kurucu: "modern premium bir admin sayfası."
+   *
+   * Eski panel baştan aşağı beyazdı: kenar menü, kartlar ve zemin neredeyse
+   * aynı tondaydı, hiyerarşi yalnız ince çizgilerle kuruluyordu. Sonuç
+   * yıkanmış ve şablon gibi bir görüntüydü.
+   *
+   * Yeni dil ÜÇ KATMAN üzerine kurulu:
+   *   1. Kenar menü KOYU (mürekkep) — sabit, ağır, panelin omurgası.
+   *   2. Zemin sıcak açık nötr — göz yormuyor, saf beyaz değil.
+   *   3. Kartlar SAF BEYAZ — içerik zeminin üstünde yüzüyor.
+   * Aradaki fark tek başına hiyerarşiyi kuruyor; ince çizgilere yük binmiyor.
+   *
+   * Aksan markanın limesi. Koyu menü üstünde ilk kez gerçekten PARLIYOR;
+   * beyaz üstünde soluk kalıyordu. Aksan üzerindeki yazı için lime'ın
+   * kendisi değil koyu mürekkep kullanılıyor — lime açık bir renk ve beyaz
+   * yazı üstünde okunmuyor.
+   *
+   * NÖTRLER SICAK: gri değil, hafif yeşile çalan. Saf gri, lime'ın yanında
+   * kirli görünüyor.
+   */
+  --bg: #f7f8f3;
+  --bg-alt: #eff1e8;
   --surface: #ffffff;
-  --ink: #23261c;
-  --muted: #8b9083;
-  --line: #e7eadf;
-  /* AYNA marka — lime (mobil ile birebir) */
+  --ink: #191c14;
+  --ink-soft: #4b5142;
+  --muted: #868c7a;
+  --line: #e6e9dd;
+  --line-soft: #f0f2ea;
+
+  /* Kenar menü — panelin omurgası */
+  --nav-bg: #1b2016;
+  --nav-ink: #dfe4d4;
+  --nav-muted: #8d967d;
+  --nav-line: #2b3225;
+  --nav-hover: #262d20;
+
+  /* Marka */
   --accent: #c6e24b;
   --accent-soft: #eef7c8;
-  --accent-fg: #5c7714;
-  --on-accent: #1a1a1a;
-  --ink-soft: #4a4f41;
-  --gold: #b8912f;
-  --gold-soft: #f4ecd4;
-  --danger: #c9685c;
-  --danger-soft: #f6e2de;
-  --success: #4f9a6f;
-  --success-soft: #e2efe8;
-  --info: #5b7fb0;
-  --info-soft: #e5ecf5;
-  --shadow: 0 6px 24px rgba(40, 46, 28, 0.06);
-  --shadow-sm: 0 2px 8px rgba(40, 46, 28, 0.05);
-  /* geriye dönük — eski değişken adları lime'a eşlendi */
+  --accent-fg: #55700f;
+  --on-accent: #1b2016;
+
+  /* Anlam renkleri — aksandan AYRI. Karışırsa "iyi/kötü" okunmaz olur. */
+  --gold: #96731d;
+  --gold-soft: #f7efd8;
+  --danger: #b8453a;
+  --danger-soft: #fae5e2;
+  --success: #2f7d55;
+  --success-soft: #ddf0e5;
+  --info: #3b6699;
+  --info-soft: #e4ecf6;
+
+  /*
+   * Gölgeler renksiz siyah değil: zeminin sıcaklığını taşıyorlar, yoksa
+   * kartlar zeminden kopuk ve "yapıştırılmış" görünüyor.
+   */
+  --shadow: 0 12px 32px -12px rgba(30, 38, 18, 0.18), 0 2px 6px -2px rgba(30, 38, 18, 0.08);
+  --shadow-sm: 0 1px 2px rgba(30, 38, 18, 0.05), 0 1px 1px rgba(30, 38, 18, 0.03);
+  --radius: 14px;
+  --radius-sm: 10px;
+
+  /* geriye dönük — eski değişken adları */
   --rose: var(--accent-fg);
   --rose-soft: var(--accent-soft);
   --coral: var(--accent);
@@ -29,10 +72,13 @@
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-ui), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Rakamlar sütun sütun karşılaştırılıyor: para, adet, oran. */
+  font-variant-numeric: tabular-nums;
 }
 button { font-family: inherit; cursor: pointer; border: none; }
 input, textarea, select { font-family: inherit; }
@@ -184,3 +230,246 @@ textarea.input { height: auto; min-height: 120px; padding: 12px 14px; line-heigh
   font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .verify-chip.on { background: #16a34a; border-color: #16a34a; color: #fff; }
+
+/* ── PANEL İÇİ DİYALOG ────────────────────────────────────────────────────
+   Tarayıcının prompt/alert/confirm kutularının yerine. Onlar panelin
+   tasarımıyla ilgisiz, tek alanlık ve ekranın tepesinden düşen kutulardı;
+   üye düzenlemek için arka arkaya DÖRT pencere açılıyordu. */
+.dlg-perde {
+  position: fixed; inset: 0; z-index: 90;
+  background: rgba(26, 30, 20, 0.42);
+  backdrop-filter: blur(2px);
+  display: grid; place-items: center; padding: 24px;
+  animation: dlg-gir 0.12s ease-out;
+}
+.dlg {
+  width: 100%; max-width: 460px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: 0 18px 48px rgba(30, 35, 20, 0.22);
+  padding: 22px; max-height: 84vh; overflow-y: auto;
+  animation: dlg-yuksel 0.14s ease-out;
+}
+.dlg-baslik { font-size: 17px; font-weight: 800; letter-spacing: -0.1px; }
+.dlg-mesaj { margin-top: 8px; font-size: 14px; line-height: 1.5; color: var(--ink-soft); }
+.dlg-form { margin-top: 4px; }
+.dlg-alan { display: block; margin-top: 14px; }
+.dlg-etiket { display: block; font-size: 13px; font-weight: 700; color: var(--ink-soft); margin-bottom: 6px; }
+.dlg-zorunlu { color: var(--danger); font-style: normal; }
+.dlg-not { display: block; font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
+.dlg-uzun { height: 88px; padding: 10px 14px; line-height: 1.5; resize: vertical; }
+.dlg-eylem { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+@keyframes dlg-gir { from { opacity: 0 } to { opacity: 1 } }
+@keyframes dlg-yuksel { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+
+/* Bildirim şeridi — `alert` gibi tıklama beklemez, iş akışını kesmez. */
+.bildirim-yigin {
+  position: fixed; z-index: 95; right: 20px; bottom: 20px;
+  display: flex; flex-direction: column; gap: 8px; max-width: 380px;
+}
+.bildirim {
+  background: var(--ink); color: #fff; padding: 12px 16px;
+  border-radius: 11px; font-size: 14px; font-weight: 600; line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(30, 35, 20, 0.28);
+  animation: dlg-yuksel 0.16s ease-out;
+}
+.bildirim-hata { background: var(--danger); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dlg-perde, .dlg, .bildirim { animation: none; }
+}
+
+/* ── KENAR MENÜ ───────────────────────────────────────────────────────────
+   26 kalem var. Gruplama tek başına yetmiyordu: aradığı ekranı bulmak için
+   hâlâ yirmi altı satırı gözle taramak gerekiyordu. */
+.nav-ara {
+  width: 100%; height: 36px; margin: 10px 0 6px;
+  border-radius: 10px; border: 1px solid var(--line);
+  background: #fbfcf8; color: var(--ink);
+  padding: 0 12px; font-size: 13px;
+}
+.nav-ara:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.nav-ara::placeholder { color: var(--muted); }
+.nav-liste { flex: 1; min-height: 0; overflow-y: auto; margin: 0 -2px; padding: 0 2px; }
+.nav-grup + .nav-grup { margin-top: 10px; }
+.nav-grup-baslik {
+  padding: 10px 12px 5px; font-size: 10px; font-weight: 800;
+  letter-spacing: 1.1px; color: var(--muted);
+}
+.nav-ikon { width: 18px; text-align: center; flex: none; }
+/* Uzun etiket menüyü genişletmesin; tamamı `title` yerine satırda kalsın. */
+.nav-etiket { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-rozet {
+  flex: none; background: var(--danger); color: #fff; border-radius: 999px;
+  font-size: 11px; font-weight: 800; padding: 1px 7px; line-height: 1.5;
+}
+.nav-item.active .nav-rozet { background: var(--accent-fg); }
+.nav-bos { padding: 18px 12px; font-size: 13px; color: var(--muted); }
+/* Klavye erişilebilirliği: odak görünür olmalı. */
+.nav-item:focus-visible, .chip:focus-visible, .btn-sm:focus-visible, .btn:focus-visible {
+  outline: 2px solid var(--accent-fg); outline-offset: 2px;
+}
+.logout { margin-top: 8px; flex: none; }
+
+/* ── OKUNURLUK ────────────────────────────────────────────────────────────
+   Ana alan dar kalıp uzun listeleri sıkıştırıyordu; başlık da kaydırınca
+   kayboluyor ve hangi ekranda olunduğu belirsizleşiyordu. */
+.main { max-width: 1360px; padding: 26px 34px 56px; }
+.page-title { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 6px 0 2px; }
+.list-row { padding: 14px 20px; }
+.list-row .meta { line-height: 1.5; }
+/* Sayısal sütunlar hizalansın — para ve adet gözle karşılaştırılıyor. */
+.stat .v, .kv-v { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 1080px) {
+  .shell { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--line); }
+  .nav-liste { max-height: 260px; }
+  .main { padding: 20px 18px 40px; max-width: none; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .row2, .kv-grid, .form-inline { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PREMIUM GEÇİŞİ
+   Kurucu: "modern premium bir admin sayfası."
+   Aşağıdakiler yukarıdaki eski kuralları BİLEREK eziyor: 4500 satırlık
+   JSX'i yeniden yazmak yerine görsel dili tek yerden değiştiriyoruz.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── KENAR MENÜ: KOYU OMURGA ───────────────────────────────────────────── */
+.sidebar {
+  width: 258px; background: var(--nav-bg); border-right: none;
+  padding: 20px 14px 16px; color: var(--nav-ink);
+}
+.side-brand {
+  color: #fff; font-size: 19px; letter-spacing: 3.5px; font-weight: 800;
+  padding: 6px 10px 12px; border-bottom: 1px solid var(--nav-line); margin-bottom: 4px;
+}
+.side-brand::before { box-shadow: 0 0 0 4px rgba(198, 226, 75, 0.16); }
+.nav-ara {
+  background: rgba(255, 255, 255, 0.05); border-color: var(--nav-line);
+  color: var(--nav-ink); height: 38px;
+}
+.nav-ara::placeholder { color: var(--nav-muted); }
+.nav-ara:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(198, 226, 75, 0.16); background: rgba(255, 255, 255, 0.08); }
+.nav-grup-baslik { color: var(--nav-muted); letter-spacing: 1.3px; }
+.nav-item { color: var(--nav-ink); border-radius: var(--radius-sm); padding: 9px 11px; font-size: 13.5px; }
+.nav-item:hover { background: var(--nav-hover); color: #fff; }
+/* Seçili kalem: lime dolgu + koyu yazı. Lime açık bir renk; üstüne beyaz
+   yazı okunmuyordu. */
+.nav-item.active { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.nav-item.active::before { display: none; }
+.nav-item.active .nav-rozet { background: var(--on-accent); color: var(--accent); }
+.nav-rozet { background: var(--danger); box-shadow: 0 0 0 2px var(--nav-bg); }
+.nav-bos { color: var(--nav-muted); }
+.logout { color: #e79c92; border-top: 1px solid var(--nav-line); border-radius: 0; padding-top: 14px; margin-top: 12px; }
+.logout:hover { background: transparent; color: #f3b6ad; }
+.nav-liste::-webkit-scrollbar { width: 6px }
+.nav-liste::-webkit-scrollbar-thumb { background: var(--nav-line); border-radius: 3px }
+
+/* ── SAYFA BAŞLIĞI ─────────────────────────────────────────────────────── */
+.main { padding: 30px 38px 60px; }
+.page-title {
+  font-size: 27px; font-weight: 800; letter-spacing: -0.7px;
+  /* Yapışkan başlık zeminle aynı renkte olmalı; yoksa altından içerik sızar. */
+  background: var(--bg); padding: 4px 0 10px;
+}
+.page-sub { font-size: 14px; margin-bottom: 24px; line-height: 1.55; max-width: 68ch; }
+
+/* ── KARTLAR & İSTATİSTİK ──────────────────────────────────────────────── */
+.card, .stat {
+  border-radius: var(--radius); border: 1px solid var(--line); box-shadow: var(--shadow-sm);
+}
+.stat { padding: 18px 20px; transition: box-shadow 0.16s, transform 0.16s; }
+.stat:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+/* Sol renk şeridi kaldırıldı: on kart yan yana dizilince ritim değil
+   gürültü üretiyordu. Vurgu artık rakamın kendisinde. */
+.stat::after { display: none; }
+.stat .v { font-size: 30px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+.stat .l { font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 600; letter-spacing: 0.1px; }
+.stat-grid { gap: 12px; }
+.section-title {
+  font-size: 12px; font-weight: 800; letter-spacing: 1.1px; text-transform: uppercase;
+  color: var(--muted); margin: 32px 0 12px;
+}
+
+/* ── LİSTELER ──────────────────────────────────────────────────────────── */
+.list-row, .list-col { border-bottom: 1px solid var(--line-soft); }
+.list-row:hover { background: var(--bg-alt); }
+.list-row .name, .list-col .name { font-weight: 700; letter-spacing: -0.15px; }
+.list-row .meta, .list-col .meta { font-size: 12.5px; }
+
+/* ── DÜĞMELER ──────────────────────────────────────────────────────────── */
+.btn, .btn-sm {
+  border-radius: var(--radius-sm); font-weight: 700;
+  transition: filter 0.14s, box-shadow 0.14s, transform 0.06s;
+}
+.btn { box-shadow: 0 2px 10px -3px rgba(140, 170, 40, 0.5); }
+.btn-sm { height: 33px; padding: 0 13px; font-size: 12.5px; }
+.btn-sm:hover { filter: brightness(0.97); }
+.btn-ghost { background: var(--bg-alt); color: var(--ink-soft); border: 1px solid var(--line); }
+.btn-ghost:hover { background: var(--line-soft); color: var(--ink); }
+.btn-danger { background: var(--danger-soft); color: var(--danger); }
+.btn-ok { background: var(--success-soft); color: var(--success); }
+
+/* ── ETİKET & FİLTRE ───────────────────────────────────────────────────── */
+.pill { font-size: 11px; font-weight: 700; padding: 4px 9px; letter-spacing: 0.15px; }
+.chip { border-radius: 999px; padding: 7px 14px; font-size: 12.5px; }
+.chip.on { box-shadow: 0 2px 8px -3px rgba(140, 170, 40, 0.55); }
+
+/* ── GİRDİLER ──────────────────────────────────────────────────────────── */
+.input { border-radius: var(--radius-sm); height: 42px; background: #fff; font-size: 14px; }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* ── DİYALOG ───────────────────────────────────────────────────────────── */
+.dlg { border-radius: 18px; padding: 24px; box-shadow: 0 24px 60px -18px rgba(20, 26, 12, 0.5); }
+.dlg-baslik { font-size: 18px; letter-spacing: -0.35px; }
+.dlg-perde { background: rgba(20, 26, 12, 0.5); }
+.bildirim { border-radius: var(--radius-sm); background: var(--nav-bg); }
+
+/* ── GİRİŞ EKRANI ──────────────────────────────────────────────────────── */
+.login-wrap { background: var(--nav-bg); }
+.login-card { border-radius: 20px; padding: 36px; border: none; box-shadow: 0 30px 70px -25px rgba(0, 0, 0, 0.6); }
+.brand { letter-spacing: 4px; }
+
+/* Ekranı daraltınca koyu menü tepede bir şerit olur; içerik nefes alır. */
+@media (max-width: 1080px) {
+  .sidebar { width: 100%; padding: 14px 16px; }
+  .side-brand { border-bottom: none; margin-bottom: 0; padding-bottom: 8px; }
+  .page-title { font-size: 22px; }
+}
+
+/* ── BEKLEYEN İŞ KARTLARI ──────────────────────────────────────────────────
+   Panonun ilk satırı ve panelin en çok bakılan yeri. Rakamlar diğer
+   satırlarla AYNI ölçüde olmalı; küçük kalınca bekleyen iş gözden kaçıyordu. */
+.stat-tik { cursor: pointer; text-align: left; width: 100%; background: var(--surface); }
+.stat-tik:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+/* İşi olan kart öne çıkar: on bir kart aynı görünürse taramak gözle sayma
+   işine dönüyor. */
+.stat-tik.dikkat { border-color: var(--danger); background: var(--danger-soft); }
+.stat-tik.dikkat .v { color: var(--danger); }
+.stat-tik.dikkat .l { color: var(--danger); opacity: 0.85; }
+
+/* ── SATIR İÇİ EYLEMLER ────────────────────────────────────────────────────
+   Bir üye satırında beş düğme yan yana duruyor: Kaydet · Düzenle · Şifre ·
+   Kısıtla · Askıya al. Hepsi aksan renginde olunca hangisinin ana eylem
+   olduğu okunmuyor ve satır "kalabalık" görünüyordu.
+
+   Kural: satır içindeki düğmeler SESSİZ. Anlamı olanlar (kırmızı = yıkıcı,
+   yeşil = onay) kendi rengini korur; geri kalanı nötr. */
+.list-row .btn-sm:not(.btn-danger):not(.btn-ok),
+.list-col .btn-sm:not(.btn-danger):not(.btn-ok),
+.actions .btn-sm:not(.btn-danger):not(.btn-ok) {
+  background: var(--bg-alt); color: var(--ink-soft); border: 1px solid var(--line);
+}
+.list-row .btn-sm:not(.btn-danger):not(.btn-ok):hover,
+.list-col .btn-sm:not(.btn-danger):not(.btn-ok):hover,
+.actions .btn-sm:not(.btn-danger):not(.btn-ok):hover {
+  background: #fff; color: var(--ink); border-color: var(--muted);
+}
+/* Yıkıcı eylem kenarlıkla da ayrılıyor: renk körlüğünde tek başına renk
+   yetmez. */
+.btn-danger { border: 1px solid rgba(184, 69, 58, 0.28); }
+.btn-ok { border: 1px solid rgba(47, 125, 85, 0.28); }
+/* Satırda çok düğme var; alt alta binmesinler. */
+.list-row .actions { flex-wrap: wrap; justify-content: flex-end; }
