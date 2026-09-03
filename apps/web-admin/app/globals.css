@@ -184,3 +184,101 @@ textarea.input { height: auto; min-height: 120px; padding: 12px 14px; line-heigh
   font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .verify-chip.on { background: #16a34a; border-color: #16a34a; color: #fff; }
+
+/* ── PANEL İÇİ DİYALOG ────────────────────────────────────────────────────
+   Tarayıcının prompt/alert/confirm kutularının yerine. Onlar panelin
+   tasarımıyla ilgisiz, tek alanlık ve ekranın tepesinden düşen kutulardı;
+   üye düzenlemek için arka arkaya DÖRT pencere açılıyordu. */
+.dlg-perde {
+  position: fixed; inset: 0; z-index: 90;
+  background: rgba(26, 30, 20, 0.42);
+  backdrop-filter: blur(2px);
+  display: grid; place-items: center; padding: 24px;
+  animation: dlg-gir 0.12s ease-out;
+}
+.dlg {
+  width: 100%; max-width: 460px; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 16px;
+  box-shadow: 0 18px 48px rgba(30, 35, 20, 0.22);
+  padding: 22px; max-height: 84vh; overflow-y: auto;
+  animation: dlg-yuksel 0.14s ease-out;
+}
+.dlg-baslik { font-size: 17px; font-weight: 800; letter-spacing: -0.1px; }
+.dlg-mesaj { margin-top: 8px; font-size: 14px; line-height: 1.5; color: var(--ink-soft); }
+.dlg-form { margin-top: 4px; }
+.dlg-alan { display: block; margin-top: 14px; }
+.dlg-etiket { display: block; font-size: 13px; font-weight: 700; color: var(--ink-soft); margin-bottom: 6px; }
+.dlg-zorunlu { color: var(--danger); font-style: normal; }
+.dlg-not { display: block; font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
+.dlg-uzun { height: 88px; padding: 10px 14px; line-height: 1.5; resize: vertical; }
+.dlg-eylem { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+@keyframes dlg-gir { from { opacity: 0 } to { opacity: 1 } }
+@keyframes dlg-yuksel { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+
+/* Bildirim şeridi — `alert` gibi tıklama beklemez, iş akışını kesmez. */
+.bildirim-yigin {
+  position: fixed; z-index: 95; right: 20px; bottom: 20px;
+  display: flex; flex-direction: column; gap: 8px; max-width: 380px;
+}
+.bildirim {
+  background: var(--ink); color: #fff; padding: 12px 16px;
+  border-radius: 11px; font-size: 14px; font-weight: 600; line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(30, 35, 20, 0.28);
+  animation: dlg-yuksel 0.16s ease-out;
+}
+.bildirim-hata { background: var(--danger); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dlg-perde, .dlg, .bildirim { animation: none; }
+}
+
+/* ── KENAR MENÜ ───────────────────────────────────────────────────────────
+   26 kalem var. Gruplama tek başına yetmiyordu: aradığı ekranı bulmak için
+   hâlâ yirmi altı satırı gözle taramak gerekiyordu. */
+.nav-ara {
+  width: 100%; height: 36px; margin: 10px 0 6px;
+  border-radius: 10px; border: 1px solid var(--line);
+  background: #fbfcf8; color: var(--ink);
+  padding: 0 12px; font-size: 13px;
+}
+.nav-ara:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.nav-ara::placeholder { color: var(--muted); }
+.nav-liste { flex: 1; min-height: 0; overflow-y: auto; margin: 0 -2px; padding: 0 2px; }
+.nav-grup + .nav-grup { margin-top: 10px; }
+.nav-grup-baslik {
+  padding: 10px 12px 5px; font-size: 10px; font-weight: 800;
+  letter-spacing: 1.1px; color: var(--muted);
+}
+.nav-ikon { width: 18px; text-align: center; flex: none; }
+/* Uzun etiket menüyü genişletmesin; tamamı `title` yerine satırda kalsın. */
+.nav-etiket { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-rozet {
+  flex: none; background: var(--danger); color: #fff; border-radius: 999px;
+  font-size: 11px; font-weight: 800; padding: 1px 7px; line-height: 1.5;
+}
+.nav-item.active .nav-rozet { background: var(--accent-fg); }
+.nav-bos { padding: 18px 12px; font-size: 13px; color: var(--muted); }
+/* Klavye erişilebilirliği: odak görünür olmalı. */
+.nav-item:focus-visible, .chip:focus-visible, .btn-sm:focus-visible, .btn:focus-visible {
+  outline: 2px solid var(--accent-fg); outline-offset: 2px;
+}
+.logout { margin-top: 8px; flex: none; }
+
+/* ── OKUNURLUK ────────────────────────────────────────────────────────────
+   Ana alan dar kalıp uzun listeleri sıkıştırıyordu; başlık da kaydırınca
+   kayboluyor ve hangi ekranda olunduğu belirsizleşiyordu. */
+.main { max-width: 1360px; padding: 26px 34px 56px; }
+.page-title { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 6px 0 2px; }
+.list-row { padding: 14px 20px; }
+.list-row .meta { line-height: 1.5; }
+/* Sayısal sütunlar hizalansın — para ve adet gözle karşılaştırılıyor. */
+.stat .v, .kv-v { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 1080px) {
+  .shell { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--line); }
+  .nav-liste { max-height: 260px; }
+  .main { padding: 20px 18px 40px; max-width: none; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .row2, .kv-grid, .form-inline { grid-template-columns: 1fr; }
+}

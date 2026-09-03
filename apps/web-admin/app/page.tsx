@@ -1,6 +1,6 @@
 'use client';
-
 import { useCallback, useEffect, useState } from 'react';
+import { DiyalogSaglayici, useDiyalog } from './ui/Diyalog';
 import {
   api,
   type AdBanner,
@@ -52,7 +52,6 @@ import {
   type IadeSatiri,
   type UzlasmaSatiri,
 } from './lib/api';
-
 type Tab =
   | 'overview'
   | 'stats'
@@ -82,7 +81,6 @@ type Tab =
   | 'system'
   | 'audit';
 const TL = (n: number) => '₸' + n.toLocaleString('tr-TR');
-
 // §12 — her liste Excel'e aktarılabilir: CSV (UTF-8 BOM → Excel Türkçe uyumlu)
 function exportCsv(filename: string, rows: Record<string, unknown>[]) {
   if (rows.length === 0) return;
@@ -96,7 +94,6 @@ function exportCsv(filename: string, rows: Record<string, unknown>[]) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
-
 type PendingCounts = {
   businesses: number;
   kyc: number;
@@ -119,19 +116,30 @@ type PendingCounts = {
   reconciliationsOpen: number;
   adOrders: number;
 };
-
+/**
+ * Kök: diyalog sağlayıcısı PANELİN TAMAMINI sarıyor.
+ *
+ * Her görünüm kendi onay/form kutusunu açabilmeli; sağlayıcı burada
+ * olmasaydı her görünüm kendi kutusunu yazar ve panel yine dağılırdı.
+ */
 export default function AdminApp() {
+  return (
+    <DiyalogSaglayici>
+      <AdminGovde />
+    </DiyalogSaglayici>
+  );
+}
+function AdminGovde() {
   const [authed, setAuthed] = useState(false);
   const [ready, setReady] = useState(false);
   const [tab, setTab] = useState<Tab>('overview');
+  const [navAra, setNavAra] = useState('');
   // §12.1 — bekleyen iş sayaçları (nav rozetleri): 30 sn'de bir tazelenir
   const [pendingCounts, setPendingCounts] = useState<PendingCounts | null>(null);
-
   useEffect(() => {
     setAuthed(!!getToken());
     setReady(true);
   }, []);
-
   useEffect(() => {
     if (!authed) return;
     let alive = true;
@@ -147,15 +155,12 @@ export default function AdminApp() {
       clearInterval(timer);
     };
   }, [authed, tab]);
-
   if (!ready) return null;
   if (!authed) return <Login onDone={() => setAuthed(true)} />;
-
   const logout = () => {
     clearToken();
     setAuthed(false);
   };
-
   // §12 — bilgi mimarisi: işletim mantığına göre GRUPLU nav. "Onay Kuyruğu" panelin kalbi:
   // bekleyen iş sayaçları (rozet) /admin/overview.pending'den gelir, 30 sn'de bir tazelenir.
   type NavItem = { id: Tab; label: string; icon: string; badge?: number };
@@ -240,7 +245,6 @@ export default function AdminApp() {
       ],
     },
   ];
-
   return (
     <div className="shell">
       <aside
@@ -248,45 +252,63 @@ export default function AdminApp() {
         style={{ display: 'flex', flexDirection: 'column', overflowY: 'auto' }}
       >
         <div className="side-brand">AYNA</div>
-        {NAV_GROUPS.map((g) => (
-          <div key={g.title}>
-            <div
-              style={{
-                padding: '10px 14px 4px',
-                fontSize: 10,
-                fontWeight: 800,
-                letterSpacing: 1,
-                opacity: 0.55,
-              }}
-            >
-              {g.title}
-            </div>
-            {g.items.map((n) => (
-              <button
-                key={n.id}
-                className={`nav-item ${tab === n.id ? 'active' : ''}`}
-                onClick={() => setTab(n.id)}
-              >
-                <span>{n.icon}</span> {n.label}
-                {n.badge ? (
-                  <span
-                    style={{
-                      marginLeft: 'auto',
-                      background: '#e5484d',
-                      color: '#fff',
-                      borderRadius: 999,
-                      fontSize: 11,
-                      fontWeight: 800,
-                      padding: '1px 7px',
-                    }}
+
+        {/*
+          MENÜ ARAMASI — 26 kalem var.
+          Kurucu: "admin paneli rezil durumda hiç user friendly değil ve
+          karışık." Gruplama tek başına yetmiyordu: aradığı ekranı bulmak
+          için hâlâ yirmi altı satırı gözle taramak gerekiyordu. Yazınca
+          liste daralıyor, hiçbir şey ezberlemek gerekmiyor.
+        */}
+        <input
+          className="nav-ara"
+          value={navAra}
+          onChange={(e) => setNavAra(e.target.value)}
+          placeholder="Menüde ara…"
+          aria-label="Menüde ara"
+        />
+
+        <nav className="nav-liste">
+          {NAV_GROUPS.map((g) => {
+            const kalemler = g.items.filter((n) =>
+              n.label.toLocaleLowerCase('tr').includes(navAra.trim().toLocaleLowerCase('tr')),
+            );
+            // Boş grup başlığı göstermek, aramayı gürültüye çevirirdi.
+            if (!kalemler.length) return null;
+            return (
+              <div key={g.title} className="nav-grup">
+                <div className="nav-grup-baslik">{g.title}</div>
+                {kalemler.map((n) => (
+                  <button
+                    key={n.id}
+                    className={`nav-item ${tab === n.id ? 'active' : ''}`}
+                    onClick={() => setTab(n.id)}
+                    aria-current={tab === n.id ? 'page' : undefined}
                   >
-                    {n.badge}
-                  </span>
-                ) : null}
-              </button>
-            ))}
-          </div>
-        ))}
+                    <span className="nav-ikon" aria-hidden="true">
+                      {n.icon}
+                    </span>
+                    <span className="nav-etiket">{n.label}</span>
+                    {n.badge ? (
+                      <span className="nav-rozet" title={`${n.badge} bekleyen iş`}>
+                        {n.badge}
+                      </span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
+          {NAV_GROUPS.every((g) =>
+            g.items.every(
+              (n) =>
+                !n.label.toLocaleLowerCase('tr').includes(navAra.trim().toLocaleLowerCase('tr')),
+            ),
+          ) ? (
+            <div className="nav-bos">Eşleşen ekran yok</div>
+          ) : null}
+        </nav>
+
         <button className="nav-item logout" onClick={logout}>
           <span>↩</span> Çıkış
         </button>
@@ -323,13 +345,11 @@ export default function AdminApp() {
     </div>
   );
 }
-
 function Login({ onDone }: { onDone: () => void }) {
   const [id, setId] = useState('');
   const [pw, setPw] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
-
   const submit = async () => {
     setBusy(true);
     setErr('');
@@ -347,7 +367,6 @@ function Login({ onDone }: { onDone: () => void }) {
       setBusy(false);
     }
   };
-
   return (
     <div className="login-wrap">
       <div className="login-card">
@@ -382,7 +401,6 @@ function Login({ onDone }: { onDone: () => void }) {
     </div>
   );
 }
-
 function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -406,7 +424,6 @@ function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {
   useEffect(run, [run]);
   return { data, loading, error, reload: run };
 }
-
 // §admin — paylaşımlı yükleme/hata durumu (sonsuz "Yükleniyor" yerine gerçek hata)
 function Gate({
   loading,
@@ -452,7 +469,6 @@ function Gate({
     </div>
   );
 }
-
 // §14.5 — 3 DİL form yardımcıları: app'e ulaşan içerik tr(base)+kk+ru girilir
 type Lang = 'tr' | 'kk' | 'ru';
 const LANGS: Lang[] = ['tr', 'kk', 'ru'];
@@ -491,7 +507,6 @@ function buildI18n(fields: Record<string, { kk: string; ru: string }>): I18nOver
   }
   return Object.keys(out).length ? out : undefined;
 }
-
 // §profil-onay — salon/uzman profil değişiklik onay kuyruğu
 function ProfileChangesView() {
   const [status, setStatus] = useState<string>('pending');
@@ -615,7 +630,6 @@ function ProfileChangesView() {
     </>
   );
 }
-
 // EK Z.3 — KYC uzman/salon belge doğrulama kuyruğu
 /**
  * §destek — kullanıcı talepleri kuyruğu.
@@ -732,7 +746,6 @@ function SupportView() {
     </>
   );
 }
-
 function KycView() {
   const [status, setStatus] = useState<string>('pending');
   const { data, loading, error, reload } = useAsync<KycRow[]>(
@@ -835,7 +848,6 @@ function KycView() {
     </>
   );
 }
-
 // §11 — üyelik abonelik kuyruğu (Premium/Platinum dekont onayı)
 function SubscriptionsView() {
   const [status, setStatus] = useState<string>('pending');
@@ -957,7 +969,6 @@ function SubscriptionsView() {
     </>
   );
 }
-
 function OverviewView({ onGo }: { onGo: (t: Tab) => void }) {
   const { data, loading, error, reload } = useAsync<Overview>(() => api.overview(), []);
   // §12.1 — Bekleyen İşler: tıklanabilir kuyruk kartları (rozetlerin dashboard karşılığı)
@@ -1037,7 +1048,6 @@ function OverviewView({ onGo }: { onGo: (t: Tab) => void }) {
     </>
   );
 }
-
 function Stat({ v, l }: { v: string; l: string }) {
   return (
     <div className="stat">
@@ -1046,7 +1056,6 @@ function Stat({ v, l }: { v: string; l: string }) {
     </div>
   );
 }
-
 const SECTOR_TR: Record<string, string> = {
   hair: 'Saç',
   nails: 'Tırnak',
@@ -1058,26 +1067,22 @@ const SECTOR_TR: Record<string, string> = {
   epilation: 'Epilasyon',
 };
 const sectorLabel = (s: string) => SECTOR_TR[s] ?? s;
-
 const METRICS = [
   { key: 'users' as const, label: 'Kayıt', color: '#cc6b86' },
   { key: 'bookings' as const, label: 'Randevu', color: '#6f9f86' },
   { key: 'revenue' as const, label: 'Gelir', color: '#c2a06a' },
 ];
-
 function StatsView() {
   const [days, setDays] = useState(30);
   const [metric, setMetric] = useState<'users' | 'bookings' | 'revenue'>('bookings');
   const { data } = useAsync<Stats>(() => api.stats(days), [days]);
   const active = METRICS.find((m) => m.key === metric)!;
-
   return (
     <>
       <h1 className="page-title">İstatistik</h1>
       <p className="page-sub">
         Zaman serisi — kayıt, randevu ve gelir {data ? `· ${data.timezone}` : ''}
       </p>
-
       <div className="toolbar">
         {[7, 30, 90].map((d) => (
           <button key={d} className={`chip ${days === d ? 'on' : ''}`} onClick={() => setDays(d)}>
@@ -1085,7 +1090,6 @@ function StatsView() {
           </button>
         ))}
       </div>
-
       {!data ? (
         <div className="empty">Yükleniyor…</div>
       ) : (
@@ -1095,7 +1099,6 @@ function StatsView() {
             <Stat v={String(data.totals.bookings)} l={`Randevu (${days}g)`} />
             <Stat v={TL(data.totals.revenue)} l={`Gelir (${days}g)`} />
           </div>
-
           <div className="section-title">Günlük seyir</div>
           <div className="toolbar">
             {METRICS.map((m) => (
@@ -1115,7 +1118,6 @@ function StatsView() {
               format={metric === 'revenue' ? TL : (n) => String(n)}
             />
           </div>
-
           <div className="section-title">Kategori dağılımı (uzman havuzu)</div>
           <div className="card" style={{ padding: 20 }}>
             <CategoryBars items={data.categories} />
@@ -1125,7 +1127,6 @@ function StatsView() {
     </>
   );
 }
-
 function BarChart({
   points,
   color,
@@ -1146,7 +1147,6 @@ function BarChart({
   const bw = innerW / n - gap;
   // eksende ~8 etiket göster (kalabalığı önle)
   const labelEvery = Math.ceil(n / 8);
-
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Günlük grafik">
       {[0, 0.5, 1].map((g) => {
@@ -1182,7 +1182,6 @@ function BarChart({
     </svg>
   );
 }
-
 function CategoryBars({ items }: { items: { sector: string; count: number }[] }) {
   const max = Math.max(1, ...items.map((i) => i.count));
   if (items.length === 0) return <div className="empty">Veri yok</div>;
@@ -1210,7 +1209,6 @@ function CategoryBars({ items }: { items: { sector: string; count: number }[] })
     </div>
   );
 }
-
 // Randevu & ödeme kuyrukları: dekont doğrulama, iadeler, uzlaşma kayıtları.
 /**
  * Brief §8 — RANDEVU KUYRUKLARI.
@@ -1220,13 +1218,12 @@ function CategoryBars({ items }: { items: { sector: string; count: number }[] })
  * fatura da kalmadı. Yerine brief'in istediği üç kuyruk geldi.
  */
 function RandevuKuyruklari() {
+  const { onayla, formAl } = useDiyalog();
   const dekont = useAsync<DekontSatiri[]>(() => api.dekontKuyrugu(), []);
   const iade = useAsync<IadeSatiri[]>(() => api.iadeKuyrugu(), []);
   const uzlasma = useAsync<UzlasmaSatiri[]>(() => api.uzlasmaKuyrugu(), []);
   const [msg, setMsg] = useState<string | null>(null);
-
   const kzt = (n: number) => `${n.toLocaleString('tr-TR')} ₸`;
-
   return (
     <>
       {/* ── §8.1 Dekont doğrulama ── */}
@@ -1276,7 +1273,15 @@ function RandevuKuyruklari() {
                 className="btn-sm btn-danger"
                 onClick={async () => {
                   // Yıkıcı: randevu iptal + hesap yasaklı. Onay istemek şart.
-                  if (!confirm('Sahte dekont: randevu iptal edilecek ve kullanıcı yasaklanacak.'))
+                  if (
+                    !(await onayla({
+                      baslik: 'Sahte dekont olarak işaretle',
+                      mesaj:
+                        'Randevu iptal edilecek ve kullanıcının hesabı yasaklanacak. Bu işlem geri alınamaz.',
+                      onayEtiket: 'Sahte olarak işaretle',
+                      tehlikeli: true,
+                    }))
+                  )
                     return;
                   await api.dekontReddet(b.id);
                   setMsg('Dekont reddedildi, kullanıcı yasaklandı');
@@ -1289,7 +1294,6 @@ function RandevuKuyruklari() {
           ))
         )}
       </div>
-
       {/* ── §8.2 İadeler ── */}
       <div className="section-title">İadeler ({iade.data?.length ?? 0})</div>
       <div className="card" style={{ marginBottom: 16 }}>
@@ -1327,7 +1331,6 @@ function RandevuKuyruklari() {
           ))
         )}
       </div>
-
       {/* ── §8.3 Uzlaşma ── */}
       <div className="section-title">Uzlaşma kayıtları ({uzlasma.data?.length ?? 0})</div>
       <div className="card" style={{ marginBottom: 16 }}>
@@ -1360,8 +1363,21 @@ function RandevuKuyruklari() {
                   key={k}
                   className="btn-sm"
                   onClick={async () => {
-                    const not = prompt('Telefon teyidi / not (opsiyonel)') ?? '';
-                    await api.uzlasmaCoz(u.id, k, not);
+                    const v = await formAl({
+                      baslik: `Uzlaşma — ${etiket}`,
+                      mesaj: 'Karar denetim kaydına yazılır.',
+                      alanlar: [
+                        {
+                          ad: 'not',
+                          etiket: 'Telefon teyidi / not',
+                          tur: 'uzun',
+                          ipucu: 'İsteğe bağlı',
+                        },
+                      ],
+                      onayEtiket: etiket,
+                    });
+                    if (!v) return;
+                    await api.uzlasmaCoz(u.id, k, (v.not ?? '').trim());
                     setMsg('Uzlaşma çözüldü');
                     uzlasma.reload();
                   }}
@@ -1373,7 +1389,6 @@ function RandevuKuyruklari() {
           ))
         )}
       </div>
-
       {msg ? (
         <div className="meta full" style={{ color: 'var(--success)' }}>
           {msg}
@@ -1382,12 +1397,11 @@ function RandevuKuyruklari() {
     </>
   );
 }
-
 function CommissionsView() {
+  const { formAl, bildir } = useDiyalog();
   const { data, loading, reload } = useAsync<Commissions>(() => api.commissions(), []);
   const [rateInput, setRateInput] = useState('');
   const [busy, setBusy] = useState(false);
-
   const saveRate = async () => {
     const v = parseInt(rateInput, 10);
     if (!Number.isFinite(v) || v < 0 || v > 100) return;
@@ -1400,12 +1414,10 @@ function CommissionsView() {
       setBusy(false);
     }
   };
-
   const stateLabel = (s: string) =>
     s === 'earned' ? 'Kazanıldı' : s === 'pending' ? 'Bekliyor' : 'İptal/Gelmedi';
   const statePill = (s: string) =>
     s === 'earned' ? 'approved' : s === 'pending' ? 'pending' : 'rejected';
-
   return (
     <>
       <h1 className="page-title">
@@ -1436,7 +1448,6 @@ function CommissionsView() {
       <p className="page-sub">
         App üzerinden alınan online randevulardan platform komisyonu (offline salon kayıtları hariç)
       </p>
-
       {loading || !data ? (
         <div className="empty">Yükleniyor…</div>
       ) : (
@@ -1447,7 +1458,6 @@ function CommissionsView() {
             <Stat v={TL(data.totals.outstanding)} l="Açık alacak" />
             <Stat v={`%${data.rate}`} l={`Oran · ${data.totals.count} online randevu`} />
           </div>
-
           <div className="section-title">Komisyon oranı</div>
           <div className="card">
             <div className="list-row">
@@ -1473,7 +1483,6 @@ function CommissionsView() {
               </button>
             </div>
           </div>
-
           <div className="section-title">Salon bazında — alacak & tahsilat</div>
           <div className="card">
             {data.salons.length === 0 ? (
@@ -1504,13 +1513,27 @@ function CommissionsView() {
                     <button
                       className="btn-sm btn-ok"
                       onClick={async () => {
-                        const raw = prompt(
-                          `${s.proName} — tahsil edilecek tutar (KZT):`,
-                          String(s.outstanding),
-                        );
-                        if (raw == null) return;
-                        const amount = Number(raw);
-                        if (!Number.isFinite(amount) || amount <= 0) return;
+                        const v = await formAl({
+                          baslik: `${s.proName} — tahsilat`,
+                          mesaj: `Ödenmemiş komisyon: ${s.outstanding.toLocaleString('tr-TR')} ₸`,
+                          alanlar: [
+                            {
+                              ad: 'tutar',
+                              etiket: 'Tahsil edilecek tutar (₸)',
+                              tur: 'number',
+                              deger: String(s.outstanding),
+                              zorunlu: true,
+                            },
+                          ],
+                          onayEtiket: 'Tahsilatı kaydet',
+                        });
+                        if (!v) return;
+                        const amount = Number(v.tutar);
+                        // Para kaydı: geçersiz tutar sessizce yazılmamalı.
+                        if (!Number.isFinite(amount) || amount <= 0) {
+                          bildir('Tutar geçerli bir sayı olmalı.', true);
+                          return;
+                        }
                         await api.addPayout({
                           proId: s.proId || s.proName,
                           proName: s.proName,
@@ -1526,7 +1549,6 @@ function CommissionsView() {
               ))
             )}
           </div>
-
           {data.payouts.length > 0 ? (
             <>
               <div className="section-title">Tahsilat geçmişi</div>
@@ -1548,9 +1570,7 @@ function CommissionsView() {
               </div>
             </>
           ) : null}
-
           <RandevuKuyruklari />
-
           <div className="section-title">Randevu kayıtları ({data.items.length})</div>
           <div className="card">
             {data.items.length === 0 ? (
@@ -1577,7 +1597,6 @@ function CommissionsView() {
     </>
   );
 }
-
 const ENTITY_LABEL: Record<string, string> = {
   llp: 'ТОО / LLP (tüzel kişi)',
   ip: 'ИП (bireysel girişimci)',
@@ -1591,20 +1610,46 @@ const VERIFY_CHECKS: { key: keyof BizVerification; label: string }[] = [
   { key: 'address', label: 'Adres' },
   { key: 'social', label: 'Sosyal medya' },
 ];
-
 function BusinessesView() {
+  const { formAl } = useDiyalog();
   const [status, setStatus] = useState<string>('pending');
   const [detail, setDetail] = useState<BusinessDetail | null>(null);
   const { data, reload } = useAsync<Business[]>(() => api.businesses(status), [status]);
   const act = async (id: string, kind: 'approve' | 'reject') => {
     if (kind === 'approve') await api.approveBusiness(id);
-    else await api.rejectBusiness(id, prompt('Red sebebi:') ?? '');
+    else {
+      const v = await formAl({
+        baslik: 'Salon başvurusunu reddet',
+        mesaj: 'Gerekçe başvuru sahibine iletilir.',
+        alanlar: [{ ad: 'sebep', etiket: 'Red sebebi', tur: 'uzun', zorunlu: true }],
+        onayEtiket: 'Reddet',
+      });
+      if (!v) return;
+      await api.rejectBusiness(id, (v.sebep ?? '').trim());
+    }
     setDetail(null);
     reload();
   };
   const decide = async (id: string, status: string, defaultReason?: string) => {
-    const reason =
-      status === 'needs_docs' ? (prompt('Hangi belge/eksik?', defaultReason) ?? '') : undefined;
+    let reason: string | undefined;
+    if (status === 'needs_docs') {
+      const v = await formAl({
+        baslik: 'Eksik belge iste',
+        mesaj: 'Hangi belgenin eksik olduğu başvuru sahibine iletilir.',
+        alanlar: [
+          {
+            ad: 'belge',
+            etiket: 'Eksik belge / açıklama',
+            tur: 'uzun',
+            deger: defaultReason ?? '',
+            zorunlu: true,
+          },
+        ],
+        onayEtiket: 'Gönder',
+      });
+      if (!v) return;
+      reason = (v.belge ?? '').trim();
+    }
     await api.decisionBusiness(id, status, reason);
     setDetail(null);
     reload();
@@ -1660,7 +1705,6 @@ function BusinessesView() {
           ))
         )}
       </div>
-
       {detail ? (
         <div className="modal-backdrop" onClick={() => setDetail(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -1704,7 +1748,6 @@ function BusinessesView() {
                 }
               />
             </div>
-
             {/* §3.3 — Katmanlı doğrulama kontrol listesi (admin işaretler) */}
             <h3 className="section-head" style={{ marginTop: 14 }}>
               Doğrulama kontrol listesi
@@ -1767,7 +1810,6 @@ function BusinessesView() {
     </>
   );
 }
-
 // §uzman onboarding — admin uzman doğrulama kontrol listesi
 const SP_ENTITY_LABEL: Record<string, string> = {
   freelance: 'Serbest çalışan',
@@ -1778,7 +1820,6 @@ const SP_VERIFY_CHECKS: { key: 'cert' | 'social'; label: string }[] = [
   { key: 'cert', label: 'Sertifika' },
   { key: 'social', label: 'Sosyal medya' },
 ];
-
 function SpecialistsView() {
   const [detail, setDetail] = useState<SpecialistDetail | null>(null);
   const { data } = useAsync<SpecialistRow[]>(() => api.specialists(), []);
@@ -1826,7 +1867,6 @@ function SpecialistsView() {
           ))
         )}
       </div>
-
       {detail ? (
         <div className="modal-backdrop" onClick={() => setDetail(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -1854,7 +1894,6 @@ function SpecialistsView() {
               <KV k="Sosyal doğrulama kodu" v={detail.socialVerifyCode || '—'} />
               <KV k="Bio" v={detail.bio || '—'} />
             </div>
-
             <h3 className="section-head" style={{ marginTop: 14 }}>
               Doğrulama kontrol listesi
             </h3>
@@ -1900,7 +1939,6 @@ function SpecialistsView() {
     </>
   );
 }
-
 function KV({ k, v }: { k: string; v: string }) {
   return (
     <div className="kv">
@@ -1909,15 +1947,21 @@ function KV({ k, v }: { k: string; v: string }) {
     </div>
   );
 }
-
 function ModerationView() {
+  const { onayla } = useDiyalog();
   const { data, reload } = useAsync<AdminReview[]>(() => api.reviews(), []);
   const { data: circle, reload: reloadCircle } = useAsync<CirclePost[]>(
     () => api.circleQueue(),
     [],
   );
   const hide = async (id: string) => {
-    if (confirm('Bu yorumu gizle? (moderasyon)')) {
+    if (
+      await onayla({
+        baslik: 'Yorumu gizle',
+        mesaj: 'Yorum moderasyon gereği gizlenecek.',
+        onayEtiket: 'Gizle',
+      })
+    ) {
       await api.hideReview(id);
       reload();
     }
@@ -1933,7 +1977,6 @@ function ModerationView() {
         W2W onay kuyruğu (otomatik filtre + şikâyet) · görünür yorumlar. Sabit ilke: dürüst eleştiri
         silinmez.
       </p>
-
       {/* §12.5 — W2W moderasyon kuyruğu (pending + şikâyetle gizlenen) */}
       <h2 className="section-head">W2W kuyruğu ({circle?.length ?? 0})</h2>
       <div className="card" style={{ marginBottom: 24 }}>
@@ -1968,7 +2011,6 @@ function ModerationView() {
           ))
         )}
       </div>
-
       <h2 className="section-head">Görünür yorumlar</h2>
       <div className="card">
         {!data || data.length === 0 ? (
@@ -1996,8 +2038,8 @@ function ModerationView() {
     </>
   );
 }
-
 function CampaignsView() {
+  const { onayla } = useDiyalog();
   const { data, reload } = useAsync<Campaign[]>(() => api.campaigns(), []);
   const empty = {
     title: '',
@@ -2039,7 +2081,6 @@ function CampaignsView() {
     <>
       <h1 className="page-title">Kampanya & Banner</h1>
       <p className="page-sub">Keşif vitrinindeki kampanyaları yönet</p>
-
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
           <LangTabs
@@ -2084,7 +2125,6 @@ function CampaignsView() {
           </button>
         </div>
       </div>
-
       <div className="card">
         {!data || data.length === 0 ? (
           <div className="empty">Kampanya yok</div>
@@ -2114,7 +2154,14 @@ function CampaignsView() {
               <button
                 className="btn-sm btn-danger"
                 onClick={async () => {
-                  if (confirm('Kampanya silinsin mi?')) {
+                  if (
+                    await onayla({
+                      baslik: 'Kampanyayı sil',
+                      mesaj: 'Bu kampanya kalıcı olarak silinecek.',
+                      onayEtiket: 'Sil',
+                      tehlikeli: true,
+                    })
+                  ) {
                     await api.deleteCampaign(c.id);
                     reload();
                   }
@@ -2129,9 +2176,9 @@ function CampaignsView() {
     </>
   );
 }
-
 // §12.6 İçerik Yönetimi — Blog editörü + kullanıcı başvuruları + haftalık W2W teması
 function ContentView() {
+  const { onayla, formAl } = useDiyalog();
   const { data: articles, reload: reloadArticles } = useAsync<BlogArticle[]>(
     () => api.blogArticles(),
     [],
@@ -2141,7 +2188,6 @@ function ContentView() {
     [],
   );
   const { data: themes, reload: reloadThemes } = useAsync<WeeklyTheme[]>(() => api.themes(), []);
-
   const empty: ArticleInput = {
     title: '',
     tag: '',
@@ -2162,7 +2208,6 @@ function ContentView() {
   };
   const [ov, setOv] = useState(blankOv);
   const [lang, setLang] = useState<Lang>('tr');
-
   type BField = 'title' | 'tag' | 'excerpt' | 'body';
   const fieldVal = (f: BField): string => {
     if (lang === 'tr')
@@ -2200,7 +2245,6 @@ function ContentView() {
     setLang('tr');
     setEditId(null);
   };
-
   const save = async () => {
     const body = (form.body ?? []).map((p) => p.trim()).filter(Boolean);
     if (form.title.length < 3 || !form.tag || !form.excerpt || body.length === 0) return; // tr (kaynak) zorunlu
@@ -2216,7 +2260,6 @@ function ContentView() {
     resetForm();
     reloadArticles();
   };
-
   const edit = (a: BlogArticle) => {
     setEditId(a.id);
     setForm({
@@ -2250,7 +2293,6 @@ function ContentView() {
     });
     setLang('tr');
   };
-
   const emptyTheme = {
     title: '',
     prompt: '',
@@ -2283,17 +2325,14 @@ function ContentView() {
     setThemeLang('tr');
     reloadThemes();
   };
-
   const pending = (apps ?? []).filter((a) => a.status === 'pending');
   const reviewed = (apps ?? []).filter((a) => a.status !== 'pending');
-
   return (
     <>
       <h1 className="page-title">İçerik & Blog</h1>
       <p className="page-sub">
         AYNA Blog editörü · kullanıcı başvuruları (onayla → puan) · haftalık W2W teması
       </p>
-
       {/* Blog editörü */}
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="section-title">{editId ? 'Yazıyı düzenle' : 'Yeni yazı'}</div>
@@ -2381,7 +2420,6 @@ function ContentView() {
           )}
         </div>
       </div>
-
       <div className="card" style={{ marginBottom: 28 }}>
         {!articles || articles.length === 0 ? (
           <div className="empty">Yazı yok</div>
@@ -2413,7 +2451,14 @@ function ContentView() {
               <button
                 className="btn-sm btn-danger"
                 onClick={async () => {
-                  if (confirm('Yazı silinsin mi?')) {
+                  if (
+                    await onayla({
+                      baslik: 'Yazıyı sil',
+                      mesaj: 'Bu blog yazısı kalıcı olarak silinecek.',
+                      onayEtiket: 'Sil',
+                      tehlikeli: true,
+                    })
+                  ) {
                     await api.deleteArticle(a.id);
                     reloadArticles();
                   }
@@ -2425,7 +2470,6 @@ function ContentView() {
           ))
         )}
       </div>
-
       {/* Kullanıcı blog başvuruları */}
       <h2 className="section-head">Kullanıcı blog başvuruları</h2>
       <p className="page-sub">
@@ -2470,8 +2514,18 @@ function ContentView() {
                 <button
                   className="btn-sm btn-danger"
                   onClick={async () => {
-                    const note = prompt('Red gerekçesi (opsiyonel):') ?? '';
-                    await api.reviewApplication(a.id, { decision: 'reject', note });
+                    const v = await formAl({
+                      baslik: 'Blog başvurusunu reddet',
+                      alanlar: [
+                        { ad: 'not', etiket: 'Red gerekçesi', tur: 'uzun', ipucu: 'İsteğe bağlı' },
+                      ],
+                      onayEtiket: 'Reddet',
+                    });
+                    if (!v) return;
+                    await api.reviewApplication(a.id, {
+                      decision: 'reject',
+                      note: (v.not ?? '').trim(),
+                    });
                     reloadApps();
                   }}
                 >
@@ -2498,7 +2552,6 @@ function ContentView() {
           </div>
         )}
       </div>
-
       {/* Haftalık W2W teması */}
       <h2 className="section-head">Haftalık W2W teması</h2>
       <p className="page-sub">App&apos;te haftanın sorusu/teması. Tek tema aktif olabilir.</p>
@@ -2576,7 +2629,6 @@ function ContentView() {
     </>
   );
 }
-
 // §12.10 Bildirim Merkezi — segment bazlı toplu duyuru + gönderim geçmişi
 const SEGMENTS: { id: AnnouncementSegment; label: string }[] = [
   { id: 'all', label: 'Tüm kullanıcılar' },
@@ -2586,8 +2638,8 @@ const SEGMENTS: { id: AnnouncementSegment; label: string }[] = [
   { id: 'salons', label: 'Salonlar' },
   { id: 'city', label: 'Şehir bazlı' },
 ];
-
 function AnnouncementsView() {
+  const { onayla } = useDiyalog();
   const { data, reload } = useAsync<Announcement[]>(() => api.announcements(), []);
   const empty = {
     title: '',
@@ -2607,11 +2659,17 @@ function AnnouncementsView() {
     lang === 'tr' ? 'title' : lang === 'kk' ? 'titleKk' : 'titleRu'
   ) as keyof typeof form;
   const bKey = (lang === 'tr' ? 'body' : lang === 'kk' ? 'bodyKk' : 'bodyRu') as keyof typeof form;
-
   const send = async () => {
     if (form.title.length < 2 || form.body.length < 2) return; // tr (kaynak) zorunlu
     if (form.segment === 'city' && !form.city) return;
-    if (!confirm(`"${form.title}" duyurusu gönderilsin mi?`)) return;
+    if (
+      !(await onayla({
+        baslik: 'Duyuruyu gönder',
+        mesaj: `"${form.title}" duyurusu seçili segmente gönderilecek. Gönderilen duyuru geri alınamaz.`,
+        onayEtiket: 'Gönder',
+      }))
+    )
+      return;
     const i18n = buildI18n({
       title: { kk: form.titleKk, ru: form.titleRu },
       body: { kk: form.bodyKk, ru: form.bodyRu },
@@ -2628,14 +2686,11 @@ function AnnouncementsView() {
     setLang('tr');
     reload();
   };
-
   const segLabel = (s: AnnouncementSegment) => SEGMENTS.find((x) => x.id === s)?.label ?? s;
-
   return (
     <>
       <h1 className="page-title">Bildirimler</h1>
       <p className="page-sub">Segment bazlı toplu duyuru — app bildirim listesine düşer</p>
-
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
           <LangTabs
@@ -2691,7 +2746,6 @@ function AnnouncementsView() {
           )}
         </div>
       </div>
-
       <h2 className="section-head">Gönderim geçmişi</h2>
       <div className="card">
         {!data || data.length === 0 ? (
@@ -2715,8 +2769,8 @@ function AnnouncementsView() {
     </>
   );
 }
-
 function AdsView() {
+  const { onayla } = useDiyalog();
   const { data: ads, reload } = useAsync<AdBanner[]>(() => api.ads(), []);
   // Ödeme kuyruğu BURADA: reklamı onaylayacak kişi "Reklamlar"a bakar,
   // randevu kuyruklarına değil.
@@ -2745,7 +2799,6 @@ function AdsView() {
     lang === 'tr' ? 'subtitle' : lang === 'kk' ? 'subtitleKk' : 'subtitleRu'
   ) as keyof typeof form;
   const proName = (id: string) => pros?.find((p) => p.id === id)?.name ?? id;
-
   const create = async () => {
     if (!form.proId || form.title.length < 2 || !form.image) return; // tr (kaynak) zorunlu
     await api.createAd({
@@ -2768,7 +2821,6 @@ function AdsView() {
     setLang('tr');
     reload();
   };
-
   return (
     <>
       <h1 className="page-title">Reklamlar</h1>
@@ -2776,7 +2828,6 @@ function AdsView() {
         Ücretli vitrin: uzman/salon Kaspi ile öder, dekontu buradan doğrularsın. Onaylanan reklam
         satın alınan süre boyunca Keşfet ekranında yayınlanır.
       </p>
-
       {/* ── §reklam — ÜCRETLİ VİTRİN ÖDEMELERİ ──
           Reklam sipariş anında yayına GİRMEZ; ödeme burada doğrulanınca
           yayınlanır. Onaylanmadan yayınlansaydı ödenmemiş reklam vitrine
@@ -2830,7 +2881,14 @@ function AdsView() {
               <button
                 className="btn-sm btn-danger"
                 onClick={async () => {
-                  if (!confirm('Ödeme doğrulanamadı olarak işaretlensin mi?')) return;
+                  if (
+                    !(await onayla({
+                      baslik: 'Ödeme doğrulanamadı',
+                      mesaj: 'Bu ödeme doğrulanamadı olarak işaretlenecek.',
+                      onayEtiket: 'İşaretle',
+                    }))
+                  )
+                    return;
                   await api.reklamReddet(o.id);
                   setMsg('Reklam ödemesi reddedildi');
                   reklam.reload();
@@ -2842,7 +2900,6 @@ function AdsView() {
           ))
         )}
       </div>
-
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
           <select
@@ -2918,7 +2975,6 @@ function AdsView() {
           </button>
         </div>
       </div>
-
       <div className="card">
         {!ads || ads.length === 0 ? (
           <div className="empty">Reklam yok</div>
@@ -2958,7 +3014,14 @@ function AdsView() {
               <button
                 className="btn-sm btn-danger"
                 onClick={async () => {
-                  if (confirm('Reklam silinsin mi?')) {
+                  if (
+                    await onayla({
+                      baslik: 'Reklamı sil',
+                      mesaj: 'Bu reklam kalıcı olarak silinecek.',
+                      onayEtiket: 'Sil',
+                      tehlikeli: true,
+                    })
+                  ) {
                     await api.deleteAd(a.id);
                     reload();
                   }
@@ -2981,7 +3044,6 @@ function AdsView() {
     </>
   );
 }
-
 const EMPTY_PRO: ProInput = {
   name: '',
   sector: 'hair',
@@ -2993,13 +3055,12 @@ const EMPTY_PRO: ProInput = {
   priceFrom: 0,
   imageUrl: '',
 };
-
 function ProfessionalsView() {
+  const { onayla } = useDiyalog();
   const { data, reload } = useAsync<Pro[]>(() => api.professionals(), []);
   const { data: cats } = useAsync<Category[]>(() => api.categories(), []);
   const [edit, setEdit] = useState<{ id?: string; form: ProInput } | null>(null);
   const [q, setQ] = useState('');
-
   const list = (data ?? []).filter(
     (p) =>
       !q || p.name.toLowerCase().includes(q.toLowerCase()) || p.sector.includes(q.toLowerCase()),
@@ -3019,12 +3080,18 @@ function ProfessionalsView() {
     reload();
   };
   const del = async (id: string) => {
-    if (confirm('Uzman silinsin mi? (ilişkili teklifler de silinir)')) {
+    if (
+      await onayla({
+        baslik: 'Uzmanı sil',
+        mesaj: 'Uzman ve ona bağlı tüm teklifler kalıcı olarak silinecek.',
+        onayEtiket: 'Sil',
+        tehlikeli: true,
+      })
+    ) {
       await api.deleteProfessional(id);
       reload();
     }
   };
-
   return (
     <>
       <h1 className="page-title">Uzmanlar</h1>
@@ -3107,7 +3174,6 @@ function ProfessionalsView() {
           ))
         )}
       </div>
-
       {edit ? (
         <div className="modal-backdrop" onClick={() => setEdit(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -3225,7 +3291,6 @@ function ProfessionalsView() {
     </>
   );
 }
-
 function F({
   label,
   children,
@@ -3244,7 +3309,6 @@ function F({
     </div>
   );
 }
-
 function ServicesView() {
   const { data, reload } = useAsync<Category[]>(() => api.categories(), []);
   const [form, setForm] = useState({
@@ -3272,7 +3336,6 @@ function ServicesView() {
       <p className="page-sub">
         Keşif kategorileri (saç, tırnak, makyaj…) — ekle, düzenle, sırala, sil
       </p>
-
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
           <input
@@ -3305,7 +3368,6 @@ function ServicesView() {
           </button>
         </div>
       </div>
-
       <div className="card">
         {!data ? (
           <div className="empty">Yükleniyor…</div>
@@ -3318,8 +3380,8 @@ function ServicesView() {
     </>
   );
 }
-
 function CategoryRow({ cat, onChanged }: { cat: Category; onChanged: () => void }) {
+  const { onayla } = useDiyalog();
   const [name, setName] = useState(cat.nameTr);
   const [icon, setIcon] = useState(cat.icon);
   const [order, setOrder] = useState(String(cat.sortOrder));
@@ -3363,7 +3425,14 @@ function CategoryRow({ cat, onChanged }: { cat: Category; onChanged: () => void 
       <button
         className="btn-sm btn-danger"
         onClick={async () => {
-          if (confirm(`"${cat.nameTr}" hizmeti silinsin mi?`)) {
+          if (
+            await onayla({
+              baslik: 'Hizmeti sil',
+              mesaj: `"${cat.nameTr}" hizmet kategorisi kalıcı olarak silinecek.`,
+              onayEtiket: 'Sil',
+              tehlikeli: true,
+            })
+          ) {
             await api.deleteCategory(cat.id);
             onChanged();
           }
@@ -3374,7 +3443,6 @@ function CategoryRow({ cat, onChanged }: { cat: Category; onChanged: () => void 
     </div>
   );
 }
-
 function PricesView() {
   const { data, reload } = useAsync<MarketPrice[]>(() => api.marketPrices(), []);
   const { data: cats } = useAsync<Category[]>(() => api.categories(), []);
@@ -3397,7 +3465,6 @@ function PricesView() {
         Piyasa taban fiyatları (kategori × şehir) — teklif tabanı ve %40-altı uyarısı için. Uzman
         başlangıç fiyatları "Uzmanlar" bölümünden düzenlenir.
       </p>
-
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
           <select
@@ -3430,7 +3497,6 @@ function PricesView() {
           </button>
         </div>
       </div>
-
       <div className="card">
         {!data ? (
           <div className="empty">Yükleniyor…</div>
@@ -3453,7 +3519,6 @@ function PricesView() {
     </>
   );
 }
-
 const ROLE_TR: Record<string, string> = {
   user: 'Kullanıcı',
   professional: 'Uzman',
@@ -3461,9 +3526,9 @@ const ROLE_TR: Record<string, string> = {
   moderator: 'Moderatör',
   admin: 'Admin',
 };
-
 // §12.3 Ceza Takip — 7 gün sayaçlı kısıtlı hesaplar + kalıcı engel
 function PenaltiesView() {
+  const { onayla } = useDiyalog();
   const { data, reload } = useAsync<Penalty[]>(() => api.penalties(), []);
   return (
     <>
@@ -3504,7 +3569,14 @@ function PenaltiesView() {
               <button
                 className="btn-sm btn-danger"
                 onClick={async () => {
-                  if (confirm(`${p.name || 'Hesap'} kalıcı olarak engellensin mi?`)) {
+                  if (
+                    await onayla({
+                      baslik: 'Hesabı engelle',
+                      mesaj: `${p.name || 'Hesap'} kalıcı olarak engellenecek.`,
+                      onayEtiket: 'Engelle',
+                      tehlikeli: true,
+                    })
+                  ) {
                     await api.setUserStatus(p.id, 'suspended');
                     reload();
                   }
@@ -3519,7 +3591,6 @@ function PenaltiesView() {
     </>
   );
 }
-
 // §11 — Üyelik seviyesi düzenleyici: seç → "Kaydet" → anında backend'e işlenir (app senkronda yansıtır).
 // Kullanıcı/salon/uzman (hepsi User) için aynı bileşen. onChange değil; kasıtlı Kaydet butonu.
 function TierEditor({ user, onSaved }: { user: AdminUser; onSaved: () => void }) {
@@ -3561,8 +3632,8 @@ function TierEditor({ user, onSaved }: { user: AdminUser; onSaved: () => void })
     </div>
   );
 }
-
 function UsersView() {
+  const { onayla, formAl, bildir } = useDiyalog();
   const { data, reload } = useAsync<AdminUser[]>(() => api.users(), []);
   const [q, setQ] = useState('');
   const [role, setRole] = useState('all');
@@ -3656,19 +3727,11 @@ function UsersView() {
               <button
                 className="btn-sm"
                 onClick={async () => {
-                  const ad = prompt('Ad:', u.name ?? '');
-                  if (ad === null) return;
-                  const eposta = prompt('E-posta (boş bırakırsan silinir):', u.email ?? '');
-                  if (eposta === null) return;
-                  const sehir = prompt('Şehir:', u.city ?? '');
-                  if (sehir === null) return;
                   /*
-                   * TELEFON — destek yolu. Kullanıcı kendi talebini SMS ile
-                   * doğrulayarak açıyor; hattını kaybetmiş biri bunu
-                   * yapamaz ve tek çare veritabanına elle dokunmaktı.
-                   *
-                   * Boş bırakmak = DOKUNMA. Silmek yok: telefon giriş
-                   * kimliği, boşaltmak hesabı girişsiz bırakırdı.
+                   * TEK FORM — eskiden ARKA ARKAYA DÖRT tarayıcı penceresi
+                   * açılıyordu (ad, e-posta, şehir, telefon). Üçüncüde
+                   * vazgeçen kişi ilk ikisini de kaybediyordu ve hangi üyeyi
+                   * düzenlediği ekranda görünmüyordu.
                    */
                   // Mevcut numara AYRI bir uçtan okunuyor: liste bilerek
                   // telefonsuz. Körlemesine düzenlemek yanlış hesabı
@@ -3679,25 +3742,45 @@ function UsersView() {
                   } catch {
                     // Okunamazsa akış durmasın; boş bırakılırsa dokunulmuyor.
                   }
-                  const telefon = prompt(
-                    'Telefon (boş bırakırsan değişmez).\nDeğiştirirsen numara "doğrulanmamış" olarak işaretlenir:',
-                    mevcutTel,
-                  );
-                  if (telefon === null) return;
+                  const v = await formAl({
+                    baslik: `${u.name || 'Üye'} — bilgileri düzenle`,
+                    alanlar: [
+                      { ad: 'name', etiket: 'Ad', deger: u.name ?? '', zorunlu: true },
+                      {
+                        ad: 'email',
+                        etiket: 'E-posta',
+                        deger: u.email ?? '',
+                        tur: 'email',
+                        not: 'Boş bırakırsan e-posta silinir.',
+                      },
+                      { ad: 'city', etiket: 'Şehir', deger: u.city ?? '' },
+                      {
+                        ad: 'phone',
+                        etiket: 'Telefon',
+                        deger: mevcutTel,
+                        tur: 'tel',
+                        // Telefon giriş kimliği; boşaltmak hesabı girişsiz
+                        // bırakırdı, o yüzden silme yok — dokunmama var.
+                        not: 'Değiştirmezsen dokunulmaz. Değiştirirsen numara "doğrulanmamış" olarak işaretlenir.',
+                      },
+                    ],
+                  });
+                  if (!v) return;
                   try {
                     await api.setUserProfile(u.id, {
-                      name: ad.trim(),
-                      email: eposta.trim(),
-                      city: sehir.trim(),
-                      ...(telefon.trim() && telefon.trim() !== mevcutTel
-                        ? { phone: telefon.trim() }
+                      name: (v.name ?? '').trim(),
+                      email: (v.email ?? '').trim(),
+                      city: (v.city ?? '').trim(),
+                      ...((v.phone ?? '').trim() && (v.phone ?? '').trim() !== mevcutTel
+                        ? { phone: (v.phone ?? '').trim() }
                         : {}),
                     });
+                    bildir('Üye bilgileri güncellendi.');
                     reload();
                   } catch (e) {
-                    // Sunucu e-posta çakışmasını REDDEDER; sessizce ezmek o hesabı
-                    // girişsiz bırakırdı. Sebebi kullanıcıya göster.
-                    alert(e instanceof Error ? e.message : 'Kaydedilemedi');
+                    // Sunucu e-posta/telefon çakışmasını REDDEDER; sessizce
+                    // ezmek o hesabı girişsiz bırakırdı. Sebebi göster.
+                    bildir(e instanceof Error ? e.message : 'Kaydedilemedi', true);
                   }
                 }}
               >
@@ -3706,14 +3789,27 @@ function UsersView() {
               <button
                 className="btn-sm"
                 onClick={async () => {
-                  const pw = prompt(`${u.name || 'Üye'} için yeni parola (en az 6 karakter):`);
-                  if (pw === null) return;
-                  if (pw.trim().length < 6) {
-                    alert('Parola en az 6 karakter olmalı.');
+                  const v = await formAl({
+                    baslik: `${u.name || 'Üye'} — yeni parola`,
+                    mesaj: 'Üye bir sonraki girişinde bu parolayı kullanacak.',
+                    alanlar: [
+                      {
+                        ad: 'pw',
+                        etiket: 'Yeni parola',
+                        tur: 'password',
+                        zorunlu: true,
+                        not: 'En az 6 karakter.',
+                      },
+                    ],
+                    onayEtiket: 'Parolayı değiştir',
+                  });
+                  if (!v) return;
+                  if ((v.pw ?? '').trim().length < 6) {
+                    bildir('Parola en az 6 karakter olmalı.', true);
                     return;
                   }
-                  await api.setUserPassword(u.id, pw.trim());
-                  alert('Parola güncellendi ✓');
+                  await api.setUserPassword(u.id, (v.pw ?? '').trim());
+                  bildir('Parola güncellendi.');
                 }}
               >
                 Şifre
@@ -3722,11 +3818,24 @@ function UsersView() {
                 <button
                   className="btn-sm"
                   onClick={async () => {
-                    const reason = prompt('Kısıtlama gerekçesi (7 gün sayaçlı kısıtlı mod):');
-                    if (reason && reason.trim()) {
-                      await api.restrictUser(u.id, reason.trim());
-                      reload();
-                    }
+                    const v = await formAl({
+                      baslik: `${u.name || 'Üye'} — kısıtla`,
+                      mesaj: 'Hesap 7 gün sayaçlı kısıtlı moda alınır.',
+                      alanlar: [
+                        {
+                          ad: 'reason',
+                          etiket: 'Gerekçe',
+                          tur: 'uzun',
+                          zorunlu: true,
+                          not: 'Denetim kaydına yazılır.',
+                        },
+                      ],
+                      onayEtiket: 'Kısıtla',
+                    });
+                    if (!v?.reason?.trim()) return;
+                    await api.restrictUser(u.id, v.reason.trim());
+                    bildir('Üye kısıtlandı.');
+                    reload();
                   }}
                 >
                   Kısıtla
@@ -3736,8 +3845,15 @@ function UsersView() {
                 <button
                   className="btn-sm btn-danger"
                   onClick={async () => {
-                    if (u.role === 'admin') return alert('Admin askıya alınamaz.');
-                    if (confirm(`${u.name || 'Kullanıcı'} askıya alınsın mı?`)) {
+                    if (u.role === 'admin') return bildir('Yönetici hesabı askıya alınamaz.', true);
+                    if (
+                      await onayla({
+                        baslik: 'Üyeyi askıya al',
+                        mesaj: `${u.name || 'Kullanıcı'} askıya alınacak; giriş yapamayacak.`,
+                        onayEtiket: 'Askıya al',
+                        tehlikeli: true,
+                      })
+                    ) {
                       await api.setUserStatus(u.id, 'suspended');
                       reload();
                     }
@@ -3763,7 +3879,6 @@ function UsersView() {
     </>
   );
 }
-
 // Brief §3 durum sözlüğü. Adlar kod, veritabanı ve belgede AYNI; panel de
 // aynı kelimeleri kullanıyor ki bir randevu üç yerde üç farklı isimle
 // görünmesin. Eski sözlük (confirmed/pending/waitlist...) tamamen kaldırıldı:
@@ -3788,7 +3903,6 @@ const BOOKING_STATUS_TR: Record<string, string> = {
   no_show_uzman: 'Uzman gelmedi',
   uyusmazlik: 'Uyuşmazlık',
 };
-
 /** Kapanmış (bir daha akmayacak) durumlar — eylem düğmeleri gösterilmez. */
 const KAPALI_DURUMLAR = [
   'tamamlandi',
@@ -3801,18 +3915,18 @@ const KAPALI_DURUMLAR = [
   'no_show_uzman',
   'uyusmazlik',
 ];
-
 function BookingsAdminView() {
+  const { onayla, bildir } = useDiyalog();
   const [status, setStatus] = useState('all');
   const [q, setQ] = useState('');
   const { data, reload: run } = useAsync<AdminBooking[]>(() => api.bookings(status), [status]);
   const act = async (fn: () => Promise<unknown>, msg: string) => {
-    if (!confirm(msg)) return;
+    if (!(await onayla({ baslik: 'Randevu işlemi', mesaj: msg, onayEtiket: 'Uygula' }))) return;
     try {
       await fn();
       run();
     } catch {
-      alert('İşlem başarısız (durum geçişi geçersiz olabilir)');
+      bildir('İşlem başarısız — durum geçişi geçersiz olabilir.', true);
     }
   };
   const rows = (data ?? []).filter((b) => {
@@ -3907,28 +4021,28 @@ function BookingsAdminView() {
     </>
   );
 }
-
 // §12.4 Anlaşmazlık kuyruğu — depozito/iade dekont görselleri incelenir, karar verilir
 function DisputesView() {
+  const { formAl } = useDiyalog();
   const { data, reload } = useAsync<Dispute[]>(() => api.disputes(), []);
   const open = (data ?? []).filter((d) => d.status === 'open');
   const resolved = (data ?? []).filter((d) => d.status !== 'open');
-
   const kindLabel = (k: string) => (k === 'refund' ? 'İade dekontu' : 'Depozito itirazı');
   const statusLabel = (s: string) =>
     s === 'approved' ? 'Onaylandı' : s === 'rejected' ? 'Reddedildi' : 'Açık';
   const statusPill = (s: string) =>
     s === 'approved' ? 'approved' : s === 'rejected' ? 'rejected' : 'pending';
-
   const resolve = async (d: Dispute, decision: 'approve' | 'reject') => {
-    const resolution = prompt(
-      `${kindLabel(d.kind)} — ${decision === 'approve' ? 'onay' : 'ret'} notu (ops.):`,
-    );
-    if (resolution === null) return;
-    await api.resolveDispute(d.id, decision, resolution || undefined);
+    const v = await formAl({
+      baslik: `${kindLabel(d.kind)} — ${decision === 'approve' ? 'onayla' : 'reddet'}`,
+      mesaj: `${d.proName} · ${TL(d.amount)} · Randevu #${d.bookingRef}`,
+      alanlar: [{ ad: 'not', etiket: 'Karar notu', tur: 'uzun', ipucu: 'İsteğe bağlı' }],
+      onayEtiket: decision === 'approve' ? 'Onayla' : 'Reddet',
+    });
+    if (!v) return;
+    await api.resolveDispute(d.id, decision, (v.not ?? '').trim() || undefined);
     reload();
   };
-
   const row = (d: Dispute) => (
     <div key={d.id} className="list-col">
       <div className="name">
@@ -3973,7 +4087,6 @@ function DisputesView() {
       </div>
     </div>
   );
-
   return (
     <>
       <h1 className="page-title">Anlaşmazlık Kuyruğu</h1>
@@ -3981,12 +4094,10 @@ function DisputesView() {
         Depozito itirazları ve iade dekontları — dekont görselleri burada incelenir. Sabit ilke:
         dürüst eleştiri/haklı iade reddedilmez.
       </p>
-
       <div className="section-title">Bekleyen ({open.length})</div>
       <div className="card" style={{ marginBottom: 20 }}>
         {open.length === 0 ? <div className="empty">Bekleyen anlaşmazlık yok</div> : open.map(row)}
       </div>
-
       {resolved.length > 0 && (
         <>
           <div className="section-title">Çözülenler ({resolved.length})</div>
@@ -3998,24 +4109,29 @@ function DisputesView() {
     </>
   );
 }
-
 // §7.2 — yorum itiraz kuyruğu: uzman/işletme itirazı; yorum görünür kalır, admin tut/gizle karar verir.
 function ReviewDisputesView() {
+  const { onayla } = useDiyalog();
   const { data, reload } = useAsync<ReviewDispute[]>(() => api.reviewDisputes(), []);
   const list = data ?? [];
-
   const resolve = async (d: ReviewDispute, action: 'keep' | 'remove') => {
     const msg =
       action === 'remove'
         ? 'Bu yorumu GİZLE? Yalnızca kural ihlali (hakaret, kişisel bilgi, alakasız içerik, sahte yorum) varsa yapılır. Dürüst negatif yorum silinmez.'
         : 'İtirazı kapat ve yorumu OLDUĞU GİBİ tut?';
-    if (!confirm(msg)) return;
+    if (
+      !(await onayla({
+        baslik: action === 'remove' ? 'Yorumu gizle' : 'İtirazı kapat',
+        mesaj: msg,
+        onayEtiket: action === 'remove' ? 'Gizle' : 'Olduğu gibi tut',
+        tehlikeli: action === 'remove',
+      }))
+    )
+      return;
     await api.resolveReviewDispute(d.id, action);
     reload();
   };
-
   const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
-
   return (
     <>
       <h1 className="page-title">Yorum İtiraz Kuyruğu</h1>
@@ -4023,7 +4139,6 @@ function ReviewDisputesView() {
         Uzman/işletmenin itiraz ettiği yorumlar. Sabit ilke: yorum inceleme boyunca görünür kalır;
         yalnızca kural ihlalinde gizlenir — “hizmeti beğenmedim” türü dürüst negatif yorum SİLİNMEZ.
       </p>
-
       <div className="section-title">Bekleyen ({list.length})</div>
       <div className="card">
         {list.length === 0 ? (
@@ -4062,7 +4177,6 @@ function ReviewDisputesView() {
     </>
   );
 }
-
 function QuotesView() {
   const { data } = useAsync<QuoteReq[]>(() => api.quoteRequests(), []);
   return (
@@ -4106,7 +4220,6 @@ function QuotesView() {
     </>
   );
 }
-
 function LoyaltyView() {
   const { data } = useAsync<Loyalty>(() => api.loyalty(), []);
   return (
@@ -4150,7 +4263,6 @@ function LoyaltyView() {
     </>
   );
 }
-
 function FlagsView() {
   const { data, reload } = useAsync<FeatureFlag[]>(() => api.featureFlags(), []);
   const [form, setForm] = useState({ key: '', description: '' });
@@ -4211,7 +4323,6 @@ function FlagsView() {
     </>
   );
 }
-
 // §12.9 Sistem Ayarları — parametrik oranlar + API anahtarları + şehir yönetimi
 function SystemView() {
   const { data, reload } = useAsync<SystemSettings>(() => api.systemSettings(), []);
@@ -4221,7 +4332,6 @@ function SystemView() {
   const [cityActive, setCityActive] = useState('');
   const [citySoon, setCitySoon] = useState('');
   const [kaspiEdit, setKaspiEdit] = useState('');
-
   const saveRate = async (key: string) => {
     const raw = rateEdits[key];
     if (raw === undefined || raw === '') return;
@@ -4231,14 +4341,12 @@ function SystemView() {
     setRateEdits((s) => ({ ...s, [key]: '' }));
     reload();
   };
-
   const saveKey = async (provider: string) => {
     const value = keyEdits[provider] ?? '';
     await api.setApiKey(provider, value);
     setKeyEdits((s) => ({ ...s, [provider]: '' }));
     reload();
   };
-
   const saveKaspi = async () => {
     // Boş kaydetmek özelliği KAPATIR — bilinçli bir seçenek: bağlantı bozulursa
     // düğmeyi gizlemek, müşteriyi çalışmayan bir yola göndermekten iyidir.
@@ -4246,12 +4354,10 @@ function SystemView() {
     setKaspiEdit('');
     reload();
   };
-
   const test = async (provider: string) => {
     const res = await api.testApiKey(provider);
     setTests((s) => ({ ...s, [provider]: res }));
   };
-
   const saveCities = async () => {
     const active = cityActive
       .split(',')
@@ -4267,12 +4373,10 @@ function SystemView() {
     setCitySoon('');
     reload();
   };
-
   return (
     <>
       <h1 className="page-title">Sistem Ayarları</h1>
       <p className="page-sub">Parametrik oranlar · dış servis anahtarları · şehir yönetimi</p>
-
       {/* Parametrik oranlar */}
       <h2 className="section-head">Ceza / depozito tutarları ve oranlar</h2>
       <p className="page-sub">Değişiklikler app&apos;e `/config` üzerinden yansır.</p>
@@ -4303,7 +4407,6 @@ function SystemView() {
           ))
         )}
       </div>
-
       {/* §4.4 — Kaspi ödeme bağlantısı */}
       <h2 className="section-head">Kaspi ile ödeme</h2>
       <p className="page-sub">
@@ -4337,7 +4440,6 @@ function SystemView() {
           </button>
         </div>
       </div>
-
       {/* API anahtarları */}
       <h2 className="section-head">API anahtarları</h2>
       <p className="page-sub">
@@ -4380,7 +4482,6 @@ function SystemView() {
           ))
         )}
       </div>
-
       {/* Şehir yönetimi */}
       <h2 className="section-head">Şehir yönetimi</h2>
       <p className="page-sub">Aktif şehirler + &quot;yakında&quot; listesi (virgülle ayır).</p>
@@ -4417,12 +4518,10 @@ function SystemView() {
           </>
         )}
       </div>
-
       <CategorySection />
     </>
   );
 }
-
 // §12.9 — kategori bakım periyodu (gün) + standart hizmet süresi (dk)
 function CategorySection() {
   const { data, reload } = useAsync<CategoryConfig>(() => api.categoryConfig(), []);
@@ -4490,7 +4589,6 @@ function CategorySection() {
     </>
   );
 }
-
 function AuditView() {
   const { data } = useAsync<AuditEntry[]>(() => api.auditLogs(), []);
   return (
