@@ -9,7 +9,7 @@ import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadMediaCache, medyaAnahtari, saveMediaCache } from './media-cache';
 import { portreKesilmisMi, portreSec } from './portre';
-import { BOS_DURUM, type SplashDurumu } from '@ayna/domain';
+import { BOS_DURUM, type SplashDurumu, type UzakKatalog } from '@ayna/domain';
 import { setApiToken } from './api';
 import { formatTrDate } from './date-label';
 import { create } from 'zustand';
@@ -424,6 +424,16 @@ interface State {
   /** Son açılış anı (ms) — 30+ gün yokluk mesajı için. */
   sonAcilisMs: number | null;
   setSonAcilis: (ms: number) => void;
+  /**
+   * Sunucudan inen açılış kataloğu — brief §7.1.
+   *
+   * HESABA ÖZEL DEĞİL: kataloğun kullanıcıyla ilgisi yok, herkese aynısı
+   * iniyor. Çıkışta silseydik yeni üye ilk açılışında (henüz eşitleme
+   * bitmeden) eski pakete düşerdi. `partialize`da var, `userScopedReset`te
+   * bilinçli olarak YOK.
+   */
+  acilisKatalog: UzakKatalog | null;
+  setAcilisKatalog: (k: UzakKatalog | null) => void;
   setSellerProfile: (p: { social?: SocialValue; hours?: DayHours[]; certs?: string[] }) => void;
   // §10.1/§6.2 — salon-seviyesi profil (uzman profilinden AYRI). Kalıcı saklanır.
   salonProfile: {
@@ -1000,6 +1010,8 @@ export const useStore = create<State>()(
       setAcilisDurumu: (d) => set({ acilisDurumu: d }),
       sonAcilisMs: null,
       setSonAcilis: (ms) => set({ sonAcilisMs: ms }),
+      acilisKatalog: null,
+      setAcilisKatalog: (k) => set({ acilisKatalog: k }),
       setSellerProfile: (p) => {
         set(() => ({
           ...(p.social ? { sellerSocial: p.social } : {}),
@@ -3314,6 +3326,7 @@ export const useStore = create<State>()(
          */
         acilisDurumu: s.acilisDurumu,
         sonAcilisMs: s.sonAcilisMs,
+        acilisKatalog: s.acilisKatalog,
         salonProfile: s.salonProfile,
         demandNotif: s.demandNotif,
         offersSeen: s.offersSeen, // açılış 'yeni teklif' pop-up sayacı

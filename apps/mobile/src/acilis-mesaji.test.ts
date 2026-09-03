@@ -97,7 +97,13 @@ test('UZUN mesaj KÜÇÜLÜYOR ama okunur bir alt sınırda duruyor', () => {
 
 test('DOKUNMA GEÇİYOR ve hareket azaltma destekleniyor', () => {
   const k = readFileSync(join(__dirname, 'ui', 'AcilisMesaji.tsx'), 'utf8');
-  assert.match(k, /onPress=\{\(\) => kapat\.current\(\)\}/, 'dokunarak geçme yok');
+  // Dokunmak ATLAMA sayılıyor (true); süre dolup kapanma saymıyor.
+  assert.match(k, /onPress=\{\(\) => kapat\.current\(true\)\}/, 'dokunarak geçme yok');
+  assert.match(
+    k,
+    /if \(hazir\) kapat\.current\(false\);/,
+    'kendiliğinden kapanma atlama sayılıyor',
+  );
   assert.match(k, /isReduceMotionEnabled/, 'hareket azaltma okunmuyor');
   assert.match(k, /azHareket \? 0 :/, 'hareket azaltmada süzülme kapanmıyor');
 });
@@ -111,12 +117,12 @@ test('SPLASH yüklemeye EK BEKLEME yaratmıyor', () => {
   const k = readFileSync(join(__dirname, 'ui', 'AcilisMesaji.tsx'), 'utf8');
   assert.match(
     k,
-    /sureDoldu\.current = true;\s*\n\s*if \(hazir\) kapat\.current\(\);/,
+    /sureDoldu\.current = true;\s*\n\s*if \(hazir\) kapat\.current\(false\);/,
     'süre dolunca hazırlık beklenmiyor',
   );
   assert.match(
     k,
-    /if \(hazir && sureDoldu\.current\) kapat\.current\(\);/,
+    /if \(hazir && sureDoldu\.current\) kapat\.current\(false\);/,
     'hazır olunca süre beklenmiyor',
   );
 });

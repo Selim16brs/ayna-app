@@ -1683,3 +1683,63 @@ model ProPostRecipient {
   @@index([userId])
   @@map("pro_post_recipients")
 }
+
+/// AÇILIŞ MESAJI — `AYNA_ACILIS_MESAJLARI_BRIEF.md` §7.1/§7.2.
+///
+/// Tablo BOŞ olabilir ve olması normaldir: cihaz kataloğu uygulamayla
+/// birlikte taşıyor. Bu tablo yalnızca "uzaktan güncelleme" katmanı —
+/// panelden bir şey değiştirilene kadar tek satır bile gerekmiyor.
+///
+/// Kimlik (`code`) DEĞİŞMEZ: rotasyon durumu cihazda bu kimlikle
+/// saklanıyor, kimlik değişirse mesaj kullanıcı için "hiç görülmemiş"
+/// olur ve döngü bozulur.
+model SplashMessage {
+  code   String  @id
+  grup   String
+  etiket String  @default("neutral")
+  tr     String
+  kk     String
+  ru     String
+  /// Pasife alınan mesaj katalogda YER ALMAZ. Silmek yerine pasife almak
+  /// esas: kimlik korunur, analitik geçmişi anlamlı kalır.
+  active Boolean @default(true)
+  sira   Int     @default(0)
+
+  /// Koşullar — `packages/domain` şekliyle birebir; null = koşulsuz.
+  saatBas          Int?    @map("saat_bas")
+  saatSon          Int?    @map("saat_son")
+  haftaSonu        Boolean @default(false) @map("hafta_sonu")
+  gunler           Int[]   @default([])
+  pencereBasAy     Int?    @map("pencere_bas_ay")
+  pencereBasGun    Int?    @map("pencere_bas_gun")
+  pencereSonAy     Int?    @map("pencere_son_ay")
+  pencereSonGun    Int?    @map("pencere_son_gun")
+  oncelikliOzelGun Boolean @default(false) @map("oncelikli_ozel_gun")
+  adGerekli        Boolean @default(false) @map("ad_gerekli")
+  dogumGunu        Boolean @default(false) @map("dogum_gunu")
+  adsizTr          String? @map("adsiz_tr")
+  adsizKk          String? @map("adsiz_kk")
+  adsizRu          String? @map("adsiz_ru")
+  davranis         String?
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([active])
+  @@map("splash_messages")
+}
+
+/// AÇILIŞ MESAJI ANALİTİĞİ — brief §7.3 ("skip oranı ölçülür").
+///
+/// KİŞİYE BAĞLI SATIR YOK. Kim hangi mesajı gördü bilgisini tutmuyoruz;
+/// gün + mesaj + dil kırılımında yalnızca SAYAÇ artıyor. Skip oranını
+/// ölçmek için kimlik gerekmiyor, tutmak ise gereksiz bir iz olurdu.
+model SplashStat {
+  gun      DateTime @db.Date
+  code     String
+  locale   String
+  gosterim Int      @default(0)
+  atlama   Int      @default(0)
+
+  @@id([gun, code, locale])
+  @@map("splash_stats")
+}

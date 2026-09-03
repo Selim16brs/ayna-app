@@ -13,9 +13,11 @@ import {
   syncBookingReminders,
 } from '../src/notifications';
 import { useStore } from '../src/store';
+import { acilisKatalogunuEsitle, acilisOlcumuGonder } from '../src/acilis-esitleme';
+import { api } from '../src/api';
 import { acilisMesajiHazirla } from '../src/acilis-mesaji-kapisi';
 import { AcilisMesaji } from '../src/ui/AcilisMesaji';
-import type { SplashSonucu } from '@ayna/domain';
+import { gecerliKatalog, type SplashSonucu } from '@ayna/domain';
 import { useBackExit } from '../src/use-back-exit';
 import { ThemeProvider, useTheme } from '../src/theme-context';
 import {
@@ -205,8 +207,16 @@ function ThemedStack() {
       dahaOnceAcildi: st.sonAcilisMs != null,
       sonAcilisMs: st.sonAcilisMs,
       durum: st.acilisDurumu,
+      // Brief §7.1 — uzak katalog varsa o, yoksa cihazdaki paket.
+      katalog: gecerliKatalog(st.acilisKatalog),
     });
     st.setSonAcilis(Date.now());
+    /*
+     * Eşitleme mesaj SEÇİLDİKTEN SONRA başlıyor: indirmeyi beklemek
+     * açılışa bekleme eklerdi (brief §6.1). Yeni katalog bir SONRAKİ
+     * açılışta devreye giriyor.
+     */
+    void acilisKatalogunuEsitle(api.splashKatalog, st.acilisKatalog, st.setAcilisKatalog);
     if (!sonuc) return;
     st.setAcilisDurumu(sonuc.durum);
     setAcilis(sonuc);
@@ -227,7 +237,15 @@ function ThemedStack() {
       <OfflineBanner />
       {/* Açılış mesajı EN ÜSTTE: geçiş bitene kadar ana sayfayı örtüyor. */}
       {acilis && !acilisBitti ? (
-        <AcilisMesaji sonuc={acilis} hazir={true} bitti={() => setAcilisBitti(true)} />
+        <AcilisMesaji
+          sonuc={acilis}
+          hazir={true}
+          bitti={(atlandi) => {
+            // Brief §7.3 — gösterim + skip oranı. Kişi kimliği gitmiyor.
+            acilisOlcumuGonder(api.splashOlcum, acilis.id, locale, atlandi);
+            setAcilisBitti(true);
+          }}
+        />
       ) : null}
       {baseHidden ? null : isSalon ? (
         <SalonTabBar />

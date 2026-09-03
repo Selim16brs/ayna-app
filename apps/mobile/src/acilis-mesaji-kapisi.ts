@@ -37,6 +37,8 @@ export interface AcilisGirdisi {
   /** Son açılış anı (ms) — 30+ gün yokluk kuralı için. */
   sonAcilisMs?: number | null | undefined;
   durum: SplashDurumu;
+  /** Brief §7.1 — uzak katalog inmişse o, yoksa cihazdaki paket. */
+  katalog?: SplashBaglami['katalog'];
   simdi?: Date;
 }
 
@@ -99,6 +101,7 @@ export function acilisMesajiHazirla(g: AcilisGirdisi): SplashSonucu | null {
     tamamlananRandevuId: tamamlanan?.id ?? null,
     puan: g.puan,
     durum: g.durum ?? BOS_DURUM,
+    katalog: g.katalog,
   };
   return acilisMesajiSec(baglam);
 }

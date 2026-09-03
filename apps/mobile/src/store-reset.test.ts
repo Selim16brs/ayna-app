@@ -70,6 +70,21 @@ const PERSISTED_USER_KEYS = [
   'sonAcilisMs',
 ];
 
+/*
+ * HESAPTAN BAĞIMSIZ persist alanları.
+ *
+ * Buraya bir alan koymak "bu veri kullanıcıya ait DEĞİL" iddiasıdır ve
+ * gerekçesi yazılmak zorundadır. Liste bir kaçamak değil: aşağıdaki test
+ * bu alanların sıfırlama setinde OLMAMASINI da doğruluyor, yani bir alan
+ * iki listede birden duramaz — her yeni alan hâlâ açık bir karar.
+ */
+const HESAPTAN_BAGIMSIZ = [
+  // Sunucudan inen açılış mesajı kataloğu: herkese aynısı iniyor,
+  // kullanıcıyla ilgisi yok. Çıkışta silseydik yeni üye eşitleme bitene
+  // kadar eski pakete düşerdi.
+  'acilisKatalog',
+];
+
 test('persist edilen tüm kullanıcı alanları sıfırlama setinde', () => {
   const reset = block('export const userScopedReset', '});');
   const seeded = block('const SEEDED_PERSONAL_RESET', '};');
@@ -88,8 +103,22 @@ test('partialize ile bekçi listesi senkron', () => {
   for (const k of keys) {
     if (k === 'token' || k === 'currentUser') continue;
     assert.ok(
-      PERSISTED_USER_KEYS.includes(k),
+      PERSISTED_USER_KEYS.includes(k) || HESAPTAN_BAGIMSIZ.includes(k),
       `partialize'a yeni alan eklendi ('${k}') — PERSISTED_USER_KEYS + userScopedReset güncellenmeli`,
+    );
+  }
+});
+
+// Bir alan hem "kullanıcıya ait" hem "hesaptan bağımsız" olamaz; ikisine
+// birden yazmak bekçiyi etkisiz kılardı.
+test('hesaptan bağımsız alanlar sıfırlama setinde DEĞİL', () => {
+  const reset = block('export const userScopedReset', '});');
+  const seeded = block('const SEEDED_PERSONAL_RESET', '};');
+  for (const key of HESAPTAN_BAGIMSIZ) {
+    assert.ok(!PERSISTED_USER_KEYS.includes(key), `'${key}' iki listede birden`);
+    assert.ok(
+      !new RegExp(`\\b${key}:`).test(reset) && !new RegExp(`\\b${key}:`).test(seeded),
+      `'${key}' hesaptan bağımsız deniyor ama çıkışta siliniyor`,
     );
   }
 });
