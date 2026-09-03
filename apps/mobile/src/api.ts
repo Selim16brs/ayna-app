@@ -693,8 +693,54 @@ export interface ApiTaksonomi {
   }[];
 }
 
+/** Uzmanın CRM satırı — tamamlanmış randevusu olan müşteri. */
+export interface ProCustomer {
+  id: string;
+  name: string;
+  /** En son tamamlanan randevunun anı (UTC ms) — yoksa null. */
+  lastServiceAt: number | null;
+  lastService: string;
+}
+
+/** Öncesi/sonrası paylaşımı. 7 gün sonra sunucudan silinir. */
+export interface ProPost {
+  id: string;
+  beforeUrl: string;
+  afterUrl: string;
+  note: string;
+  createdAt: number;
+  expiresAt: number;
+  /** Uzmanın kendi listesinde: kaç müşteriye gitti. */
+  recipientCount?: number;
+  /** Müşterinin gelen kutusunda: kimden. */
+  proName?: string;
+  proImage?: string;
+}
+
 export const api = {
   categories: () => get<ApiCategory[]>('/categories'),
+
+  // ── Uzman paylaşımları (öncesi/sonrası, 7 gün) ──────────────────────
+  /** Uzmanın CRM'i: tamamlanmış randevusu olan müşteriler. */
+  proCustomers: (token: string) => get<{ customers: ProCustomer[] }>('/pro-posts/customers', token),
+  /** Uzmanın kendi paylaşımları (süresi geçmemişler). */
+  myProPosts: (token: string) => get<{ posts: ProPost[] }>('/pro-posts/mine', token),
+  /** Müşteriye gelen paylaşımlar. */
+  proPostInbox: (token: string) => get<{ posts: ProPost[] }>('/pro-posts/inbox', token),
+  /**
+   * Paylaş. `consent` müşteriden izin alındığı BEYANI — sunucu izinsiz
+   * gövdeyi reddediyor, ekranın bunu kullanıcıya sorması şart.
+   */
+  createProPost: (
+    token: string,
+    input: { beforeDataUrl: string; afterDataUrl: string; note?: string; consent: true },
+  ) => post<ProPost>('/pro-posts', input, token),
+  markProPostRead: (token: string, id: string) =>
+    post<{ ok: boolean }>(`/pro-posts/${id}/read`, {}, token),
+  /** Müşteri kendi fotoğrafını görürse — gönderi anında gizlenir. */
+  reportProPost: (token: string, id: string) =>
+    post<{ ok: boolean }>(`/pro-posts/${id}/report`, {}, token),
+  deleteProPost: (token: string, id: string) => del<{ ok: boolean }>(`/pro-posts/${id}`, token),
   /**
    * Hizmet taksonomisi + "Yakında" durumu (brief §7.4).
    *

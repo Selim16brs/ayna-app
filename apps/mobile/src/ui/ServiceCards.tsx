@@ -9,9 +9,20 @@ import { Text } from './Text';
 import { YakindaRozeti } from './YakindaRozeti';
 
 /**
- * Alt hizmetler — YATAY kaydırmalı bilgi kartları (ad + süre + başlangıç fiyatı).
- * Çipten farkı: gerçek veri gösterir (taksonomi süre/fiyat) → premium ve tek satır (kompakt).
- * Tek seçim; seçiliye tekrar basınca kalkar.
+ * Alt hizmetler — YATAY kaydırmalı kartlar.
+ *
+ * ── FİYAT VE SÜRE KALDIRILDI ────────────────────────────────────────────
+ *
+ * Kurucu: "fiyat ve süre yazmak doğru olmaz çünkü herkesin fiyatı ve
+ * işlem süresi farklı."
+ *
+ * Haklıydı ve gösterilen sayılar KİMSENİN fiyatı değildi: katalog
+ * varsayılanlarıydı (`hizmet-varsayilan.ts`) — uzman kayıt olurken
+ * doldurulan başlangıç değerleri. Müşteri "Kesim 9.000 ₸" görüp uzmanın
+ * profilinde 15.000 ₸ ile karşılaşıyordu.
+ *
+ * Gerçek fiyat UZMANIN KENDİ satırında ve profilinde duruyor; kategori
+ * ekranı hizmetin NE olduğunu anlatır, kaça olduğunu değil.
  */
 export function ServiceCards({
   categoryId,
@@ -53,15 +64,6 @@ export function ServiceCards({
               </Text>
               {on ? <Ionicons name="checkmark-circle" size={16} color={colors.onAccent} /> : null}
             </View>
-            <View style={styles.metaRow}>
-              <Ionicons name="time-outline" size={11} color={on ? colors.onAccent : colors.muted} />
-              <Text variant="caption" tone={on ? 'onAccent' : 'muted'} style={styles.meta}>
-                {s.durationMin} dk
-              </Text>
-            </View>
-            <Text variant="caption" tone={on ? 'onAccent' : 'accentFg'} style={styles.price}>
-              ₸{s.price.toLocaleString('ru-RU')}+
-            </Text>
             {/*
              * Brief §7.4 — bu alt hizmette yayında uzman yok. Kart yine de
              * SEÇİLEBİLİR: rozet bir kapı değil, beklenti ayarı. Müşteri

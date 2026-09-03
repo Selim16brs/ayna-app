@@ -45,6 +45,14 @@ const MENU: {
   // işi yoktu; oradaki tek anlamlı parça üyelik işlemleriydi, o da kendi
   // ekranına alındı (/membership).
   { key: 'profile.menu.passport', icon: 'card-outline', customerOnly: true },
+  /*
+   * UZMANIMDAN GELEN PAYLAŞIMLAR — yalnız müşteri.
+   *
+   * Uzmanın kendi paylaşımları menüsünde (`/seller/paylas`); burası
+   * ALICI tarafı. Aynı satırı ikisine de göstermek, uzmanı kendi
+   * gönderisinin gelen kutusuna sokardı.
+   */
+  { key: 'propost.inbox', icon: 'images-outline', customerOnly: true },
   { key: 'profile.menu.membership', icon: 'diamond-outline', sellerOnly: true },
   // Profilini paylaş Menü sekmesinde de var; en çok aranan yer profil olduğu
   // için buraya da kondu.
@@ -134,6 +142,7 @@ export default function ProfileScreen() {
 
   const onPress = (key: MessageKey) => {
     if (key === 'profile.menu.passport') router.push('/profile/passport');
+    if (key === 'propost.inbox') router.push('/paylasimlar');
     // Bu satır bir önceki düzenlememde kayboldu: menüde görünüyor ama
     // dokununca hiçbir şey olmuyordu.
     else if (key === 'profile.menu.membership') router.push('/membership');
