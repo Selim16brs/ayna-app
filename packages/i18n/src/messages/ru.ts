@@ -420,7 +420,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.services.active_unit': 'активных услуг',
   'seller.services.empty': 'В этой категории услуги ещё не выбраны.',
   'seller.services.saved': 'Ваши услуги обновлены.',
-  'home.greeting': 'Привет, {ad}',
   'home.services': 'Услуги',
   'home.qa.book': 'Записаться',
   'home.qa.wish': 'Расскажи о желании',

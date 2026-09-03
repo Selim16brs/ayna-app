@@ -8,6 +8,7 @@ import {
 import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadMediaCache, medyaAnahtari, saveMediaCache } from './media-cache';
+import { portreKesilmisMi, portreSec } from './portre';
 import { setApiToken } from './api';
 import { formatTrDate } from './date-label';
 import { create } from 'zustand';
@@ -3432,8 +3433,12 @@ export const selectUnreadCount = (s: State): number => {
  * Dönen değer string|null olduğu için seçici referans olarak KARARLIDIR
  * (useSyncExternalStore döngüsüne yol açmaz).
  */
-export const selectPortrait = (s: State): string | null => {
-  const { cutoutUri, cutoutFor, avatarUri } = s;
-  if (cutoutUri && cutoutFor && cutoutFor === medyaAnahtari(avatarUri)) return cutoutUri;
-  return avatarUri ?? null;
-};
+/**
+ * Portre kararları `portre.ts`te — saf mantık, mağazadan bağımsız.
+ *
+ * Mağaza React Native'i çekiyor ve Node testinde içe aktarılamıyor;
+ * kararın kendisi ise saf. Buradaki iki satır yalnız mağaza durumunu
+ * o saf fonksiyonlara bağlıyor.
+ */
+export const selectPortrait = (s: State): string | null => portreSec(s);
+export const selectPortraitKesilmis = (s: State): boolean => portreKesilmisMi(s);

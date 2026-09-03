@@ -415,7 +415,6 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.services.active_unit': 'белсенді қызмет',
   'seller.services.empty': 'Бұл санатта әлі қызмет таңдалмаған.',
   'seller.services.saved': 'Қызметтерің жаңартылды.',
-  'home.greeting': 'Сәлем, {ad}',
   'home.services': 'Қызметтер',
   'home.qa.book': 'Жазылу',
   'home.qa.wish': 'Тілегіңді айт',

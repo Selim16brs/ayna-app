@@ -14,7 +14,11 @@ const d = readFileSync(join(import.meta.dirname, '..', 'app', '(tabs)', 'discove
 
 test('bölümler Figma SIRASIYLA duruyor', () => {
   const sira = [
-    "t('home.greeting')", // welcome-vip-area
+    // welcome-vip-area. İşaret KAPSAYICI, metin değil: karşılama tek
+    // satırdan iki satıra ("selam" üstte küçük, İSİM altta büyük)
+    // geçince metin anahtarı değişti ve bu test kapsayıcı hâlâ yerinde
+    // dururken düştü.
+    'styles.karsilama', // welcome-vip-area
     "t('home.search')", // search-container
     'HIZLI_EYLEMLER.map', // quick-action-strip
     "t('home.services')", // service-icons-strip

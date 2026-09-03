@@ -432,7 +432,6 @@ export const tr = {
   'seller.services.saved': 'Hizmetlerin güncellendi.',
 
   // Keşfet (ana ekran)
-  'home.greeting': 'Merhaba, {ad}',
   'home.services': 'Hizmetler',
   'home.qa.book': 'Randevu Al',
   'home.qa.wish': 'Dileğini Anlat',
