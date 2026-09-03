@@ -33,14 +33,15 @@ export class ProfileChangesController {
   /**
    * Telefon değişikliği talebi.
    *
-   * Genel `submit` ucundan AYRI: burada SMS kodu doğrulanıyor. Aynı uçtan
-   * geçseydi telefon, kodsuz da gönderilebilen serbest bir alan olurdu.
+   * Genel `submit` ucundan AYRI: burada çakışma kontrolü ve şifreli
+   * saklama var. Aynı uçtan geçseydi telefon, serbest bir metin alanı gibi
+   * işlenir ve başkasının numarasıyla talep açılabilirdi.
    */
   @Post('phone')
   phone(
     @Req() req: AuthedRequest,
     @Body(new ZodValidationPipe(phoneChangeSchema)) body: PhoneChangeInput,
   ) {
-    return this.svc.telefonTalebi(req.user?.id ?? '', body.phone, body.code);
+    return this.svc.telefonTalebi(req.user?.id ?? '', body.phone);
   }
 }

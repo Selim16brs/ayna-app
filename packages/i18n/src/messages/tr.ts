@@ -1881,11 +1881,9 @@ export const tr = {
   'profile.phone.title': 'Telefon numarasını değiştir',
   'profile.phone.change': 'Telefon numaramı değiştir',
   'profile.phone.why':
-    'Yeni numaranı SMS koduyla doğruluyoruz, sonra ekibimiz onaylıyor. Onaylanana kadar eski numaranla giriş yapmaya devam edersin.',
+    'Yeni numaranı yaz ve gönder. Ekibimiz onayladıktan sonra numaran değişir; onaylanana kadar eski numaranla giriş yapmaya devam edersin.',
   'profile.phone.current': 'Şu anki numaran',
   'profile.phone.new': 'Yeni numaran',
-  'profile.phone.send_code': 'Doğrulama kodu gönder',
-  'profile.phone.code_sent': 'Kod şu numaraya gönderildi:',
   'profile.phone.submit': 'Onaya gönder',
   'profile.phone.submitted': 'Talebin alındı. Onaylanınca haber vereceğiz.',
   'profile.phone.taken': 'Bu numara başka bir hesapta kayıtlı.',

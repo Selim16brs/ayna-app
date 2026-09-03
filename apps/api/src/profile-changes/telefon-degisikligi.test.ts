@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ProfileChangesService } from './profile-changes.service';
-import { encryptField, hashOtp, phoneHash } from '../common/crypto';
+import { encryptField, phoneHash } from '../common/crypto';
 
 /**
  * TELEFON DEĞİŞİKLİĞİ — KULLANICI TALEP EDER, ADMIN ONAYLAR.
@@ -12,8 +12,13 @@ import { encryptField, hashOtp, phoneHash } from '../common/crypto';
  * kapalı. kullanıcı değişiklik gönderebilmesi lazım ve adminden onay
  * alması gerekir."
  *
- * Telefon GİRİŞ KİMLİĞİ (§4.6): bu akıştaki bir hata "profil düzenleme
- * hatası" değil HESAP ELE GEÇİRME olur. Testler ona göre.
+ * SMS DOĞRULAMASI YOK — kurucu kararı: "biz neden telefon değişikliği
+ * yaparken Mobizon'u araya sokuyoruz ki? o tamamen admin işi. Mobizon ile
+ * telefonu doğrulama olayı zaten başka bir yerde var."
+ *
+ * Zincirin tamamı: kullanıcı bildirir → admin onaylar → numara değişir ve
+ * DOĞRULANMAMIŞ işaretlenir → uygulama doğrulama ekranını gösterir.
+ * Son halkanın testi `telefon-tazeleme.test.ts` içinde.
  */
 
 const KEY = 'a'.repeat(64);
@@ -81,31 +86,14 @@ function ortam(over: Record<string, unknown> = {}) {
 
 /* ── TALEP ─────────────────────────────────────────────────────────────── */
 
-test('doğru kodla talep açılıyor ve ONAY BEKLİYOR', async () => {
+test('talep açılıyor ve ONAY BEKLİYOR', async () => {
   const { svc, izler } = ortam();
-  const r = await svc.telefonTalebi('u1', YENI, '123456');
+  const r = await svc.telefonTalebi('u1', YENI);
   assert.deepEqual(r.pending, ['phone']);
   assert.equal(izler.istek.length, 1);
   assert.equal(izler.istek[0]!['status'], 'pending', 'talep anında uygulanmış');
   // Numara HENÜZ değişmedi: onay bekliyor.
   assert.equal(izler.userUpdate.length, 0, 'onay beklemeden numara değişti');
-});
-
-test('YANLIŞ kodla talep AÇILMIYOR', async () => {
-  /*
-   * Bu testin koruduğu şey hesap devri: kodsuz/yanlış kodla talep
-   * açılabilseydi, başkasının numarasını yazan biri admin onayıyla o
-   * numarayı hesabına bağlardı.
-   */
-  const { svc, izler } = ortam();
-  await assert.rejects(() => svc.telefonTalebi('u1', YENI, '000000'), /OTP_INVALID|Kod/);
-  assert.equal(izler.istek.length, 0, 'yanlış kodla talep açıldı');
-});
-
-test('kod HİÇ YOKKEN talep açılmıyor', async () => {
-  const { svc, izler } = ortam({ otp: null });
-  await assert.rejects(() => svc.telefonTalebi('u1', YENI, '123456'));
-  assert.equal(izler.istek.length, 0);
 });
 
 test('BAŞKASINA AİT numara için talep açılmıyor', async () => {
@@ -125,7 +113,7 @@ test('BAŞKASINA AİT numara için talep açılmıyor', async () => {
       },
     },
   });
-  await assert.rejects(() => svc.telefonTalebi('u1', YENI, '123456'), /PHONE_TAKEN|kayıtlı/);
+  await assert.rejects(() => svc.telefonTalebi('u1', YENI), /PHONE_TAKEN|kayıtlı/);
   assert.equal(izler.istek.length, 0);
 });
 
@@ -142,19 +130,19 @@ test('SİLİNMİŞ hesabın numarası yeniden kullanılabiliyor', async () => {
       },
     },
   });
-  await svc.telefonTalebi('u1', YENI, '123456');
+  await svc.telefonTalebi('u1', YENI);
   assert.equal(izler.istek.length, 1);
 });
 
 test('kendi numarası için talep açılmıyor', async () => {
   const { svc, izler } = ortam();
-  await assert.rejects(() => svc.telefonTalebi('u1', ESKI, '123456'), /PHONE_SAME|senin/);
+  await assert.rejects(() => svc.telefonTalebi('u1', ESKI), /PHONE_SAME|senin/);
   assert.equal(izler.istek.length, 0, 'admin boş yere meşgul edildi');
 });
 
 test('numara veritabanında AÇIK METİN saklanmıyor', async () => {
   const { svc, izler } = ortam();
-  await svc.telefonTalebi('u1', YENI, '123456');
+  await svc.telefonTalebi('u1', YENI);
   const changes = izler.istek[0]!['changes'] as Record<string, unknown>;
   assert.equal(
     JSON.stringify(changes).includes(YENI),
@@ -163,6 +151,7 @@ test('numara veritabanında AÇIK METİN saklanmıyor', async () => {
   );
   assert.equal(changes['phone'], '…3344', 'maskeli hâli yok');
   assert.equal(typeof changes['phoneEnc'], 'string', 'şifreli numara yok');
+  assert.equal(changes['phoneVerified'], false, 'doğrulanmadan doğrulanmış yazıldı');
 });
 
 /* ── ONAY ──────────────────────────────────────────────────────────────── */
@@ -173,7 +162,7 @@ const onayliTalep = () => ({
   changes: {
     phone: '…3344',
     phoneEnc: encryptField(YENI, KEY).toString('hex'),
-    phoneVerified: true,
+    phoneVerified: false,
   },
 });
 
@@ -191,7 +180,12 @@ test('ONAY numarayı GERÇEKTEN değiştiriyor', async () => {
   const yazilan = izler.userUpdate[0]!;
   assert.equal(yazilan['phoneHash'], phoneHash(YENI, KEY), 'yanlış numara yazıldı');
   assert.ok(yazilan['phoneEnc'], 'şifreli numara yazılmadı');
-  assert.equal(yazilan['phoneVerified'], true, 'doğrulanmış işaretlenmedi');
+  /*
+   * DOĞRULANMAMIŞ. Bu akışta SMS yok; numaranın sahibi olduğu kanıtlanmadı,
+   * yalnız admin uygun buldu. `true` yazmak sistemin kanıtı varmış gibi
+   * davranması olurdu — ve kullanıcıya doğrulama ekranı hiç çıkmazdı.
+   */
+  assert.equal(yazilan['phoneVerified'], false, 'doğrulanmamış numara doğrulanmış sayıldı');
 });
 
 test('ONAY sırasında numarayı araya biri kaptıysa yazılmıyor', async () => {
@@ -249,5 +243,6 @@ test('kullanıcı için değiştirme yolu AÇIK', () => {
   // Ekran KODU da istiyor: yalnız numara gönderen bir ekran, sunucudaki
   // korumayı kullanıcıya çıkmaz gibi gösterirdi.
   assert.match(ekran, /requestPhoneChange\(/, 'talep gönderilmiyor');
-  assert.match(ekran, /otpRequest\(/, 'yeni numaraya kod gönderilmiyor');
+  // SMS BURADA YOK: kurucu kararı. Ekranın kod istemesi akışı tıkıyordu.
+  assert.equal(/otpRequest\(/.test(ekran), false, 'telefon değişikliğinde SMS geri gelmiş');
 });

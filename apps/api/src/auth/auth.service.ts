@@ -32,6 +32,8 @@ import type { LoginInput, RegisterInput } from './auth.dto';
 const OTP_TTL_SEC = 300; // 5 dk geçerli
 const OTP_MAX_ATTEMPTS = 5; // kod başına yanlış deneme
 const OTP_RESEND_COOLDOWN_SEC = 30; // yeni kod isteme aralığı
+/** Kayıt, bu süre içinde yapılmış bir doğrulamayı devralır. */
+const KAYIT_DOGRULAMA_PENCERESI_SEC = 30 * 60;
 
 @Injectable()
 export class AuthService {
@@ -69,6 +71,27 @@ export class AuthService {
       }
     }
     const avatarUrl = await this.storage.put(input.photoDataUrl ?? null, 'avatars/reg');
+    /*
+     * KAYIT ÖNCESİ DOĞRULAMA DEVRALINIYOR.
+     *
+     * Akış: kullanıcı numarasını OTP ile doğruluyor, SONRA hesabı
+     * oluşturuluyor. Doğrulama anında hesap HENÜZ YOK, bu yüzden
+     * `verifyOtp`in `updateMany`i hiçbir satırı güncelleyemiyordu ve
+     * doğrulama kayboluyordu — canlıda 97 kullanıcının 96'sı
+     * "doğrulanmamış" görünüyordu, oysa hepsi kayıt olurken doğrulamıştı.
+     *
+     * Tüketilmiş (yani BAŞARIYLA doğrulanmış) ve TAZE bir kod varsa yeni
+     * hesap doğrulanmış başlıyor. Süre sınırı var: aylar önceki bir
+     * doğrulamayı bugünkü kayda saymak, kanıtı olmayan bir şeyi kanıtlı
+     * göstermek olurdu.
+     */
+    const dogrulanmis = await this.prisma.otpCode.findFirst({
+      where: {
+        phoneHash: ph,
+        consumedAt: { gt: new Date(Date.now() - KAYIT_DOGRULAMA_PENCERESI_SEC * 1000) },
+      },
+    });
+
     const user = await this.prisma.user.create({
       data: {
         phoneHash: ph,
@@ -77,6 +100,8 @@ export class AuthService {
         name: input.name,
         defaultLocale: 'tr',
         gender: input.gender ?? 'unspecified',
+        // Kayıt öncesi doğrulanmışsa hesap doğrulanmış başlıyor.
+        ...(dogrulanmis ? { phoneVerified: true } : {}),
         ...(input.email ? { email: input.email } : {}),
         ...(avatarUrl ? { avatarUrl } : {}),
         ...(input.birthDateMs ? { birthDate: new Date(input.birthDateMs) } : {}),

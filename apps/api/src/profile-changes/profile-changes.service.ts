@@ -8,7 +8,7 @@ import {
 import type { Env } from '@ayna/config/env';
 import { ENV } from '../config/config.module';
 import { PrismaService } from '../prisma/prisma.service';
-import { decryptField, encryptField, hashOtp, normalizePhone, phoneHash } from '../common/crypto';
+import { decryptField, encryptField, normalizePhone, phoneHash } from '../common/crypto';
 
 /**
  * PROFİL DEĞİŞİKLİĞİ — çoğu ANINDA, iletişim bilgisi ONAYLA.
@@ -95,38 +95,26 @@ export class ProfileChangesService {
    * Onaylanmış ama uygulanmamış değişiklik, sistemin olmayan bir şeyi
    * olmuş göstermesi demek.
    *
-   * ── YENİ NUMARA NEDEN SMS İLE DOĞRULANIYOR ────────────────────────────
+   * ── SMS DOĞRULAMASI YOK — BİLİNÇLİ KARAR ──────────────────────────────
    *
-   * Admin onayı TEK BAŞINA yetmez. Admin formda yazan numaranın gerçekten
-   * o kişiye ait olduğunu göremez; başkasının numarasını yazan biri onayı
-   * geçerse o hesabı ele geçirir (telefon giriş kimliği — §4.6).
+   * Kurucu: "biz neden telefon değişikliği yaparken Mobizon'u araya
+   * sokuyoruz ki? o tamamen admin işi. Mobizon ile telefonu doğrulama
+   * olayı zaten başka bir yerde var."
    *
-   * O yüzden iki kapı var ve ikisi farklı şeye bakıyor:
-   *   · SMS kodu — numara GERÇEKTEN başvuranın mı?
-   *   · Admin    — bu değişiklik UYGUN mu? (numara değiştirip
-   *                değerlendirmelerden ya da yasaktan kaçmak buradan durur)
+   * İlk sürüm yeni numaraya SMS kodu gönderiyordu. Pratikte akışı
+   * TIKADI: numara ülke kodsuz yazılınca sağlayıcı reddetti, kullanıcı
+   * yalnız "kod gönderilemedi" gördü ve talep hiç açılamadı. Üstelik her
+   * deneme para harcıyordu.
+   *
+   * Karar: bu akışın hakemi ADMIN. Numara doğrulaması kayıt/doğrulama
+   * ekranında yapılıyor, burada tekrarlanmıyor.
+   *
+   * SMS ÇIKINCA "numara gerçekten bu kişinin mi" sorusunu admin
+   * cevaplıyor. Sistemin bunu bildiğini VARSAYMAMASI için:
+   *   · Onaydan sonra numara `phoneVerified: false` — doğrulanmadı,
+   *     doğrulanmış göstermek uydurma olurdu.
+   *   · Çakışma kontrolü ve denetim kaydı yerinde duruyor.
    */
-
-  /** OTP'yi doğrular ve TÜKETİR. Geçersizse istisna atar. */
-  private async kodDogrula(telefon: string, kod: string): Promise<void> {
-    const key = this.env.FIELD_ENCRYPTION_KEY;
-    const ph = phoneHash(telefon, key);
-    const otp = await this.prisma.otpCode.findFirst({
-      where: { phoneHash: ph, consumedAt: null, expiresAt: { gt: new Date() } },
-      orderBy: { createdAt: 'desc' },
-    });
-    if (!otp || otp.codeHash !== hashOtp(kod, key)) {
-      throw new BadRequestException({
-        code: 'OTP_INVALID',
-        message: 'Kod geçersiz veya süresi doldu',
-      });
-    }
-    // Kod TÜKETİLİYOR: aynı kodla ikinci bir talep açılamasın.
-    await this.prisma.otpCode.update({
-      where: { id: otp.id },
-      data: { consumedAt: new Date() },
-    });
-  }
 
   /** Numara başkasına ait mi? */
   private async telefonSahibi(ph: string, haricUserId: string) {
@@ -134,10 +122,8 @@ export class ProfileChangesService {
     return sahip && sahip.id !== haricUserId && sahip.status !== 'deleted' ? sahip : null;
   }
 
-  /**
-   * Kullanıcı yeni numarasını SMS koduyla doğrular; talep admin onayına düşer.
-   */
-  async telefonTalebi(userId: string, telefon: string, kod: string) {
+  /** Kullanıcı yeni numarasını bildirir; talep admin onayına düşer. */
+  async telefonTalebi(userId: string, telefon: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) this.notFound();
 
@@ -158,8 +144,6 @@ export class ProfileChangesService {
       throw new ConflictException({ code: 'PHONE_TAKEN', message: 'Bu telefon zaten kayıtlı' });
     }
 
-    await this.kodDogrula(duz, kod);
-
     await this.prisma.profileChangeRequest.updateMany({
       where: { userId, status: 'pending' },
       data: { status: 'rejected', reviewedAt: new Date() },
@@ -178,7 +162,9 @@ export class ProfileChangesService {
         changes: {
           phone: `…${duz.slice(-4)}`,
           phoneEnc: encryptField(duz, key).toString('hex'),
-          phoneVerified: true,
+          // Doğrulanmadı. `true` yazmak sistemin bilmediği bir şeyi bilir
+          // gibi davranması olurdu — admin panelinde de böyle görünüyor.
+          phoneVerified: false,
         },
         status: 'pending',
       },
@@ -210,8 +196,13 @@ export class ProfileChangesService {
       data: {
         phoneHash: ph,
         phoneEnc: Uint8Array.from(encryptField(duz, key)),
-        // Kod zaten doğrulandı; yeni numara doğrulanmış sayılıyor.
-        phoneVerified: true,
+        /*
+         * DOĞRULANMAMIŞ. Bu akışta SMS yok; numaranın sahibi olduğu
+         * kanıtlanmadı, yalnız admin uygun buldu. `true` yazmak sistemin
+         * kanıtı varmış gibi davranması olurdu. Kullanıcı numarayı mevcut
+         * doğrulama ekranından geçirebilir.
+         */
+        phoneVerified: false,
       },
     });
   }
