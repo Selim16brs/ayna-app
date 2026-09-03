@@ -308,15 +308,51 @@ test('düğme ScrollView DIŞINDA — kaydırınca kaybolmuyor', () => {
   assert.ok(eylem > kapanis, 'eylem düğmesi kaydırma alanının içinde');
 });
 
-test('çipler SATIR ATLIYOR — ekran dışında seçenek kalmıyor', () => {
+test('kırılımlar AÇILIR SATIR — hepsi birden açık değil', () => {
   /*
-   * İlk sürümde her grup yatay şeritti ve seçenekler sağdan kesiliyordu:
-   * "Almatı" ve "AYNA Onaylı" yarım görünüyordu.
+   * İki sürüm kalabalık kaldı: yatay şerit (seçenekler kesiliyordu) ve
+   * hepsi açık sarmalı çipler (23 şehir tek başına ekranı dolduruyordu).
+   * Kurucu: "seçim alanları çok kalabalık, açılır menü şeklinde olsun."
    */
-  assert.match(ekran, /grupCipler: \{ flexDirection: 'row', flexWrap: 'wrap'/, 'çipler sarmıyor');
-  assert.ok(
-    !/function FiltreGrubu\([\s\S]{0,400}horizontal/.test(ekran),
-    'kırılım grubu hâlâ yatay kayıyor',
+  assert.match(ekran, /function FiltreSatiri\(/, 'kırılımlar açılır satır değil');
+  assert.match(ekran, /const \[acikGrup, setAcikGrup\]/, 'açık grup durumu yok');
+  // Tek seferde tek grup: aynı ada basmak kapatır, başkası açılınca öteki kapanır.
+  assert.match(
+    ekran,
+    /setAcikGrup\(\(v\) => \(v === ad \? null : ad\)\)/,
+    'tek seferde tek grup açılmıyor',
+  );
+  // Kapalıyken seçenekler ÇİZİLMEMELİ — yoksa kalabalık geri gelir.
+  assert.match(
+    ekran,
+    /\{acik \? <View style=\{styles\.satirCipler\}>\{children\}<\/View> : null\}/,
+    'kapalı satır seçenekleri gizlemiyor',
+  );
+  // Açılan seçenekler yine sarmalı: kesilmesin.
+  assert.match(ekran, /satirCipler: \{[\s\S]{0,80}flexWrap: 'wrap'/, 'açılan çipler sarmıyor');
+});
+
+test('kapalı satır seçili değeri yazıyor', () => {
+  // Kullanıcı neyi seçtiğini görmek için satırı açmak zorunda kalmamalı.
+  assert.match(
+    ekran,
+    /deger=\{filtre\.sehir \?\? t\('search\.filter\.all_cities'\)\}/,
+    'şehir satırı seçili değeri göstermiyor',
+  );
+  assert.match(ekran, /function turEtiketi\(/, 'tür satırı birleşik değeri göstermiyor');
+});
+
+test('FİLTRE DE BİR ARAMADIR — sonuç listesi çiziliyor', () => {
+  /*
+   * Kurucunun bildirdiği hata: "sonuçları göster butonuna basınca
+   * çalışmıyor." Düğme paneli kapatıyordu ama ekran, arama kutusu boş diye
+   * SONUÇ DEĞİL "son aramalar" kutusunu çiziyordu — filtreler `isEmpty`
+   * hesabına girmiyordu.
+   */
+  assert.match(
+    ekran,
+    /const isEmpty =\s*query\.trim\(\)\.length === 0 && activeCat === null && etkin === 0;/,
+    'etkin filtre varken boş ekran gösteriliyor',
   );
 });
 
