@@ -1115,6 +1115,13 @@ export const api = {
   ) => post<unknown>('/specialists/me/services', { services }),
   joinBusiness: (code: string) =>
     post<{ ok: boolean; businessName: string }>('/specialists/me/join-business', { code }),
+  /**
+   * Kayıtta yüklenen sertifikalar — GERİ OKUMA.
+   *
+   * Yalnız yazma ucu vardı: uzman profilini açtığında alan boş
+   * görünüyor, hepsini yeniden yüklemesi gerekiyordu.
+   */
+  myCertificates: () => get<{ certificates: string[] }>('/specialists/me/certificates'),
   setMyCertificates: (certificates: string[]) =>
     post<{ certificates: string[] }>('/specialists/me/certificates', { certificates }),
   myClosedDays: () => get<{ days: number[] }>('/specialists/me/closed-days'),

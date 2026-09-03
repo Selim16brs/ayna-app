@@ -145,6 +145,12 @@ export class SpecialistsController {
   }
 
   // §9.5 — sertifika listesi güncelle (data URL; public profil certs bundan beslenir)
+  @Get('me/certificates')
+  @UseGuards(JwtAuthGuard)
+  myCertificates(@Req() req: AuthedRequest) {
+    return this.specialists.myCertificates(req.user!.id);
+  }
+
   @Post('me/certificates')
   @UseGuards(JwtAuthGuard)
   setCertificates(@Req() req: AuthedRequest, @Body() body: { certificates?: string[] }) {

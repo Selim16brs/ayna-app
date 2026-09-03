@@ -419,7 +419,24 @@ const makeStyles = (colors: ColorTokens) =>
       borderWidth: 3,
       borderColor: colors.bg,
     },
-    photoActions: { flexDirection: 'row', gap: space(1) },
+    /*
+     * SATIR SARIYOR — taşmıyor.
+     *
+     * "Arka planı temizle" eklenince dört düğme oldu ve satır ekrandan
+     * TAŞTI: soldaki "Galeriden" ile sağdaki "Fotoğrafı kaldır" ekran
+     * kenarlarında kesiliyordu. `flexWrap` olmadan React Native satırı
+     * kırpar, kaydırmaz — kullanıcı kesilen düğmelere hiç ulaşamıyordu.
+     *
+     * `justifyContent: center` sarma sonrası ikinci satırı ortalıyor;
+     * sola yaslı kalsaydı tek başına duran düğme sayfayı dengesiz
+     * gösterirdi.
+     */
+    photoActions: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: space(1),
+    },
     photoBtn: {
       flexDirection: 'row',
       alignItems: 'center',
