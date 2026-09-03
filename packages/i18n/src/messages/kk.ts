@@ -439,6 +439,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'pro.about': 'Туралы',
   'pro.services_empty': 'Бұл маман әлі қызметтерін қоспаған.',
   'pro.services': 'Қызметтер',
+  'pro.services_other': 'Басқа қызметтер',
   'pro.services_short': 'қызмет',
   'pro.linked_salon': 'Байланысты жұмыс салоны',
   'pro.certs': 'Сертификаттар',
@@ -761,10 +762,6 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'circle.sort_by_rating': 'Бағалау бойынша',
   // §5.5 — тұрақты W2W санат жолағы
   'circle.cat.all': 'Барлығы',
-  'circle.cat.hair': 'Шаш',
-  'circle.cat.skincare': 'Тері күтімі',
-  'circle.cat.makeup': 'Макияж',
-  'circle.cat.nails': 'Тырнақ',
   'circle.cat.experience': 'Тәжірибелерім',
   'circle.cat.asking': 'Кеңес іздеймін',
   'circle.cat.chat': 'Әңгіме',

@@ -35,7 +35,15 @@ export default function NewPostScreen() {
   const addPost = useStore((s) => s.addPost);
 
   const [type, setType] = useState<CirclePostType>('recommend');
-  const [category, setCategory] = useState<string>(tri(CATEGORIES[0]!.ad, locale));
+  /*
+   * KATEGORİ KODU saklanıyor, etiket değil.
+   *
+   * Eskiden o anki dildeki ETİKET ("Saç") kaydediliyordu. Rusça arayüzdeki
+   * bir kullanıcı Türkçe yazılmış gönderide "Saç" görüyor, W2W kategori
+   * şeridi de sabit TR metinlerle eşleştiği için dil değiştiren kullanıcının
+   * gönderileri filtrelerin dışında kalıyordu.
+   */
+  const [category, setCategory] = useState<string>(CATEGORIES[0]!.id);
   const [text, setText] = useState('');
   const [anonymous, setAnonymous] = useState(false);
 
@@ -106,9 +114,9 @@ export default function NewPostScreen() {
           >
             {CATEGORIES.map((cat) => {
               const label = tri(cat.ad, locale);
-              const active = label === category;
+              const active = cat.id === category;
               return (
-                <Pressable key={cat.id} onPress={() => setCategory(label)} style={styles.kategori}>
+                <Pressable key={cat.id} onPress={() => setCategory(cat.id)} style={styles.kategori}>
                   <HizmetIkonu id={cat.id} tarz="kutu" secili={active} />
                   <Text variant="caption" tone={active ? 'ink' : 'inkSoft'} numberOfLines={1}>
                     {label}

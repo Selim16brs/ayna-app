@@ -444,6 +444,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'pro.about': 'О мастере',
   'pro.services_empty': 'Этот мастер ещё не добавил услуги.',
   'pro.services': 'Услуги',
+  'pro.services_other': 'Другие услуги',
   'pro.services_short': 'услуга',
   'pro.linked_salon': 'Салон, где работает',
   'pro.certs': 'Сертификаты',
@@ -768,10 +769,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'circle.sort_by_rating': 'По оценке',
   // §5.5 — фиксированная лента категорий W2W
   'circle.cat.all': 'Все',
-  'circle.cat.hair': 'Волосы',
-  'circle.cat.skincare': 'Уход за кожей',
-  'circle.cat.makeup': 'Макияж',
-  'circle.cat.nails': 'Ногти',
   'circle.cat.experience': 'Мой опыт',
   'circle.cat.asking': 'Ищу совет',
   'circle.cat.chat': 'Общение',

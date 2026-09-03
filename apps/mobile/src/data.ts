@@ -609,8 +609,15 @@ export interface Campaign {
 
 // ── İşletme detayı ───────────────────────────────────────────────────────
 export interface ServiceItem {
+  /** SATIR kimliği — aynı alt hizmetin birden çok satırı olabilir. */
   id: string;
-  name: string; // TR (varsayılan); 3 dil için label kullan
+  /**
+   * Katalog alt hizmeti (`hair.coloring`) — brief §4.7'nin istediği
+   * "kategori → alt hizmet hiyerarşisi" bundan kuruluyor. Eski kayıtlarda
+   * ya da serbest yazılmış hizmetlerde boş olabilir.
+   */
+  serviceId?: string | null;
+  name: string; // uzmanın KENDİ adı ("Kök boyası")
   label?: Tri; // taksonomi 3-dil etiketi (ekranlar tri(label, locale) ile yerelleştirir)
   durationMin: number;
   price: number;

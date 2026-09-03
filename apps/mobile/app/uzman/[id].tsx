@@ -6,12 +6,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatPrice } from '../../src/data';
 import { formatSlotTr } from '../../src/datetime';
 import { tri } from '../../src/taxonomy';
+import { hizmetleriGrupla } from '../../src/hizmet-gruplama';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { DateField, TAB_BAR_CLEARANCE, Text, WaveLayered } from '../../src/ui';
+import { DateField, HizmetIkonu, TAB_BAR_CLEARANCE, Text, WaveLayered } from '../../src/ui';
 
 export default function UzmanScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -26,6 +27,7 @@ export default function UzmanScreen() {
   const uzman = salon.staff.find((u) => u.id === id) ?? salon.staff[0];
 
   const [selected, setSelected] = useState<string>(salon.services[0]?.id ?? '');
+  const gruplar = hizmetleriGrupla(salon.services);
   const minDate = new Date(Date.now() + 2 * 3_600_000);
   minDate.setMinutes(0, 0, 0);
   const [when, setWhen] = useState<Date>(() => new Date(minDate));
@@ -142,38 +144,61 @@ export default function UzmanScreen() {
           <Text variant="bodyStrong" tone="ink" style={styles.section}>
             {t('pro.services')}
           </Text>
+          {/*
+           * BRIEF §4.7 — kategori → alt hizmet hiyerarşisi.
+           *
+           * Düz liste vardı. Brief §4.1 ile uzman aynı alt hizmetin altına
+           * birden çok satır ekleyebiliyor ("Kök boyası", "Tam boya");
+           * dört kategoride çalışan bir uzmanın on beş satırı sırasız
+           * akıyor ve müşteri aradığı hizmeti bulamıyordu.
+           *
+           * Tek kategoride çalışan uzmanda başlık ÇİZİLMİYOR: tek başlıklı
+           * bir grup bilgi taşımaz, yalnız yer kaplar.
+           */}
           <View style={styles.services}>
-            {salon.services.map((s) => {
-              const active = s.id === selected;
-              const finalPrice = s.discountPct
-                ? Math.round((s.price * (100 - s.discountPct)) / 100)
-                : s.price;
-              return (
-                <Pressable
-                  key={s.id}
-                  onPress={() => setSelected(s.id)}
-                  style={[styles.service, shadow.soft, active && styles.serviceActive]}
-                >
-                  <View style={styles.serviceText}>
-                    <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                      {s.name}
-                    </Text>
-                    <Text variant="caption" tone="muted">
-                      {s.durationMin} {t('pro.min')}
-                      {s.discountPct ? `  ·  −%${s.discountPct}` : ''}
+            {gruplar.map((g) => (
+              <View key={g.kategoriId ?? 'kategorisiz'} style={styles.grup}>
+                {gruplar.length > 1 ? (
+                  <View style={styles.grupBas}>
+                    {g.kategoriId ? <HizmetIkonu id={g.kategoriId} tarz="satir" /> : null}
+                    <Text variant="caption" tone="accentFg" style={styles.grupAd}>
+                      {g.ad ? tri(g.ad, locale) : t('pro.services_other')}
                     </Text>
                   </View>
-                  <Text variant="bodyStrong" tone="ink">
-                    {formatPrice(finalPrice)}
-                  </Text>
-                  <View style={[styles.check, active && styles.checkOn]}>
-                    {active ? (
-                      <Ionicons name="checkmark" size={14} color={colors.onAccent} />
-                    ) : null}
-                  </View>
-                </Pressable>
-              );
-            })}
+                ) : null}
+                {g.satirlar.map((s) => {
+                  const active = s.id === selected;
+                  const finalPrice = s.discountPct
+                    ? Math.round((s.price * (100 - s.discountPct)) / 100)
+                    : s.price;
+                  return (
+                    <Pressable
+                      key={s.id}
+                      onPress={() => setSelected(s.id)}
+                      style={[styles.service, shadow.soft, active && styles.serviceActive]}
+                    >
+                      <View style={styles.serviceText}>
+                        <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                          {s.name}
+                        </Text>
+                        <Text variant="caption" tone="muted">
+                          {s.durationMin} {t('pro.min')}
+                          {s.discountPct ? `  ·  −%${s.discountPct}` : ''}
+                        </Text>
+                      </View>
+                      <Text variant="bodyStrong" tone="ink">
+                        {formatPrice(finalPrice)}
+                      </Text>
+                      <View style={[styles.check, active && styles.checkOn]}>
+                        {active ? (
+                          <Ionicons name="checkmark" size={14} color={colors.onAccent} />
+                        ) : null}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
           </View>
 
           {/* Tarih & saat — Benim İçin kayıt eklemeleriyle AYNI native seçici */}
@@ -295,6 +320,11 @@ const makeStyles = (colors: ColorTokens) =>
     about: { lineHeight: 21 },
     section: { marginTop: space(3), marginBottom: space(1.5), fontSize: 17 },
     services: { gap: space(1.25) },
+    grup: { gap: space(1.25) },
+    // Başlık satırı: kategori ikonu + adı. Hizmet satırlarından ayrılsın
+    // diye üstünde boşluk var, altında yok — başlık kendi grubuna yapışık.
+    grupBas: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginTop: space(1) },
+    grupAd: { fontFamily: font.semibold, letterSpacing: 0.2 },
     dateCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: space(2) },
     service: {
       flexDirection: 'row',

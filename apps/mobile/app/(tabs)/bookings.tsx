@@ -16,12 +16,12 @@ import {
 } from '../../src/data';
 import { formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
-import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
+import { hizmetEtiketiCevir, hizmetKategorisi } from '../../src/hizmet-adi';
 import { musteriRandevulari, useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { ListSkeleton, Screen, TAB_BAR_CLEARANCE, TabHero, Text } from '../../src/ui';
+import { HizmetIkonu, ListSkeleton, Screen, TAB_BAR_CLEARANCE, TabHero, Text } from '../../src/ui';
 import { kategoriAdi } from '../../src/taxonomy';
 
 // §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş
@@ -183,6 +183,7 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
   // Bu ekran MÜŞTERİ sekmesi; uzman kendi ajandasını kullanıyor.
   const rol = 'musteri' as const;
   const st = makeStatus(colors)[appt.status];
+  const hizmetKategori = hizmetKategorisi(appt.service);
   const toDetail = () => router.push('/booking/' + appt.id);
   return (
     <View style={[styles.card, shadow.soft]}>
@@ -212,9 +213,22 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
           <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
             {appt.proName}
           </Text>
-          <Text variant="caption" tone="muted" numberOfLines={1} style={styles.cardSub}>
-            {hizmetEtiketiCevir(appt.service, locale)}
-          </Text>
+          {/*
+           * BRIEF §4.8 — kategori ikonu + hizmet adı.
+           *
+           * Kartta yalnız metin vardı. İkon, listeyi taramayı hızlandırıyor:
+           * müşteri "saç randevum ne zamandı" diye bakarken adı okumadan
+           * ayırt edebiliyor.
+           *
+           * Katalog dışı serbest bir hizmet adında ikon ÇİZİLMİYOR —
+           * rastgele bir kategori ikonu koymak yanlış bilgi olurdu.
+           */}
+          <View style={styles.hizmetSatiri}>
+            {hizmetKategori ? <HizmetIkonu id={hizmetKategori} tarz="satir" /> : null}
+            <Text variant="caption" tone="muted" numberOfLines={1} style={styles.cardSub}>
+              {hizmetEtiketiCevir(appt.service, locale)}
+            </Text>
+          </View>
           {appt.uzmanName ? (
             <Text variant="caption" tone="inkSoft" numberOfLines={1} style={styles.cardSub}>
               {appt.uzmanName}
@@ -387,7 +401,9 @@ const makeStyles = (colors: ColorTokens) =>
     },
     cardMain: { flexDirection: 'row', gap: space(1.75), alignItems: 'center' },
     thumb: { width: 76, height: 76, borderRadius: radius.md, backgroundColor: colors.bgSunken },
-    cardSub: { marginTop: 2 },
+    cardSub: { marginTop: 2, flex: 1 },
+    // İkon ve ad tek satırda; ad taşarsa ikon değil YAZI kırpılıyor.
+    hizmetSatiri: { flexDirection: 'row', alignItems: 'center', gap: 5 },
     cardPrice: { marginTop: space(0.75) },
     status: { paddingHorizontal: space(1.25), paddingVertical: 4, borderRadius: radius.pill },
     statusRow: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },

@@ -465,6 +465,7 @@ export const tr = {
   'pro.about': 'Hakkında',
   'pro.services_empty': 'Bu uzman henüz hizmetlerini eklememiş.',
   'pro.services': 'Hizmetler',
+  'pro.services_other': 'Diğer hizmetler',
   'pro.services_short': 'hizmet',
   'pro.linked_salon': 'Bağlı çalıştığı salon',
   'pro.certs': 'Sertifikalar',
@@ -813,10 +814,6 @@ export const tr = {
   'circle.sort_by_rating': 'Değerlendirmeye göre',
   // §5.5 (MD satır 238) — sabit W2W kategori şeridi
   'circle.cat.all': 'Tümü',
-  'circle.cat.hair': 'Saç',
-  'circle.cat.skincare': 'Cilt Bakımı',
-  'circle.cat.makeup': 'Makyaj',
-  'circle.cat.nails': 'Tırnak',
   'circle.cat.experience': 'Deneyimlerim',
   'circle.cat.asking': 'Tavsiye Arıyorum',
   'circle.cat.chat': 'Sohbet',

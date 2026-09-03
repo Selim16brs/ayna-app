@@ -1,4 +1,4 @@
-import { TAXONOMY, tri, type TaxLocale } from './taxonomy';
+import { TAXONOMY, findServiceWithCategory, tri, type TaxLocale } from './taxonomy';
 
 /**
  * KAYITLI HİZMET ADINI SEÇİLİ DİLE ÇEVİRİR.
@@ -84,4 +84,58 @@ export function hizmetEtiketiCevir(etiket: string, locale: string): string {
     .split(' + ')
     .map((p) => hizmetAdiCevir(p, locale))
     .join(' + ');
+}
+
+/**
+ * KAYITLI HİZMET METNİNDEN KATEGORİYİ BULUR — brief §4.8.
+ *
+ * "Her randevu kartında ilgili hizmetin kategori ikonu + alt hizmet adı
+ * görünür."
+ *
+ * `Booking.service` hizmetin KİMLİĞİNİ değil METNİNİ saklıyor (yukarıdaki
+ * nota bakınız). Kategoriyi bulmak için aynı ters dizin kullanılıyor:
+ * metin katalogda varsa kimliği, kimlikten de kategorisi çıkıyor.
+ *
+ * BİRLEŞİK ETİKETTE İLK PARÇA belirliyor ("Kesim & fön + Manikür" → saç).
+ * İkon tek; iki kategoriyi tek ikonla anlatmanın yolu yok ve ilk hizmet
+ * randevunun ana işi.
+ *
+ * KATALOG DIŞI metinde `undefined` — çağıran ikonu ÇİZMEMELİ. Rastgele
+ * bir kategori ikonu koymak, uzmanın serbest yazdığı bir hizmeti yanlış
+ * kategoriye ait göstermek olurdu.
+ */
+export function hizmetKategorisi(etiket: string): string | undefined {
+  const ham = (etiket ?? '').trim();
+  if (!ham) return undefined;
+  const ilk = ham.includes(' + ') ? ham.split(' + ')[0]! : ham;
+  const id = TERS_DIZIN.get(anahtar(ilk));
+  return id ? findServiceWithCategory(id)?.category.id : undefined;
+}
+
+/**
+ * W2W GÖNDERİSİNİN KATEGORİSİNİ ÇÖZER — brief §4.10.
+ *
+ * "Memnuniyet paylaşımı kartında hizmetin kategori etiketi/ikonu yer alır."
+ *
+ * `CirclePost.category` iki biçimde olabilir: KOD (`hair`) ya da o anki
+ * dilde yazılmış ETİKET ("Saç"). Gönderi oluşturma ekranı etiketi
+ * saklıyordu; arayüz dili değişince aynı gönderi filtrelerin dışında
+ * kalıyordu.
+ *
+ * Her iki biçim de çözülüyor — eski gönderiler kaybolmasın diye. Yeni
+ * gönderiler kodu saklıyor.
+ */
+export function gonderiKategorisi(deger: string): string | undefined {
+  const ham = (deger ?? '').trim();
+  if (!ham) return undefined;
+  // Önce kod: en yaygın ve en ucuz durum.
+  if (TAXONOMY.some((c) => c.id === ham)) return ham;
+  // Sonra ÜÇ DİLDE etiket — arayüz dili ne olursa olsun eşleşmeli.
+  const a = anahtar(ham);
+  for (const c of TAXONOMY) {
+    for (const dil of ['tr', 'kk', 'ru'] as const) {
+      if (anahtar(c.ad[dil]) === a) return c.id;
+    }
+  }
+  return undefined;
 }

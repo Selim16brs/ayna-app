@@ -4,6 +4,9 @@ import { useRouter } from 'expo-router';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { CirclePost, CirclePostType } from '../../src/data';
+import { CATEGORIES } from '../../src/data';
+import { gonderiKategorisi } from '../../src/hizmet-adi';
+import { kategoriAdi, tri } from '../../src/taxonomy';
 
 /**
  * Gönderinin yorum sayısı.
@@ -20,6 +23,7 @@ import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   ConsensusCard,
+  HizmetIkonu,
   PressableScale,
   Screen,
   TabHero,
@@ -35,37 +39,39 @@ const makeType = (
   experience: { key: 'circle.type.experience', bg: colors.blueSoft, fg: colors.blue },
 });
 
-// §5.5 (MD satır 238) — SABİT W2W kategori şeridi (post'lardan türetilmez).
-// Hizmet kategorileri post.category (TR etiket veya kod) ile; içerik türleri post.type ile eşlenir.
-const W2W_FILTERS: { id: string; labelKey: MessageKey; match: (p: CirclePost) => boolean }[] = [
-  { id: 'all', labelKey: 'circle.cat.all', match: () => true },
-  {
-    id: 'hair',
-    labelKey: 'circle.cat.hair',
-    match: (p) => p.category === 'Saç' || p.category === 'hair',
-  },
-  {
-    id: 'skincare',
-    labelKey: 'circle.cat.skincare',
-    match: (p) => p.category === 'Cilt Bakımı' || p.category === 'skincare',
-  },
-  {
-    id: 'makeup',
-    labelKey: 'circle.cat.makeup',
-    match: (p) => p.category === 'Makyaj' || p.category === 'makeup',
-  },
-  {
-    id: 'nails',
-    labelKey: 'circle.cat.nails',
-    match: (p) => p.category === 'Tırnak' || p.category === 'nails',
-  },
-  { id: 'experience', labelKey: 'circle.cat.experience', match: (p) => p.type === 'experience' },
-  { id: 'asking', labelKey: 'circle.cat.asking', match: (p) => p.type === 'asking' },
-  { id: 'chat', labelKey: 'circle.cat.chat', match: (p) => p.type === 'recommend' },
-];
+/**
+ * W2W KATEGORİ ŞERİDİ — brief §1 + §4.10.
+ *
+ * Burada DÖRT kategori elle yazılıydı (saç, cilt, makyaj, tırnak) ve
+ * biri (`skincare`) katalog geçişinden sonra ARTIK YOKTU — o filtre
+ * hiçbir gönderiyi bulamıyordu. Kalan dokuz kategorinin ise hiç filtresi
+ * yoktu: masaj paylaşımı yapan biri kendi gönderisini şeritte bulamazdı.
+ *
+ * Şerit artık KATALOGDAN türüyor. Katalog büyüdüğünde filtre de büyüyor.
+ *
+ * Eşleşme `gonderiKategorisi` üzerinden: eski gönderiler kategoriyi o anki
+ * dildeki ETİKETLE saklamış olabiliyor ("Саç"), yenileri KODLA. İkisi de
+ * çözülüyor, yoksa dil değiştiren kullanıcının eski gönderileri
+ * filtrelerin dışında kalırdı.
+ */
+type W2WFiltre = { id: string; ad: string; match: (p: CirclePost) => boolean };
+
+function w2wFiltreleri(t: (k: MessageKey) => string, locale: string): W2WFiltre[] {
+  return [
+    { id: 'all', ad: t('circle.cat.all'), match: () => true },
+    ...CATEGORIES.map((c) => ({
+      id: c.id,
+      ad: tri(c.ad, locale),
+      match: (p: CirclePost) => gonderiKategorisi(p.category) === c.id,
+    })),
+    { id: 'experience', ad: t('circle.cat.experience'), match: (p) => p.type === 'experience' },
+    { id: 'asking', ad: t('circle.cat.asking'), match: (p) => p.type === 'asking' },
+    { id: 'chat', ad: t('circle.cat.chat'), match: (p) => p.type === 'recommend' },
+  ];
+}
 
 export default function CircleScreen() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
@@ -87,8 +93,10 @@ export default function CircleScreen() {
     [myId],
   );
 
+  const filtreler = useMemo(() => w2wFiltreleri(t, locale), [t, locale]);
+
   const visible = useMemo(() => {
-    const f = W2W_FILTERS.find((x) => x.id === cat) ?? W2W_FILTERS[0]!;
+    const f = filtreler.find((x) => x.id === cat) ?? filtreler[0]!;
     const taban =
       sekme === 'mine'
         ? posts.filter(benimMi)
@@ -261,7 +269,7 @@ export default function CircleScreen() {
           style={styles.chipBar}
           contentContainerStyle={styles.chips}
         >
-          {W2W_FILTERS.map((f) => {
+          {filtreler.map((f) => {
             const on = f.id === cat;
             return (
               <Pressable
@@ -270,7 +278,7 @@ export default function CircleScreen() {
                 style={[styles.chip, on && styles.chipOn]}
               >
                 <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
-                  {t(f.labelKey)}
+                  {f.ad}
                 </Text>
               </Pressable>
             );
@@ -326,7 +334,8 @@ export default function CircleScreen() {
 }
 
 function PostCard({ post }: { post: CirclePost }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  const postKategori = gonderiKategorisi(post.category);
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
@@ -365,9 +374,22 @@ function PostCard({ post }: { post: CirclePost }) {
             <Text variant="caption" tone="ink" numberOfLines={1}>
               {shownAuthor}
             </Text>
-            <Text variant="caption" tone="muted">
-              {post.category}
-            </Text>
+            {/*
+             * BRIEF §4.10 — kategori etiketi + ikonu.
+             *
+             * Ham metin yazıyordu: gönderi oluşturulurken O ANKİ dilde
+             * kaydedilmiş etiket. Rusça arayüzdeki bir kullanıcı, Türkçe
+             * yazılmış bir gönderide "Saç" görüyordu.
+             *
+             * Katalog dışı bir değerde ikon çizilmiyor ve metin OLDUĞU GİBİ
+             * kalıyor — uydurma bir kategori göstermek yanlış bilgi olurdu.
+             */}
+            <View style={styles.kategoriSatiri}>
+              {postKategori ? <HizmetIkonu id={postKategori} tarz="satir" /> : null}
+              <Text variant="caption" tone="muted" numberOfLines={1}>
+                {postKategori ? kategoriAdi(postKategori, locale) : post.category}
+              </Text>
+            </View>
           </View>
         </View>
         <View style={styles.topRight}>
@@ -550,6 +572,7 @@ const makeStyles = (colors: ColorTokens) =>
     sortLabel: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     sortText: { fontFamily: font.semibold },
     // Kategori çipleri
+    kategoriSatiri: { flexDirection: 'row', alignItems: 'center', gap: 5 },
     chipBar: { flexGrow: 0, flexShrink: 0 },
     chips: { paddingHorizontal: space(3), gap: space(1), alignItems: 'center' },
     chip: {
