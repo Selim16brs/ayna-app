@@ -234,6 +234,15 @@ export const api = {
   updateCategory: (id: string, c: Partial<Omit<CategoryInput, 'code'>>) =>
     req<Category>(`/admin/categories/${id}`, { method: 'PATCH', body: JSON.stringify(c) }),
   deleteCategory: (id: string) => req(`/admin/categories/${id}`, { method: 'DELETE' }),
+  /**
+   * Brief §7.3 — kategori sırası. Panelden değiştirilebilen TEK şey;
+   * adlar ve alt hizmetler hizmet kataloğunda tanımlı.
+   */
+  reorderCategories: (codes: string[]) =>
+    req<{ ok: true }>('/admin/categories/order', {
+      method: 'PATCH',
+      body: JSON.stringify({ codes }),
+    }),
   marketPrices: () => req<MarketPrice[]>('/admin/market-prices'),
   setMarketPrice: (m: { category: string; city?: string; basePrice: number }) =>
     req<MarketPrice>('/admin/market-prices', { method: 'POST', body: JSON.stringify(m) }),
@@ -850,11 +859,21 @@ export type ProInput = {
 };
 export interface Category {
   id: string;
+  /** Katalog kimliği (`hair`, `lashes_brows`) — DEĞİŞMEZ. */
   code: string;
   nameTr: string;
+  /** Üç dilli ad — katalogdan; panelden değiştirilemez. */
+  nameRu: string;
+  nameKk: string;
   icon: string;
   tone: string;
   sortOrder: number;
+  /** Katalogdaki alt hizmet sayısı. */
+  serviceCount: number;
+  /** Brief §7.4 — yayında uzmanı olan alt hizmet sayısı. */
+  suppliedCount: number;
+  /** Katalogda tanımlı: adı ve alt hizmetleri panelden değişmez. */
+  fromCatalog: boolean;
 }
 export type CategoryInput = {
   code: string;
