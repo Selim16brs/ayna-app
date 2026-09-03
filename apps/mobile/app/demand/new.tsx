@@ -12,7 +12,7 @@ import { useStore } from '../../src/store';
 import { bildirimIzniIste } from '../../src/notifications';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { tri } from '../../src/taxonomy';
+import { findServiceWithCategory, tri } from '../../src/taxonomy';
 import { useKategoriYakinda } from '../../src/yakinda';
 import {
   BudgetGauge,
@@ -56,8 +56,16 @@ export default function NewDemandScreen() {
   const [photos, setPhotos] = useState<{ uri: string; base64?: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [category, setCategory] = useState<string>(initialCat);
-  const [serviceId, setServiceId] = useState<string | null>(
-    typeof svcParam === 'string' ? svcParam : null,
+  /*
+   * Brief §4.5 — ÇOKLU hizmet talebi.
+   *
+   * Tek seçimdi ve gelin paketi isteyen müşteri üç ayrı talep açmak
+   * zorundaydı: üç teklif turu, üç pazarlık, aynı gün için birbirinden
+   * habersiz üç randevu. Liste TÜM kategorileri kapsıyor; kullanıcı
+   * kategoriler arasında gezerken seçimleri korunuyor.
+   */
+  const [serviceIds, setServiceIds] = useState<string[]>(
+    typeof svcParam === 'string' ? [svcParam] : [],
   );
   const [budget, setBudget] = useState('');
   const [collectMin, setCollectMin] = useState<number>(COLLECT_DEFAULT);
@@ -130,7 +138,7 @@ export default function NewDemandScreen() {
         budget: budgetNum,
         collectMin,
         ...(preferred.length ? { preferredSlots: preferred } : {}),
-        ...(serviceId ? { serviceId } : {}),
+        ...(serviceIds.length ? { serviceIds } : {}),
         ...(addressId ? { addressId } : {}),
         ...(photos[0]?.base64
           ? { photoDataUrl: `data:image/jpeg;base64,${photos[0].base64}` }
@@ -203,7 +211,6 @@ export default function NewDemandScreen() {
                   style={styles.cat}
                   onPress={() => {
                     setCategory(cat.id);
-                    setServiceId(null);
                   }}
                 >
                   {/*
@@ -226,7 +233,34 @@ export default function NewDemandScreen() {
           <Text variant="bodyStrong" tone="ink" style={styles.label}>
             {t('demand.new.service')}
           </Text>
-          <ServiceChips categoryId={category} value={serviceId} onChange={setServiceId} />
+          <ServiceChips categoryId={category} secilenler={serviceIds} degistir={setServiceIds} />
+
+          {/*
+           * SEÇİLENLERİN TAMAMI — kullanıcı kategori değiştirince önceki
+           * seçimleri ekrandan kayboluyordu ve neyi istediğini
+           * göremiyordu. Paket talebinin bütünü tek bakışta görünmeli.
+           */}
+          {serviceIds.length > 1 ? (
+            <View style={styles.paket}>
+              {serviceIds.map((id) => {
+                const bulunan = findServiceWithCategory(id);
+                if (!bulunan) return null;
+                return (
+                  <Pressable
+                    key={id}
+                    onPress={() => setServiceIds((cur) => cur.filter((x) => x !== id))}
+                    style={styles.paketCip}
+                    accessibilityRole="button"
+                  >
+                    <Text variant="caption" tone="onAccent">
+                      {tri(bulunan.service.label, locale)}
+                    </Text>
+                    <Ionicons name="close" size={13} color={colors.onAccent} />
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : null}
 
           {/* Konum — yakın salon sıralaması için adres seçimi. Adres uzmana ASLA gösterilmez;
               talepte tarih YOK (uygun saati uzmanlar teklifleriyle önerir §5.2). */}
@@ -465,6 +499,17 @@ export default function NewDemandScreen() {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: space(3) },
+    // Paket özeti — seçilenlerin tamamı, kategoriden bağımsız.
+    paket: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1), marginTop: space(1.5) },
+    paketCip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(0.75),
+      borderRadius: radius.pill,
+      backgroundColor: colors.accent,
+    },
 
     locChip: {
       flexDirection: 'row',

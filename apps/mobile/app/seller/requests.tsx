@@ -22,7 +22,7 @@ import { sellerTrialInfo, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text, TextInput, TAB_BAR_CLEARANCE } from '../../src/ui';
-import { kategoriAdi } from '../../src/taxonomy';
+import { findServiceWithCategory, kategoriAdi, tri } from '../../src/taxonomy';
 
 const catLabel = (id: string, locale: string): string => kategoriAdi(id, locale);
 
@@ -507,6 +507,13 @@ function RequestCard({
   const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  /*
+   * Katalogda karşılığı olmayan kimlik ELENİYOR: uzmana adı çözülemeyen
+   * bir kimlik göstermek ("hair.olmayan") bilgi değil gürültü olurdu.
+   */
+  const talepHizmetleri = (demand.serviceIds ?? (demand.serviceId ? [demand.serviceId] : []))
+    .map((id) => findServiceWithCategory(id)?.service)
+    .filter((x): x is NonNullable<typeof x> => !!x);
   const remainMin = Math.max(0, Math.round((demand.expiresAt - Date.now()) / 60_000));
   const urgent = remainMin <= 60;
 
@@ -545,6 +552,26 @@ function RequestCard({
         </View>
       ) : (
         <>
+          {/*
+           * BRIEF §4.5 — TALEP EDİLEN HİZMETLER.
+           *
+           * Kartta yalnız KATEGORİ yazıyordu ("Saç"). Müşteri artık tek
+           * talepte birden çok hizmet seçebiliyor (düğün paketi: saç +
+           * makyaj + tırnak); uzman neyi fiyatlayacağını göremezse teklifi
+           * tahmine dayanır ve randevuda anlaşmazlık çıkar.
+           */}
+          {talepHizmetleri.length > 0 ? (
+            <View style={styles.hizmetler}>
+              {talepHizmetleri.map((h) => (
+                <View key={h.id} style={styles.hizmetCip}>
+                  <Text variant="caption" tone="accentFg">
+                    {tri(h.label, locale)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
           {/* Kullanıcının yüklediği referans fotoğrafı — teklif verirken görülür (§5.2) */}
           {demand.photoUrl ? (
             <Pressable onPress={() => onViewPhoto?.(demand.photoUrl!)}>
@@ -693,6 +720,15 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.surfaceMuted,
     },
     metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    // Talep edilen hizmetler — kategoriden AYRI ve vurgulu: teklifi
+    // belirleyen bilgi bu, konum/bütçe çipleriyle aynı ağırlıkta olmamalı.
+    hizmetler: { flexDirection: 'row', flexWrap: 'wrap', gap: space(0.75) },
+    hizmetCip: {
+      paddingHorizontal: space(1.25),
+      paddingVertical: 4,
+      borderRadius: radius.pill,
+      backgroundColor: colors.accentSoft,
+    },
     metaChip: {
       flexDirection: 'row',
       alignItems: 'center',

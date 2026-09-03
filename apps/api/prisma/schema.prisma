@@ -398,7 +398,14 @@ model QuoteRequest {
   notifyWave         Int       @default(0) @map("notify_wave")
   waveAt             DateTime? @map("wave_at") @db.Timestamptz(6)
   expiresAt          DateTime? @map("expires_at") @db.Timestamptz(6)
-  serviceId          String?   @map("service_id") // taksonomi alt hizmet (opsiyonel)
+  serviceId          String?   @map("service_id") // taksonomi alt hizmet — BİRİNCİL (geriye dönük)
+  /// Brief §4.5 — ÇOKLU hizmet talebi (düğün paketi: saç + makyaj + tırnak).
+  ///
+  /// `serviceId` tek alandı ve gelin paketi isteyen müşteri üç ayrı talep
+  /// açmak zorundaydı: üç ayrı teklif turu, üç ayrı pazarlık, aynı gün için
+  /// birbirinden habersiz üç randevu. Liste burada; `serviceId` listenin
+  /// İLKİ olarak korunuyor ki eski okuyanlar bozulmasın.
+  serviceIdsJson     String    @default("[]") @map("service_ids_json")
   bookingId          String?   @map("booking_id") // seçim sonrası oluşan randevu
   selectedQuoteId    String?   @map("selected_quote_id") // kazanan teklif
   preferredSlotsJson String    @default("[]") @map("preferred_slots_json") // kullanıcının İSTEDİĞİ saatler (UTC ms)

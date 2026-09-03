@@ -1548,7 +1548,13 @@ export interface DemandRequest {
   photoUrl?: string;
   budget?: number; // Mod 2 bütçe (₸)
   collectMin: number; // teklif toplama süresi (dk)
-  serviceId?: string; // opsiyonel alt hizmet (taksonomi) — talebi spesifikleştirir
+  serviceId?: string; // opsiyonel alt hizmet (taksonomi) — listenin İLKİ (geriye dönük)
+  /**
+   * Brief §4.5 — talebin TÜM alt hizmetleri (düğün paketi: saç + makyaj +
+   * tırnak). Tek `serviceId` olduğunda müşteri paket için üç ayrı talep
+   * açmak zorundaydı.
+   */
+  serviceIds?: string[];
   // §privacy — yalnızca yakın salon sıralaması için kullanıcı adresi; UZMANA ASLA GÖSTERİLMEZ
   addressId?: string;
   preferredSlots?: number[]; // kullanıcının İSTEDİĞİ tarih-saat(ler) — uzman okeyler ya da alternatif verir
