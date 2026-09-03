@@ -19,14 +19,15 @@ import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   Button,
+  PlanBadge,
   PressableScale,
   RulesCard,
   Screen,
   StackHeader,
   TAB_BAR_CLEARANCE,
+  TepeIsigi,
   Text,
   VerificationBadges,
-  PlanBadge,
   asPlanTier,
 } from '../../src/ui';
 
@@ -302,6 +303,12 @@ export default function ProfessionalScreen() {
             Kanvas: AÇIK porselen zemin, 48'lik kart düğmeler. Önceki sürüm mor
             bir hero bandıydı; üstelik metinler tone="ink" (koyu) olduğu için
             mor zeminde koyu-üstüne-koyu okunuyordu. */}
+        {/*
+         * Yıkama üst satırın DIŞINDA: `topRow` yalnız 48'lik düğme
+         * sırası, içine koysak o yüksekliğe sıkışırdı. Kaydırma alanının
+         * ilk çocuğu olduğu için portre ve isim de üstünde duruyor.
+         */}
+        <TepeIsigi yukseklik={320} />
         <View style={[styles.topRow, { paddingTop: insets.top + space(1) }]}>
           <PressableScale
             style={[styles.topIconBtn, shadow.soft]}

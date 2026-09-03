@@ -26,12 +26,13 @@ import { tri } from '../../src/taxonomy';
 import { useKategoriYakinda } from '../../src/yakinda';
 import {
   HizmetIkonu,
-  YakindaRozeti,
   ListSkeleton,
   PressableScale,
   Screen,
   TAB_BAR_CLEARANCE,
+  TepeIsigi,
   Text,
+  YakindaRozeti,
   useOfflineInset,
 } from '../../src/ui';
 
@@ -218,6 +219,9 @@ export default function DiscoverScreen() {
   const cityEmpty = !prosLoading && cityPros.length === 0;
   return (
     <Screen edges={[]}>
+      {/* Tepe ışığı kaydırma alanının DIŞINDA: içerik kayarken yıkama
+          yerinde kalıyor, birlikte kaymıyor. */}
+      <TepeIsigi yukseklik={260} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
