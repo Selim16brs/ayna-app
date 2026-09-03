@@ -42,6 +42,7 @@ import { CollectionsModule } from './collections/collections.module';
 import { OffersModule } from './offers/offers.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { ProPostsModule } from './pro-posts/pro-posts.module';
+import { SplashModule } from './splash/splash.module';
 import { ReferralModule } from './referral/referral.module';
 
 @Module({
@@ -90,6 +91,7 @@ import { ReferralModule } from './referral/referral.module';
     OffersModule,
     QuotesModule,
     ProPostsModule,
+    SplashModule,
     ReferralModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],

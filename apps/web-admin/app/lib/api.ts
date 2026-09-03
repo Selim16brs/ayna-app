@@ -331,7 +331,54 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(config),
     }),
+
+  // ── Açılış mesajları — brief §7.2 / §7.3 ───────────────────────────────
+  acilisMesajlari: () => req<AcilisMesajSatiri[]>('/admin/splash'),
+  acilisRapor: (days = 30) => req<AcilisRaporSatiri[]>(`/admin/splash/report?days=${days}`),
+  /** Yerel paketi tabloya aktar — var olan satırlara dokunmuyor. */
+  acilisPaketiAktar: () => req<{ eklenen: number }>('/admin/splash/seed', { method: 'POST' }),
+  acilisMesajKaydet: (code: string, govde: unknown) =>
+    req<AcilisMesajSatiri>(`/admin/splash/${encodeURIComponent(code)}`, {
+      method: 'POST',
+      body: JSON.stringify(govde),
+    }),
+  acilisMesajDurum: (code: string, active: boolean) =>
+    req<AcilisMesajSatiri>(`/admin/splash/${encodeURIComponent(code)}/active`, {
+      method: 'POST',
+      body: JSON.stringify({ active }),
+    }),
 };
+
+export interface AcilisMesajSatiri {
+  code: string;
+  grup: string;
+  etiket: string;
+  tr: string;
+  kk: string;
+  ru: string;
+  active: boolean;
+  sira: number;
+  saatBas: number | null;
+  saatSon: number | null;
+  haftaSonu: boolean;
+  gunler: number[];
+  pencereBasAy: number | null;
+  pencereBasGun: number | null;
+  pencereSonAy: number | null;
+  pencereSonGun: number | null;
+  oncelikliOzelGun: boolean;
+  adGerekli: boolean;
+  dogumGunu: boolean;
+  davranis: string | null;
+}
+
+export interface AcilisRaporSatiri {
+  code: string;
+  gosterim: number;
+  atlama: number;
+  /** Gösterim yoksa null — 0 "hiç atlanmıyor" diye okunurdu. */
+  skipOrani: number | null;
+}
 
 export type CategoryConfig = Record<string, { maintenanceDays: number; serviceMin: number }>;
 

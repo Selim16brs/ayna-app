@@ -60,6 +60,13 @@ export interface SplashBaglami {
   /** bh_06 — kullanılabilir puan. */
   puan?: number;
   durum: SplashDurumu;
+  /**
+   * Kullanılacak katalog — brief §7.1 uzak güncelleme.
+   *
+   * Verilmezse cihazla gelen yerel paket. Sunucudan inen katalog
+   * `uzakKatalogAyikla` doğrulamasından geçmiş olmalı.
+   */
+  katalog?: readonly SplashMesaji[] | undefined;
 }
 
 export interface SplashSonucu {
@@ -121,7 +128,17 @@ function sonHaftaGosterildi(id: string, b: SplashBaglami): boolean {
   return z !== undefined && b.simdi.getTime() - z < HAFTA;
 }
 
-const bul = (id: string) => ACILIS_MESAJLARI.find((x) => x.id === id)!;
+const katalogu = (b: SplashBaglami): readonly SplashMesaji[] => b.katalog ?? ACILIS_MESAJLARI;
+
+/*
+ * Yapısal mesajı katalogda ARA — bulunamazsa null.
+ *
+ * Uzak katalog bh_04'ü kaldırabilir. `!` ile "kesin vardır" deseydim,
+ * o kataloğu indiren cihazda randevusu olan herkes AÇILIŞTA ÇÖKERDİ.
+ * Bulunamayan mesaj sessizce atlanıyor; sıradaki kural devralıyor.
+ */
+const bul = (b: SplashBaglami, id: string): SplashMesaji | null =>
+  katalogu(b).find((x) => x.id === id) ?? null;
 
 /**
  * Davranış mesajlarının sıklık limitleri.
@@ -143,14 +160,16 @@ function davranisAdayi(b: SplashBaglami): { msj: SplashMesaji; anahtar: string }
     const anahtar = randevuBazli ? `${id}:${deger}` : id;
     const z = b.durum.sonGosterimZamani[anahtar];
     if (randevuBazli ? z !== undefined : sonHaftaGosterildi(anahtar, b)) continue;
-    return { msj: bul(id), anahtar };
+    const msj = bul(b, id);
+    if (!msj) continue;
+    return { msj, anahtar };
   }
   return null;
 }
 
 /** Genel havuz: A + B + G + o an geçerli C/D/E-sezon + pn_01. */
 function havuz(b: SplashBaglami): SplashMesaji[] {
-  return ACILIS_MESAJLARI.filter(
+  return katalogu(b).filter(
     (x) => x.grup !== 'H' && !x.dogumGunu && !x.oncelikliOzelGun && uygun(x, b),
   );
 }
@@ -182,7 +201,10 @@ export function acilisMesajiSec(
   });
 
   // 1 · bh_01 — ömürde bir kez.
-  if (b.ilkAcilis && b.durum.sonGosterimZamani.bh_01 === undefined) return yaz(bul('bh_01'));
+  if (b.ilkAcilis && b.durum.sonGosterimZamani.bh_01 === undefined) {
+    const hosGeldin = bul(b, 'bh_01');
+    if (hosGeldin) return yaz(hosGeldin);
+  }
 
   // 2 · Doğum günü — o günkü ilk açılış. Özel güne denk gelirse KAZANIR.
   if (
@@ -191,11 +213,12 @@ export function acilisMesajiSec(
     b.dogumGunu.gun === b.simdi.getDate() &&
     !bugunGosterildi('pn_02', b)
   ) {
-    return yaz(bul('pn_02'));
+    const dogum = bul(b, 'pn_02');
+    if (dogum) return yaz(dogum);
   }
 
   // 3 · Öncelikli özel gün — pencere içindeki ilk açılış.
-  const ozel = ACILIS_MESAJLARI.find(
+  const ozel = katalogu(b).find(
     (x) => x.oncelikliOzelGun && uygun(x, b) && !bugunGosterildi(x.id, b),
   );
   if (ozel) return yaz(ozel);

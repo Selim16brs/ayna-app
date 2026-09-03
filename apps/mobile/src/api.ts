@@ -720,6 +720,32 @@ export interface ProPost {
 export const api = {
   categories: () => get<ApiCategory[]>('/categories'),
 
+  // ── Açılış mesajları (brief §7.1 / §7.3) ────────────────────────────
+  /**
+   * Uzak katalog. Kimlik istemiyor: açılış ekranı giriş yapılmadan da
+   * çiziliyor. Dönen gövde HAM — `uzakKatalogAyikla` doğrulamadan
+   * kataloğa dönüştürmüyoruz.
+   */
+  splashKatalog: () => get<unknown>('/splash/catalog'),
+  /**
+   * Gösterim ölçümü — brief §7.3.
+   *
+   * OTURUM BAŞLIĞI BİLEREK GÖNDERİLMİYOR. `post()` kullansaydık istek
+   * kullanıcının token'ını taşırdı ve sunucu, istemese de, hangi mesajı
+   * KİMİN gördüğünü bilebilecek konuma gelirdi. Skip oranı için kimlik
+   * gerekmiyor; taşımamak en temizi.
+   */
+  splashOlcum: (input: { code: string; locale: string; atlandi: boolean }) =>
+    zamanAsimliFetch(
+      `${API_BASE}/splash/impression`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      },
+      '/splash/impression',
+    ).then(() => undefined),
+
   // ── Uzman paylaşımları (öncesi/sonrası, 7 gün) ──────────────────────
   /** Uzmanın CRM'i: tamamlanmış randevusu olan müşteriler. */
   proCustomers: (token: string) => get<{ customers: ProCustomer[] }>('/pro-posts/customers', token),

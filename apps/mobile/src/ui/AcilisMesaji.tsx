@@ -41,7 +41,13 @@ export function AcilisMesaji({
   sonuc: SplashSonucu;
   /** Uygulama açılışı tamamlandı mı? */
   hazir: boolean;
-  bitti: () => void;
+  /**
+   * Kapandı. `atlandi` = kullanıcı okumayı beklemeden dokunup geçti
+   * (brief §7.3 skip oranı). Süre dolup kendiliğinden kapanma atlama
+   * DEĞİLDİR — ikisini karıştırsaydık her gösterim atlanmış sayılır ve
+   * "düşük performanslı mesaj" ayıklaması tüm katalogu ayıklardı.
+   */
+  bitti: (atlandi: boolean) => void;
 }) {
   const { colors, mode } = useTheme();
   const [azHareket, setAzHareket] = useState(false);
@@ -88,8 +94,8 @@ export function AcilisMesaji({
    * `kapandi` bayrağı ikinci çağrıyı yutuyor — dokunuş ve zamanlayıcı
    * aynı anda tetiklenirse geçiş iki kez başlardı.
    */
-  const kapat = useRef<() => void>(() => undefined);
-  kapat.current = () => {
+  const kapat = useRef<(atlandi: boolean) => void>(() => undefined);
+  kapat.current = (atlandi: boolean) => {
     if (kapandi.current) return;
     kapandi.current = true;
     Animated.timing(kapanis, {
@@ -97,20 +103,20 @@ export function AcilisMesaji({
       duration: azHareket ? 200 : 480,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
-    }).start(() => bitti());
+    }).start(() => bitti(atlandi));
   };
 
   // Süre + yükleme: İKİSİ de tamamlanınca kapanıyor.
   useEffect(() => {
     const t = setTimeout(() => {
       sureDoldu.current = true;
-      if (hazir) kapat.current();
+      if (hazir) kapat.current(false);
     }, okumaSuresi(sonuc.metin));
     return () => clearTimeout(t);
   }, [sonuc.metin, hazir]);
 
   useEffect(() => {
-    if (hazir && sureDoldu.current) kapat.current();
+    if (hazir && sureDoldu.current) kapat.current(false);
   }, [hazir]);
 
   const punto = mesajPuntosu(sonuc.metin);
@@ -134,7 +140,7 @@ export function AcilisMesaji({
       ]}
     >
       {/* Dokunmak geçiyor — brief §6.1. */}
-      <Pressable style={StyleSheet.absoluteFill} onPress={() => kapat.current()} />
+      <Pressable style={StyleSheet.absoluteFill} onPress={() => kapat.current(true)} />
       <View style={styles.orta} pointerEvents="none">
         <Animated.Text
           style={[
