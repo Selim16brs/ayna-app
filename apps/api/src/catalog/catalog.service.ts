@@ -140,7 +140,7 @@ export class CatalogService {
      * (N+1) yok. (proId, status) indeksi bunun için eklendi.
      */
     const TAMAMLANMIS = ['tamamlandi', 'degerlendirme', 'kapandi'] as const;
-    const [sps, bizs, randevuSayilari] = await Promise.all([
+    const [sps, bizs, randevuSayilari, puanlar, esikAyari] = await Promise.all([
       this.prisma.specialist.findMany({
         where: { proId: { in: ids } },
         select: {
@@ -170,9 +170,52 @@ export class CatalogService {
         where: { proId: { in: ids }, status: { in: [...TAMAMLANMIS] } },
         _count: { _all: true },
       }),
+      /**
+       * PUAN VE DEĞERLENDİRME SAYISI — GERÇEK KAYITLARDAN.
+       *
+       * `Professional.rating` ve `reviewCount` sütunları hiçbir yerde
+       * GÜNCELLENMİYORDU: değerlendirme verildiğinde `Rating` satırı
+       * açılıyor ama uzman kaydına geri yazılmıyordu. Canlıda 12 gerçek
+       * değerlendirme varken listede herkesin puanı 0 görünüyordu.
+       *
+       * Sonuç: aramada "4,5+" seçen kullanıcı HER ZAMAN boş liste alıyordu
+       * ve "Puan"/"Popülerlik" sıralamaları hiçbir şey sıralamıyordu.
+       *
+       * Sütunlara yazmak yerine listede HESAPLIYORUZ: tek doğruluk kaynağı
+       * `Rating` tablosu kalıyor, ikinci bir yerde bayatlama riski doğmuyor.
+       *
+       * Görünürlük kuralları `RatingsService.summary()` ile AYNI: yalnız
+       * `visible` ve yayın anı gelmiş olanlar (§4.11 bir günlük gecikme).
+       */
+      this.prisma.rating.groupBy({
+        by: ['subjectId'],
+        where: {
+          subjectId: { in: ids },
+          visible: true,
+          OR: [{ publishAt: null }, { publishAt: { lte: new Date() } }],
+        },
+        _avg: { score: true },
+        _count: { _all: true },
+      }),
+      this.prisma.setting.findUnique({ where: { key: 'rating.threshold' } }),
     ]);
     const randevuByPro = new Map(
       randevuSayilari.flatMap((x) => (x.proId ? [[x.proId, x._count._all] as const] : [])),
+    );
+    /*
+     * AÇILMA EŞİĞİ — `summary()` ile aynı: eşiğin altındayken ORTALAMA
+     * gizli. Sayı görünür kalıyor (özet ucu da öyle yapıyor): "2
+     * değerlendirme var ama puan henüz açılmadı" dürüst bilgi.
+     * Ayar yoksa 1 — lansman kararı, tek yorum bile profilde görünür.
+     */
+    const esik = esikAyari?.intValue ?? 1;
+    const puanByPro = new Map(
+      puanlar.map((x) => {
+        const adet = x._count._all;
+        const ortalama =
+          adet >= esik && x._avg.score != null ? Math.round(x._avg.score * 10) / 10 : 0;
+        return [x.subjectId, { ortalama, adet }] as const;
+      }),
     );
     const ownerByPro = new Map<string, string>();
     for (const x of sps) if (x.proId) ownerByPro.set(x.proId, x.userId);
@@ -235,6 +278,10 @@ export class CatalogService {
           priceTo: prices.length ? Math.max(...prices) : Number(r.priceFrom),
           // Hiç randevusu olmayan uzman için groupBy satır döndürmez → 0.
           completedBookings: randevuByPro.get(r.id) ?? 0,
+          // Sütun değil GERÇEK kayıtlar. `mapPro` sütunu koyuyor; burada
+          // üzerine yazılıyor ki liste ile profil aynı sayıyı göstersin.
+          rating: puanByPro.get(r.id)?.ortalama ?? 0,
+          reviewCount: puanByPro.get(r.id)?.adet ?? 0,
           isPremium: owner ? premiumUsers.has(owner) : false,
           membershipTier: owner ? (tierById.get(owner) ?? 'free') : 'free',
           // §3.3 — GÜVEN ROZETİ listede de. Eskiden yalnız detay ucundaydı:

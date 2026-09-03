@@ -1394,8 +1394,6 @@ export const tr = {
   'search.filter.bookings': 'Tamamlanan randevu',
   'search.filter.apply': '{n} sonucu göster',
   'search.filter.no_result': 'Bu kriterlere uyan sonuç yok',
-  'search.filter.experience': 'Deneyim',
-  'search.filter.years': '{n}+ yıl',
   'search.filter.price': 'Başlangıç fiyatı',
   'search.filter.upto': '{n} ₸ ve altı',
   'search.filter.kind': 'Tür',
