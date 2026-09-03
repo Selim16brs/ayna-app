@@ -12,13 +12,22 @@ import {
   type Professional,
   proCoords,
 } from '../src/data';
+import { bolgeAdi } from '../src/bolge-adi';
 import { useProfessionals } from '../src/catalog';
 import { useStore } from '../src/store';
-import { useLocale } from '../src/locale';
+import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { useProfessionalDetail } from '../src/catalog';
-import { asPlanTier, PlanBadge, PressableScale, Screen, StackHeader, Text } from '../src/ui';
+import {
+  Button,
+  asPlanTier,
+  PlanBadge,
+  PressableScale,
+  Screen,
+  StackHeader,
+  Text,
+} from '../src/ui';
 
 export default function MapScreen() {
   const router = useRouter();
@@ -27,7 +36,19 @@ export default function MapScreen() {
   const styles = useThemedStyles(makeStyles);
   const all = useProfessionals();
   // §5.1.4 — harita da şehre göre filtreli (salona bağlı uzmanlar zaten listede tek başına yok)
-  const city = useStore((s) => s.currentUser?.city) ?? 'Almatı';
+  const varsayilanSehir = useStore((s) => s.currentUser?.city) ?? 'Almatı';
+  /*
+   * ŞEHİR ARTIK HARİTADAN SEÇİLİYOR.
+   *
+   * Eskiden kullanıcının kayıtlı şehrine KİLİTLİYDİ: Almatı'da kayıtlı biri
+   * Astana'ya bakamıyordu, haritanın üstünde bunu değiştirecek bir şey de
+   * yoktu. Kurucu: "harita üzerinde şehir seçimi ile lokasyonu oraya
+   * çekmek."
+   */
+  const [city, setCity] = useState(varsayilanSehir);
+  /** Seçilen şehir içinde daraltma — gerçek `district` alanına göre. */
+  const [bolge, setBolge] = useState<string | null>(null);
+  const [yerAcik, setYerAcik] = useState(false);
   const [cat, setCat] = useState<string | null>(null);
   const [selected, setSelected] = useState<Professional | null>(null);
   // §5.1.3 — karta dokun → POPUP profil (kapatınca haritaya dönülür)
@@ -38,21 +59,72 @@ export default function MapScreen() {
   const center = cityCenter(city);
   const region: Region = { ...center, latitudeDelta: 0.14, longitudeDelta: 0.14 };
 
+  // Bölge adı normalizasyonu `src/bolge-adi.ts`te — saf mantık, gerçek
+  // girdilerle test ediliyor (ekran içindeyken bekçi metne bakmak zorunda
+  // kalıyordu ve mutasyonu yakalayamamıştı).
+  const bolgeAdiOf = (p: { district: string }) => bolgeAdi(p.district, city);
+
+  /**
+   * Seçilebilir şehirler — BOŞ ŞEHİR GÖSTERİLMİYOR.
+   *
+   * Tüm ülke listesini sunmak, dokunulunca bomboş bir harita açan
+   * seçenekler üretirdi. Yalnız gerçekten sağlayıcısı olan şehirler.
+   */
+  const sehirler = useMemo(() => {
+    const sayac = new Map<string, number>();
+    for (const p of all) if (p.city) sayac.set(p.city, (sayac.get(p.city) ?? 0) + 1);
+    return [...sayac.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'tr'));
+  }, [all]);
+
+  /** Seçili şehirdeki bölgeler — yine yalnız gerçekten dolu olanlar. */
+  const bolgeler = useMemo(() => {
+    const sayac = new Map<string, number>();
+    for (const p of all) {
+      if (p.city !== city) continue;
+      const ad = bolgeAdiOf(p);
+      if (ad && ad !== city) sayac.set(ad, (sayac.get(ad) ?? 0) + 1);
+    }
+    return [...sayac.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'tr'));
+  }, [all, city]);
+
   const pros = useMemo(
-    () => all.filter((p) => p.city === city && (!cat || p.sector === cat)),
-    [all, city, cat],
+    () =>
+      all.filter(
+        (p) => p.city === city && (!cat || p.sector === cat) && (!bolge || bolgeAdiOf(p) === bolge),
+      ),
+    [all, city, cat, bolge],
   );
 
   return (
     <Screen edges={[]}>
       <View style={styles.headerRow}>
         <StackHeader title={t('map.title')} />
-        <PressableScale style={styles.listBtn} onPress={() => router.replace('/search')}>
-          <Ionicons name="list" size={16} color={colors.ink} />
-          <Text variant="caption" tone="ink">
-            {t('map.list')}
-          </Text>
-        </PressableScale>
+        <View style={styles.headerSag}>
+          {/*
+           * YER SEÇİCİ. Harita alanını yemesin diye alt sayfada açılıyor —
+           * arama ekranındaki kalıbın aynısı. Düğmenin üstünde seçili yer
+           * yazıyor: kullanıcı nereye baktığını görmek için açmak zorunda
+           * kalmıyor.
+           */}
+          <PressableScale style={styles.yerBtn} onPress={() => setYerAcik(true)}>
+            <Ionicons name="location-outline" size={15} color={colors.accentFg} />
+            <Text variant="caption" tone="ink" numberOfLines={1} style={styles.yerYazi}>
+              {bolge ? `${city} · ${bolge}` : city}
+            </Text>
+            <Ionicons name="chevron-down" size={14} color={colors.muted} />
+          </PressableScale>
+          {/* Yer düğmesi genişleyince liste düğmesi ikona indi; etiketi
+              erişilebilirlik adı olarak duruyor — ikon tek başına ekran
+              okuyucuya hiçbir şey söylemez. */}
+          <PressableScale
+            style={styles.listBtn}
+            onPress={() => router.replace('/search')}
+            accessibilityRole="button"
+            accessibilityLabel={t('map.list')}
+          >
+            <Ionicons name="list" size={16} color={colors.ink} />
+          </PressableScale>
+        </View>
       </View>
 
       {/* Kategori filtresi */}
@@ -74,8 +146,10 @@ export default function MapScreen() {
       </ScrollView>
 
       <View style={styles.mapWrap}>
+        {/* Anahtar bölgeyi de içeriyor: bölge değişince harita yeni odağa
+            sıçrasın, eski konumda kalmasın. */}
         <MapView
-          key={city}
+          key={`${city}:${bolge ?? ''}`}
           style={StyleSheet.absoluteFill}
           initialRegion={region}
           showsUserLocation
@@ -314,6 +388,91 @@ export default function MapScreen() {
           </View>
         </Modal>
       </View>
+
+      {/* ══ YER SEÇİCİ ══ */}
+      <Modal
+        visible={yerAcik}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setYerAcik(false)}
+      >
+        <Pressable style={styles.perde} onPress={() => setYerAcik(false)}>
+          <Pressable style={styles.sayfa} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.tutamak} />
+            <View style={styles.sayfaBas}>
+              <Text variant="h2" tone="ink">
+                {t('map.where.title')}
+              </Text>
+              <Pressable onPress={() => setYerAcik(false)} hitSlop={10}>
+                <Ionicons name="close" size={22} color={colors.ink} />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.sayfaGovde}
+            >
+              <Text variant="micro" tone="muted" style={styles.grupBaslik}>
+                {t('map.where.city')}
+              </Text>
+              <View style={styles.sarmal}>
+                {sehirler.map(([ad, adet]) => (
+                  <Chip
+                    key={ad}
+                    label={`${ad} (${adet})`}
+                    active={city === ad}
+                    onPress={() => {
+                      // Şehir değişince bölge sıfırlanır: Almatı'nın Medeu'su
+                      // Astana'da yok, eski seçim listeyi boşaltırdı.
+                      setCity(ad);
+                      setBolge(null);
+                    }}
+                  />
+                ))}
+              </View>
+
+              <Text variant="micro" tone="muted" style={styles.grupBaslik}>
+                {t('map.where.area')}
+              </Text>
+              {bolgeler.length > 0 ? (
+                <View style={styles.sarmal}>
+                  <Chip
+                    label={t('map.all')}
+                    active={bolge === null}
+                    onPress={() => setBolge(null)}
+                  />
+                  {bolgeler.map(([ad, adet]) => (
+                    <Chip
+                      key={ad}
+                      label={`${ad} (${adet})`}
+                      active={bolge === ad}
+                      onPress={() => setBolge(bolge === ad ? null : ad)}
+                    />
+                  ))}
+                </View>
+              ) : (
+                /* Bölge kaydı olmayan şehirde boş bir şerit bırakmak yerine
+                   nedenini yazıyoruz. */
+                <Text variant="caption" tone="muted">
+                  {t('map.where.no_area')}
+                </Text>
+              )}
+            </ScrollView>
+
+            <View style={styles.sayfaEylem}>
+              <Button
+                label={
+                  pros.length === 0
+                    ? t('map.where.empty')
+                    : fillParams(t('map.where.apply'), { n: String(pros.length) })
+                }
+                onPress={() => setYerAcik(false)}
+                disabled={pros.length === 0}
+              />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Screen>
   );
 }
@@ -331,6 +490,59 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    // ── yer seçici (şehir + bölge) ──
+    headerSag: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginRight: space(3) },
+    yerBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      // Şehir adı uzun olabilir ("Öskemen", "Taldıkorgan"); düğme büyüsün
+      // ama başlığı ezmesin.
+      maxWidth: 190,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    yerYazi: { flexShrink: 1 },
+    perde: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+    sayfa: {
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: radius.xl,
+      borderTopRightRadius: radius.xl,
+      paddingTop: space(1),
+      // Harita arkada görünür kalsın: kullanıcı neyi daralttığını unutmasın.
+      maxHeight: '80%',
+    },
+    tutamak: {
+      alignSelf: 'center',
+      width: 40,
+      height: 4,
+      borderRadius: radius.pill,
+      backgroundColor: colors.lineStrong,
+      marginBottom: space(1.5),
+    },
+    sayfaBas: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space(3),
+      paddingBottom: space(1),
+    },
+    sayfaGovde: { paddingHorizontal: space(3), paddingBottom: space(2) },
+    grupBaslik: { paddingTop: space(2), paddingBottom: space(1) },
+    sarmal: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    sayfaEylem: {
+      paddingHorizontal: space(3),
+      paddingTop: space(1.5),
+      paddingBottom: space(4),
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.line,
+      backgroundColor: colors.bg,
+    },
+
     sheetRoot: { flex: 1, backgroundColor: colors.bg },
     sheetHead: {
       flexDirection: 'row',
