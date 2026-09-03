@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { altHizmetBul, depositFor, hasConflict } from '@ayna/domain';
+import { altHizmetBul, depositFor, hasConflict, kategoriBul, ucDil } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
 import { loadDepositRules } from '../bookings/deposit.rules';
@@ -245,6 +245,12 @@ export class QuotesService {
     return this.mapRequest({ ...row, selectedQuoteId: null }, [], new Map());
   }
 
+  /** Kategori kodunu alıcının dilindeki ada çevirir; bilinmiyorsa genel sözcük. */
+  private kategoriAdi(kod: string | undefined, dil: string | null | undefined): string {
+    const k = kod ? kategoriBul(kod) : undefined;
+    return k ? ucDil(k.ad, dil ?? 'tr') : 'hizmet';
+  }
+
   // Faz 5 (§19) — KADEMELİ dalga: tek talep şehirdeki HERKESE aynı anda gönderilmez.
   // Dalga boyu Setting marketplace.wave_size (vars. 5); sıralama: kimliği doğrulanmış
   // (KYC) uzmanlar önce, sonra kıdem. Engellenen taraflar zaten liste dışı (openForExpert).
@@ -264,7 +270,9 @@ export class QuotesService {
         ...(row.userId ? { id: { not: row.userId } } : {}),
         ...(row.city ? { city: row.city } : {}),
       },
-      select: { id: true, kycStatus: true, createdAt: true },
+      // `defaultLocale` bildirim metnini ALICININ dilinde kurmak için
+      // (brief §4.11). Aynı sorguda geliyor; ek tur yok.
+      select: { id: true, kycStatus: true, createdAt: true, defaultLocale: true },
     });
     const ordered = [...experts].sort((a, b) => {
       const ka = a.kycStatus === 'approved' ? 0 : 1;
@@ -279,7 +287,17 @@ export class QuotesService {
           .sendTemplate(
             e.id,
             'quote.new_request',
-            { cat: cat?.code ?? 'hizmet' },
+            /*
+             * BRIEF §4.11 — kategori adı ALICININ DİLİNDE, katalogdan.
+             *
+             * Buraya `cat.code` gidiyordu: uzmanın telefonunda "Yeni
+             * lashes_brows talebi" yazıyordu. Kod bir kimliktir, kullanıcıya
+             * gösterilecek bir metin değil — üstelik hiçbir dile çevrilmiyordu.
+             *
+             * Katalogda karşılığı yoksa şablonun kendi genel sözcüğüne
+             * düşülüyor; uydurma bir ad yazmak yerine "hizmet" demek doğru.
+             */
+            { cat: this.kategoriAdi(cat?.code, e.defaultLocale) },
             {
               route: '/seller/requests',
               requestId,

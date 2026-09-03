@@ -1,7 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { SLOT_HOLDING_STATUSES } from '../bookings/slot-statuses';
 import type { Professional, Quote, ServiceCategory } from '@prisma/client';
-import { computeDaySlots, aynaOnayli, guvenKatmanlari, uzmanKayitli } from '@ayna/domain';
+import {
+  computeDaySlots,
+  aynaOnayli,
+  guvenKatmanlari,
+  hizmetSatirininKimligi,
+  uzmanKayitli,
+} from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { CutoutService } from '../cutout/cutout.service';
 import { StorageService } from '../storage/storage.service';
@@ -840,8 +846,26 @@ function parsePromos(raw: string): unknown[] {
 }
 
 // §9.5 — servicesJson çözümü: {id,name,price,durationMin} dizisi (bozuksa boş)
-function safeParseServices(raw: string): {
+/**
+ * Uzmanın hizmet listesi — profil ve keşif için.
+ *
+ * ── KATALOG BAĞI TAŞINIYOR ──────────────────────────────────────────────
+ *
+ * Brief §4.1 ile satırlar `{ serviceId, name, price, durationMin }` oldu:
+ * `name` uzmanın kendi adı, `serviceId` bağlı olduğu alt hizmet. Burası
+ * yalnız `x.id` okuyordu ve bağ DÜŞÜYORDU — profil `svc-0`, `svc-1` gibi
+ * uydurma kimliklerle geliyordu.
+ *
+ * Bağ olmadan brief §4.7'nin istediği "kategori → alt hizmet
+ * hiyerarşisiyle gruplu" gösterim kurulamıyordu: hangi hizmetin hangi
+ * kategoriye ait olduğu bilinmiyordu.
+ *
+ * `id` SATIR kimliği (aynı alt hizmetin iki satırı olabilir, ekranın
+ * onları ayırt etmesi gerekiyor), `serviceId` KATALOG bağı.
+ */
+export function safeParseServices(raw: string): {
   id: string;
+  serviceId: string | null;
   name: string;
   durationMin: number;
   price: number;
@@ -853,14 +877,21 @@ function safeParseServices(raw: string): {
     if (!Array.isArray(arr)) return [];
     return arr
       .filter((x): x is Record<string, unknown> => !!x && typeof x === 'object')
-      .map((x, i) => ({
-        id: String(x.id ?? `svc-${i}`),
-        name: String(x.name ?? ''),
-        durationMin: Number(x.durationMin) || 60,
-        price: Number(x.price) || 0,
-        popular: false,
-        discountPct: 0,
-      }))
+      .map((x, i) => {
+        const bag = hizmetSatirininKimligi(x) ?? null;
+        return {
+          // Satır kimliği BENZERSİZ olmalı: aynı alt hizmetin iki satırı
+          // aynı kimliği taşısaydı profilde biri seçilince öteki de
+          // seçili görünürdü.
+          id: `${bag ?? String(x.id ?? 'svc')}#${i}`,
+          serviceId: bag,
+          name: String(x.name ?? ''),
+          durationMin: Number(x.durationMin) || 60,
+          price: Number(x.price) || 0,
+          popular: false,
+          discountPct: 0,
+        };
+      })
       .filter((x) => x.name);
   } catch {
     return [];
