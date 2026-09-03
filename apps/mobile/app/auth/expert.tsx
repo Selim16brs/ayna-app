@@ -585,7 +585,7 @@ export default function ExpertRegisterScreen() {
                     style={[styles.chip, on && styles.chipActive]}
                   >
                     <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
-                      {t(c.labelKey)}
+                      {tri(c.ad, locale)}
                     </Text>
                   </Pressable>
                 );

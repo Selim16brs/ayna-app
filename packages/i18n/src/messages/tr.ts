@@ -451,18 +451,6 @@ export const tr = {
   'home.featured': 'Senin İçin Seçtiklerimiz',
 
   // Kategoriler
-  'category.hair': 'Saç',
-  'category.nails': 'Tırnak',
-  'category.brows': 'Kaş',
-  'category.lashes': 'Kirpik',
-  'category.makeup': 'Makyaj',
-  'category.skincare': 'Cilt Bakımı',
-  'category.spa': 'Masaj & Vücut',
-  'category.epilation': 'Epilasyon',
-  'category.pmu': 'Kalıcı Makyaj',
-  'category.bridal': 'Gelin & Özel Gün',
-  'category.wellness': 'Sağlıklı Yaşam',
-  'category.style': 'Stil & İmaj',
 
   // Kampanya kartı
 

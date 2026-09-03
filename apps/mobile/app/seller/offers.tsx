@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, ApiError, type ApiOffer } from '../../src/api';
-import { activeCategories } from '../../src/taxonomy';
+import { activeCategories, tri } from '../../src/taxonomy';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -40,7 +40,7 @@ const WINDOWS: { label: string; from: string; to: string }[] = [
 // §keşif Modül 2 — uzman/salon kampanya yönetimi: self-publish (otomatik kural kontrolü
 // sunucuda), aktif limit uzman 1 / salon 3, duraklat/sil, kota takibi.
 export default function SellerOffersScreen() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const token = useStore((s) => s.token);
@@ -247,7 +247,7 @@ export default function SellerOffersScreen() {
                   style={[styles.chip, sector === c.id && styles.chipOn]}
                 >
                   <Text variant="caption" tone={sector === c.id ? 'onAccent' : 'inkSoft'}>
-                    {t(c.labelKey)}
+                    {tri(c.ad, locale)}
                   </Text>
                 </Pressable>
               ))}

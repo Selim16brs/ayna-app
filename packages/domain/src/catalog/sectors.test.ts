@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { KATALOG } from './katalog.js';
 import { MAX_SECTORS, sectorsFromServiceIds, servesSector } from './sectors.js';
 
 test('alt hizmet kimliğinden kategori çıkar', () => {
@@ -32,8 +33,35 @@ test('bozuk girdi listeyi kirletmez', () => {
 });
 
 test('alan sayısı sınırlanır', () => {
-  const cok = Array.from({ length: 40 }, (_, i) => `k${i}-x`);
+  // GERÇEK kategorilerle: uydurma önekler artık zaten eleniyor, sınırı
+  // sahte kimliklerle denemek testi anlamsız kılardı.
+  const cok = KATALOG.flatMap((k) => k.altHizmetler.map((a) => a.id));
+  assert.ok(KATALOG.length > MAX_SECTORS, 'katalog sınırı test edecek kadar büyük değil');
   assert.equal(sectorsFromServiceIds(cok).length, MAX_SECTORS);
+});
+
+test('YENİ katalog kimlikleri kategoriye çözülüyor', () => {
+  /*
+   * Kimlikler `hair-cut`ten `hair.haircut`e geçti ve bir kategorinin
+   * KENDİSİNDE alt çizgi var (`lashes_brows`). Tireye bakan eski kod
+   * 'hair.haircut'ı olduğu gibi "alan" sanardı: o uzman hiçbir aramada
+   * çıkmaz, sessizce kaybolurdu.
+   */
+  assert.deepEqual(sectorsFromServiceIds(['hair.haircut']), ['hair']);
+  assert.deepEqual(sectorsFromServiceIds(['lashes_brows.lash_ext']), ['lashes_brows']);
+  assert.deepEqual(sectorsFromServiceIds(['body_contouring.lpg']), ['body_contouring']);
+  // Salon kaydı hizmet değil ALAN gönderiyor — kategori kimliğinin kendisi.
+  assert.deepEqual(sectorsFromServiceIds(['makeup']), ['makeup']);
+});
+
+test('TANINMAYAN önek hayalet alan üretmiyor', () => {
+  /*
+   * Eskiden önek ne olursa olsun "alan" sayılıyordu: uzmanın serbest
+   * yazdığı `paket-1` diye bir kimlik, hiçbir aramayla eşleşmeyen
+   * `paket` kategorisini doğuruyordu.
+   */
+  assert.deepEqual(sectorsFromServiceIds(['paket-1', 'roza-ozel']), []);
+  assert.deepEqual(sectorsFromServiceIds(['hair.haircut', 'paket-1']), ['hair']);
 });
 
 test('boş liste boş set verir — uydurma alan yok', () => {

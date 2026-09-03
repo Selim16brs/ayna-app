@@ -1,32 +1,23 @@
-// UYGULAMANIN KATEGORİ LİSTESİ — tek kaynak.
-//
-// SORUN: liste iki yerde ayrı ayrı yazılıydı. Mobil taksonomide 12 kategori
-// vardı, sunucudaki admin varsayılanında 8. Eksik dördün İKİSİ AKTİFTİ
-// (`pmu`, `bridal`): o kategorilerde hizmet veren uzmanlar vardı ama admin
-// panelinden bakım periyodu ve hizmet süresi ayarlanamıyordu — panelde
-// kategori hiç görünmüyordu.
-//
-// İki listeyi elle eşit tutmak sürdürülemez: biri değişince diğeri sessizce
-// geride kalır. Kimlikler artık BURADA; taksonomi ve sunucu buradan besleniyor
-// ve testler ikisinin ayrışmasını engelliyor.
+import { KATALOG } from './katalog.js';
 
-/** Kategori kimliği — hizmet kimliklerinin de öneki (`hair-cut` → `hair`). */
-export const CATEGORY_IDS = [
-  'hair',
-  'nails',
-  'lashes',
-  'brows',
-  'makeup',
-  'skincare',
-  'epilation',
-  'spa',
-  'pmu',
-  'bridal',
-  'wellness',
-  'style',
-] as const;
+/**
+ * KATEGORİ KİMLİKLERİ VE SUNUCU TARAFI VARSAYILANLARI.
+ *
+ * ── LİSTE ARTIK BURADA DEĞİL ────────────────────────────────────────────
+ *
+ * Bu dosyada 12 kategori ELLE yazılıydı ve adları da (`nameTr`) burada
+ * ikinci kez duruyordu. `AYNA_HIZMET_KATALOGU_BRIEF.md` §1 bunu açıkça
+ * yasaklıyor: "İkinci bir liste, hard-coded kategori YASAKTIR."
+ *
+ * Kimlikler ve adlar artık `KATALOG`dan türetiliyor. Katalog büyüdüğünde
+ * sunucunun kategori tablosu, admin paneli ve bakım periyotları kendi
+ * kendine genişliyor — elle eşitlenecek ikinci bir yer yok.
+ */
 
-export type CategoryId = (typeof CATEGORY_IDS)[number];
+/** Kategori kimliği (`hair`, `lashes_brows`, …) — KATALOGDAN. */
+export const CATEGORY_IDS = KATALOG.map((k) => k.id);
+
+export type CategoryId = string;
 
 /**
  * Kategori bazlı varsayılanlar.
@@ -34,54 +25,72 @@ export type CategoryId = (typeof CATEGORY_IDS)[number];
  * `maintenanceDays` — bakım hatırlatma periyodu (0 = periyodik değil).
  * `serviceMin`      — tipik hizmet süresi (slot hesabının başlangıç değeri).
  *
- * Admin bunları panelden değiştirebilir; buradakiler yalnız BAŞLANGIÇ.
- * Her kategorinin bir girdisi olmak ZORUNDA — eksik olan panelde görünmez.
+ * Bunlar AD ya da KİMLİK tanımlamıyor, katalogdaki kimliklere SAYI bağlıyor;
+ * ikinci bir liste değiller. Admin panelden değiştirebilir — buradakiler
+ * yalnız başlangıç.
+ *
+ * Her kategorinin girdisi olmak ZORUNDA: eksik olan panelde ayarsız kalır.
+ * Test bunu katalogla karşılaştırıyor.
  */
-export const CATEGORY_DEFAULTS: Record<
-  CategoryId,
-  { maintenanceDays: number; serviceMin: number }
-> = {
+export const CATEGORY_DEFAULTS: Record<string, { maintenanceDays: number; serviceMin: number }> = {
   hair: { maintenanceDays: 35, serviceMin: 90 },
   nails: { maintenanceDays: 15, serviceMin: 60 },
-  lashes: { maintenanceDays: 21, serviceMin: 120 },
-  brows: { maintenanceDays: 21, serviceMin: 30 },
-  makeup: { maintenanceDays: 0, serviceMin: 60 },
-  skincare: { maintenanceDays: 30, serviceMin: 60 },
+  lashes_brows: { maintenanceDays: 21, serviceMin: 90 },
   epilation: { maintenanceDays: 28, serviceMin: 45 },
-  spa: { maintenanceDays: 30, serviceMin: 90 },
-  // ── Panelde EKSİK olanlar (bu dosyanın var oluş sebebi) ──
-  // Kalıcı makyaj: dokunuş aralığı uzun, seans uzun.
-  pmu: { maintenanceDays: 365, serviceMin: 150 },
-  // Gelin hazırlığı: tek seferlik, periyodik bakım yok.
-  bridal: { maintenanceDays: 0, serviceMin: 180 },
-  // Aşağıdaki ikisi taksonomide `active: false` — yine de burada olmalılar
-  // ki açıldıkları gün panelde ayarsız kalmasınlar.
+  skin: { maintenanceDays: 30, serviceMin: 60 },
+  // Makyaj tek seferlik: gelin ve çekim makyajının periyodik bakımı yok.
+  makeup: { maintenanceDays: 0, serviceMin: 60 },
+  massage: { maintenanceDays: 21, serviceMin: 60 },
+  spa: { maintenanceDays: 45, serviceMin: 90 },
+  // Vücut şekillendirme KÜR: seanslar haftalık, tek seans satılmıyor.
+  body_contouring: { maintenanceDays: 7, serviceMin: 50 },
+  hair_health: { maintenanceDays: 30, serviceMin: 55 },
+  // Stil danışmanlığı bir projedir, tekrar eden bakım değil.
+  style: { maintenanceDays: 0, serviceMin: 90 },
   wellness: { maintenanceDays: 7, serviceMin: 60 },
-  style: { maintenanceDays: 0, serviceMin: 60 },
+  // "Diğer" karışık: solaryumdan dövmeye. Ortak bir periyot uydurmak,
+  // dövme yaptıran birine 45 günde bir hatırlatma göndermek olurdu.
+  other: { maintenanceDays: 0, serviceMin: 60 },
 };
 
 /**
- * Kategorinin görünen bilgileri — sunucudaki `service_categories` tablosunu
- * uygulamayla aynı tutmak için.
+ * Kategorinin görünen bilgileri — sunucudaki `service_categories` tablosu
+ * ve admin paneli için.
  *
- * Tablo 8 satır içeriyordu, uygulamada 12 kategori vardı: `pmu` ve `bridal`
- * AKTİF olmasına rağmen admin panelinde HİÇ görünmüyordu (panel tabloyu
- * okuyor). Satırlar elle eklendiği için liste sessizce geride kalmıştı.
+ * `nameTr` ve sıra KATALOGDAN geliyor; burada yalnız panelin ihtiyaç
+ * duyduğu ikon ve renk tonu ekleniyor.
  */
-export const CATEGORY_META: Record<
-  CategoryId,
-  { nameTr: string; icon: string; tone: string; sortOrder: number }
-> = {
-  hair: { nameTr: 'Saç', icon: 'cut-outline', tone: 'rose', sortOrder: 1 },
-  nails: { nameTr: 'Tırnak', icon: 'color-palette-outline', tone: 'lavender', sortOrder: 2 },
-  lashes: { nameTr: 'Kirpik', icon: 'sparkles-outline', tone: 'gold', sortOrder: 3 },
-  brows: { nameTr: 'Kaş', icon: 'eye-outline', tone: 'sage', sortOrder: 4 },
-  makeup: { nameTr: 'Makyaj', icon: 'brush-outline', tone: 'rose', sortOrder: 5 },
-  skincare: { nameTr: 'Cilt bakımı', icon: 'water-outline', tone: 'blue', sortOrder: 6 },
-  epilation: { nameTr: 'Epilasyon', icon: 'flash-outline', tone: 'gold', sortOrder: 7 },
-  spa: { nameTr: 'Spa & masaj', icon: 'body-outline', tone: 'sage', sortOrder: 8 },
-  pmu: { nameTr: 'Kalıcı makyaj', icon: 'color-wand-outline', tone: 'lavender', sortOrder: 9 },
-  bridal: { nameTr: 'Gelin paketi', icon: 'flower-outline', tone: 'rose', sortOrder: 10 },
-  wellness: { nameTr: 'Wellness', icon: 'barbell-outline', tone: 'sage', sortOrder: 11 },
-  style: { nameTr: 'Stil danışmanlığı', icon: 'shirt-outline', tone: 'blue', sortOrder: 12 },
+const IKON: Record<string, string> = {
+  hair: 'cut-outline',
+  nails: 'color-palette-outline',
+  lashes_brows: 'eye-outline',
+  epilation: 'flash-outline',
+  skin: 'water-outline',
+  makeup: 'brush-outline',
+  massage: 'hand-left-outline',
+  spa: 'flower-outline',
+  body_contouring: 'body-outline',
+  hair_health: 'medkit-outline',
+  style: 'shirt-outline',
+  wellness: 'leaf-outline',
+  other: 'ellipsis-horizontal-circle-outline',
 };
+
+const TONLAR = ['rose', 'lavender', 'gold', 'sage', 'blue'] as const;
+
+export const CATEGORY_META: Record<
+  string,
+  { nameTr: string; icon: string; tone: string; sortOrder: number }
+> = Object.fromEntries(
+  KATALOG.map((k, i) => [
+    k.id,
+    {
+      nameTr: k.ad.tr,
+      icon: IKON[k.id] ?? 'sparkles-outline',
+      tone: TONLAR[i % TONLAR.length]!,
+      // Brief §7.3: katalog sırası VARSAYILAN UI sırası; admin değiştirebilir
+      // (override `service_categories.sort_order` içinde).
+      sortOrder: i + 1,
+    },
+  ]),
+);

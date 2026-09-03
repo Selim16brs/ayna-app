@@ -18,7 +18,7 @@ import {
   isValidEmail,
   missingLabels,
 } from '../../../src/formValidation';
-import { activeCategories } from '../../../src/taxonomy';
+import { TaxCategory, activeCategories, kategoriAdi, tri } from '../../../src/taxonomy';
 import { useLocale } from '../../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme-context';
@@ -41,8 +41,15 @@ import {
   TakvimSecici,
 } from '../../../src/ui';
 
-// Salon hizmet alanları — MERKEZİ taksonomideki AKTİF kategoriler (fiyat YOK, yalnızca alan; §3.2 A)
-const AREAS: MessageKey[] = activeCategories().map((c) => c.labelKey);
+/**
+ * Salon hizmet alanları — katalog kategorileri (fiyat YOK, yalnızca alan; §3.2 A).
+ *
+ * Seçim artık KATEGORİ KİMLİĞİ tutuyor (`hair`), i18n anahtarı değil.
+ * Eskiden `'category.hair'` saklanıp gönderirken `.replace('category.','')`
+ * ile kimlik geri çıkarılıyordu; çeviri anahtarının biçimi veri formatına
+ * bağlanmıştı ve anahtar adı değişse kayıt sessizce bozulurdu.
+ */
+const AREAS: TaxCategory[] = activeCategories();
 
 const PHOTO_MAX = 10;
 
@@ -56,7 +63,7 @@ function serializeHours(hours: DayHours[]): string {
 
 export default function NewBusinessScreen() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -80,7 +87,7 @@ export default function NewBusinessScreen() {
   const [foundedYear, setFoundedYear] = useState('');
   const [womenOnly, setWomenOnly] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
-  const [areas, setAreas] = useState<Set<MessageKey>>(new Set(['category.hair']));
+  const [areas, setAreas] = useState<Set<string>>(new Set(['hair']));
   const [city, setCity] = useState<string | null>(null);
   const [district, setDistrict] = useState('');
   const [address, setAddress] = useState('');
@@ -133,7 +140,7 @@ export default function NewBusinessScreen() {
     }
   }
 
-  function toggleArea(a: MessageKey) {
+  function toggleArea(a: string) {
     setAreas((prev) => {
       const next = new Set(prev);
       if (next.has(a)) next.delete(a);
@@ -205,7 +212,7 @@ export default function NewBusinessScreen() {
   async function submit() {
     setBusy(true);
     try {
-      const categories = [...areas].map((a) => a.replace('category.', ''));
+      const categories = [...areas];
       await api.registerBusiness({
         name: name.trim(),
         ownerName: `${firstName.trim()} ${lastName.trim()}`.trim(),
@@ -472,7 +479,12 @@ export default function NewBusinessScreen() {
             </Text>
             <View style={styles.chips}>
               {AREAS.map((a) => (
-                <Chip key={a} label={t(a)} active={areas.has(a)} onPress={() => toggleArea(a)} />
+                <Chip
+                  key={a.id}
+                  label={tri(a.ad, locale)}
+                  active={areas.has(a.id)}
+                  onPress={() => toggleArea(a.id)}
+                />
               ))}
             </View>
 
@@ -623,7 +635,7 @@ export default function NewBusinessScreen() {
               <View style={styles.previewRow}>
                 <Ionicons name="cut-outline" size={14} color={colors.inkSoft} />
                 <Text variant="caption" tone="inkSoft" numberOfLines={1}>
-                  {[...areas].map((a) => t(a)).join(', ') || '—'}
+                  {[...areas].map((a) => kategoriAdi(a, locale)).join(', ') || '—'}
                 </Text>
               </View>
               <Text variant="caption" tone="muted" style={styles.previewNote}>

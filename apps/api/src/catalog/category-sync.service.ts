@@ -31,7 +31,12 @@ export class CategorySyncService implements OnModuleInit {
       if (eksik.length === 0) return;
 
       await this.prisma.serviceCategory.createMany({
-        data: eksik.map((id) => ({ code: id, ...CATEGORY_META[id] })),
+        // Meta'sı olmayan kimlik yazılmıyor: kod/ad boş bir satır panelde
+        // adsız bir kategori olarak görünürdü.
+        data: eksik.flatMap((id) => {
+          const meta = CATEGORY_META[id];
+          return meta ? [{ code: id, ...meta }] : [];
+        }),
         // Yarış durumunda (iki konteyner aynı anda açılırsa) çakışanı atla.
         skipDuplicates: true,
       });

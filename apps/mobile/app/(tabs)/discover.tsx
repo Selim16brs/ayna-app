@@ -22,6 +22,7 @@ import { useUnreadMessages } from '../../src/use-unread-messages';
 import { space, type ColorTokens, font } from '../../src/theme';
 import { lightColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { tri } from '../../src/taxonomy';
 import {
   HizmetIkonu,
   ListSkeleton,
@@ -361,7 +362,7 @@ export default function DiscoverScreen() {
               {/* İKİ SATIR: "Kalıcı Makyaj" ve "Gelin & Özel Gün" tek satıra
                   sığmıyor, kırpılıyordu. Figma da iki satıra sarıyor. */}
               <Text numberOfLines={2} style={styles.ikonYazi}>
-                {t(cat.labelKey)}
+                {tri(cat.ad, locale)}
               </Text>
             </PressableScale>
           ))}

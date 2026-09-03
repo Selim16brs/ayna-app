@@ -92,7 +92,7 @@ export class ReengageScheduler implements OnModuleInit, OnModuleDestroy {
     for (const b of bookings) {
       const kat = kategoriKodu(b.service);
       if (!kat) continue;
-      const periyot = CATEGORY_DEFAULTS[kat].maintenanceDays;
+      const periyot = CATEGORY_DEFAULTS[kat]?.maintenanceDays ?? 0;
       if (periyot <= 0) continue; // periyodik olmayan hizmet (gelin paketi, makyaj)
 
       const sahip = sahipByPro.get(b.proId!);

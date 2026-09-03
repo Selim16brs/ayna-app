@@ -20,6 +20,7 @@ import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { useProfessionalDetail } from '../src/catalog';
+import { tri } from '../src/taxonomy';
 import {
   Button,
   asPlanTier,
@@ -32,7 +33,7 @@ import {
 
 export default function MapScreen() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const all = useProfessionals();
@@ -188,7 +189,7 @@ export default function MapScreen() {
         {CATEGORIES.map((c) => (
           <Chip
             key={c.id}
-            label={t(c.labelKey)}
+            label={tri(c.ad, locale)}
             active={cat === c.id}
             onPress={() => setCat(cat === c.id ? null : c.id)}
           />

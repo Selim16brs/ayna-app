@@ -12,6 +12,7 @@ import { useStore } from '../../src/store';
 import { bildirimIzniIste } from '../../src/notifications';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { tri } from '../../src/taxonomy';
 import {
   TarihSecici,
   HizmetIkonu,
@@ -27,7 +28,7 @@ import {
 
 export default function NewDemandScreen() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
@@ -210,7 +211,7 @@ export default function NewDemandScreen() {
                    */}
                   <HizmetIkonu id={cat.id} tarz="kutu" secili={active} />
                   <Text variant="caption" tone={active ? 'ink' : 'inkSoft'} numberOfLines={1}>
-                    {t(cat.labelKey)}
+                    {tri(cat.ad, locale)}
                   </Text>
                 </Pressable>
               );

@@ -15,6 +15,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { tri } from '../../src/taxonomy';
 import {
   HizmetIkonu,
   Button,
@@ -28,13 +29,13 @@ import {
 
 export default function NewPostScreen() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const addPost = useStore((s) => s.addPost);
 
   const [type, setType] = useState<CirclePostType>('recommend');
-  const [category, setCategory] = useState<string>(t(CATEGORIES[0]!.labelKey));
+  const [category, setCategory] = useState<string>(tri(CATEGORIES[0]!.ad, locale));
   const [text, setText] = useState('');
   const [anonymous, setAnonymous] = useState(false);
 
@@ -104,7 +105,7 @@ export default function NewPostScreen() {
             contentContainerStyle={styles.categories}
           >
             {CATEGORIES.map((cat) => {
-              const label = t(cat.labelKey);
+              const label = tri(cat.ad, locale);
               const active = label === category;
               return (
                 <Pressable key={cat.id} onPress={() => setCategory(label)} style={styles.kategori}>

@@ -2,14 +2,22 @@ import type { Ionicons } from '@expo/vector-icons';
 import type { BookingState as DomainBookingState } from '@ayna/domain';
 import type { MessageKey } from '@ayna/i18n';
 import { almatySlotMs, daysUntil, formatSlotTr } from './datetime';
-import { TAXONOMY, type Tri, activeCategories, tri } from './taxonomy';
+import { TAXONOMY, type Tri, activeCategories, kategoriAdi, tri } from './taxonomy';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 // ── Kategoriler / sektörler (kadın odaklı güzellik) ──────────────────────
 export interface Category {
   id: string;
-  labelKey: MessageKey;
+  /**
+   * Üç dilli ad — KATALOGDAN geliyor (`@ayna/domain`).
+   *
+   * Eskiden burada `labelKey: MessageKey` vardı ve adlar `packages/i18n`
+   * içinde ikinci kez yazılıydı. Katalog da aynı adları taşıyor; iki
+   * kopya zamanla ayrışırdı ve brief §1 tam olarak bunu yasaklıyor.
+   * i18n'deki `category.<id>` anahtarları bu yüzden SİLİNDİ.
+   */
+  ad: Tri;
   icon: IoniconName;
   tone: 'rose' | 'gold';
 }
@@ -17,13 +25,19 @@ export interface Category {
 // Keşfet/talep akışı ana kategorileri = MERKEZİ taksonomideki AKTİF kategoriler (tek kaynak).
 export const CATEGORIES: Category[] = activeCategories().map((c, i) => ({
   id: c.id,
-  labelKey: c.labelKey,
+  ad: c.ad,
   icon: c.icon,
   tone: i % 2 === 0 ? 'rose' : 'gold',
 }));
 
-export const categoryLabelKey = (id: string): MessageKey =>
-  CATEGORIES.find((c) => c.id === id)?.labelKey ?? 'category.hair';
+/**
+ * Kategori adı, seçili dilde.
+ *
+ * Tanınmayan kimlikte BOŞ döner — eskiden 'category.hair'e düşüyordu ve
+ * bilinmeyen bir kategori ekranda "Saç" diye görünüyordu. Yanlış ad
+ * göstermektense hiç göstermemek doğru.
+ */
+export const categoryLabel = (id: string, locale: string): string => kategoriAdi(id, locale);
 
 // Kazakistan başlıca şehirleri (kayıt / şehir seçimi)
 // §5.1.4 — Kazakistan'ın başlıca şehirleri (bölge merkezleri + büyük şehirler), alfabetik.

@@ -1,542 +1,161 @@
 import type { Ionicons } from '@expo/vector-icons';
-import type { MessageKey } from '@ayna/i18n';
+import { KATALOG, ucDil, type UcDil } from '@ayna/domain';
+import { varsayilan } from './hizmet-varsayilan';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
 /**
- * AYNA — MERKEZİ KATEGORİ MİMARİSİ (tek doğruluk kaynağı).
- * İki seviye: Ana kategori (Keşfet + talep akışı hedeflemesi) → Alt hizmet
- * (uzman kaydında fiyat+süre girer; bakım takvimi periyodu burada tanımlı).
+ * AYNA — KATEGORİ MİMARİSİ.
  *
- * Kullanım: Keşfet kategorileri, talep akışı, uzman/salon kayıt hizmet seçimi, bakım takvimi.
- * Diller: TR/KK/RU — alt hizmet adları burada (merkezi sözlük); ana kategori etiketi packages/i18n'de.
- * "Diğer" YOK (moderasyonsuz çöp talep üretir; kullanıcı Mod 2'de serbest metinle anlatır).
- * v1: ilk 10 kategori açık; Sağlıklı Yaşam & Stil admin panelde arz oluşunca açılır (active=false).
+ * Bu dosya ARTIK KATALOG DEĞİL. Kategoriler ve alt hizmetler
+ * `@ayna/domain` → `KATALOG` içinde; kaynağı `AYNA_HIZMET_KATALOGU_BRIEF.md`
+ * v1.0 ve orası hem sunucunun hem uygulamanın okuduğu tek liste.
+ *
+ * Burada kalan şey UYGULAMANIN GÖRÜNÜMÜ: katalog kimliklerine ikon ve
+ * (ayrı dosyadan) süre/fiyat/döngü bağlanıyor. Eskiden 12 kategori ve
+ * `hair-cut` gibi kimlikler BU dosyada elle yazılıydı — brief §1 bunu
+ * açıkça yasaklıyor ("ikinci bir liste, hard-coded kategori YASAKTIR").
+ *
+ * ── "AKTİF" KAVRAMI KALKTI ──────────────────────────────────────────────
+ *
+ * Eskiden Wellness ve Stil `active: false` ile GİZLENİYORDU. Brief §7.4
+ * bunun yerine arz-güdümlü davranış istiyor: kategori her zaman görünür,
+ * o an yayında uzmanı yoksa "Yakında" rozeti alır. Gizlemek, talebi de
+ * görünmez yapıyordu — hiç kimse istemediği için hiç uzman gelmiyordu.
+ * Rozet hesabı sunucuda (`GET /taxonomy`), çünkü arzı orası biliyor.
  */
 
 export type TaxLocale = 'tr' | 'kk' | 'ru';
-export interface Tri {
-  tr: string;
-  kk: string;
-  ru: string;
-}
+export type Tri = UcDil;
 
-export function tri(t: Tri, locale: string): string {
-  return t[locale as TaxLocale] ?? t.tr;
-}
+/** Üç dilli metinden geçerli dildekini seçer (eksikse TR). */
+export const tri = (t: Tri, locale: string): string => ucDil(t, locale);
 
 export interface TaxService {
-  id: string; // örn 'hair-color'
+  /** Katalog kimliği: `kategori.alt` (örn `hair.haircut`). DEĞİŞTİRİLEMEZ. */
+  id: string;
   label: Tri;
-  durationMin: number; // varsayılan süre (uzman düzenleyebilir)
-  price: number; // varsayılan başlangıç fiyatı (₸)
-  periodDays?: number; // bakım döngüsü — bakım takvimi bunu kullanır (yoksa periyodik değil)
+  durationMin: number;
+  price: number;
+  /** Bakım döngüsü — bakım takvimi bunu kullanır (yoksa periyodik değil). */
+  periodDays?: number;
   popular?: boolean;
 }
 
 export interface TaxCategory {
-  id: string; // rota + sektör kimliği (KALICI — değiştirme): hair, nails, ...
-  labelKey: MessageKey; // ana kategori etiketi (packages/i18n — 3 dil)
+  /** Katalog kimliği (örn `lashes_brows`). DEĞİŞTİRİLEMEZ. */
+  id: string;
+  /** Üç dilli kategori adı — KATALOGDAN. i18n'de kopyası YOK. */
+  ad: Tri;
   icon: IoniconName;
-  active: boolean; // v1'de açık mı (admin panelde parametrik)
   services: TaxService[];
 }
 
-export const TAXONOMY: TaxCategory[] = [
-  {
-    id: 'hair',
-    labelKey: 'category.hair',
-    icon: 'cut-outline',
-    active: true,
-    services: [
-      {
-        id: 'hair-cut',
-        label: { tr: 'Kesim & fön', kk: 'Қию & кептіру', ru: 'Стрижка и укладка' },
-        durationMin: 60,
-        price: 9000,
-        periodDays: 49,
-        popular: true,
-      },
-      {
-        id: 'hair-color',
-        label: { tr: 'Saç boyama (kök)', kk: 'Шаш бояу (түбір)', ru: 'Окрашивание (корни)' },
-        durationMin: 90,
-        price: 15000,
-        periodDays: 42,
-        popular: true,
-      },
-      {
-        id: 'hair-balayage',
-        label: { tr: 'Röfle / Balayage', kk: 'Мелирлеу / Балаяж', ru: 'Мелирование / Балаяж' },
-        durationMin: 150,
-        price: 28000,
-        periodDays: 90,
-      },
-      {
-        id: 'hair-keratin',
-        label: { tr: 'Keratin / Botoks', kk: 'Кератин / Ботокс', ru: 'Кератин / Ботокс' },
-        durationMin: 120,
-        price: 22000,
-        periodDays: 120,
-      },
-      {
-        id: 'hair-care',
-        label: { tr: 'Saç bakımı', kk: 'Шаш күтімі', ru: 'Уход за волосами' },
-        durationMin: 60,
-        price: 12000,
-        periodDays: 30,
-      },
-      {
-        id: 'hair-style',
-        label: { tr: 'Şekillendirme / Fön', kk: 'Сәндеу / Кептіру', ru: 'Укладка' },
-        durationMin: 45,
-        price: 7000,
-      },
-      {
-        id: 'hair-braid',
-        label: { tr: 'Örgü', kk: 'Өру', ru: 'Плетение' },
-        durationMin: 60,
-        price: 8000,
-      },
-      {
-        id: 'hair-bridal',
-        label: { tr: 'Gelin saçı', kk: 'Қалыңдық шашы', ru: 'Свадебная причёска' },
-        durationMin: 90,
-        price: 20000,
-      },
-    ],
-  },
-  {
-    id: 'nails',
-    labelKey: 'category.nails',
-    icon: 'color-palette-outline',
-    active: true,
-    services: [
-      {
-        id: 'nails-classic',
-        label: { tr: 'Klasik manikür', kk: 'Классикалық маникюр', ru: 'Классический маникюр' },
-        durationMin: 45,
-        price: 6000,
-        periodDays: 15,
-        popular: true,
-      },
-      {
-        id: 'nails-hardware',
-        label: { tr: 'Aparat manikür', kk: 'Аппараттық маникюр', ru: 'Аппаратный маникюр' },
-        durationMin: 60,
-        price: 7000,
-        periodDays: 18,
-      },
-      {
-        id: 'nails-gel',
-        label: { tr: 'Jel / Kalıcı oje', kk: 'Гель-лак', ru: 'Гель-лак' },
-        durationMin: 60,
-        price: 9000,
-        periodDays: 21,
-        popular: true,
-      },
-      {
-        id: 'nails-extension',
-        label: { tr: 'Protez tırnak', kk: 'Тырнақ ұзарту', ru: 'Наращивание ногтей' },
-        durationMin: 120,
-        price: 18000,
-        periodDays: 21,
-      },
-      {
-        id: 'nails-art',
-        label: { tr: 'Nail art', kk: 'Nail art', ru: 'Дизайн ногтей' },
-        durationMin: 90,
-        price: 13000,
-        periodDays: 21,
-      },
-      {
-        id: 'nails-pedi',
-        label: { tr: 'Pedikür', kk: 'Педикюр', ru: 'Педикюр' },
-        durationMin: 60,
-        price: 8000,
-        periodDays: 30,
-      },
-    ],
-  },
-  {
-    id: 'lashes',
-    labelKey: 'category.lashes',
-    icon: 'sparkles-outline',
-    active: true,
-    services: [
-      {
-        id: 'lashes-classic',
-        label: { tr: 'İpek kirpik', kk: 'Классикалық кірпік', ru: 'Классическое наращивание' },
-        durationMin: 90,
-        price: 14000,
-        periodDays: 21,
-        popular: true,
-      },
-      {
-        id: 'lashes-volume',
-        label: { tr: 'Volüm teknikleri', kk: 'Көлемді кірпік', ru: 'Объёмное наращивание' },
-        durationMin: 120,
-        price: 18000,
-        periodDays: 21,
-      },
-      {
-        id: 'lashes-lift',
-        label: {
-          tr: 'Lifting / Laminasyon',
-          kk: 'Лифтинг / Ламинация',
-          ru: 'Ламинирование ресниц',
-        },
-        durationMin: 60,
-        price: 10000,
-        periodDays: 42,
-      },
-      {
-        id: 'lashes-tint',
-        label: { tr: 'Kirpik boyama', kk: 'Кірпік бояу', ru: 'Окрашивание ресниц' },
-        durationMin: 30,
-        price: 5000,
-        periodDays: 28,
-      },
-    ],
-  },
-  {
-    id: 'brows',
-    labelKey: 'category.brows',
-    icon: 'eye-outline',
-    active: true,
-    services: [
-      {
-        id: 'brows-shape',
-        label: { tr: 'Şekillendirme', kk: 'Қас түзету', ru: 'Коррекция бровей' },
-        durationMin: 30,
-        price: 4000,
-        periodDays: 21,
-        popular: true,
-      },
-      {
-        id: 'brows-lam',
-        label: { tr: 'Laminasyon', kk: 'Қас ламинациясы', ru: 'Ламинирование бровей' },
-        durationMin: 60,
-        price: 11000,
-        periodDays: 42,
-      },
-      {
-        id: 'brows-tint',
-        label: { tr: 'Boyama', kk: 'Қас бояу', ru: 'Окрашивание бровей' },
-        durationMin: 30,
-        price: 5000,
-        periodDays: 30,
-      },
-      {
-        id: 'brows-henna',
-        label: { tr: 'Kına', kk: 'Хна', ru: 'Хна для бровей' },
-        durationMin: 40,
-        price: 6000,
-        periodDays: 30,
-      },
-      {
-        id: 'brows-micro',
-        label: {
-          tr: 'Microblading / Powder',
-          kk: 'Микроблейдинг / Pudra',
-          ru: 'Микроблейдинг / Пудровые',
-        },
-        durationMin: 120,
-        price: 30000,
-        periodDays: 365,
-      },
-    ],
-  },
-  {
-    id: 'makeup',
-    labelKey: 'category.makeup',
-    icon: 'brush-outline',
-    active: true,
-    services: [
-      {
-        id: 'makeup-day',
-        label: { tr: 'Günlük makyaj', kk: 'Күнделікті макияж', ru: 'Дневной макияж' },
-        durationMin: 45,
-        price: 9000,
-      },
-      {
-        id: 'makeup-evening',
-        label: { tr: 'Gece / Davet makyajı', kk: 'Кешкі макияж', ru: 'Вечерний макияж' },
-        durationMin: 60,
-        price: 13000,
-        popular: true,
-      },
-      {
-        id: 'makeup-bridal',
-        label: { tr: 'Gelin makyajı', kk: 'Қалыңдық макияжы', ru: 'Свадебный макияж' },
-        durationMin: 90,
-        price: 25000,
-      },
-      {
-        id: 'makeup-photo',
-        label: { tr: 'Çekim makyajı', kk: 'Түсірілім макияжы', ru: 'Макияж для съёмки' },
-        durationMin: 60,
-        price: 15000,
-      },
-    ],
-  },
-  {
-    id: 'skincare',
-    labelKey: 'category.skincare',
-    icon: 'water-outline',
-    active: true,
-    services: [
-      {
-        id: 'skin-facial',
-        label: {
-          tr: 'Klasik yüz bakımı',
-          kk: 'Классикалық бет күтімі',
-          ru: 'Классический уход за лицом',
-        },
-        durationMin: 60,
-        price: 12000,
-        periodDays: 30,
-        popular: true,
-      },
-      {
-        id: 'skin-clean',
-        label: { tr: 'Temizleme', kk: 'Тазалау', ru: 'Чистка лица' },
-        durationMin: 75,
-        price: 14000,
-        periodDays: 30,
-      },
-      {
-        id: 'skin-peel',
-        label: { tr: 'Peeling', kk: 'Пилинг', ru: 'Пилинг' },
-        durationMin: 45,
-        price: 13000,
-        periodDays: 30,
-      },
-      {
-        id: 'skin-antiage',
-        label: { tr: 'Anti-age uygulama', kk: 'Анти-эйдж процедурасы', ru: 'Анти-возрастной уход' },
-        durationMin: 60,
-        price: 18000,
-        periodDays: 30,
-      },
-      {
-        id: 'skin-massage',
-        label: { tr: 'Yüz masajı', kk: 'Бет массажы', ru: 'Массаж лица' },
-        durationMin: 45,
-        price: 9000,
-        periodDays: 21,
-      },
-    ],
-  },
-  {
-    id: 'epilation',
-    labelKey: 'category.epilation',
-    icon: 'flash-outline',
-    active: true,
-    services: [
-      {
-        id: 'epil-sugar',
-        label: { tr: 'Şugaring', kk: 'Шугаринг', ru: 'Шугаринг' },
-        durationMin: 45,
-        price: 7000,
-        periodDays: 24,
-        popular: true,
-      },
-      {
-        id: 'epil-wax',
-        label: { tr: 'Ağda', kk: 'Балауыз', ru: 'Восковая депиляция' },
-        durationMin: 45,
-        price: 6000,
-        periodDays: 24,
-      },
-      {
-        id: 'epil-laser',
-        label: { tr: 'Lazer epilasyon', kk: 'Лазерлік эпиляция', ru: 'Лазерная эпиляция' },
-        durationMin: 30,
-        price: 12000,
-        periodDays: 30,
-      },
-    ],
-  },
-  {
-    id: 'spa',
-    labelKey: 'category.spa',
-    icon: 'body-outline',
-    active: true,
-    services: [
-      {
-        id: 'spa-relax',
-        label: { tr: 'Klasik / Relax masaj', kk: 'Классикалық массаж', ru: 'Классический массаж' },
-        durationMin: 60,
-        price: 12000,
-        periodDays: 30,
-        popular: true,
-      },
-      {
-        id: 'spa-cellulite',
-        label: {
-          tr: 'Anti-selülit masaj',
-          kk: 'Анти-целлюлит массаж',
-          ru: 'Антицеллюлитный массаж',
-        },
-        durationMin: 60,
-        price: 14000,
-        periodDays: 14,
-      },
-      {
-        id: 'spa-ritual',
-        label: { tr: 'SPA ritüeli', kk: 'SPA рәсімі', ru: 'SPA-ритуал' },
-        durationMin: 90,
-        price: 20000,
-        periodDays: 45,
-      },
-      {
-        id: 'spa-wrap',
-        label: { tr: 'Vücut sargısı', kk: 'Дене орау', ru: 'Обёртывание' },
-        durationMin: 75,
-        price: 16000,
-        periodDays: 21,
-      },
-    ],
-  },
-  {
-    id: 'pmu',
-    labelKey: 'category.pmu',
-    icon: 'color-wand-outline',
-    active: true,
-    services: [
-      {
-        id: 'pmu-lip',
-        label: { tr: 'Dudak', kk: 'Ерін', ru: 'Перманент губ' },
-        durationMin: 120,
-        price: 35000,
-        periodDays: 365,
-        popular: true,
-      },
-      {
-        id: 'pmu-eyeliner',
-        label: { tr: 'Eyeliner', kk: 'Көз айналасы', ru: 'Перманент век' },
-        durationMin: 120,
-        price: 30000,
-        periodDays: 540,
-      },
-      {
-        id: 'pmu-brow',
-        label: { tr: 'Kaş (microblading)', kk: 'Қас (микроблейдинг)', ru: 'Перманент бровей' },
-        durationMin: 120,
-        price: 32000,
-        periodDays: 365,
-      },
-    ],
-  },
-  {
-    id: 'bridal',
-    labelKey: 'category.bridal',
-    icon: 'flower-outline',
-    active: true,
-    services: [
-      {
-        id: 'bridal-look',
-        label: { tr: 'Gelin başı (saç + makyaj)', kk: 'Қалыңдық образы', ru: 'Образ невесты' },
-        durationMin: 180,
-        price: 45000,
-        popular: true,
-      },
-      {
-        id: 'bridal-henna',
-        label: { tr: 'Kına gecesi hazırlığı', kk: 'Қыналау кеші', ru: 'Подготовка к вечеру хны' },
-        durationMin: 120,
-        price: 30000,
-      },
-      {
-        id: 'bridal-grad',
-        label: { tr: 'Mezuniyet hazırlığı', kk: 'Бітіру дайындығы', ru: 'Подготовка к выпускному' },
-        durationMin: 120,
-        price: 28000,
-      },
-    ],
-  },
-  // ── v1'de KAPALI (arz oluşunca admin açar) ──
-  {
-    id: 'wellness',
-    labelKey: 'category.wellness',
-    icon: 'barbell-outline',
-    active: false,
-    services: [
-      {
-        id: 'well-pt',
-        label: { tr: 'Fitness / PT', kk: 'Фитнес / PT', ru: 'Фитнес / PT' },
-        durationMin: 60,
-        price: 8000,
-      },
-      {
-        id: 'well-yoga',
-        label: { tr: 'Yoga', kk: 'Йога', ru: 'Йога' },
-        durationMin: 60,
-        price: 6000,
-      },
-      {
-        id: 'well-pilates',
-        label: { tr: 'Pilates', kk: 'Пилатес', ru: 'Пилатес' },
-        durationMin: 60,
-        price: 7000,
-      },
-      {
-        id: 'well-nutrition',
-        label: {
-          tr: 'Beslenme danışmanlığı',
-          kk: 'Тамақтану кеңесі',
-          ru: 'Консультация по питанию',
-        },
-        durationMin: 45,
-        price: 10000,
-      },
-    ],
-  },
-  {
-    id: 'style',
-    labelKey: 'category.style',
-    icon: 'shirt-outline',
-    active: false,
-    services: [
-      {
-        id: 'style-personal',
-        label: { tr: 'Kişisel stil', kk: 'Жеке стиль', ru: 'Персональный стиль' },
-        durationMin: 60,
-        price: 15000,
-      },
-      {
-        id: 'style-color',
-        label: { tr: 'Renk analizi', kk: 'Түс талдауы', ru: 'Цветотипирование' },
-        durationMin: 90,
-        price: 18000,
-      },
-      {
-        id: 'style-wardrobe',
-        label: { tr: 'Gardırop danışmanlığı', kk: 'Гардероб кеңесі', ru: 'Разбор гардероба' },
-        durationMin: 120,
-        price: 20000,
-      },
-    ],
-  },
-];
+/**
+ * Kategori ikonu (Ionicons).
+ *
+ * Ana sayfadaki ÇİZİLMİŞ ikonlar burada değil — onlar `hizmet-ikon.ts`te.
+ * Bu eşleme haritada, bildirim tercihlerinde ve çizimin olmadığı yerlerde
+ * kullanılıyor; brief §6.2'deki ikon konseptini takip ediyor.
+ */
+const IKON: Record<string, IoniconName> = {
+  hair: 'cut-outline',
+  nails: 'color-palette-outline',
+  lashes_brows: 'eye-outline',
+  epilation: 'flash-outline',
+  skin: 'water-outline',
+  makeup: 'brush-outline',
+  massage: 'hand-left-outline',
+  spa: 'flower-outline',
+  body_contouring: 'body-outline',
+  hair_health: 'medkit-outline',
+  style: 'shirt-outline',
+  wellness: 'leaf-outline',
+  other: 'ellipsis-horizontal-circle-outline',
+};
 
-// ── Türetilmiş yardımcılar ───────────────────────────────────────────────
-export const activeCategories = (): TaxCategory[] => TAXONOMY.filter((c) => c.active);
+export const TAXONOMY: TaxCategory[] = KATALOG.map((k) => ({
+  id: k.id,
+  ad: k.ad,
+  icon: IKON[k.id] ?? 'sparkles-outline',
+  services: k.altHizmetler.map((a) => {
+    const v = varsayilan(a.id);
+    return {
+      id: a.id,
+      label: a.ad,
+      durationMin: v.durationMin,
+      price: v.price,
+      ...(v.periodDays === undefined ? {} : { periodDays: v.periodDays }),
+      ...(v.popular ? { popular: true } : {}),
+    };
+  }),
+}));
+
+/**
+ * Görünen kategoriler.
+ *
+ * Brief §7.4 gereği TAMAMI görünüyor; arzı olmayan "Yakında" rozetiyle
+ * çıkıyor. Ad eski çağıranlar bozulmasın diye korundu.
+ */
+export const activeCategories = (): TaxCategory[] => TAXONOMY;
+
 export const findCategory = (id: string): TaxCategory | undefined =>
   TAXONOMY.find((c) => c.id === id);
+
 export const servicesOf = (categoryId: string): TaxService[] =>
   findCategory(categoryId)?.services ?? [];
+
 export const allServices = (): TaxService[] => TAXONOMY.flatMap((c) => c.services);
+
 export const findService = (id: string): TaxService | undefined =>
   allServices().find((s) => s.id === id);
-/** Hizmeti kategorisiyle birlikte bul (geri-çağırma bildirimi kategori tonunu kullanır). */
+
 export const findServiceWithCategory = (
   id: string,
-): { categoryId: string; service: TaxService } | undefined => {
-  for (const c of TAXONOMY) {
-    const service = c.services.find((s) => s.id === id);
-    if (service) return { categoryId: c.id, service };
+): { service: TaxService; category: TaxCategory } | undefined => {
+  for (const category of TAXONOMY) {
+    const service = category.services.find((s) => s.id === id);
+    if (service) return { service, category };
   }
   return undefined;
 };
+
+/** Kategori adı, seçili dilde. Kimlik tanınmazsa boş döner (uydurma yok). */
+export const kategoriAdi = (id: string, locale: string): string => {
+  const c = findCategory(id);
+  return c ? tri(c.ad, locale) : '';
+};
+
+/**
+ * ── ÜÇ DİLLİ ARAMA (brief §4.4) ─────────────────────────────────────────
+ *
+ * Arama SEÇİLİ DİLE BAKMAZ. Kazakistan'da kullanıcı arayüzü Kazakça olsa
+ * da "маникюр" yazıyor; arayüz Rusça olsa da "kirpik" arayan oluyor.
+ * Eskiden yalnız o anki dildeki etiket taranıyordu ve öteki iki dildeki
+ * karşılığını yazan hiçbir sonuç göremiyordu.
+ *
+ * TÜRKÇE "I" TUZAĞI: `toLocaleLowerCase('tr-TR')` "MANIKÜR"ü "manıkür"
+ * yapar ve katalogdaki "manikür"le eşleşmez. Bu yüzden i/ı/İ/I dördü de
+ * tek bir "i"ye indirgeniyor — arama tarafında bu ayrım bilgi taşımıyor,
+ * yalnız eşleşmeyi bozuyor.
+ */
+export function aramaAnahtari(s: string): string {
+  return (s ?? '').toLowerCase().replace(/[İıI]/g, 'i').trim();
+}
+
+/** Metin, üç dilli adın herhangi bir dilindeki karşılığında geçiyor mu? */
+const ucDildeGecer = (ad: Tri, sorgu: string): boolean => {
+  const q = aramaAnahtari(sorgu);
+  if (!q) return false;
+  return (['tr', 'kk', 'ru'] as const).some((d) => aramaAnahtari(ad[d]).includes(q));
+};
+
+/** Kategori kimliği verilen sorguyla üç dilde eşleşiyor mu? */
+export const kategoriAra = (id: string, sorgu: string): boolean => {
+  const c = findCategory(id);
+  return c ? ucDildeGecer(c.ad, sorgu) : false;
+};
+
+/** Sorguyla üç dilde eşleşen alt hizmetler. */
+export const hizmetAra = (sorgu: string): TaxService[] =>
+  allServices().filter((s) => ucDildeGecer(s.label, sorgu));

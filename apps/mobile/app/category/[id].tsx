@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { servesSector } from '@ayna/domain';
-import { categoryLabelKey } from '../../src/data';
+import { kategoriAdi } from '../../src/taxonomy';
 import { useProfessionals } from '../../src/catalog';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
@@ -22,7 +22,7 @@ const SORTS: { key: SortKey; label: MessageKey }[] = [
 
 export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, gradients, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
@@ -45,7 +45,7 @@ export default function CategoryScreen() {
 
   return (
     <Screen edges={[]}>
-      <StackHeader title={t(categoryLabelKey(sector))} />
+      <StackHeader title={kategoriAdi(sector, locale)} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {/* ── HİZMETLER ── */}
         <Text variant="label" tone="muted" style={styles.eyebrow}>
