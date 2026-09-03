@@ -1,3 +1,5 @@
+import { KATALOG, altHizmetinKategorisi, kategoriBul } from './katalog.js';
+
 // Uzmanın HANGİ ALANLARDA hizmet verdiği — hizmet kimliklerinden türetilir.
 //
 // SORUN: uzman kayıtta birden çok alan seçebiliyordu ama sunucuya YALNIZ TEK
@@ -6,13 +8,39 @@
 //  - Hiçbir hizmeti eşleşmeyen uzman 'hair' varsayılanına düşüyor, yani hiç
 //    saç yapmayan biri saç aramasında çıkıyordu.
 //
-// Hizmet kimlikleri iki tarafta da `<kategori>-<...>` biçiminde ('hair-cut',
-// 'nails-art', sunucu demo kataloğunda 'hair-1'). Alan seti bu önekten
-// türetilir; ayrı bir alan tutup ikisini senkron tutmaya çalışmak, birinin
-// diğerinden sapması demekti.
+// ── AYRAÇTAN TÜRETME BİTTİ ─────────────────────────────────────────────
+//
+// Eskiden kategori, kimliğin İLK TİREYE kadarki parçasıydı ('hair-cut' →
+// 'hair'). Katalog kimlikleri artık `hair.haircut` ve kategorilerin
+// kendisinde alt çizgi var ('lashes_brows'); tireye bakan kod
+// 'hair.haircut'ı olduğu gibi "alan" sanardı ve o uzman HİÇBİR aramada
+// çıkmazdı. Kategori artık KATALOGDAN okunuyor.
 
 /** Bir uzmanın en çok kaç alanda görünebileceği — kötüye kullanım sınırı. */
 export const MAX_SECTORS = 12;
+
+const KATEGORI_KIMLIKLERI = new Set(KATALOG.map((k) => k.id));
+
+/**
+ * Tek bir hizmet kimliğinin kategorisi.
+ *
+ * Üç durum, sırayla:
+ *   1. Katalogdaki alt hizmet — `hair.haircut` → `hair`.
+ *   2. Kategorinin kendisi — `hair` (salon kaydı alan seçiyor, hizmet değil).
+ *   3. ESKİ ya da demo kimlik — `hair-cut`, `hair-1`. Ayraçtan önceki parça
+ *      GERÇEK bir kategoriyse kabul ediliyor. Bu tolerans bilerek dar:
+ *      tanınmayan önek atılıyor, çünkü uydurulmuş bir "alan" hiçbir aramayla
+ *      eşleşmeyen hayalet kategori üretir.
+ */
+export function categoryOfServiceId(raw: string): string | undefined {
+  const ham = raw.trim();
+  if (!ham) return undefined;
+  const alt = altHizmetinKategorisi(ham);
+  if (alt) return alt;
+  if (kategoriBul(ham)) return ham;
+  const onek = ham.split(/[.-]/)[0]?.trim().toLowerCase();
+  return onek && KATEGORI_KIMLIKLERI.has(onek) ? onek : undefined;
+}
 
 /**
  * Hizmet kimliklerinden alan (kategori) setini çıkarır.
@@ -24,13 +52,7 @@ export function sectorsFromServiceIds(ids: readonly unknown[]): string[] {
   const out: string[] = [];
   for (const raw of ids) {
     if (typeof raw !== 'string') continue;
-    const tire = raw.indexOf('-');
-    // Tireyle BAŞLAYAN kimlik bozuktur ('-orphan'): kategorisi yok, atlanır.
-    // Yoksa '-orphan' olduğu gibi bir "alan" hâline gelir ve hiçbir aramayla
-    // eşleşmeyen hayalet kategori üretirdi.
-    if (tire === 0) continue;
-    // Tiresiz kimlik kategorinin KENDİSİDİR ('hair'); tireli olan alt hizmet.
-    const kat = (tire > 0 ? raw.slice(0, tire) : raw).trim().toLowerCase();
+    const kat = categoryOfServiceId(raw);
     if (!kat) continue;
     if (!out.includes(kat)) out.push(kat);
     if (out.length >= MAX_SECTORS) break;

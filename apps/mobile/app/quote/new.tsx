@@ -12,6 +12,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { tri } from '../../src/taxonomy';
 import {
   HizmetIkonu,
   TarihSecici,
@@ -28,7 +29,7 @@ const HERO_WOMAN = require('../../assets/hero-user.png');
 
 export default function NewQuoteScreen() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
@@ -203,7 +204,7 @@ export default function NewQuoteScreen() {
               <Pressable key={cat.id} onPress={() => setCategory(cat.id)} style={styles.cat}>
                 <HizmetIkonu id={cat.id} tarz="kutu" secili={active} />
                 <Text variant="caption" tone={active ? 'ink' : 'inkSoft'} numberOfLines={1}>
-                  {t(cat.labelKey)}
+                  {tri(cat.ad, locale)}
                 </Text>
               </Pressable>
             );

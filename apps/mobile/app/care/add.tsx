@@ -12,14 +12,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  CATEGORIES,
-  QUICK_ADD,
-  categoryLabelKey,
-  type QuickAddKind,
-  quickAddMeta,
-} from '../../src/data';
-import { servicesOf, tri } from '../../src/taxonomy';
+import { CATEGORIES, QUICK_ADD, type QuickAddKind, quickAddMeta } from '../../src/data';
+import { kategoriAdi, servicesOf, tri } from '../../src/taxonomy';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
@@ -303,7 +297,7 @@ function RoutineForm({ onDone }: { onDone: () => void }) {
                       tone={active ? 'onAccent' : 'inkSoft'}
                       style={active ? styles.chipTextActive : undefined}
                     >
-                      {t(categoryLabelKey(c.id))}
+                      {kategoriAdi(c.id, locale)}
                     </Text>
                   </Pressable>
                 );

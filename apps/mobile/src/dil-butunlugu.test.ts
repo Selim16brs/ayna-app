@@ -74,37 +74,41 @@ test('ekranlarda ve bileşenlerde SABİT metin yok', () => {
  *
  * `Booking.service` hizmetin KİMLİĞİNİ değil METNİNİ saklıyor: randevu
  * kurulurken etiket o anki dilde donduruluyor. Ekran görüntüsünde arayüz
- * Rusça'yken hizmet "Saç boyama (kök) + Keratin / Botoks" kalıyordu.
+ * Rusça'yken hizmet "Boya + Keratin & Saç Botoksu" kalıyordu.
  */
 
 test('katalogdaki hizmet adı seçili dile çevriliyor', () => {
-  assert.equal(hizmetAdiCevir('Saç boyama (kök)', 'ru'), 'Окрашивание (корни)');
-  assert.equal(hizmetAdiCevir('Keratin / Botoks', 'ru'), 'Кератин / Ботокс');
-  assert.equal(hizmetAdiCevir('Saç boyama (kök)', 'kk'), 'Шаш бояу (түбір)');
+  assert.equal(hizmetAdiCevir('Boya', 'ru'), 'Окрашивание');
+  assert.equal(hizmetAdiCevir('Keratin & Saç Botoksu', 'ru'), 'Кератин и ботокс для волос');
+  assert.equal(hizmetAdiCevir('Boya', 'kk'), 'Шаш бояу');
 });
 
 test('birleşik etiket parça parça çevriliyor', () => {
   // Ekran görüntüsündeki tam metin.
   assert.equal(
-    hizmetEtiketiCevir('Saç boyama (kök) + Keratin / Botoks', 'ru'),
-    'Окрашивание (корни) + Кератин / Ботокс',
+    hizmetEtiketiCevir('Boya + Keratin & Saç Botoksu', 'ru'),
+    'Окрашивание + Кератин и ботокс для волос',
   );
   // Ayraç korunuyor: kaybolursa iki hizmet tek uzun ad gibi okunur.
-  assert.ok(hizmetEtiketiCevir('Saç boyama (kök) + Keratin / Botoks', 'ru').includes(' + '));
+  assert.ok(hizmetEtiketiCevir('Boya + Keratin & Saç Botoksu', 'ru').includes(' + '));
 });
 
 test('hizmet adının İÇİNDEKİ ayraçlardan bölünmüyor', () => {
-  // "Keratin / Botoks" ve "Kesim & fön" adların KENDİSİNDE ayraç taşıyor;
+  // "Ombre / Balayage / Röfle" ve "Kesim & Şekillendirme" adların
+  // KENDİSİNDE ayraç taşıyor;
   // onlardan bölmek adı ortadan ikiye keserdi.
-  assert.equal(hizmetEtiketiCevir('Keratin / Botoks', 'ru'), 'Кератин / Ботокс');
-  assert.equal(hizmetEtiketiCevir('Kesim & fön', 'ru'), 'Стрижка и укладка');
+  assert.equal(
+    hizmetEtiketiCevir('Ombre / Balayage / Röfle', 'ru'),
+    'Омбре / балаяж / мелирование',
+  );
+  assert.equal(hizmetEtiketiCevir('Kesim & Şekillendirme', 'ru'), 'Стрижка и укладка');
 });
 
 test('zaten çevrilmiş etiket bozulmuyor', () => {
   // Kayıt Rusça yazılmışsa ve arayüz Türkçe ise geri çevrilmeli.
-  assert.equal(hizmetAdiCevir('Окрашивание (корни)', 'tr'), 'Saç boyama (kök)');
+  assert.equal(hizmetAdiCevir('Окрашивание', 'tr'), 'Boya');
   // Aynı dile çevirmek kimliği değiştirmiyor.
-  assert.equal(hizmetAdiCevir('Окрашивание (корни)', 'ru'), 'Окрашивание (корни)');
+  assert.equal(hizmetAdiCevir('Окрашивание', 'ru'), 'Окрашивание');
 });
 
 test('KATALOG DIŞI ad olduğu gibi kalıyor', () => {
@@ -115,8 +119,8 @@ test('KATALOG DIŞI ad olduğu gibi kalıyor', () => {
    */
   assert.equal(hizmetAdiCevir('Roza özel bakım paketi', 'ru'), 'Roza özel bakım paketi');
   assert.equal(
-    hizmetEtiketiCevir('Roza paketi + Keratin / Botoks', 'ru'),
-    'Roza paketi + Кератин / Ботокс',
+    hizmetEtiketiCevir('Roza paketi + Keratin & Saç Botoksu', 'ru'),
+    'Roza paketi + Кератин и ботокс для волос',
   );
 });
 
@@ -124,5 +128,5 @@ test('boş ve bozuk girdi çökertmiyor', () => {
   assert.equal(hizmetAdiCevir('', 'ru'), '');
   assert.equal(hizmetEtiketiCevir('   ', 'ru'), '');
   // Bilinmeyen dil kodu varsayılana (tr) düşer.
-  assert.equal(hizmetAdiCevir('Окрашивание (корни)', 'xx'), 'Saç boyama (kök)');
+  assert.equal(hizmetAdiCevir('Окрашивание', 'xx'), 'Boya');
 });

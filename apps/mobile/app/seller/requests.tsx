@@ -13,19 +13,18 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import type { MessageKey } from '@ayna/i18n';
 import { hasConflict } from '@ayna/domain';
+import { type DemandRequest, formatPrice } from '../../src/data';
 import { api } from '../../src/api';
-import { CATEGORIES, type DemandRequest, formatPrice } from '../../src/data';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { sellerTrialInfo, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text, TextInput, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { kategoriAdi } from '../../src/taxonomy';
 
-const catLabel = (id: string): MessageKey =>
-  (CATEGORIES.find((c) => c.id === id)?.labelKey ?? 'nav.discover') as MessageKey;
+const catLabel = (id: string, locale: string): string => kategoriAdi(id, locale);
 
 // §9.3 — yaklaşık mesafe (deterministik, talep id'sinden 1–9 km). Gerçek adres kullanılmaz (privacy).
 const estKm = (id: string): number => {
@@ -505,7 +504,7 @@ function RequestCard({
   offered?: boolean; // §5.2 Faz A — bu talebe teklifim var (buton "güncelle" olur)
   onViewPhoto?: (uri: string) => void;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const remainMin = Math.max(0, Math.round((demand.expiresAt - Date.now()) / 60_000));
@@ -522,7 +521,7 @@ function RequestCard({
           />
         </View>
         <Text variant="bodyStrong" tone="ink" style={styles.flex}>
-          {t(catLabel(demand.category))}
+          {catLabel(demand.category, locale)}
         </Text>
         <View style={[styles.countdown, urgent && styles.countdownUrgent]}>
           <Ionicons name="alarm-outline" size={12} color={urgent ? colors.onColor : colors.gold} />

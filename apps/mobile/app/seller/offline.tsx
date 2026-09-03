@@ -203,7 +203,7 @@ export default function OfflineBookingScreen() {
                         style={styles.accTitle}
                         numberOfLines={1}
                       >
-                        {t(cat.labelKey)}
+                        {tri(cat.ad, locale)}
                       </Text>
                       {picked > 0 ? <View style={styles.accDot} /> : null}
                       <Text variant="caption" tone="muted">

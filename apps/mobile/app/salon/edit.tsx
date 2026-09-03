@@ -6,7 +6,7 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-nat
 import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { activeCategories } from '../../src/taxonomy';
+import { activeCategories, tri } from '../../src/taxonomy';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -22,7 +22,7 @@ import {
 
 // §10.1/§6.2 — SALON profil DÜZENLEME formu (Profil hub'ından "Profili düzenle" ile açılır).
 export default function SalonEditScreen() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
@@ -210,7 +210,7 @@ export default function SalonEditScreen() {
               >
                 <Ionicons name={c.icon} size={13} color={on ? colors.onAccent : colors.muted} />
                 <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
-                  {t(c.labelKey)}
+                  {tri(c.ad, locale)}
                 </Text>
               </Pressable>
             );

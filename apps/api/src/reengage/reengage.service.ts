@@ -1,13 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { CATEGORY_DEFAULTS, type CategoryId } from '@ayna/domain';
+import { CATEGORY_DEFAULTS, type CategoryId, categoryOfServiceId } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 
 export const GUN_MS = 24 * 60 * 60 * 1000;
 
-/** Hizmet kimliğinin kategorisi: `nails-gel` → `nails`. */
+/**
+ * Hizmet kimliğinin kategorisi: `nails.gel_polish` → `nails`.
+ *
+ * Çözüm KATALOGDAN geliyor. Eskiden ilk tireye kadarki parça alınıyordu;
+ * katalog kimlikleri artık nokta ayraçlı (`nails.gel_polish`) ve
+ * kategorilerin kendisinde alt çizgi var (`lashes_brows`) — tireye bakan
+ * kod hiçbirini çözemezdi ve tüm yeniden-kazanım sessizce dururdu.
+ */
 export function kategoriKodu(service: string): CategoryId | null {
-  const kod = service.split('-')[0];
-  return kod && kod in CATEGORY_DEFAULTS ? (kod as CategoryId) : null;
+  const kod = categoryOfServiceId(service);
+  return kod && kod in CATEGORY_DEFAULTS ? kod : null;
 }
 
 export interface ReengageAday {
@@ -74,7 +81,7 @@ export class ReengageService {
       gorulen.add(anahtar);
       const kat = kategoriKodu(b.service);
       if (!kat) continue;
-      const periyot = CATEGORY_DEFAULTS[kat].maintenanceDays;
+      const periyot = CATEGORY_DEFAULTS[kat]?.maintenanceDays ?? 0;
       if (periyot <= 0) continue; // periyodik olmayan hizmet (gelin paketi, makyaj)
       const kalanGun = Math.round((b.startAt!.getTime() + periyot * GUN_MS - simdi) / GUN_MS);
       if (kalanGun > ufukGun) continue;

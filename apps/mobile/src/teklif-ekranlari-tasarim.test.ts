@@ -76,13 +76,63 @@ test('ikon eşlemesi TEK kaynakta — üç ekran da onu okuyor', () => {
   }
 });
 
-test('kategorilerin HEPSİNİN ikonu var', () => {
-  // Eksik ikon sessizce boş kutu demek; kategori listesi büyüdüğünde
-  // eşlemeyi güncellemeyi unutmayalım diye.
-  assert.ok(IKON_ANAHTARLARI.size >= 10, 'ikon eşlemesi okunamadı');
-  for (const cat of CATEGORIES) {
-    assert.ok(IKON_ANAHTARLARI.has(cat.id), `"${cat.id}" kategorisinin Figma ikonu yok`);
-  }
+test('HİÇBİR kategori ikonsuz kalmıyor', () => {
+  /*
+   * Katalog 13 kategori; elde 7 çizim var. Kalan altısı (Spa & Hamam,
+   * Vücut Şekillendirme, Saç Sağlığı, İmaj & Stil, Wellness, Diğer)
+   * BİLEREK çizimsiz — mevcut ikonları taklit eden üretilmiş bir görsel
+   * yanlarında yamalı durur.
+   *
+   * Bu testin derdi çizim SAYISI değil: hiçbir kategorinin ekranda BOŞ
+   * kalmaması. Her kategori ya çizime ya da geçerli bir Ionicons adına
+   * bağlanmalı; ikisi de yoksa kullanıcı boş bir kutu görür.
+   */
+  assert.ok(IKON_ANAHTARLARI.size >= 7, 'ikon eşlemesi okunamadı');
+  const ikonsuz = CATEGORIES.filter(
+    (c) => !IKON_ANAHTARLARI.has(c.id) && !(c.icon && c.icon.length > 0),
+  ).map((c) => c.id);
+  assert.deepEqual(ikonsuz, [], `ekranda boş kalacak kategori: ${ikonsuz.join(', ')}`);
+});
+
+test('çizim eşlemesindeki her anahtar GERÇEK bir kategori', () => {
+  /*
+   * Kategori kimliği değiştiğinde (`skincare` → `skin`) eşlemedeki eski
+   * anahtar öylece kalır: tip hatası YOK, ekranda sessizce ikon kaybolur.
+   */
+  const kimlikler = new Set(CATEGORIES.map((c) => c.id));
+  const oksuz = [...IKON_ANAHTARLARI].filter((k) => !kimlikler.has(k));
+  assert.deepEqual(oksuz, [], `karşılığı olmayan ikon anahtarı: ${oksuz.join(', ')}`);
+});
+
+test('çizimi olmayan kategori VEKTÖR YEDEĞİNE düşüyor', () => {
+  /*
+   * Yukarıdaki test kategorinin bir `icon` alanı olduğunu görüyor; bu
+   * test o alanın GERÇEKTEN çizildiğini görüyor. Yedek kaldırılırsa
+   * altı kategori sessizce boş kutuya döner ve tip denetimi bunu
+   * yakalamaz — eşleme `Record<string, number>`, eksik anahtar hata değil.
+   */
+  const b = readFileSync(join(__dirname, 'ui', 'HizmetIkonu.tsx'), 'utf8');
+  assert.match(b, /HIZMET_IKON\[id\]/, 'çizim eşlemesi okunmuyor');
+  /*
+   * Arama BAŞKA BİR KATEGORİNİN çizimine düşmemeli. `HIZMET_IKON[id] ??
+   * HIZMET_IKON.hair` gibi bir kısayol testi geçerdi ama Spa'ya saç
+   * ikonunu koyardı — boş kutudan daha kötü, çünkü yanlış bilgi verir.
+   */
+  assert.doesNotMatch(
+    b,
+    /HIZMET_IKON\[id\]\s*(\?\?|\|\|)/,
+    'eksik çizim başka bir kategorinin çizimiyle dolduruluyor',
+  );
+  assert.match(
+    b,
+    /kaynak \?[\s\S]{0,400}?<Ionicons/,
+    'çizim yoksa vektör yedeği çizilmiyor — kategori boş kutu olur',
+  );
+  assert.match(
+    b,
+    /CATEGORIES\.find\(\(c\) => c\.id === id\)\?\.icon/,
+    'yedek ikon kategoriden gelmiyor',
+  );
 });
 
 test('GÖKKUŞAĞI kategori paleti gitti', () => {

@@ -11,7 +11,6 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-nat
 import {
   type Appointment,
   type BookingStatus,
-  CATEGORIES,
   type DemandRequest,
   formatPrice,
 } from '../../src/data';
@@ -23,6 +22,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { ListSkeleton, Screen, TAB_BAR_CLEARANCE, TabHero, Text } from '../../src/ui';
+import { kategoriAdi } from '../../src/taxonomy';
 
 // §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş
 type Seg = 'requests' | 'upcoming' | 'past';
@@ -32,8 +32,7 @@ const SEGS: { value: Seg; labelKey: MessageKey }[] = [
   { value: 'past', labelKey: 'bookings.seg.past' },
 ];
 
-const catLabel = (id: string): MessageKey =>
-  (CATEGORIES.find((c) => c.id === id)?.labelKey ?? 'nav.bookings') as MessageKey;
+const catLabel = (id: string, locale: string): string => kategoriAdi(id, locale);
 
 /**
  * Durum rozeti — TEK KAYNAK `booking-flow`.
@@ -259,7 +258,7 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
 
 // §5.3 Taleplerim — talep kartı: kategori + durum (geri sayım / X teklif / süre doldu / dönüştü)
 function DemandCard({ demand }: { demand: DemandRequest }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
@@ -290,7 +289,7 @@ function DemandCard({ demand }: { demand: DemandRequest }) {
         <View style={styles.flex}>
           <View style={styles.cardHead}>
             <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.flex}>
-              {t(catLabel(demand.category))}
+              {catLabel(demand.category, locale)}
             </Text>
             <View style={[styles.status, { backgroundColor: badge.bg }]}>
               <Text variant="caption" style={[styles.statusText, { color: badge.fg }]}>

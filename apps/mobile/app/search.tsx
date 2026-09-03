@@ -13,7 +13,6 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   CATEGORIES,
-  categoryLabelKey,
   cityCenter,
   distanceKm,
   type Professional,
@@ -29,6 +28,7 @@ import { servesSector } from '@ayna/domain';
 import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
+import { kategoriAra, tri } from '../src/taxonomy';
 import {
   HizmetIkonu,
   Button,
@@ -219,7 +219,7 @@ function FiltreCipi({ etiket, secili, bas }: { etiket: string; secili: boolean; 
 }
 
 export default function SearchScreen() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
@@ -339,7 +339,7 @@ export default function SearchScreen() {
       // Metin araması da TÜM alanlara bakar: "tırnak" yazan biri, ana alanı
       // saç olan ama tırnak da yapan uzmanı bulabilmeli.
       const alanlar = p.sectors?.length ? p.sectors : [p.sector];
-      const alanEslesti = alanlar.some((a) => lower(t(categoryLabelKey(a))).includes(q));
+      const alanEslesti = alanlar.some((a) => kategoriAra(a, q));
       return lower(p.name).includes(q) || lower(p.specialty).includes(q) || alanEslesti;
     });
     // §7 — sıralama
@@ -438,7 +438,7 @@ export default function SearchScreen() {
                 tone={on ? 'onAccent' : 'inkSoft'}
                 style={on ? styles.chipOnText : undefined}
               >
-                {t(cat.labelKey)}
+                {tri(cat.ad, locale)}
               </Text>
             </Pressable>
           );
@@ -474,7 +474,7 @@ export default function SearchScreen() {
                 <Pressable key={cat.id} style={styles.popChip} onPress={() => setActiveCat(cat.id)}>
                   <HizmetIkonu id={cat.id} tarz="satir" />
                   <Text variant="caption" tone="ink">
-                    {t(cat.labelKey)}
+                    {tri(cat.ad, locale)}
                   </Text>
                 </Pressable>
               ))}

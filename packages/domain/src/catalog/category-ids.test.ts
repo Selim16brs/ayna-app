@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { CATEGORY_DEFAULTS, CATEGORY_IDS } from './category-ids.js';
+import { CATEGORY_DEFAULTS, CATEGORY_IDS, CATEGORY_META } from './category-ids.js';
+import { KATALOG } from './katalog.js';
 
 /**
  * Kategori listesi TEK KAYNAKTAN gelmeli.
@@ -38,8 +39,34 @@ test('değerler makul aralıkta', () => {
   }
 });
 
-test('panelde eksik olan dördü artık var', () => {
-  for (const id of ['pmu', 'bridal', 'wellness', 'style'] as const) {
-    assert.ok(CATEGORY_DEFAULTS[id], `${id} hâlâ eksik`);
+test('KATALOGDAKİ her kategorinin varsayılanı var — panelde ayarsız kalan yok', () => {
+  /*
+   * Bu testin asıl derdi: admin paneli `service_categories` tablosunu
+   * okuyor ve varsayılanı olmayan kategori orada AYARSIZ görünüyor.
+   * Eskiden dört kategori (pmu, bridal, wellness, style) elle unutulmuştu.
+   *
+   * Artık liste katalogdan geliyor; katalog büyüdüğünde bu test hangi
+   * kategoriye varsayılan konmadığını söyler.
+   */
+  const eksik = KATALOG.map((k) => k.id).filter((id) => !CATEGORY_DEFAULTS[id]);
+  assert.deepEqual(eksik, [], `varsayılanı olmayan kategori: ${eksik.join(', ')}`);
+});
+
+test('varsayılanlar KATALOGDA OLMAYAN kategori taşımıyor', () => {
+  // Kategori kimliği değişince (`skincare` → `skin`) eski satır burada
+  // öylece kalır: panelde karşılığı olmayan bir ayar görünür.
+  const gecerli = new Set(KATALOG.map((k) => k.id));
+  const fazla = Object.keys(CATEGORY_DEFAULTS).filter((id) => !gecerli.has(id));
+  assert.deepEqual(fazla, [], `katalogda karşılığı olmayan varsayılan: ${fazla.join(', ')}`);
+});
+
+test('kategori kimlikleri ve meta KATALOGLA birebir', () => {
+  assert.deepEqual(
+    CATEGORY_IDS,
+    KATALOG.map((k) => k.id),
+    'kimlik listesi katalogdan sapmış',
+  );
+  for (const k of KATALOG) {
+    assert.equal(CATEGORY_META[k.id]?.nameTr, k.ad.tr, `${k.id} adı katalogla aynı değil`);
   }
 });

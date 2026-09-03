@@ -80,7 +80,7 @@ export default function SellerServicesScreen() {
                 style={[styles.chip, on && styles.chipActive]}
               >
                 <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'}>
-                  {t(c.labelKey)}
+                  {tri(c.ad, locale)}
                 </Text>
                 {n > 0 ? (
                   <View style={[styles.badge, on && styles.badgeOn]}>

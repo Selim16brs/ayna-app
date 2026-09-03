@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { activeCategories } from '../../src/taxonomy';
+import { activeCategories, tri } from '../../src/taxonomy';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
@@ -38,7 +38,7 @@ const GROUPS: {
 ];
 
 export default function NotificationPrefsScreen() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
@@ -121,7 +121,7 @@ export default function NotificationPrefsScreen() {
                   >
                     <Ionicons name={c.icon} size={13} color={on ? colors.accentFg : colors.muted} />
                     <Text variant="caption" tone={on ? 'ink' : 'muted'}>
-                      {t(c.labelKey)}
+                      {tri(c.ad, locale)}
                     </Text>
                   </Pressable>
                 );
