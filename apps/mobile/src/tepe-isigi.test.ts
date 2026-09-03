@@ -102,14 +102,23 @@ test('YIKAMA BAŞLIKTAN AŞAĞI UZANIYOR', () => {
    * bitiyor, ince bir şerit gibi duruyordu. Yükseklik verilen yerlerde
    * artık ilk içerik kartlarının arkasına kadar iniyor.
    */
-  for (const [yol, ad] of [
-    ['(tabs)/discover.tsx', 'ana sayfa'],
-    ['professional/[id].tsx', 'salon/uzman profili'],
-  ] as [string, string][]) {
-    const m = ekran(yol).match(/<TepeIsigi yukseklik=\{(\d+)\} \/>/);
-    assert.ok(m, `${ad} ekranında yükseklik verilmemiş`);
-    assert.ok(Number(m![1]) >= 400, `${ad} yıkaması kısa kalmış: ${m![1]}`);
-  }
+  /*
+   * Ana sayfa artık SABİT ÜST BLOK kullanıyor (başlık + karşılama +
+   * arama kaydırma alanının dışında) ve yıkama o bloğu DOLDURUYOR;
+   * yükseklik vermek bloğu aşıp kayan içeriğe taşardı. Sabit yükseklik
+   * yalnız kapsayıcısı tüm ekran olan yerde gerekli.
+   */
+  const m = ekran('professional/[id].tsx').match(/<TepeIsigi yukseklik=\{(\d+)\} \/>/);
+  assert.ok(m, 'salon/uzman profilinde yükseklik verilmemiş');
+  assert.ok(Number(m![1]) >= 400, `salon/uzman profili yıkaması kısa: ${m![1]}`);
+
+  // Ana sayfada yıkama sabit bloğun İÇİNDE ve onu dolduruyor.
+  const anaSayfa = ekran('(tabs)/discover.tsx');
+  assert.match(
+    anaSayfa,
+    /<View style=\{styles\.sabitUst\}>\s*<TepeIsigi \/>/,
+    'ana sayfada yıkama sabit bloğu doldurmuyor',
+  );
 });
 
 test('RENK ALANIN ÇOĞUNA yayılıyor — erime geç başlıyor', () => {
@@ -117,4 +126,32 @@ test('RENK ALANIN ÇOĞUNA yayılıyor — erime geç başlıyor', () => {
   const m = bilesen.match(/<Stop offset="(\d+)%" stopColor=\{colors\.bg\} stopOpacity=\{0\} \/>/);
   assert.ok(m, 'erimenin başlangıcı okunamadı');
   assert.ok(Number(m![1]) >= 65, `erime çok erken başlıyor: %${m![1]}`);
+});
+
+test('ANA SAYFADA başlık + karşılama + ARAMA sabit', () => {
+  /*
+   * Kurucu: "search kısmını üstünden yukarı kadar olan kısmı aynı
+   * profildeki gibi sabit tutabilir misin?"
+   *
+   * Üçü de kaydırma alanının DIŞINDA olmalı; içeri kaçan biri sayfa
+   * kayarken yukarı süzülür ve arama yine elden gider.
+   */
+  const d = ekran('(tabs)/discover.tsx');
+  const sabitBlok = d.slice(d.indexOf('<View style={styles.sabitUst}>'), d.indexOf('<ScrollView'));
+  for (const [ad, isaret] of [
+    ['başlık', 'styles.header'],
+    ['karşılama', 'styles.karsilama'],
+    ['arama', 'styles.aramaKap'],
+  ] as [string, string][]) {
+    assert.ok(sabitBlok.includes(isaret), `${ad} sabit blokta değil`);
+  }
+  // Hızlı eylemler KAYMALI: sabit blok yalnız aramaya kadar.
+  assert.ok(!sabitBlok.includes('HIZLI_EYLEMLER'), 'hızlı eylemler de sabitlenmiş');
+});
+
+test('SABİT BLOK yıkamanın taşmasını kırpıyor', () => {
+  // Yıkama bloğu dolduruyor; kırpma olmasa alt kenarından kayan içeriğe
+  // renk sızardı.
+  const d = ekran('(tabs)/discover.tsx');
+  assert.match(d, /sabitUst: \{ overflow: 'hidden' \}/, 'sabit blok taşmayı kırpmıyor');
 });

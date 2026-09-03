@@ -227,14 +227,22 @@ export default function DiscoverScreen() {
   const cityEmpty = !prosLoading && cityPros.length === 0;
   return (
     <Screen edges={[]}>
-      {/* Tepe ışığı kaydırma alanının DIŞINDA: içerik kayarken yıkama
-          yerinde kalıyor, birlikte kaymıyor. */}
-      <TepeIsigi yukseklik={460} />
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-      >
+      {/*
+       * ═══ SABİT ÜST BLOK ═══
+       *
+       * Kurucu: "ana sayfada search kısmını üstünden yukarı kadar olan
+       * kısmı aynı profildeki gibi sabit tutabilir misin?"
+       *
+       * Başlık, karşılama ve arama kaydırma alanının DIŞINDA: sayfa
+       * kayarken yerlerinde duruyorlar. Arama her an elin altında —
+       * eskiden aramak için en yukarı kaydırmak gerekiyordu.
+       *
+       * Tepe ışığı bu bloğun İÇİNDE ve onu dolduruyor: daireler artık
+       * sabit alanın boyuna göre yerleşiyor, altındaki kayan içeriğe
+       * taşmıyor.
+       */}
+      <View style={styles.sabitUst}>
+        <TepeIsigi />
         {/* ═══ BAŞLIK — Figma `header-section` (68h) ═══
             Solda marka, sağda şehir · mesaj · bildirim. Ölçüler Figma'dan;
             işlevsel ikonlar (mesaj/bildirim rozetleri) korundu. */}
@@ -343,7 +351,13 @@ export default function DiscoverScreen() {
             <Text style={styles.aramaYazi}>{t('home.search')}</Text>
           </Pressable>
         </View>
+      </View>
 
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
         {/* ═══ HIZLI EYLEMLER — Figma `quick-action-strip` (3 × h140, radius 16) ═══
             Fotoğraf + alttan koyulaşan degrade; yazı degradenin üstünde. */}
         <View style={styles.hizliSerit}>
@@ -803,6 +817,13 @@ function VitrinKarti({
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { paddingBottom: TAB_BAR_CLEARANCE },
+    /*
+     * Sabit üst blok — başlık + karşılama + arama.
+     *
+     * `overflow: hidden`: tepe ışığı bloğu dolduruyor ve alt kenarından
+     * taşmamalı, yoksa kayan içeriğin üstüne renk sızardı.
+     */
+    sabitUst: { overflow: 'hidden' },
     grow: { flex: 1 },
 
     // header-section (68h)

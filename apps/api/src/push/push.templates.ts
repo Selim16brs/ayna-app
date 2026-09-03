@@ -9,7 +9,8 @@ export type PushTemplateKey =
   | 'quote.new_request'
   | 'booking.request_expired'
   | 'booking.deposit_expired'
-  | 'booking.completed_confirm';
+  | 'booking.completed_confirm'
+  | 'propost.new';
 
 type Tpl = { title: string; body: string };
 const T: Record<string, Record<PushTemplateKey, Tpl>> = {
@@ -30,6 +31,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
       title: 'Hizmetin tamamlandı mı? ✨',
       body: 'Uzman tamamlandı olarak işaretledi — onayla ya da itiraz et.',
     },
+    'propost.new': {
+      title: 'Yeni paylaşım ✨',
+      body: '{pro} müşterileriyle yeni bir çalışma paylaştı — 7 gün görünür.',
+    },
   },
   kk: {
     'quote.new_request': {
@@ -48,6 +53,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
       title: 'Қызмет аяқталды ма? ✨',
       body: 'Маман аяқталды деп белгіледі — растаңыз немесе шағым жасаңыз.',
     },
+    'propost.new': {
+      title: 'Жаңа жарияланым ✨',
+      body: '{pro} жаңа жұмысын бөлісті — 7 күн көрінеді.',
+    },
   },
   ru: {
     'quote.new_request': {
@@ -65,6 +74,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
     'booking.completed_confirm': {
       title: 'Услуга выполнена? ✨',
       body: 'Мастер отметил услугу выполненной — подтвердите или откройте спор.',
+    },
+    'propost.new': {
+      title: 'Новая публикация ✨',
+      body: '{pro} поделился новой работой — видно 7 дней.',
     },
   },
 };

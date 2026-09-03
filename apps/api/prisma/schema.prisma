@@ -1627,3 +1627,59 @@ model RegulatedServiceFlag {
   @@index([status])
   @@map("regulated_service_flags")
 }
+
+/// UZMANIN MÜŞTERİLERİNE ÖNCESİ/SONRASI PAYLAŞIMI.
+///
+/// Kurucu: "bir uzman daha önce tamamlanmış randevusu olan müşterilerini CRM
+/// olarak tutulsun ve öncesi/sonrası fotoğrafını paylaştığında daha önce
+/// müşterisi olan müşterilere gösterilsin… bu gönderilen fotoğraflar 7 gün
+/// kalacak ve sonrasında sistemden silinecek."
+///
+/// ── CRM AYRI BİR LİSTE DEĞİL ────────────────────────────────────────────
+///
+/// "Uzmanın müşterisi" = onunla EN AZ BİR TAMAMLANMIŞ randevusu olan kişi.
+/// Ayrı bir müşteri tablosu tutmak, zamanla randevu gerçeğinden ayrışan
+/// ikinci bir doğru üretirdi: randevu iptal olduğunda ya da uzman
+/// değiştiğinde liste yanlış kalırdı. Kaynak `bookings`.
+model ProPost {
+  id           String   @id @default(uuid()) @db.Uuid
+  proId        String   @map("pro_id")
+  /// Gönderiyi oluşturan hesap — uzman kendi paylaşımını silebilsin diye.
+  authorUserId String   @map("author_user_id") @db.Uuid
+  beforeUrl    String   @map("before_url")
+  afterUrl     String   @map("after_url")
+  note         String   @default("")
+  /// Uzmanın "müşterimden izin aldım" beyanı. Beyansız gönderi kabul
+  /// edilmiyor: öncesi/sonrası fotoğrafı kişisel veridir.
+  consent      Boolean  @default(false)
+  /// Şikâyet sayısı — müşteri kendi fotoğrafını görürse bildirebilsin.
+  reports      Int      @default(0)
+  status       String   @default("published")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 7 gün. Süresi geçen gönderi hiçbir sorguda dönmez; temizlik işi
+  /// ayrıca kaydı VE fotoğrafları depodan siler.
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
+
+  recipients ProPostRecipient[]
+
+  @@index([proId, expiresAt])
+  @@index([expiresAt])
+  @@map("pro_posts")
+}
+
+/// Gönderinin alıcıları — GÖNDERİ ANINDA DONDURULUYOR.
+///
+/// Alıcıyı her okumada randevulardan hesaplasaydık, 6. günde ilk randevusunu
+/// tamamlayan biri kendisiyle hiç ilgisi olmayan eski bir paylaşımı görürdü.
+/// Liste gönderi anında yazılıyor ve bir daha değişmiyor.
+model ProPostRecipient {
+  postId String    @map("post_id") @db.Uuid
+  userId String    @map("user_id") @db.Uuid
+  readAt DateTime? @map("read_at") @db.Timestamptz(6)
+
+  post ProPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId])
+  @@map("pro_post_recipients")
+}
