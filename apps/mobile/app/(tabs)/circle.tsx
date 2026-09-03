@@ -240,22 +240,6 @@ export default function CircleScreen() {
           uzuyor, kart ekrana sığmıyor ve iki kenardan da taşıyordu —
           kurucunun "kayma var" dediği şey buydu.
         */}
-        <View style={styles.gizlilik}>
-          <View style={styles.gizlilikHead}>
-            <Ionicons name="lock-closed" size={15} color={colors.inkSoft} />
-            <Text variant="bodyStrong" tone="ink" style={styles.flex}>
-              {t('circle.privacy.title')}
-            </Text>
-          </View>
-          {(['circle.privacy.a', 'circle.privacy.b', 'circle.privacy.c'] as const).map((k) => (
-            <View key={k} style={styles.gizlilikRow}>
-              <Ionicons name="checkmark" size={14} color={colors.success} />
-              <Text variant="caption" tone="muted" style={styles.flex}>
-                {t(k)}
-              </Text>
-            </View>
-          ))}
-        </View>
 
         {/* Tavsiyeler başlığı + değerlendirme sıralaması */}
         <View style={styles.recHeader}>
@@ -301,22 +285,6 @@ export default function CircleScreen() {
                sayılıyor (hasCompletedWith + proVerified).
             Doğrulayamadığım maddeyi yazmıyorum: kanvasta "uzmanlar kimin
             kendilerini KAYDETTİĞİNİ göremez" var ama kaydetme özelliği yok. */}
-          <View style={styles.gizlilik}>
-            <View style={styles.gizlilikHead}>
-              <Ionicons name="lock-closed" size={15} color={colors.inkSoft} />
-              <Text variant="bodyStrong" tone="ink" style={styles.flex}>
-                {t('circle.privacy.title')}
-              </Text>
-            </View>
-            {(['circle.privacy.a', 'circle.privacy.b', 'circle.privacy.c'] as const).map((k) => (
-              <View key={k} style={styles.gizlilikRow}>
-                <Ionicons name="checkmark" size={14} color={colors.success} />
-                <Text variant="caption" tone="muted" style={styles.flex}>
-                  {t(k)}
-                </Text>
-              </View>
-            ))}
-          </View>
         </ScrollView>
 
         <View style={styles.list}>
@@ -351,32 +319,6 @@ export default function CircleScreen() {
           ) : (
             visible.map((p) => <PostCard key={p.id} post={p} />)
           )}
-        </View>
-        {/* Kanvas §gizlilik şeridi — "buraya hiçbir şey kendiliğinden düşmez".
-            Buradaki üç madde de KOD DOĞRULANDI, süs değil:
-            1) circlePost.create tüm sunucuda TEK yerde ve yalnız kullanıcının
-               kendi eylemiyle çağrılıyor — randevu/yorum akışa düşmüyor.
-            2) Anonimde authorLabel 'AYNA Üyesi' ve authorUserId null; uzman
-               kimliği çözemiyor (circle.service §5.5).
-            3) Fikir birliğinde yalnız o uzmanda TAMAMLANMIŞ randevusu olan
-               sayılıyor (hasCompletedWith + proVerified).
-            Doğrulayamadığım maddeyi yazmıyorum: kanvasta "uzmanlar kimin
-            kendilerini KAYDETTİĞİNİ göremez" var ama kaydetme özelliği yok. */}
-        <View style={styles.gizlilik}>
-          <View style={styles.gizlilikHead}>
-            <Ionicons name="lock-closed" size={15} color={colors.inkSoft} />
-            <Text variant="bodyStrong" tone="ink" style={styles.flex}>
-              {t('circle.privacy.title')}
-            </Text>
-          </View>
-          {(['circle.privacy.a', 'circle.privacy.b', 'circle.privacy.c'] as const).map((k) => (
-            <View key={k} style={styles.gizlilikRow}>
-              <Ionicons name="checkmark" size={14} color={colors.success} />
-              <Text variant="caption" tone="muted" style={styles.flex}>
-                {t(k)}
-              </Text>
-            </View>
-          ))}
         </View>
       </ScrollView>
     </Screen>

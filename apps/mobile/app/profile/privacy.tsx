@@ -195,6 +195,36 @@ export default function PrivacyScreen() {
           {t('privacy.subtitle')}
         </Text>
 
+        {/*
+         * W2W GİZLİLİK VAADİ — buraya TAŞINDI.
+         *
+         * Kurucu: "bu açıklama w2w içerisinde gereksiz, bunu gizlilik
+         * alanında gösterelim."
+         *
+         * Haklıydı: kart topluluk akışının ORTASINDA duruyor, her açılışta
+         * aynı üç maddeyi tekrar okutuyor ve asıl içeriği aşağı itiyordu.
+         * Bir kez okunacak bir vaat, akışta değil gizlilik ekranında
+         * yaşamalı — insan bu soruyu zaten buraya sorarak geliyor.
+         *
+         * Metinler AYNEN korundu (üç dilde de); yalnız yeri değişti.
+         */}
+        <View style={styles.gizlilik}>
+          <View style={styles.gizlilikHead}>
+            <Ionicons name="lock-closed" size={15} color={colors.inkSoft} />
+            <Text variant="bodyStrong" tone="ink" style={styles.flex}>
+              {t('circle.privacy.title')}
+            </Text>
+          </View>
+          {(['circle.privacy.a', 'circle.privacy.b', 'circle.privacy.c'] as const).map((k) => (
+            <View key={k} style={styles.gizlilikRow}>
+              <Ionicons name="checkmark" size={14} color={colors.success} />
+              <Text variant="caption" tone="muted" style={styles.flex}>
+                {t(k)}
+              </Text>
+            </View>
+          ))}
+        </View>
+
         <View style={[styles.group, shadow.soft]}>
           {TOGGLES.map((tg, i) => (
             <View key={tg.key} style={[styles.row, i < TOGGLES.length - 1 && styles.rowBorder]}>
@@ -304,6 +334,33 @@ const makeStyles = (colors: ColorTokens) =>
       paddingBottom: TAB_BAR_CLEARANCE,
     },
     subtitle: { marginBottom: space(2.5) },
+    // W2W akışından TAŞINDI (bkz. yukarıdaki gerekçe).
+    gizlilik: {
+      // Yatay şeritten çıkınca kendi boşluğunu kendi vermeli: sayfanın
+      // dış kabı yatay dolgu taşımıyor, her blok kendi ayarlıyor
+      // (`sectionTitle`, `recHeader` de öyle).
+      marginHorizontal: space(3),
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.lg,
+      padding: space(2),
+      gap: space(1),
+      marginTop: space(2),
+    },
+    gizlilikHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    gizlilikRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space(1) },
+    sectionTitle: { paddingHorizontal: space(3), marginBottom: space(1.5) },
+    // §12.6 haftalık tema banner'ı
+    themeBanner: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space(1.5),
+      marginHorizontal: space(3),
+      marginBottom: space(2),
+      padding: space(2),
+      borderRadius: radius.lg,
+      backgroundColor: colors.accentSoft,
+    },
+    flex: { flex: 1 },
     promise: {
       backgroundColor: colors.inverse,
       borderRadius: radius.xl,
