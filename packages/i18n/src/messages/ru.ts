@@ -1330,6 +1330,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'search.results': 'результат',
   'search.all_categories': 'Все категории',
   'search.recent': 'Недавние запросы',
+  'catalog.soon': 'Скоро',
+  'catalog.soon_hint': 'По этой услуге пока нет мастеров — вы всё равно можете оставить заявку.',
   'search.popular': 'Популярные категории',
   'search.sort.recommended': 'Рекомендуемые',
   'search.sort.rating': 'Балл',

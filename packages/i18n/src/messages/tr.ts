@@ -1421,6 +1421,8 @@ export const tr = {
   'search.results': 'sonuç',
   'search.all_categories': 'Tüm kategoriler',
   'search.recent': 'Son aramalar',
+  'catalog.soon': 'Yakında',
+  'catalog.soon_hint': 'Bu hizmette henüz uzman yok — yine de talep oluşturabilirsin.',
   'search.popular': 'Popüler kategoriler',
   // §7 — sıralama
   'search.sort.recommended': 'Önerilen',

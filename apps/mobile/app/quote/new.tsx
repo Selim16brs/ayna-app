@@ -13,15 +13,17 @@ import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { tri } from '../../src/taxonomy';
+import { useKategoriYakinda } from '../../src/yakinda';
 import {
   HizmetIkonu,
-  TarihSecici,
   RulesCard,
   Screen,
   SectionHeader,
   TAB_BAR_CLEARANCE,
+  TarihSecici,
   Text,
   TextInput,
+  YakindaRozeti,
 } from '../../src/ui';
 
 // Sıfır-demo: stok model fotoğrafı yerine kendi çizim asset'imiz
@@ -30,6 +32,7 @@ const HERO_WOMAN = require('../../assets/hero-user.png');
 export default function NewQuoteScreen() {
   const router = useRouter();
   const { t, locale } = useLocale();
+  const kategoriYakinda = useKategoriYakinda();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
@@ -198,7 +201,12 @@ export default function NewQuoteScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.catRow}
         >
-          {CATEGORIES.slice(0, 6).map((cat) => {
+          {/*
+           * `.slice(0, 6)` KALDIRILDI. Şerit zaten yatay kayıyor; kesme
+           * bir yerleşim gereği değildi, 13 kategorinin 7'sini bu akışta
+           * GÖRÜNMEZ yapıyordu. Brief §1: ekrana özel varyasyon yasak.
+           */}
+          {CATEGORIES.map((cat) => {
             const active = cat.id === category;
             return (
               <Pressable key={cat.id} onPress={() => setCategory(cat.id)} style={styles.cat}>
@@ -206,6 +214,7 @@ export default function NewQuoteScreen() {
                 <Text variant="caption" tone={active ? 'ink' : 'inkSoft'} numberOfLines={1}>
                   {tri(cat.ad, locale)}
                 </Text>
+                {kategoriYakinda(cat.id) ? <YakindaRozeti tarz="kutu" /> : null}
               </Pressable>
             );
           })}

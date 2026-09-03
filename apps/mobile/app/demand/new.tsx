@@ -13,22 +13,25 @@ import { bildirimIzniIste } from '../../src/notifications';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { tri } from '../../src/taxonomy';
+import { useKategoriYakinda } from '../../src/yakinda';
 import {
-  TarihSecici,
-  HizmetIkonu,
   BudgetGauge,
+  HizmetIkonu,
   PressableScale,
   RulesCard,
   Screen,
   ServiceChips,
   TAB_BAR_CLEARANCE,
+  TarihSecici,
   Text,
   TextInput,
+  YakindaRozeti,
 } from '../../src/ui';
 
 export default function NewDemandScreen() {
   const router = useRouter();
   const { t, locale } = useLocale();
+  const kategoriYakinda = useKategoriYakinda();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
@@ -213,6 +216,7 @@ export default function NewDemandScreen() {
                   <Text variant="caption" tone={active ? 'ink' : 'inkSoft'} numberOfLines={1}>
                     {tri(cat.ad, locale)}
                   </Text>
+                  {kategoriYakinda(cat.id) ? <YakindaRozeti tarz="kutu" /> : null}
                 </Pressable>
               );
             })}
