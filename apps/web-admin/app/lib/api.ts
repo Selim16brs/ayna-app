@@ -37,6 +37,18 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export interface RegulatedServiceFlag {
+  id: string;
+  proId: string;
+  proName: string;
+  city: string;
+  /** Uzmanın YAZDIĞI ad — yöneticinin göreceği kanıt. */
+  serviceName: string;
+  /** Eşleşen kuralın kısa sebebi ("Enjeksiyon (botoks)"). */
+  reason: string;
+  createdAt: string;
+}
+
 export const api = {
   // ── Brief §8 — randevu akışı kuyrukları ────────────────────────────────
   // §reklam — ücretli vitrin ödeme kuyruğu
@@ -246,6 +258,18 @@ export const api = {
   announcements: () => req<Announcement[]>('/admin/content/announcements'),
   sendAnnouncement: (a: AnnouncementInput) =>
     req<Announcement>('/admin/content/announcements', { method: 'POST', body: JSON.stringify(a) }),
+
+  /**
+   * Brief §5 — regüle hizmet uyarıları.
+   *
+   * Uzmanın SERBEST yazdığı hizmet adı botoks / dolgu / mezoterapi / diş
+   * estetiği / beslenme danışmanlığı içeriyorsa kuyruğa düşüyor. Kayıt
+   * engellenmiyor: anahtar kelime taraması hata yapar, otomatik reddetme
+   * meşru bir uzmanı sessizce hizmetsiz bırakırdı.
+   */
+  regulatedServices: () => req<RegulatedServiceFlag[]>('/admin/regulated-services'),
+  decideRegulatedService: (id: string, karar: 'cleared' | 'removed') =>
+    req(`/admin/regulated-services/${id}`, { method: 'PATCH', body: JSON.stringify({ karar }) }),
 
   // §12.5 W2W moderasyon kuyruğu
   circleQueue: () => req<CirclePost[]>('/admin/circle/queue'),

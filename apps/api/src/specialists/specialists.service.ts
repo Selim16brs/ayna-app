@@ -10,7 +10,8 @@ import {
 // Asia/Almaty = UTC+5, yaz saati YOK. Sunucu UTC saklıyor; uzman yerel saate
 // göre çalışıyor, ham UTC ile karşılaştırmak günü kaydırırdı.
 const ALMATY_OFFSET_MS = 5 * 60 * 60_000;
-import { sectorsFromServiceIds } from '@ayna/domain';
+import { hizmetSatirininKimligi, sectorsFromServiceIds } from '@ayna/domain';
+import { ReguleUyariService } from '../catalog/regule-uyari.service';
 import {
   BadRequestException,
   ConflictException,
@@ -50,6 +51,7 @@ export class SpecialistsService {
     private readonly prisma: PrismaService,
     private readonly push: PushService,
     private readonly storage: StorageService,
+    private readonly regule: ReguleUyariService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -160,8 +162,12 @@ export class SpecialistsService {
             sector: input.sector ?? 'hair',
             // Alan seti hizmet listesinden türetilir; boşsa ana alana düşülür
             // ki uzman en azından kendi ana alanında bulunabilsin.
-            sectors: sectorsFromServiceIds(hizmetler.map((x) => x.id)).length
-              ? sectorsFromServiceIds(hizmetler.map((x) => x.id))
+            // Kimlik `@ayna/domain`den okunuyor — kayıt, güncelleme ve
+            // "Yakında" hesabı üçü de aynı yerden. Elle `x.id` okunsaydı
+            // biri değiştiğinde ötekiler sessizce ayrışırdı.
+            sectors: sectorsFromServiceIds(hizmetler.map((x) => hizmetSatirininKimligi(x) ?? ''))
+              .length
+              ? sectorsFromServiceIds(hizmetler.map((x) => hizmetSatirininKimligi(x) ?? ''))
               : [input.sector ?? 'hair'],
             // §9.5 — kayıtta girilen gerçek hizmet/fiyat/süre listesi. Buraya
             // yazılmadığı için profil sektörün varsayılan menüsünü uyduruyordu.
@@ -183,6 +189,10 @@ export class SpecialistsService {
           where: { id: specialist.id },
           data: { proId: pro.id },
         });
+        // Brief §5 — kayıt anında da taranıyor. Yalnız "Hizmetlerim"
+        // ekranında taransaydı, kayıtta regüle hizmet yazan ve bir daha
+        // o ekrana girmeyen uzman hiç görünmezdi.
+        await this.regule.tara(pro.id, hizmetler);
       } catch {
         // keşif kaydı oluşturulamazsa kayıt yine de tamamlanır (proId null kalır)
       }
@@ -444,7 +454,12 @@ export class SpecialistsService {
     // Alan seti hizmet listesiyle BİRLİKTE güncellenir. Ayrı tutulsaydı,
     // uzman tırnak hizmetlerini silince tırnak aramasında görünmeye devam
     // ederdi (ya da tersi: yeni alan eklese aramada hiç çıkmazdı).
-    const sectors = sectorsFromServiceIds(kesilmis.map((x) => (x as { id?: unknown })?.id));
+    /*
+     * Alan seti de kimliği AYNI yerden okuyor. Burada `x.id` elle
+     * okunuyordu; "Yakında" hesabı `serviceId` okuyordu ve ikisi sessizce
+     * ayrışmıştı. Tek kaynak, ayrışacak bir şey bırakmıyor.
+     */
+    const sectors = sectorsFromServiceIds(kesilmis.map((x) => hizmetSatirininKimligi(x) ?? ''));
     const pro = await this.prisma.professional.update({
       where: { id: proId },
       data: {
@@ -452,6 +467,12 @@ export class SpecialistsService {
         ...(sectors.length ? { sectors } : {}),
       },
     });
+    /*
+     * Brief §5 — regüle hizmet taraması. Hizmet ZATEN kaydedildi; tarama
+     * yalnız yöneticiye uyarı bırakıyor. Sırası önemli: kayıt önce,
+     * tarama sonra. Tersi olsaydı tarama hatası kaydı düşürebilirdi.
+     */
+    await this.regule.tara(proId, kesilmis);
     return { services: safeParse(pro.servicesJson) };
   }
 

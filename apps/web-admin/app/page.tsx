@@ -51,6 +51,7 @@ import {
   type ReklamSiparisi,
   type IadeSatiri,
   type UzlasmaSatiri,
+  type RegulatedServiceFlag,
 } from './lib/api';
 type Tab =
   | 'overview'
@@ -72,6 +73,7 @@ type Tab =
   | 'campaigns'
   | 'ads'
   | 'moderation'
+  | 'regulated'
   | 'content'
   | 'announcements'
   | 'users'
@@ -102,6 +104,8 @@ type PendingCounts = {
   disputes: number;
   reviewDisputes: number;
   circle: number;
+  /** Brief §5 — uzmanın serbest yazdığı regüle hizmet adları. */
+  regulatedServices: number;
   /** Dekont yüklenmiş ama tahsil edilmemiş komisyon faturaları. */
   /*
    * Sunucunun gönderdiği para kuyrukları. Bunlar hesaplanıyordu ama panelde
@@ -213,6 +217,12 @@ function AdminGovde() {
         { id: 'disputes', label: 'Depozito itirazları', icon: '⚖', badge: q?.disputes },
         { id: 'reviewDisputes', label: 'Yorum itirazları', icon: '❝', badge: q?.reviewDisputes },
         { id: 'moderation', label: 'Topluluk moderasyonu', icon: '⛨', badge: q?.circle },
+        {
+          id: 'regulated',
+          label: 'Regüle hizmet uyarıları',
+          icon: '⚕',
+          badge: q?.regulatedServices,
+        },
         { id: 'support', label: 'Destek talepleri', icon: '☏' },
       ],
     },
@@ -397,6 +407,7 @@ function AdminGovde() {
           {tab === 'campaigns' && <CampaignsView />}
           {tab === 'ads' && <AdsView />}
           {tab === 'moderation' && <ModerationView />}
+          {tab === 'regulated' && <ReguleHizmetView />}
           {tab === 'content' && <ContentView />}
           {tab === 'announcements' && <AnnouncementsView />}
           {tab === 'users' && <UsersView />}
@@ -1046,6 +1057,7 @@ function OverviewView({ onGo }: { onGo: (t: Tab) => void }) {
     { key: 'disputes', label: 'Depozito İtirazı', tab: 'disputes' },
     { key: 'reviewDisputes', label: 'Yorum İtirazı', tab: 'reviewDisputes' },
     { key: 'circle', label: 'W2W Moderasyon', tab: 'moderation' },
+    { key: 'regulatedServices', label: 'Regüle hizmet', tab: 'regulated' },
     // §reklam — AYNA'nın kazanç kuyruğu. Bekleyen ödeme kartını ana sayfada
     // görmek, onayı geciktirmemek demek: reklamı ödeyen uzman yayına
     // girmeyi bekliyor.
@@ -2011,6 +2023,68 @@ function KV({ k, v }: { k: string; v: string }) {
     </div>
   );
 }
+function ReguleHizmetView() {
+  const { onayla } = useDiyalog();
+  const { data, reload } = useAsync<RegulatedServiceFlag[]>(() => api.regulatedServices(), []);
+
+  const karar = async (f: RegulatedServiceFlag, k: 'cleared' | 'removed') => {
+    const kaldir = k === 'removed';
+    if (
+      await onayla({
+        baslik: kaldir ? 'Hizmet kaldırıldı olarak işaretle' : 'Sorun yok',
+        mesaj: kaldir
+          ? `"${f.serviceName}" hizmeti için uzman uyarılacak ve kayıt iz olarak kalacak.`
+          : `"${f.serviceName}" sorunsuz sayılacak ve bu ad bir daha kuyruğa düşmeyecek.`,
+        onayEtiket: kaldir ? 'Kaldırıldı' : 'Sorun yok',
+      })
+    ) {
+      await api.decideRegulatedService(f.id, k);
+      reload();
+    }
+  };
+
+  return (
+    <>
+      <h1 className="page-title">Regüle hizmet uyarıları</h1>
+      <p className="page-sub">
+        Botoks, dolgu, mezoterapi, diş estetiği ve beslenme danışmanlığı lisans gerektirdiği için
+        katalogda yok. Uzman bu işlemleri kendi yazdığı hizmet adına girerse satır buraya düşer.{' '}
+        <strong>Kayıt engellenmedi</strong> — karar sende.
+      </p>
+      <div className="card">
+        {!data || data.length === 0 ? (
+          <div className="empty">Bekleyen uyarı yok</div>
+        ) : (
+          data.map((f) => (
+            <div key={f.id} className="list-col">
+              <div className="name">
+                {f.proName || f.proId} <span className="pill pending">{f.reason}</span>
+              </div>
+              {/*
+               * Uzmanın YAZDIĞI ad aynen gösteriliyor: yöneticinin kararı
+               * buna dayanıyor. Özetlemek ya da kısaltmak, kararı verenden
+               * kanıtı saklamak olurdu.
+               */}
+              <div className="meta" style={{ marginTop: 4 }}>
+                “{f.serviceName}”{f.city ? ` · ${f.city}` : ''} ·{' '}
+                {new Date(f.createdAt).toLocaleDateString('tr-TR')}
+              </div>
+              <div className="row-actions" style={{ marginTop: 8 }}>
+                <button className="btn-sm" onClick={() => void karar(f, 'cleared')}>
+                  Sorun yok
+                </button>
+                <button className="btn-sm btn-primary" onClick={() => void karar(f, 'removed')}>
+                  Kaldırıldı
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
+
 function ModerationView() {
   const { onayla } = useDiyalog();
   const { data, reload } = useAsync<AdminReview[]>(() => api.reviews(), []);

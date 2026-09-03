@@ -106,6 +106,7 @@ export class AdminService {
       refundsPending,
       reconciliationsOpen,
       adOrders,
+      regulatedServices,
     ] = await Promise.all([
       this.prisma.kycVerification.count({ where: { status: 'pending' } }),
       this.prisma.profileChangeRequest.count({ where: { status: 'pending' } }),
@@ -124,6 +125,8 @@ export class AdminService {
       this.prisma.reconciliation.count({ where: { status: 'bekliyor' } }),
       // §reklam — ödemesi doğrulanmayı bekleyen vitrin siparişleri.
       this.prisma.adOrder.count({ where: { status: 'bekliyor', receiptUri: { not: null } } }),
+      // Brief §5 — uzmanın serbest yazdığı regüle hizmet adları.
+      this.prisma.regulatedServiceFlag.count({ where: { status: 'pending' } }),
     ]);
     const bizByStatus = { pending: 0, approved: 0, rejected: 0 } as Record<string, number>;
     for (const g of businesses) bizByStatus[g.status] = g._count;
@@ -148,6 +151,7 @@ export class AdminService {
         refundsPending,
         reconciliationsOpen,
         adOrders,
+        regulatedServices,
       },
     };
   }

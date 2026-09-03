@@ -1,5 +1,5 @@
 import type { Ionicons } from '@expo/vector-icons';
-import { KATALOG, ucDil, type UcDil } from '@ayna/domain';
+import { KATALOG, aramaAnahtari, ucDil, type UcDil } from '@ayna/domain';
 import { varsayilan } from './hizmet-varsayilan';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -139,9 +139,15 @@ export const kategoriAdi = (id: string, locale: string): string => {
  * tek bir "i"ye indirgeniyor — arama tarafında bu ayrım bilgi taşımıyor,
  * yalnız eşleşmeyi bozuyor.
  */
-export function aramaAnahtari(s: string): string {
-  return (s ?? '').toLowerCase().replace(/[İıI]/g, 'i').trim();
-}
+/**
+ * Arama anahtarı — `@ayna/domain`den geliyor.
+ *
+ * Burada kendi kopyası vardı ve Türkçe "İ" tuzağına düşüyordu:
+ * `'İ'.toLowerCase()` iki kod noktası üretiyor ('i' + birleşen nokta) ve
+ * "MANİKÜR" araması HİÇBİR SONUÇ döndürmüyordu. Kural artık tek yerde;
+ * sunucunun regüle hizmet taraması da oradan besleniyor.
+ */
+export { aramaAnahtari };
 
 /** Metin, üç dilli adın herhangi bir dilindeki karşılığında geçiyor mu? */
 const ucDildeGecer = (ad: Tri, sorgu: string): boolean => {
