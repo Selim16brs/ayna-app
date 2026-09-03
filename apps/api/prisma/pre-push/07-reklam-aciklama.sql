@@ -34,3 +34,22 @@ WHERE b."owner_user_id"::text = a."pro_id"
 -- Yayınlanan banner da açıklamayı taşımalı: kart tıklanınca açılan sayfa
 -- onu gösteriyor.
 ALTER TABLE "ad_banners" ADD COLUMN IF NOT EXISTS "description" TEXT NOT NULL DEFAULT '';
+
+-- ── YAYINLANAN BANNER DA ONARILIYOR ─────────────────────────────────────
+--
+-- İlk onarım yalnız `ad_orders`a bakmıştı; oysa UYGULAMANIN OKUDUĞU tablo
+-- `ad_banners`. Sipariş düzeldi ama ana sayfadaki kart hâlâ olmayan uzmana
+-- gidiyordu. Aynı hatanın iki tabloda da onarılması gerekiyordu.
+UPDATE "ad_banners" b
+SET "pro_id" = s."pro_id"::text
+FROM "specialists" s
+WHERE s."user_id"::text = b."pro_id"
+  AND s."pro_id" IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM "professionals" p WHERE p."id"::text = b."pro_id");
+
+UPDATE "ad_banners" b
+SET "pro_id" = z."professional_id"::text
+FROM "businesses" z
+WHERE z."owner_user_id"::text = b."pro_id"
+  AND z."professional_id" IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM "professionals" p WHERE p."id"::text = b."pro_id");
