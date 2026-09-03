@@ -942,6 +942,8 @@ export const tr = {
   // §konum — adres artık HARİTADAN iğneyle; metin yalnız kapı/kat ayrıntısı.
   'addresses.pick_on_map': 'Haritada konumu seç',
   'addresses.pinned': 'Konum haritada işaretlendi',
+  'addresses.verify': 'haritada gör / düzelt',
+  'addresses.no_pin': 'Konum işaretlenmemiş — mesafe hesabına girmiyor. Düzeltmek için dokun.',
   'addresses.why_pin':
     'Yakınındaki uzmanları doğru sıralayabilmek için konumun haritadan işaretlenmeli. Adres alanına kapı numarası, kat gibi ayrıntıları yazabilirsin.',
   'addresses.empty': 'Henüz adres eklemedin',

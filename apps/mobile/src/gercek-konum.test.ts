@@ -129,3 +129,50 @@ test('mevcut uzman konumunu SONRADAN düzeltebiliyor', () => {
   const menu = oku('app/seller/menu.tsx');
   assert.match(menu, /route: '\/seller\/location'/, 'menüde konum girişi yok');
 });
+
+/*
+ * SIRALAMA CADDE ADINA DEĞİL KOORDİNATA BAKIYOR.
+ *
+ * Kurucu: "cadde çok uzun bir cadde ve eğer doğru iğnelenen yeri
+ * belirlemeyip cadde bazında bir değerlendirme yaparsa sistem kullanıcıdan
+ * çok uzakta yerleri de gösterebilir."
+ *
+ * Endişe yerinde ama sistem metne HİÇ bakmıyor. Asıl eksik DOĞRULAMAYDI:
+ * kullanıcı iğnenin nereye düştüğünü göremiyor, göremediği için
+ * düzeltemiyordu.
+ */
+
+test('mesafe adres METNİNE değil koordinata bakıyor', () => {
+  // Aynı cadde adı, iki farklı iğne → iki farklı sonuç.
+  const caddeBasi: UserAddress = {
+    id: '1',
+    label: 'home',
+    detail: 'Kabanbay Batyr Street',
+    lat: 43.2405,
+    lng: 76.8512,
+  };
+  const caddeSonu: UserAddress = {
+    id: '2',
+    label: 'work',
+    detail: 'Kabanbay Batyr Street',
+    lat: 43.2489,
+    lng: 76.9503,
+  };
+  const hedef = { latitude: 43.2405, longitude: 76.8512 };
+  const yakin = gercekMesafeKm(kullaniciKonumu([caddeBasi]), hedef);
+  const uzak = gercekMesafeKm(kullaniciKonumu([caddeSonu]), hedef);
+  assert.ok(yakin !== null && uzak !== null);
+  assert.ok(yakin! < 0.5, `cadde başı yakın olmalı: ${yakin}`);
+  assert.ok(uzak! > 5, `cadde sonu uzak olmalı: ${uzak}`);
+  assert.ok(uzak! > yakin!, 'aynı cadde adı iki adresi eşitliyor — metne bakılıyor');
+});
+
+test('kayıtlı adresin İĞNESİ görünüyor ve düzeltilebiliyor', () => {
+  const ekran = oku('app/profile/addresses.tsx');
+  // Koordinat açıkça yazılı: kullanıcı iğnenin yerini doğrulayabilmeli.
+  assert.match(ekran, /a\.lat\.toFixed\(5\)/, 'kayıtlı adresin koordinatı gizli');
+  assert.match(ekran, /'addresses\.verify'/, 'haritada görme yolu yok');
+  assert.match(ekran, /updateAddressCoord\(duzeltilen\.id/, 'iğne düzeltilemiyor');
+  // İğnesiz eski kayıt UYARILIYOR: sessizce mesafe dışında kalmamalı.
+  assert.match(ekran, /'addresses\.no_pin'/, 'iğnesiz adres uyarılmıyor');
+});

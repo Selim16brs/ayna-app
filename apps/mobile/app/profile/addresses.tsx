@@ -23,6 +23,9 @@ export default function AddressesScreen() {
   const addresses = useStore((s) => s.addresses);
   const addAddress = useStore((s) => s.addAddress);
   const removeAddress = useStore((s) => s.removeAddress);
+  const updateAddressCoord = useStore((s) => s.updateAddressCoord);
+  /** Düzeltilmekte olan adres — null ise yeni adres ekleniyor. */
+  const [duzeltilen, setDuzeltilen] = useState<UserAddress | null>(null);
 
   const [label, setLabel] = useState<UserAddress['label']>('home');
   const [detail, setDetail] = useState('');
@@ -74,6 +77,45 @@ export default function AddressesScreen() {
                   <Text variant="caption" tone="muted" numberOfLines={2}>
                     {a.detail}
                   </Text>
+                  {/*
+                   * İĞNE GÖRÜNÜR VE DÜZELTİLEBİLİR.
+                   *
+                   * Kurucu: "cadde çok uzun bir cadde... sistem kullanıcıdan
+                   * çok uzakta yerleri de gösterebilir." Sıralama cadde
+                   * ADINA değil koordinata bakıyor; eksik olan doğrulamaydı —
+                   * kullanıcı iğnenin nereye düştüğünü göremiyor, göremediği
+                   * için düzeltemiyordu.
+                   */}
+                  {a.lat != null && a.lng != null ? (
+                    <Pressable
+                      onPress={() => {
+                        setDuzeltilen(a);
+                        setHaritaAcik(true);
+                      }}
+                      hitSlop={6}
+                      style={styles.pinSatir}
+                    >
+                      <Ionicons name="location" size={13} color={colors.accentFg} />
+                      <Text variant="micro" tone="accentFg">
+                        {a.lat.toFixed(5)}, {a.lng.toFixed(5)} · {t('addresses.verify')}
+                      </Text>
+                    </Pressable>
+                  ) : (
+                    /* Eski kayıtta iğne yok — mesafe hesabına girmiyor. */
+                    <Pressable
+                      onPress={() => {
+                        setDuzeltilen(a);
+                        setHaritaAcik(true);
+                      }}
+                      hitSlop={6}
+                      style={styles.pinSatir}
+                    >
+                      <Ionicons name="alert-circle-outline" size={13} color={colors.gold} />
+                      <Text variant="micro" tone="gold">
+                        {t('addresses.no_pin')}
+                      </Text>
+                    </Pressable>
+                  )}
                 </View>
                 <Pressable onPress={() => removeAddress(a.id)} hitSlop={8}>
                   <Ionicons name="trash-outline" size={20} color={colors.muted} />
@@ -140,9 +182,25 @@ export default function AddressesScreen() {
         <AddressPicker
           visible={haritaAcik}
           initialCity={sehir ?? undefined}
-          initialCoord={koord ? { latitude: koord.lat, longitude: koord.lng } : undefined}
-          onClose={() => setHaritaAcik(false)}
+          initialCoord={
+            duzeltilen?.lat != null && duzeltilen?.lng != null
+              ? { latitude: duzeltilen.lat, longitude: duzeltilen.lng }
+              : koord
+                ? { latitude: koord.lat, longitude: koord.lng }
+                : undefined
+          }
+          onClose={() => {
+            setHaritaAcik(false);
+            setDuzeltilen(null);
+          }}
           onPick={(r) => {
+            if (duzeltilen) {
+              // Mevcut adresin iğnesi düzeltiliyor; metni kullanıcı yazdıysa
+              // korunuyor, haritadan geleni ezmiyoruz.
+              updateAddressCoord(duzeltilen.id, { lat: r.lat, lng: r.lng });
+              setDuzeltilen(null);
+              return;
+            }
             setKoord({ lat: r.lat, lng: r.lng });
             // Metin boşsa haritadan gelen adresle doldur; kullanıcı üstüne
             // kapı/kat ekleyebilsin.
@@ -192,6 +250,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     rowText: { flex: 1, gap: 2 },
     empty: { alignItems: 'center', paddingVertical: space(4), gap: space(1) },
+    pinSatir: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
     haritaBtn: {
       flexDirection: 'row',
       alignItems: 'center',

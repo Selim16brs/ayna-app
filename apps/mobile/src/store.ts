@@ -570,6 +570,8 @@ interface State {
     koord?: { lat: number; lng: number },
   ) => void;
   removeAddress: (id: string) => void;
+  /** Kayıtlı adresin İĞNESİNİ düzeltir (metin aynı kalır). */
+  updateAddressCoord: (id: string, koord: { lat: number; lng: number }, detail?: string) => void;
 
   // personal
   addPersonalLog: (input: AddPersonalLogInput) => void;
@@ -2326,6 +2328,25 @@ export const useStore = create<State>()(
       },
       removeAddress: (id) => {
         set((s) => ({ addresses: s.addresses.filter((a) => a.id !== id) }));
+        void api.setPrefs({ addresses: get().addresses }).catch(() => undefined);
+      },
+      /*
+       * İĞNE DÜZELTME. Kurucu: "cadde çok uzun bir cadde ve eğer doğru
+       * iğnelenen yeri belirlemeyip cadde bazında bir değerlendirme
+       * yaparsa sistem kullanıcıdan çok uzakta yerleri de gösterebilir."
+       *
+       * Sıralama zaten CADDE ADINA değil koordinata bakıyor. Eksik olan
+       * DOĞRULAMAYDI: kullanıcı iğnenin nereye düştüğünü göremiyor,
+       * göremediği için düzeltemiyordu.
+       */
+      updateAddressCoord: (id, koord, detail) => {
+        set((s) => ({
+          addresses: s.addresses.map((a) =>
+            a.id === id
+              ? { ...a, lat: koord.lat, lng: koord.lng, ...(detail ? { detail } : {}) }
+              : a,
+          ),
+        }));
         void api.setPrefs({ addresses: get().addresses }).catch(() => undefined);
       },
 
