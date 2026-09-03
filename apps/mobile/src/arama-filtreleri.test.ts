@@ -28,6 +28,27 @@ const kok = join(import.meta.dirname, '..');
 const ekran = readFileSync(join(kok, 'app/search.tsx'), 'utf8');
 const sozluk = readFileSync(join(kok, '../../packages/i18n/src/messages/tr.ts'), 'utf8');
 
+/**
+ * Kaynağın YORUMSUZ hâli.
+ *
+ * "Şu alan artık kullanılmıyor" testleri ham metne bakarsa, kaldırma
+ * GEREKÇESİNİ anlatan yorum da eşleşir ve test kendi açıklamasına takılır
+ * (ilk yazımda tam bu oldu). Blok yorumlar ve satır yorumları atılıyor;
+ * `://` gibi dizi içi kalıpları bozmamak için yalnız SATIR BAŞINDAKİ `//`
+ * ve `*` işaretleri siliniyor.
+ */
+const yorumsuz = (k: string) =>
+  k
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .filter((l) => {
+      const t = l.trim();
+      return !t.startsWith('//') && !t.startsWith('*');
+    })
+    .join('\n');
+
+const ekranKod = yorumsuz(ekran);
+
 // ── Test verisi: gerçek `Professional` alanlarının ilgili altkümesi ──
 interface Kayit {
   id: string;
@@ -36,7 +57,6 @@ interface Kayit {
   reviewCount: number;
   /** Sunucudan gelen TAMAMLANAN randevu sayısı. */
   completedBookings?: number;
-  experienceYears: number;
   priceFrom: number;
   kind: 'salon' | 'independent';
   aynaVerified?: boolean;
@@ -49,7 +69,6 @@ const KAYITLAR: Kayit[] = [
     rating: 4.9,
     reviewCount: 320,
     completedBookings: 540,
-    experienceYears: 12,
     priceFrom: 42000,
     kind: 'independent',
     aynaVerified: true,
@@ -60,7 +79,6 @@ const KAYITLAR: Kayit[] = [
     rating: 4.2,
     reviewCount: 60,
     completedBookings: 210,
-    experienceYears: 4,
     priceFrom: 9000,
     kind: 'salon',
   },
@@ -70,7 +88,6 @@ const KAYITLAR: Kayit[] = [
     rating: 4.6,
     reviewCount: 110,
     completedBookings: 180,
-    experienceYears: 6,
     priceFrom: 22000,
     kind: 'independent',
     aynaVerified: true,
@@ -80,7 +97,6 @@ const KAYITLAR: Kayit[] = [
     city: 'Şımkent',
     rating: 3.8,
     reviewCount: 15,
-    experienceYears: 1,
     priceFrom: 5000,
     kind: 'salon',
   },
@@ -91,7 +107,6 @@ interface Filtre {
   minPuan: number | null;
   minRandevu: number | null;
   minYorum: number | null;
-  minDeneyim: number | null;
   maxFiyat: number | null;
   tur: 'salon' | 'independent' | null;
   onayliMi: boolean;
@@ -102,7 +117,6 @@ const bos = (sehir: string | null = null): Filtre => ({
   minPuan: null,
   minRandevu: null,
   minYorum: null,
-  minDeneyim: null,
   maxFiyat: null,
   tur: null,
   onayliMi: false,
@@ -121,7 +135,6 @@ function ele(kayitlar: Kayit[], f: Filtre): string[] {
       )
         return false;
       if (f.minYorum !== null && p.reviewCount < f.minYorum) return false;
-      if (f.minDeneyim !== null && p.experienceYears < f.minDeneyim) return false;
       if (f.maxFiyat !== null && p.priceFrom > f.maxFiyat) return false;
       if (f.tur !== null && p.kind !== f.tur) return false;
       if (f.onayliMi && !p.aynaVerified) return false;
@@ -177,11 +190,6 @@ test('değerlendirme sayısı kırılımı', () => {
   assert.deepEqual(ele(KAYITLAR, { ...bos(), minYorum: 300 }), ['a']);
 });
 
-test('deneyim kırılımı', () => {
-  assert.deepEqual(ele(KAYITLAR, { ...bos(), minDeneyim: 5 }), ['a', 'c']);
-  assert.deepEqual(ele(KAYITLAR, { ...bos(), minDeneyim: 10 }), ['a']);
-});
-
 test('fiyat kırılımı ÜST sınır — bütçeyi aşan elenir', () => {
   assert.deepEqual(ele(KAYITLAR, { ...bos(), maxFiyat: 25000 }), ['b', 'c', 'd']);
   assert.deepEqual(ele(KAYITLAR, { ...bos(), maxFiyat: 10000 }), ['b', 'd']);
@@ -218,12 +226,11 @@ test('"Farketmez" seçimi o kırılımı gerçekten kapatıyor', () => {
 
 // ── 3. Ekran bağı ──
 
-test('panel yedi kırılımı da çiziyor', () => {
+test('panel altı kırılımı da çiziyor', () => {
   for (const anahtar of [
     'search.filter.city',
     'search.filter.rating',
     'search.filter.reviews',
-    'search.filter.experience',
     'search.filter.price',
     'search.filter.kind',
     'search.filter.verified_only',
@@ -242,7 +249,6 @@ test('eleme koşulları ekranda duruyor', () => {
     'filtre.minPuan !== null && p.rating < filtre.minPuan',
     'p.completedBookings < filtre.minRandevu',
     'filtre.minYorum !== null && p.reviewCount < filtre.minYorum',
-    'filtre.minDeneyim !== null && p.experienceYears < filtre.minDeneyim',
     'filtre.maxFiyat !== null && p.priceFrom > filtre.maxFiyat',
     'filtre.tur !== null && p.kind !== filtre.tur',
     'filtre.onayliMi && !p.aynaVerified',
@@ -394,6 +400,44 @@ test('gezinme modunda filtre penceresi AÇIK başlıyor', () => {
 test('gezinme modunda arkada SONUÇ var, boş kutu değil', () => {
   // Aksi hâlde "N sonucu göster" düğmesi hiçbir şeyin üstünde durur.
   assert.ok(/const isEmpty =[^;]*&& !gozat;/.test(ekran), 'gezinme modunda boş kutu gösteriliyor');
+});
+
+test('BEYANA dayalı kırılım YOK — deneyim kaldırıldı', () => {
+  /*
+   * Kurucu: "uzman deneyimini koymak mantıklı mı, uzman bunu kafasına göre
+   * yazabilir kendini daha eski göstermek isteyebilir."
+   *
+   * `experienceYears` uzmanın kayıtta kendi yazdığı sayı; doğrulayan hiçbir
+   * mekanizma yok. Aramayı doğrulanamayan bir beyana göre daraltmak
+   * kullanıcıyı yanlış yönlendirir. Yerine sistemin kendi kaydı olan
+   * `completedBookings` var.
+   */
+  assert.ok(!ekranKod.includes('experienceYears'), 'beyana dayalı deneyim kırılımı geri gelmiş');
+  assert.ok(!ekranKod.includes('minDeneyim'), 'deneyim filtresi geri gelmiş');
+  assert.ok(!sozluk.includes("'search.filter.experience':"), 'deneyim metni sözlükte kalmış');
+});
+
+test('her kırılım DOĞRULANABİLİR bir veriye dayanıyor', () => {
+  /*
+   * Kalan altı kırılımın kaynağı:
+   *   şehir            → kayıtta seçilir, haritayla tutarlı
+   *   puan / yorum     → Rating tablosu (yalnız tamamlanmış randevudan)
+   *   tamamlanan rand. → Booking sayımı (sistem kaydı)
+   *   fiyat            → uzmanın gerçek hizmet listesi
+   *   tür / onaylı     → kayıt tipi ve doğrulama bayrakları
+   * Hiçbiri serbest metin beyanı değil.
+   */
+  for (const alan of [
+    'p.city',
+    'p.rating',
+    'p.reviewCount',
+    'p.completedBookings',
+    'p.priceFrom',
+    'p.kind',
+    'p.aynaVerified',
+  ]) {
+    assert.ok(ekran.includes(alan), `kırılım alanı ekranda yok: ${alan}`);
+  }
 });
 
 test('şehir listesi merkezi taksonomiden geliyor', () => {

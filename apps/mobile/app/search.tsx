@@ -74,7 +74,6 @@ interface Filtre {
   /** TAMAMLANAN randevu sayısı — sunucudan gelen gerçek sayı. */
   minRandevu: number | null;
   minYorum: number | null;
-  minDeneyim: number | null;
   /** Üst sınır: uzmanın başlangıç fiyatı bunun altında olmalı. */
   maxFiyat: number | null;
   tur: ProviderKind | null;
@@ -86,7 +85,6 @@ const bosFiltre = (sehir: string | null): Filtre => ({
   minPuan: null,
   minRandevu: null,
   minYorum: null,
-  minDeneyim: null,
   maxFiyat: null,
   tur: null,
   onayliMi: false,
@@ -99,7 +97,6 @@ function etkinSayisi(f: Filtre, varsayilanSehir: string): number {
   if (f.minPuan !== null) n += 1;
   if (f.minRandevu !== null) n += 1;
   if (f.minYorum !== null) n += 1;
-  if (f.minDeneyim !== null) n += 1;
   if (f.maxFiyat !== null) n += 1;
   if (f.tur !== null) n += 1;
   if (f.onayliMi) n += 1;
@@ -108,6 +105,21 @@ function etkinSayisi(f: Filtre, varsayilanSehir: string): number {
 
 const PUANLAR = [4, 4.5, 4.8] as const;
 const RANDEVULAR = [50, 200, 500] as const;
+
+/*
+ * DENEYİM KIRILIMI KALDIRILDI.
+ *
+ * Kurucu: "uzman deneyimini koymak mantıklı mı, uzman bunu kafasına göre
+ * yazabilir kendini daha eski göstermek isteyebilir."
+ *
+ * Haklı: `experienceYears` uzmanın kayıtta kendi yazdığı sayı. Doğrulayan
+ * hiçbir mekanizma yok — belge, sertifika ya da sistem kaydıyla
+ * karşılaştırılmıyor. Aramayı doğrulanamayan bir beyana göre daraltmak,
+ * kullanıcıyı yanlış yönlendirir.
+ *
+ * Yerine `completedBookings` var: uzmanın AYNA üzerinden gerçekten
+ * tamamladığı randevu sayısı — sistemin kendi kaydı, uydurulamaz.
+ */
 
 /** "Tür" satırının kapalı hâlde gösterdiği değer — iki kırılım tek satırda. */
 function turEtiketi(f: Filtre, t: (k: MessageKey) => string): string {
@@ -118,7 +130,6 @@ function turEtiketi(f: Filtre, t: (k: MessageKey) => string): string {
   return parcalar.length ? parcalar.join(' · ') : t('search.filter.any');
 }
 const YORUMLAR = [50, 100, 300] as const;
-const DENEYIMLER = [3, 5, 10] as const;
 const FIYATLAR = [10000, 25000, 50000] as const;
 
 /**
@@ -284,7 +295,6 @@ export default function SearchScreen() {
       )
         return false;
       if (filtre.minYorum !== null && p.reviewCount < filtre.minYorum) return false;
-      if (filtre.minDeneyim !== null && p.experienceYears < filtre.minDeneyim) return false;
       if (filtre.maxFiyat !== null && p.priceFrom > filtre.maxFiyat) return false;
       if (filtre.tur !== null && p.kind !== filtre.tur) return false;
       if (filtre.onayliMi && !p.aynaVerified) return false;
@@ -627,31 +637,6 @@ export default function SearchScreen() {
                     etiket={`${v}+`}
                     secili={filtre.minYorum === v}
                     bas={() => yama({ minYorum: filtre.minYorum === v ? null : v })}
-                  />
-                ))}
-              </FiltreSatiri>
-
-              <FiltreSatiri
-                baslik={t('search.filter.experience')}
-                deger={
-                  filtre.minDeneyim === null
-                    ? t('search.filter.any')
-                    : fillParams(t('search.filter.years'), { n: String(filtre.minDeneyim) })
-                }
-                acik={acikGrup === 'search.filter.experience'}
-                ac={() => cevir('search.filter.experience')}
-              >
-                <FiltreCipi
-                  etiket={t('search.filter.any')}
-                  secili={filtre.minDeneyim === null}
-                  bas={() => yama({ minDeneyim: null })}
-                />
-                {DENEYIMLER.map((v) => (
-                  <FiltreCipi
-                    key={v}
-                    etiket={fillParams(t('search.filter.years'), { n: String(v) })}
-                    secili={filtre.minDeneyim === v}
-                    bas={() => yama({ minDeneyim: filtre.minDeneyim === v ? null : v })}
                   />
                 ))}
               </FiltreSatiri>

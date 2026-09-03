@@ -83,7 +83,7 @@ test('TEK sorgu — uzman başına sorgu (N+1) yok', () => {
   // bir tur açmıyor.
   assert.match(
     servis,
-    /const \[sps, bizs, randevuSayilari\] = await Promise\.all\(\[/,
+    /const \[sps, bizs, randevuSayilari, puanlar, esikAyari\] = await Promise\.all\(\[/,
     'sayım sorgusu toplu turun içinde değil',
   );
   /*
@@ -117,6 +117,55 @@ test('randevusu olmayan uzman 0 alıyor, undefined değil', () => {
     /completedBookings: randevuByPro\.get\(r\.id\) \?\? 0,/,
     'sayısı olmayan uzman için 0 verilmiyor',
   );
+});
+
+/*
+ * PUAN VE YORUM SAYISI — sütun değil GERÇEK KAYIT.
+ *
+ * Bulgu: `Professional.rating` ve `reviewCount` sütunlarına HİÇBİR YERDE
+ * yazılmıyordu. Değerlendirme verilince `Rating` satırı açılıyor ama uzman
+ * kaydına dönmüyordu. Canlıda 12 gerçek değerlendirme varken listede
+ * herkesin puanı 0 görünüyordu; aramada "4,5+" seçen kullanıcı her zaman
+ * boş liste alıyordu ve "Puan"/"Popülerlik" sıralamaları hiçbir şey
+ * sıralamıyordu.
+ */
+
+test('puan ve yorum sayısı Rating tablosundan hesaplanıyor', () => {
+  assert.match(servis, /this\.prisma\.rating\.groupBy\(\{/, 'puanlar toplu hesaplanmıyor');
+  assert.match(servis, /_avg: \{ score: true \}/, 'ortalama hesaplanmıyor');
+  assert.match(
+    servis,
+    /rating: puanByPro\.get\(r\.id\)\?\.ortalama \?\? 0,/,
+    'liste hâlâ bayat sütunu döndürüyor',
+  );
+  assert.match(
+    servis,
+    /reviewCount: puanByPro\.get\(r\.id\)\?\.adet \?\? 0,/,
+    'yorum sayısı hâlâ bayat sütundan geliyor',
+  );
+});
+
+test('görünürlük kuralları özet ucuyla AYNI', () => {
+  /*
+   * Liste ile profil aynı sayıyı göstermeli. `summary()` iki kural
+   * uyguluyor: yalnız `visible` olanlar ve yayın anı gelmiş olanlar
+   * (§4.11 bir günlük gecikme). Liste bunlardan birini atlarsa gizli ya da
+   * henüz yayınlanmamış yorum aramada ortaya çıkar.
+   */
+  const i = servis.indexOf('this.prisma.rating.groupBy');
+  const sorgu = servis.slice(i, i + 500);
+  assert.ok(sorgu.includes('visible: true'), 'gizli yorumlar da sayılıyor');
+  assert.ok(
+    sorgu.includes('publishAt: null') && sorgu.includes('publishAt: { lte: new Date() }'),
+    'yayın anı gelmemiş yorumlar da sayılıyor (§4.11 gecikmesi atlanıyor)',
+  );
+});
+
+test('açılma eşiği uygulanıyor — eşik altında ortalama gizli', () => {
+  // `summary()` eşiğin altında `average: null` döndürüyor; liste de 0
+  // vermeli, yoksa profil "puan henüz açılmadı" derken arama puan gösterir.
+  assert.match(servis, /rating\.threshold/, 'eşik ayarı okunmuyor');
+  assert.match(servis, /adet >= esik/, 'eşik uygulanmıyor');
 });
 
 test('sayaç listede döndürülüyor', () => {

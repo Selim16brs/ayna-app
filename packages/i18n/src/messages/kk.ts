@@ -1304,8 +1304,6 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'search.filter.bookings': 'Аяқталған жазылу',
   'search.filter.apply': '{n} нәтижені көрсету',
   'search.filter.no_result': 'Бұл шарттарға сай нәтиже жоқ',
-  'search.filter.experience': 'Тәжірибе',
-  'search.filter.years': '{n}+ жыл',
   'search.filter.price': 'Бастапқы баға',
   'search.filter.upto': '{n} ₸ дейін',
   'search.filter.kind': 'Түрі',

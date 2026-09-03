@@ -1312,8 +1312,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'search.filter.bookings': 'Завершённые записи',
   'search.filter.apply': 'Показать {n} результатов',
   'search.filter.no_result': 'Нет результатов по этим условиям',
-  'search.filter.experience': 'Опыт',
-  'search.filter.years': 'от {n} лет',
   'search.filter.price': 'Начальная цена',
   'search.filter.upto': 'до {n} ₸',
   'search.filter.kind': 'Тип',
