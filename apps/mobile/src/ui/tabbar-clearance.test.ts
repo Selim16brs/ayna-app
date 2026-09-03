@@ -135,6 +135,19 @@ test('kaydırmadan sonra gelen sabit şeritler barı aşıyor', () => {
       new RegExp(`    ${ad}: \\{[\\s\\S]*?\\n    \\},`).exec(src) ??
       new RegExp(`    ${ad}: \\{[^\\n]*\\},`).exec(src);
     if (sm && /paddingBottom:[^,}\n]*TAB_BAR_CLEARANCE/.test(sm[0])) continue;
+    /*
+     * BOŞLUĞU ŞERİDİN KENDİSİ DEĞİL, ONU SARAN KAP DA VEREBİLİR.
+     *
+     * `care/add` klavye açıkken boşluğu kaldırıyor (açıkken alt menü zaten
+     * görünmüyor ve boşluk "Kaydet" ile klavye arasında delik bırakıyordu),
+     * kapalıyken veriyor. Bu koşullu boşluk kabın `paddingBottom`unda
+     * duruyor ve kuralın ASIL AMACINI — içerik barın altında kalmasın —
+     * şeritten daha iyi karşılıyor: kaydırılan içeriği de koruyor.
+     *
+     * Kural gevşetilmiyor: ekran boşluğu HİÇBİR YERDE ayırmıyorsa yine
+     * ihlal sayılıyor.
+     */
+    if (new RegExp(`paddingBottom: [^\\n]*TAB_BAR_CLEARANCE`).test(src)) continue;
     ihlal.push(`${rel} (styles.${ad})`);
   }
   assert.deepEqual(

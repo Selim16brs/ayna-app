@@ -129,44 +129,66 @@ export function TakvimSecici({
 
           {saatli ? (
             <View style={styles.saatBolum}>
-              <Text variant="caption" tone="muted" style={styles.saatBaslik}>
-                {t('takvim.saat')}
-              </Text>
-              <View style={styles.saatSatir}>
-                <ScrollView
-                  style={styles.serit}
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.seritIc}
-                >
-                  {SAATLER.map((s) => (
+              {/*
+               * ── SAAT SEÇİMİ YENİDEN ───────────────────────────────────
+               *
+               * Kurucu: "saat seçimleri çok saçma olmuş."
+               *
+               * İlk hâli iki DAR DİKEY ŞERİTTİ (saat ve dakika). 24 saat
+               * 132 piksellik bir kutuda kayıyordu: seçtiğin değer görünmüyor,
+               * nereye geldiğini bilmiyor, kaydırmayı takvim hareketiyle
+               * karıştırıyordun.
+               *
+               * Yeni hâli: saat TEK SATIRDA yatay şerit — parmağın doğal
+               * yönü ve seçili olan hep ortada okunuyor. Dakika dört çipe
+               * indi (00/15/30/45); randevu ve hatırlatmada bundan ince
+               * ayar gerekmiyor, beşer beşer 12 seçenek gereksiz kalabalıktı.
+               */}
+              <View style={styles.saatBaslikSatir}>
+                <Text variant="caption" tone="muted">
+                  {t('takvim.saat')}
+                </Text>
+                {/* Seçili değer BÜYÜK ve sabit yerde: şeritte kaybolmasın. */}
+                <Text variant="bodyStrong" tone="ink">
+                  {String(secili.getHours()).padStart(2, '0')}:
+                  {String(secili.getMinutes()).padStart(2, '0')}
+                </Text>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.saatSerit}
+              >
+                {SAATLER.map((h) => {
+                  const on = secili.getHours() === h;
+                  return (
                     <Pressable
-                      key={s}
-                      onPress={() => setSecili((d) => saatUygula(d, s, d.getMinutes()))}
-                      style={[styles.saatOge, secili.getHours() === s && styles.saatSecili]}
+                      key={h}
+                      onPress={() => setSecili((d) => saatUygula(d, h, d.getMinutes()))}
+                      style={[styles.saatCip, on && styles.saatCipSecili]}
                     >
-                      <Text variant="caption" tone={secili.getHours() === s ? 'onAccent' : 'ink'}>
-                        {String(s).padStart(2, '0')}
+                      <Text variant="caption" tone={on ? 'onAccent' : 'ink'}>
+                        {String(h).padStart(2, '0')}
                       </Text>
                     </Pressable>
-                  ))}
-                </ScrollView>
-                <ScrollView
-                  style={styles.serit}
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.seritIc}
-                >
-                  {DAKIKALAR.map((m) => (
+                  );
+                })}
+              </ScrollView>
+              <View style={styles.dakikaSatir}>
+                {DAKIKALAR.map((m) => {
+                  const on = secili.getMinutes() === m;
+                  return (
                     <Pressable
                       key={m}
                       onPress={() => setSecili((d) => saatUygula(d, d.getHours(), m))}
-                      style={[styles.saatOge, secili.getMinutes() === m && styles.saatSecili]}
+                      style={[styles.dakikaCip, on && styles.saatCipSecili]}
                     >
-                      <Text variant="caption" tone={secili.getMinutes() === m ? 'onAccent' : 'ink'}>
-                        {String(m).padStart(2, '0')}
+                      <Text variant="caption" tone={on ? 'onAccent' : 'ink'}>
+                        :{String(m).padStart(2, '0')}
                       </Text>
                     </Pressable>
-                  ))}
-                </ScrollView>
+                  );
+                })}
               </View>
             </View>
           ) : null}
@@ -222,19 +244,35 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.md,
     },
     hucreSecili: { backgroundColor: colors.accent },
-    saatBolum: { marginTop: space(1.5) },
-    saatBaslik: { marginBottom: space(0.75) },
-    saatSatir: { flexDirection: 'row', gap: space(1.5), height: 132 },
-    serit: {
-      flex: 1,
-      backgroundColor: colors.surface,
+    saatBolum: { marginTop: space(2) },
+    saatBaslikSatir: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: space(1),
+    },
+    saatSerit: { gap: space(1), paddingRight: space(2) },
+    saatCip: {
+      minWidth: 44,
+      paddingVertical: space(1),
+      paddingHorizontal: space(1.25),
+      alignItems: 'center',
       borderRadius: radius.md,
+      backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.line,
     },
-    seritIc: { paddingVertical: space(0.5) },
-    saatOge: { paddingVertical: space(1), alignItems: 'center', borderRadius: radius.sm },
-    saatSecili: { backgroundColor: colors.accent },
+    dakikaSatir: { flexDirection: 'row', gap: space(1), marginTop: space(1) },
+    dakikaCip: {
+      flex: 1,
+      paddingVertical: space(1),
+      alignItems: 'center',
+      borderRadius: radius.md,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+    },
+    saatCipSecili: { backgroundColor: colors.accent, borderColor: colors.accent },
     altBar: {
       flexDirection: 'row',
       alignItems: 'center',

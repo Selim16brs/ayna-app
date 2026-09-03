@@ -109,5 +109,11 @@ export function tarihYaz(d: Date, saatliMi: boolean): string {
 
 /** Saat seçenekleri (0..23). */
 export const SAATLER = Array.from({ length: 24 }, (_, i) => i);
-/** Dakika seçenekleri — beşer beşer; dakika dakika seçtirmek işkence. */
-export const DAKIKALAR = Array.from({ length: 12 }, (_, i) => i * 5);
+/**
+ * Dakika seçenekleri — ÇEYREK saat.
+ *
+ * Kurucu: "saat seçimleri çok saçma olmuş." Beşer beşer 12 seçenek
+ * gereksiz kalabalıktı; randevu ve hatırlatmada bundan ince ayar
+ * gerekmiyor. Dördü tek satıra sığıyor ve tek dokunuşla seçiliyor.
+ */
+export const DAKIKALAR = [0, 15, 30, 45] as const;

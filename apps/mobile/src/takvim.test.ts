@@ -164,3 +164,61 @@ test('tarih girilen her ekran ORTAK takvimi kullanıyor', async () => {
     assert.match(kod, /<TakvimSecici/, `${ad}: ortak takvimi kullanmıyor`);
   }
 });
+
+/* ── SAAT SEÇİMİ ───────────────────────────────────────────────────────── */
+
+test('dakika ÇEYREK saat — kalabalık değil', async () => {
+  /*
+   * Kurucu: "saat seçimleri çok saçma olmuş."
+   *
+   * İlk hâli iki DAR DİKEY ŞERİTTİ ve dakika beşer beşer 12 seçenekti.
+   * 24 saat 132 piksellik bir kutuda kayıyordu: seçilen değer görünmüyor,
+   * kaydırma takvim hareketiyle karışıyordu.
+   *
+   * Randevu ve hatırlatmada çeyrek saatten ince ayar gerekmiyor; dördü tek
+   * satıra sığıyor ve tek dokunuşla seçiliyor.
+   */
+  const { DAKIKALAR } = await import('./takvim');
+  assert.deepEqual([...DAKIKALAR], [0, 15, 30, 45]);
+});
+
+test('saat şeridi YATAY ve seçili değer AYRICA yazılı', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const kod = readFileSync(join(import.meta.dirname, 'ui', 'TakvimSecici.tsx'), 'utf8');
+  // Dikey dar şerit, seçileni gizliyordu.
+  assert.match(kod, /horizontal\s*\n\s*showsHorizontalScrollIndicator/, 'saat şeridi yatay değil');
+  /*
+   * Seçilen saat şeritte kaybolmasın diye SABİT BİR YERDE de yazıyor.
+   * İlk yazımda test yalnız stil ADINI arıyordu ve kullanım yerinden
+   * kaldırılınca bile geçiyordu (stil tanımı dosyada duruyor); artık
+   * çizilen JSX'e bağlı.
+   */
+  assert.match(
+    kod,
+    /<View style=\{styles\.saatBaslikSatir\}>[\s\S]{0,600}getHours\(\)\)\.padStart/,
+    'seçili saat ayrıca gösterilmiyor',
+  );
+});
+
+test('kişisel kayıt ekranında klavye içeriği örtmüyor', async () => {
+  /*
+   * Kurucu: "kaydet ile klavye arası çok açık ve yazı altta kalıyor."
+   *
+   * İKİ SEBEP: (1) `footer` altında `TAB_BAR_CLEARANCE` kadar boşluk
+   * ayırıyordu — oysa bu bir YIĞIN ekranı, altında sekme çubuğu YOK ve
+   * klavye açılınca o boşluk yukarı taşınıp koca bir delik bırakıyordu.
+   * (2) Klavye kaçışı yoktu; yazılan satır klavyenin altında kalıyordu.
+   */
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const kod = readFileSync(join(import.meta.dirname, '..', 'app', 'care', 'add.tsx'), 'utf8');
+  assert.match(kod, /KeyboardAvoidingView/, 'klavye kaçışı yok');
+  assert.equal(
+    /paddingBottom: TAB_BAR_CLEARANCE/.test(kod),
+    false,
+    'yığın ekranında sekme çubuğu boşluğu ayrılıyor',
+  );
+  // Üç form da (günlük, rutin, özel gün) aynı kaptan geçmeli.
+  assert.equal((kod.match(/<FormKabi>/g) ?? []).length, 3, 'formların hepsi sarılmamış');
+});
