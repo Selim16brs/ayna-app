@@ -308,7 +308,7 @@ export default function ProfessionalScreen() {
          * sırası, içine koysak o yüksekliğe sıkışırdı. Kaydırma alanının
          * ilk çocuğu olduğu için portre ve isim de üstünde duruyor.
          */}
-        <TepeIsigi yukseklik={320} />
+        <TepeIsigi yukseklik={460} />
         <View style={[styles.topRow, { paddingTop: insets.top + space(1) }]}>
           <PressableScale
             style={[styles.topIconBtn, shadow.soft]}

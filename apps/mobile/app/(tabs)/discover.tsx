@@ -221,7 +221,7 @@ export default function DiscoverScreen() {
     <Screen edges={[]}>
       {/* Tepe ışığı kaydırma alanının DIŞINDA: içerik kayarken yıkama
           yerinde kalıyor, birlikte kaymıyor. */}
-      <TepeIsigi yukseklik={260} />
+      <TepeIsigi yukseklik={460} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

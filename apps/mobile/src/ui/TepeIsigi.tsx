@@ -66,12 +66,17 @@ export function TepeIsigi({
       <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
         <Defs>
           {/*
-           * ALTA DOĞRU ERİME. Yıkama içeriğe sert bir çizgiyle bitmemeli;
+           * ALTA DOĞRU ERİME — geç başlıyor (%72).
+           *
+           * Kurucu: "çok kısa kalmış, daha aşağıya doğru ve biraz daha
+           * belirgin olmalı." İlk sürümde erime %55'te başlıyordu: renk
+           * alanın yarısında bitiyor, yıkama ince bir şerit gibi
+           * duruyordu. Yıkama içeriğe sert bir çizgiyle de bitmemeli;
            * maskeyle değil, üstüne çizilen zemin renginden bir geçişle
            * yapılıyor — maske desteği cihazdan cihaza değişiyor.
            */}
           <LinearGradient id="ti-erime" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="55%" stopColor={colors.bg} stopOpacity={0} />
+            <Stop offset="72%" stopColor={colors.bg} stopOpacity={0} />
             <Stop offset="100%" stopColor={colors.bg} stopOpacity={1} />
           </LinearGradient>
         </Defs>
@@ -81,9 +86,9 @@ export function TepeIsigi({
          * Örtüşen yerler alfa bileşimiyle kendiliğinden koyulaşıyor —
          * kurucunun gönderdiği görselin karakteri orada.
          */}
-        <Ellipse cx="22" cy="2" rx="46" ry="40" fill={colors.accent} opacity={0.17 * k} />
-        <Ellipse cx="84" cy="-6" rx="44" ry="38" fill={colors.gold} opacity={0.13 * k} />
-        <Ellipse cx="58" cy="26" rx="58" ry="34" fill={colors.accent} opacity={0.11 * k} />
+        <Ellipse cx="20" cy="4" rx="52" ry="46" fill={colors.accent} opacity={0.26 * k} />
+        <Ellipse cx="86" cy="-4" rx="50" ry="44" fill={colors.gold} opacity={0.2 * k} />
+        <Ellipse cx="56" cy="34" rx="66" ry="42" fill={colors.accent} opacity={0.16 * k} />
         <Rect x="0" y="0" width="100" height="100" fill="url(#ti-erime)" />
       </Svg>
     </View>
