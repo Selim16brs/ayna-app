@@ -49,10 +49,13 @@ test('OKUNURLUĞU BOZMUYOR — hiçbir katman yarı yarıya opak değil', () => 
    * Başlıktaki isim yıkamanın üstünde okunuyor. Opaklık yükselirse
    * kontrast düşer ve bu testin yakalayamayacağı bir okunurluk sorunu
    * doğar; üst sınır burada tutuluyor.
+   *
+   * Sınır 0.2'den 0.3'e çıkarıldı: kurucu "biraz daha belirgin olmalı"
+   * dedi. Sınırın KENDİSİ duruyor — istek "belirgin", "okunmaz" değildi.
    */
   const opakliklar = [...bilesen.matchAll(/opacity=\{([\d.]+) \* k\}/g)].map((x) => Number(x[1]));
   assert.ok(opakliklar.length >= 3, 'katman bulunamadı');
-  for (const o of opakliklar) assert.ok(o <= 0.2, `katman fazla opak: ${o}`);
+  for (const o of opakliklar) assert.ok(o <= 0.3, `katman fazla opak: ${o}`);
 });
 
 test('ALTA DOĞRU ERİYOR — içeriğe sert çizgiyle bitmiyor', () => {
@@ -89,4 +92,29 @@ test('KAPSAYICISI KAPATMIYOR — kendi zemini olan başlıkta İÇERİDE', () =>
     /borderBottomRightRadius: 28,\s*\n\s*\/\/[^\n]*\n\s*overflow: 'hidden',/,
     'yuvarlak köşede taşma kırpılmıyor',
   );
+});
+
+test('YIKAMA BAŞLIKTAN AŞAĞI UZANIYOR', () => {
+  /*
+   * Kurucu: "çok kısa kalmış, daha aşağıya doğru olmalı."
+   *
+   * İlk sürümde ana sayfada 260 vardı: yıkama başlığın hemen altında
+   * bitiyor, ince bir şerit gibi duruyordu. Yükseklik verilen yerlerde
+   * artık ilk içerik kartlarının arkasına kadar iniyor.
+   */
+  for (const [yol, ad] of [
+    ['(tabs)/discover.tsx', 'ana sayfa'],
+    ['professional/[id].tsx', 'salon/uzman profili'],
+  ] as [string, string][]) {
+    const m = ekran(yol).match(/<TepeIsigi yukseklik=\{(\d+)\} \/>/);
+    assert.ok(m, `${ad} ekranında yükseklik verilmemiş`);
+    assert.ok(Number(m![1]) >= 400, `${ad} yıkaması kısa kalmış: ${m![1]}`);
+  }
+});
+
+test('RENK ALANIN ÇOĞUNA yayılıyor — erime geç başlıyor', () => {
+  // Erime %55'te başlıyordu: renk alanın yarısında bitiyordu.
+  const m = bilesen.match(/<Stop offset="(\d+)%" stopColor=\{colors\.bg\} stopOpacity=\{0\} \/>/);
+  assert.ok(m, 'erimenin başlangıcı okunamadı');
+  assert.ok(Number(m![1]) >= 65, `erime çok erken başlıyor: %${m![1]}`);
 });

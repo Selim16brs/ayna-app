@@ -17,11 +17,18 @@ import { formatSlotTr } from '../../src/datetime';
 import type { MessageKey } from '@ayna/i18n';
 import { fillParams, useLocale } from '../../src/locale';
 import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
-import { musteriRandevulari, selectPortrait, selectUnreadCount, useStore } from '../../src/store';
+import {
+  musteriRandevulari,
+  selectPortrait,
+  selectPortraitKesilmis,
+  selectUnreadCount,
+  useStore,
+} from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
 import { space, type ColorTokens, font } from '../../src/theme';
 import { lightColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { greetingKey } from '../../src/greeting';
 import { tri } from '../../src/taxonomy';
 import { useKategoriYakinda } from '../../src/yakinda';
 import {
@@ -143,6 +150,7 @@ export default function DiscoverScreen() {
       .split(' ')[0] || '';
   // Portre TEK YERDEN: bayat kesik portre otomatik elenir (selectPortrait).
   const portre = useStore(selectPortrait);
+  const portreKesilmis = useStore(selectPortraitKesilmis);
   // Dinamik kullanıcı adı — ilk harf büyük (el yazısı katman için)
   const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
   const pros = useProfessionals();
@@ -221,7 +229,7 @@ export default function DiscoverScreen() {
     <Screen edges={[]}>
       {/* Tepe ışığı kaydırma alanının DIŞINDA: içerik kayarken yıkama
           yerinde kalıyor, birlikte kaymıyor. */}
-      <TepeIsigi yukseklik={260} />
+      <TepeIsigi yukseklik={460} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -275,13 +283,19 @@ export default function DiscoverScreen() {
           </PressableScale>
         </View>
 
-        {/* ═══ KARŞILAMA — Figma `welcome-vip-area` (px24 py20) ═══ */}
+        {/* ═══ KARŞILAMA — Figma `welcome-vip-area` (px24 py20) ═══
+            Kurucu: "mesaj üstte ve daha küçük, altında da isim daha büyük
+            ve bold olsun."
+
+            Tek satırdı ("Merhaba, Selim") ve isim selamlamanın içinde
+            kayboluyordu. Artık iki satır: üstte saate göre karşılama
+            küçük, altında İSİM büyük. Hiyerarşi de doğrulandı — ekranın
+            konusu kullanıcının kendisi, karşılama sözü değil. */}
         <View style={styles.karsilama}>
           <View style={styles.grow}>
-            <Text style={styles.selam}>
-              {displayName
-                ? fillParams(t('home.greeting'), { ad: displayName })
-                : t('home.guest_title')}
+            <Text style={styles.selamUst}>{t(greetingKey())}</Text>
+            <Text style={styles.selamAd} numberOfLines={1}>
+              {displayName || t('home.guest_title')}
             </Text>
             <View style={styles.puanSatir}>
               <Ionicons name="ribbon" size={12} color={colors.gold} />
@@ -295,9 +309,27 @@ export default function DiscoverScreen() {
               ) : null}
             </View>
           </View>
-          <PressableScale style={styles.avatarHalka} onPress={() => router.push('/(tabs)/profile')}>
+          {/*
+           * PORTRE — kurucu: "daha büyük ve arka planı kesilmiş şekilde
+           * çıksın, daire içinde olmasın."
+           *
+           * KESİLMİŞ portre çerçevesiz ve büyük: zemini saydam, tepe
+           * ışığının üstünde duruyor. HAM fotoğraf ise daire içinde
+           * kalıyor — kendi arka planını taşıyor ve çerçevesiz kare
+           * göstermek kullanıcının odasını ana sayfaya yapıştırmak olurdu.
+           */}
+          <PressableScale
+            style={portreKesilmis ? undefined : styles.avatarHalka}
+            onPress={() => router.push('/(tabs)/profile')}
+            accessibilityRole="button"
+            accessibilityLabel={t('nav.profile')}
+          >
             {portre ? (
-              <Image source={{ uri: portre }} style={styles.avatar} />
+              <Image
+                source={{ uri: portre }}
+                style={portreKesilmis ? styles.portreKesik : styles.avatar}
+                resizeMode="contain"
+              />
             ) : (
               <View style={[styles.avatar, styles.avatarBos]} />
             )}
@@ -844,18 +876,30 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: 20,
       gap: 12,
     },
-    // Figma: 28px Bold Italic. Onest'te italik yok; eğim sentezleniyor.
-    selam: {
+    // Üst satır: saate göre karşılama. Küçük ve sakin — asıl bilgi altta.
+    selamUst: { fontFamily: font.regular, fontSize: 14, lineHeight: 18, color: colors.inkSoft },
+    // Alt satır: İSİM. Ekranın konusu bu.
+    selamAd: {
       fontFamily: font.semibold,
-      fontSize: 28,
-      lineHeight: 34,
+      fontSize: 32,
+      lineHeight: 38,
+      letterSpacing: -0.6,
       color: colors.ink,
-      fontStyle: 'italic',
+      marginTop: 2,
     },
     puanSatir: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
     puanSayi: { fontFamily: font.semibold, fontSize: 12, color: colors.gold },
     avatarHalka: { padding: 2, borderRadius: 100, borderWidth: 1.5, borderColor: colors.accent },
     avatar: { width: 52, height: 52, borderRadius: 100 },
+    /*
+     * Kesilmiş portre: BÜYÜK ve ÇERÇEVESİZ.
+     *
+     * `resizeMode="contain"`: kesilmiş görselin oranı fotoğraftan
+     * fotoğrafa değişiyor; `cover` olsaydı kimini tepesinden keserdi.
+     * Yükseklik selamlama bloğundan biraz taşıyor — portre satırın
+     * içinde yüzmüyor, ona yaslanıyor.
+     */
+    portreKesik: { width: 104, height: 104 },
     avatarBos: { backgroundColor: colors.accentSoft },
 
     // search-container (radius 12, border #E5E0DE, px14 py8)
