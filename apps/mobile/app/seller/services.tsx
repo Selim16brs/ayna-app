@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../src/locale';
@@ -9,10 +9,34 @@ import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text, TextInput, TAB_BAR_CLEARANCE } from '../../src/ui';
 
-// §6.1 — uzman hizmetleri: alan seç → alt hizmetleri aç/kapat + fiyat/süre yönet.
-// Merkezi taksonomiden türer; kayıtlı hizmetler store'da kalıcı — offline randevu akışı buradan besler.
-type SvcRow = SellerServiceRow;
+/**
+ * HİZMETLERİM — brief §4.1.
+ *
+ * "Seçilen her alt hizmet altında uzman KENDİ hizmetlerini manuel ekler:
+ * serbest ad + fiyat + süre (şablon yok)."
+ *
+ * ── ŞABLON KALKTI ───────────────────────────────────────────────────────
+ *
+ * Eskiden alt hizmet başına TEK satır vardı ve adı katalogdan geliyordu.
+ * "Boya" diyen bir uzman kök boyası ile tam boyayı ayrı fiyatlayamıyordu:
+ * ikisini tek fiyata sıkıştırmak ya da müşteriye mesajla anlatmak
+ * zorundaydı. Artık bir alt hizmetin altına istediği kadar satır
+ * ekleyebiliyor.
+ *
+ * ── KATALOG BAĞI ZORUNLU ────────────────────────────────────────────────
+ *
+ * Her satır bir alt hizmete bağlı (`serviceId`). Bağ olmadan hizmet
+ * aramada, talep eşleşmesinde ve "Yakında" hesabında görünmez — uzman
+ * yazdığını sanır, müşteri hiç bulamaz.
+ *
+ * İlk satır katalog adıyla ve önerilen fiyatla açılıyor; uzman ikisini de
+ * değiştirebiliyor. Boş bir ad kutusu vermek, ne yazacağını bilmeyen
+ * uzmanı boş bırakırdı.
+ */
 const CATS = activeCategories();
+
+let sayac = 0;
+const yeniAnahtar = (serviceId: string) => `${serviceId}#${Date.now().toString(36)}${sayac++}`;
 
 export default function SellerServicesScreen() {
   const { t, locale } = useLocale();
@@ -21,26 +45,48 @@ export default function SellerServicesScreen() {
   const storeServices = useStore((s) => s.sellerServices);
   const setSellerServices = useStore((s) => s.setSellerServices);
   const [cat, setCat] = useState<string>(CATS[0]!.id);
-  const [svc, setSvc] = useState<Record<string, SvcRow>>(storeServices);
+  const [rows, setRows] = useState<SellerServiceRow[]>(storeServices);
 
-  const activeCount = Object.keys(svc).length;
-  const rows = servicesOf(cat);
+  const rowsByService = useMemo(() => {
+    const m: Record<string, SellerServiceRow[]> = {};
+    for (const r of rows) (m[r.serviceId] ??= []).push(r);
+    return m;
+  }, [rows]);
 
-  const toggle = (s: TaxService) =>
-    setSvc((m) => {
-      if (m[s.id]) {
-        const rest = { ...m };
-        delete rest[s.id];
-        return rest;
-      }
-      return { ...m, [s.id]: { price: String(s.price), dur: String(s.durationMin) } };
-    });
+  const activeCount = rows.length;
+  const services = servicesOf(cat);
 
-  const edit = (id: string, field: keyof SvcRow, val: string) =>
-    setSvc((m) => (m[id] ? { ...m, [id]: { ...m[id]!, [field]: val.replace(/[^0-9]/g, '') } } : m));
+  /** Alt hizmete yeni satır — ilk satır katalog adı + önerilen fiyatla. */
+  const ekle = (s: TaxService) =>
+    setRows((cur) => [
+      ...cur,
+      {
+        key: yeniAnahtar(s.id),
+        serviceId: s.id,
+        name: tri(s.label, locale),
+        price: String(s.price),
+        dur: String(s.durationMin),
+      },
+    ]);
+
+  const sil = (key: string) => setRows((cur) => cur.filter((r) => r.key !== key));
+
+  const edit = (key: string, field: 'name' | 'price' | 'dur', val: string) =>
+    setRows((cur) =>
+      cur.map((r) =>
+        r.key === key ? { ...r, [field]: field === 'name' ? val : val.replace(/[^0-9]/g, '') } : r,
+      ),
+    );
 
   const save = () => {
-    setSellerServices(svc);
+    /*
+     * ADSIZ ya da FİYATSIZ satır KAYDEDİLMİYOR. Müşteriye adsız bir
+     * hizmet ya da 0 ₸ göstermek, uzmanın yarım bıraktığı bir kaydı
+     * gerçek bir teklif gibi sunmak olurdu.
+     */
+    const gecerli = rows.filter((r) => r.name.trim() && Number(r.price) > 0);
+    setSellerServices(gecerli);
+    setRows(gecerli);
     Alert.alert(t('seller.services.title'), t('seller.services.saved'));
   };
 
@@ -72,7 +118,10 @@ export default function SellerServicesScreen() {
         >
           {CATS.map((c) => {
             const on = c.id === cat;
-            const n = servicesOf(c.id).filter((s) => svc[s.id]).length;
+            const n = servicesOf(c.id).reduce(
+              (sum, s) => sum + (rowsByService[s.id]?.length ?? 0),
+              0,
+            );
             return (
               <Pressable
                 key={c.id}
@@ -94,53 +143,79 @@ export default function SellerServicesScreen() {
           })}
         </ScrollView>
 
-        {/* Alt hizmetler */}
-        {rows.length === 0 ? (
+        {services.length === 0 ? (
           <Text variant="caption" tone="muted" style={styles.empty}>
             {t('seller.services.empty')}
           </Text>
         ) : (
-          rows.map((s) => {
-            const row = svc[s.id];
-            const on = !!row;
+          services.map((s) => {
+            const kendi = rowsByService[s.id] ?? [];
             return (
-              <View key={s.id} style={[styles.card, on && styles.cardOn]}>
-                <Pressable style={styles.cardTop} onPress={() => toggle(s)}>
-                  <View style={[styles.check, on && styles.checkOn]}>
-                    {on ? <Ionicons name="checkmark" size={14} color={colors.onAccent} /> : null}
+              <View key={s.id} style={[styles.card, kendi.length > 0 && styles.cardOn]}>
+                {/* Alt hizmet başlığı — katalog adı, DEĞİŞMEZ. Uzmanın kendi
+                    adları bunun ALTINDA duruyor; hangi başlığa bağlı
+                    olduğunu görmesi gerekiyor. */}
+                <Pressable style={styles.cardTop} onPress={() => ekle(s)}>
+                  <View style={styles.plus}>
+                    <Ionicons name="add" size={16} color={colors.accentFg} />
                   </View>
                   <Text variant="bodyStrong" tone="ink" style={styles.name} numberOfLines={1}>
                     {tri(s.label, locale)}
                   </Text>
+                  {kendi.length > 0 ? (
+                    <Text variant="caption" tone="muted">
+                      {kendi.length}
+                    </Text>
+                  ) : null}
                 </Pressable>
-                {on ? (
-                  <View style={styles.fieldRow}>
-                    <View style={styles.field}>
-                      <Text variant="caption" tone="muted">
-                        {t('expert.reg.service_price')}
-                      </Text>
+
+                {kendi.map((r) => (
+                  <View key={r.key} style={styles.satir}>
+                    <View style={styles.satirBas}>
                       <TextInput
-                        value={row.price}
-                        onChangeText={(v) => edit(s.id, 'price', v)}
-                        keyboardType="number-pad"
+                        value={r.name}
+                        onChangeText={(v) => edit(r.key, 'name', v)}
+                        placeholder={tri(s.label, locale)}
                         placeholderTextColor={colors.muted}
-                        style={styles.input}
+                        style={[styles.input, styles.adInput]}
                       />
+                      <Pressable
+                        onPress={() => sil(r.key)}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('common.delete')}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={colors.muted} />
+                      </Pressable>
                     </View>
-                    <View style={styles.field}>
-                      <Text variant="caption" tone="muted">
-                        {t('expert.reg.service_dur')}
-                      </Text>
-                      <TextInput
-                        value={row.dur}
-                        onChangeText={(v) => edit(s.id, 'dur', v)}
-                        keyboardType="number-pad"
-                        placeholderTextColor={colors.muted}
-                        style={styles.input}
-                      />
+                    <View style={styles.fieldRow}>
+                      <View style={styles.field}>
+                        <Text variant="caption" tone="muted">
+                          {t('expert.reg.service_price')}
+                        </Text>
+                        <TextInput
+                          value={r.price}
+                          onChangeText={(v) => edit(r.key, 'price', v)}
+                          keyboardType="number-pad"
+                          placeholderTextColor={colors.muted}
+                          style={styles.input}
+                        />
+                      </View>
+                      <View style={styles.field}>
+                        <Text variant="caption" tone="muted">
+                          {t('expert.reg.service_dur')}
+                        </Text>
+                        <TextInput
+                          value={r.dur}
+                          onChangeText={(v) => edit(r.key, 'dur', v)}
+                          keyboardType="number-pad"
+                          placeholderTextColor={colors.muted}
+                          style={styles.input}
+                        />
+                      </View>
                     </View>
                   </View>
-                ) : null}
+                ))}
               </View>
             );
           })
@@ -170,6 +245,25 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.pill,
     },
     countText: { fontFamily: font.semibold },
+    // Uzmanın kendi satırı — alt hizmet başlığının ALTINDA, girintili.
+    satir: {
+      gap: space(1),
+      paddingTop: space(1.25),
+      marginTop: space(1.25),
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+    },
+    satirBas: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    adInput: { flex: 1 },
+    // "Ekle" işareti: başlığa dokunmak satır açıyor.
+    plus: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.accentSoft,
+    },
     chips: { gap: space(1), paddingRight: space(3), paddingBottom: space(2) },
     chip: {
       flexDirection: 'row',

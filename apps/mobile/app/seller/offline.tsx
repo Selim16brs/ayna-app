@@ -6,8 +6,9 @@ import { hasConflict } from '@ayna/domain';
 import type { Appointment } from '../../src/data';
 import { localWallClockToAlmatyMs } from '../../src/datetime';
 import { useStore } from '../../src/store';
+import type { SellerServiceRow } from '../../src/store';
 import { fillParams, useLocale } from '../../src/locale';
-import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
+import { activeCategories, servicesOf, tri } from '../../src/taxonomy';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -39,16 +40,34 @@ export default function OfflineBookingScreen() {
   // Randevunun sahibi = hesabın kendi adı (uzman → kendi adı; salon → salon adı) — 'Salonum' hardcode yerine
   const myName = useStore((s) => s.currentUser?.name) ?? 'AYNA';
 
-  // §6.1 — uzmanın profilinde kayıtlı hizmetler (Hizmetler ekranından) → accordion seçim
+  /*
+   * §6.1 + brief §4.1 — uzmanın KENDİ hizmet satırları (Hizmetlerim
+   * ekranından). Artık alt hizmet başına tek şablon satır değil; uzman
+   * "Kök boyası" ve "Tam boya"yı ayrı ayrı fiyatlayabiliyor ve offline
+   * randevuda ikisini AYRI seçebilmeli.
+   */
   const sellerServices = useStore((s) => s.sellerServices);
-  // Kategori bazında yalnız kayıtlı hizmetleri grupla (boş kategorileri gizle)
-  const svcGroups = useMemo(
-    () =>
-      activeCategories()
-        .map((c) => ({ cat: c, items: servicesOf(c.id).filter((s) => sellerServices[s.id]) }))
-        .filter((g) => g.items.length > 0),
-    [sellerServices],
-  );
+  // Kategori bazında yalnız uzmanın kendi yazdığı satırlar (boş kategoriler gizli)
+  const svcGroups = useMemo(() => {
+    const altHizmetSirasi = new Map<string, number>();
+    let i = 0;
+    for (const c of activeCategories())
+      for (const s of servicesOf(c.id)) altHizmetSirasi.set(s.id, i++);
+    return activeCategories()
+      .map((c) => {
+        const kimlikler = new Set(servicesOf(c.id).map((s) => s.id));
+        const items = sellerServices
+          .filter((r) => kimlikler.has(r.serviceId))
+          // Katalog sırasını koru: uzmanın ekleme sırası rastgele olabilir,
+          // ekranda hep aynı düzen görünmeli.
+          .sort(
+            (a, b) =>
+              (altHizmetSirasi.get(a.serviceId) ?? 0) - (altHizmetSirasi.get(b.serviceId) ?? 0),
+          );
+        return { cat: c, items };
+      })
+      .filter((g) => g.items.length > 0);
+  }, [sellerServices]);
   const hasServices = svcGroups.length > 0;
 
   const [customer, setCustomer] = useState('');
@@ -69,28 +88,32 @@ export default function OfflineBookingScreen() {
   const bookings = useStore((s) => s.bookings);
   const queueOfflineBooking = useStore((s) => s.queueOfflineBooking);
 
-  // Taksonomi id → TaxService (seçili hizmetlerin ad/fiyat/süresini toplamak için)
-  const svcById = useMemo(() => {
-    const m: Record<string, TaxService> = {};
-    for (const g of svcGroups) for (const s of g.items) m[s.id] = s;
+  // Satır anahtarı → satır (seçili hizmetlerin ad/fiyat/süresini toplamak için)
+  const rowByKey = useMemo(() => {
+    const m: Record<string, SellerServiceRow> = {};
+    for (const g of svcGroups) for (const r of g.items) m[r.key] = r;
     return m;
   }, [svcGroups]);
 
   // Seçim değişince: ad = birleştirilmiş, fiyat = toplam, süre = toplam (uzman yine düzenleyebilir)
-  const applySelection = (ids: string[]) => {
-    setSelectedIds(ids);
-    const names = ids.map((id) => (svcById[id] ? tri(svcById[id]!.label, locale) : ''));
+  const applySelection = (keys: string[]) => {
+    setSelectedIds(keys);
+    // Uzmanın KENDİ adı kullanılıyor, katalog etiketi değil: müşteriye de
+    // randevu kartında o ad görünüyor.
+    const names = keys.map((k) => rowByKey[k]?.name ?? '');
     setService(names.filter(Boolean).join(' + '));
-    const totalPrice = ids.reduce((sum, id) => sum + Number(sellerServices[id]?.price || 0), 0);
-    const totalDur = ids.reduce((sum, id) => sum + Number(sellerServices[id]?.dur || 0), 0);
+    const totalPrice = keys.reduce((sum, k) => sum + Number(rowByKey[k]?.price || 0), 0);
+    const totalDur = keys.reduce((sum, k) => sum + Number(rowByKey[k]?.dur || 0), 0);
     if (totalPrice) setPrice(String(totalPrice));
     if (totalDur) setDur(String(totalDur));
   };
 
-  // Çoklu seçim: hizmete dokun → ekle/çıkar
-  const toggleService = (s: TaxService) =>
+  // Çoklu seçim: satıra dokun → ekle/çıkar
+  const toggleService = (r: SellerServiceRow) =>
     applySelection(
-      selectedIds.includes(s.id) ? selectedIds.filter((x) => x !== s.id) : [...selectedIds, s.id],
+      selectedIds.includes(r.key)
+        ? selectedIds.filter((x) => x !== r.key)
+        : [...selectedIds, r.key],
     );
 
   const canSave = customer.trim().length > 1 && service.trim().length > 1 && !busy;
@@ -189,7 +212,7 @@ export default function OfflineBookingScreen() {
             <View style={styles.accordion}>
               {svcGroups.map(({ cat, items }) => {
                 const open = openCat === cat.id;
-                const picked = items.filter((s) => selectedIds.includes(s.id)).length;
+                const picked = items.filter((r) => selectedIds.includes(r.key)).length;
                 return (
                   <View key={cat.id} style={styles.accCat}>
                     <Pressable
@@ -217,14 +240,13 @@ export default function OfflineBookingScreen() {
                     </Pressable>
                     {open ? (
                       <View style={styles.accBody}>
-                        {items.map((s) => {
-                          const on = selectedIds.includes(s.id);
-                          const row = sellerServices[s.id];
+                        {items.map((r) => {
+                          const on = selectedIds.includes(r.key);
                           return (
                             <Pressable
-                              key={s.id}
+                              key={r.key}
                               style={[styles.accRow, on && styles.accRowOn]}
-                              onPress={() => toggleService(s)}
+                              onPress={() => toggleService(r)}
                             >
                               <View style={[styles.check, on && styles.checkOn]}>
                                 {on ? (
@@ -237,13 +259,11 @@ export default function OfflineBookingScreen() {
                                 style={styles.accName}
                                 numberOfLines={1}
                               >
-                                {tri(s.label, locale)}
+                                {r.name}
                               </Text>
-                              {row ? (
-                                <Text variant="caption" tone="muted">
-                                  {row.price} ₸ · {row.dur} {t('pro.min')}
-                                </Text>
-                              ) : null}
+                              <Text variant="caption" tone="muted">
+                                {r.price} ₸ · {r.dur} {t('pro.min')}
+                              </Text>
                             </Pressable>
                           );
                         })}

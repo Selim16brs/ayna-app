@@ -166,7 +166,7 @@ export default function ReportsScreen() {
   //  · hizmet listesi boşsa müşteri randevu ALAMIYOR (professional/[id] CTA)
   const myCity = useStore((s) => s.currentUser?.city);
   const myTier = useStore((s) => s.currentUser?.membershipTier ?? 'free');
-  const myServiceCount = useStore((s) => Object.keys(s.sellerServices).length);
+  const myServiceCount = useStore((s) => s.sellerServices.length);
   const gorunurlukEtkenleri = useMemo(
     () => [
       {

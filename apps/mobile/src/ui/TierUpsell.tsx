@@ -25,10 +25,10 @@ export function TierUpsell() {
    * teklif ya kullanıcı bir Premium özelliğe dokununca ya da EN AZ BİR
    * ANLAMLI AKSİYON tamamlandıktan sonra çıkmalı.
    *
-   * Ölçüt EN AZ BİR RANDEVU. Hizmet listesini ölçüt yapmayı denedim ama
-   * `sellerServices` demo verisiyle TOHUMLANIYOR — hiç boş olmuyor, yani
-   * kullanıcının bir şey yaptığını göstermiyor. Randevu ise ancak gerçek
-   * bir etkileşimle oluşuyor.
+   * Ölçüt EN AZ BİR RANDEVU. Hizmet listesi de artık gerçek bir sinyal
+   * (demo tohumu kalktı, yeni hesap boş başlıyor) ama randevu daha güçlü:
+   * hizmet yazmak henüz kimseyle çalışmadığı anlamına geliyor, randevu
+   * ise platformdan değer aldığını gösteriyor.
    */
   const anlamliAksiyon = useStore((st) => st.bookings.length > 0);
 
