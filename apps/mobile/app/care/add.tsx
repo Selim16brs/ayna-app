@@ -1,7 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   CATEGORIES,
   QUICK_ADD,
@@ -17,11 +27,11 @@ import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   Button,
+  TAB_BAR_CLEARANCE,
   DateField,
   formatTrDate,
   Screen,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   Text,
   TextInput,
 } from '../../src/ui';
@@ -139,7 +149,7 @@ function LogForm({
   };
 
   return (
-    <>
+    <FormKabi>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}
@@ -217,7 +227,7 @@ function LogForm({
           onPress={save}
         />
       </View>
-    </>
+    </FormKabi>
   );
 }
 
@@ -257,7 +267,7 @@ function RoutineForm({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <>
+    <FormKabi>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.panel, shadow.soft]}>
           <Field label={t('care.add.what')}>
@@ -344,7 +354,58 @@ function RoutineForm({ onDone }: { onDone: () => void }) {
           onPress={save}
         />
       </View>
-    </>
+    </FormKabi>
+  );
+}
+
+/**
+ * FORM KABI — klavye açıkken düğme yazının üstüne binmesin.
+ *
+ * Kurucu: "kaydet ile klavye arası çok açık ve yazı altta kalıyor."
+ *
+ * İKİ AYRI SEBEP vardı:
+ *
+ *  1. `footer` altında `TAB_BAR_CLEARANCE` kadar boşluk ayırıyordu. Bu
+ *     ekran bir YIĞIN ekranı — altında sekme çubuğu YOK. Klavye açılınca
+ *     o boşluk da yukarı taşınıyor ve "Kaydet" ile klavye arasında koca
+ *     bir delik bırakıyordu.
+ *  2. Klavye kaçışı yoktu: içerik yukarı itilmediği için yazılan satır
+ *     klavyenin altında kalıyordu.
+ *
+ * Üç form da (günlük, rutin, özel gün) aynı kalıbı kullanıyor; kap ortak
+ * ki biri düzelip diğeri bozuk kalmasın.
+ */
+function FormKabi({ children }: { children: React.ReactNode }) {
+  const alt = useSafeAreaInsets().bottom;
+  /*
+   * ALT BOŞLUK KLAVYEYE GÖRE.
+   *
+   * Kapalıyken alt menü ekranda: içerik onun altında kalmasın diye
+   * `TAB_BAR_CLEARANCE` kadar boşluk ŞART (`tabbar-clearance` testi bunu
+   * bekliyor ve haklı).
+   *
+   * Açıkken menü zaten görünmüyor ama boşluk yukarı taşınıyor ve "Kaydet"
+   * ile klavye arasında koca bir delik bırakıyordu — kurucunun gördüğü şey
+   * buydu. O yüzden boşluk klavye açıkken güvenli alana iniyor.
+   */
+  const [klavye, setKlavye] = useState(false);
+  useEffect(() => {
+    const ac = Keyboard.addListener('keyboardDidShow', () => setKlavye(true));
+    const kapa = Keyboard.addListener('keyboardDidHide', () => setKlavye(false));
+    return () => {
+      ac.remove();
+      kapa.remove();
+    };
+  }, []);
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      // Yığın başlığı zaten yukarıda; ek kaydırma içeriği zıplatıyor.
+      keyboardVerticalOffset={0}
+    >
+      <View style={{ flex: 1, paddingBottom: klavye ? alt : TAB_BAR_CLEARANCE }}>{children}</View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -370,7 +431,7 @@ function MomentForm({ onDone }: { onDone: () => void }) {
   };
 
   return (
-    <>
+    <FormKabi>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.panel, shadow.soft]}>
           <Field label={t('care.add.what')}>
@@ -394,7 +455,7 @@ function MomentForm({ onDone }: { onDone: () => void }) {
           onPress={save}
         />
       </View>
-    </>
+    </FormKabi>
   );
 }
 
@@ -477,6 +538,8 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt güvenli alan `FormKabi` içinde veriliyor; burada sekme
+      // çubuğu boşluğu ayırmak klavye açıkken delik bırakıyordu.
+      paddingBottom: space(1.5),
     },
   });
