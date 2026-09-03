@@ -5,7 +5,19 @@ import { hashPassword, verifyPassword } from '../common/crypto';
 import { PrismaService } from '../prisma/prisma.service';
 
 /** Panel girişinin kullandığı yönetici kimliği (auth.service'teki 'admin' takma adı buraya çözülür). */
-const ADMIN_EMAIL = 'admin@ayna.kz';
+/*
+ * Kurucu: "bizim ayna.kz diye bir domainimiz yok. mail adresimiz
+ * info@ayna.salon ve websitemiz www.ayna.salon."
+ *
+ * `admin@ayna.kz` OLMAYAN bir alan adıydı. Giriş için sorun değildi (adres
+ * yalnız kimlik olarak kullanılıyor, posta gitmiyor) ama şifre sıfırlama
+ * ya da bildirim ihtiyacı doğduğunda hiçbir yere ulaşmayacaktı — ve panelde
+ * gerçekmiş gibi görünüyordu.
+ *
+ * Mevcut kayıt `pre-push/09-yonetici-alan-adi.sql` ile taşınıyor; burada
+ * yalnız sabit değişiyor.
+ */
+const ADMIN_EMAIL = 'admin@ayna.salon';
 /** Yönetici şifresinin en az uzunluğu. */
 const EN_AZ_UZUNLUK = 12;
 

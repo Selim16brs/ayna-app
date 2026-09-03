@@ -63,7 +63,9 @@ export class MailerService {
   }
 
   private get gonderen(): string {
-    return process.env.EMAIL_FROM ?? 'AYNA <merhaba@ayna.salon>';
+    // Kurucu: "mail adresimiz info@ayna.salon". `merhaba@` diye bir kutu yok;
+    // oradan giden postanın yanıtı hiçbir yere ulaşmazdı.
+    return process.env.EMAIL_FROM ?? 'AYNA <info@ayna.salon>';
   }
 
   private get site(): string {
