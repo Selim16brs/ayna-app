@@ -5,6 +5,8 @@ import { useLocale } from '../locale';
 import {
   AY_ADI,
   DAKIKALAR,
+  carkSecimi,
+  carkSirasi,
   GUN_KISA,
   SAATLER,
   ayEkle,
@@ -37,6 +39,71 @@ import { Text } from './Text';
  * MANTIK AYRI (`src/takvim.ts`): ızgara, sınırlar ve ay geçişi JSX olmadan
  * test ediliyor.
  */
+/** Çarkta bir satırın yüksekliği. Sabit: kaydırma matematiği buna dayanıyor. */
+const OGE_Y = 44;
+/** Görünen satır sayısı — tek sayı ki seçili olan tam ortada dursun. */
+const GORUNEN = 5;
+
+/**
+ * KLASİK ÇEVİRMELİ SEÇİCİ (wheel).
+ *
+ * Kurucu: "saat için klasik sistem bir şey yapsan."
+ *
+ * Telefonun kendi çarkı NATIVE bir modülden geliyor ve o modül kurucunun
+ * yapısında yok (bkz. `takvim.ts`) — bu yüzden aynı davranış saf JS ile
+ * kuruldu: kaydırınca satırlara OTURUYOR, seçili satır ortada duruyor ve
+ * ortadaki şerit hangi değerin seçili olduğunu gösteriyor.
+ *
+ * `snapToInterval` + `decelerationRate="fast"` çarkın "tık tık" oturma
+ * hissini veriyor; onlarsız liste serbest kayıyor ve hangi değerin seçili
+ * olduğu belirsizleşiyor.
+ */
+function Cark({
+  liste,
+  deger,
+  degisti,
+  etiket,
+}: {
+  liste: readonly number[];
+  deger: number;
+  degisti: (v: number) => void;
+  etiket: string;
+}) {
+  const styles = useThemedStyles(makeStyles);
+  const sira = carkSirasi(liste, deger);
+  return (
+    <View style={styles.cark} accessibilityLabel={etiket}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        snapToInterval={OGE_Y}
+        decelerationRate="fast"
+        // Açılışta seçili değer ortada olsun; kullanıcı aramasın.
+        contentOffset={{ x: 0, y: sira * OGE_Y }}
+        contentContainerStyle={styles.carkIc}
+        onMomentumScrollEnd={(e) =>
+          degisti(liste[carkSecimi(e.nativeEvent.contentOffset.y, OGE_Y, liste.length)]!)
+        }
+        // Tek dokunuşla da bitebilsin: parmak kalkınca sürüklenme olmazsa
+        // `onMomentumScrollEnd` HİÇ tetiklenmiyor ve seçim kaydedilmiyordu.
+        onScrollEndDrag={(e) =>
+          degisti(liste[carkSecimi(e.nativeEvent.contentOffset.y, OGE_Y, liste.length)]!)
+        }
+      >
+        {liste.map((v) => (
+          <View key={v} style={styles.carkOge}>
+            <Text variant="bodyStrong" tone={v === deger ? 'ink' : 'muted'}>
+              {String(v).padStart(2, '0')}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+      {/* Ortadaki şerit: hangi satırın seçili olduğunu gösteriyor.
+          Dokunuşu engellememeli, yoksa çark kaydırılamıyor. */}
+      <View pointerEvents="none" style={styles.carkSerit} />
+    </View>
+  );
+}
+
 export function TakvimSecici({
   acik,
   deger,
@@ -129,66 +196,32 @@ export function TakvimSecici({
 
           {saatli ? (
             <View style={styles.saatBolum}>
-              {/*
-               * ── SAAT SEÇİMİ YENİDEN ───────────────────────────────────
-               *
-               * Kurucu: "saat seçimleri çok saçma olmuş."
-               *
-               * İlk hâli iki DAR DİKEY ŞERİTTİ (saat ve dakika). 24 saat
-               * 132 piksellik bir kutuda kayıyordu: seçtiğin değer görünmüyor,
-               * nereye geldiğini bilmiyor, kaydırmayı takvim hareketiyle
-               * karıştırıyordun.
-               *
-               * Yeni hâli: saat TEK SATIRDA yatay şerit — parmağın doğal
-               * yönü ve seçili olan hep ortada okunuyor. Dakika dört çipe
-               * indi (00/15/30/45); randevu ve hatırlatmada bundan ince
-               * ayar gerekmiyor, beşer beşer 12 seçenek gereksiz kalabalıktı.
-               */}
               <View style={styles.saatBaslikSatir}>
                 <Text variant="caption" tone="muted">
                   {t('takvim.saat')}
                 </Text>
-                {/* Seçili değer BÜYÜK ve sabit yerde: şeritte kaybolmasın. */}
+                {/* Seçili değer ayrıca yazılı: çarkta gözden kaçmasın. */}
                 <Text variant="bodyStrong" tone="ink">
                   {String(secili.getHours()).padStart(2, '0')}:
                   {String(secili.getMinutes()).padStart(2, '0')}
                 </Text>
               </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.saatSerit}
-              >
-                {SAATLER.map((h) => {
-                  const on = secili.getHours() === h;
-                  return (
-                    <Pressable
-                      key={h}
-                      onPress={() => setSecili((d) => saatUygula(d, h, d.getMinutes()))}
-                      style={[styles.saatCip, on && styles.saatCipSecili]}
-                    >
-                      <Text variant="caption" tone={on ? 'onAccent' : 'ink'}>
-                        {String(h).padStart(2, '0')}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-              <View style={styles.dakikaSatir}>
-                {DAKIKALAR.map((m) => {
-                  const on = secili.getMinutes() === m;
-                  return (
-                    <Pressable
-                      key={m}
-                      onPress={() => setSecili((d) => saatUygula(d, d.getHours(), m))}
-                      style={[styles.dakikaCip, on && styles.saatCipSecili]}
-                    >
-                      <Text variant="caption" tone={on ? 'onAccent' : 'ink'}>
-                        :{String(m).padStart(2, '0')}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+              <View style={styles.carkSatir}>
+                <Cark
+                  liste={SAATLER}
+                  deger={secili.getHours()}
+                  degisti={(h) => setSecili((d) => saatUygula(d, h, d.getMinutes()))}
+                  etiket={t('takvim.saat')}
+                />
+                <Text variant="bodyStrong" tone="ink">
+                  :
+                </Text>
+                <Cark
+                  liste={DAKIKALAR}
+                  deger={secili.getMinutes()}
+                  degisti={(m) => setSecili((d) => saatUygula(d, d.getHours(), m))}
+                  etiket={t('takvim.saat')}
+                />
               </View>
             </View>
           ) : null}
@@ -251,28 +284,29 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'space-between',
       marginBottom: space(1),
     },
-    saatSerit: { gap: space(1), paddingRight: space(2) },
-    saatCip: {
-      minWidth: 44,
-      paddingVertical: space(1),
-      paddingHorizontal: space(1.25),
+    carkSatir: {
+      flexDirection: 'row',
       alignItems: 'center',
-      borderRadius: radius.md,
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.line,
+      justifyContent: 'center',
+      gap: space(1),
     },
-    dakikaSatir: { flexDirection: 'row', gap: space(1), marginTop: space(1) },
-    dakikaCip: {
-      flex: 1,
-      paddingVertical: space(1),
-      alignItems: 'center',
+    cark: { width: 92, height: OGE_Y * GORUNEN },
+    // Üstte/altta boşluk: ilk ve son değer de ORTAYA gelebilsin.
+    carkIc: { paddingVertical: OGE_Y * ((GORUNEN - 1) / 2) },
+    carkOge: { height: OGE_Y, alignItems: 'center', justifyContent: 'center' },
+    carkSerit: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: OGE_Y * ((GORUNEN - 1) / 2),
+      height: OGE_Y,
       borderRadius: radius.md,
-      backgroundColor: colors.surface,
+      backgroundColor: colors.accentSoft,
       borderWidth: 1,
-      borderColor: colors.line,
+      borderColor: colors.accent,
+      // Şerit yazının ARKASINDA kalmalı.
+      zIndex: -1,
     },
-    saatCipSecili: { backgroundColor: colors.accent, borderColor: colors.accent },
     altBar: {
       flexDirection: 'row',
       alignItems: 'center',

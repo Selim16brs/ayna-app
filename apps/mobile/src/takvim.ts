@@ -110,10 +110,30 @@ export function tarihYaz(d: Date, saatliMi: boolean): string {
 /** Saat seçenekleri (0..23). */
 export const SAATLER = Array.from({ length: 24 }, (_, i) => i);
 /**
- * Dakika seçenekleri — ÇEYREK saat.
+ * Dakika seçenekleri — BEŞER.
  *
- * Kurucu: "saat seçimleri çok saçma olmuş." Beşer beşer 12 seçenek
- * gereksiz kalabalıktı; randevu ve hatırlatmada bundan ince ayar
- * gerekmiyor. Dördü tek satıra sığıyor ve tek dokunuşla seçiliyor.
+ * Kurucu: "saat için klasik sistem bir şey yapsan." Klasik çevirmeli
+ * seçicide kaydırmak zaten ucuz; çeyrek saate kısmak burada gereksiz bir
+ * kısıtlamaya dönüşüyordu (13:10'a randevu yazılamıyordu).
  */
-export const DAKIKALAR = [0, 15, 30, 45] as const;
+export const DAKIKALAR = Array.from({ length: 12 }, (_, i) => i * 5);
+
+/**
+ * Bir değerin çark içindeki sırası. Bulunamazsa 0 —
+ * çark boş açılmasın.
+ */
+export function carkSirasi(liste: readonly number[], deger: number): number {
+  const i = liste.indexOf(deger);
+  return i >= 0 ? i : 0;
+}
+
+/**
+ * Kaydırma konumundan seçilen sıra.
+ *
+ * Sınırlara KIRPILIYOR: hızlı savurmada taşan konum listenin dışına
+ * çıkıp `undefined` üretiyor ve saat "NaN" oluyordu.
+ */
+export function carkSecimi(kaydirma: number, ogeYuksekligi: number, adet: number): number {
+  const ham = Math.round(kaydirma / ogeYuksekligi);
+  return Math.max(0, Math.min(adet - 1, ham));
+}
