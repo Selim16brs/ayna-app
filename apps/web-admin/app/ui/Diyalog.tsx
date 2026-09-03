@@ -209,7 +209,7 @@ export function DiyalogSaglayici({ children }: { children: ReactNode }) {
                   <button type="button" className="btn-sm btn-ghost" onClick={() => kapat(null)}>
                     Vazgeç
                   </button>
-                  <button type="submit" className="btn-sm" disabled={eksikZorunlu}>
+                  <button type="submit" className="btn-sm btn-primary" disabled={eksikZorunlu}>
                     {istek.onayEtiket ?? 'Kaydet'}
                   </button>
                 </div>
@@ -221,7 +221,7 @@ export function DiyalogSaglayici({ children }: { children: ReactNode }) {
                 </button>
                 <button
                   type="button"
-                  className={`btn-sm ${istek.tehlikeli ? 'btn-danger' : ''}`}
+                  className={`btn-sm ${istek.tehlikeli ? 'btn-danger' : 'btn-primary'}`}
                   onClick={() => kapat(true)}
                   autoFocus
                 >

@@ -163,88 +163,126 @@ function AdminGovde() {
   };
   // §12 — bilgi mimarisi: işletim mantığına göre GRUPLU nav. "Onay Kuyruğu" panelin kalbi:
   // bekleyen iş sayaçları (rozet) /admin/overview.pending'den gelir, 30 sn'de bir tazelenir.
+  /*
+   * ── BİLGİ MİMARİSİ ────────────────────────────────────────────────────
+   *
+   * Kurucu: "app'de çalışan fonksiyonları gruplayarak doğru başlıklar
+   * altında mantıklı ve user friendly olarak yap."
+   *
+   * Eski gruplama İÇ MODÜLLERE göreydi ("Pazar", "Finans") ve yöneticinin
+   * yaptığı işe karşılık gelmiyordu. Yeni gruplar bir soruyu cevaplıyor:
+   *
+   *   PANO              Bugün ne durumdayız?
+   *   ONAY BEKLEYENLER  Birileri BENİ bekliyor. (kuyrukların hepsi burada)
+   *   KİŞİLER           Kim var, kimi kısıtladım?
+   *   RANDEVU & PARA    Para nerede, kim kime ne borçlu?
+   *   KATALOG           Platform NE satıyor?
+   *   İÇERİK            Kullanıcıya ne gösteriyoruz?
+   *   SİSTEM            Ayarlar ve iz kaydı.
+   *
+   * Etiketler de değişti: "Randevu & Ödeme Kuyrukları" gibi iç isimler
+   * yerine yöneticinin kafasındaki adlar ("Randevular & Ödemeler").
+   */
   type NavItem = { id: Tab; label: string; icon: string; badge?: number };
   const q = pendingCounts;
   const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     {
       title: 'PANO',
       items: [
-        { id: 'overview', label: 'Genel Bakış', icon: '📊' },
-        { id: 'stats', label: 'İstatistik', icon: '📈' },
+        { id: 'overview', label: 'Bugün', icon: '◎' },
+        { id: 'stats', label: 'Raporlar', icon: '◔' },
       ],
     },
     {
-      title: 'ONAY KUYRUĞU',
+      /*
+       * Panelin kalbi. Dokuz kuyruğun HEPSİ burada: dağıtıldıklarında
+       * "beni bekleyen iş var mı" sorusunun cevabı menüye yayılıyordu.
+       */
+      title: 'ONAY BEKLEYENLER',
       items: [
-        { id: 'businesses', label: 'Salon Onayları', icon: '🏪', badge: q?.businesses },
-        { id: 'specialists', label: 'Uzman Doğrulama', icon: '💇', badge: undefined },
-        { id: 'kyc', label: 'Kimlik (KYC)', icon: '🪪', badge: q?.kyc },
-        { id: 'support', label: 'Destek Talepleri', icon: '🆘', badge: undefined },
+        { id: 'businesses', label: 'Salon başvuruları', icon: '◈', badge: q?.businesses },
+        { id: 'specialists', label: 'Uzman doğrulama', icon: '◇' },
+        { id: 'kyc', label: 'Kimlik doğrulama', icon: '⬡', badge: q?.kyc },
         {
           id: 'profileChanges',
-          label: 'Profil Değişiklikleri',
-          icon: '📝',
+          label: 'Profil değişiklikleri',
+          icon: '✎',
           badge: q?.profileChanges,
         },
-        { id: 'subscriptions', label: 'Abonelik Dekontları', icon: '💎', badge: q?.subscriptions },
-        { id: 'disputes', label: 'Depozito İtirazları', icon: '⚖️', badge: q?.disputes },
-        { id: 'reviewDisputes', label: 'Yorum İtirazları', icon: '🗣️', badge: q?.reviewDisputes },
-        { id: 'moderation', label: 'W2W Moderasyon', icon: '🛡️', badge: q?.circle },
+        { id: 'subscriptions', label: 'Abonelik dekontları', icon: '❖', badge: q?.subscriptions },
+        { id: 'disputes', label: 'Depozito itirazları', icon: '⚖', badge: q?.disputes },
+        { id: 'reviewDisputes', label: 'Yorum itirazları', icon: '❝', badge: q?.reviewDisputes },
+        { id: 'moderation', label: 'Topluluk moderasyonu', icon: '⛨', badge: q?.circle },
+        { id: 'support', label: 'Destek talepleri', icon: '☏' },
       ],
     },
     {
-      title: 'ÜYELER',
+      title: 'KİŞİLER',
       items: [
-        { id: 'users', label: 'Tüm Üyeler', icon: '👥' },
-        { id: 'penalties', label: 'Ceza Takibi', icon: '⛔' },
+        { id: 'users', label: 'Üyeler', icon: '☰' },
+        { id: 'professionals', label: 'Uzman & salonlar', icon: '✦' },
+        { id: 'penalties', label: 'Kısıtlı hesaplar', icon: '⊘' },
       ],
     },
     {
-      title: 'PAZAR',
+      title: 'RANDEVU & PARA',
       items: [
-        { id: 'quotes', label: 'Canlı Talepler', icon: '📩' },
-        { id: 'professionals', label: 'Keşfet Kataloğu', icon: '💇' },
-        { id: 'services', label: 'Hizmet Kategorileri', icon: '🗂️' },
-        { id: 'prices', label: 'Taban Fiyatlar', icon: '🏷️' },
-      ],
-    },
-    {
-      title: 'İÇERİK & PAZARLAMA',
-      items: [
-        { id: 'content', label: 'Blog & Tema', icon: '📰' },
-        { id: 'announcements', label: 'Duyurular', icon: '📣' },
-        { id: 'campaigns', label: 'Kampanyalar', icon: '🎯' },
-        { id: 'ads', label: 'Reklamlar', icon: '📢', badge: q?.adOrders },
-      ],
-    },
-    {
-      title: 'FİNANS',
-      items: [
-        // Bu sekme MENÜDE HİÇ YOKTU: `tab === 'bookings'` hiçbir yerden
-        // seçilemiyordu, dolayısıyla dekont doğrulama, iadeler, uzlaşma ve
-        // reklam ödemeleri kuyrukları panelde AÇILAMIYORDU. Veri sunucuda
-        // duruyor, ekran yazılmış ama kapısı yoktu.
         {
+          // Bu sekme bir dönem MENÜDE HİÇ YOKTU: dekont doğrulama, iadeler
+          // ve uzlaşma kuyrukları panelde açılamıyordu.
           id: 'bookings',
-          label: 'Randevu & Ödeme Kuyrukları',
-          icon: '🧾',
-          // Üç kuyruk da bu sekmede: dekont, iade, uzlaşma.
+          label: 'Randevular & ödemeler',
+          icon: '▤',
           badge:
             (q?.depositReceipts ?? 0) + (q?.refundsPending ?? 0) + (q?.reconciliationsOpen ?? 0),
         },
-        { id: 'commissions', label: 'Komisyon Takibi', icon: '💰' },
-        { id: 'loyalty', label: 'Puan Ekonomisi', icon: '🎁' },
+        { id: 'commissions', label: 'Komisyonlar', icon: '₸' },
+        { id: 'loyalty', label: 'Puan ekonomisi', icon: '◍' },
+      ],
+    },
+    {
+      title: 'KATALOG',
+      items: [
+        { id: 'services', label: 'Hizmetler', icon: '⊞' },
+        { id: 'prices', label: 'Taban fiyatlar', icon: '⊙' },
+        { id: 'quotes', label: 'Canlı talepler', icon: '◐' },
+      ],
+    },
+    {
+      title: 'İÇERİK',
+      items: [
+        { id: 'content', label: 'Blog & tema', icon: '▦' },
+        { id: 'announcements', label: 'Duyurular', icon: '◭' },
+        { id: 'campaigns', label: 'Kampanyalar', icon: '◮' },
+        { id: 'ads', label: 'Reklamlar', icon: '▣', badge: q?.adOrders },
       ],
     },
     {
       title: 'SİSTEM',
       items: [
-        { id: 'system', label: 'Ayarlar & API', icon: '⚙️' },
-        { id: 'flags', label: 'Özellik Anahtarları', icon: '🚩' },
-        { id: 'audit', label: 'Denetim Kaydı', icon: '📜' },
+        { id: 'system', label: 'Ayarlar', icon: '⚙' },
+        { id: 'flags', label: 'Özellikler', icon: '⚑' },
+        { id: 'audit', label: 'Denetim kaydı', icon: '⧉' },
       ],
     },
   ];
+
+  /*
+   * NEREDEYİM / KAÇ İŞ BEKLİYOR.
+   *
+   * Kurucu: "admin paneli çorba gibi, ne nerede ne iş yapıyor ne ile
+   * alakalı hiçbir şey belli değil, sıra sıra dizilmiş öylesine."
+   *
+   * Bu üç değer üst barı besliyor. Menüdeki vurgu tek başına yetmiyordu:
+   * kaydırınca menü gözden çıkıyor ve ekranın hangi bölüme ait olduğu
+   * kayboluyordu.
+   */
+  const aktifGrup = NAV_GROUPS.find((g) => g.items.some((n) => n.id === tab))?.title ?? 'PANO';
+  const aktifEtiket =
+    NAV_GROUPS.flatMap((g) => g.items).find((n) => n.id === tab)?.label ?? 'Bugün';
+  // Rozetlerin toplamı: "beni bekleyen iş var mı" sorusunun tek cevabı.
+  const bekleyenToplam = NAV_GROUPS.flatMap((g) => g.items).reduce((n, x) => n + (x.badge ?? 0), 0);
+
   return (
     <div className="shell">
       <aside
@@ -313,35 +351,62 @@ function AdminGovde() {
           <span>↩</span> Çıkış
         </button>
       </aside>
-      <main className="main">
-        {tab === 'overview' && <OverviewView onGo={setTab} />}
-        {tab === 'stats' && <StatsView />}
-        {tab === 'commissions' && <CommissionsView />}
-        {tab === 'subscriptions' && <SubscriptionsView />}
-        {tab === 'profileChanges' && <ProfileChangesView />}
-        {tab === 'kyc' && <KycView />}
-        {tab === 'support' && <SupportView />}
-        {tab === 'businesses' && <BusinessesView />}
-        {tab === 'specialists' && <SpecialistsView />}
-        {tab === 'professionals' && <ProfessionalsView />}
-        {tab === 'services' && <ServicesView />}
-        {tab === 'prices' && <PricesView />}
-        {tab === 'bookings' && <BookingsAdminView />}
-        {tab === 'disputes' && <DisputesView />}
-        {tab === 'reviewDisputes' && <ReviewDisputesView />}
-        {tab === 'quotes' && <QuotesView />}
-        {tab === 'campaigns' && <CampaignsView />}
-        {tab === 'ads' && <AdsView />}
-        {tab === 'moderation' && <ModerationView />}
-        {tab === 'content' && <ContentView />}
-        {tab === 'announcements' && <AnnouncementsView />}
-        {tab === 'users' && <UsersView />}
-        {tab === 'penalties' && <PenaltiesView />}
-        {tab === 'loyalty' && <LoyaltyView />}
-        {tab === 'flags' && <FlagsView />}
-        {tab === 'system' && <SystemView />}
-        {tab === 'audit' && <AuditView />}
-      </main>
+      <div className="govde">
+        {/*
+          ÜST BAR — panelde HİÇ YOKTU.
+          Sonuç: ekran doğrudan içerikle başlıyor, hangi bölümde olunduğu
+          yalnız menüdeki vurgudan anlaşılıyor ve panel bir ürün değil ham
+          bir liste gibi duruyordu. Üst bar üç şeyi hep görünür tutuyor:
+          hangi bölümdeyim, kaç iş beni bekliyor, kim olarak giriş yaptım.
+        */}
+        <header className="ustbar">
+          <div className="ustbar-yol">
+            <span className="ustbar-grup">{aktifGrup}</span>
+            <span className="ustbar-ayrac">/</span>
+            <span className="ustbar-sayfa">{aktifEtiket}</span>
+          </div>
+          <div className="ustbar-sag">
+            {bekleyenToplam > 0 ? (
+              <button className="ustbar-bekleyen" onClick={() => setTab('overview')}>
+                <span className="ustbar-nokta" />
+                {bekleyenToplam} iş bekliyor
+              </button>
+            ) : (
+              <span className="ustbar-temiz">Bekleyen iş yok</span>
+            )}
+            <span className="ustbar-kim">Yönetici</span>
+          </div>
+        </header>
+        <main className="main">
+          {tab === 'overview' && <OverviewView onGo={setTab} />}
+          {tab === 'stats' && <StatsView />}
+          {tab === 'commissions' && <CommissionsView />}
+          {tab === 'subscriptions' && <SubscriptionsView />}
+          {tab === 'profileChanges' && <ProfileChangesView />}
+          {tab === 'kyc' && <KycView />}
+          {tab === 'support' && <SupportView />}
+          {tab === 'businesses' && <BusinessesView />}
+          {tab === 'specialists' && <SpecialistsView />}
+          {tab === 'professionals' && <ProfessionalsView />}
+          {tab === 'services' && <ServicesView />}
+          {tab === 'prices' && <PricesView />}
+          {tab === 'bookings' && <BookingsAdminView />}
+          {tab === 'disputes' && <DisputesView />}
+          {tab === 'reviewDisputes' && <ReviewDisputesView />}
+          {tab === 'quotes' && <QuotesView />}
+          {tab === 'campaigns' && <CampaignsView />}
+          {tab === 'ads' && <AdsView />}
+          {tab === 'moderation' && <ModerationView />}
+          {tab === 'content' && <ContentView />}
+          {tab === 'announcements' && <AnnouncementsView />}
+          {tab === 'users' && <UsersView />}
+          {tab === 'penalties' && <PenaltiesView />}
+          {tab === 'loyalty' && <LoyaltyView />}
+          {tab === 'flags' && <FlagsView />}
+          {tab === 'system' && <SystemView />}
+          {tab === 'audit' && <AuditView />}
+        </main>
+      </div>
     </div>
   );
 }
@@ -559,7 +624,7 @@ function ProfileChangesView() {
   ];
   return (
     <>
-      <h1 className="page-title">Profil Onayları</h1>
+      <h1 className="page-title">Profil değişiklikleri</h1>
       <p className="page-sub">
         Salon/uzman profil değişiklikleri admin onayı olmadan yayınlanmaz ({data?.length ?? 0}{' '}
         kayıt)
@@ -670,7 +735,7 @@ function SupportView() {
   };
   return (
     <>
-      <h1 className="page-title">Destek Talepleri</h1>
+      <h1 className="page-title">Destek talepleri</h1>
       <p className="page-sub">
         Kullanıcıdan gelen talepler. Güvenlik başlıklı olanlar önce okunmalı. ({data?.length ?? 0}{' '}
         kayıt)
@@ -775,7 +840,7 @@ function KycView() {
   ];
   return (
     <>
-      <h1 className="page-title">Kimlik Doğrulama (KYC)</h1>
+      <h1 className="page-title">Kimlik doğrulama</h1>
       <p className="page-sub">
         Uzman/salon belge doğrulama kuyruğu — onaylanınca profilde &quot;Doğrulanmış&quot; rozeti (
         {data?.length ?? 0} kayıt)
@@ -884,7 +949,7 @@ function SubscriptionsView() {
           : 'Süresi doldu';
   return (
     <>
-      <h1 className="page-title">Abonelikler</h1>
+      <h1 className="page-title">Abonelik dekontları</h1>
       <p className="page-sub">Premium / Platinum üyelik dekont onayı ({data?.length ?? 0} kayıt)</p>
       <div className="toolbar">
         {FILTERS.map(([s, label]) => (
@@ -993,7 +1058,7 @@ function OverviewView({ onGo }: { onGo: (t: Tab) => void }) {
   ];
   return (
     <>
-      <h1 className="page-title">Genel Bakış</h1>
+      <h1 className="page-title">Bugün</h1>
       <p className="page-sub">Platform geneli canlı metrikler</p>
       {!data ? (
         <Gate loading={loading} error={error} onRetry={reload} />
@@ -1078,7 +1143,7 @@ function StatsView() {
   const active = METRICS.find((m) => m.key === metric)!;
   return (
     <>
-      <h1 className="page-title">İstatistik</h1>
+      <h1 className="page-title">Raporlar</h1>
       <p className="page-sub">
         Zaman serisi — kayıt, randevu ve gelir {data ? `· ${data.timezone}` : ''}
       </p>
@@ -1420,7 +1485,7 @@ function CommissionsView() {
   return (
     <>
       <h1 className="page-title">
-        Komisyon{' '}
+        Komisyonlar{' '}
         {data ? (
           <button
             className="btn-sm"
@@ -1661,7 +1726,7 @@ function BusinessesView() {
   const openDetail = async (id: string) => setDetail(await api.businessDetail(id));
   return (
     <>
-      <h1 className="page-title">Salon Onay</h1>
+      <h1 className="page-title">Salon başvuruları</h1>
       <p className="page-sub">Salon (işletme) kayıt onayları ve durum yönetimi</p>
       <div className="toolbar">
         {['pending', 'approved', 'rejected'].map((s) => (
@@ -1838,7 +1903,7 @@ function SpecialistsView() {
   };
   return (
     <>
-      <h1 className="page-title">Uzman Doğrulama</h1>
+      <h1 className="page-title">Uzman doğrulama</h1>
       <p className="page-sub">
         Bağımsız uzman katmanlı doğrulama — kimlik (KYC), sertifika, sosyal medya → AYNA Onaylı
       </p>
@@ -1971,7 +2036,7 @@ function ModerationView() {
   };
   return (
     <>
-      <h1 className="page-title">Moderasyon Merkezi</h1>
+      <h1 className="page-title">Topluluk moderasyonu</h1>
       <p className="page-sub">
         W2W onay kuyruğu (otomatik filtre + şikâyet) · görünür yorumlar. Sabit ilke: dürüst eleştiri
         silinmez.
@@ -2078,7 +2143,7 @@ function CampaignsView() {
   };
   return (
     <>
-      <h1 className="page-title">Kampanya & Banner</h1>
+      <h1 className="page-title">Kampanyalar</h1>
       <p className="page-sub">Keşif vitrinindeki kampanyaları yönet</p>
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
@@ -2328,7 +2393,7 @@ function ContentView() {
   const reviewed = (apps ?? []).filter((a) => a.status !== 'pending');
   return (
     <>
-      <h1 className="page-title">İçerik & Blog</h1>
+      <h1 className="page-title">Blog & tema</h1>
       <p className="page-sub">
         AYNA Blog editörü · kullanıcı başvuruları (onayla → puan) · haftalık W2W teması
       </p>
@@ -2688,7 +2753,7 @@ function AnnouncementsView() {
   const segLabel = (s: AnnouncementSegment) => SEGMENTS.find((x) => x.id === s)?.label ?? s;
   return (
     <>
-      <h1 className="page-title">Bildirimler</h1>
+      <h1 className="page-title">Duyurular</h1>
       <p className="page-sub">Segment bazlı toplu duyuru — app bildirim listesine düşer</p>
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
@@ -3093,7 +3158,7 @@ function ProfessionalsView() {
   };
   return (
     <>
-      <h1 className="page-title">Uzmanlar</h1>
+      <h1 className="page-title">Uzman & salonlar</h1>
       <p className="page-sub">
         Keşif listesindeki uzman/salonlar — ekle, düzenle, fiyat, öne çıkar, sil
       </p>
@@ -3459,7 +3524,7 @@ function PricesView() {
   const catName = (code: string) => cats?.find((c) => c.code === code)?.nameTr ?? code;
   return (
     <>
-      <h1 className="page-title">Fiyatlar</h1>
+      <h1 className="page-title">Taban fiyatlar</h1>
       <p className="page-sub">
         Piyasa taban fiyatları (kategori × şehir) — teklif tabanı ve %40-altı uyarısı için. Uzman
         başlangıç fiyatları "Uzmanlar" bölümünden düzenlenir.
@@ -3531,7 +3596,7 @@ function PenaltiesView() {
   const { data, reload } = useAsync<Penalty[]>(() => api.penalties(), []);
   return (
     <>
-      <h1 className="page-title">Ceza Takip</h1>
+      <h1 className="page-title">Kısıtlı hesaplar</h1>
       <p className="page-sub">
         Kısıtlı hesaplar (yeni talep göremez) · 7 gün sayacı dolunca kalıcı engel adayı
       </p>
@@ -3955,7 +4020,7 @@ function BookingsAdminView() {
         : 'pending';
   return (
     <>
-      <h1 className="page-title">Randevular</h1>
+      <h1 className="page-title">Randevular & ödemeler</h1>
       <p className="page-sub">Platform geneli tüm randevular ({data?.length ?? 0})</p>
       <div className="toolbar">
         {STATES.map((s) => (
@@ -4088,7 +4153,7 @@ function DisputesView() {
   );
   return (
     <>
-      <h1 className="page-title">Anlaşmazlık Kuyruğu</h1>
+      <h1 className="page-title">Depozito itirazları</h1>
       <p className="page-sub">
         Depozito itirazları ve iade dekontları — dekont görselleri burada incelenir. Sabit ilke:
         dürüst eleştiri/haklı iade reddedilmez.
@@ -4133,7 +4198,7 @@ function ReviewDisputesView() {
   const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
   return (
     <>
-      <h1 className="page-title">Yorum İtiraz Kuyruğu</h1>
+      <h1 className="page-title">Yorum itirazları</h1>
       <p className="page-sub">
         Uzman/işletmenin itiraz ettiği yorumlar. Sabit ilke: yorum inceleme boyunca görünür kalır;
         yalnızca kural ihlalinde gizlenir — “hizmeti beğenmedim” türü dürüst negatif yorum SİLİNMEZ.
@@ -4180,7 +4245,7 @@ function QuotesView() {
   const { data } = useAsync<QuoteReq[]>(() => api.quoteRequests(), []);
   return (
     <>
-      <h1 className="page-title">Canlı Talepler</h1>
+      <h1 className="page-title">Canlı talepler</h1>
       <p className="page-sub">
         §12.4 — talep akışı: kim açtı, şehir, bütçe, gelen teklifler, randevuya dönüşüm (
         {data?.length ?? 0})
@@ -4223,7 +4288,7 @@ function LoyaltyView() {
   const { data } = useAsync<Loyalty>(() => api.loyalty(), []);
   return (
     <>
-      <h1 className="page-title">Sadakat</h1>
+      <h1 className="page-title">Puan ekonomisi</h1>
       <p className="page-sub">
         Puan defteri (append-only) — bakiye dolaşımdaki puan = platform yükümlülüğü
       </p>
@@ -4273,7 +4338,7 @@ function FlagsView() {
   };
   return (
     <>
-      <h1 className="page-title">Feature Flag</h1>
+      <h1 className="page-title">Özellikler</h1>
       <p className="page-sub">Özellik açma/kapama (kademeli yayın)</p>
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
@@ -4374,7 +4439,7 @@ function SystemView() {
   };
   return (
     <>
-      <h1 className="page-title">Sistem Ayarları</h1>
+      <h1 className="page-title">Ayarlar</h1>
       <p className="page-sub">Parametrik oranlar · dış servis anahtarları · şehir yönetimi</p>
       {/* Parametrik oranlar */}
       <h2 className="section-head">Ceza / depozito tutarları ve oranlar</h2>
@@ -4592,7 +4657,7 @@ function AuditView() {
   const { data } = useAsync<AuditEntry[]>(() => api.auditLogs(), []);
   return (
     <>
-      <h1 className="page-title">Denetim Kaydı</h1>
+      <h1 className="page-title">Denetim kaydı</h1>
       <p className="page-sub">Kritik eylemlerin izi (PII yok — yalnızca rol/kaynak/hash)</p>
       <div className="card">
         {!data ? (
