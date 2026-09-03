@@ -5,6 +5,7 @@ import { useLocale } from '../locale';
 import {
   AY_ADI,
   DAKIKALAR,
+  enYakinDakika,
   carkSecimi,
   carkSirasi,
   GUN_KISA,
@@ -144,7 +145,17 @@ export function TakvimSecici({
   const styles = useThemedStyles(makeStyles);
   // Görünen ay ve seçili gün ayrı: kullanıcı seçim yapmadan aylarda gezebilir.
   const [gorunen, setGorunen] = useState(deger);
-  const [secili, setSecili] = useState(deger);
+  /*
+   * Açılış dakikası listeye OTURTULUYOR.
+   *
+   * Şu an 19:24 ise dakika listesinde (00/05/…/55) 24 YOK: çark 00'ı
+   * işaretliyor ama özet "19:24" yazıyordu — kullanıcı iki farklı değer
+   * görüp "çalışmıyor" diyor. Artık en yakın seçeneğe (25) oturuyor;
+   * ekrandaki iki sayı hep aynı şeyi söylüyor.
+   */
+  const [secili, setSecili] = useState(() =>
+    saatUygula(deger, deger.getHours(), enYakinDakika(deger.getMinutes())),
+  );
 
   const izgara = useMemo(() => ayIzgarasi(gorunen.getFullYear(), gorunen.getMonth()), [gorunen]);
 
@@ -155,9 +166,27 @@ export function TakvimSecici({
 
   return (
     <Modal visible={acik} transparent animationType="slide" onRequestClose={kapat}>
-      <Pressable style={styles.perde} onPress={kapat}>
-        {/* Kutunun içine dokunmak kapatmamalı: gün seçerken kapanırdı. */}
-        <Pressable style={styles.sayfa} onPress={(e) => e.stopPropagation()}>
+      <View style={styles.perde}>
+        {/*
+         * ── PERDE AYRI, İÇERİK AYRI ──────────────────────────────────────
+         *
+         * Kurucu: "çalışmıyor" — çark dönmüyordu.
+         *
+         * İçerik bir `Pressable` ile SARILIYDI. `Pressable` dokunma
+         * sorumluluğunu (responder) üstleniyor; parmağı basılı tutup
+         * SÜRÜKLEYİNCE hareketi kendi alıyor ve içteki `ScrollView`a hiç
+         * bırakmıyordu. Takvimdeki gün seçimi (tek DOKUNUŞ) çalıştığı için
+         * hata yalnız kaydırma gereken yerde — yani çarkta — görünüyordu.
+         *
+         * Perde artık ayrı bir katman: kapatma görevini o yapıyor, içerik
+         * hiçbir `Pressable` içinde değil.
+         */}
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={kapat}
+          accessibilityLabel={t('common.cancel')}
+        />
+        <View style={styles.sayfa}>
           <View style={styles.ayBar}>
             <Pressable
               onPress={() => setGorunen((g) => ayEkle(g, -1))}
@@ -259,8 +288,8 @@ export function TakvimSecici({
               </Pressable>
             </View>
           </View>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }

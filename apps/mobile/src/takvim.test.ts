@@ -326,3 +326,54 @@ test('gönderi ekranında son satır düğmenin altında kalmıyor', async () =>
   assert.match(kod, /style=\{styles\.kaydirma\}/, 'kaydırma alanı esnek değil');
   assert.match(kod, /kaydirma: \{ flex: 1 \}/, 'kaydırma alanına flex verilmemiş');
 });
+
+/* ── ÇARK GERÇEKTEN DÖNÜYOR MU ─────────────────────────────────────────── */
+
+test('çarkı SARAN bir Pressable yok', async () => {
+  /*
+   * Kurucu: "çalışmıyor."
+   *
+   * İçerik bir `Pressable` ile sarılıydı. `Pressable` dokunma
+   * sorumluluğunu (responder) üstleniyor; parmağı basılı tutup
+   * SÜRÜKLEYİNCE hareketi kendi alıyor ve içteki `ScrollView`a hiç
+   * bırakmıyordu. Takvimdeki gün seçimi tek DOKUNUŞ olduğu için
+   * çalışıyordu — hata yalnız kaydırma gereken çarkta görünüyordu.
+   *
+   * Perde artık ayrı bir katman (`absoluteFill`); içerik hiçbir
+   * `Pressable` içinde değil.
+   */
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const kod = readFileSync(join(import.meta.dirname, 'ui', 'TakvimSecici.tsx'), 'utf8');
+  assert.equal(
+    /<Pressable style=\{styles\.sayfa\}/.test(kod),
+    false,
+    'içerik hâlâ Pressable ile sarılı — sürükleme yutuluyor',
+  );
+  assert.match(kod, /<View style=\{styles\.sayfa\}>/, 'içerik düz View değil');
+  assert.match(
+    kod,
+    /<Pressable\s*\n\s*style=\{StyleSheet\.absoluteFill\}/,
+    'perde ayrı katman değil',
+  );
+});
+
+test('açılış dakikası çarkın SEÇENEKLERİNDEN birine oturuyor', async () => {
+  /*
+   * "Şimdi" 19:24 iken listede 24 YOK: çark 00'ı işaretliyor ama özet
+   * "19:24" yazıyordu. Kullanıcı ekranda iki farklı sayı görünce
+   * "çalışmıyor" diyor — haklı olarak.
+   */
+  const { enYakinDakika, DAKIKALAR } = await import('./takvim');
+  for (const d of [0, 1, 24, 26, 43, 58, 59]) {
+    assert.ok(DAKIKALAR.includes(enYakinDakika(d)), `${d} → listede olmayan değer`);
+  }
+  assert.equal(enYakinDakika(24), 25, '24 en yakın seçeneğe gitmiyor');
+  /*
+   * 58 → 55, 00 DEĞİL. 00'a yuvarlamak bir sonraki saate geçmek demek:
+   * kullanıcı 19:58 yazdığında ekranda 20:00 görürdü — SAATİ sessizce
+   * değiştirmek, dakikayı yuvarlamaktan çok daha kötü.
+   */
+  assert.equal(enYakinDakika(58), 55, '58 saati ileri kaydırıyor');
+  assert.equal(enYakinDakika(30), 30, 'tam değer değişiyor');
+});

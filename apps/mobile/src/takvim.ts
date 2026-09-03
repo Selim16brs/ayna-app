@@ -119,6 +119,21 @@ export const SAATLER = Array.from({ length: 24 }, (_, i) => i);
 export const DAKIKALAR = Array.from({ length: 12 }, (_, i) => i * 5);
 
 /**
+ * Verilen dakikayı çarkın SEÇENEKLERİNDEN en yakınına oturtur.
+ *
+ * "Şimdi" 19:24 iken listede 24 yok: çark 00'ı işaretliyor ama özet
+ * "19:24" yazıyordu — ekranda iki farklı değer görünüyordu. Beraberlikte
+ * BÜYÜK olan seçiliyor (geçmişe değil ileriye yuvarla).
+ */
+export function enYakinDakika(dakika: number): number {
+  let en = DAKIKALAR[0]!;
+  for (const m of DAKIKALAR) {
+    if (Math.abs(m - dakika) <= Math.abs(en - dakika)) en = m;
+  }
+  return en;
+}
+
+/**
  * Bir değerin çark içindeki sırası. Bulunamazsa 0 —
  * çark boş açılmasın.
  */
