@@ -7,13 +7,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/api';
 import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS, formatPrice } from '../../src/data';
 import type { MessageKey } from '@ayna/i18n';
-import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { bildirimIzniIste } from '../../src/notifications';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
+  TarihSecici,
   HizmetIkonu,
   BudgetGauge,
   PressableScale,
@@ -391,37 +391,13 @@ export default function NewDemandScreen() {
           <Text variant="caption" tone="muted" style={{ marginBottom: 8 }}>
             {t('demand.pref.hint')}
           </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
-            {Array.from({ length: 3 }, (_, d) =>
-              [11, 15, 18].map((h) => almatySlotMs(Date.now(), d + 1, h, 0)),
-            )
-              .flat()
-              .map((ms) => {
-                const on = preferred.includes(ms);
-                return (
-                  <Pressable
-                    key={ms}
-                    onPress={() =>
-                      setPreferred((p) =>
-                        p.includes(ms) ? p.filter((x) => x !== ms) : p.length >= 2 ? p : [...p, ms],
-                      )
-                    }
-                    style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      borderRadius: 999,
-                      borderWidth: 1.25,
-                      borderColor: on ? colors.accent : colors.line,
-                      backgroundColor: on ? colors.accent : colors.surface,
-                    }}
-                  >
-                    <Text variant="caption" tone={on ? 'onAccent' : 'ink'}>
-                      {formatSlotTr(ms)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-          </View>
+          {/*
+           * GERÇEK TAKVİM. Eskiden burada SABİT DOKUZ ÇİP vardı: yalnız üç
+           * gün (yarın/öbür gün/üç gün sonra) ve yalnız üç saat (11/15/18).
+           * Cumartesi 10:00 isteyen kullanıcının ekranda karşılığı yoktu.
+           * Kurucu: "bir takvim çıkmalı, tarih seçenekleri kısıtlanmamalı."
+           */}
+          <TarihSecici secilenler={preferred} degisti={setPreferred} />
 
           {/* Teklif toplama süresi (§5.2) */}
           <Text variant="bodyStrong" tone="ink" style={styles.label}>
