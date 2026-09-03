@@ -30,21 +30,25 @@ export interface EarnRule {
  * Object.prototype döndürür ve doğrulama "sebep tanımlı" sanır. `Map` ile
  * arama prototip zincirine bakmaz. (Bu tuzağı testin kendisi yakaladı.)
  */
-export const EARN_RULES = new Map<string, EarnRule>(
-  Object.entries({
-    // Uzman gelmedi telafisi — nadir olay, günde birden fazlası şüphelidir.
-    'rewards.earn.provider_noshow': { points: 1000, dailyLimit: 2 },
-    // Doğrulanmış yorum — tamamlanmış randevu başına bir yorum yazılabilir.
-    'rewards.earn.review': { points: 40, dailyLimit: 5 },
-    // İlk randevu ödülü — ömür boyu bir kez; günlük 1 + aşağıdaki lifetime kontrolü.
-    'rewards.earn.first_booking': { points: 300, dailyLimit: 1 },
-    // W2W katkısı — mikro kazanım; şartname "sınırlı W2W katkısı" diyor.
-    'rewards.earn.w2w_like': { points: 1, dailyLimit: 20 },
-  }),
-);
+/**
+ * İSTEMCİ BEYANIYLA KAZANILABİLEN SEBEP KALMADI.
+ *
+ * Kurucu denetimi haklı çıkardı: canlıda "uzman gelmedi" için 1000 puan
+ * verilmişti ama o kullanıcının `no_show_uzman` durumunda SIFIR randevusu
+ * vardı; "yorum" için 6 ödül vardı ama gerçek yorum sayısı 1'di.
+ *
+ * Sebep: bu tablo tutarı ve günlük adedi denetliyordu ama OLAYIN OLUP
+ * OLMADIĞINI hiç sormuyordu. Sunucu istemcinin beyanına inanıyordu.
+ *
+ * Kazanım artık `olay-odulleri.ts` içinden, olayın veritabanındaki KANITI
+ * okunarak yazılıyor. Tablo BİLEREK BOŞ: `POST /loyalty/earn` hiçbir sebebi
+ * kabul etmiyor. Tabloyu silmek yerine boş bırakmak, buraya yeni bir sebep
+ * eklemenin neden yanlış olduğunu okunur tutuyor.
+ */
+export const EARN_RULES = new Map<string, EarnRule>();
 
 /** Ömür boyu yalnız bir kez kazanılabilen sebepler. */
-export const ONCE_PER_LIFETIME = new Set(['rewards.earn.first_booking']);
+export const ONCE_PER_LIFETIME = new Set<string>();
 
 export function ruleFor(reason: string): EarnRule | undefined {
   return EARN_RULES.get(reason);
