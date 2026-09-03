@@ -54,6 +54,23 @@ export default function MapScreen() {
   // §5.1.3 — karta dokun → POPUP profil (kapatınca haritaya dönülür)
   const [profileOpen, setProfileOpen] = useState(false);
   const detail = useProfessionalDetail(selected?.id ?? '');
+  /**
+   * PROFİLİ BOŞ UZMAN.
+   *
+   * Kurucu: "haritada uzman seçildiğinde açılan ekran bu şekilde boş, yani
+   * kalitesiz çıkıyor."
+   *
+   * Sebep yerleşim değil VERİ: canlıda 25 uzmanın 24'ünde hizmet listesi,
+   * 22'sinde tanıtım, 23'ünde galeri YOK. Karttaki her blok koşullu olduğu
+   * için hiçbiri çizilmiyor ve ekranda kocaman bir boşluk kalıyor.
+   *
+   * Boşluğu dolgu içerikle kapatmak yanlış olurdu — olmayan bilgiyi varmış
+   * gibi göstermek. Bunun yerine DURUM SÖYLENİYOR ve işe yarar bir yol
+   * açılıyor: AYNA ters pazar yeri, kullanıcı fiyat listesi olmadan da ne
+   * istediğini anlatıp teklif isteyebilir.
+   */
+  const profilBos =
+    !!selected && detail.services.length === 0 && !detail.about && detail.portfolio.length === 0;
 
   // Harita seçili ŞEHRİN merkezine odaklanır (Almatı seçince Almatı, Astana seçince Astana).
   const center = cityCenter(city);
@@ -349,6 +366,17 @@ export default function MapScreen() {
                   </Text>
                 </>
               ) : null}
+              {profilBos ? (
+                <View style={styles.eksikKutu}>
+                  <Ionicons name="document-text-outline" size={26} color={colors.muted} />
+                  <Text variant="bodyStrong" tone="ink" style={styles.eksikBaslik}>
+                    {t('pro.incomplete.title')}
+                  </Text>
+                  <Text variant="caption" tone="muted" style={styles.eksikAlt}>
+                    {t('pro.incomplete.body')}
+                  </Text>
+                </View>
+              ) : null}
               {detail.services.length > 0 ? (
                 <>
                   <Text variant="label" tone="accentFg" style={styles.sheetSection}>
@@ -372,18 +400,53 @@ export default function MapScreen() {
                 </>
               ) : null}
             </ScrollView>
+            {/*
+             * EYLEM PROFİLE GÖRE DEĞİŞİYOR.
+             *
+             * Hizmet listesi olmayan uzmanda "Randevu al" kullanıcıyı seçecek
+             * hiçbir şeyin olmadığı bir ekrana götürüyordu. Teklif yolu
+             * çalışıyor: kullanıcı ne istediğini anlatıyor, uzman fiyat
+             * veriyor. Profili açma yolu ikincil olarak duruyor.
+             */}
             <View style={styles.sheetFoot}>
-              <PressableScale
-                style={styles.cardBtn}
-                onPress={() => {
-                  setProfileOpen(false);
-                  if (selected) router.push('/professional/' + selected.id);
-                }}
-              >
-                <Text variant="bodyStrong" tone="onAccent">
-                  {t('map.book')}
-                </Text>
-              </PressableScale>
+              {profilBos ? (
+                <View style={styles.footIkili}>
+                  <PressableScale
+                    style={styles.footIkincil}
+                    onPress={() => {
+                      setProfileOpen(false);
+                      if (selected) router.push('/professional/' + selected.id);
+                    }}
+                  >
+                    <Text variant="bodyStrong" tone="ink">
+                      {t('pro.incomplete.open')}
+                    </Text>
+                  </PressableScale>
+                  <PressableScale
+                    style={[styles.cardBtn, styles.footBirincil]}
+                    onPress={() => {
+                      setProfileOpen(false);
+                      router.push('/quote');
+                    }}
+                  >
+                    <Text variant="bodyStrong" tone="onAccent">
+                      {t('pro.incomplete.cta')}
+                    </Text>
+                  </PressableScale>
+                </View>
+              ) : (
+                <PressableScale
+                  style={styles.cardBtn}
+                  onPress={() => {
+                    setProfileOpen(false);
+                    if (selected) router.push('/professional/' + selected.id);
+                  }}
+                >
+                  <Text variant="bodyStrong" tone="onAccent">
+                    {t('map.book')}
+                  </Text>
+                </PressableScale>
+              )}
             </View>
           </View>
         </Modal>
@@ -490,6 +553,28 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    // ── profili boş uzman ──
+    eksikKutu: {
+      alignItems: 'center',
+      gap: space(1),
+      paddingVertical: space(4),
+      paddingHorizontal: space(2),
+    },
+    eksikBaslik: { textAlign: 'center' },
+    eksikAlt: { textAlign: 'center', lineHeight: 20 },
+    footIkili: { flexDirection: 'row', gap: space(1.25) },
+    footIkincil: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: space(2),
+      borderRadius: radius.pill,
+      borderWidth: 1.25,
+      borderColor: colors.lineStrong,
+      backgroundColor: colors.surface,
+    },
+    footBirincil: { flex: 1.4 },
+
     // ── yer seçici (şehir + bölge) ──
     headerSag: { flexDirection: 'row', alignItems: 'center', gap: space(1), marginRight: space(3) },
     yerBtn: {

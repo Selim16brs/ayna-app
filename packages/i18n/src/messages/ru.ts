@@ -1292,6 +1292,11 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'biz.step.review': 'Предпросмотр',
   'biz.preview.note': 'Примерно так профиль увидят клиенты. Подтвердите и завершите регистрацию.',
   'pro.new': 'Новый',
+  'pro.incomplete.title': 'Мастер ещё не заполнил профиль',
+  'pro.incomplete.body':
+    'Нет списка услуг и описания. Но ты можешь описать, что хочешь, и запросить предложение.',
+  'pro.incomplete.cta': 'Запросить предложение',
+  'pro.incomplete.open': 'Открыть профиль',
   'map.from': 'от',
   'map.title': 'Карта',
   'map.list': 'Список',

@@ -1284,6 +1284,11 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'biz.step.review': 'Алдын ала қарау',
   'biz.preview.note': 'Профиль клиентке шамамен осылай көрінеді. Растап тіркеуді аяқта.',
   'pro.new': 'Жаңа',
+  'pro.incomplete.title': 'Бұл маман профилін әлі толтырмаған',
+  'pro.incomplete.body':
+    'Қызмет тізімі мен таныстыруы жоқ. Дегенмен не қалайтыныңды жазып, ұсыныс сұрай аласың.',
+  'pro.incomplete.cta': 'Ұсыныс сұрау',
+  'pro.incomplete.open': 'Профильді ашу',
   'map.from': 'бастап',
   'map.title': 'Карта',
   'map.list': 'Тізім',
