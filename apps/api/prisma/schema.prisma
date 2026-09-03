@@ -702,6 +702,9 @@ model AdBanner {
   proId     String   @map("pro_id") // hedef uzman/salon (keşif listesi id'si)
   title     String
   subtitle  String   @default("")
+  /// Reklamın NEYİ ANLATTIĞI — kurucu isteği. Kartta değil, reklamın kendi
+  /// sayfasında gösterilir; kart zaten başlık + alt başlık taşıyor.
+  description String @default("")
   image     String
   i18n      Json? // §14.5 — 3 dil: kk/ru title/subtitle override'ları
   sortOrder Int      @default(0) @map("sort_order")
@@ -744,6 +747,10 @@ model AdOrder {
   // Reklamın içeriği. Onaydan sonra banner bunlardan üretilir.
   title       String
   subtitle    String    @default("")
+  /// Kurucu isteği: "reklamın neyi anlattığını anlatan bir alan olmalı."
+  /// Kart üstünde değil, reklamın kendi sayfasında gösterilir — kart zaten
+  /// başlık + alt başlık taşıyor, üçüncü metin oraya sığmıyor.
+  description String    @default("")
   image       String
   status      String    @default("bekliyor") // bekliyor | yayinda | reddedildi
   receiptUri  String?   @map("receipt_uri")

@@ -10,15 +10,18 @@ import { formatPrice } from '../../src/data';
 import { almatyDayStart, almatyParts, formatSlotTr, slotTime } from '../../src/datetime';
 import { tri } from '../../src/taxonomy';
 import { ApiError, api } from '../../src/api';
-import { useProfessionalDetail } from '../../src/catalog';
+import { useProfessionalDetail, useProfessionalDurumu } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { girisGerekli } from '../../src/auth-wall';
 import { selectSellerView, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
+  Button,
   PressableScale,
   RulesCard,
+  Screen,
+  StackHeader,
   TAB_BAR_CLEARANCE,
   Text,
   VerificationBadges,
@@ -42,6 +45,7 @@ export default function ProfessionalScreen() {
   const isSeller = useStore(selectSellerView);
   const proId = id ?? '1';
   const pro = useProfessionalDetail(proId);
+  const durum = useProfessionalDurumu(proId);
 
   // TÜM hook'lar KOŞULSUZ çağrılır (React kuralı) — erken dönüş aşağıda, hook'lardan SONRA.
   const [tab, setTab] = useState<Tab>('booking');
@@ -171,7 +175,31 @@ export default function ProfessionalScreen() {
       cur.includes(sid) ? (cur.length > 1 ? cur.filter((x) => x !== sid) : cur) : [...cur, sid],
     );
 
-  // Sunucudan profil henüz gelmediyse/bulunamadıysa: güvenli yükleme durumu (tüm hook'lardan SONRA)
+  /*
+   * BULUNAMADI ile YÜKLENİYOR artık AYRI.
+   *
+   * Eskiden ikisi de aynı "Yükleniyor" ekranıydı: silinmiş bir uzmana
+   * gidildiğinde ekran sonsuza kadar dönüyor, kullanıcı geri düğmesinden
+   * başka çıkış bulamıyordu.
+   */
+  if (durum === 'yok') {
+    return (
+      <Screen edges={[]}>
+        <StackHeader title={t('pro.not_found.title')} />
+        <View style={styles.bulunamadi}>
+          <Ionicons name="alert-circle-outline" size={44} color={colors.muted} />
+          <Text variant="h2" tone="ink" style={styles.bulunamadiBaslik}>
+            {t('pro.not_found.title')}
+          </Text>
+          <Text variant="caption" tone="muted" style={styles.bulunamadiAlt}>
+            {t('pro.not_found.body')}
+          </Text>
+          <Button label={t('pro.not_found.cta')} onPress={() => router.replace('/search')} />
+        </View>
+      </Screen>
+    );
+  }
+
   if (!pro.id) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -1048,6 +1076,17 @@ export default function ProfessionalScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
+    // Bulunamayan profil — sonsuz spinner yerine çıkışı olan bir ekran.
+    bulunamadi: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space(1.5),
+      paddingHorizontal: space(4),
+    },
+    bulunamadiBaslik: { textAlign: 'center', marginTop: space(1) },
+    bulunamadiAlt: { textAlign: 'center', marginBottom: space(2) },
+
     root: { flex: 1, backgroundColor: colors.bg },
     grow: { flex: 1 },
     // ── Kanvas Uzman.dc.html §ÜST — açık zeminde 48'lik kart düğmeler ──

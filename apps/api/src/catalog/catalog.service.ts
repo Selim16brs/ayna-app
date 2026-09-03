@@ -98,11 +98,13 @@ export class CatalogService {
       },
       orderBy: { sortOrder: 'asc' },
     });
-    return localizeRows(rows, locale, ['title', 'subtitle']).map((a) => ({
+    return localizeRows(rows, locale, ['title', 'subtitle', 'description']).map((a) => ({
       id: a.id,
       proId: a.proId,
       title: a.title,
       subtitle: a.subtitle,
+      // Reklamın neyi anlattığı — kart tıklanınca açılan sayfa gösteriyor.
+      description: a.description,
       image: a.image,
       placement: a.placement,
     }));

@@ -63,30 +63,62 @@ export class AdOrdersService {
    * görüp öderken admin fiyatı değiştirirse, ödenen ile beklenen tutar
    * ayrışırdı.
    */
+  /**
+   * UZMAN KİMLİĞİ SUNUCUDA TÜRETİLİR — istemciden gelene güvenilmez.
+   *
+   * İstemci `currentUser.id` (KULLANICI kimliği) gönderiyordu ve sunucu
+   * doğrulamadan kaydediyordu. Sonuç: ana sayfadaki "Senin İçin
+   * Seçtiklerimiz" kartına dokunulunca olmayan bir uzmana gidiliyor,
+   * ekran sonsuza kadar "Yükleniyor"da kalıyordu.
+   *
+   * Aynı kural değerlendirmelerde zaten uygulanıyor ("subjectId istemciden
+   * GÜVENİLMEZ — randevudan sunucuda türetilir"). Reklamda eksikti.
+   *
+   * Uzman kaydı iki yoldan bulunuyor: bağımsız uzman `Specialist.proId`,
+   * salon `Business.professionalId`.
+   */
+  private async uzmanKimligi(userId: string): Promise<string> {
+    const sp = await this.prisma.specialist.findFirst({
+      where: { userId, proId: { not: null } },
+      select: { proId: true },
+    });
+    if (sp?.proId) return sp.proId;
+    const biz = await this.prisma.business.findFirst({
+      where: { ownerUserId: userId, professionalId: { not: null } },
+      select: { professionalId: true },
+    });
+    if (biz?.professionalId) return biz.professionalId;
+    // Katalog kaydı olmayan hesap reklam veremez: verilse kart hiçbir yere
+    // gitmeyen bir bağlantı olurdu.
+    throw new BadRequestException('ad.no_professional');
+  }
+
   async olustur(
     userId: string,
     input: {
-      proId: string;
       proName: string;
       placement: Yerlesim;
       title: string;
       subtitle?: string | undefined;
+      description?: string | undefined;
       image: string;
       months?: number | undefined;
     },
   ) {
+    const proId = await this.uzmanKimligi(userId);
     const months = Math.min(12, Math.max(1, Math.floor(input.months ?? 1)));
     const amount = (await this.aylikUcret()) * months;
     return this.prisma.adOrder.create({
       data: {
         userId,
-        proId: input.proId,
+        proId,
         proName: input.proName,
         placement: input.placement,
         months,
         amount,
         title: input.title,
         subtitle: input.subtitle ?? '',
+        description: input.description ?? '',
         image: input.image,
       },
     });
@@ -159,6 +191,7 @@ export class AdOrdersService {
         proId: o!.proId,
         title: o!.title,
         subtitle: o!.subtitle,
+        description: o!.description,
         image: o!.image,
         placement: o!.placement,
         startsAt: bas,
