@@ -1946,6 +1946,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
 
   // §5.1.1 — фото профиля с удалённым фоном (remove.bg)
   'cutout.done': 'Фото готово — фон удалён ✨',
+  'cutout.clean': 'Убрать фон',
+  'cutout.working': 'Обработка…',
   'cutout.failed': 'Фон сейчас не удалось убрать; использовано обычное фото. Попробуй чуть позже.',
   'cutout.upsell_title': 'В Premium профиль выглядел бы так ✨',
   'cutout.upsell_body':

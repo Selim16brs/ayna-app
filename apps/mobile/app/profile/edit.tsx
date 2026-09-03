@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../src/locale';
-import { useStore } from '../../src/store';
+import { selectPortraitKesilmis, useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -27,6 +27,36 @@ export default function ProfileEditScreen() {
   const avatarUri = useStore((s) => s.avatarUri);
   const setAvatar = useStore((s) => s.setAvatar);
   const applyProfileCutout = useStore((s) => s.applyProfileCutout); // §5.1.1 — remove.bg
+  const portreKesilmis = useStore(selectPortraitKesilmis);
+  const [temizleniyor, setTemizleniyor] = useState(false);
+
+  /**
+   * MEVCUT fotoğrafın arka planını temizler.
+   *
+   * `avatarUri` bir data URL; remove.bg saf base64 istiyor. Önek burada
+   * ayrılıyor — `applyProfileCutout` da aynı temizliği yapıyor ama oraya
+   * ham base64 gidiyor, buradan data URL geliyor.
+   *
+   * Uzak bir adres (http) ise base64'e çeviremeyiz; o durumda kullanıcıya
+   * fotoğrafı yeniden seçmesini söylemek, sessizce başarısız olmaktan iyi.
+   */
+  const temizle = async () => {
+    if (!avatarUri || temizleniyor) return;
+    const m = /^data:image\/\w+;base64,(.+)$/.exec(avatarUri);
+    if (!m) {
+      Alert.alert(t('cutout.failed'));
+      return;
+    }
+    setTemizleniyor(true);
+    try {
+      const res = await applyProfileCutout(m[1]!);
+      if (res === 'not_premium') Alert.alert(t('cutout.upsell_title'), t('cutout.upsell_body'));
+      else if (res === 'ok') Alert.alert(t('cutout.done'));
+      else Alert.alert(t('cutout.failed'));
+    } finally {
+      setTemizleniyor(false);
+    }
+  };
   const storeName = useStore((s) => s.currentUser?.name);
   // §9.5 — uzman/salon: kayıt sonrası sertifika/sosyal medya/çalışma saatleri düzenleme
   const role = useStore((s) => s.currentUser?.role);
@@ -207,6 +237,37 @@ export default function ProfileEditScreen() {
                 {t('profile.photo.camera')}
               </Text>
             </Pressable>
+            {/*
+             * ARKA PLANI TEMİZLE — mevcut fotoğraf için.
+             *
+             * Kesim yalnız YENİ fotoğraf seçilirken çalışıyordu. Fotoğrafını
+             * bu özellikten önce yüklemiş bir kullanıcının portresi sonsuza
+             * kadar ham kalıyordu ve ana sayfada daire içinde görünüyordu —
+             * kurucunun "olmamış" dediği şey buydu.
+             *
+             * Düğme AÇIK bir eylem: her basış remove.bg'de bir kredi
+             * harcıyor. Uygulama bunu kendiliğinden yapmıyor — kullanıcının
+             * haberi olmadan para harcamak olurdu.
+             *
+             * Zaten temizlenmiş fotoğrafta düğme ÇIKMIYOR: aynı işi ikinci
+             * kez yaptırmak krediyi boşa harcardı.
+             */}
+            {avatarUri && !portreKesilmis ? (
+              <Pressable
+                style={styles.photoBtn}
+                onPress={() => void temizle()}
+                disabled={temizleniyor}
+              >
+                <Ionicons
+                  name={temizleniyor ? 'hourglass-outline' : 'sparkles-outline'}
+                  size={16}
+                  color={colors.accentFg}
+                />
+                <Text variant="caption" tone="accentFg" style={styles.photoBtnText}>
+                  {t(temizleniyor ? 'cutout.working' : 'cutout.clean')}
+                </Text>
+              </Pressable>
+            ) : null}
             {avatarUri ? (
               <Pressable style={styles.photoBtn} onPress={removePhoto}>
                 <Ionicons name="trash-outline" size={16} color={colors.danger} />

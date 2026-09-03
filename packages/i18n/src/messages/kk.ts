@@ -1938,6 +1938,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
 
   // §5.1.1 — фоны алынған профиль фотосы (remove.bg)
   'cutout.done': 'Фотоң дайын — фоны алынды ✨',
+  'cutout.clean': 'Фонды тазалау',
+  'cutout.working': 'Тазалануда…',
   'cutout.failed': 'Фон қазір алынбады; қалыпты фотоң қолданылды. Сәлден соң қайта көр.',
   'cutout.upsell_title': 'Premium-да профиль осылай көрінер еді ✨',
   'cutout.upsell_body':

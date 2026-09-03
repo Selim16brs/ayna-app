@@ -41,6 +41,7 @@ import { PushModule } from './push/push.module';
 import { CollectionsModule } from './collections/collections.module';
 import { OffersModule } from './offers/offers.module';
 import { QuotesModule } from './quotes/quotes.module';
+import { ProPostsModule } from './pro-posts/pro-posts.module';
 import { ReferralModule } from './referral/referral.module';
 
 @Module({
@@ -88,6 +89,7 @@ import { ReferralModule } from './referral/referral.module';
     CollectionsModule,
     OffersModule,
     QuotesModule,
+    ProPostsModule,
     ReferralModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],

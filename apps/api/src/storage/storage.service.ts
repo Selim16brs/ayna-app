@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { Env } from '@ayna/config/env';
 import { ENV } from '../config/config.module';
@@ -93,6 +93,34 @@ export class StorageService {
       this.lastError = (e as Error).message;
       this.log.warn(`R2 put başarısız (${key}): ${this.lastError}`);
       return value;
+    }
+  }
+
+  /**
+   * Depodan siler — public URL ile.
+   *
+   * 7 günlük paylaşımların "sistemden silinmesi" için gerekli: kaydı
+   * silip fotoğrafı bırakmak, kişisel veriyi süresiz saklamak olurdu.
+   *
+   * DATA URL'DE İŞ YOK: R2 yapılandırılmamışsa görsel zaten kaydın
+   * içinde ve kayıt silinince o da gidiyor.
+   *
+   * Silme başarısız olursa AKIŞ DÜŞMÜYOR (`false` dönüyor) ama sessiz de
+   * kalmıyor: çağıran taraf kaydı silmeyip bir sonraki turda yeniden
+   * denemeyi seçebilir.
+   */
+  async remove(url: string | null | undefined): Promise<boolean> {
+    if (!url || !this.client || !this.publicUrl) return false;
+    if (!url.startsWith(this.publicUrl)) return false;
+    const key = url.slice(this.publicUrl.length).replace(/^\/+/, '');
+    if (!key) return false;
+    try {
+      await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
+      return true;
+    } catch (e) {
+      this.lastError = (e as Error).message;
+      this.log.warn(`R2 delete başarısız (${key}): ${this.lastError}`);
+      return false;
     }
   }
 
