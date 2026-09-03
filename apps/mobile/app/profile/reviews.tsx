@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useProfessionals } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
+import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -10,7 +11,7 @@ import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 // Profil > Değerlendirme sayısına tıklayınca: kullanıcının yazdığı tüm yorumlar
 export default function MyReviewsScreen() {
   const pros = useProfessionals();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const userReviews = useStore((s) => s.userReviews);
@@ -45,7 +46,7 @@ export default function MyReviewsScreen() {
                       {r.proName}
                     </Text>
                     <Text variant="caption" tone="muted" numberOfLines={1}>
-                      {r.service} · {r.period}
+                      {hizmetEtiketiCevir(r.service, locale)} · {r.period}
                     </Text>
                   </View>
                   <View style={styles.stars}>

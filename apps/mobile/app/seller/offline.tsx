@@ -148,7 +148,7 @@ export default function OfflineBookingScreen() {
             style={styles.input}
             value={customer}
             onChangeText={setCustomer}
-            placeholder="Ayşe K."
+            placeholder={t('name.placeholder')}
             placeholderTextColor={colors.muted}
           />
         </Field>
@@ -176,7 +176,7 @@ export default function OfflineBookingScreen() {
                   setService(v);
                   setSelectedIds([]);
                 }}
-                placeholder="Saç kesimi & fön"
+                placeholder={t('name.service_placeholder')}
                 placeholderTextColor={colors.muted}
               />
               {!hasServices ? (

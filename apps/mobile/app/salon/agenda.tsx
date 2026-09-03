@@ -8,6 +8,7 @@ import { type Appointment, type BookingStatus, formatPrice } from '../../src/dat
 import { almatyDayStart, slotTime } from '../../src/datetime';
 import { api } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
+import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -197,7 +198,7 @@ export default function SalonAgendaScreen() {
                   <View style={[styles.apptBar, { backgroundColor: statusTone(b.status) }]} />
                   <View style={styles.apptBody}>
                     <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
-                      {b.service}
+                      {hizmetEtiketiCevir(b.service, locale)}
                     </Text>
                     <View style={styles.apptMeta}>
                       <Ionicons name="person-outline" size={11} color={colors.muted} />
@@ -343,7 +344,7 @@ function AddTab({
           style={styles.input}
           value={customer}
           onChangeText={setCustomer}
-          placeholder="Ayşe K."
+          placeholder={t('name.placeholder')}
           placeholderTextColor={colors.muted}
         />
       </Field>
@@ -362,7 +363,7 @@ function AddTab({
           style={styles.input}
           value={service}
           onChangeText={setService}
-          placeholder="Saç kesimi & fön"
+          placeholder={t('name.service_placeholder')}
           placeholderTextColor={colors.muted}
         />
       </Field>

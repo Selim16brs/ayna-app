@@ -3,6 +3,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatSlotTr } from '../datetime';
+import { fillParams, useLocale } from '../locale';
 import { radius, space, type ColorTokens, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
@@ -39,6 +40,7 @@ export function TarihSecici({
   secilenler: number[];
   degisti: (yeni: number[]) => void;
 }) {
+  const { t } = useLocale();
   const { colors, mode } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [acik, setAcik] = useState(false);
@@ -68,7 +70,7 @@ export function TarihSecici({
             onPress={() => sil(ms)}
             style={styles.cip}
             accessibilityRole="button"
-            accessibilityLabel={`${formatSlotTr(ms)} — kaldır`}
+            accessibilityLabel={fillParams(t('date.remove_a11y'), { tarih: formatSlotTr(ms) })}
           >
             <Text variant="caption" tone="onAccent">
               {formatSlotTr(ms)}
@@ -82,11 +84,11 @@ export function TarihSecici({
             onPress={() => setAcik(true)}
             style={styles.ekle}
             accessibilityRole="button"
-            accessibilityLabel="Tarih ekle"
+            accessibilityLabel={t('date.add_a11y')}
           >
             <Ionicons name="calendar-outline" size={16} color={colors.accentFg} />
             <Text variant="caption" tone="accentFg">
-              Tarih seç
+              {t('date.pick')}
             </Text>
           </Pressable>
         ) : null}
@@ -115,7 +117,7 @@ export function TarihSecici({
             <View style={styles.iosEylem}>
               <Pressable onPress={() => setAcik(false)} hitSlop={8}>
                 <Text variant="caption" tone="muted">
-                  Vazgeç
+                  {t('common.cancel')}
                 </Text>
               </Pressable>
               <Pressable
@@ -126,7 +128,7 @@ export function TarihSecici({
                 hitSlop={8}
               >
                 <Text variant="captionStrong" tone="accentFg">
-                  Ekle
+                  {t('common.add')}
                 </Text>
               </Pressable>
             </View>

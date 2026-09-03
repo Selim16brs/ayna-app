@@ -16,6 +16,7 @@ import {
 } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
+import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { randevuDepozitosu, useStore, type BookingEylem } from '../../src/store';
 import { font, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -47,7 +48,7 @@ import {
  */
 export default function BookingDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
@@ -231,7 +232,7 @@ export default function BookingDetail() {
                 {karsiTaraf}
               </Text>
               <Text style={styles.hizmet} numberOfLines={1}>
-                {booking.service}
+                {hizmetEtiketiCevir(booking.service, locale)}
               </Text>
             </View>
           </View>

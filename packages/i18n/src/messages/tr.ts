@@ -9,6 +9,18 @@ export const tr = {
   'common.exit_confirm': 'Çıkmak için tekrar geri tuşuna bas',
   'common.offline': 'Çevrimdışısın — bağlantı bekleniyor',
   'common.retry': 'Yeniden dene',
+  // §dil — arayüzde sabit kalmış metinler (kurucu denetimi). Hepsi i18n'e
+  // bağlandı; ekran okuyucu etiketleri de çevriliyor.
+  'common.close_card': 'Kartı kapat',
+  'common.loading_a11y': 'Yükleniyor',
+  'common.cancel': 'Vazgeç',
+  'common.add': 'Ekle',
+  'date.pick': 'Tarih seç',
+  'date.add_a11y': 'Tarih ekle',
+  'date.remove_a11y': '{tarih} — kaldır',
+  'name.placeholder': 'Ayşe K.',
+  'name.service_placeholder': 'Saç kesimi & fön',
+  'share.tagline': 'GÜZELLİK & BAKIM',
   'passport.care.load_err': 'Bilgilerin yüklenemedi. Bağlantını kontrol et.',
   'passport.care.allergy_ph': 'Alerji ekle — örn. amonyak, lateks',
   'passport.care.allergy_max': 'En çok 20 alerji ekleyebilirsin.',
@@ -47,7 +59,6 @@ export const tr = {
   'premium.b.promo': 'Haftalık promosyon hakkı',
   'premium.b.promo_d': 'Haftada 1 promosyon oluştur',
   'premium.already': 'Premium aktif',
-  'common.cancel': 'İptal',
   'common.continue': 'Devam et',
   'common.yes': 'Evet',
   'common.no': 'Hayır',
@@ -1328,7 +1339,6 @@ export const tr = {
   // Ortak (yeni)
   'common.delete': 'Sil',
   'common.save': 'Kaydet',
-  'common.add': 'Ekle',
   'common.back': 'Geri',
   'common.next': 'İleri',
   // §11 — paket rozetleri (satın alınan üyelik; sadakat seviyesinden ayrı)

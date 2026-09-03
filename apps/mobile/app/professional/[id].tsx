@@ -12,6 +12,7 @@ import { tri } from '../../src/taxonomy';
 import { ApiError, api } from '../../src/api';
 import { useProfessionalDetail, useProfessionalDurumu } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
+import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { girisGerekli } from '../../src/auth-wall';
 import { selectSellerView, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
@@ -959,7 +960,7 @@ export default function ProfessionalScreen() {
                           {r.author}
                         </Text>
                         <Text variant="caption" tone="muted">
-                          {r.service} · {r.period}
+                          {hizmetEtiketiCevir(r.service, locale)} · {r.period}
                         </Text>
                       </View>
                     </View>
