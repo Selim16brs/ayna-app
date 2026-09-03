@@ -6,7 +6,16 @@ import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
+import {
+  Button,
+  Screen,
+  StackHeader,
+  TelefonGirdisi,
+  Text,
+  TextInput,
+  VARSAYILAN_ULKE,
+  tamNumara,
+} from '../../src/ui';
 
 type Step = 'phone' | 'code' | 'password';
 
@@ -28,7 +37,9 @@ export default function ForgotPasswordScreen() {
   const styles = useThemedStyles(makeStyles);
 
   const [step, setStep] = useState<Step>('phone');
-  const [phone, setPhone] = useState('');
+  const [ulke, setUlke] = useState(VARSAYILAN_ULKE);
+  const [yerel, setYerel] = useState('');
+  const phone = tamNumara(ulke.kod, yerel);
   const [code, setCode] = useState('');
   const [devCode, setDevCode] = useState<string | null>(null);
   const [password, setPassword] = useState('');
@@ -109,17 +120,12 @@ export default function ForgotPasswordScreen() {
 
         {step === 'phone' ? (
           <>
-            <Text variant="caption" tone="inkSoft" style={styles.label}>
-              {t('auth.forgot.phone_label')}
-            </Text>
-            <TextInput
-              value={phone}
-              onChangeText={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
-              placeholder="+7 700 123 45 67"
-              placeholderTextColor={colors.muted}
-              keyboardType="phone-pad"
-              style={styles.input}
-              autoFocus
+            <TelefonGirdisi
+              etiket={t('auth.forgot.phone_label')}
+              ulke={ulke}
+              ulkeDegisti={setUlke}
+              yerel={yerel}
+              yerelDegisti={setYerel}
             />
           </>
         ) : step === 'code' ? (

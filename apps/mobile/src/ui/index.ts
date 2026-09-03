@@ -46,3 +46,7 @@ export { SurumBilgisi } from './SurumBilgisi';
 export { OfflineBanner, useOfflineInset } from './OfflineBanner';
 export { HizmetIkonu, type HizmetIkonTarzi } from './HizmetIkonu';
 export { TarihSecici } from './TarihSecici';
+// Yalnız EKRANLARIN kullandıkları dışa açılıyor. `parcala` /
+// `yerelKismiTemizle` saf yardımcılar; testler onları `telefon-bicim`den
+// doğrudan alıyor, barrel'da durmaları ölü ihracat olurdu.
+export { TelefonGirdisi, VARSAYILAN_ULKE, tamNumara, type Ulke } from './TelefonGirdisi';
