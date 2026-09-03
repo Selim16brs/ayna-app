@@ -2971,14 +2971,41 @@ export const useStore = create<State>()(
             // Portrenin hangi fotoğraftan üretildiği bilgisi ÖNBELLEKTEN
             // taşınır. Taşınmazsa her açılışta bağ kopar ve geçerli bir portre
             // de bayat sayılırdı.
-            cutoutFor: get().cutoutFor ?? cached?.cutoutFor ?? null,
+            /*
+             * ── KESİK PORTRENİN BAĞI SUNUCUYA GEÇİNCE KOPUYORDU ──────
+             *
+             * Kurucu: "ana sayfadaki profil fotoğrafı kesiliyor ama daha
+             * sonra uygulama açılıp kapanınca yeniden daire içine giriyor."
+             *
+             * `cutoutFor`, kesiğin HANGİ FOTOĞRAFTAN üretildiğini tutuyor
+             * ve tazelik oradan anlaşılıyor. Anahtar YEREL fotoğrafın
+             * (data URL) içeriğinden hesaplanmıştı. Fotoğraf depoya
+             * yüklenince `avatarUri` bir ADRESE (https://…) dönüşüyor;
+             * adresin içeriği bambaşka, anahtar tutmuyor ve kesik BAYAT
+             * sayılıp ham fotoğrafa düşülüyordu — daire geri geliyordu.
+             *
+             * SUNUCUDAN GELEN ÇİFT GÜVENİLİR: fotoğraf değiştiğinde kesik
+             * hem yerelde hem sunucuda siliniyor (`setAvatar`), yani
+             * sunucuda ikisi birden varsa AYNI fotoğrafa aitler. Bağ o
+             * durumda mevcut fotoğrafa yeniden çakılıyor.
+             *
+             * Sunucuda kesik yoksa eski davranış sürüyor: yerel anahtar
+             * neyse o. Bayat kesik koruması böylece kaybolmuyor.
+             */
+            cutoutFor: serverCutout
+              ? medyaAnahtari(nextAvatar)
+              : (get().cutoutFor ?? cached?.cutoutFor ?? null),
           }));
           // Önbelleği yalnız bir şey VARSA güncelle — geçici null cache'i EZMESİN.
           if (uid && (nextAvatar || nextCutout))
             saveMediaCache(uid, {
               avatar: nextAvatar,
               cutout: nextCutout,
-              cutoutFor: get().cutoutFor ?? cached?.cutoutFor ?? null,
+              // Önbelleğe de AYNI değer: ayrışsalar bir sonraki soğuk
+              // açılış yine bayat sanardı.
+              cutoutFor: serverCutout
+                ? medyaAnahtari(nextAvatar)
+                : (get().cutoutFor ?? cached?.cutoutFor ?? null),
             });
           // §5.6 — favoriler/adresler hesaptan (sunucuda veri varsa o esas; boşsa yerel korunur)
           const prefs = (me as { prefs?: { favorites?: string[]; addresses?: UserAddress[] } })
@@ -3020,7 +3047,23 @@ export const useStore = create<State>()(
                 if (r.hours.length) set({ sellerHours: r.hours });
               })
               .catch(() => undefined);
-            void 0;
+            /*
+             * SERTİFİKALAR DA HESAPTAN.
+             *
+             * Kayıtta yüklenip veritabanına yazılıyorlardı ama hiç geri
+             * okunmuyordu: uzman profilini açtığında alan boş görünüyor,
+             * hepsini yeniden yüklemesi gerekiyordu.
+             *
+             * BOŞ YANIT YEREL LİSTEYİ EZMİYOR: uzman az önce sertifika
+             * eklediyse ve istek o an düştüyse, boş bir cevabın yereli
+             * silmesi yüklediklerini kaybettirirdi.
+             */
+            void api
+              .myCertificates()
+              .then((r) => {
+                if (r.certificates.length) set({ sellerCerts: r.certificates });
+              })
+              .catch(() => undefined);
           }
           // §5.5 — takip/takipçi hesaptan (rol farketmez)
           void api

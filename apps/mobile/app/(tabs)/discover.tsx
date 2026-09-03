@@ -327,7 +327,7 @@ export default function DiscoverScreen() {
            * göstermek kullanıcının odasını ana sayfaya yapıştırmak olurdu.
            */}
           <PressableScale
-            style={portreKesilmis ? undefined : styles.avatarHalka}
+            style={portreKesilmis ? styles.portreKap : styles.avatarHalka}
             onPress={() => router.push('/(tabs)/profile')}
             accessibilityRole="button"
             accessibilityLabel={t('nav.profile')}
@@ -341,6 +341,23 @@ export default function DiscoverScreen() {
             ) : (
               <View style={[styles.avatar, styles.avatarBos]} />
             )}
+            {/*
+             * ZEMİN ÇİZGİSİ — yalnız kesilmiş portrede.
+             *
+             * Kurucu: "o profil fotoğrafının altına paralel şekilde
+             * dairenin dışındaki pembe renkten çizgi atar mısın? tam
+             * fotoğrafın bittiği yerde ince görünsün ve fotoğraf genişliği
+             * kadar olsun."
+             *
+             * Kesilmiş portrenin zemini saydam; çizgi olmadan figür
+             * boşlukta asılı duruyor. Çizgi fotoğrafın TAM ALTINDA ve
+             * TAM GENİŞLİĞİNDE: kabın kendisi portre ölçüsünde, çizgi de
+             * kabın alt kenarı.
+             *
+             * Daire içindeki ham fotoğrafta ÇİZİLMİYOR: orada zaten bir
+             * çerçeve var, ikisi birden fazlalık olurdu.
+             */}
+            {portreKesilmis ? <View style={styles.portreCizgi} /> : null}
           </PressableScale>
         </View>
 
@@ -835,11 +852,14 @@ const makeStyles = (colors: ColorTokens) =>
       paddingBottom: 8,
     },
     /*
-     * Figma `ayna-logo-mark` 80×30 idi; kurucu "%35 daha büyük olsun"
-     * dedi → 108×41. ORAN KORUNUYOR (80/30 = 108/40.5): tek kenarı
-     * büyütmek işareti ezerdi.
+     * Figma `ayna-logo-mark` 80×30 idi. Kurucu iki kez büyüttü:
+     * önce %35 (108×41), sonra %30 daha (140×52.5).
+     *
+     * ORAN KORUNUYOR (80/30 = 140/52.5 = 2.667): tek kenarı büyütmek
+     * işareti ezerdi. Kesirli yükseklik bilerek — yuvarlasaydık oran
+     * kayardı ve marka işareti hafifçe basık görünürdü.
      */
-    logo: { width: 108, height: 41 },
+    logo: { width: 140, height: 52.5 },
     sehirCip: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -925,6 +945,15 @@ const makeStyles = (colors: ColorTokens) =>
      * içinde yüzmüyor, ona yaslanıyor.
      */
     portreKesik: { width: 104, height: 104 },
+    // Kap portre ölçüsünde: çizgi "fotoğraf genişliği kadar" olsun diye
+    // genişliği buradan alıyor.
+    portreKap: { width: 104, alignItems: 'center' },
+    portreCizgi: {
+      width: '100%',
+      height: 2,
+      borderRadius: 1,
+      backgroundColor: colors.accent,
+    },
     avatarBos: { backgroundColor: colors.accentSoft },
 
     // search-container (radius 12, border #E5E0DE, px14 py8)

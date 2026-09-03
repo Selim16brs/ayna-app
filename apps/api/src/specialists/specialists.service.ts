@@ -610,6 +610,20 @@ export class SpecialistsService {
     return { days: safeParse(pro.closedDaysJson) };
   }
 
+  /**
+   * SERTİFİKALARI OKU.
+   *
+   * Kurucu: kayıtta girilen bilgiler profilde görünmüyordu. Sertifikalar
+   * bu sınıfın son örneğiydi: kayıtta gönderiliyor, veritabanına
+   * yazılıyor ama GERİ OKUYACAK UÇ YOKTU — yalnız yazma vardı. Uzman
+   * profilini açtığında sertifika alanını boş görüyor, hepsini yeniden
+   * yüklemesi gerekiyordu.
+   */
+  async myCertificates(userId: string) {
+    const sp = await this.prisma.specialist.findUnique({ where: { userId } });
+    return { certificates: sp?.certificates ?? [] };
+  }
+
   async setCertificates(userId: string, certificates: string[]) {
     const sp = await this.prisma.specialist.findUnique({ where: { userId } });
     if (!sp) return { certificates: [] };

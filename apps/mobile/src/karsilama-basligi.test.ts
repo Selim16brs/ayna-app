@@ -67,11 +67,18 @@ test('KESİLMİŞ portre BÜYÜK ve ÇERÇEVESİZ', () => {
     `kesilmiş portre büyütülmemiş: ${kesik.width} vs ${daire.width}`,
   );
   assert.equal(kesik.borderRadius, undefined, 'kesilmiş portre hâlâ daire içinde');
+  /*
+   * Kesilmiş portrede HALKA yok — kap yalnız zemin çizgisini
+   * hizalıyor (`portreKap`), çerçeve çizmiyor.
+   */
   assert.match(
     ekran,
-    /style=\{portreKesilmis \? undefined : styles\.avatarHalka\}/,
+    /style=\{portreKesilmis \? styles\.portreKap : styles\.avatarHalka\}/,
     'kesilmiş portrede halka kaldırılmıyor',
   );
+  const kap = stil('portreKap');
+  assert.equal(kap.borderWidth, undefined, 'kesilmiş portrenin kabı çerçeve çiziyor');
+  assert.equal(kap.borderRadius, undefined, 'kesilmiş portrenin kabı yuvarlak');
 });
 
 test('HAM fotoğraf DAİRE içinde kalıyor', () => {
@@ -125,17 +132,100 @@ test('"kesilmiş mi" kararı PORTRE SEÇİMİYLE aynı koşulda', () => {
   assert.equal(portreSec(yok), 'foto');
 });
 
-test('ANA SAYFA LOGOSU %35 büyütüldü — oran korunarak', () => {
+test('ANA SAYFA LOGOSU büyütüldü — ORAN korunarak', () => {
   /*
-   * Kurucu: "ana sayfadaki ayna logosu %35 daha büyük olsun."
+   * Kurucu logoyu iki kez büyüttü (%35, sonra %30 daha). Testin
+   * KORUDUĞU ŞEY ORAN: tek kenarı büyütmek marka işaretini ezerdi.
    *
-   * Tek kenarı büyütmek marka işaretini ezerdi; ikisi de aynı oranda
-   * büyümeli. Test oranı da ölçüyor.
+   * Kesin ölçüye bağlamıyorum — o bir beğeni kararı ve değişmeye devam
+   * edecek; ölçüyü sabitleyen bir test her ayarda gürültü çıkarırdı.
+   * Kural, işaretin Figma'daki 80×30'dan KÜÇÜLMEMESİ ve oranın
+   * bozulmaması.
    */
   const l = stil('logo');
   const g = Number(l.width);
   const y = Number(l.height);
-  assert.ok(g >= 105 && g <= 110, `logo genişliği %35 büyümemiş: ${g}`);
+  assert.ok(g >= 80, `logo Figma ölçüsünden küçük: ${g}`);
   const oran = g / y;
   assert.ok(Math.abs(oran - 80 / 30) < 0.05, `logo oranı bozulmuş: ${oran.toFixed(2)}`);
+});
+
+test('KESİK PORTRE uygulama kapanıp açılınca KAYBOLMUYOR', () => {
+  /*
+   * Kurucu: "ana sayfadaki profil fotoğrafı kesiliyor ama daha sonra
+   * uygulama açılıp kapanınca yeniden daire içine giriyor."
+   *
+   * `cutoutFor` anahtarı YEREL fotoğrafın içeriğinden hesaplanıyordu.
+   * Fotoğraf depoya yüklenince `avatarUri` bir ADRESE dönüşüyor;
+   * adresin içeriği bambaşka, anahtar tutmuyor ve kesik BAYAT sayılıp
+   * ham fotoğrafa düşülüyordu.
+   *
+   * Sunucudan gelen çift güvenilir: fotoğraf değiştiğinde kesik de
+   * siliniyor, yani ikisi birden varsa aynı fotoğrafa aitler.
+   */
+  /*
+   * DURUMU YAZAN yere bakıyoruz, önbelleğe yazana değil.
+   *
+   * Aynı ifade iki yerde geçiyor (`set(...)` ve `saveMediaCache(...)`).
+   * İlk denememde dosyanın herhangi bir yerinde arıyordum: `set(`
+   * bloğunu bozan mutasyon, öteki kopya sayesinde testi geçiyordu.
+   * Ekranın gördüğü değer `set(` içindeki.
+   */
+  const magaza = readFileSync(join(__dirname, 'store.ts'), 'utf8');
+  const durumBlogu = magaza.slice(
+    magaza.indexOf('const localCutout ='),
+    magaza.indexOf('}));', magaza.indexOf('const localCutout =')),
+  );
+  assert.match(
+    durumBlogu,
+    /cutoutFor: serverCutout\s*\?\s*medyaAnahtari\(nextAvatar\)/,
+    'sunucudan gelen kesik mevcut fotoğrafa bağlanmıyor',
+  );
+  // Sunucuda kesik YOKSA eski davranış sürmeli: bayat koruması kalkmasın.
+  assert.match(
+    durumBlogu,
+    /: \(get\(\)\.cutoutFor \?\? cached\?\.cutoutFor \?\? null\)/,
+    'bayat kesik koruması kaldırılmış',
+  );
+});
+
+test('ADRES ile DATA URL aynı anahtarı vermiyor — hatanın çekirdeği', () => {
+  /*
+   * Bu testin amacı düzeltmeyi değil SEBEBİ kilitlemek: biri "anahtar
+   * zaten tutuyordu" diye düzeltmeyi geri alırsa burası hatırlatır.
+   */
+  const dataUrl = 'data:image/jpeg;base64,QUJDREVG';
+  const adres = 'https://cdn.ayna.salon/avatars/abc123.jpg';
+  assert.notEqual(medyaAnahtari(dataUrl), medyaAnahtari(adres));
+});
+
+test('KESİK PORTRENİN ALTINDA zemin çizgisi', () => {
+  /*
+   * Kurucu: "fotoğrafın altına paralel şekilde pembe çizgi… tam
+   * fotoğrafın bittiği yerde ince görünsün ve fotoğraf genişliği kadar
+   * olsun."
+   *
+   * Kesilmiş portrenin zemini saydam; çizgi olmadan figür boşlukta asılı
+   * duruyor.
+   */
+  assert.match(
+    ekran,
+    /\{portreKesilmis \? <View style=\{styles\.portreCizgi\} \/> : null\}/,
+    'zemin çizgisi yok',
+  );
+  const c = stil('portreCizgi');
+  assert.equal(c.width, "'100%'", 'çizgi fotoğraf genişliğinde değil');
+  assert.ok(Number(c.height) <= 3, `çizgi ince değil: ${c.height}`);
+  assert.equal(c.backgroundColor, 'colors.accent', 'çizgi aksan renginden gelmiyor');
+  // Kap portre ölçüsünde olmalı, yoksa "%100" fotoğrafın genişliği olmaz.
+  assert.equal(Number(stil('portreKap').width), Number(stil('portreKesik').width));
+});
+
+test('DAİRE içindeki ham fotoğrafta çizgi YOK', () => {
+  // Orada zaten bir çerçeve var; ikisi birden fazlalık olurdu.
+  assert.match(
+    ekran,
+    /style=\{portreKesilmis \? styles\.portreKap : styles\.avatarHalka\}/,
+    'ham fotoğraf da çizgili kapta',
+  );
 });
