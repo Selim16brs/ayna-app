@@ -31,7 +31,18 @@ export const envSchema = z.object({
    * olan) biri kullanabilir; dışarıya AÇILAN BİR UÇ YOK. En az 12 karakter.
    * İş bitince değişkeni SİL — bırakılırsa her dağıtımda şifre bu değere döner.
    */
-  ADMIN_BOOTSTRAP_PASSWORD: z.string().min(12).optional(),
+  /*
+   * UZUNLUK KURALI BURADA DEĞİL, `AdminBootstrapService` İÇİNDE.
+   *
+   * `.min(12)` şemadaydı ve kısa bir şifre yazmak `loadEnv`i düşürüyordu:
+   * yani API HİÇ AÇILMIYORDU. Bu tam olarak Mobizon anahtarında yaşanan
+   * kesintinin aynısı — kurucu panele giremediği için şifre sıfırlamaya
+   * çalışırken, bir yazım hatası tüm pazar yerini kapatabilirdi.
+   *
+   * Kısa şifre artık uygulamayı düşürmüyor: sıfırlama atlanıyor ve sebep
+   * açılış kaydına yazılıyor.
+   */
+  ADMIN_BOOTSTRAP_PASSWORD: z.string().optional(),
 
   PAYMENT_PROVIDER: z.enum(['mock']).default('mock'),
   /**

@@ -1,4 +1,4 @@
-import { Inject, Injectable, type OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import type { Env } from '@ayna/config/env';
 import { ENV } from '../config/config.module';
 import { hashPassword, verifyPassword } from '../common/crypto';
@@ -6,6 +6,8 @@ import { PrismaService } from '../prisma/prisma.service';
 
 /** Panel girişinin kullandığı yönetici kimliği (auth.service'teki 'admin' takma adı buraya çözülür). */
 const ADMIN_EMAIL = 'admin@ayna.kz';
+/** Yönetici şifresinin en az uzunluğu. */
+const EN_AZ_UZUNLUK = 12;
 
 /**
  * YÖNETİCİ ŞİFRESİ KURTARMA — yalnız ortam değişkeniyle.
@@ -22,6 +24,8 @@ const ADMIN_EMAIL = 'admin@ayna.kz';
  */
 @Injectable()
 export class AdminBootstrapService implements OnModuleInit {
+  private readonly logger = new Logger(AdminBootstrapService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     @Inject(ENV) private readonly env: Env,
@@ -30,6 +34,24 @@ export class AdminBootstrapService implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     const sifre = this.env.ADMIN_BOOTSTRAP_PASSWORD;
     if (!sifre) return;
+
+    /*
+     * EN AZ 12 KARAKTER — ama uygulamayı DÜŞÜRMEDEN.
+     *
+     * Bu kural şemadaydı ve kısa şifre `loadEnv`i düşürüp API'yi hiç
+     * açtırmıyordu. Kurucu zaten panele giremediği için buraya geliyor;
+     * bir yazım hatasının tüm pazar yerini kapatması kabul edilemez.
+     *
+     * Kural duruyor (zayıf yönetici şifresi ciddi bir risk) ama bedelini
+     * yalnız sıfırlama ödüyor: atlanıyor ve sebep kayda yazılıyor.
+     */
+    if (sifre.length < EN_AZ_UZUNLUK) {
+      this.logger.error(
+        `ADMIN_BOOTSTRAP_PASSWORD en az ${EN_AZ_UZUNLUK} karakter olmalı — ` +
+          `${sifre.length} karakter verildi. Yönetici şifresi DEĞİŞTİRİLMEDİ.`,
+      );
+      return;
+    }
 
     try {
       const mevcut = await this.prisma.user.findUnique({ where: { email: ADMIN_EMAIL } });
