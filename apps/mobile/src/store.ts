@@ -9,6 +9,7 @@ import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadMediaCache, medyaAnahtari, saveMediaCache } from './media-cache';
 import { portreKesilmisMi, portreSec } from './portre';
+import { BOS_DURUM, type SplashDurumu } from '@ayna/domain';
 import { setApiToken } from './api';
 import { formatTrDate } from './date-label';
 import { create } from 'zustand';
@@ -417,6 +418,12 @@ interface State {
   /** Çalışma saatleri — kendi ekranından doğrudan kaydedilir (admin onayı yok). */
   setSellerHours: (hours: DayHours[]) => void;
   sellerCerts: string[];
+  /** Açılış mesajı rotasyon durumu — brief §3, cihazda saklanıyor. */
+  acilisDurumu: SplashDurumu;
+  setAcilisDurumu: (d: SplashDurumu) => void;
+  /** Son açılış anı (ms) — 30+ gün yokluk mesajı için. */
+  sonAcilisMs: number | null;
+  setSonAcilis: (ms: number) => void;
   setSellerProfile: (p: { social?: SocialValue; hours?: DayHours[]; certs?: string[] }) => void;
   // §10.1/§6.2 — salon-seviyesi profil (uzman profilinden AYRI). Kalıcı saklanır.
   salonProfile: {
@@ -699,6 +706,18 @@ export const userScopedReset = (): Partial<State> => ({
   pendingBookingSync: [], // önceki üyenin eşitleme kuyruğu yeni üyeye taşınmaz
   pendingBookingActions: [], // aynı gerekçe: başkasının adına işlem gönderilmez
   uyelikOgrenildi: false, // yeni üyenin üyeliği henüz öğrenilmedi
+  /*
+   * AÇILIŞ MESAJI DURUMU HESABA ÖZEL.
+   *
+   * Taşınsaydı iki şey bozulurdu: yeni üye önceki üyenin "görüldü"
+   * listesini devralır ve havuzun yarısını hiç görmez; daha ağırı,
+   * `bh_01` ("AYNA'ya hoş geldin") ömürde bir kez ve önceki hesapta
+   * gösterilmiş sayıldığı için YENİ ÜYE HOŞ GELDİN MESAJINI HİÇ GÖRMEZ.
+   */
+  acilisDurumu: BOS_DURUM,
+  // Aynı gerekçe: dolu kalsaydı yeni üye "geri dönen kullanıcı" sanılır
+  // ve ilk açılış mesajı hiç tetiklenmezdi.
+  sonAcilisMs: null,
   moments: [],
   closedDays: [],
   promotions: [],
@@ -977,6 +996,10 @@ export const useStore = create<State>()(
       sellerSocial: emptySocial,
       sellerHours: defaultHours(),
       sellerCerts: [],
+      acilisDurumu: BOS_DURUM,
+      setAcilisDurumu: (d) => set({ acilisDurumu: d }),
+      sonAcilisMs: null,
+      setSonAcilis: (ms) => set({ sonAcilisMs: ms }),
       setSellerProfile: (p) => {
         set(() => ({
           ...(p.social ? { sellerSocial: p.social } : {}),
@@ -3284,6 +3307,13 @@ export const useStore = create<State>()(
         sellerSocial: s.sellerSocial,
         sellerHours: s.sellerHours,
         sellerCerts: s.sellerCerts,
+        /*
+         * Açılış mesajı durumu KALICI. Persist edilmeseydi tekrarsız
+         * döngü her açılışta sıfırlanır ve kullanıcı hep havuzun aynı
+         * başındaki mesajları görürdü.
+         */
+        acilisDurumu: s.acilisDurumu,
+        sonAcilisMs: s.sonAcilisMs,
         salonProfile: s.salonProfile,
         demandNotif: s.demandNotif,
         offersSeen: s.offersSeen, // açılış 'yeni teklif' pop-up sayacı

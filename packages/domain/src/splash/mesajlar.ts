@@ -1,0 +1,548 @@
+import type { UcDil } from '../catalog/katalog.js';
+
+/**
+ * AÇILIŞ MESAJLARI KATALOĞU — `AYNA_ACILIS_MESAJLARI_BRIEF.md` v2.0.
+ *
+ * ── KİMLİKLER DEĞİŞMEZ ──────────────────────────────────────────────────
+ *
+ * Brief §2: "Tüm ID'ler sabittir (immutable); analitik ve rotasyon bu
+ * ID'lere bağlanır." Rotasyon durumu cihazda ID ile saklanıyor: bir kimlik
+ * değişirse o mesaj kullanıcı için "hiç görülmemiş" olur ve döngü bozulur.
+ *
+ * ── ÇEVİRİLER ÜRÜN ONAYLI ───────────────────────────────────────────────
+ *
+ * Üç dilli metinler brief'teki tablolardan AYNEN kopyalanmıştır; kendi
+ * çevirim üretilmedi.
+ *
+ * ── KATALOG NEDEN BURADA ────────────────────────────────────────────────
+ *
+ * `packages/domain` içinde: uygulama splash'ı çiziyor, sunucu uzaktan
+ * güncelleme ve admin paneli için aynı listeyi okuyor. İki kopya zamanla
+ * ayrışırdı.
+ *
+ * Brief §7.1 "yerel paket + uzak güncelleme" istiyor: bu dosya YEREL
+ * PAKET — internet olmadan da splash çalışıyor. Uzak katalog ayrı bir
+ * adımda üzerine biniyor.
+ */
+
+export type SplashEtiket = 'female' | 'neutral';
+export type SplashGrup = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
+
+/** Yıl içinde bir tarih penceresi — [ay, gün], ay 1-12. */
+export interface TarihPenceresi {
+  bas: [number, number];
+  son: [number, number];
+}
+
+export interface SplashMesaji {
+  id: string;
+  grup: SplashGrup;
+  etiket: SplashEtiket;
+  metin: UcDil;
+  /** C — saat aralığı [dahil, hariç), cihaz yerel saati. */
+  saat?: [number, number];
+  /** C — yalnız hafta sonu (Cmt/Paz). */
+  haftaSonu?: true;
+  /** D — haftanın günleri (0 = Pazar). */
+  gunler?: readonly number[];
+  /** E — tarih penceresi. */
+  pencere?: TarihPenceresi;
+  /**
+   * E — ÖNCELİKLİ özel gün (sp_01–04): pencere içindeki İLK açılışta
+   * kesin gösterilir. Sezon mesajları (sp_05–07) öncelikli DEĞİL, genel
+   * havuza karışır.
+   */
+  oncelikliOzelGun?: true;
+  /** F — `{name}` taşıyor; ad yoksa havuza girmez (pn_02 hariç, kısaltması var). */
+  adGerekli?: true;
+  /** F — doğum gününde gösterilir. */
+  dogumGunu?: true;
+  /** pn_02'nin adsız kısaltması — brief §2.6. */
+  adsizMetin?: UcDil;
+  /** H — davranış koşulu. */
+  davranis?:
+    | 'ilk_acilis'
+    | 'uzun_yokluk'
+    | 'yarin_randevu'
+    | 'bugun_randevu'
+    | 'randevu_sonrasi'
+    | 'puan_hazir';
+}
+
+const m = (
+  id: string,
+  grup: SplashGrup,
+  etiket: SplashEtiket,
+  tr: string,
+  ru: string,
+  kk: string,
+  ek: Partial<SplashMesaji> = {},
+): SplashMesaji => ({ id, grup, etiket, metin: { tr, ru, kk }, ...ek });
+
+/** Brief §2.3 — saat aralıkları (cihaz yerel saati). */
+const SABAH: [number, number] = [5, 11];
+const OGLE: [number, number] = [11, 17];
+const AKSAM: [number, number] = [17, 24];
+
+export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
+  // ── GRUP A · Genel motivasyon (her zaman havuzda) ────────────────────
+  m(
+    'msg_01',
+    'A',
+    'female',
+    'Sen güçlü bir kadınsın!',
+    'Ты сильная женщина!',
+    'Сен мықты әйелсің!',
+  ),
+  m('msg_02', 'A', 'neutral', 'Bugün senin günün!', 'Сегодня твой день!', 'Бүгін — сенің күнің!'),
+  m(
+    'msg_03',
+    'A',
+    'neutral',
+    'Güzelliğin içinden geliyor.',
+    'Твоя красота идёт изнутри.',
+    'Сұлулығың ішіңнен бастау алады.',
+  ),
+  m(
+    'msg_04',
+    'A',
+    'neutral',
+    'Kendine zaman ayırmayı hak ediyorsun.',
+    'Ты заслуживаешь времени для себя.',
+    'Сен өзіңе уақыт бөлуге лайықсың.',
+  ),
+  m(
+    'msg_05',
+    'A',
+    'neutral',
+    'Işılda! Dünya sana bakıyor.',
+    'Сияй! Мир смотрит на тебя.',
+    'Жарқыра! Әлем саған қарап тұр.',
+  ),
+  m(
+    'msg_06',
+    'A',
+    'neutral',
+    'En güzel yatırım, kendine yaptığındır.',
+    'Лучшая инвестиция — в себя.',
+    'Ең үздік инвестиция — өзіңе салғаның.',
+  ),
+  m(
+    'msg_07',
+    'A',
+    'female',
+    'Sen olduğun gibi mükemmelsin.',
+    'Ты прекрасна такая, какая есть.',
+    'Сен өз қалпыңда кереметсің.',
+  ),
+  m(
+    'msg_08',
+    'A',
+    'neutral',
+    'Bugün kendini şımart!',
+    'Побалуй себя сегодня!',
+    'Бүгін өзіңді еркелет!',
+  ),
+  m(
+    'msg_09',
+    'A',
+    'neutral',
+    'Gülüşün en güzel aksesuarın.',
+    'Твоя улыбка — лучшее украшение.',
+    'Күлкің — ең әдемі әшекейің.',
+  ),
+  m(
+    'msg_10',
+    'A',
+    'neutral',
+    'Kendine iyi bakmak bencillik değil, sevgidir.',
+    'Забота о себе — это не эгоизм, а любовь.',
+    'Өзіңе қамқорлық — өзімшілдік емес, махаббат.',
+  ),
+  m(
+    'msg_11',
+    'A',
+    'neutral',
+    'Her gün yeni bir başlangıç.',
+    'Каждый день — новое начало.',
+    'Әр күн — жаңа бастау.',
+  ),
+  m('msg_12', 'A', 'female', 'Sen bir tanesin!', 'Ты неповторима!', 'Сен қайталанбассың!'),
+  m(
+    'msg_13',
+    'A',
+    'neutral',
+    'Enerjin her şeyi değiştirir.',
+    'Твоя энергия меняет всё.',
+    'Сенің энергияң бәрін өзгертеді.',
+  ),
+  m(
+    'msg_14',
+    'A',
+    'neutral',
+    'Hayallerinin peşinden git.',
+    'Иди за своей мечтой.',
+    'Арманыңның соңынан ер.',
+  ),
+  m(
+    'msg_15',
+    'A',
+    'female',
+    'Bugün de harikasın!',
+    'Ты сегодня великолепна!',
+    'Сен бүгін де кереметсің!',
+  ),
+  m(
+    'msg_16',
+    'A',
+    'neutral',
+    'Kendini sevmek en büyük güçtür.',
+    'Любовь к себе — великая сила.',
+    'Өзіңді сүю — ең үлкен күш.',
+  ),
+  m(
+    'msg_17',
+    'A',
+    'neutral',
+    'Küçük bir bakım, büyük bir özgüven.',
+    'Немного заботы — много уверенности.',
+    'Кішкене күтім — үлкен сенімділік.',
+  ),
+  m('msg_18', 'A', 'female', 'Sen buna değersin.', 'Ты этого достойна.', 'Сен бұған лайықсың.'),
+  m(
+    'msg_19',
+    'A',
+    'neutral',
+    'Parlamaktan asla vazgeçme.',
+    'Никогда не переставай сиять.',
+    'Жарқырауды ешқашан тоқтатпа.',
+  ),
+  m(
+    'msg_20',
+    'A',
+    'neutral',
+    'Güzellik bir yolculuktur — tadını çıkar.',
+    'Красота — это путь. Наслаждайся им.',
+    'Сұлулық — бұл жол. Ләззатын ал.',
+  ),
+
+  // ── GRUP B · Hizmete yönlendiren (her zaman havuzda) ─────────────────
+  m(
+    'msg_21',
+    'B',
+    'neutral',
+    "Bugün kendin için bir şey yap — spa'ya git!",
+    'Сделай сегодня что-то для себя — сходи в спа!',
+    'Бүгін өзің үшін бірдеңе жаса — спаға бар!',
+  ),
+  m(
+    'msg_22',
+    'B',
+    'neutral',
+    'Manikür zamanı gelmedi mi?',
+    'Не пора ли на маникюр?',
+    'Маникюр жасайтын уақыт келді емес пе?',
+  ),
+  m(
+    'msg_23',
+    'B',
+    'neutral',
+    'İyi bir masaj her şeyi çözer.',
+    'Хороший массаж решает всё.',
+    'Жақсы массаж бәрін шешеді.',
+  ),
+  m(
+    'msg_24',
+    'B',
+    'neutral',
+    'Cildin sana teşekkür edecek — bir bakım planla.',
+    'Твоя кожа скажет спасибо — запишись на уход.',
+    'Терің саған алғыс айтады — күтімге жазыл.',
+  ),
+  m(
+    'msg_25',
+    'B',
+    'female',
+    'Yeni bir saç, yeni bir sen!',
+    'Новая причёска — новая ты!',
+    'Жаңа шаш үлгісі — жаңа сен!',
+  ),
+  m(
+    'msg_26',
+    'B',
+    'neutral',
+    'Kendine bir güzellik molası ver.',
+    'Устрой себе бьюти-паузу.',
+    'Өзіңе сұлулық үзілісін жаса.',
+  ),
+  m(
+    'msg_27',
+    'B',
+    'neutral',
+    'Işıldamak için bir randevu yeter.',
+    'Одна запись — и ты сияешь.',
+    'Бір жазылу — сен жарқырап шыға келесің.',
+  ),
+  m(
+    'msg_28',
+    'B',
+    'neutral',
+    'Dileğini yaz, uzmanlar sana gelsin!',
+    'Напиши своё желание — мастера откликнутся!',
+    'Тілегіңді жаз — мамандар өздері хабарласады!',
+  ),
+
+  // ── GRUP C · Zaman dilimi ────────────────────────────────────────────
+  m(
+    'tod_01',
+    'C',
+    'neutral',
+    'Günaydın! Bugün ışıldamak için harika bir gün.',
+    'Доброе утро! Отличный день, чтобы сиять.',
+    'Қайырлы таң! Бүгін жарқырауға тамаша күн.',
+    { saat: SABAH },
+  ),
+  m(
+    'tod_02',
+    'C',
+    'neutral',
+    'Güne bir gülümsemeyle başla.',
+    'Начни день с улыбки.',
+    'Күнді күлкіден баста.',
+    { saat: SABAH },
+  ),
+  m(
+    'tod_03',
+    'C',
+    'neutral',
+    'Kendine küçük bir mola borçlusun.',
+    'Ты заслуживаешь маленькой паузы.',
+    'Сен шағын үзіліске лайықсың.',
+    { saat: OGLE },
+  ),
+  m(
+    'tod_04',
+    'C',
+    'neutral',
+    'Bugün kendine ne kadar zaman ayırdın?',
+    'Сегодня было время для себя?',
+    'Бүгін өзіңе уақыт бөлдің бе?',
+    { saat: AKSAM },
+  ),
+  m(
+    'tod_05',
+    'C',
+    'neutral',
+    'Yarın için güzel bir plan yapalım mı?',
+    'Составим красивый план на завтра?',
+    'Ертеңге әдемі жоспар құрайық па?',
+    { saat: AKSAM },
+  ),
+  m(
+    'tod_06',
+    'C',
+    'neutral',
+    'Hafta sonu, kendine bakım zamanı!',
+    'Выходные — время заботы о себе!',
+    'Демалыс — өзіңе қамқорлық уақыты!',
+    { haftaSonu: true },
+  ),
+
+  // ── GRUP D · Haftanın günü ───────────────────────────────────────────
+  m(
+    'dow_01',
+    'D',
+    'neutral',
+    'Haftaya ışıldayarak başla!',
+    'Начни неделю с сияния!',
+    'Аптаны жарқыраудан баста!',
+    { gunler: [1] },
+  ),
+  m(
+    'dow_02',
+    'D',
+    'neutral',
+    'Hafta sonu planın hazır mı? Belki bir manikür?',
+    'Планы на выходные готовы? Может, маникюр?',
+    'Демалысқа жоспар дайын ба? Мүмкін маникюр?',
+    { gunler: [5] },
+  ),
+
+  // ── GRUP E · Özel gün ve sezon ───────────────────────────────────────
+  m(
+    'sp_01',
+    'E',
+    'neutral',
+    'Yeni yıl, yeni sen! Nice ışıltılı yıllara.',
+    'Новый год — новая версия тебя!',
+    'Жаңа жыл — жаңа сен!',
+    { pencere: { bas: [12, 31], son: [1, 7] }, oncelikliOzelGun: true },
+  ),
+  m(
+    'sp_02',
+    'E',
+    'neutral',
+    'Bugün sevginin günü — önce kendini sev.',
+    'Сегодня день любви — начни с любви к себе.',
+    'Бүгін махаббат күні — өзіңді сүюден баста.',
+    { pencere: { bas: [2, 14], son: [2, 14] }, oncelikliOzelGun: true },
+  ),
+  m(
+    'sp_03',
+    'E',
+    'female',
+    '8 Mart kutlu olsun! Bugün gün senin günün.',
+    'С 8 Марта! Сегодня твой день.',
+    '8 Наурыз мейрамы құтты болсын! Бүгін — сенің күнің.',
+    { pencere: { bas: [3, 8], son: [3, 8] }, oncelikliOzelGun: true },
+  ),
+  m(
+    'sp_04',
+    'E',
+    'neutral',
+    'Nauryz kutlu olsun! Baharla birlikte yenilen.',
+    'С Наурызом! Обновляйся вместе с весной.',
+    'Наурыз мейрамы құтты болсын! Көктеммен бірге жаңар.',
+    { pencere: { bas: [3, 21], son: [3, 23] }, oncelikliOzelGun: true },
+  ),
+  m(
+    'sp_05',
+    'E',
+    'neutral',
+    'Soğuk havada cildin ekstra sevgi ister.',
+    'В холода твоя кожа просит больше заботы.',
+    'Суықта терің көбірек қамқорлық қалайды.',
+    { pencere: { bas: [12, 1], son: [2, 29] } },
+  ),
+  m(
+    'sp_06',
+    'E',
+    'neutral',
+    'Güneş çıktı — sen de parla!',
+    'Солнце сияет — сияй и ты!',
+    'Күн жарқырап тұр — сен де жарқыра!',
+    { pencere: { bas: [6, 1], son: [8, 31] } },
+  ),
+  m(
+    'sp_07',
+    'E',
+    'neutral',
+    'Düğün sezonu açıldı! Davetlere hazır mısın?',
+    'Сезон свадеб открыт! Готовишься к торжествам?',
+    'Той маусымы басталды! Тойларға дайынсың ба?',
+    { pencere: { bas: [5, 1], son: [9, 30] } },
+  ),
+
+  // ── GRUP F · Kişiselleştirilmiş ──────────────────────────────────────
+  m(
+    'pn_01',
+    'F',
+    'neutral',
+    'Hoş geldin, {name}! Bugün senin günün.',
+    'С возвращением, {name}! Сегодня твой день.',
+    'Қош келдің, {name}! Бүгін — сенің күнің.',
+    { adGerekli: true },
+  ),
+  m(
+    'pn_02',
+    'F',
+    'neutral',
+    'İyi ki doğdun, {name}! Bugün ışılda!',
+    'С днём рождения, {name}! Сияй сегодня!',
+    'Туған күніңмен, {name}! Бүгін жарқыра!',
+    {
+      dogumGunu: true,
+      // Brief §2.6 — ad yoksa kısaltılmış varyant; mesaj HAVUZDAN DÜŞMÜYOR.
+      adsizMetin: {
+        tr: 'İyi ki doğdun! Bugün ışılda!',
+        ru: 'С днём рождения! Сияй сегодня!',
+        kk: 'Туған күніңмен! Бүгін жарқыра!',
+      },
+    },
+  ),
+
+  // ── GRUP G · Samimi / espri ──────────────────────────────────────────
+  m(
+    'fun_01',
+    'G',
+    'female',
+    'Ayna ayna, söyle bana... Söylemeye gerek yok — harikasın.',
+    'Свет мой, зеркальце, скажи... Можно не говорить — ты прекрасна.',
+    'Айна, айна, айтшы маған... Айтудың қажеті жоқ — сен кереметсің.',
+  ),
+  m(
+    'fun_02',
+    'G',
+    'neutral',
+    'Aynaya bir gülümse — bunu hak etti.',
+    'Улыбнись зеркалу — оно это заслужило.',
+    'Айнаға күлімсіреші — ол соған лайық.',
+  ),
+  m(
+    'fun_03',
+    'G',
+    'neutral',
+    'Güzellik uykusu iyi de… biraz da güzellik randevusu?',
+    'Бьюти-сон — это хорошо. А бьюти-запись — ещё лучше!',
+    'Сұлулық ұйқысы жақсы. Ал сұлулық жазылымы — одан да жақсы!',
+  ),
+
+  // ── GRUP H · Davranış bazlı ──────────────────────────────────────────
+  m(
+    'bh_01',
+    'H',
+    'neutral',
+    "AYNA'ya hoş geldin! İlk dileğini yazmaya hazır mısın?",
+    'Добро пожаловать в AYNA! Загадай своё первое желание.',
+    'AYNA-ға қош келдің! Алғашқы тілегіңді жаз.',
+    { davranis: 'ilk_acilis' },
+  ),
+  m(
+    'bh_02',
+    'H',
+    'neutral',
+    'Seni özledik! Kendine yeniden zaman ayırma vakti.',
+    'Мы соскучились! Пора снова уделить себе время.',
+    'Сені сағындық! Өзіңе қайта уақыт бөлетін кез келді.',
+    { davranis: 'uzun_yokluk' },
+  ),
+  m(
+    'bh_03',
+    'H',
+    'neutral',
+    'Yarın randevun var — heyecan başlasın!',
+    'Завтра твоя запись. Уже ждём!',
+    'Ертең жазылуың бар. Асыға күтеміз!',
+    { davranis: 'yarin_randevu' },
+  ),
+  m(
+    'bh_04',
+    'H',
+    'neutral',
+    'Bugün randevu günü! Harika görüneceksin.',
+    'Сегодня день записи! Всё будет красиво.',
+    'Бүгін жазылу күні! Бәрі керемет болады.',
+    { davranis: 'bugun_randevu' },
+  ),
+  m(
+    'bh_05',
+    'H',
+    'neutral',
+    'Yeni halin çok yakışmış!',
+    'Обновление тебе к лицу!',
+    'Жаңа келбетің жарасып тұр!',
+    { davranis: 'randevu_sonrasi' },
+  ),
+  m(
+    'bh_06',
+    'H',
+    'neutral',
+    'Puanların hazır — bir sonraki randevunda kullan!',
+    'Твои баллы готовы — используй при следующей записи!',
+    'Ұпайларың дайын — келесі жазылымда қолдан!',
+    { davranis: 'puan_hazir' },
+  ),
+];
+
+/** Brief §2.8 — bh_06 eşiği, puan kullanım minimumuyla senkron. */
+export const PUAN_ESIGI = 5000;

@@ -10,6 +10,8 @@ export * from './catalog/sectors.js';
 export * from './catalog/hizmet-kimligi.js';
 export * from './catalog/arama.js';
 export * from './catalog/regule.js';
+export * from './splash/mesajlar.js';
+export * from './splash/secim.js';
 export * from './catalog/category-ids.js';
 export * from './loyalty/spend-rules.js';
 export * from './trust/ayna-verified.js';
