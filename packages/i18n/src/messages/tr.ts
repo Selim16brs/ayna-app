@@ -1876,10 +1876,20 @@ export const tr = {
   'profile.edit.save_err':
     'Kaydedilemedi — tekrar dene. (Oturumun yenilenmiş olabilir; çıkış-giriş dene.)',
   'profile.edit.name': 'Ad Soyad',
-  'profile.edit.identity_note':
-    'Telefon ve e-posta giriş bilgilerindir; değiştirmek için destek ile iletişime geç.',
   'profile.edit.email': 'E-posta',
   'profile.edit.phone': 'Telefon',
+  'profile.phone.title': 'Telefon numarasını değiştir',
+  'profile.phone.change': 'Telefon numaramı değiştir',
+  'profile.phone.why':
+    'Yeni numaranı SMS koduyla doğruluyoruz, sonra ekibimiz onaylıyor. Onaylanana kadar eski numaranla giriş yapmaya devam edersin.',
+  'profile.phone.current': 'Şu anki numaran',
+  'profile.phone.new': 'Yeni numaran',
+  'profile.phone.send_code': 'Doğrulama kodu gönder',
+  'profile.phone.code_sent': 'Kod şu numaraya gönderildi:',
+  'profile.phone.submit': 'Onaya gönder',
+  'profile.phone.submitted': 'Talebin alındı. Onaylanınca haber vereceğiz.',
+  'profile.phone.taken': 'Bu numara başka bir hesapta kayıtlı.',
+  'profile.phone.same': 'Bu zaten senin numaran.',
   'profile.edit.city': 'Şehir',
   'profile.edit.saved': 'Profil güncellendi',
   'profile.edit.pending_t': 'Değişiklik onaya gönderildi',

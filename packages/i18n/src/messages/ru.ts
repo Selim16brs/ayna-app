@@ -1755,10 +1755,20 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'profile.edit.save_err':
     'Не удалось сохранить — попробуйте снова. (Сессия могла обновиться; выйдите и войдите.)',
   'profile.edit.name': 'Имя и фамилия',
-  'profile.edit.identity_note':
-    'Телефон и e-mail — данные для входа; для изменения обратитесь в поддержку.',
   'profile.edit.email': 'Эл. почта',
   'profile.edit.phone': 'Телефон',
+  'profile.phone.title': 'Изменить номер телефона',
+  'profile.phone.change': 'Изменить мой номер телефона',
+  'profile.phone.why':
+    'Мы подтвердим новый номер кодом из SMS, затем наша команда одобрит изменение. До одобрения ты продолжаешь входить со старым номером.',
+  'profile.phone.current': 'Текущий номер',
+  'profile.phone.new': 'Новый номер',
+  'profile.phone.send_code': 'Отправить код подтверждения',
+  'profile.phone.code_sent': 'Код отправлен на номер:',
+  'profile.phone.submit': 'Отправить на одобрение',
+  'profile.phone.submitted': 'Заявка принята. Сообщим, когда её одобрят.',
+  'profile.phone.taken': 'Этот номер уже зарегистрирован в другом аккаунте.',
+  'profile.phone.same': 'Это и есть твой текущий номер.',
   'profile.edit.city': 'Город',
   'profile.edit.saved': 'Профиль обновлён',
   'profile.edit.pending_t': 'Изменение отправлено на одобрение',
