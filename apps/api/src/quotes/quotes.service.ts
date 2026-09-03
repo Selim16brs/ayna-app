@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { depositFor, hasConflict } from '@ayna/domain';
+import { altHizmetBul, depositFor, hasConflict } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
 import { loadDepositRules } from '../bookings/deposit.rules';
@@ -123,6 +123,8 @@ export class QuotesService {
       budget: unknown;
       collectMin: number;
       serviceId: string | null;
+      /** Brief §4.5 — çoklu hizmet listesi. Eski satırlarda yok. */
+      serviceIdsJson?: string;
       createdAt: Date;
       expiresAt: Date | null;
       status: string;
@@ -152,6 +154,20 @@ export class QuotesService {
       ...(r.budget != null ? { budget: Number(r.budget) } : {}),
       collectMin: r.collectMin,
       ...(r.serviceId ? { serviceId: r.serviceId } : {}),
+      /*
+       * Brief §4.5 — talebin TÜM hizmetleri. Eski kayıtlarda liste yok;
+       * o zaman tek `serviceId`den türetiliyor ki uzman ekranı boş
+       * kalmasın.
+       */
+      serviceIds: ((): string[] => {
+        try {
+          const v: unknown = JSON.parse(r.serviceIdsJson ?? '[]');
+          const liste = Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+          return liste.length ? liste : r.serviceId ? [r.serviceId] : [];
+        } catch {
+          return r.serviceId ? [r.serviceId] : [];
+        }
+      })(),
       preferredSlots: ((): number[] => {
         try {
           const v: unknown = JSON.parse(
@@ -191,6 +207,19 @@ export class QuotesService {
     if (!category)
       throw new BadRequestException({ code: 'BAD_CATEGORY', message: 'Kategori bulunamadı' });
 
+    /*
+     * Brief §4.5 — çoklu hizmet. Gelin paketi isteyen müşteri üç ayrı
+     * talep açmak zorundaydı: üç teklif turu, üç pazarlık, aynı gün için
+     * birbirinden habersiz üç randevu.
+     *
+     * KATALOGDA OLMAYAN kimlik ATILIYOR: uzman ekranında karşılığı
+     * olmayan bir satır görünürdü. `serviceId` listenin İLKİ olarak
+     * saklanıyor — eski okuyanlar (uzman kartı, bildirim) bozulmuyor.
+     */
+    const hizmetler = [
+      ...new Set([...(input.serviceIds ?? []), ...(input.serviceId ? [input.serviceId] : [])]),
+    ].filter((id) => altHizmetBul(id));
+
     const now = Date.now();
     const row = await this.prisma.quoteRequest.create({
       data: {
@@ -203,7 +232,8 @@ export class QuotesService {
         budget: input.budget ?? null,
         collectMin: input.collectMin,
         expiresAt: new Date(now + input.collectMin * 60_000),
-        serviceId: input.serviceId ?? null,
+        serviceId: hizmetler[0] ?? null,
+        serviceIdsJson: JSON.stringify(hizmetler),
         preferredSlotsJson: JSON.stringify(input.preferredSlots ?? []),
       },
       include: { category: { select: { code: true } } },

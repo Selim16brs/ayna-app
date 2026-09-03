@@ -504,6 +504,8 @@ interface State {
     budget?: number;
     collectMin: number;
     serviceId?: string;
+    /** Brief §4.5 — çoklu hizmet (düğün paketi: saç + makyaj + tırnak). */
+    serviceIds?: string[];
     addressId?: string;
     preferredSlots?: number[];
   }) => Promise<string | null>; // → talep id (backend) | null = hata
@@ -1522,6 +1524,7 @@ export const useStore = create<State>()(
             ...(input.budget ? { budget: input.budget } : {}),
             collectMin: input.collectMin,
             ...(input.serviceId ? { serviceId: input.serviceId } : {}),
+            ...(input.serviceIds?.length ? { serviceIds: input.serviceIds } : {}),
             ...(input.preferredSlots?.length ? { preferredSlots: input.preferredSlots } : {}),
           });
           set((s) => ({ demands: [demand, ...s.demands.filter((d) => d.id !== demand.id)] }));

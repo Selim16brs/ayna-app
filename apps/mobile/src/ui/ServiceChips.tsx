@@ -17,10 +17,27 @@ export function ServiceChips({
   categoryId,
   value,
   onChange,
+  secilenler,
+  degistir,
 }: {
   categoryId: string;
-  value: string | null;
-  onChange: (id: string | null) => void;
+  /** Tek seçim kipi (eski çağıranlar). */
+  value?: string | null;
+  onChange?: (id: string | null) => void;
+  /**
+   * ÇOKLU seçim kipi — brief §4.5 (düğün paketi).
+   *
+   * Verilirse tek seçim yok sayılıyor. İki ayrı bileşen yazmak yerine
+   * kip eklendi: çipin görünümü, üç dilli adı ve "Yakında" rozeti aynı
+   * kalmalı, ikinci bir kopya zamanla ayrışırdı.
+   *
+   * Liste TÜM kategorilerin seçimini taşıyor; bu bileşen yalnız kendi
+   * kategorisindekileri işaretliyor. Böylece kullanıcı kategoriler
+   * arasında gezerken seçimleri kaybolmuyor — gelin paketi zaten üç
+   * ayrı kategoriden hizmet topluyor.
+   */
+  secilenler?: readonly string[];
+  degistir?: (yeni: string[]) => void;
 }) {
   const { locale } = useLocale();
   const { colors } = useTheme();
@@ -31,11 +48,23 @@ export function ServiceChips({
   return (
     <View style={styles.wrap}>
       {services.map((s) => {
-        const on = s.id === value;
+        const coklu = !!degistir && !!secilenler;
+        const on = coklu ? secilenler!.includes(s.id) : s.id === value;
+        const dokun = () => {
+          if (coklu) {
+            degistir!(
+              secilenler!.includes(s.id)
+                ? secilenler!.filter((x) => x !== s.id)
+                : [...secilenler!, s.id],
+            );
+            return;
+          }
+          onChange?.(on ? null : s.id);
+        };
         return (
           <Pressable
             key={s.id}
-            onPress={() => onChange(on ? null : s.id)}
+            onPress={dokun}
             style={[styles.chip, on ? styles.chipOn : styles.chipOff]}
             hitSlop={4}
           >
