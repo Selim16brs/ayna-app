@@ -108,26 +108,71 @@ function etkinSayisi(f: Filtre, varsayilanSehir: string): number {
 
 const PUANLAR = [4, 4.5, 4.8] as const;
 const RANDEVULAR = [50, 200, 500] as const;
+
+/** "Tür" satırının kapalı hâlde gösterdiği değer — iki kırılım tek satırda. */
+function turEtiketi(f: Filtre, t: (k: MessageKey) => string): string {
+  const parcalar: string[] = [];
+  if (f.tur === 'independent') parcalar.push(t('search.kind.independent'));
+  if (f.tur === 'salon') parcalar.push(t('search.kind.salon'));
+  if (f.onayliMi) parcalar.push(t('search.filter.verified_only'));
+  return parcalar.length ? parcalar.join(' · ') : t('search.filter.any');
+}
 const YORUMLAR = [50, 100, 300] as const;
 const DENEYIMLER = [3, 5, 10] as const;
 const FIYATLAR = [10000, 25000, 50000] as const;
 
 /**
- * Bir kırılım: başlık + çipler.
+ * Bir kırılım — AÇILIR SATIR.
  *
- * ÇİPLER SATIR ATLIYOR, yatay kaymıyor. İlk sürümde yatay şeritti ve
- * ekranın sağından taşan seçenekler KESİLİYORDU — "Almatı" yarım, "AYNA
- * Onaylı" yarım görünüyordu. Kullanıcı orada bir şey olduğunu anlamıyordu.
- * Sarmalı düzende her seçenek tam görünür.
+ * İki sürüm denendi, ikisi de kalabalıktı:
+ *   1. Yatay şerit — seçenekler ekranın sağından kesiliyordu.
+ *   2. Hepsi açık, sarmalı çipler — 23 şehir tek başına ekranı dolduruyordu;
+ *      kurucu "seçim alanları çok kalabalık, açılır menü şeklinde olsun" dedi.
+ *
+ * Şimdi her kırılım TEK SATIR: solda adı, sağda seçili değeri. Dokununca
+ * yalnız o açılıyor, açık olan varsa kapanıyor (tek seferde bir tane).
+ * Kapalıyken yedi kırılım da tek ekrana sığıyor ve düğme hep görünür.
+ *
+ * Seçili değer kapalı satırda YAZILI: kullanıcı neyi seçtiğini görmek için
+ * açmak zorunda kalmıyor.
  */
-function FiltreGrubu({ baslik, children }: { baslik: string; children: ReactNode }) {
+function FiltreSatiri({
+  baslik,
+  deger,
+  acik,
+  ac,
+  children,
+}: {
+  baslik: string;
+  deger: string;
+  acik: boolean;
+  ac: () => void;
+  children: ReactNode;
+}) {
+  const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <View style={styles.grup}>
-      <Text variant="micro" tone="muted" style={styles.grupBaslik}>
-        {baslik}
-      </Text>
-      <View style={styles.grupCipler}>{children}</View>
+    <View style={styles.satirKap}>
+      <Pressable
+        onPress={ac}
+        style={styles.satir}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: acik }}
+        accessibilityLabel={`${baslik}: ${deger}`}
+      >
+        <Text variant="bodyStrong" tone="ink" style={styles.satirAd}>
+          {baslik}
+        </Text>
+        <Text variant="caption" tone={acik ? 'accentFg' : 'muted'} numberOfLines={1}>
+          {deger}
+        </Text>
+        <Ionicons
+          name={acik ? 'chevron-up' : 'chevron-down'}
+          size={18}
+          color={acik ? colors.accentFg : colors.muted}
+        />
+      </Pressable>
+      {acik ? <View style={styles.satirCipler}>{children}</View> : null}
     </View>
   );
 }
@@ -180,10 +225,23 @@ export default function SearchScreen() {
   // Filtre şehri kullanıcının şehriyle başlar — mevcut davranış korunuyor.
   const [filtre, setFiltre] = useState<Filtre>(() => bosFiltre(city));
   const etkin = etkinSayisi(filtre, city);
+  // Tek seferde tek kırılım açık: yedi grup birden açılırsa yine kalabalık olur.
+  const [acikGrup, setAcikGrup] = useState<string | null>(null);
+  const cevir = (ad: string) => setAcikGrup((v) => (v === ad ? null : ad));
   const yama = (y: Partial<Filtre>) => setFiltre((f) => ({ ...f, ...y }));
   const recentSearches = useStore((s) => s.recentSearches);
   const addRecentSearch = useStore((s) => s.addRecentSearch);
-  const isEmpty = query.trim().length === 0 && activeCat === null;
+  /*
+   * BOŞ EKRAN KOŞULU — filtreler de sayılıyor.
+   *
+   * Eskiden yalnız metin ve kategoriye bakıyordu. Kullanıcı filtre panelinden
+   * şehir/puan seçip "{n} sonucu göster"e bastığında panel kapanıyor ama
+   * arkada SONUÇ DEĞİL "son aramalar" kutusu duruyordu: düğme çalışmıyor
+   * gibi görünüyordu. Kurucunun bildirdiği hata buydu.
+   *
+   * Filtre de bir aramadır: etkin kırılım varsa sonuç listesi çizilmeli.
+   */
+  const isEmpty = query.trim().length === 0 && activeCat === null && etkin === 0;
 
   const results = useMemo(() => {
     const q = lower(query.trim());
@@ -441,7 +499,16 @@ export default function SearchScreen() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.sayfaGovde}
             >
-              <FiltreGrubu baslik={t('search.sort')}>
+              <FiltreSatiri
+                baslik={t('search.sort')}
+                deger={
+                  SORTS.find((o) => o.key === sort)
+                    ? t(SORTS.find((o) => o.key === sort)!.label)
+                    : ''
+                }
+                acik={acikGrup === 'search.sort'}
+                ac={() => cevir('search.sort')}
+              >
                 {SORTS.map((o) => (
                   <FiltreCipi
                     key={o.key}
@@ -450,9 +517,14 @@ export default function SearchScreen() {
                     bas={() => setSort(o.key)}
                   />
                 ))}
-              </FiltreGrubu>
+              </FiltreSatiri>
 
-              <FiltreGrubu baslik={t('search.filter.city')}>
+              <FiltreSatiri
+                baslik={t('search.filter.city')}
+                deger={filtre.sehir ?? t('search.filter.all_cities')}
+                acik={acikGrup === 'search.filter.city'}
+                ac={() => cevir('search.filter.city')}
+              >
                 <FiltreCipi
                   etiket={t('search.filter.all_cities')}
                   secili={filtre.sehir === null}
@@ -466,9 +538,18 @@ export default function SearchScreen() {
                     bas={() => yama({ sehir: c })}
                   />
                 ))}
-              </FiltreGrubu>
+              </FiltreSatiri>
 
-              <FiltreGrubu baslik={t('search.filter.rating')}>
+              <FiltreSatiri
+                baslik={t('search.filter.rating')}
+                deger={
+                  filtre.minPuan === null
+                    ? t('search.filter.any')
+                    : `${filtre.minPuan.toLocaleString('tr-TR')}+`
+                }
+                acik={acikGrup === 'search.filter.rating'}
+                ac={() => cevir('search.filter.rating')}
+              >
                 <FiltreCipi
                   etiket={t('search.filter.any')}
                   secili={filtre.minPuan === null}
@@ -482,9 +563,16 @@ export default function SearchScreen() {
                     bas={() => yama({ minPuan: filtre.minPuan === v ? null : v })}
                   />
                 ))}
-              </FiltreGrubu>
+              </FiltreSatiri>
 
-              <FiltreGrubu baslik={t('search.filter.bookings')}>
+              <FiltreSatiri
+                baslik={t('search.filter.bookings')}
+                deger={
+                  filtre.minRandevu === null ? t('search.filter.any') : `${filtre.minRandevu}+`
+                }
+                acik={acikGrup === 'search.filter.bookings'}
+                ac={() => cevir('search.filter.bookings')}
+              >
                 <FiltreCipi
                   etiket={t('search.filter.any')}
                   secili={filtre.minRandevu === null}
@@ -498,9 +586,14 @@ export default function SearchScreen() {
                     bas={() => yama({ minRandevu: filtre.minRandevu === v ? null : v })}
                   />
                 ))}
-              </FiltreGrubu>
+              </FiltreSatiri>
 
-              <FiltreGrubu baslik={t('search.filter.reviews')}>
+              <FiltreSatiri
+                baslik={t('search.filter.reviews')}
+                deger={filtre.minYorum === null ? t('search.filter.any') : `${filtre.minYorum}+`}
+                acik={acikGrup === 'search.filter.reviews'}
+                ac={() => cevir('search.filter.reviews')}
+              >
                 <FiltreCipi
                   etiket={t('search.filter.any')}
                   secili={filtre.minYorum === null}
@@ -514,9 +607,18 @@ export default function SearchScreen() {
                     bas={() => yama({ minYorum: filtre.minYorum === v ? null : v })}
                   />
                 ))}
-              </FiltreGrubu>
+              </FiltreSatiri>
 
-              <FiltreGrubu baslik={t('search.filter.experience')}>
+              <FiltreSatiri
+                baslik={t('search.filter.experience')}
+                deger={
+                  filtre.minDeneyim === null
+                    ? t('search.filter.any')
+                    : fillParams(t('search.filter.years'), { n: String(filtre.minDeneyim) })
+                }
+                acik={acikGrup === 'search.filter.experience'}
+                ac={() => cevir('search.filter.experience')}
+              >
                 <FiltreCipi
                   etiket={t('search.filter.any')}
                   secili={filtre.minDeneyim === null}
@@ -530,9 +632,20 @@ export default function SearchScreen() {
                     bas={() => yama({ minDeneyim: filtre.minDeneyim === v ? null : v })}
                   />
                 ))}
-              </FiltreGrubu>
+              </FiltreSatiri>
 
-              <FiltreGrubu baslik={t('search.filter.price')}>
+              <FiltreSatiri
+                baslik={t('search.filter.price')}
+                deger={
+                  filtre.maxFiyat === null
+                    ? t('search.filter.any')
+                    : fillParams(t('search.filter.upto'), {
+                        n: filtre.maxFiyat.toLocaleString('tr-TR'),
+                      })
+                }
+                acik={acikGrup === 'search.filter.price'}
+                ac={() => cevir('search.filter.price')}
+              >
                 <FiltreCipi
                   etiket={t('search.filter.any')}
                   secili={filtre.maxFiyat === null}
@@ -548,9 +661,14 @@ export default function SearchScreen() {
                     bas={() => yama({ maxFiyat: filtre.maxFiyat === v ? null : v })}
                   />
                 ))}
-              </FiltreGrubu>
+              </FiltreSatiri>
 
-              <FiltreGrubu baslik={t('search.filter.kind')}>
+              <FiltreSatiri
+                baslik={t('search.filter.kind')}
+                deger={turEtiketi(filtre, t)}
+                acik={acikGrup === 'search.filter.kind'}
+                ac={() => cevir('search.filter.kind')}
+              >
                 <FiltreCipi
                   etiket={t('search.filter.any')}
                   secili={filtre.tur === null}
@@ -571,7 +689,7 @@ export default function SearchScreen() {
                   secili={filtre.onayliMi}
                   bas={() => yama({ onayliMi: !filtre.onayliMi })}
                 />
-              </FiltreGrubu>
+              </FiltreSatiri>
             </ScrollView>
 
             {/*
@@ -750,10 +868,23 @@ const makeStyles = (colors: ColorTokens) =>
       borderTopColor: colors.line,
       backgroundColor: colors.bg,
     },
-    grup: { paddingTop: space(2) },
-    grupBaslik: { paddingBottom: space(1) },
-    // Sarmalı: hiçbir seçenek ekran dışında kalmıyor.
-    grupCipler: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    // ── açılır kırılım satırı ──
+    satirKap: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
+    satir: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      // 56pt: dokunma hedefi eşiğinin (44) üstünde.
+      minHeight: 56,
+    },
+    satirAd: { flex: 1 },
+    // Açılan seçenekler sarmalı: hiçbiri ekran dışında kalmıyor.
+    satirCipler: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space(1),
+      paddingBottom: space(2),
+    },
     // Sayı rozeti: panel kapalıyken kaç kırılımın açık olduğunu gösterir.
     tuneRozet: {
       position: 'absolute',
