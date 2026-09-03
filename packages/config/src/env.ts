@@ -25,7 +25,7 @@ export const envSchema = z.object({
    *
    * Panel girişi kilitlendiğinde (şifre kayboldu/bozuldu) yönetici hesabını
    * yeniden kurmanın tek yolu veritabanına doğrudan erişimdi. Bu değişken
-   * ayarlıysa API açılışta `admin@ayna.kz` hesabını bu şifreyle kurar/günceller.
+   * ayarlıysa API açılışta `admin@ayna.salon` hesabını bu şifreyle kurar/günceller.
    *
    * GÜVENLİK: yalnız ortam değişkenini ayarlayabilen (yani zaten sunucuya sahip
    * olan) biri kullanabilir; dışarıya AÇILAN BİR UÇ YOK. En az 12 karakter.

@@ -122,7 +122,7 @@ export class AuthService {
     const key = this.env.FIELD_ENCRYPTION_KEY;
     // 'admin' takma adı → yönetici e-postası (panel girişi kısayolu)
     const ident =
-      input.identifier.trim().toLowerCase() === 'admin' ? 'admin@ayna.kz' : input.identifier;
+      input.identifier.trim().toLowerCase() === 'admin' ? 'admin@ayna.salon' : input.identifier;
     const user = ident.includes('@')
       ? await this.prisma.user.findUnique({ where: { email: ident } })
       : await this.prisma.user.findUnique({

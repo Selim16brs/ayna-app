@@ -370,7 +370,7 @@ async function main(): Promise<void> {
         phoneEnc: Uint8Array.from(encryptField(normalizePhone(adminPhone), key)),
         passwordHash: hashPassword('admin12345'),
         name: 'AYNA Admin',
-        email: 'admin@ayna.kz',
+        email: 'admin@ayna.salon',
         role: 'admin',
         defaultLocale: 'tr',
       },
