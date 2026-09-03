@@ -564,7 +564,11 @@ interface State {
   toggleFollow: (author: string, targetUserId?: string | null) => void;
   removeFollower: (name: string) => void;
   // §5.6 — adres yönetimi
-  addAddress: (label: UserAddress['label'], detail: string) => void;
+  addAddress: (
+    label: UserAddress['label'],
+    detail: string,
+    koord?: { lat: number; lng: number },
+  ) => void;
   removeAddress: (id: string) => void;
 
   // personal
@@ -2297,10 +2301,26 @@ export const useStore = create<State>()(
         set((s) => ({ followerNames: s.followerNames.filter((x) => x !== name) })),
 
       // §5.6 — adres ekle/kaldır
-      addAddress: (label, detail) => {
+      /*
+       * Adres KOORDİNATLA kaydediliyor. Eskiden yalnız serbest metindi ve
+       * "yakınımdakiler" kullanıcının ŞEHİR MERKEZİNE göre hesaplanıyordu —
+       * kurucunun "alakasız uzaklıktaki yerler çıkıyor" dediği şey buydu.
+       *
+       * Koordinat opsiyonel kalıyor: eski kayıtlar bozulmasın. Koordinatsız
+       * adres mesafe hesabına katılmıyor (bkz. `kullaniciKonumu`).
+       */
+      addAddress: (label, detail, koord) => {
         if (!detail.trim()) return;
         set((s) => ({
-          addresses: [...s.addresses, { id: nextId('ad'), label, detail: detail.trim() }],
+          addresses: [
+            ...s.addresses,
+            {
+              id: nextId('ad'),
+              label,
+              detail: detail.trim(),
+              ...(koord ? { lat: koord.lat, lng: koord.lng } : {}),
+            },
+          ],
         }));
         void api.setPrefs({ addresses: get().addresses }).catch(() => undefined);
       },

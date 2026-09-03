@@ -132,6 +132,8 @@ export const tr = {
   // §uzman onboarding — çok adımlı sihirbaz
   'expert.reg.step.identity': 'Kimlik & Hesap',
   'expert.reg.step.location': 'Konum & Fotoğraf',
+  'expert.reg.why_pin':
+    'Müşteriler "yakınımdakiler" dediğinde doğru sıraya girebilmen için konumunu haritada işaretle. Adres alanı yalnızca kapı/kat gibi ayrıntılar için.',
   'expert.reg.step.services': 'Uzmanlık & Hizmet',
   'expert.reg.step.extra': 'Portföy & İletişim',
   'expert.reg.step.finish': 'Önizleme & Tamamla',
@@ -506,6 +508,8 @@ export const tr = {
 
   // Ana akış — giriş aksiyonları
   'home.nearby': 'Yakınındaki Salonlar',
+  'nearby.no_location':
+    'Mesafeye göre sıralayabilmek için konumun ve salonun konumu gerekiyor. Profilinden haritada konum ekleyebilirsin.',
   'home.campaigns': 'Fırsatlar',
   'home.trend': 'Bu Hafta Trend',
   // Ana ekran — ACİL kartı (süresi işleyen tek iş). Yoksa kart hiç görünmez.
@@ -929,6 +933,11 @@ export const tr = {
   'addresses.title': 'Adreslerim',
   'addresses.hint': 'Ev ve iş adreslerini yönet — "Sana Yakın" ve mesafe hesabı için kullanılır.',
   'addresses.add': 'Adres ekle',
+  // §konum — adres artık HARİTADAN iğneyle; metin yalnız kapı/kat ayrıntısı.
+  'addresses.pick_on_map': 'Haritada konumu seç',
+  'addresses.pinned': 'Konum haritada işaretlendi',
+  'addresses.why_pin':
+    'Yakınındaki uzmanları doğru sıralayabilmek için konumun haritadan işaretlenmeli. Adres alanına kapı numarası, kat gibi ayrıntıları yazabilirsin.',
   'addresses.empty': 'Henüz adres eklemedin',
   'profile.menu.privacy': 'Gizlilik',
   'profile.menu.notifications': 'Bildirimler',

@@ -123,6 +123,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'expert.reg.code': 'Код салона',
   'expert.reg.step.identity': 'Личность & Аккаунт',
   'expert.reg.step.location': 'Локация & Фото',
+  'expert.reg.why_pin':
+    'Отметь своё место на карте, чтобы правильно попадать в выдачу «рядом со мной». Поле адреса — только для квартиры, этажа и подобных деталей.',
   'expert.reg.step.services': 'Специализация & Услуги',
   'expert.reg.step.extra': 'Портфолио & Контакты',
   'expert.reg.step.finish': 'Предпросмотр & Завершение',
@@ -483,6 +485,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.schedule.uzman': 'Выбери мастера',
   'booking.field.salon': 'Салон',
   'home.nearby': 'Салоны рядом',
+  'nearby.no_location':
+    'Чтобы сортировать по расстоянию, нужны твоё место и место салона. Отметить своё место можно в профиле на карте.',
   'home.campaigns': 'Возможности',
   'home.trend': 'Тренд недели',
   'home.guest_title': 'Добро пожаловать',
@@ -872,6 +876,10 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'addresses.hint':
     'Управляй домашним и рабочим адресами — используются для «Рядом с тобой» и расчёта расстояния.',
   'addresses.add': 'Добавить адрес',
+  'addresses.pick_on_map': 'Выбрать место на карте',
+  'addresses.pinned': 'Место отмечено на карте',
+  'addresses.why_pin':
+    'Чтобы правильно показывать ближайших мастеров, отметь своё место на карте. В поле адреса можно указать квартиру, этаж и другие детали.',
   'addresses.empty': 'Ты ещё не добавила адрес',
   'profile.menu.privacy': 'Конфиденциальность',
   'profile.menu.notifications': 'Уведомления',

@@ -169,6 +169,13 @@ export class SpecialistsService {
             kind: 'independent',
             city: input.city ?? '', // §5.1.4 — harita/arama şehir eşleşmesi
             district: input.city ?? '',
+            /*
+             * GERÇEK KONUM. Yazılmadığı için `proCoords` şehir merkezi
+             * etrafına uydurma bir dağılım üretiyordu ve "yakınımdakiler"
+             * alakasız sonuçlar veriyordu.
+             */
+            ...(input.lat != null ? { lat: input.lat } : {}),
+            ...(input.lng != null ? { lng: input.lng } : {}),
             imageUrl: '',
           },
         });

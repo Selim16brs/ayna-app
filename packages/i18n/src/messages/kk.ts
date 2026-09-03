@@ -120,6 +120,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'expert.reg.code': 'Салон коды',
   'expert.reg.step.identity': 'Тұлға & Аккаунт',
   'expert.reg.step.location': 'Орналасу & Фото',
+  'expert.reg.why_pin':
+    'Клиенттер «жақындағылар» дегенде дұрыс шығуың үшін орныңды картада белгіле. Мекенжай өрісі тек пәтер/қабат сияқты мәліметтер үшін.',
   'expert.reg.step.services': 'Мамандық & Қызмет',
   'expert.reg.step.extra': 'Портфолио & Байланыс',
   'expert.reg.step.finish': 'Алдын ала қарау & Аяқтау',
@@ -478,6 +480,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.schedule.uzman': 'Маман таңда',
   'booking.field.salon': 'Салон',
   'home.nearby': 'Маңайдағы салондар',
+  'nearby.no_location':
+    'Қашықтық бойынша сұрыптау үшін сенің де, салонның да орны керек. Профильден картада орын қоса аласың.',
   'home.campaigns': 'Мүмкіндіктер',
   'home.trend': 'Осы апта трендте',
   'home.guest_title': 'Қош келдің',
@@ -865,6 +869,10 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'addresses.hint':
     'Үй және жұмыс мекенжайларыңды басқар — "Саған жақын" және қашықтық есебі үшін қолданылады.',
   'addresses.add': 'Мекенжай қосу',
+  'addresses.pick_on_map': 'Картадан орынды таңдау',
+  'addresses.pinned': 'Орын картада белгіленді',
+  'addresses.why_pin':
+    'Жақын мамандарды дұрыс сұрыптау үшін орныңды картадан белгілеу керек. Мекенжай өрісіне пәтер, қабат сияқты мәліметтерді жазуға болады.',
   'addresses.empty': 'Әзірге мекенжай қоспадың',
   'profile.menu.privacy': 'Құпиялылық',
   'profile.menu.notifications': 'Хабарламалар',

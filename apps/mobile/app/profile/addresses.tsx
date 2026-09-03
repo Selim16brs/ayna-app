@@ -6,7 +6,15 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text, TextInput, TAB_BAR_CLEARANCE } from '../../src/ui';
+import {
+  AddressPicker,
+  Button,
+  Screen,
+  StackHeader,
+  Text,
+  TextInput,
+  TAB_BAR_CLEARANCE,
+} from '../../src/ui';
 
 export default function AddressesScreen() {
   const { t } = useLocale();
@@ -18,10 +26,22 @@ export default function AddressesScreen() {
 
   const [label, setLabel] = useState<UserAddress['label']>('home');
   const [detail, setDetail] = useState('');
+  /*
+   * KONUM HARİTADAN. Kurucu: "elle manuel yazılmak yerine harita üzerinden
+   * iğne attırmalı ve bunu hafızasına kaydettirmeliyiz."
+   *
+   * Metin alanı DURUYOR — kapı numarası, kat, tarif gibi haritanın
+   * bilemeyeceği ayrıntılar için. Ama nihai konum iğneden geliyor.
+   */
+  const [koord, setKoord] = useState<{ lat: number; lng: number } | null>(null);
+  const [haritaAcik, setHaritaAcik] = useState(false);
+  const sehir = useStore((s) => s.currentUser?.city);
 
   const add = () => {
-    addAddress(label, detail);
+    if (!koord) return;
+    addAddress(label, detail, koord);
     setDetail('');
+    setKoord(null);
   };
 
   return (
@@ -86,6 +106,19 @@ export default function AddressesScreen() {
             onPress={() => setLabel('work')}
           />
         </View>
+        {/* Haritadan iğne — ZORUNLU adım. */}
+        <Pressable style={styles.haritaBtn} onPress={() => setHaritaAcik(true)}>
+          <Ionicons
+            name={koord ? 'location' : 'location-outline'}
+            size={18}
+            color={koord ? colors.accentFg : colors.muted}
+          />
+          <Text variant="bodyStrong" tone={koord ? 'ink' : 'muted'} style={styles.haritaYazi}>
+            {koord ? t('addresses.pinned') : t('addresses.pick_on_map')}
+          </Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+        </Pressable>
+
         <TextInput
           value={detail}
           onChangeText={setDetail}
@@ -93,11 +126,28 @@ export default function AddressesScreen() {
           placeholderTextColor={colors.muted}
           style={styles.input}
         />
+        {/* Neden iğne şart: mesafe hesabı buna dayanıyor. */}
+        <Text variant="caption" tone="muted" style={styles.haritaNot}>
+          {t('addresses.why_pin')}
+        </Text>
         <Button
           label={t('addresses.add')}
-          variant={detail.trim() ? 'primary' : 'secondary'}
-          disabled={!detail.trim()}
+          variant={koord && detail.trim() ? 'primary' : 'secondary'}
+          disabled={!koord || !detail.trim()}
           onPress={add}
+        />
+
+        <AddressPicker
+          visible={haritaAcik}
+          initialCity={sehir ?? undefined}
+          initialCoord={koord ? { latitude: koord.lat, longitude: koord.lng } : undefined}
+          onClose={() => setHaritaAcik(false)}
+          onPick={(r) => {
+            setKoord({ lat: r.lat, lng: r.lng });
+            // Metin boşsa haritadan gelen adresle doldur; kullanıcı üstüne
+            // kapı/kat ekleyebilsin.
+            if (!detail.trim() && r.address) setDetail(r.address);
+          }}
         />
       </ScrollView>
     </Screen>
@@ -142,6 +192,21 @@ const makeStyles = (colors: ColorTokens) =>
     },
     rowText: { flex: 1, gap: 2 },
     empty: { alignItems: 'center', paddingVertical: space(4), gap: space(1) },
+    haritaBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.25),
+      paddingHorizontal: space(2),
+      // 56pt: dokunma hedefi eşiğinin üstünde.
+      minHeight: 56,
+      borderRadius: radius.md,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.line,
+      marginBottom: space(1.5),
+    },
+    haritaYazi: { flex: 1 },
+    haritaNot: { marginTop: space(1), marginBottom: space(2) },
     addLabel: { marginTop: space(2), marginLeft: space(0.5) },
     chips: { flexDirection: 'row', gap: space(1) },
     chip: {

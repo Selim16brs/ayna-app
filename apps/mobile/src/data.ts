@@ -1217,6 +1217,49 @@ export interface UserAddress {
   id: string;
   label: AddressLabel;
   detail: string;
+  /**
+   * HARİTADAN İĞNEYLE SEÇİLEN KONUM.
+   *
+   * Kurucu: "elle manuel yazılmak yerine harita üzerinden iğne attırmalı ve
+   * bunu hafızasına kaydettirmeliyiz... bir müşteri yakınındakileri
+   * seçtiğinde ona alakasız uzaklıktaki yerler çıkarsa bu sorun olur."
+   *
+   * Adres eskiden yalnız SERBEST METİNDİ; koordinat hiç tutulmuyordu ve
+   * "yakınımdakiler" kullanıcının ŞEHİR MERKEZİNE göre hesaplanıyordu.
+   *
+   * Opsiyonel: eski kayıtlarda yok. Koordinatsız adres mesafe hesabına
+   * KATILMIYOR — uydurma sonuç üretmektense hesaplamamak doğru.
+   */
+  lat?: number;
+  lng?: number;
+}
+
+/**
+ * Kullanıcının MESAFE REFERANSI.
+ *
+ * İğneli ilk adres; yoksa `null`. Şehir merkezine düşmüyor: merkez gerçek
+ * konum değil ve "senden X km" iddiasını taşıyamaz.
+ */
+export function kullaniciKonumu(addresses: readonly UserAddress[]): LatLng | null {
+  const a = addresses.find((x) => x.lat != null && x.lng != null);
+  return a ? { latitude: a.lat!, longitude: a.lng! } : null;
+}
+
+/** Sağlayıcının GERÇEK koordinatı var mı — uydurulmuş dağılım değil. */
+export function konumuVar(pro: { lat?: number | null; lng?: number | null }): boolean {
+  return pro.lat != null && pro.lng != null;
+}
+
+/**
+ * İki nokta arası mesafe — İKİSİ DE gerçekse.
+ *
+ * Biri eksikse `null`: ekran mesafeyi hiç göstermemeli. Eski davranışta
+ * eksik koordinat şehir merkezine düşüyor ve "2,5 km" gibi güven veren ama
+ * uydurma bir sayı çıkıyordu.
+ */
+export function gercekMesafeKm(a: LatLng | null, b: LatLng | null): number | null {
+  if (!a || !b) return null;
+  return distanceKm(a, b);
 }
 
 // ── Circle (topluluk) ────────────────────────────────────────────────────
