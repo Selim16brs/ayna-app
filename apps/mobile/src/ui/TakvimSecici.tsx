@@ -70,15 +70,34 @@ function Cark({
   etiket: string;
 }) {
   const styles = useThemedStyles(makeStyles);
-  const sira = carkSirasi(liste, deger);
+  /*
+   * ── BAŞLANGIÇ KONUMU YALNIZ BİR KEZ ─────────────────────────────────
+   *
+   * Kurucu: "saat hareket etmiyor seçemiyorum."
+   *
+   * `contentOffset` DOĞRUDAN `deger`den hesaplanıyordu. Kullanıcı çarkı
+   * çevirince seçim değişiyor, bileşen yeniden çiziliyor ve DEĞİŞEN
+   * `contentOffset` kaydırmayı geri çekiyordu. Yani çark her hareket
+   * denemesinde kendini toparlıyor ve "hiç oynamıyor" gibi görünüyordu.
+   *
+   * Konum artık ilk çizimde donduruluyor; sonrasını kullanıcı yönetiyor.
+   */
+  const [baslangic] = useState(() => carkSirasi(liste, deger) * OGE_Y);
   return (
     <View style={styles.cark} accessibilityLabel={etiket}>
+      {/*
+       * Şerit ScrollView'DAN ÖNCE çiziliyor: sonra çizilip `zIndex: -1` ile
+       * arkaya itilmeye çalışılıyordu ve negatif zIndex bazı platformlarda
+       * kapsayıcının arkasına düşüp görünmez oluyordu. Çizim sırası daha
+       * güvenilir.
+       */}
+      <View pointerEvents="none" style={styles.carkSerit} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         snapToInterval={OGE_Y}
         decelerationRate="fast"
         // Açılışta seçili değer ortada olsun; kullanıcı aramasın.
-        contentOffset={{ x: 0, y: sira * OGE_Y }}
+        contentOffset={{ x: 0, y: baslangic }}
         contentContainerStyle={styles.carkIc}
         onMomentumScrollEnd={(e) =>
           degisti(liste[carkSecimi(e.nativeEvent.contentOffset.y, OGE_Y, liste.length)]!)
@@ -97,9 +116,6 @@ function Cark({
           </View>
         ))}
       </ScrollView>
-      {/* Ortadaki şerit: hangi satırın seçili olduğunu gösteriyor.
-          Dokunuşu engellememeli, yoksa çark kaydırılamıyor. */}
-      <View pointerEvents="none" style={styles.carkSerit} />
     </View>
   );
 }
@@ -304,8 +320,6 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.accentSoft,
       borderWidth: 1,
       borderColor: colors.accent,
-      // Şerit yazının ARKASINDA kalmalı.
-      zIndex: -1,
     },
     altBar: {
       flexDirection: 'row',

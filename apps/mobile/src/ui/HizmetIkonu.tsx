@@ -94,7 +94,21 @@ const makeStyles = (colors: ColorTokens) =>
       overflow: 'hidden',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: colors.surface,
+      /*
+       * ── ZEMİN ARTIK AKSANI TAKİP EDİYOR ────────────────────────────
+       *
+       * Kurucu: "renk değiştiğinde hizmetler ikonlarının altındaki renk
+       * sabit kalıyor."
+       *
+       * Sebep burada DEĞİLDİ: PNG'ler alfa kanalsız (RGB) geliyordu ve
+       * lila zemin GÖRSELİN İÇİNE pişmişti — kutuya hangi rengi verirsek
+       * verelim üstüne opak bir kare biniyordu. Görseller şeffaflaştırıldı;
+       * artık kutunun rengi gerçekten görünüyor.
+       *
+       * `accentSoft` seçildi: aksanın açık tonu, seçilen her renk setinde
+       * ikon çizgisinin altında okunur bir zemin bırakıyor.
+       */
+      backgroundColor: colors.accentSoft,
       borderWidth: 1,
       borderColor: colors.accentSoft,
     },

@@ -227,12 +227,35 @@ test('kişisel kayıt ekranında klavye içeriği örtmüyor', async () => {
   assert.equal((kod.match(/<FormKabi>/g) ?? []).length, 3, 'formların hepsi sarılmamış');
 });
 
-test('çark açılışta SEÇİLİ değerin üstünde duruyor', async () => {
-  // Kullanıcı kendi saatini aramak zorunda kalmamalı.
+test('çark açılışta seçili değerde AÇILIYOR ama sonra KENDİ KENDİNE OYNAMIYOR', async () => {
+  /*
+   * ── BU TEST DEĞİŞTİ, ÇÜNKÜ KOD YANLIŞTI ─────────────────────────────
+   *
+   * Kurucu: "saat hareket etmiyor seçemiyorum."
+   *
+   * `contentOffset` DOĞRUDAN seçili değerden hesaplanıyordu. Kullanıcı
+   * çarkı çevirince seçim değişiyor, bileşen yeniden çiziliyor ve DEĞİŞEN
+   * `contentOffset` kaydırmayı geri çekiyordu — çark her denemede kendini
+   * toparlıyor, "hiç oynamıyor" gibi görünüyordu.
+   *
+   * Şart artık iki taraflı: başlangıç seçili değerden gelmeli AMA bir daha
+   * değişmemeli (ilk çizimde dondurulmalı).
+   */
   const { readFileSync } = await import('node:fs');
   const { join } = await import('node:path');
   const kod = readFileSync(join(import.meta.dirname, 'ui', 'TakvimSecici.tsx'), 'utf8');
-  assert.match(kod, /contentOffset=\{\{ x: 0, y: sira \* OGE_Y \}\}/, 'çark başa dönüyor');
+  assert.match(
+    kod,
+    /useState\(\(\) => carkSirasi\(liste, deger\) \* OGE_Y\)/,
+    'başlangıç konumu ilk çizimde dondurulmuyor',
+  );
+  assert.match(kod, /contentOffset=\{\{ x: 0, y: baslangic \}\}/, 'çark seçili değerde açılmıyor');
+  // Canlı değerden türetmek, hatanın ta kendisiydi.
+  assert.equal(
+    /contentOffset=\{\{ x: 0, y: sira \* OGE_Y \}\}/.test(kod),
+    false,
+    'konum yine canlı değerden türetiliyor — çark geri çekilir',
+  );
 });
 
 test('TEK DOKUNUŞLA sürükleme de seçimi kaydediyor', async () => {
@@ -263,4 +286,43 @@ test('bilinmeyen değer çarkı BOŞ açmıyor', async () => {
   assert.equal(carkSirasi(DAKIKALAR, 30), 6);
   // Listede olmayan bir dakika (ör. eski kayıttan 07) ilk satıra düşer.
   assert.equal(carkSirasi(DAKIKALAR, 7), 0);
+});
+
+/* ── GİZLİLİK KARTI YERİ ───────────────────────────────────────────────── */
+
+test('gizlilik vaadi W2W akışında DEĞİL, gizlilik ekranında', async () => {
+  /*
+   * Kurucu: "bu açıklama w2w içerisinde gereksiz, bunu gizlilik alanında
+   * gösterelim." + "hem üst hem altta var."
+   *
+   * Kart topluluk akışında ÜÇ kez çiziliyordu (üstte, altta ve boş
+   * durumda): her açılışta aynı üç maddeyi tekrar okutuyor ve asıl içeriği
+   * aşağı itiyordu. Bir kez okunacak bir vaat, akışta değil gizlilik
+   * ekranında yaşamalı — insan bu soruyu zaten oraya sorarak geliyor.
+   */
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const kok = join(import.meta.dirname, '..', 'app');
+  const w2w = readFileSync(join(kok, '(tabs)', 'circle.tsx'), 'utf8');
+  const gizlilik = readFileSync(join(kok, 'profile', 'privacy.tsx'), 'utf8');
+
+  assert.equal(/circle\.privacy\./.test(w2w), false, 'kart hâlâ W2W akışında');
+  assert.match(gizlilik, /circle\.privacy\.title/, 'kart gizlilik ekranına taşınmamış');
+  // Üç madde de taşınmalı; biri unutulursa vaat eksik anlatılır.
+  for (const k of ['circle.privacy.a', 'circle.privacy.b', 'circle.privacy.c']) {
+    assert.ok(gizlilik.includes(k), `gizlilik ekranında eksik madde: ${k}`);
+  }
+});
+
+test('gönderi ekranında son satır düğmenin altında kalmıyor', async () => {
+  /*
+   * Kurucu: "kaymış ekran." Son kart ("Anonim paylaş") "Paylaş" düğmesinin
+   * altında yarım kalıyordu: ScrollView `flex: 1` almadığı için kendini
+   * içeriği kadar boyutlandırıyor ve kabı taşırıyordu.
+   */
+  const { readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const kod = readFileSync(join(import.meta.dirname, '..', 'app', 'circle', 'new.tsx'), 'utf8');
+  assert.match(kod, /style=\{styles\.kaydirma\}/, 'kaydırma alanı esnek değil');
+  assert.match(kod, /kaydirma: \{ flex: 1 \}/, 'kaydırma alanına flex verilmemiş');
 });

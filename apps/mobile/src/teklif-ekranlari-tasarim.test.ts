@@ -107,7 +107,24 @@ test('kategori döşemesi SEÇİLİ/SEÇİLMEMİŞ ayrımını ÇERÇEVEYLE yap�
     /kutuSecili: \{ borderWidth: 2, borderColor: colors\.accent \}/,
     'seçim çerçeveyle belirtilmiyor',
   );
-  assert.match(b, /backgroundColor: colors\.surface/, 'kutu zemini yüzey değil');
+  /*
+   * ZEMİN `surface`TAN `accentSoft`A GEÇTİ.
+   *
+   * Kurucu: "renk değiştiğinde hizmetler ikonlarının altındaki renk sabit
+   * kalıyor." Zemin aslında PNG'nin içindeydi (alfa kanalı yoktu) ve
+   * kutunun rengi hiç görünmüyordu. Görseller şeffaflaştırılınca zemin
+   * ortaya çıktı ve aksana bağlandı.
+   *
+   * Bu testin ASIL derdi değişmedi: seçim AYRIMI çerçeveyle yapılıyor,
+   * zemin seçili/seçilmemiş arasında OYNAMIYOR.
+   */
+  assert.match(b, /backgroundColor: colors\.accentSoft/, 'kutu zemini aksana bağlı değil');
+  const secili = b.slice(b.indexOf('kutuSecili:'));
+  assert.equal(
+    /backgroundColor/.test(secili.slice(0, secili.indexOf('}'))),
+    false,
+    'seçim zemini değiştiriyor — ikon aksan üstünde kalır',
+  );
 });
 
 test('kategori yazısı İKİ TEMADA da okunuyor', () => {

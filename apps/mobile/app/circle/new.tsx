@@ -72,6 +72,13 @@ export default function NewPostScreen() {
       >
         <ScrollView
           keyboardShouldPersistTaps="handled"
+          /*
+           * `flex: 1` ŞART. Yoksa ScrollView kendini içeriği kadar
+           * boyutlandırıyor, kap taşıyor ve son satır ("Anonim paylaş")
+           * "Paylaş" düğmesinin altında yarım kalıyordu — kurucunun
+           * "kaymış ekran" dediği şey buydu.
+           */
+          style={styles.kaydirma}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
@@ -157,7 +164,10 @@ export default function NewPostScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: space(13) },
+    // Alt boşluk küçüldü: düğme şeridi KARDEŞ eleman, içeriğin üstüne
+    // binmiyor. Eski 104px, son kartla düğme arasında koca bir delik
+    // bırakıyordu.
+    content: { paddingHorizontal: space(3), paddingTop: space(1), paddingBottom: space(2) },
     label: {
       marginTop: space(3),
       marginBottom: space(1.5),
@@ -166,6 +176,7 @@ const makeStyles = (colors: ColorTokens) =>
       letterSpacing: -0.4,
     },
     kacis: { flex: 1 },
+    kaydirma: { flex: 1 },
     // Ana sayfadaki ızgara ile aynı: kutu + altında etiket.
     kategori: { alignItems: 'center', gap: space(0.75), width: 76 },
     textarea: {

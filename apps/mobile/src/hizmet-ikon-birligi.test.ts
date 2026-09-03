@@ -100,11 +100,20 @@ test('kutu, ana sayfadaki kap ile birebir aynı', () => {
     'height: OLCU.kutu',
     'borderRadius: radius.md',
     "overflow: 'hidden'",
-    'backgroundColor: colors.surface',
     'borderColor: colors.accentSoft',
   ]) {
     assert.ok(bilesen.includes(kural), `kutu kabında eksik: ${kural}`);
   }
+  /*
+   * ZEMİN `surface`TAN `accentSoft`A GEÇTİ.
+   *
+   * Kurucu: "renk değiştiğinde hizmetler ikonlarının altındaki renk sabit
+   * kalıyor." Zemin aslında GÖRSELİN İÇİNDEYDİ (PNG'ler alfa kanalsızdı) ve
+   * kutunun rengi hiç görünmüyordu. Görseller şeffaflaştırılınca zemin
+   * ortaya çıktı; aksanın açık tonuna bağlandı ki seçilen renk setiyle
+   * birlikte değişsin.
+   */
+  assert.match(bilesen, /backgroundColor: colors\.accentSoft/, 'kutu zemini aksana bağlı değil');
 });
 
 test('seçili durum ikonun GÖRÜNÜŞÜNÜ değiştirmiyor', () => {
@@ -131,4 +140,30 @@ test('eşlemede olmayan kategori sessizce kaybolmuyor', () => {
 test('satır bağlamı ikinci bir kutu eklemiyor', () => {
   // Hap zaten bir kap; içine kutu koymak ekranı kalabalıklaştırır.
   assert.match(bilesen, /if \(tarz === 'satir'\) return gorsel;/, 'satır bağlamı kutuya sarılıyor');
+});
+
+test('ikon görselleri ŞEFFAF — zemin görselin içinde değil', async () => {
+  /*
+   * Kurucu: "renk değiştiğinde hizmetler ikonlarının altındaki renk sabit
+   * kalıyor."
+   *
+   * Sebep kodda değil ASSET'teydi: PNG'ler RGB (alfa kanalı YOK) ve lila
+   * zemin görselin içine pişmişti. Kutuya hangi rengi verirsek verelim
+   * üstüne opak bir kare biniyordu.
+   *
+   * Yeniden dışa aktarılan bir ikon alfasız gelirse aynı hata sessizce
+   * geri döner — bu test onu yakalar.
+   */
+  const { readdirSync, readFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const dizin = join(import.meta.dirname, '..', 'assets', 'hizmet-ikon');
+  const alfasiz: string[] = [];
+  for (const ad of readdirSync(dizin).filter((f) => f.endsWith('.png'))) {
+    const buf = readFileSync(join(dizin, ad));
+    // PNG IHDR: 8 bayt imza + 4 uzunluk + 4 tip, sonra genişlik/yükseklik/derinlik.
+    // 25. bayt renk tipi: 6 = RGBA, 4 = gri+alfa. Alfasız tipler: 0, 2, 3.
+    const renkTipi = buf[25];
+    if (renkTipi !== 6 && renkTipi !== 4) alfasiz.push(`${ad} (tip ${renkTipi})`);
+  }
+  assert.deepEqual(alfasiz, [], `alfa kanalı olmayan ikon: ${alfasiz.join(', ')}`);
 });
