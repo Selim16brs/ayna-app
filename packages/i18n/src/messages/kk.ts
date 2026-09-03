@@ -2085,6 +2085,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'profile.follow.remove': 'Жою',
   'profile.follow.unfollow': 'Бас тарту',
   'auth.otp.invalid': 'Код жарамсыз немесе мерзімі өтіп кеткен',
+  'auth.otp.send_failed': 'Код қазір жіберілмеді. Сәлден соң қайталап көр.',
+  'auth.forgot.save_failed': 'Құпия сөз өзгертілмеді. Кодты және байланысыңды тексер.',
   'review.not_eligible': 'Бұл жазылуды бағалау мүмкін емес',
 
   // EK Z.1 — жеке хабарламалар

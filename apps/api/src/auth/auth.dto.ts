@@ -17,7 +17,16 @@ export const loginSchema = z.object({
 });
 
 // §4.6 — OTP
-export const otpRequestSchema = z.object({ phone: z.string().min(7) });
+export const otpRequestSchema = z.object({
+  phone: z.string().min(7),
+  /**
+   * SMS'in dili. İstemciden geliyor çünkü kullanıcının HENÜZ HESABI YOK —
+   * kayıt akışında sunucunun tercihi bilebileceği bir yer de yok. Boşsa
+   * 'tr' (kaynak dil). Geçersiz değer reddediliyor: uydurma bir dil kodu
+   * mesajı sessizce yanlış dile düşürürdü.
+   */
+  locale: z.enum(['tr', 'kk', 'ru']).optional(),
+});
 export const otpVerifySchema = z.object({
   phone: z.string().min(7),
   code: z.string().regex(/^\d{6}$/, '6 haneli kod'),

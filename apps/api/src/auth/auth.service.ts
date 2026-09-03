@@ -14,6 +14,7 @@ import { ENV } from '../config/config.module';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { AuditService } from '../audit/audit.service';
+import { SmsService } from '../sms/sms.service';
 import {
   decryptField,
   encryptField,
@@ -38,6 +39,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly audit: AuditService,
+    private readonly sms: SmsService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -214,8 +216,8 @@ export class AuthService {
     return this.safe(user);
   }
 
-  // §4.6 — OTP iste. Kod düz metin saklanmaz (HMAC). Mock SMS ile "gönderilir".
-  async requestOtp(phone: string) {
+  // §4.6 — OTP iste. Kod düz metin saklanmaz (HMAC); SMS ile GERÇEKTEN gider.
+  async requestOtp(phone: string, locale?: string) {
     const key = this.env.FIELD_ENCRYPTION_KEY;
     const ph = phoneHash(phone, key);
 
@@ -241,7 +243,7 @@ export class AuthService {
     });
 
     const code = generateOtp();
-    await this.prisma.otpCode.create({
+    const kayit = await this.prisma.otpCode.create({
       data: {
         phoneHash: ph,
         codeHash: hashOtp(code, key),
@@ -250,6 +252,31 @@ export class AuthService {
     });
 
     await this.audit.record({ action: 'otp.request', resourceType: 'otp' });
+
+    /*
+     * ── GÖNDERİM: "sent" ARTIK GERÇEĞİ ANLATIYOR ────────────────────────
+     *
+     * Burası eskiden hiçbir şey göndermeden `{sent: true}` diyordu. Mock'ta
+     * zararsızdı; gerçek sağlayıcı bağlanınca YALAN olurdu — bakiye
+     * bittiğinde kullanıcı hiç gelmeyecek bir kodu bekler, kimse sebebini
+     * bilmezdi.
+     *
+     * Kurucu: "sistem hiçbir şeyi kendiliğinden uydurmamalı."
+     *
+     * KOD SİLİNİYOR: gönderim düşerse üretilen kayıt kalmıyor. İki sebep —
+     * (1) kimseye ulaşmamış bir kod veritabanında durmamalı, (2) daha
+     * önemlisi SOĞUMA SÜRESİ "son kayıt"a bakıyor; kayıt kalsaydı kullanıcı
+     * BİZİM hatamız yüzünden 30 saniye kilitlenirdi. Şimdi hemen yeniden
+     * deneyebiliyor.
+     */
+    const gonderim = await this.sms.kodGonder(phone, code, locale ?? 'tr');
+    if (!gonderim.gonderildi) {
+      await this.prisma.otpCode.delete({ where: { id: kayit.id } }).catch(() => undefined);
+      throw new HttpException(
+        { code: 'SMS_SEND_FAILED', message: 'Kod gönderilemedi, birazdan tekrar dene' },
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
     // GÜVENLİK (P0): OTP kodu yanıtta/logda YALNIZ açık bayrakla döner (varsayılan KAPALI).
     // Eski davranış (mock modda herkese devCode) üretimde HESAP ELE GEÇİRME açığıydı:
     // herhangi bir telefonun sıfırlama kodu response'tan okunabiliyordu.

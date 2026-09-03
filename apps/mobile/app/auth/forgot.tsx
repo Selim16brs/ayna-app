@@ -12,7 +12,14 @@ type Step = 'phone' | 'code' | 'password';
 
 /**
  * §3.3 — Şifremi Unuttum: kayıtlı telefon → SMS OTP → yeni şifre belirleme.
- * 3 adımlı akış; servis erişilemezse dev kod ile devam eder.
+ *
+ * ÜÇ ADIMIN DA HAKEMİ SUNUCU. Ekran eskiden servise erişemediğinde kendi
+ * "000000" kodunu uydurup akışı yürütüyor, sonunda sıfırlama reddedilse
+ * bile "şifren değiştirildi" diyordu. Kullanıcı yeni şifresiyle giremeyip
+ * sebebini bilemezdi.
+ *
+ * Kurucu: "sistem hiçbir şeyi kendiliğinden uydurmamalı, her şey %100
+ * doğru çalışmalı." Artık her adım gerçek yanıtı bekliyor.
  */
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -34,11 +41,12 @@ export default function ForgotPasswordScreen() {
     try {
       const res = await api.otpRequest(phone.trim());
       setDevCode(res.devCode ?? null);
+      // Kod adımına YALNIZ gerçekten gönderildiyse geçiliyor.
+      setStep('code');
     } catch {
-      setDevCode('000000');
+      Alert.alert(t('auth.forgot.title'), t('auth.otp.send_failed'));
     } finally {
       setBusy(false);
-      setStep('code');
     }
   };
 
@@ -47,11 +55,12 @@ export default function ForgotPasswordScreen() {
     setBusy(true);
     try {
       const res = await api.otpVerify(phone.trim(), code);
-      if (res.verified || code === devCode) setStep('password');
+      // `code === devCode` KALDIRILDI. İstemcinin elindeki kodla kendini
+      // doğrulaması doğrulama değil; kararı sunucu veriyor.
+      if (res.verified) setStep('password');
       else Alert.alert(t('auth.forgot.title'), t('auth.otp.invalid'));
     } catch {
-      if (code === devCode) setStep('password');
-      else Alert.alert(t('auth.forgot.title'), t('auth.otp.invalid'));
+      Alert.alert(t('auth.forgot.title'), t('auth.otp.invalid'));
     } finally {
       setBusy(false);
     }
@@ -62,12 +71,15 @@ export default function ForgotPasswordScreen() {
     setBusy(true);
     try {
       await api.resetPassword({ phone: phone.trim(), code, newPassword: password });
-    } catch {
-      // Servis erişilemiyor → akış engellenmesin (mock)
-    } finally {
-      setBusy(false);
+      // Başarı YALNIZ sunucu kabul ettiğinde söyleniyor. Eskiden hata
+      // yutuluyor ve her koşulda "şifren değiştirildi" yazıyordu — sonra
+      // kullanıcı yeni şifresiyle giremiyordu.
       Alert.alert(t('auth.forgot.success'));
       router.replace('/auth/login');
+    } catch {
+      Alert.alert(t('auth.forgot.title'), t('auth.forgot.save_failed'));
+    } finally {
+      setBusy(false);
     }
   };
 
