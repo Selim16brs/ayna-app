@@ -1309,7 +1309,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'map.all': 'Все',
   'map.open': 'Открыть профиль',
   'map.book': 'Записаться',
-  'map.distance': 'км от вас',
+  'map.distance': 'км от центра',
   'map.bridge': 'Не нашли то, что искали? Отправьте фото, получите предложение',
   'search.title': 'Поиск',
   'search.placeholder': 'Поиск мастера, салона или услуги',

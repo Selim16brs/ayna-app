@@ -1301,7 +1301,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'map.all': 'Барлығы',
   'map.open': 'Профильді ашу',
   'map.book': 'Жазылу',
-  'map.distance': 'км қашықтықта',
+  'map.distance': 'км орталыққа',
   'map.bridge': 'Іздегеніңді таппадың ба? Фото жібер, ұсыныс ал',
   'search.title': 'Іздеу',
   'search.placeholder': 'Маман, салон немесе қызмет іздеу',

@@ -136,7 +136,21 @@ export default function MapScreen() {
             </PressableScale>
             <PressableScale
               style={styles.listBtn}
-              onPress={() => router.replace('/search')}
+              /*
+               * SEÇİLİ YER LİSTEYE TAŞINIYOR.
+               *
+               * Kurucunun senaryosu: Almatı'daki kullanıcı 5 Eylül'de
+               * gideceği Astana'ya bakıyor. Liste görünümüne geçince
+               * parametresiz gidiliyordu ve arama KULLANICININ şehrine
+               * sıfırlanıyordu — Astana bağlamı kayboluyor, kullanıcı her
+               * şeyi baştan seçiyordu.
+               */
+              onPress={() =>
+                router.replace(
+                  `/search?sehir=${encodeURIComponent(city)}` +
+                    (bolge ? `&bolge=${encodeURIComponent(bolge)}` : ''),
+                )
+              }
               accessibilityRole="button"
               accessibilityLabel={t('map.list')}
             >
