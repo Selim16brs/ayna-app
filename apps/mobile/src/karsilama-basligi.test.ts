@@ -124,3 +124,18 @@ test('"kesilmiş mi" kararı PORTRE SEÇİMİYLE aynı koşulda', () => {
   assert.equal(portreKesilmisMi(yok), false);
   assert.equal(portreSec(yok), 'foto');
 });
+
+test('ANA SAYFA LOGOSU %35 büyütüldü — oran korunarak', () => {
+  /*
+   * Kurucu: "ana sayfadaki ayna logosu %35 daha büyük olsun."
+   *
+   * Tek kenarı büyütmek marka işaretini ezerdi; ikisi de aynı oranda
+   * büyümeli. Test oranı da ölçüyor.
+   */
+  const l = stil('logo');
+  const g = Number(l.width);
+  const y = Number(l.height);
+  assert.ok(g >= 105 && g <= 110, `logo genişliği %35 büyümemiş: ${g}`);
+  const oran = g / y;
+  assert.ok(Math.abs(oran - 80 / 30) < 0.05, `logo oranı bozulmuş: ${oran.toFixed(2)}`);
+});

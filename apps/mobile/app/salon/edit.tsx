@@ -53,6 +53,24 @@ export default function SalonEditScreen() {
   const [igCode, setIgCode] = useState('');
   const [igVerified, setIgVerified] = useState(false);
   const [igBusy, setIgBusy] = useState(false);
+  /*
+   * KAYITTA GİRİLENLER FORMA GERİ YÜKLENİYOR.
+   *
+   * Kurucu: "yeni salon ve uzman kayıt olduğunda adres ve diğer bilgileri
+   * belirttiği halde kayıt sonrasında profilinde görünmüyor, her şeyi bir
+   * daha doldurması gerekiyor."
+   *
+   * Sebep buradaydı: bu istek zaten adresi, ilçeyi, alanları ve çalışma
+   * saatlerini GETİRİYORDU ama ekran yalnız Instagram alanlarını okuyup
+   * gerisini ATIYORDU. Form ise yerel `salonProfile` diliminden
+   * besleniyordu — o dilim BOŞ başlıyor ve yalnız onaylanmış bir profil
+   * değişikliğinden doluyor. Yani kayıt verisi hiçbir zaman forma
+   * ulaşmıyordu.
+   *
+   * YEREL DEĞİŞİKLİK EZİLMİYOR: kullanıcı bir alanı düzenlediyse
+   * (`salonProfile`te değer varsa) sunucudan gelen üzerine yazılmıyor.
+   * Aksi hâlde ekran açıldığında kullanıcının kaydettiği metin kaybolurdu.
+   */
   useEffect(() => {
     if (!token) return;
     void api
@@ -64,6 +82,27 @@ export default function SalonEditScreen() {
         if (b.socialInstagram) setIgUser(b.socialInstagram);
         if (b.socialVerifyCode) setIgCode(b.socialVerifyCode);
         setIgVerified(b.verification?.social ?? false);
+
+        // Kayıtta girilen adres: ilçe + açık adres birlikte anlamlı.
+        setAddress((mevcut) =>
+          mevcut.trim()
+            ? mevcut
+            : [b.district, b.address]
+                .map((x) => (x ?? '').trim())
+                .filter(Boolean)
+                .join(', '),
+        );
+        setContact((mevcut) => mevcut.trim() || (b.phone ?? '').trim());
+        setAreas((mevcut) => (mevcut.length ? mevcut : (b.categories ?? [])));
+        /*
+         * ÇALIŞMA SAATLERİ BURADAN GERİ YÜKLENMİYOR. Sunucuda BİÇİMLİ
+         * METİN olarak duruyor ("Pzt 09:00-18:00, …"); onu yapıya geri
+         * çevirmek tahmine dayanır ve yanlış çözülen bir saat, salonun
+         * kapalı olduğu bir güne randevu almasına yol açar.
+         *
+         * Saatlerin yapılı kaynağı `myHours` ucu ve `refreshMembership`
+         * onu zaten çekiyor.
+         */
       })
       .catch(() => undefined);
   }, [token]);

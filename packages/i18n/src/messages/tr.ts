@@ -2074,6 +2074,8 @@ export const tr = {
 
   // §5.1.1 — remove.bg cut-out profil fotosu
   'cutout.done': 'Fotoğrafın hazır — arka planı temizlendi ✨',
+  'cutout.clean': 'Arka planı temizle',
+  'cutout.working': 'Temizleniyor…',
   'cutout.failed':
     'Arka plan şu an temizlenemedi; normal fotoğrafın kullanıldı. Birazdan tekrar dene.',
   'cutout.upsell_title': 'Premium’da profilin böyle görünürdü ✨',

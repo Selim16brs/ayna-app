@@ -813,8 +813,12 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: 20,
       paddingBottom: 8,
     },
-    // Figma `ayna-logo-mark` 80×36; oran korunuyor.
-    logo: { width: 80, height: 30 },
+    /*
+     * Figma `ayna-logo-mark` 80×30 idi; kurucu "%35 daha büyük olsun"
+     * dedi → 108×41. ORAN KORUNUYOR (80/30 = 108/40.5): tek kenarı
+     * büyütmek işareti ezerdi.
+     */
+    logo: { width: 108, height: 41 },
     sehirCip: {
       flexDirection: 'row',
       alignItems: 'center',
