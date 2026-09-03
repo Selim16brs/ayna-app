@@ -1361,6 +1361,14 @@ export const tr = {
   'map.from': 'başlangıç',
   'map.title': 'Harita',
   'map.list': 'Liste',
+  // §harita — şehir + bölge daraltma (kurucu isteği). Bölge GERÇEK `district`
+  // alanından geliyor; boş şehir/bölge hiç gösterilmiyor.
+  'map.where.title': 'Nerede arayalım?',
+  'map.where.city': 'Şehir',
+  'map.where.area': 'Bölge',
+  'map.where.no_area': 'Bu şehirde henüz bölge bilgisi girilmiş uzman yok.',
+  'map.where.apply': '{n} uzmanı göster',
+  'map.where.empty': 'Bu seçimle uzman yok',
   'map.all': 'Tümü',
   'map.open': 'Profili aç',
   'map.book': 'Randevu al',
