@@ -301,6 +301,21 @@ export default function ProfessionalScreen() {
     // sonrası AYNI profile dönüyor — niyeti kaybolmuyor.
     if (girisGerekli(`/professional/${proId}`)) return;
     /*
+     * DOĞRULAMA KAPISI RANDEVUDA DA. Kapı yalnız mesajlaşmada duruyordu:
+     * doğrulanmamış müşteri saati seçip düğmeye basıyor, kayıt yerelde
+     * açılıyor ve sunucu onu reddediyordu. Müşteri listesinde duran ama
+     * uzmanın hiç görmediği bir randevu kalıyordu.
+     *
+     * Tek gerçek kapı sunucu; burası kullanıcıyı boşuna uğraştırmamak için.
+     */
+    if (!randevuVerebilir(kullanici ?? {})) {
+      Alert.alert(t('booking.verify_required'), '', [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('booking.verify_cta'), onPress: () => router.push('/auth/verify') },
+      ]);
+      return;
+    }
+    /*
      * HİZMETİ OLMAYAN UZMANDA DÜĞME "TEKLİF İSTE".
      *
      * Eskiden düğme burada ÖLÜYDÜ: `chosen.length > 0` şartı yüzünden

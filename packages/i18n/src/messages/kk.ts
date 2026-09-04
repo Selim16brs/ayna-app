@@ -917,6 +917,10 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'notif.slot_conflict': 'Уақыт қайшылығы ⚠️',
   'notif.slot_conflict_b':
     '{slot} үшін таңдалған уақыт басқа жазылумен қайшы келді — жаңа уақыт таңдаңыз.',
+  'notif.booking_failed': 'Жазылу құрылмады',
+  'notif.booking_failed_b': '{slot} үшін сұранысың серверге жазылмады — түртіп қайта көр.',
+  'notif.verify_required': 'Жазылу үшін растау керек',
+  'notif.verify_required_b': 'Телефоныңды растa, сосын сұранысты қайта жібер.',
   'booking.schedule.day_closed': 'Бұл күні маман демалыста — басқа күнді таңдаңыз',
   'booking.schedule.slots_loading': 'Бос уақыттар жүктелуде…',
   'booking.schedule.slots_failed':

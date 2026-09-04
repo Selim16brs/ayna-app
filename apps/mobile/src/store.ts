@@ -6,6 +6,7 @@ import {
   esikGecti,
   ANONIM_YAZAR_ETIKETI,
   BEN_YAZAR_ETIKETI,
+  RANDEVU_KAPISI_KODU,
 } from '@ayna/domain';
 import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -2159,7 +2160,21 @@ export const useStore = create<State>()(
               pendingBookingSync: s.pendingBookingSync.filter((x) => x !== booking.id),
             })),
           )
-          .catch(() => undefined); // kuyrukta kalır — açılışta/hydrate'te yeniden denenir
+          .catch((err: unknown) => {
+            /*
+             * KALICI RED HEMEN İŞLENİYOR.
+             *
+             * Eskiden her hata sessizce yutuluyor, kayıt kuyrukta kalıyordu.
+             * Ağ hatasında doğru; ama sunucu "bu randevuyu asla kabul
+             * etmeyeceğim" dediyse (telefon doğrulanmamış, saat dolu) kayıt
+             * müşterinin listesinde SANKİ VARMIŞ gibi duruyordu — uzman ise
+             * hiç görmüyordu. Boşaltma zaten bu ayrımı yapıyor; onu şimdi
+             * çalıştırmak, kullanıcıyı uygulamayı kapatıp açana kadar
+             * yanlış bilgiyle bırakmıyor.
+             */
+            if (err instanceof ApiError && kaliciRed(err)) void get().flushBookingSync();
+            // Geçici hata: kuyrukta kalır — açılışta/hydrate'te yeniden denenir.
+          });
       },
 
       /**
@@ -2268,12 +2283,22 @@ export const useStore = create<State>()(
             await api.createBooking(b, token);
             set((s) => ({ pendingBookingSync: s.pendingBookingSync.filter((x) => x !== id) }));
           } catch (err) {
-            // Faz 1/3 — SLOT_CONFLICT kalıcı reddir: sonsuz tekrar yerine kuyruktan düşür,
-            // kaydı cancelled işaretle ve kullanıcıya bildir (yeni saat seçmesi gerekir).
-            if (
-              err instanceof ApiError &&
-              (err.code === 'SLOT_CONFLICT' || err.code === 'CALENDAR_FORBIDDEN')
-            ) {
+            /*
+             * KALICI RED SONSUZA KADAR DENENMEZ.
+             *
+             * Eskiden yalnız SLOT_CONFLICT ve CALENDAR_FORBIDDEN düşürülüyordu;
+             * başka her kalıcı red (telefon doğrulanmamış, uzman bulunamadı,
+             * geçersiz istek) kuyrukta kalıyordu. Sonucu HAYALET RANDEVU:
+             * müşteri listesinde duran, sunucuda hiç var olmayan, uzmanın asla
+             * görmediği bir kayıt. `randevuEylemi` bu ayrımı zaten yapıyordu
+             * (`kaliciRed`); yazma yolu yapmıyordu — aynı kurala bağlandı.
+             *
+             * Kayıt SİLİNMİYOR, `sync_conflict` işaretleniyor: sessizce yok
+             * olan bir randevu, duran ama "olmadı" diyenden beter.
+             */
+            if (err instanceof ApiError && kaliciRed(err)) {
+              const cakisma = err.code === 'SLOT_CONFLICT' || err.code === 'CALENDAR_FORBIDDEN';
+              const dogrulama = err.code === RANDEVU_KAPISI_KODU;
               set((s) => ({
                 pendingBookingSync: s.pendingBookingSync.filter((x) => x !== id),
                 bookings: s.bookings.map((x) =>
@@ -2282,15 +2307,24 @@ export const useStore = create<State>()(
               }));
               get().pushNotification({
                 type: 'booking',
-                titleKey: 'notif.slot_conflict',
-                bodyKey: 'notif.slot_conflict_b',
+                titleKey: cakisma
+                  ? 'notif.slot_conflict'
+                  : dogrulama
+                    ? 'notif.verify_required'
+                    : 'notif.booking_failed',
+                bodyKey: cakisma
+                  ? 'notif.slot_conflict_b'
+                  : dogrulama
+                    ? 'notif.verify_required_b'
+                    : 'notif.booking_failed_b',
                 params: { slot: formatSlotTr(b.startMs) },
                 dateLabel: '',
                 icon: 'alert-circle-outline',
-                route: `/booking/${id}`,
+                // Doğrulama eksikse çözüm randevu ekranında değil: oraya götür.
+                route: dogrulama ? '/auth/verify' : `/booking/${id}`,
               });
             }
-            // diğer hatalar (ağ vb.) → sıradaki denemede tekrar
+            // GEÇİCİ hata (ağ yok, sunucu uykuda) → sıradaki denemede tekrar
           }
         }
       },

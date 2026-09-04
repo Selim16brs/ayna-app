@@ -984,6 +984,10 @@ export const tr = {
   'notif.slot_conflict': 'Saat çakıştı ⚠️',
   'notif.slot_conflict_b':
     '{slot} için seçtiğin saat başka bir randevuyla çakıştı — yeni saat seç.',
+  'notif.booking_failed': 'Randevu oluşturulamadı',
+  'notif.booking_failed_b': '{slot} için isteğin sunucuya yazılamadı — dokun, tekrar dene.',
+  'notif.verify_required': 'Randevu için doğrulama gerekli',
+  'notif.verify_required_b': 'Telefonunu doğrula, sonra randevu talebini tekrar gönder.',
   'booking.schedule.day_closed': 'Bu gün uzman izinli — başka bir gün seç',
   'booking.schedule.slots_loading': 'Uygun saatler yükleniyor…',
   'booking.schedule.slots_failed':
