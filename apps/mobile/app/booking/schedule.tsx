@@ -141,7 +141,7 @@ export default function ScheduleScreen() {
       : seciliHizmetler.length
         ? seciliHizmetler.map((sv) => sv.name).join(' + ')
         : (params.service ?? uzmanlikYazisi(pro, locale));
-    const price = offer ? offer.finalPrice : toplamTutar || Number(pro.priceFrom);
+    const price = offer ? offer.finalPrice : toplamTutar;
 
     const id = addBooking({
       source,

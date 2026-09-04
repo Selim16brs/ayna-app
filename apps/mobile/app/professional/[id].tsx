@@ -319,7 +319,7 @@ export default function ProfessionalScreen() {
       ...(uzman?.specialistId ? { uzmanId: uzman.specialistId } : {}),
       startMs,
       durationMin: totalDur || 60,
-      price: totalPrice || Number(pro.priceFrom),
+      price: totalPrice,
     });
     router.replace({
       pathname: '/booking/confirmed',
@@ -331,7 +331,7 @@ export default function ProfessionalScreen() {
         uzmanName: uzman?.name ?? '',
         // Polish 1.1 — onay ekranı SEÇİLEN hizmeti ve gerçek toplamı göstersin
         service: svcNames,
-        price: String(totalPrice || Number(pro.priceFrom)),
+        price: String(totalPrice),
       },
     });
   };

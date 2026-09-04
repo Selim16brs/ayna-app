@@ -524,6 +524,20 @@ export function formatPrice(value: number): string {
   return `₸${value.toLocaleString('ru-RU')}`;
 }
 
+/**
+ * RANDEVU FİYATI — HENÜZ BELLİ DEĞİLSE "₸0" DEĞİL.
+ *
+ * Hizmet listesi olmayan uzmandan randevu istendiğinde tutar hesaplanamıyor
+ * ve kayıt 0 ile açılıyor. Ekranda "₸0" yazmak "bu iş bedava" demekti;
+ * oysa fiyatı uzman verecek — ters pazar yerinin işleyişi bu.
+ *
+ * `t` dışarıdan geliyor: metin i18n'de, sayı biçimi burada; ikisi de tek
+ * yerde kalsın diye.
+ */
+export function randevuFiyatiYazisi(price: number, tbdYazisi: string): string {
+  return price > 0 ? formatPrice(price) : tbdYazisi;
+}
+
 // §5.1.5 — salon kartı fiyat ARALIĞI (uzman fiyatları), bağımsız uzman tek fiyat gösterir.
 export function priceLabel(pro: Pick<Professional, 'kind' | 'priceFrom' | 'priceTo'>): string {
   if (pro.kind === 'salon') {
