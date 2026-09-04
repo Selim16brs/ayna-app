@@ -3,6 +3,7 @@ export { TextInput } from './TextInput';
 export { Button } from './Button';
 export { Screen } from './Screen';
 export { ProCard } from './ProCard';
+export { SaglayiciFoto } from './SaglayiciFoto';
 export { SalonRow } from './SalonRow';
 export { WaveLayered } from './WaveLayered';
 export { TabHero } from './TabHero';

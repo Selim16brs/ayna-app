@@ -21,6 +21,7 @@ import {
   StackHeader,
   TAB_BAR_CLEARANCE,
   Text,
+  SaglayiciFoto,
 } from '../../src/ui';
 
 const LEAD_H = 2; // en erken 2 saat sonrası
@@ -189,7 +190,7 @@ export default function ScheduleScreen() {
       <StackHeader title={t('booking.schedule.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.proCard, shadow.soft]}>
-          <Image source={{ uri: pro.image }} style={styles.proImage} />
+          <SaglayiciFoto uri={pro.image} ad={pro.name} style={styles.proImage} />
           <View style={styles.proBody}>
             <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
               {pro.name}

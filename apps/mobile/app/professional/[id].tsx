@@ -30,6 +30,7 @@ import {
   Text,
   VerificationBadges,
   asPlanTier,
+  SaglayiciFoto,
 } from '../../src/ui';
 
 type Tab = 'booking' | 'portfolio' | 'reviews';
@@ -397,7 +398,7 @@ export default function ProfessionalScreen() {
         <View style={styles.identityRow}>
           <View style={styles.portraitCol} pointerEvents="none">
             <View style={styles.portraitWrap}>
-              <Image source={{ uri: pro.image }} style={styles.portrait} resizeMode="cover" />
+              <SaglayiciFoto uri={pro.image} ad={pro.name} style={styles.portrait} />
             </View>
           </View>
 
