@@ -569,7 +569,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'offers.publish': 'Жариялау',
   'offers.created_t': 'Науқан жарияланды',
   'offers.created_b':
-    'Науқаның Keşfet-те көрінеді. Жазылулар келген сайын квота автоматты есептеледі.',
+    'Науқаның Ашу бөлімінде көрінеді. Жазылулар келген сайын квота автоматты есептеледі.',
   'offers.remove_q': 'Науқан жойылсын ба?',
   'offers.st.active': 'Жарияланған',
   'offers.st.paused': 'Тоқтатылды',
@@ -1235,7 +1235,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.promo.cta': 'Пакеттерді қара →',
   'reports.perf.title': 'Өнімділік',
   'reports.visibility.desc':
-    'Реттілікті шынымен айқындайтын факторлар. Жасырын ұпай жоқ: тізімдер бағаға қарай сұрыпталады, іздеуде premium алға шығады, қаласы сәйкес келмейтін маман мүлде көрінбейді.',
+    'Реттілікті шынымен айқындайтын факторлар. Жасырын ұпай жоқ: тізімдер бағаға қарай сұрыпталады, Ашу бөлімінде premium алға шығады, қаласы сәйкес келмейтін маман мүлде көрінбейді.',
   'reports.visibility.title': 'Сені неге көреді',
   'reports.visibility.services': 'Қызмет тізімің — онсыз клиент жазыла алмайды',
   'reports.visibility.services_none': 'Әлі қосылмаған',
@@ -1569,7 +1569,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'notif.re.spa-wrap.due': 'Теріңе күтім уақыты — {expert} көмегімен орау уақыты ✨',
   'notif.re.pmu-lip.pre': 'Ертең ерін түзетуі уақыты — {expert} сені күтуде 💄',
   'notif.re.pmu-lip.due': 'Ерін түсің жаңаруды қалайды — {expert} дайын 💋',
-  'notif.re.pmu-eyeliner.pre': 'Ертең eyeliner түзетуі уақыты — {expert} дайын ✨',
+  'notif.re.pmu-eyeliner.pre': 'Ертең айлайнер түзетуінің уақыты — {expert} дайын ✨',
   'notif.re.pmu-eyeliner.due': 'Көзқарасың айқындықты аңсады — {expert} сені күтуде 🖤',
   'notif.re.pmu-brow.pre': 'Ертең қас түзетуі уақыты — {expert} сені күтуде ✨',
   'notif.re.pmu-brow.due': 'Қастарың түзетуді қалайды — {expert} дайын 💕',
