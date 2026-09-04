@@ -17,6 +17,7 @@ import { girisGerekli } from '../../src/auth-wall';
 import { selectSellerView, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { uzmanlikYazisi } from '../../src/uzmanlik';
 import {
   Button,
   PlanBadge,
@@ -298,7 +299,8 @@ export default function ProfessionalScreen() {
       return;
     }
     const svcNames =
-      chosen.map((s) => (s.label ? tri(s.label, locale) : s.name)).join(' + ') || pro.specialty;
+      chosen.map((s) => (s.label ? tri(s.label, locale) : s.name)).join(' + ') ||
+      uzmanlikYazisi(pro, locale);
     const uzman = pro.staff.find((u) => u.id === uzmanId);
     const startMs = slotMs;
     const bid = addBooking({
@@ -410,7 +412,8 @@ export default function ProfessionalScreen() {
               ) : null}
             </View>
             <Text variant="body" tone="inkSoft" numberOfLines={2}>
-              {pro.specialty} · {t(isSalon ? 'pro.kind.salon' : 'pro.kind.independent')}
+              {uzmanlikYazisi(pro, locale)} ·{' '}
+              {t(isSalon ? 'pro.kind.salon' : 'pro.kind.independent')}
             </Text>
             <View style={styles.metaRow}>
               <Ionicons name="location-outline" size={14} color={colors.muted} />

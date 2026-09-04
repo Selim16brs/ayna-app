@@ -31,6 +31,7 @@ import {
   StackHeader,
   Text,
 } from '../src/ui';
+import { uzmanlikYazisi } from '../src/uzmanlik';
 
 export default function MapScreen() {
   const router = useRouter();
@@ -278,7 +279,7 @@ export default function MapScreen() {
                     {selected.name}
                   </Text>
                   <Text variant="caption" tone="muted" numberOfLines={1}>
-                    {selected.specialty}
+                    {uzmanlikYazisi(selected, locale)}
                   </Text>
                   <View style={styles.cardMeta}>
                     {/*
@@ -375,7 +376,7 @@ export default function MapScreen() {
                 />
               ) : null}
               <Text variant="bodyStrong" tone="ink">
-                {detail.specialty || selected?.specialty}
+                {uzmanlikYazisi(detail, locale) || uzmanlikYazisi(selected ?? {}, locale)}
               </Text>
 
               {/* GÜVEN ŞERİDİ — sayfanın en üstünde, adın hemen altında.

@@ -12,6 +12,7 @@ import { bildirimIzniIste } from '../../src/notifications';
 import { useStore } from '../../src/store';
 import { type ColorTokens, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { uzmanlikYazisi } from '../../src/uzmanlik';
 import {
   Button,
   DateField,
@@ -26,7 +27,7 @@ const LEAD_H = 2; // en erken 2 saat sonrası
 
 export default function ScheduleScreen() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const params = useLocalSearchParams<{
@@ -138,7 +139,7 @@ export default function ScheduleScreen() {
       ? offer.title
       : seciliHizmetler.length
         ? seciliHizmetler.map((sv) => sv.name).join(' + ')
-        : (params.service ?? pro.specialty);
+        : (params.service ?? uzmanlikYazisi(pro, locale));
     const price = offer ? offer.finalPrice : toplamTutar || Number(pro.priceFrom);
 
     const id = addBooking({
@@ -194,7 +195,9 @@ export default function ScheduleScreen() {
               {pro.name}
             </Text>
             <Text variant="caption" tone="muted" numberOfLines={1}>
-              {isSalon && uzman ? `${pro.specialty} · ${uzman.name}` : pro.specialty}
+              {isSalon && uzman
+                ? `${uzmanlikYazisi(pro, locale)} · ${uzman.name}`
+                : uzmanlikYazisi(pro, locale)}
             </Text>
           </View>
         </View>
