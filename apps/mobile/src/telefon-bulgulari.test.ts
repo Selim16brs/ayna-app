@@ -288,3 +288,25 @@ test('gün hesabı ekranda DEĞİL, ortak mantıkta', () => {
   const r = oku('..', 'app', 'seller', 'reports.tsx');
   assert.match(r, /reklamGunu[\s\S]{0,60}from '@ayna\/domain'/, 'gün hesabı ekranda yapılıyor');
 });
+
+test('OTP SINIRLARI kullanıcıya DOĞRU sebeple söyleniyor', () => {
+  /*
+   * Üç ayrı durum tek mesajla anlatılıyordu: gönderim düştü, çok sık
+   * istendi, günlük tavan doldu. "Birazdan tekrar dene" günlük tavanda
+   * YANLIŞ — kullanıcı beş dakika sonra tekrar deneyip yine alamıyordu.
+   */
+  const k = readFileSync(join(__dirname, '..', 'app', 'auth', 'verify.tsx'), 'utf8');
+  assert.match(k, /kod === 'OTP_DAILY_LIMIT'/, 'günlük tavan ayrı anlatılmıyor');
+  assert.match(k, /kod === 'OTP_RATE_LIMIT'/, 'soğuma süresi ayrı anlatılmıyor');
+
+  /*
+   * Sunucu gerçekten bu kodları döndürüyor mu — mesajlar koda bağlı,
+   * kod değişirse mesaj sessizce genel hâle düşerdi.
+   */
+  const sunucu = readFileSync(
+    join(__dirname, '..', '..', 'api', 'src', 'auth', 'auth.service.ts'),
+    'utf8',
+  );
+  assert.match(sunucu, /code: 'OTP_DAILY_LIMIT'/, 'sunucu günlük tavan kodu dönmüyor');
+  assert.match(sunucu, /code: 'OTP_RATE_LIMIT'/, 'sunucu soğuma kodu dönmüyor');
+});

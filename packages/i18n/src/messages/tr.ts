@@ -2350,6 +2350,8 @@ export const tr = {
   // Sistem / domain
   'auth.otp.invalid': 'Kod geçersiz veya süresi dolmuş',
   'auth.otp.send_failed': 'Kod şu an gönderilemedi. Biraz sonra tekrar dene.',
+  'auth.otp.daily_limit': 'Bugünlük kod sınırına ulaştın — yarın tekrar dene.',
+  'auth.otp.too_soon': 'Çok sık kod istedin — biraz bekleyip tekrar dene.',
   'auth.forgot.save_failed': 'Şifre değiştirilemedi. Kodu ve bağlantını kontrol et.',
   'review.not_eligible': 'Bu randevu değerlendirilemez',
 
