@@ -18,6 +18,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'review.period.recent': 'Соңғы 30 күнде',
   'review.period.months': '1–3 ай бұрын',
   'review.period.old': '3 айдан ескі',
+  'review.author.anon': 'Расталған мүше',
+  'review.author.me': 'Сен',
   'common.add': 'Қосу',
   'date.pick': 'Күн таңдау',
   'date.add_a11y': 'Күн қосу',

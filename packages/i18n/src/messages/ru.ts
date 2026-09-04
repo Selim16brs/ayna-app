@@ -19,6 +19,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'review.period.recent': 'За последние 30 дней',
   'review.period.months': '1–3 месяца назад',
   'review.period.old': 'Более 3 месяцев назад',
+  'review.author.anon': 'Проверенный участник',
+  'review.author.me': 'Вы',
   'common.add': 'Добавить',
   'date.pick': 'Выбрать дату',
   'date.add_a11y': 'Добавить дату',

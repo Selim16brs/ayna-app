@@ -24,6 +24,7 @@ import { type ColorTokens, font, space } from '../../src/theme';
 import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { TepeIsigi, PressableScale, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { yorumYazariYazisi } from '../../src/yorum-yazari';
 
 type Period = 'week' | 'month' | 'all';
 
@@ -840,7 +841,7 @@ export default function ReportsScreen() {
               </View>
               <View style={styles.buyu}>
                 <Text style={styles.yorumAd} numberOfLines={1}>
-                  {bekleyenYorum.authorLabel}
+                  {yorumYazariYazisi(bekleyenYorum.authorLabel, t)}
                 </Text>
                 <Text style={styles.yorumHizmet} numberOfLines={1}>
                   {bekleyenYorum.serviceTag}

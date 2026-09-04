@@ -7,6 +7,7 @@ import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, Text, TextInput, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { yorumYazariYazisi } from '../../src/yorum-yazari';
 
 export default function SellerReviewsScreen() {
   const { t } = useLocale();
@@ -156,7 +157,7 @@ function ReviewRow({
         {review.comment || '—'}
       </Text>
       <Text variant="caption" tone="muted">
-        {review.authorLabel}
+        {yorumYazariYazisi(review.authorLabel, t)}
       </Text>
 
       {review.reply ? (

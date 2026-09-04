@@ -21,6 +21,8 @@ export const tr = {
   'review.period.recent': 'Son 30 gün içinde',
   'review.period.months': '1–3 ay önce',
   'review.period.old': '3 aydan eski',
+  'review.author.anon': 'Doğrulanmış üye',
+  'review.author.me': 'Sen',
   'common.add': 'Ekle',
   'date.pick': 'Tarih seç',
   'date.add_a11y': 'Tarih ekle',

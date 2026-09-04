@@ -19,6 +19,7 @@ import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { uzmanlikYazisi } from '../../src/uzmanlik';
 import { yorumDonemiYazisi } from '../../src/gecen-sure';
+import { yorumYazariYazisi } from '../../src/yorum-yazari';
 import {
   Button,
   PlanBadge,
@@ -1088,7 +1089,7 @@ export default function ProfessionalScreen() {
                       </View>
                       <View style={styles.flex}>
                         <Text variant="bodyStrong" tone="ink">
-                          {r.author}
+                          {yorumYazariYazisi(r.author, t)}
                         </Text>
                         <Text variant="caption" tone="muted">
                           {hizmetEtiketiCevir(r.service, locale)} ·{' '}
