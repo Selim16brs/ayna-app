@@ -1518,6 +1518,7 @@ function CommissionsView() {
                   ciro: r.gmv,
                   komisyon: r.earned,
                   bekleyen: r.pending,
+                  depozito: r.deposits,
                   tahsil: r.collected,
                   kalan: r.outstanding,
                 })),
@@ -1537,8 +1538,12 @@ function CommissionsView() {
         <>
           <div className="stat-grid">
             <Stat v={TL(data.totals.earned)} l="Kazanılan komisyon" />
-            <Stat v={TL(data.totals.collected)} l="Tahsil edilen" />
-            <Stat v={TL(data.totals.outstanding)} l="Açık alacak" />
+            {/* Depozito AYNA'nın kasasına müşteriden PEŞİN girdi; uzmandan
+                ikinci kez istenmiyor. Bu kalem görünmediğinde "açık alacak"
+                komisyonun tamamını gösteriyor, yani %10 fiilen %20 sanılıyordu. */}
+            <Stat v={TL(data.totals.deposits)} l="Depozitodan tahsil" />
+            <Stat v={TL(data.totals.collected)} l="Uzmandan tahsil" />
+            <Stat v={TL(data.totals.outstanding)} l="Açık cari alacak" />
             <Stat v={`%${data.rate}`} l={`Oran · ${data.totals.count} online randevu`} />
           </div>
           <div className="section-title">Komisyon oranı</div>
@@ -1576,7 +1581,8 @@ function CommissionsView() {
                   <div className="grow">
                     <div className="name">{s.proName}</div>
                     <div className="meta">
-                      Kazanılan {TL(s.earned)} · Tahsil {TL(s.collected)}
+                      Kazanılan {TL(s.earned)} · Depozito {TL(s.deposits)} · Tahsil{' '}
+                      {TL(s.collected)}
                       {s.pending > 0 ? ` · +${TL(s.pending)} bekleyen randevu` : ''}
                     </div>
                   </div>

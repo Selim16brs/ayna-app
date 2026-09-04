@@ -3,7 +3,9 @@ import {
   commissionFor,
   commissionFromMinor,
   fromMinor,
+  odenenTutar,
   toMinor,
+  uzmanCariBorcu,
   uzmanKayitli,
   KAZANILMIS_DURUMLAR,
   YAKLASAN_DURUMLAR,
@@ -173,6 +175,8 @@ export class AdminService {
     const span = Math.min(Math.max(days, 7), 90);
     const since = new Date(Date.now() - (span - 1) * 86400000);
     since.setUTCHours(0, 0, 0, 0);
+    // Komisyon oranı admin ayarı; gelir kovası bunu kullanıyor.
+    const rate = await this.commissionRate();
 
     const [users, bookings, professionals] = await Promise.all([
       this.prisma.user.findMany({
@@ -181,8 +185,15 @@ export class AdminService {
       }),
       this.prisma.booking.findMany({
         where: { createdAt: { gte: since } },
-        // depositAmount: AYNA'nın gelir kalemi (§10) — komisyon = depozito.
-        select: { createdAt: true, status: true, price: true, depositAmount: true },
+        // depositAmount: AYNA'nın peşin tahsil ettiği kalem (§10).
+        // finalPrice: kasada fiyat değiştiyse komisyon TABANI odur.
+        select: {
+          createdAt: true,
+          status: true,
+          price: true,
+          finalPrice: true,
+          depositAmount: true,
+        },
       }),
       this.prisma.professional.findMany({ select: { sector: true } }),
     ]);
@@ -212,10 +223,14 @@ export class AdminService {
     for (const bk of bookings) {
       bump(bk.createdAt, (b) => {
         b.bookings += 1;
-        // Brief §10: AYNA'nın geliri komisyondur ve komisyon = depozito (%10).
-        // Eskiden hizmet bedelinin TAMAMI gelir sayılıyordu — o para uzmana
-        // gidiyor, AYNA'ya değil.
-        if (bk.status === 'tamamlandi') b.revenue += Number(bk.depositAmount ?? 0);
+        // Brief §10: AYNA'nın geliri KOMİSYONDUR. Fiyat değişmediyse komisyon
+        // tam olarak peşin alınan depozitodur; değiştiyse aradaki fark uzmanın
+        // cari borcu olarak doğar (kurucu, 05.09.2026). Gelir ikisinin
+        // toplamı: sadece depozitoyu saymak, yükselen fiyattaki komisyonu
+        // hiç görünmez yapardı.
+        if (bk.status !== 'tamamlandi') return;
+        const depozito = Number(bk.depositAmount ?? 0);
+        b.revenue += depozito + uzmanCariBorcu(commissionFor(odenenTutar(bk), rate), depozito);
       });
     }
 
@@ -303,6 +318,9 @@ export class AdminService {
         gmvMinor: number;
         earnedGrossMinor: number;
         pendingGrossMinor: number;
+        // AYNA'nın müşteriden PEŞİN aldığı depozito toplamı (yalnız kazanılmış
+        // randevularda). Uzmanın borcundan düşülüyor.
+        depositMinor: number;
       }
     >();
     // Komisyon, tek tek randevulardan DEĞİL, kova cironun toplamından hesaplanır
@@ -315,12 +333,18 @@ export class AdminService {
       earnedGrossMinor: 0,
       pendingGrossMinor: 0,
       voidedGrossMinor: 0,
+      depositMinor: 0,
     };
     const items = rows.map((r) => {
-      const price = Number(r.price);
+      // Komisyon TABANI kasada ödenen tutardır. Fiyat değişmediyse rezervasyon
+      // fiyatının kendisi; değiştiyse müşterinin beyan ettiği tutar (kurucu,
+      // 05.09.2026: "ona göre tutarı girer ve ona göre ayna para kazanır").
+      const price = odenenTutar(r);
       const commission = commissionFor(price, rate); // KZT (2 hane)
       const isEarned = EARNED.includes(r.status);
       const isPending = PENDING.includes(r.status);
+      // Peşin alınan depozito — AYNA'nın kasasında ZATEN duran para.
+      const deposit = Number(r.depositAmount ?? 0);
       const key = r.proId || r.proName;
       const s = bySalon.get(key) ?? {
         proId: r.proId ?? '',
@@ -329,6 +353,7 @@ export class AdminService {
         gmvMinor: 0,
         earnedGrossMinor: 0,
         pendingGrossMinor: 0,
+        depositMinor: 0,
       };
       const priceMinor = toMinor(price);
       s.count += 1;
@@ -339,6 +364,8 @@ export class AdminService {
       if (isEarned) {
         s.earnedGrossMinor += priceMinor;
         totals.earnedGrossMinor += priceMinor;
+        s.depositMinor += toMinor(deposit);
+        totals.depositMinor += toMinor(deposit);
       } else if (isPending) {
         s.pendingGrossMinor += priceMinor;
         totals.pendingGrossMinor += priceMinor;
@@ -353,6 +380,10 @@ export class AdminService {
         dateLabel: r.dateLabel,
         price,
         commission,
+        deposit,
+        // Uzmanın bu randevudan AYNA'ya cari borcu: komisyonun depozito
+        // DIŞINDA kalan kısmı. Fiyat değişmediyse sıfır.
+        cari: isEarned ? uzmanCariBorcu(commission, deposit) : 0,
         status: r.status,
         state: isEarned ? 'earned' : isPending ? 'pending' : 'void',
       };
@@ -369,9 +400,25 @@ export class AdminService {
         earned: commissionFromMinor(totals.earnedGrossMinor, rate),
         pending: commissionFromMinor(totals.pendingGrossMinor, rate),
         collected: round2(totalCollected),
-        // Alacak = kazanılan − tahsil edilen (negatife düşmez: fazla tahsilat 0 sayılır)
+        // Müşteriden PEŞİN alınmış depozito toplamı.
+        deposits: fromMinor(totals.depositMinor),
+        /*
+         * Alacak = kazanılan komisyon − PEŞİN alınan depozito − sonradan
+         * tahsil edilen.
+         *
+         * Depozito eskiden hiç düşülmüyordu: AYNA parayı müşteriden zaten
+         * almışken panel aynı komisyonu bir de uzmandan istiyor gibi
+         * görünüyordu — %10'luk komisyon fiilen %20 olarak raporlanıyordu.
+         * Kurucu (05.09.2026): "uzmanda aynaya cari olarak depozito dışında
+         * kalan tutarı alması gerekir."
+         */
         outstanding: round2(
-          Math.max(0, commissionFromMinor(totals.earnedGrossMinor, rate) - totalCollected),
+          Math.max(
+            0,
+            commissionFromMinor(totals.earnedGrossMinor, rate) -
+              fromMinor(totals.depositMinor) -
+              totalCollected,
+          ),
         ),
       },
       salons: [...bySalon.values()]
@@ -380,6 +427,7 @@ export class AdminService {
           // Komisyon burada da kova cirosundan TEK KEZ hesaplanır — faturanın
           // (closePeriod) yaptığıyla birebir aynı işlem.
           const earned = commissionFromMinor(s.earnedGrossMinor, rate);
+          const deposits = fromMinor(s.depositMinor);
           return {
             proId: s.proId,
             proName: s.proName,
@@ -388,7 +436,9 @@ export class AdminService {
             earned,
             pending: commissionFromMinor(s.pendingGrossMinor, rate),
             collected: round2(collected),
-            outstanding: round2(Math.max(0, earned - collected)),
+            deposits,
+            // Cari borç: komisyonun depozito ve tahsilat DIŞINDA kalan kısmı.
+            outstanding: round2(Math.max(0, earned - deposits - collected)),
           };
         })
         .sort((a, b) => b.outstanding - a.outstanding || b.earned - a.earned),

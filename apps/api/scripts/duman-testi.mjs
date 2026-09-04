@@ -357,6 +357,35 @@ ol(
 );
 
 /*
+ * ÖDEME BEYANI DA ERKEN AÇILMIYOR — kurucu (05.09.2026) ödeme düğmesinin
+ * "hizmet saati başladığında" açılmasını istedi. Randevu ileri tarihli
+ * olduğu için burada kapıya çarpması gerekiyor: açık kalsaydı müşteri
+ * yaşanmamış bir hizmet için para ve puan doğurabilirdi.
+ */
+const erkenOdeme = await gonder(`/bookings/${bookingId}/balance-paid`, {}, musteri.govde?.token);
+const erkenOdemeKod = erkenOdeme.govde?.error?.code ?? erkenOdeme.govde?.code;
+ol(
+  'hizmet saati gelmeden ÖDEME BEYAN EDİLEMİYOR',
+  !erkenOdeme.ok && erkenOdemeKod === 'ODEME_ERKEN',
+  `${erkenOdeme.durum} ${erkenOdemeKod ?? ''}`,
+);
+
+/*
+ * Beyan edilen TUTAR da doğrulanıyor: sıfır ya da negatif bir tutar,
+ * komisyonu ve puanı sıfırlamanın en kolay yoluydu.
+ */
+const kotuTutar = await gonder(
+  `/bookings/${bookingId}/balance-paid`,
+  { amount: -5000 },
+  musteri.govde?.token,
+);
+ol(
+  'negatif ödeme tutarı REDDEDİLİYOR',
+  !kotuTutar.ok,
+  `${kotuTutar.durum} ${kotuTutar.govde?.error?.code ?? ''}`,
+);
+
+/*
  * Puan da erken yüklenmiyor: tamamlanmamış randevudan puan doğarsa
  * "uydurma puan" tam olarak budur.
  */

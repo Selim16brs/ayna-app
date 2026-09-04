@@ -230,6 +230,14 @@ export const kk: Partial<Record<MessageKey, string>> = {
     'Маман қабылдаса жаңа уақыт күшіне енеді; қабылдамаса қазіргі жазылуың қалады.',
   'reschedule.err': 'Кейінге қалдыру жасалмады. Хақың біткен не мерзім жабылған болуы мүмкін.',
   'refund.err_t': 'Қайтару өтінімі жіберілмеді',
+  // ── Төлем хабарламасы (құрылтайшы, 05.09.2026) ────────────────────────────
+  'payment.title': 'Төлемді хабарла',
+  'payment.due_now': 'Салонда төленеді',
+  'payment.deposit_note': '{deposit} ₸ депозитті сен төлеп қойдың',
+  'payment.amount_label': 'Салонда төлеген сомаң',
+  'payment.same_note': 'Баға өзгермесе, өзгертудің қажеті жоқ.',
+  'payment.changed_note': 'Жазылудағы баға {price} ₸ болатын. Маман осы соманы растайды.',
+  'payment.earn_note': 'Осы сомадан {points} ұпай жинайсың',
   'refund.title': 'Депозитті қайтару',
   'refund.amount': 'Қайтарылатын сома',
   'refund.account_label': 'Қайтарылатын шот',
@@ -1747,6 +1755,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'logout.pending_force': 'Бәрібір шығу',
   'logout.pending_fail': 'Синхрондау аяқталмады — байланысты тексеріңіз',
   'booking.money.deposit': 'Депозит',
+  'booking.money.declared': 'Төленді деп хабарланған сома',
   'booking.balance.wait_b': 'Маман растағанда жазылуың жабылады, ұпайың жүктеледі.',
   'booking.balance.provider_confirm_b':
     'Ақшаны алсаң растa. Жазылу жабылады, клиенттің ұпайы жүктеледі.',

@@ -28,6 +28,15 @@ type Adim = {
   sira: 'musteri' | 'uzman';
   /** Sıradaki tarafın basacağı düğme. */
   dugme: string;
+  /**
+   * KARŞI TARAFIN da düğmesi varsa etiketi.
+   *
+   * Akışın tek adımında iki tarafın da yapacağı bir şey var: hizmet günü.
+   * Müşteri ödemeyi bildirir, uzman işlemi bitirir — ikisi de aynı randevuyu
+   * ileri taşır ve hangisi önce basarsa akış oradan devam eder. Boşsa kural
+   * eskisi gibi: karşı tarafta düğme OLMAMALI.
+   */
+  karsiDugme?: string;
 };
 
 /** §4 mutlu yol — her satır bir el değiştirme. */
@@ -35,7 +44,21 @@ const MUTLU_YOL: Adim[] = [
   { durum: 'onay_bekliyor', sira: 'uzman', dugme: 'flow.act.onayla' },
   { durum: 'depozito_bekliyor', sira: 'musteri', dugme: 'flow.act.depozito_ode' },
   { durum: 'kesinlesti', sira: 'musteri', dugme: '' }, // iki taraf da günü bekler
-  { durum: 'hizmet_gunu', sira: 'uzman', dugme: 'flow.act.islemi_bitirdim' },
+  /*
+   * HİZMET GÜNÜ — kurucu (05.09.2026): "müşteri salona gittiğinde hizmet
+   * saati başladığında otomatik olarak müşteri ekranında ilgili randevuda
+   * Ödeme Yap butonu aktif olmalı."
+   *
+   * Burada müşterinin hiçbir düğmesi yoktu: ödeme ancak uzman "işlemi
+   * bitirdim" dedikten SONRA açılıyordu ve uzman basmazsa randevu sonsuza
+   * kadar açık kalıyordu.
+   */
+  {
+    durum: 'hizmet_gunu',
+    sira: 'musteri',
+    dugme: 'flow.act.odeme_yaptim',
+    karsiDugme: 'flow.act.islemi_bitirdim',
+  },
   { durum: 'odeme_bekliyor', sira: 'musteri', dugme: 'flow.act.odeme_yaptim' },
   {
     durum: 'odeme_bekliyor',
@@ -54,12 +77,15 @@ test('mutlu yolda TOP her adımda doğru tarafta', () => {
     const a = birincilAksiyon(adim.durum, adim.sira, ctx);
     assert.ok(a, `${adim.durum}: sıradaki taraf (${adim.sira}) için düğme yok`);
     assert.equal(a.etiket, adim.dugme, `${adim.durum}/${adim.sira}: yanlış düğme`);
-    // KARŞI TARAFTA düğme OLMAMALI — iki taraf aynı anda ilerletemez.
-    assert.equal(
-      birincilAksiyon(adim.durum, karsi as 'musteri' | 'uzman', ctx),
-      null,
-      `${adim.durum}: karşı taraf (${karsi}) da ilerletebiliyor`,
-    );
+    const karsiAksiyon = birincilAksiyon(adim.durum, karsi as 'musteri' | 'uzman', ctx);
+    if (adim.karsiDugme) {
+      // Hizmet günü: iki tarafın da kendi düğmesi var, ama AYNI düğme değil.
+      assert.ok(karsiAksiyon, `${adim.durum}/${karsi}: beklenen düğme yok`);
+      assert.equal(karsiAksiyon.etiket, adim.karsiDugme, `${adim.durum}/${karsi}: yanlış düğme`);
+    } else {
+      // KARŞI TARAFTA düğme OLMAMALI — iki taraf aynı anda ilerletemez.
+      assert.equal(karsiAksiyon, null, `${adim.durum}: karşı taraf (${karsi}) da ilerletebiliyor`);
+    }
   }
 });
 
@@ -70,6 +96,8 @@ test('sırası olmayan taraf NE BEKLEDİĞİNİ görüyor', () => {
     // orada durum rozetini, tamamlanmış çizelgeyi ve parayı gösteriyor —
     // bekleme nabzı çizmek "hâlâ bir şey olacak" demek olurdu.
     if (adim.durum === 'tamamlandi') continue;
+    // İki tarafın da düğmesi olan adımda kimse beklemiyor.
+    if (adim.karsiDugme) continue;
     const ctx = { esikOncesi: true, ...adim.ctx };
     const karsi = (adim.sira === 'musteri' ? 'uzman' : 'musteri') as 'musteri' | 'uzman';
     assert.ok(

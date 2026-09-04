@@ -874,7 +874,11 @@ export const api = {
   // Onay/alternatif pazarlık döngüsü (§1.6)
   approveBooking: (id: string) => post<Appointment>(`/bookings/${id}/approve`, {}),
   // Para el değiştirme — müşteri "ödedim", uzman "aldım".
-  balancePaid: (id: string) => post<Appointment>(`/bookings/${id}/balance-paid`, {}),
+  // `amount` YALNIZ kasada fiyat değiştiyse gönderilir; gönderilmezse
+  // rezervasyon fiyatı geçerli sayılır (kurucu: fiyat aynıysa müşteri direkt
+  // "ödemeyi yaptım"a basabilmeli).
+  balancePaid: (id: string, amount?: number) =>
+    post<Appointment>(`/bookings/${id}/balance-paid`, amount !== undefined ? { amount } : {}),
   balanceReceived: (id: string) => post<Appointment>(`/bookings/${id}/balance-received`, {}),
   proposeBooking: (id: string, proposedStartMs: number) =>
     post<Appointment>(`/bookings/${id}/propose`, { proposedStartMs }),

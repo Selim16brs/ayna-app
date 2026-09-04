@@ -246,7 +246,8 @@ export function bookingEylemGonder(
     case 'islemi_bitirdim':
       return api.completeBookingApi(id);
     case 'odeme_yaptim':
-      return api.balancePaid(id);
+      // Tutar isteğe bağlı: yalnız fiyat değiştiyse geliyor.
+      return api.balancePaid(id, typeof arg === 'number' ? arg : undefined);
     case 'odeme_aldim':
       return api.balanceReceived(id);
     case 'musteri_gelmedi':

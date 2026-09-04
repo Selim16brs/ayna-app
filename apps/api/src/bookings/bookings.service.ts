@@ -18,6 +18,8 @@ import {
   esikGecti,
   hasConflict,
   isBookingState,
+  beyanEdilenTutarGecerli,
+  odenenTutar,
   paymentSplit,
   KAZANILMIS_DURUMLAR,
   YAKLASAN_DURUMLAR,
@@ -26,6 +28,7 @@ import {
 import {
   cashbackPoints,
   DEFAULT_CASHBACK_PCT,
+  grantCompletionCashback,
   grantCompletionRewards,
 } from '../loyalty/completion-rewards';
 import { loadLedgerState, loadLoyaltyRules } from '../loyalty/loyalty.rules';
@@ -305,7 +308,10 @@ export class BookingsService {
     }
     const rows = await this.prisma.booking.findMany({ where });
     const base = computeBookingStats(
-      rows.map((b) => ({ status: b.status, price: Number(b.price), userId: b.userId })),
+      // Ciro ve komisyon TABANI kasada ödenen tutardır: fiyat değiştiyse
+      // uzmanın raporu da gerçekte tahsil ettiğini göstermeli, rezervasyon
+      // anındaki tahmini değil.
+      rows.map((b) => ({ status: b.status, price: odenenTutar(b), userId: b.userId })),
     );
     // §12.8 — ödenecek komisyon: online ciro × oran(%); oran admin parametresi (varsayılan %15)
     const s = await this.prisma.setting.findUnique({ where: { key: 'commission.rate' } });
@@ -745,18 +751,135 @@ export class BookingsService {
 
   /** ADIM 2 — müşteri "ödemeyi yaptım" der; uzmanda "ödemeyi aldım" açılır. */
   /** Brief §4.9 adım 2 — müşteri "ÖDEME YAPTIM" der; uzmanda buton belirir. */
-  async balancePaid(id: string, actorId?: string) {
+  /**
+   * MÜŞTERİ "ÖDEMEYİ YAPTIM" der — ve para hesabı BU AN kurulur.
+   *
+   * Kurucu (05.09.2026): "müşteri salona gittiğinde hizmet saati başladığında
+   * otomatik olarak müşteri ekranında ilgili randevuda Ödeme Yap butonu aktif
+   * olmalı. şu anda yok ve randevu açık kalıyor ve tamamlanmıyor. Müşteri
+   * ödeme yaptım butonuna bastığında ayna para kazanıyor. eğer bunu yapmazsa
+   * kazanamaz."
+   *
+   * Üç şey değişti:
+   *
+   * 1. HİZMET GÜNÜNDE DE KABUL EDİLİYOR. Eskiden beyan yalnız uzman "işlemi
+   *    bitirdim" dedikten sonra (`odeme_bekliyor`) mümkündü: uzman düğmeye
+   *    basmazsa randevu sonsuza kadar açık kalıyor, müşteri ödediği hâlde
+   *    hiçbir şey yapamıyordu. Artık hizmet saati başlar başlamaz müşteri
+   *    kendi başına kapatabiliyor.
+   * 2. TUTAR BEYAN EDİLEBİLİYOR. Kasada fiyat değiştiyse müşteri ödediğini
+   *    girer; puan ve komisyon o tutardan doğar (`odenenTutar`).
+   * 3. PUAN BU ANDA YAZILIYOR. "Basmazsa kazanamaz" kuralının karşılığı bu:
+   *    ödül artık tamamlanma anına değil, MÜŞTERİNİN BEYANINA bağlı.
+   *    (`grantCompletionCashback` beyanı olmayan randevuyu atlıyor.)
+   */
+  async balancePaid(id: string, actorId?: string, beyanEdilenTutar?: number) {
     await this.assertParty(id, actorId, 'owner');
-    // Durum DEĞİŞMEZ — brief §3'te ODEME_BEKLIYOR tek durum. Yalnız beyan
-    // damgalanır; uzmanın butonu buna bakar.
-    const row = await this.prisma.booking.update({
-      where: { id },
-      data: { balanceDeclaredAt: new Date() },
-    });
+    const mevcut = await this.prisma.booking.findUnique({ where: { id } });
+    if (!mevcut) {
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    }
+    // Hizmet başlamadan ödeme beyanı kabul edilmez: aksi hâlde randevu daha
+    // yaşanmadan "para el değiştirdi" sayılır ve puan doğardı.
+    const acikDurumlar = ['kesinlesti', 'hizmet_gunu', 'odeme_bekliyor'];
+    if (!acikDurumlar.includes(mevcut.status)) {
+      throw new BadRequestException({
+        code: 'ODEME_BEYANI_KAPALI',
+        message: `'${mevcut.status}' durumundaki randevuda ödeme beyan edilemez`,
+      });
+    }
+    // `kesinlesti`: zamanlayıcı hizmet gününe henüz çevirmemiş olabilir (60 sn
+    // tur, kapatılabilir bayrak). Saat geldiyse müşteriyi bekletmiyoruz —
+    // beklettiği için randevu "açık kalıyordu".
+    if (mevcut.status === 'kesinlesti') {
+      const basladi = mevcut.startAt != null && mevcut.startAt.getTime() <= Date.now();
+      if (!basladi) {
+        throw new BadRequestException({
+          code: 'ODEME_ERKEN',
+          message: 'Ödeme beyanı hizmet saati başladığında açılır',
+        });
+      }
+      await this.transition(id, { status: 'hizmet_gunu' });
+    }
+
+    // Tutar YALNIZ değiştiyse yazılır: aynı tutarı `finalPrice`e kopyalamak,
+    // "fiyat değişti mi" sorusunu kayıttan okunamaz hâle getirirdi.
+    const rezervasyonTutari = Number(mevcut.price);
+    let yeniTutar: number | undefined;
+    if (beyanEdilenTutar !== undefined) {
+      if (!beyanEdilenTutarGecerli(beyanEdilenTutar)) {
+        throw new BadRequestException({
+          code: 'BAD_VALUE',
+          message: 'Ödenen tutar geçerli bir para tutarı olmalı',
+        });
+      }
+      if (beyanEdilenTutar !== rezervasyonTutari) yeniTutar = beyanEdilenTutar;
+    }
+
+    const cfg = await this.prisma.setting.findUnique({ where: { key: 'policy.confirm_hours' } });
+    const hours = cfg?.intValue ?? 24;
+    // Beyan iki şeyi birden yapıyor: durumu ödeme beklemeye taşıyor (uzmanın
+    // "ödeme aldım" düğmesi buna bakıyor) ve itiraz penceresini başlatıyor.
+    // Pencere olmasaydı uzman sessiz kaldığında randevu yine kapanmazdı.
+    const veri: Record<string, unknown> = {
+      balanceDeclaredAt: new Date(),
+      ...(yeniTutar !== undefined ? { finalPrice: yeniTutar } : {}),
+      ...(mevcut.status === 'odeme_bekliyor'
+        ? {}
+        : {
+            status: 'odeme_bekliyor' as BookingState,
+            finalizeDeadline: new Date(Date.now() + hours * 60 * 60 * 1000),
+          }),
+    };
+    const row = await this.transition(id, veri);
+
+    // §12 — fiyat değişikliği KRİTİK bir para olayı: kim, hangi randevuda,
+    // hangi tutarı beyan etti. Denetim kaydı olmadan komisyon itirazı
+    // çözülemezdi.
+    if (yeniTutar !== undefined)
+      void this.prisma.auditLog
+        .create({
+          data: {
+            action: 'booking.final_price',
+            resourceType: 'booking',
+            resourceId: id,
+            actorId: actorId ?? null,
+            actorRole: 'party',
+            safeDiff: { price: rezervasyonTutari, finalPrice: yeniTutar },
+          },
+        })
+        .catch(() => undefined);
+
+    // Kurucu: "müşteri ödeme yaptım butonuna bastığında ayna para kazanıyor."
+    // Ödül burada yazılıyor, tamamlanmayı beklemeden. İki kez yazılmıyor:
+    // `grantCompletionCashback` aynı randevu için ikinci girişi düşürüyor.
+    const guncel = await this.prisma.booking.findUnique({ where: { id } });
+    if (guncel?.userId) {
+      const kazanilan = await grantCompletionCashback(this.prisma, [guncel]).catch((e: unknown) => {
+        this.log.error(
+          `beyan puanı yazılamadı: booking=${id} — ${e instanceof Error ? e.message : String(e)}`,
+        );
+        return 0;
+      });
+      if (kazanilan > 0)
+        void this.push.sendTemplate(
+          guncel.userId,
+          'loyalty.points_earned',
+          { n: String(cashbackPoints(odenenTutar(guncel), DEFAULT_CASHBACK_PCT)) },
+          { route: `/booking/${id}` },
+        );
+    }
+
     void this.expertUserIdFor(id).then((uid) => {
       if (!uid) return;
+      // Tutar değiştiyse uzman BUNU görmeli: onaylayacağı rakam artık
+      // rezervasyondaki değil. Aynıysa eski, sade bildirim gidiyor.
+      const [anahtar, params] =
+        yeniTutar !== undefined
+          ? (['booking.payment_declared_amount', { tutar: String(yeniTutar) }] as const)
+          : (['booking.payment_declared', undefined] as const);
       void this.push
-        .sendTemplate(uid, 'booking.payment_declared', undefined, { route: `/booking/${id}` })
+        .sendTemplate(uid, anahtar, params, { route: `/booking/${id}` })
         .catch(() => undefined);
     });
     return row;
@@ -778,15 +901,29 @@ export class BookingsService {
       // §4.9.3 — puan yüklemesi. Sessizce yutulmuyor: yutulursa müşteri
       // hak ettiği puanı hiç almaz ve kimse fark etmez. Zamanlayıcı yolu da
       // aynı fonksiyonu çağırıyor; çift yazım orada da engelli.
-      await grantCompletionRewards(this.prisma, [b]).catch((e: unknown) =>
+      const odul = await grantCompletionRewards(this.prisma, [b]).catch((e: unknown) => {
         this.log.error(
           `puan/ödül yazılamadı: booking=${id} — ${e instanceof Error ? e.message : String(e)}`,
-        ),
-      );
+        );
+        return { cashback: 0, referrals: 0 };
+      });
       // §6 — "Uzman 'Ödeme aldım' | Müşteri | X puan kazandınız — Değerlendir".
       // Kazanılan puanı YAZMAK şart: "teşekkürler" tek başına ödülün gerçekten
       // yüklendiğini göstermiyor ve puan sessizce birikmiş oluyordu.
-      const kazanilan = cashbackPoints(Number(b.price), DEFAULT_CASHBACK_PCT);
+      //
+      // AMA YALNIZ GERÇEKTEN YAZILDIYSA. Puan artık müşterinin ödeme beyanına
+      // bağlı (kurucu: "eğer bunu yapmazsa kazanamaz"); beyan yoksa hiçbir
+      // puan doğmuyor ve "X puan kazandınız" bildirimi YALAN olurdu. Beyan
+      // varsa puan zaten beyan ANINDA yazılmıştı; o zaman da aynı puanı ikinci
+      // kez müjdelemek yerine randevunun kapandığını ve değerlendirme
+      // davetini gönderiyoruz — müşteri hiçbir bildirim almadan kalmasın.
+      if (odul.cashback === 0) {
+        void this.push.sendTemplate(b.userId, 'booking.completed_rate', undefined, {
+          route: `/review/new?id=${id}`,
+        });
+        return;
+      }
+      const kazanilan = cashbackPoints(odenenTutar(b), DEFAULT_CASHBACK_PCT);
       /*
        * Sayı `tr-TR` ile biçimlendiriliyordu; Rusça/Kazakça bildirimde de
        * Türkçe ayraç görünürdü. Ham sayı gidiyor, biçim şablonun dilinde
@@ -1565,6 +1702,9 @@ function mapBooking(b: Booking, opts?: { forProvider?: boolean; customerName?: s
     proposedBy: (b.proposedBy as 'customer' | 'provider' | null) ?? undefined,
     durationMin: b.durationMin ?? undefined,
     price: Number(b.price),
+    // Kasada ödendiği beyan edilen tutar — yalnız rezervasyon fiyatından
+    // FARKLIYSA dolu. Ekran "ödenen tutar"ı bundan yazıyor.
+    finalPrice: b.finalPrice != null ? Number(b.finalPrice) : undefined,
     status: b.status,
     cancelReason: b.cancelReason ?? undefined,
     // §3 — iptali kim yaptı. İstemci "sen iptal ettin" ile "uzman iptal etti"

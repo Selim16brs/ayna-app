@@ -630,6 +630,8 @@ export interface Commissions {
     earned: number;
     pending: number;
     collected: number;
+    /** Müşteriden PEŞİN alınan depozito — komisyonun zaten tahsil edilmiş kısmı. */
+    deposits: number;
     outstanding: number;
   };
   salons: {
@@ -640,6 +642,7 @@ export interface Commissions {
     earned: number;
     pending: number;
     collected: number;
+    deposits: number;
     outstanding: number;
   }[];
   payouts: {

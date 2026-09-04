@@ -1,4 +1,4 @@
-import { DEFAULT_EARN_PCT, earnPoints } from '@ayna/domain';
+import { DEFAULT_EARN_PCT, earnPoints, odenenTutar } from '@ayna/domain';
 import { grantPoints } from './loyalty.grant';
 import type { PrismaService } from '../prisma/prisma.service';
 
@@ -19,20 +19,34 @@ export const REFERRAL_POINTS = 300;
 // yatan puan birbirinden ayrılırdı.
 export const cashbackPoints = earnPoints;
 
-type CompletedBooking = { id: string; userId: string | null; price: unknown };
+type CompletedBooking = {
+  id: string;
+  userId: string | null;
+  price: unknown;
+  /** Kasada değişen fiyat — varsa puan BUNDAN doğar (`odenenTutar`). */
+  finalPrice?: unknown;
+  /** Müşterinin "ödemeyi yaptım" beyanı. Geri kazanımın ÖN KOŞULU. */
+  balanceDeclaredAt?: Date | null;
+};
 
 /**
- * K4.1 — tamamlanan hizmetten geri kazanım.
+ * K4.1 — ödenen hizmetten geri kazanım.
  *
  * İKİ KEZ YAZMAZ: aynı randevu için daha önce kazanım varsa atlanır. Ayırt edici
  * anahtar `detail` alanındaki randevu kimliği.
+ *
+ * ÖN KOŞUL: müşterinin ödeme beyanı. Kurucu (05.09.2026): "müşteri ödeme
+ * yaptım butonuna bastığında ayna para kazanıyor. eğer bunu yapmazsa
+ * kazanamaz." Eskiden puan yalnız TAMAMLANMAYA bağlıydı; uzmanın sessiz
+ * kalması sonucu zamanlayıcı randevuyu 24 saat sonra kendiliğinden kapatıyor
+ * ve müşteri hiçbir şey beyan etmeden puan kazanıyordu.
  */
 export async function grantCompletionCashback(
   prisma: PrismaService,
   bookings: ReadonlyArray<CompletedBooking>,
 ): Promise<number> {
   const uygun = bookings.filter(
-    (b): b is { id: string; userId: string; price: unknown } => !!b.userId,
+    (b): b is CompletedBooking & { userId: string } => !!b.userId && !!b.balanceDeclaredAt,
   );
   if (uygun.length === 0) return 0;
 
@@ -51,7 +65,8 @@ export async function grantCompletionCashback(
       userId: b.userId,
       reason: CASHBACK_REASON,
       detail: b.id,
-      points: cashbackPoints(Number(b.price), pct),
+      // Kasada ödenen tutardan: fiyat değiştiyse puan da ona göre doğar.
+      points: cashbackPoints(odenenTutar(b), pct),
     }))
     .filter((g) => g.points > 0);
 

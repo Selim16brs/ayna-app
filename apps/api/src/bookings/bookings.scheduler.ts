@@ -167,7 +167,17 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
     //    randevuyu süresiz askıda bırakmamalı.
     const finalize = await this.prisma.booking.findMany({
       where: { status: 'odeme_bekliyor', finalizeDeadline: { lt: now } },
-      select: { id: true, userId: true, price: true },
+      // `balanceDeclaredAt` ve `finalPrice` ÖDÜL HESABININ girdisi: beyan
+      // etmeyen müşteriye geri kazanım yazılmıyor, beyan edilen tutar varsa
+      // puan ondan doğuyor. Seçilmezlerse ikisi de sessizce `undefined`
+      // gelir ve kural bu yolda hiç uygulanmazdı.
+      select: {
+        id: true,
+        userId: true,
+        price: true,
+        finalPrice: true,
+        balanceDeclaredAt: true,
+      },
       take: 200,
     });
     if (finalize.length) {
