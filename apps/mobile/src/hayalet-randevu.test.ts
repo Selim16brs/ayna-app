@@ -84,3 +84,23 @@ test('DOĞRULAMA KAPISI her iki randevu yolunda', () => {
     assert.match(govde, /router\.push\('\/auth\/verify'\)/, `${yol.join('/')}: çözüme götürmüyor`);
   }
 });
+
+test('YAZILAMAYAN İZİN GÜNÜ geri alınıyor', () => {
+  /*
+   * Uzman günü kapalı işaretliyor, ekranda kapalı görünüyor ama sunucu
+   * yazımı sessizce düşüyordu: sunucu hâlâ o güne slot açıyor ve müşteri
+   * uzmanın İZİNLİ olduğu güne randevu alıyordu.
+   *
+   * Ekran ile sunucu ayrı şey gösteremez: yazılamayan değişiklik geri
+   * alınıyor ve uzmana söyleniyor.
+   */
+  const i = store.indexOf('toggleClosedDay: async (dayStartMs) => {');
+  assert.ok(i > 0, 'izin günü eylemi yok');
+  const govde = store.slice(i, store.indexOf('createPromotion:', i));
+  assert.match(govde, /const oncekiler = get\(\)\.closedDays;/, 'önceki durum tutulmuyor');
+  assert.match(govde, /set\(\{ closedDays: oncekiler \}\);/, 'geri alma yok');
+  assert.doesNotMatch(govde, /\.catch\(\(\) => undefined\)/, 'hata hâlâ yutuluyor');
+
+  const ekran = oku('app', 'seller', 'agenda.tsx');
+  assert.match(ekran, /'agenda\.close_err'/, 'uzmana söylenmiyor');
+});

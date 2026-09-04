@@ -417,7 +417,11 @@ interface State {
   // §6.1 — uzman/salon hizmet kataloğu (taksonomi id → fiyat/süre). Profil "Hizmetler" ekranından
   // yönetilir; offline randevu akışında hazır (accordion) seçim olarak kullanılır. Kalıcı saklanır.
   sellerServices: SellerServiceRow[];
-  setSellerServices: (rows: SellerServiceRow[]) => void;
+  /**
+   * Hizmet listesini kaydeder. Sunucu yazımı BAŞARILI MI diye dönüyor:
+   * ekran "Kaydedildi" demeden önce buna bakıyor.
+   */
+  setSellerServices: (rows: SellerServiceRow[]) => Promise<boolean>;
   // §9.5 — uzman/salon profil verileri (kayıt sonrası düzenlenebilir). Kalıcı saklanır.
   sellerSocial: SocialValue;
   sellerHours: DayHours[];
@@ -545,7 +549,11 @@ interface State {
   checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
   expireDeposits: () => void; // §4.4 — depozito süresi dolan randevuları düşürür
   expireResponses: () => void; // §4.1.3 — uzman yanıt süresi dolan talepleri düşürür
-  toggleClosedDay: (dayStartMs: number) => void; // §4.6 — günü kapalı/açık işaretle
+  /**
+   * Günü kapalı/açık işaretler. Sunucuya yazılamazsa YEREL DEĞİŞİKLİK GERİ
+   * ALINIYOR ve `false` dönüyor: ekran ile sunucu ayrı şey gösteremez.
+   */
+  toggleClosedDay: (dayStartMs: number) => Promise<boolean>; // §4.6 — günü kapalı/açık işaretle
   // §5.2 Faz A — teklif/talep akışı BULUTTAN (iki cihaz arasında gerçek çalışır)
   createDemand: (input: {
     mode: DemandMode;
@@ -1037,7 +1045,7 @@ export const useStore = create<State>()(
       },
       setSellerHours: (hours) => set({ sellerHours: hours }),
       sellerServices: bosHizmetListesi(),
-      setSellerServices: (rows) => {
+      setSellerServices: async (rows) => {
         set({ sellerServices: rows });
         // §9.5 — hizmet listesi HESABIN parçası: public profil de bundan beslenir
         const gonderilecek = rows
@@ -1050,7 +1058,21 @@ export const useStore = create<State>()(
             durationMin: Number(r.dur) || 60,
           }))
           .filter((x) => x.price > 0 && x.name);
-        void api.setMyServices(gonderilecek).catch(() => undefined);
+        /*
+         * SUNUCU YAZIMI SESSİZ DEĞİL.
+         *
+         * Hata yutuluyordu ve ekran yine "Kaydedildi" diyordu. Uzmanın
+         * keşif kartı yoksa sunucu `NO_DISCOVERY_CARD` fırlatıyor: hizmetler
+         * hiçbir yere yazılmıyor, müşteri onları hiç görmüyor ve uzman
+         * kaydettiğini sanıyor. Kurucunun "uzman hizmet ekliyor ama müşteri
+         * göremiyor" dediği sessizliğin son halkası buydu.
+         */
+        try {
+          await api.setMyServices(gonderilecek);
+          return true;
+        } catch {
+          return false;
+        }
       },
       sellerSocial: emptySocial,
       sellerHours: defaultHours(),
@@ -1598,14 +1620,29 @@ export const useStore = create<State>()(
       },
 
       // §4.6 — günü kapalı/açık işaretle (izin/tatil). Kullanıcı tarafında kapalı gün slot göstermez.
-      toggleClosedDay: (dayStartMs) => {
+      toggleClosedDay: async (dayStartMs) => {
+        const oncekiler = get().closedDays;
         set((s) => ({
           closedDays: s.closedDays.includes(dayStartMs)
             ? s.closedDays.filter((d) => d !== dayStartMs)
             : [...s.closedDays, dayStartMs],
         }));
         // §4.6 — izin günleri HESAPTA (kullanıcı tarafı slotları da bunlara göre kapanır)
-        void api.setMyClosedDays(get().closedDays).catch(() => undefined);
+        try {
+          await api.setMyClosedDays(get().closedDays);
+          return true;
+        } catch {
+          /*
+           * YAZILAMAYAN İZİN GÜNÜ GERİ ALINIYOR.
+           *
+           * Hata yutuluyordu: uzman günü kapalı işaretliyor, ekranda kapalı
+           * görünüyor, ama sunucu hâlâ o güne slot açıyordu. Müşteri uzmanın
+           * izinli olduğu güne randevu alıyordu — uzmanın hiç kabul etmediği
+           * bir gün. Ekranın sunucuyla aynı şeyi göstermesi şart.
+           */
+          set({ closedDays: oncekiler });
+          return false;
+        }
       },
 
       // §10.1/§12.7 — promosyon oluştur → admin onayına düşer (status 'pending')

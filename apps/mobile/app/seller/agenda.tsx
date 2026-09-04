@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { DURUM_ETIKETI } from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
 import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
@@ -372,7 +372,16 @@ export default function AgendaScreen() {
                 ) : null
               ) : (
                 <Pressable
-                  onPress={() => toggleClosedDay(selectedDay)}
+                  onPress={() => {
+                    /*
+                     * Yazılamazsa uzmana SÖYLENİYOR: ekran kapalı gösterip
+                     * sunucunun o güne slot açması, uzmanın izinli olduğu
+                     * güne randevu demekti.
+                     */
+                    void toggleClosedDay(selectedDay).then((oldu) => {
+                      if (!oldu) Alert.alert(t('agenda.title_own'), t('agenda.close_err'));
+                    });
+                  }}
                   style={[styles.closeToggle, dayClosed && styles.closeToggleOn]}
                 >
                   <Ionicons

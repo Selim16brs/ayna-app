@@ -440,6 +440,7 @@ export const tr = {
   'seller.services.active_unit': 'aktif hizmet',
   'seller.services.empty': 'Bu kategoride henüz hizmet seçmedin.',
   'seller.services.saved': 'Hizmetlerin güncellendi.',
+  'seller.services.save_err': 'Kaydedilemedi — hizmetlerin müşteriye görünmüyor. Tekrar dene.',
   'seller.services.add_row': 'Ekle',
   'seller.services.need_name_price': 'Ad, fiyat ve süre gerekli',
 
@@ -1355,6 +1356,7 @@ export const tr = {
   'agenda.title_own': 'Takvimim',
   'agenda.add_offline': 'Offline randevu',
   'agenda.empty': 'Bu aralıkta randevu yok',
+  'agenda.close_err': 'Kaydedilemedi — o gün müşteriye hâlâ açık görünüyor. Tekrar dene.',
   'agenda.view.day': 'Gün',
   'agenda.view.list': 'Liste',
   'agenda.view.salon': 'Salon',
