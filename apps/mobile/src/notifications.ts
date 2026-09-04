@@ -191,8 +191,31 @@ export async function registerForRemotePush(authToken: string): Promise<void> {
 // EK Z.5 — bildirime dokunma → DEEP-LINK (MD_000 satır 266: doğrudan ilgili ekrana).
 // Uygulama AÇIKKEN push düşerse çağrılır — ekranlar yenileme beklemeden tazelenir
 // (MD_000 §4.2: "uzman ekranı açıkken yeni talep anında düşer").
-export function addPushReceivedListener(onReceive: () => void) {
-  return Notifications.addNotificationReceivedListener(() => onReceive());
+/**
+ * Uygulama AÇIKKEN gelen push.
+ *
+ * Eskiden yalnız "bir şey oldu" sinyali veriyordu (listeler tazelensin diye)
+ * ve bildirimin KENDİSİ atılıyordu. Sonuç: uygulama içindeki bildirim
+ * listesi yalnız KULLANICININ KENDİ yaptıklarını gösteriyordu — karşı
+ * tarafın yaptığı hiçbir şey (uzman onayladı, teklif geldi) orada
+ * görünmüyordu. Push kapalıysa ya da kaçırıldıysa hiçbir iz kalmıyordu.
+ *
+ * Artık başlık/gövde ve varsa hedef ekran da veriliyor; çağıran bunu
+ * uygulama içi listeye yazıyor. Uydurma değil: sunucunun gerçekten
+ * gönderdiği bildirimin ta kendisi.
+ */
+export function addPushReceivedListener(
+  onReceive: (bildirim: { title: string; body: string; route?: string }) => void,
+) {
+  return Notifications.addNotificationReceivedListener((n) => {
+    const icerik = n.request.content;
+    const route = icerik.data?.route;
+    onReceive({
+      title: icerik.title ?? '',
+      body: icerik.body ?? '',
+      ...(typeof route === 'string' && route.startsWith('/') ? { route } : {}),
+    });
+  });
 }
 
 export function addPushDeepLinkListener(onRoute: (route: string) => void) {

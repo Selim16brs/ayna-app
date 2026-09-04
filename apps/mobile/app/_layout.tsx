@@ -131,9 +131,29 @@ function ThemedStack() {
   }, [token]);
   // MD_000 §4.2 — uygulama AÇIKKEN push düşerse randevu/talep listeleri anında tazelenir
   useEffect(() => {
-    const sub = addPushReceivedListener(() => {
+    const sub = addPushReceivedListener((bildirim) => {
       void hydrateBookings();
       void hydrateDemands();
+      /*
+       * BİLDİRİM UYGULAMA İÇİNDE DE KALIYOR.
+       *
+       * Push yalnız listeleri tazeleyip kayboluyordu: uygulama içindeki
+       * bildirim listesi KULLANICININ KENDİ yaptıklarını gösteriyor, karşı
+       * tarafın yaptıklarını (uzman onayladı, teklif geldi) göstermiyordu.
+       * Bildirimi görüp geçen kullanıcı onu bir daha bulamıyordu.
+       *
+       * Metin sunucudan geldiği gibi yazılıyor — anahtar değil düz metin,
+       * çünkü uydurmadan tek kaynağı bu.
+       */
+      if (bildirim.title || bildirim.body)
+        useStore.getState().pushNotification({
+          type: 'system',
+          title: bildirim.title,
+          body: bildirim.body,
+          dateLabel: '',
+          icon: 'notifications-outline',
+          ...(bildirim.route ? { route: bildirim.route } : {}),
+        });
     });
     return () => sub.remove();
   }, [hydrateBookings, hydrateDemands]);
