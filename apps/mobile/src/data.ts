@@ -992,6 +992,12 @@ export interface Appointment {
   depositDeadline?: number; // §4.4 — depozito son ödeme anı (UTC ms, 10 dk); geçilirse randevu düşer
   /** §4.9 — müşterinin "ödeme yaptım" beyanı (UTC ms). Uzmanın butonu buna bakar. */
   balanceDeclaredAt?: number;
+  /**
+   * Kasada ÖDENDİĞİ BEYAN EDİLEN tutar — yalnız `price`ten farklıysa dolu
+   * (kurucu, 05.09.2026). Puan ve komisyon bundan doğuyor; `price` ise
+   * depozitonun dayanağı olarak olduğu gibi duruyor.
+   */
+  finalPrice?: number;
   /** §4.8/§4.9 — itiraz/otomatik onay penceresinin bitişi (UTC ms). */
   finalizeDeadline?: number;
   receiptUri?: string; // §4.3 — yüklenen dekont görseli

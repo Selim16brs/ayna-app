@@ -27,6 +27,7 @@ export type PushTemplateKey =
   | 'booking.new_request'
   | 'booking.no_show_marked'
   | 'booking.payment_declared'
+  | 'booking.payment_declared_amount'
   | 'loyalty.points_earned'
   | 'booking.reschedule_offer'
   | 'booking.expert_proposed'
@@ -136,6 +137,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
     'booking.payment_declared': {
       title: 'Müşteri ödemeyi yaptığını bildirdi',
       body: 'Parayı aldıysan onayla — komisyon süren o an başlar.',
+    },
+    'booking.payment_declared_amount': {
+      title: 'Müşteri {tutar} ₸ ödediğini bildirdi',
+      body: 'Rezervasyon fiyatından farklı. Doğruysa onayla, değilse itiraz et.',
     },
     'loyalty.points_earned': {
       title: '{n} puan kazandın 💛',
@@ -311,6 +316,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
       title: 'Клиент төледім деп білдірді',
       body: 'Ақшаны алсаң растa — комиссия мерзімі сол сәтте басталады.',
     },
+    'booking.payment_declared_amount': {
+      title: 'Клиент {tutar} ₸ төледім деп білдірді',
+      body: 'Бұл брондау бағасынан өзге. Дұрыс болса раста, әйтпесе шағым жаз.',
+    },
     'loyalty.points_earned': {
       title: '{n} ұпай жинадың 💛',
       body: 'Тәжірибеңді бағала — 30 секунд алады',
@@ -484,6 +493,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
     'booking.payment_declared': {
       title: 'Клиент сообщил об оплате',
       body: 'Подтвердите получение — тогда начнётся срок комиссии.',
+    },
+    'booking.payment_declared_amount': {
+      title: 'Клиент сообщил об оплате {tutar} ₸',
+      body: 'Сумма отличается от брони. Если верно — подтвердите, иначе оспорьте.',
     },
     'loyalty.points_earned': {
       title: 'Вы получили {n} баллов 💛',

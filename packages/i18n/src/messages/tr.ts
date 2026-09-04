@@ -244,6 +244,14 @@ export const tr = {
     'Uzman kabul ederse yeni saatin geçerli olur; reddederse mevcut randevun kalır.',
   'reschedule.err': 'Erteleme yapılamadı. Hakkın bitmiş ya da süre kapanmış olabilir.',
   'refund.err_t': 'İade talebi gönderilemedi',
+  // ── Ödeme beyanı (kurucu, 05.09.2026) ─────────────────────────────────────
+  'payment.title': 'Ödemeyi bildir',
+  'payment.due_now': 'Salonda ödenecek',
+  'payment.deposit_note': '{deposit} ₸ depozitoyu zaten ödedin',
+  'payment.amount_label': 'Salonda ödediğin tutar',
+  'payment.same_note': 'Fiyat değişmediyse dokunmana gerek yok.',
+  'payment.changed_note': 'Randevudaki fiyat {price} ₸ idi. Uzman bu tutarı onaylayacak.',
+  'payment.earn_note': 'Bu tutardan {points} puan kazanacaksın',
   'refund.title': 'Depozito iadesi',
   'refund.amount': 'İade edilecek tutar',
   'refund.account_label': 'İade yapılacak hesap',
@@ -1864,6 +1872,8 @@ export const tr = {
   // §4.4 — iptal/ceza/iade
   // §4.3 — depozito/dekont akışı (kullanıcı)
   'booking.money.deposit': 'Depozito',
+  // Kasada fiyat değiştiyse görünür — iki taraf da aynı rakamı görmeli.
+  'booking.money.declared': 'Ödendiği bildirilen tutar',
   'booking.balance.wait_b': 'Uzman onaylayınca randevun kapanır ve puanın yüklenir.',
   'booking.balance.provider_confirm_b':
     'Parayı aldıysan onayla. Randevu kapanır, müşterinin puanı yüklenir.',

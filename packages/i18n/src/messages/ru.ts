@@ -235,6 +235,14 @@ export const ru: Partial<Record<MessageKey, string>> = {
     'Если мастер примет — время изменится; если откажет, останется текущая запись.',
   'reschedule.err': 'Перенос не выполнен. Возможно, лимит исчерпан или срок закрыт.',
   'refund.err_t': 'Заявка на возврат не отправлена',
+  // ── Сообщение об оплате (основатель, 05.09.2026) ──────────────────────────
+  'payment.title': 'Сообщить об оплате',
+  'payment.due_now': 'К оплате в салоне',
+  'payment.deposit_note': 'Депозит {deposit} ₸ вы уже оплатили',
+  'payment.amount_label': 'Сумма, оплаченная в салоне',
+  'payment.same_note': 'Если цена не изменилась, менять ничего не нужно.',
+  'payment.changed_note': 'В записи было {price} ₸. Мастер подтвердит эту сумму.',
+  'payment.earn_note': 'С этой суммы вы получите {points} баллов',
   'refund.title': 'Возврат депозита',
   'refund.amount': 'Сумма к возврату',
   'refund.account_label': 'Счёт для возврата',
@@ -1754,6 +1762,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'logout.pending_force': 'Всё равно выйти',
   'logout.pending_fail': 'Синхронизация не завершена — проверьте соединение',
   'booking.money.deposit': 'Депозит',
+  'booking.money.declared': 'Заявленная сумма оплаты',
   'booking.balance.wait_b': 'Когда мастер подтвердит, запись закроется и начислятся баллы.',
   'booking.balance.provider_confirm_b':
     'Если получили деньги — подтвердите. Запись закроется, клиенту начислятся баллы.',

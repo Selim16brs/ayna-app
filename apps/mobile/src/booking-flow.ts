@@ -354,15 +354,29 @@ export function birincilAksiyon(
     /**
      * §4.8/§4.9 — hizmet günü.
      *
-     * Uzmanın birincil eylemi işi bitirmek. MÜŞTERİNİN birincil eylemi YOK:
-     * hizmet sürüyor, yapması gereken bir şey yok. Burada 15 dakika sonra
-     * "Gelmedi" birincil düğme oluyordu — kartın en büyük, tek, mor düğmesi
-     * "uzman gelmedi" idi. Yıkıcı ve geri alınamaz bir beyanı ana eylem diye
-     * sunmak, kullanıcıyı ona doğru itmektir. Artık ikincil ve sessiz
-     * (kartta ayrıca çiziliyor), tıpkı uzman tarafındaki gibi.
+     * Uzmanın birincil eylemi işi bitirmek.
+     *
+     * MÜŞTERİDE DE ÖDEME DÜĞMESİ VAR — kurucu (05.09.2026): "müşteri salona
+     * gittiğinde hizmet saati başladığında otomatik olarak müşteri ekranında
+     * ilgili randevuda Ödeme Yap butonu aktif olmalı. şu anda yok ve randevu
+     * açık kalıyor ve tamamlanmıyor."
+     *
+     * Burada müşterinin HİÇBİR eylemi yoktu: ödeme ancak uzman "işlemi
+     * bitirdim" dedikten sonra açılıyordu. Uzman düğmeye basmazsa randevu
+     * sonsuza kadar açık kalıyor, müşteri parayı ödemiş olmasına rağmen
+     * kapatamıyor ve puanını da alamıyordu. Artık hizmet saati başladığı anda
+     * müşteri kendi başına kapatabiliyor.
+     *
+     * "Gelmedi" birincil düğme DEĞİL: yıkıcı ve geri alınamaz bir beyanı
+     * kartın en büyük düğmesi yapmak kullanıcıyı ona doğru iter. İkincil ve
+     * sessiz kalıyor (kartta ayrıca çiziliyor), tıpkı uzman tarafındaki gibi.
      */
     case 'hizmet_gunu':
-      return musteri ? null : { etiket: 'flow.act.islemi_bitirdim', eylem: 'islemi_bitirdim' };
+      if (musteri)
+        return ctx.odemeBildirildi
+          ? null
+          : { etiket: 'flow.act.odeme_yaptim', eylem: 'odeme_yaptim' };
+      return { etiket: 'flow.act.islemi_bitirdim', eylem: 'islemi_bitirdim' };
     // §4.9 — iki aşamalı el sıkışma. Müşteri bildirmeden uzmanda buton çıkmaz.
     case 'odeme_bekliyor':
       if (musteri)

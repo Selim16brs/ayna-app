@@ -103,7 +103,10 @@ export default function BookingDetail() {
 
   // §4.4 — peşin %10; kalan bakiye hizmetten sonra doğrudan uzmana ödenir.
   const pesinat = randevuDepozitosu(booking, rates);
-  const kalan = Math.max(0, booking.price - pesinat);
+  // Kasada fiyat değiştiyse KALAN da ona göre: rezervasyon fiyatından hesap
+  // yapmak, müşteriye ödemediği bir rakamı borç gibi gösterirdi.
+  const odenen = booking.finalPrice ?? booking.price;
+  const kalan = Math.max(0, odenen - pesinat);
 
   // §4.8 — "gelmedi" butonları randevu saatinden 15 DAKİKA sonra aktifleşir.
   const gelmediAcik = Date.now() >= booking.startMs + 15 * 60_000;
@@ -185,8 +188,11 @@ export default function BookingDetail() {
         return cagir('erteleme_red');
       case 'islemi_bitirdim':
         return cagir('islemi_bitirdim');
+      // Ödeme beyanı TUTARLA gidiyor: kasada fiyat değişmiş olabilir
+      // (kurucu, 05.09.2026). Ekran rezervasyon fiyatıyla dolu açılıyor,
+      // değişmediyse tek dokunuş yetiyor.
       case 'odeme_yaptim':
-        return cagir('odeme_yaptim');
+        return router.push(`/booking/payment?id=${bid}` as never);
       case 'odeme_aldim':
         return cagir('odeme_aldim');
       case 'degerlendir':
@@ -283,6 +289,15 @@ export default function BookingDetail() {
             <Text style={styles.paraEtiket}>{t('booking.money.deposit')}</Text>
             <Text style={styles.paraDeger}>{pesinat.toLocaleString('tr-TR')} ₸</Text>
           </View>
+          {/* Beyan edilen tutar YALNIZ değiştiyse çıkıyor: aynı rakamı iki
+              satırda göstermek kartı gereksiz kalabalıklaştırırdı. Uzman
+              onaylayacağı tutarı burada görüyor. */}
+          {booking.finalPrice != null ? (
+            <View style={styles.paraSatir}>
+              <Text style={styles.paraEtiket}>{t('booking.money.declared')}</Text>
+              <Text style={styles.paraDeger}>{booking.finalPrice.toLocaleString('tr-TR')} ₸</Text>
+            </View>
+          ) : null}
           <View style={styles.paraSatir}>
             <Text style={styles.paraEtiket}>
               {t(rol === 'uzman' ? 'booking.balance.remaining_pro' : 'booking.balance.remaining')}
