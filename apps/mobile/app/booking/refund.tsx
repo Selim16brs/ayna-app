@@ -3,13 +3,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { api, ApiError } from '../../src/api';
+import { api } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
 import { randevuDepozitosu, useStore } from '../../src/store';
 import { font, type ColorTokens } from '../../src/theme';
 import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { sunucuHatasi } from '../../src/sunucu-hatasi';
 
 /**
  * DEPOZİTO İADE TALEBİ — brief §4.10.
@@ -72,10 +73,13 @@ export default function RefundScreen() {
       // sunucu "İade edilecek depozito yok" dediğinde bile kullanıcı girdiği
       // telefon numarasının reddedildiğini sanıyor, aynı şeyi tekrar tekrar
       // deniyordu. Sebebi bilmeden düzeltebileceği bir şey yok.
-      Alert.alert(
-        t('refund.err_t'),
-        err instanceof ApiError && err.message ? err.message : t('common.error'),
-      );
+      /*
+       * SEBEP KULLANICININ DİLİNDE. Sunucunun mesajı Türkçe: Kazak ya da
+       * Rus kullanıcı sebebi hiç anlamıyordu. Kodu biliyorsak kendi
+       * sözlüğümüzden yazıyoruz; bilmiyorsak sunucunun cümlesi yedek —
+       * anlaşılmayan bir sebep, hiç sebep yazmamaktan iyi.
+       */
+      Alert.alert(t('refund.err_t'), sunucuHatasi(err, t));
     } finally {
       setBusy(false);
     }

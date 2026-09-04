@@ -88,5 +88,10 @@ test('§4.10 — iade edilecek tutar yoksa düğme çıkmıyor', () => {
   assert.equal(birincilAksiyon('iptal_uzman', 'musteri', { iadeEdilecekVar: false }), null);
   assert.ok(birincilAksiyon('iptal_uzman', 'musteri', { iadeEdilecekVar: true }));
   const src = oku('..', 'app', 'booking', 'refund.tsx');
-  assert.match(src, /err instanceof ApiError && err\.message/, 'sunucunun sebebi gösterilmiyor');
+  /*
+   * Sebep artık KULLANICININ DİLİNDE gösteriliyor: sunucunun mesajı
+   * Türkçe, `sunucuHatasi` hata KODUNU kendi sözlüğümüzden çeviriyor ve
+   * bilinmeyen kodda sunucunun cümlesini yedek tutuyor (kk/ru turu).
+   */
+  assert.match(src, /sunucuHatasi\(err, t\)/, 'sunucunun sebebi gösterilmiyor');
 });
