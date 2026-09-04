@@ -67,12 +67,26 @@ export default function SellerRequestsScreen() {
       // çevrimdışı: eldeki liste korunur
     }
   }, [token]);
+  /*
+   * AÇIK TALEP HAVUZU tazeleniyordu ama GELEN RANDEVU TALEPLERİ değil.
+   *
+   * Üstteki "Talepler" bloğu yerel `bookings` listesinden besleniyor ve o
+   * liste yalnız uygulama açılışında doluyordu: müşteri randevu isteği
+   * gönderiyor, uzman ekranı açıyor ve HİÇBİR ŞEY görmüyordu. Uzman
+   * cevap vermeyince talep süresi doluyor — kimsenin hatası olmadan
+   * kaybedilen randevu.
+   */
+  const hydrateBookings = useStore((st) => st.hydrateBookings);
   useFocusEffect(
     useCallback(() => {
       void refreshPool();
-      const timer = setInterval(() => void refreshPool(), 20_000);
+      void hydrateBookings();
+      const timer = setInterval(() => {
+        void refreshPool();
+        void hydrateBookings();
+      }, 20_000);
       return () => clearInterval(timer);
-    }, [refreshPool]),
+    }, [refreshPool, hydrateBookings]),
   );
   // §11 — açık taleplere YANIT VERMEK premium'a özel; premium olmayan görür ama teklif veremez.
   const premium = useStore((s) => s.premium);

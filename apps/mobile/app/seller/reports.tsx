@@ -165,6 +165,7 @@ export default function ReportsScreen() {
    * `null` = HENÜZ BİLİNMİYOR. `false` ile aynı saysaydım ekran açılır
    * açılmaz uyarı çakıp sunucu cevabı gelince kaybolurdu.
    */
+  const hydrateBookings = useStore((s) => s.hydrateBookings);
   const [konumVar, setKonumVar] = useState<boolean | null>(null);
   const [saatVar, setSaatVar] = useState<boolean | null>(null);
   const [basari, setBasari] = useState<{
@@ -272,6 +273,13 @@ export default function ReportsScreen() {
         .myLocation(token)
         .then((r) => setKonumVar(r.hasLocation))
         .catch(() => undefined);
+      /*
+       * RANDEVULAR DA TAZELENİYOR. Ana ekrandaki "yanıt bekleyen talep"
+       * sayısı yerel listeden geliyor ve o liste yalnız uygulama
+       * açılışında doluyordu: müşteri talep gönderiyor, uzman ana ekranı
+       * açıyor ve "yeni bir şey yok" sanıyordu.
+       */
+      void hydrateBookings();
       /*
        * SAATLERİNİ GİRMEMİŞ uzmana sunucu varsayılan pencereyi uyguluyor ve
        * müşteriye 10:00–20:00 gösteriyor — uzmanın hiç söylemediği saatler.

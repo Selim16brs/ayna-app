@@ -41,3 +41,46 @@ test('TEKLİF EKRANI zaten sürekli soruyordu — kural bozulmasın', () => {
   assert.match(k, /setInterval\(\(\) => void hydrateDemands\(\), 15_000\)/, 'düzenli tazeleme yok');
   assert.match(k, /return \(\) => clearInterval\(timer\)/, 'sayaç temizlenmiyor');
 });
+
+test('UZMANIN gelen talepleri de tazeleniyor', () => {
+  /*
+   * Açık talep HAVUZU tazeleniyordu ama gelen RANDEVU TALEPLERİ değil:
+   * onlar yerel randevu listesinden besleniyor ve o liste yalnız uygulama
+   * açılışında doluyordu. Müşteri istek gönderiyor, uzman ekranı açıyor,
+   * hiçbir şey görmüyor — sonra yanıt süresi doluyor ve randevu kimsenin
+   * hatası olmadan kaybediliyordu.
+   */
+  for (const yol of [
+    ['app', 'seller', 'requests.tsx'],
+    ['app', 'seller', 'reports.tsx'],
+  ]) {
+    const k = oku(...yol);
+    const i = k.indexOf('useFocusEffect(');
+    assert.ok(i > 0, `${yol.join('/')}: odak tazelemesi yok`);
+    /*
+     * Çağrı ODAK GÖVDESİNİN İÇİNDE aranıyor. Dosyanın herhangi bir yerine
+     * bakan bir test, ekran açılışındaki çağrı silinip yalnız zamanlayıcıda
+     * kalsa bile geçerdi — ekranı açan uzman ilk 20 saniye boyunca eski
+     * listeyi görürdü.
+     */
+    const sonu = ((): number => {
+      const zamanlayici = k.indexOf('setInterval', i);
+      const kapanis = k.indexOf('}, [', i);
+      // Zamanlayıcı varsa ondan ÖNCESİ: açılıştaki çağrı orada olmalı.
+      return zamanlayici > 0 && zamanlayici < kapanis ? zamanlayici : kapanis;
+    })();
+    const govde = k.slice(i, sonu);
+    assert.match(govde, /void hydrateBookings\(\);/, `${yol.join('/')}: randevular tazelenmiyor`);
+  }
+});
+
+test('MESAJ LİSTESİ odaklanınca tazeleniyor', () => {
+  /*
+   * `useEffect` yalnız ilk açılışta çalışıyordu: kullanıcı sohbete girip
+   * geri döndüğünde ya da karşı taraf yazdığında liste eski kalıyordu.
+   */
+  const k = oku('app', 'messages', 'index.tsx');
+  const i = k.indexOf('useFocusEffect(');
+  assert.ok(i > 0, 'odak tazelemesi yok');
+  assert.match(k.slice(i, i + 200), /void load\(\);/, 'liste yeniden okunmuyor');
+});
