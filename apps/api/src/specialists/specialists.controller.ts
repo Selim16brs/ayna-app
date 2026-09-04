@@ -147,6 +147,13 @@ export class SpecialistsController {
   }
 
   /** Haritadan iğneyle konum — mevcut kayıtlar da düzeltebilsin. */
+  /** Haritada görünüyor muyum — panel uyarısı için. */
+  @Get('me/location')
+  @UseGuards(JwtAuthGuard)
+  myLocation(@Req() req: AuthedRequest) {
+    return this.specialists.myLocation(req.user!.id);
+  }
+
   @Post('me/location')
   @UseGuards(JwtAuthGuard)
   setLocation(

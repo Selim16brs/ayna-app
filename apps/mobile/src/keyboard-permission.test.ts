@@ -80,3 +80,40 @@ test('#16 — izin DEĞER belli olunca isteniyor', () => {
   // Reddedilirse tekrar tekrar sorulmamalı.
   assert.match(n, /if \(!sor \|\| permAsked\) return false;/, 'ret sonrası tekrar soruyor');
 });
+
+test('#12 — KLAVYE KAÇINMASI İKİ KEZ uygulanmıyor', () => {
+  /*
+   * Kurucu: "ekran görüntüsünde gördüğün gibi kayma var. kullanıcı ne
+   * işlem yaptığını anlayamıyor, göremiyor bile."
+   *
+   * Altı ekranın KENDİ `KeyboardAvoidingView`i vardı ama `Screen`in
+   * kaçınmasını KAPATMIYORLARDI: klavye açılınca içerik iki kez
+   * itiliyor, ekran neredeyse klavye yüksekliği kadar fazladan yukarı
+   * kayıyordu — başlık ekranın dışına çıkıyordu.
+   */
+  const ihlal: string[] = [];
+  for (const f of tsx()) {
+    const s = readFileSync(f, 'utf8');
+    if (!s.includes('<KeyboardAvoidingView')) continue;
+    if (!s.includes('<Screen')) continue;
+    if (!s.includes('keyboardAvoiding={false}')) ihlal.push(f.slice(kok.length + 1));
+  }
+  assert.deepEqual(
+    ihlal,
+    [],
+    `Klavye kaçınması İKİ KEZ uygulanıyor (içerik iki kat yukarı kayar):\n  ${ihlal.join('\n  ')}`,
+  );
+});
+
+test('#12 — KAÇINMA güvenli alanın DIŞINDA', () => {
+  /*
+   * SafeAreaView alt güvenli alan payını zaten uyguluyor; içeride kalan
+   * bir KAV klavye yüksekliğini pencere dibinden ölçüp o kadar dolgu
+   * ekleyince alt pay İKİ KEZ sayılıyordu.
+   */
+  const scr = readFileSync(join(kok, 'src/ui/Screen.tsx'), 'utf8');
+  const kav = scr.indexOf('<KeyboardAvoidingView');
+  const safe = scr.indexOf('<SafeAreaView');
+  assert.ok(kav > 0 && safe > 0, 'bileşenler bulunamadı');
+  assert.ok(kav < safe, 'kaçınma güvenli alanın içinde — alt pay iki kez sayılıyor');
+});

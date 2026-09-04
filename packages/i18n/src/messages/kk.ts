@@ -1225,6 +1225,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reports.live.commission': 'AYNA комиссиясы ({pct}%)',
   'reports.quality.title': 'Жауап & сапа',
   'reports.success.title': 'Жетістік көрсеткішің',
+  'reports.no_location': 'Картада көрінбейсің',
+  'reports.no_location_b':
+    'Мекенжайыңды картада белгіле — клиент сені жақын жердегілер арасынан таба алмайды.',
   'reports.success.none': 'Әзірге өлшейтін дерек жоқ — алғашқы жазылуларыңнан кейін көрінеді',
   'reports.success.hidden': 'Клиентпен бөлісілмейді — Құпиялық экранынан қоса аласың',
   'reports.success.is': 'Аяқталған жұмыс',

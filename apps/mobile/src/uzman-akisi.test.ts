@@ -196,3 +196,28 @@ test('ÖLÜ ad→hizmet tablosu kaldırıldı', () => {
   const k = oku('src', 'data.ts');
   assert.doesNotMatch(k, /export const STAFF_SERVICES/, 'tablo hâlâ duruyor');
 });
+
+test('KONUMU OLMAYAN uzman bunu ÖĞRENİYOR', () => {
+  /*
+   * Konum ekranı VARDI (Menü → Konum) ama uzman oraya girmediği sürece
+   * haritada görünmediğini hiç öğrenmiyordu: eksik bir şey olduğunu
+   * söyleyen bir yer yoktu. Kurucu "haritada da çıkmıyor" derken bunun
+   * bir ucu buydu.
+   */
+  const k = oku('app', 'seller', 'reports.tsx');
+  assert.match(k, /konumVar === false \? \(/, 'uyarı yok');
+  assert.match(k, /router\.push\('\/seller\/location'\)/, 'çözüme götürmüyor');
+  /*
+   * `null` = HENÜZ BİLİNMİYOR. `false` ile aynı sayılsaydı ekran açılır
+   * açılmaz uyarı çakıp cevap gelince kaybolurdu.
+   */
+  assert.match(k, /useState<boolean \| null>\(null\)/, 'bilinmeyen durum ayrılmamış');
+  assert.match(
+    readFileSync(
+      join(__dirname, '..', '..', 'api', 'src', 'specialists', 'specialists.service.ts'),
+      'utf8',
+    ),
+    /hasLocation: p\?\.lat != null && p\?\.lng != null/,
+    'sunucu konum durumunu dönmüyor',
+  );
+});

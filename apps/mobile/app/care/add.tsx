@@ -63,7 +63,7 @@ export default function AddEntryScreen() {
           : 'care.add.log_title';
 
   return (
-    <Screen edges={['bottom']}>
+    <Screen edges={['bottom']} keyboardAvoiding={false}>
       <StackHeader title={t(titleKey)} />
       {formMode === 'log' ? (
         <LogForm initialKind={kind} editId={id} onDone={() => router.back()} />
