@@ -38,6 +38,20 @@ export interface BasariSonucu {
   bilesenler: { ad: 'is' | 'puan' | 'cevap'; yuzde: number }[];
 }
 
+/**
+ * İŞ BAŞARISI İÇİN EN AZ TALEP.
+ *
+ * Tek talep bir ölçü değil. Yeni kayıt olan uzmana bir talep gelip henüz
+ * cevaplamadığında oran 0/1 = %0 çıkıyordu ve müşteri onu "başarısız"
+ * diye görüyordu — oysa daha ilk işi. Canlıda görülen durum tam buydu.
+ *
+ * Bu eşiğin altında iş bileşeni ÖLÇÜLEMİYOR sayılıyor: ağırlığı diğer
+ * bileşenlere dağılıyor, hiçbiri yoksa yüzde `null` ve ekranda rozet hiç
+ * çizilmiyor. Modülün en baştaki kuralı zaten buydu; tek talep onu
+ * deliyordu.
+ */
+export const EN_AZ_TALEP = 3;
+
 /** Cevap süresi eşiği: bu sürede dönen uzman tam puan alıyor. */
 export const HIZLI_CEVAP_DK = 30;
 /** Bu süreden yavaş cevap sıfır sayılıyor. */
@@ -53,9 +67,10 @@ export function uzmanBasarisi(g: BasariGirdisi): BasariSonucu {
    *
    * Ham "tamamlanan sayısı" kullanmak büyük salonu her zaman üste
    * çıkarırdı; oran, gelen işi ne kadar sonuca ulaştırdığını söylüyor.
-   * Hiç talep gelmemişse ölçülemiyor.
+   * `EN_AZ_TALEP`ten az talep gelmişse ölçülemiyor — tek talep bir
+   * başarı ölçüsü değil.
    */
-  if (g.gelenTalep > 0) {
+  if (g.gelenTalep >= EN_AZ_TALEP) {
     bilesenler.push({ ad: 'is', yuzde: kirp(g.tamamlanan / g.gelenTalep) * 100, agirlik: 40 });
   }
 
