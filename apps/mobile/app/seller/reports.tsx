@@ -20,7 +20,7 @@ import {
   uzmanRandevulari,
 } from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
-import { type ColorTokens, font } from '../../src/theme';
+import { type ColorTokens, font, space } from '../../src/theme';
 import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { TepeIsigi, PressableScale, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
@@ -154,6 +154,16 @@ export default function ReportsScreen() {
   // §9.3 — Talepler rozeti: şehirdeki AÇIK talepler BULUTTAN sayılır (ekran odaklandıkça tazelenir)
   const token = useStore((s) => s.token);
   const [puanOrt, setPuanOrt] = useState<number | null>(null);
+  /*
+   * BAŞARI YÜZDESİ sunucudan: bileşenlerin hepsi (tamamlanan/gelen oranı,
+   * değerlendirme, cevap süresi) sunucudaki gerçek kayıtlardan geliyor.
+   * İstemcide hesaplamak, elindeki eksik listeyle yanlış yüzde üretmek
+   * olurdu.
+   */
+  const [basari, setBasari] = useState<{
+    yuzde: number | null;
+    bilesenler: { ad: 'is' | 'puan' | 'cevap'; yuzde: number }[];
+  } | null>(null);
   // Kanvasta selamlamanın ÜSTÜNDE günün tarihi var ("Salı, 26 Ağustos").
   // Uzman panele bakınca hangi güne baktığını görmeli.
   const bugunEtiketi = useMemo(
@@ -239,6 +249,12 @@ export default function ReportsScreen() {
       void api
         .myAdOrders()
         .then(setReklamlarim)
+        .catch(() => undefined);
+      // Başarı yüzdesi de her dönüşte tazeleniyor: yeni tamamlanan
+      // randevu ve değerlendirme oranı değiştiriyor.
+      void api
+        .myPerformance(token)
+        .then(setBasari)
         .catch(() => undefined);
     }, [token]),
   );
@@ -569,6 +585,46 @@ export default function ReportsScreen() {
             <Text style={styles.paketBag}>{t('seller.promo.cta')}</Text>
           </View>
         </PressableScale>
+
+        {/* ═══ BAŞARI DURUMU ═══
+            Kurucu: "uzman ve salon puan toplayamaz. uzmanlar aldıkları
+            onaylanıp hizmet verilmiş rezervasyon sayısı, değerlendirme
+            notu başarısı, cevap verme süresi ve bunun gibi başarı
+            durumlarına göre yüzde üzerinden değerlendirilir."
+
+            Yüzde ÖLÇÜLEBİLENLERDEN: hiç randevusu olmayan uzmana "%0"
+            yazmak, hiç çalışmamış birine kötü çalıştığını söylemek
+            olurdu — o durumda yüzde yerine sebebi yazılıyor. */}
+        <View style={styles.kaliteKart}>
+          <Text style={styles.kaliteBaslik}>{t('reports.success.title')}</Text>
+          {basari?.yuzde === null || basari === null ? (
+            <Text variant="caption" tone="muted">
+              {t('reports.success.none')}
+            </Text>
+          ) : (
+            <>
+              <Text style={styles.basariYuzde}>%{basari.yuzde}</Text>
+              <View style={styles.basariSatir}>
+                {basari.bilesenler.map((b) => (
+                  <View key={b.ad} style={styles.basariKutu}>
+                    <Text variant="micro" tone="muted" numberOfLines={1}>
+                      {t(
+                        b.ad === 'is'
+                          ? 'reports.success.is'
+                          : b.ad === 'puan'
+                            ? 'reports.success.puan'
+                            : 'reports.success.cevap',
+                      )}
+                    </Text>
+                    <Text variant="bodyStrong" tone="ink">
+                      %{b.yuzde}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+        </View>
 
         {/* ═══ YANIT & KALİTE — Figma `yanit-kalite-card` (radius 24, p20) ═══ */}
         <View style={styles.kaliteKart}>
@@ -1040,6 +1096,9 @@ const makeStyles = (colors: ColorTokens) =>
     reklamFiyat: { fontFamily: font.semibold, fontSize: 12, color: colors.gold },
 
     // yanit-kalite-card (radius 24, p20, gap 16)
+    basariYuzde: { fontFamily: font.semibold, fontSize: 34, color: colors.accentFg },
+    basariSatir: { flexDirection: 'row', flexWrap: 'wrap', gap: space(2), marginTop: space(0.5) },
+    basariKutu: { gap: 2 },
     kaliteKart: {
       marginHorizontal: 24,
       padding: 20,

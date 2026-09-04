@@ -6,6 +6,7 @@ import {
   aynaOnayli,
   guvenKatmanlari,
   hizmetSatirininKimligi,
+  type PromosyonKarti,
   uzmanKayitli,
 } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
@@ -114,6 +115,103 @@ export class CatalogService {
       image: a.image,
       placement: a.placement,
     }));
+  }
+
+  /**
+   * PROMOSYONLAR — uzmanın KENDİ açtığı kampanyalar.
+   *
+   * Kurucu: "uzman panelinden oluşturulan promosyonlar, fırsatlar
+   * alanında gösterilmesin. fırsatlar ve senin için seçtiklerim parayla
+   * sattığımız alan ama uzmanın açtığı promosyonlar o uzmana AYNA'nın
+   * sağladığı bir reklam alanı… ayrı bir sekmede müşteriye promosyonlar
+   * alanı gösterilmeli, en yakın lokasyondaki 4 promosyon ekranda görünüp
+   * diğerleri için tümü butonu olmalı."
+   *
+   * Kaynak `Offer` tablosu — uzmanın "Kampanyalarım" ekranından açtığı
+   * kayıtlar. Aynı liste "Fırsatlar" şeridinde de çiziliyordu; oradan
+   * çıkarıldı çünkü o şerit ÖDENMİŞ yerleşim için.
+   *
+   * ── ONAY KAPISI BURADA DA GEÇERLİ ──────────────────────────────────
+   *
+   * Onaysız uzmanın promosyonu da görünmüyor: katalogdan gizlenen bir
+   * hesap promosyon üzerinden vitrine sızmamalı.
+   *
+   * ── MESAFE UYDURULMUYOR ────────────────────────────────────────────
+   *
+   * Sağlayıcının koordinatı yoksa mesafe `null`; istemci o satırda
+   * mesafe yazmıyor ve sıralamada sona koyuyor.
+   */
+  async promotions(lat?: number, lng?: number): Promise<PromosyonKarti[]> {
+    const simdi = new Date();
+    const teklifler = await this.prisma.offer.findMany({
+      where: { status: 'active', startsAt: { lte: simdi }, endsAt: { gt: simdi } },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+    if (teklifler.length === 0) return [];
+
+    const proIds = [...new Set(teklifler.map((o) => o.proId))];
+    const prolar = await this.prisma.professional.findMany({
+      where: { id: { in: proIds } },
+      select: {
+        id: true,
+        name: true,
+        imageUrl: true,
+        rating: true,
+        reviewCount: true,
+        city: true,
+        lat: true,
+        lng: true,
+      },
+    });
+    const proById = new Map(prolar.map((p) => [p.id, p]));
+
+    const gizli = new Set<string>();
+    for (const x of await this.prisma.specialist.findMany({
+      where: {
+        proId: { in: proIds },
+        OR: [{ status: { not: 'approved' } }, { hiddenUntil: { gt: simdi } }],
+      },
+      select: { proId: true },
+    })) {
+      if (x.proId) gizli.add(x.proId);
+    }
+    for (const b of await this.prisma.business.findMany({
+      where: { professionalId: { in: proIds }, status: { not: 'approved' } },
+      select: { professionalId: true },
+    })) {
+      if (b.professionalId) gizli.add(b.professionalId);
+    }
+
+    const out: PromosyonKarti[] = [];
+    for (const o of teklifler) {
+      if (gizli.has(o.proId)) continue;
+      const p = proById.get(o.proId);
+      if (!p) continue;
+      out.push({
+        id: o.id,
+        proId: o.proId,
+        proAd: p.name,
+        proGorsel: p.imageUrl,
+        /*
+         * Değerlendirilmemiş uzman "0,0" DEĞİL: puanı sıfır göstermek
+         * onu en kötü puanlı gibi sunardı.
+         */
+        puan: p.reviewCount > 0 ? Number(p.rating) : null,
+        sehir: p.city || o.city,
+        mesafeKm:
+          lat != null && lng != null && p.lat != null && p.lng != null
+            ? mesafeKm(lat, lng, p.lat, p.lng)
+            : null,
+        baslik: o.title,
+        aciklama: o.description,
+        indirimYuzde: o.discountType === 'percent' ? Number(o.discountValue) : null,
+        gorsel: o.imageUrl || null,
+        basEtiket: o.startsAt.toISOString(),
+        sonEtiket: o.endsAt.toISOString(),
+      });
+    }
+    return out;
   }
 
   async professionals() {
@@ -887,6 +985,17 @@ const SECTOR_SERVICES: Record<string, SvcItem[]> = {
     { id: 'epi-4', name: 'İğneli epilasyon', durationMin: 60, price: 12000 },
   ],
 };
+
+/** İki koordinat arası mesafe (km, haversine). */
+function mesafeKm(aLat: number, aLng: number, bLat: number, bLng: number): number {
+  const R = 6371;
+  const dLat = ((bLat - aLat) * Math.PI) / 180;
+  const dLng = ((bLng - aLng) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(a)) * 10) / 10;
+}
 
 // §11 — promoJson güvenli çözümü (bozuk veri profili düşürmesin)
 function parsePromos(raw: string): unknown[] {

@@ -8,14 +8,15 @@ import { CATEGORIES, cityCenter, distanceKm } from '../../src/data';
 import {
   useAds,
   useCampaigns,
-  useOffers,
   useProfessionals,
   useProfessionalsLoading,
+  usePromosyonlar,
 } from '../../src/catalog';
 import { AKIS_ADIMLARI, akisAdimi, durumEtiketi } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
 import type { MessageKey } from '@ayna/i18n';
-import { fillParams, useLocale } from '../../src/locale';
+import { ANA_EKRAN_PROMOSYON, promosyonlariSirala } from '@ayna/domain';
+import { useLocale } from '../../src/locale';
 import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import {
   musteriRandevulari,
@@ -32,6 +33,7 @@ import { greetingKey } from '../../src/greeting';
 import { tri } from '../../src/taxonomy';
 import { useKategoriYakinda } from '../../src/yakinda';
 import {
+  PromosyonKarti,
   HizmetIkonu,
   ListSkeleton,
   PressableScale,
@@ -130,7 +132,6 @@ export default function DiscoverScreen() {
   const ads = useAds();
   const firsatReklamlari = ads.filter((a) => a.placement === 'firsatlar');
   const oneCikanReklamlari = ads.filter((a) => a.placement === 'one_cikanlar');
-  const offers = useOffers();
   // §A4 — trend içerikleri (admin 'trend' tipli yayınlar); boşsa bant gizli
   // DİKKAT: seçici içinde .filter() YENİ dizi üretir → useSyncExternalStore
   // "getSnapshot should be cached" sonsuz döngüsü = açılışta beyaz ekran.
@@ -167,6 +168,18 @@ export default function DiscoverScreen() {
    * Artık kaynak reklam tablosu; ödemesi bitmiş reklamı sunucu zaten süzüyor.
    */
   const featured = oneCikanReklamlari.slice(0, 6);
+  /*
+   * PROMOSYONLAR — ana ekranda EN YAKIN dördü, gerisi "Tümü" ekranında.
+   *
+   * Mesafesi bilinmeyen (koordinatı olmayan işletme) sona düşüyor:
+   * "0 km" sayıp başa koymak, kullanıcıya en yakın sanıp yola çıkacağı
+   * bir şey göstermek olurdu.
+   */
+  const promosyonlar = usePromosyonlar();
+  const yakinPromosyonlar = useMemo(
+    () => promosyonlariSirala(promosyonlar, 'yakinlik').slice(0, ANA_EKRAN_PROMOSYON),
+    [promosyonlar],
+  );
   // §5.1.8 Sana Yakın: premium salon önce; YETMEZSE diğer salonlar + bağımsız uzmanlar
   // (yeni pazarda salon az olabilir — kayıtlı uzmanlar da keşfette görünsün). Günlük rotasyon.
   const nearby = useMemo(() => {
@@ -574,7 +587,7 @@ export default function DiscoverScreen() {
             Ücretli reklamlar başta ve SPONSORLU etiketli; ardından organik
             kampanyalar. Etiket şart: ödenmiş yerleşimi organik içerikten
             ayırt edilemez göstermek kullanıcıyı yanıltır. */}
-        {firsatReklamlari.length > 0 || offers.length > 0 || campaigns.length > 0 ? (
+        {firsatReklamlari.length > 0 || campaigns.length > 0 ? (
           <>
             <BolumBasligi title={t('home.campaigns')} onSeeAll={() => router.push('/offers')} />
             <ScrollView
@@ -605,28 +618,37 @@ export default function DiscoverScreen() {
                   onPress={() => router.push(`/category/${c.category}` as never)}
                 />
               ))}
-              {offers.slice(0, 8).map((o) => (
-                <VitrinKarti
-                  key={o.id}
-                  title={o.title}
-                  image={o.imageUrl}
-                  /*
-                   * İndirim ROZETE gidiyor, alt yazıya değil. Eskiden
-                   * `subtitle` olarak "-%30" yazılıyordu; fırsatın kendi
-                   * açıklaması böylece ekrana HİÇ çıkmıyordu.
-                   */
-                  subtitle={o.description}
-                  discount={
-                    o.discountType === 'percent'
-                      ? fillParams(t('offers.discount_badge'), { pct: String(o.discountValue) })
-                      : `${o.finalPrice.toLocaleString('tr-TR')} ₸`
-                  }
-                  onPress={() =>
-                    router.push({
-                      pathname: '/booking/schedule',
-                      params: { proId: o.proId, offerId: o.id, source: 'direct' },
-                    })
-                  }
+              {/*
+                UZMANIN KENDİ KAMPANYALARI ARTIK BURADA DEĞİL.
+
+                Kurucu: "uzman panelinden oluşturulan promosyonlar,
+                fırsatlar alanında gösterilmesin. fırsatlar ve senin için
+                seçtiklerim parayla sattığımız alan ama uzmanın açtığı
+                promosyonlar o uzmana AYNA'nın sağladığı bir reklam alanı."
+
+                Ücretli yerleşimle ücretsiz hakkı aynı şeritte göstermek,
+                ödeyenin satın aldığı yeri dağıtmak olurdu. Uzman
+                kampanyaları aşağıdaki "Promosyonlar" bölümünde.
+              */}
+            </ScrollView>
+          </>
+        ) : null}
+
+        {/* ═══ PROMOSYONLAR — uzmanların KENDİ kampanyaları ═══
+            En yakın dördü burada; gerisi "Tümü" ekranında (filtreli). */}
+        {promosyonlar.length > 0 ? (
+          <>
+            <BolumBasligi title={t('promos.title')} onSeeAll={() => router.push('/promotions')} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.vitrinSerit}
+            >
+              {yakinPromosyonlar.map((p) => (
+                <PromosyonKarti
+                  key={`${p.proId}:${p.id}`}
+                  p={p}
+                  onPress={() => router.push(`/professional/${p.proId}`)}
                 />
               ))}
             </ScrollView>

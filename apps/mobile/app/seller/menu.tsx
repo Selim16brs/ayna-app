@@ -47,6 +47,25 @@ const ITEMS: {
     tone: 'accent',
   },
   {
+    /*
+     * MÜŞTERİ GÖZÜYLE PROFİLİM.
+     *
+     * Kurucu: "uzman kendi profilinin müşteri tarafında nasıl göründüğünü
+     * göremiyor. kampanya ya da promosyonlarının nasıl göründüğünü
+     * göremiyor."
+     *
+     * Uzman kendi kartını, hizmet listesini ve kampanyalarını ancak
+     * müşteri hesabı açarak görebiliyordu. En üstte: yayına çıkan her
+     * değişikliğin karşılığını görmek en sık ihtiyaç duyulan şey.
+     */
+    id: 'preview',
+    icon: 'eye',
+    labelKey: 'seller.menu.preview',
+    descKey: 'seller.menu.preview_d',
+    route: '/seller/preview',
+    tone: 'accent',
+  },
+  {
     id: 'offers',
     icon: 'pricetags',
     labelKey: 'seller.menu.offers',

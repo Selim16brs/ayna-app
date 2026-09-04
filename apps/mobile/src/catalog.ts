@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api, type AdBanner } from './api';
 import { useLocale } from './locale';
 import { useStore } from './store';
+import type { PromosyonKarti } from '@ayna/domain';
 import { type Campaign, type Professional, type ProfessionalDetail } from './data';
 
 /**
@@ -100,6 +101,25 @@ export function useCampaigns(): Campaign[] {
     staleTime: 60_000,
   });
   return data ?? []; // demo kampanya YOK — yalnız admin içeriği
+}
+
+/**
+ * PROMOSYONLAR — uzmanların kendi kampanyaları.
+ *
+ * "Fırsatlar" ve "Senin için seçtiklerim" ÖDENMİŞ vitrin; promosyon ise
+ * uzmanın üyeliğiyle gelen hak. Ayrı uç, ayrı önbellek, ayrı ekran.
+ *
+ * Dil anahtarda YOK: promosyon metinlerini uzman kendi yazıyor, sunucu
+ * çevirmiyor. Dile göre önbellek açmak boşuna istek olurdu.
+ */
+export function usePromosyonlar(): PromosyonKarti[] {
+  const { data } = useQuery({
+    queryKey: ['promosyonlar'],
+    queryFn: () => api.promosyonlar(),
+    retry: 1,
+    staleTime: 120_000,
+  });
+  return data ?? [];
 }
 
 /**

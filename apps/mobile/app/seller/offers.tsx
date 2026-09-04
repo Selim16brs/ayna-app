@@ -1,7 +1,16 @@
 import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { api, ApiError, type ApiOffer } from '../../src/api';
 import { activeCategories, tri } from '../../src/taxonomy';
 import { useLocale } from '../../src/locale';
@@ -78,6 +87,23 @@ export default function SellerOffersScreen() {
   const valid =
     title.trim().length >= 3 && Number(pct) >= 5 && Number(pct) <= 50 && Number(basePrice) > 0;
 
+  /*
+   * Görsel base64 gönderiliyor; sunucu depoya taşıyıp adresini saklıyor.
+   * Kalite 0.35: kampanya kartı küçük, yüksek çözünürlük yükü boşuna
+   * büyütürdü.
+   */
+  const [gorsel, setGorsel] = useState<string | null>(null);
+  const gorselSec = async () => {
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.35,
+      base64: true,
+    });
+    if (res.canceled || !res.assets[0]) return;
+    const a = res.assets[0];
+    setGorsel(a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+  };
+
   async function submit() {
     if (!token || !valid || busy) return;
     setBusy(true);
@@ -96,6 +122,7 @@ export default function SellerOffersScreen() {
         startsAtMs: Date.now(),
         endsAtMs: endsAt.getTime(),
         ...(Number(quota) > 0 ? { slotQuota: Number(quota) } : {}),
+        ...(gorsel ? { imageDataUrl: gorsel } : {}),
       });
       setCreating(false);
       setTitle('');
@@ -103,6 +130,7 @@ export default function SellerOffersScreen() {
       setBasePrice('');
       setDays([]);
       setQuota('');
+      setGorsel(null);
       load();
       Alert.alert(t('offers.created_t'), t('offers.created_b'));
     } catch (e) {
@@ -342,6 +370,32 @@ export default function SellerOffersScreen() {
               placeholderTextColor={colors.muted}
               style={styles.input}
             />
+            {/*
+              ── KAMPANYA GÖRSELİ ────────────────────────────────────────
+              Kurucu: "uzman kendi ekranından promosyon girerken promosyon
+              fotoğrafını ekleyeceği bir alan yok o yüzden müşteri
+              ekranında fotoğraf çıkmıyor."
+
+              Sunucu görseli ZATEN kabul ediyordu (`imageDataUrl`) ve
+              müşteri kartı `imageUrl` çiziyordu — eksik olan tek şey bu
+              alandı. Görsel olmayan kampanya, müşteri ekranında boş bir
+              kutu olarak duruyordu.
+            */}
+            <Text variant="caption" tone="inkSoft" style={styles.label}>
+              {t('offers.f.image')}
+            </Text>
+            <Pressable style={styles.gorselKutu} onPress={gorselSec}>
+              {gorsel ? (
+                <Image source={{ uri: gorsel }} style={styles.gorsel} />
+              ) : (
+                <View style={styles.gorselBos}>
+                  <Ionicons name="image-outline" size={22} color={colors.inkSoft} />
+                  <Text variant="caption" tone="muted">
+                    {t('offers.f.image_hint')}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
             <Text variant="caption" tone="muted" style={styles.rulesNote}>
               {t('offers.rules_note')}
             </Text>
@@ -433,6 +487,17 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: radius.md,
       paddingHorizontal: space(1.5),
     },
+    gorselKutu: {
+      height: 120,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surfaceMuted,
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space(1),
+    },
+    gorsel: { width: '100%', height: '100%' },
+    gorselBos: { alignItems: 'center', gap: space(0.5) },
     rulesNote: { lineHeight: 17, marginTop: space(0.5) },
     formActions: { flexDirection: 'row', marginTop: space(1) },
   });

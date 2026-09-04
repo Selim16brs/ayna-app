@@ -323,9 +323,19 @@ test('FIRSAT kartı referanstaki DÖRT ögeyi de taşıyor', () => {
   assert.match(kod, /styles\.indirimRozet/, 'indirim rozeti yok');
   assert.match(kod, /styles\.vitrinBaslik/, 'başlık yok');
   assert.match(kod, /styles\.vitrinAltYazi/, 'alt yazı yok');
-  // İndirim alt yazının YERİNİ almamalı.
-  assert.match(kod, /subtitle=\{o\.description\}/, 'fırsatın açıklaması alt yazıya basılmıyor');
-  assert.doesNotMatch(kod, /subtitle=\{\s*o\.discountType/, 'indirim hâlâ alt yazının yerinde');
+  /*
+   * İNDİRİM ALT YAZININ YERİNİ ALMAMALI.
+   *
+   * Bu kural artık PROMOSYON kartında yaşıyor: uzmanın kendi
+   * kampanyaları Fırsatlar şeridinden çıkarıldı (o şerit ÖDENMİŞ
+   * yerleşim için) ve ayrı bir bölüme taşındı. Kural taşındı, kaybolmadı.
+   */
+  const promo = readFileSync(join(import.meta.dirname, 'ui', 'PromosyonKarti.tsx'), 'utf8').replace(
+    /\/\*[\s\S]*?\*\//g,
+    '',
+  );
+  assert.match(promo, /\{p\.aciklama\}/, 'kampanyanın açıklaması ekrana çıkmıyor');
+  assert.match(promo, /%\{p\.indirimYuzde\}/, 'indirim ayrı rozet değil');
 });
 
 test('FIRSAT kartındaki yazılar okunuyor', () => {

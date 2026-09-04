@@ -20,3 +20,5 @@ export * from './catalog/katalog.js';
 export * from './splash/uzak.js';
 export * from './auth/sifre.js';
 export * from './auth/randevu-kapisi.js';
+export * from './catalog/promosyon.js';
+export * from './trust/uzman-basari.js';

@@ -10,7 +10,7 @@ import {
 // Asia/Almaty = UTC+5, yaz saati YOK. Sunucu UTC saklıyor; uzman yerel saate
 // göre çalışıyor, ham UTC ile karşılaştırmak günü kaydırırdı.
 const ALMATY_OFFSET_MS = 5 * 60 * 60_000;
-import { hizmetSatirininKimligi, sectorsFromServiceIds } from '@ayna/domain';
+import { hizmetSatirininKimligi, sectorsFromServiceIds, uzmanBasarisi } from '@ayna/domain';
 import { ReguleUyariService } from '../catalog/regule-uyari.service';
 import {
   BadRequestException,
@@ -371,6 +371,73 @@ export class SpecialistsService {
     return biz?.professionalId ?? null;
   }
 
+  /**
+   * BAŞARI YÜZDESİ — uzman puan toplamıyor, başarıyla ölçülüyor.
+   *
+   * Kurucu: "uzmanlar aldıkları onaylanıp hizmet verilmiş rezervasyon
+   * sayısı, değerlendirme notu başarısı, cevap verme süresi ve bunun gibi
+   * başarı durumlarına göre yüzde üzerinden değerlendirilir."
+   *
+   * Üç bileşen de GERÇEK kayıttan: tamamlanan/gelen randevu oranı,
+   * değerlendirme ortalaması ve talebe ortalama cevap dakikası. Ölçülemeyen
+   * bileşen hesaba katılmıyor — yeni bir uzmana "%0" yazmak, hiç
+   * çalışmamış birine kötü çalıştığını söylemek olurdu.
+   */
+  async myPerformance(userId: string) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { yuzde: null, bilesenler: [] };
+
+    const randevular = await this.prisma.booking.findMany({
+      where: { proId },
+      select: { status: true, createdAt: true, respondedAt: true },
+      take: 1000,
+    });
+    const tamamlanan = randevular.filter((b) =>
+      ['tamamlandi', 'degerlendirme', 'kapandi'].includes(b.status),
+    ).length;
+    /*
+     * GELEN TALEP: uzmanın kararına sunulan her randevu. Taslak ve
+     * müşteri iptalleri sayılmıyor — onlar uzmanın başarısı değil.
+     */
+    const gelenTalep = randevular.filter(
+      (b) => !['taslak', 'iptal_musteri'].includes(b.status),
+    ).length;
+
+    const puanlar = await this.prisma.rating.aggregate({
+      where: { subjectId: proId, raterRole: 'user', visible: true },
+      _avg: { score: true },
+      _count: true,
+    });
+
+    /*
+     * CEVAP DAKİKASI: uzmanın yanıtladığı randevularda oluşturulma ile
+     * yanıt arasındaki ortalama. Hiç yanıtlamadıysa `null` — ölçüm yok,
+     * sıfır değil.
+     */
+    const yanitlanan = randevular.filter((b) => b.respondedAt !== null);
+    const cevapDk =
+      yanitlanan.length > 0
+        ? Math.round(
+            yanitlanan.reduce(
+              (n, b) => n + (b.respondedAt!.getTime() - b.createdAt.getTime()) / 60_000,
+              0,
+            ) / yanitlanan.length,
+          )
+        : null;
+
+    return uzmanBasarisi({
+      tamamlanan,
+      gelenTalep,
+      puanOrt: puanlar._count > 0 ? (puanlar._avg.score ?? null) : null,
+      cevapDk,
+    });
+  }
+
+  /** Uzmanın kendi keşif kartının kimliği — "müşteri gözüyle gör" için. */
+  async myProId(userId: string): Promise<{ proId: string | null }> {
+    return { proId: (await this.proIdFor(userId)) ?? null };
+  }
+
   // §11 — Platinum promosyonları: profil sayfasında yayınlanır (Keşfet vitrini DEĞİL — o admin'in)
   async myPromotions(userId: string) {
     const proId = await this.proIdFor(userId);
@@ -389,9 +456,30 @@ export class SpecialistsService {
     }
     const proId = await this.proIdFor(userId);
     if (!proId) return { promotions: [] };
+    /*
+     * ── PROMOSYON GÖRSELİ DEPOYA ───────────────────────────────────────
+     *
+     * Uygulama görseli `data:image/jpeg;base64,...` olarak gönderiyor.
+     * Ham base64'ü `promo_json` içine yazmak satırı MEGABAYTLARA şişirir
+     * ve o satır işletme profilinin HER okumasında taşınır: promosyonu
+     * olan bir uzmanın profili herkese yavaş açılırdı.
+     *
+     * Görsel depoya taşınıp yerine adresi saklanıyor. Depo
+     * yapılandırılmamışsa `put` geleni olduğu gibi döndürüyor ve akış
+     * yine çalışıyor.
+     */
+    const temiz: unknown[] = [];
+    for (const ham of promotions.slice(0, 10)) {
+      if (typeof ham !== 'object' || ham === null) continue;
+      const p = { ...(ham as Record<string, unknown>) };
+      if (typeof p.imageUri === 'string' && p.imageUri.startsWith('data:')) {
+        p.imageUri = (await this.storage.put(p.imageUri, 'promos')) ?? p.imageUri;
+      }
+      temiz.push(p);
+    }
     const pro = await this.prisma.professional.update({
       where: { id: proId },
-      data: { promoJson: JSON.stringify(promotions.slice(0, 10)) },
+      data: { promoJson: JSON.stringify(temiz) },
     });
     return { promotions: safeParse(pro.promoJson) };
   }

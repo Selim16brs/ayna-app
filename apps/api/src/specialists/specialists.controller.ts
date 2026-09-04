@@ -78,6 +78,32 @@ export class SpecialistsController {
   }
 
   // §11 — Platinum promosyonları (kendi profil sayfasında yayınlanır)
+  /**
+   * KENDİ KEŞİF KARTIMIN KİMLİĞİ.
+   *
+   * Kurucu: "uzman kendi profilinin müşteri tarafında nasıl göründüğünü
+   * göremiyor."
+   *
+   * Uzmanın müşteri gözüyle gördüğü sayfa `/professional/<proId>`; ama o
+   * kimliği uygulamada hiçbir yerde bilmiyordu. Tek bir alan dönüyor —
+   * başka hiçbir bilgi yok.
+   */
+  /**
+   * BAŞARI YÜZDESİ — uzman puan toplamıyor, başarıyla ölçülüyor.
+   * Ölçülemeyen bileşen hesaba katılmıyor; hiçbiri yoksa `null` dönüyor.
+   */
+  @Get('me/performance')
+  @UseGuards(JwtAuthGuard)
+  myPerformance(@Req() req: AuthedRequest) {
+    return this.specialists.myPerformance(req.user!.id);
+  }
+
+  @Get('me/pro-id')
+  @UseGuards(JwtAuthGuard)
+  myProId(@Req() req: AuthedRequest) {
+    return this.specialists.myProId(req.user!.id);
+  }
+
   @Get('me/promotions')
   @UseGuards(JwtAuthGuard)
   myPromotions(@Req() req: AuthedRequest) {
