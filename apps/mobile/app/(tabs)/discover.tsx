@@ -817,10 +817,18 @@ function BolumBasligi({ title, onSeeAll }: { title: string; onSeeAll?: () => voi
   return (
     <View style={styles.bolumBas}>
       {/*
-        Başlık KESİLİYORDU: "Hizmetler" → "Hizmetle". Satır
-        `space-between` ve iki çocuk da esnemiyordu; yer daralınca yazı
-        kırpılıyordu. Başlık daralabilir (`flexShrink`) ve gerekirse
-        puntosu iner — harf kaybetmez. "Tümünü Gör" ise daralmaz.
+        BAŞLIĞIN KUTUSU ARTIK ÖLÇÜMDEN DEĞİL, PAYDAN GELİYOR.
+
+        Önce `flexShrink: 1` vardı: Yoga başlığı ÖNCE kendi doğal
+        genişliğinde ölçüyor, sonra gerekirse daraltıyor. Cihazda o ölçüm
+        olması gerekenden küçük dönüyor ve satırda bol yer olduğu hâlde
+        başlık "Hizmet…" diye kırpılıyordu (kurucu iki kez bildirdi; punto
+        küçültme bunu bir süre gizledi, kaldırınca yeniden göründü).
+
+        `flex: 1` ile kutu ölçümden bağımsız: "Tümünü Gör" doğal
+        genişliğini alıyor (daralmıyor), kalan TÜM yer başlığın oluyor.
+        Ölçüm ne derse desin başlık 200pt'den geniş bir kutuya çiziliyor;
+        "Hizmetler" 86pt.
       */}
       <Text variant="h2" tone="ink" style={styles.bolumBaslik} numberOfLines={1}>
         {title}
@@ -1130,7 +1138,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
 
     // bölüm başlığı (px24, 28 üst boşluk)
-    bolumBaslik: { flexShrink: 1 },
+    bolumBaslik: { flex: 1 },
     bolumBas: {
       flexDirection: 'row',
       alignItems: 'center',
