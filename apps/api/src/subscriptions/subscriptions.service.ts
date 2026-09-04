@@ -98,11 +98,13 @@ export class SubscriptionsService {
     // §11 — kullanıcıya push: üyelik yükseltildi → app tier'ı tazeleyip hakları açar
     const buyer = await this.prisma.user.findUnique({ where: { id: sub!.userId } });
     const route = buyer?.role === 'user' ? '/profile/passport' : '/seller/premium';
-    void this.push.sendToUser(sub!.userId, {
-      title: 'Üyeliğin yükseltildi 🎉',
-      body: `${sub!.tier === 'platinum' ? 'Platinum' : 'Premium'} üyeliğin aktif — tüm ayrıcalıkların açıldı.`,
-      data: { route },
-    });
+    void this.push.sendTemplate(
+      sub!.userId,
+      'membership.upgraded',
+      // Katman adı ÜRÜN ADI: üç dilde de "Premium"/"Platinum" yazılıyor.
+      { katman: sub!.tier === 'platinum' ? 'Platinum' : 'Premium' },
+      { route },
+    );
     return updated;
   }
 
@@ -114,10 +116,8 @@ export class SubscriptionsService {
       data: { status: 'rejected', reviewedAt: new Date() },
     });
     await this.audit('subscription.reject', id, actorId);
-    void this.push.sendToUser(sub!.userId, {
-      title: 'Üyelik dekontu onaylanmadı',
-      body: 'Dekont doğrulanamadı — kontrol edip yeniden yükleyebilirsin.',
-      data: { route: '/seller/premium' },
+    void this.push.sendTemplate(sub!.userId, 'membership.receipt_rejected', undefined, {
+      route: '/seller/premium',
     });
     return updated;
   }

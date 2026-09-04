@@ -118,14 +118,12 @@ export class ReengageScheduler implements OnModuleInit, OnModuleDestroy {
         continue;
       }
       const ad = proAdi.get(b.proId!) ?? u.name;
-      await this.push.sendToUser(b.userId!, {
-        title: stage === 'pre' ? 'Bakım zamanın yaklaşıyor' : 'Bakım zamanın geldi',
-        body:
-          stage === 'pre'
-            ? `${ad} ile son randevunun üzerinden neredeyse ${periyot} gün geçti.`
-            : `${ad} ile bakım zamanın bugün doldu — yeni randevu alabilirsin.`,
-        data: { route: '/bookings', proId: b.proId! },
-      });
+      await this.push.sendTemplate(
+        b.userId!,
+        stage === 'pre' ? 'reengage.pre' : 'reengage.due',
+        { pro: ad, gun: String(periyot) },
+        { route: '/bookings', proId: b.proId! },
+      );
     }
   }
 }

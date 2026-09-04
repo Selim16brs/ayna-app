@@ -517,10 +517,8 @@ export class QuotesService {
 
     // Talep sahibine push — doğrudan gelen teklifler sayfasına (deep-link kuralı)
     if (req.userId) {
-      void this.push.sendToUser(req.userId, {
-        title: 'Yeni teklifin var 💌',
-        body: 'Talebine bir uzman teklif gönderdi. Teklifleri incele.',
-        data: { route: `/quote/results?id=${requestId}` },
+      void this.push.sendTemplate(req.userId, 'quote.new_offer', undefined, {
+        route: `/quote/results?id=${requestId}`,
       });
     }
     return { id: quote.id, ok: true };
@@ -663,19 +661,18 @@ export class QuotesService {
 
     // Kazanan uzmana push — takvimine düştü
     if (quote.userId) {
-      void this.push.sendToUser(quote.userId, {
-        title: 'Teklifin seçildi 🎉',
-        body: `${almatyLabel(input.slotMs)} için randevu oluştu. Takvimini kontrol et.`,
-        data: { route: '/seller/agenda' },
-      });
+      void this.push.sendTemplate(
+        quote.userId,
+        'quote.selected',
+        { slot: almatyLabel(input.slotMs) },
+        { route: '/seller/agenda' },
+      );
     }
     // §5.2 — seçilmeyen uzmanlara nazik kapanış
     for (const q of req.quotes) {
       if (q.id !== quote.id && q.userId) {
-        void this.push.sendToUser(q.userId, {
-          title: 'Talep kapandı',
-          body: 'Bu talepte başka bir teklif seçildi — ilgin için teşekkürler 💛',
-          data: { route: '/seller/requests' },
+        void this.push.sendTemplate(q.userId, 'quote.closed', undefined, {
+          route: '/seller/requests',
         });
       }
     }

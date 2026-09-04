@@ -210,11 +210,17 @@ export class AdOrdersService {
       },
     });
     await this.denetim('ad_order.onay', id, actorId);
-    void this.push.sendToUser(o!.userId, {
-      title: 'Reklamın yayında',
-      body: `${o!.placement === 'firsatlar' ? 'Fırsatlar' : 'Öne çıkanlar'} bölümünde ${o!.months} ay boyunca görüneceksin.`,
-      data: { route: '/seller/ads' },
-    });
+    void this.push.sendTemplate(
+      o!.userId,
+      'ad.live',
+      {
+        // Yerleşim adı ŞABLONDA değil: iki vitrinin adı ürün adı gibi,
+        // her dilde aynı yazılıyor (kullanıcı panelde de böyle görüyor).
+        yer: o!.placement === 'firsatlar' ? 'Fırsatlar' : 'Öne çıkanlar',
+        ay: String(o!.months),
+      },
+      { route: '/seller/ads' },
+    );
     return guncel;
   }
 
@@ -227,10 +233,8 @@ export class AdOrdersService {
       data: { status: 'reddedildi', reviewedAt: new Date() },
     });
     await this.denetim('ad_order.red', id, actorId);
-    void this.push.sendToUser(o!.userId, {
-      title: 'Reklam ödemen doğrulanamadı',
-      body: 'Dekontu kontrol edip yeniden gönderebilirsin.',
-      data: { route: '/seller/ads' },
+    void this.push.sendTemplate(o!.userId, 'ad.payment_failed', undefined, {
+      route: '/seller/ads',
     });
     return guncel;
   }

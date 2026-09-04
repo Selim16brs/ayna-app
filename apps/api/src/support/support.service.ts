@@ -121,11 +121,7 @@ export class SupportService {
     });
     // Yanıt yazıldı ama kullanıcı haberdar olmazsa yanıt YOK demektir.
     void this.push
-      .sendToUser(t.userId, {
-        title: 'Destek yanıtladı',
-        body: 'Talebine yanıt geldi.',
-        data: { route: '/profile/help' },
-      })
+      .sendTemplate(t.userId, 'support.replied', undefined, { route: '/profile/help' })
       .catch(() => undefined);
     await this.prisma.auditLog
       .create({

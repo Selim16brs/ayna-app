@@ -110,11 +110,20 @@ export class DisputesService {
     });
     // §7.2/§4.4 — karar itiraz SAHİBİNE push ile döner (süreç şeffaf)
     if (updated.userId)
-      void this.push.sendToUser(updated.userId, {
-        title: input.decision === 'approve' ? 'İtirazın kabul edildi' : 'İtirazın reddedildi',
-        body: input.resolution?.trim() || 'Detay için uygulamadaki kaydına bak',
-        data: { route: '/notifications' },
-      });
+      /*
+       * Karar metni ŞABLONDAN; yöneticinin yazdığı açıklama varsa gövde
+       * onun yerine geçiyor — o metin kullanıcı tarafından yazılmış,
+       * çevrilemez.
+       */
+      void this.push.sendTemplate(
+        updated.userId,
+        input.decision === 'approve' ? 'dispute.approved' : 'dispute.rejected',
+        undefined,
+        {
+          route: '/notifications',
+          ...(input.resolution?.trim() ? { not: input.resolution.trim() } : {}),
+        },
+      );
     return this.map(updated);
   }
 }

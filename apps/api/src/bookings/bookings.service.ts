@@ -39,6 +39,7 @@ import { OffersService } from '../offers/offers.service';
 import { slotAllowed } from '../offers/offers.rules';
 import { canReschedule, cancelOutcome } from './bookings.policy';
 import type { CreateBookingInput } from './bookings.dto';
+import type { PushTemplateKey } from '../push/push.templates';
 
 // §3 — iptali yapan taraf. `system` zamanlayıcı/iç çağrı demek.
 export type ActorRole = 'customer' | 'provider' | 'admin' | 'system';
@@ -574,11 +575,12 @@ export class BookingsService {
     }
     for (const uid of targets) {
       void this.push
-        .sendToUser(uid, {
-          title: 'Yeni randevu talebi 📅',
-          body: `${b.service} · ${b.dateLabel} — yanıt süresi sınırlı, hemen bak.`,
-          data: { route: '/seller/agenda' },
-        })
+        .sendTemplate(
+          uid,
+          'booking.new_request',
+          { hizmet: b.service, tarih: b.dateLabel },
+          { route: '/seller/agenda' },
+        )
         .catch(() => undefined);
     }
   }
@@ -614,11 +616,13 @@ export class BookingsService {
       // bilgisi alınması gerekiyor (ekran o bilgiyi topluyor).
     }
     // §A1 — slot boşaldı: aynı uzmanın bekleme listesindekilere haber ver
-    this.notifyParties(
-      id,
-      'Randevu iptal edildi',
-      reason ? `Sebep: ${reason}` : 'Detay için randevuya dokun',
-    );
+    /*
+     * Sebep KULLANICININ yazdığı metin: çevrilemez, olduğu gibi taşınıyor.
+     * Sebep yoksa şablonun kendi cümlesi kullanılıyor.
+     */
+    if (reason?.trim())
+      this.notifyParties(id, 'booking.cancelled_reason', { sebep: reason.trim() });
+    else this.notifyParties(id, 'booking.cancelled');
     return row;
   }
 
@@ -702,10 +706,8 @@ export class BookingsService {
     if (b?.offerId) void this.offers.refundQuota(b.offerId);
     // §4.8 — beyan KARŞI TARAFA bildirilir; itiraz hakkı 24 saat.
     if (b?.userId)
-      void this.push.sendToUser(b.userId, {
-        title: 'Uzman "gelmedin" olarak işaretledi',
-        body: 'Katılmadığını düşünüyorsan 24 saat içinde itiraz edebilirsin',
-        data: { route: `/booking/${id}` },
+      void this.push.sendTemplate(b.userId, 'booking.no_show_marked', undefined, {
+        route: `/booking/${id}`,
       });
     return row;
   }
@@ -754,11 +756,7 @@ export class BookingsService {
     void this.expertUserIdFor(id).then((uid) => {
       if (!uid) return;
       void this.push
-        .sendToUser(uid, {
-          title: 'Müşteri ödemeyi yaptığını bildirdi',
-          body: 'Parayı aldıysan onayla — komisyon süren o an başlar.',
-          data: { route: `/booking/${id}` },
-        })
+        .sendTemplate(uid, 'booking.payment_declared', undefined, { route: `/booking/${id}` })
         .catch(() => undefined);
     });
     return row;
@@ -789,11 +787,18 @@ export class BookingsService {
       // Kazanılan puanı YAZMAK şart: "teşekkürler" tek başına ödülün gerçekten
       // yüklendiğini göstermiyor ve puan sessizce birikmiş oluyordu.
       const kazanilan = cashbackPoints(Number(b.price), DEFAULT_CASHBACK_PCT);
-      void this.push.sendToUser(b.userId, {
-        title: `${kazanilan.toLocaleString('tr-TR')} puan kazandın 💛`,
-        body: 'Deneyimini değerlendir — 30 saniye sürer',
-        data: { route: `/review/new?id=${id}` },
-      });
+      /*
+       * Sayı `tr-TR` ile biçimlendiriliyordu; Rusça/Kazakça bildirimde de
+       * Türkçe ayraç görünürdü. Ham sayı gidiyor, biçim şablonun dilinde
+       * kalıyor (üç dilde de binlik ayracı boşluk ya da nokta değil, sade
+       * sayı — puan değerleri dört haneyi geçmiyor).
+       */
+      void this.push.sendTemplate(
+        b.userId,
+        'loyalty.points_earned',
+        { n: String(kazanilan) },
+        { route: `/review/new?id=${id}` },
+      );
     });
     return row;
   }
@@ -807,11 +812,14 @@ export class BookingsService {
   private async taraflaraBildir(
     bookingId: string,
     musteriId: string | null,
-    mesaj: { title: string; body: string; data: Record<string, string> },
+    key: PushTemplateKey,
+    data: Record<string, string>,
   ): Promise<void> {
+    // ANAHTAR taşınıyor, metin değil: iki taraf farklı dil kullanıyor
+    // olabilir ve her biri kendi dilinde almalı.
     const uzmanId = await this.expertUserIdFor(bookingId).catch(() => null);
     for (const uid of [musteriId, uzmanId]) {
-      if (uid) void this.push.sendToUser(uid, mesaj).catch(() => undefined);
+      if (uid) void this.push.sendTemplate(uid, key, undefined, data).catch(() => undefined);
     }
   }
 
@@ -944,10 +952,8 @@ export class BookingsService {
     // Eskiden yalnız uzmana, üstelik "kontrol edip onayla" diyen bir şablonla
     // gidiyordu: onay adımı §4.4 ile kaldırıldığı hâlde metin kalmıştı ve
     // parayı gönderen MÜŞTERİ hiçbir bildirim almıyordu.
-    void this.taraflaraBildir(id, kayit?.userId ?? null, {
-      title: 'Randevu kesinleşti ✓',
-      body: 'Depozito alındı — randevun garanti altında.',
-      data: { route: `/booking/${id}` },
+    void this.taraflaraBildir(id, kayit?.userId ?? null, 'booking.confirmed', {
+      route: `/booking/${id}`,
     });
     return res;
   }
@@ -1165,11 +1171,12 @@ export class BookingsService {
     const hedef = rol === 'customer' ? await this.expertUserIdFor(id) : (b.userId ?? null);
     if (hedef)
       void this.push
-        .sendToUser(hedef, {
-          title: 'Erteleme önerisi',
-          body: `Yeni saat: ${deriveDateLabel(newStartMs)} — Kabul / Red`,
-          data: { route: `/booking/${id}` },
-        })
+        .sendTemplate(
+          hedef,
+          'booking.reschedule_offer',
+          { slot: deriveDateLabel(newStartMs) },
+          { route: `/booking/${id}` },
+        )
         .catch(() => undefined);
     return row;
   }
@@ -1273,10 +1280,8 @@ export class BookingsService {
     });
     void this.prisma.booking.findUnique({ where: { id } }).then((b) => {
       if (b?.userId)
-        void this.push.sendToUser(b.userId, {
-          title: 'Uzman farklı bir saat önerdi',
-          body: 'Kabul et ya da kendi saatini öner',
-          data: { route: `/booking/${id}` },
+        void this.push.sendTemplate(b.userId, 'booking.expert_proposed', undefined, {
+          route: `/booking/${id}`,
         });
     });
     return row;
@@ -1354,10 +1359,8 @@ export class BookingsService {
     });
     void this.expertUserIdFor(id).then((uid) => {
       if (uid)
-        void this.push.sendToUser(uid, {
-          title: 'Müşteri farklı bir saat önerdi',
-          body: 'Kabul et ya da reddet',
-          data: { route: `/booking/${id}` },
+        void this.push.sendTemplate(uid, 'booking.customer_proposed', undefined, {
+          route: `/booking/${id}`,
         });
     });
     return row;
@@ -1487,13 +1490,22 @@ export class BookingsService {
   private lastActorId: string | undefined;
 
   // Durum geçişlerinde İKİ TARAFA push (sahip müşteri + uzman) — kapalıyken de haber gitsin
-  private notifyParties(bookingId: string, title: string, body: string): void {
+  private notifyParties(
+    bookingId: string,
+    key: PushTemplateKey,
+    params?: Record<string, string>,
+  ): void {
+    /*
+     * ANAHTAR alıyor, METİN değil: metni `sendTemplate` her tarafın KENDİ
+     * dilinde çözüyor. Eskiden hazır Türkçe cümle geçiyordu ve müşteriyle
+     * uzman farklı dil kullansa bile ikisi de Türkçe bildirim alıyordu.
+     */
     void this.prisma.booking.findUnique({ where: { id: bookingId } }).then((b) => {
       if (!b) return;
       const data = { route: `/booking/${bookingId}` };
-      if (b.userId) void this.push.sendToUser(b.userId, { title, body, data });
+      if (b.userId) void this.push.sendTemplate(b.userId, key, params, data);
       void this.expertUserIdFor(bookingId).then((uid) => {
-        if (uid && uid !== b.userId) void this.push.sendToUser(uid, { title, body, data });
+        if (uid && uid !== b.userId) void this.push.sendTemplate(uid, key, params, data);
       });
     });
   }
