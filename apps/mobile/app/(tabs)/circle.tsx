@@ -422,6 +422,25 @@ function PostCard({ post }: { post: CirclePost }) {
         </View>
       </View>
 
+      {/*
+        DURUM ŞERİDİ — yalnız kendi gönderinde ve normal değilse.
+        Şüpheli bulunan gönderi akışta HİÇ yok (sunucu yalnız yayındakileri
+        döndürüyor); yazan kişi bunu bilmezse yayında sanır. Reddedilen
+        gönderi ise ekranda duran ama kimsenin görmediği bir yayın olurdu.
+      */}
+      {post.durum ? (
+        <View style={styles.durumSerit}>
+          <Ionicons
+            name={post.durum === 'incelemede' ? 'time-outline' : 'alert-circle-outline'}
+            size={13}
+            color={post.durum === 'incelemede' ? colors.muted : colors.danger}
+          />
+          <Text variant="caption" tone={post.durum === 'incelemede' ? 'muted' : 'ink'}>
+            {t(post.durum === 'incelemede' ? 'circle.state.pending' : 'circle.state.failed')}
+          </Text>
+        </View>
+      ) : null}
+
       <Text variant="body" tone="inkSoft" style={styles.text}>
         {post.text}
       </Text>
@@ -654,6 +673,12 @@ const makeStyles = (colors: ColorTokens) =>
     scoreText: { fontFamily: font.semibold },
     typeBadge: { paddingHorizontal: space(1.25), paddingVertical: 4, borderRadius: radius.pill },
     typeText: { fontSize: 11 },
+    durumSerit: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: space(0.75),
+    },
     text: { marginTop: space(1.5) },
     footer: {
       flexDirection: 'row',

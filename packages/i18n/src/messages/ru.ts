@@ -766,6 +766,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'circle.empty.mine': 'Ты пока ничего не спросила',
   'circle.empty.saved': 'Нет сохранённых постов',
   'circle.empty.sub': 'Задай первый вопрос — можно анонимно.',
+  'circle.state.pending': 'На проверке — после одобрения увидят все',
+  'circle.state.failed': 'Не отправлено — видно только вам',
   'circle.tab.saved': 'Сохранённые',
   'circle.save': 'Сохранить',
   'circle.unsave': 'Убрать из сохранённых',

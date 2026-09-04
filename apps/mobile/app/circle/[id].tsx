@@ -71,13 +71,18 @@ export default function PostDetailScreen() {
   // A kullanıcısı yazıyor, B sayacın arttığını görüyor ama yorumu okuyamıyordu.
   // (Okuma ucu PR #18 ile eklendi.)
   const [remote, setRemote] = useState<CircleCommentRow[] | null>(null);
+  /*
+   * Okuma da SUNUCUNUN BİLDİĞİ kimlikle: yeni açılan gönderinin yerel
+   * kimliğiyle sorulduğunda sunucu onu tanımıyor ve liste hep boş dönüyordu.
+   */
+  const uzakId = post?.sunucuId ?? id;
   const loadComments = useCallback(() => {
-    if (!id) return;
+    if (!uzakId) return;
     void api
-      .circleComments(id)
+      .circleComments(uzakId)
       .then(setRemote)
       .catch(() => undefined);
-  }, [id]);
+  }, [uzakId]);
   useFocusEffect(loadComments);
   // Sunucu listesi geldiyse ONU göster (herkesin yorumu). Gelmediyse yerel
   // kopyaya düş — çevrimdışıyken ekran boş kalmasın.

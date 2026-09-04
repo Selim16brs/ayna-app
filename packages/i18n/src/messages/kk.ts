@@ -759,6 +759,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'circle.empty.mine': 'Әзірге ештеңе сұрамадың',
   'circle.empty.saved': 'Сақталған жазба жоқ',
   'circle.empty.sub': 'Бірінші сұрақты сен қой — жасырын болуы мүмкін.',
+  'circle.state.pending': 'Тексерілуде — расталған соң бәрі көреді',
+  'circle.state.failed': 'Жіберілмеді — тек сенде тұр',
   'circle.tab.saved': 'Сақталғандар',
   'circle.save': 'Сақтау',
   'circle.unsave': 'Сақтаудан алу',
