@@ -246,10 +246,16 @@ const kapali = await gonder(
   { quoteId: gelenTeklif?.id, slotMs: gelenTeklif?.slots?.[0] },
   musteri.govde?.token,
 );
+/*
+ * Kod ZARFIN İÇİNDE: hata gövdesi `{ error: { code, message, requestId } }`
+ * biçiminde dönüyor (`AllExceptionsFilter`). İlk yazdığımda düz `code`
+ * aramıştım ve test 403'ü görmesine rağmen düştü — CI yakaladı.
+ */
+const kapaliKod = kapali.govde?.error?.code ?? kapali.govde?.code;
 ol(
   'doğrulanmamış müşteri teklif seçemiyor',
-  kapali.durum === 403 && kapali.govde?.code === 'VERIFICATION_REQUIRED',
-  `${kapali.durum} ${kapali.govde?.code ?? ''}`,
+  kapali.durum === 403 && kapaliKod === 'VERIFICATION_REQUIRED',
+  `${kapali.durum} ${kapaliKod ?? ''}`,
 );
 
 /*
