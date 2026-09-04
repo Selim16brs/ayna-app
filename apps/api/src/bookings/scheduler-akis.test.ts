@@ -62,17 +62,27 @@ function sahtePrisma(bookings: Kayit[]) {
   };
 }
 
+/*
+ * Bildirimler artık ŞABLON ANAHTARIYLA gidiyor (kk/ru turu): sahte push
+ * servisi de metin yerine anahtarı kaydediyor. Metne bakan bir test,
+ * çeviri geldiği anda yanlış sebeple düşerdi.
+ */
 const pushlar: { title: string }[] = [];
+const anahtarlar: string[] = [];
 const sahtePush = {
   sendToUser: (_u: string, m: { title: string }) => {
     pushlar.push(m);
     return Promise.resolve();
   },
-  sendTemplate: () => Promise.resolve(),
+  sendTemplate: (_u: string, key: string) => {
+    anahtarlar.push(key);
+    return Promise.resolve();
+  },
 };
 
 function kur(bookings: Kayit[]) {
   pushlar.length = 0;
+  anahtarlar.length = 0;
   const prisma = sahtePrisma(bookings);
   // Zamanlayıcı yalnız bu üç bağımlılığı kullanıyor; DI kabı gerekmiyor.
   return new BookingsScheduler(
@@ -204,10 +214,10 @@ test('§4.5 — 30 dk hatırlatması bir kez gider, tekrar turda TEKRARLAMAZ', a
   };
   const s = kur([b]);
   await s.tick();
-  const ilk = pushlar.filter((m) => m.title.includes('30 dakika')).length;
+  const ilk = anahtarlar.filter((k) => k === 'booking.remind_30m').length;
   assert.equal(ilk, 1, '30 dk hatırlatması gitmedi');
   await s.tick();
-  const ikinci = pushlar.filter((m) => m.title.includes('30 dakika')).length;
+  const ikinci = anahtarlar.filter((k) => k === 'booking.remind_30m').length;
   assert.equal(ikinci, 1, 'aynı hatırlatma her turda tekrar gidiyor (spam)');
 });
 
@@ -221,7 +231,7 @@ test('§4.5 — aynı turda hem "1 saat" hem "30 dk" gitmez', async () => {
     gunHatirlatmalari: 0,
   };
   await kur([b]).tick();
-  assert.equal(pushlar.filter((m) => m.title.includes('1 saat')).length, 0);
+  assert.equal(anahtarlar.filter((k) => k === 'booking.remind_1h').length, 0);
 });
 
 test('§6 — depozito penceresi bitmeden son uyarı gider (bir kez)', async () => {
@@ -237,7 +247,7 @@ test('§6 — depozito penceresi bitmeden son uyarı gider (bir kez)', async () 
   await s.tick();
   await s.tick();
   assert.equal(
-    pushlar.filter((m) => m.title.includes('son dakikalar')).length,
+    anahtarlar.filter((k) => k === 'booking.deposit_last_minutes').length,
     1,
     'son uyarı ya hiç gitmiyor ya her turda tekrarlıyor',
   );

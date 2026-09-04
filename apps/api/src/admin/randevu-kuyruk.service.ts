@@ -95,11 +95,7 @@ export class RandevuKuyrukService {
         data: { status: 'suspended', restrictReason: 'Sahte depozito dekontu' },
       });
       void this.push
-        .sendToUser(b.userId, {
-          title: 'Randevun iptal edildi',
-          body: 'Yüklenen dekont doğrulanamadı. Hesabın kapatıldı.',
-          data: { route: '/profile' },
-        })
+        .sendTemplate(b.userId, 'booking.cancelled_receipt', undefined, { route: '/profile' })
         .catch(() => undefined);
     }
     await this.denetim('dekont.red', bookingId, actorId);
@@ -126,11 +122,12 @@ export class RandevuKuyrukService {
       data: { status: 'odendi', paidAt: new Date(), note },
     });
     void this.push
-      .sendToUser(r.payeeUserId, {
-        title: 'İaden yapıldı',
-        body: `${Number(r.amount)} ₸ hesabına gönderildi.`,
-        data: { route: `/booking/${r.bookingId}` },
-      })
+      .sendTemplate(
+        r.payeeUserId,
+        'refund.sent',
+        { tutar: String(Number(r.amount)) },
+        { route: `/booking/${r.bookingId}` },
+      )
       .catch(() => undefined);
     await this.denetim('iade.odendi', id, actorId);
     return { ok: true };

@@ -75,7 +75,13 @@ test('istek karşı tarafa BİLDİRİLİYOR', () => {
   // Eski kurguda bildirim yerel üretiliyordu; uzmanın cihazına hiç ulaşmıyordu.
   const m = /async request\([\s\S]*?\n {2}\}/.exec(svc);
   assert.ok(m, 'request yok');
-  assert.match(m[0], /this\.push\.sendToUser\(proUserId/, 'uzman haberdar edilmiyor');
+  /*
+   * Bildirim ŞABLONDAN gidiyor (kk/ru turu): uzman kendi dilinde alsın.
+   * Önemli olan çağrının VAR olması, hangi biçimde olduğu değil — ama
+   * şablon biçimi de burada bağlanıyor ki ham metne geri dönülmesin.
+   */
+  assert.match(m[0], /this\.push\.sendTemplate\(\s*proUserId/, 'uzman haberdar edilmiyor');
+  assert.match(m[0], /'always\.request'/, 'şablon anahtarı yok');
 });
 
 test('mağaza sunucuya yazıyor ve okuyor', () => {

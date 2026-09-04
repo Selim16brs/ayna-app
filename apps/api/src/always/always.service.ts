@@ -113,11 +113,15 @@ export class AlwaysService {
       where: { id: userId },
       select: { name: true },
     });
-    await this.push.sendToUser(proUserId, {
-      title: 'Always isteği',
-      body: `${musteri?.name ?? 'Bir müşteri'} sana Always bağı kurmak istiyor.`,
-      data: { route: '/always' },
-    });
+    await this.push.sendTemplate(
+      proUserId,
+      'always.request',
+      // Ad boşsa şablonun kendi cümlesi bozulmasın diye genel bir söz:
+      // "Bir müşteri" karşılığı her dilde şablonun içinde değil, burada
+      // olamaz — bu yüzden adı olmayan kullanıcıda da ad alanı doluyor.
+      { musteri: musteri?.name?.trim() || 'AYNA' },
+      { route: '/always' },
+    );
     return this.gorunum(bond);
   }
 
@@ -133,13 +137,11 @@ export class AlwaysService {
       where: { id },
       data: { status: 'accepted', acceptedAt: new Date() },
     });
-    await this.push.sendToUser(
+    await this.push.sendTemplate(
       bond.initiator === 'customer' ? bond.customerUserId : bond.proUserId,
-      {
-        title: 'Always bağın kuruldu',
-        body: 'İsteğin kabul edildi 💫',
-        data: { route: '/always' },
-      },
+      'always.accepted',
+      undefined,
+      { route: '/always' },
     );
     return this.gorunum(guncel);
   }

@@ -43,7 +43,8 @@ const svcYap = (over: Record<string, unknown> = {}) => {
     },
     business: { findFirst: () => Promise.resolve('business' in over ? over['business'] : null) },
   };
-  const push = { sendToUser: () => Promise.resolve() };
+  // Bildirimler ŞABLONDAN gidiyor (kk/ru turu); sahte servis ikisini de tanır.
+  const push = { sendToUser: () => Promise.resolve(), sendTemplate: () => Promise.resolve() };
   const storage = { put: (x: string) => Promise.resolve(x) };
   return {
     svc: new AdOrdersService(prisma as never, push as never, storage as never),

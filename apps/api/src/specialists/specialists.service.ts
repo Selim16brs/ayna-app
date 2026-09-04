@@ -362,11 +362,7 @@ export class SpecialistsService {
     // Salona bildirim (yeni kadro üyesi)
     if (biz?.ownerUserId)
       void this.push
-        .sendToUser(biz.ownerUserId, {
-          title: 'Yeni kadro üyesi',
-          body: 'Bir uzman salonuna katıldı',
-          data: { route: '/salon/staff' },
-        })
+        .sendTemplate(biz.ownerUserId, 'staff.joined', undefined, { route: '/salon/staff' })
         .catch(() => undefined);
     return { ok: true, businessName: biz?.name ?? '' };
   }
@@ -645,10 +641,8 @@ export class SpecialistsService {
       const biz = await this.prisma.business.findUnique({ where: { id: sp.businessId } });
       if (biz?.ownerUserId) {
         void this.push
-          .sendToUser(biz.ownerUserId, {
-            title: 'Takvim yetkisi güncellendi',
-            body: `${(await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true } }))?.name ?? 'Uzman'} salon-takvim iznini değiştirdi.`,
-            data: { route: '/salon/staff' },
+          .sendTemplate(biz.ownerUserId, 'calendar.permission_changed', undefined, {
+            route: '/salon/staff',
           })
           .catch(() => undefined);
       }
@@ -830,11 +824,12 @@ export class SpecialistsService {
       where: { id: expertUserId },
       select: { name: true },
     });
-    void this.push.sendToUser(customerId, {
-      title: 'İyi ki doğdun! 🎂',
-      body: `${expert?.name ?? 'Uzmanın'} doğum gününü kutluyor — nice mutlu, güzel yıllara! ✨`,
-      data: { route: '/notifications' },
-    });
+    void this.push.sendTemplate(
+      customerId,
+      'birthday',
+      { pro: expert?.name?.trim() || 'AYNA' },
+      { route: '/notifications' },
+    );
     return { ok: true };
   }
 }

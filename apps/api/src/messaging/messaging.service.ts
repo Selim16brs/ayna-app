@@ -194,11 +194,26 @@ export class MessagingService {
         where: { id: meId },
         select: { name: true },
       });
-      void this.push.sendToUser(otherId, {
-        title: sender?.name || 'Yeni mesaj',
-        body: body.length > 80 ? `${body.slice(0, 80)}…` : body,
-        data: { route: `/messages/${conversationId}` },
-      });
+      /*
+       * BU BİLDİRİM ÇEVRİLMİYOR — çevrilemez: başlığı gönderenin ADI,
+       * gövdesi kullanıcının YAZDIĞI mesaj. Şablona sokmak, kullanıcının
+       * cümlesini bizim cümlemize çevirmek olurdu.
+       *
+       * Yalnız adın olmadığı durumdaki yedek başlık dile duyarlı: orada
+       * yazan bizim sözümüz.
+       */
+      const gonderen = sender?.name?.trim();
+      if (gonderen)
+        void this.push.sendToUser(otherId, {
+          title: gonderen,
+          body: body.length > 80 ? `${body.slice(0, 80)}…` : body,
+          data: { route: `/messages/${conversationId}` },
+        });
+      // Adı yoksa yedek başlık ŞABLONDAN: orada yazan bizim sözümüz.
+      else
+        void this.push.sendTemplate(otherId, 'message.new', undefined, {
+          route: `/messages/${conversationId}`,
+        });
     }
     return {
       id: msg.id,
