@@ -254,3 +254,30 @@ test('TEKLİF MESAFESİ uydurulmuyor — kimlikten sayı üretilmiyor', () => {
     'bilinmeyen başa geçiyor',
   );
 });
+
+test('ROZET GERÇEK DOĞRULAMADAN — "verified" sütunu artık yok', () => {
+  /*
+   * `Professional.badge` sütunu şemada `@default(verified)`: kayıt olan
+   * HERKES "doğrulanmış" doğuyor ve hiçbir doğrulama bu değeri
+   * güncellemiyordu. Kartlarda rozet olarak çizilseydi — o kartlar hâlâ
+   * kodda duruyor — hiç doğrulanmamış uzman doğrulanmış görünürdü.
+   * Uydurulmuş güven işaretinin en pahalısı.
+   *
+   * Sunucu alanı artık hiç göndermiyor; kartlar KYC'ye bağlı
+   * `aynaVerified`i okuyor ve doğrulanmamışa hiçbir şey çizmiyor —
+   * "değil" damgası basmak da ayrı bir haksızlık olurdu.
+   */
+  const katalog = readFileSync(
+    join(__dirname, '..', '..', 'api', 'src', 'catalog', 'catalog.service.ts'),
+    'utf8',
+  );
+  assert.doesNotMatch(katalog, /^\s*badge: p\.badge,/m, 'uydurma rozet hâlâ gönderiliyor');
+
+  for (const dosya of ['ProCard.tsx', 'SalonRow.tsx']) {
+    const k = oku('src', 'ui', dosya);
+    assert.doesNotMatch(k, /BADGE\[pro\.badge\]/, `${dosya}: rozet sütundan okunuyor`);
+    assert.match(k, /pro\.aynaVerified \? DOGRULANDI : null/, `${dosya}: gerçek doğrulama yok`);
+    // Doğrulanmamışta rozet HİÇ çizilmiyor.
+    assert.match(k, /\{badge \? \(/, `${dosya}: rozet koşulsuz çiziliyor`);
+  }
+});
