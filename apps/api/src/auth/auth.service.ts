@@ -156,14 +156,37 @@ export class AuthService {
         ...(input.city ? { city: input.city } : {}),
       },
     });
-    // Hoş geldin bonusu (sadakat defterine ilk kayıt).
-    // Eskiden expiresAt YAZILMIYORDU — bu puanlar hiç yanmıyordu (K4.4 ihlali).
-    await grantPoints(this.prisma, {
-      userId: user.id,
-      reason: 'rewards.earn.welcome',
-      points: 200,
-    });
+    /*
+     * ── HOŞ GELDİN BONUSU DOĞRULAMADAN SONRA ──────────────────────────
+     *
+     * Kurucu: "ilk açılış hediye puanı da bu doğrulamalardan sonra
+     * (admin onayı ya da telefon doğrulama) müşteri hanesine işlenir."
+     *
+     * Bonus KAYIT ANINDA yazılıyordu: doğrulanmamış bir numarayla açılan
+     * her hesap 200 puan kazanıyordu. Aynı kişi numarayı doğrulamadan
+     * defalarca hesap açıp puan biriktirebilirdi.
+     *
+     * Kayıt öncesi numarasını zaten doğrulamış olan (`dogrulanmis`)
+     * kullanıcı bonusu HEMEN alıyor — beklemesi için bir sebep yok.
+     * Diğerleri doğruladıkları anda (`verifyOtp`) alıyor.
+     */
+    if (dogrulanmis) await this.hosGeldinBonusu(user.id);
     return this.session(user);
+  }
+
+  /**
+   * HOŞ GELDİN BONUSU — ömürde BİR KEZ.
+   *
+   * Defterde aynı sebeple bir satır varsa yeniden yazmıyor: kullanıcı
+   * numarasını her yeniden doğruladığında 200 puan daha kazanamaz.
+   */
+  private async hosGeldinBonusu(userId: string): Promise<void> {
+    const varMi = await this.prisma.loyaltyEntry.findFirst({
+      where: { userId, reason: 'rewards.earn.welcome' },
+      select: { id: true },
+    });
+    if (varMi) return;
+    await grantPoints(this.prisma, { userId, reason: 'rewards.earn.welcome', points: 200 });
   }
 
   async login(input: LoginInput) {
@@ -403,6 +426,18 @@ export class AuthService {
       where: { phoneHash: ph },
       data: { phoneVerified: true },
     });
+    /*
+     * DOĞRULAMA TAMAMLANDI → hoş geldin bonusu şimdi işleniyor.
+     * Kayıt anında verilseydi doğrulanmamış numaralarla açılan hesaplar
+     * puan biriktirirdi.
+     */
+    if (updated.count > 0) {
+      const kisi = await this.prisma.user.findUnique({
+        where: { phoneHash: ph },
+        select: { id: true },
+      });
+      if (kisi) await this.hosGeldinBonusu(kisi.id);
+    }
     await this.audit.record({ action: 'otp.verify', resourceType: 'otp' });
     return { verified: true, phoneVerified: updated.count > 0 };
   }
@@ -481,6 +516,8 @@ export class AuthService {
       avatarUrl: user.avatarUrl ?? null, // profil foto (data URL) — tüm cihazlarda aynı
       cutoutUrl: user.cutoutUrl ?? null, // kesik portre — girişte geri yüklenir (kredi yakmadan)
       phoneVerified: user.phoneVerified,
+      // Randevu kapısı: doğrulama YA DA yönetici onayı.
+      adminApproved: user.adminApproved,
       gender: user.gender,
       /*
        * ÜYELİK BAŞLANGICI — pasaportta gösteriliyor.

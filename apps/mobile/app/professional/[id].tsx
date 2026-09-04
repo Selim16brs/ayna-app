@@ -3,8 +3,8 @@ import { cakisiyor, doluAraliklar } from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { randevuVerebilir } from '@ayna/domain';
 import type { MessageKey } from '@ayna/i18n';
 import { formatPrice } from '../../src/data';
 import { almatyDayStart, almatyParts, formatSlotTr, slotTime } from '../../src/datetime';
@@ -67,6 +67,8 @@ export default function ProfessionalScreen() {
   const isFav = useStore((s) => s.favorites.includes(proId));
   const token = useStore((s) => s.token);
   const addBooking = useStore((s) => s.addBooking);
+  // Randevu kapısı — doğrulama YA DA yönetici onayı.
+  const kullanici = useStore((s) => s.currentUser);
   const userReviewsMap = useStore((s) => s.userReviews);
 
   // §5.5 — uzmanı takip et (karşılıklı takip → serbest DM). Yalnız hesabı bağlı gerçek uzmanda.
@@ -238,6 +240,24 @@ export default function ProfessionalScreen() {
     // Eskiden yalnız "giriş lazım" diyip bırakıyordu: kullanıcı ne yapacağını
     // bilmiyordu. Kapı giriş/kayıt sunuyor ve buraya geri döndürüyor.
     if (girisGerekli(`/professional/${proId}`)) return;
+    /*
+     * ── DOĞRULANMAMIŞ MÜŞTERİ RANDEVU VEREMİYOR ─────────────────────
+     *
+     * Kurucu: "bir müşteri ya admin panelinden onaylanmalı ya da mutlaka
+     * telefon ile doğrulama yapmalı. aksi takdirde uygulamada kesinlikle
+     * randevu veremez."
+     *
+     * Tek gerçek kapı SUNUCU; burası kullanıcıyı boşuna uğraştırmamak
+     * için: saati seçip düğmeye bastıktan sonra sunucudan hata almak
+     * yerine sebebini şimdi söylüyor ve doğrulama ekranına götürüyor.
+     */
+    if (!randevuVerebilir(kullanici ?? {})) {
+      Alert.alert(t('booking.verify_required'), '', [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('booking.verify_cta'), onPress: () => router.push('/auth/verify') },
+      ]);
+      return;
+    }
     // Kapı boolean döndürüyor; TypeScript token'ın dolduğunu buradan bilemez.
     if (!token) return;
     if (!pro.ownerUserId) {
@@ -288,6 +308,12 @@ export default function ProfessionalScreen() {
       proName: pro.name,
       proImage: pro.image,
       ...(uzman?.name ? { uzmanName: uzman.name } : {}),
+      /*
+       * KİMLİK DE GİDİYOR. Randevu yalnız adı taşıyordu ve sunucu
+       * eşleştirmeyi adla yapıyordu: aynı salonda iki aynı adlı uzman
+       * birbirinin randevusunu görüyordu.
+       */
+      ...(uzman?.specialistId ? { uzmanId: uzman.specialistId } : {}),
       startMs,
       durationMin: totalDur || 60,
       price: totalPrice || Number(pro.priceFrom),
@@ -357,26 +383,19 @@ export default function ProfessionalScreen() {
           </PressableScale>
         </View>
 
-        {/* ═══ KİMLİK — kesik portre + yansıma (kanvas §KİMLİK) ═══
-            Portre SOLDA 118×158 (132 görsel + 26 yansıma), bilgi sağda. */}
+        {/* ═══ KİMLİK — portre solda, bilgi sağda ═══
+            Kurucu: "uzmanın profil fotoğrafının alt kısmında bir degrade
+            gibi bir şey var onu kaldır."
+
+            Portrenin altında ters çevrilmiş soluk bir KOPYASI (yansıma) ve
+            fotoğrafın alt kısmını zemine eriten bir degrade vardı. İkisi
+            birlikte fotoğrafı alt kenarından dağıtıyordu: kullanıcı ne
+            fotoğrafın nerede bittiğini anlıyor ne de yansımanın ne olduğunu.
+            İkisi de kaldırıldı; fotoğraf net bir kenarla bitiyor. */}
         <View style={styles.identityRow}>
           <View style={styles.portraitCol} pointerEvents="none">
             <View style={styles.portraitWrap}>
               <Image source={{ uri: pro.image }} style={styles.portrait} resizeMode="cover" />
-              <LinearGradient
-                colors={['rgba(251,248,246,0)', colors.bg]}
-                locations={[0.62, 1]}
-                style={StyleSheet.absoluteFill}
-                pointerEvents="none"
-              />
-            </View>
-            <View style={styles.reflection}>
-              <Image source={{ uri: pro.image }} style={styles.reflectionImg} resizeMode="cover" />
-              <LinearGradient
-                colors={['rgba(251,248,246,0.55)', colors.bg]}
-                locations={[0, 0.88]}
-                style={StyleSheet.absoluteFill}
-              />
             </View>
           </View>
 
@@ -586,7 +605,21 @@ export default function ProfessionalScreen() {
                       return (
                         <Pressable
                           key={u.id}
-                          onPress={() => router.push('/uzman/' + u.id)}
+                          /*
+                           * SALON KİMLİĞİ AÇIKÇA GİDİYOR.
+                           *
+                           * Uzman ekranı salonu ADRESTEN ÇIKARMAYA
+                           * çalışıyordu (`id.split('-u')[0]`) — eski demo
+                           * kimlik biçimine göre yazılmış bir varsayım.
+                           * Gerçek kimlikler UUID; bölme çöp veriyor ve
+                           * ekran "Bu profil bulunamadı" diyordu.
+                           */
+                          onPress={() =>
+                            router.push({
+                              pathname: '/uzman/[id]',
+                              params: { id: u.id, salon: pro.id },
+                            })
+                          }
                           style={styles.staffCard}
                         >
                           <View style={[styles.staffAvatarWrap, on && styles.staffAvatarOn]}>
@@ -1150,17 +1183,11 @@ const makeStyles = (colors: ColorTokens) =>
       paddingTop: space(1.75),
     },
     identityText: { flex: 1, paddingBottom: space(3.75), gap: 6, minWidth: 0 },
-    portraitCol: { width: 118, height: 158 },
+    // Yükseklik 158'di: 132 fotoğraf + 26 yansıma. Yansıma kalkınca
+    // fazlalık 26px boşluk kalıyordu.
+    portraitCol: { width: 118, height: 132 },
     portraitWrap: { width: 118, height: 132, overflow: 'hidden', borderRadius: radius.md },
     portrait: { width: 118, height: 132 },
-    reflection: { width: 118, height: 26, overflow: 'hidden' },
-    reflectionImg: {
-      width: 118,
-      height: 132,
-      marginTop: -106,
-      transform: [{ scaleY: -1 }],
-      opacity: 0.16,
-    },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
     mapLink: { fontFamily: font.semibold },
     // ── §GÜVEN — tek kartta yıl · müşteri · puan ──

@@ -87,6 +87,35 @@ const kayit = await gonder('/specialists', {
 ol('uzman kaydı kabul edildi', kayit.ok, kayit.ok ? '' : JSON.stringify(kayit.govde).slice(0, 200));
 const uzmanToken = kayit.govde?.token;
 
+/* ── 2b · ONAY KAPISI — onaysız uzman katalogda YOK ────────────────── */
+/*
+ * Uzman kaydolur olmaz katalogda görünüyordu. Artık yönetici hesabı
+ * açmadan ne listede ne profil adresinde var. Kapı önce KAPALI olduğu
+ * doğrulanıyor, sonra açılıp akışın geri kalanı sınanıyor — yalnız
+ * açtıktan sonra bakmak, kapının hiç çalışmadığı bir sürümde de geçerdi.
+ */
+const onaysizListe = await get('/professionals');
+ol('onaysız uzman katalogda YOK', !(onaysizListe ?? []).some((x) => x.name === 'Duman Uzman'));
+
+const yoneticiGiris = await gonder('/auth/login', {
+  identifier: 'admin',
+  password: process.env.ADMIN_BOOTSTRAP_PASSWORD ?? '',
+});
+const yoneticiToken = yoneticiGiris.govde?.token;
+ol('yönetici girişi', !!yoneticiToken, JSON.stringify(yoneticiGiris.govde).slice(0, 120));
+
+const kuyruk = await get('/admin/specialists', yoneticiToken);
+const bekleyen = (kuyruk ?? []).find((x) => x.name === 'Duman Uzman');
+ol('uzman ONAY KUYRUĞUNA düştü', !!bekleyen, `kuyruk: ${(kuyruk ?? []).length}`);
+if (bekleyen) {
+  const ac = await gonder(
+    `/admin/specialists/${bekleyen.id}/status`,
+    { status: 'approved' },
+    yoneticiToken,
+  );
+  ol('yönetici uzman hesabını açtı', ac.ok, JSON.stringify(ac.govde).slice(0, 120));
+}
+
 /* ── 3 · ARZ — "Yakında" rozeti (brief §7.4) ───────────────────────── */
 const tax2 = await get('/taxonomy');
 const alt = (id) => tax2.kategoriler.flatMap((k) => k.altHizmetler).find((a) => a.id === id);

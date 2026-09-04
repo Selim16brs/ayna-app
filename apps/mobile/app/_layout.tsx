@@ -72,6 +72,25 @@ function ThemedStack() {
       const s = useStore.getState();
       if (!s.token || s.currentUser?.role !== 'user') return;
       const fresh = s.takeNewOffers();
+      /*
+       * GERÇEK teklif geldiğinde bildirim de düşüyor. Eskiden yalnız bir
+       * uyarı penceresi vardı: kullanıcı o an ekranda değilse ya da
+       * "Sonra" derse teklif geldiğinin izi kalmıyordu — oysa uydurma
+       * "teklifler gelmeye başladı" bildirimi talep açılır açılmaz
+       * düşüyordu. Sıra artık doğru: bildirim GERÇEK sayıyla.
+       */
+      if (fresh.count > 0) {
+        s.pushNotification({
+          type: 'quote',
+          audience: 'user',
+          titleKey: 'notif.offers_started',
+          bodyKey: 'notif.offers_started_b',
+          params: { n: String(fresh.count) },
+          dateLabel: 'Az önce',
+          icon: 'pricetags-outline',
+          route: fresh.demandId ? `/quote/results?id=${fresh.demandId}` : '/bookings',
+        });
+      }
       if (fresh.count > 0)
         Alert.alert(t('newoffers.t'), fillParams(t('newoffers.b'), { n: fresh.count }), [
           { text: t('promo.later'), style: 'cancel' },
@@ -223,13 +242,23 @@ function ThemedStack() {
       dogumTarihiMs: dogumTarihiMs,
       randevular: st.bookings,
       puan: st.points,
-      dahaOnceAcildi: st.sonAcilisMs != null,
+      /*
+       * HOŞ GELDİN YALNIZ İLK GİRİŞTE.
+       *
+       * `sonAcilisMs != null` yazıyordu ve o alan çıkışta sıfırlanıyor:
+       * aynı kullanıcı çıkıp girdiğinde "AYNA'ya hoş geldin" yeniden
+       * çıkıyordu. Karar artık ÜYE KİMLİĞİNE bağlı ve o liste çıkışta
+       * silinmiyor.
+       */
+      dahaOnceAcildi: st.hosGeldinGorenler.includes(currentUser.id) || st.sonAcilisMs != null,
       sonAcilisMs: st.sonAcilisMs,
       durum: st.acilisDurumu,
       // Brief §7.1 — uzak katalog varsa o, yoksa cihazdaki paket.
       katalog: gecerliKatalog(st.acilisKatalog),
     });
     st.setSonAcilis(Date.now());
+    // Bu üye artık hoş geldin mesajını görmüş sayılıyor.
+    st.hosGeldiniIsaretle(currentUser.id);
     /*
      * Eşitleme mesaj SEÇİLDİKTEN SONRA başlıyor: indirmeyi beklemek
      * açılışa bekleme eklerdi (brief §6.1). Yeni katalog bir SONRAKİ
@@ -254,7 +283,26 @@ function ThemedStack() {
       </NailCursor>
       {/* §10 — ÇEVRİMDIŞI BANDI en üstte, her ekranda. */}
       <OfflineBanner />
-      {/* Açılış mesajı EN ÜSTTE: geçiş bitene kadar ana sayfayı örtüyor. */}
+      {baseHidden ? null : isSalon ? (
+        <SalonTabBar />
+      ) : isExpert ? (
+        <SellerTabBar />
+      ) : pathname.startsWith('/seller') || pathname.startsWith('/salon') ? null : (
+        <AppTabBar />
+      )}
+      {/*
+       * AÇILIŞ MESAJI EN SONDA ÇİZİLİYOR — yani her şeyin ÜSTÜNDE.
+       *
+       * Kurucu: "açılışta mesaj çıkarken altta alt menüde görünüyor.
+       * o hata, mesaj bitene kadar ana ekrandan bir şey çıkmaması lazım."
+       *
+       * React Native'de kardeşler sırayla boyanıyor: mesaj alt barlardan
+       * ÖNCE yazılıydı, bu yüzden bar mesajın üstüne düşüyordu.
+       *
+       * Barlar yine ÇİZİLİYOR (kaldırılmadı): kapanış geçişi mesajı
+       * söndürerek altındaki ekranı açıyor; barlar hiç kurulmasaydı o an
+       * boş bir yerden aniden belirirlerdi.
+       */}
       {acilis && !acilisBitti ? (
         <AcilisMesaji
           sonuc={acilis}
@@ -266,13 +314,6 @@ function ThemedStack() {
           }}
         />
       ) : null}
-      {baseHidden ? null : isSalon ? (
-        <SalonTabBar />
-      ) : isExpert ? (
-        <SellerTabBar />
-      ) : pathname.startsWith('/seller') || pathname.startsWith('/salon') ? null : (
-        <AppTabBar />
-      )}
     </>
   );
 }

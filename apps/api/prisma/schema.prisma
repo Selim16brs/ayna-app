@@ -71,6 +71,15 @@ model User {
   membershipUntil    DateTime?  @map("membership_until") @db.Timestamptz(6)
   // §4.6 — telefon OTP doğrulaması (mock SMS)
   phoneVerified      Boolean    @default(false) @map("phone_verified")
+  /// YÖNETİCİ ONAYI — telefon doğrulamasının ALTERNATİFİ.
+  ///
+  /// Kurucu: "bir müşteri ya admin panelinden onaylanmalı ya da mutlaka
+  /// telefon ile doğrulama yapmalı. aksi takdirde uygulamada kesinlikle
+  /// randevu veremez."
+  ///
+  /// SMS'in ulaşmadığı ya da numarasını doğrulayamayan gerçek bir müşteri
+  /// için elle açılan kapı; ikisinden biri yeterli.
+  adminApproved      Boolean    @default(false) @map("admin_approved")
   // EK Z.3 — ağır KYC (uzman/salon belge doğrulaması): none | pending | approved | rejected
   kycStatus          String     @default("none") @map("kyc_status")
   kycVerifiedAt      DateTime?  @map("kyc_verified_at") @db.Timestamptz(6)
@@ -266,6 +275,16 @@ model Booking {
   proName           String        @map("pro_name")
   proImage          String        @map("pro_image")
   uzmanName         String?       @map("uzman_name")
+  /// UZMANIN KİMLİĞİ (`Specialist.id`) — AD DEĞİL.
+  ///
+  /// Randevu yalnız uzmanın ADINI taşıyordu ve kadro işlemleri o adla
+  /// eşleşiyordu: aynı salonda iki "Madina" varsa birini kadrodan
+  /// çıkarmak DİĞERİNİN randevularını da iptal ediyordu. Ad kimlik
+  /// değildir.
+  ///
+  /// Eski kayıtlarda null: onlar için ada düşen davranış korunuyor ama
+  /// yeni kayıtların hepsi kimlik taşıyor.
+  uzmanId           String?       @map("uzman_id")
   // §2.2/§5 — offline (salon kaydı) randevuda müşteri adı
   customerName      String?       @map("customer_name")
   // §6.C/Faz3 — randevu türü (normal | group | express) + grup kişi sayısı
@@ -445,6 +464,18 @@ model Quote {
 
 // --- İşletme & uzman kaydı (Build Brief §3) ---
 
+/// Uzman hesabının YÖNETİCİ ONAY durumu.
+///
+/// Kurucu: "uzman ve salonlar admin panelinde onay verilmeden açılamaz."
+///
+/// Salonda bu kapı zaten vardı (`BusinessStatus`); uzmanda YOKTU — kayıt
+/// olan uzman anında katalogda görünüyor ve randevu alabiliyordu.
+enum SpecialistStatus {
+  pending
+  approved
+  rejected
+}
+
 enum BusinessStatus {
   pending
   approved
@@ -548,6 +579,12 @@ model Specialist {
   iin                String             @default("") // 12 hane; yalnızca kayıtlı ИП uzmanlar; public'te ASLA açık dönmez
   // Katmanlı rozet bayrakları (kimlik = User.kycStatus; diğerleri admin/otomatik)
   certVerified       Boolean            @default(false) @map("cert_verified")
+  /// YÖNETİCİ ONAYI. Onaysız uzman katalogda görünmüyor ve randevu alamıyor.
+  ///
+  /// MEVCUT KAYITLAR ONAYLI SAYILIYOR (`pre-push/13`): canlıdaki uzmanları
+  /// bir gecede kapatmak, kendi hatamızı onların işine kesmek olurdu.
+  status             SpecialistStatus   @default(pending)
+  rejectReason       String?            @map("reject_reason")
   socialVerified     Boolean            @default(false) @map("social_verified")
   socialInstagram    String             @default("") @map("social_instagram")
   socialVerifyCode   String             @default("") @map("social_verify_code")

@@ -20,7 +20,29 @@ export function YakindaRozeti({ tarz = 'satir' }: { tarz?: 'satir' | 'kutu' }) {
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.rozet, tarz === 'kutu' && styles.kutu]}>
-      <Text variant="micro" tone="muted" style={styles.yazi}>
+      {/*
+       * TEK SATIR. Kurucu: "Kazakçada Yakında yazısında son harf alta
+       * düşüyor."
+       *
+       * Sebep kırpma değil SARMAYDI. Kategori hücresi 68px; rozet metni
+       * Kazakçada ("Жақында") 54,7px ve eski yatay dolgusuyla toplam
+       * 68,7px ediyordu — bir piksel taşıyor, son harf alt satıra
+       * geçiyordu. (Türkçe 60,1px, Rusça 51,6px olduğu için yalnız
+       * Kazakçada görünüyordu.)
+       *
+       * `numberOfLines` sarmayı kapatıyor; küçültme ise ileride daha uzun
+       * bir çeviri gelirse kırpılma yerine ölçek veriyor. Dolgu da
+       * daraltıldı: ölçü `yakinda-rozeti.test.ts` içinde FONTTAN
+       * hesaplanarak sınanıyor.
+       */}
+      <Text
+        variant="micro"
+        tone="muted"
+        style={styles.yazi}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.85}
+      >
         {t('catalog.soon')}
       </Text>
     </View>
@@ -30,7 +52,7 @@ export function YakindaRozeti({ tarz = 'satir' }: { tarz?: 'satir' | 'kutu' }) {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     rozet: {
-      paddingHorizontal: space(0.75),
+      paddingHorizontal: space(0.5),
       paddingVertical: 2,
       borderRadius: radius.pill,
       backgroundColor: colors.surfaceMuted,

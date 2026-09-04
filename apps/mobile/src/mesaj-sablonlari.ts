@@ -84,12 +84,44 @@ const UZMAN: Harita = {
 };
 
 /**
+ * RANDEVU ÖNCESİ şablonlar — henüz bir randevu YOKKEN.
+ *
+ * Kurucu: "mesaj alanı açılmıyor. burada standart kalıplar ile iletişim
+ * kurulacaktı."
+ *
+ * Şablonlar randevu DURUMUNA bağlıydı ve randevu yoksa liste BOŞ
+ * dönüyordu: müşteri uzmanın profilinden mesaj açtığında ekranda "İlk
+ * mesajı sen yaz" yazıyor ama yazacak hiçbir şey olmuyordu. Konuşma
+ * kutusu ölü bir ekrandı.
+ *
+ * Randevu öncesi konuşulacak şeyler bellidir: uygunluk, fiyat, süre,
+ * adres. Uzman tarafında da karşılama ve yönlendirme.
+ */
+const MUSTERI_RANDEVUSUZ: Sablon[] = [
+  { anahtar: 'tpl.c.pre_available' },
+  { anahtar: 'tpl.c.pre_price' },
+  { anahtar: 'tpl.c.pre_duration' },
+  { anahtar: 'tpl.c.pre_where' },
+];
+
+const UZMAN_RANDEVUSUZ: Sablon[] = [
+  { anahtar: 'tpl.p.pre_welcome' },
+  { anahtar: 'tpl.p.pre_available' },
+  { anahtar: 'tpl.p.pre_price' },
+  { anahtar: 'tpl.p.pre_book' },
+];
+
+/**
  * O anki duruma ve role uygun şablonlar.
  *
- * Durum bilinmiyorsa (eski konuşma, kapanmış randevu) boş döner — kapanmış bir
- * randevuda mesajlaşmak akışa ait değil.
+ * Durum YOKSA randevu öncesi liste dönüyor — eskiden boş dönüyordu ve
+ * ekran hiçbir şey yazılamayan bir kutuya dönüşüyordu.
+ *
+ * Durum VAR ama o duruma özel şablon yoksa (ör. iptal edilmiş randevu)
+ * liste yine boş: kapanmış bir randevuda konuşacak bir şey yok ve oraya
+ * "uygun musun?" gibi bir şablon koymak akışa ait değil.
  */
 export function sablonlar(rol: SablonRol, status?: BookingStatus): Sablon[] {
-  if (!status) return [];
+  if (!status) return rol === 'musteri' ? MUSTERI_RANDEVUSUZ : UZMAN_RANDEVUSUZ;
   return (rol === 'musteri' ? MUSTERI : UZMAN)[status] ?? [];
 }

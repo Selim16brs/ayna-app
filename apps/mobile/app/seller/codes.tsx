@@ -60,8 +60,22 @@ export default function SellerCodesScreen() {
   };
 
   const share = async (code: string) => {
+    /*
+     * ── YALNIZ KOD KOPYALANIYOR ────────────────────────────────────────
+     *
+     * Kurucu: "salon kodu kopyalanırken sadece kod değil diğer yazıları da
+     * kopyalıyor. sadece kod kopyalanmalı."
+     *
+     * `message` alanı "Uzmanı davet et: A1B2C3" gibi tek parça bir metindi
+     * ve paylaşım sayfasındaki "Kopyala" bu metnin TAMAMINI panoya
+     * yazıyordu. Uzman onu kayıt alanına yapıştırınca kod geçersiz
+     * oluyordu.
+     *
+     * Açıklama `title`a taşındı: paylaşım sayfasında yine görünüyor ama
+     * kopyalanan metne KARIŞMIYOR.
+     */
     try {
-      await Share.share({ message: `${t('seller.codes.share_msg')}: ${code}` });
+      await Share.share({ message: code, title: t('seller.codes.share_msg') });
     } catch {
       // paylaşım iptali — sessiz
     }

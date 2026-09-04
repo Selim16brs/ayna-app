@@ -6,6 +6,8 @@ import { useStore } from './store';
 // (Madina/Aigerim/Saule) girişli salon panelinde ASLA gösterilmez; kadro yoksa
 // ekranlar dürüst boş-durum + "davet koduyla uzman ekle" yönlendirmesi gösterir.
 export interface SalonStaffMember {
+  /** Uzman kaydının kimliği (`Specialist.id`) — eşleşme buna bakıyor. */
+  id: string;
   name: string;
   image: string; // profil foto altyapısı gelene dek boş (ekranlar baş harfe düşer)
   bookings: number;
@@ -39,6 +41,7 @@ export function useSalonStaff(): { staff: SalonStaffMember[]; loading: boolean }
        * puanı almış gibi görünüyordu. Bilinmeyen puan `null`.
        */
       return rows.map((r) => ({
+        id: r.id,
         name: r.name,
         image: '',
         bookings: 0,

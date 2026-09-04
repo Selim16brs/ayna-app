@@ -22,7 +22,7 @@ import {
 } from '../../src/ui';
 
 export default function UzmanScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, salon: salonParam } = useLocalSearchParams<{ id: string; salon?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t, locale } = useLocale();
@@ -30,17 +30,28 @@ export default function UzmanScreen() {
   const styles = useThemedStyles(makeStyles);
 
   /*
-   * BAŞKA KİŞİYE DÜŞMEK YOK.
+   * ── SALON KİMLİĞİ ARTIK ADRESTEN TAHMİN EDİLMİYOR ──────────────────
    *
-   * İki sessiz ikame vardı:
-   *   1. Kimlik yoksa `|| '1'` ile 1 numaralı salon açılıyordu.
-   *   2. İstenen uzman kadroda bulunamazsa `?? salon.staff[0]` ile
-   *      LİSTEDEKİ İLK KİŞİ gösteriliyordu — başkasının adı, fotoğrafı,
-   *      puanı ve çalışan bir "Randevu al" düğmesiyle.
+   * Kurucu: "uzman salona kayıt yaptı ve salonda görünüyor. ama müşteri
+   * uzmanın profiline tıkladığında 'bu profil bulunamadı' diye hata
+   * veriyor."
    *
-   * İkisi de kaldırıldı: bulunamayan uzman için salon detayına dönülüyor.
+   * Salon kimliği uzmanın kimliğinden ÇIKARILIYORDU:
+   * `id.split('-u')[0]`. Bu, eski demo kimliklerinin (`salon1-u2`)
+   * biçimine göre yazılmış bir varsayımdı. Gerçek kadro kimlikleri UUID
+   * ve içinde `-u` yok — bölme ya çöp veriyor ya da kimliğin tamamını
+   * salon sanıyor. Sonuç: salonda görünen uzmanın profili hiç açılmıyor.
+   *
+   * Salon kimliği artık bağlantıyla AÇIKÇA geliyor. Eski biçimdeki
+   * bağlantılar (paylaşılmış olabilir) için bölme YEDEK olarak duruyor.
+   *
+   * ── BAŞKA KİŞİYE DÜŞMEK YOK ──────────────────────────────────────
+   *
+   * İstenen uzman kadroda bulunamazsa LİSTEDEKİ İLK KİŞİ gösteriliyordu:
+   * başkasının adı, fotoğrafı, puanı ve çalışan bir "Randevu al"
+   * düğmesiyle. O da kaldırıldı.
    */
-  const salonId = (id ?? '').split('-u')[0] || '';
+  const salonId = (salonParam ?? '').trim() || (id ?? '').split('-u')[0] || '';
   const salon = useProfessionalDetail(salonId);
   const uzman = salonId ? salon.staff.find((u) => u.id === id) : undefined;
 

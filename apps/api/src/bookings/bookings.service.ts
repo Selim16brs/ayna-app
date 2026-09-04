@@ -10,6 +10,8 @@ import {
 import type { Booking } from '@prisma/client';
 import { createHash } from 'node:crypto';
 import {
+  randevuVerebilir,
+  RANDEVU_KAPISI_KODU,
   canTransition,
   commissionFor,
   depositFor,
@@ -28,7 +30,7 @@ import {
 } from '../loyalty/completion-rewards';
 import { loadLedgerState, loadLoyaltyRules } from '../loyalty/loyalty.rules';
 import { loadDepositRules } from './deposit.rules';
-import { holdDeadline, loadWindows, responseDeadline } from './booking-windows';
+import { cevapSonu, holdDeadline, loadWindows } from './booking-windows';
 import { SLOT_HOLDING_STATUSES } from './slot-statuses';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
@@ -220,23 +222,27 @@ export class BookingsService {
       const biz = await this.prisma.business.findFirst({ where: { ownerUserId: userId } });
       proId = biz?.professionalId ?? null;
     }
-    // §10.2 — SALON-BAĞLI uzman: kendi keşif kaydı (proId) yoktur; salonun keşif kaydına gelip
-    // KENDİSİNE atanan randevuları görür (uzmanName eşleşmesi). Salon sahibi tüm kadroyu görürken,
-    // bağlı uzman yalnız kendi randevusunu görür — takvimi boş kalmaz.
+    /*
+     * §10.2 — SALON-BAĞLI uzman: kendi keşif kaydı (proId) yoktur; salonun
+     * keşif kaydına gelip KENDİSİNE atanan randevuları görür. Salon sahibi
+     * tüm kadroyu görürken bağlı uzman yalnız kendi randevusunu görür.
+     *
+     * ── EŞLEŞME ADLA DEĞİL KİMLİKLE ───────────────────────────────────
+     *
+     * Sorgu `uzmanName: me.name` idi: aynı salonda iki aynı adlı uzman
+     * BİRBİRİNİN randevu listesini görüyordu — müşteri adı, saati,
+     * hizmeti dahil. Ad kimlik değildir.
+     *
+     * Eski kayıtlarda `uzmanId` yok; onlar için ada DÜŞMÜYORUZ. Yanlış
+     * kişiye başkasının randevusunu göstermektense hiç göstermemek doğru
+     * (salon sahibi hepsini görüyor).
+     */
     if (!proId && sp?.businessId) {
       const biz = await this.prisma.business.findUnique({ where: { id: sp.businessId } });
       const salonPro = biz?.professionalId ?? null;
       if (salonPro) {
-        const me = await this.prisma.user.findUnique({
-          where: { id: userId },
-          select: { name: true },
-        });
-        // Adı olmayan uzman hiçbir kayıtla eşleşemez. Sorguyu NUL sentinel'iyle
-        // çalıştırmak Postgres'te hata verir (text alanı NUL kabul etmez) —
-        // sorguyu hiç açmadan boş dön.
-        if (!me?.name) return [];
         const rows = await this.prisma.booking.findMany({
-          where: { proId: salonPro, uzmanName: me.name },
+          where: { proId: salonPro, uzmanId: sp.id },
           orderBy: { inDays: 'asc' },
         });
         // SAĞLAYICI yolu: kendi verdiği sinyali görür.
@@ -294,6 +300,32 @@ export class BookingsService {
   }
 
   async create(input: CreateBookingInput, userId?: string) {
+    /*
+     * ── DOĞRULANMAMIŞ MÜŞTERİ RANDEVU VEREMİYOR ───────────────────────
+     *
+     * Kurucu: "bir müşteri ya admin panelinden onaylanmalı ya da mutlaka
+     * telefon ile doğrulama yapmalı. aksi takdirde uygulamada kesinlikle
+     * randevu veremez."
+     *
+     * Doğrulanmamış numarayla açılan hesap randevu alabiliyordu: uzman
+     * hazırlanıp bekliyor, gelen olmuyor ve ulaşılacak bir numara da yok.
+     *
+     * Kapı BURADA — uygulamadaki düğme de kapanıyor ama tek gerçek kapı
+     * sunucu. Salon/uzmanın KENDİ eklediği çevrimdışı kayıt (`userId`
+     * yok) bu kapıdan geçmiyor: orada müşteri hesabı zaten yok.
+     */
+    if (userId) {
+      const kisi = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { phoneVerified: true, adminApproved: true, role: true },
+      });
+      if (kisi?.role === 'user' && !randevuVerebilir(kisi)) {
+        throw new ForbiddenException({
+          code: RANDEVU_KAPISI_KODU,
+          message: 'Randevu için telefon doğrulaması gerekiyor',
+        });
+      }
+    }
     // §keşif Modül 2 — kampanyadan randevu: sunucu doğrular (aktif + hedef uzman +
     // gün/saat penceresi + kota) ve fiyatı KAMPANYA fiyatına sabitler (client'a güvenilmez).
     let offerPrice: number | null = null;
@@ -338,6 +370,8 @@ export class BookingsService {
       proName: input.proName,
       proImage: input.proImage,
       uzmanName: input.uzmanName ?? null,
+      // Uzmanın KİMLİĞİ — ad değişebilir, kimlik değişmez.
+      uzmanId: input.uzmanId ?? null,
       customerName: input.customerName ?? null,
       customerPhone: input.customerPhone ?? null,
       bySalon: input.bySalon ?? false,
@@ -354,30 +388,43 @@ export class BookingsService {
       ...(input.offerId ? { offerId: input.offerId } : {}),
       // §4.2 — uzmanın 3 saati SUNUCUDA damgalanır; mobil sayaç buna bakar.
       ...((input.status ?? 'onay_bekliyor') === 'onay_bekliyor'
-        ? { responseDeadline: responseDeadline(windows) }
+        ? /*
+           * Pencere randevu saatine göre ORANTILI: sabit 3 saat, aynı gün
+           * randevularında anlamsızdı ve ayrı bir kural o talepleri anında
+           * düşürüyordu. Saatsiz talepte (teklif toplama) tam pencere.
+           */
+          { responseDeadline: cevapSonu(windows, input.startMs ?? null) }
         : {}),
     };
     const existing = await this.prisma.booking.findUnique({ where: { id: input.id } });
     // Faz 4 (§15) — SALON, üye adına kayıt eklerken üyenin seçtiği yetki modu uygulanır:
     // view_availability_only → 403; create_requires_approval → uzman onayına ZORLA;
     // manage_calendar → doğrudan kesinleşebilir (fiyat/gelir görünürlüğü değişmez).
-    if (!existing && input.bySalon && input.uzmanName && input.proId) {
+    /*
+     * ── YETKİ MODU KİMLİKTEN OKUNUYOR ──────────────────────────────────
+     *
+     * Kadro üyesi ADLA bulunuyordu (`user.name === input.uzmanName`).
+     * Aynı salonda iki aynı adlı uzman varsa YANLIŞ KİŞİNİN takvim izni
+     * uygulanıyordu: takvimini salona kapatmış uzman adına, izin veren
+     * adaşının ayarıyla kayıt açılabiliyordu.
+     */
+    if (!existing && input.uzmanId && input.bySalon && input.proId) {
       const biz = await this.prisma.business.findFirst({
         where: { professionalId: input.proId },
         select: { id: true },
       });
       let member: { calendarPermission: string } | null = null;
       if (biz) {
-        const candidates = await this.prisma.specialist.findMany({
-          where: { businessId: biz.id },
-          select: { userId: true, calendarPermission: true },
+        member = await this.prisma.specialist.findFirst({
+          where: { id: input.uzmanId, businessId: biz.id },
+          select: { calendarPermission: true },
         });
-        const named = await this.prisma.user.findFirst({
-          where: { id: { in: candidates.map((c) => c.userId) }, name: input.uzmanName },
-          select: { id: true },
-        });
-        member = candidates.find((c) => c.userId === named?.id) ?? null;
       }
+      /*
+       * Üye BULUNAMAZSA en güvenli mod. Eskiden de varsayılan buydu ama
+       * artık bilinçli: kimliği o salonda olmayan biri adına kayıt
+       * açılıyorsa uzman onayı şart.
+       */
       const mode = member?.calendarPermission ?? 'create_requires_approval';
       if (mode === 'view_availability_only') {
         throw new ForbiddenException({
@@ -387,7 +434,7 @@ export class BookingsService {
       }
       if (mode === 'create_requires_approval' && data.status === 'kesinlesti') {
         data.status = 'onay_bekliyor';
-        data.responseDeadline = responseDeadline(windows);
+        data.responseDeadline = cevapSonu(windows, input.startMs ?? null);
       }
       // manage_calendar → `kesinlesti` kalabilir; çakışma kontrolü yine çalışır.
       // OFFLINE kayıtta depozito akışı YOK: AYNA müşterisi yok, dolayısıyla
@@ -499,16 +546,17 @@ export class BookingsService {
       where: { professionalId: b.proId! },
     });
     if (biz?.ownerUserId) targets.add(biz.ownerUserId);
-    if (biz && b.uzmanName) {
-      const members = await this.prisma.specialist.findMany({
-        where: { businessId: biz.id },
+    /*
+     * Bildirim KİMLİĞE gidiyor. Adla bulunuyordu ve `findMany` olduğu
+     * için aynı adlı HERKESE bildirim düşüyordu: adaşı, kendisine ait
+     * olmayan bir randevunun bildirimini alıyordu.
+     */
+    if (biz && b.uzmanId) {
+      const uye = await this.prisma.specialist.findFirst({
+        where: { id: b.uzmanId, businessId: biz.id },
         select: { userId: true },
       });
-      const named = await this.prisma.user.findMany({
-        where: { id: { in: members.map((m) => m.userId) }, name: b.uzmanName },
-        select: { id: true },
-      });
-      for (const u of named) targets.add(u.id);
+      if (uye) targets.add(uye.userId);
     }
     for (const uid of targets) {
       void this.push
@@ -1329,11 +1377,25 @@ export class BookingsService {
         const biz = await this.prisma.business.findFirst({ where: { professionalId: b.proId } });
         isProvider = biz?.ownerUserId === actorId;
       }
-      // §10.2 — salona-bağlı uzman KENDİSİNE atanan salon randevusunu yönetebilir
-      // (salonun keşif kaydına gelen + uzmanName kendisine eşleşen). Salon sahibi de yönetir.
-      if (!isProvider && b.uzmanName && actor?.name === b.uzmanName) {
+      /*
+       * §10.2 — salona-bağlı uzman KENDİSİNE atanan salon randevusunu
+       * yönetebilir.
+       *
+       * ── YETKİ ADLA VERİLİYORDU ────────────────────────────────────
+       *
+       * Koşul `actor?.name === b.uzmanName` idi: aynı salonda iki
+       * "Madina" varsa biri diğerinin randevusunu iptal edebilir,
+       * erteleyebilir, tamamlandı işaretleyebilirdi. Adını değiştiren
+       * biri de aynı kapıyı açardı. Ad kimlik değildir; yetki kimliğe
+       * bağlı.
+       *
+       * Eski randevularda `uzmanId` yok. O kayıtlar için ADA DÜŞMÜYORUZ:
+       * yetkiyi yanlış kişiye vermektense vermemek doğru — salon sahibi
+       * zaten yönetebiliyor.
+       */
+      if (!isProvider && b.uzmanId) {
         const sp = await this.prisma.specialist.findUnique({ where: { userId: actorId } });
-        if (sp?.businessId) {
+        if (sp && sp.id === b.uzmanId && sp.businessId) {
           const myBiz = await this.prisma.business.findUnique({ where: { id: sp.businessId } });
           isProvider = myBiz?.professionalId === b.proId;
         }
@@ -1441,6 +1503,8 @@ function mapBooking(b: Booking, opts?: { forProvider?: boolean }) {
     proName: b.proName,
     proImage: b.proImage,
     uzmanName: b.uzmanName ?? undefined,
+    // Kimlik de dönüyor: uygulama tarafı da adla eşleştirmeyi bıraksın.
+    uzmanId: b.uzmanId ?? undefined,
     customerName: b.customerName ?? undefined,
     bookingKind: b.bookingKind,
     groupSize: b.groupSize ?? undefined,

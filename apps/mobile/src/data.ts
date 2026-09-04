@@ -122,6 +122,13 @@ export interface Professional {
 /** Salon içindeki bir uzman (kadro). Bağımsız uzmanlarda kadro yoktur. */
 export interface Uzman {
   id: string;
+  /**
+   * Uzman KAYDININ kimliği (`Specialist.id`) — randevu bunu taşıyor.
+   *
+   * `id` kullanıcı kimliği ve rotalar ona bağlı; randevu tarafı ayrı bir
+   * kimlik istiyor. İkisini karıştırmamak için ayrı alan.
+   */
+  specialistId?: string;
   name: string;
   role: string;
   image: string;
@@ -924,7 +931,15 @@ export interface Appointment {
   proId: string;
   proName: string;
   proImage: string;
-  uzmanName?: string; // hangi uzmandan
+  uzmanName?: string; // hangi uzmandan (EKRANDA yazılan ad)
+  /**
+   * Hangi uzman — KİMLİK.
+   *
+   * Ad kimlik değildir: aynı salonda iki "Madina" varsa ada göre yapılan
+   * her eşleşme (randevu listesi, yetki, bildirim, kadrodan çıkarma)
+   * yanlış kişiyi vuruyordu. Eski kayıtlarda yok.
+   */
+  uzmanId?: string;
   customerName?: string; // §2.2 offline randevuda müşteri adı
   customerPhone?: string; // offline/salon randevusunda müşteri telefonu (koordinasyon için)
   bookingKind?: string; // normal | group | express (Faz 3)
@@ -1842,6 +1857,55 @@ export const FAQ: Faq[] = [
   },
 ];
 
+/**
+ * UZMAN / SALON SORU-CEVAPLARI.
+ *
+ * Kurucu: "yardım istek kısmında uzman ve salon ortak ve onlara özel soru
+ * cevap kısmı olmalı. müşteride ise ona özel olmalı."
+ *
+ * Yardım ekranı herkese MÜŞTERİ sorularını gösteriyordu: uzman
+ * "randevumu nasıl iptal ederim", "puanları nasıl kazanırım" gibi kendi
+ * işiyle ilgisi olmayan cevapları okuyordu — üstelik uzman puan
+ * toplamıyor. Kendi soruları ise hiçbir yerde yoktu.
+ */
+export const FAQ_UZMAN: Faq[] = [
+  {
+    id: 'p1',
+    q: 'Gelen randevu talebini nerede görürüm?',
+    a: '"Talepler" ekranında. Müşterinin seni seçtiği randevular orada onayını bekler; onayladığında takvimine düşer. Onaylanmamış talep takvimde görünmez.',
+  },
+  {
+    id: 'p2',
+    q: 'Talebe ne kadar sürede cevap vermeliyim?',
+    a: 'Cevap süresi randevunun ne kadar yakın olduğuna göre değişir: uzak bir tarih için 3 saat, aynı gün randevularda kalan sürenin yarısı (en az 15 dakika). Süre dolarsa talep düşer ve müşteri başka bir uzman seçer.',
+  },
+  {
+    id: 'p3',
+    q: 'Hizmet ve fiyatlarımı nasıl eklerim?',
+    a: 'Menü → Hizmetlerim. Alt hizmet başlığına dokun, kendi adını, fiyatını ve süreni yaz, "Ekle"ye bas. Her hizmet eklendiği anda kaydedilir.',
+  },
+  {
+    id: 'p4',
+    q: 'Haritada neden görünmüyorum?',
+    a: 'Menü → Konum bölümünden haritada iğneni bırakman gerekiyor. Koordinatı olmayan bir işletme haritada gösterilmiyor.',
+  },
+  {
+    id: 'p5',
+    q: 'Hesabım neden onay bekliyor?',
+    a: 'Uzman ve salon hesapları yönetici onayından sonra açılır. Onaydan önce katalogda görünmez ve randevu alamazsın.',
+  },
+  {
+    id: 'p6',
+    q: 'Puan topluyor muyum?',
+    a: 'Hayır. AYNA Puanı müşteriye ait. Uzman ve salonlar tamamlanan randevu sayısı, değerlendirme notu ve cevap süresi gibi başarı ölçüleriyle değerlendirilir.',
+  },
+  {
+    id: 'p7',
+    q: 'Müşterinin telefon numarasını görebilir miyim?',
+    a: 'Hayır. İletişim uygulama içinden, hazır kalıplarla kurulur. Anonim bir yorumun sahibini de göremezsin.',
+  },
+];
+
 // ── Seller (işletme paneli) ──────────────────────────────────────────────
 export interface SellerMetric {
   id: string;
@@ -1852,10 +1916,11 @@ export interface SellerMetric {
   icon: string;
 }
 
-// §5.1/§10 — her uzmanın KENDİ panelinde tanımladığı hizmetler (tek doğruluk kaynağı).
-// Salon uzman detayında bunları YALNIZ görüntüler; değiştiremez.
-export const STAFF_SERVICES: Record<string, string[]> = {
-  Madina: ['Saç boyama', 'Röfle / Balayage', 'Keratin bakımı'],
-  Aigerim: ['Saç kesimi & fön', 'Gelin saçı', 'Topuz / saç tasarımı'],
-  Saule: ['Keratin bakımı', 'Saç bakımı', 'Fön'],
-};
+/*
+ * `STAFF_SERVICES` KALDIRILDI.
+ *
+ * Koda gömülü bir AD→HİZMET tablosuydu: adı "Madina" olan HERKESE aynı üç
+ * hizmet yazılıyordu. Kadro ekranı artık uzmanın gerçek listesini
+ * sunucudan okuyor; tablo hiçbir yerde kullanılmıyor ve dursaydı aynı
+ * hatanın tohumu olarak kalırdı.
+ */

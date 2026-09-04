@@ -17,6 +17,7 @@ import { hasConflict } from '@ayna/domain';
 import { type DemandRequest, formatPrice } from '../../src/data';
 import { api } from '../../src/api';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
+import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { fillParams, useLocale } from '../../src/locale';
 import { sellerTrialInfo, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
@@ -40,10 +41,18 @@ const catLabel = (id: string, locale: string): string => kategoriAdi(id, locale)
  */
 
 export default function SellerRequestsScreen() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const bookings = useStore((s) => s.bookings);
+  const randevuEylemi = useStore((s) => s.randevuEylemi);
+  /*
+   * Uzmanın KARARINI bekleyen doğrudan randevu talepleri. Kendi müşteri
+   * randevuları elenir: onlar onun kararını beklemiyor.
+   */
+  const randevuTalepleri = bookings
+    .filter((b) => b.benimRolum !== 'musteri' && b.status === 'onay_bekliyor')
+    .sort((a, b) => a.startMs - b.startMs);
   const hours = useStore((s) => s.sellerHours);
   const submitOffer = useStore((s) => s.submitOffer);
   const token = useStore((s) => s.token);
@@ -238,7 +247,63 @@ export default function SellerRequestsScreen() {
               </Pressable>
             ) : null}
 
-            {open.length === 0 ? (
+            {/*
+              ── MÜŞTERİNİN DOĞRUDAN RANDEVU TALEBİ ────────────────────
+              Kurucu: "müşteriden gelen randevu isteği uzmanın talepler
+              kısmında görünmeli."
+
+              Bu ekran YALNIZ teklif havuzunu (fiyat sorulan açık
+              talepleri) gösteriyordu. Müşteri uzmanı seçip saat
+              belirlediğinde doğan randevu talebi buraya HİÇ düşmüyor,
+              yalnız takvimde beliriyordu — uzman onu bir talep değil
+              yapılmış bir randevu sanıyordu.
+            */}
+            {randevuTalepleri.length > 0 ? (
+              <View style={styles.talepBolum}>
+                <View style={styles.talepBaslik}>
+                  <Ionicons name="hourglass-outline" size={15} color={colors.accentFg} />
+                  <Text variant="label" tone="accentFg" style={styles.flex}>
+                    {t('seller.requests.direct')}
+                  </Text>
+                  <View style={styles.talepRozet}>
+                    <Text style={styles.talepRozetYazi}>{randevuTalepleri.length}</Text>
+                  </View>
+                </View>
+                <Text variant="micro" tone="muted">
+                  {t('seller.requests.direct_note')}
+                </Text>
+                {randevuTalepleri.map((b) => (
+                  <View key={b.id} style={styles.talepKart}>
+                    <Pressable style={styles.flex} onPress={() => router.push(`/booking/${b.id}`)}>
+                      <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
+                        {hizmetEtiketiCevir(b.service, locale)}
+                      </Text>
+                      <Text variant="caption" tone="muted" numberOfLines={1}>
+                        {formatSlotTr(b.startMs)} · {formatPrice(b.price)}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.talepDugme, styles.talepOnay]}
+                      onPress={() => void randevuEylemi(b.id, 'onayla')}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('common.ok')}
+                    >
+                      <Ionicons name="checkmark" size={18} color={colors.onAccent} />
+                    </Pressable>
+                    <Pressable
+                      style={styles.talepDugme}
+                      onPress={() => void randevuEylemi(b.id, 'iptal', '')}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('common.cancel')}
+                    >
+                      <Ionicons name="close" size={18} color={colors.danger} />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+
+            {open.length === 0 && randevuTalepleri.length === 0 ? (
               <View style={styles.empty}>
                 <Ionicons name="pricetags-outline" size={30} color={colors.muted} />
                 <Text variant="caption" tone="muted">
@@ -644,6 +709,44 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.5) },
     // §4.4 kısıtlı mod kutusu
+    // Doğrudan randevu talepleri — teklif havuzunun ÜSTÜNDE, aksan zeminli.
+    talepBolum: {
+      backgroundColor: colors.accentSoft,
+      borderRadius: radius.lg,
+      padding: space(1.5),
+      gap: space(1),
+    },
+    talepBaslik: { flexDirection: 'row', alignItems: 'center', gap: space(0.75) },
+    talepRozet: {
+      minWidth: 20,
+      height: 20,
+      borderRadius: 10,
+      paddingHorizontal: 6,
+      backgroundColor: colors.accentFg,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    talepRozetYazi: { color: colors.onAccent, fontFamily: font.semibold, fontSize: 11 },
+    talepKart: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: space(1.25),
+    },
+    // 44×44: erişilebilirlik eşiği. 36 yazmıştım, bekçi test yakaladı —
+    // onay/ret düğmeleri yan yana ve küçük hedefte yanlışlıkla reddetmek
+    // uzmanın müşterisini kaybettirir.
+    talepDugme: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surfaceMuted,
+    },
+    talepOnay: { backgroundColor: colors.accent },
     restrictBox: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,

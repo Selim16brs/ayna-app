@@ -18,6 +18,8 @@ export default function StaffDetailScreen() {
   const styles = useThemedStyles(makeStyles);
   const cikanUzmanRandevulari = useStore((s) => s.cikanUzmanRandevulari);
   const p = useLocalSearchParams<{
+    /** Uzman kaydının kimliği — kadro işlemleri BUNA bakıyor, ada değil. */
+    id?: string;
     name?: string;
     image?: string;
     bookings?: string;
@@ -28,14 +30,18 @@ export default function StaffDetailScreen() {
   // Devretme kaldırıldı: müşteriyi seçtiği kişiden başkasına habersiz
   // yönlendirmek brief'in akışında yok. Sessiz silme yine yasak.
   function removeFromTeam() {
-    const name = p.name ?? '';
+    const kimlik = p.id ?? '';
     Alert.alert(t('seller.staff.remove_confirm'), t('seller.staff.remove_desc'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('seller.staff.remove'),
         style: 'destructive',
         onPress: () => {
-          const count = cikanUzmanRandevulari(name);
+          /*
+           * KİMLİKLE. Eskiden adla çağrılıyordu ve aynı adlı bir başka
+           * uzmanın randevuları da iptal ediliyordu.
+           */
+          const count = cikanUzmanRandevulari(kimlik);
           Alert.alert(count > 0 ? t('seller.staff.reassigned') : t('seller.staff.removed'));
           router.back();
         },
@@ -65,7 +71,12 @@ export default function StaffDetailScreen() {
    * Gerçek liste sunucudan geliyor; yoksa bölüm hiç çizilmiyor.
    */
   const { staff } = useSalonStaff();
-  const kadroda = staff.find((u) => u.name === (p.name ?? ''));
+  /*
+   * Kadro üyesi KİMLİKLE bulunuyor. `u.name === p.name` idi: adı aynı
+   * olan iki uzmandan HANGİSİ olduğu belirsizdi ve ekran ilk eşleşenin
+   * hizmetlerini gösteriyordu.
+   */
+  const kadroda = staff.find((u) => u.id === (p.id ?? ''));
   const ownServices = kadroda?.services ?? [];
   const [schedule, setSchedule] = useState<Schedule>('standard');
 

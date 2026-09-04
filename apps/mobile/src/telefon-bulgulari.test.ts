@@ -219,15 +219,24 @@ test('reklam iki bölümde birden ÇIKMIYOR', () => {
   assert.match(d, /placement === 'one_cikanlar'/, 'öne çıkan reklamları ayrılmıyor');
 });
 
-test('Reklam ver kartı YANIT & KALİTE bölümünün ÜSTÜNDE', () => {
-  // Kurucu konumu açıkça verdi: kazanç alanı, ekranın hâlâ okunan bölgesinde
-  // olmalı. Aşağı kayarsa bir daha kimse görmez.
+test('AYNA VİTRİN kartı YANIT & KALİTE bölümünün ALTINDA', () => {
+  /*
+   * KURUCU KONUMU DEĞİŞTİRDİ.
+   *
+   * Önceki talimat "kazanç alanı ekranın hâlâ okunan bölgesinde olmalı"
+   * idi ve bu test onu tutuyordu. Yeni talimat: "ayna vitrin bloğu yanıt
+   * ve kalite bloğunun altında olmalı."
+   *
+   * Sıra artık uzmanın günlük işini öne alıyor; satış kartları altta.
+   * Eski gerekçeyi siliyorum ama sebebini burada bırakıyorum: bu bir
+   * kaza değil, bilinçli bir ters çevirme.
+   */
   const r = oku('..', 'app', 'seller', 'reports.tsx');
   const reklam = r.indexOf("router.push('/seller/ads')");
   const kalite = r.indexOf("t('reports.quality.title')");
-  assert.ok(reklam > 0, 'ana sayfada reklam kartı yok');
+  assert.ok(reklam > 0, 'ana sayfada vitrin kartı yok');
   assert.ok(kalite > 0, 'yanıt & kalite bölümü bulunamadı');
-  assert.ok(reklam < kalite, 'reklam kartı yanıt & kalite bölümünün ALTINDA');
+  assert.ok(reklam > kalite, 'vitrin kartı yanıt & kalite bölümünün ÜSTÜNDE');
 });
 
 test('Reklam ver kartı menü satırı DEĞİL — reklam gibi duruyor', () => {

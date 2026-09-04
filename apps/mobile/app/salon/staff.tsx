@@ -40,6 +40,8 @@ export default function SalonStaffScreen() {
                 router.push({
                   pathname: '/seller/staff',
                   params: {
+                    // Kimlik: kadro ekranı ada göre eşleşiyordu.
+                    id: u.id,
                     name: u.name,
                     image: u.image,
                     bookings: String(u.bookings),

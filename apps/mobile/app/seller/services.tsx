@@ -46,6 +46,45 @@ export default function SellerServicesScreen() {
   const setSellerServices = useStore((s) => s.setSellerServices);
   const [cat, setCat] = useState<string>(CATS[0]!.id);
   const [rows, setRows] = useState<SellerServiceRow[]>(storeServices);
+  /*
+   * ── EKLENDİ Mİ, EKLENMEDİ Mİ ───────────────────────────────────────
+   *
+   * Kurucu: "uzmanda hizmetlerim kısmında hizmet ekleniyor mu eklenmiyor
+   * mu belli değil. uzman kendine göre fiyat süre belirlediğinde ekle
+   * demesi lazım ve o hizmet eklenmiş olarak kabul edilmeli ve penceresi
+   * kapanmalı sonra diğer hizmete geçip o şekilde devam etmeli."
+   *
+   * Önceden HER satır sürekli açık bir formdu ve tek bir "Kaydet" en
+   * altta duruyordu: uzman fiyatı yazıyor, hiçbir şey olmuyor, eklenip
+   * eklenmediğini anlamıyordu.
+   *
+   * Artık yeni satır bir TASLAK: kendi "Ekle" düğmesi var, basınca
+   * hizmet KAYDEDİLİYOR ve kutu kapanıyor. Eklenmiş hizmetler kapalı
+   * bir özet satırı olarak duruyor; düzenlemek için dokunuluyor.
+   */
+  const [acikSatirlar, setAcikSatirlar] = useState<string[]>([]);
+  const acikMi = (key: string) => acikSatirlar.includes(key);
+  const kapat = (key: string) => setAcikSatirlar((c) => c.filter((k) => k !== key));
+  const ac = (key: string) => setAcikSatirlar((c) => (c.includes(key) ? c : [...c, key]));
+
+  /** Taslak geçerli mi — adsız ya da fiyatsız hizmet eklenmiyor. */
+  const satirGecerli = (r: SellerServiceRow) => !!r.name.trim() && Number(r.price) > 0;
+
+  /**
+   * Tek satırı EKLE: hemen kaydediliyor ve kutusu kapanıyor.
+   *
+   * Tamamı için ayrıca "Kaydet" var (düzenlemeler için); ama uzman bir
+   * hizmeti ekledikten sonra o hizmet ARTIK EKLENMİŞ sayılıyor — alttaki
+   * düğmeye basmayı unutması hizmeti kaybettirmiyor.
+   */
+  const satiriEkle = (key: string) => {
+    const guncel = rows.filter((r) => satirGecerli(r) || r.key !== key);
+    const hedef = rows.find((r) => r.key === key);
+    if (!hedef || !satirGecerli(hedef)) return;
+    setRows(guncel);
+    setSellerServices(guncel.filter(satirGecerli));
+    kapat(key);
+  };
 
   const rowsByService = useMemo(() => {
     const m: Record<string, SellerServiceRow[]> = {};
@@ -57,19 +96,30 @@ export default function SellerServicesScreen() {
   const services = servicesOf(cat);
 
   /** Alt hizmete yeni satır — ilk satır katalog adı + önerilen fiyatla. */
-  const ekle = (s: TaxService) =>
+  const ekle = (s: TaxService) => {
+    const key = yeniAnahtar(s.id);
     setRows((cur) => [
       ...cur,
       {
-        key: yeniAnahtar(s.id),
+        key,
         serviceId: s.id,
         name: tri(s.label, locale),
         price: String(s.price),
         dur: String(s.durationMin),
       },
     ]);
+    // Yeni satır AÇIK doğuyor: uzman fiyatını hemen yazsın.
+    ac(key);
+  };
 
-  const sil = (key: string) => setRows((cur) => cur.filter((r) => r.key !== key));
+  const sil = (key: string) => {
+    const kalan = rows.filter((r) => r.key !== key);
+    setRows(kalan);
+    // Silme de HEMEN kalıcı: "Kaydet"e basmayı unutan uzman sildiğini
+    // sanıp listede görmeye devam ederdi.
+    setSellerServices(kalan.filter(satirGecerli));
+    kapat(key);
+  };
 
   const edit = (key: string, field: 'name' | 'price' | 'dur', val: string) =>
     setRows((cur) =>
@@ -169,53 +219,88 @@ export default function SellerServicesScreen() {
                   ) : null}
                 </Pressable>
 
-                {kendi.map((r) => (
-                  <View key={r.key} style={styles.satir}>
-                    <View style={styles.satirBas}>
-                      <TextInput
-                        value={r.name}
-                        onChangeText={(v) => edit(r.key, 'name', v)}
-                        placeholder={tri(s.label, locale)}
-                        placeholderTextColor={colors.muted}
-                        style={[styles.input, styles.adInput]}
-                      />
-                      <Pressable
-                        onPress={() => sil(r.key)}
-                        hitSlop={8}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('common.delete')}
-                      >
-                        <Ionicons name="trash-outline" size={18} color={colors.muted} />
-                      </Pressable>
-                    </View>
-                    <View style={styles.fieldRow}>
-                      <View style={styles.field}>
-                        <Text variant="caption" tone="muted">
-                          {t('expert.reg.service_price')}
-                        </Text>
+                {kendi.map((r) =>
+                  !acikMi(r.key) ? (
+                    /*
+                      EKLENMİŞ HİZMET — kapalı özet satırı. Uzman ne
+                      eklediğini tek bakışta görüyor; dokununca açılıyor.
+                    */
+                    <Pressable key={r.key} style={styles.eklenmis} onPress={() => ac(r.key)}>
+                      <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                      <Text variant="body" tone="ink" style={styles.eklenmisAd} numberOfLines={1}>
+                        {r.name}
+                      </Text>
+                      <Text variant="caption" tone="muted">
+                        {Number(r.price).toLocaleString('tr-TR')} ₸ · {r.dur} {t('common.min')}
+                      </Text>
+                      <Ionicons name="chevron-forward" size={14} color={colors.muted} />
+                    </Pressable>
+                  ) : (
+                    <View key={r.key} style={styles.satir}>
+                      <View style={styles.satirBas}>
                         <TextInput
-                          value={r.price}
-                          onChangeText={(v) => edit(r.key, 'price', v)}
-                          keyboardType="number-pad"
+                          value={r.name}
+                          onChangeText={(v) => edit(r.key, 'name', v)}
+                          placeholder={tri(s.label, locale)}
                           placeholderTextColor={colors.muted}
-                          style={styles.input}
+                          style={[styles.input, styles.adInput]}
                         />
+                        <Pressable
+                          onPress={() => sil(r.key)}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('common.delete')}
+                        >
+                          <Ionicons name="trash-outline" size={18} color={colors.muted} />
+                        </Pressable>
                       </View>
-                      <View style={styles.field}>
-                        <Text variant="caption" tone="muted">
-                          {t('expert.reg.service_dur')}
-                        </Text>
-                        <TextInput
-                          value={r.dur}
-                          onChangeText={(v) => edit(r.key, 'dur', v)}
-                          keyboardType="number-pad"
-                          placeholderTextColor={colors.muted}
-                          style={styles.input}
+                      <View style={styles.fieldRow}>
+                        <View style={styles.field}>
+                          <Text variant="caption" tone="muted">
+                            {t('expert.reg.service_price')}
+                          </Text>
+                          <TextInput
+                            value={r.price}
+                            onChangeText={(v) => edit(r.key, 'price', v)}
+                            keyboardType="number-pad"
+                            placeholderTextColor={colors.muted}
+                            style={styles.input}
+                          />
+                        </View>
+                        <View style={styles.field}>
+                          <Text variant="caption" tone="muted">
+                            {t('expert.reg.service_dur')}
+                          </Text>
+                          <TextInput
+                            value={r.dur}
+                            onChangeText={(v) => edit(r.key, 'dur', v)}
+                            keyboardType="number-pad"
+                            placeholderTextColor={colors.muted}
+                            style={styles.input}
+                          />
+                        </View>
+                      </View>
+                      {/*
+                      EKLE — bu hizmeti tek başına kaydediyor ve kutuyu
+                      kapatıyor. Alttaki "Kaydet"e basmayı unutmak artık
+                      hizmeti kaybettirmiyor.
+                    */}
+                      <View style={styles.satirDugmeler}>
+                        <Button
+                          label={t('seller.services.add_row')}
+                          variant={satirGecerli(r) ? 'primary' : 'secondary'}
+                          disabled={!satirGecerli(r)}
+                          onPress={() => satiriEkle(r.key)}
                         />
+                        {!satirGecerli(r) ? (
+                          <Text variant="micro" tone="muted">
+                            {t('seller.services.need_name_price')}
+                          </Text>
+                        ) : null}
                       </View>
                     </View>
-                  </View>
-                ))}
+                  ),
+                )}
               </View>
             );
           })
@@ -253,6 +338,18 @@ const makeStyles = (colors: ColorTokens) =>
       borderTopWidth: 1,
       borderTopColor: colors.line,
     },
+    // Eklenmiş hizmet: kapalı, tek satır, yeşil onay işaretiyle.
+    eklenmis: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1),
+      paddingVertical: space(1.25),
+      paddingHorizontal: space(1),
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.line,
+    },
+    eklenmisAd: { flex: 1 },
+    satirDugmeler: { gap: space(0.75), marginTop: space(1) },
     satirBas: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     adInput: { flex: 1 },
     // "Ekle" işareti: başlığa dokunmak satır açıyor.

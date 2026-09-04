@@ -1,7 +1,8 @@
 import * as Updates from 'expo-updates';
 import * as Application from 'expo-application';
 import surumBilgi from '../surum-bilgi.json';
-import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { space, type ColorTokens } from '../theme';
 import { useThemedStyles } from '../theme-context';
 import { Text } from './Text';
@@ -24,8 +25,21 @@ import { Text } from './Text';
  */
 export function SurumBilgisi() {
   const styles = useThemedStyles(makeStyles);
+  /*
+   * ── EKRANDA YALNIZ SÜRÜM ───────────────────────────────────────────
+   *
+   * Kurucu: "tüm profil kısmında en altta 'yapı' ile başlayan alan artık
+   * gösterilmesin. orada sadece Ayna V1.xxx şeklinde gösterilmeli."
+   *
+   * Ayrıntı SİLİNMEDİ, GİZLENDİ: bu satır bir kez gerçek bir belirsizliği
+   * çözdü (telefondaki yapının bizim projemizden olup olmadığı) ve bir
+   * daha lazım olursa tek dokunuşla açılıyor. Silseydim aynı soru
+   * geldiğinde elimizde hiçbir şey olmazdı.
+   */
+  const [ayrinti, setAyrinti] = useState(false);
 
   let satir = '—';
+  let surum = 'AYNA';
   let ozet = '';
   try {
     // NATIVE yapı — GERÇEK binary'den. Önce `Constants.expoConfig` okunuyordu
@@ -48,6 +62,7 @@ export function SurumBilgisi() {
         })
       : '—';
     // "yapı" = TestFlight'taki native sürüm · "güncelleme" = üstüne düşen JS.
+    surum = `AYNA v${native}`;
     satir = `yapı ${native} (${build}) · güncelleme ${guncelleme} · ${tarih}`;
     // OKUNUR ÖZET: kimlik ve tarih "bu ulaştı mı" sorusunu cevaplıyor ama "NE
     // ulaştı" sorusunu cevaplamıyordu. `01a0587f` kimsenin bir şey anlamadığı
@@ -61,13 +76,22 @@ export function SurumBilgisi() {
 
   return (
     <View style={styles.kap}>
-      <Text variant="caption" tone="muted" style={styles.metin} selectable>
-        {satir}
-      </Text>
-      {ozet ? (
+      <Pressable onPress={() => setAyrinti((a) => !a)} hitSlop={8}>
         <Text variant="caption" tone="muted" style={styles.metin} selectable>
-          {ozet}
+          {surum}
         </Text>
+      </Pressable>
+      {ayrinti ? (
+        <>
+          <Text variant="caption" tone="muted" style={styles.metin} selectable>
+            {satir}
+          </Text>
+          {ozet ? (
+            <Text variant="caption" tone="muted" style={styles.metin} selectable>
+              {ozet}
+            </Text>
+          ) : null}
+        </>
       ) : null}
     </View>
   );

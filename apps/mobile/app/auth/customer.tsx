@@ -1,3 +1,4 @@
+import { sifreGecerli } from '@ayna/domain';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -18,6 +19,7 @@ import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
+  SifreKurali,
   Button,
   CitySelect,
   MissingFields,
@@ -102,7 +104,7 @@ export default function CustomerRegisterScreen() {
     firstName.trim().length > 1 &&
     lastName.trim().length > 1 &&
     phone.trim().length >= 7 &&
-    password.length >= 6 &&
+    sifreGecerli(password) &&
     password === password2 &&
     city !== null &&
     !emailInvalid &&
@@ -112,7 +114,7 @@ export default function CustomerRegisterScreen() {
     { ok: firstName.trim().length > 1 && lastName.trim().length > 1, key: 'auth.miss.name' },
     { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
     { ok: city !== null, key: 'auth.f.city' },
-    { ok: password.length >= 6, key: 'auth.f.password' },
+    { ok: sifreGecerli(password), key: 'auth.f.pw_rule' },
     { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
     { ok: terms, key: 'auth.miss.terms' },
   ]);
@@ -140,7 +142,7 @@ export default function CustomerRegisterScreen() {
       { ok: phone.trim().length >= 7, key: 'auth.f.phone' as const },
       { ok: city !== null, key: 'auth.f.city' as const },
       { ok: !emailInvalid, key: 'auth.f.email' as const },
-      { ok: password.length >= 6, key: 'auth.f.password' as const },
+      { ok: sifreGecerli(password), key: 'auth.f.pw_rule' as const },
       { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' as const },
       { ok: terms, key: 'auth.miss.terms' as const },
     ];
@@ -401,9 +403,8 @@ export default function CustomerRegisterScreen() {
           placeholderKey="auth.f.password"
           autofill="newPassword"
         />
-        <Text variant="caption" tone="muted" style={styles.hint}>
-          {t('auth.f.password_hint')}
-        </Text>
+        {/* Kural alanın hemen ALTINDA ve karşılandıkça işaretleniyor. */}
+        <SifreKurali sifre={password} />
         <PasswordStrength password={password} />
         <Label text={t('auth.f.password2')} />
         <Input

@@ -57,11 +57,22 @@ function gunPenceresi(hours: DayHours[], dayStart: number): { bas: number; son: 
   return { bas: dayStart + bas, son: dayStart + son };
 }
 // Takvimde SLOT'U TUTAN durumlar: onaylı + tamamlanan + uzman onayı sonrası depozito bekleyenler.
+/*
+ * TAKVİMDE GÖRÜNEN DURUMLAR.
+ *
+ * `onay_bekliyor` BİLEREK YOK: onaylanmamış bir talep takvimde randevu
+ * gibi durursa uzman o saati ayırdığını sanır. Talepler "Talepler"
+ * ekranında karara bağlanıyor; takvime ancak onaydan sonra düşüyor.
+ *
+ * `depozito_bekliyor` VAR: uzman kabul etmiş, slot kilitli — takvimde
+ * görünmesi gerekiyor.
+ */
 const CALENDAR_STATUSES: BookingStatus[] = [
   'kesinlesti',
-  'tamamlandi',
   'depozito_bekliyor',
-  'kesinlesti',
+  'hizmet_gunu',
+  'tamamlandi',
+  'degerlendirme',
 ];
 
 // §4.6 uzman gün-ızgarası: açık pencere içinde boş aralıklar + randevu blokları
@@ -147,8 +158,10 @@ export default function AgendaScreen() {
 
   // §4.6 — önümüzdeki 14 gün (gün seçici + kapalı işaretleme)
   // §10.2 — salon takviminde uzman filtresi (null = tümü)
+  // Filtre KİMLİKLE: adla süzüldüğünde aynı adlı iki uzman aynı sütunda
+  // birleşiyor ve ikisinin randevuları karışıyordu.
   const [staffFilter, setStaffFilter] = useState<string | null>(null);
-  const shownStaff = staffFilter ? staff.filter((u) => u.name === staffFilter) : staff;
+  const shownStaff = staffFilter ? staff.filter((u) => u.id === staffFilter) : staff;
   // §9.4 — bekleyen talepler (uzman onayı bekleyen randevular): takvim üstünde şerit
   // §9.4 — YALNIZ uzman olarak gelen talepler. Uzmanın kendi müşteri
   // randevuları burada görünmemeli: onlar onun kararını beklemiyor.
@@ -206,9 +219,24 @@ export default function AgendaScreen() {
   );
 
   const now = Date.now();
+  /*
+   * ── TAKVİME YALNIZ ONAYLANMIŞ RANDEVU GİRİYOR ──────────────────────
+   *
+   * Kurucu: "takvim kısmında randevu onaylandıktan sonra görünmeli, bunun
+   * dışındaki talepler kesinlikle takvime işlenmez."
+   *
+   * Liste görünümü TÜM kayıtları çiziyordu: henüz onaylanmamış bir talep
+   * ve düşmüş bir kayıt ("Süre doldu") takvimde randevuymuş gibi
+   * duruyordu. Uzman onları takviminde görüp yer ayırdığını sanıyordu.
+   *
+   * Onay bekleyenler "Talepler" ekranında; takvim yalnız KESİNLEŞMİŞ
+   * (ve sonrasındaki) durumları gösteriyor.
+   */
+  const takvimeGirer = (b: Appointment) => CALENDAR_STATUSES.includes(b.status);
   const groups = GROUP_ORDER.map((key) => ({
     key,
     rows: calBookings
+      .filter(takvimeGirer)
       .filter((b) => bucket(daysUntil(b.startMs, now)) === key)
       .sort((a, b) => a.startMs - b.startMs),
   })).filter((g) => g.rows.length > 0);
@@ -543,11 +571,11 @@ export default function AgendaScreen() {
                 </Text>
               </Pressable>
               {staff.map((u) => {
-                const on = staffFilter === u.name;
+                const on = staffFilter === u.id;
                 return (
                   <Pressable
-                    key={u.name}
-                    onPress={() => setStaffFilter(on ? null : u.name)}
+                    key={u.id}
+                    onPress={() => setStaffFilter(on ? null : u.id)}
                     style={[styles.filterChip, on && styles.filterChipOn]}
                   >
                     <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} numberOfLines={1}>
@@ -573,7 +601,9 @@ export default function AgendaScreen() {
                  */
                 const uRows = buildDayRows(
                   selectedDay,
-                  dayBookings.filter((b) => (b.uzmanName ?? '') === u.name),
+                  // Sütun KİMLİĞE göre: adla süzülürken aynı adlı iki
+                  // uzmanın randevuları tek sütunda toplanıyordu.
+                  dayBookings.filter((b) => b.uzmanId === u.id),
                   sellerHours,
                 );
                 return (

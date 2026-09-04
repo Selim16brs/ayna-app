@@ -125,6 +125,32 @@ export class CatalogService {
       select: { proId: true },
     });
     const gizli = new Set(cezali.flatMap((x) => (x.proId ? [x.proId] : [])));
+    /*
+     * ── ONAYSIZ UZMAN KATALOGDA YOK ────────────────────────────────────
+     *
+     * Kurucu: "uzman ve salonlar admin panelinde onay verilmeden
+     * açılamaz."
+     *
+     * Kayıt olan uzman anında listede görünüyor ve randevu alabiliyordu:
+     * müşteri hiç doğrulanmamış birine gidiyordu. Salonda bu kapı zaten
+     * vardı (`Business.status`), uzmanda yoktu.
+     */
+    const onaysiz = await this.prisma.specialist.findMany({
+      where: { status: { not: 'approved' }, proId: { not: null } },
+      select: { proId: true },
+    });
+    for (const x of onaysiz) if (x.proId) gizli.add(x.proId);
+    /*
+     * Onaylanmamış SALONLAR da listede yoktu — ama salonun keşif kaydı
+     * `professionalId` üzerinden bağlı ve `status` orada. Aynı kapıyı
+     * salon için de kapatıyoruz: `pending` bir salon vitrine düşmesin.
+     */
+    const onaysizSalon = await this.prisma.business.findMany({
+      where: { status: { not: 'approved' }, professionalId: { not: null } },
+      select: { professionalId: true },
+    });
+    for (const b of onaysizSalon) if (b.professionalId) gizli.add(b.professionalId);
+
     const tumRows = await this.prisma.professional.findMany({ orderBy: { rating: 'desc' } });
     const rows = tumRows.filter((r) => !gizli.has(r.id));
     // §5.1.4-8 — liste eksik alanları: konum (harita), fiyat aralığı üstü, premium rozeti.
@@ -405,6 +431,23 @@ export class CatalogService {
         throw new NotFoundException({ code: 'PRO_NOT_FOUND', message: 'İşletme bulunamadı' });
       }
     }
+    /*
+     * ONAYSIZ PROFİL DERİN BAĞLANTIYLA DA AÇILMIYOR.
+     *
+     * Listeden gizlemek yetmiyor: profil adresi paylaşılabiliyor ve
+     * onaysız bir uzman kendi bağlantısını dağıtıp randevu toplayabilirdi.
+     */
+    const spOnay = await this.prisma.specialist.findFirst({
+      where: { proId: id },
+      select: { status: true },
+    });
+    const bizOnay = await this.prisma.business.findFirst({
+      where: { professionalId: id },
+      select: { status: true },
+    });
+    if ((spOnay && spOnay.status !== 'approved') || (bizOnay && bizOnay.status !== 'approved')) {
+      throw new NotFoundException({ code: 'PRO_NOT_FOUND', message: 'İşletme bulunamadı' });
+    }
     // §9.5 — PUBLIC profil uzmanın KENDİ hizmet listesini gösterir.
     //
     // Liste boşken sektörün varsayılan menüsü UYDURULUYORDU: uzmanın hiç
@@ -454,6 +497,16 @@ export class CatalogService {
                 }
                 return {
                   id: m.userId,
+                  /*
+                   * UZMAN KAYDININ KİMLİĞİ — randevu bunu taşıyor.
+                   *
+                   * Randevular uzmanı yalnız ADIYLA tutuyordu; aynı
+                   * salonda iki aynı adlı uzman birbirinin randevusunu
+                   * görüp yönetebiliyordu. `id` burada kullanıcı kimliği
+                   * (rotalar ona bağlı, değiştirmiyoruz); randevu tarafı
+                   * `Specialist.id` istiyor.
+                   */
+                  specialistId: m.id,
                   name: u?.name ?? '',
                   role: m.bio.slice(0, 40),
                   image: img,

@@ -50,10 +50,25 @@ const MENU: {
   // için buraya da kondu.
   { key: 'profile.menu.share', icon: 'share-social-outline', sellerOnly: true },
   { key: 'profile.menu.always', icon: 'infinite-outline' },
-  { key: 'profile.menu.rewards', icon: 'gift-outline' },
+  /*
+   * PUANLAR YALNIZ MÜŞTERİDE.
+   *
+   * Kurucu: "uzman kısmında puanlarım diye bir şey yok. uzman ve salon
+   * puan toplayamaz."
+   *
+   * AYNA Puanı müşterinin harcamasından doğuyor ve randevuda indirim
+   * olarak kullanılıyor. Uzman/salon harcama yapmıyor; menüde bir puan
+   * ekranı görmek onlara olmayan bir hak vaat ediyordu.
+   *
+   * Uzmanın karşılığı BAŞARI YÜZDESİ — tamamlanan randevu, değerlendirme
+   * ve cevap süresinden hesaplanıyor (`/seller/reports`).
+   */
+  { key: 'profile.menu.rewards', icon: 'gift-outline', customerOnly: true },
   { key: 'profile.menu.budget', icon: 'wallet-outline', customerOnly: true },
   { key: 'profile.menu.saved', icon: 'bookmark-outline' },
-  { key: 'profile.menu.referral', icon: 'gift-outline' },
+  // Davet ödülü de PUAN veriyor: uzman/salon puan toplayamadığı için
+  // onlara gösterilmiyor.
+  { key: 'profile.menu.referral', icon: 'gift-outline', customerOnly: true },
   { key: 'profile.menu.safety', icon: 'shield-checkmark-outline' },
   // Adresler MÜŞTERİ kavramı (hizmetin geleceği yer). Uzmanın çalışma adresi
   // profil bilgisinde; ayrı bir adres defteri anlamsızdı.
@@ -69,6 +84,7 @@ export default function ProfileScreen() {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const uyeNo = useStore((s) => s.currentUser?.id ?? '');
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -191,6 +207,36 @@ export default function ProfileScreen() {
             {phone || t('nav.profile')}
           </Text>
         </View>
+        {/*
+         * ÜYE NUMARASI GÖRÜNÜR.
+         *
+         * Kurucu: "tüm kullanıcıların bir ID'si olması ve bu ID'ye göre
+         * işlemlerin değerlendirilmesi daha mantıklı olabilir. ID numarası
+         * profil kısmında yazabilir."
+         *
+         * Kimlik zaten vardı ama hiçbir yerde GÖRÜNMÜYORDU: destek
+         * konuşmasında kullanıcı ancak adını söyleyebiliyordu ve adaşlar
+         * ayırt edilemiyordu. Dokununca panoya kopyalanıyor.
+         *
+         * Tam kimlik uzun; ilk sekiz karakter destek için yeterli ayrım
+         * veriyor — kopyalanan ise TAM kimlik.
+         */}
+        {uyeNo ? (
+          <View style={styles.contactRow}>
+            <Ionicons name="finger-print-outline" size={13} color={colors.muted} />
+            {/*
+             * SEÇİLEBİLİR — panoya kopyalama YERİNE.
+             *
+             * Kopyalama düğmesi yeni bir YEREL MODÜL isterdi; o modül
+             * OTA ile telefona inmez ve tam da takvimde yaşadığımız
+             * "JS güncellendi ama modül yok" hatasına düşerdik. Uzun
+             * basıp seçmek her yapıda çalışıyor.
+             */}
+            <Text variant="caption" tone="muted" style={styles.contactText} selectable>
+              {t('profile.user_id')}: {uyeNo.slice(0, 8).toUpperCase()}
+            </Text>
+          </View>
+        ) : null}
         <View style={styles.badgeRow}>
           {phoneVerified ? (
             <View style={styles.badge}>

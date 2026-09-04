@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLocale } from '../../src/locale';
 import { font, radius, space, type ColorTokens } from '../../src/theme';
-import { darkColors, lightColors } from '../../src/theme.palette';
+import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
@@ -141,15 +141,11 @@ function YolKarti({
         <View style={[styles.dugme, dolu ? styles.dugmeDolu : styles.dugmeBos]}>
           <Text
             variant="caption"
-            style={[styles.dugmeYazi, { color: dolu ? lightColors.accent : colors.onAccent }]}
+            style={[styles.dugmeYazi, { color: dolu ? colors.accent : colors.onAccent }]}
           >
             {cta}
           </Text>
-          <Ionicons
-            name="arrow-forward"
-            size={13}
-            color={dolu ? lightColors.accent : colors.onAccent}
-          />
+          <Ionicons name="arrow-forward" size={13} color={dolu ? colors.accent : colors.onAccent} />
         </View>
       </Pressable>
     </Animated.View>
@@ -172,7 +168,13 @@ const makeStyles = (colors: ColorTokens) =>
       overflow: 'hidden',
       minHeight: 168,
     },
-    kartDolu: { backgroundColor: lightColors.accent },
+    /*
+     * Zemin SEÇİLEN AKSANDAN. `lightColors.accent` sabitiydi: kullanıcı
+     * hangi rengi seçerse seçsin kart aynı kırmızı kalıyordu ve üstündeki
+     * yazı da o sabite göre ayarlıydı — seçilen renk değişince kontrast
+     * bozuluyordu.
+     */
+    kartDolu: { backgroundColor: colors.accent },
     kartBos: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.accentSoft },
     basili: { opacity: 0.97, transform: [{ scale: 0.985 }] },
 

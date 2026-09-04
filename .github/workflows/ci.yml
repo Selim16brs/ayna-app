@@ -30,6 +30,11 @@ jobs:
       JWT_ACCESS_SECRET: ci-access-secret
       JWT_REFRESH_SECRET: ci-refresh-secret
       FIELD_ENCRYPTION_KEY: ci-field-encryption-key-0000
+      # Duman testi yönetici olarak giriş yapıp uzman hesabını AÇIYOR:
+      # onay kapısı eklendikten sonra uzman onaysız katalogda görünmüyor
+      # ve akışın tamamı ancak onayla birlikte sınanabiliyor. Şifre CI'a
+      # özel; veritabanı her koşuda sıfırdan kuruluyor.
+      ADMIN_BOOTSTRAP_PASSWORD: ci-admin-Duman1234
     steps:
       - uses: actions/checkout@v4
       # pnpm sürümü package.json'daki "packageManager" alanından okunur (çift tanım = hata)

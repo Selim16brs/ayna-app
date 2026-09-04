@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import type { SubmitKycInput } from './kyc.dto';
 
 // EK Z.3 — Ağır KYC servisi. Uzman/salon belge yükler → admin onaylar → "doğrulanmış" rozeti.
@@ -12,7 +13,10 @@ import type { SubmitKycInput } from './kyc.dto';
 // üstüne opsiyonel güven katmanı ekler).
 @Injectable()
 export class KycService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
   // Uzman/salon başvuru gönderir (pending). Mevcut pending varsa yenisiyle değişir.
   async submit(userId: string, role: string, input: SubmitKycInput) {
@@ -24,8 +28,21 @@ export class KycService {
     }
     // Aynı kullanıcının bekleyen başvurusunu temizle (tek aktif başvuru)
     await this.prisma.kycVerification.deleteMany({ where: { userId, status: 'pending' } });
+    /*
+     * BELGELER DEPOYA TAŞINIYOR.
+     *
+     * Uygulama fotoğrafı base64 gönderiyor. Veritabanına ham base64
+     * yazmak satırı megabaytlara şişirir ve her okuma onu taşır —
+     * yönetici kuyruğu listelemek bile ağırlaşırdı. Depoya taşınıp
+     * yerine adresi saklanıyor; depo yapılandırılmamışsa `put` geleni
+     * olduğu gibi döndürüyor ve akış yine çalışıyor.
+     */
+    const belgeler: string[] = [];
+    for (const d of input.documents) {
+      belgeler.push((await this.storage.put(d, 'kyc')) ?? d);
+    }
     const v = await this.prisma.kycVerification.create({
-      data: { userId, docType: input.docType, documents: input.documents, status: 'pending' },
+      data: { userId, docType: input.docType, documents: belgeler, status: 'pending' },
     });
     await this.prisma.user.update({ where: { id: userId }, data: { kycStatus: 'pending' } });
     return this.map(v);

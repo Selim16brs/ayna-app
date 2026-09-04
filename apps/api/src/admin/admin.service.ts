@@ -578,10 +578,22 @@ export class AdminService {
   }
 
   // §uzman onboarding — admin uzman doğrulama kuyruğu (bağımsız uzmanlar)
+  /**
+   * UZMAN DOĞRULAMA KUYRUĞU.
+   *
+   * ── SALONA BAĞLI UZMAN KUYRUĞA HİÇ DÜŞMÜYORDU ──────────────────────
+   *
+   * Kurucu: "uzman onayı admin paneline düşmüyor."
+   *
+   * Sorgu `kind: 'independent'` ile süzüyordu: bir salona bağlanan uzman
+   * kayıtlarının TAMAMI kuyruğun dışında kalıyordu. Yönetici onlardan
+   * haberdar bile olmuyor, uzman ise onaysız çalışmaya başlıyordu.
+   *
+   * Onay bekleyenler BAŞTA: yönetici sıradaki işi aramak zorunda kalmasın.
+   */
   async specialists() {
     const rows = await this.prisma.specialist.findMany({
-      where: { kind: 'independent' },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
       take: 300,
     });
     const userIds = rows.map((s) => s.userId);
@@ -619,8 +631,30 @@ export class AdminService {
           },
           uzmanKayitli(s.entityType, s.iin),
         ),
+        // Onay kapısı: onaysız uzman katalogda görünmüyor, randevu alamıyor.
+        status: s.status,
+        rejectReason: s.rejectReason,
+        /** Salona bağlı mı — kuyruğa artık ikisi de düşüyor. */
+        kind: s.kind,
         createdAt: s.createdAt,
       };
+    });
+  }
+
+  /**
+   * Uzman hesabını AÇ / REDDET.
+   *
+   * Doğrulama rozetlerinden (`setSpecialistVerification`) AYRI: rozetler
+   * "neyi doğruladık" der, bu ise "çalışabilir mi" der. İkisini tek
+   * düğmeye bağlamak, sertifikasını henüz yüklememiş bir uzmanı da
+   * kapatmak olurdu.
+   */
+  async setSpecialistStatus(id: string, status: 'approved' | 'rejected', reason?: string) {
+    const sp = await this.prisma.specialist.findUnique({ where: { id } });
+    if (!sp) throw new NotFoundException({ code: 'SPECIALIST_NOT_FOUND', message: 'Uzman yok' });
+    return this.prisma.specialist.update({
+      where: { id },
+      data: { status, rejectReason: status === 'rejected' ? (reason ?? '') : null },
     });
   }
 
@@ -716,6 +750,8 @@ export class AdminService {
         status: true,
         gender: true,
         phoneVerified: true,
+        // Randevu kapısı: doğrulama YA DA yönetici onayı.
+        adminApproved: true,
         isPremium: true,
         membershipTier: true,
         membershipUntil: true,
@@ -723,6 +759,23 @@ export class AdminService {
       },
     });
     return rows;
+  }
+
+  /**
+   * MÜŞTERİYİ ELLE ONAYLA / ONAYI KALDIR.
+   *
+   * Telefon doğrulamasının ALTERNATİFİ: SMS'i ulaşmayan gerçek bir
+   * müşteri aksi hâlde hiç randevu veremez. Telefonu zaten doğrulanmış
+   * birinde bu bayrağın etkisi yok — kapı ikisinden birine bakıyor.
+   */
+  async setUserApproved(id: string, approved: boolean) {
+    const u = await this.prisma.user.findUnique({ where: { id }, select: { id: true } });
+    if (!u) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: 'Üye yok' });
+    return this.prisma.user.update({
+      where: { id },
+      data: { adminApproved: approved },
+      select: { id: true, adminApproved: true },
+    });
   }
 
   /**
@@ -1237,9 +1290,36 @@ export class AdminService {
     return { deleted: true };
   }
 
-  // Reklam banner yönetimi
+  /**
+   * Reklam banner yönetimi.
+   *
+   * ── PANEL "AKTİF" DERKEN YAYINDA DEMİYORDU ─────────────────────────
+   *
+   * Kurucu: "süresi biten reklam uygulamada görünmüyor ama admin
+   * panelinde hâlâ aktif diye görünüyor."
+   *
+   * Panel `active` BAYRAĞINI gösteriyordu; uygulama ise yayın penceresini
+   * (`startsAt`/`endsAt`) de süzüyor. İkisi ayrı şeydi: süresi dolmuş bir
+   * reklam bayrağı açık olduğu için panelde "Aktif" görünüyor, oysa
+   * kimseye gösterilmiyordu. Yönetici ödeme aldığı reklamın yayında
+   * olduğunu sanıyordu.
+   *
+   * Artık GERÇEK durum da dönüyor: uygulama hangi kuralla süzüyorsa
+   * panel de aynı kuralla etiketliyor.
+   */
   async ads() {
-    return this.prisma.adBanner.findMany({ orderBy: { sortOrder: 'asc' } });
+    const rows = await this.prisma.adBanner.findMany({ orderBy: { sortOrder: 'asc' } });
+    const simdi = Date.now();
+    return rows.map((a) => ({
+      ...a,
+      durum: !a.active
+        ? ('pasif' as const)
+        : a.startsAt && a.startsAt.getTime() > simdi
+          ? ('baslamadi' as const)
+          : a.endsAt && a.endsAt.getTime() <= simdi
+            ? ('doldu' as const)
+            : ('yayinda' as const),
+    }));
   }
 
   async createAd(input: {
@@ -1253,6 +1333,32 @@ export class AdminService {
     startsAt?: string | null | undefined;
     endsAt?: string | null | undefined;
   }) {
+    /*
+     * ── YAYIN PENCERESİ ZORUNLU ──────────────────────────────────────
+     *
+     * Kurucu: "reklam girişleri yaparken başlangıç bitiş tarihleri
+     * seçilmeli. seçilmediyse onay butonu çalışmamalı."
+     *
+     * Tarihler isteğe bağlıydı ve boş bırakılan reklam SINIRSIZ
+     * yayınlanıyordu: ücreti bir aylık ödenmiş bir vitrin, kapatmayı
+     * unutulduğu sürece bedava yayında kalıyordu. Panel de düğmeyi
+     * kapatıyor ama tek gerçek kapı burası — panel dışından gelen bir
+     * istek de reddedilmeli.
+     */
+    const bas = input.startsAt ? new Date(input.startsAt) : null;
+    const son = input.endsAt ? new Date(input.endsAt) : null;
+    if (!bas || Number.isNaN(bas.getTime()) || !son || Number.isNaN(son.getTime())) {
+      throw new BadRequestException({
+        code: 'AD_WINDOW_REQUIRED',
+        message: 'Reklam için başlangıç ve bitiş tarihi zorunlu',
+      });
+    }
+    if (son <= bas) {
+      throw new BadRequestException({
+        code: 'AD_WINDOW_INVALID',
+        message: 'Bitiş tarihi başlangıçtan sonra olmalı',
+      });
+    }
     return this.prisma.adBanner.create({
       data: {
         proId: input.proId,
@@ -1262,10 +1368,10 @@ export class AdminService {
         image: input.image,
         sortOrder: input.sortOrder ?? 0,
         placement: input.placement ?? 'one_cikanlar',
-        // Boş = sınırsız yayın. Tarih verilmişse yayın penceresini SUNUCU
-        // uygular; süresi biten ücretli reklam kendiliğinden düşer.
-        startsAt: input.startsAt ? new Date(input.startsAt) : null,
-        endsAt: input.endsAt ? new Date(input.endsAt) : null,
+        // Pencere ZORUNLU (yukarıda doğrulandı); süresi biten reklam
+        // kendiliğinden düşüyor.
+        startsAt: bas,
+        endsAt: son,
       },
     });
   }

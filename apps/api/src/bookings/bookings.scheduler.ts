@@ -211,15 +211,25 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       data: { depositForfeited: true, finalizeDeadline: null },
     });
 
-    // 5) Brief §4.2 — "VEYA randevu saatine 3 saatten az kalırsa talep
-    //    OTOMATIK_DUSTU olur." Uzmanın 3 saatlik cevap penceresi henüz
-    //    dolmamış olabilir; randevu saatine 3 saatten az kaldıysa o pencere
-    //    zaten anlamsızdır — müşteri son anda "belki gelir" diye bekletilmez.
-    //
-    //    Aynı sınır §4.4 ASKIDA KALMA KORUMASI için de geçerli: push'u hiç
-    //    açmayan müşterinin 10 dakikası hiç başlamaz ve randevu sonsuza kadar
-    //    slotu tutardı.
-    const esikNoktasi = new Date(now.getTime() + ESIK_MS);
+    /*
+     * 5) RANDEVU SAATİ GEÇTİ — bekleyen talep/depozito düşüyor.
+     *
+     * ── ÖNCEDEN 3 SAAT ÖNCESİNDEN DÜŞÜYORDU ──────────────────────────
+     *
+     * Kurucu: "müşteriden gelen randevu isteği taleplerde görünmüyor.
+     * takvimde çıktı ve orada da hemen süresi doldu diye kapanmış, teklif
+     * verilmeden… hemen süre doldu denmemesi lazım."
+     *
+     * Eşik randevu saatinden 3 SAAT ÖNCESİYDİ: sabah 08:30'da saat 10:00
+     * için gelen bir talep uzmana hiç ulaşmadan ilk zamanlayıcı turunda
+     * düşüyordu. Aynı gün randevu almak imkânsızdı.
+     *
+     * Cevap penceresi artık randevuya kalan süreyle ORANTILI
+     * (`cevapPenceresiMs`) — yani "uzman zamanında yanıt vermedi" kararını
+     * o pencere veriyor (yukarıdaki 4. adım). Burada kalan tek gerçek
+     * sınır randevu saatinin GEÇMİŞ olması: geçmişe randevu onaylanamaz.
+     */
+    const esikNoktasi = new Date(now.getTime());
     const gecKalanlar = await this.prisma.booking.findMany({
       where: {
         status: { in: ['onay_bekliyor', 'depozito_bekliyor'] },
@@ -231,7 +241,7 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
     if (gecKalanlar.length) {
       await this.prisma.booking.updateMany({
         where: { id: { in: gecKalanlar.map((b) => b.id) } },
-        data: { status: 'otomatik_dustu', cancelReason: 'Randevu saatine 3 saatten az kaldı' },
+        data: { status: 'otomatik_dustu', cancelReason: 'Randevu saati geçti' },
       });
       for (const b of gecKalanlar) {
         if (!b.userId) continue;

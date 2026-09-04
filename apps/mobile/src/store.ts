@@ -268,6 +268,8 @@ export interface AddBookingInput {
   proName: string;
   proImage: string;
   uzmanName?: string;
+  /** Uzman kaydının kimliği — eşleşme ADLA değil bununla yapılıyor. */
+  uzmanId?: string;
   startMs: number;
   durationMin: number;
   price: number;
@@ -445,6 +447,22 @@ interface State {
    */
   acilisKatalog: UzakKatalog | null;
   setAcilisKatalog: (k: UzakKatalog | null) => void;
+  /**
+   * HOŞ GELDİN MESAJINI GÖRMÜŞ ÜYELER.
+   *
+   * Kurucu: "karşılama mesajında AYNA'ya hoş geldin yazısı sadece ilk
+   * girişte görünür, sonrasında o kullanıcı için bir daha gösterilmez."
+   *
+   * Rotasyon durumu HESABA ÖZEL olduğu için çıkışta sıfırlanıyor (yeni
+   * üye öncekinin listesini devralmamalı). Ama bu sıfırlama hoş geldin
+   * mesajını da unutturuyordu: AYNI kullanıcı çıkıp girdiğinde mesaj
+   * yeniden çıkıyordu.
+   *
+   * Bu liste ÜYE KİMLİKLERİNİ tutuyor ve çıkışta silinmiyor — kimliğe
+   * bağlı olduğu için başka bir üyeye sızmıyor.
+   */
+  hosGeldinGorenler: string[];
+  hosGeldiniIsaretle: (userId: string) => void;
   setSellerProfile: (p: { social?: SocialValue; hours?: DayHours[]; certs?: string[] }) => void;
   // §10.1/§6.2 — salon-seviyesi profil (uzman profilinden AYRI). Kalıcı saklanır.
   salonProfile: {
@@ -467,6 +485,7 @@ interface State {
   salonAddOffline: (input: {
     salonName: string;
     uzmanName: string;
+    uzmanId?: string;
     customerName: string;
     customerPhone: string;
     service: string;
@@ -559,7 +578,13 @@ interface State {
   ) => Promise<boolean>;
   // §4.5 — uzman ayrılığında randevu devri (sessiz silme YASAK)
   /** Kadrodan çıkan uzmanın açık randevularını iptal eder; iptal edilen sayıyı döner. */
-  cikanUzmanRandevulari: (uzmanAdi: string) => number;
+  /**
+   * Kadrodan çıkarılan uzmanın açık randevularını kapatır.
+   *
+   * Parametre KİMLİK — eskiden addı ve aynı adlı bir başka uzmanın
+   * randevuları da iptal ediliyordu.
+   */
+  cikanUzmanRandevulari: (uzmanId: string) => number;
   // §7.1 — çift puanlama (uzman + ops. salon) + alt kırılım etiketleri
   reviewBooking: (
     id: string,
@@ -1026,6 +1051,15 @@ export const useStore = create<State>()(
       setSonAcilis: (ms) => set({ sonAcilisMs: ms }),
       acilisKatalog: null,
       setAcilisKatalog: (k) => set({ acilisKatalog: k }),
+      hosGeldinGorenler: [],
+      hosGeldiniIsaretle: (userId) =>
+        set((s) =>
+          s.hosGeldinGorenler.includes(userId)
+            ? {}
+            : // Son 50 üye yeterli: bu cihazda daha fazlası birikmez ve
+              // liste sonsuza kadar büyümemeli.
+              { hosGeldinGorenler: [...s.hosGeldinGorenler, userId].slice(-50) },
+        ),
       butceLimiti: null,
       /*
        * 0 ya da negatif "limit yok" demek: kullanıcı alanı boşaltıp
@@ -1192,6 +1226,7 @@ export const useStore = create<State>()(
           proName: input.proName,
           proImage: input.proImage,
           ...(input.uzmanName ? { uzmanName: input.uzmanName } : {}),
+          ...(input.uzmanId ? { uzmanId: input.uzmanId } : {}),
           ...(input.offerId ? { offerId: input.offerId } : {}),
           ...(input.serviceNames?.length ? { serviceNames: input.serviceNames } : {}),
           startMs: input.startMs,
@@ -1231,6 +1266,7 @@ export const useStore = create<State>()(
           proName: input.salonName,
           proImage: '',
           uzmanName: input.uzmanName,
+          uzmanId: input.uzmanId,
           customerName: input.customerName,
           ...(input.customerPhone ? { customerPhone: input.customerPhone } : {}),
           startMs: input.startMs,
@@ -1600,15 +1636,28 @@ export const useStore = create<State>()(
             ...(input.preferredSlots?.length ? { preferredSlots: input.preferredSlots } : {}),
           });
           set((s) => ({ demands: [demand, ...s.demands.filter((d) => d.id !== demand.id)] }));
-          // Müşteri tarafı: teklif toplama başladı (uygulama-içi bildirim)
+          /*
+           * ── OLMAYAN TEKLİF DUYURULMUYOR ──────────────────────────────
+           *
+           * Kurucu: "kullanıcı teklifi aldığı gibi hiçbir teklif gelmeden
+           * direkt bildirim geldi ve bildirimde 'teklifler gelmeye
+           * başladı' yazıyor. bu şekilde uydurma şeyler olmamalı."
+           *
+           * Bildirim talep OLUŞTURULUR OLUŞTURULMAZ atılıyordu — üstelik
+           * `n: 0` ile, yani "0 uzman talebini yanıtladı" diye. Hiçbir
+           * uzman henüz görmemişken teklif geldiğini söylemek.
+           *
+           * Artık GERÇEKTEN olan şey yazılıyor: talep uzmanlara iletildi.
+           * "Teklifler geldi" bildirimi teklif GERÇEKTEN düştüğünde
+           * atılıyor (`takeNewOffers` yolu).
+           */
           get().pushNotification({
             type: 'quote',
             audience: 'user',
-            titleKey: 'notif.offers_started',
-            bodyKey: 'notif.offers_started_b',
-            params: { n: 0 },
+            titleKey: 'notif.demand_sent',
+            bodyKey: 'notif.demand_sent_b',
             dateLabel: 'Az önce',
-            icon: 'pricetags-outline',
+            icon: 'paper-plane-outline',
             route: `/quote/results?id=${demand.id}`,
           });
           return demand.id;
@@ -1802,11 +1851,21 @@ export const useStore = create<State>()(
        * yasak — her randevu sunucuda da iptal edilir, depozito ödendiyse §4.10
        * iade hakkı doğar ve müşteriye bildirim gider. İptal edilen sayı döner.
        */
-      cikanUzmanRandevulari: (uzmanAdi) => {
+      cikanUzmanRandevulari: (uzmanId) => {
         const now = Date.now();
+        /*
+         * KİMLİKLE eşleşiyor. Eskiden `b.uzmanName === uzmanAdi` idi:
+         * aynı salonda iki "Madina" varsa birini kadrodan çıkarmak
+         * DİĞERİNİN randevularını da iptal ediyordu — müşterilere
+         * "uzman kadrodan ayrıldı" bildirimi gidiyordu.
+         *
+         * Kimliği olmayan eski randevular ETKİLENMİYOR: yanlış randevuyu
+         * iptal etmektense dokunmamak doğru.
+         */
         const etkilenen = get().bookings.filter(
           (b) =>
-            b.uzmanName === uzmanAdi &&
+            !!uzmanId &&
+            b.uzmanId === uzmanId &&
             b.startMs > now &&
             SLOT_HOLDING_STATES.includes(b.status as never),
         );
@@ -3363,6 +3422,7 @@ export const useStore = create<State>()(
         acilisDurumu: s.acilisDurumu,
         sonAcilisMs: s.sonAcilisMs,
         acilisKatalog: s.acilisKatalog,
+        hosGeldinGorenler: s.hosGeldinGorenler,
         butceLimiti: s.butceLimiti,
         salonProfile: s.salonProfile,
         demandNotif: s.demandNotif,

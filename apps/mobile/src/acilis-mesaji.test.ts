@@ -132,3 +132,53 @@ test('MESAJ bir kez seçiliyor — ekranda dururken değişmiyor', () => {
   const k = readFileSync(join(__dirname, '..', 'app', '_layout.tsx'), 'utf8');
   assert.match(k, /acilisSecildi\.current = true;/, 'her render yeniden seçiliyor');
 });
+
+test('AÇILIŞ MESAJI alt barların ÜSTÜNDE çiziliyor', () => {
+  /*
+   * Kurucu: "açılışta mesaj çıkarken altta alt menüde görünüyor. o hata,
+   * mesaj bitene kadar ana ekrandan bir şey çıkmaması lazım."
+   *
+   * React Native kardeşleri SIRAYLA boyuyor: sonra yazılan üste düşüyor.
+   * Mesaj alt barlardan ÖNCE yazılıydı, bu yüzden bar mesajın üstünde
+   * kalıyordu. Sıra tek başına bir kural — testi de sıraya bakıyor.
+   */
+  const k = readFileSync(join(__dirname, '..', 'app', '_layout.tsx'), 'utf8');
+  const mesaj = k.indexOf('<AcilisMesaji');
+  assert.ok(mesaj > 0, 'açılış mesajı çizilmiyor');
+  for (const bar of ['<SalonTabBar />', '<SellerTabBar />', '<AppTabBar />', '<OfflineBanner />']) {
+    const i = k.indexOf(bar);
+    assert.ok(i > 0, `${bar} bulunamadı`);
+    assert.ok(i < mesaj, `${bar} açılış mesajından SONRA çiziliyor — mesajın üstüne düşer`);
+  }
+});
+
+test('HOŞ GELDİN mesajı ÜYE BAŞINA bir kez — çıkış/giriş tekrar ETTİRMİYOR', () => {
+  /*
+   * Kurucu: "AYNA'ya hoş geldin yazısı sadece ilk girişte görünür,
+   * sonrasında o kullanıcı için bir daha gösterilmez."
+   *
+   * Rotasyon durumu hesaba özel olduğu için çıkışta sıfırlanıyor (yeni
+   * üye öncekinin listesini devralmamalı) — ama bu, AYNI kullanıcının
+   * hoş geldin mesajını da unutturuyordu: çıkıp girince yeniden
+   * çıkıyordu.
+   *
+   * Karar artık ÜYE KİMLİĞİNE bağlı ve o liste çıkışta silinmiyor.
+   */
+  const layout = readFileSync(join(__dirname, '..', 'app', '_layout.tsx'), 'utf8');
+  assert.match(
+    layout,
+    /dahaOnceAcildi: st\.hosGeldinGorenler\.includes\(currentUser\.id\)/,
+    'ilk giriş kararı üye kimliğine bağlı değil',
+  );
+  assert.match(layout, /st\.hosGeldiniIsaretle\(currentUser\.id\)/, 'üye işaretlenmiyor');
+
+  const store = readFileSync(join(__dirname, 'store.ts'), 'utf8');
+  // Liste sonsuza kadar büyümemeli.
+  assert.match(store, /\.slice\(-50\)/, 'liste sınırsız büyüyor');
+  // Aynı kimlik iki kez yazılmamalı.
+  assert.match(
+    store,
+    /s\.hosGeldinGorenler\.includes\(userId\)\s*\?\s*\{\}/,
+    'kimlik tekrar yazılıyor',
+  );
+});

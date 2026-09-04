@@ -107,27 +107,84 @@ test('§3 — saati GELMEMİŞ randevu hizmet gününe geçmez', async () => {
   assert.equal(b.status, 'kesinlesti');
 });
 
-test('§4.2 — randevu saatine 3 saatten az kalan TALEP otomatik düşer', async () => {
+test('AYNI GÜN talebi ERKENDEN düşmüyor — pencere daha dolmadı', async () => {
+  /*
+   * Kurucu: "hemen süre doldu denmemesi lazım."
+   *
+   * Kural randevu saatine 3 saatten az kalan HER talebi düşürüyordu:
+   * sabah 08:30'da saat 10:00 için gelen talep uzmana ulaşmadan
+   * kapanıyordu — aynı gün randevu almak imkânsızdı.
+   *
+   * Karar artık CEVAP PENCERESİNİN (randevuya kalan süreyle orantılı)
+   * dolup dolmadığına bakıyor.
+   */
   const b: Kayit = {
     id: 'b3',
     status: 'onay_bekliyor',
-    startAt: dk(100), // < 3 saat
-    responseDeadline: dk(120), // cevap penceresi HENÜZ dolmadı
+    startAt: dk(100), // 1 saat 40 dk sonra
+    responseDeadline: dk(50), // pencere HENÜZ dolmadı
     responseReminders: 2,
     userId: 'u1',
     gunHatirlatmalari: 0,
   };
   await kur([b]).tick();
-  assert.equal(b.status, 'otomatik_dustu', 'son anda cevapsız talep müşteriyi bekletiyor');
+  assert.equal(b.status, 'onay_bekliyor', 'talep pencere dolmadan düşürüldü');
 });
 
-test('§4.4 — askıda kalan DEPOZİTO randevusu 3 saat eşiğinde düşer', async () => {
-  // Müşteri push'u hiç açmadıysa 10 dakikalık sayaç başlamaz; bu randevu
-  // eşik koruması olmadan slotu sonsuza kadar tutardı.
+test('CEVAP PENCERESİ dolan talep düşüyor', async () => {
+  const b: Kayit = {
+    id: 'b3b',
+    status: 'onay_bekliyor',
+    startAt: dk(100),
+    responseDeadline: dk(-1), // pencere doldu
+    responseReminders: 2,
+    userId: 'u1',
+    gunHatirlatmalari: 0,
+  };
+  await kur([b]).tick();
+  assert.equal(b.status, 'otomatik_dustu', 'cevapsız talep müşteriyi bekletiyor');
+});
+
+test('RANDEVU SAATİ GEÇEN talep düşüyor', async () => {
+  // Geçmişe randevu onaylanamaz; pencere hâlâ açık olsa bile.
+  const b: Kayit = {
+    id: 'b3c',
+    status: 'onay_bekliyor',
+    startAt: dk(-5),
+    responseDeadline: dk(120),
+    userId: 'u1',
+    gunHatirlatmalari: 0,
+  };
+  await kur([b]).tick();
+  assert.equal(b.status, 'otomatik_dustu');
+});
+
+test('AYNI GÜN depozito randevusu erkenden düşmüyor', async () => {
+  // 3 saat eşiği depozito tarafında da aynı hatayı yapıyordu: aynı gün
+  // randevusu depozito aşamasında kapanıyordu.
   const b: Kayit = {
     id: 'b4',
     status: 'depozito_bekliyor',
     startAt: dk(100),
+    depositDeadline: dk(8), // 10 dakikalık sayaç işliyor
+    userId: 'u1',
+    gunHatirlatmalari: 0,
+  };
+  await kur([b]).tick();
+  assert.equal(b.status, 'depozito_bekliyor', 'sayaç dolmadan düşürüldü');
+});
+
+test('ASKIDA KALAN depozito randevusu SLOTU sonsuza kadar TUTMUYOR', async () => {
+  /*
+   * Müşteri push'u hiç açmadıysa 10 dakikalık sayaç başlamayabilir ve
+   * randevu slotu sonsuza kadar tutardı. Koruma duruyor ama sınır artık
+   * randevu SAATİ: eskiden 3 saat öncesiydi ve aynı gün randevularını
+   * öldürüyordu.
+   */
+  const b: Kayit = {
+    id: 'b4b',
+    status: 'depozito_bekliyor',
+    startAt: dk(-1),
     depositDeadline: dk(500),
     userId: 'u1',
     gunHatirlatmalari: 0,

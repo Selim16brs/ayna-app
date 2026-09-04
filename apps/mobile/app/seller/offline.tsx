@@ -5,6 +5,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { hasConflict } from '@ayna/domain';
 import type { Appointment } from '../../src/data';
 import { localWallClockToAlmatyMs } from '../../src/datetime';
+import { useSalonStaff } from '../../src/staff';
 import { useStore } from '../../src/store';
 import type { SellerServiceRow } from '../../src/store';
 import { fillParams, useLocale } from '../../src/locale';
@@ -77,7 +78,24 @@ export default function OfflineBookingScreen() {
   // Kayıtlı hizmet yoksa doğrudan elle giriş; varsa "Elle gir" ile geçilebilir
   const [manual, setManual] = useState(!hasServices);
   const [openCat, setOpenCat] = useState<string | null>(svcGroups[0]?.cat.id ?? null);
-  const [uzman, setUzman] = useState(typeof params.uzman === 'string' ? params.uzman : '');
+  /*
+   * UZMAN SERBEST METİN DEĞİL, KADRODAN SEÇİM.
+   *
+   * Alan elle yazılan bir addı ve çakışma kontrolü o adla yapılıyordu:
+   * aynı adlı iki uzman birbirinin saatini "dolu" gösteriyor, salon
+   * gerçekte boş olan bir saate kayıt açamıyordu. Bir yazım hatası da
+   * randevuyu kimseye bağlamıyordu.
+   *
+   * Kadro boşsa (henüz uzman bağlanmamış) alan hiç çıkmıyor — seçilecek
+   * kimse yok.
+   */
+  const { staff: kadro } = useSalonStaff();
+  const [uzmanId, setUzmanId] = useState<string>(() => {
+    const gelen = typeof params.uzman === 'string' ? params.uzman : '';
+    return gelen;
+  });
+  const seciliUzman = kadro.find((u) => u.id === uzmanId) ?? null;
+  const uzman = seciliUzman?.name ?? '';
   // Tarih + saat — Benim İçin/Randevu al ile AYNI native model
   const [when, setWhen] = useState<Date>(() => new Date(startParam ?? Date.now() + 3_600_000));
   const [dur, setDur] = useState('60');
@@ -125,9 +143,13 @@ export default function OfflineBookingScreen() {
     const durationMin = Number(dur.replace(/[^0-9]/g, '')) || 60;
     // §4.2 — çift rezervasyon önlemi: aynı uzmanın çakışan randevusu varsa engelle
     const candidate = { startMs, endMs: startMs + durationMin * 60_000 };
-    const uzmanName = uzman.trim();
+    /*
+     * ÇAKIŞMA KİMLİĞE GÖRE. Adla süzülüyordu: aynı adlı iki uzman
+     * birbirinin saatini dolu gösteriyor, gerçekte boş bir saat
+     * "çakışıyor" diye reddediliyordu.
+     */
     const conflictBusy = bookings
-      .filter((b) => b.status !== 'iptal_musteri' && (uzmanName ? b.uzmanName === uzmanName : true))
+      .filter((b) => b.status !== 'iptal_musteri' && (uzmanId ? b.uzmanId === uzmanId : true))
       .map((b) => ({ startMs: b.startMs, endMs: b.startMs + b.durationMin * 60_000 }));
     if (hasConflict(candidate, conflictBusy)) {
       Alert.alert(t('offline.conflict_title'), t('offline.conflict'));
@@ -141,7 +163,8 @@ export default function OfflineBookingScreen() {
       proId: '',
       proName: myName,
       proImage: '',
-      uzmanName: uzman.trim() || undefined,
+      uzmanName: uzman || undefined,
+      ...(uzmanId ? { uzmanId } : {}),
       customerName: customer.trim(),
       startMs,
       durationMin,
@@ -285,15 +308,24 @@ export default function OfflineBookingScreen() {
           ) : null}
         </View>
         {/* §9/§10 — "Uzman" alanı YALNIZ salonda (uzman zaten kendisidir) */}
-        {isSalon ? (
+        {isSalon && kadro.length > 0 ? (
           <Field label={t('offline.uzman')}>
-            <TextInput
-              style={styles.input}
-              value={uzman}
-              onChangeText={setUzman}
-              placeholder="Madina"
-              placeholderTextColor={colors.muted}
-            />
+            <View style={styles.uzmanSecim}>
+              {kadro.map((u) => {
+                const on = u.id === uzmanId;
+                return (
+                  <Pressable
+                    key={u.id}
+                    onPress={() => setUzmanId(on ? '' : u.id)}
+                    style={[styles.uzmanCip, on && styles.uzmanCipOn]}
+                  >
+                    <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} numberOfLines={1}>
+                      {u.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </Field>
         ) : null}
         {/* Tarih + saat — native seçici (Benim İçin/Randevu al ile aynı) */}
@@ -397,6 +429,14 @@ const makeStyles = (colors: ColorTokens) =>
     fieldFlex: { flex: 1 },
     label: {},
     rowFields: { flexDirection: 'row', gap: space(1.5) },
+    uzmanSecim: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    uzmanCip: {
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1),
+      borderRadius: radius.pill,
+      backgroundColor: colors.surfaceMuted,
+    },
+    uzmanCipOn: { backgroundColor: colors.accent },
     input: {
       backgroundColor: colors.surface,
       borderRadius: radius.md,

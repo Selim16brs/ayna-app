@@ -1,9 +1,23 @@
 import { z } from 'zod';
+import { sifreGecerli } from '@ayna/domain';
+
+/*
+ * ŞİFRE KURALI YALNIZ YENİ ŞİFRELERDE.
+ *
+ * `loginSchema` BİLEREK dokunulmadı: girişte de dayatsaydık kuralı
+ * karşılamayan eski şifreyle kayıtlı herkes bir gecede uygulamadan
+ * kilitlenirdi. Kurucu: "şu andaki kayıtlı olanlar kalsın ama bundan
+ * sonrakilerde dikkat edelim."
+ */
+const yeniSifre = z
+  .string()
+  .min(6)
+  .refine(sifreGecerli, { message: 'Şifre en az bir büyük harf ve bir rakam içermeli' });
 
 export const registerSchema = z.object({
   name: z.string().min(2),
   phone: z.string().min(7),
-  password: z.string().min(6),
+  password: yeniSifre,
   email: z.string().email().optional(),
   city: z.string().optional(),
   gender: z.enum(['female', 'unspecified']).optional(),
@@ -36,7 +50,8 @@ export const otpVerifySchema = z.object({
 export const resetPasswordSchema = z.object({
   phone: z.string().min(7),
   code: z.string().regex(/^\d{6}$/, '6 haneli kod'),
-  newPassword: z.string().min(6),
+  // Şifre SIFIRLAMA da yeni bir şifre üretiyor: aynı kural.
+  newPassword: yeniSifre,
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

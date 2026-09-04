@@ -11,7 +11,6 @@ import { useLocale } from '../../src/locale';
 import { bildirimIzniIste } from '../../src/notifications';
 import { useStore } from '../../src/store';
 import { type ColorTokens, space } from '../../src/theme';
-import { lightColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   Button,
@@ -340,17 +339,27 @@ export default function ScheduleScreen() {
         {/* §4.1.3 — ÖZET: "Göndermeden önce açıkça gösterilir: hizmetler,
             toplam süre, toplam tutar, depozito tutarı (%10), iptal kuralı."
             Kullanıcı neyi kabul ettiğini göndermeden ÖNCE görmeli. */}
+        {/*
+          ── AKSAN ZEMİNDE SAYFA RENGİ YOK ────────────────────────────
+          Kurucu: "okunurluluk sorunu var."
+
+          Kartın zemini AKSAN; yazıları ise sayfa tonlarıydı (`ink`,
+          `muted`). Koyu mürekkep ve gri, doygun bir zeminde okunmuyor —
+          "Özet" ve "Toplam süre" satırları neredeyse görünmezdi.
+          Aksan zemininde YAZI DA aksanın karşıtı olmalı (`onAccent`);
+          ikisi paletde birlikte tanımlı ve birlikte değişiyor.
+        */}
         <View style={[styles.ozetKart, shadow.soft]}>
-          <Text variant="caption" tone="muted">
+          <Text variant="caption" style={styles.ozetIkincil}>
             {t('booking.schedule.summary')}
           </Text>
           {(offer ? [{ name: offer.title, price: offer.finalPrice }] : seciliHizmetler).map(
             (sv) => (
               <View key={sv.name} style={styles.ozetSatir}>
-                <Text variant="body" tone="ink" numberOfLines={1} style={styles.ozetAd}>
+                <Text variant="body" numberOfLines={1} style={[styles.ozetAd, styles.ozetYazi]}>
                   {sv.name}
                 </Text>
-                <Text variant="body" tone="ink">
+                <Text variant="body" style={styles.ozetYazi}>
                   {(sv.price ?? 0).toLocaleString('tr-TR')} ₸
                 </Text>
               </View>
@@ -358,18 +367,18 @@ export default function ScheduleScreen() {
           )}
           <View style={styles.ozetAyrac} />
           <View style={styles.ozetSatir}>
-            <Text variant="caption" tone="muted">
+            <Text variant="caption" style={styles.ozetIkincil}>
               {t('booking.schedule.total_time')}
             </Text>
-            <Text variant="body" tone="ink">
+            <Text variant="body" style={styles.ozetYazi}>
               {durationMin} {t('common.min')}
             </Text>
           </View>
           <View style={styles.ozetSatir}>
-            <Text variant="bodyStrong" tone="ink">
+            <Text variant="bodyStrong" style={styles.ozetYazi}>
               {t('booking.schedule.total')}
             </Text>
-            <Text variant="h2" tone="ink">
+            <Text variant="h2" style={styles.ozetYazi}>
               {(offer ? offer.finalPrice : toplamTutar).toLocaleString('tr-TR')} ₸
             </Text>
           </View>
@@ -420,19 +429,34 @@ const makeStyles = (colors: ColorTokens) =>
     },
     hizmetAyrac: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
     hizmetGovde: { flex: 1 },
-    // Özet KOYU: tasarım dilinde kararın merkezindeki para koyu kartta ve
-    // büyük. Zemin iki temada da sabit, yazısı da öyle.
+    /*
+     * ÖZET KARTI — kararın merkezindeki para büyük ve dolu kartta.
+     *
+     * Zemin SEÇİLEN AKSANDAN. `lightColors.accent` sabitiydi: kullanıcı
+     * hangi rengi seçerse seçsin kart hep aynı kırmızı kalıyordu.
+     *
+     * Yazılar `onAccent` — paletde aksanın karşıtı olarak tanımlı ve
+     * onunla birlikte değişiyor. Sayfa tonları (`ink`/`muted`) doygun
+     * zeminde okunmuyordu.
+     */
     ozetKart: {
-      backgroundColor: lightColors.accent,
+      backgroundColor: colors.accent,
       borderRadius: 24,
       padding: 20,
       gap: 12,
     },
+    ozetYazi: { color: colors.onAccent },
+    // İkincil satırlar: aynı renk, düşük opaklık. Ayrı bir gri kullanmak
+    // yine kontrastı kaybettirirdi.
+    ozetIkincil: { color: colors.onAccent, opacity: 0.75 },
     ozetSatir: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     ozetAd: { flex: 1, marginRight: space(1) },
+    // Ayraç da kartın kendi yazı renginden: `colors.line` sayfa çizgisi,
+    // doygun zeminde görünmüyordu.
     ozetAyrac: {
       height: StyleSheet.hairlineWidth,
-      backgroundColor: colors.line,
+      backgroundColor: colors.onAccent,
+      opacity: 0.35,
       marginVertical: space(0.5),
     },
     content: { paddingHorizontal: 24, paddingBottom: 32 },

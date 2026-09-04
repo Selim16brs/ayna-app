@@ -13,6 +13,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { reklamGunu } from '@ayna/domain';
 import {
   selectCommissionRate,
+  selectPortraitKesilmis,
   selectPortrait,
   selectUnreadCount,
   useStore,
@@ -72,6 +73,7 @@ export default function ReportsScreen() {
   const [period, setPeriod] = useState<Period>('week');
   const salonName = useStore((s) => s.currentUser?.name) ?? 'AYNA İşletme';
   const portre = useStore(selectPortrait); // bayat portre otomatik elenir
+  const portreKesilmis = useStore(selectPortraitKesilmis);
   /** §4.2 — uzmanın yanıtını bekleyen talepler; en yakın saat önce. */
   // §9.4 — YALNIZ uzman olarak gelen talepler. Uzmanın kendi müşteri
   // randevuları burada görünmemeli: onlar onun kararını beklemiyor.
@@ -387,9 +389,27 @@ export default function ReportsScreen() {
               <Ionicons name="notifications-outline" size={20} color={colors.ink} />
               {unread > 0 ? <View style={styles.basNokta} /> : null}
             </PressableScale>
-            <PressableScale style={styles.avatarHalka} onPress={() => router.push('/seller/menu')}>
+            {/*
+              PORTRE MÜŞTERİ TARAFIYLA AYNI BİÇİMDE.
+
+              Kurucu: "uzmanda da profil fotoğrafı kullanıcı ile aynı
+              formatta daire olmadan arkası kesik çıkmalı."
+
+              Kesilmiş portre daireye sokuluyordu: saçı ve omzu daireden
+              taşan yerinden kesiliyordu. Ham fotoğraf daire içinde
+              kalıyor — kendi arka planını taşıdığı için çerçevesiz
+              göstermek odayı panele yapıştırmak olurdu.
+            */}
+            <PressableScale
+              style={portreKesilmis ? styles.portreKap : styles.avatarHalka}
+              onPress={() => router.push('/seller/menu')}
+            >
               {portre ? (
-                <Image source={{ uri: portre }} style={styles.avatar} />
+                <Image
+                  source={{ uri: portre }}
+                  style={portreKesilmis ? styles.portreKesik : styles.avatar}
+                  resizeMode={portreKesilmis ? 'contain' : 'cover'}
+                />
               ) : (
                 <View style={[styles.avatar, styles.avatarBos]} />
               )}
@@ -510,18 +530,16 @@ export default function ReportsScreen() {
           </View>
         </LinearGradient>
 
-        {/* ═══ PAKET TANITIMI — Figma `promo-card` (radius 24, p20, gap 16) ═══ */}
-        <PressableScale style={styles.paketKart} onPress={() => router.push('/membership')}>
-          <View style={styles.paketIkon}>
-            <Ionicons name="star" size={22} color={colors.accent} />
-          </View>
-          <View style={styles.buyu}>
-            <Text style={styles.paketBaslik}>{t('seller.promo.title')}</Text>
-            <Text style={styles.paketAlt}>{t('seller.promo.sub')}</Text>
-            <Text style={styles.paketBag}>{t('seller.promo.cta')}</Text>
-          </View>
-        </PressableScale>
+        {/*
+          ── BÖLÜM SIRASI KURUCUNUN İSTEĞİ ─────────────────────────────
+          "daha çok müşteriye ulaş bölümü talepler ve takvimim bloğunun
+          altında olmalı" · "ayna vitrin bloğu yanıt ve kalite bloğunun
+          altında olmalı".
 
+          Sıra: günlük iş (talepler + takvim) → paket tanıtımı → yanıt &
+          kalite → vitrin. Satış kartları uzmanın işinin ÜSTÜNDE
+          duruyordu; önce yapması gerekeni görsün.
+        */}
         {/* ═══ TALEPLER + TAKVİM — Figma `grid-row` (iki kart, radius 20, p16) ═══ */}
         <View style={styles.ikiliSatir}>
           <IkiliKart
@@ -538,6 +556,49 @@ export default function ReportsScreen() {
             badge={stats?.upcoming ?? 0}
             onPress={() => router.push('/seller/agenda')}
           />
+        </View>
+
+        {/* ═══ PAKET TANITIMI — Figma `promo-card` (radius 24, p20, gap 16) ═══ */}
+        <PressableScale style={styles.paketKart} onPress={() => router.push('/membership')}>
+          <View style={styles.paketIkon}>
+            <Ionicons name="star" size={22} color={colors.accent} />
+          </View>
+          <View style={styles.buyu}>
+            <Text style={styles.paketBaslik}>{t('seller.promo.title')}</Text>
+            <Text style={styles.paketAlt}>{t('seller.promo.sub')}</Text>
+            <Text style={styles.paketBag}>{t('seller.promo.cta')}</Text>
+          </View>
+        </PressableScale>
+
+        {/* ═══ YANIT & KALİTE — Figma `yanit-kalite-card` (radius 24, p20) ═══ */}
+        <View style={styles.kaliteKart}>
+          <Text style={styles.kaliteBaslik}>{t('reports.quality.title')}</Text>
+          <View style={styles.kaliteSatir}>
+            <KaliteKutu
+              value={
+                quality.avgMin != null
+                  ? `${quality.avgMin} ${t('pro.min')}`
+                  : t('reports.quality.none')
+              }
+              label={t('reports.quality.avg_response')}
+              vurgu
+            />
+            <View style={styles.kaliteAyrac} />
+            <KaliteKutu
+              value={String(quality.depositPending)}
+              label={t('reports.quality.deposit_pending')}
+            />
+            <View style={styles.kaliteAyrac} />
+            <KaliteKutu
+              value={
+                quality.completion != null ? `%${quality.completion}` : t('reports.quality.none')
+              }
+              label={t('reports.quality.completion')}
+            />
+          </View>
+          <View style={styles.ipucu}>
+            <Text style={styles.ipucuYazi}>{t('reports.quality.tip')}</Text>
+          </View>
         </View>
 
         {/* ═══ REKLAM — Figma `reklam-banner` (radius 24, p16, kenarlık altın) ═══
@@ -625,37 +686,6 @@ export default function ReportsScreen() {
             </View>
           </PressableScale>
         )}
-
-        {/* ═══ YANIT & KALİTE — Figma `yanit-kalite-card` (radius 24, p20) ═══ */}
-        <View style={styles.kaliteKart}>
-          <Text style={styles.kaliteBaslik}>{t('reports.quality.title')}</Text>
-          <View style={styles.kaliteSatir}>
-            <KaliteKutu
-              value={
-                quality.avgMin != null
-                  ? `${quality.avgMin} ${t('pro.min')}`
-                  : t('reports.quality.none')
-              }
-              label={t('reports.quality.avg_response')}
-              vurgu
-            />
-            <View style={styles.kaliteAyrac} />
-            <KaliteKutu
-              value={String(quality.depositPending)}
-              label={t('reports.quality.deposit_pending')}
-            />
-            <View style={styles.kaliteAyrac} />
-            <KaliteKutu
-              value={
-                quality.completion != null ? `%${quality.completion}` : t('reports.quality.none')
-              }
-              label={t('reports.quality.completion')}
-            />
-          </View>
-          <View style={styles.ipucu}>
-            <Text style={styles.ipucuYazi}>{t('reports.quality.tip')}</Text>
-          </View>
-        </View>
 
         {/* ═══ YANIT BEKLEYEN YORUM ═══
             Figma'da ayrı bir kart yok; cevapsız kalan düşük puanlı yorum
@@ -862,6 +892,9 @@ const makeStyles = (colors: ColorTokens) =>
     },
     avatarHalka: { padding: 2, borderRadius: 100, borderWidth: 1.5, borderColor: colors.accent },
     avatar: { width: 40, height: 40, borderRadius: 100 },
+    // Kesilmiş portre: çerçevesiz, zeminsiz, kırpmasız — ana sayfayla aynı.
+    portreKap: { width: 48, alignItems: 'center' },
+    portreKesik: { width: 48, height: 48 },
     avatarBos: { backgroundColor: colors.accentSoft },
 
     // canli-ozet-card (radius 24, p20, gap 18) — koyu, iki temada da sabit

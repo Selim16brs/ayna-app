@@ -48,19 +48,48 @@ test('para KOYU kartta gösteriliyor', () => {
   for (const [ad, desen] of [
     ['deposit.tsx', /tutarKart:[\s\S]{0,120}borderRadius: 24/],
     ['refund.tsx', /tutarKart:[\s\S]{0,120}borderRadius: 24/],
-    ['schedule.tsx', /ozetKart:[\s\S]{0,160}backgroundColor: lightColors\.accent/],
+    // Özet kartı SEÇİLEN aksandan. `lightColors.accent` sabitiydi:
+    // kullanıcı hangi rengi seçerse seçsin kart hep aynı kırmızıydı.
+    ['schedule.tsx', /ozetKart:[\s\S]{0,200}backgroundColor: colors\.accent/],
   ] as const) {
     assert.match(oku(ad), desen, `${ad}: para koyu kartta değil`);
   }
 });
 
-test('koyu kart CİHAZ TEMASINDAN bağımsız', () => {
-  // Zemin `colors.accent` olsaydı koyu temada açık mora dönerdi ve üstündeki
-  // açık yazı okunmazdı — daha önce yaşadığımız hata.
-  for (const ad of ['deposit.tsx', 'refund.tsx', 'schedule.tsx']) {
-    const s = oku(ad);
-    assert.match(s, /lightColors/, `${ad}: koyu kart sabit palete bağlı değil`);
+test('koyu GRADYAN kart cihaz temasından bağımsız', () => {
+  // Depozito ve iade kartları KOYU GRADYAN üstünde AÇIK yazı taşıyor.
+  // Gradyan tema ile açılsaydı üstündeki sabit açık yazı okunmazdı —
+  // daha önce yaşadığımız hata.
+  for (const ad of ['deposit.tsx', 'refund.tsx']) {
+    assert.match(oku(ad), /lightColors|darkColors/, `${ad}: koyu kart sabit palete bağlı değil`);
   }
+});
+
+test('AKSAN DOLU kartta yazı SAYFA tonlarını kullanmıyor', () => {
+  /*
+   * Kurucu: "okunurluluk sorunu var."
+   *
+   * Özet kartının zemini aksan, yazıları ise sayfa tonlarıydı (`ink`,
+   * `muted`). Koyu mürekkep ve gri, doygun bir zeminde okunmuyordu:
+   * "Özet" ve "Toplam süre" satırları neredeyse görünmezdi.
+   *
+   * Doğru eşleşme `accent` + `onAccent`: palet ikisini birlikte tanımlıyor
+   * ve `aksan-kontrast.test.ts` her aksan setinde, her temada aralarındaki
+   * kontrastı zaten ölçüyor. Yani bu kart artık ölçülmüş bir çift
+   * kullanıyor.
+   */
+  const s = oku('schedule.tsx');
+  const kart = s.slice(s.indexOf('<View style={[styles.ozetKart'), s.indexOf('<RulesCard'));
+  assert.ok(kart.length > 200, 'özet kartı bulunamadı');
+  assert.doesNotMatch(kart, /tone="ink"/, 'aksan zeminde sayfa mürekkebi kullanılıyor');
+  assert.doesNotMatch(kart, /tone="muted"/, 'aksan zeminde gri metin kullanılıyor');
+  assert.match(s, /ozetYazi: \{ color: colors\.onAccent \}/, 'kart yazısı onAccent değil');
+  // Ayraç da kartın kendi renginden: sayfa çizgisi doygun zeminde görünmüyordu.
+  assert.match(
+    s,
+    /ozetAyrac:[\s\S]{0,120}backgroundColor: colors\.onAccent/,
+    'ayraç sayfa çizgisi',
+  );
 });
 
 test('iade ekranında GİZLİLİK notu forma bitişik', () => {
