@@ -75,3 +75,21 @@ test('DURUM EKRANDA yazıyor', () => {
   assert.match(k, /'circle\.state\.pending'/, 'inceleme yazısı yok');
   assert.match(k, /'circle\.state\.failed'/, 'red yazısı yok');
 });
+
+test('YORUM sunucunun BİLDİĞİ kimliğe yazılıyor', () => {
+  /*
+   * Yeni açılan gönderinin yerel kimliği var; sunucu onu tanımıyor. Yerel
+   * kimlikle yazılan yorum sessizce düşüyordu: yazan kişi yorumunu görüyor,
+   * başka kimse görmüyordu. Okuma da aynı sebeple hep boş dönüyordu.
+   */
+  assert.match(
+    store,
+    /const uzakId = get\(\)\.circlePosts\.find\(\(p\) => p\.id === postId\)\?\.sunucuId \?\? postId;/,
+    'yorum yerel kimlikle yazılıyor',
+  );
+  assert.match(store, /api\.circleComment\(uzakId,/, 'yorum uzak kimliğe gitmiyor');
+
+  const detay = oku('app', 'circle', '[id].tsx');
+  assert.match(detay, /const uzakId = post\?\.sunucuId \?\? id;/, 'okuma yerel kimlikle');
+  assert.match(detay, /\.circleComments\(uzakId\)/, 'okuma uzak kimliğe gitmiyor');
+});

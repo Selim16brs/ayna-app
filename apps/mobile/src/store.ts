@@ -2948,8 +2948,16 @@ export const useStore = create<State>()(
       },
 
       addComment: (postId, text, anonymous, proId) => {
+        /*
+         * SUNUCUYA GİDEN KİMLİK, SUNUCUNUN BİLDİĞİ KİMLİK.
+         *
+         * Yeni açılan gönderinin YEREL kimliği var; sunucu onu tanımıyor.
+         * Yerel kimlikle yazılan yorum sessizce düşüyordu: yazan kişi
+         * yorumunu görüyor, başka kimse görmüyordu.
+         */
+        const uzakId = get().circlePosts.find((p) => p.id === postId)?.sunucuId ?? postId;
         // §5.5 — yorum SUNUCUYA yazılır (moderasyon + diğer kullanıcılar görür)
-        void api.circleComment(postId, text, anonymous, proId).catch(() => undefined);
+        void api.circleComment(uzakId, text, anonymous, proId).catch(() => undefined);
         set((s) => ({
           circlePosts: s.circlePosts.map((p) =>
             p.id === postId
