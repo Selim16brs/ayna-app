@@ -810,6 +810,8 @@ export const tr = {
   'circle.empty.mine': 'Henüz bir şey sormadın',
   'circle.empty.saved': 'Kaydettiğin gönderi yok',
   'circle.empty.sub': 'İlk soruyu sen sor — kimliğin gizli kalabilir.',
+  'circle.state.pending': 'İncelemede — onaylanınca herkes görecek',
+  'circle.state.failed': 'Gönderilemedi — yalnız sende duruyor',
   'circle.tab.saved': 'Kaydedilenler',
   'circle.save': 'Kaydet',
   'circle.unsave': 'Kaydı kaldır',

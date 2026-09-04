@@ -1361,6 +1361,23 @@ export interface CircleComment {
 }
 export interface CirclePost {
   id: string;
+  /**
+   * Sunucudaki kimlik. Gönderi önce YERELDE açılıyor (iyimser) ve yerel bir
+   * kimlik alıyor; sunucu kabul edince kendi kimliğini dönüyor. İkisi
+   * eşleşmediği için akış tazelenince aynı gönderi İKİ KEZ görünüyordu.
+   * Kimlik burada saklanıyor ve birleştirme bunu da eleme ölçütü sayıyor.
+   */
+  sunucuId?: string;
+  /**
+   * Gönderinin sunucudaki durumu — yalnız KENDİ gönderinde ve normal
+   * değilse yazılıyor.
+   *
+   * `incelemede`: sunucu şüpheli buldu, akışta YOK. Yazan kişi bunu
+   * bilmezse gönderisinin yayında olduğunu sanır.
+   * `gonderilemedi`: sunucu kalıcı olarak reddetti. Ekranda duran ama
+   * kimsenin görmediği bir gönderi, uydurulmuş bir yayındır.
+   */
+  durum?: 'incelemede' | 'gonderilemedi';
   type: CirclePostType;
   category: string;
   author: string;

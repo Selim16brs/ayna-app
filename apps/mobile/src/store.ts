@@ -869,7 +869,14 @@ export const useStore = create<State>()(
           if (postsR.status === 'rejected') throw postsR.reason;
           const backendPosts = postsR.value;
           set((s) => {
-            const have = new Set(s.circlePosts.map((p) => p.id));
+            /*
+             * Eleme YEREL kimliği de SUNUCU kimliğini de sayıyor: iyimser
+             * açılan gönderi sunucudan kendi kimliğiyle döndüğünde ikinci
+             * kez eklenmesin.
+             */
+            const have = new Set(
+              s.circlePosts.flatMap((p) => (p.sunucuId ? [p.id, p.sunucuId] : [p.id])),
+            );
             // Kaydetme durumu SUNUCUDAN gelir ve BİLİNEN gönderilerde de
             // tazelenir. Yalnız yeni gönderileri eklemek yetmiyordu: başka
             // cihazda kaydedilen bir gönderi burada hep "kaydedilmemiş"
@@ -2842,7 +2849,16 @@ export const useStore = create<State>()(
             ...s.circlePosts,
           ],
         }));
-        // §5.5 — backend moderasyonuna gönder (şüpheli→pending; best-effort)
+        /*
+         * SUNUCUNUN CEVABI ARTIK OKUNUYOR.
+         *
+         * Eskiden atılıyordu ve iki ayrı yanlış doğuyordu:
+         *   · Kabul edilen gönderi akış tazelenince İKİ KEZ görünüyordu —
+         *     yerel kopya ve sunucu kopyası (kimlikleri farklı).
+         *   · Şüpheli bulunan gönderi akışta HİÇ yok (sunucu yalnız
+         *     `published` dönüyor) ama yerelde duruyordu: yazan kişi
+         *     yayında sanıyordu.
+         */
         const token = get().token;
         if (token)
           void api
@@ -2851,7 +2867,31 @@ export const useStore = create<State>()(
               text: input.text,
               anonymous: input.anonymous,
             })
-            .catch(() => undefined);
+            .then((r) =>
+              set((s) => ({
+                circlePosts: s.circlePosts.map((p) =>
+                  p.id === id
+                    ? {
+                        ...p,
+                        sunucuId: r.id,
+                        ...(r.status === 'published' ? {} : { durum: 'incelemede' as const }),
+                      }
+                    : p,
+                ),
+              })),
+            )
+            .catch((err: unknown) => {
+              // Geçici hata (ağ yok) sessiz: kullanıcı yeniden açtığında
+              // gönderi hâlâ yerelde ve yeniden denenebilir. KALICI red ise
+              // söylenmeli — yoksa kimsenin görmediği bir gönderi ekranda
+              // yayınlanmış gibi durur.
+              if (!(err instanceof ApiError) || !kaliciRed(err)) return;
+              set((s) => ({
+                circlePosts: s.circlePosts.map((p) =>
+                  p.id === id ? { ...p, durum: 'gonderilemedi' as const } : p,
+                ),
+              }));
+            });
         return id;
       },
 
