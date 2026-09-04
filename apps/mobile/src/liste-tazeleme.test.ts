@@ -84,3 +84,37 @@ test('MESAJ LİSTESİ odaklanınca tazeleniyor', () => {
   assert.ok(i > 0, 'odak tazelemesi yok');
   assert.match(k.slice(i, i + 200), /void load\(\);/, 'liste yeniden okunmuyor');
 });
+
+test('RANDEVU DETAYI açılınca sunucudan tazeleniyor', () => {
+  /*
+   * Bu ekran yerel kopyayı çiziyor ve ÜZERİNDE EYLEM yapılıyor. Kopya
+   * bayatsa iki şey birden bozuluyor: kullanıcı yanlış durumu görüyor
+   * (uzman onayladı ama "yanıt bekleniyor" yazıyor) ve bastığı düğme
+   * sunucuda geçersiz bir geçiş oluyor — anlamsız bir hata. Bildirimden
+   * doğrudan buraya gelinebiliyor, yani listeden geçmek şart değil.
+   */
+  const k = oku('app', 'booking', '[id].tsx');
+  const i = k.indexOf('useFocusEffect(');
+  assert.ok(i > 0, 'detay ekranı hiç tazelenmiyor');
+  assert.match(k.slice(i, i + 200), /void hydrateBookings\(\);/, 'randevu tazelenmiyor');
+});
+
+test('UZMAN YORUMLARI ve PAYLAŞIMLAR da odakta tazeleniyor', () => {
+  /*
+   * İkisi de `useEffect` ile yalnız ilk açılışta okunuyordu: müşteri
+   * değerlendirme yazıyor, uzman ekranı açıyor ve yanıt hakkı olan yorumu
+   * hiç görmüyordu.
+   */
+  for (const yol of [
+    ['app', 'seller', 'reviews.tsx'],
+    ['app', 'paylasimlar.tsx'],
+  ]) {
+    const k = oku(...yol);
+    assert.match(k, /useFocusEffect\(/, `${yol.join('/')}: odak tazelemesi yok`);
+    assert.doesNotMatch(
+      k,
+      /useEffect\(\(\) => \{\s*void (load|yukle)\(\);/,
+      `${yol.join('/')}: eski yol duruyor`,
+    );
+  }
+});

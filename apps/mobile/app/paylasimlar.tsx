@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, type ProPost } from '../src/api';
@@ -40,7 +41,8 @@ export default function PaylasimlarScreen() {
       })
       .catch(() => setPosts([]));
   }, [token]);
-  useEffect(yukle, [yukle]);
+  // Yeni paylaşımlar ekran açılınca geliyor (ilk açılışta bir kez değil).
+  useFocusEffect(useCallback(yukle, [yukle]));
 
   const bildir = (id: string) => {
     if (!token) return;

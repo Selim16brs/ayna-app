@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { api, type SellerReview, type SellerReviews } from '../../src/api';
@@ -32,9 +33,17 @@ export default function SellerReviewsScreen() {
     );
   }, [token]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  /*
+   * Yeni yorum EKRAN AÇILINCA görünüyor. `useEffect` yalnız ilk açılışta
+   * okuyordu: müşteri değerlendirme yazıyor, uzman yorumlar ekranını
+   * açıyor ve eski listeyi görüyordu — yanıt hakkı olan bir yorumu hiç
+   * fark etmeden.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
 
   return (
     <Screen edges={[]}>
