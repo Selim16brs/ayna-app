@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { Redirect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Redirect, useFocusEffect, useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { api } from '../../src/api';
 import { type SupplierAd } from '../../src/data';
 import { useSalonStaff } from '../../src/staff';
 import { TepeIsigi, OccupancyStrip } from '../../src/ui';
@@ -37,6 +39,28 @@ export default function SalonHomeScreen() {
   // Faz C — GERÇEK kadro (davet koduyla bağlı uzmanlar); mock Madina/Aigerim yok.
   const { staff } = useSalonStaff();
   const ads: SupplierAd[] = []; // demo tedarikçi reklamı YOK (admin ucu bağlanınca gerçek veri)
+  const token = useStore((st) => st.token);
+
+  /*
+   * HARİTADA GÖRÜNÜYOR MU? — uzman panelindeki uyarının AYNISI.
+   *
+   * Canlıdaki salonun koordinatı boştu: haritada hiç görünmüyor, "yakınındaki
+   * salonlar" listesine de giremiyor. Sahibinin bunu öğrenecek bir yeri yoktu;
+   * konum ekranı vardı ama salon menüsünde bile değildi.
+   *
+   * `null` = HENÜZ BİLİNMİYOR: `false` ile aynı sayılsaydı ekran açılır
+   * açılmaz uyarı çakıp cevap gelince kaybolurdu.
+   */
+  const [konumVar, setKonumVar] = useState<boolean | null>(null);
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      void api
+        .myLocation(token)
+        .then((r) => setKonumVar(r.hasLocation))
+        .catch(() => undefined);
+    }, [token]),
+  );
 
   // §10.1 — salon kapak fotoğrafı: uzman profil fotosuyla AYNI yerden (avatar) düzenlenebilir
   const editCover = async () => {
@@ -105,6 +129,26 @@ export default function SalonHomeScreen() {
         </View>
 
         <View style={styles.body}>
+          {/* ═══ HARİTADA GÖRÜNMÜYORSUN ═══ uzman panelindekiyle aynı uyarı,
+              aynı ekrana götürüyor. Salonun tek farkı bir salon olması. */}
+          {konumVar === false ? (
+            <PressableScale
+              style={styles.konumUyari}
+              onPress={() => router.push('/seller/location')}
+            >
+              <Ionicons name="location-outline" size={20} color={colors.danger} />
+              <View style={styles.flex}>
+                <Text variant="bodyStrong" tone="ink">
+                  {t('reports.no_location')}
+                </Text>
+                <Text variant="caption" tone="muted">
+                  {t('reports.no_location_b')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            </PressableScale>
+          ) : null}
+
           {/* §10 gizlilik — salon panelinde gelir/komisyon GÖSTERİLMEZ (uzmanın şahsi para alanı) */}
 
           {/* §11 — katman-farkında üyelik teşviki (free → Premium/Platinum, premium → Platinum) */}
@@ -274,6 +318,15 @@ const makeStyles = (colors: ColorTokens) =>
     content: { paddingBottom: TAB_BAR_CLEARANCE + space(2) },
     occupancy: { paddingHorizontal: space(2.5), marginTop: space(2) },
     flex: { flex: 1 },
+    // Uzman panelindeki uyarıyla AYNI ölçüler (seller/reports `konumUyari`).
+    konumUyari: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      padding: space(1.75),
+      borderRadius: 20,
+      backgroundColor: colors.dangerSoft,
+    },
     // Kapak foto hero
     // Kanvas §başlık — açık zeminde 54'lük avatar + koyu başlık + beyaz düğme.
     header: {

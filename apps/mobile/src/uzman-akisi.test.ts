@@ -239,3 +239,23 @@ test('SÜRESİ YAZILMAMIŞ hizmet kaydedilmiyor — 60 dk uydurulmuyor', () => {
    */
   assert.match(k, /const gecerli = rows\.filter\(satirGecerli\);/, 'kaydet ayrı kural kullanıyor');
 });
+
+test('SALON da haritada görünmediğini ÖĞRENİYOR', () => {
+  /*
+   * Kurucu: "salona bağlı uzman ile salona bağlı olmayan uzman arasındaki
+   * tek fark bağlı olup olmamaları. onun dışında herşey işleyiş olarak
+   * aynı olmalı." Salon da aynı: canlıdaki salonun koordinatı boştu,
+   * haritada hiç görünmüyordu ve sahibinin bunu öğrenecek bir yeri yoktu.
+   *
+   * Konum ekranı UZMANLA AYNI (`/seller/location`); sunucu tarafı da aynı
+   * (`proIdFor` salon sahibinin işletme kartını buluyor).
+   */
+  const panel = oku('app', 'salon', 'home.tsx');
+  assert.match(panel, /konumVar === false \? \(/, 'salon panelinde uyarı yok');
+  assert.match(panel, /router\.push\('\/seller\/location'\)/, 'çözüme götürmüyor');
+  assert.match(panel, /useState<boolean \| null>\(null\)/, 'bilinmeyen durum ayrılmamış');
+
+  // Uyarıyı görmeyen salon da menüden ulaşabilmeli.
+  const profil = oku('app', 'salon', 'profile.tsx');
+  assert.match(profil, /route: '\/seller\/location'/, 'salon menüsünde konum yok');
+});
