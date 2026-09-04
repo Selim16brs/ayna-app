@@ -560,6 +560,7 @@ export default function DiscoverScreen() {
                   title={reklam.title}
                   image={reklam.image}
                   subtitle={reklam.subtitle}
+                  oran="yatay"
                   sponsored
                   rating={pros.find((x) => x.id === reklam.proId)?.rating}
                   onPress={() => router.push('/professional/' + reklam.proId)}
@@ -770,6 +771,7 @@ function VitrinKarti({
   sponsored,
   rating,
   discount,
+  oran = 'dikey',
   onPress,
 }: {
   title: string;
@@ -779,12 +781,20 @@ function VitrinKarti({
   rating?: number | undefined;
   /** "%30 İndirim" gibi — referans kartta AYRI bir rozet, alt yazı değil. */
   discount?: string | undefined;
+  /**
+   * Kartın oranı. Öne çıkanlar YATAY, fırsatlar DİKEY — kurucunun isteği.
+   * İki bölüm aynı ekranda; farklı oran ikisini bakışta ayırıyor.
+   */
+  oran?: 'yatay' | 'dikey';
   onPress: () => void;
 }) {
   const { t } = useLocale();
   const styles = useThemedStyles(makeStyles);
   return (
-    <PressableScale style={styles.vitrinKart} onPress={onPress}>
+    <PressableScale
+      style={oran === 'yatay' ? styles.vitrinKartYatay : styles.vitrinKart}
+      onPress={onPress}
+    >
       {image ? (
         <Image source={{ uri: image }} style={StyleSheet.absoluteFill} resizeMode="cover" />
       ) : (
@@ -1142,6 +1152,19 @@ const makeStyles = (colors: ColorTokens) =>
        */
       width: 260,
       height: 328,
+      borderRadius: 20,
+      overflow: 'hidden',
+      justifyContent: 'flex-end',
+    },
+    /*
+     * ÖNE ÇIKANLAR YATAY. Fırsatlarla aynı dikey oranı paylaşıyorlardı ve
+     * iki bölüm aynı ekranda birbirinin tekrarı gibi duruyordu. Genişlik
+     * biraz artıyor: yatık bir kartta aynı başlık daha dar bir alana
+     * sıkışırdı.
+     */
+    vitrinKartYatay: {
+      width: 300,
+      height: 180,
       borderRadius: 20,
       overflow: 'hidden',
       justifyContent: 'flex-end',

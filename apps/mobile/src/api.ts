@@ -451,6 +451,8 @@ export interface AuthUser {
   // §12.3 — admin ceza takip: kısıtlı mod (yeni talep oluşturamaz)
   restricted?: boolean;
   restrictedDaysLeft?: number; // 7 gün penceresinde kalan gün
+  /** Hesabın açıldığı an (ISO). Pasaporttaki "üyelik" yılı buradan. */
+  memberSince?: string | null;
   // §11 — üyelik katmanı (admin onayıyla aktif): free | premium | platinum
   membershipTier?: string;
   membershipUntil?: string | null;

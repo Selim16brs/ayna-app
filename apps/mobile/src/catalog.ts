@@ -1,7 +1,27 @@
 import { useQuery } from '@tanstack/react-query';
 import { api, type AdBanner } from './api';
+import { useLocale } from './locale';
 import { useStore } from './store';
 import { type Campaign, type Professional, type ProfessionalDetail } from './data';
+
+/**
+ * DİL, ÖNBELLEK KİMLİĞİNİN PARÇASI.
+ *
+ * Panelden girilen kk/ru metinleri sunucu çözüyor (`?locale=`), ama önbellek
+ * anahtarı yalnız `['ads']` gibi sabitti: kullanıcı dili değiştirince
+ * TanStack Query aynı anahtarı bulup ESKİ DİLDEKİ cevabı veriyordu.
+ * Yeniden istek de atılmıyordu — anahtar değişmemişti.
+ *
+ * Sonuç: panele üç dil de girilmiş olsa bile ekranda Türkçe kalıyordu.
+ * Dili anahtara koymak her dile ayrı önbellek satırı veriyor; dil
+ * değişince istek KENDİLİĞİNDEN yenileniyor.
+ *
+ * Yalnız sunucusu `?locale=` alan uçlarda kullanılıyor; dilden bağımsız
+ * uçlara eklemek her dil değişiminde gereksiz istek demek olurdu.
+ */
+function dilliAnahtar(ad: string, dil: string): [string, string] {
+  return [ad, dil];
+}
 
 /**
  * İşletme kataloğu backend'den; API erişilemezse yerel veriye düşer (offline-first).
@@ -39,8 +59,9 @@ export function useProfessionals(): Professional[] {
 // §12 — aktif kampanyalar; API erişilemezse yerel yedeğe düşer
 // §keşif Modül 3 — aktif dönemsel koleksiyonlar (tarih penceresi sunucuda)
 export function useCollections() {
+  const { locale } = useLocale();
   const { data } = useQuery({
-    queryKey: ['collections'],
+    queryKey: dilliAnahtar('collections', locale),
     queryFn: api.collections,
     retry: 1,
     staleTime: 300_000,
@@ -50,13 +71,19 @@ export function useCollections() {
 
 // §keşif Modül 2 — aktif salon/uzman kampanyaları (Offers)
 export function useOffersLoading(): boolean {
-  const { isLoading } = useQuery({ queryKey: ['offers'], queryFn: api.offers, retry: 1 });
+  const { locale } = useLocale();
+  const { isLoading } = useQuery({
+    queryKey: dilliAnahtar('offers', locale),
+    queryFn: api.offers,
+    retry: 1,
+  });
   return isLoading;
 }
 
 export function useOffers() {
+  const { locale } = useLocale();
   const { data } = useQuery({
-    queryKey: ['offers'],
+    queryKey: dilliAnahtar('offers', locale),
     queryFn: api.offers,
     retry: 1,
     staleTime: 60_000,
@@ -65,8 +92,9 @@ export function useOffers() {
 }
 
 export function useCampaigns(): Campaign[] {
+  const { locale } = useLocale();
   const { data } = useQuery({
-    queryKey: ['campaigns'],
+    queryKey: dilliAnahtar('campaigns', locale),
     queryFn: api.campaigns,
     retry: 1,
     staleTime: 60_000,
@@ -79,8 +107,9 @@ export function useCampaigns(): Campaign[] {
  * Erişilemezse boş döner — reklam yokluğu ekranı bozmaz, bölüm gizlenir.
  */
 export function useAds(): AdBanner[] {
+  const { locale } = useLocale();
   const { data } = useQuery({
-    queryKey: ['ads'],
+    queryKey: dilliAnahtar('ads', locale),
     queryFn: api.ads,
     retry: 1,
     staleTime: 60_000,

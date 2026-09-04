@@ -6,7 +6,7 @@ import { PREMIUM_PRICE_KZT } from '../../src/data';
 import { formatDateTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { api } from '../../src/api';
-import { selectPortrait, useStore } from '../../src/store';
+import { selectPortrait, selectPortraitKesilmis, useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
@@ -18,6 +18,13 @@ import {
   TAB_BAR_CLEARANCE,
   Text,
 } from '../../src/ui';
+
+/** Sadakat seviyesinin etiketi — sunucudan gelen anahtara göre. */
+const TIER_LABEL: Record<'bronze' | 'silver' | 'gold', MessageKey> = {
+  bronze: 'rewards.tier.bronze',
+  silver: 'rewards.tier.silver',
+  gold: 'rewards.tier.gold',
+};
 
 // K6 — "öncelikli randevu fırsatları" ve "öncelikli destek" KALDIRILDI:
 // ikisinin de sunucuda karşılığı yok (sıralama yalnız puana göre, ayrı bir
@@ -49,12 +56,39 @@ export default function PassportScreen() {
   const userName = (useStore((s) => s.currentUser?.name) ?? '').trim();
   const displayName = userName || t('passport.member');
   const photo = useStore(selectPortrait);
+  /*
+   * Kesilmiş portre DAİRE İÇİNE SOKULMUYOR.
+   *
+   * Kurucu portreyi arka planı kesilmiş ve dairesiz istedi; ana sayfada
+   * öyle çiziliyordu ama pasaport hâlâ her portreyi 30px yarıçapla
+   * kırpıyordu — kesilmiş portrenin saçı ve omzu daireden taşan yerinden
+   * kesiliyordu. HAM fotoğraf daire içinde kalıyor: kendi arka planını
+   * taşıdığı için çerçevesiz göstermek odayı karta yapıştırmak olurdu.
+   */
+  const portreKesilmis = useStore(selectPortraitKesilmis);
   const womenVerified = useStore((s) => s.currentUser?.womenVerified ?? false);
   const completed = useStore((s) => s.bookings.filter((b) => b.status === 'tamamlandi').length);
   const reviews = useStore((s) => Object.values(s.userReviews).reduce((n, a) => n + a.length, 0));
   const points = useStore((s) => s.points);
   const premium = useStore((s) => s.premium);
   const membershipUntil = useStore((s) => s.currentUser?.membershipUntil ?? null);
+  /*
+   * ÜYELİK YILI GERÇEK. Burada sabit `2024` yazıyordu: hesabını dün açan
+   * kullanıcı da 2024'ten beri üyeymiş gibi görünüyordu. Sunucu hesabın
+   * açılış anını dönüyor; DÖNMEZSE satır hiç çizilmiyor — uydurma yıl
+   * yazmaktansa söylememek doğru.
+   */
+  const memberSinceMs = useStore((s) => {
+    const iso = s.currentUser?.memberSince;
+    const ms = iso ? Date.parse(iso) : Number.NaN;
+    return Number.isFinite(ms) ? ms : null;
+  });
+  /*
+   * SADAKAT SEVİYESİ GERÇEK. Burada herkese "Gümüş" yazıyordu — puanı
+   * ne olursa olsun. Seviye sunucudan geliyor (`hydrateLoyalty`);
+   * gelmediyse satır seviyesiz çiziliyor, yanlış seviye gösterilmiyor.
+   */
+  const tier = useStore((s) => s.tier);
   // §12.9 — premium fiyatı admin-parametrik (config); fetch yoksa sabit varsayılan
   const premiumPrice = useStore((s) => s.config.rates.premiumUserKzt) || PREMIUM_PRICE_KZT;
   // KALDIRILDI: `const trust = 92` — sabit bir sayı, kullanıcıya hesaplanmış bir
@@ -113,9 +147,15 @@ export default function PassportScreen() {
         {/* Kimlik kartı — lime aksan */}
         <View style={[styles.hero, shadow.card]}>
           <View style={styles.heroTop}>
-            <View style={styles.avatar}>
+            <View style={portreKesilmis ? styles.portre : styles.avatar}>
               {photo ? (
-                <Image source={{ uri: photo }} style={styles.avatarImg} resizeMode="cover" />
+                <Image
+                  source={{ uri: photo }}
+                  style={styles.avatarImg}
+                  // Kesilmiş portre KIRPILMIYOR: 'cover' kareye sığdırmak
+                  // için kenarlardan keserdi.
+                  resizeMode={portreKesilmis ? 'contain' : 'cover'}
+                />
               ) : (
                 <Text variant="title" tone="onAccent">
                   {displayName.charAt(0).toLocaleUpperCase('tr-TR')}
@@ -153,25 +193,27 @@ export default function PassportScreen() {
               <Ionicons name="medal-outline" size={18} color={colors.gold} />
             </View>
             <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
-              {t('rewards.tier.silver')}
+              {tier ? t(TIER_LABEL[tier.key]) : t('rewards.title')}
             </Text>
             <Text variant="bodyStrong" tone="gold">
               {points} {t('rewards.redeem.cost')}
             </Text>
           </View>
-          <View style={styles.row}>
-            {/* Altın PUANI, yeşil DOĞRULANMIŞLIĞI anlatıyor; lavanta hiçbir
-                şeyi anlatmıyordu — nötr marka rozeti erik. */}
-            <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
-              <Ionicons name="calendar-outline" size={18} color={colors.accent} />
+          {memberSinceMs !== null ? (
+            <View style={styles.row}>
+              {/* Altın PUANI, yeşil DOĞRULANMIŞLIĞI anlatıyor; lavanta hiçbir
+                  şeyi anlatmıyordu — nötr marka rozeti erik. */}
+              <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+                <Ionicons name="calendar-outline" size={18} color={colors.accent} />
+              </View>
+              <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
+                {t('passport.member_since')}
+              </Text>
+              <Text variant="bodyStrong" tone="inkSoft">
+                {new Date(memberSinceMs).getFullYear()}
+              </Text>
             </View>
-            <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
-              {t('passport.member_since')}
-            </Text>
-            <Text variant="bodyStrong" tone="inkSoft">
-              2024
-            </Text>
-          </View>
+          ) : null}
         </View>
 
         {/* Avantajlar */}
@@ -287,6 +329,8 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
       overflow: 'hidden',
     },
+    // Kesilmiş portre: çerçevesiz, zeminsiz, kırpmasız.
+    portre: { width: 60, height: 60, alignItems: 'center', justifyContent: 'center' },
     avatarImg: { width: '100%', height: '100%' },
     heroText: { gap: 4 },
     verified: {

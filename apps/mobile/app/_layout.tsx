@@ -129,9 +129,20 @@ function ThemedStack() {
   }, [bookings, t]);
   // §12.6/§12.10 — blog + haftalık tema + segmentine uyan toplu duyurular.
   // currentUser değişince tekrar çağrılır ki giriş sonrası duyurular da düşsün.
+  /*
+   * DİL DEĞİŞİNCE İÇERİK YENİDEN ÇEKİLİYOR.
+   *
+   * Blog yazıları ve haftalık tema panelden üç dilde giriliyor ve sunucu
+   * `?locale=` ile çözüyor. Bu etki yalnız `currentUser`a bağlıydı: dili
+   * değiştiren kullanıcı ekranda ESKİ DİLDEKİ metinleri görmeye devam
+   * ediyordu, çünkü yeniden istek atılmıyordu.
+   *
+   * (Kampanya/fırsat/reklam tarafında aynı hatanın karşılığı önbellek
+   * anahtarındaydı — `catalog.ts` içinde dil artık anahtarın parçası.)
+   */
   useEffect(() => {
     void loadContent();
-  }, [loadContent, currentUser]);
+  }, [loadContent, currentUser, locale]);
   // §4.1/§4.3/§5.2 — her gezinmede: hatırlatmalar + süresi dolan talepler + dekont süresi (mock scheduler)
   useEffect(() => {
     checkReminders();
