@@ -692,19 +692,29 @@ export default function DiscoverScreen() {
           </>
         ) : null}
 
-        {/* ═══ YAKININDAKİ SALONLAR ═══ */}
-        <BolumBasligi title={t('home.nearby')} onSeeAll={() => router.push('/nearby')} />
+        {/* ═══ YAKININDAKİ SALONLAR ═══
+            Liste BOŞSA başlık da çizilmiyor — altındaki "yakınındaki
+            uzmanlar" bölümü zaten böyle davranıyordu. Boş bir başlık
+            müşteriye "burada bir şey olmalıydı ama gelmedi" dedirtiyordu;
+            oysa o şehirde henüz salon yok. Hiç sağlayıcı yoksa aşağıdaki
+            şehir mesajı devreye giriyor. */}
         {prosLoading ? (
-          <View style={styles.iadeKap}>
-            <ListSkeleton rows={3} />
-          </View>
-        ) : (
-          <View style={styles.salonListe}>
-            {nearbySalons.map((pro) => (
-              <SaglayiciSatiri key={pro.id} pro={pro} />
-            ))}
-          </View>
-        )}
+          <>
+            <BolumBasligi title={t('home.nearby')} onSeeAll={() => router.push('/nearby')} />
+            <View style={styles.iadeKap}>
+              <ListSkeleton rows={3} />
+            </View>
+          </>
+        ) : nearbySalons.length > 0 ? (
+          <>
+            <BolumBasligi title={t('home.nearby')} onSeeAll={() => router.push('/nearby')} />
+            <View style={styles.salonListe}>
+              {nearbySalons.map((pro) => (
+                <SaglayiciSatiri key={pro.id} pro={pro} />
+              ))}
+            </View>
+          </>
+        ) : null}
 
         {/* ═══ YAKININDAKİ UZMANLAR ═══
             Kurucu: "yakınındaki uzmanlar diye bir alan da olmalı,

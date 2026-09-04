@@ -18,6 +18,7 @@ import { selectSellerView, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { uzmanlikYazisi } from '../../src/uzmanlik';
+import { yorumDonemiYazisi } from '../../src/gecen-sure';
 import {
   Button,
   PlanBadge,
@@ -1090,7 +1091,10 @@ export default function ProfessionalScreen() {
                           {r.author}
                         </Text>
                         <Text variant="caption" tone="muted">
-                          {hizmetEtiketiCevir(r.service, locale)} · {r.period}
+                          {hizmetEtiketiCevir(r.service, locale)} ·{' '}
+                          {r.createdAtMs != null
+                            ? yorumDonemiYazisi(r.createdAtMs, Date.now(), t)
+                            : r.period}
                         </Text>
                       </View>
                     </View>

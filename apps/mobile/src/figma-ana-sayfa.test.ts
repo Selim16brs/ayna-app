@@ -431,3 +431,22 @@ test('BİLDİRİM ROZETİNDEKİ rakam ortalı', () => {
   assert.match(stil, /textAlign: 'center'/, 'yatay ortalama yok');
   assert.match(stil, /includeFontPadding: false/, 'Android ekstra boşluğu kapatılmamış');
 });
+
+test('BOŞ bölüm başlığı çizilmiyor', () => {
+  /*
+   * "Yakınındaki salonlar" başlığı liste boşken de çiziliyordu: müşteriye
+   * "burada bir şey olmalıydı ama gelmedi" dedirtiyordu. Oysa o şehirde
+   * henüz salon yok. Hemen altındaki "yakınındaki uzmanlar" bölümü zaten
+   * boşken kendini gizliyordu — iki bölüm aynı kurala bağlandı.
+   */
+  assert.match(d, /nearbySalons\.length > 0 \? \(/, 'salon bölümü boşken de çiziliyor');
+  assert.match(d, /nearbyExperts\.length > 0 \? \(/, 'uzman bölümü boşken de çiziliyor');
+  /*
+   * YÜKLENİRKEN başlık DURUYOR: iskelet satırların üstünde başlıksız üç
+   * gri kutu ne olduğu belirsiz bir yükleme olurdu.
+   */
+  const i = d.indexOf('prosLoading ? (');
+  const j = d.indexOf('ListSkeleton rows={3}');
+  const baslik = d.slice(i, j);
+  assert.match(baslik, /t\('home\.nearby'\)/, 'yüklenirken başlık kayboldu');
+});

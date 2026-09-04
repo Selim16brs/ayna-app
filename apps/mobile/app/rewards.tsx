@@ -18,6 +18,7 @@ import { useStore } from '../src/store';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import type { MessageKey } from '@ayna/i18n';
+import { gecenSureYazisi } from '../src/gecen-sure';
 import {
   PressableScale,
   Progress,
@@ -314,7 +315,10 @@ export default function RewardsScreen() {
                   {t(e.labelKey)}
                 </Text>
                 <Text variant="caption" tone="muted" numberOfLines={1}>
-                  {e.detail} · {e.dateLabel}
+                  {e.detail} ·{' '}
+                  {e.createdAtMs != null
+                    ? gecenSureYazisi(e.createdAtMs, Date.now(), t)
+                    : e.dateLabel}
                 </Text>
               </View>
               <Text

@@ -691,7 +691,10 @@ export interface ServiceRating {
 export interface Review {
   id: string;
   author: string;
+  /** Sunucudan Türkçe gelen hazır cümle — YENİ kayıtlarda yerine `createdAtMs`. */
   period: string;
+  /** Ham damga; yazı kullanıcının dilinde çizim anında kuruluyor. */
+  createdAtMs?: number;
   rating: number;
   service: string;
   text: string;
@@ -1794,7 +1797,10 @@ export interface LedgerEntry {
   labelKey: MessageKey;
   detail: string;
   points: number; // earn pozitif, spend negatif
+  /** Sunucudan/eski kayıtlardan gelen hazır yazı — yenilerde `createdAtMs`. */
   dateLabel: string;
+  /** Ham damga; yazı kullanıcının dilinde çizim anında kuruluyor. */
+  createdAtMs?: number;
 }
 
 export interface Reward {
