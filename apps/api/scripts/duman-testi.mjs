@@ -299,6 +299,85 @@ ol(
   String(yeniRandevu?.customerName),
 );
 
+/* ── 10 · PARA YOLU — depozito, tamamlanma, PUAN ───────────────────────
+ *
+ * Kurucunun ilk kuralı: "sistem hiçbir şekilde randevu, değerlendirme,
+ * not, puanlama, ayna para… hiçbir şeyi kendiliğinden uydurmamalı."
+ *
+ * Bu yolun hiçbir ucu duman testinde yoktu: depozito yüklendiğinde
+ * randevu kesinleşiyor mu, tamamlandığında puan GERÇEKTEN hak edilen
+ * kadar mı yükleniyor. Para ve puan sessizce bozulursa kimse fark etmez.
+ */
+const bookingId = secim.govde?.bookingId;
+const dekont = await gonder(
+  `/bookings/${bookingId}/deposit-receipt`,
+  { receiptUri: 'data:image/jpeg;base64,RFVNQU4=' },
+  musteri.govde?.token,
+);
+ol(
+  'depozito dekontu kabul ediliyor',
+  dekont.ok,
+  dekont.ok ? '' : JSON.stringify(dekont.govde).slice(0, 160),
+);
+ol(
+  'dekont randevuyu KESİNLEŞTİRİYOR',
+  dekont.govde?.status === 'kesinlesti',
+  String(dekont.govde?.status),
+);
+/*
+ * Depozito hizmet bedelinin %10'u (K1). Sabit bir tutar ya da yuvarlama
+ * yoktu: 18.000 ₸ için tam 1.800 ₸.
+ */
+ol(
+  "depozito hizmetin %10'u",
+  Number(dekont.govde?.depositAmount) === 1800,
+  String(dekont.govde?.depositAmount),
+);
+
+const tamam = await gonder(`/bookings/${bookingId}/complete`, {}, uzmanToken);
+ol(
+  'uzman hizmeti tamamlayabiliyor',
+  tamam.ok,
+  tamam.ok ? '' : JSON.stringify(tamam.govde).slice(0, 160),
+);
+ol(
+  'tamamlanınca ÖDEME BEKLİYOR',
+  tamam.govde?.status === 'odeme_bekliyor',
+  String(tamam.govde?.status),
+);
+
+const beyan = await gonder(`/bookings/${bookingId}/balance-paid`, {}, musteri.govde?.token);
+ol(
+  'müşteri ödemeyi bildirebiliyor',
+  beyan.ok,
+  beyan.ok ? '' : JSON.stringify(beyan.govde).slice(0, 160),
+);
+const kapanis = await gonder(`/bookings/${bookingId}/balance-received`, {}, uzmanToken);
+ol(
+  'uzman parayı aldığını onaylıyor',
+  kapanis.ok,
+  kapanis.ok ? '' : JSON.stringify(kapanis.govde).slice(0, 160),
+);
+ol('randevu TAMAMLANDI', kapanis.govde?.status === 'tamamlandi', String(kapanis.govde?.status));
+
+/*
+ * PUAN UYDURULMUYOR: kazanım hizmet bedelinin %1'i (DEFAULT_EARN_PCT).
+ * 18.000 ₸ → 180 puan. Sıfır da yanlış, fazlası da.
+ *
+ * TOPLAMA değil DEFTER SATIRINA bakılıyor: tamamlanma başka ödüller de
+ * yükleyebiliyor (davet primi gibi) ve toplamı sabitlemek testi ilgisiz
+ * bir özellik yüzünden kırardı. Denetlenen şey KAZANIMIN KURALI.
+ */
+const sadakat = await get('/loyalty', musteri.govde?.token);
+const kazanim = (sadakat?.ledger ?? []).find((x) => x.kind === 'earn');
+ol(
+  'tamamlanınca puan defterine KAYIT düşüyor',
+  !!kazanim,
+  `${(sadakat?.ledger ?? []).length} satır`,
+);
+ol('puan HAK EDİLEN kadar — ne eksik ne fazla', kazanim?.points === 180, `${kazanim?.points} puan`);
+ol('bakiye defterle tutarlı', (sadakat?.points ?? 0) >= 180, `${sadakat?.points} puan`);
+
 /* ── RAPOR ─────────────────────────────────────────────────────────── */
 const dusen = sonuclar.filter((s) => !s.gecti);
 for (const s of sonuclar) {
