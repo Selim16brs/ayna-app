@@ -444,6 +444,7 @@ export const tr = {
   'home.refund.cta': 'İade iste',
   'home.pending': 'Bekleyen Randevuların',
   'home.verified': 'Doğrulanmış',
+  'home.success': 'başarı',
   'home.details': 'Detaylar',
   // Silinmiş/erişilemez uzman — reklam eski bir kayda işaret edebiliyor.
   'pro.not_found.title': 'Bu profil bulunamadı',
@@ -1308,6 +1309,7 @@ export const tr = {
   'reports.quality.title': 'Yanıt & kalite',
   'reports.success.title': 'Başarı durumun',
   'reports.success.none': 'Henüz ölçülecek veri yok — ilk randevularından sonra burada görünecek',
+  'reports.success.hidden': 'Müşteriyle paylaşılmıyor — Gizlilik ekranından açabilirsin',
   'reports.success.is': 'Tamamlanan iş',
   'reports.success.puan': 'Değerlendirme',
   'reports.success.cevap': 'Cevap süresi',
@@ -2184,6 +2186,9 @@ export const tr = {
   'privacy.subtitle': 'Verilerin üzerindeki kontrol sende',
   'privacy.location': 'Konum paylaşımı',
   'privacy.pro_address': 'İşletme adresin herkese açık',
+  'privacy.pro_success': 'Başarı yüzdemi müşteriye göster',
+  'privacy.pro_success_sub':
+    'Tamamlanan iş, değerlendirme ve cevap süresinden hesaplanır. Kapatırsan müşteri ekranında hiç görünmez; sıralamadaki yerin değişmez.',
   'privacy.pro_address_sub':
     'Müşteri seni haritada bulabilsin diye adresin profilinde görünür. Bu bir tercih değil, hizmet vermenin koşulu.',
   'privacy.pro_customer_data': 'Müşteri bilgileri',

@@ -427,6 +427,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'home.refund.cta': 'Қайтаруды сұрау',
   'home.pending': 'Күтудегі жазылуларың',
   'home.verified': 'Расталған',
+  'home.success': 'жетістік',
   'home.details': 'Толығырақ',
   'pro.not_found.title': 'Бұл профиль табылмады',
   'pro.not_found.body': 'Маман жазбасы жойылған немесе уақытша қолжетімсіз болуы мүмкін.',
@@ -1225,6 +1226,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reports.quality.title': 'Жауап & сапа',
   'reports.success.title': 'Жетістік көрсеткішің',
   'reports.success.none': 'Әзірге өлшейтін дерек жоқ — алғашқы жазылуларыңнан кейін көрінеді',
+  'reports.success.hidden': 'Клиентпен бөлісілмейді — Құпиялық экранынан қоса аласың',
   'reports.success.is': 'Аяқталған жұмыс',
   'reports.success.puan': 'Бағалау',
   'reports.success.cevap': 'Жауап беру уақыты',
@@ -2043,6 +2045,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'privacy.subtitle': 'Деректеріңізді бақылау сізде',
   'privacy.location': 'Орналасқан жерді бөлісу',
   'privacy.pro_address': 'Кәсіп мекенжайың ашық',
+  'privacy.pro_success': 'Жетістік көрсеткішімді клиентке көрсет',
+  'privacy.pro_success_sub':
+    'Аяқталған жұмыс, бағалау және жауап беру уақытынан есептеледі. Өшірсең, клиент экранында мүлде көрінбейді; тізімдегі орның өзгермейді.',
   'privacy.pro_address_sub':
     'Клиент сені картадан таба алуы үшін мекенжайың профиліңде көрінеді. Бұл таңдау емес, қызмет көрсету шарты.',
   'privacy.pro_customer_data': 'Клиент мәліметтері',

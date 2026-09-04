@@ -163,6 +163,7 @@ export default function ReportsScreen() {
   const [basari, setBasari] = useState<{
     yuzde: number | null;
     bilesenler: { ad: 'is' | 'puan' | 'cevap'; yuzde: number }[];
+    showSuccess?: boolean;
   } | null>(null);
   // Kanvasta selamlamanın ÜSTÜNDE günün tarihi var ("Salı, 26 Ağustos").
   // Uzman panele bakınca hangi güne baktığını görmeli.
@@ -614,6 +615,15 @@ export default function ReportsScreen() {
           ) : (
             <>
               <Text style={styles.basariYuzde}>%{basari.yuzde}</Text>
+              {/*
+                Müşteriyle paylaşılmıyorsa uzman bunu BURADA görüyor:
+                kapattığını unutup "neden görünmüyorum" diye sormasın.
+              */}
+              {basari.showSuccess === false ? (
+                <Text variant="micro" tone="muted">
+                  {t('reports.success.hidden')}
+                </Text>
+              ) : null}
               <View style={styles.basariSatir}>
                 {basari.bilesenler.map((b) => (
                   <View key={b.ad} style={styles.basariKutu}>

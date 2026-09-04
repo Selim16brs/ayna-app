@@ -782,14 +782,31 @@ function SaglayiciSatiri({ pro }: { pro: Professional }) {
           DEĞERLENDİRİLMEMİŞ sağlayıcı "0,0" DEĞİL: puanı sıfır göstermek
           onu en kötü puanlı gibi sunardı.
         */}
-        {pro.reviewCount > 0 ? (
-          <View style={styles.puanCip}>
-            <Ionicons name="star" size={11} color={colors.gold} />
-            <Text variant="micro" tone="ink">
-              {pro.rating.toFixed(1)}
-            </Text>
-          </View>
-        ) : null}
+        <View style={styles.olcuSatir}>
+          {pro.reviewCount > 0 ? (
+            <View style={styles.puanCip}>
+              <Ionicons name="star" size={11} color={colors.gold} />
+              <Text variant="micro" tone="ink">
+                {pro.rating.toFixed(1)}
+              </Text>
+            </View>
+          ) : null}
+          {/*
+            BAŞARI YÜZDESİ — kurucunun isteğiyle müşteriye de gösteriliyor.
+            Uzmanın kendi panelindekiyle AYNI serviste hesaplanıyor.
+
+            Ölçülecek veri yoksa rozet HİÇ çizilmiyor: "%0" yazmak, hiç
+            çalışmamış bir uzmana kötü çalıştığını söylemek olurdu.
+          */}
+          {pro.basariYuzde != null ? (
+            <View style={styles.basariCip}>
+              <Ionicons name="trending-up" size={11} color={colors.success} />
+              <Text variant="micro" tone="ink">
+                %{pro.basariYuzde} {t('home.success')}
+              </Text>
+            </View>
+          ) : null}
+        </View>
       </View>
       <View style={styles.detayDugme}>
         <Text style={styles.detayYazi}>{t('home.details')}</Text>
@@ -1341,6 +1358,8 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.successSoft,
     },
     dogruYazi: { fontFamily: font.semibold, fontSize: 9, color: colors.success },
+    olcuSatir: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+    basariCip: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     puanCip: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
     detayDugme: {
       paddingHorizontal: 14,

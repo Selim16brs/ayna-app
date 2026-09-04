@@ -210,14 +210,89 @@ test('SIRALAMA sunucudan — başarıya göre', () => {
   const k = api('catalog', 'catalog.service.ts');
   assert.match(
     k,
-    /\.sort\(\(a, b\) => b\.basariSirasi - a\.basariSirasi\)/,
-    'liste başarıya göre sıralanmıyor',
+    /*
+     * SIRALAMA GERÇEK başarıya göre — GÖSTERİLEN değere değil.
+     * Gösterilene göre sıralasaydık, yüzdesini paylaşmamayı seçen uzman
+     * listenin en altına düşerdi: gizlilik tercihi cezaya dönüşürdü.
+     */
+    /basarilar\.get\(b\.id\)\?\.yuzde \?\? -1\) - \(basarilar\.get\(a\.id\)\?\.yuzde \?\? -1\)/,
+    'sıralama gerçek başarıya bakmıyor',
   );
-  assert.match(k, /uzmanBasarisi\(\{/, 'başarı hesabı kullanılmıyor');
   // Müşteriye yüzde YAZILMIYOR: uzmanın panelindeki yüzdeyle çelişirdi.
   assert.doesNotMatch(
     oku('app', '(tabs)', 'discover.tsx'),
     /basariSirasi/,
     'yüzde müşteriye gösteriliyor',
   );
+});
+
+test('BAŞARI PAYLAŞIMI uzmanın tercihi', () => {
+  /*
+   * Kurucu: "puan müşteride gösterilsin, bu özellik kalsın ama bunu
+   * uzman eğer istiyorsa seçenek koyalım. istemiyorsa paylaşılmasın
+   * müşteri ile."
+   */
+  const liste = api('catalog', 'catalog.service.ts');
+  // Kapalıysa yüzde YÜKTE HİÇ GİTMİYOR: istemcide gizlemek, veriyi yine
+  // göndermek olurdu.
+  assert.match(liste, /r\.showSuccess \? \(basarilar/, 'listede tercih okunmuyor');
+  assert.match(liste, /p\.showSuccess \? \(\(await this\.basari\.tek/, 'profilde tercih okunmuyor');
+
+  // Varsayılan AÇIK: özellik istenen davranış, kapatmak bir tercih.
+  const sema = readFileSync(join(__dirname, '..', '..', 'api', 'prisma', 'schema.prisma'), 'utf8');
+  assert.match(sema, /showSuccess\s+Boolean\s+@default\(true\)/, 'varsayılan kapalı');
+
+  // Uzman anahtarı gizlilik ekranından çeviriyor.
+  const gizlilik = oku('app', 'profile', 'privacy.tsx');
+  assert.match(gizlilik, /api\.setShowSuccess\(token, v\)/, 'anahtar sunucuya yazmıyor');
+  assert.match(gizlilik, /privacy\.pro_success/, 'anahtar ekranda yok');
+
+  // Panel kapalı olduğunu SÖYLÜYOR: uzman kapattığını unutup
+  // "neden görünmüyorum" diye sormasın.
+  assert.match(
+    oku('app', 'seller', 'reports.tsx'),
+    /reports\.success\.hidden/,
+    'kapalı durumu söylenmiyor',
+  );
+});
+
+test('BAŞARI YÜZDESİ tek kod yolundan — iki farklı sayı doğamıyor', () => {
+  /*
+   * Kurucu: "müşteriye de göster."
+   *
+   * İlk sürümde hesap İKİ YERDEYDİ ve liste cevap süresini ölçmüyordu:
+   * aynı uzman panelinde ve müşteri listesinde FARKLI yüzde gösterirdi.
+   * Tam bu yüzden müşteriye hiç göstermemiştim. Artık ikisi de aynı
+   * servisi çağırıyor ve kopya hesap kalmadı.
+   */
+  const liste = api('catalog', 'catalog.service.ts');
+  const panel = api('specialists', 'specialists.service.ts');
+  assert.match(liste, /this\.basari\.hesapla\(ids\)/, 'liste ortak servisi kullanmıyor');
+  assert.match(panel, /this\.basari\.tek\(proId\)/, 'panel ortak servisi kullanmıyor');
+  // Kopya hesap kalsaydı zamanla ayrışırdı.
+  assert.doesNotMatch(liste, /uzmanBasarisi\(\{/, 'listede ikinci bir hesap duruyor');
+  assert.doesNotMatch(panel, /uzmanBasarisi\(\{/, 'panelde ikinci bir hesap duruyor');
+  // Ortak servis ÜÇ bileşeni de ölçüyor — cevap süresi dahil.
+  const servis = api('basari', 'basari.service.ts');
+  assert.match(servis, /responded_at - created_at/, 'cevap süresi ölçülmüyor');
+  assert.match(servis, /uzmanBasarisi\(\{/, 'ortak servis hesabı yapmıyor');
+  // Toplu sorgu: liste yüzlerce sağlayıcı için çağırıyor.
+  assert.doesNotMatch(
+    servis,
+    /for \([^)]*\)[\s\S]{0,200}await this\.prisma\./,
+    'servis N+1 açıyor',
+  );
+});
+
+test('MÜŞTERİYE gösteriliyor ama VERİ YOKKEN gösterilmiyor', () => {
+  const d = oku('app', '(tabs)', 'discover.tsx');
+  assert.match(d, /pro\.basariYuzde != null \? \(/, 'liste satırında yüzde yok');
+  const pro = oku('app', 'professional', '[id].tsx');
+  assert.match(pro, /pro\.basariYuzde != null \? \(/, 'profilde yüzde yok');
+  /*
+   * "%0" YAZMIYOR: hiç randevusu olmayan uzmana kötü çalıştığını
+   * söylemek olurdu.
+   */
+  assert.doesNotMatch(d, /basariYuzde \?\? 0/, 'ölçülemeyen yüzde sıfıra düşürülüyor');
+  assert.doesNotMatch(pro, /basariYuzde \?\? 0/, 'ölçülemeyen yüzde sıfıra düşürülüyor');
 });

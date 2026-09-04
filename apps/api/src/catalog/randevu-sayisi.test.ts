@@ -82,15 +82,16 @@ test('TEK sorgu — uzman başına sorgu (N+1) yok', () => {
   // `Promise.all` içinde: mevcut iki toplu sorgunun yanına eklendi, ayrı
   // bir tur açmıyor.
   /*
-   * Başarı sıralaması için GELEN TALEP sayımı da eklendi — o da aynı
-   * toplu turda. Kural sorgu SAYISI değil ŞEKLİ: hepsi tek `Promise.all`
-   * içinde ve sağlayıcı başına değil.
+   * Başarı hesabı da aynı toplu turda — ama ORTAK SERVİSTEN
+   * (`basari.hesapla`). Kural sorgu SAYISI değil ŞEKLİ: hepsi tek
+   * `Promise.all` içinde ve sağlayıcı başına değil.
    */
   assert.match(
     servis,
-    /const \[sps, bizs, randevuSayilari, gelenTalepler, puanlar, esikAyari\] = await Promise\.all\(\[/,
-    'sayım sorguları toplu turun içinde değil',
+    /const \[sps, bizs, randevuSayilari, basarilar, puanlar, esikAyari\] = await Promise\.all\(\[/,
+    'sorgular toplu turun içinde değil',
   );
+  assert.match(servis, /this\.basari\.hesapla\(ids\)/, 'başarı hesabı ortak servisten gelmiyor');
   /*
    * Liste döngüsünün içinde sorgu OLMAMALI. Dilim METODUN SONUNDA bitmeli:
    * dosyanın geri kalanına taşarsa başka metotların await'lerini yakalayıp

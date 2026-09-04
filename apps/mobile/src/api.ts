@@ -1205,10 +1205,14 @@ export const api = {
   myProId: (token: string) => get<{ proId: string | null }>('/specialists/me/pro-id', token),
   /** Uzmanın başarı yüzdesi — puan DEĞİL. Ölçülemiyorsa `yuzde: null`. */
   myPerformance: (token: string) =>
-    get<{ yuzde: number | null; bilesenler: { ad: 'is' | 'puan' | 'cevap'; yuzde: number }[] }>(
-      '/specialists/me/performance',
-      token,
-    ),
+    get<{
+      yuzde: number | null;
+      bilesenler: { ad: 'is' | 'puan' | 'cevap'; yuzde: number }[];
+      showSuccess: boolean;
+    }>('/specialists/me/performance', token),
+  /** Başarı yüzdesini müşteriye göster/gösterme — uzmanın tercihi. */
+  setShowSuccess: (token: string, show: boolean) =>
+    post<{ showSuccess: boolean }>('/specialists/me/show-success', { show }, token),
   setMyPromotions: (token: string, promotions: import('./data').Promotion[]) =>
     post<{ promotions: import('./data').Promotion[] }>(
       '/specialists/me/promotions',

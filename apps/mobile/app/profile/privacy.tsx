@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { File, Paths } from 'expo-file-system';
@@ -70,6 +70,24 @@ export default function PrivacyScreen() {
   const satici = useStore(
     (st) => st.currentUser?.role === 'professional' || st.currentUser?.role === 'salon',
   );
+  /*
+   * Başarı paylaşımı SUNUCUDAN okunuyor: yerel bir varsayılan gösterip
+   * sonra farklı bir değere atlamak, anahtarın kendiliğinden değiştiği
+   * izlenimi verirdi.
+   */
+  const [basariPaylas, setBasariPaylas] = useState(true);
+  useEffect(() => {
+    if (!token || !satici) return;
+    let alive = true;
+    void api
+      .myPerformance(token)
+      .then((r) => alive && setBasariPaylas(r.showSuccess))
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [token, satici]);
+
   const gorunenAnahtarlar = TOGGLES.filter(
     (x) => !(satici && (x.key === 'location' || x.key === 'anon')),
   );
@@ -305,6 +323,41 @@ export default function PrivacyScreen() {
                 </Text>
               </View>
             </View>
+            {/*
+              ── BAŞARI YÜZDESİNİ PAYLAŞ ─────────────────────────────
+              Kurucu: "puan müşteride gösterilsin, bu özellik kalsın ama
+              bunu uzman eğer istiyorsa seçenek koyalım. istemiyorsa
+              paylaşılmasın müşteri ile."
+
+              Varsayılan AÇIK: özellik istenen davranış, kapatmak tercih.
+              Kapalıyken yüzde müşteri yüküne HİÇ konmuyor — istemcide
+              gizlemek, veriyi yine göndermek olurdu.
+            */}
+            <SectionHeader title={t('privacy.pro_success')} />
+            <View style={[styles.group, shadow.soft]}>
+              <View style={styles.row}>
+                <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+                  <Ionicons name="trending-up-outline" size={18} color={colors.ink} />
+                </View>
+                <View style={styles.rowLabel}>
+                  <Text variant="bodyStrong" tone="ink">
+                    {t('privacy.pro_success')}
+                  </Text>
+                  <Text variant="caption" tone="muted">
+                    {t('privacy.pro_success_sub')}
+                  </Text>
+                </View>
+                <Switch
+                  value={basariPaylas}
+                  onValueChange={(v) => {
+                    setBasariPaylas(v);
+                    if (token) void api.setShowSuccess(token, v).catch(() => undefined);
+                  }}
+                  trackColor={{ true: colors.accent, false: colors.surfaceMuted }}
+                />
+              </View>
+            </View>
+
             <SectionHeader title={t('privacy.pro_customer_data')} />
             <View style={[styles.group, styles.list, shadow.soft]}>
               <View style={styles.listRow}>

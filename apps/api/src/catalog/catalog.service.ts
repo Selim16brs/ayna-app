@@ -7,10 +7,10 @@ import {
   guvenKatmanlari,
   hizmetSatirininKimligi,
   type PromosyonKarti,
-  uzmanBasarisi,
   uzmanKayitli,
 } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
+import { BasariService } from '../basari/basari.service';
 import { CutoutService } from '../cutout/cutout.service';
 import { StorageService } from '../storage/storage.service';
 import { localizeRows } from '../common/i18n';
@@ -22,6 +22,8 @@ export class CatalogService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly cutout: CutoutService,
+    // Başarı hesabı ORTAK: uzmanın paneli de aynı servisi çağırıyor.
+    private readonly basari: BasariService,
   ) {}
 
   // §medya taşıma — R2 öncesi kayıtlarda base64 data-URL görseller JSON yanıtı MB'larca
@@ -273,7 +275,7 @@ export class CatalogService {
      * (N+1) yok. (proId, status) indeksi bunun için eklendi.
      */
     const TAMAMLANMIS = ['tamamlandi', 'degerlendirme', 'kapandi'] as const;
-    const [sps, bizs, randevuSayilari, gelenTalepler, puanlar, esikAyari] = await Promise.all([
+    const [sps, bizs, randevuSayilari, basarilar, puanlar, esikAyari] = await Promise.all([
       this.prisma.specialist.findMany({
         where: { proId: { in: ids } },
         select: {
@@ -304,21 +306,16 @@ export class CatalogService {
         _count: { _all: true },
       }),
       /*
-       * GELEN TALEP SAYISI — başarı sıralaması için.
+       * BAŞARI YÜZDESİ — ORTAK SERVİSTEN.
        *
-       * Kurucu: "ilk 3 görünmeli (başarı durumuna göre)."
+       * Kurucu: "müşteriye de göster."
        *
-       * Ham "tamamlanan sayısı" ile sıralamak büyük salonu her zaman üste
-       * çıkarırdı; başarı, gelen işi ne kadar sonuca ulaştırdığın. Taslak
-       * ve müşteri iptalleri sayılmıyor: onlar sağlayıcının başarısı değil.
-       *
-       * Yine TEK SORGU — sağlayıcı başına sorgu (N+1) yok.
+       * Hesabı burada tekrar yazsaydım (ilk sürümde öyleydi) uzmanın
+       * panelindeki yüzdeyle çelişirdi: panel cevap süresini de ölçüyor.
+       * İki farklı yüzde göstermektense tek kod yolu — ayrışacak bir şey
+       * kalmıyor. Servis de toplu sorgu kullanıyor, N+1 açılmıyor.
        */
-      this.prisma.booking.groupBy({
-        by: ['proId'],
-        where: { proId: { in: ids }, status: { notIn: ['taslak', 'iptal_musteri'] } },
-        _count: { _all: true },
-      }),
+      this.basari.hesapla(ids),
       /**
        * PUAN VE DEĞERLENDİRME SAYISI — GERÇEK KAYITLARDAN.
        *
@@ -348,9 +345,6 @@ export class CatalogService {
       }),
       this.prisma.setting.findUnique({ where: { key: 'rating.threshold' } }),
     ]);
-    const gelenByPro = new Map(
-      gelenTalepler.flatMap((x) => (x.proId ? [[x.proId, x._count._all] as const] : [])),
-    );
     const randevuByPro = new Map(
       randevuSayilari.flatMap((x) => (x.proId ? [[x.proId, x._count._all] as const] : [])),
     );
@@ -459,23 +453,34 @@ export class CatalogService {
               );
             })(),
             /*
-             * ── BAŞARI SIRALAMASI ────────────────────────────────────────
+             * ── BAŞARI YÜZDESİ — MÜŞTERİYE DE GÖSTERİLİYOR ─────────────
              *
-             * Kurucu: "ilk 3 görünmeli (başarı durumuna göre)."
+             * Kurucu: "ilk 3 görünmeli (başarı durumuna göre)" ve sonra
+             * "müşteriye de göster."
              *
-             * Sıralama için; MÜŞTERİYE YAZILMIYOR. Yazsaydık uzmanın kendi
-             * panelindeki yüzdeyle çelişebilirdi: panel cevap süresini de
-             * ölçüyor, liste ölçmüyor (sağlayıcı başına ikinci bir sorgu
-             * gerekirdi). İki farklı yüzde göstermektense sıralamada
-             * kullanıp göstermemek doğru.
+             * Değer uzmanın kendi panelindekiyle AYNI serviste
+             * hesaplanıyor; iki farklı yüzde doğamıyor. İlk sürümde hesap
+             * burada ayrıca yazılıydı ve cevap süresini ölçmüyordu — tam
+             * bu yüzden müşteriye göstermemiştim.
+             *
+             * ÖLÇÜLEMEYENDE `null`: hiç randevusu olmayan uzmana "%0"
+             * yazmak, hiç çalışmamış birine kötü çalıştığını söylemek
+             * olurdu. Ekran o durumda rozeti hiç çizmiyor.
              */
-            basariSirasi:
-              uzmanBasarisi({
-                tamamlanan: randevuByPro.get(r.id) ?? 0,
-                gelenTalep: gelenByPro.get(r.id) ?? 0,
-                puanOrt: puanByPro.get(r.id)?.adet ? (puanByPro.get(r.id)?.ortalama ?? null) : null,
-                cevapDk: null,
-              }).yuzde ?? -1,
+            /*
+             * PAYLAŞIM UZMANIN TERCİHİ.
+             *
+             * Kurucu: "uzman eğer istiyorsa seçenek koyalım. istemiyorsa
+             * paylaşılmasın müşteri ile."
+             *
+             * Kapalıysa yüzde yükte HİÇ GİTMİYOR — istemcide gizlemek,
+             * veriyi yine göndermek olurdu.
+             *
+             * SIRALAMA yine gerçek değere göre (aşağıda): yüzdeyi
+             * paylaşmamak bir gizlilik tercihi, sıralamada geriye
+             * düşme cezası değil.
+             */
+            basariYuzde: r.showSuccess ? (basarilar.get(r.id)?.yuzde ?? null) : null,
           };
         })
         /*
@@ -486,7 +491,12 @@ export class CatalogService {
          * sayıp en alta atmak yerine, bilinmeyeni bilinenlerin arkasına
          * koyuyoruz — sıralama aynı ama sebep dürüst.
          */
-        .sort((a, b) => b.basariSirasi - a.basariSirasi)
+        /*
+         * Sıralama GERÇEK başarıya göre — gösterilen değere değil.
+         * Gösterilene göre sıralasaydık, yüzdesini paylaşmayan uzman
+         * listenin en altına düşerdi: gizlilik tercihi cezaya dönüşürdü.
+         */
+        .sort((a, b) => (basarilar.get(b.id)?.yuzde ?? -1) - (basarilar.get(a.id)?.yuzde ?? -1))
     );
   }
 
@@ -837,6 +847,12 @@ export class CatalogService {
         this.prisma.professional.update({ where: { id: p.id }, data: { portfolio: next } }),
       ),
       promotions: parsePromos(p.promoJson), // §11 — Platinum'un profilinde yayınladığı promosyonlar
+      /*
+       * BAŞARI YÜZDESİ — listedeki AYNI servisten, aynı paylaşım
+       * tercihiyle. Profilde gösterip listede göstermemek (ya da tersi)
+       * kullanıcıyı şaşırtırdı.
+       */
+      basariYuzde: p.showSuccess ? ((await this.basari.tek(p.id)).yuzde ?? null) : null,
       reviews,
       starDist,
     };

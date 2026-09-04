@@ -117,6 +117,18 @@ export interface Professional {
    * kaybolmaktansa görünmesi doğru.
    */
   completedBookings?: number;
+  /**
+   * BAŞARI YÜZDESİ (0–100) — puan DEĞİL.
+   *
+   * Tamamlanan/gelen randevu oranı, değerlendirme ve cevap süresinden
+   * hesaplanıyor. Uzmanın kendi panelindeki yüzdeyle AYNI serviste
+   * üretiliyor; iki farklı sayı doğamıyor.
+   *
+   * `null`/`undefined`: ölçülecek veri yok. Ekran o durumda rozeti HİÇ
+   * çizmiyor — "%0" yazmak, hiç çalışmamış bir uzmana kötü çalıştığını
+   * söylemek olurdu.
+   */
+  basariYuzde?: number | null;
 }
 
 /** Salon içindeki bir uzman (kadro). Bağımsız uzmanlarda kadro yoktur. */

@@ -180,6 +180,16 @@ model Professional {
   imageUrl        String       @map("image_url")
   portfolio       String[]     @default([]) // uzman galerisi (data URL; medya fazında objeye)
   promoJson       String       @default("[]") @map("promo_json") // §11 Platinum promosyonları (kendi profilinde görünür)
+  /// BAŞARI YÜZDESİ MÜŞTERİYE GÖSTERİLSİN Mİ.
+  ///
+  /// Kurucu: "puan müşteride gösterilsin dedik, bu özellik kalsın ama
+  /// bunu uzman eğer istiyorsa seçenek koyalım. istemiyorsa paylaşılmasın
+  /// müşteri ile."
+  ///
+  /// Varsayılan AÇIK: özellik istenen davranış, kapatmak bir tercih.
+  /// Kapalıysa yüzde müşteri yükünde HİÇ gitmiyor (gizlenmiş bir alan
+  /// olarak da değil) — istemcide saklamak, veriyi yine göndermek olurdu.
+  showSuccess     Boolean      @default(true) @map("show_success")
   servicesJson    String       @default("[]") @map("services_json") // §9.5 uzmanın GERÇEK hizmet/fiyat listesi
   hoursJson       String       @default("[]") @map("hours_json") // §9.5 çalışma saatleri (DayHours[])
   closedDaysJson  String       @default("[]") @map("closed_days_json") // §4.6 izin/tatil günleri (UTC ms)

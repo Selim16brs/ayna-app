@@ -432,6 +432,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'home.refund.cta': 'Запросить возврат',
   'home.pending': 'Твои записи в ожидании',
   'home.verified': 'Проверено',
+  'home.success': 'успех',
   'home.details': 'Подробнее',
   'pro.not_found.title': 'Профиль не найден',
   'pro.not_found.body': 'Запись мастера удалена или временно недоступна.',
@@ -1234,6 +1235,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reports.quality.title': 'Ответ и качество',
   'reports.success.title': 'Ваш показатель успеха',
   'reports.success.none': 'Пока нет данных — появится после первых записей',
+  'reports.success.hidden':
+    'Не показывается клиентам — включить можно в разделе «Конфиденциальность»',
   'reports.success.is': 'Завершённая работа',
   'reports.success.puan': 'Оценка',
   'reports.success.cevap': 'Время ответа',
@@ -2051,6 +2054,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'privacy.subtitle': 'Контроль над вашими данными — у вас',
   'privacy.location': 'Передача местоположения',
   'privacy.pro_address': 'Адрес вашего бизнеса открыт',
+  'privacy.pro_success': 'Показывать клиенту мой показатель успеха',
+  'privacy.pro_success_sub':
+    'Считается по завершённым работам, оценкам и времени ответа. Если выключить, клиент его не увидит; ваше место в списке не изменится.',
   'privacy.pro_address_sub':
     'Адрес виден в профиле, чтобы клиент нашёл вас на карте. Это не настройка, а условие работы.',
   'privacy.pro_customer_data': 'Данные клиента',

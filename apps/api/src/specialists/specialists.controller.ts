@@ -92,6 +92,19 @@ export class SpecialistsController {
    * BAŞARI YÜZDESİ — uzman puan toplamıyor, başarıyla ölçülüyor.
    * Ölçülemeyen bileşen hesaba katılmıyor; hiçbiri yoksa `null` dönüyor.
    */
+  /**
+   * BAŞARI YÜZDESİNİ PAYLAŞ / PAYLAŞMA.
+   *
+   * Kurucu: "uzman eğer istiyorsa seçenek koyalım. istemiyorsa
+   * paylaşılmasın müşteri ile." Kapalıyken yüzde müşteri yükünde HİÇ
+   * gitmiyor.
+   */
+  @Post('me/show-success')
+  @UseGuards(JwtAuthGuard)
+  setShowSuccess(@Req() req: AuthedRequest, @Body() body: { show?: unknown }) {
+    return this.specialists.setShowSuccess(req.user!.id, body.show !== false);
+  }
+
   @Get('me/performance')
   @UseGuards(JwtAuthGuard)
   myPerformance(@Req() req: AuthedRequest) {

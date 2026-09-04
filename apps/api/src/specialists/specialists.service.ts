@@ -10,7 +10,7 @@ import {
 // Asia/Almaty = UTC+5, yaz saati YOK. Sunucu UTC saklıyor; uzman yerel saate
 // göre çalışıyor, ham UTC ile karşılaştırmak günü kaydırırdı.
 const ALMATY_OFFSET_MS = 5 * 60 * 60_000;
-import { hizmetSatirininKimligi, sectorsFromServiceIds, uzmanBasarisi } from '@ayna/domain';
+import { hizmetSatirininKimligi, sectorsFromServiceIds } from '@ayna/domain';
 import { ReguleUyariService } from '../catalog/regule-uyari.service';
 import {
   BadRequestException,
@@ -34,6 +34,7 @@ import {
 } from '../common/crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
+import { BasariService } from '../basari/basari.service';
 import { StorageService } from '../storage/storage.service';
 import type { RegisterSpecialistInput } from './specialists.dto';
 
@@ -53,6 +54,12 @@ export class SpecialistsService {
     private readonly storage: StorageService,
     private readonly regule: ReguleUyariService,
     @Inject(ENV) private readonly env: Env,
+    /*
+     * Başarı hesabı ORTAK serviste. EN SONA eklendi: aradaki bir yere
+     * koysaydım mevcut testlerin argüman sırası sessizce kayardı —
+     * `regule` yerine `basari` geçirilir ve hata çok sonra çıkardı.
+     */
+    private readonly basari: BasariService,
   ) {}
 
   // §3.3 — Uzman kaydı. Salona bağlıysa işletme doğrulama kodu şart.
@@ -393,63 +400,39 @@ export class SpecialistsService {
   /**
    * BAŞARI YÜZDESİ — uzman puan toplamıyor, başarıyla ölçülüyor.
    *
-   * Kurucu: "uzmanlar aldıkları onaylanıp hizmet verilmiş rezervasyon
-   * sayısı, değerlendirme notu başarısı, cevap verme süresi ve bunun gibi
-   * başarı durumlarına göre yüzde üzerinden değerlendirilir."
-   *
-   * Üç bileşen de GERÇEK kayıttan: tamamlanan/gelen randevu oranı,
-   * değerlendirme ortalaması ve talebe ortalama cevap dakikası. Ölçülemeyen
-   * bileşen hesaba katılmıyor — yeni bir uzmana "%0" yazmak, hiç
-   * çalışmamış birine kötü çalıştığını söylemek olurdu.
+   * Hesap ORTAK SERVİSTE: müşterinin gördüğü listeyle AYNI kod yolu.
+   * Burada ayrıca hesaplasaydım (ilk sürümde öyleydi) panel cevap
+   * süresini ölçüp liste ölçmediği için aynı uzman iki farklı yüzde
+   * gösterirdi.
    */
   async myPerformance(userId: string) {
     const proId = await this.proIdFor(userId);
-    if (!proId) return { yuzde: null, bilesenler: [] };
+    const sonuc = await this.basari.tek(proId);
+    // Paylaşım tercihi de dönüyor: panel anahtarın durumunu göstersin.
+    const pro = proId
+      ? await this.prisma.professional.findUnique({
+          where: { id: proId },
+          select: { showSuccess: true },
+        })
+      : null;
+    return { ...sonuc, showSuccess: pro?.showSuccess ?? true };
+  }
 
-    const randevular = await this.prisma.booking.findMany({
-      where: { proId },
-      select: { status: true, createdAt: true, respondedAt: true },
-      take: 1000,
+  /**
+   * Başarı yüzdesinin müşteriye gösterilip gösterilmeyeceği.
+   *
+   * Keşif KARTINDA tutuluyor: liste sorgusu zaten o satırı okuyor,
+   * ayrı bir tabloya koysaydım her satır için ikinci bir okuma gerekirdi.
+   */
+  async setShowSuccess(userId: string, show: boolean) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { showSuccess: show };
+    const p = await this.prisma.professional.update({
+      where: { id: proId },
+      data: { showSuccess: show },
+      select: { showSuccess: true },
     });
-    const tamamlanan = randevular.filter((b) =>
-      ['tamamlandi', 'degerlendirme', 'kapandi'].includes(b.status),
-    ).length;
-    /*
-     * GELEN TALEP: uzmanın kararına sunulan her randevu. Taslak ve
-     * müşteri iptalleri sayılmıyor — onlar uzmanın başarısı değil.
-     */
-    const gelenTalep = randevular.filter(
-      (b) => !['taslak', 'iptal_musteri'].includes(b.status),
-    ).length;
-
-    const puanlar = await this.prisma.rating.aggregate({
-      where: { subjectId: proId, raterRole: 'user', visible: true },
-      _avg: { score: true },
-      _count: true,
-    });
-
-    /*
-     * CEVAP DAKİKASI: uzmanın yanıtladığı randevularda oluşturulma ile
-     * yanıt arasındaki ortalama. Hiç yanıtlamadıysa `null` — ölçüm yok,
-     * sıfır değil.
-     */
-    const yanitlanan = randevular.filter((b) => b.respondedAt !== null);
-    const cevapDk =
-      yanitlanan.length > 0
-        ? Math.round(
-            yanitlanan.reduce(
-              (n, b) => n + (b.respondedAt!.getTime() - b.createdAt.getTime()) / 60_000,
-              0,
-            ) / yanitlanan.length,
-          )
-        : null;
-
-    return uzmanBasarisi({
-      tamamlanan,
-      gelenTalep,
-      puanOrt: puanlar._count > 0 ? (puanlar._avg.score ?? null) : null,
-      cevapDk,
-    });
+    return p;
   }
 
   /** Uzmanın kendi keşif kartının kimliği — "müşteri gözüyle gör" için. */
