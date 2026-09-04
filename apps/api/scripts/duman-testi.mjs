@@ -299,6 +299,74 @@ ol(
   String(yeniRandevu?.customerName),
 );
 
+/* ── 10 · PARA YOLU — depozito, tamamlanma, PUAN ───────────────────────
+ *
+ * Kurucunun ilk kuralı: "sistem hiçbir şekilde randevu, değerlendirme,
+ * not, puanlama, ayna para… hiçbir şeyi kendiliğinden uydurmamalı."
+ *
+ * Bu yolun hiçbir ucu duman testinde yoktu: depozito yüklendiğinde
+ * randevu kesinleşiyor mu, tamamlandığında puan GERÇEKTEN hak edilen
+ * kadar mı yükleniyor. Para ve puan sessizce bozulursa kimse fark etmez.
+ */
+const bookingId = secim.govde?.bookingId;
+const dekont = await gonder(
+  `/bookings/${bookingId}/deposit-receipt`,
+  { receiptUri: 'data:image/jpeg;base64,RFVNQU4=' },
+  musteri.govde?.token,
+);
+ol(
+  'depozito dekontu kabul ediliyor',
+  dekont.ok,
+  dekont.ok ? '' : JSON.stringify(dekont.govde).slice(0, 160),
+);
+ol(
+  'dekont randevuyu KESİNLEŞTİRİYOR',
+  dekont.govde?.status === 'kesinlesti',
+  String(dekont.govde?.status),
+);
+/*
+ * Depozito hizmet bedelinin %10'u (K1). Sabit bir tutar ya da yuvarlama
+ * yoktu: 18.000 ₸ için tam 1.800 ₸.
+ */
+ol(
+  "depozito hizmetin %10'u",
+  Number(dekont.govde?.depositAmount) === 1800,
+  String(dekont.govde?.depositAmount),
+);
+
+/*
+ * RANDEVU GÜNÜ GELMEDEN TAMAMLANAMAZ.
+ *
+ * `kesinlesti → odeme_bekliyor` diye bir geçiş YOK: araya `hizmet_gunu`
+ * giriyor ve oraya geçişi randevu saati geldiğinde zamanlayıcı yapıyor.
+ * Bu kural olmasaydı uzman ileri tarihli bir randevuyu bugün kapatıp
+ * puanı ve komisyon saatini erken başlatabilirdi.
+ *
+ * Tamamlanma sonrası adımlar (ödeme beyanı, puan yüklemesi) burada
+ * DENENMİYOR: randevunun saatinin gelmesini beklemek gerekiyor ve
+ * zamanlayıcı 60 saniyede bir dönüyor — duman testini bir dakika
+ * bekletmek, kazandırdığından çok maliyet olurdu. O adımların kuralları
+ * birim testlerinde bağlı (completion-rewards, state-machine).
+ */
+const erken = await gonder(`/bookings/${bookingId}/complete`, {}, uzmanToken);
+const erkenKod = erken.govde?.error?.code ?? erken.govde?.code;
+ol(
+  'randevu günü gelmeden TAMAMLANAMIYOR',
+  !erken.ok && erkenKod === 'INVALID_TRANSITION',
+  `${erken.durum} ${erkenKod ?? ''}`,
+);
+
+/*
+ * Puan da erken yüklenmiyor: tamamlanmamış randevudan puan doğarsa
+ * "uydurma puan" tam olarak budur.
+ */
+const sadakat = await get('/loyalty', musteri.govde?.token);
+ol(
+  'tamamlanmamış randevudan PUAN DOĞMUYOR',
+  (sadakat?.points ?? 0) === 0,
+  `${sadakat?.points} puan`,
+);
+
 /* ── RAPOR ─────────────────────────────────────────────────────────── */
 const dusen = sonuclar.filter((s) => !s.gecti);
 for (const s of sonuclar) {
