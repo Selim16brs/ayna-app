@@ -72,6 +72,25 @@ function ThemedStack() {
       const s = useStore.getState();
       if (!s.token || s.currentUser?.role !== 'user') return;
       const fresh = s.takeNewOffers();
+      /*
+       * GERÇEK teklif geldiğinde bildirim de düşüyor. Eskiden yalnız bir
+       * uyarı penceresi vardı: kullanıcı o an ekranda değilse ya da
+       * "Sonra" derse teklif geldiğinin izi kalmıyordu — oysa uydurma
+       * "teklifler gelmeye başladı" bildirimi talep açılır açılmaz
+       * düşüyordu. Sıra artık doğru: bildirim GERÇEK sayıyla.
+       */
+      if (fresh.count > 0) {
+        s.pushNotification({
+          type: 'quote',
+          audience: 'user',
+          titleKey: 'notif.offers_started',
+          bodyKey: 'notif.offers_started_b',
+          params: { n: String(fresh.count) },
+          dateLabel: 'Az önce',
+          icon: 'pricetags-outline',
+          route: fresh.demandId ? `/quote/results?id=${fresh.demandId}` : '/bookings',
+        });
+      }
       if (fresh.count > 0)
         Alert.alert(t('newoffers.t'), fillParams(t('newoffers.b'), { n: fresh.count }), [
           { text: t('promo.later'), style: 'cancel' },

@@ -3,7 +3,6 @@ import { cakisiyor, doluAraliklar } from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { randevuVerebilir } from '@ayna/domain';
 import type { MessageKey } from '@ayna/i18n';
@@ -384,26 +383,19 @@ export default function ProfessionalScreen() {
           </PressableScale>
         </View>
 
-        {/* ═══ KİMLİK — kesik portre + yansıma (kanvas §KİMLİK) ═══
-            Portre SOLDA 118×158 (132 görsel + 26 yansıma), bilgi sağda. */}
+        {/* ═══ KİMLİK — portre solda, bilgi sağda ═══
+            Kurucu: "uzmanın profil fotoğrafının alt kısmında bir degrade
+            gibi bir şey var onu kaldır."
+
+            Portrenin altında ters çevrilmiş soluk bir KOPYASI (yansıma) ve
+            fotoğrafın alt kısmını zemine eriten bir degrade vardı. İkisi
+            birlikte fotoğrafı alt kenarından dağıtıyordu: kullanıcı ne
+            fotoğrafın nerede bittiğini anlıyor ne de yansımanın ne olduğunu.
+            İkisi de kaldırıldı; fotoğraf net bir kenarla bitiyor. */}
         <View style={styles.identityRow}>
           <View style={styles.portraitCol} pointerEvents="none">
             <View style={styles.portraitWrap}>
               <Image source={{ uri: pro.image }} style={styles.portrait} resizeMode="cover" />
-              <LinearGradient
-                colors={['rgba(251,248,246,0)', colors.bg]}
-                locations={[0.62, 1]}
-                style={StyleSheet.absoluteFill}
-                pointerEvents="none"
-              />
-            </View>
-            <View style={styles.reflection}>
-              <Image source={{ uri: pro.image }} style={styles.reflectionImg} resizeMode="cover" />
-              <LinearGradient
-                colors={['rgba(251,248,246,0.55)', colors.bg]}
-                locations={[0, 0.88]}
-                style={StyleSheet.absoluteFill}
-              />
             </View>
           </View>
 
@@ -613,7 +605,21 @@ export default function ProfessionalScreen() {
                       return (
                         <Pressable
                           key={u.id}
-                          onPress={() => router.push('/uzman/' + u.id)}
+                          /*
+                           * SALON KİMLİĞİ AÇIKÇA GİDİYOR.
+                           *
+                           * Uzman ekranı salonu ADRESTEN ÇIKARMAYA
+                           * çalışıyordu (`id.split('-u')[0]`) — eski demo
+                           * kimlik biçimine göre yazılmış bir varsayım.
+                           * Gerçek kimlikler UUID; bölme çöp veriyor ve
+                           * ekran "Bu profil bulunamadı" diyordu.
+                           */
+                          onPress={() =>
+                            router.push({
+                              pathname: '/uzman/[id]',
+                              params: { id: u.id, salon: pro.id },
+                            })
+                          }
                           style={styles.staffCard}
                         >
                           <View style={[styles.staffAvatarWrap, on && styles.staffAvatarOn]}>
@@ -1177,17 +1183,11 @@ const makeStyles = (colors: ColorTokens) =>
       paddingTop: space(1.75),
     },
     identityText: { flex: 1, paddingBottom: space(3.75), gap: 6, minWidth: 0 },
-    portraitCol: { width: 118, height: 158 },
+    // Yükseklik 158'di: 132 fotoğraf + 26 yansıma. Yansıma kalkınca
+    // fazlalık 26px boşluk kalıyordu.
+    portraitCol: { width: 118, height: 132 },
     portraitWrap: { width: 118, height: 132, overflow: 'hidden', borderRadius: radius.md },
     portrait: { width: 118, height: 132 },
-    reflection: { width: 118, height: 26, overflow: 'hidden' },
-    reflectionImg: {
-      width: 118,
-      height: 132,
-      marginTop: -106,
-      transform: [{ scaleY: -1 }],
-      opacity: 0.16,
-    },
     metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
     mapLink: { fontFamily: font.semibold },
     // ── §GÜVEN — tek kartta yıl · müşteri · puan ──

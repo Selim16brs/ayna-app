@@ -13,6 +13,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { reklamGunu } from '@ayna/domain';
 import {
   selectCommissionRate,
+  selectPortraitKesilmis,
   selectPortrait,
   selectUnreadCount,
   useStore,
@@ -72,6 +73,7 @@ export default function ReportsScreen() {
   const [period, setPeriod] = useState<Period>('week');
   const salonName = useStore((s) => s.currentUser?.name) ?? 'AYNA İşletme';
   const portre = useStore(selectPortrait); // bayat portre otomatik elenir
+  const portreKesilmis = useStore(selectPortraitKesilmis);
   /** §4.2 — uzmanın yanıtını bekleyen talepler; en yakın saat önce. */
   // §9.4 — YALNIZ uzman olarak gelen talepler. Uzmanın kendi müşteri
   // randevuları burada görünmemeli: onlar onun kararını beklemiyor.
@@ -387,9 +389,27 @@ export default function ReportsScreen() {
               <Ionicons name="notifications-outline" size={20} color={colors.ink} />
               {unread > 0 ? <View style={styles.basNokta} /> : null}
             </PressableScale>
-            <PressableScale style={styles.avatarHalka} onPress={() => router.push('/seller/menu')}>
+            {/*
+              PORTRE MÜŞTERİ TARAFIYLA AYNI BİÇİMDE.
+
+              Kurucu: "uzmanda da profil fotoğrafı kullanıcı ile aynı
+              formatta daire olmadan arkası kesik çıkmalı."
+
+              Kesilmiş portre daireye sokuluyordu: saçı ve omzu daireden
+              taşan yerinden kesiliyordu. Ham fotoğraf daire içinde
+              kalıyor — kendi arka planını taşıdığı için çerçevesiz
+              göstermek odayı panele yapıştırmak olurdu.
+            */}
+            <PressableScale
+              style={portreKesilmis ? styles.portreKap : styles.avatarHalka}
+              onPress={() => router.push('/seller/menu')}
+            >
               {portre ? (
-                <Image source={{ uri: portre }} style={styles.avatar} />
+                <Image
+                  source={{ uri: portre }}
+                  style={portreKesilmis ? styles.portreKesik : styles.avatar}
+                  resizeMode={portreKesilmis ? 'contain' : 'cover'}
+                />
               ) : (
                 <View style={[styles.avatar, styles.avatarBos]} />
               )}
@@ -862,6 +882,9 @@ const makeStyles = (colors: ColorTokens) =>
     },
     avatarHalka: { padding: 2, borderRadius: 100, borderWidth: 1.5, borderColor: colors.accent },
     avatar: { width: 40, height: 40, borderRadius: 100 },
+    // Kesilmiş portre: çerçevesiz, zeminsiz, kırpmasız — ana sayfayla aynı.
+    portreKap: { width: 48, alignItems: 'center' },
+    portreKesik: { width: 48, height: 48 },
     avatarBos: { backgroundColor: colors.accentSoft },
 
     // canli-ozet-card (radius 24, p20, gap 18) — koyu, iki temada da sabit

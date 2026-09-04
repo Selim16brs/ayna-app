@@ -1611,15 +1611,28 @@ export const useStore = create<State>()(
             ...(input.preferredSlots?.length ? { preferredSlots: input.preferredSlots } : {}),
           });
           set((s) => ({ demands: [demand, ...s.demands.filter((d) => d.id !== demand.id)] }));
-          // Müşteri tarafı: teklif toplama başladı (uygulama-içi bildirim)
+          /*
+           * ── OLMAYAN TEKLİF DUYURULMUYOR ──────────────────────────────
+           *
+           * Kurucu: "kullanıcı teklifi aldığı gibi hiçbir teklif gelmeden
+           * direkt bildirim geldi ve bildirimde 'teklifler gelmeye
+           * başladı' yazıyor. bu şekilde uydurma şeyler olmamalı."
+           *
+           * Bildirim talep OLUŞTURULUR OLUŞTURULMAZ atılıyordu — üstelik
+           * `n: 0` ile, yani "0 uzman talebini yanıtladı" diye. Hiçbir
+           * uzman henüz görmemişken teklif geldiğini söylemek.
+           *
+           * Artık GERÇEKTEN olan şey yazılıyor: talep uzmanlara iletildi.
+           * "Teklifler geldi" bildirimi teklif GERÇEKTEN düştüğünde
+           * atılıyor (`takeNewOffers` yolu).
+           */
           get().pushNotification({
             type: 'quote',
             audience: 'user',
-            titleKey: 'notif.offers_started',
-            bodyKey: 'notif.offers_started_b',
-            params: { n: 0 },
+            titleKey: 'notif.demand_sent',
+            bodyKey: 'notif.demand_sent_b',
             dateLabel: 'Az önce',
-            icon: 'pricetags-outline',
+            icon: 'paper-plane-outline',
             route: `/quote/results?id=${demand.id}`,
           });
           return demand.id;
