@@ -22,9 +22,25 @@ import { tr } from '@ayna/i18n';
 const oku = (p: string) => readFileSync(join(__dirname, '..', 'app', p), 'utf8');
 
 test('uzman ana ekranı ADI gerçekten basıyor', () => {
+  /*
+   * DÜZEN DEĞİŞTİ — kural değişmedi.
+   *
+   * Kurucu: "uzman ana sayfası üst taraf tasarımı müşteri ana
+   * sayfasındaki üst tasarım gibi olmalı." Müşteride selamlama ÜSTTE ve
+   * küçük, İSİM altta büyük ve kalın — yani tek satırlık "Günaydın,
+   * Darina" birleşimi artık yok.
+   *
+   * Korunan kural aynı: isim GERÇEKTEN ekrana basılıyor ve adı olmayan
+   * hesapta boş bir satır kalmıyor.
+   */
   const k = oku('seller/reports.tsx');
-  assert.match(k, /t\('benim\.hello\.named'\)/, 'isimli selamlama kullanılmıyor');
-  assert.match(k, /ad: firstName/, "isim '{ad}' anahtarıyla verilmiyor");
+  assert.match(
+    k,
+    /<Text style=\{styles\.selamUst\}>\{t\(greetingKey\(\)\)\}<\/Text>/,
+    'selamlama üst satırda değil',
+  );
+  assert.match(k, /<Text style=\{styles\.selamAd\}/, 'isim kendi satırında değil');
+  assert.match(k, /\{firstName \|\|/, 'isim basılmıyor');
   // Eski hâli: yer tutucusu olmayan metne yanlış anahtarla doldurma.
   assert.doesNotMatch(
     k,
@@ -33,9 +49,10 @@ test('uzman ana ekranı ADI gerçekten basıyor', () => {
   );
 });
 
-test('adı olmayan hesapta boşta virgül kalmıyor', () => {
+test('adı olmayan hesapta boş satır kalmıyor', () => {
+  // Ad yoksa yerine rol yazılıyor: boş bir başlık satırı kalmıyor.
   const k = oku('seller/reports.tsx');
-  assert.match(k, /firstName\s*\?/, 'ad boşken düz selamlamaya düşmüyor');
+  assert.match(k, /firstName \|\| t\(isSalon \?/, 'ad boşken yedek yok');
 });
 
 test('YER TUTUCUSU OLMAYAN metne doldurma yapılmıyor', () => {

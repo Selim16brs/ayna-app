@@ -81,10 +81,15 @@ test('TEK sorgu — uzman başına sorgu (N+1) yok', () => {
   assert.match(servis, /this\.prisma\.booking\.groupBy\(\{/, 'toplu sayım sorgusu yok');
   // `Promise.all` içinde: mevcut iki toplu sorgunun yanına eklendi, ayrı
   // bir tur açmıyor.
+  /*
+   * Başarı sıralaması için GELEN TALEP sayımı da eklendi — o da aynı
+   * toplu turda. Kural sorgu SAYISI değil ŞEKLİ: hepsi tek `Promise.all`
+   * içinde ve sağlayıcı başına değil.
+   */
   assert.match(
     servis,
-    /const \[sps, bizs, randevuSayilari, puanlar, esikAyari\] = await Promise\.all\(\[/,
-    'sayım sorgusu toplu turun içinde değil',
+    /const \[sps, bizs, randevuSayilari, gelenTalepler, puanlar, esikAyari\] = await Promise\.all\(\[/,
+    'sayım sorguları toplu turun içinde değil',
   );
   /*
    * Liste döngüsünün içinde sorgu OLMAMALI. Dilim METODUN SONUNDA bitmeli:

@@ -7,6 +7,7 @@ import {
   guvenKatmanlari,
   hizmetSatirininKimligi,
   type PromosyonKarti,
+  uzmanBasarisi,
   uzmanKayitli,
 } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
@@ -272,7 +273,7 @@ export class CatalogService {
      * (N+1) yok. (proId, status) indeksi bunun için eklendi.
      */
     const TAMAMLANMIS = ['tamamlandi', 'degerlendirme', 'kapandi'] as const;
-    const [sps, bizs, randevuSayilari, puanlar, esikAyari] = await Promise.all([
+    const [sps, bizs, randevuSayilari, gelenTalepler, puanlar, esikAyari] = await Promise.all([
       this.prisma.specialist.findMany({
         where: { proId: { in: ids } },
         select: {
@@ -300,6 +301,22 @@ export class CatalogService {
       this.prisma.booking.groupBy({
         by: ['proId'],
         where: { proId: { in: ids }, status: { in: [...TAMAMLANMIS] } },
+        _count: { _all: true },
+      }),
+      /*
+       * GELEN TALEP SAYISI — başarı sıralaması için.
+       *
+       * Kurucu: "ilk 3 görünmeli (başarı durumuna göre)."
+       *
+       * Ham "tamamlanan sayısı" ile sıralamak büyük salonu her zaman üste
+       * çıkarırdı; başarı, gelen işi ne kadar sonuca ulaştırdığın. Taslak
+       * ve müşteri iptalleri sayılmıyor: onlar sağlayıcının başarısı değil.
+       *
+       * Yine TEK SORGU — sağlayıcı başına sorgu (N+1) yok.
+       */
+      this.prisma.booking.groupBy({
+        by: ['proId'],
+        where: { proId: { in: ids }, status: { notIn: ['taslak', 'iptal_musteri'] } },
         _count: { _all: true },
       }),
       /**
@@ -331,6 +348,9 @@ export class CatalogService {
       }),
       this.prisma.setting.findUnique({ where: { key: 'rating.threshold' } }),
     ]);
+    const gelenByPro = new Map(
+      gelenTalepler.flatMap((x) => (x.proId ? [[x.proId, x._count._all] as const] : [])),
+    );
     const randevuByPro = new Map(
       randevuSayilari.flatMap((x) => (x.proId ? [[x.proId, x._count._all] as const] : [])),
     );
@@ -394,51 +414,80 @@ export class CatalogService {
         )
         .map((u) => u.id),
     );
-    return rows
-      .filter((r) => {
-        const owner = ownerByPro.get(r.id);
-        return !owner || !hiddenOwners.has(owner);
-      })
-      .map((r) => {
-        const services = safeParseServices(r.servicesJson);
-        const prices = services.map((x) => x.price).filter((p) => p > 0);
-        const owner = ownerByPro.get(r.id);
-        return {
-          ...mapPro(r),
-          lat: r.lat ?? undefined,
-          lng: r.lng ?? undefined,
-          priceTo: prices.length ? Math.max(...prices) : Number(r.priceFrom),
-          // Hiç randevusu olmayan uzman için groupBy satır döndürmez → 0.
-          completedBookings: randevuByPro.get(r.id) ?? 0,
-          // Sütun değil GERÇEK kayıtlar. `mapPro` sütunu koyuyor; burada
-          // üzerine yazılıyor ki liste ile profil aynı sayıyı göstersin.
-          rating: puanByPro.get(r.id)?.ortalama ?? 0,
-          reviewCount: puanByPro.get(r.id)?.adet ?? 0,
-          isPremium: owner ? premiumUsers.has(owner) : false,
-          membershipTier: owner ? (tierById.get(owner) ?? 'free') : 'free',
-          // §3.3 — GÜVEN ROZETİ listede de. Eskiden yalnız detay ucundaydı:
-          // müşteri aramada/keşifte kimin doğrulandığını göremiyor, her
-          // profili tek tek açmak zorunda kalıyordu. Kural detayla AYNI
-          // fonksiyondan geliyor, ayrışamaz.
-          aynaVerified: (() => {
-            const sp = spByPro.get(r.id);
-            const biz = bizByPro.get(r.id);
-            const kayitli = uzmanKayitli(sp?.entityType, sp?.iin);
-            const kyc = owner ? (kycById.get(owner) ?? false) : false;
-            return aynaOnayli(
-              r.kind,
-              guvenKatmanlari({
-                kind: r.kind,
-                kycOnayli: kyc,
+    return (
+      rows
+        .filter((r) => {
+          const owner = ownerByPro.get(r.id);
+          return !owner || !hiddenOwners.has(owner);
+        })
+        .map((r) => {
+          const services = safeParseServices(r.servicesJson);
+          const prices = services.map((x) => x.price).filter((p) => p > 0);
+          const owner = ownerByPro.get(r.id);
+          return {
+            ...mapPro(r),
+            lat: r.lat ?? undefined,
+            lng: r.lng ?? undefined,
+            priceTo: prices.length ? Math.max(...prices) : Number(r.priceFrom),
+            // Hiç randevusu olmayan uzman için groupBy satır döndürmez → 0.
+            completedBookings: randevuByPro.get(r.id) ?? 0,
+            // Sütun değil GERÇEK kayıtlar. `mapPro` sütunu koyuyor; burada
+            // üzerine yazılıyor ki liste ile profil aynı sayıyı göstersin.
+            rating: puanByPro.get(r.id)?.ortalama ?? 0,
+            reviewCount: puanByPro.get(r.id)?.adet ?? 0,
+            isPremium: owner ? premiumUsers.has(owner) : false,
+            membershipTier: owner ? (tierById.get(owner) ?? 'free') : 'free',
+            // §3.3 — GÜVEN ROZETİ listede de. Eskiden yalnız detay ucundaydı:
+            // müşteri aramada/keşifte kimin doğrulandığını göremiyor, her
+            // profili tek tek açmak zorunda kalıyordu. Kural detayla AYNI
+            // fonksiyondan geliyor, ayrışamaz.
+            aynaVerified: (() => {
+              const sp = spByPro.get(r.id);
+              const biz = bizByPro.get(r.id);
+              const kayitli = uzmanKayitli(sp?.entityType, sp?.iin);
+              const kyc = owner ? (kycById.get(owner) ?? false) : false;
+              return aynaOnayli(
+                r.kind,
+                guvenKatmanlari({
+                  kind: r.kind,
+                  kycOnayli: kyc,
+                  kayitli,
+                  salon: biz,
+                  uzman: sp,
+                }),
                 kayitli,
-                salon: biz,
-                uzman: sp,
-              }),
-              kayitli,
-            );
-          })(),
-        };
-      });
+              );
+            })(),
+            /*
+             * ── BAŞARI SIRALAMASI ────────────────────────────────────────
+             *
+             * Kurucu: "ilk 3 görünmeli (başarı durumuna göre)."
+             *
+             * Sıralama için; MÜŞTERİYE YAZILMIYOR. Yazsaydık uzmanın kendi
+             * panelindeki yüzdeyle çelişebilirdi: panel cevap süresini de
+             * ölçüyor, liste ölçmüyor (sağlayıcı başına ikinci bir sorgu
+             * gerekirdi). İki farklı yüzde göstermektense sıralamada
+             * kullanıp göstermemek doğru.
+             */
+            basariSirasi:
+              uzmanBasarisi({
+                tamamlanan: randevuByPro.get(r.id) ?? 0,
+                gelenTalep: gelenByPro.get(r.id) ?? 0,
+                puanOrt: puanByPro.get(r.id)?.adet ? (puanByPro.get(r.id)?.ortalama ?? null) : null,
+                cevapDk: null,
+              }).yuzde ?? -1,
+          };
+        })
+        /*
+         * BAŞARIYA GÖRE SIRALI DÖNÜYOR. İstemci ilk üçü alıyor; sıralamayı
+         * burada yapmak, aynı kuralın her ekranda tekrarlanmasını önlüyor.
+         *
+         * Ölçülemeyen (`-1`) sona düşüyor: yeni bir uzmanı "%0 başarılı"
+         * sayıp en alta atmak yerine, bilinmeyeni bilinenlerin arkasına
+         * koyuyoruz — sıralama aynı ama sebep dürüst.
+         */
+        .sort((a, b) => b.basariSirasi - a.basariSirasi)
+    );
   }
 
   // §4.6 — GERÇEK slot üretimi (Faz 1): çalışma saati + izin günü + mevcut randevular +

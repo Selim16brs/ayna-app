@@ -488,6 +488,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.schedule.uzman': 'Выбери мастера',
   'booking.field.salon': 'Салон',
   'home.nearby': 'Салоны рядом',
+  'home.nearby_experts': 'Мастера рядом',
   'nearby.no_location':
     'Чтобы сортировать по расстоянию, нужны твоё место и место салона. Отметить своё место можно в профиле на карте.',
   'home.campaigns': 'Возможности',

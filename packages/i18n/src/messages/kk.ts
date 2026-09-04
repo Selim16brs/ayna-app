@@ -483,6 +483,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.schedule.uzman': 'Маман таңда',
   'booking.field.salon': 'Салон',
   'home.nearby': 'Маңайдағы салондар',
+  'home.nearby_experts': 'Жақындағы мамандар',
   'nearby.no_location':
     'Қашықтық бойынша сұрыптау үшін сенің де, салонның да орны керек. Профильден картада орын қоса аласың.',
   'home.campaigns': 'Мүмкіндіктер',

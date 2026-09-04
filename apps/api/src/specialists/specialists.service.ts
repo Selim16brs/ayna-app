@@ -150,15 +150,32 @@ export class SpecialistsService {
       });
     }
 
-    // §7 — bağımsız uzman keşif kataloğunda da yer alır; yorumları bu Professional'a bağlanır.
-    // (salon_bound uzman tek başına listelenmez — salonun kaydı üzerinden görünür)
+    /*
+     * ── HER UZMANIN KEŞİF KARTI VAR ────────────────────────────────────
+     *
+     * Kurucu: "uzman hizmetler eklediği halde müşteri tarafından uzman
+     * profiline bakıldığında görünmüyor. haritada da çıkmıyor. yakınındaki
+     * uzmanlar diye bir alan da olmalı."
+     *
+     * Kart YALNIZ bağımsız uzmana açılıyordu; salona bağlanan uzmanın
+     * `proId`si null kalıyordu. Sonuçları zincirleme:
+     *   · `setMyServices` sessizce boş dönüyordu — uzman hizmet ekliyor,
+     *     kaydediliyor sanıyor, hiçbir yere yazılmıyordu.
+     *   · Profili açılmıyordu (kart yok).
+     *   · Haritada görünmüyordu (koordinat taşıyacak satır yok).
+     *   · Yorumları ve başarı yüzdesi de bağlanamıyordu.
+     *
+     * Artık her uzmanın kendi kartı var. Salona bağlı uzman salonun
+     * kadrosunda da görünmeye devam ediyor; harita zaten aynı adrestekileri
+     * tek iğnede topluyor.
+     */
     /*
      * Kayıt satırları da normalleşiyor: kataloğa bağlanmayan, adsız ya da
      * fiyatsız satır SAKLANMIYOR. Bağsız hizmet aramada ve arz hesabında
      * görünmez; uzman yazdığını sanır, müşteri hiç bulamaz.
      */
     const hizmetler = hizmetSatirlariniNormalle(input.services ?? []).slice(0, 60);
-    if (input.kind === 'independent') {
+    {
       try {
         const pro = await this.prisma.professional.create({
           data: {
@@ -177,6 +194,8 @@ export class SpecialistsService {
             // §9.5 — kayıtta girilen gerçek hizmet/fiyat/süre listesi. Buraya
             // yazılmadığı için profil sektörün varsayılan menüsünü uyduruyordu.
             servicesJson: JSON.stringify(hizmetler),
+            // Kart TÜRÜ her zaman bireysel: salona bağlı olmak, kişinin
+            // kendisinin bir salon olduğu anlamına gelmiyor.
             kind: 'independent',
             city: input.city ?? '', // §5.1.4 — harita/arama şehir eşleşmesi
             district: input.city ?? '',
@@ -542,7 +561,23 @@ export class SpecialistsService {
 
   async setMyServices(userId: string, services: unknown[]) {
     const proId = await this.proIdFor(userId);
-    if (!proId) return { services: [] };
+    /*
+     * ── SESSİZ BAŞARISIZLIK YOK ────────────────────────────────────────
+     *
+     * Burası `{ services: [] }` dönüyordu: keşif kartı olmayan uzman
+     * hizmetlerini kaydediyor, ekran "kaydedildi" diyor ve hiçbir yere
+     * yazılmıyordu. Kurucu bunu "hizmet ekliyorum ama müşteri görmüyor"
+     * diye bildirdi — hata aylarca sessizdi.
+     *
+     * Artık açık bir hata: uygulama kullanıcıya söyleyebiliyor, ve
+     * kaydın neden eksik olduğu kayıtlarda görünüyor.
+     */
+    if (!proId) {
+      throw new NotFoundException({
+        code: 'NO_DISCOVERY_CARD',
+        message: 'Keşif kaydın yok — hizmetler kaydedilemedi',
+      });
+    }
     const kesilmis = hizmetSatirlariniNormalle(services).slice(0, 60);
     // Alan seti hizmet listesiyle BİRLİKTE güncellenir. Ayrı tutulsaydı,
     // uzman tırnak hizmetlerini silince tırnak aramasında görünmeye devam

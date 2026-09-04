@@ -138,3 +138,86 @@ test('BAŞARI YÜZDESİ sunucudan ve veri yoksa UYDURULMUYOR', () => {
   // Bileşenler ayrı ayrı: uzman "neden %70" sorusunun cevabını görmeli.
   assert.match(k, /basari\.bilesenler\.map/, 'bileşenler gösterilmiyor');
 });
+
+test('HER UZMANIN keşif kartı var — salona bağlı olsa bile', () => {
+  /*
+   * Kurucu: "salona bağlı uzman ile salona bağlı olmayan uzman arasındaki
+   * tek fark bağlı olup olmamaları. onun dışında her şey işleyiş olarak
+   * aynı olmalı."
+   *
+   * Kart YALNIZ bağımsız uzmana açılıyordu. Sonuçları zincirleme:
+   * hizmetleri hiçbir yere yazılmıyor, profili açılmıyor, haritada
+   * görünmüyor, yorumları bağlanamıyordu.
+   */
+  const k = api('specialists', 'specialists.service.ts');
+  const kayit = k.slice(
+    k.indexOf('const hizmetler = hizmetSatirlariniNormalle'),
+    k.indexOf('async myReviews'),
+  );
+  assert.doesNotMatch(
+    kayit,
+    /if \(input\.kind === 'independent'\) \{/,
+    'kart hâlâ yalnız bağımsıza açılıyor',
+  );
+  assert.match(kayit, /professional\.create\(/, 'keşif kartı oluşturulmuyor');
+});
+
+test('HİZMET KAYDI sessizce başarısız OLMUYOR', () => {
+  /*
+   * `{ services: [] }` dönüyordu: keşif kartı olmayan uzman hizmetlerini
+   * kaydediyor, ekran "kaydedildi" diyor, hiçbir yere yazılmıyordu.
+   * Kurucu bunu "hizmet ekliyorum ama müşteri görmüyor" diye bildirdi.
+   */
+  const k = api('specialists', 'specialists.service.ts');
+  const govde = k.slice(
+    k.indexOf('async setMyServices('),
+    k.indexOf('async setMyServices(') + 1200,
+  );
+  assert.match(govde, /NO_DISCOVERY_CARD/, 'kartsız uzmanda sessizce boş dönüyor');
+});
+
+test('YAKINDAKİ SALONLAR ve UZMANLAR AYRI bölümler', () => {
+  const d = oku('app', '(tabs)', 'discover.tsx');
+  assert.match(d, /home\.nearby_experts/, 'uzmanlar bölümü yok');
+  assert.match(d, /nearbySalons\.map/, 'salon listesi yok');
+  assert.match(d, /nearbyExperts\.map/, 'uzman listesi yok');
+  /*
+   * HER İKİ liste de en fazla 3. Tek bir `.slice(0, 3)` aramak yetmiyordu:
+   * birini kaldıran bir değişiklik diğerinin eşleşmesiyle geçiyordu
+   * (mutasyonla göründü).
+   */
+  const salonBlok = d.slice(d.indexOf('const nearbySalons'), d.indexOf('const nearbyExperts'));
+  const uzmanBlok = d.slice(
+    d.indexOf('const nearbyExperts'),
+    d.indexOf('const nearbyExperts') + 300,
+  );
+  assert.match(salonBlok, /\.slice\(0, 3\)/, 'salon listesinde ilk 3 sınırı yok');
+  assert.match(uzmanBlok, /\.slice\(0, 3\)/, 'uzman listesinde ilk 3 sınırı yok');
+  // "Tümü" iki bölümde de var.
+  assert.match(d, /router\.push\('\/nearby'\)/, 'salonlar için tümü yok');
+  assert.match(d, /router\.push\('\/nearby\?tur=uzman'\)/, 'uzmanlar için tümü yok');
+  // Satır ORTAK bileşenden: kopyalasaydık ikisi zamanla ayrışırdı.
+  assert.match(d, /function SaglayiciSatiri/, 'ortak satır bileşeni yok');
+});
+
+test('SIRALAMA sunucudan — başarıya göre', () => {
+  /*
+   * Kurucu: "ilk 3 görünmeli (başarı durumuna göre)."
+   *
+   * Sıralama sunucuda; istemci ilk üçü alıyor. İki yerde iki farklı
+   * kural olsaydı liste ile "Tümü" ekranı farklı sıralanırdı.
+   */
+  const k = api('catalog', 'catalog.service.ts');
+  assert.match(
+    k,
+    /\.sort\(\(a, b\) => b\.basariSirasi - a\.basariSirasi\)/,
+    'liste başarıya göre sıralanmıyor',
+  );
+  assert.match(k, /uzmanBasarisi\(\{/, 'başarı hesabı kullanılmıyor');
+  // Müşteriye yüzde YAZILMIYOR: uzmanın panelindeki yüzdeyle çelişirdi.
+  assert.doesNotMatch(
+    oku('app', '(tabs)', 'discover.tsx'),
+    /basariSirasi/,
+    'yüzde müşteriye gösteriliyor',
+  );
+});

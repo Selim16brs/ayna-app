@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CATEGORIES, cityCenter, distanceKm } from '../../src/data';
+import { type Professional, CATEGORIES, cityCenter, distanceKm } from '../../src/data';
 import {
   useAds,
   useCampaigns,
@@ -180,24 +180,33 @@ export default function DiscoverScreen() {
     () => promosyonlariSirala(promosyonlar, 'yakinlik').slice(0, ANA_EKRAN_PROMOSYON),
     [promosyonlar],
   );
-  // §5.1.8 Sana Yakın: premium salon önce; YETMEZSE diğer salonlar + bağımsız uzmanlar
-  // (yeni pazarda salon az olabilir — kayıtlı uzmanlar da keşfette görünsün). Günlük rotasyon.
-  const nearby = useMemo(() => {
+  /*
+   * ── SALONLAR ve UZMANLAR AYRI ──────────────────────────────────────
+   *
+   * Kurucu: "yakınındaki uzmanlar diye bir alan da olmalı. salonların
+   * altında. hem yakınındaki salonlar hem de yakınındaki uzmanlar ilk 3
+   * görünmeli (başarı durumuna göre) kalanlar tümü butonuna basılarak
+   * görünmeli."
+   *
+   * Tek bir "Sana yakın" bölümü vardı ve salon yetmezse uzmanları da
+   * içine katıyordu: müşteri ikisini ayırt edemiyordu.
+   *
+   * SIRALAMA SUNUCUDAN: liste başarıya göre sıralı geliyor
+   * (`catalog.service` — tamamlanan/gelen oranı + değerlendirme).
+   * Burada yeniden sıralamak, iki yerde iki farklı kural demek olurdu.
+   *
+   * PREMIUM SALON ÖNCE: satın alınmış görünürlük korunuyor; premium
+   * içinde sıra yine başarıya göre.
+   */
+  const nearbySalons = useMemo(() => {
     const salons = cityPros.filter((p) => p.kind === 'salon');
-    const experts = cityPros.filter((p) => p.kind !== 'salon');
     const premium = salons.filter((p) => p.isPremium);
-    const pool =
-      premium.length >= 3
-        ? premium
-        : [...premium, ...salons.filter((p) => !p.isPremium), ...experts];
-    if (pool.length === 0) return [];
-    // Günlük rotasyon: aynı 3 salon kilitlenmez (premium satış değeri korunur)
-    const offset = Math.floor(Date.now() / (24 * 60 * 60_000)) % pool.length;
-    return Array.from(
-      { length: Math.min(3, pool.length) },
-      (_, i) => pool[(offset + i) % pool.length]!,
-    );
+    return [...premium, ...salons.filter((p) => !p.isPremium)].slice(0, 3);
   }, [cityPros]);
+  const nearbyExperts = useMemo(
+    () => cityPros.filter((p) => p.kind !== 'salon').slice(0, 3),
+    [cityPros],
+  );
   /**
    * §4 — YÜKLENİYOR ile GERÇEKTEN BOŞ farklı şeyler.
    *
@@ -682,50 +691,39 @@ export default function DiscoverScreen() {
           </>
         ) : null}
 
-        {/* ═══ YAKININDAKİ SALONLAR — Figma `salons-section` (satır p14, radius 16) ═══ */}
+        {/* ═══ YAKININDAKİ SALONLAR ═══ */}
         <BolumBasligi title={t('home.nearby')} onSeeAll={() => router.push('/nearby')} />
         {prosLoading ? (
           <View style={styles.iadeKap}>
-            <ListSkeleton rows={4} />
+            <ListSkeleton rows={3} />
           </View>
         ) : (
           <View style={styles.salonListe}>
-            {nearby.map((pro) => (
-              <PressableScale
-                key={pro.id}
-                style={styles.salonSatir}
-                onPress={() => router.push('/professional/' + pro.id)}
-              >
-                <Image source={{ uri: pro.image }} style={styles.salonFoto} />
-                <View style={styles.grow}>
-                  <View style={styles.salonAdSatir}>
-                    <Text variant="captionStrong" tone="ink" numberOfLines={1}>
-                      {pro.name}
-                    </Text>
-                    {pro.aynaVerified ? (
-                      <View style={styles.dogruCip}>
-                        <Text style={styles.dogruYazi}>{t('home.verified')}</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  <Text variant="micro" tone="muted" numberOfLines={1}>
-                    {mesafe(pro) != null ? `${mesafe(pro)!.toFixed(1)} km · ` : ''}
-                    {pro.city}
-                  </Text>
-                  <View style={styles.puanCip}>
-                    <Ionicons name="star" size={11} color={colors.gold} />
-                    <Text variant="micro" tone="ink">
-                      {pro.rating.toFixed(1)}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.detayDugme}>
-                  <Text style={styles.detayYazi}>{t('home.details')}</Text>
-                </View>
-              </PressableScale>
+            {nearbySalons.map((pro) => (
+              <SaglayiciSatiri key={pro.id} pro={pro} />
             ))}
           </View>
         )}
+
+        {/* ═══ YAKININDAKİ UZMANLAR ═══
+            Kurucu: "yakınındaki uzmanlar diye bir alan da olmalı,
+            salonların altında."
+
+            Tek bir "Sana yakın" bölümü vardı ve salon yetmezse uzmanları
+            da içine katıyordu: müşteri ikisini ayırt edemiyordu. */}
+        {nearbyExperts.length > 0 ? (
+          <>
+            <BolumBasligi
+              title={t('home.nearby_experts')}
+              onSeeAll={() => router.push('/nearby?tur=uzman')}
+            />
+            <View style={styles.salonListe}>
+              {nearbyExperts.map((pro) => (
+                <SaglayiciSatiri key={pro.id} pro={pro} />
+              ))}
+            </View>
+          </>
+        ) : null}
 
         {cityEmpty ? (
           <View style={styles.iadeKap}>
@@ -744,6 +742,59 @@ export default function DiscoverScreen() {
         ) : null}
       </ScrollView>
     </Screen>
+  );
+}
+
+/**
+ * SAĞLAYICI SATIRI — salon ve uzman listelerinin ORTAK satırı.
+ *
+ * İki bölüm aynı satırı çiziyor. Kopyalasaydım birine eklenen bir rozet
+ * ötekinde çıkmaz, ikisi zamanla ayrışırdı.
+ */
+function SaglayiciSatiri({ pro }: { pro: Professional }) {
+  const { t } = useLocale();
+  const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const km = mesafe(pro);
+  return (
+    <PressableScale
+      style={styles.salonSatir}
+      onPress={() => router.push('/professional/' + pro.id)}
+    >
+      <Image source={{ uri: pro.image }} style={styles.salonFoto} />
+      <View style={styles.grow}>
+        <View style={styles.salonAdSatir}>
+          <Text variant="captionStrong" tone="ink" numberOfLines={1}>
+            {pro.name}
+          </Text>
+          {pro.aynaVerified ? (
+            <View style={styles.dogruCip}>
+              <Text style={styles.dogruYazi}>{t('home.verified')}</Text>
+            </View>
+          ) : null}
+        </View>
+        <Text variant="micro" tone="muted" numberOfLines={1}>
+          {km != null ? `${km.toFixed(1)} km · ` : ''}
+          {pro.city}
+        </Text>
+        {/*
+          DEĞERLENDİRİLMEMİŞ sağlayıcı "0,0" DEĞİL: puanı sıfır göstermek
+          onu en kötü puanlı gibi sunardı.
+        */}
+        {pro.reviewCount > 0 ? (
+          <View style={styles.puanCip}>
+            <Ionicons name="star" size={11} color={colors.gold} />
+            <Text variant="micro" tone="ink">
+              {pro.rating.toFixed(1)}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.detayDugme}>
+        <Text style={styles.detayYazi}>{t('home.details')}</Text>
+      </View>
+    </PressableScale>
   );
 }
 

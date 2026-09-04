@@ -511,6 +511,7 @@ export const tr = {
 
   // Ana akış — giriş aksiyonları
   'home.nearby': 'Yakınındaki Salonlar',
+  'home.nearby_experts': 'Yakınındaki uzmanlar',
   'nearby.no_location':
     'Mesafeye göre sıralayabilmek için konumun ve salonun konumu gerekiyor. Profilinden haritada konum ekleyebilirsin.',
   'home.campaigns': 'Fırsatlar',
