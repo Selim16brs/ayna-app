@@ -5,12 +5,13 @@ import { Redirect, useFocusEffect, useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { VARSAYILAN_CALISMA_SAATI } from '@ayna/domain';
 import { api } from '../../src/api';
 import { type SupplierAd } from '../../src/data';
 import { useSalonStaff } from '../../src/staff';
 import { TepeIsigi, OccupancyStrip } from '../../src/ui';
 import { greetingKey } from '../../src/greeting';
-import { useLocale } from '../../src/locale';
+import { fillParams, useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -52,12 +53,22 @@ export default function SalonHomeScreen() {
    * açılmaz uyarı çakıp cevap gelince kaybolurdu.
    */
   const [konumVar, setKonumVar] = useState<boolean | null>(null);
+  const [saatVar, setSaatVar] = useState<boolean | null>(null);
   useFocusEffect(
     useCallback(() => {
       if (!token) return;
       void api
         .myLocation(token)
         .then((r) => setKonumVar(r.hasLocation))
+        .catch(() => undefined);
+      /*
+       * Saatini girmemiş salona da sunucu varsayılan pencereyi uyguluyor:
+       * müşteri, salonun hiç söylemediği bir aralığı görüyor. Uzmandaki
+       * uyarının aynısı.
+       */
+      void api
+        .myHours()
+        .then((r) => setSaatVar(r.hours.length > 0))
         .catch(() => undefined);
     }, [token]),
   );
@@ -143,6 +154,21 @@ export default function SalonHomeScreen() {
                 </Text>
                 <Text variant="caption" tone="muted">
                   {t('reports.no_location_b')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+            </PressableScale>
+          ) : null}
+
+          {saatVar === false ? (
+            <PressableScale style={styles.konumUyari} onPress={() => router.push('/seller/hours')}>
+              <Ionicons name="time-outline" size={20} color={colors.danger} />
+              <View style={styles.flex}>
+                <Text variant="bodyStrong" tone="ink">
+                  {t('reports.no_hours')}
+                </Text>
+                <Text variant="caption" tone="muted">
+                  {fillParams(t('reports.no_hours_b'), VARSAYILAN_CALISMA_SAATI)}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.muted} />

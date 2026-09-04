@@ -1311,6 +1311,8 @@ export const tr = {
   'reports.no_location': 'Haritada görünmüyorsun',
   'reports.no_location_b':
     'Adresini haritada işaretle — müşteri seni yakınındakiler arasında bulamıyor.',
+  'reports.no_hours': 'Çalışma saatlerini belirtmedin',
+  'reports.no_hours_b': 'Müşteriye {from}–{to} arası gösteriliyor. Kendi saatlerini gir.',
   'reports.success.none': 'Henüz ölçülecek veri yok — ilk randevularından sonra burada görünecek',
   'reports.success.hidden': 'Müşteriyle paylaşılmıyor — Gizlilik ekranından açabilirsin',
   'reports.success.is': 'Tamamlanan iş',

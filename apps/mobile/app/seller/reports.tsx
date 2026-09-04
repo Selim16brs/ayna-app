@@ -10,7 +10,7 @@ import { formatSlotTr } from '../../src/datetime';
 import { Redirect } from 'expo-router';
 import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
-import { reklamGunu } from '@ayna/domain';
+import { reklamGunu, VARSAYILAN_CALISMA_SAATI } from '@ayna/domain';
 import {
   selectCommissionRate,
   selectPortraitKesilmis,
@@ -165,6 +165,7 @@ export default function ReportsScreen() {
    * açılmaz uyarı çakıp sunucu cevabı gelince kaybolurdu.
    */
   const [konumVar, setKonumVar] = useState<boolean | null>(null);
+  const [saatVar, setSaatVar] = useState<boolean | null>(null);
   const [basari, setBasari] = useState<{
     yuzde: number | null;
     bilesenler: { ad: 'is' | 'puan' | 'cevap'; yuzde: number }[];
@@ -269,6 +270,16 @@ export default function ReportsScreen() {
       void api
         .myLocation(token)
         .then((r) => setKonumVar(r.hasLocation))
+        .catch(() => undefined);
+      /*
+       * SAATLERİNİ GİRMEMİŞ uzmana sunucu varsayılan pencereyi uyguluyor ve
+       * müşteriye 10:00–20:00 gösteriyor — uzmanın hiç söylemediği saatler.
+       * Pencereyi kaldırmak saatini girmemiş herkesi randevuya kapatırdı;
+       * doğrusu uzmana bunu SÖYLEMEK.
+       */
+      void api
+        .myHours()
+        .then((r) => setSaatVar(r.hours.length > 0))
         .catch(() => undefined);
     }, [token]),
   );
@@ -471,6 +482,23 @@ export default function ReportsScreen() {
               </Text>
               <Text variant="caption" tone="muted">
                 {t('reports.no_location_b')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+          </PressableScale>
+        ) : null}
+
+        {/* ═══ ÇALIŞMA SAATİ YOK ═══ Uydurulan randevu değil, SAATLER:
+            uzman bunları hiç söylemedi ama müşteri görüyor. */}
+        {saatVar === false ? (
+          <PressableScale style={styles.konumUyari} onPress={() => router.push('/seller/hours')}>
+            <Ionicons name="time-outline" size={20} color={colors.danger} />
+            <View style={styles.buyu}>
+              <Text variant="bodyStrong" tone="ink">
+                {t('reports.no_hours')}
+              </Text>
+              <Text variant="caption" tone="muted">
+                {fillParams(t('reports.no_hours_b'), VARSAYILAN_CALISMA_SAATI)}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.muted} />
