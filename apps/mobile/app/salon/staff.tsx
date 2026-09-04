@@ -56,7 +56,8 @@ export default function SalonStaffScreen() {
                 <View style={styles.metaRow}>
                   <Ionicons name="star" size={12} color={colors.gold} />
                   <Text variant="caption" tone="inkSoft">
-                    {u.rating.toFixed(1)}
+                    {/* Değerlendirilmemiş uzman "0,0" değil "—". */}
+                    {u.rating !== null ? u.rating.toFixed(1) : '—'}
                   </Text>
                   <Text variant="caption" tone="muted">
                     · {u.bookings} {t('reports.bookings')}

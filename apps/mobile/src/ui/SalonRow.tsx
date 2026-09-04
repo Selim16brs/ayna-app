@@ -4,7 +4,7 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../locale';
-import { cityCenter, distanceKm, type Professional, proCoords } from '../data';
+import { type Professional, saglayiciMesafesi } from '../data';
 import { useStore } from '../store';
 import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
@@ -42,9 +42,12 @@ export function SalonRow({ pro, index = 0 }: { pro: Professional; index?: number
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const badge = BADGE[pro.badge];
-  // Gerçek mesafe = kullanıcının şehir merkezi → sağlayıcı (harita ile tutarlı)
+  /*
+   * MESAFE YALNIZ GERÇEK KOORDİNATTAN — arama satırıyla aynı gerekçe.
+   * `proCoords(pro.id)` konumsuz çağrıldığında sayıyı kimlikten üretiyor.
+   */
   const city = useStore((s) => s.currentUser?.city);
-  const km = distanceKm(cityCenter(city), proCoords(pro.id)).toFixed(1);
+  const km = saglayiciMesafesi(pro, city);
 
   return (
     <Animated.View entering={FadeInDown.duration(340).delay(index * 70)}>
@@ -68,7 +71,8 @@ export function SalonRow({ pro, index = 0 }: { pro: Professional; index?: number
             </Text>
           </View>
           <Text variant="caption" tone="muted" numberOfLines={1} style={styles.meta}>
-            {km} km • {pro.district || pro.specialty}
+            {km !== null ? `${km.toFixed(1)} km • ` : ''}
+            {pro.district || pro.specialty}
           </Text>
         </View>
 

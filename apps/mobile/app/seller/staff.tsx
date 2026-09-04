@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
-import { STAFF_SERVICES } from '../../src/data';
 import { useLocale } from '../../src/locale';
+import { useSalonStaff } from '../../src/staff';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -43,10 +43,30 @@ export default function StaffDetailScreen() {
     ]);
   }
   const bookings = Number(p.bookings ?? 0) || 0;
-  const rating = Number(p.rating ?? 0) || 0;
+  /*
+   * PUAN YOKSA "0,0" DEĞİL, "—".
+   *
+   * `Number(p.rating) || 0` hiç değerlendirilmemiş uzmanı yıldızın
+   * yanında 0,0 puanlı gösteriyordu: en kötü puanı almış gibi.
+   */
+  const ratingHam = Number(p.rating);
+  const rating = Number.isFinite(ratingHam) && ratingHam > 0 ? ratingHam : null;
 
-  // §5.1/§10 — uzmanın hizmetleri: uzmanın KENDİ panelinde tanımladığı liste (salt-okunur; salon değiştiremez)
-  const ownServices = STAFF_SERVICES[p.name ?? ''] ?? [];
+  /*
+   * UZMANIN HİZMETLERİ ARTIK UYDURULMUYOR.
+   *
+   * Burada `STAFF_SERVICES[p.name]` okunuyordu: koda gömülü bir
+   * AD→HİZMET tablosu. Adı "Madina" olan HERHANGİ bir uzman, panelinde
+   * ne tanımlamış olursa olsun, ekranda "Saç boyama · Röfle · Keratin"
+   * görünüyordu. Üstelik bölümün başlığı "uzmanın KENDİ panelinden
+   * otomatik gelir" diyor ve yanında kilit rozeti var — salon sahibi
+   * uydurma listeyi doğrulanmış veri sanıyordu.
+   *
+   * Gerçek liste sunucudan geliyor; yoksa bölüm hiç çizilmiyor.
+   */
+  const { staff } = useSalonStaff();
+  const kadroda = staff.find((u) => u.name === (p.name ?? ''));
+  const ownServices = kadroda?.services ?? [];
   const [schedule, setSchedule] = useState<Schedule>('standard');
 
   return (
@@ -73,7 +93,11 @@ export default function StaffDetailScreen() {
             label={t('seller.staff.bookings')}
           />
           <View style={styles.divider} />
-          <Stat icon="star-outline" value={rating.toFixed(1)} label={t('seller.staff.rating')} />
+          <Stat
+            icon="star-outline"
+            value={rating !== null ? rating.toFixed(1) : '—'}
+            label={t('seller.staff.rating')}
+          />
           {/* KALDIRILDI: doluluk yüzdesi `60 + (bookings % 38)` ile UYDURULUYORDU —
               gerçek veriye dayanmayan bir sayıyı yüzde diye göstermek, hiç
               göstermemekten kötüdür. Gerçek doluluk, uzmanın çalışma saatleri ile

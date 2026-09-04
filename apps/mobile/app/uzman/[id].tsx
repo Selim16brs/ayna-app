@@ -29,9 +29,20 @@ export default function UzmanScreen() {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
-  const salonId = (id ?? '').split('-u')[0] || '1';
+  /*
+   * BAŞKA KİŞİYE DÜŞMEK YOK.
+   *
+   * İki sessiz ikame vardı:
+   *   1. Kimlik yoksa `|| '1'` ile 1 numaralı salon açılıyordu.
+   *   2. İstenen uzman kadroda bulunamazsa `?? salon.staff[0]` ile
+   *      LİSTEDEKİ İLK KİŞİ gösteriliyordu — başkasının adı, fotoğrafı,
+   *      puanı ve çalışan bir "Randevu al" düğmesiyle.
+   *
+   * İkisi de kaldırıldı: bulunamayan uzman için salon detayına dönülüyor.
+   */
+  const salonId = (id ?? '').split('-u')[0] || '';
   const salon = useProfessionalDetail(salonId);
-  const uzman = salon.staff.find((u) => u.id === id) ?? salon.staff[0];
+  const uzman = salonId ? salon.staff.find((u) => u.id === id) : undefined;
 
   const [selected, setSelected] = useState<string>(salon.services[0]?.id ?? '');
   const gruplar = hizmetleriGrupla(salon.services);
@@ -43,9 +54,9 @@ export default function UzmanScreen() {
   const isFav = useStore((s) => s.favorites.includes(salonId));
   const addBooking = useStore((s) => s.addBooking);
 
-  // Uzman kaydı yoksa (ör. bağımsız) salon detayına düş
+  // Uzman kaydı yoksa (ör. bağımsız) salon detayına düş; salon da yoksa aramaya.
   if (!uzman) {
-    router.replace('/professional/' + salonId);
+    router.replace(salonId ? '/professional/' + salonId : '/search');
     return null;
   }
 

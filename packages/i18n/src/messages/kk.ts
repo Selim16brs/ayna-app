@@ -890,6 +890,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'notif.slot_conflict_b':
     '{slot} үшін таңдалған уақыт басқа жазылумен қайшы келді — жаңа уақыт таңдаңыз.',
   'booking.schedule.day_closed': 'Бұл күні маман демалыста — басқа күнді таңдаңыз',
+  'booking.schedule.slots_loading': 'Бос уақыттар жүктелуде…',
+  'booking.schedule.slots_failed':
+    'Бос уақыттарды қазір алу мүмкін болмады. Ойдан шығарылған уақыт көрсетілмейді — қайта көріңіз.',
   'booking.schedule.slot_busy': 'Бос емес',
   'booking.schedule.pick_slot': 'Алдымен күн мен уақытты таңдаңыз',
   'booking.schedule.busy_title': 'Таңдалған күнгі бос емес уақыттар',
@@ -1869,8 +1872,6 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'budget.title': 'Бюджет',
   'budget.subtitle': 'Күтім шығындарын бақылаңыз',
   'budget.spent': 'Осы айда жұмсалды',
-  'budget.limit': 'Айлық шек',
-  'budget.remaining': 'Қалды',
   'budget.by_category': 'Санат бойынша',
   'budget.history': 'Шығын тарихы',
   'budget.no_spend': 'Әзірге шығын жоқ',

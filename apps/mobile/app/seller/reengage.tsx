@@ -89,10 +89,18 @@ export default function ReengageScreen() {
       period: c.periodDays,
       daysUntil: c.kalanGun,
       daysSince: c.periodDays - c.kalanGun,
-      // Gönderim durumu SUNUCUDA tutuluyor; pencere geçmişse gitmiştir.
-      preSent: c.kalanGun < 1,
-      dueSent: c.kalanGun < 0,
-      sent: c.kalanGun < 0,
+      /*
+       * GÖNDERİLDİ Mİ — TAHMİN DEĞİL, KAYIT.
+       *
+       * Burada "pencere geçmişse gitmiştir" varsayılıyordu ve uzmana
+       * yeşil "Gönderildi" rozeti basılıyordu. Zamanlayıcı çalışmamış,
+       * müşterinin bildirimi kapalı ya da gönderim hata almış olabilir:
+       * uzman gitmemiş bir mesajı gitmiş sanıyordu. Sunucu artık gerçek
+       * gönderim kaydını dönüyor.
+       */
+      preSent: c.preSent === true,
+      dueSent: c.dueSent === true,
+      sent: c.preSent === true || c.dueSent === true,
       preview,
     };
   });

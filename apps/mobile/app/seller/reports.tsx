@@ -139,7 +139,15 @@ export default function ReportsScreen() {
       )
     : null;
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
-  const restrictedDays = useStore((s) => s.currentUser?.restrictedDaysLeft ?? 7);
+  /*
+   * KALAN GÜN BİLİNMİYORSA SAYI YAZILMIYOR.
+   *
+   * `?? 7` vardı: sunucu değeri göndermediğinde ekran kısıtlı uzmana
+   * "7 gün kaldı" diyordu. Hesabının ne zaman açılacağı hakkında
+   * uydurma bir tarih. Profil ekranı aynı alanı `?? 0` ile okuyup satırı
+   * gizliyor; burası tek başına sayı üretiyordu.
+   */
+  const restrictedDays = useStore((s) => s.currentUser?.restrictedDaysLeft ?? null);
   // Talepler rozeti = şehirdeki açık talepler; reklamlar şehre göre hedeflenir (sektör admin ucunda)
   // §9.3 — Talepler rozeti: şehirdeki AÇIK talepler BULUTTAN sayılır (ekran odaklandıkça tazelenir)
   const token = useStore((s) => s.token);
@@ -395,9 +403,13 @@ export default function ReportsScreen() {
             <View style={styles.kisitBas}>
               <Ionicons name="alert-circle" size={20} color={colors.danger} />
               <Text style={styles.kisitBaslik}>{t('restricted.title')}</Text>
-              <Text style={styles.kisitGun}>
-                {fillParams(t('restricted.days_left'), { n: String(restrictedDays) })}
-              </Text>
+              {/* Kalan gün bilinmiyorsa satır hiç çizilmiyor — uydurma
+                  tarih vermektense söylememek doğru. */}
+              {restrictedDays !== null ? (
+                <Text style={styles.kisitGun}>
+                  {fillParams(t('restricted.days_left'), { n: String(restrictedDays) })}
+                </Text>
+              ) : null}
             </View>
             <Text style={styles.kisitGovde}>{t('restricted.pay')}</Text>
             <PressableScale style={styles.kisitDugme} onPress={() => router.push('/membership')}>
@@ -595,9 +607,16 @@ export default function ReportsScreen() {
             </View>
             <View style={styles.reklamAltSatir}>
               <Text style={styles.reklamFiyat}>
-                {fillParams(t('ads.promo.price'), {
-                  amount: (reklamAylik ?? 200000).toLocaleString('tr-TR'),
-                })}
+                {/*
+                  FİYAT SUNUCUDAN. `?? 200000` vardı: yapılandırma
+                  yüklenmemişse uzmana uydurma bir aylık ücret
+                  gösteriliyordu.
+                */}
+                {reklamAylik
+                  ? fillParams(t('ads.promo.price'), {
+                      amount: reklamAylik.toLocaleString('tr-TR'),
+                    })
+                  : t('ads.promo.cta')}
               </Text>
               <Text style={styles.reklamKalan}>{t('ads.promo.cta')} →</Text>
             </View>

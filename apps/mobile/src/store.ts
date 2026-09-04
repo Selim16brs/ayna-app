@@ -35,6 +35,7 @@ import {
   POINTS_SPEND_CAP_PCT,
   POINTS_UNLOCK_KZT,
   POINTS_EXPIRY_DAYS,
+  PLATINUM_PRICE_KZT,
   PREMIUM_PRICE_KZT,
   DEPOSIT_RECEIPT_WINDOW_MS,
   DEPOSIT_RECEIPT_SHORT_MS,
@@ -783,6 +784,7 @@ export const useStore = create<State>()(
           pointsUnlockKzt: POINTS_UNLOCK_KZT,
           pointsExpiryDays: POINTS_EXPIRY_DAYS,
           premiumUserKzt: PREMIUM_PRICE_KZT,
+          platinumUserKzt: PLATINUM_PRICE_KZT,
           premiumSalonKzt: 4990,
           raffleCost: RAFFLE_COST,
         },
@@ -1053,6 +1055,17 @@ export const useStore = create<State>()(
                 ...userScopedReset(), // TAM gizlilik sıfırlaması (eksik alan = sızıntı)
                 avatarUri: session.user.avatarUrl ?? null, // hesabın fotosu her cihazda
                 cutoutUri: session.user.cutoutUrl ?? null, // kesik portre hesaptan (kredi yok)
+                /*
+                 * Kesiğin BAĞI da kuruluyor. Sunucuda ikisi birden varsa
+                 * AYNI fotoğrafa aitler: fotoğraf değişince kesik hem
+                 * yerelde hem sunucuda siliniyor (`setAvatar`). Bağı
+                 * kurmasaydık giriş sonrası kesik bayat sayılır ve
+                 * portre daire içinde açılırdı.
+                 */
+                cutoutFor:
+                  session.user.avatarUrl && session.user.cutoutUrl
+                    ? medyaAnahtari(session.user.avatarUrl)
+                    : null,
               };
           setApiToken(session.token);
           return {
@@ -1064,6 +1077,9 @@ export const useStore = create<State>()(
             // aynı kullanıcı yeniden girdi + sunucuda foto varsa yereli tazele
             ...(sameUser && session.user.avatarUrl ? { avatarUri: session.user.avatarUrl } : {}),
             ...(sameUser && session.user.cutoutUrl ? { cutoutUri: session.user.cutoutUrl } : {}),
+            ...(sameUser && session.user.avatarUrl && session.user.cutoutUrl
+              ? { cutoutFor: medyaAnahtari(session.user.avatarUrl) }
+              : {}),
           };
         });
         void get().hydrateLoyalty();
@@ -3365,9 +3381,23 @@ useStore.persist.onFinishHydration((state) => {
     void loadMediaCache(uid).then((m) => {
       if (!m) return;
       const cur = useStore.getState();
+      /*
+       * ── SOĞUK AÇILIŞTA KESİK PORTRENİN BAĞI KAYBOLUYORDU ──────────
+       *
+       * Kurucu: "ana sayfadaki profil fotoğrafı kesiliyor ama daha sonra
+       * uygulama açılıp kapanınca yeniden daire içine giriyor." Bir
+       * önceki düzeltme yalnız SUNUCUDAN TAZELEME yolunu kapsıyordu; bu
+       * yol (cihaz önbelleğinden geri yükleme) hâlâ açıktı.
+       *
+       * Önbellek `cutoutFor`u SAKLIYORDU ama geri yazmıyordu. Portrenin
+       * tazeliği tam olarak o alandan anlaşılıyor: null kalınca kesik
+       * BAYAT sayılıyor ve ham fotoğrafa düşülüyor — daire geri geliyor.
+       * Ağ yoksa ya da tazeleme geç gelirse kalıcı olarak öyle kalıyordu.
+       */
       useStore.setState({
         ...(cur.avatarUri == null && m.avatar ? { avatarUri: m.avatar } : {}),
         ...(cur.cutoutUri == null && m.cutout ? { cutoutUri: m.cutout } : {}),
+        ...(cur.cutoutFor == null && m.cutoutFor ? { cutoutFor: m.cutoutFor } : {}),
       });
     });
 });

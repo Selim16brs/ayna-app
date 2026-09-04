@@ -26,6 +26,10 @@ export interface ReengageAday {
   periodDays: number;
   /** Bakım dolumuna kalan gün: 1 = yarın, 0 = bugün, negatif = geçti. */
   kalanGun: number;
+  /** 1 gün kala hatırlatması GERÇEKTEN gönderildi mi (`reengage_sent`). */
+  preSent: boolean;
+  /** Bitiş günü hatırlatması GERÇEKTEN gönderildi mi. */
+  dueSent: boolean;
 }
 
 /**
@@ -73,6 +77,27 @@ export class ReengageService {
 
     // Aynı müşteri+hizmet için YALNIZ EN SON randevu sayılır: eski ziyaretler
     // de aday olsaydı kişi aynı hizmet için birden çok hatırlatma alırdı.
+    /*
+     * GÖNDERİLDİ Mİ — GERÇEK KAYIT.
+     *
+     * Uygulama bunu "pencere geçmişse gitmiştir" diye TAHMİN ediyordu ve
+     * uzmana yeşil "Gönderildi" rozeti basıyordu. Zamanlayıcı o gün
+     * çalışmamış, müşterinin bildirimi kapalı ya da gönderim hata almış
+     * olabilir: uzman gitmemiş bir mesajı gitmiş sanıyordu.
+     *
+     * `reengage_sent` tablosu gerçekten gönderilenleri tutuyor; okunuyor.
+     */
+    const gonderimler = await this.prisma.reengageSent.findMany({
+      where: { bookingId: { in: bookings.map((b) => b.id) } },
+      select: { bookingId: true, stage: true },
+    });
+    const gonderilen = new Map<string, Set<string>>();
+    for (const g of gonderimler) {
+      const k = gonderilen.get(g.bookingId) ?? new Set<string>();
+      k.add(g.stage);
+      gonderilen.set(g.bookingId, k);
+    }
+
     const gorulen = new Set<string>();
     const out: ReengageAday[] = [];
     for (const b of bookings) {
@@ -93,6 +118,8 @@ export class ReengageService {
         service: b.service,
         periodDays: periyot,
         kalanGun,
+        preSent: gonderilen.get(b.id)?.has('pre') ?? false,
+        dueSent: gonderilen.get(b.id)?.has('due') ?? false,
       });
     }
     return out.sort((a, b) => a.kalanGun - b.kalanGun);

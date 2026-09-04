@@ -571,6 +571,30 @@ export function proCoords(id: string, lat?: number | null, lng?: number | null):
   return { latitude: center.latitude + dlat, longitude: center.longitude + dlng };
 }
 
+/**
+ * SAĞLAYICIYA GERÇEK MESAFE — koordinatı yoksa `null`.
+ *
+ * `proCoords` konum verilmediğinde kimlikten deterministik bir nokta
+ * ÜRETİYOR (şehir merkezinin ±0,09°/±0,13° çevresi). Bu, harita çizimi
+ * için kabul edilebilir bir dağılım; ama kullanıcıya "3,2 km" diye
+ * YAZILDIĞINDA uydurma bir bilgiye dönüşüyor: sayı işletmenin kimlik
+ * dizesinden geliyor, konumundan değil.
+ *
+ * Keşfet ekranı bunu zaten doğru yapıyordu ("uydurma sayı yazmaktansa
+ * satırı boş bırakmak doğru"); arama ve salon satırı aynı kuralı
+ * atlıyordu. Kural tek yerde toplandı.
+ */
+export function saglayiciMesafesi(
+  pro: { lat?: number | null; lng?: number | null; city?: string | undefined },
+  kullaniciSehri?: string | undefined,
+): number | null {
+  if (pro.lat == null || pro.lng == null) return null;
+  return distanceKm(
+    { latitude: pro.lat, longitude: pro.lng },
+    cityCenter(kullaniciSehri ?? pro.city),
+  );
+}
+
 /** İki nokta arası mesafe (km, haversine). */
 export function distanceKm(a: LatLng, b: LatLng): number {
   const R = 6371;

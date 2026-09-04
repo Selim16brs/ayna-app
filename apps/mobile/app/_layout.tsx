@@ -32,7 +32,7 @@ import {
 
 function ThemedStack() {
   const { colors, isDark } = useTheme();
-  const { t, locale } = useLocale();
+  const { t, locale, hazir: dilHazir } = useLocale();
   const pathname = usePathname();
   // §14 — SEKME KÖKÜ: burada geri tuşu geçmişi boşaltıp uygulamayı UYARISIZ
   // kapatıyordu. Kök yollarda çift dokunuş isteniyor; alt ekranlarda normal
@@ -129,9 +129,20 @@ function ThemedStack() {
   }, [bookings, t]);
   // §12.6/§12.10 — blog + haftalık tema + segmentine uyan toplu duyurular.
   // currentUser değişince tekrar çağrılır ki giriş sonrası duyurular da düşsün.
+  /*
+   * DİL DEĞİŞİNCE İÇERİK YENİDEN ÇEKİLİYOR.
+   *
+   * Blog yazıları ve haftalık tema panelden üç dilde giriliyor ve sunucu
+   * `?locale=` ile çözüyor. Bu etki yalnız `currentUser`a bağlıydı: dili
+   * değiştiren kullanıcı ekranda ESKİ DİLDEKİ metinleri görmeye devam
+   * ediyordu, çünkü yeniden istek atılmıyordu.
+   *
+   * (Kampanya/fırsat/reklam tarafında aynı hatanın karşılığı önbellek
+   * anahtarındaydı — `catalog.ts` içinde dil artık anahtarın parçası.)
+   */
   useEffect(() => {
     void loadContent();
-  }, [loadContent, currentUser]);
+  }, [loadContent, currentUser, locale]);
   // §4.1/§4.3/§5.2 — her gezinmede: hatırlatmalar + süresi dolan talepler + dekont süresi (mock scheduler)
   useEffect(() => {
     checkReminders();
@@ -184,7 +195,15 @@ function ThemedStack() {
   const [acilisBitti, setAcilisBitti] = useState(false);
   const acilisSecildi = useRef(false);
   useEffect(() => {
-    if (acilisSecildi.current || !currentUser) return;
+    /*
+     * DİL KESİNLEŞMEDEN MESAJ SEÇİLMİYOR.
+     *
+     * Kurucu: "Rusça kullanan birisine Türkçe gösteremezsin." Mesaj bir
+     * kez seçilip donuyor; kullanıcının kayıtlı dil seçimi ise depodan
+     * asenkron geliyor. Beklemeseydik seçim CİHAZ diliyle yapılır ve
+     * telefonu Türkçe olan bir Rus kullanıcı Türkçe mesaj görürdü.
+     */
+    if (acilisSecildi.current || !currentUser || !dilHazir) return;
     acilisSecildi.current = true;
     const st = useStore.getState();
     // Doğum tarihi profil pasaportunda; hesapta yoksa doğum günü mesajı
@@ -220,7 +239,7 @@ function ThemedStack() {
     if (!sonuc) return;
     st.setAcilisDurumu(sonuc.durum);
     setAcilis(sonuc);
-  }, [currentUser, locale]);
+  }, [currentUser, locale, dilHazir]);
 
   return (
     <>
@@ -278,15 +297,6 @@ export default function RootLayout() {
     'Onest-Regular': require('../assets/fonts/Onest-Regular.ttf'),
     'Onest-Medium': require('../assets/fonts/Onest-Medium.ttf'),
     'Onest-SemiBold': require('../assets/fonts/Onest-SemiBold.ttf'),
-    /*
-     * Açılış mesajları el yazısı — brief §5.2'nin KRİTİK KISITI: font
-     * Türkçe, Rusça Kiril ve KAZAKÇAYA ÖZGÜ Kiril harflerini (ә ғ қ ң ө
-     * ұ ү һ і) eksiksiz kapsamalı. Beş aday fontun karakter tablosu tek
-     * tek okundu; Marck Script ve Neucha kazak gliflerini taşımıyordu.
-     * Pacifico üç alfabeyi de kapsıyor, OFL lisanslı (uygulamaya gömme
-     * serbest) ve kurucunun seçimi.
-     */
-    'Pacifico-Regular': require('../assets/fonts/Pacifico-Regular.ttf'),
     Caveat_700Bold,
   });
 

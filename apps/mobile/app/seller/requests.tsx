@@ -26,12 +26,18 @@ import { findServiceWithCategory, kategoriAdi, tri } from '../../src/taxonomy';
 
 const catLabel = (id: string, locale: string): string => kategoriAdi(id, locale);
 
-// §9.3 — yaklaşık mesafe (deterministik, talep id'sinden 1–9 km). Gerçek adres kullanılmaz (privacy).
-const estKm = (id: string): number => {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return 1 + (Math.abs(h) % 9);
-};
+/*
+ * MESAFE KALDIRILDI.
+ *
+ * Burada talebin KİMLİK DİZESİNDEN 1–9 arası bir sayı üretilip
+ * "~4 km" diye yazılıyordu. Uzman o sayıya bakıp yola çıkıp çıkmayacağına
+ * karar veriyordu: sayının müşterinin nerede olduğuyla hiçbir ilgisi
+ * yoktu.
+ *
+ * Gerçek mesafe için müşterinin konumu gerekir; gizlilik kuralı gereği
+ * müşteri adresi uzmana açılmıyor. Yani doğru sayı ÜRETİLEMEZ — o hâlde
+ * yazılmıyor. Şehir bilgisi gerçek ve kalıyor.
+ */
 
 export default function SellerRequestsScreen() {
   const { t } = useLocale();
@@ -589,7 +595,7 @@ function RequestCard({
             <View style={styles.metaChip}>
               <Ionicons name="location-outline" size={12} color={colors.inkSoft} />
               <Text variant="caption" tone="inkSoft">
-                {demand.city} · ~{estKm(demand.id)} km
+                {demand.city}
               </Text>
             </View>
             {demand.budget ? (

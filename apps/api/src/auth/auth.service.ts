@@ -434,6 +434,14 @@ export class AuthService {
       cutoutUrl: user.cutoutUrl ?? null, // kesik portre — girişte geri yüklenir (kredi yakmadan)
       phoneVerified: user.phoneVerified,
       gender: user.gender,
+      /*
+       * ÜYELİK BAŞLANGICI — pasaportta gösteriliyor.
+       *
+       * Ekranda sabit `2024` yazıyordu: hesabı ne zaman açtığından
+       * bağımsız, herkese aynı yıl. Kullanıcı kendi hesabı hakkında
+       * YANLIŞ bir bilgi okuyordu.
+       */
+      memberSince: user.createdAt.toISOString(),
       // §11 — üyelik katmanı + bitiş (mobil premium/platinum bunu okur; admin onayıyla set edilir)
       membershipTier: user.membershipTier,
       membershipUntil: user.membershipUntil ? user.membershipUntil.toISOString() : null,

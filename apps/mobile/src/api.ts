@@ -333,6 +333,9 @@ export interface ReengageAday {
   service: string;
   periodDays: number;
   kalanGun: number;
+  /** Hatırlatmanın GERÇEKTEN gönderilip gönderilmediği — tahmin değil. */
+  preSent?: boolean;
+  dueSent?: boolean;
 }
 
 export class ApiError extends Error {
@@ -451,6 +454,8 @@ export interface AuthUser {
   // §12.3 — admin ceza takip: kısıtlı mod (yeni talep oluşturamaz)
   restricted?: boolean;
   restrictedDaysLeft?: number; // 7 gün penceresinde kalan gün
+  /** Hesabın açıldığı an (ISO). Pasaporttaki "üyelik" yılı buradan. */
+  memberSince?: string | null;
   // §11 — üyelik katmanı (admin onayıyla aktif): free | premium | platinum
   membershipTier?: string;
   membershipUntil?: string | null;
@@ -912,10 +917,17 @@ export const api = {
     ),
   // Faz C — salonun gerçek kadrosu (davet koduyla bağlı uzmanlar)
   businessStaff: (token: string, businessId: string) =>
-    get<{ id: string; name: string; bio: string; kind: string; calendarPermission?: string }[]>(
-      `/businesses/${businessId}/staff`,
-      token,
-    ),
+    get<
+      {
+        id: string;
+        name: string;
+        bio: string;
+        kind: string;
+        /** Uzmanın kendi panelinde tanımladığı hizmetler (salt-okunur). */
+        services?: string[];
+        calendarPermission?: string;
+      }[]
+    >(`/businesses/${businessId}/staff`, token),
   inviteCodes: (token: string, businessId: string) =>
     get<SellerInviteCode[]>(`/businesses/${businessId}/invite-codes`, token),
   createInviteCode: (token: string, businessId: string) =>
@@ -1521,6 +1533,8 @@ export interface AppConfig {
     pointsUnlockKzt: number;
     pointsExpiryDays: number;
     premiumUserKzt: number;
+    /** Platinum aylık ücreti — panelden yönetiliyor. */
+    platinumUserKzt?: number;
     premiumSalonKzt: number;
     raffleCost: number;
     /** §reklam — vitrin aylık ücreti (panelden yönetilir). */

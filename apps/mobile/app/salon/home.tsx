@@ -214,7 +214,7 @@ export default function SalonHomeScreen() {
                     {/* Gerçek geçmiş birikene kadar sahte metrik YOK — dürüst "yeni" etiketi */}
                     <Text variant="caption" tone="muted">
                       {u.bookings > 0
-                        ? `${u.bookings} · ${u.rating.toFixed(1)}`
+                        ? `${u.bookings}${u.rating !== null ? ` · ${u.rating.toFixed(1)}` : ''}`
                         : t('salon.staff.new')}
                     </Text>
                   </View>

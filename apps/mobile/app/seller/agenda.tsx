@@ -6,6 +6,7 @@ import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
 import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
+import type { DayHours } from '../../src/ui/WorkingHours';
 import { almatyDayStart, almatyParts, daysUntil, formatSlot, slotTime } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
@@ -23,8 +24,38 @@ import {
 } from '../../src/ui';
 
 type DayRow = { type: 'free'; startMs: number; endMs: number } | { type: 'busy'; b: Appointment };
-const OPEN_H = 10;
-const CLOSE_H = 19;
+
+/*
+ * ÇALIŞMA SAATİ UZMANIN KENDİSİNDEN.
+ *
+ * Burada `OPEN_H = 10` / `CLOSE_H = 19` sabitleri vardı ve ızgara herkese
+ * 10:00–19:00 çiziyordu. Uzman saatlerini "Çalışma saatleri" ekranında
+ * zaten giriyor: sabah 8'de açan biri iki saatini takvimde hiç görmüyor,
+ * kapalı olduğu günde ise BOŞ SAATLER görüyordu — yani ajanda olmayan bir
+ * müsaitlik gösteriyordu.
+ */
+const SAAT_MS = 3_600_000;
+
+/** "09:30" → gün başlangıcına eklenecek ms. Bozuksa null. */
+function saatiMs(hhmm: string): number | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
+  if (!m) return null;
+  const sa = Number(m[1]);
+  const dk = Number(m[2]);
+  if (sa < 0 || sa > 24 || dk < 0 || dk > 59) return null;
+  return sa * SAAT_MS + dk * 60_000;
+}
+
+/** O günün açık penceresi; kapalıysa null. */
+function gunPenceresi(hours: DayHours[], dayStart: number): { bas: number; son: number } | null {
+  const wd = new Date(dayStart).getDay();
+  const gun = hours.find((h) => h.wd === wd);
+  if (!gun || !gun.open) return null;
+  const bas = saatiMs(gun.from);
+  const son = saatiMs(gun.to);
+  if (bas === null || son === null || son <= bas) return null;
+  return { bas: dayStart + bas, son: dayStart + son };
+}
 // Takvimde SLOT'U TUTAN durumlar: onaylı + tamamlanan + uzman onayı sonrası depozito bekleyenler.
 const CALENDAR_STATUSES: BookingStatus[] = [
   'kesinlesti',
@@ -34,24 +65,31 @@ const CALENDAR_STATUSES: BookingStatus[] = [
 ];
 
 // §4.6 uzman gün-ızgarası: açık pencere içinde boş aralıklar + randevu blokları
-function buildDayRows(dayStart: number, dayBookings: Appointment[]): DayRow[] {
-  const openStart = dayStart + OPEN_H * 3_600_000;
-  const openEnd = dayStart + CLOSE_H * 3_600_000;
+function buildDayRows(dayStart: number, dayBookings: Appointment[], hours: DayHours[]): DayRow[] {
+  const pencere = gunPenceresi(hours, dayStart);
   // §4.1/§4.6 — takvimde SLOT'U TUTAN randevular: onaylı + tamamlanan + uzman ONAYLADIKTAN sonra
   // depozito bekleyenler (depozito_bekliyor). Uzman kabul edince slot HEMEN takvimde görünür
   // (gold=bekliyor). Yalnız onay-ÖNCESİ (onay_bekliyor) ayrı "Bekleyen Talepler" şeridindedir.
   const bs = dayBookings
     .filter((b) => CALENDAR_STATUSES.includes(b.status))
     .sort((a, b) => a.startMs - b.startMs);
+  /*
+   * KAPALI GÜNDE BOŞ ARALIK YOK — ama randevu VARSA gizlenmiyor.
+   *
+   * Uzman kapalı gününe elle randevu almış olabilir; onu saklamak
+   * takvimini yalan söyletirdi. Yalnız "boş" satırlar üretilmiyor.
+   */
+  if (!pencere) return bs.map((b) => ({ type: 'busy', b }) as DayRow);
+
   const rows: DayRow[] = [];
-  let cursor = openStart;
+  let cursor = pencere.bas;
   for (const b of bs) {
-    const bStart = Math.max(b.startMs, openStart);
+    const bStart = Math.max(b.startMs, pencere.bas);
     if (bStart > cursor) rows.push({ type: 'free', startMs: cursor, endMs: bStart });
     rows.push({ type: 'busy', b });
     cursor = Math.max(cursor, b.startMs + b.durationMin * 60_000);
   }
-  if (cursor < openEnd) rows.push({ type: 'free', startMs: cursor, endMs: openEnd });
+  if (cursor < pencere.son) rows.push({ type: 'free', startMs: cursor, endMs: pencere.son });
   return rows;
 }
 
@@ -132,7 +170,9 @@ export default function AgendaScreen() {
     return [...map.values()];
   }, [items, storeBookings]);
   const dayBookings = calBookings.filter((b) => almatyDayStart(b.startMs, 0) === selectedDay);
-  const dayRows = buildDayRows(selectedDay, dayBookings);
+  // Uzmanın KENDİ çalışma saatleri — "Çalışma saatleri" ekranından.
+  const sellerHours = useStore((st) => st.sellerHours);
+  const dayRows = buildDayRows(selectedDay, dayBookings, sellerHours);
   // Gün özeti: kesinleşmiş randevu sayısı + günün cirosu
   const dayBusy = dayRows.filter((r): r is { type: 'busy'; b: Appointment } => r.type === 'busy');
   const dayTotal = dayBusy.reduce((s, r) => s + r.b.price, 0);
@@ -334,7 +374,15 @@ export default function AgendaScreen() {
               <Pressable
                 style={styles.dayEmpty}
                 onPress={() =>
-                  router.push(`/seller/offline?start=${selectedDay + OPEN_H * 3_600_000}`)
+                  /*
+                   * Elle randevu ekranı GÜNÜN AÇILIŞ SAATİNDE başlıyor.
+                   * Sabit 10:00 yazılıydı: sabah 8'de açan uzman her
+                   * seferinde saati elle geri almak zorundaydı, kapalı
+                   * günde ise olmayan bir saat öneriliyordu.
+                   */
+                  router.push(
+                    `/seller/offline?start=${gunPenceresi(sellerHours, selectedDay)?.bas ?? selectedDay + 9 * SAAT_MS}`,
+                  )
                 }
               >
                 <View style={styles.dayEmptyIcon}>
@@ -517,9 +565,16 @@ export default function AgendaScreen() {
               contentContainerStyle={styles.columns}
             >
               {shownStaff.map((u) => {
+                /*
+                 * Salon görünümünde her sütun BİR uzman. Kadronun kendi
+                 * saatleri istemciye gelmiyor; salonun saatleriyle
+                 * çiziliyor. Uydurma sabit 10–19'dan daha doğru ama
+                 * kadro saatleri sunucudan gelene kadar yaklaşık.
+                 */
                 const uRows = buildDayRows(
                   selectedDay,
                   dayBookings.filter((b) => (b.uzmanName ?? '') === u.name),
+                  sellerHours,
                 );
                 return (
                   <View key={u.name} style={styles.column}>

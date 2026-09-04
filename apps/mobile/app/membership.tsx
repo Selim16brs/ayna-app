@@ -91,7 +91,18 @@ export default function SellerPremiumScreen() {
     !isSeller || tierParam === 'premium' ? 'premium' : 'platinum',
   );
   const isPlat = tier === 'platinum';
-  const tierPrice = isPlat ? PLATINUM_PRICE_KZT : PREMIUM_PRICE_KZT;
+  /*
+   * FİYAT ÖNCE SUNUCUDAN.
+   *
+   * İki sabit okunuyordu; pasaport ekranı ise sunucu değerini önceliyordu.
+   * Aynı ürün iki ekranda FARKLI fiyatla görünebiliyordu ve buradaki
+   * tutar dekont ekranına ÖDENECEK TUTAR olarak geçiyordu: admin fiyatı
+   * güncellediğinde kullanıcı eski fiyatı ödemeye yönlendiriliyordu.
+   */
+  const oranlar = useStore((s) => s.config.rates);
+  const tierPrice = isPlat
+    ? oranlar.platinumUserKzt || PLATINUM_PRICE_KZT
+    : oranlar.premiumUserKzt || PREMIUM_PRICE_KZT;
   const benefits = !isSeller
     ? CUSTOMER_BENEFITS
     : isPlat

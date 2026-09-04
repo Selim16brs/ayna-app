@@ -148,6 +148,20 @@ export class BusinessesService {
   }
 
   // Faz C — salonun GERÇEK kadrosu: davet koduyla bağlanan uzmanlar (mock kadro değil).
+  /** `servicesJson` içinden yalnız hizmet ADLARI — bozuksa boş liste. */
+  private hizmetAdlariCoz(ham: string): string[] {
+    try {
+      const veri: unknown = JSON.parse(ham);
+      if (!Array.isArray(veri)) return [];
+      return veri
+        .map((x) => (typeof x === 'object' && x !== null ? (x as { name?: unknown }).name : null))
+        .filter((n): n is string => typeof n === 'string' && n.trim().length > 0);
+    } catch {
+      // Bozuk JSON = liste yok. Uydurma isim üretmiyoruz.
+      return [];
+    }
+  }
+
   async staff(businessId: string, ownerUserId: string) {
     await this.assertOwner(businessId, ownerUserId);
     const rows = await this.prisma.specialist.findMany({
@@ -160,11 +174,32 @@ export class BusinessesService {
       select: { id: true, name: true },
     });
     const names = new Map(users.map((u) => [u.id, u.name]));
+    /*
+     * Hizmet listesi uzmanın İŞLETME kaydında (`Professional.servicesJson`).
+     * Tek sorguyla topluca çekiliyor — kadro başına ayrı sorgu N+1 olurdu.
+     */
+    const proIds = rows.flatMap((r) => (r.proId ? [r.proId] : []));
+    const prolar = proIds.length
+      ? await this.prisma.professional.findMany({
+          where: { id: { in: proIds } },
+          select: { id: true, servicesJson: true },
+        })
+      : [];
+    const hizmetler = new Map(prolar.map((p) => [p.id, this.hizmetAdlariCoz(p.servicesJson)]));
     return rows.map((r) => ({
       id: r.id,
       name: names.get(r.userId) ?? 'Uzman',
       bio: r.bio,
       kind: r.kind,
+      /*
+       * UZMANIN GERÇEK HİZMET LİSTESİ.
+       *
+       * Kadro ekranı bunu koda gömülü bir AD→HİZMET tablosundan
+       * okuyordu: adı "Madina" olan herkese aynı üç hizmet yazılıyordu.
+       * Kaynak uzmanın KENDİ panelinde tanımladığı liste; salon yalnız
+       * görüntülüyor.
+       */
+      services: (r.proId ? hizmetler.get(r.proId) : null) ?? [],
       calendarPermission: r.calendarPermission, // Faz 4 — kadro ekranında yetki rozeti
     }));
   }
