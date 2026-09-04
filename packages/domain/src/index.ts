@@ -16,6 +16,7 @@ export * from './splash/secim.js';
 export * from './catalog/category-ids.js';
 export * from './loyalty/spend-rules.js';
 export * from './trust/ayna-verified.js';
+export * from './trust/yorum-yazari.js';
 export * from './money/kzt.js';
 export * from './catalog/katalog.js';
 export * from './splash/uzak.js';

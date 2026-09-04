@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { SubmitRatingInput } from './ratings.dto';
+import { ANONIM_YAZAR_ETIKETI } from '@ayna/domain';
 
 // §4.11 — DEĞERLENDİRME PENCERESİ ve PROFİLE YANSIMA GECİKMESİ.
 //
@@ -136,7 +137,7 @@ export class RatingsService {
         score: input.score,
         comment: input.comment ?? '',
         serviceTag: input.serviceTag ?? '',
-        authorLabel: input.authorLabel?.trim() || 'Doğrulanmış üye',
+        authorLabel: input.authorLabel?.trim() || ANONIM_YAZAR_ETIKETI,
         ...(input.photos && input.photos.length ? { photos: input.photos } : {}), // EK Z.10
         visible: publicReview,
         // §4.11 — "Değerlendirme uzmanın profiline 1 GÜN GECİKMEYLE yansır

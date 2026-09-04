@@ -4,6 +4,8 @@ import {
   SLOT_HOLDING_STATES,
   depositFor,
   esikGecti,
+  ANONIM_YAZAR_ETIKETI,
+  BEN_YAZAR_ETIKETI,
 } from '@ayna/domain';
 import type { PointsSpendRules } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -2391,7 +2393,7 @@ export const useStore = create<State>()(
         const anon = get().reviewAnonymous;
         // Gizlilik: anonimse "Doğrulanmış üye"; değilse kullanıcının ilk adı
         const firstName = get().currentUser?.name?.trim().split(/\s+/)[0];
-        const authorLabel = anon || !firstName ? 'Doğrulanmış üye' : firstName;
+        const authorLabel = anon || !firstName ? ANONIM_YAZAR_ETIKETI : firstName;
         set((s) => ({
           bookings: s.bookings.map((x) => (x.id === id ? { ...x, reviewed: true } : x)),
         }));
@@ -2797,7 +2799,7 @@ export const useStore = create<State>()(
               id,
               type: input.type,
               category: input.category,
-              author: input.anonymous ? 'Doğrulanmış üye' : 'Sen',
+              author: input.anonymous ? ANONIM_YAZAR_ETIKETI : BEN_YAZAR_ETIKETI,
               anonymous: input.anonymous,
               text: input.text,
               helpful: 0,
@@ -2886,7 +2888,7 @@ export const useStore = create<State>()(
                     ...p.comments,
                     {
                       id: nextId('cm'),
-                      author: anonymous ? 'Doğrulanmış üye' : 'Sen',
+                      author: anonymous ? ANONIM_YAZAR_ETIKETI : BEN_YAZAR_ETIKETI,
                       anonymous,
                       text,
                     },
