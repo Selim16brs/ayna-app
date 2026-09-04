@@ -1,6 +1,6 @@
 import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { KEEP_SENT_DAYS } from './outbox.rules';
+import { GECMIS_SAKLAMA_GUN, KEEP_SENT_DAYS } from './outbox.rules';
 import { PushService } from './push.service';
 
 /**
@@ -65,9 +65,20 @@ export class OutboxScheduler implements OnModuleInit, OnModuleDestroy {
         },
       });
 
-      if (bekleyen.length || budandi.count) {
+      /*
+       * BİLDİRİM GEÇMİŞİ de budanıyor — 30 gün.
+       *
+       * Uygulamanın yerel temizliğiyle (NOTIFICATION_TTL_MS) AYNI süre:
+       * iki taraf farklı saklasaydı liste cihazdan cihaza değişir,
+       * kullanıcı "telefonumda vardı, tablette yok" derdi.
+       */
+      const eskiBildirim = await this.prisma.userNotification.deleteMany({
+        where: { createdAt: { lt: new Date(now.getTime() - GECMIS_SAKLAMA_GUN * 86_400_000) } },
+      });
+
+      if (bekleyen.length || budandi.count || eskiBildirim.count) {
         this.log.log(
-          `outbox: denenen=${bekleyen.length} teslim=${teslim} budanan=${budandi.count}`,
+          `outbox: denenen=${bekleyen.length} teslim=${teslim} budanan=${budandi.count} geçmiş-budanan=${eskiBildirim.count}`,
         );
       }
     } finally {

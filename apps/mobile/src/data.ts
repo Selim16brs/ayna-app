@@ -1854,6 +1854,14 @@ export interface AppNotification {
   audience?: 'user' | 'seller';
   // Tıklanınca gidilecek ekran (yoksa türe göre varsayılan kullanılır)
   route?: string;
+  /**
+   * SUNUCUDAKİ kimlik — yalnız sunucudan gelen bildirimlerde dolu.
+   *
+   * Eleme ölçütü: aynı bildirim her tazelemede yeniden eklenirse liste
+   * kendi kendini çoğaltır. Okundu bilgisini sunucuya yazarken de bu
+   * kimlik kullanılıyor.
+   */
+  sunucuId?: string;
   // §5.7 — oluşturulma zamanı (ms); 30 günden eski bildirimler otomatik temizlenir.
   // Seed'lerde yok (demo kalıcı); gerçek bildirimler push anında damgalanır.
   createdAt?: number;

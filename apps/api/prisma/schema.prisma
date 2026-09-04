@@ -1052,6 +1052,34 @@ model Dispute {
 // SAKLAMA: title/body kullanıcı adı taşıyabilir. Bu operasyonel veri, log ya da
 // analytics DEĞİL — ama süresiz durmamalı: teslim edilen satırlar zamanlayıcı
 // tarafından budanıyor.
+/**
+ * KULLANICININ BİLDİRİM GEÇMİŞİ.
+ *
+ * `NotificationOutbox` bir TESLİM KUYRUĞU: teslim edilen satırlar 7 gün
+ * sonra siliniyor (PII süresiz durmasın) ve teslim edilemeyen satırlar
+ * "dead" olarak kalıyor. Kullanıcıya okutulacak liste bu değil.
+ *
+ * Bu tablo kullanıcının KENDİ kutusu: sunucunun ona gönderdiği her bildirim
+ * burada duruyor — push teslim edilemese, izin kapalı olsa, telefon kapalı
+ * olsa bile. Uygulama listeyi buradan çekiyor.
+ *
+ * Saklama 30 gün: uygulamanın kendi yerel temizliğiyle (NOTIFICATION_TTL_MS)
+ * aynı. İki taraf farklı süre saklasaydı liste cihazdan cihaza değişirdi.
+ */
+model UserNotification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  title     String
+  body      String
+  /// Dokununca gidilecek ekran (uygulama içi yol). Yoksa liste sadece okunur.
+  route     String?
+  readAt    DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId, createdAt])
+  @@map("user_notifications")
+}
+
 model NotificationOutbox {
   id            String    @id @default(uuid()) @db.Uuid
   userId        String    @map("user_id") @db.Uuid

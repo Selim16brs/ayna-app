@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { type AppNotification, NOTIFICATION_ROUTE, type NotificationType } from '../src/data';
 import { fillParams, useLocale } from '../src/locale';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { inAudience, selectSellerView, useStore } from '../src/store';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -26,6 +26,16 @@ export default function NotificationsScreen() {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const allItems = useStore((s) => s.notifications);
+  const hydrateNotifications = useStore((s) => s.hydrateNotifications);
+  /*
+   * Liste açıldığında sunucudan tazeleniyor: kullanıcı bildirime bakmak
+   * için bu ekranı açıyor, en güncel hâli görmesi gereken yer burası.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      void hydrateNotifications();
+    }, [hydrateNotifications]),
+  );
   const seller = useStore(selectSellerView);
   // §9.1/§10 — aktif moda göre filtrelenir (useMemo: yeni-ref sonsuz döngü tuzağından kaçınır)
   const items = useMemo(() => allItems.filter((n) => inAudience(n, seller)), [allItems, seller]);

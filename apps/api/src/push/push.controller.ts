@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { type AuthedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -18,6 +18,27 @@ export class PushController {
     @Body(new ZodValidationPipe(registerTokenSchema)) body: RegisterTokenInput,
   ) {
     return this.push.register(req.user!.id, body.token, body.platform);
+  }
+
+  /**
+   * BİLDİRİM GEÇMİŞİ. Uygulama içi liste bunu okuyup kendi kayıtlarıyla
+   * birleştiriyor: karşı tarafın yaptıkları da listede kalıyor.
+   */
+  @Get('notifications')
+  history(@Req() req: AuthedRequest) {
+    return this.push.history(req.user!.id);
+  }
+
+  /** Tekil okundu. Sahiplik sunucuda doğrulanıyor. */
+  @Post('notifications/:id/read')
+  readOne(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.push.markRead(req.user!.id, id);
+  }
+
+  /** Hepsini okundu işaretle — liste ekranındaki "tümünü okundu yap". */
+  @Post('notifications/read-all')
+  readAll(@Req() req: AuthedRequest) {
+    return this.push.markRead(req.user!.id);
   }
 
   @Post('tokens/remove')
