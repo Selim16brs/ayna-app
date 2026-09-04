@@ -158,3 +158,29 @@ test('ÇÖKME · bookings değişimine bağlı TEK native tetikleyici var', () =
     `bookings'e bağlı ${bagimli.length} efekt var — her biri native çağrı yapıyorsa yarış geri gelir`,
   );
 });
+
+test('GELEN PUSH uygulama içi listede DE kalıyor', () => {
+  /*
+   * Push yalnız "bir şey oldu" sinyali verip kayboluyordu: uygulama
+   * içindeki bildirim listesi KULLANICININ KENDİ yaptıklarını gösteriyor,
+   * karşı tarafın yaptıklarını (uzman onayladı, teklif geldi) hiç
+   * göstermiyordu. Bildirimi görüp geçen kullanıcı onu bir daha
+   * bulamıyordu.
+   */
+  const layout = readFileSync(join(__dirname, '..', 'app', '_layout.tsx'), 'utf8');
+  const i = layout.indexOf('addPushReceivedListener(');
+  assert.ok(i > 0, 'push dinleyicisi yok');
+  const govde = layout.slice(i, layout.indexOf('return () => sub.remove();', i));
+  assert.match(govde, /pushNotification\(\{/, 'gelen bildirim listeye yazılmıyor');
+  /*
+   * Metin SUNUCUDAN geldiği gibi yazılıyor (title/body), anahtar değil:
+   * uydurmadan tek kaynağı bu. Boş bildirim ise hiç yazılmıyor.
+   */
+  assert.match(govde, /title: bildirim\.title/, 'başlık sunucudan alınmıyor');
+  assert.match(govde, /if \(bildirim\.title \|\| bildirim\.body\)/, 'boş bildirim de yazılıyor');
+
+  // Dinleyici başlığı/gövdeyi gerçekten taşıyor mu?
+  const nots = readFileSync(join(__dirname, 'notifications.ts'), 'utf8');
+  assert.match(nots, /title: icerik\.title \?\? ''/, 'dinleyici başlığı taşımıyor');
+  assert.match(nots, /body: icerik\.body \?\? ''/, 'dinleyici gövdeyi taşımıyor');
+});
