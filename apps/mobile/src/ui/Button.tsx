@@ -70,6 +70,15 @@ export function Button({
       disabled={disabled || loading}
       {...rest}
     >
+      {/*
+        DÜĞME YAZISI PUNTO KÜÇÜLTMÜYOR.
+
+        `adjustsFontSizeToFit` vardı ve React Native ölçü genişliği belirsiz
+        olduğunda puntoyu `minimumFontScale`i de aşarak indiriyor: kurucunun
+        ekran görüntüsünde "Yeni saat seç" birkaç piksellik bir lekeydi,
+        hizmet ekranındaki "Ekle" düğmesinde de aynısı olmuştu. Sığmayan
+        yazı artık kırpılıyor — kırpılmış yazı okunur, küçülmüş yazı değil.
+      */}
       <Animated.View style={{ transform: [{ scale }] }}>
         {variant === 'primary' ? (
           <LinearGradient
@@ -80,13 +89,7 @@ export function Button({
           >
             <View style={styles.inner}>
               {loading ? <ActivityIndicator size="small" color={colors.onAccent} /> : null}
-              <Text
-                variant="bodyStrong"
-                style={[styles.label, styles.goldLabel]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
+              <Text variant="bodyStrong" style={[styles.label, styles.goldLabel]} numberOfLines={1}>
                 {label}
               </Text>
             </View>
@@ -100,8 +103,6 @@ export function Button({
                 tone={variant === 'ghost' ? 'inkSoft' : 'ink'}
                 style={styles.label}
                 numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
               >
                 {label}
               </Text>

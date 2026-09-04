@@ -320,13 +320,7 @@ export default function NewDemandScreen() {
               <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
                 {city}
               </Text>
-              <Text
-                variant="caption"
-                tone="accentFg"
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
+              <Text variant="caption" tone="accentFg" numberOfLines={1}>
                 {t('addresses.add')}
               </Text>
               <Ionicons
@@ -485,8 +479,6 @@ export default function NewDemandScreen() {
             tone={canSubmit ? 'onAccent' : 'muted'}
             style={styles.ctaText}
             numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.75}
           >
             {t('demand.new.send')}
           </Text>

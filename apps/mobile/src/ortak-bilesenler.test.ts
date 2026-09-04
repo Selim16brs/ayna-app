@@ -85,9 +85,17 @@ test('BÖLÜM BAŞLIKLARI harf kaybetmiyor', () => {
    * `TabHero` ve `StackHeader` bu işi baştan doğru yapıyordu; kırılan
    * ikisi `SectionHeader` ve Keşfet'in kendi başlığıydı.
    */
-  const s = oku('SectionHeader.tsx');
+  // Yorumsuz: kaldırma kararının gerekçesi dosyanın başında yazılı.
+  const s = oku('SectionHeader.tsx')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
   assert.match(s, /title: \{[^}]*flexShrink: 1/, 'başlık daralamıyor');
-  assert.match(s, /adjustsFontSizeToFit/, 'başlık sığmayınca küçülmüyor');
+  /*
+   * Punto küçültme KALDIRILDI (4 Eyl 2026): kurucu "hizmetler başlığı
+   * küçülmüş" dedi — RN, ölçü genişliği belirsiz olduğunda puntoyu
+   * okunamayacak kadar indiriyor. Başlık artık kırpılıyor.
+   */
+  assert.doesNotMatch(s, /adjustsFontSizeToFit/, 'başlık punto küçültüyor');
   assert.match(s, /seeAll: \{[^}]*flexShrink: 0/, '"Tümü" daralıyor — başlığı eziyor');
 });
 

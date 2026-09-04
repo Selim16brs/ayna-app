@@ -153,8 +153,6 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
                   <Text
                     numberOfLines={1}
                     allowFontScaling={false}
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.85}
                     style={[styles.activeLabel, { color: colors.onAccent }]}
                   >
                     {t(tab.labelKey)}

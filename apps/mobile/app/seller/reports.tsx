@@ -458,13 +458,6 @@ export default function ReportsScreen() {
               ) : (
                 <View style={[styles.avatar, styles.avatarBos]} />
               )}
-              {/*
-                ZEMİN ÇİZGİSİ — müşteri ana sayfasındakiyle aynı.
-                Kesilmiş portrenin zemini saydam; çizgi olmadan figür
-                boşlukta asılı duruyor. Ham fotoğrafta çizilmiyor: orada
-                zaten bir çerçeve var.
-              */}
-              {portreKesilmis ? <View style={styles.portreCizgi} /> : null}
             </PressableScale>
           </View>
         </View>
@@ -1010,8 +1003,20 @@ const makeStyles = (colors: ColorTokens) =>
      * `bas` kapatıyor (paddingBottom 0 + negatif marginBottom, kaydırma
      * alanının 20px'lik kendi aralığını da yutuyor).
      */
-    karsilama: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, marginTop: 12 },
-    basSol: { flex: 1, gap: 2 },
+    /*
+     * METİN BLOĞU DİKEYDE ORTALI, PORTRE ALTA YASLI.
+     *
+     * Kurucu: "karşılama mesajı, uzman adı ve bireysel uzman bölümü daha
+     * yukarıdaki boşluk olan yere ortalansın."
+     *
+     * Satır `flex-end` iken üç satırlık metin 104px'lik portrenin alt
+     * kenarına yapışıyor ve üstünde koca bir boşluk kalıyordu. `stretch`
+     * ile sütun satırın tamamını kaplıyor, metin kendi içinde ortalanıyor;
+     * portre ise alta yaslı kalıyor — altındaki blokla yapışıklığı bozan
+     * bir şey yok.
+     */
+    karsilama: { flexDirection: 'row', alignItems: 'stretch', gap: 12, marginTop: 12 },
+    basSol: { flex: 1, gap: 2, justifyContent: 'center' },
     // Müşteri ana sayfasıyla AYNI ölçüler: selam küçük üstte, isim büyük altta.
     selamUst: { fontFamily: font.regular, fontSize: 14, lineHeight: 18, color: colors.inkSoft },
     selamAd: {
@@ -1071,9 +1076,12 @@ const makeStyles = (colors: ColorTokens) =>
      * SAĞA YASLI ve kap portre genişliğinde: zemin çizgisi genişliğini
      * buradan alıyor.
      */
-    portreKap: { width: 104, alignItems: 'flex-end' },
+    /*
+     * Kurucu: "profil fotoğrafının altındaki çizgiyi kaldır ve biraz daha
+     * sola al." Çizgi kalktı; sağ kenardan 12px içeri alındı.
+     */
+    portreKap: { width: 104, alignItems: 'flex-end', alignSelf: 'flex-end', marginRight: 12 },
     portreKesik: { width: 104, height: 104 },
-    portreCizgi: { width: '100%', height: 2, borderRadius: 1, backgroundColor: colors.accent },
     avatarBos: { backgroundColor: colors.accentSoft },
 
     // canli-ozet-card (radius 24, p20, gap 18) — koyu, iki temada da sabit

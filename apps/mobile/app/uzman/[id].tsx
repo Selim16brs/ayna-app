@@ -252,14 +252,7 @@ export default function UzmanScreen() {
 
       <View style={[styles.cta, { paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }]}>
         <Pressable style={styles.ctaBtn} onPress={book}>
-          <Text
-            variant="bodyStrong"
-            tone="onAccent"
-            style={styles.ctaText}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.75}
-          >
+          <Text variant="bodyStrong" tone="onAccent" style={styles.ctaText} numberOfLines={1}>
             {t('pro.book')}
           </Text>
           <Ionicons name="arrow-forward" size={19} color={colors.onAccent} />

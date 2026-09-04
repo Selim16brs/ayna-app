@@ -364,23 +364,6 @@ export default function DiscoverScreen() {
             ) : (
               <View style={[styles.avatar, styles.avatarBos]} />
             )}
-            {/*
-             * ZEMİN ÇİZGİSİ — yalnız kesilmiş portrede.
-             *
-             * Kurucu: "o profil fotoğrafının altına paralel şekilde
-             * dairenin dışındaki pembe renkten çizgi atar mısın? tam
-             * fotoğrafın bittiği yerde ince görünsün ve fotoğraf genişliği
-             * kadar olsun."
-             *
-             * Kesilmiş portrenin zemini saydam; çizgi olmadan figür
-             * boşlukta asılı duruyor. Çizgi fotoğrafın TAM ALTINDA ve
-             * TAM GENİŞLİĞİNDE: kabın kendisi portre ölçüsünde, çizgi de
-             * kabın alt kenarı.
-             *
-             * Daire içindeki ham fotoğrafta ÇİZİLMİYOR: orada zaten bir
-             * çerçeve var, ikisi birden fazlalık olurdu.
-             */}
-            {portreKesilmis ? <View style={styles.portreCizgi} /> : null}
           </PressableScale>
         </View>
 
@@ -839,14 +822,7 @@ function BolumBasligi({ title, onSeeAll }: { title: string; onSeeAll?: () => voi
         kırpılıyordu. Başlık daralabilir (`flexShrink`) ve gerekirse
         puntosu iner — harf kaybetmez. "Tümünü Gör" ise daralmaz.
       */}
-      <Text
-        variant="h2"
-        tone="ink"
-        style={styles.bolumBaslik}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.85}
-      >
+      <Text variant="h2" tone="ink" style={styles.bolumBaslik} numberOfLines={1}>
         {title}
       </Text>
       {onSeeAll ? (
@@ -1086,13 +1062,8 @@ const makeStyles = (colors: ColorTokens) =>
      * 104px'lik kabın ortasında duruyordu ve sağında bir boşluk kalıyordu:
      * ekranın sağ kenarıyla hizalanmıyordu.
      */
-    portreKap: { width: 104, alignItems: 'flex-end' },
-    portreCizgi: {
-      width: '100%',
-      height: 2,
-      borderRadius: 1,
-      backgroundColor: colors.accent,
-    },
+    // Çizgi kaldırıldı (kurucu); portre sağ kenardan 12px içeri.
+    portreKap: { width: 104, alignItems: 'flex-end', marginRight: 12 },
     avatarBos: { backgroundColor: colors.accentSoft },
 
     // search-container (radius 12, border #E5E0DE, px14 py8)

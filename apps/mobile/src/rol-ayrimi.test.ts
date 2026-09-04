@@ -31,10 +31,16 @@ test('mesaj şablonları rolü RANDEVUDAN alıyor', () => {
   assert.match(src, /benUzman = ilgiliRandevu\?\.benimRolum === 'uzman'/);
 });
 
-test('tazeleme hangi UÇTAN geldiğini işaretliyor', () => {
+test('rol SUNUCUDAN geliyor, uç etiketi yalnız yedek', () => {
+  /*
+   * Rol yalnız "hangi uçtan geldi" ile işaretleniyordu. Etiket düştüğünde
+   * randevu sessizce "müşteri" sayılıyor ve uzman KENDİ ekranında müşteri
+   * görünümüne düşüyordu (4 Eyl 2026, kurucu canlıda gördü). Sunucu artık
+   * rolü kaydın kendisiyle gönderiyor; uç etiketi yedek kaldı.
+   */
   const src = oku('src', 'store.ts');
-  assert.match(src, /benimRolum: 'musteri' as const/, 'müşteri ucu işaretlenmiyor');
-  assert.match(src, /benimRolum: 'uzman' as const/, 'sağlayıcı ucu işaretlenmiyor');
+  assert.match(src, /benimRolum: b\.benimRolum \?\? 'musteri'/, 'müşteri ucu yedeği yok');
+  assert.match(src, /benimRolum: b\.benimRolum \?\? 'uzman'/, 'sağlayıcı ucu yedeği yok');
 });
 
 test('müşteri listeleri uzman taleplerini GÖSTERMİYOR', () => {

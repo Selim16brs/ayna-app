@@ -302,13 +302,7 @@ export default function ChatThreadScreen() {
                   </View>
                   <View style={styles.guardActions}>
                     <Pressable style={styles.guardBtn} onPress={() => setGuardOff(true)}>
-                      <Text
-                        variant="captionStrong"
-                        tone="inkSoft"
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                        minimumFontScale={0.75}
-                      >
+                      <Text variant="captionStrong" tone="inkSoft" numberOfLines={1}>
                         {t('messages.guard.ok')}
                       </Text>
                     </Pressable>

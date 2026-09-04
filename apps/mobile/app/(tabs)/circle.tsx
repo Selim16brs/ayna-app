@@ -128,13 +128,7 @@ export default function CircleScreen() {
           canPost ? (
             <Pressable style={styles.ask} onPress={() => router.push('/circle/new')}>
               <Ionicons name="add" size={16} color={colors.ink} />
-              <Text
-                variant="caption"
-                tone="ink"
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.85}
-              >
+              <Text variant="caption" tone="ink" numberOfLines={1}>
                 {t('circle.ask')}
               </Text>
             </Pressable>
@@ -153,13 +147,7 @@ export default function CircleScreen() {
               accessibilityRole="tab"
               accessibilityState={{ selected: sekme === k }}
             >
-              <Text
-                variant="caption"
-                tone={sekme === k ? 'onAccent' : 'inkSoft'}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
+              <Text variant="caption" tone={sekme === k ? 'onAccent' : 'inkSoft'} numberOfLines={1}>
                 {k === 'saved'
                   ? `${t('circle.tab.saved')}${kayitliSayisi ? ` · ${kayitliSayisi}` : ''}`
                   : t(k === 'feed' ? 'circle.tab.feed' : 'circle.tab.mine')}

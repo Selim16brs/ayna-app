@@ -254,13 +254,7 @@ function OfferCard({
             size={13}
             color={badge === 'balance' ? colors.onAccent : colors.success}
           />
-          <Text
-            variant="micro"
-            tone={badge === 'balance' ? 'onAccent' : 'sage'}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.8}
-          >
+          <Text variant="micro" tone={badge === 'balance' ? 'onAccent' : 'sage'} numberOfLines={1}>
             {t(badge === 'balance' ? 'quotes.badge.balance' : 'quotes.badge.cheapest')}
           </Text>
         </View>

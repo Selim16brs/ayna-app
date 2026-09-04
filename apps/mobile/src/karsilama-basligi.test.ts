@@ -199,25 +199,19 @@ test('ADRES ile DATA URL aynı anahtarı vermiyor — hatanın çekirdeği', () 
   assert.notEqual(medyaAnahtari(dataUrl), medyaAnahtari(adres));
 });
 
-test('KESİK PORTRENİN ALTINDA zemin çizgisi', () => {
+test('PORTRENİN ALTINDA ÇİZGİ YOK — kurucu kaldırdı', () => {
   /*
-   * Kurucu: "fotoğrafın altına paralel şekilde pembe çizgi… tam
-   * fotoğrafın bittiği yerde ince görünsün ve fotoğraf genişliği kadar
-   * olsun."
+   * Çizgi kurucunun isteğiyle konmuştu ("fotoğrafın altına paralel pembe
+   * çizgi"), 4 Eyl 2026'da yine kurucunun isteğiyle kalktı: "profil
+   * fotosunun altındaki çizgiyi kaldır ve biraz daha sola al."
    *
-   * Kesilmiş portrenin zemini saydam; çizgi olmadan figür boşlukta asılı
-   * duruyor.
+   * Karar geri alınabilir; testi silmek yerine YENİ hâli bağlıyorum ki
+   * çizgi kazara geri gelirse burada görünsün.
    */
-  assert.match(
-    ekran,
-    /\{portreKesilmis \? <View style=\{styles\.portreCizgi\} \/> : null\}/,
-    'zemin çizgisi yok',
-  );
-  const c = stil('portreCizgi');
-  assert.equal(c.width, "'100%'", 'çizgi fotoğraf genişliğinde değil');
-  assert.ok(Number(c.height) <= 3, `çizgi ince değil: ${c.height}`);
-  assert.equal(c.backgroundColor, 'colors.accent', 'çizgi aksan renginden gelmiyor');
-  // Kap portre ölçüsünde olmalı, yoksa "%100" fotoğrafın genişliği olmaz.
+  assert.doesNotMatch(ekran, /portreCizgi/, 'çizgi geri gelmiş');
+  // Portre sağ kenardan içeri alındı.
+  assert.match(ekran, /portreKap: \{[^}]*marginRight: 12/, 'portre sola alınmamış');
+  // Kap hâlâ portre ölçüsünde: çizgi gitse de portrenin sağa yaslanması aynı.
   assert.equal(Number(stil('portreKap').width), Number(stil('portreKesik').width));
 });
 
@@ -273,7 +267,14 @@ test('UZMANDA canlı özet kartı da çizgiye yapışık', () => {
     }
     return o;
   };
-  assert.equal(stilU('karsilama').alignItems, "'flex-end'", 'uzman satırı alt hizalı değil');
+  /*
+   * Satır artık `stretch`: metin bloğu dikeyde ORTALANIYOR (kurucu:
+   * "karşılama mesajı, uzman adı ve bireysel uzman bölümü daha yukarıdaki
+   * boşluk olan yere ortalansın"), portre ise `alignSelf: 'flex-end'` ile
+   * alta yaslı kalıyor — altındaki blokla yapışıklık bozulmuyor.
+   */
+  assert.equal(stilU('karsilama').alignItems, "'stretch'", 'metin bloğu ortalanamıyor');
+  assert.equal(stilU('portreKap').alignSelf, "'flex-end'", 'portre alta yaslı değil');
   const bas = stilU('bas');
   assert.equal(bas.paddingBottom, 0, 'çizginin altında boşluk kalıyor');
   const aralik = stilU('icerik').gap;

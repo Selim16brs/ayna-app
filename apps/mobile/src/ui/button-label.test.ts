@@ -15,26 +15,36 @@ import { join } from 'node:path';
  * onu derleyemiyor (aynı sebeple tabbar-clearance testi de böyle yazıldı).
  */
 
-const src = readFileSync(join(import.meta.dirname, 'Button.tsx'), 'utf8');
+const yorumsuz = (x: string) =>
+  x.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+// Kaynak YORUMSUZ okunuyor: kararın gerekçesi dosyanın başında yazılı ve
+// aranan sözcükler orada geçiyor.
+const src = yorumsuz(readFileSync(join(import.meta.dirname, 'Button.tsx'), 'utf8'));
 
-test('etiket tek satır ve küçülebilir', () => {
+test('etiket TEK SATIR — ve punto KÜÇÜLTMÜYOR', () => {
   // İki değişkenin (primary / secondary+ghost) İKİSİNDE de olmalı: ilk
   // düzeltmemde yalnız altın düğmeye koymuştum, ikincil düğme açıkta kalıyordu.
   const etiketler = [...src.matchAll(/<Text[\s\S]*?>\s*\{label\}/g)].map((m) => m[0]);
   assert.equal(etiketler.length, 2, `beklenen 2 etiket, bulunan ${etiketler.length}`);
   for (const e of etiketler) {
     assert.match(e, /numberOfLines=\{1\}/, 'etiket sarabiliyor — numberOfLines={1} yok');
-    assert.match(e, /adjustsFontSizeToFit/, 'sığmayan etiket küçülmüyor');
+    /*
+     * PUNTO KÜÇÜLTME KALDIRILDI (4 Eyl 2026). `adjustsFontSizeToFit` React
+     * Native'de ölçü genişliği belirsiz olduğunda puntoyu `minimumFontScale`i
+     * de aşarak indiriyor: kurucunun ekran görüntüsünde "Yeni saat seç"
+     * birkaç piksellik bir lekeydi. Sığmayan yazı kırpılıyor — kırpılmış
+     * yazı okunur, küçülmüş yazı değil.
+     */
+    assert.doesNotMatch(e, /adjustsFontSizeToFit/, 'etiket punto küçültüyor');
   }
 });
 
-test('küçülme tabanı okunur kalıyor', () => {
-  // Sınırsız küçülme "sığdı" ama okunmaz sonucu verir. %75 → 12pt taban.
-  const m = /minimumFontScale=\{([\d.]+)\}/.exec(src);
-  assert.ok(m, 'minimumFontScale verilmemiş — RN keyfi küçültür');
-  const oran = Number(m[1]);
-  assert.ok(oran >= 0.7, `taban çok düşük: ${oran}`);
-  assert.ok(16 * oran >= 11, `${16 * oran}pt okunmaz`);
+test('KÜÇÜLTME AYARI hiç kalmadı', () => {
+  /*
+   * `minimumFontScale` yalnız `adjustsFontSizeToFit` ile anlamlı. Biri
+   * kalıp öteki dönerse eski davranış sessizce geri gelir.
+   */
+  assert.doesNotMatch(src, /minimumFontScale/, 'küçültme tabanı duruyor');
 });
 
 /**
@@ -90,6 +100,6 @@ test('sabit yükseklikli ekran düğmelerinde uzun etiket kırpılmıyor', () =>
     ihlal,
     [],
     `Sabit yükseklikli düğmede sınırsız etiket — uzun dilde kırpılır:\n  ${ihlal.join('\n  ')}\n` +
-      'numberOfLines={1} + adjustsFontSizeToFit ver ya da paylaşılan Button kullan.',
+      'numberOfLines={1} ver ya da paylaşılan Button kullan (punto küçültme YOK).',
   );
 });
