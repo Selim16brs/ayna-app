@@ -225,3 +225,32 @@ test('FOTOĞRAF YOKSA kart BOŞ değil — sağlayıcının BAŞ HARFİ', () => 
     assert.match(k, /<SaglayiciFoto/, `${yol.join('/')}: ortak bileşen kullanılmıyor`);
   }
 });
+
+test('TEKLİF MESAFESİ uydurulmuyor — kimlikten sayı üretilmiyor', () => {
+  /*
+   * Sunucu `distanceKm: estKm(q.id)` gönderiyordu: teklifin KİMLİK
+   * DİZESİNDEN hesaplanan 1–9 km arası bir sayı. Müşteri kartta "3 km"
+   * okuyor, üstelik "Yakınlık" sıralaması ve "Önerilen" skoru da bu sayıya
+   * bakıyordu — yani sıralama kısmen rastgeleydi.
+   */
+  const svc = readFileSync(
+    join(__dirname, '..', '..', 'api', 'src', 'quotes', 'quotes.service.ts'),
+    'utf8',
+  );
+  assert.doesNotMatch(svc, /function estKm/, 'kimlikten mesafe üreten fonksiyon duruyor');
+  assert.doesNotMatch(svc, /distanceKm:/, 'uydurma mesafe hâlâ gönderiliyor');
+  assert.match(svc, /lat: pro\?\.lat \?\? null/, 'gerçek koordinat gönderilmiyor');
+
+  // Ekran mesafeyi ORTAK kuraldan hesaplıyor ve bilinmiyorsa hiç yazmıyor.
+  const ekran = oku('app', 'quote', 'results.tsx');
+  assert.match(ekran, /saglayiciMesafesi\(o, sehir\)/, 'ortak kural kullanılmıyor');
+  assert.match(ekran, /offer\.mesafeKm != null \? \(/, 'bilinmeyen mesafe yine yazılıyor');
+
+  // Sıralama da bilinmeyeni "yakın" saymıyor.
+  const data = oku('src', 'data.ts');
+  assert.match(
+    data,
+    /\(a\.mesafeKm \?\? Infinity\) - \(b\.mesafeKm \?\? Infinity\)/,
+    'bilinmeyen başa geçiyor',
+  );
+});
