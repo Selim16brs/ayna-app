@@ -6,7 +6,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { altHizmetBul, depositFor, hasConflict, kategoriBul, ucDil } from '@ayna/domain';
+import {
+  altHizmetBul,
+  depositFor,
+  hasConflict,
+  kategoriBul,
+  ucDil,
+  randevuVerebilir,
+  RANDEVU_KAPISI_KODU,
+} from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
 import { loadDepositRules } from '../bookings/deposit.rules';
@@ -596,6 +604,28 @@ export class QuotesService {
     // Bu yol `depositDeadline` YAZMIYORDU. `depozito_bekliyor` slotu işgal ettiği için
     // ödemeyen müşterinin randevusu o saati süresiz kilitliyordu: scheduler'ın süre
     // dolum sorgusu `depositDeadline: { lt: now }` arıyor, NULL olan kayda hiç değmiyor.
+    /*
+     * ── DOĞRULAMA KAPISI BURADA DA ──────────────────────────────────────
+     *
+     * Kurucu: "bir müşteri ya admin panelinden onaylanmalı ya da mutlaka
+     * telefon ile doğrulama yapmalı. aksi takdirde uygulamada kesinlikle
+     * randevu veremez."
+     *
+     * Doğrudan randevu yolu (`bookings.create`) bu kapıyı uyguluyordu ama
+     * TEKLİF SEÇİMİ randevuyu kendi transaction'ında doğuruyor ve kapıdan
+     * hiç geçmiyordu: doğrulanmamış müşteri teklif akışından randevu
+     * alabiliyordu. Aynı kural, aynı hata kodu.
+     */
+    const secen = await this.prisma.user.findUnique({
+      where: { id: ownerId },
+      select: { phoneVerified: true, adminApproved: true, role: true },
+    });
+    if (secen?.role === 'user' && !randevuVerebilir(secen))
+      throw new ForbiddenException({
+        code: RANDEVU_KAPISI_KODU,
+        message: 'Randevu için telefon doğrulaması gerekiyor',
+      });
+
     const holdUntil = holdDeadline(await loadWindows(this.prisma));
     const bookingId = `bk_q_${randomUUID().slice(0, 8)}`;
     const inDays = Math.max(0, Math.round((input.slotMs - Date.now()) / 86_400_000));

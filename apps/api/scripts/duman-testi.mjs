@@ -187,6 +187,112 @@ ol(
 );
 ol('talep HİZMET LİSTESİYLE geliyor', (gorunen?.serviceIds ?? []).length === 3);
 
+/* ── 8 · TEKLİF ROUND TRIP — uzman teklif verir, MÜŞTERİ GÖRÜR ─────────
+ *
+ * Kurucu "uzman onayladı ama müşteriye teklif düşmedi" dediğinde bu
+ * yolun hangi ucunda koptuğunu gösterecek bir şey yoktu: duman testi
+ * "uzman talebi görüyor" deyip duruyordu. Asıl sözleşme bundan sonrası —
+ * teklif yazılıyor mu, müşterinin listesine düşüyor mu.
+ */
+const teklif = await gonder(
+  `/quote-requests/${talep.govde?.id}/quotes`,
+  {
+    price: 18000,
+    discountPercent: 0,
+    etaMin: 90,
+    slots: [Date.now() + 3 * 86_400_000],
+  },
+  uzmanToken,
+);
+ol(
+  'uzman teklif gönderebiliyor',
+  teklif.ok,
+  teklif.ok ? '' : JSON.stringify(teklif.govde).slice(0, 200),
+);
+
+const benimTalepler = await get('/quote-requests/mine', musteri.govde?.token);
+const benimTalep = Array.isArray(benimTalepler)
+  ? benimTalepler.find((r) => r.id === talep.govde?.id)
+  : null;
+ol(
+  'teklif MÜŞTERİNİN listesine düşüyor',
+  (benimTalep?.offers ?? []).length === 1,
+  `${(benimTalep?.offers ?? []).length} teklif`,
+);
+const gelenTeklif = benimTalep?.offers?.[0];
+ol('teklifte UZMANIN ADI var', !!gelenTeklif?.proName, String(gelenTeklif?.proName));
+/*
+ * Mesafe UYDURULMUYOR: sunucu kimlikten üretilmiş bir sayı yerine gerçek
+ * koordinat gönderiyor (yoksa null). `distanceKm` alanı hiç olmamalı.
+ */
+ol(
+  'mesafe uydurulmuyor',
+  gelenTeklif && !('distanceKm' in gelenTeklif),
+  'distanceKm: ' + String(gelenTeklif?.distanceKm),
+);
+
+/* ── 9 · TEKLİF SEÇİMİ → RANDEVU + UZMANIN GÖRDÜĞÜ ────────────────────
+ *
+ * Seçimden sonra uzman tarafında randevunun DOĞRU görünmesi: rolü sunucu
+ * damgalıyor (uzman kendi ekranında müşteri görünümüne düşmesin) ve
+ * müşterinin ADI geliyor (uzman kimin geleceğini bilsin).
+ */
+/*
+ * KAPI: müşteri doğrulanmadan randevu ALAMAZ — teklif seçimi dahil.
+ * Doğrudan randevu yolu bu kapıyı uyguluyordu, teklif seçimi atlıyordu.
+ */
+const kapali = await gonder(
+  `/quote-requests/${talep.govde?.id}/select`,
+  { quoteId: gelenTeklif?.id, slotMs: gelenTeklif?.slots?.[0] },
+  musteri.govde?.token,
+);
+ol(
+  'doğrulanmamış müşteri teklif seçemiyor',
+  kapali.durum === 403 && kapali.govde?.code === 'VERIFICATION_REQUIRED',
+  `${kapali.durum} ${kapali.govde?.code ?? ''}`,
+);
+
+/*
+ * Yönetici onayı telefon doğrulamasının ALTERNATİFİ (§randevu kapısı).
+ * Kurucu bunu panelden kullanıyor; burada da o yol deneniyor.
+ */
+const musteriId = (await get('/auth/me', musteri.govde?.token))?.id;
+const onay = await gonder(`/admin/users/${musteriId}/approve`, { approved: true }, yoneticiToken);
+ol(
+  'yönetici müşteriyi onaylayabiliyor',
+  onay.ok,
+  onay.ok ? '' : JSON.stringify(onay.govde).slice(0, 120),
+);
+
+const secim = await gonder(
+  `/quote-requests/${talep.govde?.id}/select`,
+  { quoteId: gelenTeklif?.id, slotMs: gelenTeklif?.slots?.[0] },
+  musteri.govde?.token,
+);
+ol(
+  'müşteri teklifi seçebiliyor',
+  secim.ok,
+  secim.ok ? '' : JSON.stringify(secim.govde).slice(0, 200),
+);
+
+const uzmanRandevulari = await get('/bookings/provider', uzmanToken);
+const yeniRandevu = Array.isArray(uzmanRandevulari)
+  ? uzmanRandevulari.find((b) => b.id === secim.govde?.bookingId)
+  : null;
+ol(
+  'randevu UZMANIN listesinde',
+  !!yeniRandevu,
+  Array.isArray(uzmanRandevulari)
+    ? `${uzmanRandevulari.length} kayıt`
+    : String(uzmanRandevulari?.error?.code),
+);
+ol('rolü SUNUCU damgalıyor', yeniRandevu?.benimRolum === 'uzman', String(yeniRandevu?.benimRolum));
+ol(
+  'uzman MÜŞTERİNİN ADINI görüyor',
+  yeniRandevu?.customerName === 'Duman Müşteri',
+  String(yeniRandevu?.customerName),
+);
+
 /* ── RAPOR ─────────────────────────────────────────────────────────── */
 const dusen = sonuclar.filter((s) => !s.gecti);
 for (const s of sonuclar) {
@@ -207,6 +313,9 @@ try {
     where: { name: 'Duman Uzman' },
     select: { id: true },
   });
+  // Sıra ÖNEMLİ: randevu ve teklifler talebe bağlı; önce onlar silinmeli.
+  await p.booking.deleteMany({ where: { userId: { in: ids } } });
+  await p.quote.deleteMany({ where: { userId: { in: ids } } });
   await p.quoteRequest.deleteMany({ where: { userId: { in: ids } } });
   await p.regulatedServiceFlag.deleteMany({ where: { proId: { in: prolar.map((x) => x.id) } } });
   await p.specialist.deleteMany({ where: { userId: { in: ids } } });
