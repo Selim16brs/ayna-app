@@ -961,12 +961,27 @@ const makeStyles = (colors: ColorTokens) =>
      */
     bas: {
       paddingHorizontal: 24,
-      paddingBottom: 16,
+      // Alt boşluk YOK ve kaydırma alanının 20px'lik aralığı negatif
+      // pay ile geri alınıyor: portrenin çizgisiyle altındaki kart
+      // arasında hiç boşluk kalmıyor.
+      paddingBottom: 0,
+      marginBottom: -20,
       gap: 12,
     },
     basSira: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     // Karşılama: metin solda esner, portre sağda sabit.
-    karsilama: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
+    /*
+     * CANLI ÖZET KARTI PORTRENİN ÇİZGİSİNE YAPIŞIK — müşteri ana
+     * sayfasındaki arama çubuğuyla aynı kural.
+     *
+     * Kurucu: "uzmanda da canlı özet kartının üstü ile uzman profil
+     * fotoğrafının altı çizgisi yapışık olsun."
+     *
+     * Alt hizalama çizgiyi satırın alt kenarına oturtuyor; boşluğu
+     * `bas` kapatıyor (paddingBottom 0 + negatif marginBottom, kaydırma
+     * alanının 20px'lik kendi aralığını da yutuyor).
+     */
+    karsilama: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, marginTop: 12 },
     basSol: { flex: 1, gap: 2 },
     // Müşteri ana sayfasıyla AYNI ölçüler: selam küçük üstte, isim büyük altta.
     selamUst: { fontFamily: font.regular, fontSize: 14, lineHeight: 18, color: colors.inkSoft },

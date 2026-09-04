@@ -1014,11 +1014,26 @@ const makeStyles = (colors: ColorTokens) =>
     },
 
     // welcome-vip-area (px24 py20)
+    /*
+     * ARAMA ÇUBUĞU PORTRENİN ÇİZGİSİNE YAPIŞIK.
+     *
+     * Kurucu: "search barın üstü müşteri profil fotosunun alt çizgisi
+     * ile yapışık olsun. alttakileri üste çek."
+     *
+     * İki şey gerekiyordu: satır ORTALI değil ALT hizalı olmalı (ortalıyken
+     * portre 104px'lik satırın ortasında yüzüyor, çizginin altında pay
+     * kalıyordu) ve alt iç boşluk SIFIR olmalı. İkisi birlikte çizgiyi
+     * satırın tam alt kenarına oturtuyor; arama onun hemen altında.
+     *
+     * `paddingTop` ayrı yazıldı: üstteki 20px nefes duruyor, kalkan
+     * yalnızca alttaki.
+     */
     karsilama: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-end',
       paddingHorizontal: 24,
-      paddingVertical: 20,
+      paddingTop: 20,
+      paddingBottom: 0,
       gap: 12,
     },
     // Üst satır: saate göre karşılama. Küçük ve sakin — asıl bilgi altta.

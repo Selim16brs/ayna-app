@@ -229,3 +229,53 @@ test('DAİRE içindeki ham fotoğrafta çizgi YOK', () => {
     'ham fotoğraf da çizgili kapta',
   );
 });
+
+test('ARAMA ÇUBUĞU portrenin ÇİZGİSİNE YAPIŞIK', () => {
+  /*
+   * Kurucu: "search barın üstü müşteri profil fotosunun alt çizgisi ile
+   * yapışık olsun. alttakileri üste çek."
+   *
+   * İki koşul birden gerekiyor. Satır ORTALI kalırsa portre 104px'lik
+   * satırın ortasında yüzer ve çizginin altında pay kalır; alt iç boşluk
+   * kalırsa çizgiyle arama arasında 20px durur.
+   */
+  const k = stil('karsilama');
+  assert.equal(k.alignItems, "'flex-end'", 'satır alt hizalı değil');
+  assert.equal(k.paddingBottom, 0, 'çizginin altında boşluk kalıyor');
+  // Üstteki nefes duruyor: kalkan yalnız alttaki.
+  assert.equal(k.paddingTop, 20, 'başlıkla karşılama sıkışmış');
+  /*
+   * Arama karşılamanın HEMEN ardından geliyor: araya bir şey girerse
+   * "yapışık" iddiası ölçüyle değil sırayla bozulur.
+   */
+  const a = ekran.indexOf('styles.karsilama');
+  const b = ekran.indexOf('styles.aramaKap');
+  assert.ok(a > 0 && b > a, 'arama karşılamanın altında değil');
+});
+
+test('UZMANDA canlı özet kartı da çizgiye yapışık', () => {
+  /*
+   * Kurucu: "uzmanda da canlı özet kartının üstü ile uzman profil
+   * fotoğrafının altı çizgisi yapışık olsun."
+   *
+   * Uzmanda başlık kaydırma alanının İÇİNDE ve o alanın kendi 20px'lik
+   * aralığı var: yalnız paddingBottom'u sıfırlamak yetmiyordu, aralık da
+   * negatif payla geri alınmalı.
+   */
+  const u = yorumsuz(readFileSync(join(__dirname, '..', 'app', 'seller', 'reports.tsx'), 'utf8'));
+  const stilU = (ad: string) => {
+    const i = u.indexOf(`${ad}: {`);
+    assert.ok(i > 0, `stil yok: ${ad}`);
+    const govde = u.slice(i, u.indexOf('}', i));
+    const o: Record<string, number | string> = {};
+    for (const m of govde.matchAll(/(\w+):\s*(-?[\d.]+|'[^']*')/g)) {
+      o[m[1]!] = /^-?[\d.]+$/.test(m[2]!) ? Number(m[2]) : m[2]!;
+    }
+    return o;
+  };
+  assert.equal(stilU('karsilama').alignItems, "'flex-end'", 'uzman satırı alt hizalı değil');
+  const bas = stilU('bas');
+  assert.equal(bas.paddingBottom, 0, 'çizginin altında boşluk kalıyor');
+  const aralik = stilU('icerik').gap;
+  assert.equal(bas.marginBottom, -Number(aralik), 'kaydırma aralığı geri alınmamış');
+});
