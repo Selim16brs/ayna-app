@@ -1,5 +1,6 @@
+import { useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { esikGecti } from '@ayna/domain';
 import {
@@ -54,8 +55,23 @@ export default function BookingDetail() {
   const router = useRouter();
 
   const booking = useStore((s) => s.bookings.find((b) => b.id === id));
-  const rates = useStore((s) => s.config.rates);
+  /*
+   * ── EKRAN AÇILINCA SUNUCUDAN TAZELENİYOR ────────────────────────────
+   *
+   * Bu ekran YEREL kopyayı çiziyor ve üzerinde eylem yapılıyor. Kopya
+   * bayatsa iki şey birden bozuluyor: kullanıcı yanlış durumu görüyor
+   * (uzman onayladı ama "yanıt bekleniyor" yazıyor) ve bastığı düğme
+   * sunucuda geçersiz bir geçiş oluyor — anlamsız bir hata.
+   *
+   * Bildirimden doğrudan buraya gelinebiliyor; listeyi hiç açmadan.
+   */
   const hydrateBookings = useStore((s) => s.hydrateBookings);
+  useFocusEffect(
+    useCallback(() => {
+      void hydrateBookings();
+    }, [hydrateBookings]),
+  );
+  const rates = useStore((s) => s.config.rates);
   const randevuEylemi = useStore((s) => s.randevuEylemi);
 
   if (!booking) {
