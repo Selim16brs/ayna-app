@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 import { hasConflict } from '@ayna/domain';
-import { type DemandRequest, formatPrice } from '../../src/data';
+import { type DemandRequest, formatPrice, randevuFiyatiYazisi } from '../../src/data';
 import { api } from '../../src/api';
 import { almatySlotMs, formatSlotTr } from '../../src/datetime';
 import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
@@ -279,7 +279,8 @@ export default function SellerRequestsScreen() {
                         {hizmetEtiketiCevir(b.service, locale)}
                       </Text>
                       <Text variant="caption" tone="muted" numberOfLines={1}>
-                        {formatSlotTr(b.startMs)} · {formatPrice(b.price)}
+                        {formatSlotTr(b.startMs)} ·{' '}
+                        {randevuFiyatiYazisi(b.price, t('booking.price_tbd'))}
                       </Text>
                     </Pressable>
                     <Pressable

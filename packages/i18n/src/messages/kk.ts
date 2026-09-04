@@ -922,6 +922,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.field.pro': 'Маман',
   'booking.field.datetime': 'Күн және уақыт',
   'booking.field.price': 'Бағасы',
+  'booking.price_tbd': 'Бағаны маман белгілейді',
   'booking.address_note':
     'Салонның мекенжайы растаудан кейін көрсетіледі; сіздің мекенжайыңыз маманға берілмейді',
   'booking.confirmed.done': 'Жазылуларыма өту',

@@ -988,6 +988,7 @@ export const tr = {
   'booking.field.pro': 'Uzman',
   'booking.field.datetime': 'Tarih & saat',
   'booking.field.price': 'Fiyat',
+  'booking.price_tbd': 'Fiyatı uzman belirleyecek',
   'booking.address_note':
     'Salonun adresi onay sonrası sana gösterilir; senin adresin uzmanla asla paylaşılmaz',
   'booking.confirmed.done': 'Randevularıma git',

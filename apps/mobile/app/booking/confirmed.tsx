@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { formatPrice } from '../../src/data';
+import { randevuFiyatiYazisi } from '../../src/data';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
 import { font, type ColorTokens } from '../../src/theme';
@@ -54,7 +54,10 @@ export default function ConfirmedScreen() {
           <View style={styles.ayrac} />
           <Ozet label={t('booking.field.service')} value={serviceLabel} />
           <Ozet label={t('booking.field.datetime')} value={params.slot ?? ''} />
-          <Ozet label={t('booking.field.price')} value={formatPrice(price)} />
+          <Ozet
+            label={t('booking.field.price')}
+            value={randevuFiyatiYazisi(price, t('booking.price_tbd'))}
+          />
           {isSalon ? (
             <>
               <Ozet label={t('booking.field.salon')} value={pro.name} />

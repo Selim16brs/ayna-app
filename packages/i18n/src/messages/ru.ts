@@ -929,6 +929,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.field.pro': 'Мастер',
   'booking.field.datetime': 'Дата и время',
   'booking.field.price': 'Цена',
+  'booking.price_tbd': 'Цену назначит мастер',
   'booking.address_note':
     'Адрес салона показывается после подтверждения; ваш адрес мастеру не передаётся',
   'booking.confirmed.done': 'Перейти к моим записям',

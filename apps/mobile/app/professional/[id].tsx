@@ -115,7 +115,12 @@ export default function ProfessionalScreen() {
   // Slot YETMEZ: hizmet de seçilmiş olmalı. Uzman hiç hizmet girmemişse
   // `chosen` boş kalıyor ve randevu, adı uzmanlık olan SIFIR fiyatlı bir kayıt
   // olarak oluşuyordu.
-  const randevuAlinabilir = slotMs != null && chosen.length > 0;
+  /*
+   * Hizmeti olmayan uzmanda düğme AÇIK ama işi farklı: teklif yolu.
+   * Kapalı bırakmak müşteriyi çıkışsız bırakıyordu.
+   */
+  const hizmetsiz = pro.services.length === 0;
+  const randevuAlinabilir = hizmetsiz || (slotMs != null && chosen.length > 0);
 
   // §4.2 — uzmanın DOLU aralıkları: müşteri saat seçerken dolu yerler görünür, dolu slot seçilemez
   // (çifte iş biter). Sunucu yalnız zaman aralığı döner — müşteri bilgisi asla (gizlilik).
@@ -293,6 +298,25 @@ export default function ProfessionalScreen() {
     // kullanıcı uzmanı beğenip saati seçtikten sonra soruluyor ve giriş
     // sonrası AYNI profile dönüyor — niyeti kaybolmuyor.
     if (girisGerekli(`/professional/${proId}`)) return;
+    /*
+     * HİZMETİ OLMAYAN UZMANDA DÜĞME "TEKLİF İSTE".
+     *
+     * Eskiden düğme burada ÖLÜYDÜ: `chosen.length > 0` şartı yüzünden
+     * seçilecek hizmeti olmayan uzmanda hep pasifti ve müşteriye neden
+     * olduğunu söyleyen bir şey yoktu — çıkışsız bir ekran.
+     *
+     * Doğrudan randevuya açmak da olmazdı: tutar hesaplanamayınca randevu
+     * 0 ₸ ile doğuyor, uzman onaylayınca depozito "0 ₸" çıkıyor ve randevu
+     * orada kilitleniyor (depozito AYNA'nın tek tahsilatı, sıfır geçilemez).
+     * Uzmanın bu ekranda fiyat verecek bir yeri de yok.
+     *
+     * Haritadaki kart bunu zaten böyle çözüyordu; profil çözmüyordu.
+     * Kullanıcı ne istediğini anlatıyor, uzman fiyat veriyor.
+     */
+    if (hizmetsiz) {
+      router.push('/quote');
+      return;
+    }
     // §4.2 — saat seçilmeden randevu OLUŞTURULMAZ (buton pasif — buraya düşmez, güvenlik ağı)
     if (slotMs == null) return;
     if (slotBusy) {
@@ -319,7 +343,7 @@ export default function ProfessionalScreen() {
       ...(uzman?.specialistId ? { uzmanId: uzman.specialistId } : {}),
       startMs,
       durationMin: totalDur || 60,
-      price: totalPrice || Number(pro.priceFrom),
+      price: totalPrice,
     });
     router.replace({
       pathname: '/booking/confirmed',
@@ -331,7 +355,7 @@ export default function ProfessionalScreen() {
         uzmanName: uzman?.name ?? '',
         // Polish 1.1 — onay ekranı SEÇİLEN hizmeti ve gerçek toplamı göstersin
         service: svcNames,
-        price: String(totalPrice || Number(pro.priceFrom)),
+        price: String(totalPrice),
       },
     });
   };
@@ -1161,7 +1185,7 @@ export default function ProfessionalScreen() {
               ve metin kutusu daralabilir yapıldı — hiçbir uzunlukta taşmaz. */}
           <View style={styles.bookLabel}>
             <Text variant="bodyStrong" tone="onAccent" numberOfLines={1}>
-              {t('pro.book')}
+              {t(hizmetsiz ? 'pro.incomplete.cta' : 'pro.book')}
             </Text>
             {chosen.length > 1 || totalPrice > 0 ? (
               <Text variant="caption" tone="onAccent" numberOfLines={1} style={styles.bookSub}>

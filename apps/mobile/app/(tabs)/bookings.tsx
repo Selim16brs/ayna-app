@@ -12,7 +12,7 @@ import {
   type Appointment,
   type BookingStatus,
   type DemandRequest,
-  formatPrice,
+  randevuFiyatiYazisi,
 } from '../../src/data';
 import { formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
@@ -235,7 +235,7 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
             </Text>
           ) : null}
           <Text variant="bodyStrong" tone="ink" style={styles.cardPrice}>
-            {formatPrice(appt.price)}
+            {randevuFiyatiYazisi(appt.price, t('booking.price_tbd'))}
           </Text>
         </View>
       </Pressable>
