@@ -68,7 +68,17 @@ export default function SellerServicesScreen() {
   const ac = (key: string) => setAcikSatirlar((c) => (c.includes(key) ? c : [...c, key]));
 
   /** Taslak geçerli mi — adsız ya da fiyatsız hizmet eklenmiyor. */
-  const satirGecerli = (r: SellerServiceRow) => !!r.name.trim() && Number(r.price) > 0;
+  /*
+   * SÜRE de ZORUNLU — ad ve fiyat gibi.
+   *
+   * Süre boş bırakılırsa sunucu onu 60 dk'ya çeviriyor ve müşteri, uzmanın
+   * hiç yazmadığı bir süreyi uzman yazmış gibi görüyordu; randevu da o
+   * süreye göre kilitleniyordu. Uydurulmuş bilgi. Katalog varsayılanı
+   * satır açılırken zaten yazılı duruyor; uzman silerse yerine bir sayı
+   * konmuyor, satır kaydedilmiyor.
+   */
+  const satirGecerli = (r: SellerServiceRow) =>
+    !!r.name.trim() && Number(r.price) > 0 && Number(r.dur) > 0;
 
   /**
    * Tek satırı EKLE: hemen kaydediliyor ve kutusu kapanıyor.
@@ -130,11 +140,11 @@ export default function SellerServicesScreen() {
 
   const save = () => {
     /*
-     * ADSIZ ya da FİYATSIZ satır KAYDEDİLMİYOR. Müşteriye adsız bir
-     * hizmet ya da 0 ₸ göstermek, uzmanın yarım bıraktığı bir kaydı
-     * gerçek bir teklif gibi sunmak olurdu.
+     * ADSIZ, FİYATSIZ ya da SÜRESİZ satır KAYDEDİLMİYOR. Müşteriye adsız
+     * bir hizmet, 0 ₸ ya da kimsenin yazmadığı bir süre göstermek, uzmanın
+     * yarım bıraktığı bir kaydı gerçek bir teklif gibi sunmak olurdu.
      */
-    const gecerli = rows.filter((r) => r.name.trim() && Number(r.price) > 0);
+    const gecerli = rows.filter(satirGecerli);
     setSellerServices(gecerli);
     setRows(gecerli);
     Alert.alert(t('seller.services.title'), t('seller.services.saved'));
