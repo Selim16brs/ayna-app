@@ -123,6 +123,13 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
       paddingHorizontal: space(3),
     },
+    /*
+     * `flex: 1` DENENDİ, GERİ ALINDI: `inner` kendi içeriğine göre
+     * genişleyen bir satır; içinde `flex: 1` (temel 0) veren bir çocuk
+     * genişliği sıfıra çeker ve düğme boş bir ovale döner. Daralma
+     * burada doğru; asıl sorun yanlış ÖLÇÜMDÜ ve o, font beklemesiyle
+     * (`_layout.tsx`) kökünden çözüldü.
+     */
     label: { fontSize: 16, flexShrink: 1, textAlign: 'center' },
     inner: {
       flexDirection: 'row',

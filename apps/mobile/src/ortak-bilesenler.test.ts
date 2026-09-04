@@ -89,7 +89,8 @@ test('BÖLÜM BAŞLIKLARI harf kaybetmiyor', () => {
   const s = oku('SectionHeader.tsx')
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/(^|[^:])\/\/.*$/gm, '$1');
-  assert.match(s, /title: \{[^}]*flexShrink: 1/, 'başlık daralamıyor');
+  // Kutu ölçümden değil paydan (bkz. figma-ana-sayfa `bolumBaslik`).
+  assert.match(s, /title: \{[^}]*flex: 1/, 'başlık kutusu ölçüme bağlı');
   /*
    * Punto küçültme KALDIRILDI (4 Eyl 2026): kurucu "hizmetler başlığı
    * küçülmüş" dedi — RN, ölçü genişliği belirsiz olduğunda puntoyu

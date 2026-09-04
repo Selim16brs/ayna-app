@@ -401,7 +401,12 @@ test('BÖLÜM BAŞLIĞI harf kaybetmiyor', () => {
   // iki çocuk da esnemiyordu. Başlık daralır ve puntosu iner; sağdaki
   // "Tümünü Gör" daralmaz.
   const kod = d.replace(/\/\*[\s\S]*?\*\//g, '');
-  assert.match(kod, /bolumBaslik: \{ flexShrink: 1 \}/, 'başlık daralamıyor');
+  /*
+   * `flexShrink` → `flex`: kutu artık ÖLÇÜMDEN değil PAYDAN geliyor.
+   * "Tümünü Gör" doğal genişliğini alıyor, kalan tüm yer başlığın —
+   * ölçüm şaşsa bile başlık yer kaybetmiyor (4 Eyl 2026).
+   */
+  assert.match(kod, /bolumBaslik: \{ flex: 1 \}/, 'başlık kutusu ölçüme bağlı');
   /*
    * Punto küçültme KALDIRILDI (4 Eyl 2026): kurucu "hizmetler başlığı
    * küçülmüş" dedi — RN, ölçü genişliği belirsiz olduğunda puntoyu

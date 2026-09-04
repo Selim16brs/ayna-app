@@ -96,8 +96,24 @@ test('loadContent tek turda çekiyor', () => {
   assert.ok(uc >= 5, `grupta ${uc} uç var, en az 5 bekleniyordu`);
 });
 
-test('font yüklemesi açılışı BLOKLAMIYOR', () => {
-  // Bloklarsa asset asılı kaldığında uygulama sonsuza kadar beyaz kalır.
-  assert.doesNotMatch(layout, /const \[\w+\] = useFonts\(/, 'font sonucu bekleniyor');
-  assert.doesNotMatch(layout, /if \(!fontsLoaded\)/, 'font yüklenene kadar çizim durduruluyor');
+test('font beklemesi SINIRLI — açılış sonsuza kadar kilitlenmiyor', () => {
+  /*
+   * KURAL DEĞİŞTİ (4 Eyl 2026). Eskiden font yüklemesi HİÇ beklenmiyordu:
+   * asset asılı kalırsa uygulama sonsuza kadar beyaz kalıyordu (gerçek bir
+   * olay) ve bu, bloklamamak için yeterli sebepti.
+   *
+   * Ama bloklamamanın bedeli sessizdi: ilk çizim `Onest-*` kayıtlı
+   * değilken yapılıyor, React Native yazıyı bilmediği bir yazı tipiyle
+   * ölçüyor ve Yoga o ölçümü önbelleğe alıyor — font sonradan gelse de
+   * yeniden ölçülmüyor. Cihazda kırpılan başlıklar ("Hizmet…", "Keşf…")
+   * ve okunmayan düğme yazıları bundandı; kurucu iki kez bildirdi.
+   *
+   * Yeni kural ikisinin ortası: BEKLİYORUZ ama ÜST SINIRLA. Süre dolunca
+   * uygulama sistem fontuyla açılıyor, yani eski riskin kendisi geri
+   * gelmiyor. Test o sınırın var ve makul olduğunu bağlıyor.
+   */
+  assert.match(layout, /const \[fontlarHazir\] = useFonts\(/, 'font durumu okunmuyor');
+  const m = /const FONT_BEKLEME_MS = (\d+);/.exec(layout);
+  assert.ok(m, 'bekleme üst sınırı yok — açılış kilitlenebilir');
+  assert.ok(Number(m![1]) <= 3000, `üst sınır çok uzun: ${m![1]}ms`);
 });

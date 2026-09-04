@@ -50,6 +50,7 @@ const makeStyles = (_colors: ColorTokens) =>
       marginTop: space(3.5),
       marginBottom: space(1.75),
     },
-    title: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.4, flexShrink: 1 },
+    // Kutu ÖLÇÜMDEN değil PAYDAN: bkz. discover.tsx `bolumBaslik`.
+    title: { fontSize: 20, fontFamily: font.semibold, letterSpacing: -0.4, flex: 1 },
     seeAll: { flexDirection: 'row', alignItems: 'center', gap: 2, flexShrink: 0 },
   });
