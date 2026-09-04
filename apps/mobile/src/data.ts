@@ -73,6 +73,16 @@ export const CITIES: string[] = [
   'Türkistan',
 ];
 
+/**
+ * ESKİ ROZET TÜRÜ — artık sunucudan GELMİYOR.
+ *
+ * `Professional.badge` sütunu şemada herkese `verified` doğuyordu ve
+ * hiçbir doğrulama onu güncellemiyordu: kartta "Doğrulanmış" diye
+ * çizilseydi hiç doğrulanmamış uzman doğrulanmış görünürdü. Gerçek
+ * doğrulama `aynaVerified`ta ve KYC'ye bağlı.
+ *
+ * Tür tohum verisi için duruyor; sunucu yolunda alan YOK.
+ */
 export type ProBadge = 'campaign' | 'verified' | 'today';
 export type ProviderKind = 'salon' | 'independent';
 
@@ -94,7 +104,8 @@ export interface Professional {
   priceFrom: number;
   priceTo: number; // §5.1.5 — salon kartında fiyat ARALIĞI için üst sınır (uzman fiyatları)
   image: string;
-  badge: ProBadge;
+  /** Yalnız TOHUM verisinde; sunucudan gelmiyor (bkz. ProBadge). */
+  badge?: ProBadge;
   city: string;
   district: string;
   lat?: number; // §5.1.4 — gerçek konum (kayıtta haritadan seçildi); yoksa şehir merkezine yakın
@@ -213,7 +224,8 @@ interface ProSeed {
   reviewCount: number;
   friends?: number;
   priceFrom: number;
-  badge: ProBadge;
+  /** Yalnız TOHUM verisinde; sunucudan gelmiyor (bkz. ProBadge). */
+  badge?: ProBadge;
 }
 
 const PRO_SEEDS: ProSeed[] = [

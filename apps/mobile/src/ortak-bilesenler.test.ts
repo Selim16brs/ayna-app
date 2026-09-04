@@ -50,19 +50,21 @@ test('TEMA KİPİ renk karşılaştırmasıyla anlaşılmıyor', () => {
   }
 });
 
-test('SALON ROZETLERİ palette ve iki temada okunuyor', () => {
-  // Üç rozet sabit pastel yazılıydı (lime/lavanta/şeftali): palette olmayan
-  // renkler, temaya hiç bakmıyorlardı.
+test('SALON ROZETİ palette ve iki temada okunuyor', () => {
+  /*
+   * Üç rozet sabit pastel yazılıydı (lime/lavanta/şeftali): palette olmayan
+   * renkler, temaya hiç bakmıyorlardı.
+   *
+   * Üçlü tablo SONRADAN kalktı: rozetler `pro.badge` sütunundan geliyordu
+   * ve o sütun herkese `verified` doğuruyordu. Geriye KYC'ye bağlı tek
+   * rozet kaldı; rengi hâlâ paletten.
+   */
   const k = yorumsuz(oku('SalonRow.tsx'));
   for (const olu of ['#DDF08A', '#E1DAF3', '#F8DFC2']) {
     assert.doesNotMatch(k, new RegExp(olu, 'i'), `${olu} hâlâ duruyor`);
   }
-  for (const [bg, fg] of [
-    ['goldSoft', 'gold'],
-    ['successSoft', 'success'],
-    ['accentSoft', 'accent'],
-  ] as const) {
-    assert.match(k, new RegExp(`bg: '${bg}', fg: '${fg}'`), `${bg}/${fg} rozeti yok`);
+  for (const [bg, fg] of [['successSoft', 'success']] as const) {
+    assert.match(k, new RegExp(`bg: '${bg}',\\s*\\n?\\s*fg: '${fg}'`), `${bg}/${fg} rozeti yok`);
     for (const [tema, c] of [
       ['açık', lightColors],
       ['koyu', darkColors],

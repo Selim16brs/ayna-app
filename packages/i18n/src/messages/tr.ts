@@ -475,8 +475,6 @@ export const tr = {
 
   // Uzman kartı
   'card.verified': 'Doğrulanmış',
-  'card.campaign': 'Kampanya',
-  'card.today': 'Bugün müsait',
   'card.details': 'Detaylar',
 
   // Uzman/salon profili

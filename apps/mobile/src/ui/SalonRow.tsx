@@ -21,13 +21,19 @@ import { Text } from './Text';
  *   · bugün       → erik (marka)
  * Yazı da artık zeminle aynı token çiftinden; ölçüldü, iki temada ≥4.5:1.
  */
-const BADGE: Record<
-  Professional['badge'],
-  { key: MessageKey; bg: keyof ColorTokens; fg: keyof ColorTokens }
-> = {
-  campaign: { key: 'card.campaign', bg: 'goldSoft', fg: 'gold' },
-  verified: { key: 'card.verified', bg: 'successSoft', fg: 'success' },
-  today: { key: 'card.today', bg: 'accentSoft', fg: 'accent' },
+/*
+ * ROZET GERÇEK DOĞRULAMADAN — üçlü rozet tablosu kalktı.
+ *
+ * Rozet `pro.badge` sütunundan geliyordu ve o sütun şemada herkese
+ * `verified` doğuyordu: hiç doğrulanmamış uzman "Doğrulanmış" rozetiyle
+ * çizilirdi. Sütun artık sunucudan hiç gelmiyor. Rozet yalnız KYC'ye
+ * bağlı `aynaVerified` doğruysa çiziliyor; değilse hiç çizilmiyor —
+ * doğrulanmamışa "değil" damgası basmak ayrı bir haksızlık olurdu.
+ */
+const DOGRULANDI: { key: MessageKey; bg: keyof ColorTokens; fg: keyof ColorTokens } = {
+  key: 'card.verified',
+  bg: 'successSoft',
+  fg: 'success',
 };
 // Rozet yazısı: rozet zemini sabit olduğu için mürekkep de sabit — ama
 // değeri palet veriyor, marka değişince birlikte değişsin.
@@ -41,7 +47,7 @@ export function SalonRow({ pro, index = 0 }: { pro: Professional; index?: number
   const router = useRouter();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const badge = BADGE[pro.badge];
+  const badge = pro.aynaVerified ? DOGRULANDI : null;
   /*
    * MESAFE YALNIZ GERÇEK KOORDİNATTAN — arama satırıyla aynı gerekçe.
    * `proCoords(pro.id)` konumsuz çağrıldığında sayıyı kimlikten üretiyor.
@@ -77,11 +83,13 @@ export function SalonRow({ pro, index = 0 }: { pro: Professional; index?: number
         </View>
 
         <View style={styles.right}>
-          <View style={[styles.badge, { backgroundColor: colors[badge.bg] }]}>
-            <Text variant="caption" style={[styles.badgeText, { color: colors[badge.fg] }]}>
-              {t(badge.key)}
-            </Text>
-          </View>
+          {badge ? (
+            <View style={[styles.badge, { backgroundColor: colors[badge.bg] }]}>
+              <Text variant="caption" style={[styles.badgeText, { color: colors[badge.fg] }]}>
+                {t(badge.key)}
+              </Text>
+            </View>
+          ) : null}
           <View style={styles.cta}>
             <Text variant="caption" tone="onAccent" style={styles.ctaText}>
               {t('card.details')}

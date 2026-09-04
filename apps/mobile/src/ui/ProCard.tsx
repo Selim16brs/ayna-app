@@ -12,11 +12,16 @@ import { Text } from './Text';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-const BADGE: Record<Professional['badge'], { key: MessageKey; icon: IoniconName }> = {
-  campaign: { key: 'card.campaign', icon: 'pricetag' },
-  verified: { key: 'card.verified', icon: 'checkmark-circle' },
-  today: { key: 'card.today', icon: 'time' },
-};
+/*
+ * ROZET GERÇEK DOĞRULAMADAN.
+ *
+ * Eskiden `pro.badge` sütunundan geliyordu ve o sütun şemada herkese
+ * `verified` doğuyordu: hiç doğrulanmamış uzman "Doğrulanmış" rozetiyle
+ * çizilirdi. Sütun artık sunucudan hiç gelmiyor; rozet yalnız KYC'ye
+ * bağlı `aynaVerified` doğruysa çiziliyor, değilse hiç çizilmiyor —
+ * doğrulanmamışa "değil" damgası basmak da ayrı bir haksızlık olurdu.
+ */
+const DOGRULANDI = { key: 'card.verified' as MessageKey, icon: 'checkmark-circle' as IoniconName };
 
 // Premium editorial salon kartı — tam fotoğraf + altta gradient, bilgiler foto üstünde.
 export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number }) {
@@ -24,7 +29,7 @@ export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number 
   const router = useRouter();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const badge = BADGE[pro.badge];
+  const badge = pro.aynaVerified ? DOGRULANDI : null;
 
   return (
     <Animated.View entering={FadeInDown.duration(380).delay(index * 80)}>
@@ -45,12 +50,14 @@ export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number 
 
           {/* Üst: rozet + kalp */}
           <View style={styles.top}>
-            <View style={styles.badge}>
-              <Ionicons name={badge.icon} size={11} color={colors.onColor} />
-              <Text variant="caption" tone="onColor" style={styles.badgeText}>
-                {t(badge.key)}
-              </Text>
-            </View>
+            {badge ? (
+              <View style={styles.badge}>
+                <Ionicons name={badge.icon} size={11} color={colors.onColor} />
+                <Text variant="caption" tone="onColor" style={styles.badgeText}>
+                  {t(badge.key)}
+                </Text>
+              </View>
+            ) : null}
             <View style={styles.heart}>
               <Ionicons name="heart-outline" size={16} color={colors.onColor} />
             </View>

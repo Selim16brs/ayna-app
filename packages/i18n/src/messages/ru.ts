@@ -456,8 +456,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'home.search': 'Салон, услуга или стилист...',
   'home.featured': 'Мы выбрали для тебя',
   'card.verified': 'Проверено',
-  'card.campaign': 'Акция',
-  'card.today': 'Свободно сегодня',
   'card.details': 'Подробнее',
   'pro.book': 'Записаться',
   'pro.about': 'О мастере',

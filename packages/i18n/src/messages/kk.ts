@@ -451,8 +451,6 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'home.search': 'Салон, қызмет немесе стилист іздеу...',
   'home.featured': 'Саған таңдадық',
   'card.verified': 'Расталған',
-  'card.campaign': 'Науқан',
-  'card.today': 'Бүгін бос',
   'card.details': 'Толығырақ',
   'pro.book': 'Жазылу',
   'pro.about': 'Туралы',

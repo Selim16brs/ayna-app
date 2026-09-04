@@ -989,7 +989,18 @@ function mapPro(p: Professional) {
     friends: p.friends ?? undefined,
     priceFrom: baslangicFiyati(p),
     image: p.imageUrl,
-    badge: p.badge,
+    /*
+     * ROZET ALANI ARTIK DÖNMÜYOR.
+     *
+     * `Professional.badge` sütunu şemada `@default(verified)`: kayıt olan
+     * HERKES "doğrulanmış" doğuyor ve bu değeri hiçbir doğrulama
+     * güncellemiyordu. Kartlarda "Doğrulanmış" rozeti olarak çizilseydi —
+     * ki o kartlar hâlâ kodda duruyor — hiç doğrulanmamış uzman doğrulanmış
+     * görünürdü. Uydurulmuş güven işareti.
+     *
+     * Gerçek doğrulama `aynaVerified` alanında ve KYC'ye bağlı; kartlar
+     * onu okuyor.
+     */
     city: p.city, // §5.1.4 — harita/arama şehir eşleşmesi
     district: p.district,
     // §5.1.4 — gerçek konum (kayıtta haritadan seçildi); yoksa null → mobil şehir merkezine yakın
