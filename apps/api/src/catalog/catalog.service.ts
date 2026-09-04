@@ -422,6 +422,7 @@ export class CatalogService {
             ...mapPro(r),
             lat: r.lat ?? undefined,
             lng: r.lng ?? undefined,
+            // Alt sınır `mapPro` içinde aynı listeden — ikisi ayrışamaz.
             priceTo: prices.length ? Math.max(...prices) : Number(r.priceFrom),
             // Hiç randevusu olmayan uzman için groupBy satır döndürmez → 0.
             completedBookings: randevuByPro.get(r.id) ?? 0,
@@ -936,6 +937,23 @@ function safeParseHours(raw: string): DayHoursRow[] {
   }
 }
 
+/**
+ * "…₸'den başlayan" fiyatı GERÇEK HİZMET LİSTESİNDEN.
+ *
+ * `Professional.priceFrom` sütunu kayıtta bir kez yazılıyor ve uzman
+ * sonradan hizmet eklediğinde GÜNCELLENMİYOR. Canlıda görülen sonuç:
+ * hizmetleri 7.000–60.000 ₸ olan uzmanın kartında "0 ₸". Üst sınır zaten
+ * hizmetlerden hesaplanıyordu (`priceTo`), alt sınır sütunda kalmıştı.
+ *
+ * Sütun yalnızca hiç hizmeti olmayan uzman için yedek.
+ */
+export function baslangicFiyati(p: Professional): number {
+  const fiyatlar = safeParseServices(p.servicesJson)
+    .map((x) => x.price)
+    .filter((x) => x > 0);
+  return fiyatlar.length ? Math.min(...fiyatlar) : Number(p.priceFrom);
+}
+
 function mapPro(p: Professional) {
   return {
     id: p.id,
@@ -949,7 +967,7 @@ function mapPro(p: Professional) {
     rating: Number(p.rating),
     reviewCount: p.reviewCount,
     friends: p.friends ?? undefined,
-    priceFrom: Number(p.priceFrom),
+    priceFrom: baslangicFiyati(p),
     image: p.imageUrl,
     badge: p.badge,
     city: p.city, // §5.1.4 — harita/arama şehir eşleşmesi
