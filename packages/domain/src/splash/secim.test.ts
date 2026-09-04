@@ -367,3 +367,33 @@ test('ADSIZ VARYANTTA da vurgu tutuyor', () => {
     }
   }
 });
+
+/*
+ * ── AÇILIŞ MESAJLARI DA TEK ÜSLUPTA ───────────────────────────────────────
+ *
+ * Kurucu kararı (05.09.2026): Rusça baştan sona "вы". Sözlük (packages/i18n)
+ * düzeltildiğinde bu dosya gözden kaçıyordu: uygulamayı açan ilk ekran
+ * "Ты сильная женщина!" diyor, iki saniye sonra gelen ana ekran "вы" diyordu.
+ * Kullanıcının gördüğü İLK cümle, en görünür yerdeki tutarsızlıktı.
+ *
+ * Kazakça'da da tek üslup: "сен" (tr kaynağıyla aynı).
+ */
+const RU_SAMIMI = /(^|[^А-Яа-яЁё])([Тт]ы|[Тт]еб[ея]|[Тт]обо[йю]|[Тт]во[а-яё]+)([^А-Яа-яЁё]|$)/;
+const RU_FIIL_DISI = /(^|[^А-Яа-яЁё])(лишь|тишь)([^А-Яа-яЁё]|$)/i;
+const RU_2TEKIL = /[А-Яа-яЁё]+(ешь|ишь|ёшь)(ся)?(?![А-Яа-яЁё])/;
+const RU_TEKIL_EMIR =
+  /(^|[^А-Яа-яЁё])(побалуй|сияй|иди|сделай|напиши|начни|сходи|запишись|устрой|улыбнись|загадай|наслаждайся|переставай|обновляйся|используй)([^А-Яа-яЁё]|$)/i;
+
+test('RUSÇA açılış mesajları tek üslupta — "ты" değil "вы"', () => {
+  for (const m of ACILIS_MESAJLARI) {
+    for (const metin of [m.metin.ru, m.adsizMetin?.ru, m.vurgu?.ru]) {
+      if (!metin) continue;
+      assert.ok(!RU_SAMIMI.test(metin), `${m.id}: samimi zamir — ${metin}`);
+      assert.ok(
+        !RU_2TEKIL.test(metin.replace(RU_FIIL_DISI, ' ')),
+        `${m.id}: 2. tekil fiil — ${metin}`,
+      );
+      assert.ok(!RU_TEKIL_EMIR.test(metin), `${m.id}: samimi emir kipi — ${metin}`);
+    }
+  }
+});

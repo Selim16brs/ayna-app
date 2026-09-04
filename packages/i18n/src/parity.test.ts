@@ -195,3 +195,147 @@ test('kk sözlüğü tek üslupta — "сіз" değil "сен"', () => {
     assert.ok(!KK_RESMI.test(deger), `kk.${key} resmi üslupta ("сіз"): ${deger}`);
   }
 });
+
+/*
+ * ── RUSÇA TEK ÜSLUP: "ВЫ" ─────────────────────────────────────────────────
+ *
+ * Kurucu kararı (05.09.2026): Rusça sözlük baştan sona RESMİ üslupta.
+ *
+ * Öncesinde sözlük ikiye bölünmüştü — 179 satır "вы", 161 satır "ты" — ve
+ * bölünme ekran ekran değil, cümle cümleydi: bildirimlerin 45'i samimi, 5'i
+ * resmi; randevu ekranının 8'i resmi, 1'i samimiydi. Kullanıcı aynı akışta
+ * iki farklı sesle konuşuluyordu.
+ *
+ * Üç işaret denetleniyor: samimi zamirler, 2. tekil fiil çekimi (-ешь/-ишь)
+ * ve dönüştürülen emir kiplerinin tekil biçimleri.
+ */
+const RU_SAMIMI_ZAMIR = /(^|[^А-Яа-яЁё])(ты|теб[ея]|тобо[йю]|тво[а-яё]+)([^А-Яа-яЁё]|$)/i;
+// «лишь» ve «тишь» fiil değil, -шь kuralının yanlış pozitifleri.
+const RU_FIIL_DISI = new Set(['лишь', 'тишь']);
+const RU_2TEKIL = /[А-Яа-яЁё]+(ешь|ишь|ёшь)(ся)?(?![А-Яа-яЁё])/i;
+const RU_TEKIL_EMIR = new Set([
+  'будь',
+  'введи',
+  'верни',
+  'вернёшься',
+  'видишь',
+  'включи',
+  'возвращай',
+  'войди',
+  'впиши',
+  'выбери',
+  'выбираешь',
+  'выделяешься',
+  'дай',
+  'делись',
+  'добавь',
+  'дождись',
+  'дотянись',
+  'едешь',
+  'загляни',
+  'загрузи',
+  'задай',
+  'заполни',
+  'заполняй',
+  'зарабатывай',
+  'засияй',
+  'захочешь',
+  'идёшь',
+  'используй',
+  'ищешь',
+  'коснись',
+  'можешь',
+  'нажми',
+  'назначаешь',
+  'найдёшь',
+  'напиши',
+  'обратись',
+  'опаздываешь',
+  'опиши',
+  'оплати',
+  'оплатишь',
+  'оповещай',
+  'опубликуй',
+  'оставишь',
+  'оставь',
+  'отвечаешь',
+  'отдохни',
+  'откроешь',
+  'открой',
+  'отмени',
+  'отметь',
+  'отправляешь',
+  'отправь',
+  'отредактируй',
+  'отсканируй',
+  'оформишь',
+  'оцени',
+  'перейди',
+  'пересмотри',
+  'повысь',
+  'погаси',
+  'поделись',
+  'подписывайся',
+  'подтверди',
+  'получай',
+  'попадаешь',
+  'попадай',
+  'попробуй',
+  'посмотри',
+  'потеряешь',
+  'предложи',
+  'предупреди',
+  'пригласи',
+  'приглашай',
+  'придёшь',
+  'принимаешь',
+  'присоединяйся',
+  'проверь',
+  'продли',
+  'продолжаешь',
+  'продолжай',
+  'продолжи',
+  'продолжишь',
+  'публикуй',
+  'публикуйся',
+  'работаешь',
+  'работай',
+  'расскажи',
+  'решаешь',
+  'следи',
+  'смотри',
+  'собери',
+  'создавай',
+  'создай',
+  'сократи',
+  'сохрани',
+  'спрашивай',
+  'увидишь',
+  'удаляй',
+  'узнавай',
+  'узнаешь',
+  'узнай',
+  'укажи',
+  'управляй',
+  'уточни',
+  'участвуешь',
+  'учитывай',
+  'хочешь',
+]);
+
+test('ru sözlüğü tek üslupta — "ты" değil "вы"', () => {
+  for (const [key, deger] of Object.entries(ru as Record<string, string>)) {
+    if (typeof deger !== 'string') continue;
+    assert.ok(!RU_SAMIMI_ZAMIR.test(deger), `ru.${key} samimi zamir taşıyor: ${deger}`);
+    for (const kelime of deger.match(/[А-Яа-яЁё]+/g) ?? []) {
+      if (RU_FIIL_DISI.has(kelime.toLowerCase())) continue;
+      assert.ok(!RU_2TEKIL.test(kelime), `ru.${key} 2. tekil fiil taşıyor: "${kelime}" — ${deger}`);
+    }
+    for (const kelime of deger.match(/[А-Яа-яЁё]+/g) ?? []) {
+      assert.ok(
+        !RU_TEKIL_EMIR.has(kelime.toLowerCase()),
+        `ru.${key} samimi emir kipi taşıyor: "${kelime}" — ${deger}`,
+      );
+    }
+  }
+});
