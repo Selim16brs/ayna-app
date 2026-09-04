@@ -22,7 +22,7 @@ import { useUnreadMessages } from '../../src/use-unread-messages';
 import { type ColorTokens, font } from '../../src/theme';
 import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { TepeIsigi, PressableScale, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
 type Period = 'week' | 'month' | 'all';
 
@@ -337,8 +337,11 @@ export default function ReportsScreen() {
   return (
     <Screen edges={[]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.icerik}>
-        {/* ═══ BAŞLIK — Figma `header-section` (px24, pt12 pb16) ═══ */}
+        {/* ═══ BAŞLIK — Figma `header-section` (px24, pt12 pb16) ═══
+            Tepe ışığı İÇERİDE: başlığın kendi zemini varsa dışarıdaki
+            yıkamayı kapatır (müşteri profilinde tam bu hata yaşanmıştı). */}
         <View style={[styles.bas, { paddingTop: insets.top + 12 }]}>
+          <TepeIsigi />
           <View style={styles.basSol}>
             <Text style={styles.tarih}>{bugunEtiketi}</Text>
             <Text style={styles.selam} numberOfLines={1}>

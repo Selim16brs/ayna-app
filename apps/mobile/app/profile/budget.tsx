@@ -1,24 +1,36 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ayBasi, limitiCoz } from '../../src/butce';
 import { formatPrice } from '../../src/data';
 import { formatSlot } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import {
+  Button,
+  Progress,
+  Screen,
+  SectionHeader,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+} from '../../src/ui';
 
 /*
- * AYLIK LİMİT KALDIRILDI.
+ * AYLIK LİMİT KULLANICININ.
  *
- * Burada `const LIMIT = 80000` vardı ve ekran bunu "Aylık limit" diye
- * yazıp üstüne bir doluluk çubuğu ve "Kalan" tutarı çiziyordu. Kullanıcı
- * böyle bir limit HİÇ BELİRLEMEMİŞTİ: kendi bütçesi sanılan sayı
- * koddan geliyordu.
+ * Burada `const LIMIT = 80000` sabiti vardı ve ekran bunu "Aylık limit"
+ * diye yazıp üstüne doluluk çubuğu ve "Kalan" tutarı çiziyordu. Kullanıcı
+ * böyle bir limit hiç belirlememişti — kendi bütçesi sanılan sayı koddan
+ * geliyordu.
  *
- * Gerçek bir limit ancak kullanıcı kendisi girerse olur; o ayrı bir
- * özellik. O gelene kadar ekran yalnız GERÇEK harcamayı gösteriyor.
+ * Kurucu: "bütçe kısmında limiti kullanıcının belirleyeceği ve istediğinde
+ * değişiklik yapacağı şekilde kurgula." Limit artık kullanıcıya ait,
+ * cihazda kalıcı ve istendiğinde değiştirilip kaldırılabiliyor. Limit
+ * YOKKEN çubuk da "kalan" da çizilmiyor: olmayan bir sınıra göre yüzde
+ * göstermek yine uydurma olurdu.
  */
 
 export default function BudgetScreen() {
@@ -35,11 +47,26 @@ export default function BudgetScreen() {
    * hiç randevusu olmasa bile yüksek bir "bu ay" rakamı görüyordu.
    */
   const completed = useMemo(() => {
-    const simdi = new Date();
-    const ayBasi = new Date(simdi.getFullYear(), simdi.getMonth(), 1).getTime();
-    return bookings.filter((b) => b.status === 'tamamlandi' && b.startMs >= ayBasi);
+    const bas = ayBasi(new Date());
+    return bookings.filter((b) => b.status === 'tamamlandi' && b.startMs >= bas);
   }, [bookings]);
   const spent = completed.reduce((n, b) => n + b.price, 0);
+
+  const limit = useStore((s) => s.butceLimiti);
+  const setLimit = useStore((s) => s.setButceLimiti);
+  const [duzenle, setDuzenle] = useState(false);
+  const [taslak, setTaslak] = useState('');
+  const kalan = limit !== null ? limit - spent : null;
+  const asildi = kalan !== null && kalan < 0;
+
+  const duzenlemeyiAc = () => {
+    setTaslak(limit !== null ? String(limit) : '');
+    setDuzenle(true);
+  };
+  const kaydet = () => {
+    setLimit(limitiCoz(taslak));
+    setDuzenle(false);
+  };
 
   // Kategori = işletme bazlı kırılım
   const byCategory = completed.reduce<Record<string, number>>((acc, b) => {
@@ -51,7 +78,12 @@ export default function BudgetScreen() {
   return (
     <Screen edges={['bottom']}>
       <StackHeader title={t('budget.title')} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {/* Klavye açıkken Kaydet'e TEK dokunuş yetsin (#12). */}
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text variant="body" tone="inkSoft" style={styles.subtitle}>
           {t('budget.subtitle')}
         </Text>
@@ -64,6 +96,80 @@ export default function BudgetScreen() {
           <Text variant="display" tone="ink">
             {formatPrice(spent)}
           </Text>
+
+          {limit !== null ? (
+            <>
+              <View style={styles.barWrap}>
+                {/*
+                  Çubuk 1'de duruyor: limit aşıldığında taşan bir çubuk
+                  çizmek yerine aşımı YAZIYLA söylüyoruz.
+                */}
+                <Progress
+                  value={Math.min(spent / limit, 1)}
+                  color={asildi ? colors.danger : colors.accent}
+                />
+              </View>
+              <View style={styles.cardFoot}>
+                <Text variant="caption" tone="muted">
+                  {t('budget.limit')}: {formatPrice(limit)}
+                </Text>
+                <Text variant="caption" style={{ color: asildi ? colors.danger : colors.sage }}>
+                  {asildi
+                    ? `${t('budget.over')}: ${formatPrice(-kalan!)}`
+                    : `${t('budget.remaining')}: ${formatPrice(kalan!)}`}
+                </Text>
+              </View>
+            </>
+          ) : (
+            <Text variant="caption" tone="muted" style={styles.limitYok}>
+              {t('budget.no_limit')}
+            </Text>
+          )}
+
+          {duzenle ? (
+            <View style={styles.limitDuzen}>
+              <TextInput
+                style={styles.limitGirdi}
+                value={taslak}
+                onChangeText={setTaslak}
+                keyboardType="number-pad"
+                placeholder={t('budget.limit_ph')}
+                placeholderTextColor={colors.muted}
+                autoFocus
+              />
+              <Text variant="micro" tone="muted">
+                {t('budget.limit_hint')}
+              </Text>
+              <View style={styles.limitDugmeler}>
+                <Button label={t('budget.limit_save')} onPress={kaydet} />
+                {limit !== null ? (
+                  <Pressable
+                    onPress={() => {
+                      setLimit(null);
+                      setDuzenle(false);
+                    }}
+                    hitSlop={8}
+                  >
+                    <Text variant="caption" style={{ color: colors.danger }}>
+                      {t('budget.limit_clear')}
+                    </Text>
+                  </Pressable>
+                ) : null}
+                <Pressable onPress={() => setDuzenle(false)} hitSlop={8}>
+                  <Text variant="caption" tone="muted">
+                    {t('common.cancel')}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <Pressable onPress={duzenlemeyiAc} hitSlop={8} style={styles.limitAc}>
+              <Ionicons name="options-outline" size={14} color={colors.accent} />
+              <Text variant="caption" style={{ color: colors.accent }}>
+                {t(limit !== null ? 'budget.edit_limit' : 'budget.set_limit')}
+              </Text>
+            </Pressable>
+          )}
         </View>
 
         {/* Kategoriye göre */}
@@ -135,6 +241,21 @@ const makeStyles = (colors: ColorTokens) =>
       paddingBottom: TAB_BAR_CLEARANCE,
     },
     subtitle: { marginBottom: space(2.5) },
+    barWrap: { marginTop: space(1.5), marginBottom: space(0.5) },
+    cardFoot: { flexDirection: 'row', justifyContent: 'space-between' },
+    limitYok: { marginTop: space(0.5) },
+    limitAc: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space(1) },
+    limitDuzen: { marginTop: space(1.5), gap: space(1) },
+    limitGirdi: {
+      borderWidth: 1,
+      borderColor: colors.lineStrong,
+      borderRadius: radius.sm,
+      paddingHorizontal: space(1.5),
+      paddingVertical: space(1.25),
+      color: colors.ink,
+      fontSize: 16,
+    },
+    limitDugmeler: { flexDirection: 'row', alignItems: 'center', gap: space(2), flexWrap: 'wrap' },
     card: {
       backgroundColor: colors.surface,
       borderRadius: radius.xl,

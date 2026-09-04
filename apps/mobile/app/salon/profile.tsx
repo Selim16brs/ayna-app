@@ -6,7 +6,15 @@ import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import {
+  TepeIsigi,
+  GorunumKarti,
+  PressableScale,
+  Screen,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+} from '../../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -56,8 +64,9 @@ export default function SalonProfileHub() {
     <Screen edges={[]}>
       <StackHeader title={t('salon.nav.profile')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Salon başlık kartı */}
+        {/* Salon başlık kartı — tepe ışığı kartın İÇİNDE (kendi zemini var). */}
         <View style={[styles.headerCard, shadow.soft]}>
+          <TepeIsigi />
           <View style={styles.avatar}>
             {avatarUri ? (
               <Image source={{ uri: avatarUri }} style={styles.avatarImg} />
@@ -144,6 +153,14 @@ export default function SalonProfileHub() {
             </Text>
           </PressableScale>
         </View>
+
+        {/*
+          GÖRÜNÜM — müşteri profiliyle AYNI kart.
+          Kurucu: "renk seçim olayı salon ve uzmanda da olmalı." Salon
+          profilinde hiç yoktu: salon hesabıyla giren kişi temayı da rengi
+          de değiştiremiyordu.
+        */}
+        <GorunumKarti />
       </ScrollView>
     </Screen>
   );

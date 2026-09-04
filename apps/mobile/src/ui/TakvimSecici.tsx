@@ -10,12 +10,15 @@ import {
   carkSirasi,
   GUN_KISA,
   SAATLER,
+  ayAcikMi,
   ayEkle,
   ayIzgarasi,
   ayniGun,
   saatUygula,
   secilebilir,
+  secilebilirYillar,
   tarihYaz,
+  yilAyUygula,
 } from '../takvim';
 import { radius, space, type ColorTokens } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
@@ -146,6 +149,21 @@ export function TakvimSecici({
   // Görünen ay ve seçili gün ayrı: kullanıcı seçim yapmadan aylarda gezebilir.
   const [gorunen, setGorunen] = useState(deger);
   /*
+   * ── YIL/AY PANELİ ────────────────────────────────────────────────────
+   *
+   * Kurucu: "1970'de doğan birisi için yıl seçmek çok zor oluyor.
+   * üstteki ay-yıl üzerine basınca direkt sene ay seçimi olmalı."
+   *
+   * Ok tuşlarıyla 1970'e gitmek 660'tan fazla dokunuş. Başlık artık bir
+   * düğme: basınca gün ızgarasının yerine yıl listesi + ay ızgarası
+   * geliyor, ay seçilince gün ızgarasına dönüyor.
+   */
+  const [yilAyAcik, setYilAyAcik] = useState(false);
+  const yillar = useMemo(
+    () => secilebilirYillar(gorunen.getFullYear(), enAz, enCok),
+    [gorunen, enAz, enCok],
+  );
+  /*
    * Açılış dakikası listeye OTURTULUYOR.
    *
    * Şu an 19:24 ise dakika listesinde (00/05/…/55) 24 YOK: çark 00'ı
@@ -196,9 +214,23 @@ export function TakvimSecici({
             >
               <Ionicons name="chevron-back" size={20} color={colors.ink} />
             </Pressable>
-            <Text variant="bodyStrong" tone="ink">
-              {AY_ADI[gorunen.getMonth()]} {gorunen.getFullYear()}
-            </Text>
+            {/* BAŞLIK BİR DÜĞME — basınca yıl/ay seçimi açılıyor. */}
+            <Pressable
+              onPress={() => setYilAyAcik((a) => !a)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('takvim.yil_ay_sec')}
+              style={styles.ayBaslik}
+            >
+              <Text variant="bodyStrong" tone="ink">
+                {AY_ADI[gorunen.getMonth()]} {gorunen.getFullYear()}
+              </Text>
+              <Ionicons
+                name={yilAyAcik ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color={colors.inkSoft}
+              />
+            </Pressable>
             <Pressable
               onPress={() => setGorunen((g) => ayEkle(g, 1))}
               hitSlop={10}
@@ -209,35 +241,97 @@ export function TakvimSecici({
             </Pressable>
           </View>
 
-          <View style={styles.gunBasliklari}>
-            {GUN_KISA.map((g) => (
-              <Text key={g} variant="micro" tone="muted" style={styles.gunBasligi}>
-                {g}
-              </Text>
-            ))}
-          </View>
-
-          <View style={styles.izgara}>
-            {izgara.map(({ tarih, ayIcinde }) => {
-              const acikMi = secilebilir(tarih, enAz, enCok);
-              const secilenMi = ayniGun(tarih, secili);
-              return (
-                <Pressable
-                  key={tarih.toISOString()}
-                  disabled={!acikMi}
-                  onPress={() => setSecili((s) => saatUygula(tarih, s.getHours(), s.getMinutes()))}
-                  style={[styles.hucre, secilenMi && styles.hucreSecili]}
-                >
-                  <Text
-                    variant="caption"
-                    tone={secilenMi ? 'onAccent' : !acikMi || !ayIcinde ? 'muted' : 'ink'}
-                  >
-                    {tarih.getDate()}
+          {yilAyAcik ? (
+            <View style={styles.yilAy}>
+              {/*
+                YIL LİSTESİ. Çark yerine düz liste: 120 satırlık bir çarkta
+                hedef yıla oturmak, ok tuşlarıyla gitmekten kolay değil.
+                Liste seçili yıla kaydırılmış açılıyor.
+              */}
+              <ScrollView
+                style={styles.yilListe}
+                contentOffset={{
+                  x: 0,
+                  y: Math.max(0, yillar.indexOf(gorunen.getFullYear()) - 2) * OGE_Y,
+                }}
+                showsVerticalScrollIndicator={false}
+              >
+                {yillar.map((y) => {
+                  const secili = y === gorunen.getFullYear();
+                  return (
+                    <Pressable
+                      key={y}
+                      onPress={() =>
+                        setGorunen((g) => yilAyUygula(g, y, g.getMonth(), enAz, enCok))
+                      }
+                      style={[styles.yilOge, secili && styles.yilOgeSecili]}
+                    >
+                      <Text variant="bodyStrong" tone={secili ? 'onAccent' : 'ink'}>
+                        {y}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+              <View style={styles.ayIzgara}>
+                {AY_ADI.map((ad, i) => {
+                  const acikMi = ayAcikMi(gorunen.getFullYear(), i, enAz, enCok);
+                  const secili = i === gorunen.getMonth();
+                  return (
+                    <Pressable
+                      key={ad}
+                      disabled={!acikMi}
+                      onPress={() => {
+                        setGorunen((g) => yilAyUygula(g, g.getFullYear(), i, enAz, enCok));
+                        // Ay seçilince gün ızgarasına DÖNÜYOR: kullanıcı
+                        // paneli ayrıca kapatmak zorunda kalmasın.
+                        setYilAyAcik(false);
+                      }}
+                      style={[styles.ayOge, secili && styles.ayOgeSecili]}
+                    >
+                      <Text variant="caption" tone={secili ? 'onAccent' : acikMi ? 'ink' : 'muted'}>
+                        {ad.slice(0, 3)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          ) : (
+            <>
+              <View style={styles.gunBasliklari}>
+                {GUN_KISA.map((g) => (
+                  <Text key={g} variant="micro" tone="muted" style={styles.gunBasligi}>
+                    {g}
                   </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+                ))}
+              </View>
+
+              <View style={styles.izgara}>
+                {izgara.map(({ tarih, ayIcinde }) => {
+                  const acikMi = secilebilir(tarih, enAz, enCok);
+                  const secilenMi = ayniGun(tarih, secili);
+                  return (
+                    <Pressable
+                      key={tarih.toISOString()}
+                      disabled={!acikMi}
+                      onPress={() =>
+                        setSecili((s) => saatUygula(tarih, s.getHours(), s.getMinutes()))
+                      }
+                      style={[styles.hucre, secilenMi && styles.hucreSecili]}
+                    >
+                      <Text
+                        variant="caption"
+                        tone={secilenMi ? 'onAccent' : !acikMi || !ayIcinde ? 'muted' : 'ink'}
+                      >
+                        {tarih.getDate()}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </>
+          )}
 
           {saatli ? (
             <View style={styles.saatBolum}>
@@ -311,6 +405,32 @@ const makeStyles = (colors: ColorTokens) =>
       paddingHorizontal: space(1),
       paddingBottom: space(1.5),
     },
+    ayBaslik: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    /*
+     * YIL/AY PANELİ — gün ızgarasının YERİNE geçiyor, altına EKLENMİYOR.
+     * Eklenseydi sayfa uzar ve alttaki onay düğmeleri ekrandan taşardı.
+     * Yükseklik gün ızgarasıyla aynı hizada: panel açılıp kapanınca
+     * sayfa zıplamıyor.
+     */
+    yilAy: { flexDirection: 'row', gap: space(1.5), height: OGE_Y * GORUNEN },
+    yilListe: { width: 96 },
+    yilOge: {
+      height: OGE_Y,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.sm,
+    },
+    yilOgeSecili: { backgroundColor: colors.accent },
+    ayIzgara: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: space(1) },
+    ayOge: {
+      width: '30%',
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.sm,
+      backgroundColor: colors.surfaceMuted,
+    },
+    ayOgeSecili: { backgroundColor: colors.accent },
     gunBasliklari: { flexDirection: 'row' },
     gunBasligi: { width: `${100 / 7}%`, textAlign: 'center' },
     izgara: { flexDirection: 'row', flexWrap: 'wrap', marginTop: space(0.5) },

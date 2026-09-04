@@ -1,4 +1,13 @@
-import { BadRequestException, Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  HttpCode,
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
@@ -29,6 +38,23 @@ export class AuthController {
   @Post('register')
   register(@Body(new ZodValidationPipe(registerSchema)) body: RegisterInput) {
     return this.auth.register(body);
+  }
+
+  /**
+   * Kayıt sırasında "bu numara/e-posta müsait mi" kontrolü.
+   *
+   * HIZ SINIRLI: cevap yalnız bir evet/hayır ama art arda sorulursa
+   * numara taramasına dönerdi. Dakikada 20 — form doldururken bolca
+   * yeter, tarama için yetmez.
+   */
+  @Throttle({ default: { ttl: 60_000, limit: 20 } })
+  @Post('availability')
+  @HttpCode(200)
+  availability(@Body() body: { phone?: unknown; email?: unknown }) {
+    return this.auth.musaitMi({
+      phone: typeof body.phone === 'string' ? body.phone : undefined,
+      email: typeof body.email === 'string' ? body.email : undefined,
+    });
   }
 
   // Brute-force önleme: IP başına dakikada 10 giriş denemesi

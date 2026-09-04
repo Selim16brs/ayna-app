@@ -725,6 +725,15 @@ export interface ProPost {
 export const api = {
   categories: () => get<ApiCategory[]>('/categories'),
 
+  /**
+   * Kayıt sırasında "bu numara/e-posta müsait mi" kontrolü.
+   *
+   * Kimlik istemiyor: henüz hesap yok. Cevap yalnız iki evet/hayır —
+   * hesap hakkında başka hiçbir bilgi dönmüyor.
+   */
+  musaitlik: (input: { phone?: string; email?: string }) =>
+    post<{ phoneTaken: boolean; emailTaken: boolean }>('/auth/availability', input),
+
   // ── Açılış mesajları (brief §7.1 / §7.3) ────────────────────────────
   /**
    * Uzak katalog. Kimlik istemiyor: açılış ekranı giriş yapılmadan da

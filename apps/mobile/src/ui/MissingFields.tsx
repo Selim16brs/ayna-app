@@ -6,11 +6,28 @@ import { type ColorTokens, radius, space } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
 import { Text } from './Text';
 
-// Kayıt butonu pasifken neyin eksik olduğunu gösteren kibar uyarı şeridi.
-export function MissingFields({ keys }: { keys: MessageKey[] }) {
+/**
+ * Neyin eksik olduğunu gösteren şerit.
+ *
+ * `hata` verilirse ŞERİT KIRMIZI ve metin doğrudan yazılıyor: "eksik
+ * alan" ile "bu numara zaten kayıtlı" aynı tonda görünmemeli — ikincisi
+ * kullanıcının düzeltmesi gereken bir ÇAKIŞMA, eksik alan ise henüz
+ * doldurulmamış bir yer.
+ */
+export function MissingFields({ keys, hata }: { keys: MessageKey[]; hata?: string | null }) {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  if (hata) {
+    return (
+      <View style={[styles.wrap, styles.wrapHata]}>
+        <Ionicons name="alert-circle-outline" size={15} color={colors.danger} />
+        <Text variant="caption" style={[styles.text, { color: colors.danger }]}>
+          {hata}
+        </Text>
+      </View>
+    );
+  }
   if (!keys.length) return null;
   return (
     <View style={styles.wrap}>
@@ -34,5 +51,6 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(1.25),
       marginTop: space(1),
     },
+    wrapHata: { backgroundColor: colors.dangerSoft },
     text: { flex: 1, lineHeight: 18 },
   });

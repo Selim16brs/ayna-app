@@ -10,6 +10,7 @@ function fmtDate(d: Date): string {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
 import { api } from '../../src/api';
+import { ADIM_TAMAM, type AdimSonucu, eksikAlanlar, kimlikAdimi } from '../../src/kayit-adimi';
 import { useStore } from '../../src/store';
 import { CITIES } from '../../src/data';
 import { getDeviceFingerprint } from '../../src/device';
@@ -230,6 +231,58 @@ export default function ExpertRegisterScreen() {
     bindingOk, // 4 · önizleme & tamamla
   ];
   const valid = identityOk && validServices.length > 0 && bindingOk;
+
+  /*
+   * ── ADIM GEÇİŞİ ARTIK SEBEBİNİ SÖYLÜYOR ────────────────────────────
+   *
+   * "İleri" eksik alan varken SESSİZCE pasifti: kullanıcı basıyor,
+   * hiçbir şey olmuyor, neyin eksik olduğu da yazmıyordu. Telefon
+   * çakışması ise ancak EN SONDA anlaşılıyordu — beş adım doldurup
+   * duvara çarpmak.
+   *
+   * Düğme hep basılabilir; basınca eksikler YAZILIYOR ve adım
+   * geçilmiyor. Kimlik adımında ayrıca sunucuya "bu numara müsait mi"
+   * soruluyor.
+   */
+  const [adimSonucu, setAdimSonucu] = useState<AdimSonucu>(ADIM_TAMAM);
+  const [adimBekliyor, setAdimBekliyor] = useState(false);
+
+  /** O adımın koşulları — eksik olan kullanıcıya adıyla söyleniyor. */
+  const adimKosullari: Record<number, { ok: boolean; key: MessageKey }[]> = {
+    0: [
+      { ok: entityType !== null, key: 'expert.reg.entity_q' },
+      { ok: firstName.trim().length > 1 && lastName.trim().length > 1, key: 'auth.miss.name' },
+      { ok: iinOk, key: 'expert.reg.iin' },
+      { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
+      { ok: password.length >= 6, key: 'auth.f.password' },
+      { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
+    ],
+    1: [{ ok: coord !== null, key: 'expert.reg.step.location' }],
+    2: [{ ok: validServices.length > 0, key: 'auth.miss.services' }],
+    3: [],
+    4: [{ ok: bindingOk, key: 'expert.reg.code' }],
+  };
+
+  const ileri = async () => {
+    if (adimBekliyor) return;
+    const kosullar = adimKosullari[step] ?? [];
+    let sonuc: AdimSonucu;
+    if (step === 0) {
+      setAdimBekliyor(true);
+      sonuc = await kimlikAdimi(
+        kosullar,
+        // Uzman kaydında e-posta alanı yok; yalnız telefon soruluyor.
+        () => api.musaitlik({ phone: phone.trim() }),
+        { telefonDolu: t('auth.f.phone_taken'), epostaDolu: t('auth.f.email_taken') },
+      );
+      setAdimBekliyor(false);
+    } else {
+      const eksikler = eksikAlanlar(kosullar);
+      sonuc = eksikler.length ? { gecebilir: false, eksikler, hata: null } : ADIM_TAMAM;
+    }
+    setAdimSonucu(sonuc);
+    if (sonuc.gecebilir) setStep((v) => Math.min(STEP_COUNT - 1, v + 1));
+  };
   const touched = !!(firstName || lastName || phone || password);
   const missing = missingLabels([
     { ok: entityType !== null, key: 'expert.reg.entity_q' },
@@ -878,24 +931,28 @@ export default function ExpertRegisterScreen() {
             </View>
           </>
         ) : (
-          <View style={styles.navRow}>
-            {step > 0 ? (
+          <>
+            {/* Sebep düğmenin ÜSTÜNDE: basan kişi neyi düzelteceğini görüyor. */}
+            <MissingFields keys={adimSonucu.eksikler} hata={adimSonucu.hata} />
+            <View style={styles.navRow}>
+              {step > 0 ? (
+                <Button
+                  label={t('common.back')}
+                  variant="secondary"
+                  onPress={() => setStep((s) => s - 1)}
+                />
+              ) : (
+                <View style={{ flex: 1 }} />
+              )}
+              <View style={styles.navSpacer} />
               <Button
-                label={t('common.back')}
-                variant="secondary"
-                onPress={() => setStep((s) => s - 1)}
+                label={t('common.next')}
+                variant={stepOk[step] ? 'primary' : 'secondary'}
+                disabled={adimBekliyor}
+                onPress={() => void ileri()}
               />
-            ) : (
-              <View style={{ flex: 1 }} />
-            )}
-            <View style={styles.navSpacer} />
-            <Button
-              label={t('common.next')}
-              variant={stepOk[step] ? 'primary' : 'secondary'}
-              disabled={!stepOk[step]}
-              onPress={() => setStep((s) => Math.min(STEP_COUNT - 1, s + 1))}
-            />
-          </View>
+            </View>
+          </>
         )}
       </View>
     </Screen>

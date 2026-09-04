@@ -19,6 +19,7 @@ import { useStore } from '../src/store';
 import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
+import { haritaKumeleri } from '../src/harita-kumeleme';
 import { useProfessionalDetail } from '../src/catalog';
 import { tri } from '../src/taxonomy';
 import {
@@ -129,6 +130,19 @@ export default function MapScreen() {
    */
   const konumlu = useMemo(() => pros.filter((p) => konumuVar(p)), [pros]);
   const konumsuzSayisi = pros.length - konumlu.length;
+  /*
+   * AYNI ADRESTEKİLER TEK İĞNE.
+   *
+   * Aynı salonda çalışan beş uzman beş iğneydi: hepsi üst üste, üstteki
+   * diğerlerini örtüyor ve kullanıcı alttakine basamıyordu. Artık adres
+   * başına tek iğne — salon varsa iğne salonun — ve karta basınca o
+   * adresteki diğerleri listeleniyor.
+   */
+  const kumeler = useMemo(() => haritaKumeleri(konumlu), [konumlu]);
+  const seciliKume = useMemo(
+    () => (selected ? (kumeler.find((k) => k.bas.id === selected.id) ?? null) : null),
+    [kumeler, selected],
+  );
 
   return (
     <Screen edges={[]}>
@@ -206,14 +220,13 @@ export default function MapScreen() {
           showsUserLocation
           showsMyLocationButton
         >
-          {konumlu.map((p) => (
+          {kumeler.map((k) => (
             <Marker
-              key={p.id}
-              // `p.lat`/`p.lng` burada KESİN dolu (`konumuVar` süzdü).
-              coordinate={{ latitude: p.lat!, longitude: p.lng! }}
+              key={k.bas.id}
+              coordinate={{ latitude: k.lat, longitude: k.lng }}
               // §5.1.3 — salon vs bağımsız uzman pinleri görsel ayrı
-              pinColor={p.kind === 'salon' ? colors.accentFg : colors.blue}
-              onPress={() => setSelected(p)}
+              pinColor={k.bas.kind === 'salon' ? colors.accentFg : colors.blue}
+              onPress={() => setSelected(k.bas)}
             />
           ))}
         </MapView>
@@ -282,6 +295,33 @@ export default function MapScreen() {
                   </View>
                 </View>
               </Pressable>
+              {/*
+                AYNI ADRESTEKİ DİĞERLERİ. Salon iğnesine basınca orada
+                çalışan uzmanlar burada; her biri kendi profiline gidiyor.
+              */}
+              {seciliKume && seciliKume.digerleri.length > 0 ? (
+                <View style={styles.kumeListe}>
+                  <Text variant="micro" tone="muted">
+                    {fillParams(t('map.same_address'), {
+                      n: String(seciliKume.digerleri.length),
+                    })}
+                  </Text>
+                  {seciliKume.digerleri.map((u) => (
+                    <Pressable key={u.id} style={styles.kumeSatir} onPress={() => setSelected(u)}>
+                      <Image source={{ uri: u.image }} style={styles.kumeFoto} />
+                      <View style={styles.kumeGovde}>
+                        <Text variant="caption" tone="ink" numberOfLines={1}>
+                          {u.name}
+                        </Text>
+                        <Text variant="micro" tone="muted" numberOfLines={1}>
+                          {u.specialty}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={14} color={colors.muted} />
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
               <PressableScale style={styles.cardBtn} onPress={() => setProfileOpen(true)}>
                 <Text variant="bodyStrong" tone="onAccent">
                   {t('map.open')}
@@ -836,6 +876,11 @@ const makeStyles = (colors: ColorTokens) =>
       marginTop: 2,
       flexWrap: 'wrap',
     },
+    // Aynı adresteki diğerleri — kart içinde, ana düğmenin ÜSTÜNDE.
+    kumeListe: { gap: space(0.75), marginTop: space(1) },
+    kumeSatir: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
+    kumeFoto: { width: 28, height: 28, borderRadius: 14 },
+    kumeGovde: { flex: 1 },
     cardBtn: {
       backgroundColor: colors.accent,
       borderRadius: radius.pill,

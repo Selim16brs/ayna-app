@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { type SupplierAd } from '../../src/data';
 import { useSalonStaff } from '../../src/staff';
-import { OccupancyStrip } from '../../src/ui';
+import { TepeIsigi, OccupancyStrip } from '../../src/ui';
 import { greetingKey } from '../../src/greeting';
 import { useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
@@ -62,6 +62,8 @@ export default function SalonHomeScreen() {
             beyaz metindi — kanvasla ilgisi yoktu.
             Kapak düzenleme işlevi KORUNDU: avatara dokunmak aynı akışı açıyor. */}
         <View style={[styles.header, { paddingTop: insets.top + space(1.5) }]}>
+          {/* Tepe ışığı İÇERİDE: başlığın kendi zemini dışarıdakini kapatırdı. */}
+          <TepeIsigi />
           <PressableScale
             style={styles.avatarBtn}
             onPress={editCover}

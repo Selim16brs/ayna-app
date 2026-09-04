@@ -68,6 +68,8 @@ const PERSISTED_USER_KEYS = [
    */
   'acilisDurumu',
   'sonAcilisMs',
+  // Kullanıcının kendi belirlediği aylık bütçe limiti — hesaba özel.
+  'butceLimiti',
 ];
 
 /*

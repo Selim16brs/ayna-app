@@ -69,7 +69,13 @@ test('BÜTÇE ekranı olmayan bir limit uydurmuyor', () => {
   const k = oku('app', 'profile', 'budget.tsx');
   assert.doesNotMatch(k, /const LIMIT = \d+/, 'uydurma aylık limit geri gelmiş');
   // "Bu ay harcanan" GERÇEKTEN bu ay: tüm geçmişi toplamak da bir yalandı.
-  assert.match(k, /b\.startMs >= ayBasi/, 'toplam bu ayla sınırlanmıyor');
+  // "Bu ay harcanan" GERÇEKTEN bu ay: tüm geçmişi toplamak da bir yalandı.
+  assert.match(k, /b\.startMs >= bas/, 'toplam bu ayla sınırlanmıyor');
+  assert.match(
+    oku('src', 'butce.ts'),
+    /new Date\(simdi\.getFullYear\(\), simdi\.getMonth\(\), 1\)/,
+    'ay başı yanlış hesaplanıyor',
+  );
 });
 
 test('KADRO hizmetleri koda gömülü tablodan gelmiyor', () => {
