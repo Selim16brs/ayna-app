@@ -68,13 +68,20 @@ test('sunucuya KATALOG BAĞIYLA gönderiliyor', () => {
   assert.match(govde, /name: r\.name/, 'uzmanın kendi adı gönderilmiyor');
 });
 
-test('ADSIZ ya da FİYATSIZ satır KAYDEDİLMİYOR', () => {
-  // Müşteriye adsız hizmet ya da 0 ₸ göstermek yarım kaydı gerçek bir
-  // teklif gibi sunmaktır.
+test('ADSIZ, FİYATSIZ ya da SÜRESİZ satır KAYDEDİLMİYOR', () => {
+  /*
+   * Müşteriye adsız hizmet, 0 ₸ ya da kimsenin yazmadığı bir süre
+   * göstermek yarım kaydı gerçek bir teklif gibi sunmaktır. Süre sonradan
+   * eklendi: boş bırakılınca sunucu 60 dk uyduruyordu.
+   *
+   * "Kaydet" ile satır içindeki "Ekle" AYNI kuralı okuyor; ayrı süzgeç
+   * yazılsaydı ikisi zamanla ayrışırdı.
+   */
+  assert.match(hizmetler, /rows\.filter\(satirGecerli\)/, 'yarım satırlar süzülmüyor');
   assert.match(
     hizmetler,
-    /rows\.filter\(\(r\) => r\.name\.trim\(\) && Number\(r\.price\) > 0\)/,
-    'yarım satırlar süzülmüyor',
+    /satirGecerli = \(r: SellerServiceRow\) =>\s*!!r\.name\.trim\(\) && Number\(r\.price\) > 0 && Number\(r\.dur\) > 0/,
+    'kural ad + fiyat + süreyi birlikte istemiyor',
   );
 });
 

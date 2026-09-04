@@ -432,7 +432,7 @@ export const tr = {
   'seller.services.empty': 'Bu kategoride henüz hizmet seçmedin.',
   'seller.services.saved': 'Hizmetlerin güncellendi.',
   'seller.services.add_row': 'Ekle',
-  'seller.services.need_name_price': 'Ad ve fiyat gerekli',
+  'seller.services.need_name_price': 'Ad, fiyat ve süre gerekli',
 
   // Keşfet (ana ekran)
   'home.services': 'Hizmetler',

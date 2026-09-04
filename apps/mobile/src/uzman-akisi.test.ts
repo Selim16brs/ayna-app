@@ -221,3 +221,21 @@ test('KONUMU OLMAYAN uzman bunu ÖĞRENİYOR', () => {
     'sunucu konum durumunu dönmüyor',
   );
 });
+
+test('SÜRESİ YAZILMAMIŞ hizmet kaydedilmiyor — 60 dk uydurulmuyor', () => {
+  /*
+   * Süre boş bırakılınca sunucu 60 dk yazıyordu: müşteri, uzmanın hiç
+   * söylemediği bir süreyi uzman söylemiş gibi görüyor, randevu da o
+   * süreye kilitleniyordu. Kurucu: "uydurma bilgiler olmamalı."
+   *
+   * Katalog varsayılanı satır açılırken zaten yazılı; uzman onu silerse
+   * yerine sayı konmuyor, satır geçersiz sayılıyor.
+   */
+  const k = oku('app', 'seller', 'services.tsx');
+  assert.match(k, /Number\(r\.dur\) > 0/, 'süre zorunlu değil');
+  /*
+   * "Kaydet" AYNI kuralı kullanıyor: kendi süzgecini yazsaydı iki kural
+   * ayrışır, biri süreyi ister öbürü istemezdi.
+   */
+  assert.match(k, /const gecerli = rows\.filter\(satirGecerli\);/, 'kaydet ayrı kural kullanıyor');
+});

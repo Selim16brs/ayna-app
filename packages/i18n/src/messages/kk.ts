@@ -417,7 +417,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.services.empty': 'Бұл санатта әлі қызмет таңдалмаған.',
   'seller.services.saved': 'Қызметтерің жаңартылды.',
   'seller.services.add_row': 'Қосу',
-  'seller.services.need_name_price': 'Атауы мен бағасы қажет',
+  'seller.services.need_name_price': 'Атауы, бағасы және ұзақтығы қажет',
   'home.services': 'Қызметтер',
   'home.qa.book': 'Жазылу',
   'home.qa.wish': 'Тілегіңді айт',
