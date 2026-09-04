@@ -421,6 +421,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.services.active_unit': 'активных услуг',
   'seller.services.empty': 'В этой категории услуги ещё не выбраны.',
   'seller.services.saved': 'Ваши услуги обновлены.',
+  'seller.services.add_row': 'Добавить',
+  'seller.services.need_name_price': 'Нужны название и цена',
   'home.services': 'Услуги',
   'home.qa.book': 'Записаться',
   'home.qa.wish': 'Расскажи о желании',
@@ -703,6 +705,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'demand.card.view': 'Смотреть предложения →',
   'seller.requests.title': 'Заявки',
   'seller.requests.empty': 'Сейчас нет открытых заявок',
+  'seller.requests.direct': 'Записи, ожидающие вашего подтверждения',
+  'seller.requests.direct_note':
+    'Клиент выбрал вас. После подтверждения запись появится в календаре.',
   'seller.requests.last': 'Последняя',
   'seller.requests.budget': 'Бюджет',
   'seller.requests.give': 'Дать предложение',
@@ -2028,6 +2033,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'privacy.title': 'Конфиденциальность',
   'privacy.subtitle': 'Контроль над вашими данными — у вас',
   'privacy.location': 'Передача местоположения',
+  'privacy.pro_address': 'Адрес вашего бизнеса открыт',
+  'privacy.pro_address_sub':
+    'Адрес виден в профиле, чтобы клиент нашёл вас на карте. Это не настройка, а условие работы.',
+  'privacy.pro_customer_data': 'Данные клиента',
+  'privacy.pro_customer_data_sub':
+    'Телефон клиента вам недоступен; связь — внутри приложения. Автора анонимного отзыва вы не видите.',
   'privacy.location_sub': 'По умолчанию отключено',
   'privacy.anon_reviews': 'Анонимные отзывы',
   'privacy.anon_reviews_sub': 'В ваших отзывах личность остаётся скрытой',

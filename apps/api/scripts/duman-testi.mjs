@@ -95,10 +95,7 @@ const uzmanToken = kayit.govde?.token;
  * açtıktan sonra bakmak, kapının hiç çalışmadığı bir sürümde de geçerdi.
  */
 const onaysizListe = await get('/professionals');
-ol(
-  'onaysız uzman katalogda YOK',
-  !(onaysizListe ?? []).some((x) => x.name === 'Duman Uzman'),
-);
+ol('onaysız uzman katalogda YOK', !(onaysizListe ?? []).some((x) => x.name === 'Duman Uzman'));
 
 const yoneticiGiris = await gonder('/auth/login', {
   identifier: 'admin',

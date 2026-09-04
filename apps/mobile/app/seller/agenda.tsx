@@ -57,11 +57,22 @@ function gunPenceresi(hours: DayHours[], dayStart: number): { bas: number; son: 
   return { bas: dayStart + bas, son: dayStart + son };
 }
 // Takvimde SLOT'U TUTAN durumlar: onaylı + tamamlanan + uzman onayı sonrası depozito bekleyenler.
+/*
+ * TAKVİMDE GÖRÜNEN DURUMLAR.
+ *
+ * `onay_bekliyor` BİLEREK YOK: onaylanmamış bir talep takvimde randevu
+ * gibi durursa uzman o saati ayırdığını sanır. Talepler "Talepler"
+ * ekranında karara bağlanıyor; takvime ancak onaydan sonra düşüyor.
+ *
+ * `depozito_bekliyor` VAR: uzman kabul etmiş, slot kilitli — takvimde
+ * görünmesi gerekiyor.
+ */
 const CALENDAR_STATUSES: BookingStatus[] = [
   'kesinlesti',
-  'tamamlandi',
   'depozito_bekliyor',
-  'kesinlesti',
+  'hizmet_gunu',
+  'tamamlandi',
+  'degerlendirme',
 ];
 
 // §4.6 uzman gün-ızgarası: açık pencere içinde boş aralıklar + randevu blokları
@@ -208,9 +219,24 @@ export default function AgendaScreen() {
   );
 
   const now = Date.now();
+  /*
+   * ── TAKVİME YALNIZ ONAYLANMIŞ RANDEVU GİRİYOR ──────────────────────
+   *
+   * Kurucu: "takvim kısmında randevu onaylandıktan sonra görünmeli, bunun
+   * dışındaki talepler kesinlikle takvime işlenmez."
+   *
+   * Liste görünümü TÜM kayıtları çiziyordu: henüz onaylanmamış bir talep
+   * ve düşmüş bir kayıt ("Süre doldu") takvimde randevuymuş gibi
+   * duruyordu. Uzman onları takviminde görüp yer ayırdığını sanıyordu.
+   *
+   * Onay bekleyenler "Talepler" ekranında; takvim yalnız KESİNLEŞMİŞ
+   * (ve sonrasındaki) durumları gösteriyor.
+   */
+  const takvimeGirer = (b: Appointment) => CALENDAR_STATUSES.includes(b.status);
   const groups = GROUP_ORDER.map((key) => ({
     key,
     rows: calBookings
+      .filter(takvimeGirer)
       .filter((b) => bucket(daysUntil(b.startMs, now)) === key)
       .sort((a, b) => a.startMs - b.startMs),
   })).filter((g) => g.rows.length > 0);

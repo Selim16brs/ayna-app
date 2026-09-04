@@ -52,6 +52,28 @@ export default function PrivacyScreen() {
   const reviewAnonymous = useStore((s) => s.reviewAnonymous);
   const setReviewAnonymous = useStore((s) => s.setReviewAnonymous);
 
+  /*
+   * ── UZMAN/SALON GİZLİLİĞİ MÜŞTERİNİNKİYLE AYNI DEĞİL ───────────────
+   *
+   * Kurucu: "uzman gizlilik alanında konum paylaşımı açılıp kapanabilir
+   * bir özellik olmamalı çünkü uzman adresini belirtmeli. ayrıca müşteri
+   * ile aynı opsiyonlar uzmanda olmamalı, uzmana özel olmalı."
+   *
+   * Konum anahtarı uzmanda YANILTICIYDI: kapatınca adresinin gizleneceğini
+   * sanıyordu, oysa işletme adresi zaten herkese açık ve açık OLMAK
+   * ZORUNDA — müşteri haritada bulamazsa hizmet veremez. Anahtarın hiçbir
+   * etkisi de yoktu.
+   *
+   * "Anonim yorum" da müşteri tarafının ayarı: uzman kendi yorumunu
+   * anonimleştirmiyor, aksine anonim yorumun sahibini GÖREMİYOR.
+   */
+  const satici = useStore(
+    (st) => st.currentUser?.role === 'professional' || st.currentUser?.role === 'salon',
+  );
+  const gorunenAnahtarlar = TOGGLES.filter(
+    (x) => !(satici && (x.key === 'location' || x.key === 'anon')),
+  );
+
   const [state, setState] = useState<Record<ToggleKey, boolean>>({
     location: false,
     anon: true,
@@ -225,9 +247,16 @@ export default function PrivacyScreen() {
           ))}
         </View>
 
+        {/*
+          UZMAN/SALONDA KONUM ve ANONİM YORUM anahtarları YOK: ikisi de
+          müşteri ayarı ve uzmanda yanıltıcıydı (bkz. yukarıdaki gerekçe).
+        */}
         <View style={[styles.group, shadow.soft]}>
-          {TOGGLES.map((tg, i) => (
-            <View key={tg.key} style={[styles.row, i < TOGGLES.length - 1 && styles.rowBorder]}>
+          {gorunenAnahtarlar.map((tg, i) => (
+            <View
+              key={tg.key}
+              style={[styles.row, i < gorunenAnahtarlar.length - 1 && styles.rowBorder]}
+            >
               <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
                 <Ionicons name={tg.icon} size={18} color={colors.ink} />
               </View>
@@ -260,17 +289,47 @@ export default function PrivacyScreen() {
                o yüzden gerçeği yazıyorum.
             3) packages/analytics: lat/lng/coordinates/location YASAKLI alan —
                varsa capture FIRLATIR, sessizce göndermez. */}
-        <SectionHeader title={t('privacy.loc.title')} />
-        <View style={[styles.group, styles.list, shadow.soft]}>
-          {(['privacy.loc.1', 'privacy.loc.2', 'privacy.loc.3'] as const).map((k) => (
-            <View key={k} style={styles.listRow}>
-              <Ionicons name="checkmark-circle" size={17} color={colors.success} />
-              <Text variant="caption" tone="inkSoft" style={styles.listText}>
-                {t(k)}
-              </Text>
+        {satici ? (
+          /*
+            UZMANA ÖZEL: konum bir TERCİH değil, hizmet vermenin koşulu.
+            Müşteri metinleri ("konumun gizli") uzmanda tam tersini
+            söylüyordu.
+          */
+          <>
+            <SectionHeader title={t('privacy.pro_address')} />
+            <View style={[styles.group, styles.list, shadow.soft]}>
+              <View style={styles.listRow}>
+                <Ionicons name="location" size={17} color={colors.accentFg} />
+                <Text variant="caption" tone="inkSoft" style={styles.listText}>
+                  {t('privacy.pro_address_sub')}
+                </Text>
+              </View>
             </View>
-          ))}
-        </View>
+            <SectionHeader title={t('privacy.pro_customer_data')} />
+            <View style={[styles.group, styles.list, shadow.soft]}>
+              <View style={styles.listRow}>
+                <Ionicons name="shield-checkmark" size={17} color={colors.success} />
+                <Text variant="caption" tone="inkSoft" style={styles.listText}>
+                  {t('privacy.pro_customer_data_sub')}
+                </Text>
+              </View>
+            </View>
+          </>
+        ) : (
+          <>
+            <SectionHeader title={t('privacy.loc.title')} />
+            <View style={[styles.group, styles.list, shadow.soft]}>
+              {(['privacy.loc.1', 'privacy.loc.2', 'privacy.loc.3'] as const).map((k) => (
+                <View key={k} style={styles.listRow}>
+                  <Ionicons name="checkmark-circle" size={17} color={colors.success} />
+                  <Text variant="caption" tone="inkSoft" style={styles.listText}>
+                    {t(k)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
 
         {/* ANONİM YORUM — vaat değil MEKANİZMA. Buradaki üç madde kodda doğrulandı:
             yorumda kullanıcı kimliği tutulmuyor, uzman tarihi görmüyor, silme uç

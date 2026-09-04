@@ -145,11 +145,7 @@ function YolKarti({
           >
             {cta}
           </Text>
-          <Ionicons
-            name="arrow-forward"
-            size={13}
-            color={dolu ? colors.accent : colors.onAccent}
-          />
+          <Ionicons name="arrow-forward" size={13} color={dolu ? colors.accent : colors.onAccent} />
         </View>
       </Pressable>
     </Animated.View>

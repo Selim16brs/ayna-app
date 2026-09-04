@@ -30,7 +30,7 @@ import {
 } from '../loyalty/completion-rewards';
 import { loadLedgerState, loadLoyaltyRules } from '../loyalty/loyalty.rules';
 import { loadDepositRules } from './deposit.rules';
-import { holdDeadline, loadWindows, responseDeadline } from './booking-windows';
+import { cevapSonu, holdDeadline, loadWindows } from './booking-windows';
 import { SLOT_HOLDING_STATUSES } from './slot-statuses';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
@@ -388,7 +388,12 @@ export class BookingsService {
       ...(input.offerId ? { offerId: input.offerId } : {}),
       // §4.2 — uzmanın 3 saati SUNUCUDA damgalanır; mobil sayaç buna bakar.
       ...((input.status ?? 'onay_bekliyor') === 'onay_bekliyor'
-        ? { responseDeadline: responseDeadline(windows) }
+        ? /*
+           * Pencere randevu saatine göre ORANTILI: sabit 3 saat, aynı gün
+           * randevularında anlamsızdı ve ayrı bir kural o talepleri anında
+           * düşürüyordu. Saatsiz talepte (teklif toplama) tam pencere.
+           */
+          { responseDeadline: cevapSonu(windows, input.startMs ?? null) }
         : {}),
     };
     const existing = await this.prisma.booking.findUnique({ where: { id: input.id } });
@@ -429,7 +434,7 @@ export class BookingsService {
       }
       if (mode === 'create_requires_approval' && data.status === 'kesinlesti') {
         data.status = 'onay_bekliyor';
-        data.responseDeadline = responseDeadline(windows);
+        data.responseDeadline = cevapSonu(windows, input.startMs ?? null);
       }
       // manage_calendar → `kesinlesti` kalabilir; çakışma kontrolü yine çalışır.
       // OFFLINE kayıtta depozito akışı YOK: AYNA müşterisi yok, dolayısıyla

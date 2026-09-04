@@ -431,6 +431,8 @@ export const tr = {
   'seller.services.active_unit': 'aktif hizmet',
   'seller.services.empty': 'Bu kategoride henüz hizmet seçmedin.',
   'seller.services.saved': 'Hizmetlerin güncellendi.',
+  'seller.services.add_row': 'Ekle',
+  'seller.services.need_name_price': 'Ad ve fiyat gerekli',
 
   // Keşfet (ana ekran)
   'home.services': 'Hizmetler',
@@ -448,7 +450,7 @@ export const tr = {
   'pro.not_found.body': 'Uzman kaydı kaldırılmış ya da geçici olarak erişilemiyor olabilir.',
   'pro.not_found.cta': 'Başka uzman ara',
   'home.search': 'Salon, hizmet veya stilist ara...',
-  'home.featured': 'Senin İçin Seçtiklerimiz',
+  'home.featured': 'Senin İçin Seçtiklerim',
 
   // Kategoriler
 
@@ -743,6 +745,8 @@ export const tr = {
   'demand.card.view': 'Teklifleri gör →',
   'seller.requests.title': 'Talepler',
   'seller.requests.empty': 'Şu an açık talep yok',
+  'seller.requests.direct': 'Onayını bekleyen randevular',
+  'seller.requests.direct_note': 'Müşteri seni seçti. Onaylarsan randevu takvimine düşer.',
   'seller.requests.last': 'Son',
   'seller.requests.budget': 'Bütçe',
   'seller.requests.give': 'Teklif ver',
@@ -1643,7 +1647,7 @@ export const tr = {
   'ads.placement': 'Nerede yayınlansın?',
   'ads.place.firsatlar': 'Fırsatlar',
   'ads.place.firsatlar_d': 'Kampanya arayan müşterinin baktığı yer',
-  'ads.place.one_cikanlar': 'Öne çıkanlar',
+  'ads.place.one_cikanlar': 'Senin İçin Seçtiklerim',
   'ads.place.one_cikanlar_d': 'Keşfet ekranının üst vitrini',
   'ads.months': 'Kaç ay?',
   'ads.creative': 'Reklamın',
@@ -2161,6 +2165,12 @@ export const tr = {
   'privacy.title': 'Gizlilik',
   'privacy.subtitle': 'Verilerin üzerindeki kontrol sende',
   'privacy.location': 'Konum paylaşımı',
+  'privacy.pro_address': 'İşletme adresin herkese açık',
+  'privacy.pro_address_sub':
+    'Müşteri seni haritada bulabilsin diye adresin profilinde görünür. Bu bir tercih değil, hizmet vermenin koşulu.',
+  'privacy.pro_customer_data': 'Müşteri bilgileri',
+  'privacy.pro_customer_data_sub':
+    'Müşterinin telefonu sana kapalı; iletişim uygulama içinden. Anonim yorumların sahibini göremezsin.',
   'privacy.location_sub': 'Varsayılan olarak kapalı',
   'privacy.anon_reviews': 'Anonim yorumlar',
   'privacy.anon_reviews_sub': 'Yorumlarında kimliğin gizli kalır',

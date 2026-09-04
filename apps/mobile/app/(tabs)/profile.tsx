@@ -50,10 +50,25 @@ const MENU: {
   // için buraya da kondu.
   { key: 'profile.menu.share', icon: 'share-social-outline', sellerOnly: true },
   { key: 'profile.menu.always', icon: 'infinite-outline' },
-  { key: 'profile.menu.rewards', icon: 'gift-outline' },
+  /*
+   * PUANLAR YALNIZ MÜŞTERİDE.
+   *
+   * Kurucu: "uzman kısmında puanlarım diye bir şey yok. uzman ve salon
+   * puan toplayamaz."
+   *
+   * AYNA Puanı müşterinin harcamasından doğuyor ve randevuda indirim
+   * olarak kullanılıyor. Uzman/salon harcama yapmıyor; menüde bir puan
+   * ekranı görmek onlara olmayan bir hak vaat ediyordu.
+   *
+   * Uzmanın karşılığı BAŞARI YÜZDESİ — tamamlanan randevu, değerlendirme
+   * ve cevap süresinden hesaplanıyor (`/seller/reports`).
+   */
+  { key: 'profile.menu.rewards', icon: 'gift-outline', customerOnly: true },
   { key: 'profile.menu.budget', icon: 'wallet-outline', customerOnly: true },
   { key: 'profile.menu.saved', icon: 'bookmark-outline' },
-  { key: 'profile.menu.referral', icon: 'gift-outline' },
+  // Davet ödülü de PUAN veriyor: uzman/salon puan toplayamadığı için
+  // onlara gösterilmiyor.
+  { key: 'profile.menu.referral', icon: 'gift-outline', customerOnly: true },
   { key: 'profile.menu.safety', icon: 'shield-checkmark-outline' },
   // Adresler MÜŞTERİ kavramı (hizmetin geleceği yer). Uzmanın çalışma adresi
   // profil bilgisinde; ayrı bir adres defteri anlamsızdı.
