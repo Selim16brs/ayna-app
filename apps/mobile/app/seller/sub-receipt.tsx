@@ -10,6 +10,7 @@ import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, PressableScale, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { BELGE_GENISLIK, kucultVeB64 } from '../../src/gorsel-kucult';
 
 // §11/§460 — üyelik ödeme dekontu: app-dışı ödeme (Kaspi/banka) sonrası dekont yükle → admin onayı.
 export default function SubReceiptScreen() {
@@ -33,7 +34,9 @@ export default function SubReceiptScreen() {
     });
     if (!res.canceled && res.assets[0]) {
       const a = res.assets[0];
-      setUri(a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+      // Dekont belge gibi: tutar ve tarih okunur kalmalı.
+      const b64 = await kucultVeB64(a.uri, a.base64, BELGE_GENISLIK);
+      if (b64) setUri(`data:image/jpeg;base64,${b64}`);
     }
   };
 

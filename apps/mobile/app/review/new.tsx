@@ -10,6 +10,7 @@ import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import { kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 
 const STARS = [1, 2, 3, 4, 5];
 // §7.1 — alt kırılım etiketleri (hızlı, isteğe bağlı)
@@ -63,7 +64,8 @@ export default function ReviewNewScreen() {
     });
     if (res.canceled || !res.assets[0]) return;
     const a = res.assets[0];
-    setPhotos((p) => [...p, a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri]);
+    const b64 = await kucultVeB64(a.uri, a.base64, PAYLASIM_GENISLIK);
+    if (b64) setPhotos((p) => [...p, `data:image/jpeg;base64,${b64}`]);
   }
 
   if (!booking) {

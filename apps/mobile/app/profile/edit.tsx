@@ -7,7 +7,7 @@ import { useLocale } from '../../src/locale';
 import { selectPortraitKesilmis, useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { AVATAR_GENISLIK, kucultVeB64 } from '../../src/gorsel-kucult';
+import { AVATAR_GENISLIK, BELGE_GENISLIK, kucultVeB64 } from '../../src/gorsel-kucult';
 import {
   Button,
   Screen,
@@ -84,8 +84,9 @@ export default function ProfileEditScreen() {
     });
     if (!res.canceled && res.assets[0]) {
       const a = res.assets[0];
-      const uri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
-      setCerts((c) => [...c, uri]);
+      // Sertifika belge gibi: üstündeki yazı okunur kalmalı.
+      const b64 = await kucultVeB64(a.uri, a.base64, BELGE_GENISLIK);
+      if (b64) setCerts((c) => [...c, `data:image/jpeg;base64,${b64}`]);
     }
   };
   const removeCert = (uri: string) =>

@@ -70,6 +70,24 @@ test('ÜÇ EKRAN da ortak küçültmeden geçiyor', () => {
   }
 });
 
+test('GÖRSEL GÖNDEREN HİÇBİR EKRAN küçültmeyi atlamıyor', () => {
+  /*
+   * Tek ekranı düzeltmek yetmez: aynı hata her yeni ekranda tekrar
+   * doğuyordu. Bu test, ham `base64`i doğrudan data URL'ye çeviren bir
+   * ekran kalmadığını tarıyor — yenisi eklenirse burada düşer.
+   */
+  const { readdirSync, statSync } = require('node:fs') as typeof import('node:fs');
+  const gez = (d: string): string[] =>
+    readdirSync(d).flatMap((ad) => {
+      const tam = join(d, ad);
+      return statSync(tam).isDirectory() ? gez(tam) : tam.endsWith('.tsx') ? [tam] : [];
+    });
+  const suclu = gez(join(__dirname, '..', 'app')).filter((f) =>
+    /a\.base64 \? `data:image/.test(readFileSync(f, 'utf8')),
+  );
+  assert.deepEqual(suclu, [], `küçültmeden gönderen ekran(lar):\n  ${suclu.join('\n  ')}`);
+});
+
 test('BELGE OKUNAMAZSA listeye eklenmiyor', () => {
   /*
    * Eskiden base64 yoksa yerel dosya yolu (`file://…`) belge diye giriyordu:

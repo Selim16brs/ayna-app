@@ -18,6 +18,7 @@ import { useStore } from '../../src/store';
 import { radius, shadow, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { BELGE_GENISLIK, kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 
 /**
  * REKLAM VER — ücretli vitrin satın alma.
@@ -85,7 +86,17 @@ export default function SellerAdsScreen() {
     });
     if (res.canceled || !res.assets?.[0]) return;
     const a = res.assets[0];
-    const uri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
+    /*
+     * DEKONT belge gibi: tutar ve tarih okunur kalmalı, o yüzden reklam
+     * görselinden daha geniş küçültülüyor.
+     */
+    const b64 = await kucultVeB64(
+      a.uri,
+      a.base64,
+      hedef === 'reklam' ? PAYLASIM_GENISLIK : BELGE_GENISLIK,
+    );
+    if (!b64) return;
+    const uri = `data:image/jpeg;base64,${b64}`;
     if (hedef === 'reklam') setGorsel(uri);
     else setDekont(uri);
   };

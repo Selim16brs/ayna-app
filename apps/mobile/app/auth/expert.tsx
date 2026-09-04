@@ -49,6 +49,7 @@ import {
 } from '../../src/ui';
 import { type AutofillKind, autofillProps, missingLabels } from '../../src/formValidation';
 import type { MessageKey } from '@ayna/i18n';
+import { BELGE_GENISLIK, kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 
 // Faz B — uzmanın bağlanacağı salonlar GERÇEK kayıtlı işletmelerden gelir (mock değil).
 const lower = (s: string) => s.replace(/İ/g, 'i').replace(/I/g, 'ı').toLocaleLowerCase('tr-TR');
@@ -172,8 +173,9 @@ export default function ExpertRegisterScreen() {
     });
     if (!res.canceled && res.assets[0]) {
       const a = res.assets[0];
-      const uri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
-      setCerts((c) => [...c, uri]);
+      // Sertifika belge gibi: üstündeki yazı okunur kalmalı.
+      const b64 = await kucultVeB64(a.uri, a.base64, BELGE_GENISLIK);
+      if (b64) setCerts((c) => [...c, `data:image/jpeg;base64,${b64}`]);
     }
   }
 
@@ -189,13 +191,19 @@ export default function ExpertRegisterScreen() {
       allowsMultipleSelection: true,
       selectionLimit: PORTFOLIO_MAX - portfolio.length,
     });
-    if (!res.canceled)
-      setPortfolio((p) =>
-        [
-          ...p,
-          ...res.assets.map((a) => (a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri)),
-        ].slice(0, PORTFOLIO_MAX),
-      );
+    if (!res.canceled) {
+      /*
+       * ÇOKLU SEÇİM: küçültme olmadan üç-dört fotoğraf tek istekte
+       * sunucunun gövde sınırını aşıyor ve KAYIT düşüyordu — kullanıcı
+       * neden olduğunu anlamadan.
+       */
+      const yeni = (
+        await Promise.all(res.assets.map((a) => kucultVeB64(a.uri, a.base64, PAYLASIM_GENISLIK)))
+      )
+        .filter((x): x is string => !!x)
+        .map((b) => `data:image/jpeg;base64,${b}`);
+      setPortfolio((p) => [...p, ...yeni].slice(0, PORTFOLIO_MAX));
+    }
   }
 
   // Alt hizmeti aç/kapa (açınca taksonomi varsayılan fiyat/süresiyle gelir)

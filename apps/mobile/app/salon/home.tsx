@@ -16,6 +16,7 @@ import { selectUnreadCount, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { PressableScale, Screen, TAB_BAR_CLEARANCE, Text, TierUpsell } from '../../src/ui';
+import { BELGE_GENISLIK, kucultVeB64 } from '../../src/gorsel-kucult';
 
 // §10.1 — SALON dashboard: kadro-merkezli. Üstte salon kapak fotoğrafı; yönetim öğeleri Profil'de.
 export default function SalonHomeScreen() {
@@ -84,7 +85,9 @@ export default function SalonHomeScreen() {
     });
     if (!res.canceled && res.assets[0]) {
       const a = res.assets[0];
-      setAvatar(a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+      // Kapak geniş gösteriliyor: belge genişliğinde küçültülüyor.
+      const b64 = await kucultVeB64(a.uri, a.base64, BELGE_GENISLIK);
+      if (b64) setAvatar(`data:image/jpeg;base64,${b64}`);
     }
   };
 

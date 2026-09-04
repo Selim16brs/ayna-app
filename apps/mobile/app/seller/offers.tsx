@@ -27,6 +27,7 @@ import {
   TAB_BAR_CLEARANCE,
 } from '../../src/ui';
 import type { MessageKey } from '@ayna/i18n';
+import { kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 
 const CATS = activeCategories();
 const DAY_KEYS: MessageKey[] = [
@@ -101,7 +102,8 @@ export default function SellerOffersScreen() {
     });
     if (res.canceled || !res.assets[0]) return;
     const a = res.assets[0];
-    setGorsel(a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+    const b64 = await kucultVeB64(a.uri, a.base64, PAYLASIM_GENISLIK);
+    if (b64) setGorsel(`data:image/jpeg;base64,${b64}`);
   };
 
   async function submit() {

@@ -24,6 +24,7 @@ import { TaxCategory, activeCategories, kategoriAdi, tri } from '../../../src/ta
 import { useLocale } from '../../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme-context';
+import { kucultVeB64, PAYLASIM_GENISLIK } from '../../../src/gorsel-kucult';
 import {
   SifreKurali,
   AddressPicker,
@@ -122,13 +123,19 @@ export default function NewBusinessScreen() {
       allowsMultipleSelection: true,
       selectionLimit: PHOTO_MAX - photos.length,
     });
-    if (!res.canceled)
-      setPhotos((p) =>
-        [
-          ...p,
-          ...res.assets.map((a) => (a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri)),
-        ].slice(0, PHOTO_MAX),
-      );
+    if (!res.canceled) {
+      /*
+       * ÇOKLU SEÇİM: küçültme olmadan üç-dört fotoğraf tek istekte
+       * sunucunun gövde sınırını aşıyor ve KAYIT düşüyordu — kullanıcı
+       * neden olduğunu anlamadan.
+       */
+      const yeni = (
+        await Promise.all(res.assets.map((a) => kucultVeB64(a.uri, a.base64, PAYLASIM_GENISLIK)))
+      )
+        .filter((x): x is string => !!x)
+        .map((b) => `data:image/jpeg;base64,${b}`);
+      setPhotos((p) => [...p, ...yeni].slice(0, PHOTO_MAX));
+    }
   }
 
   // §3.2 — işletme belgesi (ruhsat/vergi vb.) — galeriden görsel; data URL olarak kayda gider.

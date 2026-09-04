@@ -17,6 +17,7 @@ import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 
 // Kayıttan gelen başlangıç galerisi (demo)
 
@@ -69,8 +70,10 @@ export default function GalleryScreen() {
     });
     if (!result.canceled && result.assets[0]) {
       const a = result.assets[0];
-      const uri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
-      persist([uri, ...photos].slice(0, 20));
+      // Küçültme ORTAK: ham telefon fotoğrafı sunucunun gövde sınırını aşıyor.
+      const b64 = await kucultVeB64(a.uri, a.base64, PAYLASIM_GENISLIK);
+      if (!b64) return;
+      persist([`data:image/jpeg;base64,${b64}`, ...photos].slice(0, 20));
     }
   }
 
