@@ -1281,6 +1281,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'agenda.title_own': 'Мой календарь',
   'agenda.add_offline': 'Офлайн-запись',
   'agenda.empty': 'В этом интервале нет записей',
+  'agenda.close_err': 'Не сохранено — этот день всё ещё открыт для клиента. Попробуйте снова.',
   'agenda.view.day': 'День',
   'agenda.view.list': 'Список',
   'agenda.view.salon': 'Салон',

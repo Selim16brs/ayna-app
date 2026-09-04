@@ -1356,6 +1356,7 @@ export const tr = {
   'agenda.title_own': 'Takvimim',
   'agenda.add_offline': 'Offline randevu',
   'agenda.empty': 'Bu aralıkta randevu yok',
+  'agenda.close_err': 'Kaydedilemedi — o gün müşteriye hâlâ açık görünüyor. Tekrar dene.',
   'agenda.view.day': 'Gün',
   'agenda.view.list': 'Liste',
   'agenda.view.salon': 'Salon',

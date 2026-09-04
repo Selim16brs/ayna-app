@@ -1271,6 +1271,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'agenda.title_own': 'Күнтізбем',
   'agenda.add_offline': 'Офлайн жазылу',
   'agenda.empty': 'Осы аралықта жазылу жоқ',
+  'agenda.close_err': 'Сақталмады — ол күн клиентке әлі ашық көрінеді. Қайта көр.',
   'agenda.view.day': 'Күн',
   'agenda.view.list': 'Тізім',
   'agenda.view.salon': 'Салон',

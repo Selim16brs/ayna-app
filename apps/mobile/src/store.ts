@@ -549,7 +549,11 @@ interface State {
   checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
   expireDeposits: () => void; // §4.4 — depozito süresi dolan randevuları düşürür
   expireResponses: () => void; // §4.1.3 — uzman yanıt süresi dolan talepleri düşürür
-  toggleClosedDay: (dayStartMs: number) => void; // §4.6 — günü kapalı/açık işaretle
+  /**
+   * Günü kapalı/açık işaretler. Sunucuya yazılamazsa YEREL DEĞİŞİKLİK GERİ
+   * ALINIYOR ve `false` dönüyor: ekran ile sunucu ayrı şey gösteremez.
+   */
+  toggleClosedDay: (dayStartMs: number) => Promise<boolean>; // §4.6 — günü kapalı/açık işaretle
   // §5.2 Faz A — teklif/talep akışı BULUTTAN (iki cihaz arasında gerçek çalışır)
   createDemand: (input: {
     mode: DemandMode;
@@ -1616,14 +1620,29 @@ export const useStore = create<State>()(
       },
 
       // §4.6 — günü kapalı/açık işaretle (izin/tatil). Kullanıcı tarafında kapalı gün slot göstermez.
-      toggleClosedDay: (dayStartMs) => {
+      toggleClosedDay: async (dayStartMs) => {
+        const oncekiler = get().closedDays;
         set((s) => ({
           closedDays: s.closedDays.includes(dayStartMs)
             ? s.closedDays.filter((d) => d !== dayStartMs)
             : [...s.closedDays, dayStartMs],
         }));
         // §4.6 — izin günleri HESAPTA (kullanıcı tarafı slotları da bunlara göre kapanır)
-        void api.setMyClosedDays(get().closedDays).catch(() => undefined);
+        try {
+          await api.setMyClosedDays(get().closedDays);
+          return true;
+        } catch {
+          /*
+           * YAZILAMAYAN İZİN GÜNÜ GERİ ALINIYOR.
+           *
+           * Hata yutuluyordu: uzman günü kapalı işaretliyor, ekranda kapalı
+           * görünüyor, ama sunucu hâlâ o güne slot açıyordu. Müşteri uzmanın
+           * izinli olduğu güne randevu alıyordu — uzmanın hiç kabul etmediği
+           * bir gün. Ekranın sunucuyla aynı şeyi göstermesi şart.
+           */
+          set({ closedDays: oncekiler });
+          return false;
+        }
       },
 
       // §10.1/§12.7 — promosyon oluştur → admin onayına düşer (status 'pending')
