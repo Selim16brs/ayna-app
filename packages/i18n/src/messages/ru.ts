@@ -924,6 +924,11 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'booking.schedule.confirm': 'Подтвердить запись',
   'notif.slot_conflict': 'Конфликт времени ⚠️',
   'notif.slot_conflict_b': 'Время для {slot} пересеклось с другой записью — выберите новое время.',
+  'notif.booking_failed': 'Запись не создана',
+  'notif.booking_failed_b':
+    'Запрос на {slot} не сохранился на сервере — нажмите и попробуйте снова.',
+  'notif.verify_required': 'Для записи нужна проверка',
+  'notif.verify_required_b': 'Подтвердите номер, затем отправьте запрос снова.',
   'booking.schedule.day_closed': 'В этот день мастер не работает — выберите другой день',
   'booking.schedule.slots_loading': 'Загружаем свободное время…',
   'booking.schedule.slots_failed':

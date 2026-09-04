@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { cakisiyor, doluAraliklar } from '../../src/booking-flow';
 import type { BookingSource } from '../../src/data';
 import { almatyDayStart, formatSlotTr, slotTime } from '../../src/datetime';
@@ -13,6 +13,7 @@ import { useStore } from '../../src/store';
 import { type ColorTokens, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { uzmanlikYazisi } from '../../src/uzmanlik';
+import { randevuVerebilir } from '@ayna/domain';
 import {
   Button,
   DateField,
@@ -52,6 +53,7 @@ export default function ScheduleScreen() {
     };
   }, [params.offerId]);
   const addBooking = useStore((s) => s.addBooking);
+  const kullanici = useStore((s) => s.currentUser);
   const pro = useProfessionalDetail(params.proId ?? '1');
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   const [uzmanId, setUzmanId] = useState<string>(params.uzmanId ?? pro.staff[0]?.id ?? '');
@@ -134,6 +136,18 @@ export default function ScheduleScreen() {
   const offerWindowOk = inOfferWindow(when.getTime());
 
   function confirm() {
+    /*
+     * DOĞRULAMA KAPISI BURADA DA — uzman profilindeki randevu düğmesiyle
+     * aynı kural. Bu ekran ayrı bir giriş yolu: kampanyadan ve teklif
+     * sonucundan buraya doğrudan geliniyor, profilden geçilmiyor.
+     */
+    if (!randevuVerebilir(kullanici ?? {})) {
+      Alert.alert(t('booking.verify_required'), '', [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('booking.verify_cta'), onPress: () => router.push('/auth/verify') },
+      ]);
+      return;
+    }
     const startMs = when.getTime();
     const source = (params.source as BookingSource) ?? 'direct';
     const serviceName = offer
