@@ -37,15 +37,11 @@ type QuoteRow = {
     imageUrl: string;
     rating: unknown;
     reviewCount: number;
+    /** Gerçek konum — mesafe bundan hesaplanıyor; yoksa mesafe YAZILMIYOR. */
+    lat: number | null;
+    lng: number | null;
   } | null;
 };
-
-// §9.3 — yaklaşık mesafe (deterministik; gerçek adres asla kullanılmaz — privacy)
-function estKm(id: string): number {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return 1 + (Math.abs(h) % 9);
-}
 
 function almatyLabel(ms: number): string {
   return new Intl.DateTimeFormat('tr-TR', {
@@ -100,7 +96,20 @@ export class QuotesService {
       proImage: pro?.imageUrl ?? '',
       rating: pro ? Number(pro.rating) : 0,
       reviewCount: pro?.reviewCount ?? 0,
-      distanceKm: estKm(q.id),
+      /*
+       * MESAFE UYDURULMUYOR.
+       *
+       * Buradan `estKm(q.id)` dönüyordu: teklifin KİMLİK DİZESİNDEN
+       * hesaplanan 1–9 km arası bir sayı. Müşteri kartta "3 km" okuyor,
+       * "Yakınlık" sıralaması ve "Önerilen" skoru da bu sayıya bakıyordu —
+       * yani sıralama kısmen rastgeleydi.
+       *
+       * Artık uzmanın GERÇEK koordinatı gidiyor; mesafeyi uygulama, keşif
+       * ve arama ekranlarıyla AYNI kuralla hesaplıyor. Koordinat yoksa
+       * mesafe yazılmıyor (uydurmaktansa boş bırakmak).
+       */
+      lat: pro?.lat ?? null,
+      lng: pro?.lng ?? null,
       price: Number(q.price),
       // §A2 — ⚡Fırsat rozeti (indirim >0 ise müşteri kartında görünür)
       discountPercent: q.discountPercent,
@@ -368,7 +377,15 @@ export class QuotesService {
         quotes: {
           include: {
             professional: {
-              select: { id: true, name: true, imageUrl: true, rating: true, reviewCount: true },
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+                rating: true,
+                reviewCount: true,
+                lat: true,
+                lng: true,
+              },
             },
           },
         },
@@ -428,7 +445,15 @@ export class QuotesService {
           orderBy: { createdAt: 'asc' },
           include: {
             professional: {
-              select: { id: true, name: true, imageUrl: true, rating: true, reviewCount: true },
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+                rating: true,
+                reviewCount: true,
+                lat: true,
+                lng: true,
+              },
             },
           },
         },
@@ -542,7 +567,15 @@ export class QuotesService {
         quotes: {
           include: {
             professional: {
-              select: { id: true, name: true, imageUrl: true, rating: true, reviewCount: true },
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+                rating: true,
+                reviewCount: true,
+                lat: true,
+                lng: true,
+              },
             },
           },
         },

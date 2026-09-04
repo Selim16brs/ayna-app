@@ -1621,7 +1621,22 @@ export interface DemandOffer {
   proImage: string;
   rating: number;
   reviewCount: number;
-  distanceKm: number;
+  /**
+   * Uzmanın GERÇEK konumu (yoksa null). Sunucu eskiden `distanceKm`
+   * gönderiyordu ama o sayı teklifin KİMLİK DİZESİNDEN üretiliyordu:
+   * kartta "3 km" yazıyor, "Yakınlık" sıralaması ve "Önerilen" skoru da
+   * ona bakıyordu — sıralama kısmen rastgeleydi.
+   */
+  lat?: number | null;
+  lng?: number | null;
+  /**
+   * Hesaplanan mesafe (km) — koordinat yoksa `null`.
+   *
+   * Ekran, keşif ve arama ile AYNI kuraldan (`saglayiciMesafesi`) hesaplayıp
+   * buraya yazıyor; sıralama da bunu okuyor. Bilinmeyen mesafe sıralamada
+   * öne geçmiyor, ama "uzak" da sayılmıyor: bilmiyoruz.
+   */
+  mesafeKm?: number | null;
   price: number;
   discountPercent?: number; // §A2 — ⚡Fırsat teklifi (0 = indirimsiz)
   discountReason?: string; // off_peak | last_minute | flash
@@ -1716,7 +1731,6 @@ export function buildOffers(
       proImage: p.image,
       rating: p.rating,
       reviewCount: p.reviewCount,
-      distanceKm: 1 + ((i * 2) % 8),
       price,
       etaMin: eta,
       ...(i % 2 === 1 ? { note: OFFER_NOTES[i % OFFER_NOTES.length] } : {}),
@@ -1731,9 +1745,19 @@ export type OfferSort = 'recommended' | 'price' | 'distance' | 'rating';
 export function sortOffers(offers: DemandOffer[], by: OfferSort): DemandOffer[] {
   const arr = [...offers];
   if (by === 'price') return arr.sort((a, b) => a.price - b.price);
-  if (by === 'distance') return arr.sort((a, b) => a.distanceKm - b.distanceKm);
+  if (by === 'distance')
+    /*
+     * MESAFESİ BİLİNMEYEN SONA. "Yakınlık"a göre sıralarken mesafesi
+     * bilinmeyeni başa koymak, onu yakın SAYMAK olurdu.
+     */
+    return arr.sort((a, b) => (a.mesafeKm ?? Infinity) - (b.mesafeKm ?? Infinity));
   if (by === 'rating') return arr.sort((a, b) => b.rating - a.rating);
-  const score = (o: DemandOffer) => o.rating * 20 - o.distanceKm * 2 - o.price / 2000;
+  /*
+   * "Önerilen" skoru: mesafe BİLİNİYORSA cezalandırıyor, bilinmiyorsa
+   * hiç katılmıyor. Bilinmeyeni "0 km" saymak onu en yakın gibi gösterir,
+   * "9 km" saymak haksız yere cezalandırırdı.
+   */
+  const score = (o: DemandOffer) => o.rating * 20 - (o.mesafeKm ?? 0) * 2 - o.price / 2000;
   return arr.sort((a, b) => score(b) - score(a));
 }
 
