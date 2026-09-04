@@ -254,7 +254,26 @@ function ThemedStack() {
       </NailCursor>
       {/* §10 — ÇEVRİMDIŞI BANDI en üstte, her ekranda. */}
       <OfflineBanner />
-      {/* Açılış mesajı EN ÜSTTE: geçiş bitene kadar ana sayfayı örtüyor. */}
+      {baseHidden ? null : isSalon ? (
+        <SalonTabBar />
+      ) : isExpert ? (
+        <SellerTabBar />
+      ) : pathname.startsWith('/seller') || pathname.startsWith('/salon') ? null : (
+        <AppTabBar />
+      )}
+      {/*
+       * AÇILIŞ MESAJI EN SONDA ÇİZİLİYOR — yani her şeyin ÜSTÜNDE.
+       *
+       * Kurucu: "açılışta mesaj çıkarken altta alt menüde görünüyor.
+       * o hata, mesaj bitene kadar ana ekrandan bir şey çıkmaması lazım."
+       *
+       * React Native'de kardeşler sırayla boyanıyor: mesaj alt barlardan
+       * ÖNCE yazılıydı, bu yüzden bar mesajın üstüne düşüyordu.
+       *
+       * Barlar yine ÇİZİLİYOR (kaldırılmadı): kapanış geçişi mesajı
+       * söndürerek altındaki ekranı açıyor; barlar hiç kurulmasaydı o an
+       * boş bir yerden aniden belirirlerdi.
+       */}
       {acilis && !acilisBitti ? (
         <AcilisMesaji
           sonuc={acilis}
@@ -266,13 +285,6 @@ function ThemedStack() {
           }}
         />
       ) : null}
-      {baseHidden ? null : isSalon ? (
-        <SalonTabBar />
-      ) : isExpert ? (
-        <SellerTabBar />
-      ) : pathname.startsWith('/seller') || pathname.startsWith('/salon') ? null : (
-        <AppTabBar />
-      )}
     </>
   );
 }

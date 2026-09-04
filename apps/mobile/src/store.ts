@@ -268,6 +268,8 @@ export interface AddBookingInput {
   proName: string;
   proImage: string;
   uzmanName?: string;
+  /** Uzman kaydının kimliği — eşleşme ADLA değil bununla yapılıyor. */
+  uzmanId?: string;
   startMs: number;
   durationMin: number;
   price: number;
@@ -467,6 +469,7 @@ interface State {
   salonAddOffline: (input: {
     salonName: string;
     uzmanName: string;
+    uzmanId?: string;
     customerName: string;
     customerPhone: string;
     service: string;
@@ -559,7 +562,13 @@ interface State {
   ) => Promise<boolean>;
   // §4.5 — uzman ayrılığında randevu devri (sessiz silme YASAK)
   /** Kadrodan çıkan uzmanın açık randevularını iptal eder; iptal edilen sayıyı döner. */
-  cikanUzmanRandevulari: (uzmanAdi: string) => number;
+  /**
+   * Kadrodan çıkarılan uzmanın açık randevularını kapatır.
+   *
+   * Parametre KİMLİK — eskiden addı ve aynı adlı bir başka uzmanın
+   * randevuları da iptal ediliyordu.
+   */
+  cikanUzmanRandevulari: (uzmanId: string) => number;
   // §7.1 — çift puanlama (uzman + ops. salon) + alt kırılım etiketleri
   reviewBooking: (
     id: string,
@@ -1192,6 +1201,7 @@ export const useStore = create<State>()(
           proName: input.proName,
           proImage: input.proImage,
           ...(input.uzmanName ? { uzmanName: input.uzmanName } : {}),
+          ...(input.uzmanId ? { uzmanId: input.uzmanId } : {}),
           ...(input.offerId ? { offerId: input.offerId } : {}),
           ...(input.serviceNames?.length ? { serviceNames: input.serviceNames } : {}),
           startMs: input.startMs,
@@ -1231,6 +1241,7 @@ export const useStore = create<State>()(
           proName: input.salonName,
           proImage: '',
           uzmanName: input.uzmanName,
+          uzmanId: input.uzmanId,
           customerName: input.customerName,
           ...(input.customerPhone ? { customerPhone: input.customerPhone } : {}),
           startMs: input.startMs,
@@ -1802,11 +1813,21 @@ export const useStore = create<State>()(
        * yasak — her randevu sunucuda da iptal edilir, depozito ödendiyse §4.10
        * iade hakkı doğar ve müşteriye bildirim gider. İptal edilen sayı döner.
        */
-      cikanUzmanRandevulari: (uzmanAdi) => {
+      cikanUzmanRandevulari: (uzmanId) => {
         const now = Date.now();
+        /*
+         * KİMLİKLE eşleşiyor. Eskiden `b.uzmanName === uzmanAdi` idi:
+         * aynı salonda iki "Madina" varsa birini kadrodan çıkarmak
+         * DİĞERİNİN randevularını da iptal ediyordu — müşterilere
+         * "uzman kadrodan ayrıldı" bildirimi gidiyordu.
+         *
+         * Kimliği olmayan eski randevular ETKİLENMİYOR: yanlış randevuyu
+         * iptal etmektense dokunmamak doğru.
+         */
         const etkilenen = get().bookings.filter(
           (b) =>
-            b.uzmanName === uzmanAdi &&
+            !!uzmanId &&
+            b.uzmanId === uzmanId &&
             b.startMs > now &&
             SLOT_HOLDING_STATES.includes(b.status as never),
         );

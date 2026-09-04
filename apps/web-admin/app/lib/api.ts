@@ -160,6 +160,18 @@ export const api = {
     }),
   // §uzman onboarding — uzman doğrulama kuyruğu
   specialists: () => req<SpecialistRow[]>('/admin/specialists'),
+  /** Uzman hesabını aç / reddet — onaysız uzman çalışamıyor. */
+  setSpecialistStatus: (id: string, status: 'approved' | 'rejected', reason?: string) =>
+    req<{ id: string }>(`/admin/specialists/${id}/status`, {
+      method: 'POST',
+      body: JSON.stringify({ status, reason }),
+    }),
+  /** Müşteriyi elle onayla — telefon doğrulamasının alternatifi. */
+  setUserApproved: (id: string, approved: boolean) =>
+    req<{ id: string; adminApproved: boolean }>(`/admin/users/${id}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ approved }),
+    }),
   specialistDetail: (id: string) => req<SpecialistDetail>(`/admin/specialists/${id}`),
   verifySpecialist: (id: string, flags: Record<string, boolean>) =>
     req<{ verification: { cert: boolean; social: boolean } }>(`/admin/specialists/${id}/verify`, {
@@ -348,6 +360,9 @@ export const api = {
       body: JSON.stringify({ active }),
     }),
 };
+
+/** Reklamın GERÇEK yayın durumu — bayrak değil, yayın penceresiyle birlikte. */
+export type ReklamDurumu = 'yayinda' | 'baslamadi' | 'doldu' | 'pasif';
 
 export interface AcilisMesajSatiri {
   code: string;
@@ -715,6 +730,14 @@ export interface SpecialistRow {
   kycStatus: string;
   verification: SpVerification;
   aynaVerified: boolean;
+  /**
+   * HESAP AÇILDI MI. Rozetlerden ayrı: rozet "neyi doğruladık", bu ise
+   * "çalışabilir mi". Onaysız uzman katalogda görünmüyor.
+   */
+  status: 'pending' | 'approved' | 'rejected';
+  rejectReason?: string | null;
+  /** Salona bağlı mı — bağlı uzmanlar kuyruğa hiç düşmüyordu. */
+  kind: string;
   createdAt: string;
 }
 export interface SpecialistDetail extends SpecialistRow {
@@ -744,6 +767,8 @@ export interface AdminUser {
   status: string;
   gender: string;
   phoneVerified: boolean;
+  /** Yönetici onayı — telefon doğrulamasının alternatifi (randevu kapısı). */
+  adminApproved?: boolean;
   isPremium: boolean;
   membershipTier?: 'free' | 'premium' | 'platinum';
   membershipUntil?: string | null;
@@ -861,9 +886,15 @@ export interface AdBanner {
   active: boolean;
   /** Hangi vitrin satın alındı. */
   placement: 'firsatlar' | 'one_cikanlar';
-  /** Yayın penceresi (ISO). Boş = sınırsız. */
+  /** Yayın penceresi (ISO). Yeni kayıtlarda ZORUNLU; eskiler boş olabilir. */
   startsAt: string | null;
   endsAt: string | null;
+  /**
+   * GERÇEK durum. `active` yalnız bayrak: süresi dolmuş bir reklam
+   * bayrağı açık olduğu için panelde "Aktif" görünüyordu, oysa uygulama
+   * onu hiç göstermiyordu.
+   */
+  durum?: ReklamDurumu;
 }
 export type NewAd = {
   proId: string;

@@ -18,3 +18,5 @@ export * from './trust/ayna-verified.js';
 export * from './money/kzt.js';
 export * from './catalog/katalog.js';
 export * from './splash/uzak.js';
+export * from './auth/sifre.js';
+export * from './auth/randevu-kapisi.js';

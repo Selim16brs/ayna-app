@@ -452,6 +452,13 @@ export interface AuthUser {
   businessName?: string;
   womenVerified?: boolean;
   // §12.3 — admin ceza takip: kısıtlı mod (yeni talep oluşturamaz)
+  /**
+   * Yönetici onayı — telefon doğrulamasının ALTERNATİFİ.
+   *
+   * Randevu kapısı ikisinden birine bakıyor: doğrulanmamış ve
+   * onaylanmamış müşteri randevu veremiyor.
+   */
+  adminApproved?: boolean;
   restricted?: boolean;
   restrictedDaysLeft?: number; // 7 gün penceresinde kalan gün
   /** Hesabın açıldığı an (ISO). Pasaporttaki "üyelik" yılı buradan. */

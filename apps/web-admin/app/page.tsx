@@ -1902,8 +1902,9 @@ const SP_VERIFY_CHECKS: { key: 'cert' | 'social'; label: string }[] = [
   { key: 'social', label: 'Sosyal medya' },
 ];
 function SpecialistsView() {
+  const { onayla } = useDiyalog();
   const [detail, setDetail] = useState<SpecialistDetail | null>(null);
-  const { data } = useAsync<SpecialistRow[]>(() => api.specialists(), []);
+  const { data, reload } = useAsync<SpecialistRow[]>(() => api.specialists(), []);
   const openDetail = async (id: string) => setDetail(await api.specialistDetail(id));
   const toggleVerify = async (key: 'cert' | 'social', on: boolean) => {
     if (!detail) return;
@@ -1933,14 +1934,59 @@ function SpecialistsView() {
               <div className="grow" style={{ cursor: 'pointer' }} onClick={() => openDetail(s.id)}>
                 <div className="name">
                   {s.name} {s.aynaVerified ? '🛡️' : ''}
+                  {/*
+                    HESAP AÇIK MI. Rozetlerden ayrı bir şey: rozet "neyi
+                    doğruladık", bu ise "çalışabilir mi". Onaysız uzman
+                    katalogda görünmüyor ve randevu alamıyor.
+                  */}
+                  <span
+                    className={`pill ${s.status === 'approved' ? 'approved' : s.status === 'rejected' ? 'rejected' : 'pending'}`}
+                    style={{ marginLeft: 8 }}
+                  >
+                    {s.status === 'approved'
+                      ? 'Açık'
+                      : s.status === 'rejected'
+                        ? 'Reddedildi'
+                        : 'Onay bekliyor'}
+                  </span>
                 </div>
                 <div className="meta">
                   {SP_ENTITY_LABEL[s.entityType] ?? s.entityType} · {s.city || '—'} · KYC:{' '}
                   {s.kycStatus}
+                  {s.kind === 'independent' ? ' · Bağımsız' : ' · Salona bağlı'}
                   {s.verification.cert ? ' · ✓Sertifika' : ''}
                   {s.verification.social ? ' · ✓Sosyal' : ''}
                 </div>
               </div>
+              {s.status !== 'approved' ? (
+                <button
+                  className="btn-sm btn-ok"
+                  onClick={async () => {
+                    await api.setSpecialistStatus(s.id, 'approved');
+                    reload();
+                  }}
+                >
+                  Hesabı aç
+                </button>
+              ) : (
+                <button
+                  className="btn-sm btn-ghost"
+                  onClick={async () => {
+                    if (
+                      !(await onayla({
+                        baslik: 'Uzman hesabını kapat',
+                        mesaj: `${s.name} katalogdan düşecek ve yeni randevu alamayacak. Mevcut randevuları etkilenmez.`,
+                        onayEtiket: 'Kapat',
+                      }))
+                    )
+                      return;
+                    await api.setSpecialistStatus(s.id, 'rejected');
+                    reload();
+                  }}
+                >
+                  Kapat
+                </button>
+              )}
               <button className="btn-sm btn-ghost" onClick={() => openDetail(s.id)}>
                 Detay
               </button>
@@ -3123,8 +3169,19 @@ function AdsView() {
     lang === 'tr' ? 'subtitle' : lang === 'kk' ? 'subtitleKk' : 'subtitleRu'
   ) as keyof typeof form;
   const proName = (id: string) => pros?.find((p) => p.id === id)?.name ?? id;
+  /*
+   * TARİHLER ZORUNLU. Kurucu: "reklam girişleri yaparken başlangıç bitiş
+   * tarihleri seçilmeli. seçilmediyse onay butonu çalışmamalı."
+   *
+   * Boş bırakılan reklam SINIRSIZ yayınlanıyordu: bir aylığına ödenmiş
+   * vitrin, kapatmak unutulduğu sürece bedava yayında kalıyordu.
+   */
+  const tarihlerTamam =
+    !!form.startsAt && !!form.endsAt && new Date(form.endsAt) > new Date(form.startsAt);
+  const eklenebilir = !!form.proId && form.title.length >= 2 && !!form.image && tarihlerTamam;
+
   const create = async () => {
-    if (!form.proId || form.title.length < 2 || !form.image) return; // tr (kaynak) zorunlu
+    if (!eklenebilir) return;
     await api.createAd({
       proId: form.proId,
       title: form.title,
@@ -3283,20 +3340,26 @@ function AdsView() {
           <input
             className="input"
             type="date"
-            title="Yayın başlangıcı (boş = hemen)"
+            title="Yayın başlangıcı (zorunlu)"
             value={form.startsAt}
             onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
           />
           <input
             className="input"
             type="date"
-            title="Yayın bitişi (boş = sınırsız)"
+            title="Yayın bitişi (zorunlu)"
             value={form.endsAt}
             onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
           />
-          <button className="btn-sm btn-ok full" onClick={create}>
+          <button className="btn-sm btn-ok full" disabled={!eklenebilir} onClick={create}>
             + Reklam ekle
           </button>
+          {!tarihlerTamam && (
+            <div className="meta full">
+              Başlangıç ve bitiş tarihi zorunlu; bitiş başlangıçtan sonra olmalı. Tarihsiz reklam
+              süresiz yayında kalırdı.
+            </div>
+          )}
         </div>
       </div>
       <div className="card">
@@ -3327,13 +3390,24 @@ function AdsView() {
                 </div>
               </div>
               <button
-                className={`switch ${a.active ? 'on' : 'off'}`}
+                className={`switch ${a.durum === 'yayinda' ? 'on' : 'off'}`}
                 onClick={async () => {
                   await api.setAdActive(a.id, !a.active);
                   reload();
                 }}
               >
-                {a.active ? 'Aktif' : 'Pasif'}
+                {/*
+                  GERÇEK durum. Bayrağı gösteriyordu: süresi dolmuş bir
+                  reklam "Aktif" görünüyor ama kimseye gösterilmiyordu —
+                  yönetici ödeme aldığı reklamı yayında sanıyordu.
+                */}
+                {a.durum === 'yayinda'
+                  ? 'Yayında'
+                  : a.durum === 'doldu'
+                    ? 'Süresi doldu'
+                    : a.durum === 'baslamadi'
+                      ? 'Başlamadı'
+                      : 'Pasif'}
               </button>
               <button
                 className="btn-sm btn-danger"
@@ -4019,9 +4093,33 @@ function UsersView() {
                 <div className="meta">
                   {u.email ?? '—'} · {u.city ?? '—'}
                   {u.phoneVerified ? ' · ✓ telefon' : ''}
+                  {u.adminApproved ? ' · ✓ elle onaylı' : ''}
                   {u.gender === 'female' ? ' · Kadın' : ''}
                 </div>
+                {/*
+                  RANDEVU KAPISI. Doğrulanmamış ve onaylanmamış müşteri
+                  randevu VEREMİYOR: numarası doğrulanmamış bir hesap için
+                  uzman hazırlanıp bekliyor, gelen olmuyor ve ulaşılacak
+                  numara da yok.
+                */}
+                {u.role === 'user' && !u.phoneVerified && !u.adminApproved ? (
+                  <div className="meta" style={{ color: 'var(--danger)' }}>
+                    Randevu veremez — telefonu doğrulanmamış
+                  </div>
+                ) : null}
               </div>
+              {u.role === 'user' && !u.phoneVerified ? (
+                <button
+                  className={`btn-sm ${u.adminApproved ? 'btn-ghost' : 'btn-ok'}`}
+                  onClick={async () => {
+                    await api.setUserApproved(u.id, !u.adminApproved);
+                    reload();
+                  }}
+                  title="Telefon doğrulamasının alternatifi: SMS ulaşmayan gerçek müşteri için."
+                >
+                  {u.adminApproved ? 'Onayı kaldır' : 'Onayla'}
+                </button>
+              ) : null}
               <select
                 className="input"
                 style={{ height: 32, maxWidth: 130 }}

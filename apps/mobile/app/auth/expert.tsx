@@ -1,3 +1,4 @@
+import { sifreGecerli } from '@ayna/domain';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -25,6 +26,7 @@ import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
+  SifreKurali,
   AddressPicker,
   Button,
   CitySelect,
@@ -216,7 +218,7 @@ export default function ExpertRegisterScreen() {
     firstName.trim().length > 1 &&
     lastName.trim().length > 1 &&
     phone.trim().length >= 7 &&
-    password.length >= 6 &&
+    sifreGecerli(password) &&
     password === password2 &&
     iinOk;
   const bindingOk = !bound || (salonId !== null && code.trim().length >= 4);
@@ -254,7 +256,7 @@ export default function ExpertRegisterScreen() {
       { ok: firstName.trim().length > 1 && lastName.trim().length > 1, key: 'auth.miss.name' },
       { ok: iinOk, key: 'expert.reg.iin' },
       { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
-      { ok: password.length >= 6, key: 'auth.f.password' },
+      { ok: sifreGecerli(password), key: 'auth.f.pw_rule' },
       { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
     ],
     1: [{ ok: coord !== null, key: 'expert.reg.step.location' }],
@@ -534,9 +536,8 @@ export default function ExpertRegisterScreen() {
               placeholder={t('auth.f.password')}
               autofill="newPassword"
             />
-            <Text variant="caption" tone="muted" style={{ marginTop: space(0.75) }}>
-              {t('auth.f.password_hint')}
-            </Text>
+            {/* Kural alanın hemen ALTINDA ve karşılandıkça işaretleniyor. */}
+            <SifreKurali sifre={password} />
             <PasswordStrength password={password} />
             <Label text={t('auth.f.password2')} />
             <Input

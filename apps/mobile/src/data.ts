@@ -122,6 +122,13 @@ export interface Professional {
 /** Salon içindeki bir uzman (kadro). Bağımsız uzmanlarda kadro yoktur. */
 export interface Uzman {
   id: string;
+  /**
+   * Uzman KAYDININ kimliği (`Specialist.id`) — randevu bunu taşıyor.
+   *
+   * `id` kullanıcı kimliği ve rotalar ona bağlı; randevu tarafı ayrı bir
+   * kimlik istiyor. İkisini karıştırmamak için ayrı alan.
+   */
+  specialistId?: string;
   name: string;
   role: string;
   image: string;
@@ -924,7 +931,15 @@ export interface Appointment {
   proId: string;
   proName: string;
   proImage: string;
-  uzmanName?: string; // hangi uzmandan
+  uzmanName?: string; // hangi uzmandan (EKRANDA yazılan ad)
+  /**
+   * Hangi uzman — KİMLİK.
+   *
+   * Ad kimlik değildir: aynı salonda iki "Madina" varsa ada göre yapılan
+   * her eşleşme (randevu listesi, yetki, bildirim, kadrodan çıkarma)
+   * yanlış kişiyi vuruyordu. Eski kayıtlarda yok.
+   */
+  uzmanId?: string;
   customerName?: string; // §2.2 offline randevuda müşteri adı
   customerPhone?: string; // offline/salon randevusunda müşteri telefonu (koordinasyon için)
   bookingKind?: string; // normal | group | express (Faz 3)

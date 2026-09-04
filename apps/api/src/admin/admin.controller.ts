@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -316,6 +317,37 @@ export class AdminController {
     @Body(new ZodValidationPipe(spVerifySchema)) body: SpVerifyInput,
   ) {
     return this.admin.setSpecialistVerification(id, body);
+  }
+
+  /**
+   * Müşteriyi elle onayla — telefon doğrulamasının alternatifi.
+   * Onaysız ve doğrulanmamış müşteri randevu veremiyor.
+   */
+  @Post('users/:id/approve')
+  approveUser(@Param('id') id: string, @Body() body: { approved?: unknown }) {
+    return this.admin.setUserApproved(id, body.approved !== false);
+  }
+
+  /**
+   * Uzman hesabını AÇ / REDDET — onaysız uzman çalışamıyor.
+   *
+   * `verify` uçundan ayrı: o rozetleri işaretliyor, bu ise hesabın
+   * açılıp açılmayacağına karar veriyor.
+   */
+  @Post('specialists/:id/status')
+  setSpecialistStatus(
+    @Param('id') id: string,
+    @Body() body: { status?: unknown; reason?: unknown },
+  ) {
+    const s = body.status === 'approved' || body.status === 'rejected' ? body.status : null;
+    if (!s) {
+      throw new BadRequestException({ code: 'BAD_STATUS', message: 'status: approved|rejected' });
+    }
+    return this.admin.setSpecialistStatus(
+      id,
+      s,
+      typeof body.reason === 'string' ? body.reason : undefined,
+    );
   }
 
   // Test/spam uzman kaydını katalogdan + hesaptan kaldır (zero-demo temizliği)

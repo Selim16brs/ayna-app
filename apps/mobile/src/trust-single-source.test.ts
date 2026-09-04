@@ -67,14 +67,32 @@ test('liste rozeti için YENİ sorgu açılmadı', () => {
   const src = oku('catalog', 'catalog.service.ts');
   const govde = /async professionals\(\)[\s\S]*?\n {2}\}/.exec(src);
   assert.ok(govde, 'professionals() bulunamadı');
-  // 4'tü (professional + specialist + business + user); randevu brief'iyle
-  // 5. eklendi: §4.7/§4.8 GÖRÜNMEZLİK CEZASI olan uzmanları listeden çıkaran
-  // sorgu. O da TOPLU — satır başına değil, tek seferde tüm cezalıları çekiyor,
-  // yani N+1 değil. Sayı 5'i geçerse biri gerçekten N+1 açmış demektir.
+  /*
+   * ── SAYI DEĞİL, ŞEKİL ──────────────────────────────────────────────
+   *
+   * Burada sorgu SAYISI (≤5) sınanıyordu. Ama sayı N+1'in ölçüsü değil:
+   * onay kapısı iki TOPLU sorgu daha ekleyince test kırıldı, oysa
+   * eklenenlerin ikisi de satır başına değil tek seferlik. Tersi de
+   * mümkündü — beş sorgunun biri döngü içinde olsaydı test geçerdi.
+   *
+   * Asıl kural: sorgu SATIR BAŞINA açılmasın. Onu sınıyoruz — döngü ya
+   * da `map` gövdesinin içinde `this.prisma` çağrısı olmayacak.
+   */
+  const donguIci = /\.map\(\s*async[^)]*\)?\s*=>[\s\S]{0,400}?this\.prisma\./.exec(govde[0]);
+  assert.equal(donguIci, null, 'satır başına sorgu (N+1) açılmış');
+  assert.equal(
+    /for \([^)]*\) \{[\s\S]{0,300}?await this\.prisma\./.exec(govde[0]),
+    null,
+    'döngü içinde sorgu (N+1) açılmış',
+  );
+  // Yine de bir üst sınır: toplu bile olsa her istekte onlarca sorgu
+  // listeyi yavaşlatır.
   const sorgu = [...govde[0].matchAll(/this\.prisma\.\w+\.findMany/g)].length;
-  assert.ok(sorgu <= 5, `${sorgu} toplu sorgu — rozet/ceza uğruna N+1 açılmış`);
+  assert.ok(sorgu <= 8, `${sorgu} toplu sorgu — liste sorgusu şişiyor`);
   // Ceza sorgusu GERÇEKTEN orada mı: silinirse cezalı uzman listede görünür.
   assert.match(govde[0], /hiddenUntil: \{ gt: new Date\(\) \}/, 'görünmezlik filtresi yok');
+  // Onay kapısı da BURADA: onaysız uzman/salon listede görünmemeli.
+  assert.match(govde[0], /status: \{ not: 'approved' \}/, 'onaysız sağlayıcı filtresi yok');
 });
 
 test('güven işareti ortak satırda çiziliyor', () => {

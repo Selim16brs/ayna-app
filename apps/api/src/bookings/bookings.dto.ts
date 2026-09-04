@@ -9,6 +9,14 @@ export const createBookingSchema = z.object({
   proName: z.string().min(1),
   proImage: z.string(),
   uzmanName: z.string().optional(),
+  /**
+   * Uzmanın KİMLİĞİ (`Specialist.id`).
+   *
+   * Ad da taşınmaya devam ediyor (ekranlarda yazılıyor) ama eşleşme,
+   * yetki ve bildirim artık kimliğe bakıyor: aynı adlı iki uzman
+   * birbirinin randevusunu görüp yönetebiliyordu.
+   */
+  uzmanId: z.string().uuid().optional(),
   customerName: z.string().max(80).optional(),
   customerPhone: z.string().max(40).optional(), // salon offline koordinasyonu
   bySalon: z.boolean().optional(), // §10 — salonun aldığı kayıt (para görünürlüğü kuralı)

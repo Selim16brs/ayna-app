@@ -251,7 +251,12 @@ export default function SalonAgendaScreen() {
 
       {tab === 'add' ? (
         <AddTab
-          staff={staff.map((u) => u.name)}
+          /*
+             KADRO ARTIK KİMLİKLE. Yalnız adlar geçiliyordu: aynı adlı iki
+             uzman aynı çipi paylaşıyor ve randevu hangisine gittiği
+             belirsiz kalıyordu.
+          */
+          staff={staff}
           salonName={salonName}
           onSubmit={(v) => {
             salonAddOffline({ salonName, ...v });
@@ -278,10 +283,11 @@ function AddTab({
   onSubmit,
   locale: _locale,
 }: {
-  staff: string[];
+  staff: { id: string; name: string }[];
   salonName: string;
   onSubmit: (v: {
     uzmanName: string;
+    uzmanId: string;
     customerName: string;
     customerPhone: string;
     service: string;
@@ -294,7 +300,7 @@ function AddTab({
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const [uzman, setUzman] = useState(staff[0] ?? '');
+  const [uzman, setUzman] = useState(staff[0]?.id ?? '');
   const [customer, setCustomer] = useState('');
   const [phone, setPhone] = useState('');
   const [service, setService] = useState('');
@@ -318,12 +324,13 @@ function AddTab({
         {t('salon.add.uzman')}
       </Text>
       <View style={styles.uzmanRow}>
-        {staff.map((name) => {
-          const on = uzman === name;
+        {staff.map((u) => {
+          const name = u.name;
+          const on = uzman === u.id;
           return (
             <Pressable
-              key={name}
-              onPress={() => setUzman(name)}
+              key={u.id}
+              onPress={() => setUzman(u.id)}
               style={[styles.uzmanChip, on && styles.uzmanChipOn]}
             >
               <Ionicons
@@ -398,7 +405,8 @@ function AddTab({
           disabled={!canAdd}
           onPress={() =>
             onSubmit({
-              uzmanName: uzman,
+              uzmanId: uzman,
+              uzmanName: staff.find((u) => u.id === uzman)?.name ?? '',
               customerName: customer.trim(),
               customerPhone: phone.trim(),
               service: service.trim(),

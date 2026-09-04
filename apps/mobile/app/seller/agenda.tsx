@@ -147,8 +147,10 @@ export default function AgendaScreen() {
 
   // §4.6 — önümüzdeki 14 gün (gün seçici + kapalı işaretleme)
   // §10.2 — salon takviminde uzman filtresi (null = tümü)
+  // Filtre KİMLİKLE: adla süzüldüğünde aynı adlı iki uzman aynı sütunda
+  // birleşiyor ve ikisinin randevuları karışıyordu.
   const [staffFilter, setStaffFilter] = useState<string | null>(null);
-  const shownStaff = staffFilter ? staff.filter((u) => u.name === staffFilter) : staff;
+  const shownStaff = staffFilter ? staff.filter((u) => u.id === staffFilter) : staff;
   // §9.4 — bekleyen talepler (uzman onayı bekleyen randevular): takvim üstünde şerit
   // §9.4 — YALNIZ uzman olarak gelen talepler. Uzmanın kendi müşteri
   // randevuları burada görünmemeli: onlar onun kararını beklemiyor.
@@ -543,11 +545,11 @@ export default function AgendaScreen() {
                 </Text>
               </Pressable>
               {staff.map((u) => {
-                const on = staffFilter === u.name;
+                const on = staffFilter === u.id;
                 return (
                   <Pressable
-                    key={u.name}
-                    onPress={() => setStaffFilter(on ? null : u.name)}
+                    key={u.id}
+                    onPress={() => setStaffFilter(on ? null : u.id)}
                     style={[styles.filterChip, on && styles.filterChipOn]}
                   >
                     <Text variant="caption" tone={on ? 'onAccent' : 'inkSoft'} numberOfLines={1}>
@@ -573,7 +575,9 @@ export default function AgendaScreen() {
                  */
                 const uRows = buildDayRows(
                   selectedDay,
-                  dayBookings.filter((b) => (b.uzmanName ?? '') === u.name),
+                  // Sütun KİMLİĞE göre: adla süzülürken aynı adlı iki
+                  // uzmanın randevuları tek sütunda toplanıyordu.
+                  dayBookings.filter((b) => b.uzmanId === u.id),
                   sellerHours,
                 );
                 return (

@@ -1,3 +1,4 @@
+import { sifreGecerli } from '@ayna/domain';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -24,6 +25,7 @@ import { useLocale } from '../../../src/locale';
 import { radius, space, type ColorTokens, font } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme-context';
 import {
+  SifreKurali,
   AddressPicker,
   Button,
   CitySelect,
@@ -162,7 +164,7 @@ export default function NewBusinessScreen() {
     firstName.trim().length > 1 &&
     lastName.trim().length > 1 &&
     ownerPhone.trim().length >= 7 &&
-    password.length >= 6 &&
+    sifreGecerli(password) &&
     password === password2 &&
     name.trim().length > 1 &&
     areas.size > 0 &&
@@ -185,7 +187,8 @@ export default function NewBusinessScreen() {
     },
     { ok: coord !== null, key: 'biz.field.map' },
     { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
-    { ok: password.length >= 6 && password === password2, key: 'auth.f.password' },
+    { ok: sifreGecerli(password), key: 'auth.f.pw_rule' },
+    { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
     { ok: terms, key: 'auth.miss.terms' },
   ]);
   // Adım başına geçiş koşulu (İleri butonu için)
@@ -194,7 +197,7 @@ export default function NewBusinessScreen() {
     firstName.trim().length > 1 &&
       lastName.trim().length > 1 &&
       ownerPhone.trim().length >= 7 &&
-      password.length >= 6 &&
+      sifreGecerli(password) &&
       password === password2,
     name.trim().length > 1 && areas.size > 0,
     city !== null &&
@@ -232,7 +235,7 @@ export default function NewBusinessScreen() {
     1: [
       { ok: firstName.trim().length > 1 && lastName.trim().length > 1, key: 'auth.miss.name' },
       { ok: ownerPhone.trim().length >= 7, key: 'auth.f.phone' },
-      { ok: password.length >= 6, key: 'auth.f.password' },
+      { ok: sifreGecerli(password), key: 'auth.f.pw_rule' },
       { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
     ],
     2: [
@@ -455,9 +458,8 @@ export default function NewBusinessScreen() {
               placeholderKey="biz.field.password"
               autofill="newPassword"
             />
-            <Text variant="caption" tone="muted" style={{ marginTop: space(0.75) }}>
-              {t('auth.f.password_hint')}
-            </Text>
+            {/* Kural alanın hemen ALTINDA ve karşılandıkça işaretleniyor. */}
+            <SifreKurali sifre={password} />
             <PasswordStrength password={password} />
             <Label text={t('auth.f.password2')} />
             <Input

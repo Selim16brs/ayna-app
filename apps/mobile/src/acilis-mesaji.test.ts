@@ -132,3 +132,22 @@ test('MESAJ bir kez seçiliyor — ekranda dururken değişmiyor', () => {
   const k = readFileSync(join(__dirname, '..', 'app', '_layout.tsx'), 'utf8');
   assert.match(k, /acilisSecildi\.current = true;/, 'her render yeniden seçiliyor');
 });
+
+test('AÇILIŞ MESAJI alt barların ÜSTÜNDE çiziliyor', () => {
+  /*
+   * Kurucu: "açılışta mesaj çıkarken altta alt menüde görünüyor. o hata,
+   * mesaj bitene kadar ana ekrandan bir şey çıkmaması lazım."
+   *
+   * React Native kardeşleri SIRAYLA boyuyor: sonra yazılan üste düşüyor.
+   * Mesaj alt barlardan ÖNCE yazılıydı, bu yüzden bar mesajın üstünde
+   * kalıyordu. Sıra tek başına bir kural — testi de sıraya bakıyor.
+   */
+  const k = readFileSync(join(__dirname, '..', 'app', '_layout.tsx'), 'utf8');
+  const mesaj = k.indexOf('<AcilisMesaji');
+  assert.ok(mesaj > 0, 'açılış mesajı çizilmiyor');
+  for (const bar of ['<SalonTabBar />', '<SellerTabBar />', '<AppTabBar />', '<OfflineBanner />']) {
+    const i = k.indexOf(bar);
+    assert.ok(i > 0, `${bar} bulunamadı`);
+    assert.ok(i < mesaj, `${bar} açılış mesajından SONRA çiziliyor — mesajın üstüne düşer`);
+  }
+});

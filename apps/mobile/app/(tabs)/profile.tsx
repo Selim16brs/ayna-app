@@ -69,6 +69,7 @@ export default function ProfileScreen() {
   const { t } = useLocale();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const uyeNo = useStore((s) => s.currentUser?.id ?? '');
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -191,6 +192,36 @@ export default function ProfileScreen() {
             {phone || t('nav.profile')}
           </Text>
         </View>
+        {/*
+         * ÜYE NUMARASI GÖRÜNÜR.
+         *
+         * Kurucu: "tüm kullanıcıların bir ID'si olması ve bu ID'ye göre
+         * işlemlerin değerlendirilmesi daha mantıklı olabilir. ID numarası
+         * profil kısmında yazabilir."
+         *
+         * Kimlik zaten vardı ama hiçbir yerde GÖRÜNMÜYORDU: destek
+         * konuşmasında kullanıcı ancak adını söyleyebiliyordu ve adaşlar
+         * ayırt edilemiyordu. Dokununca panoya kopyalanıyor.
+         *
+         * Tam kimlik uzun; ilk sekiz karakter destek için yeterli ayrım
+         * veriyor — kopyalanan ise TAM kimlik.
+         */}
+        {uyeNo ? (
+          <View style={styles.contactRow}>
+            <Ionicons name="finger-print-outline" size={13} color={colors.muted} />
+            {/*
+             * SEÇİLEBİLİR — panoya kopyalama YERİNE.
+             *
+             * Kopyalama düğmesi yeni bir YEREL MODÜL isterdi; o modül
+             * OTA ile telefona inmez ve tam da takvimde yaşadığımız
+             * "JS güncellendi ama modül yok" hatasına düşerdik. Uzun
+             * basıp seçmek her yapıda çalışıyor.
+             */}
+            <Text variant="caption" tone="muted" style={styles.contactText} selectable>
+              {t('profile.user_id')}: {uyeNo.slice(0, 8).toUpperCase()}
+            </Text>
+          </View>
+        ) : null}
         <View style={styles.badgeRow}>
           {phoneVerified ? (
             <View style={styles.badge}>

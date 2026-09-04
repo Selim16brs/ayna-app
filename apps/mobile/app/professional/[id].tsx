@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { randevuVerebilir } from '@ayna/domain';
 import type { MessageKey } from '@ayna/i18n';
 import { formatPrice } from '../../src/data';
 import { almatyDayStart, almatyParts, formatSlotTr, slotTime } from '../../src/datetime';
@@ -67,6 +68,8 @@ export default function ProfessionalScreen() {
   const isFav = useStore((s) => s.favorites.includes(proId));
   const token = useStore((s) => s.token);
   const addBooking = useStore((s) => s.addBooking);
+  // Randevu kapısı — doğrulama YA DA yönetici onayı.
+  const kullanici = useStore((s) => s.currentUser);
   const userReviewsMap = useStore((s) => s.userReviews);
 
   // §5.5 — uzmanı takip et (karşılıklı takip → serbest DM). Yalnız hesabı bağlı gerçek uzmanda.
@@ -238,6 +241,24 @@ export default function ProfessionalScreen() {
     // Eskiden yalnız "giriş lazım" diyip bırakıyordu: kullanıcı ne yapacağını
     // bilmiyordu. Kapı giriş/kayıt sunuyor ve buraya geri döndürüyor.
     if (girisGerekli(`/professional/${proId}`)) return;
+    /*
+     * ── DOĞRULANMAMIŞ MÜŞTERİ RANDEVU VEREMİYOR ─────────────────────
+     *
+     * Kurucu: "bir müşteri ya admin panelinden onaylanmalı ya da mutlaka
+     * telefon ile doğrulama yapmalı. aksi takdirde uygulamada kesinlikle
+     * randevu veremez."
+     *
+     * Tek gerçek kapı SUNUCU; burası kullanıcıyı boşuna uğraştırmamak
+     * için: saati seçip düğmeye bastıktan sonra sunucudan hata almak
+     * yerine sebebini şimdi söylüyor ve doğrulama ekranına götürüyor.
+     */
+    if (!randevuVerebilir(kullanici ?? {})) {
+      Alert.alert(t('booking.verify_required'), '', [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('booking.verify_cta'), onPress: () => router.push('/auth/verify') },
+      ]);
+      return;
+    }
     // Kapı boolean döndürüyor; TypeScript token'ın dolduğunu buradan bilemez.
     if (!token) return;
     if (!pro.ownerUserId) {
@@ -288,6 +309,12 @@ export default function ProfessionalScreen() {
       proName: pro.name,
       proImage: pro.image,
       ...(uzman?.name ? { uzmanName: uzman.name } : {}),
+      /*
+       * KİMLİK DE GİDİYOR. Randevu yalnız adı taşıyordu ve sunucu
+       * eşleştirmeyi adla yapıyordu: aynı salonda iki aynı adlı uzman
+       * birbirinin randevusunu görüyordu.
+       */
+      ...(uzman?.specialistId ? { uzmanId: uzman.specialistId } : {}),
       startMs,
       durationMin: totalDur || 60,
       price: totalPrice || Number(pro.priceFrom),
