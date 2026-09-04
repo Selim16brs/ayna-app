@@ -812,6 +812,7 @@ export function ProRow({
 }) {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { t } = useLocale();
   /*
    * MESAFE YALNIZ GERÇEK KOORDİNATTAN.
    *
@@ -847,11 +848,27 @@ export function ProRow({
               <PlanBadge tier={asPlanTier(pro.membershipTier)} size="sm" role="pro" />
             ) : null}
           </View>
+          {/*
+            DEĞERLENDİRİLMEMİŞ sağlayıcı "0,0" DEĞİL.
+
+            Hiç yorumu olmayan uzmanın puanı sunucudan 0 geliyor ve burada
+            yıldızla "0.0" yazıyordu: müşteri onu EN KÖTÜ puanlı sanıyordu.
+            Oysa kimse puan vermemiş. Yeni uzman "Yeni" diye anılıyor —
+            haritadaki kart da aynısını yapıyor.
+          */}
           <View style={styles.rowRating}>
-            <Ionicons name="star" size={13} color={colors.gold} />
-            <Text variant="caption" tone="ink" style={styles.rowRatingText}>
-              {pro.rating.toFixed(1)}
-            </Text>
+            {pro.reviewCount > 0 ? (
+              <>
+                <Ionicons name="star" size={13} color={colors.gold} />
+                <Text variant="caption" tone="ink" style={styles.rowRatingText}>
+                  {pro.rating.toFixed(1)}
+                </Text>
+              </>
+            ) : (
+              <Text variant="caption" tone="muted" style={styles.rowRatingText}>
+                ✨ {t('pro.new')}
+              </Text>
+            )}
           </View>
           <View style={styles.rowMetaRow}>
             <Ionicons name="location-outline" size={12} color={colors.muted} />

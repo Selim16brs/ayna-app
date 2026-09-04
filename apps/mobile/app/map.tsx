@@ -281,10 +281,22 @@ export default function MapScreen() {
                     {selected.specialty}
                   </Text>
                   <View style={styles.cardMeta}>
-                    <Ionicons name="star" size={12} color={colors.gold} />
-                    <Text variant="caption" tone="inkSoft">
-                      {selected.rating.toFixed(1)}
-                    </Text>
+                    {/*
+                      Puanı olmayan "0,0" değil "Yeni" — aşağıdaki detay
+                      sayfası zaten böyle yapıyordu, iğne kartı yapmıyordu.
+                    */}
+                    {selected.reviewCount > 0 ? (
+                      <>
+                        <Ionicons name="star" size={12} color={colors.gold} />
+                        <Text variant="caption" tone="inkSoft">
+                          {selected.rating.toFixed(1)}
+                        </Text>
+                      </>
+                    ) : (
+                      <Text variant="caption" tone="muted">
+                        ✨ {t('pro.new')}
+                      </Text>
+                    )}
                     <Text variant="caption" tone="muted">
                       · {distanceKm(center, proCoords(selected.id, selected.lat, selected.lng))}{' '}
                       {t('map.distance')}
