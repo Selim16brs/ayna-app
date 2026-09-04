@@ -756,7 +756,14 @@ export class CatalogService {
     if (sp && !media.cutoutUrl && media.avatarUrl?.startsWith('http')) {
       try {
         if (await this.cutout.available()) {
-          const { dataUrl } = await this.cutout.cutout({ imageUrl: media.avatarUrl });
+          /*
+           * Uzmanın KENDİ hesabı adına: hak kontrolü ve günlük sayaç ona
+           * yazılıyor. Sistem çağrısı diye sayaçtan muaf tutmak, ucu
+           * dolaylı bir sınırsız kapıya çevirirdi.
+           */
+          const { dataUrl } = await this.cutout.cutout(sp.userId, {
+            imageUrl: media.avatarUrl,
+          });
           const stored = await this.storage.put(dataUrl, 'avatars');
           if (stored?.startsWith('http')) {
             media.cutoutUrl = stored;

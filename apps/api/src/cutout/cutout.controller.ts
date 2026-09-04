@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard, type AuthedRequest } from '../auth/jwt-auth.guard';
 import { CutoutService } from './cutout.service';
 
 // Kaynak: public URL VEYA yerel fotonun base64'ü (en az biri zorunlu)
@@ -27,8 +27,12 @@ export class CutoutController {
   @Post()
   @UseGuards(JwtAuthGuard)
   process(
+    @Req() req: AuthedRequest,
     @Body(new ZodValidationPipe(cutoutSchema)) body: { imageUrl?: string; imageB64?: string },
   ) {
-    return this.cutout.cutout({ imageUrl: body.imageUrl, imageB64: body.imageB64 });
+    return this.cutout.cutout(req.user!.id, {
+      imageUrl: body.imageUrl,
+      imageB64: body.imageB64,
+    });
   }
 }
