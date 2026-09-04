@@ -1189,6 +1189,28 @@ export const api = {
   myCertificates: () => get<{ certificates: string[] }>('/specialists/me/certificates'),
   setMyCertificates: (certificates: string[]) =>
     post<{ certificates: string[] }>('/specialists/me/certificates', { certificates }),
+  /**
+   * BİLDİRİM GEÇMİŞİ — sunucunun bu kullanıcıya gönderdiği her bildirim.
+   *
+   * Uygulama içi liste yalnız kullanıcının KENDİ yaptıklarını biliyordu;
+   * karşı tarafın yaptıkları push olarak geçip kayboluyordu. Uygulama
+   * kapalıyken gelen bildirim de artık burada.
+   */
+  bildirimGecmisi: (token: string) =>
+    get<
+      {
+        id: string;
+        title: string;
+        body: string;
+        route: string | null;
+        read: boolean;
+        createdAtMs: number;
+      }[]
+    >('/push/notifications', token),
+  bildirimOkundu: (token: string, id: string) =>
+    post<{ updated: number }>(`/push/notifications/${id}/read`, {}, token),
+  bildirimlerinHepsiOkundu: (token: string) =>
+    post<{ updated: number }>('/push/notifications/read-all', {}, token),
   myClosedDays: () => get<{ days: number[] }>('/specialists/me/closed-days'),
   setMyClosedDays: (days: number[]) => post<unknown>('/specialists/me/closed-days', { days }),
   myHours: () => get<{ hours: import('./ui/WorkingHours').DayHours[] }>('/specialists/me/hours'),

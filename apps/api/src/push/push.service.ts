@@ -35,6 +35,47 @@ export class PushService {
     return { ok: true };
   }
 
+  /**
+   * BİLDİRİM GEÇMİŞİ — kullanıcının kendi kutusu.
+   *
+   * Uygulama içindeki liste yalnız kullanıcının KENDİ yaptıklarını
+   * biliyordu; karşı tarafın yaptıkları push olarak geçip kayboluyordu.
+   * Bu uç, sunucunun o kullanıcıya gönderdiği her bildirimi döndürüyor —
+   * push teslim edilemese ya da izin verilmemiş olsa bile.
+   *
+   * 50 satır: liste ekranı bundan fazlasını göstermiyor ve 30 günlük
+   * saklama zaten üst sınır koyuyor.
+   */
+  async history(userId: string) {
+    const rows = await this.prisma.userNotification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      body: r.body,
+      route: r.route ?? null,
+      read: r.readAt != null,
+      createdAtMs: r.createdAt.getTime(),
+    }));
+  }
+
+  /**
+   * Okundu işaretler. `id` verilmezse KULLANICININ TÜMÜ.
+   *
+   * Sahiplik `where` içinde: başka kullanıcının bildirimini okundu
+   * yapmak mümkün olmasın diye kimlik tek başına yeterli değil.
+   */
+  async markRead(userId: string, id?: string) {
+    const sonuc = await this.prisma.userNotification.updateMany({
+      where: { userId, readAt: null, ...(id ? { id } : {}) },
+      data: { readAt: new Date() },
+    });
+    return { updated: sonuc.count };
+  }
+
   // Faz 6 (§29) — kullanıcının DİLİNDE push: şablon sözlüğünden çözer (fallback tr)
   async sendTemplate(
     userId: string,
@@ -57,6 +98,31 @@ export class PushService {
    * ama bu durum log'a ERROR olarak düşer — sessiz kayıp yok.
    */
   async sendToUser(userId: string, payload: PushPayload): Promise<void> {
+    /*
+     * ── ÖNCE KUTUYA, SONRA TESLİME ──────────────────────────────────────
+     *
+     * Outbox bir TESLİM kuyruğu: teslim edileni 7 gün sonra siliyor,
+     * edilemeyeni "dead" bırakıyor. Kullanıcının okuyacağı geçmiş bu
+     * olamaz. Bildirim önce kullanıcının KENDİ kutusuna yazılıyor —
+     * telefon kapalı olsa, push izni verilmemiş olsa, teslim hiç
+     * başarmasa bile uygulama açıldığında orada duruyor.
+     *
+     * Yazma başarısız olursa teslim yine denenir: geçmişi kaybetmek,
+     * bildirimi hiç göndermemekten iyidir.
+     */
+    const route = typeof payload.data?.route === 'string' ? payload.data.route : null;
+    await this.prisma.userNotification
+      .create({
+        data: {
+          userId,
+          title: payload.title,
+          body: payload.body,
+          ...(route ? { route } : {}),
+        },
+      })
+      .catch((e: unknown) => {
+        this.log.error(`bildirim geçmişi yazılamadı: ${shortError(e)}`);
+      });
     let row: { id: string } | null = null;
     try {
       row = await this.prisma.notificationOutbox.create({

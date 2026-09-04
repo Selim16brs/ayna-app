@@ -715,6 +715,8 @@ interface State {
   pushNotification: (n: Omit<AppNotification, 'id' | 'read'>) => void;
   pruneNotifications: () => void; // §5.7 — 30 günden eski bildirimleri temizle
   markNotificationRead: (id: string) => void;
+  /** Sunucudaki bildirim geçmişini yerel listeyle birleştirir. */
+  hydrateNotifications: () => Promise<void>;
   setUnreadMessages: (n: number) => void;
   markAllNotificationsRead: () => void;
 }
@@ -3431,10 +3433,66 @@ export const useStore = create<State>()(
           return kept.length === s.notifications.length ? {} : { notifications: kept };
         }),
 
-      markNotificationRead: (id) =>
+      markNotificationRead: (id) => {
         set((s) => ({
           notifications: s.notifications.map((x) => (x.id === id ? { ...x, read: true } : x)),
-        })),
+        }));
+        const token = get().token;
+        const sid = get().notifications.find((x) => x.id === id)?.sunucuId;
+        // Okundu bilgisi sunucuda da: başka cihazda tekrar okunmamış görünmesin.
+        if (token && sid) void api.bildirimOkundu(token, sid).catch(() => undefined);
+      },
+
+      /**
+       * SUNUCUDAKİ BİLDİRİM GEÇMİŞİNİ yerel listeyle BİRLEŞTİRİR.
+       *
+       * Yerel liste kullanıcının KENDİ yaptıklarını taşıyor (randevu isteği
+       * gönderdi, puan kazandı) ve bunlar sunucuda yok. Sunucudakiler ise
+       * karşı tarafın yaptıkları. İkisi ayrı kaynak, o yüzden birleşiyor —
+       * biri ötekini silmiyor.
+       *
+       * Eleme `sunucuId` ile: aynı bildirim her tazelemede yeniden
+       * eklenirse liste kendi kendini çoğaltırdı.
+       */
+      hydrateNotifications: async () => {
+        const token = get().token;
+        if (!token) return;
+        try {
+          const uzak = await api.bildirimGecmisi(token);
+          set((s) => {
+            const bilinen = new Set(
+              s.notifications.map((n) => n.sunucuId).filter((x): x is string => !!x),
+            );
+            const yeni: AppNotification[] = uzak
+              .filter((n) => !bilinen.has(n.id))
+              .map((n) => ({
+                id: nextId('n'),
+                sunucuId: n.id,
+                type: 'system' as const,
+                title: n.title,
+                body: n.body,
+                dateLabel: '',
+                icon: 'notifications-outline',
+                read: n.read,
+                createdAt: n.createdAtMs,
+                ...(n.route ? { route: n.route } : {}),
+              }));
+            /*
+             * OKUNDU DURUMU SUNUCUDAN TAZELENİYOR: başka cihazda okunan
+             * bildirim burada da okunmuş görünsün.
+             */
+            const okunanlar = new Set(uzak.filter((n) => n.read).map((n) => n.id));
+            const guncel = s.notifications.map((n) =>
+              n.sunucuId && okunanlar.has(n.sunucuId) ? { ...n, read: true } : n,
+            );
+            return yeni.length
+              ? { notifications: [...yeni, ...guncel] }
+              : { notifications: guncel };
+          });
+        } catch {
+          // çevrimdışı: eldeki liste korunur
+        }
+      },
 
       removeDemand: async (id) => {
         const onceki = get().demands;
@@ -3523,8 +3581,11 @@ export const useStore = create<State>()(
         }
       },
 
-      markAllNotificationsRead: () =>
-        set((s) => ({ notifications: s.notifications.map((x) => ({ ...x, read: true })) })),
+      markAllNotificationsRead: () => {
+        set((s) => ({ notifications: s.notifications.map((x) => ({ ...x, read: true })) }));
+        const token = get().token;
+        if (token) void api.bildirimlerinHepsiOkundu(token).catch(() => undefined);
+      },
 
       setUnreadMessages: (n) => set({ unreadMessages: Math.max(0, Math.trunc(n) || 0) }),
     }),

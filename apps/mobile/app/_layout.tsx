@@ -51,6 +51,7 @@ function ThemedStack() {
   const token = useStore((s) => s.token);
   const bookings = useStore((s) => s.bookings);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
+  const hydrateNotifications = useStore((s) => s.hydrateNotifications);
   const hydrateDemands = useStore((s) => s.hydrateDemands);
   const hydrateLoyalty = useStore((s) => s.hydrateLoyalty);
   const hydrateCare = useStore((s) => s.hydrateCare);
@@ -106,6 +107,12 @@ function ThemedStack() {
         ]);
     });
     void hydrateLoyalty(); // Faz B — puan/çekiliş/ledger yeniden açılışta da buluttan
+    /*
+     * Bildirim GEÇMİŞİ: uygulama kapalıyken gelenler de listeye girsin.
+     * Uygulama açıkken gelen push'u dinleyici yazıyor; kapalıyken gelenin
+     * tek kaynağı sunucu.
+     */
+    void hydrateNotifications();
     void refreshMembership(); // medya (foto/cutout) + tier açılışta HESAPTAN (bayat yerel kopya ezilir)
     // §bakım — rutin/an/günlük. Bunlar eskiden hiç sunucuya gitmiyordu;
     // yazma tarafını bağlayıp okumayı unutmak, veriyi tek yönlü bırakırdı:
@@ -124,6 +131,7 @@ function ThemedStack() {
     refreshMembership,
     hydrateCare,
     hydrateAlways,
+    hydrateNotifications,
   ]);
   // EK Z.5 — giriş yapıldığında (token gelince) Expo push token'ı backend'e kaydet
   useEffect(() => {
