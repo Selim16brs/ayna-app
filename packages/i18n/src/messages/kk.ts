@@ -1228,6 +1228,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'reports.no_location': 'Картада көрінбейсің',
   'reports.no_location_b':
     'Мекенжайыңды картада белгіле — клиент сені жақын жердегілер арасынан таба алмайды.',
+  'reports.no_hours': 'Жұмыс уақытыңды көрсетпедің',
+  'reports.no_hours_b': 'Клиентке {from}–{to} аралығы көрсетіліп тұр. Өз уақытыңды енгіз.',
   'reports.success.none': 'Әзірге өлшейтін дерек жоқ — алғашқы жазылуларыңнан кейін көрінеді',
   'reports.success.hidden': 'Клиентпен бөлісілмейді — Құпиялық экранынан қоса аласың',
   'reports.success.is': 'Аяқталған жұмыс',

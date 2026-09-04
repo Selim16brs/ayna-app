@@ -259,3 +259,38 @@ test('SALON da haritada görünmediğini ÖĞRENİYOR', () => {
   const profil = oku('app', 'salon', 'profile.tsx');
   assert.match(profil, /route: '\/seller\/location'/, 'salon menüsünde konum yok');
 });
+
+test('SAATİNİ GİRMEMİŞ sağlayıcı bunu ÖĞRENİYOR — uzman ve salon', () => {
+  /*
+   * Sunucu, saatlerini girmemiş sağlayıcıya varsayılan 10:00–20:00
+   * penceresini uyguluyor ve müşteri o saatlerde slot görüyor. Sağlayıcı
+   * bunu HİÇ söylemedi.
+   *
+   * Pencereyi kaldırmak saatini girmemiş herkesi randevuya kapatırdı;
+   * doğrusu sağlayıcıya söylemek. Uyarıdaki saat, sunucunun kullandığı
+   * saatle AYNI kaynaktan (`VARSAYILAN_CALISMA_SAATI`) — ayrı yazılsaydı
+   * uyarı yanlış saati söyler, sağlayıcı doğru sandığı aralıkla kalırdı.
+   */
+  for (const yol of [
+    ['app', 'seller', 'reports.tsx'],
+    ['app', 'salon', 'home.tsx'],
+  ]) {
+    const k = oku(...yol);
+    assert.match(k, /saatVar === false \? \(/, `${yol.join('/')}: uyarı yok`);
+    assert.match(k, /router\.push\('\/seller\/hours'\)/, `${yol.join('/')}: çözüme götürmüyor`);
+    assert.match(
+      k,
+      /fillParams\(t\('reports\.no_hours_b'\), VARSAYILAN_CALISMA_SAATI\)/,
+      `${yol.join('/')}: saat elle yazılmış`,
+    );
+  }
+  const sunucu = readFileSync(
+    join(__dirname, '..', '..', 'api', 'src', 'catalog', 'catalog.service.ts'),
+    'utf8',
+  );
+  assert.match(
+    sunucu,
+    /day\?\.open \? day\.from : VARSAYILAN_CALISMA_SAATI\.from/,
+    'sunucu kendi saatini yazıyor',
+  );
+});

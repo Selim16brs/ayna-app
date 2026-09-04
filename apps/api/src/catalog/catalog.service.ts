@@ -8,6 +8,7 @@ import {
   hizmetSatirininKimligi,
   type PromosyonKarti,
   uzmanKayitli,
+  VARSAYILAN_CALISMA_SAATI,
 } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { BasariService } from '../basari/basari.service';
@@ -518,8 +519,13 @@ export class CatalogService {
     const hours = safeParseHours(p.hoursJson);
     const day = hours.find((h) => h.wd === wd);
     if (hours.length > 0 && day && !day.open) return { slots: [], closed: true };
-    const from = day?.open ? day.from : '10:00';
-    const to = day?.open ? day.to : '20:00';
+    /*
+     * Saatini GİRMEMİŞ sağlayıcıya varsayılan pencere uygulanıyor. Sayı
+     * `@ayna/domain`den: uzman paneli "müşteriye şu aralık gösteriliyor"
+     * uyarısını aynı kaynaktan yazıyor, ikisi ayrışamaz.
+     */
+    const from = day?.open ? day.from : VARSAYILAN_CALISMA_SAATI.from;
+    const to = day?.open ? day.to : VARSAYILAN_CALISMA_SAATI.to;
     const openWindows = [{ startMs: hmToMs(dayMs, from), endMs: hmToMs(dayMs, to) }];
 
     const [stepSetting, leadSetting] = await Promise.all([

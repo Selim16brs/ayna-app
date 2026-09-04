@@ -1236,6 +1236,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reports.success.title': 'Ваш показатель успеха',
   'reports.no_location': 'Вас не видно на карте',
   'reports.no_location_b': 'Отметьте адрес на карте — клиент не найдёт вас среди ближайших.',
+  'reports.no_hours': 'Ты не указал часы работы',
+  'reports.no_hours_b': 'Клиенту показывается {from}–{to}. Укажи своё время.',
   'reports.success.none': 'Пока нет данных — появится после первых записей',
   'reports.success.hidden':
     'Не показывается клиентам — включить можно в разделе «Конфиденциальность»',
