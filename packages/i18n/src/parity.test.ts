@@ -88,3 +88,110 @@ test('kk/ru çevrilmemiş (tr ile aynı, Latince) girdi içermez', () => {
     }
   }
 });
+
+/*
+ * ── CÜMLE İÇİNDE KALMIŞ LATİN KELİME ──────────────────────────────────────
+ *
+ * Üstteki test yalnız DEĞERİN TAMAMI tr ile aynıysa yakalıyor. Çevirinin
+ * gövdesi Kirilce ama içinde tek bir Türkçe kelime kaldıysa hiçbir test
+ * görmüyordu. Canlıda tam olarak bu vardı:
+ *
+ *   · kk.offers.created_b  → "Науқаның Keşfet-те көрінеді" (Kazak kullanıcı
+ *     uygulamada "Keşfet" diye bir sekme görmüyor; onun sekmesi "Ашу").
+ *   · ru.hours.conflict_penalty → "клиентка planировала" (Latin "plan" +
+ *     Kiril ek: hiçbir dilde var olmayan bir kelime).
+ *
+ * Kural: kk/ru değerlerinde Latin harfli kelime YALNIZ marka, ürün ve
+ * uluslararası kısaltma olabilir. Yeni bir marka geliyorsa listeye eklenir —
+ * eklenmesi bilinçli bir karar olsun diye liste burada duruyor.
+ */
+const LATIN_MARKALAR = new Set([
+  'AI',
+  'App',
+  'Always',
+  'AYNA',
+  'BIN',
+  'Boni',
+  'Cut',
+  'Express',
+  'Google',
+  'GPS',
+  'IBAN',
+  'Instagram',
+  'INVEST',
+  'JPG',
+  'Kaspi',
+  'KYC',
+  'Life',
+  'LLP',
+  'mail',
+  'MB',
+  'name',
+  'Nail',
+  'Offline',
+  'out',
+  'Passport',
+  'Platinum',
+  'Play',
+  'remove',
+  'bg',
+  'Plus',
+  'Premium',
+  'premium',
+  'PNG',
+  'QR',
+  'Safe',
+  'SES',
+  'show',
+  'Spa',
+  'Store',
+  'Stories',
+  'Story',
+  'TOO',
+  'TOP',
+  'Wellness',
+  'at',
+  'e',
+  'email',
+  'kz',
+  'no',
+  'W2W',
+]);
+
+test('kk/ru cümlelerinde MARKA DIŞI Latin kelime kalmıyor', () => {
+  for (const [locale, dict] of Object.entries({ kk, ru })) {
+    for (const [key, deger] of Object.entries(dict as Record<string, string>)) {
+      if (typeof deger !== 'string') continue;
+      // Parametreler ({ad}, {tutar}) çeviri değil, yer tutucudur.
+      const govde = deger.replace(/\{[^}]*\}/g, ' ');
+      for (const kelime of govde.match(/[A-Za-zÇĞİÖŞÜçğıöşü]{2,}/g) ?? []) {
+        assert.ok(
+          LATIN_MARKALAR.has(kelime),
+          `${locale}.${key} içinde çevrilmemiş Latin kelime: "${kelime}" — ${deger}`,
+        );
+      }
+    }
+  }
+});
+
+/*
+ * ── KAZAKÇA TEK ÜSLUP: "СЕН" ──────────────────────────────────────────────
+ *
+ * Kaynak dil (tr) baştan sona "sen" diyor: "randevunu", "kazanacaksın",
+ * "dene". Kazakça sözlük de 85 satırda "сен" derken ÜÇ satırda birden
+ * "сіз"e geçiyordu — kullanıcı aynı akış içinde iki farklı üslupla
+ * konuşulduğunu görüyordu (ör. randevu kartında "сен", hemen altındaki
+ * adres notunda "сіздің").
+ *
+ * "-сіз" EKİ (şeksіz, mүmkіnsіz) kelimenin İÇİNDE geçiyor; kural yalnız
+ * kelimenin BAŞINDAKİ zamire bakıyor.
+ */
+const KK_RESMI =
+  /(^|[^а-яәғқңөұүһіА-ЯӘҒҚҢӨҰҮҺІ])(сіз|сізд[а-яәғқңөұүһі]*|Сіз|Сізд[а-яәғқңөұүһі]*)([^а-яәғқңөұүһіА-ЯӘҒҚҢӨҰҮҺІ]|$)/;
+
+test('kk sözlüğü tek üslupta — "сіз" değil "сен"', () => {
+  for (const [key, deger] of Object.entries(kk as Record<string, string>)) {
+    if (typeof deger !== 'string') continue;
+    assert.ok(!KK_RESMI.test(deger), `kk.${key} resmi üslupta ("сіз"): ${deger}`);
+  }
+});
