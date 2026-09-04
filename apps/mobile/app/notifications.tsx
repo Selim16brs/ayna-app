@@ -8,6 +8,7 @@ import { inAudience, selectSellerView, useStore } from '../src/store';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../src/ui';
+import { gecenSureYazisi } from '../src/gecen-sure';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -91,8 +92,17 @@ export default function NotificationsScreen() {
                       <Text variant="caption" tone="inkSoft" style={styles.body}>
                         {n.bodyKey ? fillParams(t(n.bodyKey), n.params) : (n.body ?? '')}
                       </Text>
+                      {/*
+                        ZAMAN ÇİZİM ANINDA HESAPLANIYOR.
+                        Bildirime "Az önce" diye TÜRKÇE yazı gömülüyordu;
+                        Kazak/Rus kullanıcı onu Türkçe görüyordu. Damga
+                        (`createdAt`) zaten vardı. Damgası olmayan eski
+                        (tohum) kayıtlar için saklanan yazı yedek.
+                      */}
                       <Text variant="caption" tone="muted" style={styles.date}>
-                        {n.dateLabel}
+                        {n.createdAt != null
+                          ? gecenSureYazisi(n.createdAt, Date.now(), t)
+                          : n.dateLabel}
                       </Text>
                     </View>
                     <View style={styles.trailing}>

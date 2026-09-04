@@ -689,6 +689,13 @@ export class CatalogService {
     const reviews = ratings.slice(0, 10).map((r) => ({
       id: r.id,
       author: r.authorLabel,
+      /*
+       * `period` TÜRKÇE bir cümle ("Son 30 gün içinde") ve sunucu onu her
+       * kullanıcıya aynı dilde yolluyordu: Kazak/Rus müşteri yorumların
+       * altında Türkçe okuyordu. Ham damga da gidiyor; uygulama yazıyı
+       * kendi dilinde kuruyor. `period` eski sürümler için duruyor.
+       */
+      createdAtMs: r.createdAt.getTime(),
       period: periodLabel(r.createdAt),
       rating: r.score,
       text: r.comment,

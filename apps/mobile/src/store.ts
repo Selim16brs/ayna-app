@@ -1247,7 +1247,7 @@ export const useStore = create<State>()(
           titleKey: 'notif.booking_sent',
           bodyKey: 'notif.booking_sent_b',
           params: { pro: input.proName, slot: formatSlotTr(input.startMs) },
-          dateLabel: 'Az önce',
+          dateLabel: '',
           icon: 'calendar-outline',
           route: `/booking/${id}`,
         });
@@ -1286,7 +1286,7 @@ export const useStore = create<State>()(
           titleKey: 'notif.salon_offline_pending',
           bodyKey: 'notif.salon_offline_pending_b',
           params: { uzman: input.uzmanName, slot: formatSlotTr(input.startMs) },
-          dateLabel: 'Az önce',
+          dateLabel: '',
           icon: 'time-outline',
           route: `/booking/${id}`,
         });
@@ -1421,7 +1421,7 @@ export const useStore = create<State>()(
               titleKey: 'notif.cancel_refund',
               bodyKey: 'notif.cancel_refund_b',
               params: { pro: b.proName },
-              dateLabel: 'Az önce',
+              dateLabel: '',
               icon: 'return-up-back-outline',
               route: `/booking/${id}`,
             });
@@ -1435,7 +1435,7 @@ export const useStore = create<State>()(
                 pro: b.proName,
                 deposit: randevuDepozitosu(b, get().config.rates),
               },
-              dateLabel: 'Az önce',
+              dateLabel: '',
               icon: 'alert-circle-outline',
               route: `/booking/${id}`,
             });
@@ -1469,7 +1469,7 @@ export const useStore = create<State>()(
             titleKey: 'notif.dispute',
             bodyKey: 'notif.dispute_b',
             params: { pro: b.proName },
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'flag-outline',
             route: `/booking/${id}`,
           });
@@ -1514,7 +1514,7 @@ export const useStore = create<State>()(
               titleKey: 'notif.moment.title',
               bodyKey: m.daysLeft === 0 ? 'notif.moment.today' : 'notif.moment.body',
               params: { ad: m.title, gun: String(m.daysLeft) },
-              dateLabel: 'Az önce',
+              dateLabel: '',
               icon: m.icon ?? 'gift-outline',
               route: '/care',
             });
@@ -1541,7 +1541,7 @@ export const useStore = create<State>()(
                 titleKey: 'survey.title',
                 bodyKey: 'survey.body',
                 params: { pro: b.proName },
-                dateLabel: 'Az önce',
+                dateLabel: '',
                 icon: 'star-outline',
                 route: `/review/new?bookingId=${b.id}`,
               });
@@ -1573,7 +1573,7 @@ export const useStore = create<State>()(
                 titleKey: baslik,
                 bodyKey: govde,
                 params: { pro: b.proName, slot: formatSlotTr(b.startMs) },
-                dateLabel: 'Az önce',
+                dateLabel: '',
                 icon: 'alarm-outline',
                 read: false,
                 route: `/booking/${b.id}`,
@@ -1656,7 +1656,7 @@ export const useStore = create<State>()(
             audience: 'user',
             titleKey: 'notif.demand_sent',
             bodyKey: 'notif.demand_sent_b',
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'paper-plane-outline',
             route: `/quote/results?id=${demand.id}`,
           });
@@ -1736,7 +1736,7 @@ export const useStore = create<State>()(
             type: 'quote',
             titleKey: 'notif.offer_sent',
             bodyKey: 'notif.offer_sent_b',
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'pricetag-outline',
           });
           return true;
@@ -1792,7 +1792,7 @@ export const useStore = create<State>()(
             titleKey: 'notif.deposit_expired',
             bodyKey: 'notif.deposit_expired_b',
             params: { pro: b.proName },
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'time-outline',
             route: `/booking/${b.id}`,
           });
@@ -1819,7 +1819,7 @@ export const useStore = create<State>()(
             titleKey: 'notif.response_expired',
             bodyKey: 'notif.response_expired_b',
             params: { pro: b.proName },
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'time-outline',
             route: `/booking/${b.id}`,
           });
@@ -1885,7 +1885,7 @@ export const useStore = create<State>()(
             titleKey: 'notif.cancel_refund',
             bodyKey: 'notif.cancel_refund_b',
             params: { pro: b.proName },
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'alert-circle-outline',
             route: `/booking/${b.id}`,
           });
@@ -1922,7 +1922,7 @@ export const useStore = create<State>()(
               slot: formatSlotTr(b.startMs),
               deposit: randevuDepozitosu(b, get().config.rates),
             },
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'card-outline',
             route: `/booking/${id}`,
           });
@@ -1955,7 +1955,7 @@ export const useStore = create<State>()(
               slot: formatSlotTr(b.startMs),
               deposit: randevuDepozitosu(b, get().config.rates),
             },
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'card-outline',
             route: `/booking/${id}`,
           });
@@ -1976,7 +1976,7 @@ export const useStore = create<State>()(
             titleKey: 'notif.rejected',
             bodyKey: 'notif.rejected_b',
             params: { pro: b.proName },
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'close-circle-outline',
             route: `/booking/${id}`,
           });
@@ -2002,7 +2002,7 @@ export const useStore = create<State>()(
           type: 'booking',
           titleKey: 'notif.reschedule',
           bodyKey: 'notif.reschedule_b',
-          dateLabel: 'Az önce',
+          dateLabel: '',
           icon: 'time-outline',
           route: `/booking/${id}`,
         });
@@ -2029,7 +2029,7 @@ export const useStore = create<State>()(
             titleKey: 'notif.alt_proposed',
             bodyKey: 'notif.alt_proposed_b',
             params: { pro: b.proName, slot: formatSlotTr(startMs) },
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'time-outline',
             route: `/booking/${id}`,
           });
@@ -2050,7 +2050,7 @@ export const useStore = create<State>()(
             titleKey: 'notif.receipt_sent',
             bodyKey: 'notif.receipt_sent_b',
             params: { pro: b.proName },
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'receipt-outline',
             route: `/booking/${id}`,
           });
@@ -2084,7 +2084,7 @@ export const useStore = create<State>()(
             titleKey: 'notif.review_invite',
             bodyKey: 'notif.review_invite_b',
             params: { pro: b.proName },
-            dateLabel: 'Az önce',
+            dateLabel: '',
             icon: 'star-outline',
             route: `/review/new?id=${id}`,
           });
@@ -2113,7 +2113,7 @@ export const useStore = create<State>()(
           titleKey: 'notif.provider_noshow',
           bodyKey: 'notif.provider_noshow_b',
           params: { pro: b.proName },
-          dateLabel: 'Az önce',
+          dateLabel: '',
           icon: 'gift-outline',
           route: `/booking/${id}`,
         });
@@ -2283,7 +2283,7 @@ export const useStore = create<State>()(
                 titleKey: 'notif.slot_conflict',
                 bodyKey: 'notif.slot_conflict_b',
                 params: { slot: formatSlotTr(b.startMs) },
-                dateLabel: 'Az önce',
+                dateLabel: '',
                 icon: 'alert-circle-outline',
                 route: `/booking/${id}`,
               });
@@ -2406,7 +2406,8 @@ export const useStore = create<State>()(
         ): Review => ({
           id: nextId('rv'),
           author: authorLabel,
-          period: 'Az önce',
+          period: '',
+          createdAtMs: Date.now(),
           rating,
           service: suffix ? `${b.service} · ${suffix}` : b.service,
           text,
@@ -2478,7 +2479,7 @@ export const useStore = create<State>()(
           type: 'system',
           titleKey: 'notif.review_dispute',
           bodyKey: 'notif.review_dispute_b',
-          dateLabel: 'Az önce',
+          dateLabel: '',
           icon: 'flag-outline',
         });
       },
@@ -2906,7 +2907,7 @@ export const useStore = create<State>()(
           type: 'system',
           titleKey: 'notif.report_received',
           bodyKey: 'notif.report_received_b',
-          dateLabel: 'Az önce',
+          dateLabel: '',
           icon: 'flag-outline',
         });
       },
@@ -2916,7 +2917,15 @@ export const useStore = create<State>()(
         set((s) => ({
           points: s.points + points,
           ledger: [
-            { id: nextId('le'), kind: 'earn', labelKey, detail, points, dateLabel: 'Az önce' },
+            {
+              id: nextId('le'),
+              kind: 'earn',
+              labelKey,
+              detail,
+              points,
+              dateLabel: '',
+              createdAtMs: Date.now(),
+            },
             ...s.ledger,
           ],
         }));
@@ -2966,7 +2975,7 @@ export const useStore = create<State>()(
               labelKey: reward.titleKey,
               detail: 'Ödül kullanıldı',
               points: -reward.cost,
-              dateLabel: 'Az önce',
+              dateLabel: '',
             },
             ...s.ledger,
           ],
@@ -2989,7 +2998,7 @@ export const useStore = create<State>()(
               labelKey: 'rewards.raffle.entry',
               detail: 'Çekiliş bileti',
               points: -bilet,
-              dateLabel: 'Az önce',
+              dateLabel: '',
             },
             ...s.ledger,
           ],
@@ -3221,7 +3230,7 @@ export const useStore = create<State>()(
               type: 'system',
               titleKey: 'sub.upgraded_t',
               bodyKey: 'sub.upgraded_b',
-              dateLabel: 'Az önce',
+              dateLabel: '',
               icon: 'diamond-outline',
               route: '/profile/passport',
             });

@@ -86,7 +86,7 @@ function ThemedStack() {
           titleKey: 'notif.offers_started',
           bodyKey: 'notif.offers_started_b',
           params: { n: String(fresh.count) },
-          dateLabel: 'Az önce',
+          dateLabel: '',
           icon: 'pricetags-outline',
           route: fresh.demandId ? `/quote/results?id=${fresh.demandId}` : '/bookings',
         });
