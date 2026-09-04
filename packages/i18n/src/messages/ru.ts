@@ -1285,7 +1285,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'gallery.save_cta': 'Загрузить фото',
   'gallery.saved_t': 'Загружено ✓',
   'gallery.saved_b': 'Фото галереи сохранены в аккаунте; их видят в вашем профиле.',
-  'gallery.save_err': 'Не удалось загрузить — попробуйте снова.',
+  'gallery.save_err':
+    'Не удалось загрузить — попробуйте снова. (Возможно, сессия обновилась; выйдите и войдите заново.)',
   'gallery.saving': 'Сохранение…',
   'gallery.autosaved': 'Изменения сохранены автоматически',
   'gallery.remove_confirm': 'Удалить эту фотографию?',

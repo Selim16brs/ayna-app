@@ -173,3 +173,25 @@ test('kk/ru cümlelerinde MARKA DIŞI Latin kelime kalmıyor', () => {
     }
   }
 });
+
+/*
+ * ── KAZAKÇA TEK ÜSLUP: "СЕН" ──────────────────────────────────────────────
+ *
+ * Kaynak dil (tr) baştan sona "sen" diyor: "randevunu", "kazanacaksın",
+ * "dene". Kazakça sözlük de 85 satırda "сен" derken ÜÇ satırda birden
+ * "сіз"e geçiyordu — kullanıcı aynı akış içinde iki farklı üslupla
+ * konuşulduğunu görüyordu (ör. randevu kartında "сен", hemen altındaki
+ * adres notunda "сіздің").
+ *
+ * "-сіз" EKİ (şeksіz, mүmkіnsіz) kelimenin İÇİNDE geçiyor; kural yalnız
+ * kelimenin BAŞINDAKİ zamire bakıyor.
+ */
+const KK_RESMI =
+  /(^|[^а-яәғқңөұүһіА-ЯӘҒҚҢӨҰҮҺІ])(сіз|сізд[а-яәғқңөұүһі]*|Сіз|Сізд[а-яәғқңөұүһі]*)([^а-яәғқңөұүһіА-ЯӘҒҚҢӨҰҮҺІ]|$)/;
+
+test('kk sözlüğü tek üslupta — "сіз" değil "сен"', () => {
+  for (const [key, deger] of Object.entries(kk as Record<string, string>)) {
+    if (typeof deger !== 'string') continue;
+    assert.ok(!KK_RESMI.test(deger), `kk.${key} resmi üslupta ("сіз"): ${deger}`);
+  }
+});

@@ -175,7 +175,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.location.saved': 'Орның сақталды',
   'seller.menu.verify_d': 'Тұлғаңды, сертификатты және әлеуметтік желіні раста — AYNA Растаған бол',
   'expert.verify.title': 'Растау & Белгілер',
-  'expert.verify.not_yet': 'Сіз әлі AYNA Растаған емессіз',
+  'expert.verify.not_yet': 'Сен әлі AYNA Растаған емессің',
   'expert.verify.ayna_rule':
     'Тұлғаңыз (KYC) расталып, сертификат немесе әлеуметтік желіңіз расталғанда AYNA Растаған боласыз.',
   'expert.verify.layers': 'Сенім қабаттары',
@@ -952,7 +952,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'booking.field.price': 'Бағасы',
   'booking.price_tbd': 'Бағаны маман белгілейді',
   'booking.address_note':
-    'Салонның мекенжайы растаудан кейін көрсетіледі; сіздің мекенжайыңыз маманға берілмейді',
+    'Салонның мекенжайы растаудан кейін саған көрсетіледі; сенің мекенжайың маманға ешқашан берілмейді',
   'booking.confirmed.done': 'Жазылуларыма өту',
   'rewards.title': 'Ұпайларым',
   'rewards.points': 'AYNA Ұпайы',
@@ -1275,7 +1275,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'gallery.save_cta': 'Фотоларды жүктеу',
   'gallery.saved_t': 'Жүктелді ✓',
   'gallery.saved_b': 'Галерея фотоларың тіркелгіңе сақталды; бәрі профиліңнен көре алады.',
-  'gallery.save_err': 'Жүктелмеді — қайталап көр.',
+  'gallery.save_err':
+    'Жүктелмеді — қайталап көр. (Сеансың жаңарған болуы мүмкін; шығып, қайта кір.)',
   'gallery.saving': 'Сақталуда…',
   'gallery.autosaved': 'Өзгерістер автоматты сақталды',
   'gallery.remove_confirm': 'Осы фотосурет жойылсын ба?',
@@ -2080,7 +2081,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'privacy.delete_note':
     'Жойылған соң қайтарылмайды. ТОЛЫҚ ЖОЙЫЛАДЫ: паспортың (аллергиялар мен қалауларың), сенімді адамдарың, қауіпсіздік сессиялары, W2W жазбаларың, сақтағандарың және жазылымдарың. СЕНЕН АЖЫРАТЫЛАДЫ: жазылу жазбаларындағы атың мен телефоның, W2W пікірлерің «AYNA мүшесі» болады. ЗАҢ БОЙЫНША ҚАЛАДЫ: төлем, комиссия және ұпай кітабы — бірақ енді саған байланысты емес.',
   'privacy.title': 'Құпиялылық',
-  'privacy.subtitle': 'Деректеріңізді бақылау сізде',
+  'privacy.subtitle': 'Деректеріңді бақылау сенде',
   'privacy.location': 'Орналасқан жерді бөлісу',
   'privacy.pro_address': 'Кәсіп мекенжайың ашық',
   'privacy.pro_success': 'Жетістік көрсеткішімді клиентке көрсет',
