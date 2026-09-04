@@ -325,3 +325,45 @@ test('ÇAKIŞAN PENCERELER: öncelik sırası TEK belirleyici — brief §7.5', 
   const ikinci = t(ilk.durum);
   assert.notEqual(ikinci.id, 'sp_04', 'öncelikli özel gün aynı gün tekrar çıktı');
 });
+
+test('VURGU her mesajın KENDİ metninde geçiyor — üç dilde', () => {
+  /*
+   * Vurgu ayrı bir alan: ekran o parçayı metnin içinde ARAYIP kalın
+   * çiziyor. Bir harf bile tutmazsa hiçbir şey kalınlaşmaz ve kimse fark
+   * etmez — sessiz kayıp. Bu yüzden eşleşme testle zorunlu.
+   */
+  const eksik: string[] = [];
+  for (const m of ACILIS_MESAJLARI) {
+    if (!m.vurgu) {
+      eksik.push(`${m.id}: vurgu yok`);
+      continue;
+    }
+    for (const dil of ['tr', 'kk', 'ru'] as const) {
+      if (!m.metin[dil].includes(m.vurgu[dil])) {
+        eksik.push(`${m.id}/${dil}: "${m.vurgu[dil]}" metinde yok`);
+      }
+    }
+  }
+  assert.deepEqual(eksik, []);
+});
+
+test('VURGU metnin TAMAMI değil — vurgu olmaktan çıkardı', () => {
+  const tamami = ACILIS_MESAJLARI.filter((m) => m.vurgu && m.vurgu.tr === m.metin.tr).map(
+    (m) => m.id,
+  );
+  assert.deepEqual(tamami, [], 'bu mesajlarda her şey kalın — vurgu anlamsız');
+});
+
+test('ADSIZ VARYANTTA da vurgu tutuyor', () => {
+  // pn_02'nin adsız metni ayrı bir cümle; vurgu orada da geçmeli, yoksa
+  // adı olmayan kullanıcıda vurgu sessizce düşerdi.
+  for (const m of ACILIS_MESAJLARI) {
+    if (!m.adsizMetin || !m.vurgu) continue;
+    for (const dil of ['tr', 'kk', 'ru'] as const) {
+      assert.ok(
+        m.adsizMetin[dil].includes(m.vurgu[dil]),
+        `${m.id}/${dil}: adsız metinde vurgu yok`,
+      );
+    }
+  }
+});

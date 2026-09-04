@@ -13,11 +13,9 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   CATEGORIES,
-  cityCenter,
-  distanceKm,
   type Professional,
-  proCoords,
   type ProviderKind,
+  saglayiciMesafesi,
   CITIES,
 } from '../src/data';
 import type { MessageKey } from '@ayna/i18n';
@@ -347,8 +345,26 @@ export default function SearchScreen() {
     if (sort === 'rating') sorted.sort((a, b) => b.rating - a.rating);
     else if (sort === 'popular') sorted.sort((a, b) => b.reviewCount - a.reviewCount);
     else if (sort === 'distance') {
-      const c = cityCenter(filtre.sehir ?? city);
-      sorted.sort((a, b) => distanceKm(c, proCoords(a.id)) - distanceKm(c, proCoords(b.id)));
+      /*
+       * KONUMU OLMAYAN İŞLETME SONA.
+       *
+       * Sıralama da `proCoords(id)` ile yapılıyordu: konumu olmayan bir
+       * salon kimliğinden üretilmiş bir noktaya göre sıraya giriyordu,
+       * yani "en yakın" listesinin başında gerçekte nerede olduğu
+       * bilinmeyen bir işletme durabiliyordu. Artık yalnız konumu
+       * bilinenler mesafeye göre sıralanıyor; bilinmeyenler listenin
+       * sonunda, kendi aralarında sırasını koruyor.
+       */
+      const sehir = filtre.sehir ?? city;
+      const uzaklik = (p: Professional) => saglayiciMesafesi(p, sehir);
+      sorted.sort((a, b) => {
+        const da = uzaklik(a);
+        const db = uzaklik(b);
+        if (da === null && db === null) return 0;
+        if (da === null) return 1;
+        if (db === null) return -1;
+        return da - db;
+      });
     }
     return sorted;
   }, [professionals, query, activeCat, sort, city, filtre, t]);
@@ -796,9 +812,16 @@ export function ProRow({
 }) {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  // Kullanıcının şehir merkezinden gerçek mesafe (harita/SalonRow ile tutarlı)
+  /*
+   * MESAFE YALNIZ GERÇEK KOORDİNATTAN.
+   *
+   * Burada `proCoords(pro.id)` çağrılıyordu — konum PARAMETRESİ
+   * verilmeden. O hâlde fonksiyon kimlik dizesinden bir nokta üretiyor:
+   * ekrandaki "3,2 km" işletmenin nerede olduğuyla değil, kimliğinin
+   * harfleriyle ilgiliydi. Koordinat yoksa mesafe artık HİÇ yazılmıyor.
+   */
   const city = useStore((s) => s.currentUser?.city);
-  const km = distanceKm(cityCenter(city), proCoords(pro.id)).toFixed(1);
+  const km = saglayiciMesafesi(pro, city);
   return (
     <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 50)}>
       <PressableScale style={[styles.row, shadow.soft]} onPress={onPress}>
@@ -833,7 +856,8 @@ export function ProRow({
           <View style={styles.rowMetaRow}>
             <Ionicons name="location-outline" size={12} color={colors.muted} />
             <Text variant="caption" tone="muted" numberOfLines={1} style={styles.rowMeta}>
-              {km} km • {pro.specialty}
+              {km !== null ? `${km.toFixed(1)} km • ` : ''}
+              {pro.specialty}
             </Text>
           </View>
         </View>

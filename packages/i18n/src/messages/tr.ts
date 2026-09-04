@@ -957,6 +957,9 @@ export const tr = {
   'notif.slot_conflict_b':
     '{slot} için seçtiğin saat başka bir randevuyla çakıştı — yeni saat seç.',
   'booking.schedule.day_closed': 'Bu gün uzman izinli — başka bir gün seç',
+  'booking.schedule.slots_loading': 'Uygun saatler yükleniyor…',
+  'booking.schedule.slots_failed':
+    'Uygun saatler şu an alınamadı. Gösterilecek saat uydurulmuyor — yeniden dene.',
   'booking.schedule.slot_busy': 'Dolu',
   'booking.schedule.pick_slot': 'Önce gün ve saat seç',
   'booking.schedule.busy_title': 'Seçilen günde dolu saatler',
@@ -2003,8 +2006,6 @@ export const tr = {
   'budget.title': 'Bütçe',
   'budget.subtitle': 'Bakım harcamalarını takip et',
   'budget.spent': 'Bu ay harcanan',
-  'budget.limit': 'Aylık limit',
-  'budget.remaining': 'Kalan',
   'budget.by_category': 'Kategoriye göre',
   'budget.history': 'Harcama geçmişi',
   'budget.no_spend': 'Henüz harcama yok',

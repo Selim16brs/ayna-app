@@ -8,7 +8,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { type SplashSonucu } from '@ayna/domain';
+import { type SplashSonucu, vurguyuBol } from '@ayna/domain';
 import { font, space } from '../theme';
 import { mesajPuntosu, okumaSuresi } from '../acilis-olcu';
 import { useTheme } from '../theme-context';
@@ -154,7 +154,23 @@ export function AcilisMesaji({
             },
           ]}
         >
-          {sonuc.metin}
+          {/*
+            VURGU KALIN. Kurucu: "önemli kelime bold olsun."
+            Metin üçe bölünüyor; vurgu bulunamazsa tek parça çıkıyor —
+            yanlış girilmiş bir vurgu mesajı EKSİLTMİYOR.
+          */}
+          {(() => {
+            const [once, vurgu, sonra] = vurguyuBol(sonuc.metin, sonuc.vurgu);
+            return vurgu ? (
+              <>
+                {once}
+                <Animated.Text style={styles.vurgu}>{vurgu}</Animated.Text>
+                {sonra}
+              </>
+            ) : (
+              sonuc.metin
+            );
+          })()}
         </Animated.Text>
         {/* Logo imza gibi: mesajın altında, düşük ağırlıkta (brief §5.1). */}
         <Animated.View style={{ opacity: logoOpaklik }}>
@@ -187,6 +203,15 @@ export function AcilisMesaji({
 const styles = StyleSheet.create({
   kap: { alignItems: 'center', justifyContent: 'center' },
   orta: { alignItems: 'center', paddingHorizontal: space(4), gap: space(4) },
-  mesaj: { fontFamily: font.script, textAlign: 'center' },
-  logo: { width: 84, height: 32 },
+  /*
+   * UYGULAMANIN KENDİ YAZI TİPİ.
+   *
+   * Burada el yazısı (`font.script`) vardı. Kurucu: "font uygulamadaki
+   * ile aynı olsun." Açılış ekranı artık uygulamanın geri kalanıyla aynı
+   * aileyi kullanıyor.
+   */
+  mesaj: { fontFamily: font.regular, textAlign: 'center' },
+  vurgu: { fontFamily: font.semibold },
+  // Kurucunun isteğiyle büyütüldü; oran korunuyor (84×32 → 126×48).
+  logo: { width: 126, height: 48 },
 });

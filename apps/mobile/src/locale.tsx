@@ -32,12 +32,22 @@ interface LocaleContextValue {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: MessageKey) => string;
+  /**
+   * Kullanıcının KAYITLI dil seçimi okundu mu?
+   *
+   * `locale` ilk karede CİHAZ dilidir; kullanıcının kendi seçimi
+   * AsyncStorage'dan asenkron geliyor. Bir kez seçilip donan içerikler
+   * (açılış mesajı) bunu beklemezse yanlış dilde donar: telefonu Türkçe
+   * ama uygulaması Rusça olan kullanıcı Türkçe mesaj görürdü.
+   */
+  hazir: boolean;
 }
 
 const LocaleContext = createContext<LocaleContextValue>({
   locale: DEFAULT_LOCALE,
   setLocale: () => undefined,
   t: (key) => translate(DEFAULT_LOCALE, key),
+  hazir: false,
 });
 
 // §14.5 — hook-DIŞI erişim (store gibi): geçerli dili modül değişkeninde tutar.
@@ -61,6 +71,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     void AsyncStorage.setItem(DIL_ANAHTARI, l).catch(() => undefined);
   };
 
+  const [hazir, setHazir] = useState(false);
   useEffect(() => {
     // Kullanıcının AÇIK seçimi cihaz dilini ezer — bir kez, açılışta.
     void AsyncStorage.getItem(DIL_ANAHTARI)
@@ -70,11 +81,15 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
           setLocaleState(v);
         }
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      // Okuma bitti: kayıt olsun ya da olmasın, artık dil KESİN.
+      // `finally` şart — okuma hata verirse de beklemeyi bitirmeliyiz,
+      // yoksa açılış mesajı hiç gösterilmezdi.
+      .finally(() => setHazir(true));
   }, []);
   const value = useMemo<LocaleContextValue>(
-    () => ({ locale, setLocale, t: (key) => translate(locale, key) }),
-    [locale],
+    () => ({ locale, setLocale, t: (key) => translate(locale, key), hazir }),
+    [locale, hazir],
   );
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }

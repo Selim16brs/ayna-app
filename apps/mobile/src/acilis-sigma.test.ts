@@ -13,10 +13,12 @@ import { mesajPuntosu } from './acilis-olcu';
  *
  * ── NEDEN FONTUN KENDİSİNİ OKUYORUZ ─────────────────────────────────────
  *
- * "Sığıyor herhalde" demek bir ölçüm değil. Pacifico'nun glif genişlikleri
- * TTF'in içinde yazıyor; test dosyayı açıp okuyor. Font değişirse ölçüm de
- * değişir — sabit bir tabloya yazsaydım font değiştiği gün test yalan
- * söylemeye başlardı.
+ * "Sığıyor herhalde" demek bir ölçüm değil. Kullanılan yazı tipinin glif
+ * genişlikleri TTF'in içinde yazıyor; test dosyayı açıp okuyor. Font
+ * değişirse ölçüm de değişir — sabit bir tabloya yazsaydım font değiştiği
+ * gün test yalan söylemeye başlardı. (Nitekim DEĞİŞTİ: el yazısı Pacifico
+ * bırakılıp uygulamanın kendi yazı tipine dönüldü ve test kendiliğinden
+ * yeni fontu ölçmeye başladı.)
  *
  * Ölçüm KABA ama tek yönlü kaba: kerning ve ligatür metni DARALTIR, biz
  * saymıyoruz; yani gerçek genişlik hesapladığımızdan küçük. Testin
@@ -83,7 +85,25 @@ function fontOlculeri(yol: string) {
   return { gidBul, genislik };
 }
 
-const font = fontOlculeri(join(__dirname, '..', 'assets', 'fonts', 'Pacifico-Regular.ttf'));
+/*
+ * Ekranın GERÇEKTEN kullandığı yazı tipi. Dosya adını elle yazsaydım,
+ * ekran başka bir fonta geçtiğinde test eski fontu ölçmeye devam eder ve
+ * "sığıyor" derken yanlış fontu ölçerdi.
+ */
+const AILE = /mesaj: \{ fontFamily: font\.(\w+)/.exec(
+  readFileSync(join(__dirname, 'ui', 'AcilisMesaji.tsx'), 'utf8'),
+)?.[1];
+// `export const font = { ... }` bloğunu HEDEFLİ okuyoruz: dosyanın
+// tamamında `ad: 'değer'` deseni başka yerlerde de geçiyor (`weight`
+// tablosu gibi) ve oradan okumak yanlış eşleşme veriyordu.
+const temaKaynagi = readFileSync(join(__dirname, 'theme.ts'), 'utf8');
+const fontBloku = temaKaynagi.slice(
+  temaKaynagi.indexOf('export const font = {'),
+  temaKaynagi.indexOf('} as const;', temaKaynagi.indexOf('export const font = {')),
+);
+const aileler = new Map([...fontBloku.matchAll(/(\w+): '([\w-]+)',/g)].map((m) => [m[1]!, m[2]!]));
+const FONT_DOSYASI = aileler.get(AILE ?? '');
+const font = fontOlculeri(join(__dirname, '..', 'assets', 'fonts', `${FONT_DOSYASI}.ttf`));
 
 /** Metnin em cinsinden genişliği (punto ile çarpılınca px). */
 const emGenisligi = (s: string): number =>
@@ -141,7 +161,7 @@ test('KAZAK GLİFLERİNİN hepsi fontta var — brief §7.4(b)', () => {
     assert.notEqual(
       font.gidBul(ch.codePointAt(0)!),
       0,
-      `Pacifico'da '${ch}' yok — boş kare çizilir`,
+      `${FONT_DOSYASI} içinde '${ch}' yok — boş kare çizilir`,
     );
   }
 });

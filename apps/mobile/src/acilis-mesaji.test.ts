@@ -86,12 +86,13 @@ test('UZUN mesaj KÜÇÜLÜYOR ama okunur bir alt sınırda duruyor', () => {
    * §5.2: en uzun mesajlar (genelde KK) kırpılmadan sığmalı; mesaj bazında
    * otomatik küçültme kabul, alt sınır belirlenmeli.
    *
-   * Pacifico dolgun bir yazı — kurucunun seçimi. Uzun Kazakça cümleler
-   * büyük puntoda taşıyor.
+   * Üst uç, ekranın kullandığı yazı tipiyle ÖLÇÜLEREK belirlendi
+   * (`acilis-sigma.test.ts`): en uzun Kazakça kelime bunun üstünde en dar
+   * ekranın satırına sığmıyor.
    */
-  assert.equal(mesajPuntosu('Bugün senin günün!'), 34);
+  assert.equal(mesajPuntosu('Bugün senin günün!'), 30);
   const uzunKK = 'Сұлулық ұйқысы жақсы. Ал сұлулық жазылымы — одан да жақсы!';
-  assert.ok(mesajPuntosu(uzunKK) < 34, 'uzun mesaj küçülmüyor');
+  assert.ok(mesajPuntosu(uzunKK) < 30, 'uzun mesaj küçülmüyor');
   assert.ok(mesajPuntosu('x'.repeat(300)) >= 24, 'punto okunmaz seviyeye düşüyor');
 });
 

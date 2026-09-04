@@ -59,6 +59,19 @@ export interface SplashMesaji {
   dogumGunu?: true;
   /** pn_02'nin adsız kısaltması — brief §2.6. */
   adsizMetin?: UcDil;
+  /**
+   * VURGULANACAK BÖLÜM — açılış ekranında kalın çizilir.
+   *
+   * Kurucu: "önemli kelime bold olsun." Metnin kendisi brief'ten AYNEN
+   * geliyor ve değişmiyor; vurgu ayrı bir alan olarak duruyor, çünkü
+   * metnin içine `*yıldız*` gibi işaret koysaydım metin artık brief'le
+   * birebir olmazdı.
+   *
+   * Değer, o dildeki metnin İÇİNDE GEÇEN bir parça olmak zorunda —
+   * `vurgu.test.ts` bunu doğruluyor. Geçmiyorsa hiçbir şey kalınlaşmaz;
+   * sessiz bir yazım hatası bütün vurguyu düşürebilirdi.
+   */
+  vurgu?: UcDil;
   /** H — davranış koşulu. */
   davranis?:
     | 'ilk_acilis'
@@ -93,8 +106,11 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Sen güçlü bir kadınsın!',
     'Ты сильная женщина!',
     'Сен мықты әйелсің!',
+    { vurgu: { tr: 'güçlü bir kadınsın', ru: 'сильная женщина', kk: 'мықты әйелсің' } },
   ),
-  m('msg_02', 'A', 'neutral', 'Bugün senin günün!', 'Сегодня твой день!', 'Бүгін — сенің күнің!'),
+  m('msg_02', 'A', 'neutral', 'Bugün senin günün!', 'Сегодня твой день!', 'Бүгін — сенің күнің!', {
+    vurgu: { tr: 'senin günün', ru: 'твой день', kk: 'сенің күнің' },
+  }),
   m(
     'msg_03',
     'A',
@@ -102,6 +118,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Güzelliğin içinden geliyor.',
     'Твоя красота идёт изнутри.',
     'Сұлулығың ішіңнен бастау алады.',
+    { vurgu: { tr: 'içinden geliyor', ru: 'идёт изнутри', kk: 'ішіңнен бастау алады' } },
   ),
   m(
     'msg_04',
@@ -110,6 +127,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Kendine zaman ayırmayı hak ediyorsun.',
     'Ты заслуживаешь времени для себя.',
     'Сен өзіңе уақыт бөлуге лайықсың.',
+    { vurgu: { tr: 'hak ediyorsun', ru: 'заслуживаешь', kk: 'лайықсың' } },
   ),
   m(
     'msg_05',
@@ -118,6 +136,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Işılda! Dünya sana bakıyor.',
     'Сияй! Мир смотрит на тебя.',
     'Жарқыра! Әлем саған қарап тұр.',
+    { vurgu: { tr: 'Işılda', ru: 'Сияй', kk: 'Жарқыра' } },
   ),
   m(
     'msg_06',
@@ -126,6 +145,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'En güzel yatırım, kendine yaptığındır.',
     'Лучшая инвестиция — в себя.',
     'Ең үздік инвестиция — өзіңе салғаның.',
+    { vurgu: { tr: 'kendine yaptığındır', ru: 'в себя', kk: 'өзіңе салғаның' } },
   ),
   m(
     'msg_07',
@@ -134,6 +154,13 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Sen olduğun gibi mükemmelsin.',
     'Ты прекрасна такая, какая есть.',
     'Сен өз қалпыңда кереметсің.',
+    {
+      vurgu: {
+        tr: 'olduğun gibi mükemmelsin',
+        ru: 'такая, какая есть',
+        kk: 'өз қалпыңда кереметсің',
+      },
+    },
   ),
   m(
     'msg_08',
@@ -142,6 +169,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Bugün kendini şımart!',
     'Побалуй себя сегодня!',
     'Бүгін өзіңді еркелет!',
+    { vurgu: { tr: 'kendini şımart', ru: 'Побалуй себя', kk: 'өзіңді еркелет' } },
   ),
   m(
     'msg_09',
@@ -150,6 +178,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Gülüşün en güzel aksesuarın.',
     'Твоя улыбка — лучшее украшение.',
     'Күлкің — ең әдемі әшекейің.',
+    { vurgu: { tr: 'en güzel aksesuarın', ru: 'лучшее украшение', kk: 'ең әдемі әшекейің' } },
   ),
   m(
     'msg_10',
@@ -158,6 +187,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Kendine iyi bakmak bencillik değil, sevgidir.',
     'Забота о себе — это не эгоизм, а любовь.',
     'Өзіңе қамқорлық — өзімшілдік емес, махаббат.',
+    { vurgu: { tr: 'sevgidir', ru: 'любовь', kk: 'махаббат' } },
   ),
   m(
     'msg_11',
@@ -166,8 +196,11 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Her gün yeni bir başlangıç.',
     'Каждый день — новое начало.',
     'Әр күн — жаңа бастау.',
+    { vurgu: { tr: 'yeni bir başlangıç', ru: 'новое начало', kk: 'жаңа бастау' } },
   ),
-  m('msg_12', 'A', 'female', 'Sen bir tanesin!', 'Ты неповторима!', 'Сен қайталанбассың!'),
+  m('msg_12', 'A', 'female', 'Sen bir tanesin!', 'Ты неповторима!', 'Сен қайталанбассың!', {
+    vurgu: { tr: 'bir tanesin', ru: 'неповторима', kk: 'қайталанбассың' },
+  }),
   m(
     'msg_13',
     'A',
@@ -175,6 +208,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Enerjin her şeyi değiştirir.',
     'Твоя энергия меняет всё.',
     'Сенің энергияң бәрін өзгертеді.',
+    { vurgu: { tr: 'her şeyi değiştirir', ru: 'меняет всё', kk: 'бәрін өзгертеді' } },
   ),
   m(
     'msg_14',
@@ -183,6 +217,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Hayallerinin peşinden git.',
     'Иди за своей мечтой.',
     'Арманыңның соңынан ер.',
+    { vurgu: { tr: 'Hayallerinin', ru: 'мечтой', kk: 'Арманыңның' } },
   ),
   m(
     'msg_15',
@@ -191,6 +226,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Bugün de harikasın!',
     'Ты сегодня великолепна!',
     'Сен бүгін де кереметсің!',
+    { vurgu: { tr: 'harikasın', ru: 'великолепна', kk: 'кереметсің' } },
   ),
   m(
     'msg_16',
@@ -199,6 +235,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Kendini sevmek en büyük güçtür.',
     'Любовь к себе — великая сила.',
     'Өзіңді сүю — ең үлкен күш.',
+    { vurgu: { tr: 'en büyük güçtür', ru: 'великая сила', kk: 'ең үлкен күш' } },
   ),
   m(
     'msg_17',
@@ -207,8 +244,11 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Küçük bir bakım, büyük bir özgüven.',
     'Немного заботы — много уверенности.',
     'Кішкене күтім — үлкен сенімділік.',
+    { vurgu: { tr: 'büyük bir özgüven', ru: 'много уверенности', kk: 'үлкен сенімділік' } },
   ),
-  m('msg_18', 'A', 'female', 'Sen buna değersin.', 'Ты этого достойна.', 'Сен бұған лайықсың.'),
+  m('msg_18', 'A', 'female', 'Sen buna değersin.', 'Ты этого достойна.', 'Сен бұған лайықсың.', {
+    vurgu: { tr: 'buna değersin', ru: 'этого достойна', kk: 'бұған лайықсың' },
+  }),
   m(
     'msg_19',
     'A',
@@ -216,6 +256,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Parlamaktan asla vazgeçme.',
     'Никогда не переставай сиять.',
     'Жарқырауды ешқашан тоқтатпа.',
+    { vurgu: { tr: 'asla vazgeçme', ru: 'Никогда не переставай', kk: 'ешқашан тоқтатпа' } },
   ),
   m(
     'msg_20',
@@ -224,6 +265,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Güzellik bir yolculuktur — tadını çıkar.',
     'Красота — это путь. Наслаждайся им.',
     'Сұлулық — бұл жол. Ләззатын ал.',
+    { vurgu: { tr: 'tadını çıkar', ru: 'Наслаждайся', kk: 'Ләззатын ал' } },
   ),
 
   // ── GRUP B · Hizmete yönlendiren (her zaman havuzda) ─────────────────
@@ -234,6 +276,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     "Bugün kendin için bir şey yap — spa'ya git!",
     'Сделай сегодня что-то для себя — сходи в спа!',
     'Бүгін өзің үшін бірдеңе жаса — спаға бар!',
+    { vurgu: { tr: "spa'ya git", ru: 'сходи в спа', kk: 'спаға бар' } },
   ),
   m(
     'msg_22',
@@ -242,6 +285,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Manikür zamanı gelmedi mi?',
     'Не пора ли на маникюр?',
     'Маникюр жасайтын уақыт келді емес пе?',
+    { vurgu: { tr: 'Manikür zamanı', ru: 'маникюр', kk: 'Маникюр' } },
   ),
   m(
     'msg_23',
@@ -250,6 +294,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'İyi bir masaj her şeyi çözer.',
     'Хороший массаж решает всё.',
     'Жақсы массаж бәрін шешеді.',
+    { vurgu: { tr: 'her şeyi çözer', ru: 'решает всё', kk: 'бәрін шешеді' } },
   ),
   m(
     'msg_24',
@@ -258,6 +303,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Cildin sana teşekkür edecek — bir bakım planla.',
     'Твоя кожа скажет спасибо — запишись на уход.',
     'Терің саған алғыс айтады — күтімге жазыл.',
+    { vurgu: { tr: 'bir bakım planla', ru: 'запишись на уход', kk: 'күтімге жазыл' } },
   ),
   m(
     'msg_25',
@@ -266,6 +312,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Yeni bir saç, yeni bir sen!',
     'Новая причёска — новая ты!',
     'Жаңа шаш үлгісі — жаңа сен!',
+    { vurgu: { tr: 'yeni bir sen', ru: 'новая ты', kk: 'жаңа сен' } },
   ),
   m(
     'msg_26',
@@ -274,6 +321,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Kendine bir güzellik molası ver.',
     'Устрой себе бьюти-паузу.',
     'Өзіңе сұлулық үзілісін жаса.',
+    { vurgu: { tr: 'güzellik molası', ru: 'бьюти-паузу', kk: 'сұлулық үзілісін' } },
   ),
   m(
     'msg_27',
@@ -282,6 +330,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Işıldamak için bir randevu yeter.',
     'Одна запись — и ты сияешь.',
     'Бір жазылу — сен жарқырап шыға келесің.',
+    { vurgu: { tr: 'bir randevu yeter', ru: 'Одна запись', kk: 'Бір жазылу' } },
   ),
   m(
     'msg_28',
@@ -290,6 +339,13 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Dileğini yaz, uzmanlar sana gelsin!',
     'Напиши своё желание — мастера откликнутся!',
     'Тілегіңді жаз — мамандар өздері хабарласады!',
+    {
+      vurgu: {
+        tr: 'uzmanlar sana gelsin',
+        ru: 'мастера откликнутся',
+        kk: 'мамандар өздері хабарласады',
+      },
+    },
   ),
 
   // ── GRUP C · Zaman dilimi ────────────────────────────────────────────
@@ -300,7 +356,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Günaydın! Bugün ışıldamak için harika bir gün.',
     'Доброе утро! Отличный день, чтобы сиять.',
     'Қайырлы таң! Бүгін жарқырауға тамаша күн.',
-    { saat: SABAH },
+    { saat: SABAH, vurgu: { tr: 'Günaydın', ru: 'Доброе утро', kk: 'Қайырлы таң' } },
   ),
   m(
     'tod_02',
@@ -309,7 +365,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Güne bir gülümsemeyle başla.',
     'Начни день с улыбки.',
     'Күнді күлкіден баста.',
-    { saat: SABAH },
+    { saat: SABAH, vurgu: { tr: 'bir gülümsemeyle', ru: 'с улыбки', kk: 'күлкіден' } },
   ),
   m(
     'tod_03',
@@ -318,7 +374,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Kendine küçük bir mola borçlusun.',
     'Ты заслуживаешь маленькой паузы.',
     'Сен шағын үзіліске лайықсың.',
-    { saat: OGLE },
+    { saat: OGLE, vurgu: { tr: 'küçük bir mola', ru: 'маленькой паузы', kk: 'шағын үзіліске' } },
   ),
   m(
     'tod_04',
@@ -327,7 +383,10 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Bugün kendine ne kadar zaman ayırdın?',
     'Сегодня было время для себя?',
     'Бүгін өзіңе уақыт бөлдің бе?',
-    { saat: AKSAM },
+    {
+      saat: AKSAM,
+      vurgu: { tr: 'ne kadar zaman ayırdın', ru: 'было время для себя', kk: 'уақыт бөлдің бе' },
+    },
   ),
   m(
     'tod_05',
@@ -336,7 +395,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Yarın için güzel bir plan yapalım mı?',
     'Составим красивый план на завтра?',
     'Ертеңге әдемі жоспар құрайық па?',
-    { saat: AKSAM },
+    { saat: AKSAM, vurgu: { tr: 'güzel bir plan', ru: 'красивый план', kk: 'әдемі жоспар' } },
   ),
   m(
     'tod_06',
@@ -345,7 +404,14 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Hafta sonu, kendine bakım zamanı!',
     'Выходные — время заботы о себе!',
     'Демалыс — өзіңе қамқорлық уақыты!',
-    { haftaSonu: true },
+    {
+      haftaSonu: true,
+      vurgu: {
+        tr: 'kendine bakım zamanı',
+        ru: 'время заботы о себе',
+        kk: 'өзіңе қамқорлық уақыты',
+      },
+    },
   ),
 
   // ── GRUP D · Haftanın günü ───────────────────────────────────────────
@@ -356,7 +422,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Haftaya ışıldayarak başla!',
     'Начни неделю с сияния!',
     'Аптаны жарқыраудан баста!',
-    { gunler: [1] },
+    { gunler: [1], vurgu: { tr: 'ışıldayarak', ru: 'с сияния', kk: 'жарқыраудан' } },
   ),
   m(
     'dow_02',
@@ -365,7 +431,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Hafta sonu planın hazır mı? Belki bir manikür?',
     'Планы на выходные готовы? Может, маникюр?',
     'Демалысқа жоспар дайын ба? Мүмкін маникюр?',
-    { gunler: [5] },
+    { gunler: [5], vurgu: { tr: 'bir manikür', ru: 'маникюр', kk: 'маникюр' } },
   ),
 
   // ── GRUP E · Özel gün ve sezon ───────────────────────────────────────
@@ -376,7 +442,15 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Yeni yıl, yeni sen! Nice ışıltılı yıllara.',
     'Новый год — новая версия тебя!',
     'Жаңа жыл — жаңа сен!',
-    { pencere: { bas: [12, 31], son: [1, 7] }, oncelikliOzelGun: true },
+    {
+      pencere: { bas: [12, 31], son: [1, 7] },
+      oncelikliOzelGun: true,
+      vurgu: {
+        tr: 'Yeni yıl, yeni sen',
+        ru: 'Новый год — новая версия тебя',
+        kk: 'Жаңа жыл — жаңа сен',
+      },
+    },
   ),
   m(
     'sp_02',
@@ -385,7 +459,11 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Bugün sevginin günü — önce kendini sev.',
     'Сегодня день любви — начни с любви к себе.',
     'Бүгін махаббат күні — өзіңді сүюден баста.',
-    { pencere: { bas: [2, 14], son: [2, 14] }, oncelikliOzelGun: true },
+    {
+      pencere: { bas: [2, 14], son: [2, 14] },
+      oncelikliOzelGun: true,
+      vurgu: { tr: 'önce kendini sev', ru: 'начни с любви к себе', kk: 'өзіңді сүюден баста' },
+    },
   ),
   m(
     'sp_03',
@@ -394,7 +472,11 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     '8 Mart kutlu olsun! Bugün gün senin günün.',
     'С 8 Марта! Сегодня твой день.',
     '8 Наурыз мейрамы құтты болсын! Бүгін — сенің күнің.',
-    { pencere: { bas: [3, 8], son: [3, 8] }, oncelikliOzelGun: true },
+    {
+      pencere: { bas: [3, 8], son: [3, 8] },
+      oncelikliOzelGun: true,
+      vurgu: { tr: '8 Mart kutlu olsun', ru: 'С 8 Марта', kk: '8 Наурыз мейрамы құтты болсын' },
+    },
   ),
   m(
     'sp_04',
@@ -403,7 +485,11 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Nauryz kutlu olsun! Baharla birlikte yenilen.',
     'С Наурызом! Обновляйся вместе с весной.',
     'Наурыз мейрамы құтты болсын! Көктеммен бірге жаңар.',
-    { pencere: { bas: [3, 21], son: [3, 23] }, oncelikliOzelGun: true },
+    {
+      pencere: { bas: [3, 21], son: [3, 23] },
+      oncelikliOzelGun: true,
+      vurgu: { tr: 'Nauryz kutlu olsun', ru: 'С Наурызом', kk: 'Наурыз мейрамы құтты болсын' },
+    },
   ),
   m(
     'sp_05',
@@ -412,7 +498,10 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Soğuk havada cildin ekstra sevgi ister.',
     'В холода твоя кожа просит больше заботы.',
     'Суықта терің көбірек қамқорлық қалайды.',
-    { pencere: { bas: [12, 1], son: [2, 29] } },
+    {
+      pencere: { bas: [12, 1], son: [2, 29] },
+      vurgu: { tr: 'ekstra sevgi ister', ru: 'больше заботы', kk: 'көбірек қамқорлық қалайды' },
+    },
   ),
   m(
     'sp_06',
@@ -421,7 +510,10 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Güneş çıktı — sen de parla!',
     'Солнце сияет — сияй и ты!',
     'Күн жарқырап тұр — сен де жарқыра!',
-    { pencere: { bas: [6, 1], son: [8, 31] } },
+    {
+      pencere: { bas: [6, 1], son: [8, 31] },
+      vurgu: { tr: 'sen de parla', ru: 'сияй и ты', kk: 'сен де жарқыра' },
+    },
   ),
   m(
     'sp_07',
@@ -430,7 +522,10 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Düğün sezonu açıldı! Davetlere hazır mısın?',
     'Сезон свадеб открыт! Готовишься к торжествам?',
     'Той маусымы басталды! Тойларға дайынсың ба?',
-    { pencere: { bas: [5, 1], son: [9, 30] } },
+    {
+      pencere: { bas: [5, 1], son: [9, 30] },
+      vurgu: { tr: 'Düğün sezonu açıldı', ru: 'Сезон свадеб открыт', kk: 'Той маусымы басталды' },
+    },
   ),
 
   // ── GRUP F · Kişiselleştirilmiş ──────────────────────────────────────
@@ -441,7 +536,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Hoş geldin, {name}! Bugün senin günün.',
     'С возвращением, {name}! Сегодня твой день.',
     'Қош келдің, {name}! Бүгін — сенің күнің.',
-    { adGerekli: true },
+    { adGerekli: true, vurgu: { tr: 'Hoş geldin', ru: 'С возвращением', kk: 'Қош келдің' } },
   ),
   m(
     'pn_02',
@@ -458,6 +553,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
         ru: 'С днём рождения! Сияй сегодня!',
         kk: 'Туған күніңмен! Бүгін жарқыра!',
       },
+      vurgu: { tr: 'İyi ki doğdun', ru: 'С днём рождения', kk: 'Туған күніңмен' },
     },
   ),
 
@@ -469,6 +565,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Ayna ayna, söyle bana... Söylemeye gerek yok — harikasın.',
     'Свет мой, зеркальце, скажи... Можно не говорить — ты прекрасна.',
     'Айна, айна, айтшы маған... Айтудың қажеті жоқ — сен кереметсің.',
+    { vurgu: { tr: 'harikasın', ru: 'ты прекрасна', kk: 'сен кереметсің' } },
   ),
   m(
     'fun_02',
@@ -477,6 +574,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Aynaya bir gülümse — bunu hak etti.',
     'Улыбнись зеркалу — оно это заслужило.',
     'Айнаға күлімсіреші — ол соған лайық.',
+    { vurgu: { tr: 'bunu hak etti', ru: 'оно это заслужило', kk: 'ол соған лайық' } },
   ),
   m(
     'fun_03',
@@ -485,6 +583,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Güzellik uykusu iyi de… biraz da güzellik randevusu?',
     'Бьюти-сон — это хорошо. А бьюти-запись — ещё лучше!',
     'Сұлулық ұйқысы жақсы. Ал сұлулық жазылымы — одан да жақсы!',
+    { vurgu: { tr: 'güzellik randevusu', ru: 'бьюти-запись', kk: 'сұлулық жазылымы' } },
   ),
 
   // ── GRUP H · Davranış bazlı ──────────────────────────────────────────
@@ -495,7 +594,10 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     "AYNA'ya hoş geldin! İlk dileğini yazmaya hazır mısın?",
     'Добро пожаловать в AYNA! Загадай своё первое желание.',
     'AYNA-ға қош келдің! Алғашқы тілегіңді жаз.',
-    { davranis: 'ilk_acilis' },
+    {
+      davranis: 'ilk_acilis',
+      vurgu: { tr: 'hoş geldin', ru: 'Добро пожаловать', kk: 'қош келдің' },
+    },
   ),
   m(
     'bh_02',
@@ -504,7 +606,10 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Seni özledik! Kendine yeniden zaman ayırma vakti.',
     'Мы соскучились! Пора снова уделить себе время.',
     'Сені сағындық! Өзіңе қайта уақыт бөлетін кез келді.',
-    { davranis: 'uzun_yokluk' },
+    {
+      davranis: 'uzun_yokluk',
+      vurgu: { tr: 'Seni özledik', ru: 'Мы соскучились', kk: 'Сені сағындық' },
+    },
   ),
   m(
     'bh_03',
@@ -513,7 +618,10 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Yarın randevun var — heyecan başlasın!',
     'Завтра твоя запись. Уже ждём!',
     'Ертең жазылуың бар. Асыға күтеміз!',
-    { davranis: 'yarin_randevu' },
+    {
+      davranis: 'yarin_randevu',
+      vurgu: { tr: 'Yarın randevun var', ru: 'Завтра твоя запись', kk: 'Ертең жазылуың бар' },
+    },
   ),
   m(
     'bh_04',
@@ -522,7 +630,10 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Bugün randevu günü! Harika görüneceksin.',
     'Сегодня день записи! Всё будет красиво.',
     'Бүгін жазылу күні! Бәрі керемет болады.',
-    { davranis: 'bugun_randevu' },
+    {
+      davranis: 'bugun_randevu',
+      vurgu: { tr: 'Bugün randevu günü', ru: 'Сегодня день записи', kk: 'Бүгін жазылу күні' },
+    },
   ),
   m(
     'bh_05',
@@ -531,7 +642,7 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Yeni halin çok yakışmış!',
     'Обновление тебе к лицу!',
     'Жаңа келбетің жарасып тұр!',
-    { davranis: 'randevu_sonrasi' },
+    { davranis: 'randevu_sonrasi', vurgu: { tr: 'çok yakışmış', ru: 'к лицу', kk: 'жарасып тұр' } },
   ),
   m(
     'bh_06',
@@ -540,7 +651,10 @@ export const ACILIS_MESAJLARI: readonly SplashMesaji[] = [
     'Puanların hazır — bir sonraki randevunda kullan!',
     'Твои баллы готовы — используй при следующей записи!',
     'Ұпайларың дайын — келесі жазылымда қолдан!',
-    { davranis: 'puan_hazir' },
+    {
+      davranis: 'puan_hazir',
+      vurgu: { tr: 'Puanların hazır', ru: 'Твои баллы готовы', kk: 'Ұпайларың дайын' },
+    },
   ),
 ];
 

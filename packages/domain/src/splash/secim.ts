@@ -73,8 +73,28 @@ export interface SplashSonucu {
   id: string;
   /** Ekrana yazılacak metin — yer tutucular doldurulmuş. */
   metin: string;
+  /**
+   * Metnin KALIN çizilecek parçası — brief dışı, kurucunun isteği
+   * ("önemli kelime bold olsun").
+   *
+   * Metnin İÇİNDEN bir parça; ekran onu arayıp üçe bölüyor. Bulunamazsa
+   * (ör. uzak katalogda vurgu yanlış girilmiş) hiçbir şey kalınlaşmıyor,
+   * mesaj yine tam çıkıyor.
+   */
+  vurgu: string | null;
   grup: SplashMesaji['grup'];
   durum: SplashDurumu;
+}
+
+/**
+ * Metni [önce, vurgu, sonra] olarak böl. Vurgu yoksa ya da metinde
+ * geçmiyorsa vurgu parçası boş döner.
+ */
+export function vurguyuBol(metin: string, vurgu: string | null): [string, string, string] {
+  if (!vurgu) return [metin, '', ''];
+  const i = metin.indexOf(vurgu);
+  if (i < 0) return [metin, '', ''];
+  return [metin.slice(0, i), vurgu, metin.slice(i + vurgu.length)];
 }
 
 const GUN = 24 * 60 * 60 * 1000;
@@ -105,6 +125,15 @@ function uygun(msj: SplashMesaji, b: SplashBaglami): boolean {
 }
 
 /** Metni dile çevirip `{name}` yer tutucusunu doldurur. */
+/** Seçilen dildeki vurgu parçası; tanımsızsa null. */
+function vurguKur(msj: SplashMesaji, b: SplashBaglami): string | null {
+  if (!msj.vurgu) return null;
+  const dil = (['tr', 'kk', 'ru'] as const).includes(b.dil as SplashDil)
+    ? (b.dil as SplashDil)
+    : 'tr';
+  return msj.vurgu[dil] ?? msj.vurgu.tr ?? null;
+}
+
 function metniKur(msj: SplashMesaji, b: SplashBaglami): string {
   const ad = b.ad?.trim();
   const dil = (['tr', 'kk', 'ru'] as const).includes(b.dil as SplashDil)
@@ -187,6 +216,7 @@ export function acilisMesajiSec(
   const yaz = (msj: SplashMesaji, anahtar = msj.id): SplashSonucu => ({
     id: msj.id,
     metin: metniKur(msj, b),
+    vurgu: vurguKur(msj, b),
     grup: msj.grup,
     durum: {
       // Havuz kimliği turda işaretleniyor; öncelikli dallar havuza ait

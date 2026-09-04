@@ -897,6 +897,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'notif.slot_conflict': 'Конфликт времени ⚠️',
   'notif.slot_conflict_b': 'Время для {slot} пересеклось с другой записью — выберите новое время.',
   'booking.schedule.day_closed': 'В этот день мастер не работает — выберите другой день',
+  'booking.schedule.slots_loading': 'Загружаем свободное время…',
+  'booking.schedule.slots_failed':
+    'Сейчас не удалось получить свободное время. Мы не показываем выдуманные слоты — попробуйте снова.',
   'booking.schedule.slot_busy': 'Занято',
   'booking.schedule.pick_slot': 'Сначала выберите день и время',
   'booking.schedule.busy_title': 'Занятые часы в выбранный день',
@@ -1877,8 +1880,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'budget.title': 'Бюджет',
   'budget.subtitle': 'Отслеживайте расходы на уход',
   'budget.spent': 'Потрачено в этом месяце',
-  'budget.limit': 'Месячный лимит',
-  'budget.remaining': 'Остаток',
   'budget.by_category': 'По категориям',
   'budget.history': 'История расходов',
   'budget.no_spend': 'Пока нет расходов',

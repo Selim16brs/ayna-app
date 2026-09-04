@@ -7,16 +7,19 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Progress,
-  Screen,
-  SectionHeader,
-  StackHeader,
-  TAB_BAR_CLEARANCE,
-  Text,
-} from '../../src/ui';
+import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 
-const LIMIT = 80000;
+/*
+ * AYLIK LİMİT KALDIRILDI.
+ *
+ * Burada `const LIMIT = 80000` vardı ve ekran bunu "Aylık limit" diye
+ * yazıp üstüne bir doluluk çubuğu ve "Kalan" tutarı çiziyordu. Kullanıcı
+ * böyle bir limit HİÇ BELİRLEMEMİŞTİ: kendi bütçesi sanılan sayı
+ * koddan geliyordu.
+ *
+ * Gerçek bir limit ancak kullanıcı kendisi girerse olur; o ayrı bir
+ * özellik. O gelene kadar ekran yalnız GERÇEK harcamayı gösteriyor.
+ */
 
 export default function BudgetScreen() {
   const { t } = useLocale();
@@ -24,10 +27,19 @@ export default function BudgetScreen() {
   const styles = useThemedStyles(makeStyles);
 
   const bookings = useStore((s) => s.bookings);
-  const completed = useMemo(() => bookings.filter((b) => b.status === 'tamamlandi'), [bookings]);
+  /*
+   * "BU AY" GERÇEKTEN BU AY.
+   *
+   * Başlık "Bu ay harcanan" diyordu ama toplam TÜM tamamlanmış
+   * randevuları kapsıyordu: bir yıldır uygulamayı kullanan biri, bu ay
+   * hiç randevusu olmasa bile yüksek bir "bu ay" rakamı görüyordu.
+   */
+  const completed = useMemo(() => {
+    const simdi = new Date();
+    const ayBasi = new Date(simdi.getFullYear(), simdi.getMonth(), 1).getTime();
+    return bookings.filter((b) => b.status === 'tamamlandi' && b.startMs >= ayBasi);
+  }, [bookings]);
   const spent = completed.reduce((n, b) => n + b.price, 0);
-  const remaining = Math.max(LIMIT - spent, 0);
-  const progress = Math.min(spent / LIMIT, 1);
 
   // Kategori = işletme bazlı kırılım
   const byCategory = completed.reduce<Record<string, number>>((acc, b) => {
@@ -52,17 +64,6 @@ export default function BudgetScreen() {
           <Text variant="display" tone="ink">
             {formatPrice(spent)}
           </Text>
-          <View style={styles.barWrap}>
-            <Progress value={progress} color={colors.accent} />
-          </View>
-          <View style={styles.cardFoot}>
-            <Text variant="caption" tone="muted">
-              {t('budget.limit')}: {formatPrice(LIMIT)}
-            </Text>
-            <Text variant="caption" style={{ color: colors.sage }}>
-              {t('budget.remaining')}: {formatPrice(remaining)}
-            </Text>
-          </View>
         </View>
 
         {/* Kategoriye göre */}
@@ -140,8 +141,6 @@ const makeStyles = (colors: ColorTokens) =>
       padding: space(2.75),
       gap: space(0.5),
     },
-    barWrap: { marginTop: space(1.5), marginBottom: space(1.25) },
-    cardFoot: { flexDirection: 'row', justifyContent: 'space-between' },
     group: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,

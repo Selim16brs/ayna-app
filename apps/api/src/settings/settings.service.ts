@@ -215,6 +215,7 @@ export class SettingsService {
         pointsUnlockKzt: rate('rate.points_unlock_kzt'),
         pointsExpiryDays: rate('rate.points_expiry_days'),
         premiumUserKzt: rate('rate.premium_user_kzt'),
+        platinumUserKzt: rate('rate.platinum_user_kzt'),
         premiumSalonKzt: rate('rate.premium_salon_kzt'),
         raffleCost: rate('rate.raffle_cost'),
         adMonthlyKzt: rate('rate.ad_monthly_kzt'),

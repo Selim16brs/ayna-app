@@ -63,18 +63,6 @@ export const font = {
   extrabold: 'Onest-SemiBold',
   /** Figma başlıkları DM Sans; bizde başlık da Onest. */
   displayMedium: 'Onest-Medium',
-  /**
-   * EL YAZISI — yalnız açılış mesajı ekranında.
-   *
-   * Brief §5.2: font üç alfabeyi de (TR + Rusça Kiril + KAZAKÇAYA ÖZGÜ
-   * ә ғ қ ң ө ұ ү һ і) eksiksiz kapsamalı. Beş aday tarandı, ikisi kazak
-   * gliflerini taşımıyordu. Pacifico kapsıyor ve kurucu onu seçti.
-   *
-   * Uygulamanın geri kalanında KULLANILMIYOR: el yazısı arayüzde
-   * okunurluğu düşürür, brief de onu "tek kahraman" olarak splash'a
-   * ayırıyor.
-   */
-  script: 'Pacifico-Regular',
   displayBold: 'Onest-SemiBold',
 } as const;
 

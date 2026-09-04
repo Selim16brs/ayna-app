@@ -99,8 +99,14 @@ export default function RewardsScreen() {
     ]);
   };
 
-  // §11 — sunucudan türetilen seviye; yoksa makul varsayılan
-  const tierKey = tier?.key ?? 'bronze';
+  /*
+   * SEVİYE BİLİNMİYORSA ROZET YOK.
+   *
+   * Burada `?? 'bronze'` vardı: sunucudan seviye gelmediğinde herkese
+   * "Bronz" yazılıyordu. Kullanıcı en alt seviyede olduğunu SANIYOR,
+   * oysa gerçek seviyesi Altın olabilirdi.
+   */
+  const tierKey = tier?.key ?? null;
   const progress = tier?.progress ?? 0;
   const pointsToNext = tier?.pointsToNext ?? 0;
   const isMaxTier = tier?.next == null;
@@ -140,12 +146,14 @@ export default function RewardsScreen() {
             <Text variant="caption" tone="onColor" style={styles.dim}>
               {t('rewards.points')}
             </Text>
-            <View style={styles.tierBadge}>
-              <Ionicons name="medal" size={13} color={colors.onColor} />
-              <Text variant="caption" tone="onColor" style={styles.tierText}>
-                {t(TIER_LABEL[tierKey])}
-              </Text>
-            </View>
+            {tierKey ? (
+              <View style={styles.tierBadge}>
+                <Ionicons name="medal" size={13} color={colors.onColor} />
+                <Text variant="caption" tone="onColor" style={styles.tierText}>
+                  {t(TIER_LABEL[tierKey])}
+                </Text>
+              </View>
+            ) : null}
           </View>
           {/* PUAN ÇIPLAK DURMAZ — kanvas kuralı. Kodda doğrulandı:
               app/payment/[bookingId].tsx cashDue = amount - pointsApplied,

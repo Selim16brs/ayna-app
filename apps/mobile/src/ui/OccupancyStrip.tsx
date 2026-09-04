@@ -17,17 +17,44 @@ import { Text } from './Text';
  * boş grafik "doluluk sıfır" demek değildir, "veri yok" demektir.
  */
 
-const OPEN_HOUR = 10;
-const CLOSE_HOUR = 20;
+/*
+ * ÇALIŞMA PENCERESİ SALONUN KENDİSİNDEN.
+ *
+ * Burada `OPEN_HOUR = 10` / `CLOSE_HOUR = 20` sabitleri vardı ve şerit
+ * HER salonu 10–20 arası varsayıyordu. "Boş saatler: 15:00–17:00" satırı,
+ * salonun kapalı olduğu saatleri boş KAPASİTE gibi gösteriyordu.
+ *
+ * Saat bilgisi yoksa (henüz girilmemiş) boş saat listesi HİÇ üretilmiyor:
+ * bilinmeyen bir pencereden "boş" çıkarmak uydurma olurdu.
+ */
+const VARSAYILAN_PENCERE = { bas: 10, son: 20 };
+
+/** "09:30" → saat (tam sayı). Bozuksa null. */
+function saatiCoz(hhmm: string): number | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
+  if (!m) return null;
+  const sa = Number(m[1]);
+  return sa >= 0 && sa <= 24 ? sa : null;
+}
 
 export function OccupancyStrip({ salonName }: { salonName: string }) {
   const { t } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const bookings = useStore((s) => s.bookings);
+  const sellerHours = useStore((s) => s.sellerHours);
 
-  const { hours, peak, freeHours, total } = useMemo(() => {
+  const { hours, peak, freeHours, total, acilis } = useMemo(() => {
     const dayStart = almatyDayStart(Date.now(), 0);
+    const wd = new Date(dayStart).getDay();
+    const bugun = sellerHours.find((h) => h.wd === wd);
+    const bas = bugun?.open ? saatiCoz(bugun.from) : null;
+    const son = bugun?.open ? saatiCoz(bugun.to) : null;
+    // Saat girilmemişse grafiği yine çiziyoruz (randevular gerçek), ama
+    // BOŞ SAAT listesi üretmiyoruz.
+    const saatBiliniyor = bas !== null && son !== null && son > bas;
+    const OPEN_HOUR = saatBiliniyor ? bas : VARSAYILAN_PENCERE.bas;
+    const CLOSE_HOUR = saatBiliniyor ? son : VARSAYILAN_PENCERE.son;
     const dayEnd = dayStart + 24 * 3_600_000;
     const dead = ['cancelled', 'expired', 'no_show'];
     const todays = bookings.filter(
@@ -52,8 +79,14 @@ export function OccupancyStrip({ salonName }: { salonName: string }) {
       .map((c, i) => ({ c, h: i + OPEN_HOUR }))
       .filter((x) => x.c === 0)
       .map((x) => x.h);
-    return { hours: counts, peak: max, freeHours: free, total: todays.length };
-  }, [bookings, salonName]);
+    return {
+      hours: counts,
+      peak: max,
+      freeHours: saatBiliniyor ? free : [],
+      total: todays.length,
+      acilis: OPEN_HOUR,
+    };
+  }, [bookings, salonName, sellerHours]);
 
   if (total === 0) {
     return (
@@ -105,7 +138,7 @@ export function OccupancyStrip({ salonName }: { salonName: string }) {
               />
             </View>
             <Text numeric variant="micro" tone={c === 0 ? 'danger' : 'muted'} style={styles.hour}>
-              {i + OPEN_HOUR}
+              {i + acilis}
             </Text>
           </View>
         ))}

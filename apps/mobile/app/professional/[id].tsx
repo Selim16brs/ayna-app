@@ -45,7 +45,14 @@ export default function ProfessionalScreen() {
   const alwaysDurum = useStore((s) => s.alwaysBonds.find((b) => b.proId === id)?.status);
   const requestAlways = useStore((s) => s.requestAlways);
   const isSeller = useStore(selectSellerView);
-  const proId = id ?? '1';
+  /*
+   * KİMLİK YOKSA 1 NUMARALI İŞLETME AÇILMIYOR.
+   *
+   * `id ?? '1'` yazıyordu: bozuk bir bağlantı sessizce BAŞKA bir
+   * işletmenin profilini açıyor, kullanıcı tıkladığı yerin burası
+   * olduğunu sanıyordu. Boş kimlik "bulunamadı" ekranına gidiyor.
+   */
+  const proId = id ?? '';
   const pro = useProfessionalDetail(proId);
   const durum = useProfessionalDurumu(proId);
 
@@ -136,40 +143,53 @@ export default function ProfessionalScreen() {
     null,
   );
   const [dayClosed, setDayClosed] = useState(false);
+  /*
+   * SAATLER YÜKLENİYOR mu, ALINAMADI mı — ikisi ayrı.
+   *
+   * Önceden tek durum vardı ve sunucu cevap vermeyince ekran 10:00–19:00
+   * arası ON ADET SAAT UYDURUYORDU. Uzmanın çalışma saatiyle, izin
+   * günüyle, dolu randevularıyla hiçbir ilgisi yoktu: müşteri
+   * yayınlanmamış bir saate randevu almaya çalışıyordu.
+   */
+  const [slotDurum, setSlotDurum] = useState<'yukleniyor' | 'hazir' | 'hata'>('yukleniyor');
   useEffect(() => {
     if (!pro.id) return;
     let alive = true;
     setServerSlots(null);
     setDayClosed(false);
+    setSlotDurum('yukleniyor');
     void api
       .proSlots(pro.id, selectedDay, totalDur || 60)
       .then((r) => {
         if (!alive) return;
         setServerSlots(r.slots.map((x) => ({ startMs: x.startMs, available: x.available })));
         setDayClosed(r.closed);
+        setSlotDurum('hazir');
       })
-      .catch(() => undefined); // yedek: aşağıdaki yerel üretim devreye girer
+      .catch(() => {
+        // Uydurma saat YOK. Alınamadıysa öyle söylüyoruz.
+        if (alive) setSlotDurum('hata');
+      });
     return () => {
       alive = false;
     };
   }, [pro.id, selectedDay, totalDur]);
   const overlapsBusy = (startMs: number, endMs: number) =>
     busyRanges.some((b) => cakisiyor({ startMs, endMs }, b));
-  const daySlots = serverSlots
-    ? serverSlots.map((sl) => ({
-        startMs: sl.startMs,
-        busy: !sl.available && sl.startMs >= minDate.getTime(),
-        past: !sl.available && sl.startMs < minDate.getTime(),
-      }))
-    : Array.from({ length: 10 }, (_, i) => {
-        const start = selectedDay + (10 + i) * 3_600_000;
-        const end = start + (totalDur || 60) * 60_000;
-        return {
-          startMs: start,
-          busy: overlapsBusy(start, end),
-          past: start < minDate.getTime(),
-        };
-      });
+  /*
+   * SAATLER YALNIZCA SUNUCUDAN.
+   *
+   * Burada bir yedek üretim vardı: sunucu cevap vermeyince 10:00'dan
+   * başlayıp saat başı on kutucuk çiziliyordu. O saatler uzmanın
+   * takviminde YOKTU — çalışma saatini, izin gününü ve dolu randevuları
+   * yalnız sunucu biliyor. Müşteri var olmayan bir saati seçip randevu
+   * akışına giriyordu.
+   */
+  const daySlots = (serverSlots ?? []).map((sl) => ({
+    startMs: sl.startMs,
+    busy: !sl.available && sl.startMs >= minDate.getTime(),
+    past: !sl.available && sl.startMs < minDate.getTime(),
+  }));
   const slotBusy = slotMs != null && overlapsBusy(slotMs, slotMs + (totalDur || 60) * 60_000);
   const dayBusy = busyRanges.filter((b) => almatyDayStart(b.startMs, 0) === selectedDay);
   const toggleService = (sid: string) =>
@@ -757,6 +777,15 @@ export default function ProfessionalScreen() {
               {dayClosed ? (
                 <Text variant="caption" tone="muted" style={styles.busyFreeHint}>
                   {t('booking.schedule.day_closed')}
+                </Text>
+              ) : null}
+              {slotDurum !== 'hazir' ? (
+                <Text variant="caption" tone="muted" style={styles.busyFreeHint}>
+                  {t(
+                    slotDurum === 'yukleniyor'
+                      ? 'booking.schedule.slots_loading'
+                      : 'booking.schedule.slots_failed',
+                  )}
                 </Text>
               ) : null}
               <View style={styles.slotGrid}>

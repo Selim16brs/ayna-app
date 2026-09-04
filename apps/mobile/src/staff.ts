@@ -9,7 +9,14 @@ export interface SalonStaffMember {
   name: string;
   image: string; // profil foto altyapısı gelene dek boş (ekranlar baş harfe düşer)
   bookings: number;
-  rating: number;
+  /** Değerlendirme yoksa `null` — "0,0 puan" DEĞİL. */
+  rating: number | null;
+  /**
+   * Uzmanın KENDİ panelinde tanımladığı hizmetler. Kadro ekranı bunları
+   * koda gömülü bir ad→hizmet tablosundan okuyordu; artık sunucudan.
+   * Liste boşsa ekran "hizmet tanımlanmamış" diyor, uydurmuyor.
+   */
+  services?: string[];
 }
 
 export function useSalonStaff(): { staff: SalonStaffMember[]; loading: boolean } {
@@ -24,8 +31,20 @@ export function useSalonStaff(): { staff: SalonStaffMember[]; loading: boolean }
       const first = businesses[0];
       if (!first) return [];
       const rows = await api.businessStaff(token!, first.id);
-      // bookings/rating: yeni bağlanan uzman için dürüst sıfır (gerçek veri biriktikçe dolacak)
-      return rows.map((r) => ({ name: r.name, image: '', bookings: 0, rating: 0 }));
+      /*
+       * PUAN HENÜZ YOK ≠ PUAN SIFIR.
+       *
+       * `rating: 0` yazılıyordu ve ekran bunu yıldız ikonunun yanında
+       * "0.0" diye basıyordu: değerlendirilmemiş bir uzman, en kötü
+       * puanı almış gibi görünüyordu. Bilinmeyen puan `null`.
+       */
+      return rows.map((r) => ({
+        name: r.name,
+        image: '',
+        bookings: 0,
+        rating: null,
+        services: r.services ?? [],
+      }));
     },
   });
   return { staff: data ?? [], loading: isLoading };

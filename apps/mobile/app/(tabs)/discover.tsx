@@ -944,7 +944,14 @@ const makeStyles = (colors: ColorTokens) =>
     },
     puanSatir: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
     puanSayi: { fontFamily: font.semibold, fontSize: 12, color: colors.gold },
-    avatarHalka: { padding: 2, borderRadius: 100, borderWidth: 1.5, borderColor: colors.accent },
+    // Ham fotoğraf da sağa yaslı: kesik/ham geçişinde portre yer değiştirmesin.
+    avatarHalka: {
+      padding: 2,
+      borderRadius: 100,
+      borderWidth: 1.5,
+      borderColor: colors.accent,
+      alignSelf: 'flex-end',
+    },
     avatar: { width: 52, height: 52, borderRadius: 100 },
     /*
      * Kesilmiş portre: BÜYÜK ve ÇERÇEVESİZ.
@@ -955,9 +962,15 @@ const makeStyles = (colors: ColorTokens) =>
      * içinde yüzmüyor, ona yaslanıyor.
      */
     portreKesik: { width: 104, height: 104 },
-    // Kap portre ölçüsünde: çizgi "fotoğraf genişliği kadar" olsun diye
-    // genişliği buradan alıyor.
-    portreKap: { width: 104, alignItems: 'center' },
+    /*
+     * Kap portre ölçüsünde: çizgi "fotoğraf genişliği kadar" olsun diye
+     * genişliği buradan alıyor.
+     *
+     * SAĞA YASLI — kurucunun isteği. `alignItems: 'center'` iken portre
+     * 104px'lik kabın ortasında duruyordu ve sağında bir boşluk kalıyordu:
+     * ekranın sağ kenarıyla hizalanmıyordu.
+     */
+    portreKap: { width: 104, alignItems: 'flex-end' },
     portreCizgi: {
       width: '100%',
       height: 2,
