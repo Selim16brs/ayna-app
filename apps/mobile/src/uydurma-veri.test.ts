@@ -181,3 +181,47 @@ test('YORUMSUZ uzmanın ortalaması ÇİZGİ — sıfır değil', () => {
     'ortalama yorumsuzken de sayı yazıyor',
   );
 });
+
+test('FOTOĞRAFI OLMAYAN işletmeye BAŞKASININ fotoğrafı konmuyor', () => {
+  /*
+   * Admin onayında, fotoğraf yüklememiş her işletmenin kartına stok bir
+   * Unsplash salon fotoğrafı konuyordu. Canlıdaki salonda görülen buydu:
+   * müşteri, o işletmeye ait OLMAYAN bir mekânın fotoğrafını onun mekânı
+   * sanıyordu. Uydurulmuş kanıtın en ağırı — yazı değil, fotoğraf.
+   */
+  const admin = readFileSync(
+    join(__dirname, '..', '..', 'api', 'src', 'admin', 'admin.service.ts'),
+    'utf8',
+  );
+  assert.doesNotMatch(admin, /imageUrl:[^\n]*\?\?\s*DEFAULT_PRO_IMAGE/, 'stok fotoğraf hâlâ var');
+  assert.doesNotMatch(admin, /images\.unsplash\.com/, 'stok fotoğraf adresi duruyor');
+  assert.match(admin, /imageUrl: b\.photos\[0\] \?\? '',/, 'boş bırakılmıyor');
+});
+
+test('FOTOĞRAF YOKSA kart BOŞ değil — sağlayıcının BAŞ HARFİ', () => {
+  /*
+   * Stok fotoğraf kalkınca `image` boş kalıyor; `<Image uri="">` sessiz
+   * bir boşluk çiziyor ve kart bozuk görünüyor. Baş harf uydurma değil —
+   * elimizdeki tek gerçek bilgi.
+   */
+  const bilesen = oku('src', 'ui', 'SaglayiciFoto.tsx');
+  assert.match(bilesen, /if \(uri\) return <Image/, 'foto varken bileşen çizmiyor');
+  assert.match(bilesen, /charAt\(0\)\.toLocaleUpperCase\('tr'\)/, 'baş harf alınmıyor');
+
+  // Müşterinin sağlayıcıyı gördüğü ekranlar ham <Image> kullanmıyor.
+  for (const [yol, alan] of [
+    [['app', 'search.tsx'], 'pro'],
+    [['app', '(tabs)', 'discover.tsx'], 'pro'],
+    [['app', 'map.tsx'], 'selected'],
+    [['app', 'professional', '[id].tsx'], 'pro'],
+    [['app', 'booking', 'schedule.tsx'], 'pro'],
+  ] as [string[], string][]) {
+    const k = oku(...yol);
+    assert.doesNotMatch(
+      k,
+      new RegExp(`<Image source=\\{\\{ uri: ${alan}\\.image \\}\\}`),
+      `${yol.join('/')}: ham <Image> kalmış`,
+    );
+    assert.match(k, /<SaglayiciFoto/, `${yol.join('/')}: ortak bileşen kullanılmıyor`);
+  }
+});

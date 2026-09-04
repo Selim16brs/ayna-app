@@ -30,6 +30,7 @@ import {
   Screen,
   StackHeader,
   Text,
+  SaglayiciFoto,
 } from '../src/ui';
 import { uzmanlikYazisi } from '../src/uzmanlik';
 
@@ -273,7 +274,7 @@ export default function MapScreen() {
                 <Ionicons name="close" size={16} color={colors.muted} />
               </Pressable>
               <Pressable style={styles.cardRow} onPress={() => setProfileOpen(true)}>
-                <Image source={{ uri: selected.image }} style={styles.cardImage} />
+                <SaglayiciFoto uri={selected.image} ad={selected.name} style={styles.cardImage} />
                 <View style={styles.cardBody}>
                   <Text variant="bodyStrong" tone="ink" style={styles.cardName} numberOfLines={1}>
                     {selected.name}

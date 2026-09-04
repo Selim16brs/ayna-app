@@ -43,6 +43,7 @@ import {
   Text,
   YakindaRozeti,
   useOfflineInset,
+  SaglayiciFoto,
 } from '../../src/ui';
 
 // Kategori daire zeminleri (spec §0.1) — pastel + ink ikon
@@ -762,7 +763,7 @@ function SaglayiciSatiri({ pro }: { pro: Professional }) {
       style={styles.salonSatir}
       onPress={() => router.push('/professional/' + pro.id)}
     >
-      <Image source={{ uri: pro.image }} style={styles.salonFoto} />
+      <SaglayiciFoto uri={pro.image} ad={pro.name} style={styles.salonFoto} />
       <View style={styles.grow}>
         <View style={styles.salonAdSatir}>
           <Text variant="captionStrong" tone="ink" numberOfLines={1}>

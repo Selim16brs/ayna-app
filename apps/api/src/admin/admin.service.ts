@@ -23,9 +23,18 @@ import type { Env } from '@ayna/config/env';
 import { ENV } from '../config/config.module';
 import { computeBookingStats } from '../bookings/bookings.service';
 
-// Onayda otomatik keşif listesi için varsayılan görsel (işletme foto yüklemediyse)
-const DEFAULT_PRO_IMAGE =
-  'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=70';
+/*
+ * BAŞKASININ FOTOĞRAFI YOK.
+ *
+ * Burada stok bir Unsplash salon fotoğrafı sabiti vardı ve fotoğraf
+ * yüklemeyen her işletme onaylandığında kartına o konuyordu. Canlıdaki
+ * salonda görülen tam olarak buydu: müşteri, o işletmeye ait OLMAYAN bir
+ * mekânın fotoğrafını onun mekânı sanıyordu. Uydurulmuş kanıtın en
+ * ağırı — yazı değil, fotoğraf.
+ *
+ * Fotoğraf yoksa alan BOŞ kalıyor; mobil tarafta `SaglayiciFoto`
+ * işletmenin kendi adının baş harfini çiziyor.
+ */
 
 // Platform komisyon oranı (yüzde) — app sahibi her online randevudan bu oranı kazanır (MD: %15)
 const DEFAULT_COMMISSION_RATE = 10;
@@ -522,7 +531,7 @@ export class AdminService {
           // §5.1.4 — salonun haritadan seçtiği gerçek konum keşif haritasına taşınır
           ...(b.lat != null ? { lat: b.lat } : {}),
           ...(b.lng != null ? { lng: b.lng } : {}),
-          imageUrl: b.photos[0] ?? DEFAULT_PRO_IMAGE,
+          imageUrl: b.photos[0] ?? '',
           badge: 'verified',
         },
       });
@@ -1406,7 +1415,7 @@ export class AdminService {
         about: input.about ?? '',
         experienceYears: input.experienceYears ?? 0,
         priceFrom: input.priceFrom ?? 0,
-        imageUrl: input.imageUrl ?? DEFAULT_PRO_IMAGE,
+        imageUrl: input.imageUrl ?? '',
         badge: (input.badge ?? 'verified') as never,
       },
     });

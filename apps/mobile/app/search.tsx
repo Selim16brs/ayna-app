@@ -3,7 +3,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Modal,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -39,6 +38,7 @@ import {
   TAB_BAR_CLEARANCE,
   Text,
   ListSkeleton,
+  SaglayiciFoto,
 } from '../src/ui';
 
 // Türkçe-duyarlı küçük harfe çevirme (İ/ı dahil)
@@ -827,7 +827,7 @@ export function ProRow({
   return (
     <Animated.View entering={FadeInDown.duration(320).delay(Math.min(index, 8) * 50)}>
       <PressableScale style={[styles.row, shadow.soft]} onPress={onPress}>
-        <Image source={{ uri: pro.image }} style={styles.thumb} />
+        <SaglayiciFoto uri={pro.image} ad={pro.name} style={styles.thumb} />
         <View style={styles.rowBody}>
           {/* §3.3 — GÜVEN İŞARETİ adın yanında.
               Rozet yalnız detay ucunda vardı: müşteri aramada, favorilerde,
