@@ -1096,17 +1096,31 @@ const makeStyles = (colors: ColorTokens) =>
     },
     canliNokta: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#4DA66B' },
     ozetKutular: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    /*
+     * ETİKET KELİMENİN ORTASINDAN BÖLÜNMÜYOR.
+     *
+     * Yatay dolgu 12 iken kutu içinde 63.7pt yazı alanı kalıyordu;
+     * "Tamamlanan" 64.1pt, Rusça "Предстоящие" 72.9pt (ölçü fonttan —
+     * `canli-ozet-etiket.test.ts`). Sığmayan sözcüğü React Native
+     * HARFİNDEN bölüyor: kurucunun ekran görüntüsünde "Tamamlana / n"
+     * diye iki satıra düşmüştü.
+     *
+     * Dikey dolgu 12 kalıyor; kısalan yalnız yanlar.
+     */
     ozetKutu: {
       flex: 1,
       alignItems: 'center',
       gap: 6,
-      padding: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 2,
       borderRadius: 16,
       backgroundColor: 'rgba(255,255,255,0.05)',
       borderWidth: 1,
       borderColor: 'rgba(212,160,160,0.2)',
     },
     ozetSayi: { fontFamily: font.semibold, fontSize: 22, color: OZET_YAZI },
+    // Punto DEĞİŞMEDİ: yanları daraltmak sığdırmaya yetti (bkz.
+    // `canli-ozet-etiket.test.ts` — ölçü fonttan okunuyor).
     ozetEtiket: { fontFamily: font.regular, fontSize: 11, color: OZET_ETIKET },
     ozetAyrac: { width: 1, height: 40, backgroundColor: 'rgba(212,160,160,0.2)' },
     ozetCizgi: { height: 1, backgroundColor: 'rgba(212,160,160,0.2)' },

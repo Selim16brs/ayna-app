@@ -123,7 +123,14 @@ test('uzman ekranı: Figma ölçüleri yuvarlanmamış', () => {
   };
   for (const [ad, degerler] of [
     ['ozetKart', ['borderRadius: 24', 'padding: 20', 'gap: 18']],
-    ['ozetKutu', ['borderRadius: 16', 'padding: 12']],
+    /*
+     * `ozetKutu` yatay dolgusu Figma'daki 12'den 2'ye indi (4 Eyl 2026):
+     * 12'de kutuda 63.7pt yazı alanı kalıyordu ve "Tamamlanan" (64.1pt) ile
+     * Rusça etiketler KELİMENİN ORTASINDAN bölünüyordu — kurucunun ekran
+     * görüntüsünde "Tamamlana / n". DİKEY dolgu tasarımdaki gibi 12.
+     * Ölçü `canli-ozet-etiket.test.ts`te fonttan okunarak bağlandı.
+     */
+    ['ozetKutu', ['borderRadius: 16', 'paddingVertical: 12', 'paddingHorizontal: 2']],
     ['paketKart', ['borderRadius: 24', 'padding: 20', 'gap: 16']],
     ['ikiliKart', ['borderRadius: 20', 'padding: 16', 'gap: 10']],
     ['reklamKart', ['borderRadius: 24', 'padding: 16', 'gap: 12']],
