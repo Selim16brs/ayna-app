@@ -1162,9 +1162,51 @@ export class AdminService {
       status: b.status,
       source: b.source,
       online: b.userId != null, // app üzerinden mi (komisyonlu)
+      /*
+       * DEPOZİTO DEKONTU — §4.4'ün ikinci yarısı.
+       *
+       * Dekont yüklendiği an randevu "kesinleşti" sayılıyor; admin
+       * doğrulaması SONRA geliyor ve yalnız sahte dekontu geri alıyor.
+       * Ama panel dekontu HİÇ göstermiyordu: yönetici neyi doğrulayacağını
+       * göremiyor, elinde yalnız "İptal" kalıyordu (kurucu bunu bildirdi).
+       */
+      depositReceiptUri: b.depositReceiptUri ?? null,
+      depositAmount: b.depositAmount != null ? Number(b.depositAmount) : null,
       createdAt: b.createdAt,
     }));
     return filter && filter !== 'all' ? mapped.filter((b) => b.status === filter) : mapped;
+  }
+
+  /**
+   * SAHTE DEKONTU GERİ ALIR — §4.4/§8.
+   *
+   * Dekont yüklendiği an randevu kesinleşiyor; para gerçekten gelmediyse
+   * yöneticinin bunu geri alacak bir yolu olmalıydı, yoktu: elinde yalnız
+   * "İptal" vardı ve iptal, müşteriyi cezalandıran ayrı bir sonuç doğurur.
+   * Geri alma randevuyu ÖLDÜRMÜYOR — depozito beklemeye döndürüyor, müşteri
+   * doğru dekontu yükleyebiliyor.
+   */
+  async rejectDepositReceipt(id: string, actorId?: string) {
+    const b = await this.prisma.booking.findUnique({
+      where: { id },
+      select: { id: true, status: true, depositReceiptUri: true },
+    });
+    if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu yok' });
+    if (!b.depositReceiptUri)
+      throw new BadRequestException({ code: 'NO_RECEIPT', message: 'Bu randevuda dekont yok' });
+    const updated = await this.prisma.booking.update({
+      where: { id },
+      data: {
+        status: 'depozito_bekliyor',
+        depositReceiptUri: null,
+        // Hash da siliniyor: müşteri düzeltilmiş dekontu yükleyebilsin.
+        // Kalsaydı "bu dekont daha önce kullanılmış" diye reddedilirdi.
+        receiptHash: null,
+      },
+      select: { id: true, status: true },
+    });
+    await this.kaydet(id, 'admin.booking.receipt_rejected', { actorId: actorId ?? null });
+    return updated;
   }
 
   // Teklif talepleri (§ çekirdek akış: foto teklif / talep) + gelen teklifler
