@@ -105,10 +105,21 @@ test('haritada UYDURMA pin yok', () => {
    */
   const ekran = oku('app/map.tsx');
   assert.match(ekran, /pros\.filter\(\(p\) => konumuVar\(p\)\)/, 'konumsuzlar süzülmüyor');
+  /*
+   * Pinler artık KÜMEDEN geliyor (aynı adrestekiler tek iğne). Küme
+   * koordinatı temsilcinin GERÇEK koordinatı; kümeleme null koordinatlıyı
+   * zaten hiç almıyor. İki iddia birden: ekran kümeden çiziyor ve
+   * kümeleme koordinatsızı dışarıda bırakıyor.
+   */
   assert.match(
     ekran,
-    /coordinate=\{\{ latitude: p\.lat!, longitude: p\.lng! \}\}/,
+    /coordinate=\{\{ latitude: k\.lat, longitude: k\.lng \}\}/,
     'pin hâlâ üretilmiş koordinattan çiziliyor',
+  );
+  assert.match(
+    oku('src/harita-kumeleme.ts'),
+    /if \(p\.lat == null \|\| p\.lng == null\) continue;/,
+    'kümeleme koordinatsız sağlayıcıyı alıyor',
   );
   assert.ok(!/<Marker[\s\S]{0,160}proCoords\(/.test(ekran), 'proCoords ile pin çizimi geri gelmiş');
   // Kaybolmuyorlar: sayıları yazılıyor.

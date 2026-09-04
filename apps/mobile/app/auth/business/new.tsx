@@ -11,6 +11,7 @@ function fmtDate(d: Date): string {
 }
 import type { MessageKey } from '@ayna/i18n';
 import { api, type BusinessEntityType } from '../../../src/api';
+import { ADIM_TAMAM, type AdimSonucu, eksikAlanlar, kimlikAdimi } from '../../../src/kayit-adimi';
 import { registerErrorMessage } from '../../../src/authError';
 import {
   type AutofillKind,
@@ -170,6 +171,7 @@ export default function NewBusinessScreen() {
     address.trim().length > 3 &&
     phone.trim().length >= 7 &&
     !emailInvalid &&
+    coord !== null &&
     terms;
   const touched = !!(entityType || firstName || lastName || ownerPhone || password || name);
   const missing = missingLabels([
@@ -181,6 +183,7 @@ export default function NewBusinessScreen() {
       ok: city !== null && district.trim().length > 1 && address.trim().length > 3,
       key: 'biz.field.address',
     },
+    { ok: coord !== null, key: 'biz.field.map' },
     { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
     { ok: password.length >= 6 && password === password2, key: 'auth.f.password' },
     { ok: terms, key: 'auth.miss.terms' },
@@ -198,9 +201,75 @@ export default function NewBusinessScreen() {
       district.trim().length > 1 &&
       address.trim().length > 3 &&
       phone.trim().length >= 7 &&
-      !emailInvalid,
+      !emailInvalid &&
+      /*
+       * İĞNE ZORUNLU — uzman kaydında zaten öyleydi.
+       *
+       * Kurucu: "salon kısmında harita ile iğne atma özelliği yok sanırım
+       * bu yüzden de müşteri haritada göremiyor salon lokasyonunu."
+       * Özellik VARDI ama isteğe bağlıydı: iğne atmadan kaydolan salonun
+       * koordinatı olmuyor ve harita onu HİÇ göstermiyor. Salonun
+       * bulunabilir olmaması, salonun uygulamada var olmaması demek.
+       */
+      coord !== null,
     terms,
   ];
+  /*
+   * ── ADIM GEÇİŞİ SEBEBİNİ SÖYLÜYOR ──────────────────────────────────
+   *
+   * Uzman kaydındaki ile aynı gerekçe: "İleri" eksik alan varken sessizce
+   * pasifti ve telefon çakışması ancak en sonda anlaşılıyordu.
+   * Sahip telefonu 1. adımda giriliyor; kontrol de orada yapılıyor.
+   */
+  const [adimSonucu, setAdimSonucu] = useState<AdimSonucu>(ADIM_TAMAM);
+  const [adimBekliyor, setAdimBekliyor] = useState(false);
+
+  const adimKosullari: Record<number, { ok: boolean; key: MessageKey }[]> = {
+    0: [
+      { ok: entityType !== null, key: 'biz.entity.label' },
+      { ok: officialOk, key: 'biz.field.bin' },
+    ],
+    1: [
+      { ok: firstName.trim().length > 1 && lastName.trim().length > 1, key: 'auth.miss.name' },
+      { ok: ownerPhone.trim().length >= 7, key: 'auth.f.phone' },
+      { ok: password.length >= 6, key: 'auth.f.password' },
+      { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
+    ],
+    2: [
+      { ok: name.trim().length > 1, key: 'biz.field.name' },
+      { ok: areas.size > 0, key: 'auth.miss.services' },
+    ],
+    3: [
+      { ok: city !== null, key: 'auth.f.city' },
+      { ok: district.trim().length > 1 && address.trim().length > 3, key: 'biz.field.address' },
+      // Haritadaki iğne: olmadan salon haritada hiç görünmüyor.
+      { ok: coord !== null, key: 'biz.field.map' },
+      { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
+      { ok: !emailInvalid, key: 'auth.f.email' },
+    ],
+    4: [{ ok: terms, key: 'auth.miss.terms' }],
+  };
+
+  const ileri = async () => {
+    if (adimBekliyor) return;
+    const kosullar = adimKosullari[step] ?? [];
+    let sonuc: AdimSonucu;
+    // Sahip telefonu 1. adımda: çakışma orada sorulmalı, beş adım sonra değil.
+    if (step === 1) {
+      setAdimBekliyor(true);
+      sonuc = await kimlikAdimi(kosullar, () => api.musaitlik({ phone: ownerPhone.trim() }), {
+        telefonDolu: t('auth.f.phone_taken'),
+        epostaDolu: t('auth.f.email_taken'),
+      });
+      setAdimBekliyor(false);
+    } else {
+      const eksikler = eksikAlanlar(kosullar);
+      sonuc = eksikler.length ? { gecebilir: false, eksikler, hata: null } : ADIM_TAMAM;
+    }
+    setAdimSonucu(sonuc);
+    if (sonuc.gecebilir) setStep((v) => Math.min(STEP_COUNT - 1, v + 1));
+  };
+
   const STEP_TITLES: MessageKey[] = [
     'biz.step.official',
     'biz.step.owner',
@@ -706,24 +775,28 @@ export default function NewBusinessScreen() {
             </View>
           </>
         ) : (
-          <View style={styles.navRow}>
-            {step > 0 ? (
+          <>
+            {/* Sebep düğmenin ÜSTÜNDE. */}
+            <MissingFields keys={adimSonucu.eksikler} hata={adimSonucu.hata} />
+            <View style={styles.navRow}>
+              {step > 0 ? (
+                <Button
+                  label={t('common.back')}
+                  variant="secondary"
+                  onPress={() => setStep((s) => s - 1)}
+                />
+              ) : (
+                <View style={{ flex: 1 }} />
+              )}
+              <View style={styles.navSpacer} />
               <Button
-                label={t('common.back')}
-                variant="secondary"
-                onPress={() => setStep((s) => s - 1)}
+                label={t('common.next')}
+                variant={stepOk[step] ? 'primary' : 'secondary'}
+                disabled={adimBekliyor}
+                onPress={() => void ileri()}
               />
-            ) : (
-              <View style={{ flex: 1 }} />
-            )}
-            <View style={styles.navSpacer} />
-            <Button
-              label={t('common.next')}
-              variant={stepOk[step] ? 'primary' : 'secondary'}
-              disabled={!stepOk[step]}
-              onPress={() => setStep((s) => Math.min(STEP_COUNT - 1, s + 1))}
-            />
-          </View>
+            </View>
+          </>
         )}
       </View>
     </Screen>

@@ -152,3 +152,56 @@ export function carkSecimi(kaydirma: number, ogeYuksekligi: number, adet: number
   const ham = Math.round(kaydirma / ogeYuksekligi);
   return Math.max(0, Math.min(adet - 1, ham));
 }
+
+/**
+ * SEÇİLEBİLİR YILLAR — takvimin yıl listesi.
+ *
+ * Kurucu: "1970'de doğan birisi için yıl seçmek çok zor oluyor." Ok
+ * tuşlarıyla ay ay geriye gitmek 1970 için 660'tan fazla dokunuş demek.
+ * Başlığa basınca doğrudan yıl/ay seçimi açılıyor ve liste buradan
+ * geliyor.
+ *
+ * Sınır verilmemişse pencere GÖRÜNEN yıla göre kuruluyor, "bugüne" göre
+ * değil: doğum tarihi için geriye 120 yıl açık olmalı, randevu için ise
+ * `enAz`/`enCok` zaten daraltıyor.
+ */
+export function secilebilirYillar(gorunenYil: number, enAz?: Date, enCok?: Date): number[] {
+  const alt = enAz ? enAz.getFullYear() : Math.min(gorunenYil, new Date().getFullYear()) - 120;
+  const ust = enCok ? enCok.getFullYear() : Math.max(gorunenYil, new Date().getFullYear()) + 5;
+  if (ust < alt) return [gorunenYil];
+  const out: number[] = [];
+  for (let y = alt; y <= ust; y++) out.push(y);
+  return out;
+}
+
+/**
+ * O yılda bu ay seçilebilir mi? (Ay içinde EN AZ BİR gün sınırlar içinde.)
+ *
+ * Ayın 1'ini sınamak yetmiyor: `enAz` 15 Mart ise Mart ayının tamamı
+ * kapalı görünür, oysa 15–31 Mart seçilebilir.
+ */
+export function ayAcikMi(yil: number, ay: number, enAz?: Date, enCok?: Date): boolean {
+  const ilk = new Date(yil, ay, 1);
+  const son = new Date(yil, ay + 1, 0);
+  return secilebilir(son, enAz, enCok) || secilebilir(ilk, enAz, enCok);
+}
+
+/**
+ * Yıl/ay seçilince gösterilecek tarih — GÜN KORUNUYOR ama taşmıyor.
+ *
+ * 31 Ocak'tayken Şubat seçilirse 31 Şubat olmaz: ayın son gününe iniyor.
+ * Sınırların dışına düşerse en yakın sınıra çekiliyor.
+ */
+export function yilAyUygula(
+  mevcut: Date,
+  yil: number,
+  ay: number,
+  enAz?: Date,
+  enCok?: Date,
+): Date {
+  const sonGun = new Date(yil, ay + 1, 0).getDate();
+  const hedef = new Date(yil, ay, Math.min(mevcut.getDate(), sonGun));
+  if (enAz && hedef < gunBasi(enAz)) return new Date(enAz);
+  if (enCok && gunBasi(hedef) > gunBasi(enCok)) return new Date(enCok);
+  return hedef;
+}

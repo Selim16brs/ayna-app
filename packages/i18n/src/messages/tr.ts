@@ -32,6 +32,7 @@ export const tr = {
   'notif.moment.today': '{ad} bugün!',
   'takvim.saat': 'Saat',
   'takvim.onceki_ay': 'Önceki ay',
+  'takvim.yil_ay_sec': 'Yıl ve ay seç',
   'takvim.sonraki_ay': 'Sonraki ay',
   // §11 satıcı premium ödeme ekranı
   'premium.title': 'Premium',
@@ -1035,6 +1036,10 @@ export const tr = {
   'auth.f.password': 'Şifre',
   'auth.f.password_hint': 'En az 6 karakter',
   'auth.f.missing': 'Eksik',
+  'auth.f.phone_taken':
+    'Bu telefon numarası zaten kayıtlı. Giriş yapabilir ya da başka bir numara girebilirsin.',
+  'auth.f.email_taken':
+    'Bu e-posta zaten kayıtlı. Giriş yapabilir ya da başka bir e-posta girebilirsin.',
   'auth.f.email_invalid': 'Geçerli bir e-posta adresi gir',
   'auth.miss.name': 'Ad Soyad',
   'auth.miss.terms': 'Koşul onayı',
@@ -1410,6 +1415,7 @@ export const tr = {
    */
   'map.distance': 'km merkeze',
   'map.no_pin': '{n} uzman konumunu işaretlememiş — haritada görünmüyorlar, listede duruyorlar.',
+  'map.same_address': 'Aynı adreste {n} uzman daha',
   'map.bridge': 'Aradığını bulamadın mı? Fotoğraf gönder, teklif al',
 
   // Arama
@@ -2006,6 +2012,16 @@ export const tr = {
   'budget.title': 'Bütçe',
   'budget.subtitle': 'Bakım harcamalarını takip et',
   'budget.spent': 'Bu ay harcanan',
+  'budget.limit': 'Aylık limit',
+  'budget.remaining': 'Kalan',
+  'budget.over': 'Limiti aştın',
+  'budget.set_limit': 'Aylık limit belirle',
+  'budget.edit_limit': 'Limiti değiştir',
+  'budget.limit_hint': 'Kendi belirlediğin aylık üst sınır. Boş bırakırsan limit olmaz.',
+  'budget.limit_ph': 'Örn. 80 000',
+  'budget.limit_save': 'Kaydet',
+  'budget.limit_clear': 'Limiti kaldır',
+  'budget.no_limit': 'Aylık limit belirlemedin.',
   'budget.by_category': 'Kategoriye göre',
   'budget.history': 'Harcama geçmişi',
   'budget.no_spend': 'Henüz harcama yok',

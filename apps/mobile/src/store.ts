@@ -422,6 +422,16 @@ interface State {
   /** Açılış mesajı rotasyon durumu — brief §3, cihazda saklanıyor. */
   acilisDurumu: SplashDurumu;
   setAcilisDurumu: (d: SplashDurumu) => void;
+  /**
+   * AYLIK BÜTÇE LİMİTİ (₸) — KULLANICININ KENDİ BELİRLEDİĞİ değer.
+   *
+   * Ekran bir dönem koda gömülü 80.000 ₸'yi "aylık limit" diye
+   * gösteriyordu; kullanıcı böyle bir şey belirlememişti. Artık limit
+   * ancak kullanıcı girerse var; `null` = limit yok, ekran yalnız
+   * harcamayı gösteriyor.
+   */
+  butceLimiti: number | null;
+  setButceLimiti: (kzt: number | null) => void;
   /** Son açılış anı (ms) — 30+ gün yokluk mesajı için. */
   sonAcilisMs: number | null;
   setSonAcilis: (ms: number) => void;
@@ -729,6 +739,8 @@ export const userScopedReset = (): Partial<State> => ({
   // Aynı gerekçe: dolu kalsaydı yeni üye "geri dönen kullanıcı" sanılır
   // ve ilk açılış mesajı hiç tetiklenmezdi.
   sonAcilisMs: null,
+  // Bütçe limiti KİŞİSEL: yeni üye öncekinin limitini devralmamalı.
+  butceLimiti: null,
   moments: [],
   closedDays: [],
   promotions: [],
@@ -1014,6 +1026,14 @@ export const useStore = create<State>()(
       setSonAcilis: (ms) => set({ sonAcilisMs: ms }),
       acilisKatalog: null,
       setAcilisKatalog: (k) => set({ acilisKatalog: k }),
+      butceLimiti: null,
+      /*
+       * 0 ya da negatif "limit yok" demek: kullanıcı alanı boşaltıp
+       * kaydettiğinde limit kalkıyor. 0 ₸'lik bir limit tutulsaydı
+       * çubuk her harcamada dolu görünürdü.
+       */
+      setButceLimiti: (kzt) =>
+        set({ butceLimiti: kzt !== null && kzt > 0 ? Math.round(kzt) : null }),
       setSellerProfile: (p) => {
         set(() => ({
           ...(p.social ? { sellerSocial: p.social } : {}),
@@ -3343,6 +3363,7 @@ export const useStore = create<State>()(
         acilisDurumu: s.acilisDurumu,
         sonAcilisMs: s.sonAcilisMs,
         acilisKatalog: s.acilisKatalog,
+        butceLimiti: s.butceLimiti,
         salonProfile: s.salonProfile,
         demandNotif: s.demandNotif,
         offersSeen: s.offersSeen, // açılış 'yeni teklif' pop-up sayacı

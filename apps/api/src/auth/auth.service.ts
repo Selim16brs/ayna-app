@@ -45,6 +45,54 @@ export class AuthService {
     @Inject(ENV) private readonly env: Env,
   ) {}
 
+  /**
+   * TELEFON / E-POSTA MÜSAİT Mİ — kayıt SIRASINDA sorulan hafif kontrol.
+   *
+   * Kurucu: "kayıt işleminde ekran geçişi olmadan önce eğer girilen
+   * bilgilerde (mesela eksik bilgi ya da daha önce kayıtlı numara gibi)
+   * hata varsa o anda hata gösterilmeli."
+   *
+   * Çakışma yalnız `register`da anlaşılıyordu: kullanıcı beş adımı
+   * doldurup en sonda "bu telefon zaten kayıtlı" duvarına çarpıyor ve
+   * baştan başlıyordu.
+   *
+   * ── NE SIZDIRIYOR, NE SIZDIRMIYOR ──────────────────────────────────
+   *
+   * Cevap yalnız "müsait mi" — hesap adı, rolü, ne zaman açıldığı gibi
+   * hiçbir bilgi dönmüyor. Numaranın kayıtlı olup olmadığı zaten kayıt
+   * denemesiyle de öğrenilebilen bir bilgi; burada erken söylemek yeni
+   * bir sızıntı açmıyor. Uç yine de HIZ SINIRLI (bkz. controller):
+   * numara taramasına açık bırakılmıyor.
+   */
+  async musaitMi(input: { phone?: string | undefined; email?: string | undefined }): Promise<{
+    phoneTaken: boolean;
+    emailTaken: boolean;
+  }> {
+    const key = this.env.FIELD_ENCRYPTION_KEY;
+    let phoneTaken = false;
+    let emailTaken = false;
+    const tel = input.phone?.trim();
+    if (tel && tel.length >= 7) {
+      const v = await this.prisma.user.findUnique({
+        where: { phoneHash: phoneHash(tel, key) },
+        select: { status: true },
+      });
+      // Silinmiş hesap telefonu SERBEST bırakıyor — `register` de öyle
+      // davranıyor. Burada "dolu" deseydik kullanıcı aslında kayıt
+      // olabileceği numarayla engellenirdi.
+      phoneTaken = !!v && v.status !== 'deleted';
+    }
+    const eposta = input.email?.trim().toLowerCase();
+    if (eposta && eposta.includes('@')) {
+      const v = await this.prisma.user.findUnique({
+        where: { email: eposta },
+        select: { status: true },
+      });
+      emailTaken = !!v && v.status !== 'deleted';
+    }
+    return { phoneTaken, emailTaken };
+  }
+
   async register(input: RegisterInput) {
     const key = this.env.FIELD_ENCRYPTION_KEY;
     const ph = phoneHash(input.phone, key);

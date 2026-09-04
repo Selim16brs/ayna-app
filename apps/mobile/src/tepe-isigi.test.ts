@@ -64,11 +64,22 @@ test('ALTA DOĞRU ERİYOR — içeriğe sert çizgiyle bitmiyor', () => {
 });
 
 test('ANA SAYFA ve TÜM PROFİLLERDE var', () => {
+  /*
+   * Kurucu: "müşteri tarafında yaptığımız ve uzman ile salonda da olan
+   * şeyler otomatik olarak bu ekranlarda da olmalı… zemine attığımız üst
+   * taraftaki tasarım ve renk seçim olayı salon ve uzmanda da olmalı."
+   *
+   * Uzman ve salonun KENDİ ana ekranlarında yoktu: aynı uygulamanın iki
+   * yarısı iki farklı ürün gibi duruyordu.
+   */
   const yerler: [string, string][] = [
     ['(tabs)/discover.tsx', 'ana sayfa'],
     ['(tabs)/profile.tsx', 'kendi profilim'],
     ['uzman/[id].tsx', 'uzman profili'],
     ['professional/[id].tsx', 'salon/uzman profili'],
+    ['seller/reports.tsx', 'uzman ana ekranı'],
+    ['salon/home.tsx', 'salon ana ekranı'],
+    ['salon/profile.tsx', 'salon profili'],
   ];
   for (const [yol, ad] of yerler) {
     assert.match(ekran(yol), /<TepeIsigi[\s/]/, `${ad} ekranında tepe ışığı yok`);
@@ -154,4 +165,29 @@ test('SABİT BLOK yıkamanın taşmasını kırpıyor', () => {
   // renk sızardı.
   const d = ekran('(tabs)/discover.tsx');
   assert.match(d, /sabitUst: \{ overflow: 'hidden' \}/, 'sabit blok taşmayı kırpmıyor');
+});
+
+test('RENK SEÇİMİ üç profilde de AYNI bileşenden', () => {
+  /*
+   * Blok müşteri profilinin içine yazılıydı ve salon profilinde HİÇ
+   * yoktu: salon hesabıyla giren kişi ne temayı ne rengi değiştirebiliyordu.
+   *
+   * Kopyalamak yerine tek bileşen: birine eklenen yeni renk diğerinde de
+   * çıkıyor. Test kopyalamayı da yasaklıyor — ekranların içinde ikinci bir
+   * renk ızgarası kalmamalı.
+   */
+  for (const [yol, ad] of [
+    ['(tabs)/profile.tsx', 'müşteri/uzman profili'],
+    ['salon/profile.tsx', 'salon profili'],
+  ] as const) {
+    const k = ekran(yol);
+    assert.match(k, /<GorunumKarti \/>/, `${ad}: görünüm kartı yok`);
+    assert.ok(
+      !/AKSAN_ANAHTARLARI\.map/.test(k),
+      `${ad}: renk ızgarası ekrana KOPYALANMIŞ — ikisi zamanla ayrışır`,
+    );
+  }
+  const kart = oku('ui/GorunumKarti.tsx');
+  assert.match(kart, /AKSAN_ANAHTARLARI\.map/, 'ortak kartta renk ızgarası yok');
+  assert.match(kart, /setPreference/, 'ortak kartta tema kipi yok');
 });

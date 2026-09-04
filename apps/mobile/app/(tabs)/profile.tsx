@@ -5,27 +5,19 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-nat
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fillParams, useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
-import {
-  AKSANLAR,
-  AKSAN_ANAHTARLARI,
-  radius,
-  space,
-  type ColorTokens,
-  font,
-} from '../../src/theme';
+import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useStore } from '../../src/store';
 import {
+  GorunumKarti,
   PlanBadge,
   Screen,
-  Segmented,
   SurumBilgisi,
   TAB_BAR_CLEARANCE,
   TepeIsigi,
   Text,
   asPlanTier,
 } from '../../src/ui';
-import type { ThemeMode } from '../../src/theme';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
@@ -75,7 +67,7 @@ const MENU: {
 
 export default function ProfileScreen() {
   const { t } = useLocale();
-  const { colors, shadow, preference, setPreference, aksan, setAksan, isDark } = useTheme();
+  const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -135,10 +127,6 @@ export default function ProfileScreen() {
   const isSeller = role === 'salon' || role === 'professional';
   const menu = MENU.filter((m) => (!m.sellerOnly || isSeller) && (!m.customerOnly || !isSeller));
   const menuLabel = (key: MessageKey): string => t(key);
-
-  const appearance: 'system' | ThemeMode = preference ?? 'system';
-  const onAppearance = (value: 'system' | ThemeMode) =>
-    setPreference(value === 'system' ? null : value);
 
   const onPress = (key: MessageKey) => {
     if (key === 'profile.menu.passport') router.push('/profile/passport');
@@ -319,86 +307,11 @@ export default function ProfileScreen() {
           </Pressable>
         ) : null}
 
-        {/* Görünüm */}
-        <View style={styles.appearance}>
-          <View style={styles.appearanceHead}>
-            <Ionicons name="contrast-outline" size={18} color={colors.inkSoft} />
-            <Text variant="bodyStrong" tone="ink" style={styles.flex}>
-              {t('profile.appearance')}
-            </Text>
-          </View>
-          <Segmented
-            value={appearance}
-            onChange={onAppearance}
-            options={[
-              { value: 'system', label: t('profile.appearance.system') },
-              { value: 'light', label: t('profile.appearance.light') },
-              { value: 'dark', label: t('profile.appearance.dark') },
-            ]}
-          />
-
-          {/*
-           * UYGULAMA RENGİ.
-           *
-           * Ayrı bir ekran DEĞİL: tema seçiminin hemen altında, aynı kartın
-           * içinde. "Uygulama nasıl görünsün" tek bir soru; ikiye bölüp
-           * kullanıcıyı iki yere göndermek gereksiz.
-           *
-           * Yuvarlaklar SEÇİLİ TEMANIN rengini gösteriyor — koyu temada açık
-           * temanın koyu tonunu göstermek yanıltıcı olurdu.
-           */}
-          <View style={styles.ayrac} />
-          <View style={styles.appearanceHead}>
-            <Ionicons name="color-palette-outline" size={18} color={colors.inkSoft} />
-            <Text variant="bodyStrong" tone="ink" style={styles.flex}>
-              {t('profile.accent')}
-            </Text>
-            <Text variant="caption" tone="muted">
-              {t(AKSANLAR[aksan].etiket)}
-            </Text>
-          </View>
-          <Text variant="caption" tone="muted">
-            {t('profile.accent.hint')}
-          </Text>
-          <View style={styles.renkIzgara}>
-            {AKSAN_ANAHTARLARI.map((anahtar) => {
-              const secili = anahtar === aksan;
-              const renk = AKSANLAR[anahtar][isDark ? 'dark' : 'light'].accent;
-              return (
-                <Pressable
-                  key={anahtar}
-                  onPress={() => setAksan(anahtar)}
-                  style={styles.renkHucre}
-                  hitSlop={4}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: secili }}
-                  accessibilityLabel={t(AKSANLAR[anahtar].etiket)}
-                >
-                  <View style={[styles.renkHalka, secili && { borderColor: renk }]}>
-                    <View style={[styles.renkDaire, { backgroundColor: renk }]}>
-                      {/*
-                       * Seçili olan yalnız halkayla değil TİKLE de belli
-                       * oluyor: renk körlüğünde iki yakın ton (Gökyüzü /
-                       * Lacivert) halkadan ayırt edilemez.
-                       */}
-                      {secili ? (
-                        <Ionicons name="checkmark" size={20} color={colors.onAccent} />
-                      ) : null}
-                    </View>
-                  </View>
-                  <Text
-                    variant="micro"
-                    tone={secili ? 'ink' : 'muted'}
-                    numberOfLines={1}
-                    style={styles.renkAd}
-                  >
-                    {t(AKSANLAR[anahtar].etiket)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
+        {/*
+          GÖRÜNÜM — ortak bileşen. Blok burada yazılıydı ve salon
+          profilinde yoktu; kopyalasaydım ikisi zamanla ayrışırdı.
+        */}
+        <GorunumKarti />
 
         {/* Menü — sade ikon + etiket + chevron + ince ayraç */}
         <View style={styles.menuCard}>
@@ -564,35 +477,10 @@ const makeStyles = (colors: ColorTokens) =>
     },
     bannerText: { flex: 1, gap: 2 },
 
-    appearance: {
-      backgroundColor: colors.surface,
-      borderRadius: radius.lg,
-      padding: space(2),
-      marginBottom: space(2),
-      gap: space(1.5),
-    },
-    appearanceHead: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
-    ayrac: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
     // Sekiz yuvarlak, satıra dört. `space-between` yerine sabit genişlik:
     // son satır dolu olduğu için ikisi de aynı sonucu veriyor ama sabit
     // genişlik ad etiketleri farklı uzunlukta olunca kaymayı önlüyor.
-    renkIzgara: { flexDirection: 'row', flexWrap: 'wrap', rowGap: space(1.5) },
-    renkHucre: { width: '25%', alignItems: 'center', gap: 6 },
     // Halka + iç daire = 50pt: dokunma hedefi 44pt eşiğinin üstünde.
-    renkHalka: {
-      padding: 3,
-      borderRadius: 100,
-      borderWidth: 2,
-      borderColor: 'transparent',
-    },
-    renkDaire: {
-      width: 40,
-      height: 40,
-      borderRadius: 100,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    renkAd: { textAlign: 'center' },
 
     menuCard: {
       backgroundColor: colors.surface,

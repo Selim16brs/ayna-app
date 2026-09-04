@@ -11,6 +11,7 @@ function fmtDate(d: Date): string {
 }
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
+import { ADIM_TAMAM, type AdimSonucu, kimlikAdimi } from '../../src/kayit-adimi';
 import { useStore } from '../../src/store';
 import { registerErrorMessage } from '../../src/authError';
 import { useLocale } from '../../src/locale';
@@ -115,6 +116,51 @@ export default function CustomerRegisterScreen() {
     { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
     { ok: terms, key: 'auth.miss.terms' },
   ]);
+
+  /*
+   * ── EKSİK ALAN SESSİZ KALMIYOR ─────────────────────────────────────
+   *
+   * "Kayıt ol" eksik alan varken pasifti: kullanıcı basıyor, hiçbir şey
+   * olmuyordu. Düğme artık basılabilir; basınca ya eksikler yazılıyor ya
+   * da kayıt başlıyor.
+   *
+   * Telefon çakışması da BASILDIĞI ANDA sunucuya soruluyor. Eskiden
+   * yalnız kayıt denemesinde, üstelik bir uyarı penceresiyle
+   * öğreniliyordu; şerit alanın hemen üstünde ve kalıcı.
+   */
+  const [adimSonucu, setAdimSonucu] = useState<AdimSonucu>(ADIM_TAMAM);
+
+  async function kaydet() {
+    if (busy) return;
+    const kosullar = [
+      {
+        ok: firstName.trim().length > 1 && lastName.trim().length > 1,
+        key: 'auth.miss.name' as const,
+      },
+      { ok: phone.trim().length >= 7, key: 'auth.f.phone' as const },
+      { ok: city !== null, key: 'auth.f.city' as const },
+      { ok: !emailInvalid, key: 'auth.f.email' as const },
+      { ok: password.length >= 6, key: 'auth.f.password' as const },
+      { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' as const },
+      { ok: terms, key: 'auth.miss.terms' as const },
+    ];
+    setBusy(true);
+    const sonuc = await kimlikAdimi(
+      kosullar,
+      () =>
+        api.musaitlik({
+          phone: phone.trim(),
+          ...(email.trim() ? { email: email.trim() } : {}),
+        }),
+      { telefonDolu: t('auth.f.phone_taken'), epostaDolu: t('auth.f.email_taken') },
+    );
+    setAdimSonucu(sonuc);
+    if (!sonuc.gecebilir) {
+      setBusy(false);
+      return;
+    }
+    await submit();
+  }
 
   async function submit() {
     setBusy(true);
@@ -381,12 +427,18 @@ export default function CustomerRegisterScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        {touched && !valid ? <MissingFields keys={missing} /> : null}
+        {adimSonucu.hata || adimSonucu.eksikler.length ? (
+          <MissingFields keys={adimSonucu.eksikler} hata={adimSonucu.hata} />
+        ) : touched && !valid ? (
+          <MissingFields keys={missing} />
+        ) : null}
         <Button
           label={t('auth.tab.register')}
           variant={valid && !busy ? 'primary' : 'secondary'}
-          disabled={!valid || busy}
-          onPress={submit}
+          // Yalnız İSTEK SÜRERKEN kapalı: eksik alan yüzünden kapatmak,
+          // kullanıcının basıp sebebi öğrenmesini engellerdi.
+          disabled={busy}
+          onPress={() => void kaydet()}
         />
       </View>
     </Screen>

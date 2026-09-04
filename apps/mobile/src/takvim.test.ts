@@ -1,6 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ayEkle, ayIzgarasi, ayniGun, gunBasi, saatUygula, secilebilir, tarihYaz } from './takvim';
+import {
+  ayAcikMi,
+  ayEkle,
+  ayIzgarasi,
+  ayniGun,
+  gunBasi,
+  saatUygula,
+  secilebilir,
+  secilebilirYillar,
+  tarihYaz,
+  yilAyUygula,
+} from './takvim';
 
 /**
  * SAF TAKVİM MANTIĞI.
@@ -376,4 +387,57 @@ test('açılış dakikası çarkın SEÇENEKLERİNDEN birine oturuyor', async ()
    */
   assert.equal(enYakinDakika(58), 55, '58 saati ileri kaydırıyor');
   assert.equal(enYakinDakika(30), 30, 'tam değer değişiyor');
+});
+
+// ── YIL/AY SEÇİMİ — kurucunun isteği ────────────────────────────────────
+
+test('DOĞUM TARİHİ için 120 yıl geriye açık', () => {
+  /*
+   * Kurucu: "1970'de doğan birisi için yıl seçmek çok zor oluyor."
+   * Sınır verilmediğinde (doğum tarihi alanı) geriye doğru pencere geniş
+   * olmalı; dar olsaydı 1970 listede HİÇ olmaz ve kullanıcı yine ok
+   * tuşlarıyla uğraşırdı.
+   */
+  const yillar = secilebilirYillar(2000);
+  assert.ok(yillar.includes(1970), '1970 listede yok');
+  assert.ok(yillar.includes(1930), 'yeterince geriye gitmiyor');
+  assert.ok(yillar[0]! < yillar[yillar.length - 1]!, 'liste artan sırada değil');
+});
+
+test('SINIR VARSA yıl listesi sınırların DIŞINA çıkmıyor', () => {
+  // Randevu takviminde geçmiş yıl seçilebilseydi kullanıcı geçmişe
+  // randevu almaya çalışırdı.
+  const yillar = secilebilirYillar(2026, new Date(2026, 0, 1), new Date(2027, 11, 31));
+  assert.deepEqual(yillar, [2026, 2027]);
+});
+
+test('AY, İÇİNDE TEK BİR GÜN bile seçilebiliyorsa AÇIK', () => {
+  /*
+   * Ayın 1'ini sınamak yetmiyor: `enAz` 15 Mart ise Mart'ın tamamı kapalı
+   * görünürdü, oysa 15–31 Mart seçilebilir.
+   */
+  const enAz = new Date(2026, 2, 15);
+  assert.equal(ayAcikMi(2026, 2, enAz), true, 'kısmen açık ay kapalı görünüyor');
+  assert.equal(ayAcikMi(2026, 1, enAz), false, 'tamamen geçmiş ay açık görünüyor');
+});
+
+test('AY DEĞİŞİNCE gün TAŞMIYOR', () => {
+  // 31 Ocak'tayken Şubat seçilirse 31 Şubat olmaz.
+  const d = yilAyUygula(new Date(2026, 0, 31), 2026, 1);
+  assert.equal(d.getMonth(), 1, 'ay bir sonrakine taştı');
+  assert.equal(d.getDate(), 28);
+});
+
+test('YIL/AY seçimi SINIRA çekiliyor', () => {
+  const enAz = new Date(2026, 5, 10);
+  const d = yilAyUygula(new Date(2026, 5, 1), 2026, 5, enAz);
+  assert.equal(d.getTime(), enAz.getTime(), 'sınırın dışına düşen seçim düzeltilmiyor');
+  const enCok = new Date(2026, 5, 20);
+  const d2 = yilAyUygula(new Date(2026, 5, 25), 2026, 5, undefined, enCok);
+  assert.equal(d2.getTime(), enCok.getTime());
+});
+
+test('ARTIK YIL 29 Şubat doğru', () => {
+  assert.equal(yilAyUygula(new Date(2024, 0, 31), 2024, 1).getDate(), 29);
+  assert.equal(yilAyUygula(new Date(2026, 0, 31), 2026, 1).getDate(), 28);
 });
