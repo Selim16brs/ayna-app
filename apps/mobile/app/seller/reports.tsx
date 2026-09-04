@@ -530,18 +530,16 @@ export default function ReportsScreen() {
           </View>
         </LinearGradient>
 
-        {/* ═══ PAKET TANITIMI — Figma `promo-card` (radius 24, p20, gap 16) ═══ */}
-        <PressableScale style={styles.paketKart} onPress={() => router.push('/membership')}>
-          <View style={styles.paketIkon}>
-            <Ionicons name="star" size={22} color={colors.accent} />
-          </View>
-          <View style={styles.buyu}>
-            <Text style={styles.paketBaslik}>{t('seller.promo.title')}</Text>
-            <Text style={styles.paketAlt}>{t('seller.promo.sub')}</Text>
-            <Text style={styles.paketBag}>{t('seller.promo.cta')}</Text>
-          </View>
-        </PressableScale>
+        {/*
+          ── BÖLÜM SIRASI KURUCUNUN İSTEĞİ ─────────────────────────────
+          "daha çok müşteriye ulaş bölümü talepler ve takvimim bloğunun
+          altında olmalı" · "ayna vitrin bloğu yanıt ve kalite bloğunun
+          altında olmalı".
 
+          Sıra: günlük iş (talepler + takvim) → paket tanıtımı → yanıt &
+          kalite → vitrin. Satış kartları uzmanın işinin ÜSTÜNDE
+          duruyordu; önce yapması gerekeni görsün.
+        */}
         {/* ═══ TALEPLER + TAKVİM — Figma `grid-row` (iki kart, radius 20, p16) ═══ */}
         <View style={styles.ikiliSatir}>
           <IkiliKart
@@ -558,6 +556,49 @@ export default function ReportsScreen() {
             badge={stats?.upcoming ?? 0}
             onPress={() => router.push('/seller/agenda')}
           />
+        </View>
+
+        {/* ═══ PAKET TANITIMI — Figma `promo-card` (radius 24, p20, gap 16) ═══ */}
+        <PressableScale style={styles.paketKart} onPress={() => router.push('/membership')}>
+          <View style={styles.paketIkon}>
+            <Ionicons name="star" size={22} color={colors.accent} />
+          </View>
+          <View style={styles.buyu}>
+            <Text style={styles.paketBaslik}>{t('seller.promo.title')}</Text>
+            <Text style={styles.paketAlt}>{t('seller.promo.sub')}</Text>
+            <Text style={styles.paketBag}>{t('seller.promo.cta')}</Text>
+          </View>
+        </PressableScale>
+
+        {/* ═══ YANIT & KALİTE — Figma `yanit-kalite-card` (radius 24, p20) ═══ */}
+        <View style={styles.kaliteKart}>
+          <Text style={styles.kaliteBaslik}>{t('reports.quality.title')}</Text>
+          <View style={styles.kaliteSatir}>
+            <KaliteKutu
+              value={
+                quality.avgMin != null
+                  ? `${quality.avgMin} ${t('pro.min')}`
+                  : t('reports.quality.none')
+              }
+              label={t('reports.quality.avg_response')}
+              vurgu
+            />
+            <View style={styles.kaliteAyrac} />
+            <KaliteKutu
+              value={String(quality.depositPending)}
+              label={t('reports.quality.deposit_pending')}
+            />
+            <View style={styles.kaliteAyrac} />
+            <KaliteKutu
+              value={
+                quality.completion != null ? `%${quality.completion}` : t('reports.quality.none')
+              }
+              label={t('reports.quality.completion')}
+            />
+          </View>
+          <View style={styles.ipucu}>
+            <Text style={styles.ipucuYazi}>{t('reports.quality.tip')}</Text>
+          </View>
         </View>
 
         {/* ═══ REKLAM — Figma `reklam-banner` (radius 24, p16, kenarlık altın) ═══
@@ -645,37 +686,6 @@ export default function ReportsScreen() {
             </View>
           </PressableScale>
         )}
-
-        {/* ═══ YANIT & KALİTE — Figma `yanit-kalite-card` (radius 24, p20) ═══ */}
-        <View style={styles.kaliteKart}>
-          <Text style={styles.kaliteBaslik}>{t('reports.quality.title')}</Text>
-          <View style={styles.kaliteSatir}>
-            <KaliteKutu
-              value={
-                quality.avgMin != null
-                  ? `${quality.avgMin} ${t('pro.min')}`
-                  : t('reports.quality.none')
-              }
-              label={t('reports.quality.avg_response')}
-              vurgu
-            />
-            <View style={styles.kaliteAyrac} />
-            <KaliteKutu
-              value={String(quality.depositPending)}
-              label={t('reports.quality.deposit_pending')}
-            />
-            <View style={styles.kaliteAyrac} />
-            <KaliteKutu
-              value={
-                quality.completion != null ? `%${quality.completion}` : t('reports.quality.none')
-              }
-              label={t('reports.quality.completion')}
-            />
-          </View>
-          <View style={styles.ipucu}>
-            <Text style={styles.ipucuYazi}>{t('reports.quality.tip')}</Text>
-          </View>
-        </View>
 
         {/* ═══ YANIT BEKLEYEN YORUM ═══
             Figma'da ayrı bir kart yok; cevapsız kalan düşük puanlı yorum

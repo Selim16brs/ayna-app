@@ -85,6 +85,13 @@ const HESAPTAN_BAGIMSIZ = [
   // kullanıcıyla ilgisi yok. Çıkışta silseydik yeni üye eşitleme bitene
   // kadar eski pakete düşerdi.
   'acilisKatalog',
+  /*
+   * Hoş geldin mesajını görmüş ÜYE KİMLİKLERİ. Çıkışta silinmemeli:
+   * silinseydi aynı kullanıcı çıkıp girdiğinde mesaj yeniden çıkardı
+   * ("sadece ilk girişte" kuralı bozulurdu). Kimliğe bağlı olduğu için
+   * başka bir üyeye sızmıyor.
+   */
+  'hosGeldinGorenler',
 ];
 
 test('persist edilen tüm kullanıcı alanları sıfırlama setinde', () => {

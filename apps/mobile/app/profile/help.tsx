@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, ApiError, type SupportTicket } from '../../src/api';
-import { FAQ } from '../../src/data';
+import { FAQ, FAQ_UZMAN } from '../../src/data';
 import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
@@ -24,6 +24,11 @@ type Konu = (typeof KONULAR)[number];
 
 export default function HelpScreen() {
   const { t } = useLocale();
+  // Uzman ve salon ORTAK: ikisi de hizmet veren taraf, soruları aynı.
+  const satici = useStore(
+    (st) => st.currentUser?.role === 'professional' || st.currentUser?.role === 'salon',
+  );
+  const sorular = satici ? FAQ_UZMAN : FAQ;
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const [open, setOpen] = useState<string | null>(null);
@@ -80,11 +85,21 @@ export default function HelpScreen() {
           {t('help.subtitle')}
         </Text>
 
+        {/*
+          ── SORULAR ROLE GÖRE ────────────────────────────────────────
+          Kurucu: "yardım istek kısmında uzman ve salon ortak ve onlara
+          özel soru cevap kısmı olmalı. müşteride ise ona özel olmalı."
+
+          Herkese MÜŞTERİ soruları gösteriliyordu: uzman "randevumu nasıl
+          iptal ederim", "puanları nasıl kazanırım" gibi kendi işiyle
+          ilgisi olmayan cevapları okuyor, kendi soruları ise hiçbir yerde
+          yer almıyordu.
+        */}
         <View style={[styles.group, shadow.soft]}>
-          {FAQ.map((f, i) => {
+          {sorular.map((f, i) => {
             const expanded = open === f.id;
             return (
-              <View key={f.id} style={i < FAQ.length - 1 && styles.rowBorder}>
+              <View key={f.id} style={i < sorular.length - 1 && styles.rowBorder}>
                 <Pressable style={styles.qRow} onPress={() => setOpen(expanded ? null : f.id)}>
                   <Text variant="bodyStrong" tone="ink" style={styles.qText}>
                     {f.q}

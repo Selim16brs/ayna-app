@@ -167,3 +167,32 @@ test('UZMAN PORTRESİ müşteriyle aynı biçimde', () => {
   const pro = oku('app', 'professional', '[id].tsx');
   assert.doesNotMatch(pro, /styles\.reflection/, 'yansıma duruyor');
 });
+
+test('YARDIM soruları ROLE göre', () => {
+  /*
+   * Kurucu: "yardım istek kısmında uzman ve salon ortak ve onlara özel
+   * soru cevap kısmı olmalı. müşteride ise ona özel olmalı."
+   *
+   * Herkese müşteri soruları gösteriliyordu: uzman "puanları nasıl
+   * kazanırım" cevabını okuyordu — oysa uzman puan toplamıyor.
+   */
+  const k = oku('app', 'profile', 'help.tsx');
+  assert.match(k, /const sorular = satici \? FAQ_UZMAN : FAQ;/, 'sorular role göre değişmiyor');
+  assert.match(k, /sorular\.map/, 'ekran hâlâ sabit listeyi çiziyor');
+  // Uzman ve salon ORTAK: ikisi de hizmet veren taraf.
+  assert.match(k, /'professional' \|\| st\.currentUser\?\.role === 'salon'/, 'salon ayrı düşmüş');
+});
+
+test('SÜRÜM satırı yalnız sürümü gösteriyor', () => {
+  // Kurucu: "'yapı' ile başlayan alan gösterilmesin, sadece Ayna V1.xxx."
+  const k = oku('src', 'ui', 'SurumBilgisi.tsx');
+  assert.match(k, /surum = `AYNA v\$\{native\}`/, 'sürüm satırı yok');
+  // Ayrıntı SİLİNMEDİ, gizlendi: bir kez gerçek bir belirsizliği çözdü.
+  assert.match(k, /setAyrinti\(\(a\) => !a\)/, 'ayrıntıya ulaşılamıyor');
+});
+
+test('ÖLÜ ad→hizmet tablosu kaldırıldı', () => {
+  // Dursaydı aynı hatanın tohumu olarak kalırdı.
+  const k = oku('src', 'data.ts');
+  assert.doesNotMatch(k, /export const STAFF_SERVICES/, 'tablo hâlâ duruyor');
+});

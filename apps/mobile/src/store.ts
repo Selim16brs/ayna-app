@@ -447,6 +447,22 @@ interface State {
    */
   acilisKatalog: UzakKatalog | null;
   setAcilisKatalog: (k: UzakKatalog | null) => void;
+  /**
+   * HOŞ GELDİN MESAJINI GÖRMÜŞ ÜYELER.
+   *
+   * Kurucu: "karşılama mesajında AYNA'ya hoş geldin yazısı sadece ilk
+   * girişte görünür, sonrasında o kullanıcı için bir daha gösterilmez."
+   *
+   * Rotasyon durumu HESABA ÖZEL olduğu için çıkışta sıfırlanıyor (yeni
+   * üye öncekinin listesini devralmamalı). Ama bu sıfırlama hoş geldin
+   * mesajını da unutturuyordu: AYNI kullanıcı çıkıp girdiğinde mesaj
+   * yeniden çıkıyordu.
+   *
+   * Bu liste ÜYE KİMLİKLERİNİ tutuyor ve çıkışta silinmiyor — kimliğe
+   * bağlı olduğu için başka bir üyeye sızmıyor.
+   */
+  hosGeldinGorenler: string[];
+  hosGeldiniIsaretle: (userId: string) => void;
   setSellerProfile: (p: { social?: SocialValue; hours?: DayHours[]; certs?: string[] }) => void;
   // §10.1/§6.2 — salon-seviyesi profil (uzman profilinden AYRI). Kalıcı saklanır.
   salonProfile: {
@@ -1035,6 +1051,15 @@ export const useStore = create<State>()(
       setSonAcilis: (ms) => set({ sonAcilisMs: ms }),
       acilisKatalog: null,
       setAcilisKatalog: (k) => set({ acilisKatalog: k }),
+      hosGeldinGorenler: [],
+      hosGeldiniIsaretle: (userId) =>
+        set((s) =>
+          s.hosGeldinGorenler.includes(userId)
+            ? {}
+            : // Son 50 üye yeterli: bu cihazda daha fazlası birikmez ve
+              // liste sonsuza kadar büyümemeli.
+              { hosGeldinGorenler: [...s.hosGeldinGorenler, userId].slice(-50) },
+        ),
       butceLimiti: null,
       /*
        * 0 ya da negatif "limit yok" demek: kullanıcı alanı boşaltıp
@@ -3397,6 +3422,7 @@ export const useStore = create<State>()(
         acilisDurumu: s.acilisDurumu,
         sonAcilisMs: s.sonAcilisMs,
         acilisKatalog: s.acilisKatalog,
+        hosGeldinGorenler: s.hosGeldinGorenler,
         butceLimiti: s.butceLimiti,
         salonProfile: s.salonProfile,
         demandNotif: s.demandNotif,
