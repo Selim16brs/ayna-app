@@ -334,49 +334,38 @@ ol(
   String(dekont.govde?.depositAmount),
 );
 
-const tamam = await gonder(`/bookings/${bookingId}/complete`, {}, uzmanToken);
+/*
+ * RANDEVU GÜNÜ GELMEDEN TAMAMLANAMAZ.
+ *
+ * `kesinlesti → odeme_bekliyor` diye bir geçiş YOK: araya `hizmet_gunu`
+ * giriyor ve oraya geçişi randevu saati geldiğinde zamanlayıcı yapıyor.
+ * Bu kural olmasaydı uzman ileri tarihli bir randevuyu bugün kapatıp
+ * puanı ve komisyon saatini erken başlatabilirdi.
+ *
+ * Tamamlanma sonrası adımlar (ödeme beyanı, puan yüklemesi) burada
+ * DENENMİYOR: randevunun saatinin gelmesini beklemek gerekiyor ve
+ * zamanlayıcı 60 saniyede bir dönüyor — duman testini bir dakika
+ * bekletmek, kazandırdığından çok maliyet olurdu. O adımların kuralları
+ * birim testlerinde bağlı (completion-rewards, state-machine).
+ */
+const erken = await gonder(`/bookings/${bookingId}/complete`, {}, uzmanToken);
+const erkenKod = erken.govde?.error?.code ?? erken.govde?.code;
 ol(
-  'uzman hizmeti tamamlayabiliyor',
-  tamam.ok,
-  tamam.ok ? '' : JSON.stringify(tamam.govde).slice(0, 160),
+  'randevu günü gelmeden TAMAMLANAMIYOR',
+  !erken.ok && erkenKod === 'INVALID_TRANSITION',
+  `${erken.durum} ${erkenKod ?? ''}`,
 );
-ol(
-  'tamamlanınca ÖDEME BEKLİYOR',
-  tamam.govde?.status === 'odeme_bekliyor',
-  String(tamam.govde?.status),
-);
-
-const beyan = await gonder(`/bookings/${bookingId}/balance-paid`, {}, musteri.govde?.token);
-ol(
-  'müşteri ödemeyi bildirebiliyor',
-  beyan.ok,
-  beyan.ok ? '' : JSON.stringify(beyan.govde).slice(0, 160),
-);
-const kapanis = await gonder(`/bookings/${bookingId}/balance-received`, {}, uzmanToken);
-ol(
-  'uzman parayı aldığını onaylıyor',
-  kapanis.ok,
-  kapanis.ok ? '' : JSON.stringify(kapanis.govde).slice(0, 160),
-);
-ol('randevu TAMAMLANDI', kapanis.govde?.status === 'tamamlandi', String(kapanis.govde?.status));
 
 /*
- * PUAN UYDURULMUYOR: kazanım hizmet bedelinin %1'i (DEFAULT_EARN_PCT).
- * 18.000 ₸ → 180 puan. Sıfır da yanlış, fazlası da.
- *
- * TOPLAMA değil DEFTER SATIRINA bakılıyor: tamamlanma başka ödüller de
- * yükleyebiliyor (davet primi gibi) ve toplamı sabitlemek testi ilgisiz
- * bir özellik yüzünden kırardı. Denetlenen şey KAZANIMIN KURALI.
+ * Puan da erken yüklenmiyor: tamamlanmamış randevudan puan doğarsa
+ * "uydurma puan" tam olarak budur.
  */
 const sadakat = await get('/loyalty', musteri.govde?.token);
-const kazanim = (sadakat?.ledger ?? []).find((x) => x.kind === 'earn');
 ol(
-  'tamamlanınca puan defterine KAYIT düşüyor',
-  !!kazanim,
-  `${(sadakat?.ledger ?? []).length} satır`,
+  'tamamlanmamış randevudan PUAN DOĞMUYOR',
+  (sadakat?.points ?? 0) === 0,
+  `${sadakat?.points} puan`,
 );
-ol('puan HAK EDİLEN kadar — ne eksik ne fazla', kazanim?.points === 180, `${kazanim?.points} puan`);
-ol('bakiye defterle tutarlı', (sadakat?.points ?? 0) >= 180, `${sadakat?.points} puan`);
 
 /* ── RAPOR ─────────────────────────────────────────────────────────── */
 const dusen = sonuclar.filter((s) => !s.gecti);
