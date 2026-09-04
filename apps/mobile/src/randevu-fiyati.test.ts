@@ -59,3 +59,27 @@ test('MÜŞTERİ ve UZMAN aynı yazıyı görüyor', () => {
     assert.match(k, /randevuFiyatiYazisi\(/, `${yol.join('/')}: ortak kural kullanılmıyor`);
   }
 });
+
+test('HİZMETİ OLMAYAN uzmanda düğme ÖLÜ değil — teklif yolu', () => {
+  /*
+   * `chosen.length > 0` şartı yüzünden seçilecek hizmeti olmayan uzmanda
+   * "Randevu al" hep pasifti ve müşteriye nedenini söyleyen bir şey yoktu:
+   * çıkışsız ekran. Doğrudan randevuya açmak da olmazdı — tutar
+   * hesaplanamayınca randevu 0 ₸ doğuyor, uzman onaylayınca depozito
+   * "0 ₸" çıkıyor ve randevu orada kilitleniyor.
+   *
+   * Haritadaki kart bunu zaten teklif yoluna bağlıyordu; profil bağlamıyordu.
+   */
+  const k = oku('app', 'professional', '[id].tsx');
+  assert.match(k, /const hizmetsiz = pro\.services\.length === 0;/, 'durum yok');
+  assert.match(
+    k,
+    /randevuAlinabilir = hizmetsiz \|\| \(slotMs != null && chosen\.length > 0\)/,
+    'düğme hâlâ ölü',
+  );
+  assert.match(k, /t\(hizmetsiz \? 'pro\.incomplete\.cta' : 'pro\.book'\)/, 'yazı değişmiyor');
+  // Yönlendirme SLOT KONTROLÜNDEN ÖNCE: saat seçilmeden de teklif istenebilir.
+  const i = k.indexOf('if (hizmetsiz) {');
+  const j = k.indexOf('if (slotMs == null) return;');
+  assert.ok(i > 0 && j > i, 'teklif yolu saat kontrolünün altında kalmış');
+});
