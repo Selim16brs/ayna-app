@@ -1234,6 +1234,8 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'reports.live.commission': 'Комиссия AYNA ({pct}%)',
   'reports.quality.title': 'Ответ и качество',
   'reports.success.title': 'Ваш показатель успеха',
+  'reports.no_location': 'Вас не видно на карте',
+  'reports.no_location_b': 'Отметьте адрес на карте — клиент не найдёт вас среди ближайших.',
   'reports.success.none': 'Пока нет данных — появится после первых записей',
   'reports.success.hidden':
     'Не показывается клиентам — включить можно в разделе «Конфиденциальность»',

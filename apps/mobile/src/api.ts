@@ -1247,6 +1247,9 @@ export const api = {
     konum: { lat: number; lng: number; address?: string; district?: string; city?: string },
     token: string,
   ) => post<{ ok: boolean }>('/specialists/me/location', konum, token),
+  /** Haritada görünüyor muyum — panel uyarısı için. */
+  myLocation: (token: string) =>
+    get<{ hasLocation: boolean; address: string }>('/specialists/me/location', token),
   submitProfileChange: (changes: Record<string, unknown>, token: string) =>
     post<ProfileChangeReq>('/profile-changes', { changes }, token),
   myProfileChange: (token: string) => get<ProfileChangeReq | null>('/profile-changes/mine', token),

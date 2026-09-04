@@ -179,7 +179,7 @@ export default function SellerRequestsScreen() {
   const canSend = Number(price) > 0 && Number(eta) > 0 && picked.length > 0;
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={[]} keyboardAvoiding={false}>
       <StackHeader title={t('seller.requests.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* §4.4 — kısıtlı mod: talep listesi gizlenir, yükümlülük çözümü yönlendirilir */}

@@ -52,17 +52,32 @@ export function Screen({
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <SafeAreaView style={styles.safe} edges={edges}>
-        <KeyboardAvoidingView
-          style={styles.safe}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          enabled={keyboardAvoiding}
-        >
+      {/*
+       * ── KLAVYE KAÇINMASI SafeAreaView'İN DIŞINDA ──────────────────────
+       *
+       * Kurucu: "ekran görüntüsünde gördüğün gibi kayma var… bunu her
+       * yerde profesyonelce çöz."
+       *
+       * Eskiden `KeyboardAvoidingView` SafeAreaView'in İÇİNDEYDİ.
+       * SafeAreaView alt güvenli alan payını (çentikli telefonlarda ~34pt)
+       * zaten uyguluyor; KAV ise klavye yüksekliğini PENCERE DİBİNDEN
+       * ölçüp o kadar dolgu ekliyordu. Yani alt pay İKİ KEZ sayılıyor ve
+       * içerik gereğinden ~34pt fazla yukarı itiliyordu.
+       *
+       * Dışarı alınca KAV'ın çerçevesi pencerenin tamamı oluyor: ölçtüğü
+       * yükseklikle uyguladığı dolgu aynı eksende, çift sayım kalmıyor.
+       */}
+      <KeyboardAvoidingView
+        style={styles.safe}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        enabled={keyboardAvoiding}
+      >
+        <SafeAreaView style={styles.safe} edges={edges}>
           <Animated.View style={styles.safe} entering={FadeIn.duration(280)}>
             {children}
           </Animated.View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

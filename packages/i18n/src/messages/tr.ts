@@ -1308,6 +1308,9 @@ export const tr = {
   'reports.live.commission': 'AYNA komisyonu (%{pct})',
   'reports.quality.title': 'Yanıt & kalite',
   'reports.success.title': 'Başarı durumun',
+  'reports.no_location': 'Haritada görünmüyorsun',
+  'reports.no_location_b':
+    'Adresini haritada işaretle — müşteri seni yakınındakiler arasında bulamıyor.',
   'reports.success.none': 'Henüz ölçülecek veri yok — ilk randevularından sonra burada görünecek',
   'reports.success.hidden': 'Müşteriyle paylaşılmıyor — Gizlilik ekranından açabilirsin',
   'reports.success.is': 'Tamamlanan iş',

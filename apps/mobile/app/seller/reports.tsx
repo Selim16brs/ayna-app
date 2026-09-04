@@ -160,6 +160,11 @@ export default function ReportsScreen() {
    * İstemcide hesaplamak, elindeki eksik listeyle yanlış yüzde üretmek
    * olurdu.
    */
+  /*
+   * `null` = HENÜZ BİLİNMİYOR. `false` ile aynı saysaydım ekran açılır
+   * açılmaz uyarı çakıp sunucu cevabı gelince kaybolurdu.
+   */
+  const [konumVar, setKonumVar] = useState<boolean | null>(null);
   const [basari, setBasari] = useState<{
     yuzde: number | null;
     bilesenler: { ad: 'is' | 'puan' | 'cevap'; yuzde: number }[];
@@ -256,6 +261,14 @@ export default function ReportsScreen() {
       void api
         .myPerformance(token)
         .then(setBasari)
+        .catch(() => undefined);
+      /*
+       * Konum durumu da her dönüşte: uzman konumunu girip geri geldiğinde
+       * uyarı hemen kalksın, "hâlâ yazıyor" demesin.
+       */
+      void api
+        .myLocation(token)
+        .then((r) => setKonumVar(r.hasLocation))
         .catch(() => undefined);
     }, [token]),
   );
@@ -443,6 +456,26 @@ export default function ReportsScreen() {
             </PressableScale>
           </View>
         </View>
+
+        {/* ═══ HARİTADA GÖRÜNMÜYORSUN ═══
+            Konum ekranı VARDI (Menü → Konum) ama uzman oraya girmediği
+            sürece haritada görünmediğini HİÇ öğrenmiyordu: eksik bir şey
+            olduğunu söyleyen bir yer yoktu. Dokununca doğrudan o ekrana
+            gidiyor — uyarı verip çözümü aratmak olmaz. */}
+        {konumVar === false ? (
+          <PressableScale style={styles.konumUyari} onPress={() => router.push('/seller/location')}>
+            <Ionicons name="location-outline" size={20} color={colors.danger} />
+            <View style={styles.buyu}>
+              <Text variant="bodyStrong" tone="ink">
+                {t('reports.no_location')}
+              </Text>
+              <Text variant="caption" tone="muted">
+                {t('reports.no_location_b')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+          </PressableScale>
+        ) : null}
 
         {/* ═══ HESAP KISITI ═══
             Figma'da yok — tasarımı yapan hesap kısıtlı değildi. Ama kısıtlı
@@ -1142,6 +1175,15 @@ const makeStyles = (colors: ColorTokens) =>
     reklamFiyat: { fontFamily: font.semibold, fontSize: 12, color: colors.gold },
 
     // yanit-kalite-card (radius 24, p20, gap 16)
+    konumUyari: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space(1.5),
+      marginHorizontal: 24,
+      padding: space(1.75),
+      borderRadius: 20,
+      backgroundColor: colors.dangerSoft,
+    },
     basariYuzde: { fontFamily: font.semibold, fontSize: 34, color: colors.accentFg },
     basariSatir: { flexDirection: 'row', flexWrap: 'wrap', gap: space(2), marginTop: space(0.5) },
     basariKutu: { gap: 2 },

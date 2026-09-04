@@ -201,7 +201,7 @@ export default function ChatThreadScreen() {
   ) : undefined;
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={[]} keyboardAvoiding={false}>
       {/* Kanvas (design/Mesajlar.dc.html §başlık): sohbet başlığı MOR BANT DEĞİL —
           açık zeminde kompakt bir satır: geri çipi · avatar · isim + yanıt süresi.
           StackHeader 78 ekranda ortak olduğu için o değiştirilmedi; sohbet

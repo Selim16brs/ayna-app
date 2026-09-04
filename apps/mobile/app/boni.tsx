@@ -116,7 +116,7 @@ export default function BoniScreen() {
   // Premium değilse: kilit ekranı + demo aç
   if (quota && !quota.premium) {
     return (
-      <Screen edges={[]}>
+      <Screen edges={[]} keyboardAvoiding={false}>
         <StackHeader
           title={t('boni.title')}
           subtitle={t('boni.header_sub')}
@@ -148,7 +148,7 @@ export default function BoniScreen() {
   const empty = quota ? quota.remaining <= 0 : false;
 
   return (
-    <Screen edges={[]}>
+    <Screen edges={[]} keyboardAvoiding={false}>
       <StackHeader title={t('boni.title')} subtitle={t('boni.header_sub')} heroImage={boniAvatar} />
       <KeyboardAvoidingView
         style={styles.flex}

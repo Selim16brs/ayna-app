@@ -405,6 +405,30 @@ export class SpecialistsService {
    * süresini ölçüp liste ölçmediği için aynı uzman iki farklı yüzde
    * gösterirdi.
    */
+  /**
+   * KONUM DURUMU — "haritada görünüyor muyum".
+   *
+   * Kurucu: uzman panelinde adres alanı ve haritada iğne olmalı. Ekran
+   * VARDI (Menü → Konum) ama uzman oraya girmediği sürece haritada
+   * görünmediğini HİÇ öğrenmiyordu: eksik bir şey olduğunu söyleyen bir
+   * yer yoktu.
+   *
+   * Koordinat keşif kartında; performans yükünde döndürmek yerine ayrı
+   * uç: kart okumasını her ekranda tekrarlamamak için.
+   */
+  async myLocation(userId: string) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { hasLocation: false, address: '' };
+    const p = await this.prisma.professional.findUnique({
+      where: { id: proId },
+      select: { lat: true, lng: true, district: true, city: true },
+    });
+    return {
+      hasLocation: p?.lat != null && p?.lng != null,
+      address: [p?.district, p?.city].filter(Boolean).join(' · '),
+    };
+  }
+
   async myPerformance(userId: string) {
     const proId = await this.proIdFor(userId);
     const sonuc = await this.basari.tek(proId);

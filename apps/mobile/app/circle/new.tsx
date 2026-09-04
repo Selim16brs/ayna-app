@@ -61,7 +61,7 @@ export default function NewPostScreen() {
   };
 
   return (
-    <Screen edges={['bottom']}>
+    <Screen edges={['bottom']} keyboardAvoiding={false}>
       <StackHeader title={t('circle.new.title')} />
       {/*
        * KLAVYE İÇERİĞİ ÖRTMESİN.
