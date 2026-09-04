@@ -76,6 +76,12 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'common.no': 'Жоқ',
   'common.see_all': 'Барлығын көру',
   'common.error': 'Қате шықты, қайталап көріңіз',
+  'err.NO_REFUND_RIGHT': 'Бұл жазылуда қайтару құқығы жоқ',
+  'err.NO_DEPOSIT': 'Қайтарылатын депозит жоқ',
+  'err.ALREADY_REQUESTED': 'Бұл жазылу үшін қайтару сұранысы ашық',
+  'err.AD_ORDER_CLOSED': 'Бұл жарнама тапсырысы жабылды',
+  'err.RECEIPT_REUSED': 'Бұл түбіртек бұрын қолданылған',
+  'err.RECEIPT_MISSING': 'Алдымен түбіртекті жүкте',
   // §12.3 — шектеулі режим ескертуі
   'restricted.title': 'Есептік жазбаңыз қазір шектеулі',
   'restricted.body':

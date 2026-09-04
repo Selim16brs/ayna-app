@@ -237,7 +237,7 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
     },
     'booking.deposit_expired': {
       title: 'Жазылу мерзімі өтті',
-      body: 'Кепілпұл түбіртегі жүктелмегендіктен жазылу тоқтатылды.',
+      body: 'Депозит түбіртегі жүктелмегендіктен жазылу тоқтатылды.',
     },
     'booking.completed_confirm': {
       title: 'Қызмет аяқталды ма? ✨',
@@ -281,7 +281,7 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
     },
     'booking.dropped_no_deposit': {
       title: 'Сұранысың жойылды',
-      body: 'Кепілпұл төленбегендіктен жазылу тоқтады — қаласаң қайта көр',
+      body: 'Депозит төленбегендіктен жазылу тоқтады — қаласаң қайта көр',
     },
     'booking.remind_30m': {
       title: 'Жазылуыңа 30 минут қалды',
@@ -292,11 +292,11 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
       body: 'Дайындала бастауыңа болады',
     },
     'booking.free_cancel_last': {
-      title: 'Кепілпұлды жоғалтпай тоқтатудың соңғы мүмкіндігі',
-      body: 'Бұдан кейін тоқтатсаң кепілпұл қайтарылмайды',
+      title: 'Депозитды жоғалтпай тоқтатудың соңғы мүмкіндігі',
+      body: 'Бұдан кейін тоқтатсаң депозит қайтарылмайды',
     },
     'booking.deposit_last_minutes': {
-      title: 'Кепілпұл үшін соңғы минуттар',
+      title: 'Депозит үшін соңғы минуттар',
       body: 'Жазылуың жойылмай тұрып түбіртекті жүкте',
     },
     'booking.new_request': {
@@ -397,7 +397,7 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
     },
     'booking.confirmed': {
       title: 'Жазылу расталды ✓',
-      body: 'Кепілпұл алынды — жазылуың кепілдікте.',
+      body: 'Депозит алынды — жазылуың кепілдікте.',
     },
   },
   ru: {

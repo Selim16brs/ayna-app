@@ -77,6 +77,12 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'common.no': 'Нет',
   'common.see_all': 'Смотреть все',
   'common.error': 'Произошла ошибка, попробуйте ещё раз',
+  'err.NO_REFUND_RIGHT': 'По этой записи нет права на возврат',
+  'err.NO_DEPOSIT': 'Нет депозита к возврату',
+  'err.ALREADY_REQUESTED': 'Запрос на возврат по этой записи уже открыт',
+  'err.AD_ORDER_CLOSED': 'Этот рекламный заказ закрыт',
+  'err.RECEIPT_REUSED': 'Эта квитанция уже использована',
+  'err.RECEIPT_MISSING': 'Сначала загрузите квитанцию',
   // §12.3 — предупреждение об ограниченном режиме
   'restricted.title': 'Ваш аккаунт сейчас ограничен',
   'restricted.body':

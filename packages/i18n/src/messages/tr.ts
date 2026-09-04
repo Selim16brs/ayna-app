@@ -80,6 +80,12 @@ export const tr = {
   'common.no': 'Hayır',
   'common.see_all': 'Tümünü Gör',
   'common.error': 'Bir hata oluştu, tekrar dene',
+  'err.NO_REFUND_RIGHT': 'Bu randevuda iade hakkı doğmadı',
+  'err.NO_DEPOSIT': 'İade edilecek depozito yok',
+  'err.ALREADY_REQUESTED': 'Bu randevu için iade talebi zaten açık',
+  'err.AD_ORDER_CLOSED': 'Bu reklam siparişi kapandı',
+  'err.RECEIPT_REUSED': 'Bu dekont daha önce kullanılmış',
+  'err.RECEIPT_MISSING': 'Önce dekontu yükle',
   // §12.3 — kısıtlı mod uyarısı (admin ceza takip)
   'restricted.title': 'Hesabın şu an kısıtlı',
   'restricted.body':

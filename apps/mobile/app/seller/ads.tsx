@@ -19,6 +19,7 @@ import { radius, shadow, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
 import { BELGE_GENISLIK, kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
+import { sunucuHatasi } from '../../src/sunucu-hatasi';
 
 /**
  * REKLAM VER — ücretli vitrin satın alma.
@@ -133,7 +134,7 @@ export default function SellerAdsScreen() {
         Alert.alert(t('deposit.kaspi_fail_t'), t('deposit.kaspi_fail_b'));
       }
     } catch (e) {
-      Alert.alert(t('ads.fail_t'), e instanceof Error ? e.message : '');
+      Alert.alert(t('ads.fail_t'), sunucuHatasi(e, t));
     } finally {
       setMesgul(false);
     }
@@ -154,7 +155,7 @@ export default function SellerAdsScreen() {
     } catch (e) {
       // Sunucunun kendi gerekçesi gösteriliyor: "bir hata oluştu" kullanıcıya
       // neyi düzelteceğini söylemiyor.
-      Alert.alert(t('ads.fail_t'), e instanceof Error ? e.message : '');
+      Alert.alert(t('ads.fail_t'), sunucuHatasi(e, t));
     } finally {
       setMesgul(false);
     }
