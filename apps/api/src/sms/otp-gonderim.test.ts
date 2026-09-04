@@ -19,11 +19,13 @@ import { AuthService } from '../auth/auth.service';
 const KEY = 'a'.repeat(64);
 
 /** Sahte OTP kaydı; silinip silinmediği izleniyor. */
-function ortam(gonderildi: boolean) {
+function ortam(gonderildi: boolean, gunluk = 0) {
   const izler = { silindi: [] as string[], olusturuldu: 0 };
   const prisma = {
     otpCode: {
       findFirst: () => Promise.resolve(null),
+      // Günlük tavan sayacı; testler `gunluk` ile istediği değeri verir.
+      count: () => Promise.resolve(gunluk),
       updateMany: () => Promise.resolve({ count: 0 }),
       create: () => {
         izler.olusturuldu += 1;
@@ -158,4 +160,31 @@ test('sms_log tablosu Railway dağıtımında GERÇEKTEN oluşuyor', () => {
   // Tam numara ASLA saklanmıyor — sütunu bile yok.
   assert.equal(/"phone"\s/.test(sql), false, 'tam numara sütunu var');
   assert.equal(/"message"|"text"|"body"/.test(sql), false, 'mesaj metni saklanıyor — OTP sızar');
+});
+
+test('GÜNLÜK SMS TAVANI — numara başına', async () => {
+  /*
+   * Soğuma süresi ARDIŞIK isteği yavaşlatıyor ama TOPLAMI sınırlamıyor:
+   * 30 saniyede bir isteyen biri tek numaraya günde binlerce SMS
+   * attırabilirdi. Bedeli iki türlü: Mobizon faturası ve numarası hedef
+   * alınan kişinin telefonunun susmaması. IP limiti yetmiyor — IP
+   * değiştirmek ucuz, numara değil.
+   */
+  const { svc, izler } = ortam(true, 10);
+  await assert.rejects(
+    () => svc.requestOtp('+77771234567', 'tr'),
+    (e: { getStatus?: () => number; response?: { code?: string } }) => {
+      assert.equal(e.getStatus?.(), 429);
+      assert.equal(e.response?.code, 'OTP_DAILY_LIMIT');
+      return true;
+    },
+  );
+  assert.equal(izler.olusturuldu, 0, 'tavana rağmen kod üretildi');
+});
+
+test('TAVANIN ALTINDA kod üretiliyor — sınır normal kullanımı kesmiyor', async () => {
+  const { svc, izler } = ortam(true, 9);
+  const r = await svc.requestOtp('+77771234567', 'tr');
+  assert.equal(r.sent, true);
+  assert.equal(izler.olusturuldu, 1);
 });

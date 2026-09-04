@@ -32,6 +32,19 @@ import type { LoginInput, RegisterInput } from './auth.dto';
 const OTP_TTL_SEC = 300; // 5 dk geçerli
 const OTP_MAX_ATTEMPTS = 5; // kod başına yanlış deneme
 const OTP_RESEND_COOLDOWN_SEC = 30; // yeni kod isteme aralığı
+/*
+ * GÜNLÜK SMS TAVANI — numara başına.
+ *
+ * Soğuma süresi ARDIŞIK isteği yavaşlatıyor ama TOPLAMI sınırlamıyor: 30
+ * saniyede bir isteyen biri tek numaraya günde binlerce SMS attırabilir.
+ * Bunun iki bedeli var — Mobizon faturası ve numarası hedef alınan kişinin
+ * telefonunun susmaması. IP limiti de yetmiyor: IP değiştirmek ucuz,
+ * numara değil.
+ *
+ * 10, gerçek kullanımın çok üstünde: kayıt + doğrulama + şifre sıfırlama
+ * aynı günde en fazla birkaç kod eder.
+ */
+const OTP_GUNLUK_SINIR = 10;
 /** Kayıt, bu süre içinde yapılmış bir doğrulamayı devralır. */
 const KAYIT_DOGRULAMA_PENCERESI_SEC = 30 * 60;
 
@@ -330,6 +343,21 @@ export class AuthService {
           HttpStatus.TOO_MANY_REQUESTS,
         );
       }
+    }
+
+    /*
+     * GÜNLÜK TAVAN — soğuma süresinden AYRI bir kural: o ardışık isteği
+     * yavaşlatıyor, bu toplamı sınırlıyor.
+     */
+    const sonGun = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const gunlukAdet = await this.prisma.otpCode.count({
+      where: { phoneHash: ph, createdAt: { gte: sonGun } },
+    });
+    if (gunlukAdet >= OTP_GUNLUK_SINIR) {
+      throw new HttpException(
+        { code: 'OTP_DAILY_LIMIT', message: 'Bugün için kod sınırına ulaşıldı, yarın tekrar dene' },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
 
     // Önceki kullanılmamış kodları geçersiz kıl (tek aktif kod)

@@ -2198,6 +2198,8 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'profile.follow.unfollow': 'Бас тарту',
   'auth.otp.invalid': 'Код жарамсыз немесе мерзімі өтіп кеткен',
   'auth.otp.send_failed': 'Код қазір жіберілмеді. Сәлден соң қайталап көр.',
+  'auth.otp.daily_limit': 'Бүгінгі код шегіне жеттің — ертең қайта көр.',
+  'auth.otp.too_soon': 'Кодты тым жиі сұрадың — сәл күтіп қайта көр.',
   'auth.forgot.save_failed': 'Құпия сөз өзгертілмеді. Кодты және байланысыңды тексер.',
   'review.not_eligible': 'Бұл жазылуды бағалау мүмкін емес',
 
