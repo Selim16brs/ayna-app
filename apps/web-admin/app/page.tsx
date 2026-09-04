@@ -813,7 +813,9 @@ function SupportView() {
               </div>
               {t.status !== 'closed' ? (
                 <button
-                  className="btn ghost"
+                  // `ghost` diye bir kural yok — `btn-ghost`. Aynı hata:
+                  // düğme `.btn`in tam genişliğini alıyordu.
+                  className="btn-sm btn-ghost"
                   disabled={busy === t.id}
                   onClick={() => act(() => api.supportClose(t.id), t.id)}
                 >
@@ -1318,7 +1320,7 @@ function RandevuKuyruklari() {
           <div className="empty">Bekleyen dekont yok</div>
         ) : (
           dekont.data.map((b) => (
-            <div key={b.id} className="row">
+            <div key={b.id} className="list-row">
               <div className="grow">
                 <div>
                   <b>{b.proName}</b> · {b.service}
@@ -1386,7 +1388,7 @@ function RandevuKuyruklari() {
           <div className="empty">Bekleyen iade yok</div>
         ) : (
           iade.data.map((r) => (
-            <div key={r.id} className="row">
+            <div key={r.id} className="list-row">
               <div className="grow">
                 <div>
                   <b>{kzt(Number(r.amount))}</b> ·{' '}
@@ -1423,7 +1425,7 @@ function RandevuKuyruklari() {
           <div className="empty">Bekleyen uzlaşma yok</div>
         ) : (
           uzlasma.data.map((u) => (
-            <div key={u.id} className="row">
+            <div key={u.id} className="list-row">
               <div className="grow">
                 <div>
                   <b>{u.kind === 'no_show' ? 'Gelmedi itirazı' : 'Ödeme itirazı'}</b>
@@ -2045,10 +2047,7 @@ function SpecialistsView() {
               })}
             </div>
             {detail.certificates.length > 0 ? (
-              <div
-                className="cert-thumbs"
-                style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}
-              >
+              <div className="cert-thumbs">
                 {detail.certificates.map((c, i) => (
                   <a key={i} href={c} target="_blank" rel="noreferrer">
                     <img
@@ -2120,7 +2119,7 @@ function ReguleHizmetView() {
                 “{f.serviceName}”{f.city ? ` · ${f.city}` : ''} ·{' '}
                 {new Date(f.createdAt).toLocaleDateString('tr-TR')}
               </div>
-              <div className="row-actions" style={{ marginTop: 8 }}>
+              <div className="actions" style={{ marginTop: 8 }}>
                 <button className="btn-sm" onClick={() => void karar(f, 'cleared')}>
                   Sorun yok
                 </button>
@@ -3223,7 +3222,7 @@ function AdsView() {
           <div className="empty">Bekleyen reklam ödemesi yok</div>
         ) : (
           reklam.data.map((o) => (
-            <div key={o.id} className="row">
+            <div key={o.id} className="list-row">
               {o.image ? <img className="thumb" src={o.image} alt="" /> : <div className="thumb" />}
               <div className="grow">
                 <div>
@@ -3817,7 +3816,7 @@ function ServicesView() {
       </div>
 
       {degisti ? (
-        <div className="row-actions" style={{ marginTop: 16 }}>
+        <div className="actions" style={{ marginTop: 16 }}>
           <button className="btn-sm" onClick={() => setSira(null)} disabled={kaydediliyor}>
             Vazgeç
           </button>
@@ -4409,6 +4408,19 @@ function BookingsAdminView() {
                   {b.online ? 'Online (app)' : 'Offline (salon)'}
                 </div>
               </div>
+              {/*
+                DEPOZİTO DEKONTU GÖRÜNÜR.
+
+                §4.4: dekont yüklendiği an randevu kesinleşiyor, yönetici
+                doğrulaması SONRA geliyor. Ama panel dekontu hiç
+                göstermiyordu — yönetici neyi doğrulayacağını göremiyor,
+                elinde yalnız "İptal" kalıyordu (kurucu bildirdi).
+              */}
+              {b.depositReceiptUri ? (
+                <a href={b.depositReceiptUri} target="_blank" rel="noreferrer" title="Dekontu aç">
+                  <img className="thumb" src={b.depositReceiptUri} alt="dekont" />
+                </a>
+              ) : null}
               <div className="kv-v">{b.price > 0 ? TL(b.price) : '—'}</div>
               <span className={`pill ${pill(b.status)}`}>
                 {BOOKING_STATUS_TR[b.status] ?? b.status}
@@ -4419,9 +4431,37 @@ function BookingsAdminView() {
                   ödenmemiş bir randevuya puan yükleyip komisyon tabanına
                   yazardı. §8 admin'e üç kuyruk veriyor; tamamlama vermiyor.
                   İptal destek kaçış kapısı olarak kalıyor. */}
+              {/*
+                SAHTE DEKONT GERİ ALINIYOR — iptal DEĞİL.
+                İptal müşteriyi cezalandıran ayrı bir sonuç; para gelmediyse
+                doğru sonuç randevunun depozito beklemeye dönmesi ve
+                müşterinin doğru dekontu yükleyebilmesi.
+              */}
+              {b.depositReceiptUri && !KAPALI_DURUMLAR.includes(b.status) ? (
+                <button
+                  className="btn-sm btn-ghost"
+                  onClick={() =>
+                    act(
+                      () => api.rejectReceipt(b.id),
+                      `Dekont reddedilsin mi? Randevu depozito beklemeye döner. (${b.service})`,
+                    )
+                  }
+                >
+                  Dekontu reddet
+                </button>
+              ) : null}
               {!KAPALI_DURUMLAR.includes(b.status) ? (
                 <button
-                  className="btn small danger"
+                  /*
+                   * SINIF ADLARI YANLIŞTI: `small` ve `danger` diye bir kural
+                   * YOK (`btn-sm`, `btn-danger` var). Düğme yalnız `.btn`
+                   * alıyordu ve `.btn` bir FORM düğmesi: `width: 100%`.
+                   * Satırdaki tüm yeri kaplıyor, ad/hizmet sütununu bir
+                   * harflik şeride eziyordu — kurucunun "yazılar iç içe
+                   * geçmiş" dediği ekran. Kapalı randevularda düğme
+                   * çizilmediği için o satırlar düzgün görünüyordu.
+                   */
+                  className="btn-sm btn-danger"
                   onClick={() =>
                     act(() => api.cancelBooking(b.id), `Randevu iptal edilsin mi? (${b.service})`)
                   }

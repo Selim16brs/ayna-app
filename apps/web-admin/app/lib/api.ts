@@ -205,6 +205,9 @@ export const api = {
   unrestrictUser: (id: string) => req(`/admin/users/${id}/unrestrict`, { method: 'POST' }),
   cancelBooking: (id: string) =>
     req<unknown>(`/bookings/${id}/cancel`, { method: 'POST', body: JSON.stringify({}) }),
+  /** Sahte dekontu geri alır: randevu depozito beklemeye döner (iptal DEĞİL). */
+  rejectReceipt: (id: string) =>
+    req<unknown>(`/admin/bookings/${id}/reject-receipt`, { method: 'POST' }),
   bookings: (status?: string) =>
     req<AdminBooking[]>(`/admin/bookings${status && status !== 'all' ? `?status=${status}` : ''}`),
   quoteRequests: () => req<QuoteReq[]>('/admin/quote-requests'),
@@ -796,6 +799,9 @@ export interface AdminBooking {
   status: string;
   source: string;
   online: boolean;
+  /** Depozito dekontu (varsa) — yönetici §4.4 doğrulamasını buradan yapıyor. */
+  depositReceiptUri: string | null;
+  depositAmount: number | null;
   createdAt: string;
 }
 export interface QuoteReq {

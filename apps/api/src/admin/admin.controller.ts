@@ -471,6 +471,19 @@ export class AdminController {
     return this.admin.bookings(status);
   }
 
+  /**
+   * SAHTE DEKONTU GERİ AL — §4.4/§8.
+   *
+   * Dekont yüklendiği an randevu kesinleşiyor. Para gerçekten gelmediyse
+   * yöneticinin elinde yalnız "İptal" vardı; iptal ise müşteriyi
+   * cezalandıran ayrı bir sonuç. Bu uç randevuyu öldürmüyor, depozito
+   * beklemeye döndürüyor.
+   */
+  @Post('bookings/:id/reject-receipt')
+  rejectReceipt(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.admin.rejectDepositReceipt(id, req.user?.id);
+  }
+
   // Teklif talepleri
   @Get('quote-requests')
   quoteRequests() {

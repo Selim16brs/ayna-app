@@ -295,6 +295,9 @@ textarea.input { height: auto; min-height: 110px; padding: var(--s3); resize: ve
 .list-row .name, .list-col .name { font-weight: 700; letter-spacing: -0.15px; }
 .list-row .meta, .list-col .meta { color: var(--ink-3); font-size: var(--t-sm); margin-top: 2px; }
 .actions { display: flex; gap: var(--s2); flex-wrap: wrap; justify-content: flex-end; }
+/* Sertifika/dekont küçük görsel şeridi. Sınıf HTML'de vardı ama kuralı YOKTU:
+   düzen satır içi stille kuruluyordu, yani sınıf hiçbir şey yapmıyordu. */
+.cert-thumbs { display: flex; gap: var(--s2); margin-top: var(--s3); flex-wrap: wrap; }
 .thumb { width: 46px; height: 46px; border-radius: var(--r-sm); object-fit: cover; background: var(--line); flex: none; }
 .empty { padding: var(--s7) var(--s4); text-align: center; color: var(--ink-3); }
 

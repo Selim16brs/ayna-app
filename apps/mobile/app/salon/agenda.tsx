@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DURUM_ETIKETI } from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
@@ -45,6 +45,18 @@ export default function SalonAgendaScreen() {
   const router = useRouter();
 
   const bookings = useStore((s) => s.bookings);
+  const hydrateBookings = useStore((s) => s.hydrateBookings);
+  /*
+   * Salon takvimi de EKRAN AÇILDIĞINDA tazeleniyor: müşteri randevu
+   * gönderdiğinde ya da uzman onayladığında salon sahibi uygulamayı
+   * kapatıp açmadan görebilsin. (Müşteri sekmesindeki aynı eksik,
+   * kurucunun "teklif düşmedi" dediği şeydi.)
+   */
+  useFocusEffect(
+    useCallback(() => {
+      void hydrateBookings();
+    }, [hydrateBookings]),
+  );
   const salonAddOffline = useStore((s) => s.salonAddOffline);
   const salonName = useStore((s) => s.currentUser?.name) ?? 'Salon';
   const { staff } = useSalonStaff(); // Faz C — GERÇEK kadro (mock değil)
