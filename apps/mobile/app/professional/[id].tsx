@@ -473,14 +473,25 @@ export default function ProfessionalScreen() {
           </View>
           <View style={styles.statSep} />
           <View style={styles.statCol}>
-            <View style={styles.statRating}>
-              <Ionicons name="star" size={13} color={colors.gold} />
-              <Text numeric variant="h2" tone="ink">
-                {pro.rating.toFixed(1)}
+            {/*
+              PUANI OLMAYAN "0,0" DEĞİL. Sunucu değerlendirilmemiş uzmanın
+              puanını 0 döndürüyor; yıldızla "0.0" yazmak onu en kötü puanlı
+              gibi göstermekti. Kimse puan vermediyse söylenecek şey bu.
+            */}
+            {pro.reviewCount > 0 ? (
+              <View style={styles.statRating}>
+                <Ionicons name="star" size={13} color={colors.gold} />
+                <Text numeric variant="h2" tone="ink">
+                  {pro.rating.toFixed(1)}
+                </Text>
+              </View>
+            ) : (
+              <Text variant="h2" tone="muted">
+                ✨
               </Text>
-            </View>
+            )}
             <Text variant="micro" tone="muted" numberOfLines={1}>
-              {t('rewards.tier')}
+              {pro.reviewCount > 0 ? t('rewards.tier') : t('pro.new')}
             </Text>
           </View>
         </View>
@@ -909,8 +920,9 @@ export default function ProfessionalScreen() {
               {/* §6.1 — puan ortalaması + yıldız dağılımı + alt kırılım özet çubukları */}
               <View style={[styles.ratingSummary, shadow.soft]}>
                 <View style={styles.ratingAvgCol}>
-                  <Text variant="display" tone="ink">
-                    {pro.rating.toFixed(1)}
+                  {/* Yorum yoksa ortalama YOK: "0,0" uydurma bir not olurdu. */}
+                  <Text variant="display" tone={pro.reviewCount > 0 ? 'ink' : 'muted'}>
+                    {pro.reviewCount > 0 ? pro.rating.toFixed(1) : '—'}
                   </Text>
                   <View style={styles.reviewStars}>
                     {Array.from({ length: 5 }).map((_, i) => (

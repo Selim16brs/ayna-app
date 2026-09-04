@@ -138,3 +138,46 @@ test('PASAPORT kesilmiş portreyi daireye sokmuyor', () => {
     'kesik portre kırpılıyor',
   );
 });
+
+test('DEĞERLENDİRİLMEMİŞ uzman "0,0" DEĞİL — her ekranda', () => {
+  /*
+   * Sunucu hiç yorumu olmayan uzmanın puanını 0 döndürüyor (`rating:
+   * puanByPro.get(r.id)?.ortalama ?? 0`). Ekranların bir kısmı bunu
+   * yıldızla "0.0" diye yazıyordu: müşteri, kimsenin puan vermediği
+   * uzmanı EN KÖTÜ puanlı sanıyordu. Keşif satırı ve harita detayı
+   * doğruyu yapıyordu, arama satırı / harita iğne kartı / uzman profili
+   * yapmıyordu.
+   *
+   * Kural: puan YALNIZ `reviewCount > 0` iken sayı olarak yazılır.
+   */
+  for (const yol of [
+    ['app', 'search.tsx'],
+    ['app', 'map.tsx'],
+    ['app', 'professional', '[id].tsx'],
+    ['app', '(tabs)', 'discover.tsx'],
+  ]) {
+    const k = oku(...yol);
+    for (const m of k.matchAll(/(\w+)\.rating\.toFixed\(1\)/g)) {
+      const nesne = m[1]!;
+      // Sayının HEMEN üstünde o nesnenin yorum sayısı sorulmuş olmalı.
+      const once = k.slice(Math.max(0, m.index! - 600), m.index!);
+      assert.ok(
+        new RegExp(`${nesne.replace('[', '\\[')}\\.reviewCount > 0`).test(once),
+        `${yol.join('/')}: ${nesne}.rating yorum sayısı sorulmadan yazılıyor`,
+      );
+    }
+  }
+});
+
+test('YORUMSUZ uzmanın ortalaması ÇİZGİ — sıfır değil', () => {
+  /*
+   * Yorumlar sekmesindeki büyük ortalama da 0 yazıyordu. Hiç not yoksa
+   * gösterilecek bir ortalama YOK; "—" bunu söylüyor, "0,0" yalan.
+   */
+  const k = oku('app', 'professional', '[id].tsx');
+  assert.match(
+    k,
+    /\{pro\.reviewCount > 0 \? pro\.rating\.toFixed\(1\) : '—'\}/,
+    'ortalama yorumsuzken de sayı yazıyor',
+  );
+});
