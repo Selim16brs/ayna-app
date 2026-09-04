@@ -269,8 +269,22 @@ export class BookingsService {
       if (h.status === 'no_show_musteri') bad.add(h.userId);
       else done.set(h.userId, (done.get(h.userId) ?? 0) + 1);
     }
+    /*
+     * MÜŞTERİ ADLARI TEK SORGUDA. Randevu başına sorgu atmak (N+1) listeyi
+     * uzman büyüdükçe yavaşlatırdı; kimlikler zaten elde.
+     */
+    const adlar = uids.length
+      ? await this.prisma.user.findMany({
+          where: { id: { in: uids } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const adOf = new Map(adlar.map((u) => [u.id, u.name]));
     return rows.map((b) => ({
-      ...mapBooking(b, { forProvider: true }),
+      ...mapBooking(b, {
+        forProvider: true,
+        customerName: b.userId ? (adOf.get(b.userId) ?? null) : null,
+      }),
       customerTrusted: !!b.userId && (done.get(b.userId) ?? 0) >= 3 && !bad.has(b.userId),
     }));
   }
@@ -1492,10 +1506,20 @@ export class BookingsService {
  * Varsayılan KAPALI: bir alanı yanlışlıkla açık bırakmak, kadına "sorunlu"
  * etiketlendiğini göstermek demekti. Açmak bilinçli bir hareket olmalı.
  */
-function mapBooking(b: Booking, opts?: { forProvider?: boolean }) {
+function mapBooking(b: Booking, opts?: { forProvider?: boolean; customerName?: string | null }) {
   return {
     // §7.3 — gizli sinyal; müşteri yolunda alan HİÇ bulunmaz (undefined).
     providerSignal: opts?.forProvider ? (b.providerSignal ?? undefined) : undefined,
+    /*
+     * ROLÜ SUNUCU SÖYLÜYOR.
+     *
+     * Uygulama rolü HANGİ UÇTAN geldiğine bakarak kendisi etiketliyordu;
+     * etiket düşerse (yerel kayıt, eski sürüm, yarım eşitleme) randevu
+     * "müşteri" sayılıyor ve uzman KENDİ ekranında müşteri ekranını
+     * görüyordu: başlıkta kendi adı, altında "randevu gününü bekliyorsun".
+     * Kurucu bunu canlıda gördü. Rol artık kaydın kendisiyle geliyor.
+     */
+    benimRolum: opts?.forProvider ? ('uzman' as const) : ('musteri' as const),
     id: b.id,
     source: b.source,
     service: b.service,
@@ -1505,7 +1529,18 @@ function mapBooking(b: Booking, opts?: { forProvider?: boolean }) {
     uzmanName: b.uzmanName ?? undefined,
     // Kimlik de dönüyor: uygulama tarafı da adla eşleştirmeyi bıraksın.
     uzmanId: b.uzmanId ?? undefined,
-    customerName: b.customerName ?? undefined,
+    /*
+     * MÜŞTERİNİN ADI SAĞLAYICIYA GİDİYOR.
+     *
+     * `customerName` yalnız salonun elle açtığı çevrimdışı kayıtta
+     * doluydu; uygulamadan gelen randevuda NULL kalıyordu ve uzman
+     * ekranında "Müşteri" diye genel bir etiket görünüyordu — kimin
+     * geleceğini bilmiyordu. Ad hesaptan okunup burada dolduruluyor.
+     *
+     * YALNIZ SAĞLAYICI YOLUNDA: müşteri kendi randevusunda kendi adını
+     * görmek zorunda değil ve alan boş yere taşınmasın.
+     */
+    customerName: b.customerName ?? opts?.customerName ?? undefined,
     bookingKind: b.bookingKind,
     groupSize: b.groupSize ?? undefined,
     dateLabel: b.dateLabel,

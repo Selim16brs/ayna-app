@@ -256,8 +256,6 @@ export default function CustomerRegisterScreen() {
             tone={birthDate ? 'ink' : 'muted'}
             style={styles.dateText}
             numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.75}
           >
             {birthDate ? fmtDate(birthDate) : t('auth.f.birthdate_ph')}
           </Text>
@@ -304,8 +302,6 @@ export default function CustomerRegisterScreen() {
             tone={gps ? 'onAccent' : 'accentFg'}
             style={styles.gpsText}
             numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.75}
           >
             {gps ? t('auth.location.detected') : t('auth.location.use_gps')}
           </Text>

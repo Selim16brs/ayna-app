@@ -8,6 +8,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useStore } from '../../src/store';
+import { randevuVerebilir } from '@ayna/domain';
 import {
   GorunumKarti,
   PlanBadge,
@@ -102,6 +103,15 @@ export default function ProfileScreen() {
   const phone = useStore((s) => s.currentUser?.phone) ?? '';
   const isLoggedIn = useStore((s) => s.currentUser != null);
   const phoneVerified = useStore((s) => s.currentUser?.phoneVerified ?? false);
+  /*
+   * DOĞRULANMIŞ SAYILMANIN İKİ YOLU VAR.
+   *
+   * Ekran yalnız `phoneVerified`e bakıyordu; yönetici onayı verilen
+   * kullanıcıda randevu kapısı AÇIK olduğu hâlde profilde "telefonunu
+   * doğrula" kartı duruyor ve kullanıcı neyi yanlış yaptığını
+   * anlamıyordu. Kural randevu kapısıyla AYNI kaynaktan.
+   */
+  const dogrulanmisSayilir = useStore((s) => randevuVerebilir(s.currentUser ?? {}));
   const restricted = useStore((s) => s.currentUser?.restricted ?? false);
   const restrictedDaysLeft = useStore((s) => s.currentUser?.restrictedDaysLeft ?? 0);
   // Gerçek kademe: `premium` boolean'ı Platinum'u Premium'dan ayıramıyordu.
@@ -336,7 +346,7 @@ export default function ProfileScreen() {
           </View>
         ) : null}
 
-        {isLoggedIn && !phoneVerified ? (
+        {isLoggedIn && !dogrulanmisSayilir ? (
           <Pressable style={styles.verifyRow} onPress={() => router.push('/auth/verify')}>
             <View style={styles.verifyIcon}>
               <Ionicons name="shield-checkmark" size={18} color={colors.onAccent} />

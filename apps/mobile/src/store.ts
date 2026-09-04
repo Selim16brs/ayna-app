@@ -1561,6 +1561,8 @@ export const useStore = create<State>()(
           const asked = get().surveyAskedIds;
           const due = get().bookings.filter(
             (b) =>
+              // MÜŞTERİ tarafı: uzman kendi verdiği hizmeti değerlendirmez.
+              b.benimRolum !== 'uzman' &&
               b.status === 'tamamlandi' &&
               !asked.includes(b.id) &&
               now >= b.startMs + b.durationMin * 60_000 + 3 * 60 * 60_000,
@@ -1585,6 +1587,16 @@ export const useStore = create<State>()(
           const now = Date.now();
           const news: AppNotification[] = [];
           const bookings = s.bookings.map((b) => {
+            /*
+             * BU HATIRLATMALAR MÜŞTERİYE AİT.
+             *
+             * Uzmanın cihazında sağlayıcı olduğu randevular AYNI listede
+             * duruyor (`benimRolum: 'uzman'`) ve buradan geçiyordu: uzmana
+             * "Ücretsiz iptal için son şans" bildirimi düşüyordu — kendi
+             * müşterisinin randevusu için, hiç anlamı olmayan bir cümle.
+             * Kurucu bunu canlıda gördü.
+             */
+            if (b.benimRolum === 'uzman') return b;
             if (b.status !== 'kesinlesti') return b;
             const left = b.startMs - now;
             if (left <= 0) return b;
@@ -2425,9 +2437,17 @@ export const useStore = create<State>()(
           // Hangi UÇTAN geldiği rolü belirliyor. Sağlayıcı listesi sonra
           // yazılıyor: aynı randevu iki listede birden çıkarsa (kendi
           // salonundan randevu alan uzman) sağlayıcı görünümü kazanır.
+          /*
+           * ROL SUNUCUDAN GELİYOR; uç etiketi yalnız YEDEK.
+           *
+           * Rol yalnız "hangi uçtan geldi" ile belirleniyordu. Etiket
+           * düştüğünde randevu sessizce "müşteri" sayılıyor ve uzman kendi
+           * ekranında müşteri görünümüne düşüyordu: başlıkta kendi adı,
+           * altında "randevu gününü bekliyorsun".
+           */
           const byId = new Map<string, (typeof mine)[number]>();
-          for (const b of mine) byId.set(b.id, { ...b, benimRolum: 'musteri' as const });
-          for (const b of provider) byId.set(b.id, { ...b, benimRolum: 'uzman' as const });
+          for (const b of mine) byId.set(b.id, { ...b, benimRolum: b.benimRolum ?? 'musteri' });
+          for (const b of provider) byId.set(b.id, { ...b, benimRolum: b.benimRolum ?? 'uzman' });
           const remote = [...byId.values()];
           const remoteIds = new Set(remote.map((b) => b.id));
           set((s) => {
@@ -3222,6 +3242,18 @@ export const useStore = create<State>()(
                    */
                   ...(me.phone ? { phone: me.phone } : {}),
                   phoneVerified: me.phoneVerified,
+                  /*
+                   * YÖNETİCİ ONAYI DA TAZELENİYOR.
+                   *
+                   * Randevu kapısı "telefon doğrulandı YA DA yönetici
+                   * onayladı" diyor (`randevuVerebilir`). `phoneVerified`
+                   * tazeleniyordu ama `adminApproved` GİRİŞTEKİ kopyada
+                   * kalıyordu: admin panelden onayladığında uygulama bunu
+                   * hiç öğrenmiyor, müşteri randevu alamıyor ve profilde
+                   * "telefonunu doğrula" kartı duruyordu. Kurucu bunu
+                   * canlıda gördü.
+                   */
+                  adminApproved: me.adminApproved,
                 }
               : s.currentUser,
             premium: tier === 'premium' || tier === 'platinum',

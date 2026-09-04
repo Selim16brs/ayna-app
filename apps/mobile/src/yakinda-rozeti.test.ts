@@ -118,5 +118,7 @@ test('SARMA KAPALI — taşsa bile alt satıra düşmüyor', () => {
    * olması gerekiyor.
    */
   assert.match(rozetKaynak, /numberOfLines=\{1\}/, 'rozet metni sarabiliyor');
-  assert.match(rozetKaynak, /adjustsFontSizeToFit/, 'taşan metin kırpılıyor');
+  // Punto küçültme kaldırıldı (4 Eyl 2026): RN belirsiz genişlikte puntoyu
+  // okunamayacak kadar indiriyordu. Taşan metin kırpılıyor.
+  assert.doesNotMatch(rozetKaynak, /adjustsFontSizeToFit/, 'rozet punto küçültüyor');
 });

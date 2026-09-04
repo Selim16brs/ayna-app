@@ -57,13 +57,7 @@ export default function MessagesScreen() {
                 başlıyor; kullanıcıyı oraya götürüyoruz. */}
             <Pressable style={styles.emptyCta} onPress={() => router.push('/search')}>
               <Ionicons name="search" size={16} color={colors.onAccent} />
-              <Text
-                variant="cta"
-                tone="onAccent"
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
+              <Text variant="cta" tone="onAccent" numberOfLines={1}>
                 {t('messages.empty_cta')}
               </Text>
             </Pressable>

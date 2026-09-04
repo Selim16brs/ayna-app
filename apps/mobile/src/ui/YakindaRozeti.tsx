@@ -35,14 +35,7 @@ export function YakindaRozeti({ tarz = 'satir' }: { tarz?: 'satir' | 'kutu' }) {
        * daraltıldı: ölçü `yakinda-rozeti.test.ts` içinde FONTTAN
        * hesaplanarak sınanıyor.
        */}
-      <Text
-        variant="micro"
-        tone="muted"
-        style={styles.yazi}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.85}
-      >
+      <Text variant="micro" tone="muted" style={styles.yazi} numberOfLines={1}>
         {t('catalog.soon')}
       </Text>
     </View>

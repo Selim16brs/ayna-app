@@ -74,8 +74,20 @@ test('servis erişilemezken doğrulama UYDURULMUYOR', () => {
   assert.equal(/code === devCode/.test(govde), false, 'çevrimdışıyken doğrulama uyduruluyor');
 });
 
-test('doğrulanmış kullanıcıya şerit ÇIKMIYOR', () => {
-  // Zincirin son halkası: koşul yalnız doğrulanmamışlar için.
+test('doğrulanmış SAYILAN kullanıcıya şerit ÇIKMIYOR', () => {
+  /*
+   * Zincirin son halkası: koşul yalnız doğrulanmamışlar için.
+   *
+   * 4 Eyl 2026 — koşul `!phoneVerified` idi ve YÖNETİCİ ONAYINI yok
+   * sayıyordu: randevu kapısı açık olduğu hâlde profilde "telefonunu
+   * doğrula" kartı duruyor, kullanıcı neyi yanlış yaptığını anlamıyordu.
+   * Kural artık randevu kapısıyla AYNI kaynaktan (`randevuVerebilir`).
+   */
   const profil = readFileSync(join(kok, '..', 'mobile', 'app', '(tabs)', 'profile.tsx'), 'utf8');
-  assert.match(profil, /isLoggedIn && !phoneVerified \?/, 'şerit koşulu doğrulanmışı da kapsıyor');
+  assert.match(profil, /isLoggedIn && !dogrulanmisSayilir \?/, 'şerit koşulu eski kuralda');
+  assert.match(
+    profil,
+    /randevuVerebilir\(s\.currentUser \?\? \{\}\)/,
+    'şerit kendi kuralını yazıyor — kapıyla ayrışır',
+  );
 });

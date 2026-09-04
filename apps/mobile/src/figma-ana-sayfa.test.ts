@@ -395,7 +395,12 @@ test('BÖLÜM BAŞLIĞI harf kaybetmiyor', () => {
   // "Tümünü Gör" daralmaz.
   const kod = d.replace(/\/\*[\s\S]*?\*\//g, '');
   assert.match(kod, /bolumBaslik: \{ flexShrink: 1 \}/, 'başlık daralamıyor');
-  assert.match(kod, /adjustsFontSizeToFit/, 'başlık sığmayınca küçülmüyor');
+  /*
+   * Punto küçültme KALDIRILDI (4 Eyl 2026): kurucu "hizmetler başlığı
+   * küçülmüş" dedi — RN, ölçü genişliği belirsiz olduğunda puntoyu
+   * okunamayacak kadar indiriyor. Başlık artık kırpılıyor.
+   */
+  assert.doesNotMatch(kod, /adjustsFontSizeToFit/, 'başlık punto küçültüyor');
   assert.match(kod, /tumuKap: \{[^}]*flexShrink: 0/, '"Tümünü Gör" daralıyor — başlığı eziyor');
 });
 

@@ -64,6 +64,12 @@ test('BOŞ telefon mevcut numarayı EZMİYOR', () => {
 
 test('doğrulanmamış numara için ekranda YOL var', () => {
   // Zincirin son halkası: şerit görünür ve doğrulama ekranına götürür.
-  assert.match(profil, /!phoneVerified/, 'doğrulama şeridi koşulu yok');
+  /*
+   * Koşul artık randevu kapısıyla aynı: telefon doğrulandı YA DA yönetici
+   * onayladı. Yalnız `phoneVerified`e bakarken, yönetici onayı verilmiş
+   * kullanıcıda kapı açık olduğu hâlde şerit duruyordu.
+   */
+  assert.match(profil, /!dogrulanmisSayilir/, 'doğrulama şeridi koşulu yok');
+  assert.match(profil, /randevuVerebilir\(/, 'şerit kendi kuralını yazıyor');
   assert.match(profil, /auth\/verify/, 'doğrulama ekranına yol yok');
 });

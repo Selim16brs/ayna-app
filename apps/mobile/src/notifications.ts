@@ -120,6 +120,14 @@ async function senkronEt(bookings: Appointment[], t: Tr): Promise<void> {
     const wanted = new Set<string>();
 
     for (const b of bookings) {
+      /*
+       * MÜŞTERİ HATIRLATMALARI — uzmanın cihazında planlanmıyor.
+       *
+       * Sağlayıcı olduğu randevular aynı listede (`benimRolum: 'uzman'`)
+       * ve buradan da geçiyordu: uzmanın telefonuna "Ücretsiz iptal için
+       * son şans" düşüyordu. Kendi müşterisinin randevusu için anlamsız.
+       */
+      if (b.benimRolum === 'uzman') continue;
       if (b.status !== 'kesinlesti') continue;
       const plan: [tag: string, offset: number, titleKey: MessageKey, bodyKey: MessageKey][] = [
         // §4.5 sırası: ücretsiz iptal uyarısı → 1 saat → 30 dakika.
