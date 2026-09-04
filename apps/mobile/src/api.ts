@@ -8,6 +8,7 @@ import type {
   Professional,
   ProfessionalDetail,
 } from './data';
+import type { PromosyonKarti } from '@ayna/domain';
 import { getCurrentLocale } from './locale';
 
 // §14.5 — admin→app içeriklerini kullanıcı dilinde çöz (kk/ru override, tr fallback)
@@ -748,6 +749,16 @@ export const api = {
    * kataloğa dönüştürmüyoruz.
    */
   splashKatalog: () => get<unknown>('/splash/catalog'),
+
+  /**
+   * Uzmanların kendi promosyonları — "Fırsatlar"dan AYRI uç.
+   *
+   * Konum İSTEĞE BAĞLI: verilmezse sunucu mesafeyi `null` döndürüyor ve
+   * ekran mesafe yazmıyor. Kullanıcının konumu olmadan uydurma km
+   * göstermektense hiç göstermemek doğru.
+   */
+  promosyonlar: (konum?: { lat: number; lng: number }) =>
+    get<PromosyonKarti[]>(konum ? `/promotions?lat=${konum.lat}&lng=${konum.lng}` : '/promotions'),
   /**
    * Gösterim ölçümü — brief §7.3.
    *
@@ -1190,6 +1201,18 @@ export const api = {
     }>('/specialists/me/hours', { hours }),
   myPromotions: (token: string) =>
     get<{ promotions: import('./data').Promotion[] }>('/specialists/me/promotions', token),
+  /** Uzmanın kendi keşif kartının kimliği — "müşteri gözüyle gör" için. */
+  myProId: (token: string) => get<{ proId: string | null }>('/specialists/me/pro-id', token),
+  /** Uzmanın başarı yüzdesi — puan DEĞİL. Ölçülemiyorsa `yuzde: null`. */
+  myPerformance: (token: string) =>
+    get<{
+      yuzde: number | null;
+      bilesenler: { ad: 'is' | 'puan' | 'cevap'; yuzde: number }[];
+      showSuccess: boolean;
+    }>('/specialists/me/performance', token),
+  /** Başarı yüzdesini müşteriye göster/gösterme — uzmanın tercihi. */
+  setShowSuccess: (token: string, show: boolean) =>
+    post<{ showSuccess: boolean }>('/specialists/me/show-success', { show }, token),
   setMyPromotions: (token: string, promotions: import('./data').Promotion[]) =>
     post<{ promotions: import('./data').Promotion[] }>(
       '/specialists/me/promotions',

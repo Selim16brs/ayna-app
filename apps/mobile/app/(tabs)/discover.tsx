@@ -4,18 +4,19 @@ import { useRouter } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CATEGORIES, cityCenter, distanceKm } from '../../src/data';
+import { type Professional, CATEGORIES, cityCenter, distanceKm } from '../../src/data';
 import {
   useAds,
   useCampaigns,
-  useOffers,
   useProfessionals,
   useProfessionalsLoading,
+  usePromosyonlar,
 } from '../../src/catalog';
 import { AKIS_ADIMLARI, akisAdimi, durumEtiketi } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
 import type { MessageKey } from '@ayna/i18n';
-import { fillParams, useLocale } from '../../src/locale';
+import { ANA_EKRAN_PROMOSYON, promosyonlariSirala } from '@ayna/domain';
+import { useLocale } from '../../src/locale';
 import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import {
   musteriRandevulari,
@@ -32,6 +33,7 @@ import { greetingKey } from '../../src/greeting';
 import { tri } from '../../src/taxonomy';
 import { useKategoriYakinda } from '../../src/yakinda';
 import {
+  PromosyonKarti,
   HizmetIkonu,
   ListSkeleton,
   PressableScale,
@@ -130,7 +132,6 @@ export default function DiscoverScreen() {
   const ads = useAds();
   const firsatReklamlari = ads.filter((a) => a.placement === 'firsatlar');
   const oneCikanReklamlari = ads.filter((a) => a.placement === 'one_cikanlar');
-  const offers = useOffers();
   // §A4 — trend içerikleri (admin 'trend' tipli yayınlar); boşsa bant gizli
   // DİKKAT: seçici içinde .filter() YENİ dizi üretir → useSyncExternalStore
   // "getSnapshot should be cached" sonsuz döngüsü = açılışta beyaz ekran.
@@ -167,24 +168,45 @@ export default function DiscoverScreen() {
    * Artık kaynak reklam tablosu; ödemesi bitmiş reklamı sunucu zaten süzüyor.
    */
   const featured = oneCikanReklamlari.slice(0, 6);
-  // §5.1.8 Sana Yakın: premium salon önce; YETMEZSE diğer salonlar + bağımsız uzmanlar
-  // (yeni pazarda salon az olabilir — kayıtlı uzmanlar da keşfette görünsün). Günlük rotasyon.
-  const nearby = useMemo(() => {
+  /*
+   * PROMOSYONLAR — ana ekranda EN YAKIN dördü, gerisi "Tümü" ekranında.
+   *
+   * Mesafesi bilinmeyen (koordinatı olmayan işletme) sona düşüyor:
+   * "0 km" sayıp başa koymak, kullanıcıya en yakın sanıp yola çıkacağı
+   * bir şey göstermek olurdu.
+   */
+  const promosyonlar = usePromosyonlar();
+  const yakinPromosyonlar = useMemo(
+    () => promosyonlariSirala(promosyonlar, 'yakinlik').slice(0, ANA_EKRAN_PROMOSYON),
+    [promosyonlar],
+  );
+  /*
+   * ── SALONLAR ve UZMANLAR AYRI ──────────────────────────────────────
+   *
+   * Kurucu: "yakınındaki uzmanlar diye bir alan da olmalı. salonların
+   * altında. hem yakınındaki salonlar hem de yakınındaki uzmanlar ilk 3
+   * görünmeli (başarı durumuna göre) kalanlar tümü butonuna basılarak
+   * görünmeli."
+   *
+   * Tek bir "Sana yakın" bölümü vardı ve salon yetmezse uzmanları da
+   * içine katıyordu: müşteri ikisini ayırt edemiyordu.
+   *
+   * SIRALAMA SUNUCUDAN: liste başarıya göre sıralı geliyor
+   * (`catalog.service` — tamamlanan/gelen oranı + değerlendirme).
+   * Burada yeniden sıralamak, iki yerde iki farklı kural demek olurdu.
+   *
+   * PREMIUM SALON ÖNCE: satın alınmış görünürlük korunuyor; premium
+   * içinde sıra yine başarıya göre.
+   */
+  const nearbySalons = useMemo(() => {
     const salons = cityPros.filter((p) => p.kind === 'salon');
-    const experts = cityPros.filter((p) => p.kind !== 'salon');
     const premium = salons.filter((p) => p.isPremium);
-    const pool =
-      premium.length >= 3
-        ? premium
-        : [...premium, ...salons.filter((p) => !p.isPremium), ...experts];
-    if (pool.length === 0) return [];
-    // Günlük rotasyon: aynı 3 salon kilitlenmez (premium satış değeri korunur)
-    const offset = Math.floor(Date.now() / (24 * 60 * 60_000)) % pool.length;
-    return Array.from(
-      { length: Math.min(3, pool.length) },
-      (_, i) => pool[(offset + i) % pool.length]!,
-    );
+    return [...premium, ...salons.filter((p) => !p.isPremium)].slice(0, 3);
   }, [cityPros]);
+  const nearbyExperts = useMemo(
+    () => cityPros.filter((p) => p.kind !== 'salon').slice(0, 3),
+    [cityPros],
+  );
   /**
    * §4 — YÜKLENİYOR ile GERÇEKTEN BOŞ farklı şeyler.
    *
@@ -574,7 +596,7 @@ export default function DiscoverScreen() {
             Ücretli reklamlar başta ve SPONSORLU etiketli; ardından organik
             kampanyalar. Etiket şart: ödenmiş yerleşimi organik içerikten
             ayırt edilemez göstermek kullanıcıyı yanıltır. */}
-        {firsatReklamlari.length > 0 || offers.length > 0 || campaigns.length > 0 ? (
+        {firsatReklamlari.length > 0 || campaigns.length > 0 ? (
           <>
             <BolumBasligi title={t('home.campaigns')} onSeeAll={() => router.push('/offers')} />
             <ScrollView
@@ -605,28 +627,37 @@ export default function DiscoverScreen() {
                   onPress={() => router.push(`/category/${c.category}` as never)}
                 />
               ))}
-              {offers.slice(0, 8).map((o) => (
-                <VitrinKarti
-                  key={o.id}
-                  title={o.title}
-                  image={o.imageUrl}
-                  /*
-                   * İndirim ROZETE gidiyor, alt yazıya değil. Eskiden
-                   * `subtitle` olarak "-%30" yazılıyordu; fırsatın kendi
-                   * açıklaması böylece ekrana HİÇ çıkmıyordu.
-                   */
-                  subtitle={o.description}
-                  discount={
-                    o.discountType === 'percent'
-                      ? fillParams(t('offers.discount_badge'), { pct: String(o.discountValue) })
-                      : `${o.finalPrice.toLocaleString('tr-TR')} ₸`
-                  }
-                  onPress={() =>
-                    router.push({
-                      pathname: '/booking/schedule',
-                      params: { proId: o.proId, offerId: o.id, source: 'direct' },
-                    })
-                  }
+              {/*
+                UZMANIN KENDİ KAMPANYALARI ARTIK BURADA DEĞİL.
+
+                Kurucu: "uzman panelinden oluşturulan promosyonlar,
+                fırsatlar alanında gösterilmesin. fırsatlar ve senin için
+                seçtiklerim parayla sattığımız alan ama uzmanın açtığı
+                promosyonlar o uzmana AYNA'nın sağladığı bir reklam alanı."
+
+                Ücretli yerleşimle ücretsiz hakkı aynı şeritte göstermek,
+                ödeyenin satın aldığı yeri dağıtmak olurdu. Uzman
+                kampanyaları aşağıdaki "Promosyonlar" bölümünde.
+              */}
+            </ScrollView>
+          </>
+        ) : null}
+
+        {/* ═══ PROMOSYONLAR — uzmanların KENDİ kampanyaları ═══
+            En yakın dördü burada; gerisi "Tümü" ekranında (filtreli). */}
+        {promosyonlar.length > 0 ? (
+          <>
+            <BolumBasligi title={t('promos.title')} onSeeAll={() => router.push('/promotions')} />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.vitrinSerit}
+            >
+              {yakinPromosyonlar.map((p) => (
+                <PromosyonKarti
+                  key={`${p.proId}:${p.id}`}
+                  p={p}
+                  onPress={() => router.push(`/professional/${p.proId}`)}
                 />
               ))}
             </ScrollView>
@@ -660,50 +691,39 @@ export default function DiscoverScreen() {
           </>
         ) : null}
 
-        {/* ═══ YAKININDAKİ SALONLAR — Figma `salons-section` (satır p14, radius 16) ═══ */}
+        {/* ═══ YAKININDAKİ SALONLAR ═══ */}
         <BolumBasligi title={t('home.nearby')} onSeeAll={() => router.push('/nearby')} />
         {prosLoading ? (
           <View style={styles.iadeKap}>
-            <ListSkeleton rows={4} />
+            <ListSkeleton rows={3} />
           </View>
         ) : (
           <View style={styles.salonListe}>
-            {nearby.map((pro) => (
-              <PressableScale
-                key={pro.id}
-                style={styles.salonSatir}
-                onPress={() => router.push('/professional/' + pro.id)}
-              >
-                <Image source={{ uri: pro.image }} style={styles.salonFoto} />
-                <View style={styles.grow}>
-                  <View style={styles.salonAdSatir}>
-                    <Text variant="captionStrong" tone="ink" numberOfLines={1}>
-                      {pro.name}
-                    </Text>
-                    {pro.aynaVerified ? (
-                      <View style={styles.dogruCip}>
-                        <Text style={styles.dogruYazi}>{t('home.verified')}</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  <Text variant="micro" tone="muted" numberOfLines={1}>
-                    {mesafe(pro) != null ? `${mesafe(pro)!.toFixed(1)} km · ` : ''}
-                    {pro.city}
-                  </Text>
-                  <View style={styles.puanCip}>
-                    <Ionicons name="star" size={11} color={colors.gold} />
-                    <Text variant="micro" tone="ink">
-                      {pro.rating.toFixed(1)}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.detayDugme}>
-                  <Text style={styles.detayYazi}>{t('home.details')}</Text>
-                </View>
-              </PressableScale>
+            {nearbySalons.map((pro) => (
+              <SaglayiciSatiri key={pro.id} pro={pro} />
             ))}
           </View>
         )}
+
+        {/* ═══ YAKININDAKİ UZMANLAR ═══
+            Kurucu: "yakınındaki uzmanlar diye bir alan da olmalı,
+            salonların altında."
+
+            Tek bir "Sana yakın" bölümü vardı ve salon yetmezse uzmanları
+            da içine katıyordu: müşteri ikisini ayırt edemiyordu. */}
+        {nearbyExperts.length > 0 ? (
+          <>
+            <BolumBasligi
+              title={t('home.nearby_experts')}
+              onSeeAll={() => router.push('/nearby?tur=uzman')}
+            />
+            <View style={styles.salonListe}>
+              {nearbyExperts.map((pro) => (
+                <SaglayiciSatiri key={pro.id} pro={pro} />
+              ))}
+            </View>
+          </>
+        ) : null}
 
         {cityEmpty ? (
           <View style={styles.iadeKap}>
@@ -722,6 +742,76 @@ export default function DiscoverScreen() {
         ) : null}
       </ScrollView>
     </Screen>
+  );
+}
+
+/**
+ * SAĞLAYICI SATIRI — salon ve uzman listelerinin ORTAK satırı.
+ *
+ * İki bölüm aynı satırı çiziyor. Kopyalasaydım birine eklenen bir rozet
+ * ötekinde çıkmaz, ikisi zamanla ayrışırdı.
+ */
+function SaglayiciSatiri({ pro }: { pro: Professional }) {
+  const { t } = useLocale();
+  const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const km = mesafe(pro);
+  return (
+    <PressableScale
+      style={styles.salonSatir}
+      onPress={() => router.push('/professional/' + pro.id)}
+    >
+      <Image source={{ uri: pro.image }} style={styles.salonFoto} />
+      <View style={styles.grow}>
+        <View style={styles.salonAdSatir}>
+          <Text variant="captionStrong" tone="ink" numberOfLines={1}>
+            {pro.name}
+          </Text>
+          {pro.aynaVerified ? (
+            <View style={styles.dogruCip}>
+              <Text style={styles.dogruYazi}>{t('home.verified')}</Text>
+            </View>
+          ) : null}
+        </View>
+        <Text variant="micro" tone="muted" numberOfLines={1}>
+          {km != null ? `${km.toFixed(1)} km · ` : ''}
+          {pro.city}
+        </Text>
+        {/*
+          DEĞERLENDİRİLMEMİŞ sağlayıcı "0,0" DEĞİL: puanı sıfır göstermek
+          onu en kötü puanlı gibi sunardı.
+        */}
+        <View style={styles.olcuSatir}>
+          {pro.reviewCount > 0 ? (
+            <View style={styles.puanCip}>
+              <Ionicons name="star" size={11} color={colors.gold} />
+              <Text variant="micro" tone="ink">
+                {pro.rating.toFixed(1)}
+              </Text>
+            </View>
+          ) : null}
+          {/*
+            BAŞARI YÜZDESİ — kurucunun isteğiyle müşteriye de gösteriliyor.
+            Uzmanın kendi panelindekiyle AYNI serviste hesaplanıyor.
+
+            Ölçülecek veri yoksa rozet HİÇ çizilmiyor: "%0" yazmak, hiç
+            çalışmamış bir uzmana kötü çalıştığını söylemek olurdu.
+          */}
+          {pro.basariYuzde != null ? (
+            <View style={styles.basariCip}>
+              <Ionicons name="trending-up" size={11} color={colors.success} />
+              <Text variant="micro" tone="ink">
+                %{pro.basariYuzde} {t('home.success')}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+      <View style={styles.detayDugme}>
+        <Text style={styles.detayYazi}>{t('home.details')}</Text>
+      </View>
+    </PressableScale>
   );
 }
 
@@ -1268,6 +1358,8 @@ const makeStyles = (colors: ColorTokens) =>
       backgroundColor: colors.successSoft,
     },
     dogruYazi: { fontFamily: font.semibold, fontSize: 9, color: colors.success },
+    olcuSatir: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
+    basariCip: { flexDirection: 'row', alignItems: 'center', gap: 3 },
     puanCip: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
     detayDugme: {
       paddingHorizontal: 14,

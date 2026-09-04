@@ -34,6 +34,7 @@ import {
 } from '../common/crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
+import { BasariService } from '../basari/basari.service';
 import { StorageService } from '../storage/storage.service';
 import type { RegisterSpecialistInput } from './specialists.dto';
 
@@ -53,6 +54,12 @@ export class SpecialistsService {
     private readonly storage: StorageService,
     private readonly regule: ReguleUyariService,
     @Inject(ENV) private readonly env: Env,
+    /*
+     * Başarı hesabı ORTAK serviste. EN SONA eklendi: aradaki bir yere
+     * koysaydım mevcut testlerin argüman sırası sessizce kayardı —
+     * `regule` yerine `basari` geçirilir ve hata çok sonra çıkardı.
+     */
+    private readonly basari: BasariService,
   ) {}
 
   // §3.3 — Uzman kaydı. Salona bağlıysa işletme doğrulama kodu şart.
@@ -150,15 +157,32 @@ export class SpecialistsService {
       });
     }
 
-    // §7 — bağımsız uzman keşif kataloğunda da yer alır; yorumları bu Professional'a bağlanır.
-    // (salon_bound uzman tek başına listelenmez — salonun kaydı üzerinden görünür)
+    /*
+     * ── HER UZMANIN KEŞİF KARTI VAR ────────────────────────────────────
+     *
+     * Kurucu: "uzman hizmetler eklediği halde müşteri tarafından uzman
+     * profiline bakıldığında görünmüyor. haritada da çıkmıyor. yakınındaki
+     * uzmanlar diye bir alan da olmalı."
+     *
+     * Kart YALNIZ bağımsız uzmana açılıyordu; salona bağlanan uzmanın
+     * `proId`si null kalıyordu. Sonuçları zincirleme:
+     *   · `setMyServices` sessizce boş dönüyordu — uzman hizmet ekliyor,
+     *     kaydediliyor sanıyor, hiçbir yere yazılmıyordu.
+     *   · Profili açılmıyordu (kart yok).
+     *   · Haritada görünmüyordu (koordinat taşıyacak satır yok).
+     *   · Yorumları ve başarı yüzdesi de bağlanamıyordu.
+     *
+     * Artık her uzmanın kendi kartı var. Salona bağlı uzman salonun
+     * kadrosunda da görünmeye devam ediyor; harita zaten aynı adrestekileri
+     * tek iğnede topluyor.
+     */
     /*
      * Kayıt satırları da normalleşiyor: kataloğa bağlanmayan, adsız ya da
      * fiyatsız satır SAKLANMIYOR. Bağsız hizmet aramada ve arz hesabında
      * görünmez; uzman yazdığını sanır, müşteri hiç bulamaz.
      */
     const hizmetler = hizmetSatirlariniNormalle(input.services ?? []).slice(0, 60);
-    if (input.kind === 'independent') {
+    {
       try {
         const pro = await this.prisma.professional.create({
           data: {
@@ -177,6 +201,8 @@ export class SpecialistsService {
             // §9.5 — kayıtta girilen gerçek hizmet/fiyat/süre listesi. Buraya
             // yazılmadığı için profil sektörün varsayılan menüsünü uyduruyordu.
             servicesJson: JSON.stringify(hizmetler),
+            // Kart TÜRÜ her zaman bireysel: salona bağlı olmak, kişinin
+            // kendisinin bir salon olduğu anlamına gelmiyor.
             kind: 'independent',
             city: input.city ?? '', // §5.1.4 — harita/arama şehir eşleşmesi
             district: input.city ?? '',
@@ -371,6 +397,49 @@ export class SpecialistsService {
     return biz?.professionalId ?? null;
   }
 
+  /**
+   * BAŞARI YÜZDESİ — uzman puan toplamıyor, başarıyla ölçülüyor.
+   *
+   * Hesap ORTAK SERVİSTE: müşterinin gördüğü listeyle AYNI kod yolu.
+   * Burada ayrıca hesaplasaydım (ilk sürümde öyleydi) panel cevap
+   * süresini ölçüp liste ölçmediği için aynı uzman iki farklı yüzde
+   * gösterirdi.
+   */
+  async myPerformance(userId: string) {
+    const proId = await this.proIdFor(userId);
+    const sonuc = await this.basari.tek(proId);
+    // Paylaşım tercihi de dönüyor: panel anahtarın durumunu göstersin.
+    const pro = proId
+      ? await this.prisma.professional.findUnique({
+          where: { id: proId },
+          select: { showSuccess: true },
+        })
+      : null;
+    return { ...sonuc, showSuccess: pro?.showSuccess ?? true };
+  }
+
+  /**
+   * Başarı yüzdesinin müşteriye gösterilip gösterilmeyeceği.
+   *
+   * Keşif KARTINDA tutuluyor: liste sorgusu zaten o satırı okuyor,
+   * ayrı bir tabloya koysaydım her satır için ikinci bir okuma gerekirdi.
+   */
+  async setShowSuccess(userId: string, show: boolean) {
+    const proId = await this.proIdFor(userId);
+    if (!proId) return { showSuccess: show };
+    const p = await this.prisma.professional.update({
+      where: { id: proId },
+      data: { showSuccess: show },
+      select: { showSuccess: true },
+    });
+    return p;
+  }
+
+  /** Uzmanın kendi keşif kartının kimliği — "müşteri gözüyle gör" için. */
+  async myProId(userId: string): Promise<{ proId: string | null }> {
+    return { proId: (await this.proIdFor(userId)) ?? null };
+  }
+
   // §11 — Platinum promosyonları: profil sayfasında yayınlanır (Keşfet vitrini DEĞİL — o admin'in)
   async myPromotions(userId: string) {
     const proId = await this.proIdFor(userId);
@@ -389,9 +458,30 @@ export class SpecialistsService {
     }
     const proId = await this.proIdFor(userId);
     if (!proId) return { promotions: [] };
+    /*
+     * ── PROMOSYON GÖRSELİ DEPOYA ───────────────────────────────────────
+     *
+     * Uygulama görseli `data:image/jpeg;base64,...` olarak gönderiyor.
+     * Ham base64'ü `promo_json` içine yazmak satırı MEGABAYTLARA şişirir
+     * ve o satır işletme profilinin HER okumasında taşınır: promosyonu
+     * olan bir uzmanın profili herkese yavaş açılırdı.
+     *
+     * Görsel depoya taşınıp yerine adresi saklanıyor. Depo
+     * yapılandırılmamışsa `put` geleni olduğu gibi döndürüyor ve akış
+     * yine çalışıyor.
+     */
+    const temiz: unknown[] = [];
+    for (const ham of promotions.slice(0, 10)) {
+      if (typeof ham !== 'object' || ham === null) continue;
+      const p = { ...(ham as Record<string, unknown>) };
+      if (typeof p.imageUri === 'string' && p.imageUri.startsWith('data:')) {
+        p.imageUri = (await this.storage.put(p.imageUri, 'promos')) ?? p.imageUri;
+      }
+      temiz.push(p);
+    }
     const pro = await this.prisma.professional.update({
       where: { id: proId },
-      data: { promoJson: JSON.stringify(promotions.slice(0, 10)) },
+      data: { promoJson: JSON.stringify(temiz) },
     });
     return { promotions: safeParse(pro.promoJson) };
   }
@@ -454,7 +544,23 @@ export class SpecialistsService {
 
   async setMyServices(userId: string, services: unknown[]) {
     const proId = await this.proIdFor(userId);
-    if (!proId) return { services: [] };
+    /*
+     * ── SESSİZ BAŞARISIZLIK YOK ────────────────────────────────────────
+     *
+     * Burası `{ services: [] }` dönüyordu: keşif kartı olmayan uzman
+     * hizmetlerini kaydediyor, ekran "kaydedildi" diyor ve hiçbir yere
+     * yazılmıyordu. Kurucu bunu "hizmet ekliyorum ama müşteri görmüyor"
+     * diye bildirdi — hata aylarca sessizdi.
+     *
+     * Artık açık bir hata: uygulama kullanıcıya söyleyebiliyor, ve
+     * kaydın neden eksik olduğu kayıtlarda görünüyor.
+     */
+    if (!proId) {
+      throw new NotFoundException({
+        code: 'NO_DISCOVERY_CARD',
+        message: 'Keşif kaydın yok — hizmetler kaydedilemedi',
+      });
+    }
     const kesilmis = hizmetSatirlariniNormalle(services).slice(0, 60);
     // Alan seti hizmet listesiyle BİRLİKTE güncellenir. Ayrı tutulsaydı,
     // uzman tırnak hizmetlerini silince tırnak aramasında görünmeye devam

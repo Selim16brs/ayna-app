@@ -33,7 +33,9 @@ test('#4 — Keşfet YÜKLENİRKEN boş-durum mesajı vermiyor', () => {
     'yükleme ile boş ayrılmamış',
   );
   // Spinner değil ISKELET (denetim açıkça skeleton diyor).
-  assert.match(d, /<ListSkeleton rows=\{4\} \/>/, 'iskelet yok');
+  // Satır sayısı bölümün kaç öğe gösterdiğine bağlı (salon listesi 3);
+  // kural İSKELET olması, kaç satır olduğu değil.
+  assert.match(d, /<ListSkeleton rows=\{\d\} \/>/, 'iskelet yok');
 });
 
 test('#4 — W2W sekmesinde boş durum var ve SEKMEYE göre değişiyor', () => {

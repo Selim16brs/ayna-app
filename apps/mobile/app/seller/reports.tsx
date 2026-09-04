@@ -20,7 +20,7 @@ import {
   uzmanRandevulari,
 } from '../../src/store';
 import { useUnreadMessages } from '../../src/use-unread-messages';
-import { type ColorTokens, font } from '../../src/theme';
+import { type ColorTokens, font, space } from '../../src/theme';
 import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { TepeIsigi, PressableScale, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
@@ -154,6 +154,17 @@ export default function ReportsScreen() {
   // §9.3 — Talepler rozeti: şehirdeki AÇIK talepler BULUTTAN sayılır (ekran odaklandıkça tazelenir)
   const token = useStore((s) => s.token);
   const [puanOrt, setPuanOrt] = useState<number | null>(null);
+  /*
+   * BAŞARI YÜZDESİ sunucudan: bileşenlerin hepsi (tamamlanan/gelen oranı,
+   * değerlendirme, cevap süresi) sunucudaki gerçek kayıtlardan geliyor.
+   * İstemcide hesaplamak, elindeki eksik listeyle yanlış yüzde üretmek
+   * olurdu.
+   */
+  const [basari, setBasari] = useState<{
+    yuzde: number | null;
+    bilesenler: { ad: 'is' | 'puan' | 'cevap'; yuzde: number }[];
+    showSuccess?: boolean;
+  } | null>(null);
   // Kanvasta selamlamanın ÜSTÜNDE günün tarihi var ("Salı, 26 Ağustos").
   // Uzman panele bakınca hangi güne baktığını görmeli.
   const bugunEtiketi = useMemo(
@@ -239,6 +250,12 @@ export default function ReportsScreen() {
       void api
         .myAdOrders()
         .then(setReklamlarim)
+        .catch(() => undefined);
+      // Başarı yüzdesi de her dönüşte tazeleniyor: yeni tamamlanan
+      // randevu ve değerlendirme oranı değiştiriyor.
+      void api
+        .myPerformance(token)
+        .then(setBasari)
         .catch(() => undefined);
     }, [token]),
   );
@@ -344,51 +361,54 @@ export default function ReportsScreen() {
             yıkamayı kapatır (müşteri profilinde tam bu hata yaşanmıştı). */}
         <View style={[styles.bas, { paddingTop: insets.top + 12 }]}>
           <TepeIsigi />
-          <View style={styles.basSol}>
+          {/* ── ÜST SIRA: tarih solda, eylem ikonları sağda ── */}
+          <View style={styles.basSira}>
             <Text style={styles.tarih}>{bugunEtiketi}</Text>
-            <Text style={styles.selam} numberOfLines={1}>
-              {/*
-                İSİM YAZMIYORDU. İki hata üst üsteydi:
-                  · Selamlama metinleri ('Günaydın', 'İyi günler'…) isim için
-                    YER TUTUCU taşımıyordu, yani doldurulacak bir şey yoktu.
-                  · Doldurma da yanlış anahtarla çağrılıyordu (`name`), oysa
-                    uygulamanın kuralı `{ad}` (Keşfet böyle kullanıyor).
-                Artık isimli bir anahtar var; noktalama ve sıra dile ait.
-                Adı olmayan hesapta yalnız selamlama görünür — sonunda
-                boşta kalan virgül olmasın.
-              */}
-              {firstName
-                ? fillParams(t('benim.hello.named'), {
-                    selam: t(greetingKey()),
-                    ad: firstName,
-                  })
-                : t(greetingKey())}
-            </Text>
-            <View style={styles.rolRozet}>
-              <Text style={styles.rolYazi}>
-                {t(isSalon ? 'seller.badge.salon' : 'seller.badge.expert')}
-              </Text>
+            <View style={styles.basSag}>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t('messages.title')}
+                style={styles.basIkon}
+                onPress={() => router.push('/messages')}
+              >
+                <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.ink} />
+                {unreadMsg > 0 ? <View style={styles.basNokta} /> : null}
+              </PressableScale>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t('notifications.title')}
+                style={styles.basIkon}
+                onPress={() => router.push('/notifications')}
+              >
+                <Ionicons name="notifications-outline" size={20} color={colors.ink} />
+                {unread > 0 ? <View style={styles.basNokta} /> : null}
+              </PressableScale>
             </View>
           </View>
-          <View style={styles.basSag}>
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={t('messages.title')}
-              style={styles.basIkon}
-              onPress={() => router.push('/messages')}
-            >
-              <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.ink} />
-              {unreadMsg > 0 ? <View style={styles.basNokta} /> : null}
-            </PressableScale>
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={t('notifications.title')}
-              style={styles.basIkon}
-              onPress={() => router.push('/notifications')}
-            >
-              <Ionicons name="notifications-outline" size={20} color={colors.ink} />
-              {unread > 0 ? <View style={styles.basNokta} /> : null}
-            </PressableScale>
+
+          {/* ── KARŞILAMA — MÜŞTERİ ANA SAYFASIYLA AYNI DÜZEN ──────────
+              Kurucu: "uzman ana sayfası üst taraf tasarımı müşteri ana
+              sayfasındaki üst tasarım gibi olmalı."
+
+              Müşteride selamlama ÜSTTE ve küçük, İSİM altta büyük ve
+              kalın; portre sağda, kesikse dairesiz ve altında zemin
+              çizgisi. Uzmanda hepsi tek satırdı ve isim selamlamanın
+              içinde kayboluyordu.
+
+              İÇERİK uzmana ait kalıyor: müşteride puan satırı olan yerde
+              burada rol rozeti var — uzman puan toplamıyor. */}
+          <View style={styles.karsilama}>
+            <View style={styles.basSol}>
+              <Text style={styles.selamUst}>{t(greetingKey())}</Text>
+              <Text style={styles.selamAd} numberOfLines={1}>
+                {firstName || t(isSalon ? 'seller.badge.salon' : 'seller.badge.expert')}
+              </Text>
+              <View style={styles.rolRozet}>
+                <Text style={styles.rolYazi}>
+                  {t(isSalon ? 'seller.badge.salon' : 'seller.badge.expert')}
+                </Text>
+              </View>
+            </View>
             {/*
               PORTRE MÜŞTERİ TARAFIYLA AYNI BİÇİMDE.
 
@@ -413,6 +433,13 @@ export default function ReportsScreen() {
               ) : (
                 <View style={[styles.avatar, styles.avatarBos]} />
               )}
+              {/*
+                ZEMİN ÇİZGİSİ — müşteri ana sayfasındakiyle aynı.
+                Kesilmiş portrenin zemini saydam; çizgi olmadan figür
+                boşlukta asılı duruyor. Ham fotoğrafta çizilmiyor: orada
+                zaten bir çerçeve var.
+              */}
+              {portreKesilmis ? <View style={styles.portreCizgi} /> : null}
             </PressableScale>
           </View>
         </View>
@@ -569,6 +596,55 @@ export default function ReportsScreen() {
             <Text style={styles.paketBag}>{t('seller.promo.cta')}</Text>
           </View>
         </PressableScale>
+
+        {/* ═══ BAŞARI DURUMU ═══
+            Kurucu: "uzman ve salon puan toplayamaz. uzmanlar aldıkları
+            onaylanıp hizmet verilmiş rezervasyon sayısı, değerlendirme
+            notu başarısı, cevap verme süresi ve bunun gibi başarı
+            durumlarına göre yüzde üzerinden değerlendirilir."
+
+            Yüzde ÖLÇÜLEBİLENLERDEN: hiç randevusu olmayan uzmana "%0"
+            yazmak, hiç çalışmamış birine kötü çalıştığını söylemek
+            olurdu — o durumda yüzde yerine sebebi yazılıyor. */}
+        <View style={styles.kaliteKart}>
+          <Text style={styles.kaliteBaslik}>{t('reports.success.title')}</Text>
+          {basari?.yuzde === null || basari === null ? (
+            <Text variant="caption" tone="muted">
+              {t('reports.success.none')}
+            </Text>
+          ) : (
+            <>
+              <Text style={styles.basariYuzde}>%{basari.yuzde}</Text>
+              {/*
+                Müşteriyle paylaşılmıyorsa uzman bunu BURADA görüyor:
+                kapattığını unutup "neden görünmüyorum" diye sormasın.
+              */}
+              {basari.showSuccess === false ? (
+                <Text variant="micro" tone="muted">
+                  {t('reports.success.hidden')}
+                </Text>
+              ) : null}
+              <View style={styles.basariSatir}>
+                {basari.bilesenler.map((b) => (
+                  <View key={b.ad} style={styles.basariKutu}>
+                    <Text variant="micro" tone="muted" numberOfLines={1}>
+                      {t(
+                        b.ad === 'is'
+                          ? 'reports.success.is'
+                          : b.ad === 'puan'
+                            ? 'reports.success.puan'
+                            : 'reports.success.cevap',
+                      )}
+                    </Text>
+                    <Text variant="bodyStrong" tone="ink">
+                      %{b.yuzde}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+        </View>
 
         {/* ═══ YANIT & KALİTE — Figma `yanit-kalite-card` (radius 24, p20) ═══ */}
         <View style={styles.kaliteKart}>
@@ -843,15 +919,32 @@ const makeStyles = (colors: ColorTokens) =>
     buyu: { flex: 1 },
 
     // header-section (px24, pt12 pb16)
+    /*
+     * BAŞLIK MÜŞTERİ ANA SAYFASIYLA AYNI DÜZENDE.
+     *
+     * Eskiden tek satırdı: tarih, selamlama+isim ve rozet solda, ikonlar
+     * sağda. İsim selamlamanın içinde kayboluyordu. Artık iki katman —
+     * üst sıra (tarih + ikonlar), altında karşılama bloğu.
+     */
     bas: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
       paddingHorizontal: 24,
       paddingBottom: 16,
       gap: 12,
     },
-    basSol: { flex: 1, gap: 4 },
+    basSira: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    // Karşılama: metin solda esner, portre sağda sabit.
+    karsilama: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
+    basSol: { flex: 1, gap: 2 },
+    // Müşteri ana sayfasıyla AYNI ölçüler: selam küçük üstte, isim büyük altta.
+    selamUst: { fontFamily: font.regular, fontSize: 14, lineHeight: 18, color: colors.inkSoft },
+    selamAd: {
+      fontFamily: font.semibold,
+      fontSize: 32,
+      lineHeight: 38,
+      letterSpacing: -0.6,
+      color: colors.ink,
+      marginTop: 2,
+    },
     tarih: {
       fontFamily: font.medium,
       fontSize: 11,
@@ -893,8 +986,17 @@ const makeStyles = (colors: ColorTokens) =>
     avatarHalka: { padding: 2, borderRadius: 100, borderWidth: 1.5, borderColor: colors.accent },
     avatar: { width: 40, height: 40, borderRadius: 100 },
     // Kesilmiş portre: çerçevesiz, zeminsiz, kırpmasız — ana sayfayla aynı.
-    portreKap: { width: 48, alignItems: 'center' },
-    portreKesik: { width: 48, height: 48 },
+    /*
+     * Müşteri ana sayfasıyla AYNI ölçü (104): kurucu iki ekranın üst
+     * tasarımının aynı olmasını istedi. 48'de kalsaydı aynı düzende ama
+     * belirgin biçimde küçük bir portre olurdu.
+     *
+     * SAĞA YASLI ve kap portre genişliğinde: zemin çizgisi genişliğini
+     * buradan alıyor.
+     */
+    portreKap: { width: 104, alignItems: 'flex-end' },
+    portreKesik: { width: 104, height: 104 },
+    portreCizgi: { width: '100%', height: 2, borderRadius: 1, backgroundColor: colors.accent },
     avatarBos: { backgroundColor: colors.accentSoft },
 
     // canli-ozet-card (radius 24, p20, gap 18) — koyu, iki temada da sabit
@@ -1040,6 +1142,9 @@ const makeStyles = (colors: ColorTokens) =>
     reklamFiyat: { fontFamily: font.semibold, fontSize: 12, color: colors.gold },
 
     // yanit-kalite-card (radius 24, p20, gap 16)
+    basariYuzde: { fontFamily: font.semibold, fontSize: 34, color: colors.accentFg },
+    basariSatir: { flexDirection: 'row', flexWrap: 'wrap', gap: space(2), marginTop: space(0.5) },
+    basariKutu: { gap: 2 },
     kaliteKart: {
       marginHorizontal: 24,
       padding: 20,

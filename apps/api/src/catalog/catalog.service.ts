@@ -6,9 +6,11 @@ import {
   aynaOnayli,
   guvenKatmanlari,
   hizmetSatirininKimligi,
+  type PromosyonKarti,
   uzmanKayitli,
 } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
+import { BasariService } from '../basari/basari.service';
 import { CutoutService } from '../cutout/cutout.service';
 import { StorageService } from '../storage/storage.service';
 import { localizeRows } from '../common/i18n';
@@ -20,6 +22,8 @@ export class CatalogService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly cutout: CutoutService,
+    // Başarı hesabı ORTAK: uzmanın paneli de aynı servisi çağırıyor.
+    private readonly basari: BasariService,
   ) {}
 
   // §medya taşıma — R2 öncesi kayıtlarda base64 data-URL görseller JSON yanıtı MB'larca
@@ -116,6 +120,103 @@ export class CatalogService {
     }));
   }
 
+  /**
+   * PROMOSYONLAR — uzmanın KENDİ açtığı kampanyalar.
+   *
+   * Kurucu: "uzman panelinden oluşturulan promosyonlar, fırsatlar
+   * alanında gösterilmesin. fırsatlar ve senin için seçtiklerim parayla
+   * sattığımız alan ama uzmanın açtığı promosyonlar o uzmana AYNA'nın
+   * sağladığı bir reklam alanı… ayrı bir sekmede müşteriye promosyonlar
+   * alanı gösterilmeli, en yakın lokasyondaki 4 promosyon ekranda görünüp
+   * diğerleri için tümü butonu olmalı."
+   *
+   * Kaynak `Offer` tablosu — uzmanın "Kampanyalarım" ekranından açtığı
+   * kayıtlar. Aynı liste "Fırsatlar" şeridinde de çiziliyordu; oradan
+   * çıkarıldı çünkü o şerit ÖDENMİŞ yerleşim için.
+   *
+   * ── ONAY KAPISI BURADA DA GEÇERLİ ──────────────────────────────────
+   *
+   * Onaysız uzmanın promosyonu da görünmüyor: katalogdan gizlenen bir
+   * hesap promosyon üzerinden vitrine sızmamalı.
+   *
+   * ── MESAFE UYDURULMUYOR ────────────────────────────────────────────
+   *
+   * Sağlayıcının koordinatı yoksa mesafe `null`; istemci o satırda
+   * mesafe yazmıyor ve sıralamada sona koyuyor.
+   */
+  async promotions(lat?: number, lng?: number): Promise<PromosyonKarti[]> {
+    const simdi = new Date();
+    const teklifler = await this.prisma.offer.findMany({
+      where: { status: 'active', startsAt: { lte: simdi }, endsAt: { gt: simdi } },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+    if (teklifler.length === 0) return [];
+
+    const proIds = [...new Set(teklifler.map((o) => o.proId))];
+    const prolar = await this.prisma.professional.findMany({
+      where: { id: { in: proIds } },
+      select: {
+        id: true,
+        name: true,
+        imageUrl: true,
+        rating: true,
+        reviewCount: true,
+        city: true,
+        lat: true,
+        lng: true,
+      },
+    });
+    const proById = new Map(prolar.map((p) => [p.id, p]));
+
+    const gizli = new Set<string>();
+    for (const x of await this.prisma.specialist.findMany({
+      where: {
+        proId: { in: proIds },
+        OR: [{ status: { not: 'approved' } }, { hiddenUntil: { gt: simdi } }],
+      },
+      select: { proId: true },
+    })) {
+      if (x.proId) gizli.add(x.proId);
+    }
+    for (const b of await this.prisma.business.findMany({
+      where: { professionalId: { in: proIds }, status: { not: 'approved' } },
+      select: { professionalId: true },
+    })) {
+      if (b.professionalId) gizli.add(b.professionalId);
+    }
+
+    const out: PromosyonKarti[] = [];
+    for (const o of teklifler) {
+      if (gizli.has(o.proId)) continue;
+      const p = proById.get(o.proId);
+      if (!p) continue;
+      out.push({
+        id: o.id,
+        proId: o.proId,
+        proAd: p.name,
+        proGorsel: p.imageUrl,
+        /*
+         * Değerlendirilmemiş uzman "0,0" DEĞİL: puanı sıfır göstermek
+         * onu en kötü puanlı gibi sunardı.
+         */
+        puan: p.reviewCount > 0 ? Number(p.rating) : null,
+        sehir: p.city || o.city,
+        mesafeKm:
+          lat != null && lng != null && p.lat != null && p.lng != null
+            ? mesafeKm(lat, lng, p.lat, p.lng)
+            : null,
+        baslik: o.title,
+        aciklama: o.description,
+        indirimYuzde: o.discountType === 'percent' ? Number(o.discountValue) : null,
+        gorsel: o.imageUrl || null,
+        basEtiket: o.startsAt.toISOString(),
+        sonEtiket: o.endsAt.toISOString(),
+      });
+    }
+    return out;
+  }
+
   async professionals() {
     // §4.7/§4.8 — GÖRÜNMEZLİK CEZASI BURADA UYGULANIYOR. Ceza `hiddenUntil`e
     // yazılıyordu ama hiçbir yerde okunmuyordu: bayrak vardı, KAPI yoktu.
@@ -174,7 +275,7 @@ export class CatalogService {
      * (N+1) yok. (proId, status) indeksi bunun için eklendi.
      */
     const TAMAMLANMIS = ['tamamlandi', 'degerlendirme', 'kapandi'] as const;
-    const [sps, bizs, randevuSayilari, puanlar, esikAyari] = await Promise.all([
+    const [sps, bizs, randevuSayilari, basarilar, puanlar, esikAyari] = await Promise.all([
       this.prisma.specialist.findMany({
         where: { proId: { in: ids } },
         select: {
@@ -204,6 +305,17 @@ export class CatalogService {
         where: { proId: { in: ids }, status: { in: [...TAMAMLANMIS] } },
         _count: { _all: true },
       }),
+      /*
+       * BAŞARI YÜZDESİ — ORTAK SERVİSTEN.
+       *
+       * Kurucu: "müşteriye de göster."
+       *
+       * Hesabı burada tekrar yazsaydım (ilk sürümde öyleydi) uzmanın
+       * panelindeki yüzdeyle çelişirdi: panel cevap süresini de ölçüyor.
+       * İki farklı yüzde göstermektense tek kod yolu — ayrışacak bir şey
+       * kalmıyor. Servis de toplu sorgu kullanıyor, N+1 açılmıyor.
+       */
+      this.basari.hesapla(ids),
       /**
        * PUAN VE DEĞERLENDİRME SAYISI — GERÇEK KAYITLARDAN.
        *
@@ -296,51 +408,96 @@ export class CatalogService {
         )
         .map((u) => u.id),
     );
-    return rows
-      .filter((r) => {
-        const owner = ownerByPro.get(r.id);
-        return !owner || !hiddenOwners.has(owner);
-      })
-      .map((r) => {
-        const services = safeParseServices(r.servicesJson);
-        const prices = services.map((x) => x.price).filter((p) => p > 0);
-        const owner = ownerByPro.get(r.id);
-        return {
-          ...mapPro(r),
-          lat: r.lat ?? undefined,
-          lng: r.lng ?? undefined,
-          priceTo: prices.length ? Math.max(...prices) : Number(r.priceFrom),
-          // Hiç randevusu olmayan uzman için groupBy satır döndürmez → 0.
-          completedBookings: randevuByPro.get(r.id) ?? 0,
-          // Sütun değil GERÇEK kayıtlar. `mapPro` sütunu koyuyor; burada
-          // üzerine yazılıyor ki liste ile profil aynı sayıyı göstersin.
-          rating: puanByPro.get(r.id)?.ortalama ?? 0,
-          reviewCount: puanByPro.get(r.id)?.adet ?? 0,
-          isPremium: owner ? premiumUsers.has(owner) : false,
-          membershipTier: owner ? (tierById.get(owner) ?? 'free') : 'free',
-          // §3.3 — GÜVEN ROZETİ listede de. Eskiden yalnız detay ucundaydı:
-          // müşteri aramada/keşifte kimin doğrulandığını göremiyor, her
-          // profili tek tek açmak zorunda kalıyordu. Kural detayla AYNI
-          // fonksiyondan geliyor, ayrışamaz.
-          aynaVerified: (() => {
-            const sp = spByPro.get(r.id);
-            const biz = bizByPro.get(r.id);
-            const kayitli = uzmanKayitli(sp?.entityType, sp?.iin);
-            const kyc = owner ? (kycById.get(owner) ?? false) : false;
-            return aynaOnayli(
-              r.kind,
-              guvenKatmanlari({
-                kind: r.kind,
-                kycOnayli: kyc,
+    return (
+      rows
+        .filter((r) => {
+          const owner = ownerByPro.get(r.id);
+          return !owner || !hiddenOwners.has(owner);
+        })
+        .map((r) => {
+          const services = safeParseServices(r.servicesJson);
+          const prices = services.map((x) => x.price).filter((p) => p > 0);
+          const owner = ownerByPro.get(r.id);
+          return {
+            ...mapPro(r),
+            lat: r.lat ?? undefined,
+            lng: r.lng ?? undefined,
+            priceTo: prices.length ? Math.max(...prices) : Number(r.priceFrom),
+            // Hiç randevusu olmayan uzman için groupBy satır döndürmez → 0.
+            completedBookings: randevuByPro.get(r.id) ?? 0,
+            // Sütun değil GERÇEK kayıtlar. `mapPro` sütunu koyuyor; burada
+            // üzerine yazılıyor ki liste ile profil aynı sayıyı göstersin.
+            rating: puanByPro.get(r.id)?.ortalama ?? 0,
+            reviewCount: puanByPro.get(r.id)?.adet ?? 0,
+            isPremium: owner ? premiumUsers.has(owner) : false,
+            membershipTier: owner ? (tierById.get(owner) ?? 'free') : 'free',
+            // §3.3 — GÜVEN ROZETİ listede de. Eskiden yalnız detay ucundaydı:
+            // müşteri aramada/keşifte kimin doğrulandığını göremiyor, her
+            // profili tek tek açmak zorunda kalıyordu. Kural detayla AYNI
+            // fonksiyondan geliyor, ayrışamaz.
+            aynaVerified: (() => {
+              const sp = spByPro.get(r.id);
+              const biz = bizByPro.get(r.id);
+              const kayitli = uzmanKayitli(sp?.entityType, sp?.iin);
+              const kyc = owner ? (kycById.get(owner) ?? false) : false;
+              return aynaOnayli(
+                r.kind,
+                guvenKatmanlari({
+                  kind: r.kind,
+                  kycOnayli: kyc,
+                  kayitli,
+                  salon: biz,
+                  uzman: sp,
+                }),
                 kayitli,
-                salon: biz,
-                uzman: sp,
-              }),
-              kayitli,
-            );
-          })(),
-        };
-      });
+              );
+            })(),
+            /*
+             * ── BAŞARI YÜZDESİ — MÜŞTERİYE DE GÖSTERİLİYOR ─────────────
+             *
+             * Kurucu: "ilk 3 görünmeli (başarı durumuna göre)" ve sonra
+             * "müşteriye de göster."
+             *
+             * Değer uzmanın kendi panelindekiyle AYNI serviste
+             * hesaplanıyor; iki farklı yüzde doğamıyor. İlk sürümde hesap
+             * burada ayrıca yazılıydı ve cevap süresini ölçmüyordu — tam
+             * bu yüzden müşteriye göstermemiştim.
+             *
+             * ÖLÇÜLEMEYENDE `null`: hiç randevusu olmayan uzmana "%0"
+             * yazmak, hiç çalışmamış birine kötü çalıştığını söylemek
+             * olurdu. Ekran o durumda rozeti hiç çizmiyor.
+             */
+            /*
+             * PAYLAŞIM UZMANIN TERCİHİ.
+             *
+             * Kurucu: "uzman eğer istiyorsa seçenek koyalım. istemiyorsa
+             * paylaşılmasın müşteri ile."
+             *
+             * Kapalıysa yüzde yükte HİÇ GİTMİYOR — istemcide gizlemek,
+             * veriyi yine göndermek olurdu.
+             *
+             * SIRALAMA yine gerçek değere göre (aşağıda): yüzdeyi
+             * paylaşmamak bir gizlilik tercihi, sıralamada geriye
+             * düşme cezası değil.
+             */
+            basariYuzde: r.showSuccess ? (basarilar.get(r.id)?.yuzde ?? null) : null,
+          };
+        })
+        /*
+         * BAŞARIYA GÖRE SIRALI DÖNÜYOR. İstemci ilk üçü alıyor; sıralamayı
+         * burada yapmak, aynı kuralın her ekranda tekrarlanmasını önlüyor.
+         *
+         * Ölçülemeyen (`-1`) sona düşüyor: yeni bir uzmanı "%0 başarılı"
+         * sayıp en alta atmak yerine, bilinmeyeni bilinenlerin arkasına
+         * koyuyoruz — sıralama aynı ama sebep dürüst.
+         */
+        /*
+         * Sıralama GERÇEK başarıya göre — gösterilen değere değil.
+         * Gösterilene göre sıralasaydık, yüzdesini paylaşmayan uzman
+         * listenin en altına düşerdi: gizlilik tercihi cezaya dönüşürdü.
+         */
+        .sort((a, b) => (basarilar.get(b.id)?.yuzde ?? -1) - (basarilar.get(a.id)?.yuzde ?? -1))
+    );
   }
 
   // §4.6 — GERÇEK slot üretimi (Faz 1): çalışma saati + izin günü + mevcut randevular +
@@ -690,6 +847,12 @@ export class CatalogService {
         this.prisma.professional.update({ where: { id: p.id }, data: { portfolio: next } }),
       ),
       promotions: parsePromos(p.promoJson), // §11 — Platinum'un profilinde yayınladığı promosyonlar
+      /*
+       * BAŞARI YÜZDESİ — listedeki AYNI servisten, aynı paylaşım
+       * tercihiyle. Profilde gösterip listede göstermemek (ya da tersi)
+       * kullanıcıyı şaşırtırdı.
+       */
+      basariYuzde: p.showSuccess ? ((await this.basari.tek(p.id)).yuzde ?? null) : null,
       reviews,
       starDist,
     };
@@ -887,6 +1050,17 @@ const SECTOR_SERVICES: Record<string, SvcItem[]> = {
     { id: 'epi-4', name: 'İğneli epilasyon', durationMin: 60, price: 12000 },
   ],
 };
+
+/** İki koordinat arası mesafe (km, haversine). */
+function mesafeKm(aLat: number, aLng: number, bLat: number, bLng: number): number {
+  const R = 6371;
+  const dLat = ((bLat - aLat) * Math.PI) / 180;
+  const dLng = ((bLng - aLng) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((aLat * Math.PI) / 180) * Math.cos((bLat * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(a)) * 10) / 10;
+}
 
 // §11 — promoJson güvenli çözümü (bozuk veri profili düşürmesin)
 function parsePromos(raw: string): unknown[] {

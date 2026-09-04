@@ -30,6 +30,22 @@ export class CatalogController {
     return this.catalog.categories();
   }
 
+  /**
+   * Uzmanların kendi promosyonları — "Fırsatlar"dan AYRI.
+   *
+   * Kimlik doğrulaması YOK: promosyonlar herkese açık bir vitrin.
+   * Konum isteğe bağlı; verilmezse mesafe alanı boş döner ve istemci
+   * mesafe yazmaz (uydurma km yok).
+   */
+  @Get('promotions')
+  promotions(@Query('lat') lat?: string, @Query('lng') lng?: string) {
+    const n = (v?: string) => {
+      const x = Number(v);
+      return Number.isFinite(x) ? x : undefined;
+    };
+    return this.catalog.promotions(n(lat), n(lng));
+  }
+
   @Get('campaigns')
   campaigns(@Query('locale') locale?: string) {
     return this.catalog.campaigns(locale);

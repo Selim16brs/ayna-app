@@ -18,6 +18,7 @@ export { FloatingTabBar, TAB_BAR_CLEARANCE, type TabDef } from './FloatingTabBar
 export { SellerTabBar } from './SellerTabBar';
 export { SalonTabBar } from './SalonTabBar';
 export { StackHeader } from './StackHeader';
+export { PromosyonKarti } from './PromosyonKarti';
 export { SifreKurali } from './SifreKurali';
 export { GorunumKarti } from './GorunumKarti';
 export { Segmented } from './Segmented';

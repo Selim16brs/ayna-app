@@ -444,6 +444,7 @@ export const tr = {
   'home.refund.cta': 'İade iste',
   'home.pending': 'Bekleyen Randevuların',
   'home.verified': 'Doğrulanmış',
+  'home.success': 'başarı',
   'home.details': 'Detaylar',
   // Silinmiş/erişilemez uzman — reklam eski bir kayda işaret edebiliyor.
   'pro.not_found.title': 'Bu profil bulunamadı',
@@ -511,9 +512,17 @@ export const tr = {
 
   // Ana akış — giriş aksiyonları
   'home.nearby': 'Yakınındaki Salonlar',
+  'home.nearby_experts': 'Yakınındaki uzmanlar',
   'nearby.no_location':
     'Mesafeye göre sıralayabilmek için konumun ve salonun konumu gerekiyor. Profilinden haritada konum ekleyebilirsin.',
   'home.campaigns': 'Fırsatlar',
+  'promos.title': 'Promosyonlar',
+  'promos.subtitle': 'Uzmanların kendi kampanyaları',
+  'promos.empty': 'Şu an yayında promosyon yok',
+  'promos.sort.yakinlik': 'Yakınlık',
+  'promos.sort.puan': 'Değerlendirme',
+  'promos.sort.indirim': 'İndirim',
+  'promos.no_rating': 'Henüz değerlendirme yok',
   'home.trend': 'Bu Hafta Trend',
   // Ana ekran — ACİL kartı (süresi işleyen tek iş). Yoksa kart hiç görünmez.
   'home.guest_title': 'Hoş geldin',
@@ -556,7 +565,6 @@ export const tr = {
   'earnings.offline_tag': 'salon kaydı',
   'offers.title': 'Salon & uzman kampanyaları',
   'offers.empty': 'Şu an aktif kampanya yok — yakında burada fırsatlar olacak.',
-  'offers.discount_badge': '%{pct} İndirim',
   'offers.fixed_badge': 'Kampanya fiyatı',
   'offers.last_chance': 'Son fırsat',
   'offers.book': 'Randevu al',
@@ -587,6 +595,8 @@ export const tr = {
   'offers.f.all_day': 'Tüm gün',
   'offers.f.ends': 'Bitiş tarihi (en fazla 30 gün)',
   'offers.f.quota': 'Kota (opsiyonel)',
+  'offers.f.image': 'Kampanya görseli',
+  'offers.f.image_hint': 'Müşteri ekranında bu görsel çıkar',
   'offers.f.quota_ph': 'örn. 10 randevu',
   'offers.rules_note':
     "Kurallar: indirim %5–50 · metinde telefon/link olamaz · referans fiyat son 60 gün ortalamanın %120'sini aşamaz · komisyon ve depozito kuralları aynen geçerli.",
@@ -596,6 +606,10 @@ export const tr = {
   'offers.err.inflated': 'Referans fiyat son fiyatlarının çok üstünde — gerçekçi bir fiyat gir.',
   'offers.err.range': 'İndirim %5 ile %50 arasında olmalı.',
   'seller.menu.offers': 'Kampanyalarım',
+  'seller.menu.preview': 'Müşteri gözüyle profilim',
+  'seller.menu.preview_d':
+    'Profilinin, kampanyalarının ve hizmetlerinin müşteriye nasıl göründüğünü gör',
+  'seller.menu.preview_none': 'Profilin henüz yayında değil. Hesabın onaylandıktan sonra görünür.',
   'seller.menu.offers_d': 'Süreli indirim yayınla — ölü saatlerini doldur',
   'day.sun': 'Paz',
   'day.mon': 'Pzt',
@@ -1293,6 +1307,12 @@ export const tr = {
   'reports.live.revenue': 'Tamamlanan gelir',
   'reports.live.commission': 'AYNA komisyonu (%{pct})',
   'reports.quality.title': 'Yanıt & kalite',
+  'reports.success.title': 'Başarı durumun',
+  'reports.success.none': 'Henüz ölçülecek veri yok — ilk randevularından sonra burada görünecek',
+  'reports.success.hidden': 'Müşteriyle paylaşılmıyor — Gizlilik ekranından açabilirsin',
+  'reports.success.is': 'Tamamlanan iş',
+  'reports.success.puan': 'Değerlendirme',
+  'reports.success.cevap': 'Cevap süresi',
   'reports.quality.avg_response': 'Ort. yanıt',
   'reports.quality.deposit_pending': 'Bekleyen dekont',
   'reports.quality.completion': 'Tamamlanma',
@@ -2166,6 +2186,9 @@ export const tr = {
   'privacy.subtitle': 'Verilerin üzerindeki kontrol sende',
   'privacy.location': 'Konum paylaşımı',
   'privacy.pro_address': 'İşletme adresin herkese açık',
+  'privacy.pro_success': 'Başarı yüzdemi müşteriye göster',
+  'privacy.pro_success_sub':
+    'Tamamlanan iş, değerlendirme ve cevap süresinden hesaplanır. Kapatırsan müşteri ekranında hiç görünmez; sıralamadaki yerin değişmez.',
   'privacy.pro_address_sub':
     'Müşteri seni haritada bulabilsin diye adresin profilinde görünür. Bu bir tercih değil, hizmet vermenin koşulu.',
   'privacy.pro_customer_data': 'Müşteri bilgileri',

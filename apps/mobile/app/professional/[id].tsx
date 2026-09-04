@@ -442,6 +442,27 @@ export default function ProfessionalScreen() {
               <View style={styles.statSep} />
             </>
           ) : null}
+          {/*
+            BAŞARI YÜZDESİ — kurucunun isteğiyle müşteriye de gösteriliyor.
+            Uzmanın kendi panelindekiyle AYNI serviste hesaplanıyor:
+            tamamlanan/gelen randevu oranı + değerlendirme + cevap süresi.
+
+            Ölçülecek veri yoksa sütun HİÇ çizilmiyor — "%0" yazmak, hiç
+            çalışmamış bir uzmana kötü çalıştığını söylemek olurdu.
+          */}
+          {pro.basariYuzde != null ? (
+            <>
+              <View style={styles.statCol}>
+                <Text numeric variant="h2" tone="ink">
+                  %{pro.basariYuzde}
+                </Text>
+                <Text variant="micro" tone="muted" numberOfLines={1}>
+                  {t('home.success')}
+                </Text>
+              </View>
+              <View style={styles.statSep} />
+            </>
+          ) : null}
           <View style={styles.statCol}>
             <Text numeric variant="h2" tone="ink">
               {pro.reviewCount}

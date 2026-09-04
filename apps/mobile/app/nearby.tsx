@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { kullaniciKonumu, konumuVar, gercekMesafeKm } from '../src/data';
 import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
@@ -37,9 +37,24 @@ export default function NearbyScreen() {
    * neden olduğu söyleniyor.
    */
   const benimKonum = kullaniciKonumu(addresses);
+  // Bağlantıdaki `tur=uzman` uzman listesini açıyor; yoksa salonlar.
+  const { tur } = useLocalSearchParams<{ tur?: string }>();
+  const uzmanlar = tur === 'uzman';
 
   const { salons, siralanabilir } = useMemo(() => {
-    const liste = all.filter((p) => p.city === city && p.kind === 'salon');
+    /*
+     * AYNI EKRAN İKİ LİSTEYE HİZMET EDİYOR.
+     *
+     * Kurucu: "hem yakınındaki salonlar hem de yakınındaki uzmanlar ilk 3
+     * görünmeli… kalanlar tümü butonuna basılarak görünmeli."
+     *
+     * İki ayrı ekran açsaydım mesafe hesabı, sıralama kuralı ve "sıralama
+     * yapılamıyor" uyarısı iki kez yazılır ve zamanla ayrışırdı. Tür
+     * bağlantıdan geliyor.
+     */
+    const liste = all.filter(
+      (p) => p.city === city && (uzmanlar ? p.kind !== 'salon' : p.kind === 'salon'),
+    );
     const konumlu = liste.filter((p) => konumuVar(p));
     // Sıralama ancak KULLANICININ ve en az bir salonun konumu varsa anlamlı.
     const ok = benimKonum !== null && konumlu.length > 0;
@@ -58,11 +73,11 @@ export default function NearbyScreen() {
       ),
       siralanabilir: true,
     };
-  }, [all, city, benimKonum]);
+  }, [all, city, benimKonum, uzmanlar]);
 
   return (
     <Screen edges={[]}>
-      <StackHeader title={t('home.nearby')} />
+      <StackHeader title={t(uzmanlar ? 'home.nearby_experts' : 'home.nearby')} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {/*
          * Sıralanamıyorsa SÖYLENİYOR. Sessizce rastgele sıralamak,
