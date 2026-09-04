@@ -27,6 +27,7 @@ import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import { kategoriAra, tri } from '../src/taxonomy';
+import { uzmanlikYazisi } from '../src/uzmanlik';
 import {
   HizmetIkonu,
   Button,
@@ -812,7 +813,7 @@ export function ProRow({
 }) {
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   /*
    * MESAFE YALNIZ GERÇEK KOORDİNATTAN.
    *
@@ -874,7 +875,7 @@ export function ProRow({
             <Ionicons name="location-outline" size={12} color={colors.muted} />
             <Text variant="caption" tone="muted" numberOfLines={1} style={styles.rowMeta}>
               {km !== null ? `${km.toFixed(1)} km • ` : ''}
-              {pro.specialty}
+              {uzmanlikYazisi(pro, locale)}
             </Text>
           </View>
         </View>

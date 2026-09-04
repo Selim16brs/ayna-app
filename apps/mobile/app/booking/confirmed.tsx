@@ -7,10 +7,11 @@ import { useLocale } from '../../src/locale';
 import { font, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { uzmanlikYazisi } from '../../src/uzmanlik';
 
 export default function ConfirmedScreen() {
   const router = useRouter();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const params = useLocalSearchParams<{
@@ -24,7 +25,7 @@ export default function ConfirmedScreen() {
   const isSalon = pro.kind === 'salon' && pro.staff.length > 0;
   // Polish 1.1 — SEÇİLEN hizmet ve GERÇEK toplam parametreyle gelir; eski derin
   // linkler için profil verisi yalnız yedek (ilk hizmet/uzmanlık tahmini değil).
-  const serviceLabel = params.service || pro.specialty;
+  const serviceLabel = params.service || uzmanlikYazisi(pro, locale);
   const price = params.price
     ? Number(params.price)
     : (pro.services[0]?.price ?? Number(pro.priceFrom));
