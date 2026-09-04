@@ -80,7 +80,9 @@ test('HİZMET tek tek EKLENİYOR ve kutusu kapanıyor', () => {
    * kapanmalı."
    */
   const k = oku('app', 'seller', 'services.tsx');
-  assert.match(k, /const satiriEkle = \(key: string\) =>/, 'tek satır ekleme yok');
+  // `async`: kaydetmenin SUNUCUDA da olduğunu beklemek gerekiyor; olmadıysa
+  // uzmana söyleniyor (bkz. hizmet-menusu testleri).
+  assert.match(k, /const satiriEkle = async \(key: string\) =>/, 'tek satır ekleme yok');
   assert.match(k, /setSellerServices\(guncel\.filter\(satirGecerli\)\)/, 'ekleme kaydetmiyor');
   assert.match(k, /kapat\(key\);/, 'kutu kapanmıyor');
   assert.match(k, /!acikMi\(r\.key\) \? \(/, 'eklenmiş hizmet özetlenmiyor');

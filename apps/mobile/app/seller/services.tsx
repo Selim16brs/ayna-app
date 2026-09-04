@@ -87,13 +87,14 @@ export default function SellerServicesScreen() {
    * hizmeti ekledikten sonra o hizmet ARTIK EKLENMİŞ sayılıyor — alttaki
    * düğmeye basmayı unutması hizmeti kaybettirmiyor.
    */
-  const satiriEkle = (key: string) => {
+  const satiriEkle = async (key: string) => {
     const guncel = rows.filter((r) => satirGecerli(r) || r.key !== key);
     const hedef = rows.find((r) => r.key === key);
     if (!hedef || !satirGecerli(hedef)) return;
     setRows(guncel);
-    setSellerServices(guncel.filter(satirGecerli));
+    const oldu = await setSellerServices(guncel.filter(satirGecerli));
     kapat(key);
+    if (!oldu) Alert.alert(t('seller.services.title'), t('seller.services.save_err'));
   };
 
   const rowsByService = useMemo(() => {
@@ -122,13 +123,14 @@ export default function SellerServicesScreen() {
     ac(key);
   };
 
-  const sil = (key: string) => {
+  const sil = async (key: string) => {
     const kalan = rows.filter((r) => r.key !== key);
     setRows(kalan);
     // Silme de HEMEN kalıcı: "Kaydet"e basmayı unutan uzman sildiğini
     // sanıp listede görmeye devam ederdi.
-    setSellerServices(kalan.filter(satirGecerli));
+    const oldu = await setSellerServices(kalan.filter(satirGecerli));
     kapat(key);
+    if (!oldu) Alert.alert(t('seller.services.title'), t('seller.services.save_err'));
   };
 
   const edit = (key: string, field: 'name' | 'price' | 'dur', val: string) =>
@@ -145,9 +147,19 @@ export default function SellerServicesScreen() {
      * yarım bıraktığı bir kaydı gerçek bir teklif gibi sunmak olurdu.
      */
     const gecerli = rows.filter(satirGecerli);
-    setSellerServices(gecerli);
     setRows(gecerli);
-    Alert.alert(t('seller.services.title'), t('seller.services.saved'));
+    /*
+     * "KAYDEDİLDİ" ANCAK GERÇEKTEN KAYDEDİLDİYSE.
+     *
+     * Sunucu hatası yutuluyor ve ekran yine "Kaydedildi" diyordu: uzman
+     * hizmetlerini girdiğini sanıyor, müşteri hiçbirini görmüyordu.
+     */
+    void setSellerServices(gecerli).then((oldu) =>
+      Alert.alert(
+        t('seller.services.title'),
+        t(oldu ? 'seller.services.saved' : 'seller.services.save_err'),
+      ),
+    );
   };
 
   return (
@@ -256,7 +268,7 @@ export default function SellerServicesScreen() {
                           style={[styles.input, styles.adInput]}
                         />
                         <Pressable
-                          onPress={() => sil(r.key)}
+                          onPress={() => void sil(r.key)}
                           hitSlop={8}
                           accessibilityRole="button"
                           accessibilityLabel={t('common.delete')}
@@ -300,7 +312,7 @@ export default function SellerServicesScreen() {
                           label={t('seller.services.add_row')}
                           variant={satirGecerli(r) ? 'primary' : 'secondary'}
                           disabled={!satirGecerli(r)}
-                          onPress={() => satiriEkle(r.key)}
+                          onPress={() => void satiriEkle(r.key)}
                         />
                         {!satirGecerli(r) ? (
                           <Text variant="micro" tone="muted">

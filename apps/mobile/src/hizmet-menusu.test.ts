@@ -62,7 +62,7 @@ test('sunucuya KATALOG BAĞIYLA gönderiliyor', () => {
    * `serviceId` gitmezse sunucu satırı kataloğa bağlayamaz: arama,
    * talep eşleşmesi ve "Yakında" hesabı o hizmeti hiç görmez.
    */
-  const yazma = store.slice(store.indexOf('setSellerServices: (rows)'));
+  const yazma = store.slice(store.indexOf('setSellerServices: async (rows)'));
   const govde = yazma.slice(0, yazma.indexOf('api.setMyServices'));
   assert.match(govde, /serviceId: r\.serviceId/, 'katalog bağı gönderilmiyor');
   assert.match(govde, /name: r\.name/, 'uzmanın kendi adı gönderilmiyor');
@@ -92,7 +92,7 @@ test('AYNI alt hizmete birden çok satır eklenebiliyor', () => {
    * listeye EKLİYOR.
    */
   assert.match(hizmetler, /setRows\(\(cur\) => \[\s*\.\.\.cur,/, 'ekleme satırı listeye eklemiyor');
-  assert.match(hizmetler, /sil = \(key: string\)/, 'satır silinemiyor');
+  assert.match(hizmetler, /sil = async \(key: string\)/, 'satır silinemiyor');
 });
 
 test('OFFLINE RANDEVU uzmanın kendi adını gösteriyor', () => {
@@ -139,5 +139,42 @@ test('sunucudan gelen BAĞSIZ satır menüye alınmıyor', () => {
     okuma.slice(0, 1200),
     /if \(!bag \|\| !findServiceWithCategory\(bag\)\) continue;/,
     'bağsız satır süzülmüyor',
+  );
+});
+
+test('"KAYDEDİLDİ" ancak GERÇEKTEN kaydedildiyse', () => {
+  /*
+   * Sunucu hatası yutuluyor ve ekran yine "Kaydedildi" diyordu. Uzmanın
+   * keşif kartı yoksa sunucu `NO_DISCOVERY_CARD` fırlatıyor: hizmetler
+   * hiçbir yere yazılmıyor, müşteri onları hiç görmüyor, uzman kaydettiğini
+   * sanıyor. Kurucunun "uzman hizmet ekliyor ama müşteri göremiyor"
+   * dediği sessizliğin son halkası buydu.
+   */
+  assert.match(store, /setSellerServices: async \(rows\)/, 'kaydetme sonucu bildirmiyor');
+  assert.match(
+    store,
+    /await api\.setMyServices\(gonderilecek\);\s*\n\s*return true;/,
+    'sonuç dönmüyor',
+  );
+  assert.doesNotMatch(
+    store.slice(store.indexOf('setSellerServices: async')),
+    /api\.setMyServices\([^;]*\)\.catch\(\(\) => undefined\)/,
+    'hata hâlâ yutuluyor',
+  );
+  assert.match(
+    hizmetler,
+    /t\(oldu \? 'seller\.services\.saved' : 'seller\.services\.save_err'\)/,
+    'ekran her hâlde "kaydedildi" diyor',
+  );
+  // Satır içi "Ekle" ve "Sil" de aynı sonucu okuyor.
+  assert.match(
+    hizmetler,
+    /const oldu = await setSellerServices\(guncel\.filter\(satirGecerli\)\)/,
+    'ekleme sessiz',
+  );
+  assert.match(
+    hizmetler,
+    /const oldu = await setSellerServices\(kalan\.filter\(satirGecerli\)\)/,
+    'silme sessiz',
   );
 });

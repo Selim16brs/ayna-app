@@ -430,6 +430,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.services.active_unit': 'активных услуг',
   'seller.services.empty': 'В этой категории услуги ещё не выбраны.',
   'seller.services.saved': 'Ваши услуги обновлены.',
+  'seller.services.save_err': 'Не сохранено — ваши услуги не видны клиенту. Попробуйте снова.',
   'seller.services.add_row': 'Добавить',
   'seller.services.need_name_price': 'Нужны название, цена и длительность',
   'home.services': 'Услуги',

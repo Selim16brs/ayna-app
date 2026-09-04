@@ -440,6 +440,7 @@ export const tr = {
   'seller.services.active_unit': 'aktif hizmet',
   'seller.services.empty': 'Bu kategoride henüz hizmet seçmedin.',
   'seller.services.saved': 'Hizmetlerin güncellendi.',
+  'seller.services.save_err': 'Kaydedilemedi — hizmetlerin müşteriye görünmüyor. Tekrar dene.',
   'seller.services.add_row': 'Ekle',
   'seller.services.need_name_price': 'Ad, fiyat ve süre gerekli',
 

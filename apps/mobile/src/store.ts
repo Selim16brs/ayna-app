@@ -417,7 +417,11 @@ interface State {
   // §6.1 — uzman/salon hizmet kataloğu (taksonomi id → fiyat/süre). Profil "Hizmetler" ekranından
   // yönetilir; offline randevu akışında hazır (accordion) seçim olarak kullanılır. Kalıcı saklanır.
   sellerServices: SellerServiceRow[];
-  setSellerServices: (rows: SellerServiceRow[]) => void;
+  /**
+   * Hizmet listesini kaydeder. Sunucu yazımı BAŞARILI MI diye dönüyor:
+   * ekran "Kaydedildi" demeden önce buna bakıyor.
+   */
+  setSellerServices: (rows: SellerServiceRow[]) => Promise<boolean>;
   // §9.5 — uzman/salon profil verileri (kayıt sonrası düzenlenebilir). Kalıcı saklanır.
   sellerSocial: SocialValue;
   sellerHours: DayHours[];
@@ -1037,7 +1041,7 @@ export const useStore = create<State>()(
       },
       setSellerHours: (hours) => set({ sellerHours: hours }),
       sellerServices: bosHizmetListesi(),
-      setSellerServices: (rows) => {
+      setSellerServices: async (rows) => {
         set({ sellerServices: rows });
         // §9.5 — hizmet listesi HESABIN parçası: public profil de bundan beslenir
         const gonderilecek = rows
@@ -1050,7 +1054,21 @@ export const useStore = create<State>()(
             durationMin: Number(r.dur) || 60,
           }))
           .filter((x) => x.price > 0 && x.name);
-        void api.setMyServices(gonderilecek).catch(() => undefined);
+        /*
+         * SUNUCU YAZIMI SESSİZ DEĞİL.
+         *
+         * Hata yutuluyordu ve ekran yine "Kaydedildi" diyordu. Uzmanın
+         * keşif kartı yoksa sunucu `NO_DISCOVERY_CARD` fırlatıyor: hizmetler
+         * hiçbir yere yazılmıyor, müşteri onları hiç görmüyor ve uzman
+         * kaydettiğini sanıyor. Kurucunun "uzman hizmet ekliyor ama müşteri
+         * göremiyor" dediği sessizliğin son halkası buydu.
+         */
+        try {
+          await api.setMyServices(gonderilecek);
+          return true;
+        } catch {
+          return false;
+        }
       },
       sellerSocial: emptySocial,
       sellerHours: defaultHours(),
