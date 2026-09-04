@@ -11,6 +11,7 @@ import { font, type ColorTokens } from '../../src/theme';
 import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Sayac, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { BELGE_GENISLIK, kucultVeB64 } from '../../src/gorsel-kucult';
 
 /**
  * DEPOZİTO ÖDEME — brief §4.4.
@@ -135,7 +136,13 @@ export default function DepositScreen() {
     });
     if (res.canceled || !res.assets[0]) return;
     const a = res.assets[0];
-    setDekont(a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+    /*
+     * DEKONT: tutar ve tarih okunur kalmalı — uzman parayı buna bakarak
+     * onaylıyor. Ham fotoğraf ise sunucunun gövde sınırını aşıp gönderimi
+     * düşürüyordu; randevu depozito aşamasında ölüyordu.
+     */
+    const b64 = await kucultVeB64(a.uri, a.base64, BELGE_GENISLIK);
+    if (b64) setDekont(`data:image/jpeg;base64,${b64}`);
   };
 
   const gonder = async () => {

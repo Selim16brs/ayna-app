@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -8,6 +7,7 @@ import { useLocale } from '../../src/locale';
 import { selectPortraitKesilmis, useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { AVATAR_GENISLIK, BELGE_GENISLIK, kucultVeB64 } from '../../src/gorsel-kucult';
 import {
   Button,
   Screen,
@@ -84,8 +84,9 @@ export default function ProfileEditScreen() {
     });
     if (!res.canceled && res.assets[0]) {
       const a = res.assets[0];
-      const uri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
-      setCerts((c) => [...c, uri]);
+      // Sertifika belge gibi: üstündeki yazı okunur kalmalı.
+      const b64 = await kucultVeB64(a.uri, a.base64, BELGE_GENISLIK);
+      if (b64) setCerts((c) => [...c, `data:image/jpeg;base64,${b64}`]);
     }
   };
   const removeCert = (uri: string) =>
@@ -102,17 +103,7 @@ export default function ProfileEditScreen() {
   // remove.bg ile temizle (Keşfet/uzman hero'sunda kullanılır). Premium değilse upsell.
   const onPhotoPicked = async (asset: ImagePicker.ImagePickerAsset) => {
     // Payload GARANTİSİ: foto 1000px'e küçültülür (remove.bg + sunucu limitleri asla aşılmaz)
-    let b64 = asset.base64 ?? null;
-    try {
-      const small = await ImageManipulator.manipulateAsync(
-        asset.uri,
-        [{ resize: { width: 1000 } }],
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true },
-      );
-      if (small.base64) b64 = small.base64;
-    } catch {
-      /* küçültme başarısızsa orijinal base64 ile devam */
-    }
+    const b64 = await kucultVeB64(asset.uri, asset.base64, AVATAR_GENISLIK);
     // data URL: hem yerelde gösterilir hem HESABA yazılır (store.setAvatar buluta senkronlar)
     setAvatar(b64 ? `data:image/jpeg;base64,${b64}` : asset.uri);
     if (!b64) return;

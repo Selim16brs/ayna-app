@@ -11,6 +11,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 import {
   Button,
   DateField,
@@ -89,7 +90,8 @@ export default function SellerPromotionsScreen() {
     });
     if (!res.canceled && res.assets[0]) {
       const a = res.assets[0];
-      setImage(a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+      const b64 = await kucultVeB64(a.uri, a.base64, PAYLASIM_GENISLIK);
+      if (b64) setImage(`data:image/jpeg;base64,${b64}`);
     }
   };
 

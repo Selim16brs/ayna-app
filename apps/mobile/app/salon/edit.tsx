@@ -9,6 +9,7 @@ import { useStore } from '../../src/store';
 import { activeCategories, tri } from '../../src/taxonomy';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
+import { BELGE_GENISLIK, kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 import {
   Button,
   Screen,
@@ -131,7 +132,8 @@ export default function SalonEditScreen() {
     });
     if (!res.canceled && res.assets[0]) {
       const a = res.assets[0];
-      setAvatar(a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri);
+      const b64 = await kucultVeB64(a.uri, a.base64, BELGE_GENISLIK);
+      if (b64) setAvatar(`data:image/jpeg;base64,${b64}`);
     }
   };
   const addPhoto = async () => {
@@ -142,8 +144,12 @@ export default function SalonEditScreen() {
     });
     if (!res.canceled && res.assets[0]) {
       const a = res.assets[0];
-      const uri = a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri;
-      setPhotos((p) => [...p, uri]);
+      /*
+       * Salon fotoğrafları ÇOKLU ve hepsi tek istekte gidiyor: küçültme
+       * olmadan üç-dört fotoğraf sunucunun gövde sınırını aşıyordu.
+       */
+      const b64 = await kucultVeB64(a.uri, a.base64, PAYLASIM_GENISLIK);
+      if (b64) setPhotos((p) => [...p, `data:image/jpeg;base64,${b64}`]);
     }
   };
   const removePhoto = (uri: string) =>

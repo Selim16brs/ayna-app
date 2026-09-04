@@ -2112,6 +2112,8 @@ export const tr = {
 
   // EK Z.3 — KYC uzman doğrulama
   'kyc.title': 'Kimlik doğrulama',
+  'kyc.read_err': 'Bu görsel okunamadı — başka bir fotoğraf seç.',
+  'kyc.too_big': 'Belgeler çok büyük. Birini çıkar ya da daha küçük bir fotoğraf seç.',
   'kyc.subtitle':
     'Belgelerini yükle, ekibimiz onaylasın — profilinde "Doğrulanmış" rozeti görünsün.',
   'kyc.status_none': 'Henüz doğrulama göndermedin',
