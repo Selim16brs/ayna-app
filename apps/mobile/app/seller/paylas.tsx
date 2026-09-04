@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, type ProCustomer, type ProPost } from '../../src/api';
@@ -9,6 +8,7 @@ import { useStore } from '../../src/store';
 import { type ColorTokens, font, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import { kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 
 /**
  * MÜŞTERİLERİMLE PAYLAŞ — öncesi/sonrası.
@@ -67,17 +67,7 @@ export default function PaylasScreen() {
     });
     const asset = !res.canceled ? res.assets[0] : null;
     if (!asset) return;
-    let b64 = asset.base64 ?? null;
-    try {
-      const kucuk = await ImageManipulator.manipulateAsync(
-        asset.uri,
-        [{ resize: { width: 1200 } }],
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true },
-      );
-      if (kucuk.base64) b64 = kucuk.base64;
-    } catch {
-      /* küçültme başarısızsa orijinalle devam */
-    }
+    const b64 = await kucultVeB64(asset.uri, asset.base64, PAYLASIM_GENISLIK);
     if (!b64) return;
     const uri = `data:image/jpeg;base64,${b64}`;
     if (hedef === 'once') setOnce(uri);

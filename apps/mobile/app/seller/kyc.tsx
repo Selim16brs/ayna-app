@@ -8,6 +8,7 @@ import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { Button, Screen, Segmented, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { BELGE_GENISLIK, kucultVeB64, siniriAsiyorMu } from '../../src/gorsel-kucult';
 
 const DOC_TYPES: KycDocType[] = ['id_card', 'passport', 'certificate'];
 
@@ -45,11 +46,36 @@ export default function KycScreen() {
     });
     if (res.canceled || !res.assets[0]) return;
     const a = res.assets[0];
-    setDocs((prev) => [...prev, a.base64 ? `data:image/jpeg;base64,${a.base64}` : a.uri]);
+    /*
+     * BELGE KÜÇÜLTÜLÜYOR. Bu ekran küçültmüyordu: telefon fotoğrafı base64'e
+     * çevrilince birkaç MB oluyor, iki-üç belge sunucunun 15 MB'lık gövde
+     * sınırını aşıyor ve "doğrulama gönder" hata veriyordu. Profil ve
+     * paylaşım ekranları zaten küçültüyordu; kural artık ortak.
+     */
+    const b64 = await kucultVeB64(a.uri, a.base64, BELGE_GENISLIK);
+    /*
+     * base64 YOKSA EKLENMİYOR. Eskiden yerel dosya yolu (`file://…`) belge
+     * diye listeye giriyordu: sunucuya gönderilse okunamaz bir metin olurdu,
+     * uzman ise belgeyi göndermiş sanırdı.
+     */
+    if (!b64) {
+      Alert.alert(t('kyc.title'), t('kyc.read_err'));
+      return;
+    }
+    setDocs((prev) => [...prev, `data:image/jpeg;base64,${b64}`]);
   };
 
   const submit = async () => {
     if (!token || docs.length === 0 || busy) return;
+    /*
+     * SINIRI AŞAN YIĞIN GÖNDERİLMİYOR. Sunucu 15 MB'ta isteği düşürüyor ve
+     * kullanıcı sebebini anlamayan bir hata görüyor. Küçültmeden sonra bu
+     * neredeyse hiç olmuyor ama beş büyük belge hâlâ aşabilir.
+     */
+    if (siniriAsiyorMu(docs)) {
+      Alert.alert(t('kyc.title'), t('kyc.too_big'));
+      return;
+    }
     setBusy(true);
     try {
       await api.submitKyc(token, { docType, documents: docs });
