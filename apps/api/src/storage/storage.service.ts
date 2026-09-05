@@ -39,6 +39,36 @@ export class StorageService {
           },
         })
       : null;
+    /*
+     * ── YAPILANDIRMA EKSİKSE SESSİZ KALINMIYOR ──────────────────────────
+     *
+     * Depolama yoksa `put()` gelen değeri OLDUĞU GİBİ döndürüyor: telefondan
+     * seçilen fotoğraf ham base64 olarak veritabanı satırına yazılıyor.
+     * Uygulama çalışmaya devam ettiği için hata görünmüyor — ta ki
+     * veritabanı şişip listeler yavaşlayana kadar.
+     *
+     * SMS servisi eksik yapılandırmayı zaten yüksek sesle söylüyor; depolama
+     * söylemiyordu. Sunucu günlüğünde tek satır, kurucunun Railway'de
+     * göreceği yerde.
+     */
+    if (!ok) {
+      const eksik = (
+        [
+          ['R2_ACCOUNT_ID', env.R2_ACCOUNT_ID],
+          ['R2_ACCESS_KEY_ID', env.R2_ACCESS_KEY_ID],
+          ['R2_SECRET_ACCESS_KEY', env.R2_SECRET_ACCESS_KEY],
+          ['R2_BUCKET', env.R2_BUCKET],
+          ['R2_PUBLIC_URL', env.R2_PUBLIC_URL],
+        ] as const
+      )
+        .filter(([, v]) => !v)
+        .map(([k]) => k);
+      this.log.warn(
+        `DEPOLAMA YAPILANDIRMASI EKSİK — şu değişken(ler) boş: ${eksik.join(', ')}. ` +
+          'Yüklenen fotoğraflar VERİTABANINA ham base64 olarak yazılacak; ' +
+          'kayıtlar büyür ve listeler yavaşlar.',
+      );
+    }
   }
 
   get enabled(): boolean {
