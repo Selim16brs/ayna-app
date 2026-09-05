@@ -42,15 +42,35 @@ test('TEK TALEP bir ölçü değil — yeni uzman %0 damgası yemiyor', () => {
   assert.equal(esik.yuzde, 0, 'eşikte iş bileşeni hâlâ ölçülmüyor');
 
   /*
-   * Eşiğin altındaki uzmanın ÖLÇÜLEBİLEN bileşeni varsa yüzde yine
-   * çıkıyor: kural yalnız iş bileşenini susturuyor, uzmanı değil.
+   * Eşiğin altındaki uzman HIZLI CEVAP VERSE DE yüzde çıkmıyor.
+   *
+   * Canlıda (05.09.2026) görülen: tamamlanmış tek işi, tek değerlendirmesi
+   * olmayan uzmanın kartında yeşil "↗ %100 başarı". Tek ölçülebilen bileşen
+   * cevap süresiydi ve ağırlık paylaştırması onu %25'ten %100'e çıkarıyordu.
+   * Müşteri o rozeti "aldığı işlerin %100'ü iyi gitmiş" diye okuyor.
    */
   const cevaplayan = uzmanBasarisi({ tamamlanan: 0, gelenTalep: 1, puanOrt: null, cevapDk: 10 });
-  assert.equal(cevaplayan.yuzde, 100);
-  assert.deepEqual(
-    cevaplayan.bilesenler.map((b) => b.ad),
-    ['cevap'],
-  );
+  assert.equal(cevaplayan.yuzde, null, 'hızlı cevap tek başına başarı yüzdesi üretiyor');
+  assert.deepEqual(cevaplayan.bilesenler, []);
+});
+
+test('CEVAP SÜRESİ TEK BAŞINA yüzde üretmiyor — iş kanıtı şart', () => {
+  // Hiç işi yok, hiç değerlendirmesi yok: ne kadar hızlı dönerse dönsün rozet yok.
+  for (const dk of [1, 10, 30]) {
+    const r = uzmanBasarisi({ tamamlanan: 0, gelenTalep: 0, puanOrt: null, cevapDk: dk });
+    assert.equal(r.yuzde, null, `${dk} dk cevaptan yüzde doğuyor`);
+  }
+  // İŞ KANITI gelince ölçülüyor: bir değerlendirme yeter…
+  const puanli = uzmanBasarisi({ tamamlanan: 0, gelenTalep: 0, puanOrt: 5, cevapDk: 10 });
+  assert.equal(puanli.yuzde, 100);
+  // …ya da eşiği geçen talep sayısı.
+  const isli = uzmanBasarisi({
+    tamamlanan: EN_AZ_TALEP,
+    gelenTalep: EN_AZ_TALEP,
+    puanOrt: null,
+    cevapDk: 10,
+  });
+  assert.equal(isli.yuzde, 100);
 });
 
 test('MÜKEMMEL uzman %100', () => {
@@ -88,21 +108,21 @@ test('İŞ BAŞARISI ORAN — ham sayı değil', () => {
 });
 
 test('CEVAP SÜRESİ eşikleri', () => {
-  const g = { tamamlanan: 0, gelenTalep: 0, puanOrt: null };
-  assert.equal(
-    uzmanBasarisi({ ...g, cevapDk: HIZLI_CEVAP_DK }).yuzde,
-    100,
-    'hızlı cevap tam değil',
-  );
-  assert.equal(uzmanBasarisi({ ...g, cevapDk: 1 }).yuzde, 100);
-  assert.equal(
-    uzmanBasarisi({ ...g, cevapDk: YAVAS_CEVAP_DK }).yuzde,
-    0,
-    'yavaş cevap sıfır değil',
-  );
-  assert.equal(uzmanBasarisi({ ...g, cevapDk: 500 }).yuzde, 0, 'çok yavaş negatife düşüyor');
+  /*
+   * Eşikler BİLEŞENİN KENDİ yüzdesinden okunuyor. Eskiden toplam yüzdeden
+   * okunuyordu ve bu ancak cevap süresi TEK bileşenken çalışıyordu — yani
+   * testin kendisi, kartta "%100 başarı" yalanını üreten duruma dayanıyordu.
+   * İş kanıtı veriliyor; ölçülen yine yalnız cevap bileşeni.
+   */
+  const g = { tamamlanan: 0, gelenTalep: 0, puanOrt: 3 };
+  const cevap = (dk: number) =>
+    uzmanBasarisi({ ...g, cevapDk: dk }).bilesenler.find((b) => b.ad === 'cevap')?.yuzde;
+  assert.equal(cevap(HIZLI_CEVAP_DK), 100, 'hızlı cevap tam değil');
+  assert.equal(cevap(1), 100);
+  assert.equal(cevap(YAVAS_CEVAP_DK), 0, 'yavaş cevap sıfır değil');
+  assert.equal(cevap(500), 0, 'çok yavaş negatife düşüyor');
   // Arası doğrusal: 105 dk tam ortası.
-  assert.equal(uzmanBasarisi({ ...g, cevapDk: 105 }).yuzde, 50);
+  assert.equal(cevap(105), 50);
 });
 
 test('TAMAMLANAN talepten ÇOK olsa bile %100 aşılmıyor', () => {

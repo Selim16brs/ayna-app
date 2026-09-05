@@ -4,6 +4,7 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../locale';
+import { uzmanlikYazisi } from '../uzmanlik';
 import { type Professional, saglayiciMesafesi } from '../data';
 import { useStore } from '../store';
 import { type ColorTokens, radius, space, font } from '../theme';
@@ -43,7 +44,7 @@ const DOGRULANDI: { key: MessageKey; bg: keyof ColorTokens; fg: keyof ColorToken
  * sağda rozet ve lime "Detaylar" pill'i. Dikey listede kullanılır.
  */
 export function SalonRow({ pro, index = 0 }: { pro: Professional; index?: number }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -67,18 +68,32 @@ export function SalonRow({ pro, index = 0 }: { pro: Professional; index?: number
           <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.name}>
             {pro.name}
           </Text>
+          {/*
+            PUAN YOKSA YILDIZ DA YOK — keşif kartıyla aynı kural.
+
+            Burada daha da açığı vardı: "★ 0.0 (0)". Hiç değerlendirilmemiş
+            uzmana sıfır puan yazmak, kimsenin söylemediği bir şeyi söylemek.
+          */}
           <View style={styles.ratingRow}>
-            <Ionicons name="star" size={13} color={colors.gold} />
-            <Text variant="caption" tone="ink" style={styles.rating}>
-              {pro.rating.toFixed(1)}
-            </Text>
-            <Text variant="caption" tone="muted">
-              ({pro.reviewCount})
-            </Text>
+            {pro.reviewCount > 0 ? (
+              <>
+                <Ionicons name="star" size={13} color={colors.gold} />
+                <Text variant="caption" tone="ink" style={styles.rating}>
+                  {pro.rating.toFixed(1)}
+                </Text>
+                <Text variant="caption" tone="muted">
+                  ({pro.reviewCount})
+                </Text>
+              </>
+            ) : (
+              <Text variant="caption" tone="muted" style={styles.rating}>
+                ✨ {t('pro.new')}
+              </Text>
+            )}
           </View>
           <Text variant="caption" tone="muted" numberOfLines={1} style={styles.meta}>
             {km !== null ? `${km.toFixed(1)} km • ` : ''}
-            {pro.district || pro.specialty}
+            {pro.district || uzmanlikYazisi(pro, locale)}
           </Text>
         </View>
 
