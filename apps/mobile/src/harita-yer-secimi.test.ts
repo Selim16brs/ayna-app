@@ -132,5 +132,11 @@ test('yer seçici haritayı yemiyor — alt sayfa', () => {
 
 test('seçili yer düğmenin üstünde YAZILI', () => {
   // Kullanıcı nereye baktığını görmek için sayfayı açmak zorunda kalmamalı.
-  assert.match(ekran, /bolge \? `\$\{city\} · \$\{bolge\}` : city/, 'seçili yer görünmüyor');
+  // Ad YERELLEŞTİRİLİYOR (ru arayüzde "Almatı" yazıyordu); yapı aynı:
+  // bölge varsa "Şehir · Bölge", yoksa yalnız şehir.
+  assert.match(
+    ekran,
+    /bolge \? `\$\{sehirGoster\(city, locale\)\} · \$\{bolge\}` : sehirGoster\(city, locale\)/,
+    'seçili yer görünmüyor ya da yerelleştirilmiyor',
+  );
 });

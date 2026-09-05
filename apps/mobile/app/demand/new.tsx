@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { sehirGoster } from '@ayna/domain';
 import { api } from '../../src/api';
 import { CATEGORIES, COLLECT_DEFAULT, COLLECT_OPTIONS, formatPrice } from '../../src/data';
 import type { MessageKey } from '@ayna/i18n';
@@ -189,7 +190,7 @@ export default function NewDemandScreen() {
             <PressableScale style={styles.locChip} onPress={() => router.push('/city')}>
               <Ionicons name="location" size={13} color={colors.sage} />
               <Text variant="caption" tone="ink" style={styles.locText}>
-                {city}
+                {sehirGoster(city, locale)}
               </Text>
             </PressableScale>
           </View>
@@ -318,7 +319,7 @@ export default function NewDemandScreen() {
                 <Ionicons name="location-outline" size={20} color={colors.inkSoft} />
               </View>
               <Text variant="bodyStrong" tone="ink" style={styles.rowLabel}>
-                {city}
+                {sehirGoster(city, locale)}
               </Text>
               <Text variant="caption" tone="accentFg" numberOfLines={1}>
                 {t('addresses.add')}

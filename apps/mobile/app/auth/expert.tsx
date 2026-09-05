@@ -1,4 +1,4 @@
-import { sifreGecerli } from '@ayna/domain';
+import { sehirGoster, sifreGecerli } from '@ayna/domain';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -892,7 +892,7 @@ export default function ExpertRegisterScreen() {
               <View style={styles.previewRow}>
                 <Ionicons name="location-outline" size={15} color={colors.muted} />
                 <Text variant="caption" tone="muted">
-                  {city}
+                  {sehirGoster(city, locale)}
                   {district ? ` · ${district}` : ''}
                 </Text>
               </View>

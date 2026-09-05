@@ -100,6 +100,76 @@ const YAZIMLAR: Record<string, readonly string[]> = {
   Türkistan: ['Туркестан', 'Түркістан', 'Turkestan'],
 };
 
+/*
+ * ŞEHRİN ÜÇ DİLDEKİ GÖSTERİM ADI.
+ *
+ * Kurucu (05.09.2026, ru arayüzün ekran görüntüsüyle): şehir çipinde
+ * "Almatı" yazıyordu — Rusça ekranda Türkçe yazım. Üç yerde birden:
+ * ana sayfa çipi, "Создать заявку" başlığı ve arama filtresindeki "Город".
+ *
+ * Sebep: kanonik ad depolama anahtarı olarak DOĞRU ('Almatı'), ama ekrana
+ * OLDUĞU GİBİ basılıyordu. Gösterim adı diye bir kavram yoktu.
+ *
+ * `YAZIMLAR` bu işi göremez: orası EŞLEŞTİRME için ve dil etiketi taşımıyor
+ * (aynı listede hem Rusça hem Kazakça hem Latin yazım var, sırası da bir
+ * anlam taşımıyor). Oradan "Rusçası hangisi" diye tahmin etmek, modülün
+ * kendi kuralını ("liste elle yazılıyor, harf kuralıyla türetilmiyor")
+ * çiğnemek olurdu. Bu yüzden gösterim ayrı ve elle yazılı bir tablo.
+ *
+ * Kazakça sütunu Kiril: uygulamanın kk metinleri Kiril alfabesinde.
+ */
+export const SEHIR_ADLARI: Record<string, { tr: string; kk: string; ru: string }> = {
+  Aktau: { tr: 'Aktau', kk: 'Ақтау', ru: 'Актау' },
+  Aktöbe: { tr: 'Aktöbe', kk: 'Ақтөбе', ru: 'Актобе' },
+  Almatı: { tr: 'Almatı', kk: 'Алматы', ru: 'Алматы' },
+  Arkalık: { tr: 'Arkalık', kk: 'Арқалық', ru: 'Аркалык' },
+  Astana: { tr: 'Astana', kk: 'Астана', ru: 'Астана' },
+  Atırav: { tr: 'Atırav', kk: 'Атырау', ru: 'Атырау' },
+  Balkaş: { tr: 'Balkaş', kk: 'Балқаш', ru: 'Балхаш' },
+  Ekibastuz: { tr: 'Ekibastuz', kk: 'Екібастұз', ru: 'Экибастуз' },
+  Jezkazgan: { tr: 'Jezkazgan', kk: 'Жезқазған', ru: 'Жезказган' },
+  Janaözen: { tr: 'Janaözen', kk: 'Жаңаөзен', ru: 'Жанаозен' },
+  Karagandı: { tr: 'Karagandı', kk: 'Қарағанды', ru: 'Караганда' },
+  Kentau: { tr: 'Kentau', kk: 'Кентау', ru: 'Кентау' },
+  Kızılorda: { tr: 'Kızılorda', kk: 'Қызылорда', ru: 'Кызылорда' },
+  Kökşetau: { tr: 'Kökşetau', kk: 'Көкшетау', ru: 'Кокшетау' },
+  Kostanay: { tr: 'Kostanay', kk: 'Қостанай', ru: 'Костанай' },
+  Oral: { tr: 'Oral', kk: 'Орал', ru: 'Уральск' },
+  Öskemen: { tr: 'Öskemen', kk: 'Өскемен', ru: 'Усть-Каменогорск' },
+  Pavlodar: { tr: 'Pavlodar', kk: 'Павлодар', ru: 'Павлодар' },
+  Ridder: { tr: 'Ridder', kk: 'Риддер', ru: 'Риддер' },
+  Rudnıy: { tr: 'Rudnıy', kk: 'Рудный', ru: 'Рудный' },
+  Sarıağaş: { tr: 'Sarıağaş', kk: 'Сарыағаш', ru: 'Сарыагаш' },
+  Semey: { tr: 'Semey', kk: 'Семей', ru: 'Семей' },
+  Stepnogorsk: { tr: 'Stepnogorsk', kk: 'Степногорск', ru: 'Степногорск' },
+  Şımkent: { tr: 'Şımkent', kk: 'Шымкент', ru: 'Шымкент' },
+  Taldıkorgan: { tr: 'Taldıkorgan', kk: 'Талдықорған', ru: 'Талдыкорган' },
+  Taraz: { tr: 'Taraz', kk: 'Тараз', ru: 'Тараз' },
+  Temirtau: { tr: 'Temirtau', kk: 'Теміртау', ru: 'Темиртау' },
+  Türkistan: { tr: 'Türkistan', kk: 'Түркістан', ru: 'Туркестан' },
+};
+
+/**
+ * Şehrin EKRANDA görünecek adı.
+ *
+ * Girdi hangi yazımla gelirse gelsin ('Алматы', 'Almaty', 'Almatı') önce
+ * kanonik ada indiriliyor, sonra istenen dilde yazılıyor.
+ *
+ * TANIMADIĞIMIZ ad OLDUĞU GİBİ dönüyor: kullanıcının elle yazdığı bir yer
+ * adını uydurma bir çeviriyle değiştirmektense aynen göstermek doğru.
+ * Boş girdi boş dönüyor — çağıran taraf kendi yedeğini gösterir.
+ */
+export function sehirGoster(ad: string | null | undefined, locale: string): string {
+  const ham = (ad ?? '').trim();
+  if (!ham) return '';
+  const kanonik = kanonikSehir(ham);
+  if (!kanonik) return ham;
+  const satir = SEHIR_ADLARI[kanonik];
+  if (!satir) return kanonik;
+  const dil = locale.slice(0, 2).toLowerCase();
+  return dil === 'ru' ? satir.ru : dil === 'kk' ? satir.kk : satir.tr;
+}
+
 const KIRIL_LATIN: Record<string, string> = {
   а: 'a',
   ә: 'a',
