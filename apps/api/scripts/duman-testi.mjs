@@ -1198,6 +1198,211 @@ ol(
   JSON.stringify(yorumlar ?? []).slice(0, 100),
 );
 
+/* ══════════════════════════════════════════════════════════════════════
+ * AŞAMA 6 — SALON KADROSU (§4.5, sessiz silme yasak)
+ *
+ * Salon kaydı → yönetici onayı → davet kodu → uzmanın kodla katılması →
+ * kadro listesi → kadrodan çıkarma.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const salonTel = '+7702' + damga.slice(0, 7);
+const salonKaydi = await gonder('/businesses', {
+  name: 'Duman Salon',
+  ownerName: 'Duman Sahip',
+  phone: salonTel,
+  password: 'Duman12345!',
+  sector: 'hair',
+  categories: ['hair', 'nails'],
+  city: 'Almatı',
+  district: 'Bostandık',
+  address: 'Duman caddesi 1',
+  entityType: 'llp',
+  bin: '123456789012',
+  legalName: 'Duman Salon TOO',
+});
+ol('salon kaydı kabul ediliyor', salonKaydi.ok, JSON.stringify(salonKaydi.govde).slice(0, 150));
+const salonId = salonKaydi.govde?.id ?? salonKaydi.govde?.business?.id;
+
+const salonlar = await get('/businesses');
+ol(
+  'ONAYSIZ salon listede YOK',
+  !(salonlar ?? []).some((b) => b.name === 'Duman Salon'),
+  `${(salonlar ?? []).length} onaylı salon`,
+);
+
+// Onaydan ÖNCE sahip içeri giremez — kadro/davet ekranları da böylece kapalı.
+const erkenGiris = await gonder('/auth/login', {
+  identifier: salonTel,
+  password: 'Duman12345!',
+});
+ol(
+  'ONAYSIZ salon sahibi giriş YAPAMIYOR',
+  !erkenGiris.ok,
+  `${erkenGiris.durum} ${erkenGiris.govde?.error?.code ?? ''}`,
+);
+
+const salonOnay = await gonder(`/businesses/${salonId}/approve`, {}, yoneticiToken);
+ol('yönetici salonu onaylıyor', salonOnay.ok, JSON.stringify(salonOnay.govde).slice(0, 130));
+
+// Kayıt token döndürmüyor: sahip onaydan sonra giriş yapıyor (mobildeki akış).
+const salonGiris = await gonder('/auth/login', {
+  identifier: salonTel,
+  password: 'Duman12345!',
+});
+const salonToken = salonGiris.govde?.token;
+ol(
+  'ONAYLI salon sahibi giriş yapabiliyor',
+  !!salonToken,
+  JSON.stringify(salonGiris.govde).slice(0, 130),
+);
+ol(
+  'salon sahibinin rolü SALON',
+  salonGiris.govde?.user?.role === 'salon',
+  String(salonGiris.govde?.user?.role),
+);
+
+const kod = await gonder(`/businesses/${salonId}/invite-codes`, {}, salonToken);
+ol('salon davet kodu üretebiliyor', kod.ok, JSON.stringify(kod.govde).slice(0, 130));
+const davetKodu = kod.govde?.code;
+ol('davet kodu üretildi', !!davetKodu, String(davetKodu));
+
+/* ── 6.1 UZMAN KODLA KATILIYOR ────────────────────────────────────── */
+const kadroTel = '+7703' + damga.slice(0, 7);
+const kadroUzman = await gonder('/specialists', {
+  name: 'Duman Kadro',
+  phone: kadroTel,
+  password: 'Duman12345!',
+  city: 'Almatı',
+  kind: 'salon_bound',
+  businessId: salonId,
+  code: davetKodu,
+  entityType: 'freelance',
+  certificates: [],
+  sector: 'hair',
+  services: [{ serviceId: 'hair.haircut', name: 'Kesim', price: 8000, durationMin: 30 }],
+});
+ol('uzman davet koduyla katılıyor', kadroUzman.ok, JSON.stringify(kadroUzman.govde).slice(0, 200));
+const kadroToken = kadroUzman.govde?.token;
+
+// YANLIŞ kod kabul edilmemeli.
+const yanlisKod = await gonder('/specialists', {
+  name: 'Duman Sahte',
+  phone: '+7704' + damga.slice(0, 7),
+  password: 'Duman12345!',
+  city: 'Almatı',
+  kind: 'salon_bound',
+  businessId: salonId,
+  code: 'YANLIS1',
+  entityType: 'freelance',
+  certificates: [],
+  sector: 'hair',
+  services: [{ serviceId: 'hair.haircut', name: 'Kesim', price: 8000, durationMin: 30 }],
+});
+ol(
+  'YANLIŞ davet kodu reddediliyor',
+  !yanlisKod.ok,
+  `${yanlisKod.durum} ${yanlisKod.govde?.error?.code ?? ''}`,
+);
+
+// Aynı kod İKİNCİ kez kullanılamaz (tek kullanımlık).
+const ikinciKullanim = await gonder('/specialists', {
+  name: 'Duman İkinci',
+  phone: '+7705' + damga.slice(0, 7),
+  password: 'Duman12345!',
+  city: 'Almatı',
+  kind: 'salon_bound',
+  businessId: salonId,
+  code: davetKodu,
+  entityType: 'freelance',
+  certificates: [],
+  sector: 'hair',
+  services: [{ serviceId: 'hair.haircut', name: 'Kesim', price: 8000, durationMin: 30 }],
+});
+ol(
+  'davet kodu TEK KULLANIMLIK',
+  !ikinciKullanim.ok,
+  `${ikinciKullanim.durum} ${ikinciKullanim.govde?.error?.code ?? ''}`,
+);
+
+/* ── 6.2 KADRO LİSTESİ ────────────────────────────────────────────── */
+const kadroYanit = await get(`/businesses/${salonId}/staff`, salonToken);
+const kadro = Array.isArray(kadroYanit) ? kadroYanit : [];
+ol(
+  'salon kadro listesini okuyabiliyor',
+  Array.isArray(kadroYanit),
+  JSON.stringify(kadroYanit ?? {}).slice(0, 130),
+);
+const kadroKaydi = kadro.find((x) => x.name === 'Duman Kadro');
+ol('uzman salon kadrosunda görünüyor', !!kadroKaydi, `${(kadro ?? []).length} kişi`);
+ol(
+  'kadro uzmanın KENDİ hizmetlerini gösteriyor',
+  (kadroKaydi?.services ?? []).includes('Kesim'),
+  JSON.stringify(kadroKaydi?.services ?? []),
+);
+
+// GİZLİLİK: başka salon bu kadroyu okuyamaz.
+const baskaSalon = await get(`/businesses/${salonId}/staff`, uzmanToken);
+ol(
+  'BAŞKASI salon kadrosunu okuyamıyor',
+  !Array.isArray(baskaSalon),
+  JSON.stringify(baskaSalon ?? {}).slice(0, 90),
+);
+
+/* ── 6.3 KADRODAN ÇIKARMA (§4.5) ──────────────────────────────────── */
+const yetkisiz = await gonder(
+  `/businesses/${salonId}/staff/${kadroKaydi?.id}/remove`,
+  {},
+  uzmanToken,
+);
+ol(
+  'SAHİBİ OLMAYAN kadrodan çıkaramıyor',
+  !yetkisiz.ok,
+  `${yetkisiz.durum} ${yetkisiz.govde?.error?.code ?? ''}`,
+);
+
+const cikar = await gonder(`/businesses/${salonId}/staff/${kadroKaydi?.id}/remove`, {}, salonToken);
+ol('salon uzmanı kadrodan çıkarabiliyor', cikar.ok, JSON.stringify(cikar.govde).slice(0, 130));
+ol('salon bağı KOPUYOR', cikar.govde?.businessId === null, String(cikar.govde?.businessId));
+
+const kadroSonraYanit = await get(`/businesses/${salonId}/staff`, salonToken);
+const kadroSonra = Array.isArray(kadroSonraYanit) ? kadroSonraYanit : [];
+ol(
+  'uzman kadro listesinden ÇIKIYOR',
+  !kadroSonra.some((x) => x.name === 'Duman Kadro'),
+  `${kadroSonra.length} kişi kaldı`,
+);
+
+// Hesabı SİLİNMİYOR: bağımsız uzman olarak devam ediyor.
+const kadroProId = (await get('/specialists/me/pro-id', kadroToken))?.proId;
+ol('çıkarılan uzmanın KENDİ kartı duruyor', !!kadroProId, String(kadroProId));
+const kadroHizmetler = await get('/specialists/me/services', kadroToken);
+ol(
+  'çıkarılan uzmanın HİZMETLERİ duruyor',
+  (kadroHizmetler?.services ?? []).length > 0,
+  `${(kadroHizmetler?.services ?? []).length} hizmet`,
+);
+
+// Sessiz silme yasak: uzmana bildirim gitmeli.
+const kadroKutuYanit = await get('/push/notifications', kadroToken);
+const kadroKutu = Array.isArray(kadroKutuYanit) ? kadroKutuYanit : [];
+ol(
+  'çıkarılan uzmana BİLDİRİM gidiyor',
+  kadroKutu.some((n) => `${n.title ?? ''} ${n.body ?? ''}`.toLowerCase().includes('kadro')),
+  JSON.stringify(kadroKutuYanit ?? {}).slice(0, 140),
+);
+
+// İkinci çıkarma denemesi: artık o kadroda değil.
+const tekrarCikar = await gonder(
+  `/businesses/${salonId}/staff/${kadroKaydi?.id}/remove`,
+  {},
+  salonToken,
+);
+ol(
+  'kadroda olmayan uzman çıkarılamıyor',
+  !tekrarCikar.ok,
+  `${tekrarCikar.durum} ${tekrarCikar.govde?.error?.code ?? ''}`,
+);
+
 /* ── RAPOR ─────────────────────────────────────────────────────────── */
 const dusen = sonuclar.filter((s) => !s.gecti);
 for (const s of sonuclar) {
@@ -1221,12 +1426,24 @@ try {
   const { PrismaClient } = await import('@prisma/client');
   const p = new PrismaClient();
   const kullanicilar = await p.user.findMany({
-    where: { name: { in: ['Duman Uzman', 'Duman Müşteri'] } },
+    where: {
+      name: {
+        in: [
+          'Duman Uzman',
+          'Duman Müşteri',
+          'Duman Sahip',
+          'Duman Kadro',
+          // Reddedilmesi beklenen kayıtlar: bir gün geçerlerse artıkları burada kalmasın.
+          'Duman Sahte',
+          'Duman İkinci',
+        ],
+      },
+    },
     select: { id: true },
   });
   const ids = kullanicilar.map((u) => u.id);
   const prolar = await p.professional.findMany({
-    where: { name: 'Duman Uzman' },
+    where: { name: { in: ['Duman Uzman', 'Duman Kadro', 'Duman Sahte', 'Duman İkinci'] } },
     select: { id: true },
   });
   // Sıra ÖNEMLİ: randevu ve teklifler talebe bağlı; önce onlar silinmeli.
@@ -1251,7 +1468,17 @@ try {
   await p.notificationOutbox.deleteMany({ where: { userId: { in: ids } } });
   await p.userPrefs.deleteMany({ where: { userId: { in: ids } } });
   await p.specialist.deleteMany({ where: { userId: { in: ids } } });
-  await p.professional.deleteMany({ where: { name: 'Duman Uzman' } });
+  const salonlarim = await p.business.findMany({
+    where: { ownerUserId: { in: ids } },
+    select: { id: true },
+  });
+  await p.businessInviteCode.deleteMany({
+    where: { businessId: { in: salonlarim.map((x) => x.id) } },
+  });
+  await p.business.deleteMany({ where: { ownerUserId: { in: ids } } });
+  await p.professional.deleteMany({
+    where: { name: { in: ['Duman Uzman', 'Duman Kadro', 'Duman Sahte', 'Duman İkinci'] } },
+  });
   await p.user.deleteMany({ where: { id: { in: ids } } });
   await p.$disconnect();
   // HANGİ veritabanı temizlendi: yanlış hedefe koşan bir temizlik sessiz kalmasın.
