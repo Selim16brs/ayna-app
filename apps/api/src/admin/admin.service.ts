@@ -1222,6 +1222,23 @@ export class AdminService {
        */
       depositReceiptUri: b.depositReceiptUri ?? null,
       depositAmount: b.depositAmount != null ? Number(b.depositAmount) : null,
+      /*
+       * ── İKİ TARAFIN ONAYI ────────────────────────────────────────────
+       *
+       * Kurucu (05.09.2026): "her iki tarafın onayı adminde müşterinin ayna
+       * parasını aktif hale getirir."
+       *
+       * Panel bu iki onayı HİÇ göstermiyordu: yönetici, puanın neden
+       * yazılmadığını (hangi tarafın onayının eksik olduğunu) göremiyordu.
+       *   · musteriOdedi — müşterinin "ödemeyi yaptım" beyanı
+       *   · uzmanAldi    — uzmanın teyidi; randevu tamamlandıysa var
+       *   · aynaParaAktif — ikisi de varsa puan yazılmış demektir
+       */
+      musteriOdedi: b.balanceDeclaredAt != null,
+      uzmanAldi: b.completedAt != null,
+      aynaParaAktif: b.balanceDeclaredAt != null && b.completedAt != null,
+      // Kasada değişen fiyat — komisyon tabanı bu (bkz. odenenTutar).
+      finalPrice: b.finalPrice != null ? Number(b.finalPrice) : null,
       createdAt: b.createdAt,
     }));
     return filter && filter !== 'all' ? mapped.filter((b) => b.status === filter) : mapped;

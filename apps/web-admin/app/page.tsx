@@ -4412,7 +4412,32 @@ function BookingsAdminView() {
                   {b.dateLabel}
                   {b.customerName ? ` · ${b.customerName}` : ''} ·{' '}
                   {b.online ? 'Online (app)' : 'Offline (salon)'}
+                  {b.finalPrice != null ? ` · kasada ${TL(b.finalPrice)}` : ''}
                 </div>
+                {/*
+                  İKİ TARAFIN ONAYI — kurucu (05.09.2026): "her iki tarafın
+                  onayı adminde müşterinin ayna parasını aktif hale getirir."
+
+                  Panel bu iki onayı hiç göstermiyordu: yönetici, puanın neden
+                  yazılmadığını (hangi tarafın onayının eksik olduğunu)
+                  göremiyordu. Yalnız online randevularda anlamlı — offline
+                  salon kaydında ayna para zaten doğmuyor.
+                */}
+                {b.online ? (
+                  <div className="meta">
+                    <span title="Müşterinin 'ödemeyi yaptım' beyanı">
+                      {b.musteriOdedi ? '✓' : '○'} müşteri ödedi
+                    </span>
+                    {' · '}
+                    <span title="Uzmanın 'ödemeyi aldım' teyidi">
+                      {b.uzmanAldi ? '✓' : '○'} uzman aldı
+                    </span>
+                    {' · '}
+                    <span title="İkisi de onayladıysa müşterinin ayna parası yazıldı">
+                      {b.aynaParaAktif ? 'ayna para AKTİF' : 'ayna para bekliyor'}
+                    </span>
+                  </div>
+                ) : null}
               </div>
               {/*
                 DEPOZİTO DEKONTU GÖRÜNÜR.

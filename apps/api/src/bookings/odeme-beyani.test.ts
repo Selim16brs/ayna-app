@@ -112,15 +112,46 @@ test('HİZMET GÜNÜNDE beyan randevuyu ödeme beklemeye taşıyor', async () =>
   assert.ok(randevu.finalizeDeadline, 'uzmanın itiraz penceresi başlamadı');
 });
 
-test('MÜŞTERİ BEYAN EDİNCE PUAN YAZILIYOR — "bastığında ayna para kazanıyor"', async () => {
+test('MÜŞTERİ BEYANI TEK BAŞINA PUAN ÜRETMİYOR — iki taraf onaylamalı', async () => {
+  /*
+   * Kurucu (05.09.2026): "her iki tarafın onayı adminde müşterinin ayna
+   * parasını aktif hale getirir."
+   *
+   * Beyan ÖN KOŞUL ama yeterli değil: ödemediği hâlde "ödedim" diyen bir
+   * müşteri, uzman itiraz etmeye fırsat bulamadan puanı almış olurdu.
+   */
   const { svc, defter } = sahteOrtam(HIZMET_GUNU());
   await svc.balancePaid('bk-1', 'musteri-1');
   await bekle();
+  assert.equal(
+    defter.find((d) => d.reason === 'rewards.earn.cashback'),
+    undefined,
+    'tek taraflı beyan puan üretiyor',
+  );
+});
+
+test('UZMAN TEYİT EDİNCE puan yazılıyor', async () => {
+  const { svc, defter } = sahteOrtam(HIZMET_GUNU());
+  await svc.balancePaid('bk-1', 'musteri-1');
+  await svc.balanceReceived('bk-1', 'uzman-1');
+  await bekle();
   const kazanim = defter.find((d) => d.reason === 'rewards.earn.cashback');
-  assert.ok(kazanim, 'beyan puan üretmedi');
+  assert.ok(kazanim, 'iki taraf onayladığı hâlde puan yok');
   // %1 geri kazanım: 20.000 ₸ → 200 puan.
   assert.equal(kazanim.points, 200);
   assert.equal(kazanim.detail, 'bk-1');
+});
+
+test('MÜŞTERİ BEYAN ETMEDİYSE uzman teyidi de puan üretmiyor', async () => {
+  // Uzman "ödemeyi aldım" diyebiliyor ama müşteri hiçbir şey beyan etmemiş:
+  // kurucunun kuralı İKİ tarafın onayı — biri eksikse ayna para doğmuyor.
+  const { svc, defter } = sahteOrtam(HIZMET_GUNU({ status: 'odeme_bekliyor' }));
+  await svc.balanceReceived('bk-1', 'uzman-1');
+  await bekle();
+  assert.equal(
+    defter.find((d) => d.reason === 'rewards.earn.cashback'),
+    undefined,
+  );
 });
 
 test('FİYAT DEĞİŞMEDİYSE finalPrice YAZILMIYOR', async () => {
@@ -138,6 +169,9 @@ test('FİYAT DEĞİŞTİYSE beyan edilen tutar yazılıyor ve PUAN ONDAN doğuyo
   assert.equal(randevu.finalPrice, 30000);
   // Rezervasyon fiyatı KORUNUYOR: depozito onun %10'u olarak alınmıştı.
   assert.equal(randevu.price, 20000);
+  // Puan uzman teyidiyle doğuyor; tutar müşterinin beyanından geliyor.
+  await svc.balanceReceived('bk-1', 'uzman-1');
+  await bekle();
   const kazanim = defter.find((d) => d.reason === 'rewards.earn.cashback');
   assert.equal(kazanim?.points, 300, 'puan hâlâ eski fiyattan hesaplanıyor');
   // §12 — para olayı denetim kaydına giriyor.

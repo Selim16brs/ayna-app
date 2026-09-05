@@ -805,6 +805,14 @@ export interface AdminBooking {
   /** Depozito dekontu (varsa) — yönetici §4.4 doğrulamasını buradan yapıyor. */
   depositReceiptUri: string | null;
   depositAmount: number | null;
+  /** Müşterinin "ödemeyi yaptım" beyanı. */
+  musteriOdedi: boolean;
+  /** Uzmanın "ödemeyi aldım" teyidi (randevu kapandı). */
+  uzmanAldi: boolean;
+  /** İkisi de varsa müşterinin ayna parası yazılmış demektir. */
+  aynaParaAktif: boolean;
+  /** Kasada fiyat değiştiyse müşterinin beyan ettiği tutar. */
+  finalPrice: number | null;
   createdAt: string;
 }
 export interface QuoteReq {
