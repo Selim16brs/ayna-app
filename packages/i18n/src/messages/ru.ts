@@ -997,6 +997,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'rewards.earn.provider_noshow': 'Компенсация за неявку мастера',
   'rewards.earn.first_booking': 'Завершение первой записи',
   'rewards.earn.w2w_like': 'Лайк в W2W',
+  'rewards.refund.deposit': 'Возврат баллов за отменённую запись',
   'rewards.earn.referral': 'Пригласите друга',
   'rewards.redeem.title': 'Используйте баллы',
   'rewards.redeem.discount': 'Скидка на запись',

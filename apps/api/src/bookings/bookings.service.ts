@@ -31,6 +31,7 @@ import {
   grantCompletionRewards,
 } from '../loyalty/completion-rewards';
 import { loadLedgerState, loadLoyaltyRules } from '../loyalty/loyalty.rules';
+import { PUAN_HARCAMA_SEBEBI, iadeEdilecekNakit, randevuPuaniniIadeEt } from '../loyalty/puan-iade';
 import { loadDepositRules } from './deposit.rules';
 import { cevapSonu, holdDeadline, loadWindows } from './booking-windows';
 import { SLOT_HOLDING_STATUSES } from './slot-statuses';
@@ -128,7 +129,7 @@ export class BookingsService {
       data: {
         userId: b.userId,
         kind: 'spend',
-        reason: 'rewards.spend.deposit',
+        reason: PUAN_HARCAMA_SEBEBI,
         detail: bookingId,
         points: -split.pointsUsed,
       },
@@ -663,14 +664,26 @@ export class BookingsService {
       userId: string | null;
       startAt: Date | null;
       depositAmount: unknown;
+      // Puanla kapatılan kısım: nakit iadeden düşülüyor (bkz. puan-iade).
+      pointsUsed: number;
     },
     nowMs: number,
   ) {
-    // Depozito HER İKİ durumda da müşteriye iade edilir.
-    const tutar = Number(b.depositAmount ?? 0);
+    /*
+     * Depozito HER İKİ durumda da müşteriye iade edilir — ama NAKİT olarak
+     * yalnız gerçekten ödenen nakit. Puanla kapatılan kısım puan olarak geri
+     * dönüyor; yoksa müşteri puanını nakde çevirmiş olurdu (bkz. puan-iade).
+     */
+    const tutar = iadeEdilecekNakit(b.depositAmount, b.pointsUsed);
     if (b.userId && tutar > 0) {
       await this.iadeHakkiYaz(b.id, b.userId, 'musteri_iade', tutar);
     }
+    if (b.userId)
+      await randevuPuaniniIadeEt(this.prisma, b.id, b.userId).catch((e: unknown) =>
+        this.log.error(
+          `puan iadesi yazılamadı: booking=${b.id} — ${e instanceof Error ? e.message : String(e)}`,
+        ),
+      );
     if (!b.proId) return;
     const sp = await this.prisma.specialist.findFirst({ where: { proId: b.proId } });
     if (!sp) return;
@@ -1289,9 +1302,20 @@ export class BookingsService {
         message: 'Bu randevuda iade hakkı doğmadı',
       });
 
-    const tutar = Number(b.depositAmount ?? 0);
-    if (tutar <= 0)
+    /*
+     * NAKİT İADE = gerçekten ödenen nakit. Puanla kapatılan kısım aşağıda
+     * PUAN olarak geri veriliyor; ikisini birden nakit ödemek, puanı paraya
+     * çevirmenin kapısıydı.
+     */
+    const puanIadesi = await randevuPuaniniIadeEt(this.prisma, id, b.userId);
+    const tutar = iadeEdilecekNakit(b.depositAmount, b.pointsUsed);
+    if (tutar <= 0) {
+      // Depozitonun TAMAMI puanla ödenmişse iade edilecek nakit yok; puan
+      // zaten geri verildi. Bunu hata saymak, müşteriye hakkını vermeyip
+      // üstüne "iade edilecek depozito yok" demek olurdu.
+      if (puanIadesi > 0) return { ok: true as const, puanIadesi, tutar: 0 };
       throw new BadRequestException({ code: 'NO_DEPOSIT', message: 'İade edilecek depozito yok' });
+    }
 
     // Benzersiz (bookingId, kind) kısıtı ikinci talebi engelliyor: çift iade
     // ödemek, para akışındaki en pahalı hata olurdu.
