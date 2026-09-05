@@ -1166,6 +1166,32 @@ export class BookingsService {
         },
       });
     });
+    /*
+     * ── MÜŞTERİYE HABER VERİLİYOR ────────────────────────────────────────
+     *
+     * Onay HİÇ BİLDİRİM GÖNDERMİYORDU. Oysa bu anda müşterinin 10 dakikalık
+     * depozito süresi BAŞLIYOR: ödemezse randevu düşüyor ve slot açılıyor.
+     *
+     * Uygulama açıkken yerel bir bildirim üretiliyordu; telefon kapalıysa —
+     * yani push'un asıl işi olan durumda — müşteri hiçbir şey görmüyor,
+     * on dakika sonra randevusunu kaybediyordu.
+     *
+     * Uçtan uca canlı denemede bulundu (06.09.2026): onaydan sonra
+     * müşterinin bildirim kutusu boş kalıyordu.
+     */
+    if (row.userId) {
+      const kalanDk = row.depositDeadline
+        ? Math.max(1, Math.round((row.depositDeadline.getTime() - Date.now()) / 60_000))
+        : 10;
+      void this.push
+        .sendTemplate(
+          row.userId,
+          'booking.pre_approved',
+          { tutar: String(row.depositAmount ?? 0), dakika: String(kalanDk) },
+          { route: `/booking/deposit?id=${id}` },
+        )
+        .catch(() => undefined);
+    }
     // Rol ÇAĞIRANDAN: uzman onayladığında ona uzman görünümü dönmeli.
     return mapBooking(row, { forProvider: rol === 'provider' });
   }

@@ -396,6 +396,253 @@ ol(
   `${sadakat?.points} puan`,
 );
 
+/* ══════════════════════════════════════════════════════════════════════
+ * AŞAMA 2 — HİZMET GÜNÜ → ÖDEME → PUAN → DEĞERLENDİRME
+ *
+ * Kurucu (06.09.2026): "end2end canlı deneme yap. hiçbir hatayı pas geçme…
+ * tüm app özellikleri rezervasyondan puanlamaya kadar ne varsa sorunsuz
+ * çalışsın."
+ *
+ * Yukarıdaki akış randevu GÜNÜ GELMEDEN durduğu için ödeme, puan ve
+ * değerlendirme hiç denenmiyordu — para akışının yarısı testsizdi. Burada
+ * başlangıcı GEÇMİŞTE olan bir randevu açılıyor (aynı gün/aynı saat kaydı
+ * gerçek bir durum) ve akış sonuna kadar yürütülüyor.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const musteriToken = musteri.govde?.token;
+const HIZMET_FIYATI = 20000;
+
+/*
+ * UZMANIN KİMLİĞİ KENDİ UCUNDAN.
+ *
+ * Keşif listesinden ADLA aramak yanlış kaydı bulabiliyor: aynı adlı eski bir
+ * test kaydı varsa randevu BAŞKA uzmana bağlanıyor ve bu koşudaki uzman
+ * "bu randevu üzerinde yetkin yok" hatası alıyor. Ad kimlik değildir —
+ * uygulamanın kendi kuralı da bu.
+ */
+const proKimlik = (await get('/specialists/me/pro-id', uzmanToken))?.proId;
+ol('uzman kendi keşif kimliğini okuyabiliyor', !!proKimlik, String(proKimlik));
+
+/**
+ * Başlangıcı GEÇMİŞTE olan randevu açar — hizmet günü akışı için.
+ *
+ * Süre 30 dk ve çağrılar en az 60 dk arayla: aksi hâlde randevular
+ * birbirinin slotunu kapatıyor ve sunucu haklı olarak SLOT_TAKEN diyor.
+ * (İlk yazımda 60 dk süre + 15 dk aralık kullanılmıştı; testin kendi verisi
+ * çakışıyordu.)
+ */
+async function gecmisRandevuAc(dakikaOnce, fiyat = HIZMET_FIYATI) {
+  const r = await gonder(
+    '/bookings',
+    {
+      id: `e2e-${damga}-${Math.random().toString(36).slice(2, 8)}`,
+      source: 'direct',
+      service: 'Saç kesimi',
+      proId: proKimlik,
+      proName: 'Duman Uzman',
+      proImage: '',
+      dateLabel: 'bugün',
+      inDays: 0,
+      price: fiyat,
+      durationMin: 30,
+      startMs: Date.now() - dakikaOnce * 60_000,
+    },
+    musteriToken,
+  );
+  return r;
+}
+
+/** Randevuyu kesinleşmiş hâle getirir: uzman onaylar + müşteri dekont yükler. */
+async function kesinlestir(id, dekontIcerik) {
+  const onay = await gonder(`/bookings/${id}/approve`, {}, uzmanToken);
+  const dekont = await gonder(
+    `/bookings/${id}/deposit-receipt`,
+    { receiptUri: `data:image/jpeg;base64,${dekontIcerik}` },
+    musteriToken,
+  );
+  return { onay, dekont };
+}
+
+/* ── 2.1 MÜŞTERİ ÖNCE ÖDER, UZMAN SONRA TEYİT EDER ─────────────────── */
+const r1 = await gecmisRandevuAc(200);
+ol('geçmiş saatli randevu açılıyor', r1.ok, JSON.stringify(r1.govde).slice(0, 140));
+const id1 = r1.govde?.id;
+const k1 = await kesinlestir(id1, 'RTJFLTE=');
+ol(
+  'uzman onayı depozito adımını açıyor',
+  k1.onay.govde?.status === 'depozito_bekliyor',
+  String(k1.onay.govde?.status),
+);
+ol(
+  'depozito %10 hesaplandı',
+  Number(k1.onay.govde?.depositAmount) === HIZMET_FIYATI / 10,
+  String(k1.onay.govde?.depositAmount),
+);
+ol(
+  'dekont randevuyu kesinleştiriyor',
+  k1.dekont.govde?.status === 'kesinlesti',
+  String(k1.dekont.govde?.status),
+);
+
+// Kasada fiyat DEĞİŞTİ: 20.000 → 26.000. Puan ve komisyon bundan doğmalı.
+const ODENEN = 26000;
+const beyan = await gonder(`/bookings/${id1}/balance-paid`, { amount: ODENEN }, musteriToken);
+ol('müşteri ödeme beyan edebiliyor', beyan.ok, JSON.stringify(beyan.govde).slice(0, 140));
+ol(
+  'beyan randevuyu ödeme beklemeye taşıyor',
+  beyan.govde?.status === 'odeme_bekliyor',
+  String(beyan.govde?.status),
+);
+ol(
+  'beyan MÜŞTERİ görünümü dönüyor',
+  beyan.govde?.benimRolum === 'musteri',
+  String(beyan.govde?.benimRolum),
+);
+ol(
+  'kasada değişen tutar kaydedildi',
+  Number(beyan.govde?.finalPrice) === ODENEN,
+  String(beyan.govde?.finalPrice),
+);
+
+const puanAra = await get('/loyalty', musteriToken);
+ol('TEK TARAFLI beyan puan üretmiyor', (puanAra?.points ?? 0) === 0, `${puanAra?.points} puan`);
+
+const teyit = await gonder(`/bookings/${id1}/balance-received`, {}, uzmanToken);
+ol('uzman ödemeyi teyit edebiliyor', teyit.ok, JSON.stringify(teyit.govde).slice(0, 140));
+ol(
+  'iki onay randevuyu TAMAMLIYOR',
+  teyit.govde?.status === 'tamamlandi',
+  String(teyit.govde?.status),
+);
+ol(
+  'teyit UZMAN görünümü dönüyor',
+  teyit.govde?.benimRolum === 'uzman',
+  String(teyit.govde?.benimRolum),
+);
+
+// Puan yazımı `void` bir zincirde: kısa bir bekleme gerekiyor.
+await new Promise((r) => setTimeout(r, 1200));
+const puanSonra = await get('/loyalty', musteriToken);
+// %1 geri kazanım ÖDENEN tutardan: 26.000 → 260 puan (rezervasyondaki 20.000 değil).
+ol(
+  'puan ÖDENEN tutardan doğdu',
+  (puanSonra?.points ?? 0) === Math.floor(ODENEN / 100),
+  `${puanSonra?.points} puan (beklenen ${Math.floor(ODENEN / 100)})`,
+);
+
+/* ── 2.2 SIRA TERS: UZMAN ÖNCE TEYİT EDER ──────────────────────────── */
+const r2 = await gecmisRandevuAc(130);
+const id2 = r2.govde?.id;
+await kesinlestir(id2, 'RTJFLTI=');
+const teyitOnce = await gonder(`/bookings/${id2}/balance-received`, {}, uzmanToken);
+ol('uzman ÖNCE teyit edebiliyor', teyitOnce.ok, JSON.stringify(teyitOnce.govde).slice(0, 120));
+ol(
+  'tek taraflı teyit randevuyu KAPATMIYOR',
+  teyitOnce.govde?.status === 'odeme_bekliyor',
+  String(teyitOnce.govde?.status),
+);
+const beyanSonra = await gonder(`/bookings/${id2}/balance-paid`, {}, musteriToken);
+ol(
+  'müşteri beyanı el sıkışmayı TAMAMLIYOR',
+  beyanSonra.govde?.status === 'tamamlandi',
+  String(beyanSonra.govde?.status),
+);
+await new Promise((r) => setTimeout(r, 1200));
+const puanIki = await get('/loyalty', musteriToken);
+// İkinci randevu 20.000 (fiyat değişmedi) → +200 puan.
+ol(
+  'ters sırada da puan doğuyor',
+  (puanIki?.points ?? 0) === Math.floor(ODENEN / 100) + HIZMET_FIYATI / 100,
+  `${puanIki?.points} puan`,
+);
+
+/* ── 2.3 DEĞERLENDİRME ─────────────────────────────────────────────── */
+const yorum = await gonder(
+  '/ratings',
+  { bookingId: id1, raterRole: 'user', score: 5, comment: 'Duman testi yorumu', anonymous: true },
+  musteriToken,
+);
+ol('tamamlanan randevu değerlendirilebiliyor', yorum.ok, JSON.stringify(yorum.govde).slice(0, 140));
+ol(
+  'yorum YAZARIN KİMLİĞİNİ taşımıyor',
+  !JSON.stringify(yorum.govde ?? {}).includes(musteriId),
+  JSON.stringify(yorum.govde ?? {}).slice(0, 120),
+);
+
+const yorumsuzRandevu = await gecmisRandevuAc(60);
+const yorumRed = await gonder(
+  '/ratings',
+  { bookingId: yorumsuzRandevu.govde?.id, raterRole: 'user', score: 1, comment: 'olmaz' },
+  musteriToken,
+);
+ol(
+  'TAMAMLANMAMIŞ randevu değerlendirilemiyor',
+  !yorumRed.ok,
+  `${yorumRed.durum} ${yorumRed.govde?.error?.code ?? ''}`,
+);
+
+/* ── 2.4 KOMİSYON VE CARİ ──────────────────────────────────────────── */
+const kom = await get('/admin/commissions', yoneticiToken);
+const salon = (kom?.salons ?? []).find((s) => s.proName === 'Duman Uzman');
+ol('komisyon panelinde uzman görünüyor', !!salon, `salon sayısı: ${(kom?.salons ?? []).length}`);
+if (salon) {
+  // İki tamamlanan randevu: 26.000 + 20.000 = 46.000 ciro → %10 = 4.600 komisyon.
+  const beklenenKomisyon = (ODENEN + HIZMET_FIYATI) * 0.1;
+  ol(
+    'komisyon ÖDENEN tutarlardan',
+    Math.abs(salon.earned - beklenenKomisyon) < 1,
+    `${salon.earned} (beklenen ${beklenenKomisyon})`,
+  );
+  // Depozitolar AYNA'da: 2.000 + 2.000 = 4.000 peşin tahsil.
+  ol('peşin depozito düşülüyor', Math.abs(salon.deposits - 4000) < 1, String(salon.deposits));
+  // Cari borç = komisyon − depozito = 4.600 − 4.000 = 600.
+  ol(
+    'cari borç = komisyon − depozito',
+    Math.abs(salon.outstanding - 600) < 1,
+    `${salon.outstanding} (beklenen 600)`,
+  );
+}
+
+/* ── 2.5 ONAY BİLDİRİMİ ────────────────────────────────────────────── */
+/*
+ * Onay anında müşterinin 10 dakikalık depozito süresi BAŞLIYOR. Bildirim
+ * gitmezse müşteri telefonu kapalıyken randevusunu kaybediyor.
+ */
+const oncekiKutu = (await get('/push/notifications', musteriToken))?.length ?? 0;
+const r3 = await gecmisRandevuAc(270);
+const onay3 = await gonder(`/bookings/${r3.govde?.id}/approve`, {}, uzmanToken);
+ol('onay bildirimi için randevu onaylandı', onay3.ok, JSON.stringify(onay3.govde).slice(0, 160));
+await new Promise((r) => setTimeout(r, 900));
+const kutu = (await get('/push/notifications', musteriToken)) ?? [];
+ol('ONAY müşteriye bildiriliyor', kutu.length > oncekiKutu, `${oncekiKutu} → ${kutu.length}`);
+const onayBildirimi = kutu[0];
+ol(
+  'bildirim DEPOZİTO TUTARINI yazıyor',
+  String(onayBildirimi?.body ?? '').includes('2000'),
+  String(onayBildirimi?.body ?? '').slice(0, 90),
+);
+ol(
+  'bildirim depozito ekranına yönlendiriyor',
+  String(onayBildirimi?.route ?? '').includes('/booking/deposit'),
+  String(onayBildirimi?.route ?? ''),
+);
+
+/* ── 2.6 BİLDİRİM TERCİHİ ──────────────────────────────────────────── */
+await gonder('/prefs', { notif: { booking: false } }, musteriToken);
+const kapaliOncesi = (await get('/push/notifications', musteriToken))?.length ?? 0;
+const r4 = await gecmisRandevuAc(340);
+await gonder(`/bookings/${r4.govde?.id}/approve`, {}, uzmanToken);
+await new Promise((r) => setTimeout(r, 900));
+const kapaliSonrasi = (await get('/push/notifications', musteriToken))?.length ?? 0;
+// Kapatılan bildirim TELEFONA düşmüyor ama KUTUDA duruyor: kullanıcı
+// "telefonuma düşmesin" dedi, "hiç haberim olmasın" demedi.
+ol(
+  'kapatılan bildirim kutuda DURUYOR',
+  kapaliSonrasi > kapaliOncesi,
+  `${kapaliOncesi} → ${kapaliSonrasi}`,
+);
+await gonder('/prefs', { notif: { booking: true } }, musteriToken);
+
 /* ── RAPOR ─────────────────────────────────────────────────────────── */
 const dusen = sonuclar.filter((s) => !s.gecti);
 for (const s of sonuclar) {
@@ -405,6 +652,17 @@ console.log(`\n${sonuclar.length - dusen.length}/${sonuclar.length} geçti`);
 
 /* ── TEMİZLİK — bu betik ARDINDA VERİ BIRAKMAZ ─────────────────────── */
 try {
+  /*
+   * TEMİZLİK, SUNUCUNUN VERİTABANINDA ÇALIŞMALI.
+   *
+   * `DATABASE_URL` verilmediğinde Prisma varsayılan bağlantıya düşüyor ve
+   * temizlik BAŞKA bir veritabanında koşuyordu: ekrana "test verisi silindi"
+   * yazıyor, gerçek veritabanında kayıtlar birikmeye devam ediyordu. Sonraki
+   * koşu o kalıntılara takılıyor ve hata sanki üründeymiş gibi görünüyor.
+   */
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL yok — temizlik yanlış veritabanında koşabilir');
+  }
   const { PrismaClient } = await import('@prisma/client');
   const p = new PrismaClient();
   const kullanicilar = await p.user.findMany({
@@ -425,7 +683,9 @@ try {
   await p.professional.deleteMany({ where: { name: 'Duman Uzman' } });
   await p.user.deleteMany({ where: { id: { in: ids } } });
   await p.$disconnect();
-  console.log('test verisi silindi');
+  // HANGİ veritabanı temizlendi: yanlış hedefe koşan bir temizlik sessiz kalmasın.
+  const hedef = (process.env.DATABASE_URL ?? '').split('/').pop()?.split('?')[0] ?? '?';
+  console.log(`test verisi silindi (veritabanı: ${hedef})`);
 } catch (e) {
   // Temizlik başarısız olursa TEST SONUCU DEĞİŞMEZ ama sessiz de kalmaz:
   // arkada kalan veri bir sonraki çalıştırmayı bozabilir.

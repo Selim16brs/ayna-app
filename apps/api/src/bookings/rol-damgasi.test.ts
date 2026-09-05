@@ -21,6 +21,7 @@ import { BookingsService } from './bookings.service';
 type Kayit = Record<string, unknown>;
 
 function sahteOrtam(randevu: Kayit) {
+  const bildirimler: Kayit[] = [];
   const prisma = {
     booking: {
       findUnique: () => Promise.resolve({ ...randevu }),
@@ -53,11 +54,17 @@ function sahteOrtam(randevu: Kayit) {
   };
   const svc = new BookingsService(
     prisma as never,
-    { sendToUser: () => Promise.resolve(), sendTemplate: () => Promise.resolve() } as never,
+    {
+      sendToUser: () => Promise.resolve(),
+      sendTemplate: (userId: string, key: string, params?: Kayit) => {
+        bildirimler.push({ userId, key, ...(params ?? {}) });
+        return Promise.resolve();
+      },
+    } as never,
     { put: async (x: string) => x } as never,
     { refundQuota: () => undefined, findActive: () => Promise.resolve(null) } as never,
   );
-  return { svc, randevu };
+  return { svc, randevu, bildirimler };
 }
 
 const RANDEVU = (ek: Kayit = {}): Kayit => ({
@@ -166,4 +173,24 @@ test('ROL KİMLİKTEN TÜRETİLMİYOR — aynı kişi iki randevuda iki rolde', 
     assert.equal((uzmanGorunumu as { benimRolum?: string }).benimRolum, 'uzman');
     assert.equal((musteriGorunumu as { benimRolum?: string }).benimRolum, 'musteri');
   });
+});
+
+test('ONAY MÜŞTERİYE BİLDİRİLİYOR — depozito süresi o an başlıyor', async () => {
+  /*
+   * Onay HİÇ bildirim göndermiyordu. Oysa bu anda müşterinin 10 dakikalık
+   * depozito süresi BAŞLIYOR: ödemezse randevu düşüyor ve slot açılıyor.
+   *
+   * Uygulama açıkken yerel bir bildirim üretiliyordu; telefon kapalıysa —
+   * yani push'un asıl işi olan durumda — müşteri hiçbir şey görmüyor, on
+   * dakika sonra randevusunu kaybediyordu. Uçtan uca canlı denemede bulundu
+   * (06.09.2026).
+   */
+  const { svc, bildirimler } = sahteOrtam(RANDEVU({ status: 'onay_bekliyor' }));
+  await svc.approve('bk-1', 'uzman-1');
+  await new Promise((r) => setImmediate(r));
+  const b = bildirimler.find((x) => x.userId === 'musteri-1');
+  assert.ok(b, 'onaydan sonra müşteriye bildirim gitmiyor');
+  assert.equal(b.key, 'booking.pre_approved');
+  assert.ok(Number(b.tutar) > 0, `depozito tutarı yazılmıyor: ${b.tutar}`);
+  assert.ok(Number(b.dakika) > 0, `kalan süre yazılmıyor: ${b.dakika}`);
 });

@@ -50,7 +50,8 @@ export type PushTemplateKey =
   | 'membership.receipt_rejected'
   | 'support.replied'
   | 'always.accepted'
-  | 'booking.confirmed';
+  | 'booking.confirmed'
+  | 'booking.pre_approved';
 
 type Tpl = { title: string; body: string };
 const T: Record<string, Record<PushTemplateKey, Tpl>> = {
@@ -235,6 +236,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
       title: 'Randevu kesinleşti ✓',
       body: 'Depozito alındı — randevun garanti altında.',
     },
+    'booking.pre_approved': {
+      title: 'Randevun ön onaylandı ✓',
+      body: '{tutar} ₸ depozito gönder ve dekontu yükle — süren {dakika} dakika.',
+    },
   },
   kk: {
     'quote.new_request': {
@@ -417,6 +422,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
       title: 'Жазылу расталды ✓',
       body: 'Депозит алынды — жазылуың кепілдікте.',
     },
+    'booking.pre_approved': {
+      title: 'Жазылуың алдын ала расталды ✓',
+      body: '{tutar} ₸ депозит жіберіп түбіртекті жүкте — уақытың {dakika} минут.',
+    },
   },
   ru: {
     'quote.new_request': {
@@ -598,6 +607,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
     'booking.confirmed': {
       title: 'Запись подтверждена ✓',
       body: 'Депозит получен — запись закреплена.',
+    },
+    'booking.pre_approved': {
+      title: 'Запись предварительно подтверждена ✓',
+      body: 'Отправьте депозит {tutar} ₸ и загрузите квитанцию — у вас {dakika} минут.',
     },
   },
 };
