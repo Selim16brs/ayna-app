@@ -274,13 +274,57 @@ export class CircleService {
     };
   }
 
-  async setHelpful(postId: string, on: boolean) {
-    const post = await this.prisma.circlePost.findUnique({ where: { id: postId } });
-    if (!post) return { helpful: 0 };
-    const next = Math.max(0, post.helpful + (on ? 1 : -1));
+  /**
+   * "FAYDALI" İŞARETİ — KİŞİ BAŞINA BİR KEZ.
+   *
+   * ── SORUN ────────────────────────────────────────────────────────────
+   *
+   * Uç kullanıcı kimliğini HİÇ almıyordu ve servis sayacı körlemesine
+   * artırıyordu. Giriş yapmış herkes:
+   *   · aynı gönderiyi sınırsız kez işaretleyip sayacı şişirebiliyor,
+   *   · `on: false` göndererek BAŞKASININ gönderisinin işaretlerini sıfıra
+   *     indirebiliyordu (sayaç 0'da kırpılıyor, yani hepsi silinebiliyordu).
+   *
+   * Topluluğun güven sinyali tek satırlık bir döngüyle uydurulabiliyordu.
+   *
+   * ── KURAL ────────────────────────────────────────────────────────────
+   *
+   * İşaret artık kişiye bağlı bir SATIR; sayaç o satırlardan türetiliyor.
+   * Kimse başkasının işaretini kaldıramıyor, kimse kendi işaretini iki kez
+   * sayduramıyor.
+   */
+  async setHelpful(userId: string, postId: string, on: boolean) {
+    const post = await this.prisma.circlePost.findUnique({
+      where: { id: postId },
+      select: { id: true, status: true, helpfulBase: true },
+    });
+    if (!post || post.status !== 'published') {
+      throw new NotFoundException({ code: 'POST_NOT_FOUND', message: 'Gönderi bulunamadı' });
+    }
+    if (on) {
+      // Tekillik DB'de: iki eşzamanlı istek çift satır yazamaz.
+      // P2002 = zaten işaretli, istenen sonuç zaten sağlanmış.
+      await this.prisma.circleHelpful.create({ data: { userId, postId } }).catch((e: unknown) => {
+        if ((e as { code?: string }).code !== 'P2002') throw e;
+      });
+    } else {
+      // YALNIZ KENDİ işaretini kaldırıyor.
+      await this.prisma.circleHelpful
+        .delete({ where: { userId_postId: { userId, postId } } })
+        .catch(() => undefined);
+    }
+    /*
+     * Sayaç DEFTERDEN türetiliyor, artırılmıyor.
+     *
+     * Eski kayıtların sayacı korunuyor: geçmişte kimin işaretlediği
+     * bilinmiyor ve uydurulmuş bir liste üretmek yanlış olurdu. Bu yüzden
+     * yeni işaretler eski sayacın ÜSTÜNE ekleniyor (`temelSayac`).
+     */
+    const kisiler = await this.prisma.circleHelpful.count({ where: { postId } });
     const row = await this.prisma.circlePost.update({
       where: { id: postId },
-      data: { helpful: next },
+      data: { helpful: post.helpfulBase + kisiler },
+      select: { helpful: true },
     });
     return { helpful: row.helpful };
   }
