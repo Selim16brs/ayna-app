@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { puanHarca } from './puan-harca';
 import type { LoyaltyEntry } from '@prisma/client';
 import { expiringWithin, shouldUnlock, spendGate } from '@ayna/domain';
 import { AuditService } from '../audit/audit.service';
@@ -171,7 +172,7 @@ export class LoyaltyService {
       ? ((await this.prisma.setting.findUnique({ where: { key: reward.costSetting } }))?.intValue ??
         reward.cost)
       : reward.cost;
-    const { points, spend } = await this.summary(userId);
+    const { spend } = await this.summary(userId);
     // K4.2 — ödül kullanımı da kilide tabidir; aksi hâlde kilit yalnız ödemede
     // geçerli olur ve kullanıcı puanı ödül kataloğundan sızdırırdı.
     if (!spend.unlocked) {
@@ -180,18 +181,24 @@ export class LoyaltyService {
         message: `Puan kullanımı ${spend.unlockAt.toLocaleString('tr-TR')} ₸ bakiyeden sonra açılır`,
       });
     }
-    if (points < cost) {
+    /*
+     * BAKİYE KONTROLÜ VE YAZIM TEK KİLİT ALTINDA.
+     *
+     * Burada önce `summary()` ile bakiye okunuyor, sonra ayrı bir çağrıyla
+     * defter yazılıyordu. Aradaki `await`ler yüzünden aynı kullanıcıdan gelen
+     * iki eşzamanlı istek (telefonda çift dokunuş yeter) ikisi de aynı
+     * bakiyeyi okuyup ikisi de yazıyordu: 1.000 puanla 1.000'lik ödül İKİ KEZ
+     * alınabiliyordu.
+     */
+    const sonuc = await puanHarca(this.prisma, {
+      userId,
+      reason: reward.key,
+      detail: 'Ödül kullanıldı',
+      points: cost,
+    });
+    if (!sonuc.ok) {
       throw new BadRequestException({ code: 'INSUFFICIENT_POINTS', message: 'Yeterli puan yok' });
     }
-    await this.prisma.loyaltyEntry.create({
-      data: {
-        userId,
-        kind: 'spend',
-        reason: reward.key,
-        detail: 'Ödül kullanıldı',
-        points: -cost,
-      },
-    });
     // Finansal/kritik eylem → audit log (hassas veri içermez)
     await this.audit.record({
       actorId: userId,

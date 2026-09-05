@@ -30,7 +30,8 @@ import {
   DEFAULT_CASHBACK_PCT,
   grantCompletionRewards,
 } from '../loyalty/completion-rewards';
-import { loadLedgerState, loadLoyaltyRules } from '../loyalty/loyalty.rules';
+import { loadLoyaltyRules } from '../loyalty/loyalty.rules';
+import { puanHarca } from '../loyalty/puan-harca';
 import { PUAN_HARCAMA_SEBEBI, iadeEdilecekNakit, randevuPuaniniIadeEt } from '../loyalty/puan-iade';
 import { loadDepositRules } from './deposit.rules';
 import { cevapSonu, holdDeadline, loadWindows } from './booking-windows';
@@ -107,34 +108,30 @@ export class BookingsService {
     if (!b?.userId) return 0;
     const tutar = Number(b.depositAmount ?? 0);
     if (tutar <= 0) return 0;
-    const [durum, kullanici, kurallar] = await Promise.all([
-      loadLedgerState(this.prisma, b.userId),
+    const [kullanici, kurallar] = await Promise.all([
       this.prisma.user.findUnique({
         where: { id: b.userId },
         select: { pointsUnlockedAt: true },
       }),
       loadLoyaltyRules(this.prisma),
     ]);
-    const split = paymentSplit(
-      tutar,
-      istenen,
-      durum.available,
-      kullanici?.pointsUnlockedAt ?? null,
-      kurallar,
+    /*
+     * BAKİYE KİLİT ALTINDA OKUNUYOR VE HARCAMA AYNI TRANSACTION'DA YAZILIYOR.
+     *
+     * Önce bakiye okunuyor, sonra ayrı bir çağrıyla defter yazılıyordu:
+     * aynı kullanıcıdan gelen iki eşzamanlı dekont isteği ikisi de aynı
+     * bakiyeyi görüp ikisi de yazabiliyordu. Tavan hesabı (`paymentSplit`)
+     * da kilit altındaki GÜNCEL bakiyeyle yapılıyor — yoksa tavan eski
+     * bakiyeden hesaplanırdı.
+     */
+    const sonuc = await puanHarca(
+      this.prisma,
+      { userId: b.userId, reason: PUAN_HARCAMA_SEBEBI, detail: bookingId, points: 0 },
+      (bakiye) =>
+        paymentSplit(tutar, istenen, bakiye, kullanici?.pointsUnlockedAt ?? null, kurallar)
+          .pointsUsed,
     );
-    if (split.pointsUsed <= 0) return 0;
-    // Harcama defterE yazılıyor: bakiye defterden türetiliyor, alan
-    // güncellemesiyle değil (CLAUDE.md — finans ledger).
-    await this.prisma.loyaltyEntry.create({
-      data: {
-        userId: b.userId,
-        kind: 'spend',
-        reason: PUAN_HARCAMA_SEBEBI,
-        detail: bookingId,
-        points: -split.pointsUsed,
-      },
-    });
-    return split.pointsUsed;
+    return sonuc.ok ? sonuc.harcanan : 0;
   }
 
   /**
