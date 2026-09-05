@@ -1123,6 +1123,10 @@ model Subscription {
   amount      Decimal   @default(0) @db.Decimal(12, 2)
   status      String    @default("pending")
   receiptUri  String?   @map("receipt_uri") // app-dışı ödeme dekontu (Kaspi/banka)
+  /// Dekont içeriğinin sha256'sı — AYNI dekont ikinci bir üyelikte
+  /// kullanılamasın. Randevu depozitosunda bu koruma vardı, üyelikte yoktu:
+  /// kullanıcı geçen ayın dekontunu her ay yeniden yükleyebiliyordu.
+  receiptHash String?   @unique @map("receipt_hash")
   receiptAt   DateTime? @map("receipt_at") @db.Timestamptz(6)
   periodStart DateTime? @map("period_start") @db.Timestamptz(6)
   periodEnd   DateTime? @map("period_end") @db.Timestamptz(6)
