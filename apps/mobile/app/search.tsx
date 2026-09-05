@@ -21,7 +21,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { bolgeAdi } from '../src/bolge-adi';
 import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
-import { servesSector, sehirEslesir } from '@ayna/domain';
+import { sehirGoster, servesSector, sehirEslesir } from '@ayna/domain';
 import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -605,7 +605,9 @@ export default function SearchScreen() {
 
               <FiltreSatiri
                 baslik={t('search.filter.city')}
-                deger={filtre.sehir ?? t('search.filter.all_cities')}
+                deger={
+                  filtre.sehir ? sehirGoster(filtre.sehir, locale) : t('search.filter.all_cities')
+                }
                 acik={acikGrup === 'search.filter.city'}
                 ac={() => cevir('search.filter.city')}
               >
@@ -617,7 +619,11 @@ export default function SearchScreen() {
                 {CITIES.map((c) => (
                   <FiltreCipi
                     key={c}
-                    etiket={c}
+                    // ETİKET çevriliyor, DEĞER kanonik kalıyor: filtre
+                    // `sehirEslesir` ile eşleştiği için değeri de çevirmek
+                    // uzmanları sessizce görünmez yapardı — bu modülün
+                    // var oluş sebebi olan hata.
+                    etiket={sehirGoster(c, locale)}
                     secili={filtre.sehir === c}
                     // Şehir değişince bölge düşer: Almatı'nın Medeu'su
                     // Astana'da yok, eski seçim listeyi boşaltırdı.

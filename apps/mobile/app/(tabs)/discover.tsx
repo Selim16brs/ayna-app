@@ -15,7 +15,7 @@ import {
 import { AKIS_ADIMLARI, akisAdimi, durumEtiketi } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
 import type { MessageKey } from '@ayna/i18n';
-import { ANA_EKRAN_PROMOSYON, promosyonlariSirala, sehirEslesir } from '@ayna/domain';
+import { ANA_EKRAN_PROMOSYON, promosyonlariSirala, sehirEslesir, sehirGoster } from '@ayna/domain';
 import { useLocale } from '../../src/locale';
 import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import {
@@ -287,8 +287,11 @@ export default function DiscoverScreen() {
           <View style={styles.grow} />
           <PressableScale style={styles.sehirCip} onPress={() => router.push('/city')}>
             <Ionicons name="location" size={12} color={colors.accent} />
+            {/* GÖSTERİM adı — filtre hâlâ kanonik `city` ile çalışıyor.
+                Kurucu ru arayüzün ekran görüntüsünde burada "Almatı"
+                gördü: kanonik ad ekrana olduğu gibi basılıyordu. */}
             <Text variant="micro" tone="ink">
-              {city}
+              {sehirGoster(city, locale)}
             </Text>
             <Ionicons name="chevron-down" size={11} color={colors.muted} />
           </PressableScale>

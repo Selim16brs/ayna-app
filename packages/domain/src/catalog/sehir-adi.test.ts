@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   SEHIRLER,
+  SEHIR_ADLARI,
   kanonikSehir,
+  sehirGoster,
   sehirAnahtari,
   sehirEslesir,
   sehirYazimlari,
@@ -177,4 +179,85 @@ test('yazım listesi HANGİ yazımla sorulursa sorulsun tüm bilinenleri veriyor
     // (ör. kullanıcının elle yazdığı bir biçim) sorgudan düşmesin.
     assert.ok(y.includes(soru.trim()) || y.includes(soru), `"${soru}" ham hâliyle listede yok`);
   }
+});
+
+/* ── GÖSTERİM ADI (üç dil) ─────────────────────────────────────────────
+ *
+ * Kurucu ru arayüzün ekran görüntüsünde şehir çipinde "Almatı" gördü.
+ * Kanonik ad depolama için doğru ama EKRANA olduğu gibi basılıyordu.
+ * Buradaki testler gösterim tablosunun eksiksiz ve tutarlı kalmasını
+ * bekliyor — bir şehir eklenip tablosu unutulursa kırmızıya döner.
+ */
+test('her kanonik şehrin ÜÇ dilde adı var', () => {
+  for (const sehir of SEHIRLER) {
+    const satir = SEHIR_ADLARI[sehir];
+    assert.ok(satir, `${sehir}: gösterim adı yok`);
+    for (const dil of ['tr', 'kk', 'ru'] as const) {
+      assert.ok(satir![dil]?.trim(), `${sehir}: ${dil} adı boş`);
+    }
+  }
+});
+
+test('gösterim tablosunda FAZLADAN şehir yok', () => {
+  for (const anahtar of Object.keys(SEHIR_ADLARI)) {
+    assert.ok(
+      SEHIRLER.includes(anahtar),
+      `${anahtar}: kanonik listede olmayan şehir gösterim tablosunda`,
+    );
+  }
+});
+
+test('tr adı kanonik adın KENDİSİ', () => {
+  // Türkçe kaynak dil: gösterim ile depolama ayrışırsa hangisinin doğru
+  // olduğu belirsizleşir.
+  for (const sehir of SEHIRLER) {
+    assert.equal(SEHIR_ADLARI[sehir]!.tr, sehir);
+  }
+});
+
+test('kk ve ru adları KİRİL', () => {
+  const kiril = /^[Ѐ-ӿ\s-]+$/;
+  for (const sehir of SEHIRLER) {
+    const s = SEHIR_ADLARI[sehir]!;
+    assert.ok(kiril.test(s.kk), `${sehir}: kk adı Kiril değil (${s.kk})`);
+    assert.ok(kiril.test(s.ru), `${sehir}: ru adı Kiril değil (${s.ru})`);
+  }
+});
+
+test('gösterim adları GERİ tanınıyor', () => {
+  // Asıl tehlike: ekranda gösterdiğimiz adı kullanıcı geri gönderdiğinde
+  // (şehir seçimi, filtre) eşleşme kopar ve uzman sessizce kaybolur —
+  // bu modülün var oluş sebebi tam olarak bu hataydı.
+  for (const sehir of SEHIRLER) {
+    const s = SEHIR_ADLARI[sehir]!;
+    for (const dil of ['tr', 'kk', 'ru'] as const) {
+      assert.equal(kanonikSehir(s[dil]), sehir, `${sehir}: ${dil} adı (${s[dil]}) tanınmıyor`);
+    }
+  }
+});
+
+test('sehirGoster her yazımdan doğru dile çeviriyor', () => {
+  assert.equal(sehirGoster('Almatı', 'ru'), 'Алматы');
+  assert.equal(sehirGoster('Алматы', 'tr'), 'Almatı');
+  assert.equal(sehirGoster('Almaty', 'kk'), 'Алматы');
+  assert.equal(sehirGoster('Алма-Ата', 'ru'), 'Алматы');
+  // Rusça ile Kazakça AYRIŞAN bir şehir: tek harflik fark değil, ayrı ad.
+  assert.equal(sehirGoster('Öskemen', 'ru'), 'Усть-Каменогорск');
+  assert.equal(sehirGoster('Öskemen', 'kk'), 'Өскемен');
+  assert.equal(sehirGoster('Oral', 'ru'), 'Уральск');
+});
+
+test('sehirGoster bilinmeyen adı UYDURMUYOR', () => {
+  // Kullanıcının elle yazdığı yer adını sahte bir çeviriyle değiştirmek,
+  // hiç çevirmemekten kötü.
+  assert.equal(sehirGoster('Bilinmeyen Köy', 'ru'), 'Bilinmeyen Köy');
+  assert.equal(sehirGoster('', 'ru'), '');
+  assert.equal(sehirGoster(null, 'ru'), '');
+  assert.equal(sehirGoster(undefined, 'kk'), '');
+});
+
+test('sehirGoster tanımadığı dilde TÜRKÇE veriyor', () => {
+  // Kaynak dil Türkçe: bilinmeyen locale'de boş ekran değil, okunur ad.
+  assert.equal(sehirGoster('Almatı', 'en'), 'Almatı');
+  assert.equal(sehirGoster('Almatı', 'ru-RU'), 'Алматы');
 });

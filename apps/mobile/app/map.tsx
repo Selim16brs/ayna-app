@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { sehirEslesir } from '@ayna/domain';
+import { sehirEslesir, sehirGoster } from '@ayna/domain';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -168,7 +168,7 @@ export default function MapScreen() {
             <PressableScale style={styles.yerBtn} onPress={() => setYerAcik(true)}>
               <Ionicons name="location-outline" size={15} color={colors.accentFg} />
               <Text variant="caption" tone="ink" numberOfLines={1} style={styles.yerYazi}>
-                {bolge ? `${city} · ${bolge}` : city}
+                {bolge ? `${sehirGoster(city, locale)} · ${bolge}` : sehirGoster(city, locale)}
               </Text>
               <Ionicons name="chevron-down" size={14} color={colors.muted} />
             </PressableScale>
