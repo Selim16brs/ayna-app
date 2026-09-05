@@ -212,8 +212,8 @@ export class BookingsService {
       where: { userId },
       orderBy: { inDays: 'asc' },
     });
-    // MÜŞTERİ yolu: gizli sinyal gönderilmez (opts yok → kapalı).
-    return rows.map((b) => mapBooking(b));
+    // MÜŞTERİ yolu: gizli sinyal gönderilmez.
+    return rows.map((b) => mapBooking(b, { forProvider: false }));
   }
 
   // §9.4 — SAĞLAYICI olarak gelen randevular: uzman (Specialist.proId) veya salon
@@ -1257,7 +1257,8 @@ export class BookingsService {
         });
       }
     }
-    return mapBooking(updated);
+    // §4.4-b — uzman gelmedi beyanını MÜŞTERİ yapıyor.
+    return mapBooking(updated, { forProvider: false });
   }
 
   /**
@@ -1718,10 +1719,29 @@ export class BookingsService {
  * Varsayılan KAPALI: bir alanı yanlışlıkla açık bırakmak, kadına "sorunlu"
  * etiketlendiğini göstermek demekti. Açmak bilinçli bir hareket olmalı.
  */
-function mapBooking(b: Booking, opts?: { forProvider?: boolean; customerName?: string | null }) {
+/**
+ * Randevuyu EKRANIN BEKLEDİĞİ biçime çevirir.
+ *
+ * `forProvider` ZORUNLU — isteğe bağlı değil. Eskiden opsiyoneldi ve
+ * verilmediğinde sessizce 'musteri' damgalıyordu: `mapBooking(row)` yazan
+ * her uç, uzmana müşteri ekranını gönderiyordu. Kurucu bunu canlıda gördü
+ * (05.09.2026): uzman ekranında "Ödemeyi yaptım" düğmesi.
+ *
+ * ── NEDEN KİMLİĞE (ID) GÖMÜLMÜYOR ──────────────────────────────────────
+ *
+ * "Kimliklerin başına UZ/MU/SL koyalım, sistem rolü oradan anlasın" akla
+ * yakın ama YANLIŞ sonuç verir: rol kullanıcının değil, RANDEVUNUN bir
+ * özelliği. Aynı uzman başka bir uzmandan randevu aldığında o randevuda
+ * MÜŞTERİDİR. Kimlik önekine bakan sistem ona uzman ekranını gösterirdi —
+ * yani bugünkü hatanın aynısını, bu kez düzeltilemez biçimde.
+ *
+ * Rol her zaman "bu randevuda bu kişi kim" sorusunun cevabı; onu yalnız
+ * `assertParty` bilir ve buraya elden geçirilir.
+ */
+function mapBooking(b: Booking, opts: { forProvider: boolean; customerName?: string | null }) {
   return {
     // §7.3 — gizli sinyal; müşteri yolunda alan HİÇ bulunmaz (undefined).
-    providerSignal: opts?.forProvider ? (b.providerSignal ?? undefined) : undefined,
+    providerSignal: opts.forProvider ? (b.providerSignal ?? undefined) : undefined,
     /*
      * ROLÜ SUNUCU SÖYLÜYOR.
      *
@@ -1731,7 +1751,7 @@ function mapBooking(b: Booking, opts?: { forProvider?: boolean; customerName?: s
      * görüyordu: başlıkta kendi adı, altında "randevu gününü bekliyorsun".
      * Kurucu bunu canlıda gördü. Rol artık kaydın kendisiyle geliyor.
      */
-    benimRolum: opts?.forProvider ? ('uzman' as const) : ('musteri' as const),
+    benimRolum: opts.forProvider ? ('uzman' as const) : ('musteri' as const),
     id: b.id,
     source: b.source,
     service: b.service,
@@ -1752,7 +1772,7 @@ function mapBooking(b: Booking, opts?: { forProvider?: boolean; customerName?: s
      * YALNIZ SAĞLAYICI YOLUNDA: müşteri kendi randevusunda kendi adını
      * görmek zorunda değil ve alan boş yere taşınmasın.
      */
-    customerName: b.customerName ?? opts?.customerName ?? undefined,
+    customerName: b.customerName ?? opts.customerName ?? undefined,
     bookingKind: b.bookingKind,
     groupSize: b.groupSize ?? undefined,
     dateLabel: b.dateLabel,

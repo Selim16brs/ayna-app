@@ -18,7 +18,9 @@ import { join } from 'node:path';
 const src = readFileSync(join(import.meta.dirname, 'bookings.service.ts'), 'utf8');
 
 test('mapBooking sinyali KAPALI-VARSAYILAN tutar', () => {
-  const m = /providerSignal:\s*opts\?\.forProvider\s*\?[^,]*:\s*undefined/.exec(src);
+  // `opts?.` idi; rol artık ZORUNLU parametre olduğu için `opts.` — soru
+  // işareti kalktı ama kural aynı: sinyal yalnız sağlayıcı yolunda açılıyor.
+  const m = /providerSignal:\s*opts\.forProvider\s*\?[^,]*:\s*undefined/.exec(src);
   assert.ok(
     m,
     'mapBooking sinyali koşulsuz döndürüyor olabilir — müşteri yolunda undefined olmalı',

@@ -121,3 +121,49 @@ test('ROL PARAMETRESİ ZORUNLU — yeni eylem ucu unutamaz', () => {
   assert.match(imza, /rol: ActorRole/, 'rol parametresi isteğe bağlı ya da yok');
   assert.doesNotMatch(imza, /rol\?: ActorRole/, 'rol parametresi isteğe bağlı — unutulabilir');
 });
+
+test('mapBooking ROLÜ ZORUNLU İSTİYOR — sessiz varsayılan yok', () => {
+  /*
+   * Asıl tuzak buradaydı: `forProvider` isteğe bağlıydı ve verilmediğinde
+   * sessizce 'musteri' damgalıyordu. `mapBooking(row)` yazan her uç, hiçbir
+   * uyarı almadan uzmana müşteri ekranını gönderiyordu.
+   *
+   * Zorunlu olunca sessiz varsayılan diye bir şey kalmıyor: rolü yazmayan
+   * kod derlenmiyor.
+   */
+  const kaynak = readFileSync(new URL('./bookings.service.ts', import.meta.url), 'utf8');
+  const i = kaynak.indexOf('function mapBooking(');
+  assert.ok(i > 0, 'mapBooking bulunamadı');
+  const imza = kaynak.slice(i, kaynak.indexOf(') {', i));
+  assert.match(
+    imza,
+    /opts: \{ forProvider: boolean/,
+    'rol isteğe bağlı — sessizce müşteri sanılır',
+  );
+  assert.doesNotMatch(imza, /opts\?:/, 'opts isteğe bağlı bırakılmış');
+  assert.doesNotMatch(imza, /forProvider\?:/, 'forProvider isteğe bağlı bırakılmış');
+});
+
+test('ROL KİMLİKTEN TÜRETİLMİYOR — aynı kişi iki randevuda iki rolde', () => {
+  /*
+   * Kurucu önerisi (05.09.2026): "ID'lerin başına UZ/MU/SL ekleyelim, roller
+   * de bu şekilde anlaşılsın."
+   *
+   * Öneri akla yakın ama rol KULLANICININ değil, RANDEVUNUN özelliği: bir
+   * uzman başka bir uzmandan randevu aldığında o randevuda MÜŞTERİDİR.
+   * Kimlik önekine bakan sistem ona uzman ekranını gösterirdi — bugünkü
+   * hatanın aynısı, bu kez veriye gömülü olduğu için düzeltilemez hâlde.
+   *
+   * Bu test o kapıyı kapatıyor: aynı kullanıcı kimliği, iki farklı randevuda
+   * iki farklı rol alabiliyor.
+   */
+  const { svc: svc1 } = sahteOrtam(RANDEVU({ userId: 'ayni-kisi', status: 'onay_bekliyor' }));
+  const { svc: svc2 } = sahteOrtam(RANDEVU({ userId: 'ayni-kisi', status: 'kesinlesti' }));
+  return Promise.all([
+    svc1.approve('bk-1', 'uzman-1'),
+    svc2.cancel('bk-1', 'vazgeçtim', 'ayni-kisi'),
+  ]).then(([uzmanGorunumu, musteriGorunumu]) => {
+    assert.equal((uzmanGorunumu as { benimRolum?: string }).benimRolum, 'uzman');
+    assert.equal((musteriGorunumu as { benimRolum?: string }).benimRolum, 'musteri');
+  });
+});
