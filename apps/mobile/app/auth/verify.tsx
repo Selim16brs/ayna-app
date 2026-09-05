@@ -152,9 +152,9 @@ export default function VerifyScreen() {
     if (code.length !== 6 || busy || denenenKod.current === code) return;
     denenenKod.current = code;
     void confirm();
-    // `confirm` her render'da yeniden kuruluyor; bağımlılığa alınsaydı etki
-    // her render'da tetiklenirdi. Kapı yukarıdaki üç koşul.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `confirm` bilerek bağımlılıkta DEĞİL: her render'da yeniden kuruluyor,
+    // listeye alınsaydı etki her render'da tetiklenirdi. Tekrarı önleyen kapı
+    // yukarıdaki üç koşul (`denenenKod` dahil).
   }, [code, busy]);
 
   if (!phone) {

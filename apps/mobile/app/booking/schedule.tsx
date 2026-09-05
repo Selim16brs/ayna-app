@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { cakisiyor, doluAraliklar } from '../../src/booking-flow';
 import type { BookingSource } from '../../src/data';
 import { almatyDayStart, formatSlotTr, slotTime } from '../../src/datetime';
