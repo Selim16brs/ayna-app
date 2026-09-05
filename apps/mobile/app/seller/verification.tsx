@@ -7,14 +7,7 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  Screen,
-  StackHeader,
-  Text,
-  TextInput,
-  VerificationBadges,
-} from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput, VerificationBadges } from '../../src/ui';
 import type { MessageKey } from '@ayna/i18n';
 
 type Verif = {

@@ -23,7 +23,14 @@ import { useUnreadMessages } from '../../src/use-unread-messages';
 import { type ColorTokens, font, space } from '../../src/theme';
 import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { PressableScale, SaglayiciFoto, Screen, TAB_BAR_CLEARANCE, TepeIsigi, Text } from '../../src/ui';
+import {
+  PressableScale,
+  SaglayiciFoto,
+  Screen,
+  TAB_BAR_CLEARANCE,
+  TepeIsigi,
+  Text,
+} from '../../src/ui';
 import { yorumYazariYazisi } from '../../src/yorum-yazari';
 
 type Period = 'week' | 'month' | 'all';

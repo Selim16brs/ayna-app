@@ -81,7 +81,9 @@ const count = (m: keyof typeof prisma) => (prisma[m] as any).count();
 async function main() {
   const host = (process.env.DATABASE_URL ?? '').replace(/\/\/[^@]*@/, '//***@');
   console.log(`\nVeritabanı: ${host || '(DATABASE_URL tanımsız!)'}`);
-  console.log(`Mod: ${APPLY ? '\x1b[31mGERÇEK SİLME (--apply)\x1b[0m' : 'DRY-RUN (hiçbir şey silinmez)'}\n`);
+  console.log(
+    `Mod: ${APPLY ? '\x1b[31mGERÇEK SİLME (--apply)\x1b[0m' : 'DRY-RUN (hiçbir şey silinmez)'}\n`,
+  );
 
   // --- Güvenlik kontrolü: admin var mı? ---
   const admins = await prisma.user.findMany({
@@ -89,9 +91,7 @@ async function main() {
     select: { id: true, name: true, email: true, status: true, createdAt: true },
   });
   if (admins.length === 0) {
-    throw new Error(
-      'DURDURULDU: role=admin olan kullanıcı yok. Silme yapılırsa hiç hesap kalmaz.',
-    );
+    throw new Error('DURDURULDU: role=admin olan kullanıcı yok. Silme yapılırsa hiç hesap kalmaz.');
   }
   console.log(`Korunacak admin (${admins.length}):`);
   for (const a of admins) {

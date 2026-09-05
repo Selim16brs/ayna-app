@@ -12,14 +12,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  DateField,
-  HizmetIkonu,
-  SaglayiciFoto,
-  TepeIsigi,
-  Text,
-  WaveLayered,
-} from '../../src/ui';
+import { DateField, HizmetIkonu, SaglayiciFoto, TepeIsigi, Text, WaveLayered } from '../../src/ui';
 
 export default function UzmanScreen() {
   const { id, salon: salonParam } = useLocalSearchParams<{ id: string; salon?: string }>();

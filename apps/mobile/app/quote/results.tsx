@@ -15,14 +15,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  ListSkeleton,
-  PriceSpread,
-  SaglayiciFoto,
-  Screen,
-  StackHeader,
-  Text,
-} from '../../src/ui';
+import { ListSkeleton, PriceSpread, SaglayiciFoto, Screen, StackHeader, Text } from '../../src/ui';
 
 // Etiketler i18n anahtarı üzerinden — sabit Türkçe metin RU/KK'da kırılırdı.
 const SORTS: { key: OfferSort; labelKey: MessageKey; icon: keyof typeof Ionicons.glyphMap }[] = [

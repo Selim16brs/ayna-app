@@ -46,7 +46,10 @@ const yeniSifre = z
  * Kullanıcının seçtiği ülke tek doğru kaynak. Opsiyonel, çünkü eski
  * istemciler göndermiyor ve kayıt onlar için de çalışmalı.
  */
-const ulkeIso = z.string().regex(/^[A-Z]{2}$/, 'ISO 3166-1 alfa-2 bekleniyor').optional();
+const ulkeIso = z
+  .string()
+  .regex(/^[A-Z]{2}$/, 'ISO 3166-1 alfa-2 bekleniyor')
+  .optional();
 
 export const registerSchema = z.object({
   name: z.string().min(2),

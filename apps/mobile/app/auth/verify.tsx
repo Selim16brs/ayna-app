@@ -1,13 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  TextInput as HamGirdi,
-  View,
-} from 'react-native';
+import { Alert, Pressable, StyleSheet, TextInput as HamGirdi, View } from 'react-native';
 import { api, ApiError } from '../../src/api';
 import { useStore } from '../../src/store';
 import { fillParams, useLocale } from '../../src/locale';

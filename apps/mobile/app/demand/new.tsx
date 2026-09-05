@@ -463,12 +463,7 @@ export default function NewDemandScreen() {
       </ScrollView>
 
       {/* ── CTA ── */}
-      <View
-        style={[
-          styles.footer,
-          { paddingBottom: (insets.bottom || space(1.5)) },
-        ]}
-      >
+      <View style={[styles.footer, { paddingBottom: insets.bottom || space(1.5) }]}>
         <Pressable
           style={[styles.cta, !canSubmit && styles.ctaOff]}
           disabled={!canSubmit}

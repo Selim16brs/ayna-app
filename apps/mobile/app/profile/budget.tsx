@@ -8,14 +8,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  Progress,
-  Screen,
-  SectionHeader,
-  StackHeader,
-  Text,
-} from '../../src/ui';
+import { Button, Progress, Screen, SectionHeader, StackHeader, Text } from '../../src/ui';
 
 /*
  * AYLIK LİMİT KULLANICININ.

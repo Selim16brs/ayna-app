@@ -64,7 +64,14 @@ export default {
         'ax-3xl': '32px',
       },
       fontFamily: {
-        ui: ['var(--font-ui)', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        ui: [
+          'var(--font-ui)',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'sans-serif',
+        ],
       },
     },
   },

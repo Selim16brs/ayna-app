@@ -6,14 +6,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  AddressPicker,
-  Button,
-  Screen,
-  StackHeader,
-  Text,
-  TextInput,
-} from '../../src/ui';
+import { AddressPicker, Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
 export default function AddressesScreen() {
   const { t } = useLocale();

@@ -21,7 +21,15 @@ import { musteriRandevulari, useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { HizmetIkonu, ListSkeleton, SaglayiciFoto, Screen, TAB_BAR_CLEARANCE, TabHero, Text } from '../../src/ui';
+import {
+  HizmetIkonu,
+  ListSkeleton,
+  SaglayiciFoto,
+  Screen,
+  TAB_BAR_CLEARANCE,
+  TabHero,
+  Text,
+} from '../../src/ui';
 import { kategoriAdi } from '../../src/taxonomy';
 
 // §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş

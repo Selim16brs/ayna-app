@@ -183,8 +183,7 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
            * hapın o kutu içindeki yeri değişiyor. Barın kendi 8pt'lik yan
            * dolgusu duruyor, yani hap kenara yapışmıyor, yanaşıyor.
            */
-          const hizalama =
-            i === 0 ? 'flex-start' : i === tabs.length - 1 ? 'flex-end' : 'center';
+          const hizalama = i === 0 ? 'flex-start' : i === tabs.length - 1 ? 'flex-end' : 'center';
           return (
             <Pressable
               key={tab.name}

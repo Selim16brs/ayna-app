@@ -78,7 +78,9 @@ test('AÇIK zeminde `onAccent` yazı yok', () => {
       if (!kap) return;
       const sm = new RegExp(`\\b${kap}: \\{[^}]*backgroundColor: colors\\.(\\w+)`, 's').exec(src);
       if (sm && ACIK_ZEMINLER.has(sm[1] as string)) {
-        ihlal.push(`${yol.split('/apps/mobile/')[1]}:${i + 1} — styles.${kap} zemini colors.${sm[1]}`);
+        ihlal.push(
+          `${yol.split('/apps/mobile/')[1]}:${i + 1} — styles.${kap} zemini colors.${sm[1]}`,
+        );
       }
     });
   }
@@ -95,5 +97,8 @@ test('TARAMA gerçekten bir şeye bakıyor', () => {
   const kullanan = [...tsxDosyalari(appKok), ...tsxDosyalari(uiKok)].filter((y) =>
     readFileSync(y, 'utf8').includes('tone="onAccent"'),
   );
-  assert.ok(kullanan.length >= 5, `yalnız ${kullanan.length} dosya taranıyor — desen değişmiş olabilir`);
+  assert.ok(
+    kullanan.length >= 5,
+    `yalnız ${kullanan.length} dosya taranıyor — desen değişmiş olabilir`,
+  );
 });

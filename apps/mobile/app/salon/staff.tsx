@@ -5,7 +5,15 @@ import { useSalonStaff } from '../../src/staff';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, PressableScale, SaglayiciFoto, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import {
+  Button,
+  PressableScale,
+  SaglayiciFoto,
+  Screen,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+} from '../../src/ui';
 
 // §10.1 — SALON kadro yönetimi: uzman listesi + davet (kod) + uzmana dokun → detay (çıkar/performans).
 export default function SalonStaffScreen() {

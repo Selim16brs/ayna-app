@@ -19,14 +19,7 @@ import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
 import type { MessageKey } from '@ayna/i18n';
 import { gecenSureYazisi } from '../src/gecen-sure';
-import {
-  PressableScale,
-  Progress,
-  Screen,
-  SectionHeader,
-  StackHeader,
-  Text,
-} from '../src/ui';
+import { PressableScale, Progress, Screen, SectionHeader, StackHeader, Text } from '../src/ui';
 
 const NEXT_DRAW = '30 Haziran';
 // Keşfet canlı aksan paleti — ödül/çekiliş görsel-zengin kartlar

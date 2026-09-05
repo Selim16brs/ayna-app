@@ -121,15 +121,7 @@ export function SaglayiciFoto({
             <Stop offset="1" stopColor={on} stopOpacity={0.1} />
           </LinearGradient>
         </Defs>
-        <Rect
-          x="0"
-          y="0"
-          width="100%"
-          height="100%"
-          rx={kose}
-          ry={kose}
-          fill={`url(#${gradId})`}
-        />
+        <Rect x="0" y="0" width="100%" height="100%" rx={kose} ry={kose} fill={`url(#${gradId})`} />
       </Svg>
       {harf ? (
         /*

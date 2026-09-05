@@ -1,11 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import {
-  otpRequestSchema,
-  otpVerifySchema,
-  registerSchema,
-  resetPasswordSchema,
-} from './auth.dto';
+import { otpRequestSchema, otpVerifySchema, registerSchema, resetPasswordSchema } from './auth.dto';
 
 /**
  * TELEFON BİÇİMİ VERİTABANI ANAHTARIDIR.

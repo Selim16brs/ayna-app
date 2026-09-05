@@ -20,14 +20,7 @@ import { fillParams, useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import {
-  Button,
-  PressableScale,
-  Screen,
-  StackHeader,
-  Text,
-  TextInput,
-} from '../src/ui';
+import { Button, PressableScale, Screen, StackHeader, Text, TextInput } from '../src/ui';
 
 interface Msg {
   id: string;

@@ -9,14 +9,7 @@ import { api } from '../../src/api';
 import { selectPortrait, selectPortraitKesilmis, useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  PassportCare,
-  Screen,
-  SectionHeader,
-  StackHeader,
-  Text,
-} from '../../src/ui';
+import { Button, PassportCare, Screen, SectionHeader, StackHeader, Text } from '../../src/ui';
 
 /** Sadakat seviyesinin etiketi — sunucudan gelen anahtara göre. */
 const TIER_LABEL: Record<'bronze' | 'silver' | 'gold', MessageKey> = {

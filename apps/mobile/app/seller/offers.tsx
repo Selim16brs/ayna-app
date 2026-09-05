@@ -17,14 +17,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  DateField,
-  Screen,
-  StackHeader,
-  Text,
-  TextInput,
-} from '../../src/ui';
+import { Button, DateField, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 import type { MessageKey } from '@ayna/i18n';
 import { kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 

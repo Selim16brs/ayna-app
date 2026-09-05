@@ -15,14 +15,7 @@ import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useSalonStaff } from '../../src/staff';
-import {
-  PressableScale,
-  SaglayiciFoto,
-  Screen,
-  Segmented,
-  StackHeader,
-  Text,
-} from '../../src/ui';
+import { PressableScale, SaglayiciFoto, Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
 type DayRow = { type: 'free'; startMs: number; endMs: number } | { type: 'busy'; b: Appointment };
 

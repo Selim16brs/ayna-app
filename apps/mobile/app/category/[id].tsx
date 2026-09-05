@@ -11,13 +11,7 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Screen,
-  ServiceCards,
-  StackHeader,
-  Text,
-  YakindaRozeti,
-} from '../../src/ui';
+import { Screen, ServiceCards, StackHeader, Text, YakindaRozeti } from '../../src/ui';
 import { useKategoriYakinda } from '../../src/yakinda';
 import { ProRow } from '../search';
 

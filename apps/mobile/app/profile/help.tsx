@@ -8,14 +8,7 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  Screen,
-  SectionHeader,
-  StackHeader,
-  Text,
-  TextInput,
-} from '../../src/ui';
+import { Button, Screen, SectionHeader, StackHeader, Text, TextInput } from '../../src/ui';
 
 // Yönlendirme başlıkları — sunucudaki TOPICS ile aynı.
 const KONULAR = ['payment', 'booking', 'safety', 'account', 'other'] as const;

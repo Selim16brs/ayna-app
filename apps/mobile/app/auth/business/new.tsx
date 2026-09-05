@@ -45,12 +45,7 @@ import {
   TextInput,
   WorkingHours,
 } from '../../../src/ui';
-import {
-  gecerliMi,
-  tamNumara,
-  VARSAYILAN_ULKE,
-  type Ulke,
-} from '../../../src/telefon-bicim';
+import { gecerliMi, tamNumara, VARSAYILAN_ULKE, type Ulke } from '../../../src/telefon-bicim';
 
 /**
  * Salon hizmet alanları — katalog kategorileri (fiyat YOK, yalnızca alan; §3.2 A).

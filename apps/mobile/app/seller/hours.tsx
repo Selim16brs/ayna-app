@@ -6,14 +6,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { space, type ColorTokens } from '../../src/theme';
 import { useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  Screen,
-  StackHeader,
-  Text,
-  WorkingHours,
-  type DayHours,
-} from '../../src/ui';
+import { Button, Screen, StackHeader, Text, WorkingHours, type DayHours } from '../../src/ui';
 
 /**
  * ÇALIŞMA SAATLERİ — kendi ekranı, kendi kaydı.
