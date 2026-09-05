@@ -353,7 +353,6 @@ export const tr = {
   'flow.queued_t': 'Bağlantı yok',
   'flow.queued_b': 'İşlemin kaydedildi; bağlantı gelince otomatik gönderilecek.',
   'flow.act.iptal': 'İptal et',
-  'flow.act.islemi_bitirdim': 'İşlemi bitirdim',
   'flow.act.odeme_yaptim': 'Ödemeyi yaptım',
   'flow.act.odeme_aldim': 'Ödemeyi aldım',
   'flow.act.gelmedi': 'Gelmedi',

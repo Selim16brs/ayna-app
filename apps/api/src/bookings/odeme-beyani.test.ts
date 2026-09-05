@@ -95,6 +95,7 @@ const HIZMET_GUNU = (ek: Kayit = {}): Kayit => ({
   depositAmount: 2000,
   startAt: new Date(Date.now() - 30 * 60_000),
   balanceDeclaredAt: null,
+  balanceReceivedAt: null,
   finalPrice: null,
   ...ek,
 });
@@ -258,4 +259,67 @@ test('ZAMANLAYICI otomatik kesinleştirmede beyan alanlarını OKUYOR', async ()
   const sorgu = kaynak.slice(i, i + 400);
   assert.match(sorgu, /balanceDeclaredAt: true/);
   assert.match(sorgu, /finalPrice: true/);
+});
+
+// ── İKİ TARAFLI EL SIKIŞMA, SIRA ÖNEMSİZ ───────────────────────────────────
+
+test('UZMAN ÖNCE onaylayabiliyor — müşteriyi beklemiyor', async () => {
+  /*
+   * Kurucu (05.09.2026): "uzman tarafında ödemeyi yaptım değil ödemeyi aldım
+   * yazmalı."
+   *
+   * Eskiden uzmanın teyidi doğrudan TAMAMLANMA geçişiydi: müşteri hiçbir şey
+   * beyan etmemişken randevu kapanıyor, müşteri puanını hiç alamıyordu.
+   */
+  const { svc, randevu, defter } = sahteOrtam(HIZMET_GUNU());
+  await svc.balanceReceived('bk-1', 'uzman-1');
+  await bekle();
+  assert.ok(randevu.balanceReceivedAt, 'uzman teyidi damgalanmadı');
+  assert.equal(randevu.status, 'odeme_bekliyor', 'tek taraflı teyit randevuyu kapattı');
+  assert.equal(
+    defter.find((d) => d.reason === 'rewards.earn.cashback'),
+    undefined,
+    'müşteri beyan etmeden puan doğdu',
+  );
+});
+
+test('UZMAN ÖNCE + MÜŞTERİ SONRA → randevu kapanıyor, puan doğuyor', async () => {
+  const { svc, randevu, defter } = sahteOrtam(HIZMET_GUNU());
+  await svc.balanceReceived('bk-1', 'uzman-1');
+  await svc.balancePaid('bk-1', 'musteri-1');
+  await bekle();
+  assert.equal(randevu.status, 'tamamlandi', 'iki onaya rağmen randevu kapanmadı');
+  assert.equal(defter.find((d) => d.reason === 'rewards.earn.cashback')?.points, 200);
+});
+
+test('MÜŞTERİ ÖNCE + UZMAN SONRA → aynı sonuç', async () => {
+  const { svc, randevu, defter } = sahteOrtam(HIZMET_GUNU());
+  await svc.balancePaid('bk-1', 'musteri-1');
+  await svc.balanceReceived('bk-1', 'uzman-1');
+  await bekle();
+  assert.equal(randevu.status, 'tamamlandi');
+  assert.equal(defter.find((d) => d.reason === 'rewards.earn.cashback')?.points, 200);
+});
+
+test('UZMAN İKİ KEZ basarsa damga DEĞİŞMİYOR', async () => {
+  // İkinci basış ilk teyidin zamanını ileri kaydırırsa itiraz penceresi
+  // sessizce uzar.
+  const { svc, randevu } = sahteOrtam(HIZMET_GUNU());
+  await svc.balanceReceived('bk-1', 'uzman-1');
+  const ilk = randevu.balanceReceivedAt;
+  await svc.balanceReceived('bk-1', 'uzman-1');
+  assert.equal(randevu.balanceReceivedAt, ilk);
+});
+
+test('HİZMET SAATİ GELMEDEN uzman teyidi reddediliyor', async () => {
+  const { svc, randevu } = sahteOrtam(
+    HIZMET_GUNU({ status: 'kesinlesti', startAt: new Date(Date.now() + 3600_000) }),
+  );
+  await assert.rejects(() => svc.balanceReceived('bk-1', 'uzman-1'), /hizmet saati/);
+  assert.equal(randevu.balanceReceivedAt, null);
+});
+
+test('MÜŞTERİ uzmanın teyidini veremiyor', async () => {
+  const { svc } = sahteOrtam(HIZMET_GUNU());
+  await assert.rejects(() => svc.balanceReceived('bk-1', 'musteri-1'));
 });

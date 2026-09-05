@@ -29,6 +29,7 @@ const RANDEVU = (ek: Kayit = {}): Kayit => ({
   status: 'odeme_bekliyor',
   source: 'app',
   balanceDeclaredAt: null,
+  balanceReceivedAt: null,
   completedAt: null,
   finalPrice: null,
   depositAmount: 2000,
@@ -52,14 +53,20 @@ test('YALNIZ müşteri beyan etmişse ayna para hâlâ bekliyor', async () => {
 });
 
 test('YALNIZ uzman teyit etmişse ayna para bekliyor', async () => {
-  const [b] = await servis([RANDEVU({ completedAt: new Date() })]).bookings();
+  const [b] = await servis([RANDEVU({ balanceReceivedAt: new Date() })]).bookings();
   assert.equal(b!.musteriOdedi, false);
+  assert.equal(b!.uzmanAldi, true);
   assert.equal(b!.aynaParaAktif, false);
 });
 
 test('İKİSİ DE onayladıysa ayna para AKTİF', async () => {
   const [b] = await servis([
-    RANDEVU({ balanceDeclaredAt: new Date(), completedAt: new Date(), status: 'tamamlandi' }),
+    RANDEVU({
+      balanceDeclaredAt: new Date(),
+      balanceReceivedAt: new Date(),
+      completedAt: new Date(),
+      status: 'tamamlandi',
+    }),
   ]).bookings();
   assert.equal(b!.musteriOdedi, true);
   assert.equal(b!.uzmanAldi, true);

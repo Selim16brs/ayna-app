@@ -57,9 +57,17 @@ const MUTLU_YOL: Adim[] = [
     durum: 'hizmet_gunu',
     sira: 'musteri',
     dugme: 'flow.act.odeme_yaptim',
-    karsiDugme: 'flow.act.islemi_bitirdim',
+    // Uzmanın düğmesi "İşlemi bitirdim" değil "Ödemeyi aldım" (kurucu,
+    // 05.09.2026): el sıkışma iki taraflı ve sıra önemsiz.
+    karsiDugme: 'flow.act.odeme_aldim',
   },
-  { durum: 'odeme_bekliyor', sira: 'musteri', dugme: 'flow.act.odeme_yaptim' },
+  // Ödeme adımında da iki taraf birden: müşteri beyan eder, uzman teyit eder.
+  {
+    durum: 'odeme_bekliyor',
+    sira: 'musteri',
+    dugme: 'flow.act.odeme_yaptim',
+    karsiDugme: 'flow.act.odeme_aldim',
+  },
   {
     durum: 'odeme_bekliyor',
     ctx: { odemeBildirildi: true },
