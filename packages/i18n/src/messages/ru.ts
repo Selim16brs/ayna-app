@@ -345,7 +345,6 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'flow.queued_t': 'Нет соединения',
   'flow.queued_b': 'Действие сохранено и будет отправлено, когда появится связь.',
   'flow.act.iptal': 'Отменить',
-  'flow.act.islemi_bitirdim': 'Услуга завершена',
   'flow.act.odeme_yaptim': 'Я оплатил(а)',
   'flow.act.odeme_aldim': 'Я получил(а) оплату',
   'flow.act.gelmedi': 'Не пришёл(ла)',

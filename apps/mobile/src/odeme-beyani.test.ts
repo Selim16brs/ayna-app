@@ -27,10 +27,32 @@ test('HİZMET GÜNÜNDE müşterinin ödeme düğmesi VAR', () => {
   assert.equal(a.eylem, 'odeme_yaptim');
 });
 
-test('hizmet gününde UZMANIN düğmesi değişmedi', () => {
+test('hizmet gününde UZMANIN düğmesi ÖDEMEYİ ALDIM', () => {
+  /*
+   * Kurucu (05.09.2026): "uzman tarafında ödemeyi yaptım değil ödemeyi aldım
+   * yazmalı." Uzmanın düğmesi "İşlemi bitirdim"di ve müşterinin ödeme adımını
+   * açmak için vardı; ödeme adımı artık hizmet saatiyle kendiliğinden
+   * açılıyor, dolayısıyla uzmanın tek işi kendi onayını vermek.
+   */
   const a = birincilAksiyon('hizmet_gunu', 'uzman', {});
   assert.ok(a);
-  assert.equal(a.eylem, 'islemi_bitirdim');
+  assert.equal(a.eylem, 'odeme_aldim');
+});
+
+test('uzman ONAYLADIYSA düğme kalkıyor — çift teyit yok', () => {
+  assert.equal(birincilAksiyon('hizmet_gunu', 'uzman', { odemeTeyitEdildi: true }), null);
+  assert.equal(birincilAksiyon('odeme_bekliyor', 'uzman', { odemeTeyitEdildi: true }), null);
+});
+
+test('uzmanın düğmesi MÜŞTERİYİ BEKLEMİYOR', () => {
+  /*
+   * Eskiden uzmanın düğmesi ancak müşteri beyan ettikten sonra çıkıyordu:
+   * uzman kendi ekranında yapacak bir şey bulamıyor, randevu ikisinin
+   * arasında asılı kalıyordu. Sıra önemsiz.
+   */
+  const a = birincilAksiyon('odeme_bekliyor', 'uzman', { odemeBildirildi: false });
+  assert.ok(a, 'müşteri beyan etmeden uzmanda düğme yok');
+  assert.equal(a.eylem, 'odeme_aldim');
 });
 
 test('beyan edilmişse müşteride düğme KALMIYOR — çift beyan yok', () => {

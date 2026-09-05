@@ -1235,8 +1235,11 @@ export class AdminService {
        *   · aynaParaAktif — ikisi de varsa puan yazılmış demektir
        */
       musteriOdedi: b.balanceDeclaredAt != null,
-      uzmanAldi: b.completedAt != null,
-      aynaParaAktif: b.balanceDeclaredAt != null && b.completedAt != null,
+      // Uzmanın KENDİ damgası. Eskiden tamamlanma anına bakılıyordu; el
+      // sıkışma iki taraflı olunca (kim önce basarsa) o damga uzmanın
+      // onayını değil, ikisinin birden tamamlanmasını gösteriyordu.
+      uzmanAldi: b.balanceReceivedAt != null,
+      aynaParaAktif: b.balanceDeclaredAt != null && b.balanceReceivedAt != null,
       // Kasada değişen fiyat — komisyon tabanı bu (bkz. odenenTutar).
       finalPrice: b.finalPrice != null ? Number(b.finalPrice) : null,
       createdAt: b.createdAt,

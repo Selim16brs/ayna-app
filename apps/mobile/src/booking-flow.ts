@@ -278,6 +278,8 @@ export const DURUM_TONU: Record<BookingStatus, Ton> = {
 export type AkisBaglam = {
   /** Müşteri "ödemeyi yaptım" dedi mi? (§4.9 iki aşamalı el sıkışma) */
   odemeBildirildi?: boolean;
+  /** Uzman "ödemeyi aldım" dedi mi? Kendi düğmesi buna bakıyor. */
+  odemeTeyitEdildi?: boolean;
   /** Randevu saatinden 15 dk geçti mi? (§4.8 "gelmedi" butonu) */
   gelmediAcik?: boolean;
   /** 3 saat eşiği geçmedi mi? (§4.6 erteleme, §4.7 ücretsiz iptal) */
@@ -376,14 +378,25 @@ export function birincilAksiyon(
         return ctx.odemeBildirildi
           ? null
           : { etiket: 'flow.act.odeme_yaptim', eylem: 'odeme_yaptim' };
-      return { etiket: 'flow.act.islemi_bitirdim', eylem: 'islemi_bitirdim' };
-    // §4.9 — iki aşamalı el sıkışma. Müşteri bildirmeden uzmanda buton çıkmaz.
+      return ctx.odemeTeyitEdildi ? null : { etiket: 'flow.act.odeme_aldim', eylem: 'odeme_aldim' };
+    /*
+     * §4.9 — İKİ TARAFLI EL SIKIŞMA, SIRA ÖNEMSİZ.
+     *
+     * Kurucu (05.09.2026): "uzman tarafında ödemeyi yaptım değil ödemeyi
+     * aldım yazmalı."
+     *
+     * Eskiden uzmanın düğmesi ancak müşteri beyan ettikten SONRA çıkıyordu
+     * (`ctx.odemeBildirildi ? ... : null`): uzman kendi ekranında yapacak
+     * bir şey bulamıyor, randevu ikisinin arasında asılı kalıyordu. Artık
+     * her taraf kendi onayını istediği anda veriyor; randevu iki damga da
+     * geldiğinde kapanıyor.
+     */
     case 'odeme_bekliyor':
       if (musteri)
         return ctx.odemeBildirildi
           ? null
           : { etiket: 'flow.act.odeme_yaptim', eylem: 'odeme_yaptim' };
-      return ctx.odemeBildirildi ? { etiket: 'flow.act.odeme_aldim', eylem: 'odeme_aldim' } : null;
+      return ctx.odemeTeyitEdildi ? null : { etiket: 'flow.act.odeme_aldim', eylem: 'odeme_aldim' };
     // §4.11 — değerlendirme yalnız müşteride.
     case 'tamamlandi':
     case 'degerlendirme':

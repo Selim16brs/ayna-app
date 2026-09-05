@@ -115,6 +115,7 @@ export default function BookingDetail() {
 
   const baglam = {
     odemeBildirildi: booking.balanceDeclaredAt != null,
+    odemeTeyitEdildi: booking.balanceReceivedAt != null,
     gelmediAcik,
     esikOncesi,
     // §4.10 — iade edilecek bir tutar yoksa düğme hiç çıkmasın.

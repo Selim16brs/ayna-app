@@ -990,8 +990,15 @@ export interface Appointment {
   proposedStartMs?: number; // uzmanın önerdiği alternatif başlangıç (§1.6)
   depositAmount?: number; // §4.3 — beklenen depozito (₸)
   depositDeadline?: number; // §4.4 — depozito son ödeme anı (UTC ms, 10 dk); geçilirse randevu düşer
-  /** §4.9 — müşterinin "ödeme yaptım" beyanı (UTC ms). Uzmanın butonu buna bakar. */
+  /** §4.9 — müşterinin "ödeme yaptım" beyanı (UTC ms). */
   balanceDeclaredAt?: number;
+  /**
+   * Uzmanın "ödemeyi aldım" teyidi (UTC ms).
+   *
+   * El sıkışma iki taraflı ve SIRA ÖNEMSİZ: her taraf kendi onayını istediği
+   * anda veriyor, randevu iki damga da geldiğinde kapanıyor.
+   */
+  balanceReceivedAt?: number;
   /**
    * Kasada ÖDENDİĞİ BEYAN EDİLEN tutar — yalnız `price`ten farklıysa dolu
    * (kurucu, 05.09.2026). Puan ve komisyon bundan doğuyor; `price` ise

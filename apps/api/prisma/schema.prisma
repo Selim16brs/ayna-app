@@ -347,6 +347,14 @@ model Booking {
   /// KALIR (§3 diyagramında tek durum); uzmanın "ödeme aldım" butonu bu alan
   /// dolunca açılır. Ayrı bir durum açmak diyagramla çelişirdi.
   balanceDeclaredAt DateTime?     @map("balance_declared_at") @db.Timestamptz(6)
+  /// Kurucu (05.09.2026) — UZMANIN "ödemeyi aldım" teyidi.
+  ///
+  /// El sıkışma iki taraflı ve SIRA ÖNEMSİZ: kim önce basarsa bassın,
+  /// randevu ancak İKİ damga da varken kapanıyor ve müşterinin ayna parası
+  /// o an doğuyor. Eskiden uzmanın teyidi ayrı bir damga değil, doğrudan
+  /// tamamlanma geçişiydi; uzman önce basarsa beyanı olmayan randevu
+  /// kapanıyor, müşteri de puanını hiç alamıyordu.
+  balanceReceivedAt DateTime?     @map("balance_received_at") @db.Timestamptz(6)
   /// Brief §4.2 — uzmana kaçıncı hatırlatma gönderildi (0/1/2). 1. ve 2. saatte
   /// birer hatırlatma; sayaç olmadan zamanlayıcı her turda (5 dk) tekrar
   /// gönderir ve uzmanı spam'lardı.

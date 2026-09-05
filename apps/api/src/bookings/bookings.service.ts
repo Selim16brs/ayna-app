@@ -839,15 +839,25 @@ export class BookingsService {
     // Beyan iki şeyi birden yapıyor: durumu ödeme beklemeye taşıyor (uzmanın
     // "ödeme aldım" düğmesi buna bakıyor) ve itiraz penceresini başlatıyor.
     // Pencere olmasaydı uzman sessiz kaldığında randevu yine kapanmazdı.
+    /*
+     * UZMAN ÖNCE ONAYLADIYSA RANDEVU BURADA KAPANIYOR.
+     *
+     * El sıkışma iki taraflı ve SIRA ÖNEMSİZ (kurucu, 05.09.2026). Uzman
+     * "ödemeyi aldım" demişse müşterinin beyanı ikinci damgadır: randevu
+     * tamamlanıyor ve ayna para o an doğuyor. Yoksa uzmanın onayı bekleniyor.
+     */
+    const uzmanTeyitEtti = mevcut.balanceReceivedAt != null;
     const veri: Record<string, unknown> = {
       balanceDeclaredAt: new Date(),
       ...(yeniTutar !== undefined ? { finalPrice: yeniTutar } : {}),
-      ...(mevcut.status === 'odeme_bekliyor'
-        ? {}
-        : {
-            status: 'odeme_bekliyor' as BookingState,
-            finalizeDeadline: new Date(Date.now() + hours * 60 * 60 * 1000),
-          }),
+      ...(uzmanTeyitEtti
+        ? { status: 'tamamlandi' as BookingState }
+        : mevcut.status === 'odeme_bekliyor'
+          ? {}
+          : {
+              status: 'odeme_bekliyor' as BookingState,
+              finalizeDeadline: new Date(Date.now() + hours * 60 * 60 * 1000),
+            }),
     };
     const row = await this.transition(id, veri, rol);
 
@@ -885,6 +895,33 @@ export class BookingsService {
      * sayılıyor, zamanlayıcı kesinleştiriyor.
      */
 
+    /*
+     * İKİ DAMGA TAMAMSA ÖDÜL BURADA YAZILIYOR.
+     *
+     * Uzman önce onayladıysa müşterinin beyanı el sıkışmayı tamamlıyor;
+     * puanı `balanceReceived` yolunda beklemek, o randevuda hiç yazılmaması
+     * demek olurdu.
+     */
+    if (uzmanTeyitEtti) {
+      const kapanan = await this.prisma.booking.findUnique({ where: { id } });
+      if (kapanan?.userId) {
+        const odul = await grantCompletionRewards(this.prisma, [kapanan]).catch((e: unknown) => {
+          this.log.error(
+            `puan/ödül yazılamadı: booking=${id} — ${e instanceof Error ? e.message : String(e)}`,
+          );
+          return { cashback: 0, referrals: 0 };
+        });
+        void this.push.sendTemplate(
+          kapanan.userId,
+          odul.cashback > 0 ? 'loyalty.points_earned' : 'booking.completed_rate',
+          odul.cashback > 0
+            ? { n: String(cashbackPoints(odenenTutar(kapanan), DEFAULT_CASHBACK_PCT)) }
+            : undefined,
+          { route: `/review/new?id=${id}` },
+        );
+      }
+    }
+
     void this.expertUserIdFor(id).then((uid) => {
       if (!uid) return;
       // Tutar değiştiyse uzman BUNU görmeli: onaylayacağı rakam artık
@@ -908,9 +945,81 @@ export class BookingsService {
    * İkisi de bu ana bağlı: para gerçekten el değiştirmeden ne komisyon
    * istenebilir ne de puan verilebilir.
    */
+  /**
+   * UZMAN "ÖDEMEYİ ALDIM" der.
+   *
+   * Kurucu (05.09.2026): "uzman tarafında ödemeyi yaptım değil ödemeyi aldım
+   * yazmalı... her iki tarafın onayı adminde müşterinin ayna parasını aktif
+   * hale getirir."
+   *
+   * EL SIKIŞMA İKİ TARAFLI VE SIRA ÖNEMSİZ. Eskiden uzmanın teyidi ayrı bir
+   * damga değil, doğrudan tamamlanma geçişiydi; iki sonucu vardı:
+   *   · Uzman önce basarsa, müşteri hiçbir şey beyan etmemişken randevu
+   *     kapanıyordu — müşteri puanını hiç alamıyordu.
+   *   · Ekranda uzmanın düğmesi ancak müşteri beyan ettikten SONRA çıkıyordu;
+   *     uzman kendi tarafında yapacak bir şey bulamıyordu.
+   *
+   * Artık her iki taraf istediği anda kendi onayını veriyor; randevu ancak
+   * İKİ damga da varken kapanıyor ve ayna para o an doğuyor.
+   */
   async balanceReceived(id: string, actorId?: string) {
     const rol = await this.assertParty(id, actorId, 'provider');
-    const row = await this.transition(id, { status: 'tamamlandi' }, rol);
+    const mevcut = await this.prisma.booking.findUnique({ where: { id } });
+    if (!mevcut) {
+      throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
+    }
+    // Hizmet başlamadan teyit alınmaz: yaşanmamış randevu kapatılamaz.
+    const acikDurumlar = ['kesinlesti', 'hizmet_gunu', 'odeme_bekliyor'];
+    if (!acikDurumlar.includes(mevcut.status)) {
+      throw new BadRequestException({
+        code: 'ODEME_TEYIDI_KAPALI',
+        message: `'${mevcut.status}' durumundaki randevuda ödeme teyit edilemez`,
+      });
+    }
+    if (mevcut.status === 'kesinlesti') {
+      // Zamanlayıcı hizmet gününe henüz çevirmemiş olabilir (60 sn tur).
+      const basladi = mevcut.startAt != null && mevcut.startAt.getTime() <= Date.now();
+      if (!basladi) {
+        throw new BadRequestException({
+          code: 'ODEME_ERKEN',
+          message: 'Ödeme teyidi hizmet saati başladığında açılır',
+        });
+      }
+      await this.transition(id, { status: 'hizmet_gunu' }, rol);
+    }
+
+    const musteriBeyanEtti = mevcut.balanceDeclaredAt != null;
+    const cfg = await this.prisma.setting.findUnique({ where: { key: 'policy.confirm_hours' } });
+    const hours = cfg?.intValue ?? 24;
+    const veri: Record<string, unknown> = {
+      balanceReceivedAt: mevcut.balanceReceivedAt ?? new Date(),
+      ...(musteriBeyanEtti
+        ? // İki taraf da onayladı → randevu kapanıyor.
+          { status: 'tamamlandi' as BookingState }
+        : // Müşteri henüz beyan etmedi: ödeme adımında bekliyoruz. Pencere
+          // açılıyor ki randevu süresiz askıda kalmasın.
+          {
+            ...(mevcut.status === 'odeme_bekliyor'
+              ? {}
+              : {
+                  status: 'odeme_bekliyor' as BookingState,
+                  finalizeDeadline: new Date(Date.now() + hours * 60 * 60 * 1000),
+                }),
+          }),
+    };
+    const row = await this.transition(id, veri, rol);
+
+    if (!musteriBeyanEtti) {
+      // Müşteriye "uzman ödemeyi aldığını bildirdi, sen de onayla" hatırlatması.
+      if (mevcut.userId)
+        void this.push
+          .sendTemplate(mevcut.userId, 'booking.completed_confirm', undefined, {
+            route: `/booking/${id}`,
+          })
+          .catch(() => undefined);
+      return row;
+    }
+
     void this.prisma.booking.findUnique({ where: { id } }).then(async (b) => {
       if (!b?.userId) return;
       // §4.9.3 — puan yüklemesi. Sessizce yutulmuyor: yutulursa müşteri
@@ -923,15 +1032,9 @@ export class BookingsService {
         return { cashback: 0, referrals: 0 };
       });
       // §6 — "Uzman 'Ödeme aldım' | Müşteri | X puan kazandınız — Değerlendir".
-      // Kazanılan puanı YAZMAK şart: "teşekkürler" tek başına ödülün gerçekten
-      // yüklendiğini göstermiyor ve puan sessizce birikmiş oluyordu.
-      //
-      // AMA YALNIZ GERÇEKTEN YAZILDIYSA. Puan artık müşterinin ödeme beyanına
-      // bağlı (kurucu: "eğer bunu yapmazsa kazanamaz"); beyan yoksa hiçbir
-      // puan doğmuyor ve "X puan kazandınız" bildirimi YALAN olurdu. Beyan
-      // varsa puan zaten beyan ANINDA yazılmıştı; o zaman da aynı puanı ikinci
-      // kez müjdelemek yerine randevunun kapandığını ve değerlendirme
-      // davetini gönderiyoruz — müşteri hiçbir bildirim almadan kalmasın.
+      // Puan GERÇEKTEN yazıldıysa tutarı yazıyoruz; yazılmadıysa (beyan yok,
+      // oran sıfır) "X puan kazandınız" demek yalan olurdu — o zaman yalnız
+      // tamamlanma + değerlendirme daveti gidiyor.
       if (odul.cashback === 0) {
         void this.push.sendTemplate(b.userId, 'booking.completed_rate', undefined, {
           route: `/review/new?id=${id}`,
@@ -942,8 +1045,7 @@ export class BookingsService {
       /*
        * Sayı `tr-TR` ile biçimlendiriliyordu; Rusça/Kazakça bildirimde de
        * Türkçe ayraç görünürdü. Ham sayı gidiyor, biçim şablonun dilinde
-       * kalıyor (üç dilde de binlik ayracı boşluk ya da nokta değil, sade
-       * sayı — puan değerleri dört haneyi geçmiyor).
+       * kalıyor.
        */
       void this.push.sendTemplate(
         b.userId,
@@ -1802,6 +1904,8 @@ function mapBooking(b: Booking, opts: { forProvider: boolean; customerName?: str
     depositDeadline: b.depositDeadline?.getTime() ?? undefined,
     // §4.9 — müşterinin "ödeme yaptım" beyanı. Uzmanın butonu buna bakar.
     balanceDeclaredAt: b.balanceDeclaredAt?.getTime() ?? undefined,
+    // Uzmanın "ödemeyi aldım" teyidi — müşterinin ekranı buna bakıyor.
+    balanceReceivedAt: b.balanceReceivedAt?.getTime() ?? undefined,
     // §4.8 — itiraz penceresi / §4.9 otomatik onay anı. Ekran sayacı buna bakar.
     finalizeDeadline: b.finalizeDeadline?.getTime() ?? undefined,
     depositForfeited: b.depositForfeited,
