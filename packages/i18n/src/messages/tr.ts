@@ -909,7 +909,7 @@ export const tr = {
   'care.get_offer': 'Bunun için teklif al',
   'notifprefs.title': 'Bildirim tercihleri',
   'notifprefs.hint':
-    'Hangi bildirim gruplarını almak istediğini seç. Günlük bildirimler akıllıca gruplanır.',
+    'Hangi bildirim gruplarını almak istediğini seç. Kapattıkların telefonuna düşmez ama bildirim kutunda durur. Depozito süresi, iptal ve iade gibi kaçırılmaması gerekenler her hâlükârda gelir.',
   'notifprefs.demand_title': 'Talep bildirimleri',
   'notifprefs.demand_hint':
     'Hangi kategoride ve hangi saat aralığında yeni talep bildirimi almak istersin?',
