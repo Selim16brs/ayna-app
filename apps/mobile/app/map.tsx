@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { sehirEslesir, sehirGoster } from '@ayna/domain';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -102,7 +103,7 @@ export default function MapScreen() {
   const bolgeler = useMemo(() => {
     const sayac = new Map<string, number>();
     for (const p of all) {
-      if (p.city !== city) continue;
+      if (!sehirEslesir(p.city, city)) continue;
       const ad = bolgeAdiOf(p);
       if (ad && ad !== city) sayac.set(ad, (sayac.get(ad) ?? 0) + 1);
     }
@@ -112,7 +113,10 @@ export default function MapScreen() {
   const pros = useMemo(
     () =>
       all.filter(
-        (p) => p.city === city && (!cat || p.sector === cat) && (!bolge || bolgeAdiOf(p) === bolge),
+        (p) =>
+          sehirEslesir(p.city, city) &&
+          (!cat || p.sector === cat) &&
+          (!bolge || bolgeAdiOf(p) === bolge),
       ),
     [all, city, cat, bolge],
   );
@@ -164,7 +168,7 @@ export default function MapScreen() {
             <PressableScale style={styles.yerBtn} onPress={() => setYerAcik(true)}>
               <Ionicons name="location-outline" size={15} color={colors.accentFg} />
               <Text variant="caption" tone="ink" numberOfLines={1} style={styles.yerYazi}>
-                {bolge ? `${city} · ${bolge}` : city}
+                {bolge ? `${sehirGoster(city, locale)} · ${bolge}` : sehirGoster(city, locale)}
               </Text>
               <Ionicons name="chevron-down" size={14} color={colors.muted} />
             </PressableScale>

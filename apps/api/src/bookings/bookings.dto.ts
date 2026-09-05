@@ -56,6 +56,14 @@ export const dateLabelSchema = z.object({ dateLabel: z.string().min(1) });
 export const proposeSchema = z.object({ proposedStartMs: z.number().int() });
 export type ProposeInput = z.infer<typeof proposeSchema>;
 
+// Kurucu (05.09.2026) — müşterinin kasada ÖDEDİĞİ tutar.
+//
+// İsteğe bağlı: fiyat değişmediyse müşteri hiçbir şey girmeden "ödemeyi
+// yaptım" diyebiliyor. Girildiğinde tutar sunucuda ayrıca doğrulanıyor
+// (`beyanEdilenTutarGecerli`); buradaki şema yalnız gövde biçimini eliyor.
+export const balancePaidSchema = z.object({ amount: z.number().positive().optional() });
+export type BalancePaidInput = z.infer<typeof balancePaidSchema>;
+
 // §7.8 — müşterinin bir kez ücretsiz erteleme hakkı
 export const rescheduleSchema = z.object({ startMs: z.number().int().positive() });
 export type RescheduleInput = z.infer<typeof rescheduleSchema>;

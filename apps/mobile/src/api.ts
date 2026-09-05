@@ -882,7 +882,11 @@ export const api = {
   // Onay/alternatif pazarlık döngüsü (§1.6)
   approveBooking: (id: string) => post<Appointment>(`/bookings/${id}/approve`, {}),
   // Para el değiştirme — müşteri "ödedim", uzman "aldım".
-  balancePaid: (id: string) => post<Appointment>(`/bookings/${id}/balance-paid`, {}),
+  // `amount` YALNIZ kasada fiyat değiştiyse gönderilir; gönderilmezse
+  // rezervasyon fiyatı geçerli sayılır (kurucu: fiyat aynıysa müşteri direkt
+  // "ödemeyi yaptım"a basabilmeli).
+  balancePaid: (id: string, amount?: number) =>
+    post<Appointment>(`/bookings/${id}/balance-paid`, amount !== undefined ? { amount } : {}),
   balanceReceived: (id: string) => post<Appointment>(`/bookings/${id}/balance-received`, {}),
   proposeBooking: (id: string, proposedStartMs: number) =>
     post<Appointment>(`/bookings/${id}/propose`, { proposedStartMs }),
@@ -963,6 +967,20 @@ export const api = {
         calendarPermission?: string;
       }[]
     >(`/businesses/${businessId}/staff`, token),
+  /*
+   * §4.5 — KADRODAN ÇIKARMA SUNUCUYA YAZILIYOR.
+   *
+   * Ekran "kadrodan çıkar" diyordu ve uzmanın açık randevularını gerçekten
+   * iptal ediyordu — ama uzmanı çıkaran hiçbir çağrı yoktu. Kadro listesi
+   * sunucudan geliyor: bir sonraki tazelemede uzman geri geliyordu. Yani
+   * yıkıcı olan kısım gerçek, asıl amaç hayaliydi.
+   */
+  removeStaff: (token: string, businessId: string, specialistId: string) =>
+    post<{ id: string; businessId: string | null }>(
+      `/businesses/${businessId}/staff/${specialistId}/remove`,
+      {},
+      token,
+    ),
   inviteCodes: (token: string, businessId: string) =>
     get<SellerInviteCode[]>(`/businesses/${businessId}/invite-codes`, token),
   createInviteCode: (token: string, businessId: string) =>
@@ -1197,6 +1215,28 @@ export const api = {
   myCertificates: () => get<{ certificates: string[] }>('/specialists/me/certificates'),
   setMyCertificates: (certificates: string[]) =>
     post<{ certificates: string[] }>('/specialists/me/certificates', { certificates }),
+  /**
+   * BİLDİRİM GEÇMİŞİ — sunucunun bu kullanıcıya gönderdiği her bildirim.
+   *
+   * Uygulama içi liste yalnız kullanıcının KENDİ yaptıklarını biliyordu;
+   * karşı tarafın yaptıkları push olarak geçip kayboluyordu. Uygulama
+   * kapalıyken gelen bildirim de artık burada.
+   */
+  bildirimGecmisi: (token: string) =>
+    get<
+      {
+        id: string;
+        title: string;
+        body: string;
+        route: string | null;
+        read: boolean;
+        createdAtMs: number;
+      }[]
+    >('/push/notifications', token),
+  bildirimOkundu: (token: string, id: string) =>
+    post<{ updated: number }>(`/push/notifications/${id}/read`, {}, token),
+  bildirimlerinHepsiOkundu: (token: string) =>
+    post<{ updated: number }>('/push/notifications/read-all', {}, token),
   myClosedDays: () => get<{ days: number[] }>('/specialists/me/closed-days'),
   setMyClosedDays: (days: number[]) => post<unknown>('/specialists/me/closed-days', { days }),
   myHours: () => get<{ hours: import('./ui/WorkingHours').DayHours[] }>('/specialists/me/hours'),

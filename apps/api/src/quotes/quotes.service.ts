@@ -6,7 +6,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { altHizmetBul, depositFor, hasConflict, kategoriBul, ucDil } from '@ayna/domain';
+import {
+  altHizmetBul,
+  depositFor,
+  hasConflict,
+  kategoriBul,
+  ucDil,
+  randevuVerebilir,
+  RANDEVU_KAPISI_KODU,
+} from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { PushService } from '../push/push.service';
 import { loadDepositRules } from '../bookings/deposit.rules';
@@ -37,15 +45,11 @@ type QuoteRow = {
     imageUrl: string;
     rating: unknown;
     reviewCount: number;
+    /** Gerçek konum — mesafe bundan hesaplanıyor; yoksa mesafe YAZILMIYOR. */
+    lat: number | null;
+    lng: number | null;
   } | null;
 };
-
-// §9.3 — yaklaşık mesafe (deterministik; gerçek adres asla kullanılmaz — privacy)
-function estKm(id: string): number {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return 1 + (Math.abs(h) % 9);
-}
 
 function almatyLabel(ms: number): string {
   return new Intl.DateTimeFormat('tr-TR', {
@@ -100,7 +104,20 @@ export class QuotesService {
       proImage: pro?.imageUrl ?? '',
       rating: pro ? Number(pro.rating) : 0,
       reviewCount: pro?.reviewCount ?? 0,
-      distanceKm: estKm(q.id),
+      /*
+       * MESAFE UYDURULMUYOR.
+       *
+       * Buradan `estKm(q.id)` dönüyordu: teklifin KİMLİK DİZESİNDEN
+       * hesaplanan 1–9 km arası bir sayı. Müşteri kartta "3 km" okuyor,
+       * "Yakınlık" sıralaması ve "Önerilen" skoru da bu sayıya bakıyordu —
+       * yani sıralama kısmen rastgeleydi.
+       *
+       * Artık uzmanın GERÇEK koordinatı gidiyor; mesafeyi uygulama, keşif
+       * ve arama ekranlarıyla AYNI kuralla hesaplıyor. Koordinat yoksa
+       * mesafe yazılmıyor (uydurmaktansa boş bırakmak).
+       */
+      lat: pro?.lat ?? null,
+      lng: pro?.lng ?? null,
       price: Number(q.price),
       // §A2 — ⚡Fırsat rozeti (indirim >0 ise müşteri kartında görünür)
       discountPercent: q.discountPercent,
@@ -368,7 +385,15 @@ export class QuotesService {
         quotes: {
           include: {
             professional: {
-              select: { id: true, name: true, imageUrl: true, rating: true, reviewCount: true },
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+                rating: true,
+                reviewCount: true,
+                lat: true,
+                lng: true,
+              },
             },
           },
         },
@@ -428,7 +453,15 @@ export class QuotesService {
           orderBy: { createdAt: 'asc' },
           include: {
             professional: {
-              select: { id: true, name: true, imageUrl: true, rating: true, reviewCount: true },
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+                rating: true,
+                reviewCount: true,
+                lat: true,
+                lng: true,
+              },
             },
           },
         },
@@ -492,10 +525,8 @@ export class QuotesService {
 
     // Talep sahibine push — doğrudan gelen teklifler sayfasına (deep-link kuralı)
     if (req.userId) {
-      void this.push.sendToUser(req.userId, {
-        title: 'Yeni teklifin var 💌',
-        body: 'Talebine bir uzman teklif gönderdi. Teklifleri incele.',
-        data: { route: `/quote/results?id=${requestId}` },
+      void this.push.sendTemplate(req.userId, 'quote.new_offer', undefined, {
+        route: `/quote/results?id=${requestId}`,
       });
     }
     return { id: quote.id, ok: true };
@@ -542,7 +573,15 @@ export class QuotesService {
         quotes: {
           include: {
             professional: {
-              select: { id: true, name: true, imageUrl: true, rating: true, reviewCount: true },
+              select: {
+                id: true,
+                name: true,
+                imageUrl: true,
+                rating: true,
+                reviewCount: true,
+                lat: true,
+                lng: true,
+              },
             },
           },
         },
@@ -565,6 +604,28 @@ export class QuotesService {
     // Bu yol `depositDeadline` YAZMIYORDU. `depozito_bekliyor` slotu işgal ettiği için
     // ödemeyen müşterinin randevusu o saati süresiz kilitliyordu: scheduler'ın süre
     // dolum sorgusu `depositDeadline: { lt: now }` arıyor, NULL olan kayda hiç değmiyor.
+    /*
+     * ── DOĞRULAMA KAPISI BURADA DA ──────────────────────────────────────
+     *
+     * Kurucu: "bir müşteri ya admin panelinden onaylanmalı ya da mutlaka
+     * telefon ile doğrulama yapmalı. aksi takdirde uygulamada kesinlikle
+     * randevu veremez."
+     *
+     * Doğrudan randevu yolu (`bookings.create`) bu kapıyı uyguluyordu ama
+     * TEKLİF SEÇİMİ randevuyu kendi transaction'ında doğuruyor ve kapıdan
+     * hiç geçmiyordu: doğrulanmamış müşteri teklif akışından randevu
+     * alabiliyordu. Aynı kural, aynı hata kodu.
+     */
+    const secen = await this.prisma.user.findUnique({
+      where: { id: ownerId },
+      select: { phoneVerified: true, adminApproved: true, role: true },
+    });
+    if (secen?.role === 'user' && !randevuVerebilir(secen))
+      throw new ForbiddenException({
+        code: RANDEVU_KAPISI_KODU,
+        message: 'Randevu için telefon doğrulaması gerekiyor',
+      });
+
     const holdUntil = holdDeadline(await loadWindows(this.prisma));
     const bookingId = `bk_q_${randomUUID().slice(0, 8)}`;
     const inDays = Math.max(0, Math.round((input.slotMs - Date.now()) / 86_400_000));
@@ -630,19 +691,18 @@ export class QuotesService {
 
     // Kazanan uzmana push — takvimine düştü
     if (quote.userId) {
-      void this.push.sendToUser(quote.userId, {
-        title: 'Teklifin seçildi 🎉',
-        body: `${almatyLabel(input.slotMs)} için randevu oluştu. Takvimini kontrol et.`,
-        data: { route: '/seller/agenda' },
-      });
+      void this.push.sendTemplate(
+        quote.userId,
+        'quote.selected',
+        { slot: almatyLabel(input.slotMs) },
+        { route: '/seller/agenda' },
+      );
     }
     // §5.2 — seçilmeyen uzmanlara nazik kapanış
     for (const q of req.quotes) {
       if (q.id !== quote.id && q.userId) {
-        void this.push.sendToUser(q.userId, {
-          title: 'Talep kapandı',
-          body: 'Bu talepte başka bir teklif seçildi — ilgin için teşekkürler 💛',
-          data: { route: '/seller/requests' },
+        void this.push.sendTemplate(q.userId, 'quote.closed', undefined, {
+          route: '/seller/requests',
         });
       }
     }

@@ -165,6 +165,7 @@ export default function ReportsScreen() {
    * `null` = HENÜZ BİLİNMİYOR. `false` ile aynı saysaydım ekran açılır
    * açılmaz uyarı çakıp sunucu cevabı gelince kaybolurdu.
    */
+  const hydrateBookings = useStore((s) => s.hydrateBookings);
   const [konumVar, setKonumVar] = useState<boolean | null>(null);
   const [saatVar, setSaatVar] = useState<boolean | null>(null);
   const [basari, setBasari] = useState<{
@@ -272,6 +273,13 @@ export default function ReportsScreen() {
         .myLocation(token)
         .then((r) => setKonumVar(r.hasLocation))
         .catch(() => undefined);
+      /*
+       * RANDEVULAR DA TAZELENİYOR. Ana ekrandaki "yanıt bekleyen talep"
+       * sayısı yerel listeden geliyor ve o liste yalnız uygulama
+       * açılışında doluyordu: müşteri talep gönderiyor, uzman ana ekranı
+       * açıyor ve "yeni bir şey yok" sanıyordu.
+       */
+      void hydrateBookings();
       /*
        * SAATLERİNİ GİRMEMİŞ uzmana sunucu varsayılan pencereyi uyguluyor ve
        * müşteriye 10:00–20:00 gösteriyor — uzmanın hiç söylemediği saatler.
@@ -458,13 +466,6 @@ export default function ReportsScreen() {
               ) : (
                 <SaglayiciFoto ad={salonName} style={styles.avatar} />
               )}
-              {/*
-                ZEMİN ÇİZGİSİ — müşteri ana sayfasındakiyle aynı.
-                Kesilmiş portrenin zemini saydam; çizgi olmadan figür
-                boşlukta asılı duruyor. Ham fotoğrafta çizilmiyor: orada
-                zaten bir çerçeve var.
-              */}
-              {portreKesilmis ? <View style={styles.portreCizgi} /> : null}
             </PressableScale>
           </View>
         </View>
@@ -1010,8 +1011,20 @@ const makeStyles = (colors: ColorTokens) =>
      * `bas` kapatıyor (paddingBottom 0 + negatif marginBottom, kaydırma
      * alanının 20px'lik kendi aralığını da yutuyor).
      */
-    karsilama: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, marginTop: 12 },
-    basSol: { flex: 1, gap: 2 },
+    /*
+     * METİN BLOĞU DİKEYDE ORTALI, PORTRE ALTA YASLI.
+     *
+     * Kurucu: "karşılama mesajı, uzman adı ve bireysel uzman bölümü daha
+     * yukarıdaki boşluk olan yere ortalansın."
+     *
+     * Satır `flex-end` iken üç satırlık metin 104px'lik portrenin alt
+     * kenarına yapışıyor ve üstünde koca bir boşluk kalıyordu. `stretch`
+     * ile sütun satırın tamamını kaplıyor, metin kendi içinde ortalanıyor;
+     * portre ise alta yaslı kalıyor — altındaki blokla yapışıklığı bozan
+     * bir şey yok.
+     */
+    karsilama: { flexDirection: 'row', alignItems: 'stretch', gap: 12, marginTop: 12 },
+    basSol: { flex: 1, gap: 2, justifyContent: 'center' },
     // Müşteri ana sayfasıyla AYNI ölçüler: selam küçük üstte, isim büyük altta.
     selamUst: { fontFamily: font.regular, fontSize: 14, lineHeight: 18, color: colors.inkSoft },
     selamAd: {
@@ -1071,9 +1084,12 @@ const makeStyles = (colors: ColorTokens) =>
      * SAĞA YASLI ve kap portre genişliğinde: zemin çizgisi genişliğini
      * buradan alıyor.
      */
-    portreKap: { width: 104, alignItems: 'flex-end' },
+    /*
+     * Kurucu: "profil fotoğrafının altındaki çizgiyi kaldır ve biraz daha
+     * sola al." Çizgi kalktı; sağ kenardan 12px içeri alındı.
+     */
+    portreKap: { width: 104, alignItems: 'flex-end', alignSelf: 'flex-end', marginRight: 12 },
     portreKesik: { width: 104, height: 104 },
-    portreCizgi: { width: '100%', height: 2, borderRadius: 1, backgroundColor: colors.accent },
 
     // canli-ozet-card (radius 24, p20, gap 18) — koyu, iki temada da sabit
     ozetKart: { marginHorizontal: 24, borderRadius: 24, padding: 20, gap: 18, overflow: 'hidden' },
@@ -1087,17 +1103,31 @@ const makeStyles = (colors: ColorTokens) =>
     },
     canliNokta: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#4DA66B' },
     ozetKutular: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    /*
+     * ETİKET KELİMENİN ORTASINDAN BÖLÜNMÜYOR.
+     *
+     * Yatay dolgu 12 iken kutu içinde 63.7pt yazı alanı kalıyordu;
+     * "Tamamlanan" 64.1pt, Rusça "Предстоящие" 72.9pt (ölçü fonttan —
+     * `canli-ozet-etiket.test.ts`). Sığmayan sözcüğü React Native
+     * HARFİNDEN bölüyor: kurucunun ekran görüntüsünde "Tamamlana / n"
+     * diye iki satıra düşmüştü.
+     *
+     * Dikey dolgu 12 kalıyor; kısalan yalnız yanlar.
+     */
     ozetKutu: {
       flex: 1,
       alignItems: 'center',
       gap: 6,
-      padding: 12,
+      paddingVertical: 12,
+      paddingHorizontal: 2,
       borderRadius: 16,
       backgroundColor: 'rgba(255,255,255,0.05)',
       borderWidth: 1,
       borderColor: 'rgba(212,160,160,0.2)',
     },
     ozetSayi: { fontFamily: font.semibold, fontSize: 22, color: OZET_YAZI },
+    // Punto DEĞİŞMEDİ: yanları daraltmak sığdırmaya yetti (bkz.
+    // `canli-ozet-etiket.test.ts` — ölçü fonttan okunuyor).
     ozetEtiket: { fontFamily: font.regular, fontSize: 11, color: OZET_ETIKET },
     ozetAyrac: { width: 1, height: 40, backgroundColor: 'rgba(212,160,160,0.2)' },
     ozetCizgi: { height: 1, backgroundColor: 'rgba(212,160,160,0.2)' },

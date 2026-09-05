@@ -96,10 +96,14 @@ export class RatingsService {
           message: 'Randevu bir uzmana bağlı değil',
         });
       }
-      const biz = await this.prisma.business.findFirst({
-        where: { professionalId: booking.proId, ownerUserId: raterUserId },
-      });
-      if (!biz) {
+      /*
+       * BAĞIMSIZ UZMAN DA MÜŞTERİSİNİ DEĞERLENDİREBİLİR.
+       *
+       * Yalnız işletme sahipliği aranıyordu: salona bağlı olmayan uzman kendi
+       * müşterisini değerlendiremiyordu. Kurucu kuralı: "salona bağlı uzman
+       * ile bağlı olmayan uzman arasındaki tek fark bağlı olup olmamaları."
+       */
+      if (!(await this.yanitlayabilirMi(booking.proId, raterUserId))) {
         throw new ForbiddenException({
           code: 'NOT_YOUR_BOOKING',
           message: 'Bu randevu size ait değil',
@@ -256,10 +260,48 @@ export class RatingsService {
     };
   }
 
+  /**
+   * Uzmanın/işletmenin adına konuşabilecek kullanıcı kimliği.
+   *
+   * Bağımsız uzman kendi kartına, salon sahibi işletmesinin kartına yanıt
+   * verebilir. Kurucu kuralı: "salona bağlı uzman ile bağlı olmayan uzman
+   * arasındaki tek fark bağlı olup olmamaları" — iki yol da açık.
+   */
+  private async yanitlayabilirMi(proId: string, userId: string): Promise<boolean> {
+    const sp = await this.prisma.specialist.findFirst({
+      where: { userId, proId },
+      select: { id: true },
+    });
+    if (sp) return true;
+    const biz = await this.prisma.business.findFirst({
+      where: { ownerUserId: userId, professionalId: proId },
+      select: { id: true },
+    });
+    return biz !== null;
+  }
+
   // §6.D — uzman/işletme yorumu YANITLAR (silemez). Yalnızca görünür (kalıcı) yoruma yanıt.
-  async reply(ratingId: string, text: string) {
+  async reply(ratingId: string, text: string, actorUserId: string) {
     const r = await this.prisma.rating.findUnique({ where: { id: ratingId } });
     if (!r) throw new NotFoundException({ code: 'RATING_NOT_FOUND', message: 'Yorum bulunamadı' });
+    /*
+     * ── YANIT YALNIZ YORUMUN MUHATABINDAN ────────────────────────────────
+     *
+     * Uç yalnız GİRİŞ istiyordu, "bu yorum sana mı yazılmış" diye
+     * sormuyordu. Yani giriş yapmış HERKES — rakip bir uzman, sıradan bir
+     * müşteri — başkasının yorumunun altına yanıt yazabiliyordu ve yanıt
+     * ekranda "Salon yanıtı" diye görünüyordu.
+     *
+     * Müşteri, salonun ağzından yazılmış uydurma bir cümle okuyordu. Güven
+     * platformunda bundan ağırı az: kimse yazmadığı bir şeyden sorumlu
+     * tutulamaz.
+     */
+    if (!(await this.yanitlayabilirMi(r.subjectId, actorUserId))) {
+      throw new ForbiddenException({
+        code: 'NOT_RATING_SUBJECT',
+        message: 'Yalnız yorumun muhatabı yanıt verebilir',
+      });
+    }
     if (!r.visible) {
       throw new BadRequestException({
         code: 'RATING_NOT_VISIBLE',

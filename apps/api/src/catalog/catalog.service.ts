@@ -9,6 +9,8 @@ import {
   type PromosyonKarti,
   uzmanKayitli,
   VARSAYILAN_CALISMA_SAATI,
+  almatiHaftaGunu,
+  haftaGunuKapali,
 } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { BasariService } from '../basari/basari.service';
@@ -515,10 +517,16 @@ export class CatalogService {
     if (closed.includes(dayMs)) return { slots: [], closed: true };
 
     // Çalışma penceresi: DayHours[] {wd, open, from:'HH:MM', to:'HH:MM'}; boşsa 10:00–20:00
-    const wd = almatyWeekday(dayMs);
+    const wd = almatiHaftaGunu(dayMs);
     const hours = safeParseHours(p.hoursJson);
     const day = hours.find((h) => h.wd === wd);
-    if (hours.length > 0 && day && !day.open) return { slots: [], closed: true };
+    /*
+     * Kapalılık kuralı `@ayna/domain`de: uzmanın KENDİ takvimi de aynı
+     * fonksiyonu çağırıyor. Ayrı yazıldığı sürece iki ekran aynı soruya
+     * farklı cevap veriyordu — uzman kendini açık sanıyor, müşteri o gün
+     * hiç slot görmüyordu (kurucu, 06.09.2026).
+     */
+    if (haftaGunuKapali(hours, wd)) return { slots: [], closed: true };
     /*
      * Saatini GİRMEMİŞ sağlayıcıya varsayılan pencere uygulanıyor. Sayı
      * `@ayna/domain`den: uzman paneli "müşteriye şu aralık gösteriliyor"
@@ -756,7 +764,14 @@ export class CatalogService {
     if (sp && !media.cutoutUrl && media.avatarUrl?.startsWith('http')) {
       try {
         if (await this.cutout.available()) {
-          const { dataUrl } = await this.cutout.cutout({ imageUrl: media.avatarUrl });
+          /*
+           * Uzmanın KENDİ hesabı adına: hak kontrolü ve günlük sayaç ona
+           * yazılıyor. Sistem çağrısı diye sayaçtan muaf tutmak, ucu
+           * dolaylı bir sınırsız kapıya çevirirdi.
+           */
+          const { dataUrl } = await this.cutout.cutout(sp.userId, {
+            imageUrl: media.avatarUrl,
+          });
           const stored = await this.storage.put(dataUrl, 'avatars');
           if (stored?.startsWith('http')) {
             media.cutoutUrl = stored;
@@ -910,14 +925,7 @@ export class CatalogService {
   }
 }
 
-// §4.6 slot yardımcıları — timezone Intl ile çözülür (sabit UTC offset YOK; plan §5)
-function almatyWeekday(ms: number): number {
-  const wd = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Almaty', weekday: 'short' }).format(
-    new Date(ms),
-  );
-  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(wd);
-}
-
+// §4.6 slot yardımcıları — hafta günü `@ayna/domain`den (tek kaynak).
 function hmToMs(dayStartMs: number, hm: string): number {
   const [h, m] = hm.split(':').map(Number);
   return dayStartMs + ((h ?? 0) * 60 + (m ?? 0)) * 60_000;
@@ -982,7 +990,18 @@ function mapPro(p: Professional) {
     friends: p.friends ?? undefined,
     priceFrom: baslangicFiyati(p),
     image: p.imageUrl,
-    badge: p.badge,
+    /*
+     * ROZET ALANI ARTIK DÖNMÜYOR.
+     *
+     * `Professional.badge` sütunu şemada `@default(verified)`: kayıt olan
+     * HERKES "doğrulanmış" doğuyor ve bu değeri hiçbir doğrulama
+     * güncellemiyordu. Kartlarda "Doğrulanmış" rozeti olarak çizilseydi —
+     * ki o kartlar hâlâ kodda duruyor — hiç doğrulanmamış uzman doğrulanmış
+     * görünürdü. Uydurulmuş güven işareti.
+     *
+     * Gerçek doğrulama `aynaVerified` alanında ve KYC'ye bağlı; kartlar
+     * onu okuyor.
+     */
     city: p.city, // §5.1.4 — harita/arama şehir eşleşmesi
     district: p.district,
     // §5.1.4 — gerçek konum (kayıtta haritadan seçildi); yoksa null → mobil şehir merkezine yakın

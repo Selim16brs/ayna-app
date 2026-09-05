@@ -14,6 +14,15 @@ export const MAX_ATTEMPTS = BACKOFF_MINUTES.length;
 /** Teslim edilmiş satırlar bu kadar gün sonra budanır (PII süresiz durmasın). */
 export const KEEP_SENT_DAYS = 7;
 
+/**
+ * Kullanıcının bildirim GEÇMİŞİ bu kadar gün saklanır.
+ *
+ * Uygulamanın yerel temizliğiyle (`NOTIFICATION_TTL_MS` = 30 gün) AYNI
+ * olmak zorunda: iki taraf farklı saklasaydı aynı kullanıcı telefonunda
+ * gördüğü bildirimi tabletinde bulamazdı.
+ */
+export const GECMIS_SAKLAMA_GUN = 30;
+
 export type Attempt = { attempts: number };
 
 /** Bu denemeden sonraki durum: tekrar denenecek mi, yoksa hakkı bitti mi? */

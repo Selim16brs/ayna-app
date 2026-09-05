@@ -80,6 +80,12 @@ export const tr = {
   'common.no': 'Hayır',
   'common.see_all': 'Tümünü Gör',
   'common.error': 'Bir hata oluştu, tekrar dene',
+  'err.NO_REFUND_RIGHT': 'Bu randevuda iade hakkı doğmadı',
+  'err.NO_DEPOSIT': 'İade edilecek depozito yok',
+  'err.ALREADY_REQUESTED': 'Bu randevu için iade talebi zaten açık',
+  'err.AD_ORDER_CLOSED': 'Bu reklam siparişi kapandı',
+  'err.RECEIPT_REUSED': 'Bu dekont daha önce kullanılmış',
+  'err.RECEIPT_MISSING': 'Önce dekontu yükle',
   // §12.3 — kısıtlı mod uyarısı (admin ceza takip)
   'restricted.title': 'Hesabın şu an kısıtlı',
   'restricted.body':
@@ -238,6 +244,14 @@ export const tr = {
     'Uzman kabul ederse yeni saatin geçerli olur; reddederse mevcut randevun kalır.',
   'reschedule.err': 'Erteleme yapılamadı. Hakkın bitmiş ya da süre kapanmış olabilir.',
   'refund.err_t': 'İade talebi gönderilemedi',
+  // ── Ödeme beyanı (kurucu, 05.09.2026) ─────────────────────────────────────
+  'payment.title': 'Ödemeyi bildir',
+  'payment.due_now': 'Salonda ödenecek',
+  'payment.deposit_note': '{deposit} ₸ depozitoyu zaten ödedin',
+  'payment.amount_label': 'Salonda ödediğin tutar',
+  'payment.same_note': 'Fiyat değişmediyse dokunmana gerek yok.',
+  'payment.changed_note': 'Randevudaki fiyat {price} ₸ idi. Uzman bu tutarı onaylayacak.',
+  'payment.earn_note': 'Bu tutardan {points} puan kazanacaksın',
   'refund.title': 'Depozito iadesi',
   'refund.amount': 'İade edilecek tutar',
   'refund.account_label': 'İade yapılacak hesap',
@@ -339,7 +353,6 @@ export const tr = {
   'flow.queued_t': 'Bağlantı yok',
   'flow.queued_b': 'İşlemin kaydedildi; bağlantı gelince otomatik gönderilecek.',
   'flow.act.iptal': 'İptal et',
-  'flow.act.islemi_bitirdim': 'İşlemi bitirdim',
   'flow.act.odeme_yaptim': 'Ödemeyi yaptım',
   'flow.act.odeme_aldim': 'Ödemeyi aldım',
   'flow.act.gelmedi': 'Gelmedi',
@@ -440,6 +453,7 @@ export const tr = {
   'seller.services.active_unit': 'aktif hizmet',
   'seller.services.empty': 'Bu kategoride henüz hizmet seçmedin.',
   'seller.services.saved': 'Hizmetlerin güncellendi.',
+  'seller.services.save_err': 'Kaydedilemedi — hizmetlerin müşteriye görünmüyor. Tekrar dene.',
   'seller.services.add_row': 'Ekle',
   'seller.services.need_name_price': 'Ad, fiyat ve süre gerekli',
 
@@ -468,8 +482,6 @@ export const tr = {
 
   // Uzman kartı
   'card.verified': 'Doğrulanmış',
-  'card.campaign': 'Kampanya',
-  'card.today': 'Bugün müsait',
   'card.details': 'Detaylar',
 
   // Uzman/salon profili
@@ -810,6 +822,8 @@ export const tr = {
   'circle.empty.mine': 'Henüz bir şey sormadın',
   'circle.empty.saved': 'Kaydettiğin gönderi yok',
   'circle.empty.sub': 'İlk soruyu sen sor — kimliğin gizli kalabilir.',
+  'circle.state.pending': 'İncelemede — onaylanınca herkes görecek',
+  'circle.state.failed': 'Gönderilemedi — yalnız sende duruyor',
   'circle.tab.saved': 'Kaydedilenler',
   'circle.save': 'Kaydet',
   'circle.unsave': 'Kaydı kaldır',
@@ -895,7 +909,7 @@ export const tr = {
   'care.get_offer': 'Bunun için teklif al',
   'notifprefs.title': 'Bildirim tercihleri',
   'notifprefs.hint':
-    'Hangi bildirim gruplarını almak istediğini seç. Günlük bildirimler akıllıca gruplanır.',
+    'Hangi bildirim gruplarını almak istediğini seç. Kapattıkların telefonuna düşmez ama bildirim kutunda durur. Depozito süresi, iptal ve iade gibi kaçırılmaması gerekenler her hâlükârda gelir.',
   'notifprefs.demand_title': 'Talep bildirimleri',
   'notifprefs.demand_hint':
     'Hangi kategoride ve hangi saat aralığında yeni talep bildirimi almak istersin?',
@@ -1043,6 +1057,7 @@ export const tr = {
   'rewards.earn.provider_noshow': 'Uzman gelmedi telafisi',
   'rewards.earn.first_booking': 'İlk randevu tamamlama',
   'rewards.earn.w2w_like': 'W2W beğenisi',
+  'rewards.refund.deposit': 'İptal edilen randevudan puan iadesi',
   'rewards.earn.referral': 'Arkadaşını davet et',
   'rewards.redeem.title': 'Puanını kullan',
   'rewards.redeem.discount': 'Randevuda indirim',
@@ -1353,11 +1368,13 @@ export const tr = {
   'agenda.title_own': 'Takvimim',
   'agenda.add_offline': 'Offline randevu',
   'agenda.empty': 'Bu aralıkta randevu yok',
+  'agenda.close_err': 'Kaydedilemedi — o gün müşteriye hâlâ açık görünüyor. Tekrar dene.',
   'agenda.view.day': 'Gün',
   'agenda.view.list': 'Liste',
   'agenda.view.salon': 'Salon',
   'agenda.salon_note':
     'Uzman takvimlerine yalnızca randevu EKLEYEBİLİRSİN; silemez veya izin günlerine dokunamazsın. Her ekleme uzmana bildirilir.',
+  'agenda.weekly_closed': 'Haftalık saatlerinde kapalı — düzenle',
   'agenda.mark_closed': 'Kapalı işaretle',
   'agenda.mark_open': 'Açık işaretle',
   'agenda.closed_day': 'Bu gün kapalı (izin / tatil). Kullanıcıya randevuya kapalı görünür.',
@@ -1856,6 +1873,8 @@ export const tr = {
   // §4.4 — iptal/ceza/iade
   // §4.3 — depozito/dekont akışı (kullanıcı)
   'booking.money.deposit': 'Depozito',
+  // Kasada fiyat değiştiyse görünür — iki taraf da aynı rakamı görmeli.
+  'booking.money.declared': 'Ödendiği bildirilen tutar',
   'booking.balance.wait_b': 'Uzman onaylayınca randevun kapanır ve puanın yüklenir.',
   'booking.balance.provider_confirm_b':
     'Parayı aldıysan onayla. Randevu kapanır, müşterinin puanı yüklenir.',
@@ -2269,6 +2288,7 @@ export const tr = {
   'seller.metric.rating': 'Puan',
   'seller.metric.repeat': 'Tekrar müşteri',
   'seller.staff.title': 'Uzman detayı',
+  'seller.staff.remove_failed': 'Uzman kadrodan çıkarılamadı',
   'seller.staff.remove': 'Kadrodan çıkar',
   'seller.staff.remove_hint':
     'Uzman ayrılınca gelecek randevuları başka bir uzmana devredilir; kullanıcı yeniden onaylar. Randevular sessizce silinmez (§4.5).',
@@ -2349,6 +2369,8 @@ export const tr = {
   // Sistem / domain
   'auth.otp.invalid': 'Kod geçersiz veya süresi dolmuş',
   'auth.otp.send_failed': 'Kod şu an gönderilemedi. Biraz sonra tekrar dene.',
+  'auth.otp.daily_limit': 'Bugünlük kod sınırına ulaştın — yarın tekrar dene.',
+  'auth.otp.too_soon': 'Çok sık kod istedin — biraz bekleyip tekrar dene.',
   'auth.forgot.save_failed': 'Şifre değiştirilemedi. Kodu ve bağlantını kontrol et.',
   'review.not_eligible': 'Bu randevu değerlendirilemez',
 

@@ -15,7 +15,7 @@ import {
 import { AKIS_ADIMLARI, akisAdimi, durumEtiketi } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
 import type { MessageKey } from '@ayna/i18n';
-import { ANA_EKRAN_PROMOSYON, promosyonlariSirala } from '@ayna/domain';
+import { ANA_EKRAN_PROMOSYON, promosyonlariSirala, sehirEslesir, sehirGoster } from '@ayna/domain';
 import { useLocale } from '../../src/locale';
 import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import {
@@ -157,7 +157,15 @@ export default function DiscoverScreen() {
   const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
   const pros = useProfessionals();
   // §5.1.4 — şehir tüm Keşfet'i filtreler
-  const cityPros = pros.filter((p) => p.city === city);
+  /*
+   * ŞEHİR EŞLEŞMESİ DÜZ METİN DEĞİL.
+   *
+   * Haritadan konumunu işaretleyen uzmanın şehri 'Алматы' oluyordu (ters
+   * geocode Kazakistan'da Rusça döner) ve 'Almatı' seçmiş müşterinin
+   * ekranından SESSİZCE kayboluyordu: ne hata, ne boş liste uyarısı —
+   * uzman sadece yoktu.
+   */
+  const cityPros = pros.filter((p) => sehirEslesir(p.city, city));
   // §5.1.7 REVİZE — Öne Çıkanlar SPONSORLU alan: yalnız admin panelinden ⭐ işaretlenenler
   // (badge 'campaign'); otomatik doldurma YOK — admin seçmediyse bölüm görünmez.
   /**
@@ -279,8 +287,11 @@ export default function DiscoverScreen() {
           <View style={styles.grow} />
           <PressableScale style={styles.sehirCip} onPress={() => router.push('/city')}>
             <Ionicons name="location" size={12} color={colors.accent} />
+            {/* GÖSTERİM adı — filtre hâlâ kanonik `city` ile çalışıyor.
+                Kurucu ru arayüzün ekran görüntüsünde burada "Almatı"
+                gördü: kanonik ad ekrana olduğu gibi basılıyordu. */}
             <Text variant="micro" tone="ink">
-              {city}
+              {sehirGoster(city, locale)}
             </Text>
             <Ionicons name="chevron-down" size={11} color={colors.muted} />
           </PressableScale>
@@ -364,23 +375,6 @@ export default function DiscoverScreen() {
             ) : (
               <SaglayiciFoto ad={userName} style={styles.avatar} />
             )}
-            {/*
-             * ZEMİN ÇİZGİSİ — yalnız kesilmiş portrede.
-             *
-             * Kurucu: "o profil fotoğrafının altına paralel şekilde
-             * dairenin dışındaki pembe renkten çizgi atar mısın? tam
-             * fotoğrafın bittiği yerde ince görünsün ve fotoğraf genişliği
-             * kadar olsun."
-             *
-             * Kesilmiş portrenin zemini saydam; çizgi olmadan figür
-             * boşlukta asılı duruyor. Çizgi fotoğrafın TAM ALTINDA ve
-             * TAM GENİŞLİĞİNDE: kabın kendisi portre ölçüsünde, çizgi de
-             * kabın alt kenarı.
-             *
-             * Daire içindeki ham fotoğrafta ÇİZİLMİYOR: orada zaten bir
-             * çerçeve var, ikisi birden fazlalık olurdu.
-             */}
-            {portreKesilmis ? <View style={styles.portreCizgi} /> : null}
           </PressableScale>
         </View>
 
@@ -838,19 +832,20 @@ function BolumBasligi({ title, onSeeAll }: { title: string; onSeeAll?: () => voi
   return (
     <View style={styles.bolumBas}>
       {/*
-        Başlık KESİLİYORDU: "Hizmetler" → "Hizmetle". Satır
-        `space-between` ve iki çocuk da esnemiyordu; yer daralınca yazı
-        kırpılıyordu. Başlık daralabilir (`flexShrink`) ve gerekirse
-        puntosu iner — harf kaybetmez. "Tümünü Gör" ise daralmaz.
+        BAŞLIĞIN KUTUSU ARTIK ÖLÇÜMDEN DEĞİL, PAYDAN GELİYOR.
+
+        Önce `flexShrink: 1` vardı: Yoga başlığı ÖNCE kendi doğal
+        genişliğinde ölçüyor, sonra gerekirse daraltıyor. Cihazda o ölçüm
+        olması gerekenden küçük dönüyor ve satırda bol yer olduğu hâlde
+        başlık "Hizmet…" diye kırpılıyordu (kurucu iki kez bildirdi; punto
+        küçültme bunu bir süre gizledi, kaldırınca yeniden göründü).
+
+        `flex: 1` ile kutu ölçümden bağımsız: "Tümünü Gör" doğal
+        genişliğini alıyor (daralmıyor), kalan TÜM yer başlığın oluyor.
+        Ölçüm ne derse desin başlık 200pt'den geniş bir kutuya çiziliyor;
+        "Hizmetler" 86pt.
       */}
-      <Text
-        variant="h2"
-        tone="ink"
-        style={styles.bolumBaslik}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.85}
-      >
+      <Text variant="h2" tone="ink" style={styles.bolumBaslik} numberOfLines={1}>
         {title}
       </Text>
       {onSeeAll ? (
@@ -1106,13 +1101,8 @@ const makeStyles = (colors: ColorTokens) =>
      * 104px'lik kabın ortasında duruyordu ve sağında bir boşluk kalıyordu:
      * ekranın sağ kenarıyla hizalanmıyordu.
      */
-    portreKap: { width: 104, alignItems: 'flex-end' },
-    portreCizgi: {
-      width: '100%',
-      height: 2,
-      borderRadius: 1,
-      backgroundColor: colors.accent,
-    },
+    // Çizgi kaldırıldı (kurucu); portre sağ kenardan 12px içeri.
+    portreKap: { width: 104, alignItems: 'flex-end', marginRight: 12 },
 
     // search-container (radius 12, border #E5E0DE, px14 py8)
     aramaKap: { paddingHorizontal: 20 },
@@ -1199,7 +1189,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
 
     // bölüm başlığı (px24, 28 üst boşluk)
-    bolumBaslik: { flexShrink: 1 },
+    bolumBaslik: { flex: 1 },
     bolumBas: {
       flexDirection: 'row',
       alignItems: 'center',

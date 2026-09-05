@@ -3,7 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../src/locale';
-import { useSalonStaff } from '../../src/staff';
+import { useKadrodanCikar, useSalonStaff } from '../../src/staff';
+import { sunucuHatasi } from '../../src/sunucu-hatasi';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
@@ -17,6 +18,7 @@ export default function StaffDetailScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const cikanUzmanRandevulari = useStore((s) => s.cikanUzmanRandevulari);
+  const kadrodanCikar = useKadrodanCikar();
   const p = useLocalSearchParams<{
     /** Uzman kaydının kimliği — kadro işlemleri BUNA bakıyor, ada değil. */
     id?: string;
@@ -38,12 +40,32 @@ export default function StaffDetailScreen() {
         style: 'destructive',
         onPress: () => {
           /*
-           * KİMLİKLE. Eskiden adla çağrılıyordu ve aynı adlı bir başka
-           * uzmanın randevuları da iptal ediliyordu.
+           * ÇIKARMA SUNUCUYA YAZILIYOR.
+           *
+           * Burada yalnız randevular iptal ediliyordu; uzmanı kadrodan
+           * çıkaran hiçbir sunucu çağrısı yoktu. Kadro listesi sunucudan
+           * geliyor: bir sonraki tazelemede uzman geri geliyordu. Yani
+           * yıkıcı olan kısım (iptaller) gerçek, asıl amaç hayaliydi.
+           *
+           * Sıra önemli: ÖNCE sunucudan çıkarılıyor. Çıkarma başarısızsa
+           * randevular iptal edilmiyor — yarım kalmış bir çıkarma, iptal
+           * edilmiş randevularla salonda duran bir uzman demekti.
            */
-          const count = cikanUzmanRandevulari(kimlik);
-          Alert.alert(count > 0 ? t('seller.staff.reassigned') : t('seller.staff.removed'));
-          router.back();
+          void (async () => {
+            try {
+              await kadrodanCikar(kimlik);
+            } catch (err) {
+              Alert.alert(t('seller.staff.remove_failed'), sunucuHatasi(err, t));
+              return;
+            }
+            /*
+             * KİMLİKLE. Eskiden adla çağrılıyordu ve aynı adlı bir başka
+             * uzmanın randevuları da iptal ediliyordu.
+             */
+            const count = cikanUzmanRandevulari(kimlik);
+            Alert.alert(count > 0 ? t('seller.staff.reassigned') : t('seller.staff.removed'));
+            router.back();
+          })();
         },
       },
     ]);

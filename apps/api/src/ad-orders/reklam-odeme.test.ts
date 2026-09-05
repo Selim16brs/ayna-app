@@ -17,7 +17,16 @@ const svcYap = (over: Record<string, unknown> = {}) => {
     setting: { findUnique: () => Promise.resolve({ intValue: 200_000 }) },
     adOrder: {
       create: ({ data }: { data: unknown }) => Promise.resolve({ id: 'o1', ...(data as object) }),
-      findUnique: () => Promise.resolve(over['order'] ?? null),
+      /*
+       * Durum ALANI ŞEMADA VARSAYILANLI ('bekliyor'): sahte kayıtlar onu
+       * yazmıyordu ve gerçek satırdan farklı bir nesne modelliyorlardı.
+       * Onay/red artık durum kapısı taşıyor (tek ödeme = tek reklam), o
+       * yüzden varsayılan burada da veriliyor.
+       */
+      findUnique: () =>
+        Promise.resolve(
+          over['order'] ? { status: 'bekliyor', ...(over['order'] as object) } : null,
+        ),
       findFirst: () => Promise.resolve(over['tekrar'] ?? null),
       update: ({ data }: { data: unknown }) => {
         cagrilar['orderUpdate']!.push(data);
@@ -43,7 +52,8 @@ const svcYap = (over: Record<string, unknown> = {}) => {
     },
     business: { findFirst: () => Promise.resolve('business' in over ? over['business'] : null) },
   };
-  const push = { sendToUser: () => Promise.resolve() };
+  // Bildirimler ŞABLONDAN gidiyor (kk/ru turu); sahte servis ikisini de tanır.
+  const push = { sendToUser: () => Promise.resolve(), sendTemplate: () => Promise.resolve() };
   const storage = { put: (x: string) => Promise.resolve(x) };
   return {
     svc: new AdOrdersService(prisma as never, push as never, storage as never),

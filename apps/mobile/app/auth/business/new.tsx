@@ -516,8 +516,6 @@ export default function NewBusinessScreen() {
                 tone={birthDate ? 'ink' : 'muted'}
                 style={styles.dateText}
                 numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
               >
                 {birthDate ? fmtDate(birthDate) : t('biz.field.birthdate_ph')}
               </Text>
@@ -648,20 +646,11 @@ export default function NewBusinessScreen() {
                 tone={pinned ? 'onAccent' : 'accentFg'}
                 style={styles.mapText}
                 numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
               >
                 {pinned ? t('biz.field.map_pinned') : t('biz.field.map_pin')}
               </Text>
               {pinned ? (
-                <Text
-                  variant="caption"
-                  tone="onAccent"
-                  style={styles.mapChange}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.75}
-                >
+                <Text variant="caption" tone="onAccent" style={styles.mapChange} numberOfLines={1}>
                   {t('biz.field.map_change')}
                 </Text>
               ) : null}
@@ -764,13 +753,7 @@ export default function NewBusinessScreen() {
                 size={20}
                 color={docUrl ? colors.onAccent : colors.accentFg}
               />
-              <Text
-                variant="bodyStrong"
-                tone={docUrl ? 'onAccent' : 'accentFg'}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
+              <Text variant="bodyStrong" tone={docUrl ? 'onAccent' : 'accentFg'} numberOfLines={1}>
                 {docUrl ? t('biz.field.docs_added') : t('biz.field.docs_add')}
               </Text>
             </Pressable>

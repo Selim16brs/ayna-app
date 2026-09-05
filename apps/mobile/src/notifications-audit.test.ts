@@ -158,3 +158,72 @@ test('ÇÖKME · bookings değişimine bağlı TEK native tetikleyici var', () =
     `bookings'e bağlı ${bagimli.length} efekt var — her biri native çağrı yapıyorsa yarış geri gelir`,
   );
 });
+
+test('GELEN PUSH uygulama içi listede DE kalıyor', () => {
+  /*
+   * Push yalnız "bir şey oldu" sinyali verip kayboluyordu: uygulama
+   * içindeki bildirim listesi KULLANICININ KENDİ yaptıklarını gösteriyor,
+   * karşı tarafın yaptıklarını (uzman onayladı, teklif geldi) hiç
+   * göstermiyordu. Bildirimi görüp geçen kullanıcı onu bir daha
+   * bulamıyordu.
+   */
+  const layout = readFileSync(join(__dirname, '..', 'app', '_layout.tsx'), 'utf8');
+  const i = layout.indexOf('addPushReceivedListener(');
+  assert.ok(i > 0, 'push dinleyicisi yok');
+  const govde = layout.slice(i, layout.indexOf('return () => sub.remove();', i));
+  assert.match(govde, /pushNotification\(\{/, 'gelen bildirim listeye yazılmıyor');
+  /*
+   * Metin SUNUCUDAN geldiği gibi yazılıyor (title/body), anahtar değil:
+   * uydurmadan tek kaynağı bu. Boş bildirim ise hiç yazılmıyor.
+   */
+  assert.match(govde, /title: bildirim\.title/, 'başlık sunucudan alınmıyor');
+  assert.match(govde, /if \(bildirim\.title \|\| bildirim\.body\)/, 'boş bildirim de yazılıyor');
+
+  // Dinleyici başlığı/gövdeyi gerçekten taşıyor mu?
+  const nots = readFileSync(join(__dirname, 'notifications.ts'), 'utf8');
+  assert.match(nots, /title: icerik\.title \?\? ''/, 'dinleyici başlığı taşımıyor');
+  assert.match(nots, /body: icerik\.body \?\? ''/, 'dinleyici gövdeyi taşımıyor');
+});
+
+test('BİLDİRİM GEÇMİŞİ sunucudan okunup yerelle BİRLEŞİYOR', () => {
+  /*
+   * Kurucu: "bildirim geçmişi ucunu da yap."
+   *
+   * Uygulama kapalıyken gelen bildirim yalnız işletim sisteminde kalıyordu.
+   * Artık sunucuda kullanıcının kendi kutusu var ve uygulama onu okuyor.
+   *
+   * Yerel liste kullanıcının KENDİ yaptıklarını taşıyor (bunlar sunucuda
+   * yok), sunucudakiler karşı tarafın yaptıkları — iki ayrı kaynak, o
+   * yüzden biri ötekini SİLMİYOR, birleşiyor.
+   */
+  const store = readFileSync(join(__dirname, 'store.ts'), 'utf8');
+  const i = store.indexOf('hydrateNotifications: async () => {');
+  assert.ok(i > 0, 'geçmiş okunmuyor');
+  const govde = store.slice(i, store.indexOf('markAllNotificationsRead', i));
+  assert.match(govde, /api\.bildirimGecmisi\(token\)/, 'sunucudan çekilmiyor');
+  // Eleme: aynı bildirim her tazelemede eklenirse liste kendini çoğaltır.
+  assert.match(govde, /!bilinen\.has\(n\.id\)/, 'eleme yok — liste çoğalır');
+  assert.match(govde, /sunucuId: n\.id/, 'sunucu kimliği saklanmıyor');
+  // Yerel kayıtlar korunuyor.
+  assert.doesNotMatch(govde, /notifications: yeni \}/, 'yerel bildirimler siliniyor');
+  // Okundu durumu sunucudan tazeleniyor (başka cihazda okunan burada da okunmuş).
+  assert.match(govde, /okunanlar\.has\(n\.sunucuId\)/, 'okundu durumu tazelenmiyor');
+
+  // Açılışta ve bildirim ekranı odaklanınca çağrılıyor.
+  const layout = readFileSync(join(__dirname, '..', 'app', '_layout.tsx'), 'utf8');
+  assert.match(layout, /void hydrateNotifications\(\);/, 'açılışta okunmuyor');
+  const ekran = readFileSync(join(__dirname, '..', 'app', 'notifications.tsx'), 'utf8');
+  const j = ekran.indexOf('useFocusEffect(');
+  assert.ok(j > 0, 'ekran odakta tazelenmiyor');
+  assert.match(ekran.slice(j, j + 200), /void hydrateNotifications\(\);/, 'ekran tazelenmiyor');
+});
+
+test('OKUNDU işareti SUNUCUYA da yazılıyor', () => {
+  /*
+   * Yalnız yerelde kalsaydı kullanıcı başka cihazda aynı bildirimi
+   * okunmamış görürdü.
+   */
+  const store = readFileSync(join(__dirname, 'store.ts'), 'utf8');
+  assert.match(store, /api\.bildirimOkundu\(token, sid\)/, 'tekil okundu sunucuya gitmiyor');
+  assert.match(store, /api\.bildirimlerinHepsiOkundu\(token\)/, 'toplu okundu sunucuya gitmiyor');
+});

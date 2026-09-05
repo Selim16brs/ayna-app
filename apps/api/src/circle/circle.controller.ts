@@ -84,10 +84,17 @@ export class CircleController {
     return this.circle.myFollows(req.user!.id);
   }
 
+  /*
+   * KİMLİK SERVİSE GEÇİYOR.
+   *
+   * Uç yalnız giriş istiyordu ama KİMİN işaretlediğini hiç sormuyordu:
+   * herkes aynı gönderiyi sınırsız kez işaretleyebiliyor, ya da `on: false`
+   * ile başkasının gönderisinin işaretlerini sıfıra indirebiliyordu.
+   */
   @Post('posts/:id/helpful')
   @UseGuards(JwtAuthGuard)
-  helpful(@Param('id') id: string, @Body() body: { on?: boolean }) {
-    return this.circle.setHelpful(id, body?.on !== false);
+  helpful(@Req() req: AuthedRequest, @Param('id') id: string, @Body() body: { on?: boolean }) {
+    return this.circle.setHelpful(req.user!.id, id, body?.on !== false);
   }
 
   @Post('posts/:id/report')

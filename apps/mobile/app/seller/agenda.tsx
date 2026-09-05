@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
+import { almatiHaftaGunu, gunKapali, kapaliSebebi } from '@ayna/domain';
 import { DURUM_ETIKETI } from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
 import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
@@ -145,6 +146,19 @@ export default function AgendaScreen() {
   const approveBooking = useStore((s) => s.approveBooking);
   const rejectBooking = useStore((s) => s.rejectBooking);
   const closedDays = useStore((s) => s.closedDays);
+  /*
+   * HAFTALIK ÇALIŞMA SAATLERİ DE TAKVİME GİRİYOR.
+   *
+   * Kurucu (06.09.2026): "uzman izinli olarak işaretlemediği halde
+   * kullanıcıya o gün çalışmıyor gibi görünüyor."
+   *
+   * Bir günün kapalı olmasının iki sebebi var: tek tek işaretlenmiş izin
+   * günü ve haftalık saatlerde kapalı gün. Bu ekran yalnız BİRİNCİSİNİ
+   * biliyordu; haftalık saatlerinde pazar kapalı olan uzman takviminde
+   * kilit görmüyor, kendini açık sanıyordu — müşteri ise o gün hiç slot
+   * göremiyordu. Kural artık `@ayna/domain`de, sunucuyla aynı yerde.
+   */
+  const sellerHours = useStore((s) => s.sellerHours);
   const toggleClosedDay = useStore((s) => s.toggleClosedDay);
   const isSalon = useStore((s) => s.currentUser?.role === 'salon');
   const token = useStore((s) => s.token);
@@ -173,7 +187,25 @@ export default function AgendaScreen() {
     .filter((b) => b.status === 'onay_bekliyor');
   const dayStrip = Array.from({ length: 14 }, (_, d) => almatyDayStart(Date.now(), d));
   const selectedDay = dayStrip[dayIdx] ?? dayStrip[0]!;
-  const dayClosed = closedDays.includes(selectedDay);
+  const kapaliMi = (gunMs: number) =>
+    gunKapali({
+      dayMs: gunMs,
+      weekday: almatiHaftaGunu(gunMs),
+      hours: sellerHours,
+      closedDays,
+    });
+  const dayClosed = kapaliMi(selectedDay);
+  /*
+   * SEBEBİ SÖYLEMEYEN KİLİT, uzmanı çalışmayan bir düğmeye bastırır: izin
+   * günü buradan açılıyor, haftalık kapalılık ancak çalışma saatleri
+   * ekranından. Ekran hangisi olduğunu yazıyor.
+   */
+  const kapaliNeden = kapaliSebebi({
+    dayMs: selectedDay,
+    weekday: almatiHaftaGunu(selectedDay),
+    hours: sellerHours,
+    closedDays,
+  });
   // §4.2 — takvim kaynağı: API polling (items) + YEREL store birleşir; aynı id'de YEREL kazanır
   // (uzman onayı anında yansısın; polling'in stale hali onayı ezmesin).
   const calBookings = useMemo(() => {
@@ -183,8 +215,6 @@ export default function AgendaScreen() {
     return [...map.values()];
   }, [items, storeBookings]);
   const dayBookings = calBookings.filter((b) => almatyDayStart(b.startMs, 0) === selectedDay);
-  // Uzmanın KENDİ çalışma saatleri — "Çalışma saatleri" ekranından.
-  const sellerHours = useStore((st) => st.sellerHours);
   const dayRows = buildDayRows(selectedDay, dayBookings, sellerHours);
   // Gün özeti: kesinleşmiş randevu sayısı + günün cirosu
   const dayBusy = dayRows.filter((r): r is { type: 'busy'; b: Appointment } => r.type === 'busy');
@@ -315,7 +345,7 @@ export default function AgendaScreen() {
               {dayStrip.map((dayMs, i) => {
                 const p = almatyParts(dayMs);
                 const on = i === dayIdx;
-                const closed = closedDays.includes(dayMs);
+                const closed = kapaliMi(dayMs);
                 const has = items.some(
                   (b) => almatyDayStart(b.startMs, 0) === dayMs && b.status !== 'iptal_musteri',
                 );
@@ -370,9 +400,34 @@ export default function AgendaScreen() {
                     </Text>
                   </View>
                 ) : null
+              ) : kapaliNeden === 'haftalik' ? (
+                /*
+                 * HAFTALIK KAPALILIK BURADAN AÇILAMAZ.
+                 *
+                 * "Kapalı işaretle" düğmesi yalnız TARİH bazlı izin gününü
+                 * açıp kapatıyor. Haftalık saatlerde kapalı bir günde o
+                 * düğmeyi göstermek, basıldığında hiçbir şeyin değişmediği
+                 * bir düğme demekti — uzman gün açılmadığı için tekrar tekrar
+                 * basar. Sebebi yazıp doğru ekrana gönderiyoruz.
+                 */
+                <Pressable onPress={() => router.push('/seller/hours')} style={styles.closeToggle}>
+                  <Ionicons name="time-outline" size={14} color={colors.accentFg} />
+                  <Text variant="caption" tone="accentFg" style={styles.closeToggleText}>
+                    {t('agenda.weekly_closed')}
+                  </Text>
+                </Pressable>
               ) : (
                 <Pressable
-                  onPress={() => toggleClosedDay(selectedDay)}
+                  onPress={() => {
+                    /*
+                     * Yazılamazsa uzmana SÖYLENİYOR: ekran kapalı gösterip
+                     * sunucunun o güne slot açması, uzmanın izinli olduğu
+                     * güne randevu demekti.
+                     */
+                    void toggleClosedDay(selectedDay).then((oldu) => {
+                      if (!oldu) Alert.alert(t('agenda.title_own'), t('agenda.close_err'));
+                    });
+                  }}
                   style={[styles.closeToggle, dayClosed && styles.closeToggleOn]}
                 >
                   <Ionicons

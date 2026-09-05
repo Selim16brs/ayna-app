@@ -123,7 +123,14 @@ test('uzman ekranı: Figma ölçüleri yuvarlanmamış', () => {
   };
   for (const [ad, degerler] of [
     ['ozetKart', ['borderRadius: 24', 'padding: 20', 'gap: 18']],
-    ['ozetKutu', ['borderRadius: 16', 'padding: 12']],
+    /*
+     * `ozetKutu` yatay dolgusu Figma'daki 12'den 2'ye indi (4 Eyl 2026):
+     * 12'de kutuda 63.7pt yazı alanı kalıyordu ve "Tamamlanan" (64.1pt) ile
+     * Rusça etiketler KELİMENİN ORTASINDAN bölünüyordu — kurucunun ekran
+     * görüntüsünde "Tamamlana / n". DİKEY dolgu tasarımdaki gibi 12.
+     * Ölçü `canli-ozet-etiket.test.ts`te fonttan okunarak bağlandı.
+     */
+    ['ozetKutu', ['borderRadius: 16', 'paddingVertical: 12', 'paddingHorizontal: 2']],
     ['paketKart', ['borderRadius: 24', 'padding: 20', 'gap: 16']],
     ['ikiliKart', ['borderRadius: 20', 'padding: 16', 'gap: 10']],
     ['reklamKart', ['borderRadius: 24', 'padding: 16', 'gap: 12']],
@@ -394,8 +401,18 @@ test('BÖLÜM BAŞLIĞI harf kaybetmiyor', () => {
   // iki çocuk da esnemiyordu. Başlık daralır ve puntosu iner; sağdaki
   // "Tümünü Gör" daralmaz.
   const kod = d.replace(/\/\*[\s\S]*?\*\//g, '');
-  assert.match(kod, /bolumBaslik: \{ flexShrink: 1 \}/, 'başlık daralamıyor');
-  assert.match(kod, /adjustsFontSizeToFit/, 'başlık sığmayınca küçülmüyor');
+  /*
+   * `flexShrink` → `flex`: kutu artık ÖLÇÜMDEN değil PAYDAN geliyor.
+   * "Tümünü Gör" doğal genişliğini alıyor, kalan tüm yer başlığın —
+   * ölçüm şaşsa bile başlık yer kaybetmiyor (4 Eyl 2026).
+   */
+  assert.match(kod, /bolumBaslik: \{ flex: 1 \}/, 'başlık kutusu ölçüme bağlı');
+  /*
+   * Punto küçültme KALDIRILDI (4 Eyl 2026): kurucu "hizmetler başlığı
+   * küçülmüş" dedi — RN, ölçü genişliği belirsiz olduğunda puntoyu
+   * okunamayacak kadar indiriyor. Başlık artık kırpılıyor.
+   */
+  assert.doesNotMatch(kod, /adjustsFontSizeToFit/, 'başlık punto küçültüyor');
   assert.match(kod, /tumuKap: \{[^}]*flexShrink: 0/, '"Tümünü Gör" daralıyor — başlığı eziyor');
 });
 

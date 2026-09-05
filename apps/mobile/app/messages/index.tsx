@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { api, type ConversationSummary } from '../../src/api';
 import { useLocale } from '../../src/locale';
@@ -27,9 +27,16 @@ export default function MessagesScreen() {
     }
   }, [token]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  /*
+   * ODAKLANINCA TAZELENİYOR. `useEffect` yalnız ilk açılışta çalışıyordu:
+   * kullanıcı sohbete girip geri döndüğünde ya da karşı taraf yeni mesaj
+   * yazdığında liste eski hâlinde kalıyordu.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
 
   const open = (c: ConversationSummary) => {
     router.push({
@@ -57,13 +64,7 @@ export default function MessagesScreen() {
                 başlıyor; kullanıcıyı oraya götürüyoruz. */}
             <Pressable style={styles.emptyCta} onPress={() => router.push('/search')}>
               <Ionicons name="search" size={16} color={colors.onAccent} />
-              <Text
-                variant="cta"
-                tone="onAccent"
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
+              <Text variant="cta" tone="onAccent" numberOfLines={1}>
                 {t('messages.empty_cta')}
               </Text>
             </Pressable>

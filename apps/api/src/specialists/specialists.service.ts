@@ -5,6 +5,7 @@ import {
   type DayHours,
   aynaOnayli,
   uzmanKayitli,
+  kanonikSehir,
 } from '@ayna/domain';
 
 // Asia/Almaty = UTC+5, yaz saati YOK. Sunucu UTC saklıyor; uzman yerel saate
@@ -187,7 +188,15 @@ export class SpecialistsService {
         const pro = await this.prisma.professional.create({
           data: {
             name: input.name,
-            specialty: (input.bio ?? '').slice(0, 60) || input.name,
+            /*
+             * UZMANLIK ALANI OLARAK KENDİ ADI YAZILMIYOR.
+             *
+             * Canlıda görülen (05.09.2026): "Darina Serbu" adlı uzmanın
+             * uzmanlık alanı da "Darina Serbu". Kartta ad iki kez, üstelik
+             * uzmanlık diye. Biyografi yazmamış olmak bir uzmanlık üretmez;
+             * boş bırakılıyor ve ekran kendi çevrilmiş yedeğine düşüyor.
+             */
+            specialty: (input.bio ?? '').slice(0, 60),
             sector: input.sector ?? 'hair',
             // Alan seti hizmet listesinden türetilir; boşsa ana alana düşülür
             // ki uzman en azından kendi ana alanında bulunabilsin.
@@ -362,11 +371,7 @@ export class SpecialistsService {
     // Salona bildirim (yeni kadro üyesi)
     if (biz?.ownerUserId)
       void this.push
-        .sendToUser(biz.ownerUserId, {
-          title: 'Yeni kadro üyesi',
-          body: 'Bir uzman salonuna katıldı',
-          data: { route: '/salon/staff' },
-        })
+        .sendTemplate(biz.ownerUserId, 'staff.joined', undefined, { route: '/salon/staff' })
         .catch(() => undefined);
     return { ok: true, businessName: biz?.name ?? '' };
   }
@@ -547,7 +552,18 @@ export class SpecialistsService {
         // Adres alanları yalnız DOLU gelirse yazılıyor: haritadan ters
         // geocode boş dönerse mevcut kaydı silmemeli.
         ...(konum.district?.trim() ? { district: konum.district.trim() } : {}),
-        ...(konum.city?.trim() ? { city: konum.city.trim() } : {}),
+        /*
+         * ŞEHİR KANONİK YAZIMA ÇEVRİLİYOR.
+         *
+         * Ters geocode Kazakistan'da Rusça ad döndürüyor ('Алматы') ve bu
+         * ham hâliyle yazılıyordu. Uygulamanın şehir seçicisi Türkçe yazımı
+         * ('Almatı') kullandığı için uzman, kendi şehrindeki müşterilerin
+         * keşif ekranından sessizce kayboluyordu.
+         *
+         * Tanınmayan şehir OLDUĞU GİBİ yazılıyor: uydurulmuş bir şehir,
+         * kullanıcıyı hiç yaşamadığı yere taşırdı.
+         */
+        ...(konum.city?.trim() ? { city: kanonikSehir(konum.city) ?? konum.city.trim() } : {}),
       },
       select: { lat: true, lng: true, city: true, district: true },
     });
@@ -595,11 +611,29 @@ export class SpecialistsService {
      * ayrışmıştı. Tek kaynak, ayrışacak bir şey bırakmıyor.
      */
     const sectors = sectorsFromServiceIds(kesilmis.map((x) => hizmetSatirininKimligi(x) ?? ''));
+    /*
+     * ANA ALAN, HİZMET VERİLEN ALANLARDAN BİRİ OLMAK ZORUNDA.
+     *
+     * `sectors` her hizmet güncellemesinde yeniden türetiliyordu ama tekil
+     * `sector` sütunu kayıt anındaki değerde KALIYORDU. Canlıda görülen
+     * (05.09.2026): sector "makeup", sectors ["hair","nails"] — uzman
+     * makyaj yapmıyor, ama ana alanı makyaj görünüyor. Kartta uzmanlık
+     * etiketi oradan okunduğu için müşteriye YANLIŞ ALAN yazılıyordu.
+     *
+     * Ana alan hâlâ hizmet verilen alanlardan biriyse dokunulmuyor —
+     * uzmanın kendi seçimi korunur. Değilse ilk gerçek alana çekiliyor.
+     */
+    const mevcut = await this.prisma.professional.findUnique({
+      where: { id: proId },
+      select: { sector: true },
+    });
+    const anaAlanGecerli = !!mevcut?.sector && sectors.includes(mevcut.sector);
     const pro = await this.prisma.professional.update({
       where: { id: proId },
       data: {
         servicesJson: JSON.stringify(kesilmis),
         ...(sectors.length ? { sectors } : {}),
+        ...(sectors.length && !anaAlanGecerli ? { sector: sectors[0]! } : {}),
       },
     });
     /*
@@ -645,10 +679,8 @@ export class SpecialistsService {
       const biz = await this.prisma.business.findUnique({ where: { id: sp.businessId } });
       if (biz?.ownerUserId) {
         void this.push
-          .sendToUser(biz.ownerUserId, {
-            title: 'Takvim yetkisi güncellendi',
-            body: `${(await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true } }))?.name ?? 'Uzman'} salon-takvim iznini değiştirdi.`,
-            data: { route: '/salon/staff' },
+          .sendTemplate(biz.ownerUserId, 'calendar.permission_changed', undefined, {
+            route: '/salon/staff',
           })
           .catch(() => undefined);
       }
@@ -830,11 +862,12 @@ export class SpecialistsService {
       where: { id: expertUserId },
       select: { name: true },
     });
-    void this.push.sendToUser(customerId, {
-      title: 'İyi ki doğdun! 🎂',
-      body: `${expert?.name ?? 'Uzmanın'} doğum gününü kutluyor — nice mutlu, güzel yıllara! ✨`,
-      data: { route: '/notifications' },
-    });
+    void this.push.sendTemplate(
+      customerId,
+      'birthday',
+      { pro: expert?.name?.trim() || 'AYNA' },
+      { route: '/notifications' },
+    );
     return { ok: true };
   }
 }

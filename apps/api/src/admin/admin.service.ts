@@ -1,9 +1,13 @@
+import { randevuPuaniniIadeEt } from '../loyalty/puan-iade';
+import { StorageService } from '../storage/storage.service';
 import {
   aynaOnayli,
   commissionFor,
   commissionFromMinor,
   fromMinor,
+  odenenTutar,
   toMinor,
+  uzmanCariBorcu,
   uzmanKayitli,
   KAZANILMIS_DURUMLAR,
   YAKLASAN_DURUMLAR,
@@ -90,6 +94,7 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(ENV) private readonly env: Env,
+    private readonly storage: StorageService,
   ) {}
 
   // Dashboard genel bakış — platform geneli metrikler
@@ -173,6 +178,8 @@ export class AdminService {
     const span = Math.min(Math.max(days, 7), 90);
     const since = new Date(Date.now() - (span - 1) * 86400000);
     since.setUTCHours(0, 0, 0, 0);
+    // Komisyon oranı admin ayarı; gelir kovası bunu kullanıyor.
+    const rate = await this.commissionRate();
 
     const [users, bookings, professionals] = await Promise.all([
       this.prisma.user.findMany({
@@ -181,8 +188,15 @@ export class AdminService {
       }),
       this.prisma.booking.findMany({
         where: { createdAt: { gte: since } },
-        // depositAmount: AYNA'nın gelir kalemi (§10) — komisyon = depozito.
-        select: { createdAt: true, status: true, price: true, depositAmount: true },
+        // depositAmount: AYNA'nın peşin tahsil ettiği kalem (§10).
+        // finalPrice: kasada fiyat değiştiyse komisyon TABANI odur.
+        select: {
+          createdAt: true,
+          status: true,
+          price: true,
+          finalPrice: true,
+          depositAmount: true,
+        },
       }),
       this.prisma.professional.findMany({ select: { sector: true } }),
     ]);
@@ -212,10 +226,14 @@ export class AdminService {
     for (const bk of bookings) {
       bump(bk.createdAt, (b) => {
         b.bookings += 1;
-        // Brief §10: AYNA'nın geliri komisyondur ve komisyon = depozito (%10).
-        // Eskiden hizmet bedelinin TAMAMI gelir sayılıyordu — o para uzmana
-        // gidiyor, AYNA'ya değil.
-        if (bk.status === 'tamamlandi') b.revenue += Number(bk.depositAmount ?? 0);
+        // Brief §10: AYNA'nın geliri KOMİSYONDUR. Fiyat değişmediyse komisyon
+        // tam olarak peşin alınan depozitodur; değiştiyse aradaki fark uzmanın
+        // cari borcu olarak doğar (kurucu, 05.09.2026). Gelir ikisinin
+        // toplamı: sadece depozitoyu saymak, yükselen fiyattaki komisyonu
+        // hiç görünmez yapardı.
+        if (bk.status !== 'tamamlandi') return;
+        const depozito = Number(bk.depositAmount ?? 0);
+        b.revenue += depozito + uzmanCariBorcu(commissionFor(odenenTutar(bk), rate), depozito);
       });
     }
 
@@ -303,6 +321,9 @@ export class AdminService {
         gmvMinor: number;
         earnedGrossMinor: number;
         pendingGrossMinor: number;
+        // AYNA'nın müşteriden PEŞİN aldığı depozito toplamı (yalnız kazanılmış
+        // randevularda). Uzmanın borcundan düşülüyor.
+        depositMinor: number;
       }
     >();
     // Komisyon, tek tek randevulardan DEĞİL, kova cironun toplamından hesaplanır
@@ -315,12 +336,18 @@ export class AdminService {
       earnedGrossMinor: 0,
       pendingGrossMinor: 0,
       voidedGrossMinor: 0,
+      depositMinor: 0,
     };
     const items = rows.map((r) => {
-      const price = Number(r.price);
+      // Komisyon TABANI kasada ödenen tutardır. Fiyat değişmediyse rezervasyon
+      // fiyatının kendisi; değiştiyse müşterinin beyan ettiği tutar (kurucu,
+      // 05.09.2026: "ona göre tutarı girer ve ona göre ayna para kazanır").
+      const price = odenenTutar(r);
       const commission = commissionFor(price, rate); // KZT (2 hane)
       const isEarned = EARNED.includes(r.status);
       const isPending = PENDING.includes(r.status);
+      // Peşin alınan depozito — AYNA'nın kasasında ZATEN duran para.
+      const deposit = Number(r.depositAmount ?? 0);
       const key = r.proId || r.proName;
       const s = bySalon.get(key) ?? {
         proId: r.proId ?? '',
@@ -329,6 +356,7 @@ export class AdminService {
         gmvMinor: 0,
         earnedGrossMinor: 0,
         pendingGrossMinor: 0,
+        depositMinor: 0,
       };
       const priceMinor = toMinor(price);
       s.count += 1;
@@ -339,6 +367,8 @@ export class AdminService {
       if (isEarned) {
         s.earnedGrossMinor += priceMinor;
         totals.earnedGrossMinor += priceMinor;
+        s.depositMinor += toMinor(deposit);
+        totals.depositMinor += toMinor(deposit);
       } else if (isPending) {
         s.pendingGrossMinor += priceMinor;
         totals.pendingGrossMinor += priceMinor;
@@ -353,6 +383,10 @@ export class AdminService {
         dateLabel: r.dateLabel,
         price,
         commission,
+        deposit,
+        // Uzmanın bu randevudan AYNA'ya cari borcu: komisyonun depozito
+        // DIŞINDA kalan kısmı. Fiyat değişmediyse sıfır.
+        cari: isEarned ? uzmanCariBorcu(commission, deposit) : 0,
         status: r.status,
         state: isEarned ? 'earned' : isPending ? 'pending' : 'void',
       };
@@ -369,9 +403,25 @@ export class AdminService {
         earned: commissionFromMinor(totals.earnedGrossMinor, rate),
         pending: commissionFromMinor(totals.pendingGrossMinor, rate),
         collected: round2(totalCollected),
-        // Alacak = kazanılan − tahsil edilen (negatife düşmez: fazla tahsilat 0 sayılır)
+        // Müşteriden PEŞİN alınmış depozito toplamı.
+        deposits: fromMinor(totals.depositMinor),
+        /*
+         * Alacak = kazanılan komisyon − PEŞİN alınan depozito − sonradan
+         * tahsil edilen.
+         *
+         * Depozito eskiden hiç düşülmüyordu: AYNA parayı müşteriden zaten
+         * almışken panel aynı komisyonu bir de uzmandan istiyor gibi
+         * görünüyordu — %10'luk komisyon fiilen %20 olarak raporlanıyordu.
+         * Kurucu (05.09.2026): "uzmanda aynaya cari olarak depozito dışında
+         * kalan tutarı alması gerekir."
+         */
         outstanding: round2(
-          Math.max(0, commissionFromMinor(totals.earnedGrossMinor, rate) - totalCollected),
+          Math.max(
+            0,
+            commissionFromMinor(totals.earnedGrossMinor, rate) -
+              fromMinor(totals.depositMinor) -
+              totalCollected,
+          ),
         ),
       },
       salons: [...bySalon.values()]
@@ -380,6 +430,7 @@ export class AdminService {
           // Komisyon burada da kova cirosundan TEK KEZ hesaplanır — faturanın
           // (closePeriod) yaptığıyla birebir aynı işlem.
           const earned = commissionFromMinor(s.earnedGrossMinor, rate);
+          const deposits = fromMinor(s.depositMinor);
           return {
             proId: s.proId,
             proName: s.proName,
@@ -388,7 +439,9 @@ export class AdminService {
             earned,
             pending: commissionFromMinor(s.pendingGrossMinor, rate),
             collected: round2(collected),
-            outstanding: round2(Math.max(0, earned - collected)),
+            deposits,
+            // Cari borç: komisyonun depozito ve tahsilat DIŞINDA kalan kısmı.
+            outstanding: round2(Math.max(0, earned - deposits - collected)),
           };
         })
         .sort((a, b) => b.outstanding - a.outstanding || b.earned - a.earned),
@@ -1162,9 +1215,83 @@ export class AdminService {
       status: b.status,
       source: b.source,
       online: b.userId != null, // app üzerinden mi (komisyonlu)
+      /*
+       * DEPOZİTO DEKONTU — §4.4'ün ikinci yarısı.
+       *
+       * Dekont yüklendiği an randevu "kesinleşti" sayılıyor; admin
+       * doğrulaması SONRA geliyor ve yalnız sahte dekontu geri alıyor.
+       * Ama panel dekontu HİÇ göstermiyordu: yönetici neyi doğrulayacağını
+       * göremiyor, elinde yalnız "İptal" kalıyordu (kurucu bunu bildirdi).
+       */
+      depositReceiptUri: b.depositReceiptUri ?? null,
+      depositAmount: b.depositAmount != null ? Number(b.depositAmount) : null,
+      /*
+       * ── İKİ TARAFIN ONAYI ────────────────────────────────────────────
+       *
+       * Kurucu (05.09.2026): "her iki tarafın onayı adminde müşterinin ayna
+       * parasını aktif hale getirir."
+       *
+       * Panel bu iki onayı HİÇ göstermiyordu: yönetici, puanın neden
+       * yazılmadığını (hangi tarafın onayının eksik olduğunu) göremiyordu.
+       *   · musteriOdedi — müşterinin "ödemeyi yaptım" beyanı
+       *   · uzmanAldi    — uzmanın teyidi; randevu tamamlandıysa var
+       *   · aynaParaAktif — ikisi de varsa puan yazılmış demektir
+       */
+      musteriOdedi: b.balanceDeclaredAt != null,
+      // Uzmanın KENDİ damgası. Eskiden tamamlanma anına bakılıyordu; el
+      // sıkışma iki taraflı olunca (kim önce basarsa) o damga uzmanın
+      // onayını değil, ikisinin birden tamamlanmasını gösteriyordu.
+      uzmanAldi: b.balanceReceivedAt != null,
+      aynaParaAktif: b.balanceDeclaredAt != null && b.balanceReceivedAt != null,
+      // Kasada değişen fiyat — komisyon tabanı bu (bkz. odenenTutar).
+      finalPrice: b.finalPrice != null ? Number(b.finalPrice) : null,
       createdAt: b.createdAt,
     }));
     return filter && filter !== 'all' ? mapped.filter((b) => b.status === filter) : mapped;
+  }
+
+  /**
+   * SAHTE DEKONTU GERİ ALIR — §4.4/§8.
+   *
+   * Dekont yüklendiği an randevu kesinleşiyor; para gerçekten gelmediyse
+   * yöneticinin bunu geri alacak bir yolu olmalıydı, yoktu: elinde yalnız
+   * "İptal" vardı ve iptal, müşteriyi cezalandıran ayrı bir sonuç doğurur.
+   * Geri alma randevuyu ÖLDÜRMÜYOR — depozito beklemeye döndürüyor, müşteri
+   * doğru dekontu yükleyebiliyor.
+   */
+  async rejectDepositReceipt(id: string, actorId?: string) {
+    const b = await this.prisma.booking.findUnique({
+      where: { id },
+      select: { id: true, status: true, depositReceiptUri: true, userId: true, pointsUsed: true },
+    });
+    if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu yok' });
+    if (!b.depositReceiptUri)
+      throw new BadRequestException({ code: 'NO_RECEIPT', message: 'Bu randevuda dekont yok' });
+    /*
+     * PUAN GERİ VERİLİYOR.
+     *
+     * Dekont geri alınınca müşteri düzeltilmiş dekontu yüklüyor ve o sırada
+     * puanı YENİDEN harcanıyordu — ilk harcama hiç iade edilmediği için aynı
+     * depozito için iki kez puan ödemiş oluyordu. Hiçbir ekran bunu
+     * göstermiyordu; yalnız bakiyesi eksiliyordu.
+     */
+    const iade = await randevuPuaniniIadeEt(this.prisma, id, b.userId);
+    const updated = await this.prisma.booking.update({
+      where: { id },
+      data: {
+        status: 'depozito_bekliyor',
+        depositReceiptUri: null,
+        // Hash da siliniyor: müşteri düzeltilmiş dekontu yükleyebilsin.
+        // Kalsaydı "bu dekont daha önce kullanılmış" diye reddedilirdi.
+        receiptHash: null,
+        // Puan iade edildi: kayıt da sıfırlanıyor, yoksa iade edilmiş puan
+        // ileride nakit iadeden bir kez daha düşülürdü.
+        ...(iade > 0 ? { pointsUsed: 0 } : {}),
+      },
+      select: { id: true, status: true },
+    });
+    await this.kaydet(id, 'admin.booking.receipt_rejected', { actorId: actorId ?? null });
+    return updated;
   }
 
   // Teklif talepleri (§ çekirdek akış: foto teklif / talep) + gelen teklifler
@@ -1368,13 +1495,26 @@ export class AdminService {
         message: 'Bitiş tarihi başlangıçtan sonra olmalı',
       });
     }
+    /*
+     * GÖRSEL DEPOLAMAYA YÜKLENİYOR.
+     *
+     * Kurucu (05.09.2026): "orada link koyarak değil biz görsel upload
+     * ederek yapmamız lazım." Panel artık dosya seçtiriyor ve veri adresi
+     * gönderiyor; burada kalıcı depolamaya taşınıyor. Ham base64'ü satıra
+     * yazmak kaydı megabaytlarca büyütür ve o satır HER kullanıcının keşif
+     * ekranında okunuyor.
+     *
+     * Uzak URL'ye dokunulmuyor: eski kayıtlar ve elle girilmiş adresler
+     * çalışmaya devam ediyor.
+     */
+    const image = (await this.storage.put(input.image, 'ads')) ?? input.image;
     return this.prisma.adBanner.create({
       data: {
         proId: input.proId,
         title: input.title,
         subtitle: input.subtitle ?? '',
         ...(input.i18n ? { i18n: input.i18n as object } : {}), // §14.5 — kk/ru
-        image: input.image,
+        image,
         sortOrder: input.sortOrder ?? 0,
         placement: input.placement ?? 'one_cikanlar',
         // Pencere ZORUNLU (yukarıda doğrulandı); süresi biten reklam

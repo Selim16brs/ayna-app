@@ -18,6 +18,9 @@
  * Tamamlanan iş en ağırı (%40): müşterinin gerçekten hizmet aldığı tek
  * kanıt. Değerlendirme (%35) ikinci: iş yapılmış ama nasıl yapıldığını o
  * söylüyor. Cevap süresi (%25): müşterinin ilk temasta yaşadığı deneyim.
+ *
+ * Cevap süresi tek başına yüzde ÜRETMEZ (aşağıda `isKaniti`): hızlı dönmek
+ * işin iyi yapıldığının kanıtı değildir.
  */
 
 export interface BasariGirdisi {
@@ -96,6 +99,26 @@ export function uzmanBasarisi(g: BasariGirdisi): BasariSonucu {
   }
 
   if (bilesenler.length === 0) return { yuzde: null, bilesenler: [] };
+
+  /*
+   * ── CEVAP SÜRESİ TEK BAŞINA BAŞARI DEĞİLDİR ─────────────────────────────
+   *
+   * Canlıda görülen: hiç işi tamamlanmamış, hiç değerlendirilmemiş bir
+   * uzmanın kartında yeşil "↗ %100 başarı" rozeti. Sebep, tek ölçülebilen
+   * bileşenin cevap süresi olması: ağırlıklar ölçülebilenler arasında
+   * paylaştırıldığı için %25'lik bileşen tek başına kalınca %100 oluyordu.
+   *
+   * Bir talebe hızlı dönmek, İŞİN İYİ YAPILDIĞININ kanıtı değil. Müşteri o
+   * rozeti "aldığı işlerin %100'ü iyi gitmiş" diye okuyor — oysa uzmanın
+   * henüz tamamlanmış tek işi yok. Kurucunun kuralı net: sistem hiçbir şeyi
+   * kendiliğinden uydurmaz.
+   *
+   * Bu yüzden yüzde için İŞ KANITI şart: ya yeterli talep üzerinden iş
+   * oranı, ya da en az bir değerlendirme. İkisi de yoksa cevap süresi
+   * hesaba giriyor ama TEK BAŞINA yüzde üretmiyor — rozet hiç çizilmiyor.
+   */
+  const isKaniti = bilesenler.some((b) => b.ad === 'is' || b.ad === 'puan');
+  if (!isKaniti) return { yuzde: null, bilesenler: [] };
 
   /*
    * AĞIRLIKLAR ÖLÇÜLEBİLENLER ARASINDA PAYLAŞTIRILIYOR.

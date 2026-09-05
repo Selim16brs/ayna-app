@@ -73,6 +73,16 @@ export const CITIES: string[] = [
   'Türkistan',
 ];
 
+/**
+ * ESKİ ROZET TÜRÜ — artık sunucudan GELMİYOR.
+ *
+ * `Professional.badge` sütunu şemada herkese `verified` doğuyordu ve
+ * hiçbir doğrulama onu güncellemiyordu: kartta "Doğrulanmış" diye
+ * çizilseydi hiç doğrulanmamış uzman doğrulanmış görünürdü. Gerçek
+ * doğrulama `aynaVerified`ta ve KYC'ye bağlı.
+ *
+ * Tür tohum verisi için duruyor; sunucu yolunda alan YOK.
+ */
 export type ProBadge = 'campaign' | 'verified' | 'today';
 export type ProviderKind = 'salon' | 'independent';
 
@@ -94,7 +104,8 @@ export interface Professional {
   priceFrom: number;
   priceTo: number; // §5.1.5 — salon kartında fiyat ARALIĞI için üst sınır (uzman fiyatları)
   image: string;
-  badge: ProBadge;
+  /** Yalnız TOHUM verisinde; sunucudan gelmiyor (bkz. ProBadge). */
+  badge?: ProBadge;
   city: string;
   district: string;
   lat?: number; // §5.1.4 — gerçek konum (kayıtta haritadan seçildi); yoksa şehir merkezine yakın
@@ -213,7 +224,8 @@ interface ProSeed {
   reviewCount: number;
   friends?: number;
   priceFrom: number;
-  badge: ProBadge;
+  /** Yalnız TOHUM verisinde; sunucudan gelmiyor (bkz. ProBadge). */
+  badge?: ProBadge;
 }
 
 const PRO_SEEDS: ProSeed[] = [
@@ -978,8 +990,28 @@ export interface Appointment {
   proposedStartMs?: number; // uzmanın önerdiği alternatif başlangıç (§1.6)
   depositAmount?: number; // §4.3 — beklenen depozito (₸)
   depositDeadline?: number; // §4.4 — depozito son ödeme anı (UTC ms, 10 dk); geçilirse randevu düşer
-  /** §4.9 — müşterinin "ödeme yaptım" beyanı (UTC ms). Uzmanın butonu buna bakar. */
+  /**
+   * Depozitonun puanla ödenen kısmı (₸ karşılığı).
+   *
+   * İade tutarı bundan hesaplanıyor: nakit iade = depozito − puan. Ekran
+   * rakamı açıklayabilsin diye taşınıyor.
+   */
+  pointsUsed?: number;
+  /** §4.9 — müşterinin "ödeme yaptım" beyanı (UTC ms). */
   balanceDeclaredAt?: number;
+  /**
+   * Uzmanın "ödemeyi aldım" teyidi (UTC ms).
+   *
+   * El sıkışma iki taraflı ve SIRA ÖNEMSİZ: her taraf kendi onayını istediği
+   * anda veriyor, randevu iki damga da geldiğinde kapanıyor.
+   */
+  balanceReceivedAt?: number;
+  /**
+   * Kasada ÖDENDİĞİ BEYAN EDİLEN tutar — yalnız `price`ten farklıysa dolu
+   * (kurucu, 05.09.2026). Puan ve komisyon bundan doğuyor; `price` ise
+   * depozitonun dayanağı olarak olduğu gibi duruyor.
+   */
+  finalPrice?: number;
   /** §4.8/§4.9 — itiraz/otomatik onay penceresinin bitişi (UTC ms). */
   finalizeDeadline?: number;
   receiptUri?: string; // §4.3 — yüklenen dekont görseli
@@ -1361,6 +1393,23 @@ export interface CircleComment {
 }
 export interface CirclePost {
   id: string;
+  /**
+   * Sunucudaki kimlik. Gönderi önce YERELDE açılıyor (iyimser) ve yerel bir
+   * kimlik alıyor; sunucu kabul edince kendi kimliğini dönüyor. İkisi
+   * eşleşmediği için akış tazelenince aynı gönderi İKİ KEZ görünüyordu.
+   * Kimlik burada saklanıyor ve birleştirme bunu da eleme ölçütü sayıyor.
+   */
+  sunucuId?: string;
+  /**
+   * Gönderinin sunucudaki durumu — yalnız KENDİ gönderinde ve normal
+   * değilse yazılıyor.
+   *
+   * `incelemede`: sunucu şüpheli buldu, akışta YOK. Yazan kişi bunu
+   * bilmezse gönderisinin yayında olduğunu sanır.
+   * `gonderilemedi`: sunucu kalıcı olarak reddetti. Ekranda duran ama
+   * kimsenin görmediği bir gönderi, uydurulmuş bir yayındır.
+   */
+  durum?: 'incelemede' | 'gonderilemedi';
   type: CirclePostType;
   category: string;
   author: string;
@@ -1604,7 +1653,22 @@ export interface DemandOffer {
   proImage: string;
   rating: number;
   reviewCount: number;
-  distanceKm: number;
+  /**
+   * Uzmanın GERÇEK konumu (yoksa null). Sunucu eskiden `distanceKm`
+   * gönderiyordu ama o sayı teklifin KİMLİK DİZESİNDEN üretiliyordu:
+   * kartta "3 km" yazıyor, "Yakınlık" sıralaması ve "Önerilen" skoru da
+   * ona bakıyordu — sıralama kısmen rastgeleydi.
+   */
+  lat?: number | null;
+  lng?: number | null;
+  /**
+   * Hesaplanan mesafe (km) — koordinat yoksa `null`.
+   *
+   * Ekran, keşif ve arama ile AYNI kuraldan (`saglayiciMesafesi`) hesaplayıp
+   * buraya yazıyor; sıralama da bunu okuyor. Bilinmeyen mesafe sıralamada
+   * öne geçmiyor, ama "uzak" da sayılmıyor: bilmiyoruz.
+   */
+  mesafeKm?: number | null;
   price: number;
   discountPercent?: number; // §A2 — ⚡Fırsat teklifi (0 = indirimsiz)
   discountReason?: string; // off_peak | last_minute | flash
@@ -1699,7 +1763,6 @@ export function buildOffers(
       proImage: p.image,
       rating: p.rating,
       reviewCount: p.reviewCount,
-      distanceKm: 1 + ((i * 2) % 8),
       price,
       etaMin: eta,
       ...(i % 2 === 1 ? { note: OFFER_NOTES[i % OFFER_NOTES.length] } : {}),
@@ -1714,9 +1777,19 @@ export type OfferSort = 'recommended' | 'price' | 'distance' | 'rating';
 export function sortOffers(offers: DemandOffer[], by: OfferSort): DemandOffer[] {
   const arr = [...offers];
   if (by === 'price') return arr.sort((a, b) => a.price - b.price);
-  if (by === 'distance') return arr.sort((a, b) => a.distanceKm - b.distanceKm);
+  if (by === 'distance')
+    /*
+     * MESAFESİ BİLİNMEYEN SONA. "Yakınlık"a göre sıralarken mesafesi
+     * bilinmeyeni başa koymak, onu yakın SAYMAK olurdu.
+     */
+    return arr.sort((a, b) => (a.mesafeKm ?? Infinity) - (b.mesafeKm ?? Infinity));
   if (by === 'rating') return arr.sort((a, b) => b.rating - a.rating);
-  const score = (o: DemandOffer) => o.rating * 20 - o.distanceKm * 2 - o.price / 2000;
+  /*
+   * "Önerilen" skoru: mesafe BİLİNİYORSA cezalandırıyor, bilinmiyorsa
+   * hiç katılmıyor. Bilinmeyeni "0 km" saymak onu en yakın gibi gösterir,
+   * "9 km" saymak haksız yere cezalandırırdı.
+   */
+  const score = (o: DemandOffer) => o.rating * 20 - (o.mesafeKm ?? 0) * 2 - o.price / 2000;
   return arr.sort((a, b) => score(b) - score(a));
 }
 
@@ -1837,6 +1910,14 @@ export interface AppNotification {
   audience?: 'user' | 'seller';
   // Tıklanınca gidilecek ekran (yoksa türe göre varsayılan kullanılır)
   route?: string;
+  /**
+   * SUNUCUDAKİ kimlik — yalnız sunucudan gelen bildirimlerde dolu.
+   *
+   * Eleme ölçütü: aynı bildirim her tazelemede yeniden eklenirse liste
+   * kendi kendini çoğaltır. Okundu bilgisini sunucuya yazarken de bu
+   * kimlik kullanılıyor.
+   */
+  sunucuId?: string;
   // §5.7 — oluşturulma zamanı (ms); 30 günden eski bildirimler otomatik temizlenir.
   // Seed'lerde yok (demo kalıcı); gerçek bildirimler push anında damgalanır.
   createdAt?: number;

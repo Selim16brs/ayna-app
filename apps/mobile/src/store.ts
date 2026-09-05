@@ -246,7 +246,8 @@ export function bookingEylemGonder(
     case 'islemi_bitirdim':
       return api.completeBookingApi(id);
     case 'odeme_yaptim':
-      return api.balancePaid(id);
+      // Tutar isteğe bağlı: yalnız fiyat değiştiyse geliyor.
+      return api.balancePaid(id, typeof arg === 'number' ? arg : undefined);
     case 'odeme_aldim':
       return api.balanceReceived(id);
     case 'musteri_gelmedi':
@@ -417,7 +418,11 @@ interface State {
   // §6.1 — uzman/salon hizmet kataloğu (taksonomi id → fiyat/süre). Profil "Hizmetler" ekranından
   // yönetilir; offline randevu akışında hazır (accordion) seçim olarak kullanılır. Kalıcı saklanır.
   sellerServices: SellerServiceRow[];
-  setSellerServices: (rows: SellerServiceRow[]) => void;
+  /**
+   * Hizmet listesini kaydeder. Sunucu yazımı BAŞARILI MI diye dönüyor:
+   * ekran "Kaydedildi" demeden önce buna bakıyor.
+   */
+  setSellerServices: (rows: SellerServiceRow[]) => Promise<boolean>;
   // §9.5 — uzman/salon profil verileri (kayıt sonrası düzenlenebilir). Kalıcı saklanır.
   sellerSocial: SocialValue;
   sellerHours: DayHours[];
@@ -545,7 +550,11 @@ interface State {
   checkReminders: () => void; // §4.1 adım 6 — 24s/2s hatırlatmaları üretir (idempotent)
   expireDeposits: () => void; // §4.4 — depozito süresi dolan randevuları düşürür
   expireResponses: () => void; // §4.1.3 — uzman yanıt süresi dolan talepleri düşürür
-  toggleClosedDay: (dayStartMs: number) => void; // §4.6 — günü kapalı/açık işaretle
+  /**
+   * Günü kapalı/açık işaretler. Sunucuya yazılamazsa YEREL DEĞİŞİKLİK GERİ
+   * ALINIYOR ve `false` dönüyor: ekran ile sunucu ayrı şey gösteremez.
+   */
+  toggleClosedDay: (dayStartMs: number) => Promise<boolean>; // §4.6 — günü kapalı/açık işaretle
   // §5.2 Faz A — teklif/talep akışı BULUTTAN (iki cihaz arasında gerçek çalışır)
   createDemand: (input: {
     mode: DemandMode;
@@ -707,6 +716,8 @@ interface State {
   pushNotification: (n: Omit<AppNotification, 'id' | 'read'>) => void;
   pruneNotifications: () => void; // §5.7 — 30 günden eski bildirimleri temizle
   markNotificationRead: (id: string) => void;
+  /** Sunucudaki bildirim geçmişini yerel listeyle birleştirir. */
+  hydrateNotifications: () => Promise<void>;
   setUnreadMessages: (n: number) => void;
   markAllNotificationsRead: () => void;
 }
@@ -869,7 +880,14 @@ export const useStore = create<State>()(
           if (postsR.status === 'rejected') throw postsR.reason;
           const backendPosts = postsR.value;
           set((s) => {
-            const have = new Set(s.circlePosts.map((p) => p.id));
+            /*
+             * Eleme YEREL kimliği de SUNUCU kimliğini de sayıyor: iyimser
+             * açılan gönderi sunucudan kendi kimliğiyle döndüğünde ikinci
+             * kez eklenmesin.
+             */
+            const have = new Set(
+              s.circlePosts.flatMap((p) => (p.sunucuId ? [p.id, p.sunucuId] : [p.id])),
+            );
             // Kaydetme durumu SUNUCUDAN gelir ve BİLİNEN gönderilerde de
             // tazelenir. Yalnız yeni gönderileri eklemek yetmiyordu: başka
             // cihazda kaydedilen bir gönderi burada hep "kaydedilmemiş"
@@ -1030,7 +1048,7 @@ export const useStore = create<State>()(
       },
       setSellerHours: (hours) => set({ sellerHours: hours }),
       sellerServices: bosHizmetListesi(),
-      setSellerServices: (rows) => {
+      setSellerServices: async (rows) => {
         set({ sellerServices: rows });
         // §9.5 — hizmet listesi HESABIN parçası: public profil de bundan beslenir
         const gonderilecek = rows
@@ -1043,7 +1061,21 @@ export const useStore = create<State>()(
             durationMin: Number(r.dur) || 60,
           }))
           .filter((x) => x.price > 0 && x.name);
-        void api.setMyServices(gonderilecek).catch(() => undefined);
+        /*
+         * SUNUCU YAZIMI SESSİZ DEĞİL.
+         *
+         * Hata yutuluyordu ve ekran yine "Kaydedildi" diyordu. Uzmanın
+         * keşif kartı yoksa sunucu `NO_DISCOVERY_CARD` fırlatıyor: hizmetler
+         * hiçbir yere yazılmıyor, müşteri onları hiç görmüyor ve uzman
+         * kaydettiğini sanıyor. Kurucunun "uzman hizmet ekliyor ama müşteri
+         * göremiyor" dediği sessizliğin son halkası buydu.
+         */
+        try {
+          await api.setMyServices(gonderilecek);
+          return true;
+        } catch {
+          return false;
+        }
       },
       sellerSocial: emptySocial,
       sellerHours: defaultHours(),
@@ -1532,6 +1564,8 @@ export const useStore = create<State>()(
           const asked = get().surveyAskedIds;
           const due = get().bookings.filter(
             (b) =>
+              // MÜŞTERİ tarafı: uzman kendi verdiği hizmeti değerlendirmez.
+              b.benimRolum !== 'uzman' &&
               b.status === 'tamamlandi' &&
               !asked.includes(b.id) &&
               now >= b.startMs + b.durationMin * 60_000 + 3 * 60 * 60_000,
@@ -1556,6 +1590,16 @@ export const useStore = create<State>()(
           const now = Date.now();
           const news: AppNotification[] = [];
           const bookings = s.bookings.map((b) => {
+            /*
+             * BU HATIRLATMALAR MÜŞTERİYE AİT.
+             *
+             * Uzmanın cihazında sağlayıcı olduğu randevular AYNI listede
+             * duruyor (`benimRolum: 'uzman'`) ve buradan geçiyordu: uzmana
+             * "Ücretsiz iptal için son şans" bildirimi düşüyordu — kendi
+             * müşterisinin randevusu için, hiç anlamı olmayan bir cümle.
+             * Kurucu bunu canlıda gördü.
+             */
+            if (b.benimRolum === 'uzman') return b;
             if (b.status !== 'kesinlesti') return b;
             const left = b.startMs - now;
             if (left <= 0) return b;
@@ -1591,14 +1635,29 @@ export const useStore = create<State>()(
       },
 
       // §4.6 — günü kapalı/açık işaretle (izin/tatil). Kullanıcı tarafında kapalı gün slot göstermez.
-      toggleClosedDay: (dayStartMs) => {
+      toggleClosedDay: async (dayStartMs) => {
+        const oncekiler = get().closedDays;
         set((s) => ({
           closedDays: s.closedDays.includes(dayStartMs)
             ? s.closedDays.filter((d) => d !== dayStartMs)
             : [...s.closedDays, dayStartMs],
         }));
         // §4.6 — izin günleri HESAPTA (kullanıcı tarafı slotları da bunlara göre kapanır)
-        void api.setMyClosedDays(get().closedDays).catch(() => undefined);
+        try {
+          await api.setMyClosedDays(get().closedDays);
+          return true;
+        } catch {
+          /*
+           * YAZILAMAYAN İZİN GÜNÜ GERİ ALINIYOR.
+           *
+           * Hata yutuluyordu: uzman günü kapalı işaretliyor, ekranda kapalı
+           * görünüyor, ama sunucu hâlâ o güne slot açıyordu. Müşteri uzmanın
+           * izinli olduğu güne randevu alıyordu — uzmanın hiç kabul etmediği
+           * bir gün. Ekranın sunucuyla aynı şeyi göstermesi şart.
+           */
+          set({ closedDays: oncekiler });
+          return false;
+        }
       },
 
       // §10.1/§12.7 — promosyon oluştur → admin onayına düşer (status 'pending')
@@ -2381,9 +2440,17 @@ export const useStore = create<State>()(
           // Hangi UÇTAN geldiği rolü belirliyor. Sağlayıcı listesi sonra
           // yazılıyor: aynı randevu iki listede birden çıkarsa (kendi
           // salonundan randevu alan uzman) sağlayıcı görünümü kazanır.
+          /*
+           * ROL SUNUCUDAN GELİYOR; uç etiketi yalnız YEDEK.
+           *
+           * Rol yalnız "hangi uçtan geldi" ile belirleniyordu. Etiket
+           * düştüğünde randevu sessizce "müşteri" sayılıyor ve uzman kendi
+           * ekranında müşteri görünümüne düşüyordu: başlıkta kendi adı,
+           * altında "randevu gününü bekliyorsun".
+           */
           const byId = new Map<string, (typeof mine)[number]>();
-          for (const b of mine) byId.set(b.id, { ...b, benimRolum: 'musteri' as const });
-          for (const b of provider) byId.set(b.id, { ...b, benimRolum: 'uzman' as const });
+          for (const b of mine) byId.set(b.id, { ...b, benimRolum: b.benimRolum ?? 'musteri' });
+          for (const b of provider) byId.set(b.id, { ...b, benimRolum: b.benimRolum ?? 'uzman' });
           const remote = [...byId.values()];
           const remoteIds = new Set(remote.map((b) => b.id));
           set((s) => {
@@ -2842,7 +2909,16 @@ export const useStore = create<State>()(
             ...s.circlePosts,
           ],
         }));
-        // §5.5 — backend moderasyonuna gönder (şüpheli→pending; best-effort)
+        /*
+         * SUNUCUNUN CEVABI ARTIK OKUNUYOR.
+         *
+         * Eskiden atılıyordu ve iki ayrı yanlış doğuyordu:
+         *   · Kabul edilen gönderi akış tazelenince İKİ KEZ görünüyordu —
+         *     yerel kopya ve sunucu kopyası (kimlikleri farklı).
+         *   · Şüpheli bulunan gönderi akışta HİÇ yok (sunucu yalnız
+         *     `published` dönüyor) ama yerelde duruyordu: yazan kişi
+         *     yayında sanıyordu.
+         */
         const token = get().token;
         if (token)
           void api
@@ -2851,7 +2927,31 @@ export const useStore = create<State>()(
               text: input.text,
               anonymous: input.anonymous,
             })
-            .catch(() => undefined);
+            .then((r) =>
+              set((s) => ({
+                circlePosts: s.circlePosts.map((p) =>
+                  p.id === id
+                    ? {
+                        ...p,
+                        sunucuId: r.id,
+                        ...(r.status === 'published' ? {} : { durum: 'incelemede' as const }),
+                      }
+                    : p,
+                ),
+              })),
+            )
+            .catch((err: unknown) => {
+              // Geçici hata (ağ yok) sessiz: kullanıcı yeniden açtığında
+              // gönderi hâlâ yerelde ve yeniden denenebilir. KALICI red ise
+              // söylenmeli — yoksa kimsenin görmediği bir gönderi ekranda
+              // yayınlanmış gibi durur.
+              if (!(err instanceof ApiError) || !kaliciRed(err)) return;
+              set((s) => ({
+                circlePosts: s.circlePosts.map((p) =>
+                  p.id === id ? { ...p, durum: 'gonderilemedi' as const } : p,
+                ),
+              }));
+            });
         return id;
       },
 
@@ -2908,8 +3008,16 @@ export const useStore = create<State>()(
       },
 
       addComment: (postId, text, anonymous, proId) => {
+        /*
+         * SUNUCUYA GİDEN KİMLİK, SUNUCUNUN BİLDİĞİ KİMLİK.
+         *
+         * Yeni açılan gönderinin YEREL kimliği var; sunucu onu tanımıyor.
+         * Yerel kimlikle yazılan yorum sessizce düşüyordu: yazan kişi
+         * yorumunu görüyor, başka kimse görmüyordu.
+         */
+        const uzakId = get().circlePosts.find((p) => p.id === postId)?.sunucuId ?? postId;
         // §5.5 — yorum SUNUCUYA yazılır (moderasyon + diğer kullanıcılar görür)
-        void api.circleComment(postId, text, anonymous, proId).catch(() => undefined);
+        void api.circleComment(uzakId, text, anonymous, proId).catch(() => undefined);
         set((s) => ({
           circlePosts: s.circlePosts.map((p) =>
             p.id === postId
@@ -3137,6 +3245,18 @@ export const useStore = create<State>()(
                    */
                   ...(me.phone ? { phone: me.phone } : {}),
                   phoneVerified: me.phoneVerified,
+                  /*
+                   * YÖNETİCİ ONAYI DA TAZELENİYOR.
+                   *
+                   * Randevu kapısı "telefon doğrulandı YA DA yönetici
+                   * onayladı" diyor (`randevuVerebilir`). `phoneVerified`
+                   * tazeleniyordu ama `adminApproved` GİRİŞTEKİ kopyada
+                   * kalıyordu: admin panelden onayladığında uygulama bunu
+                   * hiç öğrenmiyor, müşteri randevu alamıyor ve profilde
+                   * "telefonunu doğrula" kartı duruyordu. Kurucu bunu
+                   * canlıda gördü.
+                   */
+                  adminApproved: me.adminApproved,
                 }
               : s.currentUser,
             premium: tier === 'premium' || tier === 'platinum',
@@ -3314,10 +3434,66 @@ export const useStore = create<State>()(
           return kept.length === s.notifications.length ? {} : { notifications: kept };
         }),
 
-      markNotificationRead: (id) =>
+      markNotificationRead: (id) => {
         set((s) => ({
           notifications: s.notifications.map((x) => (x.id === id ? { ...x, read: true } : x)),
-        })),
+        }));
+        const token = get().token;
+        const sid = get().notifications.find((x) => x.id === id)?.sunucuId;
+        // Okundu bilgisi sunucuda da: başka cihazda tekrar okunmamış görünmesin.
+        if (token && sid) void api.bildirimOkundu(token, sid).catch(() => undefined);
+      },
+
+      /**
+       * SUNUCUDAKİ BİLDİRİM GEÇMİŞİNİ yerel listeyle BİRLEŞTİRİR.
+       *
+       * Yerel liste kullanıcının KENDİ yaptıklarını taşıyor (randevu isteği
+       * gönderdi, puan kazandı) ve bunlar sunucuda yok. Sunucudakiler ise
+       * karşı tarafın yaptıkları. İkisi ayrı kaynak, o yüzden birleşiyor —
+       * biri ötekini silmiyor.
+       *
+       * Eleme `sunucuId` ile: aynı bildirim her tazelemede yeniden
+       * eklenirse liste kendi kendini çoğaltırdı.
+       */
+      hydrateNotifications: async () => {
+        const token = get().token;
+        if (!token) return;
+        try {
+          const uzak = await api.bildirimGecmisi(token);
+          set((s) => {
+            const bilinen = new Set(
+              s.notifications.map((n) => n.sunucuId).filter((x): x is string => !!x),
+            );
+            const yeni: AppNotification[] = uzak
+              .filter((n) => !bilinen.has(n.id))
+              .map((n) => ({
+                id: nextId('n'),
+                sunucuId: n.id,
+                type: 'system' as const,
+                title: n.title,
+                body: n.body,
+                dateLabel: '',
+                icon: 'notifications-outline',
+                read: n.read,
+                createdAt: n.createdAtMs,
+                ...(n.route ? { route: n.route } : {}),
+              }));
+            /*
+             * OKUNDU DURUMU SUNUCUDAN TAZELENİYOR: başka cihazda okunan
+             * bildirim burada da okunmuş görünsün.
+             */
+            const okunanlar = new Set(uzak.filter((n) => n.read).map((n) => n.id));
+            const guncel = s.notifications.map((n) =>
+              n.sunucuId && okunanlar.has(n.sunucuId) ? { ...n, read: true } : n,
+            );
+            return yeni.length
+              ? { notifications: [...yeni, ...guncel] }
+              : { notifications: guncel };
+          });
+        } catch {
+          // çevrimdışı: eldeki liste korunur
+        }
+      },
 
       removeDemand: async (id) => {
         const onceki = get().demands;
@@ -3406,8 +3582,11 @@ export const useStore = create<State>()(
         }
       },
 
-      markAllNotificationsRead: () =>
-        set((s) => ({ notifications: s.notifications.map((x) => ({ ...x, read: true })) })),
+      markAllNotificationsRead: () => {
+        set((s) => ({ notifications: s.notifications.map((x) => ({ ...x, read: true })) }));
+        const token = get().token;
+        if (token) void api.bildirimlerinHepsiOkundu(token).catch(() => undefined);
+      },
 
       setUnreadMessages: (n) => set({ unreadMessages: Math.max(0, Math.trunc(n) || 0) }),
     }),

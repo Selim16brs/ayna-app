@@ -30,7 +30,13 @@ const sema = readFileSync(join(api, 'prisma/schema.prisma'), 'utf8');
 test('gönderim SUNUCUDA, istemcide değil', () => {
   // İstemci döngüsü yalnız uzman uygulamayı açtığında çalışıyordu.
   assert.match(sched, /setInterval/, 'zamanlayıcı yok');
-  assert.match(sched, /this\.push\.sendToUser\(b\.userId/, 'müşteriye gerçekten gönderilmiyor');
+  // Şablondan gidiyor (kk/ru turu): müşteri kendi dilinde alıyor.
+  assert.match(
+    sched,
+    /this\.push\.sendTemplate\(\s*b\.userId!/,
+    'müşteriye gerçekten gönderilmiyor',
+  );
+  assert.match(sched, /'reengage\.pre' : 'reengage\.due'/, 'şablon anahtarı yok');
   // Eski istemci döngüsü kaldırılmış olmalı.
   assert.match(store, /runAutoReengage: \(\) => undefined/, 'istemci döngüsü duruyor');
   assert.match(store, /sendReengage: \(\) => undefined/, 'istemci gönderimi duruyor');

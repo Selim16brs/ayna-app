@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   DURUM_ETIKETI,
   DURUM_TONU,
@@ -6,7 +6,7 @@ import {
   yaklasanMi,
 } from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   type Appointment,
@@ -70,6 +70,26 @@ export default function BookingsScreen() {
   const allDemands = useStore((s) => s.demands);
   const bookingsLoading = useStore((s) => s.bookingsLoading);
   const demandsLoading = useStore((s) => s.demandsLoading);
+  const hydrateBookings = useStore((s) => s.hydrateBookings);
+  const hydrateDemands = useStore((s) => s.hydrateDemands);
+  /*
+   * ── EKRAN AÇILDIĞINDA TAZELENİYOR ───────────────────────────────────
+   *
+   * Bu liste UYGULAMA AÇILIŞINDA bir kez dolduruluyor ve bir daha hiç
+   * tazelenmiyordu. Sonuç, kurucunun canlıda gördüğü şey: uzman teklifi
+   * gönderiyor ya da randevuyu onaylıyor, müşteri sekmeyi açıyor ve
+   * ESKİ hâli görüyor — "teklif düşmedi", "onay görünmüyor". Oysa veri
+   * sunucuda vardı; uygulama sormuyordu.
+   *
+   * Teklif ekranı (`quote/results`) zaten 15 saniyede bir soruyordu; asıl
+   * bakılan yer olan bu sekme sormuyordu.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      void hydrateBookings();
+      void hydrateDemands();
+    }, [hydrateBookings, hydrateDemands]),
+  );
   // §5.2 — randevuya DÖNÜŞEN (booked) talep artık talep değildir: Randevular'da yaşar
   const demands = allDemands.filter((d) => !d.seeded && d.status !== 'booked');
   const now = Date.now();
@@ -246,21 +266,12 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
               variant="caption"
               style={[styles.btnText, { color: colors.danger }]}
               numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.75}
             >
               {t('common.cancel')}
             </Text>
           </Pressable>
           <Pressable style={[styles.btn, styles.btnFilled]} onPress={toDetail}>
-            <Text
-              variant="caption"
-              tone="onAccent"
-              style={styles.btnText}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.75}
-            >
+            <Text variant="caption" tone="onAccent" style={styles.btnText} numberOfLines={1}>
               {t('bookings.action.detail')}
             </Text>
           </Pressable>

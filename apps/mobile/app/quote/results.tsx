@@ -2,7 +2,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { type DemandOffer, type OfferSort, formatPrice, sortOffers } from '../../src/data';
+import {
+  type DemandOffer,
+  type OfferSort,
+  formatPrice,
+  sortOffers,
+  saglayiciMesafesi,
+} from '../../src/data';
 import { slotTime, formatSlot } from '../../src/datetime';
 import type { MessageKey } from '@ayna/i18n';
 import { fillParams, useLocale } from '../../src/locale';
@@ -48,7 +54,20 @@ export default function QuoteResultsScreen() {
     }, [hydrateDemands]),
   );
 
-  const offers = useMemo(() => (demand ? sortOffers(demand.offers, sort) : []), [demand, sort]);
+  /*
+   * MESAFE BURADA HESAPLANIYOR — sunucudan gelen sayı değil.
+   *
+   * Sunucu `distanceKm` gönderiyordu ama o sayı teklifin KİMLİK
+   * DİZESİNDEN üretiliyordu: kartta "3 km" yazıyor, sıralama da ona
+   * bakıyordu. Artık uzmanın gerçek koordinatı geliyor ve mesafe keşif/
+   * arama ekranlarıyla AYNI kuraldan hesaplanıyor; koordinat yoksa null.
+   */
+  const sehir = useStore((s) => s.currentUser?.city);
+  const offers = useMemo(() => {
+    if (!demand) return [];
+    const olculu = demand.offers.map((o) => ({ ...o, mesafeKm: saglayiciMesafesi(o, sehir) }));
+    return sortOffers(olculu, sort);
+  }, [demand, sort, sehir]);
 
   // Rozetler SIRALAMADAN BAĞIMSIZ hesaplanır — kullanıcı sıralamayı değiştirince
   // "en iyi denge" başka bir teklife atlarsa güven kaybolur.
@@ -254,13 +273,7 @@ function OfferCard({
             size={13}
             color={badge === 'balance' ? colors.onAccent : colors.success}
           />
-          <Text
-            variant="micro"
-            tone={badge === 'balance' ? 'onAccent' : 'sage'}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.8}
-          >
+          <Text variant="micro" tone={badge === 'balance' ? 'onAccent' : 'sage'} numberOfLines={1}>
             {t(badge === 'balance' ? 'quotes.badge.balance' : 'quotes.badge.cheapest')}
           </Text>
         </View>
@@ -291,13 +304,19 @@ function OfferCard({
               </Text>
             </View>
             {/* Mesafe bir UYARI ya da BİLGİ durumu değil; mavi bilgi rengi
-                buraya ait değildi. Keşfetteki zaman rozetiyle aynı dil. */}
-            <View style={[styles.metaChip, { backgroundColor: colors.accentSoft }]}>
-              <Ionicons name="location" size={11} color={colors.accent} />
-              <Text variant="caption" style={{ color: colors.accent }}>
-                {offer.distanceKm} km
-              </Text>
-            </View>
+                buraya ait değildi. Keşfetteki zaman rozetiyle aynı dil.
+
+                MESAFE BİLİNMİYORSA ÇİP HİÇ ÇİZİLMİYOR: uzmanın koordinatı
+                yoksa söylenecek bir mesafe yok. Eskiden buraya kimlik
+                dizesinden üretilmiş bir sayı yazılıyordu. */}
+            {offer.mesafeKm != null ? (
+              <View style={[styles.metaChip, { backgroundColor: colors.accentSoft }]}>
+                <Ionicons name="location" size={11} color={colors.accent} />
+                <Text variant="caption" style={{ color: colors.accent }}>
+                  {offer.mesafeKm.toFixed(1)} km
+                </Text>
+              </View>
+            ) : null}
           </View>
           <Text variant="caption" tone="muted" style={styles.eta}>
             {offer.etaMin} {t('pro.min')} · {t('quotes.eta')}

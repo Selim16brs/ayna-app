@@ -21,8 +21,13 @@ const svc = readFileSync(
 test('dekont alınırken puan DEFTERE yazılıyor', () => {
   const m = /private async puanDus\([\s\S]*?\n {2}\}/.exec(svc);
   assert.ok(m, 'puanDus yok — puan hiç düşülmüyor');
-  assert.match(m[0], /kind: 'spend'/, 'harcama kaydı yazılmıyor');
-  assert.match(m[0], /points: -split\.pointsUsed/, 'düşülen puan negatif yazılmıyor');
+  /*
+   * Harcama artık `puanHarca` üzerinden yazılıyor: bakiye okuma + kontrol +
+   * yazım TEK transaction'da ve kullanıcı satırı kilitli (çift harcama
+   * yarışı, 05.09.2026). Kayıt yine deftere `kind: 'spend'` olarak düşüyor —
+   * o kısım `puan-harca.test.ts`te doğrulanıyor.
+   */
+  assert.match(m[0], /puanHarca\(/, 'harcama kilitli kapıdan geçmiyor');
   // Bakiye ALAN güncellemesiyle değil, defterden türetiliyor (CLAUDE.md).
   assert.ok(!/points: \{ decrement/.test(m[0]), 'bakiye alandan düşülüyor — ledger kuralı ihlali');
 });
@@ -31,7 +36,9 @@ test('kullanılacak puanı SUNUCU belirliyor — istemci yalnız üst sınır ve
   const m = /private async puanDus\([\s\S]*?\n {2}\}/.exec(svc)![0];
   // İstenen değer doğrudan yazılamaz: paymentSplit kilit/tavan/bakiyeyi uygular.
   assert.match(m, /paymentSplit\(/, 'sınırlar uygulanmıyor');
-  assert.match(m, /loadLedgerState\(/, 'gerçek bakiye okunmuyor');
+  // Bakiye artık KİLİT ALTINDA okunuyor: `puanHarca` güncel bakiyeyi geri
+  // veriyor ve tavan onunla hesaplanıyor.
+  assert.match(m, /\(bakiye\) =>/, 'tavan güncel bakiyeyle hesaplanmıyor');
   assert.ok(!/points: -istenen/.test(m), 'istemcinin istediği kadar düşülüyor');
 });
 

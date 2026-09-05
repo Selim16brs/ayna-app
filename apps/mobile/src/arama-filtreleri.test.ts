@@ -245,7 +245,9 @@ test('eleme koşulları ekranda duruyor', () => {
   // Kopya mantığın ekrandan ayrışmasını yakalar: koşul ekrandan silinirse
   // buradaki testler hâlâ geçer ama uygulama filtrelemez.
   for (const kosul of [
-    'filtre.sehir !== null && p.city !== filtre.sehir',
+    // Şehir artık NORMALLEŞTİRİLMİŞ karşılaştırılıyor: haritadan gelen
+    // 'Алматы' ile seçicideki 'Almatı' aynı şehir (bkz. sehir-eslesmesi.test).
+    'filtre.sehir !== null && !sehirEslesir(p.city, filtre.sehir)',
     'filtre.minPuan !== null && p.rating < filtre.minPuan',
     'p.completedBookings < filtre.minRandevu',
     'filtre.minYorum !== null && p.reviewCount < filtre.minYorum',
@@ -340,10 +342,25 @@ test('kırılımlar AÇILIR SATIR — hepsi birden açık değil', () => {
 
 test('kapalı satır seçili değeri yazıyor', () => {
   // Kullanıcı neyi seçtiğini görmek için satırı açmak zorunda kalmamalı.
+  // Değer artık `sehirGoster` ile YERELLEŞTİRİLİYOR: Rusça arayüzde
+  // "Almatı" yazıyordu. Test ifadenin harfine değil, iki güvenceye bakıyor:
+  // (1) seçili şehir kapalı satırda yazılı, (2) seçim yokken "tüm şehirler".
   assert.match(
     ekran,
-    /deger=\{filtre\.sehir \?\? t\('search\.filter\.all_cities'\)\}/,
+    /deger=\{[\s\S]{0,120}filtre\.sehir[\s\S]{0,120}t\('search\.filter\.all_cities'\)/,
     'şehir satırı seçili değeri göstermiyor',
+  );
+  assert.match(
+    ekran,
+    /sehirGoster\(filtre\.sehir, locale\)/,
+    'şehir adı yerelleştirilmiyor — ru arayüzde Türkçe yazım görünür',
+  );
+  // FİLTRE DEĞERİ kanonik kalmalı: çevrilmiş ad `sehirEslesir`e girerse
+  // uzmanlar sessizce görünmez olur (bu modülün var oluş sebebi olan hata).
+  assert.match(
+    ekran,
+    /sehirEslesir\(p\.city, filtre\.sehir\)/,
+    'filtre kanonik şehirle eşleşmiyor',
   );
   assert.match(ekran, /function turEtiketi\(/, 'tür satırı birleşik değeri göstermiyor');
 });

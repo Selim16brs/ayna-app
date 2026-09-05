@@ -42,8 +42,13 @@ export class RatingsController {
   // §6.D — uzman/işletme yorumu yanıtlar (giriş gerekli; yorum silinemez, yalnızca yanıt)
   @Post(':id/reply')
   @UseGuards(JwtAuthGuard)
-  reply(@Param('id') id: string, @Body(new ZodValidationPipe(replySchema)) body: ReplyInput) {
-    return this.ratings.reply(id, body.reply);
+  reply(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(replySchema)) body: ReplyInput,
+    @Req() req: AuthedRequest,
+  ) {
+    // Kimlik SERVİSE geçiyor: yanıt yalnız yorumun muhatabından kabul ediliyor.
+    return this.ratings.reply(id, body.reply, req.user!.id);
   }
 
   @Put('threshold')

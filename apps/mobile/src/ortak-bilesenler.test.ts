@@ -50,19 +50,21 @@ test('TEMA KİPİ renk karşılaştırmasıyla anlaşılmıyor', () => {
   }
 });
 
-test('SALON ROZETLERİ palette ve iki temada okunuyor', () => {
-  // Üç rozet sabit pastel yazılıydı (lime/lavanta/şeftali): palette olmayan
-  // renkler, temaya hiç bakmıyorlardı.
+test('SALON ROZETİ palette ve iki temada okunuyor', () => {
+  /*
+   * Üç rozet sabit pastel yazılıydı (lime/lavanta/şeftali): palette olmayan
+   * renkler, temaya hiç bakmıyorlardı.
+   *
+   * Üçlü tablo SONRADAN kalktı: rozetler `pro.badge` sütunundan geliyordu
+   * ve o sütun herkese `verified` doğuruyordu. Geriye KYC'ye bağlı tek
+   * rozet kaldı; rengi hâlâ paletten.
+   */
   const k = yorumsuz(oku('SalonRow.tsx'));
   for (const olu of ['#DDF08A', '#E1DAF3', '#F8DFC2']) {
     assert.doesNotMatch(k, new RegExp(olu, 'i'), `${olu} hâlâ duruyor`);
   }
-  for (const [bg, fg] of [
-    ['goldSoft', 'gold'],
-    ['successSoft', 'success'],
-    ['accentSoft', 'accent'],
-  ] as const) {
-    assert.match(k, new RegExp(`bg: '${bg}', fg: '${fg}'`), `${bg}/${fg} rozeti yok`);
+  for (const [bg, fg] of [['successSoft', 'success']] as const) {
+    assert.match(k, new RegExp(`bg: '${bg}',\\s*\\n?\\s*fg: '${fg}'`), `${bg}/${fg} rozeti yok`);
     for (const [tema, c] of [
       ['açık', lightColors],
       ['koyu', darkColors],
@@ -85,9 +87,18 @@ test('BÖLÜM BAŞLIKLARI harf kaybetmiyor', () => {
    * `TabHero` ve `StackHeader` bu işi baştan doğru yapıyordu; kırılan
    * ikisi `SectionHeader` ve Keşfet'in kendi başlığıydı.
    */
-  const s = oku('SectionHeader.tsx');
-  assert.match(s, /title: \{[^}]*flexShrink: 1/, 'başlık daralamıyor');
-  assert.match(s, /adjustsFontSizeToFit/, 'başlık sığmayınca küçülmüyor');
+  // Yorumsuz: kaldırma kararının gerekçesi dosyanın başında yazılı.
+  const s = oku('SectionHeader.tsx')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+  // Kutu ölçümden değil paydan (bkz. figma-ana-sayfa `bolumBaslik`).
+  assert.match(s, /title: \{[^}]*flex: 1/, 'başlık kutusu ölçüme bağlı');
+  /*
+   * Punto küçültme KALDIRILDI (4 Eyl 2026): kurucu "hizmetler başlığı
+   * küçülmüş" dedi — RN, ölçü genişliği belirsiz olduğunda puntoyu
+   * okunamayacak kadar indiriyor. Başlık artık kırpılıyor.
+   */
+  assert.doesNotMatch(s, /adjustsFontSizeToFit/, 'başlık punto küçültüyor');
   assert.match(s, /seeAll: \{[^}]*flexShrink: 0/, '"Tümü" daralıyor — başlığı eziyor');
 });
 

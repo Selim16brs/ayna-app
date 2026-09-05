@@ -60,14 +60,7 @@ export default function CityScreen() {
           <View style={styles.gpsIcon}>
             <Ionicons name="navigate" size={20} color={colors.onAccent} />
           </View>
-          <Text
-            variant="bodyStrong"
-            tone="ink"
-            style={styles.rowLabel}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.75}
-          >
+          <Text variant="bodyStrong" tone="ink" style={styles.rowLabel} numberOfLines={1}>
             {locating ? t('city.locating') : t('city.use_location')}
           </Text>
           <Ionicons name="chevron-forward" size={18} color={colors.muted} />

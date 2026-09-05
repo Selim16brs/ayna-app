@@ -128,13 +128,7 @@ export default function CircleScreen() {
           canPost ? (
             <Pressable style={styles.ask} onPress={() => router.push('/circle/new')}>
               <Ionicons name="add" size={16} color={colors.ink} />
-              <Text
-                variant="caption"
-                tone="ink"
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.85}
-              >
+              <Text variant="caption" tone="ink" numberOfLines={1}>
                 {t('circle.ask')}
               </Text>
             </Pressable>
@@ -153,13 +147,7 @@ export default function CircleScreen() {
               accessibilityRole="tab"
               accessibilityState={{ selected: sekme === k }}
             >
-              <Text
-                variant="caption"
-                tone={sekme === k ? 'onAccent' : 'inkSoft'}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
+              <Text variant="caption" tone={sekme === k ? 'onAccent' : 'inkSoft'} numberOfLines={1}>
                 {k === 'saved'
                   ? `${t('circle.tab.saved')}${kayitliSayisi ? ` · ${kayitliSayisi}` : ''}`
                   : t(k === 'feed' ? 'circle.tab.feed' : 'circle.tab.mine')}
@@ -422,6 +410,25 @@ function PostCard({ post }: { post: CirclePost }) {
         </View>
       </View>
 
+      {/*
+        DURUM ŞERİDİ — yalnız kendi gönderinde ve normal değilse.
+        Şüpheli bulunan gönderi akışta HİÇ yok (sunucu yalnız yayındakileri
+        döndürüyor); yazan kişi bunu bilmezse yayında sanır. Reddedilen
+        gönderi ise ekranda duran ama kimsenin görmediği bir yayın olurdu.
+      */}
+      {post.durum ? (
+        <View style={styles.durumSerit}>
+          <Ionicons
+            name={post.durum === 'incelemede' ? 'time-outline' : 'alert-circle-outline'}
+            size={13}
+            color={post.durum === 'incelemede' ? colors.muted : colors.danger}
+          />
+          <Text variant="caption" tone={post.durum === 'incelemede' ? 'muted' : 'ink'}>
+            {t(post.durum === 'incelemede' ? 'circle.state.pending' : 'circle.state.failed')}
+          </Text>
+        </View>
+      ) : null}
+
       <Text variant="body" tone="inkSoft" style={styles.text}>
         {post.text}
       </Text>
@@ -654,6 +661,12 @@ const makeStyles = (colors: ColorTokens) =>
     scoreText: { fontFamily: font.semibold },
     typeBadge: { paddingHorizontal: space(1.25), paddingVertical: 4, borderRadius: radius.pill },
     typeText: { fontSize: 11 },
+    durumSerit: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: space(0.75),
+    },
     text: { marginTop: space(1.5) },
     footer: {
       flexDirection: 'row',

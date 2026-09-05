@@ -101,10 +101,8 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       const uid = await this.bookings.expertUserIdForBooking(b.id);
       if (uid) {
         void this.push
-          .sendToUser(uid, {
-            title: 'Bekleyen randevu talebin var',
-            body: 'Yanıtlamazsan talep düşer ve slot açılır.',
-            data: { route: `/booking/${b.id}` },
+          .sendTemplate(uid, 'booking.pending_reminder', undefined, {
+            route: `/booking/${b.id}`,
           })
           .catch(() => undefined);
       }
@@ -169,7 +167,17 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
     //    randevuyu süresiz askıda bırakmamalı.
     const finalize = await this.prisma.booking.findMany({
       where: { status: 'odeme_bekliyor', finalizeDeadline: { lt: now } },
-      select: { id: true, userId: true, price: true },
+      // `balanceDeclaredAt` ve `finalPrice` ÖDÜL HESABININ girdisi: beyan
+      // etmeyen müşteriye geri kazanım yazılmıyor, beyan edilen tutar varsa
+      // puan ondan doğuyor. Seçilmezlerse ikisi de sessizce `undefined`
+      // gelir ve kural bu yolda hiç uygulanmazdı.
+      select: {
+        id: true,
+        userId: true,
+        price: true,
+        finalPrice: true,
+        balanceDeclaredAt: true,
+      },
       take: 200,
     });
     if (finalize.length) {
@@ -190,10 +198,8 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       for (const b of finalize) {
         if (!b.userId) continue;
         void this.push
-          .sendToUser(b.userId, {
-            title: 'Hizmetin tamamlandı ✨',
-            body: 'Deneyimini değerlendir — 30 saniye sürer',
-            data: { route: `/review/new?id=${b.id}` },
+          .sendTemplate(b.userId, 'booking.completed_rate', undefined, {
+            route: `/review/new?id=${b.id}`,
           })
           .catch(() => undefined);
       }
@@ -246,14 +252,14 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       for (const b of gecKalanlar) {
         if (!b.userId) continue;
         void this.push
-          .sendToUser(b.userId, {
-            title: 'Randevu talebin düştü',
-            body:
-              b.status === 'onay_bekliyor'
-                ? 'Uzman zamanında yanıt vermedi — başka bir saat seçebilirsin'
-                : 'Depozito ödenmediği için randevu düştü — dilersen yeniden dene',
-            data: { route: '/(tabs)/bookings' },
-          })
+          .sendTemplate(
+            b.userId,
+            b.status === 'onay_bekliyor'
+              ? 'booking.dropped_no_answer'
+              : 'booking.dropped_no_deposit',
+            undefined,
+            { route: '/(tabs)/bookings' },
+          )
           .catch(() => undefined);
       }
     }
@@ -282,26 +288,28 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       if (!b.startAt) continue;
       const kalanMs = b.startAt.getTime() - now.getTime();
       let ekle = 0;
-      let baslik = '';
-      let govde = '';
+      /*
+       * ANAHTAR seçiliyor, METİN değil: metni `sendTemplate` kullanıcının
+       * diline göre çözüyor. Eskiden burada Türkçe cümleler kuruluyordu ve
+       * Kazak/Rus kullanıcı bildirimi Türkçe alıyordu.
+       */
+      let anahtar: 'booking.remind_30m' | 'booking.remind_1h' | 'booking.free_cancel_last' | '' =
+        '';
       // Sıra ÖNEMLİ: en yakın eşik kazanır, yoksa 30 dk kala hem "1 saat" hem
       // "30 dk" push'u aynı turda giderdi.
       if (kalanMs <= 30 * 60_000 && !(b.gunHatirlatmalari & H_OTUZ_DK)) {
         ekle = H_OTUZ_DK;
-        baslik = 'Randevuna 30 dakika kaldı';
-        govde = 'Yola çıkma vakti';
+        anahtar = 'booking.remind_30m';
       } else if (kalanMs <= 60 * 60_000 && !(b.gunHatirlatmalari & H_BIR_SAAT)) {
         ekle = H_BIR_SAAT;
-        baslik = 'Randevuna 1 saat kaldı';
-        govde = 'Hazırlanmaya başlayabilirsin';
+        anahtar = 'booking.remind_1h';
       } else if (kalanMs <= ESIK_MS && !(b.gunHatirlatmalari & H_IPTAL_ESIGI)) {
         // §4.5.1 — ücretsiz iptal için SON ŞANS. Yalnız müşteriye: depozitoyu
         // kaybedecek olan taraf o.
         ekle = H_IPTAL_ESIGI;
-        baslik = 'Depozitonu kaybetmeden iptal için son şans';
-        govde = 'Bu saatten sonra iptal edersen depozito iade edilmez';
+        anahtar = 'booking.free_cancel_last';
       }
-      if (!ekle) continue;
+      if (!ekle || !anahtar) continue;
       await this.prisma.booking.update({
         where: { id: b.id },
         data: { gunHatirlatmalari: { increment: ekle } },
@@ -309,16 +317,12 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       gunHatirlatma += 1;
       const veri = { route: `/booking/${b.id}` };
       if (b.userId)
-        void this.push
-          .sendToUser(b.userId, { title: baslik, body: govde, data: veri })
-          .catch(() => undefined);
+        void this.push.sendTemplate(b.userId, anahtar, undefined, veri).catch(() => undefined);
       // §4.5 — 1 saat ve 30 dk hatırlatmaları İKİ TARAFA; iptal eşiği yalnız müşteriye.
       if (ekle !== H_IPTAL_ESIGI) {
         const uzmanId = await this.uzmanKullanicisi(b.proId);
         if (uzmanId)
-          void this.push
-            .sendToUser(uzmanId, { title: baslik, body: govde, data: veri })
-            .catch(() => undefined);
+          void this.push.sendTemplate(uzmanId, anahtar, undefined, veri).catch(() => undefined);
       }
     }
 
@@ -341,10 +345,8 @@ export class BookingsScheduler implements OnModuleInit, OnModuleDestroy {
       });
       if (b.userId)
         void this.push
-          .sendToUser(b.userId, {
-            title: 'Depozito için son dakikalar',
-            body: 'Randevun düşmeden önce dekontu yükle',
-            data: { route: `/booking/${b.id}` },
+          .sendTemplate(b.userId, 'booking.deposit_last_minutes', undefined, {
+            route: `/booking/${b.id}`,
           })
           .catch(() => undefined);
     }

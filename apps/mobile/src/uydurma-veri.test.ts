@@ -225,3 +225,59 @@ test('FOTOĞRAF YOKSA kart BOŞ değil — sağlayıcının BAŞ HARFİ', () => 
     assert.match(k, /<SaglayiciFoto/, `${yol.join('/')}: ortak bileşen kullanılmıyor`);
   }
 });
+
+test('TEKLİF MESAFESİ uydurulmuyor — kimlikten sayı üretilmiyor', () => {
+  /*
+   * Sunucu `distanceKm: estKm(q.id)` gönderiyordu: teklifin KİMLİK
+   * DİZESİNDEN hesaplanan 1–9 km arası bir sayı. Müşteri kartta "3 km"
+   * okuyor, üstelik "Yakınlık" sıralaması ve "Önerilen" skoru da bu sayıya
+   * bakıyordu — yani sıralama kısmen rastgeleydi.
+   */
+  const svc = readFileSync(
+    join(__dirname, '..', '..', 'api', 'src', 'quotes', 'quotes.service.ts'),
+    'utf8',
+  );
+  assert.doesNotMatch(svc, /function estKm/, 'kimlikten mesafe üreten fonksiyon duruyor');
+  assert.doesNotMatch(svc, /distanceKm:/, 'uydurma mesafe hâlâ gönderiliyor');
+  assert.match(svc, /lat: pro\?\.lat \?\? null/, 'gerçek koordinat gönderilmiyor');
+
+  // Ekran mesafeyi ORTAK kuraldan hesaplıyor ve bilinmiyorsa hiç yazmıyor.
+  const ekran = oku('app', 'quote', 'results.tsx');
+  assert.match(ekran, /saglayiciMesafesi\(o, sehir\)/, 'ortak kural kullanılmıyor');
+  assert.match(ekran, /offer\.mesafeKm != null \? \(/, 'bilinmeyen mesafe yine yazılıyor');
+
+  // Sıralama da bilinmeyeni "yakın" saymıyor.
+  const data = oku('src', 'data.ts');
+  assert.match(
+    data,
+    /\(a\.mesafeKm \?\? Infinity\) - \(b\.mesafeKm \?\? Infinity\)/,
+    'bilinmeyen başa geçiyor',
+  );
+});
+
+test('ROZET GERÇEK DOĞRULAMADAN — "verified" sütunu artık yok', () => {
+  /*
+   * `Professional.badge` sütunu şemada `@default(verified)`: kayıt olan
+   * HERKES "doğrulanmış" doğuyor ve hiçbir doğrulama bu değeri
+   * güncellemiyordu. Kartlarda rozet olarak çizilseydi — o kartlar hâlâ
+   * kodda duruyor — hiç doğrulanmamış uzman doğrulanmış görünürdü.
+   * Uydurulmuş güven işaretinin en pahalısı.
+   *
+   * Sunucu alanı artık hiç göndermiyor; kartlar KYC'ye bağlı
+   * `aynaVerified`i okuyor ve doğrulanmamışa hiçbir şey çizmiyor —
+   * "değil" damgası basmak da ayrı bir haksızlık olurdu.
+   */
+  const katalog = readFileSync(
+    join(__dirname, '..', '..', 'api', 'src', 'catalog', 'catalog.service.ts'),
+    'utf8',
+  );
+  assert.doesNotMatch(katalog, /^\s*badge: p\.badge,/m, 'uydurma rozet hâlâ gönderiliyor');
+
+  for (const dosya of ['ProCard.tsx', 'SalonRow.tsx']) {
+    const k = oku('src', 'ui', dosya);
+    assert.doesNotMatch(k, /BADGE\[pro\.badge\]/, `${dosya}: rozet sütundan okunuyor`);
+    assert.match(k, /pro\.aynaVerified \? DOGRULANDI : null/, `${dosya}: gerçek doğrulama yok`);
+    // Doğrulanmamışta rozet HİÇ çizilmiyor.
+    assert.match(k, /\{badge \? \(/, `${dosya}: rozet koşulsuz çiziliyor`);
+  }
+});

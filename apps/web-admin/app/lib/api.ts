@@ -205,6 +205,9 @@ export const api = {
   unrestrictUser: (id: string) => req(`/admin/users/${id}/unrestrict`, { method: 'POST' }),
   cancelBooking: (id: string) =>
     req<unknown>(`/bookings/${id}/cancel`, { method: 'POST', body: JSON.stringify({}) }),
+  /** Sahte dekontu geri alır: randevu depozito beklemeye döner (iptal DEĞİL). */
+  rejectReceipt: (id: string) =>
+    req<unknown>(`/admin/bookings/${id}/reject-receipt`, { method: 'POST' }),
   bookings: (status?: string) =>
     req<AdminBooking[]>(`/admin/bookings${status && status !== 'all' ? `?status=${status}` : ''}`),
   quoteRequests: () => req<QuoteReq[]>('/admin/quote-requests'),
@@ -627,6 +630,8 @@ export interface Commissions {
     earned: number;
     pending: number;
     collected: number;
+    /** Müşteriden PEŞİN alınan depozito — komisyonun zaten tahsil edilmiş kısmı. */
+    deposits: number;
     outstanding: number;
   };
   salons: {
@@ -637,6 +642,7 @@ export interface Commissions {
     earned: number;
     pending: number;
     collected: number;
+    deposits: number;
     outstanding: number;
   }[];
   payouts: {
@@ -796,6 +802,17 @@ export interface AdminBooking {
   status: string;
   source: string;
   online: boolean;
+  /** Depozito dekontu (varsa) — yönetici §4.4 doğrulamasını buradan yapıyor. */
+  depositReceiptUri: string | null;
+  depositAmount: number | null;
+  /** Müşterinin "ödemeyi yaptım" beyanı. */
+  musteriOdedi: boolean;
+  /** Uzmanın "ödemeyi aldım" teyidi (randevu kapandı). */
+  uzmanAldi: boolean;
+  /** İkisi de varsa müşterinin ayna parası yazılmış demektir. */
+  aynaParaAktif: boolean;
+  /** Kasada fiyat değiştiyse müşterinin beyan ettiği tutar. */
+  finalPrice: number | null;
   createdAt: string;
 }
 export interface QuoteReq {

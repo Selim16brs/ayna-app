@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DiyalogSaglayici, useDiyalog } from './ui/Diyalog';
 import {
   api,
@@ -640,55 +640,45 @@ function ProfileChangesView() {
   ];
   return (
     <>
-      <PageHead
-        title="Profil değişiklikleri"
-        sub={`Salon/uzman profil değişiklikleri admin onayı olmadan yayınlanmaz (${data?.length ?? 0} kayıt)`}
-      />
-      <Toolbar>
+      <h1 className="page-title">Profil değişiklikleri</h1>
+      <p className="page-sub">
+        Salon/uzman profil değişiklikleri admin onayı olmadan yayınlanmaz ({data?.length ?? 0}{' '}
+        kayıt)
+      </p>
+      <div className="toolbar">
         {FILTERS.map(([s, label]) => (
-          <Chip key={s || 'all'} active={status === s} onClick={() => setStatus(s)}>
+          <button
+            key={s || 'all'}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
             {label}
-          </Chip>
+          </button>
         ))}
-      </Toolbar>
+      </div>
       {!data ? (
         <Gate loading={loading} error={error} onRetry={reload} />
       ) : data.length === 0 ? (
-        <Card>
-          <Loading label="Kayıt yok." />
-        </Card>
+        <div className="card">
+          <div className="empty">Kayıt yok.</div>
+        </div>
       ) : (
-        <Card>
+        <div className="card">
           {data.map((p) => (
-            <div
-              className="flex items-center gap-3 border-t border-line px-4 py-3.5 transition-colors first:border-t-0 hover:bg-bg-alt"
-              key={p.id}
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 text-ax-md font-bold text-ink">
+            <div className="list-row" key={p.id}>
+              <div className="grow">
+                <div className="name">
                   {p.userName}{' '}
-                  <span
-                    className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-ax-xs font-bold ${
-                      p.role === 'salon'
-                        ? 'bg-info-soft text-info'
-                        : 'bg-accent-soft text-accent-ink'
-                    }`}
-                  >
+                  <span className={`pill ${p.role === 'salon' ? 'info' : 'accent'}`}>
                     {p.role === 'salon' ? 'Salon' : 'Uzman'}
                   </span>
                 </div>
-                <div className="mt-0.5 text-ax-sm text-ink-3">
+                <div className="meta">
                   {summarize(p.changes)} · {new Date(p.createdAt).toLocaleDateString('tr-TR')}
                 </div>
               </div>
               <span
-                className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-ax-xs font-bold ${
-                  p.status === 'approved'
-                    ? 'bg-ok-soft text-ok'
-                    : p.status === 'pending'
-                      ? 'bg-warn-soft text-warn'
-                      : 'bg-err-soft text-err'
-                }`}
+                className={`pill ${p.status === 'approved' ? 'approved' : p.status === 'pending' ? 'pending' : 'rejected'}`}
               >
                 {p.status === 'approved'
                   ? 'Onaylandı'
@@ -697,16 +687,16 @@ function ProfileChangesView() {
                     : 'Reddedildi'}
               </span>
               {p.status === 'pending' ? (
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="actions">
                   <button
-                    className="rounded-sm border border-line bg-surface px-3 py-1.5 text-ax-sm font-semibold text-ok transition-colors hover:border-ok hover:bg-ok-soft disabled:cursor-not-allowed disabled:opacity-60"
+                    className="btn-sm btn-ok"
                     disabled={busy === p.id}
                     onClick={() => act(() => api.approveProfileChange(p.id), p.id)}
                   >
                     Onayla
                   </button>
                   <button
-                    className="rounded-sm border border-line bg-surface px-3 py-1.5 text-ax-sm font-semibold text-err transition-colors hover:border-err hover:bg-err-soft disabled:cursor-not-allowed disabled:opacity-60"
+                    className="btn-sm btn-danger"
                     disabled={busy === p.id}
                     onClick={() => act(() => api.rejectProfileChange(p.id), p.id)}
                   >
@@ -716,11 +706,19 @@ function ProfileChangesView() {
               ) : null}
             </div>
           ))}
-        </Card>
+        </div>
       )}
     </>
   );
 }
+// EK Z.3 — KYC uzman/salon belge doğrulama kuyruğu
+/**
+ * §destek — kullanıcı talepleri kuyruğu.
+ *
+ * Yardım ekranındaki "Destek ile iletişim" düğmesi hiçbir şey yapmıyordu ve
+ * talepleri görecek bir yer de yoktu. Yanıt yazılmayan bir kutu, kutu olmayan
+ * kutudan daha kötüdür — bu yüzden yanıt yazılınca kullanıcıya push gider.
+ */
 function SupportView() {
   const [status, setStatus] = useState<string>('open');
   const { data, loading, error, reload } = useAsync<SupportRow[]>(
@@ -753,23 +751,30 @@ function SupportView() {
   };
   return (
     <>
-      <PageHead
-        title="Destek talepleri"
-        sub={`Kullanıcıdan gelen talepler. Güvenlik başlıklı olanlar önce okunmalı. (${data?.length ?? 0} kayıt)`}
-      />
-      <Toolbar>
+      <h1 className="page-title">Destek talepleri</h1>
+      <p className="page-sub">
+        Kullanıcıdan gelen talepler. Güvenlik başlıklı olanlar önce okunmalı. ({data?.length ?? 0}{' '}
+        kayıt)
+      </p>
+      <div className="toolbar">
         {FILTERS.map(([s, label]) => (
-          <Chip key={s || 'all'} active={status === s} onClick={() => setStatus(s)}>
+          <button
+            key={s || 'all'}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
             {label}
-          </Chip>
+          </button>
         ))}
-      </Toolbar>
+      </div>
       {!data ? (
         <Gate loading={loading} error={error} onRetry={reload} />
       ) : data.length === 0 ? (
-        <Loading label="Talep yok." />
+        <div className="card">
+          <div className="empty">Talep yok.</div>
+        </div>
       ) : (
-        <Card>
+        <div className="card">
           {data.map((t) => (
             <div className="list-row" key={t.id}>
               <div className="grow">
@@ -779,27 +784,25 @@ function SupportView() {
                       görünür bir işaret olmazsa yönetici neden bu talebin
                       başta olduğunu anlamaz ve sırayı bozabilir. */}
                   {t.priority ? <span className="pill accent">Öncelikli</span> : null}{' '}
-                  <span
-                    className={`pill ${t.topic === 'safety' ? 'bg-err-soft text-err' : 'bg-info-soft text-info'}`}
-                  >
+                  <span className={`pill ${t.topic === 'safety' ? 'danger' : 'info'}`}>
                     {KONU[t.topic] ?? t.topic}
                   </span>
                 </div>
                 <div className="meta">{new Date(t.createdAt).toLocaleString('tr-TR')}</div>
-                <p className="my-2 whitespace-pre-wrap leading-relaxed text-ink-2">{t.body}</p>
+                <p style={{ whiteSpace: 'pre-wrap', margin: '8px 0' }}>{t.body}</p>
                 {t.reply ? (
-                  <p className="my-1 text-ax-sm text-ink-3">↳ {t.reply}</p>
+                  <p style={{ opacity: 0.75, margin: '4px 0' }}>↳ {t.reply}</p>
                 ) : (
                   <>
                     <textarea
                       rows={3}
-                      className="mb-2 w-full resize-y rounded-sm border border-line bg-surface-2 px-3 py-2.5 text-ax-sm text-ink transition-colors duration-150 placeholder:text-ink-3 focus:border-accent focus:bg-surface focus:outline-none focus:[box-shadow:0_0_0_3px_var(--accent-soft)]"
+                      style={{ width: '100%' }}
                       placeholder="Yanıt yaz…"
                       value={taslak[t.id] ?? ''}
                       onChange={(e) => setTaslak((d) => ({ ...d, [t.id]: e.target.value }))}
                     />
                     <button
-                      className="btn-sm btn-primary"
+                      className="btn"
                       disabled={busy === t.id || !(taslak[t.id] ?? '').trim()}
                       onClick={() => act(() => api.supportReply(t.id, taslak[t.id] ?? ''), t.id)}
                     >
@@ -810,6 +813,8 @@ function SupportView() {
               </div>
               {t.status !== 'closed' ? (
                 <button
+                  // `ghost` diye bir kural yok — `btn-ghost`. Aynı hata:
+                  // düğme `.btn`in tam genişliğini alıyordu.
                   className="btn-sm btn-ghost"
                   disabled={busy === t.id}
                   onClick={() => act(() => api.supportClose(t.id), t.id)}
@@ -819,7 +824,7 @@ function SupportView() {
               ) : null}
             </div>
           ))}
-        </Card>
+        </div>
       )}
     </>
   );
@@ -853,50 +858,47 @@ function KycView() {
   ];
   return (
     <>
-      <PageHead
-        title="Kimlik doğrulama"
-        sub={
-          <>
-            Uzman/salon belge doğrulama kuyruğu — onaylanınca profilde &quot;Doğrulanmış&quot; rozeti (
-            {data?.length ?? 0} kayıt)
-          </>
-        }
-      />
-      <Toolbar>
+      <h1 className="page-title">Kimlik doğrulama</h1>
+      <p className="page-sub">
+        Uzman/salon belge doğrulama kuyruğu — onaylanınca profilde &quot;Doğrulanmış&quot; rozeti (
+        {data?.length ?? 0} kayıt)
+      </p>
+      <div className="toolbar">
         {FILTERS.map(([s, label]) => (
-          <Chip key={s || 'all'} active={status === s} onClick={() => setStatus(s)}>
+          <button
+            key={s || 'all'}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
             {label}
-          </Chip>
+          </button>
         ))}
-      </Toolbar>
+      </div>
       {!data ? (
         <Gate loading={loading} error={error} onRetry={reload} />
       ) : data.length === 0 ? (
-        <Loading label="Kayıt yok." />
+        <div className="card">
+          <div className="empty">Kayıt yok.</div>
+        </div>
       ) : (
-        <Card className="p-2">
+        <div className="card">
           {data.map((k) => (
-            <div
-              className="flex items-center gap-3 px-3 py-3 border-b border-line last:border-b-0 hover:bg-bg-alt"
-              key={k.id}
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 text-ax-md font-semibold text-ink">
+            <div className="list-row" key={k.id}>
+              <div className="grow">
+                <div className="name">
                   {k.userName}{' '}
-                  <span
-                    className={`inline-flex items-center rounded-sm px-2 py-0.5 text-ax-xs font-medium ${k.userRole === 'salon' ? 'text-info bg-info-soft' : 'text-accent-ink bg-accent-soft'}`}
-                  >
+                  <span className={`pill ${k.userRole === 'salon' ? 'info' : 'accent'}`}>
                     {k.userRole === 'salon' ? 'Salon' : 'Uzman'}
                   </span>
                 </div>
-                <div className="mt-0.5 text-ax-sm text-ink-3 tabular-nums">
+                <div className="meta">
                   {DOC[k.docType] ?? k.docType} · {k.documents.length} belge ·{' '}
                   {new Date(k.submittedAt).toLocaleDateString('tr-TR')}
                   {k.status === 'rejected' && k.note ? ` · Ret: ${k.note}` : ''}
                 </div>
               </div>
               <span
-                className={`inline-flex items-center rounded-sm px-2 py-0.5 text-ax-xs font-medium ${k.status === 'approved' ? 'text-ok bg-ok-soft' : k.status === 'pending' ? 'text-warn bg-warn-soft' : 'text-err bg-err-soft'}`}
+                className={`pill ${k.status === 'approved' ? 'approved' : k.status === 'pending' ? 'pending' : 'rejected'}`}
               >
                 {k.status === 'approved'
                   ? 'Onaylandı'
@@ -905,7 +907,7 @@ function KycView() {
                     : 'Reddedildi'}
               </span>
               {k.status === 'pending' ? (
-                <div className="flex items-center gap-2">
+                <div className="actions">
                   <button
                     className="btn-sm btn-ok"
                     disabled={busy === k.id}
@@ -924,11 +926,12 @@ function KycView() {
               ) : null}
             </div>
           ))}
-        </Card>
+        </div>
       )}
     </>
   );
 }
+// §11 — üyelik abonelik kuyruğu (Premium/Platinum dekont onayı)
 function SubscriptionsView() {
   const [status, setStatus] = useState<string>('pending');
   const { data, loading, error, reload } = useAsync<Subscription[]>(
@@ -964,29 +967,30 @@ function SubscriptionsView() {
           : 'Süresi doldu';
   return (
     <>
-      <PageHead
-        title="Abonelik dekontları"
-        sub={`Premium / Platinum üyelik dekont onayı (${data?.length ?? 0} kayıt)`}
-      />
-      <Toolbar>
+      <h1 className="page-title">Abonelik dekontları</h1>
+      <p className="page-sub">Premium / Platinum üyelik dekont onayı ({data?.length ?? 0} kayıt)</p>
+      <div className="toolbar">
         {FILTERS.map(([s, label]) => (
-          <Chip key={s || 'all'} active={status === s} onClick={() => setStatus(s)}>
+          <button
+            key={s || 'all'}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
             {label}
-          </Chip>
+          </button>
         ))}
-        <button
-          className="btn-sm btn-ghost ml-auto"
-          onClick={() => api.runSubExpire().then(reload)}
-        >
+        <button className="btn-sm btn-ghost" onClick={() => api.runSubExpire().then(reload)}>
           Süre dolanları düşür
         </button>
-      </Toolbar>
+      </div>
       {!data ? (
         <Gate loading={loading} error={error} onRetry={reload} />
       ) : data.length === 0 ? (
-        <Loading label="Kayıt yok." />
+        <div className="card">
+          <div className="empty">Kayıt yok.</div>
+        </div>
       ) : (
-        <Card>
+        <div className="card">
           {data.map((s) => (
             <div className="list-row" key={s.id}>
               <div className="grow">
@@ -1008,8 +1012,13 @@ function SubscriptionsView() {
                 <img
                   src={s.receiptUri}
                   alt="dekont"
-                  className="cursor-zoom-in rounded-sm object-cover"
-                  style={{ width: 72, height: 72 }}
+                  style={{
+                    width: 72,
+                    height: 72,
+                    objectFit: 'cover',
+                    borderRadius: 8,
+                    cursor: 'zoom-in',
+                  }}
                   onClick={(e) => {
                     const img = e.currentTarget;
                     img.style.width = img.style.width === '72px' ? '360px' : '72px';
@@ -1038,7 +1047,7 @@ function SubscriptionsView() {
               ) : null}
             </div>
           ))}
-        </Card>
+        </div>
       )}
     </>
   );
@@ -1068,61 +1077,50 @@ function OverviewView({ onGo }: { onGo: (t: Tab) => void }) {
   ];
   return (
     <>
-      <PageHead title="Bugün" sub="Platform geneli canlı metrikler" />
+      <h1 className="page-title">Bugün</h1>
+      <p className="page-sub">Platform geneli canlı metrikler</p>
       {!data ? (
         <Gate loading={loading} error={error} onRetry={reload} />
       ) : (
         <>
-          <SectionTitle>Bekleyen İşler</SectionTitle>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="section-title">Bekleyen İşler</div>
+          <div className="stat-grid">
             {QUEUES.map((qd) => {
               const n = pend?.[qd.key] ?? 0;
-              // Sayı SIFIRDAN BÜYÜKSE kart öne çıkar: on bir kart yan yana
-              // dururken hepsi aynı görünürse bekleyen işi taramak gözle sayma
-              // işine döner. Renk anlam tokenından gelir (err), sabit kod değil.
               return (
                 <button
                   key={qd.key}
                   onClick={() => onGo(qd.tab)}
-                  className={`group relative flex flex-col overflow-hidden rounded-md border px-4 pb-3 pt-4 text-left shadow-1 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-2 ${
-                    n > 0 ? 'border-err bg-err-soft' : 'border-line bg-surface hover:border-ink-3'
-                  }`}
+                  /*
+                   * Bekleyen iş kartı. Sayı SIFIRDAN BÜYÜKSE kart öne çıkıyor
+                   * (`dikkat`): on bir kart yan yana duruyor ve hepsi aynı
+                   * görünürse bekleyen işi taramak gözle sayma işine dönüyor.
+                   * Renk sabit kod değil, anlam tokenından geliyor.
+                   */
+                  className={`stat stat-tik ${n > 0 ? 'dikkat' : ''}`}
                 >
-                  <span
-                    className={`absolute inset-y-0 left-0 w-1 transition-colors ${
-                      n > 0 ? 'bg-err' : 'bg-transparent group-hover:bg-accent'
-                    }`}
-                  />
-                  <span
-                    className={`text-[28px] font-extrabold leading-none tracking-[-1px] tabular-nums ${
-                      n > 0 ? 'text-err' : 'text-ink'
-                    }`}
-                  >
-                    {n}
-                  </span>
-                  <span className={`mt-2 text-ax-sm font-semibold ${n > 0 ? 'text-err' : 'text-ink-3'}`}>
-                    {qd.label}
-                  </span>
+                  <div className="v">{n}</div>
+                  <div className="l">{qd.label}</div>
                 </button>
               );
             })}
           </div>
-          <SectionTitle>Platform</SectionTitle>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="section-title">Platform</div>
+          <div className="stat-grid">
             <Stat v={String(data.users)} l="Kullanıcı" />
             <Stat v={String(data.professionals)} l="İşletme / Uzman" />
             <Stat v={String(data.bookings.upcoming)} l="Yaklaşan randevu" />
             <Stat v={TL(data.bookings.revenue)} l="Tamamlanan gelir" />
           </div>
-          <SectionTitle>Randevu durumu</SectionTitle>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="section-title">Randevu durumu</div>
+          <div className="stat-grid">
             <Stat v={String(data.bookings.completed)} l="Tamamlanan" />
             <Stat v={String(data.bookings.cancelled)} l="İptal" />
             <Stat v={`%${data.bookings.noShowRate}`} l="Gelmeyen oranı" />
             <Stat v={String(data.activeCampaigns)} l="Aktif kampanya" />
           </div>
-          <SectionTitle>Üyelik durumu</SectionTitle>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="section-title">Üyelik durumu</div>
+          <div className="stat-grid">
             <Stat v={String(data.businesses.pending)} l="Onay bekleyen" />
             <Stat v={String(data.businesses.approved)} l="Onaylı" />
             <Stat v={String(data.businesses.rejected)} l="Reddedilen" />
@@ -1133,78 +1131,13 @@ function OverviewView({ onGo }: { onGo: (t: Tab) => void }) {
     </>
   );
 }
-// ── Ortak görsel atomlar (Tailwind) ──────────────────────────────────────────
-// Tüm sekmeler bunları paylaşır: bir kez Tailwind'e çevrildiğinde panel geneli
-// tutarlı görünüm kazanır. Mantık yok — yalnız sunum.
-function PageHead({ title, sub }: { title: string; sub?: ReactNode }) {
-  return (
-    <div className="mb-6">
-      <h1 className="text-ax-2xl font-extrabold leading-tight tracking-[-0.7px] text-ink">{title}</h1>
-      {sub ? (
-        <p className="mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">{sub}</p>
-      ) : null}
-    </div>
-  );
-}
-
-function SectionTitle({ children }: { children: ReactNode }) {
-  return (
-    <div className="mb-3 mt-8 text-ax-xs font-extrabold uppercase tracking-[1.2px] text-ink-3 first:mt-0">
-      {children}
-    </div>
-  );
-}
-
 function Stat({ v, l }: { v: string; l: string }) {
   return (
-    <div className="rounded-md border border-line bg-surface px-4 pb-3 pt-4 shadow-1 transition-shadow duration-150 hover:shadow-2">
-      <div className="text-[28px] font-extrabold leading-[1.15] tracking-[-1px] tabular-nums text-ink">{v}</div>
-      <div className="mt-1 text-ax-sm font-semibold text-ink-3">{l}</div>
+    <div className="stat">
+      <div className="v">{v}</div>
+      <div className="l">{l}</div>
     </div>
   );
-}
-
-// Filtre çipi (aç/kapa) — panel genelinde sekme/filtre seçimlerinde kullanılır.
-function Chip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-ax-sm font-semibold transition-colors duration-150 ${
-        active
-          ? 'border-accent bg-accent text-on-accent'
-          : 'border-line bg-surface text-ink-3 hover:border-ink-3 hover:text-ink'
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-// Yatay araç çubuğu (filtre/aksiyon satırı).
-function Toolbar({ children }: { children: ReactNode }) {
-  return <div className="mb-4 flex flex-wrap items-center gap-2">{children}</div>;
-}
-
-// Beyaz yüzey kart.
-function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={`overflow-hidden rounded-md border border-line bg-surface shadow-1 ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-// Yükleniyor / boş durum.
-function Loading({ label = 'Yükleniyor…' }: { label?: string }) {
-  return <div className="py-16 text-center text-ax-md text-ink-3">{label}</div>;
 }
 const SECTOR_TR: Record<string, string> = {
   hair: 'Saç',
@@ -1229,45 +1162,49 @@ function StatsView() {
   const active = METRICS.find((m) => m.key === metric)!;
   return (
     <>
-      <PageHead
-        title="Raporlar"
-        sub={`Zaman serisi — kayıt, randevu ve gelir${data ? ` · ${data.timezone}` : ''}`}
-      />
-      <Toolbar>
+      <h1 className="page-title">Raporlar</h1>
+      <p className="page-sub">
+        Zaman serisi — kayıt, randevu ve gelir {data ? `· ${data.timezone}` : ''}
+      </p>
+      <div className="toolbar">
         {[7, 30, 90].map((d) => (
-          <Chip key={d} active={days === d} onClick={() => setDays(d)}>
+          <button key={d} className={`chip ${days === d ? 'on' : ''}`} onClick={() => setDays(d)}>
             Son {d} gün
-          </Chip>
+          </button>
         ))}
-      </Toolbar>
+      </div>
       {!data ? (
-        <Loading />
+        <div className="empty">Yükleniyor…</div>
       ) : (
         <>
-          <div className="mb-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="stat-grid" style={{ marginBottom: 8 }}>
             <Stat v={String(data.totals.users)} l={`Yeni kayıt (${days}g)`} />
             <Stat v={String(data.totals.bookings)} l={`Randevu (${days}g)`} />
             <Stat v={TL(data.totals.revenue)} l={`Gelir (${days}g)`} />
           </div>
-          <SectionTitle>Günlük seyir</SectionTitle>
-          <Toolbar>
+          <div className="section-title">Günlük seyir</div>
+          <div className="toolbar">
             {METRICS.map((m) => (
-              <Chip key={m.key} active={metric === m.key} onClick={() => setMetric(m.key)}>
+              <button
+                key={m.key}
+                className={`chip ${metric === m.key ? 'on' : ''}`}
+                onClick={() => setMetric(m.key)}
+              >
                 {m.label}
-              </Chip>
+              </button>
             ))}
-          </Toolbar>
-          <Card className="p-5">
+          </div>
+          <div className="card" style={{ padding: 20 }}>
             <BarChart
               points={data.series.map((s) => ({ label: s.date, value: s[metric] }))}
               color={active.color}
               format={metric === 'revenue' ? TL : (n) => String(n)}
             />
-          </Card>
-          <SectionTitle>Kategori dağılımı (uzman havuzu)</SectionTitle>
-          <Card className="p-5">
+          </div>
+          <div className="section-title">Kategori dağılımı (uzman havuzu)</div>
+          <div className="card" style={{ padding: 20 }}>
             <CategoryBars items={data.categories} />
-          </Card>
+          </div>
         </>
       )}
     </>
@@ -1383,7 +1320,7 @@ function RandevuKuyruklari() {
           <div className="empty">Bekleyen dekont yok</div>
         ) : (
           dekont.data.map((b) => (
-            <div key={b.id} className="row">
+            <div key={b.id} className="list-row">
               <div className="grow">
                 <div>
                   <b>{b.proName}</b> · {b.service}
@@ -1451,7 +1388,7 @@ function RandevuKuyruklari() {
           <div className="empty">Bekleyen iade yok</div>
         ) : (
           iade.data.map((r) => (
-            <div key={r.id} className="row">
+            <div key={r.id} className="list-row">
               <div className="grow">
                 <div>
                   <b>{kzt(Number(r.amount))}</b> ·{' '}
@@ -1488,7 +1425,7 @@ function RandevuKuyruklari() {
           <div className="empty">Bekleyen uzlaşma yok</div>
         ) : (
           uzlasma.data.map((u) => (
-            <div key={u.id} className="row">
+            <div key={u.id} className="list-row">
               <div className="grow">
                 <div>
                   <b>{u.kind === 'no_show' ? 'Gelmedi itirazı' : 'Ödeme itirazı'}</b>
@@ -1566,48 +1503,51 @@ function CommissionsView() {
     s === 'earned' ? 'approved' : s === 'pending' ? 'pending' : 'rejected';
   return (
     <>
-      <div className="mb-6">
-        <h1 className="flex flex-wrap items-center gap-2 text-ax-2xl font-extrabold leading-tight tracking-[-0.7px] text-ink">
-          Komisyonlar{' '}
-          {data ? (
-            <button
-              className="btn-sm"
-              onClick={() =>
-                exportCsv(
-                  'ayna-komisyon.csv',
-                  data.salons.map((r) => ({
-                    uzman_salon: r.proName,
-                    randevu: r.count,
-                    ciro: r.gmv,
-                    komisyon: r.earned,
-                    bekleyen: r.pending,
-                    tahsil: r.collected,
-                    kalan: r.outstanding,
-                  })),
-                )
-              }
-            >
-              ⬇ Excel
-            </button>
-          ) : null}
-        </h1>
-        <p className="mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">
-          App üzerinden alınan online randevulardan platform komisyonu (offline salon kayıtları
-          hariç)
-        </p>
-      </div>
+      <h1 className="page-title">
+        Komisyonlar{' '}
+        {data ? (
+          <button
+            className="btn-sm"
+            style={{ marginLeft: 8, verticalAlign: 'middle' }}
+            onClick={() =>
+              exportCsv(
+                'ayna-komisyon.csv',
+                data.salons.map((r) => ({
+                  uzman_salon: r.proName,
+                  randevu: r.count,
+                  ciro: r.gmv,
+                  komisyon: r.earned,
+                  bekleyen: r.pending,
+                  depozito: r.deposits,
+                  tahsil: r.collected,
+                  kalan: r.outstanding,
+                })),
+              )
+            }
+          >
+            ⬇ Excel
+          </button>
+        ) : null}
+      </h1>
+      <p className="page-sub">
+        App üzerinden alınan online randevulardan platform komisyonu (offline salon kayıtları hariç)
+      </p>
       {loading || !data ? (
-        <Loading />
+        <div className="empty">Yükleniyor…</div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="stat-grid">
             <Stat v={TL(data.totals.earned)} l="Kazanılan komisyon" />
-            <Stat v={TL(data.totals.collected)} l="Tahsil edilen" />
-            <Stat v={TL(data.totals.outstanding)} l="Açık alacak" />
+            {/* Depozito AYNA'nın kasasına müşteriden PEŞİN girdi; uzmandan
+                ikinci kez istenmiyor. Bu kalem görünmediğinde "açık alacak"
+                komisyonun tamamını gösteriyor, yani %10 fiilen %20 sanılıyordu. */}
+            <Stat v={TL(data.totals.deposits)} l="Depozitodan tahsil" />
+            <Stat v={TL(data.totals.collected)} l="Uzmandan tahsil" />
+            <Stat v={TL(data.totals.outstanding)} l="Açık cari alacak" />
             <Stat v={`%${data.rate}`} l={`Oran · ${data.totals.count} online randevu`} />
           </div>
-          <SectionTitle>Komisyon oranı</SectionTitle>
-          <Card>
+          <div className="section-title">Komisyon oranı</div>
+          <div className="card">
             <div className="list-row">
               <div className="grow">
                 <div className="name">Güncel oran: %{data.rate}</div>
@@ -1617,7 +1557,8 @@ function CommissionsView() {
                 </div>
               </div>
               <input
-                className="input h-[34px] w-[90px]"
+                className="input"
+                style={{ width: 90, height: 34 }}
                 type="number"
                 min={0}
                 max={100}
@@ -1629,18 +1570,19 @@ function CommissionsView() {
                 Kaydet
               </button>
             </div>
-          </Card>
-          <SectionTitle>Salon bazında — alacak & tahsilat</SectionTitle>
-          <Card>
+          </div>
+          <div className="section-title">Salon bazında — alacak & tahsilat</div>
+          <div className="card">
             {data.salons.length === 0 ? (
-              <Loading label="Online randevu yok" />
+              <div className="empty">Online randevu yok</div>
             ) : (
               data.salons.map((s) => (
                 <div key={s.proId || s.proName} className="list-row">
                   <div className="grow">
                     <div className="name">{s.proName}</div>
                     <div className="meta">
-                      Kazanılan {TL(s.earned)} · Tahsil {TL(s.collected)}
+                      Kazanılan {TL(s.earned)} · Depozito {TL(s.deposits)} · Tahsil{' '}
+                      {TL(s.collected)}
                       {s.pending > 0 ? ` · +${TL(s.pending)} bekleyen randevu` : ''}
                     </div>
                   </div>
@@ -1649,7 +1591,12 @@ function CommissionsView() {
                   ) : s.earned > 0 ? (
                     <span className="pill approved">Tahsil edildi</span>
                   ) : (
-                    <span className="pill bg-line text-ink-3">Alacak yok</span>
+                    <span
+                      className="pill"
+                      style={{ background: 'var(--line)', color: 'var(--muted)' }}
+                    >
+                      Alacak yok
+                    </span>
                   )}
                   {s.outstanding > 0 ? (
                     <button
@@ -1690,11 +1637,11 @@ function CommissionsView() {
                 </div>
               ))
             )}
-          </Card>
+          </div>
           {data.payouts.length > 0 ? (
             <>
-              <SectionTitle>Tahsilat geçmişi</SectionTitle>
-              <Card>
+              <div className="section-title">Tahsilat geçmişi</div>
+              <div className="card">
                 {data.payouts.map((p) => (
                   <div key={p.id} className="list-row">
                     <div className="grow">
@@ -1704,17 +1651,19 @@ function CommissionsView() {
                         {p.note ? ` · ${p.note}` : ''}
                       </div>
                     </div>
-                    <div className="kv-v text-ok">{TL(p.amount)}</div>
+                    <div className="kv-v" style={{ color: 'var(--success)' }}>
+                      {TL(p.amount)}
+                    </div>
                   </div>
                 ))}
-              </Card>
+              </div>
             </>
           ) : null}
           <RandevuKuyruklari />
-          <SectionTitle>Randevu kayıtları ({data.items.length})</SectionTitle>
-          <Card>
+          <div className="section-title">Randevu kayıtları ({data.items.length})</div>
+          <div className="card">
             {data.items.length === 0 ? (
-              <Loading label="Kayıt yok" />
+              <div className="empty">Kayıt yok</div>
             ) : (
               data.items.map((it) => (
                 <div key={it.id} className="list-row">
@@ -1731,7 +1680,7 @@ function CommissionsView() {
                 </div>
               ))
             )}
-          </Card>
+          </div>
         </>
       )}
     </>
@@ -1802,24 +1751,26 @@ function BusinessesView() {
   const openDetail = async (id: string) => setDetail(await api.businessDetail(id));
   return (
     <>
-      <PageHead
-        title="Salon başvuruları"
-        sub="Salon (işletme) kayıt onayları ve durum yönetimi"
-      />
-      <Toolbar>
+      <h1 className="page-title">Salon başvuruları</h1>
+      <p className="page-sub">Salon (işletme) kayıt onayları ve durum yönetimi</p>
+      <div className="toolbar">
         {['pending', 'approved', 'rejected'].map((s) => (
-          <Chip key={s} active={status === s} onClick={() => setStatus(s)}>
+          <button
+            key={s}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
             {s === 'pending' ? 'Onay bekleyen' : s === 'approved' ? 'Onaylı' : 'Reddedilen'}
-          </Chip>
+          </button>
         ))}
-      </Toolbar>
-      <Card>
+      </div>
+      <div className="card">
         {!data || data.length === 0 ? (
-          <Loading label="Kayıt yok" />
+          <div className="empty">Kayıt yok</div>
         ) : (
           data.map((b) => (
             <div key={b.id} className="list-row">
-              <div className="grow cursor-pointer" onClick={() => openDetail(b.id)}>
+              <div className="grow" style={{ cursor: 'pointer' }} onClick={() => openDetail(b.id)}>
                 <div className="name">{b.name}</div>
                 <div className="meta">
                   {b.ownerName} · {b.sector} · {b.city}
@@ -1842,13 +1793,13 @@ function BusinessesView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
       {detail ? (
         <div className="modal-backdrop" onClick={() => setDetail(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
               <div>
-                <div className="text-ax-xl font-extrabold tracking-[-0.4px] text-ink">
+                <div className="page-title" style={{ fontSize: 20 }}>
                   {detail.name}
                 </div>
                 <span className={`pill ${detail.status}`}>
@@ -1887,7 +1838,9 @@ function BusinessesView() {
               />
             </div>
             {/* §3.3 — Katmanlı doğrulama kontrol listesi (admin işaretler) */}
-            <SectionTitle>Doğrulama kontrol listesi</SectionTitle>
+            <h3 className="section-head" style={{ marginTop: 14 }}>
+              Doğrulama kontrol listesi
+            </h3>
             <div className="verify-grid">
               {VERIFY_CHECKS.map((vc) => {
                 const on = detail.verification?.[vc.key] ?? false;
@@ -1904,21 +1857,18 @@ function BusinessesView() {
             </div>
             {detail.docUrl ? (
               <a
-                className="btn-sm btn-ghost mt-2"
+                className="btn-sm btn-ghost"
                 href={detail.docUrl}
                 target="_blank"
                 rel="noreferrer"
+                style={{ marginTop: 8, display: 'inline-block' }}
               >
                 Belgeyi aç ↗
               </a>
             ) : null}
-            {detail.reviewNote ? (
-              <p className="mt-4 text-ax-md leading-relaxed text-ink-3">Not: {detail.reviewNote}</p>
-            ) : null}
+            {detail.reviewNote ? <p className="page-sub">Not: {detail.reviewNote}</p> : null}
             {detail.about ? <p className="about">{detail.about}</p> : null}
-            {detail.rejectReason ? (
-              <p className="mt-3 text-ax-sm text-err">Red sebebi: {detail.rejectReason}</p>
-            ) : null}
+            {detail.rejectReason ? <p className="err">Red sebebi: {detail.rejectReason}</p> : null}
             <div className="modal-actions">
               {detail.status !== 'approved' ? (
                 <button className="btn-sm btn-ok" onClick={() => act(detail.id, 'approve')}>
@@ -1949,6 +1899,7 @@ function BusinessesView() {
     </>
   );
 }
+// §uzman onboarding — admin uzman doğrulama kontrol listesi
 const SP_ENTITY_LABEL: Record<string, string> = {
   freelance: 'Serbest çalışan',
   ip: 'ИП (kayıtlı bireysel girişimci)',
@@ -1978,17 +1929,17 @@ function SpecialistsView() {
   };
   return (
     <>
-      <PageHead
-        title="Uzman doğrulama"
-        sub="Bağımsız uzman katmanlı doğrulama — kimlik (KYC), sertifika, sosyal medya → AYNA Onaylı"
-      />
-      <Card className="p-2">
+      <h1 className="page-title">Uzman doğrulama</h1>
+      <p className="page-sub">
+        Bağımsız uzman katmanlı doğrulama — kimlik (KYC), sertifika, sosyal medya → AYNA Onaylı
+      </p>
+      <div className="card">
         {!data || data.length === 0 ? (
-          <Loading label="Kayıt yok" />
+          <div className="empty">Kayıt yok</div>
         ) : (
           data.map((s) => (
             <div key={s.id} className="list-row">
-              <div className="grow cursor-pointer" onClick={() => openDetail(s.id)}>
+              <div className="grow" style={{ cursor: 'pointer' }} onClick={() => openDetail(s.id)}>
                 <div className="name">
                   {s.name} {s.aynaVerified ? '🛡️' : ''}
                   {/*
@@ -1997,7 +1948,8 @@ function SpecialistsView() {
                     katalogda görünmüyor ve randevu alamıyor.
                   */}
                   <span
-                    className={`pill ml-2 ${s.status === 'approved' ? 'approved' : s.status === 'rejected' ? 'rejected' : 'pending'}`}
+                    className={`pill ${s.status === 'approved' ? 'approved' : s.status === 'rejected' ? 'rejected' : 'pending'}`}
+                    style={{ marginLeft: 8 }}
                   >
                     {s.status === 'approved'
                       ? 'Açık'
@@ -2049,13 +2001,13 @@ function SpecialistsView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
       {detail ? (
         <div className="modal-backdrop" onClick={() => setDetail(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
               <div>
-                <div className="text-ax-xl font-bold text-ink">
+                <div className="page-title" style={{ fontSize: 20 }}>
                   {detail.name} {detail.aynaVerified ? '🛡️ AYNA Onaylı' : ''}
                 </div>
                 <span
@@ -2077,10 +2029,10 @@ function SpecialistsView() {
               <KV k="Sosyal doğrulama kodu" v={detail.socialVerifyCode || '—'} />
               <KV k="Bio" v={detail.bio || '—'} />
             </div>
-            <h3 className="section-head mt-3.5">
+            <h3 className="section-head" style={{ marginTop: 14 }}>
               Doğrulama kontrol listesi
             </h3>
-            <p className="page-sub mt-0">
+            <p className="page-sub" style={{ marginTop: 0 }}>
               Kimlik, KYC kuyruğundan onaylanır. Sertifika ve sosyal medyayı burada işaretle.
             </p>
             <div className="verify-grid">
@@ -2101,13 +2053,13 @@ function SpecialistsView() {
               })}
             </div>
             {detail.certificates.length > 0 ? (
-              <div className="flex flex-wrap gap-2 mt-2.5">
+              <div className="cert-thumbs">
                 {detail.certificates.map((c, i) => (
                   <a key={i} href={c} target="_blank" rel="noreferrer">
                     <img
                       src={c}
                       alt={`sertifika ${i + 1}`}
-                      className="w-[72px] h-[72px] object-cover rounded-sm border border-line"
+                      style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8 }}
                     />
                   </a>
                 ))}
@@ -2149,23 +2101,19 @@ function ReguleHizmetView() {
 
   return (
     <>
-      <div className="mb-6">
-        <h1 className="text-ax-2xl font-extrabold leading-tight tracking-[-0.7px] text-ink">
-          Regüle hizmet uyarıları
-        </h1>
-        <p className="mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">
-          Botoks, dolgu, mezoterapi, diş estetiği ve beslenme danışmanlığı lisans gerektirdiği için
-          katalogda yok. Uzman bu işlemleri kendi yazdığı hizmet adına girerse satır buraya düşer.{' '}
-          <strong className="font-bold text-ink">Kayıt engellenmedi</strong> — karar sende.
-        </p>
-      </div>
-      <Card>
+      <h1 className="page-title">Regüle hizmet uyarıları</h1>
+      <p className="page-sub">
+        Botoks, dolgu, mezoterapi, diş estetiği ve beslenme danışmanlığı lisans gerektirdiği için
+        katalogda yok. Uzman bu işlemleri kendi yazdığı hizmet adına girerse satır buraya düşer.{' '}
+        <strong>Kayıt engellenmedi</strong> — karar sende.
+      </p>
+      <div className="card">
         {!data || data.length === 0 ? (
-          <Loading label="Bekleyen uyarı yok" />
+          <div className="empty">Bekleyen uyarı yok</div>
         ) : (
           data.map((f) => (
-            <div key={f.id} className="border-b border-line-2 p-4 last:border-b-0">
-              <div className="flex flex-wrap items-center gap-2 text-ax-md font-bold tracking-[-0.15px] text-ink">
+            <div key={f.id} className="list-col">
+              <div className="name">
                 {f.proName || f.proId} <span className="pill pending">{f.reason}</span>
               </div>
               {/*
@@ -2173,11 +2121,11 @@ function ReguleHizmetView() {
                * buna dayanıyor. Özetlemek ya da kısaltmak, kararı verenden
                * kanıtı saklamak olurdu.
                */}
-              <div className="mt-1 text-ax-sm text-ink-3">
+              <div className="meta" style={{ marginTop: 4 }}>
                 “{f.serviceName}”{f.city ? ` · ${f.city}` : ''} ·{' '}
                 {new Date(f.createdAt).toLocaleDateString('tr-TR')}
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="actions" style={{ marginTop: 8 }}>
                 <button className="btn-sm" onClick={() => void karar(f, 'cleared')}>
                   Sorun yok
                 </button>
@@ -2188,7 +2136,7 @@ function ReguleHizmetView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
@@ -2218,15 +2166,16 @@ function ModerationView() {
   };
   return (
     <>
-      <PageHead
-        title="Topluluk moderasyonu"
-        sub="W2W onay kuyruğu (otomatik filtre + şikâyet) · görünür yorumlar. Sabit ilke: dürüst eleştiri silinmez."
-      />
+      <h1 className="page-title">Topluluk moderasyonu</h1>
+      <p className="page-sub">
+        W2W onay kuyruğu (otomatik filtre + şikâyet) · görünür yorumlar. Sabit ilke: dürüst eleştiri
+        silinmez.
+      </p>
       {/* §12.5 — W2W moderasyon kuyruğu (pending + şikâyetle gizlenen) */}
-      <SectionTitle>W2W kuyruğu ({circle?.length ?? 0})</SectionTitle>
-      <Card className="mb-6">
+      <h2 className="section-head">W2W kuyruğu ({circle?.length ?? 0})</h2>
+      <div className="card" style={{ marginBottom: 24 }}>
         {!circle || circle.length === 0 ? (
-          <Loading label="Bekleyen W2W içeriği yok" />
+          <div className="empty">Bekleyen W2W içeriği yok</div>
         ) : (
           circle.map((p) => (
             <div key={p.id} className="list-col">
@@ -2236,11 +2185,15 @@ function ModerationView() {
                   {p.status === 'hidden' ? `${p.reports} şikâyet` : 'moderasyon'}
                 </span>
               </div>
-              <div className="mt-1 text-ax-sm leading-relaxed text-ink-2">{p.text}</div>
+              <div className="meta" style={{ marginTop: 4 }}>
+                {p.text}
+              </div>
               {p.moderationReason ? (
-                <div className="mt-0.5 text-ax-sm text-ink-3">Sebep: {p.moderationReason}</div>
+                <div className="meta" style={{ marginTop: 2 }}>
+                  Sebep: {p.moderationReason}
+                </div>
               ) : null}
-              <div className="mt-2.5 flex flex-wrap gap-2">
+              <div className="form-inline" style={{ marginTop: 10 }}>
                 <button className="btn-sm btn-ok" onClick={() => moderateCircle(p.id, 'approve')}>
                   Onayla (yayınla)
                 </button>
@@ -2251,11 +2204,11 @@ function ModerationView() {
             </div>
           ))
         )}
-      </Card>
-      <SectionTitle>Görünür yorumlar</SectionTitle>
-      <Card>
+      </div>
+      <h2 className="section-head">Görünür yorumlar</h2>
+      <div className="card">
         {!data || data.length === 0 ? (
-          <Loading label="Görünür yorum yok" />
+          <div className="empty">Görünür yorum yok</div>
         ) : (
           data.map((r) => (
             <div key={r.id} className="list-row">
@@ -2275,7 +2228,7 @@ function ModerationView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
@@ -2320,8 +2273,9 @@ function CampaignsView() {
   };
   return (
     <>
-      <PageHead title="Kampanyalar" sub="Keşif vitrinindeki kampanyaları yönet" />
-      <Card className="mb-5">
+      <h1 className="page-title">Kampanyalar</h1>
+      <p className="page-sub">Keşif vitrinindeki kampanyaları yönet</p>
+      <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
           <LangTabs
             lang={lang}
@@ -2364,10 +2318,10 @@ function CampaignsView() {
             + Kampanya ekle
           </button>
         </div>
-      </Card>
-      <Card>
+      </div>
+      <div className="card">
         {!data || data.length === 0 ? (
-          <Loading label="Kampanya yok" />
+          <div className="empty">Kampanya yok</div>
         ) : (
           data.map((c) => (
             <div key={c.id} className="list-row">
@@ -2412,10 +2366,11 @@ function CampaignsView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
+// §12.6 İçerik Yönetimi — Blog editörü + kullanıcı başvuruları + haftalık W2W teması
 function ContentView() {
   const { onayla, formAl } = useDiyalog();
   const { data: articles, reload: reloadArticles } = useAsync<BlogArticle[]>(
@@ -2568,13 +2523,13 @@ function ContentView() {
   const reviewed = (apps ?? []).filter((a) => a.status !== 'pending');
   return (
     <>
-      <PageHead
-        title="Blog & tema"
-        sub="AYNA Blog editörü · kullanıcı başvuruları (onayla → puan) · haftalık W2W teması"
-      />
+      <h1 className="page-title">Blog & tema</h1>
+      <p className="page-sub">
+        AYNA Blog editörü · kullanıcı başvuruları (onayla → puan) · haftalık W2W teması
+      </p>
       {/* Blog editörü */}
-      <SectionTitle>{editId ? 'Yazıyı düzenle' : 'Yeni yazı'}</SectionTitle>
-      <Card className="mb-5">
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div className="section-title">{editId ? 'Yazıyı düzenle' : 'Yeni yazı'}</div>
         <div className="form-inline">
           <LangTabs
             lang={lang}
@@ -2600,7 +2555,6 @@ function ContentView() {
             onChange={(e) => setForm({ ...form, categoryCode: e.target.value })}
           />
           <select
-            className="input"
             value={form.contentType ?? 'guide'}
             onChange={(e) => setForm({ ...form, contentType: e.target.value })}
           >
@@ -2659,10 +2613,10 @@ function ContentView() {
             </button>
           )}
         </div>
-      </Card>
-      <Card className="mb-7">
+      </div>
+      <div className="card" style={{ marginBottom: 28 }}>
         {!articles || articles.length === 0 ? (
-          <Loading label="Yazı yok" />
+          <div className="empty">Yazı yok</div>
         ) : (
           articles.map((a) => (
             <div key={a.id} className="list-row">
@@ -2709,15 +2663,15 @@ function ContentView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
       {/* Kullanıcı blog başvuruları */}
       <h2 className="section-head">Kullanıcı blog başvuruları</h2>
-      <p className="mb-6 mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">
+      <p className="page-sub">
         Onaylanan başvuru otomatik yayına alınır ve yazara 200 puan verilir.
       </p>
-      <Card className="mb-7">
+      <div className="card" style={{ marginBottom: 28 }}>
         {pending.length === 0 ? (
-          <Loading label="Bekleyen başvuru yok" />
+          <div className="empty">Bekleyen başvuru yok</div>
         ) : (
           pending.map((a) => (
             <div key={a.id} className="list-col">
@@ -2726,10 +2680,10 @@ function ContentView() {
                 {a.authorName} · {a.tag || 'Topluluk'} ·{' '}
                 {new Date(a.createdAt).toLocaleDateString('tr-TR')}
               </div>
-              <div className="mt-1.5 text-ax-sm text-ink-3">
+              <div className="meta" style={{ marginTop: 6 }}>
                 {a.excerpt || a.body[0]?.slice(0, 140)}
               </div>
-              <div className="form-inline mt-2.5">
+              <div className="form-inline" style={{ marginTop: 10 }}>
                 <input
                   className="input"
                   placeholder="Kategori kodu (opsiyonel)"
@@ -2776,7 +2730,7 @@ function ContentView() {
           ))
         )}
         {reviewed.length > 0 && (
-          <div className="mt-3 opacity-70">
+          <div style={{ marginTop: 12, opacity: 0.7 }}>
             {reviewed.map((a) => (
               <div key={a.id} className="list-row">
                 <div className="grow">
@@ -2791,11 +2745,11 @@ function ContentView() {
             ))}
           </div>
         )}
-      </Card>
+      </div>
       {/* Haftalık W2W teması */}
       <h2 className="section-head">Haftalık W2W teması</h2>
-      <p className="mb-6 mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">App&apos;te haftanın sorusu/teması. Tek tema aktif olabilir.</p>
-      <Card className="mb-5">
+      <p className="page-sub">App&apos;te haftanın sorusu/teması. Tek tema aktif olabilir.</p>
+      <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
           <LangTabs
             lang={themeLang}
@@ -2836,10 +2790,10 @@ function ContentView() {
             + Tema ekle
           </button>
         </div>
-      </Card>
-      <Card>
+      </div>
+      <div className="card">
         {!themes || themes.length === 0 ? (
-          <Loading label="Tema yok" />
+          <div className="empty">Tema yok</div>
         ) : (
           themes.map((th) => (
             <div key={th.id} className="list-row">
@@ -2865,10 +2819,11 @@ function ContentView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
+// §12.10 Bildirim Merkezi — segment bazlı toplu duyuru + gönderim geçmişi
 const SEGMENTS: { id: AnnouncementSegment; label: string }[] = [
   { id: 'all', label: 'Tüm kullanıcılar' },
   { id: 'premium', label: 'Premium üyeler' },
@@ -2966,21 +2921,25 @@ function SplashView() {
     <>
       <h2 className="section-head">Açılış mesajları</h2>
       {!data || data.length === 0 ? (
-        <Card className="p-5">
-          <div className="max-w-[70ch] text-left leading-relaxed text-ink-2">
-            <b className="text-ink">Tablo boş — bu normal.</b>
+        <div className="card">
+          <div className="empty" style={{ textAlign: 'left', lineHeight: 1.6 }}>
+            <b>Tablo boş — bu normal.</b>
             <br />
             Uygulama 54 mesajı kendi içinde taşıyor ve internetsiz de çalışıyor. Bu ekran yalnızca
             uzaktan değiştirme katmanı: bir mesajı düzenlemek ya da pasife almak istediğinizde
             paketi tabloya alın.
           </div>
-          <button className="btn-sm btn-ok mt-4" onClick={aktar}>
+          <button className="btn-sm btn-ok" onClick={aktar}>
             Paketi tabloya al
           </button>
-          {bilgi && <div className="mt-2 text-ax-sm text-ok">{bilgi}</div>}
-        </Card>
+          {bilgi && (
+            <div className="meta" style={{ marginTop: 8, color: 'var(--success)' }}>
+              {bilgi}
+            </div>
+          )}
+        </div>
       ) : (
-        <Card>
+        <div className="card">
           {data.map((m) => {
             const r = oranlar.get(m.code);
             return (
@@ -2989,8 +2948,10 @@ function SplashView() {
                   {m.code} · {m.grup}
                   {m.active ? '' : ' · PASİF'}
                 </div>
-                <div className="mt-1 text-ax-sm text-ink-2">{m.tr}</div>
-                <div className="mt-1.5 text-ax-sm text-ink-3">
+                <div className="meta" style={{ marginTop: 4 }}>
+                  {m.tr}
+                </div>
+                <div className="meta" style={{ marginTop: 6 }}>
                   {/*
                     Gösterimi olmayan mesaja oran YAZILMIYOR. "%0 atlanıyor"
                     deseydik hiç gösterilmemiş bir mesaj en başarılı görünür,
@@ -3000,7 +2961,7 @@ function SplashView() {
                     ? `${r.gosterim} gösterim · %${Math.round(r.skipOrani * 100)} atlandı`
                     : 'Henüz gösterim verisi yok'}
                 </div>
-                <div className="mt-2 flex gap-2">
+                <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
                   <button className="btn-sm" onClick={() => ac(m)}>
                     Düzenle
                   </button>
@@ -3011,23 +2972,23 @@ function SplashView() {
               </div>
             );
           })}
-        </Card>
+        </div>
       )}
 
       {duzenlenen && (
-        <Card className="mt-3 p-5">
+        <div className="card" style={{ marginTop: 12 }}>
           <h2 className="section-head">{duzenlenen.code} — üç dil zorunlu</h2>
           {(['tr', 'kk', 'ru'] as const).map((d) => (
             <textarea
               key={d}
-              className="input full mb-2"
+              className="input full"
               rows={2}
               placeholder={d.toUpperCase()}
               value={form[d]}
               onChange={(e) => setForm({ ...form, [d]: e.target.value })}
             />
           ))}
-          <div className="mt-2 flex gap-2">
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <button className="btn-sm btn-ok" disabled={eksikDil} onClick={kaydet}>
               Kaydet
             </button>
@@ -3036,15 +2997,17 @@ function SplashView() {
             </button>
           </div>
           {eksikDil && (
-            <div className="mt-2 text-ax-sm text-ink-3">
+            <div className="meta" style={{ marginTop: 8 }}>
               Üç dil de dolmadan kaydedilemez — eksik dil, o dildeki kullanıcıya boş açılış ekranı
               demek.
             </div>
           )}
           {hata && (
-            <div className="mt-2 text-ax-sm text-err">Kaydedilemedi: {hata}</div>
+            <div className="meta" style={{ marginTop: 8, color: 'var(--danger)' }}>
+              Kaydedilemedi: {hata}
+            </div>
           )}
-        </Card>
+        </div>
       )}
     </>
   );
@@ -3101,8 +3064,9 @@ function AnnouncementsView() {
   const segLabel = (s: AnnouncementSegment) => SEGMENTS.find((x) => x.id === s)?.label ?? s;
   return (
     <>
-      <PageHead title="Duyurular" sub="Segment bazlı toplu duyuru — app bildirim listesine düşer" />
-      <Card className="mb-5">
+      <h1 className="page-title">Duyurular</h1>
+      <p className="page-sub">Segment bazlı toplu duyuru — app bildirim listesine düşer</p>
+      <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
           <LangTabs
             lang={lang}
@@ -3151,20 +3115,24 @@ function AnnouncementsView() {
             📣 Duyuruyu gönder
           </button>
           {sent && (
-            <div className="full text-ax-sm font-semibold text-ok">{sent}</div>
+            <div className="meta full" style={{ color: 'var(--success)' }}>
+              {sent}
+            </div>
           )}
         </div>
-      </Card>
+      </div>
       <h2 className="section-head">Gönderim geçmişi</h2>
-      <Card>
+      <div className="card">
         {!data || data.length === 0 ? (
-          <Loading label="Henüz duyuru gönderilmedi" />
+          <div className="empty">Henüz duyuru gönderilmedi</div>
         ) : (
           data.map((a) => (
             <div key={a.id} className="list-col">
               <div className="name">{a.title}</div>
-              <div className="meta !mt-1">{a.body}</div>
-              <div className="meta !mt-1.5 tabular-nums">
+              <div className="meta" style={{ marginTop: 4 }}>
+                {a.body}
+              </div>
+              <div className="meta" style={{ marginTop: 6 }}>
                 {segLabel(a.segment)}
                 {a.city ? ` · ${a.city}` : ''} · {a.recipientCount} alıcı ·{' '}
                 {new Date(a.createdAt).toLocaleString('tr-TR')}
@@ -3172,7 +3140,7 @@ function AnnouncementsView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
@@ -3241,17 +3209,18 @@ function AdsView() {
   };
   return (
     <>
-      <PageHead
-        title="Reklamlar"
-        sub="Ücretli vitrin: uzman/salon Kaspi ile öder, dekontu buradan doğrularsın. Onaylanan reklam satın alınan süre boyunca Keşfet ekranında yayınlanır."
-      />
+      <h1 className="page-title">Reklamlar</h1>
+      <p className="page-sub">
+        Ücretli vitrin: uzman/salon Kaspi ile öder, dekontu buradan doğrularsın. Onaylanan reklam
+        satın alınan süre boyunca Keşfet ekranında yayınlanır.
+      </p>
       {/* ── §reklam — ÜCRETLİ VİTRİN ÖDEMELERİ ──
           Reklam sipariş anında yayına GİRMEZ; ödeme burada doğrulanınca
           yayınlanır. Onaylanmadan yayınlansaydı ödenmemiş reklam vitrine
           düşerdi. */}
-      <SectionTitle>Reklam ödemeleri ({reklam.data?.length ?? 0})</SectionTitle>
-      <Card className="mb-4">
-        <div className="border-b border-line-2 px-4 py-3 text-ax-sm leading-relaxed text-ink-3">
+      <div className="section-title">Reklam ödemeleri ({reklam.data?.length ?? 0})</div>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="meta full" style={{ marginBottom: 8 }}>
           Onaylayınca reklam satın alınan süre boyunca yayına girer ve süre bitince kendiliğinden
           düşer. Reddedersen reklam üretilmez; uzman dekontu yeniden gönderebilir.
         </div>
@@ -3262,16 +3231,16 @@ function AdsView() {
             <div key={o.id} className="list-row">
               {o.image ? <img className="thumb" src={o.image} alt="" /> : <div className="thumb" />}
               <div className="grow">
-                <div className="text-ax-md text-ink">
+                <div>
                   <b>{o.proName}</b> · {o.title}
                 </div>
-                <div className="meta tabular-nums">
+                <div className="meta">
                   {o.placement === 'firsatlar' ? 'Fırsatlar' : 'Öne çıkanlar'} · {o.months} ay ·{' '}
                   {Number(o.amount).toLocaleString('tr-TR')} ₸
                 </div>
                 <div className="meta">
                   kod{' '}
-                  <code className="rounded-sm bg-bg-alt px-1.5 py-0.5 font-mono text-ax-xs font-bold tracking-wide text-ink-2">{`AYNA-${o.id
+                  <code>{`AYNA-${o.id
                     .replace(/[^a-zA-Z0-9]/g, '')
                     .slice(-5)
                     .toUpperCase()}`}</code>
@@ -3316,8 +3285,8 @@ function AdsView() {
             </div>
           ))
         )}
-      </Card>
-      <Card className="mb-5">
+      </div>
+      <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
           <select
             className="input"
@@ -3353,12 +3322,34 @@ function AdsView() {
             value={form[sKey]}
             onChange={(e) => setForm({ ...form, [sKey]: e.target.value })}
           />
-          <input
-            className="input"
-            placeholder="Görsel URL (https://...)"
-            value={form.image}
-            onChange={(e) => setForm({ ...form, image: e.target.value })}
-          />
+          {/*
+            GÖRSEL YÜKLENİYOR, LİNK YAPIŞTIRILMIYOR.
+
+            Kurucu (05.09.2026): "orada link koyarak değil biz görsel upload
+            ederek yapmamız lazım."
+
+            Alan bir URL kutusuydu ve canlıdaki iki reklam Google görsel
+            aramasının önizleme adresleriyle girilmişti (~10 piksel genişlik,
+            Google istediği an kaldırabilir). Dosya seçilince veri adresine
+            çevrilip sunucuya gidiyor; sunucu da depolamaya yüklüyor.
+          */}
+          <label className="input" style={{ display: 'grid', gap: 8, height: 'auto' }}>
+            <span className="meta">Reklam görseli</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                const okuyucu = new FileReader();
+                okuyucu.onload = () => setForm({ ...form, image: String(okuyucu.result) });
+                okuyucu.readAsDataURL(f);
+              }}
+            />
+            {form.image ? (
+              <img className="thumb" src={form.image} alt="reklam görseli önizleme" />
+            ) : null}
+          </label>
           {/* HANGİ VİTRİN satın alındı. Aynı kartı iki bölümde birden
               göstermek ekranı tekrarlı gösterirdi; yerleşimi reklamı ödeyen
               seçiyor. */}
@@ -3391,14 +3382,14 @@ function AdsView() {
             + Reklam ekle
           </button>
           {!tarihlerTamam && (
-            <div className="col-span-full text-ax-sm leading-relaxed text-warn">
+            <div className="meta full">
               Başlangıç ve bitiş tarihi zorunlu; bitiş başlangıçtan sonra olmalı. Tarihsiz reklam
               süresiz yayında kalırdı.
             </div>
           )}
         </div>
-      </Card>
-      <Card>
+      </div>
+      <div className="card">
         {!ads || ads.length === 0 ? (
           <div className="empty">Reklam yok</div>
         ) : (
@@ -3415,7 +3406,7 @@ function AdsView() {
                 {/* Hangi vitrin + yayın penceresi. "Aktif" rozeti tek başına
                     yanıltıcıydı: süresi geçmiş bir reklam da aktif görünüyor
                     ama ekranda çıkmıyordu — sunucu onu zaten süzüyor. */}
-                <div className="meta tabular-nums">
+                <div className="meta">
                   {a.placement === 'firsatlar' ? 'Fırsatlar' : 'Öne çıkanlar'}
                   {' · '}
                   {a.startsAt || a.endsAt
@@ -3466,12 +3457,12 @@ function AdsView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
       {/* Onay/red sonrası GERİ BİLDİRİM. Durum yazılıyor ama hiç
           gösterilmiyordu: admin düğmeye basıp bir şey olup olmadığını
           anlayamıyordu. */}
       {msg ? (
-        <div className="mt-4 text-ax-sm font-semibold text-ok">
+        <div className="meta full" style={{ color: 'var(--success)' }}>
           {msg}
         </div>
       ) : null}
@@ -3528,29 +3519,30 @@ function ProfessionalsView() {
   };
   return (
     <>
-      <PageHead
-        title="Uzman & salonlar"
-        sub="Keşif listesindeki uzman/salonlar — ekle, düzenle, fiyat, öne çıkar, sil"
-      />
-      <Toolbar>
+      <h1 className="page-title">Uzman & salonlar</h1>
+      <p className="page-sub">
+        Keşif listesindeki uzman/salonlar — ekle, düzenle, fiyat, öne çıkar, sil
+      </p>
+      <div className="toolbar">
         <button className="btn-sm btn-ok" onClick={() => setEdit({ form: { ...EMPTY_PRO } })}>
           + Yeni uzman
         </button>
         <input
-          className="input !h-[34px] max-w-[240px]"
+          className="input"
+          style={{ height: 34, maxWidth: 240 }}
           placeholder="Ara (isim / sektör)"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <span className="ml-auto text-ax-sm font-semibold tabular-nums text-ink-3">
+        <span className="page-sub" style={{ margin: 0 }}>
           {list.length} kayıt
         </span>
-      </Toolbar>
-      <Card>
+      </div>
+      <div className="card">
         {!data ? (
-          <Loading />
+          <div className="empty">Yükleniyor…</div>
         ) : list.length === 0 ? (
-          <Loading label="Uzman yok" />
+          <div className="empty">Uzman yok</div>
         ) : (
           list.map((p) => (
             <div key={p.id} className="list-row">
@@ -3606,12 +3598,12 @@ function ProfessionalsView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
       {edit ? (
         <div className="modal-backdrop" onClick={() => setEdit(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <div className="text-ax-xl font-extrabold tracking-[-0.7px] text-ink">
+              <div className="page-title" style={{ fontSize: 20 }}>
                 {edit.id ? 'Uzmanı düzenle' : 'Yeni uzman'}
               </div>
               <button className="btn-sm btn-ghost" onClick={() => setEdit(null)}>
@@ -3778,6 +3770,7 @@ function ServicesView() {
 
   return (
     <>
+      <h1 className="page-title">Hizmetler</h1>
       {/*
        * PANEL ARTIK GERÇEĞİ SÖYLÜYOR.
        *
@@ -3792,34 +3785,29 @@ function ServicesView() {
        * Değiştirilebilen tek şey SIRA (brief §7.3) ve o gerçekten
        * uygulamaya yansıyor.
        */}
-      <div className="mb-6">
-        <h1 className="text-ax-2xl font-extrabold leading-tight tracking-[-0.7px] text-ink">
-          Hizmetler
-        </h1>
-        <p className="mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">
-          Kategoriler ve alt hizmetler <strong className="font-bold text-ink-2">hizmet kataloğunda</strong> tanımlı — adları buradan
-          değişmez. Buradan <strong className="font-bold text-ink-2">sırayı</strong> değiştirebilirsin; uygulamada kategoriler bu
-          sırayla görünür.
-        </p>
-      </div>
+      <p className="page-sub">
+        Kategoriler ve alt hizmetler <strong>hizmet kataloğunda</strong> tanımlı — adları buradan
+        değişmez. Buradan <strong>sırayı</strong> değiştirebilirsin; uygulamada kategoriler bu
+        sırayla görünür.
+      </p>
 
-      <Card>
+      <div className="card">
         {!data ? (
-          <Loading />
+          <div className="empty">Yükleniyor…</div>
         ) : liste.length === 0 ? (
-          <Loading label="Katalog boş" />
+          <div className="empty">Katalog boş</div>
         ) : (
           liste.map((c, i) => (
             <div key={c.code} className="list-row">
-              <span className="pill inline-flex h-6 min-w-[24px] items-center justify-center bg-line text-ax-xs text-ink-3 tabular-nums">
+              <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>
                 {i + 1}
               </span>
-              <div className="min-w-0 flex-1">
-                <div className="name text-ink">{c.nameTr}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="name">{c.nameTr}</div>
                 {/* Üç dil birden: kurucunun kk/ru karşılıklarını görmesi
                     için tek yer burası. */}
                 <div className="meta">
-                  {c.nameRu} · {c.nameKk} · <span className="opacity-70">{c.code}</span>
+                  {c.nameRu} · {c.nameKk} · <span style={{ opacity: 0.7 }}>{c.code}</span>
                 </div>
               </div>
               {/*
@@ -3853,10 +3841,10 @@ function ServicesView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
 
       {degisti ? (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="actions" style={{ marginTop: 16 }}>
           <button className="btn-sm" onClick={() => setSira(null)} disabled={kaydediliyor}>
             Vazgeç
           </button>
@@ -3890,11 +3878,12 @@ function PricesView() {
   const catName = (code: string) => cats?.find((c) => c.code === code)?.nameTr ?? code;
   return (
     <>
-      <PageHead
-        title="Taban fiyatlar"
-        sub={'Piyasa taban fiyatları (kategori × şehir) — teklif tabanı ve %40-altı uyarısı için. Uzman başlangıç fiyatları "Uzmanlar" bölümünden düzenlenir.'}
-      />
-      <Card className="p-5 mb-5">
+      <h1 className="page-title">Taban fiyatlar</h1>
+      <p className="page-sub">
+        Piyasa taban fiyatları (kategori × şehir) — teklif tabanı ve %40-altı uyarısı için. Uzman
+        başlangıç fiyatları "Uzmanlar" bölümünden düzenlenir.
+      </p>
+      <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
           <select
             className="input"
@@ -3925,12 +3914,12 @@ function PricesView() {
             Kaydet / güncelle
           </button>
         </div>
-      </Card>
-      <Card className="p-5">
+      </div>
+      <div className="card">
         {!data ? (
-          <Loading />
+          <div className="empty">Yükleniyor…</div>
         ) : data.length === 0 ? (
-          <Loading label="Fiyat kaydı yok" />
+          <div className="empty">Fiyat kaydı yok</div>
         ) : (
           data.map((m) => (
             <div key={m.id} className="list-row">
@@ -3940,11 +3929,11 @@ function PricesView() {
                   {m.category} · {m.city || 'Genel'}
                 </div>
               </div>
-              <div className="kv-v tabular-nums">{TL(m.basePrice)}</div>
+              <div className="kv-v">{TL(m.basePrice)}</div>
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
@@ -3961,36 +3950,33 @@ function PenaltiesView() {
   const { data, reload } = useAsync<Penalty[]>(() => api.penalties(), []);
   return (
     <>
-      <PageHead
-        title="Kısıtlı hesaplar"
-        sub="Kısıtlı hesaplar (yeni talep göremez) · 7 gün sayacı dolunca kalıcı engel adayı"
-      />
-      <Card className="p-0 overflow-hidden">
+      <h1 className="page-title">Kısıtlı hesaplar</h1>
+      <p className="page-sub">
+        Kısıtlı hesaplar (yeni talep göremez) · 7 gün sayacı dolunca kalıcı engel adayı
+      </p>
+      <div className="card">
         {!data ? (
-          <Loading />
+          <div className="empty">Yükleniyor…</div>
         ) : data.length === 0 ? (
-          <Loading label="Kısıtlı hesap yok" />
+          <div className="empty">Kısıtlı hesap yok</div>
         ) : (
           data.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center gap-3 px-5 py-4 border-b border-line last:border-b-0 hover:bg-bg-alt transition-colors"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="text-ax-sm font-semibold text-ink">
+            <div key={p.id} className="list-row">
+              <div className="grow">
+                <div className="name">
                   {p.name || '—'} · {ROLE_TR[p.role] ?? p.role}
                   {p.banEligible ? ' · ⚠️ süre doldu' : ''}
                 </div>
-                <div className="mt-0.5 text-ax-xs text-ink-3">
+                <div className="meta">
                   {p.restrictReason || 'gerekçe yok'}
                   {p.city ? ` · ${p.city}` : ''} · geçen {p.daysElapsed}g · kalan{' '}
-                  <strong className={`tabular-nums ${p.banEligible ? 'text-err' : 'text-warn'}`}>
+                  <strong style={{ color: p.banEligible ? 'var(--danger)' : 'var(--gold)' }}>
                     {p.daysRemaining}g
                   </strong>
                 </div>
               </div>
               <button
-                className="btn-sm btn-ok shrink-0"
+                className="btn-sm btn-ok"
                 onClick={async () => {
                   await api.unrestrictUser(p.id);
                   reload();
@@ -3999,7 +3985,7 @@ function PenaltiesView() {
                 Kısıtı kaldır
               </button>
               <button
-                className="btn-sm btn-danger shrink-0"
+                className="btn-sm btn-danger"
                 onClick={async () => {
                   if (
                     await onayla({
@@ -4019,10 +4005,12 @@ function PenaltiesView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
+// §11 — Üyelik seviyesi düzenleyici: seç → "Kaydet" → anında backend'e işlenir (app senkronda yansıtır).
+// Kullanıcı/salon/uzman (hepsi User) için aynı bileşen. onChange değil; kasıtlı Kaydet butonu.
 function TierEditor({ user, onSaved }: { user: AdminUser; onSaved: () => void }) {
   const current: 'free' | 'premium' | 'platinum' =
     user.membershipTier ?? (user.isPremium ? 'premium' : 'free');
@@ -4076,20 +4064,20 @@ function UsersView() {
   );
   return (
     <>
-      <PageHead
-        title="Üyeler"
-        sub={`Uygulamaya kayıtlı herkes — kullanıcı, uzman, salon. Üyelik seviyesi + parola yönetimi (${
-          data?.length ?? 0
-        } kayıt)`}
-      />
-      <Toolbar>
+      <h1 className="page-title">Üyeler</h1>
+      <p className="page-sub">
+        Uygulamaya kayıtlı herkes — kullanıcı, uzman, salon. Üyelik seviyesi + parola yönetimi (
+        {data?.length ?? 0} kayıt)
+      </p>
+      <div className="toolbar">
         {['all', 'user', 'salon', 'professional', 'moderator', 'admin'].map((r) => (
-          <Chip key={r} active={role === r} onClick={() => setRole(r)}>
+          <button key={r} className={`chip ${role === r ? 'on' : ''}`} onClick={() => setRole(r)}>
             {r === 'all' ? 'Hepsi' : ROLE_TR[r]}
-          </Chip>
+          </button>
         ))}
         <input
-          className="input !h-[34px] max-w-[220px]"
+          className="input"
+          style={{ height: 34, maxWidth: 220 }}
           placeholder="Ara (isim / e-posta)"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -4112,10 +4100,10 @@ function UsersView() {
         >
           ⬇ Excel
         </button>
-      </Toolbar>
-      <Card>
+      </div>
+      <div className="card">
         {list.length === 0 ? (
-          <Loading label="Kullanıcı yok" />
+          <div className="empty">Kullanıcı yok</div>
         ) : (
           list.map((u) => (
             <div key={u.id} className="list-row">
@@ -4142,7 +4130,7 @@ function UsersView() {
                   numara da yok.
                 */}
                 {u.role === 'user' && !u.phoneVerified && !u.adminApproved ? (
-                  <div className="mt-0.5 text-ax-sm font-semibold text-err">
+                  <div className="meta" style={{ color: 'var(--danger)' }}>
                     Randevu veremez — telefonu doğrulanmamış
                   </div>
                 ) : null}
@@ -4160,7 +4148,8 @@ function UsersView() {
                 </button>
               ) : null}
               <select
-                className="input !h-8 max-w-[130px]"
+                className="input"
+                style={{ height: 32, maxWidth: 130 }}
                 value={u.role}
                 onChange={async (e) => {
                   await api.setUserRole(u.id, e.target.value);
@@ -4328,10 +4317,14 @@ function UsersView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
+// Brief §3 durum sözlüğü. Adlar kod, veritabanı ve belgede AYNI; panel de
+// aynı kelimeleri kullanıyor ki bir randevu üç yerde üç farklı isimle
+// görünmesin. Eski sözlük (confirmed/pending/waitlist...) tamamen kaldırıldı:
+// filtreler var olmayan adları sorguladığı için panel her sekmede boş dönüyordu.
 const BOOKING_STATUS_TR: Record<string, string> = {
   taslak: 'Taslak',
   onay_bekliyor: 'Uzman onayı bekliyor',
@@ -4405,28 +4398,31 @@ function BookingsAdminView() {
         : 'pending';
   return (
     <>
-      <PageHead
-        title="Randevular & ödemeler"
-        sub={`Platform geneli tüm randevular (${data?.length ?? 0})`}
-      />
-      <Toolbar>
+      <h1 className="page-title">Randevular & ödemeler</h1>
+      <p className="page-sub">Platform geneli tüm randevular ({data?.length ?? 0})</p>
+      <div className="toolbar">
         {STATES.map((s) => (
-          <Chip key={s} active={status === s} onClick={() => setStatus(s)}>
+          <button
+            key={s}
+            className={`chip ${status === s ? 'on' : ''}`}
+            onClick={() => setStatus(s)}
+          >
             {s === 'all' ? 'Hepsi' : BOOKING_STATUS_TR[s]}
-          </Chip>
+          </button>
         ))}
         <input
-          className="input ml-auto max-w-[260px]"
+          className="input"
+          style={{ maxWidth: 260, marginLeft: 'auto' }}
           placeholder="Ara: uzman / hizmet / müşteri"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-      </Toolbar>
-      <Card>
+      </div>
+      <div className="card">
         {!data ? (
-          <Loading />
+          <div className="empty">Yükleniyor…</div>
         ) : rows.length === 0 ? (
-          <Loading label="Randevu yok" />
+          <div className="empty">Randevu yok</div>
         ) : (
           rows.map((b) => (
             <div key={b.id} className="list-row">
@@ -4438,9 +4434,47 @@ function BookingsAdminView() {
                   {b.dateLabel}
                   {b.customerName ? ` · ${b.customerName}` : ''} ·{' '}
                   {b.online ? 'Online (app)' : 'Offline (salon)'}
+                  {b.finalPrice != null ? ` · kasada ${TL(b.finalPrice)}` : ''}
                 </div>
+                {/*
+                  İKİ TARAFIN ONAYI — kurucu (05.09.2026): "her iki tarafın
+                  onayı adminde müşterinin ayna parasını aktif hale getirir."
+
+                  Panel bu iki onayı hiç göstermiyordu: yönetici, puanın neden
+                  yazılmadığını (hangi tarafın onayının eksik olduğunu)
+                  göremiyordu. Yalnız online randevularda anlamlı — offline
+                  salon kaydında ayna para zaten doğmuyor.
+                */}
+                {b.online ? (
+                  <div className="meta">
+                    <span title="Müşterinin 'ödemeyi yaptım' beyanı">
+                      {b.musteriOdedi ? '✓' : '○'} müşteri ödedi
+                    </span>
+                    {' · '}
+                    <span title="Uzmanın 'ödemeyi aldım' teyidi">
+                      {b.uzmanAldi ? '✓' : '○'} uzman aldı
+                    </span>
+                    {' · '}
+                    <span title="İkisi de onayladıysa müşterinin ayna parası yazıldı">
+                      {b.aynaParaAktif ? 'ayna para AKTİF' : 'ayna para bekliyor'}
+                    </span>
+                  </div>
+                ) : null}
               </div>
-              <div className="kv-v tabular-nums">{b.price > 0 ? TL(b.price) : '—'}</div>
+              {/*
+                DEPOZİTO DEKONTU GÖRÜNÜR.
+
+                §4.4: dekont yüklendiği an randevu kesinleşiyor, yönetici
+                doğrulaması SONRA geliyor. Ama panel dekontu hiç
+                göstermiyordu — yönetici neyi doğrulayacağını göremiyor,
+                elinde yalnız "İptal" kalıyordu (kurucu bildirdi).
+              */}
+              {b.depositReceiptUri ? (
+                <a href={b.depositReceiptUri} target="_blank" rel="noreferrer" title="Dekontu aç">
+                  <img className="thumb" src={b.depositReceiptUri} alt="dekont" />
+                </a>
+              ) : null}
+              <div className="kv-v">{b.price > 0 ? TL(b.price) : '—'}</div>
               <span className={`pill ${pill(b.status)}`}>
                 {BOOKING_STATUS_TR[b.status] ?? b.status}
               </span>
@@ -4450,8 +4484,36 @@ function BookingsAdminView() {
                   ödenmemiş bir randevuya puan yükleyip komisyon tabanına
                   yazardı. §8 admin'e üç kuyruk veriyor; tamamlama vermiyor.
                   İptal destek kaçış kapısı olarak kalıyor. */}
+              {/*
+                SAHTE DEKONT GERİ ALINIYOR — iptal DEĞİL.
+                İptal müşteriyi cezalandıran ayrı bir sonuç; para gelmediyse
+                doğru sonuç randevunun depozito beklemeye dönmesi ve
+                müşterinin doğru dekontu yükleyebilmesi.
+              */}
+              {b.depositReceiptUri && !KAPALI_DURUMLAR.includes(b.status) ? (
+                <button
+                  className="btn-sm btn-ghost"
+                  onClick={() =>
+                    act(
+                      () => api.rejectReceipt(b.id),
+                      `Dekont reddedilsin mi? Randevu depozito beklemeye döner. (${b.service})`,
+                    )
+                  }
+                >
+                  Dekontu reddet
+                </button>
+              ) : null}
               {!KAPALI_DURUMLAR.includes(b.status) ? (
                 <button
+                  /*
+                   * SINIF ADLARI YANLIŞTI: `small` ve `danger` diye bir kural
+                   * YOK (`btn-sm`, `btn-danger` var). Düğme yalnız `.btn`
+                   * alıyordu ve `.btn` bir FORM düğmesi: `width: 100%`.
+                   * Satırdaki tüm yeri kaplıyor, ad/hizmet sütununu bir
+                   * harflik şeride eziyordu — kurucunun "yazılar iç içe
+                   * geçmiş" dediği ekran. Kapalı randevularda düğme
+                   * çizilmediği için o satırlar düzgün görünüyordu.
+                   */
                   className="btn-sm btn-danger"
                   onClick={() =>
                     act(() => api.cancelBooking(b.id), `Randevu iptal edilsin mi? (${b.service})`)
@@ -4463,10 +4525,11 @@ function BookingsAdminView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
+// §12.4 Anlaşmazlık kuyruğu — depozito/iade dekont görselleri incelenir, karar verilir
 function DisputesView() {
   const { formAl } = useDiyalog();
   const { data, reload } = useAsync<Dispute[]>(() => api.disputes(), []);
@@ -4490,31 +4553,32 @@ function DisputesView() {
   };
   const row = (d: Dispute) => (
     <div key={d.id} className="list-col">
-      <div className="font-bold tracking-[-0.15px] text-ink">
+      <div className="name">
         {kindLabel(d.kind)} · {d.proName} · {TL(d.amount)}
       </div>
-      <div className="mt-1 text-ax-sm text-ink-3">
+      <div className="meta" style={{ marginTop: 4 }}>
         Randevu #{d.bookingRef} {d.service ? `· ${d.service}` : ''} ·{' '}
         {new Date(d.createdAt).toLocaleString('tr-TR')}
         {d.note ? ` · "${d.note}"` : ''}
       </div>
       {d.resolution ? (
-        <div className="mt-0.5 text-ax-sm text-ink-3">
+        <div className="meta" style={{ marginTop: 2 }}>
           Karar notu: {d.resolution}
         </div>
       ) : null}
-      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+      <div className="form-inline" style={{ marginTop: 10 }}>
         {d.receiptUri ? (
           <a
-            className="btn-sm no-underline"
+            className="btn-sm"
             href={d.receiptUri}
             target="_blank"
             rel="noreferrer"
+            style={{ textDecoration: 'none' }}
           >
             🧾 Dekontu incele
           </a>
         ) : (
-          <span className="text-ax-sm text-ink-3">Dekont yok</span>
+          <span className="meta">Dekont yok</span>
         )}
         {d.status === 'open' ? (
           <>
@@ -4533,27 +4597,27 @@ function DisputesView() {
   );
   return (
     <>
-      <PageHead
-        title="Depozito itirazları"
-        sub="Depozito itirazları ve iade dekontları — dekont görselleri burada incelenir. Sabit ilke: dürüst eleştiri/haklı iade reddedilmez."
-      />
-      <SectionTitle>Bekleyen ({open.length})</SectionTitle>
-      <Card className="mb-5">
-        {open.length === 0 ? (
-          <Loading label="Bekleyen anlaşmazlık yok" />
-        ) : (
-          open.map(row)
-        )}
-      </Card>
+      <h1 className="page-title">Depozito itirazları</h1>
+      <p className="page-sub">
+        Depozito itirazları ve iade dekontları — dekont görselleri burada incelenir. Sabit ilke:
+        dürüst eleştiri/haklı iade reddedilmez.
+      </p>
+      <div className="section-title">Bekleyen ({open.length})</div>
+      <div className="card" style={{ marginBottom: 20 }}>
+        {open.length === 0 ? <div className="empty">Bekleyen anlaşmazlık yok</div> : open.map(row)}
+      </div>
       {resolved.length > 0 && (
         <>
-          <SectionTitle>Çözülenler ({resolved.length})</SectionTitle>
-          <Card className="opacity-80">{resolved.map(row)}</Card>
+          <div className="section-title">Çözülenler ({resolved.length})</div>
+          <div className="card" style={{ opacity: 0.8 }}>
+            {resolved.map(row)}
+          </div>
         </>
       )}
     </>
   );
 }
+// §7.2 — yorum itiraz kuyruğu: uzman/işletme itirazı; yorum görünür kalır, admin tut/gizle karar verir.
 function ReviewDisputesView() {
   const { onayla } = useDiyalog();
   const { data, reload } = useAsync<ReviewDispute[]>(() => api.reviewDisputes(), []);
@@ -4578,39 +4642,35 @@ function ReviewDisputesView() {
   const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
   return (
     <>
-      <PageHead
-        title="Yorum itirazları"
-        sub={
-          'Uzman/işletmenin itiraz ettiği yorumlar. Sabit ilke: yorum inceleme boyunca görünür kalır; yalnızca kural ihlalinde gizlenir — “hizmeti beğenmedim” türü dürüst negatif yorum SİLİNMEZ.'
-        }
-      />
-      <SectionTitle>Bekleyen ({list.length})</SectionTitle>
-      <Card className="p-2">
+      <h1 className="page-title">Yorum itirazları</h1>
+      <p className="page-sub">
+        Uzman/işletmenin itiraz ettiği yorumlar. Sabit ilke: yorum inceleme boyunca görünür kalır;
+        yalnızca kural ihlalinde gizlenir — “hizmeti beğenmedim” türü dürüst negatif yorum SİLİNMEZ.
+      </p>
+      <div className="section-title">Bekleyen ({list.length})</div>
+      <div className="card">
         {list.length === 0 ? (
-          <Loading label="Bekleyen itiraz yok" />
+          <div className="empty">Bekleyen itiraz yok</div>
         ) : (
           list.map((d) => (
-            <div
-              key={d.id}
-              className="border-b border-line px-3 py-4 last:border-b-0"
-            >
-              <div className="text-ax-md font-semibold text-ink">
-                <span className="tabular-nums text-warn">{stars(d.score)}</span> · {d.authorLabel}
+            <div key={d.id} className="list-col">
+              <div className="name">
+                {stars(d.score)} · {d.authorLabel}
                 {d.visible ? '' : ' · (gizli)'}
               </div>
-              <div className="mt-1 text-ax-sm italic text-ink-2">
+              <div className="meta" style={{ marginTop: 4 }}>
                 “{d.comment || '—'}”
               </div>
               {d.reply ? (
-                <div className="mt-1 text-ax-sm text-ink-2">
+                <div className="meta" style={{ marginTop: 2 }}>
                   Uzman yanıtı: {d.reply}
                 </div>
               ) : null}
-              <div className="mt-1 text-ax-xs text-ink-3">
+              <div className="meta" style={{ marginTop: 2 }}>
                 İtiraz gerekçesi: {d.disputeReason || '—'}
                 {d.disputedAt ? ` · ${new Date(d.disputedAt).toLocaleString('tr-TR')}` : ''}
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="form-inline" style={{ marginTop: 10 }}>
                 <button className="btn-sm" onClick={() => resolve(d, 'keep')}>
                   Yorumu tut
                 </button>
@@ -4621,7 +4681,7 @@ function ReviewDisputesView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
@@ -4629,15 +4689,16 @@ function QuotesView() {
   const { data } = useAsync<QuoteReq[]>(() => api.quoteRequests(), []);
   return (
     <>
-      <PageHead
-        title="Canlı talepler"
-        sub={`§12.4 — talep akışı: kim açtı, şehir, bütçe, gelen teklifler, randevuya dönüşüm (${data?.length ?? 0})`}
-      />
-      <Card>
+      <h1 className="page-title">Canlı talepler</h1>
+      <p className="page-sub">
+        §12.4 — talep akışı: kim açtı, şehir, bütçe, gelen teklifler, randevuya dönüşüm (
+        {data?.length ?? 0})
+      </p>
+      <div className="card">
         {!data ? (
-          <Loading />
+          <div className="empty">Yükleniyor…</div>
         ) : data.length === 0 ? (
-          <Loading label="Teklif talebi yok" />
+          <div className="empty">Teklif talebi yok</div>
         ) : (
           data.map((q) => (
             <div key={q.id} className="list-row">
@@ -4653,19 +4714,17 @@ function QuotesView() {
                   {q.note ? q.note.slice(0, 60) : 'Not yok'}
                 </div>
               </div>
-              <span className="pill bg-line text-ink-3">{q.quoteCount} teklif</span>
-              {q.bestPrice != null ? (
-                <div className="whitespace-nowrap text-ax-sm font-bold tabular-nums text-ink">
-                  min {TL(q.bestPrice)}
-                </div>
-              ) : null}
+              <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>
+                {q.quoteCount} teklif
+              </span>
+              {q.bestPrice != null ? <div className="kv-v">min {TL(q.bestPrice)}</div> : null}
               <span className={`pill ${q.status === 'open' ? 'pending' : 'approved'}`}>
                 {q.bookingId ? '✓ Randevu' : q.status === 'open' ? 'Açık' : 'Kapalı'}
               </span>
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
@@ -4673,23 +4732,23 @@ function LoyaltyView() {
   const { data } = useAsync<Loyalty>(() => api.loyalty(), []);
   return (
     <>
-      <PageHead
-        title="Puan ekonomisi"
-        sub="Puan defteri (append-only) — bakiye dolaşımdaki puan = platform yükümlülüğü"
-      />
+      <h1 className="page-title">Puan ekonomisi</h1>
+      <p className="page-sub">
+        Puan defteri (append-only) — bakiye dolaşımdaki puan = platform yükümlülüğü
+      </p>
       {!data ? (
-        <Loading />
+        <div className="empty">Yükleniyor…</div>
       ) : (
         <>
-          <div className="mb-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="stat-grid">
             <Stat v={data.totals.earned.toLocaleString('tr-TR')} l="Kazanılan puan" />
             <Stat v={data.totals.spent.toLocaleString('tr-TR')} l="Harcanan puan" />
             <Stat v={data.totals.balance.toLocaleString('tr-TR')} l="Dolaşımdaki (yükümlülük)" />
           </div>
-          <SectionTitle>Son hareketler</SectionTitle>
-          <Card>
+          <div className="section-title">Son hareketler</div>
+          <div className="card">
             {data.entries.length === 0 ? (
-              <Loading label="Hareket yok" />
+              <div className="empty">Hareket yok</div>
             ) : (
               data.entries.map((e) => (
                 <div key={e.id} className="list-row">
@@ -4700,13 +4759,13 @@ function LoyaltyView() {
                       {e.detail ? ` · ${e.detail}` : ''}
                     </div>
                   </div>
-                  <span className={`pill ${e.points >= 0 ? 'approved' : 'rejected'} tabular-nums`}>
+                  <span className={`pill ${e.points >= 0 ? 'approved' : 'rejected'}`}>
                     {e.points >= 0 ? `+${e.points}` : e.points} puan
                   </span>
                 </div>
               ))
             )}
-          </Card>
+          </div>
         </>
       )}
     </>
@@ -4723,8 +4782,9 @@ function FlagsView() {
   };
   return (
     <>
-      <PageHead title="Özellikler" sub="Özellik açma/kapama (kademeli yayın)" />
-      <Card className="mb-5">
+      <h1 className="page-title">Özellikler</h1>
+      <p className="page-sub">Özellik açma/kapama (kademeli yayın)</p>
+      <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-inline">
           <input
             className="input"
@@ -4742,12 +4802,12 @@ function FlagsView() {
             + Flag ekle (kapalı)
           </button>
         </div>
-      </Card>
-      <Card>
+      </div>
+      <div className="card">
         {!data ? (
-          <Loading />
+          <div className="empty">Yükleniyor…</div>
         ) : data.length === 0 ? (
-          <Loading label="Flag yok" />
+          <div className="empty">Flag yok</div>
         ) : (
           data.map((f) => (
             <div key={f.key} className="list-row">
@@ -4767,10 +4827,11 @@ function FlagsView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }
+// §12.9 Sistem Ayarları — parametrik oranlar + API anahtarları + şehir yönetimi
 function SystemView() {
   const { data, reload } = useAsync<SystemSettings>(() => api.systemSettings(), []);
   const [rateEdits, setRateEdits] = useState<Record<string, string>>({});
@@ -4822,18 +4883,14 @@ function SystemView() {
   };
   return (
     <>
-      <PageHead
-        title="Ayarlar"
-        sub="Parametrik oranlar · dış servis anahtarları · şehir yönetimi"
-      />
+      <h1 className="page-title">Ayarlar</h1>
+      <p className="page-sub">Parametrik oranlar · dış servis anahtarları · şehir yönetimi</p>
       {/* Parametrik oranlar */}
-      <SectionTitle>Ceza / depozito tutarları ve oranlar</SectionTitle>
-      <p className="-mt-1 mb-4 max-w-[70ch] text-ax-sm leading-relaxed text-ink-3">
-        Değişiklikler app&apos;e `/config` üzerinden yansır.
-      </p>
-      <Card>
+      <h2 className="section-head">Ceza / depozito tutarları ve oranlar</h2>
+      <p className="page-sub">Değişiklikler app&apos;e `/config` üzerinden yansır.</p>
+      <div className="card" style={{ marginBottom: 28 }}>
         {!data ? (
-          <Loading />
+          <div className="empty">Yükleniyor…</div>
         ) : (
           data.rates.map((r) => (
             <div key={r.key} className="list-row">
@@ -4844,7 +4901,8 @@ function SystemView() {
                 </div>
               </div>
               <input
-                className="input w-[120px]"
+                className="input"
+                style={{ width: 120 }}
                 type="number"
                 placeholder={String(r.value)}
                 value={rateEdits[r.key] ?? ''}
@@ -4856,14 +4914,14 @@ function SystemView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
       {/* §4.4 — Kaspi ödeme bağlantısı */}
-      <SectionTitle>Kaspi ile ödeme</SectionTitle>
-      <p className="-mt-1 mb-4 max-w-[70ch] text-ax-sm leading-relaxed text-ink-3">
+      <h2 className="section-head">Kaspi ile ödeme</h2>
+      <p className="page-sub">
         SES INVEST QR kodunun içeriği (bir bağlantı). Doluysa müşteri depozito ekranında “Kaspi ile
         öde” düğmesini görür; boşsa düğme hiç görünmez.
       </p>
-      <Card>
+      <div className="card" style={{ marginBottom: 28 }}>
         <div className="list-row">
           <div className="grow">
             <div className="name">Ödeme bağlantısı</div>
@@ -4872,14 +4930,15 @@ function SystemView() {
                 ? `Tanımlı · ${data.kaspi.url}`
                 : 'Tanımlı değil — düğme gizli'}
             </div>
-            <div className="meta !mt-1">
-              Bağlantı tutarı destekliyorsa <code className="rounded-sm bg-bg-alt px-1 py-0.5 text-ax-xs font-semibold text-ink-2">{'{tutar}'}</code>, randevu referansını
-              destekliyorsa <code className="rounded-sm bg-bg-alt px-1 py-0.5 text-ax-xs font-semibold text-ink-2">{'{ref}'}</code> yazın; uygulama bunları doldurur. Hangi biçimin
+            <div className="meta" style={{ marginTop: 4 }}>
+              Bağlantı tutarı destekliyorsa <code>{'{tutar}'}</code>, randevu referansını
+              destekliyorsa <code>{'{ref}'}</code> yazın; uygulama bunları doldurur. Hangi biçimin
               çalıştığını telefonda deneyerek doğrulayın.
             </div>
           </div>
           <input
-            className="input w-[360px]"
+            className="input"
+            style={{ width: 360 }}
             placeholder="https://kaspi.kz/pay/..."
             value={kaspiEdit}
             onChange={(e) => setKaspiEdit(e.target.value)}
@@ -4888,16 +4947,16 @@ function SystemView() {
             Kaydet
           </button>
         </div>
-      </Card>
+      </div>
       {/* API anahtarları */}
-      <SectionTitle>API anahtarları</SectionTitle>
-      <p className="-mt-1 mb-4 max-w-[70ch] text-ax-sm leading-relaxed text-ink-3">
+      <h2 className="section-head">API anahtarları</h2>
+      <p className="page-sub">
         Maskeli görünüm — değer asla panele/app&apos;e dönmez. &quot;Test Et&quot; biçim/varlık
         kontrolü yapar.
       </p>
-      <Card>
+      <div className="card" style={{ marginBottom: 28 }}>
         {!data ? (
-          <Loading />
+          <div className="empty">Yükleniyor…</div>
         ) : (
           data.apiKeys.map((k: ApiKeyStatus) => (
             <div key={k.provider} className="list-col">
@@ -4906,14 +4965,14 @@ function SystemView() {
                 {k.configured ? `Tanımlı: ${k.masked}` : 'Tanımsız'}
                 {tests[k.provider] && (
                   <span
-                    className={tests[k.provider]!.ok ? 'font-semibold text-ok' : 'font-semibold text-err'}
+                    style={{ color: tests[k.provider]!.ok ? 'var(--success)' : 'var(--danger)' }}
                   >
                     {' '}
                     · {tests[k.provider]!.ok ? '✓' : '✗'} {tests[k.provider]!.message}
                   </span>
                 )}
               </div>
-              <div className="form-inline mt-2.5">
+              <div className="form-inline" style={{ marginTop: 10 }}>
                 <input
                   className="input"
                   placeholder="Yeni anahtar (boş = temizle)"
@@ -4930,15 +4989,13 @@ function SystemView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
       {/* Şehir yönetimi */}
-      <SectionTitle>Şehir yönetimi</SectionTitle>
-      <p className="-mt-1 mb-4 max-w-[70ch] text-ax-sm leading-relaxed text-ink-3">
-        Aktif şehirler + &quot;yakında&quot; listesi (virgülle ayır).
-      </p>
-      <Card className="mb-8">
+      <h2 className="section-head">Şehir yönetimi</h2>
+      <p className="page-sub">Aktif şehirler + &quot;yakında&quot; listesi (virgülle ayır).</p>
+      <div className="card">
         {!data ? (
-          <Loading />
+          <div className="empty">Yükleniyor…</div>
         ) : (
           <>
             <div className="list-col">
@@ -4968,11 +5025,12 @@ function SystemView() {
             </div>
           </>
         )}
-      </Card>
+      </div>
       <CategorySection />
     </>
   );
 }
+// §12.9 — kategori bakım periyodu (gün) + standart hizmet süresi (dk)
 function CategorySection() {
   const { data, reload } = useAsync<CategoryConfig>(() => api.categoryConfig(), []);
   const [edits, setEdits] = useState<CategoryConfig>({});
@@ -5043,23 +5101,21 @@ function AuditView() {
   const { data } = useAsync<AuditEntry[]>(() => api.auditLogs(), []);
   return (
     <>
-      <PageHead title="Denetim kaydı" sub="Kritik eylemlerin izi (PII yok — yalnızca rol/kaynak/hash)" />
-      <Card className="overflow-hidden p-0">
+      <h1 className="page-title">Denetim kaydı</h1>
+      <p className="page-sub">Kritik eylemlerin izi (PII yok — yalnızca rol/kaynak/hash)</p>
+      <div className="card">
         {!data ? (
-          <Loading />
+          <div className="empty">Yükleniyor…</div>
         ) : data.length === 0 ? (
-          <Loading label="Kayıt yok" />
+          <div className="empty">Kayıt yok</div>
         ) : (
           data.map((a) => (
-            <div
-              key={a.id}
-              className="flex items-center gap-3 border-b border-line px-4 py-3 last:border-b-0 hover:bg-bg-alt transition-colors"
-            >
-              <div className="grow min-w-0">
-                <div className="text-ax-sm font-medium text-ink truncate">
+            <div key={a.id} className="list-row">
+              <div className="grow">
+                <div className="name">
                   {a.action} · {a.resourceType}
                 </div>
-                <div className="mt-0.5 text-ax-xs text-ink-3 tabular-nums">
+                <div className="meta">
                   {a.resourceId ? `#${a.resourceId.slice(0, 8)} · ` : ''}
                   {a.actorRole || 'sistem'} · {new Date(a.createdAt).toLocaleString('tr-TR')}
                 </div>
@@ -5067,7 +5123,7 @@ function AuditView() {
             </div>
           ))
         )}
-      </Card>
+      </div>
     </>
   );
 }

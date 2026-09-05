@@ -37,6 +37,10 @@ test('cashbackPoints geçersiz girdide 0', () => {
 
 // ── grantCompletionCashback ─────────────────────────────────────────────────
 
+// Geri kazanımın ÖN KOŞULU müşterinin ödeme beyanı (kurucu, 05.09.2026).
+// Testlerin çoğu beyan edilmiş bir randevuyu anlatıyor; damga tek yerde.
+const BEYAN = new Date('2026-09-05T10:00:00Z');
+
 function sahtePrisma(mevcut: string[] = [], pct: number | null = null) {
   const yazilanlar: Array<{ userId: string; points: number; detail: string }> = [];
   const prisma = {
@@ -60,7 +64,9 @@ function sahtePrisma(mevcut: string[] = [], pct: number | null = null) {
 
 test('tamamlanan randevu geri kazanım üretir', async () => {
   const { prisma, yazilanlar } = sahtePrisma();
-  await grantCompletionCashback(prisma, [{ id: 'b1', userId: 'u1', price: 20_000 }]);
+  await grantCompletionCashback(prisma, [
+    { id: 'b1', userId: 'u1', price: 20_000, balanceDeclaredAt: BEYAN },
+  ]);
   assert.equal(yazilanlar.length, 1);
   // Brief §5 — %1: 20.000 ₸ hizmette 200 puan (eskiden %3 → 600).
   assert.equal(yazilanlar[0]!.points, 200);
@@ -70,15 +76,17 @@ test('tamamlanan randevu geri kazanım üretir', async () => {
 test('AYNI randevu iki kez kazanım üretmez', async () => {
   // Randevu hem müşteri teyidiyle hem zamanlayıcıyla completed olabilir.
   const { prisma, yazilanlar } = sahtePrisma(['b1']);
-  await grantCompletionCashback(prisma, [{ id: 'b1', userId: 'u1', price: 20_000 }]);
+  await grantCompletionCashback(prisma, [
+    { id: 'b1', userId: 'u1', price: 20_000, balanceDeclaredAt: BEYAN },
+  ]);
   assert.equal(yazilanlar.length, 0, 'çift yazım puanı ikiye katlardı');
 });
 
 test('toplu çağrıda yalnız yazılmamış olanlar yazılır', async () => {
   const { prisma, yazilanlar } = sahtePrisma(['b1']);
   await grantCompletionCashback(prisma, [
-    { id: 'b1', userId: 'u1', price: 20_000 },
-    { id: 'b2', userId: 'u2', price: 10_000 },
+    { id: 'b1', userId: 'u1', price: 20_000, balanceDeclaredAt: BEYAN },
+    { id: 'b2', userId: 'u2', price: 10_000, balanceDeclaredAt: BEYAN },
   ]);
   assert.deepEqual(
     yazilanlar.map((y) => y.detail),
@@ -88,25 +96,33 @@ test('toplu çağrıda yalnız yazılmamış olanlar yazılır', async () => {
 
 test('sahipsiz (offline) randevu kazanım üretmez', async () => {
   const { prisma, yazilanlar } = sahtePrisma();
-  await grantCompletionCashback(prisma, [{ id: 'b1', userId: null, price: 20_000 }]);
+  await grantCompletionCashback(prisma, [
+    { id: 'b1', userId: null, price: 20_000, balanceDeclaredAt: BEYAN },
+  ]);
   assert.equal(yazilanlar.length, 0);
 });
 
 test('sıfıra yuvarlanan kazanım defteri kirletmez', async () => {
   const { prisma, yazilanlar } = sahtePrisma();
-  await grantCompletionCashback(prisma, [{ id: 'b1', userId: 'u1', price: 30 }]);
+  await grantCompletionCashback(prisma, [
+    { id: 'b1', userId: 'u1', price: 30, balanceDeclaredAt: BEYAN },
+  ]);
   assert.equal(yazilanlar.length, 0);
 });
 
 test('admin oranı uygulanır', async () => {
   const { prisma, yazilanlar } = sahtePrisma([], 10);
-  await grantCompletionCashback(prisma, [{ id: 'b1', userId: 'u1', price: 20_000 }]);
+  await grantCompletionCashback(prisma, [
+    { id: 'b1', userId: 'u1', price: 20_000, balanceDeclaredAt: BEYAN },
+  ]);
   assert.equal(yazilanlar[0]!.points, 2_000);
 });
 
 test('oran 0 ise geri kazanım kapanır', async () => {
   const { prisma, yazilanlar } = sahtePrisma([], 0);
-  await grantCompletionCashback(prisma, [{ id: 'b1', userId: 'u1', price: 20_000 }]);
+  await grantCompletionCashback(prisma, [
+    { id: 'b1', userId: 'u1', price: 20_000, balanceDeclaredAt: BEYAN },
+  ]);
   assert.equal(yazilanlar.length, 0);
 });
 
@@ -114,6 +130,36 @@ test('boş liste sorgu bile açmaz', async () => {
   const { prisma, yazilanlar } = sahtePrisma();
   assert.equal(await grantCompletionCashback(prisma, []), 0);
   assert.equal(yazilanlar.length, 0);
+});
+
+test('BEYAN EDİLMEMİŞ randevu puan üretmez — kurucu: "basmazsa kazanamaz"', async () => {
+  const { prisma, yazilanlar } = sahtePrisma();
+  // Uzman sessiz kaldığında zamanlayıcı randevuyu 24 saat sonra kendiliğinden
+  // kapatıyor. Müşteri hiçbir şey beyan etmemişken puan yazılırsa "ödeme
+  // yaptım"a basmak anlamsızlaşır ve puan bedavaya dağıtılırdı.
+  await grantCompletionCashback(prisma, [{ id: 'b1', userId: 'u1', price: 20_000 }]);
+  assert.equal(yazilanlar.length, 0);
+  await grantCompletionCashback(prisma, [
+    { id: 'b1', userId: 'u1', price: 20_000, balanceDeclaredAt: null },
+  ]);
+  assert.equal(yazilanlar.length, 0);
+});
+
+test('puan REZERVASYON fiyatından değil, ÖDENEN tutardan doğar', async () => {
+  const { prisma, yazilanlar } = sahtePrisma();
+  // Kasada fiyat 20.000 → 30.000 oldu; %1 geri kazanım 300 puan olmalı.
+  await grantCompletionCashback(prisma, [
+    { id: 'b1', userId: 'u1', price: 20_000, finalPrice: 30_000, balanceDeclaredAt: BEYAN },
+  ]);
+  assert.equal(yazilanlar[0]!.points, 300);
+});
+
+test('fiyat DÜŞTÜYSE puan da düşer', async () => {
+  const { prisma, yazilanlar } = sahtePrisma();
+  await grantCompletionCashback(prisma, [
+    { id: 'b1', userId: 'u1', price: 20_000, finalPrice: 10_000, balanceDeclaredAt: BEYAN },
+  ]);
+  assert.equal(yazilanlar[0]!.points, 100);
 });
 
 test('kazanım sebebi sabit — rapor ve tekillik buna dayanıyor', () => {

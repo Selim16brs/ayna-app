@@ -108,6 +108,18 @@ export class AdOrdersService {
     const proId = await this.uzmanKimligi(userId);
     const months = Math.min(12, Math.max(1, Math.floor(input.months ?? 1)));
     const amount = (await this.aylikUcret()) * months;
+    /*
+     * GÖRSEL DEPOLAMAYA YÜKLENİYOR.
+     *
+     * Buradan geçmiyordu: telefondan seçilen fotoğraf ham base64 olarak
+     * veritabanı satırına yazılıyordu. İki sonucu vardı — kayıt megabaytlarca
+     * büyüyor ve reklam listesi HER KULLANICININ keşif ekranında o satırları
+     * okuyor. Dekont, portföy, salon fotoğrafı: hepsi `storage.put`ten
+     * geçiyordu; reklam atlanmıştı.
+     *
+     * Uzak URL'ye dokunulmuyor (fonksiyon zaten öyle davranıyor).
+     */
+    const image = (await this.storage.put(input.image, 'ads')) ?? input.image;
     return this.prisma.adOrder.create({
       data: {
         userId,
@@ -119,7 +131,7 @@ export class AdOrdersService {
         title: input.title,
         subtitle: input.subtitle ?? '',
         description: input.description ?? '',
-        image: input.image,
+        image,
       },
     });
   }
@@ -178,6 +190,23 @@ export class AdOrdersService {
   async onayla(id: string, actorId?: string) {
     const o = await this.prisma.adOrder.findUnique({ where: { id } });
     if (!o) this.yok();
+    /*
+     * ZATEN İŞLENMİŞ SİPARİŞ YENİDEN ONAYLANAMAZ.
+     *
+     * Durum kapısı yoktu: yayındaki bir siparişi yeniden onaylamak İKİNCİ bir
+     * banner üretiyor ve `bannerId`yi onun üstüne yazıyordu. İlk banner
+     * `active: true` olarak yayında kalıyor ama artık hiçbir siparişe bağlı
+     * değil — panelden sipariş üzerinden kapatılamayan, süresi kendi
+     * penceresine göre işleyen ÖKSÜZ bir reklam. Tek ödemeye iki reklam.
+     *
+     * Yavaş bağlantıda çift tıklamak yetiyordu.
+     */
+    if (o!.status !== 'bekliyor') {
+      throw new BadRequestException({
+        code: 'AD_ORDER_CLOSED',
+        message: 'Bu sipariş zaten işlendi',
+      });
+    }
     if (!o!.receiptUri) {
       throw new BadRequestException({
         code: 'RECEIPT_MISSING',
@@ -210,11 +239,17 @@ export class AdOrdersService {
       },
     });
     await this.denetim('ad_order.onay', id, actorId);
-    void this.push.sendToUser(o!.userId, {
-      title: 'Reklamın yayında',
-      body: `${o!.placement === 'firsatlar' ? 'Fırsatlar' : 'Öne çıkanlar'} bölümünde ${o!.months} ay boyunca görüneceksin.`,
-      data: { route: '/seller/ads' },
-    });
+    void this.push.sendTemplate(
+      o!.userId,
+      'ad.live',
+      {
+        // Yerleşim adı ŞABLONDA değil: iki vitrinin adı ürün adı gibi,
+        // her dilde aynı yazılıyor (kullanıcı panelde de böyle görüyor).
+        yer: o!.placement === 'firsatlar' ? 'Fırsatlar' : 'Öne çıkanlar',
+        ay: String(o!.months),
+      },
+      { route: '/seller/ads' },
+    );
     return guncel;
   }
 
@@ -222,15 +257,30 @@ export class AdOrdersService {
   async reddet(id: string, actorId?: string) {
     const o = await this.prisma.adOrder.findUnique({ where: { id } });
     if (!o) this.yok();
+    /*
+     * YAYINDAKİ SİPARİŞ "REDDEDİLDİ" YAPILAMAZ.
+     *
+     * Kapı yoktu: yayındaki bir siparişi reddetmek durumu `reddedildi`
+     * yazıyor ama BANNER'A DOKUNMUYORDU. Uzman panelinde "ödemen
+     * doğrulanamadı" görürken reklamı yayında akmaya devam ediyordu — ve
+     * yönetici reklamın kapandığını sanıyordu.
+     *
+     * Yayındaki bir reklamı durdurmanın doğru yolu reklam panelinden
+     * banner'ı pasife almak; o yol duruyor.
+     */
+    if (o!.status !== 'bekliyor') {
+      throw new BadRequestException({
+        code: 'AD_ORDER_CLOSED',
+        message: 'Bu sipariş zaten işlendi; yayındaki reklamı reklam panelinden durdur',
+      });
+    }
     const guncel = await this.prisma.adOrder.update({
       where: { id },
       data: { status: 'reddedildi', reviewedAt: new Date() },
     });
     await this.denetim('ad_order.red', id, actorId);
-    void this.push.sendToUser(o!.userId, {
-      title: 'Reklam ödemen doğrulanamadı',
-      body: 'Dekontu kontrol edip yeniden gönderebilirsin.',
-      data: { route: '/seller/ads' },
+    void this.push.sendTemplate(o!.userId, 'ad.payment_failed', undefined, {
+      route: '/seller/ads',
     });
     return guncel;
   }

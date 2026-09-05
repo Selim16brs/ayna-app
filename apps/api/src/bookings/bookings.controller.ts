@@ -5,12 +5,14 @@ import { ENV } from '../config/config.module';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { type AuthedRequest, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import {
+  balancePaidSchema,
   bookingReceiptSchema,
   cancelSchema,
   createBookingSchema,
   iadeTalepSchema,
   proposeSchema,
   rescheduleSchema,
+  type BalancePaidInput,
   type BookingReceiptInput,
   type CancelInput,
   type CreateBookingInput,
@@ -91,11 +93,16 @@ export class BookingsController {
   }
 
   // §1.6 — onay/alternatif pazarlık döngüsü
-  // Müşteri: kalan bakiyeyi ödediğini bildirir
+  // Müşteri: kalan bakiyeyi ödediğini bildirir. `amount` yalnız kasada fiyat
+  // DEĞİŞTİYSE gelir; gelmezse rezervasyon fiyatı geçerli sayılır.
   @Post(':id/balance-paid')
   @UseGuards(JwtAuthGuard)
-  balancePaid(@Req() req: AuthedRequest, @Param('id') id: string) {
-    return this.bookings.balancePaid(id, req.user!.id);
+  balancePaid(
+    @Req() req: AuthedRequest,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(balancePaidSchema)) body: BalancePaidInput,
+  ) {
+    return this.bookings.balancePaid(id, req.user!.id, body.amount);
   }
 
   // Uzman: parayı aldığını teyit eder → randevu kapanır, komisyon saati başlar

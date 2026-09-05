@@ -70,6 +70,15 @@ export function Button({
       disabled={disabled || loading}
       {...rest}
     >
+      {/*
+        DÜĞME YAZISI PUNTO KÜÇÜLTMÜYOR.
+
+        `adjustsFontSizeToFit` vardı ve React Native ölçü genişliği belirsiz
+        olduğunda puntoyu `minimumFontScale`i de aşarak indiriyor: kurucunun
+        ekran görüntüsünde "Yeni saat seç" birkaç piksellik bir lekeydi,
+        hizmet ekranındaki "Ekle" düğmesinde de aynısı olmuştu. Sığmayan
+        yazı artık kırpılıyor — kırpılmış yazı okunur, küçülmüş yazı değil.
+      */}
       <Animated.View style={{ transform: [{ scale }] }}>
         {variant === 'primary' ? (
           <LinearGradient
@@ -80,13 +89,7 @@ export function Button({
           >
             <View style={styles.inner}>
               {loading ? <ActivityIndicator size="small" color={colors.onAccent} /> : null}
-              <Text
-                variant="bodyStrong"
-                style={[styles.label, styles.goldLabel]}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
+              <Text variant="bodyStrong" style={[styles.label, styles.goldLabel]} numberOfLines={1}>
                 {label}
               </Text>
             </View>
@@ -100,8 +103,6 @@ export function Button({
                 tone={variant === 'ghost' ? 'inkSoft' : 'ink'}
                 style={styles.label}
                 numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
               >
                 {label}
               </Text>
@@ -122,6 +123,13 @@ const makeStyles = (colors: ColorTokens) =>
       justifyContent: 'center',
       paddingHorizontal: space(3),
     },
+    /*
+     * `flex: 1` DENENDİ, GERİ ALINDI: `inner` kendi içeriğine göre
+     * genişleyen bir satır; içinde `flex: 1` (temel 0) veren bir çocuk
+     * genişliği sıfıra çeker ve düğme boş bir ovale döner. Daralma
+     * burada doğru; asıl sorun yanlış ÖLÇÜMDÜ ve o, font beklemesiyle
+     * (`_layout.tsx`) kökünden çözüldü.
+     */
     label: { fontSize: 16, flexShrink: 1, textAlign: 'center' },
     inner: {
       flexDirection: 'row',

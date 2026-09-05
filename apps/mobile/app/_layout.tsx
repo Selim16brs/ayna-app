@@ -60,6 +60,7 @@ function ThemedStack() {
   const token = useStore((s) => s.token);
   const bookings = useStore((s) => s.bookings);
   const hydrateBookings = useStore((s) => s.hydrateBookings);
+  const hydrateNotifications = useStore((s) => s.hydrateNotifications);
   const hydrateDemands = useStore((s) => s.hydrateDemands);
   const hydrateLoyalty = useStore((s) => s.hydrateLoyalty);
   const hydrateCare = useStore((s) => s.hydrateCare);
@@ -115,6 +116,12 @@ function ThemedStack() {
         ]);
     });
     void hydrateLoyalty(); // Faz B — puan/çekiliş/ledger yeniden açılışta da buluttan
+    /*
+     * Bildirim GEÇMİŞİ: uygulama kapalıyken gelenler de listeye girsin.
+     * Uygulama açıkken gelen push'u dinleyici yazıyor; kapalıyken gelenin
+     * tek kaynağı sunucu.
+     */
+    void hydrateNotifications();
     void refreshMembership(); // medya (foto/cutout) + tier açılışta HESAPTAN (bayat yerel kopya ezilir)
     // §bakım — rutin/an/günlük. Bunlar eskiden hiç sunucuya gitmiyordu;
     // yazma tarafını bağlayıp okumayı unutmak, veriyi tek yönlü bırakırdı:
@@ -133,6 +140,7 @@ function ThemedStack() {
     refreshMembership,
     hydrateCare,
     hydrateAlways,
+    hydrateNotifications,
   ]);
   // EK Z.5 — giriş yapıldığında (token gelince) Expo push token'ı backend'e kaydet
   useEffect(() => {
@@ -140,9 +148,29 @@ function ThemedStack() {
   }, [token]);
   // MD_000 §4.2 — uygulama AÇIKKEN push düşerse randevu/talep listeleri anında tazelenir
   useEffect(() => {
-    const sub = addPushReceivedListener(() => {
+    const sub = addPushReceivedListener((bildirim) => {
       void hydrateBookings();
       void hydrateDemands();
+      /*
+       * BİLDİRİM UYGULAMA İÇİNDE DE KALIYOR.
+       *
+       * Push yalnız listeleri tazeleyip kayboluyordu: uygulama içindeki
+       * bildirim listesi KULLANICININ KENDİ yaptıklarını gösteriyor, karşı
+       * tarafın yaptıklarını (uzman onayladı, teklif geldi) göstermiyordu.
+       * Bildirimi görüp geçen kullanıcı onu bir daha bulamıyordu.
+       *
+       * Metin sunucudan geldiği gibi yazılıyor — anahtar değil düz metin,
+       * çünkü uydurmadan tek kaynağı bu.
+       */
+      if (bildirim.title || bildirim.body)
+        useStore.getState().pushNotification({
+          type: 'system',
+          title: bildirim.title,
+          body: bildirim.body,
+          dateLabel: '',
+          icon: 'notifications-outline',
+          ...(bildirim.route ? { route: bildirim.route } : {}),
+        });
     });
     return () => sub.remove();
   }, [hydrateBookings, hydrateDemands]);
@@ -342,18 +370,48 @@ kurGlobalHataYakalayici((e, olumcul) => {
   }
 });
 
+/**
+ * Font yüklemesi için ÜST SINIR.
+ *
+ * Yerelde fontlar pakette gömülü: milisaniyeler. Bu süre yavaş cihaz ya da
+ * OTA sonrası ilk açılış için pay; dolduğunda uygulama açılıyor.
+ */
+const FONT_BEKLEME_MS = 2000;
+
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
   // Gövde/UI fontu = Onest (tek aile, 56 Kiril dili + TR + ₸). Caveat yalnız dekoratif el yazısı.
-  // NOT: font yüklemesini BLOKE ETMİYORUZ — EAS Update/Expo Go'da font asset'i asılı
-  // kalırsa uygulama sonsuza kadar beyaz kalıyordu. Uygulama hemen açılır; fontlar
-  // yüklenince kendiliğinden yerine oturur (o ana kadar sistem fontuna düşer).
-  useFonts({
+  const [fontlarHazir] = useFonts({
     'Onest-Regular': require('../assets/fonts/Onest-Regular.ttf'),
     'Onest-Medium': require('../assets/fonts/Onest-Medium.ttf'),
     'Onest-SemiBold': require('../assets/fonts/Onest-SemiBold.ttf'),
     Caveat_700Bold,
   });
+  /*
+   * ── FONT GELMEDEN ÖLÇÜ ALINMIYOR ────────────────────────────────────
+   *
+   * Font yüklemesi BLOKE EDİLMİYORDU çünkü asset asılı kalırsa uygulama
+   * sonsuza kadar beyaz kalıyordu (gerçek bir olay). Ama bloke etmemenin
+   * bedeli sessizdi ve kurucu onu iki kez bildirdi:
+   *
+   * İlk çizim, `Onest-*` daha kayıtlı DEĞİLKEN yapılıyor. React Native o
+   * anda yazıyı bilmediği bir yazı tipiyle ölçüyor ve Yoga bu ölçümü
+   * DÜĞÜM BAZINDA ÖNBELLEĞE ALIYOR: font sonradan gelse de aynı özelliklere
+   * sahip metin yeniden ölçülmüyor. Sonuç, kâğıt üzerindeki hesap "sığıyor"
+   * derken cihazda kırpılan başlıklar ("Hizmet…", "Keşf…") ve düğme
+   * yazıları — punto küçültme devredeyken de birkaç piksellik lekeler.
+   *
+   * Çözüm ikisinin ortası: ölçü alınmadan ÖNCE fontu bekliyoruz, ama
+   * SONSUZA KADAR değil. `FONT_BEKLEME_MS` dolduğunda uygulama sistem
+   * fontuyla açılıyor — eski davranış, yani beyaz ekran riski geri
+   * gelmiyor.
+   */
+  const [beklemeBitti, setBeklemeBitti] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setBeklemeBitti(true), FONT_BEKLEME_MS);
+    return () => clearTimeout(t);
+  }, []);
+  if (!fontlarHazir && !beklemeBitti) return null;
 
   return (
     // §9 — HATA SINIRI EN DIŞTA. Uygulamada hiçbir sınır YOKTU: tek bir render

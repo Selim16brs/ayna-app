@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
-import { api } from '../../src/api';
+import { api, ApiError } from '../../src/api';
 import { useStore } from '../../src/store';
 import { fillParams, useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
@@ -50,7 +50,16 @@ export default function VerifyScreen() {
       setDevCode(res.devCode ?? null);
       setTtl(res.expiresInSec ?? 300);
       setCooldown(30);
-    } catch {
+    } catch (err) {
+      /*
+       * SEBEBİ NE İSE O YAZILIYOR.
+       *
+       * Üç ayrı durum tek mesajla anlatılıyordu: gönderim düştü, çok sık
+       * istendi, günlük tavan doldu. "Birazdan tekrar dene" günlük tavanda
+       * YANLIŞ — kullanıcı beş dakika sonra tekrar deneyip yine
+       * alamıyordu.
+       */
+      const kod = err instanceof ApiError ? err.code : null;
       /*
        * GÖNDERİM DÜŞTÜ → KULLANICIYA SÖYLENİR.
        *
@@ -63,7 +72,16 @@ export default function VerifyScreen() {
        * Kurucu: "sistem hiçbir şeyi kendiliğinden uydurmamalı."
        */
       setSent(false);
-      Alert.alert(t('verify.title'), t('auth.otp.send_failed'));
+      Alert.alert(
+        t('verify.title'),
+        t(
+          kod === 'OTP_DAILY_LIMIT'
+            ? 'auth.otp.daily_limit'
+            : kod === 'OTP_RATE_LIMIT'
+              ? 'auth.otp.too_soon'
+              : 'auth.otp.send_failed',
+        ),
+      );
     } finally {
       setBusy(false);
     }

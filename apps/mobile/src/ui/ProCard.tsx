@@ -5,6 +5,7 @@ import { ImageBackground, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../locale';
+import { uzmanlikYazisi } from '../uzmanlik';
 import { type Professional } from '../data';
 import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
@@ -12,19 +13,24 @@ import { Text } from './Text';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 
-const BADGE: Record<Professional['badge'], { key: MessageKey; icon: IoniconName }> = {
-  campaign: { key: 'card.campaign', icon: 'pricetag' },
-  verified: { key: 'card.verified', icon: 'checkmark-circle' },
-  today: { key: 'card.today', icon: 'time' },
-};
+/*
+ * ROZET GERÇEK DOĞRULAMADAN.
+ *
+ * Eskiden `pro.badge` sütunundan geliyordu ve o sütun şemada herkese
+ * `verified` doğuyordu: hiç doğrulanmamış uzman "Doğrulanmış" rozetiyle
+ * çizilirdi. Sütun artık sunucudan hiç gelmiyor; rozet yalnız KYC'ye
+ * bağlı `aynaVerified` doğruysa çiziliyor, değilse hiç çizilmiyor —
+ * doğrulanmamışa "değil" damgası basmak da ayrı bir haksızlık olurdu.
+ */
+const DOGRULANDI = { key: 'card.verified' as MessageKey, icon: 'checkmark-circle' as IoniconName };
 
 // Premium editorial salon kartı — tam fotoğraf + altta gradient, bilgiler foto üstünde.
 export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const badge = BADGE[pro.badge];
+  const badge = pro.aynaVerified ? DOGRULANDI : null;
 
   return (
     <Animated.View entering={FadeInDown.duration(380).delay(index * 80)}>
@@ -45,12 +51,14 @@ export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number 
 
           {/* Üst: rozet + kalp */}
           <View style={styles.top}>
-            <View style={styles.badge}>
-              <Ionicons name={badge.icon} size={11} color={colors.onColor} />
-              <Text variant="caption" tone="onColor" style={styles.badgeText}>
-                {t(badge.key)}
-              </Text>
-            </View>
+            {badge ? (
+              <View style={styles.badge}>
+                <Ionicons name={badge.icon} size={11} color={colors.onColor} />
+                <Text variant="caption" tone="onColor" style={styles.badgeText}>
+                  {t(badge.key)}
+                </Text>
+              </View>
+            ) : null}
             <View style={styles.heart}>
               <Ionicons name="heart-outline" size={16} color={colors.onColor} />
             </View>
@@ -64,20 +72,35 @@ export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number 
             <View style={styles.metaRow}>
               <Ionicons name="location-outline" size={12} color="rgba(255,255,255,0.85)" />
               <Text variant="caption" tone="onColor" numberOfLines={1} style={styles.meta}>
-                {pro.district || pro.specialty}
+                {pro.district || uzmanlikYazisi(pro, locale)}
               </Text>
             </View>
+            {/*
+              PUAN YOKSA YILDIZ DA YOK.
+
+              Hiç yorumu olmayan uzmanın puanı sunucudan 0 geliyordu ve kart
+              altın yıldızla "0.0" yazıyordu: müşteri onu 5 üzerinden 0 almış,
+              yani EN KÖTÜ puanlı uzman sanıyordu. Oysa kimse puan vermemiş.
+              Arama ekranı ve promosyon kartı bunu zaten doğru yapıyordu;
+              keşif karuseli — en görünür yer — atlanmıştı.
+            */}
             <View style={styles.bottomRow}>
               <View style={styles.rating}>
-                <Ionicons name="star" size={12} color={colors.gold} />
-                <Text variant="caption" tone="onColor" style={styles.ratingText}>
-                  {pro.rating.toFixed(1)}
-                </Text>
-                {pro.reviewCount ? (
-                  <Text variant="caption" style={styles.reviewCount}>
-                    ({pro.reviewCount})
+                {pro.reviewCount > 0 ? (
+                  <>
+                    <Ionicons name="star" size={12} color={colors.gold} />
+                    <Text variant="caption" tone="onColor" style={styles.ratingText}>
+                      {pro.rating.toFixed(1)}
+                    </Text>
+                    <Text variant="caption" style={styles.reviewCount}>
+                      ({pro.reviewCount})
+                    </Text>
+                  </>
+                ) : (
+                  <Text variant="caption" tone="onColor" style={styles.ratingText}>
+                    ✨ {t('pro.new')}
                   </Text>
-                ) : null}
+                )}
               </View>
             </View>
           </View>

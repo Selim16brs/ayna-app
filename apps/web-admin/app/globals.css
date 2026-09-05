@@ -1,9 +1,3 @@
-/* Tailwind — utility katmanı. Tema değişkenleri aşağıdaki :root'ta kalır;
-   preflight tailwind.config.ts'te KAPALI (mevcut reset korunur). */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* ═══════════════════════════════════════════════════════════════════════════
    AYNA ADMIN — TASARIM SİSTEMİ
 
@@ -103,51 +97,65 @@ a { color: inherit; }
   min-height: 100vh; display: grid; place-items: center; padding: var(--s5);
   background: radial-gradient(900px 460px at 50% 0%, var(--nav-bg-2), var(--nav-bg) 70%);
 }
-.login-card { @apply w-full max-w-[380px] rounded-lg bg-surface p-6 shadow-3; }
-.brand { @apply text-2xl font-extrabold tracking-[4px]; }
-.brand small { @apply mt-1 block text-ax-xs font-bold tracking-[1.6px] text-accent-ink; }
-.field { @apply mt-4; }
-.field label { @apply mb-1 block text-ax-sm font-semibold text-ink-3; }
-.err { @apply mt-3 text-ax-sm text-err; }
+.login-card {
+  width: 100%; max-width: 380px; background: var(--surface);
+  border-radius: var(--r-lg); padding: var(--s6); box-shadow: var(--sh-3);
+}
+.brand { font-size: 24px; font-weight: 800; letter-spacing: 4px; }
+.brand small {
+  display: block; font-size: var(--t-xs); font-weight: 700; letter-spacing: 1.6px;
+  color: var(--accent-ink); margin-top: var(--s1);
+}
+.field { margin-top: var(--s4); }
+.field label {
+  display: block; font-size: var(--t-sm); color: var(--ink-3);
+  margin-bottom: var(--s1); font-weight: 600;
+}
+.err { color: var(--err); font-size: var(--t-sm); margin-top: var(--s3); }
 
 /* ═══ GİRDİLER ════════════════════════════════════════════════════════════ */
 .input {
-  @apply h-[42px] w-full rounded-sm border border-line bg-surface-2 px-3 transition-all duration-150;
+  width: 100%; height: 42px; border-radius: var(--r-sm);
+  border: 1px solid var(--line); padding: 0 var(--s3);
+  background: var(--surface-2); transition: border-color 0.14s, box-shadow 0.14s, background 0.14s;
 }
 .input:focus {
-  @apply border-accent bg-surface;
-  outline: none; box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: none; border-color: var(--accent); background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
-.input::placeholder { @apply text-ink-3; }
-textarea.input { @apply h-auto min-h-[110px] resize-y p-3; }
+.input::placeholder { color: var(--ink-3); }
+textarea.input { height: auto; min-height: 110px; padding: var(--s3); resize: vertical; }
 
 /* ═══ DÜĞMELER ════════════════════════════════════════════════════════════
    TEK ANA EYLEM kuralı: bir satırda beş lime düğme varsa hiçbiri
    "ana eylem" okunmaz. Varsayılan SESSİZ; vurgu bilinçli veriliyor. */
 .btn {
-  @apply mt-6 h-11 w-full rounded-sm bg-accent text-ax-md font-extrabold text-on-accent transition-all duration-150;
-  letter-spacing: 0.1px; box-shadow: 0 2px 12px -4px rgba(150, 180, 45, 0.7);
+  height: 44px; width: 100%; margin-top: var(--s5);
+  border-radius: var(--r-sm); background: var(--accent); color: var(--on-accent);
+  font-weight: 800; font-size: var(--t-md); letter-spacing: 0.1px;
+  box-shadow: 0 2px 12px -4px rgba(150, 180, 45, 0.7);
+  transition: filter 0.14s, transform 0.06s;
 }
 .btn:hover { filter: brightness(1.03); }
 .btn:active { transform: translateY(1px); }
-.btn:disabled { @apply cursor-not-allowed opacity-45; box-shadow: none; }
-/* Küçük aksiyon düğmesi — Tailwind @apply. Yüksek/hizalama/geçiş tek yerde;
-   88 kullanım buradan güncellenir. Hover'da hafif yükselme (shadow) verildi. */
+.btn:disabled { opacity: 0.45; box-shadow: none; cursor: not-allowed; }
 .btn-sm {
-  @apply inline-flex h-8 w-auto cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-line bg-bg-alt px-3 text-ax-sm font-bold text-ink-2 transition-all duration-150;
-  margin: 0;
+  height: 32px; padding: 0 var(--s3); border-radius: var(--r-sm);
+  font-size: var(--t-sm); font-weight: 700; width: auto; margin: 0;
+  background: var(--bg-alt); color: var(--ink-2); border: 1px solid var(--line);
+  transition: background 0.14s, border-color 0.14s, color 0.14s;
 }
-.btn-sm:hover { @apply border-ink-3 bg-surface text-ink shadow-1; }
-.btn-sm:disabled { @apply cursor-not-allowed opacity-45; box-shadow: none; }
+.btn-sm:hover { background: var(--surface); border-color: var(--ink-3); color: var(--ink); }
+.btn-sm:disabled { opacity: 0.45; cursor: not-allowed; }
 /* Vurgulu / anlamlı varyantlar. Yıkıcı olan renkten BAŞKA bir şeyle de
    ayrılıyor (kenarlık) — renk körlüğünde tek başına renk yetmez. */
-.btn-primary { @apply border-accent bg-accent font-extrabold text-on-accent; }
-.btn-primary:hover { @apply border-accent-2 bg-accent-2 text-on-accent shadow-2; }
-.btn-ghost { @apply border-line bg-bg-alt text-ink-2; }
-.btn-danger { @apply bg-err-soft text-err; border-color: rgba(176, 65, 54, 0.35); }
-.btn-danger:hover { @apply text-err; background: #f7d8d3; border-color: var(--err); }
-.btn-ok { @apply bg-ok-soft text-ok; border-color: rgba(44, 117, 80, 0.35); }
-.btn-ok:hover { @apply text-ok; background: #cfe9db; border-color: var(--ok); }
+.btn-primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); font-weight: 800; }
+.btn-primary:hover { background: var(--accent-2); border-color: var(--accent-2); color: var(--on-accent); }
+.btn-ghost { background: var(--bg-alt); color: var(--ink-2); border: 1px solid var(--line); }
+.btn-danger { background: var(--err-soft); color: var(--err); border: 1px solid rgba(176, 65, 54, 0.3); }
+.btn-danger:hover { background: #f7d8d3; border-color: var(--err); color: var(--err); }
+.btn-ok { background: var(--ok-soft); color: var(--ok); border: 1px solid rgba(44, 117, 80, 0.3); }
+.btn-ok:hover { background: #cfe9db; border-color: var(--ok); color: var(--ok); }
 
 /* ═══ KABUK ═══════════════════════════════════════════════════════════════ */
 .shell { display: flex; min-height: 100vh; }
@@ -189,24 +197,28 @@ textarea.input { @apply h-auto min-h-[110px] resize-y p-3; }
   font-size: 9.5px; font-weight: 800; letter-spacing: 1.4px; color: var(--nav-ink-2);
 }
 .nav-item {
-  @apply mb-px flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-[13px] font-semibold text-nav-ink transition-colors duration-100;
+  display: flex; align-items: center; gap: var(--s2); width: 100%; text-align: left;
+  padding: 8px var(--s2); border-radius: var(--r-sm); color: var(--nav-ink);
+  font-size: 13px; font-weight: 600; margin-bottom: 1px;
+  transition: background 0.12s, color 0.12s;
 }
-.nav-item:hover { @apply bg-nav-bg-2 text-white; }
+.nav-item:hover { background: var(--nav-bg-2); color: #fff; }
 /* Seçili: lime dolgu + KOYU yazı. Lime açık bir renk; beyaz yazı okunmuyor. */
-.nav-item.active { @apply bg-accent font-bold text-on-accent; }
-.nav-ikon { @apply w-4 flex-none text-center text-[13px] opacity-75; }
-.nav-item.active .nav-ikon { @apply opacity-100; }
-.nav-etiket { @apply min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap; }
+.nav-item.active { background: var(--accent); color: var(--on-accent); font-weight: 700; }
+.nav-ikon { width: 16px; text-align: center; flex: none; opacity: 0.75; font-size: 13px; }
+.nav-item.active .nav-ikon { opacity: 1; }
+.nav-etiket { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav-rozet {
-  @apply flex-none rounded-full bg-err px-1.5 py-px text-[10.5px] font-extrabold leading-[1.6] text-white;
+  flex: none; background: var(--err); color: #fff; border-radius: 999px;
+  font-size: 10.5px; font-weight: 800; padding: 1px 6px; line-height: 1.6;
 }
-.nav-item.active .nav-rozet { @apply bg-on-accent text-accent; }
-.nav-bos { @apply px-2 py-4 text-ax-sm text-nav-ink-2; }
+.nav-item.active .nav-rozet { background: var(--on-accent); color: var(--accent); }
+.nav-bos { padding: var(--s4) var(--s2); font-size: var(--t-sm); color: var(--nav-ink-2); }
 .logout {
-  @apply mt-2 flex-none rounded-none border-t border-nav-line pt-3;
-  color: #d99a91;
+  flex: none; margin-top: var(--s2); padding-top: var(--s3);
+  border-top: 1px solid var(--nav-line); border-radius: 0; color: #d99a91;
 }
-.logout:hover { @apply bg-transparent; color: #eeb5ac; }
+.logout:hover { background: transparent; color: #eeb5ac; }
 
 /* ── Üst bar: NEREDEYİM ──────────────────────────────────────────────────── */
 .ustbar {
@@ -216,36 +228,42 @@ textarea.input { @apply h-auto min-h-[110px] resize-y p-3; }
   background: rgba(246, 247, 242, 0.86); backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
 }
-.ustbar-yol { @apply flex min-w-0 items-center gap-2; }
-.ustbar-grup { @apply text-ax-xs font-extrabold tracking-[1.2px] text-ink-3; }
-.ustbar-ayrac { @apply text-line; }
-.ustbar-sayfa { @apply text-ax-md font-bold tracking-[-0.2px]; }
-.ustbar-sag { @apply flex flex-none items-center gap-3; }
+.ustbar-yol { display: flex; align-items: center; gap: var(--s2); min-width: 0; }
+.ustbar-grup { font-size: var(--t-xs); font-weight: 800; letter-spacing: 1.2px; color: var(--ink-3); }
+.ustbar-ayrac { color: var(--line); }
+.ustbar-sayfa { font-size: var(--t-md); font-weight: 700; letter-spacing: -0.2px; }
+.ustbar-sag { display: flex; align-items: center; gap: var(--s3); flex: none; }
 .ustbar-bekleyen {
-  @apply flex items-center gap-2 rounded-full bg-err-soft px-3 py-[5px] text-ax-sm font-bold text-err;
+  display: flex; align-items: center; gap: var(--s2);
+  font-size: var(--t-sm); font-weight: 700; color: var(--err);
+  background: var(--err-soft); padding: 5px var(--s3); border-radius: 999px;
 }
 .ustbar-nokta {
-  @apply h-1.5 w-1.5 rounded-full bg-err;
+  width: 6px; height: 6px; border-radius: 50%; background: var(--err);
   box-shadow: 0 0 0 3px rgba(176, 65, 54, 0.16);
 }
-.ustbar-temiz { @apply text-ax-sm font-semibold text-ink-3; }
+.ustbar-temiz { font-size: var(--t-sm); color: var(--ink-3); font-weight: 600; }
 .ustbar-kim {
-  @apply border-l border-line pl-3 text-ax-sm font-bold text-ink-2;
+  font-size: var(--t-sm); font-weight: 700; color: var(--ink-2);
+  padding-left: var(--s3); border-left: 1px solid var(--line);
 }
 
 /* ── İçerik ──────────────────────────────────────────────────────────────── */
-.main { @apply w-full max-w-[1400px] flex-1 px-8 pb-12 pt-6; }
-.page-title { @apply text-ax-2xl font-extrabold tracking-[-0.7px]; }
+.main { flex: 1; padding: var(--s5) var(--s6) var(--s7); max-width: 1400px; width: 100%; }
+.page-title { font-size: var(--t-2xl); font-weight: 800; letter-spacing: -0.7px; }
 .page-sub {
-  @apply mb-6 mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3;
+  color: var(--ink-3); margin: var(--s1) 0 var(--s5);
+  font-size: var(--t-md); line-height: 1.55; max-width: 70ch;
 }
 .section-title {
-  @apply mb-3 mt-8 text-ax-xs font-extrabold uppercase tracking-[1.2px] text-ink-3;
+  font-size: var(--t-xs); font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--ink-3); margin: var(--s6) 0 var(--s3);
 }
 
 /* ═══ KARTLAR ═════════════════════════════════════════════════════════════ */
 .card {
-  @apply overflow-hidden rounded-md border border-line bg-surface shadow-1;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-md); box-shadow: var(--sh-1); overflow: hidden;
 }
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s3); }
 .stat {
@@ -265,48 +283,56 @@ textarea.input { @apply h-auto min-h-[110px] resize-y p-3; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
 
 /* ═══ LİSTELER ════════════════════════════════════════════════════════════ */
-/* Liste satırı — tablo satırı hissi: net alt ayraç, belirgin hover (Tailwind). */
 .list-row {
-  @apply flex items-center gap-4 border-b border-line-2 px-4 py-3 transition-colors duration-100;
+  display: flex; align-items: center; gap: var(--s4);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--line-2); transition: background 0.1s;
 }
-.list-row:hover { @apply bg-surface-2; }
+.list-row:hover { background: var(--surface-2); }
 .list-row:last-child, .list-col:last-child { border-bottom: none; }
-.list-row .grow { @apply min-w-0 flex-1; }
-.list-col { @apply border-b border-line-2 p-4; }
-.list-row .name, .list-col .name { @apply font-bold tracking-[-0.15px]; }
-.list-row .meta, .list-col .meta { @apply mt-0.5 text-ax-sm text-ink-3; }
-.actions { @apply flex flex-wrap justify-end gap-2; }
-.thumb { @apply h-[46px] w-[46px] flex-none rounded-sm bg-line object-cover; }
-.empty { @apply px-4 py-12 text-center text-ink-3; }
+.list-row .grow { flex: 1; min-width: 0; }
+.list-col { padding: var(--s4); border-bottom: 1px solid var(--line-2); }
+.list-row .name, .list-col .name { font-weight: 700; letter-spacing: -0.15px; }
+.list-row .meta, .list-col .meta { color: var(--ink-3); font-size: var(--t-sm); margin-top: 2px; }
+.actions { display: flex; gap: var(--s2); flex-wrap: wrap; justify-content: flex-end; }
+/* Sertifika/dekont küçük görsel şeridi. Sınıf HTML'de vardı ama kuralı YOKTU:
+   düzen satır içi stille kuruluyordu, yani sınıf hiçbir şey yapmıyordu. */
+.cert-thumbs { display: flex; gap: var(--s2); margin-top: var(--s3); flex-wrap: wrap; }
+.thumb { width: 46px; height: 46px; border-radius: var(--r-sm); object-fit: cover; background: var(--line); flex: none; }
+.empty { padding: var(--s7) var(--s4); text-align: center; color: var(--ink-3); }
 
 /* ═══ ETİKET & FİLTRE ═════════════════════════════════════════════════════ */
 .pill {
-  @apply inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-extrabold uppercase tracking-[0.3px];
+  font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 999px;
+  white-space: nowrap; letter-spacing: 0.3px; text-transform: uppercase;
 }
-.pill.pending { @apply bg-warn-soft text-warn; }
-.pill.approved { @apply bg-ok-soft text-ok; }
-.pill.rejected { @apply bg-err-soft text-err; }
-.pill.accent { @apply bg-accent-soft text-accent-ink; }
-.pill.info { @apply bg-info-soft text-info; }
-.toolbar { @apply mb-4 flex flex-wrap items-center gap-2; }
+.pill.pending { background: var(--warn-soft); color: var(--warn); }
+.pill.approved { background: var(--ok-soft); color: var(--ok); }
+.pill.rejected { background: var(--err-soft); color: var(--err); }
+.pill.accent { background: var(--accent-soft); color: var(--accent-ink); }
+.pill.info { background: var(--info-soft); color: var(--info); }
+.toolbar { display: flex; gap: var(--s2); margin-bottom: var(--s4); flex-wrap: wrap; align-items: center; }
 .chip {
-  @apply cursor-pointer rounded-full border border-line bg-surface px-3 py-1.5 text-ax-sm font-semibold text-ink-3 transition-all duration-150;
+  padding: 6px var(--s3); border-radius: 999px; background: var(--surface);
+  border: 1px solid var(--line); font-size: var(--t-sm); font-weight: 600;
+  color: var(--ink-3); transition: all 0.12s;
 }
-.chip:hover { @apply border-ink-3 text-ink; }
-.chip.on { @apply border-accent bg-accent font-bold text-on-accent; }
-.switch { @apply rounded-full px-3 py-1 text-ax-sm font-bold; }
-.switch.on { @apply bg-ok-soft text-ok; }
-.switch.off { @apply bg-bg-alt text-ink-3; }
-.check { @apply flex items-center gap-2 text-ax-md font-semibold; }
-.check input { @apply h-[17px] w-[17px]; accent-color: var(--accent); }
-.form-inline { @apply grid grid-cols-2 gap-3 p-4; }
-.form-inline .full { @apply col-span-full; }
-.section-head { @apply mb-1 mt-2 text-ax-lg font-extrabold tracking-[-0.3px]; }
-.verify-grid { @apply mt-2 flex flex-wrap gap-2; }
+.chip:hover { border-color: var(--ink-3); color: var(--ink); }
+.chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700; }
+.switch { font-size: var(--t-sm); font-weight: 700; padding: 5px var(--s3); border-radius: 999px; }
+.switch.on { background: var(--ok-soft); color: var(--ok); }
+.switch.off { background: var(--bg-alt); color: var(--ink-3); }
+.check { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-md); font-weight: 600; }
+.check input { width: 17px; height: 17px; accent-color: var(--accent); }
+.form-inline { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); padding: var(--s4); }
+.form-inline .full { grid-column: 1 / -1; }
+.section-head { font-size: var(--t-lg); font-weight: 800; margin: var(--s2) 0 var(--s1); letter-spacing: -0.3px; }
+.verify-grid { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s2); }
 .verify-chip {
-  @apply cursor-pointer rounded-full border border-line bg-bg-alt px-3 py-1 text-ax-sm font-semibold text-ink-2 transition-colors duration-150;
+  padding: 5px var(--s3); border-radius: 999px; border: 1px solid var(--line);
+  background: var(--bg-alt); color: var(--ink-2); font-size: var(--t-sm); font-weight: 600;
 }
-.verify-chip.on { @apply border-ok bg-ok text-white; }
+.verify-chip.on { background: var(--ok); border-color: var(--ok); color: #fff; }
 
 /* ═══ DETAY PENCERESİ (eski modal) ════════════════════════════════════════ */
 .modal-backdrop {
@@ -315,15 +341,17 @@ textarea.input { @apply h-auto min-h-[110px] resize-y p-3; }
   backdrop-filter: blur(3px);
 }
 .modal {
-  @apply max-h-[88vh] w-full max-w-[620px] overflow-y-auto rounded-lg bg-surface p-5 shadow-3;
+  width: 100%; max-width: 620px; max-height: 88vh; overflow-y: auto;
+  background: var(--surface); border-radius: var(--r-lg); padding: var(--s5);
+  box-shadow: var(--sh-3);
 }
-.modal-head { @apply mb-5 flex items-start justify-between gap-4; }
-.modal-head .pill { @apply mt-2 inline-block; }
-.kv-grid { @apply grid grid-cols-2 gap-x-6 gap-y-4; }
-.kv-k { @apply text-ax-xs font-extrabold uppercase tracking-[0.5px] text-ink-3; }
-.kv-v { @apply mt-0.5 break-words text-ax-md font-semibold; }
-.about { @apply mt-4 text-ax-md leading-relaxed; }
-.modal-actions { @apply mt-5 flex justify-end gap-2; }
+.modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s4); margin-bottom: var(--s5); }
+.modal-head .pill { display: inline-block; margin-top: var(--s2); }
+.kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4) var(--s5); }
+.kv-k { font-size: var(--t-xs); color: var(--ink-3); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+.kv-v { font-size: var(--t-md); font-weight: 600; margin-top: 2px; word-break: break-word; }
+.about { margin-top: var(--s4); line-height: 1.6; font-size: var(--t-md); }
+.modal-actions { display: flex; gap: var(--s2); margin-top: var(--s5); justify-content: flex-end; }
 
 /* ═══ PANEL İÇİ DİYALOG ═══════════════════════════════════════════════════
    Tarayıcının prompt/alert/confirm kutularının yerine: onlar panelin
