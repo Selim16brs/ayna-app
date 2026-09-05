@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { cakisiyor, doluAraliklar } from '../../src/booking-flow';
 import type { BookingSource } from '../../src/data';
 import { almatyDayStart, formatSlotTr, slotTime } from '../../src/datetime';
@@ -20,7 +20,6 @@ import {
   RulesCard,
   Screen,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   Text,
   SaglayiciFoto,
 } from '../../src/ui';
@@ -237,7 +236,7 @@ export default function ScheduleScreen() {
                     style={[styles.staffCard, shadow.soft, on && styles.staffActive]}
                   >
                     <View style={[styles.staffAvatarWrap, on && styles.staffAvatarOn]}>
-                      <Image source={{ uri: u.image }} style={styles.staffAvatar} />
+                      <SaglayiciFoto uri={u.image} ad={u.name} style={styles.staffAvatar} />
                     </View>
                     <Text variant="caption" tone="ink" numberOfLines={1}>
                       {u.name}
@@ -582,6 +581,6 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: 24,
       paddingTop: space(1.5),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
     },
   });

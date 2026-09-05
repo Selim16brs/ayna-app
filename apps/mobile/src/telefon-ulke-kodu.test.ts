@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ULKELER, parcala, tamNumara, yerelKismiTemizle } from './telefon-bicim';
 
@@ -94,8 +94,51 @@ test('telefon girilen ekranların HEPSİ ortak bileşeni kullanıyor', () => {
     'app/auth/expert.tsx',
     'app/auth/forgot.tsx',
     'app/profile/phone.tsx',
+    /*
+     * Aşağıdakiler listede YOKTU ve hepsi ham kutu kullanıyordu:
+     *
+     * - `auth/business/new.tsx` iki telefon alıyor: SAHİP numarası (hesap
+     *   kimliği, OTP oraya gidiyor) ve salon iletişim numarası. Doğrulaması
+     *   "7 karakterden uzun" idi; ülke kodsuz kaydedilen bir sahip hesabına
+     *   sonradan SMS gönderilemiyordu.
+     * - `salon/edit.tsx` müşteriye gösterilen iletişim numarası — hiç filtre
+     *   yoktu.
+     * - `salon/agenda.tsx` walk-in müşteri numarası; randevu sonrası aranıyor.
+     * - `profile/safe.tsx` güvenilen kişi numarası — acil durumda aranacak
+     *   numara ve içine HARF bile girilebiliyordu.
+     */
+    'app/auth/business/new.tsx',
+    'app/salon/edit.tsx',
+    'app/salon/agenda.tsx',
+    'app/profile/safe.tsx',
   ]) {
     const kod = readFileSync(join(kok, ad), 'utf8');
     assert.match(kod, /<TelefonGirdisi/, `${ad}: ülke kodu ayrı girilmiyor`);
   }
+});
+
+test('telefon alanlarında HAM kutu kalmadı', () => {
+  /*
+   * Ters yön: yukarıdaki liste elle tutuluyor ve yeni bir ekran eklendiğinde
+   * güncellenmeyi unutabilir. Bu tarama `phone-pad` klavyesi açan ama ortak
+   * bileşeni kullanmayan her ekranı yakalıyor.
+   */
+  const kok = join(import.meta.dirname, '..', 'app');
+  const ihlal: string[] = [];
+  const gez = (dir: string, on = '') => {
+    for (const ad of readdirSync(dir)) {
+      const tam = join(dir, ad);
+      if (statSync(tam).isDirectory()) gez(tam, `${on}${ad}/`);
+      else if (ad.endsWith('.tsx')) {
+        const kod = readFileSync(tam, 'utf8');
+        if (!/keyboardType="phone-pad"/.test(kod)) continue;
+        if (/<TelefonGirdisi/.test(kod)) continue;
+        // Salt okunur gösterim ülke seçici gerektirmiyor.
+        if (/readOnly/.test(kod)) continue;
+        ihlal.push(`${on}${ad}`);
+      }
+    }
+  };
+  gez(kok);
+  assert.deepEqual(ihlal, [], `Ham telefon kutusu kalmış:\n  ${ihlal.join('\n  ')}`);
 });

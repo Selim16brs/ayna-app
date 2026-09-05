@@ -22,7 +22,6 @@ import {
   RulesCard,
   Screen,
   ServiceChips,
-  TAB_BAR_CLEARANCE,
   TarihSecici,
   Text,
   TextInput,
@@ -464,12 +463,7 @@ export default function NewDemandScreen() {
       </ScrollView>
 
       {/* ── CTA ── */}
-      <View
-        style={[
-          styles.footer,
-          { paddingBottom: (insets.bottom || space(1.5)) + TAB_BAR_CLEARANCE },
-        ]}
-      >
+      <View style={[styles.footer, { paddingBottom: insets.bottom || space(1.5) }]}>
         <Pressable
           style={[styles.cta, !canSubmit && styles.ctaOff]}
           disabled={!canSubmit}

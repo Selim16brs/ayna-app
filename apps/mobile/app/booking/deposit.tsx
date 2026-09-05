@@ -7,10 +7,10 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Image, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { fillParams, useLocale } from '../../src/locale';
 import { randevuDepozitosu, useStore } from '../../src/store';
-import { font, type ColorTokens } from '../../src/theme';
+import { font, space, type ColorTokens } from '../../src/theme';
 import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Sayac, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Sayac, Screen, StackHeader, Text } from '../../src/ui';
 import { BELGE_GENISLIK, kucultVeB64 } from '../../src/gorsel-kucult';
 
 /**
@@ -349,7 +349,7 @@ export default function DepositScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    icerik: { padding: 24, gap: 20, paddingBottom: TAB_BAR_CLEARANCE },
+    icerik: { padding: 24, gap: 20, paddingBottom: space(3) },
     bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
     buyu: { flex: 1 },
     acilSerit: {

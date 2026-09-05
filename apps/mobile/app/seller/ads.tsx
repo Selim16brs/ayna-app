@@ -17,7 +17,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, shadow, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text } from '../../src/ui';
 import { BELGE_GENISLIK, kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 import { sunucuHatasi } from '../../src/sunucu-hatasi';
 
@@ -386,7 +386,7 @@ export default function SellerAdsScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    icerik: { padding: space(2), gap: space(1.5), paddingBottom: TAB_BAR_CLEARANCE },
+    icerik: { padding: space(2), gap: space(1.5), paddingBottom: space(3) },
     kart: {
       backgroundColor: colors.surface,
       borderRadius: radius.lg,

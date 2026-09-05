@@ -6,15 +6,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { space, type ColorTokens } from '../../src/theme';
 import { useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  Screen,
-  StackHeader,
-  TAB_BAR_CLEARANCE,
-  Text,
-  WorkingHours,
-  type DayHours,
-} from '../../src/ui';
+import { Button, Screen, StackHeader, Text, WorkingHours, type DayHours } from '../../src/ui';
 
 /**
  * ÇALIŞMA SAATLERİ — kendi ekranı, kendi kaydı.
@@ -95,7 +87,7 @@ const makeStyles = (_colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
       gap: space(2),
     },
     note: { lineHeight: 18 },

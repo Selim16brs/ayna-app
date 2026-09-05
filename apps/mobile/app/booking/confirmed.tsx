@@ -4,9 +4,9 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { randevuFiyatiYazisi } from '../../src/data';
 import { useProfessionalDetail } from '../../src/catalog';
 import { useLocale } from '../../src/locale';
-import { font, type ColorTokens } from '../../src/theme';
+import { font, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, Text } from '../../src/ui';
 import { uzmanlikYazisi } from '../../src/uzmanlik';
 
 export default function ConfirmedScreen() {
@@ -108,7 +108,7 @@ const makeStyles = (colors: ColorTokens) =>
       alignItems: 'center',
       flexGrow: 1,
       justifyContent: 'center',
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
     },
     buyu: { flex: 1 },
     successCircle: {
@@ -172,5 +172,5 @@ const makeStyles = (colors: ColorTokens) =>
       lineHeight: 15,
       color: colors.accent,
     },
-    footer: { padding: 24, paddingTop: 0, paddingBottom: TAB_BAR_CLEARANCE },
+    footer: { padding: 24, paddingTop: 0, paddingBottom: space(3) },
   });

@@ -6,7 +6,7 @@ import { usePromosyonlar } from '../src/catalog';
 import { useLocale } from '../src/locale';
 import { space, type ColorTokens } from '../src/theme';
 import { useThemedStyles } from '../src/theme-context';
-import { PromosyonKarti, Screen, Segmented, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
+import { PromosyonKarti, Screen, Segmented, StackHeader, Text } from '../src/ui';
 
 /**
  * TÜM PROMOSYONLAR — filtreli liste.
@@ -65,7 +65,7 @@ export default function PromotionsScreen() {
 
 const makeStyles = (_colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.5) },
+    content: { paddingHorizontal: space(3), paddingBottom: space(3), gap: space(1.5) },
     alt: { marginTop: space(0.5) },
     // Tam genişlik: liste ekranında kart yatay şeritteki gibi dar durmamalı.
     liste: { gap: space(1.25) },

@@ -7,7 +7,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, font, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 import { kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 
 /**
@@ -274,7 +274,7 @@ export default function PaylasScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.5) },
+    content: { padding: space(3), paddingBottom: space(3), gap: space(1.5) },
     grow: { flex: 1, minWidth: 0 },
     kimeKart: {
       flexDirection: 'row',

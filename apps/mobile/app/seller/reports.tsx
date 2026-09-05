@@ -23,7 +23,14 @@ import { useUnreadMessages } from '../../src/use-unread-messages';
 import { type ColorTokens, font, space } from '../../src/theme';
 import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { TepeIsigi, PressableScale, Screen, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import {
+  PressableScale,
+  SaglayiciFoto,
+  Screen,
+  TAB_BAR_CLEARANCE,
+  TepeIsigi,
+  Text,
+} from '../../src/ui';
 import { yorumYazariYazisi } from '../../src/yorum-yazari';
 
 type Period = 'week' | 'month' | 'all';
@@ -464,7 +471,7 @@ export default function ReportsScreen() {
                   resizeMode={portreKesilmis ? 'contain' : 'cover'}
                 />
               ) : (
-                <View style={[styles.avatar, styles.avatarBos]} />
+                <SaglayiciFoto ad={salonName} style={styles.avatar} />
               )}
             </PressableScale>
           </View>
@@ -1090,7 +1097,6 @@ const makeStyles = (colors: ColorTokens) =>
      */
     portreKap: { width: 104, alignItems: 'flex-end', alignSelf: 'flex-end', marginRight: 12 },
     portreKesik: { width: 104, height: 104 },
-    avatarBos: { backgroundColor: colors.accentSoft },
 
     // canli-ozet-card (radius 24, p20, gap 18) — koyu, iki temada da sabit
     ozetKart: { marginHorizontal: 24, borderRadius: 24, padding: 20, gap: 18, overflow: 'hidden' },

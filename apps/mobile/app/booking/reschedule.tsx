@@ -6,9 +6,9 @@ import { esikGecti } from '@ayna/domain';
 import { formatSlotTr } from '../../src/datetime';
 import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
-import { font, type ColorTokens } from '../../src/theme';
+import { font, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, DateField, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, DateField, Screen, StackHeader, Text } from '../../src/ui';
 
 /**
  * ERTELEME — brief §4.6.
@@ -133,7 +133,7 @@ export default function RescheduleScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    icerik: { padding: 24, gap: 20, paddingBottom: TAB_BAR_CLEARANCE },
+    icerik: { padding: 24, gap: 20, paddingBottom: space(3) },
     bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
     buyu: { flex: 1 },
     kart: {

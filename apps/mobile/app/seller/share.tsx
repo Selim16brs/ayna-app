@@ -21,7 +21,7 @@ import { lightColors } from '../../src/theme.palette';
 import { selectPortrait, useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { Button, Screen, StackHeader } from '../../src/ui';
 
 // §growth — uzman/salon profilini sosyal medyada paylaşır; kart AYNA reklamı olarak da çalışır.
 //
@@ -377,7 +377,7 @@ const makeStyles = (colors: ColorTokens) =>
     },
     actions: {
       paddingHorizontal: space(3),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
       paddingTop: space(1.5),
       gap: space(1.25),
     },

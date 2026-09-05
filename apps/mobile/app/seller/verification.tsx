@@ -7,15 +7,7 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  Screen,
-  StackHeader,
-  TAB_BAR_CLEARANCE,
-  Text,
-  TextInput,
-  VerificationBadges,
-} from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput, VerificationBadges } from '../../src/ui';
 import type { MessageKey } from '@ayna/i18n';
 
 type Verif = {
@@ -105,7 +97,7 @@ export default function ExpertVerificationScreen() {
       <StackHeader title={t('expert.verify.title')} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_CLEARANCE }]}
+        contentContainerStyle={[styles.content, { paddingBottom: space(3) }]}
         showsVerticalScrollIndicator={false}
       >
         {loading && !data ? (

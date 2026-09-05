@@ -16,16 +16,7 @@ import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { tri } from '../../src/taxonomy';
-import {
-  HizmetIkonu,
-  Button,
-  Screen,
-  Segmented,
-  StackHeader,
-  TAB_BAR_CLEARANCE,
-  Text,
-  TextInput,
-} from '../../src/ui';
+import { HizmetIkonu, Button, Screen, Segmented, StackHeader, Text, TextInput } from '../../src/ui';
 
 export default function NewPostScreen() {
   const router = useRouter();
@@ -227,6 +218,6 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
     },
   });

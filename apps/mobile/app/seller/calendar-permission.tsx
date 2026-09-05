@@ -6,7 +6,7 @@ import { api } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text, useToast, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { Screen, StackHeader, Text, useToast } from '../../src/ui';
 
 /**
  * Faz 4 (§15) — UZMAN, salonun kendi takvimi üzerindeki yetkisini seçer.
@@ -131,7 +131,7 @@ export default function CalendarPermissionScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), gap: space(1.5), paddingBottom: TAB_BAR_CLEARANCE },
+    content: { padding: space(3), gap: space(1.5), paddingBottom: space(3) },
     desc: { marginTop: 2 },
     seesCard: {
       marginTop: space(1.5),

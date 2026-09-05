@@ -1,11 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSalonStaff } from '../../src/staff';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, PressableScale, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import {
+  Button,
+  PressableScale,
+  SaglayiciFoto,
+  Screen,
+  StackHeader,
+  TAB_BAR_CLEARANCE,
+  Text,
+} from '../../src/ui';
 
 // §10.1 — SALON kadro yönetimi: uzman listesi + davet (kod) + uzmana dokun → detay (çıkar/performans).
 export default function SalonStaffScreen() {
@@ -50,7 +58,7 @@ export default function SalonStaffScreen() {
                 })
               }
             >
-              <Image source={{ uri: u.image }} style={styles.img} />
+              <SaglayiciFoto uri={u.image} ad={u.name} style={styles.img} />
               <View style={styles.info}>
                 <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
                   {u.name}

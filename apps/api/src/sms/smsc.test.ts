@@ -80,14 +80,26 @@ test('Kazakistan numarasının üç yazılışı da aynı numaraya gidiyor', () 
   assert.equal(telefonuBicimle('+7 (777) 123-45-67'), beklenen, 'uluslararası');
 });
 
-test('tanınmayan numara "+" ile MÜHÜRLENMİYOR', () => {
+test('ULUSLARARASI numara "+" ile gidiyor, "+"sız gelen dokunulmadan geçiyor', () => {
   /*
-   * "+" SMSC’nin kendi düzeltmesini kapatıyor. Yabancı bir numarayı
-   * doğruymuş gibi mühürlemek, düzeltilebilecek bir hatayı kalıcı yapardı.
+   * Bu kural TERSİNE ÇEVRİLDİ; sebebi kayda değer.
+   *
+   * Eskiden yabancı numaraya "+" KONMUYORDU: numaranın doğruluğundan emin
+   * olunamadığı için SMSC'nin kendi düzeltmesine bırakmak, yanlış bir biçimi
+   * mühürlemekten iyiydi. O belirsizlik iki şeyle kalktı:
+   *   1. `auth.dto` telefonu artık E.164 olarak DOĞRULUYOR — "+"lı gelen
+   *      numara geçerliliği ölçülmüş numaradır.
+   *   2. Ülke seçici 11 ülkeden 245'e çıktı. Türkiye ya da Almanya numarası
+   *      "+"sız gidince sağlayıcının onu Kazak numarası sanma ihtimali,
+   *      düzeltme faydasından daha büyük bir risk.
+   *
+   * "+"sız gelen numaraya HÂLÂ dokunulmuyor: veritabanında numaralar
+   * `normalizePhone` yüzünden "+"sız duruyor ve oradan gelen bir çağrı eski
+   * yolu izlemeli.
    */
-  const y = telefonuBicimle('+44 20 7123 4567');
-  assert.equal(y.startsWith('+'), false, 'yabancı numara mühürlendi');
-  assert.equal(y, '442071234567');
+  assert.equal(telefonuBicimle('+44 20 7123 4567'), '+442071234567', 'E.164 mühürlenmedi');
+  assert.equal(telefonuBicimle('+905321234567'), '+905321234567', 'TR numarası');
+  assert.equal(telefonuBicimle('442071234567'), '442071234567', '"+"sız numaraya dokunuldu');
 });
 
 test('OTP mesajı üç dilde de TEK PARÇA', () => {

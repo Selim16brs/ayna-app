@@ -30,6 +30,15 @@ import {
   SellerTabBar,
 } from '../src/ui';
 
+/**
+ * Sekme kökleri — `src/ui/*TabBar` içindeki TAB listeleriyle aynı yollar.
+ * Alt bar yalnız bu yollarda görünür; gerisi yığın sayfasıdır.
+ */
+const MUSTERI_KOKLERI = ['/discover', '/bookings', '/care', '/circle', '/profile'];
+const SALON_KOKLERI = ['/salon/home', '/salon/agenda', '/salon/staff', '/salon/profile'];
+// Uzmanın beşinci sekmesi müşteriyle ORTAK profil ekranı.
+const UZMAN_KOKLERI = ['/seller/reports', '/seller/menu', '/seller/offline', '/profile'];
+
 function ThemedStack() {
   const { colors, isDark } = useTheme();
   const { t, locale, hazir: dilHazir } = useLocale();
@@ -218,13 +227,24 @@ function ThemedStack() {
   // Alt bar GLOBAL. Ekranın en altına sabit bir yazma alanı koyan sayfalarda
   // (sohbet, W2W yorum) barın altında kalıyor ve kullanıcı mesaj yazamıyordu.
   // Bu ekranlar zaten yığın (stack) sayfası; kendi geri butonları var.
-  const composerScreen = /^\/messages\/[^/]+$/.test(pathname) || /^\/circle\/[^/]+$/.test(pathname);
-  const baseHidden =
-    !currentUser ||
-    pathname === '/' ||
-    pathname.startsWith('/auth') ||
-    pathname.startsWith('/language') ||
-    composerScreen;
+  /*
+   * ALT BAR YALNIZ SEKME KÖKLERİNDE — kural TERSİNE çevrildi.
+   *
+   * Önce "kara liste" vardı: bar varsayılan olarak GÖRÜNÜR, tek tek sayılan
+   * yollarda gizlenirdi. Bu yüzden her yeni iç sayfa yanlış tarafta doğuyordu
+   * ve kurucu bunları teker teker bulup bildiriyordu (bildirimler, mesajlar,
+   * profil alt sayfaları, uzman profili, davet et, puanlarım…). Denetimde
+   * 32 iç sayfada daha bar çıktı.
+   *
+   * Artık liste beyaz: bar SADECE sekmelerin kendisinde çizilir, başka her yer
+   * yığın sayfasıdır. Yeni ekran eklendiğinde doğru davranış varsayılan olur.
+   *
+   * Kökler ROLE göre: her rolün kendi barı, kendi sekmeleri. Listeler
+   * barların TAB tanımlarıyla birebir aynı olmalı — ayrışırlarsa bar
+   * kendi sekmesinde kaybolur.
+   */
+  const sekmeKokleri = isSalon ? SALON_KOKLERI : isExpert ? UZMAN_KOKLERI : MUSTERI_KOKLERI;
+  const baseHidden = !currentUser || !sekmeKokleri.includes(pathname);
 
   /*
    * ── AÇILIŞ MESAJI ────────────────────────────────────────────────────
@@ -311,13 +331,7 @@ function ThemedStack() {
       </NailCursor>
       {/* §10 — ÇEVRİMDIŞI BANDI en üstte, her ekranda. */}
       <OfflineBanner />
-      {baseHidden ? null : isSalon ? (
-        <SalonTabBar />
-      ) : isExpert ? (
-        <SellerTabBar />
-      ) : pathname.startsWith('/seller') || pathname.startsWith('/salon') ? null : (
-        <AppTabBar />
-      )}
+      {baseHidden ? null : isSalon ? <SalonTabBar /> : isExpert ? <SellerTabBar /> : <AppTabBar />}
       {/*
        * AÇILIŞ MESAJI EN SONDA ÇİZİLİYOR — yani her şeyin ÜSTÜNDE.
        *

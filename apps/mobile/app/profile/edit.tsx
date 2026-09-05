@@ -10,10 +10,10 @@ import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { AVATAR_GENISLIK, BELGE_GENISLIK, kucultVeB64 } from '../../src/gorsel-kucult';
 import {
   Button,
+  SaglayiciFoto,
   Screen,
   SocialLinks,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   Text,
   TextInput,
 } from '../../src/ui';
@@ -201,13 +201,7 @@ export default function ProfileEditScreen() {
         <View style={styles.photoSection}>
           <Pressable style={styles.avatarWrap} onPress={pickFromGallery}>
             <View style={[styles.avatar, shadow.soft]}>
-              {avatarUri ? (
-                <Image source={{ uri: avatarUri }} style={styles.avatarImg} />
-              ) : (
-                <Text variant="display" tone="inkSoft">
-                  {name.charAt(0).toUpperCase()}
-                </Text>
-              )}
+              <SaglayiciFoto uri={avatarUri} ad={name} style={styles.avatarImg} />
             </View>
             {/* Rozet, dairenin DIŞINDA (kırpılmaz) */}
             <View style={styles.camBadge}>
@@ -382,7 +376,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(3),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      paddingBottom: space(3),
       gap: space(2.5),
     },
     photoSection: { alignItems: 'center', gap: space(2) },

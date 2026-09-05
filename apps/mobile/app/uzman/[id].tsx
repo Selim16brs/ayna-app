@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatPrice } from '../../src/data';
 import { formatSlotTr } from '../../src/datetime';
@@ -12,14 +12,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  DateField,
-  HizmetIkonu,
-  TAB_BAR_CLEARANCE,
-  TepeIsigi,
-  Text,
-  WaveLayered,
-} from '../../src/ui';
+import { DateField, HizmetIkonu, SaglayiciFoto, TepeIsigi, Text, WaveLayered } from '../../src/ui';
 
 export default function UzmanScreen() {
   const { id, salon: salonParam } = useLocalSearchParams<{ id: string; salon?: string }>();
@@ -102,7 +95,7 @@ export default function UzmanScreen() {
     <View style={styles.root}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 130 + TAB_BAR_CLEARANCE }}
+        contentContainerStyle={{ paddingBottom: 130 }}
       >
         {/*
           HERO — erik sisi bant.
@@ -160,7 +153,7 @@ export default function UzmanScreen() {
                 </Pressable>
               </View>
             </View>
-            <Image source={{ uri: uzman.image }} style={styles.heroPortrait} />
+            <SaglayiciFoto uri={uzman.image} ad={uzman.name} style={styles.heroPortrait} />
           </View>
           <View style={styles.waveAbs}>
             <WaveLayered sliver={colors.bg} bottom={colors.bg} height={70} />
@@ -250,7 +243,7 @@ export default function UzmanScreen() {
         </View>
       </ScrollView>
 
-      <View style={[styles.cta, { paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }]}>
+      <View style={[styles.cta, { paddingBottom: insets.bottom + space(1) }]}>
         <Pressable style={styles.ctaBtn} onPress={book}>
           <Text variant="bodyStrong" tone="onAccent" style={styles.ctaText} numberOfLines={1}>
             {t('pro.book')}

@@ -326,7 +326,7 @@ export default function MapScreen() {
                   </Text>
                   {seciliKume.digerleri.map((u) => (
                     <Pressable key={u.id} style={styles.kumeSatir} onPress={() => setSelected(u)}>
-                      <Image source={{ uri: u.image }} style={styles.kumeFoto} />
+                      <SaglayiciFoto uri={u.image} ad={u.name} style={styles.kumeFoto} />
                       <View style={styles.kumeGovde}>
                         <Text variant="caption" tone="ink" numberOfLines={1}>
                           {u.name}

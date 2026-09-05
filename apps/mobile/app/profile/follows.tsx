@@ -6,7 +6,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Screen, StackHeader, Text } from '../../src/ui';
 
 // Profil > Takipçi sayısına tıkla → SADECE takipçiler; Takip'e tıkla → SADECE takip edilenler.
 export default function FollowsScreen() {
@@ -87,7 +87,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      paddingBottom: space(3),
     },
     list: { gap: space(1.25) },
     row: {

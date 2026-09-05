@@ -113,7 +113,17 @@ export default function ForgotPasswordScreen() {
           <View style={styles.heroIcon}>
             <Ionicons name="lock-closed" size={24} color={colors.accent} />
           </View>
-          <Text variant="body" tone="onAccent" style={styles.heroText}>
+          {/*
+            Zemin AÇIK, yazı da açıktı — görünmüyordu.
+
+            Kart bir ara "dolu koyu durmasının sebebi yok" diye `heroSoft`a
+            çevrilmiş ama içindeki yazıların tonu `onAccent` kalmış: o ton
+            KOYU zemin için, açık temada bembeyaz (#FFFFFF). Beyaz yazı
+            #F6ECF4 üstünde 1.06:1 — okunmuyor. Koyu temada da ters yönden
+            aynı hata: `onAccent` orada koyu (#1A0810) ve zemin de koyu.
+            Aynı `heroSoft` zemini kullanan profil başlığı `ink` kullanıyor.
+          */}
+          <Text variant="body" tone="ink" style={styles.heroText}>
             {subtitle}
           </Text>
         </View>
@@ -233,7 +243,8 @@ const makeStyles = (colors: ColorTokens) =>
       width: 48,
       height: 48,
       borderRadius: radius.md,
-      backgroundColor: 'rgba(0,0,0,0.12)',
+      // Zemin TEMADAN — bkz. verify.tsx'teki aynı düzeltme.
+      backgroundColor: colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
     },

@@ -9,15 +9,7 @@ import { api } from '../../src/api';
 import { selectPortrait, selectPortraitKesilmis, useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  PassportCare,
-  Screen,
-  SectionHeader,
-  StackHeader,
-  TAB_BAR_CLEARANCE,
-  Text,
-} from '../../src/ui';
+import { Button, PassportCare, Screen, SectionHeader, StackHeader, Text } from '../../src/ui';
 
 /** Sadakat seviyesinin etiketi — sunucudan gelen anahtara göre. */
 const TIER_LABEL: Record<'bronze' | 'silver' | 'gold', MessageKey> = {
@@ -315,7 +307,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      paddingBottom: space(3),
     },
     subtitle: { marginBottom: space(2.5) },
     hero: { borderRadius: radius.xl, padding: space(2.75), backgroundColor: colors.accent },

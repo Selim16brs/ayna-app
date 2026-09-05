@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MessageKey } from '@ayna/i18n';
@@ -27,8 +28,23 @@ const FADE_H = 130;
 const HAP_MAX = 176; // aktif hapın üst sınırı
 const PASIF_MIN = 40; // pasif sekmenin dokunma hedefi
 
+/**
+ * Hapın GÜVENLİ ALANLA arasındaki pay.
+ *
+ * 10 idi ve çentikli telefonda bar ekranın 44pt yukarısında duruyordu
+ * (güvenli alan 34 + pay 10); kurucu "biraz yukarda duruyor gibi" dedi.
+ * 4'e inince bar 38pt'ye oturuyor: ana ekran çizgisinin hâlâ üstünde ama
+ * ona yaslanmış — havada asılı durmuyor.
+ *
+ * Sayı İKİ yerde kullanılıyor: barın konumu ve içeriğin bırakacağı boşluk
+ * (`TAB_BAR_CLEARANCE`). Önce iki ayrı yere elle 10 yazılmıştı; sabit
+ * olmadan biri değişince diğeri geride kalır ve içerik ya barın altında
+ * kalırdı ya da arada ölü bant açılırdı.
+ */
+const PILL_NEFES = 4;
+
 /** Çentikli cihazda hapın üst kenarı — en yüksek hâli. */
-const PILL_TOP_MAX = 34 + 10 + PILL_H; // insets.bottom(34) + 10 + hap
+const PILL_TOP_MAX = 34 + PILL_NEFES + PILL_H; // insets.bottom(34) + pay + hap
 
 /**
  * Sayfa sonundaki içeriğin bırakması gereken alt boşluk.
@@ -60,8 +76,10 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width: ekran } = useWindowDimensions();
+  // Aktif hapın ölçülen genişliği — sekme adına göre. Bkz. `aktifGenislik`.
+  const [olculer, setOlculer] = useState<Record<string, number>>({});
 
-  const bottom = Math.max(insets.bottom, PILL_BOTTOM - 10) + 10;
+  const bottom = Math.max(insets.bottom, PILL_BOTTOM - 10) + PILL_NEFES;
 
   // GENİŞLİKLER ELLE HESAPLANIR — flex dağıtımına bırakılmaz.
   //
@@ -75,7 +93,30 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
   // ne olursa olsun hiçbiri dışarı taşamaz.
   const barIci = ekran - 2 * PILL_SIDE - 2 * space(1);
   const pasifSayisi = Math.max(1, tabs.length - 1);
-  const aktifGenislik = Math.min(HAP_MAX, Math.max(0, barIci - pasifSayisi * PASIF_MIN));
+  /*
+   * AKTİF KUTU, HAPIN GERÇEK GENİŞLİĞİNE İNER.
+   *
+   * Kutu HAP_MAX kadar (176pt) sabitti; hap ise içeriğine göre ~125pt.
+   * Aradaki 51pt kutunun içinde ölü boşluk olarak kalıyordu. Hapı ortalayınca
+   * iki yana 25'er dağılıyor, uca yaslayınca hepsi tek tarafta toplanıyordu —
+   * kurucu ilkini "solda boşluk", ikincisini "sağda aşırı boşluk" diye
+   * bildirdi. İkisi de aynı fazlalığın farklı görünümüydü.
+   *
+   * Genişlik TAHMİN EDİLEMİYOR: etiket uzunluğu dile göre değişiyor
+   * ("Randevularım" ile "W2W" arasında iki kat fark var) ve yazı tipinin
+   * gerçek glif genişlikleri ancak cihazda belli oluyor. O yüzden hap
+   * ÖLÇÜLÜYOR ve kutu ona eşitleniyor; artan yer pasif sekmelere dağılıyor.
+   *
+   * Ölçüm sekme adıyla saklanıyor: aynı sekmeye dönüldüğünde değer hazır,
+   * yeniden yerleşim olmuyor. İlk açılışta bir kare boyunca HAP_MAX tahmini
+   * kullanılıyor — o da mevcut davranışın aynısı, yani geriye dönük bozulma yok.
+   *
+   * Üst sınır korunuyor: ölçüm HAP_MAX'ı aşarsa hap oraya sıkışır ve etiket
+   * `adjustsFontSizeToFit` ile küçülür — kırpılmaz.
+   */
+  const varsayilanAktif = Math.min(HAP_MAX, Math.max(0, barIci - pasifSayisi * PASIF_MIN));
+  const olculen = olculer[active];
+  const aktifGenislik = olculen ? Math.min(HAP_MAX, olculen) : varsayilanAktif;
   const pasifGenislik = (barIci - aktifGenislik) / pasifSayisi;
 
   return (
@@ -124,9 +165,25 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
           },
         ]}
       >
-        {tabs.map((tab) => {
+        {tabs.map((tab, i) => {
           const focused = tab.name === active;
           const icon = (focused ? tab.icon : `${tab.icon}-outline`) as IoniconName;
+          /*
+           * UÇTAKİ HAP KENARA YASLANIR.
+           *
+           * Hap içeriğine göre daralıyor ama kutusu sabit genişlikte (HAP_MAX
+           * kadar): `alignSelf: 'center'` ile kutunun ortasında durunca her iki
+           * yanında ~25pt ölü boşluk kalıyordu. Ortadaki sekmelerde bu simetrik
+           * olduğu için görünmüyor; UÇLARDA ise hap bar kenarından belirgin
+           * biçimde içeride kalıyordu — kurucu "Keşfet'e basınca solda, Profil'e
+           * basınca sağda çok boşluk oluyor, sağa dayalı değil" diye bildirdi.
+           *
+           * İlk sekme sola, son sekme sağa yaslanıyor; ortadakiler ortada
+           * kalıyor. Kutu genişliklerine DOKUNULMUYOR — hesap aynı, yalnız
+           * hapın o kutu içindeki yeri değişiyor. Barın kendi 8pt'lik yan
+           * dolgusu duruyor, yani hap kenara yapışmıyor, yanaşıyor.
+           */
+          const hizalama = i === 0 ? 'flex-start' : i === tabs.length - 1 ? 'flex-end' : 'center';
           return (
             <Pressable
               key={tab.name}
@@ -137,7 +194,18 @@ export function FloatingTabBar({ tabs, active }: { tabs: TabDef[]; active: strin
               accessibilityLabel={t(tab.labelKey)}
             >
               {focused ? (
-                <View style={[styles.activePill, { backgroundColor: colors.accent }]}>
+                <View
+                  onLayout={(e) => {
+                    // Aynı değerde setState ÇAĞRILMIYOR: yoksa her yerleşim
+                    // yeni bir render doğurur ve döngü kapanmaz.
+                    const g = Math.ceil(e.nativeEvent.layout.width);
+                    setOlculer((o) => (o[tab.name] === g ? o : { ...o, [tab.name]: g }));
+                  }}
+                  style={[
+                    styles.activePill,
+                    { backgroundColor: colors.accent, alignSelf: hizalama },
+                  ]}
+                >
                   <Ionicons
                     name={icon}
                     size={19}
@@ -208,7 +276,8 @@ const styles = StyleSheet.create({
     height: 50,
     paddingHorizontal: space(1.75),
     borderRadius: 25,
-    // Hap İÇERİĞİNE GÖRE daralır ve kutunun ortasına oturur.
+    // Hap İÇERİĞİNE GÖRE daralır. Kutu içindeki yeri satır içinde veriliyor
+    // (`hizalama`): uçtaki sekmelerde kenara yaslanır, ortadakilerde ortalanır.
     //
     // Eskiden `alignSelf: 'stretch'` ile kutunun tamamını kaplıyordu; etiket
     // de daralabilir olduğu için "Keşfet" gibi KISA bir ad bile "Keşf…" diye

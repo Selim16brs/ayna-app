@@ -9,7 +9,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 import { kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 
 const STARS = [1, 2, 3, 4, 5];
@@ -390,7 +390,7 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
     },
     photoHint: { marginTop: -space(1), marginBottom: space(1) },
     photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space(1.5) },

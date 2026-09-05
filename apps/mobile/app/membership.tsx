@@ -10,7 +10,7 @@ import { useLocale } from '../src/locale';
 import { selectSellerView, useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Button, Screen, Segmented, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
+import { Button, Screen, Segmented, StackHeader, Text } from '../src/ui';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
 // §11.1 — satıcı (uzman/salon) premium GÖRÜNÜRLÜK PAKETİ
@@ -293,7 +293,7 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: TAB_BAR_CLEARANCE, // §ui — global tab bar üstünde kalsın
+      paddingBottom: space(3), // §ui — global tab bar üstünde kalsın
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.line,
       backgroundColor: colors.bg,

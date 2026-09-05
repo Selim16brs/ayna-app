@@ -8,15 +8,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  Progress,
-  Screen,
-  SectionHeader,
-  StackHeader,
-  TAB_BAR_CLEARANCE,
-  Text,
-} from '../../src/ui';
+import { Button, Progress, Screen, SectionHeader, StackHeader, Text } from '../../src/ui';
 
 /*
  * AYLIK LİMİT KULLANICININ.
@@ -238,7 +230,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      paddingBottom: space(3),
     },
     subtitle: { marginBottom: space(2.5) },
     barWrap: { marginTop: space(1.5), marginBottom: space(0.5) },

@@ -1845,6 +1845,9 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'profile.edit.email': 'Электрондық пошта',
   'profile.edit.phone': 'Телефон',
   'phone.country': 'Ел коды',
+  'phone.search': 'Елді немесе кодты іздеу',
+  'phone.sms_unsupported': 'Қазір бұл елге растау кодын жібере алмаймыз',
+  'phone.invalid': 'Бұл нөмір таңдалған ел үшін жарамсыз көрінеді',
   'profile.phone.title': 'Телефон нөмірін өзгерту',
   'profile.phone.change': 'Телефон нөмірімді өзгерту',
   'profile.phone.why':

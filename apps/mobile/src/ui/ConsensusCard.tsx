@@ -1,12 +1,13 @@
 import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { api } from '../api';
 import { useProfessionals } from '../catalog';
 import { fillParams, useLocale } from '../locale';
 import { radius, space, type ColorTokens } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
+import { SaglayiciFoto } from './SaglayiciFoto';
 import { Text } from './Text';
 
 /**
@@ -66,13 +67,7 @@ export function ConsensusCard({ postId }: { postId: string }) {
             disabled={!pro}
             onPress={() => pro && router.push(`/professional/${pro.id}`)}
           >
-            {pro?.image ? (
-              <Image source={{ uri: pro.image }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatar, styles.avatarFallback]}>
-                <Ionicons name="person-outline" size={16} color={colors.muted} />
-              </View>
-            )}
+            <SaglayiciFoto uri={pro?.image} ad={pro?.name} style={styles.avatar} />
             <View style={styles.rowBody}>
               <Text variant="captionStrong" tone="ink" numberOfLines={1}>
                 {pro?.name ?? it.proId}
@@ -110,7 +105,6 @@ const makeStyles = (colors: ColorTokens) =>
     flex: { flex: 1 },
     row: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
     avatar: { width: 40, height: 40, borderRadius: radius.xs, backgroundColor: colors.bgSunken },
-    avatarFallback: { alignItems: 'center', justifyContent: 'center' },
     rowBody: { flex: 1, gap: 5 },
     track: { height: 6, borderRadius: 3, backgroundColor: colors.bgSunken, overflow: 'hidden' },
     fill: { height: '100%', borderRadius: 3, backgroundColor: colors.accent },

@@ -9,7 +9,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, PressableScale, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, PressableScale, Screen, StackHeader, Text } from '../../src/ui';
 import { BELGE_GENISLIK, kucultVeB64 } from '../../src/gorsel-kucult';
 
 // §11/§460 — üyelik ödeme dekontu: app-dışı ödeme (Kaspi/banka) sonrası dekont yükle → admin onayı.
@@ -186,7 +186,7 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.line,
       backgroundColor: colors.bg,

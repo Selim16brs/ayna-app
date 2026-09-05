@@ -6,15 +6,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  AddressPicker,
-  Button,
-  Screen,
-  StackHeader,
-  Text,
-  TextInput,
-  TAB_BAR_CLEARANCE,
-} from '../../src/ui';
+import { AddressPicker, Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
 export default function AddressesScreen() {
   const { t } = useLocale();
@@ -228,7 +220,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      paddingBottom: space(3),
       gap: space(1.5),
     },
     hint: { marginLeft: space(0.5) },

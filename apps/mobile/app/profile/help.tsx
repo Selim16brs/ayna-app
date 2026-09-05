@@ -8,15 +8,7 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Button,
-  Screen,
-  SectionHeader,
-  StackHeader,
-  TAB_BAR_CLEARANCE,
-  Text,
-  TextInput,
-} from '../../src/ui';
+import { Button, Screen, SectionHeader, StackHeader, Text, TextInput } from '../../src/ui';
 
 // Yönlendirme başlıkları — sunucudaki TOPICS ile aynı.
 const KONULAR = ['payment', 'booking', 'safety', 'account', 'other'] as const;
@@ -125,7 +117,11 @@ export default function HelpScreen() {
             aynı kuyrukta beklememeli. */}
         <SectionHeader title={t('help.contact')} />
         <View style={[styles.group, shadow.soft, styles.form]}>
-          <View style={styles.konular}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.konular}
+          >
             {KONULAR.map((k) => (
               <Pressable
                 key={k}
@@ -139,7 +135,7 @@ export default function HelpScreen() {
                 </Text>
               </Pressable>
             ))}
-          </View>
+          </ScrollView>
           <TextInput
             value={metin}
             onChangeText={setMetin}
@@ -197,7 +193,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      paddingBottom: space(3),
     },
     subtitle: { marginBottom: space(2.5) },
     group: {
@@ -217,8 +215,27 @@ const makeStyles = (colors: ColorTokens) =>
       paddingVertical: space(2),
     },
     qText: { flex: 1 },
-    form: { gap: space(1.5) },
-    konular: { flexDirection: 'row', flexWrap: 'wrap', gap: space(0.75) },
+    /*
+     * Form kartının İÇ DOLGUSU — yoktu.
+     *
+     * Aynı `group` kabını kullanan SSS satırları `row` ile 16pt yan dolgu
+     * alıyor; formun kendi dolgusu hiç verilmemişti, bu yüzden konu çipleri,
+     * metin kutusu ve gönder düğmesi kartın kenarına YAPIŞIK duruyordu ve
+     * hemen üstündeki soru satırlarıyla hizasızdı.
+     */
+    form: { gap: space(1.5), padding: space(2) },
+    /*
+     * Çipler TEK SATIR — sarmalıyordu.
+     *
+     * Beş konu ("Ödeme · Randevu · Güvenlik · Hesap · Diğer") Türkçede
+     * ~354pt tutuyor, kartın içinde ise ~313pt yer var: sonuncusu alt satıra
+     * tek başına düşüyor ve seçici bozuk görünüyordu. Kazakça/Rusça
+     * etiketler daha uzun, yani daraltmak da kalıcı çözüm değildi.
+     *
+     * Yatay kaydırma dile bağımsız: sığdığında hiçbir şey değişmez, sığmadığında
+     * hizayı bozmadan kaydırılır. Aynı desen hizmet ikonu şeridinde de var.
+     */
+    konular: { flexDirection: 'row', gap: space(0.75) },
     konu: {
       paddingHorizontal: space(1.5),
       height: 34,

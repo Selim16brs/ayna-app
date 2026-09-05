@@ -7,7 +7,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text, ListSkeleton, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { Screen, StackHeader, Text, ListSkeleton } from '../../src/ui';
 
 // EK Z.1 — Konuşma listesi (müşteri ↔ uzman/salon DM)
 export default function MessagesScreen() {
@@ -109,7 +109,10 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak liste sonunda kocaman bir boşluk demekti.
+      // Alt güvenli alanı kabuk `Screen` zaten veriyor.
+      paddingBottom: space(3),
     },
     empty: { alignItems: 'center', gap: space(2), paddingTop: space(10) },
     emptyText: { textAlign: 'center', paddingHorizontal: space(4) },

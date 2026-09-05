@@ -1,18 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
-  TepeIsigi,
   GorunumKarti,
   PressableScale,
+  SaglayiciFoto,
   Screen,
   StackHeader,
   TAB_BAR_CLEARANCE,
+  TepeIsigi,
   Text,
 } from '../../src/ui';
 
@@ -75,11 +76,7 @@ export default function SalonProfileHub() {
         <View style={[styles.headerCard, shadow.soft]}>
           <TepeIsigi />
           <View style={styles.avatar}>
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.avatarImg} />
-            ) : (
-              <Ionicons name="business" size={26} color={colors.accentFg} />
-            )}
+            <SaglayiciFoto uri={avatarUri} ad={salonName} style={styles.avatarImg} />
           </View>
           <View style={styles.flex}>
             <Text variant="h2" tone="ink" numberOfLines={1}>

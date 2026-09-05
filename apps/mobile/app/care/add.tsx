@@ -21,7 +21,6 @@ import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   Button,
-  TAB_BAR_CLEARANCE,
   DateField,
   formatTrDate,
   Screen,
@@ -359,7 +358,7 @@ function RoutineForm({ onDone }: { onDone: () => void }) {
  *
  * İKİ AYRI SEBEP vardı:
  *
- *  1. `footer` altında `TAB_BAR_CLEARANCE` kadar boşluk ayırıyordu. Bu
+ *  1. `footer` altında `space(3)` kadar boşluk ayırıyordu. Bu
  *     ekran bir YIĞIN ekranı — altında sekme çubuğu YOK. Klavye açılınca
  *     o boşluk da yukarı taşınıyor ve "Kaydet" ile klavye arasında koca
  *     bir delik bırakıyordu.
@@ -375,7 +374,7 @@ function FormKabi({ children }: { children: React.ReactNode }) {
    * ALT BOŞLUK KLAVYEYE GÖRE.
    *
    * Kapalıyken alt menü ekranda: içerik onun altında kalmasın diye
-   * `TAB_BAR_CLEARANCE` kadar boşluk ŞART (`tabbar-clearance` testi bunu
+   * `space(3)` kadar boşluk ŞART (`tabbar-clearance` testi bunu
    * bekliyor ve haklı).
    *
    * Açıkken menü zaten görünmüyor ama boşluk yukarı taşınıyor ve "Kaydet"
@@ -398,7 +397,7 @@ function FormKabi({ children }: { children: React.ReactNode }) {
       // Yığın başlığı zaten yukarıda; ek kaydırma içeriği zıplatıyor.
       keyboardVerticalOffset={0}
     >
-      <View style={{ flex: 1, paddingBottom: klavye ? alt : TAB_BAR_CLEARANCE }}>{children}</View>
+      <View style={{ flex: 1, paddingBottom: klavye ? alt : space(3) }}>{children}</View>
     </KeyboardAvoidingView>
   );
 }

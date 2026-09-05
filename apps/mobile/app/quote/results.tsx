@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   type DemandOffer,
   type OfferSort,
@@ -15,14 +15,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  ListSkeleton,
-  PriceSpread,
-  Screen,
-  StackHeader,
-  TAB_BAR_CLEARANCE,
-  Text,
-} from '../../src/ui';
+import { ListSkeleton, PriceSpread, SaglayiciFoto, Screen, StackHeader, Text } from '../../src/ui';
 
 // Etiketler i18n anahtarı üzerinden — sabit Türkçe metin RU/KK'da kırılırdı.
 const SORTS: { key: OfferSort; labelKey: MessageKey; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -286,7 +279,7 @@ function OfferCard({
         disabled={!offer.profileId}
         onPress={() => offer.profileId && router.push(`/professional/${offer.profileId}`)}
       >
-        <Image source={{ uri: offer.proImage }} style={styles.thumb} />
+        <SaglayiciFoto uri={offer.proImage} ad={offer.proName} style={styles.thumb} />
         <View style={styles.info}>
           <View style={styles.nameRow}>
             <Text variant="bodyStrong" tone="ink" numberOfLines={1} style={styles.nameText}>
@@ -414,7 +407,7 @@ const makeStyles = (colors: ColorTokens) =>
       height: 36,
     },
     sortChipOn: { backgroundColor: colors.accent },
-    list: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
+    list: { paddingHorizontal: space(3), paddingBottom: space(3), gap: space(2) },
     collectingNote: { textAlign: 'center', paddingHorizontal: space(3), paddingTop: space(2) },
     listEmpty: {
       alignItems: 'center',

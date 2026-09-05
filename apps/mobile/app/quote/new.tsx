@@ -19,7 +19,6 @@ import {
   RulesCard,
   Screen,
   SectionHeader,
-  TAB_BAR_CLEARANCE,
   TarihSecici,
   Text,
   TextInput,
@@ -292,12 +291,7 @@ export default function NewQuoteScreen() {
       </ScrollView>
 
       {/* ── CTA ── */}
-      <View
-        style={[
-          styles.footer,
-          { paddingBottom: (insets.bottom || space(1.5)) + TAB_BAR_CLEARANCE },
-        ]}
-      >
+      <View style={[styles.footer, { paddingBottom: insets.bottom || space(1.5) }]}>
         <Pressable style={styles.cta} onPress={submit} disabled={submitting}>
           <Text variant="bodyStrong" tone="onAccent" style={styles.ctaText} numberOfLines={1}>
             {t('quote.new.view_offers')}

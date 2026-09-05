@@ -15,10 +15,10 @@ import { useTheme, useThemedStyles } from '../src/theme-context';
 import {
   Button,
   PressableScale,
+  SaglayiciFoto,
   Screen,
   Segmented,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   Text,
 } from '../src/ui';
 
@@ -163,11 +163,7 @@ export default function AlwaysScreen() {
           incoming.map((b) => (
             <View key={b.id} style={[styles.card, shadow.soft]}>
               <View style={styles.reqHead}>
-                {imgOf(b) ? (
-                  <Image source={{ uri: imgOf(b) }} style={styles.avatar} />
-                ) : (
-                  <View style={styles.avatar} />
-                )}
+                <SaglayiciFoto uri={imgOf(b)} ad={nameOf(b)} style={styles.avatar} />
                 <View style={styles.flex}>
                   <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
                     {nameOf(b)}
@@ -217,7 +213,7 @@ const makeStyles = (colors: ColorTokens) =>
     segWrap: { paddingHorizontal: space(3), paddingTop: space(1.5), paddingBottom: space(1) },
     content: {
       paddingHorizontal: space(3),
-      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      paddingBottom: space(2),
       gap: space(1.25),
     },
     flex: { flex: 1 },
@@ -272,7 +268,7 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: TAB_BAR_CLEARANCE, // §ui — global tab bar'ın (88px) üstünde kalsın
+      paddingBottom: space(3), // §ui — global tab bar'ın (88px) üstünde kalsın
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.line,
       backgroundColor: colors.bg,

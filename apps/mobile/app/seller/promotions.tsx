@@ -21,7 +21,6 @@ import {
   StackHeader,
   Text,
   TextInput,
-  TAB_BAR_CLEARANCE,
 } from '../../src/ui';
 
 // §12.7 — durum rozetleri
@@ -365,7 +364,7 @@ function PromoCard({ promo }: { promo: Promotion }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE },
+    content: { padding: space(3), paddingBottom: space(3) },
     flex: { flex: 1 },
     intro: { marginBottom: space(2), lineHeight: 18 },
 
@@ -440,7 +439,7 @@ const makeStyles = (colors: ColorTokens) =>
     emptyText: { textAlign: 'center' },
 
     // §11 upsell
-    upsellWrap: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE },
+    upsellWrap: { padding: space(3), paddingBottom: space(3) },
     upsellCard: { borderRadius: radius.xl, padding: space(3), gap: space(1.25) },
     upsellIcon: {
       width: 56,

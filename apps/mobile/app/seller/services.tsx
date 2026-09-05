@@ -7,7 +7,7 @@ import type { SellerServiceRow } from '../../src/store';
 import { activeCategories, servicesOf, tri, type TaxService } from '../../src/taxonomy';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text, TextInput, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 
 /**
  * HİZMETLERİM — brief §4.1.
@@ -338,7 +338,7 @@ export default function SellerServicesScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE },
+    content: { paddingHorizontal: space(3), paddingBottom: space(3) },
     intro: { marginBottom: space(2), gap: space(1.25) },
     subtitle: { lineHeight: 18 },
     countPill: {

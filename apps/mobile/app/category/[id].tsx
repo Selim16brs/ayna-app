@@ -11,14 +11,7 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import {
-  Screen,
-  ServiceCards,
-  StackHeader,
-  TAB_BAR_CLEARANCE,
-  Text,
-  YakindaRozeti,
-} from '../../src/ui';
+import { Screen, ServiceCards, StackHeader, Text, YakindaRozeti } from '../../src/ui';
 import { useKategoriYakinda } from '../../src/yakinda';
 import { ProRow } from '../search';
 
@@ -174,7 +167,7 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2.5),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
     },
     yakindaKap: {
       flexDirection: 'row',

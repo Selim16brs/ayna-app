@@ -15,11 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "kz.ayna.app",
+      "bundleIdentifier": "com.yemreeke.template",
       "buildNumber": "117",
-      "entitlements": {
-        "com.apple.developer.default-data-protection": "NSFileProtectionCompleteUntilFirstUserAuthentication"
-      },
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Randevu dekontunu ve profil fotoğrafını yükleyebilmen için galerine erişiyoruz.",
         "NSCameraUsageDescription": "Dekont ve profil fotoğrafını çekebilmen için kamerayı kullanıyoruz.",
@@ -28,7 +25,7 @@
       }
     },
     "android": {
-      "package": "kz.ayna.app",
+      "package": "com.yemreeke.template",
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo-mark.png",
         "backgroundColor": "#F4F1EC"
@@ -63,7 +60,13 @@
           "isAccessMediaLocationEnabled": false
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "./plugins/withAynaImzalama",
+        {
+          "teamId": "9439532MU5"
+        }
+      ]
     ],
     "extra": {
       "router": {},

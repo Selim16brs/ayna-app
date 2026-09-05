@@ -21,28 +21,39 @@ const TAB_BAR_CLEARANCE = sabit('FADE_H') + 24;
  * ekranının alt boşluğu 48pt idi; yüzen alt menü ise 114pt yer kaplıyor.
  * Sayfanın SONUNDAKİ düğme barın altına düşüyor ve TIKLANAMIYOR.
  *
- * Alt menü neredeyse HER ekranda görünüyor (app/_layout.tsx: yalnız giriş,
- * dil ve yazı yazılan ekranlarda gizli). Yani bu tek bir ekranın hatası değil,
- * bir SINIF hatası: tarandığında 24 ekran çıktı.
+ * ── KURAL TERSİNE ÇEVRİLDİ ──────────────────────────────────────────────
  *
- * Ekranın ya `TAB_BAR_CLEARANCE` kullanması ya da en az o kadar alt boşluk
- * vermesi gerekir.
+ * Bu dosya eskiden "barın gizlendiği ekranlar" diye bir İSTİSNA listesi
+ * tutuyordu, çünkü bar neredeyse her ekranda görünüyordu. Artık tersi:
+ * `app/_layout.tsx` barı YALNIZ sekme köklerinde çiziyor. Yani istisna
+ * listesi değil, barın göründüğü yerlerin TAM listesi tutuluyor.
+ *
+ * İki yönlü kontrol ediliyor:
+ *  1. Sekme kökleri boşluk BIRAKMALI  — yoksa içerik barın altında kalır.
+ *  2. Diğer ekranlar boşluk BIRAKMAMALI — bar yokken o boşluk sayfanın
+ *     sonunda 130pt'lik bir delik demek.
  */
 
 const appKok = join(import.meta.dirname, '..', '..', 'app');
 
-/** Alt menünün GİZLENDİĞİ ekranlar — app/_layout.tsx baseHidden ile aynı. */
-const MENUSUZ = [
-  /^auth\//,
-  /^index\.tsx$/,
-  /^language\.tsx$/,
-  /^_layout\.tsx$/,
-  /^messages\/\[/, // sohbet — yazma alanı barın altında kalmasın diye bar gizli
-  /^circle\/\[/, // W2W yorum — aynı sebep
+/**
+ * Alt barın GÖRÜNDÜĞÜ ekranlar — `app/_layout.tsx` içindeki
+ * MUSTERI_KOKLERI / SALON_KOKLERI / UZMAN_KOKLERI ile aynı yollar.
+ */
+const SEKME_KOKLERI = [
+  '(tabs)/discover.tsx',
+  '(tabs)/bookings.tsx',
+  '(tabs)/care.tsx',
+  '(tabs)/circle.tsx',
+  '(tabs)/profile.tsx',
+  'salon/home.tsx',
+  'salon/agenda.tsx',
+  'salon/staff.tsx',
+  'salon/profile.tsx',
+  'seller/reports.tsx',
+  'seller/menu.tsx',
+  'seller/offline.tsx',
 ];
-
-/** Altında düğme olmayan tam ekran görüntüleyiciler. */
-const TAM_EKRAN = [/^gallery\.tsx$/, /^map\.tsx$/];
 
 function ekranlar(): string[] {
   const out: string[] = [];
@@ -71,21 +82,19 @@ test('boşluk SOLMA katmanını da aşıyor', () => {
   // içerik solmanın içinde eriyip okunmaz oluyordu.
   const fade = sabit('FADE_H');
   assert.ok(TAB_BAR_CLEARANCE > fade, `${TAB_BAR_CLEARANCE} ≤ solma ${fade}`);
-  // Güvenli alanlı cihazda hapın üstü: max(34, PILL_BOTTOM-10)+10 + PILL_H
-  const hapUstu = Math.max(34, sabit('PILL_BOTTOM') - 10) + 10 + sabit('PILL_H');
+  // Güvenli alanlı cihazda hapın üstü: max(34, PILL_BOTTOM-10) + pay + PILL_H
+  const hapUstu = Math.max(34, sabit('PILL_BOTTOM') - 10) + sabit('PILL_NEFES') + sabit('PILL_H');
   assert.ok(TAB_BAR_CLEARANCE >= hapUstu + 20, `${TAB_BAR_CLEARANCE} < hap üstü ${hapUstu} + pay`);
 });
 
-test('alt menü görünen her kaydırılabilir ekran ona yer bırakıyor', () => {
+test('SEKME KÖKLERİ bara yer bırakıyor', () => {
   const ihlal: string[] = [];
-  for (const rel of ekranlar()) {
-    if (MENUSUZ.some((r) => r.test(rel)) || TAM_EKRAN.some((r) => r.test(rel))) continue;
+  for (const rel of SEKME_KOKLERI) {
     const src = readFileSync(join(appKok, rel), 'utf8');
     if (!/ScrollView|FlatList/.test(src)) continue;
     // Sabiti bir ALT BOŞLUK olarak kullanan dosya güvenli sayılır. Desen
     // hesaplı ifadeleri de kabul etmeli: `insets.bottom + TAB_BAR_CLEARANCE`
-    // ve `130 + TAB_BAR_CLEARANCE` da doğru kullanım — ilk yazdığım dar desen
-    // bu dördünü yanlışlıkla ihlal saymıştı.
+    // ve `130 + TAB_BAR_CLEARANCE` da doğru kullanım.
     if (/paddingBottom:\s*[^,}\n]*TAB_BAR_CLEARANCE/.test(src)) continue;
     const bosluk = enBuyukAltBosluk(src);
     if (bosluk < TAB_BAR_CLEARANCE) ihlal.push(`${rel} (${bosluk}pt)`);
@@ -98,13 +107,56 @@ test('alt menü görünen her kaydırılabilir ekran ona yer bırakıyor', () =>
   );
 });
 
-test('taramanın kendisi boşuna geçmiyor', () => {
-  // İhlal listesi her zaman boş çıkan bir tarama, hiçbir şeyi korumaz.
-  const bakilan = ekranlar().filter((rel) => {
-    if (MENUSUZ.some((r) => r.test(rel)) || TAM_EKRAN.some((r) => r.test(rel))) return false;
-    return /ScrollView|FlatList/.test(readFileSync(join(appKok, rel), 'utf8'));
-  });
-  assert.ok(bakilan.length >= 40, `yalnız ${bakilan.length} ekran taranıyor — tarama daralmış`);
+test('SEKME KÖKÜ OLMAYAN ekran bar boşluğu AYIRMIYOR', () => {
+  /*
+   * Ters yön — kural tersine çevrilince gereken kontrol bu oldu.
+   *
+   * Bar o ekranlarda çizilmiyor; `TAB_BAR_CLEARANCE` orada ayrılmış bir
+   * boşluk, sayfanın sonunda kocaman bir delik demek. Kurucu bunu bildirdi.
+   */
+  const kokSet = new Set(SEKME_KOKLERI);
+  const ihlal = ekranlar().filter(
+    (rel) =>
+      !kokSet.has(rel) &&
+      rel !== '_layout.tsx' &&
+      /\bTAB_BAR_CLEARANCE\b/.test(readFileSync(join(appKok, rel), 'utf8')),
+  );
+  assert.deepEqual(
+    ihlal,
+    [],
+    `Bar bu ekranlarda çizilmiyor ama boşluğu ayrılmış:\n  ${ihlal.join('\n  ')}`,
+  );
+});
+
+test('KÖK LİSTESİ gerçek dosyalara işaret ediyor', () => {
+  // Yol yanlış yazılırsa yukarıdaki iki test de sessizce boş geçerdi.
+  const hepsi = new Set(ekranlar());
+  const eksik = SEKME_KOKLERI.filter((r) => !hepsi.has(r));
+  assert.deepEqual(eksik, [], `Kök listesinde olmayan dosya: ${eksik.join(', ')}`);
+  assert.ok(SEKME_KOKLERI.length >= 12, `yalnız ${SEKME_KOKLERI.length} kök — liste daralmış`);
+});
+
+test('KÖK LİSTESİ layout ile aynı', () => {
+  /*
+   * Aynı bilgi iki yerde: `app/_layout.tsx` barı hangi yollarda çizeceğini,
+   * bu dosya hangi ekranların boşluk bırakacağını biliyor. Ayrışırlarsa ya
+   * bar kendi sekmesinde kaybolur ya da içerik barın altında kalır.
+   */
+  const layout = readFileSync(join(appKok, '_layout.tsx'), 'utf8');
+  const satirlar = layout.split('\n').filter((l) => /_KOKLERI = \[/.test(l));
+  assert.ok(satirlar.length >= 3, 'layout içinde kök listeleri bulunamadı');
+  const layoutYollari = new Set(
+    satirlar.flatMap((l) => [...l.matchAll(/'(\/[a-z\-/]+)'/g)].map((m) => m[1] as string)),
+  );
+  const dosyaYollari = new Set(
+    SEKME_KOKLERI.map((r) => '/' + r.replace(/\.tsx$/, '').replace('(tabs)/', '')),
+  );
+  for (const y of layoutYollari) {
+    assert.ok(dosyaYollari.has(y), `layout'ta ${y} kök ama test listesinde yok`);
+  }
+  for (const y of dosyaYollari) {
+    assert.ok(layoutYollari.has(y), `test listesinde ${y} var ama layout onu kök saymıyor`);
+  }
 });
 
 /**
@@ -115,38 +167,21 @@ test('taramanın kendisi boşuna geçmiyor', () => {
  * `seller/share` tam bu yüzden bozuktu — boşluk kaydırma kabına konmuştu,
  * düğme yine barın altında kalıyordu.
  */
-test('kaydırmadan sonra gelen sabit şeritler barı aşıyor', () => {
+test('SEKME KÖKÜNDE sabit alt şeritler barı aşıyor', () => {
   const ihlal: string[] = [];
-  for (const rel of ekranlar()) {
-    if (MENUSUZ.some((r) => r.test(rel)) || TAM_EKRAN.some((r) => r.test(rel))) continue;
+  for (const rel of SEKME_KOKLERI) {
     const src = readFileSync(join(appKok, rel), 'utf8');
-    // </ScrollView> hemen ardından gelen ve ADI eylem şeridi olan kap.
     const m =
       /<\/ScrollView>\s*\n\s*<View style=\{(?:\[)?styles\.(actions|footer|bottomBar|cta)\b/.exec(
         src,
       );
     if (!m) continue;
     const ad = m[1];
-    // Satır içi hesaplı boşluk da geçerli (ör. insets.bottom + CLEARANCE).
     if (new RegExp(`styles\\.${ad}[^\\n]*TAB_BAR_CLEARANCE`).test(src)) continue;
-    // Stil bloğu tek satır da olabilir (Prettier kısa blokları sıkıştırıyor);
-    // desen İKİSİNİ de tanımalı, yoksa doğru yazılmış ekran ihlal sayılır.
     const sm =
       new RegExp(`    ${ad}: \\{[\\s\\S]*?\\n    \\},`).exec(src) ??
       new RegExp(`    ${ad}: \\{[^\\n]*\\},`).exec(src);
     if (sm && /paddingBottom:[^,}\n]*TAB_BAR_CLEARANCE/.test(sm[0])) continue;
-    /*
-     * BOŞLUĞU ŞERİDİN KENDİSİ DEĞİL, ONU SARAN KAP DA VEREBİLİR.
-     *
-     * `care/add` klavye açıkken boşluğu kaldırıyor (açıkken alt menü zaten
-     * görünmüyor ve boşluk "Kaydet" ile klavye arasında delik bırakıyordu),
-     * kapalıyken veriyor. Bu koşullu boşluk kabın `paddingBottom`unda
-     * duruyor ve kuralın ASIL AMACINI — içerik barın altında kalmasın —
-     * şeritten daha iyi karşılıyor: kaydırılan içeriği de koruyor.
-     *
-     * Kural gevşetilmiyor: ekran boşluğu HİÇBİR YERDE ayırmıyorsa yine
-     * ihlal sayılıyor.
-     */
     if (new RegExp(`paddingBottom: [^\\n]*TAB_BAR_CLEARANCE`).test(src)) continue;
     ihlal.push(`${rel} (styles.${ad})`);
   }

@@ -148,6 +148,23 @@ export function otpMesaji(kod: string, dil: string): string {
 export function telefonuBicimle(ham: string): string {
   const rakam = (ham ?? '').replace(/[^0-9]/g, '');
 
+  /*
+   * ULUSLARARASI BİÇİM ARTIK GÜVENİLİR — "+" korunuyor.
+   *
+   * Aşağıdaki "tanımadığımız numaraya + koymuyoruz" kuralı, numaranın
+   * doğruluğundan emin olunamadığı için yazılmıştı: SMSC'nin tahmini,
+   * bizim yanlış mühürlememizden iyiydi.
+   *
+   * O belirsizlik kalktı: `auth.dto` artık telefonu E.164 olarak DOĞRULUYOR
+   * (`+` + ülke kodu + numara), yani buraya ulaşan "+"lı numara geçerliliği
+   * ölçülmüş bir numaradır. Ülke seçici de 11 ülkeden 245'e çıktı — Türkiye,
+   * Kırgızistan, Almanya numaraları artık "+"sız gidip sağlayıcının Kazak
+   * numarası sanmasına bırakılamaz.
+   *
+   * KZ numaraları bu daldan da doğru çıkıyor: "+77771234567" → "+77771234567".
+   */
+  if ((ham ?? '').trim().startsWith('+') && rakam.length >= 8) return `+${rakam}`;
+
   // 8XXXXXXXXXX → 7XXXXXXXXXX (yerel "8" ülke kodu yerine geçiyor)
   if (rakam.length === 11 && rakam.startsWith('8') && rakam[1] === '7') {
     return `+7${rakam.slice(1)}`;

@@ -7,7 +7,7 @@ import { fillParams, useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../src/ui';
+import { SaglayiciFoto, Screen, StackHeader, Text } from '../src/ui';
 
 /**
  * UZMANIMDAN GELEN PAYLAŞIMLAR — öncesi/sonrası.
@@ -80,11 +80,7 @@ export default function PaylasimlarScreen() {
         {(posts ?? []).map((p) => (
           <View key={p.id} style={[styles.kart, shadow.soft]}>
             <View style={styles.bas}>
-              {p.proImage ? (
-                <Image source={{ uri: p.proImage }} style={styles.proFoto} />
-              ) : (
-                <View style={[styles.proFoto, styles.proFotoBos]} />
-              )}
+              <SaglayiciFoto uri={p.proImage} ad={p.proName} style={styles.proFoto} />
               <View style={styles.grow}>
                 <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
                   {fillParams(t('propost.from'), { ad: p.proName ?? '' })}
@@ -135,7 +131,7 @@ export default function PaylasimlarScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
+    content: { padding: space(3), paddingBottom: space(3), gap: space(2) },
     grow: { flex: 1, minWidth: 0 },
     bos: { textAlign: 'center', lineHeight: 20, marginTop: space(4) },
     kart: {
@@ -146,7 +142,6 @@ const makeStyles = (colors: ColorTokens) =>
     },
     bas: { flexDirection: 'row', alignItems: 'center', gap: space(1.25) },
     proFoto: { width: 36, height: 36, borderRadius: 18 },
-    proFotoBos: { backgroundColor: colors.accentSoft },
     fotolar: { flexDirection: 'row', gap: space(1) },
     fotoKap: { flex: 1, aspectRatio: 1, borderRadius: radius.md, overflow: 'hidden' },
     foto: { width: '100%', height: '100%' },

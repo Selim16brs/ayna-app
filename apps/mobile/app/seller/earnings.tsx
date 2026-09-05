@@ -8,7 +8,7 @@ import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Screen, StackHeader, Text } from '../../src/ui';
 
 type Period = 'month' | 'quarter' | 'all';
 const PERIODS: { key: Period; labelKey: MessageKey }[] = [
@@ -55,7 +55,7 @@ export default function EarningsScreen() {
     <Screen edges={[]}>
       <StackHeader title={t('earnings.title')} />
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_CLEARANCE }]}
+        contentContainerStyle={[styles.content, { paddingBottom: space(3) }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Dönem seçimi */}

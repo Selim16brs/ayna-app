@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../src/locale';
 import { useKadrodanCikar, useSalonStaff } from '../../src/staff';
 import { sunucuHatasi } from '../../src/sunucu-hatasi';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, Segmented, StackHeader, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { Button, SaglayiciFoto, Screen, Segmented, StackHeader, Text } from '../../src/ui';
 
 type Schedule = 'standard' | 'flexible';
 
@@ -107,7 +107,7 @@ export default function StaffDetailScreen() {
       <StackHeader title={t('seller.staff.title')} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.head}>
-          {p.image ? <Image source={{ uri: p.image }} style={styles.avatar} /> : null}
+          <SaglayiciFoto uri={p.image} ad={p.name} style={styles.avatar} />
           <View>
             <Text variant="h2" tone="ink">
               {p.name}
@@ -230,7 +230,7 @@ function Stat({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(2), paddingBottom: TAB_BAR_CLEARANCE },
+    content: { padding: space(2), paddingBottom: space(3) },
     removeWrap: { marginTop: space(3), gap: space(1) },
     removeHint: { textAlign: 'center', paddingHorizontal: space(2) },
     head: { flexDirection: 'row', alignItems: 'center', gap: space(1.5), marginBottom: space(2.5) },

@@ -9,7 +9,7 @@ import { useStore } from '../src/store';
 import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text, ListSkeleton } from '../src/ui';
+import { Screen, StackHeader, Text, ListSkeleton } from '../src/ui';
 import { ProRow } from './search';
 
 // §5.1.8 — Sana Yakın "Tümü": şehirdeki tüm salonlar; premium önce, kendi içinde mesafeye göre.
@@ -164,7 +164,7 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
     },
     list: { gap: space(1.5) },
     empty: { alignItems: 'center', paddingTop: space(8), gap: space(1) },

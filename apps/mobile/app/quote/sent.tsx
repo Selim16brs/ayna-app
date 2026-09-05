@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { Button, Screen, Text } from '../../src/ui';
 
 // §5.2 — "Teklif Al" sonrası ONAY ekranı: talep yakındaki uzmanlara dağıtıldı.
 // Kullanıcı doğrudan sonuçlara DÜŞMEZ; teklifler zamanla toplanır (reverse marketplace).
@@ -114,6 +114,6 @@ const makeStyles = (colors: ColorTokens) =>
       paddingTop: space(1.5),
       gap: space(1),
       // Şeridin ALT boşluğu hiç yoktu: düğme barın altında kalıyordu.
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
     },
   });
