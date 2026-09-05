@@ -9,6 +9,7 @@ export * from './loyalty/ledger.js';
 export * from './loyalty/lots.js';
 export * from './loyalty/earn-rate.js';
 export * from './catalog/sectors.js';
+export * from './catalog/sehir-adi.js';
 export * from './catalog/hizmet-kimligi.js';
 export * from './catalog/arama.js';
 export * from './catalog/regule.js';

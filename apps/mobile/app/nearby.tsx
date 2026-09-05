@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { sehirEslesir } from '@ayna/domain';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -53,7 +54,7 @@ export default function NearbyScreen() {
      * bağlantıdan geliyor.
      */
     const liste = all.filter(
-      (p) => p.city === city && (uzmanlar ? p.kind !== 'salon' : p.kind === 'salon'),
+      (p) => sehirEslesir(p.city, city) && (uzmanlar ? p.kind !== 'salon' : p.kind === 'salon'),
     );
     const konumlu = liste.filter((p) => konumuVar(p));
     // Sıralama ancak KULLANICININ ve en az bir salonun konumu varsa anlamlı.

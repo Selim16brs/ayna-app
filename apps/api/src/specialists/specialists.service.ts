@@ -5,6 +5,7 @@ import {
   type DayHours,
   aynaOnayli,
   uzmanKayitli,
+  kanonikSehir,
 } from '@ayna/domain';
 
 // Asia/Almaty = UTC+5, yaz saati YOK. Sunucu UTC saklıyor; uzman yerel saate
@@ -551,7 +552,18 @@ export class SpecialistsService {
         // Adres alanları yalnız DOLU gelirse yazılıyor: haritadan ters
         // geocode boş dönerse mevcut kaydı silmemeli.
         ...(konum.district?.trim() ? { district: konum.district.trim() } : {}),
-        ...(konum.city?.trim() ? { city: konum.city.trim() } : {}),
+        /*
+         * ŞEHİR KANONİK YAZIMA ÇEVRİLİYOR.
+         *
+         * Ters geocode Kazakistan'da Rusça ad döndürüyor ('Алматы') ve bu
+         * ham hâliyle yazılıyordu. Uygulamanın şehir seçicisi Türkçe yazımı
+         * ('Almatı') kullandığı için uzman, kendi şehrindeki müşterilerin
+         * keşif ekranından sessizce kayboluyordu.
+         *
+         * Tanınmayan şehir OLDUĞU GİBİ yazılıyor: uydurulmuş bir şehir,
+         * kullanıcıyı hiç yaşamadığı yere taşırdı.
+         */
+        ...(konum.city?.trim() ? { city: kanonikSehir(konum.city) ?? konum.city.trim() } : {}),
       },
       select: { lat: true, lng: true, city: true, district: true },
     });

@@ -245,7 +245,9 @@ test('eleme koşulları ekranda duruyor', () => {
   // Kopya mantığın ekrandan ayrışmasını yakalar: koşul ekrandan silinirse
   // buradaki testler hâlâ geçer ama uygulama filtrelemez.
   for (const kosul of [
-    'filtre.sehir !== null && p.city !== filtre.sehir',
+    // Şehir artık NORMALLEŞTİRİLMİŞ karşılaştırılıyor: haritadan gelen
+    // 'Алматы' ile seçicideki 'Almatı' aynı şehir (bkz. sehir-eslesmesi.test).
+    'filtre.sehir !== null && !sehirEslesir(p.city, filtre.sehir)',
     'filtre.minPuan !== null && p.rating < filtre.minPuan',
     'p.completedBookings < filtre.minRandevu',
     'filtre.minYorum !== null && p.reviewCount < filtre.minYorum',

@@ -21,7 +21,7 @@ import type { MessageKey } from '@ayna/i18n';
 import { bolgeAdi } from '../src/bolge-adi';
 import { useProfessionals, useProfessionalsLoading } from '../src/catalog';
 import { useStore } from '../src/store';
-import { servesSector } from '@ayna/domain';
+import { servesSector, sehirEslesir } from '@ayna/domain';
 import { fillParams, useLocale } from '../src/locale';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
@@ -302,7 +302,7 @@ export default function SearchScreen() {
   const bolgeler = useMemo(() => {
     const sayac = new Map<string, number>();
     for (const p of professionals) {
-      if (filtre.sehir !== null && p.city !== filtre.sehir) continue;
+      if (filtre.sehir !== null && !sehirEslesir(p.city, filtre.sehir)) continue;
       const ad = bolgeAdi(p.district, p.city);
       if (ad) sayac.set(ad, (sayac.get(ad) ?? 0) + 1);
     }
@@ -313,7 +313,7 @@ export default function SearchScreen() {
     const q = lower(query.trim());
     const filtered = professionals.filter((p) => {
       // null şehir = tüm şehirler
-      if (filtre.sehir !== null && p.city !== filtre.sehir) return false;
+      if (filtre.sehir !== null && !sehirEslesir(p.city, filtre.sehir)) return false;
       // Bölge haritadakiyle AYNI normalizasyondan geçiyor: iki ekran aynı
       // adı göstermeli, yoksa haritadan gelen seçim listede boş sonuç verir.
       if (filtre.bolge !== null && bolgeAdi(p.district, p.city) !== filtre.bolge) return false;

@@ -15,7 +15,7 @@ import {
 import { AKIS_ADIMLARI, akisAdimi, durumEtiketi } from '../../src/booking-flow';
 import { formatSlotTr } from '../../src/datetime';
 import type { MessageKey } from '@ayna/i18n';
-import { ANA_EKRAN_PROMOSYON, promosyonlariSirala } from '@ayna/domain';
+import { ANA_EKRAN_PROMOSYON, promosyonlariSirala, sehirEslesir } from '@ayna/domain';
 import { useLocale } from '../../src/locale';
 import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import {
@@ -157,7 +157,15 @@ export default function DiscoverScreen() {
   const displayName = userName.charAt(0).toLocaleUpperCase('tr-TR') + userName.slice(1);
   const pros = useProfessionals();
   // §5.1.4 — şehir tüm Keşfet'i filtreler
-  const cityPros = pros.filter((p) => p.city === city);
+  /*
+   * ŞEHİR EŞLEŞMESİ DÜZ METİN DEĞİL.
+   *
+   * Haritadan konumunu işaretleyen uzmanın şehri 'Алматы' oluyordu (ters
+   * geocode Kazakistan'da Rusça döner) ve 'Almatı' seçmiş müşterinin
+   * ekranından SESSİZCE kayboluyordu: ne hata, ne boş liste uyarısı —
+   * uzman sadece yoktu.
+   */
+  const cityPros = pros.filter((p) => sehirEslesir(p.city, city));
   // §5.1.7 REVİZE — Öne Çıkanlar SPONSORLU alan: yalnız admin panelinden ⭐ işaretlenenler
   // (badge 'campaign'); otomatik doldurma YOK — admin seçmediyse bölüm görünmez.
   /**
