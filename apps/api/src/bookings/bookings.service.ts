@@ -28,7 +28,6 @@ import {
 import {
   cashbackPoints,
   DEFAULT_CASHBACK_PCT,
-  grantCompletionCashback,
   grantCompletionRewards,
 } from '../loyalty/completion-rewards';
 import { loadLedgerState, loadLoyaltyRules } from '../loyalty/loyalty.rules';
@@ -511,7 +510,14 @@ export class BookingsService {
     if (!existing && row.status === 'onay_bekliyor' && row.proId) {
       void this.notifyNewRequest(row).catch(() => undefined);
     }
-    return mapBooking(row);
+    /*
+     * SALONUN AÇTIĞI KAYITTA ROL UZMAN.
+     *
+     * `create` çoğunlukla müşterinin talebi ama salon da çevrimdışı kayıt
+     * açıyor (`bySalon`). O kayıt salona MÜŞTERİ görünümüyle dönüyordu:
+     * kendi açtığı randevuda müşteri düğmelerini görüyordu.
+     */
+    return mapBooking(row, { forProvider: row.bySalon === true });
   }
 
   // Talebin muhatapları: bağımsız uzman (Specialist.proId) VE/VEYA salon sahibi
@@ -603,12 +609,16 @@ export class BookingsService {
     const outcome = cancelOutcome(b.status, b.startAt?.getTime() ?? null, Date.now());
     // §4.7 — UZMAN İPTALİ ayrı bir durum: müşteri iptali değil.
     const uzmanIptali = rol === 'provider';
-    const row = await this.transition(id, {
-      status: uzmanIptali ? 'iptal_uzman' : outcome.status,
-      cancelReason: reason ?? null,
-      cancelledBy: rol,
-      ...(outcome.forfeit ? { depositForfeited: true } : {}),
-    });
+    const row = await this.transition(
+      id,
+      {
+        status: uzmanIptali ? 'iptal_uzman' : outcome.status,
+        cancelReason: reason ?? null,
+        cancelledBy: rol,
+        ...(outcome.forfeit ? { depositForfeited: true } : {}),
+      },
+      rol,
+    );
     // §keşif Modül 2 — kampanya randevusu iptal → kota iadesi
     if (b.offerId) void this.offers.refundQuota(b.offerId);
 
@@ -696,7 +706,7 @@ export class BookingsService {
    * dağıtımı (%1 AYNA, %9 uzman) §4.10 kuyruğundan yürür.
    */
   async noShow(id: string, actorId?: string) {
-    await this.assertParty(id, actorId, 'provider');
+    const rol = await this.assertParty(id, actorId, 'provider');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (b?.startAt && Date.now() < b.startAt.getTime() + NO_SHOW_ACILMA_MS) {
       throw new BadRequestException({
@@ -704,10 +714,14 @@ export class BookingsService {
         message: 'Gelmedi işareti randevu saatinden 15 dakika sonra açılır',
       });
     }
-    const row = await this.transition(id, {
-      status: 'no_show_musteri',
-      finalizeDeadline: new Date(Date.now() + ITIRAZ_PENCERESI_MS),
-    });
+    const row = await this.transition(
+      id,
+      {
+        status: 'no_show_musteri',
+        finalizeDeadline: new Date(Date.now() + ITIRAZ_PENCERESI_MS),
+      },
+      rol,
+    );
     // §keşif Modül 2 — kampanya randevusu no-show → kota iadesi
     if (b?.offerId) void this.offers.refundQuota(b.offerId);
     // §4.8 — beyan KARŞI TARAFA bildirilir; itiraz hakkı 24 saat.
@@ -733,13 +747,17 @@ export class BookingsService {
    * uzman parayı almadan işlemeye başlıyordu.
    */
   async complete(id: string, actorId?: string) {
-    await this.assertParty(id, actorId, 'provider');
+    const rol = await this.assertParty(id, actorId, 'provider');
     const cfg = await this.prisma.setting.findUnique({ where: { key: 'policy.confirm_hours' } });
     const hours = cfg?.intValue ?? 24;
-    const row = await this.transition(id, {
-      status: 'odeme_bekliyor',
-      finalizeDeadline: new Date(Date.now() + hours * 60 * 60 * 1000),
-    });
+    const row = await this.transition(
+      id,
+      {
+        status: 'odeme_bekliyor',
+        finalizeDeadline: new Date(Date.now() + hours * 60 * 60 * 1000),
+      },
+      rol,
+    );
     void this.prisma.booking.findUnique({ where: { id } }).then((b) => {
       if (b?.userId)
         void this.push.sendTemplate(b.userId, 'booking.completed_confirm', undefined, {
@@ -774,7 +792,7 @@ export class BookingsService {
    *    (`grantCompletionCashback` beyanı olmayan randevuyu atlıyor.)
    */
   async balancePaid(id: string, actorId?: string, beyanEdilenTutar?: number) {
-    await this.assertParty(id, actorId, 'owner');
+    const rol = await this.assertParty(id, actorId, 'owner');
     const mevcut = await this.prisma.booking.findUnique({ where: { id } });
     if (!mevcut) {
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
@@ -799,7 +817,7 @@ export class BookingsService {
           message: 'Ödeme beyanı hizmet saati başladığında açılır',
         });
       }
-      await this.transition(id, { status: 'hizmet_gunu' });
+      await this.transition(id, { status: 'hizmet_gunu' }, rol);
     }
 
     // Tutar YALNIZ değiştiyse yazılır: aynı tutarı `finalPrice`e kopyalamak,
@@ -831,7 +849,7 @@ export class BookingsService {
             finalizeDeadline: new Date(Date.now() + hours * 60 * 60 * 1000),
           }),
     };
-    const row = await this.transition(id, veri);
+    const row = await this.transition(id, veri, rol);
 
     // §12 — fiyat değişikliği KRİTİK bir para olayı: kim, hangi randevuda,
     // hangi tutarı beyan etti. Denetim kaydı olmadan komisyon itirazı
@@ -850,25 +868,22 @@ export class BookingsService {
         })
         .catch(() => undefined);
 
-    // Kurucu: "müşteri ödeme yaptım butonuna bastığında ayna para kazanıyor."
-    // Ödül burada yazılıyor, tamamlanmayı beklemeden. İki kez yazılmıyor:
-    // `grantCompletionCashback` aynı randevu için ikinci girişi düşürüyor.
-    const guncel = await this.prisma.booking.findUnique({ where: { id } });
-    if (guncel?.userId) {
-      const kazanilan = await grantCompletionCashback(this.prisma, [guncel]).catch((e: unknown) => {
-        this.log.error(
-          `beyan puanı yazılamadı: booking=${id} — ${e instanceof Error ? e.message : String(e)}`,
-        );
-        return 0;
-      });
-      if (kazanilan > 0)
-        void this.push.sendTemplate(
-          guncel.userId,
-          'loyalty.points_earned',
-          { n: String(cashbackPoints(odenenTutar(guncel), DEFAULT_CASHBACK_PCT)) },
-          { route: `/booking/${id}` },
-        );
-    }
+    /*
+     * PUAN BURADA YAZILMIYOR — İKİ TARAFIN ONAYI ŞART.
+     *
+     * Kurucu (05.09.2026): "her iki tarafın onayı adminde müşterinin ayna
+     * parasını aktif hale getirir."
+     *
+     * Müşterinin beyanı ÖN KOŞUL — beyan yoksa hiç puan doğmuyor
+     * (`grantCompletionCashback` beyansız randevuyu eliyor). Ama tek başına
+     * yeterli değil: uzman parayı aldığını teyit edene kadar puan yazılmıyor.
+     * Aksi hâlde ödemediği hâlde "ödedim" diyen müşteri, uzman itiraz etmeye
+     * fırsat bulamadan puanı almış olurdu.
+     *
+     * Ödül iki yolda yazılıyor: uzmanın "ödemeyi aldım" teyidi
+     * (`balanceReceived`) ve §4.9.4 — uzman 24 saat sessiz kalırsa onaylamış
+     * sayılıyor, zamanlayıcı kesinleştiriyor.
+     */
 
     void this.expertUserIdFor(id).then((uid) => {
       if (!uid) return;
@@ -894,8 +909,8 @@ export class BookingsService {
    * istenebilir ne de puan verilebilir.
    */
   async balanceReceived(id: string, actorId?: string) {
-    await this.assertParty(id, actorId, 'provider');
-    const row = await this.transition(id, { status: 'tamamlandi' });
+    const rol = await this.assertParty(id, actorId, 'provider');
+    const row = await this.transition(id, { status: 'tamamlandi' }, rol);
     void this.prisma.booking.findUnique({ where: { id } }).then(async (b) => {
       if (!b?.userId) return;
       // §4.9.3 — puan yüklemesi. Sessizce yutulmuyor: yutulursa müşteri
@@ -969,7 +984,7 @@ export class BookingsService {
 
   // §4.3 — uzman onaylar → ATOMİK slot lock (çift-rezervasyon önlenir) → depozito_bekliyor
   async approve(id: string, actorId?: string) {
-    await this.assertParty(id, actorId, 'provider');
+    const rol = await this.assertParty(id, actorId, 'provider');
     // §5.3 — hold (dekont) penceresi admin ayarı; kod içine gömülü değil.
     const deadline = holdDeadline(await loadWindows(this.prisma));
     // Tek transaction içinde: çakışma kontrolü + durum güncelleme (atomik kilit)
@@ -1039,7 +1054,8 @@ export class BookingsService {
         },
       });
     });
-    return mapBooking(row);
+    // Rol ÇAĞIRANDAN: uzman onayladığında ona uzman görünümü dönmeli.
+    return mapBooking(row, { forProvider: rol === 'provider' });
   }
 
   // §4.2 — kullanıcı kapora dekontunu yükler → uzman onayı bekler
@@ -1055,7 +1071,7 @@ export class BookingsService {
    * biriken puanın en çok %25'i). İstemciden gelen sayı yalnız bir ÜST sınır.
    */
   async submitDepositReceipt(id: string, receiptUriRaw: string, puanIstenen = 0, actorId?: string) {
-    await this.assertParty(id, actorId, 'owner');
+    const rol = await this.assertParty(id, actorId, 'owner');
     // Faz 2 — AYNI DEKONT İKİ KEZ KULLANILAMAZ: içerik sha256'sı benzersiz saklanır
     const hash = createHash('sha256').update(receiptUriRaw).digest('hex');
     const reused = await this.prisma.booking.findFirst({
@@ -1078,12 +1094,16 @@ export class BookingsService {
     // doğrulaması SONRA gelir (§8 dekont kuyruğu) ve yalnız sahte dekontu
     // geri alır. Eskiden araya `deposit_submitted` + uzman onayı giriyordu:
     // müşteri parayı göndermiş olmasına rağmen randevusu kesin değildi.
-    const res = await this.transition(id, {
-      status: 'kesinlesti',
-      depositReceiptUri: receiptUri,
-      receiptHash: hash,
-      ...(kullanilan > 0 ? { pointsUsed: kullanilan } : {}),
-    });
+    const res = await this.transition(
+      id,
+      {
+        status: 'kesinlesti',
+        depositReceiptUri: receiptUri,
+        receiptHash: hash,
+        ...(kullanilan > 0 ? { pointsUsed: kullanilan } : {}),
+      },
+      rol,
+    );
     // §6 — "Depozito yüklendi | İKİSİ | Randevu kesinleşti ✓".
     //
     // Eskiden yalnız uzmana, üstelik "kontrol edip onayla" diyen bir şablonla
@@ -1102,8 +1122,8 @@ export class BookingsService {
    * edemez. AYNA hakem değildir; kayıt yalnız iki tarafı bir araya getirir.
    */
   async dispute(id: string, actorId?: string) {
-    await this.assertParty(id, actorId, 'either');
-    return this.transition(id, { status: 'uyusmazlik', finalizeDeadline: null });
+    const rol = await this.assertParty(id, actorId, 'either');
+    return this.transition(id, { status: 'uyusmazlik', finalizeDeadline: null }, rol);
   }
 
   // §4.4-b — UZMAN gelmedi: iade akışı + 1.000 ₸ uzmanın komisyon borcuna (ceza faturası).
@@ -1299,11 +1319,15 @@ export class BookingsService {
     // Dolu bir saati ÖNERMEK, karşı tarafı reddetmek zorunda bırakmak olurdu.
     await this.slotBosMu(b, newStartMs);
 
-    const row = await this.transition(id, {
-      status: 'erteleme_onerildi',
-      proposedStartAt: new Date(newStartMs),
-      proposedBy: rol,
-    });
+    const row = await this.transition(
+      id,
+      {
+        status: 'erteleme_onerildi',
+        proposedStartAt: new Date(newStartMs),
+        proposedBy: rol,
+      },
+      rol,
+    );
     // §6 — "Erteleme önerisi — Kabul / Red" karşı tarafa.
     const hedef = rol === 'customer' ? await this.expertUserIdFor(id) : (b.userId ?? null);
     if (hedef)
@@ -1339,16 +1363,20 @@ export class BookingsService {
     // Öneri ile kabul arasında slot kapanmış olabilir; kabul anında YENİDEN
     // bakılmazsa çift rezervasyon doğar.
     await this.slotBosMu(b, yeniMs);
-    return this.transition(id, {
-      status: 'kesinlesti',
-      startAt: new Date(yeniMs),
-      dateLabel: deriveDateLabel(yeniMs),
-      inDays: deriveInDays(yeniMs),
-      proposedStartAt: null,
-      proposedBy: null,
-      // Depozito AYNEN kalır — yeni randevuya taşınmış olur (§4.6).
-      rescheduleCount: { increment: 1 },
-    });
+    return this.transition(
+      id,
+      {
+        status: 'kesinlesti',
+        startAt: new Date(yeniMs),
+        dateLabel: deriveDateLabel(yeniMs),
+        inDays: deriveInDays(yeniMs),
+        proposedStartAt: null,
+        proposedBy: null,
+        // Depozito AYNEN kalır — yeni randevuya taşınmış olur (§4.6).
+        rescheduleCount: { increment: 1 },
+      },
+      rol,
+    );
   }
 
   /** §4.6 — erteleme reddedildi: ESKİ randevu geçerli kalır. */
@@ -1363,11 +1391,15 @@ export class BookingsService {
         message: 'Kendi erteleme önerini reddedemezsin',
       });
     }
-    return this.transition(id, {
-      status: 'kesinlesti',
-      proposedStartAt: null,
-      proposedBy: null,
-    });
+    return this.transition(
+      id,
+      {
+        status: 'kesinlesti',
+        proposedStartAt: null,
+        proposedBy: null,
+      },
+      rol,
+    );
   }
 
   /**
@@ -1409,12 +1441,16 @@ export class BookingsService {
    * `karsi_oneri` (tek tur) durumuna gider.
    */
   async propose(id: string, proposedStartMs: number, actorId?: string) {
-    await this.assertParty(id, actorId, 'provider');
-    const row = await this.transition(id, {
-      status: 'degisiklik_onerildi',
-      respondedAt: new Date(),
-      proposedStartAt: new Date(proposedStartMs),
-    });
+    const rol = await this.assertParty(id, actorId, 'provider');
+    const row = await this.transition(
+      id,
+      {
+        status: 'degisiklik_onerildi',
+        respondedAt: new Date(),
+        proposedStartAt: new Date(proposedStartMs),
+      },
+      rol,
+    );
     void this.prisma.booking.findUnique({ where: { id } }).then((b) => {
       if (b?.userId)
         void this.push.sendTemplate(b.userId, 'booking.expert_proposed', undefined, {
@@ -1465,19 +1501,23 @@ export class BookingsService {
    * depozito hiç alınmadan randevu kesin sayılıyordu.
    */
   async accept(id: string, actorId?: string) {
-    await this.assertParty(id, actorId, 'owner');
+    const rol = await this.assertParty(id, actorId, 'owner');
     const b = await this.prisma.booking.findUnique({ where: { id } });
     if (!b)
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
     const yeniBaslangic = b.proposedStartAt ?? b.startAt;
-    return this.transition(id, {
-      status: 'depozito_bekliyor',
-      startAt: yeniBaslangic,
-      proposedStartAt: null,
-      depositAmount: await this.depositAmountFor(Number(b.price)),
-      depositDeadline: holdDeadline(await loadWindows(this.prisma)),
-      ...(yeniBaslangic ? { dateLabel: deriveDateLabel(yeniBaslangic.getTime()) } : {}),
-    });
+    return this.transition(
+      id,
+      {
+        status: 'depozito_bekliyor',
+        startAt: yeniBaslangic,
+        proposedStartAt: null,
+        depositAmount: await this.depositAmountFor(Number(b.price)),
+        depositDeadline: holdDeadline(await loadWindows(this.prisma)),
+        ...(yeniBaslangic ? { dateLabel: deriveDateLabel(yeniBaslangic.getTime()) } : {}),
+      },
+      rol,
+    );
   }
 
   /**
@@ -1486,14 +1526,18 @@ export class BookingsService {
    * `degisiklik_onerildi`ye dönemez — pazarlık ping-pongu bilinçli kapalı).
    */
   async counter(id: string, proposedStartMs: number, actorId?: string) {
-    await this.assertParty(id, actorId, 'owner');
-    const row = await this.transition(id, {
-      status: 'karsi_oneri',
-      startAt: new Date(proposedStartMs),
-      dateLabel: deriveDateLabel(proposedStartMs),
-      inDays: deriveInDays(proposedStartMs),
-      proposedStartAt: null,
-    });
+    const rol = await this.assertParty(id, actorId, 'owner');
+    const row = await this.transition(
+      id,
+      {
+        status: 'karsi_oneri',
+        startAt: new Date(proposedStartMs),
+        dateLabel: deriveDateLabel(proposedStartMs),
+        inDays: deriveInDays(proposedStartMs),
+        proposedStartAt: null,
+      },
+      rol,
+    );
     void this.expertUserIdFor(id).then((uid) => {
       if (uid)
         void this.push.sendTemplate(uid, 'booking.customer_proposed', undefined, {
@@ -1573,7 +1617,25 @@ export class BookingsService {
    * "Bilinmeyen randevu durumu" hatası veriyordu. Tip, brief §3 sözlüğünün
    * dışına çıkan her satırı derleme anında yakalar.
    */
-  private async transition(id: string, data: Record<string, unknown> & { status?: BookingState }) {
+  /**
+   * ROLÜ ÇAĞIRAN SÖYLÜYOR — ZORUNLU PARAMETRE.
+   *
+   * Dönen kayıt `benimRolum` taşıyor ve uygulama ekranı ona bakıyor. Burası
+   * rolü BİLMİYORDU: her eylem ucu `mapBooking(row)` diye dönüyor, o da
+   * varsayılan olarak 'musteri' damgalıyordu. Uzman "İşlemi bitirdim"e
+   * basınca sunucu ona MÜŞTERİ görünümü geri veriyordu — kurucu bunu canlıda
+   * gördü: uzman ekranında "Ödemeyi yaptım" düğmesi çıkıyordu.
+   *
+   * Parametre isteğe bağlı DEĞİL: yeni bir eylem ucu yazan kişi rolü
+   * geçmeyi unutamasın diye derleyici zorluyor. Sınıf alanında tutmak
+   * (`lastActorId` gibi) eşzamanlı iki isteğin birbirinin rolünü ezmesine
+   * açıktı — `assertParty` ile `transition` arasında `await` var.
+   */
+  private async transition(
+    id: string,
+    data: Record<string, unknown> & { status?: BookingState },
+    rol: ActorRole,
+  ) {
     const existing = await this.prisma.booking.findUnique({ where: { id } });
     if (!existing) {
       throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu bulunamadı' });
@@ -1585,7 +1647,8 @@ export class BookingsService {
     // Çift POST idempotent kabul edilir: aynı hedef → mevcut kayıt döner.
     const target = typeof data.status === 'string' ? data.status : null;
     if (target) {
-      if (existing.status === target) return mapBooking(existing); // idempotent tekrar
+      if (existing.status === target)
+        return mapBooking(existing, { forProvider: rol === 'provider' }); // idempotent tekrar
       if (!isBookingState(target)) {
         throw new BadRequestException({
           code: 'INVALID_TRANSITION',
@@ -1620,7 +1683,7 @@ export class BookingsService {
           },
         })
         .catch(() => undefined);
-    return mapBooking(row);
+    return mapBooking(row, { forProvider: rol === 'provider' });
   }
 
   // assertParty'den geçen son aktör — transition audit'i için (istek başına tek akış)
