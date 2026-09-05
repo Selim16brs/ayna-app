@@ -1624,7 +1624,18 @@ model ReengageSent {
 /// iki ayrı ödeme yolu kurmak, para akışında ikinci bir kural demekti.
 model RefundRequest {
   id          String    @id @default(uuid()) @db.Uuid
-  bookingId   String    @map("booking_id") @db.Uuid
+  /*
+   * RANDEVU KİMLİĞİ UUID DEĞİL.
+   *
+   * Sütun `@db.Uuid` idi ama `Booking.id` düz metin: uygulama `bk-m2x8k9ab1`,
+   * sunucu `bk_q_1a2b3c4d` üretiyor. Yani HİÇBİR randevunun iade kaydı
+   * açılamıyordu — Postgres "invalid UUID" diyor, kod bunu "iade talebi
+   * zaten açık" diye raporluyordu. Müşteri var olmayan bir talebi bekliyor,
+   * depozitosunu hiç geri alamıyordu.
+   *
+   * Uçtan uca canlı denemede bulundu (06.09.2026).
+   */
+  bookingId   String    @map("booking_id")
   /// Parayı ALACAK kişi: iade müşteriye, %9 payı uzmana gider.
   payeeUserId String    @map("payee_user_id") @db.Uuid
   /// musteri_iade | uzman_payi
@@ -1690,7 +1701,9 @@ model EmailLog {
 /// taraf 24 saat içinde itiraz ederse açılır; admin panelinde çözülür.
 model Reconciliation {
   id         String    @id @default(uuid()) @db.Uuid
-  bookingId  String    @unique @map("booking_id") @db.Uuid
+  /// `Booking.id` düz metin (bkz. RefundRequest) — UUID kısıtı uzlaşma
+  /// kaydını da imkânsız kılıyordu: itiraz açılamıyordu.
+  bookingId  String    @unique @map("booking_id")
   /// no_show | odeme
   kind       String
   /// İtirazı AÇAN taraf.
