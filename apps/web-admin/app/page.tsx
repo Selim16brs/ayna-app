@@ -3322,12 +3322,34 @@ function AdsView() {
             value={form[sKey]}
             onChange={(e) => setForm({ ...form, [sKey]: e.target.value })}
           />
-          <input
-            className="input"
-            placeholder="Görsel URL (https://...)"
-            value={form.image}
-            onChange={(e) => setForm({ ...form, image: e.target.value })}
-          />
+          {/*
+            GÖRSEL YÜKLENİYOR, LİNK YAPIŞTIRILMIYOR.
+
+            Kurucu (05.09.2026): "orada link koyarak değil biz görsel upload
+            ederek yapmamız lazım."
+
+            Alan bir URL kutusuydu ve canlıdaki iki reklam Google görsel
+            aramasının önizleme adresleriyle girilmişti (~10 piksel genişlik,
+            Google istediği an kaldırabilir). Dosya seçilince veri adresine
+            çevrilip sunucuya gidiyor; sunucu da depolamaya yüklüyor.
+          */}
+          <label className="input" style={{ display: 'grid', gap: 8, height: 'auto' }}>
+            <span className="meta">Reklam görseli</span>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (!f) return;
+                const okuyucu = new FileReader();
+                okuyucu.onload = () => setForm({ ...form, image: String(okuyucu.result) });
+                okuyucu.readAsDataURL(f);
+              }}
+            />
+            {form.image ? (
+              <img className="thumb" src={form.image} alt="reklam görseli önizleme" />
+            ) : null}
+          </label>
           {/* HANGİ VİTRİN satın alındı. Aynı kartı iki bölümde birden
               göstermek ekranı tekrarlı gösterirdi; yerleşimi reklamı ödeyen
               seçiyor. */}
