@@ -1,3 +1,4 @@
+import { sehirYazimlari } from '@ayna/domain';
 import {
   BadRequestException,
   ForbiddenException,
@@ -173,7 +174,19 @@ export class OffersService {
         status: 'active',
         startsAt: { lte: new Date() },
         endsAt: { gt: new Date() },
-        ...(city ? { city } : {}),
+        /*
+         * ŞEHİR EŞLEŞMESİ TÜM YAZIMLARLA.
+         *
+         * Kampanyanın şehri, sahibinin keşif kaydından KOPYALANIYOR; o kayıt
+         * haritadan işaretlenmişse şehir 'Алматы' oluyor (ters geocode
+         * Kazakistan'da Rusça döner). Uygulama 'Almatı' diye sorunca düz metin
+         * eşleşmesi tutmuyor ve kampanya HİÇBİR müşteriye görünmüyordu —
+         * canlıda tam olarak bu vardı (05.09.2026).
+         *
+         * "Önce çek sonra süz" yapmıyoruz: `take` sınırı, süzgeçten önce
+         * eşleşen kayıtları kesebilirdi.
+         */
+        ...(city ? { city: { in: sehirYazimlari(city) } } : {}),
       },
       orderBy: { endsAt: 'asc' },
       take: 100,
