@@ -938,6 +938,10 @@ model CirclePost {
   anonymous        Boolean  @default(false)
   authorLabel      String   @default("AYNA Üyesi") @map("author_label")
   helpful          Int      @default(0)
+  /// GEÇMİŞ SAYAÇ. "Faydalı" işareti kişiye bağlanmadan önce biriken sayı;
+  /// kimin işaretlediği bilinmediği için silinmiyor, uydurulmuş bir kullanıcı
+  /// listesi de üretilmiyor. Yeni işaretler bunun ÜSTÜNE ekleniyor.
+  helpfulBase      Int      @default(0) @map("helpful_base")
   reports          Int      @default(0)
   status           String   @default("published")
   moderationReason String   @default("") @map("moderation_reason")
@@ -986,6 +990,25 @@ model CircleSave {
   @@unique([userId, postId])
   @@index([userId])
   @@map("circle_saves")
+}
+
+/// "Faydalı" işareti — KİMİN işaretlediği tutuluyor.
+///
+/// Eskiden yalnız `CirclePost.helpful` sayacı vardı ve uç kullanıcı kimliğini
+/// hiç almıyordu: giriş yapmış herkes aynı gönderiyi sınırsız kez
+/// işaretleyerek sayacı şişirebiliyor, ya da `on: false` göndererek başka
+/// birinin gönderisinin işaretlerini sıfıra indirebiliyordu. Topluluk güven
+/// sinyali, tek satırlık bir döngüyle uydurulabiliyordu.
+model CircleHelpful {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  /// Bir kişi bir gönderiyi bir kez işaretler.
+  @@unique([userId, postId])
+  @@index([postId])
+  @@map("circle_helpfuls")
 }
 
 model CircleFollow {
