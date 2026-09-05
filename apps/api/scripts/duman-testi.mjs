@@ -311,7 +311,7 @@ ol(
 const bookingId = secim.govde?.bookingId;
 const dekont = await gonder(
   `/bookings/${bookingId}/deposit-receipt`,
-  { receiptUri: 'data:image/jpeg;base64,RFVNQU4=' },
+  { receiptUri: `data:image/jpeg;base64,${Buffer.from(`dekont-${damga}`).toString('base64')}` },
   musteri.govde?.token,
 );
 ol(
@@ -520,8 +520,9 @@ ol(
   String(teyit.govde?.benimRolum),
 );
 
-// Puan yazımı `void` bir zincirde: kısa bir bekleme gerekiyor.
-await new Promise((r) => setTimeout(r, 1200));
+// Puan yazımı `void` bir zincirde: sabit uyku yerine ölçüyoruz.
+const beklenenPuan = Math.floor(ODENEN / 100);
+await bakiyeBekle(beklenenPuan);
 const puanSonra = await get('/loyalty', musteriToken);
 // %1 geri kazanım ÖDENEN tutardan: 26.000 → 260 puan (rezervasyondaki 20.000 değil).
 ol(
@@ -547,7 +548,7 @@ ol(
   beyanSonra.govde?.status === 'tamamlandi',
   String(beyanSonra.govde?.status),
 );
-await new Promise((r) => setTimeout(r, 1200));
+await bakiyeBekle(Math.floor(ODENEN / 100) + HIZMET_FIYATI / 100);
 const puanIki = await get('/loyalty', musteriToken);
 // İkinci randevu 20.000 (fiyat değişmedi) → +200 puan.
 ol(
@@ -652,12 +653,28 @@ await gonder('/prefs', { notif: { booking: true } }, musteriToken);
  * paraya çevrilebiliyordu.
  * ══════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Bakiye HEDEFE ulaşana kadar bekler — sabit uyku yerine ÖLÇÜM.
+ *
+ * Puan yazımı `void` bir zincirde ilerliyor; sabit bir bekleme yavaş bir
+ * makinede yetmiyor ve test rastgele düşüyordu. Rastgele düşen bir test,
+ * hiç olmayan bir testten kötüdür: insan onu görmezden gelmeyi öğrenir.
+ */
+async function bakiyeBekle(enAz, turSayisi = 25) {
+  for (let i = 0; i < turSayisi; i++) {
+    const p = (await get('/loyalty', musteriToken))?.points ?? 0;
+    if (p >= enAz) return p;
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  return (await get('/loyalty', musteriToken))?.points ?? 0;
+}
+
 /** Puanla ödeme kilidini açacak kadar bakiye kazandırır (tamamlanan randevu). */
 async function puanBiriktir(hedefPuan) {
   let dk = 400;
   for (let i = 0; i < 12; i++) {
-    const bakiye = (await get('/loyalty', musteriToken))?.points ?? 0;
-    if (bakiye >= hedefPuan) return bakiye;
+    const oncekiBakiye = (await get('/loyalty', musteriToken))?.points ?? 0;
+    if (oncekiBakiye >= hedefPuan) return oncekiBakiye;
     const r = await gecmisRandevuAc(dk, 200000); // %1 → 2.000 puan
     dk += 90;
     if (!r.ok) {
@@ -682,8 +699,10 @@ async function puanBiriktir(hedefPuan) {
       console.error(
         `  puan turu ${i}: ödeme — ${JSON.stringify(bp.govde).slice(0, 80)} | ${JSON.stringify(br.govde).slice(0, 80)}`,
       );
+      continue;
     }
-    await new Promise((x) => setTimeout(x, 700));
+    // Bu turun puanı yazılana kadar bekle: sabit uyku yavaş makinede yetmiyor.
+    await bakiyeBekle(oncekiBakiye + 1);
   }
   return (await get('/loyalty', musteriToken))?.points ?? 0;
 }
@@ -704,7 +723,10 @@ const rpId = rp.govde?.id;
 await gonder(`/bookings/${rpId}/approve`, {}, uzmanToken);
 const puanliDekont = await gonder(
   `/bookings/${rpId}/deposit-receipt`,
-  { receiptUri: 'data:image/jpeg;base64,UFVBTkxJ', pointsRequested: 100000 },
+  {
+    receiptUri: `data:image/jpeg;base64,${Buffer.from(`puanli-${damga}`).toString('base64')}`,
+    pointsRequested: 100000,
+  },
   musteriToken,
 );
 ol(
@@ -774,7 +796,10 @@ const ileriId = ileri.govde?.id;
 await gonder(`/bookings/${ileriId}/approve`, {}, uzmanToken);
 const ileriDekont = await gonder(
   `/bookings/${ileriId}/deposit-receipt`,
-  { receiptUri: 'data:image/jpeg;base64,SUxFUkk=', pointsRequested: 100000 },
+  {
+    receiptUri: `data:image/jpeg;base64,${Buffer.from(`ileri-${damga}`).toString('base64')}`,
+    pointsRequested: 100000,
+  },
   musteriToken,
 );
 ol(
@@ -804,13 +829,161 @@ ol(
   Number(iade.govde?.amount) === 2000 - puanIleri,
   `${iade.govde?.amount} (depozito 2000 − puan ${puanIleri})`,
 );
-await new Promise((r) => setTimeout(r, 700));
-const bakiyeIadeSonrasi = (await get('/loyalty', musteriToken))?.points ?? 0;
+const bakiyeIadeSonrasi = await bakiyeBekle(bakiyeIleri + puanIleri);
 ol(
   'puanla ödenen kısım PUAN olarak geri geliyor',
   bakiyeIadeSonrasi === bakiyeIleri + puanIleri,
   `${bakiyeIleri} + ${puanIleri} → ${bakiyeIadeSonrasi}`,
 );
+
+/* ══════════════════════════════════════════════════════════════════════
+ * AŞAMA 4 — ÜYELİK VE REKLAM (para giren diğer iki yol)
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* ── 4.1 ÜYELİK: SATIN AL → DEKONT → ONAY ─────────────────────────── */
+const uyelik = await gonder('/subscriptions', { tier: 'premium' }, uzmanToken);
+ol('üyelik talebi açılıyor', uyelik.ok, JSON.stringify(uyelik.govde).slice(0, 140));
+const uyelikId = uyelik.govde?.id;
+ol(
+  'üyelik BEKLİYOR durumunda başlıyor',
+  uyelik.govde?.status === 'pending',
+  String(uyelik.govde?.status),
+);
+
+const uyelikDekontIcerik = `data:image/jpeg;base64,${Buffer.from(`uyelik-${damga}`).toString('base64')}`;
+const uyelikDekont = await gonder(
+  `/subscriptions/${uyelikId}/receipt`,
+  { receiptUri: uyelikDekontIcerik },
+  uzmanToken,
+);
+ol('üyelik dekontu yükleniyor', uyelikDekont.ok, JSON.stringify(uyelikDekont.govde).slice(0, 120));
+
+// AYNI dekont ikinci bir üyelikte kullanılamaz.
+const uyelik2 = await gonder('/subscriptions', { tier: 'premium' }, uzmanToken);
+const tekrarDekont = await gonder(
+  `/subscriptions/${uyelik2.govde?.id}/receipt`,
+  { receiptUri: uyelikDekontIcerik },
+  uzmanToken,
+);
+ol(
+  'AYNI üyelik dekontu ikinci kez kullanılamıyor',
+  !tekrarDekont.ok,
+  `${tekrarDekont.durum} ${tekrarDekont.govde?.error?.code ?? ''}`,
+);
+
+const uyelikOnay = await gonder(
+  `/admin/subscriptions/${uyelikId}/approve`,
+  { months: 1 },
+  yoneticiToken,
+);
+ol('yönetici üyeliği onaylıyor', uyelikOnay.ok, JSON.stringify(uyelikOnay.govde).slice(0, 140));
+const benimUyelik = await get('/subscriptions/mine', uzmanToken);
+ol('üyelik AKTİF oldu', benimUyelik?.tier === 'premium', String(benimUyelik?.tier));
+const ilkBitis = new Date(benimUyelik?.until ?? 0).getTime();
+ol(
+  'üyelik bitişi 30 gün sonra',
+  Math.abs(ilkBitis - (Date.now() + 30 * 86_400_000)) < 5 * 60_000,
+  new Date(ilkBitis).toISOString(),
+);
+
+// ZATEN AKTİF talebi yeniden onaylamak bedava 30 gün yazardı.
+const tekrarOnay = await gonder(
+  `/admin/subscriptions/${uyelikId}/approve`,
+  { months: 1 },
+  yoneticiToken,
+);
+ol(
+  'AKTİF üyelik yeniden onaylanamıyor',
+  !tekrarOnay.ok,
+  `${tekrarOnay.durum} ${tekrarOnay.govde?.error?.code ?? ''}`,
+);
+
+/* ── 4.2 YENİLEME: ÖDENEN GÜN KAYBOLMUYOR ─────────────────────────── */
+const yenileme = await gonder('/subscriptions', { tier: 'premium' }, uzmanToken);
+await gonder(
+  `/subscriptions/${yenileme.govde?.id}/receipt`,
+  { receiptUri: `data:image/jpeg;base64,${Buffer.from(`yenileme-${damga}`).toString('base64')}` },
+  uzmanToken,
+);
+await gonder(`/admin/subscriptions/${yenileme.govde?.id}/approve`, { months: 1 }, yoneticiToken);
+const yenilenmis = await get('/subscriptions/mine', uzmanToken);
+const yeniBitis = new Date(yenilenmis?.until ?? 0).getTime();
+// Kalan 30 günün ÜSTÜNE 30 gün: toplam ~60. Sabit "bugün + 30" yazsaydı
+// uzman ödediği bir ayı kaybederdi.
+ol(
+  'yenilemede ödenen gün KAYBOLMUYOR',
+  Math.abs(yeniBitis - (ilkBitis + 30 * 86_400_000)) < 5 * 60_000,
+  `${new Date(ilkBitis).toISOString().slice(0, 10)} → ${new Date(yeniBitis).toISOString().slice(0, 10)}`,
+);
+
+// Eski satır kapatılmalı: kapatılmazsa zamanlayıcı onu bulup uzmanı free'ye düşürür.
+const eskiKapandi = await gonder('/admin/subscriptions/run-expire', {}, yoneticiToken);
+ol('süre dolum turu çalışıyor', eskiKapandi.ok, JSON.stringify(eskiKapandi.govde).slice(0, 80));
+const uyelikSonra = await get('/subscriptions/mine', uzmanToken);
+ol(
+  'YENİLEYEN uzman üyeliğini KAYBETMİYOR',
+  uyelikSonra?.tier === 'premium',
+  String(uyelikSonra?.tier),
+);
+
+/* ── 4.3 REKLAM: SİPARİŞ → DEKONT → YAYIN ─────────────────────────── */
+const reklam = await gonder(
+  '/ad-orders',
+  {
+    proName: 'Duman Uzman',
+    placement: 'one_cikanlar',
+    title: 'Duman kampanyası',
+    subtitle: 'E2E',
+    image: 'data:image/jpeg;base64,UkVLTEFN',
+    months: 2,
+  },
+  uzmanToken,
+);
+ol('reklam siparişi açılıyor', reklam.ok, JSON.stringify(reklam.govde).slice(0, 140));
+const reklamId = reklam.govde?.id;
+/*
+ * Görsel DEPOLAMADAN geçiyor. R2 yapılandırılmamış ortamda (yerel/CI)
+ * `storage.put` değeri olduğu gibi döndürüyor — o yüzden burada beklenen şey
+ * "veri adresi değil" değil, "görsel KAYBOLMAMIŞ". Depolamadan geçtiğinin
+ * kanıtı birim testinde (`reklam-gorseli.test.ts`); burada zincirin
+ * kopmadığını doğruluyoruz.
+ */
+ol(
+  'reklam görseli siparişte duruyor',
+  !!reklam.govde?.image,
+  String(reklam.govde?.image ?? '').slice(0, 40),
+);
+
+const dekontsuzOnay = await gonder(`/admin/ad-orders/${reklamId}/approve`, {}, yoneticiToken);
+ol(
+  'DEKONTSUZ reklam yayına alınamıyor',
+  !dekontsuzOnay.ok,
+  `${dekontsuzOnay.durum} ${dekontsuzOnay.govde?.error?.code ?? ''}`,
+);
+
+await gonder(
+  `/ad-orders/${reklamId}/receipt`,
+  { receiptUri: `data:image/jpeg;base64,${Buffer.from(`reklam-${damga}`).toString('base64')}` },
+  uzmanToken,
+);
+const reklamOnay = await gonder(`/admin/ad-orders/${reklamId}/approve`, {}, yoneticiToken);
+ol('reklam yayına alınıyor', reklamOnay.ok, JSON.stringify(reklamOnay.govde).slice(0, 120));
+ol(
+  'sipariş YAYINDA durumuna geçiyor',
+  reklamOnay.govde?.status === 'yayinda',
+  String(reklamOnay.govde?.status),
+);
+
+const tekrarReklamOnay = await gonder(`/admin/ad-orders/${reklamId}/approve`, {}, yoneticiToken);
+ol(
+  'YAYINDAKİ sipariş yeniden onaylanamıyor',
+  !tekrarReklamOnay.ok,
+  `${tekrarReklamOnay.durum} ${tekrarReklamOnay.govde?.error?.code ?? ''}`,
+);
+
+const reklamlar = await get('/ads');
+const benimReklam = (reklamlar ?? []).find((a) => a.title === 'Duman kampanyası');
+ol('reklam KEŞİFTE görünüyor', !!benimReklam, `${(reklamlar ?? []).length} reklam`);
 
 /* ── RAPOR ─────────────────────────────────────────────────────────── */
 const dusen = sonuclar.filter((s) => !s.gecti);
@@ -848,6 +1021,22 @@ try {
   await p.quote.deleteMany({ where: { userId: { in: ids } } });
   await p.quoteRequest.deleteMany({ where: { userId: { in: ids } } });
   await p.regulatedServiceFlag.deleteMany({ where: { proId: { in: prolar.map((x) => x.id) } } });
+  /*
+   * ÜYELİK, REKLAM ve BANNER da siliniyor.
+   *
+   * Temizlik yalnız randevu/teklif/uzman kayıtlarını siliyordu: üyelik ve
+   * reklam siparişleri birikiyor, dekont tekilliği yüzünden BİR SONRAKİ
+   * koşu düşüyordu. "Ardında veri bırakmaz" sözü tutulmuş olmuyordu.
+   */
+  await p.subscription.deleteMany({ where: { userId: { in: ids } } });
+  await p.adOrder.deleteMany({ where: { userId: { in: ids } } });
+  await p.adBanner.deleteMany({ where: { proId: { in: prolar.map((x) => x.id) } } });
+  await p.rating.deleteMany({ where: { subjectId: { in: prolar.map((x) => x.id) } } });
+  await p.loyaltyEntry.deleteMany({ where: { userId: { in: ids } } });
+  await p.refundRequest.deleteMany({ where: { payeeUserId: { in: ids } } });
+  await p.userNotification.deleteMany({ where: { userId: { in: ids } } });
+  await p.notificationOutbox.deleteMany({ where: { userId: { in: ids } } });
+  await p.userPrefs.deleteMany({ where: { userId: { in: ids } } });
   await p.specialist.deleteMany({ where: { userId: { in: ids } } });
   await p.professional.deleteMany({ where: { name: 'Duman Uzman' } });
   await p.user.deleteMany({ where: { id: { in: ids } } });
