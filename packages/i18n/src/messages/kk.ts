@@ -1290,6 +1290,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'agenda.view.salon': 'Салон',
   'agenda.salon_note':
     'Маман күнтізбелеріне тек жазылу ҚОСА АЛАСЫҢ; жоя алмайсың немесе демалыс күндеріне тие алмайсың. Әр қосу маманға хабарланады.',
+  'agenda.weekly_closed': 'Апталық кестеңде жабық — өңдеу',
   'agenda.mark_closed': 'Жабық деп белгіле',
   'agenda.mark_open': 'Ашық деп белгіле',
   'agenda.closed_day':

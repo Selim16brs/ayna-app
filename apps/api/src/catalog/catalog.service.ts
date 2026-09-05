@@ -9,6 +9,8 @@ import {
   type PromosyonKarti,
   uzmanKayitli,
   VARSAYILAN_CALISMA_SAATI,
+  almatiHaftaGunu,
+  haftaGunuKapali,
 } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { BasariService } from '../basari/basari.service';
@@ -515,10 +517,16 @@ export class CatalogService {
     if (closed.includes(dayMs)) return { slots: [], closed: true };
 
     // Çalışma penceresi: DayHours[] {wd, open, from:'HH:MM', to:'HH:MM'}; boşsa 10:00–20:00
-    const wd = almatyWeekday(dayMs);
+    const wd = almatiHaftaGunu(dayMs);
     const hours = safeParseHours(p.hoursJson);
     const day = hours.find((h) => h.wd === wd);
-    if (hours.length > 0 && day && !day.open) return { slots: [], closed: true };
+    /*
+     * Kapalılık kuralı `@ayna/domain`de: uzmanın KENDİ takvimi de aynı
+     * fonksiyonu çağırıyor. Ayrı yazıldığı sürece iki ekran aynı soruya
+     * farklı cevap veriyordu — uzman kendini açık sanıyor, müşteri o gün
+     * hiç slot görmüyordu (kurucu, 06.09.2026).
+     */
+    if (haftaGunuKapali(hours, wd)) return { slots: [], closed: true };
     /*
      * Saatini GİRMEMİŞ sağlayıcıya varsayılan pencere uygulanıyor. Sayı
      * `@ayna/domain`den: uzman paneli "müşteriye şu aralık gösteriliyor"
@@ -917,14 +925,7 @@ export class CatalogService {
   }
 }
 
-// §4.6 slot yardımcıları — timezone Intl ile çözülür (sabit UTC offset YOK; plan §5)
-function almatyWeekday(ms: number): number {
-  const wd = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Almaty', weekday: 'short' }).format(
-    new Date(ms),
-  );
-  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(wd);
-}
-
+// §4.6 slot yardımcıları — hafta günü `@ayna/domain`den (tek kaynak).
 function hmToMs(dayStartMs: number, hm: string): number {
   const [h, m] = hm.split(':').map(Number);
   return dayStartMs + ((h ?? 0) * 60 + (m ?? 0)) * 60_000;
