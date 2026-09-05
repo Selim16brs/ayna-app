@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { PushService } from '../push/push.service';
 import { SLOT_HOLDING_STATUSES } from '../bookings/slot-statuses';
 import {
   ConflictException,
@@ -32,6 +33,8 @@ export class BusinessesService {
     private readonly audit: AuditService,
     private readonly bookings: BookingsService,
     @Inject(ENV) private readonly env: Env,
+    // §4.5 — kadrodan çıkarılan uzmana bildirim: sessiz silme yasak.
+    private readonly push: PushService,
   ) {}
 
   // §3.2 — İşletme kaydı: sahip hesabı (rol salon) + işletme (pending). Token YOK (admin onayı şart).
@@ -202,6 +205,52 @@ export class BusinessesService {
       services: (r.proId ? hizmetler.get(r.proId) : null) ?? [],
       calendarPermission: r.calendarPermission, // Faz 4 — kadro ekranında yetki rozeti
     }));
+  }
+
+  /**
+   * KADRODAN ÇIKARMA — §4.5, sessiz silme YASAK.
+   *
+   * ── SORUN ────────────────────────────────────────────────────────────
+   *
+   * Ekran "kadrodan çıkar" diyordu ve uzmanın açık randevularını gerçekten
+   * iptal ediyordu — ama uzmanı kadrodan ÇIKARAN hiçbir sunucu çağrısı
+   * yoktu. Kadro listesi sunucudan geliyor: bir sonraki tazelemede uzman
+   * geri geliyordu.
+   *
+   * Yani mümkün olan en kötü bileşim: yıkıcı olan kısım (randevu iptalleri)
+   * gerçek, asıl amaç (kadrodan çıkarma) hayali.
+   *
+   * ── KURAL ────────────────────────────────────────────────────────────
+   *
+   * Uzmanın HESABI silinmiyor, yalnız salon bağı kopuyor: kendi kartı,
+   * hizmetleri, geçmişi duruyor ve bağımsız uzman olarak çalışmaya devam
+   * ediyor. Salonun uzmanın hesabını silme yetkisi yok.
+   *
+   * Uzmana bildirim gidiyor: kendi kadro durumunun değiştiğini ekrandan
+   * öğrenmek zorunda kalmasın (sessiz silme yasağının uzman ayağı).
+   */
+  async removeStaff(businessId: string, specialistId: string, ownerUserId: string) {
+    const b = await this.assertOwner(businessId, ownerUserId);
+    const sp = await this.prisma.specialist.findUnique({ where: { id: specialistId } });
+    if (!sp || sp.businessId !== businessId) {
+      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Bu kadroda böyle bir uzman yok' });
+    }
+    const guncel = await this.prisma.specialist.update({
+      where: { id: specialistId },
+      data: { businessId: null, kind: 'independent' },
+    });
+    await this.audit.record({
+      actorId: ownerUserId,
+      actorRole: 'salon',
+      action: 'business.staff_removed',
+      resourceType: 'specialist',
+      resourceId: specialistId,
+      safeDiff: { businessId },
+    });
+    void this.push
+      .sendTemplate(sp.userId, 'staff.removed', { salon: b.name }, { route: '/seller/premium' })
+      .catch(() => undefined);
+    return { id: guncel.id, businessId: guncel.businessId };
   }
 
   // Faz 4 (§14) — kadronun KİŞİSEL randevu dolulukları: SALT zaman bloğu.

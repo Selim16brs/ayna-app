@@ -43,6 +43,7 @@ export type PushTemplateKey =
   | 'reengage.pre'
   | 'reengage.due'
   | 'staff.joined'
+  | 'staff.removed'
   | 'calendar.permission_changed'
   | 'birthday'
   | 'membership.upgraded'
@@ -201,6 +202,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
     'staff.joined': {
       title: 'Yeni kadro üyesi',
       body: 'Bir uzman salonuna katıldı',
+    },
+    'staff.removed': {
+      title: 'Salon kadrosundan çıkarıldın',
+      body: '{salon} kadrosundan çıkarıldın. Bağımsız uzman olarak çalışmaya devam edebilirsin.',
     },
     'calendar.permission_changed': {
       title: 'Takvim yetkisi güncellendi',
@@ -380,6 +385,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
       title: 'Жаңа құрам мүшесі',
       body: 'Салоныңа маман қосылды',
     },
+    'staff.removed': {
+      title: 'Салон құрамынан шығарылдың',
+      body: '{salon} құрамынан шығарылдың. Тәуелсіз маман ретінде жұмысты жалғастыра аласың.',
+    },
     'calendar.permission_changed': {
       title: 'Күнтізбе рұқсаты жаңарды',
       body: 'Салон күнтізбесіндегі рұқсатың өзгерді.',
@@ -557,6 +566,10 @@ const T: Record<string, Record<PushTemplateKey, Tpl>> = {
     'staff.joined': {
       title: 'Новый сотрудник',
       body: 'Мастер присоединился к вашему салону',
+    },
+    'staff.removed': {
+      title: 'Вы исключены из команды салона',
+      body: 'Вас исключили из команды {salon}. Вы можете продолжить работу как независимый мастер.',
     },
     'calendar.permission_changed': {
       title: 'Права в календаре изменены',
