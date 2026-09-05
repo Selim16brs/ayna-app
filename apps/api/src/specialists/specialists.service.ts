@@ -599,11 +599,29 @@ export class SpecialistsService {
      * ayrışmıştı. Tek kaynak, ayrışacak bir şey bırakmıyor.
      */
     const sectors = sectorsFromServiceIds(kesilmis.map((x) => hizmetSatirininKimligi(x) ?? ''));
+    /*
+     * ANA ALAN, HİZMET VERİLEN ALANLARDAN BİRİ OLMAK ZORUNDA.
+     *
+     * `sectors` her hizmet güncellemesinde yeniden türetiliyordu ama tekil
+     * `sector` sütunu kayıt anındaki değerde KALIYORDU. Canlıda görülen
+     * (05.09.2026): sector "makeup", sectors ["hair","nails"] — uzman
+     * makyaj yapmıyor, ama ana alanı makyaj görünüyor. Kartta uzmanlık
+     * etiketi oradan okunduğu için müşteriye YANLIŞ ALAN yazılıyordu.
+     *
+     * Ana alan hâlâ hizmet verilen alanlardan biriyse dokunulmuyor —
+     * uzmanın kendi seçimi korunur. Değilse ilk gerçek alana çekiliyor.
+     */
+    const mevcut = await this.prisma.professional.findUnique({
+      where: { id: proId },
+      select: { sector: true },
+    });
+    const anaAlanGecerli = !!mevcut?.sector && sectors.includes(mevcut.sector);
     const pro = await this.prisma.professional.update({
       where: { id: proId },
       data: {
         servicesJson: JSON.stringify(kesilmis),
         ...(sectors.length ? { sectors } : {}),
+        ...(sectors.length && !anaAlanGecerli ? { sector: sectors[0]! } : {}),
       },
     });
     /*
