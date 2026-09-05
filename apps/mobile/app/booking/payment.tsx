@@ -8,7 +8,7 @@ import { randevuDepozitosu, useStore } from '../../src/store';
 import { font, type ColorTokens } from '../../src/theme';
 import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text } from '../../src/ui';
 
 /**
  * ÖDEME BEYANI — kurucu, 05.09.2026.
@@ -143,7 +143,9 @@ export default function PaymentScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    icerik: { padding: 24, gap: 20, paddingBottom: TAB_BAR_CLEARANCE },
+    // Alt bar bu ekranda gizli (app/_layout.tsx: yalnız sekme köklerinde çizilir) —
+    // barın yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+    icerik: { padding: 24, gap: 20, paddingBottom: 24 },
     bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
     tutarKart: { borderRadius: 24, padding: 20, gap: 6 },
     tutarEtiket: {
