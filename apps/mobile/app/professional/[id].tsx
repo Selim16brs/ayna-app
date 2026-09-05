@@ -27,7 +27,6 @@ import {
   RulesCard,
   Screen,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   TepeIsigi,
   Text,
   VerificationBadges,
@@ -387,7 +386,7 @@ export default function ProfessionalScreen() {
     <View style={styles.root}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 130 + TAB_BAR_CLEARANCE }}
+        contentContainerStyle={{ paddingBottom: 130 }}
       >
         {/* ═══ ÜST — kanvas Uzman.dc.html §ÜST ═══
             Kanvas: AÇIK porselen zemin, 48'lik kart düğmeler. Önceki sürüm mor
@@ -700,7 +699,7 @@ export default function ProfessionalScreen() {
                           style={styles.staffCard}
                         >
                           <View style={[styles.staffAvatarWrap, on && styles.staffAvatarOn]}>
-                            <Image source={{ uri: u.image }} style={styles.staffAvatar} />
+                            <SaglayiciFoto uri={u.image} ad={u.name} style={styles.staffAvatar} />
                           </View>
                           <Text
                             variant="caption"
@@ -1164,7 +1163,7 @@ export default function ProfessionalScreen() {
           </Text>
         </View>
       ) : null}
-      <View style={[styles.cta, { paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }]}>
+      <View style={[styles.cta, { paddingBottom: insets.bottom + space(1) }]}>
         {/* §5.5 — Takip et: karşılıklı takip serbest DM açar. Yalnız gerçek uzmanda. */}
         {pro.ownerUserId && token ? (
           <Pressable

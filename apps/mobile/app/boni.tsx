@@ -25,7 +25,6 @@ import {
   PressableScale,
   Screen,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   Text,
   TextInput,
 } from '../src/ui';
@@ -442,7 +441,7 @@ const makeStyles = (colors: ColorTokens) =>
     inputBar: {
       paddingHorizontal: space(3),
       paddingTop: space(1),
-      paddingBottom: TAB_BAR_CLEARANCE, // alt sekme çubuğu girdiyi ÖRTMESİN
+      paddingBottom: space(3), // alt sekme çubuğu girdiyi ÖRTMESİN
       backgroundColor: colors.bg,
     },
     inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space(1) },

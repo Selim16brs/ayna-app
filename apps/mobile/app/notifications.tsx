@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 import { inAudience, selectSellerView, useStore } from '../src/store';
 import { type ColorTokens, radius, space, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../src/ui';
+import { Screen, StackHeader, Text } from '../src/ui';
 import { gecenSureYazisi } from '../src/gecen-sure';
 
 type IoniconName = keyof typeof Ionicons.glyphMap;
@@ -127,7 +127,10 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      // Alt güvenli alanı kabuk `Screen` zaten veriyor.
+      paddingBottom: space(3),
     },
     topRow: { alignItems: 'flex-end', marginBottom: space(2) },
     markAll: {

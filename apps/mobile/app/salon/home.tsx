@@ -9,7 +9,7 @@ import { VARSAYILAN_CALISMA_SAATI } from '@ayna/domain';
 import { api } from '../../src/api';
 import { type SupplierAd } from '../../src/data';
 import { useSalonStaff } from '../../src/staff';
-import { TepeIsigi, OccupancyStrip } from '../../src/ui';
+import { OccupancyStrip, SaglayiciFoto, TepeIsigi } from '../../src/ui';
 import { greetingKey } from '../../src/greeting';
 import { fillParams, useLocale } from '../../src/locale';
 import { selectUnreadCount, useStore } from '../../src/store';
@@ -108,11 +108,7 @@ export default function SalonHomeScreen() {
             accessibilityRole="button"
             accessibilityLabel={t('salon.cover.edit')}
           >
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.avatarImg} resizeMode="cover" />
-            ) : (
-              <Ionicons name="business" size={22} color={colors.accent} />
-            )}
+            <SaglayiciFoto uri={avatarUri} ad={salonName} style={styles.avatarImg} />
             <View style={styles.avatarCam}>
               <Ionicons name="camera" size={11} color={colors.onAccent} />
             </View>
@@ -275,15 +271,7 @@ export default function SalonHomeScreen() {
                     })
                   }
                 >
-                  {u.image ? (
-                    <Image source={{ uri: u.image }} style={styles.staffImg} />
-                  ) : (
-                    <View style={[styles.staffImg, styles.staffInitial]}>
-                      <Text variant="bodyStrong" tone="inkSoft">
-                        {u.name.charAt(0).toLocaleUpperCase('tr-TR')}
-                      </Text>
-                    </View>
-                  )}
+                  <SaglayiciFoto uri={u.image} ad={u.name} style={styles.staffImg} />
                   <View style={styles.staffInfo}>
                     <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
                       {u.name}

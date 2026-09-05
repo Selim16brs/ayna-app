@@ -10,7 +10,7 @@ import { api } from '../../src/api';
 import { useStore } from '../../src/store';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, SectionHeader, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Screen, SectionHeader, StackHeader, Text } from '../../src/ui';
 
 type ToggleKey = 'location' | 'anon' | 'personalized' | 'analytics' | 'marketing';
 
@@ -443,7 +443,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      paddingBottom: space(3),
     },
     subtitle: { marginBottom: space(2.5) },
     // W2W akışından TAŞINDI (bkz. yukarıdaki gerekçe).

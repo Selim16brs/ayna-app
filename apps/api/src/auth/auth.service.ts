@@ -154,6 +154,8 @@ export class AuthService {
         ...(avatarUrl ? { avatarUrl } : {}),
         ...(input.birthDateMs ? { birthDate: new Date(input.birthDateMs) } : {}),
         ...(input.city ? { city: input.city } : {}),
+        // Ülke düz saklanıyor (PII değil); numara şifreli kalmaya devam ediyor.
+        ...(input.phoneCountry ? { phoneCountry: input.phoneCountry } : {}),
       },
     });
     /*

@@ -34,7 +34,16 @@ test('ADRES kayıttan geri yükleniyor', () => {
 });
 
 test('İLETİŞİM ve HİZMET ALANLARI geri yükleniyor', () => {
-  assert.match(yukleme, /setContact\([\s\S]{0,120}b\.phone/, 'iletişim geri yüklenmiyor');
+  /*
+   * İletişim numarası artık ÜLKE KODU + YEREL olarak ayrı tutuluyor
+   * (ortak `TelefonGirdisi`), bu yüzden geri yükleme `parcala` ile yapılıyor:
+   * kayıtlı "+77001234567" değeri kutuya olduğu gibi düşseydi kullanıcı
+   * düzenlemek için ülke kodunu elle silmek zorunda kalırdı.
+   */
+  assert.match(yukleme, /b\.phone/, 'iletişim geri yüklenmiyor');
+  assert.match(yukleme, /parcala\(/, 'numara ülke koduna göre ayrılmıyor');
+  assert.match(yukleme, /setIletisimYerel\(/, 'yerel kısım yazılmıyor');
+  assert.match(yukleme, /setIletisimUlke\(/, 'ülke kodu yazılmıyor');
   assert.match(yukleme, /setAreas\([\s\S]{0,120}b\.categories/, 'hizmet alanları geri yüklenmiyor');
 });
 
@@ -51,7 +60,7 @@ test('KULLANICININ YAZDIĞI EZİLMİYOR', () => {
   );
   assert.match(
     yukleme,
-    /setContact\(\(mevcut\) => mevcut\.trim\(\) \|\|/,
+    /setIletisimYerel\(\(mevcut\) => \{[\s\S]{0,80}mevcut\.trim\(\)\) return mevcut;/,
     'iletişim koşulsuz eziliyor',
   );
   assert.match(

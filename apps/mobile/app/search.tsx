@@ -35,7 +35,6 @@ import {
   PressableScale,
   Screen,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   Text,
   ListSkeleton,
   SaglayiciFoto,
@@ -1019,7 +1018,7 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
     },
     count: { marginBottom: space(1.5), marginLeft: space(0.5) },
     emptyBox: { gap: space(1), paddingTop: space(1) },

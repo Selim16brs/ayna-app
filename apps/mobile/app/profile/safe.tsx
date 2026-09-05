@@ -13,10 +13,11 @@ import {
   Screen,
   SectionHeader,
   StackHeader,
-  TAB_BAR_CLEARANCE,
+  TelefonGirdisi,
   Text,
   TextInput,
 } from '../../src/ui';
+import { tamNumara, VARSAYILAN_ULKE, type Ulke } from '../../src/telefon-bicim';
 
 // EK Z.2 — Randevu güvenlik katmanı: güvenilen kişiler + SOS + canlı konum oturumu.
 // Konum paylaşımı VARSAYILAN KAPALI; kullanıcı açıkça başlatır (safety.share.default_off).
@@ -44,6 +45,15 @@ export default function SafeScreen() {
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ name: '', phone: '', relation: '' });
+  /*
+   * Güvenilen kişinin telefonu da ORTAK biçimde toplanıyor.
+   *
+   * Bu alanda HİÇBİR filtre yoktu — harf bile girilebiliyordu. Hesap kimliği
+   * değil ama acil durumda ARANACAK numara; ülke kodsuz kaydedilirse o an
+   * çalışmaz.
+   */
+  const [kisiUlke, setKisiUlke] = useState<Ulke>(VARSAYILAN_ULKE);
+  const [kisiYerel, setKisiYerel] = useState('');
   const watchRef = useRef<Location.LocationSubscription | null>(null);
 
   const active = session?.status === 'active' || session?.status === 'sos';
@@ -145,16 +155,17 @@ export default function SafeScreen() {
   };
 
   const saveContact = async () => {
-    if (!token || !form.name.trim() || !form.phone.trim()) return;
+    if (!token || !form.name.trim() || !tamNumara(kisiUlke.kod, kisiYerel)) return;
     setBusy(true);
     try {
       const c = await api.addTrustedContact(token, {
         name: form.name.trim(),
-        phone: form.phone.trim(),
+        phone: tamNumara(kisiUlke.kod, kisiYerel),
         relation: form.relation.trim() || undefined,
       });
       setContacts((prev) => [...prev, c]);
       setForm({ name: '', phone: '', relation: '' });
+      setKisiYerel('');
       setAdding(false);
     } finally {
       setBusy(false);
@@ -314,13 +325,13 @@ export default function SafeScreen() {
                 placeholderTextColor={colors.muted}
                 style={styles.input}
               />
-              <TextInput
-                value={form.phone}
-                onChangeText={(v) => setForm({ ...form, phone: v })}
-                placeholder={t('safe.contact_phone')}
-                placeholderTextColor={colors.muted}
-                keyboardType="phone-pad"
-                style={styles.input}
+              <TelefonGirdisi
+                etiket={t('safe.contact_phone')}
+                ulke={kisiUlke}
+                ulkeDegisti={setKisiUlke}
+                yerel={kisiYerel}
+                yerelDegisti={setKisiYerel}
+                hataGoster={kisiYerel.length > 0}
               />
               <TextInput
                 value={form.relation}
@@ -359,7 +370,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      paddingBottom: space(3),
     },
     subtitle: { marginBottom: space(2.5) },
     sos: {

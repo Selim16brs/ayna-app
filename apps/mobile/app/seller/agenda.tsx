@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { DURUM_ETIKETI } from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
 import { type Appointment, type BookingStatus, formatPrice } from '../../src/data';
@@ -16,11 +16,11 @@ import { useTheme, useThemedStyles } from '../../src/theme-context';
 import { useSalonStaff } from '../../src/staff';
 import {
   PressableScale,
+  SaglayiciFoto,
   Screen,
   Segmented,
   StackHeader,
   Text,
-  TAB_BAR_CLEARANCE,
 } from '../../src/ui';
 
 type DayRow = { type: 'free'; startMs: number; endMs: number } | { type: 'busy'; b: Appointment };
@@ -609,7 +609,7 @@ export default function AgendaScreen() {
                 return (
                   <View key={u.name} style={styles.column}>
                     <View style={styles.colHead}>
-                      <Image source={{ uri: u.image }} style={styles.colAvatar} />
+                      <SaglayiciFoto uri={u.image} ad={u.name} style={styles.colAvatar} />
                       <Text
                         variant="caption"
                         tone="ink"
@@ -768,7 +768,7 @@ function StatusPill({ status }: { status: BookingStatus }) {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(2.5), paddingBottom: TAB_BAR_CLEARANCE },
+    content: { paddingHorizontal: space(2.5), paddingBottom: space(3) },
     toggleWrap: { marginTop: space(1), marginBottom: space(1.5) },
     // §4.6 kaynak etiketi (offline/AYNA)
     srcTag: {

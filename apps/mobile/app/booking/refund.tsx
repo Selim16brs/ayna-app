@@ -6,10 +6,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { api, ApiError } from '../../src/api';
 import { fillParams, useLocale } from '../../src/locale';
 import { randevuDepozitosu, useStore } from '../../src/store';
-import { font, type ColorTokens } from '../../src/theme';
+import { font, space, type ColorTokens } from '../../src/theme';
 import { darkColors } from '../../src/theme.palette';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text } from '../../src/ui';
 
 /**
  * DEPOZİTO İADE TALEBİ — brief §4.10.
@@ -138,7 +138,7 @@ export default function RefundScreen() {
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     // Figma: kenar boşluğu 24, bölüm arası 20.
-    icerik: { padding: 24, gap: 20, paddingBottom: TAB_BAR_CLEARANCE },
+    icerik: { padding: 24, gap: 20, paddingBottom: space(3) },
     bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
     tutarKart: { borderRadius: 24, padding: 20, gap: 6 },
     tutarEtiket: {

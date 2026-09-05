@@ -15,7 +15,6 @@ import {
   Screen,
   SectionHeader,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   Text,
 } from '../../src/ui';
 
@@ -315,7 +314,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      paddingBottom: space(3),
     },
     subtitle: { marginBottom: space(2.5) },
     hero: { borderRadius: radius.xl, padding: space(2.75), backgroundColor: colors.accent },

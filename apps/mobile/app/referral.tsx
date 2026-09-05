@@ -5,7 +5,7 @@ import { fillParams, useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { type ColorTokens, radius, space } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../src/ui';
 
 // EK Z.6 — Müşteri referans programı: kendi kodunu paylaş + arkadaş kodunu kullan.
 export default function ReferralScreen() {
@@ -137,7 +137,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      paddingBottom: space(3),
       gap: space(2),
     },
     subtitle: {},

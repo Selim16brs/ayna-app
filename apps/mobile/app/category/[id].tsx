@@ -15,7 +15,6 @@ import {
   Screen,
   ServiceCards,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   Text,
   YakindaRozeti,
 } from '../../src/ui';
@@ -174,7 +173,7 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2.5),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
     },
     yakindaKap: {
       flexDirection: 'row',

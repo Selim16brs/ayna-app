@@ -6,7 +6,7 @@ import { api, type ApiCollectionDetail } from '../../src/api';
 import { useLocale } from '../../src/locale';
 import { radius, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, Text, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { Screen, StackHeader, Text } from '../../src/ui';
 
 // §keşif Modül 3 — koleksiyon sayfası: kürasyonlu karma liste. Üç modül burada
 // birleşir: kategori (tek dokunuş talep), editoryal, kampanya, öne çıkan uzman.
@@ -111,7 +111,7 @@ export default function CollectionScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingHorizontal: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.25) },
+    content: { paddingHorizontal: space(3), paddingBottom: space(3), gap: space(1.25) },
     empty: { textAlign: 'center', marginTop: space(6) },
     hero: { width: '100%', height: 160, borderRadius: radius.xl, backgroundColor: colors.bgSunken },
     subtitle: { lineHeight: 20 },

@@ -22,7 +22,7 @@ import { fillParams, useLocale } from '../../src/locale';
 import { sellerTrialInfo, useStore } from '../../src/store';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, Text, TextInput, TAB_BAR_CLEARANCE } from '../../src/ui';
+import { Button, Screen, StackHeader, Text, TextInput } from '../../src/ui';
 import { findServiceWithCategory, kategoriAdi, tri } from '../../src/taxonomy';
 
 const catLabel = (id: string, locale: string): string => kategoriAdi(id, locale);
@@ -708,7 +708,7 @@ function RequestCard({
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(1.5) },
+    content: { padding: space(3), paddingBottom: space(3), gap: space(1.5) },
     // §4.4 kısıtlı mod kutusu
     // Doğrudan randevu talepleri — teklif havuzunun ÜSTÜNDE, aksan zeminli.
     talepBolum: {

@@ -8,7 +8,7 @@ import { useLocale } from '../src/locale';
 import { useStore } from '../src/store';
 import { radius, space, type ColorTokens, font } from '../src/theme';
 import { useTheme, useThemedStyles } from '../src/theme-context';
-import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text, TextInput } from '../src/ui';
+import { Screen, StackHeader, Text, TextInput } from '../src/ui';
 
 // §5.1.4 — Şehir seçimi: "Konumumu kullan" (GPS) + arama + tüm KZ şehirleri.
 export default function CityScreen() {
@@ -131,7 +131,7 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2),
-      paddingBottom: TAB_BAR_CLEARANCE + space(6),
+      paddingBottom: space(6),
       gap: space(1.5),
     },
     gpsRow: {

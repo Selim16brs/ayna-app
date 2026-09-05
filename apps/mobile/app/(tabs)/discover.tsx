@@ -362,7 +362,7 @@ export default function DiscoverScreen() {
                 resizeMode="contain"
               />
             ) : (
-              <View style={[styles.avatar, styles.avatarBos]} />
+              <SaglayiciFoto ad={userName} style={styles.avatar} />
             )}
             {/*
              * ZEMİN ÇİZGİSİ — yalnız kesilmiş portrede.
@@ -429,7 +429,7 @@ export default function DiscoverScreen() {
                   'rgba(255,255,255,0.93)',
                 ]}
                 locations={[0, 0.38, 0.74, 1]}
-                style={StyleSheet.absoluteFill}
+                style={[StyleSheet.absoluteFill, styles.hizliPerde]}
               />
               <Text style={styles.hizliYazi}>{t(e.etiket)}</Text>
             </PressableScale>
@@ -500,7 +500,11 @@ export default function DiscoverScreen() {
                 onPress={() => router.push(`/booking/${bekleyenRandevu.id}`)}
               >
                 <View style={styles.randevuBas}>
-                  <Image source={{ uri: bekleyenRandevu.proImage }} style={styles.randevuFoto} />
+                  <SaglayiciFoto
+                    uri={bekleyenRandevu.proImage}
+                    ad={bekleyenRandevu.proName}
+                    style={styles.randevuFoto}
+                  />
                   <View style={styles.grow}>
                     <Text variant="captionStrong" tone="ink" numberOfLines={1}>
                       {bekleyenRandevu.proName}
@@ -1066,7 +1070,23 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: 100,
       borderWidth: 1.5,
       borderColor: colors.accent,
-      alignSelf: 'flex-end',
+      /*
+       * DAİRE ÜST İKİ SATIRLA HİZALI — alta yaslıydı.
+       *
+       * Satırın kendisi `flex-end` (kesilmiş portre için doğrusu o: figürün
+       * altında zemin çizgisi var, yere basması gerekiyor). Ham fotoğraf ve
+       * baş harf dairesi ise o kurala uyunca selamlamanın ALTINA düşüyordu:
+       * sol blok üç satır (~80pt), daire 59pt — üstünde ~21pt boşluk kalıyor
+       * ve daire puan satırının hizasına iniyordu.
+       *
+       * Üste yaslanınca "Günaydın" + isim satırlarının tam karşısına geliyor:
+       * o iki satır 58pt, daire 59pt — kenarlar birebir tutuyor. Puan satırı
+       * dairenin altında kalıyor, zaten ikincil bilgi.
+       *
+       * `portreKap` (kesilmiş portre) bu kuralın DIŞINDA: onun `alignSelf`i
+       * yok, satırın `flex-end`ini miras alıp yere basmaya devam ediyor.
+       */
+      alignSelf: 'flex-start',
     },
     avatar: { width: 52, height: 52, borderRadius: 100 },
     /*
@@ -1093,7 +1113,6 @@ const makeStyles = (colors: ColorTokens) =>
       borderRadius: 1,
       backgroundColor: colors.accent,
     },
-    avatarBos: { backgroundColor: colors.accentSoft },
 
     // search-container (radius 12, border #E5E0DE, px14 py8)
     aramaKap: { paddingHorizontal: 20 },
@@ -1134,7 +1153,28 @@ const makeStyles = (colors: ColorTokens) =>
      * Çözüm: DOLGU KARTTAN ALINDI, yazıya verildi. Kartın iç boşluğu yok,
      * yüzde artık kartın tamamı demek.
      */
-    hizliFoto: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%' },
+    /*
+     * Köşeyi fotoğrafın KENDİSİ de yuvarlıyor — kartın `overflow: 'hidden'`
+     * kırpmasına güvenilemez.
+     *
+     * Kart bir `PressableScale`, yani Reanimated `transform: scale` uygulanan
+     * bir view. iOS'ta transform'lu bir katmanda `overflow: 'hidden'` köşe
+     * maskesi güvenilir çalışmıyor: fotoğrafın ve perdenin keskin köşeleri
+     * kartın yuvarlağının dışına taşıyor. Telefonda görülen "resimler köşeye
+     * tam oturmuyor" buydu — simülatörde ve basılı olmayan halde fark
+     * edilmiyor, çünkü ölçek 1 iken maske çoğu zaman tutuyor.
+     *
+     * Kart radius'u KALMALI (dokunma geri bildirimi ve gölge onu kullanıyor);
+     * buradaki değer onun kopyası değil, aynı köşenin ikinci savunması.
+     */
+    hizliFoto: {
+      ...StyleSheet.absoluteFillObject,
+      width: '100%',
+      height: '100%',
+      borderRadius: 16,
+    },
+    /* Beyaz perde de kartı tam kaplıyor — o da köşeden taşıyordu. */
+    hizliPerde: { borderRadius: 16 },
     hizliKart: {
       flex: 1,
       height: 140,

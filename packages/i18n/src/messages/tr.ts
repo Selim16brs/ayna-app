@@ -1956,6 +1956,9 @@ export const tr = {
   'profile.edit.email': 'E-posta',
   'profile.edit.phone': 'Telefon',
   'phone.country': 'Ülke kodu',
+  'phone.search': 'Ülke veya alan kodu ara',
+  'phone.sms_unsupported': 'Şu anda bu ülkeye doğrulama kodu gönderemiyoruz',
+  'phone.invalid': 'Bu numara seçilen ülke için geçerli görünmüyor',
   'profile.phone.title': 'Telefon numarasını değiştir',
   'profile.phone.change': 'Telefon numaramı değiştir',
   'profile.phone.why':

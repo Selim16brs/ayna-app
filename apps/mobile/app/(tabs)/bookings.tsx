@@ -7,7 +7,7 @@ import {
 } from '../../src/booking-flow';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   type Appointment,
   type BookingStatus,
@@ -21,7 +21,7 @@ import { musteriRandevulari, useStore } from '../../src/store';
 import type { MessageKey } from '@ayna/i18n';
 import { radius, space, type ColorTokens, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { HizmetIkonu, ListSkeleton, Screen, TAB_BAR_CLEARANCE, TabHero, Text } from '../../src/ui';
+import { HizmetIkonu, ListSkeleton, SaglayiciFoto, Screen, TAB_BAR_CLEARANCE, TabHero, Text } from '../../src/ui';
 import { kategoriAdi } from '../../src/taxonomy';
 
 // §5.3 — üst segment: Taleplerim | Randevularım | Geçmiş
@@ -208,7 +208,7 @@ function BookingCard({ appt, upcoming }: { appt: Appointment; upcoming?: boolean
       </View>
       <View style={styles.divider} />
       <Pressable style={styles.cardMain} onPress={toDetail}>
-        <Image source={{ uri: appt.proImage }} style={styles.thumb} />
+        <SaglayiciFoto uri={appt.proImage} ad={appt.proName} style={styles.thumb} />
         <View style={styles.flex}>
           <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
             {appt.proName}

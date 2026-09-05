@@ -16,15 +16,17 @@ import { useSalonStaff } from '../../src/staff';
 import {
   Button,
   DateField,
+  formatTrDate,
   PressableScale,
   Screen,
   Segmented,
   StackHeader,
   TAB_BAR_CLEARANCE,
+  TelefonGirdisi,
   Text,
   TextInput,
-  formatTrDate,
 } from '../../src/ui';
+import { tamNumara, VARSAYILAN_ULKE, type Ulke } from '../../src/telefon-bicim';
 
 // §10.2 — SALON rezervasyon takvimi: üç sekme (Genel · Randevular · Ekle).
 // Randevular kendi içinde onay bekleyen ↔ onaylanan olarak ayrılır.
@@ -302,7 +304,9 @@ function AddTab({
   const styles = useThemedStyles(makeStyles);
   const [uzman, setUzman] = useState(staff[0]?.id ?? '');
   const [customer, setCustomer] = useState('');
-  const [phone, setPhone] = useState('');
+  const [musteriUlke, setMusteriUlke] = useState<Ulke>(VARSAYILAN_ULKE);
+  const [musteriYerel, setMusteriYerel] = useState('');
+  const phone = tamNumara(musteriUlke.kod, musteriYerel);
   const [service, setService] = useState('');
   const [when, setWhen] = useState<Date>(() => new Date(Date.now() + 3_600_000));
   const [dur, setDur] = useState('60');
@@ -355,14 +359,16 @@ function AddTab({
           placeholderTextColor={colors.muted}
         />
       </Field>
+      {/*
+        Walk-in müşteri telefonu — randevu sonrası bu numaradan aranıyor,
+        yani ülke kodsuz kaydedilirse işe yaramıyor.
+      */}
       <Field label={t('salon.add.phone')}>
-        <TextInput
-          style={styles.input}
-          value={phone}
-          onChangeText={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
-          placeholder="+7 700 000 00 00"
-          keyboardType="phone-pad"
-          placeholderTextColor={colors.muted}
+        <TelefonGirdisi
+          ulke={musteriUlke}
+          ulkeDegisti={setMusteriUlke}
+          yerel={musteriYerel}
+          yerelDegisti={setMusteriYerel}
         />
       </Field>
       <Field label={t('offline.service')}>

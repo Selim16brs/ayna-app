@@ -5,7 +5,7 @@ import { Image, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text } from '../../src/ui';
 
 // §5.1.6 — sponsorlu tedarikçi kampanya detay sayfası (reklam kartına dokununca açılır).
 export default function SupplierAdScreen() {
@@ -131,7 +131,7 @@ export default function SupplierAdScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { paddingBottom: TAB_BAR_CLEARANCE + space(2) },
+    content: { paddingBottom: space(2) },
     empty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     flex: { flex: 1 },
     hero: { height: 260, position: 'relative', justifyContent: 'flex-end' },

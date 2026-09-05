@@ -16,7 +16,7 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, Screen, StackHeader, Text } from '../../src/ui';
 import { kucultVeB64, PAYLASIM_GENISLIK } from '../../src/gorsel-kucult';
 
 // Kayıttan gelen başlangıç galerisi (demo)
@@ -145,7 +145,7 @@ export default function GalleryScreen() {
 const GAP = space(1);
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE + space(2) },
+    content: { padding: space(3), paddingBottom: space(2) },
     saveWrap: { marginTop: space(2.5), gap: space(1) },
     savedHint: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
     hint: { marginBottom: space(1.5) },

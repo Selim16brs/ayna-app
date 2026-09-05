@@ -135,10 +135,20 @@ export default function VerifyScreen() {
           <View style={styles.heroIcon}>
             <Ionicons name="shield-checkmark" size={26} color={colors.accent} />
           </View>
-          <Text variant="h2" tone="onAccent">
+          {/*
+            Zemin AÇIK, yazı da açıktı — görünmüyordu.
+
+            Kart bir ara "dolu koyu durmasının sebebi yok" diye `heroSoft`a
+            çevrilmiş ama içindeki yazıların tonu `onAccent` kalmış: o ton
+            KOYU zemin için, açık temada bembeyaz (#FFFFFF). Beyaz yazı
+            #F6ECF4 üstünde 1.06:1 — okunmuyor. Koyu temada da ters yönden
+            aynı hata: `onAccent` orada koyu (#1A0810) ve zemin de koyu.
+            Aynı `heroSoft` zemini kullanan profil başlığı `ink` kullanıyor.
+          */}
+          <Text variant="h2" tone="ink">
             {t('verify.subtitle')}
           </Text>
-          <Text variant="body" tone="onAccent" style={styles.phone}>
+          <Text variant="body" tone="inkSoft" style={styles.phone}>
             {phone}
           </Text>
         </View>
@@ -215,7 +225,9 @@ const makeStyles = (colors: ColorTokens) =>
       width: 52,
       height: 52,
       borderRadius: radius.md,
-      backgroundColor: 'rgba(0,0,0,0.12)',
+      // Zemin TEMADAN — sabit siyah %12, koyu temada koyu mor üstünde
+      // neredeyse kayboluyordu. `surface` iki temada da ayrışıyor.
+      backgroundColor: colors.surface,
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: space(0.5),

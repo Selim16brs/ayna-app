@@ -21,7 +21,6 @@ import {
   RulesCard,
   Screen,
   ServiceChips,
-  TAB_BAR_CLEARANCE,
   TarihSecici,
   Text,
   TextInput,
@@ -472,7 +471,7 @@ export default function NewDemandScreen() {
       <View
         style={[
           styles.footer,
-          { paddingBottom: (insets.bottom || space(1.5)) + TAB_BAR_CLEARANCE },
+          { paddingBottom: (insets.bottom || space(1.5)) },
         ]}
       >
         <Pressable

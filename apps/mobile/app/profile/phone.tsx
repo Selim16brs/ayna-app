@@ -11,7 +11,6 @@ import {
   Button,
   Screen,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   TelefonGirdisi,
   Text,
   VARSAYILAN_ULKE,
@@ -123,7 +122,7 @@ export default function PhoneChangeScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE, gap: space(2) },
+    content: { padding: space(3), paddingBottom: space(3), gap: space(2) },
     neden: {
       flexDirection: 'row',
       gap: space(1.25),

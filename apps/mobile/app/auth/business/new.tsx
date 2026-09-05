@@ -26,24 +26,31 @@ import { radius, space, type ColorTokens, font } from '../../../src/theme';
 import { useTheme, useThemedStyles } from '../../../src/theme-context';
 import { kucultVeB64, PAYLASIM_GENISLIK } from '../../../src/gorsel-kucult';
 import {
-  SifreKurali,
   AddressPicker,
   Button,
   CitySelect,
+  type DayHours,
   defaultHours,
   emptySocial,
   MissingFields,
   PasswordStrength,
   Screen,
+  SifreKurali,
   SocialLinks,
+  type SocialValue,
   StackHeader,
+  TakvimSecici,
+  TelefonGirdisi,
   Text,
   TextInput,
-  type DayHours,
-  type SocialValue,
   WorkingHours,
-  TakvimSecici,
 } from '../../../src/ui';
+import {
+  gecerliMi,
+  tamNumara,
+  VARSAYILAN_ULKE,
+  type Ulke,
+} from '../../../src/telefon-bicim';
 
 /**
  * Salon hizmet alanları — katalog kategorileri (fiyat YOK, yalnızca alan; §3.2 A).
@@ -73,7 +80,22 @@ export default function NewBusinessScreen() {
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [ownerPhone, setOwnerPhone] = useState('');
+  /*
+   * SAHİP TELEFONU HESAP KİMLİĞİDİR — ham kutu değil, ortak bileşen.
+   *
+   * Burası müşteri/uzman kaydıyla aynı rolde: bu numara hesabın anahtarı ve
+   * OTP oraya gidiyor. Ama ham kutu kullanıyordu ve tek doğrulaması "7
+   * karakterden uzun" idi. Kullanıcı ülke kodsuz ("700 123 45 67") ya da
+   * ulusal önekle ("8 700…") yazdığında kayıt yine geçiyor, sonra o numaraya
+   * SMS GİDEMİYORDU — sunucu farklı bir dizi görüyor, hatta aynı kişi için
+   * ikinci bir hesap açılabiliyordu.
+   *
+   * `telefon-ulke-kodu` testi bu dosyayı KONTROL ETMİYORDU; hata sessizdi.
+   */
+  const [ownerUlke, setOwnerUlke] = useState<Ulke>(VARSAYILAN_ULKE);
+  const [ownerYerel, setOwnerYerel] = useState('');
+  const ownerPhone = tamNumara(ownerUlke.kod, ownerYerel);
+  const ownerPhoneGecerli = gecerliMi(ownerUlke.kod, ownerYerel);
   const [password, setPassword] = useState('');
   const [password2, setPassword2] = useState('');
   const [birthDate, setBirthDate] = useState<Date | null>(null);
@@ -99,7 +121,12 @@ export default function NewBusinessScreen() {
   const [coord, setCoord] = useState<{ lat: number; lng: number } | null>(null);
   const [mapOpen, setMapOpen] = useState(false);
   const [docUrl, setDocUrl] = useState<string | null>(null);
-  const [phone, setPhone] = useState('');
+  // Salon iletişim telefonu — hesap kimliği değil ama müşteriye gösteriliyor
+  // ve aranıyor; aynı biçimde toplanmazsa "+7" ile "8" karışık kaydediliyor.
+  const [salonUlke, setSalonUlke] = useState<Ulke>(VARSAYILAN_ULKE);
+  const [salonYerel, setSalonYerel] = useState('');
+  const phone = tamNumara(salonUlke.kod, salonYerel);
+  const salonPhoneGecerli = gecerliMi(salonUlke.kod, salonYerel);
   const [email, setEmail] = useState('');
   const [hours, setHours] = useState<DayHours[]>(defaultHours());
   const [social, setSocial] = useState<SocialValue>(emptySocial);
@@ -170,7 +197,7 @@ export default function NewBusinessScreen() {
     officialOk &&
     firstName.trim().length > 1 &&
     lastName.trim().length > 1 &&
-    ownerPhone.trim().length >= 7 &&
+    ownerPhoneGecerli &&
     sifreGecerli(password) &&
     password === password2 &&
     name.trim().length > 1 &&
@@ -178,11 +205,11 @@ export default function NewBusinessScreen() {
     city !== null &&
     district.trim().length > 1 &&
     address.trim().length > 3 &&
-    phone.trim().length >= 7 &&
+    salonPhoneGecerli &&
     !emailInvalid &&
     coord !== null &&
     terms;
-  const touched = !!(entityType || firstName || lastName || ownerPhone || password || name);
+  const touched = !!(entityType || firstName || lastName || ownerYerel || password || name);
   const missing = missingLabels([
     { ok: entityType !== null, key: 'biz.entity.label' },
     { ok: officialOk, key: 'biz.field.bin' },
@@ -193,7 +220,7 @@ export default function NewBusinessScreen() {
       key: 'biz.field.address',
     },
     { ok: coord !== null, key: 'biz.field.map' },
-    { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
+    { ok: salonPhoneGecerli, key: 'auth.f.phone' },
     { ok: sifreGecerli(password), key: 'auth.f.pw_rule' },
     { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
     { ok: terms, key: 'auth.miss.terms' },
@@ -203,14 +230,14 @@ export default function NewBusinessScreen() {
     entityType !== null && officialOk,
     firstName.trim().length > 1 &&
       lastName.trim().length > 1 &&
-      ownerPhone.trim().length >= 7 &&
+      ownerPhoneGecerli &&
       sifreGecerli(password) &&
       password === password2,
     name.trim().length > 1 && areas.size > 0,
     city !== null &&
       district.trim().length > 1 &&
       address.trim().length > 3 &&
-      phone.trim().length >= 7 &&
+      salonPhoneGecerli &&
       !emailInvalid &&
       /*
        * İĞNE ZORUNLU — uzman kaydında zaten öyleydi.
@@ -241,7 +268,7 @@ export default function NewBusinessScreen() {
     ],
     1: [
       { ok: firstName.trim().length > 1 && lastName.trim().length > 1, key: 'auth.miss.name' },
-      { ok: ownerPhone.trim().length >= 7, key: 'auth.f.phone' },
+      { ok: ownerPhoneGecerli, key: 'auth.f.phone' },
       { ok: sifreGecerli(password), key: 'auth.f.pw_rule' },
       { ok: password2.length > 0 && password === password2, key: 'auth.f.password2' },
     ],
@@ -254,7 +281,7 @@ export default function NewBusinessScreen() {
       { ok: district.trim().length > 1 && address.trim().length > 3, key: 'biz.field.address' },
       // Haritadaki iğne: olmadan salon haritada hiç görünmüyor.
       { ok: coord !== null, key: 'biz.field.map' },
-      { ok: phone.trim().length >= 7, key: 'auth.f.phone' },
+      { ok: salonPhoneGecerli, key: 'auth.f.phone' },
       { ok: !emailInvalid, key: 'auth.f.email' },
     ],
     4: [{ ok: terms, key: 'auth.miss.terms' }],
@@ -449,13 +476,13 @@ export default function NewBusinessScreen() {
                 />
               </View>
             </View>
-            <Label text={t('biz.field.phone')} />
-            <Input
-              value={ownerPhone}
-              onChange={(v) => setOwnerPhone(v.replace(/[^0-9 +]/g, ''))}
-              placeholder="+7 700 123 45 67"
-              keyboardType="phone-pad"
-              autofill="tel"
+            <TelefonGirdisi
+              etiket={t('biz.field.phone')}
+              ulke={ownerUlke}
+              ulkeDegisti={setOwnerUlke}
+              yerel={ownerYerel}
+              yerelDegisti={setOwnerYerel}
+              hataGoster={ownerYerel.length > 0}
             />
             <Label text={t('biz.field.password')} />
             <Input
@@ -653,13 +680,13 @@ export default function NewBusinessScreen() {
               }}
             />
 
-            <Label text={t('biz.field.phone')} />
-            <Input
-              value={phone}
-              onChange={(v) => setPhone(v.replace(/[^0-9 +]/g, ''))}
-              placeholder="+7 700 123 45 67"
-              keyboardType="phone-pad"
-              autofill="tel"
+            <TelefonGirdisi
+              etiket={t('biz.field.phone')}
+              ulke={salonUlke}
+              ulkeDegisti={setSalonUlke}
+              yerel={salonYerel}
+              yerelDegisti={setSalonYerel}
+              hataGoster={salonYerel.length > 0}
             />
             <Label text={t('biz.field.email')} />
             <Input

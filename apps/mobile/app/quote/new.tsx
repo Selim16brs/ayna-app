@@ -19,7 +19,6 @@ import {
   RulesCard,
   Screen,
   SectionHeader,
-  TAB_BAR_CLEARANCE,
   TarihSecici,
   Text,
   TextInput,
@@ -309,7 +308,7 @@ export default function NewQuoteScreen() {
       <View
         style={[
           styles.footer,
-          { paddingBottom: (insets.bottom || space(1.5)) + TAB_BAR_CLEARANCE },
+          { paddingBottom: (insets.bottom || space(1.5)) },
         ]}
       >
         <Pressable style={styles.cta} onPress={submit} disabled={submitting}>

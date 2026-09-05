@@ -1834,6 +1834,9 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'profile.edit.email': 'Эл. почта',
   'profile.edit.phone': 'Телефон',
   'phone.country': 'Код страны',
+  'phone.search': 'Поиск страны или кода',
+  'phone.sms_unsupported': 'Сейчас мы не можем отправить код в эту страну',
+  'phone.invalid': 'Этот номер не подходит для выбранной страны',
   'profile.phone.title': 'Изменить номер телефона',
   'profile.phone.change': 'Изменить мой номер телефона',
   'profile.phone.why':

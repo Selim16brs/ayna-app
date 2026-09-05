@@ -37,6 +37,21 @@ model User {
   // Telefon uygulama katmanında şifreli saklanır (S2). Aramayı destekleyen hash ayrı tutulur.
   phoneHash          String     @unique @map("phone_hash")
   phoneEnc           Bytes      @map("phone_enc")
+  /*
+   * Telefonun ÜLKESİ — ISO 3166-1 alfa-2 ("KZ", "TR").
+   *
+   * Numaranın kendisi şifreli (`phoneEnc`) ve hash'i geri çevrilemez; yani
+   * "hangi ülkelerden kullanıcımız var" sorusu bugün HİÇ yanıtlanamıyor.
+   * Ülke kodu tek başına kimseyi tanımlamaz — PII değil — bu yüzden düz
+   * saklanabiliyor ve numaranın gizliliği bozulmuyor.
+   *
+   * Kaynak KULLANICININ SEÇİMİ: numaradan tahmin edilseydi "+7" hem
+   * Kazakistan hem Rusya olduğu için ikisi ayrılamazdı.
+   *
+   * Nullable: mevcut kayıtlarda yok ve doldurmak için numaranın çözülmesi
+   * gerekirdi. Yeni kayıtlarda dolu geliyor.
+   */
+  phoneCountry       String?    @map("phone_country")
   // Hesap (parola tabanlı kayıt/giriş — müşteri tarafı OTP'siz)
   name               String     @default("")
   email              String?    @unique

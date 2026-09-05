@@ -15,11 +15,12 @@ import {
   Screen,
   SocialLinks,
   StackHeader,
-  TAB_BAR_CLEARANCE,
+  TelefonGirdisi,
   Text,
   TextInput,
   WorkingHours,
 } from '../../src/ui';
+import { parcala, tamNumara, VARSAYILAN_ULKE, type Ulke } from '../../src/telefon-bicim';
 
 // §10.1/§6.2 — SALON profil DÜZENLEME formu (Profil hub'ından "Profili düzenle" ile açılır).
 export default function SalonEditScreen() {
@@ -41,7 +42,9 @@ export default function SalonEditScreen() {
   const [photos, setPhotos] = useState(salonProfile.photos);
   const [about, setAbout] = useState(salonProfile.about);
   const [address, setAddress] = useState(salonProfile.address);
-  const [contact, setContact] = useState(salonProfile.contact);
+  const [iletisimUlke, setIletisimUlke] = useState<Ulke>(VARSAYILAN_ULKE);
+  const [iletisimYerel, setIletisimYerel] = useState(salonProfile.contact);
+  const contact = tamNumara(iletisimUlke.kod, iletisimYerel);
   const [areas, setAreas] = useState(salonProfile.areas);
   const [social, setSocial] = useState(sellerSocial);
   const [hours, setHours] = useState(sellerHours);
@@ -93,7 +96,21 @@ export default function SalonEditScreen() {
                 .filter(Boolean)
                 .join(', '),
         );
-        setContact((mevcut) => mevcut.trim() || (b.phone ?? '').trim());
+        /*
+          Kayıtlı numara ÜLKE KODUNA GÖRE AYRILARAK geri yükleniyor.
+          Tek kutuya yazılsaydı "+77001234567" olduğu gibi görünür, kullanıcı
+          düzenlemek isterse ülke kodunu elle silmek zorunda kalırdı.
+          `parcala` bugüne dek hiçbir ekranda kullanılmıyordu.
+        */
+        const gelenTel = (b.phone ?? '').trim();
+        if (gelenTel) {
+          const ayrik = parcala(gelenTel);
+          setIletisimYerel((mevcut) => {
+            if (mevcut.trim()) return mevcut;
+            setIletisimUlke(ayrik.ulke);
+            return ayrik.yerel;
+          });
+        }
         setAreas((mevcut) => (mevcut.length ? mevcut : (b.categories ?? [])));
         /*
          * ÇALIŞMA SAATLERİ BURADAN GERİ YÜKLENMİYOR. Sunucuda BİÇİMLİ
@@ -236,11 +253,18 @@ export default function SalonEditScreen() {
 
         <Field label={t('salon.profile.about')} value={about} onChangeText={setAbout} multiline />
         <Field label={t('salon.profile.address')} value={address} onChangeText={setAddress} />
-        <Field
-          label={t('salon.profile.contact')}
-          value={contact}
-          onChangeText={setContact}
-          keyboardType="phone-pad"
+        {/*
+          Salon iletişim telefonu — müşteriye GÖSTERİLEN ve aranan numara.
+          Hiç filtresi yoktu; ülke kodsuz ya da "8 700…" biçiminde
+          kaydedilince müşteri arayamıyordu.
+        */}
+        <TelefonGirdisi
+          etiket={t('salon.profile.contact')}
+          ulke={iletisimUlke}
+          ulkeDegisti={setIletisimUlke}
+          yerel={iletisimYerel}
+          yerelDegisti={setIletisimYerel}
+          hataGoster={iletisimYerel.length > 0}
         />
 
         <Label text={t('salon.profile.areas')} />
@@ -370,7 +394,7 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2),
-      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      paddingBottom: space(2),
       gap: space(1),
     },
     intro: { lineHeight: 18, marginBottom: space(1) },

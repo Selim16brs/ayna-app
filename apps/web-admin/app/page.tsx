@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { DiyalogSaglayici, useDiyalog } from './ui/Diyalog';
 import {
   api,
@@ -640,45 +640,55 @@ function ProfileChangesView() {
   ];
   return (
     <>
-      <h1 className="page-title">Profil değişiklikleri</h1>
-      <p className="page-sub">
-        Salon/uzman profil değişiklikleri admin onayı olmadan yayınlanmaz ({data?.length ?? 0}{' '}
-        kayıt)
-      </p>
-      <div className="toolbar">
+      <PageHead
+        title="Profil değişiklikleri"
+        sub={`Salon/uzman profil değişiklikleri admin onayı olmadan yayınlanmaz (${data?.length ?? 0} kayıt)`}
+      />
+      <Toolbar>
         {FILTERS.map(([s, label]) => (
-          <button
-            key={s || 'all'}
-            className={`chip ${status === s ? 'on' : ''}`}
-            onClick={() => setStatus(s)}
-          >
+          <Chip key={s || 'all'} active={status === s} onClick={() => setStatus(s)}>
             {label}
-          </button>
+          </Chip>
         ))}
-      </div>
+      </Toolbar>
       {!data ? (
         <Gate loading={loading} error={error} onRetry={reload} />
       ) : data.length === 0 ? (
-        <div className="card">
-          <div className="empty">Kayıt yok.</div>
-        </div>
+        <Card>
+          <Loading label="Kayıt yok." />
+        </Card>
       ) : (
-        <div className="card">
+        <Card>
           {data.map((p) => (
-            <div className="list-row" key={p.id}>
-              <div className="grow">
-                <div className="name">
+            <div
+              className="flex items-center gap-3 border-t border-line px-4 py-3.5 transition-colors first:border-t-0 hover:bg-bg-alt"
+              key={p.id}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 text-ax-md font-bold text-ink">
                   {p.userName}{' '}
-                  <span className={`pill ${p.role === 'salon' ? 'info' : 'accent'}`}>
+                  <span
+                    className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-ax-xs font-bold ${
+                      p.role === 'salon'
+                        ? 'bg-info-soft text-info'
+                        : 'bg-accent-soft text-accent-ink'
+                    }`}
+                  >
                     {p.role === 'salon' ? 'Salon' : 'Uzman'}
                   </span>
                 </div>
-                <div className="meta">
+                <div className="mt-0.5 text-ax-sm text-ink-3">
                   {summarize(p.changes)} · {new Date(p.createdAt).toLocaleDateString('tr-TR')}
                 </div>
               </div>
               <span
-                className={`pill ${p.status === 'approved' ? 'approved' : p.status === 'pending' ? 'pending' : 'rejected'}`}
+                className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-ax-xs font-bold ${
+                  p.status === 'approved'
+                    ? 'bg-ok-soft text-ok'
+                    : p.status === 'pending'
+                      ? 'bg-warn-soft text-warn'
+                      : 'bg-err-soft text-err'
+                }`}
               >
                 {p.status === 'approved'
                   ? 'Onaylandı'
@@ -687,16 +697,16 @@ function ProfileChangesView() {
                     : 'Reddedildi'}
               </span>
               {p.status === 'pending' ? (
-                <div className="actions">
+                <div className="flex shrink-0 items-center gap-2">
                   <button
-                    className="btn-sm btn-ok"
+                    className="rounded-sm border border-line bg-surface px-3 py-1.5 text-ax-sm font-semibold text-ok transition-colors hover:border-ok hover:bg-ok-soft disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={busy === p.id}
                     onClick={() => act(() => api.approveProfileChange(p.id), p.id)}
                   >
                     Onayla
                   </button>
                   <button
-                    className="btn-sm btn-danger"
+                    className="rounded-sm border border-line bg-surface px-3 py-1.5 text-ax-sm font-semibold text-err transition-colors hover:border-err hover:bg-err-soft disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={busy === p.id}
                     onClick={() => act(() => api.rejectProfileChange(p.id), p.id)}
                   >
@@ -706,19 +716,11 @@ function ProfileChangesView() {
               ) : null}
             </div>
           ))}
-        </div>
+        </Card>
       )}
     </>
   );
 }
-// EK Z.3 — KYC uzman/salon belge doğrulama kuyruğu
-/**
- * §destek — kullanıcı talepleri kuyruğu.
- *
- * Yardım ekranındaki "Destek ile iletişim" düğmesi hiçbir şey yapmıyordu ve
- * talepleri görecek bir yer de yoktu. Yanıt yazılmayan bir kutu, kutu olmayan
- * kutudan daha kötüdür — bu yüzden yanıt yazılınca kullanıcıya push gider.
- */
 function SupportView() {
   const [status, setStatus] = useState<string>('open');
   const { data, loading, error, reload } = useAsync<SupportRow[]>(
@@ -751,30 +753,23 @@ function SupportView() {
   };
   return (
     <>
-      <h1 className="page-title">Destek talepleri</h1>
-      <p className="page-sub">
-        Kullanıcıdan gelen talepler. Güvenlik başlıklı olanlar önce okunmalı. ({data?.length ?? 0}{' '}
-        kayıt)
-      </p>
-      <div className="toolbar">
+      <PageHead
+        title="Destek talepleri"
+        sub={`Kullanıcıdan gelen talepler. Güvenlik başlıklı olanlar önce okunmalı. (${data?.length ?? 0} kayıt)`}
+      />
+      <Toolbar>
         {FILTERS.map(([s, label]) => (
-          <button
-            key={s || 'all'}
-            className={`chip ${status === s ? 'on' : ''}`}
-            onClick={() => setStatus(s)}
-          >
+          <Chip key={s || 'all'} active={status === s} onClick={() => setStatus(s)}>
             {label}
-          </button>
+          </Chip>
         ))}
-      </div>
+      </Toolbar>
       {!data ? (
         <Gate loading={loading} error={error} onRetry={reload} />
       ) : data.length === 0 ? (
-        <div className="card">
-          <div className="empty">Talep yok.</div>
-        </div>
+        <Loading label="Talep yok." />
       ) : (
-        <div className="card">
+        <Card>
           {data.map((t) => (
             <div className="list-row" key={t.id}>
               <div className="grow">
@@ -784,25 +779,27 @@ function SupportView() {
                       görünür bir işaret olmazsa yönetici neden bu talebin
                       başta olduğunu anlamaz ve sırayı bozabilir. */}
                   {t.priority ? <span className="pill accent">Öncelikli</span> : null}{' '}
-                  <span className={`pill ${t.topic === 'safety' ? 'danger' : 'info'}`}>
+                  <span
+                    className={`pill ${t.topic === 'safety' ? 'bg-err-soft text-err' : 'bg-info-soft text-info'}`}
+                  >
                     {KONU[t.topic] ?? t.topic}
                   </span>
                 </div>
                 <div className="meta">{new Date(t.createdAt).toLocaleString('tr-TR')}</div>
-                <p style={{ whiteSpace: 'pre-wrap', margin: '8px 0' }}>{t.body}</p>
+                <p className="my-2 whitespace-pre-wrap leading-relaxed text-ink-2">{t.body}</p>
                 {t.reply ? (
-                  <p style={{ opacity: 0.75, margin: '4px 0' }}>↳ {t.reply}</p>
+                  <p className="my-1 text-ax-sm text-ink-3">↳ {t.reply}</p>
                 ) : (
                   <>
                     <textarea
                       rows={3}
-                      style={{ width: '100%' }}
+                      className="mb-2 w-full resize-y rounded-sm border border-line bg-surface-2 px-3 py-2.5 text-ax-sm text-ink transition-colors duration-150 placeholder:text-ink-3 focus:border-accent focus:bg-surface focus:outline-none focus:[box-shadow:0_0_0_3px_var(--accent-soft)]"
                       placeholder="Yanıt yaz…"
                       value={taslak[t.id] ?? ''}
                       onChange={(e) => setTaslak((d) => ({ ...d, [t.id]: e.target.value }))}
                     />
                     <button
-                      className="btn"
+                      className="btn-sm btn-primary"
                       disabled={busy === t.id || !(taslak[t.id] ?? '').trim()}
                       onClick={() => act(() => api.supportReply(t.id, taslak[t.id] ?? ''), t.id)}
                     >
@@ -813,7 +810,7 @@ function SupportView() {
               </div>
               {t.status !== 'closed' ? (
                 <button
-                  className="btn ghost"
+                  className="btn-sm btn-ghost"
                   disabled={busy === t.id}
                   onClick={() => act(() => api.supportClose(t.id), t.id)}
                 >
@@ -822,7 +819,7 @@ function SupportView() {
               ) : null}
             </div>
           ))}
-        </div>
+        </Card>
       )}
     </>
   );
@@ -856,47 +853,50 @@ function KycView() {
   ];
   return (
     <>
-      <h1 className="page-title">Kimlik doğrulama</h1>
-      <p className="page-sub">
-        Uzman/salon belge doğrulama kuyruğu — onaylanınca profilde &quot;Doğrulanmış&quot; rozeti (
-        {data?.length ?? 0} kayıt)
-      </p>
-      <div className="toolbar">
+      <PageHead
+        title="Kimlik doğrulama"
+        sub={
+          <>
+            Uzman/salon belge doğrulama kuyruğu — onaylanınca profilde &quot;Doğrulanmış&quot; rozeti (
+            {data?.length ?? 0} kayıt)
+          </>
+        }
+      />
+      <Toolbar>
         {FILTERS.map(([s, label]) => (
-          <button
-            key={s || 'all'}
-            className={`chip ${status === s ? 'on' : ''}`}
-            onClick={() => setStatus(s)}
-          >
+          <Chip key={s || 'all'} active={status === s} onClick={() => setStatus(s)}>
             {label}
-          </button>
+          </Chip>
         ))}
-      </div>
+      </Toolbar>
       {!data ? (
         <Gate loading={loading} error={error} onRetry={reload} />
       ) : data.length === 0 ? (
-        <div className="card">
-          <div className="empty">Kayıt yok.</div>
-        </div>
+        <Loading label="Kayıt yok." />
       ) : (
-        <div className="card">
+        <Card className="p-2">
           {data.map((k) => (
-            <div className="list-row" key={k.id}>
-              <div className="grow">
-                <div className="name">
+            <div
+              className="flex items-center gap-3 px-3 py-3 border-b border-line last:border-b-0 hover:bg-bg-alt"
+              key={k.id}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 text-ax-md font-semibold text-ink">
                   {k.userName}{' '}
-                  <span className={`pill ${k.userRole === 'salon' ? 'info' : 'accent'}`}>
+                  <span
+                    className={`inline-flex items-center rounded-sm px-2 py-0.5 text-ax-xs font-medium ${k.userRole === 'salon' ? 'text-info bg-info-soft' : 'text-accent-ink bg-accent-soft'}`}
+                  >
                     {k.userRole === 'salon' ? 'Salon' : 'Uzman'}
                   </span>
                 </div>
-                <div className="meta">
+                <div className="mt-0.5 text-ax-sm text-ink-3 tabular-nums">
                   {DOC[k.docType] ?? k.docType} · {k.documents.length} belge ·{' '}
                   {new Date(k.submittedAt).toLocaleDateString('tr-TR')}
                   {k.status === 'rejected' && k.note ? ` · Ret: ${k.note}` : ''}
                 </div>
               </div>
               <span
-                className={`pill ${k.status === 'approved' ? 'approved' : k.status === 'pending' ? 'pending' : 'rejected'}`}
+                className={`inline-flex items-center rounded-sm px-2 py-0.5 text-ax-xs font-medium ${k.status === 'approved' ? 'text-ok bg-ok-soft' : k.status === 'pending' ? 'text-warn bg-warn-soft' : 'text-err bg-err-soft'}`}
               >
                 {k.status === 'approved'
                   ? 'Onaylandı'
@@ -905,7 +905,7 @@ function KycView() {
                     : 'Reddedildi'}
               </span>
               {k.status === 'pending' ? (
-                <div className="actions">
+                <div className="flex items-center gap-2">
                   <button
                     className="btn-sm btn-ok"
                     disabled={busy === k.id}
@@ -924,12 +924,11 @@ function KycView() {
               ) : null}
             </div>
           ))}
-        </div>
+        </Card>
       )}
     </>
   );
 }
-// §11 — üyelik abonelik kuyruğu (Premium/Platinum dekont onayı)
 function SubscriptionsView() {
   const [status, setStatus] = useState<string>('pending');
   const { data, loading, error, reload } = useAsync<Subscription[]>(
@@ -965,30 +964,29 @@ function SubscriptionsView() {
           : 'Süresi doldu';
   return (
     <>
-      <h1 className="page-title">Abonelik dekontları</h1>
-      <p className="page-sub">Premium / Platinum üyelik dekont onayı ({data?.length ?? 0} kayıt)</p>
-      <div className="toolbar">
+      <PageHead
+        title="Abonelik dekontları"
+        sub={`Premium / Platinum üyelik dekont onayı (${data?.length ?? 0} kayıt)`}
+      />
+      <Toolbar>
         {FILTERS.map(([s, label]) => (
-          <button
-            key={s || 'all'}
-            className={`chip ${status === s ? 'on' : ''}`}
-            onClick={() => setStatus(s)}
-          >
+          <Chip key={s || 'all'} active={status === s} onClick={() => setStatus(s)}>
             {label}
-          </button>
+          </Chip>
         ))}
-        <button className="btn-sm btn-ghost" onClick={() => api.runSubExpire().then(reload)}>
+        <button
+          className="btn-sm btn-ghost ml-auto"
+          onClick={() => api.runSubExpire().then(reload)}
+        >
           Süre dolanları düşür
         </button>
-      </div>
+      </Toolbar>
       {!data ? (
         <Gate loading={loading} error={error} onRetry={reload} />
       ) : data.length === 0 ? (
-        <div className="card">
-          <div className="empty">Kayıt yok.</div>
-        </div>
+        <Loading label="Kayıt yok." />
       ) : (
-        <div className="card">
+        <Card>
           {data.map((s) => (
             <div className="list-row" key={s.id}>
               <div className="grow">
@@ -1010,13 +1008,8 @@ function SubscriptionsView() {
                 <img
                   src={s.receiptUri}
                   alt="dekont"
-                  style={{
-                    width: 72,
-                    height: 72,
-                    objectFit: 'cover',
-                    borderRadius: 8,
-                    cursor: 'zoom-in',
-                  }}
+                  className="cursor-zoom-in rounded-sm object-cover"
+                  style={{ width: 72, height: 72 }}
                   onClick={(e) => {
                     const img = e.currentTarget;
                     img.style.width = img.style.width === '72px' ? '360px' : '72px';
@@ -1045,7 +1038,7 @@ function SubscriptionsView() {
               ) : null}
             </div>
           ))}
-        </div>
+        </Card>
       )}
     </>
   );
@@ -1075,50 +1068,61 @@ function OverviewView({ onGo }: { onGo: (t: Tab) => void }) {
   ];
   return (
     <>
-      <h1 className="page-title">Bugün</h1>
-      <p className="page-sub">Platform geneli canlı metrikler</p>
+      <PageHead title="Bugün" sub="Platform geneli canlı metrikler" />
       {!data ? (
         <Gate loading={loading} error={error} onRetry={reload} />
       ) : (
         <>
-          <div className="section-title">Bekleyen İşler</div>
-          <div className="stat-grid">
+          <SectionTitle>Bekleyen İşler</SectionTitle>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {QUEUES.map((qd) => {
               const n = pend?.[qd.key] ?? 0;
+              // Sayı SIFIRDAN BÜYÜKSE kart öne çıkar: on bir kart yan yana
+              // dururken hepsi aynı görünürse bekleyen işi taramak gözle sayma
+              // işine döner. Renk anlam tokenından gelir (err), sabit kod değil.
               return (
                 <button
                   key={qd.key}
                   onClick={() => onGo(qd.tab)}
-                  /*
-                   * Bekleyen iş kartı. Sayı SIFIRDAN BÜYÜKSE kart öne çıkıyor
-                   * (`dikkat`): on bir kart yan yana duruyor ve hepsi aynı
-                   * görünürse bekleyen işi taramak gözle sayma işine dönüyor.
-                   * Renk sabit kod değil, anlam tokenından geliyor.
-                   */
-                  className={`stat stat-tik ${n > 0 ? 'dikkat' : ''}`}
+                  className={`group relative flex flex-col overflow-hidden rounded-md border px-4 pb-3 pt-4 text-left shadow-1 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-2 ${
+                    n > 0 ? 'border-err bg-err-soft' : 'border-line bg-surface hover:border-ink-3'
+                  }`}
                 >
-                  <div className="v">{n}</div>
-                  <div className="l">{qd.label}</div>
+                  <span
+                    className={`absolute inset-y-0 left-0 w-1 transition-colors ${
+                      n > 0 ? 'bg-err' : 'bg-transparent group-hover:bg-accent'
+                    }`}
+                  />
+                  <span
+                    className={`text-[28px] font-extrabold leading-none tracking-[-1px] tabular-nums ${
+                      n > 0 ? 'text-err' : 'text-ink'
+                    }`}
+                  >
+                    {n}
+                  </span>
+                  <span className={`mt-2 text-ax-sm font-semibold ${n > 0 ? 'text-err' : 'text-ink-3'}`}>
+                    {qd.label}
+                  </span>
                 </button>
               );
             })}
           </div>
-          <div className="section-title">Platform</div>
-          <div className="stat-grid">
+          <SectionTitle>Platform</SectionTitle>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Stat v={String(data.users)} l="Kullanıcı" />
             <Stat v={String(data.professionals)} l="İşletme / Uzman" />
             <Stat v={String(data.bookings.upcoming)} l="Yaklaşan randevu" />
             <Stat v={TL(data.bookings.revenue)} l="Tamamlanan gelir" />
           </div>
-          <div className="section-title">Randevu durumu</div>
-          <div className="stat-grid">
+          <SectionTitle>Randevu durumu</SectionTitle>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Stat v={String(data.bookings.completed)} l="Tamamlanan" />
             <Stat v={String(data.bookings.cancelled)} l="İptal" />
             <Stat v={`%${data.bookings.noShowRate}`} l="Gelmeyen oranı" />
             <Stat v={String(data.activeCampaigns)} l="Aktif kampanya" />
           </div>
-          <div className="section-title">Üyelik durumu</div>
-          <div className="stat-grid">
+          <SectionTitle>Üyelik durumu</SectionTitle>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Stat v={String(data.businesses.pending)} l="Onay bekleyen" />
             <Stat v={String(data.businesses.approved)} l="Onaylı" />
             <Stat v={String(data.businesses.rejected)} l="Reddedilen" />
@@ -1129,13 +1133,78 @@ function OverviewView({ onGo }: { onGo: (t: Tab) => void }) {
     </>
   );
 }
-function Stat({ v, l }: { v: string; l: string }) {
+// ── Ortak görsel atomlar (Tailwind) ──────────────────────────────────────────
+// Tüm sekmeler bunları paylaşır: bir kez Tailwind'e çevrildiğinde panel geneli
+// tutarlı görünüm kazanır. Mantık yok — yalnız sunum.
+function PageHead({ title, sub }: { title: string; sub?: ReactNode }) {
   return (
-    <div className="stat">
-      <div className="v">{v}</div>
-      <div className="l">{l}</div>
+    <div className="mb-6">
+      <h1 className="text-ax-2xl font-extrabold leading-tight tracking-[-0.7px] text-ink">{title}</h1>
+      {sub ? (
+        <p className="mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">{sub}</p>
+      ) : null}
     </div>
   );
+}
+
+function SectionTitle({ children }: { children: ReactNode }) {
+  return (
+    <div className="mb-3 mt-8 text-ax-xs font-extrabold uppercase tracking-[1.2px] text-ink-3 first:mt-0">
+      {children}
+    </div>
+  );
+}
+
+function Stat({ v, l }: { v: string; l: string }) {
+  return (
+    <div className="rounded-md border border-line bg-surface px-4 pb-3 pt-4 shadow-1 transition-shadow duration-150 hover:shadow-2">
+      <div className="text-[28px] font-extrabold leading-[1.15] tracking-[-1px] tabular-nums text-ink">{v}</div>
+      <div className="mt-1 text-ax-sm font-semibold text-ink-3">{l}</div>
+    </div>
+  );
+}
+
+// Filtre çipi (aç/kapa) — panel genelinde sekme/filtre seçimlerinde kullanılır.
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1.5 text-ax-sm font-semibold transition-colors duration-150 ${
+        active
+          ? 'border-accent bg-accent text-on-accent'
+          : 'border-line bg-surface text-ink-3 hover:border-ink-3 hover:text-ink'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+// Yatay araç çubuğu (filtre/aksiyon satırı).
+function Toolbar({ children }: { children: ReactNode }) {
+  return <div className="mb-4 flex flex-wrap items-center gap-2">{children}</div>;
+}
+
+// Beyaz yüzey kart.
+function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`overflow-hidden rounded-md border border-line bg-surface shadow-1 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+// Yükleniyor / boş durum.
+function Loading({ label = 'Yükleniyor…' }: { label?: string }) {
+  return <div className="py-16 text-center text-ax-md text-ink-3">{label}</div>;
 }
 const SECTOR_TR: Record<string, string> = {
   hair: 'Saç',
@@ -1160,49 +1229,45 @@ function StatsView() {
   const active = METRICS.find((m) => m.key === metric)!;
   return (
     <>
-      <h1 className="page-title">Raporlar</h1>
-      <p className="page-sub">
-        Zaman serisi — kayıt, randevu ve gelir {data ? `· ${data.timezone}` : ''}
-      </p>
-      <div className="toolbar">
+      <PageHead
+        title="Raporlar"
+        sub={`Zaman serisi — kayıt, randevu ve gelir${data ? ` · ${data.timezone}` : ''}`}
+      />
+      <Toolbar>
         {[7, 30, 90].map((d) => (
-          <button key={d} className={`chip ${days === d ? 'on' : ''}`} onClick={() => setDays(d)}>
+          <Chip key={d} active={days === d} onClick={() => setDays(d)}>
             Son {d} gün
-          </button>
+          </Chip>
         ))}
-      </div>
+      </Toolbar>
       {!data ? (
-        <div className="empty">Yükleniyor…</div>
+        <Loading />
       ) : (
         <>
-          <div className="stat-grid" style={{ marginBottom: 8 }}>
+          <div className="mb-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Stat v={String(data.totals.users)} l={`Yeni kayıt (${days}g)`} />
             <Stat v={String(data.totals.bookings)} l={`Randevu (${days}g)`} />
             <Stat v={TL(data.totals.revenue)} l={`Gelir (${days}g)`} />
           </div>
-          <div className="section-title">Günlük seyir</div>
-          <div className="toolbar">
+          <SectionTitle>Günlük seyir</SectionTitle>
+          <Toolbar>
             {METRICS.map((m) => (
-              <button
-                key={m.key}
-                className={`chip ${metric === m.key ? 'on' : ''}`}
-                onClick={() => setMetric(m.key)}
-              >
+              <Chip key={m.key} active={metric === m.key} onClick={() => setMetric(m.key)}>
                 {m.label}
-              </button>
+              </Chip>
             ))}
-          </div>
-          <div className="card" style={{ padding: 20 }}>
+          </Toolbar>
+          <Card className="p-5">
             <BarChart
               points={data.series.map((s) => ({ label: s.date, value: s[metric] }))}
               color={active.color}
               format={metric === 'revenue' ? TL : (n) => String(n)}
             />
-          </div>
-          <div className="section-title">Kategori dağılımı (uzman havuzu)</div>
-          <div className="card" style={{ padding: 20 }}>
+          </Card>
+          <SectionTitle>Kategori dağılımı (uzman havuzu)</SectionTitle>
+          <Card className="p-5">
             <CategoryBars items={data.categories} />
-          </div>
+          </Card>
         </>
       )}
     </>
@@ -1501,46 +1566,48 @@ function CommissionsView() {
     s === 'earned' ? 'approved' : s === 'pending' ? 'pending' : 'rejected';
   return (
     <>
-      <h1 className="page-title">
-        Komisyonlar{' '}
-        {data ? (
-          <button
-            className="btn-sm"
-            style={{ marginLeft: 8, verticalAlign: 'middle' }}
-            onClick={() =>
-              exportCsv(
-                'ayna-komisyon.csv',
-                data.salons.map((r) => ({
-                  uzman_salon: r.proName,
-                  randevu: r.count,
-                  ciro: r.gmv,
-                  komisyon: r.earned,
-                  bekleyen: r.pending,
-                  tahsil: r.collected,
-                  kalan: r.outstanding,
-                })),
-              )
-            }
-          >
-            ⬇ Excel
-          </button>
-        ) : null}
-      </h1>
-      <p className="page-sub">
-        App üzerinden alınan online randevulardan platform komisyonu (offline salon kayıtları hariç)
-      </p>
+      <div className="mb-6">
+        <h1 className="flex flex-wrap items-center gap-2 text-ax-2xl font-extrabold leading-tight tracking-[-0.7px] text-ink">
+          Komisyonlar{' '}
+          {data ? (
+            <button
+              className="btn-sm"
+              onClick={() =>
+                exportCsv(
+                  'ayna-komisyon.csv',
+                  data.salons.map((r) => ({
+                    uzman_salon: r.proName,
+                    randevu: r.count,
+                    ciro: r.gmv,
+                    komisyon: r.earned,
+                    bekleyen: r.pending,
+                    tahsil: r.collected,
+                    kalan: r.outstanding,
+                  })),
+                )
+              }
+            >
+              ⬇ Excel
+            </button>
+          ) : null}
+        </h1>
+        <p className="mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">
+          App üzerinden alınan online randevulardan platform komisyonu (offline salon kayıtları
+          hariç)
+        </p>
+      </div>
       {loading || !data ? (
-        <div className="empty">Yükleniyor…</div>
+        <Loading />
       ) : (
         <>
-          <div className="stat-grid">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Stat v={TL(data.totals.earned)} l="Kazanılan komisyon" />
             <Stat v={TL(data.totals.collected)} l="Tahsil edilen" />
             <Stat v={TL(data.totals.outstanding)} l="Açık alacak" />
             <Stat v={`%${data.rate}`} l={`Oran · ${data.totals.count} online randevu`} />
           </div>
-          <div className="section-title">Komisyon oranı</div>
-          <div className="card">
+          <SectionTitle>Komisyon oranı</SectionTitle>
+          <Card>
             <div className="list-row">
               <div className="grow">
                 <div className="name">Güncel oran: %{data.rate}</div>
@@ -1550,8 +1617,7 @@ function CommissionsView() {
                 </div>
               </div>
               <input
-                className="input"
-                style={{ width: 90, height: 34 }}
+                className="input h-[34px] w-[90px]"
                 type="number"
                 min={0}
                 max={100}
@@ -1563,11 +1629,11 @@ function CommissionsView() {
                 Kaydet
               </button>
             </div>
-          </div>
-          <div className="section-title">Salon bazında — alacak & tahsilat</div>
-          <div className="card">
+          </Card>
+          <SectionTitle>Salon bazında — alacak & tahsilat</SectionTitle>
+          <Card>
             {data.salons.length === 0 ? (
-              <div className="empty">Online randevu yok</div>
+              <Loading label="Online randevu yok" />
             ) : (
               data.salons.map((s) => (
                 <div key={s.proId || s.proName} className="list-row">
@@ -1583,12 +1649,7 @@ function CommissionsView() {
                   ) : s.earned > 0 ? (
                     <span className="pill approved">Tahsil edildi</span>
                   ) : (
-                    <span
-                      className="pill"
-                      style={{ background: 'var(--line)', color: 'var(--muted)' }}
-                    >
-                      Alacak yok
-                    </span>
+                    <span className="pill bg-line text-ink-3">Alacak yok</span>
                   )}
                   {s.outstanding > 0 ? (
                     <button
@@ -1629,11 +1690,11 @@ function CommissionsView() {
                 </div>
               ))
             )}
-          </div>
+          </Card>
           {data.payouts.length > 0 ? (
             <>
-              <div className="section-title">Tahsilat geçmişi</div>
-              <div className="card">
+              <SectionTitle>Tahsilat geçmişi</SectionTitle>
+              <Card>
                 {data.payouts.map((p) => (
                   <div key={p.id} className="list-row">
                     <div className="grow">
@@ -1643,19 +1704,17 @@ function CommissionsView() {
                         {p.note ? ` · ${p.note}` : ''}
                       </div>
                     </div>
-                    <div className="kv-v" style={{ color: 'var(--success)' }}>
-                      {TL(p.amount)}
-                    </div>
+                    <div className="kv-v text-ok">{TL(p.amount)}</div>
                   </div>
                 ))}
-              </div>
+              </Card>
             </>
           ) : null}
           <RandevuKuyruklari />
-          <div className="section-title">Randevu kayıtları ({data.items.length})</div>
-          <div className="card">
+          <SectionTitle>Randevu kayıtları ({data.items.length})</SectionTitle>
+          <Card>
             {data.items.length === 0 ? (
-              <div className="empty">Kayıt yok</div>
+              <Loading label="Kayıt yok" />
             ) : (
               data.items.map((it) => (
                 <div key={it.id} className="list-row">
@@ -1672,7 +1731,7 @@ function CommissionsView() {
                 </div>
               ))
             )}
-          </div>
+          </Card>
         </>
       )}
     </>
@@ -1743,26 +1802,24 @@ function BusinessesView() {
   const openDetail = async (id: string) => setDetail(await api.businessDetail(id));
   return (
     <>
-      <h1 className="page-title">Salon başvuruları</h1>
-      <p className="page-sub">Salon (işletme) kayıt onayları ve durum yönetimi</p>
-      <div className="toolbar">
+      <PageHead
+        title="Salon başvuruları"
+        sub="Salon (işletme) kayıt onayları ve durum yönetimi"
+      />
+      <Toolbar>
         {['pending', 'approved', 'rejected'].map((s) => (
-          <button
-            key={s}
-            className={`chip ${status === s ? 'on' : ''}`}
-            onClick={() => setStatus(s)}
-          >
+          <Chip key={s} active={status === s} onClick={() => setStatus(s)}>
             {s === 'pending' ? 'Onay bekleyen' : s === 'approved' ? 'Onaylı' : 'Reddedilen'}
-          </button>
+          </Chip>
         ))}
-      </div>
-      <div className="card">
+      </Toolbar>
+      <Card>
         {!data || data.length === 0 ? (
-          <div className="empty">Kayıt yok</div>
+          <Loading label="Kayıt yok" />
         ) : (
           data.map((b) => (
             <div key={b.id} className="list-row">
-              <div className="grow" style={{ cursor: 'pointer' }} onClick={() => openDetail(b.id)}>
+              <div className="grow cursor-pointer" onClick={() => openDetail(b.id)}>
                 <div className="name">{b.name}</div>
                 <div className="meta">
                   {b.ownerName} · {b.sector} · {b.city}
@@ -1785,13 +1842,13 @@ function BusinessesView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
       {detail ? (
         <div className="modal-backdrop" onClick={() => setDetail(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
               <div>
-                <div className="page-title" style={{ fontSize: 20 }}>
+                <div className="text-ax-xl font-extrabold tracking-[-0.4px] text-ink">
                   {detail.name}
                 </div>
                 <span className={`pill ${detail.status}`}>
@@ -1830,9 +1887,7 @@ function BusinessesView() {
               />
             </div>
             {/* §3.3 — Katmanlı doğrulama kontrol listesi (admin işaretler) */}
-            <h3 className="section-head" style={{ marginTop: 14 }}>
-              Doğrulama kontrol listesi
-            </h3>
+            <SectionTitle>Doğrulama kontrol listesi</SectionTitle>
             <div className="verify-grid">
               {VERIFY_CHECKS.map((vc) => {
                 const on = detail.verification?.[vc.key] ?? false;
@@ -1849,18 +1904,21 @@ function BusinessesView() {
             </div>
             {detail.docUrl ? (
               <a
-                className="btn-sm btn-ghost"
+                className="btn-sm btn-ghost mt-2"
                 href={detail.docUrl}
                 target="_blank"
                 rel="noreferrer"
-                style={{ marginTop: 8, display: 'inline-block' }}
               >
                 Belgeyi aç ↗
               </a>
             ) : null}
-            {detail.reviewNote ? <p className="page-sub">Not: {detail.reviewNote}</p> : null}
+            {detail.reviewNote ? (
+              <p className="mt-4 text-ax-md leading-relaxed text-ink-3">Not: {detail.reviewNote}</p>
+            ) : null}
             {detail.about ? <p className="about">{detail.about}</p> : null}
-            {detail.rejectReason ? <p className="err">Red sebebi: {detail.rejectReason}</p> : null}
+            {detail.rejectReason ? (
+              <p className="mt-3 text-ax-sm text-err">Red sebebi: {detail.rejectReason}</p>
+            ) : null}
             <div className="modal-actions">
               {detail.status !== 'approved' ? (
                 <button className="btn-sm btn-ok" onClick={() => act(detail.id, 'approve')}>
@@ -1891,7 +1949,6 @@ function BusinessesView() {
     </>
   );
 }
-// §uzman onboarding — admin uzman doğrulama kontrol listesi
 const SP_ENTITY_LABEL: Record<string, string> = {
   freelance: 'Serbest çalışan',
   ip: 'ИП (kayıtlı bireysel girişimci)',
@@ -1921,17 +1978,17 @@ function SpecialistsView() {
   };
   return (
     <>
-      <h1 className="page-title">Uzman doğrulama</h1>
-      <p className="page-sub">
-        Bağımsız uzman katmanlı doğrulama — kimlik (KYC), sertifika, sosyal medya → AYNA Onaylı
-      </p>
-      <div className="card">
+      <PageHead
+        title="Uzman doğrulama"
+        sub="Bağımsız uzman katmanlı doğrulama — kimlik (KYC), sertifika, sosyal medya → AYNA Onaylı"
+      />
+      <Card className="p-2">
         {!data || data.length === 0 ? (
-          <div className="empty">Kayıt yok</div>
+          <Loading label="Kayıt yok" />
         ) : (
           data.map((s) => (
             <div key={s.id} className="list-row">
-              <div className="grow" style={{ cursor: 'pointer' }} onClick={() => openDetail(s.id)}>
+              <div className="grow cursor-pointer" onClick={() => openDetail(s.id)}>
                 <div className="name">
                   {s.name} {s.aynaVerified ? '🛡️' : ''}
                   {/*
@@ -1940,8 +1997,7 @@ function SpecialistsView() {
                     katalogda görünmüyor ve randevu alamıyor.
                   */}
                   <span
-                    className={`pill ${s.status === 'approved' ? 'approved' : s.status === 'rejected' ? 'rejected' : 'pending'}`}
-                    style={{ marginLeft: 8 }}
+                    className={`pill ml-2 ${s.status === 'approved' ? 'approved' : s.status === 'rejected' ? 'rejected' : 'pending'}`}
                   >
                     {s.status === 'approved'
                       ? 'Açık'
@@ -1993,13 +2049,13 @@ function SpecialistsView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
       {detail ? (
         <div className="modal-backdrop" onClick={() => setDetail(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
               <div>
-                <div className="page-title" style={{ fontSize: 20 }}>
+                <div className="text-ax-xl font-bold text-ink">
                   {detail.name} {detail.aynaVerified ? '🛡️ AYNA Onaylı' : ''}
                 </div>
                 <span
@@ -2021,10 +2077,10 @@ function SpecialistsView() {
               <KV k="Sosyal doğrulama kodu" v={detail.socialVerifyCode || '—'} />
               <KV k="Bio" v={detail.bio || '—'} />
             </div>
-            <h3 className="section-head" style={{ marginTop: 14 }}>
+            <h3 className="section-head mt-3.5">
               Doğrulama kontrol listesi
             </h3>
-            <p className="page-sub" style={{ marginTop: 0 }}>
+            <p className="page-sub mt-0">
               Kimlik, KYC kuyruğundan onaylanır. Sertifika ve sosyal medyayı burada işaretle.
             </p>
             <div className="verify-grid">
@@ -2045,16 +2101,13 @@ function SpecialistsView() {
               })}
             </div>
             {detail.certificates.length > 0 ? (
-              <div
-                className="cert-thumbs"
-                style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}
-              >
+              <div className="flex flex-wrap gap-2 mt-2.5">
                 {detail.certificates.map((c, i) => (
                   <a key={i} href={c} target="_blank" rel="noreferrer">
                     <img
                       src={c}
                       alt={`sertifika ${i + 1}`}
-                      style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8 }}
+                      className="w-[72px] h-[72px] object-cover rounded-sm border border-line"
                     />
                   </a>
                 ))}
@@ -2096,19 +2149,23 @@ function ReguleHizmetView() {
 
   return (
     <>
-      <h1 className="page-title">Regüle hizmet uyarıları</h1>
-      <p className="page-sub">
-        Botoks, dolgu, mezoterapi, diş estetiği ve beslenme danışmanlığı lisans gerektirdiği için
-        katalogda yok. Uzman bu işlemleri kendi yazdığı hizmet adına girerse satır buraya düşer.{' '}
-        <strong>Kayıt engellenmedi</strong> — karar sende.
-      </p>
-      <div className="card">
+      <div className="mb-6">
+        <h1 className="text-ax-2xl font-extrabold leading-tight tracking-[-0.7px] text-ink">
+          Regüle hizmet uyarıları
+        </h1>
+        <p className="mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">
+          Botoks, dolgu, mezoterapi, diş estetiği ve beslenme danışmanlığı lisans gerektirdiği için
+          katalogda yok. Uzman bu işlemleri kendi yazdığı hizmet adına girerse satır buraya düşer.{' '}
+          <strong className="font-bold text-ink">Kayıt engellenmedi</strong> — karar sende.
+        </p>
+      </div>
+      <Card>
         {!data || data.length === 0 ? (
-          <div className="empty">Bekleyen uyarı yok</div>
+          <Loading label="Bekleyen uyarı yok" />
         ) : (
           data.map((f) => (
-            <div key={f.id} className="list-col">
-              <div className="name">
+            <div key={f.id} className="border-b border-line-2 p-4 last:border-b-0">
+              <div className="flex flex-wrap items-center gap-2 text-ax-md font-bold tracking-[-0.15px] text-ink">
                 {f.proName || f.proId} <span className="pill pending">{f.reason}</span>
               </div>
               {/*
@@ -2116,11 +2173,11 @@ function ReguleHizmetView() {
                * buna dayanıyor. Özetlemek ya da kısaltmak, kararı verenden
                * kanıtı saklamak olurdu.
                */}
-              <div className="meta" style={{ marginTop: 4 }}>
+              <div className="mt-1 text-ax-sm text-ink-3">
                 “{f.serviceName}”{f.city ? ` · ${f.city}` : ''} ·{' '}
                 {new Date(f.createdAt).toLocaleDateString('tr-TR')}
               </div>
-              <div className="row-actions" style={{ marginTop: 8 }}>
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button className="btn-sm" onClick={() => void karar(f, 'cleared')}>
                   Sorun yok
                 </button>
@@ -2131,7 +2188,7 @@ function ReguleHizmetView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
@@ -2161,16 +2218,15 @@ function ModerationView() {
   };
   return (
     <>
-      <h1 className="page-title">Topluluk moderasyonu</h1>
-      <p className="page-sub">
-        W2W onay kuyruğu (otomatik filtre + şikâyet) · görünür yorumlar. Sabit ilke: dürüst eleştiri
-        silinmez.
-      </p>
+      <PageHead
+        title="Topluluk moderasyonu"
+        sub="W2W onay kuyruğu (otomatik filtre + şikâyet) · görünür yorumlar. Sabit ilke: dürüst eleştiri silinmez."
+      />
       {/* §12.5 — W2W moderasyon kuyruğu (pending + şikâyetle gizlenen) */}
-      <h2 className="section-head">W2W kuyruğu ({circle?.length ?? 0})</h2>
-      <div className="card" style={{ marginBottom: 24 }}>
+      <SectionTitle>W2W kuyruğu ({circle?.length ?? 0})</SectionTitle>
+      <Card className="mb-6">
         {!circle || circle.length === 0 ? (
-          <div className="empty">Bekleyen W2W içeriği yok</div>
+          <Loading label="Bekleyen W2W içeriği yok" />
         ) : (
           circle.map((p) => (
             <div key={p.id} className="list-col">
@@ -2180,15 +2236,11 @@ function ModerationView() {
                   {p.status === 'hidden' ? `${p.reports} şikâyet` : 'moderasyon'}
                 </span>
               </div>
-              <div className="meta" style={{ marginTop: 4 }}>
-                {p.text}
-              </div>
+              <div className="mt-1 text-ax-sm leading-relaxed text-ink-2">{p.text}</div>
               {p.moderationReason ? (
-                <div className="meta" style={{ marginTop: 2 }}>
-                  Sebep: {p.moderationReason}
-                </div>
+                <div className="mt-0.5 text-ax-sm text-ink-3">Sebep: {p.moderationReason}</div>
               ) : null}
-              <div className="form-inline" style={{ marginTop: 10 }}>
+              <div className="mt-2.5 flex flex-wrap gap-2">
                 <button className="btn-sm btn-ok" onClick={() => moderateCircle(p.id, 'approve')}>
                   Onayla (yayınla)
                 </button>
@@ -2199,11 +2251,11 @@ function ModerationView() {
             </div>
           ))
         )}
-      </div>
-      <h2 className="section-head">Görünür yorumlar</h2>
-      <div className="card">
+      </Card>
+      <SectionTitle>Görünür yorumlar</SectionTitle>
+      <Card>
         {!data || data.length === 0 ? (
-          <div className="empty">Görünür yorum yok</div>
+          <Loading label="Görünür yorum yok" />
         ) : (
           data.map((r) => (
             <div key={r.id} className="list-row">
@@ -2223,7 +2275,7 @@ function ModerationView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
@@ -2268,9 +2320,8 @@ function CampaignsView() {
   };
   return (
     <>
-      <h1 className="page-title">Kampanyalar</h1>
-      <p className="page-sub">Keşif vitrinindeki kampanyaları yönet</p>
-      <div className="card" style={{ marginBottom: 20 }}>
+      <PageHead title="Kampanyalar" sub="Keşif vitrinindeki kampanyaları yönet" />
+      <Card className="mb-5">
         <div className="form-inline">
           <LangTabs
             lang={lang}
@@ -2313,10 +2364,10 @@ function CampaignsView() {
             + Kampanya ekle
           </button>
         </div>
-      </div>
-      <div className="card">
+      </Card>
+      <Card>
         {!data || data.length === 0 ? (
-          <div className="empty">Kampanya yok</div>
+          <Loading label="Kampanya yok" />
         ) : (
           data.map((c) => (
             <div key={c.id} className="list-row">
@@ -2361,11 +2412,10 @@ function CampaignsView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
-// §12.6 İçerik Yönetimi — Blog editörü + kullanıcı başvuruları + haftalık W2W teması
 function ContentView() {
   const { onayla, formAl } = useDiyalog();
   const { data: articles, reload: reloadArticles } = useAsync<BlogArticle[]>(
@@ -2518,13 +2568,13 @@ function ContentView() {
   const reviewed = (apps ?? []).filter((a) => a.status !== 'pending');
   return (
     <>
-      <h1 className="page-title">Blog & tema</h1>
-      <p className="page-sub">
-        AYNA Blog editörü · kullanıcı başvuruları (onayla → puan) · haftalık W2W teması
-      </p>
+      <PageHead
+        title="Blog & tema"
+        sub="AYNA Blog editörü · kullanıcı başvuruları (onayla → puan) · haftalık W2W teması"
+      />
       {/* Blog editörü */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div className="section-title">{editId ? 'Yazıyı düzenle' : 'Yeni yazı'}</div>
+      <SectionTitle>{editId ? 'Yazıyı düzenle' : 'Yeni yazı'}</SectionTitle>
+      <Card className="mb-5">
         <div className="form-inline">
           <LangTabs
             lang={lang}
@@ -2550,6 +2600,7 @@ function ContentView() {
             onChange={(e) => setForm({ ...form, categoryCode: e.target.value })}
           />
           <select
+            className="input"
             value={form.contentType ?? 'guide'}
             onChange={(e) => setForm({ ...form, contentType: e.target.value })}
           >
@@ -2608,10 +2659,10 @@ function ContentView() {
             </button>
           )}
         </div>
-      </div>
-      <div className="card" style={{ marginBottom: 28 }}>
+      </Card>
+      <Card className="mb-7">
         {!articles || articles.length === 0 ? (
-          <div className="empty">Yazı yok</div>
+          <Loading label="Yazı yok" />
         ) : (
           articles.map((a) => (
             <div key={a.id} className="list-row">
@@ -2658,15 +2709,15 @@ function ContentView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
       {/* Kullanıcı blog başvuruları */}
       <h2 className="section-head">Kullanıcı blog başvuruları</h2>
-      <p className="page-sub">
+      <p className="mb-6 mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">
         Onaylanan başvuru otomatik yayına alınır ve yazara 200 puan verilir.
       </p>
-      <div className="card" style={{ marginBottom: 28 }}>
+      <Card className="mb-7">
         {pending.length === 0 ? (
-          <div className="empty">Bekleyen başvuru yok</div>
+          <Loading label="Bekleyen başvuru yok" />
         ) : (
           pending.map((a) => (
             <div key={a.id} className="list-col">
@@ -2675,10 +2726,10 @@ function ContentView() {
                 {a.authorName} · {a.tag || 'Topluluk'} ·{' '}
                 {new Date(a.createdAt).toLocaleDateString('tr-TR')}
               </div>
-              <div className="meta" style={{ marginTop: 6 }}>
+              <div className="mt-1.5 text-ax-sm text-ink-3">
                 {a.excerpt || a.body[0]?.slice(0, 140)}
               </div>
-              <div className="form-inline" style={{ marginTop: 10 }}>
+              <div className="form-inline mt-2.5">
                 <input
                   className="input"
                   placeholder="Kategori kodu (opsiyonel)"
@@ -2725,7 +2776,7 @@ function ContentView() {
           ))
         )}
         {reviewed.length > 0 && (
-          <div style={{ marginTop: 12, opacity: 0.7 }}>
+          <div className="mt-3 opacity-70">
             {reviewed.map((a) => (
               <div key={a.id} className="list-row">
                 <div className="grow">
@@ -2740,11 +2791,11 @@ function ContentView() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
       {/* Haftalık W2W teması */}
       <h2 className="section-head">Haftalık W2W teması</h2>
-      <p className="page-sub">App&apos;te haftanın sorusu/teması. Tek tema aktif olabilir.</p>
-      <div className="card" style={{ marginBottom: 20 }}>
+      <p className="mb-6 mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">App&apos;te haftanın sorusu/teması. Tek tema aktif olabilir.</p>
+      <Card className="mb-5">
         <div className="form-inline">
           <LangTabs
             lang={themeLang}
@@ -2785,10 +2836,10 @@ function ContentView() {
             + Tema ekle
           </button>
         </div>
-      </div>
-      <div className="card">
+      </Card>
+      <Card>
         {!themes || themes.length === 0 ? (
-          <div className="empty">Tema yok</div>
+          <Loading label="Tema yok" />
         ) : (
           themes.map((th) => (
             <div key={th.id} className="list-row">
@@ -2814,11 +2865,10 @@ function ContentView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
-// §12.10 Bildirim Merkezi — segment bazlı toplu duyuru + gönderim geçmişi
 const SEGMENTS: { id: AnnouncementSegment; label: string }[] = [
   { id: 'all', label: 'Tüm kullanıcılar' },
   { id: 'premium', label: 'Premium üyeler' },
@@ -2916,25 +2966,21 @@ function SplashView() {
     <>
       <h2 className="section-head">Açılış mesajları</h2>
       {!data || data.length === 0 ? (
-        <div className="card">
-          <div className="empty" style={{ textAlign: 'left', lineHeight: 1.6 }}>
-            <b>Tablo boş — bu normal.</b>
+        <Card className="p-5">
+          <div className="max-w-[70ch] text-left leading-relaxed text-ink-2">
+            <b className="text-ink">Tablo boş — bu normal.</b>
             <br />
             Uygulama 54 mesajı kendi içinde taşıyor ve internetsiz de çalışıyor. Bu ekran yalnızca
             uzaktan değiştirme katmanı: bir mesajı düzenlemek ya da pasife almak istediğinizde
             paketi tabloya alın.
           </div>
-          <button className="btn-sm btn-ok" onClick={aktar}>
+          <button className="btn-sm btn-ok mt-4" onClick={aktar}>
             Paketi tabloya al
           </button>
-          {bilgi && (
-            <div className="meta" style={{ marginTop: 8, color: 'var(--success)' }}>
-              {bilgi}
-            </div>
-          )}
-        </div>
+          {bilgi && <div className="mt-2 text-ax-sm text-ok">{bilgi}</div>}
+        </Card>
       ) : (
-        <div className="card">
+        <Card>
           {data.map((m) => {
             const r = oranlar.get(m.code);
             return (
@@ -2943,10 +2989,8 @@ function SplashView() {
                   {m.code} · {m.grup}
                   {m.active ? '' : ' · PASİF'}
                 </div>
-                <div className="meta" style={{ marginTop: 4 }}>
-                  {m.tr}
-                </div>
-                <div className="meta" style={{ marginTop: 6 }}>
+                <div className="mt-1 text-ax-sm text-ink-2">{m.tr}</div>
+                <div className="mt-1.5 text-ax-sm text-ink-3">
                   {/*
                     Gösterimi olmayan mesaja oran YAZILMIYOR. "%0 atlanıyor"
                     deseydik hiç gösterilmemiş bir mesaj en başarılı görünür,
@@ -2956,7 +3000,7 @@ function SplashView() {
                     ? `${r.gosterim} gösterim · %${Math.round(r.skipOrani * 100)} atlandı`
                     : 'Henüz gösterim verisi yok'}
                 </div>
-                <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                <div className="mt-2 flex gap-2">
                   <button className="btn-sm" onClick={() => ac(m)}>
                     Düzenle
                   </button>
@@ -2967,23 +3011,23 @@ function SplashView() {
               </div>
             );
           })}
-        </div>
+        </Card>
       )}
 
       {duzenlenen && (
-        <div className="card" style={{ marginTop: 12 }}>
+        <Card className="mt-3 p-5">
           <h2 className="section-head">{duzenlenen.code} — üç dil zorunlu</h2>
           {(['tr', 'kk', 'ru'] as const).map((d) => (
             <textarea
               key={d}
-              className="input full"
+              className="input full mb-2"
               rows={2}
               placeholder={d.toUpperCase()}
               value={form[d]}
               onChange={(e) => setForm({ ...form, [d]: e.target.value })}
             />
           ))}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+          <div className="mt-2 flex gap-2">
             <button className="btn-sm btn-ok" disabled={eksikDil} onClick={kaydet}>
               Kaydet
             </button>
@@ -2992,17 +3036,15 @@ function SplashView() {
             </button>
           </div>
           {eksikDil && (
-            <div className="meta" style={{ marginTop: 8 }}>
+            <div className="mt-2 text-ax-sm text-ink-3">
               Üç dil de dolmadan kaydedilemez — eksik dil, o dildeki kullanıcıya boş açılış ekranı
               demek.
             </div>
           )}
           {hata && (
-            <div className="meta" style={{ marginTop: 8, color: 'var(--danger)' }}>
-              Kaydedilemedi: {hata}
-            </div>
+            <div className="mt-2 text-ax-sm text-err">Kaydedilemedi: {hata}</div>
           )}
-        </div>
+        </Card>
       )}
     </>
   );
@@ -3059,9 +3101,8 @@ function AnnouncementsView() {
   const segLabel = (s: AnnouncementSegment) => SEGMENTS.find((x) => x.id === s)?.label ?? s;
   return (
     <>
-      <h1 className="page-title">Duyurular</h1>
-      <p className="page-sub">Segment bazlı toplu duyuru — app bildirim listesine düşer</p>
-      <div className="card" style={{ marginBottom: 20 }}>
+      <PageHead title="Duyurular" sub="Segment bazlı toplu duyuru — app bildirim listesine düşer" />
+      <Card className="mb-5">
         <div className="form-inline">
           <LangTabs
             lang={lang}
@@ -3110,24 +3151,20 @@ function AnnouncementsView() {
             📣 Duyuruyu gönder
           </button>
           {sent && (
-            <div className="meta full" style={{ color: 'var(--success)' }}>
-              {sent}
-            </div>
+            <div className="full text-ax-sm font-semibold text-ok">{sent}</div>
           )}
         </div>
-      </div>
+      </Card>
       <h2 className="section-head">Gönderim geçmişi</h2>
-      <div className="card">
+      <Card>
         {!data || data.length === 0 ? (
-          <div className="empty">Henüz duyuru gönderilmedi</div>
+          <Loading label="Henüz duyuru gönderilmedi" />
         ) : (
           data.map((a) => (
             <div key={a.id} className="list-col">
               <div className="name">{a.title}</div>
-              <div className="meta" style={{ marginTop: 4 }}>
-                {a.body}
-              </div>
-              <div className="meta" style={{ marginTop: 6 }}>
+              <div className="meta !mt-1">{a.body}</div>
+              <div className="meta !mt-1.5 tabular-nums">
                 {segLabel(a.segment)}
                 {a.city ? ` · ${a.city}` : ''} · {a.recipientCount} alıcı ·{' '}
                 {new Date(a.createdAt).toLocaleString('tr-TR')}
@@ -3135,7 +3172,7 @@ function AnnouncementsView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
@@ -3204,18 +3241,17 @@ function AdsView() {
   };
   return (
     <>
-      <h1 className="page-title">Reklamlar</h1>
-      <p className="page-sub">
-        Ücretli vitrin: uzman/salon Kaspi ile öder, dekontu buradan doğrularsın. Onaylanan reklam
-        satın alınan süre boyunca Keşfet ekranında yayınlanır.
-      </p>
+      <PageHead
+        title="Reklamlar"
+        sub="Ücretli vitrin: uzman/salon Kaspi ile öder, dekontu buradan doğrularsın. Onaylanan reklam satın alınan süre boyunca Keşfet ekranında yayınlanır."
+      />
       {/* ── §reklam — ÜCRETLİ VİTRİN ÖDEMELERİ ──
           Reklam sipariş anında yayına GİRMEZ; ödeme burada doğrulanınca
           yayınlanır. Onaylanmadan yayınlansaydı ödenmemiş reklam vitrine
           düşerdi. */}
-      <div className="section-title">Reklam ödemeleri ({reklam.data?.length ?? 0})</div>
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div className="meta full" style={{ marginBottom: 8 }}>
+      <SectionTitle>Reklam ödemeleri ({reklam.data?.length ?? 0})</SectionTitle>
+      <Card className="mb-4">
+        <div className="border-b border-line-2 px-4 py-3 text-ax-sm leading-relaxed text-ink-3">
           Onaylayınca reklam satın alınan süre boyunca yayına girer ve süre bitince kendiliğinden
           düşer. Reddedersen reklam üretilmez; uzman dekontu yeniden gönderebilir.
         </div>
@@ -3223,19 +3259,19 @@ function AdsView() {
           <div className="empty">Bekleyen reklam ödemesi yok</div>
         ) : (
           reklam.data.map((o) => (
-            <div key={o.id} className="row">
+            <div key={o.id} className="list-row">
               {o.image ? <img className="thumb" src={o.image} alt="" /> : <div className="thumb" />}
               <div className="grow">
-                <div>
+                <div className="text-ax-md text-ink">
                   <b>{o.proName}</b> · {o.title}
                 </div>
-                <div className="meta">
+                <div className="meta tabular-nums">
                   {o.placement === 'firsatlar' ? 'Fırsatlar' : 'Öne çıkanlar'} · {o.months} ay ·{' '}
                   {Number(o.amount).toLocaleString('tr-TR')} ₸
                 </div>
                 <div className="meta">
                   kod{' '}
-                  <code>{`AYNA-${o.id
+                  <code className="rounded-sm bg-bg-alt px-1.5 py-0.5 font-mono text-ax-xs font-bold tracking-wide text-ink-2">{`AYNA-${o.id
                     .replace(/[^a-zA-Z0-9]/g, '')
                     .slice(-5)
                     .toUpperCase()}`}</code>
@@ -3280,8 +3316,8 @@ function AdsView() {
             </div>
           ))
         )}
-      </div>
-      <div className="card" style={{ marginBottom: 20 }}>
+      </Card>
+      <Card className="mb-5">
         <div className="form-inline">
           <select
             className="input"
@@ -3355,14 +3391,14 @@ function AdsView() {
             + Reklam ekle
           </button>
           {!tarihlerTamam && (
-            <div className="meta full">
+            <div className="col-span-full text-ax-sm leading-relaxed text-warn">
               Başlangıç ve bitiş tarihi zorunlu; bitiş başlangıçtan sonra olmalı. Tarihsiz reklam
               süresiz yayında kalırdı.
             </div>
           )}
         </div>
-      </div>
-      <div className="card">
+      </Card>
+      <Card>
         {!ads || ads.length === 0 ? (
           <div className="empty">Reklam yok</div>
         ) : (
@@ -3379,7 +3415,7 @@ function AdsView() {
                 {/* Hangi vitrin + yayın penceresi. "Aktif" rozeti tek başına
                     yanıltıcıydı: süresi geçmiş bir reklam da aktif görünüyor
                     ama ekranda çıkmıyordu — sunucu onu zaten süzüyor. */}
-                <div className="meta">
+                <div className="meta tabular-nums">
                   {a.placement === 'firsatlar' ? 'Fırsatlar' : 'Öne çıkanlar'}
                   {' · '}
                   {a.startsAt || a.endsAt
@@ -3430,12 +3466,12 @@ function AdsView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
       {/* Onay/red sonrası GERİ BİLDİRİM. Durum yazılıyor ama hiç
           gösterilmiyordu: admin düğmeye basıp bir şey olup olmadığını
           anlayamıyordu. */}
       {msg ? (
-        <div className="meta full" style={{ color: 'var(--success)' }}>
+        <div className="mt-4 text-ax-sm font-semibold text-ok">
           {msg}
         </div>
       ) : null}
@@ -3492,30 +3528,29 @@ function ProfessionalsView() {
   };
   return (
     <>
-      <h1 className="page-title">Uzman & salonlar</h1>
-      <p className="page-sub">
-        Keşif listesindeki uzman/salonlar — ekle, düzenle, fiyat, öne çıkar, sil
-      </p>
-      <div className="toolbar">
+      <PageHead
+        title="Uzman & salonlar"
+        sub="Keşif listesindeki uzman/salonlar — ekle, düzenle, fiyat, öne çıkar, sil"
+      />
+      <Toolbar>
         <button className="btn-sm btn-ok" onClick={() => setEdit({ form: { ...EMPTY_PRO } })}>
           + Yeni uzman
         </button>
         <input
-          className="input"
-          style={{ height: 34, maxWidth: 240 }}
+          className="input !h-[34px] max-w-[240px]"
           placeholder="Ara (isim / sektör)"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <span className="page-sub" style={{ margin: 0 }}>
+        <span className="ml-auto text-ax-sm font-semibold tabular-nums text-ink-3">
           {list.length} kayıt
         </span>
-      </div>
-      <div className="card">
+      </Toolbar>
+      <Card>
         {!data ? (
-          <div className="empty">Yükleniyor…</div>
+          <Loading />
         ) : list.length === 0 ? (
-          <div className="empty">Uzman yok</div>
+          <Loading label="Uzman yok" />
         ) : (
           list.map((p) => (
             <div key={p.id} className="list-row">
@@ -3571,12 +3606,12 @@ function ProfessionalsView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
       {edit ? (
         <div className="modal-backdrop" onClick={() => setEdit(null)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <div className="page-title" style={{ fontSize: 20 }}>
+              <div className="text-ax-xl font-extrabold tracking-[-0.7px] text-ink">
                 {edit.id ? 'Uzmanı düzenle' : 'Yeni uzman'}
               </div>
               <button className="btn-sm btn-ghost" onClick={() => setEdit(null)}>
@@ -3743,7 +3778,6 @@ function ServicesView() {
 
   return (
     <>
-      <h1 className="page-title">Hizmetler</h1>
       {/*
        * PANEL ARTIK GERÇEĞİ SÖYLÜYOR.
        *
@@ -3758,29 +3792,34 @@ function ServicesView() {
        * Değiştirilebilen tek şey SIRA (brief §7.3) ve o gerçekten
        * uygulamaya yansıyor.
        */}
-      <p className="page-sub">
-        Kategoriler ve alt hizmetler <strong>hizmet kataloğunda</strong> tanımlı — adları buradan
-        değişmez. Buradan <strong>sırayı</strong> değiştirebilirsin; uygulamada kategoriler bu
-        sırayla görünür.
-      </p>
+      <div className="mb-6">
+        <h1 className="text-ax-2xl font-extrabold leading-tight tracking-[-0.7px] text-ink">
+          Hizmetler
+        </h1>
+        <p className="mt-1 max-w-[70ch] text-ax-md leading-relaxed text-ink-3">
+          Kategoriler ve alt hizmetler <strong className="font-bold text-ink-2">hizmet kataloğunda</strong> tanımlı — adları buradan
+          değişmez. Buradan <strong className="font-bold text-ink-2">sırayı</strong> değiştirebilirsin; uygulamada kategoriler bu
+          sırayla görünür.
+        </p>
+      </div>
 
-      <div className="card">
+      <Card>
         {!data ? (
-          <div className="empty">Yükleniyor…</div>
+          <Loading />
         ) : liste.length === 0 ? (
-          <div className="empty">Katalog boş</div>
+          <Loading label="Katalog boş" />
         ) : (
           liste.map((c, i) => (
             <div key={c.code} className="list-row">
-              <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>
+              <span className="pill inline-flex h-6 min-w-[24px] items-center justify-center bg-line text-ax-xs text-ink-3 tabular-nums">
                 {i + 1}
               </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="name">{c.nameTr}</div>
+              <div className="min-w-0 flex-1">
+                <div className="name text-ink">{c.nameTr}</div>
                 {/* Üç dil birden: kurucunun kk/ru karşılıklarını görmesi
                     için tek yer burası. */}
                 <div className="meta">
-                  {c.nameRu} · {c.nameKk} · <span style={{ opacity: 0.7 }}>{c.code}</span>
+                  {c.nameRu} · {c.nameKk} · <span className="opacity-70">{c.code}</span>
                 </div>
               </div>
               {/*
@@ -3814,10 +3853,10 @@ function ServicesView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
 
       {degisti ? (
-        <div className="row-actions" style={{ marginTop: 16 }}>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <button className="btn-sm" onClick={() => setSira(null)} disabled={kaydediliyor}>
             Vazgeç
           </button>
@@ -3851,12 +3890,11 @@ function PricesView() {
   const catName = (code: string) => cats?.find((c) => c.code === code)?.nameTr ?? code;
   return (
     <>
-      <h1 className="page-title">Taban fiyatlar</h1>
-      <p className="page-sub">
-        Piyasa taban fiyatları (kategori × şehir) — teklif tabanı ve %40-altı uyarısı için. Uzman
-        başlangıç fiyatları "Uzmanlar" bölümünden düzenlenir.
-      </p>
-      <div className="card" style={{ marginBottom: 20 }}>
+      <PageHead
+        title="Taban fiyatlar"
+        sub={'Piyasa taban fiyatları (kategori × şehir) — teklif tabanı ve %40-altı uyarısı için. Uzman başlangıç fiyatları "Uzmanlar" bölümünden düzenlenir.'}
+      />
+      <Card className="p-5 mb-5">
         <div className="form-inline">
           <select
             className="input"
@@ -3887,12 +3925,12 @@ function PricesView() {
             Kaydet / güncelle
           </button>
         </div>
-      </div>
-      <div className="card">
+      </Card>
+      <Card className="p-5">
         {!data ? (
-          <div className="empty">Yükleniyor…</div>
+          <Loading />
         ) : data.length === 0 ? (
-          <div className="empty">Fiyat kaydı yok</div>
+          <Loading label="Fiyat kaydı yok" />
         ) : (
           data.map((m) => (
             <div key={m.id} className="list-row">
@@ -3902,11 +3940,11 @@ function PricesView() {
                   {m.category} · {m.city || 'Genel'}
                 </div>
               </div>
-              <div className="kv-v">{TL(m.basePrice)}</div>
+              <div className="kv-v tabular-nums">{TL(m.basePrice)}</div>
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
@@ -3923,33 +3961,36 @@ function PenaltiesView() {
   const { data, reload } = useAsync<Penalty[]>(() => api.penalties(), []);
   return (
     <>
-      <h1 className="page-title">Kısıtlı hesaplar</h1>
-      <p className="page-sub">
-        Kısıtlı hesaplar (yeni talep göremez) · 7 gün sayacı dolunca kalıcı engel adayı
-      </p>
-      <div className="card">
+      <PageHead
+        title="Kısıtlı hesaplar"
+        sub="Kısıtlı hesaplar (yeni talep göremez) · 7 gün sayacı dolunca kalıcı engel adayı"
+      />
+      <Card className="p-0 overflow-hidden">
         {!data ? (
-          <div className="empty">Yükleniyor…</div>
+          <Loading />
         ) : data.length === 0 ? (
-          <div className="empty">Kısıtlı hesap yok</div>
+          <Loading label="Kısıtlı hesap yok" />
         ) : (
           data.map((p) => (
-            <div key={p.id} className="list-row">
-              <div className="grow">
-                <div className="name">
+            <div
+              key={p.id}
+              className="flex items-center gap-3 px-5 py-4 border-b border-line last:border-b-0 hover:bg-bg-alt transition-colors"
+            >
+              <div className="flex-1 min-w-0">
+                <div className="text-ax-sm font-semibold text-ink">
                   {p.name || '—'} · {ROLE_TR[p.role] ?? p.role}
                   {p.banEligible ? ' · ⚠️ süre doldu' : ''}
                 </div>
-                <div className="meta">
+                <div className="mt-0.5 text-ax-xs text-ink-3">
                   {p.restrictReason || 'gerekçe yok'}
                   {p.city ? ` · ${p.city}` : ''} · geçen {p.daysElapsed}g · kalan{' '}
-                  <strong style={{ color: p.banEligible ? 'var(--danger)' : 'var(--gold)' }}>
+                  <strong className={`tabular-nums ${p.banEligible ? 'text-err' : 'text-warn'}`}>
                     {p.daysRemaining}g
                   </strong>
                 </div>
               </div>
               <button
-                className="btn-sm btn-ok"
+                className="btn-sm btn-ok shrink-0"
                 onClick={async () => {
                   await api.unrestrictUser(p.id);
                   reload();
@@ -3958,7 +3999,7 @@ function PenaltiesView() {
                 Kısıtı kaldır
               </button>
               <button
-                className="btn-sm btn-danger"
+                className="btn-sm btn-danger shrink-0"
                 onClick={async () => {
                   if (
                     await onayla({
@@ -3978,12 +4019,10 @@ function PenaltiesView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
-// §11 — Üyelik seviyesi düzenleyici: seç → "Kaydet" → anında backend'e işlenir (app senkronda yansıtır).
-// Kullanıcı/salon/uzman (hepsi User) için aynı bileşen. onChange değil; kasıtlı Kaydet butonu.
 function TierEditor({ user, onSaved }: { user: AdminUser; onSaved: () => void }) {
   const current: 'free' | 'premium' | 'platinum' =
     user.membershipTier ?? (user.isPremium ? 'premium' : 'free');
@@ -4037,20 +4076,20 @@ function UsersView() {
   );
   return (
     <>
-      <h1 className="page-title">Üyeler</h1>
-      <p className="page-sub">
-        Uygulamaya kayıtlı herkes — kullanıcı, uzman, salon. Üyelik seviyesi + parola yönetimi (
-        {data?.length ?? 0} kayıt)
-      </p>
-      <div className="toolbar">
+      <PageHead
+        title="Üyeler"
+        sub={`Uygulamaya kayıtlı herkes — kullanıcı, uzman, salon. Üyelik seviyesi + parola yönetimi (${
+          data?.length ?? 0
+        } kayıt)`}
+      />
+      <Toolbar>
         {['all', 'user', 'salon', 'professional', 'moderator', 'admin'].map((r) => (
-          <button key={r} className={`chip ${role === r ? 'on' : ''}`} onClick={() => setRole(r)}>
+          <Chip key={r} active={role === r} onClick={() => setRole(r)}>
             {r === 'all' ? 'Hepsi' : ROLE_TR[r]}
-          </button>
+          </Chip>
         ))}
         <input
-          className="input"
-          style={{ height: 34, maxWidth: 220 }}
+          className="input !h-[34px] max-w-[220px]"
           placeholder="Ara (isim / e-posta)"
           value={q}
           onChange={(e) => setQ(e.target.value)}
@@ -4073,10 +4112,10 @@ function UsersView() {
         >
           ⬇ Excel
         </button>
-      </div>
-      <div className="card">
+      </Toolbar>
+      <Card>
         {list.length === 0 ? (
-          <div className="empty">Kullanıcı yok</div>
+          <Loading label="Kullanıcı yok" />
         ) : (
           list.map((u) => (
             <div key={u.id} className="list-row">
@@ -4103,7 +4142,7 @@ function UsersView() {
                   numara da yok.
                 */}
                 {u.role === 'user' && !u.phoneVerified && !u.adminApproved ? (
-                  <div className="meta" style={{ color: 'var(--danger)' }}>
+                  <div className="mt-0.5 text-ax-sm font-semibold text-err">
                     Randevu veremez — telefonu doğrulanmamış
                   </div>
                 ) : null}
@@ -4121,8 +4160,7 @@ function UsersView() {
                 </button>
               ) : null}
               <select
-                className="input"
-                style={{ height: 32, maxWidth: 130 }}
+                className="input !h-8 max-w-[130px]"
                 value={u.role}
                 onChange={async (e) => {
                   await api.setUserRole(u.id, e.target.value);
@@ -4290,14 +4328,10 @@ function UsersView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
-// Brief §3 durum sözlüğü. Adlar kod, veritabanı ve belgede AYNI; panel de
-// aynı kelimeleri kullanıyor ki bir randevu üç yerde üç farklı isimle
-// görünmesin. Eski sözlük (confirmed/pending/waitlist...) tamamen kaldırıldı:
-// filtreler var olmayan adları sorguladığı için panel her sekmede boş dönüyordu.
 const BOOKING_STATUS_TR: Record<string, string> = {
   taslak: 'Taslak',
   onay_bekliyor: 'Uzman onayı bekliyor',
@@ -4371,31 +4405,28 @@ function BookingsAdminView() {
         : 'pending';
   return (
     <>
-      <h1 className="page-title">Randevular & ödemeler</h1>
-      <p className="page-sub">Platform geneli tüm randevular ({data?.length ?? 0})</p>
-      <div className="toolbar">
+      <PageHead
+        title="Randevular & ödemeler"
+        sub={`Platform geneli tüm randevular (${data?.length ?? 0})`}
+      />
+      <Toolbar>
         {STATES.map((s) => (
-          <button
-            key={s}
-            className={`chip ${status === s ? 'on' : ''}`}
-            onClick={() => setStatus(s)}
-          >
+          <Chip key={s} active={status === s} onClick={() => setStatus(s)}>
             {s === 'all' ? 'Hepsi' : BOOKING_STATUS_TR[s]}
-          </button>
+          </Chip>
         ))}
         <input
-          className="input"
-          style={{ maxWidth: 260, marginLeft: 'auto' }}
+          className="input ml-auto max-w-[260px]"
           placeholder="Ara: uzman / hizmet / müşteri"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-      </div>
-      <div className="card">
+      </Toolbar>
+      <Card>
         {!data ? (
-          <div className="empty">Yükleniyor…</div>
+          <Loading />
         ) : rows.length === 0 ? (
-          <div className="empty">Randevu yok</div>
+          <Loading label="Randevu yok" />
         ) : (
           rows.map((b) => (
             <div key={b.id} className="list-row">
@@ -4409,7 +4440,7 @@ function BookingsAdminView() {
                   {b.online ? 'Online (app)' : 'Offline (salon)'}
                 </div>
               </div>
-              <div className="kv-v">{b.price > 0 ? TL(b.price) : '—'}</div>
+              <div className="kv-v tabular-nums">{b.price > 0 ? TL(b.price) : '—'}</div>
               <span className={`pill ${pill(b.status)}`}>
                 {BOOKING_STATUS_TR[b.status] ?? b.status}
               </span>
@@ -4421,7 +4452,7 @@ function BookingsAdminView() {
                   İptal destek kaçış kapısı olarak kalıyor. */}
               {!KAPALI_DURUMLAR.includes(b.status) ? (
                 <button
-                  className="btn small danger"
+                  className="btn-sm btn-danger"
                   onClick={() =>
                     act(() => api.cancelBooking(b.id), `Randevu iptal edilsin mi? (${b.service})`)
                   }
@@ -4432,11 +4463,10 @@ function BookingsAdminView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
-// §12.4 Anlaşmazlık kuyruğu — depozito/iade dekont görselleri incelenir, karar verilir
 function DisputesView() {
   const { formAl } = useDiyalog();
   const { data, reload } = useAsync<Dispute[]>(() => api.disputes(), []);
@@ -4460,32 +4490,31 @@ function DisputesView() {
   };
   const row = (d: Dispute) => (
     <div key={d.id} className="list-col">
-      <div className="name">
+      <div className="font-bold tracking-[-0.15px] text-ink">
         {kindLabel(d.kind)} · {d.proName} · {TL(d.amount)}
       </div>
-      <div className="meta" style={{ marginTop: 4 }}>
+      <div className="mt-1 text-ax-sm text-ink-3">
         Randevu #{d.bookingRef} {d.service ? `· ${d.service}` : ''} ·{' '}
         {new Date(d.createdAt).toLocaleString('tr-TR')}
         {d.note ? ` · "${d.note}"` : ''}
       </div>
       {d.resolution ? (
-        <div className="meta" style={{ marginTop: 2 }}>
+        <div className="mt-0.5 text-ax-sm text-ink-3">
           Karar notu: {d.resolution}
         </div>
       ) : null}
-      <div className="form-inline" style={{ marginTop: 10 }}>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
         {d.receiptUri ? (
           <a
-            className="btn-sm"
+            className="btn-sm no-underline"
             href={d.receiptUri}
             target="_blank"
             rel="noreferrer"
-            style={{ textDecoration: 'none' }}
           >
             🧾 Dekontu incele
           </a>
         ) : (
-          <span className="meta">Dekont yok</span>
+          <span className="text-ax-sm text-ink-3">Dekont yok</span>
         )}
         {d.status === 'open' ? (
           <>
@@ -4504,27 +4533,27 @@ function DisputesView() {
   );
   return (
     <>
-      <h1 className="page-title">Depozito itirazları</h1>
-      <p className="page-sub">
-        Depozito itirazları ve iade dekontları — dekont görselleri burada incelenir. Sabit ilke:
-        dürüst eleştiri/haklı iade reddedilmez.
-      </p>
-      <div className="section-title">Bekleyen ({open.length})</div>
-      <div className="card" style={{ marginBottom: 20 }}>
-        {open.length === 0 ? <div className="empty">Bekleyen anlaşmazlık yok</div> : open.map(row)}
-      </div>
+      <PageHead
+        title="Depozito itirazları"
+        sub="Depozito itirazları ve iade dekontları — dekont görselleri burada incelenir. Sabit ilke: dürüst eleştiri/haklı iade reddedilmez."
+      />
+      <SectionTitle>Bekleyen ({open.length})</SectionTitle>
+      <Card className="mb-5">
+        {open.length === 0 ? (
+          <Loading label="Bekleyen anlaşmazlık yok" />
+        ) : (
+          open.map(row)
+        )}
+      </Card>
       {resolved.length > 0 && (
         <>
-          <div className="section-title">Çözülenler ({resolved.length})</div>
-          <div className="card" style={{ opacity: 0.8 }}>
-            {resolved.map(row)}
-          </div>
+          <SectionTitle>Çözülenler ({resolved.length})</SectionTitle>
+          <Card className="opacity-80">{resolved.map(row)}</Card>
         </>
       )}
     </>
   );
 }
-// §7.2 — yorum itiraz kuyruğu: uzman/işletme itirazı; yorum görünür kalır, admin tut/gizle karar verir.
 function ReviewDisputesView() {
   const { onayla } = useDiyalog();
   const { data, reload } = useAsync<ReviewDispute[]>(() => api.reviewDisputes(), []);
@@ -4549,35 +4578,39 @@ function ReviewDisputesView() {
   const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
   return (
     <>
-      <h1 className="page-title">Yorum itirazları</h1>
-      <p className="page-sub">
-        Uzman/işletmenin itiraz ettiği yorumlar. Sabit ilke: yorum inceleme boyunca görünür kalır;
-        yalnızca kural ihlalinde gizlenir — “hizmeti beğenmedim” türü dürüst negatif yorum SİLİNMEZ.
-      </p>
-      <div className="section-title">Bekleyen ({list.length})</div>
-      <div className="card">
+      <PageHead
+        title="Yorum itirazları"
+        sub={
+          'Uzman/işletmenin itiraz ettiği yorumlar. Sabit ilke: yorum inceleme boyunca görünür kalır; yalnızca kural ihlalinde gizlenir — “hizmeti beğenmedim” türü dürüst negatif yorum SİLİNMEZ.'
+        }
+      />
+      <SectionTitle>Bekleyen ({list.length})</SectionTitle>
+      <Card className="p-2">
         {list.length === 0 ? (
-          <div className="empty">Bekleyen itiraz yok</div>
+          <Loading label="Bekleyen itiraz yok" />
         ) : (
           list.map((d) => (
-            <div key={d.id} className="list-col">
-              <div className="name">
-                {stars(d.score)} · {d.authorLabel}
+            <div
+              key={d.id}
+              className="border-b border-line px-3 py-4 last:border-b-0"
+            >
+              <div className="text-ax-md font-semibold text-ink">
+                <span className="tabular-nums text-warn">{stars(d.score)}</span> · {d.authorLabel}
                 {d.visible ? '' : ' · (gizli)'}
               </div>
-              <div className="meta" style={{ marginTop: 4 }}>
+              <div className="mt-1 text-ax-sm italic text-ink-2">
                 “{d.comment || '—'}”
               </div>
               {d.reply ? (
-                <div className="meta" style={{ marginTop: 2 }}>
+                <div className="mt-1 text-ax-sm text-ink-2">
                   Uzman yanıtı: {d.reply}
                 </div>
               ) : null}
-              <div className="meta" style={{ marginTop: 2 }}>
+              <div className="mt-1 text-ax-xs text-ink-3">
                 İtiraz gerekçesi: {d.disputeReason || '—'}
                 {d.disputedAt ? ` · ${new Date(d.disputedAt).toLocaleString('tr-TR')}` : ''}
               </div>
-              <div className="form-inline" style={{ marginTop: 10 }}>
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button className="btn-sm" onClick={() => resolve(d, 'keep')}>
                   Yorumu tut
                 </button>
@@ -4588,7 +4621,7 @@ function ReviewDisputesView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
@@ -4596,16 +4629,15 @@ function QuotesView() {
   const { data } = useAsync<QuoteReq[]>(() => api.quoteRequests(), []);
   return (
     <>
-      <h1 className="page-title">Canlı talepler</h1>
-      <p className="page-sub">
-        §12.4 — talep akışı: kim açtı, şehir, bütçe, gelen teklifler, randevuya dönüşüm (
-        {data?.length ?? 0})
-      </p>
-      <div className="card">
+      <PageHead
+        title="Canlı talepler"
+        sub={`§12.4 — talep akışı: kim açtı, şehir, bütçe, gelen teklifler, randevuya dönüşüm (${data?.length ?? 0})`}
+      />
+      <Card>
         {!data ? (
-          <div className="empty">Yükleniyor…</div>
+          <Loading />
         ) : data.length === 0 ? (
-          <div className="empty">Teklif talebi yok</div>
+          <Loading label="Teklif talebi yok" />
         ) : (
           data.map((q) => (
             <div key={q.id} className="list-row">
@@ -4621,17 +4653,19 @@ function QuotesView() {
                   {q.note ? q.note.slice(0, 60) : 'Not yok'}
                 </div>
               </div>
-              <span className="pill" style={{ background: 'var(--line)', color: 'var(--muted)' }}>
-                {q.quoteCount} teklif
-              </span>
-              {q.bestPrice != null ? <div className="kv-v">min {TL(q.bestPrice)}</div> : null}
+              <span className="pill bg-line text-ink-3">{q.quoteCount} teklif</span>
+              {q.bestPrice != null ? (
+                <div className="whitespace-nowrap text-ax-sm font-bold tabular-nums text-ink">
+                  min {TL(q.bestPrice)}
+                </div>
+              ) : null}
               <span className={`pill ${q.status === 'open' ? 'pending' : 'approved'}`}>
                 {q.bookingId ? '✓ Randevu' : q.status === 'open' ? 'Açık' : 'Kapalı'}
               </span>
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
@@ -4639,23 +4673,23 @@ function LoyaltyView() {
   const { data } = useAsync<Loyalty>(() => api.loyalty(), []);
   return (
     <>
-      <h1 className="page-title">Puan ekonomisi</h1>
-      <p className="page-sub">
-        Puan defteri (append-only) — bakiye dolaşımdaki puan = platform yükümlülüğü
-      </p>
+      <PageHead
+        title="Puan ekonomisi"
+        sub="Puan defteri (append-only) — bakiye dolaşımdaki puan = platform yükümlülüğü"
+      />
       {!data ? (
-        <div className="empty">Yükleniyor…</div>
+        <Loading />
       ) : (
         <>
-          <div className="stat-grid">
+          <div className="mb-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Stat v={data.totals.earned.toLocaleString('tr-TR')} l="Kazanılan puan" />
             <Stat v={data.totals.spent.toLocaleString('tr-TR')} l="Harcanan puan" />
             <Stat v={data.totals.balance.toLocaleString('tr-TR')} l="Dolaşımdaki (yükümlülük)" />
           </div>
-          <div className="section-title">Son hareketler</div>
-          <div className="card">
+          <SectionTitle>Son hareketler</SectionTitle>
+          <Card>
             {data.entries.length === 0 ? (
-              <div className="empty">Hareket yok</div>
+              <Loading label="Hareket yok" />
             ) : (
               data.entries.map((e) => (
                 <div key={e.id} className="list-row">
@@ -4666,13 +4700,13 @@ function LoyaltyView() {
                       {e.detail ? ` · ${e.detail}` : ''}
                     </div>
                   </div>
-                  <span className={`pill ${e.points >= 0 ? 'approved' : 'rejected'}`}>
+                  <span className={`pill ${e.points >= 0 ? 'approved' : 'rejected'} tabular-nums`}>
                     {e.points >= 0 ? `+${e.points}` : e.points} puan
                   </span>
                 </div>
               ))
             )}
-          </div>
+          </Card>
         </>
       )}
     </>
@@ -4689,9 +4723,8 @@ function FlagsView() {
   };
   return (
     <>
-      <h1 className="page-title">Özellikler</h1>
-      <p className="page-sub">Özellik açma/kapama (kademeli yayın)</p>
-      <div className="card" style={{ marginBottom: 20 }}>
+      <PageHead title="Özellikler" sub="Özellik açma/kapama (kademeli yayın)" />
+      <Card className="mb-5">
         <div className="form-inline">
           <input
             className="input"
@@ -4709,12 +4742,12 @@ function FlagsView() {
             + Flag ekle (kapalı)
           </button>
         </div>
-      </div>
-      <div className="card">
+      </Card>
+      <Card>
         {!data ? (
-          <div className="empty">Yükleniyor…</div>
+          <Loading />
         ) : data.length === 0 ? (
-          <div className="empty">Flag yok</div>
+          <Loading label="Flag yok" />
         ) : (
           data.map((f) => (
             <div key={f.key} className="list-row">
@@ -4734,11 +4767,10 @@ function FlagsView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }
-// §12.9 Sistem Ayarları — parametrik oranlar + API anahtarları + şehir yönetimi
 function SystemView() {
   const { data, reload } = useAsync<SystemSettings>(() => api.systemSettings(), []);
   const [rateEdits, setRateEdits] = useState<Record<string, string>>({});
@@ -4790,14 +4822,18 @@ function SystemView() {
   };
   return (
     <>
-      <h1 className="page-title">Ayarlar</h1>
-      <p className="page-sub">Parametrik oranlar · dış servis anahtarları · şehir yönetimi</p>
+      <PageHead
+        title="Ayarlar"
+        sub="Parametrik oranlar · dış servis anahtarları · şehir yönetimi"
+      />
       {/* Parametrik oranlar */}
-      <h2 className="section-head">Ceza / depozito tutarları ve oranlar</h2>
-      <p className="page-sub">Değişiklikler app&apos;e `/config` üzerinden yansır.</p>
-      <div className="card" style={{ marginBottom: 28 }}>
+      <SectionTitle>Ceza / depozito tutarları ve oranlar</SectionTitle>
+      <p className="-mt-1 mb-4 max-w-[70ch] text-ax-sm leading-relaxed text-ink-3">
+        Değişiklikler app&apos;e `/config` üzerinden yansır.
+      </p>
+      <Card>
         {!data ? (
-          <div className="empty">Yükleniyor…</div>
+          <Loading />
         ) : (
           data.rates.map((r) => (
             <div key={r.key} className="list-row">
@@ -4808,8 +4844,7 @@ function SystemView() {
                 </div>
               </div>
               <input
-                className="input"
-                style={{ width: 120 }}
+                className="input w-[120px]"
                 type="number"
                 placeholder={String(r.value)}
                 value={rateEdits[r.key] ?? ''}
@@ -4821,14 +4856,14 @@ function SystemView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
       {/* §4.4 — Kaspi ödeme bağlantısı */}
-      <h2 className="section-head">Kaspi ile ödeme</h2>
-      <p className="page-sub">
+      <SectionTitle>Kaspi ile ödeme</SectionTitle>
+      <p className="-mt-1 mb-4 max-w-[70ch] text-ax-sm leading-relaxed text-ink-3">
         SES INVEST QR kodunun içeriği (bir bağlantı). Doluysa müşteri depozito ekranında “Kaspi ile
         öde” düğmesini görür; boşsa düğme hiç görünmez.
       </p>
-      <div className="card" style={{ marginBottom: 28 }}>
+      <Card>
         <div className="list-row">
           <div className="grow">
             <div className="name">Ödeme bağlantısı</div>
@@ -4837,15 +4872,14 @@ function SystemView() {
                 ? `Tanımlı · ${data.kaspi.url}`
                 : 'Tanımlı değil — düğme gizli'}
             </div>
-            <div className="meta" style={{ marginTop: 4 }}>
-              Bağlantı tutarı destekliyorsa <code>{'{tutar}'}</code>, randevu referansını
-              destekliyorsa <code>{'{ref}'}</code> yazın; uygulama bunları doldurur. Hangi biçimin
+            <div className="meta !mt-1">
+              Bağlantı tutarı destekliyorsa <code className="rounded-sm bg-bg-alt px-1 py-0.5 text-ax-xs font-semibold text-ink-2">{'{tutar}'}</code>, randevu referansını
+              destekliyorsa <code className="rounded-sm bg-bg-alt px-1 py-0.5 text-ax-xs font-semibold text-ink-2">{'{ref}'}</code> yazın; uygulama bunları doldurur. Hangi biçimin
               çalıştığını telefonda deneyerek doğrulayın.
             </div>
           </div>
           <input
-            className="input"
-            style={{ width: 360 }}
+            className="input w-[360px]"
             placeholder="https://kaspi.kz/pay/..."
             value={kaspiEdit}
             onChange={(e) => setKaspiEdit(e.target.value)}
@@ -4854,16 +4888,16 @@ function SystemView() {
             Kaydet
           </button>
         </div>
-      </div>
+      </Card>
       {/* API anahtarları */}
-      <h2 className="section-head">API anahtarları</h2>
-      <p className="page-sub">
+      <SectionTitle>API anahtarları</SectionTitle>
+      <p className="-mt-1 mb-4 max-w-[70ch] text-ax-sm leading-relaxed text-ink-3">
         Maskeli görünüm — değer asla panele/app&apos;e dönmez. &quot;Test Et&quot; biçim/varlık
         kontrolü yapar.
       </p>
-      <div className="card" style={{ marginBottom: 28 }}>
+      <Card>
         {!data ? (
-          <div className="empty">Yükleniyor…</div>
+          <Loading />
         ) : (
           data.apiKeys.map((k: ApiKeyStatus) => (
             <div key={k.provider} className="list-col">
@@ -4872,14 +4906,14 @@ function SystemView() {
                 {k.configured ? `Tanımlı: ${k.masked}` : 'Tanımsız'}
                 {tests[k.provider] && (
                   <span
-                    style={{ color: tests[k.provider]!.ok ? 'var(--success)' : 'var(--danger)' }}
+                    className={tests[k.provider]!.ok ? 'font-semibold text-ok' : 'font-semibold text-err'}
                   >
                     {' '}
                     · {tests[k.provider]!.ok ? '✓' : '✗'} {tests[k.provider]!.message}
                   </span>
                 )}
               </div>
-              <div className="form-inline" style={{ marginTop: 10 }}>
+              <div className="form-inline mt-2.5">
                 <input
                   className="input"
                   placeholder="Yeni anahtar (boş = temizle)"
@@ -4896,13 +4930,15 @@ function SystemView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
       {/* Şehir yönetimi */}
-      <h2 className="section-head">Şehir yönetimi</h2>
-      <p className="page-sub">Aktif şehirler + &quot;yakında&quot; listesi (virgülle ayır).</p>
-      <div className="card">
+      <SectionTitle>Şehir yönetimi</SectionTitle>
+      <p className="-mt-1 mb-4 max-w-[70ch] text-ax-sm leading-relaxed text-ink-3">
+        Aktif şehirler + &quot;yakında&quot; listesi (virgülle ayır).
+      </p>
+      <Card className="mb-8">
         {!data ? (
-          <div className="empty">Yükleniyor…</div>
+          <Loading />
         ) : (
           <>
             <div className="list-col">
@@ -4932,12 +4968,11 @@ function SystemView() {
             </div>
           </>
         )}
-      </div>
+      </Card>
       <CategorySection />
     </>
   );
 }
-// §12.9 — kategori bakım periyodu (gün) + standart hizmet süresi (dk)
 function CategorySection() {
   const { data, reload } = useAsync<CategoryConfig>(() => api.categoryConfig(), []);
   const [edits, setEdits] = useState<CategoryConfig>({});
@@ -5008,21 +5043,23 @@ function AuditView() {
   const { data } = useAsync<AuditEntry[]>(() => api.auditLogs(), []);
   return (
     <>
-      <h1 className="page-title">Denetim kaydı</h1>
-      <p className="page-sub">Kritik eylemlerin izi (PII yok — yalnızca rol/kaynak/hash)</p>
-      <div className="card">
+      <PageHead title="Denetim kaydı" sub="Kritik eylemlerin izi (PII yok — yalnızca rol/kaynak/hash)" />
+      <Card className="overflow-hidden p-0">
         {!data ? (
-          <div className="empty">Yükleniyor…</div>
+          <Loading />
         ) : data.length === 0 ? (
-          <div className="empty">Kayıt yok</div>
+          <Loading label="Kayıt yok" />
         ) : (
           data.map((a) => (
-            <div key={a.id} className="list-row">
-              <div className="grow">
-                <div className="name">
+            <div
+              key={a.id}
+              className="flex items-center gap-3 border-b border-line px-4 py-3 last:border-b-0 hover:bg-bg-alt transition-colors"
+            >
+              <div className="grow min-w-0">
+                <div className="text-ax-sm font-medium text-ink truncate">
                   {a.action} · {a.resourceType}
                 </div>
-                <div className="meta">
+                <div className="mt-0.5 text-ax-xs text-ink-3 tabular-nums">
                   {a.resourceId ? `#${a.resourceId.slice(0, 8)} · ` : ''}
                   {a.actorRole || 'sistem'} · {new Date(a.createdAt).toLocaleString('tr-TR')}
                 </div>
@@ -5030,7 +5067,7 @@ function AuditView() {
             </div>
           ))
         )}
-      </div>
+      </Card>
     </>
   );
 }

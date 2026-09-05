@@ -18,7 +18,7 @@ import { formatSlotTr } from '../../src/datetime';
 import { fillParams, useLocale } from '../../src/locale';
 import { hizmetEtiketiCevir } from '../../src/hizmet-adi';
 import { randevuDepozitosu, useStore, type BookingEylem } from '../../src/store';
-import { font, type ColorTokens } from '../../src/theme';
+import { font, space, type ColorTokens } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
 import {
   AkisCizelgesi,
@@ -27,7 +27,6 @@ import {
   Sayac,
   Screen,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   Text,
 } from '../../src/ui';
 
@@ -384,7 +383,7 @@ export default function BookingDetail() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    icerik: { padding: 24, gap: 20, paddingBottom: TAB_BAR_CLEARANCE },
+    icerik: { padding: 24, gap: 20, paddingBottom: space(3) },
     bos: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
     buyu: { flex: 1 },
     kart: {

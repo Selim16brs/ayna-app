@@ -26,7 +26,6 @@ import {
   SectionHeader,
   StackHeader,
   Text,
-  TAB_BAR_CLEARANCE,
 } from '../src/ui';
 
 const NEXT_DRAW = '30 Haziran';
@@ -433,7 +432,9 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(2),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      // Alt bar bu ekranda gizli (app/_layout.tsx: stackScreen) — barın
+      // yerini boş bırakmak sayfa sonunda kocaman bir boşluk demekti.
+      paddingBottom: space(3),
     },
     raffleJoin: {
       /*

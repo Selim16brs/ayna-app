@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fillParams, useLocale } from '../../src/locale';
 import type { MessageKey } from '@ayna/i18n';
@@ -11,6 +11,7 @@ import { useStore } from '../../src/store';
 import {
   GorunumKarti,
   PlanBadge,
+  SaglayiciFoto,
   Screen,
   SurumBilgisi,
   TAB_BAR_CLEARANCE,
@@ -186,15 +187,13 @@ export default function ProfileScreen() {
         <Text variant="bodyStrong" tone="ink" style={styles.headerTitle}>
           {t('nav.profile')}
         </Text>
-        <View style={[styles.avatar, shadow.soft]}>
-          {avatarUri ? (
-            <Image source={{ uri: avatarUri }} style={styles.avatarImg} />
-          ) : (
-            <Text variant="h2" tone="ink">
-              {userName.charAt(0).toUpperCase()}
-            </Text>
-          )}
-        </View>
+        {/*
+          Kendi avatarın da sağlayıcı kartlarıyla AYNI dili konuşuyor.
+          Burada ayrı bir yedek vardı: düz `surface` zemin + baş harf. Aynı
+          ekranda uzman kartları yumuşak gradyanlı avatarlar gösterirken
+          kullanıcının kendi dairesi yassı ve renksiz kalıyordu.
+        */}
+        <SaglayiciFoto uri={avatarUri} ad={userName} style={[styles.avatar, shadow.soft]} />
         <Pressable style={styles.nameRow} onPress={() => router.push('/profile/edit')}>
           <Text variant="title" tone="ink">
             {userName}
@@ -446,7 +445,6 @@ const makeStyles = (colors: ColorTokens) =>
       marginBottom: space(1.5),
       overflow: 'hidden',
     },
-    avatarImg: { width: '100%', height: '100%' },
     nameRow: { flexDirection: 'row', alignItems: 'center', gap: space(1) },
     contactRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
     contactText: { opacity: 0.9 },

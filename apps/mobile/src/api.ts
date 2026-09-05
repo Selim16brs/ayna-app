@@ -497,6 +497,14 @@ export interface RegisterInput {
   birthDateMs?: number;
   name: string;
   phone: string;
+  /**
+   * Telefonun ülkesi (ISO 3166-1 alfa-2) — kullanıcının SEÇTİĞİ ülke.
+   *
+   * Sunucu bunu numaradan türetemiyor: "+7" hem Kazakistan hem Rusya.
+   * Numara şifreli saklandığı için "hangi ülkeden kullanıcımız var"
+   * sorusu bu alan olmadan hiç yanıtlanamıyor.
+   */
+  phoneCountry?: string;
   password: string;
   email?: string;
   city?: string;

@@ -5,7 +5,7 @@ import { useStore } from '../../src/store';
 import { useLocale } from '../../src/locale';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Screen, StackHeader, Text } from '../../src/ui';
 import { RoutineRow } from '../(tabs)/care';
 
 // §5.4.5 — Bakım Takvimi ayrı sayfa: "Rutinlerini gör" buraya açar (önceden Benim İçin
@@ -51,7 +51,7 @@ export default function RoutinesScreen() {
 
 const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
-    content: { padding: space(3), paddingBottom: TAB_BAR_CLEARANCE + space(2), gap: space(2) },
+    content: { padding: space(3), paddingBottom: space(2), gap: space(2) },
     addBtn: {
       flexDirection: 'row',
       alignItems: 'center',

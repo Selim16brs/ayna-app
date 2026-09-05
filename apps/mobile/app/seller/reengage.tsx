@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Image, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { api, type ReengageAday } from '../../src/api';
 import { reengageMessage } from '../../src/data';
 import { fillParams, useLocale } from '../../src/locale';
@@ -9,7 +9,7 @@ import { useStore } from '../../src/store';
 import { findServiceWithCategory, tri } from '../../src/taxonomy';
 import { type ColorTokens, radius, space, font } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { Button, SaglayiciFoto, Screen, StackHeader, Text } from '../../src/ui';
 
 // §10/§4/§11 — GERİ ÇAĞIRMA yönetimi: PREMIUM özellik, sistem OTOMATİK gönderir; uzman aç/kapat eder.
 
@@ -111,7 +111,7 @@ export default function ReengageScreen() {
   const renderCard = (r: (typeof rows)[number]) => (
     <View key={r.c.id} style={[styles.card, styles.shadowSoft]}>
       <View style={styles.head}>
-        {r.c.image ? <Image source={{ uri: r.c.image }} style={styles.avatar} /> : null}
+        <SaglayiciFoto uri={r.c.image} ad={r.c.name} style={styles.avatar} />
         <View style={styles.flex}>
           <Text variant="bodyStrong" tone="ink" numberOfLines={1}>
             {r.c.name}
@@ -235,7 +235,7 @@ const makeStyles = (colors: ColorTokens) =>
     content: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: TAB_BAR_CLEARANCE + space(2),
+      paddingBottom: space(2),
       gap: space(1.25),
     },
     flex: { flex: 1 },

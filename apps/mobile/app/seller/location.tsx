@@ -7,7 +7,7 @@ import { useLocale } from '../../src/locale';
 import { useStore } from '../../src/store';
 import { type ColorTokens, radius, space } from '../../src/theme';
 import { useTheme, useThemedStyles } from '../../src/theme-context';
-import { AddressPicker, Button, Screen, StackHeader, TAB_BAR_CLEARANCE, Text } from '../../src/ui';
+import { AddressPicker, Button, Screen, StackHeader, Text } from '../../src/ui';
 
 /**
  * KONUMUM — mevcut uzman/salon konumunu haritadan düzeltir.
@@ -132,7 +132,7 @@ const makeStyles = (colors: ColorTokens) =>
   StyleSheet.create({
     content: {
       padding: space(3),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
       gap: space(2),
     },
     neden: {

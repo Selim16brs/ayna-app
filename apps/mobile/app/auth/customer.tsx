@@ -12,6 +12,7 @@ function fmtDate(d: Date): string {
 }
 import type { MessageKey } from '@ayna/i18n';
 import { api } from '../../src/api';
+import { isoBul } from '../../src/telefon-bicim';
 import { ADIM_TAMAM, type AdimSonucu, kimlikAdimi } from '../../src/kayit-adimi';
 import { useStore } from '../../src/store';
 import { registerErrorMessage } from '../../src/authError';
@@ -168,6 +169,8 @@ export default function CustomerRegisterScreen() {
     setBusy(true);
     try {
       const session = await api.register({
+        // Kullanıcının seçtiği ülke; numaradan tahmin edilemez (+7 = KZ ve RU).
+        phoneCountry: isoBul(ulke.kod) || undefined,
         name: `${firstName.trim()} ${lastName.trim()}`.trim(),
         phone: phone.trim(),
         password,

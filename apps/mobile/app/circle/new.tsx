@@ -22,7 +22,6 @@ import {
   Screen,
   Segmented,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   Text,
   TextInput,
 } from '../../src/ui';
@@ -227,6 +226,6 @@ const makeStyles = (colors: ColorTokens) =>
     footer: {
       paddingHorizontal: space(3),
       paddingTop: space(1.5),
-      paddingBottom: TAB_BAR_CLEARANCE,
+      paddingBottom: space(3),
     },
   });

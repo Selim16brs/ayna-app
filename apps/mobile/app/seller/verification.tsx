@@ -11,7 +11,6 @@ import {
   Button,
   Screen,
   StackHeader,
-  TAB_BAR_CLEARANCE,
   Text,
   TextInput,
   VerificationBadges,
@@ -105,7 +104,7 @@ export default function ExpertVerificationScreen() {
       <StackHeader title={t('expert.verify.title')} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[styles.content, { paddingBottom: TAB_BAR_CLEARANCE }]}
+        contentContainerStyle={[styles.content, { paddingBottom: space(3) }]}
         showsVerticalScrollIndicator={false}
       >
         {loading && !data ? (
