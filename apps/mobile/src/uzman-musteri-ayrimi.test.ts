@@ -52,7 +52,10 @@ test('ROLÜ SUNUCU SÖYLÜYOR — uç etiketi yedek', () => {
    */
   assert.match(
     api('src', 'bookings', 'bookings.service.ts'),
-    /benimRolum: opts\?\.forProvider \? \('uzman' as const\) : \('musteri' as const\)/,
+    // `opts?.` idi; rol artık ZORUNLU parametre (05.09.2026) — soru işareti
+    // kalktı. Sessiz varsayılan diye bir şey yok: rolü yazmayan kod
+    // derlenmiyor.
+    /benimRolum: opts\.forProvider \? \('uzman' as const\) : \('musteri' as const\)/,
     'sunucu rolü damgalamıyor',
   );
   assert.match(
@@ -76,7 +79,7 @@ test('UZMAN, MÜŞTERİSİNİN ADINI görüyor', () => {
   const svc = api('src', 'bookings', 'bookings.service.ts');
   assert.match(
     svc,
-    /customerName: b\.customerName \?\? opts\?\.customerName \?\? undefined/,
+    /customerName: b\.customerName \?\? opts\.customerName \?\? undefined/,
     'ad doldurulmuyor',
   );
   assert.match(svc, /const adOf = new Map\(adlar\.map/, 'adlar okunmuyor');
