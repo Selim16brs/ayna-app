@@ -724,6 +724,20 @@ export class BookingsService {
         message: 'Gelmedi işareti randevu saatinden 15 dakika sonra açılır',
       });
     }
+    /*
+     * ZAMANLAYICIYI BEKLEMİYORUZ.
+     *
+     * `no_show_musteri` yalnız `hizmet_gunu`ndan çıkabiliyor ve o geçişi
+     * zamanlayıcı yapıyor (60 sn tur, `JOBS_ENABLED=false` ile kapatılabilir).
+     * Yani uzman salonda müşteriyi beklerken düğmeye basıyor, sunucu
+     * "geçersiz geçiş" diyordu — kendi kabahati olmayan bir hata.
+     *
+     * Ödeme uçları (`balancePaid` / `balanceReceived`) bu kapıyı zaten
+     * açmıştı; işaretleme açık kalmıştı. Saat geldiyse burada da geçiliyor.
+     */
+    if (b?.status === 'kesinlesti') {
+      await this.transition(id, { status: 'hizmet_gunu' }, rol);
+    }
     const row = await this.transition(
       id,
       {

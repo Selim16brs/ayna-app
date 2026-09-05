@@ -985,6 +985,219 @@ const reklamlar = await get('/ads');
 const benimReklam = (reklamlar ?? []).find((a) => a.title === 'Duman kampanyası');
 ol('reklam KEŞİFTE görünüyor', !!benimReklam, `${(reklamlar ?? []).length} reklam`);
 
+/* ══════════════════════════════════════════════════════════════════════
+ * AŞAMA 5 — ERTELEME, GELMEDİ AKIŞI VE W2W
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/* ── 5.1 ERTELEME (§4.6) ──────────────────────────────────────────── */
+const ert = await gonder(
+  '/bookings',
+  {
+    id: `e2e-${damga}-ertele`,
+    source: 'direct',
+    service: 'Saç kesimi',
+    proId: proKimlik,
+    proName: 'Duman Uzman',
+    proImage: '',
+    dateLabel: 'yarın',
+    inDays: 2,
+    price: HIZMET_FIYATI,
+    durationMin: 30,
+    startMs: Date.now() + 200 * 3600_000,
+  },
+  musteriToken,
+);
+const ertId = ert.govde?.id;
+const ertOnay = await gonder(`/bookings/${ertId}/approve`, {}, uzmanToken);
+ol('erteleme randevusu onaylanıyor', ertOnay.ok, JSON.stringify(ertOnay.govde).slice(0, 150));
+const ertDekont = await gonder(
+  `/bookings/${ertId}/deposit-receipt`,
+  { receiptUri: `data:image/jpeg;base64,${Buffer.from(`ertele-${damga}`).toString('base64')}` },
+  musteriToken,
+);
+ol(
+  'erteleme randevusunun dekontu yükleniyor',
+  ertDekont.ok,
+  JSON.stringify(ertDekont.govde).slice(0, 150),
+);
+const ertDurum = (await get('/bookings/mine', musteriToken))?.find((b) => b.id === ertId);
+ol(
+  'erteleme randevusu kesinleşti',
+  ertDurum?.status === 'kesinlesti',
+  `durum: ${ertDurum?.status} · rescheduleCount: ${ertDurum?.rescheduleCount}`,
+);
+const yeniSaat = Date.now() + 224 * 3600_000;
+const oneri = await gonder(`/bookings/${ertId}/reschedule`, { startMs: yeniSaat }, musteriToken);
+ol('müşteri erteleme önerebiliyor', oneri.ok, JSON.stringify(oneri.govde).slice(0, 130));
+ol(
+  'erteleme ÖNERİ durumuna geçiyor',
+  oneri.govde?.status === 'erteleme_onerildi',
+  String(oneri.govde?.status),
+);
+
+// §4.6 — ÖNEREN kendi önerisini kabul edemez.
+const kendiKabul = await gonder(`/bookings/${ertId}/reschedule/accept`, {}, musteriToken);
+ol(
+  'ÖNEREN kendi önerisini kabul edemiyor',
+  !kendiKabul.ok,
+  `${kendiKabul.durum} ${kendiKabul.govde?.error?.code ?? ''}`,
+);
+
+const kabul = await gonder(`/bookings/${ertId}/reschedule/accept`, {}, uzmanToken);
+ol('karşı taraf erteleme kabul edebiliyor', kabul.ok, JSON.stringify(kabul.govde).slice(0, 130));
+ol(
+  'erteleme kabulünde randevu KESİNLEŞMİŞ kalıyor',
+  kabul.govde?.status === 'kesinlesti',
+  String(kabul.govde?.status),
+);
+ol(
+  'yeni saat randevuya yazıldı',
+  Math.abs(Number(kabul.govde?.startMs) - yeniSaat) < 60_000,
+  `startMs=${kabul.govde?.startMs} (beklenen ${yeniSaat})`,
+);
+// Depozito AYNEN taşınıyor: yeni tarih için ikinci kez ödeme istenmiyor.
+ol(
+  'depozito yeni tarihe TAŞINIYOR',
+  Number(kabul.govde?.depositAmount) === HIZMET_FIYATI / 10,
+  String(kabul.govde?.depositAmount),
+);
+
+// §7.8 — randevu başına 1 ücretsiz erteleme.
+const ikinciErteleme = await gonder(
+  `/bookings/${ertId}/reschedule`,
+  { startMs: Date.now() + 248 * 3600_000 },
+  musteriToken,
+);
+ol(
+  'İKİNCİ erteleme hakkı yok',
+  !ikinciErteleme.ok,
+  `${ikinciErteleme.durum} ${ikinciErteleme.govde?.error?.code ?? ''}`,
+);
+
+/* ── 5.2 "GELMEDİ" AKIŞI (§4.8) ───────────────────────────────────── */
+// Randevu saati GELMEDEN "gelmedi" işaretlenemez.
+const ns = await gecmisRandevuAc(5); // 5 dk önce başladı → 15 dk dolmadı
+await gonder(`/bookings/${ns.govde?.id}/approve`, {}, uzmanToken);
+await gonder(
+  `/bookings/${ns.govde?.id}/deposit-receipt`,
+  { receiptUri: `data:image/jpeg;base64,${Buffer.from(`noshow-${damga}`).toString('base64')}` },
+  musteriToken,
+);
+const erkenNs = await gonder(`/bookings/${ns.govde?.id}/no-show`, {}, uzmanToken);
+ol(
+  '15 dakika dolmadan "gelmedi" işaretlenemiyor',
+  !erkenNs.ok,
+  `${erkenNs.durum} ${erkenNs.govde?.error?.code ?? ''}`,
+);
+
+// 20 dk önce başlamış randevuda işaretlenebiliyor.
+const ns2 = await gecmisRandevuAc(430);
+await gonder(`/bookings/${ns2.govde?.id}/approve`, {}, uzmanToken);
+await gonder(
+  `/bookings/${ns2.govde?.id}/deposit-receipt`,
+  { receiptUri: `data:image/jpeg;base64,${Buffer.from(`noshow2-${damga}`).toString('base64')}` },
+  musteriToken,
+);
+const gelmedi = await gonder(`/bookings/${ns2.govde?.id}/no-show`, {}, uzmanToken);
+ol('uzman "gelmedi" işaretleyebiliyor', gelmedi.ok, JSON.stringify(gelmedi.govde).slice(0, 130));
+ol(
+  'randevu NO-SHOW durumuna geçiyor',
+  gelmedi.govde?.status === 'no_show_musteri',
+  String(gelmedi.govde?.status),
+);
+ol(
+  'itiraz penceresi açılıyor',
+  !!gelmedi.govde?.finalizeDeadline,
+  String(gelmedi.govde?.finalizeDeadline),
+);
+
+const itiraz = await gonder(`/bookings/${ns2.govde?.id}/dispute`, {}, musteriToken);
+ol('müşteri itiraz edebiliyor', itiraz.ok, JSON.stringify(itiraz.govde).slice(0, 120));
+ol(
+  'itirazda finansal durum DONUYOR',
+  itiraz.govde?.status === 'uyusmazlik',
+  String(itiraz.govde?.status),
+);
+
+// UZMAN gelmedi: depozito iadesi + telafi puanı.
+const uns = await gecmisRandevuAc(520);
+await gonder(`/bookings/${uns.govde?.id}/approve`, {}, uzmanToken);
+await gonder(
+  `/bookings/${uns.govde?.id}/deposit-receipt`,
+  { receiptUri: `data:image/jpeg;base64,${Buffer.from(`uzmanyok-${damga}`).toString('base64')}` },
+  musteriToken,
+);
+const puanOnce = (await get('/loyalty', musteriToken))?.points ?? 0;
+const uzmanYok = await gonder(`/bookings/${uns.govde?.id}/provider-no-show`, {}, musteriToken);
+ol(
+  'müşteri "uzman gelmedi" bildirebiliyor',
+  uzmanYok.ok,
+  JSON.stringify(uzmanYok.govde).slice(0, 130),
+);
+ol(
+  'uzman no-show durumu yazılıyor',
+  uzmanYok.govde?.status === 'no_show_uzman',
+  String(uzmanYok.govde?.status),
+);
+const puanTelafi = await bakiyeBekle(puanOnce + 1);
+ol(
+  'uzman gelmediğinde TELAFİ PUANI veriliyor',
+  puanTelafi > puanOnce,
+  `${puanOnce} → ${puanTelafi}`,
+);
+
+/* ── 5.3 W2W ──────────────────────────────────────────────────────── */
+const gonderi = await gonder(
+  '/circle/posts',
+  { category: 'Saç', text: 'Duman testi sorusu — kök boya önerisi?', anonymous: true },
+  musteriToken,
+);
+ol('W2W gönderisi açılıyor', gonderi.ok, JSON.stringify(gonderi.govde).slice(0, 130));
+const gonderiId = gonderi.govde?.id;
+
+const akis = await get('/circle/posts');
+const benimGonderi = (akis ?? []).find((x) => x.id === gonderiId);
+ol('gönderi akışta görünüyor', !!benimGonderi, `${(akis ?? []).length} gönderi`);
+ol(
+  'ANONİM gönderide yazar kimliği YOK',
+  benimGonderi?.authorUserId == null,
+  String(benimGonderi?.authorUserId),
+);
+
+const f1 = await gonder(`/circle/posts/${gonderiId}/helpful`, { on: true }, musteriToken);
+const f2 = await gonder(`/circle/posts/${gonderiId}/helpful`, { on: true }, musteriToken);
+const f3 = await gonder(`/circle/posts/${gonderiId}/helpful`, { on: true }, musteriToken);
+ol(
+  'AYNI kişi sayacı şişiremiyor',
+  Number(f3.govde?.helpful) === 1,
+  `3 kez işaretlendi → ${f3.govde?.helpful}`,
+);
+const baskasi = await gonder(`/circle/posts/${gonderiId}/helpful`, { on: true }, uzmanToken);
+ol(
+  'FARKLI kişi sayacı artırıyor',
+  Number(baskasi.govde?.helpful) === 2,
+  String(baskasi.govde?.helpful),
+);
+const silmeDenemesi = await gonder(`/circle/posts/${gonderiId}/helpful`, { on: false }, uzmanToken);
+ol(
+  'kişi YALNIZ KENDİ işaretini kaldırıyor',
+  Number(silmeDenemesi.govde?.helpful) === 1,
+  `${silmeDenemesi.govde?.helpful} (müşterininki durmalı)`,
+);
+
+const yorumW2W = await gonder(
+  `/circle/posts/${gonderiId}/comments`,
+  { text: 'Duman testi cevabı' },
+  uzmanToken,
+);
+ol('W2W yorumu yazılabiliyor', yorumW2W.ok, JSON.stringify(yorumW2W.govde).slice(0, 120));
+const yorumlar = await get(`/circle/posts/${gonderiId}/comments`);
+ol(
+  'yorumda KULLANICI KİMLİĞİ dönmüyor',
+  !JSON.stringify(yorumlar ?? []).includes(musteriId),
+  JSON.stringify(yorumlar ?? []).slice(0, 100),
+);
+
 /* ── RAPOR ─────────────────────────────────────────────────────────── */
 const dusen = sonuclar.filter((s) => !s.gecti);
 for (const s of sonuclar) {

@@ -323,3 +323,29 @@ test('MÜŞTERİ uzmanın teyidini veremiyor', async () => {
   const { svc } = sahteOrtam(HIZMET_GUNU());
   await assert.rejects(() => svc.balanceReceived('bk-1', 'musteri-1'));
 });
+
+test('"GELMEDİ" işareti de zamanlayıcıyı BEKLEMİYOR', async () => {
+  /*
+   * `no_show_musteri` yalnız `hizmet_gunu`ndan çıkabiliyor ve o geçişi
+   * zamanlayıcı yapıyor (60 sn tur, kapatılabilir bayrak). Uzman salonda
+   * müşteriyi beklerken düğmeye basıyor, sunucu "geçersiz geçiş" diyordu —
+   * kendi kabahati olmayan bir hata.
+   *
+   * Ödeme uçları bu kapıyı zaten açmıştı; işaretleme açık kalmıştı.
+   * Uçtan uca denemede bulundu (06.09.2026).
+   */
+  const { svc, randevu } = sahteOrtam(
+    HIZMET_GUNU({ status: 'kesinlesti', startAt: new Date(Date.now() - 30 * 60_000) }),
+  );
+  await svc.noShow('bk-1', 'uzman-1');
+  assert.equal(randevu.status, 'no_show_musteri', 'uzman zamanlayıcıyı beklemek zorunda');
+});
+
+test('15 DAKİKA dolmadan "gelmedi" işaretlenemiyor', async () => {
+  // Kural duruyor: erken işaretleme müşteriyi haksız yere cezalandırırdı.
+  const { svc, randevu } = sahteOrtam(
+    HIZMET_GUNU({ status: 'kesinlesti', startAt: new Date(Date.now() - 5 * 60_000) }),
+  );
+  await assert.rejects(() => svc.noShow('bk-1', 'uzman-1'), /15 dakika/);
+  assert.equal(randevu.status, 'kesinlesti');
+});
