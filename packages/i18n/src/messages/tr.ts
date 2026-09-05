@@ -1057,6 +1057,7 @@ export const tr = {
   'rewards.earn.provider_noshow': 'Uzman gelmedi telafisi',
   'rewards.earn.first_booking': 'İlk randevu tamamlama',
   'rewards.earn.w2w_like': 'W2W beğenisi',
+  'rewards.refund.deposit': 'İptal edilen randevudan puan iadesi',
   'rewards.earn.referral': 'Arkadaşını davet et',
   'rewards.redeem.title': 'Puanını kullan',
   'rewards.redeem.discount': 'Randevuda indirim',

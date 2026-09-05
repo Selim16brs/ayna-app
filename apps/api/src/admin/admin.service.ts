@@ -1,3 +1,4 @@
+import { randevuPuaniniIadeEt } from '../loyalty/puan-iade';
 import {
   aynaOnayli,
   commissionFor,
@@ -1259,11 +1260,20 @@ export class AdminService {
   async rejectDepositReceipt(id: string, actorId?: string) {
     const b = await this.prisma.booking.findUnique({
       where: { id },
-      select: { id: true, status: true, depositReceiptUri: true },
+      select: { id: true, status: true, depositReceiptUri: true, userId: true, pointsUsed: true },
     });
     if (!b) throw new NotFoundException({ code: 'BOOKING_NOT_FOUND', message: 'Randevu yok' });
     if (!b.depositReceiptUri)
       throw new BadRequestException({ code: 'NO_RECEIPT', message: 'Bu randevuda dekont yok' });
+    /*
+     * PUAN GERİ VERİLİYOR.
+     *
+     * Dekont geri alınınca müşteri düzeltilmiş dekontu yüklüyor ve o sırada
+     * puanı YENİDEN harcanıyordu — ilk harcama hiç iade edilmediği için aynı
+     * depozito için iki kez puan ödemiş oluyordu. Hiçbir ekran bunu
+     * göstermiyordu; yalnız bakiyesi eksiliyordu.
+     */
+    const iade = await randevuPuaniniIadeEt(this.prisma, id, b.userId);
     const updated = await this.prisma.booking.update({
       where: { id },
       data: {
@@ -1272,6 +1282,9 @@ export class AdminService {
         // Hash da siliniyor: müşteri düzeltilmiş dekontu yükleyebilsin.
         // Kalsaydı "bu dekont daha önce kullanılmış" diye reddedilirdi.
         receiptHash: null,
+        // Puan iade edildi: kayıt da sıfırlanıyor, yoksa iade edilmiş puan
+        // ileride nakit iadeden bir kez daha düşülürdü.
+        ...(iade > 0 ? { pointsUsed: 0 } : {}),
       },
       select: { id: true, status: true },
     });

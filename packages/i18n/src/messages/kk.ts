@@ -989,6 +989,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'rewards.earn.provider_noshow': 'Маман келмеген өтемақы',
   'rewards.earn.first_booking': 'Алғашқы жазылуды аяқтау',
   'rewards.earn.w2w_like': 'W2W ұнатуы',
+  'rewards.refund.deposit': 'Болдырылған жазылудан ұпай қайтарымы',
   'rewards.earn.referral': 'Досыңды шақыр',
   'rewards.redeem.title': 'Ұпайыңды пайдалан',
   'rewards.redeem.discount': 'Жазылуда жеңілдік',
