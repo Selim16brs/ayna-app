@@ -17,7 +17,16 @@ const svcYap = (over: Record<string, unknown> = {}) => {
     setting: { findUnique: () => Promise.resolve({ intValue: 200_000 }) },
     adOrder: {
       create: ({ data }: { data: unknown }) => Promise.resolve({ id: 'o1', ...(data as object) }),
-      findUnique: () => Promise.resolve(over['order'] ?? null),
+      /*
+       * Durum ALANI ŞEMADA VARSAYILANLI ('bekliyor'): sahte kayıtlar onu
+       * yazmıyordu ve gerçek satırdan farklı bir nesne modelliyorlardı.
+       * Onay/red artık durum kapısı taşıyor (tek ödeme = tek reklam), o
+       * yüzden varsayılan burada da veriliyor.
+       */
+      findUnique: () =>
+        Promise.resolve(
+          over['order'] ? { status: 'bekliyor', ...(over['order'] as object) } : null,
+        ),
       findFirst: () => Promise.resolve(over['tekrar'] ?? null),
       update: ({ data }: { data: unknown }) => {
         cagrilar['orderUpdate']!.push(data);
