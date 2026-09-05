@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { bildirimGonderilebilir } from '@ayna/domain';
 import { PrismaService } from '../prisma/prisma.service';
 import { type PushTemplateKey, renderPush } from './push.templates';
 import { deadTokensFrom, nextState, shortError } from './outbox.rules';
@@ -88,6 +89,30 @@ export class PushService {
       select: { defaultLocale: true },
     });
     const { title, body } = renderPush(u?.defaultLocale, key, params);
+    /*
+     * ── KULLANICININ KAPATTIĞI BİLDİRİM GÖNDERİLMİYOR ──────────────────
+     *
+     * Ayarlardaki tercih sunucuya kaydediliyordu ama burası onu HİÇ
+     * okumuyordu: kullanıcı "Bakım hatırlatmaları"nı kapatıyor, telefonu
+     * kapattığı bildirimi almaya devam ediyordu.
+     *
+     * Kapatılamayan bildirimler (`zorunluBildirim`) yine gidiyor: depozito
+     * süresi, iptal, iade gibi kaçırılması geri alınamaz olanlar.
+     */
+    const tercih = await this.prisma.userPrefs
+      .findUnique({ where: { userId }, select: { notifJson: true } })
+      .catch(() => null);
+    if (!bildirimGonderilebilir(key, this.tercihleriCoz(tercih?.notifJson))) {
+      /*
+       * PUSH gönderilmiyor ama UYGULAMA İÇİ KUTUYA yazılıyor.
+       *
+       * Kullanıcı "telefonuma düşmesin" dedi, "hiç haberim olmasın"
+       * demedi. Kaydı da silmek, kendi randevusunun geçmişini ondan
+       * saklamak olurdu — üstelik bildirim kutusunu kendi açıyor.
+       */
+      await this.kutuyaYaz(userId, { title, body, ...(data ? { data } : {}) });
+      return;
+    }
     return this.sendToUser(userId, { title, body, ...(data ? { data } : {}) });
   }
 
@@ -97,19 +122,8 @@ export class PushService {
    * Yazma başarısız olursa (veritabanı erişilemez) çağıran akış yine bozulmaz;
    * ama bu durum log'a ERROR olarak düşer — sessiz kayıp yok.
    */
-  async sendToUser(userId: string, payload: PushPayload): Promise<void> {
-    /*
-     * ── ÖNCE KUTUYA, SONRA TESLİME ──────────────────────────────────────
-     *
-     * Outbox bir TESLİM kuyruğu: teslim edileni 7 gün sonra siliyor,
-     * edilemeyeni "dead" bırakıyor. Kullanıcının okuyacağı geçmiş bu
-     * olamaz. Bildirim önce kullanıcının KENDİ kutusuna yazılıyor —
-     * telefon kapalı olsa, push izni verilmemiş olsa, teslim hiç
-     * başarmasa bile uygulama açıldığında orada duruyor.
-     *
-     * Yazma başarısız olursa teslim yine denenir: geçmişi kaybetmek,
-     * bildirimi hiç göndermemekten iyidir.
-     */
+  /** Uygulama içi bildirim kutusuna yazar — teslimden bağımsız geçmiş. */
+  private async kutuyaYaz(userId: string, payload: PushPayload): Promise<void> {
     const route = typeof payload.data?.route === 'string' ? payload.data.route : null;
     await this.prisma.userNotification
       .create({
@@ -123,6 +137,33 @@ export class PushService {
       .catch((e: unknown) => {
         this.log.error(`bildirim geçmişi yazılamadı: ${shortError(e)}`);
       });
+  }
+
+  /** `notifJson` metnini nesneye çevirir; bozuk kayıt bildirimleri kesmesin. */
+  private tercihleriCoz(json: string | null | undefined): Record<string, unknown> {
+    if (!json) return {};
+    try {
+      const v: unknown = JSON.parse(json);
+      return v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  async sendToUser(userId: string, payload: PushPayload): Promise<void> {
+    /*
+     * ── ÖNCE KUTUYA, SONRA TESLİME ──────────────────────────────────────
+     *
+     * Outbox bir TESLİM kuyruğu: teslim edileni 7 gün sonra siliyor,
+     * edilemeyeni "dead" bırakıyor. Kullanıcının okuyacağı geçmiş bu
+     * olamaz. Bildirim önce kullanıcının KENDİ kutusuna yazılıyor —
+     * telefon kapalı olsa, push izni verilmemiş olsa, teslim hiç
+     * başarmasa bile uygulama açıldığında orada duruyor.
+     *
+     * Yazma başarısız olursa teslim yine denenir: geçmişi kaybetmek,
+     * bildirimi hiç göndermemekten iyidir.
+     */
+    await this.kutuyaYaz(userId, payload);
     let row: { id: string } | null = null;
     try {
       row = await this.prisma.notificationOutbox.create({
