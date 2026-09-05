@@ -1374,6 +1374,7 @@ export const tr = {
   'agenda.view.salon': 'Salon',
   'agenda.salon_note':
     'Uzman takvimlerine yalnızca randevu EKLEYEBİLİRSİN; silemez veya izin günlerine dokunamazsın. Her ekleme uzmana bildirilir.',
+  'agenda.weekly_closed': 'Haftalık saatlerinde kapalı — düzenle',
   'agenda.mark_closed': 'Kapalı işaretle',
   'agenda.mark_open': 'Açık işaretle',
   'agenda.closed_day': 'Bu gün kapalı (izin / tatil). Kullanıcıya randevuya kapalı görünür.',

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { varsayilanCalismaSaatleri } from '@ayna/domain';
 import { Ionicons } from '@expo/vector-icons';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,8 +10,8 @@ import { Text } from './Text';
 
 export type DayHours = { wd: number; open: boolean; from: string; to: string };
 
-// Facebook işletme dili: gün gün açık/kapalı + saat aralığı. Pazartesi–Pazar sırası.
-const ORDER = [1, 2, 3, 4, 5, 6, 0];
+// Gün sırası (Pazartesi–Pazar) `@ayna/domain`de: varsayılan saatler oradan
+// geliyor ve ekran o sırayı olduğu gibi çiziyor.
 
 const TIMES: string[] = (() => {
   const out: string[] = [];
@@ -20,7 +21,9 @@ const TIMES: string[] = (() => {
 })();
 
 export function defaultHours(): DayHours[] {
-  return ORDER.map((wd) => ({ wd, open: wd !== 0, from: '10:00', to: '20:00' }));
+  // Kural `@ayna/domain`de: sunucunun varsayılan penceresiyle TEK kaynaktan
+  // okunuyor, ikisi ayrışamaz. Hiçbir gün uzman adına kapatılmıyor.
+  return varsayilanCalismaSaatleri();
 }
 
 /**

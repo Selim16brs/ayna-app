@@ -1300,6 +1300,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'agenda.view.salon': 'Салон',
   'agenda.salon_note':
     'В календари мастеров вы можете только ДОБАВЛЯТЬ записи; не можете удалять или трогать дни отпуска. О каждом добавлении уведомляется мастер.',
+  'agenda.weekly_closed': 'Закрыто в недельном графике — изменить',
   'agenda.mark_closed': 'Отметить закрытым',
   'agenda.mark_open': 'Отметить открытым',
   'agenda.closed_day':
