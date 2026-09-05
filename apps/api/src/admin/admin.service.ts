@@ -1,4 +1,5 @@
 import { randevuPuaniniIadeEt } from '../loyalty/puan-iade';
+import { StorageService } from '../storage/storage.service';
 import {
   aynaOnayli,
   commissionFor,
@@ -93,6 +94,7 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(ENV) private readonly env: Env,
+    private readonly storage: StorageService,
   ) {}
 
   // Dashboard genel bakış — platform geneli metrikler
@@ -1493,13 +1495,26 @@ export class AdminService {
         message: 'Bitiş tarihi başlangıçtan sonra olmalı',
       });
     }
+    /*
+     * GÖRSEL DEPOLAMAYA YÜKLENİYOR.
+     *
+     * Kurucu (05.09.2026): "orada link koyarak değil biz görsel upload
+     * ederek yapmamız lazım." Panel artık dosya seçtiriyor ve veri adresi
+     * gönderiyor; burada kalıcı depolamaya taşınıyor. Ham base64'ü satıra
+     * yazmak kaydı megabaytlarca büyütür ve o satır HER kullanıcının keşif
+     * ekranında okunuyor.
+     *
+     * Uzak URL'ye dokunulmuyor: eski kayıtlar ve elle girilmiş adresler
+     * çalışmaya devam ediyor.
+     */
+    const image = (await this.storage.put(input.image, 'ads')) ?? input.image;
     return this.prisma.adBanner.create({
       data: {
         proId: input.proId,
         title: input.title,
         subtitle: input.subtitle ?? '',
         ...(input.i18n ? { i18n: input.i18n as object } : {}), // §14.5 — kk/ru
-        image: input.image,
+        image,
         sortOrder: input.sortOrder ?? 0,
         placement: input.placement ?? 'one_cikanlar',
         // Pencere ZORUNLU (yukarıda doğrulandı); süresi biten reklam
