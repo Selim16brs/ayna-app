@@ -990,6 +990,13 @@ export interface Appointment {
   proposedStartMs?: number; // uzmanın önerdiği alternatif başlangıç (§1.6)
   depositAmount?: number; // §4.3 — beklenen depozito (₸)
   depositDeadline?: number; // §4.4 — depozito son ödeme anı (UTC ms, 10 dk); geçilirse randevu düşer
+  /**
+   * Depozitonun puanla ödenen kısmı (₸ karşılığı).
+   *
+   * İade tutarı bundan hesaplanıyor: nakit iade = depozito − puan. Ekran
+   * rakamı açıklayabilsin diye taşınıyor.
+   */
+  pointsUsed?: number;
   /** §4.9 — müşterinin "ödeme yaptım" beyanı (UTC ms). */
   balanceDeclaredAt?: number;
   /**

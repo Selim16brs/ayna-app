@@ -643,6 +643,175 @@ ol(
 );
 await gonder('/prefs', { notif: { booking: true } }, musteriToken);
 
+/* ══════════════════════════════════════════════════════════════════════
+ * AŞAMA 3 — İPTAL, İADE VE PUANIN GERİ DÖNMESİ
+ *
+ * Depozitonun bir kısmı puanla ödenebiliyor. İade hakkı doğduğunda NAKİT
+ * iade yalnız gerçekten ödenen nakit olmalı; puanla kapatılan kısım PUAN
+ * olarak geri dönmeli. Aksi hâlde randevu alıp hemen iptal ederek puan
+ * paraya çevrilebiliyordu.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+/** Puanla ödeme kilidini açacak kadar bakiye kazandırır (tamamlanan randevu). */
+async function puanBiriktir(hedefPuan) {
+  let dk = 400;
+  for (let i = 0; i < 12; i++) {
+    const bakiye = (await get('/loyalty', musteriToken))?.points ?? 0;
+    if (bakiye >= hedefPuan) return bakiye;
+    const r = await gecmisRandevuAc(dk, 200000); // %1 → 2.000 puan
+    dk += 90;
+    if (!r.ok) {
+      console.error(
+        `  puan turu ${i}: randevu açılamadı — ${JSON.stringify(r.govde).slice(0, 120)}`,
+      );
+      continue;
+    }
+    // Her tur FARKLI dekont: aynı içerik ikinci kez kabul edilmiyor (doğru
+    // davranış — testin kendi verisi tekrarlıyordu).
+    const kk = await kesinlestir(
+      r.govde?.id,
+      Buffer.from(`puan-turu-${i}-${damga}`).toString('base64'),
+    );
+    if (!kk.dekont.ok) {
+      console.error(`  puan turu ${i}: dekont — ${JSON.stringify(kk.dekont.govde).slice(0, 120)}`);
+      continue;
+    }
+    const bp = await gonder(`/bookings/${r.govde?.id}/balance-paid`, {}, musteriToken);
+    const br = await gonder(`/bookings/${r.govde?.id}/balance-received`, {}, uzmanToken);
+    if (!bp.ok || !br.ok) {
+      console.error(
+        `  puan turu ${i}: ödeme — ${JSON.stringify(bp.govde).slice(0, 80)} | ${JSON.stringify(br.govde).slice(0, 80)}`,
+      );
+    }
+    await new Promise((x) => setTimeout(x, 700));
+  }
+  return (await get('/loyalty', musteriToken))?.points ?? 0;
+}
+
+const bakiye = await puanBiriktir(5000);
+ol('puan kilidi açılacak bakiyeye ulaşıldı', bakiye >= 5000, `${bakiye} puan`);
+
+const kilitDurumu = await get('/loyalty', musteriToken);
+ol(
+  'bakiye eşiği geçince KİLİT AÇILIYOR',
+  kilitDurumu?.spend?.unlocked === true,
+  JSON.stringify(kilitDurumu?.spend ?? {}).slice(0, 120),
+);
+
+/* ── 3.1 DEPOZİTONUN BİR KISMI PUANLA ─────────────────────────────── */
+const rp = await gecmisRandevuAc(1500);
+const rpId = rp.govde?.id;
+await gonder(`/bookings/${rpId}/approve`, {}, uzmanToken);
+const puanliDekont = await gonder(
+  `/bookings/${rpId}/deposit-receipt`,
+  { receiptUri: 'data:image/jpeg;base64,UFVBTkxJ', pointsRequested: 100000 },
+  musteriToken,
+);
+ol(
+  'puanlı dekont kabul ediliyor',
+  puanliDekont.ok,
+  JSON.stringify(puanliDekont.govde).slice(0, 140),
+);
+const bakiyeSonra = (await get('/loyalty', musteriToken))?.points ?? 0;
+const harcanan = bakiye - bakiyeSonra;
+// Tavan: biriken puanın %25'i ve depozitoyu (2.000) aşamaz.
+ol(
+  'puan TAVANI aşılmıyor',
+  harcanan > 0 && harcanan <= 2000,
+  `${harcanan} puan harcandı (depozito 2000, bakiye ${bakiye})`,
+);
+ol('istemcinin istediği kadar DÜŞÜLMÜYOR', harcanan < 100000, `${harcanan}`);
+
+/* ── 3.2 ÜCRETSİZ İPTAL → NAKİT İADE + PUAN GERİ ──────────────────── */
+const iptal = await gonder(`/bookings/${rpId}/cancel`, { reason: 'E2E iptal' }, musteriToken);
+ol('müşteri iptal edebiliyor', iptal.ok, JSON.stringify(iptal.govde).slice(0, 120));
+ol(
+  'iptal MÜŞTERİ iptali olarak kaydediliyor',
+  iptal.govde?.status === 'iptal_musteri',
+  String(iptal.govde?.status),
+);
+// Randevu geçmişte → eşik geçti → depozito YANAR (§4.7). Yanan depozitoda
+// iade hakkı doğmuyor; puan da geri gelmiyor (ceza yarıya bölünmemeli).
+const yanmis = iptal.govde?.depositForfeited === true;
+ol('geç iptalde depozito YANIYOR', yanmis, String(iptal.govde?.depositForfeited));
+const iadeRed = await gonder(
+  `/bookings/${rpId}/refund-request`,
+  { payoutInfo: 'Kaspi 7700' },
+  musteriToken,
+);
+ol(
+  'yanan depozitoda İADE HAKKI YOK',
+  !iadeRed.ok,
+  `${iadeRed.durum} ${iadeRed.govde?.error?.code ?? ''}`,
+);
+const bakiyeYanma = (await get('/loyalty', musteriToken))?.points ?? 0;
+ol(
+  'yanan depozitoda puan da geri GELMİYOR',
+  bakiyeYanma === bakiyeSonra,
+  `${bakiyeSonra} → ${bakiyeYanma}`,
+);
+
+/* ── 3.3 ERKEN İPTAL → NAKİT İADE PUANI İÇERMİYOR ─────────────────── */
+// Başlangıcı İLERİDE olan randevu: eşik geçmedi, depozito yanmıyor.
+const ileri = await gonder(
+  '/bookings',
+  {
+    id: `e2e-${damga}-ileri`,
+    source: 'direct',
+    service: 'Saç kesimi',
+    proId: proKimlik,
+    proName: 'Duman Uzman',
+    proImage: '',
+    dateLabel: 'yarın',
+    inDays: 1,
+    price: HIZMET_FIYATI,
+    durationMin: 30,
+    startMs: Date.now() + 48 * 3600_000,
+  },
+  musteriToken,
+);
+const ileriId = ileri.govde?.id;
+await gonder(`/bookings/${ileriId}/approve`, {}, uzmanToken);
+const ileriDekont = await gonder(
+  `/bookings/${ileriId}/deposit-receipt`,
+  { receiptUri: 'data:image/jpeg;base64,SUxFUkk=', pointsRequested: 100000 },
+  musteriToken,
+);
+ol(
+  'ileri tarihli randevu kesinleşiyor',
+  ileriDekont.govde?.status === 'kesinlesti',
+  String(ileriDekont.govde?.status),
+);
+const puanIleri = Number(ileriDekont.govde?.pointsUsed ?? 0);
+ol('kullanılan puan EKRANA gönderiliyor', puanIleri > 0, `${puanIleri} puan`);
+const bakiyeIleri = (await get('/loyalty', musteriToken))?.points ?? 0;
+const iptalErken = await gonder(`/bookings/${ileriId}/cancel`, {}, musteriToken);
+ol(
+  'erken iptalde depozito YANMIYOR',
+  iptalErken.govde?.depositForfeited !== true,
+  String(iptalErken.govde?.depositForfeited),
+);
+const iade = await gonder(
+  `/bookings/${ileriId}/refund-request`,
+  { payoutInfo: 'Kaspi 7700' },
+  musteriToken,
+);
+ol('erken iptalde iade talebi açılıyor', iade.ok, JSON.stringify(iade.govde).slice(0, 140));
+// NAKİT iade = depozito − puanla ödenen kısım. Tamamı nakit ödenseydi puan
+// paraya çevrilmiş olurdu.
+ol(
+  'nakit iade puanla ödenen kısmı İÇERMİYOR',
+  Number(iade.govde?.amount) === 2000 - puanIleri,
+  `${iade.govde?.amount} (depozito 2000 − puan ${puanIleri})`,
+);
+await new Promise((r) => setTimeout(r, 700));
+const bakiyeIadeSonrasi = (await get('/loyalty', musteriToken))?.points ?? 0;
+ol(
+  'puanla ödenen kısım PUAN olarak geri geliyor',
+  bakiyeIadeSonrasi === bakiyeIleri + puanIleri,
+  `${bakiyeIleri} + ${puanIleri} → ${bakiyeIadeSonrasi}`,
+);
+
 /* ── RAPOR ─────────────────────────────────────────────────────────── */
 const dusen = sonuclar.filter((s) => !s.gecti);
 for (const s of sonuclar) {

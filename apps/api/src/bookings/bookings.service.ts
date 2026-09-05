@@ -1352,11 +1352,29 @@ export class BookingsService {
           payoutInfo,
         },
       });
-    } catch {
-      throw new BadRequestException({
-        code: 'ALREADY_REQUESTED',
-        message: 'Bu randevu için iade talebi zaten açık',
-      });
+    } catch (e) {
+      /*
+       * YALNIZ TEKİLLİK İHLALİ "zaten açık" demek.
+       *
+       * Buradaki `catch` HER hatayı "Bu randevu için iade talebi zaten açık"
+       * diye raporluyordu: veritabanı hatası, bağlantı kopması, alan
+       * uyuşmazlığı — hepsi aynı cümleyle. Müşteri var olmayan bir talebi
+       * beklerken parasını hiç alamıyor, kayıtlarda da hiçbir iz kalmıyordu.
+       *
+       * P2002 = benzersiz kısıt (bookingId + kind). Gerçekten ikinci talep.
+       */
+      if ((e as { code?: string }).code === 'P2002') {
+        throw new BadRequestException({
+          code: 'ALREADY_REQUESTED',
+          message: 'Bu randevu için iade talebi zaten açık',
+        });
+      }
+      this.log.error(
+        `iade talebi yazılamadı: booking=${id} tutar=${tutar} — ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+      throw e;
     }
     return { ok: true, amount: tutar };
   }
@@ -1949,6 +1967,16 @@ function mapBooking(b: Booking, opts: { forProvider: boolean; customerName?: str
     refundReceiptUri: b.refundReceiptUri ?? undefined,
     // mobil Appointment.depositDeadline = UTC ms bekler (ISO string geri sayımı bozar)
     depositDeadline: b.depositDeadline?.getTime() ?? undefined,
+    /*
+     * DEPOZİTONUN NE KADARI PUANLA ÖDENDİ.
+     *
+     * Sunucu bu bilgiyi tutuyordu ama ekrana HİÇ göndermiyordu: müşteri
+     * 1.275 puanını harcıyor, randevu kartında yalnız "depozito 2.000 ₸"
+     * görüyor ve puanının nereye gittiğini anlamıyordu. İade tutarı da
+     * bundan hesaplanıyor (nakit = depozito − puan), yani ekranın rakamı
+     * açıklayabilmesi için şart.
+     */
+    pointsUsed: b.pointsUsed,
     // §4.9 — müşterinin "ödeme yaptım" beyanı. Uzmanın butonu buna bakar.
     balanceDeclaredAt: b.balanceDeclaredAt?.getTime() ?? undefined,
     // Uzmanın "ödemeyi aldım" teyidi — müşterinin ekranı buna bakıyor.
