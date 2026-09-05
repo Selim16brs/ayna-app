@@ -187,7 +187,15 @@ export class SpecialistsService {
         const pro = await this.prisma.professional.create({
           data: {
             name: input.name,
-            specialty: (input.bio ?? '').slice(0, 60) || input.name,
+            /*
+             * UZMANLIK ALANI OLARAK KENDİ ADI YAZILMIYOR.
+             *
+             * Canlıda görülen (05.09.2026): "Darina Serbu" adlı uzmanın
+             * uzmanlık alanı da "Darina Serbu". Kartta ad iki kez, üstelik
+             * uzmanlık diye. Biyografi yazmamış olmak bir uzmanlık üretmez;
+             * boş bırakılıyor ve ekran kendi çevrilmiş yedeğine düşüyor.
+             */
+            specialty: (input.bio ?? '').slice(0, 60),
             sector: input.sector ?? 'hair',
             // Alan seti hizmet listesinden türetilir; boşsa ana alana düşülür
             // ki uzman en azından kendi ana alanında bulunabilsin.

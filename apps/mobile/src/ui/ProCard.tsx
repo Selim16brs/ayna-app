@@ -5,6 +5,7 @@ import { ImageBackground, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import type { MessageKey } from '@ayna/i18n';
 import { useLocale } from '../locale';
+import { uzmanlikYazisi } from '../uzmanlik';
 import { type Professional } from '../data';
 import { type ColorTokens, radius, space, font } from '../theme';
 import { useTheme, useThemedStyles } from '../theme-context';
@@ -25,7 +26,7 @@ const DOGRULANDI = { key: 'card.verified' as MessageKey, icon: 'checkmark-circle
 
 // Premium editorial salon kartı — tam fotoğraf + altta gradient, bilgiler foto üstünde.
 export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const router = useRouter();
   const { colors, shadow } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -71,20 +72,35 @@ export function ProCard({ pro, index = 0 }: { pro: Professional; index?: number 
             <View style={styles.metaRow}>
               <Ionicons name="location-outline" size={12} color="rgba(255,255,255,0.85)" />
               <Text variant="caption" tone="onColor" numberOfLines={1} style={styles.meta}>
-                {pro.district || pro.specialty}
+                {pro.district || uzmanlikYazisi(pro, locale)}
               </Text>
             </View>
+            {/*
+              PUAN YOKSA YILDIZ DA YOK.
+
+              Hiç yorumu olmayan uzmanın puanı sunucudan 0 geliyordu ve kart
+              altın yıldızla "0.0" yazıyordu: müşteri onu 5 üzerinden 0 almış,
+              yani EN KÖTÜ puanlı uzman sanıyordu. Oysa kimse puan vermemiş.
+              Arama ekranı ve promosyon kartı bunu zaten doğru yapıyordu;
+              keşif karuseli — en görünür yer — atlanmıştı.
+            */}
             <View style={styles.bottomRow}>
               <View style={styles.rating}>
-                <Ionicons name="star" size={12} color={colors.gold} />
-                <Text variant="caption" tone="onColor" style={styles.ratingText}>
-                  {pro.rating.toFixed(1)}
-                </Text>
-                {pro.reviewCount ? (
-                  <Text variant="caption" style={styles.reviewCount}>
-                    ({pro.reviewCount})
+                {pro.reviewCount > 0 ? (
+                  <>
+                    <Ionicons name="star" size={12} color={colors.gold} />
+                    <Text variant="caption" tone="onColor" style={styles.ratingText}>
+                      {pro.rating.toFixed(1)}
+                    </Text>
+                    <Text variant="caption" style={styles.reviewCount}>
+                      ({pro.reviewCount})
+                    </Text>
+                  </>
+                ) : (
+                  <Text variant="caption" tone="onColor" style={styles.ratingText}>
+                    ✨ {t('pro.new')}
                   </Text>
-                ) : null}
+                )}
               </View>
             </View>
           </View>

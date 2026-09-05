@@ -264,7 +264,9 @@ export class BusinessesService {
         const pro = await this.prisma.professional.create({
           data: {
             name: b.name,
-            specialty: b.about?.slice(0, 60) || b.name,
+            // Salonun ADI uzmanlık alanı değil (bkz. specialists.service).
+            // Tanıtım yazısı yoksa admin yolundaki nötr etiket kullanılıyor.
+            specialty: b.about?.slice(0, 60) || 'Güzellik & bakım',
             sector: b.sector || b.categories[0] || 'hair',
             /*
              * ALAN SETİ DE YAZILIYOR.
