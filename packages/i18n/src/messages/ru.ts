@@ -2148,6 +2148,7 @@ export const ru: Partial<Record<MessageKey, string>> = {
   'seller.metric.rating': 'Балл',
   'seller.metric.repeat': 'Повторные клиенты',
   'seller.staff.title': 'Данные мастера',
+  'seller.staff.remove_failed': 'Не удалось исключить мастера из команды',
   'seller.staff.remove': 'Убрать из состава',
   'seller.staff.remove_hint':
     'При уходе мастера его будущие записи передаются другому мастеру; пользователь подтверждает заново. Записи не удаляются молча (§4.5).',

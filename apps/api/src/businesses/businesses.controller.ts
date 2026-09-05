@@ -136,6 +136,21 @@ export class BusinessesController {
     return this.businesses.reviewsForBusiness(id, req.user!.id);
   }
 
+  /*
+   * §4.5 — KADRODAN ÇIKARMA. Sessiz silme yasak: uzmana bildirim gidiyor,
+   * denetim kaydı yazılıyor. Uzmanın HESABI silinmiyor, yalnız salon bağı
+   * kopuyor — bağımsız uzman olarak çalışmaya devam ediyor.
+   */
+  @Post(':id/staff/:specialistId/remove')
+  @UseGuards(JwtAuthGuard)
+  removeStaff(
+    @Param('id') id: string,
+    @Param('specialistId') specialistId: string,
+    @Req() req: AuthedRequest,
+  ) {
+    return this.businesses.removeStaff(id, specialistId, req.user!.id);
+  }
+
   // Salon paneli — yoruma yanıt (§6.D: yalnızca yanıt, silme yok)
   @Post(':id/reviews/:ratingId/reply')
   @UseGuards(JwtAuthGuard)

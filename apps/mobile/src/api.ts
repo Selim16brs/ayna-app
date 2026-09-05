@@ -959,6 +959,20 @@ export const api = {
         calendarPermission?: string;
       }[]
     >(`/businesses/${businessId}/staff`, token),
+  /*
+   * §4.5 — KADRODAN ÇIKARMA SUNUCUYA YAZILIYOR.
+   *
+   * Ekran "kadrodan çıkar" diyordu ve uzmanın açık randevularını gerçekten
+   * iptal ediyordu — ama uzmanı çıkaran hiçbir çağrı yoktu. Kadro listesi
+   * sunucudan geliyor: bir sonraki tazelemede uzman geri geliyordu. Yani
+   * yıkıcı olan kısım gerçek, asıl amaç hayaliydi.
+   */
+  removeStaff: (token: string, businessId: string, specialistId: string) =>
+    post<{ id: string; businessId: string | null }>(
+      `/businesses/${businessId}/staff/${specialistId}/remove`,
+      {},
+      token,
+    ),
   inviteCodes: (token: string, businessId: string) =>
     get<SellerInviteCode[]>(`/businesses/${businessId}/invite-codes`, token),
   createInviteCode: (token: string, businessId: string) =>

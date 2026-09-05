@@ -2137,6 +2137,7 @@ export const kk: Partial<Record<MessageKey, string>> = {
   'seller.metric.rating': 'Ұпай',
   'seller.metric.repeat': 'Қайталанатын клиент',
   'seller.staff.title': 'Маман мәліметі',
+  'seller.staff.remove_failed': 'Маман құрамнан шығарылмады',
   'seller.staff.remove': 'Құрамнан шығару',
   'seller.staff.remove_hint':
     'Маман кеткенде болашақ жазылулары басқа маманға беріледі; пайдаланушы қайта растайды. Жазылулар үнсіз жойылмайды (§4.5).',

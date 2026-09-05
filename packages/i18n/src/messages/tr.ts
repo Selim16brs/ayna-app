@@ -2284,6 +2284,7 @@ export const tr = {
   'seller.metric.rating': 'Puan',
   'seller.metric.repeat': 'Tekrar müşteri',
   'seller.staff.title': 'Uzman detayı',
+  'seller.staff.remove_failed': 'Uzman kadrodan çıkarılamadı',
   'seller.staff.remove': 'Kadrodan çıkar',
   'seller.staff.remove_hint':
     'Uzman ayrılınca gelecek randevuları başka bir uzmana devredilir; kullanıcı yeniden onaylar. Randevular sessizce silinmez (§4.5).',
