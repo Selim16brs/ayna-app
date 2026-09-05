@@ -411,6 +411,11 @@ ol(
 
 const musteriToken = musteri.govde?.token;
 const HIZMET_FIYATI = 20000;
+// §8.2 — davet ödülü. Sunucudan okumuyoruz: sunucu yanılırsa test de onunla
+// birlikte yanılırdı. Şartnamedeki rakam burada sabit, vaat de ödeme de buna
+// karşı ölçülüyor.
+const REFERANS_ODULU = 300;
+const REFERANS_SEBEBI = 'rewards.earn.referral';
 
 /*
  * UZMANIN KİMLİĞİ KENDİ UCUNDAN.
@@ -431,7 +436,7 @@ ol('uzman kendi keşif kimliğini okuyabiliyor', !!proKimlik, String(proKimlik))
  * (İlk yazımda 60 dk süre + 15 dk aralık kullanılmıştı; testin kendi verisi
  * çakışıyordu.)
  */
-async function gecmisRandevuAc(dakikaOnce, fiyat = HIZMET_FIYATI) {
+async function gecmisRandevuAc(dakikaOnce, fiyat = HIZMET_FIYATI, token = musteriToken) {
   const r = await gonder(
     '/bookings',
     {
@@ -447,18 +452,18 @@ async function gecmisRandevuAc(dakikaOnce, fiyat = HIZMET_FIYATI) {
       durationMin: 30,
       startMs: Date.now() - dakikaOnce * 60_000,
     },
-    musteriToken,
+    token,
   );
   return r;
 }
 
 /** Randevuyu kesinleşmiş hâle getirir: uzman onaylar + müşteri dekont yükler. */
-async function kesinlestir(id, dekontIcerik) {
+async function kesinlestir(id, dekontIcerik, token = musteriToken) {
   const onay = await gonder(`/bookings/${id}/approve`, {}, uzmanToken);
   const dekont = await gonder(
     `/bookings/${id}/deposit-receipt`,
     { receiptUri: `data:image/jpeg;base64,${dekontIcerik}` },
-    musteriToken,
+    token,
   );
   return { onay, dekont };
 }
@@ -660,16 +665,31 @@ await gonder('/prefs', { notif: { booking: true } }, musteriToken);
  * makinede yetmiyor ve test rastgele düşüyordu. Rastgele düşen bir test,
  * hiç olmayan bir testten kötüdür: insan onu görmezden gelmeyi öğrenir.
  */
-async function bakiyeBekle(enAz, turSayisi = 25) {
+async function bakiyeBekle(enAz, turSayisi = 25, token = musteriToken) {
   for (let i = 0; i < turSayisi; i++) {
-    const p = (await get('/loyalty', musteriToken))?.points ?? 0;
+    const p = (await get('/loyalty', token))?.points ?? 0;
     if (p >= enAz) return p;
     await new Promise((r) => setTimeout(r, 200));
   }
-  return (await get('/loyalty', musteriToken))?.points ?? 0;
+  return (await get('/loyalty', token))?.points ?? 0;
 }
 
 /** Puanla ödeme kilidini açacak kadar bakiye kazandırır (tamamlanan randevu). */
+/**
+ * Belirli SEBEPLİ defter satırını bekler. Bakiyeyi beklemek yanıltıcıydı:
+ * aynı randevudan geri kazanım puanı da doğuyor ve "bakiye arttı" koşulu
+ * referans ödülü daha yazılmadan doluyordu.
+ */
+async function defterSatiriBekle(token, sebep, turSayisi = 30) {
+  for (let i = 0; i < turSayisi; i++) {
+    const ozet = await get('/loyalty', token);
+    const satirlar = (ozet?.ledger ?? []).filter((e) => e.labelKey === sebep);
+    if (satirlar.length > 0) return satirlar;
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  return ((await get('/loyalty', token))?.ledger ?? []).filter((e) => e.labelKey === sebep);
+}
+
 async function puanBiriktir(hedefPuan) {
   let dk = 400;
   for (let i = 0; i < 12; i++) {
@@ -1403,6 +1423,215 @@ ol(
   `${tekrarCikar.durum} ${tekrarCikar.govde?.error?.code ?? ''}`,
 );
 
+/* ══════════════════════════════════════════════════════════════════════
+ * AŞAMA 7 — DAVET (REFERANS): AYNA PARA DAĞITAN ÜÇÜNCÜ YOL
+ *
+ * D9 / §8.2: ödül kod girildiği anda DEĞİL, davet edilenin İLK TAMAMLANMIŞ
+ * randevusundan sonra doğar. Bu aşama parayı sahte davetten koruyan bütün
+ * kapıları tek tek yokluyor.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+const davetim = await get('/referral/mine', musteriToken);
+ol('müşterinin davet kodu var', !!davetim?.code, JSON.stringify(davetim ?? {}));
+ol(
+  'davet kodu KARIŞAN HARF içermiyor',
+  !/[01OI]/.test(davetim?.code ?? 'O'),
+  String(davetim?.code),
+);
+ol(
+  'vaat edilen ödül ŞARTNAMEDEKİ rakam',
+  davetim?.rewardPoints === REFERANS_ODULU,
+  `${davetim?.rewardPoints} (beklenen ${REFERANS_ODULU})`,
+);
+const davetKoduM = davetim?.code;
+
+// Kod SABİT: her okumada yenisi üretilse paylaşılan kod ölürdü.
+const davetim2 = await get('/referral/mine', musteriToken);
+ol(
+  'davet kodu her okumada AYNI',
+  davetim2?.code === davetKoduM,
+  `${davetKoduM} → ${davetim2?.code}`,
+);
+
+/* ── 7.1 DAVET EDİLEN KAYIT OLUYOR ────────────────────────────────── */
+const davetliKayit = await gonder('/auth/register', {
+  name: 'Duman Davetli',
+  phone: '+7706' + damga.slice(0, 7),
+  password: 'Duman12345!',
+  city: 'Almatı',
+});
+ol('davet edilen müşteri kaydı', davetliKayit.ok, JSON.stringify(davetliKayit.govde).slice(0, 130));
+const davetliToken = davetliKayit.govde?.token;
+
+const gecersizKod = await gonder('/referral/redeem', { code: 'ZZZZZZ' }, davetliToken);
+ol(
+  'GEÇERSİZ davet kodu reddediliyor',
+  !gecersizKod.ok,
+  `${gecersizKod.durum} ${gecersizKod.govde?.error?.code ?? ''}`,
+);
+
+const kendiKodu = await gonder('/referral/redeem', { code: davetKoduM }, musteriToken);
+ol(
+  'KENDİ kodunu kullanamıyor',
+  !kendiKodu.ok,
+  `${kendiKodu.durum} ${kendiKodu.govde?.error?.code ?? ''}`,
+);
+
+const davetEdenOnce = (await get('/loyalty', musteriToken))?.points ?? 0;
+const kullan = await gonder('/referral/redeem', { code: davetKoduM }, davetliToken);
+ol('davet kodu kullanılabiliyor', kullan.ok, JSON.stringify(kullan.govde).slice(0, 130));
+ol(
+  'kod girildiğinde puan YAZILMIYOR',
+  kullan.govde?.pointsAwarded === 0,
+  String(kullan.govde?.pointsAwarded),
+);
+ol(
+  'ödül BEKLEMEDE görünüyor',
+  kullan.govde?.pointsPending > 0,
+  String(kullan.govde?.pointsPending),
+);
+
+// Asıl kapı: sahte davet ekonomisi. Kayıt + kod = 0 puan.
+ol(
+  'davet EDENİN bakiyesi kod girilince ARTMIYOR',
+  ((await get('/loyalty', musteriToken))?.points ?? 0) === davetEdenOnce,
+  `${davetEdenOnce} → ${(await get('/loyalty', musteriToken))?.points ?? 0}`,
+);
+ol(
+  'davet EDİLENİN bakiyesi kod girilince SIFIR',
+  ((await get('/loyalty', davetliToken))?.points ?? 0) === 0,
+  String((await get('/loyalty', davetliToken))?.points ?? 0),
+);
+
+const ikinciKod = await gonder('/referral/redeem', { code: davetKoduM }, davetliToken);
+ol(
+  'İKİNCİ kez davet kodu kullanılamıyor',
+  !ikinciKod.ok,
+  `${ikinciKod.durum} ${ikinciKod.govde?.error?.code ?? ''}`,
+);
+
+/* ── 7.2 İLK TAMAMLANAN RANDEVU ÖDÜLÜ AÇIYOR ──────────────────────── */
+/*
+ * KAPI: davet edilen doğrulanmadan randevu ALAMAZ. İlk müşteri bu kapıyı
+ * YÖNETİCİ ONAYIYLA geçiyordu; burada kapının DİĞER yarısı — telefon
+ * doğrulaması — uçtan uca sınanıyor. Ödül zincirinin başlangıcı da bu:
+ * doğrulanmayan hesap randevu tamamlayamaz, dolayısıyla puan da doğmaz.
+ */
+const dogrulamasiz = await gecmisRandevuAc(500, HIZMET_FIYATI, davetliToken);
+ol(
+  'DOĞRULANMAMIŞ davetli randevu ALAMIYOR',
+  !dogrulamasiz.ok,
+  `${dogrulamasiz.durum} ${dogrulamasiz.govde?.error?.code ?? ''}`,
+);
+
+const davetliTel = '+7706' + damga.slice(0, 7);
+const kodIste = await gonder('/auth/otp/request', { phone: davetliTel, locale: 'tr' });
+ol('OTP kodu isteniyor', kodIste.ok, JSON.stringify(kodIste.govde).slice(0, 110));
+const otpKodu = kodIste.govde?.devCode;
+ol(
+  'test ortamında kod okunabiliyor',
+  !!otpKodu,
+  otpKodu ? 'var' : 'OTP_DEBUG_CODES kapalı — testin okuyabilmesi gerekiyor',
+);
+
+const yanlisKodu = await gonder('/auth/otp/verify', { phone: davetliTel, code: '000000' });
+ol(
+  'YANLIŞ OTP kodu reddediliyor',
+  !yanlisKodu.ok,
+  `${yanlisKodu.durum} ${yanlisKodu.govde?.error?.code ?? ''}`,
+);
+
+const dogrula = await gonder('/auth/otp/verify', { phone: davetliTel, code: otpKodu });
+ol('DOĞRU OTP kodu kabul ediliyor', dogrula.ok, JSON.stringify(dogrula.govde).slice(0, 110));
+ol(
+  'hesap telefon doğrulanmış oluyor',
+  (await get('/auth/me', davetliToken))?.phoneVerified === true,
+  String((await get('/auth/me', davetliToken))?.phoneVerified),
+);
+
+const dr = await gecmisRandevuAc(520, HIZMET_FIYATI, davetliToken);
+ol('davet edilen randevu açabiliyor', dr.ok, JSON.stringify(dr.govde).slice(0, 130));
+const drId = dr.govde?.id;
+const drKesin = await kesinlestir(
+  drId,
+  Buffer.from(`davet-${damga}`).toString('base64'),
+  davetliToken,
+);
+ol(
+  'davet edilenin randevusu kesinleşiyor',
+  drKesin.dekont.ok,
+  JSON.stringify(drKesin.dekont.govde).slice(0, 110),
+);
+
+const drOde = await gonder(`/bookings/${drId}/balance-paid`, {}, davetliToken);
+const drAl = await gonder(`/bookings/${drId}/balance-received`, {}, uzmanToken);
+ol('davet edilenin randevusu tamamlanıyor', drOde.ok && drAl.ok, `${drOde.durum}/${drAl.durum}`);
+
+const davetliSatir = await defterSatiriBekle(davetliToken, REFERANS_SEBEBI);
+ol(
+  'davet EDİLEN ödülü ilk randevudan SONRA alıyor',
+  davetliSatir.length === 1 && davetliSatir[0].points === REFERANS_ODULU,
+  JSON.stringify(davetliSatir.map((e) => e.points)),
+);
+const edenSatir = await defterSatiriBekle(musteriToken, REFERANS_SEBEBI);
+ol(
+  'davet EDEN ödülü ilk randevudan SONRA alıyor',
+  edenSatir.length === 1 && edenSatir[0].points === REFERANS_ODULU,
+  JSON.stringify(edenSatir.map((e) => e.points)),
+);
+ol(
+  'ödül satırı KİMDEN geldiğini yazıyor',
+  edenSatir[0]?.detail === 'Duman Davetli',
+  String(edenSatir[0]?.detail),
+);
+
+const davetimSonra = await get('/referral/mine', musteriToken);
+ol('davet sayacı 1 gösteriyor', davetimSonra?.invited === 1, String(davetimSonra?.invited));
+ol(
+  'davet kazancı DEFTERDEN türüyor',
+  davetimSonra?.pointsEarned === REFERANS_ODULU,
+  String(davetimSonra?.pointsEarned),
+);
+
+/* ── 7.3 İKİNCİ RANDEVU ÖDÜLÜ TEKRAR ÖDEMİYOR ─────────────────────── */
+const oncekiEden = (await get('/loyalty', musteriToken))?.points ?? 0;
+const oncekiDavetli = (await get('/loyalty', davetliToken))?.points ?? 0;
+const dr2 = await gecmisRandevuAc(610, HIZMET_FIYATI, davetliToken);
+const dr2Kesin = await kesinlestir(
+  dr2.govde?.id,
+  Buffer.from(`davet2-${damga}`).toString('base64'),
+  davetliToken,
+);
+ol(
+  'davet edilenin İKİNCİ randevusu kesinleşiyor',
+  dr2Kesin.dekont.ok,
+  JSON.stringify(dr2Kesin.dekont.govde).slice(0, 110),
+);
+await gonder(`/bookings/${dr2.govde?.id}/balance-paid`, {}, davetliToken);
+await gonder(`/bookings/${dr2.govde?.id}/balance-received`, {}, uzmanToken);
+// İkinci randevunun geri kazanımı yazılana kadar bekle: ödül İKİ KEZ
+// yazılacaksa aynı turda yazılır, dolayısıyla bu bekleme yeterli tanık.
+await bakiyeBekle(oncekiDavetli + 1, 30, davetliToken);
+
+const edenSon = (await get('/loyalty', musteriToken))?.points ?? 0;
+ol(
+  'davet ödülü İKİNCİ randevuda TEKRAR ödenmiyor',
+  edenSon === oncekiEden,
+  `${oncekiEden} → ${edenSon}`,
+);
+const edenSatirSon = (await get('/loyalty', musteriToken))?.ledger ?? [];
+ol(
+  'defterde TEK referans satırı var',
+  edenSatirSon.filter((e) => e.labelKey === REFERANS_SEBEBI).length === 1,
+  String(edenSatirSon.filter((e) => e.labelKey === REFERANS_SEBEBI).length),
+);
+const davetimSon = await get('/referral/mine', musteriToken);
+ol(
+  'davet kazancı ŞİŞMİYOR',
+  davetimSon?.pointsEarned === REFERANS_ODULU,
+  String(davetimSon?.pointsEarned),
+);
+
 /* ── RAPOR ─────────────────────────────────────────────────────────── */
 const dusen = sonuclar.filter((s) => !s.gecti);
 for (const s of sonuclar) {
@@ -1434,6 +1663,7 @@ try {
           'Duman Sahip',
           'Duman Kadro',
           // Reddedilmesi beklenen kayıtlar: bir gün geçerlerse artıkları burada kalmasın.
+          'Duman Davetli',
           'Duman Sahte',
           'Duman İkinci',
         ],
